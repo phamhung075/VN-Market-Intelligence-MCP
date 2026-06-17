@@ -880,8 +880,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T13:14:52Z",
-    "_updated_by": "router-reconcile",
+    "_updated_at": "2026-06-17T14:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7988,7 +7988,6 @@
         "ohlcv_dep_satisfied_note": "Dependency on the OHLCV seeder gate is SATISFIED — FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0 is now done_verified (router RAW 2026-06-16T09:36Z: flat-seed=0 stable). The flat zero-vol O=H=L=C seed bar this task's giá=0 BB-breakout fires on is eliminated at source. Kept HELD this pass (NOT promoted): the ONLY remaining release condition is the next clean VN market-open observation, and RE-SCOPE-FIRST per the po_s78 note — the seed-bar kill may have already subsumed this task's open-window race surface, so verify the giá=0 path still reproduces before dispatch (possibly fold/close as subsumed). PO judgment: hold for next-open verify rather than blind-promote a possibly-subsumed task."
       },
       {
-        "task_id": "FACTORY-INTERFACE-confidence-score-50-mask",
         "title": "Replace confidence_score ?? 50 mask in /api/signals/stock handler with honest null",
         "priority": "P0",
         "dev_agent": "dev-mcp-server",
@@ -8010,10 +8009,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": true,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INTERFACE-confidence-score-50-mask"
       },
       {
-        "task_id": "FACTORY-INFRA-agentsignal-confidence-50-default",
         "title": "Remove confidence_score=50 destructuring default in agentSignalStore.postSignal",
         "priority": "P0",
         "dev_agent": "dev-mcp-server",
@@ -8035,10 +8034,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": true,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INFRA-agentsignal-confidence-50-default"
       },
       {
-        "task_id": "FACTORY-INTERFACE-sequential-confidence-05-mask",
         "title": "Stop fabricating 0.5 conviction in sequential-market-analysis",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -8060,10 +8059,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": true,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INTERFACE-sequential-confidence-05-mask"
       },
       {
-        "task_id": "FACTORY-INTERFACE-source-confidence-10-mask",
         "title": "Propagate real per-row source_confidence in finalizeBctcRefine (not 1.0)",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -8087,10 +8086,10 @@
         "created_by": "po",
         "fast_track": true,
         "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
-        "not_null_caution": "source_confidence column is REAL NOT NULL DEFAULT 1.0 (schema-financial-reports.ts:510); fix MUST propagate real per-row parser confidence, NEVER write null, else it relocates the mask. Do NOT make the column nullable in this task."
+        "not_null_caution": "source_confidence column is REAL NOT NULL DEFAULT 1.0 (schema-financial-reports.ts:510); fix MUST propagate real per-row parser confidence, NEVER write null, else it relocates the mask. Do NOT make the column nullable in this task.",
+        "id": "FACTORY-INTERFACE-source-confidence-10-mask"
       },
       {
-        "task_id": "FACTORY-PDF-paddleocr-score-07-mask",
         "title": "Stop defaulting PaddleOCR cell score to 0.7; surface real ink-density or sentinel",
         "priority": "P1",
         "dev_agent": "dev-pdf-extractor",
@@ -8112,10 +8111,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": true,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-PDF-paddleocr-score-07-mask"
       },
       {
-        "task_id": "FACTORY-RAG-confidence-impact-or-00-mask",
         "title": "Fix `or 0.0` truthiness mask on confidence/impact_score in rag _dedup_and_trim",
         "priority": "P2",
         "dev_agent": "dev-rag-service",
@@ -8137,10 +8136,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-RAG-confidence-impact-or-00-mask"
       },
       {
-        "task_id": "FACTORY-MACRO-delete-dead-ts-tree",
         "title": "Delete orphaned TypeScript src/ tree and broken bun toolchain (pure-Go service)",
         "priority": "P1",
         "dev_agent": "dev-macro-indicators",
@@ -8166,10 +8165,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-MACRO-delete-dead-ts-tree"
       },
       {
-        "task_id": "FACTORY-TECHANALYSIS-delete-orphaned-ts-service",
         "title": "Delete or attic the orphaned TS shadow service under src/",
         "priority": "P1",
         "dev_agent": "dev-technical-analysis",
@@ -8198,10 +8197,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-TECHANALYSIS-delete-orphaned-ts-service"
       },
       {
-        "task_id": "FACTORY-TECHANALYSIS-go-livepath-tests",
         "title": "Add Go tests for the deployed request path (application + interface/http + domain)",
         "priority": "P1",
         "dev_agent": "dev-technical-analysis",
@@ -8224,10 +8223,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-TECHANALYSIS-go-livepath-tests"
       },
       {
-        "task_id": "FACTORY-TECHANALYSIS-reconcile-ta-contract",
         "title": "Make api/openapi.yaml the single /ta/indicators contract; conform the Go service",
         "priority": "P1",
         "dev_agent": "dev-technical-analysis",
@@ -8253,10 +8252,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-TECHANALYSIS-reconcile-ta-contract"
       },
       {
-        "task_id": "FACTORY-KINHDICH-delete-deprecated-ts-tree",
         "title": "Delete the 4909L _deprecated TypeScript predecessor tree",
         "priority": "P1",
         "dev_agent": "dev-kinh-dich",
@@ -8278,10 +8277,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-KINHDICH-delete-deprecated-ts-tree"
       },
       {
-        "task_id": "FACTORY-INTERFACE-delete-bak-files",
         "title": "Remove 2 committed .bak dead-code files from the interface zone (+ repo-root .bak)",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -8304,10 +8303,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INTERFACE-delete-bak-files"
       },
       {
-        "task_id": "FACTORY-INFRA-delete-deprecated-rag-kinhdich",
         "title": "Delete _deprecated rag/kinhDich infra code and remove the barrel re-exports",
         "priority": "P3",
         "dev_agent": "dev-mcp-server",
@@ -8333,10 +8332,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INFRA-delete-deprecated-rag-kinhdich"
       },
       {
-        "task_id": "FACTORY-STOCK-resolve-dead-writeback",
         "title": "Resolve dead SaveQuote / Tier-3 write-back: delete the unused writer path",
         "priority": "P2",
         "dev_agent": "dev-stock-price",
@@ -8360,10 +8359,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-STOCK-resolve-dead-writeback"
       },
       {
-        "task_id": "FACTORY-STOCK-delete-dead-port-and-deprecated",
         "title": "Delete dead PriceFetcherPort interface and the _deprecated services_v1 archive",
         "priority": "P3",
         "dev_agent": "dev-stock-price",
@@ -8389,10 +8388,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-STOCK-delete-dead-port-and-deprecated"
       },
       {
-        "task_id": "FACTORY-RAG-delete-dead-sqlite-repo",
         "title": "Delete dead SQLiteAnalysisRepository and phantom AnalysisRepositoryPort",
         "priority": "P2",
         "dev_agent": "dev-rag-service",
@@ -8415,10 +8414,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-RAG-delete-dead-sqlite-repo"
       },
       {
-        "task_id": "FACTORY-SHARED-prune-phantom-primitives",
         "title": "Delete the phantom packages/primitives/technical-analysis package",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -8440,10 +8439,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SHARED-prune-phantom-primitives"
       },
       {
-        "task_id": "FACTORY-ALERT-delete-deprecated-domain",
         "title": "Delete dead _deprecated domain package (298L duplicate of primitives)",
         "priority": "P2",
         "dev_agent": "dev-alert-engine",
@@ -8466,10 +8465,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-ALERT-delete-deprecated-domain"
       },
       {
-        "task_id": "FACTORY-ALERT-consolidate-dual-engines",
         "title": "Consolidate alert evaluation onto the tested module; thin the use case to an adapter",
         "priority": "P0",
         "dev_agent": "dev-alert-engine",
@@ -8495,10 +8494,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-ALERT-consolidate-dual-engines"
       },
       {
-        "task_id": "FACTORY-ALERT-dedup-window-config",
         "title": "Replace hardcoded 60-min dedup window with a config-sourced DedupWindowMinutes",
         "priority": "P1",
         "dev_agent": "dev-alert-engine",
@@ -8523,10 +8522,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-ALERT-dedup-window-config"
       },
       {
-        "task_id": "FACTORY-SCHEDULER-alert-confidence-literals",
         "title": "Derive alert/evidence confidence from in-scope strength, not frozen literals",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -8551,10 +8550,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SCHEDULER-alert-confidence-literals"
       },
       {
-        "task_id": "FACTORY-SCHEDULER-prediction-default-dedup",
         "title": "Dedup predictionMarket signalConfig defaults into one DEFAULT constant",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -8576,10 +8575,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SCHEDULER-prediction-default-dedup"
       },
       {
-        "task_id": "FACTORY-INTERFACE-split-server-ts",
         "title": "Extract inline server.ts routes into routes/<name>Handler.ts (staged)",
         "priority": "P0",
         "dev_agent": "dev-mcp-server",
@@ -8605,10 +8604,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INTERFACE-split-server-ts"
       },
       {
-        "task_id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
         "title": "Extract one requireVpsApiKey guard; replace 15+ copy-paste auth blocks",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -8634,10 +8633,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INTERFACE-vps-auth-guard-dedup"
       },
       {
-        "task_id": "FACTORY-INTERFACE-extract-finalizeBctc-usecase",
         "title": "Move 1100L finalizeBctcRefine handler logic down into application/usecases",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -8661,10 +8660,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INTERFACE-extract-finalizeBctc-usecase"
       },
       {
-        "task_id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
         "title": "Move Kinh Dich + TA scoring math out of interface tools into domain",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -8687,10 +8686,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down"
       },
       {
-        "task_id": "FACTORY-DOMAIN-split-cascade-engine",
         "title": "Extract cascadeEngine rule tables + orchestration helpers (Steps 1-3 only)",
         "priority": "P0",
         "dev_agent": "dev-mcp-server",
@@ -8712,10 +8711,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-DOMAIN-split-cascade-engine"
       },
       {
-        "task_id": "FACTORY-DOMAIN-extract-bctc-parsing-lib",
         "title": "Extract shared BCTC parsing primitives + VAS regex tables",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -8741,10 +8740,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-DOMAIN-extract-bctc-parsing-lib"
       },
       {
-        "task_id": "FACTORY-DOMAIN-relocate-stock-catalog",
         "title": "Move STOCK_CATALOG reference table out of stockAliases logic file",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -8766,10 +8765,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-DOMAIN-relocate-stock-catalog"
       },
       {
-        "task_id": "FACTORY-DOMAIN-extract-sentiment-lexicons",
         "title": "Extract sentiment lexicon + negation tables from sentimentClassifier",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -8791,10 +8790,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-DOMAIN-extract-sentiment-lexicons"
       },
       {
-        "task_id": "FACTORY-DOMAIN-split-newsNormalizer",
         "title": "Split newsNormalizer types/helpers/tables out of the 979L file",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -8816,10 +8815,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-DOMAIN-split-newsNormalizer"
       },
       {
-        "task_id": "FACTORY-DOMAIN-extract-sla-config",
         "title": "Move DEFAULT_SLA_CONFIG out of freshnessSlaChecker into shared-config",
         "priority": "P3",
         "dev_agent": "dev-mcp-server",
@@ -8841,10 +8840,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-DOMAIN-extract-sla-config"
       },
       {
-        "task_id": "FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
         "title": "Name VAS row-code guards + cascade broadcast-floor magic numbers",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -8867,10 +8866,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-DOMAIN-name-bctc-cascade-magic-numbers"
       },
       {
-        "task_id": "FACTORY-APP-split-pollNews",
         "title": "Split pollNews 1426L god-file into single-responsibility modules (staged)",
         "priority": "P0",
         "dev_agent": "dev-mcp-server",
@@ -8894,10 +8893,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APP-split-pollNews"
       },
       {
-        "task_id": "FACTORY-APP-pollNews-layering-fix",
         "title": "Move source-health tracker singleton from interface down to infrastructure",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -8920,10 +8919,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APP-pollNews-layering-fix"
       },
       {
-        "task_id": "FACTORY-APP-split-assembleBriefing",
         "title": "Extract assembleBriefing's 19 numbered steps into briefing/ query modules",
         "priority": "P0",
         "dev_agent": "dev-mcp-server",
@@ -8947,10 +8946,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APP-split-assembleBriefing"
       },
       {
-        "task_id": "FACTORY-APP-split-assembleEveningSummary",
         "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -8974,10 +8973,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APP-split-assembleEveningSummary"
       },
       {
-        "task_id": "FACTORY-APP-dedup-date-freshness-helpers",
         "title": "Centralize VN-date/affected-codes/freshness helpers (one home each)",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -9001,10 +9000,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APP-dedup-date-freshness-helpers"
       },
       {
-        "task_id": "FACTORY-APP-split-fetchParseAndStoreBctc",
         "title": "Split fetchParseAndStoreBctc + name the news-fallback confidence constants",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -9026,10 +9025,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APP-split-fetchParseAndStoreBctc"
       },
       {
-        "task_id": "FACTORY-APP-console-to-logger",
         "title": "Replace console.* with the project logger in 5 application files",
         "priority": "P3",
         "dev_agent": "dev-mcp-server",
@@ -9055,10 +9054,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APP-console-to-logger"
       },
       {
-        "task_id": "FACTORY-INFRA-split-agentSignalStore",
         "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
         "priority": "P0",
         "dev_agent": "dev-mcp-server",
@@ -9083,10 +9082,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INFRA-split-agentSignalStore"
       },
       {
-        "task_id": "FACTORY-INFRA-agentSignal-sql-binding",
         "title": "Replace string-interpolated SQL with bound placeholders in agentSignalStore reads",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -9108,10 +9107,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INFRA-agentSignal-sql-binding"
       },
       {
-        "task_id": "FACTORY-INFRA-split-vnstockBridge",
         "title": "Extract 11 inline Python templates + shared stdout-capture wrapper from vnstockBridge",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -9133,10 +9132,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INFRA-split-vnstockBridge"
       },
       {
-        "task_id": "FACTORY-INFRA-split-telegramCommands",
         "title": "Split telegramCommands by seam; move /recap orchestration to an application usecase",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -9158,10 +9157,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INFRA-split-telegramCommands"
       },
       {
-        "task_id": "FACTORY-INFRA-split-ssc-fetchers",
         "title": "Split ssc.ts into per-portal disclosure fetchers (no dedup-delete yet)",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -9183,10 +9182,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INFRA-split-ssc-fetchers"
       },
       {
-        "task_id": "FACTORY-INFRA-split-stores-and-migrations",
         "title": "Split vnstockStore per entity + make schema-financial migrations declarative",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -9209,10 +9208,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-INFRA-split-stores-and-migrations"
       },
       {
-        "task_id": "FACTORY-SCHEDULER-split-dataAuditJob",
         "title": "Extract dataAuditJob D-n/W-n checks into per-check modules",
         "priority": "P0",
         "dev_agent": "dev-mcp-server",
@@ -9234,10 +9233,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SCHEDULER-split-dataAuditJob"
       },
       {
-        "task_id": "FACTORY-SCHEDULER-split-intelligenceCycleJob",
         "title": "Split intelligenceCycleJob (15-min hot path) into types/marketHours/defaults",
         "priority": "P0",
         "dev_agent": "dev-mcp-server",
@@ -9259,10 +9258,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SCHEDULER-split-intelligenceCycleJob"
       },
       {
-        "task_id": "FACTORY-SCHEDULER-job-table-registry",
         "title": "Replace 76 copy-paste scheduleCron/wrapRun blocks with a declarative JOB_TABLE",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -9284,10 +9283,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SCHEDULER-job-table-registry"
       },
       {
-        "task_id": "FACTORY-SCHEDULER-dedup-briefing-formatters",
         "title": "Extract shared briefing formatters; break the sibling-job cross-dependency",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -9311,10 +9310,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SCHEDULER-dedup-briefing-formatters"
       },
       {
-        "task_id": "FACTORY-SCHEDULER-split-bctcReparseJob",
         "title": "Name PDF-quality magic numbers + extract processStrandedFeedback in bctcReparseJob",
         "priority": "P3",
         "dev_agent": "dev-mcp-server",
@@ -9336,10 +9335,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SCHEDULER-split-bctcReparseJob"
       },
       {
-        "task_id": "FACTORY-PDF-split-generic-md-table",
         "title": "Split the 4111L generic_md_table_extractor god-file behind a thin shim (staged)",
         "priority": "P0",
         "dev_agent": "dev-pdf-extractor",
@@ -9361,10 +9360,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-PDF-split-generic-md-table"
       },
       {
-        "task_id": "FACTORY-PDF-split-extractLayoutFirst-execute",
         "title": "Extract ExtractLayoutFirstUseCase.execute into per-Tier private methods",
         "priority": "P1",
         "dev_agent": "dev-pdf-extractor",
@@ -9386,10 +9385,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-PDF-split-extractLayoutFirst-execute"
       },
       {
-        "task_id": "FACTORY-PDF-delete-deprecated-inspect",
         "title": "Delete the deprecated /inspect viewer surface still wired into main.py",
         "priority": "P1",
         "dev_agent": "dev-pdf-extractor",
@@ -9412,10 +9411,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-PDF-delete-deprecated-inspect"
       },
       {
-        "task_id": "FACTORY-PDF-fix-application-infra-leak",
         "title": "Introduce DocLangSerializerPort to remove application->infrastructure import",
         "priority": "P1",
         "dev_agent": "dev-pdf-extractor",
@@ -9438,10 +9437,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-PDF-fix-application-infra-leak"
       },
       {
-        "task_id": "FACTORY-PDF-extract-tesseract-config",
         "title": "Extract shared Tesseract config + DPI constants (5 files)",
         "priority": "P2",
         "dev_agent": "dev-pdf-extractor",
@@ -9467,10 +9466,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-PDF-extract-tesseract-config"
       },
       {
-        "task_id": "FACTORY-PDF-split-handlers",
         "title": "Split pdf handlers.py: schemas, run-helpers, thin routes",
         "priority": "P2",
         "dev_agent": "dev-pdf-extractor",
@@ -9494,10 +9493,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-PDF-split-handlers"
       },
       {
-        "task_id": "FACTORY-FRONTEND-extract-computeDecision",
         "title": "Move computeDecision scoring out of the analysis route into domain",
         "priority": "P1",
         "dev_agent": "dev-frontend",
@@ -9520,10 +9519,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-FRONTEND-extract-computeDecision"
       },
       {
-        "task_id": "FACTORY-FRONTEND-split-dashboard-analysis",
         "title": "Split the 1845L dashboard.analysis route (helpers + ~30 components)",
         "priority": "P1",
         "dev_agent": "dev-frontend",
@@ -9547,10 +9546,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-FRONTEND-split-dashboard-analysis"
       },
       {
-        "task_id": "FACTORY-FRONTEND-split-market-summaries",
         "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
         "priority": "P2",
         "dev_agent": "dev-frontend",
@@ -9573,10 +9572,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-FRONTEND-split-market-summaries"
       },
       {
-        "task_id": "FACTORY-FRONTEND-reconcile-formatters",
         "title": "Reconcile and dedup directionArrow/changePct formatters (behavior decision)",
         "priority": "P2",
         "dev_agent": "dev-frontend",
@@ -9603,10 +9602,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-FRONTEND-reconcile-formatters"
       },
       {
-        "task_id": "FACTORY-FRONTEND-split-orchestration",
         "title": "Split dashboard.orchestration: DTOs to shared, sections to components",
         "priority": "P2",
         "dev_agent": "dev-frontend",
@@ -9628,10 +9627,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-FRONTEND-split-orchestration"
       },
       {
-        "task_id": "FACTORY-MACRO-split-sandbox",
         "title": "Split macro sandbox 831L god-file + collapse 6 copy-paste comparators",
         "priority": "P1",
         "dev_agent": "dev-macro-indicators",
@@ -9653,10 +9652,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-MACRO-split-sandbox"
       },
       {
-        "task_id": "FACTORY-MACRO-split-repositories",
         "title": "Split repositories.go into per-adapter files; share openReadOnly",
         "priority": "P1",
         "dev_agent": "dev-macro-indicators",
@@ -9678,10 +9677,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-MACRO-split-repositories"
       },
       {
-        "task_id": "FACTORY-MACRO-split-or-justify-over-cap",
         "title": "Split adapters_vmt_sjc_fx + justify cohesive over-cap Go files",
         "priority": "P2",
         "dev_agent": "dev-macro-indicators",
@@ -9706,10 +9705,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-MACRO-split-or-justify-over-cap"
       },
       {
-        "task_id": "FACTORY-TECHANALYSIS-split-sandbox",
         "title": "Split the 1805L technical-analysis sandbox; drop dead parseCloses shim",
         "priority": "P1",
         "dev_agent": "dev-technical-analysis",
@@ -9731,10 +9730,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-TECHANALYSIS-split-sandbox"
       },
       {
-        "task_id": "FACTORY-TECHANALYSIS-dedup-calculator",
         "title": "Dedup sandboxCalculator vs TACalculator via a pkg/module mapper (behavior decision)",
         "priority": "P2",
         "dev_agent": "dev-technical-analysis",
@@ -9759,10 +9758,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-TECHANALYSIS-dedup-calculator"
       },
       {
-        "task_id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
         "title": "Remove discarded domain service wiring + inject real port into /health",
         "priority": "P3",
         "dev_agent": "dev-technical-analysis",
@@ -9785,10 +9784,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port"
       },
       {
-        "task_id": "FACTORY-KINHDICH-extract-hexagram-data",
         "title": "Extract 64-hexagram prose to an embedded data asset behind a small loader",
         "priority": "P1",
         "dev_agent": "dev-kinh-dich",
@@ -9812,10 +9811,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-KINHDICH-extract-hexagram-data"
       },
       {
-        "task_id": "FACTORY-KINHDICH-add-data-invariant-test",
         "title": "Add reading_composer data-integrity invariant test (pins contract pre-extraction)",
         "priority": "P3",
         "dev_agent": "dev-kinh-dich",
@@ -9838,10 +9837,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-KINHDICH-add-data-invariant-test"
       },
       {
-        "task_id": "FACTORY-KINHDICH-name-confidence-constants",
         "title": "Name the confidence-pipeline magic constants in reading_composer",
         "priority": "P1",
         "dev_agent": "dev-kinh-dich",
@@ -9863,10 +9862,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-KINHDICH-name-confidence-constants"
       },
       {
-        "task_id": "FACTORY-KINHDICH-name-price-score-constants",
         "title": "Name price_score normalization divisor 0.05 and 7-point threshold",
         "priority": "P1",
         "dev_agent": "dev-kinh-dich",
@@ -9889,10 +9888,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-KINHDICH-name-price-score-constants"
       },
       {
-        "task_id": "FACTORY-KINHDICH-split-sandbox",
         "title": "Split the 752L kinh-dich sandbox CLI by seam",
         "priority": "P2",
         "dev_agent": "dev-kinh-dich",
@@ -9914,10 +9913,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-KINHDICH-split-sandbox"
       },
       {
-        "task_id": "FACTORY-APIGW-split-handlers",
         "title": "Split api-gateway handlers.go into dashboard/middleware/proxy files",
         "priority": "P1",
         "dev_agent": "dev-api-gateway",
@@ -9939,10 +9938,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APIGW-split-handlers"
       },
       {
-        "task_id": "FACTORY-APIGW-proxy-timeout-constant",
         "title": "Promote the 5x proxy-timeout multiplier to a named config accessor",
         "priority": "P1",
         "dev_agent": "dev-api-gateway",
@@ -9965,10 +9964,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APIGW-proxy-timeout-constant"
       },
       {
-        "task_id": "FACTORY-APIGW-split-sandbox",
         "title": "Split api-gateway sandbox 744L god-file + dedup executors",
         "priority": "P2",
         "dev_agent": "dev-api-gateway",
@@ -9990,10 +9989,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APIGW-split-sandbox"
       },
       {
-        "task_id": "FACTORY-APIGW-split-capability-prober",
         "title": "Split capability_prober.go into manifest/probe/prober files",
         "priority": "P2",
         "dev_agent": "dev-api-gateway",
@@ -10015,10 +10014,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APIGW-split-capability-prober"
       },
       {
-        "task_id": "FACTORY-APIGW-dedup-default-urls",
         "title": "Make StaticServiceRegistry the sole SSOT for default upstream URLs",
         "priority": "P3",
         "dev_agent": "dev-api-gateway",
@@ -10041,10 +10040,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-APIGW-dedup-default-urls"
       },
       {
-        "task_id": "FACTORY-STOCK-extract-vndirect-mapper",
         "title": "Extract a pure VnDirect quote-mapper primitive; collapse Tier1/Tier2 duplication",
         "priority": "P1",
         "dev_agent": "dev-stock-price",
@@ -10070,10 +10069,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-STOCK-extract-vndirect-mapper"
       },
       {
-        "task_id": "FACTORY-STOCK-vndirect-mapper-tests",
         "title": "Backfill Tier1/Tier2 VnDirect mapper unit tests (guards the dedup)",
         "priority": "P2",
         "dev_agent": "dev-stock-price",
@@ -10095,10 +10094,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-STOCK-vndirect-mapper-tests"
       },
       {
-        "task_id": "FACTORY-STOCK-split-sandbox",
         "title": "Split the 743L stock-price sandbox by executor seam",
         "priority": "P1",
         "dev_agent": "dev-stock-price",
@@ -10120,10 +10119,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-STOCK-split-sandbox"
       },
       {
-        "task_id": "FACTORY-STOCK-dedup-history-handlers",
         "title": "Dedup priceHistory handlers + name the days=30 default",
         "priority": "P3",
         "dev_agent": "dev-stock-price",
@@ -10145,10 +10144,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-STOCK-dedup-history-handlers"
       },
       {
-        "task_id": "FACTORY-ALERT-shared-vocab-package",
         "title": "Collapse triple-declared severity/channel constants (Fence-aware)",
         "priority": "P2",
         "dev_agent": "dev-alert-engine",
@@ -10172,10 +10171,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-ALERT-shared-vocab-package"
       },
       {
-        "task_id": "FACTORY-ALERT-split-sandbox",
         "title": "Split the 565L alert-engine sandbox by concern",
         "priority": "P2",
         "dev_agent": "dev-alert-engine",
@@ -10197,10 +10196,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-ALERT-split-sandbox"
       },
       {
-        "task_id": "FACTORY-ALERT-router-cleanups",
         "title": "Delete dead UseCaseExecutor, inject real port into /health, reuse domain severity validation, simplify substring search",
         "priority": "P2",
         "dev_agent": "dev-alert-engine",
@@ -10223,10 +10222,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-ALERT-router-cleanups"
       },
       {
-        "task_id": "FACTORY-NEWS-extract-rss-parse",
         "title": "Extract the shared RSS parse layer; collapse the two 95%-identical scrapers",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -10250,10 +10249,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-NEWS-extract-rss-parse"
       },
       {
-        "task_id": "FACTORY-NEWS-dedup-normalizeDate",
         "title": "Fold the two stealth-scraper normalizeDate copies into the published-at primitive",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -10277,10 +10276,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-NEWS-dedup-normalizeDate"
       },
       {
-        "task_id": "FACTORY-NEWS-split-sandbox",
         "title": "Split news-fetch sandbox runner.ts; replace by-name signature switch",
         "priority": "P1",
         "dev_agent": "dev-mcp-server",
@@ -10302,10 +10301,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-NEWS-split-sandbox"
       },
       {
-        "task_id": "FACTORY-NEWS-fix-source-logging",
         "title": "Fix composeNewsIngest logging both sources per call",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -10327,10 +10326,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-NEWS-fix-source-logging"
       },
       {
-        "task_id": "FACTORY-NEWS-dedup-handlers-maxitems",
         "title": "Dedup the 4 headline route handlers + name the 15/10 maxItems defaults",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -10353,10 +10352,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-NEWS-dedup-handlers-maxitems"
       },
       {
-        "task_id": "FACTORY-NEWS-go-server-tier-split",
         "title": "Move Go news-fetch HTTP handlers out of the fat composition root",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -10378,10 +10377,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-NEWS-go-server-tier-split"
       },
       {
-        "task_id": "FACTORY-SHARED-fix-shared-db-stale-list",
         "title": "Add missing schema-backtesting to DB_SCHEMA_MODULES + sync guard",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -10404,10 +10403,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SHARED-fix-shared-db-stale-list"
       },
       {
-        "task_id": "FACTORY-SHARED-wire-or-prune-shared-packages",
         "title": "Wire one consumer per shared package (or prune) + collapse divergent DTOs",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -10434,10 +10433,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-SHARED-wire-or-prune-shared-packages"
       },
       {
-        "task_id": "FACTORY-XZONE-size-justification-sweep",
         "title": "Add honest size-justification headers / split remaining over-cap files (per-zone tracked)",
         "priority": "P2",
         "dev_agent": "dev-mcp-server",
@@ -10465,10 +10464,10 @@
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po",
         "fast_track": false,
-        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation)."
+        "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
+        "id": "FACTORY-XZONE-size-justification-sweep"
       },
       {
-        "task_id": "FACTORY-GUARD-CI-size-lint-justification",
         "title": "CI-size-lint-justification",
         "description": "CI-size-lint-justification: a CI lint that fails any source file (*.ts/*.py/*.go) over 120 LOC lacking an honest leading size-justification marker (`<!-- size-justification: NNL — reason -->` for TS/MD, `# size-justification:` for Python, `// size-justification:` for Go). Repo currently has exactly one source file carrying it, so the cap is unenforced — this gate stops the 600+ over-cap-without-header backlog from regrowing.",
         "priority": "P2",
@@ -10482,10 +10481,10 @@
         "source": "2026-06-15-maintainability-factory-audit ci_guardrails",
         "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
         "created_at": "2026-06-15T18:03:20Z",
-        "created_by": "po"
+        "created_by": "po",
+        "id": "FACTORY-GUARD-CI-size-lint-justification"
       },
       {
-        "task_id": "FACTORY-GUARD-CI-metric-mask-lint",
         "title": "CI-metric-mask-lint",
         "description": "CI-metric-mask-lint: an ESLint rule (TS) + ruff/custom AST check (Python) + go vet/staticcheck analyzer (Go) banning `?? <numeric-literal>`, `|| <numeric-literal>`, `or <literal>` (Python truthiness), and destructuring numeric defaults (`{ x = 50 }`) on fields named confidence*/score*/impact*/magnitude*/probability* — the confidence_score=50 bug class. Allowlist genuine config/option defaults via an inline annotation so legitimate sites pass explicitly.",
         "priority": "P2",
@@ -10499,10 +10498,10 @@
         "source": "2026-06-15-maintainability-factory-audit ci_guardrails",
         "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
         "created_at": "2026-06-15T18:03:20Z",
-        "created_by": "po"
+        "created_by": "po",
+        "id": "FACTORY-GUARD-CI-metric-mask-lint"
       },
       {
-        "task_id": "FACTORY-GUARD-CI-depguard-tier-boundaries",
         "title": "CI-depguard-tier-boundaries",
         "description": "CI-depguard-tier-boundaries: extend depguard/import-linter to enforce ALL layer fences, not just the ones currently covered. TS: boundaries plugin must forbid application->interface and domain->infrastructure (the pollNews + telegramCommands leaks). Python (pdf-extractor): add the missing `source=application forbidden=infrastructure,interface` import-linter contract (the DocLangSerializer leak passed because only domain was fenced). Go: keep Fence-A/B/C depguard and add a check that composition-root tiers (cmd/server) contain no logic that belongs in pkg/module.",
         "priority": "P2",
@@ -10516,10 +10515,10 @@
         "source": "2026-06-15-maintainability-factory-audit ci_guardrails",
         "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
         "created_at": "2026-06-15T18:03:20Z",
-        "created_by": "po"
+        "created_by": "po",
+        "id": "FACTORY-GUARD-CI-depguard-tier-boundaries"
       },
       {
-        "task_id": "FACTORY-GUARD-CI-dead-code-gate",
         "title": "CI-dead-code-gate",
         "description": "CI-dead-code-gate: a gate that fails on (a) any tracked `*.bak`/`*.backup`/`*.patch` file (4 currently committed), (b) `_deprecated/` or orphaned `src/` trees that no live code imports (knip/ts-prune for TS unused exports; `go vet`/deadcode for Go; vulture for Python), and (c) build-ignored archives left in-tree. Add `*.bak` to .gitignore.",
         "priority": "P2",
@@ -10533,10 +10532,10 @@
         "source": "2026-06-15-maintainability-factory-audit ci_guardrails",
         "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
         "created_at": "2026-06-15T18:03:20Z",
-        "created_by": "po"
+        "created_by": "po",
+        "id": "FACTORY-GUARD-CI-dead-code-gate"
       },
       {
-        "task_id": "FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
         "title": "CI-no-hardcode-allowlist-scan",
         "description": "CI-no-hardcode-allowlist-scan: a scan flagging inline ticker/date/exchange-floor allowlists and per-date special-cases (e.g. `signalText.includes('2023') && year===2024`) introduced in diffs, so reference data lives in shared-config and special-cases are not smuggled into logic. Pairs with the metric-mask lint to satisfy goal#2 (generic).",
         "priority": "P2",
@@ -10550,10 +10549,10 @@
         "source": "2026-06-15-maintainability-factory-audit ci_guardrails",
         "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
         "created_at": "2026-06-15T18:03:20Z",
-        "created_by": "po"
+        "created_by": "po",
+        "id": "FACTORY-GUARD-CI-no-hardcode-allowlist-scan"
       },
       {
-        "task_id": "FACTORY-GUARD-CI-shared-package-import-check",
         "title": "CI-shared-package-import-check",
         "description": "CI-shared-package-import-check: a check that any type/constant declared in packages/shared-* has at least one real importer (fails on orphaned 'single source of truth' packages) AND that app-side duplicates of a shared contract do not drift (compare structural shape) — prevents the shared-types/shared-db re-divergence.",
         "priority": "P2",
@@ -10567,10 +10566,10 @@
         "source": "2026-06-15-maintainability-factory-audit ci_guardrails",
         "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
         "created_at": "2026-06-15T18:03:20Z",
-        "created_by": "po"
+        "created_by": "po",
+        "id": "FACTORY-GUARD-CI-shared-package-import-check"
       },
       {
-        "task_id": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
         "title": "CI-rebuild-raw-verify-hook",
         "description": "CI-rebuild-raw-verify-hook: for any PR touching a hardcode-metric or metric-serving path, require a documented RAW verification of the served value against the named-volume DB (NOT the host ./data decoy) after a rebuild, attached to the PR — institutionalizes the no-fake-data DoD so metric fixes are proven, not asserted.",
         "priority": "P2",
@@ -10584,10 +10583,10 @@
         "source": "2026-06-15-maintainability-factory-audit ci_guardrails",
         "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
         "created_at": "2026-06-15T18:03:20Z",
-        "created_by": "po"
+        "created_by": "po",
+        "id": "FACTORY-GUARD-CI-rebuild-raw-verify-hook"
       },
       {
-        "task_id": "FACTORY-GUARD-CI-REGRESSION-SPIKE",
         "title": "Architect spike: scope the 7 factory CI guardrails (size-justification lint, metric-mask lint, depguard tier-boundaries, dead-code gate, no-hardcode allowlist scan, shared-package import check, rebuild raw-verify hook)",
         "type": "SPIKE",
         "mode": "spike",
@@ -10612,7 +10611,8 @@
         "source": "2026-06-15-maintainability-factory-audit ci_guardrails",
         "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
         "created_at": "2026-06-15T18:03:20Z",
-        "created_by": "po"
+        "created_by": "po",
+        "id": "FACTORY-GUARD-CI-REGRESSION-SPIKE"
       },
       {
         "id": "FIX-BCTC-FPT-BT5-BALANCE-GATE",
@@ -14576,32 +14576,6 @@
         "done_verified_held": true,
         "live_gate_at": "2026-06-17T16:00Z",
         "live_gate_criteria": "real off-hours gatherer cycle PASSES exec-proof gate (non-null anchor, fresh notebook+macro); a thin/no-exec cycle FAILS LOUD (BUG telegram + signal file, NO log_agent_work(completed), NO WORK ping). Both behaviours observed live -> done_verified."
-      },
-      {
-        "id": "FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616",
-        "title": "Backfill/recompute contaminated foreign-flow rows 06-14..16 (residue not covered by writer-root fix)",
-        "status": "done",
-        "type": "FIX",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "size": "S",
-        "blocking": false,
-        "depends": [
-          "FIX-FOREIGN-FLOW-INTEGRITY-BREAK"
-        ],
-        "hold_reason": "Recompute must read a FIXED writer — held until FIX-FOREIGN-FLOW-INTEGRITY-BREAK is QA-signed (done_verified), else backfill re-contaminates.",
-        "origin": "router-handoff 2026-06-17 — the P0 foreign-flow integrity fix (ddc36452/570ebedb/b24a0b6a/eff492d7) stops NEW clobbering but did NOT backfill already-contaminated rows. Live get_foreign_flow(VIC) still shows 06-14..16 at cumulative scale (217-239M net vol, holding 2.82-3.11%) while 06-17 is correct (-1.15M, room 347M).",
-        "fix_spec": "Backfill/recompute the contaminated 06-14..16 foreign-flow window (Net-Vol-daily, Holding Ratio, Room) for affected codes to the corrected daily-not-cumulative semantics, or NULL/is_estimate-flag where no real source exists. Recompute-on-read preferred over destructive backfill where feasible (see feedback_derived_column_fix_needs_reflow).",
-        "generic_mandate": "All codes in the contaminated window, not just VIC; verify the regime boundary (~06-12/06-13) is the only break and 06-17 stays correct.",
-        "verification_gate": "RAW: get_foreign_flow(VIC) + 2 more codes show 06-14..16 at plausible DAILY scale (continuous with 06-17 -1.15M, not 217-239M cumulative), holding ratio either real-sourced or NULL/is_estimate-flagged; no overnight regime discontinuity remains.",
-        "memory_ref": "feedback_derived_column_fix_needs_reflow, feedback_nonzero_values_need_plausibility_check",
-        "created": "2026-06-17T11:21:05Z",
-        "created_by": "po",
-        "source": "router-handoff-2026-06-17-fb-session",
-        "qa_verdict": "APPROVED",
-        "qa_note": "[QA] 2026-06-17T13:20Z — ops applied NULL cleanup (not recompute) to 127 rows across 36 tickers in the 2026-06-13..16 window. Live named-volume keinos/sqlite3 confirmed: HPG+VIC 06-13..16 foreign_volume=null foreign_room=null. 06-17 intact (HPG=227,463 VIC=-1,154,805). Spot-check FPT/VCB/GAS/ACB clean. 136 non-null rows in window verified as non-watchlist tickers with NULL holding_ratio — plausible daily-net scale (max 351k), not cumulative-holding-scale phantom. No phantom cumulative values remain for any of the 36 contaminated tickers. Done_verified withheld on INTEGRITY-BREAK is now RELEASED.",
-        "qa_closed_at": "2026-06-17T13:20Z"
       }
     ],
     "done_verified": [
@@ -20162,6 +20136,34 @@
         "done_verified_at": "2026-06-17T13:20Z",
         "done_verified_by": "qa",
         "done_verified_note": "[QA] done_verified RELEASED 2026-06-17T13:20Z — final blocker (FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616 cleanup) confirmed live. Named-volume market.db: all 36-ticker contamination window NULLed. 06-17 real values intact. No phantom cumulative values in served get_foreign_flow output."
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616",
+        "title": "Backfill/recompute contaminated foreign-flow rows 06-14..16 (residue not covered by writer-root fix)",
+        "status": "done_verified",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "size": "S",
+        "blocking": false,
+        "depends": [
+          "FIX-FOREIGN-FLOW-INTEGRITY-BREAK"
+        ],
+        "hold_reason": "Recompute must read a FIXED writer — held until FIX-FOREIGN-FLOW-INTEGRITY-BREAK is QA-signed (done_verified), else backfill re-contaminates.",
+        "origin": "router-handoff 2026-06-17 — the P0 foreign-flow integrity fix (ddc36452/570ebedb/b24a0b6a/eff492d7) stops NEW clobbering but did NOT backfill already-contaminated rows. Live get_foreign_flow(VIC) still shows 06-14..16 at cumulative scale (217-239M net vol, holding 2.82-3.11%) while 06-17 is correct (-1.15M, room 347M).",
+        "fix_spec": "Backfill/recompute the contaminated 06-14..16 foreign-flow window (Net-Vol-daily, Holding Ratio, Room) for affected codes to the corrected daily-not-cumulative semantics, or NULL/is_estimate-flag where no real source exists. Recompute-on-read preferred over destructive backfill where feasible (see feedback_derived_column_fix_needs_reflow).",
+        "generic_mandate": "All codes in the contaminated window, not just VIC; verify the regime boundary (~06-12/06-13) is the only break and 06-17 stays correct.",
+        "verification_gate": "RAW: get_foreign_flow(VIC) + 2 more codes show 06-14..16 at plausible DAILY scale (continuous with 06-17 -1.15M, not 217-239M cumulative), holding ratio either real-sourced or NULL/is_estimate-flagged; no overnight regime discontinuity remains.",
+        "memory_ref": "feedback_derived_column_fix_needs_reflow, feedback_nonzero_values_need_plausibility_check",
+        "created": "2026-06-17T11:21:05Z",
+        "created_by": "po",
+        "source": "router-handoff-2026-06-17-fb-session",
+        "qa_verdict": "APPROVED",
+        "qa_note": "[QA] 2026-06-17T13:20Z — ops applied NULL cleanup (not recompute) to 127 rows across 36 tickers in the 2026-06-13..16 window. Live named-volume keinos/sqlite3 confirmed: HPG+VIC 06-13..16 foreign_volume=null foreign_room=null. 06-17 intact (HPG=227,463 VIC=-1,154,805). Spot-check FPT/VCB/GAS/ACB clean. 136 non-null rows in window verified as non-watchlist tickers with NULL holding_ratio — plausible daily-net scale (max 351k), not cumulative-holding-scale phantom. No phantom cumulative values remain for any of the 36 contaminated tickers. Done_verified withheld on INTEGRITY-BREAK is now RELEASED.",
+        "qa_closed_at": "2026-06-17T13:20Z",
+        "done_verified_at": "2026-06-17T13:20Z",
+        "done_verified_by": "qa"
       }
     ],
     "head": {
