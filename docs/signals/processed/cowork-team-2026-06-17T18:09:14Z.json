@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T18:09:14Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": null
+    },
+    "last_fired_timestamp": "2026-06-17T18:07:55Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 2,
+    "signal_backlog": 0,
+    "note": "bctc-analyst-slot-2 off-market daily slot (cron 0 18 UTC) due; cron-governed (bctc-offmarket policy, calendar unknown); tick-snapshot skipped (no consumer, structural reader-miss); last_fired written on disk, not committed (sibling churn dominates diff)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T18:09:14Z",
+  "_processed": {
+    "fingerprint": "99bebe283ae0abc1c7f2c40a4611c7507eddfdf2a047861a49623e5303280cbb",
+    "processedAt": "2026-06-17T18:27:32Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

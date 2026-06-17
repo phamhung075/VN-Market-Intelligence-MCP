@@ -1,0 +1,66 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T16:11:47Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": 240
+    },
+    "last_fired_timestamp": "2026-06-17T16:11:42.736Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 2,
+    "signal_backlog": 0,
+    "note": "Tick 16:05Z (nominal 16:00, drift 5min, actual fan-out 16:11 after gate reads). Spawned news-scout-offhours (ad84c6eb) + market-watcher-offhours (ad1115eb) + market-watcher-eod (ad2a05db), all run_in_background. COLLISION (R3-allowed): market-watcher matched 2 slots (offhours+eod) — both spawned with distinct per-slot tokens + distinct published-marker keys; recurring weekday-16:00 overlap, WORK-WARN sent, flagged for optional PO schedule review. last_fired written 16:11:42Z (pre-backstop) → snap-to-16:00-boundary dedups the ~16:12 cloud 0-*/4 backstop. tick-snapshot (Step 4.7) consciously skipped (fallback-safe; agents self-bootstrap). emit_pressure_state returned stale_warning=true — expected (regime/snapshot stale → gatherers running will refresh; next tick reads legacy fallback). Each spawn carried anti-phantom gateway guard (ARCH-HEADLESS-GATEWAY-COWORK-NOPOST recurrence prevention)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T16:11:47Z",
+  "_processed": {
+    "fingerprint": "193d899560165c56895f5f1eece6854daf9d0de4b1c840eacb2c4151c29c3777",
+    "processedAt": "2026-06-17T16:31:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
