@@ -22,10 +22,61 @@
  *   'intraday' — Writer A (pushPricesHandler): accumulate-high / self-heal-open /
  *                protected-low semantics. EXTENSION POINT for SUBTASK-3.
  *
- * SUBTASK-1 — Skeleton ONLY.
+ * SUBTASK-1 -- Skeleton ONLY.
  * SUBTASK-2 migrates Writer D (taOhlcvBackfillJob) to call writeOhlcvBatch.
  * SUBTASK-3 migrates Writer A (pushPricesHandler) and fills the 'intraday' SQL branch.
  */
+
+// =============================================================================
+// WRITER INVENTORY (post-FIX-OHLCV-WRITER-SSOT-DURABLE, 2026-06-17)
+// =============================================================================
+//
+// This service is the authoritative chokepoint for all writes to daily_ohlcv
+// that carry OHLCV price data (open/high/low/close/volume). It enforces:
+//   - C=0 rejection (no zero-close stubs)
+//   - FR-S1 flat-seed skipping (no vol=0 AND O=H=L=C stubs)
+//   - Unit normalization (VND scale, x1000 correction)
+//   - Duplicate detection
+//
+// Writer | File                                               | SQL Path              | Status          | Notes
+// -------|----------------------------------------------------|-----------------------|-----------------|-------
+// A      | interface/mcp/routes/pushPricesHandler.ts          | writeOhlcvBatch       | Migrated        | Real-time market open / intraday writes
+// C      | scheduler/market-data/ohlcvDailyAggregatorJob.ts   | writeOhlcvBatch       | Migrated        | Daily aggregation from minute bars
+// D      | scheduler/market-data/taOhlcvBackfillJob.ts        | writeOhlcvBatch       | Migrated        | Historical backfill for TA indicators
+// E      | infrastructure/fetchers/ohlcvBackfill.ts           | INSERT OR IGNORE      | In-scope bypass | Historical backfill; guarded FR-S1+validateOhlcvUnit; sentinel present
+// F      | domain/services/priceBackfillService.ts            | INSERT OR IGNORE      | In-scope bypass | Historical seed/mock only (not live-market); sentinel present
+// G      | infrastructure/db/ohlcvForeignFlowStore.ts         | UPDATE-only (merge)   | Fixed           | No INSERT stub; defers on absent row (/goal#1); changes=0 = deferred, not error
+// H      | interface/mcp/server.ts (push-ohlcv-history route) | ON CONFLICT DO UPDATE | In-scope bypass | Secondary push path; C=0/vol=0 guard at L1264; sentinel present
+//
+// Note: There is no Writer B (label skipped for historical continuity).
+//
+// =============================================================================
+// WRITER-BYPASS SENTINEL PATTERN
+// =============================================================================
+//
+// Writers E, F, and H are "in-scope bypasses" -- they write directly to
+// daily_ohlcv WITHOUT routing through writeOhlcvBatch, but they have legitimate
+// justifications (historical backfill, guarded against stub injection) and MUST
+// carry the sentinel comment on the line immediately before any raw INSERT:
+//
+//   // OHLCV-WRITE-BYPASS-ALLOWED -- [justification, e.g. "historical backfill, guarded by FR-S1"]
+//   const sql = "INSERT OR IGNORE INTO daily_ohlcv ...";
+//
+// Any new raw INSERT INTO daily_ohlcv that does NOT carry this sentinel is an
+// ARCHITECTURAL VIOLATION and must be escalated to the architect.
+//
+// Writer G (ohlcvForeignFlowStore.ts) was converted to UPDATE-only (no INSERT)
+// as of FIX-OHLCV-WRITER-SSOT-DURABLE -- it no longer needs the sentinel.
+//
+// =============================================================================
+// FUTURE HARDENING (follow-on LINT-OHLCV-WRITE-BYPASS -- backlog, not P0)
+// =============================================================================
+//
+// A custom ESLint rule (LINT-OHLCV-WRITE-BYPASS) will enforce the sentinel
+// pattern at lint time: any INSERT INTO daily_ohlcv literal in a .ts file
+// outside this file that lacks the sentinel on the prior line -> lint error.
+// Until that rule ships, THIS COMMENT BLOCK IS THE AUTHORITATIVE HUMAN-READABLE INVENTORY.
+// =============================================================================
 
 import type { Database } from "bun:sqlite";
 
