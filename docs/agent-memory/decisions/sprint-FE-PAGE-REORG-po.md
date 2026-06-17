@@ -164,3 +164,15 @@
 - re-triage TNB c97 findings vs already-ACK'd at po-s91
 **why-decision:** Both OHLCV P0 rows ALREADY carry rebuild_shipped:true with router RAW-verify of running container (MERGE-ONLY + both scan-guards live, image .Created>commit, 12/12 UP) at po-s100 → rebuild precondition SATISFIED, ops dispatch would be redundant; done_verified correctly HELD to 2026-06-18 02:15Z market-open (a wait, not work). F-MORNING-SEND-FAILED 502 = same publish-transport-error class already covered by ARCH-HEADLESS-GATEWAY-COWORK-NOPOST AC-FAILCLOSED (Monday-gated, agents zone); chef-morning fired clean today (026ff5d3) → transient one-off, no new task. TNB c97 both findings ACK'd po-s91. pendingSignals=0, signal_queue NEW=0, dashboard empty, head idle, CI green.
 **why-change:** no change — nothing actionable; gateway unavailable in this subagent (false-infra mode A, dispatcher's calls prove gateway UP) so triaged on file+git ground-truth which was complete.
+
+---
+
+## STEP — 2026-06-17T15:36:02Z — dev-team triage tick 15:31Z (2 drained signals, both pre-classified)
+**task-id:** ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (data-point dedup)
+**what-done:** Recorded the bctc-analyst 15:00Z "call_tool not available" recurrence as a data-point on the existing epic (po-s101, idempotent). Returned NOTHING (no BATCH).
+**what-considered:**
+- open a new incident / spawn ops for the bctc "gateway unavailable" claim — vs dedup into the existing epic
+- dispatch a backlog item this tick (BCTC-ANALYTICS-LAYER / VN-MACRO-TOOLING / VMT-3a blocked-probe5) into the 1 free coding slot — vs hold
+- escalate my OWN session's call_tool-unavailable miss as infra-down — vs treat as same-class phantom
+**why-decision:** Router RAW-probed gateway LIVE this tick (task_claim + send_telegram + get_macro_snapshot returned data → UP); the bctc claim is the known headless/cloud per-session-miss phantom of THIS epic → DEDUP, data-point only, no new task, no ops, no bctc re-dispatch (next legit cron 18:00Z, last_fired 15:08:04Z). My own session call_tool miss is the SAME class (third PO-tick recurrence — also hit at 11:37Z) → folded as corroborating evidence, NOT escalated (False-infra-failure corroboration gate: sibling=router-live-probe disambiguates). No backlog dispatch: the open epics' next-actionable rows are either gated (VMT-3a blocked-probe5 held out of WAVE-2 serial chain pending local PROBE-5; BCTC bank/macro FIX rows BACKLOG-not-groomed) or belong to a busy/serial owner; WIP already 1 active coding lane (ARCH-CRON-SCHEDULER-RELIABILITY) and minting a half-groomed row adds debt, not throughput.
+**why-change:** no change from router's pre-classification — triage confirmed it on file+board ground-truth (gateway tool surface unreachable in my subagent, so I leaned on git/jq + the router's live-probe context, which was complete).

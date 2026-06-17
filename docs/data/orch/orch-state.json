@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T13:31:09Z",
-  "_updated_by": "router-done-verify",
+  "_updated_at": "2026-06-17T15:35:28Z",
+  "_updated_by": "po-s101-headless-gateway-datapoint",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -7826,8 +7826,22 @@
           }
         ],
         "fail_closed_ac": "AC-FAILCLOSED (GENERIC, all publishing cowork slots — chef.md Step 0.5 + spawn-fanout.md marker contract): the published-marker claim is a SAFETY GATE on an irreversible MARKET publish, so it MUST FAIL CLOSED. (1) Bound the task_claim call with a deadline < gateway timeout and a single retry. (2) Treat ANY of {tool throws, timeout/deadline exceeded, result missing a boolean `.claimed`, transport/gateway error} EXACTLY like claimed=false -> BLOCK the publish: do NOT call send_telegram(market); emit a distinct telemetry reason (e.g. reason=marker-unreadable-failclosed) so a genuinely-blocked publish is observable on WORK; record BLOCKED_DUP/BLOCKED_UNREADABLE in the notebook. (3) The chef 'degraded-dish floor / no third path between SENT and FAILED' mandate MUST carve out an explicit exception: a marker that cannot be confirmed-free is NOT a degradable supplementary source — it is a hard publish-block. NO per-slot allowlist, NO date-literal, NO hardcode; generic across morning/eod/evening/intraday + digest-sunday + tnb-audit + any future publishing slot. Verification: simulate task_claim timeout/error on the cloud path -> chef does NOT post + emits the fail-closed telemetry; non-regression: clean {claimed:true} still posts, clean {claimed:false} still silent-blocks.",
-        "updated_at": "2026-06-16T20:09:40Z",
-        "updated_by": "po-s90"
+        "updated_at": "2026-06-17T15:35:18Z",
+        "updated_by": "po-s90",
+        "data_points": [
+          {
+            "at": "2026-06-17T15:00:00Z",
+            "from": "bctc-analyst",
+            "recorded_by": "po-s101",
+            "recorded_at": "2026-06-17T15:35:18Z",
+            "symptom": "c063 Step 0 failed: call_tool (MCP gateway) not available in agent session -> no downstream vn-market tools reachable; cycle fail-loud-exited.",
+            "router_verdict": "FALSE — gateway RAW-probed UP THIS tick (task_claim + send_telegram + get_macro_snapshot all returned LIVE data). Known headless/cloud per-session MCP-registration miss of THIS epic, NOT a real outage.",
+            "disposition": "DEDUP into this epic (data-point only). No new task. No ops spawn. No bctc-analyst re-dispatch (next legit cron 18:00Z; last_fired already 15:08:04Z). 15:00 off-market BCTC slot produced no analysis — benign for a fundamental batch (fail-loud working, no fabrication).",
+            "corroborating": "po triage agent in THIS SAME tick also hit `mcp__gateway__call_tool` not-available in its own background-spawned session (could not run read_telegram_reports / list_unresolved_reports) — SAME headless per-session-miss class, while the router's LIVE probe confirms the gateway is up. Two background agents, one missing registration each; gateway itself healthy. Reinforces the architect design ask: probe call_tool + RE-QUEUE the slot rather than claim-and-drop."
+          }
+        ],
+        "recurrence_count": 1,
+        "last_recurrence_at": "2026-06-17T15:00:00Z"
       },
       {
         "id": "KD-BACKTEST-501-4X",
@@ -20546,8 +20560,8 @@
     "updated_at": "2026-06-17T12:44:31Z",
     "updated_by": "dev-team-pipeline-cont"
   },
-  "updated_at": "2026-06-17T12:54:38Z",
-  "updated_by": "router",
+  "updated_at": "2026-06-17T15:35:28Z",
+  "updated_by": "po-triage-1531z",
   "meta": {
     "updated_at": "2026-06-17T11:21:05Z",
     "updated_by": "po"

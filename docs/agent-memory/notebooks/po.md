@@ -1,20 +1,21 @@
 # PO Notebook
-_overwritten 2026-06-17T12:32:00Z_
+_overwritten 2026-06-17T15:36:00Z_
 
-## Last cycle (2026-06-17T12:32:00Z, dev-team triage tick 12:27Z) — BATCH 2 + dedup-fold 2.
+## Last cycle (2026-06-17T15:36Z, dev-team triage tick 15:31Z) — 2 drained signals, both pre-classified. Returned NOTHING (idle).
 
-**Trigger:** dev-team Step-1 triage, 3 pendingSignals[] drained. CI GREEN origin e09d4f3 (run 27687843496). WIP: 1 free coding slot (in_progress ARCH-CRON-SCHEDULER-RELIABILITY architect; ready DESIGN-GATHERER-DOUBLEFIRE — both architect/design lanes).
+**Trigger:** dev-team Step-1 triage, 2 pendingSignals[] (both already moved to processed/). CI GREEN origin/main aa603a9b (router live-probed). WIP: 1 active coding lane (in_progress ARCH-CRON-SCHEDULER-RELIABILITY architect→dev-mcp-server) → 1 free slot, but nothing groomed-and-unblocked to fill it.
 
-**Sig 1 — agent_fabrication_defect (router-verified, 2 distinct defects):**
-- DEFECT-A (gatherer fabrication / premature-return): NO existing task. NOT double-fire (AF-1 + DESIGN-GATHERER-DOUBLEFIRE cover *firing twice* — opposite mode). Class=fabricate-when-thin extending to gatherers. → BATCH `DESIGN-GATHERER-EXEC-PROOF-FAILLOUD` SPRINT-S, agents-architect→agent-father, zone multi. Generic exec-proof gate (cycle "complete" ONLY if fresh notebook entry @current-tick-ts + freshly-fetched macro fetchedAt within tick window; else FAIL LOUD). /goal#2 generic, no per-agent hardcode.
-- DEFECT-B (stale cycle-snapshot promotion — HIGHER sev, live no-fake-data /goal#1): NO existing task (EMIT-DARK family = inverse: emitter *dark*, not stale-promotion). ROOT RAW-CONFIRMED: apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts:184 promoteCycleSnapshot() does ZERO freshness validation — only existsSync(snapPath), so a June-2 cycle-snapshot-<HH:MM>.json with matching HH:MM gets copied to latest w/ fresh mtime. → BATCH `FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE` FIX, dev-mcp-server, zone apps/mcp-server/. Fix=validate source fetchedAt/created_at within window before promote; else return false + stale_warning. This is the 1 free coding lane.
-- verify_during_triage DONE: live file mtime Jun17 14:09:11 but content created_at 2026-06-02 oilUsd=93.95 (live 79.49). Read-consumers = cycle-bootstrap/cowork/market-watcher init; off-hours VN-closed → low MARKET exposure this window, but fail-safe needed regardless.
+**Sig 1 — bctc-analyst c063 "call_tool/gateway not available" (router RAW-VERIFIED PHANTOM):**
+- Router probed gateway LIVE this tick (task_claim + send_telegram + get_macro_snapshot all returned data → gateway UP). The claim = known headless/cloud per-session MCP-registration miss = ARCH-HEADLESS-GATEWAY-COWORK-NOPOST class.
+- Action = DEDUP, data-point ONLY. po-s101 appended a .data_points[] entry to that backlog row + recurrence_count=1 (idempotent, conservation-guarded: backlog 294 / total 608 unchanged). NO new task, NO ops spawn, NO bctc re-dispatch (next legit cron 18:00Z; last_fired 15:08:04Z). 15:00 off-market BCTC slot produced no analysis — benign for a fundamental batch (fail-loud working, no fabrication).
 
-**Sig 2+3 — context_bloat_breach (agent-father.md 233L, qa.md 214L):** DEDUP → both already in standing CLEAN row CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614 .targets[]. Folded live counts + fold_marker (per established pattern, NO per-notebook dups). Janitor zone (code-janitor) → NOT a coding WIP slot. Committed 11e1de54.
+**Sig 2 — cowork-fire telemetry (FIRE-tick, bctc-analyst-slot-1 @15:08, bg aa0d05c1):** informational, no action. Logged.
+
+**Self gateway-miss (NOT escalated):** my OWN po subagent ALSO hit `mcp__gateway__call_tool` not-available → could not run read_telegram_reports / list_unresolved_reports. SAME headless per-session-miss class (also seen at this tick's prior PO cycle 11:37Z → ≥3rd PO-tick recurrence). Per False-infra-failure corroboration gate: router's live probe = sibling-success → gateway is UP, my miss is the phantom. Folded as corroborating evidence INTO the s101 data-point, NOT raised as infra-down. Triaged on file+board ground-truth instead (complete).
 
 ## Carry-over
-- BATCH returned to dev-team router: 2 entries (DESIGN-GATHERER-EXEC-PROOF-FAILLOUD SPRINT-S→architect; FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE FIX→dev-mcp-server). Router dispatches; PO does NOT spawn.
-- DEFECT-A + DESIGN-GATHERER-DOUBLEFIRE are SIBLINGS not dups (premature-return vs double-fire) — both real, both needed.
-- emitPressureStateTool stale gatherer cycle-snapshot-<HH:MM>.json files on disk are the existsSync trap — fix must also not depend on cleaning them (FAIL-SAFE at promote-time).
-- OHLCV P0s + ARCH-CRON G1/G2/G3: flip done_verified ONLY after clean 2026-06-18 02:15Z VN open. Market-day wait, not work.
-- PUSH HELD (PO out-of-band). COMMIT SCOPE this cycle: orch-state (board) + po notebook ONLY. NEVER `git add -A`/`.` — loop churn live.
+- Returned NOTHING to router (idle EXIT). No BATCH this tick.
+- ARCH-HEADLESS-GATEWAY-COWORK-NOPOST now carries a recurrence ledger (.data_points[], recurrence_count) — the architect design ask (probe call_tool + RE-QUEUE the slot, not claim-and-drop) is REINFORCED by repeat PO-tick + bctc data-points; epic still backlog/agents-architect, off-market Monday-safe.
+- No backlog dispatched: VMT-3a blocked-probe5 = legit hold (out of WAVE-2 serial chain pending local PROBE-5); BCTC-ANALYTICS-LAYER/VN-MACRO-TOOLING child FIX rows are BACKLOG-not-yet-groomed (FIX-BCTC-BANK-SUMMARY-MAPPING, FIX-MACRO-SNAPSHOT-DELTAS-NULL, FIX-MACRO-CARRY-YIELD-ESTIMATE-FLAG). Grooming one needs BA spec first — defer until a free tick with no higher-priority signal, do NOT mint a half-groomed row into the free slot (debt > throughput).
+- ROUTER-HELD gates (DID NOT TOUCH — router sole arbiter): DESIGN-GATHERER-EXEC-PROOF-FAILLOUD (~16:00Z live gate), SHARED OHLCV P0 (2026-06-18 ~02:15Z market-open), FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD (done_verified WITHHELD, AF-1 class). FIX-BCTC-ENRICH-SILENT-0ROWS in REVIEW (qa-held) = true root behind BCTC user-facing P0 — watch its signoff.
+- PUSH HELD (PO out-of-band). COMMIT SCOPE this cycle: orch-state (board) + po notebook + decision journal + scripts/po-s101 ONLY. NEVER `git add -A`/`.` — loop churn live.
