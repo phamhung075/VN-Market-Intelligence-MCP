@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T06:28:25Z",
-  "_updated_by": "po-s98",
+  "_updated_at": "2026-06-17T07:37:24Z",
+  "_updated_by": "po-s100",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -708,8 +708,11 @@
         "type": "data_stale",
         "summary": "bctc-push VPS proxy stale 12.6h (check B-06)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "triaged_at": "2026-06-17T07:37:24Z",
+        "triaged_by": "po-s100",
+        "triage": "FALSE-POSITIVE (confirm-before-blame): live freshness 10.9h ≪ 168h filing-cadence threshold; get_bctc_full(FPT) RAW-verified serving real 2026-Q1 data (validation passed, conf 81%). BCTC updates on filing dates not intraday — 11h age is normal, NOT an outage. NO fix minted (auditor-false-positive lesson — do not rebuild on a tight-threshold sensor). Durable threshold fix already tracked: FIX-BCTC-QUEUE-MAXAGE-GATE (backlog)."
       },
       {
         "id": "sau-b13-202606170630",
@@ -719,8 +722,11 @@
         "type": "data_stale",
         "summary": "8 pending BCTC rows >72h old (check B-13)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "triaged_at": "2026-06-17T07:37:24Z",
+        "triaged_by": "po-s100",
+        "triage": "REAL but ALREADY-TRACKED — same root as FIX-BCTC-ENRICH-SILENT-0ROWS (P0, in REVIEW): the silent-0-table-rows enrich not draining the bctc_vps_queue. 8 rows >72h is the symptom of that P0, not a new defect. NO duplicate mint per triage-signals dedup. Will drain when the enrich P0 ships + rebuilds."
       },
       {
         "id": "sau-b07-202606170630",
@@ -730,8 +736,11 @@
         "type": "data_stale",
         "summary": "vn-foreign-flow service unhealthy (check B-07)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "triaged_at": "2026-06-17T07:37:24Z",
+        "triaged_by": "po-s100",
+        "triage": "liveness≠freshness FALSE-NEGATIVE for served data: get_foreign_flow(VHM) RAW-verified 10 days of real varied net-vol/holding-ratio history; circuit-breaker foreignFlow [OK] failures:0. The recurring foreign-flow-job fallback-exhausted is TODAY intraday incomplete fetch (graceful degrade, served data real). ORTHOGONAL to OHLCV P0s. Problem space already tracked: FIX-FOREIGN-FLOW-INTEGRITY-BREAK (review), FIX-FOREIGN-FLOW-COVERAGE + FIX-FOREIGN-FLOW-DEAD-ENDPOINT + ARCH-DAILY-FOREIGN-FLOW-TABLE (backlog). NO new mint — gate on freshness-age not the health endpoint."
       }
     ]
   },
@@ -16059,7 +16068,7 @@
         "title": "ARCH-OHLCV-WRITER-SSOT-DURABLE — route the LAST bypassing daily_ohlcv writer (writeForeignFlowToOhlcv all-zero stub) through writeOhlcvBatch SSOT; close the writer-bypass class so no writer can re-seed a fake C=0/scale-wrong current-day bar at market open (4th recurrence of the single-digit-RSI / gia-0 MARKET-spam class)",
         "zone": "apps/mcp-server/",
         "owner": "architect",
-        "status": "DESIGN_COMPLETE",
+        "status": "DONE",
         "priority": "P0",
         "blocking": true,
         "size": "M",
@@ -16082,7 +16091,65 @@
         "dispatch_note": "dev-team :07 tick 2026-06-17T04:36Z — live USER bug, /goal#1 highest-value (false RSI/BB to the user's MARKET channel every 15min at every market open). Recurring-bug-escalation -> architect for the durable writer-SSOT root. PO-authorized WIP exception: board in_progress=1 but it (ARCH-CRON) is an architect-design/gate-held lane, not an active dev coding lane; this P0 leads.",
         "normalized_at": "2026-06-17T05:30:00Z",
         "normalized_by": "pm",
-        "note": "Design deliverable shipped (handoff + brief); implementation now in child subtasks"
+        "note": "Design deliverable shipped (handoff + brief); implementation now in child subtasks",
+        "done_verified": false,
+        "done_code": true,
+        "done_code_at": "2026-06-17T07:35:49Z",
+        "done_code_by": "po-s100",
+        "subtasks": [
+          "SUBTASK-OHLCV-WRITER-1-FOREIGN-FLOW-MERGE",
+          "SUBTASK-OHLCV-WRITER-2-SSOT-ANNOTATION",
+          "SUBTASK-OHLCV-WRITER-3-UNIT-TESTS"
+        ],
+        "subtask_commits": [
+          "41b4344c",
+          "e5461ad7",
+          "e96571ac"
+        ],
+        "qa_verdict": "APPROVE (cycle-287)",
+        "rebuild_shipped": true,
+        "behavioral_gate": "NEXT VN market open 2026-06-18 ~02:15Z first TA scan (briefing 01:00Z): RSI canonical within 0.1pt (no single-digit / no 100.0), zero 'giá 0 dưới BB' on MARKET, live daily_ohlcv ZERO close=0 stubs on the latest bar across all 30 watchlist tickers (verify DAG != 0). Self-heal masks stubs after ~04:30Z — gate verifies AT open. REBUILD_SHIPPED:YES (router RAW-verified running container content via docker exec grep: MERGE-ONLY + both scan-guards live; 12/12 UP; mcp-server 200; named volume untouched).",
+        "done_code_note": "P0-A producer-root SSOT. writeForeignFlowToOhlcv is now MERGE-ONLY (UPDATE-only, no close=0 stub INSERT) — the bypassing writer no longer re-seeds a fake C=0 current-day bar. SUBTASK-1+2 (merge-only + SSOT annotation, 41b4344c), SUBTASK-3 (unit tests T-1..T-4 + integration gate, e5461ad7), legacy-test alignment (e96571ac). T-4 regression-proof: SELECT close FROM daily_ohlcv WHERE code='REGRESSION-TEST' AND date='2026-06-18' returns 0 rows (no close=0 stub). QA cycle-287 APPROVE (17 pass / 0 fail on P0-A files; 52 full-suite fails ALL disjoint). Router RAW-verified ops rebuild LIVE. Parent was DESIGN_COMPLETE (architect deliverable); the 3 code-subtasks (formerly bare strings in review[]) are folded here under .subtasks and the parent flips to code-complete DONE. done_verified HELD to the shared 2026-06-18 ~02:15Z market-open gate (paired with P0-B). Follow-ons LINT-OHLCV-WRITE-BYPASS + ARCH-DAILY-FOREIGN-FLOW-TABLE already in backlog per architect brief."
+      },
+      {
+        "id": "FIX-ALERT-SCAN-REJECT-STUB-BAR-P0",
+        "type": "FIX",
+        "title": "FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 — taAlertScanJob + bbAlertScanJob must reject a latest daily_ohlcv bar with close<=0 OR volume<=0 (stub/seed) BEFORE computing RSI/BB; guards the VALUE not just the candle count (consumer defense-in-depth for the C=0 foreign-flow stub)",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "priority": "P0",
+        "blocking": true,
+        "size": "S",
+        "next_agent": "dev-mcp-server",
+        "root_cause": "taAlertScanJob.ts (L182-188) only guards closes.length < MIN_CANDLES(35) — it does NOT inspect the latest close VALUE, so a C=0 foreign-flow stub at the tail of the 60-day window flows into the RSI closes[] and collapses Wilder RSI to single-digit. bbAlertScanJob.ts (L173-182) has a 'not from today -> skip stale' guard but NO close<=0/volume<=0 reject, so close=Math.round(0)=0 -> 'gia 0 duoi BB' breakout spam. This is the EXACT gap the existing FIX-ALERT-ENGINE-RSI-SINGLEDIGIT status_note named: 'guards COUNT not the corrupt latest VALUE'.",
+        "fix_spec": "In BOTH taAlertScanJob and bbAlertScanJob, after fetching candleRows, fail-closed (skip the ticker, log.info pending, NO alert) when the LATEST in-window bar has close<=0 OR volume<=0 — same fail-closed posture as the report path (FIX-RSI-REPORT-FAILCLOSED, done_verified). Prefer reading volume in CANDLE_SQL (currently SELECTs only date+close) so the guard can see vol=0 stubs. Optionally drop any interior close<=0 bar from the closes[] passed to the Go TA svc (a 0 anywhere in the window corrupts Wilder smoothing), or skip if any in-window close<=0. GENERIC all tickers (/goal#2). This is the consumer half — paired with ARCH-OHLCV-WRITER-SSOT-DURABLE which stops the producer writing the stub; ship BOTH so a future writer regression cannot re-spam MARKET.",
+        "generic_mandate": "Guard applies to every ticker uniformly, no per-ticker logic; fail-closed (skip) is the correct posture for a thin/illiquid/no-trade ticker — better an honest gap than a fabricated single-digit RSI or gia-0 breakout.",
+        "verification_gate": "NEXT VN market open 2026-06-18 (first TA scan 02:15Z + briefing 01:00Z, RAW-read get_unreviewed_market_messages): NO single-digit RSI, NO 'gia 0 duoi BB' on MARKET even if a C=0 stub exists transiently in daily_ohlcv; tickers with a stub/zero latest bar are SILENTLY skipped (no alert), not spammed. Unit: a test seeding a C=0 latest bar after N real bars asserts the ticker is skipped (no alert emitted).",
+        "depends": [
+          "ARCH-OHLCV-WRITER-SSOT-DURABLE"
+        ],
+        "depends_note": "Independent fix (can ship in parallel) but its gate is shared with the producer root; together they form the two-layer durable fix. Defense-in-depth: this guard alone stops the SPAM even if a producer regression re-seeds a stub.",
+        "source": "USER BUG report MARKET 2026-06-17; PO code-traced the missing latest-value guard in both scan jobs.",
+        "created_at": "2026-06-17T04:38:28Z",
+        "created_by": "po",
+        "triaged_by": "po-s96",
+        "rebuild_required": "mcp-server",
+        "dispatch_note": "dev-team :07 tick 2026-06-17T04:36Z — consumer defense-in-depth, paired with the architect producer root; runtime scheduler change -> mcp-server rebuild required.",
+        "reviewed_at": "2026-06-17T05:30:00Z",
+        "reviewed_by": "dev-mcp-server",
+        "qa_verdict": "APPROVE-CODE (cycle-287)",
+        "qa_reviewed_at": "2026-06-17T07:10:00Z",
+        "qa_reviewed_by": "qa (agent cycle-243; router RAW-verified first-hand)",
+        "qa_notes": "APPROVE-CODE (code+test quality). QA first-hand: tsc 0 err; touched-file isolation 52 pass / 0 fail (6 files: 1307/1309/1391/1803/FIX-RSI-SINGLEDIGIT/FIX-FINGERPRINT); full suite 13181 pass / 52 fail — all 52 DISJOINT (git log confirmed no overlap with d79314bb change set); stub-bar guard verified: taAlertScanJob L196-209 + bbAlertScanJob L195-198 check close<=0||vol<=0 fail-closed; CANDLE_SQL SELECT volume added; SB-1..SB-5 behavioral tests each job (5+5=10 tests); mock-guard PASS; DDD PASS (scheduler→infrastructure allowed). done_verified HELD — behavioral gate 2026-06-18 02:15Z market open (no single-digit RSI, no gia-0 BB alert).",
+        "done_verified_withheld": "Behavioral gate open: NEXT VN market open 2026-06-18 ~02:15Z. Guard must prevent single-digit RSI / \"gía 0 dưới BB\" on MARKET even if C=0 stub exists transiently. REBUILD_REQUIRED: YES — ops must rebuild mcp-server before gate fires.",
+        "done_verified": false,
+        "done_code": true,
+        "done_code_at": "2026-06-17T07:35:49Z",
+        "done_code_by": "po-s100",
+        "rebuild_shipped": true,
+        "behavioral_gate": "NEXT VN market open 2026-06-18 ~02:15Z first TA scan (briefing 01:00Z): RSI canonical within 0.1pt (no single-digit / no 100.0), zero 'giá 0 dưới BB' on MARKET, live daily_ohlcv ZERO close=0 stubs on the latest bar across all 30 watchlist tickers (verify DAG != 0). Self-heal masks stubs after ~04:30Z — gate verifies AT open. REBUILD_SHIPPED:YES (router RAW-verified running container content via docker exec grep: MERGE-ONLY + both scan-guards live; 12/12 UP; mcp-server 200; named volume untouched).",
+        "done_code_note": "P0-B consumer defense-in-depth — taAlertScanJob L196-209 + bbAlertScanJob L195-198 reject latest bar close<=0||vol<=0 fail-closed; CANDLE_SQL SELECT volume added. Commit d79314bb. QA cycle-287 APPROVE-CODE (full suite 13181 pass / 52 fail ALL disjoint / tsc 0; SB-1..SB-5 behavioral each job). Router RAW-verified ops rebuild LIVE. Relocated review->done as CODE-COMPLETE; done_verified HELD to the shared 2026-06-18 ~02:15Z market-open gate."
       }
     ],
     "done_verified": [
@@ -20203,43 +20270,7 @@
         "created_by": "po-triage-fb-2026-06-16",
         "_moved_to_review_at": "2026-06-16T20:00:40Z",
         "_review_by": "dev-mcp-server"
-      },
-      {
-        "id": "FIX-ALERT-SCAN-REJECT-STUB-BAR-P0",
-        "type": "FIX",
-        "title": "FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 — taAlertScanJob + bbAlertScanJob must reject a latest daily_ohlcv bar with close<=0 OR volume<=0 (stub/seed) BEFORE computing RSI/BB; guards the VALUE not just the candle count (consumer defense-in-depth for the C=0 foreign-flow stub)",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "status": "done-code",
-        "priority": "P0",
-        "blocking": true,
-        "size": "S",
-        "next_agent": "dev-mcp-server",
-        "root_cause": "taAlertScanJob.ts (L182-188) only guards closes.length < MIN_CANDLES(35) — it does NOT inspect the latest close VALUE, so a C=0 foreign-flow stub at the tail of the 60-day window flows into the RSI closes[] and collapses Wilder RSI to single-digit. bbAlertScanJob.ts (L173-182) has a 'not from today -> skip stale' guard but NO close<=0/volume<=0 reject, so close=Math.round(0)=0 -> 'gia 0 duoi BB' breakout spam. This is the EXACT gap the existing FIX-ALERT-ENGINE-RSI-SINGLEDIGIT status_note named: 'guards COUNT not the corrupt latest VALUE'.",
-        "fix_spec": "In BOTH taAlertScanJob and bbAlertScanJob, after fetching candleRows, fail-closed (skip the ticker, log.info pending, NO alert) when the LATEST in-window bar has close<=0 OR volume<=0 — same fail-closed posture as the report path (FIX-RSI-REPORT-FAILCLOSED, done_verified). Prefer reading volume in CANDLE_SQL (currently SELECTs only date+close) so the guard can see vol=0 stubs. Optionally drop any interior close<=0 bar from the closes[] passed to the Go TA svc (a 0 anywhere in the window corrupts Wilder smoothing), or skip if any in-window close<=0. GENERIC all tickers (/goal#2). This is the consumer half — paired with ARCH-OHLCV-WRITER-SSOT-DURABLE which stops the producer writing the stub; ship BOTH so a future writer regression cannot re-spam MARKET.",
-        "generic_mandate": "Guard applies to every ticker uniformly, no per-ticker logic; fail-closed (skip) is the correct posture for a thin/illiquid/no-trade ticker — better an honest gap than a fabricated single-digit RSI or gia-0 breakout.",
-        "verification_gate": "NEXT VN market open 2026-06-18 (first TA scan 02:15Z + briefing 01:00Z, RAW-read get_unreviewed_market_messages): NO single-digit RSI, NO 'gia 0 duoi BB' on MARKET even if a C=0 stub exists transiently in daily_ohlcv; tickers with a stub/zero latest bar are SILENTLY skipped (no alert), not spammed. Unit: a test seeding a C=0 latest bar after N real bars asserts the ticker is skipped (no alert emitted).",
-        "depends": [
-          "ARCH-OHLCV-WRITER-SSOT-DURABLE"
-        ],
-        "depends_note": "Independent fix (can ship in parallel) but its gate is shared with the producer root; together they form the two-layer durable fix. Defense-in-depth: this guard alone stops the SPAM even if a producer regression re-seeds a stub.",
-        "source": "USER BUG report MARKET 2026-06-17; PO code-traced the missing latest-value guard in both scan jobs.",
-        "created_at": "2026-06-17T04:38:28Z",
-        "created_by": "po",
-        "triaged_by": "po-s96",
-        "rebuild_required": "mcp-server",
-        "dispatch_note": "dev-team :07 tick 2026-06-17T04:36Z — consumer defense-in-depth, paired with the architect producer root; runtime scheduler change -> mcp-server rebuild required.",
-        "reviewed_at": "2026-06-17T05:30:00Z",
-        "reviewed_by": "dev-mcp-server",
-        "qa_verdict": "APPROVE-CODE",
-        "qa_reviewed_at": "2026-06-17T07:10:00Z",
-        "qa_reviewed_by": "qa (agent cycle-243; router RAW-verified first-hand)",
-        "qa_notes": "APPROVE-CODE (code+test quality). QA first-hand: tsc 0 err; touched-file isolation 52 pass / 0 fail (6 files: 1307/1309/1391/1803/FIX-RSI-SINGLEDIGIT/FIX-FINGERPRINT); full suite 13181 pass / 52 fail — all 52 DISJOINT (git log confirmed no overlap with d79314bb change set); stub-bar guard verified: taAlertScanJob L196-209 + bbAlertScanJob L195-198 check close<=0||vol<=0 fail-closed; CANDLE_SQL SELECT volume added; SB-1..SB-5 behavioral tests each job (5+5=10 tests); mock-guard PASS; DDD PASS (scheduler→infrastructure allowed). done_verified HELD — behavioral gate 2026-06-18 02:15Z market open (no single-digit RSI, no gia-0 BB alert).",
-        "done_verified_withheld": "Behavioral gate open: NEXT VN market open 2026-06-18 ~02:15Z. Guard must prevent single-digit RSI / \"gía 0 dưới BB\" on MARKET even if C=0 stub exists transiently. REBUILD_REQUIRED: YES — ops must rebuild mcp-server before gate fires."
-      },
-      "SUBTASK-OHLCV-WRITER-1-FOREIGN-FLOW-MERGE",
-      "SUBTASK-OHLCV-WRITER-2-SSOT-ANNOTATION",
-      "SUBTASK-OHLCV-WRITER-3-UNIT-TESTS"
+      }
     ],
     "qa": [],
     "_closed_signals_20260614": {
