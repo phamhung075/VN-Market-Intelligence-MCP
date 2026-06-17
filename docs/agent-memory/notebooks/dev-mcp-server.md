@@ -41,3 +41,17 @@ Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
 **REBUILD_REQUIRED:** YES — systemTools.ts changed; ops must rebuild container for live timeout guard to activate.
 
 Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule (startupHelpers.ts), withSectionDeadline deadline guard active | HEALTHY
+
+## 2026-06-17 · FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 — consumer stub-bar guard for taAlertScanJob + bbAlertScanJob
+
+**Task:** FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 (P0, S, blocking)
+**Root:** A foreign-flow writer inserts an all-zero stub bar (close=0, volume=0) into daily_ohlcv at market open before the real OHLCV bar arrives. CANDLE_SQL ORDER BY day ASC places this stub as the LATEST bar; taAlertScanJob fed it as the final element of closes[] → Wilder RSI collapsed to single-digit universe-wide; bbAlertScanJob read close=Math.round(0)=0 → "giá 0 dưới BB" spam (MARKET msg 783-790, 2026-06-17 02:15-03:15Z).
+**Fix:** Both scan jobs now SELECT volume alongside close in CANDLE_SQL. After fetching candleRows, the LATEST bar (candleRows[length-1]) is inspected: if close_price<=0 OR volume<=0 → fail-closed (skip ticker, log info, no alert). Only the latest bar is rejected; interior bars feed Wilder RSI as-is. Generic: applies to all 30 watchlist tickers uniformly, no per-ticker logic.
+**Files changed:**
+- apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts — CandleRow+volume, CANDLE_SQL+volume, guard a3 (17 lines)
+- apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts — CandleRow+volume, CANDLE_SQL+volume, guard c2 (15 lines)
+**Tests written (new SB-1..SB-5, both jobs):** 10 new stubs: SB-1 (close=0,vol=0 → skip), SB-2 (close=0,vol>0 → skip), SB-3 (close>0,vol=0 → skip), SB-4 (valid bar → still fires), SB-5 (stub+valid sibling: skip stub, fire sibling). Also fixed pre-existing fingerprint schema failures: added fingerprint TEXT UNIQUE to 1803, 1391, FIX-ALERT-ENGINE-RSI-SINGLEDIGIT buildTestDb; fixed seedTodayCandle volume=0 in FINGERPRINT + 1309/1391 helpers.
+**Gate results:** tsc clean (0 errors) | 52/0 across 6 affected files | full suite 13180 pass / 46 fail (pre-task baseline: 59 fail — reduced by 13 pre-existing failures fixed) | tools=165 (unchanged) | sched=3 (unchanged)
+**REBUILD_REQUIRED:** YES — scheduler job logic changed; ops must rebuild mcp-server container.
+
+Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
