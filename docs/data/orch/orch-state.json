@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T19:22:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-17T19:36:00Z",
+  "_updated_by": "po-s96",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -220,8 +220,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-17T09:31:21.000Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-17T19:36:00Z",
+    "_updated_by": "po-s96",
     "archive": [
       {
         "from": "system-auditor",
@@ -246,94 +246,6 @@
         "to": "po",
         "ts": "2026-06-12T22:30:24Z",
         "type": "system_issue"
-      }
-    ],
-    "rows": [
-      {
-        "id": "sau-c06-202606171834",
-        "ts": "2026-06-17T18:34:48Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "db_integrity_breach",
-        "summary": "market_messages check C-06 failed (0 messages in 3h window)",
-        "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
-      },
-      {
-        "id": "sau-b13-202606171834",
-        "ts": "2026-06-17T18:34:48Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "db_integrity_breach",
-        "summary": "bctc_vps_queue check B-13 failed (8 stale pending >72h)",
-        "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
-      },
-      {
-        "id": "sau-d4-202606170300",
-        "ts": "2026-06-17T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "resolved_at": "2026-06-17T03:32:24Z",
-        "resolved_by": "po",
-        "resolution": "STALE — RECURRING D4 false-positive (po-s95). Held-lock esc-datacov:FPT:Q1-2026:ESC-3 references no orch-state task_board row because D4 fires on EXPIRED/concurrent lock keys (ephemeral dispatcher-mutex / expired esc lock), not real dropped work. Dismissed STALE before: po-s76(x2), 5a807e65, 44853141, 44853141. Durable owner = system-auditor D4-check blind-spot (auditor must NOT flag a held lock whose key is an expired/ephemeral mutex with no live task) — already noted moot; no new board task this tick (not the tick WIP budget; ≤1 coding lane spent on nothing-new)."
-      },
-      {
-        "id": "sau-d4-202606160300",
-        "ts": "2026-06-16T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "resolved_at": "2026-06-16T04:23:35Z",
-        "resolved_by": "po-s76",
-        "resolution": "STALE/false-positive: the task FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 IS in the board (was ready[], relocated to review[] this run). The auditor held-lock check fired against an ALREADY-EXPIRED lock (expired 04:03:05Z, dev-team owner) whose task is fully boarded. No orphan lock; no action needed beyond the lane promotion."
-      },
-      {
-        "id": "sau-d4-202606160300",
-        "ts": "2026-06-16T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "orch-state/lock mismatch: active=FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 held=FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "resolved_at": "2026-06-16T04:23:35Z",
-        "resolved_by": "po-s76",
-        "resolution": "RECONCILED (not a real mismatch): head.active=FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (push-unblocker, set po-s74 01:31Z) and the held lock task:FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 (dev-team, expired 04:03:05Z) were BOTH legitimate concurrent states — the head was repointed to the push-unblocker while a dev-team worker still held the OHLCV lock mid-implementation. OHLCV impl now complete + promoted to review[]; head deliberately stays on TS2367 to clear the fleet push-block. Drift converged."
-      },
-      {
-        "id": "tnb-20260615T201300",
-        "ts": "2026-06-15T20:13:00Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "audit-handoff",
-        "summary": "c96 NEEDS_ATTENTION IMPROVING — EOD 6/6 GOOD (best), G1/G2 PASS, G3/G4 FAIL (last_fired not written)",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
-      },
-      {
-        "id": "tnb-20260616T201300",
-        "ts": "2026-06-16T20:13:00Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "audit-handoff",
-        "summary": "c97 NEEDS_ATTENTION STABLE — morning FAILED 502, EOD+Evening 5.5/6 GOOD, F-G3-G4 confirmed day2 (all 3 guaranteed slots), F-MORNING-SEND-FAILED NEW",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       },
       {
         "id": "sau-d4-202606150300",
@@ -644,6 +556,103 @@
         "resolved_at": "",
         "resolved_by": "po",
         "resolution": ""
+      }
+    ],
+    "rows": [
+      {
+        "id": "sau-c06-202606171834",
+        "ts": "2026-06-17T18:34:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages check C-06 failed (0 messages in 3h window)",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": null,
+        "triaged_by": "po-s96",
+        "triaged_at": "2026-06-17T19:36:00Z",
+        "disposition": "FALSE-POSITIVE",
+        "triage_note": "RAW-probed live market.db (named volume vn-market-intelligence-mcp_market_data, sidecar): market_messages last sent_at=2026-06-17T15:30:02Z (age 4.09h), 19 rows/24h, 56 rows/72h, total 796 — table HEALTHY. C-06 fired at 18:34Z; its 3h window (~15:34-18:34Z) is fully OFF-MARKET (VN market closed 08:59Z). 0 messages is normal: summary/Chef agents post ~3x/day not hourly, last dish (15:30 evening_summary) just predates the window. Not a wedge. Generic recalibration minted -> FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (backlog/ready, LOW)."
+      },
+      {
+        "id": "sau-b13-202606171834",
+        "ts": "2026-06-17T18:34:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "bctc_vps_queue check B-13 failed (8 stale pending >72h)",
+        "severity": "HIGH",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "triaged_by": "po-s96",
+        "triaged_at": "2026-06-17T19:36:00Z",
+        "disposition": "DUPLICATE",
+        "linked_task": "FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH",
+        "triage_note": "DUP/SYMPTOM of in-flight FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (in_progress, CHANGES_REQUESTED->dev-mcp-server, test-fix re-dispatch underway). The 8 stale-pending>72h rows ARE the genuinely-absent tickers stuck at attempts=0 that that fix terminalizes: post-rebuild they accumulate real-discovery attempts -> reach MAX_ENRICH_ATTEMPTS(5) -> marked url_not_found terminal -> drop out of pending -> B-13 self-clears. No new task minted. dev-mcp-server + QA own that row's status/next_agent — PO does not touch it."
+      },
+      {
+        "id": "sau-d4-202606170300",
+        "ts": "2026-06-17T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-17T03:32:24Z",
+        "resolved_by": "po",
+        "resolution": "STALE — RECURRING D4 false-positive (po-s95). Held-lock esc-datacov:FPT:Q1-2026:ESC-3 references no orch-state task_board row because D4 fires on EXPIRED/concurrent lock keys (ephemeral dispatcher-mutex / expired esc lock), not real dropped work. Dismissed STALE before: po-s76(x2), 5a807e65, 44853141, 44853141. Durable owner = system-auditor D4-check blind-spot (auditor must NOT flag a held lock whose key is an expired/ephemeral mutex with no live task) — already noted moot; no new board task this tick (not the tick WIP budget; ≤1 coding lane spent on nothing-new)."
+      },
+      {
+        "id": "sau-d4-202606160300",
+        "ts": "2026-06-16T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-16T04:23:35Z",
+        "resolved_by": "po-s76",
+        "resolution": "STALE/false-positive: the task FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 IS in the board (was ready[], relocated to review[] this run). The auditor held-lock check fired against an ALREADY-EXPIRED lock (expired 04:03:05Z, dev-team owner) whose task is fully boarded. No orphan lock; no action needed beyond the lane promotion."
+      },
+      {
+        "id": "sau-d4-202606160300",
+        "ts": "2026-06-16T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 held=FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-16T04:23:35Z",
+        "resolved_by": "po-s76",
+        "resolution": "RECONCILED (not a real mismatch): head.active=FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (push-unblocker, set po-s74 01:31Z) and the held lock task:FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 (dev-team, expired 04:03:05Z) were BOTH legitimate concurrent states — the head was repointed to the push-unblocker while a dev-team worker still held the OHLCV lock mid-implementation. OHLCV impl now complete + promoted to review[]; head deliberately stays on TS2367 to clear the fleet push-block. Drift converged."
+      },
+      {
+        "id": "tnb-20260615T201300",
+        "ts": "2026-06-15T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c96 NEEDS_ATTENTION IMPROVING — EOD 6/6 GOOD (best), G1/G2 PASS, G3/G4 FAIL (last_fired not written)",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
+      {
+        "id": "tnb-20260616T201300",
+        "ts": "2026-06-16T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c97 NEEDS_ATTENTION STABLE — morning FAILED 502, EOD+Evening 5.5/6 GOOD, F-G3-G4 confirmed day2 (all 3 guaranteed slots), F-MORNING-SEND-FAILED NEW",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       },
       {
         "id": "dev-team-20260615T2128Z-head-drift-po-s64-vs-task-board-head",
@@ -910,8 +919,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T13:31:09Z",
-    "_updated_by": "router-done-verify",
+    "_updated_at": "2026-06-17T19:36:00Z",
+    "_updated_by": "po-s96",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11285,6 +11294,31 @@
         "source": "PO reroute triage 2026-06-17 (router-verified) — SLA-metric residual",
         "minted_at": "2026-06-17T18:58:32Z",
         "minted_by": "po"
+      },
+      {
+        "id": "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
+        "type": "FIX",
+        "severity": "LOW",
+        "priority": "low",
+        "size": "S",
+        "status": "READY",
+        "title": "system-auditor C-06 (market_messages) false-positives off-market: fixed 3h-count check fires HIGH during normal off-market quiet windows",
+        "description": "C-06 (docs/agents/system-auditor/flow/main.md L149,L465) is `SELECT count(*) FROM market_messages WHERE sent_at > datetime('now','-3 hours') > 0`. summary/Chef agents post ~3x/day, NOT hourly, so any 3h off-market window legitimately has 0 messages and C-06 fires HIGH false-positive (sau-c06-202606171834: live table healthy — last sent_at 15:30:02Z age 4.09h, 19/24h, 56/72h). The fixed 3h-count is calibrated for market hours only.",
+        "owner": "system-auditor",
+        "next_agent": "ba",
+        "zone": "docs/agents/system-auditor/",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "fix_spec": "Recalibrate C-06 to be off-market-aware and freshness-based, GENERIC (no date literals, /goal#2): EITHER (a) key the check on last-successful-write AGE vs a generous SLA (e.g. MAX(sent_at) older than ~12-18h => WARN/HIGH) instead of a fixed 3h rowcount; OR (b) exempt the check (or widen the window) when the probe runs outside VN market hours (market closes ~08:59 UTC / 15:59 ICT). Prefer (a): age-of-last-write is the real liveness signal and is calibration-free. Apply the same off-market/age pattern to any sibling fixed-short-window count checks if present.",
+        "generic_mandate": "No date literals, no per-window hardcode. Liveness = age-of-last-successful-write vs SLA, market-hours-aware.",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "depends": [],
+        "sequencing": "BACKLOG/ready only — WIP coding side FULL (ARCH-CRON designer-exempt + FIX-BCTC-DISCOVER 1 active lane). Do NOT auto-promote to in_progress. Doc/flow-only fix (no container rebuild).",
+        "source": "po-s96 triage of sau-c06-202606171834 (RAW live market.db probe via sidecar). Generic /goal#2 recalibration.",
+        "created_at": "2026-06-17T19:36:00Z",
+        "created_by": "po-s96"
       }
     ],
     "closed_sprints": [

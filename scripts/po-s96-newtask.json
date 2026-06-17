@@ -1,0 +1,23 @@
+{
+  "id": "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
+  "type": "FIX",
+  "severity": "LOW",
+  "priority": "low",
+  "size": "S",
+  "status": "READY",
+  "title": "system-auditor C-06 (market_messages) false-positives off-market: fixed 3h-count check fires HIGH during normal off-market quiet windows",
+  "description": "C-06 (docs/agents/system-auditor/flow/main.md L149,L465) is `SELECT count(*) FROM market_messages WHERE sent_at > datetime('now','-3 hours') > 0`. summary/Chef agents post ~3x/day, NOT hourly, so any 3h off-market window legitimately has 0 messages and C-06 fires HIGH false-positive (sau-c06-202606171834: live table healthy — last sent_at 15:30:02Z age 4.09h, 19/24h, 56/72h). The fixed 3h-count is calibrated for market hours only.",
+  "owner": "system-auditor",
+  "next_agent": "ba",
+  "zone": "docs/agents/system-auditor/",
+  "files": ["docs/agents/system-auditor/flow/main.md"],
+  "fix_spec": "Recalibrate C-06 to be off-market-aware and freshness-based, GENERIC (no date literals, /goal#2): EITHER (a) key the check on last-successful-write AGE vs a generous SLA (e.g. MAX(sent_at) older than ~12-18h => WARN/HIGH) instead of a fixed 3h rowcount; OR (b) exempt the check (or widen the window) when the probe runs outside VN market hours (market closes ~08:59 UTC / 15:59 ICT). Prefer (a): age-of-last-write is the real liveness signal and is calibration-free. Apply the same off-market/age pattern to any sibling fixed-short-window count checks if present.",
+  "generic_mandate": "No date literals, no per-window hardcode. Liveness = age-of-last-successful-write vs SLA, market-hours-aware.",
+  "baseline_pass": true,
+  "rebuild_required": false,
+  "depends": [],
+  "sequencing": "BACKLOG/ready only — WIP coding side FULL (ARCH-CRON designer-exempt + FIX-BCTC-DISCOVER 1 active lane). Do NOT auto-promote to in_progress. Doc/flow-only fix (no container rebuild).",
+  "source": "po-s96 triage of sau-c06-202606171834 (RAW live market.db probe via sidecar). Generic /goal#2 recalibration.",
+  "created_at": "__NOW__",
+  "created_by": "po-s96"
+}

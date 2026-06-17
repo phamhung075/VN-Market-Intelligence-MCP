@@ -1,7 +1,24 @@
 # PO Notebook
-_overwritten 2026-06-17T15:36:00Z_
+_overwritten 2026-06-17T19:36:00Z_
 
-## Last cycle (2026-06-17T15:36Z, dev-team triage tick 15:31Z) — 2 drained signals, both pre-classified. Returned NOTHING (idle).
+## Cycle po-s96 (2026-06-17T19:36Z, dev-team Step-1 triage) — 2 NEW signal_queue rows triaged, 1 LOW task minted, 48h prune.
+
+**sau-c06-202606171834 (market_messages C-06 "0 msgs in 3h", HIGH) → READ / FALSE-POSITIVE.**
+- RAW-probed live market.db (named vol vn-market-intelligence-mcp_market_data via keinos/sqlite3 sidecar): market_messages last sent_at=2026-06-17T15:30:02Z (age 4.09h), 19 rows/24h, 56/72h, total 796 — table HEALTHY.
+- C-06 fired 18:34Z; its 3h window (~15:34–18:34Z) is fully OFF-MARKET (VN closed 08:59Z). Summary/Chef agents post ~3x/day not hourly → 0 in an off-market 3h window is normal (last dish 15:30 evening_summary just predates window). NOT a wedge.
+- C-06 def: docs/agents/system-auditor/flow/main.md L149,L465 = fixed `count(*) WHERE sent_at > -3h > 0`, calibrated for market hours only. Minted generic recalibration (age-of-last-write OR off-market exempt) → FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE, backlog/READY, LOW, owner system-auditor→ba, doc-only no rebuild. NOT promoted (WIP full).
+
+**sau-b13-202606171834 (bctc_vps_queue B-13 "8 stale pending >72h", HIGH) → TRIAGED / DUPLICATE.**
+- Linked to in-flight FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (in_progress, CHANGES_REQUESTED→dev-mcp-server, impl 3eebf3bc, test-fix re-dispatch underway). The 8 stale rows = genuinely-absent tickers stuck at attempts=0 that that fix terminalizes (→ url_not_found → drop pending → B-13 self-clears). NO new task. DID NOT touch that row's status/next_agent — dev/QA own it; only referenced.
+
+**0a-D-PRUNE (48h, cut 2026-06-15T19:36Z):** 23 RESOLVED/READ rows → archive. rows 41→18, archive 2→25. _updated_by=po-s96 on signal_queue + task_board + root.
+**WIP guard:** in_progress unchanged = [ARCH-CRON-SCHEDULER-RELIABILITY, FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH]. Coding lane FULL respected.
+**Commit scope:** orch-state + po notebook + scripts/po-s96-*.{jq,json} ONLY (explicit pathspec). NO push.
+**Scripts:** scripts/po-s96-c06-fp-b13-dedup-prune.jq + scripts/po-s96-newtask.json (reusable triage+prune pattern; pointer per dev-standards Script Persistence).
+
+---
+
+## Prior cycle (2026-06-17T15:36Z, dev-team triage tick 15:31Z) — 2 drained signals, both pre-classified. Returned NOTHING (idle).
 
 **Trigger:** dev-team Step-1 triage, 2 pendingSignals[] (both already moved to processed/). CI GREEN origin/main aa603a9b (router live-probed). WIP: 1 active coding lane (in_progress ARCH-CRON-SCHEDULER-RELIABILITY architect→dev-mcp-server) → 1 free slot, but nothing groomed-and-unblocked to fill it.
 
