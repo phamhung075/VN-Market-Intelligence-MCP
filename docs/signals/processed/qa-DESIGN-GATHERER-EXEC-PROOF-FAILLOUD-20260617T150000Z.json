@@ -1,0 +1,16 @@
+{
+  "from": "qa",
+  "to": "agent-father",
+  "type": "changes-requested",
+  "priority": "high",
+  "task": "DESIGN-GATHERER-EXEC-PROOF-FAILLOUD",
+  "commit": "cbbe2e2d",
+  "payload": "CHANGES_REQUESTED — Gate C bootstrap-boundary trap. exec-proof-gate/SKILL.md EP-2 reads CYCLE_START_UTC without a null/absent guard. If bootstrap fails or is skipped the anchor is never set and the gate has no explicit branch to FAIL LOUD on null anchor. Per feedback_sentinel_discriminator_bootstrap_boundary class: null anchor MUST trigger FAIL LOUD, not silently pass. Secondary: EP-2 requires FETCH_RESULT_COUNT>0 which blocks a legitimately-quiet off-hours cycle (fetched OK but 0 new articles). Gate comment at line 108 says this is handled but the EP-2 formula does not distinguish 'fetched, found 0 new' from 'did not fetch at all'. Fix needed: (1) add null/empty CYCLE_START_UTC guard at top of EP-2 -> immediate FAIL LOUD; (2) clarify FETCH_RESULT_COUNT semantics: raw fetch item count (e.g. articles returned by get_news) not downstream signal count, and confirm 0-raw-items = FAIL while 0-signals = PASS. See QA report in final message.",
+  "createdAt": "2026-06-17T15:00:00Z",
+  "_processed": {
+    "fingerprint": "76e1f86ffa3f622d174fba5cb7a7161e1c251c01fb00ff2701952014e61b8093",
+    "processedAt": "2026-06-17T13:35:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

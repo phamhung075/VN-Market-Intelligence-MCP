@@ -18,19 +18,25 @@
       "id": "EP-2",
       "action": "patch cycle-bootstrap — add CYCLE_START_UTC anchor capture + exec-proof-gate reference",
       "file": ".claude/skills/cycle-bootstrap/SKILL.md",
-      "depends_on": ["EP-1"]
+      "depends_on": [
+        "EP-1"
+      ]
     },
     {
       "id": "EP-3",
       "action": "insert Step 3e exec-proof gate before log_agent_work(completed)",
       "file": "docs/agents/news-scout/flow/stage-log-notify.md",
-      "depends_on": ["EP-1"]
+      "depends_on": [
+        "EP-1"
+      ]
     },
     {
       "id": "EP-4",
       "action": "insert Step 4e exec-proof gate before WORK ping in Step 5b",
       "file": "docs/agents/market-watcher/flow/cycle.md",
-      "depends_on": ["EP-1"]
+      "depends_on": [
+        "EP-1"
+      ]
     }
   ],
   "cross_ref": {
@@ -42,5 +48,11 @@
       "SPIKE-UNIFIED-NB-GAP",
       "HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING"
     ]
+  },
+  "_processed": {
+    "fingerprint": "3777844d54326a3499bc82d78ed1927967ac7b6c3a525fc6d51d45a347facf39",
+    "processedAt": "2026-06-17T13:35:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
