@@ -145,3 +145,12 @@
 - durable fix: extend FU-ORIGIN-LAG-PUSH-DISCIPLINE (option-2 backstop) vs new mechanism vs leave as manual nudge
 **why-decision:** Ran the 2 reds LOCALLY — both fail (084 stale toBe(2)→3 tool-count; VPS-HEALTH-FRESHN behavioral) = GENUINE, DISJOINT from the CI-RED fix (which is 13 pass/0 fail). Gate is "full-suite CI green on origin" → still RED → WITHHELD all 5; reassigned gate-blocker to new P1 FIX. Durable: the recurrence (2nd ~100-commit manual nudge this session) proves in-mutex push (option-1, shipped) is insufficient under a perpetually-dirty tree; minted ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP = the option-2 the DISCIPLINE task explicitly deferred, reusing the proven worktree-push recipe.
 **why-change:** no change from plan — push executed, gate honestly withheld, root tracked not nudged.
+
+### STEP po-S101 · po · 2026-06-17T08:34:07Z
+**task-id:** FIX-CI-RED-2RED-084-VPS-FRESHN
+**what-done:** Triaged ci-health-probe ci_red signal (CI-RED-701923bc, run 27670009188); FOLDED as duplicate into the existing ready[] P1 — no new fixer.
+**what-considered:**
+- (a) fold/dedup into FIX-CI-RED-2RED-084-VPS-FRESHN vs (b) mint a new ci_red FIX vs (c) flaky/no-fixer
+- mint dup would violate two-layer dedup (head_sha + failing-job set) + DRY
+**why-decision:** Signal head_sha=701923bc / run_id=27670009188 are the EXACT SHA+run that po-s98 minted FIX-CI-RED-2RED-084-VPS-FRESHN to cover 6h ago. `gh run view --log-failed` confirms identical disjoint set: 084-tool-market.test.ts + FIX-VPS-HEALTH-FRESHN.test.ts (13166 pass/53 skip/2 fail). CONFIRM-BEFORE-BLAME case (a) — not flaky (deterministic 2-file fail, both fail locally per po-s98), not new. Annotated existing task .ci_red_refires[] (idempotent), signal→processed/ (result=skipped-duplicate) + signals.db id 2192.
+**why-change:** no change from plan — existing P1 already groomed to ready[], gate intact; WIP unchanged at 0 active coding lanes; PUSH held out-of-band.
