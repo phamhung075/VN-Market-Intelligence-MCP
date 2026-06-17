@@ -86,3 +86,13 @@
 - RED 2: Fix vpsHealthPoller.ts code vs fix test — RAW-verified: initDatabase BACKFILL_079 seeds 7 pending rows → active_count=7 → falls through to latestAt=null → "unreachable" is correct active-freshness behavior. Test was testing old passive:true contract.
 **why-decision:** Both stale tests; code is correct. RED 2 fix preserves active-freshness guard per passive-health-masks-dead-data lesson.
 **why-change:** No code changes needed; test-only fix is correct scope per task spec.
+
+### STEP dev-mcp-server-S10 · dev-mcp-server · 2026-06-17T13:09:00Z
+**task-id:** FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE
+**what-done:** Added SNAPSHOT_MAX_STALENESS_MS (4h) generic constant; changed promoteCycleSnapshot to return {promoted,stale} with freshness gate; propagated stale_warning into PressureState + result; 8 new tests.
+**what-considered:**
+- Option A: Clean stale on-disk HH:MM residue files on container start — REJECTED: symptom-chase; root is writer not residue; new snapshot written by cycle-bootstrap would still overwrite.
+- Option B: Gate at read-time in cycle-bootstrap consumer — REJECTED: fixes consumer not the writer; any new consumer forgets.
+- Option C: Gate at PROMOTE-TIME in promoteCycleSnapshot (writer is the authority) — CHOSEN: single-point fix, generic, no per-instance date literals.
+**why-decision:** Option C is the only fix that can never be bypassed by a new consumer. SNAPSHOT_MAX_STALENESS_MS=4h is generous for real off-hours ticks (fetched ≤15min ago) but tight vs 15-day residue.
+**why-change:** stale_warning on PressureState was typed as literal `false` — widened to `boolean` as part of the fix (previously the type was lying about the field's possible values).
