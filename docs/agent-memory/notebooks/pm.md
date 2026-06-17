@@ -1,5 +1,44 @@
 # PM — Notebook
 
+## c317 ARCH-OHLCV-WRITER-SSOT-DURABLE atomization · 2026-06-17T053000Z
+
+**PARENT:** ARCH-OHLCV-WRITER-SSOT-DURABLE (recurring escalation, 4th recurrence, architect design FINAL)
+
+**INPUT:** Architect handoff (ARCH-OHLCV-WRITER-SSOT-DURABLE-architect-design.md), brief (2026-06-17-ohlcv-writer-ssot-durable.md), router 60s re-fetch finding (cadence documented to prevent stub-hack compensations)
+
+**OUTPUT:** 3 P0 subtasks (SUBTASK-OHLCV-WRITER-1/2/3) added to ready[]; 2 P1 follow-ons (LINT-OHLCV-WRITE-BYPASS, ARCH-DAILY-FOREIGN-FLOW-TABLE) queued backlog; parent normalized ready/REVIEW → done/DESIGN_COMPLETE; 1 workorder doc + 3 handoff files created.
+
+**Board mutation (atomic):**
+- **Before:** ready=3, in_progress=1, backlog=294, done=162
+- **After:** ready=5, in_progress=1, backlog=296, done=163
+- Parent task moved from ready → done (design deliverable complete)
+- 3 P0 subtasks added to ready
+- 2 P1 follow-ons added to backlog
+
+**Task structure (ready dispatch order):**
+
+1. **SUBTASK-1 (S, ~2h, READY now):** Rewrite writeForeignFlowToOhlcv — merge-only UPDATE (no INSERT stub). File: ohlcvForeignFlowStore.ts L57-69. CRITICAL: verify both callers (foreignFlowFetcher L136-137/L219-220, pushForeignFlowHandler L319) treat changes=0 as non-error. Rebuild=YES.
+
+2. **SUBTASK-2 (XS, ~30min, READY now, parallel with SUBTASK-1):** Add SSOT annotation to ohlcvWriteService.ts. JSDoc inventory of 8 writers (A–H) + sentinel pattern explanation. Documentation-only, no logic changes.
+
+3. **SUBTASK-3 (S, ~2h, BLOCKS on SUBTASK-1):** Unit tests T-1..T-4 + integration gate. T-4 is the REGRESSION PROOF: SELECT close FROM daily_ohlcv WHERE code=X AND date=Y after deferred write on empty DB returns ZERO rows (NOT close=0). Rebuild=YES.
+
+**Sequencing & WIP:** dev-mcp-server can start SUBTASK-1+SUBTASK-2 in parallel (2 lanes, at limit). After SUBTASK-1 merges, start SUBTASK-3. Total dev time: ~4–5h. FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 is parallel consumer guard (already in-flight, 1 lane). Both P0s gate on shared verification 2026-06-18 market open 02:15Z (RSI canonical match, no BB spam, zero close=0 stubs on live DB).
+
+**Router 60s re-fetch finding (carried verbatim to dev):** CRONS.foreignFlowFetch fires every 60s (startupHelpers.ts:219, startScheduler.ts:840). Architect's R-1 "2–3h data-loss window" is correct risk assessment, but the merge-only UPDATE fix is definitive (re-fetch within 60s, moment real bar lands next fetch UPDATEs). DO NOT justify re-introducing stub hacks. Same-day loss ≤ 60s; honest gap beats fake close=0 (/goal#1).
+
+**Follow-on tasks queued (backlog P1):** LINT-OHLCV-WRITE-BYPASS (ESLint rule, depends SUBTASK-1), ARCH-DAILY-FOREIGN-FLOW-TABLE (separate staging table design, future architect pass). NOT in_progress, serialize after P0s.
+
+**Decision journal:** docs/agent-memory/decisions/sprint-2026-06-17-pm.md (DJ-GATE-1..6) documents parent normalization, router finding, board mutation, shared gate.
+
+**Workorder:** docs/handoffs/WORKORDER-dev-mcp-server-OHLCV-WRITER-SSOT-DURABLE.md (complete task breakdown + 60s cadence fact + verification gate rules).
+
+**Handoffs:** 3 files (SUBTASK-OHLCV-WRITER-*.md) created.
+
+**Commit discipline:** Explicit pathspec only (orch-state.json + this DJ entry + notebook update). Atomic temp→rename on board. PM owns board mutation; dev owns code commits.
+
+---
+
 ## c316 FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE task atomization · 2026-06-16T000000Z
 
 **PARENT:** FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE (ERROR-AUDIT-2026-06-15 Wave 2, P1, L-size, ready→decomposed)
