@@ -1,5 +1,13 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-17 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — terminalization fix
+
+**Task:** FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (P1/HIGH, rerouted from dev-vps-crawls)
+**Root cause:** `bctcQueueEnricherJob.ts` lines ~509-513 — `else { /* attempts===0 do nothing */ }` branch prevented incrementing attempts on the first real-discovery 0-URL pass. Genuinely-absent rows (9 tickers, Q1-2026 filings not yet published) stayed stuck at attempts=0 forever → 210+ zero-url cycles → bctc SLA FALSE-CRITICAL artifact.
+**Fix:** Removed the `attempts===0` special-case else-branch. When discovery REACHES source and returns 0 URLs (real network result, NOT exception), always increment attempts. Generic: no per-ticker allowlist, no Q1-2026 date literal. Error/exception path (catch block) unchanged — no increment on network failure.
+**Tests:** 8 new tests in `FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH.test.ts` proving TERM-1 (first-pass increments 0→1), TERM-2 (multi-pass accumulation), TERM-3 (terminates at MAX=5), TERM-3b (full 0→url_not_found cycle), TERM-4 (exception no-increment preserved), TERM-5 (ticker/date agnostic), TERM-6 (success path unchanged), TERM-7 (url_not_found not re-processed). 64 pass across all enricher test files, 0 fail. tsc clean.
+**Commit:** 3eebf3bc · **rebuild_required:** YES — ops must rebuild mcp-server container before router SLA live-probe.
+
 ## 2026-06-16 · FIX-CI-RED-STANDING-1837A-1352A — CI red unblocked
 
 **Task:** FIX-CI-RED-STANDING-1837A-1352A (S — BLOCKING fleet push)
