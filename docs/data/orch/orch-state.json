@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T10:45:27Z",
-  "_updated_by": "system-auditor",
+  "_updated_at": "2026-06-17T13:00:24Z",
+  "_updated_by": "router",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -880,7 +880,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T12:54:38Z",
+    "_updated_at": "2026-06-17T13:00:24Z",
     "_updated_by": "router",
     "active_sprints": [
       {
@@ -20170,6 +20170,65 @@
         "claimed_at": "2026-06-17T12:35Z",
         "claimed_by": "dev-team",
         "dispatch_note": "Router routed PO BATCH (dev-team tick 2026-06-17T12:35Z). FIX coding lane -> dev-mcp-server (coding WIP 0->1, under WIP<=2). FAIL-SAFE freshness gate at promote-time. bun tests BEFORE ops rebuild (RED-PREPUSH); targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down); QA LIVE-verify raw (cycle_snapshot_promoted=false + stale_warning=true on stale, latest untouched), never badges."
+      },
+      {
+        "id": "DESIGN-GATHERER-EXEC-PROOF-FAILLOUD",
+        "type": "SPRINT-S",
+        "title": "Generic execution-proof fail-loud gate for off-hours gatherers (premature-return / narrate-without-execute)",
+        "desc": "DEFECT-A (router RAW-verified). DISTINCT from existing DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER + AF-1 (those solve firing TWICE; this solves claiming complete WITHOUT executing once — opposite failure mode, no dedup). Class = fabricate-when-thin, now extending from fb-market-poster/unified-agent/chef to detection/gatherer agents. Evidence: news-scout-offhours + market-watcher-offhours returned 'cycle complete' at 12:09Z but wrote NO fresh notebook entry (news-scout latest c114 08:08Z; market-watcher header still 'Last updated 08:07 UTC'), parroted their own prior-notebook macro oil=78.38, emitted 0 NEW signal_queue rows, no news_impact_*.json. DESIGN MANDATE (generic, /goal#2 — no per-agent hardcode): a gatherer cycle is 'complete' ONLY if a fresh notebook entry stamped with the current-tick timestamp AND freshly-fetched macro (fetchedAt within the tick window) was written; otherwise FAIL LOUD — never narrate '0 signals complete'. Architect designs ONE execution-proof gate that both off-hours gatherer flows inherit (overlaps SPIKE-UNIFIED-NB-GAP crash-before-notebook + HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING — cross-ref but distinct: fail-loud-on-no-execution, not cap-enforcement). -> agents-architect (design brief) -> agent-father (impl into docs/agents/{news-scout,market-watcher}/flow).",
+        "files": [
+          "docs/agents/news-scout/flow/",
+          "docs/agents/market-watcher/flow/",
+          ".claude/skills/cycle-bootstrap/SKILL.md"
+        ],
+        "zone": "multi",
+        "route": "agents-architect",
+        "size": "S",
+        "priority": "P2",
+        "baseline_pass": "n/a (agent-flow/skill layer, market-independent)",
+        "status": "CHANGES_REQUESTED",
+        "source": "DEFECT-A from agent_fabrication_defect signal agent-fabrication-gatherers-offhours-2026-06-17T1212Z.json, router RAW-verified; distinct from DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER + AF-1",
+        "created_at": "2026-06-17T12:35Z",
+        "created_by": "po-batch",
+        "claimed_at": "2026-06-17T12:35Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router routed PO BATCH (dev-team tick 2026-06-17T12:35Z). DESIGN lane -> agents-architect (design brief; WIP-exempt, no coding lane). ONE generic execution-proof gate both off-hours gatherer flows inherit: cycle 'complete' ONLY on fresh-tick-stamped notebook entry + freshly-fetched macro (fetchedAt in tick window); else FAIL LOUD. No per-agent hardcode (/goal#2). architect brief -> agent-father impl into docs/agents/{news-scout,market-watcher}/flow + cycle-bootstrap skill.",
+        "design_complete_at": "2026-06-17T12:44Z",
+        "design_brief": "docs/architecture-briefs/2026-06-17-gatherer-exec-proof-failloud.md",
+        "design_commit": "6eb16082",
+        "next_task": "EP-1-EXEC-PROOF-GATE-SKILL",
+        "next_agent": "agent-father",
+        "impl_dispatched_at": "2026-06-17T12:44Z",
+        "impl_dispatched_by": "dev-team",
+        "impl_dispatch_note": "Router continued pipeline (architect DONE 6eb16082). agent-father implements brief: EP-1 exec-proof-gate skill (prereq) -> EP-2 cycle-bootstrap CYCLE_START_UTC anchor + EP-3 news-scout stage-log-notify Step 3e + EP-4 market-watcher cycle Step 4e (parallel). Generic gate (no per-agent hardcode /goal#2): cycle complete ONLY if notebook ts>=cycle_start AND primary fetch>0 + macro fetchedAt>=cycle_start; else BUG telegram + signal + EXIT (completion ping never sent). agent-father WIP-exempt maintenance lane.",
+        "impl_commit": "cbbe2e2d",
+        "impl_complete_at": "2026-06-17T12:54:38Z",
+        "review_at": "2026-06-17T12:54:38Z",
+        "review_by": "router",
+        "review_note": "Router flip on agent-father signal (agent-father-20260617T145010Z.json): EP-1..EP-4 shipped commit cbbe2e2d (4 files: exec-proof-gate skill + cycle-bootstrap anchor + news-scout Step 3e + market-watcher Step 4e). Generic gate, AGENT_ID-parameterized, no per-agent hardcode. No rebuild (flow/skill layer). QA gate: thin/no-execution cycle FAILS LOUD (BUG telegram, no log_agent_work completed); real cycle PASS. Live test next offhours gatherer ~16:00Z.",
+        "impl_files": [
+          ".claude/skills/exec-proof-gate/SKILL.md",
+          ".claude/skills/cycle-bootstrap/SKILL.md",
+          "docs/agents/news-scout/flow/stage-log-notify.md",
+          "docs/agents/market-watcher/flow/cycle.md"
+        ],
+        "changes_requested_at": "2026-06-17T13:00:24Z",
+        "changes_requested_by": "router",
+        "qa_verdict": "CHANGES_REQUESTED",
+        "qa_gate": {
+          "A": "PASS-generic",
+          "B": "PASS-faill oud",
+          "C": "FAIL-BLOCKER-bootstrap-boundary",
+          "D": "PASS-no-stale-parrot",
+          "E": "PARTIAL-PASS-thresholds"
+        },
+        "qa_blocker": "Gate C: no null-anchor guard in exec-proof-gate EP-2; tick-snapshot HIT (cycle-bootstrap Step -1) skips Step 0 so CYCLE_START_UTC never set -> null anchor can false-PASS (sentinel-discriminator bootstrap-boundary class)",
+        "required_fixes": [
+          "exec-proof-gate/SKILL.md: add EP-0 anchor guard before EP-1 — if CYCLE_START_UTC null/empty/absent -> FAIL LOUD (same a-d steps as EP-4)",
+          "cycle-bootstrap/SKILL.md: capture CYCLE_START_UTC on tick-snapshot HIT path (Step -1) too, not only after Step 0 bootstrap — anchor set unconditionally before gate"
+        ],
+        "qa_signal": "docs/signals/qa-DESIGN-GATHERER-EXEC-PROOF-FAILLOUD-20260617T150000Z.json",
+        "router_raw_confirmed": "RAW-verified first-hand: exec-proof-gate EP-2 L55-57 no null guard; cycle-bootstrap Step -1 L49 skips Step 0 anchor capture"
       }
     ],
     "ready": [
@@ -20427,48 +20486,6 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
-      },
-      {
-        "id": "DESIGN-GATHERER-EXEC-PROOF-FAILLOUD",
-        "type": "SPRINT-S",
-        "title": "Generic execution-proof fail-loud gate for off-hours gatherers (premature-return / narrate-without-execute)",
-        "desc": "DEFECT-A (router RAW-verified). DISTINCT from existing DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER + AF-1 (those solve firing TWICE; this solves claiming complete WITHOUT executing once — opposite failure mode, no dedup). Class = fabricate-when-thin, now extending from fb-market-poster/unified-agent/chef to detection/gatherer agents. Evidence: news-scout-offhours + market-watcher-offhours returned 'cycle complete' at 12:09Z but wrote NO fresh notebook entry (news-scout latest c114 08:08Z; market-watcher header still 'Last updated 08:07 UTC'), parroted their own prior-notebook macro oil=78.38, emitted 0 NEW signal_queue rows, no news_impact_*.json. DESIGN MANDATE (generic, /goal#2 — no per-agent hardcode): a gatherer cycle is 'complete' ONLY if a fresh notebook entry stamped with the current-tick timestamp AND freshly-fetched macro (fetchedAt within the tick window) was written; otherwise FAIL LOUD — never narrate '0 signals complete'. Architect designs ONE execution-proof gate that both off-hours gatherer flows inherit (overlaps SPIKE-UNIFIED-NB-GAP crash-before-notebook + HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING — cross-ref but distinct: fail-loud-on-no-execution, not cap-enforcement). -> agents-architect (design brief) -> agent-father (impl into docs/agents/{news-scout,market-watcher}/flow).",
-        "files": [
-          "docs/agents/news-scout/flow/",
-          "docs/agents/market-watcher/flow/",
-          ".claude/skills/cycle-bootstrap/SKILL.md"
-        ],
-        "zone": "multi",
-        "route": "agents-architect",
-        "size": "S",
-        "priority": "P2",
-        "baseline_pass": "n/a (agent-flow/skill layer, market-independent)",
-        "status": "REVIEW",
-        "source": "DEFECT-A from agent_fabrication_defect signal agent-fabrication-gatherers-offhours-2026-06-17T1212Z.json, router RAW-verified; distinct from DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER + AF-1",
-        "created_at": "2026-06-17T12:35Z",
-        "created_by": "po-batch",
-        "claimed_at": "2026-06-17T12:35Z",
-        "claimed_by": "dev-team",
-        "dispatch_note": "Router routed PO BATCH (dev-team tick 2026-06-17T12:35Z). DESIGN lane -> agents-architect (design brief; WIP-exempt, no coding lane). ONE generic execution-proof gate both off-hours gatherer flows inherit: cycle 'complete' ONLY on fresh-tick-stamped notebook entry + freshly-fetched macro (fetchedAt in tick window); else FAIL LOUD. No per-agent hardcode (/goal#2). architect brief -> agent-father impl into docs/agents/{news-scout,market-watcher}/flow + cycle-bootstrap skill.",
-        "design_complete_at": "2026-06-17T12:44Z",
-        "design_brief": "docs/architecture-briefs/2026-06-17-gatherer-exec-proof-failloud.md",
-        "design_commit": "6eb16082",
-        "next_task": "EP-1-EXEC-PROOF-GATE-SKILL",
-        "next_agent": "qa",
-        "impl_dispatched_at": "2026-06-17T12:44Z",
-        "impl_dispatched_by": "dev-team",
-        "impl_dispatch_note": "Router continued pipeline (architect DONE 6eb16082). agent-father implements brief: EP-1 exec-proof-gate skill (prereq) -> EP-2 cycle-bootstrap CYCLE_START_UTC anchor + EP-3 news-scout stage-log-notify Step 3e + EP-4 market-watcher cycle Step 4e (parallel). Generic gate (no per-agent hardcode /goal#2): cycle complete ONLY if notebook ts>=cycle_start AND primary fetch>0 + macro fetchedAt>=cycle_start; else BUG telegram + signal + EXIT (completion ping never sent). agent-father WIP-exempt maintenance lane.",
-        "impl_commit": "cbbe2e2d",
-        "impl_complete_at": "2026-06-17T12:54:38Z",
-        "review_at": "2026-06-17T12:54:38Z",
-        "review_by": "router",
-        "review_note": "Router flip on agent-father signal (agent-father-20260617T145010Z.json): EP-1..EP-4 shipped commit cbbe2e2d (4 files: exec-proof-gate skill + cycle-bootstrap anchor + news-scout Step 3e + market-watcher Step 4e). Generic gate, AGENT_ID-parameterized, no per-agent hardcode. No rebuild (flow/skill layer). QA gate: thin/no-execution cycle FAILS LOUD (BUG telegram, no log_agent_work completed); real cycle PASS. Live test next offhours gatherer ~16:00Z.",
-        "impl_files": [
-          ".claude/skills/exec-proof-gate/SKILL.md",
-          ".claude/skills/cycle-bootstrap/SKILL.md",
-          "docs/agents/news-scout/flow/stage-log-notify.md",
-          "docs/agents/market-watcher/flow/cycle.md"
-        ]
       }
     ],
     "qa": [],
