@@ -134,12 +134,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-16T22:40:40Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "ROUTER 2026-06-16T22:40:40Z — CLEAN-AUDITOR-DOC-SIGNAL-TYPES DONE_VERIFIED (router RAW-verified first-hand, commit bab66a03): system-auditor docs now cite signal_type:signal_feedback (live enum agentSignalStore.ts) — D1/D2/D3 post_agent_signal disambiguated, D4/D5 signal_queue-row system_issue correctly preserved. DESIGN-GATHERER umbrella (ready, design-complete tracker) + DMS-1+DMS-2 (backlog) still HELD behind ARCH-CRON-SCHEDULER-RELIABILITY. PUSH held (PO out-of-band)."
+    "status": "in_progress",
+    "active_task_id": "FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD",
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-06-17T01:34:10Z",
+    "updated_by": "po-s94",
+    "note": "ROUTER 2026-06-17T01:34:10Z — health-recheck W3 triage: dispatch TIME-SENSITIVE P1 FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD (getSystemStatus TE/Chromium no per-source deadline -> market-watcher smoke probe aborts at 02:00Z open) to dev-mcp-server. Minted alongside P2 FIX-AGENTSIGNALS-FROMAGENT-SCHEMA + P3 CLEAN-TI-DOC-PARAM-CODE-DRIFT (both backlog, WIP<=2 coding respected). 28 health-recheck reports 3181..3208 triaged; rest DEDUP to tracked/done_verified. DESIGN-GATHERER + DMS still HELD behind ARCH-CRON-SCHEDULER-RELIABILITY. PUSH held (PO out-of-band)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -759,8 +759,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T22:40:40Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-17T01:34:10Z",
+    "_updated_by": "po-s94",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12660,6 +12660,58 @@
         "tnb_finding": "F-BCTC-BANK-SCALAR-MAPPING (c97 HIGH)",
         "created_at": "2026-06-16T21:34:06Z",
         "created_by": "po"
+      },
+      {
+        "id": "FIX-AGENTSIGNALS-FROMAGENT-SCHEMA",
+        "title": "get_agent_signals({from_agent}) fails schema (`agent` Required) -> news-scout SELF_SIGNALS_CACHE empty every cycle",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts"
+        ],
+        "root_cause": "get_agent_signals zod schema marks `agent` as required even for sender-history calls that pass `from_agent`. LIVE 2026-06-17T01:31Z RAW-confirmed: get_agent_signals({from_agent:'news-scout'}) -> MCP -32602 invalid_type `agent` Required. news-scout's SELF_SIGNALS_CACHE warm-up (its self-history read) silently empties every cycle -> feedback/self-tuning permanently disabled.",
+        "fix_spec": "Make `agent` optional when `from_agent` is supplied (zod .refine or .or so at least one of agent/from_agent is present; query path already supports from_agent). GENERIC — no per-agent special-case.",
+        "generic_mandate": "Schema relaxation applies to any sender-history query, not a news-scout allowlist.",
+        "verification_gate": "LIVE: get_agent_signals({from_agent:'news-scout'}) returns rows (or empty array, not -32602); news-scout SELF_SIGNALS_CACHE populates. RAW-verify via gateway.",
+        "rebuild_required": true,
+        "source_reports": [
+          3202,
+          3203,
+          3204
+        ],
+        "dedup_note": "untracked — router RAW-confirmed the live -32602 + searched board (no agentSignals/from_agent task). Distinct from FACTORY-INFRA-agentsignal-* (those are confidence-default/SQL-binding refactors, not this required-param bug).",
+        "minted_by": "po-s94",
+        "minted_at": "2026-06-17T01:34:10Z"
+      },
+      {
+        "id": "CLEAN-TI-DOC-PARAM-CODE-DRIFT",
+        "title": "get_technical_indicators.md + get_price_history.md doc SSOT says param `ticker` but live server requires `code` (doc-only, 0 runtime broken)",
+        "type": "CLEAN",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "cross-service/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "docs/agents/tools/list/get_technical_indicators.md",
+          "docs/agents/tools/list/get_price_history.md",
+          "docs/agents/market-watcher.md"
+        ],
+        "root_cause": "Doc SSOT lists param=`ticker`; live tool schema requires `code`. Flow files already use `code` (working) so 0 runtime breakage (report 3204 confirms doc-only). market-watcher.md examples (lines ~147/177/208) carry the stale `ticker`.",
+        "fix_spec": "Correct the param name `ticker` -> `code` in the two list docs + the market-watcher.md examples. Doc-only, no code, no rebuild.",
+        "verification_gate": "grep shows no `ticker:` param example for get_technical_indicators/get_price_history in the listed docs.",
+        "rebuild_required": false,
+        "source_reports": [
+          3199,
+          3204
+        ],
+        "dedup_note": "untracked, cosmetic. Low priority — purely SSOT hygiene, no served-data impact.",
+        "minted_by": "po-s94",
+        "minted_at": "2026-06-17T01:34:10Z"
       }
     ],
     "closed_sprints": [
@@ -19589,6 +19641,35 @@
       }
     ],
     "ready": [
+      {
+        "id": "FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD",
+        "title": "get_system_status 60s timeout — TE/Chromium source-health probe has no per-source deadline -> market-watcher smoke probe (main.md:36) aborts every cycle at market open",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P1",
+        "blocking": true,
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/systemTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/news-analysis/sourceHealthTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/cycleBootstrapTool.ts"
+        ],
+        "root_cause": "getSystemStatus composes the source-health probe which awaits the TradingEconomics Chromium fetch with NO per-source timeout. When TE Chromium hangs (live: TE source Ngung, 55-56 consecutive errors) the entire get_system_status call blocks ~60s. market-watcher main.md:36 smoke-probes get_system_status step-0 and aborts-on-fail -> BUG telegram + EXIT every fire. Affects 6 flow files (market-watcher, system-auditor/tier1-probe, tran-ngoc-bau/bootstrap, unified-agent/market-bootstrap, po/channel-audit, po/market-group).",
+        "fix_spec": "GENERIC, no per-source allowlist. Option A: wrap each source-health probe (esp. TE/Chromium) in Promise.race(fetch, timeout(3000)) so one hung source degrades to a 'Ngung/timeout' row instead of blocking the whole tool. Option B (preferred for the smoke-probe consumers): repoint the market-watcher/po smoke probes to get_cycle_bootstrap which returns system_status in ~1ms without the live source-health fan-out. Ship whichever the architect/dev judges durable; the deadline must be < the gateway/agent smoke-probe timeout.",
+        "generic_mandate": "Per-source deadline applies to ALL source-health probes, not a TE-only special-case. No date/source allowlist.",
+        "verification_gate": "LIVE: get_system_status returns < 5s even with TE breaker open (force TE hang or probe during a TE-Ngung window); market-watcher smoke probe at the next 02:00Z open does NOT abort. RAW-verify via the gateway, not a green test only.",
+        "rebuild_required": true,
+        "time_sensitive": "before ~02:00Z market open",
+        "source_reports": [
+          3203,
+          3206
+        ],
+        "dedup_note": "untracked — no prior getSystemStatus/TE-Chromium/smoke-probe task on the board (router RAW-confirmed). report 3204 'BUG-4 RESOLVED via restart' is a false-clear: restart only frees the hung Chromium, the no-guard root recurs (report 3206 RECURRED 20:09Z).",
+        "minted_by": "po-s94",
+        "minted_at": "2026-06-17T01:34:10Z"
+      },
       {
         "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
         "type": "SPRINT-S",
