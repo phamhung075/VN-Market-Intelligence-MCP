@@ -154,3 +154,13 @@
 - mint dup would violate two-layer dedup (head_sha + failing-job set) + DRY
 **why-decision:** Signal head_sha=701923bc / run_id=27670009188 are the EXACT SHA+run that po-s98 minted FIX-CI-RED-2RED-084-VPS-FRESHN to cover 6h ago. `gh run view --log-failed` confirms identical disjoint set: 084-tool-market.test.ts + FIX-VPS-HEALTH-FRESHN.test.ts (13166 pass/53 skip/2 fail). CONFIRM-BEFORE-BLAME case (a) — not flaky (deterministic 2-file fail, both fail locally per po-s98), not new. Annotated existing task .ci_red_refires[] (idempotent), signal→processed/ (result=skipped-duplicate) + signals.db id 2192.
 **why-change:** no change from plan — existing P1 already groomed to ready[], gate intact; WIP unchanged at 0 active coding lanes; PUSH held out-of-band.
+
+### STEP po-S102 · po · 2026-06-17T09:36:12Z
+**task-id:** (ambient — dev-team triage tick, 7am-dispatcher off-cadence)
+**what-done:** Triaged 2 drained TNB c97 audit-handoffs + the OHLCV-P0 rebuild precondition; returned NOTHING (no BATCH).
+**what-considered:**
+- dispatch ops to rebuild mcp-server for the OHLCV 06-18 gate (spawn prompt flagged "load-bearing") vs already-done
+- mint a new FIX for F-MORNING-SEND-FAILED 502 vs fold into existing AC-FAILCLOSED
+- re-triage TNB c97 findings vs already-ACK'd at po-s91
+**why-decision:** Both OHLCV P0 rows ALREADY carry rebuild_shipped:true with router RAW-verify of running container (MERGE-ONLY + both scan-guards live, image .Created>commit, 12/12 UP) at po-s100 → rebuild precondition SATISFIED, ops dispatch would be redundant; done_verified correctly HELD to 2026-06-18 02:15Z market-open (a wait, not work). F-MORNING-SEND-FAILED 502 = same publish-transport-error class already covered by ARCH-HEADLESS-GATEWAY-COWORK-NOPOST AC-FAILCLOSED (Monday-gated, agents zone); chef-morning fired clean today (026ff5d3) → transient one-off, no new task. TNB c97 both findings ACK'd po-s91. pendingSignals=0, signal_queue NEW=0, dashboard empty, head idle, CI green.
+**why-change:** no change — nothing actionable; gateway unavailable in this subagent (false-infra mode A, dispatcher's calls prove gateway UP) so triaged on file+git ground-truth which was complete.
