@@ -58,3 +58,13 @@
 - Breadth+liquidity: extend get_market_snapshot vs separate tool — CHOSEN both: get_market_snapshot co-fetches breadth in parallel + new get_market_breadth for dedicated queries.
 **why-decision:** ON CONFLICT exclusion is atomic and safe for existing rows. Co-fetch costs zero extra network (same URL). Separate tool needed for agent direct-call without requesting stock codes.
 **why-change:** All 4 tasks in one session per task context (breadth+liquidity co-implementable in same file).
+
+### STEP dev-mcp-server-S7 · dev-mcp-server · 2026-06-17T01:58:00Z
+**task-id:** FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD
+**what-done:** Added `withSectionDeadline(label, work, 3000ms)` helper to systemTools.ts; wrapped ALL 4 async sections of `getSystemStatus()` generically; exported helper for unit-testing; 6-test TDD suite verifying AC-1..5.
+**what-considered:**
+- Option A: Per-source timeout inside sourceHealthTools (special-case TE/Chromium) — REJECTED: violates /goal#2 generic constraint; doesn't cover DB sections.
+- Option B: Single overall deadline on full `getSystemStatus()` — REJECTED: gives no granularity; one section budgets all others.
+- Option C: Per-section `Promise.race(work, deadline(3000ms))` applied to EVERY section — CHOSEN.
+**why-decision:** Option C is generic (no source allowlist), gives per-section budget diagnostic (timeout message labels section), and worst-case 4×3s=12s stays well under the 60s gateway limit.
+**why-change:** No change from PO triage — budget=3000ms as suggested; `withSectionDeadline` exported for testability (TDD requirement).

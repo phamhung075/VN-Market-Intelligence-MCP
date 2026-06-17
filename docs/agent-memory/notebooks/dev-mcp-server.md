@@ -1,98 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-16 · FIX-SIGNALS-STOCK-FULL-DETAIL — full finding_data + ISO created_at exposed on /api/signals/stock/:code
-
-**Task:** FIX-SIGNALS-STOCK-FULL-DETAIL (INFOCARD-EXPAND-FETCH epic)
-**Root cause:** GET /api/signals/stock/:code flattened the rich finding_data JSON into a single `detail` string and discarded finding_data, payload, source, and raw created_at (SQLite format 'YYYY-MM-DD HH:MM:SS' → Invalid Date on client).
-**Fix:** Extracted routes/stockSignalsHandler.ts — querySignalsForStock() (generic across all signal types: chain_catalyst, urgent_news, price_anomaly, price_confirmation, cross_validate, and any future type) + normalizeCreatedAt() (SQLite→ISO-8601 UTC). server.ts endpoint now delegates to handler; `detail` kept for back-compat; `finding_data`, `payload`, `source` added to every response item.
-**Tests:** 22 new ACs in FIX-SIGNALS-STOCK-FULL-DETAIL.test.ts (normalizeCreatedAt unit tests AC-9 + per-type finding_data shape AC-1/2/3/4/5/6/7/8 + shape invariants). tsc clean.
-**Commit:** pending | **rebuild_required:** yes (server.ts changed)
-
-Zone health: tsc clean, 164 tools intact, scheduler 3 cron.schedule, signals endpoint now returns full structured finding_data+source+ISO dates | HEALTHY
-
-## 2026-06-16 · FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS — fingerprint dedup gate wired into parallel scan jobs
-
-**Task:** FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS (M — REGRESSION, 14-26 duplicate HVN alerts/cycle)
-**Root cause:** taAlertScanJob + bbAlertScanJob used crypto.randomUUID() for IDs + plain INSERT (not OR IGNORE), so dedup on `id` was ineffective. The 4h SQL cooldown check is a TOCTOU race when both scans run concurrently via alertScanParallelJob. computeAlertFingerprint existed in alertDedup.ts but was never wired into either scan job.
-**Fix:** DB-level UNIQUE(fingerprint) constraint as authoritative single choke-point. Added computeScanAlertFingerprint(ticker, alertType, daySlot) → "scan:{t}:{a}:{YYYY-MM-DD}". Schema-alerts.ts: idempotent fingerprint TEXT UNIQUE migration. Both scan jobs: INSERT OR IGNORE + fingerprint in payload. Cooldown SQL kept as first-pass cost filter only.
-**Tests:** 6 new ACs in FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS.test.ts (parallel race AC-4 is critical); AC-6/AC-7 in 1307/1309 updated for correct per-day semantics. 125/125 across 13 alert-domain files. tsc clean.
-**Commit:** 75e7a80f | **rebuild_required:** true
-
-## 2026-06-15 · FIX-BCTC-ENRICH-SILENT-0ROWS — 0-rows enrich fails loud
-
-**Task:** FIX-BCTC-ENRICH-SILENT-0ROWS (P0 CO-OWNER surface: enrich orchestration)
-**Pattern learned:** Silent-swallow class — extraction fires, header inserts, rows=0, queue advances to done. Fix: read ACTUAL DB counts post-extraction (JOIN bctc_table_rows via financial_reports on action_code+sort_key); if both 0 → enrich_failed + logger.error + sendTelegramBug + continue.
-**Key:** sort_key = `${period_year}-${period_quarter}` (e.g. "2026-Q1"). bctc_table_rows joins via report_id FK so must go through financial_reports for the action_code filter.
-**Regression pattern:** 3 existing test files expected `done` on happy-path runs but had no extraction rows seeded. Fix: `seedExtractionResult(db, ticker, year, quarter)` in beforeEach or per-test — minimal financial_reports header + 1 bctc_table_rows row.
-**Commit:** d4a0dacc | **Tests:** 9 new ACs + 55/55 across 4 files | No push (PO's call)
-**Ops flag:** container REBUILD required before done_verified (worktree code not yet in live image)
-
-## 2026-06-16 · FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0 — aggregator migrated to writeOhlcvBatch
-
-**Task:** FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0 (RESUME — prior session died on transport, edits on disk)
-**Root class:** 4 corruption classes per behavioral gate RED (2026-06-16-RED.md)
-
-**Class 3 root (NEW FINDING):** PDN/NHD ÷1000 persists: prices in [100,999] bypass normalizeOhlcvToVnd (>=STOCK_MIN_VND=100). detectAndNormalizeScaleFromPrevClose needs prevClose>0 — PDN/NHD have NO prior real-volume row. prevCloseMap=0 → ratio check no-op. Cold-start gap; needs exchange reference-price seed (separate task).
-
-**Gate results:** tsc clean | 6/6 new pass | 29/29 existing pass | 13073 full / 54 pre-existing fail | tools=164 | sched=3
-**Live RAW:** VHM/VIC RSI healed (was 6.5/8.8, now 30.6/36.1). DCR/H11/DAG stranded pre-fix rows remain (FR-S1 blocks new re-creation).
-**Commit:** d4b532be | Image rebuilt 05:41Z | REBUILD DONE
-
-Zone health: tsc clean, 164 tools intact, scheduler 3 cron.schedule, VHM/VIC RSI real mid-band post-rebuild | HEALTHY
-
-## 2026-06-16 · FIX-OHLCV-STRANDED-ROWS-REPAIR-P1 — generic purge of synthetic flat seed bars
-
-**Task:** FIX-OHLCV-STRANDED-ROWS-REPAIR-P1 | Priority: P1 | Zone: apps/mcp-server/
-
-**Root surface:** allzeroOhlcvBackfill.ts — added purgeStrandedSeedRows(). No separate repair job needed: called synchronously at startScheduler startup (before ohlcvStartupProbe fire-and-forget). On next ops rebuild+restart the live named-volume DB is repaired in-place.
-
-**Shape predicate (GENERIC — no date literal, no ticker allowlist):**
-`volume=0 AND open=high AND high=low AND low=close`
-Covers Class 1 (DCR close=5900, H11 close=25700 — wrong-scale seeds) and Class 2 (DAG/DFF/POM close=0 — all-zero seeds). Safety: vol>0 candles never matched; ATC halt-day rows immune. Idempotent: second run deletes 0 rows.
-
-**Why delete not recompute-on-read:** /goal#1 — no fake data stays in DB. Future readers without the guard would re-serve poison. Delete is permanent; recompute-on-read is not.
-
-**Tests (7 cases in FIX-OHLCV-STRANDED-ROWS-REPAIR-P1.test.ts):**
-- Regression: exact DCR/H11/DAG 2026-06-16 rows planted → all 5 purged
-- Generic: XTICKER/ANOTHER on arbitrary past dates → deleted by shape alone
-- Safety: ABC vol=100000 O=H=L=C (halt day) → NOT deleted
-- Mixed: 3 real candles survive, 3 stranded deleted
-- Idempotent: second run = 0 deletions
-- Empty table: 0 deletions, no error
-- Class-1 scale-outlier: DCR prior real close survives, stranded seed gone
-
-**Gate results:** tsc clean (0 errors) | 73 pass / 0 fail (CONTAM-5/7 + P0 + ALLZERO + P1 suite) | tools=164 | sched=81
-**Commit:** d4dcb5c4 | **REBUILD_REQUIRED:** YES — repair executes at container startup against named-volume DB
-
-Zone health: tsc clean, 164 tools intact, scheduler 81 (cron.schedule+scheduleCron), purgeStrandedSeedRows wired at startup | HEALTHY
-
-## 2026-06-16 · FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0 — kill startup backfill's flat seed-bar emission
-
-**Task:** FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0 | Priority: P0 | Zone: apps/mcp-server/
-
-**Root confirmed:** `runOhlcvBackfill()` (called async fire-and-forget from `runOhlcvStartupProbe()` ~127s after boot) uses `INSERT OR IGNORE` directly — bypasses `writeOhlcvBatch` / FR-S1. VNDirect returns `O=H=L=C=reference_price, vol=0` for non-traded tickers → 636 flat bars re-seeded 2.5min post-boot (08:19Z), undoing the 08:16Z purge. `data_env='production'` (space-format `datetime('now')`) confirms the writer.
-
-**Fix: generic shape guard in the transaction loop (after normalizeOhlcvToVnd, before upsert):**
-`vol===0 AND norm.open===norm.high===norm.high===norm.low===norm.close` → skip, log at DEBUG.
-Applied AFTER normalize: thousand-scale flat bars (5.9→5900, still flat) also caught. Vol>0 discriminates halt-day candles (O=H=L=C) from placeholders — preserved correctly.
-
-**Injectable fetchFn:** Added `options.fetchFn` to `runOhlcvBackfill` signature for zero-network unit tests.
-
-**Tests (8 cases in FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0.test.ts):**
-- TC-1 (PRIMARY REGRESSION): 5 illiquid tickers + VNINDEX with flat vol=0 rows → ZERO rows written for today
-- TC-2: Thousand-VND flat seed (DCR 5.9→5900 normalized) not written
-- TC-3: Full-VND flat seed (H11 25700) not written
-- TC-4: All-zero flat seed (DAG 0=0=0=0) not written
-- TC-5: Real candle (vol>0, varied OHLC) IS written
-- TC-6: Historical real candle (past date) IS written
-- TC-7: Mixed batch — flat seeds rejected, real + halt-day candle written
-- TC-8: Boot sequence combined test — purgeStrandedSeedRows + runOhlcvBackfill → zero flat bars
-
-**Gate results:** tsc clean (0 errors) | 8/8 new pass | 13184 total / 0 fail | tools=164 | sched=3
-**Commit:** 448ce71c | **REBUILD_REQUIRED:** YES (ops must rebuild to activate the guard in the running container)
-
-Zone health: tsc clean, 164 tools intact, scheduler 3 cron.schedule (startupHelpers.ts wrapper) | HEALTHY
-
 ## 2026-06-16 · FIX-CI-RED-STANDING-1837A-1352A — CI red unblocked
 
 **Task:** FIX-CI-RED-STANDING-1837A-1352A (S — BLOCKING fleet push)
@@ -116,3 +23,21 @@ Zone health: tsc clean, 164 tools intact, scheduler 3 cron.schedule (startupHelp
 **REBUILD_REQUIRED:** YES — storeTradingStats SQL + new hose.ts function + get_market_breadth tool + new DB columns.
 
 Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
+
+## 2026-06-17 · FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD — per-section deadline added to getSystemStatus()
+
+**Task:** FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD (P1, TIME-SENSITIVE)
+**Root confirmed:** `getSystemStatus()` had no overall or per-section deadline. Any section that hung (e.g. DB lock during TE/Chromium scrape) blocked the aggregate for ~60s, causing market-watcher smoke probe to abort at 02:00Z open.
+**Fix:** Exported `withSectionDeadline(label, work, budgetMs=3000)` helper — races `work` against a `budgetMs` timer; on timeout returns honest "timeout/unknown" diagnostic string (never synthetic "ok"). Applied GENERICALLY to all 4 async sections in `getSystemStatus()`: DB_STATUS, SOURCE_HEALTH, DATA_FRESHNESS, RECENT_ERRORS. No source allowlist, no special-cases.
+**Worst-case wall time:** 4 × 3000ms = 12s — well below the 60s gateway limit.
+**Tests (6 ACs in FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD.test.ts):**
+- AC-1: stalled promise resolves within 200ms with "timeout" in result
+- AC-2: fast promise returns real content (no regression)
+- AC-4: timed-out result never contains "ok" as sole status word
+- AC-5: resolves within 3× budget for infinite promise
+- Integration: all section headers present in healthy path; completes within 10s
+**Gate results:** tsc clean (0 errors) | 6/6 new pass | 59/59 across 5 related files | tools=165 | sched=3
+**Docs updated:** docs/architecture/microservice/mcp-server/system.md — get_system_status row + invariant #7
+**REBUILD_REQUIRED:** YES — systemTools.ts changed; ops must rebuild container for live timeout guard to activate.
+
+Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule (startupHelpers.ts), withSectionDeadline deadline guard active | HEALTHY

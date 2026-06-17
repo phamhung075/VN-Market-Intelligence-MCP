@@ -12,7 +12,7 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 | Tool | Purpose | Key inputs | Downstream |
 |------|---------|-----------|-----------|
-| `get_system_status` | Unified system health: MCP server, VPS, data freshness, error summary | — | market.db (cron_job_runs) + VPS health checks |
+| `get_system_status` | Unified system health: MCP server, VPS, data freshness, error summary. Each of the 4 sections is guarded by a 3 000 ms per-section deadline (`withSectionDeadline`). A slow section degrades to honest "timeout/unknown" — never hangs the caller. | — | market.db (cron_job_runs) + VPS health checks |
 | `get_vps_proxy_health` | VPS proxy health and staleness check | — | market.db (market_prices.updated_at) |
 | `get_vps_service_health` | Individual VPS service status | service? | SSH health check (operator only) |
 | `restart_vps_service` | Restart a VPS systemd service | service | vps/sshExec.ts (operator only) |
@@ -57,3 +57,4 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 4. VPS staleness watchdog: 45-min threshold (vpsProxyWatchdogJob) + 6h market-hours threshold (priceUpdateWatchdogJob). Dual-layer coverage.
 5. Telegram /ask bot commands routing: `docs/protocols/ask-queue-protocol.md` + `docs/standards/telegram-commands.md`.
 6. `smart_compact` invokes a spawned compact sub-agent for Cowork context management.
+7. `get_system_status` per-section deadline: `withSectionDeadline(label, work, 3000ms)` wraps EVERY async section generically (no source allowlist). Max wall time ≈ 4 × 3s = 12s, well under the 60s gateway limit. Exported from `systemTools.ts` for unit-testing (FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD).

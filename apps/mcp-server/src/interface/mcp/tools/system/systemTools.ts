@@ -38,6 +38,42 @@ interface SystemLogRow {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Per-section bounded fetch deadline.
+ *
+ * Races `work` against a `budgetMs` timer. If `work` resolves within the
+ * budget, its value is returned unchanged. If the budget expires first, an
+ * honest "timeout/unknown" diagnostic string is returned — never synthetic
+ * "ok", never a hang.
+ *
+ * Applied GENERICALLY to EVERY async section in getSystemStatus(); no source
+ * or section is whitelisted or special-cased. A slow source degrades cleanly
+ * rather than blocking the aggregate.
+ *
+ * Exported for unit-testing (FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD).
+ *
+ * @param label    - Section label for the timeout message (diagnostic only).
+ * @param work     - The async work to race.
+ * @param budgetMs - Per-section deadline in milliseconds (default: 3000).
+ * @returns The work result, or a timeout diagnostic string.
+ */
+export function withSectionDeadline(
+  label: string,
+  work: Promise<string>,
+  budgetMs = 3000,
+): Promise<string> {
+  const deadline = new Promise<string>((resolve) =>
+    setTimeout(
+      () =>
+        resolve(
+          `[${label}] timeout/unknown — section exceeded ${budgetMs}ms deadline`,
+        ),
+      budgetMs,
+    ),
+  );
+  return Promise.race([work, deadline]);
+}
+
 /** Format bytes into a human-readable string. */
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -96,6 +132,17 @@ export interface SystemStatusOptions {
  * @param opts - Control options.
  * @returns Formatted plain-text report with labeled sections.
  */
+/**
+ * Per-section deadline budget in milliseconds.
+ *
+ * 3 000 ms is comfortably below the market-watcher smoke-probe / gateway
+ * timeout (~60 s) and well within any reasonable interactive SLA.  Each of
+ * the four sections in getSystemStatus() races against this budget
+ * independently — so the theoretical worst-case wall time is
+ * 4 × SECTION_DEADLINE_MS  ≈  12 s, still safely under the 60 s gateway limit.
+ */
+const SECTION_DEADLINE_MS = 3_000;
+
 export async function getSystemStatus(opts: SystemStatusOptions): Promise<string> {
   const sections: string[] = [];
 
@@ -105,239 +152,271 @@ export async function getSystemStatus(opts: SystemStatusOptions): Promise<string
   sections.push(`=== VN TRADING WINDOW ===\n${tradingWindowLabel()}`);
 
   // ── Section 1: DB STATUS ──────────────────────────────────────────────────
+  // Wrapped in withSectionDeadline so a slow/locked DB cannot block the
+  // aggregate beyond SECTION_DEADLINE_MS.
   sections.push("=== DB STATUS ===");
-  try {
-    await initDatabase();
-    const db = getDb();
+  sections.push(
+    await withSectionDeadline(
+      "DB_STATUS",
+      (async (): Promise<string> => {
+        await initDatabase();
+        const db = getDb();
 
-    const dbLines: string[] = [
-      `Generated: ${new Date().toISOString()}`,
-      `uptime: ${formatUptime(Math.floor(process.uptime()))}`,
-      "",
-    ];
+        const dbLines: string[] = [
+          `Generated: ${new Date().toISOString()}`,
+          `uptime: ${formatUptime(Math.floor(process.uptime()))}`,
+          "",
+        ];
 
-    // Circuit Breaker Status
-    dbLines.push("--- Circuit Breaker Status ---");
-    const stats = getAllBreakerStats();
-    const stateIcon = (s: string) => s === "closed" ? "[OK]" : s === "open" ? "[OPEN]" : "[HALF]";
-    for (const [source, info] of Object.entries(stats)) {
-      dbLines.push(
-        `  ${source.padEnd(20)} ${stateIcon(info.state).padEnd(8)} failures: ${info.failures}`,
-      );
-    }
-    dbLines.push("");
-
-    // Database Info
-    dbLines.push("--- Database ---");
-    const dbPath = Bun.env["DB_PATH"] ?? "./data/market.db";
-    dbLines.push(`  path:  ${dbPath}`);
-    dbLines.push(`  size:  ${getDbFileSize(dbPath)}`);
-    const walPath = `${dbPath}-wal`;
-    dbLines.push(`  WAL:   ${getDbFileSize(walPath)}`);
-    dbLines.push("");
-
-    // Recent System Errors (last 10 unresolved from SQLite)
-    dbLines.push("--- Recent System Errors (last 10 unresolved) ---");
-    let errorRows: SystemLogRow[] = [];
-    try {
-      errorRows = db
-        .query<SystemLogRow, []>(
-          `SELECT id, timestamp, level, source, message, resolved
-           FROM system_logs
-           WHERE level IN ('error', 'warn') AND resolved = 0
-           ORDER BY timestamp DESC
-           LIMIT 10`,
-        )
-        .all();
-    } catch {
-      // system_logs table may not exist yet
-    }
-
-    if (errorRows.length === 0) {
-      dbLines.push("  (none)");
-    } else {
-      for (const row of errorRows) {
-        const ts = row.timestamp.slice(0, 19);
-        dbLines.push(`  [${row.level.toUpperCase()}] ${ts}  ${row.source}: ${row.message.slice(0, 120)}`);
-      }
-    }
-    dbLines.push("");
-
-    // Alert Stats (last 24h)
-    dbLines.push("--- Alert Stats (last 24h) ---");
-    try {
-      const since24h = new Date(Date.now() - 24 * 3600_000).toISOString();
-      const totalAlerts = db.query<{ cnt: number }, [string]>(
-        "SELECT COUNT(*) as cnt FROM alerts WHERE triggered_at >= ?",
-      ).get(since24h);
-      const highCritical = db.query<{ cnt: number }, [string]>(
-        "SELECT COUNT(*) as cnt FROM alerts WHERE triggered_at >= ? AND severity IN ('high', 'critical')",
-      ).get(since24h);
-      const unnotified = db.query<{ cnt: number }, []>(
-        "SELECT COUNT(*) as cnt FROM alerts WHERE notified_telegram = 0 AND severity IN ('high', 'critical')",
-      ).get();
-      const lastTelegram = db.query<{ triggered_at: string }, []>(
-        "SELECT triggered_at FROM alerts WHERE notified_telegram = 1 ORDER BY triggered_at DESC LIMIT 1",
-      ).get();
-
-      dbLines.push(`  Total (24h):        ${totalAlerts?.cnt ?? 0}`);
-      dbLines.push(`  HIGH/CRITICAL (24h): ${highCritical?.cnt ?? 0}`);
-      dbLines.push(`  Unnotified:         ${unnotified?.cnt ?? 0}`);
-      // NOTE: this only tracks alerts-table notifications (price/volume alerts).
-      // Briefings, digests, feedback, WORK/BUG messages do NOT update this row.
-      // "never" here means "no HIGH/CRITICAL alert has been Telegram-notified",
-      // NOT "Telegram is broken". See telegramEnvStatus below for liveness.
-      dbLines.push(`  Last alert→Telegram: ${lastTelegram?.triggered_at ?? "never (no alert notified yet)"}`);
-    } catch {
-      dbLines.push("  (alerts table not ready)");
-    }
-    dbLines.push("");
-
-    // Telegram env (liveness) — reads env at call-time, no secrets printed.
-    dbLines.push("--- Telegram Env (live) ---");
-    const telegramEnv = {
-      TELEGRAM_BOT_TOKEN: (Bun.env.TELEGRAM_BOT_TOKEN ?? "").length > 0,
-      TELEGRAM_INFO_MARKET_GROUP_ID: (Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID ?? "").length > 0,
-      TELEGRAM_INFO_WORK_CHANNEL_ID: (Bun.env.TELEGRAM_INFO_WORK_CHANNEL_ID ?? "").length > 0,
-      TELEGRAM_REPORT_BUG_CHANNEL_ID: (Bun.env.TELEGRAM_REPORT_BUG_CHANNEL_ID ?? "").length > 0,
-    };
-    for (const [k, v] of Object.entries(telegramEnv)) {
-      dbLines.push(`  ${k}: ${v ? "SET" : "MISSING"}`);
-    }
-    dbLines.push("");
-
-    // DB Audit
-    dbLines.push("--- DB Audit ---");
-    try {
-      const auditRow = db.query<{
-        last_daily_audit_at: string | null;
-        last_weekly_audit_at: string | null;
-      }, []>(
-        "SELECT last_daily_audit_at, last_weekly_audit_at FROM audit_state WHERE id = 1",
-      ).get();
-
-      const pendingFeedback = db.query<{ cnt: number }, []>(
-        "SELECT COUNT(*) as cnt FROM agent_feedback WHERE status = 'new'",
-      ).get();
-      const openWarnings = db.query<{ cnt: number }, []>(
-        "SELECT COUNT(*) as cnt FROM agent_feedback WHERE status = 'new' AND priority IN ('high', 'critical')",
-      ).get();
-
-      dbLines.push(`  last_daily_audit:   ${auditRow?.last_daily_audit_at ?? "never"}`);
-      dbLines.push(`  last_weekly_audit:  ${auditRow?.last_weekly_audit_at ?? "never"}`);
-      dbLines.push(`  pending_feedback:   ${pendingFeedback?.cnt ?? 0} new items`);
-      dbLines.push(`  open_warnings:      ${openWarnings?.cnt ?? 0} high/critical items`);
-    } catch {
-      dbLines.push("  (audit_state table not yet created — no audit has run)");
-    }
-    dbLines.push("");
-
-    // Auto-tracked Indicators
-    dbLines.push("--- Auto-tracked Indicators ---");
-    try {
-      const indicators = db.query<{ indicator: string; value: number; cnt: number }, []>(
-        `SELECT indicator, value, (SELECT COUNT(*) FROM tracked_indicators t2 WHERE t2.indicator = t1.indicator) as cnt
-         FROM tracked_indicators t1
-         WHERE extracted_at = (SELECT MAX(extracted_at) FROM tracked_indicators t3 WHERE t3.indicator = t1.indicator)
-         GROUP BY indicator ORDER BY cnt DESC LIMIT 10`,
-      ).all();
-      if (indicators.length === 0) {
-        dbLines.push("  (none yet — will populate after first news cycle)");
-      } else {
-        for (const ind of indicators) {
-          dbLines.push(`  ${ind.indicator.padEnd(22)} ${String(ind.value).padEnd(12)} (${ind.cnt} data points)`);
+        // Circuit Breaker Status
+        dbLines.push("--- Circuit Breaker Status ---");
+        const stats = getAllBreakerStats();
+        const stateIcon = (s: string) => s === "closed" ? "[OK]" : s === "open" ? "[OPEN]" : "[HALF]";
+        for (const [source, info] of Object.entries(stats)) {
+          dbLines.push(
+            `  ${source.padEnd(20)} ${stateIcon(info.state).padEnd(8)} failures: ${info.failures}`,
+          );
         }
-      }
-    } catch {
-      dbLines.push("  (table not ready)");
-    }
-    dbLines.push("");
+        dbLines.push("");
 
-    // Threshold Readiness (σ data)
-    dbLines.push("--- Threshold Readiness (σ data) ---");
-    try {
-      const commodityCount = db.query<{ cnt: number }, []>(
-        "SELECT COUNT(DISTINCT fetched_at) as cnt FROM commodity_prices_history",
-      ).get();
-      const sbvCount = db.query<{ cnt: number }, []>(
-        "SELECT COUNT(DISTINCT fetched_at) as cnt FROM sbv_rates_history",
-      ).get();
-      const need = 30;
-      const cPts = commodityCount?.cnt ?? 0;
-      const sPts = sbvCount?.cnt ?? 0;
-      const cReady = cPts >= need;
-      const sReady = sPts >= need;
-      dbLines.push(`  Commodity σ:  ${cPts}/${need} points ${cReady ? "✅ READY" : `⏳ ${need - cPts} more needed`}`);
-      dbLines.push(`  SBV rates σ:  ${sPts}/${need} points ${sReady ? "✅ READY" : `⏳ ${need - sPts} more needed`}`);
+        // Database Info
+        dbLines.push("--- Database ---");
+        const dbPath = Bun.env["DB_PATH"] ?? "./data/market.db";
+        dbLines.push(`  path:  ${dbPath}`);
+        dbLines.push(`  size:  ${getDbFileSize(dbPath)}`);
+        const walPath = `${dbPath}-wal`;
+        dbLines.push(`  WAL:   ${getDbFileSize(walPath)}`);
+        dbLines.push("");
 
-      const stockCounts = db.query<{ code: string; cnt: number }, []>(
-        `SELECT code, COUNT(*) as cnt FROM market_prices_history
-         GROUP BY code ORDER BY cnt DESC LIMIT 10`,
-      ).all();
-      if (stockCounts.length > 0) {
-        for (const s of stockCounts) {
-          dbLines.push(`  ${s.code.padEnd(8)} σ:  ${s.cnt}/${need} ${s.cnt >= need ? "✅" : "⏳"}`);
+        // Recent System Errors (last 10 unresolved from SQLite)
+        dbLines.push("--- Recent System Errors (last 10 unresolved) ---");
+        let errorRows: SystemLogRow[] = [];
+        try {
+          errorRows = db
+            .query<SystemLogRow, []>(
+              `SELECT id, timestamp, level, source, message, resolved
+               FROM system_logs
+               WHERE level IN ('error', 'warn') AND resolved = 0
+               ORDER BY timestamp DESC
+               LIMIT 10`,
+            )
+            .all();
+        } catch {
+          // system_logs table may not exist yet
         }
-      }
-    } catch {
-      dbLines.push("  (history tables not ready)");
-    }
-    dbLines.push("");
 
-    // Summary
-    const openBreakers = Object.values(stats).filter(s => s.state === "open").length;
-    const halfOpenBreakers = Object.values(stats).filter(s => s.state === "half-open").length;
-    dbLines.push("--- Summary ---");
-    dbLines.push(`  Open circuits:      ${openBreakers}`);
-    dbLines.push(`  Half-open circuits: ${halfOpenBreakers}`);
-    dbLines.push(`  Unresolved errors:  ${errorRows.length}`);
+        if (errorRows.length === 0) {
+          dbLines.push("  (none)");
+        } else {
+          for (const row of errorRows) {
+            const ts = row.timestamp.slice(0, 19);
+            dbLines.push(`  [${row.level.toUpperCase()}] ${ts}  ${row.source}: ${row.message.slice(0, 120)}`);
+          }
+        }
+        dbLines.push("");
 
-    sections.push(dbLines.join("\n"));
-  } catch (err) {
-    logger.error("[getSystemStatus] DB STATUS error", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    sections.push(`Error retrieving DB status: ${(err as Error).message}`);
-  }
+        // Alert Stats (last 24h)
+        dbLines.push("--- Alert Stats (last 24h) ---");
+        try {
+          const since24h = new Date(Date.now() - 24 * 3600_000).toISOString();
+          const totalAlerts = db.query<{ cnt: number }, [string]>(
+            "SELECT COUNT(*) as cnt FROM alerts WHERE triggered_at >= ?",
+          ).get(since24h);
+          const highCritical = db.query<{ cnt: number }, [string]>(
+            "SELECT COUNT(*) as cnt FROM alerts WHERE triggered_at >= ? AND severity IN ('high', 'critical')",
+          ).get(since24h);
+          const unnotified = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(*) as cnt FROM alerts WHERE notified_telegram = 0 AND severity IN ('high', 'critical')",
+          ).get();
+          const lastTelegram = db.query<{ triggered_at: string }, []>(
+            "SELECT triggered_at FROM alerts WHERE notified_telegram = 1 ORDER BY triggered_at DESC LIMIT 1",
+          ).get();
+
+          dbLines.push(`  Total (24h):        ${totalAlerts?.cnt ?? 0}`);
+          dbLines.push(`  HIGH/CRITICAL (24h): ${highCritical?.cnt ?? 0}`);
+          dbLines.push(`  Unnotified:         ${unnotified?.cnt ?? 0}`);
+          // NOTE: this only tracks alerts-table notifications (price/volume alerts).
+          // Briefings, digests, feedback, WORK/BUG messages do NOT update this row.
+          // "never" here means "no HIGH/CRITICAL alert has been Telegram-notified",
+          // NOT "Telegram is broken". See telegramEnvStatus below for liveness.
+          dbLines.push(`  Last alert→Telegram: ${lastTelegram?.triggered_at ?? "never (no alert notified yet)"}`);
+        } catch {
+          dbLines.push("  (alerts table not ready)");
+        }
+        dbLines.push("");
+
+        // Telegram env (liveness) — reads env at call-time, no secrets printed.
+        dbLines.push("--- Telegram Env (live) ---");
+        const telegramEnv = {
+          TELEGRAM_BOT_TOKEN: (Bun.env.TELEGRAM_BOT_TOKEN ?? "").length > 0,
+          TELEGRAM_INFO_MARKET_GROUP_ID: (Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID ?? "").length > 0,
+          TELEGRAM_INFO_WORK_CHANNEL_ID: (Bun.env.TELEGRAM_INFO_WORK_CHANNEL_ID ?? "").length > 0,
+          TELEGRAM_REPORT_BUG_CHANNEL_ID: (Bun.env.TELEGRAM_REPORT_BUG_CHANNEL_ID ?? "").length > 0,
+        };
+        for (const [k, v] of Object.entries(telegramEnv)) {
+          dbLines.push(`  ${k}: ${v ? "SET" : "MISSING"}`);
+        }
+        dbLines.push("");
+
+        // DB Audit
+        dbLines.push("--- DB Audit ---");
+        try {
+          const auditRow = db.query<{
+            last_daily_audit_at: string | null;
+            last_weekly_audit_at: string | null;
+          }, []>(
+            "SELECT last_daily_audit_at, last_weekly_audit_at FROM audit_state WHERE id = 1",
+          ).get();
+
+          const pendingFeedback = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(*) as cnt FROM agent_feedback WHERE status = 'new'",
+          ).get();
+          const openWarnings = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(*) as cnt FROM agent_feedback WHERE status = 'new' AND priority IN ('high', 'critical')",
+          ).get();
+
+          dbLines.push(`  last_daily_audit:   ${auditRow?.last_daily_audit_at ?? "never"}`);
+          dbLines.push(`  last_weekly_audit:  ${auditRow?.last_weekly_audit_at ?? "never"}`);
+          dbLines.push(`  pending_feedback:   ${pendingFeedback?.cnt ?? 0} new items`);
+          dbLines.push(`  open_warnings:      ${openWarnings?.cnt ?? 0} high/critical items`);
+        } catch {
+          dbLines.push("  (audit_state table not yet created — no audit has run)");
+        }
+        dbLines.push("");
+
+        // Auto-tracked Indicators
+        dbLines.push("--- Auto-tracked Indicators ---");
+        try {
+          const indicators = db.query<{ indicator: string; value: number; cnt: number }, []>(
+            `SELECT indicator, value, (SELECT COUNT(*) FROM tracked_indicators t2 WHERE t2.indicator = t1.indicator) as cnt
+             FROM tracked_indicators t1
+             WHERE extracted_at = (SELECT MAX(extracted_at) FROM tracked_indicators t3 WHERE t3.indicator = t1.indicator)
+             GROUP BY indicator ORDER BY cnt DESC LIMIT 10`,
+          ).all();
+          if (indicators.length === 0) {
+            dbLines.push("  (none yet — will populate after first news cycle)");
+          } else {
+            for (const ind of indicators) {
+              dbLines.push(`  ${ind.indicator.padEnd(22)} ${String(ind.value).padEnd(12)} (${ind.cnt} data points)`);
+            }
+          }
+        } catch {
+          dbLines.push("  (table not ready)");
+        }
+        dbLines.push("");
+
+        // Threshold Readiness (σ data)
+        dbLines.push("--- Threshold Readiness (σ data) ---");
+        try {
+          const commodityCount = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(DISTINCT fetched_at) as cnt FROM commodity_prices_history",
+          ).get();
+          const sbvCount = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(DISTINCT fetched_at) as cnt FROM sbv_rates_history",
+          ).get();
+          const need = 30;
+          const cPts = commodityCount?.cnt ?? 0;
+          const sPts = sbvCount?.cnt ?? 0;
+          const cReady = cPts >= need;
+          const sReady = sPts >= need;
+          dbLines.push(`  Commodity σ:  ${cPts}/${need} points ${cReady ? "✅ READY" : `⏳ ${need - cPts} more needed`}`);
+          dbLines.push(`  SBV rates σ:  ${sPts}/${need} points ${sReady ? "✅ READY" : `⏳ ${need - sPts} more needed`}`);
+
+          const stockCounts = db.query<{ code: string; cnt: number }, []>(
+            `SELECT code, COUNT(*) as cnt FROM market_prices_history
+             GROUP BY code ORDER BY cnt DESC LIMIT 10`,
+          ).all();
+          if (stockCounts.length > 0) {
+            for (const s of stockCounts) {
+              dbLines.push(`  ${s.code.padEnd(8)} σ:  ${s.cnt}/${need} ${s.cnt >= need ? "✅" : "⏳"}`);
+            }
+          }
+        } catch {
+          dbLines.push("  (history tables not ready)");
+        }
+        dbLines.push("");
+
+        // Summary
+        const openBreakers = Object.values(stats).filter(s => s.state === "open").length;
+        const halfOpenBreakers = Object.values(stats).filter(s => s.state === "half-open").length;
+        dbLines.push("--- Summary ---");
+        dbLines.push(`  Open circuits:      ${openBreakers}`);
+        dbLines.push(`  Half-open circuits: ${halfOpenBreakers}`);
+        dbLines.push(`  Unresolved errors:  ${errorRows.length}`);
+
+        return dbLines.join("\n");
+      })().catch((err: unknown) => {
+        logger.error("[getSystemStatus] DB STATUS error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return `Error retrieving DB status: ${(err as Error).message}`;
+      }),
+      SECTION_DEADLINE_MS,
+    ),
+  );
 
   // ── Section 2: SOURCE HEALTH ──────────────────────────────────────────────
+  // Wrapped in withSectionDeadline for uniform deadline enforcement across all
+  // sections (getAllHealth() is synchronous/in-memory but the wrapper ensures
+  // no future async refactor can silently remove the bound).
   sections.push("\n=== SOURCE HEALTH ===");
-  try {
-    const sources = globalSourceTracker.getAllHealth();
-    sections.push(formatSourceHealthTable(sources));
-  } catch (err) {
-    logger.error("[getSystemStatus] SOURCE HEALTH error", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    sections.push(`Error retrieving source health: ${(err as Error).message}`);
-  }
+  sections.push(
+    await withSectionDeadline(
+      "SOURCE_HEALTH",
+      (async (): Promise<string> => {
+        const sources = globalSourceTracker.getAllHealth();
+        return formatSourceHealthTable(sources);
+      })().catch((err: unknown) => {
+        logger.error("[getSystemStatus] SOURCE HEALTH error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return `Error retrieving source health: ${(err as Error).message}`;
+      }),
+      SECTION_DEADLINE_MS,
+    ),
+  );
 
   // ── Section 3: DATA FRESHNESS ─────────────────────────────────────────────
+  // Wrapped in withSectionDeadline so a slow/locked DB cannot block the
+  // aggregate beyond SECTION_DEADLINE_MS.
   sections.push("\n=== DATA FRESHNESS ===");
-  try {
-    await initDatabase();
-    const db = getDb();
-    const freshness = await getDataFreshness(db);
-    sections.push(freshness);
-  } catch (err) {
-    logger.error("[getSystemStatus] DATA FRESHNESS error", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    sections.push(`Error retrieving data freshness: ${(err as Error).message}`);
-  }
+  sections.push(
+    await withSectionDeadline(
+      "DATA_FRESHNESS",
+      (async (): Promise<string> => {
+        await initDatabase();
+        const db = getDb();
+        return getDataFreshness(db);
+      })().catch((err: unknown) => {
+        logger.error("[getSystemStatus] DATA FRESHNESS error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return `Error retrieving data freshness: ${(err as Error).message}`;
+      }),
+      SECTION_DEADLINE_MS,
+    ),
+  );
 
   // ── Section 4: RECENT ERRORS (optional) ──────────────────────────────────
+  // Wrapped in withSectionDeadline for uniform enforcement — getErrorSummary
+  // reads from the global in-memory log buffer (synchronous), but the wrapper
+  // provides a safety net for any future async refactor.
   if (opts.includeErrors) {
     sections.push("\n=== RECENT ERRORS ===");
-    try {
-      const errorContent = getErrorSummary(opts.errorLines);
-      sections.push(errorContent);
-    } catch (err) {
-      logger.error("[getSystemStatus] RECENT ERRORS error", {
-        error: err instanceof Error ? err.message : String(err),
-      });
-      sections.push(`Error retrieving error log: ${(err as Error).message}`);
-    }
+    sections.push(
+      await withSectionDeadline(
+        "RECENT_ERRORS",
+        (async (): Promise<string> => {
+          return getErrorSummary(opts.errorLines);
+        })().catch((err: unknown) => {
+          logger.error("[getSystemStatus] RECENT ERRORS error", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          return `Error retrieving error log: ${(err as Error).message}`;
+        }),
+        SECTION_DEADLINE_MS,
+      ),
+    );
   }
 
   return sections.join("\n");
