@@ -227,7 +227,11 @@ describe("TASK-1943a AC-2 — enricher processes reset pending rows", () => {
     expect(row?.status).toBe("url_not_found");
   });
 
-  it("leaves reset rows pending if attempts=0 and no URL found (first pass)", async () => {
+  it("increments attempts to 1 on reached-source 0-URL first pass, stays pending until MAX", async () => {
+    // All fetchers reach the source and return empty (0 URLs found).
+    // This is a completed network-level discovery — the new contract ALWAYS increments
+    // attempts. With attempts=0→1 < MAX_ENRICH_ATTEMPTS=5, status stays 'pending'
+    // (only after 5 exhausted attempts does it become 'url_not_found').
     const db = makeMinimalDb();
 
     db.prepare(
@@ -252,9 +256,9 @@ describe("TASK-1943a AC-2 — enricher processes reset pending rows", () => {
       )
       .get() as { status: string; attempts: number } | null;
 
-    // attempts=0 on first pass — stays pending at 0 (no penalty on first try)
+    // attempts incremented 0→1 on first reached-source pass; still below MAX (5) so status stays pending
     expect(row?.status).toBe("pending");
-    expect(row?.attempts).toBe(0);
+    expect(row?.attempts).toBe(1);
   });
 });
 

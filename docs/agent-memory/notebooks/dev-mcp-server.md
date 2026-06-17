@@ -1,5 +1,14 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-17 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — CHANGES_REQUESTED test-only fix
+
+**Task:** CHANGES_REQUESTED → QA found 2 pre-existing test files asserting old buggy contract (attempts stays 0 on first-pass 0-URL discovery). Production code (commit 3eebf3bc) confirmed QA-correct — NOT touched.
+**Fix 1 (FIX-BCTC-PIPELINE.test.ts:184):** Renamed test "does not increment attempts field" → "increments attempts on reached-source 0-URL first pass". Changed `.toBe(0)` → `.toBe(1)`. Updated inline comment to explain reached-source vs pre-network throw distinction.
+**Fix 2 (BCTC-1943-queue-reset-and-retry.test.ts:257):** Renamed test "leaves reset rows pending if attempts=0 and no URL found (first pass)" → "increments attempts to 1 on reached-source 0-URL first pass, stays pending until MAX". Changed `.toBe(0)` → `.toBe(1)`. Kept `status=pending` assertion (attempts=1 < MAX=5 → still pending). Updated comment.
+**Discrimination preserved:** TERM-4 (all fetchers throw ECONNREFUSED → attempts stays 0) untouched. No ticker allowlist or date literal introduced.
+**CI post-fix:** 13174 pass / 42 skip / 21 fail / 8 failed files. The 2 stale-test files are GONE. Remaining 8 = environmental set (pollNews/rss/e2e-briefing, Chromium-absent/flaky-network). **tsc: 0 errors.**
+**Board:** CHANGES_REQUESTED→REVIEW, next_agent→qa, qa_blocking_issues cleared, rebuild_required:true kept (ops rebuild gated on QA re-approval, then router does live SLA probe).
+
 ## 2026-06-17 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — terminalization fix
 
 **Task:** FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (P1/HIGH, rerouted from dev-vps-crawls)

@@ -168,7 +168,10 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
     expect(getStatus(db, id2)).toBe("pending");
   });
 
-  it("does not increment attempts field", async () => {
+  it("increments attempts on reached-source 0-URL first pass", async () => {
+    // _fetchHsx reaches the source and returns an empty array (0 URLs found).
+    // This is a completed network-level discovery, NOT a pre-network throw, so
+    // the new contract ALWAYS increments attempts. attempts goes 0→1 after one pass.
     const db = makeDb();
     insertRow(db, "VNM", "pending", null);
 
@@ -181,7 +184,7 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
     const row = db
       .prepare("SELECT attempts FROM bctc_vps_queue WHERE action_code = 'VNM'")
       .get() as { attempts: number };
-    expect(row.attempts).toBe(0);
+    expect(row.attempts).toBe(1);
   });
 
   it("processes items and populates source_url on discovery success", async () => {
