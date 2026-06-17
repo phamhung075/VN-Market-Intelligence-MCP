@@ -1,0 +1,35 @@
+{
+  "from": "ci-health-probe",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-06-17T08:29:19Z",
+  "dedup_key": "ci_red:701923bc79df8c72d06392889844c667112b79b4:bun test",
+  "payload": {
+    "check_id": "CI-RED-701923bc",
+    "head_sha": "701923bc79df8c72d06392889844c667112b79b4",
+    "run_id": 27670009188,
+    "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/27670009188",
+    "conclusion": "failure",
+    "failing_jobs": [
+      {
+        "name": "bun test",
+        "conclusion": "failure",
+        "jobId": 81832040427
+      }
+    ],
+    "fingerprint": "e42be66ab39c303e9ed27790c8ac05658ca752a670e56706224c9292ec28bd12",
+    "zone_owner": "dev-team (CI fix)",
+    "summary": "CI RED on main HEAD 701923bc79df8c72d06392889844c667112b79b4: bun test",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "_processed": {
+    "fingerprint": "3aeca0d6b1087b22abe8b8284a135b7ca89073ab0c9baee9860520493e0b8a6d",
+    "processedAt": "20260617T083235Z",
+    "processedBy": "po-s101",
+    "result": "skipped-duplicate",
+    "dedup_target": "FIX-CI-RED-2RED-084-VPS-FRESHN",
+    "note": "re-fire of ci_red on SHA 701923bc / run 27670009188 already tracked by ready[] blocking P1; 2 fail (084-tool-market + FIX-VPS-HEALTH-FRESHN) — folded, no new fixer"
+  }
+}
