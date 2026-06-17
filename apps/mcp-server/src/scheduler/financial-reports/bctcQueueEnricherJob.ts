@@ -485,30 +485,33 @@ export async function runBctcQueueEnricherJob(opts: {
         // No URL found.
         logger.warn(`[bctcQueueEnricher] 0 URLs found for ticker ${item.action_code} — scrape may be stale or source unavailable`);
 
-        // Task 1782: rows that have already been attempted MAX_ENRICH_ATTEMPTS
-        // times are marked 'url_not_found' so they stop blocking the queue.
-        // Rows below the threshold stay 'pending' for the next cron cycle.
+        // FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH:
+        // When discovery REACHES the source and returns 0 URLs (a real
+        // network-level discovery, NOT a pre-network error), ALWAYS increment
+        // attempts regardless of current value.  This is generic — no per-ticker
+        // allowlist, no date literal.  Any genuinely-absent filing accumulates
+        // attempts across cron cycles → reaches MAX_ENRICH_ATTEMPTS → marked
+        // url_not_found (honest terminal) → drops out of pending → SLA stops
+        // climbing.
         //
-        // Fix (FIX-BCTC-PIPELINE Bug 2): do NOT increment attempts on the very
-        // first pass (attempts === 0). A source_url=NULL row with attempts=0 has
-        // never had a successful network-level discovery attempt; incrementing on
-        // the first miss would penalise rows that are simply new. Only rows that
-        // have already been tried at least once (attempts > 0) are incremented.
+        // The previous `attempts===0` special-case else-branch prevented increment
+        // on the first pass, causing genuinely-absent rows to stay stuck at
+        // attempts=0 forever and cycle through 210+ zero-url cycles without ever
+        // terminalising (root cause of bctc SLA FALSE-CRITICAL).
+        //
+        // The pre-network error path (catch block below) still does NOT increment,
+        // so transient network/source-down failures do not penalise rows.
         if (item.attempts >= MAX_ENRICH_ATTEMPTS) {
           markUrlNotFoundStmt.run(item.id);
           logger.warn("[bctcQueueEnricher] no URL after max attempts — marking url_not_found", {
             ticker: item.action_code,
             attempts: item.attempts,
           });
-        } else if (item.attempts > 0) {
+        } else {
           incrementAttemptsStmt.run(item.id);
-          logger.debug("[bctcQueueEnricher] no URLs found, leaving pending", {
+          logger.debug("[bctcQueueEnricher] no URLs found, incrementing attempts", {
             ticker: item.action_code,
             attempts: item.attempts + 1,
-          });
-        } else {
-          logger.debug("[bctcQueueEnricher] no URLs found on first pass, leaving pending at 0", {
-            ticker: item.action_code,
           });
         }
         result.partialFailures++;
