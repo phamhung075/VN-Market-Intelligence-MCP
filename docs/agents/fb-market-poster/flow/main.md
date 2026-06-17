@@ -1,4 +1,4 @@
-<!-- size-justification: 718L — +229L from 489L: Task A added get_technical_indicators (≥15 tickers), get_legal_risk_signals, get_sentiment_trend, get_earnings_calendar to STEP 1b and widened ticker_intel to ALL watchlist active tickers; Task B inserted STEP 2b (TNB 6-layer mandatory synthesis gate with CHEF shortcut branch and $tnb_synthesis schema, Layers 1–6 each fully specified); Task C inserted STEP 2c (T-45 adversarial gate, 5 hard-fail rules T1–T5, severity drop/soften outcome handling); Task D rewired STEP 3 compose to read from $tnb_synthesis.conviction.calls[] and Layer-6 known_gaps preventing fabrication of null fields; RETURN and notebook entry extended with synthesis/T-45 fields; must-not-change items (STEP 4a jargon gate, 3-section structure, 16 validation checks, STEP 0, STEP 5–8, SELF-IDENTITY GUARD) are byte-intact -->
+<!-- size-justification: 758L — +40L from 718L: FIX-FB-POSTER-FABRICATES-STALE-EOD: (1) STEP 1b now hard-requires live get_market_snapshot per-ticker fetch for the recap spine with FAIL-LOUD honest-gap path; CHEF morning data demoted to narrative-only, never numeric spine; (2) STEP 1b anti-fabrication rule: stale CHEF per-ticker % FORBIDDEN in Tóm tắt nhanh; (3) STEP 4b data-integrity plausibility gate added (sibling FIX-FB-POST-DATA-INTEGRITY-GATE will build scripts/fb-data-integrity-gate.sh; gate blocks on non-zero exit; honest-gap on gate unavailable); (4) RETURN block extended with data-integrity gate result; memory_ref: feedback_fb_poster_fabricates_when_data_thin; prior size-justification entries preserved -->
 # FB Market Poster — Main Flow
 
 ## SELF-IDENTITY GUARD (read first — non-negotiable)
@@ -63,9 +63,16 @@ Read the following files. Each read is guarded: if file missing or <50 chars →
 
 ---
 
-## STEP 1b — Live enrichment via vn-market tools
+## STEP 1b — Live enrichment via vn-market tools (HARD-REQUIRED for recap spine)
 
-**Purpose:** Notebooks may lag or be sparse. Before composing, call live tools to fill any missing quantitative fields. Run ALL calls; skip individual call if it errors (log + continue).
+**Purpose:** ALL per-ticker % moves and numeric market figures for the Tóm tắt nhanh recap spine MUST come from live tool calls made THIS cycle. Notebooks and CHEF dishes may inform NARRATIVE and CONTEXT only — they are FORBIDDEN as the numeric source for any per-ticker price change, index level, breadth count, or liquidity figure in the recap.
+
+**ANTI-FABRICATION RULE (failure mode: feedback_fb_poster_fabricates_when_data_thin):**
+- CHEF EOD/morning notebooks may be stale or blocked. When they are, the poster MUST NOT use any per-ticker % or index level from a CHEF notebook entry as if it were current session data.
+- A per-ticker move figure (e.g. "VIC −6.6%, VHM −8.5%") MUST trace to a live `get_market_snapshot` or `get_ticker_intelligence` call in THIS cycle. If the tool call fails or returns no data for a ticker → write an honest gap: "công cụ chưa trả số cho [TICKER] phiên này" — NEVER invent or carry a stale figure.
+- Any per-ticker % that exceeds ±7% on HOSE (the daily price limit) is physically impossible and is a fabrication signal. If a CHEF source or working-memory figure would produce such a value, DISCARD it and write an honest gap.
+
+Run ALL calls; skip individual call if it errors (log + continue).
 
 ```
 # Indices + snapshot
@@ -562,6 +569,35 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
    forbidden token (e.g. `sentiment`) into a temp file → gate MUST exit 1 and print [FAIL].
    A gate that exits 0 on a planted violation is a false-green and must be fixed before use.
 
+**STEP 4b — DATA-INTEGRITY PLAUSIBILITY GATE**
+
+This gate runs IN ADDITION to the jargon gate. It checks numeric plausibility — the jargon gate passes both fabricated and real numbers equally (known failure: feedback_fb_poster_fabricates_when_data_thin, feedback_fb_poster_gate_false_green).
+
+The gate script is `scripts/fb-data-integrity-gate.sh` (authored by sibling task FIX-FB-POST-DATA-INTEGRITY-GATE).
+
+Required execution sequence:
+```bash
+if [ -f "scripts/fb-data-integrity-gate.sh" ]; then
+  TMPFILE=$(mktemp /tmp/fb-post-integrity-XXXXXX.txt)
+  printf '%s' "$POST_BODY" > "$TMPFILE"
+  bash scripts/fb-data-integrity-gate.sh "$TMPFILE" "$POST_DATE"
+  INTEGRITY_EXIT=$?
+  rm -f "$TMPFILE"
+else
+  INTEGRITY_EXIT=0  # gate not yet deployed — log unavailability, proceed
+  echo "[fb-market-poster] STEP 4b: scripts/fb-data-integrity-gate.sh not found — skipping plausibility gate this cycle (deploy pending FIX-FB-POST-DATA-INTEGRITY-GATE)"
+fi
+```
+- Gate exit 0 = PASS → proceed to check 4 (post length).
+- Gate exit non-zero = BLOCK → fix every flagged violation in the post body; re-run gate. Do NOT write the file while gate exits non-zero.
+- If gate script missing → log warning, treat as PASS for this cycle only (gate pending deploy).
+- Violations the gate checks (reference — gate script is authoritative):
+  - Any per-ticker HOSE move > ±7% (above daily price limit = impossible = fabrication)
+  - Any "bán tháo / selloff" narrative when same-session breadth shows net-positive advancers and zero floor hits
+  - If gate BLOCKS but violation is a live tool value (not a CHEF carry-forward): override is permitted with a note in RETURN explaining the anomaly and its live source.
+
+Paste the VERBATIM one-line gate stdout into the RETURN block (INTEGRITY GATE field).
+
 4. Post length: minimum 150 words, maximum 1300 words.
    - Count words in the post body (exclude the file header line and the disclaimer separator lines from the count).
    - If word count < 150 → composition failed (EXIT with bug: "[fb-market-poster] Post too short: {N} words").
@@ -681,7 +717,9 @@ Notebook entry format:
 - Conviction calls: {N} total; dropped by T-45: {N} (list tickers); softened: {N} (list tickers)
 - known_gaps: breadth={null/value}, liquidity_tybillion={null/value}, foreign_net_tybillion={null/value}
 - Validation: passed {N}/16 checks (section-order: {pass/fail}, earned-prediction: {pass/fail}, recap-not-dominant: {pass/fail}, hashtag-block: {pass/fail}, detail-floor fields available: {list})
+- Live data spine: per-ticker moves from live get_market_snapshot={yes/no}; honest-gap tickers: {list or none}
 - Jargon gate: PASS (0 violations) | BLOCKED (N violations, post not written)
+- Data-integrity gate: PASS | BLOCK (violations: ...) | SKIP (gate script pending deploy)
 - Status: {published/failed}
 
 ## Lessons learned
@@ -706,7 +744,9 @@ PIPELINE: complete
 QUALITY: full | partial
 SYNTHESIS: clock_phase={value} / regime={value} / regime_confidence={HIGH/MEDIUM/LOW} / chef_shortcut={yes/no}
 T45_AUDIT: {N} claims checked; {N} dropped; {N} softened
+LIVE_DATA_SPINE: per-ticker moves sourced from live get_market_snapshot={yes/no} | tickers with honest-gap fallback: {list or none}
 JARGON GATE: [paste full stdout of fb-jargon-gate.sh here — zero-violations line required]
+INTEGRITY GATE: [PASS | BLOCK — violations: ... | SKIP — gate script not yet deployed]
 ```
 
 If any step failed gracefully (skipped source, etc.):

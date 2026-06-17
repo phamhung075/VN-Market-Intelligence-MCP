@@ -1,5 +1,19 @@
 # Agent Father — Notebook
 
+## 2026-06-17 — FIX-FB-POSTER-FABRICATES-STALE-EOD (P1)
+
+- Task: Edit fb-market-poster flow + init — anti-fabrication rules for per-ticker numeric spine
+- Files modified: docs/agents/fb-market-poster/flow/main.md (718L→758L, +40L) + docs/agents/fb-market-poster/init.md (version bump + 2 responsibility rules + 2 forbidden_output entries) + docs/handoffs/FIX-FB-POSTER-FABRICATES-STALE-EOD-developer.md (new)
+- Change A: STEP 1b renamed "HARD-REQUIRED for recap spine"; ANTI-FABRICATION RULE block added — CHEF notebooks are narrative-only; per-ticker % must trace to live get_market_snapshot this cycle; FAIL-LOUD honest-gap ("công cụ chưa trả số") when tool fails; ±7% HOSE sentinel discards physically-impossible values
+- Change B: STEP 4b DATA-INTEGRITY PLAUSIBILITY GATE added after STEP 4a jargon gate; references scripts/fb-data-integrity-gate.sh (sibling task FIX-FB-POST-DATA-INTEGRITY-GATE); non-zero exit = BLOCK; gate-not-found = SKIP log (graceful pending deploy)
+- Change C: RETURN block extended with LIVE_DATA_SPINE and INTEGRITY GATE fields
+- Change D: STEP 8 notebook template extended with live-data-spine and data-integrity-gate entries
+- Change E: init.md version 2026-06-17; responsibilities + forbidden_outputs extended with fabrication prohibitions
+- Task lane: ready → review (orch-state updated atomically)
+- Handoff: docs/handoffs/FIX-FB-POSTER-FABRICATES-STALE-EOD-developer.md
+- agent-md-factory: P-1 (guide-flows.md §6.1) ✓, P-2 SSOT no doubles ✓, P-4 frontmatter line-1 ✓, P-5 lazy-load check (inline is appropriate — gate run every cycle) ✓, P-6 tree-DAG no cycles ✓; Q-1 re-grep ✓, Q-3 size cap (758L, size-justification present) ✓
+- commit-boundary: RULE 1 explicit stage ✓, RULE 2 zone check (docs/agents/ + docs/handoffs/ only) ✓
+
 ## 2026-06-16 — AF-1-LEADER-LOCK-BACKSTOP-DEFER (Root A gatherer double-fire fix)
 
 - Task: Edit leader-lock.md — insert Backstop-Window Defer Gate (new error/timeout branch)
