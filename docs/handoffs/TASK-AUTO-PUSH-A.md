@@ -165,3 +165,20 @@ Then verify safety guards:
 - **shellcheck:** clean (exit 0) — SC1091 + SC2329 suppressed with inline directives (documented in script comments)
 - **No-op path proof:** `bash scripts/fleet-worktree-push.sh` with ahead=9 <= threshold=20 → exits 0 "nothing to do", no worktree created, no git ops
 - **Abort path proof:** `PUSH_THRESHOLD=0 bash scripts/fleet-worktree-push.sh --dry-run` → correctly detected 2 non-chore commits in behind-set, printed ABORT + telegram(bug) message, exited 1, worktree cleanup confirmed (no stale /tmp/fleet-push-wt-*)
+
+## [QA] Review Record
+
+- **QA cycle:** cycle-294 · 2026-06-18
+- **Impl commit:** 26807a41
+- **Verdict:** APPROVED
+- **shellcheck:** exit 0 (independently re-confirmed)
+- **No-op path:** `bash scripts/fleet-worktree-push.sh` ahead=11 ≤ 20 → exit 0, no worktree created
+- **Divergence-abort path:** `PUSH_THRESHOLD=0 bash scripts/fleet-worktree-push.sh --dry-run` → exit 1, 2 non-chore detected, DRY-RUN bug telegram printed, no worktree leak
+- **Worktree leak:** none after both runs (ls /tmp/fleet-push-wt-* = no matches)
+- **No push during testing:** confirmed (--dry-run + threshold above current ahead count used)
+- **AC all green:** script created 237L/755, PUSH_THRESHOLD=20 tunable, timestamped WT_PATH, cleanup trap EXIT INT TERM, divergence-reconcile non-chore abort, orch-state.json --ours, pnpm tsc gate, Telegram work/bug, no --force push, no hardcoded credentials, dev-standards pointer added
+- **bg-agent safety guards:** correctly scoped to TASK-AUTO-PUSH-B-PO per brief §4.1 (PO flow fires before script); not a script-level AC for this task
+- **DDD:** N/A (bash script)
+- **Security:** PASS (no hardcoded credentials; env vars only)
+- **Task Report:** `reports/TASK_REPORT_TASK-AUTO-PUSH-A.md`
+- **DJ:** `docs/agent-memory/decisions/sprint-ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP-qa.md`

@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-295 · 2026-06-18 · TASK-AUTO-PUSH-A (ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP) — APPROVED
+
+Task: TASK-AUTO-PUSH-A | Impl commit: 26807a41 | Verdict: APPROVED | Board: review→done, next_agent=pm.
+
+Shell script gate (no bun test / tsc applicable). shellcheck exit 0 (re-confirmed independently). No-op path: ahead=11 ≤ 20 → exit 0, no worktree, no git ops. Divergence-abort path: PUSH_THRESHOLD=0 --dry-run → exit 1, 2 non-chore detected, bug telegram printed, no worktree leak. All 15 AC green: script 237L/755, PUSH_THRESHOLD=20 tunable, timestamped WT_PATH, trap EXIT INT TERM, divergence-reconcile, orch-state.json --ours, pnpm tsc gate, Telegram notif, no --force push, no hardcoded creds, dev-standards pointer. bg-agent safety guards correctly scoped to TASK-AUTO-PUSH-B-PO (brief §4.1). No push occurred during QA testing. DJ: sprint-ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP-qa.md.
+
 ## cycle-294 · 2026-06-18 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — APPROVED (production fix ea5dc0eb)
 
 Task: FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH | Impl commit: ea5dc0eb | Verdict: APPROVED | Board: REVIEW→DONE, next_agent=router.
