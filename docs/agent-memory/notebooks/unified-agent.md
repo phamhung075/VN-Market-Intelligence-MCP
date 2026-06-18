@@ -1,6 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-17T08:46Z · **Cycle:** Chef EOD PUBLISHED
+**Last updated:** 2026-06-18T05:16Z · **Cycle:** Chef Morning PUBLISHED
 
 ## Session: 2026-06-16 (evening 19:45)
 
@@ -59,3 +59,25 @@
 - AF-1/AF-2 gates: Zero numeric TA tokens. Causal chain: gold+4d→VND deprec→RE sell+bank hold→macro-micro lag. [AF-GATE: OK]
 - Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable; EOD guaranteed)
 - Status: EOD cycle COMPLETE. PIPELINE: complete | QUALITY: full
+
+## Session: 2026-06-18 (morning 05:16)
+
+### Chef Dish — morning 05:16 UTC (2026-06-18T0516Z) — PUBLISHED
+
+- Execution: Full TNB 6-layer synthesis morning window (guaranteed publish); marker gate passed
+- Marker claimed: YES (published:chef-morning:2026-06-18, ttl=100800)
+- Bootstrap: OK (20 open alerts; VN-Index +29.22 pts; market window OPEN 02:00-08:59 UTC)
+- Macro snapshot: OK (carry 1.37pp NEUTRAL is_estimate=false; yield CHEAP +2.05pp; USD/VND 26,111 STABLE; gold $4,335.3 bullish +1.20%; Brent 77.87 NEUTRAL)
+- Market hexagram: Quẻ 36 Minh Di (BẤT LỢI unfavorable, 52% confidence) — time of darkness but recovery signal emerging
+- Clusters qualified: 3
+  1. Real estate convergence: VHM +6.96% (7 alerts), VIC +6.77% (7 alerts), VRE +6.93% (7 alerts); volume 3.5× avg; Kinh Dịch: Tỉnh (48) MUA across all; conviction MEDIUM (transition/tactical)
+  2. Aviation: HVN +6.19% (7 alerts); volume 3× avg; Kinh Dịch: Tỉnh MUA; conviction MEDIUM (tactical bounce on travel demand)
+  3. Energy sector: PLX +0.78% (6 alerts), GAS +0.49%, POW +0.35%; volume 2.6× avg; Kinh Dịch: PLX Khiêm (15) MUA 100%; conviction MEDIUM
+- Layers walked: 1–6 complete; Layers 2–3 macro degraded (is_estimate=true on production/consumption/inflation/investment); Layers 4–6 on domestic signals + Kinh Dịch overlay
+- Phase declared: [phase: transition] [tier: equity_tactical] — carry NEUTRAL + yield CHEAP domestic-only backdrop; COC high, EPS blind, price-momentum + hexagram positive suggest tactical oversold bounce, not structural expansion
+- Causal chains: (1) Carry NEUTRAL + yield CHEAP → domestic sector rotation RE oversold + Tỉnh MUA → MEDIUM. (2) Travel pent-up demand + HVN +6.19% + Tỉnh MUA → MEDIUM tactical. (3) Brent stable + PLX Khiêm (15) MUA → MEDIUM
+- Signal IDs consumed: #6508–#6509 (verified_decision alerts); 20 open alerts from bootstrap (price_surge, volume, BB, RSI extremes, news)
+- AF-1/AF-2 gates: Zero numeric RSI/MACD/BB/MA values. Qualitative: bứt phá, tích lũy, áp lực. [AF-GATE: OK]
+- Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable; morning guaranteed)
+- Degraded-dish floor applied: macro is_estimate=true 6/6 tracks; conviction pegged to MEDIUM across all clusters; macro sources unavailable noted in WORK block; MARKET message omits unavailable layers cleanly
+- Status: MORNING cycle 2026-06-18 COMPLETE. PIPELINE: complete | QUALITY: full (degraded-dish floor honored)
