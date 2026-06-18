@@ -96,3 +96,16 @@
 - Disjoint-failure-set: 17 failing files, 0 overlap with commit's 4 files (2 test + notebook + orch-state).
 **why-decision:** APPROVED. toBe(1) correct for reached-source 0-URL path; TERM-4 catch-path no-increment left untouched; all 17 failing files are pre-existing environmental (network timeouts, a42d0835 revert schema drift, deprecated test). rebuild_required:true preserved for ops.
 **why-change:** No change from plan — prior CHANGES_REQUESTED was solely for stale test assertions; those are now fixed.
+
+---
+
+### STEP qa-S9 · qa · 2026-06-18T00:50:00Z
+**task-id:** FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH
+**what-done:** Production fix ea5dc0eb QA gate: removed resetQ1UrlNotFound() from initFinancialReportsTables() in schema-financial-reports.ts; CI per-file-isolation 13190/6 vs baseline 13179/17 (net +11 pass, -11 fail, 0 overlap); all 8 Q1-2026 rows live at url_not_found/attempts=7; zero_url_consecutive_cycles=243 STOPPED at 00:00Z cycle (idle path).
+**what-considered:**
+- Container image .Created (23:17Z) < commit ea5dc0eb (23:41Z): dev wrote code→built image→then committed; container confirmed to have fix text at /app/src/infrastructure/db/schema-financial-reports.ts line 695 "startup reset REMOVED".
+- Live DB: 8 rows BDI/DAG/DLC/JSH/SIS/VDC/VEA/VNH all url_not_found/attempts=7; 65 total done rows untouched; zero_url_consecutive_cycles not updated since 00:00Z (idle-queue path = fix working).
+- Genericity: Arm-2 query uses `attempts < 6` numeric cap (no per-ticker allowlist, no date literal) — confirmed generic.
+- Failing files: 083-tool-analysis, 102-job-news-poll, 1227-source-health-empty-result, 1324-push-news-all-sources, TASK17-PAGE13 — all disjoint from 3 changed files; all present in baseline.
+**why-decision:** APPROVED. All DoD criteria independently verified live. Tests +11 net improvement. tsc clean. DDD PASS. Security PASS. mock-guard PASS. Container has fix. 8 rows terminal. Counter stopped.
+**why-change:** No change from plan — fix is durable, generic, and live-verified.

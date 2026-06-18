@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-294 · 2026-06-18 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — APPROVED (production fix ea5dc0eb)
+
+Task: FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH | Impl commit: ea5dc0eb | Verdict: APPROVED | Board: REVIEW→DONE, next_agent=router.
+
+Production fix: resetQ1UrlNotFound() removed from initFinancialReportsTables() in schema-financial-reports.ts. TERM-8 regression guard added (seeds url_not_found rows→re-runs initDatabase()→asserts rows stay terminal). CI per-file isolation: 13190/42skip/6fail vs baseline 13179/42/17 (net +11 pass, -11 fail). Failing files (5): 083-tool-analysis, 102-job-news-poll, 1227-source-health-empty-result, 1324-push-news-all-sources, TASK17-PAGE13 — ZERO overlap with 3 changed files; all in baseline. tsc: 0 errors. DDD PASS. Security PASS. mock-guard PASS (exit 0). Live DB (named volume): all 8 Q1-2026 rows url_not_found/attempts=7; 65 done untouched; zero_url_consecutive_cycles=243 STOPPED (idle-queue path). Container: fix text confirmed at /app/src/infrastructure/db/schema-financial-reports.ts:695. Genericity: Arm-2 uses `attempts<6` numeric cap only — no allowlist, no date literal. DJ: sprint-FE-PAGE-REORG-qa.md §qa-S9.
+
 ## cycle-293 · 2026-06-17 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — APPROVED (re-validation)
 
 Task: FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH | Test-fix commit: 97546591 | Production commit: 3eebf3bc (UNTOUCHED) | Verdict: APPROVED | Board: in_progress[REVIEW]/next_agent=qa → in_progress[REVIEW]/next_agent=ops | rebuild_required:true preserved.

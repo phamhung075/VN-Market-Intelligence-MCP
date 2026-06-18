@@ -1,24 +1,37 @@
 ## Task Report FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH
-changed: [apps/mcp-server/src/__tests__/FIX-BCTC-PIPELINE.test.ts:187, apps/mcp-server/src/__tests__/BCTC-1943-queue-reset-and-retry.test.ts:261]
-tests: 13204 pass / 45 fail / 42 skip | tsc: 0 errors | ddd: PASS (test-only change) | security: PASS (test-only change)
+date: 2026-06-18 (cycle-294)
+changed: [apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts:692-706, apps/mcp-server/src/__tests__/FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH.test.ts:298-336, apps/mcp-server/src/__tests__/BCTC-1943-queue-reset-and-retry.test.ts:3-5]
+tests: 13190 pass / 42 skip / 6 fail (per-file isolation) | baseline: 13179/42/17 | net: +11 pass, -11 fail | tsc: 0 errors | ddd: PASS | security: PASS
 verdict: APPROVED
 
-### Re-validation (cycle-293) — test contract fix only
-Commit under review: 97546591
-Production fix commit: 3eebf3bc (UNTOUCHED — git log -1 confirmed)
-Scope: 2 test files + dev notebook + orch-state board flip. No production code.
+### Production Fix (ea5dc0eb)
+Removed `resetQ1UrlNotFound(db)` call from `initFinancialReportsTables()` in schema-financial-reports.ts.
+Function kept exported and marked `@deprecated`; Arm-2 grace-period query in COMBINED_SQL provides generic bounded retry (attempts < 6, 7-day window).
 
-New assertions verified first-hand:
-- FIX-BCTC-PIPELINE.test.ts:187 — `expect(row.attempts).toBe(1)` on reached-source empty ([]). _fetchHsx returns [] = network-level discovery completes with 0 URLs → increment. CORRECT.
-- BCTC-1943-queue-reset-and-retry.test.ts:261 — `expect(row?.attempts).toBe(1)` + status="pending" on all-mockFetchEmpty sources. All mocks reach source and return [] → increment; attempts=1 < MAX=5 → stays pending. CORRECT.
+### TERM-8 Regression Guard (new test)
+FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH.test.ts: seeds url_not_found rows (attempts=6) → re-runs initDatabase() → asserts rows remain url_not_found/attempts=6 post-init. 9/0 pass.
 
-Discrimination verified: TERM-4 (ECONNREFUSED catch path = pre-network throw = no increment) is LEFT UNTOUCHED. test at FIX-BCTC-PIPELINE.test.ts:155 asserts only status="pending" not attempts, which is correct because mockFail throws before reaching source.
+### Full CI Results (per-file isolation, P=8)
+Baseline (pre-fix): 13179 pass / 42 skip / 17 fail
+With fix (ea5dc0eb): 13190 pass / 42 skip / 6 fail
+Net: +11 pass / -11 fail — no new failures introduced.
+Failing files (5 files, 6 total): 083-tool-analysis, 102-job-news-poll, 1227-source-health-empty-result, 1324-push-news-all-sources, TASK17-PAGE13 — ZERO overlap with 3 changed files; all present in baseline.
 
-2-file targeted run: 24 pass / 0 fail.
+### Live DB Verification (named volume vn-market-intelligence-mcp_market_data)
+All 8 genuinely-absent Q1-2026 rows: status=url_not_found, attempts=7 (BDI, DAG, DLC, JSH, SIS, VDC, VEA, VNH)
+65 total done rows across all periods: UNTOUCHED.
+zero_url_consecutive_cycles=243, last_updated=2026-06-18 00:00:56 UTC: STOPPED CLIMBING.
+Idle-queue path fires when all 8 rows excluded from Arm-2 (attempts>=6 > cap of 5).
 
-Full suite 45 fails — all 17 failing files DISJOINT from commit 97546591's 4 changed files:
-- Network timeout (5000ms+): 102-job-news-poll, 1146-insider-transactions, 1518-foreign-flow-ohlcv, TSU-DEV-U5, 1324-push-news-all-sources, 1892a-pushNewsHandler, 1898b-rss-degradation, 251-mcp-tools, RAPID-B2-get-market-cap — Chromium-absent/flaky-network
-- Schema pre-existing (a42d0835 revert 2026-06-08): 1113-vps-proxy-health, VPT-1-vps-proxy-health-endpoint, 1193-push-prices-persist, 1858c-logvpspush-fix, 1405b-bctc-vps-fixes, 235-telegram-send-merge, 1875c-record-signal-outcome-routing
-- Deprecated stale contract: 1302-technical-indicators (deprecated path)
+### Container Verification
+/app/src/infrastructure/db/schema-financial-reports.ts line 695: "startup reset REMOVED" — fix confirmed live.
+Developer workflow: write→build image (23:17Z)→commit (23:41Z); image .Created precedes commit by 24min; fix content is present.
 
-Zero overlap with changed files. rebuild_required:true remains (ops must rebuild mcp-server container for production fix 3eebf3bc to take effect).
+### Genericity (/goal#2)
+COMBINED_SQL Arm-2: `attempts < 6 AND status='url_not_found' AND last_attempt < datetime('now', '-7 days')` — numeric cap only, no ticker allowlist, no date literal. Any genuinely-absent ticker at any period terminates generically.
+
+### Deferred
+NODE-CRON DOUBLE-FIRE: explicitly out of scope per DoD — tracked in ARCH-CRON-SCHEDULER-RELIABILITY.
+
+### Merge Status
+APPROVED — router to perform final live RAW-verify before done_verified flip.
