@@ -211,9 +211,22 @@ export function normalizeOhlcvToVnd(type: "stock" | "index", v: Ohlcv): Ohlcv {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ScaleDetectionResult {
-  /** Whether a scale correction was applied */
+  /** Whether a ÷1000 scale correction was applied */
   corrected: boolean;
-  /** Normalized OHLCV values (same as input if no correction) */
+  /**
+   * Whether the bar was rejected as implausible-magnitude (×N direction where N >= SCALE_DETECTION_RATIO).
+   *
+   * FIX-OHLCV-SCALE-X1000-AUTO-REPAIR: the ×1000 direction (current >> prevClose)
+   * cannot be safely auto-repaired at write-time because N is not guaranteed to be
+   * exactly 1000 (live incident: VNM 2026-06-01 was ×1225×, not ×1000).
+   * The correct response is to REJECT the bar and leave an honest gap.
+   *
+   * Rejection criterion: current.close / prevClose >= SCALE_DETECTION_RATIO (50).
+   * This threshold is symmetric with the ÷1000 detection (prevClose / current >= 50).
+   * It catches all implausible inflations regardless of being a clean power of 1000.
+   */
+  rejected: boolean;
+  /** Normalized OHLCV values (same as input if no correction or rejection) */
   ohlcv: Ohlcv;
   /** Detection reason for logging */
   reason?: string;
@@ -227,16 +240,31 @@ export interface ScaleDetectionResult {
  * fails when all OHLC fields are in the 100-999 range (looks valid but is actually
  * thousand-scale for expensive stocks like VIC/VHM).
  *
- * Detection rule:
- *   If prevClose > 0 AND current close < prevClose / SCALE_DETECTION_RATIO:
- *     - The row is thousand-scale (off by ~1000×)
- *     - Multiply ALL four fields by 1000 (WHOLE-ROW scaling)
+ * Detection rules (symmetric — both directions checked):
+ *
+ *   ÷1000 direction (current << prevClose):
+ *     If prevClose > 0 AND prevClose / current.close >= SCALE_DETECTION_RATIO:
+ *       - The row is thousand-scale (off by ~1000×)
+ *       - Multiply ALL four fields by 1000 (WHOLE-ROW scaling)
+ *       - Returns { corrected: true, rejected: false }
+ *
+ *   ×N direction (current >> prevClose) — FIX-OHLCV-SCALE-X1000-AUTO-REPAIR:
+ *     If prevClose > 0 AND current.close / prevClose >= SCALE_DETECTION_RATIO:
+ *       - The bar is implausibly inflated (e.g., VNM 2026-06-01: 72500000 vs prevClose ~59200)
+ *       - N is NOT guaranteed to be exactly 1000 (live incident: ×1225×), so auto-repair
+ *         is UNSAFE. Reject the bar and leave an honest gap (write-no-row per /goal#1).
+ *       - Returns { corrected: false, rejected: true }
+ *
+ * Note on FR-G2: the post-write sanity scanner (ohlcvSanityCheckJob) uses a threshold
+ * of 500 to flag ×1000 class rows. The write-time threshold (50) is more aggressive,
+ * consistent with the ÷1000 detection. This ensures implausible bars are caught
+ * BEFORE they land in daily_ohlcv — not merely detected after the fact.
  *
  * @param type      "stock" | "index" — indices are exempt
  * @param v         Current OHLCV row
  * @param prevClose Previous day's close price (full-VND expected); 0 or undefined = skip detection
  *
- * @returns ScaleDetectionResult with corrected OHLCV and detection reason
+ * @returns ScaleDetectionResult with corrected/rejected OHLCV and detection reason
  */
 export function detectAndNormalizeScaleFromPrevClose(
   type: "stock" | "index",
@@ -245,26 +273,25 @@ export function detectAndNormalizeScaleFromPrevClose(
 ): ScaleDetectionResult {
   // Indices are exempt — their values span a wider range naturally
   if (type === "index") {
-    return { corrected: false, ohlcv: v };
+    return { corrected: false, rejected: false, ohlcv: v };
   }
 
   // No previous close available — cannot detect scale; return unchanged
   if (!prevClose || prevClose <= 0) {
-    return { corrected: false, ohlcv: v };
+    return { corrected: false, rejected: false, ohlcv: v };
   }
 
   // Skip if current values are obviously invalid (zero or negative)
   if (v.close <= 0) {
-    return { corrected: false, ohlcv: v };
+    return { corrected: false, rejected: false, ohlcv: v };
   }
 
-  // Detection: if close is < 1/SCALE_DETECTION_RATIO of prevClose, it's thousand-scale
-  // Example: VIC prevClose=196000, current close=195.5 → ratio = 1002× → thousand-scale
-  const ratio = prevClose / v.close;
-
-  if (ratio >= SCALE_DETECTION_RATIO) {
+  // ── ÷1000 direction: prevClose >> current (current is thousand-scale) ──────
+  // Example: VIC prevClose=196000, current close=195.5 → ratio=1002× → ×1000
+  const divRatio = prevClose / v.close;
+  if (divRatio >= SCALE_DETECTION_RATIO) {
     // Thousand-scale detected — correct by multiplying ALL fields by 1000
-    const corrected: Ohlcv = {
+    const correctedOhlcv: Ohlcv = {
       open: v.open * 1000,
       high: v.high * 1000,
       low: v.low * 1000,
@@ -273,11 +300,40 @@ export function detectAndNormalizeScaleFromPrevClose(
 
     return {
       corrected: true,
-      ohlcv: corrected,
-      reason: `scale_correction: prevClose=${prevClose} current=${v.close} ratio=${ratio.toFixed(1)} → ×1000`,
+      rejected: false,
+      ohlcv: correctedOhlcv,
+      reason: `scale_correction: prevClose=${prevClose} current=${v.close} ratio=${divRatio.toFixed(1)} → ×1000`,
     };
   }
 
-  // No correction needed
-  return { corrected: false, ohlcv: v };
+  // ── ×N direction: current >> prevClose (implausible inflation) ───────────
+  // FIX-OHLCV-SCALE-X1000-AUTO-REPAIR: reject bars inflated by ≥ SCALE_DETECTION_RATIO×.
+  //
+  // Example: VNM 2026-06-01 close=72500000 vs prevClose=59200 → ratio=1224×  → REJECT
+  // Example: AAA YESTERDAY close=7260000 vs prevClose=7260 → ratio=1000× → REJECT
+  //
+  // Auto-repair is UNSAFE because N is not guaranteed to be exactly 1000
+  // (÷1000 would give 72500, which may still be wrong for the specific stock).
+  // Writing a wrong value is worse than an honest gap (/goal#1 no-fake-data).
+  //
+  // The close field is used for the ratio check. The high field could also be
+  // inflated independently (e.g., open=59200 normal, high=72500000 inflated)
+  // — check BOTH to catch mixed-field inflation regardless of close.
+  const upRatioClose = v.close / prevClose;
+  const upRatioHigh  = v.high  / prevClose;
+  const upRatioMax   = Math.max(upRatioClose, upRatioHigh);
+
+  if (upRatioMax >= SCALE_DETECTION_RATIO) {
+    return {
+      corrected: false,
+      rejected: true,
+      ohlcv: v, // unchanged — caller must write-no-row (leave honest gap)
+      reason:
+        `implausible_magnitude_reject: prevClose=${prevClose} close=${v.close} high=${v.high} ` +
+        `max_ratio=${upRatioMax.toFixed(1)} >= ${SCALE_DETECTION_RATIO} → reject, leave honest gap`,
+    };
+  }
+
+  // No correction or rejection needed
+  return { corrected: false, rejected: false, ohlcv: v };
 }

@@ -442,18 +442,28 @@ describe("AC-T3: ×1000 class — inflated value (7260000) rejected/normalized b
     db.close();
   });
 
-  it("T3-c: ×1000 overscale above STOCK_MAX_VND=10M is rejected by validateOhlcvUnit", async () => {
-    // Guard boundary: detectAndNormalizeScaleFromPrevClose uses ratio = prevClose/close.
-    // For ×1000 class: prevClose=9220, close=9220000 → ratio = 9220/9220000 = 0.001 < 50.
-    // The ratio check is NOT triggered (÷1000 detection, not ×1000).
-    // However, validateOhlcvUnit Rule 2: if close > STOCK_MAX_VND=10,000,000 → above_10m reject.
-    // To test this defense-in-depth: use a value that IS above 10M.
-    // (ADS at 9.22M is a known gap per BA spec §2.2: passes validateOhlcvUnit. That gap is
-    //  covered by FR-G2 in ohlcvSanityCheckJob — tested in AC-T6-b above.)
+  it("T3-c: ×1000 overscale above STOCK_MAX_VND=10M is rejected by the write pipeline", async () => {
+    // FIX-OHLCV-SCALE-X1000-AUTO-REPAIR update: the new implausible_magnitude guard
+    // in detectAndNormalizeScaleFromPrevClose (Step 3) now fires BEFORE validateOhlcvUnit
+    // (Step 4) when prevClose is known.
+    //
+    // With prevClose=9220 and close=10000001: ratio=10000001/9220=1084× >= 50 →
+    // implausible_magnitude_reject fires at Step 3.
+    //
+    // Without prevClose: validateOhlcvUnit Rule 2 (close > STOCK_MAX_VND=10M → above_10m)
+    // fires at Step 4.
+    //
+    // Both guards block the write — the outcome (result.written=0, no DB row) is identical.
+    // The reason string now depends on which guard fires first (prevClose present → Step 3 wins).
+    // The invariant is: the write is BLOCKED regardless of which guard fires.
+    //
+    // (ADS at 9.22M below 10M is a known gap per BA spec §2.2 — it passes both guards but
+    //  is caught post-write by FR-G2 in ohlcvSanityCheckJob — tested in AC-T6-b.)
     const db = makeDb();
     insertRealRow(db, "HIGHVOL_T", YESTERDAY, 9_100, 9_300, 9_000, 9_220, 500_000);
 
-    // Value that is unambiguously above STOCK_MAX_VND (10,000,001 > 10,000,000)
+    // Value unambiguously above STOCK_MAX_VND (10,000,001 > 10,000,000)
+    // AND unambiguously implausible vs prevClose (10000001/9220 = 1084× >= SCALE_DETECTION_RATIO=50)
     const result = await writeOhlcvBatch(
       [
         {
@@ -470,10 +480,12 @@ describe("AC-T3: ×1000 class — inflated value (7260000) rejected/normalized b
       { vnToday: VN_TODAY },
     );
 
-    // validateOhlcvUnit Rule 2: 10,000,001 > STOCK_MAX_VND=10,000,000 → above_10m → rejected
+    // Invariant: write BLOCKED (written=0, no DB row) regardless of which guard fires first
     expect(result.written).toBe(0);
     expect(result.rejected).toHaveLength(1);
-    expect(result.rejected[0]).toContain("above_10m");
+    // Either "above_10m" (validateOhlcvUnit) or "implausible_magnitude_reject" (scale guard)
+    const reason = result.rejected[0] ?? "";
+    expect(reason.includes("above_10m") || reason.includes("implausible_magnitude_reject")).toBe(true);
     expect(getRow(db, "HIGHVOL_T", TWO_DAYS_AGO)).toBeNull();
 
     db.close();

@@ -348,12 +348,29 @@ export async function writeOhlcvBatch(
       });
 
       // ── Pipeline step 3: detectAndNormalizeScaleFromPrevClose ──────────────
-      // ×1000 when prevClose / current.close >= SCALE_DETECTION_RATIO (50).
-      // prevClose sourced from batched DB query (no N+1); 0 when no prior real row.
-      // This catches expensive stocks (VHM/VIC/VJC) whose seed price looks valid
-      // (136.1 >= 100) but is actually thousand-VND vs prior close 136,100.
+      // Handles BOTH directions vs prevClose (DB-seeded, batched query — no N+1):
+      //
+      //   ÷1000 direction (prevClose >> current): ×1000 correction applied.
+      //   ×N direction (current >> prevClose):    REJECT — leave honest gap.
+      //
+      // ×N rejection is the FIX-OHLCV-SCALE-X1000-AUTO-REPAIR hardening:
+      //   A bar inflated by ≥ SCALE_DETECTION_RATIO (50×) vs prevClose cannot be
+      //   safely auto-repaired (N may not be exactly 1000; live incident: VNM
+      //   2026-06-01 was ×1225×). Reject → write-no-row → honest gap (/goal#1).
+      //
+      // prevClose sourced from batched DB query (no N+1); 0 when no prior real row
+      // (in which case both directions are skipped — only normalizeOhlcvToVnd applies).
       const prevClose = prevCloseMap.get(row.code) ?? 0;
       const scaleResult = detectAndNormalizeScaleFromPrevClose(type, ohlcv, prevClose);
+
+      if (scaleResult.rejected) {
+        // ×N direction — implausible magnitude: reject bar, leave honest gap
+        const msg = `${row.code} ${row.date}: ${scaleResult.reason}`;
+        console.error(`[ohlcvWriteService] BUG implausible_magnitude_reject ${msg}`);
+        result.rejected.push(msg);
+        continue;
+      }
+
       if (scaleResult.corrected) {
         console.debug(
           `[ohlcvWriteService] scale_correction ${row.code} ${row.date}: ` +
