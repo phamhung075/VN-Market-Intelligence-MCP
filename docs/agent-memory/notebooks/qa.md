@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-296 · 2026-06-18 · FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE — APPROVED
+
+Task: FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE | Verdict: APPROVED | Board: ready→done_verified.
+
+Verify-only task (baseline_pass=true). test-fleet-push-classifier.sh exit 0: 5/5 PASS. BENIGN_RE extracted live from shipped script — single SSOT, no drift possible. CASE A (load-bearing regression): Merge+docs(reports)+chore+.jq behind-set = code_touched=0 → push proceeds. CASE B/C/E: code/config in behind-set → ABORT (code_touched=1). bash -n: PASS on both scripts. Guard 1 confirmed fixed in po/flow/main.md lines 141-144: checks .git/rebase-merge|.git/rebase-apply|.git/MERGE_HEAD|.git/index.lock — NOT dirty-tree files. Live dry-run with PUSH_THRESHOLD=0: ABORT (origin behind-set contains scripts/fleet-worktree-push.sh + scripts/test-fleet-push-classifier.sh = real code — correct). No push during QA. DJ: sprint-FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE.md.
+
 ## cycle-295 · 2026-06-18 · TASK-AUTO-PUSH-A (ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP) — APPROVED
 
 Task: TASK-AUTO-PUSH-A | Impl commit: 26807a41 | Verdict: APPROVED | Board: review→done, next_agent=pm.
