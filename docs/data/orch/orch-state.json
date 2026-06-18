@@ -957,8 +957,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-18T004138Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-18T00:49:17Z",
+    "_updated_by": "developer",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -20485,29 +20485,6 @@
           "done_verified_gate": "Live DB: the 8 rows (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA) reach url_not_found and STAY terminal across >=3 consecutive enricher cycles (no oscillation back to pending/attempts=0); consecutive_zero_cycles stops climbing / bctc SLA no longer FALSE-CRITICAL.",
           "ownership": "Code implementation stays dev-mcp-server (next_agent unchanged). This stamp removes the policy ambiguity ONLY — no architect needed; the scheduler double-fire is the only architect-adjacent piece and is already tracked in the ARCH-CRON lane."
         }
-      },
-      {
-        "id": "TASK-AUTO-PUSH-A",
-        "title": "Create scripts/fleet-worktree-push.sh: worktree-isolated push with divergence-reconcile + safety guards",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "zone": "scripts/",
-        "type": "feature",
-        "size": "S",
-        "priority": "P1",
-        "depends": [],
-        "blocks": [
-          "TASK-AUTO-PUSH-B-PO",
-          "TASK-AUTO-PUSH-B-DT"
-        ],
-        "created_at": "2026-06-18T004138Z",
-        "files": [
-          "scripts/fleet-worktree-push.sh"
-        ],
-        "note": "Implements proven worktree recipe from po-s84/po-s98; threshold=20 unpushed commits",
-        "claimed_at": "2026-06-18T00:45:15Z",
-        "claimed_by": "router",
-        "next_agent": "developer"
       }
     ],
     "ready": [
@@ -20830,6 +20807,31 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
+      },
+      {
+        "id": "TASK-AUTO-PUSH-A",
+        "title": "Create scripts/fleet-worktree-push.sh: worktree-isolated push with divergence-reconcile + safety guards",
+        "owner": "developer",
+        "status": "REVIEW",
+        "zone": "scripts/",
+        "type": "feature",
+        "size": "S",
+        "priority": "P1",
+        "depends": [],
+        "blocks": [
+          "TASK-AUTO-PUSH-B-PO",
+          "TASK-AUTO-PUSH-B-DT"
+        ],
+        "created_at": "2026-06-18T004138Z",
+        "files": [
+          "scripts/fleet-worktree-push.sh"
+        ],
+        "note": "Implements proven worktree recipe from po-s84/po-s98; threshold=20 unpushed commits",
+        "claimed_at": "2026-06-18T00:45:15Z",
+        "claimed_by": "router",
+        "next_agent": "qa",
+        "updated_at": "2026-06-18T00:49:17Z",
+        "updated_by": "developer"
       }
     ],
     "qa": [],

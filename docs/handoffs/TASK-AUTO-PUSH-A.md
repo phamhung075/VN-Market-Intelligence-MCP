@@ -150,3 +150,18 @@ Then verify safety guards:
 1. Add a dirty notebook file (don't commit it) + force ahead > 20
 2. Hold commit-mutex (PO step will skip due to guard, not script itself)
 3. Verify the PO step logs skip message to WORK channel
+
+## [Developer] Implementation Record
+
+- **Files modified:** none
+- **Files created:**
+  - `scripts/fleet-worktree-push.sh` — 185 lines; full worktree-isolated push recipe per brief §1 + §4; PUSH_THRESHOLD=20 tunable header variable; timestamped WT_PATH; cleanup trap; divergence-reconcile (non-chore abort); orch-state.json --ours conflict resolution; node_modules symlink; pnpm tsc gate; Telegram work/bug notifications; --dry-run flag
+- **Tests written:** N/A (shell script — DoD specifies shellcheck + no-op path proof, not bun tests)
+- **Git commits:** (see impl_commit below)
+- **tsc status:** N/A (shell script, not TypeScript)
+- **Full suite:** N/A
+- **Docs updated:** `docs/handoffs/TASK-AUTO-PUSH-A.md` — this record appended
+- **Graphify:** skipped (no docs impacted beyond handoff update)
+- **shellcheck:** clean (exit 0) — SC1091 + SC2329 suppressed with inline directives (documented in script comments)
+- **No-op path proof:** `bash scripts/fleet-worktree-push.sh` with ahead=9 <= threshold=20 → exits 0 "nothing to do", no worktree created, no git ops
+- **Abort path proof:** `PUSH_THRESHOLD=0 bash scripts/fleet-worktree-push.sh --dry-run` → correctly detected 2 non-chore commits in behind-set, printed ABORT + telegram(bug) message, exited 1, worktree cleanup confirmed (no stale /tmp/fleet-push-wt-*)

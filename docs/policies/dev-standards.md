@@ -55,6 +55,18 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Owning flow: docs/agents/fb-market-poster/flow/main.md STEP 4b
 ```
 
+**CANONICAL: Fleet worktree push backstop (TASK-AUTO-PUSH-A)**
+```bash
+# No-op check (safe, never pushes unless ahead > threshold):
+bash scripts/fleet-worktree-push.sh --dry-run
+# Live push (fires when git rev-list --count origin/main..HEAD > PUSH_THRESHOLD=20):
+bash scripts/fleet-worktree-push.sh
+# Override threshold (tunable, no rebuild needed):
+PUSH_THRESHOLD=30 bash scripts/fleet-worktree-push.sh
+# Owning flow: docs/agents/po/flow/main.md § Step PUSH-BACKSTOP
+# Fallback flow: docs/agents/dev-team/flow/post-cycle.md § Step PUSH-BACKSTOP
+```
+
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 
 **Maintenance (user directive 2026-06-07):** agents MAY update/upgrade an existing `scripts/` script to work better or optimize (fix bugs, harden, speed up, extend) — improving the shared script beats writing a parallel one-off. Rules: (1) if the script implements a flow spec, edit the spec first, then the script — they MUST stay in sync; (2) smoke-test after the change (clean no-op run at minimum); (3) keep the usage contract (CLI args/env/stdout) backward-compatible or update every caller + flow pointer in the same commit; (4) commit under commit-mutex.
