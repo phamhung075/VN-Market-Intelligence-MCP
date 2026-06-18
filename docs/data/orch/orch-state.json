@@ -175,12 +175,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-18T01:01:33Z",
-    "updated_by": "dev-team",
-    "active_task_id": "TASK-AUTO-PUSH-B-PO",
-    "next_agent": "agent-father",
-    "note": "FIX-BCTC done_verified (router live RAW-verify); tier2 B-PO+B-DT dispatched to agent-father in parallel (depend on A=done)."
+    "status": "idle",
+    "updated_at": "2026-06-18T01:06:45Z",
+    "updated_by": "router",
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "SPRINT ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP COMPLETE: A(script 26807a41 qa-approved)+C(cron-jobs.md da3bc636)+B-PO(73bcd4e9)+B-DT(c0c13df3) all done. Auto-push backstop wired into PO tick + dev-team fallback; fires when origin/main..HEAD>20 via worktree-isolated script. Push remains PO out-of-band call."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14804,6 +14804,58 @@
         "qa_at": "2026-06-18T00:57:06Z",
         "qa_by": "qa",
         "done_at": "2026-06-18T00:57:06Z"
+      },
+      {
+        "id": "TASK-AUTO-PUSH-B-PO",
+        "title": "Add Step PUSH-BACKSTOP to docs/agents/po/flow/main.md: threshold check + safety guard + script invocation",
+        "owner": "agent-father",
+        "status": "DONE",
+        "zone": "docs/agents/po/",
+        "type": "maintenance",
+        "size": "S",
+        "priority": "P1",
+        "depends": [
+          "TASK-AUTO-PUSH-A"
+        ],
+        "blocks": [],
+        "created_at": "2026-06-18T004138Z",
+        "files": [
+          "docs/agents/po/flow/main.md"
+        ],
+        "note": "Insert at every PO tick exit path; fires when git rev-list origin/main..HEAD > 20",
+        "claimed_at": "2026-06-18T01:01:33Z",
+        "claimed_by": "router",
+        "next_agent": "agent-father",
+        "done_by": "router",
+        "done_at": "2026-06-18T01:06:45Z",
+        "impl_commit": "73bcd4e9",
+        "verify_note": "Router RAW-verified po/flow/main.md Step PUSH-BACKSTOP first-hand: threshold origin/main..HEAD>${PUSH_THRESHOLD:-20}; Guard1 dirty-critical (orch-state|notebooks); Guard2 task_list_held kind=commit-mutex (tool confirmed live, count:0); invokes shipped script 26807a41 w/ explicit no-reimplement; no new cron; commit 73bcd4e9 touches only po/flow/main.md (+7fbdbc4a handoff), no orch-state, no push."
+      },
+      {
+        "id": "TASK-AUTO-PUSH-B-DT",
+        "title": "Add fallback PUSH-BACKSTOP to docs/agents/dev-team/flow/post-cycle.md Step 4.9",
+        "owner": "agent-father",
+        "status": "DONE",
+        "zone": "docs/agents/dev-team/",
+        "type": "maintenance",
+        "size": "XS",
+        "priority": "P1",
+        "depends": [
+          "TASK-AUTO-PUSH-A"
+        ],
+        "blocks": [],
+        "created_at": "2026-06-18T004138Z",
+        "files": [
+          "docs/agents/dev-team/flow/post-cycle.md"
+        ],
+        "note": "Secondary location if PO unavailable; same guard logic as PO step",
+        "claimed_at": "2026-06-18T01:01:33Z",
+        "claimed_by": "router",
+        "next_agent": "agent-father",
+        "done_by": "router",
+        "done_at": "2026-06-18T01:06:45Z",
+        "impl_commit": "c0c13df3",
+        "verify_note": "Router RAW-verified dev-team/flow/post-cycle.md Step 4.8 PUSH-BACKSTOP (fallback) first-hand: identical guard logic + threshold to PO step; invokes shipped script; exit-1 no double-notify; commit c0c13df3 touches only post-cycle.md+handoff, no orch-state, no push."
       }
     ],
     "done_verified": [
@@ -20517,50 +20569,6 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
-      },
-      {
-        "id": "TASK-AUTO-PUSH-B-PO",
-        "title": "Add Step PUSH-BACKSTOP to docs/agents/po/flow/main.md: threshold check + safety guard + script invocation",
-        "owner": "agent-father",
-        "status": "IN_PROGRESS",
-        "zone": "docs/agents/po/",
-        "type": "maintenance",
-        "size": "S",
-        "priority": "P1",
-        "depends": [
-          "TASK-AUTO-PUSH-A"
-        ],
-        "blocks": [],
-        "created_at": "2026-06-18T004138Z",
-        "files": [
-          "docs/agents/po/flow/main.md"
-        ],
-        "note": "Insert at every PO tick exit path; fires when git rev-list origin/main..HEAD > 20",
-        "claimed_at": "2026-06-18T01:01:33Z",
-        "claimed_by": "router",
-        "next_agent": "agent-father"
-      },
-      {
-        "id": "TASK-AUTO-PUSH-B-DT",
-        "title": "Add fallback PUSH-BACKSTOP to docs/agents/dev-team/flow/post-cycle.md Step 4.9",
-        "owner": "agent-father",
-        "status": "IN_PROGRESS",
-        "zone": "docs/agents/dev-team/",
-        "type": "maintenance",
-        "size": "XS",
-        "priority": "P1",
-        "depends": [
-          "TASK-AUTO-PUSH-A"
-        ],
-        "blocks": [],
-        "created_at": "2026-06-18T004138Z",
-        "files": [
-          "docs/agents/dev-team/flow/post-cycle.md"
-        ],
-        "note": "Secondary location if PO unavailable; same guard logic as PO step",
-        "claimed_at": "2026-06-18T01:01:33Z",
-        "claimed_by": "router",
-        "next_agent": "agent-father"
       }
     ],
     "ready": [
