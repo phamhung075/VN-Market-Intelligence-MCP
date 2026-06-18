@@ -14752,6 +14752,29 @@
         "zone": "cross-service/",
         "created_at": "2026-06-18T004138Z",
         "note": "Architect brief; 4 atomic subtasks created in ready"
+      },
+      {
+        "id": "TASK-AUTO-PUSH-C",
+        "title": "Add note to docs/standards/cron-jobs.md: PUSH-BACKSTOP via PO tick, no new cron entry",
+        "owner": "agent-father",
+        "status": "DONE",
+        "zone": "docs/standards/",
+        "type": "maintenance",
+        "size": "XS",
+        "priority": "P1",
+        "depends": [],
+        "blocks": [],
+        "created_at": "2026-06-18T004138Z",
+        "files": [
+          "docs/standards/cron-jobs.md"
+        ],
+        "note": "Clarifies that Option-B chosen: no new launchd/cron",
+        "claimed_at": "2026-06-18T00:45:15Z",
+        "claimed_by": "router",
+        "next_agent": "agent-father",
+        "done_at": "2026-06-18T00:46:57Z",
+        "done_by": "agent-father",
+        "verify_note": "router RAW-verified: commit da3bc636, 1 file (cron-jobs.md, 9 ins), Option-B note consistent with brief §2 (no new cron, N=20, fleet-worktree-push.sh)"
       }
     ],
     "done_verified": [
@@ -20485,26 +20508,6 @@
         "claimed_at": "2026-06-18T00:45:15Z",
         "claimed_by": "router",
         "next_agent": "developer"
-      },
-      {
-        "id": "TASK-AUTO-PUSH-C",
-        "title": "Add note to docs/standards/cron-jobs.md: PUSH-BACKSTOP via PO tick, no new cron entry",
-        "owner": "agent-father",
-        "status": "IN_PROGRESS",
-        "zone": "docs/standards/",
-        "type": "maintenance",
-        "size": "XS",
-        "priority": "P1",
-        "depends": [],
-        "blocks": [],
-        "created_at": "2026-06-18T004138Z",
-        "files": [
-          "docs/standards/cron-jobs.md"
-        ],
-        "note": "Clarifies that Option-B chosen: no new launchd/cron",
-        "claimed_at": "2026-06-18T00:45:15Z",
-        "claimed_by": "router",
-        "next_agent": "agent-father"
       }
     ],
     "ready": [
