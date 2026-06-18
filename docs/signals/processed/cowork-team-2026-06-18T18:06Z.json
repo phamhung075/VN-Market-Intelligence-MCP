@@ -1,0 +1,43 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-18T18:00:00Z",
+    "nominal_tick": "18:00",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "bctc-analyst-slot-2"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "gateway_blind_session_and_slot_has_no_cloud_backstop",
+    "slot_detail": {
+      "bctc-analyst-slot-2": {
+        "agent": "bctc-analyst",
+        "cron": "0 18 * * *",
+        "guaranteed": false,
+        "policy_id": "bctc-offmarket",
+        "last_fired": "2026-06-14T18:07:57Z",
+        "due_reason": "cron"
+      }
+    },
+    "leader_lock": "self_held_renewed",
+    "note": "18:00 bctc-analyst off-market slot matched but NOT in the 6 cloud RemoteTrigger backstops (chef-morning/eod/evening, tnb-audit, digest-sunday, health-recheck) — so it goes unfired this blind session. Same class as 14:06Z (refine-bctc-slot-2) + 15:06Z (bctc-analyst-slot-1). Not local-spawned (would fabricate per feedback_local_cowork_subagents_gateway_blind). USER-side fix: register gateway in .mcp.json + reconnect."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T18:06:25Z",
+  "_processed": {
+    "fingerprint": "d24b6f30527996fa6f06825334299098459c1a32e945ed5a4eb07ca2d1ccdde6",
+    "processedAt": "2026-06-18T18:31:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
