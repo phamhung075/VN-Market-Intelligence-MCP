@@ -1,0 +1,58 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T05:23:05Z",
+    "matched_slots": [
+      "chef-morning",
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-morning"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [
+      "chef-intraday"
+    ],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-morning": "cron-guaranteed",
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60
+    },
+    "last_fired_timestamp": "2026-06-18T05:21:20Z",
+    "last_fired_slots": [
+      "chef-morning"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned_chef-morning_deferred_chef-intraday",
+    "nominal_tick": "05:15",
+    "leader_lock": "own_held_renewed",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "chef-morning GUARANTEED + 3d-stale (last 2026-06-15) → FIRED [bg a99044bb]. chef-intraday DEFERRED by router despite legacy-mode cron-match: last_fired 04:24:49Z on 60m cadence (due 05:24:49Z, 3.5m short) AND concurrent 2nd unified-agent would race shared notebook + risk double MARKET post seconds after morning dish. Re-surfaces cleanly next tick when cadence-due. Legacy mode = pressure stale_warning:true (cycle_snapshot_promoted false across recent manual ticks). Leader lock own-held (05:06 tick), renewed."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T05:23:05Z",
+  "_processed": {
+    "fingerprint": "aa8045a85bc8f65072f649d39a2312dfd7c8e5ac1cd5999620f6acb1efc4e8ff",
+    "processedAt": "2026-06-18T05:32:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

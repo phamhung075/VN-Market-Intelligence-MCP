@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T03:23:15Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "last_fired_timestamp": "2026-06-18T03:23:15Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "03:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 0,
+    "note": "chef-intraday intraday dish spawned (first since 2026-06-15); legacy pressure-mode — host pressure-state stale ~62min, stale_warning persists after emit_pressure_state (container/host file split, known); leader lock won (stolen from expired orphan); tick-snapshot pre-warm skipped (single-agent fan-out, zero-blocker fallback)"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T03:23:15Z",
+  "_processed": {
+    "fingerprint": "45442b8c0c8a4d7eabeae90d7ff55ecf14ee23145f8d80c25f6f97337c391ea8",
+    "processedAt": "2026-06-18T05:32:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

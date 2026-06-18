@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T04:25:02Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "last_fired_timestamp": "2026-06-18T04:24:49.000Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "manual /flow invocation off-tick (04:24 UTC); pressure-state stale (stale_warning=true, ~58min) -> legacy mode -> cron-match only. chef-intraday self-gates on publish-marker+convergence. tick-snapshot skipped (multiline market_context unserializable -> agent self-bootstraps, zero blocker). 2 PO-addressed signal_queue rows left NEW for dev-team drain."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T04:25:02Z",
+  "_processed": {
+    "fingerprint": "9782b7948ed1b257031aaabfc0cc7d7797e46d0d95aa7aa1ddbe423842fc21bb",
+    "processedAt": "2026-06-18T05:32:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
