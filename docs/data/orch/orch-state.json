@@ -16,6 +16,14 @@
   },
   "decision_journal": [
     {
+      "by": "pm",
+      "task_id": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER",
+      "ts": "2026-06-18T053057Z",
+      "decision": "DECOMPOSED: FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER into TASK-CWKSCH-1 (flow-doc FR-4 monotonic guard, S) + TASK-CWKSCH-2 (test helper + T-14/T-14b/T-14c, M). Tier-1 parallel, ready dev-mcp-server. Handoffs: docs/handoffs/TASK-CWKSCH-1.md + docs/handoffs/TASK-CWKSCH-2.md. Depends: TASK-CWKSCH-2 blocks_on TASK-CWKSCH-1. Status: TODO→dev-mcp-server. Queued: FOLLOW-ON-CWKSCH-3 backlog (matcher WARN, non-blocking). Risk flags: RISK-1 (T-14b load-bearing RED), RISK-3 (test count 13→16).",
+      "what_considered": "(A) single task mixing prose+test — REJECTED: violates atomic rule. (B) 3+ tasks (helper/T14/T14b/T14c split) — REJECTED: over-granular, false deps. (C) 2 tasks (flow-doc + test) — CHOSEN: respects zones (docs/agents/cowork-team/flow/ vs apps/mcp-server/), single concern.",
+      "why_change": "Architect atomizes: Interface layer (flow spec) vs Infrastructure layer (test). Enforces atomic 2h tasks; bundling would create ~3h mixing prose+TypeScript."
+    },
+    {
       "agent": "dev-mcp-server",
       "task_id": "FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH",
       "timestamp": "2026-06-18T00:00:00Z",
@@ -11388,6 +11396,24 @@
         "source": "po-s96 triage of sau-c06-202606171834 (RAW live market.db probe via sidecar). Generic /goal#2 recalibration.",
         "created_at": "2026-06-17T19:36:00Z",
         "created_by": "po-s96"
+      },
+      {
+        "id": "FOLLOW-ON-CWKSCH-3",
+        "title": "Add matcher-side >48h elapsed-time WARN canary (defence-in-depth for cowork-schedule stale-base)",
+        "type": "ENHANCEMENT",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "scripts/agents-flow/",
+        "size": "XS",
+        "description": "Add 1-line log WARN to cowork-match-slots.js cadence-skip: if elapsedSeconds > 172800 log WARN. Defence-in-depth canary per ARCH-RATIFY-CWKSCH-3. Not a blocker (root-cause is FR-4 guard in TASK-CWKSCH-1/2).",
+        "created_at": "2026-06-18T053057Z",
+        "origin": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER architect ratification ARCH-RATIFY-CWKSCH-3",
+        "blocks": [],
+        "depends_on": [
+          "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER"
+        ],
+        "owner": null,
+        "next_agent": "po"
       }
     ],
     "closed_sprints": [
@@ -20723,10 +20749,10 @@
         "id": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER",
         "title": "cowork-schedule.json last_fired stamps clobbered by stale-base read-modify-write race",
         "type": "FIX",
-        "status": "READY",
+        "status": "TODO",
         "priority": "P2",
         "zone": "apps/mcp-server/",
-        "next_agent": "ba",
+        "next_agent": "dev-mcp-server",
         "blocking": false,
         "root_cause": "A writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline -- file uncommitted since e96176d8 2026-06-15), updates only ITS slot (chef-intraday) and writes the WHOLE file back -> every other slot last_fired reverts to the stale base. Evidence 2026-06-18T04:07Z: chef-intraday=03:23:15Z (fresh, =file mtime) BUT news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z -- reverted to 3-day-old values despite fresh stamps existing earlier today (00:07Z matcher snapped_last_fired=2026-06-18T00:00:00Z). Effect: matcher sees slots as massively overdue -> spurious re-offer/re-fire risk (doublefire class); cadence ledger corrupted. NOT a gather gap (gathering still happens; only the stamp ledger is clobbered). Relates [[feedback_worktree_stale_base]] + guaranteed-slot doublefire class.",
         "fix_spec": "cowork-schedule.json writer MUST FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set / per-slot CAS), never echo back a whole stale snapshot. Same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read, project_orch_state_cutover). Applies to BOTH the cloud cowork-leader dispatcher writer AND any local cowork-team last-fired writer (docs/agents/cowork-team/flow/last-fired.md, match-slots.md).",
@@ -20742,7 +20768,11 @@
         "origin": "2026-06-18 cowork-team signal, MEDIUM, RAW-verified mixed-state at 04:07Z.",
         "created_at": "2026-06-18T04:25:34Z",
         "groomed_by": "po-s103",
-        "promoted_at": "2026-06-18T04:25:34Z"
+        "promoted_at": "2026-06-18T04:25:34Z",
+        "pm_done": true,
+        "updated_at": "2026-06-18T053057Z",
+        "updated_by": "pm",
+        "status_note": "Decomposed into 2 atomic tasks: TASK-CWKSCH-1 (flow-doc, S) + TASK-CWKSCH-2 (test, M). Tier-1 parallel tasks, ready for dev-mcp-server dispatch."
       }
     ],
     "review": [
@@ -20967,11 +20997,11 @@
         }
       ]
     },
-    "updated_at": "2026-06-17T11:32:30Z",
+    "updated_at": "2026-06-18T053057Z",
     "updated_by": "pm"
   },
-  "updated_at": "2026-06-17T15:35:28Z",
-  "updated_by": "po-triage-1531z",
+  "updated_at": "2026-06-18T053057Z",
+  "updated_by": "pm",
   "meta": {
     "updated_at": "2026-06-17T11:21:05Z",
     "updated_by": "po",
