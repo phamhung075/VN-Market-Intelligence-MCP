@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-298 · 2026-06-18 · CLEAN-FOREIGN-FLOW-DOC-PARAM-CODE-DRIFT + FIX-COWORK-BLIND-SESSION-GUARD — APPROVED (both)
+
+CLEAN-FOREIGN-FLOW-DOC-PARAM-CODE-DRIFT: commit ace01f1a | Verdict: APPROVED | Board: in_progress→done_verified. Doc-only Smart-Skip: no bun test/tsc/DDD/security/mock-guard. Code-SSOT spot-check: get_foreign_flow param ticker→code (foreignFlowTools.ts:246 z.string()) + days range 2–30 default 10 (lines 249–255) + response {source_tier:2,text} (lines 362–367) PASS. get_market_foreign_flow: days+top_n added (marketWideForeignFlowTool.ts:177–187) + response keys {source_tier,coverage_note,text,latest_date,sessions_returned} (lines 256–262) PASS. diagnose/reset circuit-breaker: breaker_id removed (code handler takes {}) + output fields match PASS. All 4 docs match code. DJ: sprint-QA-GATE-2026-06-18-doc-drift-blind-guard.md.
+
+FIX-COWORK-BLIND-SESSION-GUARD: commit 55fb9d5f | Verdict: APPROVED | Board: in_progress→done_verified. BG-1: blind-guard.md 49L (≤50L); primary check jq '.mcpServers|length' .mcp.json → LIVE RESULT 0 → SESSION_BLIND=true per doc logic. PASS. BG-2: spawn-fanout.md Step 5.0 at lines 8–37 (before any Agent() spawn at line 107+); SESSION_BLIND=true → EXIT Step 5 (line 34); BACKSTOP/NO_BACKSTOP from cowork-schedule.json .slots[].trigger_id+trigger_status (no hardcode); errors[] one entry per no-backstop; ONE send_telegram(channel="work") summary; false falls through. PASS. BG-3: main.md JUMP-TO Step 0c→blind-guard.md at table line; inline sub-flow reference lines 62–64; size comment updated line 1. PASS. Signal consumed to processed/. DJ: sprint-QA-GATE-2026-06-18-doc-drift-blind-guard.md.
+
 ## cycle-297 · 2026-06-18 · FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER (TASK-CWKSCH-1+2) — APPROVED
 
 Task: TASK-CWKSCH-1+2 | Impl commit: 30b9a7f8 | Verdict: APPROVED | Board: DONE→done_verified, next_agent=pm.
