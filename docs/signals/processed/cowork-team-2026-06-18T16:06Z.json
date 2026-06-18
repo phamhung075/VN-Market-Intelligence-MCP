@@ -1,0 +1,48 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T16:06:23Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "won_slots": [],
+    "spawned": [],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "deferred_to_backstop": [],
+    "skipped_no_backstop": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "pressure_mode": "adaptive",
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron",
+      "market-watcher-eod": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": null
+    },
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "gateway_blind_session_and_slots_have_no_cloud_backstop",
+    "nominal_tick": "16:00",
+    "leader_lock": "self_held_renewed",
+    "note": "16:00 cluster: news-scout-offhours + market-watcher-offhours (cron 0 */4, gatherer-standard) plus market-watcher-eod (cron 0 16 1-5, weekday Thu). Session gateway-blind (mcpServers=0) -> NOT locally spawned (blind gatherers have no mcp__gateway__call_tool, would fabricate briefs, violates no-fake-data). All three are local-dispatcher-only gatherers, NONE in the 6 cloud RemoteTrigger backstops -> no fallback this tick -> genuinely unfired. last_fired stays 2026-06-15T08:08:57Z (offhours) / 2026-06-11T16:06:00Z (eod). Real coverage gap, not an outage: fix = user reconnects gateway in .mcp.json. Same class as 15:06Z bctc-analyst-slot-1, 14:06Z refine-bctc-slot-2, 12:06Z offhours gatherers."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-18T16:06:23Z",
+  "_processed": {
+    "fingerprint": "680b072f317ecd53e015c674db4c4b80456f4259a321d00639f439ef9fda4234",
+    "processedAt": "2026-06-18T16:31:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
