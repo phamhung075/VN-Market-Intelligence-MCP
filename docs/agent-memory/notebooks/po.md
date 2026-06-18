@@ -1,23 +1,29 @@
 # PO Notebook
-_overwritten 2026-06-18T09:31Z_
+_overwritten 2026-06-18T12:24Z_
 
-## Cycle po-s103 (2026-06-18T09:31Z) — dev-team tick: reconcile STALE agent-father head + close gatherer umbrella + promote DMS (zone now free)
-**CI GREEN on origin/main HEAD 9d29a814 (run 27748038282). Divergence 19-ahead/20-behind (20 = benign cloud chore commits → push HELD, my deferred out-of-band call; gateway-blind local spawn so no push attempted). Active coding WIP was 1 (the design umbrella) → now 0; DMS promoted to ready keeps WIP ≤2.**
+## Cycle po-s105 (2026-06-18T12:24Z) — FIX-AUTO-PUSH-TRIGGER-NOT-FIRING: pivot to launchd timer + manual push 32-ahead
 
-**Reconciled the dangling head (router flagged stale).** `.head` pointed at next_agent=agent-father for DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER, but agent-father ALREADY shipped its portion: Root A committed 69babf46 (leader-lock AF-1 backstop-window defer gate) + 6f306bfa closed Root A and routed Roots B/C fix_spec → dev-mcp-server. Umbrella row's `agent_father_done_at` already stamped. Re-dispatching agent-father would be a no-op on shipped work — did NOT.
-- Router context said "WIP=0, DESIGN-GATHERER not on board" — RAW-corrected: it WAS in_progress (WIP=1). The agents-architect design umbrella whose code is fully delegated.
+**Router DEFINITIVE: auto-push backstop never fires autonomously despite qa done_verified. False-done — qa tested the SCRIPT in isolation (5/5 green), NOT the production trigger. Diagnosed, fixed, board corrected, pushed.**
 
-**M1 — CLOSED umbrella in_progress→done, done_verified:false.** Design pass complete (architect_done_at 2026-06-16) + Root A shipped. done_verified GATED on all 3 children's behavioral gates (Root A defer-sim + DMS-1 zero-dup concurrent-sibling + DMS-2 no-false-gateway-down). Partial work not reverted.
+**FAILURE MODE = (a) step never reached.** Instrumented the spawn chain, did not guess:
+- `cowork-schedule.json` 16 slots, NONE po/dev-team → PO not on */15 cadence.
+- dev-team `flow/main.md` Step 1 spawns PO ONLY (via 7 * * * * router) as a BACKGROUND TRIAGE SUB-AGENT (return BATCH/NOTHING).
+- PO main.md dispatch routes a dev-team spawn → `tnb-audit` → triage sub-flow.
+- Each po sub-flow (channel-audit/triage-signals/sprint-kickoff/sprint-signoff) has its OWN `## RETURN` block handing control to the dev-team router — control NEVER routes back up to main.md Step PUSH-BACKSTOP. The ~58L tick-exit step is dead code on the only autonomous path. (dev-team Step 4.8 fallback sits on the router path but only :07 cron + skipped on SF-1/session-gate exits.)
 
-**M2 — PROMOTED DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION backlog→ready (next_agent=dev-mcp-server).** KEY: its sole hold_reason was the apps/mcp-server/ zone collision with ARCH-CRON-SCHEDULER-RELIABILITY — which is NOW done_verified:true, so the zone is FREE. Dropped held/held_on/hold_reason. Roots B/C of the double-fire cluster; fix_spec docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md. The 2 apps/mcp-server review[] rows are QA-gated (not active dev lanes) so promoting opens no 2nd concurrent dev lane — WIP≤2 honored.
+**FIX = PIVOT to Option-A dedicated launchd timer (no-new-cron was the wrong call).**
+- Installed `com.vn-market.fleet-push` (`launchd/com.vn-market.fleet-push.plist`, StartInterval 1800s + RunAtLoad) → runs `bash scripts/fleet-worktree-push.sh` directly. Safe: script fully self-guarding (threshold no-op / worktree-isolated / code-divergence abort→BUG / tsc gate / self-clean). `launchctl list` shows it registered (last exit 0); RunAtLoad fire RAW-verified in `fleet-push.log` (correct no-op at ahead=0).
+- `docs/standards/cron-jobs.md` § Push Backstop rewritten → Option-A timer authoritative; flow-steps demoted to harmless SECONDARY best-effort (annotated in po main.md Step PUSH-BACKSTOP).
 
-**M3 — REPOINTED head off stale agent-father → DMS / dev-mcp-server** (router mutex-wraps the spawn).
+**MANUAL PUSH (32-ahead) — origin ADVANCED.** Worktree merge: 6 origin code files genuinely diverged (origin NEWER — NOT cloud-chore noise as briefed; script CORRECTLY aborted on them). Merge clean except orch-state.json → resolved `--ours` (board mutations authoritative). tsc gate GREEN. Pushed `414c0b9f → 1110651a` (fast-forward, no force). ahead now 0.
 
-**Cowork signals (2 drained, both processed/):** chef-eod DEFERRED_BLIND escalation was a FALSE infra-failure (read local cowork-schedule last_fired the cloud backstop never syncs back) — SUPERSEDED by the same-tick CORRECTION: RAW RemoteTrigger list = exactly 6 cloud backstops, chef-eod-backstop fired 08:45:06Z today → EOD dish DELIVERED, no outage. REAL standing issue (non-backstopped slots go unfired while local */15 dispatcher is gateway-blind) is USER-SIDE .mcp.json config — already captured in docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md. NO new dev-team code task warranted (router cannot fix user-side config; aligns feedback_local_cowork_subagents_gateway_blind + feedback_false_infra_failure_corroboration_gate). ACK only.
+**BOARD CORRECTED (honesty over green badge)** — `scripts/po-s105-*.jq` (conservation+idempotency guarded, applied + re-run delta 0):
+- M1 MINT `FIX-AUTO-PUSH-TRIGGER-NOT-FIRING` → done[] DONE/done_verified:false. REAL gate = AUTONOMOUS-FIRE (origin advances on a timer tick with NO human/router invoking it — NOT isolated-script-green). qa owns gate; done_verified WITHHELD.
+- M2 ANNOTATE 4 false-done rows (`TASK-AUTO-PUSH-B-PO`/`B-DT`/`C` + `ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP`) `trigger_corrected` — script/doc work retained, only TRIGGER was structurally wrong.
 
-**Lesson:** a "dispatch agent-X" head can be stale because agent-X already shipped (row carries *_done_at + the commit exists) — RAW-verify the commit + row stamps before re-dispatch; and a held task's blocker reaching done_verified is the trigger to re-scan its hold_reason and promote (zone freed). Wrote scripts/po-s103-*.jq (conservation+idempotency guarded).
+**Lesson:** a flow-step "fires at every tick exit" is a LIE when the agent runs as a bg triage sub-agent whose sub-flows RETURN to the spawning router — the step is never reached. Verify the actual spawn/RETURN path, not the prose claim. For an autonomous backstop, a dumb self-guarding launchd timer ("actually fires") beats a flow-step ("no new cron"). qa gate must test the PRODUCTION trigger autonomously, never the script in isolation.
 
 ## Carry-over
-- DMS in ready[] for router to dispatch dev-mcp-server (apps/mcp-server/, S). On done_verified, the gatherer umbrella's done_verified can flip true once all 3 children's behavioral gates pass.
-- Push held: 19-ahead but 20-behind benign cloud chore; PO's out-of-band call (can't push from gateway-blind spawn anyway).
-- Gateway-blind cowork = user-side .mcp.json fix pending (GATEWAY-BLIND-USER-ACTION-2026-06-18.md).
+- `FIX-AUTO-PUSH-TRIGGER-NOT-FIRING` done_verified WITHHELD → qa must observe origin advance on a launchd tick (ahead>20) with no human invoking it. Until then, NOT done_verified.
+- launchd `com.vn-market.fleet-push` needs `launchctl load ~/Library/LaunchAgents/com.vn-market.fleet-push.plist` after machine restart (documented in cron-jobs.md).
+- 295-task backlog sprint kickoff still deferred; WIP managed by dev-team router.

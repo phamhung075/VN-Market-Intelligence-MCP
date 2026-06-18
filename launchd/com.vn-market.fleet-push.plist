@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.fleet-push</string>
+
+  <!--
+    Dedicated push-backstop timer (FIX-AUTO-PUSH-TRIGGER-NOT-FIRING).
+    The flow-step-at-tick-exit approach (Option-B) was structurally wrong:
+    PO is spawned by the dev-team router ONLY as a background triage sub-agent
+    (returns BATCH/NOTHING), so its main.md Step PUSH-BACKSTOP at tick-exit is
+    NEVER reached — the triage sub-flows RETURN straight to the router.
+    Result: local sat >20 ahead for multiple router-passes, origin got 0 pushes.
+
+    This timer fires scripts/fleet-worktree-push.sh directly every 30 min.
+    The script is self-guarding: no-op when ahead <= PUSH_THRESHOLD (20),
+    worktree-isolated (never touches the dirty main working tree), aborts on
+    a divergent code/config behind-set (BUG telegram), runs the pre-push tsc
+    gate, and self-cleans the worktree on every exit. A dumb timer is therefore
+    safe — "actually fires" beats "no new cron".
+  -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/scripts/fleet-worktree-push.sh</string>
+  </array>
+
+  <!-- Run every 30 min (1800s). Threshold-gated, so most runs are sub-second no-ops. -->
+  <key>StartInterval</key>
+  <integer>1800</integer>
+
+  <!-- Fire once on load/boot so an accumulated backlog is bounded immediately. -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- One-shot per interval — NEVER keep alive (the script exits 0/1 by design). -->
+  <key>KeepAlive</key>
+  <false/>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP</string>
+
+  <!-- Log destination — tail for backstop history. -->
+  <key>StandardOutPath</key>
+  <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/sessions/fleet-push.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/sessions/fleet-push-error.log</string>
+
+  <!-- Resolve git/pnpm/bun/docker + load HOME so the script can source .env. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+    <key>HOME</key>
+    <string>/Users/admin</string>
+    <key>PUSH_THRESHOLD</key>
+    <string>20</string>
+  </dict>
+</dict>
+</plist>

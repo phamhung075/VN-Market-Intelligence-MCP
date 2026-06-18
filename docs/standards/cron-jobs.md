@@ -151,11 +151,40 @@ Operator runbook (telemetry meanings + recovery) → `docs/protocols/chef-pipeli
 - All agents have Early Exit guards — skip full scan when no changes detected
 - All agents run `/compact` before exiting to compress session context
 
-### Push Backstop (Option-B: PO Tick, No New Cron)
+### Push Backstop (dedicated launchd timer — Option-A, PIVOTED 2026-06-18)
 
-**No new cron entry.** The push backstop is NOT a new launchd plist, cron entry, or RemoteTrigger. It fires inside the existing PO flow tick (~every 15 min) as **Step PUSH-BACKSTOP**, with a fallback in `docs/agents/dev-team/flow/post-cycle.md` Step 4.9 when PO is unavailable.
+**PIVOT — Option-B (PO-tick flow-step) was structurally wrong and is RETIRED as the trigger.**
+The flow-step-at-tick-exit approach NEVER fired in autonomous operation. Root cause
+(FIX-AUTO-PUSH-TRIGGER-NOT-FIRING, failure mode (a) "step never reached"):
+- The `*/15` cowork dispatcher has NO `po`/`dev-team` slot — PO is not on the 15-min cadence at all.
+- PO is spawned ONLY by the `7 * * * *` dev-team router (Step 1) as a **background triage sub-agent**
+  whose contract is "return a BATCH or NOTHING". In that mode PO's `main.md` routes straight to a
+  triage sub-flow (`channel-audit.md` / `triage-signals.md` / `sprint-kickoff.md` / `sprint-signoff.md`),
+  and **each sub-flow has its own `## RETURN` block that hands control back to the dev-team router** —
+  it never routes back up through `main.md` Step PUSH-BACKSTOP. So the inline tick-exit step is dead code
+  on the only path the autonomous tick actually takes.
+- Observed impact: local sat >20 ahead across multiple router-passes (23 → 32-ahead), origin received
+  zero fleet-push merges in that window. "Actually fires" beats "no new cron."
 
-**Trigger:** `git rev-list --count origin/main..HEAD` exceeds `PUSH_THRESHOLD` (default N=20).
-**Action:** Invokes `scripts/fleet-worktree-push.sh` — a worktree-isolated push (never touches main working tree) with divergence-reconcile, bg-agent safety guard (skips if commit-mutex held or critical files dirty), and a mandatory `pnpm --filter vn-market check` pre-push gate.
-**Rationale:** Option-B chosen over dedicated cron/launchd (Option-A): reuses existing PO tick cadence, adds zero new always-on components, avoids cron inventory debt.
-**References:** `docs/architecture-briefs/2026-06-18-auto-push-threshold-backstop.md` (§2 Options Evaluation)
+**Mechanism (now): dedicated launchd timer** — `com.vn-market.fleet-push`.
+| Field | Value |
+|-------|-------|
+| Plist | `launchd/com.vn-market.fleet-push.plist` (installed to `~/Library/LaunchAgents/`) |
+| Cadence | `StartInterval` 1800s (30 min) + `RunAtLoad` |
+| Program | `bash scripts/fleet-worktree-push.sh` |
+| Threshold | `PUSH_THRESHOLD=20` (env, tunable in plist, no rebuild) |
+| Logs | `docs/agent-memory/sessions/fleet-push{,-error}.log` |
+| KeepAlive | `false` — one-shot per interval; script exits 0/1 by design |
+
+**Why a dumb timer is safe:** the script is fully self-guarding — no-op when `ahead <= PUSH_THRESHOLD`,
+worktree-isolated (never touches the perpetually-dirty main working tree), aborts with a BUG telegram
+when the origin behind-set touches divergent code/config, runs the mandatory `pnpm --filter vn-market check`
+pre-push gate, and self-cleans the worktree on every exit. No flow-step coordination, no commit-mutex
+gateway dependency (which fail-closed in sub-agents). Threshold-gated → most 30-min runs are sub-second no-ops.
+
+**Install / re-arm** (after machine restart): `launchctl load ~/Library/LaunchAgents/com.vn-market.fleet-push.plist`.
+
+**Flow-step status:** `docs/agents/po/flow/main.md` Step PUSH-BACKSTOP + `docs/agents/dev-team/flow/post-cycle.md`
+Step 4.8 are retained as a SECONDARY opportunistic best-effort (harmless when they do run on a real router
+tick) but are NO LONGER the primary trigger — the launchd timer is authoritative.
+**References:** `docs/architecture-briefs/2026-06-18-auto-push-threshold-backstop.md` (§2 Options Evaluation — Option-A now selected)

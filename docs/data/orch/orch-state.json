@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-18T12:30:00Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-18T12:24:45Z",
+  "_updated_by": "po-s105",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -14896,7 +14896,9 @@
         "status": "DESIGN_COMPLETE",
         "zone": "cross-service/",
         "created_at": "2026-06-18T004138Z",
-        "note": "Architect brief; 4 atomic subtasks created in ready"
+        "note": "Architect brief; 4 atomic subtasks created in ready",
+        "trigger_corrected": "2026-06-18T12:24:45Z",
+        "trigger_corrected_note": "Flow-step tick-exit placement NEVER fired autonomously (failure mode (a): PO is a bg triage sub-agent; triage sub-flows RETURN to the dev-team router and never reach this Step PUSH-BACKSTOP). The script/doc work in this task was real and is RETAINED — only the TRIGGER was structurally wrong. Superseded by dedicated launchd timer com.vn-market.fleet-push. Honest program-level gate captured by FIX-AUTO-PUSH-TRIGGER-NOT-FIRING."
       },
       {
         "id": "TASK-AUTO-PUSH-C",
@@ -14919,7 +14921,9 @@
         "next_agent": "agent-father",
         "done_at": "2026-06-18T00:46:57Z",
         "done_by": "agent-father",
-        "verify_note": "router RAW-verified: commit da3bc636, 1 file (cron-jobs.md, 9 ins), Option-B note consistent with brief §2 (no new cron, N=20, fleet-worktree-push.sh)"
+        "verify_note": "router RAW-verified: commit da3bc636, 1 file (cron-jobs.md, 9 ins), Option-B note consistent with brief §2 (no new cron, N=20, fleet-worktree-push.sh)",
+        "trigger_corrected": "2026-06-18T12:24:45Z",
+        "trigger_corrected_note": "Flow-step tick-exit placement NEVER fired autonomously (failure mode (a): PO is a bg triage sub-agent; triage sub-flows RETURN to the dev-team router and never reach this Step PUSH-BACKSTOP). The script/doc work in this task was real and is RETAINED — only the TRIGGER was structurally wrong. Superseded by dedicated launchd timer com.vn-market.fleet-push. Honest program-level gate captured by FIX-AUTO-PUSH-TRIGGER-NOT-FIRING."
       },
       {
         "id": "TASK-AUTO-PUSH-A",
@@ -14974,7 +14978,9 @@
         "done_by": "router",
         "done_at": "2026-06-18T01:06:45Z",
         "impl_commit": "73bcd4e9",
-        "verify_note": "Router RAW-verified po/flow/main.md Step PUSH-BACKSTOP first-hand: threshold origin/main..HEAD>${PUSH_THRESHOLD:-20}; Guard1 dirty-critical (orch-state|notebooks); Guard2 task_list_held kind=commit-mutex (tool confirmed live, count:0); invokes shipped script 26807a41 w/ explicit no-reimplement; no new cron; commit 73bcd4e9 touches only po/flow/main.md (+7fbdbc4a handoff), no orch-state, no push."
+        "verify_note": "Router RAW-verified po/flow/main.md Step PUSH-BACKSTOP first-hand: threshold origin/main..HEAD>${PUSH_THRESHOLD:-20}; Guard1 dirty-critical (orch-state|notebooks); Guard2 task_list_held kind=commit-mutex (tool confirmed live, count:0); invokes shipped script 26807a41 w/ explicit no-reimplement; no new cron; commit 73bcd4e9 touches only po/flow/main.md (+7fbdbc4a handoff), no orch-state, no push.",
+        "trigger_corrected": "2026-06-18T12:24:45Z",
+        "trigger_corrected_note": "Flow-step tick-exit placement NEVER fired autonomously (failure mode (a): PO is a bg triage sub-agent; triage sub-flows RETURN to the dev-team router and never reach this Step PUSH-BACKSTOP). The script/doc work in this task was real and is RETAINED — only the TRIGGER was structurally wrong. Superseded by dedicated launchd timer com.vn-market.fleet-push. Honest program-level gate captured by FIX-AUTO-PUSH-TRIGGER-NOT-FIRING."
       },
       {
         "id": "TASK-AUTO-PUSH-B-DT",
@@ -15000,7 +15006,9 @@
         "done_by": "router",
         "done_at": "2026-06-18T01:06:45Z",
         "impl_commit": "c0c13df3",
-        "verify_note": "Router RAW-verified dev-team/flow/post-cycle.md Step 4.8 PUSH-BACKSTOP (fallback) first-hand: identical guard logic + threshold to PO step; invokes shipped script; exit-1 no double-notify; commit c0c13df3 touches only post-cycle.md+handoff, no orch-state, no push."
+        "verify_note": "Router RAW-verified dev-team/flow/post-cycle.md Step 4.8 PUSH-BACKSTOP (fallback) first-hand: identical guard logic + threshold to PO step; invokes shipped script; exit-1 no double-notify; commit c0c13df3 touches only post-cycle.md+handoff, no orch-state, no push.",
+        "trigger_corrected": "2026-06-18T12:24:45Z",
+        "trigger_corrected_note": "Flow-step tick-exit placement NEVER fired autonomously (failure mode (a): PO is a bg triage sub-agent; triage sub-flows RETURN to the dev-team router and never reach this Step PUSH-BACKSTOP). The script/doc work in this task was real and is RETAINED — only the TRIGGER was structurally wrong. Superseded by dedicated launchd timer com.vn-market.fleet-push. Honest program-level gate captured by FIX-AUTO-PUSH-TRIGGER-NOT-FIRING."
       },
       {
         "baseline_pass": false,
@@ -15184,6 +15192,36 @@
         "completed_by": "dev-mcp-server",
         "commit": "e8f19e98",
         "verification": "Router RAW live-probed get_cycle_bootstrap: bctc-analyst→200, unified-agent→200, fb-market-poster→Zod-reject. Live enum=9 values; doc reconciled 1:1 (e8f19e98, doc-only, 0 .ts). chef.md agent_id→agent_name(unified-agent). fb-market-poster leg: PATH B (call removed, not schema-widen) — OVERRIDES PO DoD which assumed widen-schema; evidence: fb-market-poster is downstream notebook-only consumer (STEP 1b covers market context via get_market_snapshot/context/foreign_flow), agent_signals bus not in its input model. cycle-bootstrap skill updated to exclude it. FLAGGED for PO next-triage awareness — reversible doc-only if PO prefers schema-widen."
+      },
+      {
+        "id": "FIX-AUTO-PUSH-TRIGGER-NOT-FIRING",
+        "title": "Auto-push backstop never fires autonomously — pivot to dedicated launchd timer (was false-done_verified: qa tested the script in isolation, NOT the production trigger)",
+        "owner": "po",
+        "status": "DONE",
+        "done_verified": false,
+        "zone": "cross-service/",
+        "type": "maintenance",
+        "size": "M",
+        "priority": "P1",
+        "depends": [
+          "TASK-AUTO-PUSH-A",
+          "ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP"
+        ],
+        "blocks": [],
+        "created_at": "2026-06-18T12:24:45Z",
+        "files": [
+          "launchd/com.vn-market.fleet-push.plist",
+          "docs/standards/cron-jobs.md",
+          "scripts/fleet-worktree-push.sh"
+        ],
+        "root_cause": "FAILURE MODE (a) step-never-reached. The */15 cowork dispatcher has NO po/dev-team slot; PO is spawned ONLY by the 7 * * * * dev-team router as a BACKGROUND TRIAGE SUB-AGENT (contract: return BATCH/NOTHING). In that mode po/flow/main.md routes to a triage sub-flow (channel-audit/triage-signals/sprint-kickoff/sprint-signoff), each of which has its OWN ## RETURN block handing control straight back to the dev-team router — never routing back up through main.md Step PUSH-BACKSTOP. The inline ~58L tick-exit step is therefore dead code on the only path the autonomous tick takes. Result: local sat >20 ahead across multiple router-passes (23 -> 32), origin got 0 fleet-push merges.",
+        "fix": "PIVOT to Option-A: dedicated launchd timer com.vn-market.fleet-push (launchd/com.vn-market.fleet-push.plist), StartInterval 1800s + RunAtLoad, runs bash scripts/fleet-worktree-push.sh directly. Script is fully self-guarding (no-op when ahead<=PUSH_THRESHOLD, worktree-isolated, behind-set code-divergence abort -> BUG telegram, pre-push tsc gate, self-cleaning worktree) so a dumb timer is safe. Flow-step Step PUSH-BACKSTOP (po main.md) + Step 4.8 (dev-team post-cycle.md) retained as SECONDARY best-effort but no longer the primary trigger. cron-jobs.md updated.",
+        "verification_gate": "AUTONOMOUS-FIRE (the REAL gate, replacing the isolated-script gate): with local >PUSH_THRESHOLD ahead, observe origin/main ADVANCE on a launchd tick WITHOUT any human/router invoking the push — i.e. `launchctl list | grep fleet-push` registered AND `tail docs/agent-memory/sessions/fleet-push.log` shows a real push (not just a no-op) on the next accumulation, AND `git log origin/main` gains a fleet-push merge commit in a window where no human ran the script. NOT satisfied by `bash scripts/fleet-worktree-push.sh` passing in isolation.",
+        "next_agent": "qa",
+        "done_by": "po",
+        "done_at": "2026-06-18T12:24:45Z",
+        "impl_commit": null,
+        "verify_note": "Router RAW-confirmed the trigger failure twice (local 23->32 ahead across po-ticks 13:37/12:33/12:19 + dev-team ticks 13:43/12:38, origin got 0 fleet-push merges). Diagnosed failure mode (a) by reading dev-team/flow/main.md Step 1 (PO spawned as bg triage sub-agent) + po sub-flow RETURN blocks (hand back to router, never reach main.md PUSH-BACKSTOP) + cowork-schedule.json (no po/dev-team slot). Launchd timer installed + loaded + RunAtLoad fire RAW-verified in fleet-push.log (no-op at ahead=0, correct). done_verified:false WITHHELD until a real autonomous push (ahead>20) is observed advancing origin on a timer tick — qa owns that gate."
       }
     ],
     "done_verified": [
