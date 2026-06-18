@@ -183,12 +183,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-06-18T10:38:28Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-CYCLE-BOOTSTRAP-AGENT-ENUM-SSOT",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server aligns cycle_bootstrap enum SSOT (doc+chef+fb flow/skill) to live 9-value enum; path B (fix callers, no schema widen) for fb-market-poster",
+    "updated_at": "2026-06-18T11:42:37Z",
     "updated_by": "dev-team",
-    "note": "Tick 20260618T1031 complete — FIX-SSOT-SYSTEM-MAP-TOOLCOUNT-166 done_verified (4d9eda99, 3 count SSOTs==166). WIP=0. Deferred to gateway-capable path: push (SAFE, PO call), 295-backlog sprint kickoff. Follow-on candidate: system-map tools[] generator (stop wave-drift at root)."
+    "note": "Tick 20260618T1131 — live enum RAW-probed (9: news-scout,financial-analyst,market-watcher,alert-commander,digest-predict,qa-responder,unified-agent,report-analyzer,bctc-analyst). bctc-analyst=doc-add; chef.md=agent_id→agent_name(unified-agent); fb-market-poster=schema-rejects→path-B fix callers (consumer not participant), flag for QA/PO confirm at review."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20949,12 +20950,11 @@
       "note": "DEPRECATED — do NOT read or write this field. The canonical head SSOT is TOP-LEVEL .head (read by dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). This field formerly drifted from top-level .head because po-s65/po-s54 scripts wrote here while the flow read top-level .head (signal head-drift-po-s64-vs-task-board-head). Any new script writing .task_board.head is a BUG — write .head instead. Kept as a stub (not removed) so a legacy reader sees the redirect rather than a phantom active_task_id.",
       "next_task": "TASK-AUTO-PUSH-A"
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "FIX-CYCLE-BOOTSTRAP-AGENT-ENUM-SSOT",
         "type": "FIX",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "priority": "P2",
         "zone": "cross-service/",
         "next_agent": "dev-mcp-server",
@@ -20970,9 +20970,12 @@
         "size": "S",
         "source": "health-recheck reports 3209-3237 (A1+A4+A5 cluster), router-deduped tick 20260618T113056Z",
         "created_at": "2026-06-18T11:36:53Z",
-        "created_by": "po"
+        "created_by": "po",
+        "claimed_at": "2026-06-18T11:42:37Z",
+        "claimed_by": "router"
       }
     ],
+    "ready": [],
     "review": [
       {
         "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
