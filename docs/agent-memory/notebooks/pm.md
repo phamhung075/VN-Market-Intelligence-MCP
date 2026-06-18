@@ -1,5 +1,52 @@
 # PM — Notebook
 
+## c318 ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP decomposition · 2026-06-18T000000Z
+
+**PARENT:** ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP (architect design FINAL, Option-B: threshold-checked push inside PO tick)
+
+**INPUT:** Architect brief (docs/architecture-briefs/2026-06-18-auto-push-threshold-backstop.md), current orch-state.json .task_board, PM init (docs/agents/pm/init.md)
+
+**OUTPUT:** 4 atomic subtasks (TASK-AUTO-PUSH-A/B-PO/B-DT/C) added to ready[]; parent design moved to done[] (DESIGN_COMPLETE); 4 handoff files created (TASK-AUTO-PUSH-*.md)
+
+**Board mutation (atomic):**
+- **Before:** ready=N, review=6 (including ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP), done=M
+- **After:** ready=N+4, review=5 (ARCH moved out), done=M+1
+- ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP moved from review → done with status DESIGN_COMPLETE
+- 4 atomic subtasks added to ready (all TODO)
+
+**Task structure (ready dispatch order):**
+
+1. **TASK-AUTO-PUSH-A (S, ~2h, READY now):** Create `scripts/fleet-worktree-push.sh` — full implementation of proven worktree recipe from po-s84/po-s98 (new file, root-level scripts/). Includes: worktree isolation, divergence-reconcile (classify behind-set chore vs non-chore), orch-state.json conflict handling (keep-HEAD), pre-push tsc gate, Telegram notifications. BLOCKS B-PO + B-DT (script must exist).
+
+2. **TASK-AUTO-PUSH-B-PO (S, ~1.5h, READY after A ships):** Add Step PUSH-BACKSTOP to `docs/agents/po/flow/main.md` § No-Task Guard (every exit path). Threshold check + safety guards (dirty critical files, commit-mutex held) + script invocation. Uses agent-md-factory skill (required edit pattern). PRIMARY location for auto-push decision (PO is semantic owner).
+
+3. **TASK-AUTO-PUSH-B-DT (XS, ~30min, READY after A ships, parallel with B-PO):** Add fallback PUSH-BACKSTOP to `docs/agents/dev-team/flow/post-cycle.md` Step 4.9. Identical guard logic; activates when dev-team runs without PO spawn. Uses agent-md-factory skill.
+
+4. **TASK-AUTO-PUSH-C (XS, ~15min, READY now, can pair with A):** Add note to `docs/standards/cron-jobs.md` — clarifies Option-B: no new cron/launchd/RemoteTrigger; push backstop reuses existing PO tick cadence. Documentation-only; unblocks no tasks.
+
+**Sequencing & WIP:** dev-team can start A + C in parallel (2 lanes). After A merges + container rebuild, spawn B-PO + B-DT in parallel (2 lanes). Total elapsed: ~3–4h (A 2h + rebuild 30min + B-PO+B-DT parallel 1.5h). WIP capacity: 2 coding lanes available.
+
+**Key constraints (from brief §4, §10):**
+- **Safety-critical:** Script MUST NEVER touch main working tree (worktree-isolated only). No git stash/reset/checkout on main.
+- **Divergence guard:** Classify behind-set before merge; abort if non-chore detected (send BUG telegram).
+- **Conflict handling:** orch-state.json merge conflicts → keep HEAD (--ours); cloud chores are additive only.
+- **Red-tree gate:** If pnpm check fails, exit 1 + BUG telegram; never push around red.
+- **Option-B lock-in:** No new cron entry, no launchd plist, no RemoteTrigger. Threshold-checked push fires ONLY inside existing PO tick + fallback in dev-team post-cycle. Proof: ARCH brief §2 Options Evaluation table.
+
+**Safety gate (before B ships):** Script must pass verification gate (run PO tick with ahead > 20, observe successful push + WORK telegram + origin updated). Then test guards (dirty notebooks block, commit-mutex blocks).
+
+**Follow-ons (queued backlog):** None; this sprint is self-contained and completes the recurring manual-push debt (po-s102 rationale).
+
+**Handoffs:** 4 files (TASK-AUTO-PUSH-A.md through C.md) created and placed in docs/handoffs/.
+
+**Commit discipline:** Board mutation (orch-state.json + notebook + handoffs) via Python script (workaround for jq memory limit on large orch-state). Single atomic write to orch-state.json (review → ready/done moves). PM notebook appended (this entry). Handoff files committed as standalone .md (no code). PM owns board state; dev owns code commits.
+
+**DJ-GATE-1 (decision journal):** docs/agent-memory/decisions/sprint-2026-06-18-pm.md (new file) documents: ARCH brief received, Option-B design confirmed, no design changes needed, 4 subtasks minted with explicit zone/owner/dependencies, safety constraints encoded in AC per brief, WIP decision (2 lanes, serialization A→B*), decomposition complete.
+
+**Verification:** After full sprint completion (all 4 tasks shipped): run one 24h maintenance cycle with no manual intervention; verify git rev-list count never exceeds N+5 (≤25) without push. Backstop auto-fires at ≤25 and pushes. No accumulation >100 commits (the problem ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP solves).
+
+---
+
 ## c317 ARCH-OHLCV-WRITER-SSOT-DURABLE atomization · 2026-06-17T053000Z
 
 **PARENT:** ARCH-OHLCV-WRITER-SSOT-DURABLE (recurring escalation, 4th recurrence, architect design FINAL)
