@@ -4,6 +4,45 @@
 
 ---
 
+## c98 · 2026-06-17T20:13Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (morning+EOD PUBLISHED; evening PENDING at file-evidence cut; G3/G4 FAIL 3rd consecutive day)
+
+**Layer scores (audited dishes):**
+- Morning 05:16Z: 5/6 NEEDS_ATTENTION (L1✓ L2-partial-EFFR-PMI L3-partial-VIRA L4✓-phase-declared L5✓-Quẻ39-Kiển L6-partial-no-gold-L6-entry) | 9-step: 7/9 GOOD
+- EOD 08:46Z: 5.5/6 GOOD (L1✓ L2-partial L3-partial-VIRA L4✓-phase-declared L5✓-Quẻ39-Kiển L6✓-causal-chain-explicit-DSI-honored) | 9-step: 7.5/9 GOOD
+- Evening 19:45Z: PENDING (notebook cut 08:46Z; cowork-schedule confirms slot enabled + prior pattern = PUBLISH expected)
+
+**G1-G4 Verification:**
+- G1 chef-morning 2026-06-17: PASS (notebook 05:16Z PUBLISHED)
+- G2 chef-eod 2026-06-17: PASS (notebook 08:46Z PUBLISHED)
+- G3 cowork-schedule last_fired morning: FAIL (still 2026-06-15T05:25:52Z — 3rd day)
+- G4 cowork-schedule last_fired eod: FAIL (still 2026-06-15T08:52:40Z — 3rd day)
+- G6 cowork-schedule last_fired evening: FAIL (still 2026-06-14T19:55:12Z)
+
+**New findings:**
+- None new. All findings carry-forward from c97.
+
+**Auto-cures applied:**
+- **AC-GOLD-THRESHOLD-L6 (NEW):** chef.md Step 6 Layer 6 gold threshold regime-drift check added. When gold >$4,300 and used as phase-override driver, must cite as explicit L6 gap entry in CHEF-DETAIL Block B. Gap: F-GOLD-THRESHOLD-BREACH (3+ consecutive cycles). Flow: docs/agents/unified-agent/flow/chef.md Step 6.
+
+**Methodology:**
+- adversarial_gate: PASS (EOD RE [sell/FX] vs Banking [buy/defensive] competing theses resolved with causal evidence)
+- EOD L6: PASS (causal chain gold+4d→VND→sector explicit; DSI-honored; no single-source risk)
+- Hexagram: Quẻ 39 Kiển persistent across both dishes — regime consistency GOOD
+
+**Carry-forward gaps:** F-G3-G4-COWORK-LASTFIRED (3rd day) | F-CHEF-EVENING-DOUBLE-POST (CRITICAL, dispatch pending) | F-BCTC-BANK-SCALAR-MAPPING (HIGH, new sprint) | F3=PMI-sub | F4=VIRA | F9=business-context (24th cycle) | F-MORNING-NB-MISSING (15th+ cycle) | F5=hexagram-continuity (monitor — Quẻ 39 LIVE, not 501)
+
+**Positive signals:**
+- EOD 5.5/6 + 7.5/9 — maintaining GOOD trend from c97. Causal chain explicit. DSI-honored.
+- Quẻ 39 Kiển operational and consistent morning+EOD — hexagram not 501 (2nd consecutive day after c97 PASS)
+- AF-GATE OK both dishes (zero fabricated TA numbers)
+- adversarial_gate PASS (competing sector theses)
+
+**Actions:** Handoff written | Signal file emitted | Notebook appended (MCP unavailable — file-evidence mode; commit-mutex SKIPPED per C-2 FAIL-CLOSED) | WORK report sent (MCP unavailable — file-evidence mode, report in handoff)
+
+---
+
 ## c97 · 2026-06-16T20:13Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE PARTIAL (morning send_telegram 502; EOD+Evening PUBLISHED; G3-G4-G6 FAIL — all guaranteed slots last_fired stale 2nd day; F-EVENING-2026-06-15-CONFIRMED-ABSENT)

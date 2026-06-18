@@ -233,6 +233,10 @@ Rationale: Scenario 4 signals a fundamental disqualifier (governance red flag or
 
 ## Step 6 — LAYER 6 (gap catalogue)
 
+<!-- AUTO-CURE c98 2026-06-17 (tran-ngoc-bau): F-GOLD-THRESHOLD-BREACH — gold >$4,300 used as
+     phase-override driver in 3+ consecutive dishes without being cited as an explicit L6 gap entry.
+     Added mandatory gold-threshold regime-drift check below. -->
+
 Scan the draft narrative against gap catalogue from `tnb-methodology-valuation.md §Layer 6`:
 
 | Gap type | Fix required |
@@ -242,6 +246,13 @@ Scan the draft narrative against gap catalogue from `tnb-methodology-valuation.m
 | Source risk | Flag if only 1 source; add caveat |
 | Lagged indicator | Note lag; add forward-looking supplement |
 | Regime drift | Re-check current macro regime before asserting |
+
+**Gold threshold regime-drift check (mandatory when gold is a cluster driver):**
+If gold price is >$4,300 AND gold is cited as a safe-haven / phase-override signal in any cluster narrative, add this explicit L6 gap entry to the dish:
+```
+[L6-gap: gold >$4,300 active — regime-drift risk: gold-driven phase override may lag actual risk-off reversal; flag as regime-drift until gold retraces below $4,300 or EFFR-IORB confirms liquidity tightening]
+```
+This entry must appear in the WORK [CHEF-DETAIL] Block B Layer 6 section. It may be omitted from the MARKET plain-VI message.
 
 Apply fixes before Step 7. If a gap cannot be fixed (missing data) → flag explicitly in dish.
 

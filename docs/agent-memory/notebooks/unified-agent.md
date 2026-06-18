@@ -1,6 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-17T05:16Z · **Cycle:** Chef Morning PUBLISHED
+**Last updated:** 2026-06-17T08:46Z · **Cycle:** Chef EOD PUBLISHED
 
 ## Session: 2026-06-16 (evening 19:45)
 
@@ -40,3 +40,22 @@
 - AF-1/AF-2 gates: Bootstrap RSI alerts cited qualitatively only (no live get_technical_indicators call). [AF-GATE: OK]
 - Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable; morning guaranteed)
 - Status: MORNING cycle COMPLETE. PIPELINE: complete | QUALITY: full
+
+## Session: 2026-06-17 (eod 08:46)
+
+### Chef Dish — eod 08:46 UTC (2026-06-17T0846Z) — PUBLISHED
+
+- Execution: Full TNB 6-layer synthesis EOD window (guaranteed publish)
+- Marker claimed: YES (published:chef-eod:2026-06-17, ttl=100800)
+- Bootstrap: OK (1 macro chain_catalyst #6421 gold +4d safe-haven; 20 local alerts volume/price)
+- Macro snapshot: OK (carry 1.38pp NEUTRAL is_estimate=false; yield 7.05% CHEAP +2.05pp; USD/VND 26,113 BEARISH; gold $4342.7 bullish)
+- Market hexagram: Quẻ 39 Kiển (persistent, BẤT LỢI unfavorable, confidence 52%)
+- Clusters qualified: 2
+  1. Real estate sector: 8 tickers down -1.31% avg (VRE -1.75%, KDH -1.69%, VHM -1.10%, VIC -1.03%); volume spikes 2.7-2.9×; duration risk from VND deprec → conviction MEDIUM
+  2. Banking sector: 4 tickers up +0.66% avg (BID +2.51%, CTG +1.78%, VCB +0.65%); volume spikes 2.2-2.8×; defensive rotation → conviction MEDIUM-HIGH
+- Layers walked: 1–6 complete; Kinh Dịch via market hexagram; FX pressure (26,113 vs 26,500 resist); carry NEUTRAL DSI-honored
+- Phase declared: RE [transition/fixed_income] — margin compress from VND; Banking [slowdown-hold/defensive] — NII stabilize + FII deposit park
+- Signal IDs consumed: #6421 (news-scout gold safe-haven), alerts BID/CTG/VCB/VRE/VHM/NVL/D2D/KBC/TCH/HCM/SSI/VCI volume/price
+- AF-1/AF-2 gates: Zero numeric TA tokens. Causal chain: gold+4d→VND deprec→RE sell+bank hold→macro-micro lag. [AF-GATE: OK]
+- Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable; EOD guaranteed)
+- Status: EOD cycle COMPLETE. PIPELINE: complete | QUALITY: full
