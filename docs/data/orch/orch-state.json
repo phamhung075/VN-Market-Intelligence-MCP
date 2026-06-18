@@ -266,7 +266,7 @@
       "status": "NEW",
       "payload_ref": null
     },
-    "_updated_at": "2026-06-18T10:02:50Z",
+    "_updated_at": "2026-06-18T10:31:23Z",
     "_updated_by": "dev-team",
     "archive": [
       {
@@ -917,7 +917,7 @@
         "to": "po",
         "type": "ssot_drift",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "summary": "system-map tools[] enumerates 164 but registry/project-stats=166 — missing get_market_breadth (prior-wave drift) + get_recent_signals (commit 51c72725). Reconcile docs/data/system-map.json project.microservices[0].tools[] -> 166 via dev-mcp-server (feedback_ssot_toolcount_drift_after_waves). Turnkey: add both names alphabetically.",
         "payload_ref": null
       }
@@ -20882,7 +20882,32 @@
       "next_task": "TASK-AUTO-PUSH-A"
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-SSOT-SYSTEM-MAP-TOOLCOUNT-166",
+        "type": "FIX",
+        "size": "S",
+        "priority": "LOW",
+        "status": "READY",
+        "title": "Reconcile system-map.json microservices[0].tools 164 -> 166 (add get_market_breadth + get_recent_signals)",
+        "desc": "SSOT drift (feedback_ssot_toolcount_drift_after_waves): docs/data/system-map.json .project.microservices[0].tools enumerates 164 but tool-registry.totalCount=166 AND project-stats.toolCount=166. Two tools missing from the system-map array: get_market_breadth (prior-wave drift) + get_recent_signals (added commit 51c72725). Both are REAL (present in tool-registry.json groups + registered in apps/mcp-server/src marketTools.ts/agentSignalTools.ts). Turnkey: insert both names into the tools[] array in alpha position so the three count SSOTs (system-map / tool-registry / project-stats) all read 166. Reconcile via the dev-mcp-server zone owner (it owns the gen-*.ts that should emit this array) — prefer regenerating from the registry over a hand-edit so the array stops drifting each wave; if regen is brittle (gen counter broke at b33cb82d historically), a guarded hand-edit + a note in the gen path is acceptable.",
+        "zone": "apps/mcp-server",
+        "route_to": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "docs/data/system-map.json",
+          "apps/mcp-server/src"
+        ],
+        "baseline_pass": true,
+        "generic_mandate": "Fix the GENERATOR/source so the system-map tools[] array tracks the registry automatically (no hand-maintained literal that re-drifts each MCP-tool wave). No per-tool allowlist.",
+        "verification_gate": "system-map .project.microservices[0].tools | length == 166 AND contains both get_market_breadth + get_recent_signals; tool-registry.totalCount == project-stats.toolCount == 166 (all 3 SSOTs agree).",
+        "source": "dev-team signal devteam-ssotdrift-20260618100250 (ssot_drift, LOW)",
+        "minted_by": "po",
+        "minted_at": "2026-06-18T10:33:48Z",
+        "minted_tick": "dev-team :07 20260618T103051Z"
+      }
+    ],
     "review": [
       {
         "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
@@ -20957,7 +20982,10 @@
         "minted_at": "2026-06-15T15:52:27Z",
         "completed_at": "2026-06-15T16:30:00Z",
         "completed_by": "dev-mcp-server",
-        "lane": "dev-zone"
+        "lane": "dev-zone",
+        "po_review_note": "po-tick 20260618: code landed (4f5192c5 in HEAD) + live-verified real spread 85/90/78/30 vs named-vol DB, but NO qa_verdict recorded — genuinely awaiting QA sign-off, NOT a stale-lagging row. next_agent=qa. Held in review correctly (gateway-blind tick cannot dispatch qa).",
+        "po_review_note_at": "2026-06-18T10:33:48Z",
+        "next_agent": "qa"
       },
       {
         "_adjudicated_by": "po",
@@ -21122,5 +21150,6 @@
   },
   "metadata": {
     "updated_at": "2026-06-18T06:33:41Z"
-  }
+  },
+  "meta_updated_at": "2026-06-18T10:33:48Z"
 }
