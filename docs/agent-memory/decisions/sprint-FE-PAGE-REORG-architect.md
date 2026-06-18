@@ -19,6 +19,18 @@
 - Timer type: `let timer: ReturnType<typeof setTimeout>` vs `let timer: number`. Under `@remix-run/node` types + ES2022 lib, `setTimeout` return resolves to `NodeJS.Timeout` in Node context. `ReturnType<typeof setTimeout>` is environment-agnostic. Confirmed as the correct pattern (same reasoning as W2-MCP-FETCH-DEADLINE `withDeadline`).
 **why-decision:** All ratifications follow existing codebase conventions confirmed by brownfield read. The one deviation from BA spec is the Cluster A count (28 not 26) — two files missed in the BA audit. The design blueprint gives dev-frontend exact file lists and code-level guidance to avoid the RISK-4 double-migration trap and RISK-1 parse-null contract gap.
 
+### STEP architect-S3 · architect · 2026-06-18T00:33:09Z
+**task-id:** ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP
+**what-done:** Designed threshold-triggered worktree-push backstop extending FU-ORIGIN-LAG-PUSH-DISCIPLINE. Chose Option-B (PO flow step). Codified divergence-reconcile guards, bg-agent safety check, and decomposed 4 PM tasks.
+**what-considered:**
+- Option-A (launchd/cron): adds always-on component + cron inventory debt; same outcome as B with more overhead. Rejected.
+- Option-B (PO flow step): no new component; rides existing PO tick (~15 min); worktree isolation means main tree never touched. Chosen.
+- Option-C (post-commit hook): reduces to B inside hook with push-storm risk outside mutex. Rejected.
+- Rebase vs merge for behind-set: rebase requires clean tree (defeats the purpose). MERGE for cloud-chore-only behind-set is both safe and proven (po-s84 manual execution). orch-state.json conflict → keep HEAD (cloud chores are additive).
+- N=20 vs N=50: N=50 still lets 100-commit backlogs form (~2h). N=20 bounds to <1h. Tunable as `PUSH_THRESHOLD` in script.
+**why-decision:** Option-B has the smallest blast radius, no new always-on component, and the worktree isolation recipe is already proven across 2 manual executions. PO is the semantic owner of push decisions in this project (all past push events were PO-triaged).
+**why-change:** no change from PO-preferred design (PO explicitly noted "prefer option-b" in task spec).
+
 ### STEP architect-S3 · architect · 2026-06-17T05:00:00Z
 **task-id:** ARCH-OHLCV-WRITER-SSOT-DURABLE
 **what-done:** Brownfield recon of all daily_ohlcv writers; confirmed Writer G (writeForeignFlowToOhlcv) as the sole remaining bypassing writer; designed merge-only UPDATE-only replacement; issued blueprint + architecture brief.

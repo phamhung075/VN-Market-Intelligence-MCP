@@ -1,8 +1,18 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-17 05:00 UTC | **Sprint:** FE-PAGE-REORG (cross-sprint: ARCH-OHLCV-WRITER-SSOT-DURABLE)
+**Last updated:** 2026-06-18 00:33 UTC | **Sprint:** FE-PAGE-REORG (cross-sprint: ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP)
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-18T00:33Z — ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP (DESIGN DONE)
+
+**Task:** ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP | mode: MAINTENANCE (recurring-manual-push recurrence × 3) | zone: cross-service/
+**Output:** `docs/architecture-briefs/2026-06-18-auto-push-threshold-backstop.md`
+**Root confirmed:** FU-ORIGIN-LAG-PUSH-DISCIPLINE (done_verified) shipped option-1 (commit-mutex rebase-retry push). Recurrence root: the `git pull --rebase` in the retry path requires a clean main tree; the cowork churn loop keeps the tree permanently dirty → push silently falls back to "local-only" → lag accumulates.
+**Design:** Option-B chosen: threshold-triggered (N=20) push step inside PO flow tick. Fires `scripts/fleet-worktree-push.sh` (new). Guards: (1) bg-agent safety: skip if commit-mutex held OR orch-state/notebooks dirty. (2) behind-set classify: non-chore commit detected → ABORT (BUG telegram). (3) MERGE (not rebase) for cloud-chore behind-set; orch-state.json conflict → keep HEAD (additive cloud chores). (4) tsc gate: `pnpm --filter vn-market check` exit 0 mandatory; never push around red. Worktree path is isolated — main working tree NEVER touched.
+**4 PM tasks:** A=Create `scripts/fleet-worktree-push.sh` (developer); B-PO=Add Step PUSH-BACKSTOP to `docs/agents/po/flow/main.md` (agent-father); B-DT=Add fallback to post-cycle.md Step 4.9 (agent-father); C=cron-jobs.md note (agent-father). All cross-service/, BUILD-STANDARD: not-applicable.
+**BUILD-STANDARD:** not-applicable (MAINTENANCE). **Scan clean:** true.
+**NEXT:** pm
 
 ## 2026-06-17T05:00Z — ARCH-OHLCV-WRITER-SSOT-DURABLE (DESIGN DONE)
 
