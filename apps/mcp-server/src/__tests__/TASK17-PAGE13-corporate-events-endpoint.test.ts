@@ -54,6 +54,18 @@ import {
 } from "../interface/mcp/routes/corporateEventsHandler.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Fixed test clock — decoupled from real Date.now(); keeps seed-vs-window
+// relationships deterministic regardless of when CI runs.
+//
+// Chosen: 2026-06-11T12:00:00.000Z
+//   • 7d window  → since 2026-06-04  (covers seed dates 2026-06-05/06-08/06-10)
+//   • 30d window → since 2026-05-12  (covers 2026-05-20, excludes 2025-01-15)
+//   • 90d window → since 2026-03-13  (covers all recent seeds)
+//   • 365d window→ since 2025-06-11  (covers all seeds incl. VIC 2025-01-15)
+// ─────────────────────────────────────────────────────────────────────────────
+const FIXED_NOW = new Date("2026-06-11T12:00:00.000Z");
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Lifecycle
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -533,6 +545,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     expect(res.statusCode).toBe(200);
@@ -559,6 +572,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -573,6 +587,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=30"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -590,6 +605,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=5"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -604,6 +620,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=400"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -618,6 +635,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=0"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -632,6 +650,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=abc"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -646,6 +665,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=365&type=DIV"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -664,6 +684,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=365&type=DDIND"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -681,6 +702,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=365&type=XYZUNKNOWN"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -697,6 +719,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     expect(res.statusCode).toBe(200);
@@ -723,6 +746,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=365"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -749,6 +773,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=7"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -768,6 +793,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events"),
       res as unknown as import("node:http").ServerResponse,
       db,
+      FIXED_NOW,
     );
 
     expect(res.statusCode).toBe(500);
@@ -783,6 +809,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=365"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -797,6 +824,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -811,6 +839,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?type=AGME"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -825,6 +854,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -839,6 +869,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=365"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -853,6 +884,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=365"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -868,6 +900,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events?days=365"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
@@ -882,6 +915,7 @@ describe("TASK17-PAGE13 — handleGetCorporateEvents HTTP handler", () => {
       makeFakeReq("/api/corporate-events"),
       res as unknown as import("node:http").ServerResponse,
       getDb(),
+      FIXED_NOW,
     );
 
     const body = JSON.parse(res.body) as CorporateEventsResponse;
