@@ -61,6 +61,45 @@ After compact: resume from Step 1 via smart-compact-protocol.md.
 
 ---
 
+## Step 4.8 — PUSH-BACKSTOP (fallback)
+
+<!-- Fallback: PO is primary owner of push decisions (docs/agents/po/flow/main.md § Step PUSH-BACKSTOP).
+     If PO is unavailable in this tick, dev-team checks and fires the backstop here. -->
+
+**Context:** PO is the primary owner of "push to origin" decisions. This step is the secondary backstop — it activates only when dev-team runs without a concurrent PO spawn in the same tick. Uses identical guard logic and the same script as the PO step. Design authority: `docs/architecture-briefs/2026-06-18-auto-push-threshold-backstop.md` §3.2 + §4.1.
+
+**Guard 1 — dirty critical files:**
+```bash
+dirty_critical=$(git diff --name-only 2>/dev/null | grep -E 'docs/data/orch/orch-state\.json|docs/agent-memory/notebooks/')
+```
+If `dirty_critical` is non-empty: a bg agent is mid-write. **SKIP** this tick — log to WORK and continue to Step 4.9.
+
+**Guard 2 — commit-mutex held:**
+```
+held = call_tool(server="vn-market", tool="task_list_held", arguments={kind: "commit-mutex"})
+```
+If `held.count > 0`: a commit is in flight. **SKIP** this tick — log to WORK and continue to Step 4.9.
+
+**Threshold check + dispatch (only if both guards pass):**
+```bash
+ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+if [ "$ahead" -gt "${PUSH_THRESHOLD:-20}" ]; then
+  bash scripts/fleet-worktree-push.sh
+fi
+```
+Script interface: `bash scripts/fleet-worktree-push.sh [--dry-run]`; `PUSH_THRESHOLD` env var overrides default of 20.
+Exit 0 = push succeeded (script sends Telegram WORK notification internally).
+Exit 1 = script aborted with BUG notification sent internally — do NOT double-notify; log skip to WORK and continue.
+
+**If either guard blocks:**
+```
+send_telegram(channel="work", message="[dev-team] PUSH-BACKSTOP fallback: ahead={ahead} > 20 but safety guard BLOCKED (dirty_critical={dirty_critical} / mutex_held={held.count}). Will retry when PO runs.")
+```
+
+**If ahead ≤ 20:** silent no-op — continue to Step 4.9.
+
+---
+
 ## Step 4.9 — Cycle Elapsed Announce
 
 Run once, at the very end of every post-cycle exit path (after Step 4 idle/monitoring exits and after Step 4.5 compact checkpoint):
