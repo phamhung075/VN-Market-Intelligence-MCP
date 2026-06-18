@@ -184,11 +184,11 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-06-18T10:19:23Z",
-    "updated_by": "dev-team",
     "active_task_id": null,
     "next_agent": null,
-    "note": "Tick 20260618T0931 complete — DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION code-gate APPROVED (qa 9dbb548d), done_verified=false (3 behavioral criteria live-deferred, gateway-capable two-fire). WIP=0. Carried to PO: system-map toolCount SSOT reconcile (signal_queue ssot_drift). Push held — PO deferred call."
+    "updated_at": "2026-06-18T10:38:28Z",
+    "updated_by": "dev-team",
+    "note": "Tick 20260618T1031 complete — FIX-SSOT-SYSTEM-MAP-TOOLCOUNT-166 done_verified (4d9eda99, 3 count SSOTs==166). WIP=0. Deferred to gateway-capable path: push (SAFE, PO call), 295-backlog sprint kickoff. Follow-on candidate: system-map tools[] generator (stop wave-drift at root)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15088,6 +15088,37 @@
         "closed_at": "2026-06-18T09:35:49Z",
         "closed_by": "po-s103",
         "done_verified_deferred_note": "Design pass complete (architect_done_at 2026-06-16T20:39:40Z) + Root A SHIPPED (agent-father, commit 69babf46 leader-lock AF-1 backstop-window defer gate; closed 6f306bfa). Roots B/C fix_spec written to docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md and routed to dev-mcp-server as DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION (promoted ready[] this tick — zone now free). done_verified is GATED on all 3 children's behavioral gates: Root A defer-gate live-sim + DMS-1 zero-dup concurrent-sibling + DMS-2 no-false-gateway-down-when-sibling-succeeded. agent-father portion is DONE — do NOT re-dispatch."
+      },
+      {
+        "id": "FIX-SSOT-SYSTEM-MAP-TOOLCOUNT-166",
+        "type": "FIX",
+        "size": "S",
+        "priority": "LOW",
+        "status": "done_verified",
+        "title": "Reconcile system-map.json microservices[0].tools 164 -> 166 (add get_market_breadth + get_recent_signals)",
+        "desc": "SSOT drift (feedback_ssot_toolcount_drift_after_waves): docs/data/system-map.json .project.microservices[0].tools enumerates 164 but tool-registry.totalCount=166 AND project-stats.toolCount=166. Two tools missing from the system-map array: get_market_breadth (prior-wave drift) + get_recent_signals (added commit 51c72725). Both are REAL (present in tool-registry.json groups + registered in apps/mcp-server/src marketTools.ts/agentSignalTools.ts). Turnkey: insert both names into the tools[] array in alpha position so the three count SSOTs (system-map / tool-registry / project-stats) all read 166. Reconcile via the dev-mcp-server zone owner (it owns the gen-*.ts that should emit this array) — prefer regenerating from the registry over a hand-edit so the array stops drifting each wave; if regen is brittle (gen counter broke at b33cb82d historically), a guarded hand-edit + a note in the gen path is acceptable.",
+        "zone": "apps/mcp-server",
+        "route_to": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "docs/data/system-map.json",
+          "apps/mcp-server/src"
+        ],
+        "baseline_pass": true,
+        "generic_mandate": "Fix the GENERATOR/source so the system-map tools[] array tracks the registry automatically (no hand-maintained literal that re-drifts each MCP-tool wave). No per-tool allowlist.",
+        "verification_gate": "system-map .project.microservices[0].tools | length == 166 AND contains both get_market_breadth + get_recent_signals; tool-registry.totalCount == project-stats.toolCount == 166 (all 3 SSOTs agree).",
+        "source": "dev-team signal devteam-ssotdrift-20260618100250 (ssot_drift, LOW)",
+        "minted_by": "po",
+        "minted_at": "2026-06-18T10:33:48Z",
+        "minted_tick": "dev-team :07 20260618T103051Z",
+        "claimed_at": "2026-06-18T10:35:12Z",
+        "claimed_by": "dev-team",
+        "done_verified": true,
+        "commit": "4d9eda99",
+        "verified_by": "dev-team(router RAW)",
+        "verified_at": "2026-06-18T10:38:28Z",
+        "verify_note": "3 SSOTs all==166 on-disk; tools[] has get_market_breadth+get_recent_signals; commit narrow (1 file system-map.json), no .ts so tsc unaffected. _tools_ssot pointer added (registry=count SSOT). Generator NOT built (system-map tools[] is hand-maintained, no gen script — generator = separate scope-S, deferred)."
       }
     ],
     "done_verified": [
@@ -20882,32 +20913,7 @@
       "next_task": "TASK-AUTO-PUSH-A"
     },
     "in_progress": [],
-    "ready": [
-      {
-        "id": "FIX-SSOT-SYSTEM-MAP-TOOLCOUNT-166",
-        "type": "FIX",
-        "size": "S",
-        "priority": "LOW",
-        "status": "READY",
-        "title": "Reconcile system-map.json microservices[0].tools 164 -> 166 (add get_market_breadth + get_recent_signals)",
-        "desc": "SSOT drift (feedback_ssot_toolcount_drift_after_waves): docs/data/system-map.json .project.microservices[0].tools enumerates 164 but tool-registry.totalCount=166 AND project-stats.toolCount=166. Two tools missing from the system-map array: get_market_breadth (prior-wave drift) + get_recent_signals (added commit 51c72725). Both are REAL (present in tool-registry.json groups + registered in apps/mcp-server/src marketTools.ts/agentSignalTools.ts). Turnkey: insert both names into the tools[] array in alpha position so the three count SSOTs (system-map / tool-registry / project-stats) all read 166. Reconcile via the dev-mcp-server zone owner (it owns the gen-*.ts that should emit this array) — prefer regenerating from the registry over a hand-edit so the array stops drifting each wave; if regen is brittle (gen counter broke at b33cb82d historically), a guarded hand-edit + a note in the gen path is acceptable.",
-        "zone": "apps/mcp-server",
-        "route_to": "dev-mcp-server",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "files": [
-          "docs/data/system-map.json",
-          "apps/mcp-server/src"
-        ],
-        "baseline_pass": true,
-        "generic_mandate": "Fix the GENERATOR/source so the system-map tools[] array tracks the registry automatically (no hand-maintained literal that re-drifts each MCP-tool wave). No per-tool allowlist.",
-        "verification_gate": "system-map .project.microservices[0].tools | length == 166 AND contains both get_market_breadth + get_recent_signals; tool-registry.totalCount == project-stats.toolCount == 166 (all 3 SSOTs agree).",
-        "source": "dev-team signal devteam-ssotdrift-20260618100250 (ssot_drift, LOW)",
-        "minted_by": "po",
-        "minted_at": "2026-06-18T10:33:48Z",
-        "minted_tick": "dev-team :07 20260618T103051Z"
-      }
-    ],
+    "ready": [],
     "review": [
       {
         "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
