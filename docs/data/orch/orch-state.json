@@ -176,11 +176,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "TASK-AUTO-PUSH-A",
-    "next_agent": "developer",
-    "updated_at": "2026-06-18T00:45:15Z",
+    "updated_at": "2026-06-18T01:01:33Z",
     "updated_by": "dev-team",
-    "note": "Sprint ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP tier1 dispatched: A->developer (scripts/fleet-worktree-push.sh, critical path), C->agent-father (cron-jobs.md note, doc WIP-exempt). tier2 B-PO/B-DT->agent-father after A ships+rebuild."
+    "active_task_id": "TASK-AUTO-PUSH-B-PO",
+    "next_agent": "agent-father",
+    "note": "FIX-BCTC done_verified (router live RAW-verify); tier2 B-PO+B-DT dispatched to agent-father in parallel (depend on A=done)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20392,6 +20392,68 @@
         "qa_closed_at": "2026-06-17T13:20Z",
         "done_verified_at": "2026-06-17T13:20Z",
         "done_verified_by": "qa"
+      },
+      {
+        "id": "FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH",
+        "type": "FIX",
+        "severity": "HIGH",
+        "status": "DONE_VERIFIED",
+        "title": "BCTC enricher: attempts===0 guard never terminalizes genuinely-absent tickers → zero-url counter unbounded → bctc SLA FALSE-CRITICAL",
+        "description": "REROUTED 2026-06-17 (zone correction). dev-vps-crawls DISPROVED the discovery-outage hypothesis via RAW VPS probes: bctc-discover returns Q1-2026 URLs for VCB/HPG <1s; 65 Q1-2026 tickers already in done[] with real URLs. The 9 pending tickers (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA + VEA-Q4-2025) are GENUINELY ABSENT (no Q1-2026 filing exists yet on SSC — honest gap per /goal#1), NOT an outage. REAL ROOT (apps/mcp-server, dev-mcp-server zone): bctcQueueEnricherJob.ts lines 497-513 — when discovery returns 0 URLs and attempts===0, the else branch leaves the row pending at 0 and NEVER increments. Genuinely-absent rows are forever stuck at attempts=0, never reach MAX_ENRICH_ATTEMPTS(5), never marked url_not_found, cycle forever (210+ zero-url cycles). The zero-url counter climbs every cron tick → bctc SLA reads 1332/360min breached CRITICAL and STILL CLIMBING — a metric/accounting ARTIFACT of the stuck-9, NOT real staleness (current-quarter data is healthy). RECLASSIFIED CRITICAL→HIGH: not a data-loss CRITICAL (data healthy), but the permanently-stuck false-CRITICAL SLA masks ALL FUTURE real bctc breaches — a real observability fix.",
+        "owner": "dev-mcp-server",
+        "next_agent": null,
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "files": [
+          "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts"
+        ],
+        "baseline_pass": false,
+        "depends": [],
+        "sequencing": "WIP=2 (1 ARCH-CRON designer-exempt + this re-routed coding lane). SAME lane re-routed dev-vps-crawls→dev-mcp-server — NOT a new lane. WIP unchanged.",
+        "route": "dev-mcp-server",
+        "source": "ROUTER-VERIFIED reroute 2026-06-17T18:55Z (signal po-2026-06-17T18-55-00Z-bctc-discover-reroute.json; diagnosis commit 5a94f08e). Router RAW-confirmed: get_bctc_full(VCB)=Q1-2026 healthy; get_bctc_full(VEA)=latest 2025-Q4 (genuine absence); get_sla_status bctc 1332/360min climbing.",
+        "groomed_at": "2026-06-17T11:32:00Z",
+        "groomed_by": "pm",
+        "claimed_at": "2026-06-17T19:00:00Z",
+        "claimed_by": "dev-mcp-server",
+        "verification_gate": "DONE_VERIFIED gate (/goal#1): (1) live get_sla_status shows bctc age FALLING (not climbing) after the 9 absent rows terminalize; (2) the 9 absent tickers in url_not_found terminal state (attempts reached 5 via real-discovery increments); (3) the 65 done[] Q1-2026 rows UNTOUCHED (no real data lost); (4) zero-url counter no longer climbing every tick. NOT just green tests — RAW live SLA probe required (a SQL flush of attempts is a graceful workaround, the CODE fix is the durable terminal).",
+        "done_verified_blocked_reason": "Startup reset conflict closed (ea5dc0eb). resetQ1UrlNotFound() removed from initFinancialReportsTables(). Live evidence: no TASK-1943a reset at startup; cycles 23:30 + 23:45 show no startup-reset log; done=65 untouched; terminalization progressing (attempts 3→4→6). Full terminalization to url_not_found at :00Z cycle pending QA verification.",
+        "fix_spec": "Remove the attempts===0 special-case (else branch, lines 509-513) that prevents increment. GENERIC (no per-ticker allowlist, no date-literal — /goal#2): when discovery REACHES the source and returns 0 URLs (real network-level discovery, NOT a pre-network error — keep the existing error-path no-increment at lines 526+), ALWAYS increment attempts regardless of current value. Optionally distinguish 'first real attempt' via last_attempt IS NULL rather than attempts===0. Any genuinely-absent row then accumulates attempts → reaches MAX_ENRICH_ATTEMPTS(5) → marked url_not_found (honest terminal) → drops out of the pending cycle → zero-url counter resets → bctc SLA stops growing.",
+        "generic_mandate": "Fix MUST be ticker-agnostic and date-agnostic: any ticker whose filing is genuinely absent terminalizes after N real-discovery attempts. No allowlist of the current 9, no Q1-2026 literal.",
+        "rebuild_required": false,
+        "rerouted_at": "2026-06-17T18:58:32Z",
+        "rerouted_from": "dev-vps-crawls (hypothesis disproven, zone correction)",
+        "impl_commit": "ea5dc0eb",
+        "impl_at": "2026-06-18T00:00:00Z",
+        "impl_by": "dev-mcp-server",
+        "qa_reviewed_at": "2026-06-18T00:56:25Z",
+        "qa_verdict": "APPROVED",
+        "qa_blocking_issues": [],
+        "qa_reviewed_by": "qa (cycle-294)",
+        "qa_notes": "APPROVED cycle-294. Production fix ea5dc0eb: resetQ1UrlNotFound() removed from initFinancialReportsTables(). TERM-8 regression guard added. CI per-file isolation: 13190/42skip/6 vs baseline 13179/42/17 (net +11 pass, -11 fail, 0 overlap). tsc 0 errors. DDD PASS. Security PASS. mock-guard PASS. Live DB: all 8 Q1-2026 rows url_not_found/attempts=7, 65 done untouched, zero_url_consecutive_cycles=243 STOPPED. Container has fix confirmed. Genericity: Arm-2 numeric cap only, no allowlist/date-literal.",
+        "rebuild_verified_at": "2026-06-17T20:41:25Z",
+        "rebuild_image_created": "2026-06-17T20:29:25Z",
+        "done_verified": null,
+        "po_policy_decision": {
+          "decided_at": "2026-06-17T23:29:29Z",
+          "decided_by": "po-s101",
+          "question": "grace-retry (TASK-1943a auto-reset url_not_found->pending) vs terminalize (FIX-BCTC) — mutually contradictory by design; dev-mcp-server escalated as possible policy fork.",
+          "verdict": "TERMINALIZE WINS. Genuinely-absent rows MUST stay terminal. The grace-period's only legitimate purpose is a filing that appears LATE — that is served by a BOUNDED retry window, NOT by infinite re-pending. TASK-1943a's blanket 'reset Q1-2026 url_not_found rows to pending' defeats the entire SLA and is the live root of the unbounded consecutive_zero_cycles=235 oscillation.",
+          "directives": [
+            "1. BOUND the grace-period: a row may be auto-reset url_not_found->pending at most a FINITE number of times (default: grace_max_resets=2) AND only within a finite age window (default: grace_window_days=14 from first_attempt). Track per-row grace_reset_count.",
+            "2. RESPECT terminal at exhaustion: once a row hits MAX enricher attempts AND grace exhausted (grace_reset_count>=grace_max_resets OR age>grace_window_days), it stays url_not_found TERMINAL. No further reset. This is the correct steady state for a genuinely-absent filing.",
+            "3. The enricher terminalize branch (verified executing) is CORRECT — do NOT change it. The fix is to the CONFLICTING WRITER (TASK-1943a reset path: bctcQueueEnricherJob.ts Arm2 :270/:426 + schema-financial-reports.ts:695): gate its reset on the bounded counter/window above.",
+            "4. GENERALIZE the date-literal: TASK-1943a hardcodes 'Q1-2026'. Replace with the current-quarter computed at runtime (no date literal) — /goal#2.",
+            "5. SECONDARY (separate from policy): de-conflict the enricher DOUBLE-FIRE (each ticker logged 2x/cycle). This is the ARCH-CRON node-cron silent-misfire class (sibling in_progress lane ARCH-CRON-SCHEDULER-RELIABILITY) — if a quick per-job same-UTC-cycle dedup guard closes it in-zone, do it here; otherwise note it for the ARCH-CRON lane and do not block this fix on it."
+          ],
+          "bounded_defaults_rationale": "grace_max_resets=2 and grace_window_days=14 are PO defaults (filings that slip past their due date almost always appear within 2 weeks). dev-mcp-server may surface these as config constants; do NOT make them infinite. A genuinely-absent row terminalizing is the CORRECT outcome, not a failure.",
+          "done_verified_gate": "Live DB: the 8 rows (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA) reach url_not_found and STAY terminal across >=3 consecutive enricher cycles (no oscillation back to pending/attempts=0); consecutive_zero_cycles stops climbing / bctc SLA no longer FALSE-CRITICAL.",
+          "ownership": "Code implementation stays dev-mcp-server (next_agent unchanged). This stamp removes the policy ambiguity ONLY — no architect needed; the scheduler double-fire is the only architect-adjacent piece and is already tracked in the ARCH-CRON lane."
+        },
+        "verified_at": "2026-06-18T01:01:33Z",
+        "verified_by": "router",
+        "verify_note": "Router live RAW-verify (named-vol market.db via sidecar): 8 distinct Q1-2026 tickers BDI,DAG,DLC,JSH,SIS,VDC,VEA,VNH all url_not_found attempts=7 (terminal, excluded by generic attempts<6 retry gate); only 2 re-fireable rows BID,EIB 2025Q4 attempts=1 (legit-young, not the absent set); done=65 unchanged; zero_url_consecutive_cycles=243 flat; container line695 startup-reset-REMOVED confirmed. impl ea5dc0eb, qa cc7ac803. NODE-CRON DoD#6 deferred to ARCH-CRON-SCHEDULER-RELIABILITY."
       }
     ],
     "head": {
@@ -20457,63 +20519,48 @@
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
       },
       {
-        "id": "FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH",
-        "type": "FIX",
-        "severity": "HIGH",
-        "status": "DONE",
-        "title": "BCTC enricher: attempts===0 guard never terminalizes genuinely-absent tickers → zero-url counter unbounded → bctc SLA FALSE-CRITICAL",
-        "description": "REROUTED 2026-06-17 (zone correction). dev-vps-crawls DISPROVED the discovery-outage hypothesis via RAW VPS probes: bctc-discover returns Q1-2026 URLs for VCB/HPG <1s; 65 Q1-2026 tickers already in done[] with real URLs. The 9 pending tickers (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA + VEA-Q4-2025) are GENUINELY ABSENT (no Q1-2026 filing exists yet on SSC — honest gap per /goal#1), NOT an outage. REAL ROOT (apps/mcp-server, dev-mcp-server zone): bctcQueueEnricherJob.ts lines 497-513 — when discovery returns 0 URLs and attempts===0, the else branch leaves the row pending at 0 and NEVER increments. Genuinely-absent rows are forever stuck at attempts=0, never reach MAX_ENRICH_ATTEMPTS(5), never marked url_not_found, cycle forever (210+ zero-url cycles). The zero-url counter climbs every cron tick → bctc SLA reads 1332/360min breached CRITICAL and STILL CLIMBING — a metric/accounting ARTIFACT of the stuck-9, NOT real staleness (current-quarter data is healthy). RECLASSIFIED CRITICAL→HIGH: not a data-loss CRITICAL (data healthy), but the permanently-stuck false-CRITICAL SLA masks ALL FUTURE real bctc breaches — a real observability fix.",
-        "owner": "dev-mcp-server",
-        "next_agent": "router",
+        "id": "TASK-AUTO-PUSH-B-PO",
+        "title": "Add Step PUSH-BACKSTOP to docs/agents/po/flow/main.md: threshold check + safety guard + script invocation",
+        "owner": "agent-father",
+        "status": "IN_PROGRESS",
+        "zone": "docs/agents/po/",
+        "type": "maintenance",
+        "size": "S",
         "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "files": [
-          "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts"
+        "depends": [
+          "TASK-AUTO-PUSH-A"
         ],
-        "baseline_pass": false,
-        "depends": [],
-        "sequencing": "WIP=2 (1 ARCH-CRON designer-exempt + this re-routed coding lane). SAME lane re-routed dev-vps-crawls→dev-mcp-server — NOT a new lane. WIP unchanged.",
-        "route": "dev-mcp-server",
-        "source": "ROUTER-VERIFIED reroute 2026-06-17T18:55Z (signal po-2026-06-17T18-55-00Z-bctc-discover-reroute.json; diagnosis commit 5a94f08e). Router RAW-confirmed: get_bctc_full(VCB)=Q1-2026 healthy; get_bctc_full(VEA)=latest 2025-Q4 (genuine absence); get_sla_status bctc 1332/360min climbing.",
-        "groomed_at": "2026-06-17T11:32:00Z",
-        "groomed_by": "pm",
-        "claimed_at": "2026-06-17T19:00:00Z",
-        "claimed_by": "dev-mcp-server",
-        "verification_gate": "DONE_VERIFIED gate (/goal#1): (1) live get_sla_status shows bctc age FALLING (not climbing) after the 9 absent rows terminalize; (2) the 9 absent tickers in url_not_found terminal state (attempts reached 5 via real-discovery increments); (3) the 65 done[] Q1-2026 rows UNTOUCHED (no real data lost); (4) zero-url counter no longer climbing every tick. NOT just green tests — RAW live SLA probe required (a SQL flush of attempts is a graceful workaround, the CODE fix is the durable terminal).",
-        "done_verified_blocked_reason": "Startup reset conflict closed (ea5dc0eb). resetQ1UrlNotFound() removed from initFinancialReportsTables(). Live evidence: no TASK-1943a reset at startup; cycles 23:30 + 23:45 show no startup-reset log; done=65 untouched; terminalization progressing (attempts 3→4→6). Full terminalization to url_not_found at :00Z cycle pending QA verification.",
-        "fix_spec": "Remove the attempts===0 special-case (else branch, lines 509-513) that prevents increment. GENERIC (no per-ticker allowlist, no date-literal — /goal#2): when discovery REACHES the source and returns 0 URLs (real network-level discovery, NOT a pre-network error — keep the existing error-path no-increment at lines 526+), ALWAYS increment attempts regardless of current value. Optionally distinguish 'first real attempt' via last_attempt IS NULL rather than attempts===0. Any genuinely-absent row then accumulates attempts → reaches MAX_ENRICH_ATTEMPTS(5) → marked url_not_found (honest terminal) → drops out of the pending cycle → zero-url counter resets → bctc SLA stops growing.",
-        "generic_mandate": "Fix MUST be ticker-agnostic and date-agnostic: any ticker whose filing is genuinely absent terminalizes after N real-discovery attempts. No allowlist of the current 9, no Q1-2026 literal.",
-        "rebuild_required": false,
-        "rerouted_at": "2026-06-17T18:58:32Z",
-        "rerouted_from": "dev-vps-crawls (hypothesis disproven, zone correction)",
-        "impl_commit": "ea5dc0eb",
-        "impl_at": "2026-06-18T00:00:00Z",
-        "impl_by": "dev-mcp-server",
-        "qa_reviewed_at": "2026-06-18T00:56:25Z",
-        "qa_verdict": "APPROVED",
-        "qa_blocking_issues": [],
-        "qa_reviewed_by": "qa (cycle-294)",
-        "qa_notes": "APPROVED cycle-294. Production fix ea5dc0eb: resetQ1UrlNotFound() removed from initFinancialReportsTables(). TERM-8 regression guard added. CI per-file isolation: 13190/42skip/6 vs baseline 13179/42/17 (net +11 pass, -11 fail, 0 overlap). tsc 0 errors. DDD PASS. Security PASS. mock-guard PASS. Live DB: all 8 Q1-2026 rows url_not_found/attempts=7, 65 done untouched, zero_url_consecutive_cycles=243 STOPPED. Container has fix confirmed. Genericity: Arm-2 numeric cap only, no allowlist/date-literal.",
-        "rebuild_verified_at": "2026-06-17T20:41:25Z",
-        "rebuild_image_created": "2026-06-17T20:29:25Z",
-        "done_verified": null,
-        "po_policy_decision": {
-          "decided_at": "2026-06-17T23:29:29Z",
-          "decided_by": "po-s101",
-          "question": "grace-retry (TASK-1943a auto-reset url_not_found->pending) vs terminalize (FIX-BCTC) — mutually contradictory by design; dev-mcp-server escalated as possible policy fork.",
-          "verdict": "TERMINALIZE WINS. Genuinely-absent rows MUST stay terminal. The grace-period's only legitimate purpose is a filing that appears LATE — that is served by a BOUNDED retry window, NOT by infinite re-pending. TASK-1943a's blanket 'reset Q1-2026 url_not_found rows to pending' defeats the entire SLA and is the live root of the unbounded consecutive_zero_cycles=235 oscillation.",
-          "directives": [
-            "1. BOUND the grace-period: a row may be auto-reset url_not_found->pending at most a FINITE number of times (default: grace_max_resets=2) AND only within a finite age window (default: grace_window_days=14 from first_attempt). Track per-row grace_reset_count.",
-            "2. RESPECT terminal at exhaustion: once a row hits MAX enricher attempts AND grace exhausted (grace_reset_count>=grace_max_resets OR age>grace_window_days), it stays url_not_found TERMINAL. No further reset. This is the correct steady state for a genuinely-absent filing.",
-            "3. The enricher terminalize branch (verified executing) is CORRECT — do NOT change it. The fix is to the CONFLICTING WRITER (TASK-1943a reset path: bctcQueueEnricherJob.ts Arm2 :270/:426 + schema-financial-reports.ts:695): gate its reset on the bounded counter/window above.",
-            "4. GENERALIZE the date-literal: TASK-1943a hardcodes 'Q1-2026'. Replace with the current-quarter computed at runtime (no date literal) — /goal#2.",
-            "5. SECONDARY (separate from policy): de-conflict the enricher DOUBLE-FIRE (each ticker logged 2x/cycle). This is the ARCH-CRON node-cron silent-misfire class (sibling in_progress lane ARCH-CRON-SCHEDULER-RELIABILITY) — if a quick per-job same-UTC-cycle dedup guard closes it in-zone, do it here; otherwise note it for the ARCH-CRON lane and do not block this fix on it."
-          ],
-          "bounded_defaults_rationale": "grace_max_resets=2 and grace_window_days=14 are PO defaults (filings that slip past their due date almost always appear within 2 weeks). dev-mcp-server may surface these as config constants; do NOT make them infinite. A genuinely-absent row terminalizing is the CORRECT outcome, not a failure.",
-          "done_verified_gate": "Live DB: the 8 rows (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA) reach url_not_found and STAY terminal across >=3 consecutive enricher cycles (no oscillation back to pending/attempts=0); consecutive_zero_cycles stops climbing / bctc SLA no longer FALSE-CRITICAL.",
-          "ownership": "Code implementation stays dev-mcp-server (next_agent unchanged). This stamp removes the policy ambiguity ONLY — no architect needed; the scheduler double-fire is the only architect-adjacent piece and is already tracked in the ARCH-CRON lane."
-        }
+        "blocks": [],
+        "created_at": "2026-06-18T004138Z",
+        "files": [
+          "docs/agents/po/flow/main.md"
+        ],
+        "note": "Insert at every PO tick exit path; fires when git rev-list origin/main..HEAD > 20",
+        "claimed_at": "2026-06-18T01:01:33Z",
+        "claimed_by": "router",
+        "next_agent": "agent-father"
+      },
+      {
+        "id": "TASK-AUTO-PUSH-B-DT",
+        "title": "Add fallback PUSH-BACKSTOP to docs/agents/dev-team/flow/post-cycle.md Step 4.9",
+        "owner": "agent-father",
+        "status": "IN_PROGRESS",
+        "zone": "docs/agents/dev-team/",
+        "type": "maintenance",
+        "size": "XS",
+        "priority": "P1",
+        "depends": [
+          "TASK-AUTO-PUSH-A"
+        ],
+        "blocks": [],
+        "created_at": "2026-06-18T004138Z",
+        "files": [
+          "docs/agents/dev-team/flow/post-cycle.md"
+        ],
+        "note": "Secondary location if PO unavailable; same guard logic as PO step",
+        "claimed_at": "2026-06-18T01:01:33Z",
+        "claimed_by": "router",
+        "next_agent": "agent-father"
       }
     ],
     "ready": [
@@ -20593,44 +20640,6 @@
         "claimed_by": null,
         "verification_gate": "get_foreign_flow.md param renamed from ticker→code; agents no longer see schema error on market-watcher/news-scout fetch.",
         "done_verified_blocked_reason": null
-      },
-      {
-        "id": "TASK-AUTO-PUSH-B-PO",
-        "title": "Add Step PUSH-BACKSTOP to docs/agents/po/flow/main.md: threshold check + safety guard + script invocation",
-        "owner": "agent-father",
-        "status": "TODO",
-        "zone": "docs/agents/po/",
-        "type": "maintenance",
-        "size": "S",
-        "priority": "P1",
-        "depends": [
-          "TASK-AUTO-PUSH-A"
-        ],
-        "blocks": [],
-        "created_at": "2026-06-18T004138Z",
-        "files": [
-          "docs/agents/po/flow/main.md"
-        ],
-        "note": "Insert at every PO tick exit path; fires when git rev-list origin/main..HEAD > 20"
-      },
-      {
-        "id": "TASK-AUTO-PUSH-B-DT",
-        "title": "Add fallback PUSH-BACKSTOP to docs/agents/dev-team/flow/post-cycle.md Step 4.9",
-        "owner": "agent-father",
-        "status": "TODO",
-        "zone": "docs/agents/dev-team/",
-        "type": "maintenance",
-        "size": "XS",
-        "priority": "P1",
-        "depends": [
-          "TASK-AUTO-PUSH-A"
-        ],
-        "blocks": [],
-        "created_at": "2026-06-18T004138Z",
-        "files": [
-          "docs/agents/dev-team/flow/post-cycle.md"
-        ],
-        "note": "Secondary location if PO unavailable; same guard logic as PO step"
       }
     ],
     "review": [
