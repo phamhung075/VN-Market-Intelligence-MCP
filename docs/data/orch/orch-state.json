@@ -183,12 +183,12 @@
     }
   ],
   "head": {
-    "status": "dispatch",
+    "status": "in_progress",
+    "updated_at": "2026-06-18T09:39:52Z",
+    "updated_by": "dev-team",
     "active_task_id": "DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION",
     "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-18T09:35:49Z",
-    "updated_by": "po-s103",
-    "note": "PO reconcile+dispatch (po-s103, 2026-06-18T09:35:49Z): prior head was STALE — pointed at next_agent=agent-father for DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER, but agent-father ALREADY shipped Root A (commit 69babf46, closed 6f306bfa) — that work is DONE, NOT re-dispatched. Umbrella closed in_progress->done (done_verified:false, gated on 3 children). DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION (Roots B/C) promoted backlog->ready: its blocker ARCH-CRON-SCHEDULER-RELIABILITY is now done_verified:true so the apps/mcp-server/ zone is free. Router mutex-wraps the dev-mcp-server spawn (apps/mcp-server/ zone; fix_spec docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md). PUSH HELD — PO out-of-band call."
+    "note": "DMS claimed ready->in_progress 2026-06-18T09:39:52Z. dev-mcp-server implements DMS-1 (news-scout SIBLING_WINDOW_CACHE) + DMS-2 (market-watcher probe-retry-suppress) per fix_spec docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md. zone apps/mcp-server/. Run pnpm check BEFORE commit (RED-PREPUSH). Promote -> review(qa) on green."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20826,13 +20826,12 @@
       "note": "DEPRECATED — do NOT read or write this field. The canonical head SSOT is TOP-LEVEL .head (read by dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). This field formerly drifted from top-level .head because po-s65/po-s54 scripts wrote here while the flow read top-level .head (signal head-drift-po-s64-vs-task-board-head). Any new script writing .task_board.head is a BUG — write .head instead. Kept as a stub (not removed) so a legacy reader sees the redirect rather than a phantom active_task_id.",
       "next_task": "TASK-AUTO-PUSH-A"
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION",
         "type": "FIX",
         "priority": "p2",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "owner": "dev-mcp-server",
         "next_agent": "dev-mcp-server",
         "route_to": "dev-mcp-server",
@@ -20856,9 +20855,12 @@
         "created_by": "po",
         "promoted_at": "2026-06-18T09:35:49Z",
         "promoted_by": "po-s103",
-        "promotion_note": "Blocker ARCH-CRON-SCHEDULER-RELIABILITY is now done_verified:true -> apps/mcp-server/ zone collision (the sole hold_reason) is CLEARED. fix_spec ready (docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-1 + §DMS-2). Active coding WIP <=2: the only in_progress was the multi/design umbrella (now closed); the 2 apps/mcp-server review[] rows are QA-gated not active dev lanes, so no 2nd concurrent dev lane opens. Router dispatches dev-mcp-server. RAW-verify gate: 2 concurrent sibling fires -> 0 dup signal_bus rows on named-volume market.db; timeout+sibling-success -> no BUG row."
+        "promotion_note": "Blocker ARCH-CRON-SCHEDULER-RELIABILITY is now done_verified:true -> apps/mcp-server/ zone collision (the sole hold_reason) is CLEARED. fix_spec ready (docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-1 + §DMS-2). Active coding WIP <=2: the only in_progress was the multi/design umbrella (now closed); the 2 apps/mcp-server review[] rows are QA-gated not active dev lanes, so no 2nd concurrent dev lane opens. Router dispatches dev-mcp-server. RAW-verify gate: 2 concurrent sibling fires -> 0 dup signal_bus rows on named-volume market.db; timeout+sibling-success -> no BUG row.",
+        "claimed_at": "2026-06-18T09:39:52Z",
+        "claimed_by": "router"
       }
     ],
+    "ready": [],
     "review": [
       {
         "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
