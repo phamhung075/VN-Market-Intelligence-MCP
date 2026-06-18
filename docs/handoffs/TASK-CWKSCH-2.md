@@ -107,6 +107,21 @@ If T-14b does NOT red when guard is removed, the guard condition is not load-bea
 
 ---
 
+## [QA] Review Record
+
+**verdict:** APPROVED | **impl-commit:** 30b9a7f8 | **date:** 2026-06-18
+
+- G1 TARGETED 51/0 (DWF-phase1-cadence.test.ts --no-cache, 409ms)
+- G2 T-14b RED-without-guard INDEPENDENTLY REPRODUCED: 50/1 (only T-14b: received STALE_A, expected FIRED_B); guard restored → 51/0
+- G3 FULL SUITE ci-per-file-isolation.sh 16: 13159/42 skip/40 fail; 12 failing files DISJOINT from commit
+- G4 TSC exit 0
+- G5 DDD PASS, G6 SECURITY PASS, G7 SMART-SKIP (test-only + flow-doc)
+- G8 DIFF: guard scoped to WON_SLOTS only; null explicit; fresh-read+atomic-rename untouched
+- G9 VERIFICATION GATE: T-14 + T-14b = both-slots-persist + monotonic confirmed
+- DJ: sprint-FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER-qa.md
+
+---
+
 ## [Developer] Implementation Notes
 
 ### Step 1: Upgrade `batchWriteLastFired` Helper

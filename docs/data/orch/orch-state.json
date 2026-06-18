@@ -20956,10 +20956,10 @@
         "id": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER",
         "title": "cowork-schedule.json last_fired stamps clobbered by stale-base read-modify-write race",
         "type": "FIX",
-        "status": "DONE",
+        "status": "done_verified",
         "priority": "P2",
         "zone": "apps/mcp-server/",
-        "next_agent": "qa",
+        "next_agent": "pm",
         "blocking": false,
         "root_cause": "A writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline -- file uncommitted since e96176d8 2026-06-15), updates only ITS slot (chef-intraday) and writes the WHOLE file back -> every other slot last_fired reverts to the stale base. Evidence 2026-06-18T04:07Z: chef-intraday=03:23:15Z (fresh, =file mtime) BUT news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z -- reverted to 3-day-old values despite fresh stamps existing earlier today (00:07Z matcher snapped_last_fired=2026-06-18T00:00:00Z). Effect: matcher sees slots as massively overdue -> spurious re-offer/re-fire risk (doublefire class); cadence ledger corrupted. NOT a gather gap (gathering still happens; only the stamp ledger is clobbered). Relates [[feedback_worktree_stale_base]] + guaranteed-slot doublefire class.",
         "fix_spec": "cowork-schedule.json writer MUST FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set / per-slot CAS), never echo back a whole stale snapshot. Same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read, project_orch_state_cutover). Applies to BOTH the cloud cowork-leader dispatcher writer AND any local cowork-team last-fired writer (docs/agents/cowork-team/flow/last-fired.md, match-slots.md).",
@@ -20977,12 +20977,15 @@
         "groomed_by": "po-s103",
         "promoted_at": "2026-06-18T04:25:34Z",
         "pm_done": true,
-        "updated_at": "2026-06-18T05:30:00Z",
-        "updated_by": "dev-mcp-server",
-        "status_note": "Decomposed into 2 atomic tasks: TASK-CWKSCH-1 (flow-doc, S) + TASK-CWKSCH-2 (test, M). Tier-1 parallel tasks, ready for dev-mcp-server dispatch.",
+        "updated_at": "2026-06-18T06:10:00Z",
+        "updated_by": "qa",
+        "status_note": "APPROVED by QA: 51/0 targeted; T-14b RED independently reproduced (50/1 without guard); full suite 13159/42sk/40fail disjoint; tsc 0 err; DJ sprint-FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER-qa.md.",
         "dev_done": true,
         "dev_done_at": "2026-06-18T05:30:00Z",
-        "dev_done_by": "dev-mcp-server"
+        "dev_done_by": "dev-mcp-server",
+        "qa_approved": true,
+        "qa_approved_at": "2026-06-18T06:10:00Z",
+        "qa_approved_by": "qa"
       }
     ],
     "_closed_signals_20260614": {

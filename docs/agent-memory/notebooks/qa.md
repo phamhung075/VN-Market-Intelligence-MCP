@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-297 · 2026-06-18 · FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER (TASK-CWKSCH-1+2) — APPROVED
+
+Task: TASK-CWKSCH-1+2 | Impl commit: 30b9a7f8 | Verdict: APPROVED | Board: DONE→done_verified, next_agent=pm.
+
+Smart-Skip: test-only + flow-doc — DDD/security/mock-guard scanned, no production source modified. G1 TARGETED PASS: bun test DWF-phase1-cadence.test.ts --no-cache → 51/0 (409ms, 157 expect() calls). G2 T-14b RED INDEPENDENTLY REPRODUCED: removed FR-4 guard from batchWriteLastFired → 50/1 (T-14b: received STALE_A "...:09.104Z", expected FIRED_B "...:14.104Z"); ONLY T-14b failed; guard restored → 51/0. G3 FULL SUITE ci-per-file-isolation.sh 16: 13159 pass / 42 skip / 40 fail; 12 failing files ALL DISJOINT from commit (083-tool-analysis, 102-job-news-poll, 1227-source-health-empty-result, 125-test-e2e-briefing, 1288-poll-news-shape, 1324-push-news-all-sources, 1332-pollnews-source-display-name, 1345a-reuters-fallback, 1398-pollnews-all-dark-cooldown, 1793-pollnews-cooldown-persist, 1821a-pollnews-cold-start-retry, 1898b-rss-degradation-regression — all pre-existing, zero overlap with changed files). G4 TSC: exit 0. G5 DDD PASS: no forbidden imports. G6 SECURITY PASS: no process.env, no secrets. G7 DIFF REVIEW: last-fired.md guard 3 lines in WON_SLOTS loop only; null branch explicit; fresh-read + atomic-rename NOT touched. G8 VERIFICATION GATE: T-14 (Writer-A owns slot-a only → both slots persist) + T-14b (adversarial stale stamp blocked by guard) = verification gate PASS. DJ: sprint-FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER-qa.md.
+
 ## cycle-296 · 2026-06-18 · FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE — APPROVED
 
 Task: FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE | Verdict: APPROVED | Board: ready→done_verified.
