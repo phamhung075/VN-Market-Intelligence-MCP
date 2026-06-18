@@ -11448,6 +11448,46 @@
         "source": "health-recheck reports 3209-3237 (A10), router-deduped",
         "created_at": "2026-06-18T11:36:53Z",
         "created_by": "po"
+      },
+      {
+        "id": "FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
+        "title": "vn-sbv-fetch storeSbvSnapshot emits ZERO-VALUE snapshots — DB guard rejects x3, recurs post-restart (11:59 UTC). Distinct from FIX-SBV-FX-VPS-FETCHER-UNHEALTHY (that=staleness/health). This=fetcher producing all-zero data: parse/fetch returns empty→serialized as zeros→guard correctly rejects→data never lands. Root not fixed by restart. zone dev-macro-indicators.",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "apps/macro-indicators/",
+        "owner": "developer",
+        "root_cause": "storeSbvSnapshot serializes a zero/empty fetch result into a snapshot row; DB integrity guard (correctly) rejects zero-value rows; the WRITER emitting zeros is the bug, not the guard. Likely upstream SBV parse returning empty on layout/endpoint change while the fetcher still attempts a write.",
+        "generic_mandate": "Fix the fetcher to FAIL-CLOSED (no write, leave gap, log) on an empty/zero parse rather than emit a guard-rejected zero snapshot; trace ALL writers into the SBV snapshot table; do not relocate the guard.",
+        "verification_gate": "LIVE: after fix, vn-sbv-fetch either writes REAL non-zero SBV-FX data OR cleanly skips with an honest gap+log — ZERO storeSbvSnapshot rejected-zero events across 2 fetch cycles; RAW-verify against named-volume DB, not steady-state tests.",
+        "depends": [
+          "FIX-SBV-FX-VPS-FETCHER-UNHEALTHY"
+        ],
+        "related_reports": [
+          3237,
+          3238
+        ],
+        "minted_by": "po",
+        "minted_at": "2026-06-18T12:34:24Z",
+        "note": "Distinct-from: FIX-SBV-FX-VPS-FETCHER-UNHEALTHY is the VPS-infra-down/staleness layer; this is the in-band data-integrity emit-zero layer. Both can be true."
+      },
+      {
+        "id": "FIX-DOWJONES-STALE-WRONG-VALUE",
+        "title": "dow_jones served value 23750 vs real ~42k (~56% of real / ~44% wrong) — clearly-wrong macro indicator, data-integrity bug in dow_jones source/parse. Flagged NEW report 3237. zone dev-macro-indicators.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/macro-indicators/",
+        "owner": "developer",
+        "root_cause": "dow_jones indicator serves 23750 (DJIA real ~42k) — implausible-magnitude per non-zero-values-need-plausibility lesson. Likely a stale cached value, wrong field mapped, or parse picking the wrong number from the source payload.",
+        "generic_mandate": "Contract-from-live-payload: probe the real dow_jones source payload, map the correct current-level field, add a plausibility/magnitude sanity gate (DJIA band) so a ~44%-wrong value fails-closed rather than serving silently; generic across the macro indicator parse, not a one-off constant.",
+        "verification_gate": "LIVE: served dow_jones within plausible DJIA band (~40k–45k) AND VARIED (not a constant 23750) vs named-volume DB across 2 refresh cycles; sanity gate rejects an out-of-band value.",
+        "related_reports": [
+          3237
+        ],
+        "minted_by": "po",
+        "minted_at": "2026-06-18T12:34:24Z",
+        "note": "Sibling stale-issues (wti_crude $95.5, BDI 72d, dow_jones) — but dow_jones is a clearly-WRONG magnitude (data-integrity), not merely stale, so it is dev-fixable not pure out-of-band config."
       }
     ],
     "closed_sprints": [
@@ -21248,7 +21288,7 @@
   "updated_at": "2026-06-18T08:34:23Z",
   "updated_by": "po-triage-20260618T083104Z",
   "meta": {
-    "updated_at": "2026-06-17T11:21:05Z",
+    "updated_at": "2026-06-18T12:34:24Z",
     "updated_by": "po",
     "last_po_triage": "2026-06-17T18:58:32Z",
     "last_po_triage_by": "po-s101-bctc-discover-reroute"
