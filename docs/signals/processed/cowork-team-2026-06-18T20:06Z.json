@@ -1,0 +1,55 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-18T20:00:00Z",
+    "nominal_tick": "20:00",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "gateway_blind_session_and_slots_have_no_cloud_backstop",
+    "slot_detail": {
+      "news-scout-offhours": {
+        "agent": "news-scout",
+        "cron": "0 */4 * * *",
+        "guaranteed": false,
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z",
+        "due_reason": "cron",
+        "cadence_minutes": 240
+      },
+      "market-watcher-offhours": {
+        "agent": "market-watcher",
+        "cron": "0 */4 * * *",
+        "guaranteed": false,
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z",
+        "due_reason": "cron",
+        "cadence_minutes": 240
+      }
+    },
+    "leader_lock": "self_held_renewed",
+    "note": "20:00 4-hourly gatherer cluster (news-scout + market-watcher offhours) matched but NEITHER is in the 6 cloud RemoteTrigger backstops — both depend entirely on the local */15 dispatcher, so they go unfired this blind session. Not local-spawned (gateway-blind subagents fabricate per feedback_local_cowork_subagents_gateway_blind). USER-side fix: register gateway in .mcp.json + reconnect."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T20:06:21Z",
+  "_processed": {
+    "fingerprint": "b24cf1560668adde1362eb86e49d7297388b0c7d14375aad722904dae3778de8",
+    "processedAt": "2026-06-18T20:31:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

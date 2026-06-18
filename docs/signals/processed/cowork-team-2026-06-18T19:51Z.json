@@ -1,0 +1,44 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-18T19:45:00Z",
+    "nominal_tick": "19:45",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [
+      "chef-evening"
+    ],
+    "skipped_no_backstop": [],
+    "classification": "DEFERRED_BLIND",
+    "reason": "gateway_blind_session_but_slot_is_cloud_backstopped",
+    "slot_detail": {
+      "chef-evening": {
+        "agent": "unified-agent",
+        "cron": "45 19 * * *",
+        "guaranteed": true,
+        "policy_id": null,
+        "local_last_fired": "2026-06-14T19:55:12Z",
+        "due_reason": "cron",
+        "backstop": "chef-evening RemoteTrigger (45 19)"
+      }
+    },
+    "leader_lock": "self_held_renewed",
+    "note": "chef-evening is one of the 6 cloud RemoteTrigger backstops — cloud fires it in a fresh wired checkout, so blind local session need NOT spawn (would fabricate; chef dry-run publishes per feedback_chef_dryrun_publishes). Local last_fired reads 06-14 but that is NOT delivery proof — cloud backstop does not sync last_fired back (per feedback_local_cowork_subagents_gateway_blind CORRECTION). Verify delivery via RemoteTrigger(action=list).last_fired_at + MARKET channel content, NOT local last_fired."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T19:51:24Z",
+  "_processed": {
+    "fingerprint": "4329bcfd6f980c4ea3065f3f203d6e30375b4bd7bb1d254c3fb0013eef003744",
+    "processedAt": "2026-06-18T20:31:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

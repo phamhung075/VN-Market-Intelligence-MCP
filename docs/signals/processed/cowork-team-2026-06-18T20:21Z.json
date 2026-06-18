@@ -1,0 +1,44 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-18T20:13:00Z",
+    "nominal_tick": "20:13",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [
+      "tnb-audit"
+    ],
+    "skipped_no_backstop": [],
+    "classification": "DEFERRED_BLIND",
+    "reason": "gateway_blind_session_but_slot_is_cloud_backstopped",
+    "slot_detail": {
+      "tnb-audit": {
+        "agent": "tran-ngoc-bau",
+        "cron": "13 20 * * *",
+        "guaranteed": true,
+        "policy_id": null,
+        "local_last_fired": "2026-06-14T20:22:49Z",
+        "due_reason": "cron",
+        "backstop": "tnb-audit RemoteTrigger (13 20)"
+      }
+    },
+    "leader_lock": "self_held_renewed",
+    "note": "tnb-audit (strategy-supervisor TNB 6-layer audit of chef dishes) is one of the 6 cloud RemoteTrigger backstops — cloud fires it fresh, no local spawn needed. Local last_fired 06-14 is NOT delivery proof (cloud does not sync it back). Verify via RemoteTrigger(action=list).last_fired_at."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T20:21:18Z",
+  "_processed": {
+    "fingerprint": "06ee6fb1222814d963c03fe884702e226043a0c9f4c70ffad69efaf09d861fcb",
+    "processedAt": "2026-06-18T20:31:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
