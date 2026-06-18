@@ -2,6 +2,31 @@
 
 **Last updated:** 2026-06-17 | **Cycle:** FIX-FB-POST-DATA-INTEGRITY-GATE
 
+## Session 2026-06-18 — TASK-AUTO-PUSH-A fleet-worktree-push.sh (ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP)
+
+**Task:** Create `scripts/fleet-worktree-push.sh` — worktree-isolated push backstop.
+**Zone:** scripts/ (cross-service, no dev-* specialist match) → developer handles directly.
+
+**Problem context:** Cowork churn keeps main working tree perpetually dirty; `git pull --rebase` in commit-mutex retry path fails → push lag accumulates (103 unpushed 2026-06-17, 149 unpushed 2026-06-15). Need a backstop that pushes from a clean worktree without touching the dirty main tree.
+
+**What was built:**
+- `scripts/fleet-worktree-push.sh` — 185L bash, set -euo pipefail, proven recipe from po-s84/po-s98.
+- PUSH_THRESHOLD=20 tunable header constant; no-op when ahead <= threshold.
+- Cleanup trap on EXIT/INT/TERM → always removes worktree + `git worktree prune`.
+- Divergence-reconcile: classifies behind-set via `git log HEAD..origin/main --pretty=format:"%s"` → aborts on non-chore commits (sends BUG telegram), merges chore-only.
+- orch-state.json merge conflict → `--ours` (HEAD authoritative; cloud chore = additive _updated_at only).
+- node_modules symlink so pre-push hook resolves deps without copy.
+- `pnpm --filter vn-market check` tsc gate → abort if red (never push around red tree).
+- Telegram notifications via curl to TELEGRAM_INFO_WORK_CHANNEL_ID (success) / TELEGRAM_REPORT_BUG_CHANNEL_ID (abort).
+- `--dry-run` flag: prints all actions, never pushes, prints telegram calls to stderr.
+
+**DoD evidence:**
+- shellcheck: exit 0 clean; SC1091+SC2329 suppressed with inline directives (documented).
+- No-op path: `bash scripts/fleet-worktree-push.sh` with ahead=9 <= 20 → exits 0 "nothing to do", no worktree created.
+- Abort path: `PUSH_THRESHOLD=0 bash scripts/fleet-worktree-push.sh --dry-run` → detected 2 non-chore commits in behind-set, correctly aborted, worktree cleanup confirmed.
+
+**Docs updated:** `docs/policies/dev-standards.md` § Script Persistence — CANONICAL pointer added.
+
 ## Session 2026-06-17 — FIX-FB-POST-DATA-INTEGRITY-GATE (cross-service scripts task)
 
 **Task:** Build reusable plausibility gate at `scripts/fb-data-integrity-gate.sh`.
