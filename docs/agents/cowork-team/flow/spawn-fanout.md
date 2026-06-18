@@ -3,6 +3,39 @@
 
 ## Step 5 — Parallel fan-out
 
+## Step 5.0 — Blind guard (second enforcement point)
+
+```
+if SESSION_BLIND == true:
+
+  # Classify each matched slot by backstop coverage
+  # Source of truth: docs/data/cowork-schedule.json .slots[].trigger_id + .trigger_status
+  # DO NOT hardcode slot names — derive from schedule at runtime via jq
+  BACKSTOP_SLOTS    = [s for s in WON_SLOTS if s.trigger_id != null AND s.trigger_status == "active"]
+  NO_BACKSTOP_SLOTS = [s for s in WON_SLOTS if s.trigger_id == null OR s.trigger_status != "active"]
+
+  for each slot in BACKSTOP_SLOTS:
+    log: "[cowork-team] BLIND — deferred to cloud backstop: <slot.slot_id>"
+    # cloud RemoteTrigger will deliver the real post; skip local spawn
+
+  for each slot in NO_BACKSTOP_SLOTS:
+    log: "[cowork-team] BLIND — UNDELIVERABLE this tick (no cloud backstop): <slot.slot_id>"
+    append to errors[]: { slot_id: slot.slot_id, error: "undeliverable-gateway-blind" }
+    # telemetry Step 6 picks up errors[]
+
+  # Emit ONE work-channel summary per tick (not per slot)
+  WORK_MSG = "[cowork-team] gateway-blind session — " +
+    len(BACKSTOP_SLOTS) + " slots deferred to backstop, " +
+    len(NO_BACKSTOP_SLOTS) + " undeliverable; " +
+    "durable fix = register gateway in .mcp.json + reconnect " +
+    "(see docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md)"
+  call_tool(server="vn-market", tool="send_telegram", arguments={ channel: "work", message: WORK_MSG })
+
+  EXIT Step 5 — skip all subagent spawns. Proceed to Step 5b (last-fired) and Step 6 (telemetry).
+
+# SESSION_BLIND == false → fall through to normal fan-out (behavior unchanged)
+```
+
 <!-- Published marker gate (FR-P2-7, DWF-DEV-CROSS-4 Phase 2 — ARCH-DECIDE-C):
      The spawned agent flow MUST claim a published marker BEFORE calling send_telegram.
      This is belt-and-suspenders with the per-work-item token: the token prevents duplicate
