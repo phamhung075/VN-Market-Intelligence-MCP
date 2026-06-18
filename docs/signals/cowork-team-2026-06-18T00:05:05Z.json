@@ -1,0 +1,45 @@
+{
+  "from": "cowork-dispatcher",
+  "type": "tick_telemetry",
+  "ts": "2026-06-18T00:05:05Z",
+  "nominal_tick": "2026-06-18T00:00:00Z",
+  "drift_min": 5,
+  "classification": "FAN_OUT",
+  "silent": false,
+  "reason": "3-slots-due",
+  "pressure_mode": "legacy",
+  "calendar_status": "unknown",
+  "matched_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+  "won_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+  "held_by_other": [],
+  "due_reasons": {
+    "bctc-analyst-slot-4": "cron",
+    "news-scout-offhours": "cadence",
+    "market-watcher-offhours": "cadence"
+  },
+  "spawned": [
+    {"slot_id": "bctc-analyst-slot-4", "agent": "bctc-analyst", "agentId": "a110c337196738d7a", "background": true},
+    {"slot_id": "news-scout-offhours", "agent": "news-scout", "agentId": "ac7c4704f6f69ded8", "background": true},
+    {"slot_id": "market-watcher-offhours", "agent": "market-watcher", "agentId": "a7128446497a26600", "background": true}
+  ],
+  "spawn_errors": [],
+  "leader_lock": "self-held-renewed",
+  "leader_lock_expires_at": 1781742935,
+  "drain": {
+    "signal_queue_new_cowork_rows": 0,
+    "processed": []
+  },
+  "last_fired_timestamp": "2026-06-18T00:07:34.000Z",
+  "last_fired_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+  "last_fired_write_errors": null,
+  "pressure_emit": {
+    "emitted": true,
+    "pressure_mode": "legacy",
+    "cycle_snapshot_promoted": false,
+    "stale_warning": true,
+    "last_regime": "FII_OUTFLOW_RISK",
+    "last_volatility_level": "normal",
+    "note": "server rewrote pressure-state.json @00:07:40Z — re-proves gateway UP first-hand; FAN-OUT tick: 3 off-market slots claimed (all WON, no cloud-backstop double-fire), spawned background, tokens released, last_fired stamped 00:07:34Z so ~:12 backstop skips. stale_warning flipped true at deep off-market — gatherers just fired should refresh upstream. bctc-analyst E2 market-window guard [02:00,08:00)UTC not triggered at 00:05Z. dev-mcp-server FIX-BCTC (a014eadf) still in flight."
+  },
+  "fan_out": true
+}

@@ -1,0 +1,25 @@
+{
+  "from": "cowork-dispatcher",
+  "type": "tick_telemetry",
+  "ts": "2026-06-18T00:23:30Z",
+  "nominal_tick": "2026-06-18T00:15:00Z",
+  "drift_min": 8,
+  "classification": "SILENT",
+  "silent": true,
+  "reason": "no-slots-due",
+  "matched_slots": [],
+  "leader_lock": "self-held-renewed",
+  "leader_lock_expires_at": 1781743980,
+  "drain": {
+    "signal_queue_new_cowork_rows": 0,
+    "processed": []
+  },
+  "pressure_emit": {
+    "emitted": true,
+    "pressure_mode": "legacy",
+    "cycle_snapshot_promoted": false,
+    "note": "server rewrote pressure-state.json @00:23:30Z — re-proves gateway UP first-hand. SILENT tick: 0 slots due at 00:15 (gatherers + bctc-slot-4 already fired 00:07:34Z this cycle, next due 04:00). Drain read-only (0 cowork-addressed NEW rows) — no orch-state write while system-auditor a3d01cb9 active on signal_queue. Backstop-defer gate N/A (minute=21 >= 15). Two bg agents completed this tick: system-auditor Tier-1 (0 anomalies, 12/12 services UP, toolCount=165) + dev-mcp-server FIX-BCTC a014eadf (status=REVIEW, impl_commit=ea5dc0eb, NEXT=qa)."
+  },
+  "last_fired_write": false,
+  "fan_out": false
+}

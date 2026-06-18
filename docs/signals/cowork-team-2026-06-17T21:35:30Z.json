@@ -1,0 +1,29 @@
+{
+  "from": "cowork-dispatcher",
+  "type": "tick_telemetry",
+  "ts": "2026-06-17T21:35:30Z",
+  "nominal_tick": "2026-06-17T21:30:00Z",
+  "drift_min": 5,
+  "classification": "SILENT",
+  "silent": true,
+  "reason": "no-slots-due",
+  "matched_slots": [],
+  "leader_lock": "self-held-renewed",
+  "leader_lock_expires_at": 1781734007,
+  "drain": {
+    "signal_queue_new_cowork_rows": 1,
+    "processed": [
+      { "id": "tnb-20260617T202500Z", "to": "po", "action": "NEW->READ", "note": "already fully triaged this session via file-drain path -> PO ACK tnb-audit-latest.md, verdict NOTHING; marking READ closes re-drain hygiene gap" }
+    ]
+  },
+  "pressure_emit": {
+    "emitted": true,
+    "pressure_mode": "legacy",
+    "cycle_snapshot_promoted": false,
+    "last_regime": "FII_OUTFLOW_RISK",
+    "last_volatility_level": "normal",
+    "note": "server rewrote pressure-state.json @21:37:02Z — also re-proves gateway UP first-hand"
+  },
+  "last_fired_write": false,
+  "fan_out": false
+}

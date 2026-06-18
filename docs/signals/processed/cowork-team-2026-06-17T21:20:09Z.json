@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T21:20:09Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [
+      "pressure-mode->legacy (cycle-snapshot pinned 06-02, cycle_snapshot_promoted=false)"
+    ],
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "SILENT",
+    "reason": "no-slots-due",
+    "nominal_tick": "21:15",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "active",
+    "signal_backlog": 0,
+    "note": "21:20 */15 tick — matcher 0 due slots (next offhours gatherers due ~00:00). Step 0a drain: 0 NEW cowork-addressed signal_queue rows. Leader lock own-held + heartbeat-renewed (ok=true, exp 1781733025). emit_pressure_state legacy (cycle-snapshot pinned 06-02). No fan-out, no last_fired write. Prior 21:05 FIRE bctc-analyst-slot-3 (a85dc7ea) returned corroboration-gated FALSE infra-down (local-spawn lacks gateway connector; gateway RAW-proven UP via own emit 21:06:31Z); folds into ARCH-HEADLESS-GATEWAY-COWORK-NOPOST; cloud RemoteTrigger owns real bctc execution. Tier-1 system-auditor 21:14 (c341/140f1f2d) HEALTHY/0-anomalies. FIX-BCTC done_verified deferred to cron df3ffac5 (~22:10 UTC)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T21:20:09Z",
+  "_processed": {
+    "fingerprint": "b912756912cd125babc4d6feab80e65baa8b6498f1e1673f59f868c421d66098",
+    "processedAt": "2026-06-17T21:27:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

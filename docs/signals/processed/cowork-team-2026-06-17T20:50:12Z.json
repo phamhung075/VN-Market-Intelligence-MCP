@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T20:50:12Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [
+      "pressure-mode->legacy (cycle-snapshot pinned 06-02, cycle_snapshot_promoted=false)"
+    ],
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "SILENT",
+    "reason": "no-slots-due",
+    "nominal_tick": "20:45",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "active",
+    "signal_backlog": 0,
+    "note": "20:50 */15 tick — matcher returned 0 due slots (next offhours gatherers due ~00:00). Step 0a drain: 0 NEW cowork-addressed signal_queue rows (all READ/TRIAGED/RESOLVED). Leader lock own-held + heartbeat-renewed (ok=true, exp 1781731230). emit_pressure_state legacy (cycle-snapshot pinned 06-02). No fan-out, no last_fired write. Tier-1 system-auditor 20:47 returned PASS/0-anomalies. FIX-BCTC done_verified deferred to scheduled re-probe cron df3ffac5 (~22:10 UTC); ops rebuild a14abc30 already verified live first-hand."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T20:50:12Z",
+  "_processed": {
+    "fingerprint": "fd63dbf692b3b874235760bd4945795ac7dee50449e95c54bbac773f2a4ddbf3",
+    "processedAt": "2026-06-17T21:27:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

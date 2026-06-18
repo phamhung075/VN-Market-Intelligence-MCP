@@ -1,0 +1,14 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[bctc-analyst] c065 BLOCKED: MCP gateway tool (mcp__gateway__call_tool / mcp__claude_ai_gateway__call_tool) not available in spawned sub-agent context. 3rd consecutive blocked cycle (c063 2026-06-17T15:00Z, c064 2026-06-17T18:06Z, c065 2026-06-17T21:00Z). Last successful cycle: c062 2026-06-17T00:20Z. Root cause: MCP gateway binding missing from bctc-analyst spawned sub-agent. No analysis performed, no signals emitted, no task_claim executed.",
+  "priority": "high",
+  "createdAt": "2026-06-17T21:00:00Z",
+  "_processed": {
+    "fingerprint": "fef04527524e4786d114c119939b0d75cefb06060e3478cc47c737b43b615c05",
+    "processedAt": "2026-06-17T21:27:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

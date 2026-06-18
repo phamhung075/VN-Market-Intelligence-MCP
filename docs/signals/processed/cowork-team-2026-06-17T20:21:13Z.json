@@ -1,0 +1,56 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T20:21:13Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [
+      "pressure-mode->legacy (stale_warning)"
+    ],
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-06-17T20:21:13Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:13",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "active",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "tnb-audit (tran-ngoc-bau, guaranteed daily cron 13 20) fired at 20:21; last fired 2026-06-16T20:45. Per-slot dedup token claimed=true (no peer/cloud double-fire); leader lock self-held + heartbeat-renewed. tran-ngoc-bau is filesystem-only audit agent (no send_telegram) so no published-marker gate applies. This is the designed audit catch for the 2026-06-17 chef WORK-channel AF-gate false-green (gold 4360 vs live 4245.9, invented RSI on closed market). pressure-mode legacy via stale_warning (cycle-snapshot pinned 06-02). FIX-BCTC still in QA re-validation (ac6fda75); system-auditor Tier-1 all-HEALTHY this hour."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T20:21:13Z",
+  "_processed": {
+    "fingerprint": "8aaf8b15c516de85642e43c6c12246da7f2517320cdb0dd08d8d6574d8e83c0f",
+    "processedAt": "2026-06-17T21:27:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

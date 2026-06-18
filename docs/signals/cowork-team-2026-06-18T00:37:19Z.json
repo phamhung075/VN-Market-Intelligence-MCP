@@ -1,0 +1,26 @@
+{
+  "from": "cowork-dispatcher",
+  "type": "tick_telemetry",
+  "ts": "2026-06-18T00:37:19Z",
+  "nominal_tick": "2026-06-18T00:30:00Z",
+  "drift_min": 7,
+  "classification": "SILENT",
+  "silent": true,
+  "reason": "no-slots-due",
+  "matched_slots": [],
+  "leader_lock": "self-held-renewed",
+  "leader_lock_expires_at": 1781744988,
+  "drain": {
+    "signal_queue_new_cowork_rows": 0,
+    "processed": []
+  },
+  "pressure_emit": {
+    "emitted": true,
+    "note": "server rewrote pressure-state.json @00:39:49Z (emit_pressure_state success) — re-proves gateway UP first-hand. SILENT tick: 0 slots within ±2min of 00:37 (offhours gatherers + bctc-slot-4 fired 00:07:34Z this cycle, next due 04:00; chef/tnb/refine slots all daily-specific, none at 00:3x). Drain read-only (0 cowork-addressed NEW rows). Off-grid fire (00:37 not a */15 boundary)."
+  },
+  "concurrent_devteam": {
+    "note": "Router ran this cowork tick inline alongside event-driven dev-team pipeline: architect ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP completed (brief READY-FOR-PM-DECOMPOSE, head.next_agent=pm) → router advancing to pm; system-auditor Tier-3 completed (12/12 UP, C-08 63 orphaned-alert residue routed to PO as sau-c08-202606180038, dup-symptom of FIX-ALERT-ORPHAN-CORRELATION in REVIEW); qa FIX-BCTC-DISCOVER still running."
+  },
+  "last_fired_write": false,
+  "fan_out": false
+}

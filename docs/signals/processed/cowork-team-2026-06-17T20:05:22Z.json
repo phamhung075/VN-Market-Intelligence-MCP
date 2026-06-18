@@ -1,0 +1,62 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T20:05:22Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [
+      "pressure-mode->legacy (stale_warning)"
+    ],
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null
+    },
+    "last_fired_timestamp": "2026-06-17T20:05:22Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "active",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "2 offhours gatherers (news-scout + market-watcher) fired at 20:05, both last-fired 16:11 (4h cron due). Per-slot dedup tokens both claimed=true (no sibling/cloud double-fire). last_fired written promptly so ~:12 cloud backstop sees fresh and skips (anti-double-fire path). pressure-mode legacy via stale_warning (cycle-snapshot pinned 06-02). FIX-BCTC still in QA re-validation; chef-evening MARKET post verified landed single + acceptable earlier this hour."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T20:05:22Z",
+  "_processed": {
+    "fingerprint": "633f88a3a4a5472a9f15e2579e176d7e02a563ce5e3c9feaef078b2d3a0419a0",
+    "processedAt": "2026-06-17T21:27:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

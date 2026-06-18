@@ -1,0 +1,27 @@
+{
+  "from": "cowork-dispatcher",
+  "type": "tick_telemetry",
+  "ts": "2026-06-18T00:50:10Z",
+  "nominal_tick": "2026-06-18T00:45:00Z",
+  "drift_min": 5,
+  "classification": "SILENT",
+  "silent": true,
+  "reason": "no-slots-due",
+  "matched_slots": [],
+  "leader_lock": "self-held-renewed",
+  "leader_lock_expires_at": 1781745633,
+  "drain": {
+    "signal_queue_new_cowork_rows": 0,
+    "processed": []
+  },
+  "pressure_emit": {
+    "emitted": true,
+    "emitted_at": "2026-06-18T00:50:34.183Z",
+    "note": "emit_pressure_state success @00:50:34Z — re-proves gateway UP first-hand. SILENT tick: 0 slots within ±2min of 00:45/00:50. The 0-0 + 0-*/4 offhours gatherers + bctc-slot-4 already fired 00:07:34Z this cycle, next due 04:00. All other slots are specific later hours (05/08/09/14/15/16/18/19/20/21). Drain read-only (0 cowork-addressed NEW rows)."
+  },
+  "concurrent_devteam": {
+    "note": "Ran inline alongside event-driven dev-team pipeline. Since prior cowork tick: PM decomposed ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP into 4 atomic tasks (commit 97884139); router dispatched tier1 A->developer (scripts/fleet-worktree-push.sh) + C->agent-father (cron-jobs.md note); C DONE+RAW-verified (commit da3bc636, board commit, in_progress->done); system-auditor Tier-1 DONE (12/12 UP, toolCount=165, 0 new anomalies, C-08 referenced not re-minted). Live now: developer TASK-AUTO-PUSH-A + qa FIX-BCTC-DISCOVER gate. tier2 B-PO/B-DT held in ready[] pending A."
+  },
+  "last_fired_write": false,
+  "fan_out": false
+}

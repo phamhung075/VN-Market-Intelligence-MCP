@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T21:05:04Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [
+      "pressure-mode->legacy (cycle-snapshot pinned 06-02, stale_warning=true)"
+    ],
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "last_fired_timestamp": "2026-06-17T21:05:04Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "active",
+    "signal_backlog": 0,
+    "note": "21:05 */15 tick — bctc-analyst-slot-3 (cron 0 21 UTC, off-market; last fired 2026-06-16T21:08:38Z) due via cron. Per-work-item token cowork-slot:bctc-analyst-slot-3 claimed=true (no peer/cloud double-fire), released post-spawn. now_utc 21:05 NOT in E2 [02,08)UTC window → no market-window block (agent self-guards anyway). Published-marker gate (published:bctc-analyst-slot-3:<VN-date>) lives inside agent before send_telegram. Step 0a drain: 0 NEW cowork-addressed rows. Leader own-held + heartbeat-renewed (ok=true). last_fired written atomic. emit_pressure_state legacy (stale_warning=true, cycle-snapshot pinned 06-02). FIX-BCTC done_verified deferred to cron df3ffac5 (~22:10 UTC)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T21:05:04Z",
+  "_processed": {
+    "fingerprint": "0458594bc4cd455efacc6bcaf0598b8602617427d526a0d3a8c5b41cda773b68",
+    "processedAt": "2026-06-17T21:27:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

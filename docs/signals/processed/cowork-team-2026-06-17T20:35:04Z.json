@@ -1,0 +1,44 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T20:35:04Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [
+      "pressure-mode->legacy (stale_warning)"
+    ],
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "SILENT",
+    "reason": "no-slots-due",
+    "nominal_tick": "20:30",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "active",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "20:35 */15 tick — matcher returned 0 due slots (tnb-audit already fired 20:21; next offhours gatherers due ~00:00). Leader lock own-held + heartbeat-renewed (ok=true, exp 1781730336). emit_pressure_state legacy via stale_warning (cycle-snapshot pinned 06-02). No fan-out, no last_fired write. FIX-BCTC ops rebuild (a14abc30) in flight out-of-band; tnb-audit c98 returned NEEDS_ATTENTION (MCP-systemic claim corroboration-gated FALSE — tran-ngoc-bau is filesystem-only by design)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T20:35:04Z",
+  "_processed": {
+    "fingerprint": "6f322f16b461e64c876b638564769bef69095b046b4beb431fd022ba1538e364",
+    "processedAt": "2026-06-17T21:27:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

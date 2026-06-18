@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T19:52:52Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-06-17T19:52:52Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "chef-evening guaranteed daily MARKET dish spawned (unified-agent, bg); last fired 2026-06-16T19:57Z. emit_pressure_state stale_warning=true (cycle-snapshot pinned 06-02; next tick downgrades to legacy cron — safe). FIX-BCTC test fix in QA re-validation."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T19:52:52Z",
+  "_processed": {
+    "fingerprint": "25580e19c469cfc89b2bed65ae6bcae2414eeeba9bcb43be5ffa6a80f877fb63",
+    "processedAt": "2026-06-17T21:27:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
