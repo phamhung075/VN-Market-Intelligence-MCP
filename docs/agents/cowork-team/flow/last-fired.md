@@ -5,6 +5,7 @@
 <!-- BLOCKER-3 resolution: single batched read→update-all-WON→write.tmp→rename.
      No per-slot writes (avoids lost-update race from parallel fan-out).
      Only WON_SLOTS (successful spawns) update last_fired — failed spawns leave it unchanged.
+     Single-slot CAS + monotonic forward-only write: no slot's last_fired ever decreases.
      Non-fatal on write failure: log WARN, continue to Step 6, do NOT roll back spawns.
      AC-P1-7-1: last_fired written after successful spawn.
      AC-P1-7-2: spawn failure → last_fired NOT written.
@@ -25,7 +26,10 @@ try:
   WON_IDS = new Set(WON_SLOTS.map(s => s.slot_id))
   for each slot in schedule.slots:
     if WON_IDS.has(slot.slot_id):
-      slot.last_fired = FIRED_AT
+      currentLastFired = slot.last_fired           # from FRESHLY-READ file
+      if currentLastFired === null OR FIRED_AT > currentLastFired:
+        slot.last_fired = FIRED_AT
+      # else: sibling already wrote a fresher stamp — leave unchanged
 
   # Atomic write: write to .tmp then rename (AC-P1-2-2 / NFR-P1-6)
   writeFileSync(SCHED_TMPFILE, JSON.stringify(schedule, null, 2))

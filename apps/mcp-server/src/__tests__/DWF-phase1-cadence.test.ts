@@ -12,7 +12,7 @@
  * RED→GREEN doctrine: each test has an inline comment describing the deliberate-violation proof
  * (what change would make the test go RED). The live test runs the GREEN assertion.
  *
- * 13 tests: T-1..T-13 (T-13 split into T-13, T-13b, T-13c)
+ * 16 tests: T-1..T-13c, T-14, T-14b, T-14c
  */
 
 import { test, expect, describe, beforeAll } from "bun:test";
@@ -487,6 +487,44 @@ describe("T-12: EC-6 audit — No open+chef-intraday rule has null interval_minu
 
 // ─── T-13: AC-P1-7-1/7-2/7-3 — last_fired atomic write (integration stubs) ──
 
+/**
+ * Minimal replica of Step 5b batched-write logic for testing.
+ * Shared by T-13 and T-14 describe blocks.
+ * Returns { success: boolean, error?: string }
+ *
+ * FR-4 monotonic guard: never decrease last_fired — if the live file already holds a
+ * fresher stamp for a won slot, leave it unchanged (ISO-8601 lexicographic compare; valid
+ * for UTC 'Z' strings without Date parsing). NFR-4: null first-run slot always writes.
+ */
+function batchWriteLastFired(
+  scheduleFilePath: string,
+  wonSlotIds: string[],
+  firedAt: string
+): { success: boolean; error?: string } {
+  const tmpPath = scheduleFilePath + ".tmp";
+  try {
+    const raw = fs.readFileSync(scheduleFilePath, "utf8");
+    const schedule = JSON.parse(raw);
+    const wonSet = new Set(wonSlotIds);
+    for (const slot of schedule.slots) {
+      if (wonSet.has(slot.slot_id)) {
+        const currentLastFired: string | null = slot.last_fired;
+        // FR-4 monotonic guard: never decrease last_fired
+        if (currentLastFired === null || firedAt > currentLastFired) {
+          slot.last_fired = firedAt;
+        }
+        // else: live file already has a fresher stamp — leave unchanged
+      }
+    }
+    fs.writeFileSync(tmpPath, JSON.stringify(schedule, null, 2));
+    fs.renameSync(tmpPath, scheduleFilePath);
+    return { success: true };
+  } catch (e: any) {
+    // Non-fatal: log and return error (never throw — AC-P1-7-3)
+    return { success: false, error: e.message };
+  }
+}
+
 describe("T-13: AC-P1-7-1/7-2/7-3 — last_fired batched atomic write", () => {
   // These are integration tests that exercise the file-system write logic from Step 5b.
   // We implement the Step 5b write logic inline (extracted as a helper) and test it with temp files.
@@ -494,34 +532,6 @@ describe("T-13: AC-P1-7-1/7-2/7-3 — last_fired batched atomic write", () => {
   // T-13:  Successful WON_SLOTS → last_fired written with correct timestamp  (AC-P1-7-1)
   // T-13b: Failed spawn slot excluded from WON_SLOTS → last_fired NOT written (AC-P1-7-2)
   // T-13c: Write failure (permissions) is non-fatal — no throw, spawn unaffected             (AC-P1-7-3)
-
-  /**
-   * Minimal replica of Step 5b batched-write logic for testing.
-   * Returns { success: boolean, error?: string }
-   */
-  function batchWriteLastFired(
-    scheduleFilePath: string,
-    wonSlotIds: string[],
-    firedAt: string
-  ): { success: boolean; error?: string } {
-    const tmpPath = scheduleFilePath + ".tmp";
-    try {
-      const raw = fs.readFileSync(scheduleFilePath, "utf8");
-      const schedule = JSON.parse(raw);
-      const wonSet = new Set(wonSlotIds);
-      for (const slot of schedule.slots) {
-        if (wonSet.has(slot.slot_id)) {
-          slot.last_fired = firedAt;
-        }
-      }
-      fs.writeFileSync(tmpPath, JSON.stringify(schedule, null, 2));
-      fs.renameSync(tmpPath, scheduleFilePath);
-      return { success: true };
-    } catch (e: any) {
-      // Non-fatal: log and return error (never throw — AC-P1-7-3)
-      return { success: false, error: e.message };
-    }
-  }
 
   // ── T-13: AC-P1-7-1 — last_fired written after successful spawn ────────────
   // RED proof: Assert last_fired NOT updated after calling batchWriteLastFired → test fails.
@@ -607,6 +617,86 @@ describe("T-13: AC-P1-7-1/7-2/7-3 — last_fired batched atomic write", () => {
     expect(result.success).toBe(false);
     expect(typeof result.error).toBe("string");
     expect(result.error!.length).toBeGreaterThan(0);
+  });
+});
+
+// ─── T-14: FR-4 — Concurrent different-slot writers both persist (monotonic guard) ──────────
+// RED proof: Remove the monotonic guard from batchWriteLastFired (revert to unconditional
+//            slot.last_fired = firedAt) → T-14b fails (slot-b reverts to STALE_A) → RED.
+// T-14 alone is GREEN even without guard (Writer-A only mutates slot-a in T-14).
+// T-14b is the LOAD-BEARING proof: adversarial stale stamp explicitly rejected by guard.
+
+describe("T-14: FR-4 — Concurrent different-slot writers: both slots persist after stale-base write", () => {
+  test("T-14: Writer-A (stale base, owns slot-a) does NOT clobber Writer-B's slot-b", () => {
+    const tmpDir  = os.tmpdir();
+    const tmpFile = path.join(tmpDir, `schedule-t14-${Date.now()}.json`);
+
+    // Writer-B has ALREADY fired and written slot-b = FIRED_B.
+    const FIRED_B = new Date(Date.now() - 5000).toISOString();  // 5 seconds ago
+    const FIRED_A = new Date().toISOString();                    // now (Writer-A fires later)
+
+    // Simulate the live file AFTER Writer-B's write: slot-b=FIRED_B, slot-a=null (not yet fired)
+    const schedule = {
+      slots: [
+        { slot_id: "slot-a", last_fired: null },         // Writer-A's slot — not yet stamped
+        { slot_id: "slot-b", last_fired: FIRED_B }       // Writer-B already wrote this
+      ]
+    };
+    fs.writeFileSync(tmpFile, JSON.stringify(schedule, null, 2));
+
+    // Writer-A with WON_SLOTS = ["slot-a"] only — does NOT touch slot-b.
+    const resultA = batchWriteLastFired(tmpFile, ["slot-a"], FIRED_A);
+    expect(resultA.success).toBe(true);
+
+    const after = JSON.parse(fs.readFileSync(tmpFile, "utf8"));
+    expect(after.slots[0].last_fired).toBe(FIRED_A);   // slot-a: Writer-A's stamp — written
+    expect(after.slots[1].last_fired).toBe(FIRED_B);   // slot-b: Writer-B's stamp — NOT clobbered
+
+    fs.unlinkSync(tmpFile);
+  });
+
+  test("T-14b: Monotonic guard blocks explicit stale-base clobber attempt on a slot", () => {
+    // LOAD-BEARING RED PROOF (RISK-1): adversarial case — Writer-A has slot-b in WON_SLOTS
+    // with a STALE stamp (STALE_A < FIRED_B). Guard must leave slot-b at FIRED_B.
+    // Without guard: slot-b gets STALE_A → expect(FIRED_B) fails → RED.
+    const tmpDir  = os.tmpdir();
+    const tmpFile = path.join(tmpDir, `schedule-t14b-${Date.now()}.json`);
+
+    const STALE_A = new Date(Date.now() - 10000).toISOString(); // 10s ago (Writer-A's stale stamp)
+    const FIRED_B = new Date(Date.now() - 5000).toISOString();  // 5s ago (Writer-B's live stamp)
+
+    const schedule = {
+      slots: [
+        { slot_id: "slot-b", last_fired: FIRED_B }   // live file has Writer-B's stamp
+      ]
+    };
+    fs.writeFileSync(tmpFile, JSON.stringify(schedule, null, 2));
+
+    // Writer-A tries to write STALE_A to slot-b — guard must block (STALE_A < FIRED_B)
+    const resultA = batchWriteLastFired(tmpFile, ["slot-b"], STALE_A);
+    expect(resultA.success).toBe(true);   // success=true (non-fatal; guard blocks silently)
+
+    const after = JSON.parse(fs.readFileSync(tmpFile, "utf8"));
+    expect(after.slots[0].last_fired).toBe(FIRED_B);  // unchanged: guard blocked stale write
+
+    fs.unlinkSync(tmpFile);
+  });
+
+  test("T-14c: null last_fired (first-run) → always write regardless of guard (NFR-4)", () => {
+    const tmpDir  = os.tmpdir();
+    const tmpFile = path.join(tmpDir, `schedule-t14c-${Date.now()}.json`);
+
+    const FIRED_AT = new Date().toISOString();
+    const schedule = { slots: [{ slot_id: "slot-first", last_fired: null }] };
+    fs.writeFileSync(tmpFile, JSON.stringify(schedule, null, 2));
+
+    const result = batchWriteLastFired(tmpFile, ["slot-first"], FIRED_AT);
+    expect(result.success).toBe(true);
+
+    const after = JSON.parse(fs.readFileSync(tmpFile, "utf8"));
+    expect(after.slots[0].last_fired).toBe(FIRED_AT);  // NFR-4: null → always write
+
+    fs.unlinkSync(tmpFile);
   });
 });
 

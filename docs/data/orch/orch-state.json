@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-18T05:37:22Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-18T05:30:00Z",
+  "_updated_by": "dev-mcp-server",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -20744,35 +20744,6 @@
         "claimed_by": null,
         "verification_gate": "get_foreign_flow.md param renamed from ticker→code; agents no longer see schema error on market-watcher/news-scout fetch.",
         "done_verified_blocked_reason": null
-      },
-      {
-        "id": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER",
-        "title": "cowork-schedule.json last_fired stamps clobbered by stale-base read-modify-write race",
-        "type": "FIX",
-        "status": "TODO",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "blocking": false,
-        "root_cause": "A writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline -- file uncommitted since e96176d8 2026-06-15), updates only ITS slot (chef-intraday) and writes the WHOLE file back -> every other slot last_fired reverts to the stale base. Evidence 2026-06-18T04:07Z: chef-intraday=03:23:15Z (fresh, =file mtime) BUT news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z -- reverted to 3-day-old values despite fresh stamps existing earlier today (00:07Z matcher snapped_last_fired=2026-06-18T00:00:00Z). Effect: matcher sees slots as massively overdue -> spurious re-offer/re-fire risk (doublefire class); cadence ledger corrupted. NOT a gather gap (gathering still happens; only the stamp ledger is clobbered). Relates [[feedback_worktree_stale_base]] + guaranteed-slot doublefire class.",
-        "fix_spec": "cowork-schedule.json writer MUST FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set / per-slot CAS), never echo back a whole stale snapshot. Same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read, project_orch_state_cutover). Applies to BOTH the cloud cowork-leader dispatcher writer AND any local cowork-team last-fired writer (docs/agents/cowork-team/flow/last-fired.md, match-slots.md).",
-        "generic_mandate": "Fix the WRITE discipline at the schedule-writer layer (fresh-read + single-slot CAS), not a one-off re-stamp -- a re-stamp without the write-discipline fix re-clobbers next tick.",
-        "verification_gate": "After fix: two concurrent simulated writers each mutating a DIFFERENT slot must BOTH persist (no slot reverts to a stale base); cowork-schedule.json slots show monotonic last_fired (no 3-day reversion) across a multi-writer window; matcher no longer reports spurious massive-overdue.",
-        "files": [
-          "docs/data/cowork-schedule.json",
-          "docs/agents/cowork-team/flow/last-fired.md",
-          "docs/agents/cowork-team/flow/match-slots.md",
-          "apps/mcp-server/"
-        ],
-        "signal_ref": "cowork-team-20260618T0408Z-schedule-json-stale-base-clobber",
-        "origin": "2026-06-18 cowork-team signal, MEDIUM, RAW-verified mixed-state at 04:07Z.",
-        "created_at": "2026-06-18T04:25:34Z",
-        "groomed_by": "po-s103",
-        "promoted_at": "2026-06-18T04:25:34Z",
-        "pm_done": true,
-        "updated_at": "2026-06-18T053057Z",
-        "updated_by": "pm",
-        "status_note": "Decomposed into 2 atomic tasks: TASK-CWKSCH-1 (flow-doc, S) + TASK-CWKSCH-2 (test, M). Tier-1 parallel tasks, ready for dev-mcp-server dispatch."
       }
     ],
     "review": [
@@ -20980,7 +20951,40 @@
         }
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER",
+        "title": "cowork-schedule.json last_fired stamps clobbered by stale-base read-modify-write race",
+        "type": "FIX",
+        "status": "DONE",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "next_agent": "qa",
+        "blocking": false,
+        "root_cause": "A writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline -- file uncommitted since e96176d8 2026-06-15), updates only ITS slot (chef-intraday) and writes the WHOLE file back -> every other slot last_fired reverts to the stale base. Evidence 2026-06-18T04:07Z: chef-intraday=03:23:15Z (fresh, =file mtime) BUT news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z -- reverted to 3-day-old values despite fresh stamps existing earlier today (00:07Z matcher snapped_last_fired=2026-06-18T00:00:00Z). Effect: matcher sees slots as massively overdue -> spurious re-offer/re-fire risk (doublefire class); cadence ledger corrupted. NOT a gather gap (gathering still happens; only the stamp ledger is clobbered). Relates [[feedback_worktree_stale_base]] + guaranteed-slot doublefire class.",
+        "fix_spec": "cowork-schedule.json writer MUST FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set / per-slot CAS), never echo back a whole stale snapshot. Same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read, project_orch_state_cutover). Applies to BOTH the cloud cowork-leader dispatcher writer AND any local cowork-team last-fired writer (docs/agents/cowork-team/flow/last-fired.md, match-slots.md).",
+        "generic_mandate": "Fix the WRITE discipline at the schedule-writer layer (fresh-read + single-slot CAS), not a one-off re-stamp -- a re-stamp without the write-discipline fix re-clobbers next tick.",
+        "verification_gate": "After fix: two concurrent simulated writers each mutating a DIFFERENT slot must BOTH persist (no slot reverts to a stale base); cowork-schedule.json slots show monotonic last_fired (no 3-day reversion) across a multi-writer window; matcher no longer reports spurious massive-overdue.",
+        "files": [
+          "docs/data/cowork-schedule.json",
+          "docs/agents/cowork-team/flow/last-fired.md",
+          "docs/agents/cowork-team/flow/match-slots.md",
+          "apps/mcp-server/"
+        ],
+        "signal_ref": "cowork-team-20260618T0408Z-schedule-json-stale-base-clobber",
+        "origin": "2026-06-18 cowork-team signal, MEDIUM, RAW-verified mixed-state at 04:07Z.",
+        "created_at": "2026-06-18T04:25:34Z",
+        "groomed_by": "po-s103",
+        "promoted_at": "2026-06-18T04:25:34Z",
+        "pm_done": true,
+        "updated_at": "2026-06-18T05:30:00Z",
+        "updated_by": "dev-mcp-server",
+        "status_note": "Decomposed into 2 atomic tasks: TASK-CWKSCH-1 (flow-doc, S) + TASK-CWKSCH-2 (test, M). Tier-1 parallel tasks, ready for dev-mcp-server dispatch.",
+        "dev_done": true,
+        "dev_done_at": "2026-06-18T05:30:00Z",
+        "dev_done_by": "dev-mcp-server"
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
@@ -21000,8 +21004,8 @@
     "updated_at": "2026-06-18T053057Z",
     "updated_by": "pm"
   },
-  "updated_at": "2026-06-18T053057Z",
-  "updated_by": "pm",
+  "updated_at": "2026-06-18T05:30:00Z",
+  "updated_by": "dev-mcp-server",
   "meta": {
     "updated_at": "2026-06-17T11:21:05Z",
     "updated_by": "po",
