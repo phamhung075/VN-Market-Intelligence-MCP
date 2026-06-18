@@ -28,7 +28,17 @@ Scheduled invocation: daily M-F at 13:07 UTC (20:07 VN), after EOD CHEF dish.
 
 ## STEP 0 — Bootstrap
 
-→ skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `fb-market-poster`)
+<!-- FIX-CYCLE-BOOTSTRAP-AGENT-ENUM-SSOT: fb-market-poster is NOT a signal-producing cycle
+     participant — it is a downstream notebook-only consumer of already-synthesized intelligence.
+     get_cycle_bootstrap rejects agent_name="fb-market-poster" with a Zod invalid_enum_value error.
+     The cycle-bootstrap skill MUST NOT be used here. Market/system context is fully covered by
+     the live tool calls in STEP 1b (get_market_snapshot, get_market_context, get_market_foreign_flow).
+     Decision path B: correct the caller, do NOT widen the Zod schema. -->
+
+Capture cycle start anchor:
+```
+CYCLE_START_UTC = date -u +"%Y-%m-%dT%H:%M:%SZ"
+```
 
 Log cycle start:
 ```

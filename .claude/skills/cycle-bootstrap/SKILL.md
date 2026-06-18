@@ -3,7 +3,10 @@ name: cycle-bootstrap
 description: >
   Step 0 for all cowork cycle agents. Calls get_cycle_bootstrap then handles
   errors with fail-loud protocol. Used in alert-commander, financial-analyst,
-  unified-agent, report-analyzer, news-scout, market-watcher, digest-predict.
+  unified-agent, report-analyzer, news-scout, market-watcher, digest-predict,
+  bctc-analyst. NOT for fb-market-poster (downstream consumer — not a valid
+  get_cycle_bootstrap enum value; use get_market_snapshot + get_market_context
+  instead).
 ---
 
 ## Anti-Hallucination — MANDATORY before Step 0

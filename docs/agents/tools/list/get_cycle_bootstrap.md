@@ -1,7 +1,7 @@
 ---
 tool: get_cycle_bootstrap
 category: system
-agents: [news-scout, financial-analyst, report-analyzer, market-watcher, alert-commander, digest-predict, qa-responder, unified-agent]
+agents: [news-scout, financial-analyst, report-analyzer, market-watcher, alert-commander, digest-predict, qa-responder, unified-agent, bctc-analyst]
 ---
 
 # `get_cycle_bootstrap`
@@ -13,7 +13,7 @@ agents: [news-scout, financial-analyst, report-analyzer, market-watcher, alert-c
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| agent_name | enum (news-scout, financial-analyst, report-analyzer, market-watcher, alert-commander, digest-predict, qa-responder, unified-agent) | ✅ | — | Agent identifier. Must match a known Cowork agent name. |
+| agent_name | enum (news-scout, financial-analyst, report-analyzer, market-watcher, alert-commander, digest-predict, qa-responder, unified-agent, bctc-analyst) | ✅ | — | Agent identifier. Must match a known Cowork agent name. |
 
 ## Returns
 

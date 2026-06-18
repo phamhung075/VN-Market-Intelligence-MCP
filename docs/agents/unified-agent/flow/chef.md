@@ -88,7 +88,7 @@ If `claimed == true`: proceed to Step 0 GATHER. The marker is now held — send_
 
 ## Step 0 — GATHER
 
-Call `get_cycle_bootstrap(agent_id="unified-agent")` first. The response includes an `agent_signals` array (cross-agent signal index) — use this directly. Do NOT call `get_agent_signals(agent=…)` as a hard gate; if bootstrap already returned signals, the gather step is unblocked regardless of whether a standalone `get_agent_signals` call is available.
+Call `get_cycle_bootstrap(agent_name="unified-agent")` first. The response includes an `agent_signals` array (cross-agent signal index) — use this directly. Do NOT call `get_agent_signals(agent=…)` as a hard gate; if bootstrap already returned signals, the gather step is unblocked regardless of whether a standalone `get_agent_signals` call is available.
 
 Read all `docs/signals/*.json` with `mtime` within last 24h (or since last dish logged in notebook).
 
