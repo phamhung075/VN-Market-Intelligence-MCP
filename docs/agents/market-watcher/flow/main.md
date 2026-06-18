@@ -33,7 +33,46 @@ Pattern: If name/color/description fields are missing or wrong (context window t
 
 1. Read current UTC time.
 2. Match the window above (evaluate market row first, then prepost, then EOD, then offhours); all times resolve to a sub-flow — there is no unconditional EXIT branch.
-3. Run Step 0 smoke probe: `call_tool(server="vn-market", tool="get_system_status")`. On failure → `send_telegram(channel="bug", message="[market-watcher] Step 0 smoke probe FAILED")` → EXIT.
+3. Run Step 0-GW corroboration probe (Root C fix — DMS-2, DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER):
+
+   ```
+   PROBE_1 = call_tool(server="vn-market", tool="get_system_status")
+   ```
+   If PROBE_1 succeeds → gateway UP → continue to Step 4.
+
+   On timeout or error (attempt 1):
+   ```
+   WAIT 30s  # CPU-spike backoff (load spikes during double-fire)
+   PROBE_2 = call_tool(server="vn-market", tool="get_system_status")
+   ```
+   If PROBE_2 succeeds → gateway UP → continue to Step 4.
+
+   On timeout or error (attempt 2 — two successive failures):
+   ```
+   # Do NOT file gateway-down BUG yet. Corroborate via sibling success.
+   SIBLING_RECENT = call_tool(server="vn-market", tool="get_agent_signals", arguments={
+     "from_agent": null,
+     "status": "all",
+     "hours_back": 0.25
+   })
+   # from_agent=null → all producers, 15-minute window.
+   # If ANY signal is present: a sibling accessed the gateway successfully in this window.
+   ```
+
+   If SIBLING_RECENT is non-empty (count > 0):
+   ```
+   log "[market-watcher] Step 0-GW: 2x timeout but SIBLING_RECENT is non-empty — suppressing false gateway-down BUG"
+   # Gateway is reachable via a sibling. This session's failure is a local transient.
+   EXIT cleanly  # Do NOT file gateway-down BUG.
+   ```
+
+   Else (two successive probe failures + zero sibling success in 15-min window):
+   ```
+   # Real gateway outage confirmed — sibling corroboration absent.
+   send_telegram(channel="bug", message="[market-watcher] gateway-down CONFIRMED: 2x probe failure + no sibling success in 15-min window")
+   EXIT
+   ```
+
 4. Read and execute the matched sub-flow end-to-end, passing `mode` (e.g. `mode=prepost`) as a parameter so cycle.md can apply the correct threshold floor.
 5. Return that sub-flow's RETURN block verbatim.
 

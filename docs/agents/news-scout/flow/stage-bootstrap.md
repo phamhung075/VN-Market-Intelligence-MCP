@@ -31,11 +31,15 @@ If `CYCLE_SNAPSHOT` IS set: extract `macro_snapshot` from `$CYCLE_SNAPSHOT.macro
 On valid shape → skill: `.claude/skills/regime-extraction/SKILL.md`
 Variables: REGIME, CARRY_REGIME
 
-**0c. Load self-signal cache + feedback tuning**
+**0c. Load self-signal cache + sibling-window dedup cache**
 <!-- L-4 consolidation (1968b1): single call replaces 3 separate get_agent_signals calls per cycle.
      hours_back=6 covers the 360-min window required by legal_risk dedup (stage-signals.md).
-     Result stored as SELF_SIGNALS_CACHE — scoped to this cycle only, never persisted. -->
+     Result stored as SELF_SIGNALS_CACHE — scoped to this cycle only, never persisted.
+     DMS-1 (Root B — DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER): SIBLING_WINDOW_CACHE added below.
+     SIBLING_WINDOW_CACHE is used ONLY for cross-sibling dedup, NOT for feedback tuning. -->
+
 ```
+# 1. Self-history (existing): last 6 hours of own signals for feedback tuning
 SELF_SIGNALS_CACHE = call_tool(server="vn-market", tool="get_agent_signals", arguments={
   "from_agent": "news-scout",
   "status": "all",
@@ -43,6 +47,19 @@ SELF_SIGNALS_CACHE = call_tool(server="vn-market", tool="get_agent_signals", arg
 })
 ```
 Non-fatal: if tool errors, set `SELF_SIGNALS_CACHE = []`, skip feedback tuning, continue.
+
+```
+# 2. Sibling-window dedup cache (NEW — Root B fix, DMS-1):
+# Query ALL producers for the last 15 minutes. This catches a concurrent sibling news-scout
+# that committed signals in the same backstop window. Used ONLY for cross-sibling dedup —
+# NOT for feedback tuning (feedback tuning continues to use SELF_SIGNALS_CACHE).
+SIBLING_WINDOW_CACHE = call_tool(server="vn-market", tool="get_agent_signals", arguments={
+  "from_agent": null,
+  "status": "all",
+  "hours_back": 0.25
+})
+```
+Non-fatal: if tool errors, set `SIBLING_WINDOW_CACHE = []`, continue.
 
 Client-side filter for feedback: keep entries where `signal_type === "signal_feedback"`.
 

@@ -30,6 +30,7 @@ import {
   type SignalType,
   type AgentSignal,
 } from "../../../../infrastructure/db/agentSignalStore.js";
+import { getRecentSignals } from "../../../../tools/signals/getRecentSignals.js";
 import { logSignalRejection } from "../../../../infrastructure/db/signalRejectionStore.js";
 import { insertSignalQualityAudit } from "../../../../infrastructure/db/signalQualityAuditStore.js";
 import {
@@ -451,8 +452,10 @@ export function registerAgentSignalTools(server: McpServer): void {
     "Retrieve pending signals addressed to the given agent (or broadcast 'all'). " +
       "Unread signals are marked as read on retrieval. " +
       "Pass from_agent to query sender history instead (read-mark suppressed). " +
+      "Pass from_agent=null to query ALL producers' signals in the last hours_back window " +
+      "(cross-sibling dedup / corroboration gate — DMS-1 SIBLING_WINDOW_CACHE, DMS-2 corroboration). " +
       "Pass hours_back to restrict results to signals created within the last N hours " +
-      "(e.g. hours_back=6 covers the 360-min legal_risk dedup window). " +
+      "(e.g. hours_back=6 covers the 360-min legal_risk dedup window; hours_back=0.25 = 15-min sibling window). " +
       "Pass signal_type to filter results server-side by signal type (reduces payload 40-60%).",
     {
       agent: z
@@ -464,10 +467,14 @@ export function registerAgentSignalTools(server: McpServer): void {
         .describe("Filter: 'unread' (default) or 'all'"),
       from_agent: z
         .string()
+        .nullable()
         .optional()
         .describe(
-          "If provided, return only signals sent BY this agent (sender history). " +
-            "Useful for inter-cycle dedup checks. Read-mark side-effect is suppressed.",
+          "If provided as a string, return only signals sent BY this agent (sender history). " +
+            "Read-mark side-effect is suppressed. " +
+            "Pass null (or omit) to return signals from ALL producers — used for cross-sibling " +
+            "dedup (SIBLING_WINDOW_CACHE) and market-watcher corroboration gate. " +
+            "When null, hours_back is required to bound the query window.",
         ),
       hours_back: z.coerce
         .number()
@@ -475,8 +482,9 @@ export function registerAgentSignalTools(server: McpServer): void {
         .optional()
         .describe(
           "Restrict results to signals created within the last N hours " +
-            "(e.g. 6 = last 360 minutes). When omitted, only non-expired signals " +
-            "are returned (default behaviour, backward compatible).",
+            "(e.g. 6 = last 360 minutes; 0.25 = last 15 minutes for sibling window). " +
+            "When omitted with from_agent=null, defaults to 0.25 (15-min sibling window). " +
+            "When omitted with a specific from_agent, returns non-expired signals only.",
         ),
       signal_type: z
         .string()
@@ -493,9 +501,27 @@ export function registerAgentSignalTools(server: McpServer): void {
         await initDatabase();
         const db = getDb();
 
+        // DMS-1 / DMS-2: from_agent=null means "all producers" — use cross-producer window query.
+        // This is the SIBLING_WINDOW_CACHE path for news-scout dedup and the market-watcher
+        // corroboration gate. Default window: 15 minutes (0.25 hours = 900 seconds).
+        if (args.from_agent === null) {
+          const hoursBack = args.hours_back ?? 0.25;
+          const windowSeconds = Math.round(hoursBack * 3600);
+          const signals = getRecentSignals(db, windowSeconds);
+
+          // Apply optional signal_type filter client-side (getRecentSignals returns all types)
+          const filtered = args.signal_type != null
+            ? signals.filter((s) => s.signalType === args.signal_type)
+            : signals;
+
+          return {
+            content: [{ type: "text" as const, text: formatSignalLines(filtered, "all-producers") }],
+          };
+        }
+
         const signals = getSignals(db, args.agent, {
           status: args.status,
-          ...(args.from_agent !== undefined ? { fromAgent: args.from_agent } : {}),
+          ...(args.from_agent !== undefined && args.from_agent !== null ? { fromAgent: args.from_agent } : {}),
           ...(args.hours_back !== undefined ? { hoursBack: args.hours_back } : {}),
           ...(args.signal_type != null ? { signalType: args.signal_type } : {}),
         });
@@ -505,6 +531,78 @@ export function registerAgentSignalTools(server: McpServer): void {
         };
       } catch (err) {
         console.error("[get_agent_signals] Failed:", err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // ── get_recent_signals ────────────────────────────────────────────────────
+  // DMS-1 + DMS-2 — cross-producer signal window query (Root B + Root C fix).
+  // Exposed as a dedicated MCP tool so flow docs can call it directly without
+  // going through get_agent_signals null-path. Both paths call the same
+  // getRecentSignals() helper internally.
+  server.tool(
+    "get_recent_signals",
+    "Query ALL producers' signals committed in the last window_seconds seconds. " +
+      "Returns signals with status IN ('committed','published','read') — excludes unread drafts. " +
+      "Used for: (1) news-scout SIBLING_WINDOW_CACHE cross-dedup gate (DMS-1/Root B) and " +
+      "(2) market-watcher sibling-success corroboration to suppress false gateway-down BUGs (DMS-2/Root C). " +
+      "Does NOT mark signals as read — safe to call multiple times.",
+    {
+      window_seconds: z.coerce
+        .number()
+        .int()
+        .positive()
+        .default(900)
+        .describe(
+          "Look-back window in seconds (default 900 = 15 minutes). " +
+            "Use 900 for the standard sibling dedup / corroboration window.",
+        ),
+    },
+    async (args) => {
+      try {
+        await initDatabase();
+        const db = getDb();
+
+        const signals = getRecentSignals(db, args.window_seconds);
+
+        if (signals.length === 0) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ count: 0, signals: [], window_seconds: args.window_seconds }, null, 2),
+              },
+            ],
+          };
+        }
+
+        const result = {
+          count: signals.length,
+          window_seconds: args.window_seconds,
+          signals: signals.map((s) => ({
+            id: s.id,
+            from_agent: s.fromAgent,
+            signal_type: s.signalType,
+            stock_code: s.stockCode,
+            status: s.status,
+            created_at: s.createdAt,
+            payload_title: s.payload.title ?? null,
+          })),
+        };
+
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        console.error("[get_recent_signals] Failed:", err);
         return {
           content: [
             {

@@ -21,11 +21,31 @@ For each candidate signal:
 1. Extract the primary `event_type` + `affected_sectors` or `stock_code` from the candidate.
 2. Check `recent` for any entry where **both** match (same event_type AND overlapping affected_sectors or same stock_code) **AND** `created_at` is within the last 180 minutes.
 3. If match found → **SUPPRESS** with log: `"[DEDUP] {signal_type} suppressed — same theme already on bus as #{prior_id} ({N} min ago). Skipping post."`
-4. If no match → proceed to post.
+4. If no match → proceed to sibling check below.
 
 **Threshold:** 180 minutes (3 hours). Covers intra-session recurring macro events (CPI/oil, FII-outflow, sector ATH rallies).
 
 **Exception:** If the candidate has a materially different `direction` (e.g., prior=bearish, candidate=bullish on new data) → override suppression. Log the override explicitly.
+
+### Cross-sibling dedup gate (NEW — DMS-1/Root B, DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER)
+
+After the intra-session check above, perform a cross-sibling check using SIBLING_WINDOW_CACHE:
+
+```
+# Dedup key: (signal_type, stock_code_normalised, title_normalised)
+# Normalise: stock_code → uppercase trimmed; title → lowercase, strip punctuation, collapse whitespace.
+sibling_hit = SIBLING_WINDOW_CACHE.find(s =>
+  normalise_key(s) === normalise_key(candidate)
+)
+# where normalise_key(x) = x.signal_type + ":" + upper(trim(x.stock_code ?? "")) + ":" + lower(x.payload.title?.replace(/[^\w\s]/g,"").replace(/\s+/g," ").trim() ?? "")
+
+if sibling_hit:
+  log "[DEDUP-SIBLING] {signal_type} suppressed — sibling committed identical signal #{sibling_hit.id} in the last 15 min"
+  SUPPRESS
+```
+
+This gate applies to **all signal types** news-scout produces — no allowlist filter.
+The content-hash key `(signal_type, stock_code_normalised, title_normalised)` is the discriminator.
 
 ---
 
@@ -40,20 +60,28 @@ Legal risk event detected (prosecution / asset freeze / investigation) in articl
 - Article text matches any `CRIMINAL_PROSECUTION_KEYWORDS` (from `policyImpactMapper.ts`) AND `detectStocksInText()` resolves ≥1 watchlist/reference-stock code (e.g. PC1 from `referenceStocks.utilities`)
 
 **Step 1 — Dedup check:**
-Scan `SELF_SIGNALS_CACHE` for matching `(stock_code, signal_type = "legal_risk")` within 360 minutes:
+Scan `SELF_SIGNALS_CACHE` for matching `(stock_code, signal_type = "legal_risk")` within 360 minutes, then check SIBLING_WINDOW_CACHE for cross-sibling dedup:
 
 <!-- L-4 cache hit (1968b1): use SELF_SIGNALS_CACHE loaded at stage-bootstrap Step 0c.
-     hours_back=6 = 360 min — exact window needed for legal_risk dedup TTL. No MCP call needed. -->
+     hours_back=6 = 360 min — exact window needed for legal_risk dedup TTL. No MCP call needed.
+     DMS-1 (Root B): ALSO check SIBLING_WINDOW_CACHE (15-min cross-producer window). -->
 ```
+# Check 1: intra-session dedup (360-min TTL for legal events)
 dedup_check = SELF_SIGNALS_CACHE.filter(s =>
   s.signal_type === "legal_risk" &&
   s.stock_code === candidate.stock_code &&
   (now - s.created_at) <= 360  // minutes
 )
 # 360 min = 6h TTL — legal proceedings evolve slowly, no need for per-cycle repost.
+
+# Check 2: cross-sibling dedup (15-min window, DMS-1)
+sibling_hit = SIBLING_WINDOW_CACHE.find(s =>
+  normalise_key(s) === normalise_key(candidate)
+)
 ```
 
 - If `dedup_check.length > 0` → **SUPPRESS** with log: `"[DEDUP] legal_risk suppressed — same (stock_code, legal_risk) already on bus within 360 min. Skipping post."`
+- If `sibling_hit` found → **SUPPRESS** with log: `"[DEDUP-SIBLING] legal_risk suppressed — sibling committed identical signal #{sibling_hit.id} in the last 15 min"`
 - If no duplicate → proceed to Step 2
 
 **Step 2 — Classify risk level:**
