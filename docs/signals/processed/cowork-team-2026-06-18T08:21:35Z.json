@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T08:21:35Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "deferred_to_backstop": [
+      "chef-intraday"
+    ],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 120
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "DEFERRED_BLIND",
+    "reason": "gateway_blind_session_defer_to_cloud_backstop",
+    "nominal_tick": "08:21",
+    "leader_lock": "self_held_renewed",
+    "note": "Session gateway-blind (.mcp.json mcpServers=0). chef-intraday (cron 13 2-8, 2h cadence, last_fired 06:21:13Z) matched due but NOT locally spawned — a blind chef spawn fabricates the MARKET dish (per feedback_fb_poster_fabricates_when_data_thin). Deferred to cloud RemoteTrigger backstop (~08:25Z, real gateway). last_fired intentionally NOT bumped so backstop staleness check still fires it. Guaranteed EOD chef ~08:37Z also expected via backstop."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T08:21:35Z",
+  "_processed": {
+    "fingerprint": "ff1c74bc881ab202d58b297b343e2dab1cb68f49e2b5fc496b5174431e6d9431",
+    "processedAt": "2026-06-18T08:31:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

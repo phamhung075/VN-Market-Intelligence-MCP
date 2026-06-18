@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T08:07:28Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "deferred_to_backstop": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "DEFERRED_BLIND",
+    "reason": "gateway_blind_session_defer_to_cloud_backstop",
+    "nominal_tick": "08:00",
+    "leader_lock": "self_held_renewed",
+    "note": "Session is gateway-blind (.mcp.json mcpServers=0). 2 offhours gatherer slots (0 */4 cadence, last_fired 2026-06-15 = 3d stale) matched but NOT locally spawned — a blind spawn would fabricate news/prices (feedback_local_cowork_subagents_gateway_blind). Deferred to cloud RemoteTrigger backstop (~08:12Z, real gateway). last_fired intentionally NOT bumped so backstop staleness check still fires them. 3-day offhours-gatherer staleness flagged for ops attention."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T08:07:28Z",
+  "_processed": {
+    "fingerprint": "862a92e1b59cbfce4a982d49a77d2dc101e5207cf6d2ff7d36cfd0dc065a217c",
+    "processedAt": "2026-06-18T08:31:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
