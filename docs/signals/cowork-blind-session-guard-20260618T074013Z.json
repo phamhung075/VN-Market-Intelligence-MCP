@@ -1,0 +1,37 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "priority": "p1",
+  "createdAt": "2026-06-18T07:40:13Z",
+  "payload": "docs/architecture-briefs/2026-06-18-cowork-blind-session-guard.md",
+  "summary": "Gateway-blind cowork dispatcher fabrication guard. Root: spawn-fanout.md has no preflight — a SESSION_BLIND=true tick spawns data agents that cannot fetch → they fabricate (confirmed live 2026-06-18). Fix: new blind-guard.md sub-flow (Step 0c in main.md, BEFORE slot matching) runs jq '.mcpServers|length' .mcp.json gateway-free; on blind, spawn-fanout.md Step 5.0 gates the entire spawn loop — backstopped slots logged as deferred, non-backstopped slots written to telemetry errors[] as undeliverable, ONE work-channel summary per tick. Wired session: no-op. 3 file edits, all agent-father zone, no rebuild.",
+  "tasks": [
+    {
+      "id": "BG-1",
+      "priority": "p1",
+      "route_to": "agent-father",
+      "file": "docs/agents/cowork-team/flow/blind-guard.md",
+      "action": "CREATE new sub-flow (≤50L). Gateway-free preflight: jq '.mcpServers | length' .mcp.json → SESSION_BLIND=true if 0. Belt-and-suspenders: optional one-shot call_tool(server='vn-market', tool='list_server_tools') — error also sets SESSION_BLIND=true. Export SESSION_BLIND to spawn-fanout.md. See brief §New sub-flow for full pseudocode.",
+      "ac": "File exists at docs/agents/cowork-team/flow/blind-guard.md. SESSION_BLIND=true when mcpServers={}, SESSION_BLIND=false when mcpServers non-empty. No MCP call required for primary check."
+    },
+    {
+      "id": "BG-2",
+      "priority": "p1",
+      "route_to": "agent-father",
+      "file": "docs/agents/cowork-team/flow/spawn-fanout.md",
+      "action": "INSERT Step 5.0 blind gate at the top of the per-slot spawn loop. When SESSION_BLIND=true: classify WON_SLOTS into BACKSTOP_SLOTS (trigger_id != null AND trigger_status='active') vs NO_BACKSTOP_SLOTS (from cowork-schedule.json, no hardcoding). Log deferred for backstop slots. Append {slot_id, error:'undeliverable-gateway-blind'} to errors[] for no-backstop slots. Emit ONE send_telegram(channel='work') summary. EXIT Step 5. When SESSION_BLIND=false: fall through to existing spawn loop unchanged. See brief §Edits to spawn-fanout.md for verbatim pseudocode.",
+      "ac": "Read-verified: in a blind tick, no Agent() spawn call appears in the log for any WON_SLOT. Single work-channel summary message per tick. errors[] has one entry per NO_BACKSTOP slot. Wired tick behavior unchanged."
+    },
+    {
+      "id": "BG-3",
+      "priority": "p1",
+      "route_to": "agent-father",
+      "file": "docs/agents/cowork-team/flow/main.md",
+      "action": "INSERT row '| 0c | Blind detection — gateway preflight | `blind-guard.md` |' in JUMP-TO table after Step 0b row, before Steps 1-4b row. Update size-justification comment from 111L to ~113L.",
+      "ac": "main.md JUMP-TO table includes Step 0c row pointing to blind-guard.md. Size comment updated."
+    }
+  ],
+  "note": "BG-1 + BG-2 + BG-3 are all agent-father zone, no dev-mcp-server dependency, no container rebuild needed. BG-2 depends on SESSION_BLIND variable from BG-1; BG-3 depends on blind-guard.md existing from BG-1. Ship as one atomic agent-father task.",
+  "sprint_task_ref": "FIX-COWORK-BLIND-SESSION-GUARD"
+}
