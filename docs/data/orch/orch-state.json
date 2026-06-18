@@ -11411,6 +11411,43 @@
         ],
         "owner": null,
         "next_agent": "po"
+      },
+      {
+        "id": "FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "cross-service/",
+        "next_agent": "dev-mcp-server",
+        "title": "get_insider_signals outstandingShares required-vs-optional drift breaks 2 SSOT callers",
+        "desc": "get_insider_signals — outstandingShares is REQUIRED in the live Zod schema but the SSOT tool doc marks it optional, so SSOT-driven callers omit it and Zod-reject. Confirmed callers: market-watcher/flow/eod.md:59 (get_insider_signals(code=...)) + bctc-analyst/flow/stage-analyze.md:49 (get_insider_signals()). Reconcile: RAW-confirm live schema first, then EITHER make outstandingShares optional in the schema (preferred if the handler can derive/lookup it) OR update both doc + caller flows to pass it. DoD: both callers pass live schema validation. NOTE: agent-md-factory before editing the flow .md files.",
+        "files": [
+          "docs/agents/market-watcher/flow/eod.md",
+          "docs/agents/bctc-analyst/flow/stage-analyze.md"
+        ],
+        "baseline_pass": false,
+        "size": "S",
+        "source": "health-recheck reports 3209-3237 (A7), router-deduped",
+        "created_at": "2026-06-18T11:36:53Z",
+        "created_by": "po"
+      },
+      {
+        "id": "FIX-BCTC-SLA-THRESHOLD-360",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "title": "get_sla_status BCTC threshold misconfig — 120min vs should be 360min/168h out-of-earnings-window (false CRITICAL)",
+        "desc": "get_sla_status BCTC freshness threshold uses 120min, producing false CRITICAL when out of the earnings filing window; expected ~360min (or 168h out-of-window). DISTINCT from FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL (excludes url_not_found terminal rows) and FIX-BCTC-QUEUE-MAXAGE-GATE (drops >30d-no-filing tickers) — those fix WHICH rows count; this fixes the numeric staleness threshold/window itself. RAW-confirm the live threshold value before changing. DoD: BCTC SLA does not report CRITICAL during a normal out-of-earnings-window quiet period when the pipeline is healthy. config-level fix.",
+        "files": [
+          "apps/mcp-server"
+        ],
+        "baseline_pass": false,
+        "size": "S",
+        "source": "health-recheck reports 3209-3237 (A10), router-deduped",
+        "created_at": "2026-06-18T11:36:53Z",
+        "created_by": "po"
       }
     ],
     "closed_sprints": [
@@ -20913,7 +20950,29 @@
       "next_task": "TASK-AUTO-PUSH-A"
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-CYCLE-BOOTSTRAP-AGENT-ENUM-SSOT",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "next_agent": "dev-mcp-server",
+        "title": "get_cycle_bootstrap agent_name enum SSOT drift — bctc-analyst + fb-market-poster missing from doc enum; chef uses wrong param name",
+        "desc": "CLUSTER of 3 deterministic on-disk doc/SSOT bugs converging on ONE root: the get_cycle_bootstrap agent_name enum is out of sync across doc + skill + agent flows, so 3 agents Zod-reject at bootstrap. (1) docs/agents/tools/list/get_cycle_bootstrap.md L4+L16 list only 8 agents (news-scout, financial-analyst, report-analyzer, market-watcher, alert-commander, digest-predict, qa-responder, unified-agent) — MISSING bctc-analyst (in live schema, 9th) and fb-market-poster; reconcile doc enum to live schema (RAW-confirm live enum first). (2) fb-market-poster/flow/main.md:31 + .claude/skills/cycle-bootstrap/SKILL.md:74 substitute agent-id fb-market-poster into get_cycle_bootstrap(agent_name=...) which the live enum rejects -> fb-poster bootstrap fails every cycle. (3) docs/agents/unified-agent/flow/chef.md:91 calls get_cycle_bootstrap(agent_id=\"unified-agent\") — wrong param, must be agent_name. Reference SSOT test: 1975-bootstrap-enum-bctc-analyst-guard.test.ts:74. DoD: doc enum == live schema enum (incl bctc-analyst + fb-market-poster if the live schema accepts them — if it does NOT, the fix is to ADD them to the schema enum, not just docs, since both agents legitimately bootstrap); chef.md uses agent_name; cycle-bootstrap skill substitution produces a valid enum value for every agent that uses it. baseline_pass: get_cycle_bootstrap(agent_name=<each of the 3 agents>) returns 200 not Zod-reject. NOTE: invoke agent-md-factory skill before editing chef.md / fb-poster flow (agent .md factory rule).",
+        "files": [
+          "docs/agents/tools/list/get_cycle_bootstrap.md",
+          "docs/agents/fb-market-poster/flow/main.md",
+          ".claude/skills/cycle-bootstrap/SKILL.md",
+          "docs/agents/unified-agent/flow/chef.md"
+        ],
+        "baseline_pass": false,
+        "size": "S",
+        "source": "health-recheck reports 3209-3237 (A1+A4+A5 cluster), router-deduped tick 20260618T113056Z",
+        "created_at": "2026-06-18T11:36:53Z",
+        "created_by": "po"
+      }
+    ],
     "review": [
       {
         "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
