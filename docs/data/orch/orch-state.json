@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-18T05:30:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-18T12:30:00Z",
+  "_updated_by": "qa",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -11461,6 +11461,50 @@
     ],
     "done": [
       {
+        "id": "DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION",
+        "type": "FIX",
+        "priority": "p2",
+        "status": "DONE",
+        "owner": "dev-mcp-server",
+        "next_agent": null,
+        "route_to": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
+        "brief_task_ids": [
+          "DMS-1",
+          "DMS-2"
+        ],
+        "subsumes_holds": [
+          "FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE",
+          "FIX-MARKETWATCHER-GW-CORROBORATION-GATE"
+        ],
+        "title": "DMS-1+DMS-2: news-scout sibling-dedup window + market-watcher corroboration gate (Roots B/C of gatherer double-fire)",
+        "desc": "Per brief §Primitive 2+3 (share ONE get_recent_signals(window_seconds=900) helper against signal_bus on named-volume market.db). DMS-1: replace news-scout SELF_SIGNALS_CACHE=[] with the 900s window query; content-hash dedup key (signal_type, ticker_normalised, title_normalised); GENERIC — no allowlist by signal_type. DMS-2: replace market-watcher Step-0-GW immediate-BUG-on-2x-failure with the corroboration gate — after 2x probe failure, query get_recent_signals(900); sibling signals present → EXIT gracefully (no BUG); none → file gateway-down BUG. May ship as ONE combined dev-mcp-server sprint.",
+        "ac": "DMS-1: two concurrent news-scout fires within the same minute produce 0 duplicate internal signals. DMS-2: timeout with sibling success in window → no BUG filed; timeout with no sibling success → BUG filed.",
+        "verification_gate": "Live: two concurrent sibling fires → 0 dup signal_bus rows (RAW-probe named-volume market.db, not self-built test schema); timeout+sibling-success → no BUG row. Rebuild required (mcp-server code change). Cross-ref same-db-tools-diverge-rowcount + false-infra-failure-corroboration-gate.",
+        "size": "S",
+        "source": "po-s91 dev-team tick 2026-06-16T21:27Z — implementation handoff of brief 5bced686 (agents-architect→dev-mcp-server), HELD on zone collision",
+        "created_at": "2026-06-16T21:34:06Z",
+        "created_by": "po",
+        "promoted_at": "2026-06-18T09:35:49Z",
+        "promoted_by": "po-s103",
+        "promotion_note": "Blocker ARCH-CRON-SCHEDULER-RELIABILITY is now done_verified:true -> apps/mcp-server/ zone collision (the sole hold_reason) is CLEARED. fix_spec ready (docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-1 + §DMS-2). Active coding WIP <=2: the only in_progress was the multi/design umbrella (now closed); the 2 apps/mcp-server review[] rows are QA-gated not active dev lanes, so no 2nd concurrent dev lane opens. Router dispatches dev-mcp-server. RAW-verify gate: 2 concurrent sibling fires -> 0 dup signal_bus rows on named-volume market.db; timeout+sibling-success -> no BUG row.",
+        "claimed_at": "2026-06-18T09:39:52Z",
+        "claimed_by": "router",
+        "review_at": "2026-06-18T10:02:50Z",
+        "impl_commit": "51c72725",
+        "verify_note": "dev-mcp-server shipped: tsc 0, 13309/13309 tests pass, 14 DMS unit tests. CODE+UNIT green. 3 BEHAVIORAL acceptance criteria PENDING LIVE (gateway-capable) verification: DMS-1 two concurrent news-scout fires -> 0 dup; DMS-2a transient probe-fail + sibling present -> false-BUG suppressed; DMS-2b probe-fail + no sibling -> exactly one gateway-down BUG. done_verified WITHHELD until live two-fire (local QA is gateway-blind for cowork agents).",
+        "done_verified": false,
+        "done_at": "2026-06-18T12:30:00Z",
+        "done_by": "qa",
+        "qa_verdict": "APPROVED (code-gate PASS, done_verified=FALSE — 3 behavioral criteria pending live two-fire)",
+        "live_deferred_checklist": [
+          "DMS-1: 2 concurrent news-scout fires same minute -> 0 dup (signal_type,stock_code,title) committed; 2nd finds 1st via SIBLING_WINDOW_CACHE",
+          "DMS-2a: transient probe-fail + sibling present in 15-min window -> false gateway-down BUG SUPPRESSED",
+          "DMS-2b: probe-fail + NO sibling in window -> exactly ONE gateway-down BUG filed"
+        ]
+      },
+      {
         "id": "FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD",
         "title": "get_system_status 60s timeout — TE/Chromium source-health probe has no per-source deadline -> market-watcher smoke probe (main.md:36) aborts every cycle at market open",
         "type": "FIX",
@@ -21042,41 +21086,6 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
-      },
-      {
-        "id": "DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION",
-        "type": "FIX",
-        "priority": "p2",
-        "status": "REVIEW",
-        "owner": "dev-mcp-server",
-        "next_agent": "qa",
-        "route_to": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
-        "brief_task_ids": [
-          "DMS-1",
-          "DMS-2"
-        ],
-        "subsumes_holds": [
-          "FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE",
-          "FIX-MARKETWATCHER-GW-CORROBORATION-GATE"
-        ],
-        "title": "DMS-1+DMS-2: news-scout sibling-dedup window + market-watcher corroboration gate (Roots B/C of gatherer double-fire)",
-        "desc": "Per brief §Primitive 2+3 (share ONE get_recent_signals(window_seconds=900) helper against signal_bus on named-volume market.db). DMS-1: replace news-scout SELF_SIGNALS_CACHE=[] with the 900s window query; content-hash dedup key (signal_type, ticker_normalised, title_normalised); GENERIC — no allowlist by signal_type. DMS-2: replace market-watcher Step-0-GW immediate-BUG-on-2x-failure with the corroboration gate — after 2x probe failure, query get_recent_signals(900); sibling signals present → EXIT gracefully (no BUG); none → file gateway-down BUG. May ship as ONE combined dev-mcp-server sprint.",
-        "ac": "DMS-1: two concurrent news-scout fires within the same minute produce 0 duplicate internal signals. DMS-2: timeout with sibling success in window → no BUG filed; timeout with no sibling success → BUG filed.",
-        "verification_gate": "Live: two concurrent sibling fires → 0 dup signal_bus rows (RAW-probe named-volume market.db, not self-built test schema); timeout+sibling-success → no BUG row. Rebuild required (mcp-server code change). Cross-ref same-db-tools-diverge-rowcount + false-infra-failure-corroboration-gate.",
-        "size": "S",
-        "source": "po-s91 dev-team tick 2026-06-16T21:27Z — implementation handoff of brief 5bced686 (agents-architect→dev-mcp-server), HELD on zone collision",
-        "created_at": "2026-06-16T21:34:06Z",
-        "created_by": "po",
-        "promoted_at": "2026-06-18T09:35:49Z",
-        "promoted_by": "po-s103",
-        "promotion_note": "Blocker ARCH-CRON-SCHEDULER-RELIABILITY is now done_verified:true -> apps/mcp-server/ zone collision (the sole hold_reason) is CLEARED. fix_spec ready (docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-1 + §DMS-2). Active coding WIP <=2: the only in_progress was the multi/design umbrella (now closed); the 2 apps/mcp-server review[] rows are QA-gated not active dev lanes, so no 2nd concurrent dev lane opens. Router dispatches dev-mcp-server. RAW-verify gate: 2 concurrent sibling fires -> 0 dup signal_bus rows on named-volume market.db; timeout+sibling-success -> no BUG row.",
-        "claimed_at": "2026-06-18T09:39:52Z",
-        "claimed_by": "router",
-        "review_at": "2026-06-18T10:02:50Z",
-        "impl_commit": "51c72725",
-        "verify_note": "dev-mcp-server shipped: tsc 0, 13309/13309 tests pass, 14 DMS unit tests. CODE+UNIT green. 3 BEHAVIORAL acceptance criteria PENDING LIVE (gateway-capable) verification: DMS-1 two concurrent news-scout fires -> 0 dup; DMS-2a transient probe-fail + sibling present -> false-BUG suppressed; DMS-2b probe-fail + no sibling -> exactly one gateway-down BUG. done_verified WITHHELD until live two-fire (local QA is gateway-blind for cowork agents)."
       }
     ],
     "qa": [],
