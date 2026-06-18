@@ -9,8 +9,16 @@
   "reason": "3-slots-due",
   "pressure_mode": "legacy",
   "calendar_status": "unknown",
-  "matched_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
-  "won_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+  "matched_slots": [
+    "bctc-analyst-slot-4",
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "won_slots": [
+    "bctc-analyst-slot-4",
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
   "held_by_other": [],
   "due_reasons": {
     "bctc-analyst-slot-4": "cron",
@@ -18,9 +26,24 @@
     "market-watcher-offhours": "cadence"
   },
   "spawned": [
-    {"slot_id": "bctc-analyst-slot-4", "agent": "bctc-analyst", "agentId": "a110c337196738d7a", "background": true},
-    {"slot_id": "news-scout-offhours", "agent": "news-scout", "agentId": "ac7c4704f6f69ded8", "background": true},
-    {"slot_id": "market-watcher-offhours", "agent": "market-watcher", "agentId": "a7128446497a26600", "background": true}
+    {
+      "slot_id": "bctc-analyst-slot-4",
+      "agent": "bctc-analyst",
+      "agentId": "a110c337196738d7a",
+      "background": true
+    },
+    {
+      "slot_id": "news-scout-offhours",
+      "agent": "news-scout",
+      "agentId": "ac7c4704f6f69ded8",
+      "background": true
+    },
+    {
+      "slot_id": "market-watcher-offhours",
+      "agent": "market-watcher",
+      "agentId": "a7128446497a26600",
+      "background": true
+    }
   ],
   "spawn_errors": [],
   "leader_lock": "self-held-renewed",
@@ -30,7 +53,11 @@
     "processed": []
   },
   "last_fired_timestamp": "2026-06-18T00:07:34.000Z",
-  "last_fired_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+  "last_fired_slots": [
+    "bctc-analyst-slot-4",
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
   "last_fired_write_errors": null,
   "pressure_emit": {
     "emitted": true,
@@ -41,5 +68,11 @@
     "last_volatility_level": "normal",
     "note": "server rewrote pressure-state.json @00:07:40Z — re-proves gateway UP first-hand; FAN-OUT tick: 3 off-market slots claimed (all WON, no cloud-backstop double-fire), spawned background, tokens released, last_fired stamped 00:07:34Z so ~:12 backstop skips. stale_warning flipped true at deep off-market — gatherers just fired should refresh upstream. bctc-analyst E2 market-window guard [02:00,08:00)UTC not triggered at 00:05Z. dev-mcp-server FIX-BCTC (a014eadf) still in flight."
   },
-  "fan_out": true
+  "fan_out": true,
+  "_processed": {
+    "fingerprint": "aa6d29a15d2d62777c996495a461748cc815f97c4d1c2ba49965ae5c56d5ff5e",
+    "processedAt": "2026-06-18T02:29:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

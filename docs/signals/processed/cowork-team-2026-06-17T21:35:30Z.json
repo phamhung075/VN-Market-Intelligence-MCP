@@ -13,7 +13,12 @@
   "drain": {
     "signal_queue_new_cowork_rows": 1,
     "processed": [
-      { "id": "tnb-20260617T202500Z", "to": "po", "action": "NEW->READ", "note": "already fully triaged this session via file-drain path -> PO ACK tnb-audit-latest.md, verdict NOTHING; marking READ closes re-drain hygiene gap" }
+      {
+        "id": "tnb-20260617T202500Z",
+        "to": "po",
+        "action": "NEW->READ",
+        "note": "already fully triaged this session via file-drain path -> PO ACK tnb-audit-latest.md, verdict NOTHING; marking READ closes re-drain hygiene gap"
+      }
     ]
   },
   "pressure_emit": {
@@ -25,5 +30,11 @@
     "note": "server rewrote pressure-state.json @21:37:02Z — also re-proves gateway UP first-hand"
   },
   "last_fired_write": false,
-  "fan_out": false
+  "fan_out": false,
+  "_processed": {
+    "fingerprint": "2eb30c44c09d57d707cb493bc0e214e4f14009715a8da158013ffe4ee7a48a9b",
+    "processedAt": "2026-06-18T02:29:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

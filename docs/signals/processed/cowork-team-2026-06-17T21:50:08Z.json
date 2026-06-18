@@ -23,5 +23,11 @@
     "note": "server rewrote pressure-state.json @21:50:25Z — re-proves gateway UP first-hand"
   },
   "last_fired_write": false,
-  "fan_out": false
+  "fan_out": false,
+  "_processed": {
+    "fingerprint": "426f2bbf7b728f0fd3cb9c34799a5b6a094bf9556b72e836d1e4679fc194ce70",
+    "processedAt": "2026-06-18T02:29:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

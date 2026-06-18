@@ -23,5 +23,11 @@
     "note": "server rewrote pressure-state.json @22:52:51Z — re-proves gateway UP first-hand; same tick router routed FIX-BCTC REVIEW->CHANGES_REQUESTED (commit 188bea5f, dev-mcp-server dispatched a014eadf) + Tier-1 audit HEALTHY"
   },
   "last_fired_write": false,
-  "fan_out": false
+  "fan_out": false,
+  "_processed": {
+    "fingerprint": "49a06ef45e22d5183e758d75923b5bd62401e000487c010a55f6a1fae9eb6e12",
+    "processedAt": "2026-06-18T02:29:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

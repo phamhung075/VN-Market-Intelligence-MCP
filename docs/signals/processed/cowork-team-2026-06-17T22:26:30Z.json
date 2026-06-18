@@ -23,5 +23,11 @@
     "note": "server rewrote pressure-state.json @22:26:30Z — re-proves gateway UP first-hand; corroborates system-auditor Tier-1 HEALTHY verdict (notebook 2ad7e44a, 0 anomalies)"
   },
   "last_fired_write": false,
-  "fan_out": false
+  "fan_out": false,
+  "_processed": {
+    "fingerprint": "f7add94857c8fe4d5e5dbf2cdeefa56e7704f151de9deb5ef15206fdf521bf82",
+    "processedAt": "2026-06-18T02:29:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

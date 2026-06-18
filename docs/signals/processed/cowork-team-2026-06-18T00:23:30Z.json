@@ -21,5 +21,11 @@
     "note": "server rewrote pressure-state.json @00:23:30Z — re-proves gateway UP first-hand. SILENT tick: 0 slots due at 00:15 (gatherers + bctc-slot-4 already fired 00:07:34Z this cycle, next due 04:00). Drain read-only (0 cowork-addressed NEW rows) — no orch-state write while system-auditor a3d01cb9 active on signal_queue. Backstop-defer gate N/A (minute=21 >= 15). Two bg agents completed this tick: system-auditor Tier-1 (0 anomalies, 12/12 services UP, toolCount=165) + dev-mcp-server FIX-BCTC a014eadf (status=REVIEW, impl_commit=ea5dc0eb, NEXT=qa)."
   },
   "last_fired_write": false,
-  "fan_out": false
+  "fan_out": false,
+  "_processed": {
+    "fingerprint": "94e2fab4c04207e980fda96a63de180a4082ebee13c401cacbbbe697cead88cd",
+    "processedAt": "2026-06-18T02:29:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -1,15 +1,15 @@
 {
   "from": "cowork-dispatcher",
   "type": "tick_telemetry",
-  "ts": "2026-06-17T22:41:19Z",
-  "nominal_tick": "2026-06-17T22:30:00Z",
-  "drift_min": 11,
+  "ts": "2026-06-17T22:05:03Z",
+  "nominal_tick": "2026-06-17T22:00:00Z",
+  "drift_min": 5,
   "classification": "SILENT",
   "silent": true,
   "reason": "no-slots-due",
   "matched_slots": [],
   "leader_lock": "self-held-renewed",
-  "leader_lock_expires_at": 1781737877,
+  "leader_lock_expires_at": 1781735713,
   "drain": {
     "signal_queue_new_cowork_rows": 0,
     "processed": []
@@ -20,8 +20,14 @@
     "cycle_snapshot_promoted": false,
     "last_regime": "FII_OUTFLOW_RISK",
     "last_volatility_level": "normal",
-    "note": "server rewrote pressure-state.json @22:41:19Z — re-proves gateway UP first-hand"
+    "note": "server rewrote pressure-state.json @22:05:16Z — re-proves gateway UP first-hand"
   },
   "last_fired_write": false,
-  "fan_out": false
+  "fan_out": false,
+  "_processed": {
+    "fingerprint": "a2930c2d2daef3ae4f7eeba34c005a06e0bae51e6835437e3c4e2418618b189e",
+    "processedAt": "2026-06-18T02:29:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

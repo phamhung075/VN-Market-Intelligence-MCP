@@ -23,5 +23,11 @@
     "note": "server rewrote pressure-state.json @23:50:12Z — re-proves gateway UP first-hand; Tier-1 audit @23:44Z HEALTHY (mcp-server 26min uptime / restart-count 0 = container force-recreated ~23:18Z, likely a014eadf FIX-BCTC rebuild); a014eadf completion not yet received — FIX-BCTC live-verify pending"
   },
   "last_fired_write": false,
-  "fan_out": false
+  "fan_out": false,
+  "_processed": {
+    "fingerprint": "dc0069b9e0bb236f581edf98f1b39453f73efe710e3e02a80e9a5ecc2fce467d",
+    "processedAt": "2026-06-18T02:29:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

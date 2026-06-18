@@ -23,5 +23,11 @@
     "note": "server rewrote pressure-state.json @23:35:24Z — re-proves gateway UP first-hand; dev-team tick @23:26Z closed (SF-1 released, PO po-s101 grace-vs-terminalize policy stamp committed 2c1ab6d4); dev-mcp-server FIX-BCTC fix (a014eadf) still in flight pre-rebuild"
   },
   "last_fired_write": false,
-  "fan_out": false
+  "fan_out": false,
+  "_processed": {
+    "fingerprint": "feaa5adc8f98e70eef98e8a6fc68534a92c42a3447594ee3aa5266f7d68d1daf",
+    "processedAt": "2026-06-18T02:29:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
