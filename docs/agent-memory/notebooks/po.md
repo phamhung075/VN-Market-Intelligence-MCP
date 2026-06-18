@@ -1,6 +1,15 @@
 # PO Notebook
 _overwritten 2026-06-18T04:30Z_
 
+## Cycle po-s104 (2026-06-18T05:00Z) — 2nd defect folded: behind-set classifier message-prefix→file-content
+**Load-bearing follow-on to po-s103: the behind-set classifier would re-defeat the auto-push.**
+- DEFECT (RAW-confirmed live): `fleet-worktree-push.sh` classified a behind-commit benign ONLY if subject started `chore(`/`ci(`. Origin ACCUMULATES `Merge ...` (every worktree-push creates one) + `docs(reports):` (TNB churn). Live behind-set HAD 2 Merge + 1 docs( → old `non_chore=3` → abort-with-BUG ~every run. Message-prefix allow-listing is brittle.
+- FIX (scripts/fleet-worktree-push.sh ~L124-158): replaced with FILE-CONTENT check `git diff --name-only HEAD..origin/main | grep -Ev "$BENIGN_RE"`. BENIGN_RE (single SSOT var) allowlists the REAL cowork-churn surface: `docs/**`, `*.md`, `orch-state.json`, `docs/signals/**`, `*cowork-schedule.json`, `docs/agent-memory/**`, `scripts/*.jq` (261 disposable triage helpers, churned+deleted every cycle). Abort+BUG ONLY when behind-set touches CODE/CONFIG outside that set (scripts/*.sh, *.ts, apps/**, package.json). Classify by WHAT changed, not message prefix.
+- BONUS root-cause: found+fixed latent `grep -c ... || echo 0` double-count (emits "0\n0" → `[ -gt ]` crashes under set -e ON THE COMMON BENIGN PATH) at classifier + both merge-conflict counters → `|| true` + `${x:-0}`.
+- VERIFIED: `shellcheck`+`bash -n` clean both scripts; `scripts/test-fleet-push-classifier.sh` 5/5 (CASE A = exact prod benign Merge+docs(+chore+.jq → proceeds; B/C/E real code → abort); live `PUSH_THRESHOLD=0 --dry-run` reaches push step (no abort).
+- DECISION: folded classifier scope + realistic CASE-A qa gate INTO FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE (same script, same sprint, single qa gate) rather than minting FIX-AUTO-PUSH-CLASSIFIER-TOO-NARROW. Added `scripts/test-fleet-push-classifier.sh` to its files[]; verification_gate now mandates running that gate + the realistic end-to-end assertion (not clean-tree false-pass).
+- LESSON: behind-set "is this benign?" must classify by changed-PATHS, not commit-message prefix — message prefixes are an open vocabulary (Merge/docs/feat...) that the cowork loop keeps adding to.
+
 ## Cycle po-s103 (2026-06-18T04:30Z) — Guard1 self-defeat FIX + manual push + 2 signals
 
 **ROOT-CAUSE FIX (Guard 1 defeats its own purpose) — RAW-VERIFIED then fixed BOTH flow files.**

@@ -174,7 +174,8 @@ The script (committed 26807a41) owns all divergence-reconcile, tsc-gate, and pus
 - Env: `PUSH_THRESHOLD` (default 20, tunable without rebuild)
 - Flags: `--dry-run` (print only, no push, no Telegram)
 - Exit 0: pushed successfully, notified WORK channel
-- Exit 1: aborted (tsc red / non-chore behind-set / merge conflict / push failed), notified BUG channel
+- Exit 1: aborted (tsc red / behind-set touches CODE not in HEAD / merge conflict / push failed), notified BUG channel
+  - **Behind-set classifier (durable):** the script aborts only when the origin behind-set touches **code/config** paths (anything NOT in `docs/**`, `*.md`, `orch-state.json`, `docs/signals/**`, `cowork-schedule.json`, `docs/agent-memory/**`, `scripts/*.jq`). It classifies by WHAT changed, not the commit-message prefix — so benign `Merge` + `docs(reports):` + cowork `chore(...)` + churned `scripts/*.jq` triage helpers (the routine accumulation on origin) never abort the auto-push. (Was a message-prefix `chore(`/`ci(` allow-list that aborted ~every run on `Merge`/`docs(` commits — FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE.)
 - Invariants: NEVER touches main working tree; NEVER `--force`; NEVER pushes around a red tsc hook
 
 ## Branch Workflows (load only the one you need)

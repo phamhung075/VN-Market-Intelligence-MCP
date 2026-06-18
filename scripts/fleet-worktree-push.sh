@@ -122,25 +122,54 @@ behind=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo 0)
 echo "[fleet-push] behind=$behind"
 
 if [ "$behind" -gt 0 ]; then
-  # Classify the behind-set: does it contain any non-chore commit?
-  # A "chore" commit is one whose subject starts with "chore(" or "ci(".
-  # Cloud RemoteTrigger cowork churn is always chore(memory/...) or chore(cowork/...).
+  # Classify the behind-set by WHAT it changed, NOT by the commit-message prefix.
+  #
+  # WHY NOT message-prefix: the old classifier treated a commit as benign only if
+  #   its subject started with "chore(" or "ci(". That ABORTS on the two commit
+  #   kinds origin ACCUMULATES on every cycle:
+  #     - "Merge ..." commits (every worktree-push we do creates one on origin), and
+  #     - "docs(reports): ..." commits (TNB/cowork report churn).
+  #   Both are benign content-wise, but neither starts with chore(/ci( -> the
+  #   message-prefix classifier aborted ~every subsequent run. Message-prefix
+  #   allow-listing is brittle; the real question is whether the behind-set touches
+  #   CODE that needs human review.
+  #
+  # The benign-path allowlist mirrors the actual cowork/report churn surface that
+  # origin accumulates without any human-review need:
+  #   docs/**            cowork/report/health doc churn
+  #   *.md               any markdown (notebooks, reports, flow docs)
+  #   orch-state.json    board SSOT (cloud chore mutations, additive)
+  #   docs/signals/**    signal-bus files
+  #   *cowork-schedule.json  cadence ledger
+  #   docs/agent-memory/**   agent notebooks + health rechecks
+  #   scripts/*.jq       disposable PO/router triage helpers (261 on origin,
+  #                      churned + deleted every cycle — NOT reviewable code)
+  # Anything OUTSIDE this set (scripts/*.sh, *.ts, apps/**, *.json config, etc.)
+  # is real code/config -> abort + BUG telegram so a human reconciles.
+  # Single source of truth for the allowlist (keep both uses in sync via this var):
+  BENIGN_RE='^(docs/|.*\.md$|docs/data/orch/orch-state\.json|docs/signals/|.*cowork-schedule\.json|docs/agent-memory/|scripts/.*\.jq$)'
+  # NOTE: `grep -c` exits 1 on zero matches; chaining `|| echo 0` would emit a
+  # SECOND "0" (the multiline "0\n0" then breaks `[ -gt ]` under set -e). So we
+  # swallow grep's nonzero exit with `|| true` and default an empty result to 0.
   # shellcheck disable=SC2155
-  non_chore=$(git log HEAD..origin/main --pretty=format:"%s" \
-    | grep -v '^chore(' \
-    | grep -v '^ci(' \
-    | grep -c '.' 2>/dev/null || echo 0)
+  code_touched=$(git diff --name-only HEAD..origin/main 2>/dev/null \
+    | grep -Ev "$BENIGN_RE" \
+    | grep -c '.' || true)
+  code_touched=${code_touched:-0}
 
-  echo "[fleet-push] behind-set: ${behind} total, ${non_chore} non-chore"
+  echo "[fleet-push] behind-set: ${behind} commit(s), ${code_touched} code/config file(s) touched"
 
-  if [ "$non_chore" -gt 0 ]; then
-    msg="[fleet-push] ABORT: origin/main has ${non_chore} non-chore commit(s) not in HEAD. Manual reconcile required before auto-push."
+  if [ "$code_touched" -gt 0 ]; then
+    code_files=$(git diff --name-only HEAD..origin/main 2>/dev/null \
+      | grep -Ev "$BENIGN_RE" \
+      | tr '\n' ' ')
+    msg="[fleet-push] ABORT: origin/main behind-set touches ${code_touched} code/config file(s) not in HEAD: ${code_files}. Manual reconcile required before auto-push."
     echo "$msg" >&2
     send_tg bug "$msg"
     exit 1
   fi
 
-  echo "[fleet-push] behind-set is chore-only — safe to merge"
+  echo "[fleet-push] behind-set is docs/notebook/orch/signal-only (no code) — safe to merge"
 fi
 
 # ── 8. Create isolated worktree ───────────────────────────────────────────────
@@ -156,8 +185,12 @@ if [ "$behind" -gt 0 ]; then
     if ! git -C "$WT_PATH" merge origin/main --no-edit 2>&1; then
       # Merge failed — check if only orch-state.json is conflicted
       conflicted=$(git -C "$WT_PATH" diff --name-only --diff-filter=U 2>/dev/null || echo "")
-      orch_conflicts=$(echo "$conflicted" | grep -c 'orch-state\.json' || echo 0)
-      other_conflicts=$(echo "$conflicted" | grep -v 'orch-state\.json' | grep -c '.' || echo 0)
+      # `grep -c` exits 1 on zero matches -> swallow with `|| true` + default 0
+      # (chaining `|| echo 0` would emit "0\n0" and break `[ -gt ]` under set -e).
+      orch_conflicts=$(echo "$conflicted" | grep -c 'orch-state\.json' || true)
+      orch_conflicts=${orch_conflicts:-0}
+      other_conflicts=$(echo "$conflicted" | grep -v 'orch-state\.json' | grep -c '.' || true)
+      other_conflicts=${other_conflicts:-0}
 
       if [ "$other_conflicts" -gt 0 ]; then
         # Non-orch-state conflict — abort merge, abort push

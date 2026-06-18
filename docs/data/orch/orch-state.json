@@ -20692,25 +20692,28 @@
       },
       {
         "id": "FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE",
-        "title": "Auto-push backstop Safety Guard 1 keys on perpetual working-tree dirtiness -> never fires",
+        "title": "Auto-push backstop self-defeating: Guard 1 keys on perpetual tree-dirtiness (fixed) + behind-set classifier message-prefix allow-list aborts on routine Merge/docs( commits (fixed)",
         "type": "FIX",
         "status": "READY",
         "priority": "P2",
         "zone": "cross-service/",
         "next_agent": "qa",
         "blocking": false,
-        "root_cause": "Step PUSH-BACKSTOP Safety Guard 1 (po/flow/main.md) + dev-team/flow/post-cycle.md Step 4.8 skipped the worktree push whenever `git diff --name-only` matched orch-state.json OR docs/agent-memory/notebooks/. Those files are PERPETUALLY dirty from cowork churn (the exact premise the worktree-isolated push exists to overcome), so Guard 1 blocked ~every tick. The push climbed 23->28-ahead (> threshold 20) with local HEAD off origin = backstop did not fire. The worktree push (git worktree add /tmp HEAD) operates on COMMITTED HEAD, fully isolated from the dirty main tree -> a dirty main tree CANNOT race it; Guard 1's premise is invalid for a worktree push.",
-        "fix_spec": "DONE THIS PASS (flow files): replaced Guard 1 file-dirtiness skip with a real-push-blocker check (.git/rebase-merge||.git/rebase-apply, .git/MERGE_HEAD, .git/index.lock). Kept Guard 2 (commit-mutex task_list_held kind=commit-mutex) as the real concurrency guard. fleet-worktree-push.sh RAW-verified to have NO internal dirty-tree skip (only ahead-count + behind-set chore-classify + tsc gate). This FIX task tracks the qa verification of that change.",
-        "verification_gate": "qa MUST test the push FIRES when ahead>20 AND the main working tree is dirty (orch-state + a notebook modified) -- the EXACT real condition, NOT a clean-tree test that would false-pass like the original guard. Also assert: push still SKIPS on a genuine push-blocker (simulate .git/index.lock present) and on commit-mutex held. Verify both flow files (po/flow/main.md Step PUSH-BACKSTOP + dev-team/flow/post-cycle.md Step 4.8) carry the corrected Guard 1.",
+        "root_cause": "TWO defects, both defeat the auto-push. (1) Guard 1: Step PUSH-BACKSTOP Safety Guard 1 (po/flow/main.md) + dev-team/flow/post-cycle.md Step 4.8 skipped the worktree push whenever `git diff --name-only` matched orch-state.json OR docs/agent-memory/notebooks/ — files PERPETUALLY dirty from cowork churn (the exact premise the worktree-isolated push exists to overcome) -> blocked ~every tick. The worktree push operates on COMMITTED HEAD, fully isolated from the dirty main tree, so a dirty tree CANNOT race it; Guard 1's premise is invalid. (2) CLASSIFIER (this pass, load-bearing): fleet-worktree-push.sh behind-set classifier treated a commit as benign ONLY if its subject started with `chore(`/`ci(` -> ABORTED on `Merge ...` commits (every worktree-push CREATES one on origin) and `docs(reports):` commits (TNB/cowork report churn). Origin ACCUMULATES exactly those -> the auto-push aborts-with-BUG on ~every subsequent run (RAW-confirmed: live behind-set had 2 Merge + 1 docs(reports) -> old classifier non_chore=3 -> would abort). Message-prefix allow-listing is brittle.",
+        "fix_spec": "(1) Guard 1 DONE (flow files): replaced file-dirtiness skip with a real-push-blocker check (.git/rebase-merge||.git/rebase-apply, .git/MERGE_HEAD, .git/index.lock); kept Guard 2 (commit-mutex). (2) CLASSIFIER DONE (scripts/fleet-worktree-push.sh ~L124-158): replaced the message-prefix `chore(`/`ci(` allow-list with a FILE-CONTENT check — `git diff --name-only HEAD..origin/main | grep -Ev \"$BENIGN_RE\"` where BENIGN_RE allowlists the real cowork-churn surface (docs/**, *.md, orch-state.json, docs/signals/**, *cowork-schedule.json, docs/agent-memory/**, scripts/*.jq disposable triage helpers — 261 on origin, churned+deleted every cycle). Abort + BUG-telegram ONLY when the behind-set touches CODE/CONFIG outside that set (scripts/*.sh, *.ts, apps/**, package.json...). Classify by WHAT changed, not the commit-message prefix. ALSO fixed a latent `grep -c || echo 0` double-count bug (emitted \"0\\n0\" -> `[ -gt ]` crashes under set -e on the COMMON benign path) at the classifier + both merge-conflict counters. Single BENIGN_RE var = SSOT for the allowlist. RAW-verified: live 16-commit behind-set (2 Merge + docs(reports) + chore + churned .jq) now classifies as 0 code/config -> push proceeds end-to-end (dry-run reached push step).",
+        "verification_gate": "qa MUST run scripts/test-fleet-push-classifier.sh (exit 0 = all 5 cases pass; it extracts BENIGN_RE from the shipped script so it can never drift). REALISTIC END-TO-END (the case the original qa false-passed by skipping): assert the auto-push COMPLETES / push path is taken when ahead>20 AND main tree dirty (orch-state + notebook modified) AND the behind-set = benign `Merge` + `docs(reports):` + `chore(...)` + a churned scripts/*.jq (CASE A) — NOT merely that Guard 1 fires, NOT a clean-tree happy path. Negative cases: behind-set touching apps/*.ts (CASE B) / scripts/*.sh (CASE C) / package.json (CASE E) MUST abort. Also: `PUSH_THRESHOLD=0 bash scripts/fleet-worktree-push.sh --dry-run` against live origin must reach the push step (not abort) and `bash -n` + `shellcheck` clean on both scripts. Guard 1 (flow): push still SKIPS on a genuine push-blocker (.git/index.lock present) and on commit-mutex held; both flow files carry the corrected Guard 1.",
         "files": [
           "docs/agents/po/flow/main.md",
           "docs/agents/dev-team/flow/post-cycle.md",
-          "scripts/fleet-worktree-push.sh"
+          "scripts/fleet-worktree-push.sh",
+          "scripts/test-fleet-push-classifier.sh"
         ],
-        "origin": "2026-06-18 router RAW-diagnosed: ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP (done) self-defeating Guard 1; manual worktree push fired this pass (13f2e03b->1c78bfa8, 28-ahead cleared).",
+        "origin": "2026-06-18 router RAW-diagnosed: ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP (done) self-defeating Guard 1; manual worktree push fired this pass (13f2e03b->1c78bfa8, 28-ahead cleared). 2026-06-18 (2nd pass) router flagged the message-prefix classifier as load-bearing — folded the file-content classifier + realistic CASE-A qa gate into this row rather than minting FIX-AUTO-PUSH-CLASSIFIER-TOO-NARROW (same script, same sprint, single qa gate).",
         "created_at": "2026-06-18T04:25:34Z",
         "groomed_by": "po-s103",
-        "promoted_at": "2026-06-18T04:25:34Z"
+        "promoted_at": "2026-06-18T04:25:34Z",
+        "scope_expanded_at": "2026-06-18T05:00:00Z",
+        "scope_expanded_by": "po-s104"
       },
       {
         "id": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER",
