@@ -4,6 +4,34 @@
 
 ---
 
+## c99 · 2026-06-18T12:30Z
+
+**Status:** BLOCKED — MCP gateway unavailable (failure mode A)
+**Direction:** N/A (cycle not executed)
+**Session invocation time:** ~12:30Z UTC (before Evening dish 19:37 UTC — premature invocation)
+
+**MCP Status:** `mcp__gateway__call_tool` NOT present in this session's tool surface. Failure mode A per bootstrap.md: gateway wrapper absent in local CLI spawn context. Same class as c97 (2026-06-16) and c98 (2026-06-17). Pattern: local CLI sub-agent spawn does NOT wire the gateway connector. Cloud RemoteTrigger path (cron-spawned) has the connector per PO ACK on c98.
+
+**Published Marker Gate:** SKIPPED — task_claim requires MCP. No dedup slot claimed.
+
+**Timing note:** This c99 session was invoked at ~12:30Z UTC on 2026-06-18 (Thursday), which is BEFORE the Evening dish scheduled at 19:37 UTC. Even if MCP were available, the full 3-dish set for 2026-06-18 would not yet be complete. Correct audit window: 20:13 UTC (cron schedule).
+
+**Actions:**
+- Notebook entry appended (this entry)
+- Signal file dropped: docs/signals/tnb-20260618T123000Z.json (BUG escalation → PO)
+- Handoff NOT updated (no audit performed — no new findings)
+- Commit NOT attempted (no real data to commit)
+
+**Carry-forward from c98:**
+- F-MCP-SUBAGENT-SYSTEMIC-2026-06-17 (HIGH): Local CLI sub-agent spawn context does not wire MCP gateway. 3rd+ consecutive blocked cycle for this spawn path. Cloud RemoteTrigger (cron) path works.
+- F-EOD-MCP-BLOCKED-20260617 (HIGH): EOD dish not synthesized on 2026-06-17.
+- F-BCTC-BANK-SCALAR-MAPPING (HIGH): carry-forward
+- F3/F4/F9/F-MORNING-NB-MISSING: structural, carry-forward
+
+**Next cycle (c100 — cron 2026-06-18T20:13 UTC):** Cron-spawned path expected to have MCP. Will execute full audit including 2026-06-18 dishes.
+
+---
+
 ## c98 · 2026-06-17T20:13Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (morning+EOD PUBLISHED; evening PENDING at file-evidence cut; G3/G4 FAIL 3rd consecutive day)
