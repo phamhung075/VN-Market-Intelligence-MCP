@@ -183,13 +183,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CYCLE-BOOTSTRAP-AGENT-ENUM-SSOT",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server aligns cycle_bootstrap enum SSOT (doc+chef+fb flow/skill) to live 9-value enum; path B (fix callers, no schema widen) for fb-market-poster",
-    "updated_at": "2026-06-18T11:42:37Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-06-18T11:47:30Z",
     "updated_by": "dev-team",
-    "note": "Tick 20260618T1131 — live enum RAW-probed (9: news-scout,financial-analyst,market-watcher,alert-commander,digest-predict,qa-responder,unified-agent,report-analyzer,bctc-analyst). bctc-analyst=doc-add; chef.md=agent_id→agent_name(unified-agent); fb-market-poster=schema-rejects→path-B fix callers (consumer not participant), flag for QA/PO confirm at review."
+    "note": "Tick 20260618T1131 complete — FIX-CYCLE-BOOTSTRAP-AGENT-ENUM-SSOT done_verified (e8f19e98, doc-only). 3 legs live-verified. fb-market-poster=path-B (flagged for PO). 28 health-reports resolved, 3237 kept-new (standing infra: vn-bctc-fetch ~40h VPS-down + BDI + FRED, out-of-band). WIP=0. Deferred to gateway-capable/PO path: push, 295-backlog sprint kickoff."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15157,6 +15156,34 @@
         "verified_by": "dev-team(router RAW)",
         "verified_at": "2026-06-18T10:38:28Z",
         "verify_note": "3 SSOTs all==166 on-disk; tools[] has get_market_breadth+get_recent_signals; commit narrow (1 file system-map.json), no .ts so tsc unaffected. _tools_ssot pointer added (registry=count SSOT). Generator NOT built (system-map tools[] is hand-maintained, no gen script — generator = separate scope-S, deferred)."
+      },
+      {
+        "id": "FIX-CYCLE-BOOTSTRAP-AGENT-ENUM-SSOT",
+        "type": "FIX",
+        "status": "done_verified",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "next_agent": "dev-mcp-server",
+        "title": "get_cycle_bootstrap agent_name enum SSOT drift — bctc-analyst + fb-market-poster missing from doc enum; chef uses wrong param name",
+        "desc": "CLUSTER of 3 deterministic on-disk doc/SSOT bugs converging on ONE root: the get_cycle_bootstrap agent_name enum is out of sync across doc + skill + agent flows, so 3 agents Zod-reject at bootstrap. (1) docs/agents/tools/list/get_cycle_bootstrap.md L4+L16 list only 8 agents (news-scout, financial-analyst, report-analyzer, market-watcher, alert-commander, digest-predict, qa-responder, unified-agent) — MISSING bctc-analyst (in live schema, 9th) and fb-market-poster; reconcile doc enum to live schema (RAW-confirm live enum first). (2) fb-market-poster/flow/main.md:31 + .claude/skills/cycle-bootstrap/SKILL.md:74 substitute agent-id fb-market-poster into get_cycle_bootstrap(agent_name=...) which the live enum rejects -> fb-poster bootstrap fails every cycle. (3) docs/agents/unified-agent/flow/chef.md:91 calls get_cycle_bootstrap(agent_id=\"unified-agent\") — wrong param, must be agent_name. Reference SSOT test: 1975-bootstrap-enum-bctc-analyst-guard.test.ts:74. DoD: doc enum == live schema enum (incl bctc-analyst + fb-market-poster if the live schema accepts them — if it does NOT, the fix is to ADD them to the schema enum, not just docs, since both agents legitimately bootstrap); chef.md uses agent_name; cycle-bootstrap skill substitution produces a valid enum value for every agent that uses it. baseline_pass: get_cycle_bootstrap(agent_name=<each of the 3 agents>) returns 200 not Zod-reject. NOTE: invoke agent-md-factory skill before editing chef.md / fb-poster flow (agent .md factory rule).",
+        "files": [
+          "docs/agents/tools/list/get_cycle_bootstrap.md",
+          "docs/agents/fb-market-poster/flow/main.md",
+          ".claude/skills/cycle-bootstrap/SKILL.md",
+          "docs/agents/unified-agent/flow/chef.md"
+        ],
+        "baseline_pass": false,
+        "size": "S",
+        "source": "health-recheck reports 3209-3237 (A1+A4+A5 cluster), router-deduped tick 20260618T113056Z",
+        "created_at": "2026-06-18T11:36:53Z",
+        "created_by": "po",
+        "claimed_at": "2026-06-18T11:42:37Z",
+        "claimed_by": "router",
+        "done_verified": true,
+        "completed_at": "2026-06-18T11:47:30Z",
+        "completed_by": "dev-mcp-server",
+        "commit": "e8f19e98",
+        "verification": "Router RAW live-probed get_cycle_bootstrap: bctc-analyst→200, unified-agent→200, fb-market-poster→Zod-reject. Live enum=9 values; doc reconciled 1:1 (e8f19e98, doc-only, 0 .ts). chef.md agent_id→agent_name(unified-agent). fb-market-poster leg: PATH B (call removed, not schema-widen) — OVERRIDES PO DoD which assumed widen-schema; evidence: fb-market-poster is downstream notebook-only consumer (STEP 1b covers market context via get_market_snapshot/context/foreign_flow), agent_signals bus not in its input model. cycle-bootstrap skill updated to exclude it. FLAGGED for PO next-triage awareness — reversible doc-only if PO prefers schema-widen."
       }
     ],
     "done_verified": [
@@ -20950,31 +20977,7 @@
       "note": "DEPRECATED — do NOT read or write this field. The canonical head SSOT is TOP-LEVEL .head (read by dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). This field formerly drifted from top-level .head because po-s65/po-s54 scripts wrote here while the flow read top-level .head (signal head-drift-po-s64-vs-task-board-head). Any new script writing .task_board.head is a BUG — write .head instead. Kept as a stub (not removed) so a legacy reader sees the redirect rather than a phantom active_task_id.",
       "next_task": "TASK-AUTO-PUSH-A"
     },
-    "in_progress": [
-      {
-        "id": "FIX-CYCLE-BOOTSTRAP-AGENT-ENUM-SSOT",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "next_agent": "dev-mcp-server",
-        "title": "get_cycle_bootstrap agent_name enum SSOT drift — bctc-analyst + fb-market-poster missing from doc enum; chef uses wrong param name",
-        "desc": "CLUSTER of 3 deterministic on-disk doc/SSOT bugs converging on ONE root: the get_cycle_bootstrap agent_name enum is out of sync across doc + skill + agent flows, so 3 agents Zod-reject at bootstrap. (1) docs/agents/tools/list/get_cycle_bootstrap.md L4+L16 list only 8 agents (news-scout, financial-analyst, report-analyzer, market-watcher, alert-commander, digest-predict, qa-responder, unified-agent) — MISSING bctc-analyst (in live schema, 9th) and fb-market-poster; reconcile doc enum to live schema (RAW-confirm live enum first). (2) fb-market-poster/flow/main.md:31 + .claude/skills/cycle-bootstrap/SKILL.md:74 substitute agent-id fb-market-poster into get_cycle_bootstrap(agent_name=...) which the live enum rejects -> fb-poster bootstrap fails every cycle. (3) docs/agents/unified-agent/flow/chef.md:91 calls get_cycle_bootstrap(agent_id=\"unified-agent\") — wrong param, must be agent_name. Reference SSOT test: 1975-bootstrap-enum-bctc-analyst-guard.test.ts:74. DoD: doc enum == live schema enum (incl bctc-analyst + fb-market-poster if the live schema accepts them — if it does NOT, the fix is to ADD them to the schema enum, not just docs, since both agents legitimately bootstrap); chef.md uses agent_name; cycle-bootstrap skill substitution produces a valid enum value for every agent that uses it. baseline_pass: get_cycle_bootstrap(agent_name=<each of the 3 agents>) returns 200 not Zod-reject. NOTE: invoke agent-md-factory skill before editing chef.md / fb-poster flow (agent .md factory rule).",
-        "files": [
-          "docs/agents/tools/list/get_cycle_bootstrap.md",
-          "docs/agents/fb-market-poster/flow/main.md",
-          ".claude/skills/cycle-bootstrap/SKILL.md",
-          "docs/agents/unified-agent/flow/chef.md"
-        ],
-        "baseline_pass": false,
-        "size": "S",
-        "source": "health-recheck reports 3209-3237 (A1+A4+A5 cluster), router-deduped tick 20260618T113056Z",
-        "created_at": "2026-06-18T11:36:53Z",
-        "created_by": "po",
-        "claimed_at": "2026-06-18T11:42:37Z",
-        "claimed_by": "router"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
