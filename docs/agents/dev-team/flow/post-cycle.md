@@ -68,11 +68,19 @@ After compact: resume from Step 1 via smart-compact-protocol.md.
 
 **Context:** PO is the primary owner of "push to origin" decisions. This step is the secondary backstop — it activates only when dev-team runs without a concurrent PO spawn in the same tick. Uses identical guard logic and the same script as the PO step. Design authority: `docs/architecture-briefs/2026-06-18-auto-push-threshold-backstop.md` §3.2 + §4.1.
 
-**Guard 1 — dirty critical files:**
+**Guard 1 — real push-blocker (in-progress rebase/merge or index.lock):**
+> DO NOT guard on working-tree file dirtiness. The push runs in a `git worktree add … HEAD`
+> sandbox on COMMITTED HEAD, isolated from the dirty main tree. orch-state.json + notebooks
+> are perpetually dirty (cowork churn — the premise this push exists to overcome), so a
+> file-dirtiness skip blocks ~every tick → backstop never fires
+> (FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE). A dirty main tree cannot race a worktree push.
 ```bash
-dirty_critical=$(git diff --name-only 2>/dev/null | grep -E 'docs/data/orch/orch-state\.json|docs/agent-memory/notebooks/')
+push_blocker=""
+[ -d .git/rebase-merge ] || [ -d .git/rebase-apply ] && push_blocker="rebase-in-progress"
+[ -f .git/MERGE_HEAD ]   && push_blocker="merge-in-progress"
+[ -f .git/index.lock ]   && push_blocker="index.lock-present"
 ```
-If `dirty_critical` is non-empty: a bg agent is mid-write. **SKIP** this tick — log to WORK and continue to Step 4.9.
+If `push_blocker` is non-empty: the main repo is mid git-operation. **SKIP** this tick — log to WORK and continue to Step 4.9.
 
 **Guard 2 — commit-mutex held:**
 ```
@@ -93,7 +101,7 @@ Exit 1 = script aborted with BUG notification sent internally — do NOT double-
 
 **If either guard blocks:**
 ```
-send_telegram(channel="work", message="[dev-team] PUSH-BACKSTOP fallback: ahead={ahead} > 20 but safety guard BLOCKED (dirty_critical={dirty_critical} / mutex_held={held.count}). Will retry when PO runs.")
+send_telegram(channel="work", message="[dev-team] PUSH-BACKSTOP fallback: ahead={ahead} > 20 but safety guard BLOCKED (push_blocker={push_blocker} / mutex_held={held.count}). Will retry when PO runs.")
 ```
 
 **If ahead ≤ 20:** silent no-op — continue to Step 4.9.

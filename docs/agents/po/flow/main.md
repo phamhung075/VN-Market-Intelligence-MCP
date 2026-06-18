@@ -127,16 +127,27 @@ If `ahead` is not greater than `${PUSH_THRESHOLD:-20}` → skip entire step (no-
 
 If `ahead > ${PUSH_THRESHOLD:-20}` → proceed to safety guards below.
 
-### Safety Guard 1 — Critical files dirty (bg agent mid-write)
+### Safety Guard 1 — Real push-blocker (in-progress rebase/merge or index.lock)
+
+> **DO NOT guard on working-tree file dirtiness.** The push runs in a `git worktree add … HEAD`
+> sandbox operating on COMMITTED HEAD — fully isolated from the dirty main working tree.
+> orch-state.json + notebooks are PERPETUALLY dirty (constant cowork churn — the exact
+> premise this worktree push exists to overcome), so a file-dirtiness skip blocks the push
+> on ~every tick and the backstop never fires (defect FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE).
+> A dirty main tree CANNOT race a worktree-isolated push. The only legitimate
+> push-blocker is a half-finished git operation on the main repo.
 
 ```bash
-dirty_critical=$(git diff --name-only | grep -E 'docs/data/orch/orch-state\.json|docs/agent-memory/notebooks/')
+push_blocker=""
+[ -d .git/rebase-merge ] || [ -d .git/rebase-apply ] && push_blocker="rebase-in-progress"
+[ -f .git/MERGE_HEAD ]   && push_blocker="merge-in-progress"
+[ -f .git/index.lock ]   && push_blocker="index.lock-present"
 ```
 
-If `dirty_critical` is non-empty: a bg agent is mid-write on a critical file. **SKIP** this tick — send Telegram WORK and proceed to notebook commit + exit:
+If `push_blocker` is non-empty: the main repo is mid git-operation — **SKIP** this tick, send Telegram WORK, proceed to notebook commit + exit:
 
 ```
-[po] PUSH-BACKSTOP: ahead=${ahead} > ${PUSH_THRESHOLD:-20} but safety guard BLOCKED — bg agents hold uncommitted mutations. Will retry next tick.
+[po] PUSH-BACKSTOP: ahead=${ahead} > ${PUSH_THRESHOLD:-20} but BLOCKED — main repo ${push_blocker}. Will retry next tick.
 ```
 
 Call: `mcp__gateway__call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", message: "<above text>"})`

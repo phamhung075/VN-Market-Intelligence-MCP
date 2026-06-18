@@ -1,20 +1,25 @@
 # PO Notebook
-_overwritten 2026-06-18T00:23:35Z_
+_overwritten 2026-06-18T04:30Z_
 
-## Cycle po-fleet-push #3 (2026-06-18T00:23Z) — PUSH (81-ahead threshold) + DURABLE-FIX promote
+## Cycle po-s103 (2026-06-18T04:30Z) — Guard1 self-defeat FIX + manual push + 2 signals
 
-**PUSH DONE (3rd manual this session).** Local was 81-ahead/12-behind (crossed ~80). Proven isolated-worktree recipe, never touched the live loop tree:
-- `git worktree add --detach /tmp/fleet-push-wt da805bd6` (loop's HEAD untouched throughout).
-- 12-behind = pure cloud-chore (health rechecks, notebooks, chef auto-cure, TNB c98). Conflict surface = ONLY orch-state.json + tnb-audit-latest.md → MERGE (not rebase), preserved both sides.
-- orch-state resolve: took OUR HEAD (richer/processed — 5 unique sau/tnb rows origin lacked) + injected origin's 1 unique row `tnb-20260617T201300` into rows[]. Verified all 6 board arrays byte-identical to HEAD (ready2/backlog296/in_progress2/review5/done167/done_verified109).
-- tnb-audit-latest.md: same-cycle c98 regen doc → took HEAD (20:25Z, later PO-ACK version supersedes origin's 20:13Z).
-- symlinked main node_modules → `pnpm --filter vn-market check`=0 → push. pre-push hook ran tsc, PASSED. origin 40b201b4→**8890537d**. loop HEAD da805bd6 confirmed ANCESTOR (no work lost). symlinks removed BEFORE worktree remove (never rm real node_modules). worktree removed; main tree HEAD still da805bd6 (untouched).
+**ROOT-CAUSE FIX (Guard 1 defeats its own purpose) — RAW-VERIFIED then fixed BOTH flow files.**
+- DEFECT confirmed live: ahead=28 > threshold 20, and `git diff --name-only | grep -E 'orch-state|notebooks/'` matched BOTH po.md + orch-state.json → Safety Guard 1 SKIPs ~every tick → backstop never fired (push climbed 23→28). The worktree push runs on COMMITTED HEAD (isolated) so a dirty main tree CANNOT race it — Guard 1's file-dirtiness premise is invalid for a worktree push.
+- FIX: replaced Guard 1 (file-dirtiness skip) with a REAL push-blocker check (`.git/rebase-merge||rebase-apply`, `.git/MERGE_HEAD`, `.git/index.lock`) in `docs/agents/po/flow/main.md` Step PUSH-BACKSTOP + `docs/agents/dev-team/flow/post-cycle.md` Step 4.8 (both + the dev-team blocked-message var). Kept Guard 2 (commit-mutex `task_list_held kind=commit-mutex`) = the real concurrency guard.
+- `scripts/fleet-worktree-push.sh` RAW-READ: NO internal dirty-tree skip (only ahead-count + behind-set chore-classify + tsc gate) — script was already correct; defect was purely in the two flow Guard-1 blocks.
+- Minted `FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE` → ready[] (next_agent=qa). qa gate: must TEST push FIRES when ahead>20 AND main tree dirty (the EXACT real condition, not a clean-tree false-pass), and still SKIPS on a real .git/index.lock + on commit-mutex held.
 
-**DURABLE-FIX CALL → (a) PROMOTE+DISPATCH.** ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP backlog→ready (po-s102 script, conservation-guarded ready+1/backlog-1), canonical .head→architect. Rationale: 3rd manual push = real recurrence; design_mandate already complete (po-s98) = low-risk codify-proven-recipe; architect lane free; ready[] held only MEDIUM+P3 (no P0/P1 starved); market-independent (off-hours safe). The task "gates nothing visible" → that invisibility IS why it sat ~9 passes → exactly the recurrence root. "fix root cause not symptom."
+**MANUAL PUSH (cleared 28-ahead backlog, validated script invokes).**
+- Ran `bash scripts/fleet-worktree-push.sh` → it CORRECTLY aborted (Guard no longer blocks) on behind-set: 2 "non-chore" = a Merge commit + a `docs(reports):` tnb signal. RAW-verified the full 15-behind set is 100% cloud cowork churn (health rechecks/notebooks/signals/orch-state/chef.md), ZERO code (.ts/.py/.go) → benign cloud-chore divergence (the script's chore-only allowlist is just too narrow for `Merge`/`docs(`).
+- Manual isolated-worktree reconcile: `git worktree add /tmp HEAD` → merge origin/main (clean, orch-state auto-resolved) → symlink node_modules → `pnpm --filter vn-market check`=0 → push **13f2e03b→1c78bfa8** (pre-push tsc PASSED). worktree removed; main tree untouched. ahead 28→0.
+
+**2 SIGNALS (po-s103, conservation+idempotent):**
+- `cowork-team-...-schedule-json-stale-base-clobber` (MEDIUM, REAL): NEW→READ + minted `FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER` → ready[] (next_agent=ba, zone apps/mcp-server). Root: cloud cowork-dispatcher holds stale 06-15 snapshot, writes whole file back → other slots' last_fired revert 3 days → doublefire risk. Fix = fresh-read-before-write + atomic temp→rename + single-slot CAS (never echo stale snapshot). Relates [[feedback_worktree_stale_base]] + doublefire class.
+- `sau-d4-202606180300` (LOW): NEW→RESOLVED **STALE** — recurring D4 false-positive. esc-datacov:FPT:Q1-2026:ESC-3 = ESC-3 escalation TTL lock, legitimately no task_board row; TTL-expired+GC'd (task_list_held=0 prior). Dismissed STALE ≥5× before (po-s76×2, 5a807e65, 44853141, po-s95). Owner=auditor D4 blind-spot (FU-AUDITOR-D4-SIGNAL-ID). No mint.
+- Preserved cloud's additive `tnb-20260617T201300` archive row (avoid clobber on commit).
 
 ## Carry-over
-- COMMIT (this cycle, EXPLICIT PATHS only): orch-state.json + scripts/po-s102-*.jq + this notebook + sprint-FE-PAGE-REORG-po.md journal. NEVER git add -A (loop churn live). Push of THIS commit = router's call (out-of-band); the 81-commit backlog is already safely on origin via the worktree push above.
-- NEW reusable script: scripts/po-s102-auto-push-backstop-promote-dispatch.jq (promote+dispatch+head-repoint, idempotent, CAS-mtime guarded). Pointer to po/flow/main.md catalog pending.
-- DISPATCH LIVE: architect now owns ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP — deliverable = architecture-brief choosing trigger (prefer option-b flow-step firing scripts/fleet-worktree-push.sh when ahead>N), then pm decomposes + cross-service implements. recon_first=true.
-- WIP coding lanes still FULL (ARCH-CRON-SCHEDULER-RELIABILITY in_progress, FIX-BCTC-DISCOVER review) — did NOT touch. review[] has 5 awaiting qa. The promoted backstop is a DESIGN lane (architect), not a coding slot — no coding-WIP impact.
-- If the loop's local tree shows behind after this: it fast-forwards naturally next cycle (da805bd6 is clean ancestor of origin 8890537d). No manual main-tree reconcile needed.
+- COMMIT this cycle (EXPLICIT PATHS only, NEVER -A): `docs/data/orch/orch-state.json` + `docs/agents/po/flow/main.md` + `docs/agents/dev-team/flow/post-cycle.md` + `scripts/po-s103-*.jq` + this notebook. The push above is NOT this commit (already on origin via worktree).
+- NEW reusable script: `scripts/po-s103-guard1-defeat-fix-schedule-clobber-sau-d4-triage.jq` (multi-mutation: 2 mints + 2 signal flips + cloud-archive preserve; conservation-guarded ready+2/total+2/NEW−2; idempotent). Catalog pointer in po/flow/main.md pending a future doc tick.
+- Local main is behind=16 (cloud churn + my pushed merge) — ff-blocked only by dirty orch-state; reconciles naturally next cycle (local HEAD is ANCESTOR of origin, ahead=0, no work at risk).
+- 2 new ready[] FIX tasks await router dispatch: GUARD1-DEFEATS→qa, SCHEDULE-CLOBBER→ba.

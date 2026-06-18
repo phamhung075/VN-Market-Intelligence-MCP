@@ -247,8 +247,19 @@
       "status": "READ",
       "payload_ref": "docs/handoffs/tnb-audit-latest.md"
     },
-    "_updated_at": "2026-06-17T21:35:54Z",
-    "_updated_by": "cowork-dispatcher-drain",
+    "3": {
+      "id": "sau-c08-202606180038",
+      "ts": "2026-06-18T00:38:52Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "db_integrity_breach",
+      "summary": "C-08 CRITICAL: 63 orphaned alerts (expected 0)",
+      "severity": "CRITICAL",
+      "status": "NEW",
+      "payload_ref": null
+    },
+    "_updated_at": "2026-06-18T03:00:00.976Z",
+    "_updated_by": "system-auditor",
     "archive": [
       {
         "from": "system-auditor",
@@ -583,9 +594,34 @@
         "resolved_at": "",
         "resolved_by": "po",
         "resolution": ""
+      },
+      {
+        "id": "tnb-20260617T201300",
+        "ts": "2026-06-17T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c98 NEEDS_ATTENTION STABLE -- morning 5/6+7/9 GOOD, EOD 5.5/6+7.5/9 GOOD, G3/G4/G6 FAIL day3, AC-GOLD-L6 applied, evening PENDING",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606180300",
+        "ts": "2026-06-18T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-18T04:25:34Z",
+        "resolved_by": "po-s103",
+        "resolution": "STALE -- RECURRING D4 false-positive. Held-lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row because it is an ESC-3 data-coverage escalation TTL lock (esc-datacov: 30d, route ops) that INTENTIONALLY has no task row (escalation locks are not tasks); the system-auditor D4 check does not whitelist the esc-datacov:* key class -> false orphaned flag. Lock TTL-expired + GC'd (task_list_held=0 in prior RAW probe). Dismissed STALE before: po-s76 x2, 5a807e65, 44853141, po-s95. Durable owner = system-auditor D4 blind-spot (tracked: FU-AUDITOR-D4-SIGNAL-ID). No new board task (not worth the WIP budget on nothing-new)."
+      },
       {
         "id": "sau-c06-202606171834",
         "ts": "2026-06-17T18:34:48Z",
@@ -833,19 +869,24 @@
         "payload_ref": null,
         "po_disposition": "out-of-scope of FB-session handoff: B-13 BCTC staleness already tracked; A-30 host-mem transient WARN (no action).",
         "read_at": "2026-06-17T11:21:05Z"
+      },
+      {
+        "id": "cowork-team-20260618T0408Z-schedule-json-stale-base-clobber",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "SSOT integrity — cowork-schedule.json last_fired clobbered by stale-base read-modify-write race",
+        "severity": "MEDIUM",
+        "status": "READ",
+        "summary": "cowork-schedule.json last_fired stamps being CLOBBERED by a read-modify-write race with a stale base. At 2026-06-18T04:07Z the file shows a MIXED state: chef-intraday=2026-06-18T03:23:15Z (fresh, = file mtime, the writers just-updated slot) BUT news-scout-offhours + market-watcher-offhours = 2026-06-15T08:08:57Z, chef-morning = 2026-06-15T05:25:52Z, bctc-analyst-slot-4 = 2026-06-15T00:06:43Z — all reverted to 3-day-old 06-15 values, despite the cloud leader stamping them fresh earlier TODAY (offhours snapped_last_fired=2026-06-18T00:00:00Z observed in the 00:07Z matcher cadence-skip log; chef-morning published 05:23Z 06-17 etc.). Root cause: a writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline — file is uncommitted since last commit e96176d8 2026-06-15), updates only ITS slot (chef-intraday), and writes the WHOLE file back → every other slot last_fired reverts to the stale base. Effect: matcher sees slots as massively overdue (3 days) → spurious re-offer/re-fire risk; cadence tracking corrupted. NOT a gather gap (real gathering still happens; only the stamp ledger is clobbered). FIX: cowork-schedule.json writer must FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set), never echo back a whole stale snapshot — same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read). Owner: dev-mcp-server / cowork-schedule writer + cloud leader dispatcher.",
+        "payload_ref": "evidence 2026-06-18T04:07Z: jq .slots last_fired — chef-intraday=2026-06-18T03:23:15Z (=file mtime), news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z; git status: M (uncommitted since e96176d8 2026-06-15); 00:07Z matcher cadence-skip showed snapped_last_fired=2026-06-18T00:00:00Z (proves fresh value existed then, clobbered since); SSOT docs/data/cowork-schedule.json; pattern ref orch-state atomic temp->rename + fresh-read",
+        "disposition": "FIX minted FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER -> ready[] (dev-mcp-server zone, ba next). READ not RESOLVED until the writer-discipline fix ships.",
+        "ts": "2026-06-18T04:09:15Z",
+        "resolved_at": "",
+        "resolved_by": "po-s103",
+        "resolution": "",
+        "read_at": "2026-06-18T04:25:34Z"
       }
-    ],
-    "3": {
-      "id": "sau-c08-202606180038",
-      "ts": "2026-06-18T00:38:52Z",
-      "from": "system-auditor",
-      "to": "po",
-      "type": "db_integrity_breach",
-      "summary": "C-08 CRITICAL: 63 orphaned alerts (expected 0)",
-      "severity": "CRITICAL",
-      "status": "NEW",
-      "payload_ref": null
-    }
+    ]
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
@@ -957,8 +998,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-18T00:57:06Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-18T04:25:34Z",
+    "_updated_by": "po-s103",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -20648,6 +20689,53 @@
         "claimed_by": null,
         "verification_gate": "get_foreign_flow.md param renamed from ticker→code; agents no longer see schema error on market-watcher/news-scout fetch.",
         "done_verified_blocked_reason": null
+      },
+      {
+        "id": "FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE",
+        "title": "Auto-push backstop Safety Guard 1 keys on perpetual working-tree dirtiness -> never fires",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "blocking": false,
+        "root_cause": "Step PUSH-BACKSTOP Safety Guard 1 (po/flow/main.md) + dev-team/flow/post-cycle.md Step 4.8 skipped the worktree push whenever `git diff --name-only` matched orch-state.json OR docs/agent-memory/notebooks/. Those files are PERPETUALLY dirty from cowork churn (the exact premise the worktree-isolated push exists to overcome), so Guard 1 blocked ~every tick. The push climbed 23->28-ahead (> threshold 20) with local HEAD off origin = backstop did not fire. The worktree push (git worktree add /tmp HEAD) operates on COMMITTED HEAD, fully isolated from the dirty main tree -> a dirty main tree CANNOT race it; Guard 1's premise is invalid for a worktree push.",
+        "fix_spec": "DONE THIS PASS (flow files): replaced Guard 1 file-dirtiness skip with a real-push-blocker check (.git/rebase-merge||.git/rebase-apply, .git/MERGE_HEAD, .git/index.lock). Kept Guard 2 (commit-mutex task_list_held kind=commit-mutex) as the real concurrency guard. fleet-worktree-push.sh RAW-verified to have NO internal dirty-tree skip (only ahead-count + behind-set chore-classify + tsc gate). This FIX task tracks the qa verification of that change.",
+        "verification_gate": "qa MUST test the push FIRES when ahead>20 AND the main working tree is dirty (orch-state + a notebook modified) -- the EXACT real condition, NOT a clean-tree test that would false-pass like the original guard. Also assert: push still SKIPS on a genuine push-blocker (simulate .git/index.lock present) and on commit-mutex held. Verify both flow files (po/flow/main.md Step PUSH-BACKSTOP + dev-team/flow/post-cycle.md Step 4.8) carry the corrected Guard 1.",
+        "files": [
+          "docs/agents/po/flow/main.md",
+          "docs/agents/dev-team/flow/post-cycle.md",
+          "scripts/fleet-worktree-push.sh"
+        ],
+        "origin": "2026-06-18 router RAW-diagnosed: ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP (done) self-defeating Guard 1; manual worktree push fired this pass (13f2e03b->1c78bfa8, 28-ahead cleared).",
+        "created_at": "2026-06-18T04:25:34Z",
+        "groomed_by": "po-s103",
+        "promoted_at": "2026-06-18T04:25:34Z"
+      },
+      {
+        "id": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER",
+        "title": "cowork-schedule.json last_fired stamps clobbered by stale-base read-modify-write race",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "next_agent": "ba",
+        "blocking": false,
+        "root_cause": "A writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline -- file uncommitted since e96176d8 2026-06-15), updates only ITS slot (chef-intraday) and writes the WHOLE file back -> every other slot last_fired reverts to the stale base. Evidence 2026-06-18T04:07Z: chef-intraday=03:23:15Z (fresh, =file mtime) BUT news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z -- reverted to 3-day-old values despite fresh stamps existing earlier today (00:07Z matcher snapped_last_fired=2026-06-18T00:00:00Z). Effect: matcher sees slots as massively overdue -> spurious re-offer/re-fire risk (doublefire class); cadence ledger corrupted. NOT a gather gap (gathering still happens; only the stamp ledger is clobbered). Relates [[feedback_worktree_stale_base]] + guaranteed-slot doublefire class.",
+        "fix_spec": "cowork-schedule.json writer MUST FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set / per-slot CAS), never echo back a whole stale snapshot. Same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read, project_orch_state_cutover). Applies to BOTH the cloud cowork-leader dispatcher writer AND any local cowork-team last-fired writer (docs/agents/cowork-team/flow/last-fired.md, match-slots.md).",
+        "generic_mandate": "Fix the WRITE discipline at the schedule-writer layer (fresh-read + single-slot CAS), not a one-off re-stamp -- a re-stamp without the write-discipline fix re-clobbers next tick.",
+        "verification_gate": "After fix: two concurrent simulated writers each mutating a DIFFERENT slot must BOTH persist (no slot reverts to a stale base); cowork-schedule.json slots show monotonic last_fired (no 3-day reversion) across a multi-writer window; matcher no longer reports spurious massive-overdue.",
+        "files": [
+          "docs/data/cowork-schedule.json",
+          "docs/agents/cowork-team/flow/last-fired.md",
+          "docs/agents/cowork-team/flow/match-slots.md",
+          "apps/mcp-server/"
+        ],
+        "signal_ref": "cowork-team-20260618T0408Z-schedule-json-stale-base-clobber",
+        "origin": "2026-06-18 cowork-team signal, MEDIUM, RAW-verified mixed-state at 04:07Z.",
+        "created_at": "2026-06-18T04:25:34Z",
+        "groomed_by": "po-s103",
+        "promoted_at": "2026-06-18T04:25:34Z"
       }
     ],
     "review": [
