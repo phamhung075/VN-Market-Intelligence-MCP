@@ -185,10 +185,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-OHLCV-SCALE-X1000-AUTO-REPAIR",
-    "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-18T22:30:46Z",
+    "next_agent": "qa",
+    "updated_at": "2026-06-19T00:00:00Z",
     "updated_by": "dev-team",
-    "note": "Tick 20260618T223046Z — live VNM get_technical_indicators garbage (MA20 ~62x) RAW-traced to 1 bad daily_ohlcv row (VNM 2026-06-01, 72.5M, vol=0). Router did interim surgical repair (1 row deleted, honest gap; MA20 now 58,910, served metric clean). FIX-OHLCV-SCALE-X1000-AUTO-REPAIR promoted P1 ready->in_progress, dispatched dev-mcp-server for durable WRITER-fix. WIP=1. QA: verify CODE (write-time reject + test + writer hardening), NOT the already-clean live probe."
+    "note": "Durable writer-fix committed df4d4b34 (pnpm check tsc green; 47/47 OHLCV tests pass). ops ad3c4bade8245a7d8 rebuilding mcp-server (writer COPY-baked into image). NEXT: on rebuild-verified, dispatch QA. QA DONE GATE = verify CODE (write-time implausible-magnitude reject guard + REPAIR-T2 regression test + writer hardening present in running container), NOT the already-clean live probe (interim residue-delete made it clean). Do NOT re-dispatch dev-mcp-server — its work is done & committed."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -21171,13 +21171,16 @@
           "live_reprobe": "get_technical_indicators(VNM): MA20 3,680,960->58,910; BB Upper 35.2M->59,749 Lower -27.9M->58,071; MACD -703K->-342. Served metric now price-consistent.",
           "QA_WARNING": "LIVE probe is already clean due to this interim residue-repair — does NOT satisfy DONE. DONE still requires the CODE work: write-time rejection of implausible-magnitude/vol=0/data_env=NULL bars (gate e), regression test (gate b), and writer identified+hardened (gate f). Verify the CODE, not the live probe."
         },
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "promoted_by": "po-s107",
         "promoted_at": "2026-06-18T22:35:35Z",
         "promote_reason": "Live served metric is GARBAGE NOW + [no-fake-data] STANDING GOAL violated -> P3->P1 bump; WIP=0 (slot free, respects WIP<=2); zone apps/mcp-server/ owner dev-mcp-server (OHLCV write/normalize owner per dispatch table).",
         "claimed_at": "2026-06-18T22:30:46Z",
         "claimed_by": "router",
-        "dispatch_note": "Dispatched dev-mcp-server 2026-06-18T22:30:46Z. Durable writer-fix for the live VNM OHLCV garbage class. Interim residue already repaired by router (1 row deleted, served metric clean). Scope: (1) trace WHICH writer into daily_ohlcv can emit a vol=0/data_env=NULL/implausible-magnitude bar (the 2026-06-01 VNM 72.5M bar — ~1225x, NOT a clean x1000) and harden it (write-no-row/leave-gap per startup-seeder lesson); (2) extend ohlcvWriteService.detectAndNormalizeScaleFromPrevClose to AUTO-REPAIR/REJECT implausible magnitude at write-time, not just clean x1000; (3) regression test for the abnormal-bar reject path; (4) FR-G2 still fires for genuine volatility (no over-correction); (5) pnpm check GREEN before commit (RED-PREPUSH); rebuild mcp-server. DONE gate = CODE verified, NOT the already-clean live probe."
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-18T22:30:46Z. Durable writer-fix for the live VNM OHLCV garbage class. Interim residue already repaired by router (1 row deleted, served metric clean). Scope: (1) trace WHICH writer into daily_ohlcv can emit a vol=0/data_env=NULL/implausible-magnitude bar (the 2026-06-01 VNM 72.5M bar — ~1225x, NOT a clean x1000) and harden it (write-no-row/leave-gap per startup-seeder lesson); (2) extend ohlcvWriteService.detectAndNormalizeScaleFromPrevClose to AUTO-REPAIR/REJECT implausible magnitude at write-time, not just clean x1000; (3) regression test for the abnormal-bar reject path; (4) FR-G2 still fires for genuine volatility (no over-correction); (5) pnpm check GREEN before commit (RED-PREPUSH); rebuild mcp-server. DONE gate = CODE verified, NOT the already-clean live probe.",
+        "commit_sha": "df4d4b34",
+        "dev_report": "dev-mcp-server done: extended detectAndNormalizeScaleFromPrevClose with up-direction reject (max(upRatioClose,upRatioHigh)>=50 -> write-no-row honest gap, high checked independently); ohlcvWriteService Step3 handles scaleResult.rejected; FR-G2 sanity job (500) preserved. Tests: FIX-OHLCV-SCALE-X1000-AUTO-REPAIR.test.ts (18, REPAIR-T2=exact VNM shape). Router gates: pnpm check tsc green; 47/47 tests pass. Committed df4d4b34.",
+        "rebuild_status": "dispatched ops ad3c4bade8245a7d8 (rebuild mcp-server + verify image .Created>commit epoch + running-container implausible_magnitude_reject marker)"
       }
     ],
     "ready": [],
