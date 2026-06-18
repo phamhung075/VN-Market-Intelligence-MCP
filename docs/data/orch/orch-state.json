@@ -183,12 +183,12 @@
     }
   ],
   "head": {
-    "status": "dispatch",
-    "updated_at": "2026-06-18T10:02:50Z",
+    "status": "idle",
+    "updated_at": "2026-06-18T10:19:23Z",
     "updated_by": "dev-team",
-    "active_task_id": "DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION",
-    "next_agent": "qa",
-    "note": "DMS code shipped (commit 51c72725, tsc0/13309 tests green) -> review lane. Router dispatches qa to gate (code-review + DDD/security + re-verify unit suite + task report). 3 behavioral criteria are LIVE-deferred (gateway-capable) — qa flips code-verified, done_verified withheld pending live two-fire. system-map SSOT drift signalled to po (signal_queue)."
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "Tick 20260618T0931 complete — DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION code-gate APPROVED (qa 9dbb548d), done_verified=false (3 behavioral criteria live-deferred, gateway-capable two-fire). WIP=0. Carried to PO: system-map toolCount SSOT reconcile (signal_queue ssot_drift). Push held — PO deferred call."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
