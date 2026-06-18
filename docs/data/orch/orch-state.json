@@ -247,8 +247,8 @@
       "status": "READ",
       "payload_ref": "docs/handoffs/tnb-audit-latest.md"
     },
-    "_updated_at": "2026-06-17T21:35:54Z",
-    "_updated_by": "cowork-dispatcher-drain",
+    "_updated_at": "2026-06-18T02:00:00Z",
+    "_updated_by": "po-fleet-push-merge",
     "archive": [
       {
         "from": "system-auditor",
@@ -833,6 +833,17 @@
         "payload_ref": null,
         "po_disposition": "out-of-scope of FB-session handoff: B-13 BCTC staleness already tracked; A-30 host-mem transient WARN (no action).",
         "read_at": "2026-06-17T11:21:05Z"
+      },
+      {
+        "id": "tnb-20260617T201300",
+        "ts": "2026-06-17T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c98 NEEDS_ATTENTION STABLE — morning 5/6+7/9 GOOD, EOD 5.5/6+7.5/9 GOOD, G3/G4/G6 FAIL day3, AC-GOLD-L6 applied, evening PENDING",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ]
   },
