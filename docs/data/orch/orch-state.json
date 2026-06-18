@@ -1022,8 +1022,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-18T04:25:34Z",
-    "_updated_by": "po-s103",
+    "_updated_at": "2026-06-18T09:55:00Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -20674,27 +20674,15 @@
         "qa_approved_at": "2026-06-18T05:37:22Z",
         "qa_agent": "qa",
         "qa_notes": "5/5 classifier cases PASS (bash test-fleet-push-classifier.sh exit 0). Guard 1 fixed: dirty-tree check replaced with real push-blocker gates (.git/rebase-merge|.git/rebase-apply|.git/MERGE_HEAD|.git/index.lock). BENIGN_RE extracted live from shipped script — no drift. bash -n clean on both scripts. CASE A: realistic behind-set (Merge+docs(reports)+chore+.jq) = 0 code files -> push proceeds. CASE B/C/E: code/config in behind-set -> ABORT. Live dry-run ABORT on real origin behind-set (scripts/*.sh code files) — CORRECT behavior. No push (PO deferred call)."
-      }
-    ],
-    "head": {
-      "status": "in_progress",
-      "canonical_moved_to": ".head",
-      "deprecated_at": "2026-06-15T22:20:27Z",
-      "deprecated_by": "po-s66",
-      "active_task_id": null,
-      "next_agent": "developer",
-      "note": "DEPRECATED — do NOT read or write this field. The canonical head SSOT is TOP-LEVEL .head (read by dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). This field formerly drifted from top-level .head because po-s65/po-s54 scripts wrote here while the flow read top-level .head (signal head-drift-po-s64-vs-task-board-head). Any new script writing .task_board.head is a BUG — write .head instead. Kept as a stub (not removed) so a legacy reader sees the redirect rather than a phantom active_task_id.",
-      "next_task": "TASK-AUTO-PUSH-A"
-    },
-    "in_progress": [
+      },
       {
         "id": "FIX-COWORK-BLIND-SESSION-GUARD",
         "type": "FIX",
         "priority": "HIGH",
-        "status": "IN_PROGRESS",
+        "status": "done_verified",
         "route_to": "agents-architect",
         "owner": "agents-architect",
-        "next_agent": "agent-father",
+        "next_agent": "pm",
         "zone": "docs/agents/cowork-team/flow/",
         "title": "Gateway-blind cowork dispatcher FABRICATION guard — refuse to spawn data agents while .mcp.json mcpServers=={}",
         "desc": "CONFIRMED live 2026-06-18: a blind news-scout local-spawn wrote fake 06-18 sentiment into 5 briefs + fake-stamped coverage-state for 62 tickers (PO reverted+quarantined). The */15 cowork master dispatcher (docs/agents/cowork-team/flow/main.md -> spawn-fanout.md) locally Agent-spawns data agents; when .mcp.json mcpServers=={} the subagents do NOT inherit mcp__gateway__call_tool -> they no-op or FABRICATE served data. Add a preflight blind-detection guard (jq .mcpServers|length==0) BEFORE slot matching: when blind, do NOT spawn data-producing slots, defer backstopped slots to cloud RemoteTriggers with a logged skip, log non-backstopped slots (news-scout-market, market-watcher-market, alert-commander-market) as undeliverable-while-blind in telemetry errors[], emit ONE work-channel summary per tick. Design owner=agents-architect; implement via agent-father (Agent .md factory rule — never edit agent/flow .md directly).",
@@ -20712,17 +20700,20 @@
         "created_at": "2026-06-18T07:37:02Z",
         "created_by": "po",
         "dispatched_at": "2026-06-18T07:37:02Z",
-        "dispatched_by": "po"
+        "dispatched_by": "po",
+        "status_note": "commit 55fb9d5f — BG-1: blind-guard.md 49L exists, jq mcpServers|length→0=SESSION_BLIND=true verified live; BG-2: Step 5.0 blocks all spawns when blind, no hardcoded slots, errors[] per no-backstop slot, single work telegram; BG-3: main.md Step 0c JUMP-TO + size comment updated",
+        "done_verified_at": "2026-06-18T09:55:00Z",
+        "done_verified_by": "qa"
       },
       {
         "id": "CLEAN-FOREIGN-FLOW-DOC-PARAM-CODE-DRIFT",
         "type": "CLEAN",
         "severity": "LOW",
-        "status": "IN_PROGRESS",
+        "status": "done_verified",
         "title": "Extend CLEAN-TI-DOC-PARAM-CODE-DRIFT: add get_foreign_flow.md to doc param scope (code vs ticker)",
         "description": "docs/agents/tools/list/get_foreign_flow.md:8,15 declares param `ticker` but live foreignFlowTools.ts:244 schema requires `code`. Agents reading SSOT (market-watcher/news-scout) hit schema error. Folding into existing CLEAN-TI-DOC-PARAM-CODE-DRIFT row scope (currently covers get_technical_indicators + get_price_history only). Doc-only, no coding lane.",
         "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "pm",
         "priority": "P3",
         "size": "XS",
         "zone": "docs/agents/tools/",
@@ -20741,9 +20732,25 @@
         "verification_gate": "get_foreign_flow.md param renamed from ticker→code; agents no longer see schema error on market-watcher/news-scout fetch.",
         "done_verified_blocked_reason": null,
         "dispatched_at": "2026-06-18T07:37:02Z",
-        "dispatched_by": "po"
+        "dispatched_by": "po",
+        "completed_at": "2026-06-18T07:42:02Z",
+        "completed_by": "dev-mcp-server",
+        "status_note": "commit ace01f1a — BG: 4 doc files reconciled; get_foreign_flow ticker→code+days; get_market_foreign_flow +days+top_n; diagnose/reset circuit-breaker breaker_id removed; all params match live code",
+        "done_verified_at": "2026-06-18T09:55:00Z",
+        "done_verified_by": "qa"
       }
     ],
+    "head": {
+      "status": "in_progress",
+      "canonical_moved_to": ".head",
+      "deprecated_at": "2026-06-15T22:20:27Z",
+      "deprecated_by": "po-s66",
+      "active_task_id": null,
+      "next_agent": "developer",
+      "note": "DEPRECATED — do NOT read or write this field. The canonical head SSOT is TOP-LEVEL .head (read by dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). This field formerly drifted from top-level .head because po-s65/po-s54 scripts wrote here while the flow read top-level .head (signal head-drift-po-s64-vs-task-board-head). Any new script writing .task_board.head is a BUG — write .head instead. Kept as a stub (not removed) so a legacy reader sees the redirect rather than a phantom active_task_id.",
+      "next_task": "TASK-AUTO-PUSH-A"
+    },
+    "in_progress": [],
     "ready": [
       {
         "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
@@ -21055,8 +21062,8 @@
         }
       ]
     },
-    "updated_at": "2026-06-18T053057Z",
-    "updated_by": "pm"
+    "updated_at": "2026-06-18T09:55:00Z",
+    "updated_by": "qa"
   },
   "updated_at": "2026-06-18T07:37:02Z",
   "updated_by": "po",
