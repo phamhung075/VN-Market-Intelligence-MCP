@@ -1,0 +1,45 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-18T21:06Z",
+    "nominal_tick": "21:00",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "bctc-analyst-slot-3"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "gateway_blind_session_and_slot_has_no_cloud_backstop",
+    "slot_detail": {
+      "bctc-analyst-slot-3": {
+        "agent": "bctc-analyst",
+        "flow_path": "docs/agents/bctc-analyst/flow/main.md",
+        "cron": "0 21 * * *",
+        "guaranteed": false,
+        "policy_id": "bctc-offmarket",
+        "last_fired": "2026-06-14T21:06:29Z",
+        "due_reason": "cron",
+        "cadence_minutes": null
+      }
+    },
+    "leader_lock": "self_held_renewed",
+    "note": "bctc-analyst-slot-* is NOT among the 6 cloud RemoteTrigger backstops (chef-morning, chef-eod, chef-evening, tnb-audit, digest-sunday, health-recheck) — it depends entirely on the local */15 dispatcher. In a gateway-blind session (mcpServers:0) a local spawn would be fabrication-prone and is suppressed, so this BCTC off-market analyst pass goes UNFIRED this session. Fix is USER/HARNESS-side: register gateway in .mcp.json + reconnect. Local last_fired (06-14) is NOT delivery proof."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T21:06Z",
+  "_processed": {
+    "fingerprint": "3d5ee98241d42b5826d0dd0a1fd4b24b6b7d5c40c367ed480892569ee403c2e9",
+    "processedAt": "2026-06-18T21:31:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
