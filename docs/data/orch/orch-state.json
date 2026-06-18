@@ -183,12 +183,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-18T01:06:45Z",
-    "updated_by": "router",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "SPRINT ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP COMPLETE: A(script 26807a41 qa-approved)+C(cron-jobs.md da3bc636)+B-PO(73bcd4e9)+B-DT(c0c13df3) all done. Auto-push backstop wired into PO tick + dev-team fallback; fires when origin/main..HEAD>20 via worktree-isolated script. Push remains PO out-of-band call."
+    "status": "active",
+    "updated_at": "2026-06-18T07:37:02Z",
+    "updated_by": "po",
+    "active_task_id": "FIX-COWORK-BLIND-SESSION-GUARD",
+    "next_agent": "agents-architect",
+    "note": "DISPATCH FIX-COWORK-BLIND-SESSION-GUARD (HIGH, agents-architect design -> agent-father impl) — confirmed-live gateway-blind fabrication guard. CLEAN-FOREIGN-FLOW also dispatched (dev-mcp-server, WIP slot 2). DESIGN-GATHERER held in ready[] (same-owner contention)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -266,8 +266,8 @@
       "status": "NEW",
       "payload_ref": null
     },
-    "_updated_at": "2026-06-18T03:00:00.976Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-18T07:34:21Z",
+    "_updated_by": "dev-team",
     "archive": [
       {
         "from": "system-auditor",
@@ -900,15 +900,15 @@
         "to": "agents-architect",
         "type": "FLOW GUARD — cowork dispatcher must detect gateway-blind session and refuse to spawn data agents (no fabrication)",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "Root-cause guard for the gateway-blind fabrication class (confirmed 2026-06-18: blind news-scout spawn wrote fake 06-18 sentiment into 5 briefs + fake-stamped coverage-state for 62 tickers; PO reverted+quarantined). The */15 cowork dispatcher (docs/agents/cowork-team/flow/main.md -> spawn-fanout.md) locally Agent-spawns data agents; in a session where .mcp.json mcpServers=={} subagents do NOT inherit mcp__gateway__call_tool -> they no-op or FABRICATE. Add a preflight blind-detection step (jq .mcpServers|length==0) before slot matching; when blind, do NOT spawn data-producing slots, defer backstopped slots to cloud RemoteTriggers with a logged skip, log non-backstopped slots (news-scout-market, market-watcher-market, alert-commander-market) as undeliverable-while-blind in telemetry errors[], emit ONE work-channel summary per tick. agents-architect designs; agent-father implements the flow .md (Agent .md factory rule). Full spec in handoff.",
         "payload_ref": "docs/handoffs/FIX-COWORK-BLIND-SESSION-GUARD-2026-06-18.md ; memory feedback_local_cowork_subagents_gateway_blind ; durable user fix handoff docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md",
         "disposition": "agents-architect -> agent-father; suggested new sub-flow docs/agents/cowork-team/flow/blind-guard.md wired as Step 0c before match-slots.md; enforce again in spawn-fanout.md Step 5",
         "ts": "2026-06-18T06:33:35Z",
-        "resolved_at": "",
-        "resolved_by": "",
-        "resolution": "",
-        "read_at": ""
+        "resolved_at": "2026-06-18T07:37:02Z",
+        "resolved_by": "po",
+        "resolution": "actioned — FIX-COWORK-BLIND-SESSION-GUARD dispatched to agents-architect in_progress this tick",
+        "read_at": "2026-06-18T07:34:21Z"
       }
     ]
   },
@@ -20686,7 +20686,64 @@
       "note": "DEPRECATED — do NOT read or write this field. The canonical head SSOT is TOP-LEVEL .head (read by dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). This field formerly drifted from top-level .head because po-s65/po-s54 scripts wrote here while the flow read top-level .head (signal head-drift-po-s64-vs-task-board-head). Any new script writing .task_board.head is a BUG — write .head instead. Kept as a stub (not removed) so a legacy reader sees the redirect rather than a phantom active_task_id.",
       "next_task": "TASK-AUTO-PUSH-A"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-COWORK-BLIND-SESSION-GUARD",
+        "type": "FIX",
+        "priority": "HIGH",
+        "status": "IN_PROGRESS",
+        "route_to": "agents-architect",
+        "owner": "agents-architect",
+        "next_agent": "agent-father",
+        "zone": "docs/agents/cowork-team/flow/",
+        "title": "Gateway-blind cowork dispatcher FABRICATION guard — refuse to spawn data agents while .mcp.json mcpServers=={}",
+        "desc": "CONFIRMED live 2026-06-18: a blind news-scout local-spawn wrote fake 06-18 sentiment into 5 briefs + fake-stamped coverage-state for 62 tickers (PO reverted+quarantined). The */15 cowork master dispatcher (docs/agents/cowork-team/flow/main.md -> spawn-fanout.md) locally Agent-spawns data agents; when .mcp.json mcpServers=={} the subagents do NOT inherit mcp__gateway__call_tool -> they no-op or FABRICATE served data. Add a preflight blind-detection guard (jq .mcpServers|length==0) BEFORE slot matching: when blind, do NOT spawn data-producing slots, defer backstopped slots to cloud RemoteTriggers with a logged skip, log non-backstopped slots (news-scout-market, market-watcher-market, alert-commander-market) as undeliverable-while-blind in telemetry errors[], emit ONE work-channel summary per tick. Design owner=agents-architect; implement via agent-father (Agent .md factory rule — never edit agent/flow .md directly).",
+        "acceptance": "Read-verified (not green-tick): in a blind session NO data agent spawned; work channel gets ONE summary; undeliverable slots land in telemetry errors[]; in a wired session the guard is a no-op. Backstop-coverage from docs/data/cowork-schedule.json .slots[].backstop — never hardcode the slot list.",
+        "placement": "New sub-flow docs/agents/cowork-team/flow/blind-guard.md wired as Step 0c in main.md before match-slots.md; re-enforced in spawn-fanout.md Step 5.",
+        "handoff_path": "docs/handoffs/FIX-COWORK-BLIND-SESSION-GUARD-2026-06-18.md",
+        "user_action_ref": "docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md",
+        "memory_ref": [
+          "feedback_local_cowork_subagents_gateway_blind",
+          "feedback_no_fake_data_real_fetch",
+          "feedback_agent_md_factory"
+        ],
+        "size": "S",
+        "source": "po dev-team tick 2026-06-18T0731Z — own HIGH escalation signal po-20260618-cowork-blind-session-guard; WIP=0 gave room; HIGH>MEDIUM so dispatched ahead of DESIGN-GATHERER (same owner, held to avoid concurrent agents-architect contention)",
+        "created_at": "2026-06-18T07:37:02Z",
+        "created_by": "po",
+        "dispatched_at": "2026-06-18T07:37:02Z",
+        "dispatched_by": "po"
+      },
+      {
+        "id": "CLEAN-FOREIGN-FLOW-DOC-PARAM-CODE-DRIFT",
+        "type": "CLEAN",
+        "severity": "LOW",
+        "status": "IN_PROGRESS",
+        "title": "Extend CLEAN-TI-DOC-PARAM-CODE-DRIFT: add get_foreign_flow.md to doc param scope (code vs ticker)",
+        "description": "docs/agents/tools/list/get_foreign_flow.md:8,15 declares param `ticker` but live foreignFlowTools.ts:244 schema requires `code`. Agents reading SSOT (market-watcher/news-scout) hit schema error. Folding into existing CLEAN-TI-DOC-PARAM-CODE-DRIFT row scope (currently covers get_technical_indicators + get_price_history only). Doc-only, no coding lane.",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "priority": "P3",
+        "size": "XS",
+        "zone": "docs/agents/tools/",
+        "files": [
+          "docs/agents/tools/list/get_foreign_flow.md"
+        ],
+        "baseline_pass": false,
+        "depends": [],
+        "sequencing": "doc-only, no coding-lane impact. Can run in parallel.",
+        "route": "dev-mcp-server",
+        "source": "PO recommendation: fold into CLEAN-TI-DOC-PARAM-CODE-DRIFT row scope rather than separate task (2026-06-17)",
+        "groomed_at": "2026-06-17T11:32:00Z",
+        "groomed_by": "pm",
+        "claimed_at": null,
+        "claimed_by": null,
+        "verification_gate": "get_foreign_flow.md param renamed from ticker→code; agents no longer see schema error on market-watcher/news-scout fetch.",
+        "done_verified_blocked_reason": null,
+        "dispatched_at": "2026-06-18T07:37:02Z",
+        "dispatched_by": "po"
+      }
+    ],
     "ready": [
       {
         "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
@@ -20737,33 +20794,6 @@
         "created_by": "po",
         "promoted_at": "2026-06-16T20:31:21Z",
         "promoted_by": "po"
-      },
-      {
-        "id": "CLEAN-FOREIGN-FLOW-DOC-PARAM-CODE-DRIFT",
-        "type": "CLEAN",
-        "severity": "LOW",
-        "status": "READY",
-        "title": "Extend CLEAN-TI-DOC-PARAM-CODE-DRIFT: add get_foreign_flow.md to doc param scope (code vs ticker)",
-        "description": "docs/agents/tools/list/get_foreign_flow.md:8,15 declares param `ticker` but live foreignFlowTools.ts:244 schema requires `code`. Agents reading SSOT (market-watcher/news-scout) hit schema error. Folding into existing CLEAN-TI-DOC-PARAM-CODE-DRIFT row scope (currently covers get_technical_indicators + get_price_history only). Doc-only, no coding lane.",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "priority": "P3",
-        "size": "XS",
-        "zone": "docs/agents/tools/",
-        "files": [
-          "docs/agents/tools/list/get_foreign_flow.md"
-        ],
-        "baseline_pass": false,
-        "depends": [],
-        "sequencing": "doc-only, no coding-lane impact. Can run in parallel.",
-        "route": "dev-mcp-server",
-        "source": "PO recommendation: fold into CLEAN-TI-DOC-PARAM-CODE-DRIFT row scope rather than separate task (2026-06-17)",
-        "groomed_at": "2026-06-17T11:32:00Z",
-        "groomed_by": "pm",
-        "claimed_at": null,
-        "claimed_by": null,
-        "verification_gate": "get_foreign_flow.md param renamed from ticker→code; agents no longer see schema error on market-watcher/news-scout fetch.",
-        "done_verified_blocked_reason": null
       }
     ],
     "review": [
@@ -21028,8 +21058,8 @@
     "updated_at": "2026-06-18T053057Z",
     "updated_by": "pm"
   },
-  "updated_at": "2026-06-18T05:30:00Z",
-  "updated_by": "dev-mcp-server",
+  "updated_at": "2026-06-18T07:37:02Z",
+  "updated_by": "po",
   "meta": {
     "updated_at": "2026-06-17T11:21:05Z",
     "updated_by": "po",
