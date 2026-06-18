@@ -1,4 +1,4 @@
-<!-- size-justification: 130L — thin dispatcher; sub-flow routing table + BATCH schema spec + JUMP TO anchors + notebook-write skill route are tightly bound. Cross-file sub-flows live in `po/triage-*.md`, `po/channel-audit.md`, `po/sprint-*.md`. -->
+<!-- size-justification: 229L — thin dispatcher; sub-flow routing table + BATCH schema spec + JUMP TO anchors + notebook-write skill route are tightly bound + Step PUSH-BACKSTOP (TASK-AUTO-PUSH-B-PO, ~58L inline because it fires at every tick exit). Cross-file sub-flows live in `po/triage-*.md`, `po/channel-audit.md`, `po/sprint-*.md`. -->
 # Product Owner — Main Flow (Thin Dispatcher)
 
 **Tools:** `docs/agents/tools/package/po.md`
@@ -107,6 +107,64 @@ PIPELINE: idle
 ```
 
 **PO CAN self-initiate** when channel audit found bugs, strategy errors, UX issues, or logic problems — these are the sprint backlog. To kick off → jump to `po/sprint-kickoff.md`.
+
+<!-- jump:push-backstop -->
+## Step PUSH-BACKSTOP — Auto-push when ahead > threshold
+
+**Rationale (Option-B, ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP):** Threshold-checked push fires inside the PO post-triage tick (existing ~15-min cadence via dev-team), adding zero new always-on components (no new cron, launchd, or RemoteTrigger). The worktree-isolated script never conflicts with bg agents holding dirty main-tree state. Reference: `docs/standards/cron-jobs.md` § "Push Backstop (Option-B: PO Tick, No New Cron)".
+
+**Placement:** Runs at EVERY PO tick exit:
+- On the idle path (all-empty No-Task Guard → `JUMP TO end`): run this step BEFORE the JUMP.
+- After each non-idle branch workflow returns (`sprint-kickoff.md`, `review-ba-spec.md`, `sprint-signoff.md`): run this step before committing the notebook and exiting.
+
+### Threshold Probe
+
+```bash
+ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+```
+
+If `ahead` is not greater than `${PUSH_THRESHOLD:-20}` → skip entire step (no-op, proceed to notebook commit + exit).
+
+If `ahead > ${PUSH_THRESHOLD:-20}` → proceed to safety guards below.
+
+### Safety Guard 1 — Critical files dirty (bg agent mid-write)
+
+```bash
+dirty_critical=$(git diff --name-only | grep -E 'docs/data/orch/orch-state\.json|docs/agent-memory/notebooks/')
+```
+
+If `dirty_critical` is non-empty: a bg agent is mid-write on a critical file. **SKIP** this tick — send Telegram WORK and proceed to notebook commit + exit:
+
+```
+[po] PUSH-BACKSTOP: ahead=${ahead} > ${PUSH_THRESHOLD:-20} but safety guard BLOCKED — bg agents hold uncommitted mutations. Will retry next tick.
+```
+
+Call: `mcp__gateway__call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", message: "<above text>"})`
+
+### Safety Guard 2 — Commit-mutex held (agent mid-commit)
+
+```
+mcp__gateway__call_tool(server="vn-market", tool="task_list_held", arguments={kind: "commit-mutex"})
+```
+
+If the returned `count > 0`: a commit is in flight. **SKIP** this tick — send Telegram WORK (same message as Guard 1) and proceed to notebook commit + exit. The commit-mutex TTL is 90s; the next PO tick (~15 min) will always find a clear mutex.
+
+### Invoke Script (guards passed)
+
+Both guards cleared → invoke the already-shipped, qa-approved script:
+
+```bash
+bash scripts/fleet-worktree-push.sh
+```
+
+The script (committed 26807a41) owns all divergence-reconcile, tsc-gate, and push logic. Do NOT re-implement its logic here. The script exits 0 on success (sends Telegram WORK) or 1 on abort (sends Telegram BUG). Exit code is non-fatal to the PO flow — log it and proceed to notebook commit.
+
+**Script interface summary (read `scripts/fleet-worktree-push.sh` for full spec):**
+- Env: `PUSH_THRESHOLD` (default 20, tunable without rebuild)
+- Flags: `--dry-run` (print only, no push, no Telegram)
+- Exit 0: pushed successfully, notified WORK channel
+- Exit 1: aborted (tsc red / non-chore behind-set / merge conflict / push failed), notified BUG channel
+- Invariants: NEVER touches main working tree; NEVER `--force`; NEVER pushes around a red tsc hook
 
 ## Branch Workflows (load only the one you need)
 
