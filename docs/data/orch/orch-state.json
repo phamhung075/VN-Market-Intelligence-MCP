@@ -20798,7 +20798,9 @@
         "owner": "agents-architect",
         "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
         "architect_done_at": "2026-06-16T20:39:40Z",
-        "next_agent": "agent-father",
+        "next_agent": "dev-mcp-server",
+        "agent_father_done_at": "2026-06-18T00:00:00Z",
+        "agent_father_note": "Root A DONE — backstop-window defer gate committed 69babf46 (leader-lock.md AF-1). fix_spec for Roots B+C written to docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md. Roots B/C route to dev-mcp-server; blocked by ARCH-CRON-SCHEDULER-RELIABILITY zone collision on apps/mcp-server/ — DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION stays BACKLOG until that clears.",
         "zone": "multi",
         "title": "Design umbrella: solve the offhours-gatherer manual×cloud DOUBLE-FIRE cluster (roots A/B/C) ONE way — single dedup+defer concurrency model",
         "desc": "The standing offhours-gatherer double-fire (manual */15 dispatcher fires on stale last_fired AND cloud backstop independently fires the same pair ~5min later after the staleness check; leader-lock read times out so dispatcher cannot defer; news-scout SELF_SIGNALS_CACHE blind to concurrent sibling -> dup signals; market-watcher false gateway-down) decomposes into 3 HELD roots that SHARE a concurrency/dedup model. Per the existing PO hold (held_on 2026-06-16T10:31:48Z), these MUST be solved ONE way, not three. This umbrella = ONE architect design pass -> ONE BA decomposition that produces dev-ready fix_spec+files for all 3 children, then routes the code work (Root A -> agent-father via cowork-schedule.json brief; Roots B/C -> dev-mcp-server apps/mcp-server/).",
@@ -20806,23 +20808,32 @@
           {
             "id": "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
             "root": "A",
-            "zone": "docs/data/cowork-schedule.json",
+            "zone": "docs/agents/cowork-team/flow/leader-lock.md",
             "code_route": "agent-father (cowork-schedule.json brief)",
-            "problem": "dispatcher DEFER offhours-gatherer fire when leader-lock unreadable AND within :00-:15 cloud-backstop window of a 4h-boundary hour (do not fire on stale last_fired)"
+            "problem": "dispatcher DEFER offhours-gatherer fire when leader-lock unreadable AND within :00-:15 cloud-backstop window of a 4h-boundary hour (do not fire on stale last_fired)",
+            "status": "DONE",
+            "commit": "69babf46",
+            "impl_file": "docs/agents/cowork-team/flow/leader-lock.md"
           },
           {
             "id": "FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE",
             "root": "B",
             "zone": "apps/mcp-server/",
             "code_route": "dev-mcp-server",
-            "problem": "SELF_SIGNALS_CACHE concurrent-sibling visibility — dedup blind to a concurrently-firing sibling -> dup signals"
+            "problem": "SELF_SIGNALS_CACHE concurrent-sibling visibility — dedup blind to a concurrently-firing sibling -> dup signals",
+            "status": "BACKLOG",
+            "fix_spec": "docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-1",
+            "blocked_by": "ARCH-CRON-SCHEDULER-RELIABILITY (apps/mcp-server/ zone collision)"
           },
           {
             "id": "FIX-MARKETWATCHER-GW-CORROBORATION-GATE",
             "root": "C",
             "zone": "apps/mcp-server/",
             "code_route": "dev-mcp-server",
-            "problem": "Step-0-GW sibling-success corroboration gate — false gateway-down when a sibling succeeded; pairs with Root B concurrency model"
+            "problem": "Step-0-GW sibling-success corroboration gate — false gateway-down when a sibling succeeded; pairs with Root B concurrency model",
+            "status": "BACKLOG",
+            "fix_spec": "docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-2",
+            "blocked_by": "ARCH-CRON-SCHEDULER-RELIABILITY (apps/mcp-server/ zone collision)"
           }
         ],
         "design_mandate": "Architect produces ONE concurrency/dedup model that covers: (1) defer-on-unreadable-lock within backstop window, (2) cross-sibling concurrent-fire visibility for the dedup cache, (3) sibling-success corroboration before declaring gateway-down. The 3 children inherit that single model — no three divergent dedup schemes. BA then writes per-child fix_spec+files. Cross-references project memory: gatherer-manual-cloud-doublefire + sentinel-discriminator-bootstrap-boundary + false-infra-failure-corroboration-gate.",
