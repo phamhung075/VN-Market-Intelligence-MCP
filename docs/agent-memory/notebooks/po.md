@@ -1,24 +1,23 @@
 # PO Notebook
-_overwritten 2026-06-18T07:37Z_
+_overwritten 2026-06-18T09:31Z_
 
-## Cycle po-s104 (2026-06-18T07:37Z) — dev-team tick: dispatch gateway-blind fabrication guard + fill WIP slot 2
-**WIP=0 gave full room; CI GREEN (d2d9f4c run 27740329272); divergence 18-behind/10-ahead (<20 → push held).**
+## Cycle po-s103 (2026-06-18T09:31Z) — dev-team tick: reconcile STALE agent-father head + close gatherer umbrella + promote DMS (zone now free)
+**CI GREEN on origin/main HEAD 9d29a814 (run 27748038282). Divergence 19-ahead/20-behind (20 = benign cloud chore commits → push HELD, my deferred out-of-band call; gateway-blind local spawn so no push attempted). Active coding WIP was 1 (the design umbrella) → now 0; DMS promoted to ready keeps WIP ≤2.**
 
-**M1 — DISPATCHED FIX-COWORK-BLIND-SESSION-GUARD (HIGH) straight to in_progress[].**
-- My OWN escalation signal from last tick (po-20260618-cowork-blind-session-guard, READ, to=agents-architect). Re-triaged: STILL warranted — CONFIRMED-LIVE fabrication (blind news-scout local-spawn wrote fake 06-18 sentiment into 5 briefs + fake-stamped coverage-state for 62 tickers; PO reverted+quarantined) AND `[]` grep proved NO board row existed yet → not actioned, dispatch now.
-- owner=agents-architect (design brief) → next_agent=agent-father (impl; Agent .md factory rule — never edit flow .md directly). zone=docs/agents/cowork-team/flow/. Handoff fully specced: blind-detection preflight (`jq .mcpServers|length==0`) as new Step 0c sub-flow `blind-guard.md` before match-slots.md + re-enforced in spawn-fanout.md Step 5. Under blind: NO data-agent spawn, defer backstopped slots to cloud RemoteTriggers (logged skip), log non-backstopped (news-scout/market-watcher/alert-commander -market) as undeliverable in telemetry errors[], ONE work-channel summary/tick. Backstop map from cowork-schedule.json .slots[].backstop — never hardcode.
-- Set canonical top-level .head → active(FIX-COWORK-BLIND-SESSION-GUARD, agents-architect). Flipped signal row READ→RESOLVED.
+**Reconciled the dangling head (router flagged stale).** `.head` pointed at next_agent=agent-father for DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER, but agent-father ALREADY shipped its portion: Root A committed 69babf46 (leader-lock AF-1 backstop-window defer gate) + 6f306bfa closed Root A and routed Roots B/C fix_spec → dev-mcp-server. Umbrella row's `agent_father_done_at` already stamped. Re-dispatching agent-father would be a no-op on shipped work — did NOT.
+- Router context said "WIP=0, DESIGN-GATHERER not on board" — RAW-corrected: it WAS in_progress (WIP=1). The agents-architect design umbrella whose code is fully delegated.
 
-**M2 — DISPATCHED CLEAN-FOREIGN-FLOW-DOC-PARAM-CODE-DRIFT (P3) ready→in_progress (WIP slot 2).**
-- KEY CALL: picked the P3 CLEAN over the higher-pri MEDIUM DESIGN-GATHERER for slot 2 — BOTH gatherer and blind-guard are agents-architect-owned, so dispatching gatherer too would run two agents-architect tasks concurrently (same-agent serialize, no parallel gain). CLEAN-FOREIGN is dev-mcp-server-owned → genuinely parallelizes within WIP≤2. Productive parallelism > nominal priority when the higher-pri task shares an owner with the lead.
+**M1 — CLOSED umbrella in_progress→done, done_verified:false.** Design pass complete (architect_done_at 2026-06-16) + Root A shipped. done_verified GATED on all 3 children's behavioral gates (Root A defer-sim + DMS-1 zero-dup concurrent-sibling + DMS-2 no-false-gateway-down). Partial work not reverted.
 
-**M3 — HELD DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER in ready[]** (same-owner contention; next tick after agents-architect frees).
+**M2 — PROMOTED DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION backlog→ready (next_agent=dev-mcp-server).** KEY: its sole hold_reason was the apps/mcp-server/ zone collision with ARCH-CRON-SCHEDULER-RELIABILITY — which is NOW done_verified:true, so the zone is FREE. Dropped held/held_on/hold_reason. Roots B/C of the double-fire cluster; fix_spec docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md. The 2 apps/mcp-server review[] rows are QA-gated (not active dev lanes) so promoting opens no 2nd concurrent dev lane — WIP≤2 honored.
 
-**Atomicity:** scripts/po-s104-blind-guard-dispatch-clean-foreign-tick.jq (M1 mint→in_progress + M2 relocate + M4 signal-resolve + M5 head; idempotent). Harness: temp→[ -s ]→jq empty→CONSERVATION (bl 296=296, ready 2→1, in_prog 0→2, review/done/done_verified byte-stable, total +1)→PLACEMENT→IDEMPOTENCY (re-run delta 0)→rename. All PASS.
+**M3 — REPOINTED head off stale agent-father → DMS / dev-mcp-server** (router mutex-wraps the spawn).
+
+**Cowork signals (2 drained, both processed/):** chef-eod DEFERRED_BLIND escalation was a FALSE infra-failure (read local cowork-schedule last_fired the cloud backstop never syncs back) — SUPERSEDED by the same-tick CORRECTION: RAW RemoteTrigger list = exactly 6 cloud backstops, chef-eod-backstop fired 08:45:06Z today → EOD dish DELIVERED, no outage. REAL standing issue (non-backstopped slots go unfired while local */15 dispatcher is gateway-blind) is USER-SIDE .mcp.json config — already captured in docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md. NO new dev-team code task warranted (router cannot fix user-side config; aligns feedback_local_cowork_subagents_gateway_blind + feedback_false_infra_failure_corroboration_gate). ACK only.
+
+**Lesson:** a "dispatch agent-X" head can be stale because agent-X already shipped (row carries *_done_at + the commit exists) — RAW-verify the commit + row stamps before re-dispatch; and a held task's blocker reaching done_verified is the trigger to re-scan its hold_reason and promote (zone freed). Wrote scripts/po-s103-*.jq (conservation+idempotency guarded).
 
 ## Carry-over
-- COMMIT this cycle (EXPLICIT PATHS only, NEVER -A): `docs/data/orch/orch-state.json` + `scripts/po-s104-blind-guard-dispatch-clean-foreign-tick.jq` + `docs/agent-memory/decisions/triage-20260618T0737-po.md` + this notebook. Do NOT touch cowork churn files.
-- PUSH HELD: ahead=10 < threshold 20 → PO out-of-band call, skip PUSH-BACKSTOP this tick.
-- BATCH returned to router: dispatch FIX-COWORK-BLIND-SESSION-GUARD (agents-architect) + CLEAN-FOREIGN-FLOW (dev-mcp-server). DESIGN-GATHERER waits next tick.
-- NEW reusable script po-s104 (mint-to-in_progress + dispatch + signal-resolve + head; conservation+idempotent). Catalog pointer in po/flow/main.md pending future doc tick.
-- WATCH: blind-guard is the durable root-fix for the recurring fabrication class ([[feedback_local_cowork_subagents_gateway_blind]]); the connectivity restore is USER-side (register gateway in .mcp.json + reconnect, GATEWAY-BLIND-USER-ACTION-2026-06-18.md) — this guard only stops fabrication while blind.
+- DMS in ready[] for router to dispatch dev-mcp-server (apps/mcp-server/, S). On done_verified, the gatherer umbrella's done_verified can flip true once all 3 children's behavioral gates pass.
+- Push held: 19-ahead but 20-behind benign cloud chore; PO's out-of-band call (can't push from gateway-blind spawn anyway).
+- Gateway-blind cowork = user-side .mcp.json fix pending (GATEWAY-BLIND-USER-ACTION-2026-06-18.md).

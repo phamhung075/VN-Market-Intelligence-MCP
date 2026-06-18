@@ -183,12 +183,12 @@
     }
   ],
   "head": {
-    "status": "active",
-    "updated_at": "2026-06-18T08:34:23Z",
-    "updated_by": "po",
-    "active_task_id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
-    "next_agent": "agent-father",
-    "note": "DISPATCH DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER (SPRINT-S, MEDIUM, agent-father maintenance lane). Architect design done 2026-06-16; brief docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md. Prior head (FIX-COWORK-BLIND-SESSION-GUARD + CLEAN-FOREIGN-FLOW) was STALE — both already done_verified, WIP=0."
+    "status": "dispatch",
+    "active_task_id": "DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION",
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-06-18T09:35:49Z",
+    "updated_by": "po-s103",
+    "note": "PO reconcile+dispatch (po-s103, 2026-06-18T09:35:49Z): prior head was STALE — pointed at next_agent=agent-father for DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER, but agent-father ALREADY shipped Root A (commit 69babf46, closed 6f306bfa) — that work is DONE, NOT re-dispatched. Umbrella closed in_progress->done (done_verified:false, gated on 3 children). DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION (Roots B/C) promoted backlog->ready: its blocker ARCH-CRON-SCHEDULER-RELIABILITY is now done_verified:true so the apps/mcp-server/ zone is free. Router mutex-wraps the dev-mcp-server spawn (apps/mcp-server/ zone; fix_spec docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md). PUSH HELD — PO out-of-band call."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11232,36 +11232,6 @@
         "created_by": "po-triage-fb-2026-06-16"
       },
       {
-        "id": "DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION",
-        "type": "FIX",
-        "priority": "p2",
-        "status": "BACKLOG",
-        "held": true,
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "route_to": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
-        "brief_task_ids": [
-          "DMS-1",
-          "DMS-2"
-        ],
-        "subsumes_holds": [
-          "FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE",
-          "FIX-MARKETWATCHER-GW-CORROBORATION-GATE"
-        ],
-        "held_on": "ARCH-CRON-SCHEDULER-RELIABILITY",
-        "hold_reason": "ZONE COLLISION: DMS-1/DMS-2 touch apps/mcp-server/ which is the active in_progress lane of ARCH-CRON-SCHEDULER-RELIABILITY. Sequence BEHIND it — do NOT open a 2nd concurrent apps/mcp-server lane (WIP ≤2 coding lanes; in_progress=1, headroom is for a NON-colliding lane only). Promote to ready[] when ARCH-CRON-SCHEDULER-RELIABILITY reaches review/done and the zone is free.",
-        "title": "DMS-1+DMS-2: news-scout sibling-dedup window + market-watcher corroboration gate (Roots B/C of gatherer double-fire)",
-        "desc": "Per brief §Primitive 2+3 (share ONE get_recent_signals(window_seconds=900) helper against signal_bus on named-volume market.db). DMS-1: replace news-scout SELF_SIGNALS_CACHE=[] with the 900s window query; content-hash dedup key (signal_type, ticker_normalised, title_normalised); GENERIC — no allowlist by signal_type. DMS-2: replace market-watcher Step-0-GW immediate-BUG-on-2x-failure with the corroboration gate — after 2x probe failure, query get_recent_signals(900); sibling signals present → EXIT gracefully (no BUG); none → file gateway-down BUG. May ship as ONE combined dev-mcp-server sprint.",
-        "ac": "DMS-1: two concurrent news-scout fires within the same minute produce 0 duplicate internal signals. DMS-2: timeout with sibling success in window → no BUG filed; timeout with no sibling success → BUG filed.",
-        "verification_gate": "Live: two concurrent sibling fires → 0 dup signal_bus rows (RAW-probe named-volume market.db, not self-built test schema); timeout+sibling-success → no BUG row. Rebuild required (mcp-server code change). Cross-ref same-db-tools-diverge-rowcount + false-infra-failure-corroboration-gate.",
-        "size": "S",
-        "source": "po-s91 dev-team tick 2026-06-16T21:27Z — implementation handoff of brief 5bced686 (agents-architect→dev-mcp-server), HELD on zone collision",
-        "created_at": "2026-06-16T21:34:06Z",
-        "created_by": "po"
-      },
-      {
         "id": "FIX-BCTC-BANK-SCALAR-MAPPING",
         "type": "FIX",
         "priority": "high",
@@ -14995,6 +14965,74 @@
         "updated_by": "po",
         "resolution": "umbrella-complete-via-children",
         "closeout_note": "Children T1-ARCH-CRON-T4-DEDUP-GUARDS / T2-ARCH-CRON-RECOVER-JITTER / T3-ARCH-CRON-WATCHDOG all done_verified (shipped 06-14); TASK-ARCH-CRON-1A/1B/1C/2 SUPERSEDED. po-s50 HOLD-OPEN gate (Mon market-day G1/G2/G3) now days past. Stale in_progress umbrella (no updated_at, 0 commits since 06-14 claim) closed — NOT stranded-redispatch (all real work landed)."
+      },
+      {
+        "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
+        "type": "SPRINT-S",
+        "priority": "MEDIUM",
+        "status": "DONE",
+        "route_to": "agents-architect",
+        "owner": "agents-architect",
+        "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
+        "architect_done_at": "2026-06-16T20:39:40Z",
+        "next_agent": "dev-mcp-server",
+        "agent_father_done_at": "2026-06-18T00:00:00Z",
+        "agent_father_note": "Root A DONE — backstop-window defer gate committed 69babf46 (leader-lock.md AF-1). fix_spec for Roots B+C written to docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md. Roots B/C route to dev-mcp-server; blocked by ARCH-CRON-SCHEDULER-RELIABILITY zone collision on apps/mcp-server/ — DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION stays BACKLOG until that clears.",
+        "zone": "multi",
+        "title": "Design umbrella: solve the offhours-gatherer manual×cloud DOUBLE-FIRE cluster (roots A/B/C) ONE way — single dedup+defer concurrency model",
+        "desc": "The standing offhours-gatherer double-fire (manual */15 dispatcher fires on stale last_fired AND cloud backstop independently fires the same pair ~5min later after the staleness check; leader-lock read times out so dispatcher cannot defer; news-scout SELF_SIGNALS_CACHE blind to concurrent sibling -> dup signals; market-watcher false gateway-down) decomposes into 3 HELD roots that SHARE a concurrency/dedup model. Per the existing PO hold (held_on 2026-06-16T10:31:48Z), these MUST be solved ONE way, not three. This umbrella = ONE architect design pass -> ONE BA decomposition that produces dev-ready fix_spec+files for all 3 children, then routes the code work (Root A -> agent-father via cowork-schedule.json brief; Roots B/C -> dev-mcp-server apps/mcp-server/).",
+        "children": [
+          {
+            "id": "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
+            "root": "A",
+            "zone": "docs/agents/cowork-team/flow/leader-lock.md",
+            "code_route": "agent-father (cowork-schedule.json brief)",
+            "problem": "dispatcher DEFER offhours-gatherer fire when leader-lock unreadable AND within :00-:15 cloud-backstop window of a 4h-boundary hour (do not fire on stale last_fired)",
+            "status": "DONE",
+            "commit": "69babf46",
+            "impl_file": "docs/agents/cowork-team/flow/leader-lock.md"
+          },
+          {
+            "id": "FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE",
+            "root": "B",
+            "zone": "apps/mcp-server/",
+            "code_route": "dev-mcp-server",
+            "problem": "SELF_SIGNALS_CACHE concurrent-sibling visibility — dedup blind to a concurrently-firing sibling -> dup signals",
+            "status": "BACKLOG",
+            "fix_spec": "docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-1",
+            "blocked_by": "ARCH-CRON-SCHEDULER-RELIABILITY (apps/mcp-server/ zone collision)"
+          },
+          {
+            "id": "FIX-MARKETWATCHER-GW-CORROBORATION-GATE",
+            "root": "C",
+            "zone": "apps/mcp-server/",
+            "code_route": "dev-mcp-server",
+            "problem": "Step-0-GW sibling-success corroboration gate — false gateway-down when a sibling succeeded; pairs with Root B concurrency model",
+            "status": "BACKLOG",
+            "fix_spec": "docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-2",
+            "blocked_by": "ARCH-CRON-SCHEDULER-RELIABILITY (apps/mcp-server/ zone collision)"
+          }
+        ],
+        "design_mandate": "Architect produces ONE concurrency/dedup model that covers: (1) defer-on-unreadable-lock within backstop window, (2) cross-sibling concurrent-fire visibility for the dedup cache, (3) sibling-success corroboration before declaring gateway-down. The 3 children inherit that single model — no three divergent dedup schemes. BA then writes per-child fix_spec+files. Cross-references project memory: gatherer-manual-cloud-doublefire + sentinel-discriminator-bootstrap-boundary + false-infra-failure-corroboration-gate.",
+        "verification_gate": "Simulate: stale last_fired + unreadable leader-lock within :00-:15 backstop window of a 4h-boundary hour -> exactly ONE fire across manual+cloud paths, no dup internal signals, no false gateway-down when a sibling succeeded. Each child carries its own behavioral gate before its own done_verified.",
+        "size": "S",
+        "source": "po dev-team tick 2026-06-16T20:26Z — cluster all-3-HELD (no dev-ready spec); unblock via ONE architect/BA design pass per the standing hold reason; supersedes the per-stub dispatch path",
+        "supersedes_holds": [
+          "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
+          "FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE",
+          "FIX-MARKETWATCHER-GW-CORROBORATION-GATE"
+        ],
+        "created_at": "2026-06-16T20:31:21Z",
+        "created_by": "po",
+        "promoted_at": "2026-06-16T20:31:21Z",
+        "promoted_by": "po",
+        "dispatched_at": "2026-06-18T08:34:23Z",
+        "dispatched_by": "po",
+        "dispatch_note": "Promoted READY->in_progress by po dev-team triage tick 20260618T083104Z. Same-owner serialization (vs blind-session-guard) cleared: that work shipped+done_verified, WIP=0. Architect design already complete (architect_done_at 2026-06-16T20:39:40Z); brief docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md. Router mutex-wraps the agent-father spawn (maintenance lane). Umbrella: ONE design pass -> per-child fix_spec for 3 children (Root A->agent-father cowork-schedule.json; Roots B/C->dev-mcp-server apps/mcp-server/).",
+        "done_verified": false,
+        "closed_at": "2026-06-18T09:35:49Z",
+        "closed_by": "po-s103",
+        "done_verified_deferred_note": "Design pass complete (architect_done_at 2026-06-16T20:39:40Z) + Root A SHIPPED (agent-father, commit 69babf46 leader-lock AF-1 backstop-window defer gate; closed 6f306bfa). Roots B/C fix_spec written to docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md and routed to dev-mcp-server as DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION (promoted ready[] this tick — zone now free). done_verified is GATED on all 3 children's behavioral gates: Root A defer-gate live-sim + DMS-1 zero-dup concurrent-sibling + DMS-2 no-false-gateway-down-when-sibling-succeeded. agent-father portion is DONE — do NOT re-dispatch."
       }
     ],
     "done_verified": [
@@ -20788,73 +20826,39 @@
       "note": "DEPRECATED — do NOT read or write this field. The canonical head SSOT is TOP-LEVEL .head (read by dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). This field formerly drifted from top-level .head because po-s65/po-s54 scripts wrote here while the flow read top-level .head (signal head-drift-po-s64-vs-task-board-head). Any new script writing .task_board.head is a BUG — write .head instead. Kept as a stub (not removed) so a legacy reader sees the redirect rather than a phantom active_task_id.",
       "next_task": "TASK-AUTO-PUSH-A"
     },
-    "in_progress": [
+    "in_progress": [],
+    "ready": [
       {
-        "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
-        "type": "SPRINT-S",
-        "priority": "MEDIUM",
-        "status": "in_progress",
-        "route_to": "agents-architect",
-        "owner": "agents-architect",
-        "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
-        "architect_done_at": "2026-06-16T20:39:40Z",
+        "id": "DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION",
+        "type": "FIX",
+        "priority": "p2",
+        "status": "READY",
+        "owner": "dev-mcp-server",
         "next_agent": "dev-mcp-server",
-        "agent_father_done_at": "2026-06-18T00:00:00Z",
-        "agent_father_note": "Root A DONE — backstop-window defer gate committed 69babf46 (leader-lock.md AF-1). fix_spec for Roots B+C written to docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md. Roots B/C route to dev-mcp-server; blocked by ARCH-CRON-SCHEDULER-RELIABILITY zone collision on apps/mcp-server/ — DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION stays BACKLOG until that clears.",
-        "zone": "multi",
-        "title": "Design umbrella: solve the offhours-gatherer manual×cloud DOUBLE-FIRE cluster (roots A/B/C) ONE way — single dedup+defer concurrency model",
-        "desc": "The standing offhours-gatherer double-fire (manual */15 dispatcher fires on stale last_fired AND cloud backstop independently fires the same pair ~5min later after the staleness check; leader-lock read times out so dispatcher cannot defer; news-scout SELF_SIGNALS_CACHE blind to concurrent sibling -> dup signals; market-watcher false gateway-down) decomposes into 3 HELD roots that SHARE a concurrency/dedup model. Per the existing PO hold (held_on 2026-06-16T10:31:48Z), these MUST be solved ONE way, not three. This umbrella = ONE architect design pass -> ONE BA decomposition that produces dev-ready fix_spec+files for all 3 children, then routes the code work (Root A -> agent-father via cowork-schedule.json brief; Roots B/C -> dev-mcp-server apps/mcp-server/).",
-        "children": [
-          {
-            "id": "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
-            "root": "A",
-            "zone": "docs/agents/cowork-team/flow/leader-lock.md",
-            "code_route": "agent-father (cowork-schedule.json brief)",
-            "problem": "dispatcher DEFER offhours-gatherer fire when leader-lock unreadable AND within :00-:15 cloud-backstop window of a 4h-boundary hour (do not fire on stale last_fired)",
-            "status": "DONE",
-            "commit": "69babf46",
-            "impl_file": "docs/agents/cowork-team/flow/leader-lock.md"
-          },
-          {
-            "id": "FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE",
-            "root": "B",
-            "zone": "apps/mcp-server/",
-            "code_route": "dev-mcp-server",
-            "problem": "SELF_SIGNALS_CACHE concurrent-sibling visibility — dedup blind to a concurrently-firing sibling -> dup signals",
-            "status": "BACKLOG",
-            "fix_spec": "docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-1",
-            "blocked_by": "ARCH-CRON-SCHEDULER-RELIABILITY (apps/mcp-server/ zone collision)"
-          },
-          {
-            "id": "FIX-MARKETWATCHER-GW-CORROBORATION-GATE",
-            "root": "C",
-            "zone": "apps/mcp-server/",
-            "code_route": "dev-mcp-server",
-            "problem": "Step-0-GW sibling-success corroboration gate — false gateway-down when a sibling succeeded; pairs with Root B concurrency model",
-            "status": "BACKLOG",
-            "fix_spec": "docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-2",
-            "blocked_by": "ARCH-CRON-SCHEDULER-RELIABILITY (apps/mcp-server/ zone collision)"
-          }
+        "route_to": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
+        "brief_task_ids": [
+          "DMS-1",
+          "DMS-2"
         ],
-        "design_mandate": "Architect produces ONE concurrency/dedup model that covers: (1) defer-on-unreadable-lock within backstop window, (2) cross-sibling concurrent-fire visibility for the dedup cache, (3) sibling-success corroboration before declaring gateway-down. The 3 children inherit that single model — no three divergent dedup schemes. BA then writes per-child fix_spec+files. Cross-references project memory: gatherer-manual-cloud-doublefire + sentinel-discriminator-bootstrap-boundary + false-infra-failure-corroboration-gate.",
-        "verification_gate": "Simulate: stale last_fired + unreadable leader-lock within :00-:15 backstop window of a 4h-boundary hour -> exactly ONE fire across manual+cloud paths, no dup internal signals, no false gateway-down when a sibling succeeded. Each child carries its own behavioral gate before its own done_verified.",
-        "size": "S",
-        "source": "po dev-team tick 2026-06-16T20:26Z — cluster all-3-HELD (no dev-ready spec); unblock via ONE architect/BA design pass per the standing hold reason; supersedes the per-stub dispatch path",
-        "supersedes_holds": [
-          "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
+        "subsumes_holds": [
           "FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE",
           "FIX-MARKETWATCHER-GW-CORROBORATION-GATE"
         ],
-        "created_at": "2026-06-16T20:31:21Z",
+        "title": "DMS-1+DMS-2: news-scout sibling-dedup window + market-watcher corroboration gate (Roots B/C of gatherer double-fire)",
+        "desc": "Per brief §Primitive 2+3 (share ONE get_recent_signals(window_seconds=900) helper against signal_bus on named-volume market.db). DMS-1: replace news-scout SELF_SIGNALS_CACHE=[] with the 900s window query; content-hash dedup key (signal_type, ticker_normalised, title_normalised); GENERIC — no allowlist by signal_type. DMS-2: replace market-watcher Step-0-GW immediate-BUG-on-2x-failure with the corroboration gate — after 2x probe failure, query get_recent_signals(900); sibling signals present → EXIT gracefully (no BUG); none → file gateway-down BUG. May ship as ONE combined dev-mcp-server sprint.",
+        "ac": "DMS-1: two concurrent news-scout fires within the same minute produce 0 duplicate internal signals. DMS-2: timeout with sibling success in window → no BUG filed; timeout with no sibling success → BUG filed.",
+        "verification_gate": "Live: two concurrent sibling fires → 0 dup signal_bus rows (RAW-probe named-volume market.db, not self-built test schema); timeout+sibling-success → no BUG row. Rebuild required (mcp-server code change). Cross-ref same-db-tools-diverge-rowcount + false-infra-failure-corroboration-gate.",
+        "size": "S",
+        "source": "po-s91 dev-team tick 2026-06-16T21:27Z — implementation handoff of brief 5bced686 (agents-architect→dev-mcp-server), HELD on zone collision",
+        "created_at": "2026-06-16T21:34:06Z",
         "created_by": "po",
-        "promoted_at": "2026-06-16T20:31:21Z",
-        "promoted_by": "po",
-        "dispatched_at": "2026-06-18T08:34:23Z",
-        "dispatched_by": "po",
-        "dispatch_note": "Promoted READY->in_progress by po dev-team triage tick 20260618T083104Z. Same-owner serialization (vs blind-session-guard) cleared: that work shipped+done_verified, WIP=0. Architect design already complete (architect_done_at 2026-06-16T20:39:40Z); brief docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md. Router mutex-wraps the agent-father spawn (maintenance lane). Umbrella: ONE design pass -> per-child fix_spec for 3 children (Root A->agent-father cowork-schedule.json; Roots B/C->dev-mcp-server apps/mcp-server/)."
+        "promoted_at": "2026-06-18T09:35:49Z",
+        "promoted_by": "po-s103",
+        "promotion_note": "Blocker ARCH-CRON-SCHEDULER-RELIABILITY is now done_verified:true -> apps/mcp-server/ zone collision (the sole hold_reason) is CLEARED. fix_spec ready (docs/handoffs/FIX-DMS1-DMS2-SIBLING-DEDUP-CORROBORATION-spec.md §DMS-1 + §DMS-2). Active coding WIP <=2: the only in_progress was the multi/design umbrella (now closed); the 2 apps/mcp-server review[] rows are QA-gated not active dev lanes, so no 2nd concurrent dev lane opens. Router dispatches dev-mcp-server. RAW-verify gate: 2 concurrent sibling fires -> 0 dup signal_bus rows on named-volume market.db; timeout+sibling-success -> no BUG row."
       }
     ],
-    "ready": [],
     "review": [
       {
         "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
@@ -21089,8 +21093,8 @@
     "last_po_triage_by": "po-s101-bctc-discover-reroute"
   },
   "_meta": {
-    "last_writer": "po-s102",
-    "last_write_at": "2026-06-18T00:23:35Z"
+    "last_writer": "po-s103",
+    "last_write_at": "2026-06-18T09:35:49Z"
   },
   "metadata": {
     "updated_at": "2026-06-18T06:33:41Z"
