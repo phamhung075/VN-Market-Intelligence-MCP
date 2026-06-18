@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T06:22:56Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": "60"
+    },
+    "last_fired_timestamp": "2026-06-18T06:21:13Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned_chef-intraday_cadence_due",
+    "nominal_tick": "06:15",
+    "leader_lock": "acquired_stolen_expired",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "chef-intraday cadence-due (04:24:49Z + 60m, ~117m elapsed); deferred at 05:21 now cleanly fired with no concurrent chef sibling (morning posted via backstop ~1h ago). Convergence gate + published marker in spawned flow decide actual post. unified-agent local-spawn reliability watch: 2 morning spawns failed today, backstop delivered."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-18T06:22:56Z",
+  "_processed": {
+    "fingerprint": "fb69e1fa64c3ffb34dd842865636c19d3115dd01de6ed4273dc0999c1b042f1d",
+    "processedAt": "2026-06-18T06:31:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
