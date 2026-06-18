@@ -176,3 +176,22 @@
 - escalate my OWN session's call_tool-unavailable miss as infra-down — vs treat as same-class phantom
 **why-decision:** Router RAW-probed gateway LIVE this tick (task_claim + send_telegram + get_macro_snapshot returned data → UP); the bctc claim is the known headless/cloud per-session-miss phantom of THIS epic → DEDUP, data-point only, no new task, no ops, no bctc re-dispatch (next legit cron 18:00Z, last_fired 15:08:04Z). My own session call_tool miss is the SAME class (third PO-tick recurrence — also hit at 11:37Z) → folded as corroborating evidence, NOT escalated (False-infra-failure corroboration gate: sibling=router-live-probe disambiguates). No backlog dispatch: the open epics' next-actionable rows are either gated (VMT-3a blocked-probe5 held out of WAVE-2 serial chain pending local PROBE-5; BCTC bank/macro FIX rows BACKLOG-not-groomed) or belong to a busy/serial owner; WIP already 1 active coding lane (ARCH-CRON-SCHEDULER-RELIABILITY) and minting a half-groomed row adds debt, not throughput.
 **why-change:** no change from router's pre-classification — triage confirmed it on file+board ground-truth (gateway tool surface unreachable in my subagent, so I leaned on git/jq + the router's live-probe context, which was complete).
+
+### STEP po-S16 · po · 2026-06-17T18:58:59Z
+**task-id:** FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH
+**what-done:** Re-routed in_progress row dev-vps-crawls→dev-mcp-server (zone apps/vps-client→apps/mcp-server), reclassified CRITICAL→HIGH, rewrote desc to real root (bctcQueueEnricherJob attempts===0 guard never terminalizes genuinely-absent tickers → zero-url counter unbounded → bctc SLA false-CRITICAL), minted deferred SLA-freshness follow-on to backlog.
+**what-considered:**
+- keep CRITICAL — rejected: data is healthy (65 Q1-2026 done, VCB live Q1-2026), no data-loss; breach is a metric artifact
+- HIGH — chosen: stuck false-CRITICAL masks ALL future real bctc breaches = real observability fix, not an emergency
+- fold SLA-metric fix vs mint separate — minted DEFERRED backlog: metric-semantics change distinct from enricher terminal; do not block enricher on it; closeable no-op if enricher fix stabilizes SLA
+**why-decision:** Router RAW-verified discovery healthy + 9 genuinely absent; root is mcp-server enricher else-branch (attempts===0 leaves pending forever), not a vps outage. Severity follows blast-radius (observability mask) not the false SLA number.
+**why-change:** Original hypothesis (SSC/HOSE endpoint structure changed) DISPROVEN by dev-vps-crawls VPS probes; zone + root + severity all corrected.
+
+### STEP po-S103 · po · 2026-06-18T00:23:35Z
+**task-id:** ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP
+**what-done:** Ran the 3rd manual fleet worktree-push this session (81-ahead crossed threshold; origin 40b201b4→8890537d, MERGE of 12 cloud-chore behind, tsc=0), then PROMOTED the deferred auto-push backstop backlog→ready + dispatched architect via canonical .head (po-s102 script).
+**what-considered:**
+- (a) promote+dispatch architect now — make this the LAST manual push
+- (b) keep backlogged with recorded rationale (manual push every ~18h acceptable for single-user)
+**why-decision:** (a). 3rd manual push this session = real recurrence ("fix root cause not recurrent symptom"). design_mandate already complete (po-s98) so it's a low-risk codify-the-proven-recipe job; architect lane FREE (only coding lanes at WIP=2); ready[] held only MEDIUM+P3 so no P0/P1 data-integrity work starved; market-independent infra so off-hours-safe. The task gated nothing visible → never surfaced (~9 passes) → that invisibility IS the recurrence cause.
+**why-change:** No change from the deferred plan — po-s98 explicitly named this option-2 backstop; I'm executing it now rather than deferring a 4th time.

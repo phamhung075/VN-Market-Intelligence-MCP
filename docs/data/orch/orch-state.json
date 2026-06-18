@@ -175,12 +175,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-17T11:46:39Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "ROUTER 2026-06-17T02:53:38Z — FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD REBUILT+LIVE-PROBED (image .Created 02:47:55Z > commit 09302e45; marker live; 11/11 peers healthy; get_system_status serves 4 bounded sections, honest degradation, no 500). done_verified WITHHELD (false) — active >3000ms stall arm not steady-state observable (sources fail-fast), proven by unit tests not live; same class as AF-1. next_agent cleared (ops satisfied). PUSH held (PO out-of-band)."
+    "status": "dispatch",
+    "active_task_id": "ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP",
+    "next_agent": "architect",
+    "updated_at": "2026-06-18T00:23:35Z",
+    "updated_by": "po-s102",
+    "note": "PO dispatch (po-s102, 2026-06-18T00:23:35Z): ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP promoted ready[] -> architect. Durable fix for the recurring manual fleet-push (3rd this session). recon_first=true; deliverable=architecture-brief choosing trigger (prefer option-b: po/dev-team flow-step fires scripts/fleet-worktree-push.sh when ahead-count>N, no new daemon), then pm decomposes + cross-service implements. Off-market-safe / market-independent."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11293,26 +11293,6 @@
         "created_by": "pm"
       },
       {
-        "id": "ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP",
-        "title": "DURABLE: threshold-triggered worktree-push backstop so origin-lag stops recurring as manual router nudges",
-        "type": "SPRINT-S",
-        "mode": "design",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "next_agent": "architect",
-        "recon_first": true,
-        "created_at": "2026-06-17T06:28:25Z",
-        "created_by": "po-s98",
-        "extends": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
-        "problem": "FU-ORIGIN-LAG-PUSH-DISCIPLINE (done_verified) shipped option-1: a rebase-retry push step INSIDE the commit-mutex window so each committing agent pushes its own work. RECURRENCE EVIDENCE: this is the 2nd time THIS session the push backlog grew to ~100+ commits (1st: 0c826511 worktree push; now: 701923bc, 103-ahead/36-behind) and needed a manual router-nudge worktree push. ROOT of the recurrence: the working tree is PERPETUALLY dirty (cowork churn) so the in-mutex `git pull --rebase` can never get a clean window — option-1's push silently fails its rebase-retry and commits pile up local-only again. The DISCIPLINE task itself named option-2 (periodic auto-push, decoupled from commit, single race-free pusher) as the deferred alternative. The recurrence shows option-1 needs option-2 as a BACKSTOP. Also: 103 unpushed commits = ~2 days of work with NO off-machine backup.",
-        "design_mandate": "Design the LOWEST-RISK threshold-triggered worktree-push backstop that fits the flow. The proven recipe (router notebook + feedback_push_blocked_by_perpetual_dirty_tree) already WORKS precisely because it is tree-INDEPENDENT: `git worktree add <wt> HEAD` -> integrate origin (MERGE if behind-set is cloud-chore; preserve both signal_queue rows on conflict) -> symlink main node_modules so the pre-push tsc hook passes -> `pnpm --filter vn-market check`=0 -> `git push origin HEAD:main` -> remove symlinks -> `git worktree remove`. Codify THIS recipe into a single reusable script (scripts/fleet-worktree-push.sh) and TRIGGER it when `git rev-list --count origin/main..HEAD` exceeds a threshold (evaluate N=20). Evaluate the trigger options and pick one: (a) a scheduled cron/RemoteTrigger that runs the script every N hours WHEN ahead>threshold (reconcile against existing cron inventory in docs/data/system-map.json — do NOT add an unmanaged always-on component); (b) a po-flow / dev-team-flow step that fires the script when the ahead-count exceeds threshold during a triage tick (no new daemon — rides the existing loop cadence). PREFER (b) on first read: it adds no always-on component, rides the loop that's already running, and the worktree isolation means it never touches the dirty main tree the loop uses. CONSTRAINTS: must be CONCURRENCY-SAFE under the active dev-team commit loop (claim a commit-mutex/task_claim before the push; the worktree is isolated so it never blocks the loop's main-tree work); MUST run the tsc pre-push gate (never --no-verify); MUST classify the behind-set (MERGE for cloud-chore, never silently rebase over real fixes); MUST NOT push around a RED pre-push hook (red-prepush-strands-fleet lesson).",
-        "deliverable": "architecture-brief in docs/architecture-briefs/ choosing trigger (a vs b), naming the single SSOT script (scripts/fleet-worktree-push.sh), the threshold N, the mutex/claim integration, and the exact flow-step or cron wiring. Then pm decomposes + the right zone implements (cross-service/ for the script + flow-doc; dev-mcp-server only if a scheduler job is chosen). Acceptance: after ship, `git rev-list --count origin/main..HEAD` stays bounded (<= N) across a full maintenance cycle WITHOUT any manual router-nudge worktree push, and NO push-storm / non-fast-forward error spam.",
-        "dedup_note": "EXTENDS FU-ORIGIN-LAG-PUSH-DISCIPLINE (done_verified, shipped option-1 in-mutex push) — does NOT duplicate it. This is the deferred option-2 backstop the DISCIPLINE task explicitly named. Reuses the proven worktree-push recipe, does not invent a new mechanism.",
-        "size": "S",
-        "origin": "po-s98 fleet-push 2026-06-17 — 2nd ~100-commit manual-nudge recurrence this session"
-      },
-      {
         "id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
         "type": "FIX",
         "severity": "LOW",
@@ -20540,6 +20520,29 @@
         "claimed_by": null,
         "verification_gate": "get_foreign_flow.md param renamed from ticker→code; agents no longer see schema error on market-watcher/news-scout fetch.",
         "done_verified_blocked_reason": null
+      },
+      {
+        "id": "ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP",
+        "title": "DURABLE: threshold-triggered worktree-push backstop so origin-lag stops recurring as manual router nudges",
+        "type": "SPRINT-S",
+        "mode": "design",
+        "status": "READY",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "recon_first": true,
+        "created_at": "2026-06-17T06:28:25Z",
+        "created_by": "po-s98",
+        "extends": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
+        "problem": "FU-ORIGIN-LAG-PUSH-DISCIPLINE (done_verified) shipped option-1: a rebase-retry push step INSIDE the commit-mutex window so each committing agent pushes its own work. RECURRENCE EVIDENCE: this is the 2nd time THIS session the push backlog grew to ~100+ commits (1st: 0c826511 worktree push; now: 701923bc, 103-ahead/36-behind) and needed a manual router-nudge worktree push. ROOT of the recurrence: the working tree is PERPETUALLY dirty (cowork churn) so the in-mutex `git pull --rebase` can never get a clean window — option-1's push silently fails its rebase-retry and commits pile up local-only again. The DISCIPLINE task itself named option-2 (periodic auto-push, decoupled from commit, single race-free pusher) as the deferred alternative. The recurrence shows option-1 needs option-2 as a BACKSTOP. Also: 103 unpushed commits = ~2 days of work with NO off-machine backup.",
+        "design_mandate": "Design the LOWEST-RISK threshold-triggered worktree-push backstop that fits the flow. The proven recipe (router notebook + feedback_push_blocked_by_perpetual_dirty_tree) already WORKS precisely because it is tree-INDEPENDENT: `git worktree add <wt> HEAD` -> integrate origin (MERGE if behind-set is cloud-chore; preserve both signal_queue rows on conflict) -> symlink main node_modules so the pre-push tsc hook passes -> `pnpm --filter vn-market check`=0 -> `git push origin HEAD:main` -> remove symlinks -> `git worktree remove`. Codify THIS recipe into a single reusable script (scripts/fleet-worktree-push.sh) and TRIGGER it when `git rev-list --count origin/main..HEAD` exceeds a threshold (evaluate N=20). Evaluate the trigger options and pick one: (a) a scheduled cron/RemoteTrigger that runs the script every N hours WHEN ahead>threshold (reconcile against existing cron inventory in docs/data/system-map.json — do NOT add an unmanaged always-on component); (b) a po-flow / dev-team-flow step that fires the script when the ahead-count exceeds threshold during a triage tick (no new daemon — rides the existing loop cadence). PREFER (b) on first read: it adds no always-on component, rides the loop that's already running, and the worktree isolation means it never touches the dirty main tree the loop uses. CONSTRAINTS: must be CONCURRENCY-SAFE under the active dev-team commit loop (claim a commit-mutex/task_claim before the push; the worktree is isolated so it never blocks the loop's main-tree work); MUST run the tsc pre-push gate (never --no-verify); MUST classify the behind-set (MERGE for cloud-chore, never silently rebase over real fixes); MUST NOT push around a RED pre-push hook (red-prepush-strands-fleet lesson).",
+        "deliverable": "architecture-brief in docs/architecture-briefs/ choosing trigger (a vs b), naming the single SSOT script (scripts/fleet-worktree-push.sh), the threshold N, the mutex/claim integration, and the exact flow-step or cron wiring. Then pm decomposes + the right zone implements (cross-service/ for the script + flow-doc; dev-mcp-server only if a scheduler job is chosen). Acceptance: after ship, `git rev-list --count origin/main..HEAD` stays bounded (<= N) across a full maintenance cycle WITHOUT any manual router-nudge worktree push, and NO push-storm / non-fast-forward error spam.",
+        "dedup_note": "EXTENDS FU-ORIGIN-LAG-PUSH-DISCIPLINE (done_verified, shipped option-1 in-mutex push) — does NOT duplicate it. This is the deferred option-2 backstop the DISCIPLINE task explicitly named. Reuses the proven worktree-push recipe, does not invent a new mechanism.",
+        "size": "S",
+        "origin": "po-s98 fleet-push 2026-06-17 — 2nd ~100-commit manual-nudge recurrence this session",
+        "promoted_at": "2026-06-18T00:23:35Z",
+        "promoted_by": "po-s102",
+        "promotion_note": "3rd manual worktree-push this session — PO promotes the deferred option-2 backstop so this is the LAST manual push. design_mandate already complete (po-s98); architect lane free; ready[] holds only MEDIUM+P3 so no P0/P1 starved; market-independent infra/script work. fix root cause not recurrent symptom."
       }
     ],
     "review": [
@@ -20774,5 +20777,9 @@
     "updated_by": "po",
     "last_po_triage": "2026-06-17T18:58:32Z",
     "last_po_triage_by": "po-s101-bctc-discover-reroute"
+  },
+  "_meta": {
+    "last_writer": "po-s102",
+    "last_write_at": "2026-06-18T00:23:35Z"
   }
 }

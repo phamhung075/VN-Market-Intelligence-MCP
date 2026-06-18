@@ -1,22 +1,20 @@
 # PO Notebook
-_overwritten 2026-06-17T21:28:33Z_
+_overwritten 2026-06-18T00:23:35Z_
 
-## Cycle po-triage-signals (2026-06-17T21:28Z, dev-team Step-1 triage) — TNB c98 ACK + 4 actionable signals, all DEDUP. Returned NOTHING.
+## Cycle po-fleet-push #3 (2026-06-18T00:23Z) — PUSH (81-ahead threshold) + DURABLE-FIX promote
 
-**Sig 1 — TNB c98 audit-handoff (NEEDS_ATTENTION / IMPROVING).** ACK appended to docs/handoffs/tnb-audit-latest.md.
-- 2 NEW HIGH findings (F-MCP-SUBAGENT-SYSTEMIC-2026-06-17 + F-EOD-MCP-BLOCKED) = local-spawn gateway connector artifact → DEDUP into ARCH-HEADLESS-GATEWAY-COWORK-NOPOST. NOT a real outage (gateway RAW-proven UP).
-- 06-17 chef AF-gate false-green (gold 4360 vs live 4245.9, invented RSI on closed market): already covered — FIX-CHEF-FABRICATED-TA-NUMBERS (done_verified) + AC-FAILCLOSED clause folded into ARCH-HEADLESS. Pending c99 reconcile resolves: AC-FAILCLOSED ships via Monday-gated ARCH-HEADLESS design lane (agents-architect→agent-father). NO new FIX.
-- F-BCTC-BANK-SCALAR-MAPPING → already minted (FIX-BCTC-BANK-SCALAR-MAPPING po-s91). F3/F4/F9/F-MORNING-NB/F5 = structural, capacity-deferred (WIP full).
+**PUSH DONE (3rd manual this session).** Local was 81-ahead/12-behind (crossed ~80). Proven isolated-worktree recipe, never touched the live loop tree:
+- `git worktree add --detach /tmp/fleet-push-wt da805bd6` (loop's HEAD untouched throughout).
+- 12-behind = pure cloud-chore (health rechecks, notebooks, chef auto-cure, TNB c98). Conflict surface = ONLY orch-state.json + tnb-audit-latest.md → MERGE (not rebase), preserved both sides.
+- orch-state resolve: took OUR HEAD (richer/processed — 5 unique sau/tnb rows origin lacked) + injected origin's 1 unique row `tnb-20260617T201300` into rows[]. Verified all 6 board arrays byte-identical to HEAD (ready2/backlog296/in_progress2/review5/done167/done_verified109).
+- tnb-audit-latest.md: same-cycle c98 regen doc → took HEAD (20:25Z, later PO-ACK version supersedes origin's 20:13Z).
+- symlinked main node_modules → `pnpm --filter vn-market check`=0 → push. pre-push hook ran tsc, PASSED. origin 40b201b4→**8890537d**. loop HEAD da805bd6 confirmed ANCESTOR (no work lost). symlinks removed BEFORE worktree remove (never rm real node_modules). worktree removed; main tree HEAD still da805bd6 (untouched).
 
-**Sig 2 — bctc-analyst c065 BLOCKED (3rd consecutive c063/c064/c065).** Router DISPOSITION confirmed via own confirm-before-blame: gateway RAW-proven UP first-hand (emit_pressure_state round-trip @21:06:31Z, same minute as block). FALSE infra-down = local-spawn connector artifact; cloud RemoteTrigger path HAS connector (c062 00:20Z succeeded). DEDUP → appended c065 data-point to ARCH-HEADLESS; recurrence_count 1→3, last_recurrence 21:00Z. NO new gateway-fix, NO ops spawn, NO bctc re-dispatch. No double-post risk (marker gate intact). Conservation-guarded: backlog len 296 unchanged.
-
-**Sig 3+4 — context_bloat_breach: qa.md (236→242L, cap 200) + tran-ngoc-bau.md (207L, cap 200).** NO-OP from PO. Both are agent-notebook class; owning agents self-heal on next notebook-write (skill's AC-5 ≤200L gate prunes next-oldest ## block in-memory before the next OVERWRITE/APPEND). Overage small (qa +42, tnb +7); no data loss, no claude-manager-helper prune dispatch needed (auto-prune is the durable path, not a one-shot trim). Logged; will self-correct.
-
-**Cowork 7× telemetry (SILENT/FIRE 19:52–21:20):** informational, no action.
+**DURABLE-FIX CALL → (a) PROMOTE+DISPATCH.** ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP backlog→ready (po-s102 script, conservation-guarded ready+1/backlog-1), canonical .head→architect. Rationale: 3rd manual push = real recurrence; design_mandate already complete (po-s98) = low-risk codify-proven-recipe; architect lane free; ready[] held only MEDIUM+P3 (no P0/P1 starved); market-independent (off-hours safe). The task "gates nothing visible" → that invisibility IS why it sat ~9 passes → exactly the recurrence root. "fix root cause not symptom."
 
 ## Carry-over
-- Returned NOTHING to router (idle EXIT). No BATCH — every actionable signal deduped into an existing tracked epic; no new groomed-and-unblocked work to fill a slot.
-- WIP at 2 coding lanes (FULL): ARCH-CRON-SCHEDULER-RELIABILITY [in_progress], FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH [review]. DID NOT touch them.
-- ARCH-HEADLESS-GATEWAY-COWORK-NOPOST recurrence ledger now 3 data-points (bctc c063+c065, tnb c98 corroboration) — REINFORCES the architect design ask (probe call_tool + RE-QUEUE not claim-and-drop) + the AC-FAILCLOSED fail-closed marker gate. Still backlog/agents-architect, dispatch_gate=monday, off-market-safe.
-- ROUTER-HELD gates (DID NOT TOUCH): SHARED OHLCV P0 (2026-06-18 ~02:15Z market-open behavioral gate), FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD (done_verified WITHHELD, AF-1 class), head=idle.
-- COMMIT: gateway `task_claim` NOT wired in this local sub-agent session (the very artifact being triaged) → commit-mutex C-2 FAIL-CLOSED: I leave board + handoff + notebook in working tree for the ROUTER (has connector) to commit via mutex. Scope = orch-state + tnb-audit-latest.md + po notebook ONLY. NO push (PO out-of-band). NEVER `git add -A` (loop churn live).
+- COMMIT (this cycle, EXPLICIT PATHS only): orch-state.json + scripts/po-s102-*.jq + this notebook + sprint-FE-PAGE-REORG-po.md journal. NEVER git add -A (loop churn live). Push of THIS commit = router's call (out-of-band); the 81-commit backlog is already safely on origin via the worktree push above.
+- NEW reusable script: scripts/po-s102-auto-push-backstop-promote-dispatch.jq (promote+dispatch+head-repoint, idempotent, CAS-mtime guarded). Pointer to po/flow/main.md catalog pending.
+- DISPATCH LIVE: architect now owns ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP — deliverable = architecture-brief choosing trigger (prefer option-b flow-step firing scripts/fleet-worktree-push.sh when ahead>N), then pm decomposes + cross-service implements. recon_first=true.
+- WIP coding lanes still FULL (ARCH-CRON-SCHEDULER-RELIABILITY in_progress, FIX-BCTC-DISCOVER review) — did NOT touch. review[] has 5 awaiting qa. The promoted backstop is a DESIGN lane (architect), not a coding slot — no coding-WIP impact.
+- If the loop's local tree shows behind after this: it fast-forwards naturally next cycle (da805bd6 is clean ancestor of origin 8890537d). No manual main-tree reconcile needed.
