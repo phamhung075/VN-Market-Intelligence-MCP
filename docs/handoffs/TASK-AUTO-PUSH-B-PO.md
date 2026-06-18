@@ -96,3 +96,28 @@ Then test safety guard blocking:
 2. Run PO tick
 3. Verify the step detects ahead > 20 BUT logs skip message due to dirty critical files
 4. Verify Telegram WORK channel receives block message: `[po] PUSH-BACKSTOP: ahead=21 > 20 but safety guard BLOCKED...`
+
+---
+
+## Implementation Record
+
+**impl_commit:** 73bcd4e9
+**impl_date:** 2026-06-18
+**impl_agent:** agent-father (claude-sonnet-4-6)
+**status:** DONE — ready for QA sign-off
+
+**Changes made:**
+- `docs/agents/po/flow/main.md`: Added `<!-- jump:push-backstop -->` + `## Step PUSH-BACKSTOP` section (59 lines). Size-justification comment updated to 229L. Placement: after No-Task Guard "PO CAN self-initiate" paragraph, before Branch Workflows table.
+- `docs/handoffs/TASK-AUTO-PUSH-B-PO.md`: this implementation record.
+
+**Acceptance criteria cross-check:**
+- [x] New section "## Step PUSH-BACKSTOP" added to § No-Task Guard section
+- [x] Placement note: run BEFORE idle JUMP TO end AND after every branch workflow returns
+- [x] Threshold check: `ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo 0)` + `if [ "$ahead" -gt "${PUSH_THRESHOLD:-20}" ]`
+- [x] Safety Guard 1: `git diff --name-only | grep -E 'docs/data/orch/orch-state\.json|docs/agent-memory/notebooks/'`
+- [x] Safety Guard 2: `mcp__gateway__call_tool(server="vn-market", tool="task_list_held", arguments={kind: "commit-mutex"})` + `count > 0 → skip`
+- [x] Guards pass → `bash scripts/fleet-worktree-push.sh` (committed 26807a41)
+- [x] Safety guard blocked → Telegram WORK skip message (exact text per spec)
+- [x] Option-B rationale comment included
+- [x] No new cron/launchd/RemoteTrigger added
+- [x] Commit by explicit pathspec only (no git add -A)
