@@ -137,31 +137,6 @@
 
 ---
 
-## c312 VN-MACRO-TOOLING sprint decomposition · 2026-06-14T180000Z
-
-ARCHITECT brief FINAL (ARCH-VN-MACRO-TOOLING, commit 675891163d) + BA spec FINAL (REQ_VN-MACRO-TOOLING, commit 11d318ea) → decomposed into **20 atomic PM tasks** across 5 execution waves. Key innovation: **explicit probe-gating model** (PROBE-1..4 in WAVE-1 run in parallel, determine parse strategy for WAVE-2 Zone A parsers before code is written). No parser code written before live payload captured in `scripts/probes/vmt-N-sample.json` (GA-7 probe-first methodology honored).
-
-**Task structure:**
-- **WAVE-1 (6 tasks, parallel, 0 deps each):** 4 VPS-fetch probes (ops-vps-crawls, each ~1-2h) + Zone D vpsFetch.go adapter (dev-macro-indicators, critical blocker for all Zone A) + Zone C survey_distribution stub (dev-mcp-server, independent)
-- **WAVE-2 (4 tasks):** Zone A parsers not gated on probes OR gated on vpsFetch-D only: VMT-1a (total+hs_attribution), VMT-2 (full BOP, but gated on PROBE-2), VMT-3a (PMI—not geo-blocked), VMT-5a (policy_rates+SJC+fx_coupling)
-- **WAVE-3 (4 tasks):** Zone A parsers gated on probe results: VMT-1b (bloc_split, gated PROBE-1), VMT-3b (GSO, gated PROBE-3), VMT-4 (CPI, gated PROBE-3), VMT-5b (interbank+OMO, gated PROBE-4)
-- **WAVE-4 (5 tasks):** Zone B thin HTTP proxy handlers (each depends on corresponding Zone A endpoint being live): VMT-7a..7e (MCP handlers for 5 tools)
-- **WAVE-5 (1 task):** Zone B registration + gateway discoverability + skill switch-on acceptance gate: VMT-7-REGISTER
-
-**Probe-gate dependency model** (load-bearing for avoid-F1-parser failures):
-- PROBE-1 (Customs FDI-bloc) → gates only VMT-1b `bloc_split` field; VMT-1a proceeds without probe
-- PROBE-2 (SBV BOP format—PDF vs Excel, E&O sign convention) → gates VMT-2 full parser
-- PROBE-3 (GSO monthly release—table structure, CPI baskets) → gates VMT-3b + VMT-4; VMT-3a (PMI) NOT gated
-- PROBE-4 (SBV interbank 1w tenor, OMO outstanding) → gates only VMT-5b fields; VMT-5a proceeds without probe
-
-**Handoff files created:** TASK_PROBE-1.md through TASK_PROBE-4.md (4 probe specs), TASK_VMT-D-VPSFETCH.md (Zone D critical), TASK_VMT-6-CREDIT-FLOW-EXTEND.md (Zone C stub). orch-state.json .task_board.active_sprints[VN-MACRO-TOOLING].tasks updated with 20 atomic tasks, wave assignments, dependency edges, file lists per task.
-
-**Key design decisions honored:** (1) DDD Fence-A: Zone D VpsFetchPort is domain port interface, not direct infra import; (2) Honest is_estimate: VMT-6 ships survey_distribution.is_estimate=true with note "VIRA/VARA no machine-readable source confirmed"; (3) IRS deferred (DD-6): irs.is_estimate=true permanent, no blocker; (4) No parallel file conflicts: each task touches disjoint files (WAVE-1/2/3 fully parallelizable).
-
-**WIP limit decision:** Recommend dispatch all 6 WAVE-1 tasks in parallel (ops gets 4 probes, dev-macro-indicators gets Zone D, dev-mcp-server gets Zone C). WIP count = 6 (under soft limit 10). After WAVE-1 returns + container rebuild (post Zone D commit), WAVE-2 unblocks with 4 Zone A tasks to dev-macro-indicators (WIP=4 for single dev).
-
-**First dispatch set (WAVE-1 READY NOW):** ops-vps-crawls: [PROBE-1, PROBE-2, PROBE-3, PROBE-4]; dev-macro-indicators: [VMT-D-VPSFETCH]; dev-mcp-server: [VMT-6-CREDIT-FLOW-EXTEND]. All independent, no blockers, ready to go. NEXT: main terminal routes to dev-team Step 3 (dispatcher) for WAVE-1 fan-out spawn.
-
 ---
 
 ## Archive: Earlier Cycles (c313–c189)
