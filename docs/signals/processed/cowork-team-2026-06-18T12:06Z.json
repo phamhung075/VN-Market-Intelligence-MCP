@@ -1,0 +1,44 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T12:06:27Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [],
+    "spawned": [],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "deferred_to_backstop": [],
+    "skipped_no_backstop": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "pressure_mode": "adaptive",
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "gateway_blind_session_and_slots_have_no_cloud_backstop",
+    "nominal_tick": "12:00",
+    "leader_lock": "self_held_renewed",
+    "note": "Both offhours gatherers (cron 0 */4, gatherer-standard, guaranteed:false) matched on cadence. Session gateway-blind (mcpServers=0) → NOT locally spawned (blind gatherer fabricates briefs, violates no-fake-data). Neither slot is one of the 6 cloud RemoteTrigger backstops → no fallback this tick → genuinely unfired. last_fired stays 2026-06-15T08:08:57Z. This is a real coverage gap, not an outage: fix = user reconnects gateway in .mcp.json (handoff docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-18T12:06:27Z",
+  "_processed": {
+    "fingerprint": "5e15433e4ee26502f78b22c07d1ace94134875d6eba8ff330794d261ad0af239",
+    "processedAt": "2026-06-18T12:31:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

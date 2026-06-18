@@ -1,0 +1,51 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T08:51:50Z",
+    "matched_slots": [
+      "chef-eod"
+    ],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "deferred_to_backstop": [
+      "chef-eod"
+    ],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "due_reasons": {
+      "chef-eod": "cron"
+    },
+    "cadence_minutes": {
+      "chef-eod": null
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "DEFERRED_BLIND",
+    "reason": "gateway_blind_session_defer_to_cloud_backstop",
+    "nominal_tick": "08:45",
+    "leader_lock": "self_held_renewed",
+    "marker_probe": {
+      "task_id": "published:chef-eod:2026-06-18",
+      "ok": false,
+      "probed_at": "2026-06-18T08:51:40Z",
+      "interpretation": "no EOD marker yet — 6min after 08:45 cron, before ~08:57 cloud-backstop offset → inconclusive-lean-not-yet-fired"
+    },
+    "note": "GUARANTEED chef-eod (cron 45 8) matched. Session gateway-blind (mcpServers=0) → NOT locally spawned (blind chef fabricates dish). Deferred to cloud RemoteTrigger backstop. last_fired NOT bumped. CONCERN: last_fired=2026-06-15T08:52:40Z = 3 days stale, SAME staleness as offhours gatherers — suggests cloud backstop may not be writing last_fired (or not firing EOD dishes 06-16/06-17). RE-VERIFY next tick ~09:06Z (after backstop window): if marker still ok:false AND last_fired still 06-15, this is a CONFIRMED guaranteed-slot delivery gap → escalate to po/ops, NOT just a blind-session artifact."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-18T08:51:50Z",
+  "_processed": {
+    "fingerprint": "6bb2db38ca983375baae6cee6105005209c0352529bfe7e625cda575b4254ef3",
+    "processedAt": "2026-06-18T09:31:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

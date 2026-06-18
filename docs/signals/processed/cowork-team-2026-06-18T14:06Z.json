@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T14:06:28Z",
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "won_slots": [],
+    "spawned": [],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "deferred_to_backstop": [],
+    "skipped_no_backstop": [
+      "refine-bctc-slot-2"
+    ],
+    "pressure_mode": "adaptive",
+    "due_reasons": {
+      "refine-bctc-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-2": null
+    },
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "gateway_blind_session_and_slot_has_no_cloud_backstop",
+    "nominal_tick": "14:00",
+    "leader_lock": "self_held_renewed",
+    "note": "refine-bctc-slot-2 (cron 0 14, bctc-offmarket, guaranteed:false) matched on cron. Session gateway-blind (mcpServers=0) -> NOT locally spawned (blind refine_bctc_md worker has no mcp__gateway__call_tool, would no-op or fabricate, violates no-fake-data). refine-bctc-* is local-dispatcher-only, NOT one of the 6 cloud RemoteTrigger backstops -> no fallback this tick -> genuinely unfired. last_fired stays 2026-06-14T14:08:08Z. Real coverage gap, not an outage: fix = user reconnects gateway in .mcp.json. Same class as the 12:06Z offhours-gatherer skip and the 09:07Z refine-bctc-slot-1 skip."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-18T14:06:28Z",
+  "_processed": {
+    "fingerprint": "b9d93aa6d1b672750bed2c36c6dec411c21fbd103d05ee5a53b067191668cf4c",
+    "processedAt": "2026-06-18T14:31:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

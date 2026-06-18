@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-18T09:07:10Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [],
+    "spawned": [],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "deferred_to_backstop": [],
+    "skipped_no_backstop": [
+      "refine-bctc-slot-1"
+    ],
+    "pressure_mode": "adaptive",
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "gateway_blind_session_and_slot_has_no_cloud_backstop",
+    "nominal_tick": "09:00",
+    "leader_lock": "self_held_renewed",
+    "correction": {
+      "supersedes": [
+        "cowork-team-2026-06-18T08:06:..Z (offhours gatherers)",
+        "cowork-team-2026-06-18T08:21:35Z (chef-intraday)",
+        "cowork-team-2026-06-18T08:51:50Z (chef-eod escalation-prime)"
+      ],
+      "finding": "RemoteTrigger list (RAW): exactly 6 cloud backstops exist, NOT 12. chef-eod-backstop fired TODAY 08:45:06Z (next 06-19 08:45) — EOD dish DELIVERED, no outage. The earlier chef-eod 3-day-stale escalation was a FALSE infra-failure caused by reading local cowork-schedule.json last_fired, which the cloud backstop does NOT sync back to this working tree. Marker-key probe was wrong key, not non-delivery.",
+      "backstopped_slots": [
+        "chef-morning(15 5)",
+        "chef-eod(45 8 1-5)",
+        "chef-evening(45 19)",
+        "tnb-audit(13 20)",
+        "digest-sunday(47 13 *0)",
+        "health-recheck(0 */2)"
+      ],
+      "NOT_backstopped_at_risk_in_blind_sessions": [
+        "chef-intraday",
+        "news-scout-offhours",
+        "news-scout-sentiment",
+        "news-scout-market",
+        "market-watcher-offhours",
+        "market-watcher-market",
+        "market-watcher-eod",
+        "refine-bctc-slot-1",
+        "refine-bctc-slot-2",
+        "bctc-analyst-slot-1..4",
+        "alert-commander-*"
+      ],
+      "impact": "While the local */15 dispatcher session is gateway-blind (.mcp.json mcpServers=0), every NON-backstopped slot has no fallback and goes unfired. The 3 daily chef dishes + tnb + digest + health survive via cloud. The intraday/gatherer/bctc-refine/alert layer does NOT.",
+      "user_action": "Reconnect gateway in .mcp.json so the local dispatcher can spawn non-backstopped slots (handoff: docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md). Secondary: cloud backstops not syncing last_fired back to local tree makes the local matcher re-match already-fired slots (benign redundancy, not an outage)."
+    }
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-18T09:07:10Z",
+  "_processed": {
+    "fingerprint": "c019ae797dbba4769fbfc771c4a54588861477c133ee207cf3c4f72409bc4b31",
+    "processedAt": "2026-06-18T09:31:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
