@@ -150,3 +150,12 @@ Operator runbook (telemetry meanings + recovery) → `docs/protocols/chef-pipeli
 - All cron prompts are minimal (~20 words) — agent `.md` has full instructions
 - All agents have Early Exit guards — skip full scan when no changes detected
 - All agents run `/compact` before exiting to compress session context
+
+### Push Backstop (Option-B: PO Tick, No New Cron)
+
+**No new cron entry.** The push backstop is NOT a new launchd plist, cron entry, or RemoteTrigger. It fires inside the existing PO flow tick (~every 15 min) as **Step PUSH-BACKSTOP**, with a fallback in `docs/agents/dev-team/flow/post-cycle.md` Step 4.9 when PO is unavailable.
+
+**Trigger:** `git rev-list --count origin/main..HEAD` exceeds `PUSH_THRESHOLD` (default N=20).
+**Action:** Invokes `scripts/fleet-worktree-push.sh` — a worktree-isolated push (never touches main working tree) with divergence-reconcile, bg-agent safety guard (skips if commit-mutex held or critical files dirty), and a mandatory `pnpm --filter vn-market check` pre-push gate.
+**Rationale:** Option-B chosen over dedicated cron/launchd (Option-A): reuses existing PO tick cadence, adds zero new always-on components, avoids cron inventory debt.
+**References:** `docs/architecture-briefs/2026-06-18-auto-push-threshold-backstop.md` (§2 Options Evaluation)
