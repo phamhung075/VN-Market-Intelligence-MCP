@@ -184,11 +184,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-18T07:37:02Z",
+    "updated_at": "2026-06-18T08:34:23Z",
     "updated_by": "po",
-    "active_task_id": "FIX-COWORK-BLIND-SESSION-GUARD",
-    "next_agent": "agents-architect",
-    "note": "DISPATCH FIX-COWORK-BLIND-SESSION-GUARD (HIGH, agents-architect design -> agent-father impl) — confirmed-live gateway-blind fabrication guard. CLEAN-FOREIGN-FLOW also dispatched (dev-mcp-server, WIP slot 2). DESIGN-GATHERER held in ready[] (same-owner contention)."
+    "active_task_id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
+    "next_agent": "agent-father",
+    "note": "DISPATCH DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER (SPRINT-S, MEDIUM, agent-father maintenance lane). Architect design done 2026-06-16; brief docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md. Prior head (FIX-COWORK-BLIND-SESSION-GUARD + CLEAN-FOREIGN-FLOW) was STALE — both already done_verified, WIP=0."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1022,8 +1022,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-18T09:55:00Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-18T08:34:23Z",
+    "_updated_by": "po-triage-20260618T083104Z",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -20738,6 +20738,44 @@
         "status_note": "commit ace01f1a — BG: 4 doc files reconciled; get_foreign_flow ticker→code+days; get_market_foreign_flow +days+top_n; diagnose/reset circuit-breaker breaker_id removed; all params match live code",
         "done_verified_at": "2026-06-18T09:55:00Z",
         "done_verified_by": "qa"
+      },
+      {
+        "id": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER",
+        "title": "cowork-schedule.json last_fired stamps clobbered by stale-base read-modify-write race",
+        "type": "FIX",
+        "status": "done_verified",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "next_agent": null,
+        "blocking": false,
+        "root_cause": "A writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline -- file uncommitted since e96176d8 2026-06-15), updates only ITS slot (chef-intraday) and writes the WHOLE file back -> every other slot last_fired reverts to the stale base. Evidence 2026-06-18T04:07Z: chef-intraday=03:23:15Z (fresh, =file mtime) BUT news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z -- reverted to 3-day-old values despite fresh stamps existing earlier today (00:07Z matcher snapped_last_fired=2026-06-18T00:00:00Z). Effect: matcher sees slots as massively overdue -> spurious re-offer/re-fire risk (doublefire class); cadence ledger corrupted. NOT a gather gap (gathering still happens; only the stamp ledger is clobbered). Relates [[feedback_worktree_stale_base]] + guaranteed-slot doublefire class.",
+        "fix_spec": "cowork-schedule.json writer MUST FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set / per-slot CAS), never echo back a whole stale snapshot. Same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read, project_orch_state_cutover). Applies to BOTH the cloud cowork-leader dispatcher writer AND any local cowork-team last-fired writer (docs/agents/cowork-team/flow/last-fired.md, match-slots.md).",
+        "generic_mandate": "Fix the WRITE discipline at the schedule-writer layer (fresh-read + single-slot CAS), not a one-off re-stamp -- a re-stamp without the write-discipline fix re-clobbers next tick.",
+        "verification_gate": "After fix: two concurrent simulated writers each mutating a DIFFERENT slot must BOTH persist (no slot reverts to a stale base); cowork-schedule.json slots show monotonic last_fired (no 3-day reversion) across a multi-writer window; matcher no longer reports spurious massive-overdue.",
+        "files": [
+          "docs/data/cowork-schedule.json",
+          "docs/agents/cowork-team/flow/last-fired.md",
+          "docs/agents/cowork-team/flow/match-slots.md",
+          "apps/mcp-server/"
+        ],
+        "signal_ref": "cowork-team-20260618T0408Z-schedule-json-stale-base-clobber",
+        "origin": "2026-06-18 cowork-team signal, MEDIUM, RAW-verified mixed-state at 04:07Z.",
+        "created_at": "2026-06-18T04:25:34Z",
+        "groomed_by": "po-s103",
+        "promoted_at": "2026-06-18T04:25:34Z",
+        "pm_done": true,
+        "updated_at": "2026-06-18T06:33:41Z",
+        "updated_by": "qa",
+        "status_note": "APPROVED by QA: 51/0 targeted; T-14b RED independently reproduced (50/1 without guard); full suite 13159/42sk/40fail disjoint; tsc 0 err; DJ sprint-FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER-qa.md.",
+        "dev_done": true,
+        "dev_done_at": "2026-06-18T05:30:00Z",
+        "dev_done_by": "dev-mcp-server",
+        "qa_approved": true,
+        "qa_approved_at": "2026-06-18T06:10:00Z",
+        "qa_approved_by": "qa",
+        "lane_hygiene_note": "relocated qa[]->done_verified[] by po dev-team triage tick 20260618T083104Z (lane drift / signal-row-status-lags-groundtruth class); RAW-verified done: commits 30b9a7f8 (dev fix TASK-CWKSCH-1+2 monotonic guard) + e28ea436 (qa notebook APPROVED) exist on HEAD; QA DJ sprint-FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER-qa.md present; qa_approved:true. No re-dispatch/re-QA — work complete.",
+        "done_verified_at": "2026-06-18T08:34:23Z",
+        "done_verified_by": "po"
       }
     ],
     "head": {
@@ -20750,13 +20788,12 @@
       "note": "DEPRECATED — do NOT read or write this field. The canonical head SSOT is TOP-LEVEL .head (read by dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). This field formerly drifted from top-level .head because po-s65/po-s54 scripts wrote here while the flow read top-level .head (signal head-drift-po-s64-vs-task-board-head). Any new script writing .task_board.head is a BUG — write .head instead. Kept as a stub (not removed) so a legacy reader sees the redirect rather than a phantom active_task_id.",
       "next_task": "TASK-AUTO-PUSH-A"
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
         "type": "SPRINT-S",
         "priority": "MEDIUM",
-        "status": "READY",
+        "status": "in_progress",
         "route_to": "agents-architect",
         "owner": "agents-architect",
         "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
@@ -20800,9 +20837,13 @@
         "created_at": "2026-06-16T20:31:21Z",
         "created_by": "po",
         "promoted_at": "2026-06-16T20:31:21Z",
-        "promoted_by": "po"
+        "promoted_by": "po",
+        "dispatched_at": "2026-06-18T08:34:23Z",
+        "dispatched_by": "po",
+        "dispatch_note": "Promoted READY->in_progress by po dev-team triage tick 20260618T083104Z. Same-owner serialization (vs blind-session-guard) cleared: that work shipped+done_verified, WIP=0. Architect design already complete (architect_done_at 2026-06-16T20:39:40Z); brief docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md. Router mutex-wraps the agent-father spawn (maintenance lane). Umbrella: ONE design pass -> per-child fix_spec for 3 children (Root A->agent-father cowork-schedule.json; Roots B/C->dev-mcp-server apps/mcp-server/)."
       }
     ],
+    "ready": [],
     "review": [
       {
         "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
@@ -21008,44 +21049,7 @@
         }
       }
     ],
-    "qa": [
-      {
-        "id": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER",
-        "title": "cowork-schedule.json last_fired stamps clobbered by stale-base read-modify-write race",
-        "type": "FIX",
-        "status": "done_verified",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "next_agent": null,
-        "blocking": false,
-        "root_cause": "A writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline -- file uncommitted since e96176d8 2026-06-15), updates only ITS slot (chef-intraday) and writes the WHOLE file back -> every other slot last_fired reverts to the stale base. Evidence 2026-06-18T04:07Z: chef-intraday=03:23:15Z (fresh, =file mtime) BUT news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z -- reverted to 3-day-old values despite fresh stamps existing earlier today (00:07Z matcher snapped_last_fired=2026-06-18T00:00:00Z). Effect: matcher sees slots as massively overdue -> spurious re-offer/re-fire risk (doublefire class); cadence ledger corrupted. NOT a gather gap (gathering still happens; only the stamp ledger is clobbered). Relates [[feedback_worktree_stale_base]] + guaranteed-slot doublefire class.",
-        "fix_spec": "cowork-schedule.json writer MUST FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set / per-slot CAS), never echo back a whole stale snapshot. Same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read, project_orch_state_cutover). Applies to BOTH the cloud cowork-leader dispatcher writer AND any local cowork-team last-fired writer (docs/agents/cowork-team/flow/last-fired.md, match-slots.md).",
-        "generic_mandate": "Fix the WRITE discipline at the schedule-writer layer (fresh-read + single-slot CAS), not a one-off re-stamp -- a re-stamp without the write-discipline fix re-clobbers next tick.",
-        "verification_gate": "After fix: two concurrent simulated writers each mutating a DIFFERENT slot must BOTH persist (no slot reverts to a stale base); cowork-schedule.json slots show monotonic last_fired (no 3-day reversion) across a multi-writer window; matcher no longer reports spurious massive-overdue.",
-        "files": [
-          "docs/data/cowork-schedule.json",
-          "docs/agents/cowork-team/flow/last-fired.md",
-          "docs/agents/cowork-team/flow/match-slots.md",
-          "apps/mcp-server/"
-        ],
-        "signal_ref": "cowork-team-20260618T0408Z-schedule-json-stale-base-clobber",
-        "origin": "2026-06-18 cowork-team signal, MEDIUM, RAW-verified mixed-state at 04:07Z.",
-        "created_at": "2026-06-18T04:25:34Z",
-        "groomed_by": "po-s103",
-        "promoted_at": "2026-06-18T04:25:34Z",
-        "pm_done": true,
-        "updated_at": "2026-06-18T06:33:41Z",
-        "updated_by": "qa",
-        "status_note": "APPROVED by QA: 51/0 targeted; T-14b RED independently reproduced (50/1 without guard); full suite 13159/42sk/40fail disjoint; tsc 0 err; DJ sprint-FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER-qa.md.",
-        "dev_done": true,
-        "dev_done_at": "2026-06-18T05:30:00Z",
-        "dev_done_by": "dev-mcp-server",
-        "qa_approved": true,
-        "qa_approved_at": "2026-06-18T06:10:00Z",
-        "qa_approved_by": "qa",
-        "lane_hygiene_note": "done_verified (commits 30b9a7f8 + e28ea436); stale next=pm cleared by po triage tick"
-      }
-    ],
+    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
@@ -21065,8 +21069,8 @@
     "updated_at": "2026-06-18T09:55:00Z",
     "updated_by": "qa"
   },
-  "updated_at": "2026-06-18T07:37:02Z",
-  "updated_by": "po",
+  "updated_at": "2026-06-18T08:34:23Z",
+  "updated_by": "po-triage-20260618T083104Z",
   "meta": {
     "updated_at": "2026-06-17T11:21:05Z",
     "updated_by": "po",
