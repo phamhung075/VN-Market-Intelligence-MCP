@@ -4,6 +4,48 @@
 
 ---
 
+## c100 · 2026-06-19T20:00Z
+
+**Status:** BLOCKED — MCP gateway unavailable (failure mode A)
+**Direction:** N/A (cycle not executed)
+**Session invocation time:** ~20:00Z UTC 2026-06-19 (correct timing — all 3 dishes confirmed published in unified-agent notebook)
+
+**MCP Status:** `mcp__gateway__call_tool` NOT present in this session's tool surface. Failure mode A per bootstrap.md: gateway wrapper absent in local CLI spawn context. 4th+ consecutive blocked cycle for this spawn path (c97: 2026-06-16, c98: 2026-06-17, c99: 2026-06-18, c100: 2026-06-19). Cloud RemoteTrigger (cron) path has the connector per PO ACK on c98.
+
+**File evidence (NOT used for audit per bootstrap.md rule — INDICATIVE ONLY):**
+- Morning 05:16Z: PUBLISHED (unified-agent notebook). Quẻ 15 Khiêm, carry 1.37pp NEUTRAL is_estimate=false, USD/VND 26,120 +5.28σ extreme, gold -2.2σ, 4 clusters (steel/oil-gas/macro-micro/USD extreme). Layers 1–6 complete (degraded-dish-floor applied). AF-GATE: OK.
+- EOD 08:37Z: PUBLISHED (unified-agent notebook). Quẻ 15 Khiêm 64% confidence. 4 clusters (banking/steel/RE/macro-micro). Layers 1–6 complete. AF-GATE: OK.
+- Evening 19:46Z: PUBLISHED (unified-agent notebook). Quẻ 15 Khiêm 64%, same 4 clusters. Layers 1–6 complete. AF-GATE: OK.
+- All 3 guaranteed dishes present for 2026-06-19 — G1/G2/G6 PASS (per file evidence).
+
+**Published Marker Gate:** SKIPPED — task_claim requires MCP. No dedup slot claimed.
+
+**Previous handoff ACK:** c98 handoff ACK'd by PO at 2026-06-17T21:28:33Z (confirmed). c99 handoff NOT written (cycle not executed).
+
+**Actions:**
+- Notebook entry appended (this entry)
+- Signal file dropped: docs/signals/tnb-20260619T200000Z.json (BUG escalation → PO, dedup into ARCH-HEADLESS-GATEWAY-COWORK-NOPOST)
+- Handoff NOT updated (no live audit performed)
+- WORK report NOT sent (MCP unavailable)
+- Commit NOT attempted (MCP unavailable — commit-mutex SKIPPED per C-2 FAIL-CLOSED)
+
+**Carry-forward from c98/c99:**
+- F-MCP-SUBAGENT-SYSTEMIC (HIGH): Local CLI sub-agent spawn context does not wire MCP gateway. 4th+ consecutive blocked cycle. ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (backlog). Cloud RemoteTrigger (cron) path works.
+- F-BCTC-BANK-SCALAR-MAPPING (HIGH): carry-forward (FIX-BCTC-BANK-SCALAR-MAPPING minted po-s91)
+- F3/F4/F9/F-MORNING-NB-MISSING: structural, carry-forward
+- AC-FAILCLOSED spec: agents-architect→agent-father lane, dispatch_gate=monday
+
+**Note on 2026-06-19 dishes (file evidence only — cannot audit without live CHEF-DETAIL WORK read):**
+- Quẻ 15 Khiêm consistent across all 3 dishes — regime continuity GOOD (vs c98 Quẻ 39 Kiển)
+- Hexagram shift from Kiển (c97/c98) → Khiêm (c100) — regime drift possible, flagged for live verification when MCP restored
+- USD/VND 26,120 extreme (+5.28σ morning) — threshold 26,500 NOT crossed per notebook; BEARISH classification maintained
+- All 3 dishes AF-GATE: OK — fabricated TA numbers remain suppressed
+- adversarial_gate: INSUFFICIENT EVIDENCE (cannot read CHEF-DETAIL WORK; file evidence does not show adversarial exchanges)
+
+**Next cycle (c101 — cron 2026-06-20T20:13 UTC or next run):** Cron-spawned path expected to have MCP. Will execute full audit including 2026-06-20 dishes + deferred 2026-06-19 layer verification if CHEF-DETAIL WORK messages still readable (24h window).
+
+---
+
 ## c99 · 2026-06-18T12:30Z
 
 **Status:** BLOCKED — MCP gateway unavailable (failure mode A)
