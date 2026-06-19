@@ -1,0 +1,55 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T12:06Z",
+    "nominal_tick": "2026-06-19T12:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "Gatherer pair matched (cron 0 */4, 12:00 boundary, cadence 240m). Both gatherer-standard policy, NOT among the 6 cloud RemoteTrigger backstops. Session gateway-blind (mcpServers:0) so local news-scout / market-watcher spawns would fabricate/no-op — skipped per blind posture. Off-hours news + market sweep unfired until USER reconnects the gateway MCP server.",
+    "slot_detail": {
+      "news-scout-offhours": {
+        "agent": "news-scout",
+        "flow_path": "docs/agents/news-scout/flow/main.md",
+        "cron": "0 */4 * * *",
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z",
+        "cadence_minutes": 240,
+        "backstopped": false
+      },
+      "market-watcher-offhours": {
+        "agent": "market-watcher",
+        "flow_path": "docs/agents/market-watcher/flow/main.md",
+        "cron": "0 */4 * * *",
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z",
+        "cadence_minutes": 240,
+        "backstopped": false
+      }
+    },
+    "leader_lock": "renewed_ok_expires_1781872582",
+    "note": "Pressure-state emitted 12:06:22Z (stale_warning:true — benign, rapid manual ticks). Local last_fired reads 06-15 because the gatherer pair has no cloud backstop and went unfired in blind sessions since then."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T12:06Z",
+  "_processed": {
+    "fingerprint": "b29d303d0d0c0f86947b6eaba927824339b54e7a0c74e432d7747015dc382371",
+    "processedAt": "2026-06-19T12:31:15Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
