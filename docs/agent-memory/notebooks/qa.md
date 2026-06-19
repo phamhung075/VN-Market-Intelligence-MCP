@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-301 · 2026-06-19 · FIX-SIGNAL-CONFIDENCE-DEFAULT-50 — APPROVED
+
+FIX-SIGNAL-CONFIDENCE-DEFAULT-50: commit 4f5192c5 | Verdict: APPROVED | bun test FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts → 22 pass / 0 fail (41 expect() calls, 301ms). tsc exit 0. 4 call sites verified: agentSignalTools.ts finding_data.confidence*100 (runtime field, undefined when absent → honest DEFAULT), intelligenceCycleJob.ts chain.conviction*100 (in-scope runtime field), askQueueCheckJob.ts Math.min(100,count*10) (queue-depth derivation), freshnessSlaMonitorJob.ts CRITICAL→90/HIGH→70 (policy constants tied to runtime-classified severity — legitimate). DDD PASS (no infra imports in domain/). Security PASS (no process.env, no secrets). mock-guard EXIT 0. Self-confirming qualification: derivation formulas tested inline (weak) but DB write path uses real postSignal store; router live-verified spread 85/90/78/30 on named-volume — non-blocking. DJ: sprint-FIX-SIGNAL-CONFIDENCE-DEFAULT-50-qa.md.
+
 ## cycle-300 · 2026-06-19 · FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC + FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT — APPROVED (both)
 
 FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC: commit e4905b49 | Verdict: APPROVED | bun test 251-mcp-tools.test.ts → 16 pass / 0 fail (incl 3 new: code-only accepts omit, honest no-signal, mass_insider_buy via shares-independent path). pnpm check exit 0. RAW verified: outstandingShares? L35 interface optional, z.number().optional() L120-122, handler ?? 0 L53, description "defaults to 0 — signals requiring % outstanding are suppressed when absent" L114. Doc: Required=No Default=0 no auto-fetch claim. DDD PASS (no infra imports in leadershipTools.ts). Security PASS (no process.env, no secrets). mock-guard EXIT 0. DJ: sprint-FIX-INSIDER-OUTSTANDINGSHARES-AND-AGENT-SIGNALS-qa.md.
