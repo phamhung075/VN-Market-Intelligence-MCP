@@ -21203,13 +21203,25 @@
         "created_by": "po",
         "triaged_at": "2026-06-18T14:36:21Z",
         "triaged_by": "po",
-        "next_agent": "architect",
+        "next_agent": "dev-mcp-server",
         "promoted_at": "2026-06-19T00:37:56Z",
         "promoted_by": "po-s107",
         "promote_note": "WIP=0 → promote as SPRINT-S→architect; schema-vs-caller contract direction is a real decision (agent z.string() REQUIRED even in sender-history mode where description+doc L31 example omit it — doc internally contradictory). RAW-re-confirmed live schema agentSignalTools.ts L461-490. Router locks + spawns architect.",
         "claimed_at": "2026-06-19T00:40:02Z",
         "claimed_by": "router",
-        "dispatch_note": "Dispatched architect 2026-06-19T00:40:02Z. SPRINT-S contract decision (recon-first). agentSignalTools.ts L461-490: agent z.string() REQUIRED even in sender-history mode, but tool desc + doc L31 example OMIT it => internally contradictory. Architect RAW-confirms live schema, decides direction: make agent optional-when-from_agent-present vs callers add agent. Output design brief, signal back for pm/dev split."
+        "dispatch_note": "Dispatched architect 2026-06-19T00:40:02Z. SPRINT-S contract decision (recon-first). agentSignalTools.ts L461-490: agent z.string() REQUIRED even in sender-history mode, but tool desc + doc L31 example OMIT it => internally contradictory. Architect RAW-confirms live schema, decides direction: make agent optional-when-from_agent-present vs callers add agent. Output design brief, signal back for pm/dev split.",
+        "design_done": true,
+        "brief_ref": "docs/architecture-briefs/2026-06-19-fix-agent-signals-agent-param-contract.md",
+        "direction": "A — agent optional-when-not-inbox-mode (dead in sender-history mode: store L877 overrides with fromAgent)",
+        "impl_files": [
+          "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts",
+          "docs/agents/tools/list/get_agent_signals.md",
+          "docs/agents/tools/package/news-scout.md",
+          "docs/agents/tools/package/alert-commander.md",
+          "docs/agents/tools/package/tran-ngoc-bau.md"
+        ],
+        "qa_contract": "5 ACs → apps/mcp-server/src/__tests__/FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT.test.ts",
+        "stage_note": "design done 2026-06-19T00:45:35Z; dev dispatch HELD to serialize same-zone apps/mcp-server with in-flight INSIDER dev; dispatch on INSIDER completion"
       }
     ],
     "ready": [],
