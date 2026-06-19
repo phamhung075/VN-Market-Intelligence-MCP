@@ -183,12 +183,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "CI-RED-ea9a3589-FIX",
-    "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-19T02:38:02Z",
+    "next_agent": "qa",
+    "updated_at": "2026-06-19T03:04:50Z",
     "updated_by": "dev-team",
-    "note": "cycle-302: CI-RED-ea9a3589-FIX claimed -> dev-mcp-server. CONTAM-7 ohlcv test red (genuine regression df4d4b34, strands fleet push). DoD ci_green_on_subsequent_push. WIP 1."
+    "note": "cycle-302: CI-RED-ea9a3589-FIX dev-mcp-server DONE (709703ee, test-only TD-3 reconcile, 14L 1 file). CONTAM-7 isolated 45/0, REPAIR 18/0, tsc green. Promoted -> review(qa). RAW-verified narrow commit + 50 non-isolated fails = known local-env set (CI saw 1 fail on ea9a3589). DoD ci_green_on_subsequent_push AWAITS push (PO call) — origin still RED at ea9a3589. WIP 0 in_progress."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -266,8 +266,8 @@
       "status": "NEW",
       "payload_ref": null
     },
-    "_updated_at": "2026-06-18T10:31:23Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-19T03:00:00.842Z",
+    "_updated_by": "system-auditor",
     "archive": [
       {
         "from": "system-auditor",
@@ -616,6 +616,28 @@
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606190300",
+        "ts": "2026-06-19T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202606190300",
+        "ts": "2026-06-19T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=CI-RED-ea9a3589-FIX held=esc-datacov:FPT:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
       {
         "id": "sau-d4-202606180300",
         "ts": "2026-06-18T03:00Z",
@@ -21361,29 +21383,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
-      {
-        "id": "CI-RED-ea9a3589-FIX",
-        "type": "FIX",
-        "title": "CONTAM-7 ohlcv-unit-contam red — reconcile self-heal fixture with new up-direction implausible-magnitude REJECT path (df4d4b34)",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "claimed_at": "2026-06-19T02:38:02Z",
-        "claimed_by": "router",
-        "next_agent": "dev-mcp-server",
-        "files": [
-          "apps/mcp-server/src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts",
-          "apps/mcp-server/src/domain/services/market-data/ohlcvUnitGuard.ts",
-          "apps/mcp-server/src/__tests__/FIX-OHLCV-SCALE-X1000-AUTO-REPAIR.test.ts"
-        ],
-        "baseline_pass": false,
-        "head_sha_failing": "ea9a3589b6925cd6345840b13fa3a70c4afd8e04",
-        "run_id": "27801589546",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "dispatch_note": "Dispatched dev-mcp-server 2026-06-19T02:38:02Z. Genuine router-RAW-confirmed CI RED (run 27801589546 on HEAD ea9a3589=FAILURE; prior e0c700d0=SUCCESS). SOLE failing file src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts. Red strands EVERY fleet push (red pre-push pnpm check). ROOT: df4d4b34 added UP-direction REJECT path in detectAndNormalizeScaleFromPrevClose (max upRatio>=SCALE_DETECTION_RATIO 50 => write-no-row honest gap, NOT self-heal-correct); it updated sibling FIX-OHLCV-SCALE-X1000-AUTO-REPAIR.test.ts to new contract but NOT CONTAM-7, which still asserts old up-direction self-heal. FIX: update the exact CONTAM-7 up-ratio>=50 assertion(s) to the NEW reject contract; KEEP down-direction div1000 self-heal fixtures asserting correct; do NOT weaken the guard (df4d4b34 is intended done_verified behavior). Confirm SOLE error via full per-file-isolation CI cmd locally. RED-PREPUSH: pnpm check GREEN before commit. DoD VERIFICATION GATE: ci_green_on_subsequent_push (success on SHA != ea9a3589)."
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -21513,6 +21513,31 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
+      },
+      {
+        "id": "CI-RED-ea9a3589-FIX",
+        "type": "FIX",
+        "title": "CONTAM-7 ohlcv-unit-contam red — reconcile self-heal fixture with new up-direction implausible-magnitude REJECT path (df4d4b34)",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "claimed_at": "2026-06-19T02:38:02Z",
+        "claimed_by": "router",
+        "next_agent": "qa",
+        "files": [
+          "apps/mcp-server/src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts",
+          "apps/mcp-server/src/domain/services/market-data/ohlcvUnitGuard.ts",
+          "apps/mcp-server/src/__tests__/FIX-OHLCV-SCALE-X1000-AUTO-REPAIR.test.ts"
+        ],
+        "baseline_pass": false,
+        "head_sha_failing": "ea9a3589b6925cd6345840b13fa3a70c4afd8e04",
+        "run_id": "27801589546",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-19T02:38:02Z. Genuine router-RAW-confirmed CI RED (run 27801589546 on HEAD ea9a3589=FAILURE; prior e0c700d0=SUCCESS). SOLE failing file src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts. Red strands EVERY fleet push (red pre-push pnpm check). ROOT: df4d4b34 added UP-direction REJECT path in detectAndNormalizeScaleFromPrevClose (max upRatio>=SCALE_DETECTION_RATIO 50 => write-no-row honest gap, NOT self-heal-correct); it updated sibling FIX-OHLCV-SCALE-X1000-AUTO-REPAIR.test.ts to new contract but NOT CONTAM-7, which still asserts old up-direction self-heal. FIX: update the exact CONTAM-7 up-ratio>=50 assertion(s) to the NEW reject contract; KEEP down-direction div1000 self-heal fixtures asserting correct; do NOT weaken the guard (df4d4b34 is intended done_verified behavior). Confirm SOLE error via full per-file-isolation CI cmd locally. RED-PREPUSH: pnpm check GREEN before commit. DoD VERIFICATION GATE: ci_green_on_subsequent_push (success on SHA != ea9a3589).",
+        "review_entered_at": "2026-06-19T03:04:50Z",
+        "impl_commit": "709703ee",
+        "local_green": "CONTAM-7 45/0 + REPAIR 18/0 isolated; tsc green",
+        "done_verified_blocker": "ci_green_on_subsequent_push awaits push (PO out-of-band) — origin/main RED at ea9a3589"
       }
     ],
     "qa": [],
