@@ -1,0 +1,47 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T18:06Z",
+    "nominal_tick": "2026-06-19T18:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "bctc-analyst-slot-2"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "bctc-analyst-slot-2 (agent bctc-analyst, cron 0 18 * * *, policy bctc-offmarket) matched but is NOT among the 6 cloud RemoteTrigger backstops (chef-morning, chef-eod, chef-evening, tnb-audit, digest-sunday, health-recheck). Session is gateway-blind (mcpServers:0) so a local spawn would be gateway-blind and fabricate/no-op. Slot goes unfired this session. Fix is USER-side: register gateway in .mcp.json + reconnect.",
+    "slot_detail": {
+      "bctc-analyst-slot-2": {
+        "agent": "bctc-analyst",
+        "flow_path": "docs/agents/bctc-analyst/flow/main.md",
+        "cron": "0 18 * * *",
+        "guaranteed": false,
+        "policy_id": "bctc-offmarket",
+        "last_fired": "2026-06-14T18:07:57Z",
+        "backstopped": false
+      }
+    },
+    "leader_lock": {
+      "ok": true,
+      "expires_at": 1781894178
+    },
+    "note": "stale_warning:true on emit_pressure_state (benign, rapid manual ticks). Second of two daily bctc-analyst off-market slots (15:00Z, 18:00Z)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T18:06:18Z",
+  "_processed": {
+    "fingerprint": "49995d0a3e5be1922e11cc43765a02be1dc9dfe73099c76bc888ccb3bd312c09",
+    "processedAt": "2026-06-19T18:33:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
