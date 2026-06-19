@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-302 · 2026-06-19 · CI-RED-ea9a3589-FIX — APPROVED (done_verified WITHHELD pending push+CI)
+
+CI-RED-ea9a3589-FIX: commit 709703ee | Verdict: APPROVED | CONTAM-7 isolated → 45 pass / 0 fail. REPAIR suite isolated → 18 pass / 0 fail (guard not weakened). pnpm check exit 0. git show --stat → 1 file only (CONTAM-7 test, 10+/4−). Smart-Skip: test-only, DDD/security/mock-guard skipped. Pre-existing non-isolated ~50 failures confirmed disjoint (local-env-only: live-MCP timeouts, logVpsPush, date-rollover). done_verified WITHHELD: ci_green_on_subsequent_push requires PO push + CI Actions green on post-ea9a3589 SHA. DJ: sprint-CI-RED-ea9a3589-FIX-qa.md.
+
 ## cycle-301 · 2026-06-19 · FIX-SIGNAL-CONFIDENCE-DEFAULT-50 — APPROVED
 
 FIX-SIGNAL-CONFIDENCE-DEFAULT-50: commit 4f5192c5 | Verdict: APPROVED | bun test FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts → 22 pass / 0 fail (41 expect() calls, 301ms). tsc exit 0. 4 call sites verified: agentSignalTools.ts finding_data.confidence*100 (runtime field, undefined when absent → honest DEFAULT), intelligenceCycleJob.ts chain.conviction*100 (in-scope runtime field), askQueueCheckJob.ts Math.min(100,count*10) (queue-depth derivation), freshnessSlaMonitorJob.ts CRITICAL→90/HIGH→70 (policy constants tied to runtime-classified severity — legitimate). DDD PASS (no infra imports in domain/). Security PASS (no process.env, no secrets). mock-guard EXIT 0. Self-confirming qualification: derivation formulas tested inline (weak) but DB write path uses real postSignal store; router live-verified spread 85/90/78/30 on named-volume — non-blocking. DJ: sprint-FIX-SIGNAL-CONFIDENCE-DEFAULT-50-qa.md.
