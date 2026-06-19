@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-19T20:37:10Z",
+  "_updated_at": "2026-06-19T21:01:06Z",
   "_updated_by": "dev-team-cron-router",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -183,15 +183,15 @@
     }
   ],
   "head": {
-    "status": "dispatching",
-    "active_task_id": "FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BPE-ARCH-1 DONE (sprint BCTC-PROSE-EXTRACT already CLOSED 2026-06-10). Design brief produced: docs/architecture-briefs/2026-06-09-bctc-prose-extract-design.md. All 5 blockers resolved. Advance head to next actionable task.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT in REVIEW, router-verified local-green (commit f1f70ec3). Gate = ci_green_on_subsequent_push: needs PO out-of-band push so CI re-runs green on a SHA above 3bddf6bb; then flip done_verified=true. No code action pending.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-19T20:37:10Z",
+    "updated_at": "2026-06-19T21:01:06Z",
     "updated_by": "dev-team-cron-router",
-    "note": "UNSTICK: prior head was VERIFY-COWORK (next_agent=cowork-team = DEAD route, status=dispatching = non-routing) — blocked both promoted tasks ~2h. VERIFY resolved (router verified no active leak). Head repointed at BPE-ARCH-1 -> architect (a REAL dev-chain executor) so dev-team Step-0b head-resume fires and dispatches. zone apps/pdf-extractor/ free (in_progress empty)."
+    "note": "FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT done: commit f1f70ec3. 4 test DDLs updated, all 4 green in isolation, tsc GREEN. Task moved to REVIEW."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -21639,34 +21639,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT",
-        "type": "FIX",
-        "title": "4 alert-scan test fixtures missing sent_by/fingerprint cols → bun test RED on 3bddf6bb",
-        "desc": "CI RED (run 27846780954, dedup ci_red:3bddf6bb:bun test) reproduces locally — GENUINE regression, not flaky. The FIX-ALERT-FINGERPRINT/FU-ALERT-COWRITE wave added sent_by + fingerprint columns to the production alerts-write path (alertStore/scanjobs), but 4 self-built test-fixture DDLs were not updated (same class as commit 847376a0 which cleared 13 red by adding cols to 5 DDLs — 4 more files were missed). INSERT fails -> no alert fires -> downstream asserts fail. Fix = ADD missing cols (sent_by, fingerprint) to the in-test alerts CREATE TABLE DDLs in the 4 files to match storeAlerts schema; verify against alertStore.ts real DDL as SSOT, do NOT weaken the write path. 5th RED file FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts is the standing time-gated behavioral hold — OUT OF SCOPE.",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "size": "S",
-        "sprint": "CI-RED-HOTFIX",
-        "market_independent": true,
-        "files": [
-          "apps/mcp-server/src/__tests__/125-test-e2e-briefing.test.ts",
-          "apps/mcp-server/src/__tests__/1391-bb-stale-candle-skip.test.ts",
-          "apps/mcp-server/src/__tests__/1869b-watchlist-threshold-wiring.test.ts",
-          "apps/mcp-server/src/__tests__/231-signal-validator-integration.test.ts",
-          "apps/mcp-server/src/infrastructure/db/alertStore.ts"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-06-19T20:37:10Z",
-        "created_by": "dev-team-cron-router",
-        "source": "ci_red run 27846780954 (HEAD 3bddf6bb), PO triage BATCH s-current",
-        "generic_mandate": "Match the real storeAlerts CREATE TABLE schema (alertStore.ts SSOT) across all 4 fixture DDLs — no per-test hardcode; do NOT weaken the production write path.",
-        "verification_gate": "ci_green_on_subsequent_push (run CI exact per-file-isolation cmd on all 4 + full suite)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -21796,6 +21769,40 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
+      },
+      {
+        "id": "FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT",
+        "type": "FIX",
+        "title": "4 alert-scan test fixtures missing sent_by/fingerprint cols → bun test RED on 3bddf6bb",
+        "desc": "CI RED (run 27846780954, dedup ci_red:3bddf6bb:bun test) reproduces locally — GENUINE regression, not flaky. The FIX-ALERT-FINGERPRINT/FU-ALERT-COWRITE wave added sent_by + fingerprint columns to the production alerts-write path (alertStore/scanjobs), but 4 self-built test-fixture DDLs were not updated (same class as commit 847376a0 which cleared 13 red by adding cols to 5 DDLs — 4 more files were missed). INSERT fails -> no alert fires -> downstream asserts fail. Fix = ADD missing cols (sent_by, fingerprint) to the in-test alerts CREATE TABLE DDLs in the 4 files to match storeAlerts schema; verify against alertStore.ts real DDL as SSOT, do NOT weaken the write path. 5th RED file FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts is the standing time-gated behavioral hold — OUT OF SCOPE.",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "size": "S",
+        "sprint": "CI-RED-HOTFIX",
+        "market_independent": true,
+        "files": [
+          "apps/mcp-server/src/__tests__/125-test-e2e-briefing.test.ts",
+          "apps/mcp-server/src/__tests__/1391-bb-stale-candle-skip.test.ts",
+          "apps/mcp-server/src/__tests__/1869b-watchlist-threshold-wiring.test.ts",
+          "apps/mcp-server/src/__tests__/231-signal-validator-integration.test.ts",
+          "apps/mcp-server/src/infrastructure/db/alertStore.ts"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-06-19T20:37:10Z",
+        "created_by": "dev-team-cron-router",
+        "source": "ci_red run 27846780954 (HEAD 3bddf6bb), PO triage BATCH s-current",
+        "generic_mandate": "Match the real storeAlerts CREATE TABLE schema (alertStore.ts SSOT) across all 4 fixture DDLs — no per-test hardcode; do NOT weaken the production write path.",
+        "verification_gate": "ci_green_on_subsequent_push (run CI exact per-file-isolation cmd on all 4 + full suite)",
+        "completed_at": "2026-06-19T21:00:00Z",
+        "commit": "f1f70ec3",
+        "fix_record": "Added fingerprint TEXT col to 125/1869b/231 DDLs; added sent_by + notified_telegram + resolved_at + resolution_notes + confidence_score + validated_at + fingerprint to 1391 DDL. All 4 pass in isolation. tsc GREEN.",
+        "router_verified": true,
+        "router_verification": "ROUTER-VERIFIED 2026-06-19T21:01:06Z: RAW re-ran all 4 in per-file isolation — 125=39/39 (3/3 retries; one earlier transient fail was pre-existing e2e flakiness, NOT the DDL class, not introduced here), 1391/1869b/231 all 0-fail; tsc exit 0; commit f1f70ec3 narrow (4 test files only, no stray/forced paths). Local gate PASS. done_verified WITHHELD pending ci_green_on_subsequent_push (push = PO out-of-band call). RSI-SINGLEDIGIT still red = expected out-of-scope hold; full-suite Bun-JIT panic = known recurring class, not a regression. WATCH (no new task): 125-test-e2e-briefing has intermittent 1-test e2e flakiness independent of this fix.",
+        "done_verified": false,
+        "impl_commit": "f1f70ec3",
+        "verified_at": "2026-06-19T21:01:06Z"
       }
     ],
     "qa": [],
