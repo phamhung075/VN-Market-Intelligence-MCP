@@ -225,8 +225,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-19T18:56:32Z",
-    "_updated_by": "dev-team-loop",
+    "_updated_at": "2026-06-19T19:33:30Z",
+    "_updated_by": "dev-team",
     "archive": [
       {
         "from": "system-auditor",
@@ -774,6 +774,21 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
+      {
+        "id": "sau-c06-202606171834",
+        "ts": "2026-06-17T18:34:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages check C-06 failed (0 messages in 3h window)",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": null,
+        "triaged_by": "po-s96",
+        "triaged_at": "2026-06-17T19:36:00Z",
+        "disposition": "FALSE-POSITIVE",
+        "triage_note": "RAW-probed live market.db (named volume vn-market-intelligence-mcp_market_data, sidecar): market_messages last sent_at=2026-06-17T15:30:02Z (age 4.09h), 19 rows/24h, 56 rows/72h, total 796 — table HEALTHY. C-06 fired at 18:34Z; its 3h window (~15:34-18:34Z) is fully OFF-MARKET (VN market closed 08:59Z). 0 messages is normal: summary/Chef agents post ~3x/day not hourly, last dish (15:30 evening_summary) just predates the window. Not a wedge. Generic recalibration minted -> FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (backlog/ready, LOW)."
       }
     ],
     "rows": [
@@ -804,21 +819,6 @@
         "resolved_at": "2026-06-18T04:25:34Z",
         "resolved_by": "po-s103",
         "resolution": "STALE -- RECURRING D4 false-positive. Held-lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row because it is an ESC-3 data-coverage escalation TTL lock (esc-datacov: 30d, route ops) that INTENTIONALLY has no task row (escalation locks are not tasks); the system-auditor D4 check does not whitelist the esc-datacov:* key class -> false orphaned flag. Lock TTL-expired + GC'd (task_list_held=0 in prior RAW probe). Dismissed STALE before: po-s76 x2, 5a807e65, 44853141, po-s95. Durable owner = system-auditor D4 blind-spot (tracked: FU-AUDITOR-D4-SIGNAL-ID). No new board task (not worth the WIP budget on nothing-new)."
-      },
-      {
-        "id": "sau-c06-202606171834",
-        "ts": "2026-06-17T18:34:48Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "db_integrity_breach",
-        "summary": "market_messages check C-06 failed (0 messages in 3h window)",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null,
-        "triaged_by": "po-s96",
-        "triaged_at": "2026-06-17T19:36:00Z",
-        "disposition": "FALSE-POSITIVE",
-        "triage_note": "RAW-probed live market.db (named volume vn-market-intelligence-mcp_market_data, sidecar): market_messages last sent_at=2026-06-17T15:30:02Z (age 4.09h), 19 rows/24h, 56 rows/72h, total 796 — table HEALTHY. C-06 fired at 18:34Z; its 3h window (~15:34-18:34Z) is fully OFF-MARKET (VN market closed 08:59Z). 0 messages is normal: summary/Chef agents post ~3x/day not hourly, last dish (15:30 evening_summary) just predates the window. Not a wedge. Generic recalibration minted -> FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (backlog/ready, LOW)."
       },
       {
         "id": "sau-b13-202606171834",
@@ -1041,7 +1041,7 @@
         "type": "repair_task_request",
         "summary": "DB-quality loop iter-2 (RAW-probe 2026-06-19T18:54Z): get_macro_snapshot computes vnIndexDelta=-5.94 correctly BUT oilUsdDelta/goldUsdDelta/usdVndDelta all NULL -> oil/gold/usd served with direction=unknown while VALUES are live tier-1 (oil $80.59, gold $4172.9, usdVnd 26120, is_estimate=false). Structural not transient: vnIndex has a prior-period row to diff, the 3 commodity/fx series do not (prior close not persisted/read for delta). Violates feedback_market_data_needs_direction. DISTINCT from macro-fetch-cluster (that is the FETCH layer, values are fine; this is the DELTA layer). Fix: persist+read prior-period value for oil/gold/usdVnd so delta computes. Root-caused, not blind-dispatch.",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "check_id": "MACRO-DELTA-NULL-20260619",
         "service": "macro-store/delta",
