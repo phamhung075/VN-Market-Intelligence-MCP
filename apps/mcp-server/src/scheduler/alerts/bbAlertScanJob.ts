@@ -37,6 +37,8 @@ import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
 import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.js";
 import { computeScanAlertFingerprint } from "../../domain/services/alertDedup.js";
+import { storeAlerts } from "../../infrastructure/db/alertStore.js";
+import type { Alert } from "../../domain/services/alertGenerator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -100,18 +102,11 @@ const COOLDOWN_SQL = `
      AND triggered_at >= ?
 `;
 
-// FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS: INSERT OR IGNORE with fingerprint column.
-// The UNIQUE(fingerprint) constraint is the authoritative dedup gate — any
-// concurrent parallel scan that tries to insert the same (ticker, alertType, day)
-// will be silently rejected by SQLite regardless of timing.  The 4h cooldown
-// SQL check above is kept as a first-pass filter to avoid unnecessary TA calls.
-const INSERT_ALERT_SQL = `
-  INSERT OR IGNORE INTO alerts
-    (id, triggered_at, severity, signals_json, affected_actions_json,
-     analysis_ids_json, message, read, user_note, fingerprint)
-  VALUES
-    (?, ?, ?, ?, ?, NULL, ?, 0, NULL, ?)
-`;
+// FU-ALERT-COWRITE-SCHEDULER-JOBS: alert writes go through storeAlerts (atomic
+// alerts↔agent_signals co-write). The fingerprint field on Alert is passed through
+// to the INSERT so the DB-level UNIQUE(fingerprint) constraint still deduplicates
+// concurrent parallel scans for the same (ticker, alertType, UTC day).
+// The 4h cooldown SQL check above is kept as a cost-saving pre-filter.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Core function
@@ -150,7 +145,6 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
   // Prepare statements once for the entire scan pass (perf: avoids re-parsing per ticker)
   const cooldownCutoff = new Date(nowFn().getTime() - 4 * 3_600_000).toISOString();
   const cooldownStmt = database.query<CooldownRow, [string, string, string]>(COOLDOWN_SQL);
-  const insertStmt = database.prepare(INSERT_ALERT_SQL);
 
   let scanned = 0;
   let fired = 0;
@@ -234,16 +228,6 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
 
       // i. Build alert payload
       const triggeredAt = nowFn().toISOString();
-      const signalsJson = JSON.stringify([
-        {
-          type: alertType,
-          actionCode: code,
-          message,
-          confidence: 0.65,
-          detectedAt: triggeredAt,
-        },
-      ]);
-      const affectedActionsJson = JSON.stringify([{ code }]);
       const id = crypto.randomUUID();
 
       // FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS: compute composite fingerprint so
@@ -252,9 +236,30 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
       const daySlot = triggeredAt.slice(0, 10); // "YYYY-MM-DD"
       const fingerprint = computeScanAlertFingerprint(code, alertType, daySlot);
 
-      // j. Insert alert — INSERT OR IGNORE; fingerprint UNIQUE constraint is the
+      // j. Build Alert object and route through storeAlerts for atomic
+      //    alerts↔agent_signals co-write (FU-ALERT-COWRITE-SCHEDULER-JOBS).
+      //    storeAlerts uses INSERT OR IGNORE; fingerprint UNIQUE constraint is the
       //    authoritative dedup gate (cooldown check above is a cost-saving pre-filter).
-      insertStmt.run(id, triggeredAt, "warning", signalsJson, affectedActionsJson, message, fingerprint);
+      const alert: Alert = {
+        id,
+        actionCode: code,
+        signals: [
+          {
+            type: alertType as "ta_bb_breakout_up" | "ta_bb_breakout_down",
+            severity: "warning",
+            actionCode: code,
+            message,
+            confidence: 0.65,
+            detectedAt: triggeredAt,
+          },
+        ],
+        severity: "warning",
+        message,
+        isRead: false,
+        createdAt: triggeredAt,
+        fingerprint,
+      };
+      storeAlerts([alert], database);
 
       // k. Count the fired alert
       fired++;

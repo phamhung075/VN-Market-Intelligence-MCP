@@ -78,8 +78,28 @@ function makeDb(): Database {
       user_note             TEXT,
       notified_telegram     INTEGER NOT NULL DEFAULT 0,
       sent_by               TEXT NOT NULL DEFAULT 'server',
+      confidence_score      REAL,
+      validated_at          TEXT,
+      fingerprint           TEXT UNIQUE,
       resolved_at           TEXT,
       resolution_notes      TEXT
+    )
+  `);
+
+  // FU-ALERT-COWRITE-SCHEDULER-JOBS: agent_signals table required for storeAlerts co-write.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS agent_signals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent TEXT NOT NULL,
+      to_agent TEXT NOT NULL,
+      signal_type TEXT NOT NULL,
+      stock_code TEXT,
+      payload TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'unread',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      expires_at TEXT NOT NULL,
+      alert_id TEXT,
+      is_correlation_stub INTEGER DEFAULT 0
     )
   `);
 
@@ -381,6 +401,84 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
 
     it("non-HIGH signals do not write evidence fragments", () => {
       expect(result.evidenceFragmentsWritten).toBe(0);
+    });
+  });
+
+  // ── FU-ALERT-COWRITE-SCHEDULER-JOBS: co-write tests ─────────────────────────
+  // DoD requires: every fired alert must have a matching agent_signals row
+  // (no orphan alert — JOIN alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.alert_id IS NULL = 0).
+
+  describe("CW-1: HIGH foreign-flow alert has a matching agent_signals row (no orphan)", () => {
+    let db: Database;
+
+    beforeEach(async () => {
+      db = makeDb();
+      seedWatchlist(db, ["VNM"]);
+      seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
+      const { overrides } = makeNoopTelegram();
+      await runForeignFlowAlertJob(db, overrides);
+    });
+
+    it("alert row exists after HIGH signal", () => {
+      const cnt = db
+        .query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM alerts")
+        .get()?.cnt ?? 0;
+      expect(cnt).toBe(1);
+    });
+
+    it("no orphan alerts — all alert rows have a matching agent_signals row via alert_id", () => {
+      const orphanCount = db
+        .query<{ cnt: number }, []>(
+          `SELECT COUNT(*) AS cnt
+           FROM alerts a
+           LEFT JOIN agent_signals s ON a.id = s.alert_id
+           WHERE s.alert_id IS NULL`
+        )
+        .get()?.cnt ?? 0;
+      expect(orphanCount).toBe(0);
+    });
+
+    it("agent_signals row has correct from_agent and stock_code", () => {
+      const signal = db
+        .query<{ from_agent: string; signal_type: string; stock_code: string }, []>(
+          "SELECT from_agent, signal_type, stock_code FROM agent_signals LIMIT 1"
+        )
+        .get();
+      expect(signal).not.toBeNull();
+      expect(signal!.from_agent).toBe("alert-engine");
+      expect(signal!.stock_code).toBe("VNM");
+    });
+  });
+
+  describe("CW-2: second run same day — still 0 orphans (idempotent co-write)", () => {
+    let db: Database;
+
+    beforeEach(async () => {
+      db = makeDb();
+      seedWatchlist(db, ["VNM"]);
+      seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
+      const { overrides } = makeNoopTelegram();
+      await runForeignFlowAlertJob(db, overrides); // first run
+      await runForeignFlowAlertJob(db, makeNoopTelegram().overrides); // second run same day
+    });
+
+    it("still exactly 1 alert row after 2 runs (INSERT OR IGNORE dedup)", () => {
+      const cnt = db
+        .query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM alerts")
+        .get()?.cnt ?? 0;
+      expect(cnt).toBe(1);
+    });
+
+    it("still 0 orphan alerts after 2 runs", () => {
+      const orphanCount = db
+        .query<{ cnt: number }, []>(
+          `SELECT COUNT(*) AS cnt
+           FROM alerts a
+           LEFT JOIN agent_signals s ON a.id = s.alert_id
+           WHERE s.alert_id IS NULL`
+        )
+        .get()?.cnt ?? 0;
+      expect(orphanCount).toBe(0);
     });
   });
 });

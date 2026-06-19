@@ -43,7 +43,27 @@ function setupTestDb(): Database {
       message TEXT,
       read INTEGER NOT NULL DEFAULT 0,
       user_note TEXT,
-      sent_by TEXT
+      sent_by TEXT NOT NULL DEFAULT 'server',
+      confidence_score REAL,
+      validated_at TEXT,
+      fingerprint TEXT UNIQUE
+    )
+  `);
+
+  // FU-ALERT-COWRITE-SCHEDULER-JOBS: agent_signals required for storeAlerts co-write
+  db.run(`
+    CREATE TABLE IF NOT EXISTS agent_signals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent TEXT NOT NULL,
+      to_agent TEXT NOT NULL,
+      signal_type TEXT NOT NULL,
+      stock_code TEXT,
+      payload TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'unread',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      expires_at TEXT NOT NULL,
+      alert_id TEXT,
+      is_correlation_stub INTEGER DEFAULT 0
     )
   `);
 

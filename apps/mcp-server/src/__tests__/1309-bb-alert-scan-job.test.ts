@@ -56,7 +56,28 @@ function buildTestDb(): Database {
       message TEXT NOT NULL,
       read INTEGER NOT NULL DEFAULT 0,
       user_note TEXT,
+      sent_by TEXT NOT NULL DEFAULT 'server',
+      confidence_score REAL,
+      validated_at TEXT,
       fingerprint TEXT UNIQUE
+    )
+  `);
+
+  // FU-ALERT-COWRITE-SCHEDULER-JOBS: agent_signals table required for storeAlerts co-write.
+  // The JOIN (alert → agent_signals via alert_id) is the invariant asserted by co-write tests.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS agent_signals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent TEXT NOT NULL,
+      to_agent TEXT NOT NULL,
+      signal_type TEXT NOT NULL,
+      stock_code TEXT,
+      payload TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'unread',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      expires_at TEXT NOT NULL,
+      alert_id TEXT,
+      is_correlation_stub INTEGER DEFAULT 0
     )
   `);
 
@@ -522,5 +543,115 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
     const alerts = getAlerts(db);
     const actions = JSON.parse(alerts[0]!.affected_actions_json) as Array<{ code: string }>;
     expect(actions[0]!.code).toBe("HPG");
+  });
+
+  // ── FU-ALERT-COWRITE-SCHEDULER-JOBS: co-write tests ─────────────────────────
+  // DoD requires: every fired alert must have a matching agent_signals row
+  // (no orphan alert — JOIN alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.alert_id IS NULL = 0).
+
+  it("CW-1: fired ta_bb_breakout_up alert has a matching agent_signals row (no orphan)", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    insertTodayCandle(db, "VCB", 88000);
+
+    await runBbAlertScan({
+      db,
+      computeFn: makeComputeFn({ upper: 86500, mid: 84000, lower: 82000 }),
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
+    });
+
+    expect(countAlerts(db)).toBe(1);
+
+    // Join: alert → agent_signals via alert_id; LEFT JOIN WHERE alert_id IS NULL = 0 orphans
+    const orphanCount = db
+      .query<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt
+         FROM alerts a
+         LEFT JOIN agent_signals s ON a.id = s.alert_id
+         WHERE s.alert_id IS NULL`
+      )
+      .get()?.cnt ?? 0;
+    expect(orphanCount).toBe(0);
+
+    // Confirm signal row content
+    const signal = db
+      .query<{ from_agent: string; signal_type: string; stock_code: string }, []>(
+        "SELECT from_agent, signal_type, stock_code FROM agent_signals LIMIT 1"
+      )
+      .get();
+    expect(signal).not.toBeNull();
+    expect(signal!.from_agent).toBe("alert-engine");
+    expect(signal!.stock_code).toBe("VCB");
+  });
+
+  it("CW-2: fired ta_bb_breakout_down alert has a matching agent_signals row (no orphan)", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('HPG')");
+    insertTodayCandle(db, "HPG", 22000);
+
+    await runBbAlertScan({
+      db,
+      computeFn: makeComputeFn({ upper: 24000, mid: 23050, lower: 23100 }),
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
+    });
+
+    expect(countAlerts(db)).toBe(1);
+
+    const orphanCount = db
+      .query<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt
+         FROM alerts a
+         LEFT JOIN agent_signals s ON a.id = s.alert_id
+         WHERE s.alert_id IS NULL`
+      )
+      .get()?.cnt ?? 0;
+    expect(orphanCount).toBe(0);
+  });
+
+  it("CW-3: multi-ticker scan — all fired BB alerts have matching agent_signals rows (0 orphans)", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    db.run("INSERT INTO watchlist (code) VALUES ('TCB')");
+    db.run("INSERT INTO watchlist (code) VALUES ('HPG')");
+    insertTodayCandle(db, "VCB", 88000);
+    insertTodayCandle(db, "TCB", 90000);
+    insertTodayCandle(db, "HPG", 50000);
+
+    // Alphabetical order: HPG → TCB → VCB
+    const bbByCallOrder = [
+      { upper: 55000, mid: 50000, lower: 45000 }, // HPG (inside band)
+      { upper: 87000, mid: 85000, lower: 83000 }, // TCB (above upper → fires)
+      { upper: 86500, mid: 84000, lower: 82000 }, // VCB (above upper → fires)
+    ];
+    let callIndex = 0;
+    const perTickerComputeFn = async (code: string, _closes: number[]): Promise<ComputeTAResponse> => {
+      const bb20 = bbByCallOrder[callIndex++] ?? null;
+      return {
+        code,
+        trend: "TREN_DUNG" as const,
+        ...(bb20 != null ? { bb: { upper: bb20.upper, middle: bb20.mid, lower: bb20.lower } } : {}),
+      };
+    };
+
+    await runBbAlertScan({
+      db,
+      computeFn: perTickerComputeFn,
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
+    });
+
+    expect(countAlerts(db)).toBe(2);
+
+    // All 2 alerts must have a matching agent_signals row — 0 orphans
+    const orphanCount = db
+      .query<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt
+         FROM alerts a
+         LEFT JOIN agent_signals s ON a.id = s.alert_id
+         WHERE s.alert_id IS NULL`
+      )
+      .get()?.cnt ?? 0;
+    expect(orphanCount).toBe(0);
+
+    const signalCount = db
+      .query<{ cnt: number }, []>("SELECT COUNT(*) AS cnt FROM agent_signals")
+      .get()?.cnt ?? 0;
+    expect(signalCount).toBe(2);
   });
 });

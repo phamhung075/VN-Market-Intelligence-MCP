@@ -76,8 +76,28 @@ function makeDb(): Database {
       user_note             TEXT,
       notified_telegram     INTEGER NOT NULL DEFAULT 0,
       sent_by               TEXT NOT NULL DEFAULT 'server',
+      confidence_score      REAL,
+      validated_at          TEXT,
+      fingerprint           TEXT UNIQUE,
       resolved_at           TEXT,
       resolution_notes      TEXT
+    )
+  `);
+
+  // FU-ALERT-COWRITE-SCHEDULER-JOBS: agent_signals required for storeAlerts co-write
+  db.run(`
+    CREATE TABLE IF NOT EXISTS agent_signals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent TEXT NOT NULL,
+      to_agent TEXT NOT NULL,
+      signal_type TEXT NOT NULL,
+      stock_code TEXT,
+      payload TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'unread',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      expires_at TEXT NOT NULL,
+      alert_id TEXT,
+      is_correlation_stub INTEGER DEFAULT 0
     )
   `);
 

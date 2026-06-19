@@ -48,6 +48,8 @@ export interface Alert {
   createdAt: string;
   confidence_score?: number;  // 0–100, from enriched signals
   validated_at?: string;      // ISO 8601, from enriched signals
+  /** FU-ALERT-COWRITE-SCHEDULER-JOBS: optional dedup fingerprint written to alerts.fingerprint */
+  fingerprint?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,6 +60,7 @@ export interface Alert {
 const SEVERITY_RANK: Record<Severity, number> = {
   low: 1,
   medium: 2,
+  warning: 2,  // TA scan alerts use "warning" — same rank as medium
   high: 3,
   critical: 4,
 };

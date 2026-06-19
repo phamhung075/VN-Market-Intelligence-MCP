@@ -26,6 +26,8 @@ import { analyzeForeignFlow, type DailyForeignFlow } from "../../domain/services
 import {
   insertEvidenceFragment,
 } from "../../infrastructure/db/evidenceFragmentStore.js";
+import { storeAlerts } from "../../infrastructure/db/alertStore.js";
+import type { Alert } from "../../domain/services/alertGenerator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -157,14 +159,11 @@ export async function runForeignFlowAlertJob(
   const utcDay = new Date().toISOString().slice(0, 10);
   const triggeredAt = new Date().toISOString();
 
-  // Prepare insert statement for alert rows
-  const insertAlert = database.prepare(`
-    INSERT OR IGNORE INTO alerts
-      (id, triggered_at, severity, signals_json, affected_actions_json,
-       analysis_ids_json, message, read, user_note, sent_by)
-    VALUES
-      (?, ?, 'high', ?, ?, NULL, ?, 0, NULL, 'server')
-  `);
+  // FU-ALERT-COWRITE-SCHEDULER-JOBS: use storeAlerts for atomic alerts↔agent_signals co-write.
+  // Dedup check: probe existing alert by deterministic id before calling storeAlerts.
+  const checkAlertExists = database.prepare<{ cnt: number }, [string]>(
+    "SELECT COUNT(*) AS cnt FROM alerts WHERE id = ?"
+  );
 
   let stocksSkipped = 0;
   let highSignals = 0;
@@ -198,29 +197,36 @@ export async function runForeignFlowAlertJob(
 
     highSignals++;
 
-    // ── 4a: Insert alert row (INSERT OR IGNORE for same-day dedup) ──────────
+    // ── 4a: Build alert and write via storeAlerts (atomic alerts↔agent_signals co-write)
+    //        FU-ALERT-COWRITE-SCHEDULER-JOBS: replaces direct INSERT OR IGNORE.
     const alertId = `foreign-flow-${code}-${utcDay}`;
-    const signalsJson = JSON.stringify([
-      {
-        type: "foreign_flow",
-        severity: "high",
-        actionCode: code,
-        message: signal.reasoning,
-        confidence: 0.75,
-        detectedAt: triggeredAt,
-      },
-    ]);
-    const affectedActionsJson = JSON.stringify([{ code }]);
     const message = `[${code}] Foreign flow signal: ${signal.reasoning}`;
 
-    const insertResult = insertAlert.run(
-      alertId,
-      triggeredAt,
-      signalsJson,
-      affectedActionsJson,
-      message,
-    );
-    if (insertResult.changes > 0) {
+    // Same-day dedup: INSERT OR IGNORE is preserved inside storeAlerts.
+    // Check existing row to accurately track alertsInserted count.
+    const existingRow = checkAlertExists.get(alertId);
+    const alreadyExists = (existingRow?.cnt ?? 0) > 0;
+
+    if (!alreadyExists) {
+      const foreignFlowAlert: Alert = {
+        id: alertId,
+        actionCode: code,
+        signals: [
+          {
+            type: "foreign_flow",
+            severity: "high",
+            actionCode: code,
+            message: signal.reasoning,
+            confidence: 0.75,
+            detectedAt: triggeredAt,
+          },
+        ],
+        severity: "high",
+        message,
+        isRead: false,
+        createdAt: triggeredAt,
+      };
+      storeAlerts([foreignFlowAlert], database);
       alertsInserted++;
     }
 

@@ -1,5 +1,9 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-19 · FU-ALERT-COWRITE-SCHEDULER-JOBS
+Routed 3 scheduler jobs through `storeAlerts` (atomic alerts↔agent_signals co-write). taAlertScanJob + bbAlertScanJob: replaced direct INSERT_ALERT_SQL with storeAlerts([alert], database); fingerprint passed via Alert.fingerprint? field. foreignFlowAlertJob: replaced insertAlert.prepare + run with storeAlerts call; pre-check alert existence to preserve alertsInserted counter. alertStore.ts: added fingerprint col to both storeAlerts and storeAlertsFromCommander INSERTs. signalDetector.ts: added ta_overbought/ta_oversold/ta_bb_breakout_up/ta_bb_breakout_down/foreign_flow to SignalType union; added "warning" to Severity. alertGenerator.ts + legalRiskDetector.ts: updated SEVERITY_RANK/SEVERITY_CONFIDENCE to include "warning". 6 test files updated (1307, 1309, 1133, 1517, FIX-EVIDENCE-PIPELINE-STARVED): added agent_signals DDL + sent_by/confidence_score/validated_at/fingerprint cols. Added 3 CW-* co-write tests per job (join invariant: 0 orphan alerts). tsc clean. 53/53 GREEN (targeted). 2x full suite exit 0.
+Zone health: bun test 0 fail, 166 tools intact, orphan write-path closed in code | HEALTHY
+
 ## 2026-06-19 · FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT
 `agent` made optional in `get_agent_signals` Zod schema. Path-C inbox guard returns user-readable error when both `agent` and `from_agent` absent. `args.agent ?? ""` on both getSignals + formatSignalLines calls. 5 ACs GREEN. tsc clean. 13335 pass / 0 fail. Docs (list/get_agent_signals.md + 3 package docs) updated. Zone health: bun test 0 fail, 166 tools intact, scheduler unchanged | HEALTHY
 

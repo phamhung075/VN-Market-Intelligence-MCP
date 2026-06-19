@@ -107,12 +107,16 @@ function hasAgentSignalsTable(db: Database): boolean {
 export function storeAlerts(alerts: Alert[], db: Database): void {
   if (alerts.length === 0) return;
 
+  // FU-ALERT-COWRITE-SCHEDULER-JOBS: include fingerprint column when present.
+  // The fingerprint UNIQUE constraint is the authoritative dedup gate for
+  // scan jobs (taAlertScanJob, bbAlertScanJob). Non-scan callers omit it.
   const insert = db.prepare(`
     INSERT OR IGNORE INTO alerts
       (id, triggered_at, severity, signals_json, affected_actions_json,
-       analysis_ids_json, message, read, user_note, sent_by, confidence_score, validated_at)
+       analysis_ids_json, message, read, user_note, sent_by, confidence_score, validated_at,
+       fingerprint)
     VALUES
-      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'server', ?, ?)
+      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'server', ?, ?, ?)
   `);
 
   // D-2 FIX-CASCADE-MACRO-CARD-REAL-DETAIL: ensure is_correlation_stub column exists
@@ -151,6 +155,7 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
         alert.message,
         alert.confidence_score ?? null,
         alert.validated_at ?? null,
+        alert.fingerprint ?? null,
       );
       // Co-write agent_signals correlation row (fail-loud if insert throws)
       if (insertSignal && checkSignal) {
@@ -192,9 +197,10 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
   const insert = db.prepare(`
     INSERT OR IGNORE INTO alerts
       (id, triggered_at, severity, signals_json, affected_actions_json,
-       analysis_ids_json, message, read, user_note, sent_by, confidence_score, validated_at)
+       analysis_ids_json, message, read, user_note, sent_by, confidence_score, validated_at,
+       fingerprint)
     VALUES
-      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'alert-commander', ?, ?)
+      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'alert-commander', ?, ?, ?)
   `);
 
   // D-2 FIX-CASCADE-MACRO-CARD-REAL-DETAIL: ensure is_correlation_stub column exists
@@ -232,6 +238,7 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
         alert.message,
         alert.confidence_score ?? null,
         alert.validated_at ?? null,
+        alert.fingerprint ?? null,
       );
       if (insertSignal && checkSignal) {
         const existing = checkSignal.get(alert.id);

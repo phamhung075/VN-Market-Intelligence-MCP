@@ -102,6 +102,7 @@ const LEGAL_PATTERNS: PatternEntry[] = [
 const SEVERITY_CONFIDENCE: Record<Severity, number> = {
   critical: 0.95,
   high: 0.85,
+  warning: 0.70,  // TA scan alerts use "warning"
   medium: 0.70,
   low: 0.50,
 };

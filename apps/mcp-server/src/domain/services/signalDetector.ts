@@ -51,9 +51,16 @@ export type SignalType =
   /** Power grid / energy market signal (Task 261) */
   | "energy_grid"
   | "crisis_event"
-  | "pharma_event";
+  | "pharma_event"
+  /** TA scan signals — FU-ALERT-COWRITE-SCHEDULER-JOBS */
+  | "ta_overbought"
+  | "ta_oversold"
+  | "ta_bb_breakout_up"
+  | "ta_bb_breakout_down"
+  /** Foreign flow institutional signal */
+  | "foreign_flow";
 
-export type Severity = "low" | "medium" | "high" | "critical";
+export type Severity = "low" | "medium" | "high" | "critical" | "warning";
 
 /**
  * A real-time price + volume snapshot for one stock.
