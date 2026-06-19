@@ -1,121 +1,157 @@
 #!/usr/bin/env bash
 # test-fleet-push-classifier.sh — hermetic gate for fleet-worktree-push.sh
 #
-# PURPOSE: Prove the auto-push backstop is DURABLE under the EXACT production
-#   behind-set, not just that "Guard 1 fires". Builds a throwaway local git
-#   repo (a fake "origin" + a local clone), replays the real cowork-churn state,
-#   and runs the actual classifier from scripts/fleet-worktree-push.sh.
+# PURPOSE: Prove the auto-push backstop's behind-set classifier PROCEEDS under
+#   the EXACT production state and ABORTS only on real behind-set code.
 #
-#   This is the qa gate for FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE (classifier
-#   scope). It exists because the ORIGINAL qa false-passed by testing a
-#   clean-tree happy path. Here we assert the realistic, load-bearing condition:
+#   THIS TEST WAS REWRITTEN (FIX-AUTO-PUSH-TWODOT-FALSE-ABORT). The PRIOR version
+#   fed a *literal file list* into the BENIGN_RE filter and never ran `git diff`
+#   at all. It therefore could NOT see the two-dot vs three-dot bug: the diff
+#   RANGE was never under test, only the regex. It false-passed 5/5 while the
+#   shipped script false-aborted every cycle.
 #
-#     CASE A (MUST COMPLETE / push proceeds):
-#       ahead > 20  AND  main tree DIRTY (orch-state + a notebook modified)
-#       AND behind-set = benign  Merge  +  docs(reports):  +  chore(...)  +
-#           a churned scripts/*.jq triage helper
-#       -> classifier reports 0 code/config files -> push path is taken.
-#       (This is the EXACT state the old message-prefix classifier aborted on.)
+#   The load-bearing production state — which the old test never set up — is:
+#     LOCAL has AHEAD COMMITS touching code (unpushed *.ts fixes)  AND
+#     origin's BEHIND-set is PURE CHORE (docs/notebook/health).
+#   With TWO-dot (HEAD..origin/main) the classifier ALSO surfaces local's ahead
+#   code edits and FALSE-ABORTS. With THREE-dot (HEAD...origin/main) it sees only
+#   the behind-set's own changes -> 0 code -> PROCEED.
 #
-#     CASE B (MUST ABORT / push blocked, BUG telegram):
-#       behind-set additionally touches a real code file (apps/x.ts)
-#       -> classifier reports >=1 code/config file -> abort.
-#
-#     CASE C (MUST ABORT): behind-set touches a scripts/*.sh (real script)
-#       -> NOT in the *.jq disposable allowlist -> abort.
+#   So this test now builds REAL throwaway git repos and runs BOTH diff ranges
+#   through the shipped BENIGN_RE, asserting:
+#     - the shipped script uses THREE-dot (grep proof), and
+#     - in the production state: two-dot=CODE-SEEN (would abort, the bug),
+#                                three-dot=0 (proceeds, the fix).
 #
 # USAGE: bash scripts/test-fleet-push-classifier.sh
 #        exit 0 = all cases pass; exit 1 = a case failed (gate is RED).
 #
-# OWNING TASK: FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE (verification_gate)
+# OWNING TASK: FIX-AUTO-PUSH-TWODOT-FALSE-ABORT (verification_gate)
 # OWNING FLOW: docs/agents/po/flow/main.md § Step PUSH-BACKSTOP
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SHIPPED="$REPO_ROOT/scripts/fleet-worktree-push.sh"
 
-# The classifier under test, extracted verbatim from fleet-worktree-push.sh.
-# We re-derive BENIGN_RE here by grepping it OUT of the script so the test can
-# NEVER drift from the shipped regex (single source of truth = the script).
-BENIGN_RE="$(grep -E "^\s*BENIGN_RE='" "$REPO_ROOT/scripts/fleet-worktree-push.sh" \
+# ── Extract the shipped BENIGN_RE so the test NEVER drifts from the script ─────
+BENIGN_RE="$(grep -E "^\s*BENIGN_RE='" "$SHIPPED" \
   | head -1 | sed -E "s/^[^']*'//; s/'.*$//")"
-
 if [ -z "$BENIGN_RE" ]; then
   echo "[test] FAIL: could not extract BENIGN_RE from fleet-worktree-push.sh" >&2
   exit 1
 fi
 echo "[test] BENIGN_RE (from shipped script) = $BENIGN_RE"
 
-# classify <file-list-newline-separated> -> prints code_touched count.
-# Mirrors the script's pipeline: filter out benign paths, count remaining
-# non-empty lines. Uses `grep -c` whose exit-1-on-zero is swallowed so the
-# count is emitted exactly once (the script relies on `|| echo 0`, but that
-# doubles output in a command-substitution; here we normalize to one value).
-classify() {
-  local n
-  n=$(printf '%s\n' "$1" | grep -Ev "$BENIGN_RE" | grep -c '.' || true)
-  echo "${n:-0}"
-}
-
 PASS=0
 FAIL=0
 check() {
   local name="$1" got="$2" want="$3"
   if [ "$got" = "$want" ]; then
-    echo "[test] PASS: $name (code_touched=$got)"
+    echo "[test] PASS: $name (got=$got)"
     PASS=$((PASS + 1))
   else
-    echo "[test] FAIL: $name — got code_touched=$got want=$want" >&2
+    echo "[test] FAIL: $name — got=$got want=$want" >&2
     FAIL=$((FAIL + 1))
   fi
 }
 
-# ── CASE A — exact production benign behind-set -> 0 code files -> push proceeds ─
-# This is the realistic state: Merge + docs(reports) + chore(memory) + chore(health)
-# + a churned scripts/*.jq triage helper. ALL benign.
-CASE_A=$(cat <<'EOF'
-docs/agent-memory/health/team-tool-recheck-2026-06-18-0407.md
-docs/agent-memory/notebooks/po.md
-docs/agent-memory/notebooks/tran-ngoc-bau.md
-docs/data/orch/orch-state.json
-docs/signals/tnb-20260617T201300Z.json
-docs/data/cowork-schedule.json
-docs/agents/po/flow/main.md
-scripts/po-s103-guard1-defeat-fix-schedule-clobber-sau-d4-triage.jq
-EOF
-)
-check "CASE A: benign Merge+docs(reports)+chore+jq behind-set -> push proceeds" \
-  "$(classify "$CASE_A")" "0"
+# classify_range <repo> <range> -> count of behind-set code/config files.
+# Mirrors the shipped pipeline EXACTLY but takes the diff range as a parameter so
+# we can prove two-dot vs three-dot differ on the same repo.
+classify_range() {
+  local repo="$1" range="$2" n
+  n=$(git -C "$repo" diff --name-only "$range" 2>/dev/null \
+    | grep -Ev "$BENIGN_RE" | grep -c '.' || true)
+  echo "${n:-0}"
+}
 
-# ── CASE B — same benign set PLUS a real code file -> abort ───────────────────
-CASE_B="$CASE_A
-apps/mcp-server/src/alerts/storeAlerts.ts"
-check "CASE B: benign set + apps/*.ts code -> ABORT" \
-  "$(classify "$CASE_B")" "1"
+# ── STATIC PROOF: the shipped script uses THREE-dot for BOTH classifier diffs ──
+# (the count-only `behind=` rev-list two-dot on ~line 121 is correct and excluded
+#  because it is `rev-list`, not `diff --name-only`).
+twodot_diff=$(grep -c 'git diff --name-only HEAD\.\.origin/main' "$SHIPPED" || true)
+threedot_diff=$(grep -c 'git diff --name-only HEAD\.\.\.origin/main' "$SHIPPED" || true)
+check "shipped script has ZERO two-dot 'git diff --name-only HEAD..origin/main'" "$twodot_diff" "0"
+check "shipped script has TWO three-dot 'git diff --name-only HEAD...origin/main'" "$threedot_diff" "2"
 
-# ── CASE C — a real shell script (NOT *.jq) in behind-set -> abort ────────────
-CASE_C="$CASE_A
-scripts/fleet-worktree-push.sh"
-check "CASE C: benign set + scripts/*.sh code -> ABORT" \
-  "$(classify "$CASE_C")" "1"
+# ── BUILD A REAL THROWAWAY REPO replicating the production divergence state ────
+TMP="$(mktemp -d -t fleet-push-classifier-XXXXXX)"
+# shellcheck disable=SC2329  # invoked via `trap cleanup EXIT INT TERM` below
+cleanup() { rm -rf "$TMP" 2>/dev/null || true; }
+trap cleanup EXIT INT TERM
 
-# ── CASE D — pure cowork churn (no scripts at all) -> push proceeds ───────────
-CASE_D=$(cat <<'EOF'
-docs/agent-memory/notebooks/unified-agent.md
-docs/data/orch/orch-state.json
-docs/signals/po-20260618T000000Z.json
-EOF
-)
-check "CASE D: pure docs/notebook/orch/signal churn -> push proceeds" \
-  "$(classify "$CASE_D")" "0"
+ORIGIN="$TMP/origin.git"
+LOCAL="$TMP/local"
 
-# ── CASE E — config json (non-allowlisted) -> abort (real config needs review) ─
-CASE_E="$CASE_A
-apps/mcp-server/package.json"
-check "CASE E: benign set + package.json config -> ABORT" \
-  "$(classify "$CASE_E")" "1"
+git init -q --bare -b main "$ORIGIN"
+
+seed() {
+  local f="$1" body="$2"
+  mkdir -p "$LOCAL/$(dirname "$f")"
+  printf '%s\n' "$body" > "$LOCAL/$f"
+  git -C "$LOCAL" add "$f"
+}
+
+# --- merge-base: a shared baseline both sides build on (seed origin first) ---
+git init -q -b main "$LOCAL"
+git -C "$LOCAL" config user.email test@test && git -C "$LOCAL" config user.name test
+git -C "$LOCAL" remote add origin "$ORIGIN"
+seed "apps/mcp-server/src/application/usecases/ohlcvWriteService.ts" "base"
+seed "docs/agent-memory/notebooks/po.md" "base"
+git -C "$LOCAL" commit -q -m "base: shared merge-base"
+git -C "$LOCAL" push -q origin main
+git -C "$LOCAL" branch -q --set-upstream-to=origin/main main 2>/dev/null || true
+
+# --- ORIGIN advances with a PURE-CHORE behind-set (health/notebook/orch) ---
+#     done via a second clone so origin moves ahead of LOCAL.
+OTHER="$TMP/other"
+git clone -q -b main "$ORIGIN" "$OTHER"
+git -C "$OTHER" config user.email b@b && git -C "$OTHER" config user.name b
+mkdir -p "$OTHER/docs/agent-memory/health" "$OTHER/docs/data/orch"
+printf 'recheck\n' > "$OTHER/docs/agent-memory/health/team-tool-recheck-2026-06-19-0207.md"
+printf '{"x":1}\n'  > "$OTHER/docs/data/orch/orch-state.json"
+git -C "$OTHER" add -A && git -C "$OTHER" commit -q -m "chore(health): team MCP tool recheck"
+git -C "$OTHER" push -q origin main
+
+# --- LOCAL advances with AHEAD COMMITS that TOUCH CODE (the production state) ---
+#     These are the unpushed *.ts fixes the fleet perpetually carries.
+git -C "$LOCAL" fetch -q origin main
+seed "apps/mcp-server/src/application/usecases/ohlcvWriteService.ts" "local-ahead-fix"
+seed "apps/mcp-server/src/domain/services/market-data/ohlcvUnitGuard.ts"  "local-ahead-new"
+seed "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts" "local-ahead-fix2"
+seed "launchd/com.vn-market.fleet-push.plist" "<plist/>"
+git -C "$LOCAL" commit -q -m "fix(mcp-server): local-ahead code edits (unpushed)"
+
+# Now LOCAL is AHEAD (1 code commit) and BEHIND (1 pure-chore commit).
+ahead=$(git -C "$LOCAL" rev-list --count origin/main..HEAD)
+behind=$(git -C "$LOCAL" rev-list --count HEAD..origin/main)
+check "fixture is AHEAD>0 (local code commit unpushed)" "$([ "$ahead" -gt 0 ] && echo ok || echo no)" "ok"
+check "fixture is BEHIND>0 (origin chore commit)"        "$([ "$behind" -gt 0 ] && echo ok || echo no)" "ok"
+
+# ── THE CORE ASSERTION ────────────────────────────────────────────────────────
+# Production state: local-ahead code + pure-chore behind-set.
+two=$(classify_range "$LOCAL" "HEAD..origin/main")    # BUGGY range
+three=$(classify_range "$LOCAL" "HEAD...origin/main")  # CORRECT range
+
+# Two-dot MUST surface the local-ahead code (proving it WOULD false-abort).
+check "TWO-dot false-counts local-ahead code (the bug: would ABORT)" \
+  "$([ "$two" -gt 0 ] && echo abort || echo proceed)" "abort"
+# Three-dot MUST see ONLY the pure-chore behind-set -> 0 -> proceed.
+check "THREE-dot sees behind-set only (the fix: PROCEEDS)" "$three" "0"
+
+# ── REGRESSION: three-dot MUST still ABORT when the BEHIND-set has real code ───
+# Add a code file to ORIGIN's behind-set; three-dot must now report it.
+git -C "$OTHER" fetch -q origin main && git -C "$OTHER" reset -q --hard origin/main
+mkdir -p "$OTHER/apps/mcp-server/src/alerts"
+printf 'real behind code\n' > "$OTHER/apps/mcp-server/src/alerts/storeAlerts.ts"
+git -C "$OTHER" add -A && git -C "$OTHER" commit -q -m "chore: msg-prefix-benign BUT touches code"
+git -C "$OTHER" push -q origin main
+git -C "$LOCAL" fetch -q origin main
+three_codebehind=$(classify_range "$LOCAL" "HEAD...origin/main")
+check "THREE-dot ABORTS when behind-set itself touches code (regression)" \
+  "$([ "$three_codebehind" -gt 0 ] && echo abort || echo proceed)" "abort"
 
 echo "[test] -------- $PASS passed, $FAIL failed --------"
 [ "$FAIL" -eq 0 ] || exit 1
-echo "[test] ALL CASES PASS — classifier is durable under the production behind-set."
+echo "[test] ALL CASES PASS — classifier proceeds on local-ahead+chore-behind (three-dot), aborts on real behind-code."
 exit 0

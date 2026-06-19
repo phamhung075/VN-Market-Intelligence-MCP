@@ -81,6 +81,44 @@ send_tg() {
     > /dev/null || echo "[fleet-push] WARN: curl Telegram failed (non-fatal)" >&2
 }
 
+# ── 3b. Abort-signal emitter ──────────────────────────────────────────────────
+# Drops a signal_queue row into docs/signals/ so the orch loop can SEE a push
+# abort (previously the abort only sent a BUG telegram -> the board was BLIND to
+# divergence, which is why the two-dot false-abort sat unnoticed for days).
+# (FIX-AUTO-PUSH-ABORT-SIGNAL-TRACKING)
+# Args: $1 = abort reason code (short slug), $2 = human-readable detail.
+emit_abort_signal() {
+  local reason="$1"
+  local detail="$2"
+  local ts
+  ts="$(date -u +%Y%m%dT%H%M%SZ)"
+  local sig_path="$REPO_ROOT/docs/signals/fleet-push-abort-${reason}-${ts}.json"
+
+  if $DRY_RUN; then
+    echo "[fleet-push][DRY-RUN] would emit abort signal: $sig_path ($reason)" >&2
+    return 0
+  fi
+
+  # Best-effort: signal emission must NEVER mask the real abort exit code.
+  cat > "$sig_path" 2>/dev/null <<EOF || echo "[fleet-push] WARN: could not write abort signal $sig_path" >&2
+{
+  "from": "fleet-worktree-push",
+  "to": "po",
+  "type": "auto-push-abort",
+  "priority": "high",
+  "payload": {
+    "reason": "${reason}",
+    "detail": "${detail}",
+    "ahead": "${ahead:-unknown}",
+    "behind": "${behind:-unknown}",
+    "threshold": "${PUSH_THRESHOLD}",
+    "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+  },
+  "createdAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+}
+
 # ── 4. Worktree path (timestamped to avoid collision) ─────────────────────────
 WT_PATH="/tmp/fleet-push-wt-$(date +%s)"
 
@@ -151,8 +189,18 @@ if [ "$behind" -gt 0 ]; then
   # NOTE: `grep -c` exits 1 on zero matches; chaining `|| echo 0` would emit a
   # SECOND "0" (the multiline "0\n0" then breaks `[ -gt ]` under set -e). So we
   # swallow grep's nonzero exit with `|| true` and default an empty result to 0.
+  # WHY THREE-DOT (HEAD...origin/main): we must classify ONLY the behind-set's
+  #   own changes (merge-base -> origin/main), NOT the symmetric tip diff.
+  #   TWO-dot (HEAD..origin/main) is the *combined* tip-to-tip diff and therefore
+  #   also surfaces LOCAL's AHEAD edits (e.g. unpushed *.ts code fixes). The fleet
+  #   perpetually carries ahead code commits, so two-dot mis-reads them as
+  #   "behind-set touches code" and FALSE-ABORTS every cycle even when origin's
+  #   actual behind-set is pure chore. Three-dot = diff(merge-base, origin/main)
+  #   = exactly what the behind-set introduces. (FIX-AUTO-PUSH-TWODOT-FALSE-ABORT)
+  #   The `behind=` rev-list on line ~121 uses two-dot CORRECTLY — that is a
+  #   reachability COUNT (commits in origin not in HEAD), not a content diff.
   # shellcheck disable=SC2155
-  code_touched=$(git diff --name-only HEAD..origin/main 2>/dev/null \
+  code_touched=$(git diff --name-only HEAD...origin/main 2>/dev/null \
     | grep -Ev "$BENIGN_RE" \
     | grep -c '.' || true)
   code_touched=${code_touched:-0}
@@ -160,12 +208,13 @@ if [ "$behind" -gt 0 ]; then
   echo "[fleet-push] behind-set: ${behind} commit(s), ${code_touched} code/config file(s) touched"
 
   if [ "$code_touched" -gt 0 ]; then
-    code_files=$(git diff --name-only HEAD..origin/main 2>/dev/null \
+    code_files=$(git diff --name-only HEAD...origin/main 2>/dev/null \
       | grep -Ev "$BENIGN_RE" \
       | tr '\n' ' ')
     msg="[fleet-push] ABORT: origin/main behind-set touches ${code_touched} code/config file(s) not in HEAD: ${code_files}. Manual reconcile required before auto-push."
     echo "$msg" >&2
     send_tg bug "$msg"
+    emit_abort_signal "behind-set-code" "$code_files"
     exit 1
   fi
 
@@ -198,6 +247,7 @@ if [ "$behind" -gt 0 ]; then
         msg="[fleet-push] ABORT: merge conflict in non-orch-state file(s): $(echo "$conflicted" | grep -v 'orch-state\.json' | tr '\n' ' '). Manual resolve required."
         echo "$msg" >&2
         send_tg bug "$msg"
+        emit_abort_signal "merge-conflict" "$(echo "$conflicted" | grep -v 'orch-state\.json' | tr '\n' ' ')"
         exit 1
       fi
 
@@ -211,6 +261,7 @@ if [ "$behind" -gt 0 ]; then
           msg="[fleet-push] ABORT: merge --continue failed after orch-state.json --ours resolution."
           echo "$msg" >&2
           send_tg bug "$msg"
+          emit_abort_signal "merge-continue-fail" "orch-state.json --ours merge --continue failed"
           exit 1
         }
         echo "[fleet-push] merge continued cleanly after orch-state.json --ours"
@@ -242,6 +293,7 @@ else
     msg="[fleet-push] ABORT: pnpm --filter vn-market check failed (red tree). Fix tsc errors before pushing."
     echo "$msg" >&2
     send_tg bug "$msg"
+    emit_abort_signal "tsc-red" "pnpm --filter vn-market check failed in worktree"
     exit 1
   fi
   popd > /dev/null
@@ -260,6 +312,7 @@ else
     msg="[fleet-push] ABORT: git push origin HEAD:main failed (non-zero exit). Check git output above."
     echo "$msg" >&2
     send_tg bug "$msg"
+    emit_abort_signal "push-fail" "git push origin HEAD:main returned non-zero"
     exit 1
   fi
   echo "[fleet-push] push succeeded"

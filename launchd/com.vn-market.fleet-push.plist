@@ -48,11 +48,15 @@
   <key>StandardErrorPath</key>
   <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/sessions/fleet-push-error.log</string>
 
-  <!-- Resolve git/pnpm/bun/docker + load HOME so the script can source .env. -->
+  <!-- Resolve git/pnpm/bun/docker + load HOME so the script can source .env.
+       ~/.bun/bin is REQUIRED: the pre-push tsc gate runs `bun tsc --noEmit`; a
+       PATH without it fails `sh: bun: command not found` and the script aborts
+       on a false "red tree" even when tsc is green (field-proven 2026-06-19,
+       fleet-push-error.log). pnpm's `check` script shells out to bun. -->
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>
-    <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+    <string>/Users/admin/.bun/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
     <key>HOME</key>
     <string>/Users/admin</string>
     <key>PUSH_THRESHOLD</key>
