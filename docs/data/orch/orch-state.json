@@ -225,8 +225,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-19T17:15:00Z",
-    "_updated_by": "router-reconcile-orphankey",
+    "_updated_at": "2026-06-19T18:56:32Z",
+    "_updated_by": "dev-team-loop",
     "archive": [
       {
         "from": "system-auditor",
@@ -985,7 +985,9 @@
         "router_note": "rehomed+liveverified",
         "triaged_at": "2026-06-19T17:34:48Z",
         "triaged_by": "po-s110",
-        "disposition": "DISPATCHED via M1 FU-ALERT-COWRITE-SCHEDULER-JOBS (orphan root) -> ready/dev-mcp-server."
+        "disposition": "DISPATCHED via M1 FU-ALERT-COWRITE-SCHEDULER-JOBS (orphan root) -> ready/dev-mcp-server.",
+        "deploy_status": "DEPLOYED b3ea96fa / img 05ad3412 (2026-06-19T19:03Z). Orphan source RAW-confirmed = 3 scan jobs (RSI/BB UUID-id + foreign-flow-id), last orphan 2026-06-19T06:45Z. Other orphan paths (news/legacy-price/macro) already quiesced (max 06-12/13). RESOLVES on next-session live-verify: orphan_max frozen + new scan alerts co-write. 1319 historical orphans = forward-fix, not backfilled.",
+        "deploy_status_at": "2026-06-19T19:10:36Z"
       },
       {
         "id": "sau-20260619T170803Z",
@@ -1030,6 +1032,20 @@
         "service_id": "mcp-server",
         "zone_owner": "ops",
         "router_verified": "2026-06-19T17:43:45Z"
+      },
+      {
+        "id": "devteam-loop-20260619T185632Z-macro-delta-null",
+        "ts": "2026-06-19T18:56:32Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "repair_task_request",
+        "summary": "DB-quality loop iter-2 (RAW-probe 2026-06-19T18:54Z): get_macro_snapshot computes vnIndexDelta=-5.94 correctly BUT oilUsdDelta/goldUsdDelta/usdVndDelta all NULL -> oil/gold/usd served with direction=unknown while VALUES are live tier-1 (oil $80.59, gold $4172.9, usdVnd 26120, is_estimate=false). Structural not transient: vnIndex has a prior-period row to diff, the 3 commodity/fx series do not (prior close not persisted/read for delta). Violates feedback_market_data_needs_direction. DISTINCT from macro-fetch-cluster (that is the FETCH layer, values are fine; this is the DELTA layer). Fix: persist+read prior-period value for oil/gold/usdVnd so delta computes. Root-caused, not blind-dispatch.",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null,
+        "check_id": "MACRO-DELTA-NULL-20260619",
+        "service": "macro-store/delta",
+        "zone_owner": "dev-macro-indicators"
       }
     ]
   },
@@ -15619,6 +15635,39 @@
         "done_at": "2026-06-19T17:43:45Z",
         "done_verified": false,
         "done_verified_note": "impl+commit clean (4 .md/skill, 0 .ts); LIVE verification pending next Tier-1 auditor tick running new flow — read-back self-check must fire + row land in .signal_queue.rows[]"
+      },
+      {
+        "_updated_at": "2026-06-19T18:10:00Z",
+        "created_at": "2026-06-13T08:09:33Z",
+        "created_by": "po",
+        "depends_on": "FIX-ALERT-ORPHAN-CORRELATION",
+        "desc": "ZONE = apps/mcp-server (dev-mcp-server). Follow-up from FIX-ALERT-ORPHAN-CORRELATION (atomic alert->signal co-write + alert_id column, commit 7cbca67a/556eb214). Files: apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts, apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts, apps/mcp-server/src/scheduler/market-data/foreignFlowAlertJob.ts. These three INSERT INTO alerts directly and skip storeAlerts/storeAlertsFromCommander, so no agent_signals row is co-written and the alert is a GENUINE orphan (distinct from the FU-1 false-orphan join bug). DoD: all three jobs route through storeAlerts (or the same atomic co-write helper); each emitted alert co-writes an agent_signals row carrying alert_id; live verify on named-volume DB that orphan-delta from these jobs -> ~0. Generic across ALL tickers — no per-ticker hardcode. SERIALIZE: same zone as the dev chain head (CI-RED-b7b84d9b-FIX); dispatch AFTER it clears to honor zone-serialization + WIP<=2.",
+        "id": "FU-ALERT-COWRITE-SCHEDULER-JOBS",
+        "owner": "dev-mcp-server",
+        "priority": "high",
+        "serialize_zone": "apps/mcp-server/",
+        "size": "M",
+        "sprint": null,
+        "status": "DONE",
+        "title": "Three scheduler jobs INSERT INTO alerts directly, bypassing storeAlerts/storeAlertsFromCommander, so they do NOT co-write agent_signals rows -> they still generate genuine orphans. Migrate taAlertScanJob, bbAlertScanJob, foreignFlowAlertJob to the atomic alert->signal co-write path (route through storeAlerts) so the orphan-delta gate can fully close to ~0.",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "next_agent": "system-auditor",
+        "promoted_at": "2026-06-19T17:34:48Z",
+        "promoted_by": "po-s110",
+        "live_evidence": "Router RAW-verified 2026-06-19T17:15Z named-vol market.db: 33 orphaned / 119 alerts-24h (was 63 06-18, 103 06-13). Recurring + currently real. C-08 source signal sau-c08-202606180038.",
+        "promotion_note": "Dependency FIX-ALERT-ORPHAN-CORRELATION shipped (7cbca67a/556eb214). 3 scheduler jobs (taAlertScanJob/bbAlertScanJob/foreignFlowAlertJob) INSERT INTO alerts directly, skipping storeAlerts co-write -> genuine orphans. DoD: route all 3 through storeAlerts atomic alert->agent_signals co-write; live-verify orphan-delta -> ~0 on named-vol DB; generic all tickers.",
+        "started_at": "2026-06-19T17:37:19Z",
+        "dispatched_by": "dev-team-cron",
+        "rebuild_required": false,
+        "review_note": "dev-mcp-server 2026-06-19: all 3 scheduler jobs routed through storeAlerts. taAlertScanJob + bbAlertScanJob: direct INSERT_ALERT_SQL replaced with storeAlerts([alert], database). foreignFlowAlertJob: pre-check pattern + storeAlerts. alertStore.ts INSERT includes fingerprint col. signalDetector.ts: ta_overbought/ta_oversold/ta_bb_breakout_up/ta_bb_breakout_down/foreign_flow added to SignalType; warning added to Severity. 8 test files updated. 99/99 targeted GREEN. tsc 0 errors. Commits: b3ea96fa (main fix), 33264de3 (orch), e238e5a1 (decision), f0ada9f4 (test schema fix). REBUILD_REQUIRED:yes — container rebuild needed before live orphan-delta verification.",
+        "qa_verdict": "CHANGES_REQUESTED: production code correct; test-only DDL gap (fingerprint col, commit b3ea96fa) → 13 red across own regression test + 4 files + 5-file sweep; fixer dispatched a286c8e1",
+        "updated_at": "2026-06-19T19:10:36Z",
+        "done_verified": false,
+        "deployed_image": "05ad3412",
+        "deployed_commit": "b3ea96fa",
+        "test_commit": "847376a0",
+        "verify_gate": "LIVE-PENDING next VN session (~0200-0800Z 2026-06-20): RSI/BB/foreign-flow scan alerts must carry fingerprint NOT NULL + agent_signals co-write; orphan_max for those id-patterns must stay frozen at pre-deploy 2026-06-19T06:45Z (no NEW orphans). Verified now: schema migrated live (alerts.fingerprint/sent_by/notified_telegram + agent_signals.alert_id all present), image 05ad3412 .Created 19:03:38Z > commit b3ea96fa epoch, container healthy 0-restart, named tests 97/0, full suite 13268/52. Forward-fix only: 1319 historical orphans NOT backfilled. system-auditor C-08 is the natural re-verifier."
       }
     ],
     "done_verified": [
@@ -21592,32 +21641,6 @@
     "in_progress": [],
     "ready": [],
     "review": [
-      {
-        "_updated_at": "2026-06-19T18:10:00Z",
-        "created_at": "2026-06-13T08:09:33Z",
-        "created_by": "po",
-        "depends_on": "FIX-ALERT-ORPHAN-CORRELATION",
-        "desc": "ZONE = apps/mcp-server (dev-mcp-server). Follow-up from FIX-ALERT-ORPHAN-CORRELATION (atomic alert->signal co-write + alert_id column, commit 7cbca67a/556eb214). Files: apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts, apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts, apps/mcp-server/src/scheduler/market-data/foreignFlowAlertJob.ts. These three INSERT INTO alerts directly and skip storeAlerts/storeAlertsFromCommander, so no agent_signals row is co-written and the alert is a GENUINE orphan (distinct from the FU-1 false-orphan join bug). DoD: all three jobs route through storeAlerts (or the same atomic co-write helper); each emitted alert co-writes an agent_signals row carrying alert_id; live verify on named-volume DB that orphan-delta from these jobs -> ~0. Generic across ALL tickers — no per-ticker hardcode. SERIALIZE: same zone as the dev chain head (CI-RED-b7b84d9b-FIX); dispatch AFTER it clears to honor zone-serialization + WIP<=2.",
-        "id": "FU-ALERT-COWRITE-SCHEDULER-JOBS",
-        "owner": "dev-mcp-server",
-        "priority": "high",
-        "serialize_zone": "apps/mcp-server/",
-        "size": "M",
-        "sprint": null,
-        "status": "REVIEW",
-        "title": "Three scheduler jobs INSERT INTO alerts directly, bypassing storeAlerts/storeAlertsFromCommander, so they do NOT co-write agent_signals rows -> they still generate genuine orphans. Migrate taAlertScanJob, bbAlertScanJob, foreignFlowAlertJob to the atomic alert->signal co-write path (route through storeAlerts) so the orphan-delta gate can fully close to ~0.",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "next_agent": "qa",
-        "promoted_at": "2026-06-19T17:34:48Z",
-        "promoted_by": "po-s110",
-        "live_evidence": "Router RAW-verified 2026-06-19T17:15Z named-vol market.db: 33 orphaned / 119 alerts-24h (was 63 06-18, 103 06-13). Recurring + currently real. C-08 source signal sau-c08-202606180038.",
-        "promotion_note": "Dependency FIX-ALERT-ORPHAN-CORRELATION shipped (7cbca67a/556eb214). 3 scheduler jobs (taAlertScanJob/bbAlertScanJob/foreignFlowAlertJob) INSERT INTO alerts directly, skipping storeAlerts co-write -> genuine orphans. DoD: route all 3 through storeAlerts atomic alert->agent_signals co-write; live-verify orphan-delta -> ~0 on named-vol DB; generic all tickers.",
-        "started_at": "2026-06-19T17:37:19Z",
-        "dispatched_by": "dev-team-cron",
-        "rebuild_required": true,
-        "review_note": "dev-mcp-server 2026-06-19: all 3 scheduler jobs routed through storeAlerts. taAlertScanJob + bbAlertScanJob: direct INSERT_ALERT_SQL replaced with storeAlerts([alert], database). foreignFlowAlertJob: pre-check pattern + storeAlerts. alertStore.ts INSERT includes fingerprint col. signalDetector.ts: ta_overbought/ta_oversold/ta_bb_breakout_up/ta_bb_breakout_down/foreign_flow added to SignalType; warning added to Severity. 8 test files updated. 99/99 targeted GREEN. tsc 0 errors. Commits: b3ea96fa (main fix), 33264de3 (orch), e238e5a1 (decision), f0ada9f4 (test schema fix). REBUILD_REQUIRED:yes — container rebuild needed before live orphan-delta verification."
-      },
       {
         "_adjudicated_by": "po",
         "_updated_at": "2026-06-13T08:48:41Z",
