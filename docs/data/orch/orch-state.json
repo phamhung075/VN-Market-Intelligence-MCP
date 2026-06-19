@@ -185,13 +185,13 @@
   "head": {
     "status": "active",
     "active_task_id": "FIX-CASCADE-MACRO-CARD-REAL-DETAIL",
-    "next_agent": "pm",
-    "next_action": "thin workorder for design-complete cascade-macro-card brief → dev",
-    "wip": 0,
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server: implement 3 interface/infra changes + migration + tests (see PM workorder)",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-19T04:40:30Z",
-    "updated_by": "po",
-    "note": "PO triaged architect brief_complete signal → board task FIX-CASCADE-MACRO-CARD-REAL-DETAIL (epic INFOCARD-EXPAND-FETCH, single zone apps/mcp-server/). next_agent=pm thin workorder (no split). Reserved WIP slot now consumed."
+    "updated_at": "2026-06-19T06:45:00Z",
+    "updated_by": "pm",
+    "note": "PM thin workorder complete: FIX-CASCADE-MACRO-CARD-REAL-DETAIL ready for dev-mcp-server dispatch. Handoff: docs/handoffs/FIX-CASCADE-MACRO-CARD-REAL-DETAIL-PM-workorder.md. Brief: docs/architecture-briefs/2026-06-19-cascade-macro-card-redesign.md"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5509,9 +5509,9 @@
             "id": "FIX-CASCADE-MACRO-CARD-REAL-DETAIL",
             "type": "FIX",
             "owner": "pm",
-            "next_agent": "pm",
+            "next_agent": "dev-mcp-server",
             "size": "M",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "depends": [],
             "zone": "apps/mcp-server/",
             "build_standard": "not-applicable",
@@ -5519,7 +5519,9 @@
             "brief": "docs/architecture-briefs/2026-06-19-cascade-macro-card-redesign.md",
             "baseline_pass": "cd apps/mcp-server && pnpm check && bun test --preload src/__tests__/setup.ts src/__tests__/FIX-SIGNALS-STOCK-FULL-DETAIL.test.ts src/__tests__/FIX-CASCADE-MACRO-CARD-REAL-DETAIL.test.ts",
             "title": "Per-stock Tác động Macro card serves real fetched detail (D-1 honor type filter in querySignalsForStock+server.ts; D-2 stop serving empty verified_decision stubs via is_correlation_stub marker + read-guard; D-3 purge test-fixture rows from live named-vol DB)",
-            "note": "Architect DESIGN-COMPLETE brief brief_complete signal 2026-06-19. 3 defects, single zone apps/mcp-server/, no PM split needed (architect verdict) → pm does thin workorder → dev. Files: stockSignalsHandler.ts (querySignalsForStock +signalTypes param, is_correlation_stub schema-probe guard), server.ts (~L1331 wire ?type param), alertStore.ts (ensureCorrelationStubColumn + is_correlation_stub=1 on both INSERTs), scripts/migrations/purge-test-fixture-signals.ts (NEW, --dry-run/--live idempotent), FIX-SIGNALS-STOCK-FULL-DETAIL.test.ts (extend AC-10..12), FIX-CASCADE-MACRO-CARD-REAL-DETAIL.test.ts (NEW AC-13..15). Frontend already correct (6abf4d19). LESSONS: ADD COLUMN no UNIQUE (silent no-op); live DB=named volume not host ./data (purge via docker exec bun). DoD §6: 1 type-filter-live curl FPT; 2 real finding_data on FPT/VCB/HPG varied not constant; 3 honest empty-state VNM; 4 pnpm check + 2 test files green + full CI clean; 5 migration drops exactly 2 rows (ids 6218,6216); 6 tsc gate root green pre-push; 7 rebuild mcp-server container (docker compose up -d --build mcp-server). Created by po triage of architect signal."
+            "note": "Architect DESIGN-COMPLETE brief brief_complete signal 2026-06-19. 3 defects, single zone apps/mcp-server/, no PM split needed (architect verdict) → pm does thin workorder → dev. Files: stockSignalsHandler.ts (querySignalsForStock +signalTypes param, is_correlation_stub schema-probe guard), server.ts (~L1331 wire ?type param), alertStore.ts (ensureCorrelationStubColumn + is_correlation_stub=1 on both INSERTs), scripts/migrations/purge-test-fixture-signals.ts (NEW, --dry-run/--live idempotent), FIX-SIGNALS-STOCK-FULL-DETAIL.test.ts (extend AC-10..12), FIX-CASCADE-MACRO-CARD-REAL-DETAIL.test.ts (NEW AC-13..15). Frontend already correct (6abf4d19). LESSONS: ADD COLUMN no UNIQUE (silent no-op); live DB=named volume not host ./data (purge via docker exec bun). DoD §6: 1 type-filter-live curl FPT; 2 real finding_data on FPT/VCB/HPG varied not constant; 3 honest empty-state VNM; 4 pnpm check + 2 test files green + full CI clean; 5 migration drops exactly 2 rows (ids 6218,6216); 6 tsc gate root green pre-push; 7 rebuild mcp-server container (docker compose up -d --build mcp-server). Created by po triage of architect signal.",
+            "assigned_at": "2026-06-19T06:45:00Z",
+            "assigned_by": "pm"
           }
         ]
       }
