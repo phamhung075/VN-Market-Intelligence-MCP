@@ -1,0 +1,53 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T04:06Z",
+    "nominal_tick": "2026-06-19T04:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "04:00 gatherer cluster (cron 0 */4) matched; both gatherer-standard slots are NOT among the 6 cloud RemoteTrigger backstops; session gateway-blind (mcpServers:0) so local spawn would fabricate/no-op — skipped per blind posture. No real data lost: cloud backstops do not cover the gatherer layer; this slot goes unfired until USER reconnects the gateway MCP server.",
+    "slot_detail": {
+      "news-scout-offhours": {
+        "agent": "news-scout",
+        "cron": "0 */4 * * *",
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z",
+        "cadence_minutes": 240,
+        "backstopped": false
+      },
+      "market-watcher-offhours": {
+        "agent": "market-watcher",
+        "cron": "0 */4 * * *",
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z",
+        "cadence_minutes": 240,
+        "backstopped": false
+      }
+    },
+    "leader_lock": "renewed_ok_expires_1781843781",
+    "note": "Pressure-state emitted 04:06:22Z (stale_warning:true — benign, rapid manual ticks)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T04:06Z",
+  "_processed": {
+    "fingerprint": "6680d617bb2e9c626db7e3bf2c972b9ad0f16dd9308c19f083a83b87182ae5ca",
+    "processedAt": "2026-06-19T04:34:06Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "from": "fleet-worktree-push",
+  "to": "po",
+  "type": "auto-push-abort",
+  "priority": "high",
+  "payload": {
+    "reason": "tsc-red",
+    "detail": "pnpm --filter vn-market check failed in worktree",
+    "ahead": "26",
+    "behind": "32",
+    "threshold": "20",
+    "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+  },
+  "createdAt": "2026-06-19T02:23:13Z",
+  "_processed": {
+    "processedAt": "2026-06-19T02:24:00Z",
+    "processedBy": "po",
+    "result": "RESOLVED \u2014 bun PATH added to plist (commit 7e67e048) + manual push succeeded e0c700d0..ea9a3589; tsc gate now green"
+  }
+}
