@@ -1,31 +1,24 @@
 # PO Notebook
-_overwritten 2026-06-19T08:24Z_
 
-## Cycle po-s108 (2026-06-19T08:24Z) — IDLE-WIP triage: P0 was a stale-DONE decoy; fill slots + groom 50 terminal rows
-
-**Trigger:** dev-team throughput tick — WIP=0 (ready=0/in_progress=0, wip_max=2) during VN market hours; router flagged a "P0 with idle capacity" promotion gap on a 298-row backlog.
-
-**P0 disposition — FALSE ALARM (RAW-verified):** `FIX-BCTC-LIAB-PRIOR-PERIOD` (the flagged P0) is `status:DONE` — merged to main 2026-06-07 (29245173 fix + 04fa26a7 notebook), 5 RED→GREEN tests, 21/21 suite. It was a STALE DONE row sitting in `backlog[]`, NOT an unpromoted P0. Promoting it = re-doing shipped work. Correct action = GROOM it out → done[]. The router's "idle capacity + waiting P0" premise did not survive a raw read of the row.
-
-**Real gap = backlog rot, not promotion.** 50 of 298 backlog rows carried a terminal status (38 DONE / 7 SUPERSEDED / 4 done_verified / 1 resolved) — never relocated to their closed lanes, inflating the live count.
-
-**Promoted 2 (genuinely-actionable HIGH, no blocker, not superseded — fills both free slots, respects wip_max=2):**
-- `VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE` → ready, next_agent=cowork-team. LIVE MARKET-channel risk: get_macro_snapshot returns a `{source_tier,text,fetchedAt}` JSON envelope (live since 98df0f43, 2026-05-23); cowork/chef prose-parsers may render raw JSON to MARKET. Distinct from done macro siblings (FDA-2/FEDFUNDS-REGRESS/etc — none address the envelope-parse→MARKET leak). Head pointed here (most urgent, market hours).
-- `BPE-ARCH-1` → ready, next_agent=architect. BCTC-PROSE-EXTRACT architect SPIKE (5 blockers), recurring-bug-escalation, NFR-4 mandatory pre-condition, no blocker.
-
-**Held (router-flagged but NOT promotable — per-task reason):**
-- `FIX-BCTC-LIAB-PRIOR-PERIOD` P0 — DONE, shipped 06-07 (groomed to done[]).
-- `BA-SHIP-WAVE-REAUDIT`, `FIX-PENDING-REFINE-LIMIT-CHECKKIND`, `FU-SCHEMA-DRIFT-P4`, `FU-SCHEMA-DRIFT-P5` — all DONE already (groomed).
-- `BCTC-HIST-VPS-BACKFILL` — `DEFERRED-INFRA`, zone infra-vps; VPS lacks pre-Q4-2025 PDFs (external dependency, not a coding lane). Deliberate deferral — held.
-
-**Groomed:** 50 terminal-status rows relocated out of backlog (45→done[], 5→done_verified[]) verbatim. Backlog **298 → 246** (−52: 2 promoted + 50 groomed). 0 terminal rows left in backlog.
-
-**Script:** `scripts/po-s108-idle-wip-promote-groom-terminal-backlog.jq` (atomic temp→[-s]→jq empty→conservation→rename). Guards GREEN: TOTAL 600=600 (pure relocation, no loss/dup — 600 ids all unique), in_progress/review byte-stable, idempotency re-run delta 0. jq trap fixed: `array | index(.id)` evaluates `.id` against the array (Cannot-index error) → bind `.id as $rid` first.
-
-**head** = VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE (cowork-team). po does NOT spawn — router dispatches via next_agent + head.
+_Last: 2026-06-19T17:31:18Z_
 
 ## Carry-over
-- Router TODO: dispatch the 2 promoted ready tasks (head→cowork-team for VERIFY, then architect for BPE-ARCH-1); RAW-verify the macro-envelope MARKET-channel risk live.
-- FIX-AUTO-PUSH-TRIGGER-NOT-FIRING done_verified still WITHHELD (qa must observe an AUTONOMOUS launchd push, not a manual run); launchd com.vn-market.fleet-push needs reload after machine restart.
-- 3 review[] rows remain QA-gated (ARCH-SHIP-WAVE-REAUDIT PARKED, FIX-ALERT-ENGINE-RSI-SINGLEDIGIT, FIX-BCTC-ENRICH-SILENT-0ROWS) — not promotable, live/USER-gated.
-- Backlog now 246 (real count); further grooming possible next tick (check for stale BACKLOG rows whose work shipped under a sibling id).
+- review[] (3, all LIVE/behavioral gates, NOT router-resolvable): FIX-ALERT-ENGINE-RSI-SINGLEDIGIT, FIX-BCTC-ENRICH-SILENT-0ROWS, ARCH-SHIP-WAVE-REAUDIT.
+- Push deferred out-of-band (launchd com.vn-market.fleet-push). 2x fleet-push-abort this tick = three-dot classifier correctly DEFERRING (ahead 43 / behind 62, benign cloud-chore) — NOT a regression, NO task minted.
+- ready[2] dispatched this tick → router spawns; in_progress will fill. WIP now at 2 (max).
+
+## This cycle — dev-team tick 2026-06-19T173118Z (GATEWAY-BLIND local spawn; board+git+fs only)
+RETURN = BATCH(2). WIP 0 → 2. Script: scripts/po-s110-orphan-cowrite-promote-auditor-writebug-mint.jq (atomic; conservation ready+2/backlog-1/sig_new-6, placement, idempotent re-run delta 0).
+
+SLOT 1 (FIX → dev-mcp-server, HIGH): PROMOTED FU-ALERT-COWRITE-SCHEDULER-JOBS backlog→ready (was MEDIUM, escalated). This is the DURABLE ROOT of sau-c08 orphaned alerts (router RAW-verified LIVE 33 orphaned/119 alerts-24h, recurring 103 06-13 → 63 06-18 → 33 now). 3 scheduler jobs (taAlertScanJob/bbAlertScanJob/foreignFlowAlertJob, files confirmed on disk) INSERT INTO alerts directly, skip storeAlerts co-write → genuine orphans. Dep FIX-ALERT-ORPHAN-CORRELATION already shipped (7cbca67a/556eb214). DoD: route all 3 through storeAlerts atomic co-write; live orphan-delta→~0; generic all tickers.
+
+SLOT 2 (UNBLOCK → agent-father via agent-md-factory, HIGH): MINTED FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY → ready. META-BUG that swallowed C-08 ~1.5d: system-auditor signal emit writes .signal_queue[N] numeric keys instead of .signal_queue.rows[] → findings invisible to PO. Also swallowed rag-service degraded this tick + legacy junk keys 0/1/2. DISTINCT from FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK (done_verified = row SHAPE, not write KEY). Fix: append to .rows[] + post-write read-back self-check. Per Agent .md factory rule → agent-md-factory then agent-father. Targets .claude/skills/signal-dashboard/SKILL.md § WRITE + system-auditor flow.
+
+TRIAGED→backlog (ranked, not dispatched, WIP full):
+- sau-20260619T170803Z rag-service OOM (MEDIUM, RestartCount=77/9d, 766/768MiB): overlaps FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX. Cap-bump ~1.5GB = ops/infra; growth = dev-rag-service. Next free slot.
+- devteam-...-macro-fetch-cluster (5 findings): needs PO scoping into separate FIXes (DJIA/WTI stale store; Reuters/TE circuit-open; FRED_API_KEY unset; SBV zero-mask; foreign-flow primary dead). Multi-owner, scope next tick — NOT blind-dispatch.
+- devteam-...-health-idle-vs-crash (P1): owner = health-recheck RemoteTrigger PROMPT (router-updatable, NOT a dev coding lane); matches project_health_recheck_trigger + bctc_lastpush_age_misread_as_crash. Queue=0+active=IDLE≠CRASH.
+- devteam-...-d4-id-collision (P2): already tracked FU-AUDITOR-D4-SIGNAL-ID; durable fix overlaps M2 signal-dashboard write-path — fold/sequence after M2.
+- qa-cycle277 ohlcv-aggregator follow-ons (2, already TRIAGED): stranded-pre-fix-rows DATA-REPAIR + class3 cold-start exchange-seed — left as-is, downstream of approved write-fix.
+
+LESSON: the orphankey write-bug (M2) is the recurring-invisibility root behind why C-08 sat unseen ~1.5d — fixing the SENSOR write-path is as load-bearing as the alert co-write itself. Both HIGH this tick.

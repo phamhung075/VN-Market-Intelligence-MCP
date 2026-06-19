@@ -929,11 +929,14 @@
         "type": "repair_task_request",
         "summary": "Deferred-for-scoping cluster from 2026-06-19 health-rechecks: (1) DJIA=23750 + WTI=95.5 stale in US-markets/commodity store corrupting macro synthesis (NOTE: get_macro_snapshot itself serves correct live oil $80.63 — corruption is in a separate store, scope which); (2) Reuters RSS + TradingEconomics x2 circuit-open ~130 consecutive failures, never succeeded this lifecycle (macro/news source degradation, owner dev-mainserver-crawls/ops-mainserver-fetch); (3) FRED_API_KEY unset -> get_ism_subcomponents + macro calendar empty; (4) SBV storeSbvSnapshot zero-mask REJECTED noise off-market + vn-sbv-fetch restart loop; (5) foreign-flow primary path dead (self-heals via VPS, log-noise only). Needs PO scoping into FIX tasks; not blind-dispatched.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "TRIAGED",
         "payload_ref": null,
         "check_id": "MACRO-FETCH-CLUSTER-20260619",
         "service": "macro/news-fetch",
-        "zone_owner": "dev-macro-indicators"
+        "zone_owner": "dev-macro-indicators",
+        "triaged_at": "2026-06-19T17:34:48Z",
+        "triaged_by": "po-s110",
+        "disposition": "RANKED backlog: 5-finding cluster needs PO scoping into separate FIX tasks (DJIA/WTI stale store; Reuters/TE circuit-open; FRED_API_KEY unset; SBV zero-mask; foreign-flow primary dead). Multi-owner, not blind-dispatch. Scope next tick."
       },
       {
         "id": "devteam-20260619T170637Z-health-idle-vs-crash",
@@ -943,11 +946,14 @@
         "type": "repair_task_request",
         "summary": "FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH (P1): health-recheck cloud trigger (trig_019Q8D5 per project_health_recheck_trigger) misclassifies vn-bctc-fetch as CRASHED P0 whenever last-push-age>360min, but RAW-VERIFIED 2026-06-19T16:20Z via SSH: service active(running) 8+ days, queue legitimately empty (9 tickers BDI/DAG/DLC/JSH/SIS/VDC/VNH/VEA have not filed Q1-2026 on HNX/UPCOM/SSC). Fired 12x today as false P0. DURABLE FIX: health check must read queue endpoint as secondary signal -> queue=0 + service active = IDLE (not CRASH); only flag CRASH when systemd state inactive/failed. Owner: health-recheck trigger prompt edit (router-updatable RemoteTrigger). Follow-ons: (a) stale-queue re-enqueue watchdog for late-filers, (b) SSC Playwright fallback during ~12:00 UTC maintenance window.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "TRIAGED",
         "payload_ref": null,
         "check_id": "FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH",
         "service": "health-recheck",
-        "zone_owner": "router/health-trigger"
+        "zone_owner": "router/health-trigger",
+        "triaged_at": "2026-06-19T17:34:48Z",
+        "triaged_by": "po-s110",
+        "disposition": "RANKED backlog: P1 health-recheck queue=0+active=IDLE-not-CRASH; owner=health-recheck RemoteTrigger prompt (router-updatable, NOT a dev coding lane). matches project_health_recheck_trigger + feedback_bctc_lastpush_age_misread_as_crash."
       },
       {
         "id": "devteam-20260619T170637Z-d4-id-collision",
@@ -957,11 +963,14 @@
         "type": "repair_task_request",
         "summary": "FIX-D4-SIGNAL-ID-COLLISION (P2): system-auditor D4 emits multiple distinct findings under ONE shared date-based id sau-d4-{YYYYMMDDHHMM}; signal_queue append is blind (no upsert-by-id) so 2 different D4 findings (lock-no-task-row + orch/lock-mismatch) landed as a duplicate-id pair 2026-06-19T03:00. Deduped manually this tick. DURABLE FIX: make D4 signal id unique per-finding (append seq or summary-hash) AND/OR make signal-dashboard WRITE upsert-by-id idempotent. Owner: system-auditor flow + signal-dashboard skill.",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "TRIAGED",
         "payload_ref": null,
         "check_id": "FIX-D4-SIGNAL-ID-COLLISION",
         "service": "system-auditor",
-        "zone_owner": "system-auditor"
+        "zone_owner": "system-auditor",
+        "triaged_at": "2026-06-19T17:34:48Z",
+        "triaged_by": "po-s110",
+        "disposition": "RANKED backlog: P2 D4 signal-id collision already tracked as FU-AUDITOR-D4-SIGNAL-ID; durable fix overlaps M2 signal-dashboard write-path work. Fold/sequence after M2."
       },
       {
         "id": "sau-c08-202606180038",
@@ -970,10 +979,13 @@
         "to": "po",
         "type": "db_integrity_breach",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "TRIAGED",
         "summary": "C-08 orphaned alerts (alerts w/ no agent_signals link, 24h window). Router RAW-verified LIVE 2026-06-19T17:15:00Z: 33 orphaned / 119 alerts-24h, 1492 total (was 63 on 06-18, 103 on 06-13 RESOLVED) = RECURRING + currently real. Re-homed from orphan key signal_queue[3] (auditor wrote wrong path -> invisible to PO ~1.5d). Route dev-alert-engine/dev-mcp-server.",
         "payload_ref": null,
-        "router_note": "rehomed+liveverified"
+        "router_note": "rehomed+liveverified",
+        "triaged_at": "2026-06-19T17:34:48Z",
+        "triaged_by": "po-s110",
+        "disposition": "DISPATCHED via M1 FU-ALERT-COWRITE-SCHEDULER-JOBS (orphan root) -> ready/dev-mcp-server."
       },
       {
         "id": "sau-20260619T170803Z",
@@ -982,10 +994,13 @@
         "to": "po",
         "type": "microservice_degraded",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "TRIAGED",
         "summary": "rag-service chronic OOM-cycle: 766MiB/768MiB cap (99.7%) + RestartCount=77 over 9d (~8.5/day), OOMKilled=false now, UP 7h healthy. Router RAW-verified 2026-06-19T17:15:00Z. Recovers each restart then regrows to ceiling = cap-undersize or memory growth (LanceDB/embeddings). Re-homed from orphan key signal_queue[5]. Fix: bump cgroup cap toward peers (~1.5GB) AND/OR dev-rag-service investigate growth.",
         "payload_ref": null,
-        "router_note": "rehomed+rawverified"
+        "router_note": "rehomed+rawverified",
+        "triaged_at": "2026-06-19T17:34:48Z",
+        "triaged_by": "po-s110",
+        "disposition": "RANKED backlog: rag-service OOM-cycle (MEDIUM) overlaps FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX; WIP<=2 this tick consumed by 2 HIGH roots. Cap-bump (~1.5GB) is an ops/infra change; growth-investigation is dev-rag-service. Pick up next free slot."
       },
       {
         "id": "router-auditor-orphankey-writebug-20260619T1715Z",
@@ -994,9 +1009,12 @@
         "to": "po",
         "type": "repair_task_request",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "TRIAGED",
         "summary": "ROOT CAUSE: system-auditor signal-write targets .signal_queue[N] (numeric key) instead of .signal_queue.rows[] -> findings land at orphan keys invisible to PO triage. Confirmed swallowed: C-08 db-breach (06-18, ~1.5d) + rag-service degraded (this tick) + legacy junk keys 0/1/2. Definitif fix: correct emit/append step (signal-dashboard skill / system-auditor flow) to .signal_queue.rows += [row] + post-write self-check asserting row in .rows[]. agent-father via agent-md-factory. Router reconciled board this tick.",
-        "payload_ref": null
+        "payload_ref": null,
+        "triaged_at": "2026-06-19T17:34:48Z",
+        "triaged_by": "po-s110",
+        "disposition": "DISPATCHED via M2 FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY -> ready/agent-father (agent-md-factory)."
       }
     ]
   },
@@ -1110,8 +1128,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-19T11:30:00Z",
-    "_updated_by": "architect",
+    "_updated_at": "2026-06-19T17:37:19Z",
+    "_updated_by": "dev-team-cron-dispatch",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6809,23 +6827,6 @@
         "status": "NEW",
         "title": "pollNews returns 0 items from ALL sources at ~23:00 UTC two consecutive nights (2026-06-10 23:00, 2026-06-11 23:30) — only 3/7 sources active (cafef/vnexpress/vneconomy/teChromiumNews/reuters/tradingeconomics/newsapi). Night-window fetch/proxy health: check VPS proxy nighttime availability + the 4 inactive sources. Infra/fetch lane, NOT a methodology gap.",
         "zone": "infrastructure/news-fetch"
-      },
-      {
-        "_updated_at": "2026-06-13T08:09:33Z",
-        "created_at": "2026-06-13T08:09:33Z",
-        "created_by": "po",
-        "depends_on": "FIX-ALERT-ORPHAN-CORRELATION",
-        "desc": "ZONE = apps/mcp-server (dev-mcp-server). Follow-up from FIX-ALERT-ORPHAN-CORRELATION (atomic alert->signal co-write + alert_id column, commit 7cbca67a/556eb214). Files: apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts, apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts, apps/mcp-server/src/scheduler/market-data/foreignFlowAlertJob.ts. These three INSERT INTO alerts directly and skip storeAlerts/storeAlertsFromCommander, so no agent_signals row is co-written and the alert is a GENUINE orphan (distinct from the FU-1 false-orphan join bug). DoD: all three jobs route through storeAlerts (or the same atomic co-write helper); each emitted alert co-writes an agent_signals row carrying alert_id; live verify on named-volume DB that orphan-delta from these jobs -> ~0. Generic across ALL tickers — no per-ticker hardcode. SERIALIZE: same zone as the dev chain head (CI-RED-b7b84d9b-FIX); dispatch AFTER it clears to honor zone-serialization + WIP<=2.",
-        "id": "FU-ALERT-COWRITE-SCHEDULER-JOBS",
-        "owner": "dev-mcp-server",
-        "priority": "medium",
-        "serialize_zone": "apps/mcp-server/",
-        "size": "M",
-        "sprint": null,
-        "status": "NEW",
-        "title": "Three scheduler jobs INSERT INTO alerts directly, bypassing storeAlerts/storeAlertsFromCommander, so they do NOT co-write agent_signals rows -> they still generate genuine orphans. Migrate taAlertScanJob, bbAlertScanJob, foreignFlowAlertJob to the atomic alert->signal co-write path (route through storeAlerts) so the orphan-delta gate can fully close to ~0.",
-        "type": "FIX",
-        "zone": "apps/mcp-server/"
       },
       {
         "created_at": "2026-06-13T09:02:02Z",
@@ -21548,7 +21549,53 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "_updated_at": "2026-06-13T08:09:33Z",
+        "created_at": "2026-06-13T08:09:33Z",
+        "created_by": "po",
+        "depends_on": "FIX-ALERT-ORPHAN-CORRELATION",
+        "desc": "ZONE = apps/mcp-server (dev-mcp-server). Follow-up from FIX-ALERT-ORPHAN-CORRELATION (atomic alert->signal co-write + alert_id column, commit 7cbca67a/556eb214). Files: apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts, apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts, apps/mcp-server/src/scheduler/market-data/foreignFlowAlertJob.ts. These three INSERT INTO alerts directly and skip storeAlerts/storeAlertsFromCommander, so no agent_signals row is co-written and the alert is a GENUINE orphan (distinct from the FU-1 false-orphan join bug). DoD: all three jobs route through storeAlerts (or the same atomic co-write helper); each emitted alert co-writes an agent_signals row carrying alert_id; live verify on named-volume DB that orphan-delta from these jobs -> ~0. Generic across ALL tickers — no per-ticker hardcode. SERIALIZE: same zone as the dev chain head (CI-RED-b7b84d9b-FIX); dispatch AFTER it clears to honor zone-serialization + WIP<=2.",
+        "id": "FU-ALERT-COWRITE-SCHEDULER-JOBS",
+        "owner": "dev-mcp-server",
+        "priority": "high",
+        "serialize_zone": "apps/mcp-server/",
+        "size": "M",
+        "sprint": null,
+        "status": "IN_PROGRESS",
+        "title": "Three scheduler jobs INSERT INTO alerts directly, bypassing storeAlerts/storeAlertsFromCommander, so they do NOT co-write agent_signals rows -> they still generate genuine orphans. Migrate taAlertScanJob, bbAlertScanJob, foreignFlowAlertJob to the atomic alert->signal co-write path (route through storeAlerts) so the orphan-delta gate can fully close to ~0.",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "promoted_at": "2026-06-19T17:34:48Z",
+        "promoted_by": "po-s110",
+        "live_evidence": "Router RAW-verified 2026-06-19T17:15Z named-vol market.db: 33 orphaned / 119 alerts-24h (was 63 06-18, 103 06-13). Recurring + currently real. C-08 source signal sau-c08-202606180038.",
+        "promotion_note": "Dependency FIX-ALERT-ORPHAN-CORRELATION shipped (7cbca67a/556eb214). 3 scheduler jobs (taAlertScanJob/bbAlertScanJob/foreignFlowAlertJob) INSERT INTO alerts directly, skipping storeAlerts co-write -> genuine orphans. DoD: route all 3 through storeAlerts atomic alert->agent_signals co-write; live-verify orphan-delta -> ~0 on named-vol DB; generic all tickers.",
+        "started_at": "2026-06-19T17:37:19Z",
+        "dispatched_by": "dev-team-cron"
+      },
+      {
+        "id": "FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY",
+        "type": "UNBLOCK",
+        "title": "system-auditor signal-write targets .signal_queue[N] numeric keys instead of .signal_queue.rows[] -> findings invisible to PO triage",
+        "status": "IN_PROGRESS",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "route_to": "agent-father",
+        "route_via": "agent-md-factory",
+        "priority": "high",
+        "size": "S",
+        "zone": "docs/agents/system-auditor",
+        "created_at": "2026-06-19T17:34:48Z",
+        "created_by": "po-s110",
+        "source_signal": "router-auditor-orphankey-writebug-20260619T1715Z",
+        "desc": "ROOT CAUSE (meta-bug): system-auditor signal emit/append step writes to .signal_queue[N] (numeric key) instead of .signal_queue.rows[] array. Findings land at orphan keys the PO signal-dashboard pre-check never scans -> SILENTLY SWALLOWED. Confirmed swallowed: C-08 db-breach (06-18, ~1.5d invisible) + rag-service degraded (this tick) + legacy junk keys 0/1/2. DISTINCT FROM FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK (done_verified) which corrected the ROW SHAPE, NOT the write-target KEY. Definitif fix via agent-md-factory then agent-father: correct the emit step in signal-dashboard skill (.claude/skills/signal-dashboard/SKILL.md § WRITE) and/or system-auditor flow to append to .signal_queue.rows += [row], PLUS a post-write self-check that asserts the row is readable back in .signal_queue.rows[] (fail-loud if not). Generic — keys on the write contract, no per-finding hardcode.",
+        "verification_gate": "After fix: a fresh system-auditor finding appears in .signal_queue.rows[] (NOT a numeric orphan key) AND the post-write self-check passes; PO signal-dashboard READ surfaces it. No new orphan-key writes for 7d.",
+        "dod": "Emit/append step writes .signal_queue.rows += [row]; post-write read-back self-check asserts membership; agent-md-factory SSOT/DRY honored; no .signal_queue[N] numeric-key writes remain.",
+        "started_at": "2026-06-19T17:37:19Z",
+        "dispatched_by": "dev-team-cron"
+      }
+    ],
     "ready": [],
     "review": [
       {
