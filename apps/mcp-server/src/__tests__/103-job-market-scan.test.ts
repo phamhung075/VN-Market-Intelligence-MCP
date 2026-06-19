@@ -87,7 +87,8 @@ function seedSchema(db: Database) {
       resolution_notes      TEXT,
       sent_by               TEXT NOT NULL DEFAULT 'server',
       confidence_score      REAL,
-      validated_at          TEXT
+      validated_at          TEXT,
+      fingerprint           TEXT
     );
     CREATE TABLE IF NOT EXISTS market_prices_history (
       code       TEXT NOT NULL,

@@ -48,7 +48,8 @@ function makeFullDb(): Database {
       notified_telegram     INTEGER NOT NULL DEFAULT 0,
       sent_by               TEXT NOT NULL DEFAULT 'server',
       confidence_score      REAL,
-      validated_at          TEXT
+      validated_at          TEXT,
+      fingerprint           TEXT
     );
     CREATE TABLE IF NOT EXISTS agent_signals (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,

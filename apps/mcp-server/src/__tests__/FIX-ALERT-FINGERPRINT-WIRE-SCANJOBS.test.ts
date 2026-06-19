@@ -72,6 +72,10 @@ function buildTestDb(): Database {
       message TEXT NOT NULL,
       read INTEGER NOT NULL DEFAULT 0,
       user_note TEXT,
+      sent_by TEXT NOT NULL DEFAULT 'server',
+      notified_telegram INTEGER NOT NULL DEFAULT 0,
+      confidence_score REAL,
+      validated_at TEXT,
       fingerprint TEXT UNIQUE
     )
   `);
