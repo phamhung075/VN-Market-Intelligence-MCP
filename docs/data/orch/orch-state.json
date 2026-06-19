@@ -183,15 +183,15 @@
     }
   ],
   "head": {
-    "status": "dispatching",
-    "active_task_id": "VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE",
-    "next_agent": "cowork-team",
-    "next_action": "raw-verify live get_macro_snapshot envelope; fix cowork parse if raw JSON leaks to MARKET",
-    "wip": 2,
+    "status": "in_progress",
+    "active_task_id": "BPE-ARCH-1",
+    "next_agent": "architect",
+    "next_action": "Run BCTC-PROSE-EXTRACT architect SPIKE + design brief (5 blockers: ocr_unit injection path, OCR gap root cause, patch order for active uncommitted work, AI tool arch, structural root-cause for module family). Spec: docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md. recurring-bug-escalation — SPIKE is NFR-4 mandatory pre-condition for dev.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-19T08:23:43Z",
-    "updated_by": "po-s108",
-    "note": "idle-wip fill: promoted VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE (LIVE MARKET-channel risk) + BPE-ARCH-1 (architect SPIKE); groomed terminal backlog rows to closed lanes"
+    "updated_at": "2026-06-19T10:21:36Z",
+    "updated_by": "po-s109",
+    "note": "UNSTICK: prior head was VERIFY-COWORK (next_agent=cowork-team = DEAD route, status=dispatching = non-routing) — blocked both promoted tasks ~2h. VERIFY resolved (router verified no active leak). Head repointed at BPE-ARCH-1 -> architect (a REAL dev-chain executor) so dev-team Step-0b head-resume fires and dispatches. zone apps/pdf-extractor/ free (in_progress empty)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10470,6 +10470,24 @@
         "created_by": "po",
         "triaged_at": "2026-06-18T14:36:21Z",
         "triaged_by": "po"
+      },
+      {
+        "id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
+        "type": "FIX",
+        "title": "Make get_macro_snapshot.text human-readable like get_market_snapshot (close latent raw-JSON leak-trap)",
+        "desc": "DEFENSIVE / latent-trap closer (spun from VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE, router-verified NO active leak). get_macro_snapshot.text currently returns raw JSON ({status,vnIndex,...}) whereas get_market_snapshot.text returns human-readable prose. A future cowork/chef prose-parser that naively echoes .text would leak raw JSON to the MARKET channel. Fix: format get_macro_snapshot.text as a human-readable Vietnamese-friendly section block (same shape as get_market_snapshot), keep the structured fields available alongside (envelope unchanged) so synthesizing agents still read typed values. No active bug — purely closes the inconsistency that makes the leak possible.",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "market_independent": true,
+        "created_at": "2026-06-19T10:21:36Z",
+        "created_by": "po-s109",
+        "source": "VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE (router verified no active leak; this closes the latent trap)",
+        "generic_mandate": "Format the text field generically for ALL macro fields — no per-field/per-ticker hardcode.",
+        "verification_gate": "get_macro_snapshot.text is human-readable prose (not raw JSON); structured envelope fields still present; no MARKET-channel leak path."
       }
     ],
     "closed_sprints": [
@@ -21420,6 +21438,41 @@
         "done_verified_at": "2026-06-14T23:53:30Z",
         "done_verified_by": "dev-team(router-raw-reprobe)",
         "live_verify_evidence": "2026-06-14T23:53:30Z ROUTER-RAW-REPROBE: trade/macro/cpi/bop + liquidity ALL HTTP 200 within gateway deadline (none hang; d35 PARTIAL had these 4 raw-timeout). bop blocked_reason='context deadline exceeded' = FetchBudgetSec=8s bound firing. Proxy UP (NSO index 85867 bytes). Fail-closed honesty held. ops 2-window 5/5 + router 3rd window concur."
+      },
+      {
+        "created_at": "2026-06-09T06:56:35Z",
+        "created_by": "po",
+        "gate": "raw-verify a live get_macro_snapshot call returns the {source_tier,text,fetchedAt} envelope, then confirm cowork-team flow parses inner text (no raw JSON in any MARKET-channel message). If leaking -> fix the parse + Vietnamese-prose formatting.",
+        "id": "VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE",
+        "labels": [
+          "cowork",
+          "macro-snapshot",
+          "envelope-parse",
+          "market-channel-risk",
+          "non-ci"
+        ],
+        "note": "[po S25 DJ-GATE-1 2026-06-09T06:56:35Z] OPENED from CI-C3-C1-GATE separate_non_ci_flag. INDEPENDENT of /goal ci/cd pass — this is a LIVE PRODUCTION behavior risk, not a CI item. Architect's C1 SPIKE found get_macro_snapshot switched to a JSON envelope at 98df0f43 (2026-05-23); downstream cowork/chef prose-parsers may render raw JSON to MARKET. Vietnamese-output-only + plain-VN policy applies. owner cowork-team. NOT in_progress (WIP<=2).",
+        "owner": "cowork-team",
+        "priority": "high",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "status": "done_verified",
+        "title": "VERIFY cowork-team parses the get_macro_snapshot {source_tier, text:JSON-string, fetchedAt} envelope correctly (NOT raw JSON to MARKET channel). Live since commit 98df0f43 (2026-05-23, ~17 days): get_macro_snapshot returns a JSON envelope instead of human-readable sections. Cowork/chef agents that parse the inner `text` as formatted prose may be rendering raw JSON to the MARKET channel. Verify the cowork flow JSON-parses inner `text` before formatting; fix if raw JSON leaks.",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "next_agent": "cowork-team",
+        "promoted_at": "2026-06-19T08:23:43Z",
+        "promoted_by": "po-s108",
+        "promotion_note": "idle-wip fill (WIP=0, wip_max=2, market hours) — genuinely-actionable HIGH, no blocker, not superseded",
+        "done_verified_at": "2026-06-19T10:21:36Z",
+        "done_verified_by": "po-s109",
+        "live_verify_agent": "router",
+        "live_verify_at": "2026-06-19T10:21:36Z",
+        "live_verify_result": "verified-no-active-leak",
+        "live_verify_evidence": "Router RAW-probed via claude.ai gateway: get_macro_snapshot.text IS raw JSON envelope {status:ok,vnIndex:1824.53,...} (latent leak-trap — unlike get_market_snapshot whose text is human-readable). BUT get_unreviewed_market_messages (8 most recent) shows NO leak: every MARKET post is clean Vietnamese prose; agents synthesize macro fields (USD/VND sigma, yield 7.05% vs 5%, gold -2.2sigma) into prose, never dump the raw envelope. NO ACTIVE LEAK.",
+        "router_reverify_verdict": "RESOLVED — no active raw-JSON leak to MARKET channel. Latent trap closed defensively via FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT (P3 backlog).",
+        "verification_gate": "SATISFIED — router live probe (gateway get_macro_snapshot + get_unreviewed_market_messages)",
+        "dead_route_note": "ROUTE BUG: this task carried next_agent=cowork-team — a DEAD route. cowork-team is the cowork CYCLE dispatcher (runs scheduled agents via signals), NOT a board-task executor; dev-team spawn-guard FORBIDS spawning the cowork-team dispatcher flow. A board VERIFY task routed there could NEVER be picked up. Router verified directly instead. VERIFY-class / live-probe tasks must route to a real executor (router-probe / qa), never cowork-team."
       }
     ],
     "head": {
@@ -21442,32 +21495,6 @@
         "title": "BCTC-PROSE-EXTRACT architect SPIKE + design brief — 5 blockers: ocr_unit injection path (BLOCKER-1), OCR gap root cause (BLOCKER-2), patch order for active uncommitted work (BLOCKER-3), AI tool arch (BLOCKER-4), structural root-cause for module family (BLOCKER-5). Spec: docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md",
         "zone": "apps/pdf-extractor/",
         "next_agent": "architect",
-        "promoted_at": "2026-06-19T08:23:43Z",
-        "promoted_by": "po-s108",
-        "promotion_note": "idle-wip fill (WIP=0, wip_max=2, market hours) — genuinely-actionable HIGH, no blocker, not superseded"
-      },
-      {
-        "created_at": "2026-06-09T06:56:35Z",
-        "created_by": "po",
-        "gate": "raw-verify a live get_macro_snapshot call returns the {source_tier,text,fetchedAt} envelope, then confirm cowork-team flow parses inner text (no raw JSON in any MARKET-channel message). If leaking -> fix the parse + Vietnamese-prose formatting.",
-        "id": "VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE",
-        "labels": [
-          "cowork",
-          "macro-snapshot",
-          "envelope-parse",
-          "market-channel-risk",
-          "non-ci"
-        ],
-        "note": "[po S25 DJ-GATE-1 2026-06-09T06:56:35Z] OPENED from CI-C3-C1-GATE separate_non_ci_flag. INDEPENDENT of /goal ci/cd pass — this is a LIVE PRODUCTION behavior risk, not a CI item. Architect's C1 SPIKE found get_macro_snapshot switched to a JSON envelope at 98df0f43 (2026-05-23); downstream cowork/chef prose-parsers may render raw JSON to MARKET. Vietnamese-output-only + plain-VN policy applies. owner cowork-team. NOT in_progress (WIP<=2).",
-        "owner": "cowork-team",
-        "priority": "high",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "status": "READY",
-        "title": "VERIFY cowork-team parses the get_macro_snapshot {source_tier, text:JSON-string, fetchedAt} envelope correctly (NOT raw JSON to MARKET channel). Live since commit 98df0f43 (2026-05-23, ~17 days): get_macro_snapshot returns a JSON envelope instead of human-readable sections. Cowork/chef agents that parse the inner `text` as formatted prose may be rendering raw JSON to the MARKET channel. Verify the cowork flow JSON-parses inner `text` before formatting; fix if raw JSON leaks.",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "next_agent": "cowork-team",
         "promoted_at": "2026-06-19T08:23:43Z",
         "promoted_by": "po-s108",
         "promotion_note": "idle-wip fill (WIP=0, wip_max=2, market hours) — genuinely-actionable HIGH, no blocker, not superseded"
