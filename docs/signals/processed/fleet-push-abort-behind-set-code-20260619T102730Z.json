@@ -1,0 +1,21 @@
+{
+  "from": "fleet-worktree-push",
+  "to": "po",
+  "type": "auto-push-abort",
+  "priority": "high",
+  "payload": {
+    "reason": "behind-set-code",
+    "detail": "apps/mcp-server/src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts ",
+    "ahead": "36",
+    "behind": "40",
+    "threshold": "20",
+    "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+  },
+  "createdAt": "2026-06-19T10:27:30Z",
+  "_processed": {
+    "fingerprint": "0d9f9a3df66f7f9f8f842b17b5a85a42fe1e07071e14985b8bcb2c194e4602fe",
+    "processedAt": "2026-06-19T10:31:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

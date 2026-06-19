@@ -5534,7 +5534,29 @@
         "completed_at": "2026-06-19T05:05:00Z"
       }
     ],
-    "archive": [],
+    "archive": [
+      {
+        "created_at": "2026-06-09T21:50:17Z",
+        "id": "BPE-ARCH-1",
+        "note": "recurring-bug-escalation=true — SPIKE is NFR-4 mandatory pre-condition for dev | DONE 2026-06-19: design brief docs/architecture-briefs/2026-06-09-bctc-prose-extract-design.md. Sprint already closed 2026-06-10 (BPE-QA-1 green). Zombie task formally closed. All 5 blockers resolved and shipped.",
+        "owner": "architect",
+        "priority": "high",
+        "sprint": "BCTC-PROSE-EXTRACT",
+        "status": "DONE",
+        "title": "BCTC-PROSE-EXTRACT architect SPIKE + design brief — 5 blockers: ocr_unit injection path (BLOCKER-1), OCR gap root cause (BLOCKER-2), patch order for active uncommitted work (BLOCKER-3), AI tool arch (BLOCKER-4), structural root-cause for module family (BLOCKER-5). Spec: docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md",
+        "zone": "apps/pdf-extractor/",
+        "next_agent": "architect",
+        "promoted_at": "2026-06-19T08:23:43Z",
+        "promoted_by": "po-s108",
+        "promotion_note": "idle-wip fill (WIP=0, wip_max=2, market hours) — genuinely-actionable HIGH, no blocker, not superseded",
+        "dispatched_at": "2026-06-19T10:33:25Z",
+        "dispatched_by": "dev-team",
+        "completed_at": "2026-06-19T11:30:00Z",
+        "completed_by": "architect",
+        "closed_by": "dev-team-tick-20260619T103058Z",
+        "closed_at": "2026-06-19T11:30:00Z"
+      }
+    ],
     "backlog": [
       {
         "baseline_pass": true,
@@ -21482,27 +21504,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
-      {
-        "created_at": "2026-06-09T21:50:17Z",
-        "id": "BPE-ARCH-1",
-        "note": "recurring-bug-escalation=true — SPIKE is NFR-4 mandatory pre-condition for dev | DONE 2026-06-19: design brief docs/architecture-briefs/2026-06-09-bctc-prose-extract-design.md. Sprint already closed 2026-06-10 (BPE-QA-1 green). Zombie task formally closed. All 5 blockers resolved and shipped.",
-        "owner": "architect",
-        "priority": "high",
-        "sprint": "BCTC-PROSE-EXTRACT",
-        "status": "DONE",
-        "title": "BCTC-PROSE-EXTRACT architect SPIKE + design brief — 5 blockers: ocr_unit injection path (BLOCKER-1), OCR gap root cause (BLOCKER-2), patch order for active uncommitted work (BLOCKER-3), AI tool arch (BLOCKER-4), structural root-cause for module family (BLOCKER-5). Spec: docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md",
-        "zone": "apps/pdf-extractor/",
-        "next_agent": "architect",
-        "promoted_at": "2026-06-19T08:23:43Z",
-        "promoted_by": "po-s108",
-        "promotion_note": "idle-wip fill (WIP=0, wip_max=2, market hours) — genuinely-actionable HIGH, no blocker, not superseded",
-        "dispatched_at": "2026-06-19T10:33:25Z",
-        "dispatched_by": "dev-team",
-        "completed_at": "2026-06-19T11:30:00Z",
-        "completed_by": "architect"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
