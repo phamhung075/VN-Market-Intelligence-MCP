@@ -1015,6 +1015,20 @@
         "triaged_at": "2026-06-19T17:34:48Z",
         "triaged_by": "po-s110",
         "disposition": "DISPATCHED via M2 FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY -> ready/agent-father (agent-md-factory)."
+      },
+      {
+        "id": "sau-20260619T173934Z",
+        "ts": "2026-06-19T17:39:34Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server memory CRITICAL 98.90% (threshold 85%)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "check_id": "A-30",
+        "service_id": "mcp-server",
+        "zone_owner": "ops"
       }
     ]
   },
