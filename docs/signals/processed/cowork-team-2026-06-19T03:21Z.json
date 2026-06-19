@@ -1,0 +1,43 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T03:21Z",
+    "nominal_tick": "03:13",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "chef-intraday"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "gateway_blind_session_and_chef_intraday_is_not_cloud_backstopped",
+    "slot_detail": {
+      "chef-intraday": {
+        "agent": "unified-agent",
+        "flow_path": "docs/agents/unified-agent/flow/chef.md",
+        "cron": "13 2-8 * * 1-5",
+        "guaranteed": false,
+        "policy_id": "chef-intraday",
+        "last_fired": "2026-06-18T06:21:13Z"
+      }
+    },
+    "leader_lock": "lapsed_then_reclaimed_via_task_claim_stolen_true",
+    "note": "Second chef-intraday skip this session (prior 02:21Z). Stale local last_fired (06-18T06:21) keeps it re-matching each intraday boundary; blind-session suppression stands (chef fabrication guard). Leader-lock heartbeat returned ok:false this tick (lock had lapsed — almost certainly expired during the 23:21Z mcp-server outage window when renewals failed); re-claimed via task_claim with stolen:true. No competing live dispatcher exists in this session, so the steal is benign/correct. chef-intraday is NOT cloud-backstopped → unfired this session. Fix is USER/HARNESS-side: register gateway in .mcp.json + reconnect."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-19T03:21Z",
+  "_processed": {
+    "fingerprint": "cd2274fac51ff4533f5cf197e32cff027396280ce6c5a717880286959ce718dc",
+    "processedAt": "2026-06-19T03:31:13Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

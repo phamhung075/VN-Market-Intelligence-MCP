@@ -266,8 +266,8 @@
       "status": "NEW",
       "payload_ref": null
     },
-    "_updated_at": "2026-06-19T03:00:00.842Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-19T03:31:00Z",
+    "_updated_by": "dev-team",
     "archive": [
       {
         "from": "system-auditor",
@@ -624,8 +624,11 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-19T03:31:00Z",
+        "resolved_by": "dev-team",
+        "resolved_note": "lock esc-datacov:FPT:Q1-2026:ESC-3 TTL-expired (heartbeat ok:false expires_at:0); head idle since 03:10 — both findings self-resolved, no task"
       },
       {
         "id": "sau-d4-202606190300",
@@ -635,8 +638,11 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=CI-RED-ea9a3589-FIX held=esc-datacov:FPT:Q1-2026:ESC-3",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-19T03:31:00Z",
+        "resolved_by": "dev-team",
+        "resolved_note": "lock esc-datacov:FPT:Q1-2026:ESC-3 TTL-expired (heartbeat ok:false expires_at:0); head idle since 03:10 — both findings self-resolved, no task"
       },
       {
         "id": "sau-d4-202606180300",
@@ -15617,13 +15623,13 @@
         "review_entered_at": "2026-06-19T03:04:50Z",
         "impl_commit": "709703ee",
         "local_green": "CONTAM-7 45/0 + REPAIR 18/0 isolated; tsc green",
-        "done_verified_blocker": "ci_green_on_subsequent_push — origin/main RED at ea9a3589; satisfied only by CI Actions green on a post-ea9a3589 SHA. Push is PO out-of-band call (router never pushes). This push also clears the fleet-wide stranding RED.",
+        "done_verified_blocker": "DIVERGED — local fix 709703ee built on merge-base 7e67e048 (ancestor of origin tip). origin/main=ea9a3589 (merge commit) is 33 commits ahead with CI run 27801589546=FAILURE (prior e0c700d0=GREEN → merge re-introduced RED). origin has CONTAM-7 test (eac132bf) but NOT the fix — fix is genuinely needed+absent. Landing requires rebase/cherry-pick of 709703ee onto ea9a3589 (CONTAM-7 test file WILL conflict) then push. Router forbidden (push+rebase = PO out-of-band; strands-fleet risk). PO: cherry-pick 709703ee onto origin tip in CLEAN worktree → push (durable pattern), OR defer to cloud po/auto-push (FIX-AUTO-PUSH just shipped 7e67e048).",
         "reviewed_at": "2026-06-19T03:10:00Z",
         "qa_verdict": "APPROVE",
         "qa_gates": "G1 CONTAM-7 45/0 | G2 REPAIR 18/0 (guard not weakened) | G3 tsc exit0 | G4 1-file scope | G5 ci_green_on_subsequent_push WITHHELD",
         "qa_report": "reports/TASK_REPORT_CI-RED-ea9a3589-FIX.md",
         "done_verified": false,
-        "push_recommendation": "PO: push HEAD (7 ahead, incl fix 709703ee) to origin/main — clears stranding RED + satisfies CI-RED DoD gate"
+        "push_recommendation": "PO out-of-band: clean-worktree cherry-pick 709703ee onto origin/main ea9a3589 → resolve CONTAM-7 conflict → push. Satisfies ci_green_on_subsequent_push + clears stranding RED."
       }
     ],
     "done_verified": [
