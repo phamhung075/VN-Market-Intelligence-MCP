@@ -1,8 +1,57 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-18 00:33 UTC | **Sprint:** FE-PAGE-REORG (cross-sprint: ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP)
+**Last updated:** 2026-06-19 11:30 UTC | **Sprint:** BCTC-PROSE-EXTRACT (BPE-ARCH-1 close-out)
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-19T11:30Z — BPE-ARCH-1 BCTC-PROSE-EXTRACT (CLOSE-OUT, SPRINT DONE)
+
+**Task:** BPE-ARCH-1 | mode: RECURRING-BUG-ESCALATION SPIKE close-out | zone: `apps/pdf-extractor/` + `apps/mcp-server/`
+**Output:** `docs/architecture-briefs/2026-06-09-bctc-prose-extract-design.md` (consolidated brief)
+**Source-verified (re-read 2026-06-19):** `ocr_unit()` prose branch fix at L3783-3816 in generic_md_table_extractor.py (commit 6e518935). `ocr_pages` passed at L447 in extract_layout_first_usecase.py. Working tree clean — all 5 blockers resolved and shipped.
+**All 5 blockers RESOLVED:**
+1. BLOCKER-1: Option A — additive `ocr_pages` param (shipped 6e518935)
+2. BLOCKER-2: OVERRULED by SPIKE-1 — `<10`-char skip guard wrongly dropped text pages; `<3` + DPI 300 retry fix shipped 5ea9f121; BPE-OPS-1 re-OCR closed gap (46/46 pages)
+3. BLOCKER-3: Serial patch order — table gates (1588a591) first, prose fix (6e518935) on top; zero line-level conflict
+4. BLOCKER-4: Extend `getBctcPageTextTool` (no new tool) — FR-2c auto-closes; `prose_sections` added to bctcFullTools (BPE-DEV-2)
+5. BLOCKER-5: Root cause = no non-empty assertion on prose stitched_markdown + gate-skip masking + PROSE-DEV-1 fallback normalizing the defect; prevention = TC-1 inverted unit test (shipped BPE-DEV-1, 16 prose + 45 table tests green)
+**Sprint outcome:** BPE-QA-1 raw-verified 2026-06-10 — page 12 prose=4099 chars, total_pages=46, 0 empty units.
+**Scan clean:** true. **BUILD-STANDARD:** lean. **NEXT:** task DONE (sprint closed).
+
+## 2026-06-19T04:33Z — FIX-CASCADE-MACRO-CARD-REAL-DETAIL (DESIGN DONE)
+
+**Task:** FIX-CASCADE-MACRO-CARD-REAL-DETAIL | mode: BUG-FIX (3 defects) | zone: `apps/mcp-server/`
+**Output:** `docs/architecture-briefs/2026-06-19-cascade-macro-card-redesign.md`
+**Root confirmed (live curl + docker bun probe):**
+- D-1: `querySignalsForStock` has no type filter; server.ts doesn't pass `?type` param → empty `verified_decision` stubs dominate (137 live, newest).
+- D-2: `alertStore.storeAlerts/storeAlertsFromCommander` co-writes `agent_signals` rows (`payload={}`, `finding_data={}`, `signal_type='verified_decision'`) for C-08 correlation — every alert fire adds one empty stub.
+- D-3: 2 test-fixture rows in live DB (ids 6218, 6216).
+**Decisions:**
+1. Type filter: backend expands `chain_catalyst` → `IN ('chain_catalyst','urgent_news')` internally (both carry real macro detail; verified live for FPT/VCB/HPG). Zero frontend change.
+2. Stub fix: (C)+B combination — read-layer guard in `querySignalsForStock` (empty `verified_decision` excluded) + write-layer `is_correlation_stub=1` marker column (plain `ADD COLUMN`, no UNIQUE — lesson feedback_sqlite_add_column_unique_silent_noop).
+3. Hygiene: `scripts/migrations/purge-test-fixture-signals.ts` --dry-run --live. Narrow DELETE with triple-guard (LIKE + signal_type + finding_data='{}').
+**BUILD-STANDARD:** not-applicable (bug-fix, in-zone). **Scan clean:** true.
+**NEXT:** pm (or direct dev-mcp-server if PM agrees — single zone, no split needed)
+
+## 2026-06-19T00:00Z — FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT (DESIGN DONE)
+
+**Task:** FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT | mode: BUG-FIX | zone: `apps/mcp-server/src/interface/mcp/tools/news-analysis/` + `docs/agents/tools/`
+**Output:** `docs/architecture-briefs/2026-06-19-fix-agent-signals-agent-param-contract.md`
+**Root confirmed:** `agent: z.string()` required at Zod schema level but is (A) unused in all-producers path (`from_agent=null`), (B) overridden by `fromAgent` bind param in sender-history path (`from_agent=string`), (C) only genuinely required in inbox path (`from_agent=undefined`). Three live flow callers legitimately omit `agent`; Zod rejects their calls.
+**Decision:** Direction A — make `agent` optional (`.optional()`); add early-return guard in inbox path. 5 files touched: 1 TS + 4 docs.
+**QA contract:** 5 ACs in brief. New test file: `FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT.test.ts`.
+**BUILD-STANDARD:** not-applicable (BUG-FIX, in-zone). **Scan clean:** true.
+**NEXT:** dev-mcp-server (direct, no PM split)
+
+## 2026-06-18T05:58Z — FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER (DESIGN DONE)
+
+**Task:** FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER | mode: BUG-FIX | zone: `docs/agents/cowork-team/flow/` + `apps/mcp-server/src/__tests__/` (test-only)
+**Output:** `docs/architecture-briefs/2026-06-18-cowork-schedule-stale-base-clobber.md` + `[Architect] Brownfield Findings` appended to BA spec handoff
+**Root confirmed:** Step 5b in-memory loop unconditionally writes `slot.last_fired = FIRED_AT` — no monotonic guard. Fresh-read and atomic temp→rename already correct. Only the guard is missing.
+**3 Ratifications:** (1) T-14 in same file — helper upgrade in-place. (2) Flow-doc-only, no JS helper — agent-interpreted prose, zero execution dependency. (3) Matcher WARN is follow-on canary, not a blocker.
+**Design:** FR-4 monotonic guard: `if currentLastFired === null OR FIRED_AT > currentLastFired: slot.last_fired = FIRED_AT` (ISO-8601 lexicographic compare valid for UTC). T-14b is the load-bearing RED proof (adversarial stale stamp blocked). T-14 + T-14c cover two-slot persistence and null first-run.
+**BUILD-STANDARD:** not-applicable (BUG-FIX, in-zone). **Scan clean:** true.
+**NEXT:** pm
 
 ## 2026-06-18T00:33Z — ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP (DESIGN DONE)
 
