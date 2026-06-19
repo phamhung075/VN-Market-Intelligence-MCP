@@ -1,4 +1,14 @@
 # System Auditor Notebook
+## c404 · 2026-06-19T22:44:00Z
+### Audit Run Tier-1 (22:44 UTC 2026-06-19)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 0 new (CLEAN)
+- Status: HEALTHY — all runtime checks PASS ✓
+- A-01..A-11 containers: all 12 UP ✓ (mcp-server 4h, api-gateway 8d, frontend 3d)
+- A-12..A-19 health: mcp-server ✓ api-gateway ✓ macro-indicators ✓ pdf-extractor ✓ frontend ✓
+- A-20..A-24 tooling: pdftoppm ✓ tesseract ✓ vie lang ✓
+- A-25..A-28 inter-svc: stock-price ✓ technical-analysis ✓ alert-engine ✓ pdf-extractor ✓
+- A-30 memory: 25.00% / 2GiB ✓ | A-31 EPIPE: 0 ✓ | A-32 disk: 33% ✓
 
 ## c403 · 2026-06-19T22:30:32Z
 ### Audit Run Tier-2 (22:30–22:31 UTC 2026-06-19)
@@ -12,6 +22,7 @@
 - B-13 OK: Stale BCTC pending 0 rows ✓
 - C-06 OK: market_messages last 3h count=1 ✓
 - C-07 OK: agent_signals last 24h count=152 ✓
+
 
 ## c402 · 2026-06-19T22:08:14Z
 ### Audit Run Tier-1 (22:08–22:08 UTC 2026-06-19)
@@ -27,18 +38,9 @@
 - A-30 memory: mcp-server 28.13%/2GiB PASS ✓
 - A-31 EPIPE: 0 ✓ | A-32 disk: 34% ✓
 
+
 ## c401 · 2026-06-19T21:37:32Z
 ### Audit Run Tier-1 (21:37–21:39 UTC 2026-06-19)
 - Tier: 1 | Services: 12 | Status: HEALTHY
 - Anomalies: 0 new | All runtime checks PASS ✓
 - A-01..A-32 all PASS ✓ (containers/health/tooling/memory/disk all nominal)
-
-## c400 · 2026-06-19T21:08:09Z
-### Audit Run Tier-1 (21:06–21:08 UTC 2026-06-19)
-- Tier: 1 | Status: HEALTHY | All checks PASS ✓
-- Runtime: containers UP, health OK, memory 19.25%, disk 34%
-
-## c399 · 2026-06-19T20:38:56Z
-### Audit Run Tier-1 (20:38–20:39 UTC 2026-06-19)
-- Tier: 1 | Status: HEALTHY | All runtime checks PASS ✓
-- Memory: 17.80%, Disk: 35% — all nominal

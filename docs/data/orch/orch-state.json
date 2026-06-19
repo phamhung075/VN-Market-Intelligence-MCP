@@ -1090,6 +1090,17 @@
         "check_id": "B-08",
         "source_id": "bctc-push",
         "details": "vps_service_health: vn-bctc-fetch health_status=unhealthy, last_push_age=275258s (~3.2 days), threshold=86400s (24h). BCTC PDF pull pipeline stalled."
+      },
+      {
+        "id": "sau-2026-06-19T22:44:00Z",
+        "ts": "2026-06-19T22:44:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_health_report",
+        "summary": "Tier-1 complete: all 12 runtime services healthy (0 anomalies)",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
