@@ -481,9 +481,15 @@ describe("T4: Writer D (taOhlcvBackfillJob) — normalize-then-guard (CONTAM-4)"
     expect(row!.close).toBe(81_000);
   });
 
-  it("TD-3: contaminated seed (open=0.9) → self-healed to 900 on Writer D re-run (ON CONFLICT DO UPDATE)", async () => {
-    // Seed contaminated row
-    addOhlcvRow(db, "VNH", "2026-06-10", 0.9, 0.95, 0.88, 0.92);
+  it("TD-3: contaminated seed (open=0.9) + valid prior close → self-healed to 900 on Writer D re-run (ON CONFLICT DO UPDATE)", async () => {
+    // Seed a valid full-VND prior row so the prevClose lookup returns a plausible value.
+    // fetchPrevCloseMap queries max(date) WHERE date < vnToday AND volume > 0.
+    // With prevClose=920 (full-VND), the normalized bar (920) yields ratio=920/920=1×,
+    // which is below SCALE_DETECTION_RATIO (50) → no rejection → self-heal proceeds.
+    addOhlcvRow(db, "VNH", "2026-06-09", 900, 950, 880, 920, 10_000); // valid full-VND prior row
+
+    // Seed contaminated row for 2026-06-10
+    addOhlcvRow(db, "VNH", "2026-06-10", 0.9, 0.95, 0.88, 0.92, 0); // vol=0 so NOT used as prevClose
     expect(getOhlcvRow(db, "VNH", "2026-06-10")?.open).toBe(0.9); // confirmed contaminated
 
     // Writer D re-runs with the same thousand-VND fetch
@@ -494,7 +500,7 @@ describe("T4: Writer D (taOhlcvBackfillJob) — normalize-then-guard (CONTAM-4)"
     });
 
     const healed = getOhlcvRow(db, "VNH", "2026-06-10");
-    expect(healed!.open).toBe(900); // normalized and overwritten
+    expect(healed!.open).toBe(900); // normalized and overwritten (0.9 × 1000)
   });
 
   it("TD-4: all-zero row → guard-rejected, NOT inserted", async () => {
