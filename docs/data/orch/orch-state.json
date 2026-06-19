@@ -225,7 +225,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-19T22:37:43Z",
+    "_updated_at": "2026-06-19T23:32:28Z",
     "_updated_by": "dev-team-router",
     "archive": [
       {
@@ -1055,13 +1055,15 @@
         "type": "data_stale",
         "summary": "B-01 CRITICAL: SSC iBoard price stale 47 min (threshold 30 min)",
         "severity": "INFO",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "check_id": "B-01",
         "source_id": "ssc-iboard",
         "details": "market_prices max(updated_at)=2026-06-19T21:45:02Z, age=47 minutes, expected_cadence=15min, stale_threshold=30min",
         "router_note": "Router downgrade: Sat 05:35 VN weekend/market-closed — SSC price-feed staleness expected with no live ticks; CRITICAL framing assumes market-open 15min cadence. Re-verify at Mon open (02:00Z). Not an emergency dispatch.",
-        "router_triaged_at": "2026-06-19T22:37:43Z"
+        "router_triaged_at": "2026-06-19T22:37:43Z",
+        "drained_at": "2026-06-19T23:32:28Z",
+        "drained_by": "dev-team"
       },
       {
         "id": "sau-vps-sbv-202606192230",
@@ -1071,11 +1073,13 @@
         "type": "data_stale",
         "summary": "VPS SBV service unhealthy (data stale 2699s > 2100s threshold)",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "check_id": "B-06",
         "source_id": "sbv-vps",
-        "details": "vps_service_health: vn-sbv-fetch health_status=unhealthy, last_push_age=2699s, threshold=2100s (35min). SBV macro data feed stalled."
+        "details": "vps_service_health: vn-sbv-fetch health_status=unhealthy, last_push_age=2699s, threshold=2100s (35min). SBV macro data feed stalled.",
+        "drained_at": "2026-06-19T23:32:28Z",
+        "drained_by": "dev-team"
       },
       {
         "id": "sau-vps-bctc-202606192230",
@@ -1085,11 +1089,13 @@
         "type": "data_stale",
         "summary": "VPS BCTC service unhealthy (data stale 275258s > 86400s threshold)",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "check_id": "B-08",
         "source_id": "bctc-push",
-        "details": "vps_service_health: vn-bctc-fetch health_status=unhealthy, last_push_age=275258s (~3.2 days), threshold=86400s (24h). BCTC PDF pull pipeline stalled."
+        "details": "vps_service_health: vn-bctc-fetch health_status=unhealthy, last_push_age=275258s (~3.2 days), threshold=86400s (24h). BCTC PDF pull pipeline stalled.",
+        "drained_at": "2026-06-19T23:32:28Z",
+        "drained_by": "dev-team"
       },
       {
         "id": "sau-2026-06-19T22:44:00Z",
@@ -1099,8 +1105,10 @@
         "type": "system_health_report",
         "summary": "Tier-1 complete: all 12 runtime services healthy (0 anomalies)",
         "severity": "INFO",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "drained_at": "2026-06-19T23:32:28Z",
+        "drained_by": "dev-team"
       }
     ]
   },
