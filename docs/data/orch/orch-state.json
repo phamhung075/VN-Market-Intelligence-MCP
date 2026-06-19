@@ -184,11 +184,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC",
+    "active_task_id": "FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT",
     "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-19T00:40:02Z",
+    "updated_at": "2026-06-19T01:03:53Z",
     "updated_by": "dev-team",
-    "note": "Tick 20260619T003100Z: 2 tasks claimed ready→in_progress (WIP 0→2, cap respected). INSIDER→dev-mcp-server direct FIX; AGENT-SIGNALS→architect SPRINT-S. Both recon_first; gateway-blind-safe (schema recon is on-disk .ts read, no live DB). Promote each→review(qa)/next-stage on completion."
+    "note": "INSIDER dev done (Option B, router-verified tsc GREEN), promoted→review(qa) — QA deferred to clean tree after AGENT-SIGNALS dev. Now dispatching AGENT-SIGNALS dev-mcp-server (serialized: INSIDER committed first, clean base). WIP 2."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -21150,10 +21150,10 @@
       {
         "id": "FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC",
         "type": "FIX",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P2",
         "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "title": "get_insider_signals outstandingShares required-vs-optional drift breaks 2 SSOT callers",
         "desc": "get_insider_signals (pure classifier, leadershipTools.ts) — live Zod schema REQUIRES code AND outstandingShares (L110-115, NEITHER .optional), but tool-doc get_insider_signals.md:18 marks outstandingShares optional/'auto-fetch from BCTC'. Doc LIES → every-cycle -32602 reject. Confirmed callers: market-watcher/flow/eod.md:59 get_insider_signals(code=...) omits outstandingShares; bctc-analyst/flow/stage-analyze.md:49 get_insider_signals() omits BOTH code+outstandingShares. Handler L40-53 reads input.outstandingShares with NO derive/fallback; NO shares-lookup exists in mcp-server outside leadershipSignal.ts so the doc's auto-fetch is UNWIRED. ALSO callers pass no transactions[] → classifier returns empty anyway (mis-use of pure classifier; the DB-backed get_insider_transactions is the real fetch). RECON-FIRST then choose ONE direction: (A) make outstandingShares .optional + wire a shares lookup so auto-fetch is real, OR (B) make it optional + reconcile doc to state transactions[]+outstandingShares are caller-supplied and update both flows to pipe get_insider_transactions output. Either way reconcile the doc to the chosen contract. DoD: both flow call sites pass live Zod validation (no -32602); doc param table matches schema. agent-md-factory before editing flow .md.",
         "files": [
@@ -21178,7 +21178,19 @@
         "promote_note": "WIP=0 → promote; corrected zone cross-service/→apps/mcp-server/, files flow-md→schema source, priority P3→P2 (2 confirmed callers Zod-reject every cycle, health-recheck 3244 rates P1).",
         "claimed_at": "2026-06-19T00:40:02Z",
         "claimed_by": "router",
-        "dispatch_note": "Dispatched dev-mcp-server 2026-06-19T00:40:02Z. Direct FIX (recon-first). Live Zod (leadershipTools.ts L110-115) REQUIRES code+outstandingShares; doc get_insider_signals.md:18 lies (optional/auto-fetch) + handler has no derive/fallback + no shares-lookup in mcp-server => doc unwired. Dev RAW-confirms live schema first, then picks: wire real auto-fetch vs make-optional+reconcile-doc. Run pnpm check GREEN before commit (RED-PREPUSH)."
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-19T00:40:02Z. Direct FIX (recon-first). Live Zod (leadershipTools.ts L110-115) REQUIRES code+outstandingShares; doc get_insider_signals.md:18 lies (optional/auto-fetch) + handler has no derive/fallback + no shares-lookup in mcp-server => doc unwired. Dev RAW-confirms live schema first, then picks: wire real auto-fetch vs make-optional+reconcile-doc. Run pnpm check GREEN before commit (RED-PREPUSH).",
+        "option_taken": "B — outstandingShares optional (default 0); no real on-disk shares source exists; pctOfOutstanding(vol,0)=0<MIN_PCT honest existing behavior; count-only MASS_INSIDER_BUY unaffected; doc reconciled",
+        "impl_files": [
+          "apps/mcp-server/src/interface/mcp/tools/sector/leadershipTools.ts",
+          "apps/mcp-server/src/__tests__/251-mcp-tools.test.ts",
+          "docs/agents/tools/list/get_insider_signals.md"
+        ],
+        "dev_evidence": {
+          "pnpm_check": "GREEN (router-verified exit 0)",
+          "tests": "251-mcp-tools 16/0; full suite 13330/0",
+          "doc_synced": true
+        },
+        "review_ready_at": "2026-06-19T01:03:53Z"
       },
       {
         "id": "FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT",

@@ -15,8 +15,9 @@ Phân tích giao dịch nội bộ của lãnh đạo công ty và tạo tín hi
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `code` | string | Yes | — | Mã cổ phiếu, ví dụ VCB, HPG |
-| `outstandingShares` | number | No | auto-fetch | Outstanding shares (millions). Auto-fetch from BCTC if omitted. |
-| `days` | number | No | 30 | Thời gian quay lại (ngày) |
+| `outstandingShares` | number | No | 0 | Số cổ phiếu đang lưu hành. Không bắt buộc — mặc định 0 nếu bỏ qua. Khi bằng 0, tín hiệu phần trăm bị bỏ qua (honest skip). Không có auto-fetch: caller cần cung cấp nếu muốn phân loại theo % lưu hành. |
+| `windowDays` | number | No | 30 | Cửa sổ thời gian cho mass insider buy (ngày) |
+| `transactions` | array | No | [] | Danh sách giao dịch cần phân tích. Lấy từ `get_insider_transactions`. Nếu bỏ qua, trả về "không có tín hiệu". |
 
 ## Returns
 
@@ -114,23 +115,34 @@ KHUYẾN CÁO GIAO DỊCH:
 
 ## Usage
 
+Minimal call (code only — outstandingShares omitted, defaults to 0):
+```json
+{
+  "tool_name": "get_insider_signals",
+  "input": {
+    "code": "VCB"
+  }
+}
+```
+
+With outstanding shares (enables % classification):
 ```json
 {
   "tool_name": "get_insider_signals",
   "input": {
     "code": "VCB",
-    "outstandingShares": 2.5,
-    "days": 30
+    "outstandingShares": 4674000000,
+    "windowDays": 30,
+    "transactions": []
   }
 }
 ```
 
 ## Data Sources
 
-- `insider_transactions` table — board/management trades
-- `bctc` table — outstanding shares (auto-fetch if omitted)
+- `insider_transactions` table — board/management trades (via `get_insider_transactions`)
 - `market_prices` — transaction price validation
-- Historical insider patterns — 3-month post-transaction return analysis
+- Outstanding shares: caller-provided only (no auto-fetch; use `get_market_cap` to obtain `shares_outstanding_approx` if needed)
 
 ## Related Tools
 

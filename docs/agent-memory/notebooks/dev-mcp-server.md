@@ -37,3 +37,13 @@ Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
 **Commit:** ea5dc0eb | tsc clean | tools=165 | sched=3
 
 Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
+
+## 2026-06-19 · FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC — make outstandingShares optional (Option B)
+
+**Task:** FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC (P2, S, recon-first)
+**Root:** `get_insider_signals` Zod schema had `outstandingShares: z.number()` (required, no `.optional()`). Callers (market-watcher eod flow `get_insider_signals(code="{TICKER}")`, bctc-analyst stage-analyze step 3) omit it → Zod-reject every cycle. Doc claimed "auto-fetch from BCTC if omitted" — lie; no auto-fetch exists anywhere on disk.
+**Decision: Option B** — No real shares source to wire (marketCapTools approximation is interface-layer, not infrastructure BCTC data). `pctOfOutstanding(vol, 0) = 0` < `MIN_PCT_THRESHOLD (0.1%)` → honest skip. Mass-insider-buy detection independent of outstandingShares → still works when omitted.
+**Changes:** leadershipTools.ts (optional field + handler resolve ?? 0 + Zod optional + description corrected), get_insider_signals.md (parameters corrected, no-auto-fetch, usage updated), 251-mcp-tools.test.ts (+3 new tests covering code-only invocation).
+**Gate results:** tsc exit 0 | 16/0 on 251-mcp-tools.test.ts | full suite 13330/0 (exit 0) | tools=166 | sched=3
+
+Zone health: tsc clean, 166 tools intact, scheduler 3 cron.schedule | HEALTHY

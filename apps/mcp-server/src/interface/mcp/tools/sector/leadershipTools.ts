@@ -26,8 +26,13 @@ import { SEVERITY_VI } from "./severityLabels.js";
 interface GetInsiderSignalsInput {
   /** Stock code to analyze, e.g. "VCB" */
   code: string;
-  /** Outstanding shares (used to compute % of outstanding) */
-  outstandingShares: number;
+  /**
+   * Outstanding shares (used to compute % of outstanding).
+   * Optional — defaults to 0 when omitted.
+   * When 0, all pctOfOutstanding values are 0, which is below MIN_PCT_THRESHOLD;
+   * the classifier returns no signals (honest skip when shares data is absent).
+   */
+  outstandingShares?: number | undefined;
   /** Test-only: inject transactions directly */
   _testData?: InsiderTransaction[] | undefined;
   /** Window in days for mass insider buy detection (default: 30) */
@@ -43,6 +48,9 @@ export async function getInsiderSignalsHandler(
   // In real usage, transactions would be loaded from the insiderStore DB.
   // For MCP calls without _testData, we use an empty list as a safe fallback.
   const transactions: InsiderTransaction[] = input._testData ?? [];
+  // Resolve outstandingShares — 0 is the honest default when caller omits it.
+  // The domain classifier returns no signals when outstanding === 0 (all pct < threshold).
+  const outstandingShares = input.outstandingShares ?? 0;
 
   const windowDays = input.windowDays ?? 30;
   const signals: LeadershipSignal[] = [];
@@ -50,7 +58,7 @@ export async function getInsiderSignalsHandler(
   // Classify individual transactions
   for (const tx of transactions) {
     if (tx.code !== input.code) continue;
-    const signal = classifyInsiderTransaction(tx, input.outstandingShares);
+    const signal = classifyInsiderTransaction(tx, outstandingShares);
     if (signal) signals.push(signal);
   }
 
@@ -101,16 +109,21 @@ export function registerLeadershipTools(server: McpServer): void {
   server.tool(
     "get_insider_signals",
     "Phân tích giao dịch nội bộ — phân loại các giao dịch insider thành tín hiệu mua/bán/mua ồ ạt. " +
-      "REQUIRES caller to provide transactions[] array as input (pure classifier, no DB call, stateless). " +
-      "Test-first design: pure classification logic with strength/confidence output. " +
-      "Input: transactions[] from get_insider_transactions or external source. " +
+      "Pure classifier, no DB call, stateless. " +
+      "Required: code (mã cổ phiếu). " +
+      "Optional: outstandingShares (defaults to 0 — signals requiring % outstanding are suppressed when absent). " +
+      "Optional: transactions[] array from get_insider_transactions or external source. " +
       "Distinct from get_insider_transactions which is a DB-backed SSC lookup that returns raw disclosure rows. " +
       "Use get_insider_transactions to fetch raw DB rows; pipe output into get_insider_signals to classify signals.",
     {
       code: z.string().describe("Mã cổ phiếu, ví dụ VCB, HPG"),
       outstandingShares: z
         .number()
-        .describe("Số cổ phiếu đang lưu hành (shares)"),
+        .optional()
+        .describe(
+          "Số cổ phiếu đang lưu hành (shares). Không bắt buộc — mặc định 0 nếu bỏ qua. " +
+            "Khi bằng 0, classifier không tạo tín hiệu phần trăm (honest skip khi thiếu dữ liệu).",
+        ),
       windowDays: z
         .number()
         .optional()

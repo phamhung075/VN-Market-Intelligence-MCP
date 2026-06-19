@@ -176,4 +176,78 @@ describe("Task 251 — get_insider_signals handler", () => {
     const text = result.content[0]!.text;
     expect(text).toContain("VCB");
   });
+
+  // FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC — callers that omit outstandingShares
+  // previously Zod-rejected every cycle (required field). These tests prove the fix.
+  it("FIX-INSIDER-OUTSTANDINGSHARES: accepts call with code only (outstandingShares omitted)", async () => {
+    const { getInsiderSignalsHandler } = await import(
+      "../interface/mcp/tools/sector/leadershipTools.js"
+    );
+    // Previously this call would TypeScript-error + Zod-reject because outstandingShares was required.
+    // After fix: outstandingShares is optional, defaults to 0 — honest skip, no crash.
+    const result = await getInsiderSignalsHandler({ code: "HPG" });
+    expect(Array.isArray(result.content)).toBe(true);
+    expect(result.content[0]).toHaveProperty("type", "text");
+    // No transactions provided → "không có tín hiệu" response
+    expect(result.content[0]!.text).toContain("HPG");
+  });
+
+  it("FIX-INSIDER-OUTSTANDINGSHARES: code-only call returns no-signal message (honest skip)", async () => {
+    const { getInsiderSignalsHandler } = await import(
+      "../interface/mcp/tools/sector/leadershipTools.js"
+    );
+    const result = await getInsiderSignalsHandler({ code: "MWG" });
+    const text = result.content[0]!.text;
+    // When outstandingShares=0 AND no transactions: classifier cannot compute % → no signals
+    expect(text).toContain("Không có tín hiệu");
+  });
+
+  it("FIX-INSIDER-OUTSTANDINGSHARES: code-only call with transactions produces mass_insider_buy signal (no pct gate needed)", async () => {
+    const { getInsiderSignalsHandler } = await import(
+      "../interface/mcp/tools/sector/leadershipTools.js"
+    );
+    // mass_insider_buy detection does NOT depend on outstandingShares — it only needs
+    // uniqueInsiders >= MASS_BUY_MIN_INSIDERS+1 (= 3) within windowDays.
+    // Providing 3 distinct buyers proves callers can get useful signals even without shares.
+    const result = await getInsiderSignalsHandler({
+      code: "FPT",
+      // outstandingShares intentionally omitted — the fix being validated
+      _testData: [
+        {
+          code: "FPT",
+          insiderName: "Insider A",
+          position: "CEO",
+          type: "buy",
+          volume: 100_000,
+          registeredVolume: 100_000,
+          price: 50_000,
+          date: "2026-06-01",
+        },
+        {
+          code: "FPT",
+          insiderName: "Insider B",
+          position: "CFO",
+          type: "buy",
+          volume: 80_000,
+          registeredVolume: 80_000,
+          price: 50_000,
+          date: "2026-06-03",
+        },
+        {
+          code: "FPT",
+          insiderName: "Insider C",
+          position: "Board",
+          type: "buy",
+          volume: 60_000,
+          registeredVolume: 60_000,
+          price: 50_000,
+          date: "2026-06-05",
+        },
+      ],
+    });
+    const text = result.content[0]!.text;
+    expect(text).toContain("FPT");
+    // mass_insider_buy is detectable without outstandingShares
+    expect(text).toContain("MASS_INSIDER_BUY");
+  });
 });
