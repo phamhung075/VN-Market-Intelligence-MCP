@@ -94,15 +94,21 @@ export function normalizeCreatedAt(raw: string | null | undefined): string | nul
  *
  * Generic across all signal types — does NOT special-case any signal_type.
  * Parses finding_data and payload JSON generically; passes through all fields.
+ *
+ * @param signalTypes - Optional filter. When ['chain_catalyst'], expands to
+ *   ['chain_catalyst','urgent_news'] (both carry macro detail for MacroImpactPanel).
+ *   When undefined, all signal types are returned.
  */
 export function querySignalsForStock(
   db: Database,
   stockCode: string,
   limit: number,
+  signalTypes?: string[],
 ): StockSignalItem[] {
   // Schema evolution guard: probe optional columns
   let hasConfidenceScore = false;
   let hasFindingData = false;
+  let hasCorrelationStub = false;
   try {
     db.prepare("SELECT confidence_score FROM agent_signals LIMIT 0").all();
     hasConfidenceScore = true;
@@ -111,19 +117,59 @@ export function querySignalsForStock(
     db.prepare("SELECT finding_data FROM agent_signals LIMIT 0").all();
     hasFindingData = true;
   } catch { /* column absent */ }
+  try {
+    db.prepare("SELECT is_correlation_stub FROM agent_signals LIMIT 0").all();
+    hasCorrelationStub = true;
+  } catch { /* column absent — pre-migration schema */ }
 
   const confidenceCol = hasConfidenceScore ? ", confidence_score" : "";
   const findingCol = hasFindingData ? ", finding_data" : "";
 
+  // D-1: Cascade type filter.
+  // When signalTypes=['chain_catalyst'], expand to include 'urgent_news' (both
+  // carry macro detail for MacroImpactPanel). No frontend change needed.
+  const effectiveTypes =
+    signalTypes && signalTypes.includes("chain_catalyst") && !signalTypes.includes("urgent_news")
+      ? [...signalTypes, "urgent_news"]
+      : signalTypes;
+
+  const typeFilter =
+    effectiveTypes && effectiveTypes.length > 0
+      ? `AND signal_type IN (${effectiveTypes.map(() => "?").join(",")})`
+      : "";
+
+  // D-2: Stub exclusion guard — belt-and-suspenders, always two layers:
+  //  (C) Content guard: always applied — drops empty verified_decision rows regardless of
+  //      column presence. Handles 137+ pre-existing stubs (is_correlation_stub=0 default).
+  //  (B) Column guard: applied when is_correlation_stub column exists — drops newly-written
+  //      stubs marked is_correlation_stub=1.
+  //  Combined: correct before AND after migration.
+  const contentStubGuard =
+    "AND NOT (signal_type = 'verified_decision' AND (finding_data IS NULL OR finding_data = '{}' OR finding_data = '') AND (payload IS NULL OR payload = '{}' OR payload = ''))";
+  const columnStubGuard = hasCorrelationStub
+    ? "AND (is_correlation_stub IS NULL OR is_correlation_stub = 0)"
+    : "";
+  const stubFilter = `${contentStubGuard} ${columnStubGuard}`;
+
+  // Bind params: [stockCode, ...expanded types (if any), limit]
+  // Type cast to (string | number | null)[] satisfies SQLQueryBindings constraint.
+  const bindParams: (string | number | null)[] = [
+    stockCode,
+    ...(effectiveTypes ?? []),
+    limit,
+  ];
+
   const rows = db
-    .prepare<SignalRow, [string, number]>(
+    .prepare<SignalRow, (string | number | null)[]>(
       `SELECT id, stock_code, signal_type, payload, created_at${confidenceCol}${findingCol}
        FROM agent_signals
        WHERE stock_code = ?
+       ${typeFilter}
+       ${stubFilter}
        ORDER BY created_at DESC
        LIMIT ?`,
     )
-    .all(stockCode, limit) as SignalRow[];
+    .all(...bindParams) as SignalRow[];
 
   return rows.map((row) => {
     // Parse payload JSON generically

@@ -389,6 +389,89 @@ describe("querySignalsForStock — absent/null field handling (AC-7)", () => {
   });
 });
 
+// ── AC-10/AC-11/AC-12: FIX-CASCADE-MACRO-CARD-REAL-DETAIL type filter + stub exclusion ──
+
+describe("querySignalsForStock — type filter and stub exclusion (AC-10/AC-11/AC-12)", () => {
+  let db: Database;
+  beforeEach(() => { db = makeDb(); });
+  afterEach(() => { db.close(); });
+
+  it("AC-10: type filter ['chain_catalyst'] returns chain_catalyst + urgent_news, excludes verified_decision", () => {
+    insertSignal(db, {
+      signalType: "chain_catalyst",
+      stockCode: "FPT",
+      findingData: { headline: "macro event", source: "cafef", event_type: "macro", direction: "bullish", confidence: 0.8, affected_stocks: ["FPT"], affected_sectors: ["tech"] },
+    });
+    insertSignal(db, {
+      signalType: "urgent_news",
+      stockCode: "FPT",
+      findingData: { headline: "SBV decision", source: "sbv.gov.vn", severity: "high", confidence: 0.7 },
+    });
+    insertSignal(db, {
+      signalType: "verified_decision",
+      stockCode: "FPT",
+      payload: { detail: "some decision" },
+    });
+
+    const items = querySignalsForStock(db, "FPT", 10, ["chain_catalyst"]);
+    expect(items).toHaveLength(2);
+    const types = items.map((i) => i.signal_type);
+    expect(types).toContain("chain_catalyst");
+    expect(types).toContain("urgent_news");
+    expect(types).not.toContain("verified_decision");
+  });
+
+  it("AC-11: no type filter returns all non-stub rows (excludes is_correlation_stub=1)", () => {
+    // Schema with is_correlation_stub column
+    db.exec("ALTER TABLE agent_signals ADD COLUMN is_correlation_stub INTEGER DEFAULT 0");
+
+    insertSignal(db, {
+      signalType: "chain_catalyst",
+      stockCode: "FPT",
+      findingData: { headline: "h1", source: "s1", event_type: "macro", direction: "bullish", confidence: 0.8, affected_stocks: ["FPT"], affected_sectors: ["tech"] },
+    });
+    insertSignal(db, {
+      signalType: "urgent_news",
+      stockCode: "FPT",
+      findingData: { headline: "h2", source: "s2", severity: "high", confidence: 0.7 },
+    });
+    insertSignal(db, {
+      signalType: "price_anomaly",
+      stockCode: "FPT",
+      findingData: { move_pct: 3.1, move_sigma: 2.1, regime: "TIGHTENING" },
+    });
+    // Insert a stub row directly (simulating what storeAlerts writes)
+    db.prepare(`
+      INSERT INTO agent_signals
+        (signal_type, stock_code, payload, status, created_at, expires_at, is_correlation_stub)
+      VALUES ('verified_decision', 'FPT', '{}', 'unread', '2026-06-16 10:00:00', datetime('now', '+2 hours'), 1)
+    `).run();
+
+    const items = querySignalsForStock(db, "FPT", 10, undefined);
+    // Should return 3 real rows, not the stub
+    expect(items).toHaveLength(3);
+    const types = items.map((i) => i.signal_type);
+    expect(types).not.toContain("verified_decision");
+  });
+
+  it("AC-12: belt-and-suspenders — empty verified_decision excluded even without is_correlation_stub column", () => {
+    // Schema WITHOUT is_correlation_stub column (pre-migration state)
+    // makeDb() creates schema without this column, so this tests the fallback filter
+
+    // Insert empty verified_decision (the stub pattern)
+    db.prepare(`
+      INSERT INTO agent_signals
+        (signal_type, stock_code, payload, status, created_at, expires_at)
+      VALUES ('verified_decision', 'STUBONLY', '{}', 'unread', '2026-06-16 10:00:00', datetime('now', '+2 hours'))
+    `).run();
+    // finding_data is NULL by default in makeDb schema (no value inserted)
+
+    const items = querySignalsForStock(db, "STUBONLY", 10);
+    // Fallback filter must exclude the empty verified_decision row
+    expect(items).toHaveLength(0);
+  });
+});
+
 // ── Response shape type guard ─────────────────────────────────────────────────
 
 describe("StockSignalItem shape invariants", () => {

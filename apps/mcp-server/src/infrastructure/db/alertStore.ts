@@ -57,6 +57,24 @@ function hasAgentSignalsAlertIdColumn(db: Database): boolean {
   }
 }
 
+// ── ensureCorrelationStubColumn ───────────────────────────────────────────────
+// D-2 FIX-CASCADE-MACRO-CARD-REAL-DETAIL: idempotent startup guard that adds
+// the is_correlation_stub column to agent_signals when absent.
+//
+// IMPORTANT: plain ALTER TABLE ... ADD COLUMN (no UNIQUE) — SQLite ADD COLUMN
+// UNIQUE is illegal and silently swallowed by catch{}, leaving the column absent.
+// The column is used as a write-time marker so querySignalsForStock can exclude
+// correlation stubs from user-facing card queries.
+export function ensureCorrelationStubColumn(db: Database): void {
+  try {
+    db.prepare("SELECT is_correlation_stub FROM agent_signals LIMIT 0").all();
+    // Column already exists — no-op
+  } catch {
+    // Column absent — add it (plain ADD COLUMN, no UNIQUE)
+    db.exec("ALTER TABLE agent_signals ADD COLUMN is_correlation_stub INTEGER DEFAULT 0");
+  }
+}
+
 // ── hasAgentSignalsTable ────────────────────────────────────────────────────
 // AC-7: gracefully skip signal write if agent_signals table doesn't exist yet.
 function hasAgentSignalsTable(db: Database): boolean {
@@ -97,6 +115,12 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
       (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'server', ?, ?)
   `);
 
+  // D-2 FIX-CASCADE-MACRO-CARD-REAL-DETAIL: ensure is_correlation_stub column exists
+  // before writing rows (idempotent, negligible overhead).
+  if (hasAgentSignalsTable(db)) {
+    ensureCorrelationStubColumn(db);
+  }
+
   // FIX-ALERT-ORPHAN-CORRELATION: co-write agent_signals row for C-08 correlation.
   // Guarded: skip gracefully when alert_id column or agent_signals table is absent.
   const writeSignal = hasAgentSignalsTable(db) && hasAgentSignalsAlertIdColumn(db);
@@ -104,10 +128,10 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
     ? db.prepare(`
         INSERT OR IGNORE INTO agent_signals
           (from_agent, to_agent, signal_type, stock_code, payload, status,
-           created_at, expires_at, alert_id)
+           created_at, expires_at, alert_id, is_correlation_stub)
         VALUES
           ('alert-engine', 'all', 'verified_decision', ?, '{}', 'unread',
-           ?, datetime(?, '+2 hours'), ?)
+           ?, datetime(?, '+2 hours'), ?, 1)
       `)
     : null;
 
@@ -173,16 +197,22 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
       (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'alert-commander', ?, ?)
   `);
 
+  // D-2 FIX-CASCADE-MACRO-CARD-REAL-DETAIL: ensure is_correlation_stub column exists
+  // before writing rows (idempotent, negligible overhead).
+  if (hasAgentSignalsTable(db)) {
+    ensureCorrelationStubColumn(db);
+  }
+
   // FIX-ALERT-ORPHAN-CORRELATION: co-write agent_signals row for C-08 correlation.
   const writeSignal = hasAgentSignalsTable(db) && hasAgentSignalsAlertIdColumn(db);
   const insertSignal = writeSignal
     ? db.prepare(`
         INSERT OR IGNORE INTO agent_signals
           (from_agent, to_agent, signal_type, stock_code, payload, status,
-           created_at, expires_at, alert_id)
+           created_at, expires_at, alert_id, is_correlation_stub)
         VALUES
           ('alert-engine', 'all', 'verified_decision', ?, '{}', 'unread',
-           ?, datetime(?, '+2 hours'), ?)
+           ?, datetime(?, '+2 hours'), ?, 1)
       `)
     : null;
 

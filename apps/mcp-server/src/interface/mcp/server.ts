@@ -1330,6 +1330,10 @@ export async function createBunServer(
       const code = decodeURIComponent((pathname.slice("/api/signals/stock/".length).split("?")[0]) ?? "");
       const limitParam = url.searchParams.get("limit");
       const limit = Math.min(Math.max(1, parseInt(limitParam ?? "10", 10) || 10), 50);
+      // D-1 FIX-CASCADE-MACRO-CARD-REAL-DETAIL: extract ?type param and pass to handler.
+      // e.g. ?type=chain_catalyst → handler expands to ['chain_catalyst','urgent_news']
+      const typeParam = url.searchParams.get("type");
+      const signalTypes = typeParam ? typeParam.split(",").map((s) => s.trim()).filter(Boolean) : undefined;
 
       if (!code) {
         res.writeHead(400, { "Content-Type": "application/json" });
@@ -1341,7 +1345,7 @@ export async function createBunServer(
         // FIX-SIGNALS-STOCK-FULL-DETAIL: delegate to stockSignalsHandler.
         // Returns full structured finding_data + payload + source + ISO created_at.
         // Generic across all signal types — no special-casing.
-        const signals = querySignalsForStock(db, code, limit);
+        const signals = querySignalsForStock(db, code, limit, signalTypes);
 
         // Build accuracy map: one entry per distinct signal_type in returned signals.
         // Guard: if signal_outcomes table does not exist yet, skip accuracy key.
