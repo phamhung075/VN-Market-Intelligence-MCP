@@ -1,8 +1,8 @@
 # System Auditor Notebook
 
 
-## c379 · 2026-06-19T12:06:54Z
-### Audit Run Tier-1 (12:06 UTC 2026-06-19)
+## c380 · 2026-06-19T12:37:22Z
+### Audit Run Tier-1 (12:37 UTC 2026-06-19)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | Tooling: 3 ✓ | Connectivity: 4 ✓
 - Anomalies: 0 new (all PASS) | Dedup: 0 skipped
 - Status: HEALTHY
@@ -12,16 +12,16 @@
 - A-21 restart count: 0 [RAW-PROBE L21] ✓
 - A-22..A-24 tooling: pdftoppm ✓ tesseract ✓ vie-lang ✓
 - A-25..A-28 connectivity: stock-price ✓ technical-analysis ✓ alert-engine ✓ pdf-extractor ✓
-- A-30 memory: 46.57% < 85% [RAW-PROBE L24] ✓
+- A-30 memory: 53.33% < 85% [RAW-PROBE L24] ✓
 - A-31 EPIPE: 0 in last 30m ✓
 - A-32 disk: 34% < 85% [RAW-PROBE L26-L28] ✓
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-19T12:06:50Z ===
+=== AUDITOR PROBE 2026-06-19T12:36:53Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 7 hours (healthy)   vn-market-intelligence-mcp-mcp-server           7 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 8 hours (healthy)   vn-market-intelligence-mcp-mcp-server           8 hours ago
 vn-market-intelligence-mcp-frontend-1             Up 2 days (healthy)    vn-market-intelligence-mcp-frontend             2 days ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 3 days (healthy)    vn-market-intelligence-mcp-pdf-extractor        3 days ago
 vn-market-intelligence-mcp-stock-price-1          Up 4 days (healthy)    vn-market-intelligence-mcp-stock-price          4 days ago
@@ -46,7 +46,7 @@ mcp-gateway                                       Up 8 days (healthy)    mcpserv
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=46.57% MemUsage=953.8MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=53.33% MemUsage=1.067GiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
@@ -55,8 +55,8 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 === PROBE DONE ===
 ```
 
-## c378 · 2026-06-19T11:37:15Z
-### Audit Run Tier-1 (11:37 UTC 2026-06-19)
+## c379 · 2026-06-19T12:06:54Z
+### Audit Run Tier-1 (12:06 UTC 2026-06-19)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | Tooling: 3 ✓ | Connectivity: 4 ✓
 - Anomalies: 0 new (all PASS) | Dedup: 0 skipped
 - Status: HEALTHY
@@ -66,6 +66,6 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - A-21 restart count: 0 [RAW-PROBE L21] ✓
 - A-22..A-24 tooling: pdftoppm ✓ tesseract ✓ vie-lang ✓
 - A-25..A-28 connectivity: stock-price ✓ technical-analysis ✓ alert-engine ✓ pdf-extractor ✓
-- A-30 memory: 43.02% < 85% [RAW-PROBE L23] ✓
+- A-30 memory: 46.57% < 85% [RAW-PROBE L24] ✓
 - A-31 EPIPE: 0 in last 30m ✓
-- A-32 disk: 35% < 85% [RAW-PROBE L25-L27] ✓
+- A-32 disk: 34% < 85% [RAW-PROBE L26-L28] ✓
