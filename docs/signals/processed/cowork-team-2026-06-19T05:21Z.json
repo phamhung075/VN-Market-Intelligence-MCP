@@ -1,0 +1,55 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T05:21Z",
+    "nominal_tick": "2026-06-19T05:15:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "chef-morning",
+      "chef-intraday"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [
+      "chef-morning"
+    ],
+    "skipped_no_backstop": [
+      "chef-intraday"
+    ],
+    "classification": "MIXED_DEFERRED_AND_SKIPPED_BLIND",
+    "reason": "chef-morning (guaranteed, cron 15 5 weekdays) IS cloud-backstopped by the chef-morning RemoteTrigger (15 5 1-5) — it fires from a fresh cloud checkout, so DEFERRED_BLIND (no local spawn needed; verify delivery via RemoteTrigger list.last_fired_at + MARKET channel, NOT local last_fired). chef-intraday re-matched (stale local last_fired) but is local-dispatcher-only → SKIPPED_BLIND_NO_BACKSTOP. Session gateway-blind (mcpServers:0): no local spawns either way.",
+    "slot_detail": {
+      "chef-morning": {
+        "agent": "unified-agent",
+        "flow_path": "docs/agents/unified-agent/flow/chef.md",
+        "cron": "15 5 * * 1-5",
+        "guaranteed": true,
+        "last_fired_local": "2026-06-18T05:21:20Z",
+        "backstopped": true,
+        "backstop_trigger": "chef-morning (15 5 1-5)"
+      },
+      "chef-intraday": {
+        "agent": "unified-agent",
+        "flow_path": "docs/agents/unified-agent/flow/chef.md",
+        "cron": "13 2-8 * * 1-5",
+        "policy_id": "chef-intraday",
+        "last_fired": "2026-06-18T06:21:13Z",
+        "backstopped": false
+      }
+    },
+    "leader_lock": "renewed_ok_expires_1781848279",
+    "note": "Pressure-state emitted 05:21:19Z. chef-morning delivery is the cloud backstop's responsibility this session; do NOT local-spawn or double-post."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T05:21Z",
+  "_processed": {
+    "fingerprint": "15b4516de207b8e95af1ed50d4850125e5bd5bc551b2bee831fbe7e6bc0e25a0",
+    "processedAt": "2026-06-19T08:31:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

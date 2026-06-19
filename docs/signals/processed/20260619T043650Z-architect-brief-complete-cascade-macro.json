@@ -1,0 +1,22 @@
+{
+  "from": "architect",
+  "to": "po",
+  "type": "brief_complete",
+  "priority": "high",
+  "createdAt": "2026-06-19T04:36:50Z",
+  "payload": {
+    "task_id": "FIX-CASCADE-MACRO-CARD-REAL-DETAIL",
+    "brief_path": "docs/architecture-briefs/2026-06-19-cascade-macro-card-redesign.md",
+    "zone": "apps/mcp-server/",
+    "build_standard": "not-applicable",
+    "summary": "3-defect fix: (D-1) type filter ignored in querySignalsForStock+server.ts, (D-2) empty verified_decision stubs from alertStore, (D-3) test fixtures in live DB. Blueprint covers: type filter expansion chain_catalyst->['chain_catalyst','urgent_news'], is_correlation_stub marker column + read-layer guard, migration script for test fixture purge. Single zone, no PM split needed.",
+    "next_agent": "pm",
+    "epic": "INFOCARD-EXPAND-FETCH"
+  },
+  "_processed": {
+    "fingerprint": "fe3643bf94c7a8316384b43fb10b148244f278e2198da5526084ddf0004672e5",
+    "processedAt": "2026-06-19T04:38:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

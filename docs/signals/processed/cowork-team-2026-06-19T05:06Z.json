@@ -1,0 +1,43 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T05:06Z",
+    "nominal_tick": "2026-06-19T05:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "news-scout-sentiment"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "news-scout-sentiment matched (cron 0 5 weekdays). gatherer-standard policy, NOT among the 6 cloud RemoteTrigger backstops. Session gateway-blind (mcpServers:0) so local news-scout spawn would fabricate/no-op — skipped per blind posture. Sentiment sweep unfired until USER reconnects the gateway MCP server.",
+    "slot_detail": {
+      "news-scout-sentiment": {
+        "agent": "news-scout",
+        "cron": "0 5 * * 1-5",
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-18T05:06:15Z",
+        "cadence_minutes": 240,
+        "backstopped": false
+      }
+    },
+    "leader_lock": "renewed_ok_expires_1781847378",
+    "note": "Pressure-state emitted 05:06:18Z (stale_warning:true — benign, rapid manual ticks)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T05:06Z",
+  "_processed": {
+    "fingerprint": "4a70b5f0400c29d0644c9960094eeb8761206f80faea8d1c8073c6bb03ba0cc5",
+    "processedAt": "2026-06-19T08:31:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

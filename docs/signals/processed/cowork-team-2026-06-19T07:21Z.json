@@ -1,0 +1,44 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T07:21Z",
+    "nominal_tick": "2026-06-19T07:13:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "chef-intraday"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "chef-intraday matched (cron 13 2-8 weekdays, 07:13 boundary, cadence 120m, stale local last_fired re-matches each tick). Local-dispatcher-only (not among the 6 cloud RemoteTrigger backstops). Session gateway-blind (mcpServers:0) so a local unified-agent spawn would fabricate/no-op — skipped per blind posture. Intraday dish unfired until USER reconnects the gateway MCP server.",
+    "slot_detail": {
+      "chef-intraday": {
+        "agent": "unified-agent",
+        "flow_path": "docs/agents/unified-agent/flow/chef.md",
+        "cron": "13 2-8 * * 1-5",
+        "policy_id": "chef-intraday",
+        "last_fired": "2026-06-18T06:21:13Z",
+        "cadence_minutes": 120,
+        "backstopped": false
+      }
+    },
+    "leader_lock": "renewed_ok_expires_1781855479",
+    "note": "Pressure-state emitted 07:21:20Z (stale_warning:true — benign, rapid manual ticks)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T07:21Z",
+  "_processed": {
+    "fingerprint": "49ee18a5759326f1cd7420837433a8788500d323149784e0f259c53254df23ab",
+    "processedAt": "2026-06-19T08:31:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
