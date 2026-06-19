@@ -1,5 +1,8 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-19 · FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT
+`agent` made optional in `get_agent_signals` Zod schema. Path-C inbox guard returns user-readable error when both `agent` and `from_agent` absent. `args.agent ?? ""` on both getSignals + formatSignalLines calls. 5 ACs GREEN. tsc clean. 13335 pass / 0 fail. Docs (list/get_agent_signals.md + 3 package docs) updated. Zone health: bun test 0 fail, 166 tools intact, scheduler unchanged | HEALTHY
+
 ## 2026-06-17 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — CHANGES_REQUESTED test-only fix
 
 **Task:** CHANGES_REQUESTED → QA found 2 pre-existing test files asserting old buggy contract (attempts stays 0 on first-pass 0-URL discovery). Production code (commit 3eebf3bc) confirmed QA-correct — NOT touched.

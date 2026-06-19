@@ -30,7 +30,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 |------|---------|-----------|
 | `get_cycle_bootstrap` | Fetch signals + market context + system status in parallel | `agent_name: "alert-commander"` |
 | `get_system_status` | Database, source health, data freshness, recent errors | — |
-| `get_agent_signals` | Recent inter-agent signals (last 24h) | `agent: string` (REQUIRED), `signal_type?: string, stock_code?: string` |
+| `get_agent_signals` | Recent inter-agent signals (last 24h) | `agent: string` (req in inbox mode), `signal_type?: string, stock_code?: string` |
 
 ### Alert Management
 | Tool | Purpose | Key Params |

@@ -12,7 +12,7 @@ Retrieve pending signals addressed to an agent. Returns all non-expired signals 
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| `agent` | string | Yes | — | Name of agent receiving signals (e.g. 'alert-commander') |
+| `agent` | string | **Conditional** | — | Receiving agent name. Required in inbox mode (from_agent omitted). Omittable in sender-history mode (from_agent=string) or all-producers mode (from_agent=null). |
 | `status` | enum | No | `"unread"` | `"unread"` returns only unread signals (marks as read); `"all"` returns all non-expired |
 | `from_agent` | string | No | — | If provided, returns signals sent BY this agent (sender-history). Read-mark suppressed. |
 | `hours_back` | number | No | — | Restrict results to signals created within the last N hours (e.g. `6` = 360 min). When omitted, all non-expired signals are returned (backward-compatible). |
@@ -68,7 +68,7 @@ Vietnamese formatted plain-text output with:
 - **Alert Commander** calls at cycle start to get urgent_news, price_anomaly, cross_validate signals
 - **Report Analyzer** calls to get fundamental_validation signals from Financial Analyst
 - **Market Watcher** calls to get suppress signals to cancel false positives
-- **News Scout** calls once per cycle with `from_agent="news-scout", status="all", hours_back=6` to populate `SELF_SIGNALS_CACHE` for dedup (L-4 pattern — replaces 3 separate calls)
+- **News Scout** calls once per cycle omitting `agent` with `from_agent="news-scout", status="all", hours_back=6` to populate `SELF_SIGNALS_CACHE` for dedup (L-4 pattern — replaces 3 separate calls; `agent` is not required in sender-history mode)
 
 ## Related Tools
 

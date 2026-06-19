@@ -185,10 +185,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT",
-    "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-19T01:03:53Z",
+    "next_agent": "qa",
+    "updated_at": "2026-06-19T01:19:59Z",
     "updated_by": "dev-team",
-    "note": "INSIDER dev done (Option B, router-verified tsc GREEN), promoted→review(qa) — QA deferred to clean tree after AGENT-SIGNALS dev. Now dispatching AGENT-SIGNALS dev-mcp-server (serialized: INSIDER committed first, clean base). WIP 2."
+    "note": "Both fixes dev-done + router tsc-GREEN. FIX-AGENT-SIGNALS committed -> REVIEW(qa). Tree clean (serialized INSIDER then AGENT-SIGNALS). Next: QA BOTH FIX-INSIDER + FIX-AGENT-SIGNALS on clean tree (read/test-only). WIP 2."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -21199,7 +21199,7 @@
         "zone": "multi",
         "owner": "architect",
         "owner_agent": "architect",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "high",
         "size": "S",
         "sequence_after": null,
@@ -21215,7 +21215,7 @@
         "created_by": "po",
         "triaged_at": "2026-06-18T14:36:21Z",
         "triaged_by": "po",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "promoted_at": "2026-06-19T00:37:56Z",
         "promoted_by": "po-s107",
         "promote_note": "WIP=0 → promote as SPRINT-S→architect; schema-vs-caller contract direction is a real decision (agent z.string() REQUIRED even in sender-history mode where description+doc L31 example omit it — doc internally contradictory). RAW-re-confirmed live schema agentSignalTools.ts L461-490. Router locks + spawns architect.",
@@ -21227,13 +21227,23 @@
         "direction": "A — agent optional-when-not-inbox-mode (dead in sender-history mode: store L877 overrides with fromAgent)",
         "impl_files": [
           "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts",
+          "apps/mcp-server/src/__tests__/FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT.test.ts",
           "docs/agents/tools/list/get_agent_signals.md",
           "docs/agents/tools/package/news-scout.md",
           "docs/agents/tools/package/alert-commander.md",
           "docs/agents/tools/package/tran-ngoc-bau.md"
         ],
         "qa_contract": "5 ACs → apps/mcp-server/src/__tests__/FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT.test.ts",
-        "stage_note": "design done 2026-06-19T00:45:35Z; dev dispatch HELD to serialize same-zone apps/mcp-server with in-flight INSIDER dev; dispatch on INSIDER completion"
+        "stage_note": "design done 2026-06-19T00:45:35Z; dev dispatch HELD to serialize same-zone apps/mcp-server with in-flight INSIDER dev; dispatch on INSIDER completion",
+        "review_ready_at": "2026-06-19T01:19:59Z",
+        "direction_taken": "A — agent param z.string().optional(); Path-C guard rejects inbox-mode-without-agent before DB query",
+        "dev_evidence": {
+          "pnpm_check": "GREEN (router-verified exit 0)",
+          "schema_optional_verified": "RAW grep L461-468 z.string().optional() live",
+          "path_c_guard_verified": "RAW grep L531/535/543 inbox-no-agent error + args.agent ?? empty-string",
+          "tests": "5/5 ACs PASS; full suite 13335/0",
+          "doc_synced": true
+        }
       }
     ],
     "ready": [],

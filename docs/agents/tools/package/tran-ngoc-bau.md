@@ -39,7 +39,7 @@ Complete index → `docs/agents/tools/list/INDEX.md`
 | `get_unreviewed_market_messages` | Find messages not yet quality-checked |
 | `review_market_message` | Label message as signal/noise after audit |
 | `send_telegram` | Send quality report to WORK, escalation to BUG |
-| `get_agent_signals` | All signals in last 24h — dedup + confidence check — requires `agent: string` (req) |
+| `get_agent_signals` | All signals in last 24h — dedup + confidence check — `agent: string` (req in inbox mode), `signal_type?: string` |
 | `get_signal_effectiveness` | Signal quality metrics — hit rate per type |
 | `get_alert_accuracy` | Alert accuracy trends — Brier scores |
 | `record_signal_outcome` | Mark signal as audited |

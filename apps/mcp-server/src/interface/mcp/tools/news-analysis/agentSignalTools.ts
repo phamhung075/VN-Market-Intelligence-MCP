@@ -460,7 +460,12 @@ export function registerAgentSignalTools(server: McpServer): void {
     {
       agent: z
         .string()
-        .describe("Agent name to fetch signals for (e.g. 'alert_commander')"),
+        .optional()
+        .describe(
+          "Agent name to fetch signals for (e.g. 'alert_commander'). " +
+            "Required in inbox mode (from_agent omitted). " +
+            "Omittable in sender-history mode (from_agent=string) and all-producers mode (from_agent=null).",
+        ),
       status: z
         .enum(["unread", "all"])
         .default("unread")
@@ -519,7 +524,15 @@ export function registerAgentSignalTools(server: McpServer): void {
           };
         }
 
-        const signals = getSignals(db, args.agent, {
+        if (args.from_agent === undefined && !args.agent) {
+          return {
+            content: [{
+              type: "text" as const,
+              text: "Error: `agent` is required when using inbox mode (from_agent not provided).",
+            }],
+          };
+        }
+        const signals = getSignals(db, args.agent ?? "", {
           status: args.status,
           ...(args.from_agent !== undefined && args.from_agent !== null ? { fromAgent: args.from_agent } : {}),
           ...(args.hours_back !== undefined ? { hoursBack: args.hours_back } : {}),
@@ -527,7 +540,7 @@ export function registerAgentSignalTools(server: McpServer): void {
         });
 
         return {
-          content: [{ type: "text" as const, text: formatSignalLines(signals, args.agent) }],
+          content: [{ type: "text" as const, text: formatSignalLines(signals, args.agent ?? "") }],
         };
       } catch (err) {
         console.error("[get_agent_signals] Failed:", err);

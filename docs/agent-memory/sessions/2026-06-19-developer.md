@@ -35,3 +35,40 @@ Make `outstandingShares` optional, default 0. When 0, all pct-based signals supp
 
 ### Doc match
 `get_insider_signals.md` now correctly states: `outstandingShares` is optional (No), default 0, no auto-fetch. Schema and doc are in sync.
+
+---
+
+## 2026-06-19 · dev-mcp-server · FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT
+
+**Agent:** dev-mcp-server | **Task:** FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT (P1/HIGH, S)
+
+### Problem
+`get_agent_signals` had `agent: z.string()` (required) but three live flow callers legitimately omit it — news-scout ×2 (sender-history / all-producers mode) and market-watcher ×1 (all-producers). In sender-history mode `getSignals()` L877 overrides `agent` with `fromAgent` as the SQL bind; in all-producers mode `agent` is never touched. Schema was a lie: required a parameter it ignored.
+
+### Decision: Direction A (per architect brief)
+Make `agent` optional, add Path-C inbox guard that returns user-readable error when both `agent` and `from_agent` are absent.
+
+### Files changed
+- `apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts` — `agent: z.string().optional()`, updated describe text; Path-C guard (inbox mode without agent → error); `args.agent ?? ""` on both `getSignals` call and `formatSignalLines` call
+- `docs/agents/tools/list/get_agent_signals.md` — param table Required→Conditional; Use Cases note updated
+- `docs/agents/tools/package/news-scout.md` — param caption updated
+- `docs/agents/tools/package/alert-commander.md` — param caption updated
+- `docs/agents/tools/package/tran-ngoc-bau.md` — param caption updated
+- `apps/mcp-server/src/__tests__/FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT.test.ts` — NEW: 5 ACs all GREEN
+
+### Gate evidence
+- `bun tsc --noEmit`: exit 0 (clean)
+- `bun test src/__tests__/FIX-AGENT-SIGNALS-AGENT-PARAM-CONTRACT.test.ts`: 5 pass / 0 fail
+- `bun test` (full suite): 13335 pass / 0 fail (exit 0; post-run Bun JIT panic is known non-test issue)
+- Tool count: 166 (unchanged — schema-only change, no new tools)
+- Scheduler count: unchanged
+
+### AC pass/fail
+- AC-1 PASS: inbox without agent → "Error: `agent` is required when using inbox mode"
+- AC-2 PASS: sender-history from_agent="news-scout", no agent → signals returned, no error
+- AC-3 PASS: all-producers from_agent=null, no agent → signals from all producers returned
+- AC-4 PASS: inbox with agent="alert-commander" → backward-compat preserved
+- AC-5 PASS: Zod safeParse accepts agent-omitted calls
+
+### Doc match
+Schema `agent: z.string().optional()` matches `get_agent_signals.md` Conditional requirement. Package docs for news-scout, alert-commander, tran-ngoc-bau updated.
