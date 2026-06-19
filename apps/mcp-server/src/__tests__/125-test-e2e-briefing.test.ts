@@ -134,7 +134,8 @@ function setupTestDb(): Database {
       resolution_notes      TEXT,
       sent_by               TEXT NOT NULL DEFAULT 'server',
       confidence_score      REAL,
-      validated_at          TEXT
+      validated_at          TEXT,
+      fingerprint           TEXT
     );
 
     CREATE TABLE IF NOT EXISTS financial_reports (

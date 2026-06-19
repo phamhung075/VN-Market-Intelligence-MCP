@@ -67,7 +67,8 @@ function seedSchema(db: Database) {
       resolved_at           TEXT,
       resolution_notes      TEXT,
       sent_by               TEXT NOT NULL DEFAULT 'server',
-      created_at            TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      created_at            TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      fingerprint           TEXT
     );
     CREATE TABLE IF NOT EXISTS market_prices_history (
       code       TEXT NOT NULL,

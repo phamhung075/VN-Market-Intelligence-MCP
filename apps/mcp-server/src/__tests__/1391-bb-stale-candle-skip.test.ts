@@ -38,16 +38,22 @@ function buildTestDb(): Database {
   `);
   db.run(`
     CREATE TABLE IF NOT EXISTS alerts (
-      id TEXT PRIMARY KEY,
-      triggered_at TEXT NOT NULL,
-      severity TEXT NOT NULL,
-      signals_json TEXT NOT NULL,
+      id                    TEXT PRIMARY KEY,
+      triggered_at          TEXT NOT NULL,
+      severity              TEXT NOT NULL,
+      signals_json          TEXT NOT NULL,
       affected_actions_json TEXT NOT NULL,
-      analysis_ids_json TEXT,
-      message TEXT NOT NULL,
-      read INTEGER NOT NULL DEFAULT 0,
-      user_note TEXT,
-      fingerprint TEXT UNIQUE
+      analysis_ids_json     TEXT,
+      message               TEXT NOT NULL,
+      read                  INTEGER NOT NULL DEFAULT 0,
+      user_note             TEXT,
+      notified_telegram     INTEGER NOT NULL DEFAULT 0,
+      resolved_at           TEXT,
+      resolution_notes      TEXT,
+      sent_by               TEXT NOT NULL DEFAULT 'server',
+      confidence_score      REAL,
+      validated_at          TEXT,
+      fingerprint           TEXT
     )
   `);
   return db;
