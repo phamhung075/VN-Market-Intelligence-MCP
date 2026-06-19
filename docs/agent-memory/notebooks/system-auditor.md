@@ -1,5 +1,16 @@
 # System Auditor Notebook
 
+## c367 · 2026-06-19T07:00:27Z
+### Audit Run Tier-2 (07:00 UTC 2026-06-19)
+- Tier: 2 | Sources: 28 probed (gateway verify-needed) | DB: 2 checks
+- Anomalies: 0 new (host-side PASS) | Dedup: 0 skipped
+- Status: HEALTHY (host-side checks)
+- B-09 BCTC SSC URL: 0 bad ✓
+- B-13 BCTC stale >72h: 0 ✓
+- C-06 market_messages 3h: 3 rows ✓
+- C-07 agent_signals 24h: 120 rows ✓
+- Gateway-verify-needed: A-29 (cron), B-01..B-07 (fetch), B-11..B-12 (rate), D-BCTC-EVAL, D-IMPROVE
+
 ## c366 · 2026-06-19T05:37:43Z
 ### Audit Run Tier-1 (05:37 UTC 2026-06-19)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
