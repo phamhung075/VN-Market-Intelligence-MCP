@@ -1,0 +1,44 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T08:51Z",
+    "nominal_tick": "2026-06-19T08:45:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "chef-eod"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [
+      "chef-eod"
+    ],
+    "skipped_no_backstop": [],
+    "classification": "DEFERRED_BLIND",
+    "reason": "chef-eod (guaranteed, cron 45 8 weekdays) IS cloud-backstopped by the chef-eod RemoteTrigger (45 8 1-5) — it fires from a fresh cloud checkout, so DEFERRED_BLIND (no local spawn needed; the EOD dish delivery is the cloud backstop's responsibility this gateway-blind session). Verify delivery via RemoteTrigger(action=list).chef-eod-backstop.last_fired_at + MARKET channel content, NOT local last_fired (reads 06-15 stale because the cloud checkout does not sync last_fired back to the local tree). Do NOT local-spawn or double-post.",
+    "slot_detail": {
+      "chef-eod": {
+        "agent": "unified-agent",
+        "flow_path": "docs/agents/unified-agent/flow/chef.md",
+        "cron": "45 8 * * 1-5",
+        "guaranteed": true,
+        "last_fired_local": "2026-06-15T08:52:40Z",
+        "backstopped": true,
+        "backstop_trigger": "chef-eod (45 8 1-5)"
+      }
+    },
+    "leader_lock": "renewed_ok_expires_1781860879",
+    "note": "Pressure-state emitted 08:51:19Z (stale_warning:true — benign, rapid manual ticks). chef-eod delivery is cloud-side; router does NOT verify via local last_fired."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T08:51Z",
+  "_processed": {
+    "fingerprint": "b8193cddd3170dd321ee91c0101b6965698139cc55143b315df9002d482caf87",
+    "processedAt": "2026-06-19T09:31:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
