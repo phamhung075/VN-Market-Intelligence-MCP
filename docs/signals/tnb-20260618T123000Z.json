@@ -1,0 +1,8 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[tran-ngoc-bau] c99 BLOCKED — gateway wrapper unavailable in local CLI sub-agent spawn context (failure mode A, bootstrap.md). 3rd+ consecutive blocked cycle for this spawn path. MCP not wired in local CLI session. Cloud RemoteTrigger (cron) path has the connector. Published Marker Gate NOT claimed. No audit performed. Session invoked at ~12:30Z UTC (before Evening dish 19:37 UTC — premature invocation). Cron-scheduled c100 at 20:13 UTC expected to succeed via cloud path.",
+  "priority": "high",
+  "createdAt": "2026-06-18T12:30:00Z"
+}
