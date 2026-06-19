@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-303 · 2026-06-19 · FU-ALERT-COWRITE-SCHEDULER-JOBS — CHANGES_REQUESTED
+
+FU-ALERT-COWRITE-SCHEDULER-JOBS | Full suite: 13255 pass / 65 fail (1112 files). Production code PASS: all 3 scheduler jobs route through storeAlerts, no raw INSERT in scheduler/, DDD PASS, security PASS, tsc 0 errors. Blocking: `b3ea96fa` added `fingerprint` to storeAlerts 13-col INSERT but missed updating DDLs in 5 test files: FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS.test.ts (new file, 9-col DDL missing sent_by/notified_telegram/confidence_score/validated_at → AC-1..AC-6 fail, 5 red), FIX-CASCADE-MACRO-CARD-REAL-DETAIL.test.ts (missing fingerprint → AC-14a..14e, 5 red), 103-job-market-scan.test.ts (1 red), 1050-alert-dispatch-fixes.test.ts (1 red), 1076-market-scan-noise-retirement.test.ts (1 red). Sweep: 064, 086, 1526, 153, 290. Pre-existing (disjoint): RSI-SINGLEDIGIT AC-4..7 + 1391 AC-2 (sent_by gap since d79314bb), network-timeout suite (~5000ms), VPS proxy, 1302 deprecated. DJ: sprint-FU-ALERT-COWRITE-SCHEDULER-JOBS-qa.md.
+
 ## cycle-302 · 2026-06-19 · CI-RED-ea9a3589-FIX — APPROVED (done_verified WITHHELD pending push+CI)
 
 CI-RED-ea9a3589-FIX: commit 709703ee | Verdict: APPROVED | CONTAM-7 isolated → 45 pass / 0 fail. REPAIR suite isolated → 18 pass / 0 fail (guard not weakened). pnpm check exit 0. git show --stat → 1 file only (CONTAM-7 test, 10+/4−). Smart-Skip: test-only, DDD/security/mock-guard skipped. Pre-existing non-isolated ~50 failures confirmed disjoint (local-env-only: live-MCP timeouts, logVpsPush, date-rollover). done_verified WITHHELD: ci_green_on_subsequent_push requires PO push + CI Actions green on post-ea9a3589 SHA. DJ: sprint-CI-RED-ea9a3589-FIX-qa.md.
