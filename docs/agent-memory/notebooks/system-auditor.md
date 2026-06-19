@@ -1,23 +1,23 @@
 # System Auditor Notebook
 
-## c371 · 2026-06-19T08:36:55Z
-### Audit Run Tier-1 (08:36 UTC 2026-06-19)
+## c372 · 2026-06-19T09:06:55Z
+### Audit Run Tier-1 (09:06 UTC 2026-06-19)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | Tooling: 3 ✓ | Connectivity: 4 ✓
 - Anomalies: 0 new (all PASS) | Dedup: 0 skipped
 - Status: HEALTHY
-- A-01..A-11 container UP: all 12 PASS ✓
-- A-12..A-19 health: mcp-server:3000 ✓ api-gateway:4000 ✓ macro-indicators:5004 ✓ pdf-extractor:5001 ✓ frontend:3001 ✓
+- A-01..A-11 container UP: all 12 PASS ✓ [RAW-PROBE L4-L15]
+- A-12..A-19 health: mcp-server:3000 ✓ api-gateway:4000 ✓ macro-indicators:5004 ✓ pdf-extractor:5001 ✓ frontend:3001 ✓ [RAW-PROBE L18-L22]
 - A-20 pdf-extractor multi-probe: 3/3 PASS ✓
-- A-21 restart count: 0 ✓
+- A-21 restart count: 0 [RAW-PROBE L24-L26] ✓
 - A-22..A-24 tooling: pdftoppm ✓ tesseract ✓ vie-lang ✓
 - A-25..A-28 connectivity: stock-price ✓ technical-analysis ✓ alert-engine ✓ pdf-extractor ✓
-- A-30 memory: 35.72% < 85% ✓
+- A-30 memory: 32.96% < 85% [RAW-PROBE L28-L29] ✓
 - A-31 EPIPE: 0 in last 30m ✓
-- A-32 disk: 35% < 85% ✓
+- A-32 disk: 35% < 85% [RAW-PROBE L31-L33] ✓
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-19T08:36:55Z ===
+=== AUDITOR PROBE 2026-06-19T09:06:55Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
@@ -46,14 +46,29 @@ mcp-gateway                                       Up 8 days (healthy)    mcpserv
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=35.72% MemUsage=731.6MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=32.96% MemUsage=675.1MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  263M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  262M    0%   /
 
 === PROBE DONE ===
 ```
+
+## c371 · 2026-06-19T08:36:55Z
+### Audit Run Tier-1 (08:36 UTC 2026-06-19)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | Tooling: 3 ✓ | Connectivity: 4 ✓
+- Anomalies: 0 new (all PASS) | Dedup: 0 skipped
+- Status: HEALTHY
+- A-01..A-11 container UP: all 12 PASS ✓
+- A-12..A-19 health: mcp-server:3000 ✓ api-gateway:4000 ✓ macro-indicators:5004 ✓ pdf-extractor:5001 ✓ frontend:3001 ✓
+- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
+- A-21 restart count: 0 ✓
+- A-22..A-24 tooling: pdftoppm ✓ tesseract ✓ vie-lang ✓
+- A-25..A-28 connectivity: stock-price ✓ technical-analysis ✓ alert-engine ✓ pdf-extractor ✓
+- A-30 memory: 35.72% < 85% ✓
+- A-31 EPIPE: 0 in last 30m ✓
+- A-32 disk: 35% < 85% ✓
 
 ## c370 · 2026-06-19T08:08:02Z
 ### Audit Run Tier-1 (08:06 UTC 2026-06-19)
@@ -62,34 +77,7 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - Status: HEALTHY
 - A-01..A-11 container UP: all 12 PASS ✓
 - A-12..A-19 health: mcp-server:3000 ✓ api-gateway:4000 ✓ macro-indicators:5004 ✓ pdf-extractor:5001 ✓ frontend:3001 ✓
-- A-20 pdf-extractor multi-probe: 3/3 PASS ✓ (in-container HTTP 200 all 3 attempts)
+- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
 - A-21 restart count: 0 ✓
-- A-22..A-24 tooling: pdftoppm ✓ tesseract ✓ vie-lang ✓
-- A-25..A-28 connectivity: stock-price ✓ technical-analysis ✓ alert-engine ✓ pdf-extractor ✓
 - A-30 memory: 30.32% < 85% ✓
-- A-31 EPIPE: 0 in last 30m ✓
 - A-32 disk: 34% < 85% ✓
-
-## c369 · 2026-06-19T07:37:28Z
-### Audit Run Tier-1 (07:37 UTC 2026-06-19)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
-- Anomalies: 0 new (all PASS) | Dedup: 0 skipped
-- Status: HEALTHY
-- A-01..A-11 container UP: all 12 PASS ✓ (mcp-server 3h, rag-service 5h, others stable)
-- A-12..A-19 health: mcp-server:3000 ✓ api-gateway:4000 ✓ macro-indicators:5004 ✓ pdf-extractor:5001 ✓ frontend:3001 ✓
-- A-20 pdf-extractor multi-probe: 3/3 PASS ✓ (in-container HTTP 200 all 3 attempts)
-- A-21 restart count: 0 ✓
-- A-30 memory: 23.76% < 85% ✓
-- A-32 disk: 35% < 85% ✓
-- A-31 EPIPE: 0 in last 30m ✓
-
-## c367 · 2026-06-19T07:00:27Z
-### Audit Run Tier-2 (07:00 UTC 2026-06-19)
-- Tier: 2 | Sources: 28 probed (gateway verify-needed) | DB: 2 checks
-- Anomalies: 0 new (host-side PASS) | Dedup: 0 skipped
-- Status: HEALTHY (host-side checks)
-- B-09 BCTC SSC URL: 0 bad ✓
-- B-13 BCTC stale >72h: 0 ✓
-- C-06 market_messages 3h: 3 rows ✓
-- C-07 agent_signals 24h: 120 rows ✓
-- Gateway-verify-needed: A-29 (cron), B-01..B-07 (fetch), B-11..B-12 (rate), D-BCTC-EVAL, D-IMPROVE
