@@ -97,6 +97,16 @@
 **why-decision:** Option C is the only fix that can never be bypassed by a new consumer. SNAPSHOT_MAX_STALENESS_MS=4h is generous for real off-hours ticks (fetched ≤15min ago) but tight vs 15-day residue.
 **why-change:** stale_warning on PressureState was typed as literal `false` — widened to `boolean` as part of the fix (previously the type was lying about the field's possible values).
 
+### STEP dev-mcp-server-S12 · dev-mcp-server · 2026-06-19T18:05:00Z
+**task-id:** FU-ALERT-COWRITE-SCHEDULER-JOBS
+**what-done:** Routed taAlertScanJob, bbAlertScanJob, foreignFlowAlertJob through storeAlerts for atomic alerts↔agent_signals co-write. Extended SignalType + Severity. Added fingerprint? to Alert. Updated storeAlerts INSERT to include fingerprint col. Added 3 CW-* join-invariant tests per job. Fixed 5 test schemas.
+**what-considered:**
+- Option A: Separate ensureSignalRow() helper called after each direct INSERT — rejected: two writes outside transaction; still leaves a window where alert exists but signal doesn't; doesn't use the existing atomic co-write path.
+- Option B: Route all 3 jobs through storeAlerts (already atomic) — CHOSEN: single transaction, existing code path, no window.
+- fingerprint: add to Alert interface vs separate param — chosen field on Alert: keeps the type as single source of truth; non-breaking (optional field).
+**why-decision:** Option B uses the already-proven atomic path from FIX-ALERT-ORPHAN-CORRELATION. No new transaction logic needed. Extending SignalType and Severity is durable — domain layer type correctness beats any cast.
+**why-change:** Only path — 3 jobs with direct INSERT are the confirmed orphan source per RAW DB probe (33 orphans 06-19). No per-ticker special-case introduced.
+
 ### STEP dev-mcp-server-S11 · dev-mcp-server · 2026-06-18T00:00:00Z
 **task-id:** FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (CHANGES_REQUESTED: conflicting writer)
 **what-done:** Removed `resetQ1UrlNotFound(db)` call from `initFinancialReportsTables()` — the function was firing on every `initDatabase()` call from ~15 MCP tool handlers, perpetually undoing enricher terminalization (tug-of-war).
