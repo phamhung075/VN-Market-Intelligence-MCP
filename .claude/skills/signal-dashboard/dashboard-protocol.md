@@ -54,8 +54,20 @@ TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
 echo "$UPDATED" > "$TMP"
 mv "$TMP" docs/data/orch/orch-state.json
 
-# 5. Validate
+# 5. Validate JSON structure
 jq . docs/data/orch/orch-state.json > /dev/null || echo "ERROR: orch-state.json invalid after write"
+
+# 6. POST-WRITE READ-BACK SELF-CHECK (MANDATORY — kills false-green "row written")
+#    Assert the new row id is present inside .signal_queue.rows[] — NOT a top-level numeric key.
+ROW_ID=$(echo "$NEW_ROW" | jq -r '.id')
+FOUND=$(jq --arg id "$ROW_ID" '[ .signal_queue.rows[] | select(.id == $id) ] | length' docs/data/orch/orch-state.json 2>/dev/null)
+if [ "${FOUND:-0}" -lt 1 ]; then
+  echo "[SIGNAL-ROW-ASSERT] FAIL: row '$ROW_ID' NOT found in .signal_queue.rows[] after write — orphan key bug or write failure"
+  # Emit BUG-channel Telegram (do not swallow — this is the false-green kill switch)
+  # The caller's ANTI-SKIP block must also fire: log + BUG telegram before exiting cycle.
+  exit 1
+fi
+echo "[SIGNAL-ROW-ASSERT] OK: row '$ROW_ID' confirmed in .signal_queue.rows[]"
 ```
 
 **Rules:**

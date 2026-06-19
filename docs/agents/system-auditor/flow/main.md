@@ -213,10 +213,17 @@ call_tool(server="vn-market", tool="post_agent_signal", arguments={
 ```
 Step E-2: `send_telegram(channel="bug", ...)` (dedup 7d per dedup_key, severity ≥ WARN).
 Step E-3 — SIGNAL ROW (mandatory, same call as E-1, no skip path):
-Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write):
+Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
 ```json
 {"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "data_stale", "summary": "{source_id} stale {elapsed_hours}h (check {check_id})", "severity": "{CRITICAL|HIGH|MED}", "status": "NEW", "payload_ref": null}
 ```
+**POST-WRITE READ-BACK (mandatory — kills false-green):** After atomic write, run:
+```bash
+FOUND=$(jq --arg id "sau-{ts}" '[ .signal_queue.rows[] | select(.id == $id) ] | length' docs/data/orch/orch-state.json 2>/dev/null)
+[ "${FOUND:-0}" -lt 1 ] && echo "[SIGNAL-ROW-ASSERT] FAIL: row NOT in .signal_queue.rows[] — orphan key bug" && <emit BUG telegram> && exit 1
+echo "[SIGNAL-ROW-ASSERT] OK: row confirmed in .signal_queue.rows[]"
+```
+If check absent or FOUND=0 → FAIL LOUD. NEVER log "row written" without this check passing.
 **ANTI-SKIP:** if the orch-state write fails (file locked, jq error), log `"[SIGNAL-ROW] FAILED: {error}"` and emit BUG-channel Telegram — do NOT silently continue without the row.
 
 ---
@@ -233,7 +240,7 @@ Example: `[BCTC-EVAL] FPT Q4-2025: stage 3 green→yellow (vn_diacritic_ratio dr
 
 Status semantics: red = hard fail, yellow = soft warning, green = pass.
 
-Also append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard skill § WRITE for any report showing `overall_status = "red"` or any new `"yellow"` (atomic write).
+Also append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard skill § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`) for any report showing `overall_status = "red"` or any new `"yellow"`. After each append, run the POST-WRITE READ-BACK self-check per signal-dashboard SKILL § WRITE — if row id absent from `.signal_queue.rows[]` → FAIL LOUD + BUG telegram.
 
 After sweep, **hold the snapshot in memory** (compact: `{report_id, ticker, period, overall_status, stage_statuses, computed_at}` per entry) — it will be written as the `BCTC-EVAL-SNAPSHOT:` block inside the end-of-cycle settled notebook write (AC-3). Do NOT write the notebook here. If endpoint returns non-200 → log `[D-BCTC-EVAL] endpoint unavailable — skipping sweep`, set snapshot=nil, continue (non-fatal).
 
@@ -301,10 +308,11 @@ Also inspect the Tier-2 stale-source findings emitted above: any source with `se
      FAIL-LOUD-SKIP if `target_files` is empty — log `"[D-IMPROVE] SKIP {id}: target_files empty"`, continue.
 
   c. Write `docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md` (path-explicit).
-     Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write):
+     Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
      ```json
      {"id": "{id}", "ts": "{ts}", "from": "system-auditor", "to": "po", "type": "improvement_proposal", "summary": "{summary ≤120 chars}", "severity": "INFO", "status": "NEW", "payload_ref": "{proposal-path}"}
      ```
+     **POST-WRITE READ-BACK (mandatory):** assert row `{id}` is in `.signal_queue.rows[]` after write; if absent → FAIL LOUD + BUG telegram (same pattern as all E-3 blocks).
      **Commit (mutex-guarded):** → skill: `.claude/skills/commit-mutex/SKILL.md`
      own_paths: [`docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md`, `docs/data/orch/orch-state.json`]
      intent: `"chore(improve): D-IMPROVE emit {id}"`
@@ -505,10 +513,17 @@ call_tool(server="vn-market", tool="post_agent_signal", arguments={
 ```
 Step E-2: `send_telegram(channel="bug", ...)` (dedup 7d per dedup_key).
 Step E-3 — SIGNAL ROW (mandatory, runs immediately after E-1, no skip path):
-Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write):
+Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
 ```json
 {"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "db_integrity_breach", "summary": "{table} check {check_id} failed (actual={actual_value})", "severity": "{CRITICAL|HIGH}", "status": "NEW", "payload_ref": null}
 ```
+**POST-WRITE READ-BACK (mandatory — kills false-green):** After atomic write, run:
+```bash
+FOUND=$(jq --arg id "sau-{ts}" '[ .signal_queue.rows[] | select(.id == $id) ] | length' docs/data/orch/orch-state.json 2>/dev/null)
+[ "${FOUND:-0}" -lt 1 ] && echo "[SIGNAL-ROW-ASSERT] FAIL: row NOT in .signal_queue.rows[] — orphan key bug" && <emit BUG telegram> && exit 1
+echo "[SIGNAL-ROW-ASSERT] OK: row confirmed in .signal_queue.rows[]"
+```
+If check absent or FOUND=0 → FAIL LOUD. NEVER log "row written" without this check passing.
 **ANTI-SKIP:** if the orch-state write fails (file locked, jq error), log `"[SIGNAL-ROW] FAILED: {error}"` and emit BUG-channel Telegram — do NOT silently continue without the row.
 
 ### Tier-3 Roll-Up Signal

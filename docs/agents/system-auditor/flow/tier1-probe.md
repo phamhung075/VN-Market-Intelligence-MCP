@@ -86,12 +86,13 @@ From `PROBE_OUT` `--- health endpoints ---` section:
      }
    })
    ```
-   Signal row in orch-state.json `.signal_queue.rows[]`:
+   Signal row in orch-state.json `.signal_queue.rows[]` (atomic write, `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
    ```json
-   {"id": "sau-{ts}", "from": "system-auditor", "to": "po", "type": "signal_feedback",
+   {"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "signal_feedback",
     "summary": "pdf-extractor A-20 multi-probe {pass_count}/3 — event-loop stall suspected",
-    "severity": "HIGH", "status": "NEW"}
+    "severity": "HIGH", "status": "NEW", "payload_ref": null}
    ```
+   After write: POST-WRITE READ-BACK per general E-3 pattern above — assert row id in `.signal_queue.rows[]`; FAIL LOUD + BUG telegram if absent.
 
 5. **Log all three probe results** verbatim in the notebook `### RAW-PROBE:` block for evidence trail.
 
@@ -141,3 +142,17 @@ call_tool(server="vn-market", tool="post_agent_signal", arguments={
 })
 ```
 Routing: severity ≥ WARN AND dedup_key not seen last 7d → `send_telegram(channel="bug", message="[system-auditor] {severity}: {summary} — see DASHBOARD.md")`. Always append DASHBOARD.md row for WARN/CRITICAL.
+
+**Step E-3 — SIGNAL ROW (mandatory, runs after E-1, no skip path):**
+Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write, MUST use `.signal_queue.rows += [$row]` — NEVER `.signal_queue[N]`):
+```json
+{"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "signal_feedback", "summary": "{check_id} FAIL: {service_id} — {severity}", "severity": "{CRITICAL|HIGH|MED}", "status": "NEW", "payload_ref": null}
+```
+**POST-WRITE READ-BACK (mandatory — kills false-green):** After atomic write, assert:
+```bash
+FOUND=$(jq --arg id "sau-{ts}" '[ .signal_queue.rows[] | select(.id == $id) ] | length' docs/data/orch/orch-state.json 2>/dev/null)
+[ "${FOUND:-0}" -lt 1 ] && echo "[SIGNAL-ROW-ASSERT] FAIL: row NOT in .signal_queue.rows[] — orphan key bug" && <emit BUG telegram> && exit 1
+echo "[SIGNAL-ROW-ASSERT] OK: row confirmed in .signal_queue.rows[]"
+```
+If FOUND=0 → FAIL LOUD. NEVER log "row written" without this check passing.
+**ANTI-SKIP:** write failure (file locked, jq error) → log `"[SIGNAL-ROW] FAILED: {error}"` + BUG-channel Telegram — do NOT silently continue without the row.

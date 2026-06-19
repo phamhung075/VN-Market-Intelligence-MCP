@@ -56,8 +56,10 @@ Row shape: per orch-state.json schema `signal_queue.rows[]`:
 ```
 One row per signal. `summary` max 120 chars — strip to fit. `payload_ref` = file path or `null`.
 
-→ Full write procedure: `.claude/skills/signal-dashboard/dashboard-protocol.md § WRITE`
+→ Full write procedure (including mandatory POST-WRITE read-back self-check): `.claude/skills/signal-dashboard/dashboard-protocol.md § WRITE`
 → Payload >120 chars or sprint-kickoff signals: `.claude/skills/signal-dashboard/reference.md § Payload Pointer Discipline`
+
+> **POST-WRITE READ-BACK CONTRACT (mandatory — no exceptions):** After every atomic write, assert the new row `id` is a member of `.signal_queue.rows[]`. If absent → FAIL LOUD: log `[SIGNAL-ROW-ASSERT] FAIL: row '{id}' NOT found in .signal_queue.rows[]` + emit BUG-channel Telegram. NEVER report "row written" if the read-back check was not executed or returned 0. This kills the false-green class (confirmed orphan-key bug 2026-06-18: keys 0,1,2,3,5 accumulated; key "3" held a CRITICAL db_integrity_breach off-board ~1.5d).
 
 ---
 
