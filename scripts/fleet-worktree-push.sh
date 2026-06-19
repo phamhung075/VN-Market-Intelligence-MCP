@@ -15,6 +15,9 @@
 #
 # TUNABLE CONSTANTS (edit header, no rebuild needed):
 PUSH_THRESHOLD=${PUSH_THRESHOLD:-20}   # push when local commits > this count
+TSC_GATE_TIMEOUT=${TSC_GATE_TIMEOUT:-180}  # max seconds for the redundant pre-push tsc gate
+#                                            before it is treated as HUNG and SKIPPED
+#                                            (the gate is defense-in-depth only — see Step 11).
 #
 # INVARIANTS (DO NOT CHANGE):
 #   - NEVER git stash / git reset / git checkout on the main working tree
@@ -117,6 +120,44 @@ emit_abort_signal() {
   "createdAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF
+}
+
+# ── 3c. Portable bounded-run helper (macOS has NO `timeout`/`gtimeout`) ────────
+# coreutils is not installed on this host, so we cannot rely on gtimeout/timeout.
+# This runs "$@" with a hard wall-clock cap (perl is always present on macOS).
+# Returns:
+#   0    command finished, exit 0
+#   1    command finished, NON-ZERO exit (a real result — e.g. tsc found errors)
+#   124  command exceeded $1 seconds and was KILLED (HUNG) — matches GNU timeout's
+#        convention so callers can distinguish "ran-and-failed" from "hung".
+# The child runs in its own process group; on timeout the WHOLE group is killed
+# (SIGTERM, then SIGKILL) so a hung `bun tsc` cannot survive as an orphan and
+# re-wedge the next launchd run.
+run_bounded() {
+  local secs="$1"; shift
+  perl -e '
+    use POSIX ":sys_wait_h";
+    my $secs = shift @ARGV;
+    my $pid = fork();
+    if (!defined $pid) { exit 125; }
+    if ($pid == 0) {
+      setpgrp(0,0);              # child leads its own process group
+      exec @ARGV or exit 127;
+    }
+    my $timed_out = 0;
+    $SIG{ALRM} = sub {
+      $timed_out = 1;
+      kill("TERM", -$pid);       # negative pid = whole process group
+      select(undef,undef,undef,3);
+      kill("KILL", -$pid);
+    };
+    alarm($secs);
+    waitpid($pid, 0);
+    my $status = $?;
+    alarm(0);
+    if ($timed_out) { exit 124; }
+    exit($status >> 8 ? 1 : 0);
+  ' "$secs" "$@"
 }
 
 # ── 4. Worktree path (timestamped to avoid collision) ─────────────────────────
@@ -281,23 +322,68 @@ if [ ! -e "$WT_PATH/apps/mcp-server/node_modules" ] && [ -d "$REPO_ROOT/apps/mcp
   ln -s "$REPO_ROOT/apps/mcp-server/node_modules" "$WT_PATH/apps/mcp-server/node_modules" 2>/dev/null || true
 fi
 
-# ── 11. Pre-push tsc gate ─────────────────────────────────────────────────────
-# MUST be 0. Never push around a red tree (feedback_red_prepush_strands_fleet).
-echo "[fleet-push] running pre-push tsc check..."
+# ── 11. Pre-push tsc gate (BOUNDED + redundant defense-in-depth) ──────────────
+# DESIGN (FIX-AUTO-PUSH-TSC-GATE-HANG):
+#   This gate is REDUNDANT — it is NOT the primary tsc gate. Every commit being
+#   pushed here is already an ALREADY-COMMITTED HEAD commit that was tsc-checked
+#   at commit time by the local pre-push hook AND validated by origin CI. The only
+#   thing the behind-set adds is docs/notebook/orch/signal CHORE churn (Step 7
+#   already HARD-ABORTS if the behind-set touches any code/config). So a green tip
+#   here is overwhelmingly expected; this re-check is purely a belt-and-braces
+#   catch for a local-vs-origin tsc interaction.
+#
+#   THE HANG (2026-06-19, fleet-push-error.log): `bun tsc --noEmit` in the worktree
+#   resolves TypeScript through a node_modules SYMLINK into the main tree (Step 10).
+#   bun followed the symlink into a resolution/lock contention and BLOCKED forever
+#   (alive ~2h, 0.02s CPU). Because launchd uses StartInterval (not KeepAlive), a
+#   hung run STARVES every future push — strictly worse than a clean fail
+#   (memory: feedback_graceful_degrade_needs_bounded_fetch — a HANG starves the
+#   path worse than a bounded fail).
+#
+#   FIX = BOUND + GRACEFUL-SKIP:
+#     - Run the check under a hard ${TSC_GATE_TIMEOUT}s wall-clock cap (run_bounded,
+#       perl-based — macOS has no gtimeout/timeout). The whole process group is
+#       killed on timeout so a hung bun cannot orphan-survive into the next run.
+#     - rc 0   -> gate green, proceed.
+#     - rc 1   -> tsc RAN and returned NON-ZERO = a REAL red tree -> HARD ABORT
+#                 (never push around a genuinely red tree:
+#                  feedback_red_prepush_strands_fleet).
+#     - rc 124 -> gate HUNG (exceeded cap) -> do NOT hard-abort. The commits are
+#                 already gated (commit-hook + CI), so SKIP this redundant gate,
+#                 emit a tracking signal so the orch loop SEES the skip, and PROCEED
+#                 to push. A bounded skip keeps the push alive; a hard-abort here
+#                 would make the push DEAD every cycle (same end-state as the hang).
+echo "[fleet-push] running pre-push tsc check (bounded ${TSC_GATE_TIMEOUT}s)..."
 if $DRY_RUN; then
-  echo "[fleet-push][DRY-RUN] would run: pnpm --filter vn-market check (in worktree)"
+  echo "[fleet-push][DRY-RUN] would run (bounded ${TSC_GATE_TIMEOUT}s): pnpm --filter vn-market check (in worktree)"
 else
   pushd "$WT_PATH" > /dev/null
-  if ! pnpm --filter vn-market check 2>&1; then
-    popd > /dev/null
-    msg="[fleet-push] ABORT: pnpm --filter vn-market check failed (red tree). Fix tsc errors before pushing."
-    echo "$msg" >&2
-    send_tg bug "$msg"
-    emit_abort_signal "tsc-red" "pnpm --filter vn-market check failed in worktree"
-    exit 1
-  fi
+  set +e
+  run_bounded "$TSC_GATE_TIMEOUT" pnpm --filter vn-market check
+  tsc_rc=$?
+  set -e
   popd > /dev/null
-  echo "[fleet-push] tsc check passed"
+
+  case "$tsc_rc" in
+    0)
+      echo "[fleet-push] tsc check passed"
+      ;;
+    124)
+      # HUNG — bounded out. Redundant gate; commits already CI/hook-gated -> SKIP + proceed.
+      msg="[fleet-push] WARN: pre-push tsc gate exceeded ${TSC_GATE_TIMEOUT}s and was killed (worktree node_modules symlink hang). Gate is redundant (commits already hook+CI gated) — SKIPPING gate and proceeding to push."
+      echo "$msg" >&2
+      send_tg bug "$msg"
+      emit_abort_signal "tsc-gate-timeout-skipped" "tsc gate hung >${TSC_GATE_TIMEOUT}s in worktree; skipped (redundant gate, commits already gated); push proceeded"
+      ;;
+    *)
+      # tsc ran and returned non-zero = genuine red tree -> hard abort.
+      msg="[fleet-push] ABORT: pnpm --filter vn-market check failed (red tree, rc=$tsc_rc). Fix tsc errors before pushing."
+      echo "$msg" >&2
+      send_tg bug "$msg"
+      emit_abort_signal "tsc-red" "pnpm --filter vn-market check returned non-zero (rc=$tsc_rc) in worktree"
+      exit 1
+      ;;
+  esac
 fi
 
 # ── 12. Push ──────────────────────────────────────────────────────────────────

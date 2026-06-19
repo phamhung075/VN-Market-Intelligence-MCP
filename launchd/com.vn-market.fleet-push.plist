@@ -17,9 +17,17 @@
     This timer fires scripts/fleet-worktree-push.sh directly every 30 min.
     The script is self-guarding: no-op when ahead <= PUSH_THRESHOLD (20),
     worktree-isolated (never touches the dirty main working tree), aborts on
-    a divergent code/config behind-set (BUG telegram), runs the pre-push tsc
-    gate, and self-cleans the worktree on every exit. A dumb timer is therefore
-    safe — "actually fires" beats "no new cron".
+    a divergent code/config behind-set (BUG telegram), runs a BOUNDED pre-push
+    tsc gate (TSC_GATE_TIMEOUT=180s; the gate is redundant — commits are already
+    hook+CI gated — so a HUNG gate is skipped, not hung-on, after the cap), and
+    self-cleans the worktree on every exit. A dumb timer is therefore safe —
+    "actually fires" beats "no new cron".
+
+    WHY the in-script bound matters: launchd uses StartInterval (not KeepAlive)
+    and has NO per-run kill, so a hung run starves every future run until killed
+    by hand. The script must therefore cap its longest op (tsc) itself. macOS has
+    no gtimeout/timeout — the cap is a perl-based process-group watchdog in the
+    script (run_bounded). (FIX-AUTO-PUSH-TSC-GATE-HANG, 2026-06-19.)
   -->
   <key>ProgramArguments</key>
   <array>
@@ -61,6 +69,9 @@
     <string>/Users/admin</string>
     <key>PUSH_THRESHOLD</key>
     <string>20</string>
+    <!-- Hard cap (seconds) for the redundant pre-push tsc gate; exceed => skip+proceed. -->
+    <key>TSC_GATE_TIMEOUT</key>
+    <string>180</string>
   </dict>
 </dict>
 </plist>

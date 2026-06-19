@@ -151,7 +151,46 @@ three_codebehind=$(classify_range "$LOCAL" "HEAD...origin/main")
 check "THREE-dot ABORTS when behind-set itself touches code (regression)" \
   "$([ "$three_codebehind" -gt 0 ] && echo abort || echo proceed)" "abort"
 
+# ── BOUNDED tsc-gate watchdog (FIX-AUTO-PUSH-TSC-GATE-HANG, 2026-06-19) ────────
+# The pre-push tsc gate (`bun tsc --noEmit`) hung forever in the worktree (alive
+# ~2h, 0.02s CPU) because it resolved deps through a node_modules SYMLINK and
+# blocked. launchd uses StartInterval (no per-run kill) so a hung run starves
+# every future push. The fix wraps the gate in `run_bounded <secs> <cmd>` (a
+# perl process-group watchdog — macOS has no gtimeout/timeout). Lock the THREE
+# return-code semantics + the no-orphan invariant against regression by sourcing
+# the SHIPPED helper (never a copy — must not drift).
+echo "[test] -------- run_bounded watchdog cases --------"
+# Extract run_bounded() from the shipped script into a sourceable file.
+RB="$TMP/_run_bounded.sh"
+sed -n '/^run_bounded() {/,/^}/p' "$SHIPPED" > "$RB"
+if ! grep -q '^run_bounded()' "$RB"; then
+  echo "[test] FAIL: could not extract run_bounded() from fleet-worktree-push.sh" >&2
+  FAIL=$((FAIL + 1))
+else
+  # shellcheck disable=SC1090  # dynamic path, extracted from the shipped script
+  source "$RB"
+
+  set +e
+  run_bounded 5 true;  rc_ok=$?
+  run_bounded 5 false; rc_red=$?
+  rb_start=$(date +%s)
+  run_bounded 1 sleep 10; rc_hang=$?
+  rb_elapsed=$(( $(date +%s) - rb_start ))
+  set -e
+
+  check "run_bounded: fast success -> rc 0"            "$rc_ok"   "0"
+  check "run_bounded: fast non-zero (red) -> rc 1"     "$rc_red"  "1"
+  check "run_bounded: HUNG cmd bounded-out -> rc 124"  "$rc_hang" "124"
+  # The 1s-cap hang must die fast (cap + TERM->KILL grace), never run the full 10s.
+  check "run_bounded: hung cmd killed promptly (<8s, not full 10s)" \
+    "$([ "$rb_elapsed" -lt 8 ] && echo fast || echo slow)" "fast"
+  # No orphan: the process-group kill must leave no 'sleep 10' survivor.
+  sleep 1
+  orphans=$(pgrep -f 'sleep 10' | grep -c '.' || true)
+  check "run_bounded: hung cmd leaves NO orphan (process-group killed)" "${orphans:-0}" "0"
+fi
+
 echo "[test] -------- $PASS passed, $FAIL failed --------"
 [ "$FAIL" -eq 0 ] || exit 1
-echo "[test] ALL CASES PASS — classifier proceeds on local-ahead+chore-behind (three-dot), aborts on real behind-code."
+echo "[test] ALL CASES PASS — classifier proceeds on local-ahead+chore-behind (three-dot), aborts on real behind-code; bounded tsc-gate kills hangs (rc124) without orphans."
 exit 0

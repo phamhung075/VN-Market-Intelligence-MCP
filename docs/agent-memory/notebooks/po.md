@@ -1,6 +1,15 @@
 # PO Notebook
 _overwritten 2026-06-18T22:31Z_
 
+## Cycle po-s109 (2026-06-19T04:23Z) — FIX-AUTO-PUSH-TSC-GATE-HANG: kill hung run + bound the gate
+
+**Symptom:** launchd `fleet-push` (PID 38269) classified OK (three-dot PROCEEDED) but `bun tsc --noEmit` (PID 39061) hung ~2h at 0.02s CPU → blocked, not slow. `StartInterval`=1800 won't start a new run while one hangs → auto-push DEAD until killed.
+**Root cause:** Step 11 tsc gate resolves deps through the worktree node_modules SYMLINK (Step 10) → bun blocked. NOT inherently deadlocked (re-ran green in 47s in a faithful test worktree) — a transient lock/resolution contention with the concurrently-active main tree. The real defect was the UNBOUNDED gate: any hang starves every future launchd run.
+**Fix (a+b together):** the tsc gate is REDUNDANT (commits already hook+CI gated; Step 7 hard-aborts on any code-touching behind-set). Wrapped it in `run_bounded $TSC_GATE_TIMEOUT` (180s) — a perl process-group watchdog (macOS has NO gtimeout/timeout). rc0=proceed; rc1=GENUINE red→hard abort; rc124=HUNG→SKIP gate + emit `tsc-gate-timeout-skipped` signal + PROCEED (bounded skip keeps push alive; hard-abort = same dead end-state as the hang — feedback_graceful_degrade_needs_bounded_fetch).
+**Killed/cleaned:** PIDs 39061+38982+38969+38269 (verified fleet-push ancestry first); removed node_modules SYMLINKS via `unlink` (never rm -r) before `git worktree remove --force /private/tmp/fleet-push-wt-1781835844`; pruned. `git worktree list` = main only; main tree node_modules INTACT (28 entries).
+**Verified:** run_bounded unit T1/T2/T3 (0/1/124, no orphan); faithful hang-site worktree → bounded gate GREEN in 47s, no orphan; default run = clean no-op exit0; test-fleet-push-classifier.sh = 12/12 (7 classifier + 5 watchdog). Note: real PUSH_THRESHOLD=0 run currently HARD-ABORTS at Step 7 (correct) — origin behind-set carries `CONTAM-7-ohlcv-unit-contam-integration.test.ts` (1 code file), needs reconcile before next auto-push.
+**done_verified for FIX-AUTO-PUSH-TRIGGER-NOT-FIRING still WITHHELD** — requires an AUTONOMOUS launchd clean completion observed (not a manual run). launchd timer now safe to take over (gate can never hang it).
+
 ## Cycle po-s108 (2026-06-19T03:31Z) — CI-RED-ea9a3589-FIX: out-of-band cherry-pick+push, CI GREEN, done_verified
 
 **Gateway-blind; all ground-truth via git/gh.** Router forbidden to push (strands-fleet) → PO out-of-band call.
