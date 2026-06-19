@@ -1,0 +1,48 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T21:06Z",
+    "nominal_tick": "2026-06-19T21:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "bctc-analyst-slot-3"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "bctc-analyst-slot-* depends ENTIRELY on the local */15 dispatcher — no cloud RemoteTrigger backstop. In a gateway-blind session (mcpServers:0) local spawns are gateway-blind (fabricate/no-op), so this slot goes genuinely UNFIRED this tick. No local spawn.",
+    "slot_detail": {
+      "bctc-analyst-slot-3": {
+        "agent": "bctc-analyst",
+        "flow_path": "docs/agents/bctc-analyst/flow/main.md",
+        "cron": "0 21 * * *",
+        "guaranteed": false,
+        "policy_id": "bctc-offmarket",
+        "last_fired_local": "2026-06-14T21:06:29Z",
+        "due_reason": "cron",
+        "backstop": null
+      }
+    },
+    "leader_lock": {
+      "ok": true,
+      "expires_at": 1781904981
+    },
+    "note": "USER/HARNESS-side fix required: register the gateway MCP server in .mcp.json so subagents inherit it, then reconnect. Until then bctc-analyst off-market layer is unfired in this session."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T21:06:22Z",
+  "_processed": {
+    "fingerprint": "12cdcbce9577a73feafaf8a6ed9da7dc3450ca09728ca5775ca9b1d1169d7dc2",
+    "processedAt": "2026-06-19T21:32:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
