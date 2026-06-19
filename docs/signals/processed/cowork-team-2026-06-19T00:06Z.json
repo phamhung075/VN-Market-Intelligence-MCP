@@ -1,0 +1,63 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T00:06Z",
+    "nominal_tick": "00:00",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "gateway_blind_session_and_none_of_these_slots_have_a_cloud_backstop",
+    "slot_detail": {
+      "bctc-analyst-slot-4": {
+        "agent": "bctc-analyst",
+        "flow_path": "docs/agents/bctc-analyst/flow/main.md",
+        "cron": "0 0 * * *",
+        "guaranteed": false,
+        "policy_id": "bctc-offmarket",
+        "last_fired": "2026-06-15T00:06:43Z"
+      },
+      "news-scout-offhours": {
+        "agent": "news-scout",
+        "flow_path": "docs/agents/news-scout/flow/main.md",
+        "cron": "0 */4 * * *",
+        "guaranteed": false,
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z"
+      },
+      "market-watcher-offhours": {
+        "agent": "market-watcher",
+        "flow_path": "docs/agents/market-watcher/flow/main.md",
+        "cron": "0 */4 * * *",
+        "guaranteed": false,
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z"
+      }
+    },
+    "leader_lock": "self_held_renewed",
+    "note": "Midnight-UTC cluster: BCTC off-market analyst pass + the */4h news/market gatherer pair. None are among the 6 cloud RemoteTrigger backstops (chef-morning, chef-eod, chef-evening, tnb-audit, digest-sunday, health-recheck) — all depend on the local */15 dispatcher. In a gateway-blind session (mcpServers:0) a local spawn would be fabrication-prone and is suppressed, so these passes go UNFIRED this session. Fix is USER/HARNESS-side: register gateway in .mcp.json + reconnect. Local last_fired (06-15) is NOT delivery proof."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-19T00:06Z",
+  "_processed": {
+    "fingerprint": "a53363d023c6600b6bc6da982d09274cd10e306feaa52930ef02b40e8dd96020",
+    "processedAt": "2026-06-19T00:32:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

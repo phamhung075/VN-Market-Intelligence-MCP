@@ -1,0 +1,43 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-18T23:21Z",
+    "nominal_tick": "23:21",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [],
+    "spawned": [
+      "ops"
+    ],
+    "errors": [
+      "task_heartbeat: dial vn-market host.docker.internal:3000 connection refused",
+      "emit_pressure_state: dial vn-market host.docker.internal:3000 connection refused"
+    ],
+    "deferred_blind": [],
+    "skipped_no_backstop": [],
+    "classification": "INFRA_INCIDENT_MCP_SERVER_DOWN",
+    "reason": "vn-market mcp-server container absent from docker ps and :3000/sse returns 000; mcp-gateway itself Up 8d healthy, 11 other containers healthy, host load 7.05 (not starvation) — corroborated genuine mcp-server outage, clears false-infra-failure gate",
+    "probe": {
+      "docker_ps_mcp_server_present": false,
+      "containers_healthy_count": 11,
+      "mcp_gateway_status": "Up 8 days (healthy)",
+      "rag_service": "Up 27 minutes (healthy)",
+      "curl_localhost_3000_sse": "000",
+      "host_load_1m": 7.05
+    },
+    "leader_lock": "renewal_FAILED_gateway_down_lock_lapsing_after_1781825780",
+    "action": "spawned ops (background) to diagnose + restart vn-market mcp-server container; root cause likely Bun-JIT corruption (restart clears, pinned in package.json per feedback_restart_masks_bun_jit_corruption) or compose event (rag-service restarted 27m ago)",
+    "note": "Matcher tick was SILENT (no slot due) so no cowork fan-out missed. The outage blocks ALL router gateway calls (lock renewal, pressure emit) until mcp-server restored. Cloud RemoteTrigger backstops run in cloud checkouts and are UNAFFECTED. Restart restores symptom; root cause stays tracked."
+  },
+  "priority": "high",
+  "createdAt": "2026-06-18T23:21Z",
+  "_processed": {
+    "fingerprint": "7c46d1e9631f6a814f4bb223af0875f392dc75b7d5589e4f38f3b62c32d14a1f",
+    "processedAt": "2026-06-19T00:32:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
