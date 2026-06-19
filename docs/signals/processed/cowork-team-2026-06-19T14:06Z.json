@@ -1,0 +1,43 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T14:06Z",
+    "nominal_tick": "2026-06-19T14:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "refine-bctc-slot-2"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "refine-bctc-slot-2 matched (cron 0 14, off-market BCTC refine). policy bctc-offmarket, NOT among the 6 cloud RemoteTrigger backstops. Session gateway-blind (mcpServers:0) so a local refine_bctc_md spawn would have no gateway access to get_bctc_pending_refine / push_bctc_refined_unit — no-op — skipped per blind posture. BCTC refine pass unfired until USER reconnects the gateway MCP server.",
+    "slot_detail": {
+      "refine-bctc-slot-2": {
+        "agent": "refine_bctc_md",
+        "flow_path": "docs/agents/refine_bctc_md/flow/main.md",
+        "cron": "0 14 * * *",
+        "policy_id": "bctc-offmarket",
+        "last_fired": "2026-06-14T14:08:08Z",
+        "backstopped": false
+      }
+    },
+    "leader_lock": "renewed_ok_expires_1781879779",
+    "note": "Pressure-state emitted 14:06:20Z."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T14:06Z",
+  "_processed": {
+    "fingerprint": "5ccde553234dc522d527e2629cb32ad894e4c206513260299613016db753aa9b",
+    "processedAt": "2026-06-19T14:31:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
