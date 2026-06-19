@@ -155,6 +155,42 @@ Recon: `docs/vps-sources/ssc-bctc-afrloop-incident/recon.md`
 
 
 
+## c018 · 2026-06-19T16:20Z · P0 INCIDENT FIX-VPS-BCTC-FETCH-RESTART — False Unhealthy: Queue Empty, Service Healthy
+
+Trigger: Dev-team router dispatched P0 incident — 12 consecutive health-recheck reports claiming vn-bctc-fetch UNHEALTHY, zero pushes since 2026-06-16T18:02Z.
+
+**VERDICT: SERVICE IS NOT CRASHED. Misdiagnosis by health monitors.**
+
+**Evidence:**
+- `systemctl status vn-bctc-fetch` → active (running) since Jun 11 00:22:03 +07 (8+ days continuous).
+- `journalctl` shows only systemd-level start/stop events — script logs go to `/var/log/vn-bctc-fetch.log`.
+- Script loops every 6h, currently in `sleep 21600` (PID 2994744).
+- Log confirms the service ran every 6h and completed normally on Jun 18 and Jun 19.
+
+**Root cause of zero pushes since 2026-06-16T18:02Z:**
+
+The `bctc-fetch-queue?skip_enrichment=true` endpoint returned `{"queue":[],"total":0}` starting 2026-06-18T00:11Z. The queue was legitimately exhausted:
+- Jun 16 18:02Z: last push — ACV Q1/2026 SUCCESS (HTTP 200).
+- Jun 17: 9 items in queue (BDI, DAG, DLC, JSH, SIS, VDC, VNH, VEA Q1/2026, VEA Q4/2025) — ALL SKIPPED every cycle: genuine non-filers on HNX/UPCOM/SSC. All three sources return no matching rows for these tickers.
+- Jun 18 00:11Z onward: queue dropped to 0. The MCP server side marked those 9 items as exhausted/expired (likely max-retry or TTL exceeded server-side).
+- Jun 18–Jun 19: 7 consecutive fetch cycles → queue=0 each time → "Nothing to fetch -- exit". Not a crash — correct behavior.
+
+**Why health monitors reported UNHEALTHY:**
+The health-recheck reporter keys on "last successful push timestamp". Last push was ACV at Jun 16 18:02Z. With no new pushes (because queue=0), the freshness check flagged SLA breach after 360min. The monitor cannot distinguish "queue empty = nothing to do" from "crashed = can't push". This is a health-monitor false-alarm class.
+
+**No restart performed:** Restarting would accomplish nothing — the service is already running. There is no crash to fix at the VPS level.
+
+**No new push will occur until the MCP server's bctc-fetch-queue is repopulated** — i.e., when new BCTC filings for BDI/DAG/DLC/JSH/SIS/VDC/VNH/VEA become available on HNX or when new tickers are added to the watch queue.
+
+**Follow-on issues (pre-existing, no new code bugs):**
+1. Health monitor: cannot distinguish empty-queue vs crash — needs "queue_size=0 AND service_running = IDLE (not UNHEALTHY)" differentiation. Follow-on: FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.
+2. SSC 503 ~12:00Z UTC daily maintenance window: service skips all items for that cycle (no retry). Pre-existing risk noted in c016.
+3. Queue server-side TTL/expiry for genuinely-not-filed tickers: those 9 tickers dropped off at Jun 18 — if they file Q1 later, they need to be re-enqueued manually or via upstream re-scan.
+
+Disk: 6.0G/25G (26%) — healthy. No OOM. No disk full.
+
+---
+
 ## Archive: c004–c012 (2026-06-04 through 2026-06-15)
 
 Moved to archive: c004–c012 entries, F-NSO-SELECTOR, F-BOP-QUERY-RECON (moved from main).
