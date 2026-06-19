@@ -1,6 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-18T19:46Z · **Cycle:** Chef EVENING PUBLISHED
+**Last updated:** 2026-06-19T08:47Z · **Cycle:** Chef EOD PUBLISHED
 
 ## Session: 2026-06-16 (evening 19:45)
 
@@ -102,3 +102,32 @@
 - Degraded-dish application: Macro macro-health-read degraded (is_estimate=true production/consumption/inflation/investment/liquidity); conviction capped MEDIUM per Layer 4 rule; BCTC unavailable; macro notes included in WORK detail only (omitted from MARKET plain-VI per degraded-dish-floor format).
 - Dishes published: YES (MARKET plain-VI narrative + WORK [CHEF-DETAIL] TNB-auditable); morning guaranteed
 - Status: Morning cycle COMPLETE. PIPELINE: complete | QUALITY: degraded-dish-floor
+
+## Session: 2026-06-19 (eod 08:37)
+
+### Chef Dish — eod 08:37 UTC (2026-06-19T0837Z) — PUBLISHED
+
+- Execution: Full TNB 6-layer synthesis EOD window (guaranteed publish)
+- Marker claimed: YES (published:chef-eod:2026-06-19, ttl=100800)
+- Bootstrap: OK (25 verified_decision alerts; VN-Index 1,818.59 -5.94 pts; market CLOSE 08:59 UTC)
+- Macro snapshot: OK (carry 1.37pp NEUTRAL is_estimate=false; yield CHEAP +2.05pp; USD/VND 26,120 APPRECIATING; gold $4,192.8 -0.51%; Brent 79.64 +0.85%)
+- Market hexagram: Quẻ 15 Khiêm 謙 (TIÊU CỰC signal 64% confidence)
+- Clusters qualified: 4
+  1. Banking sector (>=3 tickers + unified price_drop alert): BID -2.22%, VPB -1.89%, ACB -0.89%, CTG -0.59%, MBB -0.99%; Kinh Dịch Sư (7) GIỮ tích cực; USD/VND >26,000 carry pressure
+  2. Steel sector (>=3 tickers + HIGH alert + volume spike): HPG -0.21%, HSG -0.42%, NKG -2.01% + 2.2× avg volume; Kinh Dịch Tập Khảm (29) GIỮ tiêu cực
+  3. Real Estate sector (>=3 tickers + HIGH alert): NVL -3.01%, VRE -2.49%, KBC -1.48%, D2D -1.43% vs VHM +0.62%, VIC +0.05% (dividend resilience); Kinh Dịch phân hóa
+  4. Macro-micro contradiction: Gold >$4,192 (safe-haven active) vs carry 1.37pp NEUTRAL (FII pressure moderate)
+- Phase declared: [phase: transition-slowdown] [tier: fixed_income] — Carry NEUTRAL 1.37pp, USD/VND 26,120 carry pressure, earnings Q2 forecasts positive (unvalidated BCTC), margin environments tight. Conviction capped MEDIUM across all clusters (2-3 pillars aligned; FII sell pressure material; carry regime neutral prevents collapse).
+- Causal chains: (1) Carry 1.37pp NEUTRAL + FII net-sell pressure → banking sector -1.21% avg (BID -2.22%, VPB -1.89%). (2) Brent +0.85% + gold >$4,192 safe-haven → margin pinch on steel, NKG volume spike reversal play. (3) FII liquidation real estate (NVL -3.01%, VRE -2.49%) vs dividend resilience (VHM +0.62%, VIC +0.05%). (4) [gap: gold >$4,300 regime-drift risk — gold-driven safe-haven may lag actual risk-off reversal until confirmed by carry tightening or EFFR-IORB spread widening].
+- Layers walked: 1–6 complete
+  - Layer 1: Data discipline OK (state transitions: USD/VND carry pressure 26,120; volume 2.2–4.2× spikes; multi-sector convergence visible)
+  - Layer 2-3: US/VN stacks OK (Fed 3.63%, SBV 5.00% carry 1.37pp; Brent +0.85%; gold >$4,192 safe-haven active; earnings yield 7.05% > deposit 5% = 2.05pp premium)
+  - Layer 4: 4-pillar valuation MEDIUM conviction (money supply TIGHT—OMO outstanding high; cost of capital 3.63–5.00%; earnings outlook Q2 positive but BCTC unvalidated; PE 14.18 median, margin-call risk on micro-caps)
+  - Layer 5: Kinh Dịch overlay via market hexagram Khiêm (15) + per-ticker conviction dashboard
+  - Layer 6: Gap catalogue — [gold >$4,192 regime-drift], [no VIRA BOP/E&O decomposition per T-39], [steel BCTC margin detail missing], [source_tier 2 alert-engine signals adequate but single-source risk flagged]
+- Signal IDs consumed: #6629-6638 (verified_decision alerts from alert-engine, source_tier 2); 25 bootstrap alerts
+- Conviction summary: MEDIUM (banking) + LOW-MEDIUM (steel) + MEDIUM-LOW (real estate) = weighted MEDIUM across basket
+- AF-1/AF-2 gates: No get_technical_indicators call this cycle. Zero numeric TA tokens. All qualitative (áp lực bán, tín hiệu tích lũy, Kinh Dịch overlay, volume spikes qualitative only). [AF-GATE: OK]
+- Degraded-dish application: Macro is_estimate=false (carry/yield live); full 6-layer TNB synthesis completed; no supplementary sources down; standard dish published without degradation floor invocation.
+- Dishes published: YES (Block A MARKET plain-VI narrative 3pp + Block B WORK [CHEF-DETAIL] TNB-auditable, 4pp); EOD guaranteed
+- Status: EOD cycle COMPLETE. PIPELINE: complete | QUALITY: full
