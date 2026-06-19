@@ -1022,13 +1022,14 @@
         "from": "system-auditor",
         "to": "po",
         "type": "microservice_degraded",
-        "summary": "mcp-server memory CRITICAL 98.90% (threshold 85%)",
-        "severity": "CRITICAL",
-        "status": "NEW",
+        "summary": "mcp-server mem 99.16%/2GB RAW-confirmed by router; BUT RestartCount=0 OOMKilled=false Up13h host-72%-free load-3.65 = STABLE CEILING not incident (downgraded CRITICAL->WARN per denominator-falsespike lesson — reading real this time, 0-restart=stable). Queued FU-ALERT-COWRITE rebuild resets it. Capacity follow-up (bump 2GB cap OR investigate growth) = MEDIUM, defer to PO next tick (dev-mcp-server WIP-locked). rag-service 99.62% is the actual cycling one, already board-tracked.",
+        "severity": "WARN",
+        "status": "READ",
         "payload_ref": null,
         "check_id": "A-30",
         "service_id": "mcp-server",
-        "zone_owner": "ops"
+        "zone_owner": "ops",
+        "router_verified": "2026-06-19T17:43:45Z"
       }
     ]
   },
@@ -1142,8 +1143,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-19T17:37:19Z",
-    "_updated_by": "dev-team-cron-dispatch",
+    "_updated_at": "2026-06-19T17:43:45Z",
+    "_updated_by": "router-postcycle",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -15593,6 +15594,31 @@
         "title": "SPIKE — Feasibility of converting authored docs/ (policies/protocols/agent-flows/notebooks) to DocLang .dclg.xml: what breaks across the docs DAG, do agent flow-readers/skills/hooks parse non-markdown, is there ANY consumer benefit? Findings doc only.",
         "type": "SPIKE",
         "zone": "docs/agents/"
+      },
+      {
+        "id": "FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY",
+        "type": "UNBLOCK",
+        "title": "system-auditor signal-write targets .signal_queue[N] numeric keys instead of .signal_queue.rows[] -> findings invisible to PO triage",
+        "status": "DONE",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "route_to": "agent-father",
+        "route_via": "agent-md-factory",
+        "priority": "high",
+        "size": "S",
+        "zone": "docs/agents/system-auditor",
+        "created_at": "2026-06-19T17:34:48Z",
+        "created_by": "po-s110",
+        "source_signal": "router-auditor-orphankey-writebug-20260619T1715Z",
+        "desc": "ROOT CAUSE (meta-bug): system-auditor signal emit/append step writes to .signal_queue[N] (numeric key) instead of .signal_queue.rows[] array. Findings land at orphan keys the PO signal-dashboard pre-check never scans -> SILENTLY SWALLOWED. Confirmed swallowed: C-08 db-breach (06-18, ~1.5d invisible) + rag-service degraded (this tick) + legacy junk keys 0/1/2. DISTINCT FROM FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK (done_verified) which corrected the ROW SHAPE, NOT the write-target KEY. Definitif fix via agent-md-factory then agent-father: correct the emit step in signal-dashboard skill (.claude/skills/signal-dashboard/SKILL.md § WRITE) and/or system-auditor flow to append to .signal_queue.rows += [row], PLUS a post-write self-check that asserts the row is readable back in .signal_queue.rows[] (fail-loud if not). Generic — keys on the write contract, no per-finding hardcode.",
+        "verification_gate": "After fix: a fresh system-auditor finding appears in .signal_queue.rows[] (NOT a numeric orphan key) AND the post-write self-check passes; PO signal-dashboard READ surfaces it. No new orphan-key writes for 7d.",
+        "dod": "Emit/append step writes .signal_queue.rows += [row]; post-write read-back self-check asserts membership; agent-md-factory SSOT/DRY honored; no .signal_queue[N] numeric-key writes remain.",
+        "started_at": "2026-06-19T17:37:19Z",
+        "dispatched_by": "dev-team-cron",
+        "commit": "8a6dbefb",
+        "done_at": "2026-06-19T17:43:45Z",
+        "done_verified": false,
+        "done_verified_note": "impl+commit clean (4 .md/skill, 0 .ts); LIVE verification pending next Tier-1 auditor tick running new flow — read-back self-check must fire + row land in .signal_queue.rows[]"
       }
     ],
     "done_verified": [
@@ -21585,27 +21611,6 @@
         "promoted_by": "po-s110",
         "live_evidence": "Router RAW-verified 2026-06-19T17:15Z named-vol market.db: 33 orphaned / 119 alerts-24h (was 63 06-18, 103 06-13). Recurring + currently real. C-08 source signal sau-c08-202606180038.",
         "promotion_note": "Dependency FIX-ALERT-ORPHAN-CORRELATION shipped (7cbca67a/556eb214). 3 scheduler jobs (taAlertScanJob/bbAlertScanJob/foreignFlowAlertJob) INSERT INTO alerts directly, skipping storeAlerts co-write -> genuine orphans. DoD: route all 3 through storeAlerts atomic alert->agent_signals co-write; live-verify orphan-delta -> ~0 on named-vol DB; generic all tickers.",
-        "started_at": "2026-06-19T17:37:19Z",
-        "dispatched_by": "dev-team-cron"
-      },
-      {
-        "id": "FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY",
-        "type": "UNBLOCK",
-        "title": "system-auditor signal-write targets .signal_queue[N] numeric keys instead of .signal_queue.rows[] -> findings invisible to PO triage",
-        "status": "IN_PROGRESS",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "route_to": "agent-father",
-        "route_via": "agent-md-factory",
-        "priority": "high",
-        "size": "S",
-        "zone": "docs/agents/system-auditor",
-        "created_at": "2026-06-19T17:34:48Z",
-        "created_by": "po-s110",
-        "source_signal": "router-auditor-orphankey-writebug-20260619T1715Z",
-        "desc": "ROOT CAUSE (meta-bug): system-auditor signal emit/append step writes to .signal_queue[N] (numeric key) instead of .signal_queue.rows[] array. Findings land at orphan keys the PO signal-dashboard pre-check never scans -> SILENTLY SWALLOWED. Confirmed swallowed: C-08 db-breach (06-18, ~1.5d invisible) + rag-service degraded (this tick) + legacy junk keys 0/1/2. DISTINCT FROM FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK (done_verified) which corrected the ROW SHAPE, NOT the write-target KEY. Definitif fix via agent-md-factory then agent-father: correct the emit step in signal-dashboard skill (.claude/skills/signal-dashboard/SKILL.md § WRITE) and/or system-auditor flow to append to .signal_queue.rows += [row], PLUS a post-write self-check that asserts the row is readable back in .signal_queue.rows[] (fail-loud if not). Generic — keys on the write contract, no per-finding hardcode.",
-        "verification_gate": "After fix: a fresh system-auditor finding appears in .signal_queue.rows[] (NOT a numeric orphan key) AND the post-write self-check passes; PO signal-dashboard READ surfaces it. No new orphan-key writes for 7d.",
-        "dod": "Emit/append step writes .signal_queue.rows += [row]; post-write read-back self-check asserts membership; agent-md-factory SSOT/DRY honored; no .signal_queue[N] numeric-key writes remain.",
         "started_at": "2026-06-19T17:37:19Z",
         "dispatched_by": "dev-team-cron"
       }
