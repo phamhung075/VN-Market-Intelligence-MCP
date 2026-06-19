@@ -1,0 +1,63 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-19T16:06Z",
+    "nominal_tick": "2026-06-19T16:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "3 gatherer slots matched (news-scout-offhours + market-watcher-offhours on cron 0 */4, market-watcher-eod on cron 0 16 * * 1-5). NONE are among the 6 cloud RemoteTrigger backstops (chef-morning, chef-eod, chef-evening, tnb-audit, digest-sunday, health-recheck). Session is gateway-blind (mcpServers:0) so a local spawn would be gateway-blind and fabricate/no-op. Slots go unfired this session. Fix is USER-side: register gateway in .mcp.json + reconnect.",
+    "slot_detail": {
+      "news-scout-offhours": {
+        "agent": "news-scout",
+        "cron": "0 */4 * * *",
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z",
+        "backstopped": false
+      },
+      "market-watcher-offhours": {
+        "agent": "market-watcher",
+        "cron": "0 */4 * * *",
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z",
+        "backstopped": false
+      },
+      "market-watcher-eod": {
+        "agent": "market-watcher",
+        "cron": "0 16 * * 1-5",
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-11T16:06:00Z",
+        "backstopped": false
+      }
+    },
+    "leader_lock": {
+      "ok": true,
+      "expires_at": 1781886977
+    },
+    "note": "stale_warning:true on emit_pressure_state (benign, rapid manual ticks). 16:00Z = VN market close (23:00 ICT); market-watcher-eod is the close-summary slot but cannot fire blind."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-19T16:06:18Z",
+  "_processed": {
+    "fingerprint": "e2371e932fd0b63ec15faabe3969cbc332028e52ecb014581a8ce968dc9f4d58",
+    "processedAt": "2026-06-19T16:31:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
