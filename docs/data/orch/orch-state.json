@@ -1589,8 +1589,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-21T00:00:00Z",
-    "_updated_by": "dev-technical-analysis",
+    "_updated_at": "2026-06-21T04:00:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -16494,6 +16494,134 @@
         "commit_sha": "2b740b50",
         "completed_at": "2026-06-20T07:39:47Z",
         "completion_note": "Full registry param-drift audit (widened from 2 named docs). 18 tool docs in docs/agents/tools/list/ corrected to match live Zod schema (ticker→code etc.); 16 full + 1 partial (get_cash_flow) drift fixed; ticker-native tools (get_agm_plan,write_alert_verdict,get_cascade_outcomes,get_bctc_pending_refine) correctly left unchanged — proves live-schema probe not blind replace. 0 runtime drift (flow call-sites already used code). RAW-verified: commit 2b740b50 MD-only, board untouched, get_price_history.md now documents code+days. Doc-only → no CI gate."
+      },
+      {
+        "id": "TASK-RSIFIX-1",
+        "type": "TASK",
+        "title": "Document canonical Go TA engine contract",
+        "priority": "P1",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "sprint": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "created_at": "2026-06-21T00:00:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-21T00:00:00Z",
+        "updated_by": "dev-technical-analysis",
+        "status": "DONE",
+        "done_verified": true,
+        "done_verified_by": "qa-review",
+        "done_verified_reason": "Docs-only deliverable; file exists at docs/standards/ta-engine-contract.md with source-cited parameters (hard min=15 not 35, MA5/20/50 not MA100)",
+        "brief_file": "docs/handoffs/TASK-RSIFIX-1-ta-engine-contract.md",
+        "deliverable": "docs/standards/ta-engine-contract.md",
+        "blocks": [
+          "TASK-RSIFIX-2"
+        ],
+        "rebuild_required": false,
+        "done_at": "2026-06-21T04:00:00Z",
+        "done_by": "qa-review"
+      },
+      {
+        "id": "FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME",
+        "type": "FIX",
+        "title": "USD/VND false-CRITICAL +5.28σ: rolling stdDev band pathologically tight",
+        "priority": "P1",
+        "severity": "HIGH",
+        "owner": "developer",
+        "dev_agent": "dev-macro-indicators",
+        "zone": "apps/mcp-server/",
+        "status": "DONE",
+        "done_verified": false,
+        "done_verified_reason": "PENDING gate G2: USD/VND currently frozen (stddev=0, classifyDeviation='normal'). Needs non-frozen FX day with small (<0.5%) drift exceeding 3σ to verify: must show 'elevated' NOT 'CRITICAL'. Math + 16 tests + baked marker confirm logic, but live-data gate requires real volatility event.",
+        "deferred_verification": {
+          "gate_id": "G2",
+          "trigger": "Next volatile USD/VND day (>0.5% move from baseline)",
+          "expected_outcome": "USD/VND CRITICAL should NOT fire; only 'elevated' level shows for true >0.5% drift",
+          "probe_method": "RAW-verify classifyDeviation on live sbv_rates with genuine volatility"
+        },
+        "created_at": "2026-06-20T22:24:47Z",
+        "created_by": "po-digest-quality-triage",
+        "updated_at": "2026-06-21T04:00:00Z",
+        "updated_by": "qa-review",
+        "commit": "dfb4e268",
+        "rebuild_required": true,
+        "done_at": "2026-06-21T04:00:00Z",
+        "done_by": "qa-review"
+      },
+      {
+        "id": "FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN",
+        "type": "FIX",
+        "title": "Evening digest Khối ngoại top-5 padded with zero-net rows",
+        "priority": "P2",
+        "severity": "MEDIUM",
+        "owner": "developer",
+        "dev_agent": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "status": "DONE",
+        "done_verified": true,
+        "done_verified_by": "qa-review",
+        "done_verified_reason": "QA LIVE-confirmed vs named-volume daily_ohlcv 2026-06-19: WITH-fix query (AND foreign_net_vol <> 0) returns 2 nonzero rows MWG|35469 + VNH|-40; WITHOUT-fix padded 5 with ACV/DFF/HBC zeros. Served path uses exact fix query.",
+        "created_at": "2026-06-20T22:24:47Z",
+        "created_by": "po-digest-quality-triage",
+        "updated_at": "2026-06-21T04:00:00Z",
+        "updated_by": "qa-review",
+        "commit": "b1d32758",
+        "rebuild_required": true,
+        "done_at": "2026-06-21T04:00:00Z",
+        "done_by": "qa-review"
+      },
+      {
+        "id": "TASK-RSIFIX-2",
+        "type": "TASK",
+        "title": "Rewire defaultComputeTa to Go TA engine: align candle window, min-candle gate=35, remove synthetic fallback, make async",
+        "priority": "P1",
+        "parent_id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "owner": "developer",
+        "dev_agent": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "status": "DONE",
+        "done_verified": false,
+        "done_verified_reason": "PENDING gate G1: next evening digest cycle (~19:37 UTC) must show RSI ≤0.1 convergence between alert-block and TA-block for ≥3 tickers (original bug was same-DB rowcount divergence; code live-confirmed serving real RSI + <35-candle null, but cross-block convergence needs live digest render)",
+        "deferred_verification": {
+          "gate_id": "G1",
+          "trigger": "Next evening digest cycle (post rebuild, expected ~2026-06-21T19:37Z)",
+          "expected_outcome": "RSI values from TA-Alert block match TA-section (defaultComputeTa) within 0.1pt for ≥3 watchlist tickers",
+          "probe_method": "RAW-read get_unreviewed_market_messages for evening_summary; cross-check alert-engine RSI vs defaultComputeTa output"
+        },
+        "created_at": "2026-06-21T00:00:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-21T04:00:00Z",
+        "updated_by": "qa-review",
+        "commit": "3e5a5a5a",
+        "rebuild_required": true,
+        "done_at": "2026-06-21T04:00:00Z",
+        "done_by": "qa-review"
+      },
+      {
+        "id": "FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR",
+        "type": "FIX",
+        "title": "Suppress BB-break / TA alerts on sub-liquidity-threshold stocks",
+        "priority": "P3",
+        "severity": "LOW",
+        "owner": "developer",
+        "dev_agent": "dev-technical-analysis",
+        "zone": "apps/mcp-server/",
+        "status": "DONE",
+        "done_verified": false,
+        "done_verified_reason": "PENDING gate G3: next market-hours alert scan (02:00–08:00 UTC) must show NO BB/TA alert emitted for sub-100K-volume tickers (e.g. D2D) while liquid tickers still emit. Floor=100_000 confirmed in running container.",
+        "deferred_verification": {
+          "gate_id": "G3",
+          "trigger": "Next VN market-hours alert scan window (02:00–08:00 UTC)",
+          "expected_outcome": "No BB or RSI alert from sub-100K daily volume tickers (e.g. D2D with vol=6-77K); liquid tickers (e.g. VNH, MWG) still emit alerts when criteria met",
+          "probe_method": "RAW-read alert_signals for type IN ('ta_bb_breakout', 'ta_oversold', 'ta_bb_overbought'); verify ticker daily_ohlcv volume vs MIN_DAILY_VOLUME_FOR_ALERTS=100_000"
+        },
+        "created_at": "2026-06-20T22:24:47Z",
+        "created_by": "po-digest-quality-triage",
+        "updated_at": "2026-06-21T04:00:00Z",
+        "updated_by": "qa-review",
+        "commit": "2e762361",
+        "rebuild_required": true,
+        "done_at": "2026-06-21T04:00:00Z",
+        "done_by": "qa-review"
       }
     ],
     "done_verified": [
@@ -22498,162 +22626,6 @@
         "minted_at": "2026-06-20T22:34:30Z",
         "minted_by": "po-s110",
         "promoted_at": "2026-06-20T22:34:30Z"
-      },
-      {
-        "id": "FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME",
-        "type": "FIX",
-        "title": "USD/VND false-CRITICAL +5.28σ: rolling stdDev band pathologically tight (~12.5 VND) so a trivial 66-VND (0.25%) drift reads as 5σ extreme; 50-VND minAbsDeviation floor caps level only for <50-VND moves and never bounds the displayed σ",
-        "priority": "P1",
-        "severity": "HIGH",
-        "owner": "developer",
-        "dev_agent": "dev-macro-indicators",
-        "zone": "apps/mcp-server/",
-        "status": "REVIEW",
-        "created_at": "2026-06-20T22:24:47Z",
-        "created_by": "po-digest-quality-triage",
-        "raw_verified": true,
-        "evidence": "2026-06-19 evening_summary CRITICAL: USD/VND 26335 +5.28σ trên TB 26269.17. Code: macroThresholds.ts classifyDeviation() zScore=(current-mean)/stdDev, level extreme at absZ>=3. Implied stdDev = 65.83/5.28 ≈ 12.47 VND — a normal SBV-fix daily move (±50 VND) is already ~4σ. minAbsDeviation guard = 50 VND for vnd indicators (line 139) caps LEVEL to elevated ONLY when absDeviation<50; here absDeviation=65.83>50 so guard does NOT fire → extreme passes. The σ NUMBER in the summary string is never bounded.",
-        "root_cause": "σ-based escalation over a too-tight/too-short rolling stdDev window for a slow-moving SBV-fixed rate. A relative-only threshold has no absolute %-move floor before CRITICAL, and the 50-VND guard is both too low and only level-caps sub-50 moves.",
-        "fix_spec": "Add an absolute %-move floor (e.g. require |current-mean|/mean >= ~0.5% before level can reach high/extreme for FX) AND/OR widen the rolling lookback + enforce a minimum stdDev floor for FX indicators so micro-volatility cannot manufacture 5σ. Severity gate (CRITICAL) must require BOTH the σ test AND the absolute %-move floor. Keep the σ number honest in the summary but do not escalate severity on it alone.",
-        "generic_mandate": "Generic across all FX/slow-moving macro indicators (usdVndRate, usdVndOfficial, rates), not USD/VND-only.",
-        "verification_gate": "LIVE: a 0.25%-class USD/VND drift no longer emits CRITICAL; a genuine >0.5% move still does. RAW-probe classifyDeviation on the live series.",
-        "files": [
-          "apps/mcp-server/src/domain/services/macroThresholds.ts"
-        ],
-        "rebuild_required": true,
-        "standing_goal": "goal#1 — no false-extreme served data",
-        "related": [
-          "FIX-MACRO-SNAPSHOT-DELTAS-NULL"
-        ],
-        "blocked_by": [],
-        "blocks": [],
-        "wave": 1,
-        "updated_at": "2026-06-20T22:39:54.861149Z",
-        "updated_by": "pm"
-      },
-      {
-        "id": "FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN",
-        "type": "FIX",
-        "title": "Evening digest Khối ngoại top-5 padded with zero-net rows (ACV/DFF/HBC = 0.000k): top-N query ORDER BY ABS(net) DESC LIMIT 5 with no <>0 filter; allZero formatter guard misses partial-zero case",
-        "priority": "P2",
-        "severity": "MEDIUM",
-        "owner": "developer",
-        "dev_agent": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "status": "REVIEW",
-        "created_at": "2026-06-20T22:24:47Z",
-        "created_by": "po-digest-quality-triage",
-        "raw_verified": true,
-        "evidence": "Live DB latest day: only 2 tickers have nonzero foreign_net_vol (MWG +35469, VNH -40); top-5 query pads with ACV/DFF/HBC/HNG/MBS/OIL = 0.0. assembleEveningSummary.ts Step4b SQL: ORDER BY ABS(foreign_net_vol) DESC LIMIT 5 — no AND foreign_net_vol<>0. Formatter formatForeignFlowSection allZero guard only fires when EVERY mover is zero (false here, MWG!=0) so zeros render as 0.000k. UNIT scale CONFIRMED CORRECT (k = thousands of shares; VNH -40 shares = 0.040k) — scale-mislabel sub-claim DISMISSED.",
-        "root_cause": "Top-N selection ranks by |net| but never drops zero/near-zero rows; the digest then renders meaningless 0.000k lines. Also surfaces thin coverage (only 2 nonzero) — coverage is separately tracked (FIX-FOREIGN-FLOW-COVERAGE).",
-        "fix_spec": "Add AND foreign_net_vol <> 0 (or a small |net| floor) to the Step-4b query so zero-net rows are excluded before LIMIT 5; the section then renders only real movers (or the existing unavailability notice when none). Add a test with a partial-zero fixture asserting no 0.000k line is emitted.",
-        "generic_mandate": "Generic top-N hygiene; applies whenever fewer than 5 tickers have real foreign flow.",
-        "verification_gate": "LIVE evening cycle: Khối ngoại lists only nonzero-net tickers; no 0.000k padding line.",
-        "files": [
-          "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts",
-          "apps/mcp-server/src/scheduler/briefings/eveningSummaryJob.ts"
-        ],
-        "rebuild_required": true,
-        "standing_goal": "goal#1 — no meaningless padded served data",
-        "distinct_from": "FIX-FOREIGN-FLOW-COVERAGE (source-fetch coverage) — this is the DIGEST FORMATTER/top-N layer.",
-        "blocked_by": [],
-        "blocks": [],
-        "wave": 2,
-        "updated_at": "2026-06-20T22:39:54.861149Z",
-        "updated_by": "pm"
-      },
-      {
-        "id": "FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR",
-        "type": "FIX",
-        "title": "Suppress BB-break / TA alerts on sub-liquidity-threshold stocks: bbAlertScanJob only rejects volume<=0 (stub-bar), no positive-but-thin liquidity floor → noisy marginal breaks on illiquid tickers (e.g. D2D)",
-        "priority": "P3",
-        "severity": "LOW",
-        "owner": "developer",
-        "dev_agent": "dev-technical-analysis",
-        "zone": "apps/mcp-server/",
-        "status": "REVIEW",
-        "created_at": "2026-06-20T22:24:47Z",
-        "created_by": "po-digest-quality-triage",
-        "raw_verified": true,
-        "evidence": "2026-06-19 digest WARNING: D2D 31100 dưới BB dưới 31177 Vol 6.4K, only 77 below band (marginal). bbAlertScanJob.ts only guards lastCandle.volume<=0 (stub-bar, line 189). No min-liquidity floor → low-but-positive-volume illiquid stocks emit noisy near-band BB alerts. (Note: latest D2D daily vol=63.7K; the 6.4K in the report is the rendered figure — point stands regardless.)",
-        "root_cause": "TA/BB alert scan has no liquidity threshold; any positive-volume bar qualifies, so thin stocks generate low-conviction noise.",
-        "fix_spec": "Add a configurable minimum daily turnover/volume floor (or a min-distance-below-band) before emitting BB/TA alerts; below the floor, suppress (honest gap, no alert). Apply to bbAlertScanJob and the parallel TA scan. Test asserts a sub-floor ticker emits no alert.",
-        "generic_mandate": "Generic liquidity floor across all watchlist tickers and both BB + RSI scan jobs.",
-        "verification_gate": "LIVE: a known illiquid ticker with a marginal band break emits no BB alert; a liquid ticker still does.",
-        "files": [
-          "apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts",
-          "apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts"
-        ],
-        "rebuild_required": true,
-        "standing_goal": "goal#1 / UX — suppress low-conviction noise",
-        "blocked_by": [],
-        "blocks": [],
-        "wave": 3,
-        "updated_at": "2026-06-20T22:39:54.861149Z",
-        "updated_by": "pm"
-      },
-      {
-        "id": "TASK-RSIFIX-1",
-        "type": "TASK",
-        "title": "Document canonical Go TA engine contract (RSI pure-compute path, Wilder params, min-candle gate=35)",
-        "priority": "P1",
-        "parent_id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-        "owner": "developer",
-        "dev_agent": "dev-technical-analysis",
-        "zone": "apps/technical-analysis/",
-        "status": "TODO",
-        "created_at": "2026-06-20T22:34:36Z",
-        "created_by": "architect",
-        "root_cause": "No written contract for the Go TA service pure-compute path; dev-mcp-server must read Go source to verify implementation details before wiring. Contract doc prevents re-reading and drift.",
-        "fix_spec": "Write docs/standards/ta-engine-contract.md documenting: (1) POST /ta/indicators pure-compute path contract (closes[] in, RSI series out, last element = current RSI); (2) Wilder RSI params (period=14, seed=SMA of first 14 gains/losses, subsequent=(prev*(13)+current)/14); (3) min-candle requirement: period+1=15 to compute any RSI value, 35 recommended for warmup convergence; (4) BB/MACD/MA parameters for completeness; (5) error contract (insufficient data => field absent in response, not HTTP error).",
-        "files": [
-          "docs/standards/ta-engine-contract.md"
-        ],
-        "rebuild_required": false,
-        "verification_gate": "Contract doc exists at docs/standards/ta-engine-contract.md and accurately reflects apps/technical-analysis/pkg/primitive/rsi/rsi.go (period=14, Wilder seed+smoothing) and apps/technical-analysis/pkg/application/usecases.go (pure-compute path).",
-        "blocks": [
-          "TASK-RSIFIX-2"
-        ],
-        "blocked_by": [],
-        "wave": 1,
-        "updated_at": "2026-06-20T22:39:54.861149Z",
-        "updated_by": "pm"
-      },
-      {
-        "id": "TASK-RSIFIX-2",
-        "type": "TASK",
-        "title": "Rewire defaultComputeTa to Go TA engine: align candle window, min-candle gate=35, remove synthetic fallback, make async",
-        "priority": "P1",
-        "parent_id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-        "owner": "developer",
-        "dev_agent": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "status": "REVIEW",
-        "created_at": "2026-06-20T22:34:36Z",
-        "created_by": "architect",
-        "blocked_by": [
-          "TASK-RSIFIX-1"
-        ],
-        "root_cause": "defaultComputeTa() in assembleBriefing.ts uses TS-local computeRSILocal with LIMIT 60 candle window and min-candle gate=15 plus market_prices_history synthetic fallback. This diverges from taAlertScanJob which uses Go computeTAIndicators with date-window query and min-candle gate=35. Same ticker, same DB, same minute -> different RSI values in the same digest (NVL: 29.7 vs 27.6 on 2026-06-19).",
-        "fix_spec": "1. Replace TS computeRSILocal call in defaultComputeTa with await computeTAIndicators({code, closes}). 2. Replace candle SQL from ORDER date ASC LIMIT 60 to WHERE date >= date(now, -60 days) ORDER BY date ASC + also SELECT volume. 3. Raise min-candle gate from <15 to <35. 4. Remove market_prices_history synthetic-close fallback block. 5. Make defaultComputeTa async; update callers in assembleBriefing.ts (L1198) and assembleEveningSummary.ts (L594) to await. 6. Add stub-bar guard: reject latest candle if close<=0 OR volume<=0. 7. Add tests: 41-candle fixture returns same RSI as direct computeTAIndicators; 34-candle fixture returns rsi14:null; 0 daily_ohlcv rows returns null (no fallback). 8. Update existing test mocks to async.",
-        "files": [
-          "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
-          "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts",
-          "apps/mcp-server/src/__tests__/assembleBriefing.test.ts",
-          "apps/mcp-server/src/__tests__/assembleEveningSummary.test.ts"
-        ],
-        "rebuild_required": true,
-        "risk_flags": [
-          "RISK-1: defaultComputeTa becomes async — assembleEveningSummary.ts per-ticker loop at L594-635 must be for...of with await (currently synchronous)",
-          "RISK-2: Go service down at briefing time -> rsi14:null for affected tickers (acceptable fail-closed)",
-          "RISK-3: computeTaFn type signature change breaks sync test mocks — update mocks to async",
-          "RISK-4: computeRSILocal becomes unused — do NOT delete in this task; PM mints follow-on CLEAN task"
-        ],
-        "verification_gate": "LIVE evening-cycle: RAW-probe get_technical_indicators (Go path) and read taSummary RSI from evening JSON for same ticker. Assert RSI values agree to <=0.1 for >=3 tickers. Also: ticker with <35 candles returns rsi14:null; no market_prices_history rows in closes[] sent to Go service.",
-        "blocks": [],
-        "wave": 2,
-        "updated_at": "2026-06-21T00:00:00.000000Z",
-        "updated_by": "dev-mcp-server"
       }
     ],
     "review": [
@@ -22923,7 +22895,7 @@
         }
       ]
     },
-    "updated_at": "2026-06-20T22:39:54.861149Z",
+    "updated_at": "2026-06-21T04:00:00Z",
     "updated_by": "pm"
   },
   "updated_at": "2026-06-20T08:16:14Z",
