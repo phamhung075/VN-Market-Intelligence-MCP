@@ -199,6 +199,6 @@ const result = stmt.run(
 
 ## Sign-off
 
-**Developer:** _________________________ (sign when complete)
+**Developer:** dev-mcp-server — 2026-06-20T08:41Z — TASK-OHLCV-WIC-1 complete. Local stub `validateOhlcv()` removed, replaced with `normalizeOhlcvToVnd` + `validateOhlcvUnit` (Writer E pattern). INSERT uses norm values. 8 tests green. tsc clean. Claude-Session: https://claude.ai/code/session_01JdVqWyt2s6zx9wA14JM2XD
 
 **QA:** _________________________ (sign after approval)

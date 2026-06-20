@@ -1259,12 +1259,22 @@ export async function createBunServer(
         let skipped = 0;
         const upsertAll = db.transaction(() => {
           for (const bar of bars) {
-            const open  = typeof bar.open  === "number" ? bar.open  : 0;
-            const close = typeof bar.close === "number" ? bar.close : 0;
-            if (open <= 0 || close <= 0) continue;
-            const date   = typeof bar.date   === "string" ? bar.date   : "";
-            const high   = typeof bar.high   === "number" ? bar.high   : open;
-            const low    = typeof bar.low    === "number" ? bar.low    : open;
+            // TASK-OHLCV-WIC-2: parse-and-reject for all OHLCV fields.
+            // Accept number or numeric string; reject row if NaN or ≤ 0.
+            // Never default high/low to open — that silently bypasses validateOhlcvUnit Rule 5.
+            const open  = typeof bar.open  === "number" ? bar.open  : (typeof bar.open  === "string" ? parseFloat(bar.open)  : NaN);
+            const close = typeof bar.close === "number" ? bar.close : (typeof bar.close === "string" ? parseFloat(bar.close) : NaN);
+            if (Number.isNaN(open) || open <= 0 || Number.isNaN(close) || close <= 0) { skipped++; continue; }
+
+            const date = typeof bar.date === "string" ? bar.date : "";
+
+            // Parse high, low with validation — REJECT ROW if NaN or ≤ 0 (do NOT default to open).
+            const high_parsed = typeof bar.high === "number" ? bar.high : (typeof bar.high === "string" ? parseFloat(bar.high) : NaN);
+            const low_parsed  = typeof bar.low  === "number" ? bar.low  : (typeof bar.low  === "string" ? parseFloat(bar.low)  : NaN);
+            if (Number.isNaN(high_parsed) || high_parsed <= 0 || Number.isNaN(low_parsed) || low_parsed <= 0) { skipped++; continue; }
+
+            const high   = high_parsed;
+            const low    = low_parsed;
             const volume = typeof bar.volume === "number" ? bar.volume : 0;
 
             // CONTAM-3: unit guard — reject bars that are not full-VND scale

@@ -134,6 +134,6 @@ const volume = typeof bar.volume === "number" ? bar.volume : 0;
 
 ## Sign-off
 
-**Developer:** _________________________ (sign when complete)
+**Developer:** dev-mcp-server — 2026-06-20T08:41Z — TASK-OHLCV-WIC-2 complete. Coerce-to-open pattern removed; parse-and-reject in place for high and low. 10 tests green. tsc clean. Claude-Session: https://claude.ai/code/session_01JdVqWyt2s6zx9wA14JM2XD
 
 **QA:** _________________________ (sign after approval)

@@ -8,6 +8,10 @@
 
 import type { Database } from "bun:sqlite";
 import { resilientFetcher } from "./resilientFetcher.js";
+import {
+  normalizeOhlcvToVnd,
+  validateOhlcvUnit,
+} from "./market-data/ohlcvUnitGuard.js";
 
 /**
  * Result object returned from backfillPrices().
@@ -44,23 +48,8 @@ export interface OhlcvDataPoint {
   volume: number;
 }
 
-/**
- * Validates a single OHLCV row: High >= Close >= Low >= 0, Volume > 0.
- * Returns null if valid, or error reason string if invalid.
- */
-function validateOhlcv(data: OhlcvDataPoint): string | null {
-  const { high, close, low, volume } = data;
-
-  // Check ordering
-  if (high < close) return "high-less-than-close";
-  if (close < low) return "close-less-than-low";
-  if (low < 0) return "negative-low";
-
-  // Check volume
-  if (volume <= 0) return "zero-or-negative-volume";
-
-  return null;
-}
+// validateOhlcv local stub removed — TASK-OHLCV-WIC-1.
+// Validation is now routed through validateOhlcvUnit (ohlcvUnitGuard) at the call site.
 
 /**
  * Backfill historical OHLCV data for given tickers over a date range.
@@ -101,9 +90,38 @@ export async function backfillPrices(
       let tickerSkipped = 0;
 
       for (const row of ohlcvData) {
-        const validationError = validateOhlcv(row);
-        if (validationError) {
-          errors.push({ ticker, reason: validationError });
+        // TASK-OHLCV-WIC-1: Writer F guard replacement.
+        // Apply VND normalization BEFORE validation — handles thousand-scale input.
+        // Never skip sub-100 stock (it is thousand-scale, not garbage).
+        let norm: { open: number; high: number; low: number; close: number };
+        try {
+          norm = normalizeOhlcvToVnd("stock", {
+            open: row.open,
+            high: row.high,
+            low: row.low,
+            close: row.close,
+          });
+        } catch (normErr) {
+          errors.push({
+            ticker,
+            reason: `normalize-error: ${normErr instanceof Error ? normErr.message : String(normErr)}`,
+          });
+          continue;
+        }
+
+        // Guard post-normalize values — out-of-range after normalization is genuinely corrupt.
+        // Log + skip, never throw.
+        try {
+          const guardResult = validateOhlcvUnit(ticker, "stock", norm.open, norm.high, norm.low, norm.close);
+          if (!guardResult.valid) {
+            errors.push({ ticker, reason: `guard-rejected: ${guardResult.reason}` });
+            continue;
+          }
+        } catch (guardErr) {
+          errors.push({
+            ticker,
+            reason: `guard-error: ${guardErr instanceof Error ? guardErr.message : String(guardErr)}`,
+          });
           continue;
         }
 
@@ -119,10 +137,10 @@ export async function backfillPrices(
           const result = stmt.run(
             ticker,
             row.date,
-            row.open,
-            row.high,
-            row.low,
-            row.close,
+            norm.open,
+            norm.high,
+            norm.low,
+            norm.close,
             row.volume,
             now
           );

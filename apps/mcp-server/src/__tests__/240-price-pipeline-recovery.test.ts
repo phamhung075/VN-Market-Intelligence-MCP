@@ -117,8 +117,8 @@ describe("SPRINT 240: Price Pipeline Recovery", () => {
     expect(result.errors.length).toBeGreaterThan(0);
     const badError = result.errors.find((e) => e.ticker === "BAD");
     expect(badError).toBeTruthy();
-    // Validation error should indicate high < close
-    expect(badError?.reason).toBe("high-less-than-close");
+    // TASK-OHLCV-WIC-1: guard-rejected reason from validateOhlcvUnit (replaces old stub reason)
+    expect(badError?.reason).toMatch(/^guard-rejected:/);
   });
 
   // ──────────────────────────────────────────────────────────────────────────
