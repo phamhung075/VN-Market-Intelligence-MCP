@@ -1207,12 +1207,15 @@
         "type": "db_integrity_breach",
         "summary": "daily_ohlcv: 835 OHLC constraint violations (high<open,low>high, etc) across 129 tickers, date range 2026-04-24..2026-06-12",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
         "router_evidence": "LIVE market.db: 835 violations / 129 tickers / 2026-04-24..2026-06-12, exact match. Modes: close-outside-[low,high] (BMI/SHS/OIL/HUT, clusters 06-12) + high=low=0 sentinels (VNDAF). CONFIRMED real.",
-        "router_note": "ts future-stamped — cosmetic; finding genuine. Same daily_ohlcv writer class as DFF."
+        "router_note": "ts future-stamped — cosmetic; finding genuine. Same daily_ohlcv writer class as DFF.",
+        "acked_by": "po-triage-20260620T080911Z",
+        "acked_at": "2026-06-20T08:16:14Z",
+        "po_disposition": "folded into FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 + CLEAN residue"
       },
       {
         "id": "sau-20260620T103001-db2",
@@ -1222,12 +1225,15 @@
         "type": "db_integrity_breach",
         "summary": "daily_ohlcv: 1000x price-scale anomaly DFF 2026-06-12 (open=0.5, close=500.0), unit conversion bug hypothesis",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
         "router_evidence": "LIVE market.db: DFF 2026-06-12 open=0.5 high=500 low=0.5 close=500 (1000x intra-row); also 2026-06-05 low=0.0. Isolated to DFF (illiquid UPCoM micro ~55K vol). CONFIRMED real — writer/unit bug, not false-positive.",
-        "router_note": "ts future-stamped (10:30Z>tick) — auditor emit cosmetic defect, finding genuine."
+        "router_note": "ts future-stamped (10:30Z>tick) — auditor emit cosmetic defect, finding genuine.",
+        "acked_by": "po-triage-20260620T080911Z",
+        "acked_at": "2026-06-20T08:16:14Z",
+        "po_disposition": "folded into FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (same writer class) + CLEAN residue"
       },
       {
         "id": "sau-20260620T103002-db3",
@@ -1237,12 +1243,15 @@
         "type": "db_integrity_breach",
         "summary": "vn_index_cache: table empty (0 rows), expected VNINDEX snapshot cache. vnIndexRefresh cron */5 2-8h may not be running.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
         "router_evidence": "LIVE market.db: vn_index_cache count=0 (empty). CONFIRMED real — vnIndexRefresh cron not populating.",
-        "router_note": "ts future-stamped — cosmetic; finding genuine."
+        "router_note": "ts future-stamped — cosmetic; finding genuine.",
+        "acked_by": "po-triage-20260620T080911Z",
+        "acked_at": "2026-06-20T08:16:14Z",
+        "po_disposition": "minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH"
       }
     ]
   },
@@ -10776,6 +10785,54 @@
         "source": "dev-team cron tick 20260620T0207Z; guard-instructed mint (durable fix named in tick guard was absent from board); reports 3244-3262 BCTC false-alarm cluster; SSH RAW-verify report 3256 2026-06-19T16:20Z",
         "minted_by": "po-s110",
         "minted_at": "2026-06-20T02:37:02Z"
+      },
+      {
+        "id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "multi",
+        "priority": "P0",
+        "size": "M",
+        "created_at": "2026-06-20T08:16:14Z",
+        "created_by": "po-triage-20260620T080911Z",
+        "title": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 — daily_ohlcv writer admits OHLC-constraint violations + 1000x scale leak (db1+db2, 835 viol/129 tickers + DFF 1000x)",
+        "desc": "Router-RAW-VERIFIED on live named-volume market.db (signals sau-20260620T103000-db1 HIGH + sau-20260620T103001-db2 CRITICAL). SAME daily_ohlcv WRITER class — fold per memory ohlcv_startup_purge_defeated_by_backfill_seeder (fix the WRITER, trace ALL writers; one raw INSERT historically bypassed writeOhlcvBatch). TWO modes: (a) db1 — 835 OHLC-constraint violations / 129 tickers / 2026-04-24..2026-06-12: close outside [low,high] (BMI/SHS/OIL/HUT, clusters 06-12) + high=low=0 sentinel rows (VNDAF). (b) db2 — DFF 2026-06-12 open=0.5/high=500/low=0.5/close=500 = 1000x intra-row scale; DFF 06-05 low=0.0. ARCHITECT SPLIT (multi): trace EVERY writer into daily_ohlcv (stock-price writer + mcp-server writeOhlcvBatch + any raw INSERT bypass) and ADD a write-time OHLC-invariant + scale guard (low<=open,close<=high; reject/repair high=low=0 and >Nx intra-row scale leaps) so no out-of-constraint row is admitted. Cross-ref existing FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2 (the prevClose=0→detectAndNormalizeScaleFromPrevClose no-op is the db2 scale root — ABSORB its scope here, supersede the P2 row) + LINT-OHLCV-WRITE-BYPASS (guardrail, keep separate). AC: no NEW daily_ohlcv row violates OHLC invariant or carries >10x intra-row scale; write-path test injects close>high + h=l=0 + 1000x and asserts reject/repair. done_verified GATED on live re-sweep (cron-db-data-integrity) returning 0 NEW violations post-rebuild.",
+        "verification_gate": "Live cron-db-data-integrity re-sweep returns 0 NEW OHLC-constraint violations AND 0 NEW >10x scale rows after rebuild; write-path unit test green.",
+        "source": "router-verified db_integrity_breach db1+db2"
+      },
+      {
+        "id": "CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR",
+        "type": "CLEAN",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "size": "S",
+        "created_at": "2026-06-20T08:16:14Z",
+        "created_by": "po-triage-20260620T080911Z",
+        "title": "CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR — recompute/clean the 835 existing constraint-violation + DFF 1000x rows already in daily_ohlcv",
+        "desc": "Companion residue-cleanup to FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (no-fake-data standing goal #1 — recompute/clean beats leaving residue). The writer fix stops NEW bad rows; this repairs the EXISTING 835 violations / 129 tickers (2026-04-24..2026-06-12) + DFF 1000x/0.0 rows already on the live named-volume DB. For each: re-fetch the true OHLC from source where available; if unrecoverable, write an HONEST GAP (no fabricated bar) per ohlcvBackfill option-b (leave gap, never synthesize). MUST run AFTER the writer fix ships (else the cleaned rows get re-poisoned, the exact purge-defeated-by-seeder failure mode). AC: post-clean live sweep = 0 historical constraint violations AND no real recoverable data lost (illiquid→honest-gap). RUN ORDER: depends on FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 done_verified.",
+        "depends": [
+          "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0"
+        ],
+        "verification_gate": "Live sweep = 0 historical OHLC-constraint violations + 0 fabricated bars (illiquid gaps honest); no recoverable real data lost.",
+        "source": "router-verified db_integrity_breach db1+db2 (residue)"
+      },
+      {
+        "id": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "size": "S",
+        "created_at": "2026-06-20T08:16:14Z",
+        "created_by": "po-triage-20260620T080911Z",
+        "title": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH — vn_index_cache 0 rows; vnIndexRefresh */5 cron not populating",
+        "desc": "Router-RAW-VERIFIED on live named-volume market.db (signal sau-20260620T103002-db3 MEDIUM): vn_index_cache count=0. Separate cron/refresh-path issue from the OHLCV writer class. Trace vnIndexRefresh (*/5 during 2-8h market window): confirm it is wired + actually executes + actually WRITES to vn_index_cache (not silent-0-rows / fail-closed-to-empty per recurring contract-from-live-payload class). Cross-ref existing audit-question rows CI-FRESH-01-FIX (is vnIndexRefresh running) + MD-FUNC-01-FIX (snapshot VN-Index fields) — this is the CONCRETE confirmed-empty-table fix; fold/close those two audit questions on completion (their answer is: NO, not populating). AC: vn_index_cache has fresh rows during market hours (last_run<=10min) AND get_market_snapshot serves a non-empty VN-Index. done_verified GATED on live re-sweep during a market session (Mon 06-22 open) returning non-empty cache.",
+        "verification_gate": "Live: vn_index_cache non-empty + freshening every 5min during a real market session; get_market_snapshot VN-Index non-empty.",
+        "source": "router-verified db_integrity_breach db3"
       }
     ],
     "closed_sprints": [
@@ -22130,7 +22187,7 @@
     "updated_at": "2026-06-19T00:37:56Z",
     "updated_by": "po-s107"
   },
-  "updated_at": "2026-06-19T00:37:56Z",
+  "updated_at": "2026-06-20T08:16:14Z",
   "updated_by": "po-s107",
   "meta": {
     "updated_at": "2026-06-18T12:34:24Z",
