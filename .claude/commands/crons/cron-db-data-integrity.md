@@ -92,16 +92,20 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
     and stop. (2026-06-20: the deterministic helper returned the correct 835, but the agent then
     narrated "661→835 +174 regression, potential row re-entry" by comparing to the prior hallucination.)
 
-  RECORD — write a JSON history of THIS scan to docs/signals/db-integrity-history.json
-    (rolling, atomic read-modify-write: read → append one entry → keep last 200 → write once):
-      `scan_ts` MUST be the REAL current UTC — run `date -u +%Y-%m-%dT%H:%M:%SZ` and use its
-      output verbatim. NEVER guess/hardcode the date (a hallucinated date mis-orders the history).
-      { "scan_ts": "<output of date -u +%Y-%m-%dT%H:%M:%SZ>", "tables_checked": N, "findings": [
+  RECORD — append THIS scan to docs/signals/db-integrity-history.json via the DETERMINISTIC
+    helper (do NOT hand-write the file — the LLM kept OVERWRITING it to 1 entry). Build ONLY the
+    entry BODY you discover (tables_checked + findings) as a JSON object and pipe it to the helper:
+        echo '{ "tables_checked": N, "findings": [
           { "table": "...", "class": "FAIL|STALE|DUP|INCORRECT", "detail": "<what + the query result>",
             "verdict": "REAL|BY-DESIGN|NOISE", "root_cause_hypothesis": "...",
-            "signal_id": "<id if reported, else null>" } ] }
-    This is the historic trail (every scan logged, real + checked-clean), so dev-team and you
-    can see recurrence and avoid re-reporting.
+            "signal_id": "<id if reported, else null>" } ] }' | bash scripts/db-integrity-history-append.sh
+    The helper STAMPS scan_ts (real `date -u`), EMBEDS the deterministic counts (from
+    db-integrity-counts.sh), reads the existing ARRAY, appends ONE entry, caps at 200, atomic-writes,
+    and HARD-ASSERTS length grew (prints {"ok":true,"history_len_before":B,"history_len_after":B+1}).
+    Do NOT author scan_ts or counts yourself — the helper owns them. Copy the helper's before→after
+    numbers into your report; if it exits non-zero (rc 2/3) the append FAILED — say so, never claim
+    "appended". This is the historic trail (every scan logged, real + checked-clean) so dev-team and
+    you can see recurrence; it only works as a trail if it APPENDS — never overwrite it by hand.
 
   REPORT (genuine issues only → dev-team) — for each finding verdict=REAL, write ONE row to
     docs/data/orch/orch-state.json .signal_queue.rows[] per .claude/skills/signal-dashboard/SKILL.md:
