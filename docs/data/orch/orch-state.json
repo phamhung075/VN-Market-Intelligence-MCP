@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T09:55:00Z",
+  "_updated_at": "2026-06-20T10:11:08Z",
   "_updated_by": "dev-team-cron-router",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -233,7 +233,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T08:12:48Z",
+    "_updated_at": "2026-06-20T10:11:08Z",
     "_updated_by": "dev-team-cron-router",
     "archive": [
       {
@@ -1260,6 +1260,20 @@
         "acked_by": "po-triage-20260620T080911Z",
         "acked_at": "2026-06-20T08:16:14Z",
         "po_disposition": "minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH"
+      },
+      {
+        "id": "sau-2026-06-20T10:07:45Z",
+        "ts": "2026-06-20T10:07:45Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: api-gateway health endpoint unreachable",
+        "severity": "INFO",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "router_note": "FALSE POSITIVE — RAW-verified: api-gateway-1 container Up 9d (healthy), curl localhost:4000/health=HTTP 200 (1.26s). Auditor CURL_ERR was a transient latency/timeout false-negative (false-infra-failure class). No ops action. Watch-item: /health 1.26s slightly slow but 200+healthy.",
+        "router_triaged_at": "2026-06-20T10:11:08Z",
+        "router_triaged_by": "dev-team-cron-router"
       }
     ]
   },
