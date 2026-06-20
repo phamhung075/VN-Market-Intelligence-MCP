@@ -8,7 +8,7 @@ zone: apps/mcp-server/
 dev_agent: dev-macro-indicators
 created_at: 2026-06-21T00:00:00Z
 created_by: pm
-status: TODO
+status: REVIEW
 blocked_by: []
 blocks: []
 ---
@@ -120,6 +120,47 @@ None identified. This is a severity gate tightening (reduces false positives); c
 - [ ] Test: 3.5% stock move → CRITICAL (non-FX, σ-gate fires)
 - [ ] LIVE evening digest: USD/VND no longer falsely CRITICAL on normal SBV drift
 - [ ] Rebuild successful + tests pass
+
+---
+
+## Developer
+
+**Implemented by:** dev-macro-indicators
+**Date:** 2026-06-21
+
+### Changes Made
+
+**`apps/mcp-server/src/domain/services/macroThresholds.ts`**
+- Added `FX_SLOW_MOVER_INDICATORS` set: `{usdVndRate, usdVndOfficial, cnyVndRate, eurVndRate, jpyVndRate}` — generic across FX exchange rates, not a single-indicator hardcode.
+- Added `FX_PERCENT_FLOOR = 0.5` constant with derivation comment.
+- Added Guard 2 in `classifyDeviation()`: for any indicator in `FX_SLOW_MOVER_INDICATORS`, if `(|current - mean| / mean) * 100 < 0.5%`, cap `extreme`/`high` → `elevated`. zScore field preserved at full raw value (transparency).
+- Guard 1 (existing 50 VND abs floor) retained as defense-in-depth.
+
+**`apps/mcp-server/src/__tests__/1307a-macro-thresholds.test.ts`**
+- Updated AC-2: 50 VND = 0.19% → now correctly expects `elevated` (not `extreme`; pre-fix expectation was pre-%-floor).
+- Updated AC-4 "extreme below" case: 60 VND = 0.23% → now expects `elevated` + `thấp hơn TB` (not `cực thấp`).
+- Added 10 new tests across 3 suites:
+  - `FX-SIGMA-PHANTOM-EXTREME — %-floor boundary: just-under 0.5%`: reproduces live 5.28σ false-CRITICAL (0.25% → elevated), 0.38% → elevated, usdVndOfficial generic check.
+  - `FX-SIGMA-PHANTOM-EXTREME — %-floor boundary: just-over 0.5%`: 0.514% → extreme, 0.60% → extreme (genuine events still escalate).
+  - `FX-SIGMA-PHANTOM-EXTREME — non-FX indicators bypass %-floor`: brentCrudeUSD, goldUSDPerOz, refinancingRatePct all still escalate via σ-gate alone.
+
+### Test Results
+
+```
+16 pass | 0 fail | 29 expect() calls
+Ran 16 tests across 1 file. [289ms]
+```
+
+### tsc / pnpm check
+
+```
+bun tsc --noEmit — EXIT 0 (no output, clean)
+pnpm check — EXIT 0 (clean)
+```
+
+### Rebuild Required
+
+Yes — domain service code changed. Ops must rebuild `mcp-server` container.
 
 ---
 

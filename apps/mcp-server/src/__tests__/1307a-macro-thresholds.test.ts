@@ -41,17 +41,24 @@ describe("1307a AC-1 — cooldown bypass: alreadySentToday query has no notified
   });
 });
 
-// ── AC-2: 50 VND absolute deviation → extreme ────────────────────────────────
-describe("1307a AC-2 — 50 VND deviation triggers extreme", () => {
-  it("usdVndRate: 50 VND below mean → extreme (economically significant)", () => {
+// ── AC-2: 50 VND absolute deviation — below %-floor so capped at elevated ────
+// FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME: 50 VND on 26334 base = 0.19% < 0.5% floor.
+// Guard 2 (%-floor) fires AFTER Guard 1 (VND abs dev); result is "elevated" not "extreme".
+// Old expectation ("extreme") was pre-FX-%-floor; updated to "elevated".
+describe("1307a AC-2 — 50 VND deviation: below %-floor, capped at elevated", () => {
+  it("usdVndRate: 50 VND below mean (0.19%) → elevated (below 0.5% FX floor)", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26284,   // 50 VND below 26334
+      current: 26284,   // 50 VND below 26334; absPercentMove = 0.19%
       mean: 26334,
       stdDev: 0.76,
       sampleCount: 30,
     });
-    expect(result.level).toBe("extreme");
+    // 50 VND passes Guard 1 (absDeviation >= 50), but %-floor (Guard 2) fires:
+    // 50/26334 = 0.19% < 0.5% → extreme→elevated
+    expect(result.level).toBe("elevated");
+    // σ number is preserved (transparency)
+    expect(result.zScore).toBeDefined();
   });
 });
 
@@ -84,13 +91,128 @@ describe("1307a AC-4 — direction-aware Vietnamese labels", () => {
     expect(r.summary).toContain("thấp hơn TB");
   });
 
-  it("extreme below → summary contains 'cực thấp' not 'cực cao'", () => {
-    // 26273 = 60 VND below mean 26333 — above 50 VND guard, so extreme fires
-    // Task 1270: guard raised 10→50 VND; test updated to use deviation >= 50 VND
+  it("below mean at < 0.5% on FX → 'thấp hơn TB' (elevated), not 'cực thấp'", () => {
+    // FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME: 60 VND / 26333 = 0.23% — below 0.5% %-floor.
+    // Guard 2 caps extreme→elevated; direction still "below" → "thấp hơn TB".
+    // Previously expected "cực thấp" (extreme); now correctly "thấp hơn TB" (elevated).
     const r = classifyDeviation({ name: "usdVndRate", current: 26273, mean: 26333, stdDev: 12, sampleCount: 30 });
     expect(r.direction).toBe("below");
-    expect(r.summary).toContain("cực thấp");
-    expect(r.summary).not.toContain("cực cao");
+    expect(r.level).toBe("elevated");
+    expect(r.summary).toContain("thấp hơn TB");
+    expect(r.summary).not.toContain("cực thấp");
+  });
+});
+
+// ── FX-SIGMA-PHANTOM-EXTREME: %-floor boundary tests ─────────────────────────
+// Verifies that classifyDeviation() requires BOTH σ-test AND %-move floor
+// before escalating FX slow-movers (usdVndRate, usdVndOfficial) to high/extreme.
+
+describe("FX-SIGMA-PHANTOM-EXTREME — %-floor boundary: just-under 0.5%", () => {
+  // Base: mean=26269.17, stdDev=12.47 (pathologically tight window)
+  // Reproduces the live 2026-06-19 false-CRITICAL: 66 VND = 0.25%
+  it("USD/VND +66 VND (0.25% = 5.28σ) → elevated (not extreme/high)", () => {
+    const result = classifyDeviation({
+      name: "usdVndRate",
+      current: 26335,   // +65.83 VND above mean; absPercentMove ≈ 0.25%
+      mean: 26269.17,
+      stdDev: 12.47,
+      sampleCount: 30,
+    });
+    // σ-test alone: 5.28σ → would be "extreme" pre-fix
+    // %-floor: 65.83/26269.17 = 0.25% < 0.5% → capped at "elevated"
+    expect(result.level).toBe("elevated");
+    expect(result.level).not.toBe("extreme");
+    expect(result.level).not.toBe("high");
+    // zScore is still the real value (transparency preserved)
+    expect(Math.abs(result.zScore)).toBeGreaterThan(3);
+  });
+
+  it("USD/VND +100 VND (0.38%) → elevated (still below 0.5% floor)", () => {
+    const result = classifyDeviation({
+      name: "usdVndRate",
+      current: 26369,   // +100 VND; absPercentMove ≈ 0.38%
+      mean: 26269,
+      stdDev: 12.47,
+      sampleCount: 30,
+    });
+    expect(result.level).toBe("elevated");
+  });
+
+  it("usdVndOfficial: 0.25% drift → elevated (FX %-floor generic, not USD/VND-only)", () => {
+    const result = classifyDeviation({
+      name: "usdVndOfficial",
+      current: 26335,
+      mean: 26269,
+      stdDev: 12.47,
+      sampleCount: 30,
+    });
+    expect(result.level).toBe("elevated");
+    expect(result.level).not.toBe("extreme");
+  });
+});
+
+describe("FX-SIGMA-PHANTOM-EXTREME — %-floor boundary: just-over 0.5%", () => {
+  it("USD/VND +135 VND (0.51%) with high σ → extreme (genuine macro event)", () => {
+    const result = classifyDeviation({
+      name: "usdVndRate",
+      current: 26404,   // +135 VND; 135/26269 ≈ 0.514% > 0.5%
+      mean: 26269,
+      stdDev: 12.47,
+      sampleCount: 30,
+    });
+    // σ-test: 135/12.47 ≈ 10.8σ → extreme
+    // %-floor: 0.514% > 0.5% → floor passes, extreme fires
+    expect(result.level).toBe("extreme");
+  });
+
+  it("USD/VND 0.6% move → extreme (clear genuine event)", () => {
+    const result = classifyDeviation({
+      name: "usdVndRate",
+      current: 26427,   // +158 VND; 158/26269 ≈ 0.60%
+      mean: 26269,
+      stdDev: 12.47,
+      sampleCount: 30,
+    });
+    expect(result.level).toBe("extreme");
+  });
+});
+
+describe("FX-SIGMA-PHANTOM-EXTREME — non-FX indicators bypass %-floor", () => {
+  it("brentCrudeUSD: 3.5% single-day move → extreme via σ-gate (no %-floor applied)", () => {
+    // Non-FX indicators are not in FX_SLOW_MOVER_INDICATORS set; σ-gate fires alone.
+    const result = classifyDeviation({
+      name: "brentCrudeUSD",
+      current: 87.5,    // +2.8 above mean 84.7; stdDev≈0.76 → very high σ
+      mean: 84.7,
+      stdDev: 0.76,
+      sampleCount: 30,
+    });
+    // No %-floor guard → extreme from σ-test alone
+    expect(result.level).toBe("extreme");
+  });
+
+  it("goldUSDPerOz: high-σ move → extreme (non-FX, no %-floor)", () => {
+    const result = classifyDeviation({
+      name: "goldUSDPerOz",
+      current: 3550,    // +65 above mean 3485; stdDev≈12 → 5.4σ
+      mean: 3485,
+      stdDev: 12,
+      sampleCount: 30,
+    });
+    expect(result.level).toBe("extreme");
+  });
+
+  it("refinancingRatePct: not in FX set → σ-gate only, no %-floor", () => {
+    // Interest rates use percentage-point basis; %-of-% floor is not meaningful.
+    const result = classifyDeviation({
+      name: "refinancingRatePct",
+      current: 4.6,     // +0.1pp above 4.5%; σ depends on stdDev
+      mean: 4.5,
+      stdDev: 0.02,
+      sampleCount: 30,
+    });
+    // 0.1/0.02 = 5σ → extreme (no FX %-floor guard)
+    expect(result.level).toBe("extreme");
   });
 });
 

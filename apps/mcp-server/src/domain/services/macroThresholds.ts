@@ -82,6 +82,38 @@ const LEVEL_VI_BELOW: Record<DeviationLevel, string> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FX slow-mover classification
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * FX slow-mover indicators — exchange rates whose stdDev window can be
+ * pathologically tight relative to the price level, causing phantom σ-spikes.
+ *
+ * These indicators require BOTH a σ-test AND an absolute %-move floor before
+ * escalating to high/extreme. The set is intentionally generic (covers any
+ * SBV-fixed or market FX rate), NOT a single-indicator hardcode.
+ *
+ * Excluded: interest rates (refinancingRatePct, overnightRatePct) — those are
+ * expressed as percentage-points already; a %-of-% floor is not meaningful.
+ */
+const FX_SLOW_MOVER_INDICATORS = new Set([
+  "usdVndRate",
+  "usdVndOfficial",
+  "cnyVndRate",
+  "eurVndRate",
+  "jpyVndRate",
+]);
+
+/**
+ * Minimum %-move floor for FX slow-mover indicators before high/extreme fires.
+ *
+ * 0.5% is derived from the SBV daily fix band: typical valid moves are
+ * ±0.3–0.4%; genuine macro events (devaluation, policy shock) exceed 0.5%.
+ * A normal 66 VND drift on a 26,269 base = 0.25% → should be INFO/WARN only.
+ */
+const FX_PERCENT_FLOOR = 0.5; // percent (0.5 = 0.5%)
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Core functions
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -138,17 +170,33 @@ export function classifyDeviation(stats: MacroStats): MacroDeviation {
   // 50 VND is the minimum economically observable move in the USD/VND SBV fix rate.
   const minAbsDeviation = name.toLowerCase().includes("vnd") ? 50 : 0;
 
-  // If absolute deviation is below the threshold, downgrade level significantly
-  // to cap at "elevated" maximum (prevents high/extreme false positives)
+  // Base level from σ-test alone
   let level: DeviationLevel =
     absZ >= 3 ? "extreme" :
     absZ >= 2 ? "high" :
     absZ >= 1 ? "elevated" :
     "normal";
 
+  // Guard 1 (existing): absolute VND deviation floor.
+  // If absolute deviation is below the threshold, downgrade to cap at "elevated".
   if (minAbsDeviation > 0 && absDeviation < minAbsDeviation) {
     // For VND indicators with small moves: cap at "elevated"
     level = level === "extreme" || level === "high" ? "elevated" : level;
+  }
+
+  // Guard 2 (FX-SIGMA-PHANTOM-EXTREME): %-move floor for FX slow-movers.
+  // When the rolling stdDev window is pathologically tight (e.g., ~12 VND on USD/VND),
+  // a trivial 0.25% daily drift reads as 5σ+ CRITICAL. Require BOTH a σ-test AND
+  // an absolute %-move above FX_PERCENT_FLOOR before escalating to high/extreme.
+  // The σ value (zScore) is preserved in full for transparency; only the level is gated.
+  if (FX_SLOW_MOVER_INDICATORS.has(name) && mean > 0) {
+    const absPercentMove = (absDeviation / mean) * 100;
+    if (absPercentMove < FX_PERCENT_FLOOR) {
+      // %-floor not met — cap severity: extreme→elevated, high→elevated
+      if (level === "extreme" || level === "high") {
+        level = "elevated";
+      }
+    }
   }
 
   const direction: DeviationDirection =
