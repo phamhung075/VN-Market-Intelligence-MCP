@@ -183,15 +183,15 @@
     }
   ],
   "head": {
-    "status": "executing",
-    "active_task_id": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server executing FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG: re-apply CI network-skip-guards (Bun.env.CI gate on yahooFinance + SBV fetch seams) to 1345d/1345e mirroring 64981565 pollNews pattern. Gate=ci_green_on_subsequent_push.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG in REVIEW, router-verified local-green (commit 495cf0d4). Gate = ci_green_on_subsequent_push: needs push so CI re-runs green on a SHA above 495cf0d4 with 1345d+1345e GREEN, then flip done_verified. No code action pending.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T01:39:51Z",
+    "updated_at": "2026-06-20T01:46:54Z",
     "updated_by": "dev-team-cron-router",
-    "note": "DDL fix done_verified this tick (f1f70ec3 ancestor of origin 0b7abd97, CI run 27855408671 DDL-green). Dispatched dev-mcp-server bg for the remaining CI-network gap on 1345d/1345e."
+    "note": "CI-network-guards fix done: commit 495cf0d4 (2 test files, Bun.env.CI seam guard). Task moved to REVIEW awaiting ci_green."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -21748,40 +21748,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG",
-        "type": "FIX",
-        "title": "CI-network skip-guards for cascade-broadcast + integration-pipeline tests (silently RED on origin since 06-09)",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "S",
-        "blocking": false,
-        "baseline_pass": "0b7abd97",
-        "recon_first": false,
-        "files": [
-          "apps/mcp-server/src/__tests__/1345d-vnindex-cascade-broadcast.test.ts",
-          "apps/mcp-server/src/__tests__/1345e-integration-pipeline.test.ts"
-        ],
-        "root_cause": "Both files do LIVE network fetches (yahooFinance commodities, SBV macro snapshot) with NO CI skip-guard. Local has network -> GREEN in per-file isolation (router ran: 1345d 7/0, 1345e 8/0); CI runner network is blocked -> RED. This is the gap left by the 2026-06-09 REVERT (a42d0835) of 9454baad CI-NETWORK-SKIP-GUARDS; the later partial re-fix 64981565 (CI-NETWORK-GUARDS-POLLNEWS-REFILE) covered pollNews.ts ONLY, NOT these two tests. So 1345d/1345e have been SILENTLY RED on origin since 06-09, masked by the louder DDL failures until DDL went green on run 27855408671. NOT random-flaky, NOT a production-logic regression — a TEST/CI-infra gap. SUPERSEDES the earlier flaky-misdiagnosis CI-RED-f2c183f2-FIX (closed as flaky via subsequent-green, but the real root is deterministic CI-network-block on 1345e).",
-        "fix_spec": "Re-apply network-skip-guards to the cascade/integration tests mirroring 64981565s proven pollNews.ts pattern: gate the live HTTP fetches (yahooFinance commodities + SBV macro snapshot) behind `if (Bun.env.CI !== \"true\")`, supplying a deterministic fixture/no-op fallback on CI so the assertions still exercise the pipeline logic without the network. Generic: guard the fetch SEAM, do NOT hardcode per-assertion expected values; source + guard must agree.",
-        "generic_mandate": "No per-test magic numbers. Guard the network seam (CI=true -> fixture/no-op) so the same code path is exercised on CI and local; keep local doing the real fetch.",
-        "verification_gate": "ci_green_on_subsequent_push — gh run list --branch main shows conclusion=success for a push AFTER 0b7abd97 with 1345d + 1345e GREEN in CIs `bun test`. Local per-file isolation already green; the gate is CI-runner-with-network-blocked green.",
-        "source_signal": "ci-red-0b7abd97 run 27855408671 (router RAW decomposition tick)",
-        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/27855408671",
-        "created_at": "2026-06-20T01:36:50Z",
-        "created_by": "po",
-        "triaged_at": "2026-06-20T01:36:50Z",
-        "triaged_by": "po",
-        "done_verified": false,
-        "claimed_at": "2026-06-20T01:39:51Z",
-        "claimed_by": "dev-team-cron-router"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -21948,6 +21915,44 @@
         "done_at": "2026-06-20T01:36:26Z",
         "done_by": "po-tick-20260620T013626Z",
         "verify_note": "ci_green_on_subsequent_push SATISFIED: f1f70ec3 (the DDL-sentBy-fingerprint fix) is now an ancestor of origin/main HEAD 0b7abd97 (merge-base --is-ancestor TRUE; landed by com.vn-market.fleet-push backstop). On CI run 27855408671 (HEAD 0b7abd97) the 4 DDL files {1391,1869b,231,125} are GREEN — no longer in the 6-fail set. Gate met; flipped done_verified."
+      },
+      {
+        "id": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG",
+        "type": "FIX",
+        "title": "CI-network skip-guards for cascade-broadcast + integration-pipeline tests (silently RED on origin since 06-09)",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "status": "REVIEW",
+        "priority": "P2",
+        "size": "S",
+        "blocking": false,
+        "baseline_pass": "0b7abd97",
+        "recon_first": false,
+        "files": [
+          "apps/mcp-server/src/__tests__/1345d-vnindex-cascade-broadcast.test.ts",
+          "apps/mcp-server/src/__tests__/1345e-integration-pipeline.test.ts"
+        ],
+        "root_cause": "Both files do LIVE network fetches (yahooFinance commodities, SBV macro snapshot) with NO CI skip-guard. Local has network -> GREEN in per-file isolation (router ran: 1345d 7/0, 1345e 8/0); CI runner network is blocked -> RED. This is the gap left by the 2026-06-09 REVERT (a42d0835) of 9454baad CI-NETWORK-SKIP-GUARDS; the later partial re-fix 64981565 (CI-NETWORK-GUARDS-POLLNEWS-REFILE) covered pollNews.ts ONLY, NOT these two tests. So 1345d/1345e have been SILENTLY RED on origin since 06-09, masked by the louder DDL failures until DDL went green on run 27855408671. NOT random-flaky, NOT a production-logic regression — a TEST/CI-infra gap. SUPERSEDES the earlier flaky-misdiagnosis CI-RED-f2c183f2-FIX (closed as flaky via subsequent-green, but the real root is deterministic CI-network-block on 1345e).",
+        "fix_spec": "Re-apply network-skip-guards to the cascade/integration tests mirroring 64981565s proven pollNews.ts pattern: gate the live HTTP fetches (yahooFinance commodities + SBV macro snapshot) behind `if (Bun.env.CI !== \"true\")`, supplying a deterministic fixture/no-op fallback on CI so the assertions still exercise the pipeline logic without the network. Generic: guard the fetch SEAM, do NOT hardcode per-assertion expected values; source + guard must agree.",
+        "generic_mandate": "No per-test magic numbers. Guard the network seam (CI=true -> fixture/no-op) so the same code path is exercised on CI and local; keep local doing the real fetch.",
+        "verification_gate": "ci_green_on_subsequent_push — gh run list --branch main shows conclusion=success for a push AFTER 0b7abd97 with 1345d + 1345e GREEN in CIs `bun test`. Local per-file isolation already green; the gate is CI-runner-with-network-blocked green.",
+        "source_signal": "ci-red-0b7abd97 run 27855408671 (router RAW decomposition tick)",
+        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/27855408671",
+        "created_at": "2026-06-20T01:36:50Z",
+        "created_by": "po",
+        "triaged_at": "2026-06-20T01:36:50Z",
+        "triaged_by": "po",
+        "done_verified": false,
+        "claimed_at": "2026-06-20T01:39:51Z",
+        "claimed_by": "dev-team-cron-router",
+        "impl_commit": "495cf0d4",
+        "fix_record": "Injected macroFetchFn + vnstockSyncFn into CycleDeps for both 1345d/1345e; each no-ops when Bun.env.CI==\"true\" (skips blocked Yahoo/SBV/vnstock HTTP), delegates to real production fetchers locally. 30 insertions, 0 deletions — additive, no assertions weakened.",
+        "router_verified": true,
+        "router_verification": "ROUTER-VERIFIED 2026-06-20T01:46:54Z: RAW git show 495cf0d4 = exactly 2 test files, 30 ins/0 del (additive, no weakened asserts), ancestor of HEAD. Seam guarded via Bun.env.CI; local branch delegates to fetchYahooFinancePrices/storeCommoditySnapshot + syncVnstockData (real network preserved). dev-mcp-server local isolation 1345d 7/0, 1345e 8/0; tsc clean. Generic mandate satisfied (no magic numbers). Local gate PASS. done_verified WITHHELD pending ci_green_on_subsequent_push (CI must re-run green on a SHA above 495cf0d4 with 1345d+1345e GREEN; push = PO out-of-band call).",
+        "verified_at": "2026-06-20T01:46:54Z",
+        "verified_by": "dev-team-cron-router"
       }
     ],
     "qa": [],
