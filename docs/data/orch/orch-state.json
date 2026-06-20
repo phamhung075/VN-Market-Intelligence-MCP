@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T09:12:00Z",
-  "_updated_by": "dev-team-cron-router",
+  "_updated_at": "2026-06-20T09:50:00Z",
+  "_updated_by": "qa",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -10846,8 +10846,8 @@
       {
         "id": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
         "type": "FIX",
-        "status": "REVIEW",
-        "owner": "qa",
+        "status": "DONE",
+        "owner": "pm",
         "zone": "apps/mcp-server/",
         "priority": "P1",
         "size": "S",
@@ -10866,7 +10866,10 @@
         "root_cause": "vn_index_cache existed in named-vol DB (abandoned task 1842a) with no DDL + no writer; vnIndexRefreshJob fetched OK but storeMarketPrices only wrote market_prices, never vn_index_cache (silent-empty / contract-from-live-payload class). Fix: DDL + upsertVnIndexCache writer + job wiring + honest-gap (null/throw -> 0 rows, no fake seed).",
         "rebuild_required": true,
         "router_verified": "router RAW-verified: tsc exit 0 (RED-PREPUSH ok); VNINDEX test 5/5 pass via REAL initDatabase prod path (not self-confirming); commits ac8ad6c7+12f1097d narrow, no orch-state; DDD infra-layer + parameterized SQL; root cause confirmed.",
-        "router_verified_at": "2026-06-20T09:44:10Z"
+        "router_verified_at": "2026-06-20T09:44:10Z",
+        "qa_verdict": "PASS",
+        "qa_reviewed_at": "2026-06-20T09:50:00Z",
+        "qa_note": "5/5 VIC tests pass, full suite 13270 pass/19 fail (disjoint pre-existing), tsc 0 errors, DDD PASS, security PASS, mock-guard EXIT 0. done_verified GATED on Mon 2026-06-22 live market re-sweep post ops rebuild."
       },
       {
         "id": "TASK-OHLCV-WIC-1",

@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-305 · 2026-06-20 · FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH — PASS (DONE, done_verified gated Mon 2026-06-22)
+
+FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH | Commits ac8ad6c7 (fix) + 12f1097d (docs) | Verdict: PASS | Board: REVIEW→DONE, owner→pm.
+
+Targeted: bun test FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH.test.ts --no-cache → 5 pass / 0 fail (VIC-1..5, 725ms, 12 expect()). tsc: exit 0. Full suite (ci-per-file-isolation.sh 16): 13270 pass / 42 skip / 19 fail. 9 failing files (083, 102, 1227, 125, 1288, 1324, 1398, 1793, 1898b) — all pre-existing/disjoint from changed files (zero overlap with schema-market-data.ts / vnIndexCacheStore.ts / vnIndexRefreshJob.ts / freshnessSlaMonitorJob.ts). DDD PASS: vnIndexCacheStore.ts = infrastructure/db (no domain imports); vnIndexRefreshJob.ts = scheduler → infrastructure (permitted direction). Security PASS: no process.env, no hardcoded DB paths, no secrets; all SQL parameterized (? bound params). mock-guard EXIT 0. Test realness: VIC-1..5 call production initDatabase() from schema.js — real production DDL code path, not self-confirming. Honest-gap: VIC-2 (null→0 rows) + VIC-3 (throw→0 rows) confirmed. Idempotency: VIC-5 INSERT OR REPLACE leaves exactly 1 row. done_verified WITHHELD: gated on Monday 2026-06-22 live market-session re-sweep (ops rebuild container first). DJ: sprint-FE-PAGE-REORG-qa.md STEP qa-S12.
+
 ## cycle-304 · 2026-06-20 · TASK-OHLCV-WIC-1 + TASK-OHLCV-WIC-2 — APPROVED (both)
 
 TASK-OHLCV-WIC-1: commit aeacdb25 | Verdict: APPROVED | bun test WIC-1 → 8 pass / 0 fail (30 expect()). tsc 0 errors. DDD PASS (domain→domain import). Security PASS. mock-guard EXIT 0. Test realness: BAD ticker path exercises production backfillPrices→normalizeOhlcvToVnd→validateOhlcvUnit via real :memory: DB; old stub reason strings (high-less-than-close etc.) absent; guard-rejected: prefix present; 0 rows in DB for bad input. Guard correctness: close>high→Rule5; h=l=0→Rule1 zero_ohlc; 1000x ratio→Rule4 hilo_ratio_too_wide; INSERT uses norm values at L140-145. DJ: sprint-FE-PAGE-REORG-qa.md STEP qa-S10.

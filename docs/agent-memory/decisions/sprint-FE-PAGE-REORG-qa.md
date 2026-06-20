@@ -135,3 +135,23 @@
 - Security: process.env usage in WIC-2 test is test-harness auth setup (beforeAll/afterAll VPS_PUSH_API_KEY) — not production code; mock-guard checks production files only, EXIT 0.
 **why-decision:** APPROVED. 10 tests pass, tsc 0 errors, DDD clean (server.ts is interface layer, guard is domain layer — correct direction), security clean.
 **why-change:** No change from plan.
+
+---
+
+### STEP qa-S12 · qa · 2026-06-20T09:45:00Z
+**task-id:** FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH
+**what-done:** QA gate: vn_index_cache DDL + writer wire. Commits ac8ad6c7 (fix) + 12f1097d (docs). Verdict: PASS. Status: REVIEW→DONE (done_verified gated on Monday 2026-06-22 live market re-sweep).
+**what-considered:**
+- Targeted: bun test FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH.test.ts --no-cache → 5 pass / 0 fail (VIC-1..5 all green, 725ms). 12 expect() calls.
+- Full suite (ci-per-file-isolation.sh 16): 13270 pass / 42 skip / 19 fail. 9 failing files — 083, 102, 1227, 125, 1288, 1324, 1398, 1793, 1898b — all pre-existing (subset of cycle-303/cycle-297 baseline pre-existing list). Zero overlap with changed files: schema-market-data.ts / vnIndexCacheStore.ts / vnIndexRefreshJob.ts / freshnessSlaMonitorJob.ts.
+- tsc: exit 0 (no output, clean).
+- DDD: vnIndexCacheStore.ts is infrastructure/db — no domain imports. vnIndexRefreshJob.ts is scheduler/market-data — imports infrastructure only (permitted scheduler→infrastructure direction). No domain→infra forbidden crossing.
+- Security: no process.env, no hardcoded secrets, no hardcoded DB paths. SQL is fully parameterized (? bound params throughout vnIndexCacheStore).
+- mock-guard: EXIT 0 (no fabricated-data patterns in production source).
+- Test realness: test calls closeDb()+initDatabase()+getDb() from production schema.js — the real production DDL code path, not a self-confirming rebuilt schema. No inline CREATE TABLE in test file.
+- Honest-gap: VIC-2 (null return → 0 rows) and VIC-3 (throw → 0 rows) confirmed. Job does not fabricate a cache row when API unavailable.
+- Non-fatal try/catch in vnIndexRefreshJob verified: VIC-3 test confirms await resolves, not throws.
+- Upsert idempotency: VIC-5 confirms INSERT OR REPLACE leaves exactly 1 row after 2 runs (no phantom duplicates).
+- BCTC eval: N/A — no BCTC report in scope.
+**why-decision:** APPROVED. All 5 VIC tests pass, tsc 0 errors, DDD PASS, security PASS, mock-guard EXIT 0. 19 suite failures are disjoint pre-existing. done_verified WITHHELD pending Monday 2026-06-22 live session gate (ops rebuild container first).
+**why-change:** No change from plan — all checks green.
