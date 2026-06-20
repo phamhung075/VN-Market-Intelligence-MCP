@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T08:35:00Z",
+  "_updated_at": "2026-06-20T09:05:00Z",
   "_updated_by": "dev-team-cron-router",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -194,12 +194,12 @@
     "status": "in_progress",
     "active_task_id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
     "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server: claim TASK-OHLCV-WIC-1 + TASK-OHLCV-WIC-2, parallel work (independent files). Reference handoffs + architect blueprint. Done_verified gate: live cron-db-data-integrity re-sweep 0 NEW violations post-rebuild.",
-    "wip": 3,
+    "next_action": "dev-mcp-server EXECUTING TASK-OHLCV-WIC-1 (Writer F priceBackfillService.ts stub→Writer-E pattern) + WIC-2 (Writer H server.ts parse-and-reject), both apps/mcp-server/, parallel-safe. RED-PREPUSH: pnpm check green before commit. Then→qa.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-20T08:59:00Z",
-    "updated_by": "pm",
-    "note": "PM decomposed architect blueprint into 2 atomic dev tasks (WIC-1 Writer F, WIC-2 Writer H, parallel safe). WIC-3 (CLASS3 supersede confirm) is board-only — already marked superseded by architect. Handoffs reference exact file:line targets + AC + test mandate. Risk flags noted: RISK-1 (import direction), RISK-2 (VPS script update needed). Relay→dev-mcp-server."
+    "updated_at": "2026-06-20T09:05:00Z",
+    "updated_by": "dev-team-cron-router",
+    "note": "Router corrected pm head.wip 3→1 (one in-flight P0, not 3; pm miscounted child sub-tasks as separate WIP). PM decomposition (e343ebd9) RAW-verified clean: WIC-1+WIC-2 TODO/dev-mcp-server, narrow commit no code, signal_queue canonical, 2 handoffs present, WIC-3 CLASS3 superseded confirmed. Dispatching dev-mcp-server to execute (code OK Sat — only done_verified gate is Mon-LIVE)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
