@@ -225,8 +225,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T03:10:31Z",
-    "_updated_by": "router-annotate-sau-d4-expired",
+    "_updated_at": "2026-06-20T04:33:22Z",
+    "_updated_by": "dev-team-cron-router",
     "archive": [
       {
         "from": "system-auditor",
@@ -789,6 +789,36 @@
         "triaged_at": "2026-06-17T19:36:00Z",
         "disposition": "FALSE-POSITIVE",
         "triage_note": "RAW-probed live market.db (named volume vn-market-intelligence-mcp_market_data, sidecar): market_messages last sent_at=2026-06-17T15:30:02Z (age 4.09h), 19 rows/24h, 56 rows/72h, total 796 — table HEALTHY. C-06 fired at 18:34Z; its 3h window (~15:34-18:34Z) is fully OFF-MARKET (VN market closed 08:59Z). 0 messages is normal: summary/Chef agents post ~3x/day not hourly, last dish (15:30 evening_summary) just predates the window. Not a wedge. Generic recalibration minted -> FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (backlog/ready, LOW)."
+      },
+      {
+        "id": "sau-d4-202606180300",
+        "ts": "2026-06-18T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-18T04:25:34Z",
+        "resolved_by": "po-s103",
+        "resolution": "STALE -- RECURRING D4 false-positive. Held-lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row because it is an ESC-3 data-coverage escalation TTL lock (esc-datacov: 30d, route ops) that INTENTIONALLY has no task row (escalation locks are not tasks); the system-auditor D4 check does not whitelist the esc-datacov:* key class -> false orphaned flag. Lock TTL-expired + GC'd (task_list_held=0 in prior RAW probe). Dismissed STALE before: po-s76 x2, 5a807e65, 44853141, po-s95. Durable owner = system-auditor D4 blind-spot (tracked: FU-AUDITOR-D4-SIGNAL-ID). No new board task (not worth the WIP budget on nothing-new)."
+      },
+      {
+        "id": "cowork-team-20260618T0408Z-schedule-json-stale-base-clobber",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "SSOT integrity — cowork-schedule.json last_fired clobbered by stale-base read-modify-write race",
+        "severity": "MEDIUM",
+        "status": "RESOLVED",
+        "summary": "cowork-schedule.json last_fired stamps being CLOBBERED by a read-modify-write race with a stale base. At 2026-06-18T04:07Z the file shows a MIXED state: chef-intraday=2026-06-18T03:23:15Z (fresh, = file mtime, the writers just-updated slot) BUT news-scout-offhours + market-watcher-offhours = 2026-06-15T08:08:57Z, chef-morning = 2026-06-15T05:25:52Z, bctc-analyst-slot-4 = 2026-06-15T00:06:43Z — all reverted to 3-day-old 06-15 values, despite the cloud leader stamping them fresh earlier TODAY (offhours snapped_last_fired=2026-06-18T00:00:00Z observed in the 00:07Z matcher cadence-skip log; chef-morning published 05:23Z 06-17 etc.). Root cause: a writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline — file is uncommitted since last commit e96176d8 2026-06-15), updates only ITS slot (chef-intraday), and writes the WHOLE file back → every other slot last_fired reverts to the stale base. Effect: matcher sees slots as massively overdue (3 days) → spurious re-offer/re-fire risk; cadence tracking corrupted. NOT a gather gap (real gathering still happens; only the stamp ledger is clobbered). FIX: cowork-schedule.json writer must FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set), never echo back a whole stale snapshot — same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read). Owner: dev-mcp-server / cowork-schedule writer + cloud leader dispatcher.",
+        "payload_ref": "evidence 2026-06-18T04:07Z: jq .slots last_fired — chef-intraday=2026-06-18T03:23:15Z (=file mtime), news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z; git status: M (uncommitted since e96176d8 2026-06-15); 00:07Z matcher cadence-skip showed snapped_last_fired=2026-06-18T00:00:00Z (proves fresh value existed then, clobbered since); SSOT docs/data/cowork-schedule.json; pattern ref orch-state atomic temp->rename + fresh-read",
+        "disposition": "FIX minted FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER -> ready[] (dev-mcp-server zone, ba next). READ not RESOLVED until the writer-discipline fix ships.",
+        "ts": "2026-06-18T04:09:15Z",
+        "resolved_at": "2026-06-19T07:04:32Z",
+        "resolved_by": "po-s103",
+        "resolution": "Fix shipped 30b9a7f8 (TASK-CWKSCH-1+2 monotonic-guard last_fired writer in docs/agents/cowork-team/flow/last-fired.md), QA-approved e28ea436, board row FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER=done_verified. Residual 06-14/06-15 stamps are PRE-FIX residue (guard prevents future reversion, does not backfill); post-fix 06-18 stamps held monotonic. Signal status merely lagged ground truth.",
+        "read_at": "2026-06-18T04:25:34Z"
       }
     ],
     "rows": [
@@ -821,20 +851,6 @@
         "resolved_at": "2026-06-19T03:31:00Z",
         "resolved_by": "dev-team",
         "resolved_note": "lock esc-datacov:FPT:Q1-2026:ESC-3 TTL-expired (heartbeat ok:false expires_at:0); head idle since 03:10 — both findings self-resolved, no task"
-      },
-      {
-        "id": "sau-d4-202606180300",
-        "ts": "2026-06-18T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "resolved_at": "2026-06-18T04:25:34Z",
-        "resolved_by": "po-s103",
-        "resolution": "STALE -- RECURRING D4 false-positive. Held-lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row because it is an ESC-3 data-coverage escalation TTL lock (esc-datacov: 30d, route ops) that INTENTIONALLY has no task row (escalation locks are not tasks); the system-auditor D4 check does not whitelist the esc-datacov:* key class -> false orphaned flag. Lock TTL-expired + GC'd (task_list_held=0 in prior RAW probe). Dismissed STALE before: po-s76 x2, 5a807e65, 44853141, po-s95. Durable owner = system-auditor D4 blind-spot (tracked: FU-AUDITOR-D4-SIGNAL-ID). No new board task (not worth the WIP budget on nothing-new)."
       },
       {
         "id": "sau-b13-202606171834",
@@ -879,22 +895,6 @@
         "triaged_at": "2026-06-16T07:31:03Z",
         "minted_task": "FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2",
         "minted_lane": "backlog"
-      },
-      {
-        "id": "cowork-team-20260618T0408Z-schedule-json-stale-base-clobber",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "SSOT integrity — cowork-schedule.json last_fired clobbered by stale-base read-modify-write race",
-        "severity": "MEDIUM",
-        "status": "RESOLVED",
-        "summary": "cowork-schedule.json last_fired stamps being CLOBBERED by a read-modify-write race with a stale base. At 2026-06-18T04:07Z the file shows a MIXED state: chef-intraday=2026-06-18T03:23:15Z (fresh, = file mtime, the writers just-updated slot) BUT news-scout-offhours + market-watcher-offhours = 2026-06-15T08:08:57Z, chef-morning = 2026-06-15T05:25:52Z, bctc-analyst-slot-4 = 2026-06-15T00:06:43Z — all reverted to 3-day-old 06-15 values, despite the cloud leader stamping them fresh earlier TODAY (offhours snapped_last_fired=2026-06-18T00:00:00Z observed in the 00:07Z matcher cadence-skip log; chef-morning published 05:23Z 06-17 etc.). Root cause: a writer (most likely the cloud cowork-leader dispatcher, owner_agent=cowork-dispatcher) holds a STALE in-memory/checkout snapshot of cowork-schedule.json (06-15 baseline — file is uncommitted since last commit e96176d8 2026-06-15), updates only ITS slot (chef-intraday), and writes the WHOLE file back → every other slot last_fired reverts to the stale base. Effect: matcher sees slots as massively overdue (3 days) → spurious re-offer/re-fire risk; cadence tracking corrupted. NOT a gather gap (real gathering still happens; only the stamp ledger is clobbered). FIX: cowork-schedule.json writer must FRESH-READ immediately before write + atomic temp->rename + write ONLY the single mutated slot (jq targeted set), never echo back a whole stale snapshot — same pattern as orch-state consolidate (atomic temp->rename + caller fresh-read). Owner: dev-mcp-server / cowork-schedule writer + cloud leader dispatcher.",
-        "payload_ref": "evidence 2026-06-18T04:07Z: jq .slots last_fired — chef-intraday=2026-06-18T03:23:15Z (=file mtime), news-scout-offhours=market-watcher-offhours=2026-06-15T08:08:57Z, chef-morning=2026-06-15T05:25:52Z, bctc-analyst-slot-4=2026-06-15T00:06:43Z; git status: M (uncommitted since e96176d8 2026-06-15); 00:07Z matcher cadence-skip showed snapped_last_fired=2026-06-18T00:00:00Z (proves fresh value existed then, clobbered since); SSOT docs/data/cowork-schedule.json; pattern ref orch-state atomic temp->rename + fresh-read",
-        "disposition": "FIX minted FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER -> ready[] (dev-mcp-server zone, ba next). READ not RESOLVED until the writer-discipline fix ships.",
-        "ts": "2026-06-18T04:09:15Z",
-        "resolved_at": "2026-06-19T07:04:32Z",
-        "resolved_by": "po-s103",
-        "resolution": "Fix shipped 30b9a7f8 (TASK-CWKSCH-1+2 monotonic-guard last_fired writer in docs/agents/cowork-team/flow/last-fired.md), QA-approved e28ea436, board row FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER=done_verified. Residual 06-14/06-15 stamps are PRE-FIX residue (guard prevents future reversion, does not backfill); post-fix 06-18 stamps held monotonic. Signal status merely lagged ground truth.",
-        "read_at": "2026-06-18T04:25:34Z"
       },
       {
         "id": "po-20260618-cowork-blind-session-guard",
