@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T10:19:06Z",
+  "_updated_at": "2026-06-20T10:43:30Z",
   "_updated_by": "dev-team-cron-router",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -194,10 +194,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260620T100928Z CLOSED. A-12 api-gateway HIGH->INFO/RESOLVED (RAW-verified false positive, commit 81b67c4c). PO triage of 20 health-recheck reports (ids 3244-3263, ALL claimed by router): ZERO new tasks — all dedup to existing backlog or confirmed false-recurrence. DIGEST W26 double-publish = FALSE RECURRENCE (publish mutex keyed on periodKey date-range not weekLabel; already done_verified; next fire Sun 06-21 not at risk). BUG-SENTIMENT-TREND already fixed (fb-poster L119 loops watchlist). BCTC P0 'outage' = false alarm (event-driven push-age, queue=0 IDLE not crash; durable fix FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH queued). Carry-forward gated Mon 2026-06-22 (02:00-08:59Z) AFTER ops rebuilds mcp-server container (REBUILD_REQUIRED:yes): FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH live re-sweep + OHLCV-WRITER-INTEGRITY P0 + CLEAN-OHLCV-RESIDUE-REPAIR. CI-gated REVIEW rows (FIX-CI-RED-7fef5850 / FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG) BLOCKED on out-of-band push + CI-green. WIP=0 idle; SF-1 release follows.",
+    "next_action": "Tick 20260620T103940Z CLOSED. Drained 3 signals: 2 cowork tick_telemetry -> processed/ (known gateway-blind standing, USER-side .mcp.json fix); db-integrity-history 4 REAL findings ALL already-tracked (db1+db2 OHLC 835viol/129tkr + DFF 1000x = FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 [REVIEW] + CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR [BACKLOG]; db3 vn_index empty = FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH [DONE]; c04 fin-report low-conf = by-design operator review). 4 new telegram reports 3264-3267 claimed: all dedup/false. BUG-SENTIMENT-TREND = FALSE RECURRENCE (RAW-read fb-market-poster/flow/main.md L119 = get_sentiment_trend({stock_code:ticker}) loop; NO empty-arg call; report claim itself false; do NOT dispatch agent-father). BCTC P0 false alarm; HNX weekend; Reuters/TE/WTI/DJIA/SBV/FRED all tracked long-standing. No PO re-spawn (mirrors zero-result triage 30min ago). Carry-forward gated Mon 2026-06-22 (after ops mcp-server rebuild): OHLCV P0 + residue + VNINDEX live re-sweep. WIP=0 idle; SF-1 release follows.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T10:19:06Z",
+    "updated_at": "2026-06-20T10:43:30Z",
     "updated_by": "dev-team-cron-router"
   },
   "narrative": {
