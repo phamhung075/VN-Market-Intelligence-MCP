@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T09:50:00Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-20T09:55:00Z",
+  "_updated_by": "dev-team-cron-router",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -191,15 +191,15 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
-    "next_agent": "qa",
-    "next_action": "qa: review FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (commits ac8ad6c7+12f1097d). Router pre-verified tsc-green + 5/5 real-path test + narrow commits. QA scope: full suite (confirm 44 fails pre-existing zero-new), DDD/security, real-path test sanity. done_verified GATED Mon 06-22 live re-sweep AFTER ops container rebuild (REBUILD_REQUIRED:yes). QA PASS -> DONE (NOT done_verified). QA FAIL -> back to dev-mcp-server.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "Tick 20260620T090906Z CLOSED. FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH dev+QA done (PASS). done_verified GATED Mon 2026-06-22 live market re-sweep (02:00-08:59Z): vn_index_cache non-empty + freshening <=5min, AFTER ops rebuilds mcp-server container (REBUILD_REQUIRED:yes). Same Mon gate: OHLCV-WRITER-INTEGRITY P0 + CLEAN-OHLCV-RESIDUE-REPAIR. CI-gated REVIEW rows (FIX-CI-RED-7fef5850 / FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG) BLOCKED on out-of-band push + CI-green.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T09:44:10Z",
+    "updated_at": "2026-06-20T09:55:00Z",
     "updated_by": "dev-team-cron-router",
-    "note": "Tick 20260620T090906Z dev->qa. dev RETURN RAW-verified by router (tsc+test run myself). SF-1 held until QA returns + tick close."
+    "note": "SF-1 release follows this commit. Router idle; next dev-team cron tick free to claim."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
