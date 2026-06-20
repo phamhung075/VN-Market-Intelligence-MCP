@@ -4,6 +4,47 @@
 
 ---
 
+## c101 · 2026-06-20T20:13Z
+
+**Status:** BLOCKED — MCP gateway unavailable (failure mode A)
+**Direction:** N/A (cycle not executed)
+**Session invocation time:** 2026-06-20 (manual invocation slot=tnb-audit; correct timing — all 3 dishes for 2026-06-20 confirmed in unified-agent notebook)
+
+**MCP Status:** `mcp__claude_ai_gateway__call_tool` NOT present in this session's tool surface. Failure mode A per bootstrap.md: gateway wrapper absent in local CLI sub-agent spawn context. 5th consecutive blocked cycle for this spawn path (c97: 2026-06-16, c98: 2026-06-17, c99: 2026-06-18, c100: 2026-06-19, c101: 2026-06-20). Cloud RemoteTrigger (cron) path has the connector per prior PO ACK.
+
+**Published Marker Gate:** SKIPPED — task_claim requires MCP. No dedup slot claimed for period 2026-06-15/2026-06-21 (estimated — get_week_period not callable).
+
+**Previous handoff ACK:** c98 ACK'd by PO at 2026-06-17T21:28:33Z (confirmed in handoff file). c99/c100 handoffs NOT written (both cycles blocked). Handoff file still shows c98 content — 2 cycles of findings unwritten.
+
+**Dashboard inbox:** No NEW signal_queue rows addressed to tran-ngoc-bau (confirmed via orch-state.json grep).
+
+**File evidence (NOT used for audit per bootstrap.md — INDICATIVE ONLY):**
+- unified-agent notebook (last updated 2026-06-20T19:45Z):
+  - Evening 19:45Z: PUBLISHED. Clusters: 0 (no gatherer signals in 24h). Layers 1–6 complete (degraded-dish floor applied). Kinh Dịch 501/unavailable. Macro: carry 1.37pp NEUTRAL is_estimate=false, USD/VND 26,120 BEARISH, gold $4,172.9 safe-haven, yield CHEAP +3.2pp. Phase: [transition][fixed_income]. AF-GATE: OK.
+  - Morning 05:16Z (2026-06-19): PUBLISHED per c100 notebook.
+  - EOD 2026-06-20: NO notebook entry visible (notebook last updated 19:45Z evening — EOD slot may have been skipped or notebook pruned).
+- Signal dashboard: inbox empty for tran-ngoc-bau.
+
+**Per bootstrap.md hard rule:** Do NOT switch to file-evidence audit mode. Auditing from stale files produces hallucinated findings. Report failure and exit.
+
+**Carry-forward from c100:**
+- F-MCP-SUBAGENT-SYSTEMIC (HIGH): Local CLI sub-agent spawn context does not wire MCP gateway. 5th consecutive blocked cycle. ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (backlog). Cloud RemoteTrigger (cron) path works.
+- F-BCTC-BANK-SCALAR-MAPPING (HIGH): carry-forward (FIX-BCTC-BANK-SCALAR-MAPPING minted po-s91)
+- F3/F4/F9/F-MORNING-NB-MISSING: structural, carry-forward
+- AC-FAILCLOSED spec: agents-architect→agent-father lane, dispatch_gate=monday
+- EOD 2026-06-20 dish: NOT visible in unified-agent notebook (0 clusters — may be pruned or legitimately absent)
+
+**Actions:**
+- Notebook entry appended (this entry)
+- Signal file dropped: docs/signals/tnb-20260620T201300Z.json (BUG escalation → PO, dedup into ARCH-HEADLESS-GATEWAY-COWORK-NOPOST)
+- Handoff updated: docs/handoffs/tnb-audit-latest.md (c101 status)
+- WORK report NOT sent (MCP unavailable)
+- Commit NOT attempted (MCP unavailable — commit-mutex SKIPPED per C-2 FAIL-CLOSED)
+
+**Next cycle (c102 — cron 2026-06-21T20:13 UTC or next run):** Cron-spawned path expected to have MCP. Will execute full audit. Note: 2026-06-21 is Saturday — if weekend, chef-morning/eod slots are off-market; only evening guaranteed if enabled.
+
+---
+
 ## c100 · 2026-06-19T20:00Z
 
 **Status:** BLOCKED — MCP gateway unavailable (failure mode A)
