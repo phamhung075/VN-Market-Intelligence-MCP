@@ -225,7 +225,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T04:40:10Z",
+    "_updated_at": "2026-06-20T07:14:13Z",
     "_updated_by": "dev-team-cron-router",
     "archive": [
       {
@@ -819,6 +819,22 @@
         "resolved_by": "po-s103",
         "resolution": "Fix shipped 30b9a7f8 (TASK-CWKSCH-1+2 monotonic-guard last_fired writer in docs/agents/cowork-team/flow/last-fired.md), QA-approved e28ea436, board row FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER=done_verified. Residual 06-14/06-15 stamps are PRE-FIX residue (guard prevents future reversion, does not backfill); post-fix 06-18 stamps held monotonic. Signal status merely lagged ground truth.",
         "read_at": "2026-06-18T04:25:34Z"
+      },
+      {
+        "id": "po-20260618-cowork-blind-session-guard",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "FLOW GUARD — cowork dispatcher must detect gateway-blind session and refuse to spawn data agents (no fabrication)",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "summary": "Root-cause guard for the gateway-blind fabrication class (confirmed 2026-06-18: blind news-scout spawn wrote fake 06-18 sentiment into 5 briefs + fake-stamped coverage-state for 62 tickers; PO reverted+quarantined). The */15 cowork dispatcher (docs/agents/cowork-team/flow/main.md -> spawn-fanout.md) locally Agent-spawns data agents; in a session where .mcp.json mcpServers=={} subagents do NOT inherit mcp__gateway__call_tool -> they no-op or FABRICATE. Add a preflight blind-detection step (jq .mcpServers|length==0) before slot matching; when blind, do NOT spawn data-producing slots, defer backstopped slots to cloud RemoteTriggers with a logged skip, log non-backstopped slots (news-scout-market, market-watcher-market, alert-commander-market) as undeliverable-while-blind in telemetry errors[], emit ONE work-channel summary per tick. agents-architect designs; agent-father implements the flow .md (Agent .md factory rule). Full spec in handoff.",
+        "payload_ref": "docs/handoffs/FIX-COWORK-BLIND-SESSION-GUARD-2026-06-18.md ; memory feedback_local_cowork_subagents_gateway_blind ; durable user fix handoff docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md",
+        "disposition": "agents-architect -> agent-father; suggested new sub-flow docs/agents/cowork-team/flow/blind-guard.md wired as Step 0c before match-slots.md; enforce again in spawn-fanout.md Step 5",
+        "ts": "2026-06-18T06:33:35Z",
+        "resolved_at": "2026-06-18T07:37:02Z",
+        "resolved_by": "po",
+        "resolution": "actioned — FIX-COWORK-BLIND-SESSION-GUARD dispatched to agents-architect in_progress this tick",
+        "read_at": "2026-06-18T07:34:21Z"
       }
     ],
     "rows": [
@@ -895,22 +911,6 @@
         "triaged_at": "2026-06-16T07:31:03Z",
         "minted_task": "FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2",
         "minted_lane": "backlog"
-      },
-      {
-        "id": "po-20260618-cowork-blind-session-guard",
-        "from": "po",
-        "to": "agents-architect",
-        "type": "FLOW GUARD — cowork dispatcher must detect gateway-blind session and refuse to spawn data agents (no fabrication)",
-        "severity": "HIGH",
-        "status": "RESOLVED",
-        "summary": "Root-cause guard for the gateway-blind fabrication class (confirmed 2026-06-18: blind news-scout spawn wrote fake 06-18 sentiment into 5 briefs + fake-stamped coverage-state for 62 tickers; PO reverted+quarantined). The */15 cowork dispatcher (docs/agents/cowork-team/flow/main.md -> spawn-fanout.md) locally Agent-spawns data agents; in a session where .mcp.json mcpServers=={} subagents do NOT inherit mcp__gateway__call_tool -> they no-op or FABRICATE. Add a preflight blind-detection step (jq .mcpServers|length==0) before slot matching; when blind, do NOT spawn data-producing slots, defer backstopped slots to cloud RemoteTriggers with a logged skip, log non-backstopped slots (news-scout-market, market-watcher-market, alert-commander-market) as undeliverable-while-blind in telemetry errors[], emit ONE work-channel summary per tick. agents-architect designs; agent-father implements the flow .md (Agent .md factory rule). Full spec in handoff.",
-        "payload_ref": "docs/handoffs/FIX-COWORK-BLIND-SESSION-GUARD-2026-06-18.md ; memory feedback_local_cowork_subagents_gateway_blind ; durable user fix handoff docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md",
-        "disposition": "agents-architect -> agent-father; suggested new sub-flow docs/agents/cowork-team/flow/blind-guard.md wired as Step 0c before match-slots.md; enforce again in spawn-fanout.md Step 5",
-        "ts": "2026-06-18T06:33:35Z",
-        "resolved_at": "2026-06-18T07:37:02Z",
-        "resolved_by": "po",
-        "resolution": "actioned — FIX-COWORK-BLIND-SESSION-GUARD dispatched to agents-architect in_progress this tick",
-        "read_at": "2026-06-18T07:34:21Z"
       },
       {
         "id": "devteam-ssotdrift-20260618100250",
