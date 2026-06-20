@@ -194,10 +194,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "tick 20260620T181148Z closed (clean idle, Sun 01:11 VN market-closed; rapid re-fire ~40s after prior tick). No new Telegram reports, no new signal files (drained prior tick), signal_queue canonical-4/32 rows/2 NEW MEDIUM router watch-rows held Mon 06-22 PO. Open lanes: REFINE-CRON-ARM (USER-side) + BCTC-PDF-PATH-BACKFILL (backlog) — standing, no action. PO triage NOTHING. No dispatch.",
+    "next_action": "tick 20260620T184030Z closed (clean idle, Sun 01:40 VN market-closed). Drained 2 signals (context-bloat = known FIX-BLOAT-HOOK over-fire/notebook 146L<cap; db-integrity = stale-lock already actioned this cycle). Claimed Telegram 3271 (2h health-recheck): ALL items known-tracked or proven-false (vps-bctc P0 = event-driven false-alarm, corroborated by Tier-2 BCTC PASS; macro/news sources = macro-fetch-cluster; BUG-SENTIMENT RAW-disproven at fb-poster flow:119). No new dispatch. Tier-1 auditor a9de6300 running bg. Open for PO Mon 06-22: FIX-SCHEDULER-LOCK-NO-RELEASE-TTL + mem-creep + rag-restart + db1/db2/db3 + REFINE-CRON-ARM + macro-fetch-cluster.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T18:12:32Z",
+    "updated_at": "2026-06-20T18:43:16Z",
     "updated_by": "dev-team-cron-router"
   },
   "narrative": {
@@ -232,7 +232,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T18:11:05Z",
+    "_updated_at": "2026-06-20T18:39:50Z",
     "_updated_by": "dev-team-cron-router",
     "archive": [
       {
@@ -1354,8 +1354,32 @@
         "type": "db_integrity_breach",
         "summary": "scheduler_locks: weeklyPortfolioReport held 6d, will block next run",
         "severity": "HIGH",
+        "status": "DONE-LIVE-VERIFIED",
+        "payload_ref": "docs/signals/db-integrity-history.json",
+        "router_verified_at": "2026-06-20T18:36:52Z",
+        "router_verdict": "REAL-CONFIRMED via raw db-integrity-history.json: lock acquired 2026-06-14T16:00:01, released_at=NULL, cron_job_runs=job completed SUCCESS same ts (release-on-success leaked), schema has NO TTL/expires_at col. Weekly cadence -> next run ~2026-06-21T16:00Z (~21h) will be BLOCKED by stale lock. NOT a weekend-freshness FP.",
+        "router_dispatched_to": "ops",
+        "router_action": "ops RAW-verify named-vol scheduler_locks then CLEAR stale weeklyPortfolioReport lock (set released_at / delete row) before next run; mitigation only.",
+        "router_durable_fix": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL (dev-mcp-server): add release-on-success in finally + partial-unique/TTL or expires_at sweep so leaked locks self-heal. PO formalize Mon 06-22.",
+        "router_triaged_by": "dev-team-cron-router",
+        "router_resolved_at": "2026-06-20T18:39:50Z",
+        "router_resolution": "ops cleared stale lock (UPDATE released_at). Router INDEPENDENTLY RAW-confirmed on named vol vn-market-intelligence-mcp_market_data: weeklyPortfolioReport released_at=2026-06-14 16:00:01 (non-NULL). Next weekly run 2026-06-21T16:00Z UNBLOCKED. Mitigation DONE. Durable fix (release-on-success + TTL) still open for PO Mon 06-22 -> FIX-SCHEDULER-LOCK-NO-RELEASE-TTL (dev-mcp-server)."
+      },
+      {
+        "id": "sau-20260620T184351Z",
+        "ts": "2026-06-20T18:43:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "A-30 CRITICAL: mcp-server memory at 99.99% (2.0 GiB / 2 GiB cap) — trend 99.12%→99.90%→99.99%",
+        "severity": "CRITICAL",
         "status": "NEW",
-        "payload_ref": "docs/signals/db-integrity-history.json"
+        "payload_ref": null,
+        "check_id": "A-30",
+        "service_id": "mcp-server",
+        "zone_owner": "dev-mcp-server",
+        "details": "mcp-server memory pressure at absolute ceiling with zero headroom. Monotonic escalation across 3 Tier-1 audits: c600=99.12% (2026-06-20T17:08Z), c601=99.90% (2026-06-20T18:07Z), c603=99.99% (2026-06-20T18:43Z). Container healthy (RestartCount=0, no OOM kills yet), but system at breaking point. Requires immediate investigation of working-set growth (candidate: Bun-JIT v1.29.0 + Zod v3.25.76 memory behavior).",
+        "dedup_key": "microservice_degraded:mcp-server:A-30"
       }
     ]
   },
