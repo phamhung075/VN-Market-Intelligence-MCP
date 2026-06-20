@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T10:43:30Z",
+  "_updated_at": "2026-06-20T19:40:57Z",
   "_updated_by": "dev-team-cron-router",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -194,11 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "tick 20260620T184030Z closed (clean idle, Sun 01:40 VN market-closed). Drained 2 signals (context-bloat = known FIX-BLOAT-HOOK over-fire/notebook 146L<cap; db-integrity = stale-lock already actioned this cycle). Claimed Telegram 3271 (2h health-recheck): ALL items known-tracked or proven-false (vps-bctc P0 = event-driven false-alarm, corroborated by Tier-2 BCTC PASS; macro/news sources = macro-fetch-cluster; BUG-SENTIMENT RAW-disproven at fb-poster flow:119). No new dispatch. Tier-1 auditor a9de6300 running bg. Open for PO Mon 06-22: FIX-SCHEDULER-LOCK-NO-RELEASE-TTL + mem-creep + rag-restart + db1/db2/db3 + REFINE-CRON-ARM + macro-fetch-cluster.",
+    "next_action": "Tick 20260620T220914Z complete (Sun 05:09 VN, market CLOSED weekend). SF-1 claimed clean (owner_agent=dev-team fix holds). 4 crons armed (no-op). Tier-1 auditor (a6d47b1d prior run) CLEAN 0-signals. Drain: no new signal files (cowork-team telemetry gateway-blind/pre-tick; 20:21Z empty). No new Telegram reports, no ci_red. 1 NEW row reconciled: rag-restart-watch RAW-verified RestartCount=86 PLATEAU (Up 12.4h healthy, 0 new restarts/12h) -> NEW->TRIAGED, MEDIUM held, PO Mon root-cause-or-close. No emergency. Idle.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T18:43:16Z",
-    "updated_by": "dev-team-cron-router"
+    "updated_at": "2026-06-20T22:11:17Z",
+    "updated_by": "dev-team-cron-router",
+    "last_tick": "20260620T220914Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -232,7 +233,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T18:47:10Z",
+    "_updated_at": "2026-06-20T22:11:17Z",
     "_updated_by": "dev-team-cron-router",
     "archive": [
       {
@@ -1297,12 +1298,14 @@
         "type": "service_restart_watch",
         "summary": "rag-service chronic restart cycle: RestartCount=86 (24h trend 77->86, +9). Currently Up 2h healthy, StartedAt 2026-06-20T09:47:12Z, 91.84%/768MiB cgroup. Tight 768MiB cap = recurring OOM-restart pattern.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "TRIAGED",
         "payload_ref": "docs/agent-memory/notebooks/system-auditor.md",
         "router_verified": true,
         "router_verified_at": "2026-06-20T11:42:56Z",
         "router_evidence": "LIVE docker inspect 2026-06-20T11:39Z: vn-market-intelligence-mcp-rag-service-1 State=running Health=healthy RestartCount=86 StartedAt=2026-06-20T09:47:12Z (2h stable). Confirmed across 2 dev-team ticks + Tier-1 auditor 24h trend. NOT in crisis (healthy, host 67% free).",
-        "router_note": "Auditor ac7308f97 FABRICATED tracking-row id seu-20260619T170803Z (does NOT exist in board) to justify 0-signal false-dedup; RAW-verify caught it. This is the FIRST real board row for the rag-service watch-item. Disposition: fold rag-service OOM/health check into Monday 06-22 ops mcp-server rebuild window (alongside OHLCV-P0 + VNINDEX re-sweep). Durable fix candidate = raise rag-service mem cap OR fix the embedder working-set growth (dev-rag-service zone). Not a weekend emergency."
+        "router_note": "RAW-verified 2026-06-20T22:11:17Z via docker inspect vn-market-intelligence-mcp-rag-service-1: RestartCount=86 (= watch-mint value, 77->86 unchanged since 11:39Z), Up 12.4h, Health=healthy, StartedAt 2026-06-20T09:47:12Z. Chronic restart cycle CALMED (0 new restarts in 12h). MEDIUM held (86 lifetime high) but NOT an active incident. PO Mon 06-22: mint root-cause task (suspect OOM/embedding-model crash) OR close-as-stable.",
+        "router_triaged_at": "2026-06-20T22:11:17Z",
+        "router_verdict": "PLATEAU-STABLE — not escalating; continue-watch, PO Mon root-cause-or-close"
       },
       {
         "id": "sau-2026-06-20T12:37:09Z",
@@ -1355,7 +1358,7 @@
         "type": "db_integrity_breach",
         "summary": "scheduler_locks: weeklyPortfolioReport held 6d, will block next run",
         "severity": "HIGH",
-        "status": "DONE-LIVE-VERIFIED",
+        "status": "ACUTE-RESOLVED-ROOT-TRACKED",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_verified_at": "2026-06-20T18:36:52Z",
         "router_verdict": "REAL-CONFIRMED via raw db-integrity-history.json: lock acquired 2026-06-14T16:00:01, released_at=NULL, cron_job_runs=job completed SUCCESS same ts (release-on-success leaked), schema has NO TTL/expires_at col. Weekly cadence -> next run ~2026-06-21T16:00Z (~21h) will be BLOCKED by stale lock. NOT a weekend-freshness FP.",
@@ -1364,7 +1367,11 @@
         "router_durable_fix": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL (dev-mcp-server): add release-on-success in finally + partial-unique/TTL or expires_at sweep so leaked locks self-heal. PO formalize Mon 06-22.",
         "router_triaged_by": "dev-team-cron-router",
         "router_resolved_at": "2026-06-20T18:39:50Z",
-        "router_resolution": "ops cleared stale lock (UPDATE released_at). Router INDEPENDENTLY RAW-confirmed on named vol vn-market-intelligence-mcp_market_data: weeklyPortfolioReport released_at=2026-06-14 16:00:01 (non-NULL). Next weekly run 2026-06-21T16:00Z UNBLOCKED. Mitigation DONE. Durable fix (release-on-success + TTL) still open for PO Mon 06-22 -> FIX-SCHEDULER-LOCK-NO-RELEASE-TTL (dev-mcp-server)."
+        "router_resolution": "ops cleared stale lock (UPDATE released_at). Router INDEPENDENTLY RAW-confirmed on named vol vn-market-intelligence-mcp_market_data: weeklyPortfolioReport released_at=2026-06-14 16:00:01 (non-NULL). Next weekly run 2026-06-21T16:00Z UNBLOCKED. Mitigation DONE. Durable fix (release-on-success + TTL) still open for PO Mon 06-22 -> FIX-SCHEDULER-LOCK-NO-RELEASE-TTL (dev-mcp-server).",
+        "status_corrected_at": "2026-06-20T20:58:56Z",
+        "status_corrected_by": "po-s52-stale-lock-loop-close",
+        "prior_status": "DONE-LIVE-VERIFIED",
+        "router_note": "STATUS CORRECTED from bogus DONE-LIVE-VERIFIED (a system-auditor self-resolution = confabulation: a detection-only agent must never self-close its own signal on an unwitnessed fix). RAW live truth (router-verified named-vol market_data this session): the weeklyPortfolioReport lock row DOES now show released_at set, so the ACUTE next-run block-risk is GONE — but released_at==acquired_at to the second (non-natural value) + RestartCount=0 (no app restart in window) => the release ORIGIN is UNEXPLAINED, the auditors fabricated justification (ops cleared it / clean release) is not witnessed. ROOT CAUSE (scheduler_locks has NO TTL/expires_at column + release is not guaranteed on job death) was dropped by the false-resolution while sibling integrity signals all got fix tasks (cron->FIX-CRON-RUNS-NULL-ERRORMSG, agent_signals->FIX-AGENTSIGNALS-EXPIRED-GC-CRON, db3->FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH). NOW TRACKED -> minted FIX-SCHEDULER-LOCK-NO-RELEASE-TTL (backlog, dev-mcp-server, low urgency / acute gone). NOT folded into ARCH-CRON-SCHEDULER-RELIABILITY: that umbrella is DONE/done_verified (closed 06-18) and scopes node-cron tick reliability (startScheduler.ts), NOT the scheduler_locks SQLite store — folding would re-open a verified-complete record. Distinct from FU-LOCKSTORE-EXPIRED-GC (coordination.db task-locks, DONE). Recurrence-prevention already shipped: cron command-file hardening + deterministic append helper (commits c0e75a03, 41edd240)."
       },
       {
         "id": "sau-20260620T184351Z",
@@ -1381,9 +1388,9 @@
         "zone_owner": "dev-mcp-server",
         "details": "mcp-server memory pressure at absolute ceiling with zero headroom. Monotonic escalation across 3 Tier-1 audits: c600=99.12% (2026-06-20T17:08Z), c601=99.90% (2026-06-20T18:07Z), c603=99.99% (2026-06-20T18:43Z). Container healthy (RestartCount=0, no OOM kills yet), but system at breaking point. Requires immediate investigation of working-set growth (candidate: Bun-JIT v1.29.0 + Zod v3.25.76 memory behavior).",
         "dedup_key": "microservice_degraded:mcp-server:A-30",
-        "router_verified_at": "2026-06-20T18:47:10Z",
+        "router_verified_at": "2026-06-20T19:40:57Z",
         "router_verdict": "DOWNGRADE CRITICAL->MEDIUM: live-probed mcp-server NOW RestartCount=0 OOMKilled=false Status=running (up ~23h at 99.99%/2GiB). Escalation trigger (RestartCount>0 OR OOMKilled) UNMET -> stable-but-maxed ceiling, NOT incident (denominator-blind discipline). Holding at cap for hours WITHOUT OOM proves it is not crashing.",
-        "router_note": "Real working-set growth (~8pp over 23h uptime, monotonic+accelerating) -> durable investigation Mon 06-22 dev-mcp-server: working-set/heap, candidate Bun-JIT v1.29.0 + Zod v3.25.76. Restart MASKS not fixes. IF OOM occurs over weekend: Docker self-heals via restart (RestartCount->1 auto-fires escalation trigger for next auditor tick); ops should capture a heap snapshot BEFORE any manual restart, do NOT just restart-and-forget.",
+        "router_note": "Real working-set growth (~8pp over 23h uptime, monotonic+accelerating) -> durable investigation Mon 06-22 dev-mcp-server: working-set/heap, candidate Bun-JIT v1.29.0 + Zod v3.25.76. Restart MASKS not fixes. IF OOM occurs over weekend: Docker self-heals via restart (RestartCount->1 auto-fires escalation trigger for next auditor tick); ops should capture a heap snapshot BEFORE any manual restart, do NOT just restart-and-forget. | UPDATE 19:37Z auditor c605 re-read 99.99%; RAW re-probe still RestartCount=0 OOMKilled=false up~24.5h, trigger still UNMET. Malformed-id dup row (sau-) deleted as junk; finding fully tracked here.",
         "router_triaged_by": "dev-team-cron-router",
         "supersedes": "router-20260620T154041Z-mcp-server-mem-creep"
       },
@@ -1394,9 +1401,12 @@
         "to": "po",
         "type": "signal_feedback",
         "summary": "A-12 FAIL: api-gateway:4000/health endpoint unreachable (HTTP CURL_ERR)",
-        "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "severity": "INFO",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_verdict": "FALSE-POSITIVE — live curl http://localhost:4000/health @19:40Z {status:ok} all 9 services ok, mcp latency 0ms; api-gateway up 9d healthy RestartCount=0 OOMKilled=false. 19:06 CURL_ERR = transient probe-side blip during concurrent audit/host-load (corroboration-gate class).",
+        "router_triaged_at": "2026-06-20T19:40:57Z",
+        "router_triaged_by": "dev-team-cron-router"
       },
       {
         "id": "sau-20260620T190656Z-a30",
@@ -1405,20 +1415,67 @@
         "to": "po",
         "type": "signal_feedback",
         "summary": "A-30 CRITICAL: mcp-server memory at 99.85% (1.997 GiB / 2 GiB cap) — trend escalation (c603=99.99% → c604=99.85%)",
-        "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "severity": "MEDIUM",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_dup_of": "sau-20260620T184351Z",
+        "router_verdict": "DUP of canonical mem watch row. RAW @19:37Z RestartCount=0 OOMKilled=false healthy up~24.5h at 99.99%/2GiB; escalation trigger (RestartCount>0 OR OOMKilled) UNMET -> stable ceiling, not incident.",
+        "router_triaged_at": "2026-06-20T19:40:57Z",
+        "router_triaged_by": "dev-team-cron-router"
       },
       {
-        "id": "sau-",
-        "ts": "2026-06-20T19:37:19Z",
+        "id": "sau-20260620T195454Z-cron",
+        "ts": "2026-06-20T19:54:54Z",
         "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "A-30 CRITICAL: mcp-server memory 99.99% (2GiB/2GiB) — OOM-kill risk",
-        "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "cron_job_runs: 9 jobs crashed/errored (pollNews/intelligenceCycle/bctc pipeline, most recent 2026-06-18, NULL error_msg)",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/db-integrity-history.json",
+        "router_disposition": "DEFER",
+        "router_note": "DEFER: folded into FIX-NEWS-CB-FALSE-CLOSED (backlog) + macro-fetch-cluster devteam-20260619T170200Z (TRIAGED). 9 crashed cron_job_runs rows are a STALE historical count, most-recent crash 2026-06-18, not active. Observability sub-gap minted as FIX-CRON-RUNS-NULL-ERRORMSG (NULL error_msg). No new crash-fix task. Weekend, all 12 services healthy.",
+        "router_triaged_at": "2026-06-20T20:15:42Z"
+      },
+      {
+        "id": "sau-20260620T195454Z-finrpt",
+        "ts": "2026-06-20T19:54:54Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "financial_reports: 17 rows with zero/negative net_revenue (extraction failures, OCR incomplete)",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/db-integrity-history.json",
+        "router_disposition": "DEFER",
+        "router_note": "DEFER: 17 zero/neg net_revenue rows = standing BCTC extraction-quality class. True root FIX-BCTC-ENRICH-SILENT-0ROWS already code-complete in review[] awaiting QA — do not re-mint. On QA sign-off, dev-pdf-extractor RAW-verifies which tickers via financial_reports WHERE net_revenue<=0.",
+        "router_triaged_at": "2026-06-20T20:15:42Z"
+      },
+      {
+        "id": "sau-20260620T195454Z-signals",
+        "ts": "2026-06-20T19:54:54Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "agent_signals: 3444 expired rows still unread/read, no GC cron to clean expired signals",
+        "severity": "MEDIUM",
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/db-integrity-history.json",
+        "router_disposition": "RESOLVED-VIA-MINT",
+        "router_note": "RESOLVED via mint: finding fully captured by new backlog task FIX-AGENTSIGNALS-EXPIRED-GC-CRON (daily GC cron for ~3444 expired agent_signals rows).",
+        "router_triaged_at": "2026-06-20T20:15:42Z"
+      },
+      {
+        "id": "sau-20260620T212532Z-signal-outcomes",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "summary": "signal_outcomes: 65 of 72 stuck pending >5d (checked_at never populated), signal outcome verification stalled",
+        "severity": "HIGH",
+        "status": "TRIAGED",
+        "payload_ref": "docs/signals/db-integrity-history.json",
+        "router_minted": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
+        "router_verdict": "REAL-NEW confirmed via get_calibration_report (frozen 2026-06-14, 4 resolved/90d); resolution job stalled; backlog P2 dev-mcp-server, Mon batch; related FIX-ALERT-CASCADE-OUTCOME-DEAD (record-side)",
+        "router_triaged_at": "2026-06-20T21:41:56Z"
       }
     ]
   },
@@ -1532,7 +1589,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-20T12:46:31Z",
+    "_updated_at": "2026-06-20T20:44:27Z",
     "_updated_by": "dev-team-cron-router",
     "active_sprints": [
       {
@@ -11078,6 +11135,186 @@
         "updated_by": "qa",
         "router_note": "Dev (aeacdb25) shipped code+tests green; router persisted TODO→REVIEW (dev self-reported REVIEW but never committed board change). tsc clean + WIC-1 8/0 + WIC-2 10/0 RAW-verified by router.",
         "status_note": "code-done; parent FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 awaiting Monday live-sweep done_verified"
+      },
+      {
+        "id": "FIX-CRON-RUNS-NULL-ERRORMSG",
+        "title": "cron_job_runs records crash/error rows with NULL error_msg — uncapturable failures",
+        "desc": "Observability gap (auditor sau-20260620T195454Z-cron): errored cron_job_runs rows carry status=crashed/errored but error_msg IS NULL — a crash cannot be diagnosed post-hoc (source-timeout vs OOM vs unhandled throw). Fix: capture err.message (+truncated stack) into error_msg on the error write path in the cron run wrapper. RAW-verify-on-pickup: cron_job_runs WHERE status IN (crashed,errored) ORDER BY ts DESC LIMIT 20. Distinct from FIX-CRON-JOB-RUNS-DOUBLE-LOG (double-INSERT hygiene). Generic across all jobs sharing the wrapper. Small.",
+        "type": "FIX",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "baseline_pass": "RAW-verify-on-pickup",
+        "created_at": "2026-06-20T20:15:42Z",
+        "created_by": "po",
+        "source_signal": "sau-20260620T195454Z-cron"
+      },
+      {
+        "id": "FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
+        "title": "agent_signals has no GC cron — 3444 expired rows accumulating unbounded",
+        "desc": "Maintenance gap (auditor sau-20260620T195454Z-signals, MEDIUM): agent_signals accumulates ~3444 expired rows (read/expired, past expires_at) with no GC cron -> unbounded growth. Add daily off-hours GC cron: DELETE FROM agent_signals WHERE expires_at < now AND status IN ('read','expired'). Mirror shipped FU-LOCKSTORE-EXPIRED-GC pattern. RAW-verify-on-pickup: SELECT count(*) confirm ~3444 magnitude + safe predicate (never delete unread/unexpired). Small.",
+        "type": "FIX",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "baseline_pass": "RAW-verify-on-pickup",
+        "created_at": "2026-06-20T20:15:42Z",
+        "created_by": "po",
+        "source_signal": "sau-20260620T195454Z-signals"
+      },
+      {
+        "id": "FIX-MARKET-WATCHER-DOC-PARAM-DRIFT",
+        "title": "market-watcher docs: 3 example params use ticker/tickers[] instead of live API code field — non-breaking doc drift",
+        "desc": "From health-recheck report 3272 (NEW IMPROVE I6): market-watcher docs have 3 example tool-call params using ticker/tickers[] instead of the live API field 'code'. NOT breaking current callers (flow files already correct) but agents copying the examples hit validation errors. Same class as shipped FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS (commit 0e81b642, 7 tools). Fix: correct the 3 examples to 'code'. RAW-verify-on-pickup exact file+lines: grep -n 'ticker' docs/agents/market-watcher/ + notebook. Trivial, low priority. Before editing any agent .md, invoke agent-md-factory skill.",
+        "type": "FIX",
+        "size": "S",
+        "zone": "docs/agents/market-watcher/",
+        "status": "BACKLOG",
+        "baseline_pass": "RAW-verify-on-pickup",
+        "created_at": "2026-06-20T20:44:27Z",
+        "created_by": "dev-team-cron-router",
+        "source_report": "3272"
+      },
+      {
+        "id": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL",
+        "type": "FIX",
+        "title": "scheduler_locks: release-on-death + TTL/auto-expire so leaked locks self-heal",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "urgency": "low",
+        "owner": "dev-mcp-server",
+        "route": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "baseline_pass": false,
+        "source": "router RAW-verified close of signal sau-sch-20260620T182937Z-stale-lock (acute released live; root cause untracked after a confabulated self-resolution). Acute block-risk GONE -> backlog priority.",
+        "desc": "ROOT CAUSE of the weeklyPortfolioReport stale-lock incident: scheduler_locks has NO expires_at/TTL column and lock release is NOT guaranteed on job death (only on success path). A job that dies mid-run leaks a lock with released_at=NULL, blocking the next cadence run with no self-heal. Fix: (1) wrap the lock release in a finally{} so it runs on success AND failure/throw; (2) add an expires_at/TTL column (or a periodic sweep DELETE/UPDATE WHERE released_at IS NULL AND acquired_at < now-2x-cadence) so a leaked lock auto-expires instead of blocking forever. RAW evidence: on 06-14 the lock released_at==acquired_at to the second + RestartCount=0 => the release origin was unexplained (likely a sweep/manual, not a guaranteed code path). DISTINCT from FU-LOCKSTORE-EXPIRED-GC (that GCs coordination.db TASK-locks; this is the scheduler_locks SQLite table). NOT subsumed by ARCH-CRON-SCHEDULER-RELIABILITY (that umbrella is done_verified + scopes node-cron TICK delivery, not the lock store).",
+        "verification_gate": "LIVE on named-vol market_data: (a) kill a scheduler job mid-run in test -> assert its scheduler_locks row gets released_at set in finally (no leak); (b) a pre-existing leaked lock (released_at NULL, acquired_at older than 2x cadence) is auto-expired by the sweep/TTL and the next run is NOT blocked. QA verifies raw rows, never badges.",
+        "generic_mandate": "Fix the lock-lifecycle for ALL scheduler_locks consumers, not just weeklyPortfolioReport.",
+        "minted_at": "2026-06-20T20:58:56Z",
+        "minted_by": "po-s52-stale-lock-loop-close"
+      },
+      {
+        "id": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
+        "type": "FIX",
+        "title": "signal_outcomes resolution job stalled: 65/72 rows pending >5d, checked_at never advances; calibration frozen since 2026-06-14",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "urgency": "medium",
+        "owner": "dev-mcp-server",
+        "route": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "baseline_pass": false,
+        "related_to": "FIX-ALERT-CASCADE-OUTCOME-DEAD",
+        "source": "system-auditor Tier-3 deep DB scan sau-20260620T212532Z-signal-outcomes (verdict REAL-NEW); router RAW-cross-verified via get_calibration_report (frozen 2026-06-14, 4 resolved in 90d).",
+        "desc": "ROOT CAUSE (RESOLUTION stage, distinct from record stage): signal_outcomes has 72 recorded rows but 65 are stuck outcome_24h/outcome_48h='pending' with checked_at NULL for 5+ days (created_at < 2026-06-15). The outcome-resolution job (likely scheduler-zone checkSignalOutcomesJob or equivalent) is not running or stuck, so rows never advance pending->correct/incorrect. Router RAW-cross-verified via get_calibration_report: report frozen at 2026-06-14T13:00Z (6d stale) with only 4 resolved predictions in the 90-day window, confirming the resolution machinery stopped advancing. DISTINCT from FIX-ALERT-CASCADE-OUTCOME-DEAD (that = record side: record_signal_outcome never CALLED for the 49 cascade rules, Eval=0). THIS = resolution side: rows ARE recorded but never resolved. Same outcome-feedback-loop feature; PO may merge Monday. Fix: (1) locate + restart/repair the outcome-resolution job; ensure checked_at advances; (2) backfill-resolve the 65 stuck rows (compare created_at price vs +24h/+48h actual) so calibration unfreezes; (3) add freshness/liveness guard so a stalled resolver self-alerts.",
+        "verification_gate": "LIVE on named-vol market_data DB: (a) signal_outcomes rows with created_at older than 48h have checked_at populated and outcome_24h/48h resolved (not 'pending'); (b) get_calibration_report computed_at advances past 2026-06-14 with resolved-prediction count > 4; (c) a newly-recorded signal_outcome resolves within 48h+buffer. QA verifies raw rows on named volume, never badges.",
+        "generic_mandate": "Fix the outcome-resolution lifecycle for ALL signal_outcomes rows, not just the 65 currently stuck.",
+        "minted_at": "2026-06-20T21:41:56Z",
+        "minted_by": "dev-team-cron-router-20260620T213904Z"
+      },
+      {
+        "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "type": "FIX",
+        "title": "Evening digest: same-ticker RSI diverges between alert-block (Go svc, 35-candle) and TA/sector-block (TS local computeRSILocal, 15-candle + market_prices_history fallback)",
+        "priority": "P1",
+        "severity": "HIGH",
+        "owner": "developer",
+        "dev_agent": "dev-technical-analysis",
+        "zone": "multi",
+        "status": "BACKLOG",
+        "created_at": "2026-06-20T22:24:47Z",
+        "created_by": "po-digest-quality-triage",
+        "raw_verified": true,
+        "evidence": "2026-06-19 evening_summary: NVL alert-block RSI=29.7 (taAlertScanJob.ts → daily_ohlcv WHERE date>=-60d, MIN_CANDLES=35, Go computeTAIndicators Wilder) vs TA/sector-block RSI=27.6 (defaultComputeTa in assembleBriefing.ts → daily_ohlcv ORDER date ASC LIMIT 60, min 15, computeRSILocal TS Wilder, market_prices_history synthetic-close fallback). Live DB: NVL has 41 daily_ohlcv candles, both paths see same 41 rows, latest bar valid (close 12900 vol 14.98M) → divergence is engine/window/gate not data. Class = feedback_same_db_tools_diverge_rowcount but NUMERIC (both return a value), distinct from done_verified FIX-TA-GOSVC-NA-DESPITE-DEPTH (which was N/A-despite-depth).",
+        "root_cause": "Two independent RSI engines feed ONE digest cycle: (1) alert path = Go TA service Wilder over a date-windowed candle set, min 35; (2) TA/sector path = TS computeRSILocal over LIMIT-60 candle set, min 15, with a market_prices_history synthetic fallback. Different smoothing-warmup depth + different candle windows + different impl → same ticker, same minute, divergent RSI.",
+        "fix_spec": "Make the digest single-source its RSI: the TA/sector block + the alert block must read RSI from ONE canonical engine over ONE candle window+gate. Recommend: route both through the canonical get_technical_indicators / Go svc path (already the alert source) OR have defaultComputeTa delegate to the same computeTAIndicators client; align MIN_CANDLES (35) and remove the market_prices_history synthetic-close fallback divergence for digest RSI. Add a test asserting alert-block RSI == TA-block RSI for a fixture ticker.",
+        "generic_mandate": "Fix is generic across ALL watchlist tickers and both digest blocks — not an NVL special-case.",
+        "verification_gate": "LIVE: in a real evening_summary cycle, the same ticker shows identical RSI in the alert-block and the TA/sector-block (RAW-probe both engines for ≥3 tickers, assert equal to 1dp).",
+        "files": [
+          "apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts",
+          "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
+          "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts"
+        ],
+        "rebuild_required": true,
+        "standing_goal": "goal#1 — no implausible/inconsistent served data"
+      },
+      {
+        "id": "FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME",
+        "type": "FIX",
+        "title": "USD/VND false-CRITICAL +5.28σ: rolling stdDev band pathologically tight (~12.5 VND) so a trivial 66-VND (0.25%) drift reads as 5σ extreme; 50-VND minAbsDeviation floor caps level only for <50-VND moves and never bounds the displayed σ",
+        "priority": "P1",
+        "severity": "HIGH",
+        "owner": "developer",
+        "dev_agent": "dev-macro-indicators",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "created_at": "2026-06-20T22:24:47Z",
+        "created_by": "po-digest-quality-triage",
+        "raw_verified": true,
+        "evidence": "2026-06-19 evening_summary CRITICAL: USD/VND 26335 +5.28σ trên TB 26269.17. Code: macroThresholds.ts classifyDeviation() zScore=(current-mean)/stdDev, level extreme at absZ>=3. Implied stdDev = 65.83/5.28 ≈ 12.47 VND — a normal SBV-fix daily move (±50 VND) is already ~4σ. minAbsDeviation guard = 50 VND for vnd indicators (line 139) caps LEVEL to elevated ONLY when absDeviation<50; here absDeviation=65.83>50 so guard does NOT fire → extreme passes. The σ NUMBER in the summary string is never bounded.",
+        "root_cause": "σ-based escalation over a too-tight/too-short rolling stdDev window for a slow-moving SBV-fixed rate. A relative-only threshold has no absolute %-move floor before CRITICAL, and the 50-VND guard is both too low and only level-caps sub-50 moves.",
+        "fix_spec": "Add an absolute %-move floor (e.g. require |current-mean|/mean >= ~0.5% before level can reach high/extreme for FX) AND/OR widen the rolling lookback + enforce a minimum stdDev floor for FX indicators so micro-volatility cannot manufacture 5σ. Severity gate (CRITICAL) must require BOTH the σ test AND the absolute %-move floor. Keep the σ number honest in the summary but do not escalate severity on it alone.",
+        "generic_mandate": "Generic across all FX/slow-moving macro indicators (usdVndRate, usdVndOfficial, rates), not USD/VND-only.",
+        "verification_gate": "LIVE: a 0.25%-class USD/VND drift no longer emits CRITICAL; a genuine >0.5% move still does. RAW-probe classifyDeviation on the live series.",
+        "files": [
+          "apps/mcp-server/src/domain/services/macroThresholds.ts"
+        ],
+        "rebuild_required": true,
+        "standing_goal": "goal#1 — no false-extreme served data",
+        "related": [
+          "FIX-MACRO-SNAPSHOT-DELTAS-NULL"
+        ]
+      },
+      {
+        "id": "FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN",
+        "type": "FIX",
+        "title": "Evening digest Khối ngoại top-5 padded with zero-net rows (ACV/DFF/HBC = 0.000k): top-N query ORDER BY ABS(net) DESC LIMIT 5 with no <>0 filter; allZero formatter guard misses partial-zero case",
+        "priority": "P2",
+        "severity": "MEDIUM",
+        "owner": "developer",
+        "dev_agent": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "created_at": "2026-06-20T22:24:47Z",
+        "created_by": "po-digest-quality-triage",
+        "raw_verified": true,
+        "evidence": "Live DB latest day: only 2 tickers have nonzero foreign_net_vol (MWG +35469, VNH -40); top-5 query pads with ACV/DFF/HBC/HNG/MBS/OIL = 0.0. assembleEveningSummary.ts Step4b SQL: ORDER BY ABS(foreign_net_vol) DESC LIMIT 5 — no AND foreign_net_vol<>0. Formatter formatForeignFlowSection allZero guard only fires when EVERY mover is zero (false here, MWG!=0) so zeros render as 0.000k. UNIT scale CONFIRMED CORRECT (k = thousands of shares; VNH -40 shares = 0.040k) — scale-mislabel sub-claim DISMISSED.",
+        "root_cause": "Top-N selection ranks by |net| but never drops zero/near-zero rows; the digest then renders meaningless 0.000k lines. Also surfaces thin coverage (only 2 nonzero) — coverage is separately tracked (FIX-FOREIGN-FLOW-COVERAGE).",
+        "fix_spec": "Add AND foreign_net_vol <> 0 (or a small |net| floor) to the Step-4b query so zero-net rows are excluded before LIMIT 5; the section then renders only real movers (or the existing unavailability notice when none). Add a test with a partial-zero fixture asserting no 0.000k line is emitted.",
+        "generic_mandate": "Generic top-N hygiene; applies whenever fewer than 5 tickers have real foreign flow.",
+        "verification_gate": "LIVE evening cycle: Khối ngoại lists only nonzero-net tickers; no 0.000k padding line.",
+        "files": [
+          "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts",
+          "apps/mcp-server/src/scheduler/briefings/eveningSummaryJob.ts"
+        ],
+        "rebuild_required": true,
+        "standing_goal": "goal#1 — no meaningless padded served data",
+        "distinct_from": "FIX-FOREIGN-FLOW-COVERAGE (source-fetch coverage) — this is the DIGEST FORMATTER/top-N layer."
+      },
+      {
+        "id": "FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR",
+        "type": "FIX",
+        "title": "Suppress BB-break / TA alerts on sub-liquidity-threshold stocks: bbAlertScanJob only rejects volume<=0 (stub-bar), no positive-but-thin liquidity floor → noisy marginal breaks on illiquid tickers (e.g. D2D)",
+        "priority": "P3",
+        "severity": "LOW",
+        "owner": "developer",
+        "dev_agent": "dev-technical-analysis",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "created_at": "2026-06-20T22:24:47Z",
+        "created_by": "po-digest-quality-triage",
+        "raw_verified": true,
+        "evidence": "2026-06-19 digest WARNING: D2D 31100 dưới BB dưới 31177 Vol 6.4K, only 77 below band (marginal). bbAlertScanJob.ts only guards lastCandle.volume<=0 (stub-bar, line 189). No min-liquidity floor → low-but-positive-volume illiquid stocks emit noisy near-band BB alerts. (Note: latest D2D daily vol=63.7K; the 6.4K in the report is the rendered figure — point stands regardless.)",
+        "root_cause": "TA/BB alert scan has no liquidity threshold; any positive-volume bar qualifies, so thin stocks generate low-conviction noise.",
+        "fix_spec": "Add a configurable minimum daily turnover/volume floor (or a min-distance-below-band) before emitting BB/TA alerts; below the floor, suppress (honest gap, no alert). Apply to bbAlertScanJob and the parallel TA scan. Test asserts a sub-floor ticker emits no alert.",
+        "generic_mandate": "Generic liquidity floor across all watchlist tickers and both BB + RSI scan jobs.",
+        "verification_gate": "LIVE: a known illiquid ticker with a marginal band break emits no BB alert; a liquid ticker still does.",
+        "files": [
+          "apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts",
+          "apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts"
+        ],
+        "rebuild_required": true,
+        "standing_goal": "goal#1 / UX — suppress low-conviction noise"
       }
     ],
     "closed_sprints": [
