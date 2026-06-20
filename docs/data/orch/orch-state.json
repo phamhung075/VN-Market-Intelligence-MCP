@@ -194,12 +194,11 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260620T121009Z CLOSED (clean). Drain: cowork_tick_telemetry SKIPPED_BLIND_NO_BACKSTOP (08:06/09:06/12:06Z) -> processed/ (gateway-blind gatherers = USER-side .mcp.json gap, not code bug); db-integrity-history rolling log left in place, scan 11:56:14Z all 4 anomalies ALREADY-OPEN (new_signals_written:[]); daily_ohlcv OHLC-violations 661->835 (net +174, REGRESSION reversing prior 836->661 — writer fix NOT yet effective, do NOT trust single low reading) still under FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 [REVIEW] gated Mon 06-22. Telegram 1 new: report 3268 (health-recheck analysis-agent, 5 BUG+5 ISSUE) CLAIMED all-false/known/weekend: BUG-SENTIMENT FALSE (get_sentiment_trend RAW=VCB 10 entries live); BCTC BUG -> ops-vps-fetch live SSH probe = HEALTHY-IDLE (active 9d, queue=0, clean 6h-cycle exits, last real fetch 06-17, NO restart) confirmed false P0 -> feeds FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH (add queue=0 guard before push-age CRITICAL); weekend price/FX/SBV/HNX/news staleness EXPECTED->INFO. signal_queue canonical-4-keys no-orphans, 29 rows, 1 NEW (router-20260620T113917Z-rag-restart-watch MEDIUM->po stays NEW for Mon PO: rag-service RestartCount 86 / 698MiB-of-768MiB tight cap, dev-rag-service zone). No PO re-spawn (zero new actionable). now_VN Sat 19:17 market-closed. Tier-1 auditor (this session) HEALTHY self-committed notebook. WIP=0 idle. Mon 06-22 batch-rebuild gated: FIX-VNINDEX-CACHE re-sweep + OHLCV P0 confirm + rag mem-cap.",
+    "next_action": "tick 20260620T181148Z closed (clean idle, Sun 01:11 VN market-closed; rapid re-fire ~40s after prior tick). No new Telegram reports, no new signal files (drained prior tick), signal_queue canonical-4/32 rows/2 NEW MEDIUM router watch-rows held Mon 06-22 PO. Open lanes: REFINE-CRON-ARM (USER-side) + BCTC-PDF-PATH-BACKFILL (backlog) — standing, no action. PO triage NOTHING. No dispatch.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T12:46:31Z",
-    "updated_by": "dev-team-cron-router",
-    "note": "tick 20260620T123947Z closed: 0 telegram, drain clean, PO triage NOTHING (idle). DFR-BA-1 label-hygiene approved->done. Auditor heartbeat acked. rag-restart-watch held for Mon 06-22 PO. WIP=0."
+    "updated_at": "2026-06-20T18:12:32Z",
+    "updated_by": "dev-team-cron-router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -233,7 +232,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T12:46:31Z",
+    "_updated_at": "2026-06-20T18:11:05Z",
     "_updated_by": "dev-team-cron-router",
     "archive": [
       {
@@ -1316,6 +1315,47 @@
         "status": "READ",
         "payload_ref": null,
         "router_ack": "[router 2026-06-20T12:46:31Z] INFO Tier-1 clean heartbeat acked (12 services healthy, 0 anomalies)."
+      },
+      {
+        "id": "router-20260620T154041Z-mcp-server-mem-creep",
+        "ts": "2026-06-20T16:09:30Z",
+        "from": "dev-team-cron-router",
+        "to": "po",
+        "type": "memory_pressure_watch",
+        "summary": "mcp-server memory monotonic climb toward 2GiB cgroup cap: 92.37->92.99->94.27->97.09% across this session 4 Tier-1 runs. LIVE 97.09% (1.942/2GiB) Up 21h RestartCount=0 healthy. Climb is NOT a flat ceiling = consistent with slow leak; a Monday rebuild would MASK not fix.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/agent-memory/notebooks/system-auditor.md",
+        "router_verified": true,
+        "router_verified_at": "2026-06-20T16:09:30Z",
+        "router_evidence": "LIVE docker stats + inspect 2026-06-20T15:40Z: vn-market-intelligence-mcp-mcp-server-1 MemUsage=1.942GiB/2GiB 97.09% State=running Health=healthy RestartCount=0 StartedAt=2026-06-19T19:04:04Z (21h stable). Trend across session three Tier-1 auditor runs: 92.37->92.99->94.27->97.09%.",
+        "router_note": "Auditor 2f988605 classified WARN-ceiling 0-restart, wrote NO row. Router overrides: the MONOTONIC climb (not flat) crossing the ~97% flip-line warrants a tracked row so dev-mcp-server investigates the working-set GROWTH (candidate: sdk:1.29.0+zod:3.25.76 Bun-JIT working-set, see restart_masks_bun_jit_corruption) rather than masking via rebuild. Disposition: fold into Monday 06-22 ops mcp-server rebuild window alongside rag-restart-watch + OHLCV-P0 + VNINDEX. NOT a weekend emergency (0-restart healthy). If it OOM-restarts before Mon, escalate to dev-mcp-server live.",
+        "router_latest": "2026-06-20T18:07Z auditor mem=99.90% — trajectory 98.58->99.12->99.90% ACCELERATING (gap +0.54 then +0.78); RestartCount=0/no-OOM (escalation trigger RestartCount>0||OOM still UNMET). Mon 06-22 dev-mcp-server: investigate working-set growth (sdk1.29.0+zod3.25.76 Bun-JIT candidate), not rebuild-mask."
+      },
+      {
+        "id": "sau-20260620T170827ZZ",
+        "ts": "2026-06-20T17:08:27Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "C-06 FAIL: market_messages stale >3h (check C-06) — last message 2026-06-19 19:47:24",
+        "severity": "INFO",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_note": "Router weekend-framing downgrade: now_VN Sun 2026-06-21 00:09, VN market closed since Fri 08:00Z. market_messages last row 2026-06-19 19:47:24Z = Friday post-close; 21h gap is weekend idle, NOT an ingestion halt. C-06 3h threshold is market-hours-blind (see memory auditor_freshness_threshold_market_hours_blind). Severity HIGH->INFO. RE-VERIFY at Mon 06-22 market open (02:00Z/09:00 VN) — if market_messages still stale after open => real incident, escalate then. No emergency dispatch on weekend.",
+        "router_triaged_at": "2026-06-20T17:11:18Z",
+        "router_triaged_by": "dev-team-cron-router"
+      },
+      {
+        "id": "sau-sch-20260620T182937Z-stale-lock",
+        "ts": "2026-06-20T18:29:37Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "scheduler_locks: weeklyPortfolioReport held 6d, will block next run",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/db-integrity-history.json"
       }
     ]
   },
@@ -1756,10 +1796,12 @@
             "owner": "ops",
             "priority": "P3",
             "size": "S",
-            "status": "NEW",
+            "status": "DONE-LIVE-VERIFIED",
             "title": "After 7-day retention (2026-06-14): delete backup files and temp dumps",
             "type": "CLEANUP",
-            "zone": "infrastructure/storage"
+            "zone": "infrastructure/storage",
+            "router_note": "Files confirmed ABSENT 2026-06-21 (market.db.bak-100225, .bak-103143-CORRUPT-ORIGINAL, market_dump_103239.sql all gone — already deleted by prior cleanup). Retention goal achieved; host disk healthy (Data vol 27Gi free). Router ground-truth-verified NEW->DONE, NO re-dispatch (signal-row-lags-groundtruth).",
+            "router_verified_at": "2026-06-20T18:11:05Z"
           },
           {
             "created_at": "2026-06-12T20:44:18Z",
