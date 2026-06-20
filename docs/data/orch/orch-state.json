@@ -183,15 +183,15 @@
     }
   ],
   "head": {
-    "status": "active",
-    "active_task_id": "CLEAN-TI-DOC-PARAM-CODE-DRIFT",
-    "next_agent": "dev-mcp-server",
-    "next_action": "FIX dispatched to dev-mcp-server — RSI test buildTestDb() alerts DDL missing sent_by; durable fix = use canonical createAlertsSchema(). Fleet CI unblocker (gates ci_green for 495cf0d4 REVIEW). On return: RAW-verify bun test green + commit narrowness, then push gates ci re-run.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": null,
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T07:30:39Z",
+    "updated_at": "2026-06-20T07:39:47Z",
     "updated_by": "dev-team-cron-router",
-    "note": "SPIKE-REGISTRY-PARAM-DRIFT held (P3 doc-hygiene) — scope recorded on CLEAN-TI-DOC-PARAM-CODE-DRIFT backlog row for next-tick dispatch; not run concurrently to avoid commit race vs the P0 CI fix."
+    "note": "Tick 20260620T071319Z closed: FIX-CI-RED-7fef5850→REVIEW (5ed1c751, awaits out-of-band CI), SPIKE registry-param-drift→done_verified (2b740b50). Idle."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1311,8 +1311,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-20T07:30:39Z",
-    "_updated_by": "router-dev-team-tick",
+    "_updated_at": "2026-06-20T07:39:47Z",
+    "_updated_by": "dev-team-cron-router",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -15814,6 +15814,46 @@
         "deployed_commit": "b3ea96fa",
         "test_commit": "847376a0",
         "verify_gate": "LIVE-PENDING next VN session (~0200-0800Z 2026-06-20): RSI/BB/foreign-flow scan alerts must carry fingerprint NOT NULL + agent_signals co-write; orphan_max for those id-patterns must stay frozen at pre-deploy 2026-06-19T06:45Z (no NEW orphans). Verified now: schema migrated live (alerts.fingerprint/sent_by/notified_telegram + agent_signals.alert_id all present), image 05ad3412 .Created 19:03:38Z > commit b3ea96fa epoch, container healthy 0-restart, named tests 97/0, full suite 13268/52. Forward-fix only: 1319 historical orphans NOT backfilled. system-auditor C-08 is the natural re-verifier."
+      },
+      {
+        "id": "CLEAN-TI-DOC-PARAM-CODE-DRIFT",
+        "title": "get_technical_indicators.md + get_price_history.md doc SSOT says param `ticker` but live server requires `code` (doc-only, 0 runtime broken)",
+        "type": "CLEAN",
+        "status": "DONE",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "docs/agents/tools/list/get_technical_indicators.md",
+          "docs/agents/tools/list/get_price_history.md",
+          "docs/agents/market-watcher.md"
+        ],
+        "root_cause": "Doc SSOT lists param=`ticker`; live tool schema requires `code`. Flow files already use `code` (working) so 0 runtime breakage (report 3204 confirms doc-only). market-watcher.md examples (lines ~147/177/208) carry the stale `ticker`.",
+        "fix_spec": "Correct the param name `ticker` -> `code` in the two list docs + the market-watcher.md examples. Doc-only, no code, no rebuild.",
+        "verification_gate": "grep shows no `ticker:` param example for get_technical_indicators/get_price_history in the listed docs.",
+        "rebuild_required": false,
+        "source_reports": [
+          3199,
+          3204
+        ],
+        "dedup_note": "untracked, cosmetic. Low priority — purely SSOT hygiene, no served-data impact.",
+        "minted_by": "po-s94",
+        "minted_at": "2026-06-17T01:34:10Z",
+        "spike_escalation": {
+          "by": "po-triage-20260620",
+          "from_signal": "devteam-loop-20260620T071556Z-registry-param-drift",
+          "widened_scope": "FULL audit of docs/agents/tools/list/ ticker-vs-code param drift (NOT just the 2 named docs). Probe LIVE schema via list_server_tools(vn-market) — NOT all ticker-docs assumed wrong. Output truth-table + targeted doc-only fix set.",
+          "confirmed_instance": "get_price_history.md documents `ticker` but live schema rejects ticker (invalid_type) and requires `code`",
+          "timebox_min": 120,
+          "held_reason": "Dispatched next tick after P0 CI fix lands — avoids concurrent dev-mcp-server commit race",
+          "escalated_at": "2026-06-20T07:26:41Z"
+        },
+        "dispatched_at": "2026-06-20T07:30:39Z",
+        "done_verified": true,
+        "commit_sha": "2b740b50",
+        "completed_at": "2026-06-20T07:39:47Z",
+        "completion_note": "Full registry param-drift audit (widened from 2 named docs). 18 tool docs in docs/agents/tools/list/ corrected to match live Zod schema (ticker→code etc.); 16 full + 1 partial (get_cash_flow) drift fixed; ticker-native tools (get_agm_plan,write_alert_verdict,get_cascade_outcomes,get_bctc_pending_refine) correctly left unchanged — proves live-schema probe not blind replace. 0 runtime drift (flow call-sites already used code). RAW-verified: commit 2b740b50 MD-only, board untouched, get_price_history.md now documents code+days. Doc-only → no CI gate."
       }
     ],
     "done_verified": [
@@ -21792,44 +21832,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
-      {
-        "id": "CLEAN-TI-DOC-PARAM-CODE-DRIFT",
-        "title": "get_technical_indicators.md + get_price_history.md doc SSOT says param `ticker` but live server requires `code` (doc-only, 0 runtime broken)",
-        "type": "CLEAN",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "files": [
-          "docs/agents/tools/list/get_technical_indicators.md",
-          "docs/agents/tools/list/get_price_history.md",
-          "docs/agents/market-watcher.md"
-        ],
-        "root_cause": "Doc SSOT lists param=`ticker`; live tool schema requires `code`. Flow files already use `code` (working) so 0 runtime breakage (report 3204 confirms doc-only). market-watcher.md examples (lines ~147/177/208) carry the stale `ticker`.",
-        "fix_spec": "Correct the param name `ticker` -> `code` in the two list docs + the market-watcher.md examples. Doc-only, no code, no rebuild.",
-        "verification_gate": "grep shows no `ticker:` param example for get_technical_indicators/get_price_history in the listed docs.",
-        "rebuild_required": false,
-        "source_reports": [
-          3199,
-          3204
-        ],
-        "dedup_note": "untracked, cosmetic. Low priority — purely SSOT hygiene, no served-data impact.",
-        "minted_by": "po-s94",
-        "minted_at": "2026-06-17T01:34:10Z",
-        "spike_escalation": {
-          "by": "po-triage-20260620",
-          "from_signal": "devteam-loop-20260620T071556Z-registry-param-drift",
-          "widened_scope": "FULL audit of docs/agents/tools/list/ ticker-vs-code param drift (NOT just the 2 named docs). Probe LIVE schema via list_server_tools(vn-market) — NOT all ticker-docs assumed wrong. Output truth-table + targeted doc-only fix set.",
-          "confirmed_instance": "get_price_history.md documents `ticker` but live schema rejects ticker (invalid_type) and requires `code`",
-          "timebox_min": 120,
-          "held_reason": "Dispatched next tick after P0 CI fix lands — avoids concurrent dev-mcp-server commit race",
-          "escalated_at": "2026-06-20T07:26:41Z"
-        },
-        "dispatched_at": "2026-06-20T07:30:39Z"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
