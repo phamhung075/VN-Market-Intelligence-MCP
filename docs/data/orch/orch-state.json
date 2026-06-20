@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T19:40:57Z",
-  "_updated_by": "dev-team-cron-router",
+  "_updated_at": "2026-06-20T22:34:36Z",
+  "_updated_by": "architect",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -1589,8 +1589,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-20T20:44:27Z",
-    "_updated_by": "dev-team-cron-router",
+    "_updated_at": "2026-06-20T22:34:36Z",
+    "_updated_by": "architect",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11221,7 +11221,7 @@
         "owner": "developer",
         "dev_agent": "dev-technical-analysis",
         "zone": "multi",
-        "status": "BACKLOG",
+        "status": "ARCHITECT_REVIEW",
         "created_at": "2026-06-20T22:24:47Z",
         "created_by": "po-digest-quality-triage",
         "raw_verified": true,
@@ -11236,7 +11236,10 @@
           "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts"
         ],
         "rebuild_required": true,
-        "standing_goal": "goal#1 — no implausible/inconsistent served data"
+        "standing_goal": "goal#1 — no implausible/inconsistent served data",
+        "architect_brief": "docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md",
+        "next_agent": "pm",
+        "architect_updated_at": "2026-06-20T22:34:36Z"
       },
       {
         "id": "FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME",
@@ -11315,6 +11318,172 @@
         ],
         "rebuild_required": true,
         "standing_goal": "goal#1 / UX — suppress low-conviction noise"
+      },
+      {
+        "id": "FIX-FB-GATE-POINT-PCT-MATH",
+        "title": "fb-gate Check-F: point-change vs percent math consistency",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "lesson": "L2 (06-19 'giảm 0,32 điểm (−0,32%)' — should be ≈ −5,9 điểm)",
+        "zone": "cross-service/",
+        "dev_agent": "developer",
+        "files": [
+          "scripts/fb-data-integrity-gate.sh"
+        ],
+        "desc": "Gate check that |stated_point_change − pct × prev_close| is within tolerance. prev_close from the live snapshot / get_price_history. Parse both the point delta ('giảm X điểm') and the % from the post; BLOCK when they are internally inconsistent beyond a pp/points tolerance defined in the gate header.",
+        "generic_mandate": "Applies to VN-Index and any index/level the post states with BOTH a point delta and a %.",
+        "verification_gate": "Inject '−0,32 điểm (−0,32%)' at a ~1800 prev_close -> BLOCK; inject a consistent '−5,9 điểm (−0,32%)' -> pass.",
+        "size": "S",
+        "rebuild_required": false,
+        "minted_at": "2026-06-20T22:34:30Z",
+        "minted_by": "po-s110"
+      },
+      {
+        "id": "FIX-FB-GATE-STALE-MACRO-GUARD",
+        "title": "fb-gate Check-G: reject stale macro/FX presented as current + unverified comparison levels",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "lesson": "L3 (06-19 USD/VND '26.103' carried stale; 06-21 unverified '25.500' prior level)",
+        "zone": "cross-service/",
+        "dev_agent": "developer",
+        "files": [
+          "scripts/fb-data-integrity-gate.sh",
+          "docs/agents/fb-market-poster/flow/main.md (STEP 1b macro fetch)"
+        ],
+        "desc": "Any macro figure (USD/VND, gold, Brent, Fed rate, bond yield) in the post MUST be fetched live THIS cycle or written as an honest gap. Gate/flow rejects stale-as-current (figure present but no live fetch this cycle) and rejects unverified comparison levels ('vẫn ở mức X', 'từ mức Y'). Pair with a flow-side change so the poster passes a per-figure fetched-this-cycle provenance marker the gate can verify.",
+        "generic_mandate": "Covers every macro/FX class, not just USD/VND; provenance check is per-figure, generic.",
+        "verification_gate": "Inject a USD/VND figure with no live-fetch provenance -> BLOCK; inject an honest-gap phrasing -> pass; inject a figure fetched this cycle -> pass.",
+        "size": "M",
+        "rebuild_required": false,
+        "minted_at": "2026-06-20T22:34:30Z",
+        "minted_by": "po-s110"
+      },
+      {
+        "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+        "title": "fb-gate Check-H: internal breadth-% vs cited-counts consistency",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "lesson": "L4 (06-19 'độ rộng khoảng 40%' while citing 25% = 81 of ~350)",
+        "zone": "cross-service/",
+        "dev_agent": "developer",
+        "files": [
+          "scripts/fb-data-integrity-gate.sh"
+        ],
+        "desc": "Gate check that any stated advancer/decliner breadth % matches the cited counts within tolerance: |stated_pct − (advancers / total)| <= tol. Parse both the headline breadth % and any 'N của ~M' counts in the post; BLOCK on internal inconsistency.",
+        "generic_mandate": "Generic over any breadth phrasing (advancers/decliners/floor/ceiling counts vs %).",
+        "verification_gate": "Inject 'độ rộng ~40%' + '81 của ~350' -> BLOCK (real ~23%); inject matching pct+counts -> pass.",
+        "size": "S",
+        "rebuild_required": false,
+        "minted_at": "2026-06-20T22:34:30Z",
+        "minted_by": "po-s110"
+      },
+      {
+        "id": "FIX-FB-GATE-WEEKLY-FRAME-MODE",
+        "title": "fb-gate weekly/temporal-frame mode: compare weekly posts vs weekly close series; scope Check-C to claim period",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "lesson": "L5 (06-21 weekly +1,84% w/w FALSE-BLOCKED vs latest daily −0,32%; Check-C false-flagged correct last-week 'bán tháo')",
+        "zone": "cross-service/",
+        "dev_agent": "developer",
+        "files": [
+          "scripts/fb-data-integrity-gate.sh",
+          "docs/agents/fb-market-poster/flow/main.md",
+          "docs/agents/digest-predict/flow/weekly.md (weekly post caller)"
+        ],
+        "desc": "Add a weekly/frame-aware mode to the gate (flag/arg, e.g. --frame=weekly). In weekly mode, compare stated index moves against the WEEKLY close series via get_price_history (NOT the latest daily snapshot), and SCOPE Check-C's selloff-language check to the PERIOD the claim references (so 'bán tháo' describing last week's real crash is not flagged against this week's mild daily). Until shipped, weekly posts require manual router override — document that in the gate header + poster/weekly flow.",
+        "generic_mandate": "Frame mode generic to any period (daily/weekly/monthly); period is an explicit input, not inferred from today's date alone.",
+        "verification_gate": "Run the 06-21 weekly post body in weekly mode -> exits 0 (no false-block); same body in daily mode still blocks; Check-C scoped to last-week period does not flag a correct historical-crash sentence.",
+        "size": "M",
+        "rebuild_required": false,
+        "minted_at": "2026-06-20T22:34:30Z",
+        "minted_by": "po-s110"
+      },
+      {
+        "id": "FIX-FB-PREDICTION-CALIBRATION-LOOP",
+        "title": "Auto prediction-calibration loop: poster logs forward calls; digest-predict weekly auto-scores hit/miss into a ledger",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "lesson": "L6 (no auto-scoring; this week manual scorecard 16/6 HIT, 17/6 PARTIAL MISS, 18/6 HIT)",
+        "zone": "agent",
+        "dev_agent": "agent-father",
+        "next_agent": "agent-father",
+        "files": [
+          "docs/agents/fb-market-poster/flow/main.md (log each forward call)",
+          "docs/agents/digest-predict/flow/weekly.md (Sunday calibration step — already owns weekly calibration, line ~49-52)",
+          "calibration ledger (new — path per architect/agent-father design)"
+        ],
+        "desc": "Wire the daily FB poster to LOG each forward call (the explicit next-session prediction it makes) into a calibration ledger. Add a calibration step to digest-predict weekly (which already owns Sunday calibration) that auto-scores each logged forward call hit/miss/partial against the actual outcome and writes it to the ledger, feeding it back. NOTE: this is flow/agent-definition work (agent-father owns agent .md edits per the agent-md factory rule) touching TWO agents — route via agent-father with digest-predict as the calibration-owner; an architect brief may be warranted given the cross-agent ledger contract.",
+        "generic_mandate": "Ledger schema generic over any forward-call type (index direction, per-ticker conviction, range); scoring is data-driven, not hardcoded to specific tickers.",
+        "verification_gate": "After one daily post + one weekly run on real data, the ledger contains the day's forward call AND a hit/miss/partial verdict scored from the actual close; weekly digest surfaces the rolling accuracy.",
+        "size": "M",
+        "rebuild_required": false,
+        "minted_at": "2026-06-20T22:34:30Z",
+        "minted_by": "po-s110"
+      },
+      {
+        "id": "TASK-RSIFIX-1",
+        "type": "TASK",
+        "title": "Document canonical Go TA engine contract (RSI pure-compute path, Wilder params, min-candle gate=35)",
+        "priority": "P1",
+        "parent_id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "owner": "developer",
+        "dev_agent": "dev-technical-analysis",
+        "zone": "apps/technical-analysis/",
+        "status": "BACKLOG",
+        "created_at": "2026-06-20T22:34:36Z",
+        "created_by": "architect",
+        "root_cause": "No written contract for the Go TA service pure-compute path; dev-mcp-server must read Go source to verify implementation details before wiring. Contract doc prevents re-reading and drift.",
+        "fix_spec": "Write docs/standards/ta-engine-contract.md documenting: (1) POST /ta/indicators pure-compute path contract (closes[] in, RSI series out, last element = current RSI); (2) Wilder RSI params (period=14, seed=SMA of first 14 gains/losses, subsequent=(prev*(13)+current)/14); (3) min-candle requirement: period+1=15 to compute any RSI value, 35 recommended for warmup convergence; (4) BB/MACD/MA parameters for completeness; (5) error contract (insufficient data => field absent in response, not HTTP error).",
+        "files": [
+          "docs/standards/ta-engine-contract.md"
+        ],
+        "rebuild_required": false,
+        "verification_gate": "Contract doc exists at docs/standards/ta-engine-contract.md and accurately reflects apps/technical-analysis/pkg/primitive/rsi/rsi.go (period=14, Wilder seed+smoothing) and apps/technical-analysis/pkg/application/usecases.go (pure-compute path).",
+        "blocks": [
+          "TASK-RSIFIX-2"
+        ]
+      },
+      {
+        "id": "TASK-RSIFIX-2",
+        "type": "TASK",
+        "title": "Rewire defaultComputeTa to Go TA engine: align candle window, min-candle gate=35, remove synthetic fallback, make async",
+        "priority": "P1",
+        "parent_id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "owner": "developer",
+        "dev_agent": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "created_at": "2026-06-20T22:34:36Z",
+        "created_by": "architect",
+        "blocked_by": [
+          "TASK-RSIFIX-1"
+        ],
+        "root_cause": "defaultComputeTa() in assembleBriefing.ts uses TS-local computeRSILocal with LIMIT 60 candle window and min-candle gate=15 plus market_prices_history synthetic fallback. This diverges from taAlertScanJob which uses Go computeTAIndicators with date-window query and min-candle gate=35. Same ticker, same DB, same minute -> different RSI values in the same digest (NVL: 29.7 vs 27.6 on 2026-06-19).",
+        "fix_spec": "1. Replace TS computeRSILocal call in defaultComputeTa with await computeTAIndicators({code, closes}). 2. Replace candle SQL from ORDER date ASC LIMIT 60 to WHERE date >= date(now, -60 days) ORDER BY date ASC + also SELECT volume. 3. Raise min-candle gate from <15 to <35. 4. Remove market_prices_history synthetic-close fallback block. 5. Make defaultComputeTa async; update callers in assembleBriefing.ts (L1198) and assembleEveningSummary.ts (L594) to await. 6. Add stub-bar guard: reject latest candle if close<=0 OR volume<=0. 7. Add tests: 41-candle fixture returns same RSI as direct computeTAIndicators; 34-candle fixture returns rsi14:null; 0 daily_ohlcv rows returns null (no fallback). 8. Update existing test mocks to async.",
+        "files": [
+          "apps/mcp-server/src/application/usecases/assembleBriefing.ts",
+          "apps/mcp-server/src/application/usecases/assembleEveningSummary.ts",
+          "apps/mcp-server/src/__tests__/assembleBriefing.test.ts",
+          "apps/mcp-server/src/__tests__/assembleEveningSummary.test.ts"
+        ],
+        "rebuild_required": true,
+        "risk_flags": [
+          "RISK-1: defaultComputeTa becomes async — assembleEveningSummary.ts per-ticker loop at L594-635 must be for...of with await (currently synchronous)",
+          "RISK-2: Go service down at briefing time -> rsi14:null for affected tickers (acceptable fail-closed)",
+          "RISK-3: computeTaFn type signature change breaks sync test mocks — update mocks to async",
+          "RISK-4: computeRSILocal becomes unused — do NOT delete in this task; PM mints follow-on CLEAN task"
+        ],
+        "verification_gate": "LIVE evening-cycle: RAW-probe get_technical_indicators (Go path) and read taSummary RSI from evening JSON for same ticker. Assert RSI values agree to <=0.1 for >=3 tickers. Also: ticker with <35 candles returns rsi14:null; no market_prices_history rows in closes[] sent to Go service."
       }
     ],
     "closed_sprints": [
@@ -22417,7 +22586,33 @@
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-FB-GATE-SECTOR-NAME-VALIDATOR",
+        "title": "fb-gate Check-E: sector/company-name validator keyed on system-map.json",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P2",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "lesson": "L1 (06-18 HPG/FPT mislabeled ngân hàng; 06-17 VNM called Nestlé)",
+        "zone": "cross-service/",
+        "dev_agent": "developer",
+        "next_agent": "developer",
+        "files": [
+          "scripts/fb-data-integrity-gate.sh",
+          "docs/data/system-map.json (read-only SSOT)",
+          "docs/agents/fb-market-poster/flow/main.md (STEP 4b pointer)"
+        ],
+        "desc": "For EVERY ticker mentioned in the post, load its canonical sector + company name from docs/data/system-map.json (SSOT — never hardcode). BLOCK when an adjacent sector word in the prose contradicts the SSOT sector (e.g. HPG/'thép' tagged 'ngân hàng', FPT/'công nghệ' tagged 'ngân hàng'), and BLOCK known company-name mismatches (VNM=Vinamilk, not Nestlé). Add as Check-E in the gate; thresholds/SSOT-key list live only in the gate header.",
+        "generic_mandate": "Validator iterates the FULL watchlist from system-map.json — never a hardcoded ticker subset; new tickers/sectors inherit the check automatically.",
+        "verification_gate": "Inject a post body with HPG labeled 'ngân hàng' AND one with VNM='Nestlé' -> gate exits non-zero (BLOCK) on both; a correct sector/name post exits 0.",
+        "size": "S",
+        "rebuild_required": false,
+        "minted_at": "2026-06-20T22:34:30Z",
+        "minted_by": "po-s110",
+        "promoted_at": "2026-06-20T22:34:30Z"
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -22666,8 +22861,8 @@
         }
       ]
     },
-    "updated_at": "2026-06-20T08:55:00Z",
-    "updated_by": "qa"
+    "updated_at": "2026-06-20T22:34:30Z",
+    "updated_by": "po-s110"
   },
   "updated_at": "2026-06-20T08:16:14Z",
   "updated_by": "po-s107",
