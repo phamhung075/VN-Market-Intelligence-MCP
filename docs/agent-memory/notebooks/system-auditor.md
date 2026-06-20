@@ -1,4 +1,60 @@
 ## c604 · 2026-06-20T19:06:56Z
+## c605 · 2026-06-20T19:37:19Z
+### Audit Run Tier-1 (19:37 UTC 2026-06-20, Sunday market CLOSED)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 1 NEW CRITICAL (A-30 memory 99.99% / 2 GiB cap)
+- Status: CRITICAL — memory escalation trend continues; container fleet UP+HEALTHY
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-20T19:36:46Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 25 hours (healthy)   vn-market-intelligence-mcp-mcp-server           25 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 4 days (healthy)     vn-market-intelligence-mcp-frontend             4 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 4 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        4 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)     vn-market-intelligence-mcp-stock-price          5 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 5 days (healthy)     vn-market-intelligence-mcp-technical-analysis   5 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 5 days (healthy)     vn-market-intelligence-mcp-macro-indicators     5 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 6 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    6 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 9 days (healthy)     vn-market-intelligence-mcp-api-gateway          9 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 10 hours (healthy)   vn-market-intelligence-mcp-rag-service          9 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 9 days (healthy)     vn-market-intelligence-mcp-news-fetch           9 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 9 days (healthy)     vn-market-intelligence-mcp-alert-engine         9 days ago
+headroom-proxy                                    Up 7 days               headroom-proxy:local                            2 weeks ago
+mcp-gateway                                       Up 9 days (healthy)     mcpservergatway-gateway                         4 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=99.99% MemUsage=2GiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    24Gi    36%    393k  256M    0%   /
+
+=== PROBE DONE ===
+```
+
+**Verdict Summary:**
+- A-01..A-11 containers: all 12 UP ✓ [RAW-PROBE L4-15]
+- A-12..A-19 health endpoints: 5/5 PASS ✓ [RAW-PROBE L18-22]
+- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
+- A-21 restart: mcp-server=0 ✓ [RAW-PROBE L25]
+- **A-30 memory: 99.99% CRITICAL** ✗ [RAW-PROBE L28-29] — ESCALATION TREND: c603=99.99% → c604=99.85% → c605=99.99%. Container at absolute 2 GiB cap.
+- A-32 disk: 36% capacity ✓ [RAW-PROBE L31-34]
+
+**Signal:** 1 CRITICAL (A-30 signal row: sau-<ts> appended to orch-state.json)
+
 ### Audit Run Tier-1 (19:06 UTC 2026-06-20, Sunday market CLOSED)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
 - Anomalies: 2 NEW (A-12 api-gateway health FAIL, A-30 memory 99.85% / 2 GiB cap)

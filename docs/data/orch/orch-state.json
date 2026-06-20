@@ -1408,6 +1408,17 @@
         "severity": "CRITICAL",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sau-",
+        "ts": "2026-06-20T19:37:19Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "A-30 CRITICAL: mcp-server memory 99.99% (2GiB/2GiB) — OOM-kill risk",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
