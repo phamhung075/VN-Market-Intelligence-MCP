@@ -83,6 +83,15 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
     fix not deployed, nothing cleaned. This helper + the router's material-change raw-verify exist
     precisely to kill that confabulation class.)
 
+  ⚠ NO TREND NARRATION (record, don't editorialize): your job is to RECORD the helper's exact
+    count + discover NEW anomalies. Do NOT narrate "regression / improvement / +N / -N / re-entry"
+    by comparing to prior scans — early history holds LLM-era hallucinated counts (e.g. 661/836)
+    that never happened, so any LLM comparison against them invents a false trend. The count-over-
+    time comparison is read DETERMINISTICALLY from the history's `counts` fields by the router/dev-
+    team, not editorialized by you. State the current number, flag a genuinely-NEW anomaly if found,
+    and stop. (2026-06-20: the deterministic helper returned the correct 835, but the agent then
+    narrated "661→835 +174 regression, potential row re-entry" by comparing to the prior hallucination.)
+
   RECORD — write a JSON history of THIS scan to docs/signals/db-integrity-history.json
     (rolling, atomic read-modify-write: read → append one entry → keep last 200 → write once):
       `scan_ts` MUST be the REAL current UTC — run `date -u +%Y-%m-%dT%H:%M:%SZ` and use its
