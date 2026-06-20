@@ -1,0 +1,27 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-20T12:06Z",
+    "nominal_tick": "2026-06-20T12:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": ["news-scout-offhours", "market-watcher-offhours"],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "Gatherer pair (news-scout/market-watcher, gatherer-standard, cron 0 */4) is local-dispatcher-only — NO cloud RemoteTrigger backstop. Session is gateway-blind (mcpServers:0); local spawns would be data-blind/fabricating, so not spawned. Slots genuinely UNFIRED this session.",
+    "slot_detail": {
+      "news-scout-offhours": {"agent": "news-scout", "cron": "0 */4 * * *", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-15T08:08:57Z"},
+      "market-watcher-offhours": {"agent": "market-watcher", "cron": "0 */4 * * *", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-15T08:08:57Z"}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1781958978},
+    "note": "USER/HARNESS-side fix required: register the gateway MCP server in .mcp.json so Agent-spawned cowork subagents inherit vn-market access; until then non-backstopped slots (gatherers, bctc-analyst, refine-bctc, alert/intraday) go unfired in local sessions."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-20T12:06:19Z"
+}
