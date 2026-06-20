@@ -225,8 +225,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T00:32:10Z",
-    "_updated_by": "dev-team-router",
+    "_updated_at": "2026-06-20T03:10:31Z",
+    "_updated_by": "router-annotate-sau-d4-expired",
     "archive": [
       {
         "from": "system-auditor",
@@ -792,6 +792,19 @@
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606200300",
+        "ts": "2026-06-20T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null,
+        "router_note": "RAW-probed 2026-06-20T03:10:31Z: lock esc-datacov:FPT:Q1-2026:ESC-3 now expired/released (task_heartbeat ok:false, expires_at:0) — finding self-resolved since 03:00Z detection; PO triage low-priority.",
+        "router_triaged_at": "2026-06-20T03:10:31Z"
+      },
       {
         "id": "sau-d4-202606190300",
         "ts": "2026-06-19T03:00Z",
