@@ -7,6 +7,7 @@
  *   - market_prices_history  — append-only price time series
  *   - daily_ohlcv            — MERGED DDL (base + foreign flow columns)
  *   - ohlcv_backfill_queue   — VPS backfill request tracking
+ *   - vn_index_cache         — latest VNINDEX snapshot; writer: vnIndexRefreshJob (every 5 min, market hours)
  *
  * IMPORTANT: daily_ohlcv DDL is the canonical merged version combining
  * both original definitions from schema.ts (lines ~154 and ~1122).
@@ -14,14 +15,11 @@
  * volume, updated_at, foreign_buy_vol, foreign_sell_vol, foreign_net_vol,
  * put_through_vol.
  *
- * NOTE: A table named `vn_index_cache` was classified as a zombie orphan in
- * Sprint 1922 (Task 1922b). Investigation confirmed it has NO CREATE TABLE
- * definition in any schema file and ZERO production writers or readers in
- * any .ts/.js file. It exists only in the live market.db from an abandoned
- * cache design referenced in docs/architecture/1842a-backtesting-engine.md
- * (Phase 2 VNINDEX time-series, never implemented). No migration needed.
- * freshnessSlaMonitor: excluded from coverage check (no active writer).
- * DO NOT add new writers. DO NOT query this table.
+ * FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (2026-06-20): vn_index_cache was previously
+ * classified as a zombie orphan (Sprint 1922/Task 1922b) because no writer existed.
+ * This fix adds the authoritative DDL and wires vnIndexRefreshJob as the writer.
+ * The table stores the latest VNINDEX snapshot so DB integrity checks have a real
+ * source of truth for freshness (SLA: <= 10 min stale during 02:00-08:59 UTC Mon-Fri).
  */
 
 import type { Database } from "bun:sqlite";
@@ -128,4 +126,20 @@ export function initMarketDataTables(db: Database): void {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_obq_done ON ohlcv_backfill_queue(done)`);
+
+  // ── VN-Index Cache (FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH) ────────────────
+  // Single-row cache for the latest VNINDEX snapshot. code is PRIMARY KEY so
+  // INSERT OR REPLACE acts as an upsert — only ever 1 row per index code.
+  // Writer: vnIndexRefreshJob (*/5 during 02:00–08:59 UTC Mon–Fri).
+  // Freshness SLA: <= 10 min during market hours.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS vn_index_cache (
+      code         TEXT PRIMARY KEY,
+      price        REAL NOT NULL,
+      prev_price   REAL NOT NULL DEFAULT 0,
+      change_pct   REAL NOT NULL DEFAULT 0,
+      volume       REAL NOT NULL DEFAULT 0,
+      fetched_at   TEXT NOT NULL
+    )
+  `);
 }
