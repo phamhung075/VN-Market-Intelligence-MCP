@@ -183,15 +183,15 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": null,
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
+    "next_agent": "architect",
+    "next_action": "Split multi-zone daily_ohlcv writer-integrity P0 (db1 835-viol + db2 DFF-1000x) into per-zone tasks: trace ALL writers (stock-price writer, mcp-server writeOhlcvBatch, raw-INSERT bypass), add write-time OHLC-invariant + scale guard. → pm.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-20T07:39:47Z",
+    "updated_at": "2026-06-20T08:20:34Z",
     "updated_by": "dev-team-cron-router",
-    "note": "Tick 20260620T071319Z closed: FIX-CI-RED-7fef5850→REVIEW (5ed1c751, awaits out-of-band CI), SPIKE registry-param-drift→done_verified (2b740b50). Idle."
+    "note": "Tick 20260620T080911Z: 3 db-breaches RAW-verified real (cf7b9784), PO minted 3 tasks (8d4f3d2d). Dispatched P0 writer-integrity→architect (gated chain). DEFERRED in backlog: FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (db3, next tick) + CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (blocked on P0 done_verified). All done_verified gates LIVE/Mon-open — not weekend-resolvable."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
