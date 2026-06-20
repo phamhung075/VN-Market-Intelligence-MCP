@@ -225,8 +225,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T00:03:22Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-20T00:32:10Z",
+    "_updated_by": "dev-team-router",
     "archive": [
       {
         "from": "system-auditor",
@@ -1132,11 +1132,13 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports extraction_confidence<0.2 check C-04 failed (actual=13)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "check_id": "C-04",
         "table": "financial_reports",
-        "db_id": "market"
+        "db_id": "market",
+        "drained_at": "2026-06-20T00:32:10Z",
+        "drained_by": "dev-team"
       },
       {
         "id": "sau-20260620T000322Z-c08",
@@ -1146,11 +1148,13 @@
         "type": "db_integrity_signal",
         "summary": "alerts orphaned count check C-08: 10 orphaned 24h (1319 all-time, 88% of 1495 total); architecture: most alerts lack 1:1 signal by design",
         "severity": "INFO",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "check_id": "C-08",
         "table": "alerts",
-        "db_id": "market"
+        "db_id": "market",
+        "drained_at": "2026-06-20T00:32:10Z",
+        "drained_by": "dev-team"
       }
     ]
   },
