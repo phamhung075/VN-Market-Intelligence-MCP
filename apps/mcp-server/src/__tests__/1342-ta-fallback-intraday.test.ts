@@ -4,14 +4,13 @@ Bun.env["DB_PATH"] = ":memory:";
  * Task 1342 — TDD tests for fix(ta-fallback): defaultComputeTa fallback to
  * market_prices_history when daily_ohlcv has fewer than 15 rows.
  *
- * TC-1: daily_ohlcv has 20 rows for VCB → TaSignal returned from primary path
- *        (passes before fix)
- * TC-2: daily_ohlcv has 0 rows, market_prices_history has 20 days of ticks for VCB
- *        → TaSignal returned from fallback (FAILS before fix — returns null)
- * TC-3: daily_ohlcv has 0 rows, market_prices_history has only 5 days
- *        → returns null (passes before and after fix — not enough data)
- * TC-4: daily_ohlcv has 10 rows, market_prices_history has 20 days
- *        → uses fallback because daily < 15 (FAILS before fix)
+ * RSIFIX-2 update: market_prices_history fallback REMOVED. defaultComputeTa is
+ * now async (delegates to Go TA engine). Min-candle gate raised to 35.
+ *
+ * TC-1: daily_ohlcv has 20 rows for VCB → null (20 < 35 gate)
+ * TC-2: daily_ohlcv has 0 rows, market_prices_history has 20 days → null (no fallback)
+ * TC-3: daily_ohlcv has 0 rows, market_prices_history has only 5 days → null
+ * TC-4: daily_ohlcv has 10 rows, market_prices_history has 20 days → null (no fallback)
  */
 
 import { describe, it, expect, beforeEach } from "bun:test";
@@ -199,67 +198,49 @@ function seedIntradayTicks(
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-describe("1342 — defaultComputeTa fallback to market_prices_history", () => {
+describe("1342 — defaultComputeTa (RSIFIX-2: no market_prices_history fallback)", () => {
   let db: Database;
 
   beforeEach(() => {
     db = buildDb();
   });
 
-  it("TC-1: daily_ohlcv has 20 rows → primary path returns TaSignal (passes before fix)", () => {
+  it("TC-1: daily_ohlcv has 20 rows → null (RSIFIX-2: 20 < 35 gate)", async () => {
     seedOhlcv(db, "VCB", 20, 80000, 500);
 
-    const result = defaultComputeTa("VCB", db);
+    const result = await defaultComputeTa("VCB", db);
 
-    // Primary path: 20 rows >= 15 → non-null signal
-    expect(result).not.toBeNull();
-    expect(result?.code).toBe("VCB");
-    expect(result?.rsi14).not.toBeNull();
-    expect(result?.ma20).not.toBeNull();
-    // Strictly increasing prices → last price is highest → above MA20
-    expect(result?.priceVsMa20).toBe("above");
-    // Strictly increasing → RSI near 100 → overbought
-    expect(result?.rsiStatus).toBe("overbought");
-    // market_prices_history is empty — primary path was used exclusively
-  });
-
-  it("TC-2: daily_ohlcv 0 rows + market_prices_history 20 days → fallback returns TaSignal (FAILS before fix)", () => {
-    // No daily_ohlcv rows seeded
-    seedIntradayTicks(db, "VCB", 20, 3);
-
-    const result = defaultComputeTa("VCB", db);
-
-    // Before fix: returns null (fallback branch missing)
-    // After fix: fallback aggregates 20 distinct days → non-null TaSignal
-    expect(result).not.toBeNull();
-    expect(result?.code).toBe("VCB");
-    expect(result?.rsi14).not.toBeNull();
-    expect(result?.ma20).not.toBeNull();
-    // Strictly increasing prices → overbought
-    expect(result?.rsiStatus).toBe("overbought");
-  });
-
-  it("TC-3: daily_ohlcv 0 rows + market_prices_history 5 days → returns null (passes before and after fix)", () => {
-    // Only 5 distinct days in market_prices_history — below 15 minimum
-    seedIntradayTicks(db, "VCB", 5, 3);
-
-    const result = defaultComputeTa("VCB", db);
-
-    // Both before and after fix: not enough data → null
+    // RSIFIX-2: min-candle gate is 35; 20 < 35 → null
     expect(result).toBeNull();
   });
 
-  it("TC-4: daily_ohlcv 10 rows + market_prices_history 20 days → fallback used (FAILS before fix)", () => {
-    // 10 < 15 → primary path returns null, fallback should kick in
+  it("TC-2: daily_ohlcv 0 rows + market_prices_history 20 days → null (fallback removed)", async () => {
+    // No daily_ohlcv rows seeded
+    seedIntradayTicks(db, "VCB", 20, 3);
+
+    const result = await defaultComputeTa("VCB", db);
+
+    // RSIFIX-2: market_prices_history fallback removed; 0 daily_ohlcv rows < 35 → null
+    expect(result).toBeNull();
+  });
+
+  it("TC-3: daily_ohlcv 0 rows + market_prices_history 5 days → null", async () => {
+    // Only 5 distinct days — irrelevant now that fallback is removed
+    seedIntradayTicks(db, "VCB", 5, 3);
+
+    const result = await defaultComputeTa("VCB", db);
+
+    // 0 daily_ohlcv rows < 35 → null
+    expect(result).toBeNull();
+  });
+
+  it("TC-4: daily_ohlcv 10 rows + market_prices_history 20 days → null (no fallback)", async () => {
     seedOhlcv(db, "VCB", 10, 80000, 500);
     seedIntradayTicks(db, "VCB", 20, 3);
 
-    const result = defaultComputeTa("VCB", db);
+    const result = await defaultComputeTa("VCB", db);
 
-    // Before fix: returns null because daily_ohlcv < 15 and no fallback
-    // After fix: fallback provides 20 distinct days → non-null TaSignal
-    expect(result).not.toBeNull();
-    expect(result?.code).toBe("VCB");
-    expect(result?.rsiStatus).toBe("overbought");
+    // RSIFIX-2: fallback removed; 10 daily_ohlcv rows < 35 → null
+    expect(result).toBeNull();
   });
 });

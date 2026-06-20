@@ -7,8 +7,9 @@ export interface OhlcvPipelineHealthOptions {
   db: Database;
   /** List of tickers to check. Defaults to all codes in watchlist table. */
   tickers?: string[];
-  /** Injectable TA computation fn — for TDD. Defaults to defaultComputeTa. */
-  computeTaFn?: (code: string, db: Database) => { rsiStatus: string; rsi14: number | null } | null;
+  /** Injectable TA computation fn — for TDD. Defaults to defaultComputeTa.
+   *  Accepts both sync and async implementations (default is async Go engine). */
+  computeTaFn?: (code: string, db: Database) => { rsiStatus: string; rsi14: number | null } | null | Promise<{ rsiStatus: string; rsi14: number | null } | null>;
 }
 
 export interface TickerHealthStatus {
@@ -50,7 +51,7 @@ export async function getOhlcvPipelineHealth(
   }
 
   // ── Resolve computeTaFn ───────────────────────────────────────────────────
-  let computeTaFn: (code: string, db: Database) => { rsiStatus: string; rsi14: number | null } | null;
+  let computeTaFn: (code: string, db: Database) => { rsiStatus: string; rsi14: number | null } | null | Promise<{ rsiStatus: string; rsi14: number | null } | null>;
   if (options.computeTaFn) {
     computeTaFn = options.computeTaFn;
   } else {
@@ -75,7 +76,7 @@ export async function getOhlcvPipelineHealth(
 
     if (taReady) {
       try {
-        const ta = computeTaFn(code, db);
+        const ta = await Promise.resolve(computeTaFn(code, db));
         if (ta !== null) {
           status.taSignal = ta.rsiStatus;
           if (ta.rsi14 !== null) {

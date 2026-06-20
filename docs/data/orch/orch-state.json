@@ -22628,7 +22628,7 @@
         "owner": "developer",
         "dev_agent": "dev-mcp-server",
         "zone": "apps/mcp-server/",
-        "status": "TODO",
+        "status": "REVIEW",
         "created_at": "2026-06-20T22:34:36Z",
         "created_by": "architect",
         "blocked_by": [
@@ -22652,8 +22652,8 @@
         "verification_gate": "LIVE evening-cycle: RAW-probe get_technical_indicators (Go path) and read taSummary RSI from evening JSON for same ticker. Assert RSI values agree to <=0.1 for >=3 tickers. Also: ticker with <35 candles returns rsi14:null; no market_prices_history rows in closes[] sent to Go service.",
         "blocks": [],
         "wave": 2,
-        "updated_at": "2026-06-20T22:39:54.861149Z",
-        "updated_by": "pm"
+        "updated_at": "2026-06-21T00:00:00.000000Z",
+        "updated_by": "dev-mcp-server"
       }
     ],
     "review": [

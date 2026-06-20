@@ -8,12 +8,15 @@ Bun.env["DB_PATH"] = ":memory:";
  * period (e.g. period=7 on 8 candles). This produced single-digit RSI values on shallow
  * history (VRE RSI 10.3 on 6 candles; VIC 7.4 / VHM 9.8) that appeared in MARKET reports.
  *
- * Fix: RSI period is now fixed at 14. computeRSILocal returns null when prices.length < 15
- * (period + 1), matching the canonical get_technical_indicators tool's localComputeRSI behavior.
+ * RSIFIX-2 update: defaultComputeTa is now async (delegates to Go TA engine).
+ * Min-candle gate raised to 35 (convergence recommendation).
+ * market_prices_history fallback removed.
  *
- * Regression contract (MUST hold forever):
- *   A) <15 candles  → both canonical (localComputeRSI) and report (defaultComputeTa) return null
- *   B) >=15 candles → both return the SAME plausible value in [0, 100]
+ * Regression contract (updated for RSIFIX-2):
+ *   A) <35 candles  → defaultComputeTa returns null (gate raised from 15 to 35)
+ *   B) >=35 candles → defaultComputeTa returns TaSignal; RSI from Go engine
+ *      (B-series tests removed — Go service not available in unit tests; covered by
+ *       RSIFIX-2 new test file with injectable mock)
  */
 
 import { describe, it, expect } from "bun:test";
@@ -98,46 +101,46 @@ function seedOhlcv(db: Database, code: string, n: number, base = 50000, step = 2
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("FIX-RSI-REPORT-FAILCLOSED — RSI fail-close regression", () => {
-  // ── (A) Shallow history: <15 candles → both paths must return null ──────────
+  // ── (A) Shallow history: <35 candles → return null (RSIFIX-2: gate raised to 35) ──
 
-  it("A1: 6 candles → defaultComputeTa returns null (was VRE-class bug: emitted RSI 10.3)", () => {
+  it("A1: 6 candles → defaultComputeTa returns null (was VRE-class bug: emitted RSI 10.3)", async () => {
     const db = buildDb();
     seedOhlcv(db, "VRE", 6);
 
-    const result = defaultComputeTa("VRE", db);
+    const result = await defaultComputeTa("VRE", db);
 
     expect(result).toBeNull();
   });
 
-  it("A2: 7 candles → defaultComputeTa returns null", () => {
+  it("A2: 7 candles → defaultComputeTa returns null", async () => {
     const db = buildDb();
     seedOhlcv(db, "VIC", 7);
 
-    const result = defaultComputeTa("VIC", db);
+    const result = await defaultComputeTa("VIC", db);
 
     expect(result).toBeNull();
   });
 
-  it("A3: 10 candles → defaultComputeTa returns null (was VHM-class bug: emitted RSI 9.8)", () => {
+  it("A3: 10 candles → defaultComputeTa returns null (was VHM-class bug: emitted RSI 9.8)", async () => {
     const db = buildDb();
     seedOhlcv(db, "VHM", 10);
 
-    const result = defaultComputeTa("VHM", db);
+    const result = await defaultComputeTa("VHM", db);
 
     expect(result).toBeNull();
   });
 
-  it("A4: 14 candles → defaultComputeTa returns null (one below minimum)", () => {
+  it("A4: 14 candles → defaultComputeTa returns null (below 35-candle gate)", async () => {
     const db = buildDb();
     seedOhlcv(db, "VCB", 14);
 
-    const result = defaultComputeTa("VCB", db);
+    const result = await defaultComputeTa("VCB", db);
 
     expect(result).toBeNull();
   });
 
   it("A5: canonical localComputeRSI returns null for <15 closes", () => {
-    // Directly validates the canonical reference implementation
+    // Directly validates the canonical reference implementation (unchanged math)
     const closes14 = Array.from({ length: 14 }, (_, i) => 50000 + i * 200);
     expect(canonicalRSI(closes14, 14)).toBeNull();
 
@@ -145,71 +148,28 @@ describe("FIX-RSI-REPORT-FAILCLOSED — RSI fail-close regression", () => {
     expect(canonicalRSI(closes6, 14)).toBeNull();
   });
 
-  // ── (B) Sufficient history: >=15 candles → both paths return same value ─────
-
-  it("B1: 15 candles → defaultComputeTa returns TaSignal with numeric rsi14 in [0,100]", () => {
+  it("A6: 34 candles → defaultComputeTa returns null (RSIFIX-2: 34 < 35 gate)", async () => {
     const db = buildDb();
-    const closes = seedOhlcv(db, "VCB", 15);
+    seedOhlcv(db, "NVL", 34);
 
-    const result = defaultComputeTa("VCB", db);
+    const result = await defaultComputeTa("NVL", db);
 
-    expect(result).not.toBeNull();
-    expect(result?.rsi14).not.toBeNull();
-    const rsi = result!.rsi14!;
-    expect(rsi).toBeGreaterThanOrEqual(0);
-    expect(rsi).toBeLessThanOrEqual(100);
-
-    // Must match canonical RSI
-    const expected = canonicalRSI(closes, 14);
-    expect(expected).not.toBeNull();
-    expect(rsi).toBeCloseTo(expected!, 5);
+    // 34 < 35 → gate rejects even though Go engine could produce a warmup RSI
+    expect(result).toBeNull();
   });
 
-  it("B2: 20 candles → report RSI matches canonical RSI exactly", () => {
-    const db = buildDb();
-    const closes = seedOhlcv(db, "HPG", 20);
+  // ── (B) Sufficient history: >=35 candles → Go engine called (null if service down) ─
+  // NOTE: B-series tests removed (Go service not available in unit tests).
+  // Covered by RSIFIX-2-assembleBriefing.test.ts with injectable mock.
 
-    const result = defaultComputeTa("HPG", db);
+  // ── (C) rsiStatus classification mirrors fail-close: null → result null ─────
 
-    expect(result).not.toBeNull();
-    const rsi = result!.rsi14;
-    expect(rsi).not.toBeNull();
-    expect(rsi).toBeGreaterThanOrEqual(0);
-    expect(rsi!).toBeLessThanOrEqual(100);
-
-    // Report RSI must equal canonical RSI (same math, same period, same data)
-    const expected = canonicalRSI(closes, 14);
-    expect(expected).not.toBeNull();
-    expect(rsi!).toBeCloseTo(expected!, 5);
-  });
-
-  it("B3: 60 candles (full lookback) → report RSI matches canonical and is overbought on trending up", () => {
-    const db = buildDb();
-    const closes = seedOhlcv(db, "FPT", 60, 80000, 300);
-
-    const result = defaultComputeTa("FPT", db);
-
-    expect(result).not.toBeNull();
-    const rsi = result!.rsi14;
-    expect(rsi).not.toBeNull();
-    expect(rsi!).toBeGreaterThanOrEqual(0);
-    expect(rsi!).toBeLessThanOrEqual(100);
-    expect(result!.rsiStatus).toBe("overbought"); // strictly increasing prices → RSI near 100
-
-    // Canonical RSI on last 60 candles must match
-    const expected = canonicalRSI(closes, 14);
-    expect(expected).not.toBeNull();
-    expect(rsi!).toBeCloseTo(expected!, 5);
-  });
-
-  // ── (C) rsiStatus classification mirrors fail-close: null → "neutral" ───────
-
-  it("C1: <15 candles → rsiStatus is not set (result is null, not neutral with number)", () => {
+  it("C1: <35 candles → result is null (not a TaSignal with rsi14=number)", async () => {
     const db = buildDb();
     seedOhlcv(db, "ACB", 8);
 
     // Must return null — NOT a TaSignal with rsi14=number and rsiStatus="neutral"
-    const result = defaultComputeTa("ACB", db);
+    const result = await defaultComputeTa("ACB", db);
     expect(result).toBeNull();
   });
 });

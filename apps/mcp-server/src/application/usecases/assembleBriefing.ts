@@ -28,6 +28,7 @@ import {
 } from "../../domain/services/portfolioPnlCalculator.js";
 import { runSectionAsync } from "../utils/runSection.js";
 import { failLoud } from "../../domain/utils/safeQuery.js";
+import { computeTAIndicators } from "../../infrastructure/microservices/clients.js";
 // ── Local pure-math helpers (P2-B1 AC-7/AC-8 — SEV-2 fix) ───────────────────
 // computeRSI and computeMA formerly imported from domain/services/technicalIndicators.js.
 // Replaced with self-contained inline implementations so that P2-B2 can safely
@@ -309,9 +310,10 @@ export interface AssembleBriefingOptions {
   /**
    * Override TA computation per ticker for test injection.
    * Receives the ticker code and the active DB.
-   * Returns null when data is insufficient (< 8 candles).
+   * Returns null when data is insufficient (< 35 candles).
+   * Accepts both sync and async implementations (default is async Go engine).
    */
-  computeTaFn?: (code: string, db: Database) => TaSignal | null;
+  computeTaFn?: (code: string, db: Database) => TaSignal | null | Promise<TaSignal | null>;
   /**
    * Injectable clock for Step 18 date computation.
    * Tests always set this. Production leaves it undefined — defaults to new Date().
@@ -386,10 +388,11 @@ interface OpenPositionRow {
   avg_price: number;
 }
 
-/** Internal: one daily price row — day TEXT, close_price REAL. */
+/** Internal: one daily price row — day TEXT, close_price REAL, volume REAL. */
 interface CandleRow {
   day: string;
   close_price: number;
+  volume: number;
 }
 
 /** Internal: filing date result from financial_reports query. */
@@ -644,47 +647,53 @@ async function isPriceFresh(db: Database): Promise<boolean> {
 
 /**
  * Default TA computation for one ticker: queries daily_ohlcv for the last 60
- * candles, computes RSI(14) and MA20, and classifies signals.
+ * calendar days, delegates RSI(14) and MA20 to the canonical Go TA engine at
+ * port 5003, and classifies signals.
  *
- * RSI fail-close rule (FIX-RSI-REPORT-FAILCLOSED): RSI(14) requires at least
- * 15 candles (period + 1). When fewer are available, rsi14 is null and
- * rsiStatus is "neutral" — identical to the get_technical_indicators canonical
- * tool. The adaptive-period trick (Math.min(14, rows.length-1)) is intentionally
- * removed: it produced under-determined single-digit RSI values on shallow history
- * (VRE RSI 10.3 on 6 candles; VIC 7.4 / VHM 9.8 on similarly shallow data).
+ * RSIFIX-2: rewired from TS-local computeRSILocal to Go computeTAIndicators so
+ * that evening_summary RSI agrees with alert-block RSI to ≤0.1 (same Wilder
+ * algorithm, same candle window).
  *
- * Returns null when fewer than 15 candles are available in both daily_ohlcv
- * and the market_prices_history fallback.
+ * Min-candle gate: 35 (Go convergence recommendation — ta-engine-contract.md § 4.3).
+ * Candle window: date-windowed `date >= date(now,-60 days)` matching taAlertScanJob.
+ * Synthetic market_prices_history fallback: REMOVED (fail-closed is honest).
+ * Stub-bar guard: rejects last candle with close<=0 or volume<=0.
+ *
+ * Returns null when:
+ *   - fewer than 35 candles in daily_ohlcv (gate)
+ *   - last candle is a stub bar (close<=0 or volume<=0)
+ *   - Go TA service is unreachable or returns no RSI (fail-closed)
  */
-export function defaultComputeTa(code: string, db: Database): TaSignal | null {
-  let rows = db.query<CandleRow, [string]>(
-    `SELECT date AS day, close AS close_price
+export async function defaultComputeTa(code: string, db: Database): Promise<TaSignal | null> {
+  const rows = db.query<CandleRow, [string]>(
+    `SELECT date AS day, close AS close_price, volume
        FROM daily_ohlcv
-      WHERE code = ?
-      ORDER BY date ASC
-      LIMIT 60`,
+      WHERE date >= date('now', '-60 days')
+        AND code = ?
+      ORDER BY date ASC`,
   ).all(code);
 
-  if (rows.length < 15) {
-    // Fall back to intraday ticks aggregated into synthetic daily closes
-    const fallbackRows = db.prepare<CandleRow, [string]>(
-      `SELECT DATE(fetched_at) AS day, MAX(price) AS close_price
-       FROM market_prices_history
-       WHERE code = ?
-       GROUP BY DATE(fetched_at)
-       ORDER BY day ASC
-       LIMIT 60`
-    ).all(code);
-    if (fallbackRows.length < 15) return null;
-    rows = fallbackRows;
+  // Min-candle gate: 35 for Go Wilder convergence (ta-engine-contract.md § 4.3)
+  if (rows.length < 35) return null;
+
+  // Stub-bar guard: reject if last candle is a placeholder bar
+  const lastRow = rows[rows.length - 1]!;
+  if (!lastRow || lastRow.close_price <= 0 || lastRow.volume <= 0) return null;
+
+  const closes = rows.map((r) => r.close_price);
+  const currentPrice = closes[closes.length - 1] ?? null;
+
+  // Delegate to Go TA engine (pure-compute path: closes[] provided)
+  let taResult;
+  try {
+    taResult = await computeTAIndicators({ code, closes });
+  } catch {
+    // Go service unreachable → fail-closed (honest null, same as alert-block)
+    return null;
   }
 
-  const prices = rows.map((r) => r.close_price);
-  const currentPrice = prices.at(-1) ?? null;
-
-  // RSI: fixed period 14, requires >=15 candles — fail-closed (no adaptive period).
-  const rsi14 = computeRSILocal(prices, 14);
-  const ma20 = computeMALocal(prices, Math.min(20, rows.length));
+  const rsi14 = taResult.rsi ?? null;
+  const ma20 = taResult.ma20 ?? computeMALocal(closes, Math.min(20, closes.length));
 
   const rsiStatus: TaSignal["rsiStatus"] =
     rsi14 === null ? "neutral"
@@ -1199,7 +1208,7 @@ async function _assembleBriefingImpl(
     const signals: TaSignal[] = [];
     for (const row of watchlistRows) {
       try {
-        const sig = taFn(row.code, db);
+        const sig = await Promise.resolve(taFn(row.code, db));
         if (sig !== null) signals.push(sig);
       } catch { /* per-ticker failure — skip silently */ }
     }

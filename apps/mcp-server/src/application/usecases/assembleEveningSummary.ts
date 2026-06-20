@@ -161,7 +161,7 @@ export interface EveningSummary {
 export interface AssembleEveningSummaryOptions {
   db?: Database;
   reportsDir?: string;
-  computeTaFn?: (code: string, db: Database) => TaSignal | null;
+  computeTaFn?: (code: string, db: Database) => TaSignal | null | Promise<TaSignal | null>;
   getNewsCountFn?: (midnight: string) => number;
   /** Override prediction signals fetch for tests — avoids mock.module in unit tests */
   getPredictionSignalsFn?: (db: Database, hoursBack: number) => BriefingPredictionSignal[] | Promise<BriefingPredictionSignal[]>;
@@ -608,7 +608,7 @@ async function _assembleEveningSummaryImpl(
         const cnt = rowCountFn(code, db);
         rowCounts.push(cnt);
         if (cnt < 8) belowThreshold++;
-        const sig = taFn(code, db);
+        const sig = await Promise.resolve(taFn(code, db));
         if (sig !== null) { signals.push(sig); withSignal++; }
       } catch {
         rowCounts.push(0);
