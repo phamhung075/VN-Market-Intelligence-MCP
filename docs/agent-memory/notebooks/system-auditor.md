@@ -1,13 +1,13 @@
 
-## c590 · 2026-06-20T12:37:09Z
-### Audit Run Tier-1 (12:37 UTC 2026-06-20, Saturday market CLOSED)
+## c591 · 2026-06-20T13:07:12Z
+### Audit Run Tier-1 (13:07 UTC 2026-06-20, Saturday market CLOSED)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
 - Anomalies: 0 new (0 signals emitted)
-- Status: HEALTHY — all runtime checks PASS; container fleet stable; disk 34% capacity
+- Status: HEALTHY — all runtime checks PASS; container fleet stable; disk 35% capacity
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-20T12:36:47Z ===
+=== AUDITOR PROBE 2026-06-20T13:07:08Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
@@ -36,7 +36,7 @@ mcp-gateway                                       Up 9 days (healthy)     mcpser
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=84.74% MemUsage=1.695GiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=85.51% MemUsage=1.71GiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
@@ -49,19 +49,19 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - A-01..A-11 containers: all 12 UP ✓
 - A-12..A-19 health endpoints: 5/5 PASS (HTTP 200) ✓
 - A-21 restart: mcp-server=0 ✓
-- A-30 memory: mcp-server 84.74%/2GB (stable ceiling, 0-restart) ✓
+- A-30 memory: mcp-server 85.51%/2GB (stable ceiling, 0-restart) ✓
 - A-32 disk: 35% capacity (26GB avail) ✓
 
 **HEALTHY:** Tier-1 runtime ping clean. No anomalies, no signals posted.
+
+## c590 · 2026-06-20T12:37:09Z
+### Audit Run Tier-1 (12:37 UTC 2026-06-20, Saturday market CLOSED)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 0 new (0 signals emitted)
+- Status: HEALTHY — all runtime checks PASS; container fleet stable; disk 34% capacity
 
 ## c589 · 2026-06-20T12:07:21Z
 ### Audit Run Tier-1 (12:07 UTC 2026-06-20, Saturday market CLOSED)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
 - Anomalies: 0 new (no signals emitted)
 - Status: HEALTHY — all runtime/health checks PASS; no infractions detected
-
-## c588 · 2026-06-20T11:39:48Z
-### Audit Run Tier-1 (11:39 UTC 2026-06-20, Saturday market CLOSED)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | A-20 multi-probe: 3/3 OK
-- Anomalies: 0 new (no signals emitted) | rag-service restart rate monitored (86 total, +9 in 24h)
-- Status: HEALTHY — all runtime/health checks PASS; mcp-server stable ceiling 99.87%
