@@ -197,8 +197,9 @@
     "next_action": "Tick 20260620T121009Z CLOSED (clean). Drain: cowork_tick_telemetry SKIPPED_BLIND_NO_BACKSTOP (08:06/09:06/12:06Z) -> processed/ (gateway-blind gatherers = USER-side .mcp.json gap, not code bug); db-integrity-history rolling log left in place, scan 11:56:14Z all 4 anomalies ALREADY-OPEN (new_signals_written:[]); daily_ohlcv OHLC-violations 661->835 (net +174, REGRESSION reversing prior 836->661 — writer fix NOT yet effective, do NOT trust single low reading) still under FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 [REVIEW] gated Mon 06-22. Telegram 1 new: report 3268 (health-recheck analysis-agent, 5 BUG+5 ISSUE) CLAIMED all-false/known/weekend: BUG-SENTIMENT FALSE (get_sentiment_trend RAW=VCB 10 entries live); BCTC BUG -> ops-vps-fetch live SSH probe = HEALTHY-IDLE (active 9d, queue=0, clean 6h-cycle exits, last real fetch 06-17, NO restart) confirmed false P0 -> feeds FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH (add queue=0 guard before push-age CRITICAL); weekend price/FX/SBV/HNX/news staleness EXPECTED->INFO. signal_queue canonical-4-keys no-orphans, 29 rows, 1 NEW (router-20260620T113917Z-rag-restart-watch MEDIUM->po stays NEW for Mon PO: rag-service RestartCount 86 / 698MiB-of-768MiB tight cap, dev-rag-service zone). No PO re-spawn (zero new actionable). now_VN Sat 19:17 market-closed. Tier-1 auditor (this session) HEALTHY self-committed notebook. WIP=0 idle. Mon 06-22 batch-rebuild gated: FIX-VNINDEX-CACHE re-sweep + OHLCV P0 confirm + rag mem-cap.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T12:18:00Z",
-    "updated_by": "dev-team-cron-router"
+    "updated_at": "2026-06-20T12:46:31Z",
+    "updated_by": "dev-team-cron-router",
+    "note": "tick 20260620T123947Z closed: 0 telegram, drain clean, PO triage NOTHING (idle). DFR-BA-1 label-hygiene approved->done. Auditor heartbeat acked. rag-restart-watch held for Mon 06-22 PO. WIP=0."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -232,7 +233,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T10:11:08Z",
+    "_updated_at": "2026-06-20T12:46:31Z",
     "_updated_by": "dev-team-cron-router",
     "archive": [
       {
@@ -1312,8 +1313,9 @@
         "type": "system_health_report",
         "summary": "Tier-1 audit clean: all 12 services healthy (0 anomalies, 0 signals)",
         "severity": "INFO",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "router_ack": "[router 2026-06-20T12:46:31Z] INFO Tier-1 clean heartbeat acked (12 services healthy, 0 anomalies)."
       }
     ]
   },
@@ -1427,7 +1429,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-20T07:39:47Z",
+    "_updated_at": "2026-06-20T12:46:31Z",
     "_updated_by": "dev-team-cron-router",
     "active_sprints": [
       {
@@ -3920,10 +3922,11 @@
             "priority": "high",
             "size": "M",
             "sprint": "DEEPFETCH-RAG-REDESIGN",
-            "status": "approved",
+            "status": "done",
             "title": "Phase 1 requirement spec: additive LanceDB +8 metadata columns + per-doc_type query-time decay + DTO extensions + mcp-server caller updates + rag_analyses.body_text ADD COLUMN. Decompose acceptance criteria; defer Phase 2/3 scope.",
             "type": "SPRINT-S",
-            "zone": "docs/agents/"
+            "zone": "docs/agents/",
+            "router_note": "[router 2026-06-20T12:46:31Z] label-hygiene approved->done: spec delivered (docs/handoffs/DEEPFETCH-RAG-REDESIGN-phase1-BA-spec.md 25431B), PO DJ-GATE-1 APPROVED 06-08, parent sprint completed 06-08T15:35Z, all downstream DONE. Row label was stale; never startable. RAW-verified by router."
           },
           {
             "created_at": "2026-06-08T09:06:20Z",
