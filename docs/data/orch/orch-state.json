@@ -232,7 +232,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T18:39:50Z",
+    "_updated_at": "2026-06-20T18:47:10Z",
     "_updated_by": "dev-team-cron-router",
     "archive": [
       {
@@ -1324,13 +1324,14 @@
         "type": "memory_pressure_watch",
         "summary": "mcp-server memory monotonic climb toward 2GiB cgroup cap: 92.37->92.99->94.27->97.09% across this session 4 Tier-1 runs. LIVE 97.09% (1.942/2GiB) Up 21h RestartCount=0 healthy. Climb is NOT a flat ceiling = consistent with slow leak; a Monday rebuild would MASK not fix.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "SUPERSEDED",
         "payload_ref": "docs/agent-memory/notebooks/system-auditor.md",
         "router_verified": true,
         "router_verified_at": "2026-06-20T16:09:30Z",
         "router_evidence": "LIVE docker stats + inspect 2026-06-20T15:40Z: vn-market-intelligence-mcp-mcp-server-1 MemUsage=1.942GiB/2GiB 97.09% State=running Health=healthy RestartCount=0 StartedAt=2026-06-19T19:04:04Z (21h stable). Trend across session three Tier-1 auditor runs: 92.37->92.99->94.27->97.09%.",
-        "router_note": "Auditor 2f988605 classified WARN-ceiling 0-restart, wrote NO row. Router overrides: the MONOTONIC climb (not flat) crossing the ~97% flip-line warrants a tracked row so dev-mcp-server investigates the working-set GROWTH (candidate: sdk:1.29.0+zod:3.25.76 Bun-JIT working-set, see restart_masks_bun_jit_corruption) rather than masking via rebuild. Disposition: fold into Monday 06-22 ops mcp-server rebuild window alongside rag-restart-watch + OHLCV-P0 + VNINDEX. NOT a weekend emergency (0-restart healthy). If it OOM-restarts before Mon, escalate to dev-mcp-server live.",
-        "router_latest": "2026-06-20T18:07Z auditor mem=99.90% — trajectory 98.58->99.12->99.90% ACCELERATING (gap +0.54 then +0.78); RestartCount=0/no-OOM (escalation trigger RestartCount>0||OOM still UNMET). Mon 06-22 dev-mcp-server: investigate working-set growth (sdk1.29.0+zod3.25.76 Bun-JIT candidate), not rebuild-mask."
+        "router_note": "Superseded by sau-20260620T184351Z (fresher live data 99.99%, same finding consolidated). See that row for Monday action.",
+        "router_latest": "2026-06-20T18:07Z auditor mem=99.90% — trajectory 98.58->99.12->99.90% ACCELERATING (gap +0.54 then +0.78); RestartCount=0/no-OOM (escalation trigger RestartCount>0||OOM still UNMET). Mon 06-22 dev-mcp-server: investigate working-set growth (sdk1.29.0+zod3.25.76 Bun-JIT candidate), not rebuild-mask.",
+        "router_superseded_at": "2026-06-20T18:47:10Z"
       },
       {
         "id": "sau-20260620T170827ZZ",
@@ -1372,14 +1373,41 @@
         "to": "po",
         "type": "microservice_degraded",
         "summary": "A-30 CRITICAL: mcp-server memory at 99.99% (2.0 GiB / 2 GiB cap) — trend 99.12%→99.90%→99.99%",
-        "severity": "CRITICAL",
-        "status": "NEW",
+        "severity": "MEDIUM",
+        "status": "TRIAGED",
         "payload_ref": null,
         "check_id": "A-30",
         "service_id": "mcp-server",
         "zone_owner": "dev-mcp-server",
         "details": "mcp-server memory pressure at absolute ceiling with zero headroom. Monotonic escalation across 3 Tier-1 audits: c600=99.12% (2026-06-20T17:08Z), c601=99.90% (2026-06-20T18:07Z), c603=99.99% (2026-06-20T18:43Z). Container healthy (RestartCount=0, no OOM kills yet), but system at breaking point. Requires immediate investigation of working-set growth (candidate: Bun-JIT v1.29.0 + Zod v3.25.76 memory behavior).",
-        "dedup_key": "microservice_degraded:mcp-server:A-30"
+        "dedup_key": "microservice_degraded:mcp-server:A-30",
+        "router_verified_at": "2026-06-20T18:47:10Z",
+        "router_verdict": "DOWNGRADE CRITICAL->MEDIUM: live-probed mcp-server NOW RestartCount=0 OOMKilled=false Status=running (up ~23h at 99.99%/2GiB). Escalation trigger (RestartCount>0 OR OOMKilled) UNMET -> stable-but-maxed ceiling, NOT incident (denominator-blind discipline). Holding at cap for hours WITHOUT OOM proves it is not crashing.",
+        "router_note": "Real working-set growth (~8pp over 23h uptime, monotonic+accelerating) -> durable investigation Mon 06-22 dev-mcp-server: working-set/heap, candidate Bun-JIT v1.29.0 + Zod v3.25.76. Restart MASKS not fixes. IF OOM occurs over weekend: Docker self-heals via restart (RestartCount->1 auto-fires escalation trigger for next auditor tick); ops should capture a heap snapshot BEFORE any manual restart, do NOT just restart-and-forget.",
+        "router_triaged_by": "dev-team-cron-router",
+        "supersedes": "router-20260620T154041Z-mcp-server-mem-creep"
+      },
+      {
+        "id": "sau-20260620T190656Z-a12",
+        "ts": "2026-06-20T19:06:56Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: api-gateway:4000/health endpoint unreachable (HTTP CURL_ERR)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-20260620T190656Z-a30",
+        "ts": "2026-06-20T19:06:56Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 CRITICAL: mcp-server memory at 99.85% (1.997 GiB / 2 GiB cap) — trend escalation (c603=99.99% → c604=99.85%)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },

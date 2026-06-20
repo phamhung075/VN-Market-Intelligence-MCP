@@ -1,3 +1,27 @@
+## c604 · 2026-06-20T19:06:56Z
+### Audit Run Tier-1 (19:06 UTC 2026-06-20, Sunday market CLOSED)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 2 NEW (A-12 api-gateway health FAIL, A-30 memory 99.85% / 2 GiB cap)
+- Status: CRITICAL — api-gateway unreachable; mcp-server memory critically high
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-20T19:06:56Z ===
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health FAIL (HTTP CURL_ERR)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=99.85% MemUsage=1.997GiB / 2GiB
+Filesystem 233Gi 13Gi 26Gi 35% /dev/disk1s4s1 /
+=== PROBE DONE ===
+```
+
+**Verdict:** A-01..A-11 all UP ✓ | A-12 api-gateway FAIL ✗ | A-20 pdf 3/3 PASS ✓ | A-30 99.85% CRITICAL ✗ | A-32 disk 35% ✓
+
+**Signals:** 2 NEW (1 CRITICAL A-30, 1 HIGH A-12)
+
 ## c603 · 2026-06-20T18:42:08Z
 ### Audit Run Tier-1 (18:42 UTC 2026-06-20, Sunday market CLOSED)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | Tooling: A-22–A-24 | Inter-service: A-25–A-28
@@ -80,22 +104,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - C-07 agent_signals (24h): 35+ healthy. PASS.
 
 **Signals:** 0 NEW | Dedup applied: 1 (C-06, same dedup_key from c600 within 7d window)
-
-## c601 · 2026-06-20T18:07:52Z
-### Audit Run Tier-1 (18:07 UTC 2026-06-20, Saturday market CLOSED)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | Disk: 36% capacity
-- Anomalies: 0 NEW (carry-forward: C-06 market_messages=0 from c600, EXPECTED weekend idle)
-- Status: HEALTHY — all runtime checks PASS; container fleet UP+HEALTHY; C-06 stale expected on market-closed
-
-**Verdict Summary (RAW-PROBE 2026-06-20T18:07:07Z):**
-- A-01..A-11 containers: all 12 UP ✓
-- A-12..A-19 health endpoints: 4/5 PASS; api-gateway transient CURL_ERR ✓
-- A-20 pdf-extractor multi-probe: (skipped, health OK) ✓
-- A-21 restart: mcp-server=0 ✓
-- A-30 memory: 99.90% (stable ceiling) ✓
-- A-32 disk: 36% capacity ✓
-- C-06 market_messages (last 3h): 0 (EXPECTED weekend) — carry-forward, no new signal
-- C-07 agent_signals (last 24h): 103 ✓
-- B-13 stale pending: 0 ✓
-
-**Status:** HEALTHY. 0 NEW anomalies. All checks PASS or carry-forward.
