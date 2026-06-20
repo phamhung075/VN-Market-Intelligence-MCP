@@ -36,7 +36,7 @@ CronList
 ```
 
 Scan output for existing entries. Check for ALL 4 of:
-1. `cron_expression` = `7 * * * *`  AND prompt contains `dev-team/flow/main.md`
+1. `cron_expression` = `7,37 * * * *`  AND prompt contains `dev-team/flow/main.md`
 2. `cron_expression` = `*/30 * * * *` AND prompt contains `AUDIT_TIER=1`
 3. `cron_expression` = `0 */4 * * *`  AND prompt contains `AUDIT_TIER=2`
 4. `cron_expression` = `0 2 * * *`    AND prompt contains `AUDIT_TIER=3`
@@ -55,11 +55,11 @@ SSOT: `.claude/commands/crons/cron-dev-team.md` + `cron-system-auditor.md`
 
 Only execute CronCreate for entries NOT found in Step 1.
 
-**Job 1 — dev-team hourly**
+**Job 1 — dev-team every 30 min**
 ```
 CronCreate(
-  description : "dev-team hourly — signal drain + task planning",
-  cron        : "7 * * * *",
+  description : "dev-team every 30 min — signal drain + task planning",
+  cron        : "7,37 * * * *",
   recurring   : true,
   durable     : true,
   prompt      : "Read and execute docs/agents/dev-team/flow/main.md\nMCP: https://zenmidi.com/vn-market/mcp"

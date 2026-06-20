@@ -1,6 +1,6 @@
 Create dev-team cron with CronCreate:
 
-- **cron**: `7 * * * *` (every hour at :07)
+- **cron**: `7,37 * * * *` (every 30 min, at :07 and :37 — off the :00/:30 fleet-load marks and offset from system-auditor Tier-1 which runs at :00/:30)
 - **recurring**: true
 - **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
