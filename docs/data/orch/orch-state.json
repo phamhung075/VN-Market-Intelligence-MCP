@@ -183,15 +183,15 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT in REVIEW, router-verified local-green (commit f1f70ec3). Gate = ci_green_on_subsequent_push: needs PO out-of-band push so CI re-runs green on a SHA above 3bddf6bb; then flip done_verified=true. No code action pending.",
-    "wip": 0,
+    "status": "executing",
+    "active_task_id": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server executing FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG: re-apply CI network-skip-guards (Bun.env.CI gate on yahooFinance + SBV fetch seams) to 1345d/1345e mirroring 64981565 pollNews pattern. Gate=ci_green_on_subsequent_push.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-19T21:01:06Z",
+    "updated_at": "2026-06-20T01:39:51Z",
     "updated_by": "dev-team-cron-router",
-    "note": "FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT done: commit f1f70ec3. 4 test DDLs updated, all 4 green in isolation, tsc GREEN. Task moved to REVIEW."
+    "note": "DDL fix done_verified this tick (f1f70ec3 ancestor of origin 0b7abd97, CI run 27855408671 DDL-green). Dispatched dev-mcp-server bg for the remaining CI-network gap on 1345d/1345e."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -21748,8 +21748,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG",
         "type": "FIX",
@@ -21758,7 +21757,7 @@
         "owner": "dev-mcp-server",
         "owner_agent": "dev-mcp-server",
         "next_agent": "dev-mcp-server",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "priority": "P2",
         "size": "S",
         "blocking": false,
@@ -21778,9 +21777,12 @@
         "created_by": "po",
         "triaged_at": "2026-06-20T01:36:50Z",
         "triaged_by": "po",
-        "done_verified": false
+        "done_verified": false,
+        "claimed_at": "2026-06-20T01:39:51Z",
+        "claimed_by": "dev-team-cron-router"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
