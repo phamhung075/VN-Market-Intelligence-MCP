@@ -184,12 +184,12 @@
   ],
   "head": {
     "status": "active",
-    "active_task_id": "FIX-CI-RED-7fef5850-ALERTS-TEST-FIXTURE-SENTBY",
+    "active_task_id": "CLEAN-TI-DOC-PARAM-CODE-DRIFT",
     "next_agent": "dev-mcp-server",
     "next_action": "FIX dispatched to dev-mcp-server — RSI test buildTestDb() alerts DDL missing sent_by; durable fix = use canonical createAlertsSchema(). Fleet CI unblocker (gates ci_green for 495cf0d4 REVIEW). On return: RAW-verify bun test green + commit narrowness, then push gates ci re-run.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-20T07:26:41Z",
+    "updated_at": "2026-06-20T07:30:39Z",
     "updated_by": "dev-team-cron-router",
     "note": "SPIKE-REGISTRY-PARAM-DRIFT held (P3 doc-hygiene) — scope recorded on CLEAN-TI-DOC-PARAM-CODE-DRIFT backlog row for next-tick dispatch; not run concurrently to avoid commit race vs the P0 CI fix."
   },
@@ -1311,8 +1311,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-20T02:37:02Z",
-    "_updated_by": "po-s110-bctc-idle-vs-crash-mint",
+    "_updated_at": "2026-06-20T07:30:39Z",
+    "_updated_by": "router-dev-team-tick",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10515,41 +10515,6 @@
         "dedup_note": "untracked — router RAW-confirmed the live -32602 + searched board (no agentSignals/from_agent task). Distinct from FACTORY-INFRA-agentsignal-* (those are confidence-default/SQL-binding refactors, not this required-param bug).",
         "minted_by": "po-s94",
         "minted_at": "2026-06-17T01:34:10Z"
-      },
-      {
-        "id": "CLEAN-TI-DOC-PARAM-CODE-DRIFT",
-        "title": "get_technical_indicators.md + get_price_history.md doc SSOT says param `ticker` but live server requires `code` (doc-only, 0 runtime broken)",
-        "type": "CLEAN",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "files": [
-          "docs/agents/tools/list/get_technical_indicators.md",
-          "docs/agents/tools/list/get_price_history.md",
-          "docs/agents/market-watcher.md"
-        ],
-        "root_cause": "Doc SSOT lists param=`ticker`; live tool schema requires `code`. Flow files already use `code` (working) so 0 runtime breakage (report 3204 confirms doc-only). market-watcher.md examples (lines ~147/177/208) carry the stale `ticker`.",
-        "fix_spec": "Correct the param name `ticker` -> `code` in the two list docs + the market-watcher.md examples. Doc-only, no code, no rebuild.",
-        "verification_gate": "grep shows no `ticker:` param example for get_technical_indicators/get_price_history in the listed docs.",
-        "rebuild_required": false,
-        "source_reports": [
-          3199,
-          3204
-        ],
-        "dedup_note": "untracked, cosmetic. Low priority — purely SSOT hygiene, no served-data impact.",
-        "minted_by": "po-s94",
-        "minted_at": "2026-06-17T01:34:10Z",
-        "spike_escalation": {
-          "by": "po-triage-20260620",
-          "from_signal": "devteam-loop-20260620T071556Z-registry-param-drift",
-          "widened_scope": "FULL audit of docs/agents/tools/list/ ticker-vs-code param drift (NOT just the 2 named docs). Probe LIVE schema via list_server_tools(vn-market) — NOT all ticker-docs assumed wrong. Output truth-table + targeted doc-only fix set.",
-          "confirmed_instance": "get_price_history.md documents `ticker` but live schema rejects ticker (invalid_type) and requires `code`",
-          "timebox_min": 120,
-          "held_reason": "Dispatched next tick after P0 CI fix lands — avoids concurrent dev-mcp-server commit race",
-          "escalated_at": "2026-06-20T07:26:41Z"
-        }
       },
       {
         "id": "LINT-OHLCV-WRITE-BYPASS",
@@ -21829,27 +21794,40 @@
     },
     "in_progress": [
       {
-        "id": "FIX-CI-RED-7fef5850-ALERTS-TEST-FIXTURE-SENTBY",
-        "title": "CI-RED-7fef5850 — bun test 4 fails: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts buildTestDb() CREATE TABLE alerts omits sent_by(+sibling cols) → code-under-test INSERT throws → fired=0 vs 1 (AC-6/AC-7). Fleet CI unblocker.",
-        "type": "FIX",
+        "id": "CLEAN-TI-DOC-PARAM-CODE-DRIFT",
+        "title": "get_technical_indicators.md + get_price_history.md doc SSOT says param `ticker` but live server requires `code` (doc-only, 0 runtime broken)",
+        "type": "CLEAN",
         "status": "IN_PROGRESS",
-        "priority": "P0",
-        "zone": "apps/mcp-server/",
+        "priority": "P2",
+        "zone": "cross-service/",
         "owner": "dev-mcp-server",
         "next_agent": "dev-mcp-server",
         "files": [
-          "apps/mcp-server/src/__tests__/FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts",
-          "apps/mcp-server/src/infrastructure/db/schema-alerts.ts"
+          "docs/agents/tools/list/get_technical_indicators.md",
+          "docs/agents/tools/list/get_price_history.md",
+          "docs/agents/market-watcher.md"
         ],
-        "root_cause": "Test hand-rolls its OWN alerts table in buildTestDb() (~L64-75) with only {id,triggered_at,severity,signals_json,affected_actions_json,analysis_ids_json,message,read,user_note,fingerprint}. Canonical schema-alerts.ts (L17-32) ALSO defines notified_telegram,resolved_at,resolution_notes,sent_by(NOT NULL DEFAULT server)+confidence_score,outcome,outcome_at,outcome_detail. Code-under-test INSERTs sent_by → table alerts has no column named sent_by → INSERT throws → countAlerts=0 → AC-6/AC-7 fail. PRODUCTION fine (canonical schema correct) — TEST-FIXTURE drift only.",
-        "fix_spec": "Make buildTestDb() use the canonical createAlertsSchema(db) helper from schema-alerts.ts (DURABLE — kills future drift). Do NOT just patch the 6 columns it needs today (self-confirming-test trap — test builds its own schema). DoD: bun test on this file GREEN; full per-file CI cmd green; ci_green_on_subsequent_push.",
-        "verification_gate": "ci_green_on_subsequent_push — gh run conclusion=success on a SHA ABOVE the fix (above failing 7fef5850). Unblocks whole fleet incl FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG (495cf0d4, REVIEW).",
+        "root_cause": "Doc SSOT lists param=`ticker`; live tool schema requires `code`. Flow files already use `code` (working) so 0 runtime breakage (report 3204 confirms doc-only). market-watcher.md examples (lines ~147/177/208) carry the stale `ticker`.",
+        "fix_spec": "Correct the param name `ticker` -> `code` in the two list docs + the market-watcher.md examples. Doc-only, no code, no rebuild.",
+        "verification_gate": "grep shows no `ticker:` param example for get_technical_indicators/get_price_history in the listed docs.",
         "rebuild_required": false,
-        "baseline_pass": false,
-        "source_signal": "CI-RED-7fef5850 run_id=27862429369 head_sha=7fef5850639d697130ee85619c44f2933b451f0c",
-        "minted_by": "dev-team-cron-router",
-        "minted_at": "2026-06-20T07:26:41Z",
-        "dedup_note": "NOT a dup of review-lane FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (apps/alert-engine runtime MIN_CANDLES task, shares only filename). NOT a dup of DONE_VERIFIED FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT (covered FINGERPRINT-WIRE-SCANJOBS+ORPHAN-CORRELATION test files). This is a 3rd distinct test file."
+        "source_reports": [
+          3199,
+          3204
+        ],
+        "dedup_note": "untracked, cosmetic. Low priority — purely SSOT hygiene, no served-data impact.",
+        "minted_by": "po-s94",
+        "minted_at": "2026-06-17T01:34:10Z",
+        "spike_escalation": {
+          "by": "po-triage-20260620",
+          "from_signal": "devteam-loop-20260620T071556Z-registry-param-drift",
+          "widened_scope": "FULL audit of docs/agents/tools/list/ ticker-vs-code param drift (NOT just the 2 named docs). Probe LIVE schema via list_server_tools(vn-market) — NOT all ticker-docs assumed wrong. Output truth-table + targeted doc-only fix set.",
+          "confirmed_instance": "get_price_history.md documents `ticker` but live schema rejects ticker (invalid_type) and requires `code`",
+          "timebox_min": 120,
+          "held_reason": "Dispatched next tick after P0 CI fix lands — avoids concurrent dev-mcp-server commit race",
+          "escalated_at": "2026-06-20T07:26:41Z"
+        },
+        "dispatched_at": "2026-06-20T07:30:39Z"
       }
     ],
     "ready": [],
@@ -22056,6 +22034,32 @@
         "router_verification": "ROUTER-VERIFIED 2026-06-20T01:46:54Z: RAW git show 495cf0d4 = exactly 2 test files, 30 ins/0 del (additive, no weakened asserts), ancestor of HEAD. Seam guarded via Bun.env.CI; local branch delegates to fetchYahooFinancePrices/storeCommoditySnapshot + syncVnstockData (real network preserved). dev-mcp-server local isolation 1345d 7/0, 1345e 8/0; tsc clean. Generic mandate satisfied (no magic numbers). Local gate PASS. done_verified WITHHELD pending ci_green_on_subsequent_push (CI must re-run green on a SHA above 495cf0d4 with 1345d+1345e GREEN; push = PO out-of-band call).",
         "verified_at": "2026-06-20T01:46:54Z",
         "verified_by": "dev-team-cron-router"
+      },
+      {
+        "id": "FIX-CI-RED-7fef5850-ALERTS-TEST-FIXTURE-SENTBY",
+        "title": "CI-RED-7fef5850 — bun test 4 fails: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts buildTestDb() CREATE TABLE alerts omits sent_by(+sibling cols) → code-under-test INSERT throws → fired=0 vs 1 (AC-6/AC-7). Fleet CI unblocker.",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/__tests__/FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts",
+          "apps/mcp-server/src/infrastructure/db/schema-alerts.ts"
+        ],
+        "root_cause": "Test hand-rolls its OWN alerts table in buildTestDb() (~L64-75) with only {id,triggered_at,severity,signals_json,affected_actions_json,analysis_ids_json,message,read,user_note,fingerprint}. Canonical schema-alerts.ts (L17-32) ALSO defines notified_telegram,resolved_at,resolution_notes,sent_by(NOT NULL DEFAULT server)+confidence_score,outcome,outcome_at,outcome_detail. Code-under-test INSERTs sent_by → table alerts has no column named sent_by → INSERT throws → countAlerts=0 → AC-6/AC-7 fail. PRODUCTION fine (canonical schema correct) — TEST-FIXTURE drift only.",
+        "fix_spec": "Make buildTestDb() use the canonical createAlertsSchema(db) helper from schema-alerts.ts (DURABLE — kills future drift). Do NOT just patch the 6 columns it needs today (self-confirming-test trap — test builds its own schema). DoD: bun test on this file GREEN; full per-file CI cmd green; ci_green_on_subsequent_push.",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "rebuild_required": false,
+        "baseline_pass": false,
+        "source_signal": "CI-RED-7fef5850 run_id=27862429369 head_sha=7fef5850639d697130ee85619c44f2933b451f0c",
+        "minted_by": "dev-team-cron-router",
+        "minted_at": "2026-06-20T07:26:41Z",
+        "dedup_note": "NOT a dup of review-lane FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (apps/alert-engine runtime MIN_CANDLES task, shares only filename). NOT a dup of DONE_VERIFIED FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT (covered FINGERPRINT-WIRE-SCANJOBS+ORPHAN-CORRELATION test files). This is a 3rd distinct test file.",
+        "commit_sha": "5ed1c751",
+        "review_note": "test fixture now derives alerts table from canonical initAlertsTables(); bun test 8/8 green, pnpm check clean, narrow 1-file commit 5ed1c751; awaits out-of-band push + CI green to flip done_verified; unblocks FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG (495cf0d4)",
+        "moved_to_review_at": "2026-06-20T07:30:39Z"
       }
     ],
     "qa": [],
