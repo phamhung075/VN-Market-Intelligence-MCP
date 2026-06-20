@@ -39,6 +39,7 @@ import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.
 import { computeScanAlertFingerprint } from "../../domain/services/alertDedup.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import type { Alert } from "../../domain/services/alertGenerator.js";
+import { MIN_DAILY_VOLUME_FOR_ALERTS } from "../../domain/services/alertThresholds.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -178,16 +179,25 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
         continue;
       }
 
-      // c2. Stub-bar guard (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0).
-      // Consumer defense-in-depth: reject the latest bar if it is a stub/invalid row:
-      // close<=0 OR volume<=0. A foreign-flow writer can insert an all-zero stub bar
-      // before the real OHLCV bar arrives at market open; close=Math.round(0)=0 would
-      // produce "giá 0 dưới BB dưới <band>" breakout spam (msg 783-790, 2026-06-17).
-      // Fail-closed = skip this cycle, no alert emitted, no substitute value fabricated.
-      // An illiquid/not-yet-arrived bar is an honest gap (/goal#1), never a "giá 0" alert
-      // (/goal#2 generic — applies to all tickers uniformly).
+      // c2. Stub-bar + liquidity floor guard (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 +
+      // FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR).
+      // Two-tier gate on the latest bar before any BB computation or alert emit:
+      //
+      //   Tier 1 — stub-bar: close<=0 OR volume<=0. A foreign-flow writer can insert
+      //   an all-zero stub bar before the real OHLCV bar arrives at market open;
+      //   close=Math.round(0)=0 would produce "giá 0 dưới BB" breakout spam
+      //   (msg 783-790, 2026-06-17). Fail-closed = no alert, no substitute.
+      //
+      //   Tier 2 — liquidity floor (MIN_DAILY_VOLUME_FOR_ALERTS = 100K shares).
+      //   A positive-but-thin volume bar (e.g. D2D at 6.4K daily vol) is technically
+      //   valid but produces low-conviction noise in the evening digest.  Below the
+      //   floor the break is meaningless; suppress silently (honest gap /goal#1).
       if (lastCandle.close_price <= 0 || lastCandle.volume <= 0) {
         logger.info(`[bbAlertScan] stub-bar skip for ${code}: latest bar close=${lastCandle.close_price} volume=${lastCandle.volume} — fail-closed (no alert)`);
+        continue;
+      }
+      if (lastCandle.volume < MIN_DAILY_VOLUME_FOR_ALERTS) {
+        logger.info(`[bbAlertScan] thin-liquidity skip for ${code}: volume=${lastCandle.volume} < floor=${MIN_DAILY_VOLUME_FOR_ALERTS} — no alert`);
         continue;
       }
 

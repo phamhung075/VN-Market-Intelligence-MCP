@@ -95,7 +95,32 @@ None identified. This is a signal quality gate (suppresses low-conviction noise)
 - After fix: evening digest will carry fewer but higher-conviction BB/TA alerts
 
 ## NEXT Agent
-**dev-technical-analysis** — add volume floor to bbAlertScanJob, coordinate with dev-mcp-server on taAlertScanJob if needed, test LIVE.
+**qa** — verify tsc+tests green, confirm handoff acceptance criteria, clear for ops rebuild.
+
+## Developer
+
+**Agent:** dev-technical-analysis
+**Session:** 2026-06-21
+**Status:** DONE → REVIEW
+
+### Files changed
+
+- `apps/mcp-server/src/domain/services/alertThresholds.ts` — NEW. Exports `MIN_DAILY_VOLUME_FOR_ALERTS = 100_000`. Single-day 100K share floor as tunable domain constant.
+- `apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts` — Added import of `MIN_DAILY_VOLUME_FOR_ALERTS`. Extended the stub-bar guard block (previously lines 181-192) into a two-tier gate: Tier 1 = existing stub-bar check (close<=0 || volume<=0), Tier 2 = new liquidity floor (volume < MIN_DAILY_VOLUME_FOR_ALERTS). Logs `thin-liquidity skip` at INFO level on suppression. No other logic changed.
+- `apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts` — Parallel floor check added. taAlertScanJob DOES have the same emit path (RSI overbought/oversold alerts → storeAlerts). Import added, two-tier gate extended at the latestCandle stub-bar check (previously lines 190-203). Same pattern as bbAlertScanJob. Floor applied identically.
+- `apps/mcp-server/src/__tests__/FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR.test.ts` — NEW. 5 tests: LF-1 sub-floor ticker with band-break → no alert; LF-2 above-floor ticker with band-break → alert; LF-3 exactly at 100K floor → alert (boundary is inclusive pass); LF-4 mixed scan sub-floor+above-floor → only liquid one fires; LF-5 constant sanity check.
+
+### taAlertScanJob assessment
+Floor was NEEDED. taAlertScanJob has a direct parallel emit path: RSI extremes on the latest bar → storeAlerts. The latestCandle stub-bar check exists there already (lines 199-203); the liquidity floor was added immediately after it using the same `latestCandle` reference, consistent with the existing guard structure.
+
+### Verification
+- `bun tsc --noEmit`: exit 0
+- `pnpm check`: exit 0
+- New test file: 5/5 pass
+- Existing BB regression tests (1309, 1391): 21/21 pass — no regression
+
+### REBUILD REQUIRED
+Yes (code change in two scheduler jobs + new domain service file). Ops batches after all mcp-server fixes land.
 
 ---
 

@@ -38,6 +38,7 @@ import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.
 import { computeScanAlertFingerprint } from "../../domain/services/alertDedup.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import type { Alert } from "../../domain/services/alertGenerator.js";
+import { MIN_DAILY_VOLUME_FOR_ALERTS } from "../../domain/services/alertThresholds.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -187,18 +188,27 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
         continue;
       }
 
-      // a3. Stub-bar guard (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0).
-      // Consumer defense-in-depth: reject the LATEST bar (the bar that would be used
-      // as "today's price") if it is a stub/invalid row: close<=0 OR volume<=0.
-      // A foreign-flow writer can insert an all-zero stub bar before the real OHLCV
-      // bar arrives at market open; that 0-close at the tail of closes[] collapses
-      // Wilder RSI to single-digit universe-wide. Fail-closed = skip this cycle, no
-      // alert emitted, no substitute value fabricated. An illiquid/not-yet-arrived bar
-      // is an honest gap (/goal#1), never a 0-valued RSI alert (/goal#2 generic).
-      // NOTE: only the LATEST bar is inspected; interior bars are fed to Wilder RSI as-is.
+      // a3. Stub-bar + liquidity floor guard (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 +
+      // FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR).
+      // Two-tier gate on the LATEST bar before feeding closes[] to Wilder RSI:
+      //
+      //   Tier 1 — stub-bar: close<=0 OR volume<=0. A foreign-flow writer can insert
+      //   an all-zero stub bar before the real OHLCV bar arrives at market open;
+      //   that 0-close collapses Wilder RSI to single-digit universe-wide.
+      //   Fail-closed = no alert, no substitute value fabricated.
+      //   NOTE: only the LATEST bar is inspected; interior bars are fed to Wilder RSI as-is.
+      //
+      //   Tier 2 — liquidity floor (MIN_DAILY_VOLUME_FOR_ALERTS = 100K shares).
+      //   A positive-but-thin volume bar is technically valid but produces low-conviction
+      //   RSI extreme noise in the evening digest. Below the floor, suppress silently
+      //   (honest gap /goal#1, no alert /goal#2).
       const latestCandle = candleRows[candleRows.length - 1];
       if (latestCandle !== undefined && (latestCandle.close_price <= 0 || latestCandle.volume <= 0)) {
         logger.info(`[taAlertScan] stub-bar skip for ${code}: latest bar close=${latestCandle.close_price} volume=${latestCandle.volume} — fail-closed (no alert)`);
+        continue;
+      }
+      if (latestCandle !== undefined && latestCandle.volume < MIN_DAILY_VOLUME_FOR_ALERTS) {
+        logger.info(`[taAlertScan] thin-liquidity skip for ${code}: volume=${latestCandle.volume} < floor=${MIN_DAILY_VOLUME_FOR_ALERTS} — no alert`);
         continue;
       }
 
