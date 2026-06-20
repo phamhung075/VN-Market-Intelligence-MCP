@@ -1268,8 +1268,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-19T20:37:10Z",
-    "_updated_by": "dev-team-cron-router",
+    "_updated_at": "2026-06-20T02:37:02Z",
+    "_updated_by": "po-s110-bctc-idle-vs-crash-mint",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10695,6 +10695,25 @@
         "source": "VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE (router verified no active leak; this closes the latent trap)",
         "generic_mandate": "Format the text field generically for ALL macro fields — no per-field/per-ticker hardcode.",
         "verification_gate": "get_macro_snapshot.text is human-readable prose (not raw JSON); structured envelope fields still present; no MARKET-channel leak path."
+      },
+      {
+        "id": "FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "blocking": false,
+        "title": "Health-recheck BCTC monitor misreads idle-queue-0-running as CRASH (push-age>360min false P0)",
+        "desc": "The analysis-agent health-recheck cron flags vn-bctc-fetch as CRASHED/UNHEALTHY (SLA breach) whenever last-push-age > 360min, but cannot distinguish a legitimately IDLE pipeline (service active+running, queue EMPTY because 9-11 watchlist tickers simply have not filed Q1-2026 yet) from an actual DOWN service. dev-team SSH RAW-verified 2026-06-19T16:20Z (report 3256): vn-bctc-fetch active(running) 8+ days, NO crash, queue legitimately empty. This monitor fires a false BCTC P0 ~every 2h, spamming health-recheck reports (~14 of reports 3244-3262). DISTINCT FROM FIX-BCTC-FRESHNESS-GATE (done_verified) which gates SERVICE health on last_success_age — that is the inverse (make gate MORE sensitive); THIS task makes the CRASH classifier require service-state + queue-depth probe before declaring crash. Same class as memory feedback_bctc_lastpush_age_misread_as_crash + feedback_false_infra_failure_corroboration_gate.",
+        "root_cause": "Crash detector keys on last-push-age>360min alone (event-driven push age) without checking service-state (active/running) AND queue-depth. push-age is high whenever the queue is empty/idle (no filings due), which is normal off-filing-season, not a crash.",
+        "fix_spec": "Locate the BCTC crash/SLA classifier feeding the analysis-agent health-recheck report (candidates: apps/mcp-server/src/scheduler/financial-reports/bctcOverdueCheckJob.ts, scheduler/vpsProxyWatchdogJob.ts, interface/mcp/routes/fetchStatusHandler.ts). Gate the CRASH/UNHEALTHY verdict on: service-state != active/running OR (queue-depth > 0 AND last-success-age > SLA). When queue-depth == 0 AND service running == idle-waiting -> emit INFO (idle, no filings due), NEVER P0 crash. Generic: derive SLA window only over tickers with an EXPECTED-but-missing filing, not calendar age. Add a unit test: idle-queue-0-running + push-age>360min -> verdict=IDLE/INFO (not CRASH); down-service OR (queue>0 AND age>SLA) -> CRASH.",
+        "verification_gate": "Unit: idle-queue-0-running + push-age>360min => INFO not CRASH; service-down => CRASH; queue>0 & age>SLA => CRASH. Live: next health-recheck cron tick over a running-idle vn-bctc-fetch emits NO false BCTC P0.",
+        "generic_mandate": "Fix the classifier generically (service-state + queue-depth gate), not a vn-bctc-fetch special-case; applies to any event-driven pipeline whose push-age is idle-dependent.",
+        "size": "S",
+        "baseline_pass": true,
+        "source": "dev-team cron tick 20260620T0207Z; guard-instructed mint (durable fix named in tick guard was absent from board); reports 3244-3262 BCTC false-alarm cluster; SSH RAW-verify report 3256 2026-06-19T16:20Z",
+        "minted_by": "po-s110",
+        "minted_at": "2026-06-20T02:37:02Z"
       }
     ],
     "closed_sprints": [

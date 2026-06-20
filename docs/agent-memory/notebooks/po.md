@@ -1,33 +1,27 @@
 # PO Notebook
 
-_Last: 2026-06-19T17:31:18Z_
+_Last: 2026-06-20T02:35:24Z_
 
 ## Carry-over
-- review[] (3, all LIVE/behavioral gates, NOT router-resolvable): FIX-ALERT-ENGINE-RSI-SINGLEDIGIT, FIX-BCTC-ENRICH-SILENT-0ROWS, ARCH-SHIP-WAVE-REAUDIT.
-- Push deferred out-of-band (launchd com.vn-market.fleet-push). 2x fleet-push-abort this tick = three-dot classifier correctly DEFERRING (ahead 43 / behind 62, benign cloud-chore) — NOT a regression, NO task minted.
-- ready[2] dispatched this tick → router spawns; in_progress will fill. WIP now at 2 (max).
+- review[5] all LIVE/behavioral gates (NOT router-resolvable): FIX-ALERT-ENGINE-RSI-SINGLEDIGIT, FIX-BCTC-ENRICH-SILENT-0ROWS, ARCH-SHIP-WAVE-REAUDIT + 2.
+- head idle awaiting push for FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG (REVIEW, commit 495cf0d4, gate=ci_green_on_subsequent_push). NOT my action — push deferred to launchd com.vn-market.fleet-push.
+- CI RED only on FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts = weekend time-gated hold, tracking-only.
+- FIX-AUTO-PUSH backstop work all done_verified; WIP=0.
 
-## This cycle — dev-team tick 2026-06-19T173118Z (GATEWAY-BLIND local spawn; board+git+fs only)
-RETURN = BATCH(2). WIP 0 → 2. Script: scripts/po-s110-orphan-cowrite-promote-auditor-writebug-mint.jq (atomic; conservation ready+2/backlog-1/sig_new-6, placement, idempotent re-run delta 0).
+## This cycle — dev-team tick 2026-06-20T0207Z (Sat weekend, VN market CLOSED; GATEWAY-BLIND local spawn, board+git+fs only)
+RETURN = BATCH(1). Triaged 19 health-recheck reports (3244-3262, all analysis-agent cron).
 
-SLOT 1 (FIX → dev-mcp-server, HIGH): PROMOTED FU-ALERT-COWRITE-SCHEDULER-JOBS backlog→ready (was MEDIUM, escalated). This is the DURABLE ROOT of sau-c08 orphaned alerts (router RAW-verified LIVE 33 orphaned/119 alerts-24h, recurring 103 06-13 → 63 06-18 → 33 now). 3 scheduler jobs (taAlertScanJob/bbAlertScanJob/foreignFlowAlertJob, files confirmed on disk) INSERT INTO alerts directly, skip storeAlerts co-write → genuine orphans. Dep FIX-ALERT-ORPHAN-CORRELATION already shipped (7cbca67a/556eb214). DoD: route all 3 through storeAlerts atomic co-write; live orphan-delta→~0; generic all tickers.
+DISMISSED as known/handled (per tick guards + board dedup):
+- BCTC P0 "vn-bctc-fetch UNHEALTHY/SLA 51-77h" (~14 reports): KNOWN FALSE ALARM (SSH RAW-verified report 3256, active 8d, queue idle-empty no Q1-2026 filings). NOT a crash.
+- mcp-server/rag-service mem CRITICAL (3255): router-corrected 71a95ac6 (container-% denominator false-spike). Watch-item only.
+- weekend price/FX/SBV/HNX staleness + "all price sources failing" @ Sat 02:00Z: market CLOSED weekend = expected idle. Re-verify Mon open.
+- get_agent_signals from_agent=null + get_insider_signals outstandingShares: reports show RESOLVED.
+- digest W26 double-publish (3259): FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP is DONE_VERIFIED — its gate explicitly covers period-date-range key vs derived-week-label + adjacent-week-boundary Sundays. Sun 2026-06-21 publish PROTECTED. No mint, no dispatch.
 
-SLOT 2 (UNBLOCK → agent-father via agent-md-factory, HIGH): MINTED FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY → ready. META-BUG that swallowed C-08 ~1.5d: system-auditor signal emit writes .signal_queue[N] numeric keys instead of .signal_queue.rows[] → findings invisible to PO. Also swallowed rag-service degraded this tick + legacy junk keys 0/1/2. DISTINCT from FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK (done_verified = row SHAPE, not write KEY). Fix: append to .rows[] + post-write read-back self-check. Per Agent .md factory rule → agent-md-factory then agent-father. Targets .claude/skills/signal-dashboard/SKILL.md § WRITE + system-auditor flow.
+MINTED ONCE (guard-instructed — named durable fix was ABSENT from board):
+- FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH → backlog[] (FIX, P2, apps/mcp-server/). Crash classifier keys on push-age>360min alone; gate it on service-state + queue-depth so idle-queue-0-running => INFO not CRASH. DISTINCT from FIX-BCTC-FRESHNESS-GATE (done_verified, inverse — makes gate MORE sensitive). Backlog 246->247, atomic one-off jq, idempotent. NOT promoted to ready (weekend, P2, recurring-cosmetic not urgent).
 
-TRIAGED→backlog (ranked, not dispatched, WIP full):
-- sau-20260619T170803Z rag-service OOM (MEDIUM, RestartCount=77/9d, 766/768MiB): overlaps FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX. Cap-bump ~1.5GB = ops/infra; growth = dev-rag-service. Next free slot.
-- devteam-...-macro-fetch-cluster (5 findings): needs PO scoping into separate FIXes (DJIA/WTI stale store; Reuters/TE circuit-open; FRED_API_KEY unset; SBV zero-mask; foreign-flow primary dead). Multi-owner, scope next tick — NOT blind-dispatch.
-- devteam-...-health-idle-vs-crash (P1): owner = health-recheck RemoteTrigger PROMPT (router-updatable, NOT a dev coding lane); matches project_health_recheck_trigger + bctc_lastpush_age_misread_as_crash. Queue=0+active=IDLE≠CRASH.
-- devteam-...-d4-id-collision (P2): already tracked FU-AUDITOR-D4-SIGNAL-ID; durable fix overlaps M2 signal-dashboard write-path — fold/sequence after M2.
-- qa-cycle277 ohlcv-aggregator follow-ons (2, already TRIAGED): stranded-pre-fix-rows DATA-REPAIR + class3 cold-start exchange-seed — left as-is, downstream of approved write-fix.
+Recurring-but-already-tracked (NOT re-minted): FIX-NEWS-CB-FALSE-CLOSED (TODO, Reuters/TradingEconomics dead sources), FIX-COMMODITY-WTI-DELTA-CORRUPT (TODO, WTI=95.5 stale), KD-BACKTEST-501-4X (kinhdich 503). sentiment_trend stock_code + ism FRED_API_KEY config = recurring P1/config, low-value weekend, left for weekday batch.
 
-LESSON: the orphankey write-bug (M2) is the recurring-invisibility root behind why C-08 sat unseen ~1.5d — fixing the SENSOR write-path is as load-bearing as the alert co-write itself. Both HIGH this tick.
-
-## 2026-06-19T20:24Z — THRESHOLD-PUSH + UNPARK auto-push (FIX-AUTO-PUSH-TRIGGER-NOT-FIRING)
-- STATE on entry: local main 83-ahead/46-behind; launchd com.vn-market.fleet-push PARKED — every 30-min tick ABORTed at Step-7 because the three-dot behind-set carried 1 non-benign file: apps/mcp-server/src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts.
-- ROOT (RAW): origin had d220356c for CONTAM-7, local main had local-authored 709703ee; FILE CONTENT IDENTICAL (git diff --quiet HEAD origin/main -- file = no diff). So `git checkout origin/main -- <file>` would be a content NO-OP and would NOT clear the three-dot behind-set — the entry was a pure commit-GRAPH artifact (d220356c not an ancestor of local HEAD). The ONLY fix is graph ancestry of d220356c → merge origin/main.
-- ACTION: manual worktree push (C-2 commit-mutex, /tmp/fleet-push-po-c2-$$, never touched dirty main tree). Merged origin/main into worktree-of-HEAD (brought d220356c, ZERO conflicts incl CONTAM-7), bounded pnpm --filter vn-market check = GREEN (rc=0). Push rejected once (origin race: 085cc707 chore landed) → fetch+re-merge (clean) → push 085cc707..3bddf6bb. origin HEAD == our HEAD == 3bddf6bb.
-- RESULT: local main now 0-ahead/49-behind; three-dot non-benign behind-set = 0 files (Step-7 code_touched=0 → WOULD PROCEED). dry-run script no-ops at ahead=0 (correct). AUTO-PUSH UNPARKED.
-- GATE: this manual push does NOT satisfy the task's AUTONOMOUS-FIRE gate (it excludes human-run script) — qa still owns that. What I delivered: removed the BLOCKER so the next accumulation (>20 ahead via cowork churn) lets the timer fire+push autonomously; qa verifies that real timer-tick push in fleet-push.log.
-- PERPETUAL-LAG: behind-set is file-level 100% benign (docs/health-recheck/notebook/signal/merge). Auto-push stays functional while origin stays chore-only. Re-park ONLY if a cloud session commits NEW code local lacks (CONTAM-7 class) — none pending.
-- LESSON: an auto-push "code-divergence" abort can key on a file whose CONTENT is identical across branches — it's the COMMIT GRAPH (non-ancestor SHA), not a content gap. checkout-path reconcile is a no-op for that class; only a real merge (worktree push) clears it. Content-identical ≠ graph-reachable.
+## Board writes this tick (for router RAW-reconcile)
+1. .task_board.backlog += FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH (only write). _updated_by=po-s110-bctc-idle-vs-crash-mint.
