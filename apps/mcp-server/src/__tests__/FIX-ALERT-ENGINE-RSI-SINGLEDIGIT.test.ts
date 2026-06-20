@@ -29,6 +29,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import type { ComputeTAResponse } from "../infrastructure/microservices/clients.js";
 import { runTaAlertScan } from "../scheduler/market-data/taAlertScanJob.js";
+import { initAlertsTables } from "../infrastructure/db/schema-alerts.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB setup
@@ -60,20 +61,9 @@ function buildTestDb(): Database {
       PRIMARY KEY (code, date)
     )
   `);
-  db.run(`
-    CREATE TABLE IF NOT EXISTS alerts (
-      id TEXT PRIMARY KEY,
-      triggered_at TEXT NOT NULL,
-      severity TEXT NOT NULL,
-      signals_json TEXT NOT NULL,
-      affected_actions_json TEXT NOT NULL,
-      analysis_ids_json TEXT,
-      message TEXT NOT NULL,
-      read INTEGER NOT NULL DEFAULT 0,
-      user_note TEXT,
-      fingerprint TEXT UNIQUE
-    )
-  `);
+  // Use the canonical schema helper so the test table always matches production.
+  // Hand-rolling CREATE TABLE alerts here would cause drift on every schema change.
+  initAlertsTables(db);
   return db;
 }
 
