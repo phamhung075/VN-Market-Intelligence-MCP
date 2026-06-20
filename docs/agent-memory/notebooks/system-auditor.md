@@ -1,14 +1,14 @@
 # System Auditor Notebook
 
-## c416 · 2026-06-20T03:37:15Z
-### Audit Run Tier-1 (03:37 UTC 2026-06-20)
+## c417 · 2026-06-20T04:07:40Z
+### Audit Run Tier-1 (04:07 UTC 2026-06-20)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
 - Anomalies: 0 new (CLEAN)
 - Status: HEALTHY — all runtime checks PASS ✓
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-20T03:37:09Z ===
+=== AUDITOR PROBE 2026-06-20T04:06:55Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
@@ -37,19 +37,26 @@ mcp-gateway                                       Up 9 days (healthy)    mcpserv
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=47.77% MemUsage=978.4MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=54.62% MemUsage=1.092GiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    28Gi    33%    393k  291M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    27Gi    34%    393k  281M    0%   /
 ```
 
 - A-01..A-11 containers: all 12 UP ✓ (mcp-server 9h, api-gateway 8d, frontend 3d, stock-price 4d, ta 4d, macro 4d, kinh-dich 5d, pdf 4d, rag 7h, news 9d, alert 9d, mcp-gateway 9d)
 - A-12..A-19 health: mcp-server ✓ api-gateway ✓ macro-indicators ✓ pdf-extractor ✓ frontend ✓ (all HTTP 200)
+- A-20 multi-probe pdf-extractor: 3/3 PASS ✓ (event loop healthy)
 - A-21 restart count: mcp-server=0 PASS ✓
-- A-30 memory: mcp-server 47.77% / 2GiB ✓ (healthy, well under 85% threshold)
-- A-32 disk: 33% PASS ✓ (well under 85% threshold)
-- Context: Sat 2026-06-20 03:37 UTC (weekend market closed) — all checks nominal
+- A-30 memory: mcp-server 54.62% / 2GiB ✓ (healthy, well under 85% threshold)
+- A-32 disk: 34% PASS ✓ (well under 85% threshold)
+- Context: Sat 2026-06-20 04:07 UTC (weekend market closed) — all checks nominal
+
+## c416 · 2026-06-20T03:37:15Z
+### Audit Run Tier-1 (03:37 UTC 2026-06-20)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 0 new (CLEAN)
+- Status: HEALTHY — all runtime checks PASS ✓
 
 ## c415 · 2026-06-20T03:07:09Z
 ### Audit Run Tier-1 (03:07 UTC 2026-06-20)
