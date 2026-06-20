@@ -201,4 +201,33 @@ const result = stmt.run(
 
 **Developer:** dev-mcp-server — 2026-06-20T08:41Z — TASK-OHLCV-WIC-1 complete. Local stub `validateOhlcv()` removed, replaced with `normalizeOhlcvToVnd` + `validateOhlcvUnit` (Writer E pattern). INSERT uses norm values. 8 tests green. tsc clean. Claude-Session: https://claude.ai/code/session_01JdVqWyt2s6zx9wA14JM2XD
 
-**QA:** _________________________ (sign after approval)
+**QA:** qa — 2026-06-20T08:55Z — APPROVED. 8/8 tests pass. tsc 0 errors. DDD PASS (domain→domain only). Security PASS (mock-guard EXIT 0). Test realness PASS (production guard exercised via real :memory: DB + BAD ticker path). Child task TASK-OHLCV-WIC-1 status: DONE (code-done). Parent FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 awaiting Monday live cron-db-data-integrity re-sweep for done_verified. Claude-Session: https://claude.ai/code/session_01JdVqWyt2s6zx9wA14JM2XD
+
+## [QA] Review Record
+
+**Verdict:** APPROVED
+**Cycle:** 304
+**Commit reviewed:** aeacdb25
+
+**Pipeline checks:**
+- bun test TASK-OHLCV-WIC-1-writer-f-guard.test.ts: 8 pass / 0 fail (30 expect() calls)
+- bun test 240-price-pipeline-recovery.test.ts: 13 pass / 0 fail (AC-2 reason-string guard-rejected: prefix confirmed)
+- tsc --noEmit: 0 errors
+- DDD scan (grep from.*infrastructure / from.*application on priceBackfillService.ts): PASS (no hits)
+- Security scan (process.env, secrets): PASS (no hits in production file)
+- mock-guard.sh: EXIT 0 — no fabricated-data patterns
+
+**Test realness audit:**
+- TC-1: backfillPrices BAD ticker → guard-rejected: prefix in errors (not old stub reason); 0 rows in DB — REAL path exercised
+- TC-2: validateOhlcvUnit directly on high=0,low=0 → zero_ohlc rejection via Rule 1 — REAL guard
+- TC-3: HILO ratio 1000x (500/500000) → hilo_ratio_too_wide — REAL Rule 4
+- TC-4: thousand-scale normalize ×1000 + guard accept — normalizeOhlcvToVnd production function
+- TC-5: old stub reason strings (high-less-than-close etc.) confirmed absent from errors array — stub removal verified
+
+**Guard correctness:**
+- close > high → Rule 5 implausible ohlc → rejected
+- h=l=0 sentinel → Rule 1 zero_ohlc → rejected
+- HILO ratio >5 → Rule 4 hilo_ratio_too_wide → rejected
+- INSERT uses norm.open/norm.high/norm.low/norm.close (verified at priceBackfillService.ts:140-145)
+
+**DDD:** domain/services/priceBackfillService.ts imports from ./market-data/ohlcvUnitGuard.js (domain→domain — SAFE per architect D-2)

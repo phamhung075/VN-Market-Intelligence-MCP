@@ -109,3 +109,29 @@
 - Failing files: 083-tool-analysis, 102-job-news-poll, 1227-source-health-empty-result, 1324-push-news-all-sources, TASK17-PAGE13 — all disjoint from 3 changed files; all present in baseline.
 **why-decision:** APPROVED. All DoD criteria independently verified live. Tests +11 net improvement. tsc clean. DDD PASS. Security PASS. mock-guard PASS. Container has fix. 8 rows terminal. Counter stopped.
 **why-change:** No change from plan — fix is durable, generic, and live-verified.
+
+---
+
+### STEP qa-S10 · qa · 2026-06-20T08:55:00Z
+**task-id:** TASK-OHLCV-WIC-1
+**what-done:** QA gate: WIC-1 writer F guard replacement — APPROVED. Local validateOhlcv() stub removed; normalizeOhlcvToVnd + validateOhlcvUnit (Writer E pattern) in place; INSERT uses norm values.
+**what-considered:**
+- Test realness: WIC-1 tests import production guard (ohlcvUnitGuard.js) directly + call backfillPrices against real :memory: DB; no self-confirming schema; BAD ticker exercises actual fetchOhlcvData→guard path.
+- DDD: priceBackfillService.ts imports only from ./market-data/ohlcvUnitGuard.js (domain→domain); zero infra/application imports.
+- Guard correctness: close>high rejects via Rule 5; h=l=0 rejects via Rule 1 zero_ohlc; HILO ratio 1000x rejects via Rule 4; errors carry guard-rejected: prefix replacing old stub strings.
+- Security: no shell interpolation, no process.env in production files, mock-guard EXIT 0.
+**why-decision:** APPROVED. 8 tests pass, tsc 0 errors, DDD clean, security clean, mock-guard PASS.
+**why-change:** No change from plan.
+
+---
+
+### STEP qa-S11 · qa · 2026-06-20T08:55:00Z
+**task-id:** TASK-OHLCV-WIC-2
+**what-done:** QA gate: WIC-2 writer H coerce fix — APPROVED. parse-and-reject replaces coerce-to-open for high/low in push-ohlcv-history; guard receives real values.
+**what-considered:**
+- Test realness: WIC-2 tests hit the live HTTP server (createBunServer port:0), POST real JSON, verify inserted/skipped counts + DB state. Guard path confirmed live (log shows "unit guard rejected" for Rule 5 case TC-6).
+- Guard bypass eliminated: TC-6 log confirms guard sees high=99000 < low=101000 (real values), not open=open silently. Old coerce-to-open path gone.
+- No default-to-open: code at L1272-1274 rejects on NaN/≤0 without fallback — AC-4 satisfied.
+- Security: process.env usage in WIC-2 test is test-harness auth setup (beforeAll/afterAll VPS_PUSH_API_KEY) — not production code; mock-guard checks production files only, EXIT 0.
+**why-decision:** APPROVED. 10 tests pass, tsc 0 errors, DDD clean (server.ts is interface layer, guard is domain layer — correct direction), security clean.
+**why-change:** No change from plan.

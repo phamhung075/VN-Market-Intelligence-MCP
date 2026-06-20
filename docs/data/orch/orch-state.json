@@ -10855,7 +10855,7 @@
       {
         "id": "TASK-OHLCV-WIC-1",
         "type": "SUBTASK",
-        "status": "REVIEW",
+        "status": "DONE",
         "owner": "dev-mcp-server",
         "zone": "apps/mcp-server/",
         "priority": "P0",
@@ -10870,14 +10870,15 @@
         "dependencies": [],
         "blocked_by": [],
         "blocks": [],
-        "updated_at": "2026-06-20T09:10:00Z",
-        "updated_by": "dev-team-cron-router",
-        "router_note": "Dev (aeacdb25) shipped code+tests green; router persisted TODO→REVIEW (dev self-reported REVIEW but never committed board change). tsc clean + WIC-1 8/0 + WIC-2 10/0 RAW-verified by router."
+        "updated_at": "2026-06-20T08:55:00Z",
+        "updated_by": "qa",
+        "router_note": "Dev (aeacdb25) shipped code+tests green; router persisted TODO→REVIEW (dev self-reported REVIEW but never committed board change). tsc clean + WIC-1 8/0 + WIC-2 10/0 RAW-verified by router.",
+        "status_note": "code-done; parent FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 awaiting Monday live-sweep done_verified"
       },
       {
         "id": "TASK-OHLCV-WIC-2",
         "type": "SUBTASK",
-        "status": "REVIEW",
+        "status": "DONE",
         "owner": "dev-mcp-server",
         "zone": "apps/mcp-server/",
         "priority": "P0",
@@ -10892,9 +10893,10 @@
         "dependencies": [],
         "blocked_by": [],
         "blocks": [],
-        "updated_at": "2026-06-20T09:10:00Z",
-        "updated_by": "dev-team-cron-router",
-        "router_note": "Dev (aeacdb25) shipped code+tests green; router persisted TODO→REVIEW (dev self-reported REVIEW but never committed board change). tsc clean + WIC-1 8/0 + WIC-2 10/0 RAW-verified by router."
+        "updated_at": "2026-06-20T08:55:00Z",
+        "updated_by": "qa",
+        "router_note": "Dev (aeacdb25) shipped code+tests green; router persisted TODO→REVIEW (dev self-reported REVIEW but never committed board change). tsc clean + WIC-1 8/0 + WIC-2 10/0 RAW-verified by router.",
+        "status_note": "code-done; parent FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 awaiting Monday live-sweep done_verified"
       }
     ],
     "closed_sprints": [
@@ -22246,8 +22248,8 @@
         }
       ]
     },
-    "updated_at": "2026-06-19T00:37:56Z",
-    "updated_by": "po-s107"
+    "updated_at": "2026-06-20T08:55:00Z",
+    "updated_by": "qa"
   },
   "updated_at": "2026-06-20T08:16:14Z",
   "updated_by": "po-s107",
