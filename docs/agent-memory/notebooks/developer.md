@@ -143,3 +143,18 @@
 **Learning:** golangci-lint-action v7 supports v2 schema only and requires explicit `version: v2.0` input (shown in action README). v6 installed v1 binary which rejected v2 config with exit-3. The stale TS lint job (kinh-dich rebooted TS->Go 2026-05-24) had no eslint.config so would never pass — dead CI debt.
 
 **Pattern:** CI schema version mismatch (linter binary vs config version) always shows as exit-3 with "you are using a configuration file for version X with version Y". Verify action major version tracks linter major version.
+
+## Session 2026-06-21 — FIX-FB-GATE-SECTOR-NAME-VALIDATOR (AUDIT-FB-GATE-PROSE-HARDENING)
+
+**Task:** Add Check-E (sector/company-name validator) to `scripts/fb-data-integrity-gate.sh` + fix line-344 `[[: 0\n0: syntax error`.
+**Zone:** scripts/ (cross-service gate) → developer handles directly.
+
+**Bug found (line-344):** `grep -c` exits 1 on 0 matches → `|| echo "0"` fires alongside grep's stdout "0" → `floor_zero="0\n0"` → `[[ "$floor_zero" -gt 0 ]]` syntax error. Fix: `|| true` + `grep -m1 '^[0-9]' || echo "0"` to normalise to scalar. Both occurrences (lines 343+353) fixed.
+
+**Check-E design:** SSOT-driven (reads docs/data/system-map.json .project.watchlist). Two sub-checks:
+- E1 parenthesised-label contradiction: regex `TICKER (label)` / `(label) TICKER` within 60-char parens; maps SSOT English sector strings to canonical families; derives Vietnamese sector keywords per family; guards against own-sector-keyword false-positives (VRE "Retail REIT" correctly NOT flagged for "retail" kw).
+- E2 company-alias mismatch: curated known-fabrication aliases (VNM→Nestlé, SAB→Heineken).
+
+**Learning:** Proximity-window sector matching (120 chars) is too aggressive for Vietnamese financial prose where multiple sectors are discussed in the same paragraph. Tight parenthesised-label matching (pattern `TICKER (...)`) targets the fabrication signal without false-positives.
+
+**Commit:** eceee94a
