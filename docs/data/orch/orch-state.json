@@ -193,13 +193,13 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server EXECUTING FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (single-zone apps/mcp-server/, P1, size S): trace vnIndexRefresh (*/5 market-window cron) — confirm wired + executes + WRITES vn_index_cache (not silent-0-rows/fail-closed-to-empty, contract-from-live-payload class). Add unit test proving refresh path writes rows given valid upstream payload. RED-PREPUSH: pnpm check / bun tsc green before commit. done_verified GATED on Mon 06-22 live market-session re-sweep (vn_index_cache non-empty + freshening ≤10min). Then→qa.",
+    "next_agent": "qa",
+    "next_action": "qa: review FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (commits ac8ad6c7+12f1097d). Router pre-verified tsc-green + 5/5 real-path test + narrow commits. QA scope: full suite (confirm 44 fails pre-existing zero-new), DDD/security, real-path test sanity. done_verified GATED Mon 06-22 live re-sweep AFTER ops container rebuild (REBUILD_REQUIRED:yes). QA PASS -> DONE (NOT done_verified). QA FAIL -> back to dev-mcp-server.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-20T09:12:00Z",
+    "updated_at": "2026-06-20T09:44:10Z",
     "updated_by": "dev-team-cron-router",
-    "note": "Tick 20260620T090906Z. Prior P0 (OHLCV-WIC) closed. Cowork signals = SKIPPED_BLIND_NO_BACKSTOP informational. signal_queue all TRIAGED, 0 orphan keys. FIX single-zone → Step 3 direct (no architect/pm)."
+    "note": "Tick 20260620T090906Z dev->qa. dev RETURN RAW-verified by router (tsc+test run myself). SF-1 held until QA returns + tick close."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10846,8 +10846,8 @@
       {
         "id": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
         "type": "FIX",
-        "status": "IN_PROGRESS",
-        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "owner": "qa",
         "zone": "apps/mcp-server/",
         "priority": "P1",
         "size": "S",
@@ -10855,9 +10855,18 @@
         "created_by": "po-triage-20260620T080911Z",
         "title": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH — vn_index_cache 0 rows; vnIndexRefresh */5 cron not populating",
         "desc": "Router-RAW-VERIFIED on live named-volume market.db (signal sau-20260620T103002-db3 MEDIUM): vn_index_cache count=0. Separate cron/refresh-path issue from the OHLCV writer class. Trace vnIndexRefresh (*/5 during 2-8h market window): confirm it is wired + actually executes + actually WRITES to vn_index_cache (not silent-0-rows / fail-closed-to-empty per recurring contract-from-live-payload class). Cross-ref existing audit-question rows CI-FRESH-01-FIX (is vnIndexRefresh running) + MD-FUNC-01-FIX (snapshot VN-Index fields) — this is the CONCRETE confirmed-empty-table fix; fold/close those two audit questions on completion (their answer is: NO, not populating). AC: vn_index_cache has fresh rows during market hours (last_run<=10min) AND get_market_snapshot serves a non-empty VN-Index. done_verified GATED on live re-sweep during a market session (Mon 06-22 open) returning non-empty cache.",
-        "verification_gate": "Live: vn_index_cache non-empty + freshening every 5min during a real market session; get_market_snapshot VN-Index non-empty.",
+        "verification_gate": "MONDAY-2026-06-22 live market-session re-sweep (02:00-08:59Z): vn_index_cache non-empty AND freshening <=5min, AFTER ops rebuilds mcp-server container so DDL+writer reach live named-vol DB. REBUILD_REQUIRED:yes.",
         "source": "router-verified db_integrity_breach db3",
-        "claimed_at": "2026-06-20T09:12:00Z"
+        "claimed_at": "2026-06-20T09:12:00Z",
+        "reviewed_at": "2026-06-20T09:40:00Z",
+        "dev_commits": [
+          "ac8ad6c7",
+          "12f1097d"
+        ],
+        "root_cause": "vn_index_cache existed in named-vol DB (abandoned task 1842a) with no DDL + no writer; vnIndexRefreshJob fetched OK but storeMarketPrices only wrote market_prices, never vn_index_cache (silent-empty / contract-from-live-payload class). Fix: DDL + upsertVnIndexCache writer + job wiring + honest-gap (null/throw -> 0 rows, no fake seed).",
+        "rebuild_required": true,
+        "router_verified": "router RAW-verified: tsc exit 0 (RED-PREPUSH ok); VNINDEX test 5/5 pass via REAL initDatabase prod path (not self-confirming); commits ac8ad6c7+12f1097d narrow, no orch-state; DDD infra-layer + parameterized SQL; root cause confirmed.",
+        "router_verified_at": "2026-06-20T09:44:10Z"
       },
       {
         "id": "TASK-OHLCV-WIC-1",
