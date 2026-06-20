@@ -1,0 +1,30 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "high",
+  "createdAt": "2026-06-20T224747Z",
+  "payload": {
+    "check_id": "DRAIN-STATEFILE-DATALOSS",
+    "title": "drain-signals.js sweeps state file db-integrity-history.json → silent history wipe",
+    "severity": "HIGH",
+    "module": "scripts/agents-flow/drain-signals.js",
+    "root_cause": "drain-signals.js globs ALL docs/signals/*.json with NO state-file exclusion (line 33 readdirSync filter is *.json only). docs/signals/db-integrity-history.json is a PERSISTENT state array (read/written by scripts/db-integrity-history-append.sh, $HIST default path, HISTORY_CAP=200). On drain it is fingerprinted (from/to/type default to unknown/po/unknown), moved to docs/signals/processed/, then on the NEXT append run db-integrity-history-append.sh finds it missing, hits the catch branch and writes printf '[]' — silently destroying all history entries.",
+    "evidence": "Live drain tick 20260620T223928Z: had to relocate db-integrity-history.json out of the glob path to avoid the wipe; found an ORPHAN docs/signals/processed/db-integrity-history.json from a PRIOR mis-drain (untracked, never committed) = proof the trap already fired. Live file intact at 7 entries only because router excluded it manually this tick. An unattended/cloud drain would NOT exclude it.",
+    "fix_options": [
+      "(a) drain-signals.js: skip files lacking a routable shape (no from AND no type), or apply an explicit state-file denylist (db-integrity-history.json + any non-signal *.json).",
+      "(b) PREFERRED: relocate the state file OUT of the drain inbox — move db-integrity-history.json to e.g. docs/data/db-integrity-history.json and update db-integrity-history-append.sh DB_INTEGRITY_HISTORY default + any reader. State files must not live in a drain inbox."
+    ],
+    "zone": "scripts/ + apps/mcp-server/",
+    "suggested_dev_agent": "dev-mcp-server",
+    "rebuild_required": false,
+    "verification_gate": "Run node scripts/agents-flow/drain-signals.js with db-integrity-history.json present in docs/signals/ (or its new home) → file (and its entries) MUST survive the drain unchanged; processed/ MUST NOT receive a db-integrity-history.json copy.",
+    "router_note": "Router worked around this tick by relocate→drain→restore + removed the orphan processed/ copy. Definitif fix is dev-side per options above."
+  },
+  "_processed": {
+    "fingerprint": "ad64e6f9f1399cfda190e9143b406e0b6532da13052a07f567c3c28857ec6740",
+    "processedAt": "2026-06-20T23:41:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
