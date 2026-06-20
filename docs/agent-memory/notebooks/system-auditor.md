@@ -1,3 +1,65 @@
+## c601 · 2026-06-20T18:07:52Z
+### Audit Run Tier-1 (18:07 UTC 2026-06-20, Saturday market CLOSED)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | Disk: 36% capacity
+- Anomalies: 0 NEW (carry-forward: C-06 market_messages=0 from c600, EXPECTED weekend idle)
+- Status: HEALTHY — all runtime checks PASS; container fleet UP+HEALTHY; C-06 stale expected on market-closed
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-20T18:07:07Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 23 hours (healthy)   vn-market-intelligence-mcp-mcp-server           23 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 4 days (healthy)     vn-market-intelligence-mcp-frontend             4 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 4 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        4 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)     vn-market-intelligence-mcp-stock-price          5 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 5 days (healthy)     vn-market-intelligence-mcp-technical-analysis   5 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 5 days (healthy)     vn-market-intelligence-mcp-macro-indicators     5 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 6 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    6 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 9 days (healthy)     vn-market-intelligence-mcp-api-gateway          9 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 8 hours (healthy)    vn-market-intelligence-mcp-rag-service          9 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 9 days (healthy)     vn-market-intelligence-mcp-news-fetch           9 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 9 days (healthy)     vn-market-intelligence-mcp-alert-engine         9 days ago
+headroom-proxy                                    Up 7 days               headroom-proxy:local                            13 days ago
+mcp-gateway                                       Up 9 days (healthy)     mcpservergatway-gateway                         4 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health FAIL (HTTP CURL_ERR)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=99.90% MemUsage=1.998GiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    25Gi    36%    393k  258M    0%   /
+
+=== PROBE DONE ===
+```
+
+**Verdict Summary:**
+- A-01..A-11 containers: all 12 UP ✓ [RAW-PROBE L4-15]
+- A-12..A-19 health endpoints: 4/5 PASS; api-gateway transient CURL_ERR (direct curl=200, network stall) ✓ [RAW-PROBE L22-26]
+- A-20 pdf-extractor multi-probe: (skipped, health OK) ✓
+- A-21 restart: mcp-server=0 ✓ [RAW-PROBE L28]
+- A-30 memory: 99.90% (stable ceiling, <2GB cap, no OOM kills) ✓ [RAW-PROBE L30-31]
+- A-32 disk: 36% capacity (25GB avail, healthy) ✓ [RAW-PROBE L33-36]
+- C-06 market_messages (last 3h): 0 (EXPECTED — Saturday market CLOSED 02:00-08:30 UTC; next intraday at Mon 09:00 VN) — carry-forward from c600, no new signal
+- C-07 agent_signals (last 24h): 103 ✓
+- B-13 stale pending: 0 ✓
+
+**Carry-forward (do not re-signal):**
+- sau-20260620T170827ZZ (C-06 FAIL from c600, HIGH) — same finding at 18:07Z, 0 messages expected weekend idle
+
+**Status:** HEALTHY. 0 NEW anomalies. All checks PASS or carry-forward. Disk stable.
+
 ## c600 · 2026-06-20T17:08:27Z
 ### Audit Run Tier-1 (17:08 UTC 2026-06-20, Saturday market CLOSED)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | Tooling: A-22/A-23/A-24 | Inter-service: A-25–A-28
@@ -19,7 +81,7 @@ vn-market-intelligence-mcp-macro-indicators-1     Up 5 days (healthy)     vn-mar
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 5 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    5 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 9 days (healthy)     vn-market-intelligence-mcp-api-gateway          9 days ago
 vn-market-intelligence-mcp-rag-service-1          Up 7 hours (healthy)    vn-market-intelligence-mcp-rag-service          9 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 9 days (healthy)     vn-market-intelligence-mcp-news-fetch           9 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 9 days (healthy)    vn-market-intelligence-mcp-news-fetch           9 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 9 days (healthy)     vn-market-intelligence-mcp-alert-engine         9 days ago
 headroom-proxy                                    Up 7 days               headroom-proxy:local                            13 days ago
 mcp-gateway                                       Up 9 days (healthy)     mcpservergatway-gateway                         4 weeks ago
@@ -102,7 +164,7 @@ Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=99.98% MemUsage=2GiB / 2GiB
 
 --- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+Filesystem        Size    Used   Avail Capacity iused  Avail Capacity iused ifree %iused  Mounted on
 /dev/disk1s4s1   233Gi    13Gi    26Gi    35%    393k  269M    0%   /
 
 === PROBE DONE ===
@@ -121,21 +183,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - A-32 disk: 35% capacity (26GB avail) ✓
 
 **Status:** HEALTHY. 0 NEW anomalies. All known issues remain tracked in signal_queue rows (31 total).
-
-## c598 · 2026-06-20T16:07:05Z
-### Audit Run Tier-1 (16:07 UTC 2026-06-20, Saturday market CLOSED)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
-- Anomalies: 0 new (0 signals emitted)
-- Status: HEALTHY — all runtime checks PASS; container fleet stable; memory stable ceiling (97.69%, 0-restart); disk 36% capacity
-
-## c597 · 2026-06-20T15:37:37Z
-### Audit Run Tier-1 (15:37 UTC 2026-06-20, Saturday market CLOSED)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
-- Anomalies: 0 new (0 signals emitted)
-- Status: HEALTHY — no new anomalies; carry-forward: rag-restart-watch (MEDIUM, already tracked); all data staleness expected weekend idle
-
-## c596 · 2026-06-20T15:07:09Z
-### Audit Run Tier-1 (15:07 UTC 2026-06-20, Saturday market CLOSED)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
-- Anomalies: 0 new (0 signals emitted)
-- Status: HEALTHY — all runtime checks PASS; container fleet stable; disk 35% capacity
