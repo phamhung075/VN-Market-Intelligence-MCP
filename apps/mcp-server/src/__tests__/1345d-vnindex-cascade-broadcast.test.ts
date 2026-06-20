@@ -85,6 +85,21 @@ function baseDeps(overrides: Partial<CycleDeps>): CycleDeps {
     markAlertNotifiedFn: async () => {},
     getRecentAlertHistoryFn: async () => [],
     cooldownConfig: { cooldownMinutes: 0, maxAlertsPerStockPerDay: 100 },
+    // CI-NETWORK-SKIP-GUARDS: step A2 (Yahoo Finance + SBV) and step A3 (vnstock)
+    // make live HTTP calls in the default implementation. Inject no-ops when
+    // CI=true so assertions exercise the step-E logic without network dependency.
+    // Local runs delegate to the real production implementations inside each fn.
+    macroFetchFn: async () => {
+      if (Bun.env.CI === "true") return; // no-op in CI — network blocked
+      const { fetchYahooFinancePrices, storeCommoditySnapshot } = await import("../infrastructure/fetchers/yahooFinance.js");
+      const commodity = await fetchYahooFinancePrices();
+      if (commodity) await storeCommoditySnapshot(commodity);
+    },
+    vnstockSyncFn: async (_codes: string[]) => {
+      if (Bun.env.CI === "true") return; // no-op in CI — network blocked
+      const { syncVnstockData } = await import("../application/usecases/syncVnstockData.js");
+      if (_codes.length > 0) await syncVnstockData(_codes);
+    },
     ...overrides,
   };
 }
