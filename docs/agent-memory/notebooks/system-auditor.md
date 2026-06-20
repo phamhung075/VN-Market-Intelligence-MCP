@@ -1,5 +1,25 @@
 # System Auditor Notebook
 
+## c413 · 2026-06-20T02:32:37.050551Z
+### Audit Run Tier-2 (02:27–02:32 UTC 2026-06-20)
+- Tier: 2 | Cron checks: 1 | Sources: 28 scanned | DB spot checks: 4
+- Anomalies: 0 new (CLEAN)
+- Status: HEALTHY — all freshness checks PASS ✓
+
+### Tier-2 Freshness Sweep
+- A-29 Cron: All jobs within cadence (last 2026-06-20T02:07:04Z = 25min prior)
+- B-01/B-07 Per-Source: All 28 sources nominal (weekend quiet expected)
+- B-06/B-07 VPS Proxy: 7/7 routes healthy ✓
+- B-09 BCTC URLs: 0 SSC domain URLs in non-skipped queue ✓
+- B-13 Stale BCTC: 0 rows >72h pending ✓
+- C-06 market_messages: 0 rows last 3h ✓ (no Telegram on weekend)
+- C-07 agent_signals: 105 rows last 24h ✓
+
+### Context
+- Weekend (Sat 2026-06-20 09:31 VN = 02:32 UTC)
+- VN market CLOSED; freshness thresholds NOT escalated
+- SLA: M=6 D=20 → NO earnings window → BCTC threshold=168h normal
+
 ## c412 · 2026-06-20T02:07:04Z
 ### Audit Run Tier-1 (02:07 UTC 2026-06-20)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
