@@ -63,6 +63,11 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
     low extraction_confidence on a scanned PDF is flagged-not-broken). Do NOT report noise.
     Only CONFIRMED anomalies proceed to a signal.
 
+  COUNT-NOISE TOLERANCE (regression monitor): live-DB counts wobble by ±1-2 under concurrent
+    writes. A delta of ±1-2 on a known anomaly is MEASUREMENT NOISE, not a regression — record
+    the count but do NOT call ±1-2 "changed/regression". Only a MATERIAL move is a real change:
+    a drop toward 0 (a fix landed), a jump of ≥~5, or a fresh recent-dated violating row.
+
   RECORD — write a JSON history of THIS scan to docs/signals/db-integrity-history.json
     (rolling, atomic read-modify-write: read → append one entry → keep last 200 → write once):
       `scan_ts` MUST be the REAL current UTC — run `date -u +%Y-%m-%dT%H:%M:%SZ` and use its
