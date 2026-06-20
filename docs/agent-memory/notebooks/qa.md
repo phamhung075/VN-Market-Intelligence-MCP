@@ -1,5 +1,17 @@
 # QA — Notebook
 
+## cycle-306 · 2026-06-21 · 5-fix digest-quality wave — ALL APPROVED
+
+FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME (dfb4e268) | Verdict: APPROVED | tsc EXIT 0 / pnpm check EXIT 0. 1307a-macro-thresholds: 16/16 pass (29 expect). DDD PASS (domain/services pure). Security PASS. mock-guard EXIT 0. Live sbv_rates_history (30 rows): mean=26120 stddev=0 → classifyDeviation returns `normal` (stdDev<0.001 early return). Guard 2 boundary: absPercentMove<0.5% → cap extreme/high→elevated. FX_SLOW_MOVER_INDICATORS set + FX_PERCENT_FLOOR=0.5 confirmed in running container L99/L114. Test suite covers 0.25%→elevated + 0.514%→extreme + non-FX bypass. DJ: sprint-DIGEST-QUALITY-QA-2026-06-21.md §Entry1.
+
+TASK-RSIFIX-1 (60891f75, docs-only) | Verdict: APPROVED (Smart-Skip) | docs/standards/ta-engine-contract.md EXISTS (267L). git show --stat: 3 files only (orch-state + handoff + contract). No runtime code. Corrections documented: hard gate=15 not 35, MA5/20/50 not MA100, empty closes+empty symbol → HTTP 400 not 200. DJ: sprint-DIGEST-QUALITY-QA-2026-06-21.md §Entry2.
+
+TASK-RSIFIX-2 (3e5a5a5a) | Verdict: APPROVED | tsc EXIT 0 / pnpm check EXIT 0. RSIFIX-2 tests: 10/10 pass (22 expect). defaultComputeTa async at assembleBriefing.ts:667. computeTAIndicators import confirmed L31. 35-candle gate L677. market_prices_history fallback REMOVED (comment L659). stub-bar guard L681. Live: TCH 28 candles < 35 gate → TS returns null (Go hard gate=15 so Go returns RSI but TS layer gates to null). D2D 40 candles → rsi14 present. DDD/Security/mock-guard PASS. DJ: sprint-DIGEST-QUALITY-QA-2026-06-21.md §Entry3.
+
+FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN (b1d32758) | Verdict: APPROVED | tsc EXIT 0 / pnpm check EXIT 0. FFZ tests: 14/14 pass (29 expect). Live named-volume DB (2026-06-19): WITHOUT fix → MWG|35469, VNH|-40, ACV|0, DFF|0, HBC|0 (3 zero-padding rows — bug confirmed). WITH fix → MWG|35469, VNH|-40 only (no padding). SQL at assembleEveningSummary.ts:664 `AND foreign_net_vol <> 0` confirmed. formatForeignFlowSection nonZeroMovers filter at eveningSummaryJob.ts:226 confirmed. Source table: daily_ohlcv (not vnstock_trading_stats). DDD/Security/mock-guard PASS. DJ: sprint-DIGEST-QUALITY-QA-2026-06-21.md §Entry4.
+
+FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR (2e762361) | Verdict: APPROVED | tsc EXIT 0 / pnpm check EXIT 0. LF-1..LF-5: 5/5 pass. BB regression 1309+1391: 21/21 pass — no regression. alertThresholds.ts new domain constant MIN_DAILY_VOLUME_FOR_ALERTS=100_000 confirmed. bbAlertScanJob.ts tier-2 floor at L199, taAlertScanJob.ts floor at L210. Live: sub-floor tickers confirmed (HNF/MEL/VGV vol=1). Liquid tickers confirmed (VNINDEX 608M). Container grep: floor constant in running code L199. Pre-rebuild: D2D ta_bb_breakout_down @ 2026-06-19T06:45Z. Post-rebuild: 0 ta_ alerts (scan fires during VN market hours 02-08 UTC; pending next cycle). done_verified for "no D2D TA alerts post-rebuild" deferred to next market-hours scan cycle. DDD/Security/mock-guard PASS. DJ: sprint-DIGEST-QUALITY-QA-2026-06-21.md §Entry5.
+
 ## cycle-305 · 2026-06-20 · FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH — PASS (DONE, done_verified gated Mon 2026-06-22)
 
 FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH | Commits ac8ad6c7 (fix) + 12f1097d (docs) | Verdict: PASS | Board: REVIEW→DONE, owner→pm.

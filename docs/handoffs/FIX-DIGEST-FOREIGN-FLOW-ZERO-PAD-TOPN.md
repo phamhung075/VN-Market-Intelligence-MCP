@@ -177,3 +177,51 @@ New file: `apps/mcp-server/src/__tests__/FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.t
 - [x] Handoff created
 - [x] WIP slot: Wave 2 (after TASK-RSIFIX-2 completes)
 
+---
+
+## [QA] Review Record
+
+**QA agent:** qa
+**Date:** 2026-06-21
+**Verdict:** APPROVED
+
+### Formal Gate
+- `bun tsc --noEmit`: EXIT 0
+- `pnpm check`: EXIT 0
+- `bun test src/__tests__/FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.test.ts --no-cache`: **14 pass / 0 fail** (29 expect() calls, 92ms)
+- DDD: `application/usecases/assembleEveningSummary.ts` imports from `infrastructure/` (permitted). `scheduler/briefings/eveningSummaryJob.ts` is scheduler layer (permitted). PASS
+- Security: no `process.env`, no hardcoded secrets — PASS
+- mock-guard: EXIT 0 — PASS
+
+### Live Verification (Foreign Flow Zero-Pad — 2026-06-19 latest date)
+**WITHOUT fix filter** (raw query, simulating pre-fix behavior):
+```
+MWG|35469.0
+VNH|-40.0
+ACV|0.0
+DFF|0.0
+HBC|0.0
+```
+→ 3 zero-padding rows confirmed (exactly matches the bug description).
+
+**WITH fix filter** (`AND foreign_net_vol <> 0`):
+```
+MWG|35469.0
+VNH|-40.0
+```
+→ Only 2 nonzero movers returned. No zero-padding.
+
+**Source table confirmed:** `daily_ohlcv` (not `vnstock_trading_stats` as PM spec suggested — implementation correctly reads from `daily_ohlcv` per Step 4b at `assembleEveningSummary.ts:660`).
+
+**SQL in source:** `AND foreign_net_vol IS NOT NULL AND foreign_net_vol <> 0` at lines 663-664 — confirmed.
+**formatForeignFlowSection:** `nonZeroMovers = movers.filter(m => m.foreignNetVol !== 0)` at `eveningSummaryJob.ts:226` — confirmed.
+
+### Acceptance Criteria
+- [x] SQL Step 4b: `AND foreign_net_vol <> 0` added to WHERE clause
+- [x] formatForeignFlowSection: filter movers to nonZero before rendering
+- [x] Test fixture: partial-zero (2 nonzero + 3 zero) → only 2 lines rendered
+- [x] Test fixture: all-zero → "dữ liệu không có" message
+- [x] Test fixture: 5+ nonzero → top-5 all nonzero
+- [x] Rebuild successful (container rebuilt 2026-06-20T23:12:23Z)
+- [ ] LIVE evening cycle: Khối ngoại no 0.000k padding — deferred to next evening job run
+

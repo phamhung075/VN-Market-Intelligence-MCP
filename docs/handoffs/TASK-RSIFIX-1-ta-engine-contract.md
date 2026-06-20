@@ -112,6 +112,29 @@ After DONE (verified against Go), PM will unblock TASK-RSIFIX-2 for dev-mcp-serv
 
 ---
 
+## [QA] Review Record
+
+**QA agent:** qa
+**Date:** 2026-06-21
+**Verdict:** APPROVED (docs-only — Smart-Skip applied)
+
+### Formal Gate
+- Smart-Skip: docs-only change — no bun test / tsc / DDD / security / mock-guard applicable
+- `docs/standards/ta-engine-contract.md`: EXISTS at correct path (267 lines)
+- `git show --stat 60891f75`: 3 files only (orch-state.json + TASK-RSIFIX-1 handoff + ta-engine-contract.md) — no runtime code touched
+- No container rebuild required — confirmed
+
+### Acceptance Criteria
+- [x] File created: `docs/standards/ta-engine-contract.md`
+- [x] RSI section documents: period=14, Wilder seed/smoothing, min-candle=35 recommended (hard gate=15)
+- [x] BB/MACD/MA parameters documented with their periods (MA5/MA20/MA50 — correction: not MA100)
+- [x] Error contract section: field-absent (no error) behavior documented + HTTP 400 on empty-both correction
+- [x] Dev verified parameters against Go source (10 source files cited with file+line)
+- [x] Example fixtures in doc show 41-candle RSI present, 34-candle RSI PRESENT at code level (hard gate 15) but in WARMUP ZONE (contract correctly distinguishes hard vs recommended gate)
+- [x] Pushed to main (commit 60891f75 on main branch)
+
+---
+
 ## Developer — dev-technical-analysis
 
 **Status:** REVIEW

@@ -149,3 +149,53 @@ Yes (code change in two scheduler jobs + new domain service file). Ops batches a
 - [x] Handoff created
 - [x] WIP slot: Wave 2 or later (after WIP=2 constraint allows)
 
+---
+
+## [QA] Review Record
+
+**QA agent:** qa
+**Date:** 2026-06-21
+**Verdict:** APPROVED
+
+### Formal Gate
+- `bun tsc --noEmit`: EXIT 0
+- `pnpm check`: EXIT 0
+- `bun test src/__tests__/FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR.test.ts --no-cache`: **5 pass / 0 fail** (16 expect() calls, 71ms)
+  - LF-1 (D2D vol=6400 sub-floor, band-break → no alert): PASS — log confirms "thin-liquidity skip for D2D: volume=6400 < floor=100000"
+  - LF-2 (NVL vol=500000 above-floor → alert fired): PASS
+  - LF-3 (exactly 100000 floor → alert emitted, boundary inclusive): PASS
+  - LF-4 (mixed scan: D2D suppressed, NVL fires): PASS
+  - LF-5 (constant sanity check MIN_DAILY_VOLUME_FOR_ALERTS=100000): PASS
+- **BB regression 1309 + 1391**: `bun test ./src/__tests__/1309-bb-alert-scan-job.test.ts ./src/__tests__/1391-bb-stale-candle-skip.test.ts --no-cache`: **21 pass / 0 fail** (76 expect() calls, 69ms) — no regression
+- DDD: `alertThresholds.ts` in `domain/services/` — pure constants, zero imports. `bbAlertScanJob.ts` and `taAlertScanJob.ts` import `MIN_DAILY_VOLUME_FOR_ALERTS` from `domain/services/` (scheduler→domain = correct direction). PASS
+- Security: no `process.env`, no hardcoded secrets — PASS
+- mock-guard: EXIT 0 — PASS
+
+### Live Verification (BB Liquidity Floor)
+**Sub-floor tickers on 2026-06-19 (0 < volume < 100000):**
+`HNF, MEL, VGV, VSG, NDX, KTL, SID, S72, SGH, SNZ` — all with vol=1. Confirmed sub-floor tickers exist in watchlist-adjacent data.
+
+**Liquid tickers (volume ≥ 100000):**
+`VNINDEX|608253674, VN30|282675968, SHB|40246300, HPG|20055700, NVL|14984200` — full liquidity confirmed.
+
+**Running container floor constant:**
+`/app/src/scheduler/alerts/bbAlertScanJob.ts:199` — `if (lastCandle.volume < MIN_DAILY_VOLUME_FOR_ALERTS)` — CONFIRMED.
+`/app/src/scheduler/alerts/bbAlertScanJob.ts:200` — log message "thin-liquidity skip" — CONFIRMED.
+`taAlertScanJob.ts:210-211` — parallel floor check present — CONFIRMED.
+
+**Alert table audit (post-rebuild 2026-06-20T23:12:33Z):**
+No `ta_` type alerts found after rebuild time. Pre-rebuild: `D2D|ta_bb_breakout_down` (2026-06-19T06:45Z) and `D2D|ta_oversold` (2026-06-19T02:45Z) were emitted (expected — pre-fix behavior). Post-rebuild scan window not yet triggered (BB scans fire during VN market hours 02:00–08:00 UTC; container restarted at 23:12 UTC, first post-rebuild scan cycle pending).
+
+**Note:** "No D2D TA alerts post-rebuild" done_verified gate requires next market-hours scan cycle confirmation. Code path is correct and floor is in running container.
+
+### Acceptance Criteria
+- [x] MIN_DAILY_VOLUME_FOR_ALERTS config added (100K shares in domain/services/alertThresholds.ts)
+- [x] bbAlertScanJob.ts: added volume floor check before emitting alert
+- [x] taAlertScanJob.ts: added volume floor check (parallel scan exists — fixed)
+- [x] Test fixture: sub-floor ticker with band break → no alert emitted
+- [x] Test fixture: above-floor ticker with band break → alert emitted
+- [x] Test fixture: exactly-at-floor ticker → alert emitted (boundary inclusive)
+- [x] Existing BB regression tests (1309/1391) still pass (21/21) — no regression
+- [x] Rebuild successful (container rebuilt 2026-06-20T23:12:23Z)
+- [ ] LIVE evening cycle: no alerts from known thin-liquidity tickers — deferred to next market-hours scan
+

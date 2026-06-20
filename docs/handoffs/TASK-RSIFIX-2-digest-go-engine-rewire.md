@@ -240,3 +240,46 @@ After container rebuild + next evening cycle:
 
 **ops** — rebuild mcp-server container after all mcp-server fixes land.
 
+---
+
+## [QA] Review Record
+
+**QA agent:** qa
+**Date:** 2026-06-21
+**Verdict:** APPROVED
+
+### Formal Gate
+- `bun tsc --noEmit`: EXIT 0
+- `pnpm check`: EXIT 0
+- `bun test src/__tests__/RSIFIX-2-assembleBriefing.test.ts src/__tests__/RSIFIX-2-assembleEveningSummary.test.ts --no-cache`: **10 pass / 0 fail** (22 expect() calls, 137ms)
+  - T1 (async mock rsi14=27.6 → taSummary populated): PASS
+  - T2 (34 candles → null gate rejection): PASS
+  - T3 (0 daily_ohlcv rows → null, no fallback): PASS
+  - T4 (stub-bar vol=0 → null): PASS
+  - ES-T1..ES-T4 (async taFn variants): PASS
+- DDD: `application/usecases/assembleBriefing.ts` imports from `infrastructure/` (permitted by layer spec). `application/usecases/assembleEveningSummary.ts` same. PASS
+- Security: no `process.env`, no hardcoded secrets — PASS
+- mock-guard: EXIT 0 — PASS
+
+### Live Verification (RSI <35-candle gate)
+- `TCH` (watchlist ticker): 28 candles in 60-day window — below 35-candle gate
+- `defaultComputeTa()` TS gate at `assembleBriefing.ts:677` (`if (rows.length < 35) return null`) — **returns null for TCH** (gate enforced in TS layer)
+- Go TA service pure-compute path with 28 closes: returns RSI array (hard Go gate = 15 candles); the TS gate at 35 is the authoritative gating layer per ta-engine-contract.md §4.3
+- `D2D`: 40 candles in 60-day window — passes gate. Go service returns `rsi14` present (confirmed via curl)
+- `computeRSILocal` NOT deleted per RISK-4 constraint — confirmed at `assembleBriefing.ts` (unused but present)
+- `market_prices_history` fallback REMOVED — confirmed at line 659 comment + no fallback block present
+- Container rebuilt 2026-06-20T23:12:23Z (image `sha256:3615cce6`) — running healthy
+
+### Acceptance Criteria
+- [x] defaultComputeTa() signature changed to async
+- [x] TS computeRSILocal removed from defaultComputeTa flow
+- [x] Go computeTAIndicators awaited with closes[], volume included in SQL
+- [x] Candle SQL window: `date >= date(now, -60 days)` — confirmed at L668-674
+- [x] Min-candle gate: 15 → 35 — confirmed at L677
+- [x] market_prices_history synthetic fallback removed — confirmed
+- [x] Stub-bar guard added: reject if close <= 0 or volume <= 0 — confirmed at L681
+- [x] All callers updated to async for...of + await via `Promise.resolve()` pattern
+- [x] Test fixtures: 41-candle RSI matches Go, 34-candle → null, 0 rows → null, vol=0 → null
+- [x] Rebuild successful
+- [ ] LIVE RSI convergence (RSI agrees ≤0.1 between alert-block and TA-block for ≥3 tickers): deferred to next evening cycle post-rebuild
+

@@ -174,3 +174,41 @@ Yes — domain service code changed. Ops must rebuild `mcp-server` container.
 - [x] Handoff created
 - [x] WIP slot: 1 of 2 (concurrent with TASK-RSIFIX-2 as Wave 1)
 
+---
+
+## [QA] Review Record
+
+**QA agent:** qa
+**Date:** 2026-06-21
+**Verdict:** APPROVED
+
+### Formal Gate
+- `bun tsc --noEmit`: EXIT 0
+- `pnpm check`: EXIT 0
+- `bun test src/__tests__/1307a-macro-thresholds.test.ts --no-cache`: **16 pass / 0 fail** (29 expect() calls, 111ms)
+- DDD: `domain/services/macroThresholds.ts` — CLEAN (no infrastructure/application imports)
+- Security: no `process.env`, no hardcoded secrets — PASS
+- mock-guard: EXIT 0 — PASS
+
+### Live Verification (FX %-Floor)
+Live `sbv_rates_history` (30-row window, `source='sbv'`):
+- All rows = 26120.0 (SBV rate frozen at current level)
+- `n=30, mean=26120.0000, stddev=0.0000`
+- `current=26120.0, abs_deviation=0.0000, absPercentMove=0.0000%`
+- `stddev < 0.001` → `classifyDeviation()` returns `level=normal` via the `sampleCount < MIN_SAMPLE_SIZE OR stdDev < 0.001` early-return
+- **Guard 2 firing path confirmed:** if drift occurs (e.g., 65 VND = 0.249%), `absPercentMove < 0.5%` → level capped at `elevated` (not `extreme/high`)
+- `FX_SLOW_MOVER_INDICATORS` set confirmed in running container (`/app/src/domain/services/macroThresholds.ts:99`)
+- `FX_PERCENT_FLOOR=0.5` confirmed at line 114
+- Test suite covers: 0.25% → elevated (reproduces live 5.28σ false-CRITICAL), 0.38% → elevated, 0.514% → extreme (genuine event passes), non-FX bypass (brentCrudeUSD, goldUSDPerOz, refinancingRatePct all still escalate via σ-gate alone)
+
+### Acceptance Criteria
+- [x] classifyDeviation() in macroThresholds.ts updated
+- [x] FX indicator check: if absPercentMove < 0.5%, cap level at WARN/INFO (not CRITICAL/HIGH)
+- [x] sigma field still reflects real zScore (unchanged — zScore preserved at line 162)
+- [x] Non-FX indicators bypass %-floor (existing σ-gate only) — verified by test suite
+- [x] Test: 0.25% USD/VND move → elevated (not CRITICAL)
+- [x] Test: 0.6% USD/VND move → extreme (CRITICAL)
+- [x] Test: 3.5% stock move → extreme (non-FX, σ-gate fires)
+- [x] Rebuild successful (container rebuilt 2026-06-20T23:12:23Z, running healthy)
+- [ ] LIVE evening digest verification deferred to next evening cycle with non-frozen USD/VND rate
+
