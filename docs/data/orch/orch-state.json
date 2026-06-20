@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T09:15:00Z",
+  "_updated_at": "2026-06-20T09:12:00Z",
   "_updated_by": "dev-team-cron-router",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -191,15 +191,15 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "Tick 20260620T080911Z COMPLETE. FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 children DONE (code) — parent REVIEW/done_verified:false awaiting Mon 06-22 live cron-db-data-integrity re-sweep + container rebuild. CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR gated on that. Next backlog: FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (next 30-min tick).",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server EXECUTING FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (single-zone apps/mcp-server/, P1, size S): trace vnIndexRefresh (*/5 market-window cron) — confirm wired + executes + WRITES vn_index_cache (not silent-0-rows/fail-closed-to-empty, contract-from-live-payload class). Add unit test proving refresh path writes rows given valid upstream payload. RED-PREPUSH: pnpm check / bun tsc green before commit. done_verified GATED on Mon 06-22 live market-session re-sweep (vn_index_cache non-empty + freshening ≤10min). Then→qa.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-20T09:15:00Z",
+    "updated_at": "2026-06-20T09:12:00Z",
     "updated_by": "dev-team-cron-router",
-    "note": "SPRINT-S chain architect→pm→dev-mcp-server→qa drove inline this tick; all 3 agent board errors caught+reconciled by router (architect false-promote, pm wip=3, dev unpersisted status). QA respected head/signal_queue boundary."
+    "note": "Tick 20260620T090906Z. Prior P0 (OHLCV-WIC) closed. Cowork signals = SKIPPED_BLIND_NO_BACKSTOP informational. signal_queue all TRIAGED, 0 orphan keys. FIX single-zone → Step 3 direct (no architect/pm)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10846,8 +10846,8 @@
       {
         "id": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
         "type": "FIX",
-        "status": "BACKLOG",
-        "owner": "po",
+        "status": "IN_PROGRESS",
+        "owner": "dev-mcp-server",
         "zone": "apps/mcp-server/",
         "priority": "P1",
         "size": "S",
@@ -10856,7 +10856,8 @@
         "title": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH — vn_index_cache 0 rows; vnIndexRefresh */5 cron not populating",
         "desc": "Router-RAW-VERIFIED on live named-volume market.db (signal sau-20260620T103002-db3 MEDIUM): vn_index_cache count=0. Separate cron/refresh-path issue from the OHLCV writer class. Trace vnIndexRefresh (*/5 during 2-8h market window): confirm it is wired + actually executes + actually WRITES to vn_index_cache (not silent-0-rows / fail-closed-to-empty per recurring contract-from-live-payload class). Cross-ref existing audit-question rows CI-FRESH-01-FIX (is vnIndexRefresh running) + MD-FUNC-01-FIX (snapshot VN-Index fields) — this is the CONCRETE confirmed-empty-table fix; fold/close those two audit questions on completion (their answer is: NO, not populating). AC: vn_index_cache has fresh rows during market hours (last_run<=10min) AND get_market_snapshot serves a non-empty VN-Index. done_verified GATED on live re-sweep during a market session (Mon 06-22 open) returning non-empty cache.",
         "verification_gate": "Live: vn_index_cache non-empty + freshening every 5min during a real market session; get_market_snapshot VN-Index non-empty.",
-        "source": "router-verified db_integrity_breach db3"
+        "source": "router-verified db_integrity_breach db3",
+        "claimed_at": "2026-06-20T09:12:00Z"
       },
       {
         "id": "TASK-OHLCV-WIC-1",
