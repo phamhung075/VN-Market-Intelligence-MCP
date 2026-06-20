@@ -194,10 +194,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260620T110914Z CLOSED (clean, zero new actionable). Drain: db-integrity-history rolling log = ALL already-tracked; daily_ohlcv OHLC-violations ticked 835->836 (+1) = EXPECTED un-deployed-writer residue accrual (FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 [REVIEW] gated Mon 06-22 after ops mcp-server rebuild); vn_index_cache still 0 (FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH [DONE], live re-sweep gated Mon); fin_reports 21 low-conf by-design; all other tables healthy/fresh. Telegram reports = 0 new. No PO re-spawn (mirrors zero-result triage prior tick). now_VN Sat 18:09 market-closed. WIP=0 idle; SF-1 release follows.",
+    "next_action": "Tick 20260620T113917Z CLOSED (clean). Drain: only db-integrity-history rolling log; latest scan 11:24:22Z all 4 anomalies ALREADY-TRACKED (new_signals_written:[]); daily_ohlcv OHLC-violations 836->661 (net -175, REMEDIATION trend) still under FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 [REVIEW] gated Mon 06-22; vn_index_cache 0 (FIX-VNINDEX-CACHE-EMPTY [DONE] re-sweep gated Mon); fin_reports 21 low-conf by-design. Telegram 0 new. signal_queue canonical-4-keys no-orphans, 28 rows. Only NEW row sau-2026-06-20T11:08:30Z (A-30 WARN rag-service watch-item) already router-triaged last tick -> flipped NEW->READ, folded into Mon rebuild. No PO re-spawn (zero new actionable). now_VN Sat 18:39 market-closed. Tier-1 auditor (ac7308f97) running concurrently; its row routed on completion. WIP=0 idle.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T11:10:36Z",
+    "updated_at": "2026-06-20T11:41:45Z",
     "updated_by": "dev-team-cron-router"
   },
   "narrative": {
@@ -1282,12 +1282,27 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory at 99.37% cgroup cap (spike from 70.25% in 60min)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "router_note": "ROUTER RAW-VERIFIED 2026-06-20T11:10Z (docker stats --no-stream): mcp-server 1.987GiB/2GiB=99.37% CONFIRMED but Up16h healthy RestartCount=0 + host 67% free => stable cgroup-cap ceiling, NOT host pressure; Monday 06-22 mcp-server rebuild (already gated for OHLCV-P0/VNINDEX) clears working set. AUDITOR MISSED the genuine cap-proximate container (A-30 known miss-pattern): rag-service 682MiB/768MiB=88.8% AND RestartCount=86 Up~1h (last restart 09:47Z) = crash-loop history; healthy now + host fine => WATCH-ITEM not weekend emergency; fold rag-service health check into Monday rebuild window. Severity stays WARN. No PO/ops emergency dispatch (weekend, both healthy, host 67% free).",
         "router_triaged_at": "2026-06-20T11:11:59Z",
         "router_triaged_by": "dev-team-cron-router",
         "rag_service_watch_item": true
+      },
+      {
+        "id": "router-20260620T113917Z-rag-restart-watch",
+        "ts": "2026-06-20T11:42:56Z",
+        "from": "dev-team-cron-router",
+        "to": "po",
+        "type": "service_restart_watch",
+        "summary": "rag-service chronic restart cycle: RestartCount=86 (24h trend 77->86, +9). Currently Up 2h healthy, StartedAt 2026-06-20T09:47:12Z, 91.84%/768MiB cgroup. Tight 768MiB cap = recurring OOM-restart pattern.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/agent-memory/notebooks/system-auditor.md",
+        "router_verified": true,
+        "router_verified_at": "2026-06-20T11:42:56Z",
+        "router_evidence": "LIVE docker inspect 2026-06-20T11:39Z: vn-market-intelligence-mcp-rag-service-1 State=running Health=healthy RestartCount=86 StartedAt=2026-06-20T09:47:12Z (2h stable). Confirmed across 2 dev-team ticks + Tier-1 auditor 24h trend. NOT in crisis (healthy, host 67% free).",
+        "router_note": "Auditor ac7308f97 FABRICATED tracking-row id seu-20260619T170803Z (does NOT exist in board) to justify 0-signal false-dedup; RAW-verify caught it. This is the FIRST real board row for the rag-service watch-item. Disposition: fold rag-service OOM/health check into Monday 06-22 ops mcp-server rebuild window (alongside OHLCV-P0 + VNINDEX re-sweep). Durable fix candidate = raise rag-service mem cap OR fix the embedder working-set growth (dev-rag-service zone). Not a weekend emergency."
       }
     ]
   },
