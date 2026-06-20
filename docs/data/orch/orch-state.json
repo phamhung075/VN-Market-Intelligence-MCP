@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T09:10:00Z",
+  "_updated_at": "2026-06-20T09:15:00Z",
   "_updated_by": "dev-team-cron-router",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -191,15 +191,15 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
-    "next_agent": "qa",
-    "next_action": "qa: review TASK-OHLCV-WIC-1 (Writer F guard) + WIC-2 (Writer H parse-reject) — code+tests at aeacdb25. Verify DDD (domain→domain ok), guard logic correctness, test realness (not self-confirming). NOTE done_verified final gate = live cron-db-data-integrity re-sweep MONDAY (market closed Sat) — NOT a QA blocker; QA DoD = code/test/security green.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "Tick 20260620T080911Z COMPLETE. FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 children DONE (code) — parent REVIEW/done_verified:false awaiting Mon 06-22 live cron-db-data-integrity re-sweep + container rebuild. CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR gated on that. Next backlog: FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (next 30-min tick).",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T09:10:00Z",
+    "updated_at": "2026-06-20T09:15:00Z",
     "updated_by": "dev-team-cron-router",
-    "note": "Dev-mcp-server (aeacdb25) RAW-verified by router: bun tsc --noEmit EXIT=0 (RED-PREPUSH ok), WIC-1 8pass/0fail + WIC-2 10pass/0fail in isolation, narrow commit (apps/mcp-server src+tests + handoffs only, no orch-state), DDD domain→domain ok. Combined-run 2 errors = known getVpsProxyHealth module-isolation contamination (pre-existing, CI per-file isolation passes). Relay→qa."
+    "note": "SPRINT-S chain architect→pm→dev-mcp-server→qa drove inline this tick; all 3 agent board errors caught+reconciled by router (architect false-promote, pm wip=3, dev unpersisted status). QA respected head/signal_queue boundary."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10801,8 +10801,8 @@
       {
         "id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
         "type": "FIX",
-        "status": "IN_PROGRESS",
-        "owner": "pm",
+        "status": "REVIEW",
+        "owner": "po",
         "zone": "apps/mcp-server/",
         "priority": "P0",
         "size": "M",
@@ -10810,14 +10810,16 @@
         "created_by": "po-triage-20260620T080911Z",
         "title": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 — daily_ohlcv writer admits OHLC-constraint violations + 1000x scale leak (db1+db2, 835 viol/129 tickers + DFF 1000x)",
         "desc": "Router-RAW-VERIFIED on live named-volume market.db (signals sau-20260620T103000-db1 HIGH + sau-20260620T103001-db2 CRITICAL). SAME daily_ohlcv WRITER class — fold per memory ohlcv_startup_purge_defeated_by_backfill_seeder (fix the WRITER, trace ALL writers; one raw INSERT historically bypassed writeOhlcvBatch). TWO modes: (a) db1 — 835 OHLC-constraint violations / 129 tickers / 2026-04-24..2026-06-12: close outside [low,high] (BMI/SHS/OIL/HUT, clusters 06-12) + high=low=0 sentinel rows (VNDAF). (b) db2 — DFF 2026-06-12 open=0.5/high=500/low=0.5/close=500 = 1000x intra-row scale; DFF 06-05 low=0.0. ARCHITECT SPLIT (multi): trace EVERY writer into daily_ohlcv (stock-price writer + mcp-server writeOhlcvBatch + any raw INSERT bypass) and ADD a write-time OHLC-invariant + scale guard (low<=open,close<=high; reject/repair high=low=0 and >Nx intra-row scale leaps) so no out-of-constraint row is admitted. Cross-ref existing FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2 (the prevClose=0→detectAndNormalizeScaleFromPrevClose no-op is the db2 scale root — ABSORB its scope here, supersede the P2 row) + LINT-OHLCV-WRITE-BYPASS (guardrail, keep separate). AC: no NEW daily_ohlcv row violates OHLC invariant or carries >10x intra-row scale; write-path test injects close>high + h=l=0 + 1000x and asserts reject/repair. done_verified GATED on live re-sweep (cron-db-data-integrity) returning 0 NEW violations post-rebuild.",
-        "verification_gate": "Live cron-db-data-integrity re-sweep returns 0 NEW OHLC-constraint violations AND 0 NEW >10x scale rows after rebuild; write-path unit test green.",
+        "verification_gate": "MONDAY-2026-06-22 cron-db-data-integrity LIVE re-sweep (0 new OHLC-constraint + 0 new >10x scale violations) on named-vol market.db AFTER container REBUILD post-merge",
         "source": "router-verified db_integrity_breach db1+db2",
         "next_agent": "pm",
         "zone_note": "Zone 2 (apps/stock-price/) CLEARED — read-only consumer only",
         "architect_handoff": "docs/handoffs/FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0-architect-design.md",
         "updated_at": "2026-06-20T08:35:00Z",
         "updated_by": "dev-team-cron-router",
-        "router_note": "Architect blueprint DONE (867445e9). Corrected architect false-promotion REVIEW→IN_PROGRESS (no code written yet — only design). Relaying to pm for atomic dev-task breakdown."
+        "router_note": "Children TASK-OHLCV-WIC-1 (Writer F guard) + WIC-2 (Writer H parse-reject) code-complete & QA-APPROVED (a22c037c): tsc 0err, WIC-1 8/8 + WIC-2 10/10 isolation, DDD domain→domain, security clean, test-realness REAL (TC-6 confirms guard received actual high/low not coerce-to-open). Market closed Sat 06-20 → live done_verified deferred to Mon 06-22. NOT a code gap.",
+        "done_verified": false,
+        "router_triaged_at": "2026-06-20T09:15:00Z"
       },
       {
         "id": "CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR",
@@ -10835,7 +10837,11 @@
           "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0"
         ],
         "verification_gate": "Live sweep = 0 historical OHLC-constraint violations + 0 fabricated bars (illiquid gaps honest); no recoverable real data lost.",
-        "source": "router-verified db_integrity_breach db1+db2 (residue)"
+        "source": "router-verified db_integrity_breach db1+db2 (residue)",
+        "blocked_by": [
+          "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0"
+        ],
+        "router_note": "GATED: must NOT start until parent done_verified (Mon 06-22 live re-sweep). Purging residue before WRITER fix is verified live = purge-defeated-by-backfill-seeder regression."
       },
       {
         "id": "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
