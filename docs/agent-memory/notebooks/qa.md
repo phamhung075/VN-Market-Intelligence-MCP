@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-307 · 2026-06-21 · FIX-DRAIN-STATEFILE-DATALOSS — APPROVED (scripts-only)
+
+FIX-DRAIN-STATEFILE-DATALOSS (bfdb8c69) | Verdict: APPROVED | Commit: scripts-only (no bun test/tsc/DDD/mock-guard applicable). node --check EXIT 0. bash -n EXIT 0. Gate 1: drain exits clean, history survives at docs/data/db-integrity-history.json (9 entries), no copy in processed/. Gate 2a: {} probe skipped in inbox (not moved). Gate 2b: real-shaped signal routed to processed/. Gate 3: append 9→10 entries. Stale-ref sweep: 0 hits across scripts/.claude/apps/docs/agents/. Commit hygiene: 9 files, all task-scope + standard dev chore memory files — no cowork churn. DJ: sprint-FE-PAGE-REORG-qa.md §STEP qa-S13.
+
 ## cycle-306 · 2026-06-21 · 5-fix digest-quality wave — ALL APPROVED
 
 FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME (dfb4e268) | Verdict: APPROVED | tsc EXIT 0 / pnpm check EXIT 0. 1307a-macro-thresholds: 16/16 pass (29 expect). DDD PASS (domain/services pure). Security PASS. mock-guard EXIT 0. Live sbv_rates_history (30 rows): mean=26120 stddev=0 → classifyDeviation returns `normal` (stdDev<0.001 early return). Guard 2 boundary: absPercentMove<0.5% → cap extreme/high→elevated. FX_SLOW_MOVER_INDICATORS set + FX_PERCENT_FLOOR=0.5 confirmed in running container L99/L114. Test suite covers 0.25%→elevated + 0.514%→extreme + non-FX bypass. DJ: sprint-DIGEST-QUALITY-QA-2026-06-21.md §Entry1.

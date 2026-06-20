@@ -155,3 +155,15 @@
 - BCTC eval: N/A — no BCTC report in scope.
 **why-decision:** APPROVED. All 5 VIC tests pass, tsc 0 errors, DDD PASS, security PASS, mock-guard EXIT 0. 19 suite failures are disjoint pre-existing. done_verified WITHHELD pending Monday 2026-06-22 live session gate (ops rebuild container first).
 **why-change:** No change from plan — all checks green.
+
+---
+
+### STEP qa-S13 · qa · 2026-06-21T00:00:00Z
+**task-id:** FIX-DRAIN-STATEFILE-DATALOSS
+**what-done:** Scripts-only QA gate. Ran all 4 checks live: node --check + bash -n syntax, Gate 1 (drain with history at new home), Gate 2a/2b (shape guard probes), Gate 3 (append script), stale-ref sweep, commit hygiene audit.
+**what-considered:**
+- only path: JS/shell scripts — no bun test/tsc/DDD/security/mock-guard applicable (Smart-Skip); node --check + bash -n are the correct syntax gates for this zone.
+- commit bfdb8c69 bundles dev journal + notebook (benign co-commits, standard dev chore pattern; scope matches handoff task spec exactly).
+- stale-ref sweep: exit 1 (grep found 0 matches) = PASS across scripts/ .claude/ apps/ docs/agents/.
+**why-decision:** APPROVED. All 4 live gates PASS. node --check EXIT 0. bash -n EXIT 0. Gate 1: history survives at docs/data/, no copy in processed/. Gate 2a: {} probe skipped, stays in inbox. Gate 2b: real-shaped probe routed to processed/. Gate 3: append 9→10 entries. Stale-ref sweep: 0 hits.
+**why-change:** No change from plan — all checks green.

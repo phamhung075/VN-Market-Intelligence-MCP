@@ -78,3 +78,52 @@ NEXT: qa | verify gate 1-3 output above; confirm no stale refs remain in repo
 HANDOFF: docs/handoffs/FIX-DRAIN-STATEFILE-DATALOSS.md
 PIPELINE: continue
 ```
+
+---
+
+## [QA] Review Record
+
+**Verdict: APPROVED**
+**QA agent:** qa
+**Reviewed at:** 2026-06-21T00:00:00Z
+**Commit:** bfdb8c69
+
+### Gate Results (live, independently run)
+
+**Syntax/lint**
+- `node --check scripts/agents-flow/drain-signals.js` → EXIT 0
+- `bash -n scripts/db-integrity-history-append.sh` → EXIT 0
+
+**Gate 1 — drain with state file at new home**
+- `node scripts/agents-flow/drain-signals.js` output: `[drain-signals] inbox empty — nothing to drain / inserted=0 pruned_files=0 / db_count=1` EXIT 0
+- `jq 'length' docs/data/db-integrity-history.json` → 9 (entries intact)
+- `docs/signals/processed/` grep for db-integrity-history → NO_COPY_IN_PROCESSED
+- PASS
+
+**Gate 2a — no-shape probe `{}`**
+- Probe `docs/signals/_qa_probe_noshape.json` = `{}` dropped in inbox
+- drain output: `[drain-signals] SKIP non-signal shape: _qa_probe_noshape.json (no from/type — state file or unknown format; leaving in inbox)`
+- Probe still present in inbox after drain — PASS
+- Probe cleaned up after gate
+
+**Gate 2b — real-shaped probe**
+- Probe `docs/signals/_qa_probe_real.json` = `{"from":"qa","type":"test","to":"po","payload":{},"createdAt":"2026-06-21T00:00:00Z"}`
+- drain output: `_qa_probe_real.json → routed-to-po / inserted=1 pruned_files=0 / db_count=1`
+- Probe moved to processed/ (inbox copy absent) — PASS
+- Both probes (inbox + processed/ copy) cleaned up after gate
+
+**Gate 3 — append script**
+- `bash scripts/db-integrity-history-append.sh` output: `{ "ok": true, "scan_ts": "2026-06-20T23:51:46Z", "history_len_before": 9, "history_len_after": 10, "cap": 200 }`
+- `jq 'length' docs/data/db-integrity-history.json` → 10 (grew from 9) — PASS
+
+**Stale-ref sweep**
+- `grep -rn "signals/db-integrity-history" scripts/ .claude/ apps/ docs/agents/` → EXIT 1 (0 matches) — PASS
+
+**Commit hygiene**
+- `git show --name-status bfdb8c69`: 9 files
+  - 5 files = task-scope (cron-db-data-integrity.md, cron-system-auditor.md, docs/data/db-integrity-history.json, docs/signals/db-integrity-history.json deleted, scripts/agents-flow/drain-signals.js, scripts/db-integrity-history-append.sh)
+  - 2 files = handoff + dev memory chore (docs/handoffs/FIX-DRAIN-STATEFILE-DATALOSS.md, docs/agent-memory/decisions/sprint-FE-PAGE-REORG-dev-mcp-server.md, docs/agent-memory/notebooks/dev-mcp-server.md)
+  - All within fix scope — no unrelated cowork churn swept — PASS
+
+**Smart-Skip applied:** JS/shell-only fix — no bun test, tsc, DDD scan, security scan, or mock-guard applicable.
+**BCTC eval:** N/A (no BCTC report in scope).
