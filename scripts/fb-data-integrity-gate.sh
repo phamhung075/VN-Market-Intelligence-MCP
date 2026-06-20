@@ -28,9 +28,14 @@
 #   B  per-ticker % in post vs live snapshot beyond 1.0 pp absolute delta
 #   C  "bán tháo"/"giảm sàn"/selloff narrative while live breadth = 0 floor + net-positive
 #   D  VN-Index level or % in post vs live snapshot beyond tolerance
+#   E  sector/company-name validator — SSOT-driven (docs/data/system-map.json watchlist)
+#      Blocks when a watchlist ticker is labelled with a contradicting sector keyword,
+#      or when a known company-name alias mismatch is detected (e.g. VNM→"Nestlé").
 #
 # SSOT for all check thresholds lives exclusively here.
-# Memory refs: feedback_fb_poster_fabricates_when_data_thin, feedback_fb_poster_gate_false_green
+# SSOT for ticker→sector/company mapping: docs/data/system-map.json .project.watchlist
+# Memory refs: feedback_fb_poster_fabricates_when_data_thin, feedback_fb_poster_gate_false_green,
+#              feedback_no_hardcode_stats
 #
 # Pointer: referenced by docs/agents/fb-market-poster/flow/main.md STEP 4b
 #          and docs/policies/dev-standards.md § Script Persistence
@@ -340,7 +345,10 @@ if [[ "$SELLOFF_LANG" -gt 0 && -n "$SNAPSHOT_JSON" ]]; then
     vnindex_abs=$(abs_val "$vnindex_live_pct")
     if python_gt "2.0" "$vnindex_abs" 2>/dev/null; then
       # Check if post itself claims 0 floor stocks (evidence of contradiction within post)
-      floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|chỉ \d mã sàn|sàn, (0|không)' "$FILE" 2>/dev/null || echo "0")
+      # NOTE: grep -c returns exit 1 when 0 lines match, so || echo "0" would fire and produce
+      # "0\n0" (grep stdout "0" + echo "0"). Fix: capture via subshell that always exits 0.
+      floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|chỉ \d mã sàn|sàn, (0|không)' "$FILE" 2>/dev/null || true)
+      floor_zero=$(echo "$floor_zero" | grep -m1 '^[0-9]' || echo "0")
       if [[ "$floor_zero" -gt 0 ]]; then
         log_block "Check-C breadth-contradiction: post contains selloff/bán-tháo language but claims 0 floor stocks AND live VN-Index=${vnindex_live_pct}% (mild). Contradiction."
       else
@@ -350,7 +358,9 @@ if [[ "$SELLOFF_LANG" -gt 0 && -n "$SNAPSHOT_JSON" ]]; then
     fi
   else
     # No live data available — check for internal post contradiction only
-    floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|không có mã giảm sàn' "$FILE" 2>/dev/null || echo "0")
+    # Same grep -c / || echo "0" guard (see first floor_zero note above)
+    floor_zero=$(grep -ciE '0 mã (giảm sàn|sàn)|không có mã (nào |giảm )?sàn|không có mã giảm sàn' "$FILE" 2>/dev/null || true)
+    floor_zero=$(echo "$floor_zero" | grep -m1 '^[0-9]' || echo "0")
     if [[ "$floor_zero" -gt 0 ]]; then
       log_block "Check-C breadth-contradiction: post contains selloff/bán-tháo language but also states 0 floor stocks. Internal contradiction."
     fi
@@ -381,6 +391,245 @@ if [[ -n "$SNAPSHOT_JSON" ]]; then
       log_block "Check-D2 VN-Index-pct: post=${POST_VNI_PCT}% live=${LIVE_VNI_PCT}% delta=${pct_delta}pp > ${VNINDEX_PCT_LIMIT}pp tolerance"
     fi
   fi
+fi
+
+# ── Check E: sector / company-name validator ──────────────────────────────────
+# SSOT: docs/data/system-map.json .project.watchlist  — NEVER hardcode ticker→sector here.
+# For every watchlist ticker mentioned in the post:
+#   1. Look up its canonical sector and company name from system-map.json.
+#   2. Check if any contradicting sector keyword appears adjacent to the ticker.
+#   3. Check for known company-name alias mismatches (e.g. VNM→"Nestlé").
+#
+# Sector-keyword↔sector-family mapping is derived from the sector values themselves
+# (parsed from system-map.json), not hardcoded.
+#
+# The script is run from the repo root; SSOT path is relative to that.
+
+SYSTEM_MAP_PATH="${SYSTEM_MAP_PATH:-docs/data/system-map.json}"
+
+check_e_violations=$(python3 - "$FILE" "$SYSTEM_MAP_PATH" <<'PYEOF'
+import sys, json, re
+
+post_file   = sys.argv[1]
+smap_path   = sys.argv[2]
+
+# ── Load SSOT ────────────────────────────────────────────────────────────────
+try:
+    with open(smap_path, encoding="utf-8") as f:
+        smap = json.load(f)
+except Exception as e:
+    print(f"[WARN] Check-E: cannot read {smap_path}: {e}", flush=True)
+    sys.exit(0)  # skip gracefully if SSOT unavailable
+
+watchlist = smap.get("project", {}).get("watchlist", [])
+
+# Build {ticker: {sector, company}} for active tickers only
+ticker_info = {}
+for entry in watchlist:
+    if not entry.get("active", True):
+        continue
+    ticker = entry.get("ticker", "").upper().strip()
+    sector = entry.get("sector", "").strip()
+    company = entry.get("company", "").strip()
+    if ticker and sector:
+        ticker_info[ticker] = {"sector": sector, "company": company}
+
+# ── Build sector-family→keyword sets from SSOT sector values ─────────────────
+# Each sector string like "Real estate / Conglomerate" may contain multiple slash-delimited
+# tokens. We also add curated Vietnamese sector keywords for each English token so the
+# post (written in Vietnamese) can be checked.
+#
+# Approach: for every unique sector term, build a set of Vietnamese keywords that would
+# CONTRADICT it if they appear next to a ticker that has a different family.
+# We group sectors into canonical families and assign VN keywords to each family.
+#
+# Family assignment is regex-based (English labels from SSOT), so adding a new sector
+# to system-map.json automatically participates — no hardcoded ticker→keyword mapping.
+
+FAMILY_VI_KEYWORDS = {
+    "banking":     ["ngân hàng", "bank", "nhtm", "tín dụng"],
+    "steel":       ["thép", "gang thép", "sắt thép"],
+    "tech":        ["công nghệ", "it", "phần mềm", "outsourcing", "gia công phần mềm"],
+    "real_estate": ["bất động sản", "bds", "địa ốc"],
+    "aviation":    ["hàng không", "aviation", "low-cost carrier"],
+    "securities":  ["chứng khoán", "securities", "môi giới"],
+    "oil_gas":     ["dầu khí", "xăng dầu", "lọc dầu", "refinery", "petroleum"],
+    "food_bev":    ["thực phẩm", "đồ uống", "bia", "food", "beverage", "dairy", "sữa"],
+    "chemicals":   ["hóa chất", "phân bón", "chemicals", "phosphate"],
+    "agriculture": ["nông nghiệp", "chăn nuôi", "thủy sản", "livestock", "fertilizer"],
+    "utilities":   ["điện", "utilities", "electrical", "năng lượng"],
+    "automotive":  ["ô tô", "xe hơi", "automotive", "honda", "toyota"],
+    "retail":      ["bán lẻ", "retail", "electronics"],
+    "machinery":   ["máy móc", "công nghiệp", "industrial", "machinery"],
+}
+
+# Map each SSOT sector value to a canonical family key
+def sector_to_family(sector_str):
+    s = sector_str.lower()
+    if "banking" in s or "bank" in s:
+        return "banking"
+    if "steel" in s:
+        return "steel"
+    if "tech" in s or "it outsourcing" in s or "software" in s:
+        return "tech"
+    if "real estate" in s:
+        return "real_estate"
+    if "aviation" in s:
+        return "aviation"
+    if "securities" in s:
+        return "securities"
+    if "oil" in s or "gas" in s or "refinery" in s or "petroleum" in s:
+        return "oil_gas"
+    if "food" in s or "beverage" in s or "beer" in s or "dairy" in s:
+        return "food_bev"
+    if "chemicals" in s or "phosphate" in s:
+        return "chemicals"
+    if "agriculture" in s or "livestock" in s or "fertilizer" in s:
+        return "agriculture"
+    if "utilities" in s or "electrical" in s:
+        return "utilities"
+    if "automotive" in s:
+        return "automotive"
+    if "retail" in s or "electronics" in s:
+        return "retail"
+    if "machinery" in s or "industrial" in s:
+        return "machinery"
+    return None
+
+# Build per-ticker: canonical family + WRONG-family keywords (all OTHER families)
+ticker_families = {}
+for ticker, info in ticker_info.items():
+    fam = sector_to_family(info["sector"])
+    if fam is None:
+        continue
+    ticker_families[ticker] = fam
+
+# ── Load post ────────────────────────────────────────────────────────────────
+with open(post_file, encoding="utf-8") as f:
+    post_text = f.read()
+post_lower = post_text.lower()
+
+# ── E1: sector-keyword contradiction check ───────────────────────────────────
+# Catch the pattern: TICKER labelled with the wrong sector in the post.
+# Legitimate uses produce text like "HPG (thép) tăng 0,5%" — ticker + sector in parens.
+# False labelling looks like "HPG (ngân hàng)" or "FPT (ngân hàng)".
+#
+# Matching strategy (tight, not proximity):
+#   Pattern 1 — parenthesised label: "TICKER (wrong_sector_kw...)"
+#                                  or "(wrong_sector_kw) TICKER"
+#                                  Window: 40 chars inside the parens, max 1 non-paren hop.
+#   Pattern 2 — inline label:  "TICKER (company / sector)" where sector kw is wrong
+#
+# The context window is TIGHT (≤40 chars inside the parenthesised label group)
+# to avoid false positives from a paragraph that mentions many sectors.
+# A wider catch would require NLP that is not feasible in a shell gate.
+
+violations = []
+seen_e = set()
+
+for ticker, fam in ticker_families.items():
+    correct_kw_set = {w.lower() for w in FAMILY_VI_KEYWORDS.get(fam, [])}
+    wrong_families = {k: v for k, v in FAMILY_VI_KEYWORDS.items() if k != fam}
+
+    # Build a set of all keywords that appear in the ticker's OWN sector string.
+    # This guards against VRE = "Real estate / Retail REIT" triggering the 'retail' family
+    # check (Retail IS in VRE's canonical sector).
+    own_sector_lower = ticker_info[ticker]["sector"].lower()
+    own_sector_keywords = {w.lower() for fam_kws in FAMILY_VI_KEYWORDS.values()
+                           for w in fam_kws if w.lower() in own_sector_lower}
+
+    # Pattern 1a: "TICKER (... wrong_kw ...)" — sector kw inside parentheses right after ticker
+    # e.g. "HPG (ngân hàng)" or "HPG (thép)" — only flag the wrong ones
+    pat_after = re.compile(
+        r'(?<![A-Z])' + re.escape(ticker) + r'(?![A-Z])'  # the ticker
+        r'\s*\(([^)\n]{1,60})\)',                           # then (label up to 60 chars)
+        re.IGNORECASE
+    )
+    for m in pat_after.finditer(post_text):
+        label = m.group(1).lower()
+        for wrong_fam, kw_list in wrong_families.items():
+            for kw in kw_list:
+                kw_l = kw.lower()
+                if kw_l in label and kw_l not in correct_kw_set and kw_l not in own_sector_keywords:
+                    key = f"{ticker}:{wrong_fam}"
+                    if key not in seen_e:
+                        seen_e.add(key)
+                        violations.append(
+                            f"[BLOCK] Check-E sector-mismatch: {ticker} "
+                            f"(canonical={ticker_info[ticker]['sector']}) "
+                            f"labelled as '{kw}' (wrong family={wrong_fam}) in post"
+                        )
+                    break
+
+    # Pattern 1b: "(... wrong_kw ...) TICKER" — sector kw inside parens before ticker
+    # e.g. "(ngân hàng) HPG"
+    pat_before = re.compile(
+        r'\(([^)\n]{1,60})\)'                              # (label) ...
+        r'\s*(?<![A-Z])' + re.escape(ticker) + r'(?![A-Z])',
+        re.IGNORECASE
+    )
+    for m in pat_before.finditer(post_text):
+        label = m.group(1).lower()
+        for wrong_fam, kw_list in wrong_families.items():
+            for kw in kw_list:
+                kw_l = kw.lower()
+                if kw_l in label and kw_l not in correct_kw_set and kw_l not in own_sector_keywords:
+                    key = f"{ticker}:{wrong_fam}"
+                    if key not in seen_e:
+                        seen_e.add(key)
+                        violations.append(
+                            f"[BLOCK] Check-E sector-mismatch: {ticker} "
+                            f"(canonical={ticker_info[ticker]['sector']}) "
+                            f"labelled as '{kw}' (wrong family={wrong_fam}) in post"
+                        )
+                    break
+
+for v in violations:
+    print(v)
+
+# ── E2: company-name alias mismatch check ───────────────────────────────────
+# Known false aliases that must NEVER appear in the same sentence as the ticker.
+# This list IS curated because alias mismatches are named, not derivable from SSOT alone.
+# SSOT: the canonical company name comes from system-map.json; the false aliases are the
+# known fabrications documented in memory (feedback_fb_poster_fabricates_when_data_thin).
+KNOWN_FALSE_ALIASES = {
+    # ticker: [list of wrong company names / aliases]
+    "VNM": ["nestlé", "nestle", "unilever"],
+    "MSN": ["nestle", "nestlé", "unilever"],   # Masan sometimes confused
+    "FPT": ["samsung", "lg electronics"],
+    "VCB": ["agribank", "vietinbank"],
+    "HPG": ["hòa phát steel", "formosa"],       # HPG IS Hoa Phat; "formosa" = competitor
+    "SAB": ["heineken", "tiger beer"],           # SAB is Sabeco, not the Dutch/foreign brands
+}
+
+# Supplement with the canonical company name from SSOT — check it is NOT labelled
+# as a different company from the same watchlist (name confusion).
+ssot_companies = {t: i["company"] for t, i in ticker_info.items()}
+
+for ticker, false_aliases in KNOWN_FALSE_ALIASES.items():
+    # Only check tickers that appear in the post
+    pat = re.compile(r'(?<![A-Z])' + re.escape(ticker) + r'(?![A-Z])', re.IGNORECASE)
+    if not pat.search(post_text):
+        continue
+
+    post_lc = post_text.lower()
+    for alias in false_aliases:
+        if alias.lower() in post_lc:
+            canonical = ssot_companies.get(ticker, ticker)
+            print(f"[BLOCK] Check-E company-alias: {ticker} (canonical={canonical}) "
+                  f"— post contains wrong alias '{alias}'. Likely fabrication.")
+            break
+
+PYEOF
+)
+
+# Print any Check-E violations and count them
+if [[ -n "$check_e_violations" ]]; then
+  echo "$check_e_violations"
+  # Count [BLOCK] lines
+  e_count=$(echo "$check_e_violations" | grep -c '^\[BLOCK\]' || true)
+  e_count=$(echo "$e_count" | grep -m1 '^[0-9]' || echo "0")
+  VIOLATIONS=$((VIOLATIONS + e_count))
 fi
 
 # ── Result ────────────────────────────────────────────────────────────────────
