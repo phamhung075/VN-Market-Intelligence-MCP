@@ -225,8 +225,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T07:26:15Z",
-    "_updated_by": "dev-team-loop-iter5",
+    "_updated_at": "2026-06-20T08:12:48Z",
+    "_updated_by": "dev-team-cron-router",
     "archive": [
       {
         "from": "system-auditor",
@@ -1198,6 +1198,51 @@
         "check_id": "REGISTRY-PARAM-DRIFT-TICKER-CODE-20260620",
         "service": "tool-registry/docs",
         "zone_owner": "dev-mcp-server"
+      },
+      {
+        "id": "sau-20260620T103000-db1",
+        "ts": "2026-06-20T10:30:00Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "daily_ohlcv: 835 OHLC constraint violations (high<open,low>high, etc) across 129 tickers, date range 2026-04-24..2026-06-12",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/db-integrity-history.json",
+        "router_verified": true,
+        "router_verified_at": "2026-06-20T08:12:48Z",
+        "router_evidence": "LIVE market.db: 835 violations / 129 tickers / 2026-04-24..2026-06-12, exact match. Modes: close-outside-[low,high] (BMI/SHS/OIL/HUT, clusters 06-12) + high=low=0 sentinels (VNDAF). CONFIRMED real.",
+        "router_note": "ts future-stamped — cosmetic; finding genuine. Same daily_ohlcv writer class as DFF."
+      },
+      {
+        "id": "sau-20260620T103001-db2",
+        "ts": "2026-06-20T10:30:00Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "daily_ohlcv: 1000x price-scale anomaly DFF 2026-06-12 (open=0.5, close=500.0), unit conversion bug hypothesis",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": "docs/signals/db-integrity-history.json",
+        "router_verified": true,
+        "router_verified_at": "2026-06-20T08:12:48Z",
+        "router_evidence": "LIVE market.db: DFF 2026-06-12 open=0.5 high=500 low=0.5 close=500 (1000x intra-row); also 2026-06-05 low=0.0. Isolated to DFF (illiquid UPCoM micro ~55K vol). CONFIRMED real — writer/unit bug, not false-positive.",
+        "router_note": "ts future-stamped (10:30Z>tick) — auditor emit cosmetic defect, finding genuine."
+      },
+      {
+        "id": "sau-20260620T103002-db3",
+        "ts": "2026-06-20T10:30:00Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "vn_index_cache: table empty (0 rows), expected VNINDEX snapshot cache. vnIndexRefresh cron */5 2-8h may not be running.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/signals/db-integrity-history.json",
+        "router_verified": true,
+        "router_verified_at": "2026-06-20T08:12:48Z",
+        "router_evidence": "LIVE market.db: vn_index_cache count=0 (empty). CONFIRMED real — vnIndexRefresh cron not populating.",
+        "router_note": "ts future-stamped — cosmetic; finding genuine."
       }
     ]
   },
