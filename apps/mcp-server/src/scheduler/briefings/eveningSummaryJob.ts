@@ -220,17 +220,16 @@ export function formatForeignFlowSection(
 ): string[] {
   if (movers.length === 0) return [];
 
-  // BUG-1: Stale guard — when all entries carry zero values the pipeline is dark.
-  // Render an unavailability notice instead of meaningless "0.000k" lines.
-  const allZero = movers.every(
-    (m) => m.foreignNetVol === 0 && m.foreignBuyVol === 0 && m.foreignSellVol === 0,
-  );
-  if (allZero) {
-    return ["", "Khối ngoại: Dữ liệu không khả dụng (pipeline tạm dừng)"];
+  // Filter to nonzero net-vol entries only — SQL already excludes zeros, but
+  // this defensive guard also covers the injected-fn path and edge cases where
+  // a partial-zero set slips through (e.g. getForeignFlowMoversFn returns raw DB rows).
+  const nonZeroMovers = movers.filter((m) => m.foreignNetVol !== 0);
+  if (nonZeroMovers.length === 0) {
+    return ["", "Khối ngoại: dữ liệu không có"];
   }
 
-  // BUG-2: Sort by |net_flow| descending — biggest movers first.
-  const sorted = [...movers].sort(
+  // Sort by |net_flow| descending — biggest movers first.
+  const sorted = [...nonZeroMovers].sort(
     (a, b) => Math.abs(b.foreignNetVol) - Math.abs(a.foreignNetVol),
   );
 

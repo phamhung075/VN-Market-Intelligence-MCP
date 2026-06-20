@@ -113,7 +113,45 @@ None identified. This is a formatter hygiene fix (removes garbage data). Zero ri
 - After fix, the foreign flow section will only show real movers, making the digest more concise + honest
 
 ## NEXT Agent
-**dev-mcp-server** — add <> 0 filter to Step 4b SQL, tighten formatter guard, test LIVE.
+**qa** — run full suite, verify no regression on existing evening summary / foreign flow tests, mark DONE.
+
+---
+
+## Developer
+
+**Agent:** dev-mcp-server
+**Status:** REVIEW (impl complete, tests green)
+
+### Changes Made
+
+**Change 1 — SQL Step 4b** (`assembleEveningSummary.ts`, line ~663):
+Added `AND foreign_net_vol <> 0` to the WHERE clause of the `daily_ohlcv` query so zero-net rows are excluded before `LIMIT 5`. DB path only; injected `getForeignFlowMoversFn` bypasses this.
+
+**Change 2 — formatForeignFlowSection** (`eveningSummaryJob.ts`, ~line 222):
+Replaced the old `allZero` guard with a `nonZeroMovers = movers.filter(m => m.foreignNetVol !== 0)` pre-filter. Renders only `nonZeroMovers`; falls back to `"Khối ngoại: dữ liệu không có"` when the filtered set is empty. The header now says `top N` where N = actual nonzero count, not the padded 5.
+
+### Tests
+
+New file: `apps/mcp-server/src/__tests__/FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.test.ts`
+14 tests, 6 describe blocks:
+- T-1: partial-zero DB (2 nonzero + 3 zero) → assembleEveningSummary returns 2 movers only
+- T-2: all-zero DB → assembleEveningSummary returns 0 movers
+- T-3: formatter partial-zero list → only 2 lines rendered, ACV/DFF/HBC absent
+- T-4: formatter all-zero list → "dữ liệu không có" message
+- T-5: formatter 5 nonzero → all 5 present, correct header
+- T-6: formatter empty array → []
+
+### Gate Results
+
+- `bun test FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.test.ts`: 14 pass, 0 fail
+- `bun tsc --noEmit`: EXIT 0
+- `pnpm check`: EXIT 0
+
+### Constraint Compliance
+
+- Scale logic untouched (k = thousands of shares is correct)
+- TA loop in assembleEveningSummary.ts untouched (Step 4, no overlap with Step 4b)
+- No container rebuild issued (batched per PM instruction)
 
 ---
 

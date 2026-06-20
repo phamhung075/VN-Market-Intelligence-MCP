@@ -661,6 +661,7 @@ async function _assembleEveningSummaryImpl(
              FROM daily_ohlcv
             WHERE date = (SELECT MAX(date) FROM daily_ohlcv)
               AND foreign_net_vol IS NOT NULL
+              AND foreign_net_vol <> 0
             ORDER BY ABS(foreign_net_vol) DESC
             LIMIT 5`,
         )
