@@ -2,6 +2,12 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c611 · 2026-06-20T22:32:22Z
+### Audit Run Tier-2 (22:32 UTC 2026-06-20, Sunday market CLOSED)
+- Tier: 2 | Cron: checked | Sources: 28 scanned | VPS: checked | DB: 5 queries
+- Anomalies: 0 NEW (all checks PASS; weekend baseline)
+- Status: HEALTHY — BCTC pipeline + DB freshness PASS; price/FX stale = expected weekend
+- Checks: B-08 (PDFs=80) ✓ | B-09 (SSC URLs=0) ✓ | B-13 (stale pending=0) ✓ | C-06 (msgs=1) ✓ | C-07 (signals=102) ✓
 ## c610 · 2026-06-20T22:07:42Z
 ### Audit Run Tier-1 (22:07 UTC 2026-06-20, Saturday market CLOSED)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
@@ -56,19 +62,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - A-32 disk: 35% capacity ✓ [RAW-PROBE L43-46]
 
 **Signals:** 0 NEW | Status: CLEAN
-
-## c609 · 2026-06-20T21:37:51Z
-### Audit Run Tier-1 (21:37 UTC 2026-06-20, Saturday market CLOSED)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
-- Anomalies: 0 NEW (all runtime checks PASS; stable healthy state)
-- Status: HEALTHY — container fleet UP+HEALTHY; normal resource utilization
-
-**Verdict:** A-01..A-11 all 12 UP ✓ | A-12..A-19 5/5 health ✓ | A-20 3/3 probe ✓ | A-21 restart=1 ✓ | A-30 mem=18.32% ✓ | A-32 disk=34% ✓ | Signals: 0 NEW
-
-## c608 · 2026-06-20T21:07:48Z
-### Audit Run Tier-1 (21:07 UTC 2026-06-20, Saturday market CLOSED)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
-- Anomalies: 0 NEW (all runtime checks PASS; stable healthy state)
-- Status: HEALTHY — container fleet UP+HEALTHY; normal resource utilization
-
-**Verdict:** A-01..A-11 all 12 UP ✓ | A-12..A-19 5/5 health ✓ | A-20 3/3 probe ✓ | A-21 restart=1 ✓ | A-30 mem=16.41% ✓ | A-32 disk=36% ✓ | Signals: 0 NEW
