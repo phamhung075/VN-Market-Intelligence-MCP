@@ -21749,7 +21749,38 @@
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG",
+        "type": "FIX",
+        "title": "CI-network skip-guards for cascade-broadcast + integration-pipeline tests (silently RED on origin since 06-09)",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "status": "READY",
+        "priority": "P2",
+        "size": "S",
+        "blocking": false,
+        "baseline_pass": "0b7abd97",
+        "recon_first": false,
+        "files": [
+          "apps/mcp-server/src/__tests__/1345d-vnindex-cascade-broadcast.test.ts",
+          "apps/mcp-server/src/__tests__/1345e-integration-pipeline.test.ts"
+        ],
+        "root_cause": "Both files do LIVE network fetches (yahooFinance commodities, SBV macro snapshot) with NO CI skip-guard. Local has network -> GREEN in per-file isolation (router ran: 1345d 7/0, 1345e 8/0); CI runner network is blocked -> RED. This is the gap left by the 2026-06-09 REVERT (a42d0835) of 9454baad CI-NETWORK-SKIP-GUARDS; the later partial re-fix 64981565 (CI-NETWORK-GUARDS-POLLNEWS-REFILE) covered pollNews.ts ONLY, NOT these two tests. So 1345d/1345e have been SILENTLY RED on origin since 06-09, masked by the louder DDL failures until DDL went green on run 27855408671. NOT random-flaky, NOT a production-logic regression — a TEST/CI-infra gap. SUPERSEDES the earlier flaky-misdiagnosis CI-RED-f2c183f2-FIX (closed as flaky via subsequent-green, but the real root is deterministic CI-network-block on 1345e).",
+        "fix_spec": "Re-apply network-skip-guards to the cascade/integration tests mirroring 64981565s proven pollNews.ts pattern: gate the live HTTP fetches (yahooFinance commodities + SBV macro snapshot) behind `if (Bun.env.CI !== \"true\")`, supplying a deterministic fixture/no-op fallback on CI so the assertions still exercise the pipeline logic without the network. Generic: guard the fetch SEAM, do NOT hardcode per-assertion expected values; source + guard must agree.",
+        "generic_mandate": "No per-test magic numbers. Guard the network seam (CI=true -> fixture/no-op) so the same code path is exercised on CI and local; keep local doing the real fetch.",
+        "verification_gate": "ci_green_on_subsequent_push — gh run list --branch main shows conclusion=success for a push AFTER 0b7abd97 with 1345d + 1345e GREEN in CIs `bun test`. Local per-file isolation already green; the gate is CI-runner-with-network-blocked green.",
+        "source_signal": "ci-red-0b7abd97 run 27855408671 (router RAW decomposition tick)",
+        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/27855408671",
+        "created_at": "2026-06-20T01:36:50Z",
+        "created_by": "po",
+        "triaged_at": "2026-06-20T01:36:50Z",
+        "triaged_by": "po",
+        "done_verified": false
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -21885,7 +21916,7 @@
         "title": "4 alert-scan test fixtures missing sent_by/fingerprint cols → bun test RED on 3bddf6bb",
         "desc": "CI RED (run 27846780954, dedup ci_red:3bddf6bb:bun test) reproduces locally — GENUINE regression, not flaky. The FIX-ALERT-FINGERPRINT/FU-ALERT-COWRITE wave added sent_by + fingerprint columns to the production alerts-write path (alertStore/scanjobs), but 4 self-built test-fixture DDLs were not updated (same class as commit 847376a0 which cleared 13 red by adding cols to 5 DDLs — 4 more files were missed). INSERT fails -> no alert fires -> downstream asserts fail. Fix = ADD missing cols (sent_by, fingerprint) to the in-test alerts CREATE TABLE DDLs in the 4 files to match storeAlerts schema; verify against alertStore.ts real DDL as SSOT, do NOT weaken the write path. 5th RED file FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts is the standing time-gated behavioral hold — OUT OF SCOPE.",
         "priority": "P1",
-        "status": "REVIEW",
+        "status": "DONE_VERIFIED",
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "size": "S",
@@ -21909,9 +21940,12 @@
         "fix_record": "Added fingerprint TEXT col to 125/1869b/231 DDLs; added sent_by + notified_telegram + resolved_at + resolution_notes + confidence_score + validated_at + fingerprint to 1391 DDL. All 4 pass in isolation. tsc GREEN.",
         "router_verified": true,
         "router_verification": "ROUTER-VERIFIED 2026-06-19T21:01:06Z: RAW re-ran all 4 in per-file isolation — 125=39/39 (3/3 retries; one earlier transient fail was pre-existing e2e flakiness, NOT the DDL class, not introduced here), 1391/1869b/231 all 0-fail; tsc exit 0; commit f1f70ec3 narrow (4 test files only, no stray/forced paths). Local gate PASS. done_verified WITHHELD pending ci_green_on_subsequent_push (push = PO out-of-band call). RSI-SINGLEDIGIT still red = expected out-of-scope hold; full-suite Bun-JIT panic = known recurring class, not a regression. WATCH (no new task): 125-test-e2e-briefing has intermittent 1-test e2e flakiness independent of this fix.",
-        "done_verified": false,
+        "done_verified": true,
         "impl_commit": "f1f70ec3",
-        "verified_at": "2026-06-19T21:01:06Z"
+        "verified_at": "2026-06-19T21:01:06Z",
+        "done_at": "2026-06-20T01:36:26Z",
+        "done_by": "po-tick-20260620T013626Z",
+        "verify_note": "ci_green_on_subsequent_push SATISFIED: f1f70ec3 (the DDL-sentBy-fingerprint fix) is now an ancestor of origin/main HEAD 0b7abd97 (merge-base --is-ancestor TRUE; landed by com.vn-market.fleet-push backstop). On CI run 27855408671 (HEAD 0b7abd97) the 4 DDL files {1391,1869b,231,125} are GREEN — no longer in the 6-fail set. Gate met; flipped done_verified."
       }
     ],
     "qa": [],
