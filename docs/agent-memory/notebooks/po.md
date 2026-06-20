@@ -1,18 +1,16 @@
 # PO Notebook
 
-_Last: 2026-06-20T08:15:29Z_
+_Last: 2026-06-20T09:27:00Z_
 
 ## Carry-over
-- 3 NEW db_integrity_breach (router-RAW-verified live market.db) triaged this tick → minted FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (db1+db2, multi), CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR (depends on it), FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (db3, apps/mcp-server/). Signal rows db1/db2/db3 NEW→READ (not RESOLVED until fix ships).
-- review[6]: 4 CI/behavioral-gated (FIX-CI-RED-7fef5850, FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG = BLOCKED on out-of-band push+CI-green, do NOT advance) + FIX-ALERT-ENGINE-RSI-SINGLEDIGIT + FIX-BCTC-ENRICH-SILENT-0ROWS (LIVE gates). ARCH-SHIP-WAVE-REAUDIT PARKED.
-- WIP=0, head idle. New P0 writer-integrity + db3 returned in BATCH for router promotion (≤2 active discipline).
-- 14 prior TRIAGED rows = reconfirmed known (no re-mint). vps-bctc 3.19d / cowork SKIPPED_BLIND_NO_BACKSTOP = known-standing, informational, no task.
+- FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0: ALREADY code-complete + QA-APPROVED (a22c037c; write-time OHLC-invariant+scale guard merged aeacdb25; WIC-1 8/8 + WIC-2 10/10). status=REVIEW, done_verified:false. ONLY gate left = MON 2026-06-22 cron-db-data-integrity LIVE re-sweep post container REBUILD (time-gate, market closed). Router note "NOT a code gap." DO NOT re-dispatch / re-promote — that re-runs merged QA-approved code.
+- CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR: backlog, correctly blocked_by+depends on the P0. Stays GATED until P0 done_verified (else purge-defeated-by-backfill-seeder). No action.
+- Canonical .head = in_progress on db3 sibling FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (dev-mcp-server, P1), wip=1. Do not displace.
+- review[6] unchanged: CI/behavioral-gated cluster + LIVE-gated rows. ARCH-SHIP-WAVE-REAUDIT PARKED.
 
-## This cycle — dev-team triage tick 20260620T080911Z (Sat weekend, VN market CLOSED; gateway-blind local spawn; router did all live-DB verify)
-RETURN = BATCH of 3 (1 P0 FIX writer-integrity, 1 CLEAN residue-repair dependent, 1 P1 FIX vnindex-cache).
-
-PRIMARY: 3 router-VERIFIED db_integrity_breach rows from new cron-db-data-integrity (b8224509).
-- db1 (HIGH) 835 OHLC-constraint violations/129 tickers/2026-04-24..06-12 (close-outside-[low,high] BMI/SHS/OIL/HUT + h=l=0 sentinels VNDAF) + db2 (CRITICAL) DFF 1000x intra-row scale (06-12 0.5/500) → FOLDED into ONE writer-integrity FIX per memory ohlcv_startup_purge_defeated_by_backfill_seeder (same daily_ohlcv WRITER class, fix the WRITER, trace ALL writers incl raw-INSERT bypass). zone=multi (architect splits stock-price writer + mcp-server writeOhlcvBatch). ABSORBS existing FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2 (the prevClose=0→detectAndNormalizeScale no-op is db2's scale root). Companion CLEAN repairs the 835 existing rows AFTER writer ships (else re-poisoned), illiquid→honest-gap not synthesize.
-- db3 (MEDIUM) vn_index_cache 0 rows / vnIndexRefresh */5 not populating → own FIX apps/mcp-server/, refresh-path trace; folds the audit-question rows CI-FRESH-01-FIX + MD-FUNC-01-FIX (their answer: NOT populating).
-
-DEDUP: checked backlog — no exact dup of constraint-violation class (LINT-OHLCV-WRITE-BYPASS = guardrail kept separate; FIX-OHLCV-CORP-ACTION-CONTINUITY = different). db3 distinct from the two FACTORY audit questions.
+## This cycle — "drive OHLCV-integrity P0 to dispatch dev" re-triage (2026-06-20T09:27Z)
+Request premise (P0 idle-unpromoted/WIP=0/promote+repoint-head-to-dev) = STALE — authored vs the 06-14 board; the 06-20 live board shows the P0 ALREADY drove itself fully: po-mint→architect→pm-decompose→dev-fix(aeacdb25)→qa-APPROVED(a22c037c), both WIC subtasks DONE.
+Verified BOTH tasks real + not-superseded + not-dup: the NEW write-time CONSTRAINT guards ARE the ones in aeacdb25 (not from the done SSOT-DURABLE/SCALE-X1000 cluster). CLEAN correctly sequenced behind P0.
+DISPOSITION = NO board mutation. Promoting+repointing head would re-dispatch merged QA-approved code (verify-raw-not-badge / don't-re-run) AND breach wip on the active vnindex head. Board already at correct terminal-pre-gate state; Mon live-sweep flips done_verified → CLEAN auto-unblocks.
+Parallel system-auditor sweep re-confirmed same 835/129 breach (db-integrity-history 10:30Z) = expected residue; wrote only signal_queue/history, orch-state mtime UNCHANGED (no CAS conflict). NO commit-mutex/C-2 write needed since no .task_board/.head change.
+Decision journal: appended po-S1 to docs/agent-memory/decisions/sprint-ARCH-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0.md.
