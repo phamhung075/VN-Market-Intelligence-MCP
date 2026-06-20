@@ -2490,6 +2490,17 @@
             "title": "Remove 6 dead/retired source IDs from fetch-status enumeration (news, cafef1, vnexpress1, shared-url, vnbusiness, vietnambiz)",
             "type": "CLEAN",
             "zone": "apps/mcp-server"
+          },
+          {
+            "id": "FIX-DRAIN-STATEFILE-DATALOSS",
+            "type": "FIX",
+            "title": "drain-signals.js sweeps state file db-integrity-history.json → silent history wipe",
+            "status": "DONE-LIVE-VERIFIED",
+            "owner": "dev-mcp-server",
+            "priority": "high",
+            "size": "S",
+            "zone": "scripts/agents-flow/ + scripts/",
+            "note": "DONE-LIVE-VERIFIED 2026-06-21 (commit bfdb8c69, QA a431533): drain-signals.js globbed ALL docs/signals/*.json with no exclusion → swept persistent state file db-integrity-history.json to processed/, then db-integrity-history-append.sh wrote printf '[]' on the missing file = silent total wipe (router had to manually relocate→drain→restore on >=2 ticks). FIX shipped BOTH: (b) git mv state file out of inbox → docs/data/db-integrity-history.json + repointed every reader (append.sh HIST default L12, cron-db-data-integrity.md, cron-system-auditor.md); (a) non-routable-shape guard in drain-signals.js (L43-47) skips top-level arrays + objects lacking from/source/type/signal_type. QA live gates ALL PASS: drain preserves history, {} probe skipped, real signal routed, append grows 9→10, 0 live stale refs, commit narrow. rebuild_required:NO. Permanently removes the router per-tick manual workaround."
           }
         ]
       },
