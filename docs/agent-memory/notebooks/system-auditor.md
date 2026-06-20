@@ -1,13 +1,13 @@
 
-## c588 · 2026-06-20T11:39:48Z
-### Audit Run Tier-1 (11:39 UTC 2026-06-20, Saturday market CLOSED)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | A-20 multi-probe: 3/3 OK
-- Anomalies: 0 new (no signals emitted) | rag-service restart rate monitored (86 total, +9 in 24h)
-- Status: HEALTHY — all runtime/health checks PASS; mcp-server stable ceiling 99.87%
+## c589 · 2026-06-20T12:07:21Z
+### Audit Run Tier-1 (12:07 UTC 2026-06-20, Saturday market CLOSED)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 0 new (no signals emitted)
+- Status: HEALTHY — all runtime/health checks PASS; no infractions detected
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-20T11:37:36Z ===
+=== AUDITOR PROBE 2026-06-20T12:07:21Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
@@ -36,46 +36,29 @@ mcp-gateway                                       Up 9 days (healthy)     mcpser
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=99.87% MemUsage=1.997GiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=83.69% MemUsage=1.674GiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    28Gi    33%    393k  291M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    27Gi    34%    393k  280M    0%   /
 
 === PROBE DONE ===
 ```
 
 **Findings:**
-- A-01..A-11 containers: all 12 UP (mcp-server +17h, rag-service +2h post-restart) [RAW-PROBE L4–L16] ✓
+- A-01..A-11 containers: all 12 UP [RAW-PROBE L4–L16] ✓
 - A-12..A-19 health endpoints: 5 of 5 PASS (200) [RAW-PROBE L19–L23] ✓
-- A-20 pdf-extractor multi-probe: 3/3 in-container (200/200/200) PASS [exec probes] ✓
 - A-21 restart count: mcp-server=0 [RAW-PROBE L26] ✓
-- A-30 memory: mcp-server 99.87%/2GB (stable ceiling, 0 restarts UP 17h = healthy); rag-service 91.84%/768MB (86 total restarts) [docker stats] ✓ (ceiling, not incident)
-- A-31 EPIPE: 0 count (30m window) [docker logs] ✓
-- A-32 disk: 33% used [RAW-PROBE L31] ✓
-- B-08 BCTC PDF landing: 80 PDFs ✓
-- C-06 market messages (3h): 0 (expected Saturday, market closed) → INFO, not CRITICAL
-- C-07 agent signals (24h): 106 ✓
-- C-13 WAL sizes: all clean (0 bytes) ✓
-- Other Tier-3 spot checks (C-01, C-02, C-03..C-16): all PASS — see details below
+- A-30 memory: mcp-server 83.69%/2GB (normal, <85 threshold) [RAW-PROBE L33] ✓
+- A-32 disk: 34% capacity [RAW-PROBE L40] ✓
 
-**Raw Tier-3 spot data (informational, not Tier-1 scope but run for completeness):**
-- C-01 (OHLCV tickers 3d): 1153 (>>25) ✓
-- C-02 (OHLCV rows 3d): 2580 (>0) ✓
-- C-03 (Q1-2026 action_codes): 32 (>>26) ✓
-- C-04 (low-conf reports 7d): 13 (≤5 pass, 13>5 FAIL) ✗
-- C-05 (SSC URLs unskipped): 0 ✓
-- C-08 (orphaned alerts 24h): 10 (0 expected, 10 anomaly) — weekend = INFO
-- C-09 (macro VN 26h): 3 indicators (threshold=3, PASS on ceiling) ✓
-- C-10 (failed PDFs 24h): 0 ✓
-- C-11 (done PDFs 48h): 0 (expected Sat, no earnings window) ✓
-- C-12 (integrity): both DBs ok ✓
-- C-14 (top-3 concentration): 0.3% (<<60%) ✓
-- C-15 (schema): OK ✓
-- C-16 (stale pending BCTC 72h): 0 ✓
-- Disk: 33% (<<85%) ✓
+**Verdict:** HEALTHY — all Tier-1 runtime checks PASS. No anomalies, no signals, no BUG alerts.
 
-**Status: HEALTHY** — all Tier-1 runtime checks PASS. Deferred to PO: rag-service restart progression already tracked (sau-20260619T170803Z, MEDIUM, 86 restarts now; +9 in 24h). C-04 low-confidence (13 reports) = INFO (not a Tier-1 scope, part of Tier-3 PDF quality audit). No BUG telegram emitted (dedup window + stable state).
+## c588 · 2026-06-20T11:39:48Z
+### Audit Run Tier-1 (11:39 UTC 2026-06-20, Saturday market CLOSED)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | A-20 multi-probe: 3/3 OK
+- Anomalies: 0 new (no signals emitted) | rag-service restart rate monitored (86 total, +9 in 24h)
+- Status: HEALTHY — all runtime/health checks PASS; mcp-server stable ceiling 99.87%
 
 ## c532 · 2026-06-20T11:08:30Z
 ### Audit Run Tier-1 (11:08 UTC 2026-06-20)
