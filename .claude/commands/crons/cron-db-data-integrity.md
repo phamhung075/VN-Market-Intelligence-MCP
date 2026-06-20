@@ -65,7 +65,9 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
 
   RECORD — write a JSON history of THIS scan to docs/signals/db-integrity-history.json
     (rolling, atomic read-modify-write: read → append one entry → keep last 200 → write once):
-      { "scan_ts": "<UTC ISO>", "tables_checked": N, "findings": [
+      `scan_ts` MUST be the REAL current UTC — run `date -u +%Y-%m-%dT%H:%M:%SZ` and use its
+      output verbatim. NEVER guess/hardcode the date (a hallucinated date mis-orders the history).
+      { "scan_ts": "<output of date -u +%Y-%m-%dT%H:%M:%SZ>", "tables_checked": N, "findings": [
           { "table": "...", "class": "FAIL|STALE|DUP|INCORRECT", "detail": "<what + the query result>",
             "verdict": "REAL|BY-DESIGN|NOISE", "root_cause_hypothesis": "...",
             "signal_id": "<id if reported, else null>" } ] }
