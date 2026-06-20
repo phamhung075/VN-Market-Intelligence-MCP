@@ -1,5 +1,96 @@
 # PM — Notebook
 
+## c319 EVENING_SUMMARY QUALITY 5-TASK SPRINT SEQUENCING · 2026-06-21T000000Z
+
+**PARENT:** Architect brief + PO triage: FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE + 4 quality fixes from 2026-06-19 evening cycle review
+
+**INPUT:** 5 raw_verified:true tasks from orch-state backlog (TASK-RSIFIX-1/2, FIX-MACRO-FX-SIGMA, FIX-DIGEST-FOREIGN-FLOW, FIX-DIGEST-BB-ALERT), architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md, PM init
+
+**OUTPUT:** 5 handoff files + orch-state.json board update (backlog → ready, wave/blocking metadata). Developers ready to dispatch Wave 1.
+
+**Handoffs created:**
+1. docs/handoffs/TASK-RSIFIX-1-ta-engine-contract.md (dev-technical-analysis, no rebuild)
+2. docs/handoffs/TASK-RSIFIX-2-digest-go-engine-rewire.md (dev-mcp-server, rebuild, blocked_by RSIFIX-1)
+3. docs/handoffs/FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME.md (dev-macro-indicators, rebuild)
+4. docs/handoffs/FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.md (dev-mcp-server, rebuild, file conflict with RSIFIX-2)
+5. docs/handoffs/FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR.md (dev-technical-analysis, rebuild, file conflict with RSIFIX-1)
+
+**Board mutation (atomic):**
+- **Before:** ready=N, backlog includes TASK-RSIFIX-1/2 + 3 FIX tasks (all TODO)
+- **After:** ready=N+5, backlog -= 5 tasks. All moved tasks status=TODO, with wave/blocked_by/blocks metadata
+- 5 tasks structured with explicit dependencies + zone conflict analysis
+
+**DISPATCH WAVE SEQUENCING (WIP=2 max concurrent coding):**
+
+**Wave 1 (READY NOW, parallel, independent zones + files):**
+- **dev-technical-analysis:** TASK-RSIFIX-1 (docs only, ~1h, unblocks RSIFIX-2) → dev_agent="dev-technical-analysis"
+- **dev-macro-indicators:** FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME (code fix, ~1.5h, independent) → dev_agent="dev-macro-indicators"
+- **Status:** both README-driven no dependencies between them; same-zone check: RSIFIX-1 is .md, FX-SIGMA is domain/services/macroThresholds.ts → different files, safe parallel
+
+**Wave 2 (after Wave 1 done_verified; WIP=2):**
+- **dev-mcp-server:** TASK-RSIFIX-2 (code fix, ~3h, blocked_by TASK-RSIFIX-1, rebuild) → dev_agent="dev-mcp-server"
+- **dev-mcp-server:** FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN (code fix, ~1h, rebuild) → dev_agent="dev-mcp-server"
+- **Conflict analysis:** both edit assembleEveningSummary.ts + eveningSummaryJob.ts → MUST SERIALIZE. Dispatch RSIFIX-2 first (larger change set, architecture-critical), then FOREIGN-FLOW (smaller, subsumed into RSIFIX-2 review).
+- **Sequence rule:** start RSIFIX-2, let dev complete + verified. Then start FOREIGN-FLOW (knows RSIFIX-2 context, fewer conflicts on merge).
+
+**Wave 3 (after Wave 2 WIP clears; P3):**
+- **dev-technical-analysis:** FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR (code fix, ~1h, rebuild) → dev_agent="dev-technical-analysis"
+- **Conflict analysis:** bbAlertScanJob.ts (different file from RSIFIX-1's docs/standards/ta-engine-contract.md), safe to run in parallel with Wave 1 if needed, but prioritized P3 → Wave 3 sequence (after higher-priority tasks complete)
+
+**Total WIP & elapsed time:**
+- Wave 1: 2 concurrent (1h + 1.5h, critical path ~1.5h)
+- Wave 2: serial (RSIFIX-2 3h + FOREIGN-FLOW 1h, total ~4h sequential)
+- Wave 3: 1 agent (1h)
+- Total critical path: ~6.5h; with rebuilds/testing ~8h
+- WIP never exceeds 2; no thread starvation
+
+**File conflict matrix (summarized in handoffs):**
+| Task A | Task B | File | Conflict? | Mitigation |
+|--------|--------|------|-----------|------------|
+| RSIFIX-1 | BB-ALERT | docs/standards/ta-engine-contract.md vs bbAlertScanJob.ts | No | Parallel safe (Wave 1) |
+| RSIFIX-2 | FOREIGN-FLOW | assembleEveningSummary.ts | YES | Serialize: RSIFIX-2 → FOREIGN-FLOW |
+| RSIFIX-2 | FOREIGN-FLOW | eveningSummaryJob.ts | YES | Same serialization |
+| FX-SIGMA | RSIFIX-2 | classifyDeviation() vs defaultComputeTa() | No | Parallel safe (Wave 1/2 boundary) |
+| BB-ALERT | RSIFIX-1 | bbAlertScanJob.ts vs ta-engine-contract.md | No | Different zones (Wave 1/3) |
+
+**Verification gates (live evening-cycle before done_verified):**
+- **RSIFIX-1:** Contract doc exists + verified against Go source (rsi.go)
+- **RSIFIX-2:** RSI agreement ≤0.1 between Go + TS digest for ≥3 tickers; <35-candle → null; no synthetic fallback
+- **FX-SIGMA:** 0.25% USD/VND move → INFO/WARN not CRITICAL; 0.6% move → CRITICAL/HIGH
+- **FOREIGN-FLOW:** No 0.000k padding lines in digest; only nonzero movers rendered
+- **BB-ALERT:** Sub-100K-volume tickers emit no BB alert; liquid tickers still do
+
+**Rebuild sequence:** RSIFIX-1 (no rebuild) → RSIFIX-2 (rebuild) → FX-SIGMA (rebuild) → FOREIGN-FLOW (rebuild) → BB-ALERT (rebuild). Only 4 rebuilds total (RSIFIX-1 doc-only).
+
+**Key PM decisions:**
+1. Moved RSIFIX-1 as doc-first task to unblock architecture (and avoid code divergence)
+2. Serialized RSIFIX-2 + FOREIGN-FLOW due to assembleEveningSummary.ts overlap
+3. Queued P3 BB-ALERT for Wave 3 (lower urgency, independent of hotfix chain)
+4. Set blocking_by/blocks metadata explicitly to guide developer dispatch order
+5. Wave 1 sized for immediate parallel start (both independent, fast signal to team)
+
+**Safety & escalation checks:**
+- All 5 tasks raw_verified:true (no discovery risk)
+- Each carry explicit verification_gate (live evening cycle, not just tests)
+- No architecture changes; code fixes only
+- No new dependencies introduced
+- All tasks fall within P1/P2/P3 priority (no epic/strategic change)
+
+**Commit discipline:** 5 handoff .md files + orch-state.json mutated atomically in single commit 5a65a871 "pm: create 5-task sprint handoffs + sequence evening_summary fix-all (WIP=2)". Board state is SSOT; no dev mutation until dispatch confirmation.
+
+**Dispatch trigger:** PM returns NEXT=[dev-technical-analysis, dev-macro-indicators] for Wave 1. Router spawns both in parallel message.
+
+**Follow-ons (queued backlog):**
+- CLEAN: remove unused computeRSILocal (after RSIFIX-2 done_verified)
+- OBSERVABILITY: add RSI divergence detector to system-auditor (alert on next same-ticker RSI mismatch)
+- BACKLOG: FIX-FOREIGN-FLOW-COVERAGE (source data gaps, lower priority than digest formatter)
+
+**Handoff files:** 5 .md files created; each with PM section (root_cause, fix_spec, files, verification_gate, rebuild_required, risk propagation)
+
+**Decision journal:** None needed (routine sprint decomposition); all context in handoffs + orch-state metadata
+
+---
+
 ## c318 ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP decomposition · 2026-06-18T000000Z
 
 **PARENT:** ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP (architect design FINAL, Option-B: threshold-checked push inside PO tick)
