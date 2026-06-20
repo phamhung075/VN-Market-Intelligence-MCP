@@ -1,8 +1,23 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-20 08:45 UTC | **Sprint:** FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0
+**Last updated:** 2026-06-21 00:00 UTC | **Sprint:** FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-21T00:00Z — FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE (DESIGN DONE)
+
+**Task:** FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE | mode: BUG-FIX (multi-zone P1) | zones: `apps/mcp-server/` (code changes) · `apps/technical-analysis/` (contract doc only)
+**Output:** `docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md`
+**Root confirmed (brownfield):** Three mismatches between alert path and TA/sector path: (1) candle window construction (date-window vs LIMIT 60); (2) min-candle gate (35 vs 15); (3) TS-local computeRSILocal vs Go computeTAIndicators. Math is identical — divergence is purely input-pipeline. NVL: 41 candles, same DB, same minute → RSI 29.7 vs 27.6.
+**Engine authority decision:** Go TA service is canonical. TS computeRSILocal is kept as dead code (not deleted in this task — follow-on CLEAN).
+**Generic mandate audit:** RSI is the only active dual-engine split in the digest. BB/MACD not in digest TA-block; MA20 single-source.
+**Synthetic fallback decision:** `market_prices_history` MAX(price) fallback REMOVED — synthetic closes are not equivalent to official OHLCV close; fail-closed is the correct posture.
+**2 PM tasks:**
+- TASK-RSIFIX-1: dev-technical-analysis — write `docs/standards/ta-engine-contract.md` (no rebuild). Blocks TASK-RSIFIX-2.
+- TASK-RSIFIX-2: dev-mcp-server — rewire `defaultComputeTa` to Go client, align window/gate, remove fallback, make async (rebuild required).
+**Key risk flagged:** RISK-1 — `assembleEveningSummary.ts` L594–635 per-ticker loop is synchronous; must become `for...of` with `await` after async refactor.
+**BUILD-STANDARD:** not-applicable (bug-fix, in-zone). **Scan clean:** true.
+**NEXT:** pm (create handoffs for TASK-RSIFIX-1 and TASK-RSIFIX-2; set blocked_by sequencing)
 
 ## 2026-06-20T08:45Z — FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (DESIGN DONE)
 
