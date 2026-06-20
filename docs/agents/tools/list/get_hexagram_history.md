@@ -5,15 +5,15 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
-| `limit` | `number` | Max results |
+| `code` | `string` | Stock ticker code (e.g. "VCB") |
+| `days` | `number` | Number of past days to retrieve (default 30, max 365) |
 
 **Returns:** Historical readings with dates and prices
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_hexagram_history", arguments={
-  "ticker": ..., "limit": ...
+  "code": ..., "days": ...
 })
 ```
 

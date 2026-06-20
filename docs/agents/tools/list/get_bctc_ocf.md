@@ -5,15 +5,16 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
-| `year` | `number` | Fiscal year |
+| `code` | `string` | VN stock ticker (e.g. VCB, FPT). Case-insensitive |
+| `period_year` | `number` | Fiscal year (e.g. 2025) |
+| `period_quarter` | `number` | Quarter (1–4) |
 
 **Returns:** Operating cash flow and trend
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_bctc_ocf", arguments={
-  "ticker": ..., "year": ...
+  "code": ..., "period_year": ..., "period_quarter": ...
 })
 ```
 

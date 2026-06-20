@@ -5,15 +5,15 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
-| `page` | `number` | Page number |
+| `report_id` | `string` | Financial report ID from financial_reports.id |
+| `pages` | `number[]` | Page numbers to retrieve (1-indexed array) |
 
 **Returns:** Image data (base64 or URL)
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_bctc_page_image", arguments={
-  "ticker": ..., "page": ...
+  "report_id": ..., "pages": ...
 })
 ```
 

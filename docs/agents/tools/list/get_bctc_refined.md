@@ -5,15 +5,14 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
-| `year` | `number` | Fiscal year |
+| `report_id` | `string` | Financial report ID from financial_reports.id |
 
 **Returns:** Validated financial data
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_bctc_refined", arguments={
-  "ticker": ..., "year": ...
+  "report_id": ...
 })
 ```
 

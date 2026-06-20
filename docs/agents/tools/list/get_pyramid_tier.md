@@ -5,14 +5,14 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
+| `asset_class` | `string` | Asset class to classify (e.g. 'VN equity', 'crypto', 'gold', 'government bond') |
 
 **Returns:** Tier level with conviction score
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_pyramid_tier", arguments={
-  "ticker": ...
+  "asset_class": ...
 })
 ```
 

@@ -5,15 +5,15 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
-| `days` | `number` | Days back |
+| `code` | `string` | Stock ticker code (e.g. 'VCB', 'FPT', 'VNM') |
+| `days` | `number` | Number of days to look back (default 7, max 730) |
 
 **Returns:** OHLCV data with technical indicators
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_price_history", arguments={
-  "ticker": ..., "days": ...
+  "code": ..., "days": ...
 })
 ```
 

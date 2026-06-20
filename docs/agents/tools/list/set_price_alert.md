@@ -5,16 +5,16 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
-| `price_level` | `number` | Alert price |
-| `direction` | `string` | above|below |
+| `code` | `string` | Stock ticker code, e.g. 'VCB'. Must exist in the watchlist |
+| `price_level` | `number` | Price level in VND that triggers the alert |
+| `direction` | `string` | 'stop_loss' (fires when price drops to/below threshold) or 'take_profit' |
 
 **Returns:** Alert rule ID and confirmation
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="set_price_alert", arguments={
-  "ticker": ..., "price_level": ...
+  "code": ..., "price_level": ...
 })
 ```
 

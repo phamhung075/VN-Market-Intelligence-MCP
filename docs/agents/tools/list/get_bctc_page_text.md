@@ -5,15 +5,15 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
-| `page` | `number` | Page number |
+| `report_id` | `string` | Financial report ID from financial_reports.id |
+| `page_number` | `number` | 1-indexed page number |
 
 **Returns:** Extracted text with OCR confidence
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_bctc_page_text", arguments={
-  "ticker": ..., "page": ...
+  "report_id": ..., "page_number": ...
 })
 ```
 

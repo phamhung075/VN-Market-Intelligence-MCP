@@ -5,15 +5,14 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
-| `limit` | `number` | Max results |
+| `report_id` | `string` | Financial report UUID |
 
 **Returns:** Flagged cell list with flags and original values
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="list_flagged_bctc_cells", arguments={
-  "ticker": ..., "limit": ...
+  "report_id": ...
 })
 ```
 

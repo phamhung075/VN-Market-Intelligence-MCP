@@ -5,14 +5,14 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
+| `code` | `string` | Stock ticker, e.g. 'FPT' or 'VNM' |
 
 **Returns:** Company metadata, sector, market cap
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_company_profile", arguments={
-  "ticker": ...
+  "code": ...
 })
 ```
 

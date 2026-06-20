@@ -5,14 +5,14 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code optional |
+| `code` | `string` | Stock ticker, e.g. 'VNM' or 'FPT' |
 
 **Returns:** Market cap with ranking and percent of total
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_market_cap", arguments={
-  "ticker": ...
+  "code": ...
 })
 ```
 

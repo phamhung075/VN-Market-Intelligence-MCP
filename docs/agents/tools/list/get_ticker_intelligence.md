@@ -5,14 +5,14 @@
 **Parameters:**
 | Name | Type | Description |
 |------|------|-------------|
-| `ticker` | `string` | Company code |
+| `code` | `string` | Stock ticker symbol, e.g. VCB, FPT, HPG. Case-insensitive |
 
 **Returns:** Multi-aspect summary: movers, sentiment, risk
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={
-  "ticker": ...
+  "code": ...
 })
 ```
 
