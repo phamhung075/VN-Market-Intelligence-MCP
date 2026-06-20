@@ -54,7 +54,7 @@ Until confirmed safe: run in parallel (duplicate doc/memory pass is acceptable o
 
 `cron-db-data-integrity.md` (`15,45 * * * *`, offset from this cron's `:00/:30`) runs a
 30-min, data-VALUE-focused pass on the live market DB (missing/failed, stale, duplicate,
-incorrect/out-of-range), logs a JSON history (`docs/signals/db-integrity-history.json`), and
+incorrect/out-of-range), logs a JSON history (`docs/data/db-integrity-history.json`), and
 signals genuine defects to `orch-state.json .signal_queue.rows[]` → dev-team. The
 high-frequency complement to Tier-3's daily deep DB integrity. Same agent (system-auditor),
 same signal contract; detection-only (read-only DB; fixes flow through dev-team).

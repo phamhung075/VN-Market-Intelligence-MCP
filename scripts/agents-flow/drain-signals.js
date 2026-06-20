@@ -40,6 +40,14 @@ for (const base of files) {
   let j;
   try { j = JSON.parse(raw); } catch (e) { report.push(`${base} → SKIP unparseable: ${e.message}`); continue; }
 
+  // Non-routable-shape guard: skip state files / non-signal JSON dropped in inbox by accident.
+  // A routable signal must have at least one of: from/source OR type/signal_type.
+  // A top-level array or an object with NEITHER field is not a signal — skip it, do NOT move/unlink.
+  if (Array.isArray(j) || (j.from == null && j.source == null && j.type == null && j.signal_type == null)) {
+    console.log(`[drain-signals] SKIP non-signal shape: ${base} (no from/type — state file or unknown format; leaving in inbox)`);
+    continue;
+  }
+
   // Standard signal schema with fallbacks for telemetry/output files (null-safe per spec §0a-1)
   const from = j.from ?? j.source ?? 'unknown';
   const to = j.to ?? 'po';

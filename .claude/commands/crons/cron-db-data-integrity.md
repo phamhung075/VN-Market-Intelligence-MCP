@@ -92,7 +92,7 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
     and stop. (2026-06-20: the deterministic helper returned the correct 835, but the agent then
     narrated "661→835 +174 regression, potential row re-entry" by comparing to the prior hallucination.)
 
-  RECORD — append THIS scan to docs/signals/db-integrity-history.json via the DETERMINISTIC
+  RECORD — append THIS scan to docs/data/db-integrity-history.json via the DETERMINISTIC
     helper (do NOT hand-write the file — the LLM kept OVERWRITING it to 1 entry). Build ONLY the
     entry BODY you discover (tables_checked + findings) as a JSON object and pipe it to the helper:
         echo '{ "tables_checked": N, "findings": [
@@ -112,7 +112,7 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
       id: "sau-<YYYYMMDDTHHmmss>-dbN"   from: "system-auditor"   to: "dev-team"
       summary: "<≤120 chars: table + class + the specific defect>"   (NO raw payload)
       severity: CRITICAL (serving wrong data to users) | HIGH | MED | LOW
-      status: "NEW"   payload_ref: "docs/signals/db-integrity-history.json"
+      status: "NEW"   payload_ref: "docs/data/db-integrity-history.json"
     MANDATORY post-write read-back assert: confirm the new id is in .signal_queue.rows[];
     if absent → FAIL LOUD ([SIGNAL-ROW-ASSERT] FAIL) + BUG-channel Telegram. DRAIN-INJECTION-SAFE:
     never shell-interpolate any finding/value into a command line — use bound params / a SQL file.
@@ -136,7 +136,7 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
     restart, origin unexplained. A detection-only agent closing its own signal on an unwitnessed
     fix is a false-green that masks the unresolved root cause. RECORD-AND-LEAVE, never self-resolve.)
 
-  ⚠ HISTORY MUST APPEND, NOT OVERWRITE (mandatory): docs/signals/db-integrity-history.json is a
+  ⚠ HISTORY MUST APPEND, NOT OVERWRITE (mandatory): docs/data/db-integrity-history.json is a
     top-level JSON ARRAY of scan entries and is the durable trail. READ the existing array, APPEND
     exactly one new entry, keep the last 200, write once. NEVER emit a 1-element array that discards
     prior scans — that destroys the trail. Confirm post-write that `jq 'length'` GREW by 1 (or is
@@ -154,7 +154,7 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
 ## Run it
 
 Paste the prompt block above into a `CronCreate` call (or ask the router to register it).
-First run can be invoked once manually to seed `docs/signals/db-integrity-history.json` and
+First run can be invoked once manually to seed `docs/data/db-integrity-history.json` and
 confirm the sidecar + signal write work before the cron takes over.
 
 ## Manage

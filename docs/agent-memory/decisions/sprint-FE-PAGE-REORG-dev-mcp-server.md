@@ -126,3 +126,12 @@
 - Option C (chosen): Add DDL + writer so vnIndexRefreshJob keeps vn_index_cache fresh every 5 min; non-fatal try/catch tolerates first-boot schema-migration edge.
 **why-decision:** Contract-from-live-payload analysis confirmed: (1) cron IS wired + fires, (2) storeMarketPrices writes market_prices only, (3) vn_index_cache has no writer anywhere — adding one is the minimal correct fix.
 **why-change:** Schema comment (Sprint 1922) classified as orphan was wrong — table exists in live DB from old design and IS expected to hold fresh snapshots per audit sweep prompt. Root cause was mis-classification, not bad router signal.
+
+### STEP dev-mcp-server-S13 · dev-mcp-server · 2026-06-21T00:00:00Z
+**task-id:** FIX-DRAIN-STATEFILE-DATALOSS
+**what-done:** Relocated db-integrity-history.json from drain inbox (docs/signals/) to docs/data/; updated all path references; added non-routable-shape guard in drain-signals.js.
+**what-considered:**
+- Option A (exclusion list in drain): hard-code the filename as an exclusion — rejected: brittle (any future state file dropped in signals/ would still be drained; SSOT-fix-doesn't-reach-copies class).
+- Option B (relocate — CHOSEN): move file out of the drain inbox permanently + add shape guard as belt-and-suspenders; shape guard catches any future non-signal file regardless of name.
+**why-decision:** Root-cause fix (wrong location) + structural guard (shape check) together eliminate the class. The shape guard (no from/type → skip) is semantically correct: a real signal always declares its source and type.
+**why-change:** No plan deviation; both sub-fixes (b + a) per task spec shipped exactly as specified.

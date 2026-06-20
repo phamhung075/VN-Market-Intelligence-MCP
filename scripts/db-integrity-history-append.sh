@@ -9,7 +9,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-HIST="${DB_INTEGRITY_HISTORY:-docs/signals/db-integrity-history.json}"
+HIST="${DB_INTEGRITY_HISTORY:-docs/data/db-integrity-history.json}"
 CAP="${HISTORY_CAP:-200}"
 TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

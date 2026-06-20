@@ -53,6 +53,10 @@ Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
 
 Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
 
+## 2026-06-21 · FIX-DRAIN-STATEFILE-DATALOSS (DONE → REVIEW)
+Relocated docs/signals/db-integrity-history.json → docs/data/db-integrity-history.json via git mv (8 entries preserved, 33KB intact). Updated scripts/db-integrity-history-append.sh HIST default path. Replaced all 4 refs in cron-db-data-integrity.md and 1 ref in cron-system-auditor.md. Added non-routable-shape guard in drain-signals.js: Array or object with no from/source/type/signal_type fields → SKIP with log notice (not moved, not unlinked). Gate 1: drain ran clean, history survived at new home. Gate 2: {} probe skipped; {"from":"x","type":"y"} probe routed normally. Gate 3: append ok, 8→9. rebuild_required: No. No apps/mcp-server zone changes — this was scripts/docs fix only.
+Zone health: drain-signals guard live, history at docs/data/, all 3 gates GREEN | HEALTHY
+
 ## 2026-06-19 · FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC — make outstandingShares optional (Option B)
 
 **Task:** FIX-INSIDER-OUTSTANDINGSHARES-SCHEMA-DOC (P2, S, recon-first)
