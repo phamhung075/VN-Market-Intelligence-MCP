@@ -116,3 +116,13 @@
 - Option C: Escalate to PO as "retry-forever vs terminalize" product decision — assessed unnecessary: DoD explicitly says "bound the grace-period (finite retries OR finite days)"; Arm 2 already does this; the ONLY problem was the startup reset undoing it.
 **why-decision:** The startup reset was the sole source of infinite retry — removing it lets the already-correct Arm 2 + terminalization work as designed. Function kept for backward compat + emergency use. Policy question resolved from code (bounded Arm 2 exists).
 **why-change:** Prior CHANGES_REQUESTED was for test-only fix (stale tests); this cycle found the deeper live conflict — conflicting writer observed first-hand in docker logs (TASK-1943a reset at 21:30:51, 22:45:34, 22:46:07Z).
+
+### STEP dev-mcp-server-S12 · dev-mcp-server · 2026-06-20T09:36:00Z
+**task-id:** FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH
+**what-done:** Added vn_index_cache DDL to schema-market-data.ts; created vnIndexCacheStore.ts writer; wired upsertVnIndexCache into vnIndexRefreshJob; 5-test VIC suite verifying real DB write path.
+**what-considered:**
+- Option A: Treat vn_index_cache as true orphan and DROP it — rejected: task spec says fix the writer; router-RAW-verified 0 rows = REAL defect.
+- Option B: Write to market_prices only (already done) and tell auditor to exclude vn_index_cache — rejected: auditor correctly monitors it; the fix is to make it non-empty.
+- Option C (chosen): Add DDL + writer so vnIndexRefreshJob keeps vn_index_cache fresh every 5 min; non-fatal try/catch tolerates first-boot schema-migration edge.
+**why-decision:** Contract-from-live-payload analysis confirmed: (1) cron IS wired + fires, (2) storeMarketPrices writes market_prices only, (3) vn_index_cache has no writer anywhere — adding one is the minimal correct fix.
+**why-change:** Schema comment (Sprint 1922) classified as orphan was wrong — table exists in live DB from old design and IS expected to hold fresh snapshots per audit sweep prompt. Root cause was mis-classification, not bad router signal.

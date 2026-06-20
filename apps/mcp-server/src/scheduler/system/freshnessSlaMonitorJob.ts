@@ -54,8 +54,9 @@ export function querySignalAges(
   // Excluded from SLA monitoring (zero active writers — DEPRECATED or N/A):
   //   - user_requests: superseded by ask_queue (Task 1063, Sprint 1920)
   //   - skips: table does not exist in schema (Sprint 1920 investigation)
-  //   - vn_index_cache: orphan from abandoned 1842a cache design — no schema def,
-  //       zero writers (Sprint 1922, Task 1922b)
+  //   - vn_index_cache: writer wired by FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (2026-06-20).
+  //       Excluded here because it is a derived cache of market_prices.VNINDEX, not a
+  //       primary signal source. freshness already covered by 'price' signal type above.
   //   - credit_data: orphan from deleted SBV credit growth code — no schema def,
   //       zero writers (Sprint 1922, Task 1922c)
   //

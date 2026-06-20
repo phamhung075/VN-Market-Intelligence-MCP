@@ -16,6 +16,14 @@ market_prices_history (code TEXT, price, volume, fetched_at, exchange, PK(code, 
 daily_ohlcv (code TEXT, date TEXT, open, high, low, close, volume,
   updated_at, foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol,
   PK(code, date), INDEX idx_daily_ohlcv_code_date(code, date DESC))
+
+vn_index_cache (code TEXT PK, price REAL NOT NULL, prev_price REAL DEFAULT 0,
+  change_pct REAL DEFAULT 0, volume REAL DEFAULT 0, fetched_at TEXT NOT NULL)
+  -- FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (2026-06-20)
+  -- Single-row cache per index code; INSERT OR REPLACE upsert.
+  -- Writer: vnIndexRefreshJob (every 5 min, 02:00-08:59 UTC Mon-Fri)
+  -- Freshness SLA: <= 10 min stale during market hours
+  -- Store: apps/mcp-server/src/infrastructure/db/vnIndexCacheStore.ts
 ```
 
 ### Alert Tables

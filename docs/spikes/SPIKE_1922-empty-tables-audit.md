@@ -82,12 +82,13 @@
 - Read path exists: `getReputationWarnings.ts` and `getCrisisEarlyWarning.ts` call `getReputation()` — always returns empty
 - **Fix task:** Implement `reputationComputeJob` — compute score from `mention_velocity` + news sentiment per ticker on a daily cadence; wire `saveReputation()` at end
 
-### 9. `vn_index_cache` — **C (orphan schema)**
+### 9. `vn_index_cache` — **FIXED (FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH, 2026-06-20)**
 
-- Zero references across all TypeScript, Go, Python source files and schema slices
-- Not found in any `schema-*.ts` file
-- Suspected leftover from task 1842a backtesting spike; no writers, no readers
-- **Action:** Verify in production DB then `DROP TABLE IF EXISTS vn_index_cache`
+- Previously classified as C (orphan schema) — no DDL, no writer found in Sprint 1922
+- **FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH** wired it: DDL added to `schema-market-data.ts`,
+  writer `upsertVnIndexCache` in `infrastructure/db/vnIndexCacheStore.ts`,
+  `vnIndexRefreshJob` now writes to table every 5 min during market hours.
+- Classification updated: **Active — writer is vnIndexRefreshJob, SLA 10 min**
 
 ### 10. `alert_engine_records` — **D (legitimately empty, awaiting alert conditions)**
 
@@ -106,7 +107,8 @@
 |-------|--------|
 | A — Needs new writer | `mention_velocity`, `reputation_scores` |
 | B — Silent failure | `fred_series_daily`, `insider_transactions` |
-| C — Orphan (drop) | `credit_data`, `vn_index_cache` |
+| C — Orphan (drop) | `credit_data` |
+| Fixed | `vn_index_cache` (FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH) |
 | D — Legitimately empty | `bond_maturity`, `imf_indicators`, `pharma_events`, `alert_engine_records` |
 
 ---
@@ -135,7 +137,7 @@ New daily scheduler job: read last 30-day `mention_velocity` + alert history per
 
 ```sql
 DROP TABLE IF EXISTS credit_data;
-DROP TABLE IF EXISTS vn_index_cache;
+-- vn_index_cache: REMOVED from drop list — now active, writer wired by FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (2026-06-20)
 ```
 
-Verify absence in production `market.db` before dropping. No schema slice, no store file, no caller exists for either table.
+Verify absence in production `market.db` before dropping. No schema slice, no store file, no caller exists for `credit_data`.
