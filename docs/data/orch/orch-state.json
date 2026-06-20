@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T08:27:40Z",
-  "_updated_by": "architect",
+  "_updated_at": "2026-06-20T08:35:00Z",
+  "_updated_by": "dev-team-cron-router",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -183,11 +183,15 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-20T08:27:40Z",
-    "updated_by": "architect",
-    "active_task_id": null,
-    "next_agent": "pm"
+    "status": "in_progress",
+    "active_task_id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
+    "next_agent": "pm",
+    "next_action": "pm: break architect blueprint (TASK-OHLCV-WIC-1 Writer F guard replacement, WIC-2 Writer H coerce fix, WIC-3 supersede CLASS3) into atomic dev tasks + dev-mcp-server handoffs.",
+    "wip": 1,
+    "wip_max": 2,
+    "updated_at": "2026-06-20T08:35:00Z",
+    "updated_by": "dev-team-cron-router",
+    "note": "Tick 20260620T080911Z: architect returned single-zone apps/mcp-server/ (Zone2 stock-price cleared read-only), 2 gaps GAP-1 Writer F + GAP-2 Writer H, CLASS3 superseded. Router fixed head idle→in_progress (architect dropped WIP tracking mid-chain) + parent REVIEW→IN_PROGRESS. Relay→pm."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10789,8 +10793,8 @@
       {
         "id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
         "type": "FIX",
-        "status": "REVIEW",
-        "owner": "po",
+        "status": "IN_PROGRESS",
+        "owner": "pm",
         "zone": "apps/mcp-server/",
         "priority": "P0",
         "size": "M",
@@ -10803,8 +10807,9 @@
         "next_agent": "pm",
         "zone_note": "Zone 2 (apps/stock-price/) CLEARED — read-only consumer only",
         "architect_handoff": "docs/handoffs/FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0-architect-design.md",
-        "updated_at": "2026-06-20T08:27:40Z",
-        "updated_by": "architect"
+        "updated_at": "2026-06-20T08:35:00Z",
+        "updated_by": "dev-team-cron-router",
+        "router_note": "Architect blueprint DONE (867445e9). Corrected architect false-promotion REVIEW→IN_PROGRESS (no code written yet — only design). Relaying to pm for atomic dev-task breakdown."
       },
       {
         "id": "CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR",
