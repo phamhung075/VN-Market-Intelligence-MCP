@@ -183,15 +183,15 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG in REVIEW, router-verified local-green (commit 495cf0d4). Gate = ci_green_on_subsequent_push: needs push so CI re-runs green on a SHA above 495cf0d4 with 1345d+1345e GREEN, then flip done_verified. No code action pending.",
-    "wip": 0,
+    "status": "active",
+    "active_task_id": "FIX-CI-RED-7fef5850-ALERTS-TEST-FIXTURE-SENTBY",
+    "next_agent": "dev-mcp-server",
+    "next_action": "FIX dispatched to dev-mcp-server — RSI test buildTestDb() alerts DDL missing sent_by; durable fix = use canonical createAlertsSchema(). Fleet CI unblocker (gates ci_green for 495cf0d4 REVIEW). On return: RAW-verify bun test green + commit narrowness, then push gates ci re-run.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-20T01:46:54Z",
+    "updated_at": "2026-06-20T07:26:41Z",
     "updated_by": "dev-team-cron-router",
-    "note": "CI-network-guards fix done: commit 495cf0d4 (2 test files, Bun.env.CI seam guard). Task moved to REVIEW awaiting ci_green."
+    "note": "SPIKE-REGISTRY-PARAM-DRIFT held (P3 doc-hygiene) — scope recorded on CLEAN-TI-DOC-PARAM-CODE-DRIFT backlog row for next-tick dispatch; not run concurrently to avoid commit race vs the P0 CI fix."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -225,8 +225,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T07:19:51Z",
-    "_updated_by": "dev-team-cron-router",
+    "_updated_at": "2026-06-20T07:26:15Z",
+    "_updated_by": "dev-team-loop-iter5",
     "archive": [
       {
         "from": "system-auditor",
@@ -1191,7 +1191,7 @@
         "from": "dev-team",
         "to": "po",
         "type": "repair_task_request",
-        "summary": "DB-quality loop iter-4 (2026-06-20 RAW-probe): tool-registry param-name drift. get_price_history.md documents param `ticker` but LIVE schema REQUIRES `code` (live rejected ticker with invalid_type undefined on path code; accepted code -> real bars). Scope: 22 docs in docs/agents/tools/list/ use `ticker`, only 5 use `code` -> needs schema-vs-doc audit (NOT all 22 assumed wrong; some tools may genuinely take ticker). CONSEQUENCE: any agent following the doc fails the call -> price-history/data fetch UNAVAILABLE downstream. No generator referencing tools/list found (likely hand-maintained). Owner dev-mcp-server (registry SSOT). Confirmed instance: get_price_history. Root-caused, not blind-dispatch.",
+        "summary": "DB-quality loop iter-4 (2026-06-20 RAW-probe): tool-registry param-name drift. get_price_history.md documents param `ticker` but LIVE schema REQUIRES `code` (live rejected ticker with invalid_type undefined on path code; accepted code -> real bars). Scope: 22 docs in docs/agents/tools/list/ use `ticker`, only 5 use `code` -> needs schema-vs-doc audit (NOT all 22 assumed wrong; some tools may genuinely take ticker). CONSEQUENCE: any agent following the doc fails the call -> price-history/data fetch UNAVAILABLE downstream. No generator referencing tools/list found (likely hand-maintained). Owner dev-mcp-server (registry SSOT). Confirmed instance: get_price_history. Root-caused, not blind-dispatch. || CORROBORATION iter-5 (2026-06-20T07:25Z RAW-probe): get_technical_indicators ALSO documents ticker but LIVE REQUIRES code (same invalid_type undefined on path code; accepted code). 2nd confirmed instance -> drift is a multi-tool PATTERN not a one-off; audit ALL 22 ticker-doc'd tools against live schema, do not assume any single doc correct.",
         "severity": "WARN",
         "status": "READ",
         "payload_ref": null,
@@ -10521,7 +10521,7 @@
         "title": "get_technical_indicators.md + get_price_history.md doc SSOT says param `ticker` but live server requires `code` (doc-only, 0 runtime broken)",
         "type": "CLEAN",
         "status": "BACKLOG",
-        "priority": "P3",
+        "priority": "P2",
         "zone": "cross-service/",
         "owner": "dev-mcp-server",
         "next_agent": "dev-mcp-server",
@@ -10540,7 +10540,16 @@
         ],
         "dedup_note": "untracked, cosmetic. Low priority — purely SSOT hygiene, no served-data impact.",
         "minted_by": "po-s94",
-        "minted_at": "2026-06-17T01:34:10Z"
+        "minted_at": "2026-06-17T01:34:10Z",
+        "spike_escalation": {
+          "by": "po-triage-20260620",
+          "from_signal": "devteam-loop-20260620T071556Z-registry-param-drift",
+          "widened_scope": "FULL audit of docs/agents/tools/list/ ticker-vs-code param drift (NOT just the 2 named docs). Probe LIVE schema via list_server_tools(vn-market) — NOT all ticker-docs assumed wrong. Output truth-table + targeted doc-only fix set.",
+          "confirmed_instance": "get_price_history.md documents `ticker` but live schema rejects ticker (invalid_type) and requires `code`",
+          "timebox_min": 120,
+          "held_reason": "Dispatched next tick after P0 CI fix lands — avoids concurrent dev-mcp-server commit race",
+          "escalated_at": "2026-06-20T07:26:41Z"
+        }
       },
       {
         "id": "LINT-OHLCV-WRITE-BYPASS",
@@ -21818,7 +21827,31 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-CI-RED-7fef5850-ALERTS-TEST-FIXTURE-SENTBY",
+        "title": "CI-RED-7fef5850 — bun test 4 fails: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts buildTestDb() CREATE TABLE alerts omits sent_by(+sibling cols) → code-under-test INSERT throws → fired=0 vs 1 (AC-6/AC-7). Fleet CI unblocker.",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/__tests__/FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts",
+          "apps/mcp-server/src/infrastructure/db/schema-alerts.ts"
+        ],
+        "root_cause": "Test hand-rolls its OWN alerts table in buildTestDb() (~L64-75) with only {id,triggered_at,severity,signals_json,affected_actions_json,analysis_ids_json,message,read,user_note,fingerprint}. Canonical schema-alerts.ts (L17-32) ALSO defines notified_telegram,resolved_at,resolution_notes,sent_by(NOT NULL DEFAULT server)+confidence_score,outcome,outcome_at,outcome_detail. Code-under-test INSERTs sent_by → table alerts has no column named sent_by → INSERT throws → countAlerts=0 → AC-6/AC-7 fail. PRODUCTION fine (canonical schema correct) — TEST-FIXTURE drift only.",
+        "fix_spec": "Make buildTestDb() use the canonical createAlertsSchema(db) helper from schema-alerts.ts (DURABLE — kills future drift). Do NOT just patch the 6 columns it needs today (self-confirming-test trap — test builds its own schema). DoD: bun test on this file GREEN; full per-file CI cmd green; ci_green_on_subsequent_push.",
+        "verification_gate": "ci_green_on_subsequent_push — gh run conclusion=success on a SHA ABOVE the fix (above failing 7fef5850). Unblocks whole fleet incl FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG (495cf0d4, REVIEW).",
+        "rebuild_required": false,
+        "baseline_pass": false,
+        "source_signal": "CI-RED-7fef5850 run_id=27862429369 head_sha=7fef5850639d697130ee85619c44f2933b451f0c",
+        "minted_by": "dev-team-cron-router",
+        "minted_at": "2026-06-20T07:26:41Z",
+        "dedup_note": "NOT a dup of review-lane FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (apps/alert-engine runtime MIN_CANDLES task, shares only filename). NOT a dup of DONE_VERIFIED FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT (covered FINGERPRINT-WIRE-SCANJOBS+ORPHAN-CORRELATION test files). This is a 3rd distinct test file."
+      }
+    ],
     "ready": [],
     "review": [
       {
