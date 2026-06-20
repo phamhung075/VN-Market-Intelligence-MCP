@@ -1,8 +1,21 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-19 11:30 UTC | **Sprint:** BCTC-PROSE-EXTRACT (BPE-ARCH-1 close-out)
+**Last updated:** 2026-06-20 08:45 UTC | **Sprint:** FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-20T08:45Z — FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (DESIGN DONE)
+
+**Task:** FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 | mode: BUG-FIX (multi-zone P0) | zone: `apps/mcp-server/` (Zone 2 apps/stock-price/ CLEARED)
+**Output:** `docs/handoffs/FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0-architect-design.md`
+**Writer audit completed:** 8 writers (A/C/D/E/F/G/H + Go service cleared). 2 gaps found:
+- GAP-1: Writer F (`priceBackfillService.ts`) uses local stub validator, missing `normalizeOhlcvToVnd` + `validateOhlcvUnit` Rule 5.
+- GAP-2: Writer H (`server.ts` push-ohlcv-history L1262-1267) silently coerces string `high`/`low` to `open` before guard — guard never sees real values.
+**Root causes confirmed:** (a) 835 violations = pre-guard era residue + 2 active writer gaps; (b) VNDAF high=low=0 = pre-guard era DEFAULT 0 from schema; (c) DFF 1000x = pre-guard era mixed-unit VNDirect input (historical residue, existing HILO_RATIO_MAX guard catches new occurrences).
+**Absorb decision:** FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2 → SUPERSEDED (DFF cold-start root differs from that task's scope; existing guards sufficient for new writes).
+**Dependency order locked:** CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR blocked on this task's done_verified.
+**BUILD-STANDARD:** not-applicable (bug-fix, in-zone). **Scan clean:** true.
+**NEXT:** pm (split into TASK-OHLCV-WIC-1/WIC-2/WIC-3)
 
 ## 2026-06-19T11:30Z — BPE-ARCH-1 BCTC-PROSE-EXTRACT (CLOSE-OUT, SPRINT DONE)
 
