@@ -1171,6 +1171,17 @@
         "db_id": "market",
         "drained_at": "2026-06-20T00:32:10Z",
         "drained_by": "dev-team"
+      },
+      {
+        "id": "sau-20260620T043756Z",
+        "ts": "2026-06-20T04:37:56Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway /health endpoint latency 1.6–3.0s (curl timeout 3s) — A-12 check",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
