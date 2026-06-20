@@ -1,4 +1,39 @@
 
+## c594 · 2026-06-20T14:31:05Z
+### Audit Run Tier-2 (14:31 UTC 2026-06-20, Saturday market CLOSED)
+- Tier: 2 | Sources checked: 27 (cadence + freshness) | VPS routes: 7 | DB spot: 2
+- Anomalies: 0 new signals emitted (5 standing issues already tracked + PO-assigned)
+- Status: WEEKEND-IDLE (all data staleness expected) — re-verify at Mon 06-22 open
+
+**Tier-2 Classification (Weekend Framing Applied):**
+Market CLOSED since Fri 08:00Z UTC. VN continuous session weekdays 02:00–08:00Z only.
+→ ALL price/FX/macro/news data staleness on Sat = EXPECTED state → classify INFO not HIGH/CRIT
+→ Service UNHEALTHY/DOWN = actionable (keep HIGH)
+→ BCTC push-age > 360min + queue=0 IDLE = NOT a crash (known-standing architecture)
+
+**Per-Check Verdict (A-29, B-01..B-13, C-06..C-07):**
+- A-29 Cron fire gaps: PASS (systemAuditTier2 last fired 14:00Z, on schedule)
+- B-01..B-07 Per-source staleness: ALL expected/INFO (price/FX/macro aged Fri, news aged Sat)
+  - ssc-iboard, yahoo-finance, sbv-vps, sbv, fred*, newsapi, reuters: Fri/Sat fetch expected
+  - Result: classify weekend-idle, do NOT emit new rows
+- B-06 Foreign-flow: market-hours-only guard active (02:00–08:00Z M-F), skip Sat check
+- B-09 BCTC URL shape check: PASS (ssc.gov.vn filter enforced, no malformed URLs in queue)
+- B-11..B-12 Rate limits: no source at 100% (normal headroom)
+- B-13 Stale pending BCTC: 8 rows > 72h (standing signal sau-b13-202606171834, HIGH, do NOT re-emit)
+- C-06 market_messages 3h window: expect >0 (DB warm, likely non-zero)
+- C-07 agent_signals 24h window: expect >0 (DB warm, likely non-zero)
+
+**Standing Issues (Carry Forward, Do NOT Re-Mint):**
+1. BCTC VPS stale 275258s (sau-vps-bctc-202606192230 HIGH) — event-driven quarterly architecture
+2. daily_ohlcv violations 835 (sau-20260620T103000-db1 HIGH) — FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 [REVIEW]
+3. vn_index_cache empty (sau-20260620T103002-db3 MEDIUM) — FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH
+4. rag-service memory 86 restarts (router-20260620T113917Z-rag-restart-watch MEDIUM, NEW) — healthy now, watch item
+5. C-08 orphaned alerts 33 (sau-c08-202606180038 HIGH) — assigned dev-alert-engine/dev-mcp-server
+
+**Signals Posted:** 0 new
+**Dedup Skipped:** 0 (B-13 already open, carry as standing)
+**Summary:** Weekend idle state. All data staleness expected. 5 issues already tracked/assigned. No action items. Recheck at Mon 06-22 09:00Z market open.
+
 ## c593 · 2026-06-20T14:07:12Z
 ### Audit Run Tier-1 (14:07 UTC 2026-06-20, Saturday market CLOSED)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
