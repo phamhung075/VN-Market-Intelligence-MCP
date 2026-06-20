@@ -225,7 +225,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T04:33:22Z",
+    "_updated_at": "2026-06-20T04:40:10Z",
     "_updated_by": "dev-team-cron-router",
     "archive": [
       {
@@ -1179,9 +1179,11 @@
         "to": "po",
         "type": "microservice_degraded",
         "summary": "api-gateway /health endpoint latency 1.6–3.0s (curl timeout 3s) — A-12 check",
-        "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "severity": "INFO",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_triaged_at": "2026-06-20T04:40:10Z",
+        "router_note": "Live re-probe by router (load idle, 1.85): api-gateway :4000/health=200 in 1.0s cold then 4-5ms steady; docker healthcheck healthy 5/5 exit=0; Up 8d. Auditor 1.6-3.0s was a transient under-load snapshot (PO+auditor+cowork bg agents concurrent during its sweep). Transient false-degraded — NO dev/ops action. Re-verify only if A-12 recurs on a quiet host."
       }
     ]
   },
