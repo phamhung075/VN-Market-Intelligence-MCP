@@ -68,14 +68,20 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
     the count but do NOT call ±1-2 "changed/regression". Only a MATERIAL move is a real change:
     a drop toward 0 (a fix landed), a jump of ≥~5, or a fresh recent-dated violating row.
 
-  ⚠ NO HALLUCINATED COUNTS (mandatory — confabulation guard): every count you record MUST be the
-    VERBATIM stdout of the COUNT(*) query you ran THIS scan, in the same step — never recalled
-    from a prior scan, estimated, rounded, or inferred from what you "expect". Do NOT assume a
-    direction (the fix may or may not have landed — REBUILD_REQUIRED means it may NOT be live yet);
-    record whatever the query returns and do NOT invent an explanatory narrative for a change you
-    did not query-confirm. If you cannot run the query, record null + say so — never a guessed number.
-    (2026-06-20: a sweep hallucinated 836→661 "-175 fix deployed" — real count was 835, fix not
-    deployed, nothing cleaned. The router raw-verifies all material changes for exactly this reason.)
+  ⚠ NO HALLUCINATED COUNTS (mandatory — confabulation guard):
+    For the canonical anomaly COUNTS (db1 OHLC-violations, db2 scale, db3 vnindex-cache, c04
+    low-confidence) you MUST run the DETERMINISTIC helper and copy its numbers VERBATIM:
+        bash scripts/db-integrity-counts.sh
+    It emits JSON `{ "scan_ts", "counts": {db1_ohlc_violations, db2_scale_gt100x,
+    db3_vnindex_cache_rows, c04_low_confidence_reports}, "context": {...} }` straight from sqlite.
+    Use those exact numbers in the history entry + the regression check — NEVER a number you
+    recalled/estimated/expected, and NEVER invent a narrative for a change the script didn't show.
+    Use your own ad-hoc sidecar queries ONLY for discovering NEW anomalies + classification, not
+    for re-counting the known four. Do NOT assume a direction (REBUILD_REQUIRED ⇒ fix may not be
+    live). If the helper fails, record null + say so — never a guessed number.
+    (2026-06-20: an LLM-counted sweep hallucinated 836→661 "-175 fix deployed" — real count 835,
+    fix not deployed, nothing cleaned. This helper + the router's material-change raw-verify exist
+    precisely to kill that confabulation class.)
 
   RECORD — write a JSON history of THIS scan to docs/signals/db-integrity-history.json
     (rolling, atomic read-modify-write: read → append one entry → keep last 200 → write once):
