@@ -8,7 +8,7 @@ zone: apps/technical-analysis/
 dev_agent: dev-technical-analysis
 created_at: 2026-06-21T00:00:00Z
 created_by: pm
-status: TODO
+status: REVIEW
 blocked_by: []
 blocks:
   - TASK-RSIFIX-2
@@ -90,12 +90,12 @@ After DONE (verified against Go), PM will unblock TASK-RSIFIX-2 for dev-mcp-serv
 
 ## Acceptance Criteria
 
-- [ ] File created: `docs/standards/ta-engine-contract.md`
-- [ ] RSI section documents: period=14, Wilder seed/smoothing, min-candle=35 recommended
-- [ ] BB/MACD/MA parameters documented with their periods
-- [ ] Error contract section explains field-absent (no error) behavior
-- [ ] Dev verified parameters against `apps/technical-analysis/pkg/primitive/rsi/rsi.go` + usecases.go
-- [ ] Example fixtures in doc show 41-candle ✓ and 34-candle ✗ RSI14 presence
+- [x] File created: `docs/standards/ta-engine-contract.md`
+- [x] RSI section documents: period=14, Wilder seed/smoothing, min-candle=35 recommended
+- [x] BB/MACD/MA parameters documented with their periods
+- [x] Error contract section explains field-absent (no error) behavior
+- [x] Dev verified parameters against `apps/technical-analysis/pkg/primitive/rsi/rsi.go` + usecases.go
+- [x] Example fixtures in doc show 41-candle ✓ and 34-candle ✗ RSI14 presence
 - [ ] Pushed to main (no rebuild step)
 
 ---
@@ -109,4 +109,61 @@ After DONE (verified against Go), PM will unblock TASK-RSIFIX-2 for dev-mcp-serv
 - [x] Blocks identified: TASK-RSIFIX-2 (unblock after done_verified)
 - [x] Handoff created
 - [x] WIP slot reserved (1 of 2)
+
+---
+
+## Developer — dev-technical-analysis
+
+**Status:** REVIEW
+**Completed:** 2026-06-21
+**Agent:** dev-technical-analysis
+
+### Source files read and verified
+
+| File | What was verified |
+|---|---|
+| `apps/technical-analysis/pkg/primitive/rsi/rsi.go` | Wilder smoothing formula (line 56-57), seed SMA (line 33-43), hard min gate period+1 (line 24-26), RSI formula (line 64-72) |
+| `apps/technical-analysis/pkg/primitive/bollinger_bands/bollinger_bands.go` | period >= 2, min candles = period (line 50-52), population std dev divisor N (line 86-93), output length (line 59) |
+| `apps/technical-analysis/pkg/primitive/macd/macd.go` | fast=12/slow=26/signal=9 defaults via module, min candles = slow+signal (line 52-55), output length |
+| `apps/technical-analysis/pkg/primitive/macd/ema.go` | Standard EMA alpha k=2/(N+1) (line 20), SMA seed (line 24-27) |
+| `apps/technical-analysis/pkg/primitive/moving_average/moving_average.go` | SMA rolling window (line 42-55), EMA alpha formula (line 79) |
+| `apps/technical-analysis/pkg/module/technical_analysis.go` | All defaults (RSI=14 line 51, MACD=12/26/9 lines 53/56/59, BB=20/2.0 lines 54/66, MA=14 line 62), non-fatal policy (line 94-95), fixed MA5/MA20/MA50 (lines 118/122/126) |
+| `apps/technical-analysis/pkg/application/dtos.go` | JSON field names, omitempty tags (lines 15-30) |
+| `apps/technical-analysis/pkg/application/usecases.go` | Two-path dispatch, period default=14 (lines 46-48) |
+| `apps/technical-analysis/pkg/interface/http/router.go` | HTTP 400 on both-empty (lines 47-52), HTTP 500 on error (lines 55-60) |
+| `apps/technical-analysis/cmd/server/main.go` | Port 5003 (line 28), composition root wiring |
+
+### Corrections to PM spec
+
+Two corrections found during Go source verification, documented in the contract:
+
+1. **PM spec fixture says "34 closes → RSI absent"** — incorrect. 34 >= hard minimum of 15, so RSI IS present at code level with 34 closes. The 35-candle threshold is a RECOMMENDED convergence minimum, not a code-enforced gate. The contract documents both: hard gate (15) and recommended gate (35), with the warmup-zone concept.
+
+2. **PM spec lists "MA20, MA50, MA100"** — the Go source has MA5, MA20, MA50 (not MA100). Field `ma5` exists in `domain/models.go:37`, `dtos.go:28`, and `module/technical_analysis.go:118`. MA100 does not exist anywhere in the codebase. Contract documents MA5/MA20/MA50.
+
+3. **Empty `closes:[]` with empty `symbol`** — returns HTTP 400, NOT 200 OK as stated in PM spec error contract. The router enforces `closes or symbol required` at lines 47-52. The PM spec error contract row "Empty closes:[] → all fields absent, 200 OK" is only true when a `symbol` is provided but yields zero candles — an edge case not tested.
+
+### Deliverable
+
+`docs/standards/ta-engine-contract.md` — 160 lines, all constants source-cited with file+line.
+
+### RETURN block
+
+```
+DELIVERABLE: docs/standards/ta-engine-contract.md
+SOURCES_CITED:
+  - apps/technical-analysis/pkg/primitive/rsi/rsi.go
+  - apps/technical-analysis/pkg/primitive/bollinger_bands/bollinger_bands.go
+  - apps/technical-analysis/pkg/primitive/macd/macd.go
+  - apps/technical-analysis/pkg/primitive/macd/ema.go
+  - apps/technical-analysis/pkg/primitive/moving_average/moving_average.go
+  - apps/technical-analysis/pkg/module/technical_analysis.go
+  - apps/technical-analysis/pkg/application/dtos.go
+  - apps/technical-analysis/pkg/application/usecases.go
+  - apps/technical-analysis/pkg/interface/http/router.go
+  - apps/technical-analysis/cmd/server/main.go
+NEXT_AGENT: dev-mcp-server (TASK-RSIFIX-2 — rewire defaultComputeTa() to Go engine)
+PIPELINE: TASK-RSIFIX-1 REVIEW → PM unblocks TASK-RSIFIX-2 → dev-mcp-server → TASK-RSIFIX-2
+REBUILD_REQUIRED: NO
+```
 
