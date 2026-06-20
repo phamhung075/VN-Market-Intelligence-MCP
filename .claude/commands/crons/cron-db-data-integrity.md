@@ -117,6 +117,29 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
     .signal_queue rows — if the SAME table+class+defect is already NEW/READ (open) or was reported
     unchanged in the last scan, do NOT write a duplicate; note "already-open" in the history entry.
 
+  ⚠ DETECTION-ONLY — NEVER RESOLVE, NEVER CLAIM A FIX (mandatory boundary):
+    You ONLY ever write a NEW row, or leave an existing open row untouched. You MUST NOT flip
+    any signal status to DONE / DONE-LIVE-VERIFIED / RESOLVED / SUPERSEDED / TRIAGED — resolving a
+    signal is dev-team/qa's job AFTER a real fix ships. You MUST NOT write any value (released_at,
+    status, _verified) into the live DB or claim an ops/dev action ("ops cleared it", "lock
+    released", "fix deployed") you did NOT personally witness in THIS run's read-only output. If a
+    prior-scan anomaly now READS clean live (e.g. a held lock now shows released_at set), RECORD that
+    observation in the history (verdict + the raw value you read) and leave the open signal AS-IS for
+    dev-team to close — do NOT self-close it, and NEVER invent the cause of the change. The DB access
+    is `sqlite3 -readonly` ONLY; never drop -readonly, never UPDATE/INSERT/DELETE.
+    (2026-06-20: a sweep self-marked its own stale-lock signal DONE-LIVE-VERIFIED with a fabricated
+    "ops cleared, released 2026-06-14 16:00:01" claim — released_at==acquired_at, RestartCount=0/no
+    restart, origin unexplained. A detection-only agent closing its own signal on an unwitnessed
+    fix is a false-green that masks the unresolved root cause. RECORD-AND-LEAVE, never self-resolve.)
+
+  ⚠ HISTORY MUST APPEND, NOT OVERWRITE (mandatory): docs/signals/db-integrity-history.json is a
+    top-level JSON ARRAY of scan entries and is the durable trail. READ the existing array, APPEND
+    exactly one new entry, keep the last 200, write once. NEVER emit a 1-element array that discards
+    prior scans — that destroys the trail. Confirm post-write that `jq 'length'` GREW by 1 (or is
+    capped at 200); if it dropped to 1, you OVERWROTE — FAIL LOUD and do not claim "entry #N appended".
+    (2026-06-20: sweeps narrated "entry #16…#20, last 200 kept" while the file held a SINGLE entry —
+    the LLM rewrote the whole file each tick instead of appending. State only what `jq length` proves.)
+
   The dev-team hourly cron (:07) drains the signal → PO triages → mints a fix task →
   dispatches the owning zone dev → root-cause permanent fix → qa → done_verified.
   You do not fix; you detect, record, and report.
