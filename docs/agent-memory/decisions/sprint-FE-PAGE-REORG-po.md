@@ -195,3 +195,13 @@
 - (b) keep backlogged with recorded rationale (manual push every ~18h acceptable for single-user)
 **why-decision:** (a). 3rd manual push this session = real recurrence ("fix root cause not recurrent symptom"). design_mandate already complete (po-s98) so it's a low-risk codify-the-proven-recipe job; architect lane FREE (only coding lanes at WIP=2); ready[] held only MEDIUM+P3 so no P0/P1 data-integrity work starved; market-independent infra so off-hours-safe. The task gated nothing visible → never surfaced (~9 passes) → that invisibility IS the recurrence cause.
 **why-change:** No change from the deferred plan — po-s98 explicitly named this option-2 backstop; I'm executing it now rather than deferring a 4th time.
+
+### STEP po-S18 · po · 2026-06-20T03:37:46Z
+**task-id:** FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (item A) + sau-d4-202606200300 (item #6)
+**what-done:** Triage tick 20260620T0330Z — RAW-verified the digest double-post claim (item A) is a FALSE recurrence, confirmed item B (BUG-SENTIMENT-TREND) already fixed inline, closed the stale sau-d4 signal row, annotated the digest task with the reconfirm; returned NOTHING (no executable work this tick).
+**what-considered:**
+- A: mint a time-boxed FIX before Sunday vs record-and-dismiss as false-recurrence
+- B: mint a P1/S flow FIX vs confirm-already-fixed
+- #6: close the row vs leave NEW
+**why-decision:** A is divergence-proof in live code (flow keys mutex on get_week_period.periodKey date-range, never weekLabel; server tool returns periodKey by pure arithmetic + explicit _note; test asserts divergent-label→one publish). Report 3259 is factually wrong (no weekLabel-keyed path exists; its Jun-22 date is a Monday, digest fires Sundays). B already FIXED by cowork-refactory-expert (dev-team notebook L26) — flow L117-120 loops per-ticker with stock_code, zero bare-{} sites repo-wide; reports 3249/52/53/54 predate the fix. #6 lock RAW-confirmed expired by router; LOW orphan-lock-on-expired-lock = no action.
+**why-change:** No FIX minted for A or B — both genuinely protected/done; minting would be debt. Annotated to stop the recurrence loop.

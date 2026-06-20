@@ -800,10 +800,13 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_note": "RAW-probed 2026-06-20T03:10:31Z: lock esc-datacov:FPT:Q1-2026:ESC-3 now expired/released (task_heartbeat ok:false, expires_at:0) — finding self-resolved since 03:00Z detection; PO triage low-priority.",
-        "router_triaged_at": "2026-06-20T03:10:31Z"
+        "router_triaged_at": "2026-06-20T03:10:31Z",
+        "resolved_at": "2026-06-20T03:36:29Z",
+        "resolved_by": "po",
+        "resolution": "self-resolved-stale-lock: router RAW-probed lock esc-datacov:FPT:Q1-2026:ESC-3 EXPIRED (task_heartbeat ok:false). A LOW orphan-lock-no-board-row finding on an already-expired escalation lock = no action; held-lock-on-expired-lock false-positive class (feedback_signal_row_status_lags_groundtruth). No task minted."
       },
       {
         "id": "sau-d4-202606190300",
@@ -17768,7 +17771,15 @@
         "router_final_verified_at": "2026-06-14T15:56:33Z",
         "router_final_verified_by": "dev-team",
         "router_final_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the qa badge). git show 00b0d614 = EXACTLY 1 file (qa Task Report +190); git show ccbe43ec = EXACTLY 6 files; concurrent dirty tree (bctc-analyst.md/coverage-state.json/cowork-schedule.json M + 4 docs/signals ??) STILL uncommitted, NOT swept by either commit. Router probed GATEWAY get_week_period at BOTH divergent dispatch times DIRECTLY: 13:47Z -> periodKey 2026-06-08/2026-06-14 W24; 13:52Z -> periodKey 2026-06-08/2026-06-14 W24 (IDENTICAL -> both paths converge on one key -> week-label-string dedup-failure CLOSED). W25 off-by-one gone; date-RANGE key defeats last_fired staleness. GENERIC across ALL guaranteed weekly slots (shared helper + get_week_period tool + both flow gates key on periodKey). Recurrence-prevention only; no re-post (2026-06-14 digest already delivered twice). Matches [Guaranteed-slot week-key double-post] memory lesson — class closed by keying mutex on calendar period date-range not derived label.",
-        "done_verified_at": "2026-06-14T15:56:33Z"
+        "done_verified_at": "2026-06-14T15:56:33Z",
+        "reconfirm_20260620": {
+          "at": "2026-06-20T03:37:19Z",
+          "by": "po",
+          "trigger": "health-recheck report 3259 (NEW-4) claimed the W25 dispatch used the OLD weekLabel key -> double-post risk for the upcoming Sunday",
+          "verdict": "FALSE-RECURRENCE -- fix is genuinely done_verified",
+          "evidence": "RAW-read live code: docs/agents/digest-predict/flow/main.md L43-48 calls get_week_period then keys PUBLISH_TASK_ID on WEEK_PERIOD.periodKey (date-range), NOT weekLabel. Server tool get_week_period (coordinationTools.ts L347-349) returns getISOWeekPeriod().periodKey by pure arithmetic -- divergence-proof; _note explicitly says use periodKey not weekLabel. NO code path keys the mutex on weekLabel. Test FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts asserts divergent-week-label -> same periodKey -> exactly ONE publish. Next digest fires Sun 2026-06-21 (cron 47 13 star star 0) periodKey 2026-06-15/2026-06-21; the report Jun-22 date is a Monday and also wrong. NOT at risk.",
+          "action": "none -- no FIX minted; recurrence documented to stop re-triage"
+        }
       },
       {
         "id": "FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY",
