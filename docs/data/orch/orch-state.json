@@ -194,12 +194,12 @@
     "status": "active",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Idle. Tick 20260621T0442Z closed. Health-recheck report 3278 (CRITICAL, 4 BUGs day-5) RAW-verified + claimed (stop re-fire churn): ALL 4 are real-or-tracked dedup-hits, ZERO untracked work. BUG-1 BCTC-VPS-day5/51-stuck = FALSE ALARM (get_bctc_full VCB+FPT serve validated Q1-2026 financials end-to-end; push-age-misread-as-crash; root tracked FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH P1). BUG-2 Reuters-RSS = FIX-NEWS-CB-FALSE-CLOSED P1 +3. BUG-3 macro-deltas-null (RAW-confirmed oilUsdDelta/goldUsdDelta null, abs prices live) = FIX-MACRO-SNAPSHOT-DELTAS-NULL+FIX-COMMODITY-WTI-DELTA-CORRUPT. BUG-4 ISM-no_data (RAW-confirmed; FedFunds 3.63 populated so FRED_API_KEY set, root=ISM-series-fetch) = AUDIT-FC-FRED-MACRO. No mint, no PO spawn, no ops. WIP=0/2.",
+    "next_action": "Idle. Tick 20260621T0511Z closed. No new reports/signals (read_telegram_reports empty, signal_queue 0 NEW/0 orphan). Board-hygiene: promoted 2 status-lagged review rows → done_verified lane: (1) TASK-RSIFIX-1 (QA-APPROVED docs-only smart-skip, deliverable docs/standards/ta-engine-contract.md 267L shipped commit 60891f75, downstream TASK-RSIFIX-2 already DONE) status REVIEW→DONE_VERIFIED; (2) FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT already status=DONE_VERIFIED but mislaned in review → moved to done_verified lane. Noted for PO: 2 orphan PP0 review rows w/ NO handoff doc (FIX-CI-RED-7fef5850-ALERTS-TEST-FIXTURE-SENTBY, FIX-BCTC-ENRICH-SILENT-0ROWS) need reconcile. WIP=0/2.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T04:42:12Z",
+    "updated_at": "2026-06-21T05:11:45Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T0442Z"
+    "last_tick": "20260621T0511Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -22831,6 +22831,66 @@
         "router_reverify_verdict": "RESOLVED — no active raw-JSON leak to MARKET channel. Latent trap closed defensively via FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT (P3 backlog).",
         "verification_gate": "SATISFIED — router live probe (gateway get_macro_snapshot + get_unreviewed_market_messages)",
         "dead_route_note": "ROUTE BUG: this task carried next_agent=cowork-team — a DEAD route. cowork-team is the cowork CYCLE dispatcher (runs scheduled agents via signals), NOT a board-task executor; dev-team spawn-guard FORBIDS spawning the cowork-team dispatcher flow. A board VERIFY task routed there could NEVER be picked up. Router verified directly instead. VERIFY-class / live-probe tasks must route to a real executor (router-probe / qa), never cowork-team."
+      },
+      {
+        "id": "TASK-RSIFIX-1",
+        "title": "Document canonical Go TA engine contract",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "sprint": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
+        "created_at": "2026-06-21T00:00:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-21T05:11:45Z",
+        "updated_by": "dev-team-cron-router",
+        "brief_file": "docs/handoffs/TASK-RSIFIX-1-ta-engine-contract.md",
+        "deliverable": "docs/standards/ta-engine-contract.md",
+        "blocks": [
+          "TASK-RSIFIX-2"
+        ],
+        "rebuild_required": false,
+        "done_verified_note": "QA APPROVED docs-only smart-skip; deliverable shipped commit 60891f75; downstream TASK-RSIFIX-2 DONE; router-finalized stale REVIEW row"
+      },
+      {
+        "id": "FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT",
+        "type": "FIX",
+        "title": "4 alert-scan test fixtures missing sent_by/fingerprint cols → bun test RED on 3bddf6bb",
+        "desc": "CI RED (run 27846780954, dedup ci_red:3bddf6bb:bun test) reproduces locally — GENUINE regression, not flaky. The FIX-ALERT-FINGERPRINT/FU-ALERT-COWRITE wave added sent_by + fingerprint columns to the production alerts-write path (alertStore/scanjobs), but 4 self-built test-fixture DDLs were not updated (same class as commit 847376a0 which cleared 13 red by adding cols to 5 DDLs — 4 more files were missed). INSERT fails -> no alert fires -> downstream asserts fail. Fix = ADD missing cols (sent_by, fingerprint) to the in-test alerts CREATE TABLE DDLs in the 4 files to match storeAlerts schema; verify against alertStore.ts real DDL as SSOT, do NOT weaken the write path. 5th RED file FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts is the standing time-gated behavioral hold — OUT OF SCOPE.",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "size": "S",
+        "sprint": "CI-RED-HOTFIX",
+        "market_independent": true,
+        "files": [
+          "apps/mcp-server/src/__tests__/125-test-e2e-briefing.test.ts",
+          "apps/mcp-server/src/__tests__/1391-bb-stale-candle-skip.test.ts",
+          "apps/mcp-server/src/__tests__/1869b-watchlist-threshold-wiring.test.ts",
+          "apps/mcp-server/src/__tests__/231-signal-validator-integration.test.ts",
+          "apps/mcp-server/src/infrastructure/db/alertStore.ts"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-06-19T20:37:10Z",
+        "created_by": "dev-team-cron-router",
+        "source": "ci_red run 27846780954 (HEAD 3bddf6bb), PO triage BATCH s-current",
+        "generic_mandate": "Match the real storeAlerts CREATE TABLE schema (alertStore.ts SSOT) across all 4 fixture DDLs — no per-test hardcode; do NOT weaken the production write path.",
+        "verification_gate": "ci_green_on_subsequent_push (run CI exact per-file-isolation cmd on all 4 + full suite)",
+        "completed_at": "2026-06-19T21:00:00Z",
+        "commit": "f1f70ec3",
+        "fix_record": "Added fingerprint TEXT col to 125/1869b/231 DDLs; added sent_by + notified_telegram + resolved_at + resolution_notes + confidence_score + validated_at + fingerprint to 1391 DDL. All 4 pass in isolation. tsc GREEN.",
+        "router_verified": true,
+        "router_verification": "ROUTER-VERIFIED 2026-06-19T21:01:06Z: RAW re-ran all 4 in per-file isolation — 125=39/39 (3/3 retries; one earlier transient fail was pre-existing e2e flakiness, NOT the DDL class, not introduced here), 1391/1869b/231 all 0-fail; tsc exit 0; commit f1f70ec3 narrow (4 test files only, no stray/forced paths). Local gate PASS. done_verified WITHHELD pending ci_green_on_subsequent_push (push = PO out-of-band call). RSI-SINGLEDIGIT still red = expected out-of-scope hold; full-suite Bun-JIT panic = known recurring class, not a regression. WATCH (no new task): 125-test-e2e-briefing has intermittent 1-test e2e flakiness independent of this fix.",
+        "done_verified": true,
+        "impl_commit": "f1f70ec3",
+        "verified_at": "2026-06-19T21:01:06Z",
+        "done_at": "2026-06-20T01:36:26Z",
+        "done_by": "po-tick-20260620T013626Z",
+        "verify_note": "ci_green_on_subsequent_push SATISFIED: f1f70ec3 (the DDL-sentBy-fingerprint fix) is now an ancestor of origin/main HEAD 0b7abd97 (merge-base --is-ancestor TRUE; landed by com.vn-market.fleet-push backstop). On CI run 27855408671 (HEAD 0b7abd97) the 4 DDL files {1391,1869b,231,125} are GREEN — no longer in the 6-fail set. Gate met; flipped done_verified.",
+        "updated_at": "2026-06-21T05:11:45Z",
+        "updated_by": "dev-team-cron-router",
+        "lane_fix_note": "already DONE_VERIFIED but mislaned in review; router moved to done_verified lane"
       }
     ],
     "head": {
@@ -23009,43 +23069,6 @@
         }
       },
       {
-        "id": "FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT",
-        "type": "FIX",
-        "title": "4 alert-scan test fixtures missing sent_by/fingerprint cols → bun test RED on 3bddf6bb",
-        "desc": "CI RED (run 27846780954, dedup ci_red:3bddf6bb:bun test) reproduces locally — GENUINE regression, not flaky. The FIX-ALERT-FINGERPRINT/FU-ALERT-COWRITE wave added sent_by + fingerprint columns to the production alerts-write path (alertStore/scanjobs), but 4 self-built test-fixture DDLs were not updated (same class as commit 847376a0 which cleared 13 red by adding cols to 5 DDLs — 4 more files were missed). INSERT fails -> no alert fires -> downstream asserts fail. Fix = ADD missing cols (sent_by, fingerprint) to the in-test alerts CREATE TABLE DDLs in the 4 files to match storeAlerts schema; verify against alertStore.ts real DDL as SSOT, do NOT weaken the write path. 5th RED file FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts is the standing time-gated behavioral hold — OUT OF SCOPE.",
-        "priority": "P1",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "size": "S",
-        "sprint": "CI-RED-HOTFIX",
-        "market_independent": true,
-        "files": [
-          "apps/mcp-server/src/__tests__/125-test-e2e-briefing.test.ts",
-          "apps/mcp-server/src/__tests__/1391-bb-stale-candle-skip.test.ts",
-          "apps/mcp-server/src/__tests__/1869b-watchlist-threshold-wiring.test.ts",
-          "apps/mcp-server/src/__tests__/231-signal-validator-integration.test.ts",
-          "apps/mcp-server/src/infrastructure/db/alertStore.ts"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-06-19T20:37:10Z",
-        "created_by": "dev-team-cron-router",
-        "source": "ci_red run 27846780954 (HEAD 3bddf6bb), PO triage BATCH s-current",
-        "generic_mandate": "Match the real storeAlerts CREATE TABLE schema (alertStore.ts SSOT) across all 4 fixture DDLs — no per-test hardcode; do NOT weaken the production write path.",
-        "verification_gate": "ci_green_on_subsequent_push (run CI exact per-file-isolation cmd on all 4 + full suite)",
-        "completed_at": "2026-06-19T21:00:00Z",
-        "commit": "f1f70ec3",
-        "fix_record": "Added fingerprint TEXT col to 125/1869b/231 DDLs; added sent_by + notified_telegram + resolved_at + resolution_notes + confidence_score + validated_at + fingerprint to 1391 DDL. All 4 pass in isolation. tsc GREEN.",
-        "router_verified": true,
-        "router_verification": "ROUTER-VERIFIED 2026-06-19T21:01:06Z: RAW re-ran all 4 in per-file isolation — 125=39/39 (3/3 retries; one earlier transient fail was pre-existing e2e flakiness, NOT the DDL class, not introduced here), 1391/1869b/231 all 0-fail; tsc exit 0; commit f1f70ec3 narrow (4 test files only, no stray/forced paths). Local gate PASS. done_verified WITHHELD pending ci_green_on_subsequent_push (push = PO out-of-band call). RSI-SINGLEDIGIT still red = expected out-of-scope hold; full-suite Bun-JIT panic = known recurring class, not a regression. WATCH (no new task): 125-test-e2e-briefing has intermittent 1-test e2e flakiness independent of this fix.",
-        "done_verified": true,
-        "impl_commit": "f1f70ec3",
-        "verified_at": "2026-06-19T21:01:06Z",
-        "done_at": "2026-06-20T01:36:26Z",
-        "done_by": "po-tick-20260620T013626Z",
-        "verify_note": "ci_green_on_subsequent_push SATISFIED: f1f70ec3 (the DDL-sentBy-fingerprint fix) is now an ancestor of origin/main HEAD 0b7abd97 (merge-base --is-ancestor TRUE; landed by com.vn-market.fleet-push backstop). On CI run 27855408671 (HEAD 0b7abd97) the 4 DDL files {1391,1869b,231,125} are GREEN — no longer in the 6-fail set. Gate met; flipped done_verified."
-      },
-      {
         "id": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG",
         "type": "FIX",
         "title": "CI-network skip-guards for cascade-broadcast + integration-pipeline tests (silently RED on origin since 06-09)",
@@ -23108,25 +23131,6 @@
         "commit_sha": "5ed1c751",
         "review_note": "test fixture now derives alerts table from canonical initAlertsTables(); bun test 8/8 green, pnpm check clean, narrow 1-file commit 5ed1c751; awaits out-of-band push + CI green to flip done_verified; unblocks FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG (495cf0d4)",
         "moved_to_review_at": "2026-06-20T07:30:39Z"
-      },
-      {
-        "id": "TASK-RSIFIX-1",
-        "title": "Document canonical Go TA engine contract",
-        "status": "REVIEW",
-        "priority": "P1",
-        "zone": "apps/technical-analysis/",
-        "owner": "dev-technical-analysis",
-        "sprint": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-        "created_at": "2026-06-21T00:00:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-06-21T00:00:00Z",
-        "updated_by": "dev-technical-analysis",
-        "brief_file": "docs/handoffs/TASK-RSIFIX-1-ta-engine-contract.md",
-        "deliverable": "docs/standards/ta-engine-contract.md",
-        "blocks": [
-          "TASK-RSIFIX-2"
-        ],
-        "rebuild_required": false
       }
     ],
     "qa": [],
