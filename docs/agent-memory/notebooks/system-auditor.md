@@ -2,22 +2,16 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
-## c277 · 2026-06-21T18:31:27Z
-### Audit Run Tier-2 (18:31 UTC 2026-06-21, Monday pre-market 01:31 VN 2026-06-22)
-- Tier: 2 (freshness sweep) | Local DB checks: 4 probed | SLA: pre-market window
-- Anomalies: 0 NEW (C-06/C-07/B-09/B-13 all PASS)
+## c278 · 2026-06-21T18:43:48Z
+### Audit Run Tier-1 (18:43 UTC 2026-06-21, Monday pre-market 01:43 VN 2026-06-22)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | A-20 multi-probe: 3/3 PASS
+- Anomalies: 0 NEW (all PASS, stable, healthy)
 - Status: CLEAN
-- Notes: Gateway-dependent B-01..B-07 deferred (local agent constraint); container healthy; no data staleness detected
+- Notes: All containers Up/healthy; mcp-server ~8h uptime; disk 36%, mem 48.7%; pre-market window confirmed
 
-## c276 · 2026-06-21T18:13:01Z
-### Audit Run Tier-1 (18:13 UTC 2026-06-21, Monday pre-market 01:13 VN 2026-06-22)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
-- Anomalies: 0 NEW (all PASS, stable)
-- Status: CLEAN
-
-**RAW-PROBE (2026-06-21T18:13:12Z):**
+**RAW-PROBE (2026-06-21T18:43:13Z):**
 ```
-=== AUDITOR PROBE 2026-06-21T18:13:12Z ===
+=== AUDITOR PROBE 2026-06-21T18:43:13Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
@@ -29,7 +23,7 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 6 days (healthy)    vn-mark
 vn-market-intelligence-mcp-macro-indicators-1     Up 6 days (healthy)    vn-market-intelligence-mcp-macro-indicators     6 days ago
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 7 days (healthy)    vn-market-intelligence-mcp-kinh-dich-service    7 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 10 days (healthy)   vn-market-intelligence-mcp-api-gateway          10 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 8 hours (healthy)   vn-market-intelligence-mcp-rag-service          10 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 9 hours (healthy)   vn-market-intelligence-mcp-rag-service          10 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 10 days (healthy)   vn-market-intelligence-mcp-news-fetch           10 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 10 days (healthy)   vn-market-intelligence-mcp-alert-engine         10 days ago
 
@@ -44,11 +38,11 @@ vn-market-intelligence-mcp-alert-engine-1         Up 10 days (healthy)   vn-mark
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=45.66% MemUsage=935MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=48.70% MemUsage=997.3MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  263M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    24Gi    36%    393k  252M    0%   /
 
 === PROBE DONE ===
 ```
@@ -60,9 +54,15 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - Verdict: PASS (3/3 majority)
 
 **Verdict Summary:**
-- A-01..A-11 containers: all 12 UP ✓ | A-20 pdf-extractor in-container: 3/3 PASS ✓
-- A-12..A-19 health: 5/5 PASS ✓ | A-21 restart: mcp-server=0 PASS ✓
-- A-30 memory: mcp-server 45.66% PASS ✓ | A-32 disk: 35% PASS ✓
-- mcp-server: ~7.75h uptime, healthy (rebuilt ~10:29Z)
+- A-01..A-11 containers: all 12 UP ✓ | A-20 pdf-extractor: 3/3 probes PASS ✓
+- A-12..A-19 health: 5/5 probed PASS ✓ | A-21 restart: mcp-server=0 PASS ✓
+- A-30 memory: 48.70% PASS ✓ | A-32 disk: 36% PASS ✓
 
-**Signals:** 0 NEW | Dedup-skipped: 1 (rag-service mem ceiling, tracked FU-RAG-DEPLOY-MEMORY) | Status: CLEAN
+**Signals:** 0 NEW | Dedup-skipped: 1 (rag-service mem ceiling FU-RAG-DEPLOY-MEMORY) | Status: CLEAN
+
+## c277 · 2026-06-21T18:31:27Z
+### Audit Run Tier-2 (18:31 UTC 2026-06-21, Monday pre-market 01:31 VN 2026-06-22)
+- Tier: 2 (freshness sweep) | Local DB checks: 4 probed | SLA: pre-market window
+- Anomalies: 0 NEW (C-06/C-07/B-09/B-13 all PASS)
+- Status: CLEAN
+- Notes: Gateway-dependent B-01..B-07 deferred (local agent constraint); container healthy; no data staleness detected
