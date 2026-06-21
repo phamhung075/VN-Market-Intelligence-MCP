@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260621T01Z complete. PO triage BATCH([2 FIX]): DSI-MACRO-PHANTOM-STALE-GUARD dispatched->dev-macro-indicators->QA APPROVED->DONE (commit 3280d82a, REBUILD REQUIRED, done_verified WITHHELD pending rebuild+evening live gate); FIX-HNX-OFFHOURS-ERROR-DOWNGRADE left TODO backlog (low, next tick). Tier-1 auditor CLEAN 0-signals. ops rebuild dispatched for mcp-server. WIP back to 0.",
+    "next_action": "Tick 20260621T01Z CLOSED. DSI-MACRO-PHANTOM-STALE-GUARD: rebuild CONFIRMED LIVE (ops a5ef8df0, epoch-seconds staleness filter active in container; old broken 48h string-filter gone); done_verified deferred to next evening live cycle (stale-excluded/fresh-present). FIX-HNX-OFFHOURS-ERROR-DOWNGRADE remains TODO backlog (low, next tick). Tier-1 auditor CLEAN. WIP=0.",
     "wip": 0,
     "wip_max": 2,
     "updated_at": "2026-06-21T01:17:23Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T011723Z"
+    "last_tick": "20260621T01Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3880,10 +3880,11 @@
             "done_by": "dev-team-cron-router",
             "qa_verdict": "APPROVED (qa 2026-06-21): bun tsc EXIT0, pnpm check EXIT0, 6/6 new + 88/88 regression, DDD PASS, parameterized SQL (< ?) PASS, no-fake-data RAW fixture PASS (stale >4h excluded / fresh <=4h included), security PASS.",
             "commit": "3280d82a",
-            "rebuild_required": true,
+            "rebuild_required": false,
             "done_verified": false,
-            "done_verified_gate": "WITHHELD pending ops rebuild of mcp-server (4h epoch-seconds staleness gate active only post-rebuild) + next evening cycle live confirm: served macro section excludes stale indicators, includes fresh real values. Root cause = silently-bypassed filter: ISO-8601 'T' > SQLite space-separator string-compare made WHERE extracted_at>=datetime('now','-48h') pass ALL rows; fixed to (strftime('%s','now')-strftime('%s',extracted_at))<? . Commits 3280d82a/5f343136/962027aa. Memory: feedback_sqlite_iso8601_datetime_strcompare_bypass.",
-            "handoff": "docs/handoffs/DSI-MACRO-PHANTOM-STALE-GUARD.md"
+            "done_verified_gate": "REBUILD CONFIRMED LIVE (ops a5ef8df0). Remaining gate = next evening cycle live confirm only: served macro section excludes stale indicators (>4h) + includes fresh real values (oil ~$80, not phantom 95.5/dow 23750). done_verified auto-flips at that cycle. Root: ISO-8601 T > SQLite space string-compare bypassed datetime(now,-48h); fixed to epoch-seconds (strftime). Memory: feedback_sqlite_iso8601_datetime_strcompare_bypass.",
+            "handoff": "docs/handoffs/DSI-MACRO-PHANTOM-STALE-GUARD.md",
+            "rebuild_confirmed": "ops a5ef8df0 2026-06-21: image sha256:7d08f0e1 .Created 2026-06-21T01:22:31Z > commit epoch; RAW docker-exec marker present (strftime(%s) epoch-seconds filter) + old datetime(now,-48h) ABSENT; commodityTracker TRACKED_INDICATOR_STALE_MS+listTrackedIndicatorsFromDb+isStale present; health 200."
           }
         ]
       },
