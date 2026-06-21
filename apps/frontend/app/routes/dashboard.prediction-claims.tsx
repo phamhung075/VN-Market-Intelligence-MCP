@@ -9,14 +9,14 @@
  *     generatedAt: string,
  *     calibration: {
  *       total: number, resolved: number, correct: number, wrong: number,
- *       pending: number, hitRate: number|null, avgBrier: number|null
+ *       pending: number, excluded: number, hitRate: number|null, avgBrier: number|null
  *     },
  *     claims: [
  *       { id: string, stock: string, agentId: string, claimText: string,
  *         direction: "bullish"|"bearish"|"neutral",
  *         targetPrice: number|null, creationPrice: number|null,
  *         confidence: number, resolutionDate: string,
- *         outcome: "correct"|"wrong"|"pending",
+ *         outcome: "correct"|"wrong"|"pending"|"excluded",
  *         actualPrice: number|null, brierScore: number|null,
  *         createdAt: string, resolvedAt: string|null }
  *     ],
@@ -50,7 +50,7 @@ export const meta: MetaFunction = () => [
 // ---------------------------------------------------------------------------
 
 export type PredictionDirection = "bullish" | "bearish" | "neutral";
-export type PredictionOutcome = "correct" | "wrong" | "pending";
+export type PredictionOutcome = "correct" | "wrong" | "pending" | "excluded";
 
 export interface PredictionCalibration {
   total: number;
@@ -58,6 +58,8 @@ export interface PredictionCalibration {
   correct: number;
   wrong: number;
   pending: number;
+  /** Claims excluded from accuracy scoring (is_excluded=1, no entry price). */
+  excluded: number;
   hitRate: number | null;
   avgBrier: number | null;
 }
@@ -111,6 +113,7 @@ const EMPTY_CALIBRATION: PredictionCalibration = {
   correct: 0,
   wrong: 0,
   pending: 0,
+  excluded: 0,
   hitRate: null,
   avgBrier: null,
 };
@@ -135,6 +138,11 @@ function parsePredictionClaimsDto(raw: unknown): PredictionClaimsDto {
           correct: typeof dto.calibration.correct === "number" ? dto.calibration.correct : 0,
           wrong: typeof dto.calibration.wrong === "number" ? dto.calibration.wrong : 0,
           pending: typeof dto.calibration.pending === "number" ? dto.calibration.pending : 0,
+          excluded:
+            "excluded" in dto.calibration &&
+            typeof (dto.calibration as { excluded?: unknown }).excluded === "number"
+              ? (dto.calibration as { excluded: number }).excluded
+              : 0,
           hitRate:
             dto.calibration.hitRate !== null &&
             dto.calibration.hitRate !== undefined &&
@@ -289,6 +297,8 @@ export function outcomeLabel(o: PredictionOutcome): string {
       return "Đúng";
     case "wrong":
       return "Sai";
+    case "excluded":
+      return "Loại trừ";
     case "pending":
     default:
       return "Đang chờ";
@@ -313,6 +323,12 @@ export function outcomeColorClass(o: PredictionOutcome): {
       return {
         badge: "bg-red-900 text-red-300 border border-red-700",
         text: "text-red-400",
+      };
+    case "excluded":
+      // Distinct from pending (slate): excluded uses zinc — muted, clearly non-actionable.
+      return {
+        badge: "bg-zinc-800 text-zinc-400 border border-zinc-600",
+        text: "text-zinc-500",
       };
     case "pending":
     default:
@@ -409,6 +425,16 @@ function CalibrationBanner({
         </span>
         <span className="mt-0.5 text-[11px] text-slate-500">Đang chờ</span>
       </div>
+
+      {/* Loại trừ — only shown when backend emits excluded > 0 */}
+      {calibration.excluded > 0 && (
+        <div className="flex flex-col items-center rounded-md border border-zinc-600 bg-slate-900 px-4 py-2 min-w-[80px]">
+          <span className="text-lg font-bold text-zinc-400">
+            {calibration.excluded}
+          </span>
+          <span className="mt-0.5 text-[11px] text-slate-500">Loại trừ</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -424,6 +450,7 @@ function OutcomeFilter({
     { label: "Đúng", value: "correct" },
     { label: "Sai", value: "wrong" },
     { label: "Đang chờ", value: "pending" },
+    { label: "Loại trừ", value: "excluded" },
   ];
 
   return (

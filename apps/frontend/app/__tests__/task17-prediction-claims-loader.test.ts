@@ -679,6 +679,113 @@ describe("fetchPredictionClaimsData — unexpected JSON shape (non-fatal)", () =
 });
 
 // ---------------------------------------------------------------------------
+// Suite 14b — outcomeLabel("excluded") + outcomeColorClass("excluded")
+// FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY: excluded claims must render
+// "Loại trừ", NOT "Đang chờ", with a distinct zinc badge (not slate).
+// ---------------------------------------------------------------------------
+
+describe('outcomeLabel — excluded outcome (FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY)', () => {
+  it('"excluded" → "Loại trừ"', () => {
+    expect(outcomeLabel("excluded")).toBe("Loại trừ");
+  });
+
+  it('"excluded" → NOT "Đang chờ"', () => {
+    expect(outcomeLabel("excluded")).not.toBe("Đang chờ");
+  });
+
+  it('"excluded" → NOT "Đúng"', () => {
+    expect(outcomeLabel("excluded")).not.toBe("Đúng");
+  });
+
+  it('"excluded" → NOT "Sai"', () => {
+    expect(outcomeLabel("excluded")).not.toBe("Sai");
+  });
+});
+
+describe('outcomeColorClass — excluded is zinc (distinct from pending slate)', () => {
+  it('"excluded" badge contains "zinc"', () => {
+    expect(outcomeColorClass("excluded").badge).toContain("zinc");
+  });
+
+  it('"excluded" badge does NOT contain "slate" (distinct from pending)', () => {
+    expect(outcomeColorClass("excluded").badge).not.toContain("slate");
+  });
+
+  it('"excluded" badge does NOT contain "red" (not an error state)', () => {
+    expect(outcomeColorClass("excluded").badge).not.toContain("red");
+  });
+
+  it('"excluded" badge does NOT contain "emerald" (not a success state)', () => {
+    expect(outcomeColorClass("excluded").badge).not.toContain("emerald");
+  });
+
+  it('"pending" badge still contains "slate" (unchanged by excluded addition)', () => {
+    expect(outcomeColorClass("pending").badge).toContain("slate");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 14c — calibration.excluded parsing
+// ---------------------------------------------------------------------------
+
+describe('calibration.excluded field — FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY', () => {
+  it('parses excluded:3 from calibration block', async () => {
+    const dtoWithExcluded = {
+      generatedAt: GENERATED_AT,
+      calibration: {
+        total: 10,
+        resolved: 4,
+        correct: 3,
+        wrong: 1,
+        pending: 3,
+        excluded: 3,
+        hitRate: 0.75,
+        avgBrier: 0.137875,
+      },
+      claims: [],
+      count: 0,
+    };
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(dtoWithExcluded), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+
+    const data = await fetchPredictionClaimsData(ORIGIN);
+
+    expect(data.calibration.excluded).toBe(3);
+  });
+
+  it('defaults excluded to 0 when backend omits the field (backward-compat)', async () => {
+    const dtoWithoutExcluded = {
+      generatedAt: GENERATED_AT,
+      calibration: {
+        total: 7,
+        resolved: 4,
+        correct: 3,
+        wrong: 1,
+        pending: 3,
+        hitRate: 0.75,
+        avgBrier: 0.137875,
+      },
+      claims: [],
+      count: 0,
+    };
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(dtoWithoutExcluded), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
+
+    const data = await fetchPredictionClaimsData(ORIGIN);
+
+    expect(data.calibration.excluded).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Suite 15 — outcomeFilter propagation
 // ---------------------------------------------------------------------------
 
