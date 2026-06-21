@@ -194,10 +194,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "ops",
-    "next_action": "PRED-RESOLVER-GAP-FIX QA APPROVED-CODE-LEVEL (router-corroborated: tsc0, 53 fails disjoint all predate d804a013, blast-radius untouched, tests genuine). Moved review→done, done_verified=false. NEXT: ops rebuild mcp-server (is_excluded migration); watch disk (Data vol 89%/22Gi free — prune 4.6GB build cache if needed). THEN router post-rebuild live re-verify ids 1,6,7,8,9 → flip done_verified. 2 CI rows still held PO-push; health 3280/3281 recurring-tracked.",
+    "next_action": "PRED-RESOLVER-GAP-FIX: REBUILD VERIFIED LIVE (image 10:28>commit 09:42, is_excluded col present, 12 svc healthy, prune freed 5Gi). done_verified STILL false — stuck ids 1,6,7,8,9 in pre-fix state (3 invariant violations), new resolver re-processes them ONLY at predictionResolution cron 16:35Z (no manual trigger). ACTION @ next dev-team tick AFTER 16:35Z (~16:37): router same-DB re-query ids 1,6,7,8,9 → confirm all non-NULL outcome OR is_excluded=1 + 0 invariant violations → flip done_verified=true. Until then HOLD. 2 CI rows still PO-push-held; health 3280/3281 recurring-tracked; rag-service FU-RAG-DEPLOY-MEMORY tracked.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T10:25:00Z",
+    "updated_at": "2026-06-21T10:36:00Z",
     "updated_by": "dev-team-cron-router",
     "last_tick": "20260621T1007Z"
   },
@@ -17064,10 +17064,13 @@
         "done_verified_reason": "PENDING post-rebuild SAME-DB live re-verify. Code APPROVED (qa tsc0, suite 13354/53/53 fails-disjoint, per-file 69/0, DDD/sec/mock pass, tests genuine). REBUILD_REQUIRED: is_excluded ALTER + AND is_excluded=0 filter only live after mcp-server rebuild against named-vol market.db.",
         "deferred_verification": {
           "gate_id": "G-LIVE-PRED",
-          "trigger": "after ops rebuilds mcp-server container",
-          "expected_outcome": "stuck ids 1,6,7,8,9 each resolution_outcome NOT NULL OR is_excluded=1; zero rows with resolved_at NOT NULL AND resolution_outcome NULL AND is_excluded=0; fresh neutral weekend-date claim resolves to verdict",
-          "probe_method": "router same-DB query /app/data/market.db via mcp-server bun:sqlite post-rebuild"
-        }
+          "status": "PENDING-CRON",
+          "trigger": "predictionResolution cron 0 35 16 UTC (next 2026-06-21T16:35Z) — no manual trigger exists; rebuild leg DONE",
+          "expected_outcome": "after 16:35Z run: ids 1,6,7,8,9 each resolution_outcome NOT NULL OR is_excluded=1; INVARIANT_VIOLATIONS (resolved_at set+outcome NULL+is_excluded=0) = 0 (currently 3: ids 1,6,7 pre-fix); fresh neutral weekend claim resolves via ±2% band",
+          "probe_method": "router same-DB query /app/data/market.db via mcp-server bun:sqlite at/after 16:37Z dev-team tick"
+        },
+        "rebuild_done": true,
+        "rebuild_verified": "image .Created 2026-06-21T10:28:01Z > commit 09:41:59Z (router docker inspect); is_excluded column LIVE on /app/data/market.db (router bun:sqlite PRAGMA). 12 services healthy post-rebuild, no peer restarts. builder-prune freed 5Gi (Data vol 88%/24Gi free)."
       }
     ],
     "done_verified": [
