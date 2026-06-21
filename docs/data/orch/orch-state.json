@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "ops",
-    "next_action": "PRED-RESOLVER-GAP-FIX: REBUILD VERIFIED LIVE (image 10:28>commit 09:42, is_excluded col present, 12 svc healthy, prune freed 5Gi). done_verified STILL false — stuck ids 1,6,7,8,9 in pre-fix state (3 invariant violations), new resolver re-processes them ONLY at predictionResolution cron 16:35Z (no manual trigger). ACTION @ next dev-team tick AFTER 16:35Z (~16:37): router same-DB re-query ids 1,6,7,8,9 → confirm all non-NULL outcome OR is_excluded=1 + 0 invariant violations → flip done_verified=true. Until then HOLD. 2 CI rows still PO-push-held; health 3280/3281 recurring-tracked; rag-service FU-RAG-DEPLOY-MEMORY tracked.",
+    "next_action": "Tick 20260621T1237Z. Drained 12:06 cowork_tick_telemetry (gatherers SKIPPED_BLIND_NO_BACKSTOP). health-recheck 3282 (12:06) = 3rd recurring re-confirm, all 4 BUGs tracked (BCTC idle-not-crash FALSE-ALARM, Reuters/TE/ISM-FRED), not processed. signal_queue: 1 NEW = sau-...-sig-orphan (router-verified LOW, awaits PO). PRED-RESOLVER-GAP-FIX live-gate PENDING 16:35Z predictionResolution cron → @ post-16:35 dev-team tick re-query ids 1,6,7,8,9 → flip done_verified. 2 CI rows PO-push-held. Board idle wip0.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T10:36:00Z",
+    "updated_at": "2026-06-21T12:16:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T1007Z"
+    "last_tick": "20260621T1237Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
