@@ -194,12 +194,12 @@
     "status": "active",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260621T02Z CLOSED: FIX-HNX QA-APPROVED (93e9dbeb) + ops rebuild CONFIRMED live (RAW marker hit both sites). done_verified deferred to next off-hours HNX fetch cycle. WIP=0.",
+    "next_action": "Tick 20260621T0237Z: bus empty, 0 NEW signals, board idle (wip=0). Reconciled 5 dispositioned READ rows (db1/db2/cron/finrpt→TRIAGED, db3→RESOLVED) that lagged ground-truth — all routed to existing board fixes. 9 disp=NONE WARN/LOW/INFO rows remain READ (PO-acked, no action). No dev work pulled (no fresh trigger).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T02:35:00Z",
+    "updated_at": "2026-06-21T02:41:46Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T02Z"
+    "last_tick": "20260621T0237Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -233,8 +233,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-21T00:30:00Z",
-    "_updated_by": "po-dev-team-triage",
+    "_updated_at": "2026-06-21T02:41:28Z",
+    "_updated_by": "dev-team-cron-router",
     "archive": [
       {
         "from": "system-auditor",
@@ -1215,7 +1215,7 @@
         "type": "db_integrity_breach",
         "summary": "daily_ohlcv: 835 OHLC constraint violations (high<open,low>high, etc) across 129 tickers, date range 2026-04-24..2026-06-12",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "TRIAGED",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
@@ -1223,7 +1223,9 @@
         "router_note": "ts future-stamped — cosmetic; finding genuine. Same daily_ohlcv writer class as DFF.",
         "acked_by": "po-triage-20260620T080911Z",
         "acked_at": "2026-06-20T08:16:14Z",
-        "po_disposition": "folded into FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 + CLEAN residue"
+        "po_disposition": "folded into FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 + CLEAN residue",
+        "router_status_reconcile": "READ→TRIAGED: row carries explicit disposition routed to an existing board fix task (verified present). Status lagged; reconciled to stop idle-tick re-park.",
+        "router_reconciled_at": "2026-06-21T02:41:28Z"
       },
       {
         "id": "sau-20260620T103001-db2",
@@ -1233,7 +1235,7 @@
         "type": "db_integrity_breach",
         "summary": "daily_ohlcv: 1000x price-scale anomaly DFF 2026-06-12 (open=0.5, close=500.0), unit conversion bug hypothesis",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "TRIAGED",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
@@ -1241,7 +1243,9 @@
         "router_note": "ts future-stamped (10:30Z>tick) — auditor emit cosmetic defect, finding genuine.",
         "acked_by": "po-triage-20260620T080911Z",
         "acked_at": "2026-06-20T08:16:14Z",
-        "po_disposition": "folded into FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (same writer class) + CLEAN residue"
+        "po_disposition": "folded into FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (same writer class) + CLEAN residue",
+        "router_status_reconcile": "READ→TRIAGED: row carries explicit disposition routed to an existing board fix task (verified present). Status lagged; reconciled to stop idle-tick re-park.",
+        "router_reconciled_at": "2026-06-21T02:41:28Z"
       },
       {
         "id": "sau-20260620T103002-db3",
@@ -1251,7 +1255,7 @@
         "type": "db_integrity_breach",
         "summary": "vn_index_cache: table empty (0 rows), expected VNINDEX snapshot cache. vnIndexRefresh cron */5 2-8h may not be running.",
         "severity": "MEDIUM",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
@@ -1259,7 +1263,9 @@
         "router_note": "ts future-stamped — cosmetic; finding genuine.",
         "acked_by": "po-triage-20260620T080911Z",
         "acked_at": "2026-06-20T08:16:14Z",
-        "po_disposition": "minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH"
+        "po_disposition": "minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
+        "router_status_reconcile": "READ→RESOLVED: disposition minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH which is DONE on board. Status lagged ground-truth; reconciled.",
+        "router_reconciled_at": "2026-06-21T02:41:28Z"
       },
       {
         "id": "sau-2026-06-20T10:07:45Z",
@@ -1431,11 +1437,13 @@
         "type": "db_integrity_breach",
         "summary": "cron_job_runs: 9 jobs crashed/errored (pollNews/intelligenceCycle/bctc pipeline, most recent 2026-06-18, NULL error_msg)",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "TRIAGED",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_disposition": "DEFER",
         "router_note": "DEFER: folded into FIX-NEWS-CB-FALSE-CLOSED (backlog) + macro-fetch-cluster devteam-20260619T170200Z (TRIAGED). 9 crashed cron_job_runs rows are a STALE historical count, most-recent crash 2026-06-18, not active. Observability sub-gap minted as FIX-CRON-RUNS-NULL-ERRORMSG (NULL error_msg). No new crash-fix task. Weekend, all 12 services healthy.",
-        "router_triaged_at": "2026-06-20T20:15:42Z"
+        "router_triaged_at": "2026-06-20T20:15:42Z",
+        "router_status_reconcile": "READ→TRIAGED: row carries explicit disposition routed to an existing board fix task (verified present). Status lagged; reconciled to stop idle-tick re-park.",
+        "router_reconciled_at": "2026-06-21T02:41:28Z"
       },
       {
         "id": "sau-20260620T195454Z-finrpt",
@@ -1445,11 +1453,13 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports: 17 rows with zero/negative net_revenue (extraction failures, OCR incomplete)",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "TRIAGED",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_disposition": "DEFER",
         "router_note": "DEFER: 17 zero/neg net_revenue rows = standing BCTC extraction-quality class. True root FIX-BCTC-ENRICH-SILENT-0ROWS already code-complete in review[] awaiting QA — do not re-mint. On QA sign-off, dev-pdf-extractor RAW-verifies which tickers via financial_reports WHERE net_revenue<=0.",
-        "router_triaged_at": "2026-06-20T20:15:42Z"
+        "router_triaged_at": "2026-06-20T20:15:42Z",
+        "router_status_reconcile": "READ→TRIAGED: row carries explicit disposition routed to an existing board fix task (verified present). Status lagged; reconciled to stop idle-tick re-park.",
+        "router_reconciled_at": "2026-06-21T02:41:28Z"
       },
       {
         "id": "sau-20260620T195454Z-signals",
