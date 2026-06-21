@@ -854,8 +854,11 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_dup_of": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
+        "triaged_at": "2026-06-21T03:39:16Z",
+        "triaged_by": "dev-team-cron-router"
       },
       {
         "id": "sau-d4-202606200300",
