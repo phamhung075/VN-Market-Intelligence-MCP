@@ -2,6 +2,23 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c259 · 2026-06-21T10:14:04Z
+### Audit Run Tier-1 (10:14 UTC 2026-06-21, Sunday off-market)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 0 NEW (all PASS, stable)
+- Status: CLEAN
+
+**Verdict Summary:**
+- A-01..A-11 containers: all 12 UP ✓ (RestartCount: mcp-server=0, all others 0)
+- A-12..A-19 health: 5/5 PASS ✓ | Tooling: pdftoppm, tesseract, vie PASS ✓
+- A-21 restart: all 0 PASS ✓ | A-30 memory: all healthy PASS ✓
+- A-32 disk: 90% (Data volume), 37% (root) — within tolerance ✓
+- mcp-server: 166 tools, 254 sessions, 29396s uptime
+- Inter-service: stock-price, technical-analysis, alert-engine, pdf-extractor all HTTP 200 ✓
+- EPIPE/ECONNRESET: 0 in 30min ✓
+
+**Signals:** 0 NEW | Status: CLEAN
+
 ## c258 · 2026-06-21T09:43:58Z
 ### Audit Run Tier-1 (09:43 UTC 2026-06-21, Sunday off-market)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
