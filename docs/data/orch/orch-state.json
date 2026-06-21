@@ -193,11 +193,11 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "ops",
-    "next_action": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY QA APPROVED-CODE-LEVEL → review→done (done_verified=false). NEXT: ops rebuild BOTH mcp-server (a41e09a9 handler+store) + frontend (baff449a card). THEN router live-verify: GET prediction-claims ids 1,8,9 outcome=excluded + pending=0 + excluded=3, dashboard Loại trừ → flip done_verified. PRED-RESOLVER-GAP-FIX already done-verified. Backlog follow-ups (macro-calendar P2, agentsignals-GC P3, allproducers-nullstrip P3, refine-spike P3) + 2 CI rows PO-push-held.",
+    "next_agent": null,
+    "next_action": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY done_verified=TRUE — live endpoint pending=0/excluded=3 (GAS,VNINDEX,FPT), both containers rebuilt+healthy. User dashboard Dự báo AI & Kết quả fully fixed (9 total/6 resolved/3 Loại trừ/0 Đang chờ). Both PRED tasks now done_verified. Open backlog (non-urgent): macro-calendar P2, agentsignals-GC P3, allproducers-nullstrip P3, refine-spike P3; 2 CI rows PO-push-held; health 3280-3286 recurring-tracked. Board idle wip0.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T21:12:00Z",
+    "updated_at": "2026-06-21T21:16:00Z",
     "updated_by": "dev-team-cron-router",
     "last_tick": "20260621T2107Z"
   },
@@ -17040,71 +17040,6 @@
         "rebuild_required": true,
         "done_at": "2026-06-21T04:00:00Z",
         "done_by": "qa-review"
-      },
-      {
-        "id": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY",
-        "type": "FIX",
-        "title": "prediction-claims serve+display: is_excluded claims masquerade as \"Đang chờ\" pending forever (dashboard 3 phantom pendings)",
-        "desc": "Consumer/display leg of PRED-RESOLVER-GAP-FIX (resolver/DB leg done_verified — do NOT reopen). LIVE BUG on \"Dự báo AI & Kết quả\" dashboard: 3 terminally is_excluded=1 claims (ids 1 FPT, 8 VNINDEX, 9 GAS — legacy neutral, creation_price NULL, resolution_outcome NULL, resolved_at set, correctly excluded by resolver) masquerade as \"Đang chờ\" (pending) FOREVER with prices \"—\". Stats show 9 total / 6 resolved / 3 pending (should be 0 pending). hitRate 67% + Brier 0.2135 already CORRECT (excluded out of denominator). Root: serve+display layer has NO is_excluded awareness.\n\nZONE-SPLIT (3 files, 2 sub-zones):\n[dev-mcp-server]\n 1. apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts: add ClaimOutcome \"excluded\"; mapOutcome(row) → is_excluded=1 ⇒ \"excluded\" (PRECEDES the null→pending check, so pass the full row not just resolution_outcome); computeCalibration → new excluded bucket, pending = resolution_outcome NULL AND is_excluded!=1 (excluded NOT in pending); keep hitRate=correct/(correct+wrong) (already excludes); add \"excluded\" to ?outcome= enum + endpoint doc-comment (L18-30 outcome mapping + L26-28 query params).\n 2. apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts: getAllClaimsForTracker() — the ?outcome=pending branch (L375 WHERE resolution_outcome IS NULL) currently INCLUDES excluded rows → tighten to (resolution_outcome IS NULL AND (is_excluded IS NULL OR is_excluded=0)); ADD an outcome=\"excluded\" branch (WHERE is_excluded=1); widen the param union type to include \"excluded\". (is_excluded already SELECTed via SELECT * + already on PredictionClaimRow from PRED-RESOLVER-GAP-FIX — no schema change.)\n[dev-frontend]\n 3. apps/frontend/app/routes/dashboard.prediction-claims.tsx: PredictionOutcome (L53) += \"excluded\"; outcomeLabel() (~L286) \"excluded\"→ VN \"Loại trừ\" (Không tính điểm) + color class; add \"Loại trừ\" filter tab (alongside Tất cả/Đúng/Sai/Đang chờ); cards in excluded state show the excluded badge NOT \"Đang chờ\".\n\nTESTS: handler unit (excluded row → outcome \"excluded\", computeCalibration NOT counted in pending, hitRate unchanged) + store unit (outcome=excluded returns is_excluded=1 only; outcome=pending excludes them) + frontend outcomeLabel/filter test.\n\nDoD LIVE-VERIFY (after rebuild): GET /api/prediction-claims → ids 1,8,9 outcome \"excluded\" AND calibration.pending=0 AND calibration.excluded=3; dashboard renders them \"Loại trừ\" not \"Đang chờ\". REBUILD_REQUIRED: yes (handler+store baked into mcp-server image; frontend build).",
-        "status": "DONE",
-        "priority": "P2",
-        "zone": "multi",
-        "zone_split": [
-          "apps/mcp-server/",
-          "apps/frontend/"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts",
-          "apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts",
-          "apps/frontend/app/routes/dashboard.prediction-claims.tsx"
-        ],
-        "size": "S",
-        "rebuild_required": true,
-        "baseline_pass": true,
-        "parent": "PRED-RESOLVER-GAP-FIX",
-        "standing_goal": "all-info-source-link-dropdown-recheck (Kết quả accuracy)",
-        "created_at": "2026-06-21T20:09:40Z",
-        "created_by": "po",
-        "sprint": "FIX-PRED-CLAIMS-EXCLUDED",
-        "dev_agent": "dev-mcp-server+dev-frontend",
-        "dispatched_at": "2026-06-21T20:08:00Z",
-        "dispatched_by": "dev-team-cron-router",
-        "impl_commits": [
-          "a41e09a9 (backend handler+store)",
-          "baff449a (frontend card)"
-        ],
-        "review_note": "Both zones done. Backend tsc0 + 20/20 new + 88/88 targeted; frontend tsc0 + 67/67 (11 new). Contract aligned: outcome \"excluded\" + calibration.excluded. REBUILD_REQUIRED both mcp-server+frontend. Live-gate: dashboard 3 ids (1,8,9) → Loại trừ + pending=0 post-rebuild.",
-        "qa_review": {
-          "verdict": "APPROVED-CODE-LEVEL",
-          "reviewed_at": "2026-06-21T20:45:00Z",
-          "reviewed_by": "qa",
-          "backend_tsc": "EXIT 0",
-          "backend_suite": "13363 pass / 53 skip / 64 fail (all 64 pre-existing disjoint)",
-          "per_file_isolation": "20/0 FIX-PRED + 68/0 (TASK17+1123+PRED-RESOLVER) — all green",
-          "frontend_tsc": "EXIT 0",
-          "frontend_suite": "1706 pass / 2 fail (2 Kinh-Dich pre-existing, last-touch d7167c0a, disjoint)",
-          "ddd": "PASS (interface→infra permitted; zero domain→infra violations)",
-          "security": "PASS (no process.env; parameterized SQL; no secrets)",
-          "mock_guard": "EXIT 0",
-          "contract_integration": "ALIGNED — outcome literal \"excluded\" + calibration.excluded:number match backend→frontend",
-          "tests_genuine": "YES — real :memory: SQLite via initDatabase(); seedExcludedClaim uses production store functions",
-          "rebuild_required": "YES — mcp-server + frontend",
-          "deferred_live_gate": "POST-REBUILD: ids 1,8,9 → outcome=\"excluded\", calibration.pending=0, calibration.excluded=3; dashboard renders \"Loai tru\" not \"Dang cho\"",
-          "dj": "docs/agent-memory/decisions/sprint-FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY-qa.md"
-        },
-        "done_verified": false,
-        "qa_verdict": "APPROVED-CODE-LEVEL",
-        "commit": "a41e09a9 (backend) + baff449a (frontend)",
-        "done_at": "2026-06-21T21:12:00Z",
-        "done_by": "qa-review",
-        "done_verified_reason": "Code APPROVED-CODE-LEVEL (router-corroborated: backend tsc0 + 88 targeted + full-suite 64 fails all pre-existing-disjoint; frontend tsc0 + 67/67; contract aligned outcome \"excluded\"+calibration.excluded). REBUILD_REQUIRED both mcp-server + frontend.",
-        "deferred_verification": {
-          "gate_id": "G-LIVE-PRED-DISPLAY",
-          "status": "PENDING-REBUILD",
-          "trigger": "after ops rebuilds BOTH mcp-server + frontend",
-          "expected_outcome": "GET /api/prediction-claims → ids 1,8,9 outcome=\"excluded\"; calibration.pending=0, calibration.excluded=3; dashboard renders 3 as Loại trừ (zinc) not Đang chờ",
-          "probe_method": "router curl localhost prediction-claims endpoint + bun:sqlite cross-check post-rebuild"
-        }
       }
     ],
     "done_verified": [
@@ -23369,6 +23304,74 @@
         "done_verified_at": "2026-06-21T16:46:00Z",
         "done_verified_by": "dev-team-cron-router",
         "done_verified_evidence": "LIVE re-verify post predictionResolution cron 16:35:00Z (rows_written=5) on named-vol /app/data/market.db (router bun:sqlite): all 5 stuck ids terminal — id1 FPT neutral/null-creation→is_excluded=1; id6 VIC bullish→outcome=0 (actual 216500<target 224700); id7 GAS bullish→outcome=1 (actual 84900>=target 78960, NEAREST-TRADING-DAY fallback proven — 05-23 had no exact bar); id8/id9 neutral/null-creation→is_excluded=1. INVARIANT_VIOLATIONS=0, still-due-unresolved=0. Nearest-trading-day match + neutral-exclusion proven live; neutral-BAND HIT/MISS (creation_price-bearing) is unit-tested-green (QA) and will confirm on next digest-predict claim batch — residual observation, not blocking."
+      },
+      {
+        "id": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY",
+        "type": "FIX",
+        "title": "prediction-claims serve+display: is_excluded claims masquerade as \"Đang chờ\" pending forever (dashboard 3 phantom pendings)",
+        "desc": "Consumer/display leg of PRED-RESOLVER-GAP-FIX (resolver/DB leg done_verified — do NOT reopen). LIVE BUG on \"Dự báo AI & Kết quả\" dashboard: 3 terminally is_excluded=1 claims (ids 1 FPT, 8 VNINDEX, 9 GAS — legacy neutral, creation_price NULL, resolution_outcome NULL, resolved_at set, correctly excluded by resolver) masquerade as \"Đang chờ\" (pending) FOREVER with prices \"—\". Stats show 9 total / 6 resolved / 3 pending (should be 0 pending). hitRate 67% + Brier 0.2135 already CORRECT (excluded out of denominator). Root: serve+display layer has NO is_excluded awareness.\n\nZONE-SPLIT (3 files, 2 sub-zones):\n[dev-mcp-server]\n 1. apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts: add ClaimOutcome \"excluded\"; mapOutcome(row) → is_excluded=1 ⇒ \"excluded\" (PRECEDES the null→pending check, so pass the full row not just resolution_outcome); computeCalibration → new excluded bucket, pending = resolution_outcome NULL AND is_excluded!=1 (excluded NOT in pending); keep hitRate=correct/(correct+wrong) (already excludes); add \"excluded\" to ?outcome= enum + endpoint doc-comment (L18-30 outcome mapping + L26-28 query params).\n 2. apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts: getAllClaimsForTracker() — the ?outcome=pending branch (L375 WHERE resolution_outcome IS NULL) currently INCLUDES excluded rows → tighten to (resolution_outcome IS NULL AND (is_excluded IS NULL OR is_excluded=0)); ADD an outcome=\"excluded\" branch (WHERE is_excluded=1); widen the param union type to include \"excluded\". (is_excluded already SELECTed via SELECT * + already on PredictionClaimRow from PRED-RESOLVER-GAP-FIX — no schema change.)\n[dev-frontend]\n 3. apps/frontend/app/routes/dashboard.prediction-claims.tsx: PredictionOutcome (L53) += \"excluded\"; outcomeLabel() (~L286) \"excluded\"→ VN \"Loại trừ\" (Không tính điểm) + color class; add \"Loại trừ\" filter tab (alongside Tất cả/Đúng/Sai/Đang chờ); cards in excluded state show the excluded badge NOT \"Đang chờ\".\n\nTESTS: handler unit (excluded row → outcome \"excluded\", computeCalibration NOT counted in pending, hitRate unchanged) + store unit (outcome=excluded returns is_excluded=1 only; outcome=pending excludes them) + frontend outcomeLabel/filter test.\n\nDoD LIVE-VERIFY (after rebuild): GET /api/prediction-claims → ids 1,8,9 outcome \"excluded\" AND calibration.pending=0 AND calibration.excluded=3; dashboard renders them \"Loại trừ\" not \"Đang chờ\". REBUILD_REQUIRED: yes (handler+store baked into mcp-server image; frontend build).",
+        "status": "DONE",
+        "priority": "P2",
+        "zone": "multi",
+        "zone_split": [
+          "apps/mcp-server/",
+          "apps/frontend/"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts",
+          "apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts",
+          "apps/frontend/app/routes/dashboard.prediction-claims.tsx"
+        ],
+        "size": "S",
+        "rebuild_required": true,
+        "baseline_pass": true,
+        "parent": "PRED-RESOLVER-GAP-FIX",
+        "standing_goal": "all-info-source-link-dropdown-recheck (Kết quả accuracy)",
+        "created_at": "2026-06-21T20:09:40Z",
+        "created_by": "po",
+        "sprint": "FIX-PRED-CLAIMS-EXCLUDED",
+        "dev_agent": "dev-mcp-server+dev-frontend",
+        "dispatched_at": "2026-06-21T20:08:00Z",
+        "dispatched_by": "dev-team-cron-router",
+        "impl_commits": [
+          "a41e09a9 (backend handler+store)",
+          "baff449a (frontend card)"
+        ],
+        "review_note": "Both zones done. Backend tsc0 + 20/20 new + 88/88 targeted; frontend tsc0 + 67/67 (11 new). Contract aligned: outcome \"excluded\" + calibration.excluded. REBUILD_REQUIRED both mcp-server+frontend. Live-gate: dashboard 3 ids (1,8,9) → Loại trừ + pending=0 post-rebuild.",
+        "qa_review": {
+          "verdict": "APPROVED-CODE-LEVEL",
+          "reviewed_at": "2026-06-21T20:45:00Z",
+          "reviewed_by": "qa",
+          "backend_tsc": "EXIT 0",
+          "backend_suite": "13363 pass / 53 skip / 64 fail (all 64 pre-existing disjoint)",
+          "per_file_isolation": "20/0 FIX-PRED + 68/0 (TASK17+1123+PRED-RESOLVER) — all green",
+          "frontend_tsc": "EXIT 0",
+          "frontend_suite": "1706 pass / 2 fail (2 Kinh-Dich pre-existing, last-touch d7167c0a, disjoint)",
+          "ddd": "PASS (interface→infra permitted; zero domain→infra violations)",
+          "security": "PASS (no process.env; parameterized SQL; no secrets)",
+          "mock_guard": "EXIT 0",
+          "contract_integration": "ALIGNED — outcome literal \"excluded\" + calibration.excluded:number match backend→frontend",
+          "tests_genuine": "YES — real :memory: SQLite via initDatabase(); seedExcludedClaim uses production store functions",
+          "rebuild_required": "YES — mcp-server + frontend",
+          "deferred_live_gate": "POST-REBUILD: ids 1,8,9 → outcome=\"excluded\", calibration.pending=0, calibration.excluded=3; dashboard renders \"Loai tru\" not \"Dang cho\"",
+          "dj": "docs/agent-memory/decisions/sprint-FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY-qa.md"
+        },
+        "done_verified": true,
+        "qa_verdict": "APPROVED-CODE-LEVEL",
+        "commit": "a41e09a9 (backend) + baff449a (frontend)",
+        "done_at": "2026-06-21T21:12:00Z",
+        "done_by": "qa-review",
+        "done_verified_reason": "Code APPROVED-CODE-LEVEL (router-corroborated: backend tsc0 + 88 targeted + full-suite 64 fails all pre-existing-disjoint; frontend tsc0 + 67/67; contract aligned outcome \"excluded\"+calibration.excluded). REBUILD_REQUIRED both mcp-server + frontend.",
+        "deferred_verification": {
+          "gate_id": "G-LIVE-PRED-DISPLAY",
+          "status": "SATISFIED",
+          "trigger": "after ops rebuilds BOTH mcp-server + frontend",
+          "expected_outcome": "GET /api/prediction-claims → ids 1,8,9 outcome=\"excluded\"; calibration.pending=0, calibration.excluded=3; dashboard renders 3 as Loại trừ (zinc) not Đang chờ",
+          "probe_method": "router curl localhost prediction-claims endpoint + bun:sqlite cross-check post-rebuild"
+        },
+        "done_verified_at": "2026-06-21T21:16:00Z",
+        "done_verified_by": "dev-team-cron-router",
+        "done_verified_evidence": "LIVE re-verify post both-container rebuild (ops: mcp-server img .Created 21:10:44Z + frontend 21:13:15Z, both > commits, healthy). Router-independent bun-fetch GET /api/prediction-claims: calibration {total:9,resolved:6,correct:4,wrong:2,pending:0,excluded:3,hitRate:0.667,avgBrier:0.2135}; EXCLUDED=[GAS,VNINDEX,FPT] (the 3 stuck ids), PENDING=[]. Serve layer now surfaces is_excluded as outcome=excluded; frontend rebuilt renders Loại trừ. User-reported Dự báo AI dashboard data-not-update RESOLVED end-to-end."
       }
     ],
     "head": {
