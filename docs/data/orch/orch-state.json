@@ -194,12 +194,12 @@
     "status": "active",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Idle. BCTC silent-0 P0 (FIX-BCTC-ENRICH-SILENT-0ROWS) re-probed live: VCB RESOLVED + FPT non-regression intact, CTG corrupted (bank-form value/scale) — done_verified WITHHELD, blocker shifted to existing FIX-BCTC-BANK-SUMMARY-MAPPING (P1 backlog, dedup, co_owner=dev-mcp-server, serve-guard hard-block enforcement added). VCB unblocked for bctc-analyst gate; CTG+D2D remain suppressed. WIP=0.",
+    "next_action": "Idle. Tick 20260621T0407Z closed. Triaged 34-report unresolved backlog (3244-3277): ~20 = BCTC-P0 false-alarm flood (root tracked), all other themes (MACRO phantom, W26 digest dedup [done_verified, do-NOT-repost], HNX off-hours, SBV zero, D4 lock, FRED/ISM) already board-tracked. Minted 1 genuinely-untracked bug FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL (P3, backlog) — fb-market-poster flow:118 bare get_sentiment_trend({}) missing stock_code, recurring ~10x; gate has notebook-only-false-fix guard. Promoted FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH P2->P1 (root of ~20 false BCTC-P0/day; bump-not-lane-move, WIP unchanged 0/2). Auditor Tier-1 CLEAN (12/12 UP, 0 signal rows). 5 deferred done_verified gates await live cycles (BB-liquidity-floor + foreign-flow-zero-pad rebuilt 2026-06-20T23:12:23Z; HNX-offhours; bctc-idle-monitor; macro-phantom-guard). WIP=0/2.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T03:50:20Z",
+    "updated_at": "2026-06-21T04:15:52Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T0339Z"
+    "last_tick": "20260621T0407Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1628,8 +1628,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-21T04:00:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-21T04:07:00Z",
+    "_updated_by": "po-s111",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11153,7 +11153,7 @@
         "id": "FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH",
         "type": "FIX",
         "status": "BACKLOG",
-        "priority": "P2",
+        "priority": "P1",
         "zone": "apps/mcp-server/",
         "blocking": false,
         "title": "Health-recheck BCTC monitor misreads idle-queue-0-running as CRASH (push-age>360min false P0)",
@@ -11166,7 +11166,10 @@
         "baseline_pass": true,
         "source": "dev-team cron tick 20260620T0207Z; guard-instructed mint (durable fix named in tick guard was absent from board); reports 3244-3262 BCTC false-alarm cluster; SSH RAW-verify report 3256 2026-06-19T16:20Z",
         "minted_by": "po-s110",
-        "minted_at": "2026-06-20T02:37:02Z"
+        "minted_at": "2026-06-20T02:37:02Z",
+        "updated_at": "2026-06-21T04:07:00Z",
+        "updated_by": "po-s111",
+        "po_promotion_note": "2026-06-21 po-s111 PROMOTION ASSESSMENT (decision b: priority bump, NOT lane move). Bumped P2->P1, kept in BACKLOG. Rationale: this is the single highest-leverage noise-killer (root of ~20 false BCTC-P0 health-recheck reports/day flooding the unresolved queue, ids 3244-3277, burying real signals). Chose priority bump over active-promotion because (1) .head.next_action shows live BCTC enrich/bank-summary P0/P1 work in flight (FIX-BCTC-ENRICH-SILENT-0ROWS / FIX-BCTC-BANK-SUMMARY-MAPPING) which is higher product-leverage and should own the next WIP slot, and (2) WIP=0 currently — bumping to P1 places this at top of backlog so dev pulls it next WITHOUT prematurely locking a WIP slot. Net WIP unchanged (0/2), zero risk of exceeding WIP=2. Noise cost = ~20 false P0/day."
       },
       {
         "id": "FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0",
@@ -11570,6 +11573,44 @@
         "minted_by": "po",
         "minted_at": "2026-06-21T03:14:47Z",
         "note": "Distinct-from FU-AUDITOR-D4-SIGNAL-ID (signal-id collision). gateway-blind: live lock state NOT probed; recon-first to disambiguate orphaned-lock vs no-row-by-design."
+      },
+      {
+        "id": "FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "docs/agents/fb-market-poster/",
+        "blocking": false,
+        "owner": "developer",
+        "route_to": "fb-market-poster flow owner (co_owner=dev-mcp-server for tool contract)",
+        "co_owner": "dev-mcp-server",
+        "title": "fb-market-poster flow calls get_sentiment_trend({}) with EMPTY args but tool REQUIRES stock_code -> silent error every fb-poster cycle -> sentiment signal permanently blind",
+        "desc": "docs/agents/fb-market-poster/flow/main.md:118 invokes get_sentiment_trend({}) with no arguments. The tool requires a stock_code param, so the bare call silently errors out on EVERY fb-poster cycle, leaving the sentiment signal permanently blind. Recurred ~10x across health-recheck reports 3249/3253/3254/3266/3267/3268/3269/3270/3271/3272/3274/3275. Router board-scan + po dedup-scan confirm NO prior board row covers this (the two SENTIMENT hits = FACTORY-DOMAIN-extract-sentiment-lexicons and AUDIT-FC-NEWS-SENTIMENT, both unrelated).",
+        "root_cause": "Flow call site passes empty object {} to a tool whose schema mandates stock_code. Tool fails-closed (returns error/empty), fb-poster swallows it -> sentiment trend never populated. Single-line caller defect, low blast radius.",
+        "fix_spec": "Two options, dev to choose: (a) pass a per-watchlist-ticker stock_code into the get_sentiment_trend call (one call per ticker, then aggregate), driven from docs/data/system-map.json watchlist (NEVER hardcode); OR (b) make the bare call LOOP the watchlist (iterate tickers, accumulate per-ticker sentiment_trend). Either way the empty-arg call MUST be eliminated. Fix the RUNNING flow file docs/agents/fb-market-poster/flow/main.md:118 — NOT a notebook.",
+        "verification_gate": "1) RUNNING FILE CHECK (hard guard against notebook-only false-fix): docs/agents/fb-market-poster/flow/main.md line ~118 shows get_sentiment_trend called WITH a real stock_code (per-ticker or watchlist-loop), NOT {}. 2) LIVE: get_sentiment_trend returns real per-ticker sentiment data for >=1 watchlist ticker (router/ops live probe, po gateway-blind). DO NOT mark done on a notebook edit — report 3266 flagged a PRIOR false fix where cowork-refactory-expert updated the notebook only and left the actual flow file unchanged.",
+        "generic_mandate": "Watchlist-driven from docs/data/system-map.json, never hardcode tickers. Same fail-closed-swallow class as memory feedback_contract_from_live_payload_not_schema_comment.",
+        "size": "S",
+        "baseline_pass": true,
+        "related_reports": [
+          3249,
+          3253,
+          3254,
+          3266,
+          3267,
+          3268,
+          3269,
+          3270,
+          3271,
+          3272,
+          3274,
+          3275
+        ],
+        "recurrence_count": 12,
+        "source": "router triage tick 20260621T0407Z; GENUINELY-UNTRACKED finding; reports 3249-3275 sentiment-trend cluster",
+        "minted_by": "po-s111",
+        "minted_at": "2026-06-21T04:07:00Z",
+        "note": "False-fix guard: report 3266 = PO previously claimed fixed 03:37Z but live flow file unchanged (notebook-only edit). VERIFY the real caller (main.md:118), not a notebook."
       }
     ],
     "closed_sprints": [
