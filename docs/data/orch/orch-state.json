@@ -194,10 +194,10 @@
     "status": "active",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260621T02Z DONE: FIX-HNX-OFFHOURS-ERROR-DOWNGRADE QA-APPROVED (commit 93e9dbeb), board finalized, ops rebuild dispatched. done_verified deferred to next off-hours HNX fetch cycle. WIP=0.",
+    "next_action": "Tick 20260621T02Z CLOSED: FIX-HNX QA-APPROVED (93e9dbeb) + ops rebuild CONFIRMED live (RAW marker hit both sites). done_verified deferred to next off-hours HNX fetch cycle. WIP=0.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T02:30:00Z",
+    "updated_at": "2026-06-21T02:35:00Z",
     "updated_by": "dev-team-cron-router",
     "last_tick": "20260621T02Z"
   },
@@ -6154,12 +6154,13 @@
             "note": "MINTED po dev-team triage 2026-06-21. Dedup: no existing HNX/UPCOM/log-storm task on board (grep hits were prose). WIP-controlled (2 of 2).",
             "claimed_by": "dev-team-cron-router",
             "claimed_at": "20260621T02Z",
-            "rebuild_required": true,
+            "rebuild_required": false,
             "done_verified": false,
             "qa_verdict": "APPROVED",
             "commit": "93e9dbeb",
             "qa_commit": "a73bf035",
-            "done_verified_gate": "QA APPROVED (tsc/pnpm EXIT 0, 6 new tests pass clock-deterministic, 29 regression pass, both emit sites covered, DDD+security PASS). REBUILD REQUIRED — ops to rebuild mcp-server with --build. done_verified DEFERRED to next off-hours HNX fetch live cycle: confirm empty-result emits debug (not error) when market closed, error still emitted in-window."
+            "done_verified_gate": "QA APPROVED (tsc/pnpm EXIT 0, 6 new tests pass clock-deterministic, 29 regression pass, both emit sites covered, DDD+security PASS). REBUILD REQUIRED — ops to rebuild mcp-server with --build. done_verified DEFERRED to next off-hours HNX fetch live cycle: confirm empty-result emits debug (not error) when market closed, error still emitted in-window.",
+            "rebuild_confirmed": "Ops rebuilt mcp-server 2026-06-21T02:03Z; RAW grep of running container confirms isVnTradingWindow conditional present in BOTH hnx.ts emit sites (HNX ~L354, UPCOM ~L436); mcp-server healthy toolCount=166, all 11 services green. done_verified still DEFERRED to next off-hours HNX fetch live cycle."
           }
         ]
       }
