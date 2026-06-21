@@ -194,12 +194,12 @@
     "status": "in_progress",
     "active_task_id": "PRED-RESOLVER-GAP-FIX",
     "next_agent": "dev-mcp-server",
-    "next_action": "Dispatch PRED-RESOLVER-GAP-FIX (dev, apps/mcp-server): fix prediction-claim producer<->resolver contract — nearest-trading-day OHLCV match + trading-day resolution_date + neutral-band rule. qa gate = SAME-DB live re-verify stuck ids 1,6,7,8,9. po-s110.",
+    "next_action": "Tick 20260621T0937Z. Drained 1 cowork_tick_telemetry (refine_bctc_md 09:00 SKIPPED_BLIND_NO_BACKSTOP, gateway-blind, user-side .mcp.json fix) → processed/. health-recheck id3280 = same already-triaged 0806 cluster, not re-processed. PRED-RESOLVER-GAP-FIX still IN_PROGRESS (dev-mcp-server in flight, no return yet). WIP 1/2. No other actionable work.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-21T08:55:00Z",
+    "updated_at": "2026-06-21T09:38:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T0820Z"
+    "last_tick": "20260621T0937Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
