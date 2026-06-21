@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "ops",
-    "next_action": "Tick 20260621T1437Z. Drained 2 cowork telemetry (13:51 digest-predict DEFERRED_BLIND→cloud backstop; 14:06 refine_bctc SKIPPED_BLIND) → processed/. health-recheck 3283 (14:10): BUG-1/2/3/4 same recurring-tracked cluster; ISSUE-7 NEW get_macro_calendar empty ROUTER-RAW-CONFIRMED unavailable (events:[], status:unavailable, source_tier:4, 60d window — genuine, honestly-degraded not fake, NOT in backlog) → routed to PO. Spawned PO to triage 2 NEW findings: (1) macro_calendar unavailable MEDIUM (digest-predict+alert-commander lose pivot_window; dedup vs macro-fetch cluster), (2) sau-...-sig-orphan LOW. PRED live-gate pending 16:35Z cron. 2 CI rows PO-push-held.",
+    "next_action": "Tick 20260621T1537Z. Drained 15:06 cowork telemetry. 4 health reports (3280-3283) recurring-tracked (ISSUE-7 macro_calendar now FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE P2 backlog). signal_queue 0 NEW (orphan READ, folded). Board idle wip0. PRED-RESOLVER-GAP-FIX live-gate PENDING 16:35Z predictionResolution cron → @ post-16:35 tick router same-DB re-query ids 1,6,7,8,9 → flip done_verified. 2 CI rows PO-push-held.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T14:18:00Z",
+    "updated_at": "2026-06-21T15:16:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T1437Z"
+    "last_tick": "20260621T1537Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
