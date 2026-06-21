@@ -139,3 +139,22 @@ Sessions VMT-5a, VMT-1a/1b, VMT-3b/VMT-4, VMT-2 (WAVE-2 A1-A5), TSU-DEV-U4, FIX-
 **Live probe:** export=46929 M USD, import=52141 M USD, balance=-5212 M USD, hs_exports populated ✓
 
 Zone health: trade parser fully operational with live values; all 12 packages green; plausibility guard prevents future column-drift silent failures | HEALTHY
+
+---
+
+## Session 2026-06-21 (DSI-MACRO-PHANTOM-STALE-GUARD — DSI-INV-1 staleness gate)
+
+**Task:** Fix phantom stale macro values (WTI=95.5, dow_jones=23750) served as current via tracked_indicators 48h window in buildMacroSection (mcp-server domain).
+
+**Key decisions:**
+- Tightened tracked_indicators freshness from 48h to 4h in `buildMacroSection` (domain/services/marketContextBuilder.ts).
+- Discovered R-2 SQLite datetime string comparison trap: ISO-8601 'T' separator sorts after SQLite space separator, bypassing the WHERE clause entirely. Fixed via epoch-seconds: `(strftime('%s','now') - strftime('%s', extracted_at)) < 14400`.
+- Added `listTrackedIndicatorsFromDb(db)` to commodityTracker.ts — DB-injectable variant with `isStale` boolean. Enables honest staleness flag in assembleBriefing step 9.
+- TRACKED_INDICATOR_STALE_MS = 4h constant exported for cross-file reuse.
+
+**Tests:** 6 new (GUARD-1..6 all GREEN) + 13426 existing suite pass / 0 regression.
+**tsc:** EXIT 0. **pnpm check:** EXIT 0.
+**Commit:** 3280d82a
+**Rebuild required:** YES (mcp-server container)
+
+Zone health: DSI-INV-1 staleness gate operational for news-mined commodity prices; R-2 SQLite trap documented and fixed; no regression | HEALTHY
