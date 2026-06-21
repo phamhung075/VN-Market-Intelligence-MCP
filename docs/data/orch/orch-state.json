@@ -1476,6 +1476,17 @@
         "router_minted": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
         "router_verdict": "REAL-NEW confirmed via get_calibration_report (frozen 2026-06-14, 4 resolved/90d); resolution job stalled; backlog P2 dev-mcp-server, Mon batch; related FIX-ALERT-CASCADE-OUTCOME-DEAD (record-side)",
         "router_triaged_at": "2026-06-20T21:41:56Z"
+      },
+      {
+        "id": "sau-c04-202606210003",
+        "ts": "2026-06-21T00:03:34Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "financial_reports check C-04 failed (actual=7, expected=5 or less)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
