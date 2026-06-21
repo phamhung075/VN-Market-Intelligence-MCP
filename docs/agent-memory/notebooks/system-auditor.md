@@ -2,6 +2,20 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c260 · 2026-06-21T10:30:57Z
+### Audit Run Tier-2 (10:30 UTC 2026-06-21, Sunday off-market)
+- Tier: 2 | Sources checked: 4 (freshness spot-checks)
+- Anomalies: 0 NEW (market-closed weekend, silence expected)
+- Status: CLEAN
+
+**Findings:**
+- [C-06] Market messages last 3h: 0 (DOWNGRADED to INFO — Sunday off-market)
+- [C-07] Agent signals last 24h: 58 ✓
+- [B-09] BCTC SSC-filter URLs: 0 ✓
+- [B-13] BCTC stale-pending >72h: 0 ✓
+
+**Signals:** 0 NEW | Status: CLEAN
+
 ## c259 · 2026-06-21T10:14:04Z
 ### Audit Run Tier-1 (10:14 UTC 2026-06-21, Sunday off-market)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
