@@ -2,6 +2,13 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c288 · 2026-06-21T23:44:52Z
+### Audit Run Tier-1 (23:44 UTC 2026-06-21, Monday 06:44 VN 2026-06-22)
+- Tier: 1 | Services: 13 checked (host_runtime_set) | Health endpoints: 5 probed
+- Anomalies: 0 NEW (all containers UP, healthy, restart=0, memory/disk healthy)
+- Status: CLEAN
+- Notes: Pre-market window (VN 06:44 Monday, market opens 09:00). All 13 host_runtime_set UP + healthy. mcp-server UP 2h+/healthy (no restarts). rag-service UP 2h+/healthy (restart=94, steady ceiling 90.15% mem at 692.4MiB/768MiB, tracked FU-RAG-DEPLOY-MEMORY). Disk 39% / (21Gi free). No C-06 market_messages (0 in 3h = expected pre-market, 1h before open). agent_signals UP (78 in 24h). No signal_queue.rows[] NEW. Dedup: 0 skipped (no WARN/CRITICAL candidates this cycle).
+
 ## c287 · 2026-06-21T23:13:47Z
 ### Audit Run Tier-1 (23:13 UTC 2026-06-21, Monday 06:13 VN 2026-06-22)
 - Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
@@ -57,9 +64,3 @@ Disk /: 36% used (13Gi / 233Gi, 24Gi free) — healthy
 - Anomalies: 0 NEW (C-04 dedup-skip: already posted 2026-06-20T00:03Z, within 7d window; 7 low-conf reports today vs threshold 5 = same class)
 - Status: CLEAN (pre-market freshness rules applied)
 - Notes: Pre-market window (VN 05:30 Monday, market opens 09:00). DOWNGRADE: C-01/C-02 price staleness to INFO (latest bar=Fri 2026-06-19, expected pre-market). C-03 PASS (32 Q1-2026). C-04 WARN—dedup-skip. C-06/C-07/C-08/C-09 PASS. C-10/C-11 PASS (off-season, C-11=0 expected). B-08 PASS (80 PDFs). B-09 PASS (0 SSC URLs). B-13 PASS (0 stale >72h). Signal_queue.rows[] NEW=0; DASHBOARD append (C-04 dedup-skip).
-
-## c285 · 2026-06-21T22:13:09Z
-### Audit Run Tier-1 (22:13 UTC 2026-06-21, Sunday 05:13 VN 2026-06-22)
-- Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed | A-20 multi-probe: 3/3
-- Anomalies: 0 NEW (all containers UP, healthy, restart=0, memory/disk healthy)
-- Status: CLEAN
