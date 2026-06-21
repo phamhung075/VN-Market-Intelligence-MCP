@@ -18,6 +18,7 @@ import { getDb } from "../db/schema.js";
 import type { HttpClient } from "./ssc.js";
 import { isTradingSession, fetchFromVnDirectStockPrices } from "./hose.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
+import { isVnTradingWindow } from "../../domain/services/tradingWindow.js";
 
 // Re-export for callers who only import from hnx.ts
 export type { MarketPrice } from "./hose.js";
@@ -285,7 +286,7 @@ export function parseHnxResponse(
 export async function fetchHnxPrices(
   codes: string[],
   httpClient?: HttpClient,
-  options?: { force?: boolean },
+  options?: { force?: boolean; now?: Date },
 ): Promise<MarketPrice[]> {
   ensureExchangeColumnOnce();
 
@@ -350,7 +351,11 @@ export async function fetchHnxPrices(
     }
   }
 
-  logger.error("[hnx] all HNX price sources failed", { codes });
+  if (isVnTradingWindow(options?.now)) {
+    logger.error("[hnx] all HNX price sources failed", { codes });
+  } else {
+    logger.debug("[hnx] all HNX price sources returned empty — no off-hours data (market closed)", { codes });
+  }
   return [];
 }
 
@@ -372,7 +377,7 @@ export async function fetchHnxPrices(
 export async function fetchUpcomPrices(
   codes: string[],
   httpClient?: HttpClient,
-  options?: { force?: boolean },
+  options?: { force?: boolean; now?: Date },
 ): Promise<MarketPrice[]> {
   ensureExchangeColumnOnce();
 
@@ -428,6 +433,10 @@ export async function fetchUpcomPrices(
     }
   }
 
-  logger.error("[hnx] all UPCOM price sources failed", { codes });
+  if (isVnTradingWindow(options?.now)) {
+    logger.error("[hnx] all UPCOM price sources failed", { codes });
+  } else {
+    logger.debug("[hnx] all UPCOM price sources returned empty — no off-hours data (market closed)", { codes });
+  }
   return [];
 }
