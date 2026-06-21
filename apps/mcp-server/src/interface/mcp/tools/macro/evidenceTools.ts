@@ -34,6 +34,32 @@ import {
   type ClaimDirection,
 } from "../../../../infrastructure/db/predictionClaimStore.js";
 import { getDb } from "../../../../infrastructure/db/schema.js";
+import { isVnTradingDay } from "../../../../domain/services/vnTradingCalendar.js";
+
+/**
+ * Advance `startDate` by exactly `tradingDays` VN trading days, skipping
+ * weekends and VN public holidays. The result always lands on a trading day.
+ *
+ * Used by create_prediction_claim so that resolution_date is always a bar-date
+ * that exists in daily_ohlcv (PROD-RESOLVER-GAP-FIX — calendar-vs-trading-day).
+ *
+ * @param startDate    - ISO date YYYY-MM-DD (the creation date, typically today)
+ * @param tradingDays  - Number of trading days to advance (must be > 0)
+ * @returns ISO date YYYY-MM-DD of the landing trading day
+ */
+export function addTradingDays(startDate: string, tradingDays: number): string {
+  let remaining = tradingDays;
+  const current = new Date(startDate + "T00:00:00Z");
+
+  while (remaining > 0) {
+    current.setUTCDate(current.getUTCDate() + 1);
+    const dateStr = current.toISOString().slice(0, 10);
+    if (isVnTradingDay(dateStr).is_trading_day) {
+      remaining--;
+    }
+  }
+  return current.toISOString().slice(0, 10);
+}
 
 /**
  * Register the evidence fragment tool on an McpServer instance.
@@ -374,10 +400,11 @@ export function registerEvidenceTools(
               : Math.round(creationPrice * (1 - expected_move_pct))
             : null;
 
-        // Step 4: compute resolution_date = today + horizon_days calendar days
-        const resolutionDate = new Date();
-        resolutionDate.setDate(resolutionDate.getDate() + horizon_days);
-        const resolutionDateStr = resolutionDate.toISOString().slice(0, 10);
+        // Step 4: compute resolution_date = today + horizon_days TRADING days
+        // Skip weekends and VN public holidays so the target date always lands on
+        // a bar that exists in daily_ohlcv (PRED-RESOLVER-GAP-FIX — calendar-vs-trading-day).
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const resolutionDateStr = addTradingDays(todayStr, horizon_days);
 
         // Step 5: insert claim
         // direction defaults to "neutral" when omitted — the DB column is NOT NULL

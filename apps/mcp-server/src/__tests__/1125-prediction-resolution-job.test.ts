@@ -43,6 +43,8 @@ function createSchema(db: Database): void {
       brier_score        REAL,
       created_at         TEXT    NOT NULL DEFAULT (datetime('now')),
       resolved_at        TEXT,
+      creation_price     REAL,
+      is_excluded        INTEGER NOT NULL DEFAULT 0,
       UNIQUE(stock, claim_text, resolution_date)
     )
   `);
@@ -232,20 +234,25 @@ describe("Task 1125 — predictionResolutionJob", () => {
       expect(row.resolution_outcome).toBe(1);
     });
 
-    it("skips claims with neutral direction (no target evaluation)", async () => {
-      insertClaim(db, {
+    it("neutral claim with target_price resolves using neutral-band rule (within band = HIT)", async () => {
+      // neutral + targetPrice set + actual within 2% → HIT (outcome=1)
+      const id = insertClaim(db, {
         stock: "MWG",
         direction: "neutral",
         targetPrice: 60,
         confidence: 0.4,
         resolutionDate: daysAgo(1),
       });
-      insertOhlcv(db, "MWG", daysAgo(1), 60);
+      insertOhlcv(db, "MWG", daysAgo(1), 60); // exact match → 0% move < 2% band → HIT
 
       const result = await runPredictionResolution(db);
 
-      expect(result.resolved).toBe(0);
-      expect(result.skipped).toBe(1);
+      expect(result.resolved).toBe(1);
+      expect(result.skipped).toBe(0);
+      const row = db
+        .prepare("SELECT resolution_outcome FROM prediction_claims WHERE id=?")
+        .get(id) as { resolution_outcome: number };
+      expect(row.resolution_outcome).toBe(1);
     });
   });
 
@@ -409,9 +416,9 @@ describe("Task 1125 — predictionResolutionJob", () => {
       expect(result.skipped).toBe(0);
     });
 
-    it("returns { resolved: 0, unresolvable: 0, skipped: 0 } when no pending claims", async () => {
+    it("returns { resolved: 0, unresolvable: 0, skipped: 0, excluded: 0 } when no pending claims", async () => {
       const result = await runPredictionResolution(db);
-      expect(result).toEqual({ resolved: 0, unresolvable: 0, skipped: 0 });
+      expect(result).toEqual({ resolved: 0, unresolvable: 0, skipped: 0, excluded: 0 });
     });
   });
 

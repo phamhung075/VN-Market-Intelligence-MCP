@@ -207,6 +207,9 @@ export function initSystemTables(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_outcome    ON prediction_claims(resolution_outcome)`);
   // Task 1150: creation_price column
   try { db.exec(`ALTER TABLE prediction_claims ADD COLUMN creation_price REAL`); } catch {}
+  // PRED-RESOLVER-GAP-FIX: is_excluded — marks claims excluded from hitRate (e.g. neutral with no creation_price)
+  // Plain ADD COLUMN with DEFAULT — no UNIQUE (safe per [[feedback_sqlite_add_column_unique_silent_noop]])
+  try { db.exec(`ALTER TABLE prediction_claims ADD COLUMN is_excluded INTEGER NOT NULL DEFAULT 0`); } catch {}
 
   // ── Conviction History (TASK17-CONVICTION) ───────────────────────────────
   // AI conviction tracker: per-stock, per-date peak_score + dominant_signal.

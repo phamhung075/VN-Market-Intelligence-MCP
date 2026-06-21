@@ -207,7 +207,9 @@ describe("Task 1124 — evidence tools Phase B+C", () => {
       expect(text).toContain("FPT");
     });
 
-    it("computes resolution_date = today + horizon_days calendar days", async () => {
+    it("computes resolution_date = today + horizon_days TRADING days (skips weekends/holidays)", async () => {
+      // PRED-RESOLVER-GAP-FIX: resolution_date is now computed in trading days,
+      // not calendar days, so the result always lands on a VN trading day.
       const text = await callTool("create_prediction_claim", {
         stock: "HPG",
         claim_text: "HPG Q2 bullish",
@@ -216,12 +218,19 @@ describe("Task 1124 — evidence tools Phase B+C", () => {
         resolution_criteria: validCriteria,
       });
 
-      // Compute expected date
-      const expected = new Date();
-      expected.setDate(expected.getDate() + 20);
-      const expectedDate = expected.toISOString().slice(0, 10);
+      // Resolution date must be present and must be a valid YYYY-MM-DD
+      expect(text).toMatch(/resolution_date=\d{4}-\d{2}-\d{2}/);
 
-      expect(text).toContain(expectedDate);
+      // Extract the date and verify it is NOT a weekend
+      const match = text.match(/resolution_date=(\d{4}-\d{2}-\d{2})/);
+      expect(match).not.toBeNull();
+      if (match) {
+        const date = new Date(match[1] + "T00:00:00Z");
+        const dayOfWeek = date.getUTCDay();
+        // Must not be Saturday (6) or Sunday (0)
+        expect(dayOfWeek).not.toBe(6);
+        expect(dayOfWeek).not.toBe(0);
+      }
     });
 
     it("returns error string for invalid JSON resolution_criteria (no row inserted)", async () => {

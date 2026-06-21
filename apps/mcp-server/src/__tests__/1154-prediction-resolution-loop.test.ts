@@ -39,7 +39,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 function makeDb(): Database {
   const db = new Database(":memory:");
 
-  // prediction_claims table — matches production DDL including Sprint 065 column
+  // prediction_claims table — matches production DDL including Sprint 065 + PRED-RESOLVER-GAP-FIX columns
   db.exec(`
     CREATE TABLE IF NOT EXISTS prediction_claims (
       id                 INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,6 +56,7 @@ function makeDb(): Database {
       created_at         TEXT    NOT NULL DEFAULT (datetime('now')),
       resolved_at        TEXT,
       creation_price     REAL,
+      is_excluded        INTEGER NOT NULL DEFAULT 0,
       UNIQUE(stock, claim_text, resolution_date)
     )
   `);

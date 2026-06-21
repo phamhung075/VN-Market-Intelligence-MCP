@@ -1,19 +1,30 @@
 /**
- * Prediction Resolution Job — Task 1125
+ * Prediction Resolution Job — Task 1125 / PRED-RESOLVER-GAP-FIX
  *
- * Daily scheduler job (16:30 UTC, after VN market close) that resolves
+ * Daily scheduler job (16:35 UTC, after VN market close) that resolves
  * pending prediction claims by comparing actual prices to claim targets.
  *
  * Algorithm:
  *   1. Fetch all claims where resolution_date <= today AND resolution_outcome IS NULL
- *   2. For each claim: look up close price from daily_ohlcv on resolution_date
- *   3. Evaluate operator: ">", ">=", "<", "<=" against target_price → outcome 0|1
+ *      AND is_excluded = 0
+ *   2. For each claim: look up close price from daily_ohlcv using nearest-trading-day
+ *      match (prefer latest bar with date <= resolution_date; fallback: first bar
+ *      on/after resolution_date within OHLCV_LOOKFORWARD_DAYS)
+ *   3. Evaluate outcome:
+ *      - bullish/bearish with target_price: actual >= target ? 1 : 0
+ *      - bullish/bearish direction-only: actual vs creation_price
+ *      - neutral with creation_price: |actual - creation| / creation < NEUTRAL_BAND_PCT ? 1 : 0
+ *      - neutral with creation_price=NULL: excludeClaim (excluded from hitRate)
  *   4. Compute brier_score = (outcome - confidence)^2
- *   5. Call resolveClaim(db, id, outcome, actualPrice, brierScore)
- *   6. Retry window: if no OHLCV found and resolution_date <= today - 5 days,
- *      mark claim unresolvable (brier_score = NULL). Otherwise skip (retry tomorrow).
+ *   5. Call resolveClaim(db, id, outcome, actualPrice) or excludeClaim(db, id)
+ *   6. Retry window: if no OHLCV found and resolution_date <= today - RETRY_WINDOW_DAYS,
+ *      mark claim unresolvable (brier_score = NULL, is_excluded = 1). Otherwise skip.
  *
- * Registered in jobs.ts at "30 16 * * *" (16:30 UTC = 23:30 VN time, post-close).
+ * HARD INVARIANT: no terminal path may leave resolution_outcome NULL once
+ * resolved_at is stamped — every resolved claim gets a non-NULL verdict (0/1)
+ * OR is_excluded=1 (explicit excluded-from-hitRate status).
+ *
+ * Registered in jobs.ts at "35 16 * * *" (16:35 UTC = 23:35 VN time, post-close).
  *
  * Layer: scheduler — imports from infrastructure and domain only.
  *
@@ -27,8 +38,10 @@ import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import {
   resolveClaim,
+  excludeClaim,
   type PredictionClaimRow,
 } from "../../infrastructure/db/predictionClaimStore.js";
+import { NEUTRAL_BAND_PCT } from "../../domain/services/alertThresholds.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -41,6 +54,8 @@ export interface PredictionResolutionResult {
   unresolvable: number;
   /** Number of claims skipped (no price data, within retry window) */
   skipped: number;
+  /** Number of claims marked excluded (neutral with no creation_price) */
+  excluded: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -50,6 +65,9 @@ export interface PredictionResolutionResult {
 /** Number of calendar days past resolution_date before a claim is unresolvable */
 const RETRY_WINDOW_DAYS = 5;
 
+/** Max calendar days to look forward for an OHLCV bar after resolution_date */
+const OHLCV_LOOKFORWARD_DAYS = 7;
+
 /**
  * Evaluates whether actual price confirms the claim's direction.
  *
@@ -58,26 +76,41 @@ const RETRY_WINDOW_DAYS = 5;
  *   target non-null, bearish  → actual <= target ? 1 : 0
  *   target null, creation non-null, bullish  → actual > creation ? 1 : 0
  *   target null, creation non-null, bearish  → actual < creation ? 1 : 0
- *   target null, creation null   → null (skip — no baseline)
- *   neutral / other direction    → null (skip)
+ *   neutral, creation non-null → |actual - creation| / creation < NEUTRAL_BAND_PCT ? 1 : 0
+ *   neutral, creation null     → "excluded" sentinel (caller must call excludeClaim)
+ *   target null, creation null, non-neutral → null (caller skips — no baseline)
+ *
+ * Returns "excluded" string as a sentinel for the neutral+no-creation_price case.
  */
-function evaluateOutcome(
+export function evaluateOutcome(
   actualPrice: number,
   direction: string,
   targetPrice: number | null,
   creationPrice: number | null,
-): 0 | 1 | null {
+): 0 | 1 | "excluded" | null {
   if (targetPrice != null) {
     switch (direction) {
       case "bullish":
         return actualPrice >= targetPrice ? 1 : 0;
       case "bearish":
         return actualPrice <= targetPrice ? 1 : 0;
+      case "neutral": {
+        // Neutral with explicit target: band around target
+        const movePct = Math.abs((actualPrice - targetPrice) / targetPrice) * 100;
+        return movePct < NEUTRAL_BAND_PCT ? 1 : 0;
+      }
       default:
         return null;
     }
   }
+
   // Direction-only fallback — requires creation_price as baseline
+  if (direction === "neutral") {
+    if (creationPrice == null) return "excluded";
+    const movePct = Math.abs((actualPrice - creationPrice) / creationPrice) * 100;
+    return movePct < NEUTRAL_BAND_PCT ? 1 : 0;
+  }
+
   if (creationPrice == null) return null;
   switch (direction) {
     case "bullish":
@@ -90,7 +123,8 @@ function evaluateOutcome(
 }
 
 /**
- * Fetches claims due for resolution: resolution_date <= today AND unresolved.
+ * Fetches claims due for resolution: resolution_date <= today AND unresolved
+ * AND not already excluded.
  */
 function getClaimsDueForResolution(
   db: Database,
@@ -100,6 +134,7 @@ function getClaimsDueForResolution(
     .prepare(
       `SELECT * FROM prediction_claims
        WHERE resolution_outcome IS NULL
+         AND is_excluded = 0
          AND resolution_date <= ?
        ORDER BY resolution_date ASC`,
     )
@@ -109,30 +144,72 @@ function getClaimsDueForResolution(
 
 /**
  * Marks a claim as unresolvable (no price data within retry window).
+ * Sets is_excluded=1 so it is excluded from hitRate and not re-picked up.
+ *
+ * INVARIANT: after this call, is_excluded=1 and resolved_at IS NOT NULL,
+ * satisfying the "no terminal NULL without explicit excluded status" contract.
  */
 function markClaimUnresolvable(db: Database, id: number): void {
   db.prepare(
     `UPDATE prediction_claims
-     SET resolved_at = ?
+     SET resolved_at = ?,
+         is_excluded = 1
      WHERE id = ?`,
   ).run(new Date().toISOString(), id);
 }
 
 /**
- * Fetches the close price from daily_ohlcv for a given stock and date.
- * Returns null if no row is found.
+ * Fetches the close price from daily_ohlcv using nearest-trading-day matching.
+ *
+ * Strategy:
+ *   1. Prefer the latest bar with date <= resolution_date (prior close on/before)
+ *   2. Fallback: first bar with date > resolution_date within OHLCV_LOOKFORWARD_DAYS
+ *
+ * This resolves the CALENDAR-vs-TRADING-DAY mismatch: when resolution_date falls
+ * on a weekend or holiday, the exact-date query returns NULL. Nearest-day matching
+ * uses the prior trading day's close (or the next available bar) instead.
+ *
+ * All parameters are bound — no interpolation.
+ *
+ * @param db           - SQLite database connection
+ * @param stockCode    - Stock ticker, e.g. "VCB"
+ * @param resolutionDate - Target date YYYY-MM-DD
+ * @returns close price in VND, or null if no OHLCV within lookforward window
  */
-function getClosePrice(
+export function getClosePriceNearestTradingDay(
   db: Database,
   stockCode: string,
-  date: string,
+  resolutionDate: string,
 ): number | null {
-  const row = db
+  // Leg 1: latest bar on or before resolution_date
+  const before = db
     .prepare(
-      `SELECT close FROM daily_ohlcv WHERE code = ? AND date = ? LIMIT 1`,
+      `SELECT close FROM daily_ohlcv
+       WHERE code = ? AND date <= ?
+       ORDER BY date DESC
+       LIMIT 1`,
     )
-    .get(stockCode, date) as { close: number } | undefined;
-  return row?.close ?? null;
+    .get(stockCode, resolutionDate) as { close: number } | null;
+
+  if (before !== null) {
+    return before.close;
+  }
+
+  // Leg 2: first bar strictly after resolution_date (within lookforward window)
+  const lookforwardDate = new Date(resolutionDate);
+  lookforwardDate.setDate(lookforwardDate.getDate() + OHLCV_LOOKFORWARD_DAYS);
+  const lookforwardStr = lookforwardDate.toISOString().slice(0, 10);
+
+  const after = db
+    .prepare(
+      `SELECT close FROM daily_ohlcv
+       WHERE code = ? AND date > ? AND date <= ?
+       ORDER BY date ASC
+       LIMIT 1`,
+    )
+    .get(stockCode, resolutionDate, lookforwardStr) as { close: number } | null;
+
+  return after !== null ? after.close : null;
 }
 
 /**
@@ -157,7 +234,7 @@ function daysBetween(dateFrom: string, dateTo: string): number {
  * The function NEVER throws — all errors are caught and logged.
  *
  * @param db - SQLite database connection (defaults to production singleton)
- * @returns    Summary of resolved / unresolvable / skipped claims
+ * @returns    Summary of resolved / unresolvable / skipped / excluded claims
  */
 export async function runPredictionResolution(
   db?: Database,
@@ -169,6 +246,7 @@ export async function runPredictionResolution(
     resolved: 0,
     unresolvable: 0,
     skipped: 0,
+    excluded: 0,
   };
 
   let claims: PredictionClaimRow[];
@@ -192,18 +270,18 @@ export async function runPredictionResolution(
 
   for (const claim of claims) {
     try {
-      const closePrice = getClosePrice(
+      const closePrice = getClosePriceNearestTradingDay(
         database,
         claim.stock,
         claim.resolution_date,
       );
 
       if (closePrice === null) {
-        // No price data available
+        // No price data available within lookforward window
         const daysOverdue = daysBetween(claim.resolution_date, today);
 
         if (daysOverdue > RETRY_WINDOW_DAYS) {
-          // Past retry window — mark unresolvable
+          // Past retry window — mark unresolvable (is_excluded=1 satisfies invariant)
           markClaimUnresolvable(database, claim.id);
           result.unresolvable++;
           logger.info(
@@ -219,17 +297,31 @@ export async function runPredictionResolution(
         continue;
       }
 
-      // Evaluate the claim direction against actual price
+      // Evaluate the claim direction against actual price (with neutral-band rule)
       const outcome = evaluateOutcome(
         closePrice,
         claim.direction,
         claim.target_price ?? null,
-        claim.creation_price ?? null,   // Sprint 065 — direction-only fallback baseline
+        claim.creation_price ?? null,
       );
 
+      if (outcome === "excluded") {
+        // Neutral claim with no creation_price — exclude from hitRate
+        // INVARIANT: excludeClaim sets is_excluded=1 + resolved_at=now (non-NULL)
+        excludeClaim(database, claim.id);
+        result.excluded++;
+        logger.info(
+          `[prediction-resolution] excluded claim id=${claim.id} stock=${claim.stock} direction=neutral (no creation_price — cannot score neutral band)`,
+        );
+        continue;
+      }
+
       if (outcome === null) {
-        // Cannot evaluate (neutral direction or no target_price) — skip
+        // Cannot evaluate (unknown direction or no target/creation baseline) — skip
         result.skipped++;
+        logger.debug(
+          `[prediction-resolution] skipping claim id=${claim.id} stock=${claim.stock} direction=${claim.direction} — no evaluation basis`,
+        );
         continue;
       }
 
@@ -249,7 +341,7 @@ export async function runPredictionResolution(
   }
 
   logger.info(
-    `[prediction-resolution] done — resolved=${result.resolved} unresolvable=${result.unresolvable} skipped=${result.skipped}`,
+    `[prediction-resolution] done — resolved=${result.resolved} unresolvable=${result.unresolvable} skipped=${result.skipped} excluded=${result.excluded}`,
   );
 
   return result;
@@ -262,7 +354,7 @@ export async function runPredictionResolution(
 /**
  * Cron wrapper for runPredictionResolution.
  * Wraps with recordJobRun for observability.
- * Called daily at 16:30 UTC (30 16 * * *) from jobs.ts.
+ * Called daily at 16:35 UTC (35 16 * * *) from jobs.ts.
  *
  * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
  */
@@ -275,7 +367,7 @@ export async function runPredictionResolutionJob(): Promise<void> {
   try {
     await recordJobRun(db, "predictionResolutionJob", async () => {
       const result = await runPredictionResolution(db);
-      return { rowsWritten: result.resolved + result.unresolvable };
+      return { rowsWritten: result.resolved + result.unresolvable + result.excluded };
     });
   } catch (err) {
     logger.error("[prediction-resolution] unhandled error", {

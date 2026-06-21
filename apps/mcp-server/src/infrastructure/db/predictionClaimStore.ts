@@ -70,6 +70,13 @@ export interface PredictionClaimRow extends PredictionClaimInput {
   brier_score: number | null;
   /** Sprint 065 — price at claim-creation time. NULL for legacy rows. */
   creation_price: number | null;
+  /**
+   * PRED-RESOLVER-GAP-FIX — 1 if this claim is excluded from hitRate/Brier scoring.
+   * Used for legacy neutral claims where creation_price=NULL and no band can be computed.
+   * Excluded claims have resolved_at set but resolution_outcome stays NULL.
+   * Defaults to 0 (not excluded) for rows that predate this column.
+   */
+  is_excluded?: number;
   /** ISO 8601 UTC — when the claim was recorded */
   created_at: string;
   /** ISO 8601 UTC — when the claim was resolved. NULL while pending. */
@@ -92,6 +99,8 @@ interface ClaimDbRow {
   created_at: string;
   resolved_at: string | null;
   creation_price: number | null;
+  /** PRED-RESOLVER-GAP-FIX: 0 = normal, 1 = excluded from hitRate */
+  is_excluded: number | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,6 +121,7 @@ function mapRow(r: ClaimDbRow): PredictionClaimRow {
     actual_price: r.actual_price,
     brier_score: r.brier_score,
     creation_price: r.creation_price ?? null,   // Sprint 065
+    is_excluded: r.is_excluded ?? 0,             // PRED-RESOLVER-GAP-FIX
     created_at: r.created_at,
     resolved_at: r.resolved_at,
   };
@@ -188,6 +198,30 @@ export function resolveClaim(
          resolved_at        = ?
      WHERE id = ?`,
   ).run(outcome, actualPrice, brierScore, resolvedAt, id);
+}
+
+/**
+ * Mark a prediction claim as excluded from hitRate/Brier scoring.
+ *
+ * Used for legacy neutral claims where creation_price=NULL and no neutral-band
+ * evaluation is possible. Sets is_excluded=1 and resolved_at=now so the claim
+ * is no longer picked up by the pending-claims query.
+ *
+ * HARD INVARIANT: after this call, resolved_at IS NOT NULL and is_excluded=1 —
+ * satisfying the "no terminal path leaves outcome NULL without explicit excluded
+ * status" contract from PRED-RESOLVER-GAP-FIX.
+ *
+ * @param db - SQLite database connection
+ * @param id - Row id of the claim to exclude
+ */
+export function excludeClaim(db: Database, id: number): void {
+  const resolvedAt = new Date().toISOString();
+  db.prepare(
+    `UPDATE prediction_claims
+     SET is_excluded = 1,
+         resolved_at = ?
+     WHERE id = ?`,
+  ).run(resolvedAt, id);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
