@@ -259,6 +259,69 @@ export function getIndicatorHistory(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DSI-MACRO-PHANTOM-STALE-GUARD: staleness threshold for news-mined indicators
+//
+// News-mined prices (WTI, dow_jones, etc.) can cite historical prices from
+// articles published days ago. A row with extracted_at=now may carry a price
+// from a 2-month-old article. We treat any row whose extracted_at is older
+// than TRACKED_INDICATOR_STALE_MS as stale and must NOT serve it as current.
+//
+// 4 hours = macro refresh job cadence. If a news article hasn't mentioned the
+// indicator within 4h, assume the value is not representative of current market.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Staleness threshold for news-mined price indicators: 4 hours. */
+export const TRACKED_INDICATOR_STALE_MS = 4 * 60 * 60 * 1000;
+
+/**
+ * Returns all unique tracked indicators with their latest value + isStale flag.
+ *
+ * DSI-MACRO-PHANTOM-STALE-GUARD: each result carries isStale=true when
+ * lastSeen is older than TRACKED_INDICATOR_STALE_MS (4 hours). Consumers
+ * MUST surface or suppress stale values — never serve them as "current".
+ *
+ * @param db - SQLite Database instance (injected for testability)
+ * @returns Array of { indicator, value, unit, lastSeen, dataPoints, isStale }
+ */
+export function listTrackedIndicatorsFromDb(db: import("bun:sqlite").Database): {
+  indicator: string;
+  value: number;
+  unit: string;
+  lastSeen: string;
+  dataPoints: number;
+  isStale: boolean;
+}[] {
+  const rows = db
+    .query<
+      { indicator: string; value: number; unit: string; last_seen: string; cnt: number },
+      []
+    >(
+      `SELECT indicator, value, unit, extracted_at as last_seen,
+              (SELECT COUNT(*) FROM tracked_indicators t2 WHERE t2.indicator = t1.indicator) as cnt
+       FROM tracked_indicators t1
+       WHERE extracted_at = (
+         SELECT MAX(extracted_at) FROM tracked_indicators t3 WHERE t3.indicator = t1.indicator
+       )
+       GROUP BY indicator
+       ORDER BY last_seen DESC`,
+    )
+    .all();
+
+  const now = Date.now();
+  return rows.map((r) => {
+    const ageMs = now - new Date(r.last_seen).getTime();
+    return {
+      indicator: r.indicator,
+      value: r.value,
+      unit: r.unit,
+      lastSeen: r.last_seen,
+      dataPoints: r.cnt,
+      isStale: ageMs >= TRACKED_INDICATOR_STALE_MS,
+    };
+  });
+}
+
 /**
  * Returns all unique tracked indicators with their latest value.
  *

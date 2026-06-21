@@ -223,17 +223,32 @@ export function buildMacroSection(db: Database): string {
   }
 
   try {
+    // DSI-MACRO-PHANTOM-STALE-GUARD: news-mined prices (WTI, dow_jones, etc.) can
+    // cite arbitrary historical prices from articles published days ago. The old
+    // 48h window served stale phantom values (WTI=95.5, dow_jones=23750) as
+    // "current" prices, corrupting regime analysis (report I10, 2026-06-13).
+    //
+    // Fix: tighten to 4 hours — matches macro refresh job cadence. If no news
+    // article mentioned the indicator in the last 4h, the value is not
+    // representative of current market conditions and must NOT be served.
+    // R-2 NOTE: TypeScript writes extracted_at as new Date().toISOString() which
+    // uses the "T" separator (e.g. "2026-06-20T18:52:12.302Z"). SQLite's
+    // datetime('now') uses space separator ("2026-06-20 20:52:12") — string
+    // comparison "2026-06-20T..." > "2026-06-20 ..." because ASCII 'T'(84) > ' '(32).
+    // This means all ISO-8601 rows with 'T' pass the > check unconditionally.
+    // Fix: use strftime to normalise both sides to epoch seconds via unixepoch().
+    const STALE_THRESHOLD_SECONDS = 4 * 3600;
     const tracked = db
       .prepare(
         `SELECT indicator AS code, value AS price, NULL AS change_pct, extracted_at AS updated_at
          FROM tracked_indicators
-         WHERE extracted_at >= datetime('now', '-48 hours')
+         WHERE (strftime('%s', 'now') - strftime('%s', extracted_at)) < ?
          GROUP BY indicator
          HAVING extracted_at = MAX(extracted_at)
          ORDER BY indicator
          LIMIT 20`,
       )
-      .all() as MacroRow[];
+      .all(STALE_THRESHOLD_SECONDS) as MacroRow[];
 
     for (const row of tracked) {
       const alreadyShown = found.some((line) => line.startsWith(row.code));
