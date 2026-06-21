@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260621T0548Z. FIX-FB-GATE-SECTOR-NAME-VALIDATOR qa→done_verified (QA APPROVED + router RAW re-verify). Board idle wip=0. PO reconcile pending: 3 orphan no-handoff review rows (FIX-BCTC-ENRICH-SILENT-0ROWS P0, FIX-CI-RED-7fef5850 P0, FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG P2) + ARCH-SHIP-WAVE-REAUDIT PARKED. Deferred done_verified gates (no code pending): FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR (next market-hours scan), FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN (next evening job).",
+    "next_action": "Tick 20260621T0643Z. SESSION-GATE: read_telegram_reports(new)=0, signals=0, head idle wip=0. list_unresolved_reports=36 — ALL already-claimed+tracked recurring health-recheck cluster, dedup-verified no new work: BCTC-P0=FALSE-ALARM(FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH), Reuters/TE(TASK_1899a/1910a), ISM/FRED(ops-fred-key), WTI/DJIA(FIX-COMMODITY-WTI-DELTA-CORRUPT+FIX-MACRO-SNAPSHOT-DELTAS-NULL), BDI-404(FIX-BDI-SHIPPING-STALE-404-GUARD), sentiment-trend(FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL; flow file already fixed to per-ticker stock_code loop), HNX×3(FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE backlog + 2 done_verified), SBV×2(FIX-SBV-FETCHER-ZERO-VALUE-EMIT+FIX-SBV-FX-VPS-FETCHER-UNHEALTHY), digest-W26(FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP done_verified), D4-orphan-lock(sau-d4 TRIAGED LOW). NOT processing reports (open backlog≠fixed → would false-signal resolved). No re-dispatch.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T05:48:29Z",
+    "updated_at": "2026-06-21T06:43:49Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T0548Z"
+    "last_tick": "20260621T0643Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
