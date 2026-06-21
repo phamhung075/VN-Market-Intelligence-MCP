@@ -10,22 +10,21 @@
  * This handler ONLY maps + aggregates — no SQL here.
  *
  * Live contract (probed 2026-06-11 against named-volume DB):
- *   7 total claims, agent_id="08-prediction-synthesizer".
- *   Distribution: 3 correct, 1 wrong, 3 pending.
- *   Resolved brier scores: FPT 0.0576, BID 0.0529, VIC 0.0441, FPT(wrong) 0.3969.
- *   hitRate = 3/4 = 0.75; avgBrier = (0.0576+0.0529+0.0441+0.3969)/4 ≈ 0.1379.
+ *   9 total claims, agent_id="08-prediction-synthesizer".
+ *   Distribution: 3 correct, 3 wrong, 0 pending, 3 excluded.
+ *   hitRate = 3/6 = 0.50 (correct / (correct+wrong), excluded NOT counted).
  *
  * Outcome mapping:
- *   resolution_outcome NULL  → "pending"
- *   resolution_outcome 1     → "correct"
- *   resolution_outcome 0     → "wrong"
- * NOTE: rows with a past resolution_date but outcome=NULL are "pending" — the
- * resolver could not determine the outcome (e.g. neutral claims, missing price).
- * Do NOT invent a verdict.
+ *   is_excluded = 1              → "excluded" (takes PRECEDENCE over null check)
+ *   resolution_outcome NULL + is_excluded != 1 → "pending"
+ *   resolution_outcome 1         → "correct"
+ *   resolution_outcome 0         → "wrong"
+ * NOTE: rows with is_excluded=1 are legacy neutral claims where creation_price=NULL —
+ * the resolver could not evaluate them. They are terminal; do NOT show as "pending".
  *
  * Query params:
- *   ?limit=N         — default 100, clamped [1, 500]
- *   ?outcome=correct|wrong|pending — optional filter (all claims when absent)
+ *   ?limit=N                             — default 100, clamped [1, 500]
+ *   ?outcome=correct|wrong|pending|excluded — optional filter (all claims when absent)
  *
  * Sort: resolution_date DESC, id DESC.
  *
@@ -34,10 +33,11 @@
  *     generatedAt: string,                // ISO 8601 server clock
  *     calibration: {
  *       total:    number,                 // all claims in DB (unfiltered)
- *       resolved: number,                 // outcome IS NOT NULL
+ *       resolved: number,                 // outcome IS NOT NULL (correct + wrong)
  *       correct:  number,
  *       wrong:    number,
- *       pending:  number,
+ *       pending:  number,                 // resolution_outcome NULL AND NOT is_excluded
+ *       excluded: number,                 // is_excluded=1 (NEW — FIX-PRED-CLAIMS-EXCLUDED)
  *       hitRate:  number | null,          // correct/resolved; null when resolved=0
  *       avgBrier: number | null,          // mean brier over resolved rows with brier_score; null when none
  *     },
@@ -52,7 +52,7 @@
  *         creationPrice:  number | null,
  *         confidence:     number,
  *         resolutionDate: string,
- *         outcome:        "correct"|"wrong"|"pending",
+ *         outcome:        "correct"|"wrong"|"pending"|"excluded",
  *         actualPrice:    number | null,
  *         brierScore:     number | null,
  *         createdAt:      string,
@@ -88,7 +88,7 @@ const MAX_LIMIT = 500;
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ClaimOutcome = "correct" | "wrong" | "pending";
+export type ClaimOutcome = "correct" | "wrong" | "pending" | "excluded";
 
 /** One claim item in the response. */
 export interface PredictionClaimItem {
@@ -115,6 +115,8 @@ export interface CalibrationSummary {
   correct: number;
   wrong: number;
   pending: number;
+  /** FIX-PRED-CLAIMS-EXCLUDED: count of is_excluded=1 rows (legacy neutral, no creation_price). */
+  excluded: number;
   /** correct / resolved; null when resolved === 0 (guards divide-by-zero). */
   hitRate: number | null;
   /** Mean brier score over resolved rows that have a brier_score; null when none. */
@@ -134,11 +136,26 @@ export interface PredictionClaimsResponse {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Map a raw resolution_outcome integer to a human-readable outcome string.
- * NULL → "pending", 1 → "correct", 0 → "wrong".
+ * Map a raw resolution_outcome integer (and optional is_excluded flag) to a
+ * human-readable outcome string.
+ *
+ * Precedence rules:
+ *   is_excluded=1                → "excluded" (TAKES PRECEDENCE over null check)
+ *   resolution_outcome NULL + not excluded → "pending"
+ *   resolution_outcome 1         → "correct"
+ *   resolution_outcome 0         → "wrong"
+ *
+ * @param resolution_outcome - Raw DB value (NULL / 0 / 1)
+ * @param is_excluded        - DB is_excluded column value (1 = excluded; 0/null = not excluded)
+ *
  * Exported for unit testing.
  */
-export function mapOutcome(resolution_outcome: number | null): ClaimOutcome {
+export function mapOutcome(
+  resolution_outcome: number | null,
+  is_excluded?: number | null,
+): ClaimOutcome {
+  // is_excluded takes precedence — these rows are terminally excluded, not pending.
+  if (is_excluded === 1) return "excluded";
   if (resolution_outcome === null) return "pending";
   if (resolution_outcome === 1) return "correct";
   return "wrong";
@@ -160,7 +177,7 @@ export function mapClaimRow(row: PredictionClaimRow): PredictionClaimItem {
     creationPrice: row.creation_price ?? null,
     confidence: row.confidence,
     resolutionDate: row.resolution_date,
-    outcome: mapOutcome(row.resolution_outcome),
+    outcome: mapOutcome(row.resolution_outcome, row.is_excluded),
     actualPrice: row.actual_price ?? null,
     brierScore: row.brier_score ?? null,
     createdAt: row.created_at,
@@ -171,7 +188,15 @@ export function mapClaimRow(row: PredictionClaimRow): PredictionClaimItem {
 /**
  * Compute calibration stats across ALL claims (unfiltered — full DB picture).
  *
+ * Buckets:
+ *   excluded = is_excluded=1 (legacy neutral, no creation_price — terminal, not scored)
+ *   pending  = resolution_outcome NULL AND NOT is_excluded
+ *   correct  = resolution_outcome = 1
+ *   wrong    = resolution_outcome = 0
+ *   resolved = correct + wrong (excluded NOT counted)
+ *
  * hitRate  = correct / resolved; null when resolved === 0 (no NaN/Infinity).
+ *            excluded rows do NOT enter the denominator.
  * avgBrier = mean brier_score over rows where brier_score IS NOT NULL;
  *            null when no such rows exist.
  *
@@ -181,10 +206,14 @@ export function computeCalibration(rows: PredictionClaimRow[]): CalibrationSumma
   let correct = 0;
   let wrong = 0;
   let pending = 0;
+  let excluded = 0;
   const brierValues: number[] = [];
 
   for (const row of rows) {
-    if (row.resolution_outcome === null) {
+    if (row.is_excluded === 1) {
+      // Terminally excluded — NOT pending, NOT scored.
+      excluded++;
+    } else if (row.resolution_outcome === null) {
       pending++;
     } else if (row.resolution_outcome === 1) {
       correct++;
@@ -207,7 +236,7 @@ export function computeCalibration(rows: PredictionClaimRow[]): CalibrationSumma
     ? null
     : brierValues.reduce((sum, v) => sum + v, 0) / brierValues.length;
 
-  return { total, resolved, correct, wrong, pending, hitRate, avgBrier };
+  return { total, resolved, correct, wrong, pending, excluded, hitRate, avgBrier };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -240,8 +269,13 @@ export function handleGetPredictionClaims(
 
     // Parse ?outcome= optional filter
     const outcomeParam = url.searchParams.get("outcome");
-    let outcomeFilter: "correct" | "wrong" | "pending" | undefined;
-    if (outcomeParam === "correct" || outcomeParam === "wrong" || outcomeParam === "pending") {
+    let outcomeFilter: "correct" | "wrong" | "pending" | "excluded" | undefined;
+    if (
+      outcomeParam === "correct" ||
+      outcomeParam === "wrong" ||
+      outcomeParam === "pending" ||
+      outcomeParam === "excluded"
+    ) {
       outcomeFilter = outcomeParam;
     }
 

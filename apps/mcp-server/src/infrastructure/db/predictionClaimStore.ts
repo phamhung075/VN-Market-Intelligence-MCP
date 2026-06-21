@@ -328,22 +328,27 @@ export function getClaimsByAgent(
 }
 
 /**
- * Return ALL claims (resolved + pending) ordered for the calibration tracker:
+ * Return ALL claims (resolved + pending + excluded) ordered for the calibration tracker:
  * resolution_date DESC, then id DESC (newest due-date first; ties broken by insert order).
  *
  * Used by GET /api/prediction-claims — the "Dự báo AI & Kết quả" accountability ledger.
  *
  * Optional filters:
- *   - outcome: "correct" | "wrong" | "pending" — maps to resolution_outcome 1/0/NULL
+ *   - outcome: "correct" | "wrong" | "pending" | "excluded"
+ *     Maps to:
+ *       correct  → resolution_outcome = 1
+ *       wrong    → resolution_outcome = 0
+ *       pending  → resolution_outcome IS NULL AND (is_excluded IS NULL OR is_excluded = 0)
+ *       excluded → is_excluded = 1
  *
  * @param db      - SQLite database connection
  * @param limit   - Max rows to return (default 100, caller should clamp to [1,500])
- * @param outcome - Optional outcome filter ("correct" | "wrong" | "pending")
+ * @param outcome - Optional outcome filter ("correct" | "wrong" | "pending" | "excluded")
  */
 export function getAllClaimsForTracker(
   db: Database,
   limit = 100,
-  outcome?: "correct" | "wrong" | "pending",
+  outcome?: "correct" | "wrong" | "pending" | "excluded",
 ): PredictionClaimRow[] {
   if (outcome === "correct") {
     const rows = db
@@ -370,10 +375,26 @@ export function getAllClaimsForTracker(
   }
 
   if (outcome === "pending") {
+    // Tighten: exclude is_excluded=1 rows — they are NOT pending even though
+    // resolution_outcome IS NULL (they are terminally excluded, not awaiting resolution).
     const rows = db
       .prepare(
         `SELECT * FROM prediction_claims
          WHERE resolution_outcome IS NULL
+           AND (is_excluded IS NULL OR is_excluded = 0)
+         ORDER BY resolution_date DESC, id DESC
+         LIMIT ?`,
+      )
+      .all(limit) as ClaimDbRow[];
+    return rows.map(mapRow);
+  }
+
+  if (outcome === "excluded") {
+    // PRED-RESOLVER-GAP-FIX consumer: return terminally excluded legacy claims.
+    const rows = db
+      .prepare(
+        `SELECT * FROM prediction_claims
+         WHERE is_excluded = 1
          ORDER BY resolution_date DESC, id DESC
          LIMIT ?`,
       )
