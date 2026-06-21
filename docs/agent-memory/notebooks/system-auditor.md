@@ -1,6 +1,17 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c616 · 2026-06-21T00:07:07Z
+### Audit Run Tier-1 (00:07 UTC 2026-06-21, Sunday market CLOSED)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 0 NEW (all runtime checks PASS; stable healthy state)
+- Status: HEALTHY — container fleet UP+HEALTHY; normal resource utilization
+
+**Verdict Summary:**
+- A-01..A-11 containers: all 12 UP ✓ | A-12..A-19 health: 5/5 PASS ✓
+- A-20 mcp-server restart: 0 ✓ | A-30 memory: 14.46% ✓ | A-32 disk: 35% (25GB avail) ✓
+
+**Signals:** 0 NEW | Status: CLEAN
 ## c615 · 2026-06-21T00:03:34Z
 ### Audit Run Tier-3 (00:03 UTC 2026-06-21, Saturday early morning)
 - Tier: 3 | Container tooling: 3/3 PASS | Inter-service: 4/4 PASS | DB checks: 16 run
@@ -26,12 +37,5 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-01..A-11 containers: all 12 UP ✓ | A-12..A-19 health: 5/5 PASS ✓
 - A-20 pdf-extractor: 3/3 PASS ✓ | A-21 restart: 0 ✓
 - A-30 memory: 8.07% PASS ✓ | A-32 disk: 34% ✓
-
-**Signals:** 0 NEW | Status: CLEAN
-## c613 · 2026-06-20T23:07:11Z
-### Audit Run Tier-1 (23:07 UTC 2026-06-20, Sunday market CLOSED)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
-- Anomalies: 0 NEW (all runtime checks PASS; stable healthy state)
-- Status: HEALTHY — container fleet UP+HEALTHY; normal resource utilization
 
 **Signals:** 0 NEW | Status: CLEAN
