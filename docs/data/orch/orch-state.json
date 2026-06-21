@@ -194,12 +194,12 @@
     "status": "active",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Idle. Tick 20260621T0407Z closed. Triaged 34-report unresolved backlog (3244-3277): ~20 = BCTC-P0 false-alarm flood (root tracked), all other themes (MACRO phantom, W26 digest dedup [done_verified, do-NOT-repost], HNX off-hours, SBV zero, D4 lock, FRED/ISM) already board-tracked. Minted 1 genuinely-untracked bug FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL (P3, backlog) — fb-market-poster flow:118 bare get_sentiment_trend({}) missing stock_code, recurring ~10x; gate has notebook-only-false-fix guard. Promoted FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH P2->P1 (root of ~20 false BCTC-P0/day; bump-not-lane-move, WIP unchanged 0/2). Auditor Tier-1 CLEAN (12/12 UP, 0 signal rows). 5 deferred done_verified gates await live cycles (BB-liquidity-floor + foreign-flow-zero-pad rebuilt 2026-06-20T23:12:23Z; HNX-offhours; bctc-idle-monitor; macro-phantom-guard). WIP=0/2.",
+    "next_action": "Idle. Tick 20260621T0442Z closed. Health-recheck report 3278 (CRITICAL, 4 BUGs day-5) RAW-verified + claimed (stop re-fire churn): ALL 4 are real-or-tracked dedup-hits, ZERO untracked work. BUG-1 BCTC-VPS-day5/51-stuck = FALSE ALARM (get_bctc_full VCB+FPT serve validated Q1-2026 financials end-to-end; push-age-misread-as-crash; root tracked FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH P1). BUG-2 Reuters-RSS = FIX-NEWS-CB-FALSE-CLOSED P1 +3. BUG-3 macro-deltas-null (RAW-confirmed oilUsdDelta/goldUsdDelta null, abs prices live) = FIX-MACRO-SNAPSHOT-DELTAS-NULL+FIX-COMMODITY-WTI-DELTA-CORRUPT. BUG-4 ISM-no_data (RAW-confirmed; FedFunds 3.63 populated so FRED_API_KEY set, root=ISM-series-fetch) = AUDIT-FC-FRED-MACRO. No mint, no PO spawn, no ops. WIP=0/2.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T04:15:52Z",
+    "updated_at": "2026-06-21T04:42:12Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T0407Z"
+    "last_tick": "20260621T0442Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
