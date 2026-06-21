@@ -191,13 +191,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "ops",
-    "next_action": "Tick 20260621T1837Z. Drained 18:06 cowork telemetry. health-recheck 3285: BUG-5 orphan lock esc-datacov:FPT:Q1-2026:ESC-3 RELEASED by router (task_force_release_orphan owner=bctc-analyst, released:true, heartbeat_age 432293s≈5d). ISSUE-9 weatherCheckJob-6h-block = FALSE POSITIVE (RAW: 17:00 run success 4ms). ISSUE-3 intel-cycle-stall = MILD (18:00 ran 122691ms but COMPLETED success, not a hang) — LOW defensive only, not routed. Incidental: pollNews_all_sources_dark 8 unfinished rows/8d (no finished_at) — ambiguous hang-vs-logging, pre-existing, noted-not-minted. BUG-1/2/3/4 + ISSUE-1(sbv 3rd restart) recurring-tracked. PRED-RESOLVER-GAP-FIX done_verified. Board idle wip0; signal_queue 0 NEW.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY",
+    "next_agent": "dev",
+    "next_action": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY (P2, user-reported dashboard) dispatched: dev-mcp-server (handler+store) + dev-frontend (card) in parallel, shared contract outcome+\"excluded\"/label\"Loại trừ\"/calibration.excluded. On both REVIEW → QA → ops rebuild → live-verify dashboard shows 3 ids as Loại trừ + pending=0.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-21T18:18:00Z",
+    "updated_at": "2026-06-21T20:08:00Z",
     "updated_by": "dev-team-cron-router",
     "last_tick": "20260621T1837Z"
   },
@@ -11757,32 +11757,6 @@
         "created_at": "2026-06-21T16:19:36Z",
         "created_by": "po",
         "source": "health-recheck 2026-06-21T16:05Z ISSUE-8 (Telegram report; not in signal_queue)"
-      },
-      {
-        "id": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY",
-        "type": "FIX",
-        "title": "prediction-claims serve+display: is_excluded claims masquerade as \"Đang chờ\" pending forever (dashboard 3 phantom pendings)",
-        "desc": "Consumer/display leg of PRED-RESOLVER-GAP-FIX (resolver/DB leg done_verified — do NOT reopen). LIVE BUG on \"Dự báo AI & Kết quả\" dashboard: 3 terminally is_excluded=1 claims (ids 1 FPT, 8 VNINDEX, 9 GAS — legacy neutral, creation_price NULL, resolution_outcome NULL, resolved_at set, correctly excluded by resolver) masquerade as \"Đang chờ\" (pending) FOREVER with prices \"—\". Stats show 9 total / 6 resolved / 3 pending (should be 0 pending). hitRate 67% + Brier 0.2135 already CORRECT (excluded out of denominator). Root: serve+display layer has NO is_excluded awareness.\n\nZONE-SPLIT (3 files, 2 sub-zones):\n[dev-mcp-server]\n 1. apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts: add ClaimOutcome \"excluded\"; mapOutcome(row) → is_excluded=1 ⇒ \"excluded\" (PRECEDES the null→pending check, so pass the full row not just resolution_outcome); computeCalibration → new excluded bucket, pending = resolution_outcome NULL AND is_excluded!=1 (excluded NOT in pending); keep hitRate=correct/(correct+wrong) (already excludes); add \"excluded\" to ?outcome= enum + endpoint doc-comment (L18-30 outcome mapping + L26-28 query params).\n 2. apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts: getAllClaimsForTracker() — the ?outcome=pending branch (L375 WHERE resolution_outcome IS NULL) currently INCLUDES excluded rows → tighten to (resolution_outcome IS NULL AND (is_excluded IS NULL OR is_excluded=0)); ADD an outcome=\"excluded\" branch (WHERE is_excluded=1); widen the param union type to include \"excluded\". (is_excluded already SELECTed via SELECT * + already on PredictionClaimRow from PRED-RESOLVER-GAP-FIX — no schema change.)\n[dev-frontend]\n 3. apps/frontend/app/routes/dashboard.prediction-claims.tsx: PredictionOutcome (L53) += \"excluded\"; outcomeLabel() (~L286) \"excluded\"→ VN \"Loại trừ\" (Không tính điểm) + color class; add \"Loại trừ\" filter tab (alongside Tất cả/Đúng/Sai/Đang chờ); cards in excluded state show the excluded badge NOT \"Đang chờ\".\n\nTESTS: handler unit (excluded row → outcome \"excluded\", computeCalibration NOT counted in pending, hitRate unchanged) + store unit (outcome=excluded returns is_excluded=1 only; outcome=pending excludes them) + frontend outcomeLabel/filter test.\n\nDoD LIVE-VERIFY (after rebuild): GET /api/prediction-claims → ids 1,8,9 outcome \"excluded\" AND calibration.pending=0 AND calibration.excluded=3; dashboard renders them \"Loại trừ\" not \"Đang chờ\". REBUILD_REQUIRED: yes (handler+store baked into mcp-server image; frontend build).",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "multi",
-        "zone_split": [
-          "apps/mcp-server/",
-          "apps/frontend/"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts",
-          "apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts",
-          "apps/frontend/app/routes/dashboard.prediction-claims.tsx"
-        ],
-        "size": "S",
-        "rebuild_required": true,
-        "baseline_pass": true,
-        "parent": "PRED-RESOLVER-GAP-FIX",
-        "standing_goal": "all-info-source-link-dropdown-recheck (Kết quả accuracy)",
-        "created_at": "2026-06-21T20:09:40Z",
-        "created_by": "po",
-        "sprint": "FIX-PRED-CLAIMS-EXCLUDED"
       }
     ],
     "closed_sprints": [
@@ -23307,7 +23281,37 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY",
+        "type": "FIX",
+        "title": "prediction-claims serve+display: is_excluded claims masquerade as \"Đang chờ\" pending forever (dashboard 3 phantom pendings)",
+        "desc": "Consumer/display leg of PRED-RESOLVER-GAP-FIX (resolver/DB leg done_verified — do NOT reopen). LIVE BUG on \"Dự báo AI & Kết quả\" dashboard: 3 terminally is_excluded=1 claims (ids 1 FPT, 8 VNINDEX, 9 GAS — legacy neutral, creation_price NULL, resolution_outcome NULL, resolved_at set, correctly excluded by resolver) masquerade as \"Đang chờ\" (pending) FOREVER with prices \"—\". Stats show 9 total / 6 resolved / 3 pending (should be 0 pending). hitRate 67% + Brier 0.2135 already CORRECT (excluded out of denominator). Root: serve+display layer has NO is_excluded awareness.\n\nZONE-SPLIT (3 files, 2 sub-zones):\n[dev-mcp-server]\n 1. apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts: add ClaimOutcome \"excluded\"; mapOutcome(row) → is_excluded=1 ⇒ \"excluded\" (PRECEDES the null→pending check, so pass the full row not just resolution_outcome); computeCalibration → new excluded bucket, pending = resolution_outcome NULL AND is_excluded!=1 (excluded NOT in pending); keep hitRate=correct/(correct+wrong) (already excludes); add \"excluded\" to ?outcome= enum + endpoint doc-comment (L18-30 outcome mapping + L26-28 query params).\n 2. apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts: getAllClaimsForTracker() — the ?outcome=pending branch (L375 WHERE resolution_outcome IS NULL) currently INCLUDES excluded rows → tighten to (resolution_outcome IS NULL AND (is_excluded IS NULL OR is_excluded=0)); ADD an outcome=\"excluded\" branch (WHERE is_excluded=1); widen the param union type to include \"excluded\". (is_excluded already SELECTed via SELECT * + already on PredictionClaimRow from PRED-RESOLVER-GAP-FIX — no schema change.)\n[dev-frontend]\n 3. apps/frontend/app/routes/dashboard.prediction-claims.tsx: PredictionOutcome (L53) += \"excluded\"; outcomeLabel() (~L286) \"excluded\"→ VN \"Loại trừ\" (Không tính điểm) + color class; add \"Loại trừ\" filter tab (alongside Tất cả/Đúng/Sai/Đang chờ); cards in excluded state show the excluded badge NOT \"Đang chờ\".\n\nTESTS: handler unit (excluded row → outcome \"excluded\", computeCalibration NOT counted in pending, hitRate unchanged) + store unit (outcome=excluded returns is_excluded=1 only; outcome=pending excludes them) + frontend outcomeLabel/filter test.\n\nDoD LIVE-VERIFY (after rebuild): GET /api/prediction-claims → ids 1,8,9 outcome \"excluded\" AND calibration.pending=0 AND calibration.excluded=3; dashboard renders them \"Loại trừ\" not \"Đang chờ\". REBUILD_REQUIRED: yes (handler+store baked into mcp-server image; frontend build).",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "zone": "multi",
+        "zone_split": [
+          "apps/mcp-server/",
+          "apps/frontend/"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts",
+          "apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts",
+          "apps/frontend/app/routes/dashboard.prediction-claims.tsx"
+        ],
+        "size": "S",
+        "rebuild_required": true,
+        "baseline_pass": true,
+        "parent": "PRED-RESOLVER-GAP-FIX",
+        "standing_goal": "all-info-source-link-dropdown-recheck (Kết quả accuracy)",
+        "created_at": "2026-06-21T20:09:40Z",
+        "created_by": "po",
+        "sprint": "FIX-PRED-CLAIMS-EXCLUDED",
+        "dev_agent": "dev-mcp-server+dev-frontend",
+        "dispatched_at": "2026-06-21T20:08:00Z",
+        "dispatched_by": "dev-team-cron-router"
+      }
+    ],
     "ready": [],
     "review": [
       {
