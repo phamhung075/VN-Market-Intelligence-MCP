@@ -23078,7 +23078,7 @@
         "route_to": "dev",
         "size": "M",
         "sprint": "READY",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "status_note": "Resolver must (a) fetch + persist actual_price for bullish/bearish claims at resolution time so target-hit is determinable; (b) define an explicit rule for neutral / null-target claims (e.g. classify by price move vs creation_price, OR mark a distinct terminal status excluded from hitRate — never leave outcome NULL after resolved_at is set). AC met when ids 1/6/7 re-resolve to a non-NULL verdict (or explicit excluded status) and no claim has resolved_at set with resolution_outcome NULL.",
         "title": "Prediction resolver stamps resolved_at but leaves resolution_outcome NULL — claims 1/6/7 stuck pending forever",
         "type": "FIX",
@@ -23107,13 +23107,14 @@
           "decision": "KEEP producing neutral claims; ADD a neutral-band resolution rule. Rationale: a calibrated AI track-record needs honest 'I expect this to stay flat' calls scored as hits/misses — silently dropping neutral predictions would bias the hit-rate toward only directional bets and hide the model's flat-call accuracy, violating the no-fake/full-accountability standing goals. Rule: over the horizon window, |actual_move_pct from creation_price| < NEUTRAL_BAND_PCT (default 2.0%, config not hardcoded) = HIT; |move| >= band = MISS. Requires creation_price to be persisted (already is) and a trading-day-anchored window (covered by the trading-day leg above). For legacy neutral claims with creation_price=NULL (e.g. id 1 FPT), no band can be computed -> mark an explicit terminal 'excluded' status (excluded from hitRate), never NULL.",
           "band_default_pct": 2.0
         },
-        "next_agent": "dev",
+        "next_agent": "qa",
         "promoted_at": "2026-06-21T08:39:42Z",
         "promoted_by": "po",
         "promote_note": "WIP=0, head idle, spec complete after po-s110 fold/enrich. Routes to dev (apps/mcp-server) — single zone, no architect split needed (well-scoped resolver+producer contract). qa gate = SAME-DB live re-verify of stuck ids per .folded_evidence.verification_gate.",
         "dev_agent": "dev-mcp-server",
         "dispatched_at": "2026-06-21T08:55:00Z",
-        "dispatched_by": "dev-team-cron-router"
+        "dispatched_by": "dev-team-cron-router",
+        "dev_note": "REVIEW: impl complete. Commit d804a013. tsc clean. 13359 pass / 42 skip / 59 fail (59 fail = pre-existing disjoint set, none overlap changed files). New tests: 28 assertions in PRED-RESOLVER-GAP-FIX.test.ts. REBUILD_REQUIRED: yes (is_excluded column migration + container rebuild needed for live DB). QA gate: SAME-DB LIVE re-verify ids 1,6,7,8,9 after rebuild."
       }
     ],
     "ready": [],
