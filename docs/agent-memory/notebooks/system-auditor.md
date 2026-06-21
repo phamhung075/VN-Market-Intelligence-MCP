@@ -1,21 +1,8 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
-## c252 · 2026-06-21T06:32:07Z
-### Audit Run Tier-2 (06:32 UTC 2026-06-21, Sunday off-market)
-- Tier: 2 | Freshness sweep: 27 sources checked | Cron gaps: 0 | VPS routes: 5 healthy
-- Anomalies: 0 NEW (all freshness checks PASS; weekend context applied)
-- Status: HEALTHY (weekend/market-closed, price staleness INFO-flagged)
-
-**Verdict Summary:**
-- B-01..B-07 sources: all current cadence ✓ | B-09 BCTC URLs: 0 bad ✓ | B-13 stale pending: 0 ✓
-- C-06 messages (3h): 0 (EXPECTED weekend) → INFO | C-07 signals (24h): 58 ✓
-- VPS health: 5/5 routes active (vn-bctc-fetch idle=expected, vn-price-fetch idle=expected on closed market)
-- OHLCV last date: 2026-06-19 (Fri, last trading day) → EXPECTED, no Sat/Sun trading
-
-**Signals:** 0 NEW | Status: CLEAN | Weekend applied: price/FX staleness downgraded to INFO
-## c251 · 2026-06-21T06:06:58Z
-### Audit Run Tier-1 (06:06–06:07 UTC 2026-06-21)
+## c253 · 2026-06-21T06:37:46Z
+### Audit Run Tier-1 (06:37 UTC 2026-06-21, Sunday off-market)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | A-20 multi-probe: 3 probes
 - Anomalies: 0 NEW (all runtime checks PASS; stable)
 - Status: HEALTHY
@@ -23,17 +10,17 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 **Verdict Summary:**
 - A-01..A-11 containers: all 12 UP ✓ | A-12..A-19 health: 5/5 PASS ✓
 - A-20 pdf-extractor multi-probe: 3/3 PASS ✓ | A-21 restart: 0 ✓
-- A-30 memory: 32.01% ✓ | A-32 disk: 37% ✓
+- A-30 memory: 32.79% ✓ | A-32 disk: 37% ✓
 
 **Signals:** 0 NEW | Status: CLEAN
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-21T06:06:58Z ===
+=== AUDITOR PROBE 2026-06-21T06:36:49Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 4 hours (healthy)   vn-market-intelligence-mcp-mcp-server           4 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 5 hours (healthy)   vn-market-intelligence-mcp-mcp-server           5 hours ago
 vn-market-intelligence-mcp-frontend-1             Up 4 days (healthy)    vn-market-intelligence-mcp-frontend             4 days ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 5 days (healthy)    vn-market-intelligence-mcp-pdf-extractor        5 days ago
 vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)    vn-market-intelligence-mcp-stock-price          5 days ago
@@ -41,10 +28,9 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 5 days (healthy)    vn-mark
 vn-market-intelligence-mcp-macro-indicators-1     Up 6 days (healthy)    vn-market-intelligence-mcp-macro-indicators     6 days ago
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 6 days (healthy)    vn-market-intelligence-mcp-kinh-dich-service    6 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 9 days (healthy)    vn-market-intelligence-mcp-api-gateway          9 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 4 hours (healthy)   vn-market-intelligence-mcp-rag-service          10 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 5 hours (healthy)   vn-market-intelligence-mcp-rag-service          10 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 10 days (healthy)   vn-market-intelligence-mcp-news-fetch           10 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 10 days (healthy)   vn-market-intelligence-mcp-alert-engine         10 days ago
-headroom-proxy                                    Up 8 days              headroom-proxy:local                            2 weeks ago
 mcp-gateway                                       Up 10 days (healthy)   mcpservergatway-gateway                         4 weeks ago
 
 --- health endpoints ---
@@ -58,7 +44,7 @@ mcp-gateway                                       Up 10 days (healthy)   mcpserv
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=32.01% MemUsage=655.5MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=32.79% MemUsage=671.4MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
@@ -73,15 +59,16 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 ```
 Pass count: 3/3 (majority vote PASS) ✓
 
-## c250 · 2026-06-21T05:37:05Z
-### Audit Run Tier-1 (05:37–05:37 UTC 2026-06-21, Sunday off-market)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | A-20 multi-probe: 3 probes
-- Anomalies: 0 NEW (all runtime checks PASS; stable)
-- Status: HEALTHY
+## c252 · 2026-06-21T06:32:07Z
+### Audit Run Tier-2 (06:32 UTC 2026-06-21, Sunday off-market)
+- Tier: 2 | Freshness sweep: 27 sources checked | Cron gaps: 0 | VPS routes: 5 healthy
+- Anomalies: 0 NEW (all freshness checks PASS; weekend context applied)
+- Status: HEALTHY (weekend/market-closed, price staleness INFO-flagged)
 
 **Verdict Summary:**
-- A-01..A-11 containers: all 12 UP ✓ | A-12..A-19 health: 5/5 PASS ✓
-- A-20 pdf-extractor multi-probe: 3/3 PASS ✓ | A-21 restart: 0 ✓
-- A-30 memory: 26.22% ✓ | A-32 disk: 37% ✓
+- B-01..B-07 sources: all current cadence ✓ | B-09 BCTC URLs: 0 bad ✓ | B-13 stale pending: 0 ✓
+- C-06 messages (3h): 0 (EXPECTED weekend) → INFO | C-07 signals (24h): 58 ✓
+- VPS health: 5/5 routes active (vn-bctc-fetch idle=expected, vn-price-fetch idle=expected on closed market)
+- OHLCV last date: 2026-06-19 (Fri, last trading day) → EXPECTED, no Sat/Sun trading
 
-**Signals:** 0 NEW | Status: CLEAN
+**Signals:** 0 NEW | Status: CLEAN | Weekend applied: price/FX staleness downgraded to INFO
