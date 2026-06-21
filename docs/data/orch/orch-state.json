@@ -1557,7 +1557,10 @@
         "payload_ref": "docs/data/db-integrity-history.json",
         "created_at": "2026-06-21T21:25:28Z",
         "router_verify": "ROUTER RAW-VERIFIED 2026-06-21T21:46Z (bun:sqlite live): alerts total=1502, unresolved=829, unresolved>30d=205 (datetime(triggered_at)<now-30d). Finding GENUINE. Same no-GC/cleanup-cron family as FIX-AGENTSIGNALS-EXPIRED-GC-CRON. Dedup candidates: FACTORY-ALERT-router-cleanups, FW-OBS-03-FIX, DS-OBS-01-FIX. NOT service-impacting (alerts still fire) — data-hygiene/growth, MED-not-HIGH. → PO triage.",
-        "router_verified": true
+        "router_verified": true,
+        "status": "READ",
+        "read_at": "2026-06-21T21:53:00Z",
+        "disposition": "FOLDED into FIX-AGENTSIGNALS-EXPIRED-GC-CRON (existing BACKLOG, P3, apps/mcp-server). DEDUP verdict: FACTORY-ALERT-router-cleanups=alert-engine Go code-quality cleanups (NO alert-row retention, different zone); FW-OBS-03-FIX=stale-NEWS-pipeline watchdog DETECTION (not cleanup); DS-OBS-01-FIX=freshnessSlaMonitor stale-source ALERTING (not cleanup) — none cover an alerts-table resolution/retention cron. Same no-GC retention family + same mcp-server scheduler zone as the agent_signals GC task → broadened that task to a shared DB-retention/GC cron covering agent_signals AND alerts rather than minting a duplicate (task-count conservation). FIX intent for alerts: AUTO-RESOLVE-or-ARCHIVE unresolved rows older than ~30d (set resolved_at + resolution_notes), NEVER hard-delete alert history. ISO-TEXT datetime() guard baked into spec for triggered_at/resolved_at. P3 hygiene, NOT promoted (no active dev need)."
       }
     ]
   },
@@ -11350,18 +11353,21 @@
       },
       {
         "id": "FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
-        "title": "agent_signals has no GC cron — 3444 expired rows accumulating unbounded",
-        "desc": "Maintenance gap (auditor sau-20260620T195454Z-signals, MEDIUM): agent_signals accumulates ~3444 expired rows (read/expired, past expires_at) with no GC cron -> unbounded growth. Add daily off-hours GC cron: DELETE FROM agent_signals WHERE expires_at < now AND status IN ('read','expired'). Mirror shipped FU-LOCKSTORE-EXPIRED-GC pattern. RAW-verify-on-pickup: SELECT count(*) confirm ~3444 magnitude + safe predicate (never delete unread/unexpired). Small. [PO-FOLD 2026-06-21T16:19:36Z — router-RAW re-verify sau-20260621T155518: total=3496, expired=3493 (+49 vs prior 3444 baseline; slow unbounded growth confirmed). HARD CONSTRAINT for dev: expires_at is ISO-TEXT (\"2026-06-21 17:00:01\"), so the GC DELETE and the count predicate MUST use datetime(expires_at) < datetime('now'), NEVER epoch strftime('%s',...) compare (epoch returns 0 on ISO-TEXT, silently deletes/counts nothing — feedback_sqlite_iso8601_datetime_strcompare_bypass trap). Same signal-lifecycle family as FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.]",
+        "title": "DB-retention GC cron — no cleanup for expired agent_signals (3493 rows) OR stale-unresolved alerts (205 rows >30d) accumulating unbounded",
+        "desc": "Maintenance gap (auditor sau-20260620T195454Z-signals, MEDIUM): two same-family no-GC/retention-cron leaks in the SAME zone (apps/mcp-server scheduler) — fold into ONE daily off-hours retention/GC cron job. (A) agent_signals accumulates ~3493 expired rows (read/expired, past expires_at) with no GC -> unbounded growth: DELETE FROM agent_signals WHERE expires_at < now AND status IN ('read','expired'). (B) alerts accumulates stale UNRESOLVED rows with no resolution/cleanup/retention policy -> 829 unresolved / 205 unresolved >30d (Apr-May rows still unresolved as of 2026-06-21). For alerts the safe policy is AUTO-RESOLVE-or-ARCHIVE rows older than a retention threshold (suggest 30d): set resolved_at + resolution_notes='auto-resolved by retention GC' (or archive) for unresolved alerts WHERE triggered_at older than threshold — NEVER hard-DELETE alert history; alerts still fire normally (not service-impacting, data-hygiene/growth). Mirror shipped FU-LOCKSTORE-EXPIRED-GC pattern. RAW-verify-on-pickup: agent_signals count ~3493 + alerts unresolved>30d ~205 magnitude; safe predicates (never delete unread/unexpired signals; never lose alert history). Small. [PO-FOLD 2026-06-21T16:19:36Z — agent_signals re-verify sau-20260621T155518: total=3496, expired=3493.] [PO-FOLD 2026-06-21T21:5x — alerts-stale finding sau-20260621T212528-alerts-stale: router-RAW total=1502, unresolved=829, unresolved>30d=205. Same no-GC retention family, same mcp-server zone — broadened this task from agent_signals-only to a shared DB-retention/GC cron rather than minting a duplicate alert-cleanup task (task-count conservation).] HARD CONSTRAINT for dev (BOTH tables): expires_at / triggered_at / resolved_at are ISO-TEXT (\"2026-06-21 17:00:01\"), so EVERY GC/retention DELETE/UPDATE and count predicate MUST use datetime(col) < datetime('now','-N days'), NEVER epoch strftime('%s',...) compare (epoch returns 0 on ISO-TEXT, silently no-ops — feedback_sqlite_iso8601_datetime_strcompare_bypass trap). Same signal-lifecycle family as FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.",
         "type": "FIX",
         "size": "S",
+        "priority": "P3",
         "zone": "apps/mcp-server/",
+        "rebuild_required": true,
         "status": "BACKLOG",
         "baseline_pass": "RAW-verify-on-pickup",
         "created_at": "2026-06-20T20:15:42Z",
         "created_by": "po",
-        "source_signal": "sau-20260620T195454Z-signals,sau-20260621T155518-signals-regress",
-        "last_folded_at": "2026-06-21T16:19:36Z",
-        "iso_text_datetime_guard": true
+        "source_signal": "sau-20260620T195454Z-signals,sau-20260621T155518-signals-regress,sau-20260621T212528-alerts-stale",
+        "last_folded_at": "2026-06-21T21:53:00Z",
+        "iso_text_datetime_guard": true,
+        "covers_tables": ["agent_signals", "alerts"]
       },
       {
         "id": "FIX-MARKET-WATCHER-DOC-PARAM-DRIFT",
