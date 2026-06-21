@@ -110,4 +110,56 @@ YES — code runs inside the `mcp-server` container. Router to dispatch ops rebu
 
 ## Status
 
-REVIEW — implementation complete, tests green, tsc clean.
+APPROVED — QA gate passed 2026-06-21.
+
+---
+
+## [QA] Review Record
+
+**Verdict:** APPROVED
+**Reviewer:** qa
+**Date:** 2026-06-21
+**Commit under review:** 93e9dbeb
+
+### Formal Gate Results
+
+| Gate | Command | Result |
+|---|---|---|
+| 1 | `bun tsc --noEmit` | EXIT 0 — 0 errors |
+| 2 | `pnpm check` | EXIT 0 |
+| 3 | `bun test FIX-HNX-OFFHOURS-ERROR-DOWNGRADE.test.ts --no-cache` | 6 pass / 0 fail |
+| 4 | `bun test 027-hnx-prices.test.ts --no-cache` | 29 pass / 0 fail (regression clean) |
+
+### Log-Level Assertion Confirmation
+
+Clock-deterministic: YES. All 6 tests inject a fixed `now` via `options.now` — no wall-clock dependency. Three instants used: `MARKET_OPEN_UTC = 2026-06-17T03:00Z` (Wed, inside 02:00–08:59 UTC → OPEN), `MARKET_CLOSED_UTC = 2026-06-17T22:00Z` (Wed, outside → CLOSED), `WEEKEND_UTC = 2026-06-20T04:00Z` (Sat → CLOSED).
+
+Assertion strategy: logger singleton `minLevel='info'` filters debug lines before the console.log sink. Tests assert ABSENCE of `level=error` entries for the closed path (off-hours empty → no error log emitted) and PRESENCE of `level=error` entries for the open path (market-hours all-fail → error log emitted). Both together prove the conditional branch executes correctly. Not a trivial no-op: the open-path test uses `failingClient()` (throws), confirmed by test run output showing `"[hnx] all HNX price sources failed"` and `"[hnx] all UPCOM price sources failed"` at error level during the market-open tests.
+
+### Both Emit Sites Covered
+
+- `fetchHnxPrices` — line ~354: `if (isVnTradingWindow(options?.now)) { logger.error("[hnx] all HNX price sources failed", ...) } else { logger.debug("[hnx] all HNX price sources returned empty — no off-hours data (market closed)", ...) }` — CONFIRMED
+- `fetchUpcomPrices` — line ~436: identical pattern for UPCOM — CONFIRMED
+- Both sites changed symmetrically. In-window path retains `logger.error` — genuine market-hours source failures remain visible and alertable.
+
+### DDD Compliance
+
+- `infrastructure/fetchers/hnx.ts` imports `isVnTradingWindow` from `domain/services/tradingWindow.ts` — infra → domain direction: ALLOWED (pure domain helper, no infrastructure imports in tradingWindow.ts).
+- `tradingWindow.ts` has zero infrastructure imports (confirmed by grep — only exports `isVnTradingWindow` and `tradingWindowLabel`, no `import` from infrastructure or application layers).
+- DDD: PASS
+
+### Security
+
+- No `process.env` additions in changed files.
+- No hardcoded secrets, passwords, or tokens.
+- No shell interpolation.
+- mock-guard EXIT 0 — no fabricated-data patterns in production source.
+- Security: PASS
+
+### BCTC Eval Gate
+
+Not applicable — task does not touch any BCTC report.
+
+### Rebuild Required
+
+YES — code runs inside the `mcp-server` container. Router to dispatch ops rebuild after this approval.

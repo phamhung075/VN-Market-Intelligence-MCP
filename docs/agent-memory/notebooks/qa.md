@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-309 · 2026-06-21 · FIX-HNX-OFFHOURS-ERROR-DOWNGRADE — APPROVED
+
+FIX-HNX-OFFHOURS-ERROR-DOWNGRADE (93e9dbeb) | Verdict: APPROVED | tsc EXIT 0 / pnpm check EXIT 0. Task test: 6/6 pass / 0 fail — 3 for fetchHnxPrices + 3 for fetchUpcomPrices. Regression 027-hnx-prices: 29/29 pass. Clock-deterministic: YES — fixed instants MARKET_OPEN_UTC/MARKET_CLOSED_UTC/WEEKEND_UTC injected via options.now, no wall-clock. Log-level assertions: absence-of-error (closed path, emptyClient) + presence-of-error (open path, failingClient) — both together prove conditional branch. Both emit sites covered identically (line ~354 fetchHnxPrices + line ~436 fetchUpcomPrices). In-window logger.error preserved (real failures alertable). DDD PASS: infra→domain pure import allowed; tradingWindow.ts zero infra imports. Security PASS: no process.env, no secrets, mock-guard EXIT 0. Rebuild required — dispatch ops.
+
 ## cycle-308 · 2026-06-21 · DSI-MACRO-PHANTOM-STALE-GUARD — APPROVED
 
 DSI-MACRO-PHANTOM-STALE-GUARD (3280d82a) | Verdict: APPROVED | tsc EXIT 0 / pnpm check EXIT 0. Task test: 6/6 pass (14 expect) — GUARD-1..6. Regression: 88/88 pass across 9 files (marketContextBuilder, market-context, get-cycle-bootstrap, FIX-ERRAUDIT-W2-MCP-DATALAYER, commodity-tracker-refresh-job, DSI-S1-MACRO, macro-alert-cooldown, macro-alert-dispatch, FIX-MACRO-REFRESH-DEAD). DDD PASS: marketContextBuilder.ts imports = {bun:sqlite type-only, domain peer, 2x domain/utils} — zero infrastructure imports. Parameterized SQL PASS: `< ?` + `.all(STALE_THRESHOLD_SECONDS)` — no string interpolation. No-fake-data PASS: stale WTI=95.5 and dow_jones=23750 phantom values excluded in GUARD-1/3/6; fresh 79.8 included in GUARD-2. Security PASS: no process.env, no hardcoded creds. Deferred AC: live container done_verified (stale→excluded, fresh→real) pending post-rebuild at next evening cycle.
