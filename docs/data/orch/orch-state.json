@@ -1628,7 +1628,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-21T04:07:00Z",
+    "_updated_at": "2026-06-21T08:29:51Z",
     "_updated_by": "po-s111",
     "active_sprints": [
       {
@@ -6151,6 +6151,28 @@
             "depends": [],
             "zone": "scripts/",
             "note": "REVIEW 2026-06-21: Check-E implemented (E1 sector-mismatch parenthesised-label + E2 company-alias). SSOT-driven (system-map.json watchlist). line-344 floor_zero 0\\n0 bug fixed. 4 DoD runs pass. Handoff: docs/handoffs/FIX-FB-GATE-SECTOR-NAME-VALIDATOR.md"
+          },
+          {
+            "id": "FIX-FB-GATE-CURRENCY-UNIT-GUARD",
+            "title": "Check-F currency-unit guard — block VN price quoted in USD",
+            "type": "FIX",
+            "size": "S",
+            "status": "BACKLOG",
+            "owner": "developer",
+            "depends": [],
+            "zone": "scripts/",
+            "note": "P1 DANGEROUS. From LESSON 7 (2026-06-22 USD-on-VN-stock). Reuses Check-E ticker SSOT load."
+          },
+          {
+            "id": "FIX-FB-JARGON-ENGLISH-WORD-LEAK",
+            "title": "Broaden jargon-gate — flag stray English content-words in VN prose",
+            "type": "FIX",
+            "size": "S",
+            "status": "BACKLOG",
+            "owner": "developer",
+            "depends": [],
+            "zone": "scripts/",
+            "note": "P2. From LESSON 8 (2026-06-22 \"ground\" leak). Whitelist-guarded English-word detector."
           }
         ]
       },
@@ -11635,6 +11657,50 @@
         "created_at": "2026-06-21T06:30:00Z",
         "created_by": "po",
         "minted_by": "po (router-supplied LIVE RAW, PO gateway-blind)"
+      },
+      {
+        "id": "FIX-FB-GATE-CURRENCY-UNIT-GUARD",
+        "title": "Add Check-F currency-unit guard to fb-data-integrity-gate.sh — BLOCK VN stock price quoted in USD",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "owner": "developer",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "zone": "scripts/",
+        "depends": [],
+        "extends": [
+          "FIX-FB-POST-DATA-INTEGRITY-GATE"
+        ],
+        "opened_at": "2026-06-21T08:29:51Z",
+        "opened_by": "po-s111",
+        "root_cause": "2026-06-22 week-ahead FB post quoted VN equities in USD — \"Nếu giữ trên 1,84 USD/VHM\" and \"TÍCH LŨY ngay vào vùng 22–24 USD\" for banks. VN equities are VND-only (VHM 145.300đ, ACB 22.200đ). The post grabbed thousand-VND magnitudes and appended USD → telling readers to buy banks at 22–24 USD is catastrophically misleading. The data-integrity gate (Checks A-E) parses the per-ticker RECAP line only; the bad units lived in the prediction/watchlist PROSE, so exit 0 (false-green).",
+        "fix_spec": "New Check-F currency-unit guard in scripts/fb-data-integrity-gate.sh: BLOCK if a USD or $ token appears adjacent (within ~20 chars) to a watchlist ticker OR to a stock-price-magnitude number, EXCEPT whitelisted macro uses: USD/VND tỷ giá, gold USD/oz, Brent USD/thùng|USD/barrel. Magnitude sanity: a price < ~1000 labelled USD adjacent to a HOSE ticker is almost certainly a VND-as-USD error → BLOCK. REUSE the system-map.json watchlist ticker list already loaded by Check-E (SYSTEM_MAP_PATH / .project.watchlist) — do NOT hardcode tickers. Must EXIT NON-ZERO on BLOCK (log_block).",
+        "generic_mandate": "Guard keys on the SSOT watchlist + a generic price-magnitude regex + a macro-use whitelist — never a per-ticker hardcode. Applies to ALL watchlist tickers and any future ticker added to system-map.json.",
+        "verification_gate": "Feed the 2026-06-22 post text (USD-on-VHM + 22–24 USD banks) → Check-F EXIT NON-ZERO. Feed a clean post with whitelisted macro USD uses (USD/VND, USD/oz, USD/thùng) → exit 0 (no false-positive). Run from repo root.",
+        "note": "P1 DANGEROUS (misleading buy-advice). Extends DONE FIX-FB-POST-DATA-INTEGRITY-GATE; sibling under epic AUDIT-FB-GATE-PROSE-HARDENING (epic's Check-E task FIX-FB-GATE-SECTOR-NAME-VALIDATOR in REVIEW, commit eceee94a — Check-F reuses its ticker-load pattern)."
+      },
+      {
+        "id": "FIX-FB-JARGON-ENGLISH-WORD-LEAK",
+        "title": "Broaden fb-jargon-gate.sh — flag stray Latin-script English content-words in VN prose body",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "owner": "developer",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "zone": "scripts/",
+        "depends": [],
+        "extends": [
+          "FIX-FB-POST-DATA-INTEGRITY-GATE"
+        ],
+        "opened_at": "2026-06-21T08:29:51Z",
+        "opened_by": "po-s111",
+        "root_cause": "2026-06-22 week-ahead FB post contained \"chưa lấy lại toàn bộ ground\" — the English word \"ground\" in a plain-Vietnamese post. scripts/fb-jargon-gate.sh passed it (exit 0) because its detection is a FIXED English-term blocklist that did not include \"ground\".",
+        "fix_spec": "Broaden scripts/fb-jargon-gate.sh: instead of ONLY a fixed blocklist, flag Latin-script English content-words appearing in the Vietnamese prose body, allowing a WHITELIST of accepted tokens (ticker symbols, USD/VND, EPS, P/E, Fed, Brent, oz, etc.). Goal: catch stray English like \"ground\", \"selloff\", \"breakout\" not in the current list. Keep false-positives low via the whitelist. Distinguish from existing blocklist (additive, not a replacement).",
+        "generic_mandate": "Detect by Latin-English-content-word heuristic + whitelist, not by enumerating every bad word — catches NOVEL leaks. Whitelist is the single tuning surface (extendable without code change where practical).",
+        "verification_gate": "Feed a post containing \"ground\" / \"selloff\" / \"breakout\" in VN prose → jargon-gate EXIT NON-ZERO. Feed a clean VN post with whitelisted tokens (tickers, USD/VND, EPS, P/E, Fed, Brent) → exit 0 (no false-positive).",
+        "note": "P2. Extends DONE FIX-FB-POST-DATA-INTEGRITY-GATE; sibling under epic AUDIT-FB-GATE-PROSE-HARDENING. NB: fb-jargon-gate has a prior false-green class (exits 0 even on BLOCK — feedback_fb_poster_gate_false_green) — ensure the broadened path EXITS NON-ZERO on detection."
       }
     ],
     "closed_sprints": [
@@ -23188,8 +23254,8 @@
     },
     "updated_at": "2026-06-21T03:50:00Z",
     "updated_by": "po (file-only BCTC re-probe triage)",
-    "last_triaged_at": "2026-06-21T03:14:47Z",
-    "last_triaged_by": "po-gateway-blind"
+    "last_triaged_at": "2026-06-21T08:29:51Z",
+    "last_triaged_by": "po-s111"
   },
   "updated_at": "2026-06-21T03:50:00Z",
   "updated_by": "po (file-only BCTC re-probe triage)",
