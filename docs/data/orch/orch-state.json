@@ -193,12 +193,12 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "PRED-RESOLVER-GAP-FIX",
-    "next_agent": "dev",
+    "next_agent": "dev-mcp-server",
     "next_action": "Dispatch PRED-RESOLVER-GAP-FIX (dev, apps/mcp-server): fix prediction-claim producer<->resolver contract — nearest-trading-day OHLCV match + trading-day resolution_date + neutral-band rule. qa gate = SAME-DB live re-verify stuck ids 1,6,7,8,9. po-s110.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-21T08:39:42Z",
-    "updated_by": "po",
+    "updated_at": "2026-06-21T08:55:00Z",
+    "updated_by": "dev-team-cron-router",
     "last_tick": "20260621T0820Z"
   },
   "narrative": {
@@ -23063,8 +23063,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "context": "Live evidence (named-volume DB, 2026-06-11), discovered during TASK17-PRED page build. The prediction resolver cron (apps/mcp-server, calls setClaimOutcome / resolves prediction_claims) stamps resolved_at but leaves resolution_outcome=NULL on 3 claims whose resolution_date is already past. These never enter hitRate/calibration accounting, silently inflating the pending bucket and never crediting/debiting the AI track record. Two distinct sub-bugs in the same resolver: (1) actual_price never fetched — ids 6 (VIC, bullish, target 224700, creation 214000) and 7 (GAS, bullish, target 78960, creation 75200) both have resolved_at=2026-06-09T16:30Z but actual_price=NULL, so target-hit is undeterminable; (2) no rule for neutral + null target — id 1 (FPT, direction=neutral, target_price=NULL, creation_price=NULL) stamped resolved_at but has no resolution rule for a neutral claim with no target.",
         "created_at": "2026-06-11T11:15:08Z",
@@ -23079,7 +23078,7 @@
         "route_to": "dev",
         "size": "M",
         "sprint": "READY",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "status_note": "Resolver must (a) fetch + persist actual_price for bullish/bearish claims at resolution time so target-hit is determinable; (b) define an explicit rule for neutral / null-target claims (e.g. classify by price move vs creation_price, OR mark a distinct terminal status excluded from hitRate — never leave outcome NULL after resolved_at is set). AC met when ids 1/6/7 re-resolve to a non-NULL verdict (or explicit excluded status) and no claim has resolved_at set with resolution_outcome NULL.",
         "title": "Prediction resolver stamps resolved_at but leaves resolution_outcome NULL — claims 1/6/7 stuck pending forever",
         "type": "FIX",
@@ -23111,9 +23110,13 @@
         "next_agent": "dev",
         "promoted_at": "2026-06-21T08:39:42Z",
         "promoted_by": "po",
-        "promote_note": "WIP=0, head idle, spec complete after po-s110 fold/enrich. Routes to dev (apps/mcp-server) — single zone, no architect split needed (well-scoped resolver+producer contract). qa gate = SAME-DB live re-verify of stuck ids per .folded_evidence.verification_gate."
+        "promote_note": "WIP=0, head idle, spec complete after po-s110 fold/enrich. Routes to dev (apps/mcp-server) — single zone, no architect split needed (well-scoped resolver+producer contract). qa gate = SAME-DB live re-verify of stuck ids per .folded_evidence.verification_gate.",
+        "dev_agent": "dev-mcp-server",
+        "dispatched_at": "2026-06-21T08:55:00Z",
+        "dispatched_by": "dev-team-cron-router"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
