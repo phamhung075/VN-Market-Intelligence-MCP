@@ -193,13 +193,13 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "PRED-RESOLVER-GAP-FIX",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Tick 20260621T0937Z. Drained 1 cowork_tick_telemetry (refine_bctc_md 09:00 SKIPPED_BLIND_NO_BACKSTOP, gateway-blind, user-side .mcp.json fix) → processed/. health-recheck id3280 = same already-triaged 0806 cluster, not re-processed. PRED-RESOLVER-GAP-FIX still IN_PROGRESS (dev-mcp-server in flight, no return yet). WIP 1/2. No other actionable work.",
+    "next_agent": "qa",
+    "next_action": "Tick 20260621T1007Z. PRED-RESOLVER-GAP-FIX dev-mcp-server returned REVIEW (commits d804a013 impl + 1c48cfe8 row-status). ROUTER RAW-verified: tsc exit0, targeted prediction tests 83/0 green (1123/1124/1125/1154/PRED-RESOLVER-GAP-FIX), commits clean (9 files; dev updated row status only, no lane/head sweep). Moved in_progress→review, dispatching QA. QA gate: full CI suite + confirm 59 pre-existing fails DISJOINT from 9 changed files; DDD/mock-guard/tsc; SAME-DB LIVE re-verify ids 1,6,7,8,9 is POST-REBUILD (is_excluded migration, REBUILD_REQUIRED=yes) — withhold done_verified until live. Health id3280 same already-triaged 0806 cluster.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-21T09:38:00Z",
+    "updated_at": "2026-06-21T09:52:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T0937Z"
+    "last_tick": "20260621T1007Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -23063,60 +23063,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
-      {
-        "context": "Live evidence (named-volume DB, 2026-06-11), discovered during TASK17-PRED page build. The prediction resolver cron (apps/mcp-server, calls setClaimOutcome / resolves prediction_claims) stamps resolved_at but leaves resolution_outcome=NULL on 3 claims whose resolution_date is already past. These never enter hitRate/calibration accounting, silently inflating the pending bucket and never crediting/debiting the AI track record. Two distinct sub-bugs in the same resolver: (1) actual_price never fetched — ids 6 (VIC, bullish, target 224700, creation 214000) and 7 (GAS, bullish, target 78960, creation 75200) both have resolved_at=2026-06-09T16:30Z but actual_price=NULL, so target-hit is undeterminable; (2) no rule for neutral + null target — id 1 (FPT, direction=neutral, target_price=NULL, creation_price=NULL) stamped resolved_at but has no resolution rule for a neutral claim with no target.",
-        "created_at": "2026-06-11T11:15:08Z",
-        "created_by": "po",
-        "id": "PRED-RESOLVER-GAP-FIX",
-        "labels": [
-          "prediction-resolver",
-          "data-integrity"
-        ],
-        "owner": "dev",
-        "priority": "P2",
-        "route_to": "dev",
-        "size": "M",
-        "sprint": "READY",
-        "status": "REVIEW",
-        "status_note": "Resolver must (a) fetch + persist actual_price for bullish/bearish claims at resolution time so target-hit is determinable; (b) define an explicit rule for neutral / null-target claims (e.g. classify by price move vs creation_price, OR mark a distinct terminal status excluded from hitRate — never leave outcome NULL after resolved_at is set). AC met when ids 1/6/7 re-resolve to a non-NULL verdict (or explicit excluded status) and no claim has resolved_at set with resolution_outcome NULL.",
-        "title": "Prediction resolver stamps resolved_at but leaves resolution_outcome NULL — claims 1/6/7 stuck pending forever",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "folded_evidence": {
-          "folded_at": "2026-06-21T08:39:42Z",
-          "folded_by": "po",
-          "source": "router-verified live diagnosis 2026-06-21 (named-vol /app/data/market.db via mcp-server bun:sqlite); dashboard 'Dự báo AI & Kết quả' reported not-working",
-          "dedup": "FOLDED into PRED-RESOLVER-GAP-FIX (same producer<->resolver contract bug, sharper root); did NOT mint a duplicate. Sibling DISTINCT tasks left untouched: FIX-PREDICTION-SIGNALS-EMPTY (prediction_signals poll write/threshold, different table), FIX-FB-PREDICTION-CALIBRATION-LOOP (poster forward-call ledger), FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (done_verified, double-post).",
-          "do_not_touch": "digest-predict weekly slot cron '47 13 * * 0' is WORKING-AS-DESIGNED (weekly cadence) — NOT in scope.",
-          "live_proof": "prediction_claims = 9 rows, only 4 ever scored 0/1. ids 8,9 (VNINDEX/GAS neutral, due 2026-06-19) have OHLCV (1824.53 / 81200) yet pending forever (neutral leg). ids 6,7 (VIC/GAS bullish, due 2026-05-23) + id 1 (FPT neutral, due 2026-05-16=Saturday) have MISSING OHLCV on the EXACT resolution_date -> stranded -> unresolvable (trading-day leg).",
-          "root_cause_resolver_refined": "(A) CALENDAR-vs-TRADING-DAY mismatch: predictionResolutionJob.ts evaluateOutcome resolves by EXACT-date OHLCV equality (SELECT close FROM daily_ohlcv WHERE code=? AND date=resolution_date). create_prediction_claim computes resolution_date = creation + horizon_days CALENDAR days (evidenceTools.ts:378-380). When that date is a weekend/holiday there is NO bar -> never matches -> after RETRY_WINDOW_DAYS=5 marked unresolvable. This SUPERSEDES the prior 'actual_price never fetched' framing for ids 6/7 — the bar is missing on the exact date, not unfetched. (B) NEUTRAL unscoreable: evaluateOutcome (~lines 54-90) returns null for direction='neutral' (only bullish close>=target / bearish close<=target are scored).",
-          "root_cause_producer_new": "create_prediction_claim (evidenceTools.ts) defaults direction='neutral' + target_price=null when caller omits direction/expected_move_pct, AND computes resolution_date in CALENDAR days — so digest-predict (08-prediction-synthesizer) emits neutral/targetless claims with weekend-landing dates that can NEVER be scored. The resolver leg is half the contract; the producer leg is the other half.",
-          "fix_spec": [
-            "RESOLVER: match nearest trading day <= resolution_date (first bar on/after as fallback) instead of exact-date equality, so weekend/holiday resolution_dates resolve against the prior/next available bar.",
-            "PRODUCER: compute resolution_date in TRADING days at creation (skip weekends/holidays) so the target date always lands on a bar.",
-            "NEUTRAL: per PO product_decision below — add a neutral-band resolution rule AND keep producing neutral claims (do NOT reject them).",
-            "Never leave resolution_outcome NULL after resolved_at is set — any terminal path yields a non-NULL verdict or an explicit excluded-from-hitRate status."
-          ],
-          "verification_gate": "SAME-DB LIVE re-verify (NOT green tests only — self-confirming-test trap, [[feedback_contract_from_live_payload_not_schema_comment]]): after fix+rebuild, query named-volume /app/data/market.db and confirm stuck ids 1,6,7,8,9 each carry a non-NULL resolution_outcome (or explicit excluded status), AND a NEW neutral claim with a weekend resolution_date resolves to a verdict. Tests build their own schema and will pass while the live DB stays stuck."
-        },
-        "product_decision": {
-          "decided_at": "2026-06-21T08:39:42Z",
-          "decided_by": "po",
-          "question": "product intent for neutral predictions (reject at producer vs add neutral-band resolution rule)",
-          "decision": "KEEP producing neutral claims; ADD a neutral-band resolution rule. Rationale: a calibrated AI track-record needs honest 'I expect this to stay flat' calls scored as hits/misses — silently dropping neutral predictions would bias the hit-rate toward only directional bets and hide the model's flat-call accuracy, violating the no-fake/full-accountability standing goals. Rule: over the horizon window, |actual_move_pct from creation_price| < NEUTRAL_BAND_PCT (default 2.0%, config not hardcoded) = HIT; |move| >= band = MISS. Requires creation_price to be persisted (already is) and a trading-day-anchored window (covered by the trading-day leg above). For legacy neutral claims with creation_price=NULL (e.g. id 1 FPT), no band can be computed -> mark an explicit terminal 'excluded' status (excluded from hitRate), never NULL.",
-          "band_default_pct": 2.0
-        },
-        "next_agent": "qa",
-        "promoted_at": "2026-06-21T08:39:42Z",
-        "promoted_by": "po",
-        "promote_note": "WIP=0, head idle, spec complete after po-s110 fold/enrich. Routes to dev (apps/mcp-server) — single zone, no architect split needed (well-scoped resolver+producer contract). qa gate = SAME-DB live re-verify of stuck ids per .folded_evidence.verification_gate.",
-        "dev_agent": "dev-mcp-server",
-        "dispatched_at": "2026-06-21T08:55:00Z",
-        "dispatched_by": "dev-team-cron-router",
-        "dev_note": "REVIEW: impl complete. Commit d804a013. tsc clean. 13359 pass / 42 skip / 59 fail (59 fail = pre-existing disjoint set, none overlap changed files). New tests: 28 assertions in PRED-RESOLVER-GAP-FIX.test.ts. REBUILD_REQUIRED: yes (is_excluded column migration + container rebuild needed for live DB). QA gate: SAME-DB LIVE re-verify ids 1,6,7,8,9 after rebuild."
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -23266,6 +23213,58 @@
         "moved_to_review_at": "2026-06-20T07:30:39Z",
         "po_reconcile_2026-06-21": "Code LANDED: commit 5ed1c751 confirmed on main + ancestor of HEAD (router git-verify). Correctly held in review on verification_gate=ci_green_on_subsequent_push. No separate handoff doc — root_cause/fix_spec/review_note in this row are the SSOT (test fixture now derives alerts table from canonical initAlertsTables(); 8/8 green, pnpm check clean). Gate currently unsatisfiable because HEAD is 73 commits behind origin/main (benign cloud-chore divergence — [[feedback_ci_green_gate_blocked_by_cloud_chore_divergence]]); push = PO deferred call. LEAVE in review, do NOT close (no CI-green-on-push observed yet). NOT fabricating completion.",
         "_po_reconciled_at": "2026-06-21T06:30:00Z"
+      },
+      {
+        "context": "Live evidence (named-volume DB, 2026-06-11), discovered during TASK17-PRED page build. The prediction resolver cron (apps/mcp-server, calls setClaimOutcome / resolves prediction_claims) stamps resolved_at but leaves resolution_outcome=NULL on 3 claims whose resolution_date is already past. These never enter hitRate/calibration accounting, silently inflating the pending bucket and never crediting/debiting the AI track record. Two distinct sub-bugs in the same resolver: (1) actual_price never fetched — ids 6 (VIC, bullish, target 224700, creation 214000) and 7 (GAS, bullish, target 78960, creation 75200) both have resolved_at=2026-06-09T16:30Z but actual_price=NULL, so target-hit is undeterminable; (2) no rule for neutral + null target — id 1 (FPT, direction=neutral, target_price=NULL, creation_price=NULL) stamped resolved_at but has no resolution rule for a neutral claim with no target.",
+        "created_at": "2026-06-11T11:15:08Z",
+        "created_by": "po",
+        "id": "PRED-RESOLVER-GAP-FIX",
+        "labels": [
+          "prediction-resolver",
+          "data-integrity"
+        ],
+        "owner": "dev",
+        "priority": "P2",
+        "route_to": "dev",
+        "size": "M",
+        "sprint": "READY",
+        "status": "REVIEW",
+        "status_note": "Resolver must (a) fetch + persist actual_price for bullish/bearish claims at resolution time so target-hit is determinable; (b) define an explicit rule for neutral / null-target claims (e.g. classify by price move vs creation_price, OR mark a distinct terminal status excluded from hitRate — never leave outcome NULL after resolved_at is set). AC met when ids 1/6/7 re-resolve to a non-NULL verdict (or explicit excluded status) and no claim has resolved_at set with resolution_outcome NULL.",
+        "title": "Prediction resolver stamps resolved_at but leaves resolution_outcome NULL — claims 1/6/7 stuck pending forever",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "folded_evidence": {
+          "folded_at": "2026-06-21T08:39:42Z",
+          "folded_by": "po",
+          "source": "router-verified live diagnosis 2026-06-21 (named-vol /app/data/market.db via mcp-server bun:sqlite); dashboard 'Dự báo AI & Kết quả' reported not-working",
+          "dedup": "FOLDED into PRED-RESOLVER-GAP-FIX (same producer<->resolver contract bug, sharper root); did NOT mint a duplicate. Sibling DISTINCT tasks left untouched: FIX-PREDICTION-SIGNALS-EMPTY (prediction_signals poll write/threshold, different table), FIX-FB-PREDICTION-CALIBRATION-LOOP (poster forward-call ledger), FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (done_verified, double-post).",
+          "do_not_touch": "digest-predict weekly slot cron '47 13 * * 0' is WORKING-AS-DESIGNED (weekly cadence) — NOT in scope.",
+          "live_proof": "prediction_claims = 9 rows, only 4 ever scored 0/1. ids 8,9 (VNINDEX/GAS neutral, due 2026-06-19) have OHLCV (1824.53 / 81200) yet pending forever (neutral leg). ids 6,7 (VIC/GAS bullish, due 2026-05-23) + id 1 (FPT neutral, due 2026-05-16=Saturday) have MISSING OHLCV on the EXACT resolution_date -> stranded -> unresolvable (trading-day leg).",
+          "root_cause_resolver_refined": "(A) CALENDAR-vs-TRADING-DAY mismatch: predictionResolutionJob.ts evaluateOutcome resolves by EXACT-date OHLCV equality (SELECT close FROM daily_ohlcv WHERE code=? AND date=resolution_date). create_prediction_claim computes resolution_date = creation + horizon_days CALENDAR days (evidenceTools.ts:378-380). When that date is a weekend/holiday there is NO bar -> never matches -> after RETRY_WINDOW_DAYS=5 marked unresolvable. This SUPERSEDES the prior 'actual_price never fetched' framing for ids 6/7 — the bar is missing on the exact date, not unfetched. (B) NEUTRAL unscoreable: evaluateOutcome (~lines 54-90) returns null for direction='neutral' (only bullish close>=target / bearish close<=target are scored).",
+          "root_cause_producer_new": "create_prediction_claim (evidenceTools.ts) defaults direction='neutral' + target_price=null when caller omits direction/expected_move_pct, AND computes resolution_date in CALENDAR days — so digest-predict (08-prediction-synthesizer) emits neutral/targetless claims with weekend-landing dates that can NEVER be scored. The resolver leg is half the contract; the producer leg is the other half.",
+          "fix_spec": [
+            "RESOLVER: match nearest trading day <= resolution_date (first bar on/after as fallback) instead of exact-date equality, so weekend/holiday resolution_dates resolve against the prior/next available bar.",
+            "PRODUCER: compute resolution_date in TRADING days at creation (skip weekends/holidays) so the target date always lands on a bar.",
+            "NEUTRAL: per PO product_decision below — add a neutral-band resolution rule AND keep producing neutral claims (do NOT reject them).",
+            "Never leave resolution_outcome NULL after resolved_at is set — any terminal path yields a non-NULL verdict or an explicit excluded-from-hitRate status."
+          ],
+          "verification_gate": "SAME-DB LIVE re-verify (NOT green tests only — self-confirming-test trap, [[feedback_contract_from_live_payload_not_schema_comment]]): after fix+rebuild, query named-volume /app/data/market.db and confirm stuck ids 1,6,7,8,9 each carry a non-NULL resolution_outcome (or explicit excluded status), AND a NEW neutral claim with a weekend resolution_date resolves to a verdict. Tests build their own schema and will pass while the live DB stays stuck."
+        },
+        "product_decision": {
+          "decided_at": "2026-06-21T08:39:42Z",
+          "decided_by": "po",
+          "question": "product intent for neutral predictions (reject at producer vs add neutral-band resolution rule)",
+          "decision": "KEEP producing neutral claims; ADD a neutral-band resolution rule. Rationale: a calibrated AI track-record needs honest 'I expect this to stay flat' calls scored as hits/misses — silently dropping neutral predictions would bias the hit-rate toward only directional bets and hide the model's flat-call accuracy, violating the no-fake/full-accountability standing goals. Rule: over the horizon window, |actual_move_pct from creation_price| < NEUTRAL_BAND_PCT (default 2.0%, config not hardcoded) = HIT; |move| >= band = MISS. Requires creation_price to be persisted (already is) and a trading-day-anchored window (covered by the trading-day leg above). For legacy neutral claims with creation_price=NULL (e.g. id 1 FPT), no band can be computed -> mark an explicit terminal 'excluded' status (excluded from hitRate), never NULL.",
+          "band_default_pct": 2.0
+        },
+        "next_agent": "qa",
+        "promoted_at": "2026-06-21T08:39:42Z",
+        "promoted_by": "po",
+        "promote_note": "WIP=0, head idle, spec complete after po-s110 fold/enrich. Routes to dev (apps/mcp-server) — single zone, no architect split needed (well-scoped resolver+producer contract). qa gate = SAME-DB live re-verify of stuck ids per .folded_evidence.verification_gate.",
+        "dev_agent": "dev-mcp-server",
+        "dispatched_at": "2026-06-21T08:55:00Z",
+        "dispatched_by": "dev-team-cron-router",
+        "dev_note": "REVIEW: impl complete. Commit d804a013. tsc clean. 13359 pass / 42 skip / 59 fail (59 fail = pre-existing disjoint set, none overlap changed files). New tests: 28 assertions in PRED-RESOLVER-GAP-FIX.test.ts. REBUILD_REQUIRED: yes (is_excluded column migration + container rebuild needed for live DB). QA gate: SAME-DB LIVE re-verify ids 1,6,7,8,9 after rebuild."
       }
     ],
     "qa": [],
