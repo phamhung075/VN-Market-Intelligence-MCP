@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "ops",
-    "next_action": "Tick 20260621T1707Z. PRED-RESOLVER-GAP-FIX done_verified=TRUE — LIVE re-verify PASSED post 16:35Z resolution cron (5 stuck ids all terminal: id6 outcome0, id7 outcome1 via nearest-trading-day fallback, id1/8/9 is_excluded=1; 0 invariant violations). User-reported \"Dự báo AI & Kết quả\" Kết-quả leg FIXED end-to-end. Residual: neutral-band HIT/MISS live-confirm on next digest-predict batch (unit-tested green). Open: FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE P2, FIX-AGENTSIGNALS-EXPIRED-GC-CRON P3, SPIKE-BCTC-REFINE-MAXWINDOW P3 (all backlog); 2 CI rows PO-push-held; health 3280-3284 recurring-tracked. Board idle wip0.",
+    "next_action": "Tick 20260621T1837Z. Drained 18:06 cowork telemetry. health-recheck 3285: BUG-5 orphan lock esc-datacov:FPT:Q1-2026:ESC-3 RELEASED by router (task_force_release_orphan owner=bctc-analyst, released:true, heartbeat_age 432293s≈5d). ISSUE-9 weatherCheckJob-6h-block = FALSE POSITIVE (RAW: 17:00 run success 4ms). ISSUE-3 intel-cycle-stall = MILD (18:00 ran 122691ms but COMPLETED success, not a hang) — LOW defensive only, not routed. Incidental: pollNews_all_sources_dark 8 unfinished rows/8d (no finished_at) — ambiguous hang-vs-logging, pre-existing, noted-not-minted. BUG-1/2/3/4 + ISSUE-1(sbv 3rd restart) recurring-tracked. PRED-RESOLVER-GAP-FIX done_verified. Board idle wip0; signal_queue 0 NEW.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T16:46:00Z",
+    "updated_at": "2026-06-21T18:18:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T1707Z"
+    "last_tick": "20260621T1837Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
