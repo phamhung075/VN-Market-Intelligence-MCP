@@ -11611,6 +11611,30 @@
         "minted_by": "po-s111",
         "minted_at": "2026-06-21T04:07:00Z",
         "note": "False-fix guard: report 3266 = PO previously claimed fixed 03:37Z but live flow file unchanged (notebook-only edit). VERIFY the real caller (main.md:118), not a notebook."
+      },
+      {
+        "id": "FIX-BDI-SHIPPING-STALE-404-GUARD",
+        "type": "FIX",
+        "priority": "P2",
+        "severity": "MEDIUM",
+        "status": "BACKLOG",
+        "owner": "dev-mcp-server",
+        "co_owner": "ops-mainserver-fetch",
+        "zone": "apps/mcp-server",
+        "zone_owner": "apps/mcp-server/src/infrastructure/fetchers/shippingIndex.ts",
+        "size": "M",
+        "title": "get_supply_chain_exposure serves STALE BDI as current: BDI 1,400 (+0.0%) data-date 2026-04-07 (~2.5mo stale) shown under current header + concludes ổn định — ^BDI Yahoo endpoint DEAD (HTTP 404). no-fake-data/staleness violation (same class as DSI-MACRO-PHANTOM-STALE-GUARD, NEW BDI/supply-chain instance).",
+        "scope": "Two parts. (a) STALENESS GUARD: a >N-day-old BDI must surface as no-data/stale, NOT served as current +0.0% (mirror DSI-MACRO-PHANTOM-STALE-GUARD epoch-seconds compare, NOT datetime(now) string-compare). The supply-chain conclusion must not be drawn from a frozen BDI. (b) SOURCE REPLACEMENT: ^BDI Yahoo is permanently 404 — recon a live BDI feed -> ops-mainserver-fetch/dev wires it. Affects get_supply_chain_exposure + commodityTrackerRefreshJob.",
+        "source": "router RAW-verify 2026-06-21 get_supply_chain_exposure + health-recheck ^BDI HTTP 404",
+        "handoff": "docs/handoffs/FIX-BDI-SHIPPING-STALE-404-GUARD.md",
+        "precedent": "docs/handoffs/DSI-MACRO-PHANTOM-STALE-GUARD.md",
+        "user_impact": "MEDIUM — frozen BDI served as current corrupts supply-chain/commodity signal; violates no-fake-data standing goal.",
+        "dedup_note": "NOT a dup of FIX-COMMODITY-WTI-DELTA-CORRUPT (that adds BDI to refresh-job scope assuming BDI just needs refreshing — useless while ^BDI is 404-dead, and it has no serve-stale guard); NOT SEC-FUNC-03-FIX (functional sparse-data test); NOT FDA-10 (comment cleanup only). Cross-ref WTI-DELTA-CORRUPT for the refresh-coverage leg.",
+        "baseline_pass": "done_verified (LIVE RAW) = get_supply_chain_exposure does NOT present a >N-day-old BDI as a current +0.0%; stale -> explicit no-data/stale; conclusion not falsely ổn định; (post source-fix) BDI shows real varied fresh values. Generic, no per-date literal.",
+        "generic_mandate": "Guard the staleness seam generically (no per-date literal, no hardcoded BDI value).",
+        "created_at": "2026-06-21T06:30:00Z",
+        "created_by": "po",
+        "minted_by": "po (router-supplied LIVE RAW, PO gateway-blind)"
       }
     ],
     "closed_sprints": [
@@ -23072,7 +23096,9 @@
           "remaining_work_shift": "The remaining blocker has SHIFTED from 'OCR rasterize' (DONE via FIX-BCTC-BANK-PDF-OCR-RASTERIZE done_verified) to 'bank-form value/scale correctness (CTG)'. The literal silent-0-rows defect this task owns is substantially resolved (VCB+FPT valid rows, fail-loud works, non-regression holds). The CTG corruption is a DISTINCT defect class (scalar summary-mapping / scale) ALREADY OWNED by the existing backlog task FIX-BCTC-BANK-SUMMARY-MAPPING (P1) — NOT re-minted here (dedup).",
           "verdict": "HOLD at review. done_verified WITHHELD. The generic_mandate covers ALL banks; CTG (watchlist bank) still fails validation (corrupted magnitudes), so full done_verified is NOT granted. The silent-0-rows leg is functionally done for VCB/FPT but the bank cohort is not uniformly clean. cowork bctc-analyst release gate: VCB NOW UNBLOCKED (real varied valid rows); CTG remains BLOCKED (corrupted, identity-violated) and D2D remains BLOCKED (not yet re-probed clean) -> the analyst CTG/D2D suppress stays JUSTIFIED. PO note: the residual CTG/bank-cohort blocker is now tracked by FIX-BCTC-BANK-SUMMARY-MAPPING; this P0 row can be re-evaluated for done_verified once that follow-on clears CTG + any other corrupted bank, OR PO may later narrow this P0's DoD to the silent-0 leg (VCB resolved) and let BANK-SUMMARY-MAPPING own the value-correctness leg standalone.",
           "wip_disposition": "WIP unchanged (head.wip=0, wip_max=2). Nothing promoted to active. Row stays status=REVIEW."
-        }
+        },
+        "po_reconcile_2026-06-21": "CONFIRMED in review, NOT closed. Real tracked P0; ground truth lives in this row (commit 68d54c7b/989654f2 landed) + 2026-06-21 re-probe: VCB+FPT valid rows (silent-0 leg resolved), CTG corrupted (residual owned by FIX-BCTC-BANK-SUMMARY-MAPPING P1, dedup confirmed in backlog). No standalone handoff doc — row IS the SSOT. Leave in review pending BANK-SUMMARY-MAPPING (CTG bank-cohort value/scale).",
+        "_po_reconciled_at": "2026-06-21T06:30:00Z"
       },
       {
         "id": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG",
@@ -23110,7 +23136,9 @@
         "router_verified": true,
         "router_verification": "ROUTER-VERIFIED 2026-06-20T01:46:54Z: RAW git show 495cf0d4 = exactly 2 test files, 30 ins/0 del (additive, no weakened asserts), ancestor of HEAD. Seam guarded via Bun.env.CI; local branch delegates to fetchYahooFinancePrices/storeCommoditySnapshot + syncVnstockData (real network preserved). dev-mcp-server local isolation 1345d 7/0, 1345e 8/0; tsc clean. Generic mandate satisfied (no magic numbers). Local gate PASS. done_verified WITHHELD pending ci_green_on_subsequent_push (CI must re-run green on a SHA above 495cf0d4 with 1345d+1345e GREEN; push = PO out-of-band call).",
         "verified_at": "2026-06-20T01:46:54Z",
-        "verified_by": "dev-team-cron-router"
+        "verified_by": "dev-team-cron-router",
+        "po_reconcile_2026-06-21": "Code LANDED: commit 495cf0d4 confirmed on main + ancestor of HEAD (router git-verify), router_verified=true. Correctly held in review on verification_gate=ci_green_on_subsequent_push. No separate handoff doc — root_cause/fix_spec/router_verification in this row are the SSOT (macroFetchFn+vnstockSyncFn injected, CI-no-op/local-real seam, local isolation 1345d 7/0 1345e 8/0). Gate unsatisfiable while HEAD 73 behind origin/main (benign cloud-chore divergence); push = PO deferred call. LEAVE in review, do NOT close. NOT fabricating completion.",
+        "_po_reconciled_at": "2026-06-21T06:30:00Z"
       },
       {
         "id": "FIX-CI-RED-7fef5850-ALERTS-TEST-FIXTURE-SENTBY",
@@ -23136,7 +23164,9 @@
         "dedup_note": "NOT a dup of review-lane FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (apps/alert-engine runtime MIN_CANDLES task, shares only filename). NOT a dup of DONE_VERIFIED FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT (covered FINGERPRINT-WIRE-SCANJOBS+ORPHAN-CORRELATION test files). This is a 3rd distinct test file.",
         "commit_sha": "5ed1c751",
         "review_note": "test fixture now derives alerts table from canonical initAlertsTables(); bun test 8/8 green, pnpm check clean, narrow 1-file commit 5ed1c751; awaits out-of-band push + CI green to flip done_verified; unblocks FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG (495cf0d4)",
-        "moved_to_review_at": "2026-06-20T07:30:39Z"
+        "moved_to_review_at": "2026-06-20T07:30:39Z",
+        "po_reconcile_2026-06-21": "Code LANDED: commit 5ed1c751 confirmed on main + ancestor of HEAD (router git-verify). Correctly held in review on verification_gate=ci_green_on_subsequent_push. No separate handoff doc — root_cause/fix_spec/review_note in this row are the SSOT (test fixture now derives alerts table from canonical initAlertsTables(); 8/8 green, pnpm check clean). Gate currently unsatisfiable because HEAD is 73 commits behind origin/main (benign cloud-chore divergence — [[feedback_ci_green_gate_blocked_by_cloud_chore_divergence]]); push = PO deferred call. LEAVE in review, do NOT close (no CI-green-on-push observed yet). NOT fabricating completion.",
+        "_po_reconciled_at": "2026-06-21T06:30:00Z"
       }
     ],
     "qa": [],
