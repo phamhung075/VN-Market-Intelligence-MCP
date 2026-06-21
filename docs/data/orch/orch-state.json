@@ -194,12 +194,12 @@
     "status": "active",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260621T0307Z: PREFLIGHT clean, SF-1 claimed. 3 fresh reports triaged by PO (3275 health-recheck 5-BUG, 3276 D4 lock-diverge, 3277 pollNews-0): 2 false-dismissed (BCTC-dead known-false per health-recheck-idle caveat; get_sentiment_trend-bare already-fixed at fb-poster main.md:119), 4 tracked (BUG-3/4 -> FIX-NEWS-CB-FALSE-CLOSED + FIX-COMMODITY-WTI-DELTA-CORRUPT; 3277 -> OPS-POLLNEWS-NIGHT-ZERO rc=2), 3 minted BACKLOG (FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE P2, OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN P2, FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE P3 rc=3). WIP=0 unchanged, nothing promoted. backlog 262->265.",
+    "next_action": "Idle. BCTC silent-0 P0 (FIX-BCTC-ENRICH-SILENT-0ROWS) re-probed live: VCB RESOLVED + FPT non-regression intact, CTG corrupted (bank-form value/scale) — done_verified WITHHELD, blocker shifted to existing FIX-BCTC-BANK-SUMMARY-MAPPING (P1 backlog, dedup, co_owner=dev-mcp-server, serve-guard hard-block enforcement added). VCB unblocked for bctc-analyst gate; CTG+D2D remain suppressed. WIP=0.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T03:16:31Z",
+    "updated_at": "2026-06-21T03:50:20Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T0307Z"
+    "last_tick": "20260621T0339Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10621,7 +10621,20 @@
           "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
           "project_bank_aware_bctc"
         ],
-        "dispatch_note": "[PO-s70 2026-06-16T00:04:25Z] MINTED value-accuracy follow-on. RAW extraction leg (RASTERIZE) done_verified; this owns the bank SCALAR summary-mapping defect (income-statement columns garbage for banks). Searched board first — no existing BANK-AWARE/ENRICH-SILENT/BAL-* task owns this scalar-mapping scope; cross-linked into BCTC-ANALYTICS-LAYER as the scalar-summary leg of the bank-B02-TCTD cluster. Route po->ba->architect (SPIKE to pin module owner) ->pm->dev-pdf-extractor(or dev-mcp-server)->qa. Generic, no allowlist, done_verified = plausible bank scalars + accounting-identity holds vs named-volume DB."
+        "dispatch_note": "[PO-s70 2026-06-16T00:04:25Z] MINTED value-accuracy follow-on. RAW extraction leg (RASTERIZE) done_verified; this owns the bank SCALAR summary-mapping defect (income-statement columns garbage for banks). Searched board first — no existing BANK-AWARE/ENRICH-SILENT/BAL-* task owns this scalar-mapping scope; cross-linked into BCTC-ANALYTICS-LAYER as the scalar-summary leg of the bank-B02-TCTD cluster. Route po->ba->architect (SPIKE to pin module owner) ->pm->dev-pdf-extractor(or dev-mcp-server)->qa. Generic, no allowlist, done_verified = plausible bank scalars + accounting-identity holds vs named-volume DB.",
+        "po_reconfirm_log": [
+          {
+            "at": "2026-06-21T03:50:00Z",
+            "by": "po (file-only triage of router LIVE re-probe; PO gateway-blind)",
+            "note": "DEDUP HIT — router's 2026-06-21 task asked to mint a NEW 'FIX-BCTC-BANK-FORM-VALUE-CORRUPT-CTG' for the CTG corruption, but THIS existing row (P1, BACKLOG, minted PO-s70 2026-06-16) ALREADY owns the exact scope with the exact RAW evidence (net_revenue=3910, ebitda=3.6e14, net_margin_pct=229157%, total_assets=0, accounting-identity 100% violated, CTG 2026Q1) and the exact verification gate (CTG+VCB plausible scalars + identity holds + magnitudes sane + non-regression FPT/VNM). NO duplicate minted. Router dedup check that found 'no existing CTG-bank-value-corruption task' MISSED this row (it is named for the bank scalar-summary mapping, not 'CTG').",
+            "raw_reconfirm": "Router LIVE re-probe 2026-06-21 (after FIX-BCTC-BANK-PDF-OCR-RASTERIZE done_verified): VCB bank scalars NOW PLAUSIBLE+PASS (Net Revenue 17,421 ty, Total Assets 2,550,963.3 ty, Equity 224,558.7 ty, ROE 4.2%, conf 75%) and FPT PASS (non-regression) — so the bank scalar path MOSTLY works; CTG bank scalars RE-CONFIRMED CORRUPT (Total Assets=0, EBITDA 362,940,957,001.8 ty, net_margin 229157.1%, net_revenue 3,910 ~1000x off, operating_cf 1.858e17, EPS=0, conf 56%, Validation FAILED identity 100%). This is a per-form-edge corruption (CTG bank-form layout/scale variant), NOT a total bank outage — keep P1, do NOT promote past WIP.",
+            "open_question_why_vcb_clean_ctg_corrupt": "VCB (bank) parses clean but CTG (bank) corrupts -> likely a B02-TCTD layout/scale variant per CTG's bank-form rendering; BA/architect SPIKE should pin whether it is scalar-mapping (dev-pdf-extractor bctcScalarAggregator) or a CTG-specific column/scale unit in the bank-form table parse. NO per-ticker allowlist — fix generically.",
+            "serve_guard_gap": "FIX-BCTC-IDENTITY-SERVE-GUARD (DONE, merged 62ef64fe: total_assets<=0 OR total_assets<equity -> [CORRUPT DATA — SKIP], confidence=0, ratios suppressed) appears NOT to be hard-blocking CTG: CTG is SERVED with confidence 56% + 'Validation: FAILED' label and absurd magnitudes, NOT a confidence=0 [CORRUPT DATA — SKIP]. PO DECISION: serve-guard SHOULD hard-block a 100%-identity-violated bank reading (assets=0 with non-zero liabilities is exactly the assets<=0 guard condition) -> confidence=0 + suppress the corrupt scalars, NOT serve labeled garbage. Add this serve-guard-enforcement check to dev-mcp-server co-owner scope on this row (verify whether the guard regressed, never fired on bank-form path, or was bypassed by the labeled-serve path).",
+            "co_owner_scope_add": "dev-mcp-server co-owner: (1) enrich orchestration; (2) identity-serve-guard ENFORCEMENT — hard-block (confidence=0 / [CORRUPT DATA — SKIP]) any bank reading violating the accounting identity, do NOT serve a 'Validation FAILED' labeled-garbage reading.",
+            "wip_disposition": "Row stays BACKLOG P1. NOT promoted (head.wip=0, wip_max=2 — respected; nothing to active). Next-dispatch candidate alongside the residual CTG leg of FIX-BCTC-ENRICH-SILENT-0ROWS."
+          }
+        ],
+        "co_owner": "dev-mcp-server"
       },
       {
         "id": "AUDIT-FETCH-COMPLETE",
@@ -22931,7 +22944,7 @@
         "po_promote_rationale": "#1 READY P0, TRUE root of user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' + cowork bctc-analyst '#2776' release-block (CTG watchlist bank, 27 cycles BLOCKED). LEAD dev-pdf-extractor (B02-TCTD bank-form parse/OCR) is a DISTINCT specialist lane NOT occupied by the only live coding task (ARCH-CRON-SCHEDULER-RELIABILITY = architect-design phase). BA-VN-MACRO-TOOLING freed (planning-complete SPEC, zero dev WIP). Coding lanes after this promote: ARCH-CRON (architect-design, not coding) + this P0 = 1 active coding lane <= WIP cap. Live corroboration: get_agent_signals 6225 'bctc source stale 2191min vs 360 threshold'. GENERIC mandate (no per-ticker allowlist), fail-loud on 0-rows enrich, done_verified = real VARIED rows vs named-volume market.db (never host ./data, never a badge).",
         "commit": "68d54c7b 989654f2",
         "done_verified": "PENDING",
-        "done_verified_reason": "ops must REBUILD BOTH pdf-extractor + mcp-server containers, then re-trigger runBctcReparseJob for VCB/CTG bank tickers, then RAW-verify: (a) get_bctc_full(VCB) returns real VARIED rows vs the NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data — NEVER host ./data decoy); (b) a 0-row extraction's queue row shows status=enrich_failed not done; (c) non-regression — VCB 2025Q4 (112 rows) + FPT 2026Q1 (145 rows) still parse. done_verified is a LIVE RAW probe, NEVER a badge.",
+        "done_verified_reason": "ops must REBUILD BOTH pdf-extractor + mcp-server containers, then re-trigger runBctcReparseJob for VCB/CTG bank tickers, then RAW-verify: (a) get_bctc_full(VCB) returns real VARIED rows vs the NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data — NEVER host ./data decoy); (b) a 0-row extraction's queue row shows status=enrich_failed not done; (c) non-regression — VCB 2025Q4 (112 rows) + FPT 2026Q1 (145 rows) still parse. done_verified is a LIVE RAW probe, NEVER a badge. | [2026-06-21 re-probe] check(a) NOW PARTIAL: VCB PASS (P0 resolved for VCB) + FPT non-regression PASS, but CTG FAIL-corrupted (Total Assets=0, identity 100% violated, absurd EBITDA/margins/scale). done_verified STILL WITHHELD — remaining blocker shifted from OCR-rasterize (DONE) to bank-form value/scale correctness, owned by existing FIX-BCTC-BANK-SUMMARY-MAPPING (dedup, NOT re-minted).",
         "rebuild_required": "BOTH pdf-extractor AND mcp-server",
         "done_verified_gate_probe": {
           "probed_at": "2026-06-15T20:10:36Z",
@@ -22941,6 +22954,17 @@
           "check_b_fail_loud": "PASS — both VCB rows flipped status=enrich_failed (NOT done); logger.error '[bctcPdfPull] ENRICH 0-rows — FAIL LOUD'; pull result enrichFailed:2. 989654f2 silent-advance fix CONFIRMED working live.",
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
+        },
+        "done_verified_gate_probe_2026-06-21": {
+          "probed_at": "2026-06-21T03:50:00Z",
+          "by": "po (router-supplied LIVE RAW, PO gateway-blind)",
+          "method": "router re-probed get_bctc_full LIVE vs named-volume DB after FIX-BCTC-BANK-PDF-OCR-RASTERIZE reached done_verified; OCR-rasterize leg (the 2026-06-15 check(a) blocker) is now DONE.",
+          "check_a_real_varied_rows": "PARTIAL — VCB (bank, B02-TCTD) NOW returns real varied rows: Net Revenue 17,421 ty, Net Profit 9,462.1 ty, Total Assets 2,550,963.3 ty, Equity 224,558.7 ty, ROE 4.2%, EPS 15, confidence 75%, Validation PASSED -> the user-facing 'Chua co du lieu BCTC' P0 is RESOLVED for VCB. FPT (non-regression anchor) PASSED: Net Revenue 12,480 ty, Total Assets 68,586.1 ty, Equity 40,122 ty, ROE 6.2%, confidence 81%, refine_status DONE -> non-regression INTACT. CTG (watchlist bank, B02-TCTD) FAILED: rows now PRESENT but CORRUPTED — Validation FAILED 'Accounting identity violated: Assets (0) != Liabilities (24,735,484.8 ty) + Equity (244,904.3 ty), mismatch 100%'; Total Assets=0, EBITDA=362,940,957,001.8 ty (absurd), net_margin 229157.1%, net_revenue=3,910 (raw, ~1000x scale off vs VCB), operating_cf=1.858e17, EPS=0, confidence 56%. CTG went 0-rows -> corrupted-rows (nonzero-values-need-plausibility-check: non-empty is the FLOOR not the bar).",
+          "check_b_fail_loud": "PASS (carried from 2026-06-15) — silent-advance swallow fixed; 0-row enrich flips status=enrich_failed.",
+          "check_c_non_regression": "PASS — FPT 2026Q1 + VCB 2025Q4 anchors intact; VCB 2026Q1 now also produces valid rows.",
+          "remaining_work_shift": "The remaining blocker has SHIFTED from 'OCR rasterize' (DONE via FIX-BCTC-BANK-PDF-OCR-RASTERIZE done_verified) to 'bank-form value/scale correctness (CTG)'. The literal silent-0-rows defect this task owns is substantially resolved (VCB+FPT valid rows, fail-loud works, non-regression holds). The CTG corruption is a DISTINCT defect class (scalar summary-mapping / scale) ALREADY OWNED by the existing backlog task FIX-BCTC-BANK-SUMMARY-MAPPING (P1) — NOT re-minted here (dedup).",
+          "verdict": "HOLD at review. done_verified WITHHELD. The generic_mandate covers ALL banks; CTG (watchlist bank) still fails validation (corrupted magnitudes), so full done_verified is NOT granted. The silent-0-rows leg is functionally done for VCB/FPT but the bank cohort is not uniformly clean. cowork bctc-analyst release gate: VCB NOW UNBLOCKED (real varied valid rows); CTG remains BLOCKED (corrupted, identity-violated) and D2D remains BLOCKED (not yet re-probed clean) -> the analyst CTG/D2D suppress stays JUSTIFIED. PO note: the residual CTG/bank-cohort blocker is now tracked by FIX-BCTC-BANK-SUMMARY-MAPPING; this P0 row can be re-evaluated for done_verified once that follow-on clears CTG + any other corrupted bank, OR PO may later narrow this P0's DoD to the silent-0 leg (VCB resolved) and let BANK-SUMMARY-MAPPING own the value-correctness leg standalone.",
+          "wip_disposition": "WIP unchanged (head.wip=0, wip_max=2). Nothing promoted to active. Row stays status=REVIEW."
         }
       },
       {
@@ -23081,13 +23105,13 @@
         }
       ]
     },
-    "updated_at": "2026-06-21T01:17:23Z",
-    "updated_by": "dev-team-cron-router",
+    "updated_at": "2026-06-21T03:50:00Z",
+    "updated_by": "po (file-only BCTC re-probe triage)",
     "last_triaged_at": "2026-06-21T03:14:47Z",
     "last_triaged_by": "po-gateway-blind"
   },
-  "updated_at": "2026-06-20T08:16:14Z",
-  "updated_by": "po-s107",
+  "updated_at": "2026-06-21T03:50:00Z",
+  "updated_by": "po (file-only BCTC re-probe triage)",
   "meta": {
     "updated_at": "2026-06-18T12:34:24Z",
     "updated_by": "po",
