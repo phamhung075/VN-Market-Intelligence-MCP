@@ -1531,6 +1531,19 @@
         "read_at": "2026-06-21T14:19:08Z",
         "read_by": "po-s111",
         "disposition": "FOLDED into FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED (.folded_scope_orphan_fk); READ not RESOLVED until durable FK/prune-coordination fix ships."
+      },
+      {
+        "id": "sau-20260621T155518-signals-regress",
+        "ts": "2026-06-21T15:55:18Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity",
+        "summary": "agent_signals: 3491 expired rows (was 3444, +47 growth), no GC cron cleanup",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/data/db-integrity-history.json",
+        "router_verify": "ROUTER RAW-VERIFIED 2026-06-21T16:18Z (bun:sqlite live): agent_signals total=3496, expired=3493 via datetime() ISO compare. NOTE expires_at is ISO-TEXT (\"2026-06-21 17:00:01\") so any GC/count MUST use datetime(expires_at)<datetime(now) NOT epoch strftime (epoch compare returns 0 — [[feedback_sqlite_iso8601_datetime_strcompare_bypass]]). Genuine: no GC cron prunes expired agent_signals → unbounded slow growth (small now, 3496 rows). Same lifecycle family as signal_outcomes orphan (FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED). LOW-MED hygiene, not urgent. → PO triage.",
+        "router_verified": true
       }
     ]
   },
