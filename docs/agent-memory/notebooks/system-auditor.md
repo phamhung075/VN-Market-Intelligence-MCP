@@ -1,8 +1,8 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
-## c250 · 2026-06-21T05:37:05Z
-### Audit Run Tier-1 (05:37–05:37 UTC 2026-06-21, Sunday off-market)
+## c251 · 2026-06-21T06:06:58Z
+### Audit Run Tier-1 (06:06–06:07 UTC 2026-06-21)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | A-20 multi-probe: 3 probes
 - Anomalies: 0 NEW (all runtime checks PASS; stable)
 - Status: HEALTHY
@@ -10,13 +10,13 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 **Verdict Summary:**
 - A-01..A-11 containers: all 12 UP ✓ | A-12..A-19 health: 5/5 PASS ✓
 - A-20 pdf-extractor multi-probe: 3/3 PASS ✓ | A-21 restart: 0 ✓
-- A-30 memory: 26.22% ✓ | A-32 disk: 37% ✓
+- A-30 memory: 32.01% ✓ | A-32 disk: 37% ✓
 
 **Signals:** 0 NEW | Status: CLEAN
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-21T05:37:05Z ===
+=== AUDITOR PROBE 2026-06-21T06:06:58Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
@@ -45,7 +45,7 @@ mcp-gateway                                       Up 10 days (healthy)   mcpserv
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=26.22% MemUsage=537MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=32.01% MemUsage=655.5MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
@@ -60,8 +60,8 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 ```
 Pass count: 3/3 (majority vote PASS) ✓
 
-## c249 · 2026-06-21T05:06:55Z
-### Audit Run Tier-1 (05:06–05:07 UTC 2026-06-21, Sunday off-market)
+## c250 · 2026-06-21T05:37:05Z
+### Audit Run Tier-1 (05:37–05:37 UTC 2026-06-21, Sunday off-market)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | A-20 multi-probe: 3 probes
 - Anomalies: 0 NEW (all runtime checks PASS; stable)
 - Status: HEALTHY
@@ -69,6 +69,6 @@ Pass count: 3/3 (majority vote PASS) ✓
 **Verdict Summary:**
 - A-01..A-11 containers: all 12 UP ✓ | A-12..A-19 health: 5/5 PASS ✓
 - A-20 pdf-extractor multi-probe: 3/3 PASS ✓ | A-21 restart: 0 ✓
-- A-30 memory: 24.63% ✓ | A-32 disk: 37% ✓
+- A-30 memory: 26.22% ✓ | A-32 disk: 37% ✓
 
 **Signals:** 0 NEW | Status: CLEAN
