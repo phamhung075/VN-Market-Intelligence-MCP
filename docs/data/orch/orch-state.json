@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260621T0707Z. read_telegram_reports(new)=0, signals=0, preflight clean. Review lane: ARCH-SHIP-WAVE-REAUDIT PARKED; FIX-BCTC-ENRICH-SILENT-0ROWS PO-held 06:30 (CTG residual→FIX-BCTC-BANK-SUMMARY-MAPPING). 2 CI rows (FIX-CI-RED-7fef5850 cm 5ed1c751 / FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG cm 495cf0d4): QA+ROUTER RAW re-verify local-green STABLE (RSI 8/8, 1345d 7/7, 1345e 8/8, tsc exit0; both commits ancestors of HEAD). NO regression. NOT promoted — both correctly held in review per PO 06:30 reconcile; gate=ci_green_on_subsequent_push UNSATISFIABLE (HEAD behind origin, benign cloud-chore divergence; push=PO deferred call, router never pushes) [[feedback_ci_green_gate_blocked_by_cloud_chore_divergence]]. No actionable work this tick.",
+    "next_action": "Tick 20260621T0820Z. read_telegram_reports(new)=1 (health-recheck 0806, analysis-agent). Drained 1 signal (cowork_tick_telemetry gateway-blind offhours-gatherer skip → processed/). Report = recurring cluster, ALL 6 tracked: BUG-1 BCTC day-5-dead = FALSE-ALARM live-probe-confirmed (get_bctc_full(VCB) serves real varied rows, validation passed, conf 75%, published 06-15; event-driven pipeline + Sunday/no-weekend-filings → push-age grows ≠ crash [[feedback_bctc_lastpush_age_misread_as_crash]] → FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH); BUG-2 Reuters(TASK_1899a/1910a); BUG-3 TE(FIX-MACRO-SNAPSHOT-DELTAS-NULL); BUG-4 ISM/FRED(ops-fred-key); BDI-stale(FIX-BDI-SHIPPING-STALE-404-GUARD); SBV-restart(FIX-SBV-FX-VPS-FETCHER-UNHEALTHY). NOT processed (open backlog≠fixed → would false-signal resolved, constraint x). Review lane unchanged (2 CI rows held PO 06:30). No re-dispatch.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T07:20:00Z",
+    "updated_at": "2026-06-21T08:22:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T0707Z"
+    "last_tick": "20260621T0820Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
