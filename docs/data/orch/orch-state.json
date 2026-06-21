@@ -233,8 +233,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-21T11:26:00Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-21T20:13:00Z",
+    "_updated_by": "tran-ngoc-bau",
     "archive": [
       {
         "from": "system-auditor",
@@ -1546,6 +1546,17 @@
         "router_verified": true,
         "read_at": "2026-06-21T16:19:36Z",
         "disposition": "folded into FIX-AGENTSIGNALS-EXPIRED-GC-CRON (existing backlog); ISO-TEXT datetime() guard added"
+      },
+      {
+        "id": "tnb-20260621T201300Z",
+        "ts": "2026-06-21T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c102 BLOCKED (MCP failure-mode-A, 6th consecutive local-CLI cycle). Sat weekend: evening PUBLISHED, morning/EOD correctly absent. Overall: NEEDS_ATTENTION STABLE",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ]
   },
