@@ -1540,10 +1540,12 @@
         "type": "db_integrity",
         "summary": "agent_signals: 3491 expired rows (was 3444, +47 growth), no GC cron cleanup",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/db-integrity-history.json",
         "router_verify": "ROUTER RAW-VERIFIED 2026-06-21T16:18Z (bun:sqlite live): agent_signals total=3496, expired=3493 via datetime() ISO compare. NOTE expires_at is ISO-TEXT (\"2026-06-21 17:00:01\") so any GC/count MUST use datetime(expires_at)<datetime(now) NOT epoch strftime (epoch compare returns 0 — [[feedback_sqlite_iso8601_datetime_strcompare_bypass]]). Genuine: no GC cron prunes expired agent_signals → unbounded slow growth (small now, 3496 rows). Same lifecycle family as signal_outcomes orphan (FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED). LOW-MED hygiene, not urgent. → PO triage.",
-        "router_verified": true
+        "router_verified": true,
+        "read_at": "2026-06-21T16:19:36Z",
+        "disposition": "folded into FIX-AGENTSIGNALS-EXPIRED-GC-CRON (existing backlog); ISO-TEXT datetime() guard added"
       }
     ]
   },
@@ -11337,7 +11339,7 @@
       {
         "id": "FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
         "title": "agent_signals has no GC cron — 3444 expired rows accumulating unbounded",
-        "desc": "Maintenance gap (auditor sau-20260620T195454Z-signals, MEDIUM): agent_signals accumulates ~3444 expired rows (read/expired, past expires_at) with no GC cron -> unbounded growth. Add daily off-hours GC cron: DELETE FROM agent_signals WHERE expires_at < now AND status IN ('read','expired'). Mirror shipped FU-LOCKSTORE-EXPIRED-GC pattern. RAW-verify-on-pickup: SELECT count(*) confirm ~3444 magnitude + safe predicate (never delete unread/unexpired). Small.",
+        "desc": "Maintenance gap (auditor sau-20260620T195454Z-signals, MEDIUM): agent_signals accumulates ~3444 expired rows (read/expired, past expires_at) with no GC cron -> unbounded growth. Add daily off-hours GC cron: DELETE FROM agent_signals WHERE expires_at < now AND status IN ('read','expired'). Mirror shipped FU-LOCKSTORE-EXPIRED-GC pattern. RAW-verify-on-pickup: SELECT count(*) confirm ~3444 magnitude + safe predicate (never delete unread/unexpired). Small. [PO-FOLD 2026-06-21T16:19:36Z — router-RAW re-verify sau-20260621T155518: total=3496, expired=3493 (+49 vs prior 3444 baseline; slow unbounded growth confirmed). HARD CONSTRAINT for dev: expires_at is ISO-TEXT (\"2026-06-21 17:00:01\"), so the GC DELETE and the count predicate MUST use datetime(expires_at) < datetime('now'), NEVER epoch strftime('%s',...) compare (epoch returns 0 on ISO-TEXT, silently deletes/counts nothing — feedback_sqlite_iso8601_datetime_strcompare_bypass trap). Same signal-lifecycle family as FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.]",
         "type": "FIX",
         "size": "S",
         "zone": "apps/mcp-server/",
@@ -11345,7 +11347,9 @@
         "baseline_pass": "RAW-verify-on-pickup",
         "created_at": "2026-06-20T20:15:42Z",
         "created_by": "po",
-        "source_signal": "sau-20260620T195454Z-signals"
+        "source_signal": "sau-20260620T195454Z-signals,sau-20260621T155518-signals-regress",
+        "last_folded_at": "2026-06-21T16:19:36Z",
+        "iso_text_datetime_guard": true
       },
       {
         "id": "FIX-MARKET-WATCHER-DOC-PARAM-DRIFT",
@@ -11739,6 +11743,20 @@
         "distinct_from": "NOT FDA-4 (that intentionally made the Go stub honest-empty and DEFERRED wiring). NOT the macro-fetch outage cluster (FIX-MACRO-SNAPSHOT-DELTAS-NULL / F-MACRO-FETCH-DEADLINE / FIX-NEWS-CB-FALSE-CLOSED TE+Chromium) — those are live-upstream-fetch failures; this calendar needs NO upstream fetch, the data is in-repo.",
         "minted_at": "2026-06-21T14:18:56Z",
         "minted_by": "po-s111"
+      },
+      {
+        "id": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
+        "title": "Recon: does maxWindowPages truncation drop financial data in BCTC refine? (NOT a news signal-drop)",
+        "type": "SPIKE",
+        "mode": "spike",
+        "timebox": 120,
+        "zone": "apps/mcp-server/",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "desc": "needs-recon (health-recheck 2026-06-21T16:05Z ISSUE-8). Report framed 5x '[windowPartitioner] continuation window truncated at maxWindowPages' as an INTELLIGENCE-CYCLE news signal-drop on high-news cycles — that framing is WRONG. partitionIntoWindows is used EXCLUSIVELY by the BCTC financial-report REFINE pipeline (bctcRefineJob.ts + getBctcPendingRefineTool.ts, FR-12); grep confirms ZERO news/intelligence-cycle callers. The warn fires when a continuation TABLE spans more than maxWindowPages (default 3) pages of a BCTC PDF — by-design degraded, already flagged truncated_continuation. RECON QUESTION: when a >3-page continuation table is split across windows, does finalizeBctcRefine LOSE rows / mis-merge the spanning table, or does the merge stitch them correctly? READ the refine-merge/finalize path (windowPartitioner.ts L93-101 warn + finalizeBctcRefine window merge). OUTPUT: findings doc. IF data-loss confirmed -> mint a P2/P3 FIX (raise cap or stitch-across-windows); IF merge stitches correctly -> downgrade the warn to INFO (expected, not a drop) so health-recheck stops misattributing it as news signal-drop. Do NOT mint a blind FIX.",
+        "created_at": "2026-06-21T16:19:36Z",
+        "created_by": "po",
+        "source": "health-recheck 2026-06-21T16:05Z ISSUE-8 (Telegram report; not in signal_queue)"
       }
     ],
     "closed_sprints": [
