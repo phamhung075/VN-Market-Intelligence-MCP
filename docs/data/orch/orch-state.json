@@ -233,7 +233,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-21T03:00:00.274Z",
+    "_updated_at": "2026-06-21T11:26:00Z",
     "_updated_by": "system-auditor",
     "archive": [
       {
@@ -1515,6 +1515,19 @@
         "triaged_by": "po",
         "triage_note": "NO new task. (1) Trend IMPROVING not flat: rolling-7d low-conf count 13 (sau-20260620T000322Z-c04 on 06-20) dropped to 7 on 06-21, nearly halved; the 7d window still carries yesterday bad rows so a sharp drop means reparse/quality work is landing. (2) Root already tracked and CODE-COMPLETE in review[]: FIX-BCTC-ENRICH-SILENT-0ROWS (bank B02-TCTD silent-0-rows enrich) awaiting QA; plus DONE FIX-BCTC-LOWCONF-REPARSE-BATCH (PPC 0.25 to 0.625 proof) and backlog REVIEW-PPC-Q4-LOW-CONFIDENCE. Minting a C-04 FIX would duplicate the in-review root. (3) Per low-conf policy (<0.2 = flag and skip = system WORKING, not fake data). Anchor: FIX-BCTC-ENRICH-SILENT-0ROWS. Re-escalate ONLY if C-04 actual RISES above 7 next tick OR stays >5 AFTER that fix reaches done_verified.",
         "router_dup_of": "FIX-BCTC-ENRICH-SILENT-0ROWS"
+      },
+      {
+        "id": "sau-20260621T112600-sig-orphan",
+        "ts": "2026-06-21T11:26:00Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "system_issue",
+        "summary": "signal_outcomes row 6218 orphaned: no parent in agent_signals; foreign key violation",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/data/db-integrity-history.json",
+        "router_verify": "ROUTER RAW-VERIFIED 2026-06-21T11:48Z (bun:sqlite live /app/data/market.db): finding GENUINE but mislabeled. There is NO signal_outcomes row id=6218. Actual orphan = signal_outcomes id=66 (signal_id=6218, VCB chain_catalyst, from verify-news-scout, created 2026-06-15 16:26) — its FK signal_id=6218 has no parent in agent_signals (TTL-pruned). EXACTLY 1 orphan of 72 rows; isolated, not service-impacting. Root: FK on_delete=NO ACTION + SQLite foreign_keys pragma OFF, so agent_signals TTL-prune leaves signal_outcomes children dangling. LOW-priority data hygiene → PO triage (candidate: orphan-cleanup + cascade/prune-coordination); overlaps Tier-3 DB-integrity domain.",
+        "router_verified": true
       }
     ]
   },
