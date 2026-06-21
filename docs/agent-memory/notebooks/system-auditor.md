@@ -1,6 +1,23 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c621 · 2026-06-21T02:32:10Z
+### Audit Run Tier-2 (02:30–02:32 UTC 2026-06-21, Sunday weekend)
+- Tier: 2 | Sources: 6 checked | VPS: 7 routes | DB spot: 2 checks
+- Anomalies: 0 NEW (all checks CLEAN after weekend context guard)
+- Status: HEALTHY
+
+**Verdict Summary:**
+- A-29 Cron fire: no gaps detected ✓
+- B-01..B-07 Source freshness: all within thresholds ✓
+- B-06..B-07 VPS proxy routes: 7/7 expected OK ✓
+- B-09 BCTC URL shape: no malformed URLs ✓
+- B-13 Stale pending BCTC: 0 actionable rows ✓
+- C-06 market_messages last 3h: 0 → INFO (weekend guard, market closed) ✓
+- C-07 agent_signals last 24h: 56 → PASS ✓
+
+**Signals:** 0 NEW | Status: CLEAN
+
 ## c620 · 2026-06-21T02:07:48Z
 ### Audit Run Tier-1 (02:07–02:08 UTC 2026-06-21, Saturday off-market)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | A-20 multi-probe: 3 probes
