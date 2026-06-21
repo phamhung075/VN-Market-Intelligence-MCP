@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-20T22:42:14Z",
-  "_updated_by": "developer",
+  "_updated_at": "2026-06-21T14:18:56Z",
+  "_updated_by": "po-s111",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -1524,10 +1524,13 @@
         "type": "system_issue",
         "summary": "signal_outcomes row 6218 orphaned: no parent in agent_signals; foreign key violation",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/db-integrity-history.json",
         "router_verify": "ROUTER RAW-VERIFIED 2026-06-21T11:48Z (bun:sqlite live /app/data/market.db): finding GENUINE but mislabeled. There is NO signal_outcomes row id=6218. Actual orphan = signal_outcomes id=66 (signal_id=6218, VCB chain_catalyst, from verify-news-scout, created 2026-06-15 16:26) — its FK signal_id=6218 has no parent in agent_signals (TTL-pruned). EXACTLY 1 orphan of 72 rows; isolated, not service-impacting. Root: FK on_delete=NO ACTION + SQLite foreign_keys pragma OFF, so agent_signals TTL-prune leaves signal_outcomes children dangling. LOW-priority data hygiene → PO triage (candidate: orphan-cleanup + cascade/prune-coordination); overlaps Tier-3 DB-integrity domain.",
-        "router_verified": true
+        "router_verified": true,
+        "read_at": "2026-06-21T14:19:08Z",
+        "read_by": "po-s111",
+        "disposition": "FOLDED into FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED (.folded_scope_orphan_fk); READ not RESOLVED until durable FK/prune-coordination fix ships."
       }
     ]
   },
@@ -11379,7 +11382,16 @@
         "verification_gate": "LIVE on named-vol market_data DB: (a) signal_outcomes rows with created_at older than 48h have checked_at populated and outcome_24h/48h resolved (not 'pending'); (b) get_calibration_report computed_at advances past 2026-06-14 with resolved-prediction count > 4; (c) a newly-recorded signal_outcome resolves within 48h+buffer. QA verifies raw rows on named volume, never badges.",
         "generic_mandate": "Fix the outcome-resolution lifecycle for ALL signal_outcomes rows, not just the 65 currently stuck.",
         "minted_at": "2026-06-20T21:41:56Z",
-        "minted_by": "dev-team-cron-router-20260620T213904Z"
+        "minted_by": "dev-team-cron-router-20260620T213904Z",
+        "folded_scope_orphan_fk": {
+          "folded_at": "2026-06-21T14:18:56Z",
+          "folded_by": "po-s111",
+          "source_signal": "sau-20260621T112600-sig-orphan",
+          "finding": "signal_outcomes id=66 (signal_id=6218, VCB chain_catalyst, created 2026-06-15 16:26) is FK-dangling: parent agent_signals row 6218 TTL-pruned. 1 orphan of 72 rows, isolated, LOW, not service-impacting.",
+          "root_cause": "FK signal_outcomes.signal_id -> agent_signals defined on_delete=NO ACTION AND SQLite PRAGMA foreign_keys is OFF, so agent_signals TTL-prune leaves signal_outcomes children dangling.",
+          "added_scope": "While repairing signal_outcomes lifecycle on the named-vol DB: (1) clean the 1 existing orphan (id=66); (2) DURABLE fix so future agent_signals TTL-prune does not strand outcome children — either coordinate prune to also delete/resolve outcome children, or add ON DELETE CASCADE + enable foreign_keys pragma, or have the resolution job treat parent-missing as a terminal resolution. Generic: no orphaned signal_outcomes children after any agent_signals prune.",
+          "rationale": "Same signal_outcomes table / 72-row corpus / apps/mcp-server zone / outcome-feedback-loop feature as this task; standalone P3 for 1 row = churn. Fold."
+        }
       },
       {
         "id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
@@ -11694,6 +11706,26 @@
         "generic_mandate": "Detect by Latin-English-content-word heuristic + whitelist, not by enumerating every bad word — catches NOVEL leaks. Whitelist is the single tuning surface (extendable without code change where practical).",
         "verification_gate": "Feed a post containing \"ground\" / \"selloff\" / \"breakout\" in VN prose → jargon-gate EXIT NON-ZERO. Feed a clean VN post with whitelisted tokens (tickers, USD/VND, EPS, P/E, Fed, Brent) → exit 0 (no false-positive).",
         "note": "P2. Extends DONE FIX-FB-POST-DATA-INTEGRITY-GATE; sibling under epic AUDIT-FB-GATE-PROSE-HARDENING. NB: fb-jargon-gate has a prior false-green class (exits 0 even on BLOCK — feedback_fb_poster_gate_false_green) — ensure the broadened path EXITS NON-ZERO on detection."
+      },
+      {
+        "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+        "type": "FIX",
+        "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "urgency": "medium",
+        "owner": "dev-mcp-server",
+        "route": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "baseline_pass": false,
+        "related_to": "FDA-4",
+        "source": "health-recheck 3283 (2026-06-21T14:10Z) ISSUE-7; router RAW-confirmed get_macro_calendar({}) -> {daysRequested:60,events:[],is_estimate:true,source_tier:4,status:unavailable}.",
+        "desc": "ROOT CAUSE: MCP tool get_macro_calendar (apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts:110) does an HTTP GET to the macro-indicators Go /macro-calendar endpoint (apps/macro-indicators/pkg/interface/http/handlers_calendar.go), which is the FDA-4 honest-unavailable STUB — it ALWAYS returns {events:[],status:unavailable,is_estimate:true,source_tier:4} because no live source was ever wired there. This is the by-design honest-degraded state FDA-4 (DONE 2026-06-05) shipped, NOT a regression and NOT a no-fake-data violation. BUT a COMPLETE, usable calendar already exists UNWIRED in the same mcp-server: apps/mcp-server/src/domain/services/macro/macroCalendar.ts exports getMacroCalendar(referenceDate?,days=60) returning ~36 FOMC/GSO-CPI/GSO-GDP/Vietnam-PMI/SBV 2026 events with isPivotWindow + currentMonthIsPivotWindow + nextPivotWindow + pivotWindowWarning (pure function, NO external fetch). FIX (pick the cleaner of): (a) repoint the MCP get_macro_calendar tool at the local getMacroCalendar() domain service (drop the HTTP hop entirely — simplest, the data is local), OR (b) have the Go /macro-calendar handler serve an equivalent static schedule. Either way the served source_tier should reflect 'derived static schedule' (tier 3, as carryTools.ts already documents) NOT tier-4 unavailable. Restores the pivot_window_active signal that digest-predict + alert-commander consume.",
+        "verification_gate": "LIVE via gateway call_tool get_macro_calendar({}) returns events.length>0 with the 2026 FOMC/GSO/PMI/SBV schedule, isPivotWindow flags present, status NOT 'unavailable', source_tier=3, AND digest-predict / alert-commander observe a non-null pivot_window signal. QA verifies the raw tool payload, not a badge. days=N param still honored (window filter).",
+        "generic_mandate": "Wire a real (static-schedule-acceptable) calendar source so the tool serves events for ANY days window, not a special-case for the current month; keep the honest is_estimate/source_tier labelling truthful to the static-schedule nature.",
+        "distinct_from": "NOT FDA-4 (that intentionally made the Go stub honest-empty and DEFERRED wiring). NOT the macro-fetch outage cluster (FIX-MACRO-SNAPSHOT-DELTAS-NULL / F-MACRO-FETCH-DEADLINE / FIX-NEWS-CB-FALSE-CLOSED TE+Chromium) — those are live-upstream-fetch failures; this calendar needs NO upstream fetch, the data is in-repo.",
+        "minted_at": "2026-06-21T14:18:56Z",
+        "minted_by": "po-s111"
       }
     ],
     "closed_sprints": [
