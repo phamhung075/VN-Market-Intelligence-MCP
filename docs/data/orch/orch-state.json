@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260620T220914Z complete (Sun 05:09 VN, market CLOSED weekend). SF-1 claimed clean (owner_agent=dev-team fix holds). 4 crons armed (no-op). Tier-1 auditor (a6d47b1d prior run) CLEAN 0-signals. Drain: no new signal files (cowork-team telemetry gateway-blind/pre-tick; 20:21Z empty). No new Telegram reports, no ci_red. 1 NEW row reconciled: rag-restart-watch RAW-verified RestartCount=86 PLATEAU (Up 12.4h healthy, 0 new restarts/12h) -> NEW->TRIAGED, MEDIUM held, PO Mon root-cause-or-close. No emergency. Idle.",
+    "next_action": "Tick 20260621T01Z complete. PO triage BATCH([2 FIX]): DSI-MACRO-PHANTOM-STALE-GUARD dispatched->dev-macro-indicators->QA APPROVED->DONE (commit 3280d82a, REBUILD REQUIRED, done_verified WITHHELD pending rebuild+evening live gate); FIX-HNX-OFFHOURS-ERROR-DOWNGRADE left TODO backlog (low, next tick). Tier-1 auditor CLEAN 0-signals. ops rebuild dispatched for mcp-server. WIP back to 0.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-20T22:11:17Z",
+    "updated_at": "2026-06-21T01:17:23Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260620T220914Z"
+    "last_tick": "20260621T011723Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -233,8 +233,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-20T22:11:17Z",
-    "_updated_by": "dev-team-cron-router",
+    "_updated_at": "2026-06-21T00:30:00Z",
+    "_updated_by": "po-dev-team-triage",
     "archive": [
       {
         "from": "system-auditor",
@@ -960,7 +960,7 @@
         "zone_owner": "dev-macro-indicators",
         "triaged_at": "2026-06-19T17:34:48Z",
         "triaged_by": "po-s110",
-        "disposition": "RANKED backlog: 5-finding cluster needs PO scoping into separate FIX tasks (DJIA/WTI stale store; Reuters/TE circuit-open; FRED_API_KEY unset; SBV zero-mask; foreign-flow primary dead). Multi-owner, not blind-dispatch. Scope next tick."
+        "disposition": "RE-CONFIRMED 3273/3274. SCOPED 2026-06-21: finding#1 (phantom DJIA=23750/WTI=95.5 served-as-current) MINTED as DSI-MACRO-PHANTOM-STALE-GUARD (data-integrity guard, DATA-SERVE-INTEGRITY). finding#2 Reuters-RSS + TradingEconomics circuit-open = upstream-source-revive, owner dev-mainserver-crawls/ops (Chromium scraper likely missing post-rebuild) — left in this cluster row, NOT minted (source-fetch revive, not blind-dispatch; WIP-capped at 2). finding#3 FRED_API_KEY unset = CONFIG/user-side, NOT a dev FIX. finding#4 SBV zero-mask + finding#5 foreign-flow primary = log-noise/self-heal, no mint. po dev-team triage 2026-06-21."
       },
       {
         "id": "devteam-20260619T170637Z-health-idle-vs-crash",
@@ -977,7 +977,7 @@
         "zone_owner": "router/health-trigger",
         "triaged_at": "2026-06-19T17:34:48Z",
         "triaged_by": "po-s110",
-        "disposition": "RANKED backlog: P1 health-recheck queue=0+active=IDLE-not-CRASH; owner=health-recheck RemoteTrigger prompt (router-updatable, NOT a dev coding lane). matches project_health_recheck_trigger + feedback_bctc_lastpush_age_misread_as_crash."
+        "disposition": "RE-CONFIRMED by health-recheck stream 3273/3274 (2026-06-20/21). STILL owner=health-recheck RemoteTrigger prompt (router-updatable, NOT a dev coding lane); RAW-verified vn-bctc-fetch active(running) 8d, queue legitimately empty (late Q1-2026 filers). NO new dev task — known-false-CRASH; durable fix = trigger-prompt queue-aware secondary check, tracked here. po dev-team triage 2026-06-21."
       },
       {
         "id": "devteam-20260619T170637Z-d4-id-collision",
@@ -1485,8 +1485,12 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports check C-04 failed (actual=7, expected=5 or less)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "triaged_at": "2026-06-21T00:12:46Z",
+        "triaged_by": "po",
+        "triage_note": "NO new task. (1) Trend IMPROVING not flat: rolling-7d low-conf count 13 (sau-20260620T000322Z-c04 on 06-20) dropped to 7 on 06-21, nearly halved; the 7d window still carries yesterday bad rows so a sharp drop means reparse/quality work is landing. (2) Root already tracked and CODE-COMPLETE in review[]: FIX-BCTC-ENRICH-SILENT-0ROWS (bank B02-TCTD silent-0-rows enrich) awaiting QA; plus DONE FIX-BCTC-LOWCONF-REPARSE-BATCH (PPC 0.25 to 0.625 proof) and backlog REVIEW-PPC-Q4-LOW-CONFIDENCE. Minting a C-04 FIX would duplicate the in-review root. (3) Per low-conf policy (<0.2 = flag and skip = system WORKING, not fake data). Anchor: FIX-BCTC-ENRICH-SILENT-0ROWS. Re-escalate ONLY if C-04 actual RISES above 7 next tick OR stays >5 AFTER that fix reaches done_verified.",
+        "router_dup_of": "FIX-BCTC-ENRICH-SILENT-0ROWS"
       }
     ]
   },
@@ -3856,6 +3860,30 @@
             "status": "DONE-LIVE-VERIFIED",
             "title": "macro-indicators Go usecases.go fixture fallback (fedFunds 5.33 / VND deposit 4.7) masquerading as live — per-input liveness gate + carrySpread null when estimate",
             "zone": "apps/macro-indicators"
+          },
+          {
+            "id": "DSI-MACRO-PHANTOM-STALE-GUARD",
+            "title": "Phantom stale macro served as current: wti_crude_usd=95.5 (real ~$80) + dow_jones=23750 (real ~38000) read from US-markets/commodity store feed macro regime in 4+ agents (market-watcher/unified-agent/news-scout/bctc-analyst). DSI-INV-1 violation (stale-stamped-fresh). Add staleness gate so stale macro is NOT served as current: per-field fetched_at_source age check -> null/is_estimate=true/regime UNKNOWN when stale, never serve last-known as live. NOTE get_macro_snapshot itself already serves correct live oil $80.63 (DSI-MACRO-INDICATORS-LATENT) — the corrupt values live in a SEPARATE US-markets/commodity store; first sub-step = pin which store/serve path emits 95.5/23750. Source-revive of TradingEconomics (the fetch that should refresh these) is a SEPARATE upstream/config concern tracked under MACRO-FETCH-CLUSTER-20260619 — this task is the data-integrity guard only.",
+            "label": "Staleness gate on US-markets/commodity macro store (data-integrity, DSI-INV-1)",
+            "size": "M",
+            "status": "DONE",
+            "priority": "high",
+            "type": "FIX",
+            "zone": "dev-macro-indicators",
+            "files": [
+              "apps/mcp-server/src/infrastructure/fetchers (us-markets/commodity store — pin in step 1)"
+            ],
+            "baseline_pass": "get_macro_snapshot + the macro-regime serve path return null/is_estimate (NOT 95.5/23750) when the store row age exceeds freshness window; live oil $80.63 path unaffected; no agent consumes phantom value as current",
+            "origin": "health-recheck stream BUG-4b (re-confirmed 3273/3274); folds MACRO-FETCH-CLUSTER-20260619 finding #1",
+            "note": "MINTED po dev-team triage 2026-06-21. Dedup: no existing task targets the phantom-value guard; MACRO-FETCH-CLUSTER row only RANKED it for scoping (this IS the scoping). WIP-controlled (1 of 2).",
+            "done_at": "2026-06-21T01:17:23Z",
+            "done_by": "dev-team-cron-router",
+            "qa_verdict": "APPROVED (qa 2026-06-21): bun tsc EXIT0, pnpm check EXIT0, 6/6 new + 88/88 regression, DDD PASS, parameterized SQL (< ?) PASS, no-fake-data RAW fixture PASS (stale >4h excluded / fresh <=4h included), security PASS.",
+            "commit": "3280d82a",
+            "rebuild_required": true,
+            "done_verified": false,
+            "done_verified_gate": "WITHHELD pending ops rebuild of mcp-server (4h epoch-seconds staleness gate active only post-rebuild) + next evening cycle live confirm: served macro section excludes stale indicators, includes fresh real values. Root cause = silently-bypassed filter: ISO-8601 'T' > SQLite space-separator string-compare made WHERE extracted_at>=datetime('now','-48h') pass ALL rows; fixed to (strftime('%s','now')-strftime('%s',extracted_at))<? . Commits 3280d82a/5f343136/962027aa. Memory: feedback_sqlite_iso8601_datetime_strcompare_bypass.",
+            "handoff": "docs/handoffs/DSI-MACRO-PHANTOM-STALE-GUARD.md"
           }
         ]
       },
@@ -6098,6 +6126,31 @@
             "depends": [],
             "zone": "scripts/",
             "note": "REVIEW 2026-06-21: Check-E implemented (E1 sector-mismatch parenthesised-label + E2 company-alias). SSOT-driven (system-map.json watchlist). line-344 floor_zero 0\\n0 bug fixed. 4 DoD runs pass. Handoff: docs/handoffs/FIX-FB-GATE-SECTOR-NAME-VALIDATOR.md"
+          }
+        ]
+      },
+      {
+        "id": "LOG-HYGIENE",
+        "label": "Log-noise eradication: off-hours force-fetch ERROR storm masks real alerts",
+        "status": "active",
+        "priority": "low",
+        "opened_at": "2026-06-21",
+        "origin": "health-recheck stream BUG-2 (root-caused report 3274; re-confirmed 3273/3274)",
+        "tasks": [
+          {
+            "id": "FIX-HNX-OFFHOURS-ERROR-DOWNGRADE",
+            "title": "fetchHnxPrices/fetchUpcomPrices emit logger.error(\"all HNX/UPCOM price sources failed\") on EVERY off-hours force:true cycle even when empty is CORRECT (market closed, no quotes) -> recurring ERROR log storm that masks real alerts. ROUTER-VERIFIED real emitter = apps/mcp-server/src/infrastructure/fetchers/hnx.ts:353 (HNX) + :431 (UPCOM); isTradingSession() already in scope (lines 297/384) and force flag already threaded. Fix: when (!isTradingSession() AND empty-result) downgrade ERROR->DEBUG; keep ERROR for genuine in-session source failure. NOTE: the BUG-2 report cited sectorRotationTools/portfolioTools/marketTools call-sites but those ALREADY swallow gracefully (withDeadline []/logger.warn) — the true ERROR is one layer down in the fetcher; do NOT edit the call-sites.",
+            "label": "Downgrade off-hours empty-result HNX/UPCOM ERROR->DEBUG (hnx.ts:353/:431)",
+            "size": "S",
+            "status": "TODO",
+            "priority": "low",
+            "type": "FIX",
+            "zone": "dev-mcp-server",
+            "files": [
+              "apps/mcp-server/src/infrastructure/fetchers/hnx.ts"
+            ],
+            "baseline_pass": "off-hours get_market_snapshot/sector/portfolio force-fetch produces NO logger.error for empty HNX/UPCOM result; in-session genuine source failure still logs ERROR; existing tests green",
+            "note": "MINTED po dev-team triage 2026-06-21. Dedup: no existing HNX/UPCOM/log-storm task on board (grep hits were prose). WIP-controlled (2 of 2)."
           }
         ]
       }
@@ -22917,8 +22970,8 @@
         }
       ]
     },
-    "updated_at": "2026-06-21T04:00:00Z",
-    "updated_by": "pm"
+    "updated_at": "2026-06-21T01:17:23Z",
+    "updated_by": "dev-team-cron-router"
   },
   "updated_at": "2026-06-20T08:16:14Z",
   "updated_by": "po-s107",

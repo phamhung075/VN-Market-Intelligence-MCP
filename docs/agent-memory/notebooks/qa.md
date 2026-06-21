@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-308 · 2026-06-21 · DSI-MACRO-PHANTOM-STALE-GUARD — APPROVED
+
+DSI-MACRO-PHANTOM-STALE-GUARD (3280d82a) | Verdict: APPROVED | tsc EXIT 0 / pnpm check EXIT 0. Task test: 6/6 pass (14 expect) — GUARD-1..6. Regression: 88/88 pass across 9 files (marketContextBuilder, market-context, get-cycle-bootstrap, FIX-ERRAUDIT-W2-MCP-DATALAYER, commodity-tracker-refresh-job, DSI-S1-MACRO, macro-alert-cooldown, macro-alert-dispatch, FIX-MACRO-REFRESH-DEAD). DDD PASS: marketContextBuilder.ts imports = {bun:sqlite type-only, domain peer, 2x domain/utils} — zero infrastructure imports. Parameterized SQL PASS: `< ?` + `.all(STALE_THRESHOLD_SECONDS)` — no string interpolation. No-fake-data PASS: stale WTI=95.5 and dow_jones=23750 phantom values excluded in GUARD-1/3/6; fresh 79.8 included in GUARD-2. Security PASS: no process.env, no hardcoded creds. Deferred AC: live container done_verified (stale→excluded, fresh→real) pending post-rebuild at next evening cycle.
+
 ## cycle-307 · 2026-06-21 · FIX-DRAIN-STATEFILE-DATALOSS — APPROVED (scripts-only)
 
 FIX-DRAIN-STATEFILE-DATALOSS (bfdb8c69) | Verdict: APPROVED | Commit: scripts-only (no bun test/tsc/DDD/mock-guard applicable). node --check EXIT 0. bash -n EXIT 0. Gate 1: drain exits clean, history survives at docs/data/db-integrity-history.json (9 entries), no copy in processed/. Gate 2a: {} probe skipped in inbox (not moved). Gate 2b: real-shaped signal routed to processed/. Gate 3: append 9→10 entries. Stale-ref sweep: 0 hits across scripts/.claude/apps/docs/agents/. Commit hygiene: 9 files, all task-scope + standard dev chore memory files — no cowork churn. DJ: sprint-FE-PAGE-REORG-qa.md §STEP qa-S13.
