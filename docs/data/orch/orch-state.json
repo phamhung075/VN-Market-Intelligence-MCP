@@ -194,12 +194,12 @@
     "status": "active",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260621T0237Z: bus empty, 0 NEW signals, board idle (wip=0). Reconciled 5 dispositioned READ rows (db1/db2/cron/finrpt→TRIAGED, db3→RESOLVED) that lagged ground-truth — all routed to existing board fixes. 9 disp=NONE WARN/LOW/INFO rows remain READ (PO-acked, no action). No dev work pulled (no fresh trigger).",
+    "next_action": "Tick 20260621T0307Z: PREFLIGHT clean, SF-1 claimed. 3 fresh reports triaged by PO (3275 health-recheck 5-BUG, 3276 D4 lock-diverge, 3277 pollNews-0): 2 false-dismissed (BCTC-dead known-false per health-recheck-idle caveat; get_sentiment_trend-bare already-fixed at fb-poster main.md:119), 4 tracked (BUG-3/4 -> FIX-NEWS-CB-FALSE-CLOSED + FIX-COMMODITY-WTI-DELTA-CORRUPT; 3277 -> OPS-POLLNEWS-NIGHT-ZERO rc=2), 3 minted BACKLOG (FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE P2, OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN P2, FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE P3 rc=3). WIP=0 unchanged, nothing promoted. backlog 262->265.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T02:41:46Z",
+    "updated_at": "2026-06-21T03:16:31Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T0237Z"
+    "last_tick": "20260621T0307Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -233,8 +233,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-21T02:41:28Z",
-    "_updated_by": "dev-team-cron-router",
+    "_updated_at": "2026-06-21T03:00:00.274Z",
+    "_updated_by": "system-auditor",
     "archive": [
       {
         "from": "system-auditor",
@@ -846,6 +846,17 @@
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606210300",
+        "ts": "2026-06-21T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
       {
         "id": "sau-d4-202606200300",
         "ts": "2026-06-20T03:00Z",
@@ -7405,7 +7416,16 @@
         "sprint": null,
         "status": "NEW",
         "title": "pollNews returns 0 items from ALL sources at ~23:00 UTC two consecutive nights (2026-06-10 23:00, 2026-06-11 23:30) — only 3/7 sources active (cafef/vnexpress/vneconomy/teChromiumNews/reuters/tradingeconomics/newsapi). Night-window fetch/proxy health: check VPS proxy nighttime availability + the 4 inactive sources. Infra/fetch lane, NOT a methodology gap.",
-        "zone": "infrastructure/news-fetch"
+        "zone": "infrastructure/news-fetch",
+        "related_reports": [
+          3246,
+          3262,
+          3277
+        ],
+        "recurrence_count": 2,
+        "updated_at": "2026-06-21T03:14:47Z",
+        "updated_by": "po",
+        "last_recurrence_note": "report 3277 (2026-06-21): same 3/7 active (cafef/vnexpress/vneconomy), same 4 dead (teChromiumNews/reuters/tradingeconomics/newsapi) — possible VPS/network outage; recurring with 3246/3262. Still NEW; promote to ready next freed WIP slot."
       },
       {
         "created_at": "2026-06-13T09:02:02Z",
@@ -11466,6 +11486,74 @@
         "rebuild_required": false,
         "minted_at": "2026-06-20T22:34:30Z",
         "minted_by": "po-s110"
+      },
+      {
+        "id": "FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
+        "title": "HNX/UPCOM force:true fetches log ERROR-level spam off-hours — sectorRotationTools:181/188, portfolioTools:160/163, marketTools:225+. After-hours HNX/UPCOM endpoints reject/302 (FIX-HNX-SESSION-COOKIE context) but the force:true bypass still fires + logs at ERROR every off-hours tool call, polluting logs + false-alarming monitors. Distinct from FIX-HNX-SESSION-COOKIE (that=cookie correctness for IN-hours). This=log-noise/severity: off-hours expected-rejection must downgrade ERROR->INFO/DEBUG (or skip the HNX/UPCOM force-fetch when now_VN is outside session), not spam.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/sector/sectorRotationTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/portfolio/portfolioTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts"
+        ],
+        "root_cause": "force:true forces a live HNX/UPCOM fetch even off-hours; the upstream returns an expected rejection (closed-session/302) which the fetch path logs at ERROR. The severity is wrong for an EXPECTED off-hours condition; HOSE may not exhibit it but HNX/UPCOM do.",
+        "generic_mandate": "Generic across ALL three call sites + any other force:true HNX/UPCOM fetcher: gate on now_VN market session — when outside the HNX/UPCOM trading window, either SKIP the force fetch (serve last cached + honest age) or downgrade the expected-rejection log ERROR->INFO. Do NOT silently swallow a GENUINE in-hours fetch error. Market-hours awareness must come from the shared session helper, not a hardcoded window.",
+        "verification_gate": "LIVE off-hours: calling get_sector_rotation / portfolio / market tools produces NO ERROR-level HNX/UPCOM rejection log lines (INFO/DEBUG only) AND still serves cached data with honest age; LIVE in-hours: a genuine fetch failure STILL logs ERROR. RAW-verify log stream across one off-hours + one in-hours window.",
+        "baseline_pass": "existing sectorRotation/portfolio/market tool tests stay green; add a session-gate unit test asserting off-hours expected-rejection -> non-ERROR severity",
+        "related_reports": [
+          3275
+        ],
+        "source": "health-recheck 3275 BUG-2",
+        "minted_by": "po",
+        "minted_at": "2026-06-21T03:14:47Z",
+        "note": "Distinct-from FIX-HNX-SESSION-COOKIE (in-hours cookie correctness) — this is off-hours log-severity/noise. gateway-blind triage: file-confirmed force:true sites, live log-severity NOT probed."
+      },
+      {
+        "id": "OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN",
+        "title": "mcp-server restart churn: 49% unclean shutdowns (30/61 restarts in 7d not clean) — suspect Docker OOM-kill. Investigate exit codes / dmesg OOM-killer / container memory cap vs working set; distinct from the already-DONE A-30 OOM-investigate (point-in-time spike) and A-1 restart-cadence alert (detection only). This=the 7d CHURN RATE itself: half of all restarts are ungraceful, which corrupts in-flight state (Bun-JIT corruption class, lock orphans, mid-aggregator drops).",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "root_cause": "UNKNOWN pending ops probe (gateway-blind: cannot read live restart log/exit codes from this context). Candidate roots: Docker memory cap < working set -> OOM-kill (SIGKILL = unclean); unhandled rejection / Bun-JIT corruption (restart-masks-bun-jit-corruption class); host memory pressure (16GB Mac swap exhaustion, Docker 8GB cap).",
+        "generic_mandate": "ops: probe exit codes + OOM-killer (docker inspect .State.OOMKilled / dmesg) across the 30 unclean restarts; classify OOM vs crash vs deploy; if OOM, right-size the mcp-server memory cap or fix the leak (tie to FIX-MCP-MEMORY-OOM-INVESTIGATE precedent); if crash, capture the unhandled-rejection / JIT-corruption stack. Durable target = unclean-shutdown rate << 49%.",
+        "verification_gate": "LIVE: classified root for the unclean shutdowns + a fix landed; over a subsequent 7d window the unclean-restart fraction drops materially (graceful SIGTERM handling honored). RAW-verify via docker State.OOMKilled + exit-code histogram, not steady-state.",
+        "baseline_pass": "n/a (ops investigate-first); if a code/config change ships it must keep existing graceful-shutdown tests green",
+        "related_reports": [
+          3275
+        ],
+        "source": "health-recheck 3275 ISSUE-RESTART-CHURN",
+        "minted_by": "po",
+        "minted_at": "2026-06-21T03:14:47Z",
+        "note": "MEDIUM-NEW. Distinct-from A-30 (DONE, single OOM spike) + A-1 (DONE, cadence ALERT). This is the standing 49% unclean RATE = OOM/crash churn root. gateway-blind: live exit codes NOT probed, recon-first ops."
+      },
+      {
+        "id": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
+        "title": "system-auditor D4 divergence RECURRING (reports 3247, 3263, 3276): a held escalation lock (e.g. esc-datacov:FPT:Q1-2026:ESC-3) has NO matching orch-state .task_board row. Either D4 flags a genuinely orphaned/stale lock (escalation completed/abandoned but lock never released) or escalation locks are acquired without ever minting a board row. Distinct from FU-AUDITOR-D4-SIGNAL-ID (that=D4 signal-id collision at drain). This=the lock<->board CONSISTENCY gap D4 keeps reporting.",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "root_cause": "UNKNOWN pending live lock-service probe (gateway-blind: cannot read held-locks from this context). Two candidate roots: (a) escalation acquires a lock but never writes a corresponding task_board row -> permanent divergence by design; (b) the escalation completed/abandoned but its lock was never TTL-released/cleaned -> orphaned lock (refine-lock-TTL-reclaim class). 3rd recurrence => durable, not transient.",
+        "generic_mandate": "Generic reconcile: every held escalation lock MUST map to a live board row OR be eligible for TTL-reclaim; D4 should either auto-release a verified-orphaned lock or repair_task_request to mint the missing row. Decide whether escalation locks are board-backed (then enforce co-write) or ephemeral (then enforce TTL cleanup). Do NOT hand-delete one lock — fix the class.",
+        "verification_gate": "LIVE: across 2 D4 audit cycles, zero held-lock-without-board-row divergences (either every lock has a row or orphans auto-reclaim). RAW-verify via held-locks list vs .task_board ids.",
+        "baseline_pass": "system-auditor D4 handler tests stay green; add a lock<->board consistency test",
+        "related_reports": [
+          3276,
+          3263,
+          3247
+        ],
+        "recurrence_count": 3,
+        "source": "system-auditor D4 report 3276",
+        "minted_by": "po",
+        "minted_at": "2026-06-21T03:14:47Z",
+        "note": "Distinct-from FU-AUDITOR-D4-SIGNAL-ID (signal-id collision). gateway-blind: live lock state NOT probed; recon-first to disambiguate orphaned-lock vs no-row-by-design."
       }
     ],
     "closed_sprints": [
@@ -22991,7 +23079,9 @@
       ]
     },
     "updated_at": "2026-06-21T01:17:23Z",
-    "updated_by": "dev-team-cron-router"
+    "updated_by": "dev-team-cron-router",
+    "last_triaged_at": "2026-06-21T03:14:47Z",
+    "last_triaged_by": "po-gateway-blind"
   },
   "updated_at": "2026-06-20T08:16:14Z",
   "updated_by": "po-s107",
