@@ -191,15 +191,15 @@
     }
   ],
   "head": {
-    "status": "idle",
+    "status": "active",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260621T01Z CLOSED. DSI-MACRO-PHANTOM-STALE-GUARD: rebuild CONFIRMED LIVE (ops a5ef8df0, epoch-seconds staleness filter active in container; old broken 48h string-filter gone); done_verified deferred to next evening live cycle (stale-excluded/fresh-present). FIX-HNX-OFFHOURS-ERROR-DOWNGRADE remains TODO backlog (low, next tick). Tier-1 auditor CLEAN. WIP=0.",
+    "next_action": "Tick 20260621T02Z DONE: FIX-HNX-OFFHOURS-ERROR-DOWNGRADE QA-APPROVED (commit 93e9dbeb), board finalized, ops rebuild dispatched. done_verified deferred to next off-hours HNX fetch cycle. WIP=0.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-21T01:17:23Z",
+    "updated_at": "2026-06-21T02:30:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T01Z"
+    "last_tick": "20260621T02Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6143,7 +6143,7 @@
             "title": "fetchHnxPrices/fetchUpcomPrices emit logger.error(\"all HNX/UPCOM price sources failed\") on EVERY off-hours force:true cycle even when empty is CORRECT (market closed, no quotes) -> recurring ERROR log storm that masks real alerts. ROUTER-VERIFIED real emitter = apps/mcp-server/src/infrastructure/fetchers/hnx.ts:353 (HNX) + :431 (UPCOM); isTradingSession() already in scope (lines 297/384) and force flag already threaded. Fix: when (!isTradingSession() AND empty-result) downgrade ERROR->DEBUG; keep ERROR for genuine in-session source failure. NOTE: the BUG-2 report cited sectorRotationTools/portfolioTools/marketTools call-sites but those ALREADY swallow gracefully (withDeadline []/logger.warn) — the true ERROR is one layer down in the fetcher; do NOT edit the call-sites.",
             "label": "Downgrade off-hours empty-result HNX/UPCOM ERROR->DEBUG (hnx.ts:353/:431)",
             "size": "S",
-            "status": "TODO",
+            "status": "DONE",
             "priority": "low",
             "type": "FIX",
             "zone": "dev-mcp-server",
@@ -6151,7 +6151,15 @@
               "apps/mcp-server/src/infrastructure/fetchers/hnx.ts"
             ],
             "baseline_pass": "off-hours get_market_snapshot/sector/portfolio force-fetch produces NO logger.error for empty HNX/UPCOM result; in-session genuine source failure still logs ERROR; existing tests green",
-            "note": "MINTED po dev-team triage 2026-06-21. Dedup: no existing HNX/UPCOM/log-storm task on board (grep hits were prose). WIP-controlled (2 of 2)."
+            "note": "MINTED po dev-team triage 2026-06-21. Dedup: no existing HNX/UPCOM/log-storm task on board (grep hits were prose). WIP-controlled (2 of 2).",
+            "claimed_by": "dev-team-cron-router",
+            "claimed_at": "20260621T02Z",
+            "rebuild_required": true,
+            "done_verified": false,
+            "qa_verdict": "APPROVED",
+            "commit": "93e9dbeb",
+            "qa_commit": "a73bf035",
+            "done_verified_gate": "QA APPROVED (tsc/pnpm EXIT 0, 6 new tests pass clock-deterministic, 29 regression pass, both emit sites covered, DDD+security PASS). REBUILD REQUIRED — ops to rebuild mcp-server with --build. done_verified DEFERRED to next off-hours HNX fetch live cycle: confirm empty-result emits debug (not error) when market closed, error still emitted in-window."
           }
         ]
       }
