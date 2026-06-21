@@ -194,12 +194,12 @@
     "status": "in_progress",
     "active_task_id": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY",
     "next_agent": "dev",
-    "next_action": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY (P2, user-reported dashboard) dispatched: dev-mcp-server (handler+store) + dev-frontend (card) in parallel, shared contract outcome+\"excluded\"/label\"Loại trừ\"/calibration.excluded. On both REVIEW → QA → ops rebuild → live-verify dashboard shows 3 ids as Loại trừ + pending=0.",
+    "next_action": "Tick 20260621T2037Z. FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY IN_PROGRESS (dev-mcp-server+dev-frontend in flight, no REVIEW yet) — user-requested dashboard fix, WIP1. Drained 2 cowork telemetry (chef-evening DEFERRED_BLIND, gatherers SKIPPED_BLIND). health-recheck 3286: BUG-5 orphan lock CONFIRMED RESOLVED (router released 18:17Z, report verifies gone from task_list_held). BUG-6 NEW MEDIUM get_agent_signals all-producers null-strip → routed PO (ROUTER RAW: router path WORKS from_agent=null returns all-producers; bug is cowork-caller-transport-specific, unconfirmed from router, defensive fix all_producers:boolean sound). BUG-1 BCTC day7 + BUG-2/3/4 recurring-tracked. PRED-RESOLVER-GAP-FIX done_verified.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-21T20:08:00Z",
+    "updated_at": "2026-06-21T20:18:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260621T1837Z"
+    "last_tick": "20260621T2037Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
