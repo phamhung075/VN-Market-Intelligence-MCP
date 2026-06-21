@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-21T14:18:56Z",
-  "_updated_by": "po-s111",
+  "_updated_at": "2026-06-21T20:09:40Z",
+  "_updated_by": "po",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -11757,6 +11757,32 @@
         "created_at": "2026-06-21T16:19:36Z",
         "created_by": "po",
         "source": "health-recheck 2026-06-21T16:05Z ISSUE-8 (Telegram report; not in signal_queue)"
+      },
+      {
+        "id": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY",
+        "type": "FIX",
+        "title": "prediction-claims serve+display: is_excluded claims masquerade as \"Đang chờ\" pending forever (dashboard 3 phantom pendings)",
+        "desc": "Consumer/display leg of PRED-RESOLVER-GAP-FIX (resolver/DB leg done_verified — do NOT reopen). LIVE BUG on \"Dự báo AI & Kết quả\" dashboard: 3 terminally is_excluded=1 claims (ids 1 FPT, 8 VNINDEX, 9 GAS — legacy neutral, creation_price NULL, resolution_outcome NULL, resolved_at set, correctly excluded by resolver) masquerade as \"Đang chờ\" (pending) FOREVER with prices \"—\". Stats show 9 total / 6 resolved / 3 pending (should be 0 pending). hitRate 67% + Brier 0.2135 already CORRECT (excluded out of denominator). Root: serve+display layer has NO is_excluded awareness.\n\nZONE-SPLIT (3 files, 2 sub-zones):\n[dev-mcp-server]\n 1. apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts: add ClaimOutcome \"excluded\"; mapOutcome(row) → is_excluded=1 ⇒ \"excluded\" (PRECEDES the null→pending check, so pass the full row not just resolution_outcome); computeCalibration → new excluded bucket, pending = resolution_outcome NULL AND is_excluded!=1 (excluded NOT in pending); keep hitRate=correct/(correct+wrong) (already excludes); add \"excluded\" to ?outcome= enum + endpoint doc-comment (L18-30 outcome mapping + L26-28 query params).\n 2. apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts: getAllClaimsForTracker() — the ?outcome=pending branch (L375 WHERE resolution_outcome IS NULL) currently INCLUDES excluded rows → tighten to (resolution_outcome IS NULL AND (is_excluded IS NULL OR is_excluded=0)); ADD an outcome=\"excluded\" branch (WHERE is_excluded=1); widen the param union type to include \"excluded\". (is_excluded already SELECTed via SELECT * + already on PredictionClaimRow from PRED-RESOLVER-GAP-FIX — no schema change.)\n[dev-frontend]\n 3. apps/frontend/app/routes/dashboard.prediction-claims.tsx: PredictionOutcome (L53) += \"excluded\"; outcomeLabel() (~L286) \"excluded\"→ VN \"Loại trừ\" (Không tính điểm) + color class; add \"Loại trừ\" filter tab (alongside Tất cả/Đúng/Sai/Đang chờ); cards in excluded state show the excluded badge NOT \"Đang chờ\".\n\nTESTS: handler unit (excluded row → outcome \"excluded\", computeCalibration NOT counted in pending, hitRate unchanged) + store unit (outcome=excluded returns is_excluded=1 only; outcome=pending excludes them) + frontend outcomeLabel/filter test.\n\nDoD LIVE-VERIFY (after rebuild): GET /api/prediction-claims → ids 1,8,9 outcome \"excluded\" AND calibration.pending=0 AND calibration.excluded=3; dashboard renders them \"Loại trừ\" not \"Đang chờ\". REBUILD_REQUIRED: yes (handler+store baked into mcp-server image; frontend build).",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "multi",
+        "zone_split": [
+          "apps/mcp-server/",
+          "apps/frontend/"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/routes/predictionClaimsHandler.ts",
+          "apps/mcp-server/src/infrastructure/db/predictionClaimStore.ts",
+          "apps/frontend/app/routes/dashboard.prediction-claims.tsx"
+        ],
+        "size": "S",
+        "rebuild_required": true,
+        "baseline_pass": true,
+        "parent": "PRED-RESOLVER-GAP-FIX",
+        "standing_goal": "all-info-source-link-dropdown-recheck (Kết quả accuracy)",
+        "created_at": "2026-06-21T20:09:40Z",
+        "created_by": "po",
+        "sprint": "FIX-PRED-CLAIMS-EXCLUDED"
       }
     ],
     "closed_sprints": [
