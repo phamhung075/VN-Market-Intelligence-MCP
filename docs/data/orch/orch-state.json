@@ -193,13 +193,13 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL",
-    "next_agent": "dev-mcp-server",
-    "next_action": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL (P2, PO-formalized READY) dispatched → dev-mcp-server: finally{} lock-release + TTL/sweep for scheduler_locks (permanent root fix for orphan-lock class; ENDS recurring auditor over-escalation). On REVIEW → QA (LIVE gate: kill-job-mid-run release + leaked-lock auto-expire) → ops rebuild → live-verify. Also READY: FIX-CRON-DBINTEGRITY-DEDUP-BOARD-TRACKED-GUARD P3 (hold for next tick). Drained 00:06 telemetry. Both PRED tasks done_verified.",
+    "next_agent": "qa",
+    "next_action": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL in_progress to review (router-verified tsc0+8/8+single-consumer mandate). Dispatching QA; then ops rebuild mcp-server; then router LIVE-verify release-in-finally + leaked-lock auto-expire to flip done_verified. Health 3287/3288 recurring; BUG-6 resolved-after-restart=restart-masked, FIX-AGENTSIGNALS-ALLPRODUCERS-NULLSTRIP stays tracked.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-22T00:16:00Z",
+    "updated_at": "2026-06-22T01:40:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T0037Z"
+    "last_tick": "20260622T0137Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -23404,33 +23404,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL",
-        "type": "FIX",
-        "title": "scheduler_locks: release-on-death + TTL/auto-expire so leaked locks self-heal",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "urgency": "med",
-        "owner": "dev-mcp-server",
-        "route": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "baseline_pass": false,
-        "source": "router RAW-verified close of signal sau-sch-20260620T182937Z-stale-lock (acute released live; root cause untracked after a confabulated self-resolution). Acute block-risk GONE -> backlog priority.",
-        "desc": "ROOT CAUSE of the weeklyPortfolioReport stale-lock incident: scheduler_locks has NO expires_at/TTL column and lock release is NOT guaranteed on job death (only on success path). A job that dies mid-run leaks a lock with released_at=NULL, blocking the next cadence run with no self-heal. Fix: (1) wrap the lock release in a finally{} so it runs on success AND failure/throw; (2) add an expires_at/TTL column (or a periodic sweep DELETE/UPDATE WHERE released_at IS NULL AND acquired_at < now-2x-cadence) so a leaked lock auto-expires instead of blocking forever. RAW evidence: on 06-14 the lock released_at==acquired_at to the second + RestartCount=0 => the release origin was unexplained (likely a sweep/manual, not a guaranteed code path). DISTINCT from FU-LOCKSTORE-EXPIRED-GC (that GCs coordination.db TASK-locks; this is the scheduler_locks SQLite table). NOT subsumed by ARCH-CRON-SCHEDULER-RELIABILITY (that umbrella is done_verified + scopes node-cron TICK delivery, not the lock store).",
-        "verification_gate": "LIVE on named-vol market_data: (a) kill a scheduler job mid-run in test -> assert its scheduler_locks row gets released_at set in finally (no leak); (b) a pre-existing leaked lock (released_at NULL, acquired_at older than 2x cadence) is auto-expired by the sweep/TTL and the next run is NOT blocked. QA verifies raw rows, never badges.",
-        "generic_mandate": "Fix the lock-lifecycle for ALL scheduler_locks consumers, not just weeklyPortfolioReport.",
-        "minted_at": "2026-06-20T20:58:56Z",
-        "minted_by": "po-s52-stale-lock-loop-close",
-        "next_agent": "dev-mcp-server",
-        "promoted_at": "2026-06-21T23:57:58Z",
-        "promoted_by": "po-s110-scheduler-lock-ttl-formalize",
-        "promotion_note": "Formalized from backlog 2026-06-22 per PO decision: this is the PERMANENT ROOT FIX that makes the held weeklyPortfolioReport lock auto-release and ENDS the recurring system-auditor over-escalation (2/4 ticks this session re-signaled the held lock; router janitorially deleted both). WIP=0 -> direct to ready. Fix spec confirmed: (a) wrap release in finally{}; (b) add expires_at/TTL OR periodic sweep DELETE WHERE released_at IS NULL AND acquired_at < now-2x-cadence.",
-        "dev_agent": "dev-mcp-server",
-        "dispatched_at": "2026-06-22T00:16:00Z",
-        "dispatched_by": "dev-team-cron-router"
-      }
-    ],
+    "in_progress": [],
     "ready": [
       {
         "id": "FIX-CRON-DBINTEGRITY-DEDUP-BOARD-TRACKED-GUARD",
@@ -23601,6 +23575,33 @@
         "moved_to_review_at": "2026-06-20T07:30:39Z",
         "po_reconcile_2026-06-21": "Code LANDED: commit 5ed1c751 confirmed on main + ancestor of HEAD (router git-verify). Correctly held in review on verification_gate=ci_green_on_subsequent_push. No separate handoff doc — root_cause/fix_spec/review_note in this row are the SSOT (test fixture now derives alerts table from canonical initAlertsTables(); 8/8 green, pnpm check clean). Gate currently unsatisfiable because HEAD is 73 commits behind origin/main (benign cloud-chore divergence — [[feedback_ci_green_gate_blocked_by_cloud_chore_divergence]]); push = PO deferred call. LEAVE in review, do NOT close (no CI-green-on-push observed yet). NOT fabricating completion.",
         "_po_reconciled_at": "2026-06-21T06:30:00Z"
+      },
+      {
+        "id": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL",
+        "type": "FIX",
+        "title": "scheduler_locks: release-on-death + TTL/auto-expire so leaked locks self-heal",
+        "status": "REVIEW",
+        "priority": "P2",
+        "urgency": "med",
+        "owner": "dev-mcp-server",
+        "route": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "baseline_pass": false,
+        "source": "router RAW-verified close of signal sau-sch-20260620T182937Z-stale-lock (acute released live; root cause untracked after a confabulated self-resolution). Acute block-risk GONE -> backlog priority.",
+        "desc": "ROOT CAUSE of the weeklyPortfolioReport stale-lock incident: scheduler_locks has NO expires_at/TTL column and lock release is NOT guaranteed on job death (only on success path). A job that dies mid-run leaks a lock with released_at=NULL, blocking the next cadence run with no self-heal. Fix: (1) wrap the lock release in a finally{} so it runs on success AND failure/throw; (2) add an expires_at/TTL column (or a periodic sweep DELETE/UPDATE WHERE released_at IS NULL AND acquired_at < now-2x-cadence) so a leaked lock auto-expires instead of blocking forever. RAW evidence: on 06-14 the lock released_at==acquired_at to the second + RestartCount=0 => the release origin was unexplained (likely a sweep/manual, not a guaranteed code path). DISTINCT from FU-LOCKSTORE-EXPIRED-GC (that GCs coordination.db TASK-locks; this is the scheduler_locks SQLite table). NOT subsumed by ARCH-CRON-SCHEDULER-RELIABILITY (that umbrella is done_verified + scopes node-cron TICK delivery, not the lock store).",
+        "verification_gate": "LIVE on named-vol market_data: (a) kill a scheduler job mid-run in test -> assert its scheduler_locks row gets released_at set in finally (no leak); (b) a pre-existing leaked lock (released_at NULL, acquired_at older than 2x cadence) is auto-expired by the sweep/TTL and the next run is NOT blocked. QA verifies raw rows, never badges.",
+        "generic_mandate": "Fix the lock-lifecycle for ALL scheduler_locks consumers, not just weeklyPortfolioReport.",
+        "minted_at": "2026-06-20T20:58:56Z",
+        "minted_by": "po-s52-stale-lock-loop-close",
+        "next_agent": "dev-mcp-server",
+        "promoted_at": "2026-06-21T23:57:58Z",
+        "promoted_by": "po-s110-scheduler-lock-ttl-formalize",
+        "promotion_note": "Formalized from backlog 2026-06-22 per PO decision: this is the PERMANENT ROOT FIX that makes the held weeklyPortfolioReport lock auto-release and ENDS the recurring system-auditor over-escalation (2/4 ticks this session re-signaled the held lock; router janitorially deleted both). WIP=0 -> direct to ready. Fix spec confirmed: (a) wrap release in finally{}; (b) add expires_at/TTL OR periodic sweep DELETE WHERE released_at IS NULL AND acquired_at < now-2x-cadence.",
+        "dev_agent": "dev-mcp-server",
+        "dispatched_at": "2026-06-22T00:16:00Z",
+        "dispatched_by": "dev-team-cron-router",
+        "impl_commit": "db082049",
+        "review_note": "Router-verified: tsc0, new test 2027 8/8, existing lock 22/22, full-suite 15 fail pre-existing-disjoint. Approach=SWEEP via datetime() no ALTER. finally-wrap in weeklyPortfolioReportJob = ONLY scheduler_locks consumer, generic mandate met. REBUILD_REQUIRED. QA LIVE gate: kill-job-mid-run release-in-finally + leaked-lock auto-expire."
       }
     ],
     "qa": [],
