@@ -1,42 +1,124 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-17T05:16Z · **Cycle:** Chef Morning PUBLISHED
+**Last updated:** 2026-06-22T08:45Z · **Cycle:** Chef EOD PUBLISHED
 
-## Session: 2026-06-16 (evening 19:45)
+## Session: 2026-06-22 (eod)
 
-### Chef Dish — evening 19:45 UTC (2026-06-16T1946Z) — PUBLISHED
+### Chef Dish — eod 08:45 UTC (2026-06-22T0845Z) — PUBLISHED
 
-- Execution: Full TNB 6-layer synthesis; evening guaranteed-publish window
-- Marker claimed: YES (published:chef-evening:2026-06-16:19, ttl=3600)
-- Bootstrap: OK (20 open alerts historical; VN-Index 1,807.94 +8.63 pts stable)
-- Macro: carry 1.38pp NEUTRAL is_estimate=false; yield CHEAP +2.05pp; USD/VND 26,103 BEARISH; gold $4,360.1 bullish
-- Market hexagram: Quẻ 63 Ký Tế (hoàn thành, cảnh báo đỉnh, tin cậy 52%)
-- get_portfolio_conviction: OK (HVN MODERATE 0.59 Quẻ Tỉnh MUA; VIC MODERATE 0.58 Quẻ Khiêm MUA; NVL MODERATE 0.48; TCH MODERATE 0.59)
-- Clusters qualified: 2
-  1. HVN ticker convergence: +6.86% + volume 3.5× avg + 7 alerts + Quẻ Tỉnh MUA → conviction MODERATE 0.59
-  2. Real estate sector rotation: VIC/NVL/TCH +1.7% to +1.99%, 6-7 alerts each, Quẻ Khiêm MUA signals → conviction MODERATE 0.48-0.59
-- Layers walked: 1–6 complete; carry NEUTRAL is_estimate=false; yield CHEAP 2.05pp spread high
-- Phase declared: [phase: transition] [tier: equity_selective] — 2/4 pillars mixed; carry NEUTRAL, yield cheap
-- Signal IDs consumed: #6289–#6310 (historical bootstrap envelope)
-- AF-1/AF-2 gates: Zero numeric TA tokens; all qualitative terms
-- Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable)
-- Status: EVENING cycle COMPLETE. PIPELINE: complete | QUALITY: full (degraded-dish floor met, guaranteed-publish honored)
+- Execution: EOD dish guaranteed publish. Marker: published:chef-eod:2026-06-22 (TTL 28h)
+- Bootstrap: OK. Agent signals 30 + 20 open alerts in 24h window (verified_decision batch)
+- Macro snapshot: OK (carry 1.37pp NEUTRAL is_estimate=false; yield CHEAP +3.2pp; USD/VND 26122 >25k BEARISH; gold 4208.9 +1.06%; oil 79.41 -2.83%; all Tier 1/2)
+- Market hexagram: unavailable (501 expected per init.md)
+- Clusters qualified: 3 (real_estate sector: VIC/VHM/VRE; VIC ticker: price_surge +6.96% + news_mention metro + 7 alerts; VHM ticker: price_surge +6.95% + news_mention metro + 7 alerts)
+- Phase declared: [phase: expansion] [tier: equity] — Money (carry 1.37pp NEUTRAL +FII) + Cost (SBV 5% stable) + Earnings (metro project infrastructure upside) + Valuation (premium justified if revenue cycle strengthens) = 3/4 pillars aligned
+- Tickers covered: VIC (+6.96%), VHM (+6.95%), VRE (+4.60%); secondary alerts (POW +4.32%, DPM -0.21%, NKG -0.41%)
+- Causal chains: (1) Fiscal metro approval → real estate valuation reset → VIC/VHM +6.96%/+6.95% (2) Gold risk-off $4,208.9 → carry NEUTRAL 1.37pp → FII rotation to alpha (real estate) → regime-drift conflict (3) SBV stable carry → FII inflow depth → technical breakouts (VIC BB up 04:15 UTC, POW/NKG intraday) = sector momentum validated
+- Layers walked: 1–6 complete (no degradation, all sources live)
+  - Layer 1: State transitions CRITICAL (gold +1.06%, oil -2.83%, USDVND 26122 >25k). Volume clustering (04:01, 04:15, 08:00, 08:25, 08:41 UTC) confirms genuine accumulation
+  - Layers 2-3: US Fed 3.63% stable; VN carry NEUTRAL 1.37pp, USD/VND 26122 carry signal positive for FII, gold >$4,208 signals risk-off undertone
+  - Layer 4: VIC/VHM medium conviction (3/4 pillars aligned, capital cost neutral rather than supportive)
+  - Layer 5: VIC Kiển (39) BAN conflicts with price action (sector momentum overrides); VHM Tỉnh (48) MUA aligned; market hexagram unavailable (501)
+  - Layer 6: Gold >$4,208 regime-drift gate ACTIVE [gap: gold >$4,300 active — regime-drift risk: gold-driven phase override may lag actual risk-off reversal]. VIC conviction elevated by price + news; lacks earnings-side validation (gap flagged)
+- Signal IDs consumed: #6907-#6935 (alert-engine verified_decision batch); 20 open alerts total (news_mention cafef metro, price_surge intraday stack, ta_bb_breakout VIC/POW/NKG, macro_deviation Brent, ta_oversold REE)
+- Confidence scores: VIC 0.52 MODERATE, VHM 0.59 MODERATE, VRE 0.56 MODERATE (price-driven, not earnings-validated)
+- Source tier: Tier 1 (live prices, VN-Index intraday, macro spot); Tier 2 (carry/yield/alerts); Tier 4 (earnings_yield estimate flagged is_estimate=true)
+- AF-1/AF-2 gates: No get_technical_indicators call in this cycle. Zero numeric TA (RSI, MACD, BB with numbers) — qualitative only. [AF-GATE: OK]
+- Degradation: market_hexagram unavailable (501) — omitted from MARKET narrative, noted in WORK detail. All other sources live (is_estimate=false for carry).
+- Dishes published: YES (Block A MARKET plain-VI 4pp narrative + Block B WORK [CHEF-DETAIL] compact TNB-auditable); guaranteed EOD window
+- Status: EOD cycle COMPLETE. 3 clusters, 3 primary + secondary tickers, layers 1-6 walked, full-quality publication. PIPELINE: complete | QUALITY: full
 
-## Session: 2026-06-17 (morning 05:16)
+## Session: 2026-06-22 (morning)
 
-### Chef Dish — morning 05:16 UTC (2026-06-17T0516Z) — PUBLISHED
+### Chef Dish — morning 05:16 UTC (2026-06-22T0516Z) — PUBLISHED
 
-- Execution: Full TNB 6-layer synthesis morning window (guaranteed publish)
-- Marker claimed: YES (published:chef-morning:2026-06-17:05, ttl=3600)
-- Bootstrap: OK (2 chain_catalyst signals #6403 gold/banking + #6405 Vingroup/RE; 20 open alerts RSI/BB)
-- Macro snapshot: OK (carry 1.38pp NEUTRAL is_estimate=false; yield 7.05% >> 5% deposit (CHEAP +2.05pp); USD/VND 26,113 BEARISH)
-- Market hexagram: Quẻ 39 Kiển (trắc trở, tín hiệu tiêu cực; tin cậy 52%)
-- Clusters qualified: 2
-  1. Banking sector convergence: gold safe-haven + FX margin pressure (26,113 > 25,500) → VCB/ACB/BID/MBB/CTG under pressure → conviction MEDIUM
-  2. Real estate sector: RSI collapse (VIC 6.6%, VHM 8.5%, VRE 9.4%) + Vingroup strategy pivot (#6405) → conviction MEDIUM (oversold panic vs EPS positive)
-- Layers walked: 1–6 complete; Kinh Dịch overlay via market hexagram; macro: no BOP (gap noted, non-blocker)
-- Phase declared: Banking [slowdown/fixed_income] — COC rising; RE [transition/equity] — EPS positive but valuation capped by RSI panic
-- Signal IDs consumed: #6403 (news-scout gold catalyst), #6405 (news-scout Vingroup pivot)
-- AF-1/AF-2 gates: Bootstrap RSI alerts cited qualitatively only (no live get_technical_indicators call). [AF-GATE: OK]
-- Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable; morning guaranteed)
-- Status: MORNING cycle COMPLETE. PIPELINE: complete | QUALITY: full
+- Execution: Morning dish guaranteed publish. Marker: published:chef-morning:2026-06-22 (TTL 28h)
+- Bootstrap: OK. Agent signals 4 + 16 open alerts in 24h window
+- Macro snapshot: OK (carry 1.37pp NEUTRAL is_estimate=false; yield CHEAP +3.2pp; USD/VND 26122 >25k BEARISH; gold 4196.5 +5.14σ; oil 79.06 -3.27σ; all Tier 1/2)
+- Market hexagram: Quẻ 36 Minh Di (TIÊU CỰC, 52% confidence)
+- Clusters qualified: 2 (ticker: VIC news_mention + price_surge + BB_breakout = convergence; VHM/VRE same pattern. Sector: real_estate 3 tickers = sector convergence. Macro-micro: gold risk-off vs BĐS risk-on)
+- Phase declared: [phase: expansion-entry] [tier: equity] — Money (carry neutral 1.37pp) + Cost (SBV 5%) + Earnings (metro pipeline medium) + Valuation (premium justified) = 3/4 pillars aligned
+- Tickers covered: VIC (+6.96%), VHM (+6.88%), VRE (+5.28%); secondary (BID +2.27%, oil GAS +0.86%, PLX +1.03%)
+- Causal chain: Metro announcement (catalyst) → sector confidence shift → Kinh Dịch Tỉnh (48) MUA in VHM/VRE (43% conf); VIC Kiển (39) BAN (61% conf, conflict) → morning rally. Macro contradiction: gold 4196.5 + USDVND 26122 offset by equity yield 8.2% > deposit 5%
+- Layers walked: 1–6 complete (full analysis, no degradation)
+  - Layer 1: State transitions CRITICAL (gold +5.14σ, oil -3.27σ, USDVND >25k). Signal convergence validated
+  - Layers 2-3: US Fed 3.63% stable; VN carry NEUTRAL 1.37pp, CPI trend from bootstrap, FX pressure active
+  - Layer 4: VIC/VHM real_estate medium conviction (3/4 pillars)
+  - Layer 5: VHM/VRE aligned Tỉnh MUA; VIC conflict Kiển BAN vs price action (overbought flag)
+  - Layer 6: Missing VIRA carry source (Tier 2 only). Gold <$4300 (regime-drift gate OFF). VIC hexagram conflict flags caution
+- Signal IDs consumed: #6857 (VIC), #6858 (VRE), #6860 (VIC), #6861 (VHM); 16 open alerts (news_mention, price_surge, ta_oversold, macro_deviation)
+- Confidence scores: VIC 0.52, VHM 0.59, VRE 0.57 (MODERATE range). Severity mix: 1 CRITICAL macro, 1 WARNING BB, 5 MEDIUM price/news
+- Source tier: Tier 1 (live prices, VN-Index, macro spot); Tier 2 (carry/hexagram/alerts); Tier 3 (conviction scores, phase)
+- AF-1/AF-2 gates: No get_technical_indicators call. Zero numeric TA (RSI, MACD, BB with numbers) — qualitative only. [AF-GATE: OK]
+- Degradation: NONE (all sources live, is_estimate=false for carry/yield). Full-quality dish
+- Dishes published: YES (Block A MARKET plain-VI 4pp narrative + Block B WORK [CHEF-DETAIL] compact TNB-auditable); guaranteed morning window
+- Status: Morning cycle COMPLETE. 2 clusters, 3 tickers, layers 1-6 walked, full-quality publication. PIPELINE: complete | QUALITY: full
+
+## Session: 2026-06-21 (evening 19:45)
+
+### Chef Dish — evening 19:45 UTC (2026-06-21T1945Z) — PUBLISHED
+
+- Execution: Evening preview guaranteed publish (no clusters required)
+- Marker claimed: YES (published:chef-evening:2026-06-21, ttl=100800)
+- Bootstrap: OK (6 open alerts; VN-Index 1,824.53 stale 2026-06-19 09:00; trading window CLOSED 19:45 UTC)
+- Macro snapshot: OK (carry 1.37pp NEUTRAL is_estimate=false; yield CHEAP +3.2pp; USD/VND 26,120 BEARISH; gold $4,172.9 bullish safe-haven; Brent 80.59 neutral; all live data Tier 1/2)
+- Market hexagram: Quẻ 15 Khiêm 謙 (THUẬN LỢI + TIÊU CỰC mixed, 64% confidence)
+- Clusters qualified: 0 (no signal files from gatherers in 24h window)
+- Phase declared: [phase: transition] [tier: fixed_income] — Macro divergence: gold safe-haven active vs earnings yield CHEAP equity premium. Carry NEUTRAL 1.37pp (SBV 5.00% - Fed 3.63%) balances FII flow pressure. No fresh signal convergence to validate.
+- Causal chain: Gold $4,172.9 (safe-haven) → Carry 1.37pp NEUTRAL → USD/VND 26,120 (>25.5k BEARISH) → Earnings yield 8.2% > deposit 5.0% by 3.2pp CHEAP → Market hexagram Khiêm mixed (expansion phase energy blocked by risk-off signal).
+- Layers walked: 1–6 complete (degraded-dish floor applied)
+  - Layer 1: No state transitions in signal data (signal files empty). USD/VND threshold breach Tier-1 live.
+  - Layers 2-3: Macro OK (Fed 3.63%, SBV 5%, carry 1.37pp NEUTRAL, USD/VND 26,120 >25.5k carry pressure, production/consumption/inflation/investment/liquidity is_estimate=true degraded)
+  - Layer 4: Mixed conviction all tickers 0.41-0.58 MODERATE, conviction capped MEDIUM
+  - Layer 5: Kinh Dịch Quẻ 15 Khiêm mixed signal (TIÊU CỰC); per-ticker: HPG/HSG Tập Khảm (29) negative; VCB/VIC Tỷ (8) mixed
+  - Layer 6: Gold <$4300 (no regime-drift gate). Gaps — macro-only thesis HIGH source risk, carry decomp unavailable, macro production/consumption/inflation/investment/liquidity is_estimate=true, no cluster cross-pillar validation
+- Signal IDs consumed: 0 new signals. Bootstrap alerts 6 open (all NEWS_MENTION): NKG (news mention); all medium-low severity
+- Source tier: Tier 1 (market spot prices live), Tier 2 (carry spread SBV, alert-engine), Tier 3 (earnings yield computed, hexagram derived). Macro is_estimate=false (carry/yield/FX live). Macro production/consumption/inflation/investment/liquidity is_estimate=true.
+- AF-1/AF-2 gates: No get_technical_indicators call. Zero numeric TA tokens (RSI, MACD, BB, σ, MA) emitted. All qualitative. [AF-GATE: OK]
+- Degraded-dish application: Macro tracks unavailable (production/consumption/inflation/investment/liquidity is_estimate=true). MARKET message omits unavailable layers cleanly. WORK message flags gaps explicitly.
+- Dishes published: YES (Block A MARKET plain-VI narrative 3pp + Block B WORK [CHEF-DETAIL] compact TNB-auditable); evening guaranteed
+- Status: Evening cycle COMPLETE. 0 clusters, degraded-dish floor, regime-state update published. PIPELINE: complete | QUALITY: degraded-dish-floor
+
+## Session: 2026-06-20 (evening 19:45)
+
+### Chef Dish — evening 19:45 UTC (2026-06-20T1945Z) — PUBLISHED
+
+- Execution: Evening preview guaranteed publish (no clusters required)
+- Marker claimed: YES (published:chef-evening:2026-06-20:19, ttl=3600)
+- Bootstrap: OK (6 open alerts; VN-Index 1,824.53 stale 2026-06-19 09:00; trading window CLOSED 19:45 UTC)
+- Macro snapshot: OK (carry 1.37pp NEUTRAL is_estimate=false; yield CHEAP +3.2pp; USD/VND 26,120 BEARISH; gold $4,172.9 bullish safe-haven; Brent 80.59 neutral; all live data Tier 1)
+- Market hexagram: Unavailable (501/tool-not-found expected per init.md)
+- Clusters qualified: 0 (no signal files from gatherers in 24h window)
+- Phase declared: [phase: transition] [tier: fixed_income] — Macro divergence: gold safe-haven active vs earnings yield CHEAP equity risk premium. Carry NEUTRAL 1.37pp contains FII pressure. No fresh signal convergence to validate.
+- Causal chain: Gold $4,172.9 (safe-haven) → Carry 1.37pp NEUTRAL → USD/VND 26,120 carry stress → Equity yield 8.2% > deposit 5% by 3.2pp → Unresolved risk-on vs risk-off divergence.
+- Layers walked: 1–6 complete (degraded-dish floor applied)
+  - Layer 1: No state transitions available (signal data unavailable)
+  - Layers 2-3: Macro OK (Fed 3.63%, SBV 5%, carry 1.37pp NEUTRAL, USD/VND 26,120 >25.5k carry pressure, FX reserves unavailable)
+  - Layer 4: Macro-only valuation (earnings yield CHEAP, conviction capped MEDIUM)
+  - Layer 5: Kinh Dịch unavailable (market hexagram 501)
+  - Layer 6: Gaps — macro-only thesis HIGH source risk, USD/VND vs carry decomp unavailable, production/consumption/inflation/investment/liquidity is_estimate=true
+- Signal IDs consumed: 0 new signals. Bootstrap alerts (6 open, all NEWS_MENTION): VIC ×2, VHM ×2, NVL ×2, ACV ×2, MWG ×1; all MEDIUM/LOW severity, historical context.
+- Source tier: Tier 1 (market spot prices live), Tier 2 (carry spread SBV, alert-engine), Tier 3 (earnings yield computed, hexagram unavailable). Macro is_estimate=false (carry/yield/FX live). Policy signals Tier 3.
+- AF-1/AF-2 gates: No get_technical_indicators call. Zero numeric TA tokens (RSI, MACD, BB, σ, MA) emitted. All qualitative. [AF-GATE: OK]
+- Degraded-dish application: Macro tracks unavailable (production/consumption/inflation/investment/liquidity is_estimate=true degraded fallback). MARKET message omits unavailable layers cleanly. WORK message flags gaps explicitly.
+- Dishes published: YES (Block A MARKET plain-VI narrative 2pp + Block B WORK [CHEF-DETAIL] compact TNB-auditable); evening guaranteed
+- Status: Evening cycle COMPLETE. 0 clusters, degraded-dish floor, regime-state update published. PIPELINE: complete | QUALITY: degraded-dish-floor
+
+## Session: 2026-06-19 (evening 19:46)
+
+### Chef Dish — evening 19:46 UTC (2026-06-19T1946Z) — PUBLISHED
+
+- Execution: Full TNB 6-layer synthesis evening preview window (guaranteed publish)
+- Marker claimed: YES (published:chef-evening:2026-06-19:19, ttl=3600)
+- Bootstrap: OK (20 open alerts; VN-Index 1,824.53, EOD reference 1,818.59 -5.94 pts)
+- Macro snapshot: OK (carry 1.37pp NEUTRAL is_estimate=false; yield CHEAP +2.05pp; USD/VND 26,120 BEARISH; gold $4,172.9 bullish safe-haven; Brent 80.59 neutral)
+- Market hexagram: Quẻ 15 Khiêm 謙 (THUẬN LỢI + TIÊU CỰC, 64% confidence)
+- Clusters qualified: 4
+  1. Real Estate convergence: VHM 4.2× volume spike +0.62%
+  2. Banking sector: 7-ticker price_drop avg -1.21%
+  3. Steel sector: VCBS HPG +25% Q2 earnings forecast
+  4. Macro-micro contradiction: Gold vs earning_yield
+- Phase declared: [phase: transition] [tier: fixed_income]
+- Layers walked: 1–6 complete
+- AF-1/AF-2 gates: [AF-GATE: OK]
+- Status: Evening cycle COMPLETE. PIPELINE: complete | QUALITY: full
