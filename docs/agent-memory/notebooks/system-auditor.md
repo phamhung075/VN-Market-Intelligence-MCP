@@ -3,25 +3,25 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c302 · 2026-06-22T05:43:14Z
-### Audit Run Tier-1 (05:43 UTC 2026-06-22, Monday 12:43 VN 2026-06-22)
+## c303 · 2026-06-22T06:13:25Z
+### Audit Run Tier-1 (06:13 UTC 2026-06-22, Monday 13:13 VN 2026-06-22)
 - Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
 - Anomalies: 0 NEW (all containers UP, healthy)
 - Status: CLEAN
-- Notes: Market-hours window (VN 12:43 Monday, market OPEN 09:00–15:30). All 12 host_runtime_set UP+healthy. mcp-server UP 4h/healthy (restart=0, mem 40.79% 835.4MiB/2GiB). rag-service UP 4h/healthy (restart=96, tracked FU-RAG-DEPLOY-MEMORY ceiling 70-97% cycling). Disk 36% (13Gi used, 25Gi free). All A-01..A-32 checks PASS. Dedup-skipped: A-30 memory spike (prev 99.85%, current 40.79% recovered); A-12 api-gateway (prev CURL_ERR, current 200 OK).
+- Notes: Market-hours window (VN 13:13 Monday afternoon, market OPEN 09:00–15:30). All 12 host_runtime_set UP+healthy. mcp-server UP 4h/healthy (restart=0, mem 37.83% 774.8MiB/2GiB). A-20 pdf-extractor multi-probe 3/3 PASS. Disk 35% (13Gi used, 26Gi free, 233Gi total). All A-01..A-32 checks PASS. Dedup-skipped: rag-service mem cycling (tracked FU-RAG-DEPLOY-MEMORY).
 
-### RAW-PROBE (2026-06-22T05:43:14Z)
+### RAW-PROBE (2026-06-22T06:13:25Z)
 ```
 --- docker ps -a ---
 vn-market-intelligence-mcp-mcp-server-1: Up 4 hours (healthy)
-vn-market-intelligence-mcp-frontend-1: Up 8 hours (healthy)
+vn-market-intelligence-mcp-frontend-1: Up 9 hours (healthy)
 vn-market-intelligence-mcp-pdf-extractor-1: Up 6 days (healthy)
 vn-market-intelligence-mcp-stock-price-1: Up 6 days (healthy)
 vn-market-intelligence-mcp-technical-analysis-1: Up 6 days (healthy)
 vn-market-intelligence-mcp-macro-indicators-1: Up 7 days (healthy)
 vn-market-intelligence-mcp-kinh-dich-service-1: Up 7 days (healthy)
 vn-market-intelligence-mcp-api-gateway-1: Up 10 days (healthy)
-vn-market-intelligence-mcp-rag-service-1: Up 4 hours (healthy)
+vn-market-intelligence-mcp-rag-service-1: Up 5 hours (healthy)
 vn-market-intelligence-mcp-news-fetch-1: Up 11 days (healthy)
 vn-market-intelligence-mcp-alert-engine-1: Up 11 days (healthy)
 headroom-proxy: Up 9 days
@@ -38,21 +38,20 @@ mcp-gateway: Up 11 days (healthy)
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=40.79% MemUsage=835.4MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=37.83% MemUsage=774.8MiB / 2GiB
 
 --- disk df -h / ---
-Filesystem: /dev/disk1s4s1 | Size: 233Gi | Used: 13Gi | Avail: 25Gi | Capacity: 36%
+Filesystem: /dev/disk1s4s1 | Size: 233Gi | Used: 13Gi | Avail: 26Gi | Capacity: 35%
+
+--- A-20 Multi-Probe (pdf-extractor) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
 ```
 
-## c301 · 2026-06-22T05:13:40Z
-### Audit Run Tier-1 (05:13 UTC 2026-06-22, Monday 12:13 VN 2026-06-22)
+## c302 · 2026-06-22T05:43:14Z
+### Audit Run Tier-1 (05:43 UTC 2026-06-22, Monday 12:43 VN 2026-06-22)
 - Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
 - Anomalies: 0 NEW (all containers UP, healthy)
 - Status: CLEAN
-- Notes: Market-hours window (VN 12:13 Monday, market OPEN). All 12 host_runtime_set UP+healthy. mcp-server UP 3h/healthy (restart=0, mem 36.70% 751.5MiB/2GiB). rag-service UP 4h/healthy (mem cycling, tracked FU-RAG-DEPLOY-MEMORY). A-20 pdf-extractor multi-probe 3/3 PASS. Disk 36% (25Gi free, 233Gi total). All A-01..A-32 checks PASS.
-
-## c300 · 2026-06-22T04:43:14Z
-### Audit Run Tier-1 (04:43 UTC 2026-06-22, Monday 11:43 VN 2026-06-22)
-- Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
-- Anomalies: 0 NEW (all containers UP, healthy)
-- Status: CLEAN
+- Notes: Market-hours window (VN 12:43 Monday, market OPEN 09:00–15:30). All 12 host_runtime_set UP+healthy. mcp-server UP 4h/healthy (restart=0, mem 40.79% 835.4MiB/2GiB). rag-service UP 4h/healthy (restart=96, tracked FU-RAG-DEPLOY-MEMORY ceiling 70-97% cycling). Disk 36% (13Gi used, 25Gi free). All A-01..A-32 checks PASS. Dedup-skipped: A-30 memory spike (prev 99.85%, current 40.79% recovered); A-12 api-gateway (prev CURL_ERR, current 200 OK).
