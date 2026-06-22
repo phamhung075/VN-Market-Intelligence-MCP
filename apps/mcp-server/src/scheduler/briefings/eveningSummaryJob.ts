@@ -225,7 +225,7 @@ export function formatForeignFlowSection(
   // a partial-zero set slips through (e.g. getForeignFlowMoversFn returns raw DB rows).
   const nonZeroMovers = movers.filter((m) => m.foreignNetVol !== 0);
   if (nonZeroMovers.length === 0) {
-    return ["", "Khối ngoại: dữ liệu không có"];
+    return ["", "Khối ngoại: Dữ liệu không khả dụng (pipeline tạm dừng)"];
   }
 
   // Sort by |net_flow| descending — biggest movers first.
