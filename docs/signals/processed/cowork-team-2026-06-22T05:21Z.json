@@ -1,0 +1,27 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-22T05:21Z",
+    "nominal_tick": "2026-06-22T05:15:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": ["chef-morning", "chef-intraday"],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": ["chef-morning"],
+    "skipped_no_backstop": ["chef-intraday"],
+    "classification": "MIXED_BLIND",
+    "reason": "Two slots matched at the 05:15 weekday boundary. (1) chef-morning (unified-agent chef.md, cron 15 5 1-5, guaranteed:true) IS one of the 6 cloud RemoteTrigger backstops — the cloud trigger fires it from a fresh checkout at ~05:15Z weekdays with real gateway → DEFERRED_BLIND, not locally spawned. (2) chef-intraday (cron 13 2-8 1-5, policy chef-intraday) is local-dispatcher-only, NOT backstopped → SKIPPED_BLIND_NO_BACKSTOP, genuinely UNFIRED. Both not spawned because the session is gateway-blind (mcpServers:0) and a local spawn would fabricate the MARKET dish. The chef.md dedup marker is set by the cloud chef-morning run, NOT by this dispatcher.",
+    "slot_detail": {
+      "chef-morning": {"agent": "unified-agent", "flow_path": "docs/agents/unified-agent/flow/chef.md", "cron": "15 5 * * 1-5", "guaranteed": true, "policy_id": null, "last_fired": "2026-06-15T05:25:52Z", "cloud_backstop": true},
+      "chef-intraday": {"agent": "unified-agent", "flow_path": "docs/agents/unified-agent/flow/chef.md", "cron": "13 2-8 * * 1-5", "guaranteed": false, "policy_id": "chef-intraday", "last_fired": "2026-06-15T07:21:00Z", "cloud_backstop": false}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782107475},
+    "note": "Verify chef-morning delivery via RemoteTrigger(action=list).last_fired_at + MARKET channel content by period, NOT local cowork-schedule.json last_fired (cloud does not sync it back). chef-intraday recurs each weekday market-hours tick while blind — expected telemetry."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-22T05:21:16Z"
+}
