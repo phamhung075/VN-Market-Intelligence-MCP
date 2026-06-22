@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260622T1444Z. 0 NEW signals (Tier-1 c321 + Tier-2 c320 both CLEAN, 0 rows emitted). Board fully idle: all active_sprints 0 ready/0 in_progress/0 blocked; signal_queue 0 NEW, no orphan keys. Product backlog 271 standing (last triaged po-s111 06-21; 2 NEW items 10d-old intentionally un-promoted). 12/12 services healthy, disk 35%, mcp-server 66.67% mem/0 restarts. PO-candidate still open: refine_bctc_md 8d-unfired (gateway-blind + no cloud backstop). Fleet-push blocked (9 ahead/100 behind, out-of-band/user).",
+    "next_action": "Tick 20260622T1646Z (idle). Drained 2 cowork_tick_telemetry (15:06Z/16:06Z) → processed/; both SKIPPED_BLIND_NO_BACKSTOP (cloud dispatcher gateway-blind mcpServers:0, matched slots have no cloud backstop, correctly NOT spawned — no fabrication). 0 NEW queue signals, no orphan keys; active_sprints 0 ready/0 in_progress/0 blocked. Tier-1 auditor c325 CLEAN (12 svc UP, mem 76.7%, disk 34%, 0 restarts, 0 anomalies). Backlog 271 standing (last triaged po-s111 06-21). Divergence ~13 ahead/100 behind (fleet-push out-of-band/user). Standing PO-candidate (NOT router-minted, system-side fix = register gateway in .mcp.json + add cloud backstops): off-market gateway-dependent slots with no cloud RemoteTrigger backstop — refine_bctc_md, bctc-analyst-slot-1..4, news-scout-offhours, market-watcher-offhours, AND market-watcher-eod (last_fired 2026-06-11 now most-stale, weekday EOD pass missed across blind window).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-22T14:11:00Z",
+    "updated_at": "2026-06-22T18:15:31Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T1444Z"
+    "last_tick": "20260622T1815Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1560,6 +1560,17 @@
         "router_verified": true,
         "read_at": "2026-06-21T21:53:00Z",
         "disposition": "FOLDED into FIX-AGENTSIGNALS-EXPIRED-GC-CRON (existing BACKLOG, P3, apps/mcp-server). DEDUP verdict: FACTORY-ALERT-router-cleanups=alert-engine Go code-quality cleanups (NO alert-row retention, different zone); FW-OBS-03-FIX=stale-NEWS-pipeline watchdog DETECTION (not cleanup); DS-OBS-01-FIX=freshnessSlaMonitor stale-source ALERTING (not cleanup) — none cover an alerts-table resolution/retention cron. Same no-GC retention family + same mcp-server scheduler zone as the agent_signals GC task → broadened that task to a shared DB-retention/GC cron covering agent_signals AND alerts rather than minting a duplicate (task-count conservation). FIX intent for alerts: AUTO-RESOLVE-or-ARCHIVE unresolved rows older than ~30d (set resolved_at + resolution_notes), NEVER hard-delete alert history. ISO-TEXT datetime() guard baked into spec for triggered_at/resolved_at. P3 hygiene, NOT promoted (no active dev need)."
+      },
+      {
+        "id": "sau-20260622T184330Z",
+        "ts": "2026-06-22T18:43:30Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server A-30 memory pressure 90.17% (warn threshold 85%)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
