@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260622T1948Z (idle). (1) RAW-verified P0 FIX-BCTC-ENRICH-SILENT-0ROWS REVIEW→done_verified: live get_bctc_full(VCB) returns fully-populated post-fix BCTC (reproduce ticker, was 'Chua co du lieu'), Validation passed, deployed (image .Created 06-22T01:54Z > fix commits 06-15T19:12Z), data enriched post-fix. EPS=15 field quirk is a SEPARATE minor accuracy issue (not the 0-rows P0) — candidate PO follow-on. (2) Drained NEW CRITICAL sau-20260622T194358Z (auditor a2fab56d, A-30 mcp-server mem 99.94%). RAW now: 3 stable samples 99.5-99.9% of 2GiB cgroup cap, NO GC release (DIFFERS from earlier oscillation 97→99.3→79%), RestartCount=0, OOMKilled=false, StartedAt 01:56Z unchanged (18h), healthy → leak now PINNED at ceiling but empirically NOT OOM-dying (0 kills in 18h). Tracked: FIX-MCP-MEMORY-CODE-LEAK (urgency↑: oscillating→sustained) + OPS-MCP-RESTART-CHURN. Row→READ+dup. NOT restarted (masks leak user wants really-fixed, disrupts active gateway, no OOM-kill trigger), NOT minted (PO-only). Restart trigger = RestartCount++ OR OOMKilled=true → ops. 0 NEW now, backlog 271.",
+    "next_action": "Tick 20260622T2016Z (idle, WIP0). Reviewed review-lane(3). FIX-CI-RED-7fef5850 (P0): 5ed1c751 confirmed on origin/main, alerts test NOT in CI failed set (run 27980795169) -> its scope CI-GREEN, but full CI RED from DISJOINT untracked 6-file cluster (1269/1270/1326/1783/240-price/FIX-1270-usdvnd) sustained 16:04->20:08Z -> done_verified withheld, review_note updated. Wrote signal dev-20260622T2016Z->PO to triage the CI-red cluster (router no-mint). ARCH-SHIP-WAVE-REAUDIT PARKED, FIX-CI-NETWORK-SKIP-GUARDS held (same CI weather). F-1 (5 rows) queued awaiting user greenlight + .mcp.json restart. mcp-server mem CRITICAL auto-resolved via container restart (RestartCount 0->1, now 21.4%/2GiB) — restart MASKS leak, FIX-MCP-MEMORY-CODE-LEAK stands. 0 NEW signals drained. backlog 276.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-22T19:48:38Z",
+    "updated_at": "2026-06-22T20:16:40Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T1948Z"
+    "last_tick": "20260622T2016Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -233,8 +233,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-21T11:26:00Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-22T20:16:40Z",
+    "_updated_by": "dev-team-cron-router",
     "archive": [
       {
         "from": "system-auditor",
@@ -1596,6 +1596,17 @@
         "status": "READ",
         "payload_ref": null,
         "router_dup_of": "FIX-MCP-MEMORY-CODE-LEAK"
+      },
+      {
+        "id": "dev-20260622T2016Z",
+        "ts": "2026-06-22T20:16:40Z",
+        "from": "dev-team-cron-router",
+        "to": "po",
+        "type": "ci_red_untracked",
+        "summary": "Full CI RED on origin/main (run 27980795169, sustained 16:04->20:08Z): 6 DISJOINT test files fail — 1269-macro-direction-label, 1270-usd-vnd-threshold-fix, 1326-macro-deviation-direction, 1783-foreign-flow-bulletin, 240-price-pipeline-recovery, FIX-1270-usdvnd-alert-quality. NOT tracked as CI-test tasks. Blocks fleet push + every ci_green_on_subsequent_push gate (incl P0 FIX-CI-RED-7fef5850 whose OWN alerts test is green). Likely related to macro-data backlog (FIX-MACRO-SNAPSHOT-DELTAS-NULL / FIX-COMMODITY-WTI-DELTA-CORRUPT / FIX-SBV-FETCHER-ZERO-VALUE-EMIT) but the failing TESTS need own triage. PO: mint CI-red-cluster fix task(s).",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
@@ -23765,10 +23776,11 @@
         "minted_at": "2026-06-20T07:26:41Z",
         "dedup_note": "NOT a dup of review-lane FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (apps/alert-engine runtime MIN_CANDLES task, shares only filename). NOT a dup of DONE_VERIFIED FIX-ALERT-SCAN-TEST-DDL-SENTBY-FINGERPRINT (covered FINGERPRINT-WIRE-SCANJOBS+ORPHAN-CORRELATION test files). This is a 3rd distinct test file.",
         "commit_sha": "5ed1c751",
-        "review_note": "test fixture now derives alerts table from canonical initAlertsTables(); bun test 8/8 green, pnpm check clean, narrow 1-file commit 5ed1c751; awaits out-of-band push + CI green to flip done_verified; unblocks FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG (495cf0d4)",
+        "review_note": "CI-VERIFIED 20260622T2016Z: alerts test (FIX-ALERT-ENGINE-RSI-SINGLEDIGIT) NOT in CI failed-files on origin run 27980795169; 5ed1c751 IS ancestor of origin/main (pushed out-of-band) -> this fix scope is CI-GREEN, AC-6/AC-7 met. done_verified WITHHELD only by DISJOINT 6-file macro/usd-vnd/price-pipeline CI-red cluster (signal dev-20260622T2016Z -> PO), not this fix. Flip once that cluster clears full CI green; fix itself proven effective.",
         "moved_to_review_at": "2026-06-20T07:30:39Z",
         "po_reconcile_2026-06-21": "Code LANDED: commit 5ed1c751 confirmed on main + ancestor of HEAD (router git-verify). Correctly held in review on verification_gate=ci_green_on_subsequent_push. No separate handoff doc — root_cause/fix_spec/review_note in this row are the SSOT (test fixture now derives alerts table from canonical initAlertsTables(); 8/8 green, pnpm check clean). Gate currently unsatisfiable because HEAD is 73 commits behind origin/main (benign cloud-chore divergence — [[feedback_ci_green_gate_blocked_by_cloud_chore_divergence]]); push = PO deferred call. LEAVE in review, do NOT close (no CI-green-on-push observed yet). NOT fabricating completion.",
-        "_po_reconciled_at": "2026-06-21T06:30:00Z"
+        "_po_reconciled_at": "2026-06-21T06:30:00Z",
+        "ci_verified_at": "2026-06-22T20:16:40Z"
       }
     ],
     "qa": [],
