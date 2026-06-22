@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260622T1916Z (idle). Drained 1 NEW CRITICAL signal sau-20260622T191318Z (auditor a269edb2 A-30 mcp-server mem 99.31%). RAW-verified live IMMEDIATELY after: 79.4% (resample 79.49/79.34/79.35), RestartCount=0, StartedAt unchanged 01:56Z, OOMKilled=false, healthy — process GC-RELEASED ~18-20pp on its own (97% at 18:47 → 99.31% transient peak 19:13 → 79% now, NO restart). The CRITICAL = TRANSIENT SPIKE (peak correlated with the running auditor's own gateway→mcp-server probe burst), NOT an incident; matches auditor-mem-denominator-falsespike (CRITICAL spike + RAW healthy/0-restart = WARN ceiling). REVISES 18:47 OOM-<1h read: mem OSCILLATES (process GCs under pressure), not monotonic climb. Underlying leak real + already-tracked: FIX-MCP-MEMORY-CODE-LEAK (backlog) + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (backlog). Row→READ + router_dup_of=FIX-MCP-MEMORY-CODE-LEAK. NOT minted (PO-only), NOT restarted (no incident; would disrupt running auditor + mask nothing). 0 NEW now, 0 orphan keys, backlog 271 standing.",
+    "next_action": "Tick 20260622T1948Z (idle). (1) RAW-verified P0 FIX-BCTC-ENRICH-SILENT-0ROWS REVIEW→done_verified: live get_bctc_full(VCB) returns fully-populated post-fix BCTC (reproduce ticker, was 'Chua co du lieu'), Validation passed, deployed (image .Created 06-22T01:54Z > fix commits 06-15T19:12Z), data enriched post-fix. EPS=15 field quirk is a SEPARATE minor accuracy issue (not the 0-rows P0) — candidate PO follow-on. (2) Drained NEW CRITICAL sau-20260622T194358Z (auditor a2fab56d, A-30 mcp-server mem 99.94%). RAW now: 3 stable samples 99.5-99.9% of 2GiB cgroup cap, NO GC release (DIFFERS from earlier oscillation 97→99.3→79%), RestartCount=0, OOMKilled=false, StartedAt 01:56Z unchanged (18h), healthy → leak now PINNED at ceiling but empirically NOT OOM-dying (0 kills in 18h). Tracked: FIX-MCP-MEMORY-CODE-LEAK (urgency↑: oscillating→sustained) + OPS-MCP-RESTART-CHURN. Row→READ+dup. NOT restarted (masks leak user wants really-fixed, disrupts active gateway, no OOM-kill trigger), NOT minted (PO-only). Restart trigger = RestartCount++ OR OOMKilled=true → ops. 0 NEW now, backlog 271.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-22T19:16:06Z",
+    "updated_at": "2026-06-22T19:48:38Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T1916Z"
+    "last_tick": "20260622T1948Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1593,8 +1593,9 @@
         "type": "microservice_degraded",
         "summary": "mcp-server A-30 memory pressure 99.94% (critical threshold 95%) — worsening, OOMKill risk high",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "router_dup_of": "FIX-MCP-MEMORY-CODE-LEAK"
       }
     ]
   },
@@ -23477,64 +23478,12 @@
         "done_verified_at": "2026-06-22T02:00:00Z",
         "done_verified_by": "dev-team-cron-router",
         "done_verified_evidence": "LIVE re-verify post mcp-server rebuild (img .Created 01:54:51Z > commit 01:37:50Z, healthy, code markers in image). Router exercised the DEPLOYED sweepLeakedSchedulerLocks on named-vol scheduler_locks: synthetic leaked lock (released_at NULL, acquired -300min) → swept, released_at set 2026-06-22 01:59:31 (synthetic row cleaned up). finally-release unit-proven (test 2027 AC-a throw→released) + code-in-image confirmed. Real pre-fix leaked lock weeklyPortfolioReport(06-21 16:00) acute-remediated; open locks now=0. Orphan-lock class closed. Only kill-real-job-mid-run not live-synthesized (unsafe/weekly) — covered by unit AC-a + live sweep proof."
-      }
-    ],
-    "head": {
-      "status": "deprecated-stub",
-      "canonical_moved_to": ".head",
-      "active_task_id": null,
-      "next_agent": null,
-      "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
-    },
-    "in_progress": [],
-    "ready": [
-      {
-        "id": "FIX-CRON-DBINTEGRITY-DEDUP-BOARD-TRACKED-GUARD",
-        "type": "FIX",
-        "title": "cron-db-data-integrity: add 5th DEDUP-ENFORCEMENT guard — board-tracked root = ALREADY-OPEN (stop re-signaling)",
-        "status": "READY",
-        "priority": "P3",
-        "urgency": "med",
-        "owner": "dev-mcp-server",
-        "route": "dev-mcp-server",
-        "zone": "cross-service/",
-        "next_agent": "dev-mcp-server",
-        "baseline_pass": false,
-        "source": "PO decision 2026-06-22. Root: the system-auditor DATA sweep re-signaled the SAME held weeklyPortfolioReport scheduler_locks lock on 2/4 ticks this session despite an inline do-not-re-signal note (2nd time confabulating a false different-lock/prior-DONE rationale). The existing DEDUP block (.claude/commands/crons/cron-db-data-integrity.md L120-122) is prose-soft and does not make board-tracked = already-open machine-unambiguous.",
-        "desc": "DOC-HARDENING (single file: .claude/commands/crons/cron-db-data-integrity.md). Add a 5th explicit DEDUP-ENFORCEMENT guard to the cron prompt that makes ALREADY-OPEN machine-unambiguous so the auditor stops re-signaling board-tracked roots. Guard text: ⚠ DEDUP-ENFORCEMENT — an anomaly is ALREADY-OPEN (do NOT write a new signal) if EITHER a .task_board FIX-* task tracks its root OR a prior .signal_queue row for the same table+defect has status NEW/READ/TRIAGED/ACUTE-RESOLVED-ROOT-TRACKED. The held scheduler_locks weeklyPortfolioReport lock is the canonical recurring example: board-tracked by FIX-SCHEDULER-LOCK-NO-RELEASE-TTL — RECORD-AND-LEAVE, never re-signal, regardless of lock age or weekly re-acquisition. Place it adjacent to the existing DEDUP + DETECTION-ONLY blocks. NOTE: this guard is the interim recurrence-stopper; once FIX-SCHEDULER-LOCK-NO-RELEASE-TTL ships (lock auto-releases) the canonical example self-resolves but the generic guard stays valuable for future board-tracked roots.",
-        "verification_gate": "Doc-only: the 5th guard text is present in .claude/commands/crons/cron-db-data-integrity.md with the canonical scheduler_locks example AND the generic board-tracked/prior-open-status rule. No rebuild (cron prompt is read at dispatch time).",
-        "generic_mandate": "Guard must be GENERIC (any board-tracked root OR any prior open-status signal for the same table+defect), not hardcoded to weeklyPortfolioReport — the lock is only the named EXAMPLE.",
-        "depends": [],
-        "minted_at": "2026-06-21T23:57:58Z",
-        "minted_by": "po-s110-dedup-board-tracked-guard"
-      }
-    ],
-    "review": [
-      {
-        "_adjudicated_by": "po",
-        "_updated_at": "2026-06-13T08:48:41Z",
-        "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md",
-        "created_at": "2026-06-11T19:27:17Z",
-        "created_by": "po",
-        "desc": "Brownfield analysis from docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md (APPROVED). Rule NFR-C-1 stale-flag Option A (handler) vs B (middleware). Probe reputation_scores trend distribution + design trend-delta fix (PO ruled A-16 DEGRADED in-scope). Split zone:multi fixes (endpoint+page): NFR-C-4 stockPerformance direction, NFR-C-5 foreign-flow stale_fields, NFR-C-7 reputation trend. Order: BROKEN->DEGRADED->NFR. Output design brief -> pm decomposes.",
-        "id": "ARCH-SHIP-WAVE-REAUDIT",
-        "owner": "architect",
-        "park_reason": "KEEP PARKED (design COMPLETE + valid, brief docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md 16.6KB on disk). NOT closeable: accept->pm-decomposition mints zone:multi subtasks spanning apps/mcp-server + apps/frontend (NFR-C-4/5/7). The apps/mcp-server lane is load-bearing — held by ARCH-CRON-SCHEDULER-RELIABILITY (Monday market-day gate) AND queued for BA-VN-MACRO-TOOLING WAVE-1 (Zone B/C mcp-server). UNPARK CONDITION: dispatch decomposition only once BOTH (a) ARCH-CRON umbrella closes to done_verified after today's market-day gate AND (b) BA-MACRO WAVE-1 mcp-server tasks land — then apps/mcp-server is free for the NFR-C endpoint+page fixes. Until then parking is the correct serialization, not neglect.",
-        "priority": "high",
-        "sprint": "SHIP-WAVE-REAUDIT",
-        "status": "PARKED",
-        "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
-        "updated_at": "2026-06-11T19:33:43Z",
-        "updated_by": "architect",
-        "zone": "multi",
-        "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
-        "po_reparked_at": "2026-06-15T06:35:17Z"
       },
       {
         "id": "FIX-BCTC-ENRICH-SILENT-0ROWS",
         "type": "FIX",
         "priority": "P0",
-        "status": "REVIEW",
+        "status": "done_verified",
         "route_to": "dev-pdf-extractor",
         "co_owner": "dev-mcp-server",
         "zone": "multi",
@@ -23588,7 +23537,62 @@
           "wip_disposition": "WIP unchanged (head.wip=0, wip_max=2). Nothing promoted to active. Row stays status=REVIEW."
         },
         "po_reconcile_2026-06-21": "CONFIRMED in review, NOT closed. Real tracked P0; ground truth lives in this row (commit 68d54c7b/989654f2 landed) + 2026-06-21 re-probe: VCB+FPT valid rows (silent-0 leg resolved), CTG corrupted (residual owned by FIX-BCTC-BANK-SUMMARY-MAPPING P1, dedup confirmed in backlog). No standalone handoff doc — row IS the SSOT. Leave in review pending BANK-SUMMARY-MAPPING (CTG bank-cohort value/scale).",
-        "_po_reconciled_at": "2026-06-21T06:30:00Z"
+        "_po_reconciled_at": "2026-06-21T06:30:00Z",
+        "verified_at": "2026-06-22T19:48:38Z",
+        "verified_by": "dev-team-cron-router",
+        "verify_note": "LIVE get_bctc_full(VCB) fully-populated post-fix (NetRev 17421/TotAssets 2550963/NetProfit 9462 tỷ, ROE 4.2%, Validation passed, structured_data real); reproduce ticker resolved. Deployed: image .Created 06-22T01:54Z > commits 68d54c7b/989654f2 06-15T19:12Z; enriched post-fix (06-15T19:49Z). EPS=15 quirk separate."
+      }
+    ],
+    "head": {
+      "status": "deprecated-stub",
+      "canonical_moved_to": ".head",
+      "active_task_id": null,
+      "next_agent": null,
+      "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
+    },
+    "in_progress": [],
+    "ready": [
+      {
+        "id": "FIX-CRON-DBINTEGRITY-DEDUP-BOARD-TRACKED-GUARD",
+        "type": "FIX",
+        "title": "cron-db-data-integrity: add 5th DEDUP-ENFORCEMENT guard — board-tracked root = ALREADY-OPEN (stop re-signaling)",
+        "status": "READY",
+        "priority": "P3",
+        "urgency": "med",
+        "owner": "dev-mcp-server",
+        "route": "dev-mcp-server",
+        "zone": "cross-service/",
+        "next_agent": "dev-mcp-server",
+        "baseline_pass": false,
+        "source": "PO decision 2026-06-22. Root: the system-auditor DATA sweep re-signaled the SAME held weeklyPortfolioReport scheduler_locks lock on 2/4 ticks this session despite an inline do-not-re-signal note (2nd time confabulating a false different-lock/prior-DONE rationale). The existing DEDUP block (.claude/commands/crons/cron-db-data-integrity.md L120-122) is prose-soft and does not make board-tracked = already-open machine-unambiguous.",
+        "desc": "DOC-HARDENING (single file: .claude/commands/crons/cron-db-data-integrity.md). Add a 5th explicit DEDUP-ENFORCEMENT guard to the cron prompt that makes ALREADY-OPEN machine-unambiguous so the auditor stops re-signaling board-tracked roots. Guard text: ⚠ DEDUP-ENFORCEMENT — an anomaly is ALREADY-OPEN (do NOT write a new signal) if EITHER a .task_board FIX-* task tracks its root OR a prior .signal_queue row for the same table+defect has status NEW/READ/TRIAGED/ACUTE-RESOLVED-ROOT-TRACKED. The held scheduler_locks weeklyPortfolioReport lock is the canonical recurring example: board-tracked by FIX-SCHEDULER-LOCK-NO-RELEASE-TTL — RECORD-AND-LEAVE, never re-signal, regardless of lock age or weekly re-acquisition. Place it adjacent to the existing DEDUP + DETECTION-ONLY blocks. NOTE: this guard is the interim recurrence-stopper; once FIX-SCHEDULER-LOCK-NO-RELEASE-TTL ships (lock auto-releases) the canonical example self-resolves but the generic guard stays valuable for future board-tracked roots.",
+        "verification_gate": "Doc-only: the 5th guard text is present in .claude/commands/crons/cron-db-data-integrity.md with the canonical scheduler_locks example AND the generic board-tracked/prior-open-status rule. No rebuild (cron prompt is read at dispatch time).",
+        "generic_mandate": "Guard must be GENERIC (any board-tracked root OR any prior open-status signal for the same table+defect), not hardcoded to weeklyPortfolioReport — the lock is only the named EXAMPLE.",
+        "depends": [],
+        "minted_at": "2026-06-21T23:57:58Z",
+        "minted_by": "po-s110-dedup-board-tracked-guard"
+      }
+    ],
+    "review": [
+      {
+        "_adjudicated_by": "po",
+        "_updated_at": "2026-06-13T08:48:41Z",
+        "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md",
+        "created_at": "2026-06-11T19:27:17Z",
+        "created_by": "po",
+        "desc": "Brownfield analysis from docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md (APPROVED). Rule NFR-C-1 stale-flag Option A (handler) vs B (middleware). Probe reputation_scores trend distribution + design trend-delta fix (PO ruled A-16 DEGRADED in-scope). Split zone:multi fixes (endpoint+page): NFR-C-4 stockPerformance direction, NFR-C-5 foreign-flow stale_fields, NFR-C-7 reputation trend. Order: BROKEN->DEGRADED->NFR. Output design brief -> pm decomposes.",
+        "id": "ARCH-SHIP-WAVE-REAUDIT",
+        "owner": "architect",
+        "park_reason": "KEEP PARKED (design COMPLETE + valid, brief docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md 16.6KB on disk). NOT closeable: accept->pm-decomposition mints zone:multi subtasks spanning apps/mcp-server + apps/frontend (NFR-C-4/5/7). The apps/mcp-server lane is load-bearing — held by ARCH-CRON-SCHEDULER-RELIABILITY (Monday market-day gate) AND queued for BA-VN-MACRO-TOOLING WAVE-1 (Zone B/C mcp-server). UNPARK CONDITION: dispatch decomposition only once BOTH (a) ARCH-CRON umbrella closes to done_verified after today's market-day gate AND (b) BA-MACRO WAVE-1 mcp-server tasks land — then apps/mcp-server is free for the NFR-C endpoint+page fixes. Until then parking is the correct serialization, not neglect.",
+        "priority": "high",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "status": "PARKED",
+        "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
+        "updated_at": "2026-06-11T19:33:43Z",
+        "updated_by": "architect",
+        "zone": "multi",
+        "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
+        "po_reparked_at": "2026-06-15T06:35:17Z"
       },
       {
         "id": "FIX-CI-NETWORK-SKIP-GUARDS-CASCADE-INTEG",
