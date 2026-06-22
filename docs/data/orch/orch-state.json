@@ -192,14 +192,14 @@
   ],
   "head": {
     "status": "active",
-    "active_task_id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
-    "next_agent": "architect",
-    "next_action": "Tick 20260622T2053Z: PO BATCH processed (signal dev-20260622T2016Z READ). CI-red 6-file cluster = 2 roots + 1 env-red. DISPATCHED architect FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP (P1, in_progress, WIP1) — contract decision FX 0.5% floor vs 4 pre-floor tests (1269/1270/1326/FIX-1270), keep phantom-σ dfb4e268 fixed. HELD WIP-serial on main: FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING (P2, Root B eveningSummaryJob) + PROBE-CI-240-PRICE-PIPELINE-ENV-RED (P2 spike, must reproduce under CI runner before code touch) dispatch after macro commits. po-triage + dev-team-cron-singleton locks released. F-1 (5 rows) still awaiting user greenlight + .mcp.json restart.",
+    "active_task_id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Tick 20260622T2109Z: architect returned FIX-MACRO (Option A, test-only, ba1156d8, local-green 4 files, phantom-σ preserved) -> review, done_verified withheld pending push. RAW CI run 27981621391 FAILED FILES(5)=1269/1270/1326/FIX-1270/1783; 240-price ABSENT -> PROBE-CI-240 closed done (env/shard-order-only, not CI blocker). Real CI red now = Root B only. DISPATCHED dev-mcp-server FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING (P2, in_progress, WIP1) — formatForeignFlowSection copy-SSOT align. 4 commits ahead origin unpushed (ba1156d8/ef76b474/0eb1a680/928a8962); ci_green_on_subsequent_push needs fleet-push. F-1 still awaiting greenlight.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-22T20:53:52Z",
+    "updated_at": "2026-06-22T21:09:29Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T2053Z"
+    "last_tick": "20260622T2109Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11988,7 +11988,7 @@
         "id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
         "title": "FIX CI-RED macro cluster — classifyDeviation FX %-floor over-clamps high/extreme->elevated (1269/1270/1326/FIX-1270)",
         "owner": "architect",
-        "status": "in_progress",
+        "status": "review",
         "priority": "P1",
         "blocking": true,
         "type": "FIX",
@@ -12007,13 +12007,16 @@
         "generic_mandate": "Fix the level-classification contract once in macroThresholds.ts; do not special-case per-test.",
         "verification_gate": "CI full per-file isolation green: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16 exits 0 with all 4 macro files passing; subset-verify (bun test on the 4 files alone) is NOT sufficient. done_verified ONLY when gh run list --branch main shows conclusion=success on a push AFTER the fix SHA (ci_green_on_subsequent_push).",
         "status_note": "AC: full CI green (ci-per-file-isolation.sh 16) incl 1269/1270/1326/FIX-1270 + phantom-sigma stays fixed. From signal dev-20260622T2016Z.",
-        "started_at": "2026-06-22T20:53:52Z"
+        "started_at": "2026-06-22T20:53:52Z",
+        "done_verified": false,
+        "commit": "ba1156d8",
+        "review_note": "Option A (0.5% FX floor IS the contract). Test-only change, no production code; phantom-σ 1307a preserved (19/0). 4 Root A files local-green. done_verified withheld until ci_green_on_subsequent_push (commits unpushed; fleet-push out-of-band)."
       },
       {
         "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
         "title": "FIX CI-RED 1783 — foreign-flow bulletin all-zero/empty emits wrong unavailable string (expects Du lieu khong kha dung)",
-        "owner": "po",
-        "status": "TODO",
+        "owner": "dev-mcp-server",
+        "status": "in_progress",
         "priority": "P2",
         "blocking": true,
         "type": "FIX",
@@ -12027,13 +12030,14 @@
         "root_cause": "1783 BUG-1 stale-guard: formatForeignFlowSection on all-zero/empty entries renders the line Khoi ngoai: du lieu khong co but the test asserts the line contains Du lieu khong kha dung. RAW-confirmed local: 5pass/2fail, both fails toContain(Du lieu khong kha dung) Received Khoi ngoai: du lieu khong co. DISTINCT root from the macro cluster (different module + symbol). Resolve which string is the product SSOT (the stale-guard unavailable copy) and align code+test.",
         "fix_spec": "Decide canonical unavailable-copy for foreign-flow (likely Du lieu khong kha dung per broader bulletin convention), align formatForeignFlowSection to emit it on the all-zero/empty path, keep BUG-2 sort behaviour. Vietnamese-facing string — confirm it matches the rest of the briefing copy SSOT, not an ad-hoc per-test string.",
         "verification_gate": "CI full per-file isolation green: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16 exits 0 with 1783-foreign-flow-bulletin passing; not subset-verify. done_verified ONLY on ci_green_on_subsequent_push (gh run conclusion=success after fix SHA).",
-        "status_note": "AC: full CI green (ci-per-file-isolation.sh 16) incl 1783. From signal dev-20260622T2016Z."
+        "status_note": "AC: full CI green (ci-per-file-isolation.sh 16) incl 1783. From signal dev-20260622T2016Z.",
+        "started_at": "2026-06-22T21:09:29Z"
       },
       {
         "id": "PROBE-CI-240-PRICE-PIPELINE-ENV-RED",
         "title": "PROBE 240-price-pipeline-recovery CI-only red — passes LOCAL 13/0, reproduce in CI before any code fix",
         "owner": "po",
-        "status": "TODO",
+        "status": "done",
         "priority": "P2",
         "blocking": true,
         "type": "SPIKE",
@@ -12050,7 +12054,10 @@
         "root_cause": "Signal lists 240-price-pipeline-recovery in the CI-red set, BUT it passes LOCALLY 13pass/0fail (twice incl full file). Uses initDatabase/getDb (bun:sqlite) — env/DB-sensitive. Per memory ci_red_can_be_flaky_confirm_before_blame + ci_subset_verify_misses_full_suite: do NOT blame/patch a regression that does not reproduce. Likely a CI-env or per-file-isolation-ordering red (DB state leak across the 16-shard runner / afterEach cleanup / temp-db path), NOT a logic regression.",
         "question": "Why is 240-price-pipeline-recovery RED in CI run 27980795169 while green locally? Reproduce via cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16; if it reds there isolate DB-state-leak/order-dependence/temp-path vs a genuine schema gap. Output: findings doc + (if real) a spun-out FIX with precise root; if flake, harden the isolation/cleanup, do NOT touch product logic.",
         "verification_gate": "CI full per-file isolation green: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16 exits 0 with 240-price-pipeline-recovery passing AND stable across re-runs; done_verified on ci_green_on_subsequent_push.",
-        "status_note": "AC: 240 green under ci-per-file-isolation.sh 16 + root identified (env vs regression). Local=green, do not bend product code blind. From signal dev-20260622T2016Z."
+        "status_note": "AC: 240 green under ci-per-file-isolation.sh 16 + root identified (env vs regression). Local=green, do not bend product code blind. From signal dev-20260622T2016Z.",
+        "done_verified": true,
+        "resolved_at": "2026-06-22T21:09:29Z",
+        "router_note": "RAW-verified against CI run 27981621391 (SHA 081798752): FAILED FILES (5) = 1269/1270/1326/FIX-1270/1783 — 240-price ABSENT. Under CI per-file isolation 240 passes; the local red is shard-order/env-only (matches feedback_ci_red_can_be_flaky). Not a CI blocker, no code change. Closed."
       }
     ],
     "closed_sprints": [
