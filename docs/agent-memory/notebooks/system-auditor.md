@@ -3,26 +3,28 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c316 · 2026-06-22T12:43:10Z
-### Audit Run Tier-1 (12:43 UTC 2026-06-22, Monday 19:43 VN — market CLOSED)
+## c317 · 2026-06-22T13:14:32Z
+### Audit Run Tier-1 (13:14 UTC 2026-06-22, Monday 20:14 VN — market CLOSED)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 NEW (all containers UP, healthy, no restarts since last run)
+- Anomalies: 0 NEW (all containers UP, healthy, no state changes since c316)
 - Status: CLEAN
-- Evidence: All 12 containers UP+healthy. mcp-server 11h/up (mem 61.01% 1.22GiB/2GiB, restart=0). frontend/3001 200 OK. Host disk 34% (13Gi/27Gi, healthy). Dedup-skip: rag-service mem 95.63% 734.4MiB/768MiB, 96 total restarts (known FU-RAG-DEPLOY-MEMORY, no OOMKilled, lazy-loads embedding model).
+- Evidence: All 13 services UP+healthy [RAW-PROBE L3-L10]. mcp-server 11h/up (mem 59.38% 1.188GiB/2GiB, restart=0 [RAW-PROBE L23,L26]). A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). All A-01..A-32 PASS. Host disk 35% (13Gi/233Gi [RAW-PROBE L29]). Dedup-skip: rag-service mem cycling (tracked FU-RAG-DEPLOY-MEMORY).
 
-### RAW-PROBE (2026-06-22T12:43:05Z)
+### RAW-PROBE (2026-06-22T13:13:10Z)
 ```
+=== AUDITOR PROBE 2026-06-22T13:13:10Z ===
+
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
 vn-market-intelligence-mcp-mcp-server-1           Up 11 hours (healthy)   vn-market-intelligence-mcp-mcp-server           11 hours ago
-vn-market-intelligence-mcp-frontend-1             Up 15 hours (healthy)   vn-market-intelligence-mcp-frontend             15 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 16 hours (healthy)   vn-market-intelligence-mcp-frontend             16 hours ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 6 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        6 days ago
 vn-market-intelligence-mcp-stock-price-1          Up 7 days (healthy)     vn-market-intelligence-mcp-stock-price          7 days ago
 vn-market-intelligence-mcp-technical-analysis-1   Up 7 days (healthy)     vn-market-intelligence-mcp-technical-analysis   7 days ago
 vn-market-intelligence-mcp-macro-indicators-1     Up 7 days (healthy)     vn-market-intelligence-mcp-macro-indicators     7 days ago
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 7 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    7 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 11 days (healthy)    vn-market-intelligence-mcp-api-gateway          11 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 11 hours (healthy)   vn-market-intelligence-mcp-rag-service          11 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 12 hours (healthy)   vn-market-intelligence-mcp-rag-service          11 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 11 days (healthy)    vn-market-intelligence-mcp-news-fetch           11 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 11 days (healthy)    vn-market-intelligence-mcp-alert-engine         11 days ago
 headroom-proxy                                    Up 9 days               headroom-proxy:local                            2 weeks ago
@@ -39,12 +41,21 @@ mcp-gateway                                       Up 11 days (healthy)    mcpser
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=61.01% MemUsage=1.22GiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=59.38% MemUsage=1.188GiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    27Gi    34%    393k  278M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    26Gi    35%    393k  268M    0%   /
+
+=== PROBE DONE ===
 ```
+
+## c316 · 2026-06-22T12:43:10Z
+### Audit Run Tier-1 (12:43 UTC 2026-06-22, Monday 19:43 VN — market CLOSED)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 NEW (all containers UP, healthy, no restarts since last run)
+- Status: CLEAN
+- Evidence: All 12 containers UP+healthy. mcp-server 11h/up (mem 61.01% 1.22GiB/2GiB, restart=0). frontend/3001 200 OK. Host disk 34% (13Gi/27Gi, healthy). Dedup-skip: rag-service mem 95.63% 734.4MiB/768MiB, 96 total restarts (known FU-RAG-DEPLOY-MEMORY, no OOMKilled, lazy-loads embedding model).
 
 ## c315 · 2026-06-22T12:13:56Z
 ### Audit Run Tier-1 (12:13 UTC 2026-06-22, Monday 19:13 VN — market CLOSED 15:30)
@@ -52,10 +63,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - Anomalies: 0 NEW (all containers UP, healthy, no restarts)
 - Status: CLEAN
 - Evidence: All 12 containers UP+healthy. mcp-server 10h/up (mem 56.70% 1.134GiB/2GiB, restart=0). A-20 pdf-extractor multi-probe 3/3 PASS. Host disk 35% (13Gi/233Gi, healthy). A-01..A-32 all PASS. Dedup-skip: rag-service mem cycling (tracked FU-RAG-DEPLOY-MEMORY), known tracked issues.
-
-## c314 · 2026-06-22T11:43:15Z
-### Audit Run Tier-1 (11:43 UTC 2026-06-22, Monday 18:43 VN — market OPEN)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 NEW (all containers UP, healthy)
-- Status: CLEAN
-- Evidence: All 12 containers UP+healthy. mcp-server 10h/up (mem 53.78% 1.076GiB/2GiB, restart=0). All A-01..A-32 PASS. api-gateway /health responding. Host disk 35% (13Gi/233Gi, healthy). Now_VN: MONDAY 18:43 market-open. Dedup-skip: rag-service mem cycling (tracked FU-RAG-DEPLOY-MEMORY).
