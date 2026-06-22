@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260622T2315Z: no-op verify. 0 NEW signals. Tier-1 auditor HEALTHY (12 containers, A-20 3/3, mem 22.32%, RestartCount=1 baseline, disk 36%; commit 608f3697). FIX-MACRO (ba1156d8) + FIX-FOREIGN-FLOW-BULLETIN (2ea45dd6) still review/local-green; done_verified WITHHELD on ci_green_on_subsequent_push. PUSH GATE: origin now 16 behind (growing via auditor notebooks + orch chores). Router never pushes + tree dirty → fleet-push out-of-band/clean-checkout = user/PO deferred. F-1 (5 rows) awaiting greenlight. WIP0 idle.",
+    "next_action": "Tick 20260622T2344Z: no-op verify. 0 NEW signals. FIX-MACRO (ba1156d8) + FIX-FOREIGN-FLOW-BULLETIN (2ea45dd6) review/local-green; done_verified WITHHELD on ci_green_on_subsequent_push. PUSH GATE: origin 17 behind (growing via auditor notebooks + orch chores); router never pushes + tree dirty → fleet-push out-of-band/clean-checkout = user/PO deferred. Tier-1 auditor ad951ea running. F-1 (5 rows) awaiting greenlight. WIP0 idle.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-22T23:15:00Z",
+    "updated_at": "2026-06-22T23:44:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T2315Z"
+    "last_tick": "20260622T2344Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
