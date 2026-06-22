@@ -194,12 +194,12 @@
     "status": "in_progress",
     "active_task_id": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL",
     "next_agent": "dev-mcp-server",
-    "next_action": "FIX-PRED-CLAIMS-EXCLUDED-SERVE-DISPLAY done_verified=TRUE — live endpoint pending=0/excluded=3 (GAS,VNINDEX,FPT), both containers rebuilt+healthy. User dashboard Dự báo AI & Kết quả fully fixed (9 total/6 resolved/3 Loại trừ/0 Đang chờ). Both PRED tasks now done_verified. Open backlog (non-urgent): macro-calendar P2, agentsignals-GC P3, allproducers-nullstrip P3, refine-spike P3; 2 CI rows PO-push-held; health 3280-3286 recurring-tracked. Board idle wip0.",
-    "wip": 0,
+    "next_action": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL (P2, PO-formalized READY) dispatched → dev-mcp-server: finally{} lock-release + TTL/sweep for scheduler_locks (permanent root fix for orphan-lock class; ENDS recurring auditor over-escalation). On REVIEW → QA (LIVE gate: kill-job-mid-run release + leaked-lock auto-expire) → ops rebuild → live-verify. Also READY: FIX-CRON-DBINTEGRITY-DEDUP-BOARD-TRACKED-GUARD P3 (hold for next tick). Drained 00:06 telemetry. Both PRED tasks done_verified.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-21T23:57:58Z",
-    "updated_by": "po-s110-scheduler-lock-ttl-formalize",
-    "last_tick": "20260621T2107Z"
+    "updated_at": "2026-06-22T00:16:00Z",
+    "updated_by": "dev-team-cron-router",
+    "last_tick": "20260622T0037Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -23383,13 +23383,12 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "FIX-SCHEDULER-LOCK-NO-RELEASE-TTL",
         "type": "FIX",
         "title": "scheduler_locks: release-on-death + TTL/auto-expire so leaked locks self-heal",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "priority": "P2",
         "urgency": "med",
         "owner": "dev-mcp-server",
@@ -23405,8 +23404,13 @@
         "next_agent": "dev-mcp-server",
         "promoted_at": "2026-06-21T23:57:58Z",
         "promoted_by": "po-s110-scheduler-lock-ttl-formalize",
-        "promotion_note": "Formalized from backlog 2026-06-22 per PO decision: this is the PERMANENT ROOT FIX that makes the held weeklyPortfolioReport lock auto-release and ENDS the recurring system-auditor over-escalation (2/4 ticks this session re-signaled the held lock; router janitorially deleted both). WIP=0 -> direct to ready. Fix spec confirmed: (a) wrap release in finally{}; (b) add expires_at/TTL OR periodic sweep DELETE WHERE released_at IS NULL AND acquired_at < now-2x-cadence."
-      },
+        "promotion_note": "Formalized from backlog 2026-06-22 per PO decision: this is the PERMANENT ROOT FIX that makes the held weeklyPortfolioReport lock auto-release and ENDS the recurring system-auditor over-escalation (2/4 ticks this session re-signaled the held lock; router janitorially deleted both). WIP=0 -> direct to ready. Fix spec confirmed: (a) wrap release in finally{}; (b) add expires_at/TTL OR periodic sweep DELETE WHERE released_at IS NULL AND acquired_at < now-2x-cadence.",
+        "dev_agent": "dev-mcp-server",
+        "dispatched_at": "2026-06-22T00:16:00Z",
+        "dispatched_by": "dev-team-cron-router"
+      }
+    ],
+    "ready": [
       {
         "id": "FIX-CRON-DBINTEGRITY-DEDUP-BOARD-TRACKED-GUARD",
         "type": "FIX",
