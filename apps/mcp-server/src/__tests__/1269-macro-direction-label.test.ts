@@ -42,17 +42,19 @@ describe("1269: Macro Direction Label — above/below mean distinction", () => {
   });
 
   // TC-3: High Above
-  // Task 1270: 50 VND minimum guard raised from 10→50. Use stdDev=20 so
-  // 55 VND deviation (>50 VND guard) still lands in "high" zone (2.75σ).
-  // current: 26388, mean: 26333, stdDev: 20
-  // deviation: 55 VND (> 50 VND guard), zScore: +2.75 → high, above
-  // expected_label: "cao bất thường"
+  // FX-SIGMA-PHANTOM-EXTREME contract (dfb4e268): Guard-2 requires %-move ≥ 0.5%
+  // before escalating FX slow-movers to high/extreme. 55 VND on a 26333 base = 0.21%
+  // — below the 0.5% floor — so high/extreme is suppressed to "elevated" regardless of σ.
+  // To produce a genuine "high" label on USD/VND we must use a deviation ≥ 0.5% of mean
+  // (≥131 VND) AND ≥ 2σ. Use mean=26269, stdDev=60, deviation=168 VND:
+  //   0.64% > 0.5% floor → Guard-2 passes; 168/60 = 2.80σ → "high"
+  // NOTE: old TC-3 used stdDev=20/deviation=55 (0.21%) — pre-floor, now "elevated".
   it("TC-3: high above → summary contains 'cao bất thường'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26388,
-      mean: 26333,
-      stdDev: 20,
+      current: 26437,  // 168 VND above mean; 168/26269 = 0.64% > 0.5% floor
+      mean: 26269,
+      stdDev: 60,      // 168/60 = 2.80σ → "high"
       sampleCount: 30,
     });
     expect(result.level).toBe("high");
@@ -61,15 +63,14 @@ describe("1269: Macro Direction Label — above/below mean distinction", () => {
   });
 
   // TC-4: High Below (FAILS without direction-label fix)
-  // current: 26278, mean: 26333, stdDev: 20
-  // deviation: -55 VND (> 50 VND guard), zScore: -2.75 → high, below
-  // expected_label: "thấp bất thường"
+  // Same %-floor logic as TC-3: use deviation=168 VND (0.64%), stdDev=60 → 2.80σ, "high".
+  // NOTE: old TC-4 used stdDev=20/deviation=55 (0.21%) — pre-floor, now "elevated".
   it("TC-4: high below → summary contains 'thấp bất thường'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26278,
-      mean: 26333,
-      stdDev: 20,
+      current: 26101,  // 168 VND below mean; 168/26269 = 0.64% > 0.5% floor
+      mean: 26269,
+      stdDev: 60,      // 168/60 = 2.80σ → "high"
       sampleCount: 30,
     });
     expect(result.level).toBe("high");
@@ -78,15 +79,15 @@ describe("1269: Macro Direction Label — above/below mean distinction", () => {
   });
 
   // TC-5: Extreme Above
-  // current: 26408, mean: 26333, stdDev: 20
-  // deviation: 75 VND (> 50 VND guard), zScore: +3.75 → extreme, above
-  // expected_label: "cực cao"
+  // FX-SIGMA-PHANTOM-EXTREME contract: deviation must be ≥ 0.5% of mean to reach "extreme".
+  // Use mean=26269, stdDev=60, deviation=200 VND: 0.76% > 0.5% floor; 200/60 = 3.33σ → "extreme"
+  // NOTE: old TC-5 used stdDev=20/deviation=75 (0.28%) — pre-floor, now "elevated".
   it("TC-5: extreme above → summary contains 'cực cao'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26408,
-      mean: 26333,
-      stdDev: 20,
+      current: 26469,  // 200 VND above mean; 200/26269 = 0.76% > 0.5% floor
+      mean: 26269,
+      stdDev: 60,      // 200/60 = 3.33σ → "extreme"
       sampleCount: 30,
     });
     expect(result.level).toBe("extreme");
@@ -94,16 +95,15 @@ describe("1269: Macro Direction Label — above/below mean distinction", () => {
     expect(result.summary).toContain("cực cao");
   });
 
-  // TC-6: Extreme Below (FAILS without direction-label fix)
-  // current: 26258, mean: 26333, stdDev: 20
-  // deviation: -75 VND (> 50 VND guard), zScore: -3.75 → extreme, below
-  // expected_label: "cực thấp"
+  // TC-6: Extreme Below
+  // Same %-floor logic as TC-5: deviation=200 VND (0.76%), stdDev=60 → 3.33σ, "extreme".
+  // NOTE: old TC-6 used stdDev=20/deviation=75 (0.28%) — pre-floor, now "elevated".
   it("TC-6: extreme below → summary contains 'cực thấp'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26258,
-      mean: 26333,
-      stdDev: 20,
+      current: 26069,  // 200 VND below mean; 200/26269 = 0.76% > 0.5% floor
+      mean: 26269,
+      stdDev: 60,      // 200/60 = 3.33σ → "extreme"
       sampleCount: 30,
     });
     expect(result.level).toBe("extreme");

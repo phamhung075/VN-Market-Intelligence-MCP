@@ -1,8 +1,33 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-21 00:00 UTC | **Sprint:** FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE
+**Last updated:** 2026-06-22 21:00 UTC | **Sprint:** FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-22T21:00Z — FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP (TEST FIX DONE)
+
+**Task:** FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP | mode: BUG-FIX (CI-red Root A, P1) | zone: `apps/mcp-server/`
+**Contract decision:** Option A — 0.5% FX %-floor IS the correct product contract. Guard-2 (dfb4e268) stays untouched. 4 pre-floor tests updated to align with the new contract.
+**Rationale:** USD/VND at ~26000 means even 75 VND = 0.28% — micro-noise for an SBV policy-driven FX rate. Guard-2 was introduced to prevent the exact live 2026-06-19 false-CRITICAL (66 VND / 5.28σ). The phantom-σ scenario is ANY sub-0.5% FX move regardless of σ magnitude, because stdDev on a tight SBV band is by design small. 1307a (added with dfb4e268) encodes the authoritative new contract and takes priority over pre-floor tests.
+**No macroThresholds.ts change.** Only 4 test files updated:
+- 1269/1326 TC-3/4/5/6: restructured to use 168 VND (0.64%, 2.80σ → "high") and 200 VND (0.76%, 3.33σ → "extreme") deviations on mean=26269, stdDev=60 — tests still verify the direction-label code path
+- 1270 AC-3: "50 VND extreme regardless of stdDev" → "150 VND (0.57%) extreme" — documents why 50 VND is now "elevated"
+- FIX-1270 AC-2: "60 VND → high/extreme" → "150 VND (0.57%) → high/extreme"
+**CI result:** All 4 Root A files NOT in ci-per-file-isolation.sh 16 failed list. 1307a + FIX-1269 phantom-σ tests still green.
+**Decision journal:** `docs/agent-memory/decisions/sprint-FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP-architect.md`
+**BUILD-STANDARD:** not-applicable (bug-fix, test-only, in-zone). **Scan clean:** true.
+
+## 2026-06-22T00:00Z — NEXT-LEVEL-PROVENANCE-CALIBRATION-LOCAL-ARCH (DESIGN DONE)
+
+**Task:** NEXT-LEVEL-PROVENANCE-CALIBRATION-LOCAL-ARCH | mode: ARCHITECTURE-BRIEF | zone: cross-service (docs/architecture-briefs/, .mcp.json, docs/agents/, apps/mcp-server/, scripts/)
+**Output:** `docs/architecture-briefs/2026-06-22-provenance-calibration-local-arch.md`
+**3 pillars delivered:**
+1. .mcp.json gateway-registration design: register `gateway` server (4 tools only), NOT vn-market (146 tools) — preserves small tool surface + gives all local subagents real `mcp__gateway__call_tool` access. Transport probe required before writing (risk: wrong transport type silently breaks subagents). Blind-guard removal deferred until .mcp.json confirmed live.
+2. PROVENANCE-AND-CALIBRATION: (P1) cascade-signals endpoint stop-flattening `finding_data`; (P2) ADD COLUMN `source_url` to `agent_signals` (denormalized); (P3) additive provenance envelope in tool responses; (C1) `calibration_modifier` field from `calibration_snapshots` on conviction display; (C2) fb-poster writes `prediction_claims` rows. All machinery already deployed (calibrationReportJob, predictionResolutionJob, signal_outcomes). Gaps are serve-layer and claim-logging only.
+3. Local-only scheduling: launchd timers replace 5 active cloud RemoteTriggers (chef-intraday, chef-evening, digest-sunday, tnb-audit, bctc-analyst-slot-1). Pattern proven from `com.vn-market.fleet-push`. Launcher scripts check if CronCreate `*/15` session is alive before firing. Sequential gate: 2 successful launchd fires before cloud trigger decommissioned.
+**Key design choice:** `.mcp.json` registers `gateway` not `vn-market` — single most important guard to keep tool surface small while fixing subagent blindness.
+**BUILD-STANDARD:** not-applicable (cross-service architecture brief). **Scan clean:** true.
+**NEXT:** PO (sprint dispatch per Part 4 sequencing)
 
 ## 2026-06-21T00:00Z — FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE (DESIGN DONE)
 

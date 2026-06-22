@@ -33,14 +33,17 @@ describe("classifyDeviation — direction-aware Vietnamese labels", () => {
   });
 
   // TC-3: above-mean high → label contains "cao bất thường"
-  // Task 1270: 50 VND guard raised 10→50. Use stdDev=20, deviation=55 VND
-  // so absolute guard passes (55 > 50) and zScore=2.75 → high.
+  // FX-SIGMA-PHANTOM-EXTREME contract (dfb4e268): Guard-2 requires %-move ≥ 0.5% before
+  // escalating FX slow-movers to high/extreme. 55 VND on 26333 base = 0.21% — below the
+  // 0.5% floor — so the old stdDev=20/deviation=55 case would now be "elevated".
+  // Updated: use mean=26269, stdDev=60, deviation=168 VND (0.64% > 0.5%, 2.80σ → "high")
+  // to verify the direction label fires correctly when Guard-2 is cleared.
   it("TC-3: above-mean high → summary contains 'cao bất thường'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26388,   // 55 VND above mean; zScore = 55/20 = 2.75 → high, above
-      mean: 26333,
-      stdDev: 20,
+      current: 26437,   // 168 VND above mean; 168/26269 = 0.64% > 0.5% floor; 168/60 = 2.80σ → high
+      mean: 26269,
+      stdDev: 60,
       sampleCount: 30,
     });
     expect(result.level).toBe("high");
@@ -48,13 +51,14 @@ describe("classifyDeviation — direction-aware Vietnamese labels", () => {
     expect(result.summary).toContain("cao bất thường");
   });
 
-  // TC-4: below-mean high → label contains "thấp bất thường" (FAILS before fix)
+  // TC-4: below-mean high → label contains "thấp bất thường"
+  // Same %-floor logic as TC-3: deviation=168 VND (0.64%), stdDev=60 → 2.80σ, "high".
   it("TC-4: below-mean high → summary contains 'thấp bất thường'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26278,   // 55 VND below mean; zScore = -55/20 = -2.75 → high, below
-      mean: 26333,
-      stdDev: 20,
+      current: 26101,   // 168 VND below mean; 168/26269 = 0.64% > 0.5% floor; 168/60 = 2.80σ → high
+      mean: 26269,
+      stdDev: 60,
       sampleCount: 30,
     });
     expect(result.level).toBe("high");
@@ -63,12 +67,14 @@ describe("classifyDeviation — direction-aware Vietnamese labels", () => {
   });
 
   // TC-5: above-mean extreme → label contains "cực cao"
+  // FX-SIGMA-PHANTOM-EXTREME contract: deviation ≥ 0.5% of mean to reach "extreme".
+  // Use mean=26269, stdDev=60, deviation=200 VND: 0.76% > 0.5% floor; 200/60 = 3.33σ → "extreme"
   it("TC-5: above-mean extreme → summary contains 'cực cao'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26408,   // 75 VND above mean; zScore = 75/20 = 3.75 → extreme, above
-      mean: 26333,
-      stdDev: 20,
+      current: 26469,   // 200 VND above mean; 200/26269 = 0.76% > 0.5% floor; 200/60 = 3.33σ → extreme
+      mean: 26269,
+      stdDev: 60,
       sampleCount: 30,
     });
     expect(result.level).toBe("extreme");
@@ -76,13 +82,14 @@ describe("classifyDeviation — direction-aware Vietnamese labels", () => {
     expect(result.summary).toContain("cực cao");
   });
 
-  // TC-6: below-mean extreme → label contains "cực thấp" (FAILS before fix)
+  // TC-6: below-mean extreme → label contains "cực thấp"
+  // Same %-floor logic as TC-5: deviation=200 VND (0.76%), stdDev=60 → 3.33σ, "extreme".
   it("TC-6: below-mean extreme → summary contains 'cực thấp'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26258,   // 75 VND below mean; zScore = -75/20 = -3.75 → extreme, below
-      mean: 26333,
-      stdDev: 20,
+      current: 26069,   // 200 VND below mean; 200/26269 = 0.76% > 0.5% floor; 200/60 = 3.33σ → extreme
+      mean: 26269,
+      stdDev: 60,
       sampleCount: 30,
     });
     expect(result.level).toBe("extreme");

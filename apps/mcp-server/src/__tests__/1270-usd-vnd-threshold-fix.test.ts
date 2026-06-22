@@ -46,18 +46,29 @@ describe("Task 1270 — USD/VND minimum absolute deviation guard", () => {
   });
 
   /**
-   * AC-3: Verify that larger moves still work correctly
-   * (50 VND deviation should trigger EXTREME regardless of stdDev)
+   * AC-3: Verify that genuinely large moves (≥ 0.5% of rate level) still trigger EXTREME.
+   *
+   * FX-SIGMA-PHANTOM-EXTREME contract (dfb4e268): Guard-2 requires %-move ≥ 0.5% before
+   * escalating FX slow-movers to high/extreme. On a USD/VND base of ~26334, 0.5% = ~132 VND.
+   *
+   * 50 VND = 0.19% — this is below the 0.5% floor, so Guard-2 caps it at "elevated" even
+   * with a tight stdDev=0.76 (phantom-σ scenario). The original AC-3 comment ("50 VND should
+   * trigger EXTREME regardless of stdDev") was written before Guard-2 was introduced;
+   * under the current contract 50 VND / 0.19% is micro-noise → "elevated".
+   *
+   * Genuine extreme: use 150 VND (0.57% > 0.5% floor, stdDev=0.76 → 197σ-extreme).
+   * This verifies the floor passes and extreme fires for a real macro shock-sized move.
    */
-  it("AC-3: 50 VND deviation should trigger EXTREME alert", () => {
+  it("AC-3: 150 VND deviation (0.57% > 0.5% floor) should trigger EXTREME alert", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26284,    // 50 VND below mean
+      current: 26184,    // 150 VND below mean; 150/26334 = 0.57% > 0.5% floor
       mean: 26334,
       stdDev: 0.76,
       sampleCount: 30,
     });
 
+    // 150 VND / 0.57% clears the %-floor → Guard-2 does not cap → extreme fires
     expect(result.level).toBe("extreme");
   });
 

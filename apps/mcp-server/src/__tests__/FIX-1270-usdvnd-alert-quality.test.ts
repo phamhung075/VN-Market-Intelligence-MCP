@@ -47,16 +47,23 @@ describe("FIX-1270 AC-2 — 200 VND deviation triggers alert", () => {
     expect(result.level).toBe("extreme");
   });
 
-  it("usdVndRate: 60 VND above mean → extreme (above 50 VND minimum)", () => {
+  it("usdVndRate: 150 VND above mean (0.57% > 0.5% floor) → extreme", () => {
+    // FX-SIGMA-PHANTOM-EXTREME contract (dfb4e268): Guard-2 requires %-move ≥ 0.5% before
+    // escalating FX slow-movers to high/extreme. 60 VND on 26334 base = 0.23% — below the
+    // 0.5% floor — so it is correctly capped at "elevated" under the current contract.
+    //
+    // To verify high/extreme fires for genuinely large moves: use 150 VND (0.57% > 0.5%).
+    // With tight stdDev=0.76, 150/0.76 = 197σ → "extreme". Guard-2 %-floor cleared.
+    // Old case (60 VND / 0.23%): was pre-Guard-2 assertion; now correctly "elevated".
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26394,   // 60 VND above 26334
+      current: 26484,   // 150 VND above 26334; 150/26334 = 0.57% > 0.5% floor
       mean: 26334,
       stdDev: 0.76,
       sampleCount: 30,
     });
 
-    // 60 VND > 50 VND minimum → must be high or extreme
+    // 150 VND / 0.57% clears the %-floor → Guard-2 does not cap → extreme fires
     expect(["high", "extreme"]).toContain(result.level);
   });
 });
