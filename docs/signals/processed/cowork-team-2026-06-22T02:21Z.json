@@ -1,0 +1,26 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-22T02:21Z",
+    "nominal_tick": "2026-06-22T02:13:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": ["chef-intraday"],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": ["chef-intraday"],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "chef-intraday (agent unified-agent, flow chef.md, cron 13 2-8 * * 1-5, policy chef-intraday) is local-dispatcher-only — it is NOT one of the 6 cloud RemoteTrigger backstops. The three CHEF cloud backstops are chef-morning (15 5 1-5), chef-eod (45 8 1-5) and chef-evening (45 19) ONLY; the intraday 2-hourly market-hours cadence has NO cloud trigger. Session is gateway-blind (mcpServers:0) so a local spawn would fabricate the intraday MARKET dish; not spawned. Slot genuinely UNFIRED this session. (Today 2026-06-22 is Monday, so the 1-5 weekday gate matches; 02:13 UTC = 09:13 VN, market open.)",
+    "slot_detail": {
+      "chef-intraday": {"agent": "unified-agent", "flow_path": "docs/agents/unified-agent/flow/chef.md", "cron": "13 2-8 * * 1-5", "guaranteed": false, "policy_id": "chef-intraday", "last_fired": "2026-06-15T07:21:00Z", "cadence_minutes": 120}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782096680},
+    "note": "USER/HARNESS-side fix required: register the gateway MCP server in .mcp.json so subagents inherit it, then reconnect. Until then the gatherer / bctc / intraday / alert layer goes unfired in this session. NOTE: market reopened today (Mon) — intraday CHEF + market-hours gatherer/alert slots will now match on weekday ticks and remain unfired while blind."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-22T02:21:21Z"
+}
