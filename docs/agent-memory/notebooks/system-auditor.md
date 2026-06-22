@@ -3,6 +3,13 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c320 · 2026-06-22T14:31:12Z
+### Audit Run Tier-2 (14:31 UTC 2026-06-22, Monday 21:31 VN — market CLOSED)
+- Tier: 2 | Freshness sweep: 27 sources checked | Inter-service: 4 probes | DB spots: 6
+- Anomalies: 0 NEW (all sources within SLA cadence, all services reachable)
+- Status: HEALTHY
+- Evidence: A-29 cron gaps=0 (intelligence cycle stable). B-01–B-07 all sources fresh (ssc-iboard <30m, foreign-flow <1m, news <1h, bctc queued). B-08 80 PDFs in /app/data/pdfs/. B-09 0 malformed ssc.gov.vn URLs. C-06 market_messages 3h=1, C-07 agent_signals 24h=169. A-25–A-28 inter-service HTTP 200 (stock-price, technical-analysis, alert-engine, pdf-extractor). A-31 EPIPE count=0. C-13 WAL sizes clean (market.db 0B, pdf_extractor none). C-01 ticker coverage 283 (last day). C-03 BCTC financial 32 Q1-2026 codes. C-04 low-conf reports 0. Market hours OUT (14:00 UTC Mon). No dedup skips.
+
 ## c319 · 2026-06-22T14:13:29Z
 ### Audit Run Tier-1 (14:13 UTC 2026-06-22, Monday 21:13 VN — market CLOSED)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
