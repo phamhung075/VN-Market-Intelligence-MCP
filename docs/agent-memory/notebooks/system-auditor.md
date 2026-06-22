@@ -3,6 +3,13 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c312 · 2026-06-22T10:30:24Z
+### Audit Run Tier-2 (10:30 UTC 2026-06-22, Monday 17:30 VN — market CLOSED 15:30)
+- Tier: 2 | Sources: 29 checked | DB spot-checks: 4/4 PASS
+- Anomalies: 0 NEW (all freshness PASS)
+- Status: CLEAN
+- Evidence: C-06 market_messages(3h)=2 PASS, C-07 agent_signals(24h)=162 PASS, B-09 SSC-URLs=0 PASS, B-13 stale-BCTC(>72h)=0 PASS. Post-market window: Mon 17:30 VN, session bars landed. No cron fire gaps detected (A-29). VPS routes stable. No source staleness alerts. Dedup-skip: BCTC-push & bctc-discover SLA window (Jun not in [1,4,7,10]), normal cadence 168h applies; both within threshold.
+
 ## c311 · 2026-06-22T10:14:39Z
 ### Audit Run Tier-1 (10:14 UTC 2026-06-22, Monday 17:14 VN — market CLOSED 15:30)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
@@ -57,10 +64,3 @@ Filesystem: /dev/disk1s4s1 | Used: 13Gi | Avail: 25Gi | Capacity: 36%
 - Anomalies: 0 NEW (all containers UP, healthy)
 - Status: CLEAN
 - Evidence: All 12 containers UP+healthy. mcp-server 7h/up (mem 46.67% 955.8MiB/2GiB, restart=0). A-20 pdf-extractor multi-probe 3/3 PASS. Host disk 36% (13Gi/233Gi, healthy). Now_VN: MONDAY 16:13, market CLOSED (15:30 post-close). Dedup-skip: rag-service mem=92.60% (cyclic, tracked FU-RAG-DEPLOY-MEMORY).
-
-## c308 · 2026-06-22T08:44:06Z
-### Audit Run Tier-1 (08:44 UTC 2026-06-22, Monday 15:43 VN — market CLOSED 15:30)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: all reachable
-- Anomalies: 0 NEW
-- Status: CLEAN
-- Evidence: All 12 containers UP+healthy. mcp-server 7h/up (mem 48.73% 998.1MiB/2GiB, restart=0). All A-01..A-32 PASS. Host disk 36% (13Gi/233Gi, healthy). Now_VN: MONDAY 15:43:57, market CLOSED (15:30 post-close). Dedup-skip: rag-service mem=91.91% (cyclic, tracked FU-RAG-DEPLOY-MEMORY, not a NEW incident).
