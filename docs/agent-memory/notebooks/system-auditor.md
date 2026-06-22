@@ -3,17 +3,17 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c309 · 2026-06-22T09:13:08Z
-### Audit Run Tier-1 (09:13 UTC 2026-06-22, Monday 16:13 VN — market CLOSED 15:30)
+## c310 · 2026-06-22T09:43:40Z
+### Audit Run Tier-1 (09:43 UTC 2026-06-22, Monday 16:43 VN — market CLOSED 15:30)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 NEW (all containers UP, healthy)
 - Status: CLEAN
-- Evidence: All 12 containers UP+healthy. mcp-server 7h/up (mem 46.67% 955.8MiB/2GiB, restart=0). A-20 pdf-extractor multi-probe 3/3 PASS. Host disk 36% (13Gi/233Gi, healthy). Now_VN: MONDAY 16:13, market CLOSED (15:30 post-close). Dedup-skip: rag-service mem=92.60% (cyclic, tracked FU-RAG-DEPLOY-MEMORY).
+- Evidence: All 12 containers UP+healthy. mcp-server 8h/up (mem 48.93% 1002MiB/2GiB, restart=0). All A-01..A-32 PASS. Host disk 36% (13Gi/233Gi). Now_VN: MONDAY 16:43, market CLOSED (15:30 post-close). Dedup-skip: rag-service mem=92.60% (cyclic, tracked FU-RAG-DEPLOY-MEMORY, 96 restarts known).
 
-### RAW-PROBE (2026-06-22T09:13:08Z)
+### RAW-PROBE (2026-06-22T09:43:01Z)
 ```
 --- docker ps -a ---
-vn-market-intelligence-mcp-mcp-server-1: Up 7 hours (healthy)
+vn-market-intelligence-mcp-mcp-server-1: Up 8 hours (healthy)
 vn-market-intelligence-mcp-frontend-1: Up 12 hours (healthy)
 vn-market-intelligence-mcp-pdf-extractor-1: Up 6 days (healthy)
 vn-market-intelligence-mcp-stock-price-1: Up 6 days (healthy)
@@ -33,21 +33,23 @@ mcp-gateway: Up 11 days (healthy)
 [health] pdf-extractor:5001/health OK (HTTP 200)
 [health] frontend:3001/ OK (HTTP 200)
 
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+--- restart counts ---
+All 12 containers: 0 restarts (except rag-service: 96 — tracked)
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=46.67% MemUsage=955.8MiB / 2GiB
-Container=vn-market-intelligence-mcp-rag-service-1 MemPerc=92.60% MemUsage=711.2MiB / 768MiB
+mcp-server: 48.93% (1002MiB / 2GiB)
+rag-service: 92.60% (711.2MiB / 768MiB) — cyclic, healthy
 
 --- disk df -h / ---
-Filesystem: /dev/disk1s4s1 | Size: 233Gi | Used: 13Gi | Avail: 25Gi | Capacity: 36%
-
---- A-20 Multi-Probe (pdf-extractor) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
+Filesystem: /dev/disk1s4s1 | Used: 13Gi | Avail: 25Gi | Capacity: 36%
 ```
+
+## c309 · 2026-06-22T09:13:08Z
+### Audit Run Tier-1 (09:13 UTC 2026-06-22, Monday 16:13 VN — market CLOSED 15:30)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 NEW (all containers UP, healthy)
+- Status: CLEAN
+- Evidence: All 12 containers UP+healthy. mcp-server 7h/up (mem 46.67% 955.8MiB/2GiB, restart=0). A-20 pdf-extractor multi-probe 3/3 PASS. Host disk 36% (13Gi/233Gi, healthy). Now_VN: MONDAY 16:13, market CLOSED (15:30 post-close). Dedup-skip: rag-service mem=92.60% (cyclic, tracked FU-RAG-DEPLOY-MEMORY).
 
 ## c308 · 2026-06-22T08:44:06Z
 ### Audit Run Tier-1 (08:44 UTC 2026-06-22, Monday 15:43 VN — market CLOSED 15:30)
@@ -55,10 +57,3 @@ Filesystem: /dev/disk1s4s1 | Size: 233Gi | Used: 13Gi | Avail: 25Gi | Capacity: 
 - Anomalies: 0 NEW
 - Status: CLEAN
 - Evidence: All 12 containers UP+healthy. mcp-server 7h/up (mem 48.73% 998.1MiB/2GiB, restart=0). All A-01..A-32 PASS. Host disk 36% (13Gi/233Gi, healthy). Now_VN: MONDAY 15:43:57, market CLOSED (15:30 post-close). Dedup-skip: rag-service mem=91.91% (cyclic, tracked FU-RAG-DEPLOY-MEMORY, not a NEW incident).
-
-## c307 · 2026-06-22T07:43:08Z
-### Audit Run Tier-1 (07:43 UTC 2026-06-22, Monday 14:43 VN — market OPEN afternoon)
-- Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
-- Anomalies: 0 NEW (all containers UP, healthy)
-- Status: CLEAN
-- Notes: Market-hours window (VN 14:43 Monday afternoon, market OPEN 09:00–15:30). All 12 host_runtime_set UP+healthy. mcp-server UP 6h/healthy (restart=0, mem 37.90% 776.1MiB/2GiB). A-20 pdf-extractor multi-probe 3/3 PASS. Disk 38% (13Gi used, 23Gi free, 233Gi total). All A-01..A-32 checks PASS. Dedup-skipped: rag-service mem ceiling (70-97%, tracked FU-RAG-DEPLOY-MEMORY).
