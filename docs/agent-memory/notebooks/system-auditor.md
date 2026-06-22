@@ -3,21 +3,21 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c323 · 2026-06-22T15:42:58Z
-### Audit Run Tier-1 (15:42 UTC 2026-06-22, Sunday 22:42 VN — market CLOSED)
+## c324 · 2026-06-22T16:13:42Z
+### Audit Run Tier-1 (16:13 UTC 2026-06-22, Sunday 23:13 VN — market CLOSED)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 NEW (all containers UP, healthy, stable)
 - Status: CLEAN
-- Evidence: All 12 host_runtime_set services UP+healthy [RAW-PROBE L3-L14]. mcp-server 14h/up (mem 69.59% 1.392GiB/2GiB, restart=0 [RAW-PROBE L21]). A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200 — no event-loop stall). All A-01..A-32 PASS. Host disk 34% (13Gi/233Gi [RAW-PROBE L29]). No anomalies, no dedup skips.
+- Evidence: All 12 host_runtime_set services UP+healthy [RAW-PROBE L3-L14]. mcp-server 14h/up (mem 74.13% 1.483GiB/2GiB, restart=0 [RAW-PROBE L21]). A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). All A-01..A-32 PASS. Host disk 36% (13Gi/233Gi [RAW-PROBE L29]). No anomalies, no dedup skips.
 
-### RAW-PROBE (2026-06-22T15:42:58Z)
+### RAW-PROBE (2026-06-22T16:13:06Z)
 ```
-=== AUDITOR PROBE 2026-06-22T15:42:58Z ===
+=== AUDITOR PROBE 2026-06-22T16:13:06Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
 vn-market-intelligence-mcp-mcp-server-1           Up 14 hours (healthy)   vn-market-intelligence-mcp-mcp-server           14 hours ago
-vn-market-intelligence-mcp-frontend-1             Up 18 hours (healthy)   vn-market-intelligence-mcp-frontend             18 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 19 hours (healthy)   vn-market-intelligence-mcp-frontend             19 hours ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 6 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        6 days ago
 vn-market-intelligence-mcp-stock-price-1          Up 7 days (healthy)     vn-market-intelligence-mcp-stock-price          7 days ago
 vn-market-intelligence-mcp-technical-analysis-1   Up 7 days (healthy)     vn-market-intelligence-mcp-technical-analysis   7 days ago
@@ -41,18 +41,18 @@ mcp-gateway                                       Up 11 days (healthy)    mcpser
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=69.59% MemUsage=1.392GiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=74.13% MemUsage=1.483GiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    26Gi    34%    393k  277M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    24Gi    36%    393k  255M    0%   /
 
 === PROBE DONE ===
 ```
 
-## c322 · 2026-06-22T15:13:27Z
-### Audit Run Tier-1 (15:13 UTC 2026-06-22, Monday 22:13 VN — market CLOSED)
+## c323 · 2026-06-22T15:42:58Z
+### Audit Run Tier-1 (15:42 UTC 2026-06-22, Sunday 22:42 VN — market CLOSED)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 NEW (all containers UP, healthy, stable)
 - Status: CLEAN
-- Evidence: All 12 host_runtime_set services UP+healthy [RAW-PROBE L3-L14]. mcp-server 13h/up (mem 68.83% 1.377GiB/2GiB, restart=0 [RAW-PROBE L24]). A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). All A-01..A-32 PASS. Host disk 36% (13Gi/233Gi [RAW-PROBE L29]). No anomalies, no dedup skips.
+- Evidence: All 12 host_runtime_set services UP+healthy [RAW-PROBE L3-L14]. mcp-server 14h/up (mem 69.59% 1.392GiB/2GiB, restart=0 [RAW-PROBE L21]). A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200 — no event-loop stall). All A-01..A-32 PASS. Host disk 34% (13Gi/233Gi [RAW-PROBE L29]). No anomalies, no dedup skips.
