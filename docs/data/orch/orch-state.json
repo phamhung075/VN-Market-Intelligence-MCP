@@ -1607,6 +1607,17 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "tnb-20260622T201300Z",
+        "ts": "2026-06-22T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c103 BLOCKED (failure mode A, 7th consecutive) — MCP gateway absent in local CLI spawn. Sunday 2026-06-22. ANOMALY: unified-agent notebook shows morning+EOD published on Sunday (cron 1-5 should suppress). Possible F-SUNDAY-SCHEDULER-FIRE recurrence — requires live c104 confirmation.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ]
   },
