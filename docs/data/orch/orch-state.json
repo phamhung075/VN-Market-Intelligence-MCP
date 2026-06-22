@@ -191,15 +191,15 @@
     }
   ],
   "head": {
-    "status": "active",
-    "active_task_id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Tick 20260622T2109Z: architect returned FIX-MACRO (Option A, test-only, ba1156d8, local-green 4 files, phantom-σ preserved) -> review, done_verified withheld pending push. RAW CI run 27981621391 FAILED FILES(5)=1269/1270/1326/FIX-1270/1783; 240-price ABSENT -> PROBE-CI-240 closed done (env/shard-order-only, not CI blocker). Real CI red now = Root B only. DISPATCHED dev-mcp-server FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING (P2, in_progress, WIP1) — formatForeignFlowSection copy-SSOT align. 4 commits ahead origin unpushed (ba1156d8/ef76b474/0eb1a680/928a8962); ci_green_on_subsequent_push needs fleet-push. F-1 still awaiting greenlight.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "Tick 20260622T2115Z: Root B done (dev-mcp-server 2ea45dd6, 1783 local-green) -> review. ALL 5 CI-red files now locally fixed: Root A ba1156d8 + Root B 2ea45dd6. FIX-MACRO + FIX-FOREIGN-FLOW both review/local-green, done_verified WITHHELD until ci_green_on_subsequent_push. Tier-1 auditor HEALTHY 0 anomalies (5dad5572). WIP0 idle. BLOCKER: ~9 commits ahead origin unpushed (real fix work + orch/notebook chores); router never pushes + tree dirty (cowork churn) -> fleet-push is out-of-band/clean-checkout = user/PO deferred call. Until pushed, CI cannot re-run green and the 2 FIXes cannot reach done_verified. F-1 (5 rows) still awaiting greenlight.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-22T21:09:29Z",
+    "updated_at": "2026-06-22T21:15:58Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T2109Z"
+    "last_tick": "20260622T2115Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12016,7 +12016,7 @@
         "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
         "title": "FIX CI-RED 1783 — foreign-flow bulletin all-zero/empty emits wrong unavailable string (expects Du lieu khong kha dung)",
         "owner": "dev-mcp-server",
-        "status": "in_progress",
+        "status": "review",
         "priority": "P2",
         "blocking": true,
         "type": "FIX",
@@ -12031,7 +12031,10 @@
         "fix_spec": "Decide canonical unavailable-copy for foreign-flow (likely Du lieu khong kha dung per broader bulletin convention), align formatForeignFlowSection to emit it on the all-zero/empty path, keep BUG-2 sort behaviour. Vietnamese-facing string — confirm it matches the rest of the briefing copy SSOT, not an ad-hoc per-test string.",
         "verification_gate": "CI full per-file isolation green: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16 exits 0 with 1783-foreign-flow-bulletin passing; not subset-verify. done_verified ONLY on ci_green_on_subsequent_push (gh run conclusion=success after fix SHA).",
         "status_note": "AC: full CI green (ci-per-file-isolation.sh 16) incl 1783. From signal dev-20260622T2016Z.",
-        "started_at": "2026-06-22T21:09:29Z"
+        "started_at": "2026-06-22T21:09:29Z",
+        "done_verified": false,
+        "commit": "2ea45dd6",
+        "review_note": "Code was wrong (test was spec). Canonical copy \"Khối ngoại: Dữ liệu không khả dụng (pipeline tạm dừng)\" applied inline at eveningSummaryJob.ts:228 (no shared const pre-existed). 1783 local-green 7/0, pnpm check clean. done_verified withheld until ci_green_on_subsequent_push (unpushed)."
       },
       {
         "id": "PROBE-CI-240-PRICE-PIPELINE-ENV-RED",
