@@ -3,17 +3,17 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c306 · 2026-06-22T07:13:58Z
-### Audit Run Tier-1 (07:13 UTC 2026-06-22, Monday 14:13 VN — market OPEN afternoon)
+## c307 · 2026-06-22T07:43:08Z
+### Audit Run Tier-1 (07:43 UTC 2026-06-22, Monday 14:43 VN — market OPEN afternoon)
 - Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
 - Anomalies: 0 NEW (all containers UP, healthy)
 - Status: CLEAN
-- Notes: Market-hours window (VN 14:13 Monday afternoon, market OPEN 09:00–15:30). All 12 host_runtime_set UP+healthy. mcp-server UP 5h/healthy (restart=0, mem 37.01% 758MiB/2GiB). A-20 pdf-extractor multi-probe 3/3 PASS. Disk 36% (13Gi used, 25Gi free, 233Gi total). All A-01..A-32 checks PASS. Dedup-skipped: rag-service mem ceiling (70-97%, tracked FU-RAG-DEPLOY-MEMORY).
+- Notes: Market-hours window (VN 14:43 Monday afternoon, market OPEN 09:00–15:30). All 12 host_runtime_set UP+healthy. mcp-server UP 6h/healthy (restart=0, mem 37.90% 776.1MiB/2GiB). A-20 pdf-extractor multi-probe 3/3 PASS. Disk 38% (13Gi used, 23Gi free, 233Gi total). All A-01..A-32 checks PASS. Dedup-skipped: rag-service mem ceiling (70-97%, tracked FU-RAG-DEPLOY-MEMORY).
 
-### RAW-PROBE (2026-06-22T07:13:58Z)
+### RAW-PROBE (2026-06-22T07:43:08Z)
 ```
 --- docker ps -a ---
-vn-market-intelligence-mcp-mcp-server-1: Up 5 hours (healthy)
+vn-market-intelligence-mcp-mcp-server-1: Up 6 hours (healthy)
 vn-market-intelligence-mcp-frontend-1: Up 10 hours (healthy)
 vn-market-intelligence-mcp-pdf-extractor-1: Up 6 days (healthy)
 vn-market-intelligence-mcp-stock-price-1: Up 6 days (healthy)
@@ -37,10 +37,10 @@ mcp-gateway: Up 11 days (healthy)
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=37.01% MemUsage=758MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=37.90% MemUsage=776.1MiB / 2GiB
 
 --- disk df -h / ---
-Filesystem: /dev/disk1s4s1 | Size: 233Gi | Used: 13Gi | Avail: 25Gi | Capacity: 36%
+Filesystem: /dev/disk1s4s1 | Size: 233Gi | Used: 13Gi | Avail: 23Gi | Capacity: 38%
 
 --- A-20 Multi-Probe (pdf-extractor) ---
 [A-20-PROBE-1] in-container HTTP 200
@@ -48,9 +48,9 @@ Filesystem: /dev/disk1s4s1 | Size: 233Gi | Used: 13Gi | Avail: 25Gi | Capacity: 
 [A-20-PROBE-3] in-container HTTP 200
 ```
 
-## c305 · 2026-06-22T06:43:58Z
-### Audit Run Tier-1 (06:43 UTC 2026-06-22, Monday 13:43 VN — market OPEN afternoon)
+## c306 · 2026-06-22T07:13:58Z
+### Audit Run Tier-1 (07:13 UTC 2026-06-22, Monday 14:13 VN — market OPEN afternoon)
 - Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
 - Anomalies: 0 NEW (all containers UP, healthy)
 - Status: CLEAN
-- Notes: Market-hours window (VN 13:43 Monday afternoon, market OPEN 09:00–15:30). All 12 host_runtime_set UP+healthy. mcp-server UP 5h/healthy (restart=0, mem 35.30% 722.9MiB/2GiB). A-20 pdf-extractor multi-probe 3/3 PASS. Disk 35% (13Gi used, 26Gi free, 233Gi total). All A-01..A-32 checks PASS. Dedup-skipped: rag-service mem ceiling (70-97%, tracked FU-RAG-DEPLOY-MEMORY).
+- Notes: Market-hours window (VN 14:13 Monday afternoon, market OPEN 09:00–15:30). All 12 host_runtime_set UP+healthy. mcp-server UP 5h/healthy (restart=0, mem 37.01% 758MiB/2GiB). A-20 pdf-extractor multi-probe 3/3 PASS. Disk 36% (13Gi used, 25Gi free, 233Gi total). All A-01..A-32 checks PASS. Dedup-skipped: rag-service mem ceiling (70-97%, tracked FU-RAG-DEPLOY-MEMORY).
