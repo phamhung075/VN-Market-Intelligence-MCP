@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c295 · 2026-06-22T02:32:20Z
+### Audit Run Tier-2 (02:32 UTC 2026-06-22, Monday 09:32 VN 2026-06-22)
+- Tier: 2 | Sources checked: 12 | Cron gaps: 0 | Freshness: ALL PASS
+- Anomalies: 0 NEW | Dedup-skipped: 0
+- Status: CLEAN
+- Context: Market-hours window (09:32 VN Monday, market OPEN). All sources within SLA.
+- Freshness: ssc-iboard ✓ | foreign-flow (2802 events/30min) ✓ | bctc (SLA OUT-window, 168h) ✓ | sbv-vps ✓ | news ✓ | VPS proxy ✓
+- DB: market_messages=2 (3h) ✓ | agent_signals=83 (24h) ✓ | BCTC SSC URLs=0 ✓ | stale pending=0 ✓ | cron gaps=0 ✓
+
 ## c294 · 2026-06-22T02:13:49Z
 ### Audit Run Tier-1 (02:13 UTC 2026-06-22, Monday 09:13 VN 2026-06-22)
 - Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
