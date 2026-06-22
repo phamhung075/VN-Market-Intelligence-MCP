@@ -191,15 +191,15 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "Tick 20260622T2016Z (idle, WIP0). Reviewed review-lane(3). FIX-CI-RED-7fef5850 (P0): 5ed1c751 confirmed on origin/main, alerts test NOT in CI failed set (run 27980795169) -> its scope CI-GREEN, but full CI RED from DISJOINT untracked 6-file cluster (1269/1270/1326/1783/240-price/FIX-1270-usdvnd) sustained 16:04->20:08Z -> done_verified withheld, review_note updated. Wrote signal dev-20260622T2016Z->PO to triage the CI-red cluster (router no-mint). ARCH-SHIP-WAVE-REAUDIT PARKED, FIX-CI-NETWORK-SKIP-GUARDS held (same CI weather). F-1 (5 rows) queued awaiting user greenlight + .mcp.json restart. mcp-server mem CRITICAL auto-resolved via container restart (RestartCount 0->1, now 21.4%/2GiB) — restart MASKS leak, FIX-MCP-MEMORY-CODE-LEAK stands. 0 NEW signals drained. backlog 276.",
-    "wip": 0,
+    "status": "active",
+    "active_task_id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
+    "next_agent": "architect",
+    "next_action": "Tick 20260622T2053Z: PO BATCH processed (signal dev-20260622T2016Z READ). CI-red 6-file cluster = 2 roots + 1 env-red. DISPATCHED architect FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP (P1, in_progress, WIP1) — contract decision FX 0.5% floor vs 4 pre-floor tests (1269/1270/1326/FIX-1270), keep phantom-σ dfb4e268 fixed. HELD WIP-serial on main: FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING (P2, Root B eveningSummaryJob) + PROBE-CI-240-PRICE-PIPELINE-ENV-RED (P2 spike, must reproduce under CI runner before code touch) dispatch after macro commits. po-triage + dev-team-cron-singleton locks released. F-1 (5 rows) still awaiting user greenlight + .mcp.json restart.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-22T20:16:40Z",
+    "updated_at": "2026-06-22T20:53:52Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T2016Z"
+    "last_tick": "20260622T2053Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11987,8 +11987,8 @@
       {
         "id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
         "title": "FIX CI-RED macro cluster — classifyDeviation FX %-floor over-clamps high/extreme->elevated (1269/1270/1326/FIX-1270)",
-        "owner": "po",
-        "status": "TODO",
+        "owner": "architect",
+        "status": "in_progress",
         "priority": "P1",
         "blocking": true,
         "type": "FIX",
@@ -12006,7 +12006,8 @@
         "fix_spec": "developer + architect decide the CORRECT economic contract: either (a) the 0.5%-floor is intended product behaviour and these 4 pre-floor tests must be UPDATED to the new contract (FX sub-0.5% moves elevated-capped by design), or (b) the floor is too aggressive/mis-scoped (should suppress only the PHANTOM-sigma tight-window case, not a legit 3.75sigma multi-sigma move) and Guard-2 must be narrowed. Do NOT just bend tests to green — resolve the real product truth first. Whatever the resolution, ALL 4 files must pass under CI isolation AND the phantom-sigma case dfb4e268 fixed must STAY fixed (no regression of FX-SIGMA-PHANTOM-EXTREME).",
         "generic_mandate": "Fix the level-classification contract once in macroThresholds.ts; do not special-case per-test.",
         "verification_gate": "CI full per-file isolation green: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16 exits 0 with all 4 macro files passing; subset-verify (bun test on the 4 files alone) is NOT sufficient. done_verified ONLY when gh run list --branch main shows conclusion=success on a push AFTER the fix SHA (ci_green_on_subsequent_push).",
-        "status_note": "AC: full CI green (ci-per-file-isolation.sh 16) incl 1269/1270/1326/FIX-1270 + phantom-sigma stays fixed. From signal dev-20260622T2016Z."
+        "status_note": "AC: full CI green (ci-per-file-isolation.sh 16) incl 1269/1270/1326/FIX-1270 + phantom-sigma stays fixed. From signal dev-20260622T2016Z.",
+        "started_at": "2026-06-22T20:53:52Z"
       },
       {
         "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
