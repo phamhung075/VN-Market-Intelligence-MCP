@@ -1,0 +1,26 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-22T14:06Z",
+    "nominal_tick": "2026-06-22T14:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": ["refine-bctc-slot-2"],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": ["refine-bctc-slot-2"],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "refine-bctc-slot-2 (agent refine_bctc_md, cron 0 14, policy bctc-offmarket) is local-dispatcher-only — NOT among the 6 cloud RemoteTrigger backstops (chef-morning, chef-eod, chef-evening, tnb-audit, digest-sunday, health-recheck). Session is gateway-blind (mcpServers:0) so a local spawn could not call get_bctc_pending_refine / push_bctc_refined_unit; not spawned. Slot genuinely UNFIRED this session.",
+    "slot_detail": {
+      "refine-bctc-slot-2": {"agent": "refine_bctc_md", "flow_path": "docs/agents/refine_bctc_md/flow/main.md", "cron": "0 14 * * *", "guaranteed": false, "policy_id": "bctc-offmarket", "last_fired": "2026-06-14T14:08:08Z"}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782138977},
+    "note": "USER/HARNESS-side fix required: register the gateway MCP server in .mcp.json so subagents inherit it, then reconnect. Until then the gatherer / bctc / intraday / alert layer goes unfired in this session."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-22T14:06:18Z"
+}

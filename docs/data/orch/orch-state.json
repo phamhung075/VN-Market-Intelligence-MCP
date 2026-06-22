@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260622T0507Z. Drained 2 signal files: 04:21 cowork telemetry (gatherers SKIPPED_BLIND) + fleet-push-abort (auto-push backstop: local 22ahead/92behind, push non-fast-forward; benign cloud-chore divergence + dirty-tree blocks pull --rebase; constraint c = router NEVER stash/rebase/push → SURFACED TO USER for out-of-band clean-checkout reconcile via scripts/fleet-worktree-push.sh; local commits safe, all 3 dev fixes done_verified). Board idle wip0, signal_queue 0 NEW. Tier-1 CLEAN. Backlog non-urgent (macro-calendar P2; GC P3; nullstrip P3; dbintegrity-guard P3; refine-spike P3; ISSUE-10/11 PO-pending).",
+    "next_action": "Tick 20260622T1410Z. Drained 1 cowork telemetry signal (refine-bctc-slot-2 SKIPPED_BLIND_NO_BACKSTOP) → processed/. Board fully idle (all sprints 0 ready/wip/blocked), signal_queue 0 NEW, no orphan keys. Tier-1 audit CLEAN (12/12 services healthy, disk 34%, mcp-server 67% mem/0 restarts). PO-CANDIDATE: refine_bctc_md 8d-unfired (last 2026-06-14) — NOT among 6 cloud RemoteTrigger backstops; system-side fix = add cloud backstop for refine slots to unblock without waiting on .mcp.json gateway fix. Fleet-push still blocked (out-of-band/user).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-22T04:46:00Z",
+    "updated_at": "2026-06-22T14:11:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T0507Z"
+    "last_tick": "20260622T1410Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
