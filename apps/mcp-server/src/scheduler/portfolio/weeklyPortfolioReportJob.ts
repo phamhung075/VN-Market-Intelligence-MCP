@@ -23,6 +23,8 @@ import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import {
   isSchedulerLockFresh,
   acquireSchedulerLock,
+  releaseSchedulerLock,
+  sweepLeakedSchedulerLocks,
   ensureSchedulerLocksTable,
 } from "../../infrastructure/db/schedulerLockStore.js";
 import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
@@ -361,133 +363,153 @@ export async function runWeeklyPortfolioReport(
       return;
     }
 
-    // ── Task 1221: DB-backed lock — prevents duplicate runs across restarts ────
+    // ── Task 1221 / FIX-SCHEDULER-LOCK-NO-RELEASE-TTL: DB-backed lock ─────────
     // The in-memory `_running` flag resets on every launchctl restart. A restart
     // that fires the Sunday cron within the lock window of the last run would
     // produce a duplicate report. Guard: use schedulerLockStore (scheduler_locks
     // table) which is the canonical lock mechanism for all scheduler jobs.
+    //
+    // Self-heal: sweep any leaked lock (released_at IS NULL, older than 2×window)
+    // before checking freshness. This clears locks from pre-fix code or OOM kills
+    // that bypassed the finally{} block.
+    //
+    // Release is in finally{} below so it runs on success, failure AND throw.
+    const lockWindowMinutes = 60;
+    let lockAcquired = false;
     try {
-      const lockWindowMinutes = 60;
       ensureSchedulerLocksTable(db);
+      // Self-heal: clear any leaked lock older than 2× the lock window
+      sweepLeakedSchedulerLocks(db, "weeklyPortfolioReport", lockWindowMinutes);
       if (isSchedulerLockFresh(db, "weeklyPortfolioReport", lockWindowMinutes)) {
         logger.warn(
           "[weeklyPortfolioReport] DB lock held by a recent run — skipping to prevent duplicate report",
         );
         return;
       }
-      acquireSchedulerLock(db, "weeklyPortfolioReport", lockWindowMinutes);
+      lockAcquired = acquireSchedulerLock(db, "weeklyPortfolioReport", lockWindowMinutes);
     } catch {
       // scheduler_locks table may not exist in minimal test setups — proceed
     }
 
-    // ── Step 1: Query open positions with current prices ─────────────────────
-    let positionRows: PositionRow[];
     try {
-      positionRows = db
-        .prepare<PositionRow, []>(`
-          SELECT p.code, p.shares, p.avg_price,
-                 mp.price AS current_price
-          FROM positions p
-          LEFT JOIN market_prices mp ON mp.code = p.code
-          WHERE p.closed_at IS NULL
-          ORDER BY p.code
-        `)
-        .all();
-    } catch (err) {
-      logger.warn("[weeklyPortfolioReport] positions table not found or query failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
-      positionRows = [];
-    }
-
-    const codes = positionRows.map((r) => r.code);
-
-    // ── Step 2: Compute week summary from snapshots ──────────────────────────
-    let summary: WeekSummary = { weekPnlAmount: 0, weekPnlPct: 0, totalPnlAmount: 0, totalPnlPct: 0 };
-    try {
-      summary = computeWeekSummary(db, codes);
-    } catch (err) {
-      logger.warn("[weeklyPortfolioReport] snapshot query failed — using zeroed summary", {
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-
-    // ── Step 3: Build start-of-week prices per code ──────────────────────────
-    const startPriceMap = new Map<string, number>();
-    if (codes.length > 0) {
+      // ── Step 1: Query open positions with current prices ─────────────────────
+      let positionRows: PositionRow[];
       try {
-        const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000)
-          .toISOString()
-          .slice(0, 10);
-        const placeholders = sqlInClause(codes.length);
-        const earliest = db
-          .prepare<{ code: string; current_price: number | null; avg_price: number }, string[]>(`
-            SELECT code, MIN(current_price) AS current_price, avg_price
-            FROM portfolio_pnl_snapshots
-            WHERE code IN (${placeholders})
-              AND date >= ?
-            GROUP BY code
-            ORDER BY date ASC
+        positionRows = db
+          .prepare<PositionRow, []>(`
+            SELECT p.code, p.shares, p.avg_price,
+                   mp.price AS current_price
+            FROM positions p
+            LEFT JOIN market_prices mp ON mp.code = p.code
+            WHERE p.closed_at IS NULL
+            ORDER BY p.code
           `)
-          .all(...codes, sevenDaysAgo);
-        for (const row of earliest) {
-          startPriceMap.set(row.code, row.current_price ?? row.avg_price);
+          .all();
+      } catch (err) {
+        logger.warn("[weeklyPortfolioReport] positions table not found or query failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        positionRows = [];
+      }
+
+      const codes = positionRows.map((r) => r.code);
+
+      // ── Step 2: Compute week summary from snapshots ──────────────────────────
+      let summary: WeekSummary = { weekPnlAmount: 0, weekPnlPct: 0, totalPnlAmount: 0, totalPnlPct: 0 };
+      try {
+        summary = computeWeekSummary(db, codes);
+      } catch (err) {
+        logger.warn("[weeklyPortfolioReport] snapshot query failed — using zeroed summary", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      // ── Step 3: Build start-of-week prices per code ──────────────────────────
+      const startPriceMap = new Map<string, number>();
+      if (codes.length > 0) {
+        try {
+          const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000)
+            .toISOString()
+            .slice(0, 10);
+          const placeholders = sqlInClause(codes.length);
+          const earliest = db
+            .prepare<{ code: string; current_price: number | null; avg_price: number }, string[]>(`
+              SELECT code, MIN(current_price) AS current_price, avg_price
+              FROM portfolio_pnl_snapshots
+              WHERE code IN (${placeholders})
+                AND date >= ?
+              GROUP BY code
+              ORDER BY date ASC
+            `)
+            .all(...codes, sevenDaysAgo);
+          for (const row of earliest) {
+            startPriceMap.set(row.code, row.current_price ?? row.avg_price);
+          }
+        } catch {
+          // Snapshots unavailable — leave startPriceMap empty
         }
-      } catch {
-        // Snapshots unavailable — leave startPriceMap empty
       }
-    }
 
-    // ── Step 4: Build portfolio rows ─────────────────────────────────────────
-    const portfolioRows: PortfolioRow[] = positionRows.map((pos) => {
-      const currentPrice = pos.current_price ?? pos.avg_price;
-      const startOfWeekPrice = startPriceMap.get(pos.code) ?? currentPrice;
-      const weekChangePct =
-        startOfWeekPrice > 0
-          ? ((currentPrice - startOfWeekPrice) / startOfWeekPrice) * 100
-          : 0;
+      // ── Step 4: Build portfolio rows ─────────────────────────────────────────
+      const portfolioRows: PortfolioRow[] = positionRows.map((pos) => {
+        const currentPrice = pos.current_price ?? pos.avg_price;
+        const startOfWeekPrice = startPriceMap.get(pos.code) ?? currentPrice;
+        const weekChangePct =
+          startOfWeekPrice > 0
+            ? ((currentPrice - startOfWeekPrice) / startOfWeekPrice) * 100
+            : 0;
 
-      // If we have no snapshot data, add total P&L contribution inline
-      if (codes.length > 0 && !startPriceMap.has(pos.code)) {
-        // Ensure summary reflects this position even without snapshots
-        const posTotalPnl = (currentPrice - pos.avg_price) * pos.shares;
-        summary = {
-          ...summary,
-          totalPnlAmount: summary.totalPnlAmount + posTotalPnl,
+        // If we have no snapshot data, add total P&L contribution inline
+        if (codes.length > 0 && !startPriceMap.has(pos.code)) {
+          // Ensure summary reflects this position even without snapshots
+          const posTotalPnl = (currentPrice - pos.avg_price) * pos.shares;
+          summary = {
+            ...summary,
+            totalPnlAmount: summary.totalPnlAmount + posTotalPnl,
+          };
+        }
+
+        return {
+          code: pos.code,
+          shares: pos.shares,
+          avgPrice: pos.avg_price,
+          currentPrice,
+          startOfWeekPrice,
+          weekChangePct,
         };
+      });
+
+      // ── Step 5: Format report ────────────────────────────────────────────────
+      if (portfolioRows.length === 0) {
+        logger.info("[weeklyPortfolioReport] no open positions — skipping send");
+        return;
       }
 
-      return {
-        code: pos.code,
-        shares: pos.shares,
-        avgPrice: pos.avg_price,
-        currentPrice,
-        startOfWeekPrice,
-        weekChangePct,
-      };
-    });
+      const reportText = formatWeeklyReport(portfolioRows, summary);
 
-    // ── Step 5: Format report ────────────────────────────────────────────────
-    if (portfolioRows.length === 0) {
-      logger.info("[weeklyPortfolioReport] no open positions — skipping send");
-      return;
-    }
+      logger.info(
+        `[weeklyPortfolioReport] report ready — positions: ${portfolioRows.length}, ` +
+          `weekPnl: ${summary.weekPnlAmount.toFixed(0)} VND (${summary.weekPnlPct.toFixed(1)}%)`,
+      );
 
-    const reportText = formatWeeklyReport(portfolioRows, summary);
-
-    logger.info(
-      `[weeklyPortfolioReport] report ready — positions: ${portfolioRows.length}, ` +
-        `weekPnl: ${summary.weekPnlAmount.toFixed(0)} VND (${summary.weekPnlPct.toFixed(1)}%)`,
-    );
-
-    // ── Step 6: Send via Telegram ────────────────────────────────────────────
-    const send = opts.sendFn ?? sendTelegram;
-    try {
-      await send(reportText);
-    } catch (err) {
-      logger.error("[weeklyPortfolioReport] send failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      // ── Step 6: Send via Telegram ────────────────────────────────────────────
+      const send = opts.sendFn ?? sendTelegram;
+      try {
+        await send(reportText);
+      } catch (err) {
+        logger.error("[weeklyPortfolioReport] send failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        // Re-throw so the outer finally{} releases the lock on error too
+        throw err;
+      }
+    } finally {
+      // Release the DB lock on EVERY exit path: success, error, or throw.
+      // This is the core of FIX-SCHEDULER-LOCK-NO-RELEASE-TTL: a job that
+      // dies mid-run must not leave a permanently leaked lock.
+      if (lockAcquired) {
+        releaseSchedulerLock(db, "weeklyPortfolioReport");
+      }
     }
   } catch (err) {
     logger.error("[weeklyPortfolioReport] unhandled error", {

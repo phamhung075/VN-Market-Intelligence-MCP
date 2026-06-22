@@ -149,3 +149,46 @@ export function releaseSchedulerLock(db: Database, jobName: string): void {
     // Silently ignore — release is advisory
   }
 }
+
+/**
+ * Sweep leaked locks: mark as released any lock for `jobName` where
+ * released_at IS NULL and acquired_at is older than 2 × cadenceMinutes.
+ *
+ * This is the self-heal path: if a job died mid-run and never called
+ * releaseSchedulerLock (e.g. pre-fix rows or OOM kill bypassing finally{}),
+ * the next tick that calls this function will stamp released_at so the
+ * lock no longer shows as "leaked".
+ *
+ * ISO-TEXT datetime guard: uses datetime() comparison, NOT epoch strftime,
+ * per feedback_sqlite_iso8601_datetime_strcompare_bypass. The acquired_at
+ * column stores datetime('now') ISO strings — datetime() comparisons are
+ * safe here.
+ *
+ * Safe to call unconditionally before acquireSchedulerLock. No-op when
+ * no lock exists or no locks match the predicate.
+ *
+ * @param db              - SQLite database
+ * @param jobName         - Canonical job name
+ * @param cadenceMinutes  - Nominal cadence of the job; threshold = 2 × cadenceMinutes
+ */
+export function sweepLeakedSchedulerLocks(
+  db: Database,
+  jobName: string,
+  cadenceMinutes: number,
+): void {
+  try {
+    // Use the same parameterization pattern as isSchedulerLockFresh:
+    //   datetime('now', ? || ' minutes') where ? = '-120'
+    // This produces datetime('now', '-120 minutes') which SQLite evaluates correctly.
+    const thresholdParam = `-${cadenceMinutes * 2}`;
+    db.prepare(
+      `UPDATE scheduler_locks
+          SET released_at = datetime('now')
+        WHERE job_name = ?
+          AND released_at IS NULL
+          AND acquired_at < datetime('now', ? || ' minutes')`,
+    ).run(jobName, thresholdParam);
+  } catch {
+    // Silently ignore — sweep is advisory
+  }
+}
