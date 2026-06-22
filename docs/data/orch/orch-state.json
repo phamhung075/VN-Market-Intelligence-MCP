@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260622T1847Z (idle). Drained 1 NEW signal sau-20260622T184330Z (system-auditor A-30 mcp-server mem, row-severity HIGH / auditor-narrated WARN). RAW-verified live: 2GiB cgroup cap, container 97.3% climbing (97.19→97.05→97.31), RestartCount=0, OOMKilled=false, healthy, 17h uptime — genuine slow leak (~5.4%/hr, 5%→97% over 17h), NOT a denominator false-spike. RECURRING detection of ALREADY-TRACKED condition: root=FIX-MCP-MEMORY-CODE-LEAK (backlog), OOM/churn=OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (backlog, notes A-30 point-in-time investigate already DONE). Row→READ + router_dup_of=FIX-MCP-MEMORY-CODE-LEAK. NOT minted (PO-only; both items held since po-s111 06-21), NOT restarted (masks tracked root per restart-masks-bun-jit; container healthy/WARN not incident; will OOM-kill+auto-restart self-heal if it crosses 100%). Tier-1 auditor a86116bc: 12/12 svc UP+healthy, disk 36%, 0 restarts. Backlog 271 standing. PO-candidate (system-side, not router-minted): off-market gateway-dependent slots w/o cloud backstop. Note for PO: live mem now ~97% climbing → OOM likely <1h, self-recovers via restart but resets leak clock; FIX-MCP-MEMORY-CODE-LEAK warrants promotion.",
+    "next_action": "Tick 20260622T1916Z (idle). Drained 1 NEW CRITICAL signal sau-20260622T191318Z (auditor a269edb2 A-30 mcp-server mem 99.31%). RAW-verified live IMMEDIATELY after: 79.4% (resample 79.49/79.34/79.35), RestartCount=0, StartedAt unchanged 01:56Z, OOMKilled=false, healthy — process GC-RELEASED ~18-20pp on its own (97% at 18:47 → 99.31% transient peak 19:13 → 79% now, NO restart). The CRITICAL = TRANSIENT SPIKE (peak correlated with the running auditor's own gateway→mcp-server probe burst), NOT an incident; matches auditor-mem-denominator-falsespike (CRITICAL spike + RAW healthy/0-restart = WARN ceiling). REVISES 18:47 OOM-<1h read: mem OSCILLATES (process GCs under pressure), not monotonic climb. Underlying leak real + already-tracked: FIX-MCP-MEMORY-CODE-LEAK (backlog) + OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (backlog). Row→READ + router_dup_of=FIX-MCP-MEMORY-CODE-LEAK. NOT minted (PO-only), NOT restarted (no incident; would disrupt running auditor + mask nothing). 0 NEW now, 0 orphan keys, backlog 271 standing.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-22T18:47:17Z",
+    "updated_at": "2026-06-22T19:16:06Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T1847Z"
+    "last_tick": "20260622T1916Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1580,6 +1580,18 @@
         "to": "po",
         "type": "microservice_degraded",
         "summary": "mcp-server A-30 memory pressure 99.31% (critical threshold 95%)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "router_dup_of": "FIX-MCP-MEMORY-CODE-LEAK"
+      },
+      {
+        "id": "sau-20260622T194358Z",
+        "ts": "2026-06-22T19:43:58Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server A-30 memory pressure 99.94% (critical threshold 95%) — worsening, OOMKill risk high",
         "severity": "CRITICAL",
         "status": "NEW",
         "payload_ref": null
