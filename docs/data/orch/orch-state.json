@@ -233,7 +233,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-22T20:16:40Z",
+    "_updated_at": "2026-06-22T20:46:26Z",
     "_updated_by": "dev-team-cron-router",
     "archive": [
       {
@@ -1605,8 +1605,11 @@
         "type": "ci_red_untracked",
         "summary": "Full CI RED on origin/main (run 27980795169, sustained 16:04->20:08Z): 6 DISJOINT test files fail — 1269-macro-direction-label, 1270-usd-vnd-threshold-fix, 1326-macro-deviation-direction, 1783-foreign-flow-bulletin, 240-price-pipeline-recovery, FIX-1270-usdvnd-alert-quality. NOT tracked as CI-test tasks. Blocks fleet push + every ci_green_on_subsequent_push gate (incl P0 FIX-CI-RED-7fef5850 whose OWN alerts test is green). Likely related to macro-data backlog (FIX-MACRO-SNAPSHOT-DELTAS-NULL / FIX-COMMODITY-WTI-DELTA-CORRUPT / FIX-SBV-FETCHER-ZERO-VALUE-EMIT) but the failing TESTS need own triage. PO: mint CI-red-cluster fix task(s).",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "triaged_at": "2026-06-22T20:50:22Z",
+        "triaged_by": "po",
+        "triage_note": "3 tasks minted: FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP (P1, 4-file macro cluster ONE root macroThresholds.ts Guard-2 from dfb4e268), FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING (P2, 1783 distinct root eveningSummaryJob.ts), PROBE-CI-240-PRICE-PIPELINE-ENV-RED (P2 spike — 240 passes LOCAL 13/0, CI-env red, confirm-before-blame). All zone apps/mcp-server/, blocking:true, DoD=ci-per-file-isolation.sh 16 + ci_green_on_subsequent_push."
       },
       {
         "id": "sau-20260622T204255Z-A04",
@@ -1616,8 +1619,10 @@
         "type": "microservice_degraded",
         "summary": "api-gateway health endpoint FAIL — container UP 11d but localhost:4000/health CURL_ERR (check A-04)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "router_note": "Router RAW-disproved 20:44Z: container Up 11d healthy + host curl localhost:4000/health=HTTP200 in 5ms. Auditor CURL_ERR was fast-fail-window transient (also used wrong container name api-gateway->No such container). False-positive, no dispatch.",
+        "resolved_at": "2026-06-22T20:46:26Z"
       }
     ]
   },
@@ -11978,6 +11983,73 @@
         "acceptance": "DoD: (1) per-slot gate — each slot's launchd timer logged ≥2 successful local fires BEFORE its trigger_status flips; (2) all 5 slots trigger_status=\"decommissioned\" (NOT removed from cowork-schedule.json — history preserved) with enabled:false where update is supported; (3) cron-cowork-team/SKILL.md + cron-jobs.md rewritten to drop RemoteTrigger-backstop guidance and document the local launchd backstop; (4) no served behavior depends on any cloud trigger after cutover.",
         "created_at": "2026-06-22T20:12:45Z",
         "created_by": "po-s112"
+      },
+      {
+        "id": "FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP",
+        "title": "FIX CI-RED macro cluster — classifyDeviation FX %-floor over-clamps high/extreme->elevated (1269/1270/1326/FIX-1270)",
+        "owner": "po",
+        "status": "TODO",
+        "priority": "P1",
+        "blocking": true,
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-22T20:50:22Z",
+        "created_by": "po",
+        "files": [
+          "apps/mcp-server/src/domain/services/macroThresholds.ts",
+          "apps/mcp-server/src/__tests__/1269-macro-direction-label.test.ts",
+          "apps/mcp-server/src/__tests__/1270-usd-vnd-threshold-fix.test.ts",
+          "apps/mcp-server/src/__tests__/1326-macro-deviation-direction.test.ts",
+          "apps/mcp-server/src/__tests__/FIX-1270-usdvnd-alert-quality.test.ts"
+        ],
+        "root_cause": "Commit dfb4e268 added Guard-2 (FX_PERCENT_FLOOR=0.5%) to classifyDeviation: for FX_SLOW_MOVER_INDICATORS it caps level extreme/high -> elevated whenever |move|/mean*100 < 0.5%. 4 macro tests assert extreme/high for sub-0.5% FX cases (e.g. 1269 TC-5 usdVndRate current=26258 mean=26333 = 0.28% move at 3.75sigma -> test wants extreme, floor gives elevated). 1326 wants high/extreme; 1270 wants extreme; FIX-1270 AC expects [high,extreme]. Genuine regression vs tests, ONE shared root in macroThresholds.ts Guard-2. RAW-confirmed local: 1269=2pass/4fail, 1270=5/1, 1326=mult fail, FIX-1270=6/1, all Expected extreme/high Received elevated.",
+        "fix_spec": "developer + architect decide the CORRECT economic contract: either (a) the 0.5%-floor is intended product behaviour and these 4 pre-floor tests must be UPDATED to the new contract (FX sub-0.5% moves elevated-capped by design), or (b) the floor is too aggressive/mis-scoped (should suppress only the PHANTOM-sigma tight-window case, not a legit 3.75sigma multi-sigma move) and Guard-2 must be narrowed. Do NOT just bend tests to green — resolve the real product truth first. Whatever the resolution, ALL 4 files must pass under CI isolation AND the phantom-sigma case dfb4e268 fixed must STAY fixed (no regression of FX-SIGMA-PHANTOM-EXTREME).",
+        "generic_mandate": "Fix the level-classification contract once in macroThresholds.ts; do not special-case per-test.",
+        "verification_gate": "CI full per-file isolation green: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16 exits 0 with all 4 macro files passing; subset-verify (bun test on the 4 files alone) is NOT sufficient. done_verified ONLY when gh run list --branch main shows conclusion=success on a push AFTER the fix SHA (ci_green_on_subsequent_push).",
+        "status_note": "AC: full CI green (ci-per-file-isolation.sh 16) incl 1269/1270/1326/FIX-1270 + phantom-sigma stays fixed. From signal dev-20260622T2016Z."
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING",
+        "title": "FIX CI-RED 1783 — foreign-flow bulletin all-zero/empty emits wrong unavailable string (expects Du lieu khong kha dung)",
+        "owner": "po",
+        "status": "TODO",
+        "priority": "P2",
+        "blocking": true,
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-22T20:50:22Z",
+        "created_by": "po",
+        "files": [
+          "apps/mcp-server/src/scheduler/briefings/eveningSummaryJob.ts",
+          "apps/mcp-server/src/__tests__/1783-foreign-flow-bulletin.test.ts"
+        ],
+        "root_cause": "1783 BUG-1 stale-guard: formatForeignFlowSection on all-zero/empty entries renders the line Khoi ngoai: du lieu khong co but the test asserts the line contains Du lieu khong kha dung. RAW-confirmed local: 5pass/2fail, both fails toContain(Du lieu khong kha dung) Received Khoi ngoai: du lieu khong co. DISTINCT root from the macro cluster (different module + symbol). Resolve which string is the product SSOT (the stale-guard unavailable copy) and align code+test.",
+        "fix_spec": "Decide canonical unavailable-copy for foreign-flow (likely Du lieu khong kha dung per broader bulletin convention), align formatForeignFlowSection to emit it on the all-zero/empty path, keep BUG-2 sort behaviour. Vietnamese-facing string — confirm it matches the rest of the briefing copy SSOT, not an ad-hoc per-test string.",
+        "verification_gate": "CI full per-file isolation green: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16 exits 0 with 1783-foreign-flow-bulletin passing; not subset-verify. done_verified ONLY on ci_green_on_subsequent_push (gh run conclusion=success after fix SHA).",
+        "status_note": "AC: full CI green (ci-per-file-isolation.sh 16) incl 1783. From signal dev-20260622T2016Z."
+      },
+      {
+        "id": "PROBE-CI-240-PRICE-PIPELINE-ENV-RED",
+        "title": "PROBE 240-price-pipeline-recovery CI-only red — passes LOCAL 13/0, reproduce in CI before any code fix",
+        "owner": "po",
+        "status": "TODO",
+        "priority": "P2",
+        "blocking": true,
+        "type": "SPIKE",
+        "mode": "spike",
+        "timebox": 120,
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-22T20:50:22Z",
+        "created_by": "po",
+        "files": [
+          "apps/mcp-server/src/__tests__/240-price-pipeline-recovery.test.ts",
+          "apps/mcp-server/src/infrastructure/db/schema.ts",
+          "scripts/ci-per-file-isolation.sh"
+        ],
+        "root_cause": "Signal lists 240-price-pipeline-recovery in the CI-red set, BUT it passes LOCALLY 13pass/0fail (twice incl full file). Uses initDatabase/getDb (bun:sqlite) — env/DB-sensitive. Per memory ci_red_can_be_flaky_confirm_before_blame + ci_subset_verify_misses_full_suite: do NOT blame/patch a regression that does not reproduce. Likely a CI-env or per-file-isolation-ordering red (DB state leak across the 16-shard runner / afterEach cleanup / temp-db path), NOT a logic regression.",
+        "question": "Why is 240-price-pipeline-recovery RED in CI run 27980795169 while green locally? Reproduce via cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16; if it reds there isolate DB-state-leak/order-dependence/temp-path vs a genuine schema gap. Output: findings doc + (if real) a spun-out FIX with precise root; if flake, harden the isolation/cleanup, do NOT touch product logic.",
+        "verification_gate": "CI full per-file isolation green: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh 16 exits 0 with 240-price-pipeline-recovery passing AND stable across re-runs; done_verified on ci_green_on_subsequent_push.",
+        "status_note": "AC: 240 green under ci-per-file-isolation.sh 16 + root identified (env vs regression). Local=green, do not bend product code blind. From signal dev-20260622T2016Z."
       }
     ],
     "closed_sprints": [
