@@ -3,6 +3,13 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c304 · 2026-06-22T06:32:17Z
+### Audit Run Tier-2 (06:32 UTC 2026-06-22, Monday 13:32 VN — market OPEN afternoon)
+- Tier: 2 | Cron jobs: 90+ checked | Sources: 27 checked | VPS proxy: 7 routes | DB spot-checks: 4
+- Anomalies: 0 NEW | Dedup-skipped: 1 (BCTC SLA breach 7790min — tracked FIX-BCTC-ENRICH-SILENT-0ROWS)
+- Status: CLEAN
+- Notes: Market-hours freshness audit. Cron health 100% pass (intelligenceCycleJob running). Price/FX/news FRESH. Market_messages=3/3h ✓, agent_signals=100/24h ✓, B-09 SSC=0 ✓, B-13 stale_pending=0 ✓. BCTC SLA breached (5.4d age vs 2h SLA) — real but known root (silent 0-rows enrich). Q2-2026 financial_reports=0 (expected during breach). SLA in-window check: Jun 22 not in [1,4,7,10] months → BCTC normal threshold 168h, event-driven (no recent discoveries expected).
+
 ## c303 · 2026-06-22T06:13:25Z
 ### Audit Run Tier-1 (06:13 UTC 2026-06-22, Monday 13:13 VN 2026-06-22)
 - Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
