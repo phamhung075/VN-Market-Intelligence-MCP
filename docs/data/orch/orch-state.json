@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260622T2215Z: no-op verify. 0 NEW signals. Tier-1 auditor HEALTHY 0 anomalies (12 containers healthy, mem 19.60%, RestartCount=1, disk 35%). FIX-MACRO (ba1156d8) + FIX-FOREIGN-FLOW-BULLETIN (2ea45dd6) still review/local-green; done_verified WITHHELD. PUSH GATE: origin now 11 behind (growing via auditor-notebook + orch chore commits, no push). ci_green_on_subsequent_push UNMET. Router never pushes + tree dirty -> fleet-push out-of-band/clean-checkout = user/PO deferred. F-1 (5 rows) awaiting greenlight. WIP0 idle.",
+    "next_action": "Tick 20260622T2245Z: no-op verify. 0 NEW signals. Tier-1 auditor HEALTHY (12 containers, mem 21.59%, RestartCount=1 baseline, disk 35%). Tier-2 DEGRADED→triaged: sau-2233-B07 SBV-FX WARN was false-positive (usdVnd live source_tier=1 RAW-verified, 35-min threshold cadence-blind vs SBV once-daily) → downgraded INFO+READ (a8781ec5); durable threshold-widen flagged PO backlog. FIX-MACRO (ba1156d8) + FIX-FOREIGN-FLOW-BULLETIN (2ea45dd6) still review/local-green; done_verified WITHHELD on ci_green_on_subsequent_push. PUSH GATE: origin now 14 behind (growing via auditor notebooks + orch chores). Router never pushes + tree dirty → fleet-push out-of-band/clean-checkout = user/PO deferred. F-1 (5 rows) awaiting greenlight. WIP0 idle.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-22T22:15:00Z",
+    "updated_at": "2026-06-22T22:45:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260622T2215Z"
+    "last_tick": "20260622T2245Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
