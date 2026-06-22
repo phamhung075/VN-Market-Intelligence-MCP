@@ -2,6 +2,13 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c292 · 2026-06-22T01:13:22Z
+### Audit Run Tier-1 (01:13 UTC 2026-06-22, Monday 08:13 VN 2026-06-22)
+- Tier: 1 | Services: 12 checked (host_runtime_set) | Health endpoints: 5 probed
+- Anomalies: 0 NEW (all containers UP, healthy, restart ≤94, memory/disk healthy)
+- Status: CLEAN
+- Notes: Pre-market window (VN 08:13 Monday, market opens 09:00). All 12 host_runtime_set UP + healthy. mcp-server UP 4h/healthy (restart=0, mem 28.28% 579.2MiB/2GiB). rag-service UP 4h/healthy (restart=94, tracked FU-RAG-DEPLOY-MEMORY). Disk 35% / (25Gi free). All A-01..A-32 checks PASS. No signal_queue.rows[] NEW.
+
 ## c291 · 2026-06-22T01:07:39Z
 ### Audit Run Tier-3 (01:07 UTC 2026-06-22, Monday 08:07 VN 2026-06-22)
 - Tier: 3 | Services: 12 checked | DB checks: 16 (C-01..C-16) | Tooling: 3 (A-22..A-24)
