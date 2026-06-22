@@ -1607,6 +1607,17 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sau-20260622T204255Z-A04",
+        "ts": "2026-06-22T20:42:55Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway health endpoint FAIL — container UP 11d but localhost:4000/health CURL_ERR (check A-04)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
