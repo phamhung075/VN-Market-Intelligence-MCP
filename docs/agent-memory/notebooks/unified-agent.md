@@ -1,6 +1,32 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-21T19:45Z · **Cycle:** Chef EVENING PUBLISHED
+**Last updated:** 2026-06-22T05:16Z · **Cycle:** Chef MORNING PUBLISHED
+
+## Session: 2026-06-22 (morning)
+
+### Chef Dish — morning 05:16 UTC (2026-06-22T0516Z) — PUBLISHED
+
+- Execution: Morning dish guaranteed publish. Marker: published:chef-morning:2026-06-22 (TTL 28h)
+- Bootstrap: OK. Agent signals 4 + 16 open alerts in 24h window
+- Macro snapshot: OK (carry 1.37pp NEUTRAL is_estimate=false; yield CHEAP +3.2pp; USD/VND 26122 >25k BEARISH; gold 4196.5 +5.14σ; oil 79.06 -3.27σ; all Tier 1/2)
+- Market hexagram: Quẻ 36 Minh Di (TIÊU CỰC, 52% confidence)
+- Clusters qualified: 2 (ticker: VIC news_mention + price_surge + BB_breakout = convergence; VHM/VRE same pattern. Sector: real_estate 3 tickers = sector convergence. Macro-micro: gold risk-off vs BĐS risk-on)
+- Phase declared: [phase: expansion-entry] [tier: equity] — Money (carry neutral 1.37pp) + Cost (SBV 5%) + Earnings (metro pipeline medium) + Valuation (premium justified) = 3/4 pillars aligned
+- Tickers covered: VIC (+6.96%), VHM (+6.88%), VRE (+5.28%); secondary (BID +2.27%, oil GAS +0.86%, PLX +1.03%)
+- Causal chain: Metro announcement (catalyst) → sector confidence shift → Kinh Dịch Tỉnh (48) MUA in VHM/VRE (43% conf); VIC Kiển (39) BAN (61% conf, conflict) → morning rally. Macro contradiction: gold 4196.5 + USDVND 26122 offset by equity yield 8.2% > deposit 5%
+- Layers walked: 1–6 complete (full analysis, no degradation)
+  - Layer 1: State transitions CRITICAL (gold +5.14σ, oil -3.27σ, USDVND >25k). Signal convergence validated
+  - Layers 2-3: US Fed 3.63% stable; VN carry NEUTRAL 1.37pp, CPI trend from bootstrap, FX pressure active
+  - Layer 4: VIC/VHM real_estate medium conviction (3/4 pillars)
+  - Layer 5: VHM/VRE aligned Tỉnh MUA; VIC conflict Kiển BAN vs price action (overbought flag)
+  - Layer 6: Missing VIRA carry source (Tier 2 only). Gold <$4300 (regime-drift gate OFF). VIC hexagram conflict flags caution
+- Signal IDs consumed: #6857 (VIC), #6858 (VRE), #6860 (VIC), #6861 (VHM); 16 open alerts (news_mention, price_surge, ta_oversold, macro_deviation)
+- Confidence scores: VIC 0.52, VHM 0.59, VRE 0.57 (MODERATE range). Severity mix: 1 CRITICAL macro, 1 WARNING BB, 5 MEDIUM price/news
+- Source tier: Tier 1 (live prices, VN-Index, macro spot); Tier 2 (carry/hexagram/alerts); Tier 3 (conviction scores, phase)
+- AF-1/AF-2 gates: No get_technical_indicators call. Zero numeric TA (RSI, MACD, BB with numbers) — qualitative only. [AF-GATE: OK]
+- Degradation: NONE (all sources live, is_estimate=false for carry/yield). Full-quality dish
+- Dishes published: YES (Block A MARKET plain-VI 4pp narrative + Block B WORK [CHEF-DETAIL] compact TNB-auditable); guaranteed morning window
+- Status: Morning cycle COMPLETE. 2 clusters, 3 tickers, layers 1-6 walked, full-quality publication. PIPELINE: complete | QUALITY: full
 
 ## Session: 2026-06-21 (evening 19:45)
 
