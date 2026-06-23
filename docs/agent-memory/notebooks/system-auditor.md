@@ -3,6 +3,14 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c390 · 2026-06-23T22:30:27Z
+### Audit Run Tier-2 (22:30 UTC 2026-06-23)
+- Tier: 2 | Cron gaps: 0 | Sources: 28 checked | VPS routes: 4 checked
+- Anomalies: 0 new | KNOWN-STANDING: 3 (bctc-discover out-of-season, vn-sbv-fetch tracked, bctc VPS stale)
+- Status: HEALTHY | Macro age 10.3h (12:13Z refresh, 18:00Z miss noted, within 24h)
+- Freshness: prices/news/sbv/fred all ok; market closed 05:30 VN (no staleness alert)
+- DB spot C-06/C-07 PASS; B-09 SSC=0; B-13 stale-pending=0. Zero signals emitted.
+
 ## c389 · 2026-06-23T22:13:44Z
 ### Audit Run Tier-1 (22:13 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
@@ -62,9 +70,3 @@ pass_count=3/3 → MAJORITY PASS → A-20 PASS override
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
 - Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 42.20% (864.3MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 33% (28Gi avail / 233Gi) PASS. Cron health: 100+ jobs all 100%/98%+ success rates. NO new signals emitted.
-
-## c387 · 2026-06-23T21:13:58Z
-### Audit Run Tier-1 (21:13 UTC 2026-06-23)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L13]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L17-L21]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 39.30% (804.8MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 130+ jobs all 100%/98%+ success rates. NO new signals emitted.
