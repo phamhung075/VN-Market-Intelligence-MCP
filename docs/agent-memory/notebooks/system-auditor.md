@@ -3,6 +3,12 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c381 · 2026-06-23T18:31:32Z
+### Audit Run Tier-2 (18:31 UTC 2026-06-23)
+- Tier: 2 | Sources: 27 checked | Cron jobs: 93 checked | VPS proxy: 4 routes checked
+- Anomalies: 0 new | Status: HEALTHY
+- Evidence: All 93 cron jobs healthy (success_rate ≥99.8%, avg 2–18s duration). Freshness: prices 15min ok, news 60min ok, sbv_fx 15min ok, bctc VPS 168h ok (out-of-earnings-window SLA, KNOWN-STANDING FIX-BCTC-SLA-THRESHOLD-360). Macro snapshot fresh 2026-06-23T18:30:49Z (<1min, PASS). DB spot-checks: C-06 market_messages 0 in 3h (PASS market-closed context, last 15:30Z), C-07 agent_signals 291 in 24h PASS, B-09 BCTC URL shape 0 invalid PASS, B-13 stale pending 0 PASS. NO new signals emitted. NO dedup-skipped.
+
 ## c380 · 2026-06-23T18:15:16Z
 ### Audit Run Tier-1 (18:15 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
@@ -59,9 +65,3 @@ pass_count=3/3 → MAJORITY PASS → A-20 PASS override
 - Tier: 1 | Services: 12 host_runtime_set + infra checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
 - Evidence: All 12 host_runtime_set containers UP+healthy. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). Memory 95.78% (1.916/2GiB, up from 99.48% at 17:14Z). OOMKilled=false, Status=running healthy. Disk 34% PASS. RestartCount: mcp-server=1 (no jump, KNOWN-STANDING FIX-MCP-MEMORY-CODE-LEAK). rag-service=101 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, OOMKilled=false, Status=UP, no jump). A-30 mem% WARN-ceiling dedup rule: ≥85% but OOMKilled=false+RestartCount stable = RECORD-ONLY. NO new signals emitted.
-
-## c378 · 2026-06-23T17:14:02Z
-### Audit Run Tier-1 (17:14 UTC 2026-06-23)
-- Tier: 1 | Services: 12 host_runtime_set + infra checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 13 containers UP+healthy (12 host_runtime_set + mcp-gateway). Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. Memory 99.48% (1.99/2GiB, spike from 82.65% at 16:44Z, peak observed this session, WARN-ceiling). OOMKilled=false, Status=running healthy. Disk 35% PASS. RestartCount: mcp-server=1 (no jump, KNOWN-STANDING FIX-MCP-MEMORY-CODE-LEAK tracked). rag-service=101 (KNOWN-STANDING chronic OOM-loop FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX, OOMKilled=false, Status=UP+healthy, no jump). All others=0. NO new signals emitted. High mem% recorded per dedup rule A-30: PASS <85% threshold violated but OOMKilled=false+RestartCount unchanged = WARN-ceiling not incident.
