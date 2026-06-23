@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260623T0315Z: clean — drain empty, WIP=0, no NEW signals/orphan keys/active signal files. CI-FLEET-PUSH-DEADLOCK HOLDS (PO Option-a, 111 behind / 17 ahead): unblocker = user out-of-band clean-checkout rebase+push (router never-push). 2 CI fixes (FIX-CI-NETWORK-SKIP-GUARDS, FIX-CI-RED-7fef5850) in REVIEW gated on ci_green_on_subsequent_push. BLIND=true (mcpServers=0); F-1 .mcp.json fix awaits user session-restart greenlight.",
+    "next_action": "Tick 20260623T0345Z: drained cowork telemetry 03:21Z (chef-intraday SKIPPED_BLIND expected-recurring, deduped no new task). WIP=0, no NEW signals/orphan keys. CI-FLEET-PUSH-DEADLOCK HOLDS (PO Option-a, 111 behind / 21 ahead): unblocker = user out-of-band clean-checkout rebase+push (router never-push). 2 CI fixes in REVIEW gated on ci_green_on_subsequent_push. BLIND=true; F-1 .mcp.json fix awaits user session-restart greenlight.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-23T03:15:24Z",
+    "updated_at": "2026-06-23T03:45:47Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260623T0315Z",
+    "last_tick": "20260623T0345Z",
     "router_note": "PO decision recorded (po-decisions.md CI-FLEET-PUSH-DEADLOCK 2026-06-23): reconcile via OPTION (a) clean-checkout rebase of local 9-ahead onto origin/main (replays 37ac9a52 cleanly per router verify) + out-of-band push — NOT router/this-tree rebase. NOT cherry-pick-only (leaves local 111-behind, guard keeps aborting). done_verified on FIX-MACRO (ba1156d8)+FIX-FOREIGN-FLOW (2ea45dd6) WITHHELD until origin CI green on pushed SHA. Fleet conflict-surface guard = CORRECT to abort (symptom not bug); goes quiet once (a) lands; NO guard-weakening follow-on (at most a P-low abort-dedup, not minting now). Signal drainable as triaged-decision-recorded."
   },
   "narrative": {
