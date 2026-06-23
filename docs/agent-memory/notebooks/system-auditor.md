@@ -3,27 +3,19 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c390 · 2026-06-23T22:30:27Z
-### Audit Run Tier-2 (22:30 UTC 2026-06-23)
-- Tier: 2 | Cron gaps: 0 | Sources: 28 checked | VPS routes: 4 checked
-- Anomalies: 0 new | KNOWN-STANDING: 3 (bctc-discover out-of-season, vn-sbv-fetch tracked, bctc VPS stale)
-- Status: HEALTHY | Macro age 10.3h (12:13Z refresh, 18:00Z miss noted, within 24h)
-- Freshness: prices/news/sbv/fred all ok; market closed 05:30 VN (no staleness alert)
-- DB spot C-06/C-07 PASS; B-09 SSC=0; B-13 stale-pending=0. Zero signals emitted.
-
-## c389 · 2026-06-23T22:13:44Z
-### Audit Run Tier-1 (22:13 UTC 2026-06-23)
+## c391 · 2026-06-23T22:43:09Z
+### Audit Run Tier-1 (22:43 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 42.94% (879.4MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 120+ jobs all 100%/98%+ success rates. NO new signals emitted.
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. mcp-server RestartCount=0 (optimal), Memory 44.15% (904.1MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. No new signals emitted. DEDUP: mcp-server memory tracked A-30, rag-service restart tracked A-21.
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-23T22:12:59Z ===
+=== AUDITOR PROBE 2026-06-23T22:43:04Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 4 hours (healthy)   vn-market-intelligence-mcp-mcp-server           4 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 5 hours (healthy)   vn-market-intelligence-mcp-mcp-server           5 hours ago
 vn-market-intelligence-mcp-frontend-1             Up 2 days (healthy)    vn-market-intelligence-mcp-frontend             2 days ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 7 days (healthy)    vn-market-intelligence-mcp-pdf-extractor        7 days ago
 vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)    vn-market-intelligence-mcp-stock-price          8 days ago
@@ -48,25 +40,25 @@ mcp-gateway                                       Up 13 days (healthy)   mcpserv
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=42.94% MemUsage=879.4MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=44.15% MemUsage=904.1MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    27Gi    34%    393k  279M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    27Gi    34%    393k  280M    0%   /
 
 === PROBE DONE ===
 ```
 
-### A-20 Multi-Probe (pdf-extractor):
-```
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-pass_count=3/3 → MAJORITY PASS → A-20 PASS override
-```
+## c390 · 2026-06-23T22:30:27Z
+### Audit Run Tier-2 (22:30 UTC 2026-06-23)
+- Tier: 2 | Cron gaps: 0 | Sources: 28 checked | VPS routes: 4 checked
+- Anomalies: 0 new | KNOWN-STANDING: 3 (bctc-discover out-of-season, vn-sbv-fetch tracked, bctc VPS stale)
+- Status: HEALTHY | Macro age 10.3h (12:13Z refresh, 18:00Z miss noted, within 24h)
+- Freshness: prices/news/sbv/fred all ok; market closed 05:30 VN (no staleness alert)
+- DB spot C-06/C-07 PASS; B-09 SSC=0; B-13 stale-pending=0. Zero signals emitted.
 
-## c388 · 2026-06-23T21:44:01Z
-### Audit Run Tier-1 (21:44 UTC 2026-06-23)
+## c389 · 2026-06-23T22:13:44Z
+### Audit Run Tier-1 (22:13 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 42.20% (864.3MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 33% (28Gi avail / 233Gi) PASS. Cron health: 100+ jobs all 100%/98%+ success rates. NO new signals emitted.
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 42.94% (879.4MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 120+ jobs all 100%/98%+ success rates. NO new signals emitted.
