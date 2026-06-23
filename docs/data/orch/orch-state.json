@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-23T17:46:18Z: un-blinded; PO kicked S2-DATA-HONESTY. Dispatched TASK-CONF-1 (P1, dev-mcp-server) — remove DEFAULT-50 confidence mask + wire verified_decision, 5 files, RED-PREPUSH+rebuild_required, done_verified=live named-vol AC1-4 (>=2 distinct non-50). WIP=2 (parent DECOMPOSED + TASK-CONF-1); HOLD FIX-MACRO-SNAPSHOT-DELTAS-NULL P2 (ready) for WIP. auditor T1 clean (mem95.78% WARN-ceiling tracked). F-1 validated; cowork data slots resume (bctc-analyst @18:00 first real).",
-    "updated_at": "2026-06-23T17:46:18Z",
+    "next_action": "Tick 2026-06-23T17:54:02Z: TASK-CONF-1 code DONE (e3386bdf, pnpm check PASS + 73 tests, RAW-verified scope) -> qa. Dispatched ops REBUILD mcp-server (rebuild_required). done_verified PENDS: post-rebuild live named-vol probe = new verified_decision rows >=2 distinct non-50 (router will probe via gateway once rows accrue; market-closed may delay accrual). TASK-CONF-2 (FE null-render) stays blocked. claude-manager-helper pruning pm.md (364->200) in flight. WIP: qa1 + parent-decomposed; macro-delta P2 still held.",
+    "updated_at": "2026-06-23T17:54:02Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T17:46:18Z",
+    "last_tick": "2026-06-23T17:54:02Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
@@ -24113,47 +24113,6 @@
         "created_by": "po-s111",
         "promoted_at": "2026-06-23T17:28:13Z",
         "promoted_by": "po-s111"
-      },
-      {
-        "id": "TASK-CONF-1",
-        "epic": "S2-DATA-HONESTY",
-        "type": "BUG-FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "dev_agent": "dev-mcp-server",
-        "route_to": "dev-mcp-server",
-        "owner": "dev-mcp-server",
-        "title": "Backend: wire verified_decision confidence + remove DEFAULT 50 + harden null handling",
-        "desc": "Path A (alertStore.ts): implement severityToConfidence() helper, wire alert.confidence_score ?? severity map into co-write agent_signals INSERT for storeAlerts + storeAlertsFromCommander. Path B (agentSignalTools/agentSignalStore): widen PostSignalInput.confidence_score to number|null|undefined, default null; remove column DEFAULT 50 from schema-news.ts:104 (fresh DBs only, live column unaffected). Path C (stockSignalsHandler): change ?? 50 → ?? null for read-path dead-code hardening. Update 5 existing test makeDb() helpers to remove DEFAULT 50 from their own schemas.",
-        "depends_on": [],
-        "blocks": [
-          "TASK-CONF-2"
-        ],
-        "size": "M",
-        "files": [
-          "apps/mcp-server/src/infrastructure/db/alertStore.ts",
-          "apps/mcp-server/src/infrastructure/db/schema-news.ts",
-          "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts",
-          "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts",
-          "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts"
-        ],
-        "test_files": [
-          "FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts",
-          "1786-earnings-conflict-detection.test.ts",
-          "1862g-signal-dedup.test.ts",
-          "1920g-prediction-claims.test.ts",
-          "1804-price-validation-override.test.ts"
-        ],
-        "rebuild_required": true,
-        "done_verified_requires": "AC-1..AC-4 live named-vol probe (not green build): new verified_decision rows show ≥2 distinct non-50 values; severity mapping correct; genuine-absence → NULL",
-        "created_at": "2026-06-23T17:43:46.372329+00:00Z",
-        "created_by": "pm",
-        "promoted_at": "2026-06-23T17:43:46.372329+00:00Z",
-        "promoted_by": "pm",
-        "in_progress_at": "2026-06-23T17:46:18Z",
-        "dispatched_by": "dev-team-cron-router",
-        "dispatched_to": "dev-mcp-server"
       }
     ],
     "ready": [
@@ -24204,7 +24163,53 @@
         "po_reparked_at": "2026-06-15T06:35:17Z"
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "TASK-CONF-1",
+        "epic": "S2-DATA-HONESTY",
+        "type": "BUG-FIX",
+        "status": "QA-REBUILD-PENDING",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "route_to": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "title": "Backend: wire verified_decision confidence + remove DEFAULT 50 + harden null handling",
+        "desc": "Path A (alertStore.ts): implement severityToConfidence() helper, wire alert.confidence_score ?? severity map into co-write agent_signals INSERT for storeAlerts + storeAlertsFromCommander. Path B (agentSignalTools/agentSignalStore): widen PostSignalInput.confidence_score to number|null|undefined, default null; remove column DEFAULT 50 from schema-news.ts:104 (fresh DBs only, live column unaffected). Path C (stockSignalsHandler): change ?? 50 → ?? null for read-path dead-code hardening. Update 5 existing test makeDb() helpers to remove DEFAULT 50 from their own schemas.",
+        "depends_on": [],
+        "blocks": [
+          "TASK-CONF-2"
+        ],
+        "size": "M",
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/alertStore.ts",
+          "apps/mcp-server/src/infrastructure/db/schema-news.ts",
+          "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts",
+          "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts",
+          "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts"
+        ],
+        "test_files": [
+          "FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts",
+          "1786-earnings-conflict-detection.test.ts",
+          "1862g-signal-dedup.test.ts",
+          "1920g-prediction-claims.test.ts",
+          "1804-price-validation-override.test.ts"
+        ],
+        "rebuild_required": true,
+        "done_verified_requires": "AC-1..AC-4 live named-vol probe (not green build): new verified_decision rows show ≥2 distinct non-50 values; severity mapping correct; genuine-absence → NULL",
+        "created_at": "2026-06-23T17:43:46.372329+00:00Z",
+        "created_by": "pm",
+        "promoted_at": "2026-06-23T17:43:46.372329+00:00Z",
+        "promoted_by": "pm",
+        "in_progress_at": "2026-06-23T17:46:18Z",
+        "dispatched_by": "dev-team-cron-router",
+        "dispatched_to": "dev-mcp-server",
+        "code_done": true,
+        "impl_commit": "e3386bdf",
+        "code_done_at": "2026-06-23T17:54:02Z",
+        "router_note": "Code done+green (pnpm check PASS, 73 tests). RAW-verified 10 files no-orch-state, schema DEFAULT-50 removed (plain ADD COLUMN). Awaiting: (1) ops rebuild mcp-server, (2) live named-vol probe AC1-4 (>=2 distinct non-50 verified_decision rows accrued post-rebuild) for done_verified. Market closed => new-row accrual may lag."
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
