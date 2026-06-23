@@ -1,19 +1,19 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
-## c354 · 2026-06-23T05:14:09Z
-### Audit Run Tier-1 (05:14 UTC 2026-06-23)
+## c355 · 2026-06-23T05:43:41Z
+### Audit Run Tier-1 (05:43 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 | Status: HEALTHY
-- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–26]. A-20 pdf-extractor 3/3 multi-probe PASS. Memory 63.48% PASS. Restart count=1 PASS. Disk 35% PASS.
+- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–26]. A-20 pdf-extractor 3/3 multi-probe PASS. Memory 64.78% PASS. Restart count=1 PASS. Disk 36% PASS.
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-23T05:13:17Z ===
+=== AUDITOR PROBE 2026-06-23T05:43:02Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 9 hours (healthy)    vn-market-intelligence-mcp-mcp-server           27 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 10 hours (healthy)   vn-market-intelligence-mcp-mcp-server           28 hours ago
 vn-market-intelligence-mcp-frontend-1             Up 32 hours (healthy)   vn-market-intelligence-mcp-frontend             32 hours ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 7 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        7 days ago
 vn-market-intelligence-mcp-stock-price-1          Up 7 days (healthy)     vn-market-intelligence-mcp-stock-price          7 days ago
@@ -38,17 +38,22 @@ mcp-gateway                                       Up 12 days (healthy)    mcpser
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=63.48% MemUsage=1.27GiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=64.78% MemUsage=1.296GiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  263M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    24Gi    36%    393k  253M    0%   /
 
 === PROBE DONE ===
 ```
+
+## c354 · 2026-06-23T05:14:09Z
+### Audit Run Tier-1 (05:14 UTC 2026-06-23)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 | Status: HEALTHY
+- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–26]. A-20 pdf-extractor 3/3 multi-probe PASS. Memory 63.48% PASS. Restart count=1 PASS. Disk 35% PASS.
 
 ## c353 · 2026-06-23T04:43:36Z
 ### Audit Run Tier-1 (04:43 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 | Status: HEALTHY
-- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–26]. A-20 pdf-extractor 3/3 multi-probe PASS. Memory 62.32% PASS. Restart count=1 PASS. Disk 36% PASS.
