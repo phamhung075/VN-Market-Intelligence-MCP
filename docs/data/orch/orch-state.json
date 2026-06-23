@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-23T17:54:02Z: TASK-CONF-1 code DONE (e3386bdf, pnpm check PASS + 73 tests, RAW-verified scope) -> qa. Dispatched ops REBUILD mcp-server (rebuild_required). done_verified PENDS: post-rebuild live named-vol probe = new verified_decision rows >=2 distinct non-50 (router will probe via gateway once rows accrue; market-closed may delay accrual). TASK-CONF-2 (FE null-render) stays blocked. claude-manager-helper pruning pm.md (364->200) in flight. WIP: qa1 + parent-decomposed; macro-delta P2 still held.",
-    "updated_at": "2026-06-23T17:54:02Z",
+    "next_action": "Tick 2026-06-23T17:57:47Z: TASK-CONF-1 SHIPPED LIVE (e3386bdf; mcp-server rebuilt+verified image.Created>commit, severityToConfidence in container, old mask gone, healthy RestartCount=0). done_verified WITHHELD: named-vol probe shows 0 new verified_decision rows post-rebuild (market closed); existing 3316x50 historical pre-fix (untouched by design). Re-probe for 2+ distinct non-50 NEW rows on later cycle/market-open. pm.md pruned 365->106 (bab9c293). FIX-MACRO-SNAPSHOT-DELTAS-NULL P2 held. TASK-CONF-2 FE blocked. WIP qa1+parent-decomposed.",
+    "updated_at": "2026-06-23T17:57:47Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T17:54:02Z",
+    "last_tick": "2026-06-23T17:57:47Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
@@ -24168,7 +24168,7 @@
         "id": "TASK-CONF-1",
         "epic": "S2-DATA-HONESTY",
         "type": "BUG-FIX",
-        "status": "QA-REBUILD-PENDING",
+        "status": "QA-LIVE-PENDING-ACCRUAL",
         "priority": "P1",
         "zone": "apps/mcp-server/",
         "dev_agent": "dev-mcp-server",
@@ -24207,7 +24207,10 @@
         "code_done": true,
         "impl_commit": "e3386bdf",
         "code_done_at": "2026-06-23T17:54:02Z",
-        "router_note": "Code done+green (pnpm check PASS, 73 tests). RAW-verified 10 files no-orch-state, schema DEFAULT-50 removed (plain ADD COLUMN). Awaiting: (1) ops rebuild mcp-server, (2) live named-vol probe AC1-4 (>=2 distinct non-50 verified_decision rows accrued post-rebuild) for done_verified. Market closed => new-row accrual may lag."
+        "router_note": "Code done+green (pnpm check PASS, 73 tests). RAW-verified 10 files no-orch-state, schema DEFAULT-50 removed (plain ADD COLUMN). Awaiting: (1) ops rebuild mcp-server, (2) live named-vol probe AC1-4 (>=2 distinct non-50 verified_decision rows accrued post-rebuild) for done_verified. Market closed => new-row accrual may lag.",
+        "rebuild_done": true,
+        "rebuild_verified_at": "2026-06-23T17:57:47Z",
+        "router_probe": "REBUILD LIVE-VERIFIED (image .Created 17:55:03Z after commit 17:52:33Z; severityToConfidence present in container; old mask absent; healthy RestartCount=0). Named-vol probe: 0 new agent_signals since 17:55Z rebuild (market closed, no signal activity); newest verified_decision 16:32Z pre-fix value 50; 3316 historical rows at 50 are pre-fix (ALTER-existing-col no-op, untouched by design). done_verified AC (2+ distinct non-50 NEW verified_decision rows) NOT YET OBSERVABLE - WITHHELD pending accrual. Re-probe later tick / next verification cycle / market open."
       }
     ],
     "_closed_signals_20260614": {
