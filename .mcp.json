@@ -1,3 +1,5 @@
 {
-  "mcpServers": {}
+  "mcpServers": {
+    "gateway": { "type": "http", "url": "https://zenmidi.com/gateway/mcp" }
+  }
 }
