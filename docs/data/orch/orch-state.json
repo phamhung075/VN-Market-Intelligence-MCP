@@ -194,12 +194,12 @@
     "status": "in_progress",
     "active_task_id": "FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS",
     "next_agent": "developer",
-    "next_action": "Tick 2026-06-23T05:47:13Z: done_verified FIX-CRON-DBINTEGRITY-DEDUP-BOARD-TRACKED-GUARD (4a4da90c, dev-mcp-server) — RAW-verified generic DEDUP guard + canonical example in cron-db-data-integrity.md, doc-only no rebuild. Board CLEAR: ready0 in_progress0 review1(ARCH-SHIP-WAVE-REAUDIT parked). auditor T1 clean. db-integrity trail len13 ignored-holding. OPEN: BLIND=true => chef-morning 8d guaranteed-dish gap + all gateway-cowork slots dark; awaits F-1 .mcp.json + session restart (user-gated). WIP=0.",
+    "next_action": "Tick 2026-06-23T11:48:39Z: TRIAGED+DEDUP sau-c369-A21-rag-restart-100 (auditor Tier-1 A-21 re-signaled known-standing rag OOM-restart root). RAW: RestartCount=100 CUMULATIVE not active (stable 10h, healthy, OOMKilled=false; rate slowing 86->100 = +4.7/day vs prior +9/day). Root tracked by FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX + prior router-20260620T113917Z-rag-restart-watch; HIGH->MEDIUM, no mint. NOTE: Tier-1 A-21 lacks the DEDUP-ENFORCEMENT guard the DATA sweep now has -> candidate hardening. Board clear otherwise; review1 parked. BLIND=1 stale-session, F-1 awaits restart. WIP=0.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-23T05:47:13Z",
+    "updated_at": "2026-06-23T11:48:39Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T05:47:13Z",
+    "last_tick": "2026-06-23T11:48:39Z",
     "router_note": "po-s111: P2->P1 escalate + dispatch of the trail-gitreset data-loss fix after the predicted failure MATERIALIZED (38->10 entries, ~28 appends lost). Head was idle (WIP=0) — safe to repoint. cross-service git+gitignore work → generic developer."
   },
   "narrative": {
@@ -1681,9 +1681,12 @@
         "to": "po",
         "type": "signal_feedback",
         "summary": "A-21 WARN: rag-service RestartCount=100 — elevated restart pattern indicates instability",
-        "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "severity": "MEDIUM",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_triage": "router 2026-06-23T11:48:39Z RAW-verified: rag-service RestartCount=100 is CUMULATIVE not active crashloop — Status=running Health=healthy StartedAt=2026-06-23T01:32:46Z (stable ~10h) LastExit=0 OOMKilled=false. Trend NOT escalating: 86@2026-06-20 -> 100 now = +14/3d (~+4.7/day) vs prior +9/day => rate SLOWING. DEDUP/ALREADY-OPEN: same chronic 768MiB-cap OOM-restart root already tracked by board FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX AND prior signal router-20260620T113917Z-rag-restart-watch (TRIAGED). HIGH overstated (counter misread as active crash, cf bctc-lastpush class) -> downgrade HIGH->MEDIUM. NOT a new incident; no mint (durable fix already on backlog, PO to prioritize). Auditor Tier-1 A-21 should apply DEDUP-ENFORCEMENT (board-tracked root) like the DATA sweep guard.",
+        "router_dup_of": "router-20260620T113917Z-rag-restart-watch",
+        "router_triaged_at": "2026-06-23T11:48:39Z"
       }
     ]
   },
