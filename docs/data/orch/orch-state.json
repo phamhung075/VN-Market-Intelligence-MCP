@@ -1819,8 +1819,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-22T01:35:17Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-23T17:29:59Z",
+    "_updated_by": "po-s112",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6337,11 +6337,11 @@
             "title": "Add Check-E sector/company-name validator to fb-data-integrity-gate.sh + fix line-344 floor_zero syntax error",
             "type": "FIX",
             "size": "S",
-            "status": "REVIEW",
+            "status": "DONE_VERIFIED",
             "owner": "developer",
             "depends": [],
             "zone": "scripts/",
-            "note": "REVIEW 2026-06-21: Check-E implemented (E1 sector-mismatch parenthesised-label + E2 company-alias). SSOT-driven (system-map.json watchlist). line-344 floor_zero 0\\n0 bug fixed. 4 DoD runs pass. Handoff: docs/handoffs/FIX-FB-GATE-SECTOR-NAME-VALIDATOR.md"
+            "note": "REVIEW 2026-06-21: Check-E implemented (E1 sector-mismatch parenthesised-label + E2 company-alias). SSOT-driven (system-map.json watchlist). line-344 floor_zero 0\\n0 bug fixed. 4 DoD runs pass. Handoff: docs/handoffs/FIX-FB-GATE-SECTOR-NAME-VALIDATOR.md | po-s112 2026-06-23: reconciled REVIEW->DONE_VERIFIED to match real board row (done_verified lane)."
           },
           {
             "id": "FIX-FB-GATE-CURRENCY-UNIT-GUARD",
@@ -6363,9 +6363,21 @@
             "owner": "developer",
             "depends": [],
             "zone": "scripts/",
-            "note": "P2. From LESSON 8 (2026-06-22 \"ground\" leak). Whitelist-guarded English-word detector."
+            "note": "P2. From LESSON 8 (2026-06-22 \"ground\" leak). Whitelist-guarded English-word detector. | po-s112 2026-06-23: +5 fixture tokens (retail/block/foreign net flow/RSI/MA) from 3rd-day gate-bypass."
+          },
+          {
+            "id": "FIX-FB-GATE-TEMPLATE-STRUCTURE-VALIDATOR",
+            "title": "Structural-template validator (canonical header / verbatim disclaimer / valid hashtag block / no body markdown)",
+            "type": "FIX",
+            "size": "S",
+            "status": "BACKLOG",
+            "priority": "P1",
+            "owner": "developer",
+            "depends": [],
+            "note": "P1. NEW DEFECT CLASS 2026-06-23 — template non-compliance validated by NEITHER gate. SSOT for header/disclaimer/hashtags in one place."
           }
-        ]
+        ],
+        "last_evidence_at": "2026-06-23T17:29:59Z"
       },
       {
         "id": "LOG-HYGIENE",
@@ -11677,7 +11689,17 @@
         "size": "M",
         "rebuild_required": false,
         "minted_at": "2026-06-20T22:34:30Z",
-        "minted_by": "po-s110"
+        "minted_by": "po-s110",
+        "calibration_notes": [
+          {
+            "date": "2026-06-23",
+            "scored": "06-22 prediction self-scored 06-23",
+            "outcome": "right mechanism, wrong index direction due to missing rotation branch",
+            "detail": "'Vingroup cools' leg HIT (VRE −2,93% off ceiling, VHM decelerated). 'index falls to 1.820–1.840' leg MISSED — model lacked a sector-rotation (BĐS→banks) branch; index rose +0,60% to 1.869,04 as banks (TCB +3,72%, VPB +2,12%, ACB +1,59%) took over leadership.",
+            "requirement": "The calibration loop must capture outcomes as a STRUCTURED verdict (e.g. mechanism-correct + direction-wrong + missing-branch), NOT a binary hit/miss; ledger schema should support partial/mechanism-level scoring + a 'missing rotation branch' diagnostic."
+          }
+        ],
+        "last_evidence_at": "2026-06-23T17:29:59Z"
       },
       {
         "id": "FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
@@ -11851,7 +11873,33 @@
         "fix_spec": "Broaden scripts/fb-jargon-gate.sh: instead of ONLY a fixed blocklist, flag Latin-script English content-words appearing in the Vietnamese prose body, allowing a WHITELIST of accepted tokens (ticker symbols, USD/VND, EPS, P/E, Fed, Brent, oz, etc.). Goal: catch stray English like \"ground\", \"selloff\", \"breakout\" not in the current list. Keep false-positives low via the whitelist. Distinguish from existing blocklist (additive, not a replacement).",
         "generic_mandate": "Detect by Latin-English-content-word heuristic + whitelist, not by enumerating every bad word — catches NOVEL leaks. Whitelist is the single tuning surface (extendable without code change where practical).",
         "verification_gate": "Feed a post containing \"ground\" / \"selloff\" / \"breakout\" in VN prose → jargon-gate EXIT NON-ZERO. Feed a clean VN post with whitelisted tokens (tickers, USD/VND, EPS, P/E, Fed, Brent) → exit 0 (no false-positive).",
-        "note": "P2. Extends DONE FIX-FB-POST-DATA-INTEGRITY-GATE; sibling under epic AUDIT-FB-GATE-PROSE-HARDENING. NB: fb-jargon-gate has a prior false-green class (exits 0 even on BLOCK — feedback_fb_poster_gate_false_green) — ensure the broadened path EXITS NON-ZERO on detection."
+        "note": "P2. Extends DONE FIX-FB-POST-DATA-INTEGRITY-GATE; sibling under epic AUDIT-FB-GATE-PROSE-HARDENING. NB: fb-jargon-gate has a prior false-green class (exits 0 even on BLOCK — feedback_fb_poster_gate_false_green) — ensure the broadened path EXITS NON-ZERO on detection.",
+        "evidence": [
+          {
+            "date": "2026-06-23",
+            "source": "router manual review of docs/social/fb-post-2026-06-23.md (both number-gates exit 0)",
+            "english_word_leaks": [
+              "retail",
+              "block",
+              "foreign net flow",
+              "RSI",
+              "MA"
+            ],
+            "context_example": "dòng tiền retail bùng nổ",
+            "note": "3rd+ consecutive day prose defects passed BOTH gates (fb-jargon-gate.sh exit 0 + fb-data-integrity-gate.sh exit 0), caught only by router. Add these exact tokens as test fixtures."
+          }
+        ],
+        "test_fixtures": [
+          "MA",
+          "RSI",
+          "block",
+          "breakout",
+          "foreign net flow",
+          "ground",
+          "retail",
+          "selloff"
+        ],
+        "last_evidence_at": "2026-06-23T17:29:59Z"
       },
       {
         "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
@@ -12109,6 +12157,37 @@
         "done_verified": true,
         "resolved_at": "2026-06-22T21:09:29Z",
         "router_note": "RAW-verified against CI run 27981621391 (SHA 081798752): FAILED FILES (5) = 1269/1270/1326/FIX-1270/1783 — 240-price ABSENT. Under CI per-file isolation 240 passes; the local red is shard-order/env-only (matches feedback_ci_red_can_be_flaky). Not a CI blocker, no code change. Closed."
+      },
+      {
+        "id": "FIX-FB-GATE-TEMPLATE-STRUCTURE-VALIDATOR",
+        "title": "Structural-template validator for FB posts — canonical header, verbatim disclaimer, valid hashtag block, no markdown in body",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "owner": "developer",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "zone": "scripts/",
+        "depends": [],
+        "extends": [
+          "FIX-FB-POST-DATA-INTEGRITY-GATE"
+        ],
+        "opened_at": "2026-06-23T17:29:59Z",
+        "opened_by": "po-s112",
+        "root_cause": "2026-06-23 daily FB post (docs/social/fb-post-2026-06-23.md) PASSED both number-gates (fb-jargon-gate.sh exit 0 AND fb-data-integrity-gate.sh exit 0) while violating the post TEMPLATE in 4 ways — caught only by router manual review. NEW DEFECT CLASS validated by NEITHER existing gate. 3rd+ consecutive day structural/prose defects slipped the number-gates.",
+        "defects": [
+          "Non-canonical header: emitted '# Bài phân tích thị trường 23/6 — ...' instead of required '# Thị trường chứng khoán Việt Nam — YYYY-MM-DD'.",
+          "Invented disclaimer block instead of the verbatim standard one (must start '⚠️ Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng...').",
+          "Broken hashtag block: emitted hashtags WITH diacritics and spaces ('#ThịTrườngChứngKhoán', '#Việt Nam' — the space splits into a broken tag). Facebook hashtags cannot contain diacritics or spaces. Required = lowercase no-diacritic ASCII set (#chungkhoan #chungkhoanvietnam #vnindex ...).",
+          "Heavy markdown (## headers, ** bold, --- rules) in the body region — pastes as literal characters on Facebook."
+        ],
+        "fix_spec": "Add a structural validator (new scripts/fb-structure-gate.sh, or a Check block in fb-data-integrity-gate.sh) that asserts: (1) canonical header line matches regex '^# Thị trường chứng khoán Việt Nam — \\\\d{4}-\\\\d{2}-\\\\d{2}$'; (2) verbatim standard disclaimer block is present; (3) hashtag block is all-lowercase ASCII, no diacritics, no spaces, and includes the mandatory 5 (#chungkhoan #chungkhoanvietnam #vnindex + the two others in the canonical set); (4) no markdown '##' / '**' / '---' inside the body region. Exit NON-ZERO on ANY miss (heed the prior fb-gate false-green class — feedback_fb_poster_gate_false_green — verify it actually exits non-zero).",
+        "ssot_mandate": "The canonical header, verbatim disclaimer, and the mandatory hashtag set must live in ONE place (the poster flow doc docs/agents/fb-market-poster/flow/main.md, OR a small JSON the gate reads) — NEVER hardcoded twice. The validator and the poster read the SAME source.",
+        "generic_mandate": "Validate by template-conformance assertion, generic over any daily post; no per-day hardcoding.",
+        "verification_gate": "Feed the 2026-06-23 defective draft (or a fixture reproducing each of the 4 defects) → gate EXIT NON-ZERO citing each violation. Feed a compliant post (canonical header + verbatim disclaimer + clean ASCII hashtag block + markdown-free body) → exit 0.",
+        "rebuild_required": false,
+        "minted_at": "2026-06-23T17:29:59Z",
+        "minted_by": "po-s112"
       }
     ],
     "closed_sprints": [
