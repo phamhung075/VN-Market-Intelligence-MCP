@@ -3,15 +3,15 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c388 · 2026-06-23T21:44:01Z
-### Audit Run Tier-1 (21:44 UTC 2026-06-23)
+## c389 · 2026-06-23T22:13:44Z
+### Audit Run Tier-1 (22:13 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 42.20% (864.3MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 33% (28Gi avail / 233Gi) PASS. Cron health: 100+ jobs all 100%/98%+ success rates. NO new signals emitted.
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 42.94% (879.4MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 120+ jobs all 100%/98%+ success rates. NO new signals emitted.
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-23T21:43:10Z ===
+=== AUDITOR PROBE 2026-06-23T22:12:59Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
@@ -23,8 +23,8 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)    vn-mark
 vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)    vn-market-intelligence-mcp-macro-indicators     8 days ago
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)    vn-market-intelligence-mcp-kinh-dich-service    9 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)   vn-market-intelligence-mcp-api-gateway          12 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)   vn-market-intelligence-mcp-rag-service          12 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 12 days (healthy)   vn-market-intelligence-mcp-news-fetch           12 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 4 hours (healthy)   vn-market-intelligence-mcp-rag-service          13 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)   vn-market-intelligence-mcp-news-fetch           13 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)   vn-market-intelligence-mcp-alert-engine         13 days ago
 headroom-proxy                                    Up 11 days             headroom-proxy:local                            2 weeks ago
 mcp-gateway                                       Up 13 days (healthy)   mcpservergatway-gateway                         5 weeks ago
@@ -40,11 +40,11 @@ mcp-gateway                                       Up 13 days (healthy)   mcpserv
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=42.20% MemUsage=864.3MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=42.94% MemUsage=879.4MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    28Gi    33%    393k  290M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    27Gi    34%    393k  279M    0%   /
 
 === PROBE DONE ===
 ```
@@ -57,14 +57,14 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 pass_count=3/3 → MAJORITY PASS → A-20 PASS override
 ```
 
+## c388 · 2026-06-23T21:44:01Z
+### Audit Run Tier-1 (21:44 UTC 2026-06-23)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 42.20% (864.3MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 33% (28Gi avail / 233Gi) PASS. Cron health: 100+ jobs all 100%/98%+ success rates. NO new signals emitted.
+
 ## c387 · 2026-06-23T21:13:58Z
 ### Audit Run Tier-1 (21:13 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
 - Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L13]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L17-L21]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 39.30% (804.8MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 130+ jobs all 100%/98%+ success rates. NO new signals emitted.
-
-## c386 · 2026-06-23T20:43:51Z
-### Audit Run Tier-1 (20:43 UTC 2026-06-23)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L4-L15]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L19-L23]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 33.71% (690.4MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 99+ jobs all 100%/98%+ success rates. NO new signals emitted.
