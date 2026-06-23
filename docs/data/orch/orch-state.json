@@ -1660,6 +1660,18 @@
         "status": "READ",
         "payload_ref": null,
         "router_triage": "router_triage 00:34Z: EXPECTED-EMPTY not stall — newest PDF in /app/data/pdfs landed 2026-06-16, 0 new arrivals in 48h so 0 extractions; pipeline healthy (A-20 3/3). Mid-late June between VN earnings seasons (Q1 Apr-May/Q2 Jul-Aug). Downgraded HIGH→INFO. PO note: confirm BCTC fetch crawler event-armed for Q2 season."
+      },
+      {
+        "id": "router-f1-blindguard-gap-20260623T0815Z",
+        "ts": "2026-06-23T08:15:51Z",
+        "from": "dev-team-cron-router",
+        "to": "po",
+        "type": "infra_state_change",
+        "summary": "F-1 .mcp.json gateway REGISTERED (b3612720, endpoint https://zenmidi.com/gateway/mcp HTTP 200) but THIS CLI session not reloaded => effective-blind persists; blind-guard PRIMARY check (mcpServers!=0 => not-blind) now FALSE-NEGATIVES on slot-due ticks => fabrication risk until restart.",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "router_triage": "router 08:15Z: F-1 config half DONE+correct (small surface, 1 gateway wrapper not 146 tools; endpoint live 200). Remaining activation = USER session restart (router cannot restart self). Until restart, my tool surface lacks mcp__gateway__* so Agent-spawned cowork data agents stay blind. GUARD GAP: blind-guard.md primary jq-count check says not-blind (count=1) while session stale; belt-and-suspenders secondary probe is marked optional. Router compensates inline (reachability probe before any spawn) but this is not durable. PO DECISIONS: (1) is session-restart the intended F-1 activation step? (2) harden blind-guard secondary probe to MANDATORY-when-mcpServers-nonempty, OR skip straight to F1-AGENT-FATHER-BLIND-GUARD-REMOVE once restart-confirmed (the guard becomes unnecessary once gateway truly wired). Note dup-adjacent existing task F1-AGENT-FATHER-BLIND-GUARD-REMOVE — coordinate, do not double-mint."
       }
     ]
   },
