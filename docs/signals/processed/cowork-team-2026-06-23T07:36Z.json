@@ -1,0 +1,23 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_gateway_state_change",
+  "payload": {
+    "tick_id": "2026-06-23T07:36Z",
+    "nominal_tick": "2026-06-23T07:36:00Z",
+    "drift_min": 6,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "matched_slots": [],
+    "spawned": [],
+    "errors": [],
+    "classification": "GATEWAY_REGISTERED_PROBE_PENDING",
+    "reason": "MATERIAL STATE CHANGE: .mcp.json mcpServers went 0 -> 1 this tick. The registered server is `gateway` (type http, url https://zenmidi.com/gateway/mcp). This is the USER/HARNESS-side fix the dispatcher has been flagging the entire session — registering the gateway MCP server so Agent-spawned cowork subagents can inherit mcp__gateway__call_tool. The multi-day gateway-blind window may be ending.",
+    "caution": "File-registration is NOT yet proof the RUNNING CLI session has reloaded it. At session start the deferred-tools list exposed mcp__claude_ai_gateway__call_tool (router-only) but NOT mcp__gateway__call_tool (the subagent grant). The harness loads .mcp.json at session start; a mid-session edit may require a /mcp reconnect or session restart to propagate to subagents. Therefore the dispatcher will NOT immediately switch to confident local-spawning.",
+    "next_action": "On the NEXT matched non-backstopped local slot (chef-intraday / gatherer pair / bctc / refine-bctc / market-watcher-eod), spawn ONE probe subagent and RAW-verify it actually reaches the gateway (real varied data vs named-volume DB, not a fabricated/no-op response). If the probe reaches the gateway -> flip posture to ACTIVE local-spawn and stop emitting SKIPPED_BLIND_NO_BACKSTOP. If the probe is still blind (fabricates/no-op) -> stay in blind posture and flag that file-registration did not propagate to the running session (needs reconnect/restart).",
+    "leader_lock": {"ok": true, "expires_at": 1782201977},
+    "note": "This tick's matcher was SILENT ([]) so there was no spawn decision to make; recorded as an exception to Step 6.1 because the gateway-registration transition is materially important to the PO and changes the whole dispatcher posture going forward."
+  },
+  "priority": "high",
+  "createdAt": "2026-06-23T07:36:18Z"
+}
