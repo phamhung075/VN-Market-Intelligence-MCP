@@ -1,0 +1,22 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_gateway_state_change",
+  "payload": {
+    "tick_id": "2026-06-23T17:21Z",
+    "nominal_tick": "2026-06-23T17:21:00Z",
+    "drift_min": 6,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "matched_slots": [],
+    "spawned": ["news-scout (RE-PROBE — gateway-connectivity verification)"],
+    "errors": [],
+    "classification": "GATEWAY_RESTORED_REACHED",
+    "reason": "MAJOR STATE TRANSITION: the gateway-blind window is LIFTED. This session received the gateway MCP server instructions + deferred tools (mcp__gateway__call_tool now available), indicating an MCP reconnect/reload. A re-probe spawn (news-scout) CONFIRMED it: the subagent now HAS mcp__gateway__call_tool and returned REAL VARIED live data — VN-Index 1869.04, breadth 95 adv/208 dec/61 unch, HOSE turnover 30989.02bn (+112.3%), source vndirect, fetchedAt 2026-06-23T17:21:51Z. Cross-check vs the 08:07 BLIND-era router probe: turnover grew 28788->30989bn and accumulatedVol 932M->945M (live end-of-session finalization), confirming this is real fetched data not a cached constant. VN-Index price static is correct (17:21 UTC = 00:21 VN, market closed).",
+    "posture_change": "BLIND -> ACTIVE_LOCAL_SPAWN. From this tick forward: matched NON-backstopped local slots (chef-intraday, news-scout-*, market-watcher-*, refine-bctc-*, bctc-analyst-slot-*, alert-commander-*) will be SPAWNED with the real agent (run_in_background=true per BGFAN-1), no longer classified SKIPPED_BLIND_NO_BACKSTOP. The 6 cloud-backstopped slots (chef-morning, chef-eod, chef-evening, tnb-audit, digest-sunday, health-recheck) stay DEFERRED to cloud to avoid double-post contention (the published-marker dedup gate lives inside each agent flow). Each spawned agent's own dedup marker remains the double-fire guard.",
+    "leader_lock": {"ok": true, "expires_at": 1782237092},
+    "note": "This tick's matcher was SILENT ([]) so nothing was spawned beyond the verification probe. Recorded as an exception to Step 6.1 because the gateway-restored transition is materially important and flips the dispatcher posture. Resolves the multi-session USER/HARNESS-side fix the dispatcher has been flagging since session start."
+  },
+  "priority": "high",
+  "createdAt": "2026-06-23T17:21:55Z"
+}
