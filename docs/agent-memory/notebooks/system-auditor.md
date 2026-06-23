@@ -3,15 +3,15 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c391 · 2026-06-23T22:43:09Z
-### Audit Run Tier-1 (22:43 UTC 2026-06-23)
+## c392 · 2026-06-23T23:13:37Z
+### Audit Run Tier-1 (23:13 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. mcp-server RestartCount=0 (optimal), Memory 44.15% (904.1MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. No new signals emitted. DEDUP: mcp-server memory tracked A-30, rag-service restart tracked A-21.
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 45.08% (923.3MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump). Disk 35% (26Gi avail / 233Gi) PASS. All 100+ cron jobs firing with 98-100% success rates. NO new signals emitted.
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-23T22:43:04Z ===
+=== AUDITOR PROBE 2026-06-23T23:13:04Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
@@ -23,7 +23,7 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)    vn-mark
 vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)    vn-market-intelligence-mcp-macro-indicators     8 days ago
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)    vn-market-intelligence-mcp-kinh-dich-service    9 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)   vn-market-intelligence-mcp-api-gateway          12 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 4 hours (healthy)   vn-market-intelligence-mcp-rag-service          13 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 5 hours (healthy)   vn-market-intelligence-mcp-rag-service          13 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)   vn-market-intelligence-mcp-news-fetch           13 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)   vn-market-intelligence-mcp-alert-engine         13 days ago
 headroom-proxy                                    Up 11 days             headroom-proxy:local                            2 weeks ago
@@ -40,14 +40,20 @@ mcp-gateway                                       Up 13 days (healthy)   mcpserv
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=44.15% MemUsage=904.1MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=45.08% MemUsage=923.3MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    27Gi    34%    393k  280M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    26Gi    35%    393k  269M    0%   /
 
 === PROBE DONE ===
 ```
+
+## c391 · 2026-06-23T22:43:09Z
+### Audit Run Tier-1 (22:43 UTC 2026-06-23)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. mcp-server RestartCount=0 (optimal), Memory 44.15% (904.1MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. No new signals emitted. DEDUP: mcp-server memory tracked A-30, rag-service restart tracked A-21.
 
 ## c390 · 2026-06-23T22:30:27Z
 ### Audit Run Tier-2 (22:30 UTC 2026-06-23)
@@ -56,9 +62,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - Status: HEALTHY | Macro age 10.3h (12:13Z refresh, 18:00Z miss noted, within 24h)
 - Freshness: prices/news/sbv/fred all ok; market closed 05:30 VN (no staleness alert)
 - DB spot C-06/C-07 PASS; B-09 SSC=0; B-13 stale-pending=0. Zero signals emitted.
-
-## c389 · 2026-06-23T22:13:44Z
-### Audit Run Tier-1 (22:13 UTC 2026-06-23)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L17]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L22-L26]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 42.94% (879.4MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 120+ jobs all 100%/98%+ success rates. NO new signals emitted.
