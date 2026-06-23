@@ -1,0 +1,27 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-23T19:51Z",
+    "nominal_tick": "2026-06-23T19:45:00Z",
+    "drift_min": 6,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "matched_slots": ["chef-evening"],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [],
+    "skipped_already_fired": ["chef-evening"],
+    "classification": "DEFERRED_CLOUD_ALREADY_FIRED",
+    "reason": "chef-evening (agent unified-agent, flow chef.md, cron 45 19, guaranteed:true) matched, BUT last_fired = 2026-06-23T19:48:20Z — ~3 min before this 19:51 tick, i.e. THIS 19:45 window already fired and completed. chef-evening is one of the 6 cloud RemoteTrigger backstops; it is also reachable by the now-active */15 master cron (subagents sighted since 17:21Z). Either path already delivered the evening MARKET dish at 19:48Z. NOT re-spawned (double-post guard + chef.md's own published-marker dedup). The fresh same-day last_fired (vs 06-14 stale all through the blind window) is positive evidence the chef pipeline is delivering again.",
+    "slot_detail": {
+      "chef-evening": {"agent": "unified-agent", "flow_path": "docs/agents/unified-agent/flow/chef.md", "cron": "45 19 * * *", "guaranteed": true, "policy_id": null, "last_fired": "2026-06-23T19:48:20Z", "cloud_backstop": true}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782246076},
+    "note": "Verify the 19:48Z chef-evening dish landed on MARKET (content+period) rather than re-dispatching. last_fired now advancing same-day for a backstopped slot suggests the local fan-out (or a last_fired-syncing path) is live — distinct from the blind-window behaviour where backstopped slots read days-stale locally."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-23T19:51:16Z"
+}
