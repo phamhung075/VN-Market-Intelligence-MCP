@@ -193,15 +193,18 @@
   "head": {
     "active_task_id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION",
     "status": "in_progress",
-    "next_agent": "ba",
+    "next_agent": "architect",
     "dispatched_at": "2026-06-23T17:28:13Z",
     "dispatched_by": "po-s111",
-    "note": "S2 DATA-HONESTY lead. ba->architect->pm->dev-mcp-server->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-23T17:34:33Z: *** BLIND CLEARED — F-1 ACTIVE ***. Session reloaded .mcp.json (b3612720); mcp__gateway__* now in router surface; RAW-PROVEN end-to-end: list_servers=vn-market 157 tools + call_tool get_vps_service_health returned live data. Primary check (count=1) now AGREES with real reachability (false-negative gap closed). Subagent-inheritance test-spawn (ops probe ac328…) IN FLIGHT — confirms whether Agent-spawned data agents inherit the gateway (the original blind root). IF probe=yes: F1-AGENT-FATHER-BLIND-GUARD-REMOVE (backlog) is UNBLOCKED per PO decision-b (restart-confirmed + wired => remove guard) — promote+dispatch agent-father; cowork data slots (chef/news-scout/market-watcher) resume next due tick. Live VPS probe also reconfirmed: vn-bctc-fetch idle/out-of-season (VPS up 6d23h), vn-sbv-fetch unhealthy=tracked FIX-SBV-FX-VPS-FETCHER-UNHEALTHY. mem WARN-ceiling tracked (rides 99% no-OOM). Board clear, review1 parked, trail ignored. WIP=1 (probe).",
-    "updated_at": "2026-06-23T17:34:33Z",
+    "ba_spec": "docs/handoffs/FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION-BA-spec.md",
+    "ba_completed_at": "2026-06-23T17:45:00Z",
+    "note": "S2 DATA-HONESTY lead. ba DONE (spec at ba_spec). architect->pm->dev-mcp-server->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
+    "next_action": "Tick 2026-06-23T17:35:13Z: *** F-1 FULLY VALIDATED — fleet UN-BLINDED ***. Subagent-inherit probe (ops) PASSED: Agent-spawned subagent called mcp__gateway__call_tool and got REAL data => original blind root (subagents fabricate) FIXED end-to-end. Router + subagents both have live gateway. CONSEQUENCES: (1) cowork DATA slots resume on next due tick — next is bctc-analyst-slot-2 @18:00Z (~27m), then chef-evening @19:45, offhours @20:00 — these will now produce REAL output (ends the multi-day chef/news/market-watcher gap); (2) F1-AGENT-FATHER-BLIND-GUARD-REMOVE gate (PO decision-b: restart-confirmed + wired + subagent-proven) is NOW MET — but guard is harmless when not-blind (primary returns not-blind, secondary passes) so it is low-urgency CLEANUP; PO to promote backlog->ready + dispatch agent-father at convenience. Effective-blind handling RETIRED — resume normal spawns. Board clear, review1 parked, trail ignored. WIP=0.",
+    "updated_at": "2026-06-23T17:35:13Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T17:34:33Z",
-    "blind_cleared_at": "2026-06-23T17:34:33Z"
+    "last_tick": "2026-06-23T17:35:13Z",
+    "blind_cleared_at": "2026-06-23T17:34:33Z",
+    "f1_validated_at": "2026-06-23T17:35:13Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
