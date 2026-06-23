@@ -1673,6 +1673,17 @@
         "payload_ref": null,
         "router_triage": "router 08:15Z: F-1 config half DONE+correct (small surface, 1 gateway wrapper not 146 tools; endpoint live 200). Remaining activation = USER session restart (router cannot restart self). Until restart, my tool surface lacks mcp__gateway__* so Agent-spawned cowork data agents stay blind. GUARD GAP: blind-guard.md primary jq-count check says not-blind (count=1) while session stale; belt-and-suspenders secondary probe is marked optional. Router compensates inline (reachability probe before any spawn) but this is not durable. PO DECISIONS: (1) is session-restart the intended F-1 activation step? (2) harden blind-guard secondary probe to MANDATORY-when-mcpServers-nonempty, OR skip straight to F1-AGENT-FATHER-BLIND-GUARD-REMOVE once restart-confirmed (the guard becomes unnecessary once gateway truly wired). Note dup-adjacent existing task F1-AGENT-FATHER-BLIND-GUARD-REMOVE — coordinate, do not double-mint.",
         "po_decision": "po-s113 2026-06-23T08:30Z: (1) CONFIRMED — a USER CLI session-restart is the intended and ONLY remaining F-1 activation step; a .mcp.json edit takes effect only on session reload, which the router/agents cannot self-trigger. The config half (b3612720, gateway wrapper, endpoint 200) is DONE+correct. (2) DECISION = PATH (b) DEFER to F1-AGENT-FATHER-BLIND-GUARD-REMOVE. Rationale: the blind-guard is a workaround destined for removal once the post-restart test-spawn proves real mcp__gateway__call_tool access; minting a separate hardening task to make the secondary probe MANDATORY would harden a doc that is about to be deleted (churn + double-mint against an existing tracked task). Instead, the interim stale-session false-negative risk is FOLDED INTO F1-AGENT-FATHER-BLIND-GUARD-REMOVE as an interim_risk note, and the router's already-running inline reachability probe before any spawn covers the gap until restart (this is exactly the secondary-probe semantics, executed at the router boundary). NO new task minted. NOT path (a)."
+      },
+      {
+        "id": "sau-c369-A21-rag-restart-100",
+        "ts": "2026-06-23T11:44:36Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 WARN: rag-service RestartCount=100 — elevated restart pattern indicates instability",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
