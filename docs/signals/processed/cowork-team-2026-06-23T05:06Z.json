@@ -1,0 +1,26 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-23T05:06Z",
+    "nominal_tick": "2026-06-23T05:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": ["news-scout-sentiment"],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": ["news-scout-sentiment"],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "news-scout-sentiment (agent news-scout, cron 0 5 * * 1-5, policy gatherer-standard) is a weekday pre-open sentiment pass, local-dispatcher-only — NOT among the 6 cloud RemoteTrigger backstops (chef-morning, chef-eod, chef-evening, tnb-audit, digest-sunday, health-recheck). Session is gateway-blind (mcpServers:0) so a local spawn would fabricate news sentiment; not spawned. Slot genuinely UNFIRED this session. (Tuesday weekday gate matches; 05:00 UTC = 12:00 VN.)",
+    "slot_detail": {
+      "news-scout-sentiment": {"agent": "news-scout", "flow_path": "docs/agents/news-scout/flow/main.md", "cron": "0 5 * * 1-5", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-15T05:07:48Z", "cadence_minutes": 240}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782192979},
+    "note": "USER/HARNESS-side fix required: register the gateway MCP server in .mcp.json so subagents inherit it, then reconnect. NOTE: chef-morning cloud backstop (15 5 1-5) fires ~05:15Z independently in the cloud — distinct from this news-scout-sentiment slot; expect a DEFERRED_BLIND chef-morning match next tick."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-23T05:06:19Z"
+}
