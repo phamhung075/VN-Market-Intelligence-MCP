@@ -194,12 +194,12 @@
     "status": "in_progress",
     "active_task_id": "FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS",
     "next_agent": "developer",
-    "next_action": "Tick 2026-06-23T05:15:52Z: GRANTED done_verified FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS (f102d827). Gate 3 PROVEN airtight: path absent from HEAD tree (git ls-tree HEAD empty) => git reset --hard has nothing to restore for it => trail uncwipeable; + check-ignore rc0 (never re-staged). Gate 4 OBSERVED: trail grew 11->12 and persisted across intervening commits. done->done_verified. auditor T1 CLEAN (12/12, mem63%, 0 anomalies). Lanes: ready1 (P3 doc-only cron-guard, dev-mcp-server), review1 (ARCH-SHIP-WAVE-REAUDIT parked). Local 114-behind benign health-chore divergence. BLIND=true, F-1 .mcp.json awaits user. WIP=0.",
+    "next_action": "Tick 2026-06-23T05:45:49Z: dispatched FIX-CRON-DBINTEGRITY-DEDUP-BOARD-TRACKED-GUARD (P3 doc-only, dev-mcp-server) — add 5th generic DEDUP-ENFORCEMENT guard to .claude/commands/crons/cron-db-data-integrity.md. WIP=1. Verify gate (guard text present, generic+canonical example) on completion. auditor T1 clean (07ac5975, mem64.78%). db-integrity trail len13 ignored-holding. BLIND=true, chef-morning 8d gap awaits F-1.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-23T05:15:52Z",
+    "updated_at": "2026-06-23T05:45:49Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T05:15:52Z",
+    "last_tick": "2026-06-23T05:45:49Z",
     "router_note": "po-s111: P2->P1 escalate + dispatch of the trail-gitreset data-loss fix after the predicted failure MATERIALIZED (38->10 entries, ~28 appends lost). Head was idle (WIP=0) — safe to repoint. cross-service git+gitignore work → generic developer."
   },
   "narrative": {
@@ -23895,13 +23895,12 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "FIX-CRON-DBINTEGRITY-DEDUP-BOARD-TRACKED-GUARD",
         "type": "FIX",
         "title": "cron-db-data-integrity: add 5th DEDUP-ENFORCEMENT guard — board-tracked root = ALREADY-OPEN (stop re-signaling)",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "priority": "P3",
         "urgency": "med",
         "owner": "dev-mcp-server",
@@ -23915,9 +23914,13 @@
         "generic_mandate": "Guard must be GENERIC (any board-tracked root OR any prior open-status signal for the same table+defect), not hardcoded to weeklyPortfolioReport — the lock is only the named EXAMPLE.",
         "depends": [],
         "minted_at": "2026-06-21T23:57:58Z",
-        "minted_by": "po-s110-dedup-board-tracked-guard"
+        "minted_by": "po-s110-dedup-board-tracked-guard",
+        "in_progress_at": "2026-06-23T05:45:49Z",
+        "dispatched_by": "dev-team-cron-router",
+        "dispatched_to": "dev-mcp-server"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
