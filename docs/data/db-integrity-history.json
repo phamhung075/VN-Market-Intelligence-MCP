@@ -675,5 +675,79 @@
       "market_prices_freshness": "2026-06-20T23:15:02.751Z",
       "fresh_ohlc_violations_last_2d": 0
     }
+  },
+  {
+    "tables_checked": 7,
+    "findings": [
+      {
+        "table": "financial_reports",
+        "class": "INCORRECT",
+        "detail": "5 rows with net_revenue<=0 (DOWN from 17 on prior scan). news_inference stubs with extraction_confidence>=0.30. BY-DESIGN: OCR extraction method leaves zero-revenue defaults flagged, not a parse failure.",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "PDF OCR extraction stubs (news_inference) carry zero revenue; rows are correctly flagged via extraction_confidence.",
+        "signal_id": null
+      },
+      {
+        "table": "scheduler_locks",
+        "class": "FAIL",
+        "detail": "Held locks: 0. Prior stale-lock signal sau-sch-20260620T182937Z already RESOLVED. No new held locks.",
+        "verdict": "CLEAN",
+        "root_cause_hypothesis": "N/A",
+        "signal_id": null
+      },
+      {
+        "table": "deep_fetch_queue",
+        "class": "FAIL",
+        "detail": "vps-failed=0, stuck-pending>6h=0. Queue healthy.",
+        "verdict": "CLEAN",
+        "root_cause_hypothesis": "N/A",
+        "signal_id": null
+      },
+      {
+        "table": "agent_signals",
+        "class": "FAIL",
+        "detail": "Expired unread/read: 3 (no change from prior 3). BY-DESIGN: no TTL/GC cron. Already tracked in sau-20260621T155518-signals-regress (READ).",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "agent_signals lacks auto-cleanup; deferred design.",
+        "signal_id": null
+      },
+      {
+        "table": "daily_ohlcv, vn_index_cache, financial_reports",
+        "class": "INCORRECT",
+        "detail": "Canonical 4 counts: db1_ohlc_violations=835 (no change), db2_scale_gt100x=1 (no change), db3_vnindex_cache_rows=0 (no change), c04_low_confidence_reports=21 (no change). All match prior scan exactly.",
+        "verdict": "REAL-ONGOING",
+        "root_cause_hypothesis": "Known-open signals: sau-20260620T103000-db1, sau-20260620T103001-db2, sau-20260620T103002-db3 (all tracked, awaiting root fixes).",
+        "signal_id": null
+      },
+      {
+        "table": "cron_job_runs",
+        "class": "FAIL",
+        "detail": "Last error: 2026-06-14 10:21:45 (8d ago). No new crashes in past 7 days. Cron health recovered.",
+        "verdict": "CLEAN-PRIOR-TRACKED",
+        "root_cause_hypothesis": "Stale setup errors; jobs now healthy.",
+        "signal_id": null
+      },
+      {
+        "table": "daily_ohlcv",
+        "class": "FAIL",
+        "detail": "Watchlist: 1142 active tickers in last 30d (target >=25). Coverage OK.",
+        "verdict": "CLEAN",
+        "root_cause_hypothesis": "N/A",
+        "signal_id": null
+      }
+    ],
+    "scan_ts": "2026-06-23T04:26:19Z",
+    "counts": {
+      "db1_ohlc_violations": 835,
+      "db2_scale_gt100x": 1,
+      "db3_vnindex_cache_rows": 0,
+      "c04_low_confidence_reports": 21
+    },
+    "context": {
+      "daily_ohlcv_total": 16026,
+      "daily_ohlcv_newest_date": "2026-06-23",
+      "market_prices_freshness": "2026-06-23T04:25:49.087Z",
+      "fresh_ohlc_violations_last_2d": 0
+    }
   }
 ]
