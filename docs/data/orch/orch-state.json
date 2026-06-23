@@ -1643,9 +1643,10 @@
         "to": "po",
         "type": "db_integrity_breach",
         "summary": "market_messages check C-06 failed (actual=0, expected>0, last 3h)",
-        "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null,
+        "router_triage": "router_triage 00:34Z: market-hours-blind FALSE-POSITIVE — VN 07:34 pre-market, no scheduled MARKET post before CHEF-morning 12:15 VN; overnight market_messages=0 expected. Downgraded HIGH→INFO, no dev action. Durable fix = market-hours-aware threshold on C-06 (same class as freshness-blind)."
       },
       {
         "id": "sau-c11-20260623T003035Z",
@@ -1654,9 +1655,10 @@
         "to": "po",
         "type": "db_integrity_breach",
         "summary": "pdf_documents check C-11 failed (actual=0, expected>0, last 48h)",
-        "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null,
+        "router_triage": "router_triage 00:34Z: EXPECTED-EMPTY not stall — newest PDF in /app/data/pdfs landed 2026-06-16, 0 new arrivals in 48h so 0 extractions; pipeline healthy (A-20 3/3). Mid-late June between VN earnings seasons (Q1 Apr-May/Q2 Jul-Aug). Downgraded HIGH→INFO. PO note: confirm BCTC fetch crawler event-armed for Q2 season."
       }
     ]
   },
