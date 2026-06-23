@@ -55,3 +55,6 @@ docs/data/BATCH_S_1849_SUMMARY.md
 
 # runtime commit serialization lock — operational state, never version-controlled
 docs/data/commit-mutex.json
+
+# Rolling operational telemetry (cap 200, helper recreates) — must survive fleet git reset --hard (FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS)
+docs/data/db-integrity-history.json
