@@ -43,6 +43,23 @@ export function isDocAlreadyProcessed(docId: string, db: Database): boolean {
   return row !== null && row !== undefined;
 }
 
+// ── severityToConfidence ──────────────────────────────────────────────────────
+// FR-1 FIX-SIGNAL-CONFIDENCE-DEFAULT-50: module-private pure lookup.
+// Derives a fallback confidence score from alert severity when the alert does
+// not carry an explicit confidence_score value in [0,100].
+// NFR-C: no imports from domain/ or interface/ layers — pure lookup only.
+// critical=90, high=75, warning/medium=60, low=40, unknown=60 (defensive medium).
+function severityToConfidence(severity: string): number {
+  switch (severity) {
+    case "critical": return 90;
+    case "high":     return 75;
+    case "warning":  // fall-through
+    case "medium":   return 60;
+    case "low":      return 40;
+    default:         return 60; // defensive: treat unknown as medium
+  }
+}
+
 // ── alert_id column probe (cached per DB connection) ─────────────────────────
 // FIX-ALERT-ORPHAN-CORRELATION: check whether agent_signals has the alert_id
 // column. Uses try/catch on a LIMIT-0 probe so legacy DBs (pre-migration) are
@@ -132,10 +149,10 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
     ? db.prepare(`
         INSERT OR IGNORE INTO agent_signals
           (from_agent, to_agent, signal_type, stock_code, payload, status,
-           created_at, expires_at, alert_id, is_correlation_stub)
+           created_at, expires_at, alert_id, is_correlation_stub, confidence_score)
         VALUES
           ('alert-engine', 'all', 'verified_decision', ?, '{}', 'unread',
-           ?, datetime(?, '+2 hours'), ?, 1)
+           ?, datetime(?, '+2 hours'), ?, 1, ?)
       `)
     : null;
 
@@ -162,11 +179,20 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
         const existing = checkSignal.get(alert.id);
         if (!existing) {
           const stockCode = alert.actionCode === "MACRO" ? null : (alert.actionCode || null);
+          // FR-1 FIX-SIGNAL-CONFIDENCE-DEFAULT-50: use alert's real confidence when in [0,100];
+          // otherwise derive from severity via module-private severityToConfidence().
+          const confidenceScore =
+            typeof alert.confidence_score === "number" &&
+            alert.confidence_score >= 0 &&
+            alert.confidence_score <= 100
+              ? Math.min(100, Math.max(0, Math.round(alert.confidence_score)))
+              : severityToConfidence(alert.severity);
           insertSignal.run(
             stockCode,
             alert.createdAt,
             alert.createdAt,
             alert.id,
+            confidenceScore,
           );
         }
       }
@@ -215,10 +241,10 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
     ? db.prepare(`
         INSERT OR IGNORE INTO agent_signals
           (from_agent, to_agent, signal_type, stock_code, payload, status,
-           created_at, expires_at, alert_id, is_correlation_stub)
+           created_at, expires_at, alert_id, is_correlation_stub, confidence_score)
         VALUES
           ('alert-engine', 'all', 'verified_decision', ?, '{}', 'unread',
-           ?, datetime(?, '+2 hours'), ?, 1)
+           ?, datetime(?, '+2 hours'), ?, 1, ?)
       `)
     : null;
 
@@ -244,11 +270,20 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
         const existing = checkSignal.get(alert.id);
         if (!existing) {
           const stockCode = alert.actionCode === "MACRO" ? null : (alert.actionCode || null);
+          // FR-1 FIX-SIGNAL-CONFIDENCE-DEFAULT-50: use alert's real confidence when in [0,100];
+          // otherwise derive from severity via module-private severityToConfidence().
+          const confidenceScore =
+            typeof alert.confidence_score === "number" &&
+            alert.confidence_score >= 0 &&
+            alert.confidence_score <= 100
+              ? Math.min(100, Math.max(0, Math.round(alert.confidence_score)))
+              : severityToConfidence(alert.severity);
           insertSignal.run(
             stockCode,
             alert.createdAt,
             alert.createdAt,
             alert.id,
+            confidenceScore,
           );
         }
       }

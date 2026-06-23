@@ -12,7 +12,7 @@
  *   - source: string from finding_data.source or payload.source, else null
  *   - detail: string kept for back-compat (existing consumers unbroken)
  *   - direction: string extracted from finding_data or payload
- *   - confidence_score: number (default 50)
+ *   - confidence_score: number | null (null = genuinely absent, FIX-SIGNAL-CONFIDENCE-DEFAULT-50)
  *   - created_at: ISO-8601 UTC (YYYY-MM-DDTHH:MM:SS.000Z) normalized server-side
  *                 from SQLite native 'YYYY-MM-DD HH:MM:SS' format
  */
@@ -26,7 +26,7 @@ export interface StockSignalItem {
   stock_code: string | null;
   signal_type: string;
   direction: string;
-  confidence_score: number;
+  confidence_score: number | null; // null = genuinely absent (FIX-SIGNAL-CONFIDENCE-DEFAULT-50)
   detail: string;
   /** Full structured finding_data parsed from JSON. null if absent or malformed. */
   finding_data: Record<string, unknown> | null;
@@ -221,7 +221,7 @@ export function querySignalsForStock(
       stock_code: row.stock_code,
       signal_type: row.signal_type,
       direction,
-      confidence_score: row.confidence_score ?? 50,
+      confidence_score: row.confidence_score ?? null, // FIX-SIGNAL-CONFIDENCE-DEFAULT-50: no constant fallback
       detail,
       finding_data: findingData,
       payload,

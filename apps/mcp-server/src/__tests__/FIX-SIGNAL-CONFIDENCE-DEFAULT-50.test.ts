@@ -32,7 +32,7 @@ function makeDb(): Database {
       causal_root_id TEXT,
       causal_root_label TEXT,
       signal_class TEXT,
-      confidence_score INTEGER DEFAULT 50,
+      confidence_score INTEGER,
       validated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       news_sentiment REAL,
       kinh_dich_confidence REAL,
@@ -64,7 +64,7 @@ describe("FIX-SIGNAL-CONFIDENCE-DEFAULT-50 — postSignal stores explicit value"
     db = makeDb();
   });
 
-  it("postSignal without confidence_score uses column DEFAULT (50)", () => {
+  it("postSignal without confidence_score stores NULL (genuine absence, no constant injection)", () => {
     const id = postSignal(db, {
       fromAgent: "test-agent",
       toAgent: "recv-agent",
@@ -73,9 +73,9 @@ describe("FIX-SIGNAL-CONFIDENCE-DEFAULT-50 — postSignal stores explicit value"
       ttlMinutes: 10,
     });
     expect(id).toBeGreaterThan(0);
-    // Column DEFAULT 50 applies when caller omits the field
+    // FIX-SIGNAL-CONFIDENCE-DEFAULT-50: no DEFAULT 50; genuine absence = NULL.
     const score = getConfidenceScore(db, id);
-    expect(score).toBe(50);
+    expect(score).toBeNull();
   });
 
   it("postSignal with explicit confidence_score stores that value, not 50", () => {
@@ -205,13 +205,17 @@ describe("FIX-SIGNAL-CONFIDENCE-DEFAULT-50 — finding_data.confidence → confi
     expect(derivedScore).toBe(56);
   });
 
-  it("when finding_data.confidence is absent, derivedConfidenceScore is undefined (no injection)", () => {
+  it("when finding_data.confidence is absent, derivedConfidenceScore is null (explicit NULL, not 50)", () => {
     const findingData: Record<string, unknown> = { direction: "bullish" }; // no confidence key
     const rawConfidence = typeof findingData["confidence"] === "number"
       ? (findingData["confidence"] as number)
       : undefined;
     expect(rawConfidence).toBeUndefined();
-    // undefined → caller does not spread confidence_score → DB DEFAULT 50 applies
+    // FR-3 FIX-SIGNAL-CONFIDENCE-DEFAULT-50: null (not undefined) → stored as NULL in DB
+    const derivedConfidenceScore: number | null = rawConfidence !== undefined
+      ? Math.min(100, Math.max(0, Math.round(rawConfidence * 100)))
+      : null;
+    expect(derivedConfidenceScore).toBeNull();
   });
 });
 

@@ -101,7 +101,9 @@ export function initNewsTables(db: Database): void {
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN signal_class TEXT`); } catch {}
 
   // Task 230 — signal validation columns
-  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN confidence_score INTEGER DEFAULT 50`); } catch {}
+  // FIX-SIGNAL-CONFIDENCE-DEFAULT-50: no DEFAULT 50 — genuine absence must land as NULL (fresh DBs only;
+  // live column is unaffected by ALTER TABLE on an existing DB).
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN confidence_score INTEGER`); } catch {}
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN validated_at TEXT DEFAULT CURRENT_TIMESTAMP`); } catch {}
 
   // Task 1328c — new signal context columns

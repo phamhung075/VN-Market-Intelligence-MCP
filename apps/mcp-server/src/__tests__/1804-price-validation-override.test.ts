@@ -28,7 +28,7 @@ function makeDb(): Database {
       causal_root_id TEXT,
       causal_root_label TEXT,
       signal_class TEXT,
-      confidence_score INTEGER NOT NULL DEFAULT 50,
+      confidence_score INTEGER,
       validated_at TEXT,
       news_sentiment REAL,
       kinh_dich_confidence REAL,

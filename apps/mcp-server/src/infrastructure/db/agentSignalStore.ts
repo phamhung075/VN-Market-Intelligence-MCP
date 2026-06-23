@@ -87,7 +87,7 @@ export interface AgentSignal {
   status: "unread" | "read";
   createdAt: string;
   expiresAt: string;
-  confidence_score?: number; // 0–100, default 50 (Task 230)
+  confidence_score?: number | null; // 0–100, null = genuinely absent (Task 230 / FIX-CONF-DEFAULT-50)
   validated_at?: string; // ISO8601, default created_at (Task 230)
 }
 
@@ -128,10 +128,12 @@ export interface PostSignalInput {
    */
   signalClass?: "structural_factor" | "cyclical" | "technical_signal" | "one_time_catalyst" | "sentiment" | null;
   /**
-   * Task 230 — Confidence score (0–100) from signalValidator.
-   * Default: 50 (backward compatible if omitted).
+   * FIX-SIGNAL-CONFIDENCE-DEFAULT-50 — Confidence score (0–100) from signalValidator.
+   * null = genuinely absent (column DEFAULT applies for fresh DBs; live DBs unchanged).
+   * undefined = omitted by caller (same effect as null for DB write).
+   * Never substitute a constant default here — genuine absence must land as NULL.
    */
-  confidence_score?: number;
+  confidence_score?: number | null | undefined;
   /**
    * Task 230 — ISO8601 timestamp of when signal was validated.
    * Default: created_at if omitted.
@@ -338,7 +340,7 @@ function _postSignalInner(db: Database, input: PostSignalInput): number {
     causalRootId = null,
     causalRootLabel = null,
     signalClass = null,
-    confidence_score = 50, // Task 230: default 50
+    confidence_score = null, // FIX-SIGNAL-CONFIDENCE-DEFAULT-50: no constant default; null = genuine absence
     validated_at, // Task 230: optional validated_at
     newsSentiment = null, // Task 1328c
     kinhDichConfidence = null, // Task 1328c
