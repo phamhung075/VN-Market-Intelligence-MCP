@@ -1,0 +1,26 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-23T08:51Z",
+    "nominal_tick": "2026-06-23T08:45:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 1,
+    "matched_slots": ["chef-eod"],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": ["chef-eod"],
+    "skipped_no_backstop": [],
+    "classification": "DEFERRED_BLIND",
+    "reason": "chef-eod (agent unified-agent, flow chef.md, cron 45 8 * * 1-5, guaranteed:true) IS one of the 6 cloud RemoteTrigger backstops. The cloud RemoteTrigger fires this slot from a fresh cloud checkout at ~08:45Z weekdays with real gateway access. Although mcpServers:1, this running session's subagents remain gateway-blind (probe-confirmed 08:06), so a local spawn would fabricate the EOD MARKET dish anyway; deferred to the cloud backstop, not spawned. The chef.md dedup marker is set by the cloud run, NOT by this dispatcher.",
+    "slot_detail": {
+      "chef-eod": {"agent": "unified-agent", "flow_path": "docs/agents/unified-agent/flow/chef.md", "cron": "45 8 * * 1-5", "guaranteed": true, "policy_id": null, "last_fired": "2026-06-15T08:52:40Z", "cloud_backstop": true}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782206477},
+    "note": "DEFERRED_BLIND. Confirm via RemoteTrigger(action=list).last_fired_at + MARKET content by period, NOT local last_fired (cloud does not sync it back) — the exact false-3-day-EOD-outage trap from 06-18."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-23T08:51:17Z"
+}
