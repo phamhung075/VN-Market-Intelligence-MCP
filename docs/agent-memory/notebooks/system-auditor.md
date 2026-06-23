@@ -1,6 +1,13 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+
+## c357 · 2026-06-23T06:30:27Z
+### Audit Run Tier-2 (06:30 UTC 2026-06-23 — market hours)
+- Tier: 2 | Domains: 8 | Status: HEALTHY
+- Anomalies: 0 new | Macro 18h (within 24h SLA) | vps-bctc known-standing
+- Summary: market_prices 30s old, agent_signals 20s old, daily_ohlcv 765 codes. Macro 18h 17m (cadence 6h, threshold 24h). BCTC queue: pending=0, SSC URLs=0 (PASS). VPS: 4/5 healthy (bctc-fetch unhealthy known-standing ~156h). Crons: 15 recent all success/running, no gaps.
+
 ## c356 · 2026-06-23T06:13:57Z
 ### Audit Run Tier-1 (06:13 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
