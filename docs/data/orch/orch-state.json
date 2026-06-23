@@ -194,12 +194,12 @@
     "status": "in_progress",
     "active_task_id": "FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS",
     "next_agent": "developer",
-    "next_action": "Tick 2026-06-23T11:48:39Z: TRIAGED+DEDUP sau-c369-A21-rag-restart-100 (auditor Tier-1 A-21 re-signaled known-standing rag OOM-restart root). RAW: RestartCount=100 CUMULATIVE not active (stable 10h, healthy, OOMKilled=false; rate slowing 86->100 = +4.7/day vs prior +9/day). Root tracked by FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX + prior router-20260620T113917Z-rag-restart-watch; HIGH->MEDIUM, no mint. NOTE: Tier-1 A-21 lacks the DEDUP-ENFORCEMENT guard the DATA sweep now has -> candidate hardening. Board clear otherwise; review1 parked. BLIND=1 stale-session, F-1 awaits restart. WIP=0.",
+    "next_action": "Tick 2026-06-23T15:41:40Z: batch-collapsed ~13 queued fires (now 15:33Z). macro_indicators RESOLVED (3.4h fresh, refresh fired 12:13Z SUCCESS — earlier 24h-cross worry void). TRIAGED+DEDUP+DOWNGRADE sau-20260623T153559Z vn-bctc-fetch CRITICAL->INFO: 168h idle is EXPECTED out-of-season (Q2 reporting Jul-Aug, queue clean B-13=0); auditor used wrong 24h threshold vs correct 168h (FIX-BCTC-SLA-THRESHOLD-360 unshipped); root tracked by FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH + prior devteam-20260619T170637Z. No mint. Shipping FIX-BCTC-SLA-THRESHOLD-360 ends recurring false-CRITICAL. Board clear, review1 parked, trail33 ignored. BLIND=1 stale-session, F-1 awaits restart. WIP=0.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-23T11:48:39Z",
+    "updated_at": "2026-06-23T15:41:40Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T11:48:39Z",
+    "last_tick": "2026-06-23T15:41:40Z",
     "router_note": "po-s111: P2->P1 escalate + dispatch of the trail-gitreset data-loss fix after the predicted failure MATERIALIZED (38->10 entries, ~28 appends lost). Head was idle (WIP=0) — safe to repoint. cross-service git+gitignore work → generic developer."
   },
   "narrative": {
@@ -1695,9 +1695,12 @@
         "to": "po",
         "type": "data_stale",
         "summary": "vn-bctc-fetch stale 168h (check B-13, VPS service unhealthy since 2026-06-16)",
-        "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "severity": "INFO",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_triage": "router 2026-06-23T15:41:40Z RAW-triage: FALSE-CRITICAL, downgrade CRITICAL->INFO. vn-bctc-fetch 168h idle is EXPECTED out-of-earnings-season (newest PDF 2026-06-16; VN Q2 reporting Jul-Aug => no new filings to fetch) + queue CLEAN (auditor B-13 = 0 stale pending >72h). Auditor used 24h/86400s threshold but correct out-of-season BCTC threshold is 360min/168h per BACKLOG FIX-BCTC-SLA-THRESHOLD-360 (unshipped => this exact false-positive). DEDUP/ALREADY-OPEN: idle-vs-crash misread tracked by FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH + prior signal devteam-20260619T170637Z-health-idle-vs-crash (TRIAGED); threshold misconfig tracked by FIX-BCTC-SLA-THRESHOLD-360; freshness-exclude-terminal by FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL. NOT a new incident, no mint. Earlier Tier-2 today (06:30,10:31) correctly held vps-bctc as INFO known-standing — this 15:35 run regressed via wrong threshold. NOTE: shipping FIX-BCTC-SLA-THRESHOLD-360 stops the recurring false-CRITICAL. macro_indicators RESOLVED (3.4h fresh, refresh fired 12:13Z).",
+        "router_dup_of": "devteam-20260619T170637Z-health-idle-vs-crash",
+        "router_triaged_at": "2026-06-23T15:41:40Z"
       }
     ]
   },
