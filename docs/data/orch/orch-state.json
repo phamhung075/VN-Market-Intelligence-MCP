@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "dev-mcp-server a7bee01 RETURNED: CI-red RCA resolved. 37ac9a52 (test-only, no prod) aligns FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN T-4 to 1783 canonical string; RAW-verified 14 pass/0 fail; pnpm check EXIT:0. DSI-S3-sector-fin confirmed CI-flaky (passes local clean x3). HEAD=37ac9a52, 5 ahead of origin (1 fix + 4 chores). NEXT GATE: fleet-push lands 37ac9a52 on origin (out-of-band, NOT router-actionable) → CI re-runs green on that SHA → THEN done_verified on FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP (ba1156d8) + FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING (2ea45dd6). 7 'Illegal instruction:4' Bun crashes are pre-existing local-env, not CI fails.",
+    "next_action": "Tick 20260623T0102Z: HOLDING on push. CI-red fix 37ac9a52 verified-green local (14 pass/0 fail, pnpm check EXIT:0) but NOT on origin — origin/main HEAD=8b2faaef CI=failure (expected, precedes fix). Divergence: 6 local commits ahead (1 test-fix 37ac9a52 + 5 chores), origin ahead via cloud chores+merge. NO NEW signals, no orphan keys, WIP=0. Nothing router-actionable: 37ac9a52 must reach origin via out-of-band fleet-push (NOT router push/rebase) → CI re-run green on that SHA → THEN done_verified on FIX-MACRO (ba1156d8) + FIX-FOREIGN-FLOW (2ea45dd6). Review lane also holds FIX-OHLCV-WRITER-P0 (no commit, PO/dev) + FIX-DIGEST-RSI-DUAL-ENGINE (ARCHITECT_REVIEW).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-23T00:59:00Z",
+    "updated_at": "2026-06-23T01:03:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260623T0059Z"
+    "last_tick": "20260623T0102Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
