@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260623T0014Z: no-op verify. 0 NEW signals. FIX-MACRO (ba1156d8) + FIX-FOREIGN-FLOW-BULLETIN (2ea45dd6) review/local-green; done_verified WITHHELD on ci_green_on_subsequent_push. PUSH GATE: origin 19 behind (growing via auditor notebooks + orch chores); router never pushes + tree dirty → fleet-push out-of-band/clean-checkout = user/PO deferred. COVERAGE GAP: 00:00Z cowork data slots (bctc-analyst-slot-4, news-scout/market-watcher offhours) DROPPED — SESSION_BLIND (mcpServers={}) + no cloud backstops (no-remote-trigger directive); fix = F-1 .mcp.json greenlight. Tier-1 auditor aeebcb4 running. WIP0 idle.",
+    "next_action": "Tick 20260623T0046Z: fleet-push LANDED — origin gap 19→3, FIX-MACRO (ba1156d8) + FIX-FOREIGN-FLOW (2ea45dd6) now ON origin/main. BUT ci_green_on_subsequent_push UNMET: CI red on 8b2faaef (3 consecutive SHAs). RCA: 2ea45dd6 string-align broke FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.test.ts T-4 (all-zero movers expects 'dữ liệu không có', got canonical 'pipeline tạm dừng' — possible semantic conflation of zero-flow vs unavailable). DSI-S3-sector-fin passes local clean = suspected CI-flaky. Dispatched dev-mcp-server a7bee01 (WIP1) to resolve test-vs-prod + confirm flaky + full-suite green + RED-PREPUSH. 3 commits ahead = chores only (auditor notebooks + router triage).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-23T00:14:00Z",
+    "updated_at": "2026-06-23T00:48:31Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260623T0014Z"
+    "last_tick": "20260623T0046Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12070,7 +12070,8 @@
         "started_at": "2026-06-22T21:09:29Z",
         "done_verified": false,
         "commit": "2ea45dd6",
-        "review_note": "Code was wrong (test was spec). Canonical copy \"Khối ngoại: Dữ liệu không khả dụng (pipeline tạm dừng)\" applied inline at eveningSummaryJob.ts:228 (no shared const pre-existed). 1783 local-green 7/0, pnpm check clean. done_verified withheld until ci_green_on_subsequent_push (unpushed)."
+        "review_note": "Code was wrong (test was spec). Canonical copy \"Khối ngoại: Dữ liệu không khả dụng (pipeline tạm dừng)\" applied inline at eveningSummaryJob.ts:228 (no shared const pre-existed). 1783 local-green 7/0, pnpm check clean. done_verified withheld until ci_green_on_subsequent_push (unpushed).",
+        "router_note": "regression 00:46Z: 2ea45dd6 broke FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.test.ts T-4 (CI red 8b2faaef); dev-mcp-server a7bee01 dispatched to complete; done_verified stays false until CI green on subsequent push"
       },
       {
         "id": "PROBE-CI-240-PRICE-PIPELINE-ENV-RED",
