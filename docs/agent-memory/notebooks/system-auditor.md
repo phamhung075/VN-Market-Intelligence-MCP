@@ -3,31 +3,31 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c386 · 2026-06-23T20:43:51Z
-### Audit Run Tier-1 (20:43 UTC 2026-06-23)
+## c387 · 2026-06-23T21:13:58Z
+### Audit Run Tier-1 (21:13 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L4-L15]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L19-L23]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 33.71% (690.4MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 99+ jobs all 100%/98%+ success rates. NO new signals emitted.
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L13]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L17-L21]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 39.30% (804.8MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 130+ jobs all 100%/98%+ success rates. NO new signals emitted.
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-23T20:43:00Z ===
+=== AUDITOR PROBE 2026-06-23T21:13:09Z ===
 
 --- docker ps -a ---
-NAMES                                             STATUS                  IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 3 hours (healthy)    vn-market-intelligence-mcp-mcp-server           3 hours ago
-vn-market-intelligence-mcp-frontend-1             Up 47 hours (healthy)   vn-market-intelligence-mcp-frontend             47 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 7 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        7 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)     vn-market-intelligence-mcp-stock-price          8 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)     vn-market-intelligence-mcp-technical-analysis   8 days ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)     vn-market-intelligence-mcp-macro-indicators     8 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    9 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)    vn-market-intelligence-mcp-api-gateway          12 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)    vn-market-intelligence-mcp-rag-service          12 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 12 days (healthy)    vn-market-intelligence-mcp-news-fetch           12 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 12 days (healthy)    vn-market-intelligence-mcp-alert-engine         12 days ago
-headroom-proxy                                    Up 10 days              headroom-proxy:local                            2 weeks ago
-mcp-gateway                                       Up 12 days (healthy)    mcpservergatway-gateway                         5 weeks ago
+NAMES                                             STATUS                 IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 3 hours (healthy)   vn-market-intelligence-mcp-mcp-server           3 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 2 days (healthy)    vn-market-intelligence-mcp-frontend             2 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 7 days (healthy)    vn-market-intelligence-mcp-pdf-extractor        7 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)    vn-market-intelligence-mcp-stock-price          8 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)    vn-market-intelligence-mcp-technical-analysis   8 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)    vn-market-intelligence-mcp-macro-indicators     8 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)    vn-market-intelligence-mcp-kinh-dich-service    9 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)   vn-market-intelligence-mcp-api-gateway          12 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)   vn-market-intelligence-mcp-rag-service          12 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 12 days (healthy)   vn-market-intelligence-mcp-news-fetch           12 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 12 days (healthy)   vn-market-intelligence-mcp-alert-engine         13 days ago
+headroom-proxy                                    Up 11 days             headroom-proxy:local                            2 weeks ago
+mcp-gateway                                       Up 12 days (healthy)   mcpservergatway-gateway                         5 weeks ago
 
 --- health endpoints ---
 [health] mcp-server:3000/health OK (HTTP 200)
@@ -40,7 +40,7 @@ mcp-gateway                                       Up 12 days (healthy)    mcpser
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=33.71% MemUsage=690.4MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=39.30% MemUsage=804.8MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
@@ -57,14 +57,14 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 pass_count=3/3 → MAJORITY PASS → A-20 PASS override
 ```
 
+## c386 · 2026-06-23T20:43:51Z
+### Audit Run Tier-1 (20:43 UTC 2026-06-23)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L4-L15]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L19-L23]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 33.71% (690.4MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 34% (27Gi avail / 233Gi) PASS. Cron health: 99+ jobs all 100%/98%+ success rates. NO new signals emitted.
+
 ## c385 · 2026-06-23T20:14:12Z
 ### Audit Run Tier-1 (20:13 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
 - Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L4-L15]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L19-L23]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0 (optimal), Memory 23.17% (474.5MiB / 2GiB, healthy). rag-service RestartCount=103 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, no jump), Status=UP healthy. Disk 35% (26Gi avail / 233Gi) PASS. Cron health: 99+ jobs all 100%/98%+ success rates. NO new signals emitted.
-
-## c384 · 2026-06-23T19:43:47Z
-### Audit Run Tier-1 (19:43 UTC 2026-06-23)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L1-L12]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L17-L21]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0, Memory 11.75% (240.6MiB / 2GiB, optimal). rag-service RestartCount=103 (no jump vs previous 103), Status=UP healthy. KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, dedup rule satisfied. Disk 34% (27Gi avail / 233Gi) PASS. All 93+ cron jobs 100% success rate. NO new signals emitted.
