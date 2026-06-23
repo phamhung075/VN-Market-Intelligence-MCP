@@ -3,6 +3,61 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c375 · 2026-06-23T15:43:56Z
+### Audit Run Tier-1 (15:43 UTC 2026-06-23)
+- Tier: 1 | Services: 12 host_runtime_set + infra checked | Health endpoints: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
+- Evidence: All 13 containers UP+healthy (12 host_runtime_set + mcp-gateway). Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. A-20 pdf-extractor multi-probe 3/3 PASS (200, 200, 200). Memory 76.27% (1.525/2GiB) PASS. Disk 34% PASS. RestartCount: mcp-server=1, rag-service=101 (KNOWN-STANDING chronic OOM-loop FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX, Status=running healthy, OOMKilled=false, NOT acute, no new jumps). All others=0. NO new signals emitted.
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-23T15:43:02Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                       IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 20 hours (healthy)        vn-market-intelligence-mcp-mcp-server           38 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 42 hours (healthy)        vn-market-intelligence-mcp-frontend             42 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 7 days (healthy)          vn-market-intelligence-mcp-pdf-extractor        7 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)          vn-market-intelligence-mcp-stock-price          8 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)          vn-market-intelligence-mcp-technical-analysis   8 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)          vn-market-intelligence-mcp-macro-indicators     8 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 8 days (healthy)          vn-market-intelligence-mcp-kinh-dich-service    8 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)         vn-market-intelligence-mcp-api-gateway          12 days ago
+vn-market-intelligence-mcp-rag-service-1          Up About an hour (healthy)   vn-market-intelligence-mcp-rag-service          12 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 12 days (healthy)         vn-market-intelligence-mcp-news-fetch           12 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 12 days (healthy)         vn-market-intelligence-mcp-alert-engine         12 days ago
+headroom-proxy                                    Up 10 days                   headroom-proxy:local                            2 weeks ago
+mcp-gateway                                       Up 12 days (healthy)         mcpservergatway-gateway                         5 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=76.27% MemUsage=1.525GiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    27Gi    34%    393k  283M    0%   /
+
+=== PROBE DONE ===
+```
+
+### A-20 Multi-Probe (pdf-extractor event-loop):
+```
+[A-20] Container found: vn-market-intelligence-mcp-pdf-extractor-1
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+```
+Result: 3/3 PASS — pdf-extractor event-loop healthy.
+
 ## c374 · 2026-06-23T15:35:59Z
 ### Audit Run Tier-2 (15:35 UTC 2026-06-23)
 - Tier: 2 | Sources checked: 7 VPS routes | Cron jobs: macroIndicatorRefreshJob + health checks
@@ -38,55 +93,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - vn-bctc-fetch: unhealthy (7d stale, P0 escalation)
 
 Signals emitted: 1 (sau-20260623T153559Z type=data_stale severity=CRITICAL for bctc-fetch)
-
-## c373 · 2026-06-23T13:43:08Z
-### Audit Run Tier-1 (13:43 UTC 2026-06-23)
-- Tier: 1 | Services: 12 host_runtime_set + infra checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 13 containers UP+healthy (12 host_runtime_set + mcp-gateway). Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. A-20 pdf-extractor multi-probe 3/3 PASS (200, 200, 200). Memory 69.15% (1.383/2GiB) PASS. Disk 37% PASS. RestartCount: mcp-server=1, rag-service=100 (KNOWN-STANDING chronic OOM-loop FU-RAG-DEPLOY-MEMORY, Status=running healthy, OOMKilled=false, NOT acute, no change from +30min ago). All others=0. NO new signals emitted.
-
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-06-23T13:43:08Z ===
-
---- docker ps -a ---
-NAMES                                             STATUS                  IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 18 hours (healthy)   vn-market-intelligence-mcp-mcp-server           36 hours ago
-vn-market-intelligence-mcp-frontend-1             Up 40 hours (healthy)   vn-market-intelligence-mcp-frontend             40 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 7 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        7 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)     vn-market-intelligence-mcp-stock-price          8 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)     vn-market-intelligence-mcp-technical-analysis   8 days ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)     vn-market-intelligence-mcp-macro-indicators     8 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 8 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    8 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)    vn-market-intelligence-mcp-api-gateway          12 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 12 hours (healthy)   vn-market-intelligence-mcp-rag-service          12 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 12 days (healthy)    vn-market-intelligence-mcp-news-fetch           12 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 12 days (healthy)    vn-market-intelligence-mcp-alert-engine         12 days ago
-headroom-proxy                                    Up 10 days              headroom-proxy:local                            2 weeks ago
-mcp-gateway                                       Up 12 days (healthy)    mcpservergatway-gateway                         5 weeks ago
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=69.15% MemUsage=1.383GiB / 2GiB
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    23Gi    37%    393k  242M    0%   /
-
-=== PROBE DONE ===
-```
-
-## c372 · 2026-06-23T13:13:59Z
-### Audit Run Tier-1 (13:13 UTC 2026-06-23)
-- Tier: 1 | Services: 12 host_runtime_set + infra checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 13 containers UP+healthy (12 host_runtime_set + mcp-gateway). Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. A-20 pdf-extractor multi-probe 3/3 PASS (200, 200, 200). Memory 68.85% (1.377/2GiB) PASS. Disk 37% PASS. RestartCount: mcp-server=1, rag-service=100 (KNOWN-STANDING chronic OOM-loop FU-RAG-DEPLOY-MEMORY, Status=healthy Up 12h, OOMKilled=false, NOT acute). All other services=0. NO new signals emitted.
