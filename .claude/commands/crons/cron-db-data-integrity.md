@@ -121,6 +121,14 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
     .signal_queue rows — if the SAME table+class+defect is already NEW/READ (open) or was reported
     unchanged in the last scan, do NOT write a duplicate; note "already-open" in the history entry.
 
+  ⚠ DEDUP-ENFORCEMENT — an anomaly is ALREADY-OPEN (do NOT write a new signal) if EITHER
+    (a) a .task_board FIX-* task tracks its root, OR (b) a prior .signal_queue row for the same
+    table+defect has status NEW / READ / TRIAGED / ACUTE-RESOLVED-ROOT-TRACKED.
+    Canonical recurring example: the held scheduler_locks weeklyPortfolioReport lock is
+    board-tracked by FIX-SCHEDULER-LOCK-NO-RELEASE-TTL — RECORD-AND-LEAVE, never re-signal,
+    regardless of lock age or weekly re-acquisition. Once FIX-SCHEDULER-LOCK-NO-RELEASE-TTL ships
+    the example self-resolves, but this generic guard stays valid for any future board-tracked root.
+
   ⚠ DETECTION-ONLY — NEVER RESOLVE, NEVER CLAIM A FIX (mandatory boundary):
     You ONLY ever write a NEW row, or leave an existing open row untouched. You MUST NOT flip
     any signal status to DONE / DONE-LIVE-VERIFIED / RESOLVED / SUPERSEDED / TRIAGED — resolving a
