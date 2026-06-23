@@ -1,27 +1,27 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
-## c355 · 2026-06-23T05:43:41Z
-### Audit Run Tier-1 (05:43 UTC 2026-06-23)
+## c356 · 2026-06-23T06:13:57Z
+### Audit Run Tier-1 (06:13 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 | Status: HEALTHY
-- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–26]. A-20 pdf-extractor 3/3 multi-probe PASS. Memory 64.78% PASS. Restart count=1 PASS. Disk 36% PASS.
+- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–26]. A-20 pdf-extractor 3/3 multi-probe PASS. Memory 45.05% PASS. Restart count=1 PASS. Disk 35% PASS.
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-23T05:43:02Z ===
+=== AUDITOR PROBE 2026-06-23T06:13:14Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
 vn-market-intelligence-mcp-mcp-server-1           Up 10 hours (healthy)   vn-market-intelligence-mcp-mcp-server           28 hours ago
-vn-market-intelligence-mcp-frontend-1             Up 32 hours (healthy)   vn-market-intelligence-mcp-frontend             32 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 33 hours (healthy)   vn-market-intelligence-mcp-frontend             33 hours ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 7 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        7 days ago
 vn-market-intelligence-mcp-stock-price-1          Up 7 days (healthy)     vn-market-intelligence-mcp-stock-price          7 days ago
 vn-market-intelligence-mcp-technical-analysis-1   Up 7 days (healthy)     vn-market-intelligence-mcp-technical-analysis   7 days ago
 vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)     vn-market-intelligence-mcp-macro-indicators     8 days ago
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 8 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    8 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 11 days (healthy)    vn-market-intelligence-mcp-api-gateway          11 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 4 hours (healthy)    vn-market-intelligence-mcp-rag-service          12 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 5 hours (healthy)    vn-market-intelligence-mcp-rag-service          12 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 12 days (healthy)    vn-market-intelligence-mcp-news-fetch           12 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 12 days (healthy)    vn-market-intelligence-mcp-alert-engine         12 days ago
 headroom-proxy                                    Up 10 days              headroom-proxy:local                            2 weeks ago
@@ -38,22 +38,23 @@ mcp-gateway                                       Up 12 days (healthy)    mcpser
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=64.78% MemUsage=1.296GiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=45.05% MemUsage=922.7MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    24Gi    36%    393k  253M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  263M    0%   /
 
 === PROBE DONE ===
 ```
+
+## c355 · 2026-06-23T05:43:41Z
+### Audit Run Tier-1 (05:43 UTC 2026-06-23)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 | Status: HEALTHY
+- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–26]. A-20 pdf-extractor 3/3 multi-probe PASS. Memory 64.78% PASS. Restart count=1 PASS. Disk 36% PASS.
 
 ## c354 · 2026-06-23T05:14:09Z
 ### Audit Run Tier-1 (05:14 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 | Status: HEALTHY
 - Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–26]. A-20 pdf-extractor 3/3 multi-probe PASS. Memory 63.48% PASS. Restart count=1 PASS. Disk 35% PASS.
-
-## c353 · 2026-06-23T04:43:36Z
-### Audit Run Tier-1 (04:43 UTC 2026-06-23)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 | Status: HEALTHY
