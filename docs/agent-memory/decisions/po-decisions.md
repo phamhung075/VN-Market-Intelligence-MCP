@@ -1,4 +1,35 @@
 
+## CI-FLEET-PUSH-DEADLOCK reconcile — DECISION (2026-06-23T01:4xZ)
+author: po (dev-team Step 1 triage). signal=docs/signals/fleet-push-abort-push-fail-20260622T194948Z.json (auto-push-abort, ahead=21 behind=104→111 growing). Router RAW-verified all git facts; PO decides reconcile path only.
+
+### Situation (router-verified, do-not-re-derive)
+- local HEAD 5ecae5f2, ahead=9 (1 real fix 37ac9a52 test-only + 8 chore/orch/notebook), behind=111 (GROWING) vs origin/main b1d32758.
+- ONLY code file in behind-set = FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.test.ts — same file 37ac9a52 touches. Fleet conflict-surface guard aborts because that code file is in origin's behind-set, not in HEAD.
+- DEADLOCK: origin has prod 2ea45dd6 (formatForeignFlowSection→canonical "Dữ liệu không khả dụng (pipeline tạm dừng)") but origin's TEST still asserts OLD "dữ liệu không có" → origin CI RED on this exact test. 37ac9a52 is the fix (test→canonical), NOT on origin.
+- 37ac9a52 pre-image == OLD string == origin's current file → rebase of local onto origin replays 37ac9a52 CLEANLY (no conflict on that file). Router did NOT rebase (standing constraint).
+
+### Decision: OPTION (a) — clean-checkout reconcile (rebase 9-ahead onto origin/main, out-of-band push)
+NOT (b) cherry-pick-only. Rationale: (b) puts origin AHEAD of local on a 10th commit while local stays 111-behind, so the fleet conflict-surface guard KEEPS ABORTING and the 8 local chores never reconcile — trading one deadlock for a slower-growing one. (a) is verified-safe: router confirmed the only code-file divergence replays cleanly, so the rebase is NOT a conflict gamble; it absorbs origin's 111, replays the green test-fix, and leaves local==origin so the fleet guard goes quiet permanently. The 8 chores are notebook/orch churn — replaying them on origin is harmless and keeps the agent-memory trail intact (cherry-pick would orphan them). Must run out-of-band (clean checkout) — NEVER router/this-tree rebase (strands bg agents: feedback_push_blocked_by_perpetual_dirty_tree).
+
+### Exact out-of-band commands (operator runs from a CLEAN checkout, NOT this working tree)
+```
+git clone <repo-url> /tmp/vnm-reconcile && cd /tmp/vnm-reconcile   # or: git worktree add /tmp/vnm-reconcile main from a clean clone
+git fetch origin
+git checkout -B reconcile origin/main                              # land on origin tip (111 ahead of local)
+git cherry 5ecae5f2 origin/main || true                            # sanity: shows the 9 local-ahead to replay
+git rebase --onto origin/main b1d32758 5ecae5f2                    # replay local 9-ahead (incl 37ac9a52) onto origin
+pnpm check && bun test apps/mcp-server/src/__tests__/FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN.test.ts   # gate: green BEFORE push
+git push origin HEAD:main                                          # out-of-band push; clears origin CI red
+```
+(If b1d32758 is not the exact local merge-base, operator uses `git merge-base 5ecae5f2 origin/main` for the `--onto ... <base> 5ecae5f2` base arg. Push only after pnpm check EXIT:0 + the foreign-flow test green — do NOT push red, feedback_red_prepush_strands_fleet.)
+
+### done_verified ruling
+- FIX-MACRO (ba1156d8) + FIX-FOREIGN-FLOW (2ea45dd6): WITHHELD until origin CI re-runs GREEN on the pushed SHA. The prod code is already on origin (2ea45dd6); the ONLY thing red is the stale test, which 37ac9a52 fixes on push. Grant done_verified once: (1) push lands, (2) origin Actions run on the new HEAD = success, (3) the foreign-flow test green in CI (not just local). Until then, local-green ≠ origin-done (feedback_ci_green_gate_blocked_by_cloud_chore_divergence).
+- Fleet conflict-surface guard: NO new follow-on needed — it is CORRECT to abort; it is a symptom, not a bug. Once (a) lands and local==origin, the test-file divergence clears and the guard goes quiet on its own. It will KEEP aborting (correctly) every fire until the out-of-band push completes — that is expected backpressure, not a defect. Do NOT lower the threshold or weaken the guard to silence it (that would let real divergence through). If the operator cannot run (a) promptly and the abort-signal noise needs damping, the ONLY acceptable follow-on is a one-line abort-cooldown/dedup so the same unactionable abort doesn't re-signal every tick — NOT a guard-logic change. Flag-only, P-low, not minting now.
+
+### what-considered
+(a) clean rebase vs (b) cherry-pick-only vs (c) weaken-guard. Chose (a): verified-safe replay, permanently clears the guard, preserves chore trail. Rejected (b): leaves local 111-behind → guard keeps aborting. Rejected (c): guard is doing its job; weakening it admits real divergence. No board mutation (this is a push/CI reconcile, not a task) — head router_note set, signal can be drained as triaged-decision-recorded.
+
 ## NEXT-LEVEL ROADMAP — REVISION 2 (2026-06-22, supersedes Rev-1 below)
 author: po (autonomous, direction-setting, next-level cycle requested by router for "po + architect next level"). NOT minting task_board rows beyond normal flow — this is a roadmap; router routes to architect/dev-team after.
 
