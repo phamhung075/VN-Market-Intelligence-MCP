@@ -1,19 +1,24 @@
 # PO Notebook
 
-_Last: 2026-06-21T08:42:00Z_
+_Last: 2026-06-23T17:27:00Z_
 
-## This cycle — dashboard "Dự báo AI & Kết quả" prediction-resolver triage (2026-06-21, router-verified live)
-Router handed a live-verified diagnosis (named-vol /app/data/market.db via mcp-server bun:sqlite) of the prediction-claims dashboard feature reported not-working. Task = DEDUP first, then mint-or-fold. Result: FOLDED, no dup.
+## This cycle — S2 DATA-HONESTY thread kickoff (user-approved; RAW-verified live)
+Opened the approved real-data-only thread. RAW-probed all 4 items BEFORE tasking — 2 confirmed, 2 dropped.
 
-- DEDUP: board has 4 prediction tasks. 3 DISTINCT (FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP done_verified double-post; FIX-PREDICTION-SIGNALS-EMPTY = prediction_signals poll write-gap, DIFFERENT table; FIX-FB-PREDICTION-CALIBRATION-LOOP poster ledger). PRED-RESOLVER-GAP-FIX (backlog, owner dev, apps/mcp-server) IS the same producer<->resolver contract bug → folded into it. Mentioned test ids 1125/1154 are test files not board tasks.
-- ENRICHED prior framing: old task said resolver "never fetches actual_price" for ids 6/7. Live diagnosis SUPERSEDES — bar is MISSING on exact resolution_date (weekend) because resolver does EXACT-date OHLCV equality while create_prediction_claim computes resolution_date in CALENDAR days (evidenceTools.ts:378-380, code-confirmed). Added PRODUCER leg (calendar-day + neutral/null-target default) + same-DB LIVE re-verify gate (self-confirming-test trap, stuck ids 1,6,7,8,9).
-- PRODUCT CALL (neutral predictions): KEEP producing neutral claims + ADD neutral-band rule (|move from creation_price| < 2.0% over trading-day window = HIT else MISS; legacy creation_price=NULL → explicit excluded status, never NULL). Rejecting neutral would bias hit-rate to directional-only + hide flat-call accuracy.
-- Promoted backlog→ready + head dispatch (WIP=0 idle, spec complete, single zone → dev direct). P2 (dashboard quality not safety). digest-predict weekly cron untouched (working-as-designed).
-- Script: scripts/po-s110-pred-resolver-gap-fold-tradingday-producer-promote.jq (idempotent, conservation-guarded, re-run delta 0).
+CONFIRMED (tasked):
+- **FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION** (P1, ready LEAD, dev-mcp-server). Live named-vol /app/data/market.db (bun:sqlite): agent_signals confidence_score = 3316/3874 (86%) at literal 50; ALL recent verified_decision rows (dashboard SIGNALS dominant type) = 50, incl today 16:32Z. Prior FIX-SIGNAL-CONFIDENCE-DEFAULT-50 (done_verified on GREEN BUILD) only wired finding_data.confidence-carrying producers (agentSignalTools.ts:302-307); verified_decision producer supplies none → COLUMN DEFAULT 50 (agentSignalStore.ts:341 + schema-news.ts:104). REOPENED — plausibility-check gap (done_verified ≠ live-varied). Also harden read-fallback stockSignalsHandler.ts:224 `?? 50` → explicit unknown.
+- **FIX-MACRO-SNAPSHOT-DELTAS-NULL** (P2, ready, dev-macro-indicators). promoted backlog→ready. get_macro_snapshot LIVE 17:25Z: oil/gold/usdVndDelta=null, direction=unknown; vnIndexDelta=11.13 up. By-design gap (dtos.go L120-129, no prev-session persist). Fully specced.
+
+DROPPED (RAW evidence):
+- conviction `=0.5` → convictionScorer.ts 0.5 are all documented neutral-fallbacks for genuinely-MISSING inputs (L34/169/179/192/252...), NOT a mask of computed data. NO task.
+- source-confidence `1.0` → finalizeBctcRefine/bctcCorrectionService source_confidence=1.0 is CORRECT semantics for human-confirmed BCTC corrections (100% confident by definition). NO task.
+
+DoD (the real bar): live VARIED real values vs named-vol DB / live tool — NOT green build. done_verified WITHHELD on both until a live probe shows non-constant confidence + signed non-null oil/gold/fx deltas.
+
+Mechanics: S2 sprint goal authored; head→lead→ba; ba→architect→pm→dev-{mcp-server,macro-indicators}→qa per zone. Script scripts/po-s111-s2-data-honesty-kickoff.jq (idempotent, conservation-guarded +1 mint, re-run delta 0). Committed 6fffe612.
 
 ## Carry-over
-- PRED-RESOLVER-GAP-FIX now ready[] + head=in_progress next_agent=dev. Router to spawn dev (apps/mcp-server). qa gate = SAME-DB live re-verify of stuck ids, NOT green tests.
-- DRAIN-STATEFILE-DATALOSS (prior cycle) — verify it landed if a recurrence signal surfaces.
-
-## Prior cycle — evening_summary 2026-06-19 data-quality triage (RAW-verified via code-read + named-vol DB sidecar)
-4 CONFIRMED + minted, 1 DISMISSED: FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE (P1 multi), FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME (P1), FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN (P2), FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR (P3); D4 "1.825" = VN dot-thousands render, dismissed.
+- S2 lead dispatched: head=FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION in_progress/next_agent=ba. Router to spawn ba (apps/mcp-server). Macro-delta queued ready[1] (dev-macro-indicators) behind it.
+- Both fixes rebuild_required:true — ops rebuild + LIVE re-probe gates done_verified, NOT tests.
+- Stale head was pointing at FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS (in_progress empty) — repointed at S2 lead this cycle.
+- PRED-RESOLVER-GAP-FIX (prior cycle) — verify if a recurrence signal surfaces.
