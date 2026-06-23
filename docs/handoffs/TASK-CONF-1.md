@@ -288,6 +288,55 @@ Task: TASK-CONF-1
 
 ---
 
+## [Developer] Implementation — 2026-06-23
+
+**Status:** REVIEW — code shipped, rebuild required, done_verified WITHHELD.
+
+### What was changed
+
+**Commit e3386bdf** (already on main) contains all 5 source fixes:
+
+1. **alertStore.ts** — added module-private `severityToConfidence(severity)` helper (critical=90, high=75, warning/medium=60, low=40, default=60). Both `storeAlerts` and `storeAlertsFromCommander` INSERT into `agent_signals` now include the `confidence_score` column, derived from `alert.confidence_score` when in [0,100] or from the severity fallback otherwise. NFR-C: function is not exported, no domain/interface imports.
+
+2. **schema-news.ts:106** — `ALTER TABLE agent_signals ADD COLUMN confidence_score INTEGER` (DEFAULT 50 removed). Only affects fresh DB initializations; live named-vol column is unaffected by ALTER TABLE on an existing DB.
+
+3. **agentSignalStore.ts:134,341** — `PostSignalInput.confidence_score` widened to `number | null | undefined`; `_postSignalInner` default changed from `= 50` to `= null`.
+
+4. **agentSignalTools.ts:300 comment + 305-327** — `derivedConfidenceScore` typed as `number | null`, assigned `null` (not `undefined`) when `finding_data.confidence` absent; always explicitly spread as `confidence_score: derivedConfidenceScore`. Updated comment.
+
+5. **stockSignalsHandler.ts:224** — `?? 50` → `?? null`.
+
+**New test file** (this session): `apps/mcp-server/src/infrastructure/db/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50-verified-decision.test.ts` — T-1..T-4 plus 6 additional edge-case assertions. All 10 pass.
+
+**5 existing test makeDb() helpers** — `DEFAULT 50` removed from `confidence_score INTEGER` column definition in:
+- `src/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts`
+- `src/__tests__/1786-earnings-conflict-detection.test.ts`
+- `src/__tests__/1862g-signal-dedup.test.ts`
+- `src/__tests__/1920g-prediction-claims.test.ts`
+- `src/__tests__/1804-price-validation-override.test.ts`
+
+### Test result
+
+Full suite: `bun test` — 13,351 pass, 42 skip, 105 fail. The 105 failures are pre-existing (unrelated to this task; all in `_deprecated/` and other unrelated test files). Files touched by this task: 83 pass, 0 fail.
+
+New T-1..T-4 test file: 10 pass, 0 fail.
+
+### REBUILD_REQUIRED: true
+
+Schema + code changes. Ops must rebuild and redeploy the `mcp-server` container before live probe.
+
+### done_verified: WITHHELD
+
+Post-rebuild live probe required:
+- AC-1: query named-vol DB for `verified_decision` rows with `created_at >= datetime('now', '-1 day')` — must show ≥2 distinct non-50 values
+- AC-2: `get_stock_signals` API — SIGNALS-LAST-10 panel shows non-constant confidence
+- AC-3: row with NULL confidence_score returns `confidence_score: null` from API
+- AC-4: JOIN alerts+agent_signals spot-check — CRITICAL=90, WARNING=60
+
+### NEXT agent: QA
+
+---
+
 ## Decision Journal
 
 Task created by PM 2026-06-23T17:28Z. Architect atomization ratified per docs/handoffs/FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION-BA-spec.md § Task Atomization. No design changes; build to architect spec. NEXT: dev-mcp-server picks up and implements.
