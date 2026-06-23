@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-23T18:08:38Z: *** F-1 CONFIRMED IN PRODUCTION *** — bctc-analyst-slot-2 produced REAL analysis via wired gateway (get_sector_comparison FPT live 18:04Z, VN-Index 1869.04, FPT Q1-26 PE13.8x ROE28.3% EY+2.25pp M0/F7; signal-bus #7185 conf 0.8). Multi-day blind data gap CLOSED. TASK-CONF-1 done_verified still WITHHELD: re-probe shows 0 new agent_signals post-rebuild (bctc uses signal-bus not agent_signals; verified_decision rows need alert/commander flow which has not fired post-rebuild) — re-probe next cycle/market-open. OBSERVATION: bctc-analyst wrote docs/signals/bctc_signal_FPT_*.json OUTSIDE its declared write scope (notebook+briefs+cache only) — minor scope-drift, canonical post is signal-bus #7185; candidate cleanup, not acting destructively. Uncommitted agent notebooks/decision-docs accruing (architect/ba/sprint-docs) = owning-agent/janitor scope, router not sweeping. FIX-MACRO-SNAPSHOT-DELTAS-NULL P2 held; TASK-CONF-2 FE blocked. WIP qa1+parent.",
-    "updated_at": "2026-06-23T18:08:38Z",
+    "next_action": "Tick 2026-06-23T19:53:16Z: MARKET OUTPUT LAYER VERIFIED RESTORED. chef-evening dish RAW-verified REAL+LANDED: live get_macro_snapshot matches cited carry 1.37pp/EY 7.05%/VNI 1869.04 (is_estimate=false); posted market_messages id852 19:49:24Z (from_agent=mcp-user known chef quirk, verified content+id>baseline 851, not double-post). Full pipeline confirmed real post-unblind: data agents (bctc-analyst FPT) + MARKET output (chef) both genuine. Dish ran degraded-floor (empty agent_signals; news-scout/market-watcher 20:00 offhours not yet fired) but real-data floor held. tran-ngoc-bau audits dish at 20:13. RAW probe also re-confirmed macro oil/gold/usdVnd deltas STILL null = FIX-MACRO-SNAPSHOT-DELTAS-NULL P2 valid (held for PO owner-assign). TASK-CONF-1 done_verified still pends market-open (~02:00Z) for new verified_decision rows. WIP fine.",
+    "updated_at": "2026-06-23T19:53:16Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T18:08:38Z",
+    "last_tick": "2026-06-23T19:53:16Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
