@@ -1,5 +1,98 @@
 # PM — Notebook
 
+## c320 FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION TASK ATOMIZATION · 2026-06-23T172813Z
+
+**PARENT:** BA spec finalized + Architect Brownfield Findings ratified (FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION-BA-spec.md § [Architect] Brownfield Findings, 4 RATIFICATIONS resolved)
+
+**INPUT:** Parent task in READY, architect complete with CONF-1..CONF-4 decisions locked, PM init flow
+
+**OUTPUT:** Two atomic subtasks (TASK-CONF-1, TASK-CONF-2) created with explicit sequential dependency. Parent task moved to DECOMPOSED. Board updated atomically. Handoff files generated. Decision journal recorded.
+
+**Atomization rationale:**
+- **Zone split:** mcp-server (TASK-CONF-1, backend) + frontend (TASK-CONF-2, frontend) — separate repos, no file conflict
+- **Sequential dependency:** Frontend AC-3 (render null as "—") only verifiable after backend deploys null rows to DB. TASK-CONF-2 blocked-by TASK-CONF-1.
+- **Architect ratified:** CONF-1 severity-to-int map location (inline in alertStore.ts, DDD-safe), CONF-2 type widening (number|null|undefined, callers safe), CONF-3 cowork path (no FR-6 needed), CONF-4 frontend effort (3 files, separate task). No negotiation.
+- **Size accuracy:** TASK-CONF-1 = M (~2h): 5 files + 5 test makeDb() updates + new unit tests. TASK-CONF-2 = S (~1h): 3 files, type + mapper + render guard.
+
+**Task specs created:**
+1. **TASK-CONF-1** (dev-mcp-server) — Path A wire (severityToConfidence inline in alertStore.ts, wire both storeAlerts + storeAlertsFromCommander). Path B + C (remove DEFAULT 50, pass null). Path D (read-path ?? null). Test updates (5 makeDb() helpers + new T-1..T-4 unit tests). AC-1..AC-5 live probe (named-vol DB varied values, severity mapping, null-honest). BLOCKS TASK-CONF-2.
+2. **TASK-CONF-2** (dev-frontend) — Client mapper null-safe (??null not ??0). Domain type widening (number|null). Render guard null-check. AC-3 live dashboard "—" for null. DEPENDS TASK-CONF-1.
+
+**Board mutation (atomic):**
+- **Before:** ready=[FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION, FIX-MACRO-SNAPSHOT-DELTAS-NULL], in_progress=[], backlog=[278]
+- **After:** ready=[FIX-MACRO-SNAPSHOT-DELTAS-NULL, TASK-CONF-1], in_progress=[FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION (DECOMPOSED)], backlog=[TASK-CONF-2 (blocked) + 278]
+- Parent moved ready→in_progress/DECOMPOSED (preserves history)
+- TASK-CONF-1 added to ready/TODO (immediate dispatch)
+- TASK-CONF-2 added to backlog/BACKLOG with depends_on:[TASK-CONF-1]
+
+**Handoffs created:**
+1. docs/handoffs/TASK-CONF-1.md (backend implementation spec, FR-1..FR-5, test updates, AC-1..AC-5, risk RISK-1..5)
+2. docs/handoffs/TASK-CONF-2.md (frontend implementation spec, FR-F-1..FR-F-3, AC-3, risk RISK-F-1..3)
+
+**Decision journal:** docs/agent-memory/decisions/sprint-S2-DATA-HONESTY-conf-task-atomization.md (DJ-GATE-1..6: ratification, board mutation, handoff creation, verification gates, WIP capacity, follow-ons)
+
+**Done_verified gates (LIVE probe, not green build):**
+- TASK-CONF-1: AC-1 (named-vol DB ≥2 non-50 values) + AC-2 (API varied confidence) + AC-3 (null-honest) + AC-4 (severity mapping)
+- TASK-CONF-2: AC-3 (dashboard "—" for null) — only verifiable after TASK-CONF-1 deployed + DB contains null rows
+
+**Commit discipline:** docs/data/orch/orch-state.json (board mutation, atomic temp→rename) + docs/handoffs/TASK-CONF-1.md + docs/handoffs/TASK-CONF-2.md + docs/agent-memory/decisions/sprint-S2-DATA-HONESTY-conf-task-atomization.md. Explicit paths only (no -A).
+
+**WIP state:** Dispatch TASK-CONF-1 immediately (1/2 WIP). TASK-CONF-2 blocked in backlog (unblocks on TASK-CONF-1 done_verified). Max concurrent = 2 lanes, compliant.
+
+**Key PM decisions:**
+1. Accepted architect atomization as-written (no renegotiation; CONF-1..CONF-4 all ratified)
+2. Blocked TASK-CONF-2 explicitly to enforce sequential deployment (frontend AC requires backend DB state)
+3. Set done_verified gates on LIVE probe, not build-green (self-confirming test failure mode lesson applies)
+4. Left legacy 3316 confidence=50 rows untouched (FR-5: no backfill, honest honesty posture)
+
+**Follow-ons (queued backlog):** None this cycle. Edge-case emergence after deployment may trigger FR-6 (cowork path assembly→signal threading), escalate to architect.
+
+**Verification & escalation checks:**
+- Architect ratifications complete (CONF-1..4 locked)
+- No design negotiation
+- Zone split prevents file conflicts
+- Sequential dependency explicit + blocking
+- WIP within capacity
+- done_verified gates concrete (live probe, not badge)
+
+**DISPATCH WAVE SEQUENCING:**
+- **NOW (WIP available):** TASK-CONF-1 → dev-mcp-server (1/2 WIP)
+- **After TASK-CONF-1 done_verified + rebuild:** TASK-CONF-2 → dev-frontend (2/2 WIP)
+- **Both done_verified:** Parent task marked COMPLETE; sprint S2-DATA-HONESTY ready for next phase (if any)
+
+**Key risk mitigations:**
+- **Test schema drift (RISK-2):** Handoff explicitly lists 5 makeDb() helpers requiring update; no self-confirming silent failures
+- **DDD import (RISK-1):** Handoff constraint: severityToConfidence() module-private, no domain/interface imports
+- **Frontend null conflation (RISK-F-3):** Handoff clarifies: SIGNALS-LAST-10 panel (AgentSignal.confidence), not ALERTS panel (alert.confidenceScore)
+- **Sentinel bootstrap (RISK-4):** created_at filter in AC-1 preserves legacy rows; no tightening post-verify
+
+**Commit message:**
+```
+chore(pm/S2-DATA-HONESTY): atomize FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION into TASK-CONF-1 + TASK-CONF-2
+
+- TASK-CONF-1 (dev-mcp-server, M, ready/TODO): backend wire verified_decision conviction → confidence_score, remove DEFAULT 50, harden null handling
+  - alertStore: severityToConfidence() inline, wire both storeAlerts + storeAlertsFromCommander
+  - schema-news: remove DEFAULT 50 from ALTER TABLE (fresh DBs only)
+  - agentSignalStore/agentSignalTools/stockSignalsHandler: null-safe type + pass null not undefined
+  - test updates: 5 makeDb() helpers + new unit tests T-1..T-4
+  - AC-1..AC-5 live DB probe (named-vol varied values, severity mapping, null-honest)
+
+- TASK-CONF-2 (dev-frontend, S, backlog/blocked): frontend render null confidence as "—"
+  - client.ts: null-safe mapper
+  - domain/market.ts: widen confidence to number|null
+  - dashboard.alerts.tsx: render guard null-check, show "—" for null
+  - AC-3 live dashboard "—" (depends TASK-CONF-1 deployed)
+
+- Parent task FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION → DECOMPOSED
+
+- Handoffs: docs/handoffs/TASK-CONF-1.md, docs/handoffs/TASK-CONF-2.md
+- DJ: docs/agent-memory/decisions/sprint-S2-DATA-HONESTY-conf-task-atomization.md (DJ-GATE-1..6)
+```
+
+**NEXT:** Router dispatches TASK-CONF-1 to dev-mcp-server. After done_verified + rebuild, unblock TASK-CONF-2 → dev-frontend.
+
+---
+
 ## c319 EVENING_SUMMARY QUALITY 5-TASK SPRINT SEQUENCING · 2026-06-21T000000Z
 
 **PARENT:** Architect brief + PO triage: FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE + 4 quality fixes from 2026-06-19 evening cycle review
