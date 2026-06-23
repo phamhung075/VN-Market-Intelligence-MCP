@@ -1635,6 +1635,28 @@
         "payload_ref": null,
         "router_note": "Router RAW-disproved 20:44Z: container Up 11d healthy + host curl localhost:4000/health=HTTP200 in 5ms. Auditor CURL_ERR was fast-fail-window transient (also used wrong container name api-gateway->No such container). False-positive, no dispatch.",
         "resolved_at": "2026-06-22T20:46:26Z"
+      },
+      {
+        "id": "sau-c06-20260623T003030Z",
+        "ts": "2026-06-23T00:30:30Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages check C-06 failed (actual=0, expected>0, last 3h)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c11-20260623T003035Z",
+        "ts": "2026-06-23T00:30:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "pdf_documents check C-11 failed (actual=0, expected>0, last 48h)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },

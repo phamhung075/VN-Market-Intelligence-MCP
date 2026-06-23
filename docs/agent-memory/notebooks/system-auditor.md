@@ -1,6 +1,15 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c343 · 2026-06-23T00:30:16Z
+### Audit Run Tier-3 (00:30 UTC 2026-06-23)
+- Tier: 3 | Services: 12 | Runtime checks: A-22–A-31 all PASS | DB checks: C-01–C-16
+- Anomalies: 2 WARN (C-06 market_messages stale, C-11 pdf extractions absent) | Status: DEGRADED
+- C-01 distinct tickers=764 PASS | C-02 ohlcv rows=764 PASS | C-03 financial actions=32 PASS | C-04 low-conf=0 PASS | C-05 ssc-urls=0 PASS
+- C-06 market_msg 3h=0 WARN | C-07 agent_signals 24h=165 PASS | C-08 orphan-alerts=0 PASS | C-09 macro-cols=3 PASS
+- C-10 pdf-fail=0 PASS | C-11 pdf-done 48h=0 WARN | C-12 integrity all ok PASS | C-13 WAL <50MB PASS
+- C-14 ticker-concentration=0.4% PASS | C-15 schema present PASS | C-16 stale-bctc=0 PASS
+- A-22 pdftoppm PASS | A-23 tesseract PASS | A-24 tesseract-vie PASS | A-25–A-28 all services reachable PASS | A-31 epipe=0 PASS | B-08 pdf-landing=80 PASS
 ## c342 · 2026-06-23T00:14:27Z
 ### Audit Run Tier-1 (00:14 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed | A-20 multi-probe: 3/3
@@ -46,8 +55,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 
 === PROBE DONE ===
 ```
-## c341 · 2026-06-22T23:44:13Z
-### Audit Run Tier-1 (23:44 UTC 2026-06-22)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed | A-20 multi-probe: 3/3
-- Anomalies: 0 | Status: HEALTHY
-- Evidence: All 12 services UP+healthy [RAW-PROBE L6–17]. All 5 health endpoints HTTP 200 [RAW-PROBE L21–25]. A-20 pdf-extractor 3/3 PASS. Memory 24.41% PASS. Restart count=1. Disk 36% PASS.
