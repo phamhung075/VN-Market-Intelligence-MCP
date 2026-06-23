@@ -191,16 +191,12 @@
     }
   ],
   "head": {
+    "active_task_id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION",
     "status": "in_progress",
-    "active_task_id": "FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS",
-    "next_agent": "developer",
-    "next_action": "Tick 2026-06-23T15:41:40Z: batch-collapsed ~13 queued fires (now 15:33Z). macro_indicators RESOLVED (3.4h fresh, refresh fired 12:13Z SUCCESS — earlier 24h-cross worry void). TRIAGED+DEDUP+DOWNGRADE sau-20260623T153559Z vn-bctc-fetch CRITICAL->INFO: 168h idle is EXPECTED out-of-season (Q2 reporting Jul-Aug, queue clean B-13=0); auditor used wrong 24h threshold vs correct 168h (FIX-BCTC-SLA-THRESHOLD-360 unshipped); root tracked by FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH + prior devteam-20260619T170637Z. No mint. Shipping FIX-BCTC-SLA-THRESHOLD-360 ends recurring false-CRITICAL. Board clear, review1 parked, trail33 ignored. BLIND=1 stale-session, F-1 awaits restart. WIP=0.",
-    "wip": 1,
-    "wip_max": 2,
-    "updated_at": "2026-06-23T15:41:40Z",
-    "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T15:41:40Z",
-    "router_note": "po-s111: P2->P1 escalate + dispatch of the trail-gitreset data-loss fix after the predicted failure MATERIALIZED (38->10 entries, ~28 appends lost). Head was idle (WIP=0) — safe to repoint. cross-service git+gitignore work → generic developer."
+    "next_agent": "ba",
+    "dispatched_at": "2026-06-23T17:28:13Z",
+    "dispatched_by": "po-s111",
+    "note": "S2 DATA-HONESTY lead. ba->architect->pm->dev-mcp-server->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1810,6 +1806,15 @@
         ],
         "chain": "ba -> architect -> pm -> dev-frontend -> qa",
         "created_at": "2026-06-15T20:17:53Z"
+      },
+      {
+        "sprint_id": "S2-DATA-HONESTY",
+        "status": "active",
+        "vision": "Every served metric is a real fetched/computed value — no hardcoded, default, or placeholder constant masquerades as a live reading.",
+        "scope_in": "(1) verified_decision signal confidence — wire real conviction, kill literal-50 default; (2) macro oil/gold/usdVnd deltas — persist prev-session, compute signed delta+direction.",
+        "scope_out": "convictionScorer 0.5 neutral-fallbacks (legitimate missing-input semantics, NOT a mask — DROPPED); BCTC source_confidence=1.0 (correct for human-confirmed corrections — DROPPED); the broad 94-task FACTORY maintainability epic.",
+        "success_metric": "LIVE VARIED real values verified against the named-vol DB / live tool (NOT a green build): verified_decision confidence non-constant; oil/gold/usdVnd carry signed delta+direction.",
+        "created_at": "2026-06-23T17:28:13Z"
       }
     ]
   },
@@ -11053,25 +11058,6 @@
         "source": "recon docs/vps-sources/bctc-pipeline-stale-5d/recon.md §Residual Risks #3 (2026-06-16). VEA Q4/2025 queue item returns 0 results on SSC AND HNX UPCOM; possibly filed on cafef/hsx.vn direct, or not filed at all.",
         "deliverable": "Findings doc: filed-elsewhere vs not-filed verdict + (if found) the source URL + working request recipe to wire that source into discovery.",
         "baseline_pass": true
-      },
-      {
-        "id": "FIX-MACRO-SNAPSHOT-DELTAS-NULL",
-        "epic": "VN-MACRO-TOOLING",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "apps/macro-indicators/",
-        "dev_agent": "dev-macro-indicators",
-        "title": "get_macro_snapshot: oilUsdDelta/goldUsdDelta/usdVndDelta always null + direction unknown — no prev-session history persisted",
-        "desc": "ROUTER-RAW-VERIFIED 2026-06-16: get_macro_snapshot returns oilUsdDelta/goldUsdDelta/usdVndDelta = null and direction=unknown for all three — only vnIndex carries a delta. CONFIRMED BY-DESIGN in apps/macro-indicators/pkg/application/dtos.go L120-129 (Oil/Gold/UsdVnd: no prev-session history -> always null delta + unknown direction). Violates feedback_market_data_direction (show direction+delta, never a bare snapshot). FB post could only state oil/gold/FX LEVELS, not direction. FIX (dev-macro-indicators): persist a prior-session snapshot of oilUsd/goldUsd/usdVnd (the service already does this for VNIndex) and compute delta + direction (up/down/flat) the same way. REAL fetched values only.",
-        "size": "S",
-        "root_cause": "macro-indicators fetches oil/gold/usdVnd point-in-time but never persists prev-session value -> delta=null, direction=unknown by design (dtos.go L90, L120-129).",
-        "generic_mandate": "Every served market metric carries direction+delta vs prior session (feedback_market_data_direction); mirror the VNIndex delta path generically across oil/gold/usdVnd.",
-        "verification_gate": "RAW: live get_macro_snapshot returns non-null signed oilUsdDelta+goldUsdDelta+usdVndDelta with direction in {up,down,flat} after >=2 sessions; magnitudes plausible vs the level move.",
-        "rebuild_required": true,
-        "source": "router raw-probe 2026-06-16 FB decision-grade production",
-        "created_at": "2026-06-16T19:24:58Z",
-        "created_by": "po-triage-fb-2026-06-16"
       },
       {
         "id": "FIX-MACRO-CARRY-YIELD-ESTIMATE-FLAG",
@@ -23971,7 +23957,64 @@
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION",
+        "epic": "S2-DATA-HONESTY",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P1",
+        "blocking": false,
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "route_to": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "next_agent": "ba",
+        "title": "verified_decision signals still served at literal confidence 50 — dominant producer never wired (reopens FIX-SIGNAL-CONFIDENCE-DEFAULT-50)",
+        "desc": "RAW-VERIFIED LIVE 2026-06-23 against named-vol /app/data/market.db (bun:sqlite): agent_signals confidence_score dist = 3316/3874 (86%) at literal 50; EVERY recent verified_decision row (the dashboard SIGNALS-LAST-10 dominant type) = 50, incl. today 2026-06-23T16:32Z. Other producers (news 86/88/90, scanMarket 70s) DO write real varied values, but the dominant verified_decision path does not. The prior FIX-SIGNAL-CONFIDENCE-DEFAULT-50 (done_verified) only wired confidence when finding_data.confidence is present (agentSignalTools.ts:302-307); the verified_decision producer supplies no finding_data.confidence, so postSignal falls through to the COLUMN DEFAULT 50 (agentSignalStore.ts:341 + schema-news.ts:104 ALTER ... DEFAULT 50). The comment at agentSignalTools.ts:300 claims default-50 is 'honest: no fake value' — but a constant 50 reads on the dashboard as a real confidence, which IS a fabricated metric. ROOT: the verified_decision emit path (assembleBriefing / verified-decision producer) computes a real conviction (convictionScorer.computeConviction → 0..1) but never threads it into the agent_signals row. FIX (dev-mcp-server): wire the verified_decision producer's already-computed conviction (0..1) → confidence_score (round*100, clamp 0..100) on the postSignal/PostSignalInput path; where a producer genuinely has NO confidence, store NULL (and the read-fallback must serve an explicit 'n/a', NOT 50 — change stockSignalsHandler.ts:224 `?? 50` → null/explicit-unknown so the absence is honest, not masked). NO fake/constant served value. Read-fallback `?? 50` at stockSignalsHandler.ts:224 is currently dead (DB null=0) but must be hardened so a future NULL is shown as unknown not 50.",
+        "root_cause": "verified_decision producer never threads its computed conviction into the agent_signals.confidence_score column; row falls to COLUMN DEFAULT 50 (agentSignalStore.ts:341, schema-news.ts:104). Prior fix only covered finding_data.confidence-carrying producers.",
+        "generic_mandate": "No served metric is a hardcoded/default constant where a real value was computed (no_fake_data_real_fetch). Every signal producer threads its real confidence; genuine-absence → explicit unknown/NULL, never a plausible-looking constant.",
+        "verification_gate": "RAW (the real bar, not green build): after rebuild, live get_macro/get-signals + named-vol market.db query shows recent verified_decision rows carry VARIED real confidence_score (NOT a constant 50); dashboard SIGNALS-LAST-10 shows non-constant confidence across rows/sources; any genuine-absence row serves explicit unknown, never 50. done_verified WITHHELD until this live varied-data probe passes.",
+        "rebuild_required": true,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts",
+          "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts",
+          "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts",
+          "apps/mcp-server/src/application/usecases/assembleBriefing.ts"
+        ],
+        "reopens": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
+        "reopen_reason": "parent done_verified on green build + finding_data-carrying producers, but LIVE DB proves the dominant verified_decision producer still serves literal 50 (plausibility-check gap — non_zero_values_need_plausibility_check / no_fake_data_real_fetch).",
+        "source": "po-s111 S2 kickoff RAW-probe (live named-vol DB + get_macro_snapshot)",
+        "created_at": "2026-06-23T17:28:13Z",
+        "created_by": "po-s111",
+        "promoted_at": "2026-06-23T17:28:13Z",
+        "promoted_by": "po-s111"
+      },
+      {
+        "id": "FIX-MACRO-SNAPSHOT-DELTAS-NULL",
+        "epic": "S2-DATA-HONESTY",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P2",
+        "zone": "apps/macro-indicators/",
+        "dev_agent": "dev-macro-indicators",
+        "title": "get_macro_snapshot: oilUsdDelta/goldUsdDelta/usdVndDelta always null + direction unknown — no prev-session history persisted",
+        "desc": "ROUTER-RAW-VERIFIED 2026-06-16: get_macro_snapshot returns oilUsdDelta/goldUsdDelta/usdVndDelta = null and direction=unknown for all three — only vnIndex carries a delta. CONFIRMED BY-DESIGN in apps/macro-indicators/pkg/application/dtos.go L120-129 (Oil/Gold/UsdVnd: no prev-session history -> always null delta + unknown direction). Violates feedback_market_data_direction (show direction+delta, never a bare snapshot). FB post could only state oil/gold/FX LEVELS, not direction. FIX (dev-macro-indicators): persist a prior-session snapshot of oilUsd/goldUsd/usdVnd (the service already does this for VNIndex) and compute delta + direction (up/down/flat) the same way. REAL fetched values only.",
+        "size": "S",
+        "root_cause": "macro-indicators fetches oil/gold/usdVnd point-in-time but never persists prev-session value -> delta=null, direction=unknown by design (dtos.go L90, L120-129).",
+        "generic_mandate": "Every served market metric carries direction+delta vs prior session (feedback_market_data_direction); mirror the VNIndex delta path generically across oil/gold/usdVnd.",
+        "verification_gate": "RAW: live get_macro_snapshot returns non-null signed oilUsdDelta+goldUsdDelta+usdVndDelta with direction in {up,down,flat} after >=2 sessions; magnitudes plausible vs the level move.",
+        "rebuild_required": true,
+        "source": "router raw-probe 2026-06-16 FB decision-grade production",
+        "created_at": "2026-06-16T19:24:58Z",
+        "created_by": "po-triage-fb-2026-06-16",
+        "next_agent": "ba",
+        "promoted_from": "backlog",
+        "promoted_at": "2026-06-23T17:28:13Z",
+        "promoted_by": "po-s111",
+        "promotion_note": "S2 DATA-HONESTY thread (po-s111). RAW-CONFIRMED LIVE 2026-06-23T17:25Z: get_macro_snapshot oilUsdDelta/goldUsdDelta/usdVndDelta=null, direction=unknown; vnIndexDelta=11.13 up. Still reproduces exactly as specced."
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
