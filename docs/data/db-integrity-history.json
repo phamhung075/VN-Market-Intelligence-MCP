@@ -749,5 +749,135 @@
       "market_prices_freshness": "2026-06-23T04:25:49.087Z",
       "fresh_ohlc_violations_last_2d": 0
     }
+  },
+  {
+    "tables_checked": 17,
+    "findings": [
+      {
+        "table": "alerts",
+        "class": "STALE",
+        "detail": "205 unresolved alerts (resolved_at IS NULL) created >30 days ago (triggered_at < now()-30d)",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "Known standing state; alerts remain open until manually resolved; no auto-cleanup cron; recorded in dedup roster (sau-20260621T212528-alerts-stale, status=READ, HIGH severity)",
+        "signal_id": null
+      },
+      {
+        "table": "signal_outcomes",
+        "class": "STALE",
+        "detail": "71 signal_outcomes with outcome_24h='pending' created >5 days ago",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "No auto-cleanup for old pending outcomes; expected by-design state; similar to prior dedup (sau-20260620T212532Z-signal-outcomes, status=TRIAGED)",
+        "signal_id": null
+      },
+      {
+        "table": "agent_signals",
+        "class": "STALE",
+        "detail": "3708 agent_signals with expires_at < now() (expired)",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "Known standing growth state; no GC cron scheduled; dedup roster confirms (sau-20260621T155518-signals-regress, status=READ, no re-signal); count expected to grow gradually",
+        "signal_id": null
+      },
+      {
+        "table": "financial_reports",
+        "class": "INCORRECT",
+        "detail": "17 rows with net_revenue<=0 (frozen predicate, unchanged from prior scan)",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "Known standing state; entries with zero/negative revenue are factual; dedup roster confirms (sau-20260620T195454Z-finrpt, status=TRIAGED, HIGH severity); no change detected",
+        "signal_id": null
+      },
+      {
+        "table": "scheduler_locks",
+        "class": "FAIL",
+        "detail": "0 locks held >5 hours; no stale locks detected",
+        "verdict": "REAL",
+        "root_cause_hypothesis": "Prior stale-lock anomaly (sau-sch-20260620T182937Z-stale-lock, status=ACUTE-RESOLVED-ROOT-TRACKED) now reads clean; fix roots in FIX-SCHEDULER-LOCK-NO-RELEASE-TTL (in_progress); no escalation needed",
+        "signal_id": null
+      },
+      {
+        "table": "cron_job_runs",
+        "class": "FAIL",
+        "detail": "All recent cron runs show status='success'; no 'error' or 'crashed' statuses in last 10 runs",
+        "verdict": "REAL",
+        "root_cause_hypothesis": "Cron jobs executing normally; no failures detected",
+        "signal_id": null
+      },
+      {
+        "table": "daily_ohlcv + market_prices",
+        "class": "STALE/FRESH",
+        "detail": "daily_ohlcv: 16026 rows, newest date=2026-06-23 (today), MAX(updated_at)≈04:37 UTC; market_prices: 120 rows, MAX(updated_at) ≈04:37 UTC; fresh_ohlc_violations_last_2d=0",
+        "verdict": "REAL",
+        "root_cause_hypothesis": "All price data fresh within current session (market open); no staleness detected; both tables actively fed by gatherers",
+        "signal_id": null
+      },
+      {
+        "table": "db1_ohlc_violations (canonical check)",
+        "class": "INCORRECT",
+        "detail": "835 violations (O/H/L/C scale or logic errors) — matches prior baseline (frozen at 835 from rebuild-gate historical residue); daily feed clean (fresh_ohlc_violations_last_2d=0)",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "Known historical residue (dedup: sau-20260620T103000-db1, status=TRIAGED, HIGH); no fresh violations detected; expected DROP is the goal, not a regression",
+        "signal_id": null
+      },
+      {
+        "table": "db2_scale_gt100x (canonical check)",
+        "class": "INCORRECT",
+        "detail": "1 row with price scale >100x (known x1000 class anomaly)",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "Single known outlier (dedup: sau-20260620T103001-db2, status=TRIAGED); unchanged from baseline",
+        "signal_id": null
+      },
+      {
+        "table": "db3_vnindex_cache (canonical check)",
+        "class": "FAIL",
+        "detail": "0 rows (empty table)",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "Design state; vn_index_cache intentionally not seeded by any producer (dedup: sau-20260620T103002-db3, status=RESOLVED)",
+        "signal_id": null
+      },
+      {
+        "table": "c04_low_confidence_reports (canonical check)",
+        "class": "INCORRECT",
+        "detail": "21 financial_reports with confidence_score<0.2 (low-confidence extractions from PDFs)",
+        "verdict": "BY-DESIGN",
+        "root_cause_hypothesis": "Expected per low-confidence handling reference; flagged-not-broken; dedup: sau-20260620T103002-c04 (implied, tied to PDF extraction quality)",
+        "signal_id": null
+      },
+      {
+        "table": "deep_fetch_queue",
+        "class": "FAIL",
+        "detail": "0 rows with status='failed'; no stuck/failing deep-fetch entries",
+        "verdict": "REAL",
+        "root_cause_hypothesis": "Queue is healthy; no data-fetch failures detected",
+        "signal_id": null
+      },
+      {
+        "table": "sbv_rates",
+        "class": "STALE",
+        "detail": "sbv source last fetched 2026-06-23T04:30:08.824Z (fresh within current session)",
+        "verdict": "REAL",
+        "root_cause_hypothesis": "Data fresh; no staleness anomaly",
+        "signal_id": null
+      },
+      {
+        "table": "macro_indicators",
+        "class": "STALE",
+        "detail": "vietnam row last fetched 2026-06-22 12:13:01 (~15.6 hours old, within 48h threshold)",
+        "verdict": "REAL",
+        "root_cause_hypothesis": "Not stale by threshold; acceptable overnight refresh cadence",
+        "signal_id": null
+      }
+    ],
+    "scan_ts": "2026-06-23T04:38:22Z",
+    "counts": {
+      "db1_ohlc_violations": 835,
+      "db2_scale_gt100x": 1,
+      "db3_vnindex_cache_rows": 0,
+      "c04_low_confidence_reports": 21
+    },
+    "context": {
+      "daily_ohlcv_total": 16026,
+      "daily_ohlcv_newest_date": "2026-06-23",
+      "market_prices_freshness": "2026-06-23T04:38:11.777Z",
+      "fresh_ohlc_violations_last_2d": 0
+    }
   }
 ]
