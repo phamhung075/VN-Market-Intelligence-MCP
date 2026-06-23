@@ -2,6 +2,52 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c367 · 2026-06-23T10:43:56Z
+### Audit Run Tier-1 (10:43 UTC 2026-06-23)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 | Status: HEALTHY
+- Evidence: All 12 services UP+healthy (mcp-server 15h, frontend 37h, pdf-extractor 7d, stock-price 7d, ta 8d, macro 8d, kinh-dich 8d, api-gateway 12d, rag-service 9h, news 12d, alert 12d, mcp-gateway 12d). Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. A-20 pdf-extractor multi-probe: 3/3 HTTP 200 PASS. Memory 63.63% PASS. RestartCount=1 PASS. Disk 36% PASS. MCP toolCount=166 sessions=346 uptime=52848s.
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-23T10:43:02Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 15 hours (healthy)   vn-market-intelligence-mcp-mcp-server           33 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 37 hours (healthy)   vn-market-intelligence-mcp-frontend             37 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 7 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        7 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 7 days (healthy)     vn-market-intelligence-mcp-stock-price          7 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)     vn-market-intelligence-mcp-technical-analysis   8 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)     vn-market-intelligence-mcp-macro-indicators     8 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 8 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    8 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)    vn-market-intelligence-mcp-api-gateway          12 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 9 hours (healthy)    vn-market-intelligence-mcp-rag-service          12 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 12 days (healthy)    vn-market-intelligence-mcp-news-fetch           12 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 12 days (healthy)    vn-market-intelligence-mcp-alert-engine         12 days ago
+headroom-proxy                                    Up 10 days              headroom-proxy:local                            2 weeks ago
+mcp-gateway                                       Up 12 days (healthy)    mcpservergatway-gateway                         5 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=63.63% MemUsage=1.273GiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    24Gi    36%    393k  253M    0%   /
+
+=== PROBE DONE ===
+```
+
 ## c366 · 2026-06-23T10:31:40Z
 ### Audit Run Tier-2 (10:31 UTC 2026-06-23)
 - Tier: 2 | Sources: 25+ checked | Market: CLOSED (outside 02:00-08:30 UTC)
@@ -17,9 +63,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 | Status: HEALTHY
 - Evidence: All 12 services UP+healthy. All 5 health endpoints HTTP 200. Memory 61.71% PASS. RestartCount=1 PASS. Disk 37% PASS.
-
-## c364 · 2026-06-23T09:44:54Z
-### Audit Run Tier-1 (09:44 UTC 2026-06-23)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 | Status: HEALTHY
-- Evidence: All 12 services UP+healthy. All 5 health endpoints HTTP 200. Memory 59.63% PASS. RestartCount=1 PASS. Disk 38% PASS.
