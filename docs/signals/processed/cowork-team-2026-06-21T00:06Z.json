@@ -1,0 +1,66 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-21T00:06Z",
+    "nominal_tick": "2026-06-21T00:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 0,
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "All 3 matched slots are local-dispatcher-only — NONE among the 6 cloud RemoteTrigger backstops (chef-morning, chef-eod, chef-evening, tnb-audit, digest-sunday, health-recheck). bctc-analyst-slot-4 (bctc-analyst, cron 0 0, policy bctc-offmarket) + the gatherer pair news-scout-offhours/market-watcher-offhours (cron 0 */4, policy gatherer-standard). Session is gateway-blind (mcpServers:0) so a local spawn would be gateway-blind and fabricate financial analysis / news / prices; not spawned. All 3 slots genuinely UNFIRED this session.",
+    "slot_detail": {
+      "bctc-analyst-slot-4": {
+        "agent": "bctc-analyst",
+        "flow_path": "docs/agents/bctc-analyst/flow/main.md",
+        "cron": "0 0 * * *",
+        "guaranteed": false,
+        "policy_id": "bctc-offmarket",
+        "last_fired": "2026-06-15T00:06:43Z"
+      },
+      "news-scout-offhours": {
+        "agent": "news-scout",
+        "flow_path": "docs/agents/news-scout/flow/main.md",
+        "cron": "0 */4 * * *",
+        "guaranteed": false,
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z"
+      },
+      "market-watcher-offhours": {
+        "agent": "market-watcher",
+        "flow_path": "docs/agents/market-watcher/flow/main.md",
+        "cron": "0 */4 * * *",
+        "guaranteed": false,
+        "policy_id": "gatherer-standard",
+        "last_fired": "2026-06-15T08:08:57Z"
+      }
+    },
+    "leader_lock": {
+      "ok": true,
+      "expires_at": 1782002179
+    },
+    "note": "USER/HARNESS-side fix required: register the gateway MCP server in .mcp.json so subagents inherit it, then reconnect. Until then the bctc-analyst / gatherer / intraday / alert layer goes unfired in this session."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-21T00:06:30Z",
+  "_processed": {
+    "fingerprint": "f7a62303f366ff2369e3a9114c9d719e94549786b381a30ff2f4b0b8a25cd3fb",
+    "processedAt": "2026-06-21T00:09:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

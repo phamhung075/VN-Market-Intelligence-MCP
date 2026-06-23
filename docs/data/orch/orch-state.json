@@ -194,12 +194,12 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "Tick 20260623T0102Z: HOLDING on push. CI-red fix 37ac9a52 verified-green local (14 pass/0 fail, pnpm check EXIT:0) but NOT on origin — origin/main HEAD=8b2faaef CI=failure (expected, precedes fix). Divergence: 6 local commits ahead (1 test-fix 37ac9a52 + 5 chores), origin ahead via cloud chores+merge. NO NEW signals, no orphan keys, WIP=0. Nothing router-actionable: 37ac9a52 must reach origin via out-of-band fleet-push (NOT router push/rebase) → CI re-run green on that SHA → THEN done_verified on FIX-MACRO (ba1156d8) + FIX-FOREIGN-FLOW (2ea45dd6). Review lane also holds FIX-OHLCV-WRITER-P0 (no commit, PO/dev) + FIX-DIGEST-RSI-DUAL-ENGINE (ARCHITECT_REVIEW).",
+    "next_action": "Tick 20260623T0145Z: DISCOVERED fleet-push DEADLOCK (escalated to PO a82f55e7). Out-of-band push I was holding for is ABORTING: local behind=111 & GROWING; origin CI RED on foreign-flow test (origin has prod 2ea45dd6→canonical string but origin test still asserts OLD 'dữ liệu không có'; local fix 37ac9a52 NOT on origin; fleet-push conflict-surface guard aborts on the test file in behind-set). 37ac9a52 pre-image==origin file content → rebase would replay cleanly, but ROUTER NEVER rebases/pushes → PO decides reconcile (rebase-clean-checkout vs cherry-pick 37ac9a52). done_verified on FIX-MACRO ba1156d8 + FIX-FOREIGN-FLOW 2ea45dd6 STILL gated on origin-CI-green post-reconcile. Also routed context-bloat architect.md 202/200 → claude-manager-helper afa529f3. Drained 7 signals→processed. WIP=0.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-23T01:03:00Z",
+    "updated_at": "2026-06-23T01:46:00Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "20260623T0102Z"
+    "last_tick": "20260623T0145Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
