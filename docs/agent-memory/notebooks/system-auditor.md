@@ -3,6 +3,42 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c374 · 2026-06-23T15:35:59Z
+### Audit Run Tier-2 (15:35 UTC 2026-06-23)
+- Tier: 2 | Sources checked: 7 VPS routes | Cron jobs: macroIndicatorRefreshJob + health checks
+- Anomalies: 1 new (CRITICAL vn-bctc-fetch service stale 168h)
+- Status: DEGRADED
+
+**CRITICAL Finding — vn-bctc-fetch Service Stale**:
+- Last successful run: 2026-06-16 18:02:24 UTC (168h / 7 days ago)
+- Threshold: 86400s (24h) — EXCEEDED
+- Health status: unhealthy
+- Signal: saw-20260623T153559Z-bctc-fetch-stale
+- Impact: Q2 2026 earnings window (Jun-Aug) — BCTC financial report discovery blocked
+- Root: VPS push service dead or unreachable; mcp-server pull-on-schedule architecture waiting for data
+
+**PASS — macroIndicatorRefreshJob Recovered**:
+- Last run: 2026-06-23 12:13:19 UTC (3.4h ago) — SUCCESS
+- Data freshness: 2026-06-23 12:13:02 (PASS <24h)
+- Note: Prior audit 2026-06-22 10:31Z flagged 22.3h stale → resolved by today's refresh
+
+**PASS — All DB Freshness Checks**:
+- C-06 (market_messages <3h): 2 rows ✓
+- C-07 (agent_signals <24h): 291 rows ✓
+- B-09 (BCTC SSC URLs clean): 0 non-skipped ✓
+- B-13 (stale pending BCTC): 0 rows >72h ✓
+- C-01 (daily_ohlcv): 765 distinct tickers ✓
+- C-09 (macro_indicators): 3 cols in 26h ✓
+
+**VPS Service Health**:
+- vn-news-fetch: healthy (15:30 run)
+- vn-sbv-fetch: healthy (15:00 run)
+- vn-price-fetch: idle (market closed 22:35 VN, expected)
+- vn-foreign-flow: idle (market closed, expected)
+- vn-bctc-fetch: unhealthy (7d stale, P0 escalation)
+
+Signals emitted: 1 (sau-20260623T153559Z type=data_stale severity=CRITICAL for bctc-fetch)
+
 ## c373 · 2026-06-23T13:43:08Z
 ### Audit Run Tier-1 (13:43 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set + infra checked | Health endpoints: 5 probed

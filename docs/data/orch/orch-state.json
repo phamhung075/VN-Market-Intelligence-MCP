@@ -1687,6 +1687,17 @@
         "router_triage": "router 2026-06-23T11:48:39Z RAW-verified: rag-service RestartCount=100 is CUMULATIVE not active crashloop — Status=running Health=healthy StartedAt=2026-06-23T01:32:46Z (stable ~10h) LastExit=0 OOMKilled=false. Trend NOT escalating: 86@2026-06-20 -> 100 now = +14/3d (~+4.7/day) vs prior +9/day => rate SLOWING. DEDUP/ALREADY-OPEN: same chronic 768MiB-cap OOM-restart root already tracked by board FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX AND prior signal router-20260620T113917Z-rag-restart-watch (TRIAGED). HIGH overstated (counter misread as active crash, cf bctc-lastpush class) -> downgrade HIGH->MEDIUM. NOT a new incident; no mint (durable fix already on backlog, PO to prioritize). Auditor Tier-1 A-21 should apply DEDUP-ENFORCEMENT (board-tracked root) like the DATA sweep guard.",
         "router_dup_of": "router-20260620T113917Z-rag-restart-watch",
         "router_triaged_at": "2026-06-23T11:48:39Z"
+      },
+      {
+        "id": "sau-20260623T153559Z",
+        "ts": "2026-06-23T15:35:59Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "vn-bctc-fetch stale 168h (check B-13, VPS service unhealthy since 2026-06-16)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
