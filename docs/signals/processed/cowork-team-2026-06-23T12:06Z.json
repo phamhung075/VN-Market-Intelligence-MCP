@@ -1,0 +1,27 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-23T12:06Z",
+    "nominal_tick": "2026-06-23T12:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 1,
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "spawned": [],
+    "errors": ["emit_pressure_state transient Cloudflare 502 (origin_bad_gateway, ray a1035dcc8ec83433, retryable) on first attempt at 12:06:28Z; immediate retry SUCCEEDED at 12:06:42Z — transient origin blip, not an outage. task_heartbeat succeeded normally just before."],
+    "deferred_blind": [],
+    "skipped_no_backstop": ["news-scout-offhours", "market-watcher-offhours"],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "Gatherer pair (news-scout-offhours + market-watcher-offhours, cron 0 */4, gatherer-standard) matched at the 12:00 boundary. Local-dispatcher-only, NOT among the 6 cloud RemoteTrigger backstops. mcpServers:1 but subagents probe-confirmed gateway-blind (08:06, no restart since) -> a local spawn would fabricate news/prices; not spawned. Both slots genuinely UNFIRED this session.",
+    "slot_detail": {
+      "news-scout-offhours": {"agent": "news-scout", "flow_path": "docs/agents/news-scout/flow/main.md", "cron": "0 */4 * * *", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-15T08:08:57Z"},
+      "market-watcher-offhours": {"agent": "market-watcher", "flow_path": "docs/agents/market-watcher/flow/main.md", "cron": "0 */4 * * *", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-15T08:08:57Z"}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782218183},
+    "note": "The 502 was a transient Cloudflare/origin blip (retryable, retry_after 60s) — single retry cleared it; do NOT escalate as a gateway outage (the gateway served real data at 08:07 and task_heartbeat succeeded this tick). Subagent-blind state persists until full CLI restart."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-23T12:06:42Z"
+}
