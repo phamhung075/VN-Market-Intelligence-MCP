@@ -340,3 +340,112 @@ Post-rebuild live probe required:
 ## Decision Journal
 
 Task created by PM 2026-06-23T17:28Z. Architect atomization ratified per docs/handoffs/FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION-BA-spec.md § Task Atomization. No design changes; build to architect spec. NEXT: dev-mcp-server picks up and implements.
+
+---
+
+## [QA] Review Record — 2026-06-23T18:20Z
+
+**Verdict:** REVIEW — VERIFY-PENDING-ORGANIC-DATA
+**done_verified:** WITHHELD
+**Round:** 1
+
+### Code Verification (Structural)
+
+All 5 source changes confirmed in commit e3386bdf + new test file in 86f6511b:
+
+| File | Change | Status |
+|---|---|---|
+| `alertStore.ts` | `severityToConfidence()` helper; both INSERT paths wire `confidence_score` | VERIFIED |
+| `schema-news.ts:106` | `ADD COLUMN confidence_score INTEGER` (no DEFAULT 50) | VERIFIED |
+| `agentSignalStore.ts:134,341` | type widened to `number\|null\|undefined`; default=null | VERIFIED |
+| `agentSignalTools.ts:305-307` | `derivedConfidenceScore: number\|null = null` when absent | VERIFIED |
+| `stockSignalsHandler.ts:224` | `?? null` (was `?? 50`) | VERIFIED |
+
+### Test Suite
+
+- New test file T-1..T-4 + 6 edge cases: **10 pass / 0 fail** (21 expect)
+- 5 makeDb() helpers (DEFAULT 50 removed): **73 pass / 0 fail**
+- `FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts`: **22 pass / 0 fail**
+- `bun tsc --noEmit`: **EXIT 0**
+- DDD scan: PASS (no new domain→infra violations; pre-existing `Alert` type import is pre-existing from b3ea96fa)
+- Security scan: PASS (no process.env, no secrets, all SQL parameterized)
+- mock-guard: **EXIT 0**
+- Full suite: 13351 pass / 42 skip / **105 fail** (pre-existing baseline — all 105 failing files CONFIRMED DISJOINT from the 6 changed files; no overlap verified)
+
+### Live DB Probes
+
+**Container state:**
+- Image created: `2026-06-23T17:55:03Z` (3 min after commit `e3386bdf` at 17:52:33 UTC) — fix IS in image
+- Container started: `2026-06-23T18:09:05Z`
+- Named volume: `vn-market-intelligence-mcp_market_data` → `/app/data/market.db`
+
+**AC-1 (live DB — verified_decision rows post-rebuild):**
+- Result: 0 rows with `created_at > '2026-06-23T18:09:05'` in `agent_signals WHERE signal_type='verified_decision'`
+- Latest row: `2026-06-23T16:32:31Z` (severity=low, confidence_score=50) — predates rebuild
+- 122 rows in last-24h: ALL confidence_score=50 (pre-fix)
+- Classification: **VERIFY-PENDING-ORGANIC-DATA** — no alerts have fired since rebuild. Code path is structurally correct; the 50-mask is gone (schema has no DEFAULT, both producers wire severity-derived values). AC-1 final-green AWAITS next organic verified_decision write.
+
+**AC-2 (API — non-constant confidence):**
+- `/api/signals/stock/VIC`: chain_catalyst confidence={80, 75, 86} — varied, non-constant
+- verified_decision rows excluded by `is_correlation_stub=1` column guard (correct by design — stubs not surfaced in dashboard)
+- Non-verified_decision: urgent_news={90, 70}, chain_catalyst={80, 75, 86} — all varied
+- Status: **PASS for non-verified_decision types** / verified_decision stub-excluded (design intent)
+
+**AC-3 (null-honest):**
+- 1 row with `confidence_score IS NULL`: id=7185, `fundamental_validation`, created 2026-06-23 18:04:50
+- `stockSignalsHandler.ts:224`: `row.confidence_score ?? null` — read path correct
+- Status: **PASS structurally** (null path confirmed in code + one real NULL row exists)
+
+**AC-4 (severity mapping verifiable):**
+- JOIN `alerts + agent_signals ON a.id = s.alert_id` executed: pre-fix rows show critical/high/medium/low all = 50
+- No post-rebuild rows available to verify critical=90 / warning=60 on live data
+- Structural verification: `alertStore.ts:184-196` (storeAlerts) and `:275-287` (storeAlertsFromCommander) — both branches confirmed in code
+- Status: **VERIFY-PENDING-ORGANIC-DATA** — awaits first post-rebuild alert fire with known severity
+
+**AC-5 (no regression on other signal types):**
+- urgent_news last-24h: confidence={90 (53 rows), 70 (32 rows)} — varied, unchanged
+- chain_catalyst: confidence={80, 75, 86} — varied, unchanged
+- fundamental_validation: confidence_score=null (1 row, pre-rebuild) — unchanged
+- Status: **PASS**
+
+### Regression Check
+
+Pre-existing 105 failures confirmed disjoint from TASK-CONF-1 changed files:
+- None of `alertStore`, `schema-news`, `agentSignalStore`, `stockSignalsHandler`, `agentSignalTools`, `FIX-SIGNAL-CONFIDENCE-DEFAULT-50` appear in failing test file list
+- Failures are in network-dependent tests (reuters-fallback, rss-cafef, yahoo-finance), BCTC playwright, LanceDB, and other pre-existing red files — not confidence-related
+
+### Risk Flag Verdicts
+
+| Risk | Status |
+|---|---|
+| RISK-1 DDD import | PASS — severityToConfidence() module-private, no new domain imports |
+| RISK-2 test schema drift | PASS — all 5 makeDb() updated, 73/73 pass |
+| RISK-3 zero confidence | PASS — `>= 0` condition includes 0 |
+| RISK-4 out-of-range clamp | PASS — Math.min/max clamp present in both paths |
+| RISK-5 sentinel discriminator | PASS — live ALTER TABLE on existing column is no-op; pre-fix rows unaffected |
+
+### Summary
+
+**Code quality: APPROVED at code level.** All 5 FRs implemented correctly. Tests green (all task-scope files). tsc clean. DDD/security/mock-guard PASS. 105 pre-existing failures confirmed disjoint.
+
+**done_verified: WITHHELD** — AC-1 and AC-4 require live organic data. Not a code defect. Classification: VERIFY-PENDING-ORGANIC-DATA.
+
+**Action required:** When the next alert fires post-18:09Z and creates a `verified_decision` row in `agent_signals`, re-run the AC-1 and AC-4 DB probes:
+```sql
+-- AC-1
+SELECT confidence_score, COUNT(*) FROM agent_signals
+WHERE signal_type = 'verified_decision'
+  AND strftime('%s', created_at) >= strftime('%s', '2026-06-23T18:09:05')
+GROUP BY confidence_score;
+-- Expected: no 50 rows (unless severity='warning' maps to 60, etc.)
+
+-- AC-4
+SELECT a.severity, s.confidence_score FROM agent_signals s
+JOIN alerts a ON a.id = s.alert_id
+WHERE s.signal_type='verified_decision'
+  AND strftime('%s', s.created_at) >= strftime('%s', '2026-06-23T18:09:05');
+-- Expected: critical=90, high=75, warning/medium=60, low=40
+```
+
+**Task status:** REVIEW (VERIFY-PENDING-ORGANIC-DATA)
+**NEXT agent:** ops or system-auditor — notify QA when first post-rebuild verified_decision row appears; QA re-runs AC-1/AC-4 probes to flip to done_verified=YES and status=DONE.
