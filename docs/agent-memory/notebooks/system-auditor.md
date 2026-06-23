@@ -2,20 +2,20 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
-## c363 · 2026-06-23T09:13:04Z
-### Audit Run Tier-1 (09:13 UTC 2026-06-23)
+## c364 · 2026-06-23T09:44:54Z
+### Audit Run Tier-1 (09:44 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 | Status: HEALTHY
-- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–27]. Memory 57.43% PASS. RestartCount=1 PASS. Disk 36% PASS.
+- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–27]. A-20 pdf-extractor 3/3 in-container multi-probe PASS. Memory 59.63% PASS. RestartCount=1 PASS. Disk 38% PASS.
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-23T09:13:04Z ===
+=== AUDITOR PROBE 2026-06-23T09:44:54Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 13 hours (healthy)   vn-market-intelligence-mcp-mcp-server           31 hours ago
-vn-market-intelligence-mcp-frontend-1             Up 36 hours (healthy)   vn-market-intelligence-mcp-frontend             36 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 14 hours (healthy)   vn-market-intelligence-mcp-mcp-server           32 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 37 hours (healthy)   vn-market-intelligence-mcp-frontend             37 hours ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 7 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        7 days ago
 vn-market-intelligence-mcp-stock-price-1          Up 7 days (healthy)     vn-market-intelligence-mcp-stock-price          7 days ago
 vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)     vn-market-intelligence-mcp-technical-analysis   8 days ago
@@ -39,17 +39,23 @@ mcp-gateway                                       Up 12 days (healthy)    mcpser
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=57.43% MemUsage=1.149GiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=59.63% MemUsage=1.193GiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    23Gi    36%    393k  243M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    22Gi    38%    393k  231M    0%   /
 
 === PROBE DONE ===
 ```
+
+## c363 · 2026-06-23T09:13:04Z
+### Audit Run Tier-1 (09:13 UTC 2026-06-23)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 | Status: HEALTHY
+- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–27]. Memory 57.43% PASS. RestartCount=1 PASS. Disk 36% PASS.
 
 ## c362 · 2026-06-23T08:44:01Z
 ### Audit Run Tier-1 (08:43 UTC 2026-06-23)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 | Status: HEALTHY
-- Evidence: All 12 services UP+healthy [RAW-PROBE L6–18]. All 5 health endpoints HTTP 200 [RAW-PROBE L22–27]. A-20 pdf-extractor 3/3 in-container multi-probe PASS. Memory 57.43% PASS. RestartCount=1 PASS. Disk 36% PASS.
+- Evidence: All 12 services UP+healthy. All 5 health endpoints HTTP 200. A-20 pdf-extractor 3/3 in-container multi-probe PASS. Memory 57.43% PASS. RestartCount=1 PASS. Disk 36% PASS.
