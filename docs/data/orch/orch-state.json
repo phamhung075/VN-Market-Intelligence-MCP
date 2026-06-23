@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-23T19:53:16Z: MARKET OUTPUT LAYER VERIFIED RESTORED. chef-evening dish RAW-verified REAL+LANDED: live get_macro_snapshot matches cited carry 1.37pp/EY 7.05%/VNI 1869.04 (is_estimate=false); posted market_messages id852 19:49:24Z (from_agent=mcp-user known chef quirk, verified content+id>baseline 851, not double-post). Full pipeline confirmed real post-unblind: data agents (bctc-analyst FPT) + MARKET output (chef) both genuine. Dish ran degraded-floor (empty agent_signals; news-scout/market-watcher 20:00 offhours not yet fired) but real-data floor held. tran-ngoc-bau audits dish at 20:13. RAW probe also re-confirmed macro oil/gold/usdVnd deltas STILL null = FIX-MACRO-SNAPSHOT-DELTAS-NULL P2 valid (held for PO owner-assign). TASK-CONF-1 done_verified still pends market-open (~02:00Z) for new verified_decision rows. WIP fine.",
-    "updated_at": "2026-06-23T19:53:16Z",
+    "next_action": "Tick 2026-06-23T20:19:55Z: PARALLEL COWORK-DISPATCHER CONFIRMED ACTIVE. At 20:06Z a separate cowork-dispatcher (NOT this router) spawned+RAW-verified market-watcher-offhours (BID 42650 exact-match real) + news-scout-offhours (4 signals #7193-7196); signal pool now warm post-unblind. It respects last_fired => coordinated. ROUTER POSTURE: DEFER all cowork SPAWNS to the parallel dispatcher (avoid gatherer-double-fire); router keeps signal-drain + board + dev-team + auditor-triage only. Did NOT spawn tnb-audit (20:13 guaranteed) — deferred to parallel dispatcher. CAVEAT (route to downstream publishers): news-scout content (Vingroup 18T / FII 80T / HVN 2.9B) NOT content-verified — chef/fb-poster MUST content-check vs live source before MARKET/FB publish per fabrication guard; chef-evening dish (19:49) posted BEFORE these so uncontaminated. OPEN: should router stop inline cowork dispatch entirely if parallel dispatcher is authoritative? — PO/architect coordination question. TASK-CONF-1 done_verified pends market-open. macro-delta P2 held. WIP fine.",
+    "updated_at": "2026-06-23T20:19:55Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T19:53:16Z",
+    "last_tick": "2026-06-23T20:19:55Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
