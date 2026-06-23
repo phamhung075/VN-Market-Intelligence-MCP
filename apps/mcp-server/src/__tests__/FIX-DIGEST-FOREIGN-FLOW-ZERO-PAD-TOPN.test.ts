@@ -15,7 +15,7 @@
  *   T-3 (formatter partial-zero): formatForeignFlowSection given mixed list
  *        → renders only nonzero lines, correct count in header
  *   T-4 (formatter all-zero): formatForeignFlowSection given all-zero list
- *        → returns "dữ liệu không có" message
+ *        → returns "Dữ liệu không khả dụng (pipeline tạm dừng)" message (1783 canonical)
  *   T-5 (formatter 5+ nonzero): formatForeignFlowSection given 5 nonzero
  *        → renders all 5 nonzero lines, no 0.000k
  *   T-6 (formatter empty): formatForeignFlowSection given empty array
@@ -290,11 +290,12 @@ describe("FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN T-3 — formatter partial-zero: 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// T-4: formatForeignFlowSection — all-zero → "dữ liệu không có"
+// T-4: formatForeignFlowSection — all-zero → canonical unavailability message
+// (Task 1783 BUG-1 defined the canonical copy as "Dữ liệu không khả dụng (pipeline tạm dừng)")
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN T-4 — formatter all-zero → no-data message", () => {
-  it("returns 'dữ liệu không có' message when all movers are zero", () => {
+  it("returns unavailability message when all movers are zero", () => {
     const movers = [
       { code: "ACV", foreignNetVol: 0, foreignBuyVol: 0, foreignSellVol: 0 },
       { code: "DFF", foreignNetVol: 0, foreignBuyVol: 0, foreignSellVol: 0 },
@@ -303,7 +304,7 @@ describe("FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN T-4 — formatter all-zero → n
 
     const lines = formatForeignFlowSection(movers);
     const joined = lines.join("\n");
-    expect(joined).toContain("dữ liệu không có");
+    expect(joined).toContain("Dữ liệu không khả dụng");
   });
 
   it("does not render any mover lines when all are zero", () => {
