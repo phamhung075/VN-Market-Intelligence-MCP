@@ -1,0 +1,28 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-23T16:06Z",
+    "nominal_tick": "2026-06-23T16:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": true,
+    "mcp_servers": 1,
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
+    "spawned": [],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
+    "classification": "SKIPPED_BLIND_NO_BACKSTOP",
+    "reason": "Three slots matched at the 16:00 boundary: gatherer pair news-scout-offhours/market-watcher-offhours (cron 0 */4) + market-watcher-eod (cron 0 16 * * 1-5, weekday post-close pass). All policy gatherer-standard, all local-dispatcher-only — NONE among the 6 cloud RemoteTrigger backstops. mcpServers:1 but subagents probe-confirmed gateway-blind (08:06, no restart since) -> a local spawn would fabricate news/prices; not spawned. All three genuinely UNFIRED this session.",
+    "slot_detail": {
+      "news-scout-offhours": {"agent": "news-scout", "flow_path": "docs/agents/news-scout/flow/main.md", "cron": "0 */4 * * *", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-15T08:08:57Z"},
+      "market-watcher-offhours": {"agent": "market-watcher", "flow_path": "docs/agents/market-watcher/flow/main.md", "cron": "0 */4 * * *", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-15T08:08:57Z"},
+      "market-watcher-eod": {"agent": "market-watcher", "flow_path": "docs/agents/market-watcher/flow/main.md", "cron": "0 16 * * 1-5", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-11T16:06:00Z"}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782232575},
+    "note": "Gateway in .mcp.json (mcpServers:1) but running-session subagents remain blind until a full CLI restart / /mcp reconnect (probe-confirmed 08:06Z). market-watcher-eod last_fired 2026-06-11 is the most stale — weekday EOD pass missed across the blind window."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-23T16:06:16Z"
+}
