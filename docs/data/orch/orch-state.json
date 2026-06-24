@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "TASK-MACRO-COMMODITY-DELTA DONE + done_verified=YES. QA AC-1..7 all PASS. Oil delta -0.98 / Gold delta -54.60 / prevFetchedAt=2026-06-23T10:00:02.338Z exactly match DB baseline row (77.48/4135.0). Q2 usdVnd suppression correct (SBV override fired). RISK-1 RFC3339Nano parser proof confirmed. 12/12 go test packages green. NEXT: pm mark done.",
-    "next_action": "QA: verify AC-1..AC-7 live on get_macro_snapshot (rebuild done per orch-state 04:56Z; oilDelta+goldDelta live-verified); flip REVIEW→DONE when AC-1..7 pass",
-    "updated_at": "2026-06-24T05:10:00Z",
-    "updated_by": "qa",
-    "last_tick": "2026-06-24T04:56:50Z",
+    "next_action": "Tick 2026-06-24T05:16:26Z: TRIAGE+DOWNGRADE sau-b06-202606240513 vn-bctc-fetch CRITICAL->INFO (2nd false-CRITICAL today; 178h idle EXPECTED out-of-season, queue clean stale_pending=0; wrong 24h threshold). Dup-of sau-20260623T153559Z; tracked FIX-BCTC-SLA-THRESHOLD-360. RECOMMEND PO bump FIX-BCTC-SLA-THRESHOLD-360 priority (recurring auditor false-CRITICAL churn). auditor T1 runtime CLEAN (12/12, mem71%, rag105). S2: CONF-1 + macro-delta both done_verified. Open: orphan-alert_id P1, CONF-2, macro-parent umbrella (usdVnd PO decision). WIP fine.",
+    "updated_at": "2026-06-24T05:16:26Z",
+    "updated_by": "dev-team-cron-router",
+    "last_tick": "2026-06-24T05:16:26Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z",
     "done_verified": "YES"
@@ -1767,9 +1767,12 @@
         "to": "po",
         "type": "data_stale",
         "summary": "bctc-discover stale 7d 10h (check B-06, vn-bctc-fetch unhealthy)",
-        "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "severity": "INFO",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_triage": "router 2026-06-24T05:16:26Z RAW-confirmed FALSE-CRITICAL, downgrade CRITICAL->INFO. vn-bctc-fetch 178h (7d10h) idle is EXPECTED out-of-earnings-season (month=06; Q2 reporting Jul-Aug; newest filing 2026-06-16) + queue CLEAN (stale_pending>72h=0 live). Correct out-of-season BCTC threshold=168h NOT 24h. SAME root as sau-20260623T153559Z (triaged INFO 15:35 today) — this is the 2ND bctc-stale false-CRITICAL today via a different check id (B-06). Tracked by FIX-BCTC-SLA-THRESHOLD-360 + FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH. No new incident, no re-escalate. RECURRENCE NOTE: auditor freshness checks keep emitting bctc CRITICAL on 24h threshold -> recommend PO bump FIX-BCTC-SLA-THRESHOLD-360 priority to stop queue-churn/alert-fatigue.",
+        "router_dup_of": "sau-20260623T153559Z",
+        "router_triaged_at": "2026-06-24T05:16:26Z"
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
