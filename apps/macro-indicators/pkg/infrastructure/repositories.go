@@ -370,6 +370,133 @@ func fetchCommodityPricesFromDB(
 }
 
 // ---------------------------------------------------------------------------
+// SQLiteCommodityHistoryRepository — prev-session commodity close reader (S2-DATA-HONESTY)
+// ---------------------------------------------------------------------------
+
+// commodityHistoryLookbackH is the minimum age of a commodity_prices_history row
+// for it to be considered a "prior session" baseline. 18h ensures the row is from
+// a genuinely different market period regardless of when the request fires.
+// Rationale: Brent CME Globex + London + NY run ~23h/day; 18h safely clears any
+// single session. SBV sets USDVND daily at ~01:00 UTC; an 18h window from any
+// daytime VN request reaches the prior business day.
+const commodityHistoryLookbackH = 18 * time.Hour
+
+// commodityHistoryStaleH is the maximum age of a qualifying prior-session row.
+// If the row is older than 36h, it is treated as too stale for a signed delta
+// (covers weekends — oil/gold trade weekdays only). Safe-degrade: nil map.
+const commodityHistoryStaleH = 36 * time.Hour
+
+// SQLiteCommodityHistoryRepository implements domain.CommodityHistoryPort.
+// Reads the most recent commodity snapshot whose fetched_at is at least 18h ago
+// (i.e. from a prior trading session) from the shared market.db (named volume,
+// read-only). Pattern mirrors SQLiteCommodityRepository.
+//
+// Safe-degrade contract: returns (nil, "", nil) — not an error — when:
+//   - DB file is missing or unreadable
+//   - commodity_prices_history table is absent (pre-migration container)
+//   - no row satisfies fetched_at <= now-18h (all rows too fresh)
+//   - the best qualifying row is older than 36h (stale bound exceeded)
+//   - all three commodity columns in the row are zero or NULL
+type SQLiteCommodityHistoryRepository struct {
+	dbPath string
+}
+
+// NewSQLiteCommodityHistoryRepository creates a commodity history repository.
+// dbPath is read from the DB_PATH env var; falls back to /app/data/market.db.
+func NewSQLiteCommodityHistoryRepository() *SQLiteCommodityHistoryRepository {
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "/app/data/market.db"
+	}
+	return &SQLiteCommodityHistoryRepository{dbPath: dbPath}
+}
+
+// FetchPrevClose returns (prevPrices, prevFetchedAt, nil) when a qualifying row exists.
+// Returns (nil, "", nil) on any safe-degrade condition (no row / stale / error).
+func (r *SQLiteCommodityHistoryRepository) FetchPrevClose(ctx context.Context) (map[string]float64, string, error) {
+	db, err := sql.Open("sqlite", fmt.Sprintf("file:%s?mode=ro", r.dbPath))
+	if err != nil {
+		return nil, "", nil //nolint:nilerr // intentional: safe-degrade
+	}
+	defer db.Close()
+	return fetchCommodityPrevCloseFromDB(ctx, db, commodityHistoryLookbackH, commodityHistoryStaleH)
+}
+
+// fetchCommodityPrevCloseFromDB is the pure query logic extracted from FetchPrevClose
+// so tests can inject a *sql.DB (in-memory :memory:) directly. Pattern mirrors
+// fetchCommodityPricesFromDB.
+//
+// Query: SELECT the most recent row whose fetched_at <= cutoff (now - lookback).
+// Cutoff is formatted as RFC3339Nano — same precision as TypeScript writer
+// (new Date().toISOString() → "2026-05-28T06:01:23.456Z"). SQLite lexicographic
+// string comparison works correctly on ISO8601 timestamps of identical format
+// (RISK-1 guard from bug #3003 class).
+//
+// Staleness check: after finding the qualifying row, reject it if it is older than
+// staleBound (> 36h). This handles sparse history: a row at now-40h satisfies
+// fetched_at<=cutoff but is rejected as stale → nil map.
+//
+// Partial-zero guard: only include non-NULL, positive values in the result map.
+// Keys: "OIL", "GOLD", "USDVND" (same as CommodityFetcherPort).
+func fetchCommodityPrevCloseFromDB(
+	ctx context.Context,
+	db *sql.DB,
+	lookback, staleBound time.Duration,
+) (map[string]float64, string, error) {
+	cutoff := time.Now().UTC().Add(-lookback).Format(time.RFC3339Nano)
+	const query = `
+		SELECT brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at
+		FROM commodity_prices_history
+		WHERE fetched_at <= ?
+		  AND brent_crude_usd > 0
+		ORDER BY fetched_at DESC
+		LIMIT 1`
+
+	var oil, gold, usdVnd sql.NullFloat64
+	var fetchedAt sql.NullString
+	err := db.QueryRowContext(ctx, query, cutoff).Scan(&oil, &gold, &usdVnd, &fetchedAt)
+	if err != nil {
+		// sql.ErrNoRows (no qualifying row) or table absent — safe-degrade.
+		return nil, "", nil //nolint:nilerr // intentional: safe-degrade
+	}
+	if !fetchedAt.Valid {
+		return nil, "", nil
+	}
+
+	// RISK-1 (RFC3339Nano): TypeScript writer uses new Date().toISOString() which
+	// emits ms-precision timestamps (e.g. "2026-05-28T06:01:23.456Z"). Must use
+	// time.RFC3339Nano — using time.RFC3339 silently fails on the .456 suffix and
+	// treats every row as infinitely stale (reproduces bug #3003).
+	ts, err := time.Parse(time.RFC3339Nano, fetchedAt.String)
+	if err != nil {
+		// Unparseable timestamp — treat as infinitely stale (safe-degrade).
+		return nil, "", nil
+	}
+
+	// Staleness upper bound: if the qualifying row is > 36h old, nil-degrade.
+	// Handles sparse history: row at now-40h passes the lookback WHERE clause
+	// (fetched_at <= cutoff) but is rejected here as too stale for a valid delta.
+	if time.Since(ts) > staleBound {
+		return nil, "", nil
+	}
+
+	// Build result map: include only non-NULL, positive values (partial-zero guard).
+	// A zero column means the data source had no value for that commodity on that row.
+	result := make(map[string]float64, 3)
+	if oil.Valid && oil.Float64 > 0 {
+		result["OIL"] = oil.Float64
+	}
+	if gold.Valid && gold.Float64 > 0 {
+		result["GOLD"] = gold.Float64
+	}
+	if usdVnd.Valid && usdVnd.Float64 > 0 {
+		result["USDVND"] = usdVnd.Float64
+	}
+
+	return result, fetchedAt.String, nil
+}
+
+// ---------------------------------------------------------------------------
 // SBVRateSQLiteAdapter — live SBV official FX reader (DPI-1)
 // ---------------------------------------------------------------------------
 

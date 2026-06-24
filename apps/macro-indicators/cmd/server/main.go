@@ -81,7 +81,10 @@ func main() {
 	// DPI-2b: inject CarryYieldInputsSQLiteAdapter — reads live deposit/fed/earningYield
 	// from market.db so carry/yield regimes recompute from real data, not frozen fixtures.
 	carryYieldRepo := infrastructure.NewCarryYieldInputsSQLiteAdapter()
-	useCase := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo, marketIndexRepo, carryYieldRepo)
+	// S2-DATA-HONESTY: inject SQLiteCommodityHistoryRepository — reads prev-session
+	// commodity close from commodity_prices_history for oil/gold/usdVnd delta computation.
+	commodityHistoryRepo := infrastructure.NewSQLiteCommodityHistoryRepository()
+	useCase := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo, marketIndexRepo, carryYieldRepo, commodityHistoryRepo)
 
 	// VMT-2: BOP use case wiring.
 	// Fence-C: only this file imports pkg/infrastructure.

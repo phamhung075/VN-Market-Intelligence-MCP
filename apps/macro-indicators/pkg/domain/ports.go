@@ -83,6 +83,21 @@ type MarketIndexPort interface {
 	FetchPrevSessionVnIndex(ctx context.Context) (*float64, error)
 }
 
+// CommodityHistoryPort is the port for commodity prev-session close lookup.
+// Implemented in pkg/infrastructure (SQLiteCommodityHistoryRepository).
+// Only cmd/server/main.go imports pkg/infrastructure (Fence-C preserved).
+//
+// S2-DATA-HONESTY: used by Execute() to compute oil/gold/usdVnd signed delta+direction.
+// "Prior session" = most recent snapshot at least 18h before now (global commodity markets).
+// Staleness bound: 36h — rows older than 36h return nil (weekend/holiday safe-degrade).
+//
+// Result keys: "OIL", "GOLD", "USDVND" (same keys as CommodityFetcherPort).
+// Returns (nil, "", nil) — not an error — when no qualifying row exists (safe-degrade).
+// prevFetchedAt string is the raw fetched_at ISO8601 from the history row (for DTO provenance).
+type CommodityHistoryPort interface {
+	FetchPrevClose(ctx context.Context) (map[string]float64, string, error)
+}
+
 // CarryYieldInputsPort supplies the live regime INPUTS for the carry-trade and
 // yield-spread primitives, read from the shared market.db. All methods return
 // (0, nil) on absent/zero/stale rows (safe-degrade — caller keeps fixture).

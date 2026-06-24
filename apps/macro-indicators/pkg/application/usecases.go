@@ -23,6 +23,8 @@ package application
 
 import (
 	"context"
+	"os"
+	"strconv"
 	"time"
 
 	mic "github.com/vn-market-intelligence/macro-indicators/pkg/primitive/macro_investment_clock"
@@ -77,23 +79,27 @@ type ComputeMacroUseCase struct {
 	sbvRate          domain.SBVRatePort
 	marketIndex      domain.MarketIndexPort
 	carryYieldInputs domain.CarryYieldInputsPort // DPI-2b: live carry/yield regime inputs
+	commodityHistory domain.CommodityHistoryPort  // S2-DATA-HONESTY: prev-session commodity close
 }
 
 // NewComputeMacroUseCase creates a new use case with injected ports.
 // The composition root (cmd/server/main.go) is responsible for providing
 // the concrete infrastructure adapters at startup.
 // DPI-2b: carryYieldInputs port added — supplies live deposit/fed/earningYield from market.db.
+// S2-DATA-HONESTY: commodityHistory port added — supplies prev-session oil/gold/usdVnd from commodity_prices_history.
 func NewComputeMacroUseCase(
 	cf domain.CommodityFetcherPort,
 	sr domain.SBVRatePort,
 	mi domain.MarketIndexPort,
 	cy domain.CarryYieldInputsPort,
+	ch domain.CommodityHistoryPort,
 ) *ComputeMacroUseCase {
 	return &ComputeMacroUseCase{
 		commodityFetcher: cf,
 		sbvRate:          sr,
 		marketIndex:      mi,
 		carryYieldInputs: cy,
+		commodityHistory: ch,
 	}
 }
 
@@ -133,13 +139,24 @@ func (uc *ComputeMacroUseCase) Execute(
 	oilPrice, goldPrice, usdVnd, oilLive, goldLive, usdVndLive := resolveMarketPrices(ctx, uc)
 	allCommodityLive := oilLive && goldLive && usdVndLive
 
+	// S2-DATA-HONESTY: resolve the prev-session commodity close from history table.
+	// Must happen BEFORE the SBV override so we can capture the override flag.
+	// Returns (nil, nil) when no qualifying prior row exists (safe-degrade).
+	prevCommodity, prevFetchedAt := resolveCommodityPrevClose(ctx, uc)
+
 	// DPI-1: SBV official USDVND takes priority over Yahoo Finance value.
 	// If sbvRate port returns a positive value, replace usdVnd (preserves OIL/GOLD).
 	// Safe-degrade: if sbv_rates is empty or stale, GetRate returns (0, nil) and
 	// usdVnd keeps the commodity/fixture value. No error, no panic.
+	//
+	// Q2 (S2-DATA-HONESTY): capture SBV override flag for usdVnd delta suppression.
+	// Cross-source delta (SBV_current vs Yahoo_prev) is structurally misleading.
+	// When SBV fires, usdVnd delta is suppressed (nil/"unknown") per same-source-only rule.
+	usdVndSBVOverride := false
 	if uc.sbvRate != nil {
 		if r, err := uc.sbvRate.GetRate(ctx, "USD", "VND"); err == nil && r > 0 {
 			usdVnd = r
+			usdVndSBVOverride = true
 		}
 	}
 
@@ -232,16 +249,24 @@ func (uc *ComputeMacroUseCase) Execute(
 
 	// U4: Compute direction+delta for all 4 headline values.
 	// VnIndex: uses prev-session close from daily_ohlcv (nil when < 2 rows → unknown).
-	// Oil/Gold/UsdVnd: no prev-session history persisted → always (nil, "unknown").
+	// Oil/Gold: uses commodity_prices_history prev-session close (S2-DATA-HONESTY).
+	// UsdVnd: same, but suppressed when SBV override fired (Q2: cross-source honesty).
 	vnIndexDelta, vnIndexDirection := computeDelta(vnIndex, prevVnIndex)
-	var (
-		oilDelta      *float64 = nil // no history; never fabricate
-		oilDirection           = "unknown"
-		goldDelta     *float64 = nil // no history; never fabricate
-		goldDirection          = "unknown"
-		usdVndDelta   *float64 = nil // no history; never fabricate
-		usdVndDirection        = "unknown"
-	)
+
+	oilDelta, oilDirection := computeCommodityDelta("OIL", oilPrice, oilLive, prevCommodity)
+	goldDelta, goldDirection := computeCommodityDelta("GOLD", goldPrice, goldLive, prevCommodity)
+
+	// Q2 decision: usdVnd delta suppressed when SBV override fired (cross-source pair).
+	// current=SBV_official, prev=Yahoo_usd_vnd_rate from history → structurally misleading.
+	// When Yahoo is current source (SBV did not fire), delta computed normally.
+	var usdVndDelta *float64
+	var usdVndDirection string
+	if usdVndSBVOverride {
+		usdVndDelta = nil
+		usdVndDirection = "unknown"
+	} else {
+		usdVndDelta, usdVndDirection = computeCommodityDelta("USDVND", usdVnd, usdVndLive, prevCommodity)
+	}
 
 	return MacroSnapshotResponse{
 		Status:     "ok",
@@ -268,14 +293,17 @@ func (uc *ComputeMacroUseCase) Execute(
 		USDVndIsEstimate:  !usdVndLive,
 		USDVndSourceTier:  usdVndTier,
 		// U4: direction+delta (additive fields)
-		VNIndexDelta:    vnIndexDelta,
+		VNIndexDelta:     vnIndexDelta,
 		VNIndexDirection: vnIndexDirection,
-		OilUSDDelta:     oilDelta,
-		OilUSDDirection: oilDirection,
-		GoldUSDDelta:    goldDelta,
+		OilUSDDelta:      oilDelta,
+		OilUSDDirection:  oilDirection,
+		GoldUSDDelta:     goldDelta,
 		GoldUSDDirection: goldDirection,
-		USDVndDelta:     usdVndDelta,
-		USDVndDirection: usdVndDirection,
+		USDVndDelta:      usdVndDelta,
+		USDVndDirection:  usdVndDirection,
+		// S2-DATA-HONESTY: provenance stamp — ISO8601 UTC of the prior commodity row.
+		// nil when no qualifying prior row exists or all deltas are suppressed.
+		PrevFetchedAt: prevFetchedAt,
 	}, nil
 }
 
@@ -382,19 +410,18 @@ func resolvePrevSessionVnIndex(ctx context.Context, uc *ComputeMacroUseCase) *fl
 // computeDelta computes the signed point delta and direction string for a price field.
 //
 // Direction enum: "up" | "down" | "flat" | "unknown".
-// "flat" is returned when |delta/current| < flatThreshold (0.1% — ARCH-DEFERRED: tunable).
+// "flat" is returned when |delta/current| < flatThreshold (default 0.1%, tunable via
+// FLAT_THRESHOLD_PCT env — FR-6).
 // "unknown" is returned when prev is nil (no history available).
 //
 // Safe: returns (nil, "unknown") when prev is nil.
-// U4: covers all 4 headline values; oil/gold/usdVnd always pass nil → (nil, "unknown").
+// U4: covers all 4 headline values; uses getFlatThresholdPct() for runtime tuning.
 func computeDelta(current float64, prev *float64) (*float64, string) {
 	if prev == nil {
 		return nil, "unknown"
 	}
 	delta := current - *prev
-	// flatThreshold: 0.1% of current price.
-	// Architect-deferred: threshold tunable in a future sprint (ARCH-U4-2 risk).
-	const flatThresholdPct = 0.001
+	flatThresholdPct := getFlatThresholdPct()
 	var direction string
 	switch {
 	case current > 0 && delta/current > flatThresholdPct:
@@ -405,6 +432,62 @@ func computeDelta(current float64, prev *float64) (*float64, string) {
 		direction = "flat"
 	}
 	return &delta, direction
+}
+
+// getFlatThresholdPct returns the flat-direction threshold as a fraction of current price.
+// Default: 0.001 (0.1%). Overridable at runtime via FLAT_THRESHOLD_PCT env (FR-6).
+// A positive parsed value is required; invalid or non-positive values use the default.
+func getFlatThresholdPct() float64 {
+	if s := os.Getenv("FLAT_THRESHOLD_PCT"); s != "" {
+		if v, err := strconv.ParseFloat(s, 64); err == nil && v > 0 {
+			return v
+		}
+	}
+	return 0.001
+}
+
+// computeCommodityDelta guards against fixture-current delta fabrication (RISK-3).
+//
+// If currentLive=false (fixture mode — HTTPCommodityFetcher is active), the current
+// value is a hardcoded fixture constant (e.g. oilPrice=82.5). Computing a delta between
+// a fixture constant and a real history row would fabricate a meaningless signed number.
+// The gate blocks this: return (nil, "unknown") whenever current is not live.
+//
+// If prevMap is nil (no qualifying prior row) or the key is missing/zero, (nil, "unknown")
+// is returned (partial-zero guard — mirrors T-MLP partial-NULL handling).
+//
+// Keys: "OIL", "GOLD", "USDVND" (same as CommodityFetcherPort and CommodityHistoryPort).
+func computeCommodityDelta(key string, current float64, currentLive bool, prevMap map[string]float64) (*float64, string) {
+	if !currentLive {
+		// RISK-3: fixture current — never compute delta against real history.
+		return nil, "unknown"
+	}
+	if prevMap == nil {
+		return nil, "unknown"
+	}
+	prev, ok := prevMap[key]
+	if !ok || prev <= 0 {
+		// Key absent (partial-zero guard) or zero prev → no meaningful delta.
+		return nil, "unknown"
+	}
+	prevVal := prev
+	return computeDelta(current, &prevVal)
+}
+
+// resolveCommodityPrevClose fetches the prev-session commodity close from
+// CommodityHistoryPort. Returns (nil, nil) when the port is nil, errors, or returns
+// no qualifying row (safe-degrade). Mirrors resolvePrevSessionVnIndex pattern.
+//
+// S2-DATA-HONESTY: called by Execute() to populate prevCommodity (map) and
+// prevFetchedAt (*string) used for oil/gold/usdVnd delta computation + DTO provenance.
+func resolveCommodityPrevClose(ctx context.Context, uc *ComputeMacroUseCase) (map[string]float64, *string) {
+	if uc.commodityHistory != nil {
+		prices, fetchedAt, err := uc.commodityHistory.FetchPrevClose(ctx)
+		if err == nil && prices != nil && fetchedAt != "" {
+			return prices, &fetchedAt
+		}
+	}
+	return nil, nil
 }
 
 // ---------------------------------------------------------------------------

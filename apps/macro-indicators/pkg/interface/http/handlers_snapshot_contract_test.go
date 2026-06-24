@@ -83,6 +83,7 @@ func newContractRouter() http.Handler {
 		&fakeContractSBVRate{},
 		&fakeContractMarketIndex{},
 		nil, // carryYieldInputs nil → fixture safe-degrade (contract test, not DPI-2b scope)
+		nil, // commodityHistory nil → no prev-session commodity data (contract test)
 	)
 	return NewRouter(RouterConfig{Snapshot: uc, BOP: nil, Logger: nil})
 }
@@ -373,6 +374,7 @@ func fakeFixturePortsRouter() http.Handler {
 		&fakeContractSBVRate{},
 		&fakeContractMarketIndex{}, // returns 1280.5 (== fixtureVNIndex) → still "live" from port
 		nil, // nil carry/yield → fixture fallback for carry/yield
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	return NewRouter(RouterConfig{Snapshot: uc, BOP: nil, Logger: nil})
 }
@@ -390,6 +392,7 @@ func fakeAllFixturePortsRouter() http.Handler {
 		&fakeContractSBVRate{},
 		&fakeZeroMarketIndex{},        // zero → vnIndex fixture fallback
 		nil,                           // nil carry/yield → fixture fallback
+		nil,                           // commodityHistory nil → no prev-session commodity data
 	)
 	return NewRouter(RouterConfig{Snapshot: uc, BOP: nil, Logger: nil})
 }

@@ -139,6 +139,22 @@ func newInMemoryDB(t *testing.T) *sql.DB {
 		t.Fatalf("create daily_ohlcv: %v", err)
 	}
 
+	// commodity_prices_history — source for SQLiteCommodityHistoryRepository (S2-DATA-HONESTY).
+	// Hourly snapshots written by commodityTrackerRefreshJob (mcp-server scheduler).
+	// Schema mirrors the production table: brent_crude_usd, gold_usd_per_oz, usd_vnd_rate,
+	// fetched_at TEXT (ISO8601+ms, RFC3339Nano format, written by TypeScript new Date().toISOString()).
+	_, err = db.Exec(`
+		CREATE TABLE commodity_prices_history (
+			id              INTEGER PRIMARY KEY AUTOINCREMENT,
+			brent_crude_usd REAL,
+			gold_usd_per_oz REAL,
+			usd_vnd_rate    REAL,
+			fetched_at      TEXT NOT NULL
+		)`)
+	if err != nil {
+		t.Fatalf("create commodity_prices_history: %v", err)
+	}
+
 	return db
 }
 
@@ -931,5 +947,222 @@ func TestFetchPrevSessionVnIndex_OtherCodes_NotIncluded(t *testing.T) {
 	}
 	if got != nil {
 		t.Errorf("T-U4-5 other-codes: prev close = %v, want nil (no VNINDEX rows)", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// S2-DATA-HONESTY: fetchCommodityPrevCloseFromDB tests (T-HIST-1..7)
+// ---------------------------------------------------------------------------
+
+// TestFetchCommodityPrevCloseFromDB_WindowRow (T-HIST-1):
+// Row at now-20h is within the [18h, 36h] window → all three values returned,
+// prevFetchedAt is non-empty.
+func TestFetchCommodityPrevCloseFromDB_WindowRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	// Row at now-20h: within the 18h-36h lookback window.
+	// Values differ from fixtures to prove the query is reading the row.
+	ts := time.Now().UTC().Add(-20 * time.Hour).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO commodity_prices_history (brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+		VALUES (78.5, 3200.0, 25800.0, ?)`,
+		ts)
+	if err != nil {
+		t.Fatalf("T-HIST-1: insert commodity_prices_history: %v", err)
+	}
+
+	prices, fetchedAt, err := fetchCommodityPrevCloseFromDB(context.Background(), db, commodityHistoryLookbackH, commodityHistoryStaleH)
+	if err != nil {
+		t.Fatalf("T-HIST-1: fetchCommodityPrevCloseFromDB returned error: %v", err)
+	}
+	if prices == nil {
+		t.Fatal("T-HIST-1: prices is nil, want non-nil map (row within 18h-36h window)")
+	}
+	if prices["OIL"] != 78.5 {
+		t.Errorf("T-HIST-1: OIL = %.2f, want 78.5", prices["OIL"])
+	}
+	if prices["GOLD"] != 3200.0 {
+		t.Errorf("T-HIST-1: GOLD = %.2f, want 3200.0", prices["GOLD"])
+	}
+	if prices["USDVND"] != 25800.0 {
+		t.Errorf("T-HIST-1: USDVND = %.2f, want 25800.0", prices["USDVND"])
+	}
+	if fetchedAt == "" {
+		t.Errorf("T-HIST-1: prevFetchedAt is empty, want non-empty ISO8601 string")
+	}
+}
+
+// TestFetchCommodityPrevCloseFromDB_TooFreshRow (T-HIST-2):
+// Row at now-5h is < 18h old (too fresh for "prior session") → nil map (lookback gate).
+func TestFetchCommodityPrevCloseFromDB_TooFreshRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	ts := time.Now().UTC().Add(-5 * time.Hour).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO commodity_prices_history (brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+		VALUES (78.5, 3200.0, 25800.0, ?)`,
+		ts)
+	if err != nil {
+		t.Fatalf("T-HIST-2: insert commodity_prices_history: %v", err)
+	}
+
+	prices, fetchedAt, err := fetchCommodityPrevCloseFromDB(context.Background(), db, commodityHistoryLookbackH, commodityHistoryStaleH)
+	if err != nil {
+		t.Fatalf("T-HIST-2: fetchCommodityPrevCloseFromDB returned error: %v", err)
+	}
+	if prices != nil {
+		t.Errorf("T-HIST-2: prices = %v, want nil (row < 18h old must be excluded by lookback gate)", prices)
+	}
+	if fetchedAt != "" {
+		t.Errorf("T-HIST-2: prevFetchedAt = %q, want empty (no qualifying row)", fetchedAt)
+	}
+}
+
+// TestFetchCommodityPrevCloseFromDB_StaleRow (T-HIST-3):
+// Row at now-40h is > 36h (stale bound exceeded) → nil map (stale gate).
+func TestFetchCommodityPrevCloseFromDB_StaleRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	ts := time.Now().UTC().Add(-40 * time.Hour).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO commodity_prices_history (brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+		VALUES (78.5, 3200.0, 25800.0, ?)`,
+		ts)
+	if err != nil {
+		t.Fatalf("T-HIST-3: insert commodity_prices_history: %v", err)
+	}
+
+	prices, fetchedAt, err := fetchCommodityPrevCloseFromDB(context.Background(), db, commodityHistoryLookbackH, commodityHistoryStaleH)
+	if err != nil {
+		t.Fatalf("T-HIST-3: fetchCommodityPrevCloseFromDB returned error: %v", err)
+	}
+	if prices != nil {
+		t.Errorf("T-HIST-3: prices = %v, want nil (row > 36h old must be rejected by stale gate)", prices)
+	}
+	if fetchedAt != "" {
+		t.Errorf("T-HIST-3: prevFetchedAt = %q, want empty (stale row must not populate prevFetchedAt)", fetchedAt)
+	}
+}
+
+// TestFetchCommodityPrevCloseFromDB_BoundaryRow (T-HIST-4):
+// Row at exactly now-18h is boundary-inclusive (fetched_at <= cutoff) → row returned.
+// Uses a 2-second buffer to account for sub-second timing in tests.
+func TestFetchCommodityPrevCloseFromDB_BoundaryRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	// Place the row exactly at the lookback boundary (18h ago).
+	// Add 2s buffer so the row's fetched_at is definitely <= the cutoff computed in the query.
+	ts := time.Now().UTC().Add(-commodityHistoryLookbackH - 2*time.Second).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO commodity_prices_history (brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+		VALUES (79.0, 3210.0, 25850.0, ?)`,
+		ts)
+	if err != nil {
+		t.Fatalf("T-HIST-4: insert commodity_prices_history: %v", err)
+	}
+
+	prices, _, err := fetchCommodityPrevCloseFromDB(context.Background(), db, commodityHistoryLookbackH, commodityHistoryStaleH)
+	if err != nil {
+		t.Fatalf("T-HIST-4: fetchCommodityPrevCloseFromDB returned error: %v", err)
+	}
+	if prices == nil {
+		t.Errorf("T-HIST-4: prices is nil, want non-nil (row at boundary fetched_at <= cutoff must be included)")
+	}
+}
+
+// TestFetchCommodityPrevCloseFromDB_EmptyTable (T-HIST-5):
+// Empty table → nil map, no error (safe-degrade).
+func TestFetchCommodityPrevCloseFromDB_EmptyTable(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	prices, fetchedAt, err := fetchCommodityPrevCloseFromDB(context.Background(), db, commodityHistoryLookbackH, commodityHistoryStaleH)
+	if err != nil {
+		t.Fatalf("T-HIST-5: fetchCommodityPrevCloseFromDB on empty table returned error: %v", err)
+	}
+	if prices != nil {
+		t.Errorf("T-HIST-5: prices = %v, want nil (empty table must safe-degrade)", prices)
+	}
+	if fetchedAt != "" {
+		t.Errorf("T-HIST-5: prevFetchedAt = %q, want empty (empty table)", fetchedAt)
+	}
+}
+
+// TestFetchCommodityPrevCloseFromDB_PartialZeroGold (T-HIST-6):
+// Row with gold_usd_per_oz=0, others non-zero → GOLD key absent from map;
+// OIL + USDVND present (partial-zero guard, mirrors T-MLP partial-NULL test).
+func TestFetchCommodityPrevCloseFromDB_PartialZeroGold(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	ts := time.Now().UTC().Add(-20 * time.Hour).Format(time.RFC3339Nano)
+	// gold_usd_per_oz = 0 — partial zero (valid but zero column → should be omitted).
+	_, err := db.Exec(`
+		INSERT INTO commodity_prices_history (brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+		VALUES (78.5, 0, 25800.0, ?)`,
+		ts)
+	if err != nil {
+		t.Fatalf("T-HIST-6: insert commodity_prices_history: %v", err)
+	}
+
+	prices, _, err := fetchCommodityPrevCloseFromDB(context.Background(), db, commodityHistoryLookbackH, commodityHistoryStaleH)
+	if err != nil {
+		t.Fatalf("T-HIST-6: fetchCommodityPrevCloseFromDB returned error: %v", err)
+	}
+	if prices == nil {
+		t.Fatal("T-HIST-6: prices is nil, want non-nil map (row is valid, only GOLD should be absent)")
+	}
+	if prices["OIL"] != 78.5 {
+		t.Errorf("T-HIST-6: OIL = %.2f, want 78.5 (non-zero columns must be present)", prices["OIL"])
+	}
+	if _, present := prices["GOLD"]; present {
+		t.Errorf("T-HIST-6: GOLD key present (%.2f), want absent (zero column must be omitted by partial-zero guard)", prices["GOLD"])
+	}
+	if prices["USDVND"] != 25800.0 {
+		t.Errorf("T-HIST-6: USDVND = %.2f, want 25800.0", prices["USDVND"])
+	}
+}
+
+// TestFetchCommodityPrevCloseFromDB_RFC3339NanoPrecision (T-HIST-7):
+// RFC3339Nano ms-precision timestamp from TypeScript writer parses correctly.
+// This is the R-2 regression guard (bug #3003 class).
+// TypeScript writes new Date().toISOString() → "2026-05-28T06:01:23.456Z".
+// Using time.RFC3339 (without Nano) silently fails on the .456 suffix and
+// returns time.Time{} → every row treated as infinitely stale → delta always null.
+func TestFetchCommodityPrevCloseFromDB_RFC3339NanoPrecision(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	// ms-precision timestamp format matching TypeScript new Date().toISOString() output.
+	msPrecisionTs := time.Now().UTC().Add(-20 * time.Hour).Format("2006-01-02T15:04:05.000Z07:00")
+	_, err := db.Exec(`
+		INSERT INTO commodity_prices_history (brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+		VALUES (77.0, 3100.0, 25700.0, ?)`,
+		msPrecisionTs)
+	if err != nil {
+		t.Fatalf("T-HIST-7: insert commodity_prices_history: %v", err)
+	}
+
+	prices, fetchedAt, err := fetchCommodityPrevCloseFromDB(context.Background(), db, commodityHistoryLookbackH, commodityHistoryStaleH)
+	if err != nil {
+		t.Fatalf("T-HIST-7: fetchCommodityPrevCloseFromDB returned error: %v", err)
+	}
+	// If RFC3339Nano parser is correct, the fresh ms-precision row returns live values.
+	if prices == nil {
+		t.Fatalf("T-HIST-7: prices is nil — RFC3339Nano parser failed on ms-precision timestamp %q (bug #3003 regression)", msPrecisionTs)
+	}
+	if prices["OIL"] != 77.0 {
+		t.Errorf("T-HIST-7: OIL = %.2f, want 77.0 — RFC3339Nano parse failed on ms-precision timestamp", prices["OIL"])
+	}
+	if fetchedAt == "" {
+		t.Errorf("T-HIST-7: prevFetchedAt is empty — must return the raw fetched_at string from the row")
+	}
+	// The returned prevFetchedAt must match what we inserted.
+	if fetchedAt != msPrecisionTs {
+		t.Errorf("T-HIST-7: prevFetchedAt = %q, want %q (must match the row's fetched_at exactly)", fetchedAt, msPrecisionTs)
 	}
 }

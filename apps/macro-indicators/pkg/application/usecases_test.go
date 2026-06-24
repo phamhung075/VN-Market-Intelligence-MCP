@@ -107,6 +107,7 @@ func TestVNIndexSourcedFromPort(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: liveVNIndex},
 		nil, // carryYieldInputs nil → fixture safe-degrade (this test checks VNIndex, not carry/yield)
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -136,6 +137,7 @@ func TestVNIndexFallsBackToFixtureWhenPortReturnsZero(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 0}, // port has no data
 		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -172,6 +174,7 @@ func TestResolveMarketPrices_LivePortValues(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		nil, // carryYieldInputs nil → fixture safe-degrade (this test checks commodity, not carry/yield)
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -221,6 +224,7 @@ func TestResolveMarketPrices_EmptyPortFallback(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -271,6 +275,7 @@ func TestSBVRateOverridesUSDVnd(t *testing.T) {
 		&stubSBVRateLive{rate: sbvUSDVnd},
 		&stubMarketIndex{vnIndex: 1880.0},
 		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -302,6 +307,7 @@ func TestSBVRateZeroKeepsCommodityUSDVnd(t *testing.T) {
 		&stubSBVRate{}, // returns 0 — simulates stale/absent sbv_rates
 		&stubMarketIndex{vnIndex: 1880.0},
 		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -331,6 +337,7 @@ func TestSBVRateDoesNotAffectOilGold(t *testing.T) {
 		&stubSBVRateLive{rate: 26115.0}, // SBV fires
 		&stubMarketIndex{vnIndex: 1880.0},
 		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -368,6 +375,7 @@ func TestComputedAtIsCurrentTime(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		nil, // carryYieldInputs nil → fixture safe-degrade (this test checks computedAt only)
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	// Truncate to second precision: time.RFC3339 drops sub-second; comparison must
@@ -506,6 +514,7 @@ func TestDPI2b_DepositLive(t *testing.T) {
 		// fedFunds=5.33 is also "live" (non-zero from port) even though it equals the fixture.
 		// Both inputs live → carry is NOT suppressed; we get the real spread.
 		&stubCarryYieldInputs{vndDeposit: liveDeposit, fedFunds: 5.33, earnYield: 8.2},
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -538,6 +547,7 @@ func TestDPI2b_FedFundsLive(t *testing.T) {
 		&stubMarketIndex{vnIndex: 1880.0},
 		// vndDeposit=4.7 is "live" (non-zero from port). Both inputs live → not suppressed.
 		&stubCarryYieldInputs{vndDeposit: 4.7, fedFunds: liveFed, earnYield: 8.2},
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -568,6 +578,7 @@ func TestDPI2b_EarningYieldLive(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		&stubCarryYieldInputs{vndDeposit: 4.7, fedFunds: 5.33, earnYield: liveYield},
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -603,6 +614,7 @@ func TestDPI2b_SafeDegrade_EmptyPort(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		&stubCarryYieldInputs{vndDeposit: 0, fedFunds: 0, earnYield: 0}, // all zero = absent DB
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -632,6 +644,7 @@ func TestDPI2b_SafeDegrade_NilPort(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		nil, // nil port → resolvers return fixture constants, isLive=false
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -669,6 +682,7 @@ func TestDPI2b_RegimeFlip_LiveInputs(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		&stubCarryYieldInputs{vndDeposit: liveDeposit, fedFunds: liveFed, earnYield: liveYield},
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -769,6 +783,7 @@ func TestDSIINV1_CarryLivenessGate(t *testing.T) {
 				&stubSBVRate{},
 				&stubMarketIndex{vnIndex: 1880.0},
 				&stubCarryYieldInputs{vndDeposit: tt.vndDeposit, fedFunds: tt.fedFunds, earnYield: 8.2},
+				nil, // commodityHistory nil → no prev-session commodity data
 			)
 
 			resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -826,6 +841,7 @@ func TestDSIINV1_DataSourceLivenessGate(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		&stubCarryYieldInputs{vndDeposit: 0, fedFunds: 0, earnYield: 8.2}, // carry fixture
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	resp, err := ucEstimate.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -845,6 +861,7 @@ func TestDSIINV1_DataSourceLivenessGate(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		&stubCarryYieldInputs{vndDeposit: 5.0, fedFunds: 3.62, earnYield: 6.83}, // all live
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	respLive, err := ucLive.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -874,6 +891,7 @@ func TestDSIINV1_CarryFetchedAtSourceNeverTimeNow(t *testing.T) {
 			earnYield:          6.83,
 			fedFundsSourceDate: &fredDateUTC, // simulate port returning FRED date
 		},
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -1001,6 +1019,7 @@ func TestDSIINV1_CarrySourceTierAdministeredRate(t *testing.T) {
 					fedFunds:   tt.fedFunds,
 					earnYield:  tt.earnYield,
 				},
+				nil, // commodityHistory nil → no prev-session commodity data
 			)
 
 			resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -1085,6 +1104,7 @@ func TestWeekendSim_BridgedDBValueServed(t *testing.T) {
 		// Both values non-zero → port returned bridged DB rows (not fixture).
 		// This is what the infrastructure adapter returns after effrStaleBound fix.
 		&stubCarryYieldInputs{vndDeposit: bridgedDeposit, fedFunds: bridgedEFFR, earnYield: 6.83},
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -1152,6 +1172,7 @@ func TestWeekendSim_FixtureOnlyWhenBothFail(t *testing.T) {
 		&stubMarketIndex{vnIndex: 1880.0},
 		// fedFunds=0 simulates both direct fetch AND DB lookup returning nothing.
 		&stubCarryYieldInputs{vndDeposit: 5.0, fedFunds: 0, earnYield: 6.83},
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -1268,7 +1289,8 @@ func TestU4_VnIndexDeltaFromHistory(t *testing.T) {
 		newStubCommodity(),
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: current, prevVnIndex: ptr64(prev)},
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -1294,7 +1316,8 @@ func TestU4_VnIndexDeltaUnknownWhenNoPrevSession(t *testing.T) {
 		newStubCommodity(),
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1200.0, prevVnIndex: nil}, // no prev session
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -1310,9 +1333,10 @@ func TestU4_VnIndexDeltaUnknownWhenNoPrevSession(t *testing.T) {
 	}
 }
 
-// TestU4_OilGoldUsdVndAlwaysNullUnknown (T-U4-7): Oil/Gold/UsdVnd always emit
-// null delta + "unknown" direction (no prev-session history persisted).
-func TestU4_OilGoldUsdVndAlwaysNullUnknown(t *testing.T) {
+// TestU4_OilGoldUsdVndNullWhenNoCommodityHistory (T-U4-7): Oil/Gold/UsdVnd emit
+// null delta + "unknown" direction when commodityHistory port is nil (no prior row available).
+// This is the safe-degrade path — no prev-session history → no fabricated delta.
+func TestU4_OilGoldUsdVndNullWhenNoCommodityHistory(t *testing.T) {
 	uc := NewComputeMacroUseCase(
 		&stubCommodityFetcher{prices: map[string]float64{
 			"OIL":    85.0,
@@ -1321,7 +1345,8 @@ func TestU4_OilGoldUsdVndAlwaysNullUnknown(t *testing.T) {
 		}},
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1250.0, prevVnIndex: ptr64(1230.0)},
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session data → deltas must be null/unknown
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -1385,7 +1410,8 @@ func TestU4_NewFieldsInJSONResponse(t *testing.T) {
 		newStubCommodity(),
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1250.0, prevVnIndex: ptr64(1230.0)},
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -1408,7 +1434,8 @@ func TestFDA2_VNIndexFixturePath_IsEstimate(t *testing.T) {
 		newStubCommodity(),
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 0}, // zero → fixture fallback
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -1429,7 +1456,8 @@ func TestFDA2_VNIndexLivePath_NotEstimate(t *testing.T) {
 		newStubCommodity(),
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0}, // live value
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -1450,7 +1478,8 @@ func TestFDA2_OilFixturePath_IsEstimate(t *testing.T) {
 		&stubCommodityFetcher{prices: map[string]float64{}}, // empty → fixture fallback
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -1470,7 +1499,8 @@ func TestFDA2_GoldFixturePath_IsEstimate(t *testing.T) {
 		&stubCommodityFetcher{prices: map[string]float64{}},
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -1490,7 +1520,8 @@ func TestFDA2_USDVndFixturePath_IsEstimate(t *testing.T) {
 		&stubCommodityFetcher{prices: map[string]float64{}},
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -1515,7 +1546,8 @@ func TestFDA2_LivePrices_NotEstimate(t *testing.T) {
 		}},
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -1555,7 +1587,8 @@ func TestFDA3_FetchedAtIsNilOnFixturePath(t *testing.T) {
 		&stubCommodityFetcher{prices: map[string]float64{}}, // all fixture
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 0}, // fixture
-		nil,
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	before := time.Now().UTC()
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -1582,6 +1615,7 @@ func TestFDA3_FetchedAtIsSetOnLivePath(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		&stubCarryYieldInputs{vndDeposit: 5.0, fedFunds: 3.62, earnYield: 6.83},
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
 	if err != nil {
@@ -1610,6 +1644,7 @@ func TestSingleSignalNoFixtureLeak(t *testing.T) {
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
 		&stubCarryYieldInputs{vndDeposit: 5.0, fedFunds: 3.62, earnYield: 6.83},
+		nil, // commodityHistory nil → no prev-session commodity data
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -1663,5 +1698,279 @@ func TestSingleSignalNoFixtureLeak(t *testing.T) {
 	}
 	if yf.SourceTier == 0 {
 		t.Errorf("ANTI-FIXTURE: yield source_tier=0 (absent) — provenance field missing from yield DTO")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// S2-DATA-HONESTY: stubCommodityHistory + T-DELTA-1..7
+// ---------------------------------------------------------------------------
+
+// stubCommodityHistory is an in-package fake for domain.CommodityHistoryPort.
+// Mirrors stubMarketIndex pattern. Zero-value simulates no qualifying prior row (safe-degrade).
+type stubCommodityHistory struct {
+	prices       map[string]float64 // nil = no qualifying row (safe-degrade)
+	prevFetchedAt string             // "" = no prior row
+}
+
+func (s *stubCommodityHistory) FetchPrevClose(_ context.Context) (map[string]float64, string, error) {
+	return s.prices, s.prevFetchedAt, nil
+}
+
+// TestTDelta1_LiveCurrentPrevAvailable (T-DELTA-1):
+// oilLive=true, prev available → delta non-nil, direction "up"/"down"/"flat".
+// Proves the full delta pipeline fires when current is live and prior exists.
+func TestTDelta1_LiveCurrentPrevAvailable(t *testing.T) {
+	// current=85.0, prev=80.0 → delta=+5.0 → 5/85=5.9% > 0.1% → "up"
+	const currentOil = 85.0
+	const prevOil = 80.0
+
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    currentOil,
+			"GOLD":   2400.0,
+			"USDVND": 25000.0,
+		}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1250.0},
+		nil, // carryYieldInputs nil → fixture safe-degrade
+		&stubCommodityHistory{
+			prices:        map[string]float64{"OIL": prevOil, "GOLD": 2350.0, "USDVND": 24800.0},
+			prevFetchedAt: "2026-06-23T06:01:23.456Z",
+		},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("T-DELTA-1: Execute() error: %v", err)
+	}
+
+	if resp.OilUSDDelta == nil {
+		t.Fatal("T-DELTA-1: OilUSDDelta = nil, want non-nil (oilLive=true, prev available)")
+	}
+	if abs(*resp.OilUSDDelta-5.0) > 0.001 {
+		t.Errorf("T-DELTA-1: OilUSDDelta = %.4f, want 5.0 (current %.1f − prev %.1f)", *resp.OilUSDDelta, currentOil, prevOil)
+	}
+	if resp.OilUSDDirection != "up" {
+		t.Errorf("T-DELTA-1: OilUSDDirection = %q, want \"up\" (delta=+5.0, 5.9%%>0.1%%)", resp.OilUSDDirection)
+	}
+	// prevFetchedAt must be stamped
+	if resp.PrevFetchedAt == nil || *resp.PrevFetchedAt == "" {
+		t.Errorf("T-DELTA-1: PrevFetchedAt = nil/empty, want non-nil ISO8601 string (prior row found)")
+	}
+}
+
+// TestTDelta2_FixtureCurrentBlocksDelta (T-DELTA-2 / RISK-3):
+// oilLive=false (fixture mode → HTTPCommodityFetcher active) → delta nil, direction "unknown".
+// Proves RISK-3 fabrication gate: never compute delta against fixture current.
+func TestTDelta2_FixtureCurrentBlocksDelta(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		// Empty map → all commodity ports return 0 → oilLive=false (fixture path)
+		&stubCommodityFetcher{prices: map[string]float64{}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1250.0},
+		nil,
+		// Prev history is available — but must NOT be used when current is fixture
+		&stubCommodityHistory{
+			prices:        map[string]float64{"OIL": 80.0, "GOLD": 2350.0, "USDVND": 24800.0},
+			prevFetchedAt: "2026-06-23T06:01:23.456Z",
+		},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("T-DELTA-2: Execute() error: %v", err)
+	}
+
+	// RISK-3: oilLive=false → gate must block → delta=nil, direction="unknown"
+	if resp.OilUSDDelta != nil {
+		t.Errorf("T-DELTA-2 RISK-3 FAIL: OilUSDDelta = %v, want nil (fixture current must never compute delta against history prev — fabrication gate)", resp.OilUSDDelta)
+	}
+	if resp.OilUSDDirection != "unknown" {
+		t.Errorf("T-DELTA-2: OilUSDDirection = %q, want \"unknown\" (fixture current → gate blocks)", resp.OilUSDDirection)
+	}
+}
+
+// TestTDelta3_SBVOverrideSuppressesUsdVndDelta (T-DELTA-3 / Q2):
+// SBV override fires → usdVnd delta suppressed (nil/"unknown").
+// Proves Q2 decision: cross-source delta (SBV_current vs Yahoo_prev) is suppressed.
+func TestTDelta3_SBVOverrideSuppressesUsdVndDelta(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    85.0,
+			"GOLD":   2400.0,
+			"USDVND": 25000.0, // Yahoo current
+		}},
+		&stubSBVRateLive{rate: 25450.0}, // SBV override fires → usdVndSBVOverride=true
+		&stubMarketIndex{vnIndex: 1250.0},
+		nil,
+		&stubCommodityHistory{
+			prices:        map[string]float64{"OIL": 80.0, "GOLD": 2350.0, "USDVND": 24800.0},
+			prevFetchedAt: "2026-06-23T06:01:23.456Z",
+		},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("T-DELTA-3: Execute() error: %v", err)
+	}
+
+	// Q2: SBV override fired → usdVnd delta must be nil/"unknown"
+	if resp.USDVndDelta != nil {
+		t.Errorf("T-DELTA-3 Q2 FAIL: USDVndDelta = %v, want nil (SBV override → cross-source delta suppressed)", resp.USDVndDelta)
+	}
+	if resp.USDVndDirection != "unknown" {
+		t.Errorf("T-DELTA-3: USDVndDirection = %q, want \"unknown\" (SBV override suppressed)", resp.USDVndDirection)
+	}
+
+	// OIL and GOLD deltas must still be computed (SBV override only affects usdVnd)
+	if resp.OilUSDDelta == nil {
+		t.Errorf("T-DELTA-3: OilUSDDelta = nil, want non-nil (SBV override must not affect OIL delta)")
+	}
+	if resp.GoldUSDDelta == nil {
+		t.Errorf("T-DELTA-3: GoldUSDDelta = nil, want non-nil (SBV override must not affect GOLD delta)")
+	}
+}
+
+// TestTDelta4_SBVNotFiredUsdVndDeltaComputed (T-DELTA-4 / Q2 false-path):
+// SBV returns 0 (not fired) → usdVndLive=true, prev available → usdVnd delta computed.
+// Proves Q2 only suppresses when SBV fires, not on Yahoo-current path.
+func TestTDelta4_SBVNotFiredUsdVndDeltaComputed(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    85.0,
+			"GOLD":   2400.0,
+			"USDVND": 25000.0, // Yahoo current (live)
+		}},
+		&stubSBVRate{}, // returns 0 → SBV override does NOT fire
+		&stubMarketIndex{vnIndex: 1250.0},
+		nil,
+		&stubCommodityHistory{
+			prices:        map[string]float64{"OIL": 80.0, "GOLD": 2350.0, "USDVND": 24800.0},
+			prevFetchedAt: "2026-06-23T06:01:23.456Z",
+		},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("T-DELTA-4: Execute() error: %v", err)
+	}
+
+	// SBV did NOT fire → Yahoo current vs Yahoo prev → delta computed
+	if resp.USDVndDelta == nil {
+		t.Errorf("T-DELTA-4: USDVndDelta = nil, want non-nil (SBV not fired → Yahoo-vs-Yahoo delta computed)")
+	}
+	if resp.USDVndDirection == "unknown" {
+		t.Errorf("T-DELTA-4: USDVndDirection = \"unknown\", want up/down/flat (SBV not fired → delta must be computed)")
+	}
+}
+
+// TestTDelta5_NilPrevCommoditySafeDegrade (T-DELTA-5):
+// prevCommodity nil (port returns nil map) → all three deltas nil, directions "unknown".
+// Proves safe-degrade: when no qualifying prior row exists, no delta is fabricated.
+func TestTDelta5_NilPrevCommoditySafeDegrade(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    85.0,
+			"GOLD":   2400.0,
+			"USDVND": 25000.0,
+		}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1250.0},
+		nil,
+		// nil map = no qualifying prior row (empty table / all rows too fresh or stale)
+		&stubCommodityHistory{prices: nil, prevFetchedAt: ""},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("T-DELTA-5: Execute() error: %v", err)
+	}
+
+	if resp.OilUSDDelta != nil {
+		t.Errorf("T-DELTA-5: OilUSDDelta = %v, want nil (nil prev → safe-degrade)", resp.OilUSDDelta)
+	}
+	if resp.OilUSDDirection != "unknown" {
+		t.Errorf("T-DELTA-5: OilUSDDirection = %q, want \"unknown\"", resp.OilUSDDirection)
+	}
+	if resp.GoldUSDDelta != nil {
+		t.Errorf("T-DELTA-5: GoldUSDDelta = %v, want nil (nil prev → safe-degrade)", resp.GoldUSDDelta)
+	}
+	if resp.GoldUSDDirection != "unknown" {
+		t.Errorf("T-DELTA-5: GoldUSDDirection = %q, want \"unknown\"", resp.GoldUSDDirection)
+	}
+	if resp.USDVndDelta != nil {
+		t.Errorf("T-DELTA-5: USDVndDelta = %v, want nil (nil prev → safe-degrade)", resp.USDVndDelta)
+	}
+	if resp.USDVndDirection != "unknown" {
+		t.Errorf("T-DELTA-5: USDVndDirection = %q, want \"unknown\"", resp.USDVndDirection)
+	}
+	// PrevFetchedAt must be nil when no prior row
+	if resp.PrevFetchedAt != nil {
+		t.Errorf("T-DELTA-5: PrevFetchedAt = %v, want nil (no qualifying prior row)", resp.PrevFetchedAt)
+	}
+}
+
+// TestTDelta6_PartialZeroGoldPrevBlocksGoldDelta (T-DELTA-6):
+// gold prev=0 in history map → goldDelta nil (partial-zero guard from history).
+// Mirrors T-HIST-6 at the application layer.
+func TestTDelta6_PartialZeroGoldPrevBlocksGoldDelta(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    85.0,
+			"GOLD":   2400.0,
+			"USDVND": 25000.0,
+		}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1250.0},
+		nil,
+		// GOLD absent from prev map (partial-zero guard — adapter omits zero columns)
+		&stubCommodityHistory{
+			prices:        map[string]float64{"OIL": 80.0, "USDVND": 24800.0}, // GOLD key absent
+			prevFetchedAt: "2026-06-23T06:01:23.456Z",
+		},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("T-DELTA-6: Execute() error: %v", err)
+	}
+
+	// OIL: prev available → delta computed
+	if resp.OilUSDDelta == nil {
+		t.Errorf("T-DELTA-6: OilUSDDelta = nil, want non-nil (OIL prev available)")
+	}
+	// GOLD: prev key absent → delta nil (partial-zero guard)
+	if resp.GoldUSDDelta != nil {
+		t.Errorf("T-DELTA-6: GoldUSDDelta = %v, want nil (GOLD absent from prev map — partial-zero guard)", resp.GoldUSDDelta)
+	}
+	if resp.GoldUSDDirection != "unknown" {
+		t.Errorf("T-DELTA-6: GoldUSDDirection = %q, want \"unknown\" (no GOLD prev)", resp.GoldUSDDirection)
+	}
+}
+
+// TestTDelta7_FlatThresholdPctEnv (T-DELTA-7):
+// FLAT_THRESHOLD_PCT env = "0.005" → threshold respected in computeDelta.
+// current=100.0, prev=99.6 → delta=0.4 → 0.4/100=0.4% > 0.1% default → "up" at 0.1%
+// but 0.4% < 0.5% → "flat" at 0.5% threshold.
+func TestTDelta7_FlatThresholdPctEnv(t *testing.T) {
+	t.Setenv("FLAT_THRESHOLD_PCT", "0.005") // 0.5% threshold
+
+	// delta = 0.4, 0.4/100 = 0.4% < 0.5% → "flat" at 0.5% threshold
+	delta, dir := computeDelta(100.0, ptr64(99.6))
+	if delta == nil {
+		t.Fatal("T-DELTA-7: delta is nil, want non-nil")
+	}
+	if abs(*delta-0.4) > 0.001 {
+		t.Errorf("T-DELTA-7: delta = %.4f, want 0.4", *delta)
+	}
+	if dir != "flat" {
+		t.Errorf("T-DELTA-7: direction = %q, want \"flat\" (0.4%%<0.5%% threshold from FLAT_THRESHOLD_PCT=0.005)", dir)
+	}
+
+	// Verify that at the default threshold (0.1%), the same delta would be "up"
+	t.Setenv("FLAT_THRESHOLD_PCT", "")
+	_, dirDefault := computeDelta(100.0, ptr64(99.6))
+	if dirDefault != "up" {
+		t.Errorf("T-DELTA-7: default threshold sanity check: direction = %q, want \"up\" (0.4%%>0.1%% default)", dirDefault)
 	}
 }

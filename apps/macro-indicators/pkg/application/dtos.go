@@ -117,14 +117,21 @@ type MacroSnapshotResponse struct {
 
 	// U4: direction+delta fields — additive; no existing field renamed or removed.
 	// VnIndex: delta computed from daily_ohlcv prev-session close (nil when < 2 rows).
-	// Oil/Gold/UsdVnd: no prev-session history → always null delta + "unknown" direction.
+	// Oil/Gold/UsdVnd: delta computed from commodity_prices_history prev-session close
+	// (S2-DATA-HONESTY: wired via CommodityHistoryPort, nil when no qualifying prior row).
 	// Direction enum values: "up" | "down" | "flat" | "unknown".
 	VNIndexDelta     *float64 `json:"vnIndexDelta"`     // null or signed point delta
 	VNIndexDirection string   `json:"vnIndexDirection"` // "up"/"down"/"flat"/"unknown"
-	OilUSDDelta      *float64 `json:"oilUsdDelta"`      // always null (no history)
-	OilUSDDirection  string   `json:"oilUsdDirection"`  // always "unknown"
-	GoldUSDDelta     *float64 `json:"goldUsdDelta"`     // always null (no history)
-	GoldUSDDirection string   `json:"goldUsdDirection"` // always "unknown"
-	USDVndDelta      *float64 `json:"usdVndDelta"`      // always null (no history)
-	USDVndDirection  string   `json:"usdVndDirection"`  // always "unknown"
+	OilUSDDelta      *float64 `json:"oilUsdDelta"`      // signed delta or null when no prior / fixture current
+	OilUSDDirection  string   `json:"oilUsdDirection"`  // "up"/"down"/"flat"/"unknown"
+	GoldUSDDelta     *float64 `json:"goldUsdDelta"`     // signed delta or null when no prior / fixture current
+	GoldUSDDirection string   `json:"goldUsdDirection"` // "up"/"down"/"flat"/"unknown"
+	USDVndDelta      *float64 `json:"usdVndDelta"`      // signed delta or null (also null when SBV override fired — Q2 decision)
+	USDVndDirection  string   `json:"usdVndDirection"`  // "up"/"down"/"flat"/"unknown" (or "unknown" when SBV override)
+
+	// S2-DATA-HONESTY: timestamp of the prior commodity snapshot row used for delta computation.
+	// ISO8601 UTC string matching commodity_prices_history.fetched_at.
+	// null when no qualifying prior row exists (fresh DB, history < 18h, or writer failure).
+	// usdVnd delta may be null even when prevFetchedAt is non-null (SBV-override suppression — Q2 decision).
+	PrevFetchedAt *string `json:"prevFetchedAt"`
 }
