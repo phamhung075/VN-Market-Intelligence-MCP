@@ -3,6 +3,12 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c400 · 2026-06-24T02:31:02Z
+### Audit Run Tier-2 (02:31 UTC 2026-06-24)
+- Tier: 2 | Sources: 31 checked | VPS routes: 7 checked | DB spot checks: 4 passed
+- Anomalies: 0 NEW | Status: HEALTHY
+- Market: OPEN (09:31 VN time M-F) — prices, FX, foreign-flow all FRESH + live. Macro indicators last refresh 2026-06-23 12:13Z (14.3h ago, cadence 6h, threshold 24h) — within SLA, not urgent. Cron health: 100+ jobs all green 24h. VPS: prices/news/sbv/foreign-flow all ok; bctc last push 2026-06-16 18:02Z (known-standing off-season, tracked FIX-VPS-BCTC-QUEUE-STALE). vn-bctc-fetch unhealthy (known-standing FIX-SBV-FX-VPS-FETCHER-UNHEALTHY). DB freshness: market_messages-3h=3 rows (PASS), agent_signals-24h=226 rows (PASS), BCTC-URL-shape=0 (PASS), stale-pending-bctc=0 (PASS). NO NEW signals emitted; all findings dedup-known or expected out-of-season.
+
 ## c399 · 2026-06-24T02:13:12Z
 ### Audit Run Tier-1 (02:13 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
@@ -48,15 +54,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 
 === PROBE DONE ===
 ```
-
-## c398 · 2026-06-24T01:43:40Z
-### Audit Run Tier-1 (01:43 UTC 2026-06-24)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L16]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L21-L25]. mcp-server RestartCount=0, Memory 60.21% (1.204GiB / 2GiB, healthy, no OOMKilled). rag-service RestartCount=104 (known-standing FU-RAG-DEPLOY-MEMORY, running ~1h healthy). Disk 35% (26Gi avail / 233Gi) PASS. Dedup-known patterns (A-30, A-21) recorded—no escalation. NO new signals emitted.
-
-## c397 · 2026-06-24T01:13:16Z
-### Audit Run Tier-1 (01:13 UTC 2026-06-24)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy. Health endpoints all 200. A-20 pdf-extractor multi-probe 3/3 PASS. mcp-server RestartCount=0, Memory 59.89% healthy. rag-service RestartCount=104. Disk 35% PASS.
