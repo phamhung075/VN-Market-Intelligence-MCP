@@ -3,6 +3,12 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c426 · 2026-06-24T10:32:02Z
+### Audit Run Tier-2 (10:32 UTC 2026-06-24)
+- Tier: 2 | Sources: 27 checked | Cron: 0 gaps | VPS routes: 3 healthy, 1 stale (known)
+- Anomalies: 0 new | Dedup-skipped: 1 (bctc SLA out-of-season Jun) | Status: HEALTHY
+- A-29 (cron): All 100+ jobs 100% success, no gaps. B-01..B-12 (fetch freshness): ssc-iboard/muasamcong/foreign-flow/sbv-vps/news-vps/fred-family/newsapi/reuters/yahoo-finance/trading-economics OK. bctc-discover/bctc-push 10909min stale (earnings window [1,4,7,10], June out-of-window, SLA threshold 168h applies, dedup 7d). VPS proxy: prices/news/sbv OK, bctc stale (known-standing). DB spot: C-06 (1 msg 3h PASS), C-07 (348 signals 24h PASS), B-09 (0 SSC URLs PASS), B-13 (0 stale >72h PASS). Rate limits all OK. No NEW anomalies. QUALITY: full.
+
 ## c425 · 2026-06-24T10:31:07Z
 ### Audit Run Tier-2 (10:31 UTC 2026-06-24)
 - Tier: 2 | Sources: 27 checked | Cron: 0 gaps | VPS routes: 3 healthy, 1 stale (known)
