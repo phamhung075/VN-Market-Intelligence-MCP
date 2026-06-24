@@ -3,6 +3,56 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c430 · 2026-06-24T12:15:17Z
+### Audit Run Tier-1 (12:15 UTC 2026-06-24)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health: 12/12 UP + 11/12 HTTP 200
+- Anomalies: 0 new | Dedup-skipped: 1 (BCTC stale = SLA-expected) | Status: HEALTHY
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-24T12:14:29Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                 IMAGE                                           CREATED
+vn-market-intelligence-mcp-frontend-1             Up 7 hours (healthy)   vn-market-intelligence-mcp-frontend             7 hours ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 7 hours (healthy)   vn-market-intelligence-mcp-macro-indicators     7 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 6 hours (healthy)   vn-market-intelligence-mcp-mcp-server           18 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 8 days (healthy)    vn-market-intelligence-mcp-pdf-extractor        8 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 9 days (healthy)    vn-market-intelligence-mcp-stock-price          9 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 9 days (healthy)    vn-market-intelligence-mcp-technical-analysis   9 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)    vn-market-intelligence-mcp-kinh-dich-service    9 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)   vn-market-intelligence-mcp-api-gateway          13 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 4 hours (healthy)   vn-market-intelligence-mcp-rag-service          13 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)   vn-market-intelligence-mcp-news-fetch           13 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)   vn-market-intelligence-mcp-alert-engine         13 days ago
+headroom-proxy                                    Up 11 days             headroom-proxy:local                            2 weeks ago
+mcp-gateway                                       Up 13 days (healthy)   mcpservergatway-gateway                         5 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=63.89% MemUsage=1.278GiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  266M    0%   /
+
+=== PROBE DONE ===
+```
+- A-01–A-11: All 12 host_runtime_set healthy [RAW-PROBE]. PASS.
+- A-12–A-20: 11/12 HTTP 200 [RAW-PROBE], A-20 multi-probe 3/3. PASS.
+- A-21: mcp-server=1. PASS.
+- A-30: mcp 63.89% memory. PASS.
+- A-32: 35% disk. PASS.
+- Crons: all success. PASS.
+
 ## c429 · 2026-06-24T11:44:14Z
 ### Audit Run Tier-1 (11:44 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 11/12 HTTP 200
