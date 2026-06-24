@@ -1,0 +1,26 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-24T19:51Z",
+    "nominal_tick": "2026-06-24T19:45:00Z",
+    "drift_min": 6,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "matched_slots": ["chef-evening"],
+    "spawned": [],
+    "errors": [],
+    "deferred_to_cloud": ["chef-evening"],
+    "classification": "DEFERRED_TO_CLOUD",
+    "reason": "chef-evening (agent unified-agent, flow chef.md, cron 45 19, guaranteed:true) matched. last_fired = 2026-06-23T19:48Z (YESTERDAY) — has not fired today at this 19:51 tick. chef-evening is one of the 6 cloud RemoteTrigger backstops; the cloud trigger fires the guaranteed evening dish ~19:45Z daily and does NOT sync last_fired back (so a days-old local stamp is expected, NOT proof of non-delivery). DEFERRED_TO_CLOUD, not spawned (avoid double-post; chef.md marker also dedups).",
+    "verify_caveat": "UNLIKE the master-cron-fired slots today (chef-eod 08:46, digest-daily 17:31, bctc 18:02 all showed FRESH same-day last_fired), chef-evening's last_fired is still 06-23. If the master cron does NOT fire chef-evening locally and the cloud trigger also failed, the evening dish would be missed. ACTION: verify chef-evening delivery via RemoteTrigger(action=list).last_fired_at + MARKET content by period. If the cloud trigger shows it did NOT fire ~19:45Z today, spawn chef-evening locally as a one-off recovery (subagents are sighted, so a local spawn would now deliver real data).",
+    "slot_detail": {
+      "chef-evening": {"agent": "unified-agent", "flow_path": "docs/agents/unified-agent/flow/chef.md", "cron": "45 19 * * *", "guaranteed": true, "policy_id": null, "last_fired": "2026-06-23T19:48:20Z", "cloud_backstop": true}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782332481},
+    "note": "Backstopped slot deferred to cloud. Will watch the next tick: if chef-evening re-matches with a still-06-23 last_fired AND no MARKET evening dish appears, escalate to a recovery spawn."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-24T19:51:22Z"
+}
