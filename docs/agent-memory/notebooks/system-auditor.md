@@ -2,11 +2,11 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
-## c407 · 2026-06-24T05:13:49Z
+## c407 · 2026-06-24T05:13:56Z
 ### Audit Run Tier-1 (05:13 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L11-L23]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L28-L32]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0, Memory 71.45% (1.429GiB / 2GiB, healthy <85%). rag-service RestartCount recent (known-standing FU-RAG-DEPLOY-MEMORY ~1/hr—RECORD-AND-LEAVE). Disk 36% (25Gi avail) PASS. All 100+ cron jobs 100% success. NO new signals emitted.
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L16-L29]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L32-L36]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0, Memory 71.45% (1.429GiB / 2GiB, healthy <85%). rag-service RestartCount=105 (known-standing FU-RAG-DEPLOY-MEMORY ~1/hr—RECORD-AND-LEAVE, delta +1). Disk 36% (25Gi avail) PASS. All 100+ cron jobs 100% success. NO new signals emitted.
 
 ### RAW-PROBE:
 ```
