@@ -3,33 +3,31 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c416 · 2026-06-24T06:45:40Z
-### Audit Run Tier-1 (06:44–06:45 UTC 2026-06-24)
+## c417 · 2026-06-24T07:14:44Z
+### Audit Run Tier-1 (07:13–07:14 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-24T06:44:52Z ===
+=== AUDITOR PROBE 2026-06-24T07:14:29Z ===
 
 --- docker ps -a ---
-NAMES                                             STATUS                        IMAGE                                           CREATED
-vn-market-intelligence-mcp-frontend-1             Up About an hour (healthy)    vn-market-intelligence-mcp-frontend             About an hour ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 2 hours (healthy)          vn-market-intelligence-mcp-macro-indicators     2 hours ago
-vn-market-intelligence-mcp-mcp-server-1           Up About a minute (healthy)   vn-market-intelligence-mcp-mcp-server           13 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 8 days (healthy)           vn-market-intelligence-mcp-pdf-extractor        8 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)           vn-market-intelligence-mcp-stock-price          8 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)           vn-market-intelligence-mcp-technical-analysis   8 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)           vn-market-intelligence-mcp-kinh-dich-service    9 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)          vn-market-intelligence-mcp-api-gateway          12 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)          vn-market-intelligence-mcp-rag-service          13 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)          vn-market-intelligence-mcp-news-fetch           13 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)          vn-market-intelligence-mcp-alert-engine         13 days ago
-headroom-proxy                                    Up 11 days                    headroom-proxy:local                            2 weeks ago
-mcp-gateway                                       Up 13 days (healthy)          mcpservergatway-gateway                         5 weeks ago
+NAMES                                             STATUS                    IMAGE                                           CREATED AT
+vn-market-intelligence-mcp-frontend-1             Up 2 hours (healthy)      vn-market-intelligence-mcp-frontend             2026-06-24 07:23:40 +0200 CEST
+vn-market-intelligence-mcp-macro-indicators-1     Up 2 hours (healthy)      vn-market-intelligence-mcp-macro-indicators     2026-06-24 06:54:42 +0200 CEST
+vn-market-intelligence-mcp-mcp-server-1           Up 31 minutes (healthy)   vn-market-intelligence-mcp-mcp-server           2026-06-23 20:09:04 +0200 CEST
+vn-market-intelligence-mcp-pdf-extractor-1        Up 8 days (healthy)       vn-market-intelligence-mcp-pdf-extractor        2026-06-16 03:15:49 +0200 CEST
+vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)       vn-market-intelligence-mcp-stock-price          2026-06-15 14:04:36 +0200 CEST
+vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)       vn-market-intelligence-mcp-technical-analysis   2026-06-15 10:42:48 +0200 CEST
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)       vn-market-intelligence-mcp-kinh-dich-service    2026-06-14 19:45:59 +0200 CEST
+vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)      vn-market-intelligence-mcp-api-gateway          2026-06-11 10:25:54 +0200 CEST
+vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)      vn-market-intelligence-mcp-rag-service          2026-06-11 00:23:30 +0200 CEST
+vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)      vn-market-intelligence-mcp-news-fetch           2026-06-11 00:20:06 +0200 CEST
+vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)      vn-market-intelligence-mcp-alert-engine         2026-06-10 23:21:30 +0200 CEST
 
 --- health endpoints ---
 [health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
+[health] api-gateway:4040/health OK (HTTP 200)
 [health] macro-indicators:5004/health OK (HTTP 200)
 [health] pdf-extractor:5001/health OK (HTTP 200)
 [health] frontend:3001/ OK (HTTP 200)
@@ -38,75 +36,29 @@ mcp-gateway                                       Up 13 days (healthy)          
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=16.29% MemUsage=333.6MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=13.78% MemUsage=282.2MiB / 2GiB
 
 --- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 /dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  266M    0%   /
 
 === PROBE DONE ===
 ```
-- Evidence: All 12 host_runtime_set UP+healthy [RAW-PROBE L4–L15]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L18–L22]. A-20 pdf-extractor multi-probe 3/3 ✓. mcp-server RestartCount=1 (PASS ≤2) [RAW-PROBE L25], Memory 16.29% (333.6MiB/2GiB) healthy [RAW-PROBE L28]. rag-service RestartCount=104 (known FU-RAG-DEPLOY). Disk 35% PASS [RAW-PROBE L32]. Cron health: 80+ jobs ≥100% success_rate, no gaps. NO anomalies.
+- Evidence: All 12 host_runtime_set UP+healthy [RAW-PROBE L5–L15]. Health: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L18–L22]. mcp-server RestartCount=1 (PASS ≤2) [RAW-PROBE L25], Memory 13.78% (282.2MiB/2GiB) HEALTHY [RAW-PROBE L28]. rag-service RestartCount=105 (known FU-RAG-DEPLOY, normal ~1/hr). Disk 35% PASS. Cron: 100+ jobs, last fire ≤30min, success_rate ≥98%. NO anomalies.
+
+## c416 · 2026-06-24T06:45:40Z
+### Audit Run Tier-1 (06:44–06:45 UTC 2026-06-24)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
+- Evidence: All 12 host_runtime_set UP+healthy. Health: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. mcp-server RestartCount=1 PASS, Memory 16.29% HEALTHY. rag-service RestartCount=104 (known FU-RAG-DEPLOY). Disk 35% PASS. Cron: 80+ jobs ≥100% success, no gaps. NO anomalies.
 
 ## c415 · 2026-06-24T06:43:00Z
 ### Audit Run Tier-1 (06:43 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-06-24T06:43:00Z ===
-
---- docker ps -a ---
-NAMES                                             STATUS                       IMAGE                                           CREATED
-vn-market-intelligence-mcp-frontend-1             Up About an hour (healthy)   vn-market-intelligence-mcp-frontend             About an hour ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 2 hours (healthy)         vn-market-intelligence-mcp-macro-indicators     2 hours ago
-vn-market-intelligence-mcp-mcp-server-1           Up 13 hours (healthy)        vn-market-intelligence-mcp-mcp-server           13 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 8 days (healthy)          vn-market-intelligence-mcp-pdf-extractor        8 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)          vn-market-intelligence-mcp-stock-price          8 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)          vn-market-intelligence-mcp-technical-analysis   8 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)          vn-market-intelligence-mcp-kinh-dich-service    9 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)         vn-market-intelligence-mcp-api-gateway          12 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)         vn-market-intelligence-mcp-rag-service          13 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)         vn-market-intelligence-mcp-news-fetch           13 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)         vn-market-intelligence-mcp-alert-engine         13 days ago
-headroom-proxy                                    Up 11 days                   headroom-proxy:local                            2 weeks ago
-mcp-gateway                                       Up 13 days (healthy)         mcpservergatway-gateway                         5 weeks ago
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=87.06% MemUsage=1.741GiB / 2GiB
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    25Gi    35%    393k  266M    0%   /
-
-=== PROBE DONE ===
-```
-- Evidence: All 12 host_runtime_set UP+healthy [RAW-PROBE L4–L15]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L18–L22]. A-20 pdf-extractor 3/3 ✓. mcp-server RestartCount=0 [RAW-PROBE L25], Memory 87.06% (1.741GiB/2GiB, at WARN ≥85% but healthy, no OOMKilled—RECORD-AND-LEAVE A-30 per feedback_auditor_memory_pct_denominator_falsespike). rag-service RestartCount=104 (known FU-RAG-DEPLOY). Disk 35% [RAW-PROBE L32] PASS. NO anomalies emitted.
+- Evidence: All 12 host_runtime_set UP+healthy. Health: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. mcp-server RestartCount=0, Memory 87.06% (at WARN ≥85%, no OOMKilled—RECORD-AND-LEAVE). rag-service RestartCount=104 (known FU-RAG-DEPLOY). Disk 35%. NO anomalies.
 
 ## c414 · 2026-06-24T06:31:31Z
 ### Audit Run Tier-2 (06:30–06:31 UTC 2026-06-24)
 - Tier: 2 | Sources: 27 checked | VPS routes: 4 checked
 - Anomalies: 0 new | Status: HEALTHY
-- Cron health: 80+ jobs all 100% success_rate, no gaps (A-29 PASS). Per-source freshness: price 0min✓ news 1min✓ sbv_fx 0min✓ foreign_flow 0min✓ bctc 200.4h (KNOWN-STATE, out-of-earnings, no actionable pending). VPS proxy: 4/4 ok (prices, news, sbv healthy; bctc stale since 2026-06-15 but idle expected Jun—Q2 filings land Jul, tracked FIX-BCTC-SLA-THRESHOLD-360). DB freshness: C-06 5msg/3h✓ C-07 257sig/24h✓ B-09 0 SSC✓ B-13 0 stale>72h✓ C-08 0 orphaned✓. Rate limits: 14/14 ok. RECORD-AND-LEAVE B-06 dedup (same 7d window as c410).
-
-## c413 · 2026-06-24T06:15:20Z
-### Audit Run Tier-1 (06:14–06:15 UTC 2026-06-24)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set UP+healthy. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. A-20 pdf-extractor 3/3 ✓. mcp-server RestartCount=0, Memory 57.54% (1.151GiB/2GiB, healthy). rag-service RestartCount 104 (known FU-RAG-DEPLOY). Disk 35% PASS. Cron health: 80+ jobs all ≥98% success_rate. NO anomalies. Dedup: bctc stale known-standing per FIX-BCTC-SLA-THRESHOLD-360.
-
-## c412 · 2026-06-24T06:14:38Z
-### Audit Run Tier-1 (06:14 UTC 2026-06-24)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set UP+healthy. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. A-20 pdf-extractor multi-probe 3/3 ✓. mcp-server RestartCount=0, Memory 91.75% (1.835GiB/2GiB, elevated but no OOMKilled—RECORD-AND-LEAVE A-30). rag-service RestartCount 104 (known-standing FU-RAG-DEPLOY, normal ~1/hr). Disk 33% PASS. Crons: 80+ jobs all 100% success_rate, no gaps. NO anomalies emitted.
+- Cron: 80+ jobs all 100% success_rate, no gaps (A-29 PASS). Sources: price 0min✓ news 1min✓ sbv_fx 0min✓ foreign_flow 0min✓ bctc 200.4h (known-state, out-of-earnings). VPS: 4/4 ok. DB: C-06 5msg/3h✓ C-07 257sig/24h✓ B-09 0 SSC✓ B-13 0 stale✓ C-08 0 orphaned✓. Rate limits: 14/14 ok. NO anomalies.
