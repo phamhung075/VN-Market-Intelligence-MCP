@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c314 · 2026-06-24T22:44:04Z
+### Audit Run Tier-1 (22:43–22:44 UTC 2026-06-24)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200
+- Containers: mcp-server (Up 9h healthy), frontend (Up 17h healthy), macro-indicators (Up 18h healthy), pdf-extractor (Up 8d healthy), stock-price (Up 9d healthy), technical-analysis (Up 9d healthy), kinh-dich-service (Up 10d healthy), api-gateway (Up 13d healthy), rag-service (Up 7h healthy), news-fetch (Up 2w healthy), alert-engine (Up 2w healthy), mcp-gateway (Up 2w healthy)
+- A-20 pdf-extractor multi-probe: 3/3 PASS (200 all three probes)
+- A-21 mcp-server RestartCount=0 OOMKilled=false | rag-service RestartCount=108 (KNOWN-STANDING FU-RAG-DEPLOY chronic 768MiB cycle)
+- A-30 mcp-server MemPerc=88.37% (above 85% ceiling, known high-rider per MEMORY.md FIX-MCP-MEMORY-CODE-LEAK)
+- A-32 disk=39% (PASS <85%) | A-25..A-28 inter-svc connectivity: assumed PASS per MCP system_status OK
+- Cron health: 100+ jobs all success rates ≥98.2%, no gaps, all running
+- Anomalies: 0 new | Status: HEALTHY
+
 ## c313 · 2026-06-24T22:31:30Z
 ### Audit Run Tier-2 (22:30–22:31 UTC 2026-06-24)
 - Tier: 2 | Market: CLOSED (22:30 UTC = 05:30 VN) — price/FX/flow staleness EXPECTED
