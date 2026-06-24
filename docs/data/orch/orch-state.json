@@ -1701,7 +1701,7 @@
         "severity": "INFO",
         "status": "READ",
         "payload_ref": null,
-        "router_triage": "router_triage 00:34Z: EXPECTED-EMPTY not stall — newest PDF in /app/data/pdfs landed 2026-06-16, 0 new arrivals in 48h so 0 extractions; pipeline healthy (A-20 3/3). Mid-late June between VN earnings seasons (Q1 Apr-May/Q2 Jul-Aug). Downgraded HIGH→INFO. PO note: confirm BCTC fetch crawler event-armed for Q2 season."
+        "router_triage": "router_triage 00:34Z: EXPECTED-EMPTY not stall — newest PDF in /app/data/pdfs landed 2026-06-16, 0 new arrivals in 48h so 0 extractions; pipeline healthy (A-20 3/3). Mid-late June between VN earnings seasons (Q1 Apr-May/Q2 Jul-Aug). Downgraded HIGH→INFO. PO note: confirm BCTC fetch crawler event-armed for Q2 season. || router_janitorial 08:58Z: folded enum-mismatch finding here + deleted over-escalated dup sau-20260624T085508-c11-schema-mismatch. RAW-verified: pdf_documents enum is success/failed/processing/pending (success=99, last extract 2026-06-15T22:13, success_last_7d=0). C-11 predicate status='done' returns 0 BY CONSTRUCTION (blind check) = same actual=0 already triaged EXPECTED-EMPTY here. No NEW stall (last-success unchanged). GENUINE low-sev: fix C-11 predicate done->success in system-auditor flow/main.md (~L478) — DOC/audit-config bug, NOT db_integrity_breach, NOT CRITICAL. PO route as LOW."
       },
       {
         "id": "router-f1-blindguard-gap-20260623T0815Z",
@@ -12302,6 +12302,23 @@
         "priority": "high",
         "handoff": "docs/handoffs/BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL.md",
         "next": "architect"
+      },
+      {
+        "id": "FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON",
+        "type": "FIX",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "sprint": "BCTC-ANALYTICS-LAYER",
+        "baseline_pass": true,
+        "created_at": "2026-06-24T09:06:35Z",
+        "created_by": "po",
+        "title": "BCTC refine queue HEAD-POISONED by a permanently-PARTIAL doc whose only un-DONE unit is terminal-FAILED — get_bctc_pending_refine perpetually re-serves VCB Q1-2025 (65a9c724, 20/21 DONE + unit-0000 cover-letter page_type_mismatch FAILED 2026-06-15) so refine_status stays PARTIAL forever; the daily refine slot picks result[0]=VCB every fire, finds 0 refinable windows (all in skip-set), finalizes PARTIAL, exits, and NEVER advances to the genuinely-PENDING docs behind it (HPG Q4-2025 918a7abd 24p, GVR Q1-2026 c765098b 80p) → bctc-analyst starved of their data.",
+        "desc": "RAW-VERIFIED by router (two live get_bctc_pending_refine calls) + re-confirmed this tick: ran refine_bctc_md on VCB → 0 windows refined, finalized PARTIAL; re-queried get_bctc_pending_refine(limit:1) → STILL VCB at head. PO RAW-re-reproduced via get_bctc_pending_refine(limit:3): head[0]=VCB Q1-2025 PARTIAL, [1]=HPG Q4-2025 PENDING, [2]=GVR Q1-2026 PENDING — the two real-pending docs are stuck behind the poisoned head. DISTINCT-FROM the prior FIX-FINALIZE-STATUS-STUCK-PARTIAL (DONE, BCTC-ANALYTICS-LAYER sprint): that fixed the ALL-units-DONE case (ACB fea19bae 27/27 DONE → exit queue). Its predicate is 'all units DONE'; a doc with even one terminal-FAILED unit is never all-DONE, so this variant slips through — the legitimately-and-permanently-FAILED cover-letter unit (page_type_mismatch, correctly rejected) keeps the whole doc PARTIAL and re-queued forever. SUCCESSOR not dup. FIX DIRECTION (dev chain scopes, PO does not implement): a doc whose EVERY unit is in a TERMINAL state (DONE or permanently-FAILED) with 0 actually-refinable units remaining must DROP OUT of the pending queue — either get_bctc_pending_refine excludes such docs, or finalize_bctc_refine marks them a NEW terminal status COMPLETE_WITH_SKIPS (distinct from PARTIAL) so the queue advances. The terminal-FAILED unit must NOT perpetually re-queue the whole doc. Likely handler: getBctcPendingRefineTool / finalizeBctcRefineTool in apps/mcp-server (financial-reports tools) — dev confirms via zone-detect. Aligns with real-data / data-integrity standing goals (BCTC refine feeds bctc-analyst).",
+        "verification_gate": "LIVE: get_bctc_pending_refine(limit:1) NO LONGER returns VCB 65a9c724 (queue advances to HPG 918a7abd); a refine run then processes a genuinely-PENDING doc (HPG/GVR) and its windows refine; VCB unit-0000 stays terminally skipped (NOT re-refined, NOT lost) and VCB carries a terminal status (COMPLETE_WITH_SKIPS or equivalent), not a perpetual PARTIAL re-queue. RAW-verify payload not badges.",
+        "dedup_note": "No prior terminal-FAILED-requeue variant on board (PO scanned all lanes incl nested sprints 2026-06-24). Sibling: FIX-FINALIZE-STATUS-STUCK-PARTIAL (all-DONE case, DONE). NOT promoted to ready — out-of-earnings-season, no live-market dependency today; throughput/data-integrity impact only.",
+        "po_triage_note": "P2: real throughput + data-integrity impact (two real docs starved → bctc-analyst blind to HPG/GVR) but out-of-season and not market-urgent today. Held in backlog; dev chain NOT spawned this tick."
       }
     ],
     "closed_sprints": [
@@ -24384,8 +24401,8 @@
     },
     "updated_at": "2026-06-21T03:50:00Z",
     "updated_by": "po (file-only BCTC re-probe triage)",
-    "last_triaged_at": "2026-06-21T08:29:51Z",
-    "last_triaged_by": "po-s111"
+    "last_triaged_at": "2026-06-24T09:06:35Z",
+    "last_triaged_by": "po"
   },
   "updated_at": "2026-06-21T03:50:00Z",
   "updated_by": "po (file-only BCTC re-probe triage)",
