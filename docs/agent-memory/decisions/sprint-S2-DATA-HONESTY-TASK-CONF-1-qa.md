@@ -51,3 +51,28 @@ All 5 code changes verified structurally (read source files):
 - RISK-5 (sentinel discriminator): PASS — pre-fix rows unaffected (DEFAULT removal only affects fresh DBs; live ALTER TABLE ADD COLUMN already executed on existing column → no-op).
 
 **Next action:** Await organic alert fire post-rebuild. Ops or system-auditor should re-trigger QA once a verified_decision row appears with created_at > 2026-06-23T18:09:05Z.
+
+---
+
+## Entry — Re-Verify 2026-06-24T00:00Z
+
+**task-id:** TASK-CONF-1
+
+**what-considered:**
+
+VN market is open. Re-ran both pending AC probes directly against named-volume `vn-market-intelligence-mcp_market_data` via `docker run --rm -v ... keinos/sqlite3`.
+
+AC-1 result: `SELECT confidence_score, COUNT(*) FROM agent_signals WHERE signal_type='verified_decision' AND strftime('%s',created_at) >= strftime('%s','2026-06-23T18:09:05') GROUP BY confidence_score;`
+→ 40|2, 60|17, 75|1 — 3 distinct values, ALL non-50.
+
+AC-4 result: JOIN `agent_signals` + `alerts` on `alert_id` same window:
+→ low=40, medium=60, warning=60, high=75 across 20 rows. All match `severityToConfidence()` spec.
+
+**why-change:** Both VERIFY-PENDING-ORGANIC-DATA probes now have live data and PASS. The constant-50 mask is definitively removed. Code path is not merely structurally correct but live-confirmed via organic alert writes post-rebuild. Setting done_verified=YES.
+
+**Actions taken:**
+1. Wrote [QA] Re-Verify Record to `docs/handoffs/TASK-CONF-1.md`
+2. Updated TASK-CONF-2 status BACKLOG→ready in `docs/data/orch/orch-state.json` task_board.backlog (unblocked_by=qa, unblocked_at=2026-06-24T00:00:00Z)
+3. Note: TASK-CONF-1 `done_verified` field in orch-state task_board.done_verified was already set by dev-team-cron-router at 2026-06-24T02:16:28Z (router observed the same evidence); QA re-verify is independent confirmation from named-vol raw SQL.
+
+**Verdict:** DONE / done_verified=YES

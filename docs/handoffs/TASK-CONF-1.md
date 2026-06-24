@@ -449,3 +449,59 @@ WHERE s.signal_type='verified_decision'
 
 **Task status:** REVIEW (VERIFY-PENDING-ORGANIC-DATA)
 **NEXT agent:** ops or system-auditor — notify QA when first post-rebuild verified_decision row appears; QA re-runs AC-1/AC-4 probes to flip to done_verified=YES and status=DONE.
+
+---
+
+## [QA] Re-Verify Record — 2026-06-24T00:00Z
+
+**Verdict:** DONE
+**done_verified:** YES
+**Round:** 1 (re-probe only — no code changes)
+
+### AC-1 Raw Result (named-volume market.db, keinos/sqlite3 sidecar)
+
+```sql
+SELECT confidence_score, COUNT(*) FROM agent_signals
+WHERE signal_type='verified_decision'
+  AND strftime('%s',created_at) >= strftime('%s','2026-06-23T18:09:05')
+GROUP BY confidence_score;
+```
+
+| confidence_score | COUNT(*) |
+|---|---|
+| 40 | 2 |
+| 60 | 17 |
+| 75 | 1 |
+
+**PASS** — 3 distinct values, ALL non-50. No constant-50 rows in post-rebuild window.
+
+### AC-4 Raw Result
+
+```sql
+SELECT a.severity, s.confidence_score FROM agent_signals s
+JOIN alerts a ON a.id=s.alert_id
+WHERE s.signal_type='verified_decision'
+  AND strftime('%s',s.created_at) >= strftime('%s','2026-06-23T18:09:05');
+```
+
+| severity | confidence_score |
+|---|---|
+| low | 40 |
+| low | 40 |
+| medium | 60 |
+| warning | 60 |
+| high | 75 |
+| … (20 total rows) | … |
+
+Observed mapping: `low=40`, `medium=60`, `warning=60`, `high=75`. **PASS** — matches `severityToConfidence()` spec exactly (critical=90, high=75, warning/medium=60, low=40). No 50s in post-rebuild rows.
+
+### Verdict
+
+Both probes pass:
+- AC-1: 3 distinct non-50 values (40, 60, 75) in post-rebuild verified_decision rows. Requirement was ≥2.
+- AC-4: Severity→confidence map correct for all observed severity levels.
+
+**Task status:** DONE
+**done_verified:** YES
+**TASK-CONF-2 unblocked:** YES — status updated to `ready` in orch-state.json task_board.backlog
+**NEXT agent:** dev-frontend (TASK-CONF-2: render null confidence as "—")
