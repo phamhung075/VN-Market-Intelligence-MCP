@@ -3,6 +3,15 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c437 · 2026-06-24T14:30:54Z
+### Audit Run Tier-2 (14:30 UTC 2026-06-24)
+- Tier: 2 | Cron: 140+ (≥98% success) | Sources: 27 checked | VPS routes: 4 active
+- Freshness: prices 46min, news 1min, sbv 46min, bctc 7.3d (off-season, expected) | Market: CLOSED (21:30 VN)
+- DB checks: market_messages=1 (3h ✓), agent_signals=357 (24h ✓), BCTC-SSC=0 ✓, stale-pending-BCTC=0 ✓
+- Macro: oil/gold/usdvnd/carry/yield live 14:30:41Z (is_estimate=false, within 24h SLA ✓)
+- Anomalies: 0 new | Dedup: B-06 BCTC idle (KNOWN-STANDING earnings-off-season 06), B-12 SBV timing drift (KNOWN-STANDING FIX-SBV-FX-VPS-FETCHER-UNHEALTHY)
+- Status: HEALTHY
+
 ## c436 · 2026-06-24T14:30:23Z
 ### Audit Run Tier-2 (14:30 UTC 2026-06-24)
 - Tier: 2 | Sources: 27 checked | Cron: 140+ all healthy (100% success rate)
