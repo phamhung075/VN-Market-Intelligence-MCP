@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-24T02:16:28Z: TASK-CONF-1 done_verified (RAW live named-vol: new agent_signals conf dist 90/75/70/84/60/NULL = 6 distinct, severity-mapped, NULL-on-absence; constant-50 mask gone). qa->done_verified. UNBLOCKS TASK-CONF-2 (FE null-render, was blocked by CONF-1) — PO may promote. Parent FIX-SIGNAL-CONFIDENCE-DEFAULT-50 (DECOMPOSED in_progress) now has its impl subtask verified — PO to close parent when CONF-2 done. S2-DATA-HONESTY progressing. Also open: FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID P1 backlog (PO sequence); FIX-MACRO-SNAPSHOT-DELTAS-NULL P2 ready (held). WIP fine.",
-    "updated_at": "2026-06-24T02:16:28Z",
+    "next_action": "Tick 2026-06-24T03:04:02Z: TRIAGED daily D4 sau-d4-202606240300 (2 rows, KNOWN dup-id quirk FU-AUDITOR-D4-SIGNAL-ID; held esc-deepdive:FPT:ESC-3 lock-no-board-row tracked FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; LOW self-resolving, prior 06-19/20 RESOLVED). No re-escalate. auditor T1 clean. TASK-CONF-1 done_verified holds. macro P2 + orphan-alert_id P1 + CONF-2 await PO sequence. WIP fine.",
+    "updated_at": "2026-06-24T03:04:02Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-24T02:16:28Z",
+    "last_tick": "2026-06-24T03:04:02Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
@@ -247,8 +247,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-22T20:46:26Z",
-    "_updated_by": "dev-team-cron-router",
+    "_updated_at": "2026-06-24T03:00:00.411Z",
+    "_updated_by": "system-auditor",
     "archive": [
       {
         "from": "system-auditor",
@@ -860,6 +860,34 @@
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606240300",
+        "ts": "2026-06-24T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-deepdive:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_triage": "router 2026-06-24T03:04:02Z: KNOWN-RECURRING daily D4 (03:00 fire; prior 06-19/20 RESOLVED, 06-21 TRIAGED) — LOW, self-resolving (esc locks TTL-expire). Two rows share id sau-d4-202606240300 = KNOWN auditor quirk tracked by FU-AUDITOR-D4-SIGNAL-ID (one run-scoped id per multiple divergence rows). Underlying divergence (held esc-deepdive:FPT:Q1-2026:ESC-3 lock w/ no board row, from bctc-analyst FPT ESC-3 DATA-COVERAGE-LIMITED run) tracked by FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE. Not a new incident; no re-escalate; lock left to TTL/FIX-D4 reconciler per prior RESOLVED pattern.",
+        "router_dup_of": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
+        "router_triaged_at": "2026-06-24T03:04:02Z"
+      },
+      {
+        "id": "sau-d4-202606240300",
+        "ts": "2026-06-24T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION held=esc-deepdive:FPT:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "router_triage": "router 2026-06-24T03:04:02Z: KNOWN-RECURRING daily D4 (03:00 fire; prior 06-19/20 RESOLVED, 06-21 TRIAGED) — LOW, self-resolving (esc locks TTL-expire). Two rows share id sau-d4-202606240300 = KNOWN auditor quirk tracked by FU-AUDITOR-D4-SIGNAL-ID (one run-scoped id per multiple divergence rows). Underlying divergence (held esc-deepdive:FPT:Q1-2026:ESC-3 lock w/ no board row, from bctc-analyst FPT ESC-3 DATA-COVERAGE-LIMITED run) tracked by FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE. Not a new incident; no re-escalate; lock left to TTL/FIX-D4 reconciler per prior RESOLVED pattern.",
+        "router_dup_of": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
+        "router_triaged_at": "2026-06-24T03:04:02Z"
+      },
       {
         "id": "sau-2233-B07-20260622",
         "ts": "2026-06-22T22:33:08Z",
@@ -23691,7 +23719,7 @@
           "decided_by": "po",
           "question": "product intent for neutral predictions (reject at producer vs add neutral-band resolution rule)",
           "decision": "KEEP producing neutral claims; ADD a neutral-band resolution rule. Rationale: a calibrated AI track-record needs honest 'I expect this to stay flat' calls scored as hits/misses — silently dropping neutral predictions would bias the hit-rate toward only directional bets and hide the model's flat-call accuracy, violating the no-fake/full-accountability standing goals. Rule: over the horizon window, |actual_move_pct from creation_price| < NEUTRAL_BAND_PCT (default 2.0%, config not hardcoded) = HIT; |move| >= band = MISS. Requires creation_price to be persisted (already is) and a trading-day-anchored window (covered by the trading-day leg above). For legacy neutral claims with creation_price=NULL (e.g. id 1 FPT), no band can be computed -> mark an explicit terminal 'excluded' status (excluded from hitRate), never NULL.",
-          "band_default_pct": 2.0
+          "band_default_pct": 2
         },
         "next_agent": "qa",
         "promoted_at": "2026-06-21T08:39:42Z",
