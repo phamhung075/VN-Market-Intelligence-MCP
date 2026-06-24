@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-24T03:04:02Z: TRIAGED daily D4 sau-d4-202606240300 (2 rows, KNOWN dup-id quirk FU-AUDITOR-D4-SIGNAL-ID; held esc-deepdive:FPT:ESC-3 lock-no-board-row tracked FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; LOW self-resolving, prior 06-19/20 RESOLVED). No re-escalate. auditor T1 clean. TASK-CONF-1 done_verified holds. macro P2 + orphan-alert_id P1 + CONF-2 await PO sequence. WIP fine.",
-    "updated_at": "2026-06-24T03:04:02Z",
+    "next_action": "Tick 2026-06-24T04:46:02Z: dispatched TASK-MACRO-COMMODITY-DELTA (high, S2, dev-macro-indicators) — wire commodity_prices_history prev-close -> oil/gold/usdVnd deltas (Go, 7 files, handoff doc). Fixes the null-delta I RAW-confirmed (FIX-MACRO-SNAPSHOT-DELTAS-NULL parent stays ready as umbrella). RED-PREPUSH go build/test+depguard; rebuild_required; done_verified=live get_macro_snapshot non-null signed deltas after >=2 sessions (delayed). auditor T1 clean. WIP=2 (parent-decomposed + this). Other open: orphan-alert_id P1 + CONF-2 backlog (PO).",
+    "updated_at": "2026-06-24T04:46:02Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-24T03:04:02Z",
+    "last_tick": "2026-06-24T04:46:02Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
@@ -12304,6 +12304,18 @@
         "rebuild_required": true,
         "minted_at": "2026-06-24T01:05:00Z",
         "minted_by": "po-s113"
+      },
+      {
+        "id": "BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL",
+        "title": "BA spec: FIX-MACRO-SNAPSHOT-DELTAS-NULL — FR-1..FR-6 mapped to DDD layers; lead open item for architect = commodity_prices_history lookback strategy + SBV-override conflict + ownership guarantee",
+        "owner": "ba",
+        "status": "done",
+        "zone": "apps/macro-indicators/",
+        "sprint": "S2-DATA-HONESTY",
+        "created_at": "2026-06-24T00:00:00Z",
+        "priority": "high",
+        "handoff": "docs/handoffs/BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL.md",
+        "next": "architect"
       }
     ],
     "closed_sprints": [
@@ -24235,6 +24247,34 @@
         "created_by": "po-s111",
         "promoted_at": "2026-06-23T17:28:13Z",
         "promoted_by": "po-s111"
+      },
+      {
+        "id": "TASK-MACRO-COMMODITY-DELTA",
+        "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
+        "owner": "dev-macro-indicators",
+        "status": "IN_PROGRESS",
+        "zone": "apps/macro-indicators/",
+        "sprint": "S2-DATA-HONESTY",
+        "created_at": "2026-06-24T00:00:00Z",
+        "type": "implementation",
+        "size": "M",
+        "priority": "high",
+        "depends_on": [],
+        "blocks": [],
+        "files": [
+          "apps/macro-indicators/pkg/domain/ports.go",
+          "apps/macro-indicators/pkg/infrastructure/repositories.go",
+          "apps/macro-indicators/pkg/infrastructure/repositories_test.go",
+          "apps/macro-indicators/pkg/application/usecases.go",
+          "apps/macro-indicators/pkg/application/dtos.go",
+          "apps/macro-indicators/pkg/application/usecases_test.go",
+          "apps/macro-indicators/cmd/server/main.go"
+        ],
+        "handoff": "docs/handoffs/TASK-MACRO-COMMODITY-DELTA.md",
+        "next": "dev-macro-indicators",
+        "in_progress_at": "2026-06-24T04:46:02Z",
+        "dispatched_by": "dev-team-cron-router",
+        "dispatched_to": "dev-macro-indicators"
       }
     ],
     "ready": [
@@ -24323,5 +24363,28 @@
     "updated_at": "2026-06-18T06:33:41Z"
   },
   "meta_updated_at": "2026-06-18T10:33:48Z",
-  "last_tick": "20260622T2215Z"
+  "last_tick": "20260622T2215Z",
+  "tasks_backlog": [
+    {
+      "id": "TASK-MACRO-COMMODITY-DELTA",
+      "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
+      "sprint": "S2-DATA-HONESTY",
+      "zone": "apps/macro-indicators/",
+      "owner": "dev-macro-indicators",
+      "size": "M",
+      "status": "BACKLOG",
+      "created_at": "2026-06-24",
+      "handoff": "docs/handoffs/BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL.md",
+      "files_to_touch": [
+        "pkg/domain/ports.go",
+        "pkg/infrastructure/repositories.go",
+        "pkg/infrastructure/repositories_test.go",
+        "pkg/application/usecases.go",
+        "pkg/application/dtos.go",
+        "pkg/application/usecases_test.go",
+        "cmd/server/main.go"
+      ],
+      "notes": "See [Architect] section in handoff for full design. 4 Q resolutions: Q1=18h rolling lookback, Q2=same-source-only usdVnd, Q3=raw prevFetchedAt *string, Q4=safe-degrade sufficient. No CGO, no new deps, modernc.org/sqlite already in go.mod."
+    }
+  ]
 }
