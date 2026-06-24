@@ -2,6 +2,14 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c312 · 2026-06-24T22:15:12Z
+### Audit Run Tier-1 (22:14–22:15 UTC 2026-06-24)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health: 5/5 HTTP 200
+- A-20 pdf-extractor 3/3 multi-probe PASS (200 all) | A-21 mcp-server RC=0 | rag-service RC=108 (FU-RAG-DEPLOY)
+- A-25..A-28 inter-svc: 4/4 PASS | A-31 EPIPE: 0 (PASS) | Memory=84.22% (PASS <85%)
+- A-32 disk=40% (PASS <85%) | Cron: 100+ jobs, all success rates ≥98.2%
+- Anomalies: 0 new | Status: HEALTHY
+
 ## c457 · 2026-06-24T22:14:27Z
 ### Audit Run Tier-1 (22:13–22:14 UTC 2026-06-24)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health: 5/5 HTTP 200
