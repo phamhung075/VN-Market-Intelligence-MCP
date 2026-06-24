@@ -2,6 +2,12 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c412 · 2026-06-24T06:14:38Z
+### Audit Run Tier-1 (06:14 UTC 2026-06-24)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
+- Evidence: All 12 host_runtime_set UP+healthy. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. A-20 pdf-extractor multi-probe 3/3 ✓. mcp-server RestartCount=0, Memory 91.75% (1.835GiB/2GiB, elevated but no OOMKilled—RECORD-AND-LEAVE A-30). rag-service RestartCount 104 (known-standing FU-RAG-DEPLOY, normal ~1/hr). Disk 33% PASS. Crons: 80+ jobs all 100% success_rate, no gaps. NO anomalies emitted.
+
 ## c411 · 2026-06-24T05:44:58Z
 ### Audit Run Tier-1 (05:44 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
