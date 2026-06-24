@@ -2,6 +2,12 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c414 · 2026-06-24T06:31:31Z
+### Audit Run Tier-2 (06:30–06:31 UTC 2026-06-24)
+- Tier: 2 | Sources: 27 checked | VPS routes: 4 checked
+- Anomalies: 0 new | Status: HEALTHY
+- Cron health: 80+ jobs all 100% success_rate, no gaps (A-29 PASS). Per-source freshness: price 0min✓ news 1min✓ sbv_fx 0min✓ foreign_flow 0min✓ bctc 200.4h (KNOWN-STATE, out-of-earnings, no actionable pending). VPS proxy: 4/4 ok (prices, news, sbv healthy; bctc stale since 2026-06-15 but idle expected Jun—Q2 filings land Jul, tracked FIX-BCTC-SLA-THRESHOLD-360). DB freshness: C-06 5msg/3h✓ C-07 257sig/24h✓ B-09 0 SSC✓ B-13 0 stale>72h✓ C-08 0 orphaned✓. Rate limits: 14/14 ok. RECORD-AND-LEAVE B-06 dedup (same 7d window as c410).
+
 ## c413 · 2026-06-24T06:15:20Z
 ### Audit Run Tier-1 (06:14–06:15 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
