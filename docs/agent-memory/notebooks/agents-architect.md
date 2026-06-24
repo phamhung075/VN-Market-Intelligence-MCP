@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-16T20:39:40Z
-
-**Brief:** `docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md`
-
-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER: single concurrency model (3 primitives) kills all 3 roots of the offhours-gatherer manual×cloud double-fire. Primitive 1 (Backstop-Window Defer Gate) adds an error-branch to leader-lock.md: when task_claim times out AND UTC.hour ∈ {0,4,8,12,16,20} AND minute<15 → EXIT (defer one tick); outside that window → proceed. Primitive 2 (Cross-Sibling Signal Visibility Window) replaces news-scout SELF_SIGNALS_CACHE=[] with get_recent_signals(window_seconds=900) query on the shared signal_bus (named-volume market.db). Primitive 3 (Sibling-Success Corroboration Gate) adds a 2-phase market-watcher Step 0-GW: 2x probe failure + no sibling signals in 15-min window → file BUG; sibling signals present → suppress false gateway-down + EXIT. Primitives 2+3 share one get_recent_signals helper. Tasks: AF-1 (agent-father, leader-lock.md doc edit), DMS-1+DMS-2 (dev-mcp-server, apps/mcp-server/, combinable). Subsumes 3 HELD ready[] rows.
-
-**Signal dropped:** `docs/signals/gatherer-doublefire-dedup-cluster-20260616T203940Z.json` → agent-father
-
----
-
 ## 2026-06-17T12:39:55Z
 
 **Brief:** `docs/architecture-briefs/2026-06-17-gatherer-exec-proof-failloud.md`
@@ -27,3 +17,13 @@ GATHERER-EXEC-PROOF-FAILLOUD: offhours gatherers (news-scout + market-watcher) c
 COWORK-BLIND-SESSION-GUARD (P1): confirmed live 2026-06-18 — blind news-scout spawn fabricated 06-18 sentiment into 5 briefs + fake-stamped 62 tickers in coverage-state.json; PO reverted+quarantined. Root: spawn-fanout.md has no preflight to detect gateway blindness before spawning. Fix: new blind-guard.md (Step 0c in main.md, before slot matching) runs gateway-free `jq '.mcpServers|length' .mcp.json`; spawn-fanout.md Step 5.0 gates the entire spawn loop on SESSION_BLIND — backstop slots logged as deferred, no-backstop slots (news-scout-market, market-watcher-market, alert-commander-market) written to telemetry errors[] as undeliverable, ONE work-channel summary per tick. Wired session: guard is a no-op. 3 file edits (create blind-guard.md + edit spawn-fanout.md + edit main.md), all agent-father zone, no rebuild needed.
 
 **Signal dropped:** `docs/signals/cowork-blind-session-guard-20260618T074013Z.json` → agent-father
+
+---
+
+## 2026-06-24T15:04:57Z
+
+**Brief:** `docs/architecture-briefs/2026-06-24-prediction-daily-cadence.md`
+
+ARCH-PREDICTION-DAILY-CADENCE: prediction_claims producer starved since 2026-06-14 — Sprint 1949-T5 disabled monday.md (P-3..P-5 create_prediction_claim) but weekly.md only reads get_prediction_accuracy (never writes claims). Fix: create daily-predict.md reusing monday.md P-3..P-5 pipeline (cap=3/day), add same-day dedup gate in main.md (task_claim key published:digest-daily:YYYY-MM-DD TTL=86400s), add digest-daily cron slot (30 17 * * *) to cowork-schedule.json, update main.md dispatch table to route daily slot → daily-predict.md and Sunday → weekly.md (unchanged). Weekly ceiling raised to 15/week. Honest NO-OP when no ticker passes conviction threshold. weekly.md and monday.md untouched.
+
+**Signal dropped:** `docs/signals/prediction-daily-cadence-20260624T150457Z.json` → agent-father
