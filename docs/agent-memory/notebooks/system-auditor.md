@@ -3,6 +3,13 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c436 · 2026-06-24T14:30:23Z
+### Audit Run Tier-2 (14:30 UTC 2026-06-24)
+- Tier: 2 | Sources: 27 checked | Cron: 140+ all healthy (100% success rate)
+- Anomalies: 0 new | Dedup: B-06 BCTC stale (KNOWN-STATE), off-hours idle (VPS svcs, SBV post-market)
+- Status: HEALTHY
+- Market: CLOSED (21:30 VN). Post-market freshness delays expected.
+
 ## c435 · 2026-06-24T14:14:19Z
 ### Audit Run Tier-1 (14:14 UTC 2026-06-24)
 - Tier: 1 | Services: 12/12 UP, healthy | Health: 5/5 HTTP 200
