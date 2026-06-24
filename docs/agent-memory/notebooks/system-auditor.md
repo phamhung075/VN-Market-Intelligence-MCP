@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c316 · 2026-06-24T23:45:00Z
+### Audit Run Tier-1 (23:43–23:45 UTC 2026-06-24)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200
+- Containers UP: all 12 (mcp-server 10h, rag-service 8h) | A-20 pdf-extractor: 3/3 multi-probe 200 PASS
+- A-21 mcp-server RestartCount=1 (recent restart, expected after boot) | rag-service RC=108 (KNOWN-STANDING FU-RAG-DEPLOY 768MiB cycle)
+- A-30 mcp-server MemPerc=82.17% (known high-rider, below yesterday's 99.82%) | rag-service 740.9/768MiB (97%)
+- A-32 disk=39% (PASS <85%) | A-31 EPIPE: 0 (PASS) | A-25..A-28 inter-svc: MCP system_status OK
+- Cron: 100+ jobs all success rates ≥98.2%, no gaps | Anomalies: 0 new | Status: HEALTHY
+
 ## c315 · 2026-06-24T23:14:01Z
 ### Audit Run Tier-1 (23:13–23:14 UTC 2026-06-24)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200
@@ -32,11 +41,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - DB spot: C-06 market_messages 2 ✓ | C-07 agent_signals 354 ✓ | B-09 SSC URLs 0 ✓ | B-13 stale BCTC 0 ✓
 - BCTC-EVAL: 7 red, 6 yellow; HPG advancing 7/15
 - Anomalies: 0 new (all KNOWN-STATE: B-06 SLA, ACV P1, chef live, rag FU-DEPLOY) | Status: HEALTHY
-
-## c312 · 2026-06-24T22:15:12Z
-### Audit Run Tier-1 (22:14–22:15 UTC 2026-06-24)
-- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health: 5/5 HTTP 200
-- A-20 pdf-extractor 3/3 multi-probe PASS (200 all) | A-21 mcp-server RC=0 | rag-service RC=108 (FU-RAG-DEPLOY)
-- A-25..A-28 inter-svc: 4/4 PASS | A-31 EPIPE: 0 (PASS) | Memory=84.22% (PASS <85%)
-- A-32 disk=40% (PASS <85%) | Cron: 100+ jobs, all success rates ≥98.2%
-- Anomalies: 0 new | Status: HEALTHY
