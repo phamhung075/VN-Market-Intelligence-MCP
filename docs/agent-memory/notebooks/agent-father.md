@@ -52,6 +52,18 @@
 - Fix: generic cadence detection from cowork-schedule.json cron field; multi-fire → per-window key + TTL=3600; single-fire → per-date key unchanged
 - Files: 1 (chef.md 350L→391L). No rebuild required.
 
+## 2026-06-24 — FEAT-PREDICTION-CLAIMS-DAILY-CADENCE (Sprint S2/prediction-claims)
+
+- Task: Create daily-predict.md + edit main.md + init.md + cowork-schedule.json per architect brief 2026-06-24-prediction-daily-cadence.md
+- Commit: 048cd3e4 (all 4 files, single atomic commit per brief §10)
+- daily-predict.md (101L): reuses monday.md P-3..P-5 pipeline; cap=3/day; honest NO-OP on flat days; WORK-only channel
+- main.md (137L): DAILY-PREDICT DEDUP GATE (key published:digest-daily:UTC_DATE, TTL=86400s, non-Sunday only); dispatch table adds daily 17:30 UTC slot
+- init.md (138L): constraints per-day=3, weekly-ceiling=15; schedule.daily_predict block; daily_predict inter_agent receive entry
+- cowork-schedule.json: digest-daily slot after digest-sunday; cron 30 17 * * *; trigger_prompt uses main.md; guaranteed=true; last_fired=null
+- signal prediction-daily-cadence-20260624T150457Z.json moved to processed/ before this session
+- weekly.md + monday.md untouched (verified git log: not in 048cd3e4)
+- Task status: DONE (orch-state confirmed); test-fire AC-1..AC-7 needed before done_verified
+
 ## c301 · 2026-06-17T14:50Z — DESIGN-GATHERER-EXEC-PROOF-FAILLOUD (EP-1..EP-4)
 
 - Task: Implement architecture brief gatherer-exec-proof-failloud (brief 6eb16082 → impl cbbe2e2d)
