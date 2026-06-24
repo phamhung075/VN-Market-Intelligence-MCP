@@ -175,6 +175,33 @@ Depends-on: TASK-CONF-1
 
 ---
 
+## [Developer] Implementation Record
+
+- **Service:** frontend
+- **Zone:** apps/frontend/
+- **Build tier:** 3+4 (API service layer mapper + domain type + route render)
+- **Files modified:**
+  - `apps/frontend/app/lib/api/client.ts` L350-351 — null-safe confidence mapper: `confidence_score` null/absent → `confidence=null` (not 0); real 0 → 0.0 preserved
+  - `apps/frontend/app/domain/market.ts` L217 — widened `AgentSignal.confidence` from `number` to `number | null`
+  - `apps/frontend/app/routes/dashboard.analysis.tsx` L1300-1311 — `confidenceLabel(number|null)`: null-guard returning `{ text: "—", cls: "text-slate-600" }` before percentage compute; also L777-781 cascade panel inline null-guard
+  - `apps/frontend/app/__tests__/1938-stock-signals.test.ts` — updated null-coercion test (now expects null not 0) + 2 new tests (explicit null→null, integer 0→0.0 distinction)
+- **Tests written:** 3 new assertions in 1938-stock-signals.test.ts; 14/14 GREEN
+- **Git commits:** `6a962dd6 fix(frontend/signals): render null confidence as "—" not "0%" / "50%"`
+- **Type check:** tsc --noEmit EXIT 0 (clean)
+- **Service tests:** 1708 pass / 2 fail (2 pre-existing QUE_DESCRIPTIONS failures, unrelated, pre-date this task — confirmed in notebook 2026-06-16 entry)
+- **Null-vs-0 distinction:** Guard uses `!== null` (not falsy) — `confidence === 0` (real zero) renders "0%"; `confidence === null` (absent) renders "—". TypeScript type widening enforces this at compile-time.
+- **Panel scope:** SIGNALS-LAST-10 panel (`StockSignalsPanel` in `dashboard.analysis.tsx`) and cascade signals inline render. The ALERTS panel (`dashboard.alerts.tsx`) already had its own `item.confidenceScore !== null` guard (L454) — NOT touched per RISK-F-3.
+- **REBUILD_REQUIRED:** YES — frontend container must be rebuilt for type and render changes to take effect in the running dashboard
+- **Docs updated:** NONE — no API surface or architecture change; type widening is implementation-only
+- **Graphify:** skipped (no docs impacted)
+
+**Vitest summary:** `Tests  1708 passed / 2 failed` (2 pre-existing unrelated failures; all signal tests 14/14 GREEN)
+**tsc summary:** EXIT 0 — 0 errors
+
+---
+
 ## Decision Journal
 
 Task created by PM 2026-06-23T17:28Z. Architect atomization ratified per docs/handoffs/FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION-BA-spec.md § Frontend Change (CONF-4, separate sub-task required). Blocked until TASK-CONF-1 deployed (null rows must exist in DB). NEXT: dev-frontend picks up after TASK-CONF-1 done_verified.
+
+dev-frontend 2026-06-24: task_id=TASK-CONF-2, what-considered="null-safe mapper (null→null not null→0) + domain type widening + render guard in confidenceLabel + cascade panel inline guard; all 4 render sites for AgentSignal.confidence accounted for", why-change="RISK-F-2: falsy check would treat 0 as absent; explicit !== null is the only safe discriminator". Chose to widen `confidenceLabel` signature (not a new helper) to minimise diff and keep the existing colour-tier logic co-located with the null guard. Cascade panel inline fixed separately (it cannot use confidenceLabel without refactor). ALERTS panel (`item.confidenceScore`) deliberately untouched per RISK-F-3 isolation rule.

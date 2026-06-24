@@ -1,5 +1,29 @@
 # dev-frontend notebook
 
+**Last updated:** 2026-06-24 | **Sprint:** S2-DATA-HONESTY
+
+---
+
+## Session: 2026-06-24 (TASK-CONF-2 — S2-DATA-HONESTY null-confidence render)
+
+**TASK-CONF-2 DONE — null confidence propagated end-to-end, renders "—" not "0%"**
+
+Changed files (commit 6a962dd6):
+- `apps/frontend/app/lib/api/client.ts` L350-351 — `confidence_score` null/absent now maps to `confidence=null` (not 0); real 0 still becomes 0.0
+- `apps/frontend/app/domain/market.ts` L217 — `AgentSignal.confidence` widened to `number | null`
+- `apps/frontend/app/routes/dashboard.analysis.tsx` — `confidenceLabel` accepts `number|null`: null → `{ text: "—", cls: "text-slate-600" }`; cascade panel inline guard also null-safe (L777)
+- `apps/frontend/app/__tests__/1938-stock-signals.test.ts` — old null-defaults-to-0 test updated; 2 new tests (explicit null→null, 0→0.0 legitimate-zero distinction); 14/14 GREEN
+
+Null-vs-0 distinction: explicit `!== null` check (not falsy) — legitimate 0 renders "0%"; absent renders "—".
+Panel scope: SIGNALS-LAST-10 + cascade panel fixed; ALERTS panel (`item.confidenceScore`, dashboard.alerts.tsx) already had its own guard, NOT touched (RISK-F-3).
+
+Vitest: 1708 pass / 2 fail (2 pre-existing QUE_DESCRIPTIONS failures, unrelated). tsc: EXIT 0.
+REBUILD_REQUIRED: YES (frontend container). AC-3 live verification pending ops rebuild + QA probe.
+
+Zone health: AgentSignal.confidence type-widened to number|null; null propagates cleanly API→mapper→domain→render; 3-file change, 0 regression | HEALTHY
+
+---
+
 **Last updated:** 2026-06-16 | **Sprint:** INFOCARD-EXPAND-FETCH
 
 ---
