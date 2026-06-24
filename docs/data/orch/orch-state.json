@@ -12330,6 +12330,36 @@
           "done_verified": "YES",
           "qa_done_at": "2026-06-24T13:45:00Z"
         }
+      },
+      {
+        "id": "FIX-FB-JARGON-WEEKDAY-ORDINAL-COLLISION",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "scripts/",
+        "type": "FIX",
+        "title": "fb-jargon-gate weekday check false-positives on VN ordinals (Thứ nhất/hai/ba = firstly/secondly/thirdly)",
+        "scope": "scripts/fb-jargon-gate.sh Group E weekday check uses case-insensitive UNANCHORED grep for VN weekday names. \"Thứ Hai\"/\"Thứ Ba\" (Mon/Tue) collide with the ordinal enumerators \"Thứ hai\"/\"Thứ ba\" (=secondly/thirdly) that appear in normal analytical prose (\"Thứ nhất... Thứ hai... Thứ ba...\"). RAW-confirmed live: fb-post-2026-06-14.md line 19 (\"Thứ nhất, lãi suất... Thứ hai, tỷ giá... Thứ ba, dòng tiền...\") triggers TWO false [FAIL] wrong-weekday violations on a post whose hook correctly says \"Hôm nay là Chủ nhật\". A real gate BLOCK on a correct post is a false-green-inverse: it would suppress a valid post or train the agent to ignore the gate. FIX: anchor the weekday match to a date/header context (require an adjacent date token e.g. \"Thứ X DD/M\" or post-header position) OR case-SENSITIVE match on the capitalized weekday form + word boundary, distinguishing weekday-name usage from lowercase ordinal usage. Add a regression fixture: a post with \"Thứ nhất/Thứ hai/Thứ ba\" enumeration must PASS; a genuine wrong-weekday header must FAIL.",
+        "root_cause": "unanchored case-insensitive grep collides VN weekday names with VN ordinal enumerators",
+        "verification_gate": "scripts/fb-jargon-gate.sh exits 0 on fb-post-2026-06-14.md AND still exits 1 on a planted genuine wrong-weekday header; new regression fixture green",
+        "generic_mandate": "fix the gate predicate generically (no per-date special-case)",
+        "source": "PO FB-quality audit 2026-06-24 — RAW gate run across 27 posts",
+        "created_at": "2026-06-24T14:52:55Z",
+        "created_by": "po-fb-audit"
+      },
+      {
+        "id": "SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "multi",
+        "type": "SPIKE",
+        "mode": "spike",
+        "timebox": 120,
+        "title": "FB post carries ZERO source-link / re-check affordance — violates standing goal project_all_info_source_link_dropdown_recheck",
+        "question": "How should the daily FB post satisfy the standing goal that every served info element LINKS its source + allows the reader to re-check/verify? RAW-confirmed: 0 of 27 published posts contain any URL, named tool/source citation, or re-check pointer. FB plain-text body cannot carry rich dropdowns, so options to evaluate: (a) append a single compact \"Nguồn dữ liệu\" footer naming the live tools/feeds used this cycle (get_market_snapshot, get_market_context, get_market_foreign_flow) + a dashboard verify URL; (b) publish a companion dashboard card per post that expands to the FETCHED detail behind each number, with the FB post linking to it; (c) per-number provenance is impractical in FB plain text -> document an explicit NO-GO scope boundary. Output: findings doc with a recommended option + scoped follow-on FIX if (a)/(b).",
+        "scope": "docs/agents/fb-market-poster/flow/main.md STEP 5 footer + possibly a dashboard companion endpoint",
+        "source": "PO FB-quality audit 2026-06-24 — extends project_all_info_source_link_dropdown_recheck to the FB surface",
+        "created_at": "2026-06-24T14:52:55Z",
+        "created_by": "po-fb-audit"
       }
     ],
     "closed_sprints": [
