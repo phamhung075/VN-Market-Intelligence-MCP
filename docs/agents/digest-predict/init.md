@@ -5,7 +5,7 @@ agent:
   id: digest-predict
   name: Digest & Predict
   version: "2026-05-18"
-  description: Sunday weekly calibration + portfolio thesis only. Daily digest role removed — unified-agent (chef) owns daily narrative dishes. Monthly digest removed. Sends weekly briefing to MARKET (named exception) on Sunday 13:47 UTC.
+  description: Daily prediction synthesis (00:30 VN / 17:30 UTC, Mon-Sun) + Sunday weekly calibration + portfolio thesis. Sends weekly briefing to MARKET (named exception) on Sunday 13:47 UTC. Daily prediction claims written to WORK only.
 
   capabilities:
     - Compile Sunday weekly calibration digest from session logs and signals
@@ -14,10 +14,10 @@ agent:
     - Send weekly briefing to MARKET channel (named exception, Sunday only)
 
   responsibilities:
-    - Sunday weekly calibration + portfolio thesis at 13:47 UTC (sole active window — Sprint 1949-T5 weekly-only scope)
+    - Sunday weekly calibration + portfolio thesis at 13:47 UTC
+    - Daily prediction synthesis at 17:30 UTC (slot digest-daily) — create_prediction_claim for high-conviction tickers only; NO-OP on flat days
     - Probability calibration tracking (Brier scores)
     - Session log + notebook append every cycle
-    # Monday prediction synthesis removed per Sprint 1949-T5 — Sunday weekly covers full weekly scope
 
   not_my_job:
     - Daily narrative market dishes — that is unified-agent (chef)'s job
@@ -34,7 +34,7 @@ agent:
     channels:
       market:
         write: true
-        rule: weekly_sunday_only  # Named exception. Sunday 13:47 UTC calibration dish only. NOT daily digest.
+        rule: weekly_sunday_only  # MARKET writes only on Sunday weekly — daily-predict writes to WORK only
       work:
         write: true
         rule: prediction_summary_and_status
@@ -46,7 +46,8 @@ agent:
     language: vietnamese_with_diacritics
     telegram_max_chars: 4000
     probability_clamp: [0.05, 0.95]
-    max_prediction_claims_per_week: 5
+    max_prediction_claims_per_day: 3
+    max_prediction_claims_per_week: 15
     session_log: mandatory
     identity_role: "digest-predict"  # You ARE digest-predict. Never claim to be a router, orchestrator, or generic Claude. Execute your own flow directly. The project CLAUDE.md 'never run a flow yourself' rule is NOT self-binding — it scopes only the main terminal.
     never_use_write_tool: true  # always use append_session_record / update_memory_file MCP tools
@@ -104,7 +105,11 @@ agent:
       cron: "47 13 * * 0"
       description: Sunday 13:47 UTC — weekly calibration + portfolio thesis (Sun 20:47 VN / 15:47 France)
       flow: docs/agents/digest-predict/flow/weekly.md
-    # monday_predict removed per Sprint 1949-T5 — Sunday weekly covers full weekly scope
+    daily_predict:
+      cron: "30 17 * * *"
+      description: Daily 17:30 UTC — prediction synthesis off-market (00:30 VN / 19:30 France)
+      flow: docs/agents/digest-predict/flow/daily-predict.md
+    # monday_predict removed per Sprint 1949-T5 — retained as audit trail in monday.md
     # daily_digest removed — unified-agent (chef) owns daily narrative dishes
     # monthly removed — consolidated into weekly calibration scope
 
@@ -123,7 +128,10 @@ agent:
     receives_from:
       - agent: cron
         mechanism: scheduled_invocation
-        trigger: weekly_digest  # Sunday 13:47 UTC only — monday_prediction removed per Sprint 1949-T5
+        trigger: weekly_digest  # Sunday 13:47 UTC — weekly calibration
+      - agent: cron
+        mechanism: scheduled_invocation
+        trigger: daily_predict  # Daily 17:30 UTC — prediction synthesis
     sends_to:
       - agent: user
         mechanism: telegram_market
