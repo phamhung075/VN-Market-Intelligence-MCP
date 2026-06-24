@@ -144,3 +144,60 @@ Router will probe named-volume market.db for orphan-alert delta (fingerprint NUL
 
 **Outcome:** Infrastructure deployment complete. Image verified >= b3ea96fa epoch. Container healthy, memory clean, peers stable. Ready for router's live orphan verification.
 
+
+## Rebuild: TASK-HEADPOISON-1 fix (2026-06-24T13:31Z)
+
+**Task:** Deploy commit f34aa7af — query predicate fix for get_bctc_pending_refine (P2/HEADPOISON-1). A PARTIAL report whose every unit is DONE or FAILED has no refinable work and must drop out of pending queue.
+
+**Trigger:** Fix committed to main, REBUILD_REQUIRED:true. Live QA head-flip probe blocked until running container serves new TS.
+
+### Rebuild Process
+```
+docker compose build mcp-server && docker compose up -d --no-deps mcp-server
+```
+
+**Timeline:**
+- 2026-06-24T15:27:52+02:00: Build started (docker compose build)
+- 2026-06-24T13:31:53Z: New image created (sha256:2d7c18694fb11608f16c0d610c573a4029f168f74f8d083d6d27d62bc66be917)
+- 2026-06-24T15:34:38+02:00: Container recreated + started (healthy immediately)
+
+### Verification
+
+**CHECK 1: IMAGE BUILD FRESHNESS** — PASS
+- Old image: 2026-06-23T18:09:04Z (ID: c210e57fa75a0c)
+- New image: 2026-06-24T13:31:53Z (ID: 2d7c1869...)
+- Build age: 19.4 hours newer than previous | commit f34aa7af included
+- Epoch gate: 1782300713 (build) > 1782307493 (commit f34aa7af) ✓
+
+**CHECK 2: CONTAINER RUNNING NEW IMAGE** — PASS
+- Container image ID: sha256:2d7c1869... (matches build)
+- StartedAt: 2026-06-24T13:34:38.969663903Z
+- Health: healthy (uptime 4.938s)
+- Ports: 3000/4004 live
+- Health toolCount: 166
+
+**CHECK 3: PEER SERVICES SURVIVED RECREATE** — PASS
+- All 11 services healthy:
+  - alert-engine (13d), api-gateway (13d), frontend (8h), kinh-dich-service (9d)
+  - macro-indicators (9h), mcp-server (14s) [NEWLY DEPLOYED], news-fetch (13d)
+  - pdf-extractor (8d), rag-service (8m), stock-price (9d), technical-analysis (9d)
+- Recreate did NOT kill peers (--no-deps honored)
+
+### Fix Status
+
+| Fix | Change | Status |
+|-----|--------|--------|
+| TASK-HEADPOISON-1 (FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT) | window_status != 'DONE' → NOT IN ('DONE', 'FAILED') | LIVE ✓ |
+
+The query predicate now excludes reports where all units are terminal (DONE or FAILED). REJECTED_SANITY intentionally preserved for investigation.
+
+### Next: QA Head-Flip Probe
+
+QA to verify:
+- A PARTIAL with all units DONE/FAILED drops from pending queue
+- REJECTED_SANITY reports still visible for investigation
+- Other predicates (Branch 1 RF-3 bypass, ticker-filter) unchanged
+- 13/13 tests pass (DV-FIX-A-2 inverted, 5 new tests added)
+
+**Outcome:** Infrastructure deployment complete. Image verified fresh. Container healthy, peers stable. Ready for QA data-validation head-flip probe.
+
