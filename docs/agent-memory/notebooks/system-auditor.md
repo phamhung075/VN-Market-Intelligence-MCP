@@ -3,15 +3,15 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c401 · 2026-06-24T02:43:50Z
-### Audit Run Tier-1 (02:43 UTC 2026-06-24)
+## c403 · 2026-06-24T03:13:13Z
+### Audit Run Tier-1 (03:13 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L16]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L21-L25]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0, Memory 60.98% (1.22GiB / 2GiB, healthy, no OOMKilled). rag-service RestartCount=104 (known-standing FU-RAG-DEPLOY-MEMORY, ~1 restart/hr normal—RECORD-AND-LEAVE). Disk 37% (24Gi avail / 233Gi) PASS. All 100+ cron jobs 100% success rate last 7d. Dedup: A-21/A-30 known-standing patterns—no escalation. NO new signals emitted.
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L16]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L21-L25]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0, Memory 55.89% (1.118GiB / 2GiB, healthy, no OOMKilled). rag-service RestartCount=104 (known-standing FU-RAG-DEPLOY-MEMORY, ~1 restart/hr normal—RECORD-AND-LEAVE). Disk 33% (28Gi avail / 233Gi) PASS. All 100+ cron jobs 100% success rate last 7d. Dedup: A-21/A-30 known-standing patterns—no escalation. NO new signals emitted.
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-24T02:43:17Z ===
+=== AUDITOR PROBE 2026-06-24T03:13:13Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                 IMAGE                                           CREATED
@@ -23,7 +23,7 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 8 days (healthy)    vn-mark
 vn-market-intelligence-mcp-macro-indicators-1     Up 8 days (healthy)    vn-market-intelligence-mcp-macro-indicators     8 days ago
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)    vn-market-intelligence-mcp-kinh-dich-service    9 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 12 days (healthy)   vn-market-intelligence-mcp-api-gateway          12 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)   vn-market-intelligence-mcp-rag-service          13 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)   vn-market-intelligence-mcp-rag-service          13 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)   vn-market-intelligence-mcp-news-fetch           13 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)   vn-market-intelligence-mcp-alert-engine         13 days ago
 headroom-proxy                                    Up 11 days             headroom-proxy:local                            2 weeks ago
@@ -40,14 +40,30 @@ mcp-gateway                                       Up 13 days (healthy)   mcpserv
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=60.98% MemUsage=1.22GiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=55.89% MemUsage=1.118GiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    24Gi    37%    393k  250M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    28Gi    33%    393k  288M    0%   /
 
 === PROBE DONE ===
 ```
+
+## c402 · 2026-06-24T02:56:18Z
+### Audit Run Tier-3 (02:56 UTC 2026-06-24, Daily DB Integrity)
+- Tier: 3 | Tables checked: 25 | History entry: 56 (cumulative cap=200)
+- Canonical baseline (FROZEN): db1_ohlc_violations=835, db2_scale_gt100x=1, db3_vnindex_cache_rows=0, c04_low_confidence=21
+- Markets: OPEN (09:56 VN Wed, M-F trading) — daily_ohlcv newest=2026-06-24, market_prices fresh=02:55:01Z
+- Data integrity: All primary keys CLEAN (duplicates=0, negative prices=0). Watchlist coverage=708 codes (threshold 25) PASS. Locks held=0, queue stuck=0.
+- Anomalies: ZERO new findings. All monitored issues stable vs baseline: OHLC violations stable (high<low=20 subset), Scale anomaly=1 (stale), vn_index_cache=0 (expected), low_confidence=21 (PDF OCR variance within ±5 band).
+- Known-standing dedup (DO NOT re-signal): ou orphan alerts=1319 / orphan signals=3652 (by-design macro/news briefs). Cron crashes=6 in 7d (bctc/intel pipeline, known). Macro stale (out-of-hours weekend cadence). NO signals to .signal_queue.
+- Status: HEALTHY — RECORD-AND-LEAVE all findings. Helper output: { "ok": true, "scan_ts": "2026-06-24T02:56:18Z", "history_len_before": 55, "history_len_after": 56 }
+
+## c401 · 2026-06-24T02:43:50Z
+### Audit Run Tier-1 (02:43 UTC 2026-06-24)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
+- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L5-L16]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L21-L25]. A-20 pdf-extractor multi-probe 3/3 PASS (200,200,200). mcp-server RestartCount=0, Memory 60.98% (1.22GiB / 2GiB, healthy, no OOMKilled). rag-service RestartCount=104 (known-standing FU-RAG-DEPLOY-MEMORY, ~1 restart/hr normal—RECORD-AND-LEAVE). Disk 37% (24Gi avail / 233Gi) PASS. All 100+ cron jobs 100% success rate last 7d. Dedup: A-21/A-30 known-standing patterns—no escalation. NO new signals emitted.
 
 ## c400 · 2026-06-24T02:31:02Z
 ### Audit Run Tier-2 (02:31 UTC 2026-06-24)
