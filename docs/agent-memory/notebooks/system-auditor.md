@@ -2,6 +2,12 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c411 · 2026-06-24T05:44:58Z
+### Audit Run Tier-1 (05:44 UTC 2026-06-24)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
+- Evidence: All 12 host_runtime_set containers UP+healthy. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. mcp-server RestartCount=0, Memory 86.94% (1.739GiB/2GiB, elevated but healthy <OOM). rag-service RestartCount=104 (known FU-RAG-DEPLOY). Disk 35% (25Gi avail) PASS. Crons: 100+ jobs all 100% success-rate, no gaps. NO new anomalies emitted.
+
 ## c410 · 2026-06-24T05:43:46Z
 ### Audit Run Tier-1 (05:43 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
@@ -21,9 +27,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - Tier: 2 | Sources: 25+ checked | VPS routes: 4 healthy, 1 stale (bctc)
 - Anomalies: 1 CRITICAL (bctc-discover stale 7d 10h) | Status: DEGRADED
 - Findings: B-06 CRITICAL — VPS bctc proxy last_push 2026-06-16T18:02:24Z (7d 10h old); vn-bctc-fetch unhealthy; SLA breached 10591min vs 120min. C-06 PASS (8 market_messages 3h), C-07 PASS (246 signals 24h), B-09 PASS (0 ssc.gov.vn urls), B-13 PASS (0 stale >72h). Rate limits OK. All crons healthy. Signal posted (id=7261). Dedup_key=data_stale:bctc-discover:B-06 (NEW incident).
-
-## c406 · 2026-06-24T04:43:40Z
-### Audit Run Tier-1 (04:43 UTC 2026-06-24)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set containers UP+healthy [RAW-PROBE L11-L22]. Health endpoints: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200 [RAW-PROBE L27-L31]. mcp-server RestartCount=0, Memory 65.72% (1.314GiB / 2GiB, healthy <85%, no OOMKilled). rag-service RestartCount=104 (known-standing FU-RAG-DEPLOY-MEMORY ~1/hr—RECORD-AND-LEAVE, no spike). Disk 35% (26Gi avail) PASS. NO new signals emitted.
