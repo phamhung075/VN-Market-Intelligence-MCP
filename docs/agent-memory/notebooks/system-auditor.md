@@ -3,6 +3,12 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c395 · 2026-06-24T00:30:27Z
+### Audit Run Tier-3 (00:30 UTC 2026-06-24)
+- Tier: 3 | Services: 12 checked | DB checks: C-01 to C-16 + schema validation
+- Anomalies: 0 new (C critical, W warn, I info) | Status: HEALTHY
+- Evidence: A-22/23/24 tooling all PASS (pdftoppm, tesseract, vie lang present). A-25–A-28 inter-service: all 4 health checks 200 PASS. A-31 EPIPE=0 PASS. B-08 PDF landing=80 files PASS. C-01 watchlist=708 distinct codes (threshold ≥25) PASS. C-02 OHLCV rows=708 PASS. C-03 Q1 FY2026 reports=32 (≥26) PASS. C-04 low-confidence=0 (≤5) PASS. C-05 SSC portal URLs=0 PASS. C-06 market messages (3h)=0 expected closed-market PASS. C-07 agent signals (24h)=220 PASS. C-08 orphaned alerts=0 PASS. C-09 macro indicators=3 (≥3, API-gated threshold) PASS. C-10 failed PDFs (24h)=0 PASS. C-11 done PDFs (48h)=0 out-of-earnings-window expected. C-12 integrity_check=ok PASS. C-13 WAL sizes: market.db-wal=1.34MB, pdf_extractor.db-wal absent PASS. C-14 top-3 concentration=0.4% (<60%) PASS. C-15 schema=all 4 required cols PASS. C-16 stale pending=0 PASS. Cron health 100+ jobs: all success_rate 0.98–1.00. No new CRITICAL/WARN/INFO anomalies. All dedup-known patterns accounted for.
+
 ## c394 · 2026-06-24T00:13:38Z
 ### Audit Run Tier-1 (00:13 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
