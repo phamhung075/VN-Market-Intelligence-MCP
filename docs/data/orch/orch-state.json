@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-23T20:19:55Z: PARALLEL COWORK-DISPATCHER CONFIRMED ACTIVE. At 20:06Z a separate cowork-dispatcher (NOT this router) spawned+RAW-verified market-watcher-offhours (BID 42650 exact-match real) + news-scout-offhours (4 signals #7193-7196); signal pool now warm post-unblind. It respects last_fired => coordinated. ROUTER POSTURE: DEFER all cowork SPAWNS to the parallel dispatcher (avoid gatherer-double-fire); router keeps signal-drain + board + dev-team + auditor-triage only. Did NOT spawn tnb-audit (20:13 guaranteed) — deferred to parallel dispatcher. CAVEAT (route to downstream publishers): news-scout content (Vingroup 18T / FII 80T / HVN 2.9B) NOT content-verified — chef/fb-poster MUST content-check vs live source before MARKET/FB publish per fabrication guard; chef-evening dish (19:49) posted BEFORE these so uncontaminated. OPEN: should router stop inline cowork dispatch entirely if parallel dispatcher is authoritative? — PO/architect coordination question. TASK-CONF-1 done_verified pends market-open. macro-delta P2 held. WIP fine.",
-    "updated_at": "2026-06-23T20:19:55Z",
+    "next_action": "Tick 2026-06-24T00:04:22Z (Wed 06-24): COORDINATION FINDING — dual cowork dedup stores DIVERGE. Parallel cowork-dispatcher dedups via task_claim LOCKS (cowork-slot:<agent>:<slotISO>Z), NOT cowork-schedule.json last_fired (still 06-15 for offhours/bctc despite real 20:06 run). Parallel dispatcher SCOPE = offhours GATHERERS only (ran market-watcher/news-scout 20:06; did NOT run chef-evening 19:45 — router did). REFINED ROUTER POSTURE: defer offhours-gatherer spawns to parallel dispatcher (lock-dedup); router covers analysis/synthesis slots (chef/bctc/tnb/digest) when due+in-window, guaranteed-or-fresh. This tick 00:00 batch +2:24 past window: bctc-analyst-slot-4 SKIPPED (non-guaranteed, ran slot-2 18:02 today); gatherers deferred. NO double-fire has occurred to date (chef id852 single-verified). RECOMMEND PO/architect: single cowork dedup SSOT (reconcile last_fired vs task-locks) + explicit per-slot dispatcher ownership — latent double-fire/miss risk, not yet harmful. TASK-CONF-1 done_verified pends market-open ~02:00Z. macro 18:00Z refresh missed (within SLA). WIP fine.",
+    "updated_at": "2026-06-24T00:04:22Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-23T20:19:55Z",
+    "last_tick": "2026-06-24T00:04:22Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
