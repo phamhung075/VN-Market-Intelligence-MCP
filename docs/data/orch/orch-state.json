@@ -1714,8 +1714,26 @@
         "router_triage": "router 2026-06-23T15:41:40Z RAW-triage: FALSE-CRITICAL, downgrade CRITICAL->INFO. vn-bctc-fetch 168h idle is EXPECTED out-of-earnings-season (newest PDF 2026-06-16; VN Q2 reporting Jul-Aug => no new filings to fetch) + queue CLEAN (auditor B-13 = 0 stale pending >72h). Auditor used 24h/86400s threshold but correct out-of-season BCTC threshold is 360min/168h per BACKLOG FIX-BCTC-SLA-THRESHOLD-360 (unshipped => this exact false-positive). DEDUP/ALREADY-OPEN: idle-vs-crash misread tracked by FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH + prior signal devteam-20260619T170637Z-health-idle-vs-crash (TRIAGED); threshold misconfig tracked by FIX-BCTC-SLA-THRESHOLD-360; freshness-exclude-terminal by FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL. NOT a new incident, no mint. Earlier Tier-2 today (06:30,10:31) correctly held vps-bctc as INFO known-standing — this 15:35 run regressed via wrong threshold. NOTE: shipping FIX-BCTC-SLA-THRESHOLD-360 stops the recurring false-CRITICAL. macro_indicators RESOLVED (3.4h fresh, refresh fired 12:13Z).",
         "router_dup_of": "devteam-20260619T170637Z-health-idle-vs-crash",
         "router_triaged_at": "2026-06-23T15:41:40Z"
+      },
+      {
+        "id": "sau-2026-06-24T00:28:53Z-orphan-signals",
+        "ts": "2026-06-24T00:28:53Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "agent_signals: 124 orphaned alert_id references created 2026-06-22 (check C-08)",
+        "severity": "HIGH",
+        "status": "TRIAGED",
+        "payload_ref": "docs/data/db-integrity-history.json",
+        "triaged_at": "2026-06-24T01:05:00Z",
+        "triaged_by": "po-s113",
+        "router_dup_of": null,
+        "po_decision": "GENUINE new/regression integrity breach, confirmed HIGH. Router RAW-verify (named-vol market.db) = 124 dangling agent_signals.alert_id -> missing alerts.id, ONGOING ~50-70/day (06-23=70, 06-22=54), NOT the one-time 06-22 batch the summary implied. INVERSE direction of closed C-08 (FIX-ALERT-ORPHAN-CORRELATION + FU-ALERT-COWRITE-SCHEDULER-JOBS were alerts->no-signals; this is agent_signals->missing-alert) so NOT a dup. Minted fix task FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID (P1, S2-DATA-HONESTY, dev-mcp-server, apps/mcp-server/). Root vicinity to confirm: alert<->agent_signals co-write path / scheduler direct-insert bypass; rule in/out TASK-CONF-1 e3386bdf as worsener.",
+        "minted_task": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID"
       }
-    ]
+    ],
+    "last_triaged_at": "2026-06-24T01:05:00Z",
+    "last_triaged_by": "po-s113"
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
@@ -1836,8 +1854,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-23T17:43:46.372329+00:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-24T01:05:00Z",
+    "_updated_by": "po-s113",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12234,6 +12252,30 @@
         "created_by": "pm",
         "promoted_at": "2026-06-23T17:43:46.372329+00:00Z",
         "promoted_by": "pm"
+      },
+      {
+        "id": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
+        "title": "agent_signals.alert_id dangling FK: 124 rows reference a missing alerts.id (growing ~50-70/day) — inverse of closed C-08 alerts->signals work",
+        "type": "FIX",
+        "size": "M",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "owner": "dev-mcp-server",
+        "epic": "S2-DATA-HONESTY",
+        "zone": "apps/mcp-server/",
+        "depends": [],
+        "extends": [
+          "FIX-ALERT-ORPHAN-CORRELATION",
+          "FU-ALERT-COWRITE-SCHEDULER-JOBS"
+        ],
+        "opened_at": "2026-06-24T01:05:00Z",
+        "opened_by": "po-s113",
+        "root_cause": "Live RAW-verify (named-vol /app/data/market.db, bun:sqlite): agent_signals rows where alert_id IS NOT NULL AND no matching alerts.id exists = 124 total (2026-06-23=70, 2026-06-22=54). ONGOING, not a one-time 06-22 batch (auditor summary date was imprecise). This is the INVERSE direction of the closed C-08 work (FIX-ALERT-ORPHAN-CORRELATION + FU-ALERT-COWRITE-SCHEDULER-JOBS were alerts-with-no-agent_signals; this is agent_signals.alert_id -> missing alerts row) so it is NOT a dup — treat as new/regression. Something on the alert<->agent_signals co-write path writes agent_signals carrying an alert_id that is never inserted into alerts (or the alerts insert is rolled back / racing / a different store). Co-write fix TASK-CONF-1 (e3386bdf, 17:55Z 06-23) touched the SAME path for confidence and 06-23 orphans span before+after that SHA — a candidate worsener to rule in/out.",
+        "fix_spec": "Investigate the agent_signals<->alerts co-write root in apps/mcp-server/ (alertStore.ts storeAlerts / storeAlertsFromCommander) plus any scheduler jobs that INSERT alerts directly (cf FU-ALERT-COWRITE-SCHEDULER-JOBS). Confirm WHO writes agent_signals.alert_id and WHETHER the corresponding alerts row is guaranteed to exist at write time. Likely classes to check: (a) co-write not atomic — agent_signals inserted but the alerts insert fails/rolls back/uses a different alert_id; (b) a scheduler/producer path that bypasses the co-write helper and stamps an alert_id that was never persisted; (c) regression introduced/worsened by TASK-CONF-1 (e3386bdf) — split 06-23 orphans pre vs post 17:55Z to confirm or clear it. Fix the WRITER so every agent_signals.alert_id either points at a persisted alerts row or is left NULL (no fabricated/dangling ref). Add a partial integrity guard if cheap (foreign-key-style assert at write, or a co-write transaction). Then decide existing 124 historical orphans: backfill the missing alerts where reconstructable, else NULL-out the dangling alert_id and document why.",
+        "verification_gate": "LIVE on named-vol /app/data/market.db (NOT host ./data, NOT self-built test schema — heed live-DB + self-confirming-test lessons): (1) after the fix is deployed, 0 NEW agent_signals rows with alert_id IS NOT NULL AND no matching alerts.id created after the deploy timestamp; (2) the existing 124 historical orphans are either backfilled (alert_id now resolves) or intentionally NULLed and documented; (3) downstream JOIN agent_signals->alerts no longer silently drops/misrenders rows for the affected signals. Re-run the exact RAW orphan query (alert_id NOT NULL AND alerts.id missing) and confirm count is stable-or-zero over >=2 days, not a fast-window snapshot.",
+        "rebuild_required": true,
+        "minted_at": "2026-06-24T01:05:00Z",
+        "minted_by": "po-s113"
       }
     ],
     "closed_sprints": [
