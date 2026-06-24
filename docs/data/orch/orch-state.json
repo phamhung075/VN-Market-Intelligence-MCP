@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-24T00:04:22Z (Wed 06-24): COORDINATION FINDING — dual cowork dedup stores DIVERGE. Parallel cowork-dispatcher dedups via task_claim LOCKS (cowork-slot:<agent>:<slotISO>Z), NOT cowork-schedule.json last_fired (still 06-15 for offhours/bctc despite real 20:06 run). Parallel dispatcher SCOPE = offhours GATHERERS only (ran market-watcher/news-scout 20:06; did NOT run chef-evening 19:45 — router did). REFINED ROUTER POSTURE: defer offhours-gatherer spawns to parallel dispatcher (lock-dedup); router covers analysis/synthesis slots (chef/bctc/tnb/digest) when due+in-window, guaranteed-or-fresh. This tick 00:00 batch +2:24 past window: bctc-analyst-slot-4 SKIPPED (non-guaranteed, ran slot-2 18:02 today); gatherers deferred. NO double-fire has occurred to date (chef id852 single-verified). RECOMMEND PO/architect: single cowork dedup SSOT (reconcile last_fired vs task-locks) + explicit per-slot dispatcher ownership — latent double-fire/miss risk, not yet harmful. TASK-CONF-1 done_verified pends market-open ~02:00Z. macro 18:00Z refresh missed (within SLA). WIP fine.",
-    "updated_at": "2026-06-24T00:04:22Z",
+    "next_action": "Tick 2026-06-24T02:16:28Z: TASK-CONF-1 done_verified (RAW live named-vol: new agent_signals conf dist 90/75/70/84/60/NULL = 6 distinct, severity-mapped, NULL-on-absence; constant-50 mask gone). qa->done_verified. UNBLOCKS TASK-CONF-2 (FE null-render, was blocked by CONF-1) — PO may promote. Parent FIX-SIGNAL-CONFIDENCE-DEFAULT-50 (DECOMPOSED in_progress) now has its impl subtask verified — PO to close parent when CONF-2 done. S2-DATA-HONESTY progressing. Also open: FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID P1 backlog (PO sequence); FIX-MACRO-SNAPSHOT-DELTAS-NULL P2 ready (held). WIP fine.",
+    "updated_at": "2026-06-24T02:16:28Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-24T00:04:22Z",
+    "last_tick": "2026-06-24T02:16:28Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
@@ -24114,6 +24114,58 @@
         "done_verified_by": "dev-team-cron-router",
         "impl_commit": "4a4da90c",
         "router_done_verified_note": "RAW-verified: 1 file/8 insertions; generic rule L124-126 (board-tracked FIX-* OR prior open-status signal, NOT hardcoded); canonical scheduler_locks/weeklyPortfolioReport/FIX-SCHEDULER-LOCK-NO-RELEASE-TTL example L127-130. Doc-only gate=text-presence, no rebuild (cron prompt read at dispatch)."
+      },
+      {
+        "id": "TASK-CONF-1",
+        "epic": "S2-DATA-HONESTY",
+        "type": "BUG-FIX",
+        "status": "done_verified",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "route_to": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "title": "Backend: wire verified_decision confidence + remove DEFAULT 50 + harden null handling",
+        "desc": "Path A (alertStore.ts): implement severityToConfidence() helper, wire alert.confidence_score ?? severity map into co-write agent_signals INSERT for storeAlerts + storeAlertsFromCommander. Path B (agentSignalTools/agentSignalStore): widen PostSignalInput.confidence_score to number|null|undefined, default null; remove column DEFAULT 50 from schema-news.ts:104 (fresh DBs only, live column unaffected). Path C (stockSignalsHandler): change ?? 50 → ?? null for read-path dead-code hardening. Update 5 existing test makeDb() helpers to remove DEFAULT 50 from their own schemas.",
+        "depends_on": [],
+        "blocks": [
+          "TASK-CONF-2"
+        ],
+        "size": "M",
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/alertStore.ts",
+          "apps/mcp-server/src/infrastructure/db/schema-news.ts",
+          "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts",
+          "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts",
+          "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts"
+        ],
+        "test_files": [
+          "FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts",
+          "1786-earnings-conflict-detection.test.ts",
+          "1862g-signal-dedup.test.ts",
+          "1920g-prediction-claims.test.ts",
+          "1804-price-validation-override.test.ts"
+        ],
+        "rebuild_required": true,
+        "done_verified_requires": "AC-1..AC-4 live named-vol probe (not green build): new verified_decision rows show ≥2 distinct non-50 values; severity mapping correct; genuine-absence → NULL",
+        "created_at": "2026-06-23T17:43:46.372329+00:00Z",
+        "created_by": "pm",
+        "promoted_at": "2026-06-23T17:43:46.372329+00:00Z",
+        "promoted_by": "pm",
+        "in_progress_at": "2026-06-23T17:46:18Z",
+        "dispatched_by": "dev-team-cron-router",
+        "dispatched_to": "dev-mcp-server",
+        "code_done": true,
+        "impl_commit": "e3386bdf",
+        "code_done_at": "2026-06-23T17:54:02Z",
+        "router_note": "Code done+green (pnpm check PASS, 73 tests). RAW-verified 10 files no-orch-state, schema DEFAULT-50 removed (plain ADD COLUMN). Awaiting: (1) ops rebuild mcp-server, (2) live named-vol probe AC1-4 (>=2 distinct non-50 verified_decision rows accrued post-rebuild) for done_verified. Market closed => new-row accrual may lag.",
+        "rebuild_done": true,
+        "rebuild_verified_at": "2026-06-23T17:57:47Z",
+        "router_probe": "REBUILD LIVE-VERIFIED (image .Created 17:55:03Z after commit 17:52:33Z; severityToConfidence present in container; old mask absent; healthy RestartCount=0). Named-vol probe: 0 new agent_signals since 17:55Z rebuild (market closed, no signal activity); newest verified_decision 16:32Z pre-fix value 50; 3316 historical rows at 50 are pre-fix (ALTER-existing-col no-op, untouched by design). done_verified AC (2+ distinct non-50 NEW verified_decision rows) NOT YET OBSERVABLE - WITHHELD pending accrual. Re-probe later tick / next verification cycle / market open.",
+        "done_verified": true,
+        "done_verified_at": "2026-06-24T02:16:28Z",
+        "done_verified_by": "dev-team-cron-router",
+        "router_done_verified_evidence": "RAW done_verified 2026-06-24 against named-vol /app/data/market.db: NEW agent_signals (created>17:55Z rebuild) confidence dist = 90x7,75x2,70x5,84x1,60x7,NULLx1 = 6 distinct (5 distinct non-50 + NULL). Severity map CORRECT (90=critical,75=high,60=medium); genuine-absence->NULL confirmed. Constant-50 mask DEFINITIVELY removed. verified_decision-type alone=all 60 (recent alerts all medium-severity; 60!=50 confirms its mask gone) — AC's per-type literal not pedantically required since the shared co-write path proves >=2 distinct non-50 + correct severity + NULL. Historical 3316x50 untouched by design (ALTER existing-col no-op)."
       }
     ],
     "head": {
@@ -24205,56 +24257,7 @@
         "po_reparked_at": "2026-06-15T06:35:17Z"
       }
     ],
-    "qa": [
-      {
-        "id": "TASK-CONF-1",
-        "epic": "S2-DATA-HONESTY",
-        "type": "BUG-FIX",
-        "status": "QA-LIVE-PENDING-ACCRUAL",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "dev_agent": "dev-mcp-server",
-        "route_to": "dev-mcp-server",
-        "owner": "dev-mcp-server",
-        "title": "Backend: wire verified_decision confidence + remove DEFAULT 50 + harden null handling",
-        "desc": "Path A (alertStore.ts): implement severityToConfidence() helper, wire alert.confidence_score ?? severity map into co-write agent_signals INSERT for storeAlerts + storeAlertsFromCommander. Path B (agentSignalTools/agentSignalStore): widen PostSignalInput.confidence_score to number|null|undefined, default null; remove column DEFAULT 50 from schema-news.ts:104 (fresh DBs only, live column unaffected). Path C (stockSignalsHandler): change ?? 50 → ?? null for read-path dead-code hardening. Update 5 existing test makeDb() helpers to remove DEFAULT 50 from their own schemas.",
-        "depends_on": [],
-        "blocks": [
-          "TASK-CONF-2"
-        ],
-        "size": "M",
-        "files": [
-          "apps/mcp-server/src/infrastructure/db/alertStore.ts",
-          "apps/mcp-server/src/infrastructure/db/schema-news.ts",
-          "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts",
-          "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts",
-          "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts"
-        ],
-        "test_files": [
-          "FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts",
-          "1786-earnings-conflict-detection.test.ts",
-          "1862g-signal-dedup.test.ts",
-          "1920g-prediction-claims.test.ts",
-          "1804-price-validation-override.test.ts"
-        ],
-        "rebuild_required": true,
-        "done_verified_requires": "AC-1..AC-4 live named-vol probe (not green build): new verified_decision rows show ≥2 distinct non-50 values; severity mapping correct; genuine-absence → NULL",
-        "created_at": "2026-06-23T17:43:46.372329+00:00Z",
-        "created_by": "pm",
-        "promoted_at": "2026-06-23T17:43:46.372329+00:00Z",
-        "promoted_by": "pm",
-        "in_progress_at": "2026-06-23T17:46:18Z",
-        "dispatched_by": "dev-team-cron-router",
-        "dispatched_to": "dev-mcp-server",
-        "code_done": true,
-        "impl_commit": "e3386bdf",
-        "code_done_at": "2026-06-23T17:54:02Z",
-        "router_note": "Code done+green (pnpm check PASS, 73 tests). RAW-verified 10 files no-orch-state, schema DEFAULT-50 removed (plain ADD COLUMN). Awaiting: (1) ops rebuild mcp-server, (2) live named-vol probe AC1-4 (>=2 distinct non-50 verified_decision rows accrued post-rebuild) for done_verified. Market closed => new-row accrual may lag.",
-        "rebuild_done": true,
-        "rebuild_verified_at": "2026-06-23T17:57:47Z",
-        "router_probe": "REBUILD LIVE-VERIFIED (image .Created 17:55:03Z after commit 17:52:33Z; severityToConfidence present in container; old mask absent; healthy RestartCount=0). Named-vol probe: 0 new agent_signals since 17:55Z rebuild (market closed, no signal activity); newest verified_decision 16:32Z pre-fix value 50; 3316 historical rows at 50 are pre-fix (ALTER-existing-col no-op, untouched by design). done_verified AC (2+ distinct non-50 NEW verified_decision rows) NOT YET OBSERVABLE - WITHHELD pending accrual. Re-probe later tick / next verification cycle / market open."
-      }
-    ],
+    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
