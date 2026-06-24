@@ -1,0 +1,25 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-24T21:06Z",
+    "nominal_tick": "2026-06-24T21:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "matched_slots": ["bctc-analyst-slot-3"],
+    "spawned": ["bctc-analyst (slot bctc-analyst-slot-3, run_in_background, agentId pending)"],
+    "errors": [],
+    "skipped_no_backstop": [],
+    "classification": "SPAWNED_ACTIVE",
+    "reason": "bctc-analyst-slot-3 (cron 0 21, bctc-offmarket) matched with GENUINELY STALE last_fired 2026-06-14T21:06:29Z (10 days) — NOT the ~4min master-cron-fresh already-fired pattern. Unlike slot-1 (master-cron-fresh 15:02 today) and slot-2 (18:02 today), slot-3 was NOT fired by the master cron this window (still 06-14 at 21:06, 6 min past boundary). Genuinely due, outside E2 [02:00,08:00) UTC. Subagents sighted (all-local mode) -> spawned run_in_background. The agent's own slot-lock (bctc-slot-3:2026-06-24) + E3 idempotency cache guard against double-run if the master cron fires it late.",
+    "slot_detail": {
+      "bctc-analyst-slot-3": {"agent": "bctc-analyst", "flow_path": "docs/agents/bctc-analyst/flow/main.md", "cron": "0 21 * * *", "guaranteed": false, "policy_id": "bctc-offmarket", "last_fired": "2026-06-14T21:06:29Z"}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782336978},
+    "note": "Possible master-cron coverage gap for slot-3 (21:00) vs slot-1/slot-2 which fired fresh today — flagged for PO/dev to check the master dispatcher's handling of the 0-21 boundary. Awaiting completion; if the agent slot-lock-blocks, the master cron already covered it (no gap)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-24T21:06:19Z"
+}
