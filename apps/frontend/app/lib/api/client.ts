@@ -346,9 +346,10 @@ function toAgentSignal(row: unknown): AgentSignal | null {
   const signalType = typeof obj["signal_type"] === "string" ? obj["signal_type"] : "unknown";
   const direction = typeof obj["direction"] === "string" ? obj["direction"] : "NEUTRAL";
 
-  // confidence_score is stored as integer 0–100 in the DB; normalise to 0.0–1.0
-  const rawScore = typeof obj["confidence_score"] === "number" ? obj["confidence_score"] : 0;
-  const confidence = rawScore / 100;
+  // confidence_score is stored as integer 0–100 in the DB; normalise to 0.0–1.0.
+  // null/absent means genuine-absence (no confidence data) — propagate null, do NOT coerce to 0.
+  const rawScore = typeof obj["confidence_score"] === "number" ? obj["confidence_score"] : null;
+  const confidence = rawScore !== null ? rawScore / 100 : null;
 
   // reasoning comes from the top-level `detail` column or falls back to
   // the `payload` JSON field (older rows store it inside the payload blob)

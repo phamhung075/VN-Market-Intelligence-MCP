@@ -214,7 +214,7 @@ export interface AgentSignal {
   stockCode: string;
   signalType: string;       // e.g. "chain_catalyst", "urgent_news", "price_anomaly"
   direction: "BULLISH" | "BEARISH" | "NEUTRAL" | string;
-  confidence: number;       // normalised 0.0–1.0 (converted from DB integer 0–100)
+  confidence: number | null; // normalised 0.0–1.0 (converted from DB integer 0–100), or null if unknown/absent
   reasoning: string;        // human-readable explanation
   createdAt: string;        // ISO/SQLite datetime string
   /** Present when the endpoint returns Sprint B accuracy data. Absence = no history. */

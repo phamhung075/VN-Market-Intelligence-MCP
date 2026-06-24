@@ -84,8 +84,20 @@ describe("fetchStockSignals", () => {
     expect(result[0].confidence).toBeCloseTo(0.5);
   });
 
-  it("handles missing confidence_score (defaults to 0)", async () => {
+  it("handles missing/null confidence_score — preserves null (not 0)", async () => {
     mockFetch({ signals: [{ ...SAMPLE_SIGNAL_ROW, confidence_score: undefined }] });
+    const result = await fetchStockSignals("HPG");
+    expect(result[0].confidence).toBeNull();
+  });
+
+  it("handles explicit null confidence_score — preserves null", async () => {
+    mockFetch({ signals: [{ ...SAMPLE_SIGNAL_ROW, confidence_score: null }] });
+    const result = await fetchStockSignals("HPG");
+    expect(result[0].confidence).toBeNull();
+  });
+
+  it("preserves confidence 0 as 0.0 (legitimate zero, not absent)", async () => {
+    mockFetch({ signals: [{ ...SAMPLE_SIGNAL_ROW, confidence_score: 0 }] });
     const result = await fetchStockSignals("HPG");
     expect(result[0].confidence).toBe(0);
   });
