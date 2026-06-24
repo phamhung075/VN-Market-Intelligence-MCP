@@ -844,3 +844,139 @@ AC-1..AC-7 verification:
 - AC-7: No zero-fabrication: delta=0 only when current==prev (verify via prevFetchedAt+prices)
 
 Escalate to ops if rebuild not yet done before probing.
+
+---
+
+## [QA] Review Record
+
+**QA:** qa | **Date:** 2026-06-24T05:10Z | **Sprint:** S2-DATA-HONESTY | **Task:** TASK-MACRO-COMMODITY-DELTA | **Round:** 1
+
+---
+
+### Container Binary Verification
+
+- Image `vn-market-intelligence-mcp-macro-indicators:latest` created **2026-06-24T06:54:28+0200** — after commit e55805aa (2026-06-24T06:50:57+0200). Rebuild confirmed newer than commit.
+- Binary confirmed via `strings /app/server`: `computeCommodityDelta`, `CommodityHistoryPort`, `commodity_prices_history`, `prevFetchedAt`, `FetchPrevClose`, `SQLiteCommodityHistoryRepository` — all present. New code is in the running binary.
+- Container: healthy, up 7 min at probe time.
+
+---
+
+### Live Probe — POST /snapshot (2026-06-24T05:02:26Z)
+
+```json
+{
+  "oilUsd": 76.5, "oil_is_estimate": false,
+  "goldUsd": 4080.4, "gold_is_estimate": false,
+  "usdVnd": 26131, "usdVnd_is_estimate": false,
+  "oilUsdDelta": -0.980000000000004,
+  "oilUsdDirection": "down",
+  "goldUsdDelta": -54.59999999999991,
+  "goldUsdDirection": "down",
+  "usdVndDelta": null,
+  "usdVndDirection": "unknown",
+  "prevFetchedAt": "2026-06-23T10:00:02.338Z"
+}
+```
+
+---
+
+### Named-Volume DB Cross-Check
+
+Volume: `vn-market-intelligence-mcp_market_data` / `/app/data/market.db`
+
+Baseline row query (ISO8601 cutoff `2026-06-23T11:03:33Z`, matches service's `now-18h` RFC3339Nano):
+```sql
+SELECT fetched_at, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate
+FROM commodity_prices_history
+WHERE fetched_at <= '2026-06-23T11:03:33.183Z' AND brent_crude_usd > 0
+ORDER BY fetched_at DESC LIMIT 1;
+-- Result: 2026-06-23T10:00:02.338Z | 77.48 | 4135.0 | 26315.0
+```
+
+Row age: **19.1 hours** — within 18h-36h window. Valid baseline.
+
+Arithmetic:
+- OIL: 76.5 − 77.48 = **−0.980000000000004** → reported: −0.980000000000004 ✓ EXACT
+- GOLD: 4080.4 − 4135.0 = **−54.59999999999991** → reported: −54.59999999999991 ✓ EXACT
+- prevFetchedAt: "2026-06-23T10:00:02.338Z" → DB row fetched_at: "2026-06-23T10:00:02.338Z" ✓ EXACT
+
+Total rows in commodity_prices_history: **1479** (2026-03-31 → 2026-06-24). Table healthy.
+
+---
+
+### AC Verdicts
+
+| AC | Description | Verdict | Evidence |
+|---|---|---|---|
+| AC-1 | oilUsdDelta, goldUsdDelta non-null signed floats | PASS | −0.98 (oil), −54.60 (gold) |
+| AC-2 | Directions "up"/"down"/"flat", not "unknown"; sign agrees | PASS | "down" matches negative delta for both |
+| AC-3 | No qualifying row → null/unknown (safe-degrade) | PASS | Code: `resolveCommodityPrevClose` returns (nil,nil) on empty; T-HIST-2 covers <18h; T-HIST-5 covers empty table |
+| AC-4 | prevFetchedAt matches DB baseline row fetched_at | PASS | Both = "2026-06-23T10:00:02.338Z" — exact match |
+| AC-5 | oilIsEstimate=true → oilDelta=null | PASS | `computeCommodityDelta` returns (nil,"unknown") when `currentLive=false` (L461); oil_is_estimate=false and delta computed; RISK-3 gate confirmed in code + T-DELTA-2 |
+| AC-6 | Absent table → 200, deltas null, no panic | PASS | `fetchCommodityPrevCloseFromDB`: `err != nil` (incl. table-absent) → `return nil,"",nil`; T-HIST-5 (empty table) green |
+| AC-7 | No zero-fabrication: delta=0 only from real computation | PASS | Live deltas are −0.98/−54.60 (real), not 0; >36h stale → nil-degrade (T-HIST-3); no synthetic zero possible |
+
+---
+
+### Q2 — usdVnd Suppression (SBV Override)
+
+- `sbv_rates` table: `usd_vnd_official = 26131.0` (fetched 2026-06-24T05:00:02.972Z > 0) → `usdVndSBVOverride = true`.
+- Live usdVnd = 26131 (SBV value, not Yahoo). SBV override DID fire this cycle.
+- Result: `usdVndDelta = null`, `usdVndDirection = "unknown"` — **CORRECT BEHAVIOR, not a bug**.
+- Rationale: cross-source delta (SBV_official current vs Yahoo_history prev) is structurally misleading (Q2 architect decision). Same-source-only rule applies.
+- Verdict: **Q2 CONFIRMED INTENTIONAL** — usdVnd suppression is correct.
+
+---
+
+### RISK-1 — RFC3339Nano Parser Proof
+
+- Baseline row has ms-precision timestamp `2026-06-23T10:00:02.338Z` (TypeScript `.toISOString()` format).
+- Parser returned non-null result with correct values → `time.RFC3339Nano` parses `.338Z` suffix correctly.
+- 1462 rows exist older than 18h — qualifying row is present; non-null delta proves parse did NOT fail silently.
+- T-HIST-7 (ms-precision timestamp test) green in test suite.
+- Verdict: **RISK-1 PARSER PROOF CONFIRMED** — no parse failure masking.
+
+---
+
+### Test Suite
+
+```
+go clean -testcache && go test ./...  (apps/macro-indicators/)
+
+ok  pkg/application       41.134s
+ok  pkg/domain             0.666s
+ok  pkg/infrastructure    12.582s
+ok  pkg/interface/http     3.253s
+ok  pkg/module/macro_signals        1.911s
+ok  pkg/primitive/...  (6 packages)
+
+12/12 packages PASS, 0 FAIL
+```
+
+New tests: T-HIST-1..7 (infrastructure) + T-DELTA-1..7 (application) = 14 new tests, all green. Test suite is disjoint from other sprint tasks (Go-only, macro-indicators module only).
+
+---
+
+### DDD / Security Scan
+
+- DDD fences: domain→infra import absent (CommodityHistoryPort in `pkg/domain/ports.go`, adapter in `pkg/infrastructure/`). Fence-A/B/C intact.
+- Security: no new process.env usage, no secrets, all SQL parameterized (`WHERE fetched_at <= ?`).
+- No new MCP tools, no cross-service HTTP — no ARCHITECT_REVIEW_NEEDED.
+
+---
+
+### Verdict
+
+**APPROVED**
+
+All AC-1..AC-7 green on live data with arithmetic proof against named-volume DB. Q2 usdVnd suppression confirmed intentional. RISK-1 parser proof confirmed. Test suite 12/12 packages clean. Container binary confirmed newer than commit e55805aa.
+
+**done_verified: YES**
+
+Decision journal: `docs/agent-memory/decisions/sprint-S2-DATA-HONESTY-TASK-MACRO-COMMODITY-DELTA-qa.md`
+
+---
+
+### NEXT: pm
+
+Task TASK-MACRO-COMMODITY-DELTA is DONE + done_verified=YES. Mark done on board, unblock downstream S2-DATA-HONESTY sprint tasks.
