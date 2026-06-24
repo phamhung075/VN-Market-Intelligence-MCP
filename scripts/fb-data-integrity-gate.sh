@@ -31,6 +31,15 @@
 #   E  sector/company-name validator — SSOT-driven (docs/data/system-map.json watchlist)
 #      Blocks when a watchlist ticker is labelled with a contradicting sector keyword,
 #      or when a known company-name alias mismatch is detected (e.g. VNM→"Nestlé").
+#   F  VN-ticker price in USD — blocks "$NNN" or "USD NNN" adjacent to a VN equity ticker
+#      (VN stocks trade in VND/nghìn đồng; USD next to ticker price = unit error / fabrication).
+#      False-positive guard: does NOT fire on commodity $/oz $/thùng, FX USD/VND, macro tỷ USD.
+#   G  Structural template validator (FIX-FB-GATE-TEMPLATE-STRUCTURE-VALIDATOR):
+#      G1 canonical header line 1 present
+#      G2 verbatim disclaimer text present and enclosed in --- fences
+#      G3 valid hashtag block as last element (mandatory 5 tags, no diacritics)
+#      G4 no raw markdown in post body (**bold**, ##headers, | table |)
+#      G5 word ceiling ≤ 1300 words (flow cap; trim Tóm tắt nhanh first if over)
 #
 # SSOT for all check thresholds lives exclusively here.
 # SSOT for ticker→sector/company mapping: docs/data/system-map.json .project.watchlist
@@ -82,7 +91,9 @@ python_gt() {
 # ── Step 1: Extract tickers mentioned in the post ────────────────────────────
 # Matches patterns like (VIC), (VHM), (VRE), (HPG), (FPT) etc.
 # Also handles bare ticker codes preceded or followed by %)
-POST_TICKERS=$(grep -oE '\b([A-Z]{2,4})\b' "$FILE" 2>/dev/null \
+# grep -vE exits 1 when 0 lines pass the filter (all tickers are in the exclusion list).
+# Under set -o pipefail, this aborts the script silently. Use (set +o pipefail; ...) guard.
+POST_TICKERS=$(set +o pipefail; grep -oE '\b([A-Z]{2,4})\b' "$FILE" 2>/dev/null \
   | grep -vE '^(VN|MCP|AI|BOT|UTC|USD|VND|DXY|IV|EY|RSI|MACD|BB|TA|SSI|CK|EOD|OK|NA|GDP|CPI|IIP|NP|ROE|ROA|EPS|Q1|Q2|Q3|Q4|FY|YTD|HOSE|HNX|UPCOM|ETF|IPO|PE|PB|OI|SL|TP|EV|EBITDA|FCF|DCF|IRR|NPV|NAV|ESG|CSR|AGM|EGM|SGD|EUR|JPY|CNY|GBP|CAD|AUD|NZD|CHF|HKD|TWD|KRW|THB|PHP|INR|MYR|IDR)$' \
   | sort -u \
   | tr '\n' ',' | sed 's/,$//')
@@ -630,6 +641,327 @@ if [[ -n "$check_e_violations" ]]; then
   e_count=$(echo "$check_e_violations" | grep -c '^\[BLOCK\]' || true)
   e_count=$(echo "$e_count" | grep -m1 '^[0-9]' || echo "0")
   VIOLATIONS=$((VIOLATIONS + e_count))
+fi
+
+# ── Check F: VN-ticker price in USD (currency-unit guard) ─────────────────────
+# Rationale: VN-market equities trade in VND / nghìn đồng. A "$" or "USD" followed
+# by a number appearing on the SAME LINE as a VN-ticker is a unit error / fabrication
+# signal. In Vietnamese financial prose, ticker and price appear in the same clause
+# ("HPG hiện ở mức $23,50", "TCB giá USD 32,05"), so line-level co-occurrence is the
+# correct detection surface.
+#
+# FALSE-POSITIVE GUARD — must NOT fire on legitimate USD references:
+#   • Commodity prices:   "dầu Brent $87/thùng", "vàng $4.238/oz"
+#     → guarded by: commodity-unit words ("thùng", "oz", "ounce", "barrel", "tấn")
+#       anywhere on the line — commodity $/unit can never co-occur with a VN-ticker
+#       price on the same sentence since they are different asset classes.
+#   • FX rates:           "tỷ giá USD/VND ở 26.122", "USD/EUR"
+#     → guarded by: "/" immediately follows USD/$ (FX-pair separator pattern).
+#   • Macro-aggregate refs: "xuất khẩu đạt 3 tỷ USD", "FDI 2 billion USD"
+#     → guarded by: aggregate quantifier ("tỷ", "triệu", "billion", "million")
+#       between a number and the USD/$ token.
+#   • Lines mixing commodity price AND a ticker (e.g. comparing GAS stock to oil price):
+#     → guarded by: commodity-unit check fires first, skips the entire line.
+#
+# FIRE pattern (all must be true):
+#   1. A VN-ticker (2-4 uppercase letters, not in NON_TICKERS exclusion set) appears
+#      anywhere on the line.
+#   2. "$" or "USD" is followed by a number in stock-price range (5–9999) on the
+#      SAME LINE.
+#   3. The line does NOT contain a commodity-unit word.
+#   4. The "$" or "USD" is NOT in a FX-pair context ("USD/VND", "$/VND", "$/EUR", etc.).
+#   5. The line does NOT contain a macro-aggregate pattern ("X tỷ USD", "X billion USD").
+#
+# Implementation: Python3 for precise line-level exclusion logic.
+
+check_f_violations=$(python3 - "$FILE" <<'PYEOF'
+import re, sys
+
+post_file = sys.argv[1]
+try:
+    with open(post_file, encoding="utf-8") as f:
+        lines = f.readlines()
+except Exception as e:
+    print(f"[WARN] Check-F: cannot read post file: {e}", flush=True)
+    sys.exit(0)
+
+# Commodity-unit exclusion: lines with these words use $ as $/unit for commodities
+COMMODITY_UNITS = re.compile(
+    r'\bthùng\b|\boz\b|/oz\b|ounce|barrel|\btấn\b',
+    re.IGNORECASE
+)
+
+# FX-pair exclusion: USD/VND, $/VND, USD/EUR, etc. — match $ or USD followed by /
+FX_PAIR = re.compile(r'(?:USD|\$)/[A-Z]{3}', re.IGNORECASE)
+
+# Macro-aggregate exclusion: number + aggregate unit + USD/$
+MACRO_AGGREGATE = re.compile(
+    r'\d[\d.,]*\s*(?:tỷ|triệu|billion|million)\s*(?:USD|\$)',
+    re.IGNORECASE | re.UNICODE
+)
+
+# Non-ticker exclusion set: known 2-4-char uppercase abbreviations that are not tickers
+NON_TICKERS = {
+    "VN", "USD", "VND", "DXY", "FX", "TV", "AI", "MCP", "BOT", "OK", "NA",
+    "GDP", "CPI", "IIP", "NP", "ROE", "ROA", "EPS", "FY", "YTD", "HOSE",
+    "HNX", "UPCOM", "ETF", "IPO", "PE", "PB", "OI", "SL", "TP", "EV",
+    "IMF", "WB", "ADB", "FED", "ECB", "BOJ", "RBI", "FDI", "FII", "OTC",
+    "NFP", "PMI", "PCE", "PPI", "EY", "IV", "OMO", "SBV", "MOF", "GSO",
+    "SSC", "VIC",  # note: VIC IS a real ticker — removed from exclusion below
+}
+# VIC is a real ticker; keep it tickerable. Remove it if mistakenly in set.
+NON_TICKERS.discard("VIC")
+
+TICKER_PAT = re.compile(r'\b([A-Z]{2,4})\b')
+
+# USD-price pattern: "$" or "USD" (as standalone token, not mid-word) followed by a number
+# Stock-price range guard: 5–9999 (nghìn đồng mapped; fabricated USD prices land here)
+USD_PRICE_PAT = re.compile(
+    r'(?<![A-Z])(?P<usd>\$|USD)(?![/A-Z])\s*(?P<num>\d{1,5}(?:[.,]\d{1,3})?)',
+    re.IGNORECASE
+)
+
+violations = []
+
+for lineno, line in enumerate(lines, 1):
+    # Skip structural/metadata lines
+    stripped = line.strip()
+    if lineno == 1:
+        continue  # file title header allowed
+    if not stripped or stripped.startswith('---') or stripped.startswith('⚠️') or \
+       stripped.startswith('#chung') or stripped.startswith('_Được tạo'):
+        continue
+
+    # Commodity-unit lines → skip ($/oz, $/thùng are legitimate)
+    if COMMODITY_UNITS.search(line):
+        continue
+
+    # FX-pair lines → skip (USD/VND, $/EUR are legitimate)
+    if FX_PAIR.search(line):
+        continue
+
+    # Macro-aggregate lines → skip (3 tỷ USD = trade figure, not stock price)
+    if MACRO_AGGREGATE.search(line):
+        continue
+
+    # Find all USD-price patterns on this line
+    usd_matches = []
+    for m in USD_PRICE_PAT.finditer(line):
+        num_val_str = m.group("num").replace(",", "").replace(".", "")
+        try:
+            num_val = int(num_val_str)
+        except ValueError:
+            continue
+        # Only flag stock-price-range values (5–9999)
+        if 5 <= num_val <= 9999:
+            usd_matches.append(m)
+
+    if not usd_matches:
+        continue
+
+    # Find all VN-tickers on the line (full line scan — ticker often precedes price in VN prose)
+    line_tickers = []
+    for tm in TICKER_PAT.finditer(line):
+        ticker = tm.group(1)
+        if ticker not in NON_TICKERS:
+            line_tickers.append(ticker)
+
+    if not line_tickers:
+        continue
+
+    # Co-occurrence: USD-price AND VN-ticker on the same line → flag
+    for m in usd_matches:
+        ticker = line_tickers[0]  # report the first ticker found
+        violations.append(
+            f"[BLOCK] Check-F currency-unit: '{ticker}' and USD-price '{m.group().strip()}' "
+            f"co-occur on line {lineno} — VN equities trade in VND/nghìn đồng; "
+            f"USD next to ticker price = unit error / fabrication signal\n"
+            f"  line {lineno}: {line.rstrip()}"
+        )
+        break  # one violation per line is enough
+
+for v in violations:
+    print(v)
+PYEOF
+)
+
+if [[ -n "$check_f_violations" ]]; then
+  echo "$check_f_violations"
+  f_count=$(echo "$check_f_violations" | grep -c '^\[BLOCK\]' || true)
+  f_count=$(echo "$f_count" | grep -m1 '^[0-9]' || echo "0")
+  VIOLATIONS=$((VIOLATIONS + f_count))
+fi
+
+# ── Check G: structural template validator ────────────────────────────────────
+# Validates the canonical structure required by docs/agents/fb-market-poster/flow/main.md:
+#   G1  canonical header present (line 1: "# Thị trường chứng khoán Việt Nam")
+#   G2  verbatim disclaimer block present (⚠️ Nội dung... inside --- separators)
+#   G3  valid hashtag block present (last non-empty line starts with #chungkhoan)
+#   G4  no raw markdown in post body (**bold**, ##headers, | table |)
+#        — exception: line 1 (the file title header # ...) is allowed
+#   G5  word ceiling ≤ 1300 words (flow cap; posts breaching this need trimming)
+#        — word count excludes: line 1 (file header), --- separator lines,
+#          the disclaimer line itself, and the hashtag line
+#
+# Exit discipline: each violation increments $VIOLATIONS; the Result block owns the exit.
+
+check_g_violations=$(python3 - "$FILE" <<'PYEOF'
+import re, sys
+
+post_file = sys.argv[1]
+try:
+    with open(post_file, encoding="utf-8") as f:
+        raw = f.read()
+        lines = raw.splitlines()
+except Exception as e:
+    print(f"[WARN] Check-G: cannot read post file: {e}", flush=True)
+    sys.exit(0)
+
+violations = []
+
+# ── G1: canonical header ───────────────────────────────────────────────────────
+# Line 1 must start with "# Thị trường chứng khoán Việt Nam"
+HEADER_PAT = re.compile(r'^#\s+Th[iị]\s+tr[ươ]ờng\s+ch[uứ]ng\s+kho[aá]n\s+Vi[eệ]t\s+Nam', re.IGNORECASE | re.UNICODE)
+if not lines or not HEADER_PAT.match(lines[0]):
+    violations.append(
+        "[BLOCK] Check-G1 missing-header: line 1 must be "
+        "'# Thị trường chứng khoán Việt Nam — YYYY-MM-DD' "
+        f"(got: {lines[0][:80] if lines else '(empty file)'})"
+    )
+
+# ── G2: verbatim disclaimer block ─────────────────────────────────────────────
+# Must contain the exact disclaimer text (substring match — allows minor surrounding whitespace).
+DISCLAIMER_CORE = "Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng"
+if DISCLAIMER_CORE not in raw:
+    violations.append(
+        "[BLOCK] Check-G2 missing-disclaimer: verbatim disclaimer text not found. "
+        f"Expected substring: '{DISCLAIMER_CORE}'"
+    )
+else:
+    # Also verify it is enclosed in --- separators
+    # The pattern: a line with "---" before and after the disclaimer line
+    DISCLAIMER_BLOCK_PAT = re.compile(
+        r'^---\s*\n[^\n]*' + re.escape(DISCLAIMER_CORE) + r'[^\n]*\n---',
+        re.MULTILINE
+    )
+    if not DISCLAIMER_BLOCK_PAT.search(raw):
+        violations.append(
+            "[BLOCK] Check-G2 disclaimer-not-fenced: disclaimer text found but not "
+            "enclosed in '---' separator lines above and below"
+        )
+
+# ── G3: valid hashtag block ────────────────────────────────────────────────────
+# Last non-empty line must be the hashtag block starting with #chungkhoan
+last_nonempty = ""
+for ln in reversed(lines):
+    if ln.strip():
+        last_nonempty = ln.strip()
+        break
+
+MANDATORY_TAGS = ["#chungkhoan", "#chungkhoanvietnam", "#vnindex", "#dautu", "#thitruongchungkhoan"]
+if not last_nonempty.startswith("#chungkhoan"):
+    violations.append(
+        f"[BLOCK] Check-G3 missing-hashtag-block: last non-empty line must be the hashtag block "
+        f"starting with '#chungkhoan'. Got: '{last_nonempty[:80]}'"
+    )
+else:
+    # Check mandatory tags
+    missing_tags = [t for t in MANDATORY_TAGS if t not in last_nonempty]
+    if missing_tags:
+        violations.append(
+            f"[BLOCK] Check-G3 hashtag-missing-mandatory: hashtag block is missing mandatory tags: "
+            + ", ".join(missing_tags)
+        )
+    # Check no Vietnamese diacritics inside any hashtag token
+    DIACRITIC_PAT = re.compile(
+        r'[àáâãăắặằẳẵậấầẩẫèéêềếểễệìíòóôõơớờởỡợùúưứừửữựýđÀÁÂÃĂẮẶẰẲẴẬẤẦẨẪÈÉÊỀẾỂỄỆÌÍÒÓÔÕƠỚỜỞỠỢÙÚƯỨỪỬỮỰÝĐ]'
+    )
+    for token in last_nonempty.split():
+        if token.startswith('#') and DIACRITIC_PAT.search(token):
+            violations.append(
+                f"[BLOCK] Check-G3 hashtag-diacritic: hashtag token '{token}' contains "
+                "Vietnamese diacritics — FB hashtags must be plain ASCII"
+            )
+            break
+
+# ── G4: no raw markdown in post body ──────────────────────────────────────────
+# Line 1 (file title header "# Thị trường ...") is allowed as the one # line.
+# ALL other lines must not contain:
+#   - ## or deeper heading markers
+#   - **bold** or __bold__ markdown
+#   - Markdown table rows (| cell | cell |)
+# Note: a single # at start of line is ONLY allowed on line 1 (the file title).
+# The hashtag block on the last line uses # as tag prefix, not markdown — that line
+# is excluded by checking: if line starts with #chungkhoan it's the hashtag block.
+MD_HEADING = re.compile(r'^#{2,}\s+')          # ## or deeper headings
+MD_BOLD    = re.compile(r'\*\*[^*\n]+\*\*|__[^_\n]+__')  # **bold** or __bold__
+MD_TABLE   = re.compile(r'^\s*\|[^|]+\|')       # | table | row |
+
+for i, ln in enumerate(lines, 1):
+    stripped = ln.strip()
+    if i == 1:
+        continue  # allow the file title header line
+    if not stripped or stripped.startswith('---') or stripped.startswith('⚠️') or \
+       stripped.startswith('_Được tạo') or stripped.startswith('#chungkhoan'):
+        continue  # skip structural/metadata lines
+
+    if MD_HEADING.match(stripped):
+        violations.append(
+            f"[BLOCK] Check-G4 markdown-heading: line {i} contains raw markdown heading "
+            f"(## or deeper) — FB posts are plain text: '{stripped[:80]}'"
+        )
+    if MD_BOLD.search(ln):
+        violations.append(
+            f"[BLOCK] Check-G4 markdown-bold: line {i} contains **bold** or __bold__ "
+            f"markdown — FB posts are plain text: '{stripped[:80]}'"
+        )
+    if MD_TABLE.match(ln):
+        violations.append(
+            f"[BLOCK] Check-G4 markdown-table: line {i} contains a markdown table row "
+            f"— FB posts are plain text: '{stripped[:80]}'"
+        )
+
+# ── G5: word ceiling ≤ 1300 words ─────────────────────────────────────────────
+# Count words in body lines only. Exclude:
+#   - Line 1 (file title header)
+#   - Lines that are exactly "---"
+#   - The disclaimer line (contains "Nội dung được tạo tự động")
+#   - The hashtag block line (starts with #chungkhoan)
+#   - The "_Được tạo bởi bot AI" attribution line
+WORD_CEILING = 1300
+
+body_words = 0
+for i, ln in enumerate(lines, 1):
+    stripped = ln.strip()
+    if i == 1:
+        continue
+    if stripped == "---":
+        continue
+    if DISCLAIMER_CORE in stripped:
+        continue
+    if stripped.startswith("#chungkhoan"):
+        continue
+    if stripped.startswith("_Được tạo"):
+        continue
+    body_words += len(stripped.split())
+
+if body_words > WORD_CEILING:
+    violations.append(
+        f"[BLOCK] Check-G5 word-ceiling: post body is {body_words} words "
+        f"(ceiling={WORD_CEILING}). Trim the Tóm tắt nhanh section first; "
+        "never trim Phân tích or Dự đoán."
+    )
+
+for v in violations:
+    print(v)
+PYEOF
+)
+
+if [[ -n "$check_g_violations" ]]; then
+  echo "$check_g_violations"
+  g_count=$(echo "$check_g_violations" | grep -c '^\[BLOCK\]' || true)
+  g_count=$(echo "$g_count" | grep -m1 '^[0-9]' || echo "0")
+  VIOLATIONS=$((VIOLATIONS + g_count))
 fi
 
 # ── Result ────────────────────────────────────────────────────────────────────

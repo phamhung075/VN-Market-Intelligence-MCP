@@ -1,6 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-06-17 | **Cycle:** FIX-FB-POST-DATA-INTEGRITY-GATE
+**Last updated:** 2026-06-24 | **Cycle:** FIX-FB-GATE-HARDENING-BUNDLE
+
+## Session 2026-06-24 — FIX-FB-GATE-HARDENING-BUNDLE (3 tasks batched)
+
+**Task:** FIX-FB-JARGON-WEEKDAY-ORDINAL-COLLISION + FIX-FB-GATE-TEMPLATE-STRUCTURE-VALIDATOR + FIX-FB-GATE-CURRENCY-UNIT-GUARD
+**Zone:** scripts/ (cross-service) → developer handles directly.
+
+**TASK 1 — weekday/ordinal fix (fb-jargon-gate.sh Group E):**
+Vietnamese weekday names when used as DAY NAMES are always capitalised ("Thứ Hai", "Thứ Ba"). Ordinal enumerators ("Thứ nhất/hai/ba" = firstly/secondly/thirdly) use lowercase. Removing the `-i` flag from `grep -ni` in the weekday check makes it case-sensitive — correctly blocking "Thứ Hai" declared for a non-Monday date, and NOT blocking "Thứ hai" ordinal in body prose.
+Result: fb-post-2026-06-14.md (Chủ nhật post with "Thứ nhất/hai/ba" ordinals) → PASS; real wrong-weekday synthetic → FAIL. Zero regression on 06-23 (Thứ Ba) / 06-24 (Thứ Tư).
+
+**TASK 2 — structural template validator (Check-G, fb-data-integrity-gate.sh):**
+5 sub-checks: G1 canonical header / G2 verbatim disclaimer + fence / G3 hashtag block (mandatory 5 tags, no diacritics) / G4 no raw markdown (##, **bold**, | table |) / G5 word ceiling ≤1300.
+Also fixed a pre-existing `set -euo pipefail` silent-abort: `grep -vE` on the POST_TICKERS extraction pipeline exits 1 when 0 tickers pass the filter (all excluded) — now guarded with `(set +o pipefail; ...)`. This was the actual root of the `feedback_fb_poster_gate_false_green` pattern (gate aborted silently at Step 1, no violations counted, but exit was caught by a calling pipeline as exit 1 then lost).
+
+**TASK 3 — currency-unit guard (Check-F, fb-data-integrity-gate.sh):**
+Line-level co-occurrence: VN-ticker + `$NNN`/`USD NNN` (range 5-9999) on same line → BLOCK. False-positive guards: commodity lines (thùng/oz/barrel skip), FX-pair lines (USD/VND skip), macro-aggregate lines (tỷ USD skip), NON_TICKERS exclusion set, range filter. All guards verified against real posts and synthetic fixtures.
 
 ## Session 2026-06-18 — TASK-AUTO-PUSH-A fleet-worktree-push.sh (ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP)
 

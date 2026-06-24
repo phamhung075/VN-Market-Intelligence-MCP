@@ -93,6 +93,23 @@ run_grep "hashtag-typo:dankhi" '#dankhi'
 # ── Group E — Calendar weekday / date consistency ─────────────────────────────
 # Only runs when POST_DATE ($2) is provided as YYYY-MM-DD.
 # If no weekday appears in the post body, this check is a no-op (weekday mention is optional).
+#
+# ORDINAL vs WEEKDAY-NAME disambiguation (FIX-FB-JARGON-WEEKDAY-ORDINAL-COLLISION):
+#   Vietnamese weekday names — "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"
+#   — are ALWAYS written with a capitalised second word when used as a calendar day name
+#   (e.g. "Phiên Thứ Ba 23/6", "Hôm nay là Thứ Hai").
+#
+#   Vietnamese ORDINAL enumerators "Thứ nhất / Thứ hai / Thứ ba / Thứ tư ..." (= firstly /
+#   secondly / thirdly / fourthly) are written with a LOWERCASE second word in running prose
+#   (e.g. "Thứ nhất, lãi suất ...", "phiên thứ ba liên tiếp").
+#
+#   Fix: use CASE-SENSITIVE grep (no -i flag). This makes "Thứ Hai" match only the capitalised
+#   day-name form, and NOT match "Thứ hai" or "thứ hai" used as ordinals.
+#   "Chủ nhật" is always title-cased in both uses, but it is ONLY a day name in Vietnamese
+#   (there is no ordinal meaning), so no false-positive risk.
+#
+#   Genuine wrong-weekday detection is preserved: a post that incorrectly declares
+#   "Thứ Hai" for a Wednesday will always use the capitalised day-name form.
 if [[ -n "$POST_DATE" ]]; then
   VN_WEEKDAYS=("Chủ nhật" "Thứ Hai" "Thứ Ba" "Thứ Tư" "Thứ Năm" "Thứ Sáu" "Thứ Bảy")
   # DOW: 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
@@ -107,7 +124,9 @@ print((wd + 1) % 7)
   EXPECTED_VN="${VN_WEEKDAYS[$DOW]}"
   for WD in "Chủ nhật" "Thứ Hai" "Thứ Ba" "Thứ Tư" "Thứ Năm" "Thứ Sáu" "Thứ Bảy"; do
     if [[ "$WD" != "$EXPECTED_VN" ]]; then
-      hits=$(grep -ni "$WD" "$FILE" 2>/dev/null || true)
+      # CASE-SENSITIVE grep (no -i) — distinguishes capitalised day-name "Thứ Hai/Ba/..."
+      # from lowercase ordinal "Thứ hai/ba/..." used as firstly/secondly/thirdly in body prose.
+      hits=$(grep -n "$WD" "$FILE" 2>/dev/null || true)
       if [[ -n "$hits" ]]; then
         echo "[FAIL] calendar:wrong-weekday — post date $POST_DATE = $EXPECTED_VN, found '$WD'"
         echo "$hits"
