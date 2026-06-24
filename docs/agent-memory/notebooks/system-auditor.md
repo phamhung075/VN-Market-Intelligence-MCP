@@ -1,7 +1,12 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
-
+## c444 · 2026-06-24T17:14:16Z
+### Audit Run Tier-1 (17:13–17:14 UTC 2026-06-24)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (all healthy) | Health: 5/5 HTTP 200 | A-20 pdf-extractor 3/3 multi-probe PASS
+- A-21 mcp=0 PASS | A-30 mcp-mem=44.25% PASS | A-32 disk=40% PASS | Cron: 120+ jobs, all ≥99.8% success
+- Anomalies: 0 new | Dedup: A-21 rag-service=108 expected (~1/hr) FU-RAG-DEPLOY-MEMORY (known-standing, not emitted)
+- Status: HEALTHY — no WARN/CRITICAL, no signals posted
 
 ## c443 · 2026-06-24T16:43:51Z
 ### Audit Run Tier-1 (16:43 UTC 2026-06-24)
