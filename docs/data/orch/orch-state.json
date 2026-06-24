@@ -7897,7 +7897,9 @@
         "source": "T3-ARCH-CRON-WATCHDOG LIVE run (router RAW-confirmed genuine-stale alert)",
         "note": "WIP<=2: NOT queued ahead of the two HIGH/P1 dev-mcp-server tasks; stays in backlog until the refine-lock + digest-dedup pair clears.",
         "created_at": "2026-06-14T14:45:14Z",
-        "created_by": "po-S50"
+        "created_by": "po-S50",
+        "po_cross_feature_impact_marker": "2026-06-24T17:43:33Z",
+        "po_cross_feature_impact": "[po 2026-06-24] CONFIRMED STILL DEAD + impact ELEVATED. RAW probe during the first digest-daily fire: get_evidence_summary FPT/VPB on 2026-06-24 returns EVERY fragment as foreign_flow_institutional LR=1.00 (n=0) [UNTRUSTED] — i.e. evidence_likelihood_ratios.sample_size is still 0 for the live evidence type because baseRateComputationJob (the SOLE writer of that table) remains dead. SYSTEMIC, not a thin-day: every fragment of every ticker is perpetually UNTRUSTED, so validate_prediction_claims gives the evidence no predictive lift. This now limits the VALUE of BOTH the weekly digest-predict AND the new daily FEAT-PREDICTION-CLAIMS-DAILY-CADENCE feature (claims still get created on raw scores — proven by id=10 FPT / id=11 VPB today — but they are NOT evidence-calibrated). NOTE: prediction-LEVEL Brier calibration is healthy (get_calibration_report 2026-06-21 Brier=0.1379, 4 resolved) — distinct layer; the dead layer is the evidence-FRAGMENT LR calibration. DEFINITION OF SYSTEMIC-ROOT for this task: fixing baseRateComputationJob to auto-fire + accumulate sample_size>=10 per (evidence_type,direction,horizon) is what unlocks TRUSTED evidence. Related upstream: FIX-EVIDENCE-PIPELINE-STARVED (CHANGES_REQUESTED, C3 accumulator-fire gap) feeds the fragments this job consumes — both must land for end-to-end trusted evidence. RECOMMEND priority review P2->P1 once the dev-mcp-server WIP refine-lock+digest-dedup pair clears (it gates the value of two features, not one)."
       },
       {
         "id": "ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD",
@@ -17640,6 +17642,40 @@
         "rebuild_required": true,
         "done_at": "2026-06-21T04:00:00Z",
         "done_by": "qa-review"
+      },
+      {
+        "id": "FEAT-PREDICTION-CLAIMS-DAILY-CADENCE",
+        "title": "Implement daily prediction-synthesis: daily-predict sub-flow + main.md daily-window routing + init.md scope + cowork-schedule.json daily slot (digest-predict-daily 30 17 * * *)",
+        "type": "FEAT",
+        "size": "M",
+        "sprint": "PREDICTION-CLAIMS-DAILY-CADENCE",
+        "status": "DONE",
+        "owner": "agent-father",
+        "zone": "docs/agents/digest-predict/ + docs/data/cowork-schedule.json",
+        "created_at": "2026-06-24T09:30:00Z",
+        "created_by": "po",
+        "depends_on": "ARCH-PREDICTION-DAILY-CADENCE",
+        "fix_spec": "Per the ARCH-PREDICTION-DAILY-CADENCE brief (invoke agent-md-factory skill before editing any agent .md): (1) author docs/agents/digest-predict/flow/daily-predict.md (or re-enable/re-point daily.md) carrying the monday.md synthesis pipeline (P-0 self-assess .. P-5 create_prediction_claim) adapted to the architect-ruled per-day cap + same-day task_claim dedup marker + open-claim-per-ticker skip + clean NO-OP on zero high-conviction; (2) edit docs/agents/digest-predict/flow/main.md Dispatch table to ALSO route the new daily window (keep the Sunday 13:47 UTC weekly window + its published-marker gate intact); (3) edit docs/agents/digest-predict/init.md — restore daily prediction synthesis to scope/responsibilities/schedule, set the new per-day + weekly cap constraints (remove/replace the misleading Monday prediction synthesis removed + weekly-only scope lines), keep weekly Sunday MARKET named-exception unchanged; (4) add the daily slot to docs/data/cowork-schedule.json: slot_id digest-predict-daily, cron 30 17 * * *, agent/agent_id digest-predict, parallel_group digest, flow_path docs/agents/digest-predict/flow/daily-predict.md, trigger_prompt routes the daily flow, dish_type daily_prediction, guaranteed false, depends_on null, enabled true, policy_id null, last_fired null. NO frontend/endpoint change — page + /api/prediction-claims + predictionClaimsHandler are HEALTHY.",
+        "verification_gate": "done_verified GATE: the 2026-06-25 ~17:30Z daily fire claims a DISTINCT marker published:digest-daily:2026-06-25 (NOT the 06-21 week-anchor), runs the pipeline once (no double-fire), and either creates real claims or a clean no-op. Verify RAW via cron_job_runs / the per-day marker key / claim count delta. Sunday weekly MARKET dish remains un-regressed.",
+        "in_progress_at": "2026-06-24T15:09:07Z",
+        "dispatched_by": "dev-team-cron-router",
+        "dispatched_to": "agent-father",
+        "dep_satisfied": "ARCH-PREDICTION-DAILY-CADENCE done",
+        "done": true,
+        "done_at": "2026-06-24T15:50:42Z",
+        "done_by": "agent-father",
+        "impl_commit": "048cd3e4",
+        "router_note": "RAW-verified: 4 files (daily-predict.md, main.md routing+Sunday-conditional dedup gate, init.md caps 3/day+15/wk, cowork-schedule digest-daily slot cron 30 17), no orch-state, jq-valid, weekly/monday untouched, conviction bar + no-op preserved, NO rebuild (flows/schedule read at dispatch).",
+        "reopened_at": "2026-06-24T17:39:09Z",
+        "reopened_by": "dev-team-cron-router",
+        "reopen_reason": "done_verified failed at first live fire: daily dedup gate derived UTC_DATE from get_week_period.periodStart (2026-06-21 week-start) instead of today (2026-06-24). All week-days key the same published:digest-daily:2026-06-21; 24h TTL races 24h fire interval so tomorrow 17:30 fire wrongly deduped. Fix: key on today UTC calendar date. Synthesis itself correct (honest zero no-op: qualifying tickers were same-FII-event dupes of id=11, bar not lowered).",
+        "done_verified": false,
+        "code_complete_at": "2026-06-24T17:42:54Z",
+        "keying_fix_commit": "e1e9d6ab",
+        "po_disposition": "CODE-COMPLETE (done_verified WITHHELD). First-ever digest-daily fire (17:31Z 2026-06-24) executed the full daily-predict pipeline on LIVE data (37 tool calls) and produced a CORRECT honest NO-OP (AC-5): 0 fabricated claims, conviction bar NOT lowered, locks clean. Earlier 15:05 catch-up wrote 2 REAL claims (FPT id=10, VPB id=11) so the create-claim path also works. HOWEVER the same fire exposed a real dedup-keying bug (daily marker keyed get_week_period.periodStart=2026-06-21 week-anchor, same value Mon-Sat -> tomorrow's 17:30 fire would be WRONGLY deduped; 24h TTL races 24h interval). Router reopened in_progress 17:39Z; agent-father fixed it in commit e1e9d6ab (17:40Z): main.md Step pre-D now derives UTC_DATE from cycle-bootstrap UTC-now / get_current_date and FORBIDS periodStart. Fix is committed + clean. done_verified is WITHHELD only because the FIXED keying has not yet been proven by a clean distinct-key NEXT-DAY fire.",
+        "po_signoff_note": "[PO sign-off 2026-06-24] FEAT mechanism is COMPLETE and the first live fire was an honest PASS-shaped no-op. Per RAW board state the task was correctly REOPENED (not sitting done) because the fire surfaced the keying bug; that bug is now fixed (e1e9d6ab). Relocated to done as code-complete; done_verified held to the next-day clean-keyed fire per verify-raw-not-badges + code-complete-not-done_verified-when-gate-is-future-live-behavior.",
+        "po_signed_off_by": "po",
+        "po_signed_off_at": "2026-06-24T17:42:54Z"
       }
     ],
     "done_verified": [
@@ -24451,35 +24487,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
-      {
-        "id": "FEAT-PREDICTION-CLAIMS-DAILY-CADENCE",
-        "title": "Implement daily prediction-synthesis: daily-predict sub-flow + main.md daily-window routing + init.md scope + cowork-schedule.json daily slot (digest-predict-daily 30 17 * * *)",
-        "type": "FEAT",
-        "size": "M",
-        "sprint": "PREDICTION-CLAIMS-DAILY-CADENCE",
-        "status": "IN_PROGRESS",
-        "owner": "agent-father",
-        "zone": "docs/agents/digest-predict/ + docs/data/cowork-schedule.json",
-        "created_at": "2026-06-24T09:30:00Z",
-        "created_by": "po",
-        "depends_on": "ARCH-PREDICTION-DAILY-CADENCE",
-        "fix_spec": "Per the ARCH-PREDICTION-DAILY-CADENCE brief (invoke agent-md-factory skill before editing any agent .md): (1) author docs/agents/digest-predict/flow/daily-predict.md (or re-enable/re-point daily.md) carrying the monday.md synthesis pipeline (P-0 self-assess .. P-5 create_prediction_claim) adapted to the architect-ruled per-day cap + same-day task_claim dedup marker + open-claim-per-ticker skip + clean NO-OP on zero high-conviction; (2) edit docs/agents/digest-predict/flow/main.md Dispatch table to ALSO route the new daily window (keep the Sunday 13:47 UTC weekly window + its published-marker gate intact); (3) edit docs/agents/digest-predict/init.md — restore daily prediction synthesis to scope/responsibilities/schedule, set the new per-day + weekly cap constraints (remove/replace the misleading Monday prediction synthesis removed + weekly-only scope lines), keep weekly Sunday MARKET named-exception unchanged; (4) add the daily slot to docs/data/cowork-schedule.json: slot_id digest-predict-daily, cron 30 17 * * *, agent/agent_id digest-predict, parallel_group digest, flow_path docs/agents/digest-predict/flow/daily-predict.md, trigger_prompt routes the daily flow, dish_type daily_prediction, guaranteed false, depends_on null, enabled true, policy_id null, last_fired null. NO frontend/endpoint change — page + /api/prediction-claims + predictionClaimsHandler are HEALTHY.",
-        "verification_gate": "done_verified WITHHELD until first digest-daily fire (17:30Z today) produces real claims OR honest no-op + dashboard reflects + no same-day dup + Sunday weekly still intact.",
-        "in_progress_at": "2026-06-24T15:09:07Z",
-        "dispatched_by": "dev-team-cron-router",
-        "dispatched_to": "agent-father",
-        "dep_satisfied": "ARCH-PREDICTION-DAILY-CADENCE done",
-        "done": false,
-        "done_at": "2026-06-24T15:50:42Z",
-        "done_by": "agent-father",
-        "impl_commit": "048cd3e4",
-        "router_note": "RAW-verified: 4 files (daily-predict.md, main.md routing+Sunday-conditional dedup gate, init.md caps 3/day+15/wk, cowork-schedule digest-daily slot cron 30 17), no orch-state, jq-valid, weekly/monday untouched, conviction bar + no-op preserved, NO rebuild (flows/schedule read at dispatch).",
-        "reopened_at": "2026-06-24T17:39:09Z",
-        "reopened_by": "dev-team-cron-router",
-        "reopen_reason": "done_verified failed at first live fire: daily dedup gate derived UTC_DATE from get_week_period.periodStart (2026-06-21 week-start) instead of today (2026-06-24). All week-days key the same published:digest-daily:2026-06-21; 24h TTL races 24h fire interval so tomorrow 17:30 fire wrongly deduped. Fix: key on today UTC calendar date. Synthesis itself correct (honest zero no-op: qualifying tickers were same-FII-event dupes of id=11, bar not lowered)."
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -24520,8 +24528,8 @@
         }
       ]
     },
-    "updated_at": "2026-06-21T03:50:00Z",
-    "updated_by": "po (file-only BCTC re-probe triage)",
+    "updated_at": "2026-06-24T17:42:54Z",
+    "updated_by": "po (FEAT-PREDICTION-DAILY relocate in_progress->done code-complete)",
     "last_triaged_at": "2026-06-24T09:06:35Z",
     "last_triaged_by": "po"
   },
