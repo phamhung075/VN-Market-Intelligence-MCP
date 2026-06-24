@@ -173,7 +173,7 @@ export function buildGetBctcPendingRefineHandler(
                  AND (
                    SELECT COUNT(*) FROM bctc_refined_units u
                    WHERE u.report_id = financial_reports.id
-                     AND u.window_status != 'DONE'
+                     AND u.window_status NOT IN ('DONE', 'FAILED')
                  ) = 0
                  AND (
                    SELECT COUNT(*) FROM bctc_refined_units u
@@ -186,7 +186,13 @@ export function buildGetBctcPendingRefineHandler(
           )
           .all(ticker);
       } else {
-        // Branch 3: default queue query (unchanged behavior)
+        // Branch 3: default queue query
+        // FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON:
+        // Extend Fix-A exclusion: PARTIAL reports where ALL bctc_refined_units rows are
+        // window_status IN ('DONE','FAILED') AND at least one unit exists are excluded —
+        // no refinable work remains (DONE=processed, FAILED=terminal for this run).
+        // REJECTED_SANITY is NOT in the exclusion set — those docs stay visible for investigation.
+        // Index: idx_bctc_refined_units_report_status (report_id, window_status) — O(log n).
         const limitClause = limit ? `LIMIT ${limit}` : "";
         rows = db
           .prepare<PendingRefineRow, []>(
@@ -200,7 +206,7 @@ export function buildGetBctcPendingRefineHandler(
                  AND (
                    SELECT COUNT(*) FROM bctc_refined_units u
                    WHERE u.report_id = financial_reports.id
-                     AND u.window_status != 'DONE'
+                     AND u.window_status NOT IN ('DONE', 'FAILED')
                  ) = 0
                  AND (
                    SELECT COUNT(*) FROM bctc_refined_units u
@@ -325,9 +331,10 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
     "Return financial reports pending agentic refine processing, with pre-partitioned windows. " +
       "Default: queries financial_reports WHERE text_status='COMPLETE' AND refine_status IN ('PENDING','PARTIAL','FAILED') " +
       "AND confirm_status != 'CONFIRMED'. " +
-      "PARTIAL reports where ALL bctc_refined_units rows are window_status='DONE' are excluded — " +
-      "these are data-quality PARTIALs (BEQ-7 section guard fired but no refine work remains). " +
-      "FAILED reports are included so the fleet cron can retry them (e.g. Option-Y legacy failures). " +
+      "PARTIAL reports where ALL bctc_refined_units rows are window_status IN ('DONE','FAILED') are excluded — " +
+      "these have no refinable work remaining (DONE=processed, FAILED=terminal for this run; " +
+      "REJECTED_SANITY units keep the doc visible for investigation). " +
+      "FAILED reports (whole-report refine_status='FAILED', not unit-level) are included so the fleet cron can retry them. " +
       "Optional ticker parameter (action_code) filters results to a specific stock. " +
       "Optional report_id parameter fetches one specific report by primary key regardless of queue status " +
       "(bypasses text_status/refine_status filters — intentional for force-re-verify; confirm_status guard retained). " +
