@@ -1,6 +1,13 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c448 · 2026-06-24T18:30:19Z
+### Audit Run Tier-2 (18:30 UTC 2026-06-24)
+- Tier: 2 | Cron: 0 fire gaps (A-29 PASS) | Sources: 28 checked | VPS: 3/4 ok (bctc KNOWN-STALE)
+- Freshness: prices/news/sbv/foreign-flow ok | bctc out-of-window stale (tracked FIX-BCTC-SLA-THRESHOLD-360)
+- DB: C-06=0 (off-hours ok), C-07=361 ok, C-09=SSC=0 ok, B-13=0 ok | All rate-limits ready
+- Anomalies: 0 new | Dedup: bctc (B-06, tracked fix) | Status: HEALTHY
+
 ## c447 · 2026-06-24T18:15:09Z
 ### Audit Run Tier-1 (18:14–18:15 UTC 2026-06-24)
 - Tier: 1 | Services: 12/12 host_runtime_set UP | Health: 5/5 HTTP 200 | A-20 pdf-extractor 3/3 multi-probe PASS
@@ -24,7 +31,7 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 9 days (healthy)     vn-mar
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 10 days (healthy)    vn-market-intelligence-mcp-kinh-dich-service    10 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)    vn-market-intelligence-mcp-api-gateway          13 days ago
 vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)    vn-market-intelligence-mcp-rag-service          13 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)    vn-market-intelligence-mcp-news-fetch           13 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)   vn-market-intelligence-mcp-news-fetch           13 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)    vn-market-intelligence-mcp-alert-engine         13 days ago
 headroom-proxy                                    Up 11 days              headroom-proxy:local                            2 weeks ago
 mcp-gateway                                       Up 13 days (healthy)    mcpservergatway-gateway                         5 weeks ago
