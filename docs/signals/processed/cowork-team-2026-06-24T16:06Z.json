@@ -1,0 +1,30 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-24T16:06Z",
+    "nominal_tick": "2026-06-24T16:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
+    "spawned": [
+      "news-scout (slot news-scout-offhours, run_in_background, agentId aab07825d2ff8be8c)",
+      "market-watcher (slot market-watcher-eod, run_in_background, agentId a98f3a125d7c421d4)"
+    ],
+    "errors": [],
+    "skipped_redundant": ["market-watcher-offhours"],
+    "classification": "SPAWNED_ACTIVE",
+    "reason": "Trio at the 16:00 boundary, all GENUINELY due (stale last_fired, NOT the ~4min master-cron-fresh pattern): gatherer pair last_fired 12:01 (4h cadence elapsed), market-watcher-eod last_fired 2026-06-11 (post-close EOD sweep missed 13 days through the blind window). The master cron had NOT fired this 16:00 window yet (last_fired still 12:01). Spawned news-scout-offhours + market-watcher-eod. SKIPPED market-watcher-offhours as REDUNDANT: it is the SAME agent (market-watcher) as market-watcher-eod at the SAME 16:00 window — running both concurrently would race on coverage-state writes; the EOD pass covers the watchlist comprehensively. Each agent's own dedup guards any race with a late master-cron fire.",
+    "slot_detail": {
+      "news-scout-offhours": {"agent": "news-scout", "flow_path": "docs/agents/news-scout/flow/main.md", "cron": "0 */4 * * *", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-24T12:01:00Z", "spawn_agent_id": "aab07825d2ff8be8c"},
+      "market-watcher-eod": {"agent": "market-watcher", "flow_path": "docs/agents/market-watcher/flow/main.md", "cron": "0 16 * * 1-5", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-11T16:06:00Z", "spawn_agent_id": "a98f3a125d7c421d4"},
+      "market-watcher-offhours": {"agent": "market-watcher", "flow_path": "docs/agents/market-watcher/flow/main.md", "cron": "0 */4 * * *", "guaranteed": false, "policy_id": "gatherer-standard", "last_fired": "2026-06-24T12:01:00Z", "skip_reason": "same-agent same-window redundancy with market-watcher-eod"}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782318978},
+    "note": "Scheduling note for PO/dev: market-watcher-offhours (0 */4) and market-watcher-eod (0 16 1-5) both fire the SAME agent at 16:00 every weekday -> the dispatcher must collapse to one market-watcher spawn to avoid coverage-state write races. Consider excluding the 16:00 slot from market-watcher-offhours, or making the agent slot-aware to no-op the offhours pass when an eod pass ran the same window. Awaiting both completions."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-24T16:06:18Z"
+}
