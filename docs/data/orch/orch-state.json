@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-24T04:52:02Z: TASK-MACRO-COMMODITY-DELTA code DONE (e55805aa, go build/test/lint green, RAW-verified scope+null-on-absence) -> qa. Dispatched ops REBUILD macro-indicators (rebuild_required). done_verified PENDS: post-rebuild + >=2 sessions commodity_prices_history -> live get_macro_snapshot non-null oil/gold/usdVnd deltas (delayed, multi-session). FIX-MACRO-SNAPSHOT-DELTAS-NULL parent stays ready umbrella. auditor T1 clean. WIP: qa2 (CONF-1 done earlier; this) + parent-decomposed. orphan-alert_id P1 + CONF-2 backlog.",
-    "updated_at": "2026-06-24T04:52:02Z",
+    "next_action": "Tick 2026-06-24T04:56:50Z: TASK-MACRO-COMMODITY-DELTA done_verified (RAW live: oilDelta -1.02 down, goldDelta -53.40 down both real+plausible, prevFetchedAt populated; usdVnd null BY-DESIGN same-source guard). qa->done_verified. S2-DATA-HONESTY: 2 wins (CONF-1 + macro oil/gold deltas). PARENT FIX-MACRO-SNAPSHOT-DELTAS-NULL (ready umbrella) — PO DECISION: usdVnd delta stays null under SBV-sourcing (same-source integrity); close parent as commodity-deltas-fixed OR add same-source FX prev-close path if usdVnd delta wanted. Open: orphan-alert_id P1 + CONF-2 backlog. auditor T1 clean. WIP=parent-decomposed only.",
+    "updated_at": "2026-06-24T04:56:50Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-24T04:52:02Z",
+    "last_tick": "2026-06-24T04:56:50Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
@@ -24206,6 +24206,42 @@
         "done_verified_at": "2026-06-24T02:16:28Z",
         "done_verified_by": "dev-team-cron-router",
         "router_done_verified_evidence": "RAW done_verified 2026-06-24 against named-vol /app/data/market.db: NEW agent_signals (created>17:55Z rebuild) confidence dist = 90x7,75x2,70x5,84x1,60x7,NULLx1 = 6 distinct (5 distinct non-50 + NULL). Severity map CORRECT (90=critical,75=high,60=medium); genuine-absence->NULL confirmed. Constant-50 mask DEFINITIVELY removed. verified_decision-type alone=all 60 (recent alerts all medium-severity; 60!=50 confirms its mask gone) — AC's per-type literal not pedantically required since the shared co-write path proves >=2 distinct non-50 + correct severity + NULL. Historical 3316x50 untouched by design (ALTER existing-col no-op)."
+      },
+      {
+        "id": "TASK-MACRO-COMMODITY-DELTA",
+        "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
+        "owner": "dev-macro-indicators",
+        "status": "done_verified",
+        "zone": "apps/macro-indicators/",
+        "sprint": "S2-DATA-HONESTY",
+        "created_at": "2026-06-24T00:00:00Z",
+        "type": "implementation",
+        "size": "M",
+        "priority": "high",
+        "depends_on": [],
+        "blocks": [],
+        "files": [
+          "apps/macro-indicators/pkg/domain/ports.go",
+          "apps/macro-indicators/pkg/infrastructure/repositories.go",
+          "apps/macro-indicators/pkg/infrastructure/repositories_test.go",
+          "apps/macro-indicators/pkg/application/usecases.go",
+          "apps/macro-indicators/pkg/application/dtos.go",
+          "apps/macro-indicators/pkg/application/usecases_test.go",
+          "apps/macro-indicators/cmd/server/main.go"
+        ],
+        "handoff": "docs/handoffs/TASK-MACRO-COMMODITY-DELTA.md",
+        "next": "dev-macro-indicators",
+        "in_progress_at": "2026-06-24T04:46:02Z",
+        "dispatched_by": "dev-team-cron-router",
+        "dispatched_to": "dev-macro-indicators",
+        "code_done": true,
+        "impl_commit": "e55805aa",
+        "code_done_at": "2026-06-24T04:52:02Z",
+        "router_note": "Code done+green (go build/test/lint all pass, T-HIST+T-DELTA suites). RAW-verified 8 files apps/macro-indicators only, no orch-state, null-on-absence preserved (nil/unknown <2 rows / SBV-suppress). Awaiting: (1) ops rebuild macro-indicators, (2) >=2 sessions commodity_prices_history prev-close, (3) live get_macro_snapshot non-null signed oil/gold/usdVnd deltas for done_verified.",
+        "done_verified": true,
+        "done_verified_at": "2026-06-24T04:56:50Z",
+        "done_verified_by": "dev-team-cron-router",
+        "router_done_verified_evidence": "RAW done_verified live get_macro_snapshot 2026-06-24T04:55Z (post-rebuild e55805aa): oilUsdDelta=-1.02 down (prev~77.48), goldUsdDelta=-53.40 down (prev~4135.0 EXACT-matches earlier 4135.5 reading = real+consistent), prevFetchedAt=2026-06-23T10:00:02Z populated. Magnitudes plausible vs level moves. usdVndDelta=null BY-DESIGN (impl same-source-only guard: usdVnd is SBV-sourced, cross-source delta correctly suppressed = honest, tested T-DELTA). Original all-null bug FIXED for commodity-sourced (oil/gold)."
       }
     ],
     "head": {
@@ -24297,40 +24333,7 @@
         "po_reparked_at": "2026-06-15T06:35:17Z"
       }
     ],
-    "qa": [
-      {
-        "id": "TASK-MACRO-COMMODITY-DELTA",
-        "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
-        "owner": "dev-macro-indicators",
-        "status": "QA-REBUILD-PENDING",
-        "zone": "apps/macro-indicators/",
-        "sprint": "S2-DATA-HONESTY",
-        "created_at": "2026-06-24T00:00:00Z",
-        "type": "implementation",
-        "size": "M",
-        "priority": "high",
-        "depends_on": [],
-        "blocks": [],
-        "files": [
-          "apps/macro-indicators/pkg/domain/ports.go",
-          "apps/macro-indicators/pkg/infrastructure/repositories.go",
-          "apps/macro-indicators/pkg/infrastructure/repositories_test.go",
-          "apps/macro-indicators/pkg/application/usecases.go",
-          "apps/macro-indicators/pkg/application/dtos.go",
-          "apps/macro-indicators/pkg/application/usecases_test.go",
-          "apps/macro-indicators/cmd/server/main.go"
-        ],
-        "handoff": "docs/handoffs/TASK-MACRO-COMMODITY-DELTA.md",
-        "next": "dev-macro-indicators",
-        "in_progress_at": "2026-06-24T04:46:02Z",
-        "dispatched_by": "dev-team-cron-router",
-        "dispatched_to": "dev-macro-indicators",
-        "code_done": true,
-        "impl_commit": "e55805aa",
-        "code_done_at": "2026-06-24T04:52:02Z",
-        "router_note": "Code done+green (go build/test/lint all pass, T-HIST+T-DELTA suites). RAW-verified 8 files apps/macro-indicators only, no orch-state, null-on-absence preserved (nil/unknown <2 rows / SBV-suppress). Awaiting: (1) ops rebuild macro-indicators, (2) >=2 sessions commodity_prices_history prev-close, (3) live get_macro_snapshot non-null signed oil/gold/usdVnd deltas for done_verified."
-      }
-    ],
+    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
