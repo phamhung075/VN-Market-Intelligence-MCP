@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "S2 DATA-HONESTY lead. ba+architect DONE. pm->dev-mcp-server->dev-frontend->qa. Macro-delta fix (dev-macro-indicators) queued in ready[] behind it.",
-    "next_action": "Tick 2026-06-24T04:46:02Z: dispatched TASK-MACRO-COMMODITY-DELTA (high, S2, dev-macro-indicators) — wire commodity_prices_history prev-close -> oil/gold/usdVnd deltas (Go, 7 files, handoff doc). Fixes the null-delta I RAW-confirmed (FIX-MACRO-SNAPSHOT-DELTAS-NULL parent stays ready as umbrella). RED-PREPUSH go build/test+depguard; rebuild_required; done_verified=live get_macro_snapshot non-null signed deltas after >=2 sessions (delayed). auditor T1 clean. WIP=2 (parent-decomposed + this). Other open: orphan-alert_id P1 + CONF-2 backlog (PO).",
-    "updated_at": "2026-06-24T04:46:02Z",
+    "next_action": "Tick 2026-06-24T04:52:02Z: TASK-MACRO-COMMODITY-DELTA code DONE (e55805aa, go build/test/lint green, RAW-verified scope+null-on-absence) -> qa. Dispatched ops REBUILD macro-indicators (rebuild_required). done_verified PENDS: post-rebuild + >=2 sessions commodity_prices_history -> live get_macro_snapshot non-null oil/gold/usdVnd deltas (delayed, multi-session). FIX-MACRO-SNAPSHOT-DELTAS-NULL parent stays ready umbrella. auditor T1 clean. WIP: qa2 (CONF-1 done earlier; this) + parent-decomposed. orphan-alert_id P1 + CONF-2 backlog.",
+    "updated_at": "2026-06-24T04:52:02Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-24T04:46:02Z",
+    "last_tick": "2026-06-24T04:52:02Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z"
   },
@@ -24247,34 +24247,6 @@
         "created_by": "po-s111",
         "promoted_at": "2026-06-23T17:28:13Z",
         "promoted_by": "po-s111"
-      },
-      {
-        "id": "TASK-MACRO-COMMODITY-DELTA",
-        "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
-        "owner": "dev-macro-indicators",
-        "status": "IN_PROGRESS",
-        "zone": "apps/macro-indicators/",
-        "sprint": "S2-DATA-HONESTY",
-        "created_at": "2026-06-24T00:00:00Z",
-        "type": "implementation",
-        "size": "M",
-        "priority": "high",
-        "depends_on": [],
-        "blocks": [],
-        "files": [
-          "apps/macro-indicators/pkg/domain/ports.go",
-          "apps/macro-indicators/pkg/infrastructure/repositories.go",
-          "apps/macro-indicators/pkg/infrastructure/repositories_test.go",
-          "apps/macro-indicators/pkg/application/usecases.go",
-          "apps/macro-indicators/pkg/application/dtos.go",
-          "apps/macro-indicators/pkg/application/usecases_test.go",
-          "apps/macro-indicators/cmd/server/main.go"
-        ],
-        "handoff": "docs/handoffs/TASK-MACRO-COMMODITY-DELTA.md",
-        "next": "dev-macro-indicators",
-        "in_progress_at": "2026-06-24T04:46:02Z",
-        "dispatched_by": "dev-team-cron-router",
-        "dispatched_to": "dev-macro-indicators"
       }
     ],
     "ready": [
@@ -24325,7 +24297,40 @@
         "po_reparked_at": "2026-06-15T06:35:17Z"
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "TASK-MACRO-COMMODITY-DELTA",
+        "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
+        "owner": "dev-macro-indicators",
+        "status": "QA-REBUILD-PENDING",
+        "zone": "apps/macro-indicators/",
+        "sprint": "S2-DATA-HONESTY",
+        "created_at": "2026-06-24T00:00:00Z",
+        "type": "implementation",
+        "size": "M",
+        "priority": "high",
+        "depends_on": [],
+        "blocks": [],
+        "files": [
+          "apps/macro-indicators/pkg/domain/ports.go",
+          "apps/macro-indicators/pkg/infrastructure/repositories.go",
+          "apps/macro-indicators/pkg/infrastructure/repositories_test.go",
+          "apps/macro-indicators/pkg/application/usecases.go",
+          "apps/macro-indicators/pkg/application/dtos.go",
+          "apps/macro-indicators/pkg/application/usecases_test.go",
+          "apps/macro-indicators/cmd/server/main.go"
+        ],
+        "handoff": "docs/handoffs/TASK-MACRO-COMMODITY-DELTA.md",
+        "next": "dev-macro-indicators",
+        "in_progress_at": "2026-06-24T04:46:02Z",
+        "dispatched_by": "dev-team-cron-router",
+        "dispatched_to": "dev-macro-indicators",
+        "code_done": true,
+        "impl_commit": "e55805aa",
+        "code_done_at": "2026-06-24T04:52:02Z",
+        "router_note": "Code done+green (go build/test/lint all pass, T-HIST+T-DELTA suites). RAW-verified 8 files apps/macro-indicators only, no orch-state, null-on-absence preserved (nil/unknown <2 rows / SBV-suppress). Awaiting: (1) ops rebuild macro-indicators, (2) >=2 sessions commodity_prices_history prev-close, (3) live get_macro_snapshot non-null signed oil/gold/usdVnd deltas for done_verified."
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
