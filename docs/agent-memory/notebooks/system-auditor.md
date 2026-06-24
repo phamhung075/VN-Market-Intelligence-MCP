@@ -2,6 +2,14 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c409 · 2026-06-24T05:15:00Z
+### Audit Run Tier-3 (05:13–05:15 UTC 2026-06-24)
+- Tier: 3 | Containers: 12/12 UP | DB checks: C-01–C-16 PASS
+- Anomalies: 0 new | Status: HEALTHY
+- Tier-1: All 12 host_runtime_set UP+healthy. A-20 pdf-extractor 3/3 ✓. mcp-server RestartCount=0 (65.13% mem, 1.303GiB/2GiB, <85%). rag=104 restarts (known FU-RAG). Disk 34% ok.
+- Tier-2: C-06 8msg/3h ✓. C-07 247sig/24h ✓. B-09 0 SSC ✓. B-13 0 stale>72h ✓. Inter-svc: 4/4 ok.
+- Tier-3 DB: C-01 708✓ C-02 808✓ C-03 32✓ C-04 0✓ C-05 0✓ C-08 0✓ C-09 3✓ C-10 0✓ C-11 0 (expected) C-12 ok✓ C-13 3.9MB✓ C-14 0.7%✓ C-15 ok✓ C-16 0✓. Tooling: pdftoppm✓ tesseract✓ vie✓. A-31 EPIPE=0✓. B-08 PDFs=80✓. Signal 7262 posted.
+
 ## c408 · 2026-06-24T05:13:28Z
 ### Audit Run Tier-2 (05:13 UTC 2026-06-24)
 - Tier: 2 | Sources: 25+ checked | VPS routes: 4 healthy, 1 stale (bctc)
