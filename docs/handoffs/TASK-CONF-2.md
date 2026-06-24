@@ -205,3 +205,65 @@ Depends-on: TASK-CONF-1
 Task created by PM 2026-06-23T17:28Z. Architect atomization ratified per docs/handoffs/FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION-BA-spec.md § Frontend Change (CONF-4, separate sub-task required). Blocked until TASK-CONF-1 deployed (null rows must exist in DB). NEXT: dev-frontend picks up after TASK-CONF-1 done_verified.
 
 dev-frontend 2026-06-24: task_id=TASK-CONF-2, what-considered="null-safe mapper (null→null not null→0) + domain type widening + render guard in confidenceLabel + cascade panel inline guard; all 4 render sites for AgentSignal.confidence accounted for", why-change="RISK-F-2: falsy check would treat 0 as absent; explicit !== null is the only safe discriminator". Chose to widen `confidenceLabel` signature (not a new helper) to minimise diff and keep the existing colour-tier logic co-located with the null guard. Cascade panel inline fixed separately (it cannot use confidenceLabel without refactor). ALERTS panel (`item.confidenceScore`) deliberately untouched per RISK-F-3 isolation rule.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-24T05:45Z
+**QA Agent:** qa
+**Verdict:** APPROVED / done_verified=YES
+
+### Pipeline Results
+
+- **Tests:** 14/14 pass (1938-stock-signals.test.ts); full suite 1708/2 (2 pre-existing QUE_DESCRIPTIONS failures confirmed disjoint)
+- **tsc:** EXIT 0 (from dev handoff; confirmed bundle in container)
+- **DDD scan:** PASS — no domain→infra violations; frontend-only type/render changes
+- **Security:** PASS — no process.env, no secrets
+- **mock-guard:** PASS — pure arithmetic null-guard, no mock surface
+- **BCTC eval gate:** N/A (no BCTC reports in scope)
+
+### AC-3 Live Probe — PASS
+
+**Image:** Created 2026-06-24T05:23:17Z, after commit 6a962dd6 at 05:19Z UTC. Confirmed.
+**Bundle null-guard:** `grep "score === null || score === void 0" /app/build/server/index.js` → present in running container.
+
+**DB cross-check (named-volume, bun:sqlite inside mcp-server container):**
+- NULL confidence rows: id=7265 (urgent_news VIC), id=7264 (urgent_news VCB), id=7259 (urgent_news VJC), id=7185 (fundamental_validation) — all confidence_score IS NULL in DB.
+- Real-valued rows: id=7257 verified_decision NKG=60, id=7245 CTG=40, id=7244 BID=40, id=7240=75, id=7260 chain_catalyst VIC=65.
+
+**Live API probe (http://localhost:4000/mcp/api/signals/stock/VIC?limit=10):**
+- id=7265 urgent_news → confidence_score: null (DB truth propagated)
+- id=7260 chain_catalyst → confidence_score: 65 (real value propagated)
+
+**Mapper trace — null path (id=7265):**
+- client.ts L351: `rawScore = typeof null === "number" ? ... : null` → null
+- client.ts L352: `confidence = null !== null ? ... : null` → null
+- dashboard.analysis.tsx L1306-1310: `hasConfidence = (null !== null && ...)` → false
+- Render: `{ text: "—", cls: "text-slate-600" }` → displays "—" ✓ NOT "0%" NOT "50%"
+
+**Mapper trace — real value path (65 → 0.65):**
+- `rawScore = 65`, `confidence = 0.65`
+- `hasConfidence = true`, `pct = 65`
+- Render: `{ text: "65%", cls: "text-amber-400" }` → displays "65%" ✓
+
+**Null-vs-0 distinction:**
+- `confidence=null` → false → "—" ✓
+- `confidence=0` → `0 !== null && typeof 0 === "number" && !NaN` → true → "0%" ✓
+- Distinction holds end-to-end via `!== null` guard (not falsy). RISK-F-2 verified.
+
+**Panel isolation (RISK-F-3):**
+- SIGNALS panel: `AgentSignal.confidence` in `dashboard.analysis.tsx` — UPDATED
+- ALERTS panel: `item.confidenceScore` in `dashboard.alerts.tsx:454` — NOT touched (independent field, separate type)
+- No conflation. Architect's panel-conflation risk is CLEAR.
+
+**Cascade panel inline guard (L778-780):**
+- `sig.confidence !== null && typeof sig.confidence === "number" && !Number.isNaN(sig.confidence)` → confirmed present, renders "— tin cậy" for null.
+
+### Verdict
+
+**TASK-CONF-2: APPROVED — done_verified=YES**
+
+AC-3 PASS: null-confidence rows render "—" (not "0%", not "50%"). Real-confidence rows render their actual "NN%". Null-vs-0 distinction verified. Panel isolation confirmed.
+
+Decision journal: `docs/agent-memory/decisions/sprint-S2-DATA-HONESTY-TASK-CONF-2-qa.md`
