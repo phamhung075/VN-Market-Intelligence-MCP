@@ -1,0 +1,27 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-24T04:21Z",
+    "nominal_tick": "2026-06-24T04:13:00Z",
+    "drift_min": 6,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "matched_slots": ["chef-intraday"],
+    "spawned": ["unified-agent/CHEF (slot chef-intraday, run_in_background, agentId a18b390227dbf35bc)"],
+    "errors": [],
+    "deferred_blind": [],
+    "skipped_no_backstop": [],
+    "classification": "SPAWNED_ACTIVE",
+    "reason": "chef-intraday matched at the 04:13 boundary (hourly; ran 02:22 + 03:22). Spawned run_in_background. This hour there IS material new info: a live intraday REVERSAL, so the convergence gate should legitimately fire (not a stale re-post). Told CHEF to silent-exit if no NEW cluster and to NOT treat the unchanged 3 stale news catalysts as fresh convergence.",
+    "raw_verify_baseline": "Live get_market_snapshot @ 2026-06-24T04:21:37Z: VN-Index 1863.96 -0.27% DOWN (reversed from 1879.61 +0.57% at 03:21 and 1871.20 +0.12% at 02:21 — intraday rollover into negative); breadth 45 adv / 236 dec / 48 unch (sharp deterioration from 64/190 then 91/78 = strong selling); ceiling 3 floor 3; HOSE turnover 8230.03bn (grew from 4981bn). CHEF's dish must reflect ~1863.96 -0.27% / 45-236 / ~8230bn — the genuine reversal, NOT the prior up-hours values.",
+    "slot_detail": {
+      "chef-intraday": {"agent": "unified-agent", "flow_path": "docs/agents/unified-agent/flow/chef.md", "cron": "13 2-8 * * 1-5", "guaranteed": false, "policy_id": "chef-intraday", "last_fired": "2026-06-15T07:21:00Z", "cadence_minutes": 120, "spawn_agent_id": "a18b390227dbf35bc"}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782276679},
+    "note": "Intraday VN-Index path today: 1871.20 (02:21) -> 1879.61 (03:21) -> 1863.96 (04:21); breadth 91/78 -> 64/190 -> 45/236. Strong real intraday deterioration — confirms live data AND justifies the hourly CHEF cadence during a moving session. Awaiting completion + RAW-verify vs the 04:21Z baseline."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-24T04:21:38Z"
+}
