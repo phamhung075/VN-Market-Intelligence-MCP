@@ -3,27 +3,27 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
-## c419 · 2026-06-24T08:13:03Z
-### Audit Run Tier-1 (08:13 UTC 2026-06-24)
+## c420 · 2026-06-24T08:43:17Z
+### Audit Run Tier-1 (08:43 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-24T08:13:11Z ===
+=== AUDITOR PROBE 2026-06-24T08:43:17Z ===
 
 --- docker ps -a ---
-NAMES                                             STATUS                       IMAGE                                           CREATED
-vn-market-intelligence-mcp-frontend-1             Up 3 hours (healthy)         vn-market-intelligence-mcp-frontend             3 hours ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 3 hours (healthy)         vn-market-intelligence-mcp-macro-indicators     3 hours ago
-vn-market-intelligence-mcp-mcp-server-1           Up About an hour (healthy)   vn-market-intelligence-mcp-mcp-server           14 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 8 days (healthy)          vn-market-intelligence-mcp-pdf-extractor        8 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)          vn-market-intelligence-mcp-stock-price          8 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 9 days (healthy)          vn-market-intelligence-mcp-technical-analysis   9 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)          vn-market-intelligence-mcp-kinh-dich-service    9 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)         vn-market-intelligence-mcp-api-gateway          13 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)         vn-market-intelligence-mcp-rag-service          13 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)         vn-market-intelligence-mcp-news-fetch           13 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)         vn-market-intelligence-mcp-alert-engine         13 days ago
+NAMES                                             STATUS                    IMAGE                                           CREATED
+vn-market-intelligence-mcp-frontend-1             Up 3 hours (healthy)      vn-market-intelligence-mcp-frontend             3 hours ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 4 hours (healthy)      vn-market-intelligence-mcp-macro-indicators     4 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 2 hours (healthy)      vn-market-intelligence-mcp-mcp-server           15 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 8 days (healthy)       vn-market-intelligence-mcp-pdf-extractor        8 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 8 days (healthy)       vn-market-intelligence-mcp-stock-price          8 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 9 days (healthy)       vn-market-intelligence-mcp-technical-analysis   9 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 days (healthy)       vn-market-intelligence-mcp-kinh-dich-service    9 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)      vn-market-intelligence-mcp-api-gateway          13 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 13 minutes (healthy)   vn-market-intelligence-mcp-rag-service          13 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 13 days (healthy)      vn-market-intelligence-mcp-news-fetch           13 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)      vn-market-intelligence-mcp-alert-engine         13 days ago
 
 --- health endpoints ---
 [health] mcp-server:3000/health OK (HTTP 200)
@@ -36,7 +36,7 @@ vn-market-intelligence-mcp-alert-engine-1         Up 13 days (healthy)         v
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=23.99% MemUsage=491.4MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=31.57% MemUsage=646.6MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
@@ -44,6 +44,12 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 
 === PROBE DONE ===
 ```
+- Evidence: All 12 host_runtime_set UP+healthy [RAW-PROBE L15-26]. A-20 multi-probe pdf-extractor: 3/3 pass (200,200,200). mcp-server RestartCount=1 (PASS ≤2, FIX-MCP-MEMORY cycle). rag-service RestartCount unknown (recent restart, record-only). Disk 35% PASS. No anomalies.
+
+## c419 · 2026-06-24T08:13:03Z
+### Audit Run Tier-1 (08:13 UTC 2026-06-24)
+- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
+- Anomalies: 0 new | Status: HEALTHY
 - Evidence: All 12 host_runtime_set UP+healthy [RAW-PROBE]. A-20 multi-probe pdf-extractor: 3/3 pass (200,200,200). mcp-server RestartCount=1 (PASS, FIX-MCP-MEMORY cycle). rag-service RestartCount=105 (known FU-RAG-DEPLOY, record-only). Disk 35% PASS. No anomalies.
 
 ## c418 · 2026-06-24T07:43:31Z
@@ -51,9 +57,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
 - Anomalies: 0 new | Status: HEALTHY
 - Evidence: All 12 host_runtime_set UP+healthy. Health: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. mcp-server RestartCount=1 (PASS ≤2, FIX-MCP-MEMORY self-heal cycle). rag-service RestartCount=105 (known FU-RAG-DEPLOY-MEMORY). Disk 36% PASS. NO anomalies.
-
-## c417 · 2026-06-24T07:14:44Z
-### Audit Run Tier-1 (07:13–07:14 UTC 2026-06-24)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set UP+healthy. Health: mcp-server 200, api-gateway 200, macro-indicators 200, pdf-extractor 200, frontend 200. mcp-server RestartCount=1 PASS, Memory 13.78% HEALTHY. rag-service RestartCount=105 (known FU-RAG-DEPLOY). Disk 35% PASS. NO anomalies.
