@@ -3,6 +3,12 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c425 · 2026-06-24T10:31:07Z
+### Audit Run Tier-2 (10:31 UTC 2026-06-24)
+- Tier: 2 | Sources: 27 checked | Cron: 0 gaps | VPS routes: 3 healthy, 1 stale (known)
+- Anomalies: 0 new | Dedup-skipped: 1 (bctc SLA out-of-season) | Status: HEALTHY
+- Freshness details: ssc-iboard OK (0.25h cadence), foreign-flow OK (1min cadence), news OK (1h, 0min old), sbv OK (6h, 25min old). BCTC stale 10909min (FIX-BCTC-SLA-THRESHOLD-360, June not in Q1/Q2/Q3/Q4 window, out-of-season SLA). DB spot checks C-06 (market_messages 1 row in 3h PASS), C-07 (agent_signals 348 rows in 24h PASS), B-09 (SSC URLs 0 PASS), B-13 (stale pending 0 PASS). VPS svc health: vn-bctc-fetch unhealthy (known), vn-sbv-fetch healthy, vn-news-fetch healthy. Rate limits OK. No NEW anomalies.
+
 ## c424 · 2026-06-24T10:13:57Z
 ### Audit Run Tier-1 (10:13 UTC 2026-06-24)
 - Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
@@ -46,17 +52,10 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 
 === PROBE DONE ===
 ```
-- A-01 to A-11 (container liveness): All 12 host_runtime_set UP and healthy [RAW-PROBE L15–L26] (frontend, macro-indicators, mcp-server, pdf-extractor, stock-price, technical-analysis, kinh-dich-service, api-gateway, rag-service, news-fetch, alert-engine, plus infrastructure: headroom-proxy, mcp-gateway). PASS.
-- A-12 to A-20 (health endpoints): 5 probed 200 OK [RAW-PROBE L28–L33]. A-20 multi-probe pdf-extractor: 3/3 passed (200, 200, 200) — event loop healthy. PASS.
-- A-21 (restart count): mcp-server=1 [RAW-PROBE L36] (≤2, PASS). rag-service~106 (KNOWN-STANDING FU-RAG-DEPLOY-MEMORY, normal OOM cycle, not emitted per DEDUP-ENFORCEMENT).
-- A-30 (memory): mcp-server 50.84% [RAW-PROBE L39] (<85%, PASS).
-- A-32 (disk): 36% capacity [RAW-PROBE L44] (<85%, PASS).
-- Cron health: all 100% success rates. No gaps.
-- System status: 0 open circuits, 0 half-open, 10 unresolved errors (INFO level).
+- A-01 to A-11 (container liveness): All 12 host_runtime_set UP and healthy. PASS.
+- A-12 to A-20 (health endpoints): 5 probed 200 OK. PASS.
+- A-21 (restart count): mcp-server=1 (PASS). rag-service~106 (FU-RAG-DEPLOY-MEMORY, known-standing).
+- A-30 (memory): mcp-server 50.84% (PASS).
+- A-32 (disk): 36% capacity (PASS).
+- Cron health: all success rates 100%+. No gaps.
 - Anomalies: 0 new | HEALTHY
-
-## c423 · 2026-06-24T09:46:02Z
-### Audit Run Tier-1 (09:46 UTC 2026-06-24)
-- Tier: 1 | Services: 12 host_runtime_set checked | Health endpoints: 5 probed
-- Anomalies: 0 new | Status: HEALTHY
-- Evidence: All 12 host_runtime_set UP+healthy [RAW-PROBE]. 5 health endpoints 200 OK. mcp-server RestartCount=1 (PASS ≤2), MemPerc=44.73% (PASS), OOMKilled=false. rag-service RestartCount=106 (FU-RAG-DEPLOY-MEMORY known-standing). Disk 34% PASS. No anomalies.
