@@ -1,6 +1,15 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+
+## c449 · 2026-06-24T18:30:47Z
+### Audit Run Tier-2 (18:30 UTC 2026-06-24)
+- Tier: 2 | Cron: 0 fire gaps (A-29 PASS, 99+ jobs all healthy) | Sources: 28 checked
+- Freshness: prices/news/sbv/foreign-flow/macro ok | bctc stale 8+ days (KNOWN-STANDING off-season Jun)
+- DB: C-06=0 (market closed 01:30+ VN, acceptable), C-07=361 ok, B-09=0 ok, B-13=0 ok
+- Prediction claims: id10/id11 fresh today 15:07:15 UTC (daily cadence LIVE per briefing)
+- Anomalies: 0 new | Dedup: bctc (B-06 tracked FIX-BCTC-SLA-THRESHOLD-360), sbv_fx (B-07 tracked FIX-SBV-FX-VPS-FETCHER-UNHEALTHY) | Status: HEALTHY
+
 ## c448 · 2026-06-24T18:30:19Z
 ### Audit Run Tier-2 (18:30 UTC 2026-06-24)
 - Tier: 2 | Cron: 0 fire gaps (A-29 PASS) | Sources: 28 checked | VPS: 3/4 ok (bctc KNOWN-STALE)
