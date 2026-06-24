@@ -1,0 +1,25 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_spawn_completion",
+  "payload": {
+    "tick_id": "2026-06-24T20:36Z",
+    "for_signal": "cowork-team-2026-06-24T20:36Z-cloud-decommission.json",
+    "classification": "CHEF_EVENING_DELIVERED_FALSE_ALARM",
+    "chef_evening_recovery_result": {
+      "agent_id": "af4213784da65e2f6",
+      "verdict": "DUPLICATE-PUBLISH BLOCKED (already delivered)",
+      "evidence": "Recovery spawn's marker-first check found published:chef-evening:2026-06-24 ALREADY CLAIMED at 2026-06-24T19:51:27Z by unified-agent. chef-evening WAS delivered today by the local */15 master cron (19:45 boundary, marker-claimed ~19:51). The recovery correctly dedup-BLOCKED — no double-post. CHEF-EVENING WAS NOT MISSED.",
+      "root_of_false_alarm": "The apparent gap was ONLY the stale cowork-schedule.json last_fired (06-23). The TRUTH of delivery lives in the published-marker (19:51:27Z today), which cowork-schedule does NOT mirror. Same SSOT-staleness class flagged repeatedly today."
+    },
+    "corrections": {
+      "downgrade_watch": "The 'possible master-dispatcher gap at the 45-19 boundary' WATCH from the cloud-decommission signal is DOWNGRADED to NON-ISSUE: the master cron DID fire chef-evening (marker 19:51:27Z). cowork-schedule.json last_fired simply lags for this slot.",
+      "verification_method": "For all former-backstop slots in the now-all-local system, verify delivery via the published-MARKER and MARKET channel content — NOT cowork-schedule.json last_fired (lags) and NOT RemoteTrigger last_fired_at (the triggers are now disabled/frozen)."
+    },
+    "system_state": "ALL-LOCAL CONFIRMED HEALTHY: cloud backstops decommissioned (F1, by design); the durable */15 master cron reliably delivers every slot including the guaranteed chef/tnb/digest ones; published-markers are the delivery SSOT. The dispatcher's standing job: renew leader lock, emit pressure, and on matched slots apply the marker/last_fired-age guard — spawn only genuinely-unfired non-master-cron-covered slots.",
+    "leader_lock": {"ok": true, "expires_at": 1782335183},
+    "note": "Closes the chef-evening risk raised in the cloud-decommission signal. The recovery spawn was a clean marker-safe verification (no harm, confirmed delivery). End-state: gateway restored, subagents sighted, cloud decommissioned, all-local master cron healthy, RAW-verified across gatherers/bctc/CHEF."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-24T20:38:30Z"
+}
