@@ -28,11 +28,14 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 # Only execute this gate if NOT Sunday (Sunday path has its own Published Marker Gate below)
 IF weekday != Sunday:
 
-  # Obtain canonical UTC date from server (get_week_period gives periodStart for current week;
-  # combine with cycle-bootstrap UTC hour to derive today's ISO date).
-  # Preferred: call get_current_date if available.
-  # Fallback: derive UTC_DATE from cycle-bootstrap timestamp (YYYY-MM-DD portion of UTC now).
-  UTC_DATE = <ISO date string, e.g. "2026-06-24">
+  # UTC_DATE = the YYYY-MM-DD portion of the actual current UTC instant.
+  # PRIMARY source: cycle-bootstrap UTC-now timestamp (the "now" field / current UTC datetime
+  #   recorded at the top of this session) — take only the date part (before the 'T').
+  # SECONDARY source: call get_current_date if that tool is available and returns today's date.
+  # FORBIDDEN: do NOT use get_week_period.periodStart — that is the Sunday week-anchor and is
+  #   the same value Mon–Sat, which would produce duplicate keys across the whole week.
+  # Each calendar day MUST yield a distinct UTC_DATE (e.g. Mon=2026-06-23, Tue=2026-06-24 …).
+  UTC_DATE = <YYYY-MM-DD from UTC-now, e.g. "2026-06-24">
 
   DAILY_TASK_ID = "published:digest-daily:" + UTC_DATE
 
