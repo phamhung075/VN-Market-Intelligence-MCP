@@ -64,6 +64,20 @@
 - weekly.md + monday.md untouched (verified git log: not in 048cd3e4)
 - Task status: DONE (orch-state confirmed); test-fire AC-1..AC-7 needed before done_verified
 
+## 2026-06-24 — F-EVENING-QUALITY-OVERCLAIM (HIGH) — chef.md Step 7.5 quality gate
+
+- Task: Edit unified-agent chef.md — add deterministic Step 7.5 QUALITY VERDICT GATE
+- Root: evening dish (c98 audit MARKET #866) self-reported "QUALITY: full" at 3.5/6 — L2 absent w/ no gap token, L4 1.5/4 pillars, L6 gap catalogue not enumerated
+- File: docs/agents/unified-agent/flow/chef.md (444L → 509L, +65L)
+- Change A: size-justification header updated (430L → 509L, new entry for gate)
+- Change B: Step 7.5 inserted (lines 377–429) — 3-part checklist: (a) L2_OK (US macro walked OR explicit gap token written), (b) L4_PILLARS_OK (all 4 pillars cited OR flagged-missing), (c) GAP_CATALOGUE_OK (no partial layers OR gap catalogue enumerated with ≥1 [gap:X]); single FALSE forces $QUALITY_VERDICT="degraded" + conviction cap MEDIUM; doubt-favors-degraded rule; all dish windows enforced; intraday silent-exit exempt (no layer-walk)
+- Change C: Step 8 Step 1d notebook template — "Layers walked" field now uses $LAYERS_WALKED_SUMMARY; "QUALITY" field added using $QUALITY_VERDICT (both sourced from Step 7.5)
+- Change D: RETURN block — "QUALITY: full" hardcode removed; uses $QUALITY_VERDICT; degraded variant + silent-exit exempt variant explicitly stated
+- EOD path: unchanged (Step 1 degraded-dish floor + Step 6.5 conviction LOW rule already wired; Step 7.5 now captures the same discipline uniformly)
+- No shared skill (gate is chef-specific per TNB 6-layer structure; no DRY violation)
+- agent-md-factory: P-1..P-6 ✓; Q-1 no duplication (gate only in chef.md) ✓; Q-3 size-justification comment present ✓; Q-5 diff summary in RETURN ✓
+- No rebuild required (flow-doc change only)
+
 ## c301 · 2026-06-17T14:50Z — DESIGN-GATHERER-EXEC-PROOF-FAILLOUD (EP-1..EP-4)
 
 - Task: Implement architecture brief gatherer-exec-proof-failloud (brief 6eb16082 → impl cbbe2e2d)

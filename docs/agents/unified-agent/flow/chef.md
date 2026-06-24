@@ -1,4 +1,4 @@
-<!-- size-justification: 430L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5; Step 0.5 published-marker gate added FIX-COWORK-GUARANTEED-BACKSTOP AC-5 2026-06-13; Step 0.5 cadence-derived marker key+TTL FIX-CHEF-INTRADAY-MARKER-CADENCE 2026-06-15; FIX-CHEF-FABRICATED-TA-NUMBERS: anti-fabrication numeric-indicator rule + Step 6.7 pre-publish self-check gate 2026-06-15 -->
+<!-- size-justification: 509L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5; Step 0.5 published-marker gate added FIX-COWORK-GUARANTEED-BACKSTOP AC-5 2026-06-13; Step 0.5 cadence-derived marker key+TTL FIX-CHEF-INTRADAY-MARKER-CADENCE 2026-06-15; FIX-CHEF-FABRICATED-TA-NUMBERS: anti-fabrication numeric-indicator rule + Step 6.7 pre-publish self-check gate 2026-06-15; F-EVENING-QUALITY-OVERCLAIM: Step 7.5 deterministic quality-verdict gate added 2026-06-24 — closes false-full badge class -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -374,6 +374,62 @@ The `[CHEF-DETAIL]` prefix is mandatory — it allows tran-ngoc-bau's audit flow
 
 ---
 
+## Step 7.5 — QUALITY VERDICT GATE (deterministic — run AFTER Step 7, BEFORE Step 8)
+
+<!-- F-EVENING-QUALITY-OVERCLAIM fix 2026-06-24: closes the false-full badge class where
+     a dish self-reports QUALITY:full while L2/L4/L6 are silently absent or partial.
+     This gate is the single enforcement point for the quality verdict in ALL dish windows
+     (morning / intraday / eod / evening). No path may write QUALITY:full without passing
+     all three sub-checks below. Mirrors EOD rigor into every path deterministically. -->
+
+Before writing the notebook entry or the RETURN block, evaluate the following three sub-checks against the work performed in Steps 2–6 of this cycle:
+
+```
+# Sub-check (a) — US macro layer (L2) presence
+L2_OK = (US macro stack was substantively walked in Step 3)
+        OR (at least one explicit gap token was written for L2,
+            e.g. [gap:macro_health_missing] or [gap:US_macro_unavailable])
+
+# Sub-check (b) — all 4 valuation pillars named (L4)
+# Each pillar must be either cited with data OR explicitly flagged missing in Step 4
+L4_PILLARS_OK = (lượng_tiền cited OR flagged_missing)
+            AND (chi_phi_von cited OR flagged_missing)
+            AND (trien_vong_loi_nhuan cited OR flagged_missing)
+            AND (rui_ro_dinh_gia cited OR flagged_missing)
+
+# Sub-check (c) — gap catalogue enumerated if any layer is partial/missing
+ANY_LAYER_PARTIAL = (L2_OK relied on a gap token)
+                 OR (NOT all 4 L4 pillars cited with data)
+                 OR (any other layer scored PARTIAL/FAIL in this cycle)
+GAP_CATALOGUE_OK = (NOT ANY_LAYER_PARTIAL)
+                OR (Step 6 gap catalogue was explicitly enumerated with ≥1 [gap:X] token
+                    in the Block B WORK message sent in Step 7)
+
+# Verdict
+if L2_OK AND L4_PILLARS_OK AND GAP_CATALOGUE_OK:
+  $QUALITY_VERDICT = "full"
+  $CONVICTION_CAP  = (no additional cap)
+  $LAYERS_WALKED_SUMMARY = "1-6 (full)"
+else:
+  $QUALITY_VERDICT = "degraded"
+  $CONVICTION_CAP  = "MEDIUM"   # cap all per-ticker conviction scores retroactively
+  # List every failed sub-check as a gap token for the notebook
+  $FAILED_CHECKS = []
+  if NOT L2_OK:           $FAILED_CHECKS.append("[gap:L2_US_macro_absent_no_gap_token]")
+  if NOT L4_PILLARS_OK:   $FAILED_CHECKS.append("[gap:L4_partial_pillar_coverage]")
+  if NOT GAP_CATALOGUE_OK: $FAILED_CHECKS.append("[gap:L6_gap_catalogue_not_enumerated]")
+  $LAYERS_WALKED_SUMMARY = "partial — " + join($FAILED_CHECKS, " ")
+```
+
+**Enforcement rules (non-negotiable):**
+- `$QUALITY_VERDICT = "full"` requires ALL THREE sub-checks to be TRUE. A single FALSE forces `degraded`.
+- `$QUALITY_VERDICT` MUST be computed from the actual work performed this cycle, not narrated or assumed. If there is any doubt about whether a sub-check passed, treat it as FALSE.
+- When `$QUALITY_VERDICT = "degraded"`, conviction scores throughout the dish are retroactively capped at MEDIUM (this mirrors the EOD degraded-dish floor in Step 1 and the per-cluster LOW conviction rule in Step 6.5).
+- This gate fires for ALL `$DISH_TYPE` values (morning / intraday / eod / evening). There is no dish window exempt from the gate.
+- The intraday silent-exit path (Step 1, 0 clusters) is exempt — it exits before Step 7 and may still use `QUALITY: full` in its EXIT line because no layer-walk was attempted (nothing to degrade).
+
+---
+
 ## Step 8 — LOG (APPEND class — settled-write invariant)
 
 > **Write-tool contract:** The Write tool IS available in this agent. Self-refusal here is a flow violation — use the Write tool and proceed.
@@ -392,9 +448,10 @@ Step 1d — Build the new section (≤60L) in memory:
 ### Chef Dish — <DISH_TYPE> HH:MM UTC
 - Clusters qualified: N
 - Tickers covered: [list]
-- Layers walked: 1-6
+- Layers walked: <$LAYERS_WALKED_SUMMARY>   # from Step 7.5 gate — never hardcode "1-6"
 - Signals consumed: [IDs]
 - Dish published: YES | silent-exit
+- QUALITY: <$QUALITY_VERDICT>              # "full" or "degraded" — from Step 7.5 gate
 ```
 Append this new section to the end of the in-memory body.
 Step 1e — AC-2b: if any `## Prior cycles` heading is present and has ≥ 4 `### ` sub-blocks inside it, drop the oldest sub-block in memory.
@@ -430,13 +487,21 @@ git commit -m "chore(memory/unified-agent): chef <DISH_TYPE> <YYYY-MM-DD>"
 ## RETURN
 
 ```
-DONE: Chef dish published — <DISH_TYPE> | layers 1-6 walked | N clusters
+DONE: Chef dish published — <DISH_TYPE> | layers <$LAYERS_WALKED_SUMMARY> | N clusters
 NEXT: tran-ngoc-bau (audit at 20:13 UTC) | idle
 PIPELINE: complete
-QUALITY: full
+QUALITY: <$QUALITY_VERDICT>   # "full" or "degraded" — set by Step 7.5 gate; NEVER hardcode "full"
 ```
 
-Silent-exit variant:
+Degraded variant (when Step 7.5 gate fires $QUALITY_VERDICT = "degraded"):
+```
+DONE: Chef dish published — <DISH_TYPE> | layers <$LAYERS_WALKED_SUMMARY> | N clusters
+NEXT: tran-ngoc-bau (audit at 20:13 UTC) | idle
+PIPELINE: complete
+QUALITY: degraded
+```
+
+Silent-exit variant (intraday only — exempt from Step 7.5 gate; no layer-walk attempted):
 ```
 DONE: Intraday scan — 0 clusters qualified, silent exit
 PIPELINE: complete
