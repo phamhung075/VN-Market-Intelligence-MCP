@@ -1893,6 +1893,20 @@
         "scope_out": "convictionScorer 0.5 neutral-fallbacks (legitimate missing-input semantics, NOT a mask — DROPPED); BCTC source_confidence=1.0 (correct for human-confirmed corrections — DROPPED); the broad 94-task FACTORY maintainability epic.",
         "success_metric": "LIVE VARIED real values verified against the named-vol DB / live tool (NOT a green build): verified_decision confidence non-constant; oil/gold/usdVnd carry signed delta+direction.",
         "created_at": "2026-06-23T17:28:13Z"
+      },
+      {
+        "created_at": "2026-06-24T09:30:00Z",
+        "created_by": "po",
+        "sprint_id": "PREDICTION-CLAIMS-DAILY-CADENCE",
+        "status": "OPEN",
+        "priority": "high",
+        "zone": "multi",
+        "vision": "Make /dashboard/prediction-claims update DAILY, not weekly. User: page not update many day, wants update continue day by day. ROOT CAUSE (router RAW-confirmed + PO-verified live): page + /api/prediction-claims + predictionClaimsHandler are HEALTHY — do NOT touch them. The DATA PRODUCER is starved: prediction_claims has only 9 rows, newest 2026-06-14 (agentId 08-prediction-synthesizer). The synthesis flow (digest-predict/flow/monday.md, P-3..P-5 create_prediction_claim) was DISABLED by Sprint 1949-T5 (Monday prediction synthesis removed — Sunday weekly covers full scope); the Sunday weekly.md flow only READS get_prediction_accuracy, it never calls create_prediction_claim. So NO active flow has produced a claim since 1949-T5 — the 06-14 batch was the last routed run. Live confirm: get_prediction_accuracy(30d)=no results; calibration Brier=0.1379 healthy (product is SOUND, just unfed).",
+        "product_decision": "Option (a) chosen: re-enable prediction synthesis on a DAILY cadence by routing digest-predict to a daily prediction sub-flow + a new daily cowork slot, WITHOUT disturbing the Sunday weekly calibration report. Daily update = a daily synthesis run that CREATES new high-conviction claims when fresh evidence appears AND lets existing open claims keep accruing toward their multi-day/weekly horizon (e.g. W26). It is NOT a forced 5-claims-every-day spam. GUARDRAILS (designed by architect first): (1) per-DAY cap (small, e.g. 2-3) replacing the monday max_prediction_claims_per_week:5, with a weekly ceiling so cadence cannot inflate claim volume; (2) same-day idempotency marker via task_claim (TTL ~20h) keyed on day+slot so a re-fire never double-creates; (3) NO-OP cleanly when no ticker passes the bullish/bearish>0.6 high-conviction filter (do NOT lower the bar to manufacture daily claims — standing no-fake-data directive); (4) Sunday weekly.md calibration report stays unchanged + un-regressed.",
+        "success_metric": "LIVE: prediction_claims gains new rows on consecutive (high-conviction) days; /dashboard/prediction-claims generatedAt + rows reflect them day-over-day; daily/weekly caps honored; flat-market day no-ops without fabricating claims; Sunday weekly MARKET calibration dish still fires unchanged. Verified raw vs named-volume DB, not a green build.",
+        "cron_spec": "Add daily slot to docs/data/cowork-schedule.json: slot_id=digest-predict-daily, cron 30 17 * * * (17:30 UTC daily = 00:30 VN next day, off-market; free window — no slot conflict; mirrors the old monday.md 00:30-UTC predict timing). agent/agent_id=digest-predict, parallel_group=digest, flow_path=docs/agents/digest-predict/flow/daily-predict.md, guaranteed=false, policy_id=null.",
+        "immediate_catchup": "RECOMMENDED — data is 10 days stale (newest claim 2026-06-14, today 2026-06-24). Router MAY spawn digest-predict on-demand NOW to backfill fresh claims today via the daily synthesis flow once it ships; until the daily slot ships, a one-shot ad-hoc digest-predict run through the re-enabled prediction path is the catch-up.",
+        "chain": "agents-architect (cadence+cap+dedup design brief) -> agent-father (init.md scope + daily-predict sub-flow + cowork-schedule.json daily slot) -> qa (live consecutive-day verification) ; immediate catch-up = router/digest-predict on-demand"
       }
     ]
   },
@@ -12360,6 +12374,36 @@
         "source": "PO FB-quality audit 2026-06-24 — extends project_all_info_source_link_dropdown_recheck to the FB surface",
         "created_at": "2026-06-24T14:52:55Z",
         "created_by": "po-fb-audit"
+      },
+      {
+        "id": "ARCH-PREDICTION-DAILY-CADENCE",
+        "title": "Design daily prediction-synthesis cadence for digest-predict (re-enable producer + daily cap + same-day dedup, keep Sunday weekly intact)",
+        "type": "SPIKE",
+        "size": "S",
+        "sprint": "PREDICTION-CLAIMS-DAILY-CADENCE",
+        "status": "TODO",
+        "owner": "agents-architect",
+        "zone": "docs/agents/digest-predict/ + docs/data/cowork-schedule.json",
+        "created_at": "2026-06-24T09:30:00Z",
+        "created_by": "po",
+        "depends_on": null,
+        "fix_spec": "prediction_claims is weekly-only + currently STARVED: the create_prediction_claim producer (digest-predict/flow/monday.md P-3..P-5) was disabled by Sprint 1949-T5 and the Sunday weekly.md flow never calls create_prediction_claim. Design the DAILY re-enable. DELIVERABLE = a short brief in docs/architecture-briefs/ answering: (1) DAILY SUB-FLOW shape — reuse monday.md synthesis logic (get_calibration_report self-assess, get_watchlist, get_evidence_summary per ticker, high-conviction filter bullish/bearish>0.6, get_bctc_full+get_market_snapshot, create_prediction_claim with VN claim_text + valid-JSON resolution_criteria + horizon table) as a new flow/daily-predict.md, OR re-point the retained daily.md; main.md dispatcher must route the new daily window AND keep the Sunday-13:47 weekly window. (2) CAP — replace constraints.max_prediction_claims_per_week:5 with a per-DAY cap (recommend 2-3) PLUS a weekly ceiling so daily cadence cannot inflate total claim volume; rule the exact numbers. (3) DEDUP/IDEMPOTENCY — same-day task_claim marker (published:digest-predict-daily:YYYY-MM-DD, TTL ~72000s) so a re-fire never double-creates; ALSO rule whether to skip creating a NEW claim for a ticker that already has an OPEN unresolved claim. (4) NO-OP path — when zero tickers pass the conviction filter the daily run EXITS cleanly creating nothing (NEVER lower the bar — standing no-fake-data directive). (5) WEEKLY NON-REGRESSION — confirm weekly.md Sunday calibration MARKET dish is untouched. (6) hand exact cron to agent-father: slot_id=digest-predict-daily, cron 30 17 * * * (17:30 UTC = 00:30 VN, off-market, free window).",
+        "verification_gate": "Brief exists in docs/architecture-briefs/ ruling: daily sub-flow shape, per-day + weekly caps (exact numbers), same-day dedup marker key+TTL, open-claim-per-ticker rule, no-op path, weekly non-regression, exact cron slot for agent-father. PO reviews before agent-father picks up."
+      },
+      {
+        "id": "FEAT-PREDICTION-CLAIMS-DAILY-CADENCE",
+        "title": "Implement daily prediction-synthesis: daily-predict sub-flow + main.md daily-window routing + init.md scope + cowork-schedule.json daily slot (digest-predict-daily 30 17 * * *)",
+        "type": "FEAT",
+        "size": "M",
+        "sprint": "PREDICTION-CLAIMS-DAILY-CADENCE",
+        "status": "TODO",
+        "owner": "agent-father",
+        "zone": "docs/agents/digest-predict/ + docs/data/cowork-schedule.json",
+        "created_at": "2026-06-24T09:30:00Z",
+        "created_by": "po",
+        "depends_on": "ARCH-PREDICTION-DAILY-CADENCE",
+        "fix_spec": "Per the ARCH-PREDICTION-DAILY-CADENCE brief (invoke agent-md-factory skill before editing any agent .md): (1) author docs/agents/digest-predict/flow/daily-predict.md (or re-enable/re-point daily.md) carrying the monday.md synthesis pipeline (P-0 self-assess .. P-5 create_prediction_claim) adapted to the architect-ruled per-day cap + same-day task_claim dedup marker + open-claim-per-ticker skip + clean NO-OP on zero high-conviction; (2) edit docs/agents/digest-predict/flow/main.md Dispatch table to ALSO route the new daily window (keep the Sunday 13:47 UTC weekly window + its published-marker gate intact); (3) edit docs/agents/digest-predict/init.md — restore daily prediction synthesis to scope/responsibilities/schedule, set the new per-day + weekly cap constraints (remove/replace the misleading Monday prediction synthesis removed + weekly-only scope lines), keep weekly Sunday MARKET named-exception unchanged; (4) add the daily slot to docs/data/cowork-schedule.json: slot_id digest-predict-daily, cron 30 17 * * *, agent/agent_id digest-predict, parallel_group digest, flow_path docs/agents/digest-predict/flow/daily-predict.md, trigger_prompt routes the daily flow, dish_type daily_prediction, guaranteed false, depends_on null, enabled true, policy_id null, last_fired null. NO frontend/endpoint change — page + /api/prediction-claims + predictionClaimsHandler are HEALTHY.",
+        "verification_gate": "LIVE: (a) digest-predict run via the new daily-predict flow creates >=1 new prediction_claims row on a high-conviction day (verify raw vs named-volume DB, NOT host ./data) AND no-ops cleanly on a flat day; (b) /dashboard/prediction-claims generatedAt advances + new rows appear day-over-day on consecutive runs; (c) per-day + weekly cap honored; (d) same-day re-fire creates nothing (dedup holds); (e) Sunday weekly.md calibration MARKET dish still fires unchanged. qa signs off on consecutive-day live evidence (ship completion, not a slice)."
       }
     ],
     "closed_sprints": [
@@ -24445,8 +24489,8 @@
     "last_triaged_at": "2026-06-24T09:06:35Z",
     "last_triaged_by": "po"
   },
-  "updated_at": "2026-06-21T03:50:00Z",
-  "updated_by": "po (file-only BCTC re-probe triage)",
+  "updated_at": "2026-06-24T09:30:00Z",
+  "updated_by": "po (PREDICTION-CLAIMS-DAILY-CADENCE mint)",
   "meta": {
     "updated_at": "2026-06-18T12:34:24Z",
     "updated_by": "po",
