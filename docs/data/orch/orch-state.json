@@ -12309,7 +12309,7 @@
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "P2",
-        "status": "REVIEW",
+        "status": "done",
         "sprint": "BCTC-ANALYTICS-LAYER",
         "baseline_pass": true,
         "created_at": "2026-06-24T09:06:35Z",
@@ -12321,7 +12321,15 @@
         "dedup_note": "No prior terminal-FAILED-requeue variant on board (PO scanned all lanes incl nested sprints 2026-06-24). Sibling: FIX-FINALIZE-STATUS-STUCK-PARTIAL (all-DONE case, DONE). NOT promoted to ready — out-of-earnings-season, no live-market dependency today; throughput/data-integrity impact only.",
         "po_triage_note": "P2: real throughput + data-integrity impact (two real docs starved → bctc-analyst blind to HPG/GVR) but out-of-season and not market-urgent today. Held in backlog; dev chain NOT spawned this tick.",
         "handoff": "docs/handoffs/TASK_FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON.md",
-        "architect_done_at": "2026-06-24T13:12:59Z"
+        "architect_done_at": "2026-06-24T13:12:59Z",
+        "done_verified": "YES",
+        "qa_done_at": "2026-06-24T13:45:00Z",
+        "next": "pm",
+        "TASK-HEADPOISON-1": {
+          "status": "DONE",
+          "done_verified": "YES",
+          "qa_done_at": "2026-06-24T13:45:00Z"
+        }
       }
     ],
     "closed_sprints": [

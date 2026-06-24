@@ -253,3 +253,68 @@ ZONE: apps/mcp-server/
 NEXT: pm | break into TASK-HEADPOISON-1, assign to dev-mcp-server
 HANDOFF: docs/handoffs/TASK_FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON.md
 PIPELINE: continue
+
+---
+
+## [QA] Review Record — TASK-HEADPOISON-1
+
+**Date:** 2026-06-24T13:45:00Z
+**Verdict:** APPROVED
+**done_verified:** YES
+**QA cycle:** qa cycle-317
+
+### Test Results
+- Target file `FIX-REFINE-PENDING-SCHEMA.test.ts`: 13 pass / 0 fail (49 expect calls) — GREEN
+- tsc `--noEmit`: exit 0, no output — CLEAN
+- Full suite: pre-existing failures only (foreignFlowAlertJob, pollNews, logVpsPush, RAPID-B2 timeout class — ALL disjoint from changed files per dev handoff; confirmed no overlap with `getBctcPendingRefineTool.ts` or test file)
+
+### DDD: PASS
+Interface layer importing infrastructure/application is permitted. No domain→infra violations.
+
+### Security: PASS
+No `process.env` (uses `Bun.env`). No hardcoded secrets/passwords/tokens. SQL fully parameterized. mock-guard exit 0.
+
+### Live AC Probes (named-volume DB, keinos/sqlite3 sidecar on `vn-market-intelligence-mcp_market_data`)
+
+**AC-1 (head flip):** PASS
+- Queue `LIMIT 1` → `918a7abd-ae17-466f-be30-96ec55218ccc` (HPG) / PENDING
+- VCB id NOT at head. Head poison broken.
+
+**AC-2 (report_id bypass / RF-3 Branch 1):** PASS
+- `SELECT ... WHERE id='65a9c724-fc58-4b25-a273-08137e8ab4c4' AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')` → row returned: `65a9c724-fc58-4b25-a273-08137e8ab4c4` / PARTIAL / PASS_FETCHABLE
+- Branch 1 bypass intact. VCB fetchable by explicit report_id. Critical regression check: NONE.
+
+**AC-3 (VCB not mutated):** PASS
+- `refine_status = PARTIAL` — status unchanged by fix.
+- Unit breakdown: DONE=20, FAILED=1. Exactly matches pre-fix state (20 DONE + unit-0000 cover-letter FAILED). No write path touched.
+
+**AC-4 (no over-exclusion):** PASS
+- HPG (`918a7abd`) present in queue / PENDING.
+- GVR (`c765098b`) present in queue / PENDING.
+- Predicate only fires for `refine_status='PARTIAL'` docs with ALL units terminal — PENDING docs bypass entirely.
+- Queue top-3: HPG → GVR → `553fd194` (third pending doc). All genuinely-PENDING docs unblocked.
+
+**AC-5 (ticker-filter Branch 2):** PASS
+- Applied Branch 2 NOT-clause to VCB id → count=0 → PASS_EXCLUDED.
+- RISK-2 (Branch 2 vs Branch 3 divergence): CONFIRMED resolved — code review verified both branches updated identically (lines ~176 and ~202 in getBctcPendingRefineTool.ts).
+
+**Additional confirmation:**
+- VCB_IN_GENERAL_QUEUE = 0 (VCB absent from general pending queue entirely).
+- RISK-3 (REJECTED_SANITY not in exclusion set): confirmed — `NOT IN ('DONE','FAILED')` only; DV-FIX-B-3 test verifies this.
+
+### Merge Status
+Work lands on main (no separate branch per project policy — commit f34aa7af already on main).
+No merge commit needed. orch-state updated: status=done, done_verified=YES, qa_done_at=2026-06-24T13:45:00Z.
+
+### BCTC Refine Queue Status
+GENUINELY UNBLOCKED. Next refine slot fire will pick HPG (918a7abd, PENDING) as head[0], then GVR (c765098b, PENDING) as head[1]. VCB is permanently excluded from the general queue but remains fetchable via explicit report_id.
+
+### Decision Journal
+`docs/agent-memory/decisions/sprint-BCTC-ANALYTICS-LAYER-TASK-HEADPOISON-1-qa.md`
+
+## RETURN
+
+DONE: QA review complete — all ACs pass, task APPROVED, done_verified=YES
+NEXT: pm | mark TASK-HEADPOISON-1 + FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON done, notify bctc-analyst HPG/GVR unblocked
+HANDOFF: docs/handoffs/TASK_FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON.md
+PIPELINE: continue
