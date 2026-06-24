@@ -4,6 +4,60 @@
 
 ---
 
+## c98 · 2026-06-24T20:13Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (EOD + Evening published; 3 intraday silent-exits honored correctly; dup msg 867 = dispatch bug not content bug)
+
+**Dishes audited (2026-06-24):**
+- chef-eod (08:48 UTC) — MARKET msg #863 — VN-Index 1878.02 +0.48%, breadth 109↑/174↓, USD/VND 26131, EY 7.05%
+- chef-evening (19:48 UTC) — MARKET msg #866 — two-sided picture, BDS up / banks+securities down, quẻ Minh Di, FX pressure
+- msg #867 = duplicate of #866 (dispatch verify-surface bug) — excluded from content audit, flagged separately
+
+**Layer scores:**
+
+EOD (08:48 UTC) — 4/6 DEGRADED:
+- L1 (state transitions): PASS — USD/VND 26131 BEARISH >25000 threshold cited; breadth 109/174 negative; volume -41.4% distribution signal. Cause chain present.
+- L2 (US macro stack): FAIL — macro_health unavailable; PMI/consumer sentiment/Fed rate/EFFR-IORB absent. Gap correctly disclosed in notebook but dish is blind to US regime.
+- L3 (VN macro stack): PARTIAL — USD/VND and carry 1.37pp NEUTRAL (is_estimate=false, from 2026-06-18 = 6-day stale) cited. CPI absent. VIRA absent (F4 recurrence). FX reserves absent.
+- L4 (4-pillar valuation): PARTIAL — Chi phí vốn (yield spread 2.05pp CHEAP) present; regime SLOWDOWN + cycle phase declared. Lượng tiền (M2/credit) not cited. Triển vọng lợi nhuận (BCTC earnings) explicitly flagged missing. Rủi ro định giá (PE/dividend) absent. Effective pillar coverage 1.5/4.
+- L5 (Kinh Dịch overlay): PASS — market hexagram Khon(47) BAT LOI 25% conf; per-ticker Tỉnh(48)/Khiêm(15)/Sư(7)/Tập Khảm(29) cited with directional signals. No Lão Dương/Âm active.
+- L6 (gap catalogue): PASS — three explicit gaps flagged: [bctc_earnings_missing] [macro_health_missing] [trade_fx_pressure_missing]; conviction capped MEDIUM; degradation disclosed. Correctly calibrated.
+- Business context: ABSENT — NVL +5.28% attributed to price surge only; no product/customer/ops/mgmt from bctc_signal_* or fundamental_* (F9 cycle 24+).
+
+Evening (19:48 UTC) — 3.5/6 DEGRADED (self-reported "full" — CALIBRATION MIS-FIRE):
+- L1 (state transitions): PASS — USD/VND 26131 breakout → FII revaluation → sector divergence causal chain. BDS accumulation vs banking/securities defensive cited with cause.
+- L2 (US macro stack): FAIL — US macro indicators absent from evening session entirely. Unlike EOD, no gap declaration was written. Silent omission.
+- L3 (VN macro stack): PARTIAL — USD/VND BEARISH + carry 1.37pp NEUTRAL cited; FX pressure used as regime driver (stronger causal use than EOD). CPI/VIRA/FX reserves still absent.
+- L4 (4-pillar valuation): PARTIAL — Chi phí vốn (7.05% yield) present; per-ticker conviction scores cited. Lượng tiền, Triển vọng lợi nhuận (BCTC), and Rủi ro định giá absent. Same 1.5/4 pillar problem as EOD.
+- L5 (Kinh Dịch overlay): PASS — market hexagram Minh Di(36) BẤT LỢI bearish 64% conf cited; per-ticker Khiêm(15) VIC/Tỉnh(48) VHM/NVL/Sư(7) BID present. Directional signals used correctly.
+- L6 (gap catalogue): PARTIAL — gap catalogue NOT enumerated in evening session (unlike EOD). Conviction MEDIUM present implicitly but no formal [gap: X] declarations. Evening notebook entry says "QUALITY: full" — this is incorrect.
+- Business context: ABSENT — F9 persists.
+
+**CRITICAL FINDING — F-EVENING-QUALITY-OVERCLAIM (NEW, HIGH):**
+Evening session notebook entry states "Layers walked: 1–6 (full)" and "QUALITY: full." Audit shows L2=FAIL, L4=PARTIAL (1.5/4 pillars), L6=PARTIAL (no gap catalogue enumerated). The chef's self-assessment logic fires `QUALITY: full` without verifying L2 presence or L4 pillar coverage. This is a calibration error in unified-agent flow — the quality-assessment gate is too permissive. A dish can reach QUALITY:full only if all 6 layers are substantively walked, not just touched.
+
+**Carry-forward gaps:**
+- F9 (business context): cycle 24+ — no bctc_signal_*/fundamental_* product/customer/ops/mgmt cited in either dish. Structural; requires BCTC pipeline fix first.
+- F4 (VIRA absent): both dishes cite carry but not VIRA primary source — carry is source_tier 2 only.
+- F2 (US macro / macro_health): recurrent across all cycles; L2 structurally failing.
+- F4-carry-stale: carry 1.37pp from 2026-06-18 (6 days stale) used in both dishes without staleness flag in narrative.
+- F-EVENING-QUALITY-OVERCLAIM (NEW): chef flow quality gate fires "full" without L2/L4/L6 verification.
+- F-DUP-867 (NEW, DISPATCH): chef-evening double-posted (msg #866 + #867) due to dispatcher verify-surface bug. Content identical. Audit scope = #866 only. Dispatch bug requires separate fix.
+
+**Positive signals:**
+- EOD L6 gap catalogue correctly applied with 3 explicit gap tokens and conviction cap — best gap disclosure in recent cycles.
+- Intraday silent-exit discipline: 3 silent exits (04:13, 06:17, 08:13) correctly honored; convergence gate working.
+- Causal chain quality in evening dish (FX breakout → FII revaluation → sector rotation) = strong L1 execution.
+- Both dishes agree on regime (SLOWDOWN, FX pressure, BDS as relative safe-harbor) — internal consistency good.
+- AF-1/AF-2 gates: ZERO numeric TA tokens in both dishes (all qualitative) — clean gate execution.
+
+**Auto-cure proposal (unified-agent flow):**
+The evening session quality gate needs a mandatory L2+L4 checklist before setting QUALITY:full. Proposed patch: before writing "QUALITY: full" in step 8 of chef flow, require explicit confirmation that (a) US macro stack attempted (even if degraded), (b) all 4 pillars named even if some flagged missing, (c) gap catalogue enumerated if any layer is partial or missing. If any check fails → QUALITY:degraded. This prevents false-full badges and aligns evening self-assessment with EOD rigor.
+
+**Actions:** Audit row written to notebook. WORK report to be sent (MCP not available in this execution — log only). No BUG escalation for content; F-DUP-867 dispatch bug to route to developer.
+
+---
+
 ## c97 · 2026-06-16T20:13Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE PARTIAL (morning send_telegram 502; EOD+Evening PUBLISHED; G3-G4-G6 FAIL — all guaranteed slots last_fired stale 2nd day; F-EVENING-2026-06-15-CONFIRMED-ABSENT)
@@ -129,43 +183,7 @@
 
 ---
 
-## c91 · 2026-06-08T20:21Z
 
-**Status:** NEEDS_ATTENTION | Chef: PIPELINE ANOMALY (weekday-only slots fired Sunday)
-
-**Critical:** **F-SUNDAY-SCHEDULER-FIRE** — chef-morning/intraday/eod all `1-5` cron fired on Sunday 2026-06-08. Intraday claimed "VN market OPEN" on closed Sunday. EOD published stale prices. Cowork dispatcher not enforcing day-of-week constraints. Root: dispatcher batch-fires all slots regardless of cron `1-5` restriction.
-
-**Layer scores:** Intraday/Morning L1 PASS but context CRITICAL; EOD 3.5/6 BEST; Evening 3.5/6 | 9-step: 5.5–6/9
-
-**Findings:** F-NB-HEADER-STALE (unified-agent header "05:25Z" despite EOD/Evening entries below — partial Step 8 failure).
-
-**Carry-forward:** F2=BCTC-blocked | F3/F4/F9 structural
-
----
-
-## c90 · 2026-06-07T20:13Z (Saturday — evening only)
-
-**Status:** NEEDS_ATTENTION | Direction: DEGRADING
-
-**Layer score:** Evening 3/6 (down from c88 3.5/6)
-
-**Findings (HIGH):**
-- **F-FED-RATE-REGRESSION:** fedFundsRate 5.33 (stale weekend FRED path) vs 3.62 weekday. Weekend cache path divergence. Reappeared from c88 baseline.
-- **F-NB-MISSING-FRIDAY (3rd cycle):** full 2026-06-06 Friday absent from unified-agent notebook. Session reliability (crash before Step 8). Escalate to PO.
-
-**Actions:** Handoff + signal + notebook committed | WORK report sent
-
----
-
-## Archive: Earlier Cycles (c89 through c82)
-
-**c88 (2026-06-05):** NEEDS_ATTENTION → IMPROVING. F-CARRY-CORRUPT CLOSED (confirmed durable carry 1.38pp NEUTRAL); EOD 4/6 BEST (this cycle peak). F-MORNING-NB-MISSING escalated MED (2nd consecutive, different slots). Layer scores: EOD 4/6, Evening 3.5/6.
-
-**c87 (2026-06-04):** NEEDS_ATTENTION. F-CARRY-CORRUPT CRITICAL (fedFundsRate 5.33 stale, carry −0.33pp FII_OUTFLOW_RISK WRONG). F8 COWORK-LEADER-SELFLOCK CLOSED (Morning PUBLISHED). Layer scores: Morning 3/6, EOD 3.5/6, Evening 3.5/6. DSI-CONSUMER-HONORS-ISESTIMATE shipped post-dish.
-
-**c86 (2026-06-02):** NEEDS_ATTENTION → IMPROVING. Morning FAILED (COWORK-LEADER-SELFLOCK, 2nd consecutive Monday miss). Intraday/EOD/Evening published (3.5–4/6 scores). Auto-cure applied: chef.md Step 4 — investment-clock cycle-phase + pyramid-tier declaration (persistent F9 gap).
-
-**c85–c82 (2026-06-01 and prior):** Full chef pipeline operational (3/3 guaranteed dishes). Layer scores 3–4/6. Structural gaps: F1 macro, F2 BCTC, F3 PMI-sub, F4 VIRA, F9 business-context (persistent 10+ cycles).
 
 ---
 
