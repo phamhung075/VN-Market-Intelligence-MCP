@@ -1,6 +1,7 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+
 ## c313 · 2026-06-24T22:31:30Z
 ### Audit Run Tier-2 (22:30–22:31 UTC 2026-06-24)
 - Tier: 2 | Market: CLOSED (22:30 UTC = 05:30 VN) — price/FX/flow staleness EXPECTED
@@ -9,19 +10,6 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - DB spot: C-06 market_messages 2 ✓ | C-07 agent_signals 354 ✓ | B-09 SSC URLs 0 ✓ | B-13 stale BCTC 0 ✓
 - BCTC-EVAL: 7 red, 6 yellow; HPG advancing 7/15
 - Anomalies: 0 new (all KNOWN-STATE: B-06 SLA, ACV P1, chef live, rag FU-DEPLOY) | Status: HEALTHY
-
-
-## c313 · 2026-06-24T22:31:29Z
-### Audit Run Tier-2 (22:30–22:31 UTC 2026-06-24)
-- Tier: 2 | Market: CLOSED (VN ~05:31, price/FX staleness downgraded) | Crons: 100+ jobs, 98.2–100% success
-- Freshness: ssc-iboard 0s | foreign-flow <1min | sbv-vps <1min | news-vps 30s | bctc-discover 8.0d (EXPECTED Jun out-of-season, threshold=168h, PASS)
-- SLA: bctc false-positive (tool reads 360min threshold, actual 168h window-out-of-season) — RECORD-AND-LEAVE
-- Macro age: 22:30:46Z, within 24h SLA ✓ | Oil 73.18 NEUTRAL | Gold 4017 BULLISH | USDVND 26131 BEARISH
-- Carry 1.37pp NEUTRAL | Yield CHEAP 2.05pp spread
-- C-06 market_messages: 2 rows (3h window) ✓ | C-07 agent_signals: 354 rows (24h) ✓ | B-09 SSC URLs: 0 ✓ | B-13 stale BCTC: 0 ✓
-- VPS: prices ok 08:59 | news ok 22:30 | sbv ok 22:05 | bctc last 2026-06-16 (8d, documented expectation for Q2)
-- Rate limits: no source at 100% ✓ | RateLimit status: API hosts ready
-- Anomalies: 0 new (no signals emitted) | Status: HEALTHY
 
 ## c312 · 2026-06-24T22:15:12Z
 ### Audit Run Tier-1 (22:14–22:15 UTC 2026-06-24)
