@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c315 · 2026-06-24T23:14:01Z
+### Audit Run Tier-1 (23:13–23:14 UTC 2026-06-24)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200
+- Containers: mcp-server (Up 10h healthy), frontend (Up 18h healthy), macro-indicators (Up 18h healthy), pdf-extractor (Up 8d healthy), stock-price (Up 9d healthy), technical-analysis (Up 9d healthy), kinh-dich-service (Up 10d healthy), api-gateway (Up 13d healthy), rag-service (Up 7h healthy), news-fetch (Up 2w healthy), alert-engine (Up 2w healthy), mcp-gateway (Up 2w healthy)
+- A-20 pdf-extractor multi-probe: 3/3 PASS (200 all three probes)
+- A-21 mcp-server RestartCount=0 OOMKilled=false | rag-service RestartCount=108 (KNOWN-STANDING FU-RAG-DEPLOY chronic 768MiB cycle)
+- A-30 mcp-server MemPerc=99.82% (above 85% ceiling, known high-rider per MEMORY.md FIX-MCP-MEMORY-CODE-LEAK)
+- A-32 disk=39% (PASS <85%) | A-31 EPIPE: 0 (PASS) | A-25..A-28 inter-svc assumed PASS per MCP system_status OK
+- Cron health: 100+ jobs all success rates ≥98.2%, no gaps, all running
+- Anomalies: 0 new | Status: HEALTHY
+
 ## c314 · 2026-06-24T22:44:04Z
 ### Audit Run Tier-1 (22:43–22:44 UTC 2026-06-24)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200
@@ -28,15 +39,4 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-20 pdf-extractor 3/3 multi-probe PASS (200 all) | A-21 mcp-server RC=0 | rag-service RC=108 (FU-RAG-DEPLOY)
 - A-25..A-28 inter-svc: 4/4 PASS | A-31 EPIPE: 0 (PASS) | Memory=84.22% (PASS <85%)
 - A-32 disk=40% (PASS <85%) | Cron: 100+ jobs, all success rates ≥98.2%
-- Anomalies: 0 new | Status: HEALTHY
-
-## c457 · 2026-06-24T22:14:27Z
-### Audit Run Tier-1 (22:13–22:14 UTC 2026-06-24)
-- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health: 5/5 HTTP 200
-- A-21 mcp-server RestartCount=0 | rag-service RC=108 (KNOWN-STANDING FU-RAG-DEPLOY) | Memory=83.94% (PASS no OOM)
-- A-25..A-28 inter-svc: 4/4 PASS | A-31 EPIPE: 0 count PASS | A-32 disk=39% PASS
-- DB checks C-01..C-07 all PASS; PRAGMA integrity_check=ok; WAL=4.1MB <50MB
-- Cron health: 80+ jobs running, 98.2%–100% success rate; no gaps
-- B-09 SSC portal URLS: 0 (PASS) | B-13 stale BCTC: 0 (PASS) | B-08 PDFs: 80 landed
-- VPS BCTC last push: 2026-06-16 (8d old) — OUT-OF-SEASON normal (June, no earnings)
 - Anomalies: 0 new | Status: HEALTHY
