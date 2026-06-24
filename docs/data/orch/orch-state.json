@@ -208,10 +208,10 @@
     "ba_completed_at": "2026-06-23T17:45:00Z",
     "architect_completed_at": "2026-06-23T18:10:00Z",
     "note": "TASK-MACRO-COMMODITY-DELTA DONE + done_verified=YES. QA AC-1..7 all PASS. Oil delta -0.98 / Gold delta -54.60 / prevFetchedAt=2026-06-23T10:00:02.338Z exactly match DB baseline row (77.48/4135.0). Q2 usdVnd suppression correct (SBV override fired). RISK-1 RFC3339Nano parser proof confirmed. 12/12 go test packages green. NEXT: pm mark done.",
-    "next_action": "Tick 2026-06-24T15:09:07Z: ARCH-PREDICTION-DAILY-CADENCE done_verified (brief 66f5d141). Dispatched FEAT-PREDICTION-CLAIMS-DAILY-CADENCE (agent-father) -> implement daily-predict.md sub-flow + main.md routing/dedup gate + init.md scope + cowork-schedule.json daily slot (30 17 * * *) per brief. digest-predict one-off catch-up running in parallel. WIP=2 (agent-father + catch-up).",
-    "updated_at": "2026-06-24T15:09:07Z",
+    "next_action": "Tick 2026-06-24T15:50:42Z: FEAT-PREDICTION-CLAIMS-DAILY-CADENCE code/config DONE (048cd3e4, RAW-verified, no rebuild). digest-daily slot cron 30 17 added. done_verified PENDS first live fire @17:30Z today (cowork :30 tick spawns digest-predict slot=digest-daily via main.md dedup gate -> real claims or honest no-op). Catch-up already refreshed page (claims 9->11, id10 FPT/id11 VPB). USER prediction-claims-daily request: SHIPPED, awaiting first daily-fire verify. Drained architect->agent-father handoff. WIP=0.",
+    "updated_at": "2026-06-24T15:50:42Z",
     "updated_by": "dev-team-cron-router",
-    "last_tick": "2026-06-24T15:09:07Z",
+    "last_tick": "2026-06-24T15:50:42Z",
     "blind_cleared_at": "2026-06-23T17:34:33Z",
     "f1_validated_at": "2026-06-23T17:35:13Z",
     "done_verified": "YES"
@@ -1911,8 +1911,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-24T01:05:00Z",
-    "_updated_by": "po-s113",
+    "_updated_at": "2026-06-24T17:20:00Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11928,7 +11928,7 @@
         "title": "Add Check-F currency-unit guard to fb-data-integrity-gate.sh — BLOCK VN stock price quoted in USD",
         "type": "FIX",
         "size": "S",
-        "status": "BACKLOG",
+        "status": "DONE",
         "priority": "P1",
         "owner": "developer",
         "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
@@ -11943,7 +11943,12 @@
         "fix_spec": "New Check-F currency-unit guard in scripts/fb-data-integrity-gate.sh: BLOCK if a USD or $ token appears adjacent (within ~20 chars) to a watchlist ticker OR to a stock-price-magnitude number, EXCEPT whitelisted macro uses: USD/VND tỷ giá, gold USD/oz, Brent USD/thùng|USD/barrel. Magnitude sanity: a price < ~1000 labelled USD adjacent to a HOSE ticker is almost certainly a VND-as-USD error → BLOCK. REUSE the system-map.json watchlist ticker list already loaded by Check-E (SYSTEM_MAP_PATH / .project.watchlist) — do NOT hardcode tickers. Must EXIT NON-ZERO on BLOCK (log_block).",
         "generic_mandate": "Guard keys on the SSOT watchlist + a generic price-magnitude regex + a macro-use whitelist — never a per-ticker hardcode. Applies to ALL watchlist tickers and any future ticker added to system-map.json.",
         "verification_gate": "Feed the 2026-06-22 post text (USD-on-VHM + 22–24 USD banks) → Check-F EXIT NON-ZERO. Feed a clean post with whitelisted macro USD uses (USD/VND, USD/oz, USD/thùng) → exit 0 (no false-positive). Run from repo root.",
-        "note": "P1 DANGEROUS (misleading buy-advice). Extends DONE FIX-FB-POST-DATA-INTEGRITY-GATE; sibling under epic AUDIT-FB-GATE-PROSE-HARDENING (epic's Check-E task FIX-FB-GATE-SECTOR-NAME-VALIDATOR in REVIEW, commit eceee94a — Check-F reuses its ticker-load pattern)."
+        "note": "P1 DANGEROUS (misleading buy-advice). Extends DONE FIX-FB-POST-DATA-INTEGRITY-GATE; sibling under epic AUDIT-FB-GATE-PROSE-HARDENING (epic's Check-E task FIX-FB-GATE-SECTOR-NAME-VALIDATOR in REVIEW, commit eceee94a — Check-F reuses its ticker-load pattern).",
+        "done_verified": true,
+        "closed_at": "2026-06-24T17:20:00Z",
+        "closed_by": "qa",
+        "commit": "b69fef75",
+        "qa_note": "[QA] APPROVED 2026-06-24 — AC-5: HPG $23,50 + TCB USD 32,05 BLOCK EXIT:1; commodity/FX/macro do not false-fire; 06-24 live post EXIT:0."
       },
       {
         "id": "FIX-FB-JARGON-ENGLISH-WORD-LEAK",
@@ -12255,7 +12260,7 @@
         "title": "Structural-template validator for FB posts — canonical header, verbatim disclaimer, valid hashtag block, no markdown in body",
         "type": "FIX",
         "size": "S",
-        "status": "BACKLOG",
+        "status": "DONE",
         "priority": "P1",
         "owner": "developer",
         "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
@@ -12279,7 +12284,12 @@
         "verification_gate": "Feed the 2026-06-23 defective draft (or a fixture reproducing each of the 4 defects) → gate EXIT NON-ZERO citing each violation. Feed a compliant post (canonical header + verbatim disclaimer + clean ASCII hashtag block + markdown-free body) → exit 0.",
         "rebuild_required": false,
         "minted_at": "2026-06-23T17:29:59Z",
-        "minted_by": "po-s112"
+        "minted_by": "po-s112",
+        "done_verified": true,
+        "closed_at": "2026-06-24T17:20:00Z",
+        "closed_by": "qa",
+        "commit": "b69fef75",
+        "qa_note": "[QA] APPROVED 2026-06-24 — AC-4a: G4 markdown fires EXIT:1 (4 violations: ##/bold/**table); AC-4b: G5 word-ceiling 3900w>1300 EXIT:1; 06-23/06-24 clean posts EXIT:0."
       },
       {
         "id": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
@@ -12347,7 +12357,7 @@
       },
       {
         "id": "FIX-FB-JARGON-WEEKDAY-ORDINAL-COLLISION",
-        "status": "BACKLOG",
+        "status": "DONE",
         "priority": "P2",
         "zone": "scripts/",
         "type": "FIX",
@@ -12358,7 +12368,12 @@
         "generic_mandate": "fix the gate predicate generically (no per-date special-case)",
         "source": "PO FB-quality audit 2026-06-24 — RAW gate run across 27 posts",
         "created_at": "2026-06-24T14:52:55Z",
-        "created_by": "po-fb-audit"
+        "created_by": "po-fb-audit",
+        "done_verified": true,
+        "closed_at": "2026-06-24T17:20:00Z",
+        "closed_by": "qa",
+        "commit": "b69fef75",
+        "qa_note": "[QA] APPROVED 2026-06-24 — AC-1 EXIT:0 (was EXIT:1 before fix); AC-3 wrong-weekday EXIT:1; no regression on 06-15..06-24 sweep."
       },
       {
         "id": "SPIKE-FB-SOURCE-LINK-RECHECK-AFFORDANCE",
@@ -17625,6 +17640,30 @@
         "rebuild_required": true,
         "done_at": "2026-06-21T04:00:00Z",
         "done_by": "qa-review"
+      },
+      {
+        "id": "FEAT-PREDICTION-CLAIMS-DAILY-CADENCE",
+        "title": "Implement daily prediction-synthesis: daily-predict sub-flow + main.md daily-window routing + init.md scope + cowork-schedule.json daily slot (digest-predict-daily 30 17 * * *)",
+        "type": "FEAT",
+        "size": "M",
+        "sprint": "PREDICTION-CLAIMS-DAILY-CADENCE",
+        "status": "DONE",
+        "owner": "agent-father",
+        "zone": "docs/agents/digest-predict/ + docs/data/cowork-schedule.json",
+        "created_at": "2026-06-24T09:30:00Z",
+        "created_by": "po",
+        "depends_on": "ARCH-PREDICTION-DAILY-CADENCE",
+        "fix_spec": "Per the ARCH-PREDICTION-DAILY-CADENCE brief (invoke agent-md-factory skill before editing any agent .md): (1) author docs/agents/digest-predict/flow/daily-predict.md (or re-enable/re-point daily.md) carrying the monday.md synthesis pipeline (P-0 self-assess .. P-5 create_prediction_claim) adapted to the architect-ruled per-day cap + same-day task_claim dedup marker + open-claim-per-ticker skip + clean NO-OP on zero high-conviction; (2) edit docs/agents/digest-predict/flow/main.md Dispatch table to ALSO route the new daily window (keep the Sunday 13:47 UTC weekly window + its published-marker gate intact); (3) edit docs/agents/digest-predict/init.md — restore daily prediction synthesis to scope/responsibilities/schedule, set the new per-day + weekly cap constraints (remove/replace the misleading Monday prediction synthesis removed + weekly-only scope lines), keep weekly Sunday MARKET named-exception unchanged; (4) add the daily slot to docs/data/cowork-schedule.json: slot_id digest-predict-daily, cron 30 17 * * *, agent/agent_id digest-predict, parallel_group digest, flow_path docs/agents/digest-predict/flow/daily-predict.md, trigger_prompt routes the daily flow, dish_type daily_prediction, guaranteed false, depends_on null, enabled true, policy_id null, last_fired null. NO frontend/endpoint change — page + /api/prediction-claims + predictionClaimsHandler are HEALTHY.",
+        "verification_gate": "done_verified WITHHELD until first digest-daily fire (17:30Z today) produces real claims OR honest no-op + dashboard reflects + no same-day dup + Sunday weekly still intact.",
+        "in_progress_at": "2026-06-24T15:09:07Z",
+        "dispatched_by": "dev-team-cron-router",
+        "dispatched_to": "agent-father",
+        "dep_satisfied": "ARCH-PREDICTION-DAILY-CADENCE done",
+        "done": true,
+        "done_at": "2026-06-24T15:50:42Z",
+        "done_by": "agent-father",
+        "impl_commit": "048cd3e4",
+        "router_note": "RAW-verified: 4 files (daily-predict.md, main.md routing+Sunday-conditional dedup gate, init.md caps 3/day+15/wk, cowork-schedule digest-daily slot cron 30 17), no orch-state, jq-valid, weekly/monday untouched, conviction bar + no-op preserved, NO rebuild (flows/schedule read at dispatch)."
       }
     ],
     "done_verified": [
@@ -24436,27 +24475,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
-      {
-        "id": "FEAT-PREDICTION-CLAIMS-DAILY-CADENCE",
-        "title": "Implement daily prediction-synthesis: daily-predict sub-flow + main.md daily-window routing + init.md scope + cowork-schedule.json daily slot (digest-predict-daily 30 17 * * *)",
-        "type": "FEAT",
-        "size": "M",
-        "sprint": "PREDICTION-CLAIMS-DAILY-CADENCE",
-        "status": "IN_PROGRESS",
-        "owner": "agent-father",
-        "zone": "docs/agents/digest-predict/ + docs/data/cowork-schedule.json",
-        "created_at": "2026-06-24T09:30:00Z",
-        "created_by": "po",
-        "depends_on": "ARCH-PREDICTION-DAILY-CADENCE",
-        "fix_spec": "Per the ARCH-PREDICTION-DAILY-CADENCE brief (invoke agent-md-factory skill before editing any agent .md): (1) author docs/agents/digest-predict/flow/daily-predict.md (or re-enable/re-point daily.md) carrying the monday.md synthesis pipeline (P-0 self-assess .. P-5 create_prediction_claim) adapted to the architect-ruled per-day cap + same-day task_claim dedup marker + open-claim-per-ticker skip + clean NO-OP on zero high-conviction; (2) edit docs/agents/digest-predict/flow/main.md Dispatch table to ALSO route the new daily window (keep the Sunday 13:47 UTC weekly window + its published-marker gate intact); (3) edit docs/agents/digest-predict/init.md — restore daily prediction synthesis to scope/responsibilities/schedule, set the new per-day + weekly cap constraints (remove/replace the misleading Monday prediction synthesis removed + weekly-only scope lines), keep weekly Sunday MARKET named-exception unchanged; (4) add the daily slot to docs/data/cowork-schedule.json: slot_id digest-predict-daily, cron 30 17 * * *, agent/agent_id digest-predict, parallel_group digest, flow_path docs/agents/digest-predict/flow/daily-predict.md, trigger_prompt routes the daily flow, dish_type daily_prediction, guaranteed false, depends_on null, enabled true, policy_id null, last_fired null. NO frontend/endpoint change — page + /api/prediction-claims + predictionClaimsHandler are HEALTHY.",
-        "verification_gate": "LIVE: (a) digest-predict run via the new daily-predict flow creates >=1 new prediction_claims row on a high-conviction day (verify raw vs named-volume DB, NOT host ./data) AND no-ops cleanly on a flat day; (b) /dashboard/prediction-claims generatedAt advances + new rows appear day-over-day on consecutive runs; (c) per-day + weekly cap honored; (d) same-day re-fire creates nothing (dedup holds); (e) Sunday weekly.md calibration MARKET dish still fires unchanged. qa signs off on consecutive-day live evidence (ship completion, not a slice).",
-        "in_progress_at": "2026-06-24T15:09:07Z",
-        "dispatched_by": "dev-team-cron-router",
-        "dispatched_to": "agent-father",
-        "dep_satisfied": "ARCH-PREDICTION-DAILY-CADENCE done"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
