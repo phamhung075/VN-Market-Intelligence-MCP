@@ -2,6 +2,26 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c336 · 2026-06-25T05:43:45Z
+### Audit Run Tier-1 (05:43–05:44 UTC 2026-06-25)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
+- Containers all UP: mcp-server (1h14m, RestartCount=0 FRESH-REBUILD-04:40Z, OOMKilled=false), frontend (24h), macro-indicators (24h), pdf-extractor (9d), stock-price (9d), technical-analysis (9d), kinh-dich-service (10d), api-gateway (13d), rag-service (23m, RestartCount=117 KNOWN-STANDING FU-RAG-DEPLOY-MEMORY), news-fetch (2w), alert-engine (2w), mcp-gateway (2w)
+- A-30 mcp-server mem=18.05% (369.7MiB/2GiB, PASS <85%) | A-31 EPIPE=0 | A-32 disk=26% (40Gi free)
+- B-05 BCTC healthy-idle: queue=38 pending, push-age=199.7h << SLA-1714.5h out-of-window, PASS
+- VPS proxy: prices/news/sbv OK; bctc stale (last push 2026-06-16, by-design off-season)
+- Crons: 100+ active, success rates ≥98%, no gaps
+- Anomalies: 0 new | Status: HEALTHY
+
+## c335 · 2026-06-25T05:25:58Z
+### DB DATA-ANOMALY SWEEP — Tier DATA (05:24–05:26Z)
+- **CANONICAL-4** (deterministic helper): db1_ohlc_violations=835, db2_scale_gt100x=1, db3_vnindex_cache_rows=0, c04_low_confidence_reports=21
+- **market_prices_freshness**: 2026-06-25T05:24:24Z (~1 min fresh) | daily_ohlcv_total=18250 | fresh_ohlc_violations_last_2d=0
+- **TABLES CHECKED**: 12 (daily_ohlcv, market_prices, deep_fetch_queue, scheduler_locks, agent_signals, signal_outcomes, financial_reports, fred_series_daily, vn_index_cache, cron_job_runs, price_alerts, others)
+- **ANOMALIES DETECTED**: daily_ohlcv OHLC=661 (BY-DESIGN, db1 subset), deep_fetch_queue expired=573 (BY-DESIGN, lifecycle), financial_reports net_rev_≤0=31 (BY-DESIGN, 17 frozen + 14 NULL bucket), signal_outcomes orphaned=1 (READ, already-open), fred_series_daily=8311 (BY-DESIGN, FRED_API_KEY unset), vn_index_cache=0 (BY-DESIGN), scheduler_locks=0 held (BY-DESIGN), market_prices_≤0=0 (PASS), daily_ohlcv_neg_vol=0 (PASS), deep_fetch_queue stuck_pending=0 (PASS)
+- **NEW SIGNALS**: 0 (all findings BY-DESIGN or already-open, no REAL defects detected)
+- **HISTORY APPEND**: 108→109 entries (confirmed deterministic, counts embedded)
+- **STATUS**: STEADY-STATE — all tables healthy, no regressions
+
 ## c332 · 2026-06-25T05:14:56Z
 ### Audit Run Tier-1 (05:13–05:14 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 9/9 HTTP 200 OK (mcp 166 tools)
