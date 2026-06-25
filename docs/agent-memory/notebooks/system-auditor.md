@@ -3,6 +3,17 @@
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
 
+## c346 · 2026-06-25T08:13:38Z
+### Audit Run Tier-1 (08:12–08:13 UTC 2026-06-25)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
+- Containers UP: mcp-server (4h, RestartCount=0 BUILD-04:38Z sha=4ef240ed, mem=45.11% 923.9MiB/2GiB), rag-service (3h, RestartCount=117 KNOWN-STANDING FU-RAG-DEPLOY-MEMORY), all others stable 9d–2w
+- A-30 mcp-server mem=45.11% (PASS <85%) | A-31 EPIPE=0 | A-32 disk=26% (39Gi avail, 13Gi used, PASS)
+- B-05 BCTC healthy-idle: queue pending, push-age ~200h << SLA-1714.5h out-of-window → PASS
+- VPS proxy: prices OK 08:12:14, news OK 08:04:14, sbv OK 08:05:54, bctc stale 2026-06-16 18:02 (by-design off-season, not actionable per SLA)
+- Crons: 100+ active, success ≥98% | Circuit breakers: 16/16 OK | No fire gaps
+- RAW-PROBE: docker ps all 12 up; health 5/5 200; mem 45.11%; disk 26% capacity
+- Anomalies: 0 new | Status: HEALTHY
+
 ## c345 · 2026-06-25T07:44:10Z
 ### Audit Run Tier-1 (07:43–07:44 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
@@ -33,24 +44,4 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - B-05 BCTC healthy-idle: queue=38 pending, push-age=202.5h << SLA-1714.5h out-of-window → PASS
 - Circuit breakers: 16/16 OK | Crons: 100+ active, success ≥98% | No gaps
 - RAW-PROBE L4–L50: docker ps all up; health 5/5 200; mem 27.04%; disk 26%
-- Anomalies: 0 new | Status: HEALTHY
-
-## c342 · 2026-06-25T06:56:11Z
-### DB DATA-ANOMALY SWEEP — Tier DATA (06:54–06:56Z)
-- **CANONICAL-4** (deterministic helper scan_ts 2026-06-25T06:55:03Z): db1_ohlc_violations=835, db2_scale_gt100x=1, db3_vnindex_cache_rows=0, c04_low_confidence_reports=21 — FROZEN identical to scan #111 (no change)
-- **Baseline freshness**: daily_ohlcv_total=18250, newest_date=2026-06-25 (CURRENT), market_prices_freshness=2026-06-25T06:54:15Z (~1 min FRESH)
-- **TABLES CHECKED**: 14 high-value (daily_ohlcv, market_prices, cron_job_runs, deep_fetch_queue, scheduler_locks, sbv_rates, macro_indicators, agent_signals, alerts, others)
-- **INTEGRITY**: cron_job_runs 19 recent jobs all success; deep_fetch_queue 573 expired (by-design); 0 held scheduler locks; 0 stuck pending >4h; market_prices 121 rows, no negative/zero; sbv_rates fresh ~10min old
-- **ANOMALIES**: 0 NEW detected — macro_indicators stale 18h (cadence unknown, likely daily/weekly by-design, no CRITICAL flag); all canonical-4 FROZEN; findings by-design-tracked
-- **HISTORY APPEND**: 111→112 entries (scan_ts=2026-06-25T06:56:11Z, counts embedded deterministically, helper-verified grown)
-- **STATUS**: STEADY-STATE — no new signals required; market data live and fresh
-
-## c341 · 2026-06-25T06:44:46Z
-### Audit Run Tier-1 (06:44–06:45 UTC 2026-06-25)
-- Tier: 1 | Services: 11/11 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
-- Containers: mcp-server (2h14m, RestartCount=0 FRESH-BUILD-04:38Z, mem=511MiB), rag-service (RestartCount=117 KNOWN-STANDING FU-RAG-DEPLOY-MEMORY), all others stable
-- A-30 mcp-server mem=19.95% (511MiB/2GiB, PASS <85%) | A-31 EPIPE=0 | A-32 disk=26% (39Gi free, PASS)
-- B-05 BCTC: queue=38 pending, push-age=201.8h << SLA-1714.5h out-of-window → HEALTHY-IDLE PASS
-- VPS proxy: prices/news/sbv OK; bctc stale (by-design off-season, not actionable per SLA)
-- Crons: 100+ jobs active, success rates ≥98%, no fire gaps
 - Anomalies: 0 new | Status: HEALTHY
