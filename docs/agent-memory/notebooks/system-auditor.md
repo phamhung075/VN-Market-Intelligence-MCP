@@ -1,6 +1,19 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c374 · 2026-06-25T16:44:05Z
+### Audit Run Tier-1 (16:43–16:44 UTC 2026-06-25) — Runtime Ping
+- Tier: 1 | Services: 13/13 up (all INTENDED runtime set) | Health: 5/5 endpoints OK (mcp:3000, api-gateway:4000, macro:5004, pdf:5001, frontend:3001)
+- Raw-probe evidence: 13 containers UP with status "healthy"; docker ps exit=0; health endpoints all 200
+- A-20 pdf-extractor multi-probe: 3/3 PASS (in-container HTTP 200 at +0s, +5s, +10s)
+- RestartCount: mcp-server=0 (PASS); rag-service=120 (known FU-RAG-DEPLOY-MEMORY standing issue, NO jump >+2 short-window = RECORD-ONLY)
+- Memory: mcp-server=18.12% (PASS, <85%); mcp-server cold-start ~1h 7m ago (15:35Z), mem reset nominal
+- Disk: /=26% capacity (PASS, <85%); iused=0%
+- Cron health via get_cron_health: 144+ jobs all active, success_rate≥98%, last-fire timestamps current, 0 fire-gaps
+- MCP status: 16 circuit-breakers OK (no failures); uptime 1h 7m; recent errors off-hours noise (vnexpress/sbv/reuters RSS timeouts during market-closed)
+- Anomalies: 0 NEW signals (all checks PASS; A-21 rag-service and B-05 bctc SLA both known/dedup-benign per guidance; no acute regressions)
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: 74 rows (stable) | History: 43→44
+
 ## c373 · 2026-06-25T16:24:59Z
 ### Audit Run Tier-3 (16:24–16:25 UTC 2026-06-25) — DB Data-Anomaly Sweep
 - Tier: 3 | Container tooling: 3/3 ok (pdftoppm, tesseract, vie-lang) | Inter-service: 4/4 ok
