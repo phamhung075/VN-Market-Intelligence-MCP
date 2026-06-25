@@ -248,7 +248,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-24T03:00:00.411Z",
+    "_updated_at": "2026-06-25T03:00:00.695Z",
     "_updated_by": "system-auditor",
     "archive": [
       {
@@ -861,6 +861,34 @@
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606250300-a",
+        "ts": "2026-06-25T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null,
+        "router_triaged_at": "2026-06-25T03:16:25Z",
+        "router_dup_of": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
+        "router_triage": "KNOWN false-divergence: esc-datacov:FPT:Q1-2026:ESC-3 is an INTENTIONAL 8-day escalation marker lock (bctc-analyst, ttl 691200s, expires 07-02) for overdue FPT Q1-2026 coverage — marker locks have NO board row BY DESIGN. Not an orphan. Tracked FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
+      },
+      {
+        "id": "sau-d4-202606250300-b",
+        "ts": "2026-06-25T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=TASK-MACRO-COMMODITY-DELTA held=esc-datacov:FPT:Q1-2026:ESC-3",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null,
+        "router_triaged_at": "2026-06-25T03:16:25Z",
+        "router_dup_of": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
+        "router_triage": "KNOWN false-divergence + dup-id (FU-AUDITOR-D4-SIGNAL-ID): orch-state has NO .active pointer (null); 'active=TASK-MACRO-COMMODITY-DELTA' is an auditor derivation artifact and that task is correctly in done_verified. No real mismatch. Tracked FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
+      },
       {
         "id": "sau-d4-202606240300",
         "ts": "2026-06-24T03:00Z",
