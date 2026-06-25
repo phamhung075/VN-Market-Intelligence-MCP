@@ -1914,9 +1914,12 @@
         "type": "data_stale",
         "summary": "news sources stale 88min (check B-11)",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
-        "router_note": "RAW-INVESTIGATED router 2026-06-25T06:33Z: NOT a fetch outage. Only 2 news slots exist — news-scout-offhours cron 0 */4 (4-hourly: ...04:00,08:00,12:00...) + news-scout-sentiment cron 0 5 (daily). Last news fetch 05:02Z produced 6 real signals (7477-7482); next scheduled 08:00Z. 88min age is ON-CADENCE for a 4-hourly design. The flag is a THRESHOLD-vs-CADENCE mismatch: B-11 asserts expected_cadence_hours=1h but no slot fetches hourly. PO DESIGN CALL (do not auto-act): EITHER (a) 1h SLA is intended → add a market-hours news slot (02-08 UTC) — genuine coverage gap; OR (b) 4h cadence is intended → recalibrate B-11 threshold to derive from the news slot cron SSOT (same predicate-drift class as C-06/C-11). No data is dead; not a panic."
+        "router_note": "RAW-INVESTIGATED router 2026-06-25T06:33Z: NOT a fetch outage. Only 2 news slots exist — news-scout-offhours cron 0 */4 (4-hourly: ...04:00,08:00,12:00...) + news-scout-sentiment cron 0 5 (daily). Last news fetch 05:02Z produced 6 real signals (7477-7482); next scheduled 08:00Z. 88min age is ON-CADENCE for a 4-hourly design. The flag is a THRESHOLD-vs-CADENCE mismatch: B-11 asserts expected_cadence_hours=1h but no slot fetches hourly. PO DESIGN CALL (do not auto-act): EITHER (a) 1h SLA is intended → add a market-hours news slot (02-08 UTC) — genuine coverage gap; OR (b) 4h cadence is intended → recalibrate B-11 threshold to derive from the news slot cron SSOT (same predicate-drift class as C-06/C-11). No data is dead; not a panic.",
+        "router_dup_of": "sau-2026-06-25T06:32:59Z / FIX-NEWS-ANALYSIS-PIPELINE-STALL",
+        "router_triage": "DUP of primary B-11 news-stall signal (already RAW-corroborated + escalated to FIX-NEWS-ANALYSIS-PIPELINE-STALL P1 in_progress, dev-mcp-server root-causing). No separate action.",
+        "router_triaged_at": "2026-06-25T06:45:53Z"
       },
       {
         "id": "sau-2026-06-25T06:32:59Z",
