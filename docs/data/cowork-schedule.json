@@ -275,7 +275,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "gatherer-standard",
-      "last_fired": "2026-06-24T05:14:21Z",
+      "last_fired": "2026-06-25T05:02:55Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "deleted",
