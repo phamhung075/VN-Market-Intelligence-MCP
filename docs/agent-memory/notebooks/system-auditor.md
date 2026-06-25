@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c330 · 2026-06-25T04:17:51Z
+### Audit Run Tier-3 (04:14–04:18 UTC 2026-06-25)
+- Tier: 3 | Tables: 16 checked | Container tooling: 3/3 (pdftoppm, tesseract, vie) | Inter-service: 4/4 UP
+- **CRITICAL: C-12 market.db index corruption detected** — PRAGMA integrity_check failed: row 11335 missing from idx_mph_code_fetched
+- C-01: 877 distinct codes (PASS); C-02: 976 rows (PASS); C-03: 32 action codes (PASS); C-04: 0 low-conf last 7d (PASS)
+- C-05: 0 SSC URLs (PASS); C-06: 3 market_messages 3h (PASS); C-07: 234 signals 24h (PASS); C-08: 1 orphaned (transient)
+- C-09: 3 macro indicators Vietnam (PASS ≥3); C-10: 0 PDF failed 24h (PASS); C-11: 0 PDF done 48h (expected-empty Q2)
+- C-13: WAL 0 bytes (PASS); C-14: top-3 share=0.6% (PASS <60%); C-15: schema complete (PASS); C-16: 0 stale pending (PASS)
+- A-22–A-24 tooling: pdftoppm, tesseract, vie lang all present (PASS); A-25–A-28 inter-service: stock/ta/alert/pdf all 200 OK
+- Anomalies: 1 CRITICAL (C-12 index corruption) | Signal posted=1 | Status: DEGRADED
+
 ## c329 · 2026-06-25T04:14:46Z
 ### Audit Run Tier-2 (04:13–04:14 UTC 2026-06-25)
 - Tier: 2 | Cron Fire: all 100+ jobs active, ≥98% success, no gaps detected
@@ -38,8 +49,8 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 9 days (healthy)      vn-ma
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 10 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    10 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)     vn-market-intelligence-mcp-api-gateway          13 days ago
 vn-market-intelligence-mcp-rag-service-1          Up 7 minutes (healthy)   vn-market-intelligence-mcp-rag-service          2 weeks ago
-vn-market-intelligence-mcp-news-fetch-1           Up 2 weeks (healthy)     vn-market-intelligence-mcp-news-fetch           2 weeks ago
-vn-market-intelligence-mcp-alert-engine-1         Up 2 weeks (healthy)     vn-market-intelligence-mcp-alert-engine         2 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 2 weeks (healthy)    vn-market-intelligence-mcp-news-fetch           2 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 2 weeks (healthy)    vn-market-intelligence-mcp-alert-engine         2 weeks ago
 headroom-proxy                                    Up 12 days               headroom-proxy:local                            2 weeks ago
 mcp-gateway                                       Up 2 weeks (healthy)     mcpservergatway-gateway                         5 weeks ago
 
@@ -78,12 +89,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - C-01: 877 distinct codes (PASS); C-02: 976 rows (PASS); C-03: 32 action codes (PASS); C-04: 0 low-conf last 7d (enrich-silence working); C-05: 0 SSC URLs live (PASS); C-06: 4 market_messages 3h (PASS); C-07: 231 signals 24h (PASS); C-08: 1 orphaned alert (transient OK); C-09: 3 macro indicators Vietnam (PASS ≥3); C-10: 0 PDF failed 24h (PASS); C-11: 0 PDF done 48h (expected-empty Q2); C-12: integrity=ok (PASS); C-13: WAL all 0 (PASS); C-14: top-3 share=0.6% (PASS <60%); C-15: schema complete (PASS); C-16: 0 stale pending >72h (PASS)
 - History append: 104→105 rows (deterministic counts verified)
 - Status: HEALTHY | Anomalies: 0 new | Status: CLEAN
-
-## c325 · 2026-06-25T03:13:57Z
-### Audit Run Tier-1 (03:13 UTC 2026-06-25)
-- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
-- Containers all UP: mcp-server (3h healthy, RestartCount=1 PASS), frontend (22h), macro-indicators (22h), pdf-extractor (9d), stock-price (9d), technical-analysis (9d), kinh-dich-service (10d), api-gateway (13d), rag-service (6min, RestartCount=110 KNOWN-STANDING FU-RAG-DEPLOY OOM ~1/hr), news-fetch (2w), alert-engine (2w), mcp-gateway (2w)
-- A-30 mcp-server mem=43.41% (888.9/2048 MiB, PASS <85%) | A-32 disk=40% (21Gi free, PASS)
-- Cron: 100+ jobs all running, success rates ≥98%, no gaps detected
-- Pipeline health: price/news/sbv/foreign OK; bctc pending=0 (healthy-idle, no signal)
-- Anomalies: 0 new | Status: HEALTHY

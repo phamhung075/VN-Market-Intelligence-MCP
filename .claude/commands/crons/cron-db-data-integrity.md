@@ -28,7 +28,11 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
   DB ACCESS — the live DB is the named volume, NOT host ./data and NOT the mcp-server
   container (it has no sqlite3). Query read-only via the keinos/sqlite3 sidecar:
     docker run --rm -v vn-market-intelligence-mcp_market_data:/data keinos/sqlite3 \
-      sqlite3 -readonly /data/market.db "<SQL>"
+      sqlite3 "file:/data/market.db?immutable=1" "<SQL>"
+  Note: use file:?immutable=1, NOT sqlite3 -readonly. After the mcp-server writer restarts and
+  recreates market.db-shm with its uid, a different-uid sidecar cannot attach that -shm to build
+  the WAL index -> SQLITE_READONLY(8) -> empty result -> all counts null. immutable=1 bypasses
+  WAL/-shm entirely and is always safe for a read-only observer.
   Canonical DB = /data/market.db (≈300MB). Ignore the 0-byte legacy decoys
   (market_data.db, market_intelligence.db, main.db).
 
@@ -138,7 +142,7 @@ system-auditor `*/30` (:00/:30) and dev-team `:07` crons.
     prior-scan anomaly now READS clean live (e.g. a held lock now shows released_at set), RECORD that
     observation in the history (verdict + the raw value you read) and leave the open signal AS-IS for
     dev-team to close — do NOT self-close it, and NEVER invent the cause of the change. The DB access
-    is `sqlite3 -readonly` ONLY; never drop -readonly, never UPDATE/INSERT/DELETE.
+    uses `sqlite3 "file:...?immutable=1"` ONLY (NOT -readonly — see DB ACCESS note above); never UPDATE/INSERT/DELETE.
     (2026-06-20: a sweep self-marked its own stale-lock signal DONE-LIVE-VERIFIED with a fabricated
     "ops cleared, released 2026-06-14 16:00:01" claim — released_at==acquired_at, RestartCount=0/no
     restart, origin unexplained. A detection-only agent closing its own signal on an unwitnessed
@@ -169,8 +173,10 @@ confirm the sidecar + signal write work before the cron takes over.
 `CronList` | `CronDelete <id>`
 
 ## Notes
-- **Read-only DB access** (`sqlite3 -readonly`) — the sweep never mutates the DB; all fixes
-  flow through dev-team. This honours the router/agent "detect ≠ fix" boundary.
+- **Read-only DB access** (`sqlite3 "file:...?immutable=1"`, NOT `-readonly`) — the sweep never
+  mutates the DB; all fixes flow through dev-team. This honours the router/agent "detect ≠ fix"
+  boundary. The immutable=1 URI flag bypasses WAL/-shm and avoids uid-mismatch failures after the
+  writer restarts (see DB ACCESS note above).
 - **Tune cadence** if the 30-min sweep strains the host (16GB cap, see host-memory-panic): a
   full-table outlier scan is heavier than aggregate checks — keep queries aggregate; drop to
   hourly (`15 * * * *`) if load climbs.
