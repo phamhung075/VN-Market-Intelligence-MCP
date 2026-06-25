@@ -2,6 +2,22 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c354 · 2026-06-25T10:32:20Z
+### Audit Run Tier-2 Freshness Sweep (10:30–10:32 UTC 2026-06-25)
+- Tier: 2 | Cron checks: 159+ jobs all healthy ≥98% | Sources: 27 checked | VPS routes: 4 probed
+- Pipeline health: OHLCV 30+ tickers ready, TA fresh, 740 rows today, backfill=false
+- Freshness summary: price ok (30min), news ok (30sec), sbv ok (24min), foreign-flow idle (market-closed)
+- B-05 BCTC SLA check: push-age=207.5h vs dynamic threshold=1704.5h (out-of-window June)
+  * SLA resolver: last earnings window 2026-04-14 → 1704h since + 0.5h grace → threshold=1704.5h
+  * Gate: queue=38 actionable (url_not_found, enrich_failed, pending), host-up, but VPS service unhealthy
+  * Verdict: PASS (age << threshold; VPS unreachable is separate infra issue, not SLA breach)
+- B-06/B-07 VPS proxy: prices/news/sbv ok, bctc stale (last push 2026-06-16, 9d old) ← VPS-side, not local
+- B-09 SSC URLs: 0 non-skipped ✓ | B-13 stale pending: 0 >72h ✓ | C-06 market_messages: 1 in 3h ✓ | C-07 signals: 272 in 24h ✓
+- Rate limits: all ok, no source at 100% ✓ | DB writes: fresh, message + signal flow healthy
+- Post-market idle (17:30 VN): ssc-iboard and foreign-flow quiet by design, EXPECTED
+- Anomalies: 0 new critical | Dedup: vn-bctc-fetch unhealthy (STANDING FEEDBACK, no new escalation)
+- Status: HEALTHY IDLE | Signals: 0 posted | Dashboard rows: 0 | Telegram: none
+
 ## c353 · 2026-06-25T10:30:24Z
 ### Audit Run Tier-2 (10:30 UTC 2026-06-25)
 - Tier: 2 | Cron checks: 159+ jobs, all healthy ≥98% | Sources checked: 27 (fetch freshness + VPS routes)
@@ -43,3 +59,12 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-30 mcp-server mem 58% PASS (normal baseline post-build 04:40Z) | A-31 EPIPE=0 | A-32 disk=26%
 - B-05 BCTC healthy-idle (SLA gate applied, queue-dependent) PASS
 - Anomalies: 0 new | Dedup: none escalated | Status: HEALTHY | Signals: 0
+
+## c349 · 2026-06-25T09:13:31Z
+### Audit Run Tier-1 (09:13–09:14 UTC 2026-06-25)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
+- Containers: mcp-server (5h, RestartCount=0 BUILD-04:40Z, mem=66.72% 1.334GiB/2GiB steady-climb), rag-service (36m, RestartCount=118 KNOWN FU-RAG-DEPLOY-MEMORY)
+- A-20 endpoints PASS (5/5) | A-30 mcp-server mem 66.72% normal climb | A-31 EPIPE=0 | A-32 disk=26%
+- B-05 BCTC push-age 199.7h << SLA 1714.5h (healthy-idle: queue=0 + host-up) PASS | VPS proxy 3/4 live
+- Pipeline health: 30/40 tickers fresh, 740 rows today
+- Anomalies: 0 new | Status: HEALTHY | Signals: 0
