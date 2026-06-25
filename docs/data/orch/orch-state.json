@@ -12723,6 +12723,22 @@
         "rebuild_required": false,
         "minted_at": "2026-06-25T09:11:15Z",
         "minted_by": "po-s112"
+      },
+      {
+        "id": "FU-FB-FOREIGN-FLOW-UNIT-LABEL",
+        "type": "FU",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "docs/agents/fb-market-poster/",
+        "next_agent": "agent-father",
+        "title": "fb-poster mislabels foreign-flow unit: get_market_foreign_flow net is SHARE VOLUME (M shares), post writes 'X tỷ'",
+        "desc": "Regenerated fb-post-2026-06-25 writes 'khối ngoại xả ròng 2,35 tỷ' but get_market_foreign_flow returns net=-2.35M SHARES (per-ticker buy/sell in k/M shares confirm volume, not VND). The post should label foreign-flow magnitude as 'triệu cổ phiếu' OR convert to tỷ đồng value (shares × price) — not relabel the share count M->tỷ. Direction + ticker attribution are correct; only the unit/scale label is wrong. Add a UNIT-HANDLING rule to STEP 1b foreign-flow extraction + the data-integrity gate. memory: feedback_nonzero_values_need_plausibility_check.",
+        "files": [
+          "docs/agents/fb-market-poster/flow/main.md"
+        ],
+        "created_at": "2026-06-25T16:15:30Z",
+        "created_by": "router",
+        "source": "router plausibility check on regen post"
       }
     ],
     "closed_sprints": [
@@ -24937,21 +24953,11 @@
         "deployed": true,
         "deployed_at": "2026-06-25T04:41:32Z",
         "deployed_image": "4ef240ed760b"
-      }
-    ],
-    "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": null,
-      "updated_at": "2026-06-25T04:22:52Z",
-      "updated_by": "dev-team-router",
-      "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
-    },
-    "in_progress": [
+      },
       {
         "id": "FIX-FB-POSTER-MISSING-FLOW-FX-TA",
         "type": "FIX",
-        "status": "IN_PROGRESS",
+        "status": "DONE_VERIFIED",
         "priority": "P1",
         "zone": "docs/agents/fb-market-poster/",
         "next_agent": "agent-father",
@@ -24964,9 +24970,22 @@
         ],
         "created_at": "2026-06-25T16:02:05Z",
         "created_by": "router",
-        "source": "user report 2026-06-25 + router RAW corroboration"
+        "source": "user report 2026-06-25 + router RAW corroboration",
+        "done_verified_at": "2026-06-25T16:15:30Z",
+        "done_verified_by": "router",
+        "agent_father_commit": "ea267e78",
+        "regen_verified": "fb-post-2026-06-25 mtime 18:12 — foreign-flow + FX(đi ngang 26.136) + TA(VCB RSI 38.2 etc) all present; excuse gone; RAW-verified by router"
       }
     ],
+    "head": {
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": null,
+      "updated_at": "2026-06-25T04:22:52Z",
+      "updated_by": "dev-team-router",
+      "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
+    },
+    "in_progress": [],
     "ready": [],
     "review": [
       {
