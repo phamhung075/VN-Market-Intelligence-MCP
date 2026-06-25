@@ -238,8 +238,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-25T22:06:25Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-25T22:37:11Z",
+    "_updated_by": "po-dbsweep-r5-triage",
     "archive": [
       {
         "from": "system-auditor",
@@ -2316,6 +2316,41 @@
         "router_dup_of": "router-dbsweep-20260625T2202Z-conviction-history-no-backfill",
         "triaged_into": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
         "po_decision_triage": "MINTED BACKLOG FIX-CONVICTION-HISTORY-EOD-BACKFILL (PLAN-ONLY, NOT promoted to ready). RAW-verify root cause LIVE before fix (corroboration gate). po-s115."
+      },
+      {
+        "id": "router-dbsweep-20260625T2231Z-r5-agent-signals-identical-dup-doublefire",
+        "ts": "2026-06-25T22:31:00Z",
+        "created_at": "2026-06-25T22:37:11Z",
+        "from": "po",
+        "to": "dev-team",
+        "type": "repair_task_request",
+        "service": "mcp-server/agent_signals-write-path + multi-emitter",
+        "zone_owner": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "severity": "MEDIUM",
+        "priority": "MEDIUM-HIGH (cap at HIGH only if Telegram double-send is CONFIRMED — do NOT over-claim)",
+        "status": "READ",
+        "plan_only": true,
+        "router_verified": true,
+        "router_verified_at": "2026-06-25T22:31:00Z",
+        "summary": "agent_signals SYSTEMIC identical-duplicate rows (genuine double-EMISSION reaching the data layer). LIVE read (named volume vn-market-intelligence-mcp_market_data, immutable=1, scan_ts 2026-06-25T22:31Z): agent_signals total=4266; 102 all-time truly-identical dup groups (same signal_type+stock_code+minute AND same from_agent+cycle_id+payload); 43 active dup-groups in last 24h (created_at>=2026-06-24). This is DATA-LAYER impact (duplicate agent_signals rows), DISTINCT from r2 which is the mcp-server scheduler cron_job_runs symptom. 3 of 5 emitters are COWORK agents OUTSIDE r2's mcp-server-scheduler scope, so r2's fix will NOT cover them.",
+        "evidence": "agent_signals total=4266. 24h dup emitter attribution: alert-engine|verified_decision=43, freshness-sla-monitor|urgent_news=42, news-scout|chain_catalyst=3, bctc-analyst|fundamental_validation=2, system-auditor|signal_feedback=1. Sample dup pair ids 7269 & 7271: both alert-engine|verified_decision|DPM at 2026-06-24T06:15:00.156Z and ...:01.070Z (0.9s apart), both retry_count=0, cycle_id=NULL => genuine double-EMISSION, NOT a retry/upsert. Clean controls (NOT defects): daily_ohlcv dup(code,date)=0, conviction_history dup(symbol,date)=0, ohlcv neg/zero close=0, neg volume=0.",
+        "root_cause": "Two-layer: (1) NO data-layer idempotency guard on agent_signals — identical re-inserts are accepted, so any emitter double-fire corrupts the table; (2) multiple emitters genuinely double-fire: mcp-server emitters (freshness-sla-monitor) likely share r2's scheduler double-registration root; cowork emitters (alert-engine, news-scout, bctc-analyst) have their own cron/spawn double-trigger roots (system has a known 'bursts of 22 identical jobs' pattern noted in startScheduler.ts).",
+        "fix_direction": "PLAN-ONLY. (1) DATA-LAYER BACKSTOP (permanent, emitter-agnostic): add an agent_signals idempotency guard rejecting/deduping identical re-inserts keyed on (from_agent, signal_type, stock_code, payload, minute-bucket). LESSON: SQLite ALTER TABLE ADD COLUMN ... UNIQUE is a SILENT NO-OP — MUST use a CREATE UNIQUE INDEX + INSERT OR IGNORE/REPLACE (upsert), NOT ALTER ADD UNIQUE. (2) PER-EMITTER ROOT-CAUSE: mcp-server emitters (freshness-sla-monitor) — confirm shared root with r2 scheduler double-registration; cowork emitters (alert-engine, news-scout, bctc-analyst) — own cron/spawn double-trigger root-cause. (3) VERIFY-DON'T-CLAIM: alert-engine|verified_decision dups MAY cause double Telegram alerts — dev-team MUST CONFIRM whether verified_decision triggers a send BEFORE claiming user-facing impact; only THEN escalate to HIGH.",
+        "cross_ref": "router-dbsweep-20260625T1906Z-r2-scheduler-double-register",
+        "relationship_to_r2": "SAME double-fire CLASS, BROADER scope. r2 = ONE mcp-server scheduler job (vnIndexRefreshJob fires twice in cron_job_runs). THIS row = (a) the DATA-LAYER impact (duplicate agent_signals rows, not just cron_job_runs), and (b) 3 of 5 emitters are COWORK agents (alert-engine, news-scout, bctc-analyst) outside r2's mcp-server-scheduler scope. freshness-sla-monitor + system-auditor are the mcp-server-side emitters that MAY share r2's root. NOT a dup of r2 (different table + cowork emitters), NOT a dup of d4-id-collision (that=one id many findings; this=many ids identical content), NOT a dup of r3-kinhdich (different table).",
+        "related_board": [
+          "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH (alert-engine verified_decision emit path also implicated in the 220 orphan-alert_id finding sau-20260625T1426 — likely SAME emit path; coordinate roots)",
+          "FACTORY-SCHEDULER-job-table-registry(backlog)"
+        ],
+        "linked_signals": [
+          "router-dbsweep-20260625T1906Z-r2-scheduler-double-register (mcp-server emitter root candidate)",
+          "sau-20260625T1426-orphan-signals-regress (alert-engine verified_decision emit path overlap)"
+        ],
+        "triaged_at": "2026-06-25T22:54:33Z",
+        "triaged_by": "po",
+        "po_decision": "MINTED BACKLOG FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION (P2, PLAN-ONLY) — own task, NOT folded into r2. Scope: data-layer agent_signals idempotency backstop (CREATE UNIQUE INDEX/upsert, NOT ALTER ADD UNIQUE) + per-emitter roots for ALL 5 emitters incl. the 3 COWORK agents (alert-engine, news-scout, bctc-analyst) outside r2's mcp-server-scheduler scope. Cross-refs r2 (scheduler emitter root) + FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH (same alert-engine emit path). RAW-verify-first; escalate to HIGH only if Telegram double-send confirmed. READ not RESOLVED (open until fix ships).",
+        "triaged_into": "FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION"
       }
     ],
     "last_triaged_at": "2026-06-25T22:06:25Z",
@@ -13318,6 +13353,31 @@
         "minted_by": "po",
         "minted_at": "2026-06-25T22:26:44Z",
         "note": "PLAN-ONLY: minted BACKLOG, NOT promoted. Standalone data-integrity (not part of frontend-freshness epic). Net-new (dedup-scanned conviction|backfill|reconcil|scanMarket = 0 prior rows)."
+      },
+      {
+        "id": "FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION",
+        "title": "agent_signals has SYSTEMIC truly-identical duplicate rows from genuine double-EMISSION reaching the data layer (NOT retry/upsert). LIVE RAW (named volume vn-market-intelligence-mcp_market_data, immutable=1, scan_ts 2026-06-25T22:31Z): total=4266; 102 all-time identical dup-groups (same signal_type+stock_code+minute AND same from_agent+cycle_id+payload); 43 active dup-groups last 24h (created_at>=2026-06-24).",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "root_cause": "Two-layer: (1) NO data-layer idempotency guard on agent_signals — identical re-inserts are accepted, so any emitter double-fire corrupts the table; (2) multiple emitters genuinely double-fire. 24h dup attribution: alert-engine|verified_decision=43, freshness-sla-monitor|urgent_news=42, news-scout|chain_catalyst=3, bctc-analyst|fundamental_validation=2, system-auditor|signal_feedback=1. Sample dup pair ids 7269 & 7271 (alert-engine|verified_decision|DPM, 0.9s apart, both retry_count=0, cycle_id=NULL) => genuine double-EMISSION.",
+        "generic_mandate": "RAW-verify the root LIVE before any code change (re-run the GROUP BY (from_agent,signal_type,stock_code,minute-bucket,payload) HAVING COUNT(*)>1 on the named-volume DB; confirm genuine double-emission not retry/upsert) — DB-sweep finding, corroborate first (feedback_false_infra_failure_corroboration_gate). Then: (A) DATA-LAYER BACKSTOP (permanent, emitter-agnostic): add an agent_signals idempotency guard rejecting/deduping identical re-inserts keyed on (from_agent, signal_type, stock_code, payload, minute-bucket) — MUST use CREATE UNIQUE INDEX + INSERT OR IGNORE/REPLACE, NEVER ALTER TABLE ADD COLUMN ... UNIQUE which is a SILENT NO-OP in SQLite (feedback_sqlite_add_column_unique_silent_noop). (B) PER-EMITTER ROOT-CAUSE: identify ALL 5 emitters and add idempotent dedup at emission across BOTH paths — mcp-server scheduler path (freshness-sla-monitor + system-auditor; confirm shared root with r2 scheduler double-registration) AND the 3 COWORK agent paths (alert-engine, news-scout, bctc-analyst) which have their own cron/spawn double-trigger roots OUTSIDE r2's scope (r2's fix will NOT cover them). (C) VERIFY-DON'T-CLAIM: alert-engine|verified_decision dups MAY cause double Telegram alerts — CONFIRM whether verified_decision triggers a send BEFORE claiming user-facing impact; only THEN escalate to HIGH (feedback_router_verify_raw_not_badges).",
+        "verification_gate": "LIVE: after fix, GROUP BY (from_agent,signal_type,stock_code,minute-bucket,payload) HAVING COUNT(*)>1 returns 0 rows AND fresh cycles across BOTH the scheduler emitters and the 3 cowork emitters add no new identical dup-groups over 2 cycles; RAW-verify against named-volume DB.",
+        "source_signal": "router-dbsweep-20260625T2231Z-r5-agent-signals-identical-dup-doublefire",
+        "cross_ref": "router-dbsweep-20260625T1906Z-r2-scheduler-double-register",
+        "relationship_to_r2": "SAME double-fire CLASS, BROADER scope. r2 = ONE mcp-server scheduler job (vnIndexRefreshJob cron_job_runs symptom). THIS = (a) DATA-LAYER impact (duplicate agent_signals rows) and (b) 3 of 5 emitters are COWORK agents (alert-engine, news-scout, bctc-analyst) outside r2's mcp-server-scheduler scope. freshness-sla-monitor + system-auditor MAY share r2's root. NOT a dup of r2.",
+        "related_board": [
+          "FIX-SCHEDULER-DOUBLE-REGISTRATION(backlog, r2 — mcp-server scheduler emitter root candidate, DISTINCT class)",
+          "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH(done-live-verified — SAME alert-engine verified_decision emit path implicated in the 220 orphan-alert_id finding; likely SAME emit path, coordinate roots, different defect)",
+          "FACTORY-ALERT-dedup-window-config(backlog — alert dedup-window value, NOT agent_signals row idempotency)",
+          "FIX-AGENTSIGNALS-EXPIRED-GC-CRON(backlog — retention/GC, NOT duplicate-prevention)"
+        ],
+        "router_verified": true,
+        "minted_by": "po",
+        "minted_at": "2026-06-25T22:54:33Z",
+        "note": "PLAN-ONLY (project_anomaly_task_bridge): minted BACKLOG, NOT promoted to ready (WIP=0). PRIORITY P2; escalate to HIGH ONLY if Telegram double-send is CONFIRMED. Do NOT fold into r2 (different table + cowork emitters)."
       }
     ],
     "closed_sprints": [
@@ -25607,8 +25667,8 @@
     },
     "updated_at": "2026-06-24T17:42:54Z",
     "updated_by": "po (FEAT-PREDICTION-DAILY relocate in_progress->done code-complete)",
-    "last_triaged_at": "2026-06-25T22:26:44Z",
-    "last_triaged_by": "po-s115"
+    "last_triaged_at": "2026-06-25T22:54:33Z",
+    "last_triaged_by": "po-s116"
   },
   "updated_at": "2026-06-25T00:39:11Z",
   "updated_by": "po (PREDICTION-CLAIMS-DAILY-CADENCE mint)",
