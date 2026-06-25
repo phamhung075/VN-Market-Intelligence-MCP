@@ -1773,6 +1773,28 @@
         "router_triage": "router 2026-06-24T05:16:26Z RAW-confirmed FALSE-CRITICAL, downgrade CRITICAL->INFO. vn-bctc-fetch 178h (7d10h) idle is EXPECTED out-of-earnings-season (month=06; Q2 reporting Jul-Aug; newest filing 2026-06-16) + queue CLEAN (stale_pending>72h=0 live). Correct out-of-season BCTC threshold=168h NOT 24h. SAME root as sau-20260623T153559Z (triaged INFO 15:35 today) — this is the 2ND bctc-stale false-CRITICAL today via a different check id (B-06). Tracked by FIX-BCTC-SLA-THRESHOLD-360 + FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH. No new incident, no re-escalate. RECURRENCE NOTE: auditor freshness checks keep emitting bctc CRITICAL on 24h threshold -> recommend PO bump FIX-BCTC-SLA-THRESHOLD-360 priority to stop queue-churn/alert-fatigue.",
         "router_dup_of": "sau-20260623T153559Z",
         "router_triaged_at": "2026-06-24T05:16:26Z"
+      },
+      {
+        "id": "sau-c06-20260625t003213z",
+        "ts": "2026-06-25T00:32:13Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "C-06 market_messages timestamp format mismatch (0 rows, expected >0)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c11-20260625t003213z",
+        "ts": "2026-06-25T00:32:13Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "C-11 pdf_extractor done documents schema mismatch (0 rows, expected >0)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
