@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c329 · 2026-06-25T04:14:46Z
+### Audit Run Tier-2 (04:13–04:14 UTC 2026-06-25)
+- Tier: 2 | Cron Fire: all 100+ jobs active, ≥98% success, no gaps detected
+- Per-source freshness (pipeline_health): price=OK (0min), news=OK (10min), sbv_fx=OK (13min), foreign_flow=OK (0min); bctc not in pipeline_health (VPS-driven)
+- SLA status: 4 ok (price/news/sbv/foreign) | 1 affected (bctc stale 11972min) — healthy-idle gate: BCTC_ACTIVE=38 (pending) but push-age=199.5h << 1714.7h (out-of-window SLA) — PASS. DEDUP recorded (FIX-BCTC-SLA-THRESHOLD-360 P1).
+- VPS proxy: 3 healthy (prices/foreign-flow) | 2 stale artifacts (news poll-lag, bctc off-season)
+- **NEW: vn-bctc-fetch service health = unhealthy (B-14)** — VPS service layer; emit WARN + signal_queue
+- DB freshness: market_messages(3h)=3 PASS, agent_signals(24h)=234 PASS, bctc_ssc_urls=0 PASS, bctc_pending_72h=0 PASS
+- Rate limits: 0/12 sources at 100%
+- Anomalies: 1 new (B-14 vn-bctc-fetch WARN) | Status: HEALTHY (monitoring)
+
 ## c328 · 2026-06-25T04:14:28Z
 ### Audit Run Tier-1 (04:13–04:14 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
