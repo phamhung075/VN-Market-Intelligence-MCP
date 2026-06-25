@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c356 · 2026-06-25T10:57:12Z
+### DB Data-Anomaly Sweep Tier-DATA (10:55–10:57 UTC 2026-06-25)
+- Tier: DATA | Tables: 17 checked (daily_ohlcv, market_prices, market_prices_history, vn_index_cache, alerts, price_alerts, alert_engine_records, agent_signals, signal_outcomes, financial_reports, macro_indicators, sbv_rates, fred_series_daily, deep_fetch_queue, cron_job_runs, scheduler_locks)
+- Canonical counts (helper): db1_ohlc_violations=835 FROZEN, db2_scale_gt100x=1 FROZEN, db3_vnindex_cache=0 FROZEN, c04_lowconf=21 FROZEN
+- Context: daily_ohlcv_total=18251, newest_date=2026-06-25, market_prices_freshness=2026-06-25T10:00:02Z, fresh_violations_2d=0
+- Anomalies found: 0 NEW | All 13 findings BY-DESIGN (ohlcv violations FIX-in_progress, stale illiquids OPC/SMA/STG post-08:00Z, low-confidence BCTC 21 tracked, signal backlogs tracked)
+- History: appended entry #120 (before=119, after=120, length_cap=200) ✓ | Signal queue: 72 rows unchanged (0 NEW)
+- Status: HEALTHY (all known anomalies stable) | Signals: 0 posted | Dashboard: no action needed
+
 ## c355 · 2026-06-25T10:44:08Z
 ### Audit Run Tier-1 Runtime Ping (10:43–10:44 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
