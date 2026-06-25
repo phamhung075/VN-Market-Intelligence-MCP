@@ -12664,6 +12664,27 @@
         "sibling_of": "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
         "created_at": "2026-06-25T07:00:00Z",
         "created_by": "po"
+      },
+      {
+        "id": "FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
+        "title": "fb-gate Check-C: negation-blind to Vietnamese 'chưa' false-blocks orderly-pullback posts + \\d->[0-9] BSD-grep portability",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "epic": "AUDIT-FB-GATE-PROSE-HARDENING",
+        "lesson": "L4 (2026-06-25 -0,80% orderly post FALSE-BLOCKED twice: 'chưa hoảng loạn'/'chưa phải bán tháo' counted AFFIRMATIVE — 'chưa' absent from Check-C negation-strip set)",
+        "zone": "cross-service/",
+        "dev_agent": "developer",
+        "files": [
+          "scripts/fb-data-integrity-gate.sh"
+        ],
+        "desc": "Check-C builds SELLOFF_AFFIRM_LINES by removing lines that match the negation set {không phải|không có|không bán|chứ không|mà không} (line ~342). 'chưa' (not yet/not) is NOT in that set, so an explicitly-negated panic statement ('lực bán chưa hoảng loạn', 'chưa phải bán tháo') survives the strip, is counted as an AFFIRMATIVE selloff claim, and on a mild day (|VN-Index|<2%, ~0 floor) FALSE-BLOCKS a correct non-panic post. FIX (1): add 'chưa' and common variants ('chưa phải','chưa từng') to the negation-stripping lexicon. FIX (2): replace `\\d` with `[0-9]` in the floor-stock regex `chỉ \\d mã sàn` (line ~361) — BSD grep -E on macOS treats `\\d` literally; `[0-9]` is GNU/BSD portable.",
+        "generic_mandate": "Broaden the negation lexicon generically (any 'chưa'-prefixed negation of panic language), not a one-off literal; the [0-9] portability fix applies to EVERY `\\d` in the gate's grep -E patterns — audit the whole script for stray `\\d` while here.",
+        "verification_gate": "Add a fixture post containing 'lực bán chưa hoảng loạn' / 'chưa phải bán tháo' on a MILD day (live VN-Index between -2% and 0, snapshot stubbed) -> gate MUST PASS (Check-C 0 violations). Add a contrasting fixture with an AFFIRMATIVE 'thị trường bán tháo, hoảng loạn' on a mild day -> Check-C MUST still BLOCK. Confirm `chỉ [0-9] mã sàn` matches under the macOS BSD grep -E used by the gate.",
+        "size": "S",
+        "rebuild_required": false,
+        "minted_at": "2026-06-25T09:11:15Z",
+        "minted_by": "po-s112"
       }
     ],
     "closed_sprints": [
@@ -24908,7 +24929,7 @@
   "updated_at": "2026-06-25T00:39:11Z",
   "updated_by": "po (PREDICTION-CLAIMS-DAILY-CADENCE mint)",
   "meta": {
-    "updated_at": "2026-06-18T12:34:24Z",
+    "updated_at": "2026-06-25T09:11:15Z",
     "updated_by": "po",
     "last_po_triage": "2026-06-17T18:58:32Z",
     "last_po_triage_by": "po-s101-bctc-discover-reroute"
