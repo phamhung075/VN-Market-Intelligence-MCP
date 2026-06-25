@@ -1927,7 +1927,9 @@
         "summary": "news-vps stale 89min (check B-11)",
         "severity": "CRITICAL",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": null,
+        "router_verify": "RAW-CORROBORATED REAL (not false-positive): get_market_context last news analysis=2026-06-25T05:02Z (~94min stale) during active market hours; analyses clustered 04:00-05:02 then stopped. vn-news-fetch service HEALTHY+polling (15min cadence, last poll 44s) but no push lands => push/analysis pipeline stall, not service outage. Router triggered manual trigger_news_vps_fetch(dry_run=false) at 06:36Z to recover; verify next tick whether last-analysis advances past 05:02. If still stale => dev-mcp-server root-cause (push-news/analysis pipeline).",
+        "router_verified_at": "2026-06-25T06:37:21Z"
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
