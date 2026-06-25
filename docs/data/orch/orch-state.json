@@ -1914,12 +1914,20 @@
         "type": "data_stale",
         "summary": "news sources stale 88min (check B-11)",
         "severity": "MED",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_note": "RAW-INVESTIGATED router 2026-06-25T06:33Z: NOT a fetch outage. Only 2 news slots exist — news-scout-offhours cron 0 */4 (4-hourly: ...04:00,08:00,12:00...) + news-scout-sentiment cron 0 5 (daily). Last news fetch 05:02Z produced 6 real signals (7477-7482); next scheduled 08:00Z. 88min age is ON-CADENCE for a 4-hourly design. The flag is a THRESHOLD-vs-CADENCE mismatch: B-11 asserts expected_cadence_hours=1h but no slot fetches hourly. PO DESIGN CALL (do not auto-act): EITHER (a) 1h SLA is intended → add a market-hours news slot (02-08 UTC) — genuine coverage gap; OR (b) 4h cadence is intended → recalibrate B-11 threshold to derive from the news slot cron SSOT (same predicate-drift class as C-06/C-11). No data is dead; not a panic.",
         "router_dup_of": "sau-2026-06-25T06:32:59Z / FIX-NEWS-ANALYSIS-PIPELINE-STALL",
         "router_triage": "DUP of primary B-11 news-stall signal (already RAW-corroborated + escalated to FIX-NEWS-ANALYSIS-PIPELINE-STALL P1 in_progress, dev-mcp-server root-causing). No separate action.",
-        "router_triaged_at": "2026-06-25T06:45:53Z"
+        "router_triaged_at": "2026-06-25T06:45:53Z",
+        "resolved_at": "2026-06-25T07:00:00Z",
+        "resolved_by": "po",
+        "resolution": "DESIGN-CALL (PO 2026-06-25T07:00Z). RAW-confirmed router read: get_vps_proxy_health(news) push 06:43:53 Stale=no 64/24h 0err; vn-news-fetch HEALTHY; news-scout-sentiment last_fired 05:02:55Z = the 'stale last-analysis'. B-11 conflates raw-fetch-freshness (~15min, healthy) with analysis-cadence (news-scout slots 4h offhours + daily sentiment). NOT a fetch outage. ACTIONS: (a) coverage gap is REAL (05:00-08:00 no scheduled analysis) -> minted ADD-NEWS-SCOUT-INTRADAY-SLOT (P2, agent-father); (b) predicate-drift -> minted FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT (P2, system-auditor) to split the two freshness layers and stop the phantom CRITICAL+MED dup; (c) mild VPS push slip already owned by FIX-VPS-NEWS-STALE-FALSEPOS (P3) — RAW now Stale=no/0err, acceptable. Phantom resolved at root by (b).",
+        "resolution_tasks": [
+          "ADD-NEWS-SCOUT-INTRADAY-SLOT",
+          "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
+          "FIX-VPS-NEWS-STALE-FALSEPOS"
+        ]
       },
       {
         "id": "sau-2026-06-25T06:32:59Z",
@@ -1929,16 +1937,23 @@
         "type": "data_stale",
         "summary": "news-vps stale 89min (check B-11)",
         "severity": "CRITICAL",
-        "status": "IN_PROGRESS",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_verify": "RAW-CORROBORATED REAL (not false-positive): get_market_context last news analysis=2026-06-25T05:02Z (~94min stale) during active market hours; analyses clustered 04:00-05:02 then stopped. vn-news-fetch service HEALTHY+polling (15min cadence, last poll 44s) but no push lands => push/analysis pipeline stall, not service outage. Router triggered manual trigger_news_vps_fetch(dry_run=false) at 06:36Z to recover; verify next tick whether last-analysis advances past 05:02. If still stale => dev-mcp-server root-cause (push-news/analysis pipeline).",
         "router_verified_at": "2026-06-25T06:37:21Z",
         "router_note": "RAW-INVESTIGATED router 2026-06-25T06:42Z: severity OVERSTATED, NOT a VPS news outage. get_vps_service_health: vn-news-fetch=HEALTHY (only vn-bctc-fetch/B-14 unhealthy). get_vps_proxy_health(news): last push 06:30:01 (~12min ago), 15 items, 63 pushes/24h, 0 errors. The 89min figure = time since last news-scout ANALYSIS run (05:02Z), i.e. the 4h analysis-cadence layer — DUPLICATE of MED row sau-20260625T063144Z (same B-11 root, different layer/label). Real residual (minor): VPS news push flagged Stale=YES and 63/96-expected push rate = mild cadence slip, 0 errors. PO design call (same as MED row): (a) reconcile news analysis cadence vs 1h SLA / add market-hours slot, AND (b) recalibrate B-11 to separate raw-fetch-freshness from analysis-cadence so it stops emitting a CRITICAL phantom + MED dup every Tier-2 cycle. router_dup_of=sau-20260625T063144Z.",
-        "router_followup": "Manual fetch 06:36Z did NOT recover (last-analysis still 05:02 at 06:42). Minted FIX-NEWS-ANALYSIS-PIPELINE-STALL (P1, dev-mcp-server, in_progress)."
+        "router_followup": "Manual fetch 06:36Z did NOT recover (last-analysis still 05:02 at 06:42). Minted FIX-NEWS-ANALYSIS-PIPELINE-STALL (P1, dev-mcp-server, in_progress).",
+        "resolved_at": "2026-06-25T07:00:00Z",
+        "resolved_by": "po",
+        "resolution": "DUPLICATE of sau-20260625T063144Z (same B-11 root, different layer/label) — confirmed router_dup_of. Severity CRITICAL was OVERSTATED: RAW (PO 06:44Z) news push fresh 06:43:53 Stale=no 0err, service HEALTHY. The 89min = time since news-scout-sentiment analysis slot (05:02Z), on-cadence by design. The earlier in_progress task FIX-NEWS-ANALYSIS-PIPELINE-STALL (created 06:44Z from the pre-reinvestigation router_verify) rests on a falsified premise — trigger_news_vps_fetch triggers raw FETCH (which DID land 06:30/06:43), not an ANALYSIS run; analysis only fires on the news-scout slot cron. Reconciled: that task folded into FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT (predicate fix) + ADD-NEWS-SCOUT-INTRADAY-SLOT (coverage). Resolved at root.",
+        "resolution_tasks": [
+          "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
+          "ADD-NEWS-SCOUT-INTRADAY-SLOT"
+        ]
       }
     ],
-    "last_triaged_at": "2026-06-24T01:05:00Z",
-    "last_triaged_by": "po-s113"
+    "last_triaged_at": "2026-06-25T07:00:00Z",
+    "last_triaged_by": "po"
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
@@ -12590,6 +12605,65 @@
         "sibling_of": "FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE",
         "created_at": "2026-06-25T04:24:24Z",
         "created_by": "dev-team-router"
+      },
+      {
+        "id": "ADD-NEWS-SCOUT-INTRADAY-SLOT",
+        "type": "FEATURE",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "agent-father / docs/data/cowork-schedule.json",
+        "next_agent": "agent-father",
+        "owner": "agent-father",
+        "size": "S",
+        "title": "Add a market-hours news-scout analysis slot (02-08 UTC VN session) — current 4-hourly offhours leaves 05:00-08:00 with zero scheduled news analysis",
+        "root_cause": "news-scout has only news-scout-offhours (cron 0 */4) + news-scout-sentiment (cron 0 5 Mon-Fri daily). During the VN session (02:00-08:00 UTC) the only analysis fires are 04:00 + 05:00; the 05:00-08:00 window (active mid/late session) has NO scheduled news analysis even though raw VPS news pushes keep flowing every ~15min. PO design call on B-11: 4-hourly analysis is a genuine coverage gap mid-session.",
+        "fix_spec": "Add a news-scout intraday slot to docs/data/cowork-schedule.json mirroring chef-intraday cadence, e.g. cron '0 2,5,8 * * 1-5' OR market-hours hourly ('0 2-8 * * 1-5') slot_id=news-scout-intraday, policy gatherer-standard, parallel_group gatherers, enabled true. Author the cron skill file via agent-father. Recommend 3-hourly during session (02,05,08) to balance signal value vs token cost. Reconcile B-11 expected analysis cadence with the chosen value (coordinate with FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT).",
+        "dod": [
+          "New news-scout intraday slot present in cowork-schedule.json with valid cron in the 02-08 UTC session window, enabled.",
+          "Cron skill file authored (.claude/commands/crons/) so cowork-dispatcher fires it.",
+          "Cadence value coordinated with the B-11 analysis-cadence threshold (no new false-stale).",
+          "RAW: confirm during next session the news analysis last-run advances inside the 05:00-08:00 window."
+        ],
+        "depends": [
+          "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT"
+        ],
+        "source": "PO triage of B-11 sau-20260625T063144Z / sau-2026-06-25T06:32:59Z 2026-06-25",
+        "created_at": "2026-06-25T07:00:00Z",
+        "created_by": "po"
+      },
+      {
+        "id": "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "docs/agents/system-auditor/",
+        "next_agent": "ba",
+        "owner": "system-auditor",
+        "size": "S",
+        "baseline_pass": "RAW-verified healthy 2026-06-25T06:44Z (PO): get_vps_proxy_health(news) last push 06:43:53 Stale=no, 64 pushes/24h, 0 errors; vn-news-fetch service HEALTHY; news-scout-sentiment last_fired 05:02:55Z (= the so-called stale last-analysis). Auditor-tooling-only, no data incident.",
+        "title": "system-auditor B-11 (news-vps freshness) conflates raw-fetch-freshness with analysis-cadence -> emits a phantom CRITICAL + MED duplicate every Tier-2 cycle",
+        "root_cause": "B-11 reads news-vps.expected_cadence_hours=1 / stale_threshold_hours=3 from system-map.json (correct for RAW VPS push cadence ~15min) but compares it against get_pipeline_health last-ANALYSIS, which is driven by the news-scout slot crons (offhours 4h + sentiment daily), NOT the raw push. So the moment analysis is >3h old (normal between the 05:00 sentiment slot and the 08:00 offhours slot) B-11 fires CRITICAL, and a sibling MED row fires off the same root with a different label. Same predicate-drift class as C-06/C-11/FIX-AUDITOR-C12: threshold sourced from SSOT but compared against the wrong layer.",
+        "fix_spec": "Split B-11 into two independent checks with two SSOTs: (1) RAW-FETCH freshness — compare get_vps_proxy_health(news) last-push age + Stale flag vs news-vps.expected_cadence_hours/stale_threshold_hours from system-map.json (~15min push cadence). (2) ANALYSIS freshness — compare get_pipeline_health last-analysis age vs news-scout analysis-cadence derived from docs/data/cowork-schedule.json slot crons (SSOT), NOT system-map raw-fetch cadence; threshold = 2x the slot cadence, market-hours-aware (relax outside 02-08 UTC + weekends/holidays per calendar gate). Emit at most ONE finding per layer per cycle; never a CRITICAL+MED dup from one root. Coordinate the analysis-cadence value with ADD-NEWS-SCOUT-INTRADAY-SLOT once the intraday slot lands.",
+        "blast_radius": "Recurring per feedback_recurring_bug_escalation: re-fires CRITICAL + MED every Tier-2 cycle landing >3h after the last news-scout analysis (most of the day), burning auditor+telegram+PO-triage each cycle. Sibling-of FIX-AUDITOR-C06/C11/C12 predicate-drift family.",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "dod": [
+          "B-11 raw-fetch-freshness check compares vps-proxy news push age vs system-map news-vps cadence (~15min layer).",
+          "B-11 analysis-freshness check compares pipeline last-analysis age vs the news-scout slot cron cadence from cowork-schedule.json (SSOT), market-hours + calendar aware.",
+          "No CRITICAL+MED duplicate from the same root in one Tier-2 cycle; at most one finding per layer.",
+          "RAW: simulate last-analysis 3h-old at 06:30 UTC with healthy 15min pushes -> assert NO CRITICAL (on-cadence), AND assert a real >2x-cadence push gap DOES still fire."
+        ],
+        "depends": [],
+        "related": [
+          "ADD-NEWS-SCOUT-INTRADAY-SLOT",
+          "FIX-VPS-NEWS-STALE-FALSEPOS",
+          "FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME"
+        ],
+        "source": "PO triage of B-11 sau-20260625T063144Z (MED) + sau-2026-06-25T06:32:59Z (CRITICAL dup) 2026-06-25",
+        "sibling_of": "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
+        "created_at": "2026-06-25T07:00:00Z",
+        "created_by": "po"
       }
     ],
     "closed_sprints": [
@@ -17858,6 +17932,30 @@
         "rebuild_required": true,
         "done_at": "2026-06-21T04:00:00Z",
         "done_by": "qa-review"
+      },
+      {
+        "id": "FIX-NEWS-ANALYSIS-PIPELINE-STALL",
+        "type": "FIX",
+        "status": "CLOSED-NO-FIX",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "title": "News fetch->analysis pipeline stalled ~100min during market hours (last analysis 05:02Z); manual fetch did not recover",
+        "desc": "Router RAW-corroborated (sau-2026-06-25T06:32:59Z): get_market_context last news analysis=2026-06-25T05:02Z, persistent ~100min into a weekday afternoon session. vn-news-fetch VPS service is HEALTHY+polling (15min cadence) and TA alerts still flow (06:15) — so it is the NEWS fetch->push-news->intelligenceCycleJob analysis path specifically, not a full outage. Router triggered trigger_news_vps_fetch(dry_run=false) at 06:36Z; last-analysis did NOT advance (still 05:02 at 06:42). CORROBORATION GATE (feedback_false_infra_failure_corroboration_gate): FIRST confirm root cause before blaming infra — distinguish (a) genuine no-new-unique-items / dedup saturation across 14 RSS feeds (would be benign) vs (b) real break (VPS fetch returns empty/cached, push-news ingestion failing, or intelligenceCycleJob not running/erroring). Check VPS /tmp/news-debug-*.log, push-news endpoint, intelligenceCycleJob scheduler logs + last-run, and the news_articles/analysis_history write recency. DoD: identify root cause with evidence; if a real break, fix it and RAW-verify new analysis lands (last-analysis advances past 05:02 with a fresh item); if genuinely no-new-items, document that + (optional) widen sources or adjust the SLA so it doesn't false-fire. Full mcp-server check green before commit.",
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts"
+        ],
+        "created_at": "2026-06-25T06:44:45Z",
+        "created_by": "router",
+        "source": "system-auditor B-11 + router RAW corroboration",
+        "closed_at": "2026-06-25T07:00:00Z",
+        "closed_by": "po",
+        "close_reason": "FALSE-PREMISE / SUPERSEDED. Created 06:44Z from the router_verify (06:37Z) that predated the router's own deeper re-investigation (06:42Z). PO RAW-verify 06:44Z: news push DID land (06:30:01, 06:43:53, Stale=no, 0err) and 'last analysis 05:02Z' = news-scout-sentiment slot last_fired 05:02:55Z (on 4h+daily analysis cadence, next slot 08:00Z). There is NO fetch->analysis pipeline stall: trigger_news_vps_fetch triggers raw FETCH (succeeded), analysis only runs on the news-scout slot cron — so 'manual fetch did not advance last-analysis' is expected, not a break. Root cause is the same layer-confusion as B-11. Superseded by FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT (predicate split) + ADD-NEWS-SCOUT-INTRADAY-SLOT (coverage). No dev-mcp-server work needed.",
+        "superseded_by": [
+          "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
+          "ADD-NEWS-SCOUT-INTRADAY-SLOT"
+        ]
       }
     ],
     "done_verified": [
@@ -24761,25 +24859,7 @@
       "updated_by": "dev-team-router",
       "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
     },
-    "in_progress": [
-      {
-        "id": "FIX-NEWS-ANALYSIS-PIPELINE-STALL",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "owner": "dev-mcp-server",
-        "title": "News fetch->analysis pipeline stalled ~100min during market hours (last analysis 05:02Z); manual fetch did not recover",
-        "desc": "Router RAW-corroborated (sau-2026-06-25T06:32:59Z): get_market_context last news analysis=2026-06-25T05:02Z, persistent ~100min into a weekday afternoon session. vn-news-fetch VPS service is HEALTHY+polling (15min cadence) and TA alerts still flow (06:15) — so it is the NEWS fetch->push-news->intelligenceCycleJob analysis path specifically, not a full outage. Router triggered trigger_news_vps_fetch(dry_run=false) at 06:36Z; last-analysis did NOT advance (still 05:02 at 06:42). CORROBORATION GATE (feedback_false_infra_failure_corroboration_gate): FIRST confirm root cause before blaming infra — distinguish (a) genuine no-new-unique-items / dedup saturation across 14 RSS feeds (would be benign) vs (b) real break (VPS fetch returns empty/cached, push-news ingestion failing, or intelligenceCycleJob not running/erroring). Check VPS /tmp/news-debug-*.log, push-news endpoint, intelligenceCycleJob scheduler logs + last-run, and the news_articles/analysis_history write recency. DoD: identify root cause with evidence; if a real break, fix it and RAW-verify new analysis lands (last-analysis advances past 05:02 with a fresh item); if genuinely no-new-items, document that + (optional) widen sources or adjust the SLA so it doesn't false-fire. Full mcp-server check green before commit.",
-        "files": [
-          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts"
-        ],
-        "created_at": "2026-06-25T06:44:45Z",
-        "created_by": "router",
-        "source": "system-auditor B-11 + router RAW corroboration"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
