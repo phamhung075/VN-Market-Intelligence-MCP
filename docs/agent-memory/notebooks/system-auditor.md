@@ -2,6 +2,12 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c367 · 2026-06-25T14:56:40Z
+### DB Data-Anomaly Sweep Tier-DATA (14:54–14:56 UTC 2026-06-25) — Canonical-4 FROZEN, 0 NEW Signals
+- Anomaly scan results: (1) db1=835 OHLCV violations (FIX-OHLCV-WRITER-INTEGRITY in_progress); (2) db2=1 DFF scale; (3) db3=0 vnindex cache; (4) c04=21 low-conf; (5) prices_stale>4h=3 illiquid tickers; (6) orphaned_alerts_24h=1; (7) orphaned_signals_alert_fk=220 ACTIVE-TRACKED; (8) deep_queue_expired=589; (9) finrpt_zero_revenue=31 frozen; (10) bctc_ssc_urls=0 PASS
+- Verdict: 0 NEW anomalies. All findings BY-DESIGN or already-tracked via sau-20260625T1426-orphan-signals-regress.
+- Status: HEALTHY | Signals: 0 posted | Queue: 73 rows unchanged | History: 127→128 | Telegram: none
+
 ## c366 · 2026-06-25T14:32:32Z
 ### Audit Run Tier-2 (14:31–14:32 UTC 2026-06-25) — Freshness Sweep
 - Tier: 2 | Checks: A-29 cron fire, B-01..B-13 freshness, C-06/C-07 DB spot checks, VPS proxy, rate limits
