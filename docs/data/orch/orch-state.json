@@ -11343,7 +11343,9 @@
         "baseline_pass": true,
         "source": "PO reroute triage 2026-06-17 (router-verified) — SLA-metric residual",
         "minted_at": "2026-06-17T18:58:32Z",
-        "minted_by": "po"
+        "minted_by": "po",
+        "sequence_after": "FIX-BCTC-SLA-THRESHOLD-360",
+        "po_sequence_note": "po-s113 2026-06-25T02:17:00Z: NOT merged into THRESHOLD-360 (router 06-25 asked). Distinct metric-semantics change, own verification gate. Sequenced AFTER THRESHOLD-360 (same file freshnessSlaChecker.ts -> serialize to avoid contention). MAY CLOSE NO-OP if THRESHOLD-360 done_verified shows SLA stable with terminal rows present. Kept P3 backlog; not promoted (would race same file)."
       },
       {
         "id": "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
@@ -24592,7 +24594,8 @@
           "by": "po-s112",
           "at": "2026-06-25T02:15:29Z",
           "note": "router '120 vs 360' framing outdated; system-map resolver already shipped; 3 real sub-roots: (a) mcp get_sla_status legacy 120/360 path diverges from resolver, (b) 168h too tight for inter-quarter gap, (c) push-age!=host-down"
-        }
+        },
+        "po_sibling_decision": "po-s113 2026-06-25T02:17:00Z: sibling FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL kept P3 backlog, sequenced AFTER this task (NOT merged) — orthogonal metric-semantics, may close no-op once this task's done_verified shows off-season SLA stable."
       }
     ],
     "review": [
