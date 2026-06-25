@@ -2,6 +2,21 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c389 · 2026-06-25T22:13:08Z
+### Audit Run Tier-1 (22:13 UTC 2026-06-25) — Runtime Ping
+- Tier: 1 | Services: 12/12 UP (all INTENDED host_runtime_set) | Health: 5/5 endpoints OK
+- RAW-PROBE (22:13Z): all 12 containers Up with status=healthy
+  - mcp-server/frontend/macro-indicators/rag-service 33min fresh; pdf-extractor 9d+; stock-price/ta/kinh-dich 10-11d; api-gateway/news-fetch/alert-engine 2w+; mcp-gateway 5w+
+  - [health] mcp-server:3000/health OK (HTTP 200)
+  - [health] api-gateway:4000/health OK (HTTP 200)
+  - [health] macro-indicators:5004/health OK (HTTP 200)
+  - [health] pdf-extractor:5001/health OK (HTTP 200)
+  - [health] frontend:3001/ OK (HTTP 200)
+- A-20 pdf-extractor multi-probe: [A-20-PROBE-1] 200 | [A-20-PROBE-2] 200 | [A-20-PROBE-3] 200 → 3/3 PASS
+- RestartCount: mcp-server=0 PASS; Memory: mcp-server 17.26% (<85%); Disk: 16% (<85% PASS)
+- Anomalies: 0 NEW (all checks PASS)
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: 79 rows unchanged
+
 ## c388 · 2026-06-25T22:11:27Z
 ### Audit Run Tier-1 (22:11 UTC 2026-06-25) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP (all INTENDED host_runtime_set) | Health: 5/5 endpoints OK
