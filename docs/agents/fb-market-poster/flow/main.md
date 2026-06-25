@@ -1,4 +1,4 @@
-<!-- size-justification: 758L — +40L from 718L: FIX-FB-POSTER-FABRICATES-STALE-EOD: (1) STEP 1b now hard-requires live get_market_snapshot per-ticker fetch for the recap spine with FAIL-LOUD honest-gap path; CHEF morning data demoted to narrative-only, never numeric spine; (2) STEP 1b anti-fabrication rule: stale CHEF per-ticker % FORBIDDEN in Tóm tắt nhanh; (3) STEP 4b data-integrity plausibility gate added (sibling FIX-FB-POST-DATA-INTEGRITY-GATE will build scripts/fb-data-integrity-gate.sh; gate blocks on non-zero exit; honest-gap on gate unavailable); (4) RETURN block extended with data-integrity gate result; memory_ref: feedback_fb_poster_fabricates_when_data_thin; prior size-justification entries preserved -->
+<!-- size-justification: 814L — +56L from 758L: FIX-FB-POSTER-MISSING-FLOW-FX-TA: (a) STEP 1b foreign-flow disambiguated: get_market_foreign_flow(arguments={}) is MARKET-WIDE tool (no code param) for Khối ngoại recap line; per-ticker get_foreign_flow only for deep dives — NOT for recap; (b) gateway-blind premise removed: agent MUST execute STEP 1b live every run; if genuinely gateway-blind (mcpServers==0) must report per-field explicitly, NOT silently omit; (c) foreign-flow+macro/FX+TA promoted to hard-required-live tier alongside price spine (same tier as get_market_snapshot); blanket "công cụ chưa lấy được" for all three FORBIDDEN — per-field honest-gap only; FX flat/stale (usdVndDelta=null) = "đi ngang/chưa cập nhật" NOT "unfetchable"; (d) STEP 4b gate-loop bounded: max 2 fix rounds; after 2 fails → honest-gap + proceed or EXIT — never infinite-loop; prior size-justification entries preserved -->
 # FB Market Poster — Main Flow
 
 ## SELF-IDENTITY GUARD (read first — non-negotiable)
@@ -73,7 +73,7 @@ Read the following files. Each read is guarded: if file missing or <50 chars →
 
 ---
 
-## STEP 1b — Live enrichment via vn-market tools (HARD-REQUIRED for recap spine)
+## STEP 1b — Live enrichment via vn-market tools (HARD-REQUIRED for recap spine — ALL tiers)
 
 **Purpose:** ALL per-ticker % moves and numeric market figures for the Tóm tắt nhanh recap spine MUST come from live tool calls made THIS cycle. Notebooks and CHEF dishes may inform NARRATIVE and CONTEXT only — they are FORBIDDEN as the numeric source for any per-ticker price change, index level, breadth count, or liquidity figure in the recap.
 
@@ -82,7 +82,34 @@ Read the following files. Each read is guarded: if file missing or <50 chars →
 - A per-ticker move figure (e.g. "VIC −6.6%, VHM −8.5%") MUST trace to a live `get_market_snapshot` or `get_ticker_intelligence` call in THIS cycle. If the tool call fails or returns no data for a ticker → write an honest gap: "công cụ chưa trả số cho [TICKER] phiên này" — NEVER invent or carry a stale figure.
 - Any per-ticker % that exceeds ±7% on HOSE (the daily price limit) is physically impossible and is a fabrication signal. If a CHEF source or working-memory figure would produce such a value, DISCARD it and write an honest gap.
 
-Run ALL calls; skip individual call if it errors (log + continue).
+**HARD-REQUIRED-LIVE TIER (same hard requirement as get_market_snapshot — NOT optional):**
+
+The following three tool calls are HARD-REQUIRED-LIVE, on equal footing with the price spine:
+
+1. `get_market_foreign_flow(arguments={})` — **MARKET-WIDE foreign flow for the "Khối ngoại" recap line.**
+   - **TOOL DISAMBIGUATION (failure mode: notebook logged "get_foreign_flow=skipped (requires code param)"):**
+     - `get_market_foreign_flow` = market-wide aggregated flow; NO `code` argument; call with `arguments={}`. Use this for the Tóm tắt nhanh "Khối ngoại" recap line.
+     - `get_foreign_flow(arguments={"code": ticker})` = per-ticker flow; requires a ticker code. Use ONLY for ticker-specific deep dives in Phân tích/Dự đoán, NOT for the recap aggregate.
+     - NEVER substitute per-ticker `get_foreign_flow` for the market-wide recap. If confused, call `get_market_foreign_flow(arguments={})` first.
+   - If this call errors: retry ONCE. If still fails → write per-field honest gap: "dữ liệu dòng vốn ngoại phiên này công cụ chưa trả được" for ONLY the foreign-flow field. NEVER bundle with FX/TA into a blanket gap.
+
+2. `get_macro_snapshot(arguments={})` — **FX + macro figures including usdVnd.**
+   - FX stale/flat handling: if `usdVndDelta=null` or `fetched_at_source` is not today → this is NOT unfetchable; it means the rate is flat/unchanged. Report as: "tỷ giá USD/VND đi ngang quanh {usdVnd value}" — NOT "công cụ chưa lấy được tỷ giá".
+   - If this call errors entirely: retry ONCE. If still fails → write per-field honest gap: "tỷ giá phiên này công cụ chưa trả được" for ONLY the FX field.
+
+3. `get_technical_indicators(arguments={"code": ticker})` — **TA for named tickers (≥15 tickers).**
+   - Call for all tickers flagged as potential post subjects (top movers + unusual foreign flow).
+   - If a per-ticker TA call errors: mark that ticker `data_quality = NO_TA` and append "(không có dữ liệu kỹ thuật phiên này)" to its verdict. NEVER skip TA wholesale.
+   - If >80% of TA calls error: write honest gap for TA section: "dữ liệu kỹ thuật đa số mã chưa lấy được phiên này". Do NOT omit silently.
+
+**GATEWAY-BLIND PREMISE — REMOVED (failure mode: notebook logged "Live tools called: None (gateway-blind this run per instruction)"):**
+- fb-market-poster MUST execute STEP 1b live every run. There is NO "accept partial pre-fetched spine" path.
+- Agent-spawned fb-poster inherits live gateway access (verified: news-scout/chef/ops all use call_tool).
+- If genuinely gateway-blind at runtime (mcpServers count = 0 confirmed): for EACH of the three hard-required fields, write a SPECIFIC per-field honest gap stating the field name and reason. NEVER silently omit all three fields with a blanket "dữ liệu dòng vốn ngoại, tỷ giá và các chỉ báo kỹ thuật phiên này công cụ chưa lấy được".
+
+**BLANKET-GAP FORBIDDEN:** The phrase "dữ liệu dòng vốn ngoại, tỷ giá và các chỉ báo kỹ thuật phiên này công cụ chưa lấy được" (or any equivalent bundling all three into one omission) is FORBIDDEN. Each field's gap must be stated individually with its own tool name.
+
+Run ALL calls in this step. For the three hard-required tools above, retry once on error before writing a per-field honest gap. For all other tools (legal_risk, sentiment, earnings, ticker_intel), skip individual call if it errors (log + continue).
 
 ```
 # Indices + snapshot
@@ -579,31 +606,50 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
    forbidden token (e.g. `sentiment`) into a temp file → gate MUST exit 1 and print [FAIL].
    A gate that exits 0 on a planted violation is a false-green and must be fixed before use.
 
-**STEP 4b — DATA-INTEGRITY PLAUSIBILITY GATE**
+**STEP 4b — DATA-INTEGRITY PLAUSIBILITY GATE (bounded retry — max 2 fix rounds)**
 
 This gate runs IN ADDITION to the jargon gate. It checks numeric plausibility — the jargon gate passes both fabricated and real numbers equally (known failure: feedback_fb_poster_fabricates_when_data_thin, feedback_fb_poster_gate_false_green).
 
 The gate script is `scripts/fb-data-integrity-gate.sh` (authored by sibling task FIX-FB-POST-DATA-INTEGRITY-GATE).
 
+**GATE-LOOP HARDENING (failure mode: regen attempt wedged ~4.5h on Check-C "bán tháo" negation-blind false-positive):**
+- Maximum fix rounds: **2**. On each BLOCK, fix ALL flagged violations, then re-run the gate ONCE.
+- After 2 fix rounds: if gate still exits non-zero → write a SPECIFIC honest gap for each remaining flagged field (e.g. "số liệu thanh khoản chưa thể xác minh phiên này") and PROCEED to check 4. Do NOT loop further.
+- Special case — Check-C negation-blind false-positive: if the gate blocks on "bán tháo"-class language AND breadth data confirms orderly decline (e.g. ≤2 sàn, net-positive or small-negative advancers), AND the phrase includes a negation prefix ("chưa", "không", "chưa có dấu hiệu"), this is a known false-positive. Apply fix: replace "bán tháo" / "tháo chạy" / "hoảng loạn" with neutral language ("áp lực bán chưa lan rộng", "chốt lời nhẹ", "lực bán chưa quá lớn") and re-run once. If that one re-run passes: proceed. If still fails: write honest gap + proceed (do NOT EXIT on known false-positive).
+- EXIT path: only if gate blocks on a REAL fabrication violation (e.g. per-ticker move >±7% cannot be corrected by rephrasing) after 2 rounds → send_telegram(bug) + EXIT cleanly. Never infinite-loop.
+
 Required execution sequence:
 ```bash
-if [ -f "scripts/fb-data-integrity-gate.sh" ]; then
-  TMPFILE=$(mktemp /tmp/fb-post-integrity-XXXXXX.txt)
-  printf '%s' "$POST_BODY" > "$TMPFILE"
-  bash scripts/fb-data-integrity-gate.sh "$TMPFILE" "$POST_DATE"
-  INTEGRITY_EXIT=$?
-  rm -f "$TMPFILE"
-else
-  INTEGRITY_EXIT=0  # gate not yet deployed — log unavailability, proceed
-  echo "[fb-market-poster] STEP 4b: scripts/fb-data-integrity-gate.sh not found — skipping plausibility gate this cycle (deploy pending FIX-FB-POST-DATA-INTEGRITY-GATE)"
-fi
+GATE_4B_ROUNDS=0
+INTEGRITY_EXIT=1
+while [ $INTEGRITY_EXIT -ne 0 ] && [ $GATE_4B_ROUNDS -lt 2 ]; do
+  if [ -f "scripts/fb-data-integrity-gate.sh" ]; then
+    TMPFILE=$(mktemp /tmp/fb-post-integrity-XXXXXX.txt)
+    printf '%s' "$POST_BODY" > "$TMPFILE"
+    bash scripts/fb-data-integrity-gate.sh "$TMPFILE" "$POST_DATE"
+    INTEGRITY_EXIT=$?
+    rm -f "$TMPFILE"
+    GATE_4B_ROUNDS=$((GATE_4B_ROUNDS + 1))
+    if [ $INTEGRITY_EXIT -ne 0 ] && [ $GATE_4B_ROUNDS -lt 2 ]; then
+      # Fix all flagged violations inline, then loop
+      echo "[fb-market-poster] STEP 4b round $GATE_4B_ROUNDS: BLOCK — applying fixes, will re-run"
+    fi
+  else
+    INTEGRITY_EXIT=0  # gate not yet deployed — log unavailability, proceed
+    echo "[fb-market-poster] STEP 4b: scripts/fb-data-integrity-gate.sh not found — skipping plausibility gate this cycle (deploy pending FIX-FB-POST-DATA-INTEGRITY-GATE)"
+    break
+  fi
+done
+# After loop: if INTEGRITY_EXIT still non-zero → write honest gap per blocked field + proceed (DO NOT EXIT unless real fabrication)
 ```
 - Gate exit 0 = PASS → proceed to check 4 (post length).
-- Gate exit non-zero = BLOCK → fix every flagged violation in the post body; re-run gate. Do NOT write the file while gate exits non-zero.
+- Gate exits non-zero after 2 rounds:
+  - If violation is a known false-positive (Check-C negation-blind pattern described above) → write per-field honest gap + PROCEED.
+  - If violation is a real fabrication (per-ticker move >±7%, or genuine unprovable breadth claim) → send_telegram(bug, "[fb-market-poster] DATA-INTEGRITY GATE: unresolvable fabrication after 2 rounds — post NOT written") + EXIT.
 - If gate script missing → log warning, treat as PASS for this cycle only (gate pending deploy).
 - Violations the gate checks (reference — gate script is authoritative):
   - Any per-ticker HOSE move > ±7% (above daily price limit = impossible = fabrication)
-  - Any "bán tháo / selloff" narrative when same-session breadth shows net-positive advancers and zero floor hits
+  - Any "bán tháo / selloff" narrative when same-session breadth shows net-positive advancers and zero floor hits [NOTE: negation prefix "chưa/không" may trigger false-positive — see bounded retry handling above]
   - If gate BLOCKS but violation is a live tool value (not a CHEF carry-forward): override is permitted with a note in RETURN explaining the anomaly and its live source.
 
 Paste the VERBATIM one-line gate stdout into the RETURN block (INTEGRITY GATE field).

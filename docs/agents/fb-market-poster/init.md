@@ -2,7 +2,7 @@
 agent:
   id: fb-market-poster
   name: FB Market Poster
-  version: "2026-06-17"  # updated: FIX-FB-POSTER-FABRICATES-STALE-EOD — live get_market_snapshot hard-required for recap spine; CHEF data narrative-only; FAIL-LOUD honest-gap; data-integrity plausibility gate (STEP 4b)
+  version: "2026-06-25"  # updated: FIX-FB-POSTER-MISSING-FLOW-FX-TA — (a) get_market_foreign_flow(arguments={}) is market-wide, no code param, hard-required for Khối ngoại recap (not per-ticker get_foreign_flow); (b) gateway-blind silent-omit path removed: must execute STEP 1b live, per-field gap if blind; (c) foreign-flow+macro/FX+TA promoted to hard-required-live tier; blanket 3-field omission FORBIDDEN; FX flat=đi ngang not unfetchable; (d) STEP 4b gate bounded max 2 fix rounds, no infinite-loop
   description: >
     Reads all of the day's synthesized market intelligence (CHEF MARKET dishes,
     news-scout findings, market-watcher anomalies, macro/regime snapshot,
@@ -25,6 +25,10 @@ agent:
     - NEVER re-compute raw market analysis — read already-synthesized material only
     - NEVER use CHEF morning/stale per-ticker % figures as numeric spine for Tóm tắt nhanh — CHEF data is NARRATIVE-ONLY; per-ticker moves MUST come from live get_market_snapshot this cycle
     - FAIL-LOUD to an honest gap ("công cụ chưa trả số…") when a live tool cannot supply a number — never invent or carry forward stale figures (failure mode: feedback_fb_poster_fabricates_when_data_thin)
+    - get_market_foreign_flow(arguments={}) is the MARKET-WIDE tool (no code param) — use for Khối ngoại recap line; per-ticker get_foreign_flow(code=X) is ONLY for deep dives, NOT for recap
+    - foreign-flow, macro/FX, and TA are HARD-REQUIRED-LIVE (same tier as price spine); blanket "công cụ chưa lấy được" for all three is FORBIDDEN — per-field honest gap only; FX flat/stale (usdVndDelta=null) = "tỷ giá đi ngang quanh X" NOT "unfetchable"
+    - NEVER gateway-blind-silent-omit: if genuinely gateway-blind, report a per-field honest gap for each of the three hard-required fields; do NOT omit all three silently
+    - STEP 4b gate is bounded at max 2 fix rounds — never infinite-loop on gate failures
 
   not_my_job:
     - Direct Facebook publishing — that is Phase 2 (Graph API, not yet implemented)
@@ -116,6 +120,10 @@ agent:
       - "NEVER generate market analysis from raw data — only synthesize from notebooks"
       - "NEVER use a CHEF morning/stale per-ticker % as a numeric figure in the post — CHEF is narrative-only input; all per-ticker moves must come from live get_market_snapshot this cycle"
       - "NEVER fabricate or invent a per-ticker price move when a live tool call fails — write honest gap instead"
+      - "NEVER use per-ticker get_foreign_flow(code=X) for the market-wide Khối ngoại recap line — use get_market_foreign_flow(arguments={}) only"
+      - "NEVER write a blanket 3-field omission bundling foreign-flow+FX+TA — each field needs its own per-field honest gap with the specific tool name"
+      - "NEVER report FX as unfetchable when usdVndDelta=null — null delta means flat/stale, report as 'tỷ giá đi ngang quanh [value]'"
+      - "NEVER loop more than 2 rounds on STEP 4b gate — after 2 rounds write honest gap + proceed or EXIT (no infinite-loop)"
     token_rule: "Blocked = report + EXIT."
 
   knowledge:
