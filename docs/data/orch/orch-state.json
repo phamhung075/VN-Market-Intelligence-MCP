@@ -199,12 +199,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-25T15:10:47Z",
+    "status": "idle",
+    "updated_at": "2026-06-25T15:33:07Z",
     "updated_by": "dev-team-cron-router",
-    "active_task_id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH",
-    "next_agent": "qa",
-    "note": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH promoted in_progress->qa (commit 57a781a1, router raw-verified). qa validates DoD + verify criteria, then merge/done."
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH DONE-LIVE-VERIFIED (QA APPROVED, done_verified, commit 57a781a1). Board clear. WIP=0. OPS FLAG: mcp-server Docker rebuild required to deploy fix (container predates commit; orphans accrue +96/day until rebuilt)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18015,6 +18015,35 @@
           "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
           "ADD-NEWS-SCOUT-INTRADAY-SLOT"
         ]
+      },
+      {
+        "id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server",
+        "status": "DONE-LIVE-VERIFIED",
+        "title": "alert-engine verified_decision emit writes UUID into agent_signals.alert_id instead of semantic alerts.id (220 orphans, +96/day)",
+        "desc": "ROOT CAUSE (router RAW-verified live bun rw handle, immutable=1, 2026-06-25T14:40Z): LOGICAL orphan, NOT a DB FK/cascade issue (agent_signals.alert_id is TEXT/nullable/NO FK; PRAGMA foreign_key_list empty — auditor cascading-delete hypothesis is WRONG). 4248 signals; 3689 NULL alert_id (legit non-alert sources); 559 non-null → 339 MATCH alerts.id, 220 ORPHAN. ALL 220 orphans are signal_type=verified_decision emitted by alert-engine. alerts.id uses SEMANTIC keys (alert-POW-volume_spike-2026-06-25T08, alert-news-VIC-...); the 220 orphans carry UUID alert_ids (ad5d2c63-...) so refs never resolve. ID-SCHEME MISMATCH: the verified_decision emit path writes a UUID into alert_id instead of the semantic alerts.id. Growing +96/day (124 on 06-24 → 220 on 06-25), newest 08:45:01Z. Not data-loss (signals intact); alert↔signal join broken for 220 rows + accruing. FIX TARGET: make the verified_decision emit path persist the SEMANTIC alerts.id (or unify the two id schemes).",
+        "files": "apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts (line 254 UUID->semantic id); apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts (line 241 UUID->semantic id); new test apps/mcp-server/src/__tests__/FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH.test.ts",
+        "verify": "new verified_decision alert_ids match alerts.id semantic format AND orphan count stops growing (220 stops accruing; no new UUID-shaped alert_ids appear for verified_decision rows)",
+        "baseline_pass": "alert-engine Go build green + existing alert-engine tests pass before change (touched-file CI must stay green; full-suite is DoD)",
+        "source_signal": "sau-20260625T1426-orphan-signals-regress",
+        "created_at": "2026-06-25T14:46:25Z",
+        "created_by": "po",
+        "sprint": "dev-team-triage",
+        "claimed_at": "2026-06-25T14:47:35Z",
+        "claimed_by": "dev-team",
+        "next_agent": "qa",
+        "dispatch_note": "ZONE-CORRECTION (2026-06-25T14:53:58Z): dev-alert-engine RAW-investigated + reported zone mismatch — bug is NOT in apps/alert-engine (Go has ZERO agent_signals/verified_decision code; router confirmed grep empty). Real source: apps/mcp-server (TypeScript). Two scan-job emitters set alert id = crypto.randomUUID() which propagates via storeAlerts() into agent_signals.alert_id: (1) apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts:254 ; (2) apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts:241. FIX: replace UUID with semantic id 'alert-${code}-${alertType}-${daySlot}' (daySlot=triggeredAt.slice(0,10); alertType already computed). Matches alerts.id pattern alert-HVN-ta_overbought-2026-06-25. fingerprint (scan:code:alertType:daySlot) still owns UNIQUE dedup so deterministic id is safe. Re-routed apps/alert-engine -> apps/mcp-server, dispatched dev-mcp-server.",
+        "rerouted_from_zone": "apps/alert-engine",
+        "rerouted_at": "2026-06-25T14:53:58Z",
+        "commit": "57a781a14ed86aa828011c0651e8286805f4d3d0",
+        "dev_completed_at": "2026-06-25T15:10:47Z",
+        "qa_note": "dev-mcp-server fix live (router raw-verified): taAlertScanJob.ts:258 + bbAlertScanJob.ts:245 emit semantic id alert-{code}-{alertType}-{daySlot} replacing crypto.randomUUID(); storeAlerts propagates alert.id->agent_signals.alert_id. New test 5/5 pass. tsc clean. 107 suite fails pre-existing (none in touched files). VERIFY: (a) format matches alerts.id, (b) UUID writer eliminated so orphans stop accruing. Existing 220 orphans out-of-scope backfill.",
+        "done_verified": true,
+        "closed_at": "2026-06-25T15:31:55Z",
+        "rebuild_required": "mcp-server"
       }
     ],
     "done_verified": [
@@ -24942,37 +24971,7 @@
         "po_reparked_at": "2026-06-15T06:35:17Z"
       }
     ],
-    "qa": [
-      {
-        "id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server",
-        "status": "done",
-        "title": "alert-engine verified_decision emit writes UUID into agent_signals.alert_id instead of semantic alerts.id (220 orphans, +96/day)",
-        "desc": "ROOT CAUSE (router RAW-verified live bun rw handle, immutable=1, 2026-06-25T14:40Z): LOGICAL orphan, NOT a DB FK/cascade issue (agent_signals.alert_id is TEXT/nullable/NO FK; PRAGMA foreign_key_list empty — auditor cascading-delete hypothesis is WRONG). 4248 signals; 3689 NULL alert_id (legit non-alert sources); 559 non-null → 339 MATCH alerts.id, 220 ORPHAN. ALL 220 orphans are signal_type=verified_decision emitted by alert-engine. alerts.id uses SEMANTIC keys (alert-POW-volume_spike-2026-06-25T08, alert-news-VIC-...); the 220 orphans carry UUID alert_ids (ad5d2c63-...) so refs never resolve. ID-SCHEME MISMATCH: the verified_decision emit path writes a UUID into alert_id instead of the semantic alerts.id. Growing +96/day (124 on 06-24 → 220 on 06-25), newest 08:45:01Z. Not data-loss (signals intact); alert↔signal join broken for 220 rows + accruing. FIX TARGET: make the verified_decision emit path persist the SEMANTIC alerts.id (or unify the two id schemes).",
-        "files": "apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts (line 254 UUID->semantic id); apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts (line 241 UUID->semantic id); new test apps/mcp-server/src/__tests__/FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH.test.ts",
-        "verify": "new verified_decision alert_ids match alerts.id semantic format AND orphan count stops growing (220 stops accruing; no new UUID-shaped alert_ids appear for verified_decision rows)",
-        "baseline_pass": "alert-engine Go build green + existing alert-engine tests pass before change (touched-file CI must stay green; full-suite is DoD)",
-        "source_signal": "sau-20260625T1426-orphan-signals-regress",
-        "created_at": "2026-06-25T14:46:25Z",
-        "created_by": "po",
-        "sprint": "dev-team-triage",
-        "claimed_at": "2026-06-25T14:47:35Z",
-        "claimed_by": "dev-team",
-        "next_agent": "qa",
-        "dispatch_note": "ZONE-CORRECTION (2026-06-25T14:53:58Z): dev-alert-engine RAW-investigated + reported zone mismatch — bug is NOT in apps/alert-engine (Go has ZERO agent_signals/verified_decision code; router confirmed grep empty). Real source: apps/mcp-server (TypeScript). Two scan-job emitters set alert id = crypto.randomUUID() which propagates via storeAlerts() into agent_signals.alert_id: (1) apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts:254 ; (2) apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts:241. FIX: replace UUID with semantic id 'alert-${code}-${alertType}-${daySlot}' (daySlot=triggeredAt.slice(0,10); alertType already computed). Matches alerts.id pattern alert-HVN-ta_overbought-2026-06-25. fingerprint (scan:code:alertType:daySlot) still owns UNIQUE dedup so deterministic id is safe. Re-routed apps/alert-engine -> apps/mcp-server, dispatched dev-mcp-server.",
-        "rerouted_from_zone": "apps/alert-engine",
-        "rerouted_at": "2026-06-25T14:53:58Z",
-        "commit": "57a781a14ed86aa828011c0651e8286805f4d3d0",
-        "dev_completed_at": "2026-06-25T15:10:47Z",
-        "qa_note": "dev-mcp-server fix live (router raw-verified): taAlertScanJob.ts:258 + bbAlertScanJob.ts:245 emit semantic id alert-{code}-{alertType}-{daySlot} replacing crypto.randomUUID(); storeAlerts propagates alert.id->agent_signals.alert_id. New test 5/5 pass. tsc clean. 107 suite fails pre-existing (none in touched files). VERIFY: (a) format matches alerts.id, (b) UUID writer eliminated so orphans stop accruing. Existing 220 orphans out-of-scope backfill.",
-        "done_verified": true,
-        "closed_at": "2026-06-25T15:31:55Z",
-        "rebuild_required": "mcp-server"
-      }
-    ],
+    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
