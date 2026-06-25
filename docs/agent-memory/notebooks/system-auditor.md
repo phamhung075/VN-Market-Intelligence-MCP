@@ -2,6 +2,18 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c390 · 2026-06-25T22:30:23Z
+### Audit Run Tier-2 (22:30 UTC 2026-06-25) — Freshness Sweep
+- Tier: 2 | Spot checks: 4 DB queries run | Sources: multi-check scoped
+- C-06 (market_messages 3h): 0 rows (market-hours-blind FALSE-POSITIVE — 22:30 UTC = 05:30 VN pre-market; last msg 15:30 evening, expected idle)
+- C-07 (agent_signals 24h): 256 rows PASS (>0 ✓)
+- B-09 (SSC portal URLs): 0 rows PASS (should be 0 ✓)
+- B-13 (stale pending >72h): 0 rows PASS (should be 0 ✓)
+- BCTC active queue: 38 actionable items — B-05 gate: HEALTHY with work
+- Per-source cadence (B-01-B-07): TOOL-UNAVAILABLE | Cron fire gaps (A-29): TOOL-UNAVAILABLE | VPS health: TOOL-UNAVAILABLE | BCTC eval: ENDPOINT-UNREACHABLE
+- Anomalies: 0 NEW signals (spot checks PASS; prior C-06 false-positives tracked)
+- Quality: PARTIAL (spot-check layer HEALTHY; full Tier-2 freshness BLOCKED by tool unavailability)
+
 ## c389 · 2026-06-25T22:13:08Z
 ### Audit Run Tier-1 (22:13 UTC 2026-06-25) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP (all INTENDED host_runtime_set) | Health: 5/5 endpoints OK
