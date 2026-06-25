@@ -238,12 +238,15 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
 
       // i. Build alert payload
       const triggeredAt = nowFn().toISOString();
-      const id = crypto.randomUUID();
+      // FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH: use semantic
+      // id matching alerts.id format so agent_signals.alert_id resolves to an
+      // actual alerts row (UUID was orphaning all verified_decision rows).
+      const daySlot = triggeredAt.slice(0, 10); // "YYYY-MM-DD"
+      const id = `alert-${code}-${alertType}-${daySlot}`;
 
       // FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS: compute composite fingerprint so
       // the DB-level UNIQUE constraint collapses any concurrent duplicate inserts
       // (parallel job race, multi-cycle repeat within the same UTC day).
-      const daySlot = triggeredAt.slice(0, 10); // "YYYY-MM-DD"
       const fingerprint = computeScanAlertFingerprint(code, alertType, daySlot);
 
       // j. Build Alert object and route through storeAlerts for atomic
