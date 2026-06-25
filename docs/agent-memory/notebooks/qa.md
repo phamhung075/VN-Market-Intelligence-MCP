@@ -186,16 +186,6 @@ Task: QUE-REFERENCE-PAGE-TEST | Dev commit: 13a3bfd0 | Verdict: APPROVED | Board
 
 Task: QUE-REFERENCE-PAGE-2 | Dev commit: a8ec7821 | Verdict: APPROVED | Board: DONE. G1 TSC PASS: npx tsc --noEmit exit 0. G2 NO-REGRESSION PASS: parent a8ec7821^ = 21 fail / 1518 pass; HEAD a8ec7821 = 21 fail / 1518 pass; delta=0 (floor maintained). G3 CALL-SITES PASS: dashboard.analysis.tsx + dashboard.kinh-dich-signals.tsx not in commit diff; existing QueName usages unchanged. G4 LINT PASS: eslint exit 0 (pre-existing boundaries deprecation warnings only). G5 VIETNAMESE PASS: rendered labels "Tra cứu Kinh Dịch" (TopNav) + "Xem chi tiết →" (QueName anchor). G6 TEST-INTENT PASS: 6 test files (page14–page19) shift positional indices N→N+1 due to kinh-dich-reference insertion at ANALYST_NAV[17]; spot-verified all 6 index assertions match actual array (26 items); no .skip/xit/commented-it; no assertion weakening. DDD PASS. Security PASS. BCTC-eval N/A (frontend-only). Board: REVIEW→DONE 2026-06-13T11:32Z. DJ: sprint-QUE-REFERENCE-PAGE-qa.md § qa-S3.
 
-## cycle-287 · 2026-06-17 · ARCH-OHLCV-WRITER-SSOT-DURABLE (P0-A) + FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 (P0-B) — APPROVE (both)
-
-P0-A: ARCH-OHLCV-WRITER-SSOT-DURABLE (SUBTASK-1/2/3) | commits: 41b4344c+e5461ad7+e96571ac | Files: ohlcvForeignFlowStore.ts (rewrite UPDATE-only, no stub INSERT) + ohlcvWriteService.ts (writer-inventory annotation) + 3 test files (2026-ohlcv-foreign-flow-merge.test.ts NEW + DPI-4 + 1503 updated) | Verdict: APPROVE-CODE | tsc 0 err | P0-A touched-file isolation 17 pass / 0 fail | Full suite (QA first-hand): 13181 pass / 52 fail / 42 skip — 52 failures ALL DISJOINT (git log confirmed no overlap with P0-A commits) | T-4 REGRESSION PROOF verified: SELECT returns rows.length===0 (zero rows, not close=0 stub) at 2026-ohlcv-foreign-flow-merge.test.ts:281-318 | DDD PASS (infrastructure/db correct layer) | Security: process.env["NODE_ENV"] in logger shim = test-noise guard only, non-blocking; mock-guard EXIT 0 | REBUILD_REQUIRED: YES | done_verified HELD: 2026-06-18 02:15Z gate (live daily_ohlcv zero close=0 rows on latest bar + no MARKET spam)
-
-P0-B: FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 | commit: d79314bb | Files: taAlertScanJob.ts + bbAlertScanJob.ts (stub-bar guard close<=0||vol<=0 fail-closed) + 6 test files (SB-1..SB-5 × 2 jobs) | Verdict: APPROVE-CODE | tsc 0 err | P0-B touched-file isolation 52 pass / 0 fail | Full suite shared (same QA run) | 52 failures ALL DISJOINT from P0-B commit set | CANDLE_SQL SELECT volume added both jobs | DDD PASS (scheduler→infrastructure permitted) | Security PASS | mock-guard EXIT 0 | REBUILD_REQUIRED: YES | done_verified HELD: same 2026-06-18 02:15Z gate | Board: FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 review→done-code | Report: reports/TASK_REPORT_ARCH-OHLCV-WRITER-SSOT-DURABLE-P0AB.md | DJ: sprint-ARCH-OHLCV-WRITER-SSOT-DURABLE-qa.md
-
----
-
 ## Archive
 
-Pre-2026-06-17 cycles (c237–c286): See git history and prior notebook entries
-Pre-2026-06-13 cycles (c259–c240): See git history commits f1c66801...4b30adbc and qa-20260606.md
-Pre-2026-06-10 cycles (c230–c236): See git history commits 4b13a23–53d00955 and qa-20260606.md
+Older cycles (c287–c240): See git history for full audit trail
