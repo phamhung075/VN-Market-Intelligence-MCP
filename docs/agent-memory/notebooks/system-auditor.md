@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c379 · 2026-06-25T17:56:04Z
+### Audit Run Tier-DATA (17:55–17:56 UTC 2026-06-25) — DB Data-Anomaly Sweep
+- Tier: DATA | Tables: 18 scanned (4-class: FAIL/MISSING, STALE/UNAVAIL, DUP/REPEAT, INCORRECT/ALEATOR)
+- Canonical-4 VERIFIED FROZEN: db1_ohlc_violations=835, db2_scale_gt100x=1, db3_vnindex_cache_rows=0, c04_low_confidence_reports=21
+- Anomaly findings: 19 entries checked (12 PASS, 7 BY-DESIGN residue): daily_ohlcv dups=0, market_prices ok, alerts orphaned FK=1 (tracked), net_revenue≤0=17 (frozen)
+- No NEW anomalies detected; all findings match known by-design residue roster
+- Anomalies: 0 NEW signals | All verdicts PASS or BY-DESIGN
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: 74 rows unchanged | History: 133→134
+
 ## c378 · 2026-06-25T17:43:27Z
 ### Audit Run Tier-1 (17:43 UTC 2026-06-25) — Runtime Ping
 - Tier: 1 | Services: 13/13 up (all INTENDED runtime set) | Health: 5/5 endpoints OK
