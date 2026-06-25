@@ -1971,11 +1971,20 @@
         "to": "dev-team",
         "summary": "agent_signals: 220 orphaned alert_id FK violations (was 124 on 2026-06-24, +96 regression). Fresh: 29 created TODAY (2026-06-25T08:45:01Z newest). Orphans date-range 2026-06-22..2026-06-25. Material +96 growth indicates ongoing corruption in alert↔signal creation atomicity or cascading delete.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "TRIAGED",
         "created_at": "2026-06-25T14:26:59Z",
         "zone_owner": "dev-alert-engine",
         "payload_ref": "docs/data/db-integrity-history.json entry #127",
-        "notes": "Prior signal sau-2026-06-24T00:28:53Z tracked 124 orphaned on 2026-06-22. Growth +96 in 2 days + 29 created TODAY indicate escalation. Investigation: (1) review alert.delete cascade constraints in schema, (2) probe alert creation vs agent_signal enqueue atomicity, (3) check alert GC cron timing vs signal link timing."
+        "notes": "Prior signal sau-2026-06-24T00:28:53Z tracked 124 orphaned on 2026-06-22. Growth +96 in 2 days + 29 created TODAY indicate escalation. Investigation: (1) review alert.delete cascade constraints in schema, (2) probe alert creation vs agent_signal enqueue atomicity, (3) check alert GC cron timing vs signal link timing.",
+        "router_verified": "router: live immutable=1 probe confirms 220 orphaned agent_signals.alert_id (39% of 559 non-null), all created 06-22..06-25, 29 fresh today — genuine active regression, not predicate-drift",
+        "router_dup_of": "sau-2026-06-24T00:28:53Z-orphan-signals",
+        "type": "data_integrity",
+        "ts": "2026-06-25T14:26:00Z",
+        "router_note": "RAW-VERIFIED + ROOT-CAUSED router 2026-06-25T14:40Z (live bun rw handle). CONFIRMED REAL (not benign, not false-positive). Facts: agent_signals.alert_id is TEXT nullable, NO FK constraint (PRAGMA foreign_key_list=empty) — so this is a LOGICAL orphan, not a DB FK violation; auditor cascading-delete/atomicity hypothesis is WRONG. 4248 total signals; 3689 NULL alert_id (legit non-alert sources), 559 nonzero. Of nonzero: 339 MATCH alerts.id, 220 ORPHAN — ALL 220 are signal_type=verified_decision from alert-engine. ROOT CAUSE: ID-SCHEME MISMATCH. alerts.id uses SEMANTIC keys (e.g. alert-POW-volume_spike-2026-06-25T08, alert-news-VIC-...), but the 220 orphans carry UUID alert_ids (e.g. ad5d2c63-33b8-4cba-a95d-09b92a9e4bd7), newest today 08:45:01Z, growing +96/day. The alert-engine verified_decision emit path is writing a UUID into alert_id instead of the semantic alerts.id, so those refs can never resolve. ZONE: dev-alert-engine (Go). FIX TARGET: make verified_decision store the semantic alerts.id (or unify the two id schemes). Not data-loss (signals intact), but the alert<->signal join is broken for 220 rows + accruing. Verify fix by: new verified_decision alert_ids match alerts.id format AND orphan count stops growing.",
+        "router_task": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH",
+        "linked_task": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH",
+        "triaged_at": "2026-06-25T14:46:25Z",
+        "triaged_by": "po"
       }
     ],
     "last_triaged_at": "2026-06-25T07:00:00Z",
@@ -24907,7 +24916,25 @@
       "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/alert-engine",
+        "status": "READY",
+        "title": "alert-engine verified_decision emit writes UUID into agent_signals.alert_id instead of semantic alerts.id (220 orphans, +96/day)",
+        "desc": "ROOT CAUSE (router RAW-verified live bun rw handle, immutable=1, 2026-06-25T14:40Z): LOGICAL orphan, NOT a DB FK/cascade issue (agent_signals.alert_id is TEXT/nullable/NO FK; PRAGMA foreign_key_list empty — auditor cascading-delete hypothesis is WRONG). 4248 signals; 3689 NULL alert_id (legit non-alert sources); 559 non-null → 339 MATCH alerts.id, 220 ORPHAN. ALL 220 orphans are signal_type=verified_decision emitted by alert-engine. alerts.id uses SEMANTIC keys (alert-POW-volume_spike-2026-06-25T08, alert-news-VIC-...); the 220 orphans carry UUID alert_ids (ad5d2c63-...) so refs never resolve. ID-SCHEME MISMATCH: the verified_decision emit path writes a UUID into alert_id instead of the semantic alerts.id. Growing +96/day (124 on 06-24 → 220 on 06-25), newest 08:45:01Z. Not data-loss (signals intact); alert↔signal join broken for 220 rows + accruing. FIX TARGET: make the verified_decision emit path persist the SEMANTIC alerts.id (or unify the two id schemes).",
+        "files": "apps/alert-engine — Go verified_decision emit path (the code that writes agent_signals with signal_type=verified_decision; it currently generates/passes a UUID as alert_id rather than the semantic alerts.id)",
+        "verify": "new verified_decision alert_ids match alerts.id semantic format AND orphan count stops growing (220 stops accruing; no new UUID-shaped alert_ids appear for verified_decision rows)",
+        "baseline_pass": "alert-engine Go build green + existing alert-engine tests pass before change (touched-file CI must stay green; full-suite is DoD)",
+        "source_signal": "sau-20260625T1426-orphan-signals-regress",
+        "created_at": "2026-06-25T14:46:25Z",
+        "created_by": "po",
+        "sprint": "dev-team-triage"
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
