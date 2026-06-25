@@ -1,6 +1,12 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c368 · 2026-06-25T15:24:54Z
+### DB Data-Anomaly Sweep Tier-DATA (15:24–15:24 UTC 2026-06-25) — 1 CRITICAL NEW Regression
+- KEY FINDING: db1_ohlc_violations MATERIAL REGRESSION 835 → 9762 (+8927, +1142%) in 4h since 2026-06-20T19:59:48Z. Fresh violations (last 2d): 0 → 1260. Violations NOW in live trading days (06-25, 06-24, 06-23, 06-22), NOT stale pre-06-20 data. Constraint: low < close (invalid bar). Root: live OHLCV writer bug in daily_ohlcv (zone: apps/mcp-server market_price_fetch).
+- Canonical-4 delta: db1: 835→9762 (REGRESSION); db2: 1 (no change); db3: 0 (no change); c04: 21 (no change). Other metrics: daily_ohlcv_total=18251, newest=2026-06-25, prices_freshness=2026-06-25T15:00:02Z
+- Signals: 1 CRITICAL posted | id=sau-20260625T1524-db1-writer-regression | Status: NEW | Queue: 73→74 rows | Assertion PASS | Telegram: bug channel routed
+- Status: 1 CRITICAL REAL anomaly — ACTIVE DATA CORRUPTION ongoing | History: 128→129 | Emergency escalation required
 
 ## c367 · 2026-06-25T14:56:40Z
 ### DB Data-Anomaly Sweep Tier-DATA (14:54–14:56 UTC 2026-06-25) — Canonical-4 FROZEN, 0 NEW Signals
