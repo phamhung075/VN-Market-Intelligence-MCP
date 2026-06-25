@@ -1926,10 +1926,12 @@
         "type": "data_stale",
         "summary": "news-vps stale 89min (check B-11)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "IN_PROGRESS",
         "payload_ref": null,
         "router_verify": "RAW-CORROBORATED REAL (not false-positive): get_market_context last news analysis=2026-06-25T05:02Z (~94min stale) during active market hours; analyses clustered 04:00-05:02 then stopped. vn-news-fetch service HEALTHY+polling (15min cadence, last poll 44s) but no push lands => push/analysis pipeline stall, not service outage. Router triggered manual trigger_news_vps_fetch(dry_run=false) at 06:36Z to recover; verify next tick whether last-analysis advances past 05:02. If still stale => dev-mcp-server root-cause (push-news/analysis pipeline).",
-        "router_verified_at": "2026-06-25T06:37:21Z"
+        "router_verified_at": "2026-06-25T06:37:21Z",
+        "router_note": "RAW-INVESTIGATED router 2026-06-25T06:42Z: severity OVERSTATED, NOT a VPS news outage. get_vps_service_health: vn-news-fetch=HEALTHY (only vn-bctc-fetch/B-14 unhealthy). get_vps_proxy_health(news): last push 06:30:01 (~12min ago), 15 items, 63 pushes/24h, 0 errors. The 89min figure = time since last news-scout ANALYSIS run (05:02Z), i.e. the 4h analysis-cadence layer — DUPLICATE of MED row sau-20260625T063144Z (same B-11 root, different layer/label). Real residual (minor): VPS news push flagged Stale=YES and 63/96-expected push rate = mild cadence slip, 0 errors. PO design call (same as MED row): (a) reconcile news analysis cadence vs 1h SLA / add market-hours slot, AND (b) recalibrate B-11 to separate raw-fetch-freshness from analysis-cadence so it stops emitting a CRITICAL phantom + MED dup every Tier-2 cycle. router_dup_of=sau-20260625T063144Z.",
+        "router_followup": "Manual fetch 06:36Z did NOT recover (last-analysis still 05:02 at 06:42). Minted FIX-NEWS-ANALYSIS-PIPELINE-STALL (P1, dev-mcp-server, in_progress)."
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
@@ -24756,7 +24758,25 @@
       "updated_by": "dev-team-router",
       "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-NEWS-ANALYSIS-PIPELINE-STALL",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "title": "News fetch->analysis pipeline stalled ~100min during market hours (last analysis 05:02Z); manual fetch did not recover",
+        "desc": "Router RAW-corroborated (sau-2026-06-25T06:32:59Z): get_market_context last news analysis=2026-06-25T05:02Z, persistent ~100min into a weekday afternoon session. vn-news-fetch VPS service is HEALTHY+polling (15min cadence) and TA alerts still flow (06:15) — so it is the NEWS fetch->push-news->intelligenceCycleJob analysis path specifically, not a full outage. Router triggered trigger_news_vps_fetch(dry_run=false) at 06:36Z; last-analysis did NOT advance (still 05:02 at 06:42). CORROBORATION GATE (feedback_false_infra_failure_corroboration_gate): FIRST confirm root cause before blaming infra — distinguish (a) genuine no-new-unique-items / dedup saturation across 14 RSS feeds (would be benign) vs (b) real break (VPS fetch returns empty/cached, push-news ingestion failing, or intelligenceCycleJob not running/erroring). Check VPS /tmp/news-debug-*.log, push-news endpoint, intelligenceCycleJob scheduler logs + last-run, and the news_articles/analysis_history write recency. DoD: identify root cause with evidence; if a real break, fix it and RAW-verify new analysis lands (last-analysis advances past 05:02 with a fresh item); if genuinely no-new-items, document that + (optional) widen sources or adjust the SLA so it doesn't false-fire. Full mcp-server check green before commit.",
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts"
+        ],
+        "created_at": "2026-06-25T06:44:45Z",
+        "created_by": "router",
+        "source": "system-auditor B-11 + router RAW corroboration"
+      }
+    ],
     "ready": [],
     "review": [
       {
