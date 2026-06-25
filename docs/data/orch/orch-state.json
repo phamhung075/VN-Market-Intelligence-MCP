@@ -1831,6 +1831,17 @@
         "resolved_at": "2026-06-25T02:15:29Z",
         "resolved_by": "po-s112",
         "resolution": "BUMPED FIX-BCTC-SLA-THRESHOLD-360 P3->P1 + PROMOTED backlog->ready (next_agent=dev-mcp-server). Recurrence RAW-verified (06-17/06-19/06-24/06-25, auto-deduped INFO but each spawns auditor+telegram+router cost). Scope corrected: router '120 vs 360' framing outdated — system-map SLA resolver already shipped; 3 real sub-roots (mcp get_sla_status legacy path diverges, 168h too tight for inter-quarter gap, push-age!=host-down). dedup_key set so future re-fires of this recommendation dedup not re-surface."
+      },
+      {
+        "id": "router-chef-quality-20260625-0224",
+        "ts": "2026-06-25T02:24:08Z",
+        "from": "router",
+        "to": "po",
+        "type": "quality_defect",
+        "summary": "chef-intraday dish (MARKET msg 870, 02:21Z) stated gold RISING/safe-haven but live goldUsdDirection=down delta=-111.9 (7mo low) — directional error, contradicted same-channel briefing. Also overstated oil as -2.22sigma 'unprecedented' vs live NEUTRAL band. Router posted correction. FIX: chef flow must read goldUsdDirection/oilUsdDirection + *Delta from get_macro_snapshot and assert direction from those fields, not narrate from price level. Recurring snapshot-without-direction class.",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
