@@ -1,4 +1,16 @@
 
+## DB-sweep 19:06Z R1-R4 triage — DECISION (2026-06-25, po-s114)
+author: po (dev-team Step 1 triage). 4 NEW router_verified repair_task_request signals (router-dbsweep-20260625T1906Z-r1..r4), all DB-sweep findings. PLAN-ONLY per project_anomaly_task_bridge — minted BACKLOG, NONE promoted to ready (WIP stays 0). Corroboration gate (feedback_false_infra_failure_corroboration_gate): every mint carries a "RAW-verify root cause LIVE before fix" generic_mandate — DB-sweep can be false-positive.
+
+- DEDUP: no existing task covers R2/R3/R4 (ARCH-CRON-SCHEDULER-RELIABILITY=missed-fire class ≠ double-register; FACTORY-SCHEDULER-job-table-registry=maintainability refactor; KD-FRESH-01=freshness test; macro-fetch-cluster=FRED/PMI item3 only). R1's prior fix FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH is DONE/never-done_verified and the signal proves it did NOT close the root → recurring-bug-escalation, NEW task (distinct root: startup-purge + market-hours-only window), NOT a dedup.
+- MINTED (all BACKLOG, PLAN-ONLY):
+  - R1 → FIX-VNINDEX-CACHE-STARTUP-PURGE (P2, apps/mcp-server/) — stop startup purge OR add startup backfill; supersedes_resolution_of prior DONE fix; memory feedback_ohlcv_startup_purge_defeated_by_backfill_seeder.
+  - R2 → FIX-SCHEDULER-DOUBLE-REGISTRATION (P2, apps/mcp-server/) — idempotent single registration; root for R3.
+  - R3 → FIX-KINHDICH-READINGS-DEDUP (P3, apps/mcp-server/, depends R2) — CREATE UNIQUE INDEX (NOT ALTER ADD UNIQUE per feedback_sqlite_add_column_unique_silent_noop) + INSERT OR IGNORE + one-time 1534-group dedup.
+  - R4 → FIX-MACRO-INDICATORS-EMPTY-COLUMNS (P3, apps/macro-indicators/) — scope source per column; no fabricated fill (feedback_no_fake_data_real_fetch).
+- SIGNALS: all 4 NEW→READ (not RESOLVED — open until fix ships) with po_decision note + minted task id.
+- script: scripts/po-s114-dbsweep-1906z-r1r4-mint-ack.jq (idempotent: mint id-guarded all-lanes, flip NEW-guarded; conservation backlog +4 / NEW −4 / ready stays 0; re-run delta 0).
+
 ## CI-FLEET-PUSH-DEADLOCK reconcile — DECISION (2026-06-23T01:4xZ)
 author: po (dev-team Step 1 triage). signal=docs/signals/fleet-push-abort-push-fail-20260622T194948Z.json (auto-push-abort, ahead=21 behind=104→111 growing). Router RAW-verified all git facts; PO decides reconcile path only.
 
