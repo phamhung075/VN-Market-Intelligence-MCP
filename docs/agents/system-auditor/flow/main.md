@@ -126,7 +126,10 @@ For every source, resolve the effective stale threshold as follows (read ALL val
    a. Read `sla.earnings_window.trigger_months[]` and `sla.earnings_window.window_days_after_quarter_end` from system-map.json.
    b. Compute today's UTC month (M) and day (D).
    c. **In-window test:** `M ∈ trigger_months AND D ≤ window_days_after_quarter_end` → use `sla.earnings_window.stale_threshold_hours`.
-   d. **Out-of-window:** use `sla.default_stale_threshold_hours`.
+   d. **Out-of-window:** compute `hours_since_last_earnings_window_end + 0.5h grace` (dynamic, NOT the flat `sla.default_stale_threshold_hours`).
+      - `last_earnings_window_end` = end-of-day (23:59 UTC) of `window_days_after_quarter_end` of the most recent prior trigger month.
+      - Example: today=2026-06-25 → last window end = 2026-04-14 23:59 UTC → hours_since ≈ 1714h → threshold ≈ 1714.5h.
+      - This prevents false-CRITICAL during the 10-week inter-quarter quiet period (FIX-BCTC-SLA-THRESHOLD-360).
    e. This replaces the flat `stale_threshold_hours` value for this source in this cycle.
 3. Any other `sla.mode` value not listed above → use `stale_threshold_hours` (safe fallback) and emit a WARN log: `"[SLA-RESOLVER] unknown sla.mode '<value>' for source <id> — falling back to stale_threshold_hours"`.
 
@@ -134,9 +137,43 @@ Example evaluation for `bctc-discover` on 2026-04-10 (M=4, D=10, trigger_months=
 - M=4 ∈ [1,4,7,10] AND D=10 ≤ 14 → IN window → effective threshold = 24h (earnings-window active).
 
 Example evaluation for `bctc-discover` on 2026-05-20 (M=5, D=20):
-- M=5 ∉ [1,4,7,10] → OUT of window → effective threshold = 168h (7d normal cadence).
+- M=5 ∉ [1,4,7,10] → OUT of window → last window end = 2026-04-14 23:59 UTC → hours_since ≈ 876h → threshold ≈ 876.5h.
+
+Example evaluation for `bctc-discover` on 2026-06-25 (B-05/B-06 RAW scenario):
+- M=6 ∉ [1,4,7,10] → OUT of window → last window end = 2026-04-14 23:59 UTC → hours_since ≈ 1714h → threshold ≈ 1714.5h.
+- push-age=199.7h << 1714.5h → **PASS** (pipeline healthy idle). Never a CRITICAL.
 
 **No prose-only BCTC staleness rule exists. This resolver IS the rule.**
+
+#### BCTC Healthy-Idle Gate (B-05 — FIX-BCTC-SLA-THRESHOLD-360, sub-root c)
+
+**MANDATORY: apply this gate BEFORE emitting any B-05 signal for `bctc-discover`.**
+
+Event-driven push-age is NOT a crash signal. A large push-age for `bctc-discover` ONLY indicates a problem when the pipeline has PENDING work that is not being processed. When queue=0, the silence is BY DESIGN (off-season idle, not a fault).
+
+Gate logic (execute when evaluating `bctc-discover` staleness):
+```bash
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+# Gate 1: count actionable queue rows (pending / url_not_found / enrich_failed)
+BCTC_ACTIVE=$(docker exec "$MCP_CTR" bun -e "
+import { Database } from 'bun:sqlite';
+const db = new Database('/app/data/market.db', {readonly: true});
+const r = db.query(\"SELECT COUNT(*) AS c FROM bctc_vps_queue WHERE status IN ('pending','url_not_found','enrich_failed')\").get();
+console.log(r.c);
+db.close();
+" 2>/dev/null || echo "ERROR")
+
+# Gate 2: VPS host liveness (from Tier-1 probe.sh output already in PROBE_OUT)
+# Use the vps_uptime_seconds value from get_vps_proxy_health or Tier-1 host status.
+```
+
+**Verdict:**
+- `BCTC_ACTIVE = ERROR` (DB unreachable) → skip gate, apply normal SLA threshold.
+- `BCTC_ACTIVE = 0` (no pending work) AND host Tier-1 = UP → verdict: **HEALTHY IDLE** — log `"[B-05] bctc-discover: queue=0 host-up off-season — healthy idle, NOT stale"`. Do NOT emit any signal. Do NOT flag as stale.
+- `BCTC_ACTIVE > 0` (work exists but pipeline silent) → apply normal SLA threshold comparison. If push-age > threshold → **STALE** (emit B-05 signal as normal).
+- Host Tier-1 = DOWN (container missing) → skip B-05 entirely (already reported by A-xx CRITICAL).
+
+**Rationale (feedback_bctc_lastpush_age_misread_as_crash):** vn-bctc-fetch is event-driven (quarterly). Push-age grows naturally between earnings seasons. Inferring host-down from push-age alone is wrong and caused recurring false alerts in B-05/B-06. Corroboration gate: queue + host state. Both must fail before CRITICAL.
 
 ### DB Freshness Spot Checks (C-06, C-07)
 Resolve container name: `MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)` — abort check if empty (container down → CRITICAL via Tier-1 A-xx, do not duplicate here).

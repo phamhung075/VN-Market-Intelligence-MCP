@@ -24602,10 +24602,10 @@
       {
         "id": "FIX-BCTC-SLA-THRESHOLD-360",
         "type": "FIX",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P1",
         "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "title": "BCTC SLA false-CRITICAL off-season — recurring noise (P1): align mcp get_sla_status with the 168h resolver, widen inter-quarter quiet-gap threshold, and stop push-age->host-down inference",
         "desc": "RECURRING false-CRITICAL (B-05/B-06 bctc-discover). RAW-verify (po-s112 2026-06-25): router framing '120 vs 360' is OUTDATED — the system-map.json bctc-discover SLA resolver is ALREADY shipped+correct (mode=earnings-window-dependent, out-of-window=168h). THREE real sub-roots, all in scope: (a) get_sla_status mcp tool still carries the legacy bctc 120min/360min config in DEFAULT_SLA_CONFIG (freshnessSlaChecker.ts), DISTINCT from the auditor's system-map resolver — the two SLA paths diverge; align get_sla_status to the same earnings-window resolver (or 168h out-of-window). (b) 168h out-of-window is still too tight for the genuine ~10-week INTER-QUARTER quiet gap (Apr-window-end->Jul-window-start): B-05 fired 199.7h, B-06 178h, both >168h yet pipeline healthy (queue=0, host-up) — off-season staleness is BY DESIGN; widen out-of-window threshold to cover the full inter-quarter gap (or gate staleness on time-since-expected-window-end, not wall-clock). (c) push-age->'vn-bctc-fetch unhealthy'/host-down inference is WRONG (feedback_bctc_lastpush_age_misread_as_crash): event-driven push-age is NOT a crash signal; the B-05/B-06 'VPS unhealthy' verdict must gate on service-state + queue (queue=0 + host-up = healthy idle), NOT push-age alone. DISTINCT from FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL (which rows count) and FIX-BCTC-QUEUE-MAXAGE-GATE (drops >30d-no-filing tickers). DoD: BCTC SLA + auditor B-05/B-06 do NOT report CRITICAL/HIGH/unhealthy during a normal off-season inter-quarter quiet period when queue=0 and the host is up; RAW-confirm via get_sla_status + a live auditor B-05/B-06 dry-run on today (06-25, off-window). config + check-logic fix.",
         "files": [

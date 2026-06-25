@@ -193,8 +193,12 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
     expect(bctcBreachMarket!.thresholdMinutes).toBe(120);
     expect(bctcBreachMarket!.status).toBe("breached");
 
-    // Off-hours: 16:00-08:59 next day VN = 09:00-01:59 UTC (approx)
-    const offHoursUTC = new Date("2026-04-21T10:00:00Z"); // 10:00 UTC = 17:00 VN
+    // Off-hours during ACTIVE earnings window (month=4, day=8 ≤ 14 → in-window):
+    // threshold = 360 min off-hours. Age=361 > 360 → breached.
+    // NOTE: April 21 (day=21 > 14) is OUT of window and would use the dynamic
+    // minutesSinceLastEarningsWindowEnd threshold instead (FIX-BCTC-SLA-THRESHOLD-360).
+    // Use April 8 (day=8 ≤ 14) to test the in-window off-hours path.
+    const offHoursUTC = new Date("2026-04-08T10:00:00Z"); // April 8, in-window, 10:00 UTC = off-hours
     const resultOffHours = checkDataFreshnessSla(
       { ...signalAges, bctc: 361 },
       undefined,

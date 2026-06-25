@@ -274,6 +274,98 @@ export const BCTC_TRADING_DAY_ONLY_SOURCES: ReadonlySet<SignalType> = new Set([
   "bctc",
 ]);
 
+// ─────────────────────────────────────────────────────────────────────────────
+// BCTC earnings-window logic (FIX-BCTC-SLA-THRESHOLD-360)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Months in which a BCTC earnings filing window is active.
+ *
+ * SSOT: system-map.json .project.data_sources[bctc-discover].sla.earnings_window.trigger_months
+ * Quarters close: Q1=Mar→Apr window, Q2=Jun→Jul window, Q3=Sep→Oct window, Q4=Dec→Jan window.
+ */
+export const BCTC_EARNINGS_WINDOW_TRIGGER_MONTHS: ReadonlyArray<number> = [1, 4, 7, 10];
+
+/**
+ * Number of days into a trigger month during which the earnings window is active.
+ *
+ * SSOT: system-map.json .project.data_sources[bctc-discover].sla.earnings_window.window_days_after_quarter_end
+ * Day 1–14 of the trigger month = earnings window open; day 15+ = out-of-window.
+ */
+export const BCTC_EARNINGS_WINDOW_DAYS = 14;
+
+/**
+ * Returns true if today's UTC date falls within a BCTC earnings filing window.
+ *
+ * In-window: current UTC month is a trigger month AND UTC day ≤ BCTC_EARNINGS_WINDOW_DAYS.
+ *
+ * Examples:
+ *   April 10  (M=4 ∈ [1,4,7,10], D=10 ≤ 14) → IN window
+ *   April 20  (M=4 ∈ [1,4,7,10], D=20 > 14) → OUT of window
+ *   June  25  (M=6 ∉ [1,4,7,10])             → OUT of window
+ *
+ * @param now Current date/time
+ */
+export function isBctcEarningsWindowActive(now: Date = new Date()): boolean {
+  const month = now.getUTCMonth() + 1; // 1-based
+  const day = now.getUTCDate();
+  return (BCTC_EARNINGS_WINDOW_TRIGGER_MONTHS as readonly number[]).includes(month) &&
+    day <= BCTC_EARNINGS_WINDOW_DAYS;
+}
+
+/**
+ * Returns the UTC Date of the most recent BCTC earnings-window end before `now`.
+ *
+ * The window end is end-of-day-14 (23:59 UTC) of the most recent trigger month.
+ * Scans backward across up to 2 years to find it.
+ *
+ * Example: now = 2026-06-25T10:00Z → last window end = 2026-04-14T23:59:00Z.
+ *
+ * @param now Current date/time
+ */
+export function lastExpectedEarningsWindowEnd(now: Date = new Date()): Date {
+  const WINDOW_END_HOUR = 23;
+  const WINDOW_END_MIN = 59;
+
+  // Build all candidate window-end dates by scanning the last 2 years
+  // (max gap: ~3 months between trigger months, 2y scan = ample coverage)
+  const candidates: Date[] = [];
+  const currentYear = now.getUTCFullYear();
+
+  for (let y = currentYear + 1; y >= currentYear - 1; y--) {
+    for (const m of BCTC_EARNINGS_WINDOW_TRIGGER_MONTHS) {
+      const winEnd = new Date(Date.UTC(y, m - 1, BCTC_EARNINGS_WINDOW_DAYS, WINDOW_END_HOUR, WINDOW_END_MIN, 0, 0));
+      if (winEnd < now) {
+        candidates.push(winEnd);
+      }
+    }
+  }
+
+  // Sort descending and return the most recent
+  candidates.sort((a, b) => b.getTime() - a.getTime());
+  if (candidates.length > 0) {
+    return candidates[0]!;
+  }
+
+  // Fallback: should never be reached
+  return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Returns minutes elapsed since the last BCTC earnings-window closed.
+ *
+ * Used to compute the out-of-window SLA threshold for bctc.
+ * During the inter-quarter quiet period the "expected age" of last filings is at most
+ * (minutesSinceLastEarningsWindowEnd + grace), not a fixed 168h ceiling.
+ *
+ * @param now Current date/time
+ */
+export function minutesSinceLastEarningsWindowEnd(now: Date = new Date()): number {
+  const winEnd = lastExpectedEarningsWindowEnd(now);
+  const ms = now.getTime() - winEnd.getTime();
+  return Math.max(0, Math.floor(ms / 60000));
+}
+
 /**
  * Grace period added on top of "time since last window end" when computing the
  * off-hours SLA threshold.  Allows for minor clock skew and the last-push lag
@@ -559,7 +651,7 @@ export function getSlaThreshold(
     return sinceSbvWindowEnd + OFF_HOURS_GRACE_MINUTES;
   }
 
-  // BCTC has time-based thresholds with a trading-day exemption.
+  // BCTC has time-based thresholds with a trading-day AND earnings-window exemption.
   //
   // FIX-BCTC-SLA-WEEKEND: BCTC filings are only submitted on VN trading days
   // (Mon–Fri via HOSE/HNX).  On weekends the last filing was from the prior
@@ -567,10 +659,22 @@ export function getSlaThreshold(
   // trading-day close (lastExpectedWindowEnd, same as price), not from a
   // fixed 360-min off-hours threshold.
   //
+  // FIX-BCTC-SLA-THRESHOLD-360: On weekdays during the inter-quarter quiet period
+  // (out of earnings window), the fixed 360-min off-hours threshold fires false-CRITICAL
+  // because push-age is measured from the last BCTC PDF push (event-driven, up to weeks
+  // ago) rather than from an expected periodic push.  The correct threshold is:
+  //   minutesSinceLastEarningsWindowEnd + grace
+  // This mirrors the market-hours-only pattern: SLA measures "how long since the
+  // pipeline was EXPECTED to produce data", not raw wall-clock push-age.
+  //
   // Non-trading day (Sat/Sun): threshold = minutesSinceLastWindowEnd + grace
   //   → prevents false-alarm on Saturday when Friday data is 20+ h old.
   // Trading day, market hours:  use marketHoursThresholdMinutes (120 min)
-  // Trading day, off-hours:     use offHoursThresholdMinutes     (360 min)
+  //   → tight real-time SLA during earnings season.
+  // Trading day, off-hours, in-window: use offHoursThresholdMinutes (360 min)
+  //   → normal overnight gap during active earnings season.
+  // Trading day, off-hours, out-of-window: use minutesSinceLastEarningsWindowEnd + grace
+  //   → the inter-quarter quiet period can last 10+ weeks; measure from last window end.
   if (signalType === "bctc") {
     if (!isVnSbvBusinessDay(now)) {
       // Non-trading day: expand threshold to cover the expected stale window
@@ -579,10 +683,19 @@ export function getSlaThreshold(
     }
     const marketHours = isVnMarketHours(now);
     if (marketHours && cfg.marketHoursThresholdMinutes !== undefined) {
+      // Tight 120-min SLA during active market session
       return cfg.marketHoursThresholdMinutes;
     }
-    if (!marketHours && cfg.offHoursThresholdMinutes !== undefined) {
-      return cfg.offHoursThresholdMinutes;
+    if (!marketHours) {
+      if (isBctcEarningsWindowActive(now)) {
+        // Off-hours during active earnings window: standard 360-min overnight gap
+        return cfg.offHoursThresholdMinutes ?? cfg.defaultThresholdMinutes;
+      }
+      // Off-hours, out of earnings window (inter-quarter quiet period):
+      // Measure from last earnings window end + grace.
+      // A push-age of e.g. 200h is fully expected when the window closed 10+ weeks ago.
+      const sinceEarningsWindowEnd = minutesSinceLastEarningsWindowEnd(now);
+      return sinceEarningsWindowEnd + OFF_HOURS_GRACE_MINUTES;
     }
   }
 
