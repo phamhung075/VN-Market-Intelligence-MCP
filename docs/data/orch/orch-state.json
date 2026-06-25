@@ -1868,6 +1868,34 @@
         "type": "quality_defect",
         "summary": "chef-intraday dish (MARKET msg 870, 02:21Z) stated gold RISING/safe-haven but live goldUsdDirection=down delta=-111.9 (7mo low) — directional error, contradicted same-channel briefing. Also overstated oil as -2.22sigma 'unprecedented' vs live NEUTRAL band. Router posted correction. FIX: chef flow must read goldUsdDirection/oilUsdDirection + *Delta from get_macro_snapshot and assert direction from those fields, not narrate from price level. Recurring snapshot-without-direction class.",
         "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null,
+        "acked_at": "2026-06-25T04:14:29Z",
+        "acked_by": "dev-team-router"
+      },
+      {
+        "id": "sau-2026-06-25T04:14:46Z",
+        "ts": "2026-06-25T04:14:46Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "vps_service_degraded",
+        "summary": "vn-bctc-fetch unhealthy (check B-14)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "acked_at": "2026-06-25T04:19:59Z",
+        "acked_by": "dev-team-router",
+        "router_dup_of": "FIX-BCTC-SLA-THRESHOLD-360",
+        "router_note": "Likely false-positive of the push-age->host-down inference class under active fix (FIX-BCTC-SLA-THRESHOLD-360 sub-root c, now in QA REVIEW). B-14 vn-bctc-fetch unhealthy mirrors B-05/B-06: event-driven push-age != crash when queue=0 + host-up (feedback_bctc_lastpush_age_misread_as_crash). RAW get_sla_status probe timed out (gateway busy w/ concurrent QA). PO: hold as dup until QA done_verified; reopen only if QA proves host genuinely down."
+      },
+      {
+        "id": "sau-c12-20260625-0417",
+        "ts": "2026-06-25T04:17:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages_price_history index corruption (C-12): row 11335 missing from idx_mph_code_fetched",
+        "severity": "CRITICAL",
         "status": "NEW",
         "payload_ref": null
       }
@@ -24592,22 +24620,21 @@
       }
     ],
     "head": {
-      "status": "deprecated-stub",
-      "canonical_moved_to": ".head",
-      "active_task_id": null,
-      "next_agent": null,
-      "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
+      "status": "in_progress",
+      "active_task_id": "FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE",
+      "next_agent": "dev-mcp-server",
+      "updated_at": "2026-06-25T04:14:58Z",
+      "updated_by": "dev-team-router"
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE",
         "type": "FIX",
         "title": "db-integrity helper BLINDED: sqlite3 -readonly on live WAL DB → all-NULL counts; switch to file:?immutable=1 + add probe-failure guard",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "priority": "P1",
         "zone": "cross-service/",
-        "owner": "scripts/integrity-helper (router-telemetry)",
+        "owner": "dev-mcp-server",
         "next_agent": "ba",
         "size": "FIX",
         "files": [
@@ -24628,9 +24655,12 @@
         "verification_gate": "RAW: run the patched helper against the LIVE WAL DB while mcp-server is writing → asserts non-null canonical-4 (835/1/0/21 class) + ohlcv_total>0; AND force a probe failure (e.g. bad DB path) → asserts non-zero exit / loud error (NOT a silent null JSON).",
         "detected_by": "router DB-data sweep tick #106 (2026-06-25); RAW-verified root cause + fix + DoD pre-supplied",
         "created_at": "2026-06-25T03:58:09Z",
-        "created_by": "po-triage-tick106"
+        "created_by": "po-triage-tick106",
+        "started_at": "2026-06-25T04:14:58Z",
+        "dispatched_by": "dev-team-router"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -24688,7 +24718,10 @@
         },
         "po_sibling_decision": "po-s113 2026-06-25T02:17:00Z: sibling FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL kept P3 backlog, sequenced AFTER this task (NOT merged) — orthogonal metric-semantics, may close no-op once this task's done_verified shows off-season SLA stable.",
         "owner": "dev-mcp-server",
-        "started_at": "2026-06-25T02:45:29Z"
+        "started_at": "2026-06-25T02:45:29Z",
+        "qa_started_at": "2026-06-25T04:16:30Z",
+        "review_dispatched_at": "2026-06-25T04:16:30Z",
+        "review_dispatched_by": "dev-team-router"
       }
     ],
     "qa": [],
