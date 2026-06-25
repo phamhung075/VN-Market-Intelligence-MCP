@@ -2,6 +2,41 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c350 · 2026-06-25T09:43:44Z
+### Audit Run Tier-1 (09:43–09:44 UTC 2026-06-25)
+- Tier: 1 | Services: 13/13 (12 host_runtime_set + mcp-gateway all UP)
+- Health endpoints: 5/5 HTTP 200 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
+- mcp-server: RestartCount=0, MemPerc=58.00% (1.15GiB/2GiB), stable
+- rag-service: RestartCount=118 (KNOWN STANDING FU-RAG-DEPLOY-MEMORY, last cycle +1 at 08:43)
+- A-30 mcp-server mem 58% PASS (normal baseline post-build 04:40Z) | A-31 EPIPE=0 | A-32 disk=26%
+- B-05 BCTC healthy-idle (SLA gate applied, queue-dependent) PASS
+- Anomalies: 0 new | Dedup: none escalated | Status: HEALTHY | Signals: 0
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-25T09:43:09Z ===
+
+--- docker ps -a ---
+13 containers total (12 running + healthy)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=57.50% MemUsage=1.15GiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity
+/dev/disk1s4s1   233Gi    13Gi    39Gi    26%
+```
+
+
 ## c349 · 2026-06-25T09:13:31Z
 ### Audit Run Tier-1 (09:13–09:14 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
