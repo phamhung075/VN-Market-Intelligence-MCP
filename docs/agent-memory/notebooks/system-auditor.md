@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+
+## c341 · 2026-06-25T06:44:46Z
+### Audit Run Tier-1 (06:44–06:45 UTC 2026-06-25)
+- Tier: 1 | Services: 11/11 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
+- Containers: mcp-server (2h14m, RestartCount=0 FRESH-BUILD-04:38Z, mem=511MiB), rag-service (RestartCount=117 KNOWN-STANDING FU-RAG-DEPLOY-MEMORY), all others stable
+- A-30 mcp-server mem=19.95% (511MiB/2GiB, PASS <85%) | A-31 EPIPE=0 | A-32 disk=26% (39Gi free, PASS)
+- B-05 BCTC: queue=38 pending, push-age=201.8h << SLA-1714.5h out-of-window → HEALTHY-IDLE PASS
+- VPS proxy: prices/news/sbv OK; bctc stale (by-design off-season, not actionable per SLA)
+- Crons: 100+ jobs active, success rates ≥98%, no fire gaps
+- Anomalies: 0 new | Status: HEALTHY
+
 ## c340 · 2026-06-25T06:31:44Z
 ### Audit Run Tier-2 (06:30–06:31 UTC 2026-06-25)
 - Tier: 2 | Data sources: 27 checked | Cron fire: all on-schedule | VPS proxy: 4/5 healthy
