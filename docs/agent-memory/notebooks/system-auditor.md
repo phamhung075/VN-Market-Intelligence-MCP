@@ -2,6 +2,14 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c326 · 2026-06-25T03:26:31Z
+### Audit Run Tier-3 (03:26 UTC 2026-06-25)
+- Tier: 3 | Tables: 16 checked | DB Checks: C-01–C-16 all PASS/BY-DESIGN | Fresh anomalies: 0
+- Canonical counts FROZEN: db1_ohlc=835 (historical writer residue QA-approved), db2_scale=1 (DFF), db3_vnindex=0, c04_lowconf=21 (enrich-silence-gate in_progress)
+- C-01: 877 distinct codes (PASS); C-02: 976 rows (PASS); C-03: 32 action codes (PASS); C-04: 0 low-conf last 7d (enrich-silence working); C-05: 0 SSC URLs live (PASS); C-06: 4 market_messages 3h (PASS); C-07: 231 signals 24h (PASS); C-08: 1 orphaned alert (transient OK); C-09: 3 macro indicators Vietnam (PASS ≥3); C-10: 0 PDF failed 24h (PASS); C-11: 0 PDF done 48h (expected-empty Q2); C-12: integrity=ok (PASS); C-13: WAL all 0 (PASS); C-14: top-3 share=0.6% (PASS <60%); C-15: schema complete (PASS); C-16: 0 stale pending >72h (PASS)
+- History append: 104→105 rows (deterministic counts verified)
+- Status: HEALTHY | Anomalies: 0 new | Status: CLEAN
+
 ## c325 · 2026-06-25T03:13:57Z
 ### Audit Run Tier-1 (03:13 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
