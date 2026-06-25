@@ -2305,7 +2305,7 @@
         "router_verified": true,
         "router_verified_at": "2026-06-25T22:02:00Z",
         "summary": "conviction_history is MISSING two trading days with NO backfill path = permanent data loss. RAW evidence (live read, named volume vn-market-intelligence-mcp_market_data, immutable=1, scan_ts 2026-06-25T22:02Z): conviction_history newest date = 2026-06-24; present dates 06-24,06-23,06-19,06-18,06-17,06-16,06-15,06-12 (36 rows each = full scan). MISSING trading days: 2026-06-22 (Mon) and 2026-06-25 (Thu). daily_ohlcv HAS all four days with full price data (06-22=764, 06-23=708, 06-24=877, 06-25=897 rows) so the independent VPS price-ingestion path is healthy on the missing days -- the gap is conviction-specific. conviction_history.date is stamped from vnNow and written ONLY inside live scanMarket Step 5c (apps/mcp-server/src/application/usecases/scanMarket.ts:571-574, deps.marketPriceRepo.upsertConvictionHistory); there is NO backfill / EOD reconciliation path in code -> once a live scan misses a trading day that day is permanently absent.",
-        "evidence": "conviction_history newest=2026-06-24, missing trading days 06-22 + 06-25; daily_ohlcv has all 4 days (06-22=764/06-23=708/06-24=877/06-25=897 rows); write-site scanMarket.ts:571-574 (upsertConvictionHistory) is the SOLE writer, no backfill/EOD reconcile path exists.",
+        "evidence": "conviction_history newest=2026-06-24, missing trading days 06-22 + 06-25; daily_ohlcv has all 4 days (06-22=764/06-23=708/06-24=877/06-25=897 rows); write-site scanMarket.ts:571-574 (upsertConvictionHistory) is the SOLE writer, no backfill/EOD reconcile path exists. | ENRICHMENT (router DB-sweep scan_ts 2026-06-25T23:02Z, live read-only named volume immutable=1): conviction_history newest date=2026-06-24, MAX(created_at)=2026-06-24T08:30:11Z. daily_ohlcv DID write the two missing days (06-25=897 rows, 06-22=764 rows) -- both present. conviction_history MISSING 06-22 AND 06-25 but PRESENT for 06-23 AND 06-24 -> pattern is INTERMITTENT (writer ran 06-23/06-24, skipped 06-22/06-25 while OHLCV wrote all four) -- NOT a clean process-death.",
         "root_cause": "conviction_history written ONLY by live scanMarket Step 5c (vnNow-stamped); no EOD reconciliation/backfill -> any session that misses a trading day (scan never ran, OR ran but Step 5c short-circuited before upsert) loses that day permanently. CONFIRM-BEFORE-BLAME: mcp-server restarted ~19:00Z (Docker-down window); logs reach back only to 19:00Z and do NOT cover the 06-25 VN market window (02:00-08:00Z), so (a) scan-never-ran vs (b) Step-5c-short-circuited cannot be distinguished from logs -- durable fix is identical either way; dev-team must NOT over-claim the sub-cause.",
         "fix_direction": "PLAN-ONLY for dev-team: (1) Add an EOD reconciliation/backfill writer for conviction_history so a missed live scan self-heals (recompute conviction for any trading day that has daily_ohlcv but no conviction_history row) rather than silently losing the day. (2) Instrument scanMarket Step 5c to emit an observability signal (agent_signals / signal_queue) when it writes ZERO conviction rows on a CONFIRMED trading day, so the gap is caught same-day instead of discovered 2 days later by a DB sweep.",
         "impact": "Degrades /api/conviction-history depth + conviction-trend analysis; NOT a live-serving outage.",
@@ -2315,7 +2315,11 @@
         "po_decision": "FILED PLAN-ONLY repair_task_request to dev-team (status NEW). dev-team plans the fix; router does NOT implement. MEDIUM: data-depth degradation, not a live-serving outage. Net-new (dedup-scanned conviction|backfill|reconcil|scanMarket = 0 prior rows).",
         "router_dup_of": "router-dbsweep-20260625T2202Z-conviction-history-no-backfill",
         "triaged_into": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
-        "po_decision_triage": "MINTED BACKLOG FIX-CONVICTION-HISTORY-EOD-BACKFILL (PLAN-ONLY, NOT promoted to ready). RAW-verify root cause LIVE before fix (corroboration gate). po-s115."
+        "po_decision_triage": "MINTED BACKLOG FIX-CONVICTION-HISTORY-EOD-BACKFILL (PLAN-ONLY, NOT promoted to ready). RAW-verify root cause LIVE before fix (corroboration gate). po-s115.",
+        "refined_root_cause_20260625T2302Z": "REFINED (supersedes prior never-ran-vs-Step5c-short-circuit ambiguity): because the conviction writer demonstrably RAN on 06-23+06-24 but SKIPPED 06-22+06-25 while the OHLCV path wrote those same dates, the defect is a CONDITIONAL SHORT-CIRCUIT in scanMarket Step 5c (apps/mcp-server/src/application/usecases/scanMarket.ts:571-574) -- a date-string/market-window guard or a data-availability precondition that is sometimes false -- NOT process death and NOT a missing scheduler registration. Durable fix direction: find the conditional that gates the upsertConvictionHistory call on skipped sessions, PLUS add a backfill/reconciliation path (conviction has NO backfill -- a skipped session permanently loses the row). plan_only stays true, zone dev-mcp-server.",
+        "escalation_watch_20260625T2302Z": "Escalation (recurring-bug-escalation: 3rd consecutive miss -> HIGH) NOT yet met: 06-22 and 06-25 are misses #1 and #2 and are NON-CONSECUTIVE (06-23/06-24 wrote fine). Standing watch: if 2026-06-26 ALSO misses after today's VN session (02:00-08:00Z Jun 26), that firms the intermittent-skip and warrants escalation review. Severity stays MEDIUM.",
+        "last_enriched_at": "2026-06-25T23:02:00Z",
+        "last_enriched_by": "router-dbsweep-s-20260625T2302Z"
       },
       {
         "id": "router-dbsweep-20260625T2231Z-r5-agent-signals-identical-dup-doublefire",
@@ -2351,6 +2355,43 @@
         "triaged_by": "po",
         "po_decision": "MINTED BACKLOG FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION (P2, PLAN-ONLY) — own task, NOT folded into r2. Scope: data-layer agent_signals idempotency backstop (CREATE UNIQUE INDEX/upsert, NOT ALTER ADD UNIQUE) + per-emitter roots for ALL 5 emitters incl. the 3 COWORK agents (alert-engine, news-scout, bctc-analyst) outside r2's mcp-server-scheduler scope. Cross-refs r2 (scheduler emitter root) + FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH (same alert-engine emit path). RAW-verify-first; escalate to HIGH only if Telegram double-send confirmed. READ not RESOLVED (open until fix ships).",
         "triaged_into": "FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION"
+      },
+      {
+        "id": "router-dbsweep-20260625T2332Z-r6-agent-signals-verified-decision-empty-payload-null-stockcode",
+        "ts": "2026-06-25T23:32:00Z",
+        "created_at": "2026-06-25T23:32:00Z",
+        "from": "po",
+        "to": "dev-team",
+        "type": "repair_task_request",
+        "service": "alert-engine/verified_decision-emit-path",
+        "zone_owner": "dev-alert-engine",
+        "zone": "CONFIRM-BEFORE-LOCK: from_agent='alert-engine' is presumed to map to the Go alert-engine service (owns verified_decision emit). If 'alert-engine' resolves to a cowork agent rather than the Go service, dev-team MUST disambiguate the construction site before locking zone.",
+        "severity": "MEDIUM-HIGH",
+        "priority": "MEDIUM-HIGH (apply verify-don't-claim: blast radius depends on whether any consumer READS verified_decision.payload — confirm before final severity)",
+        "status": "READ",
+        "plan_only": true,
+        "router_verified": true,
+        "router_verified_at": "2026-06-25T23:32:00Z",
+        "summary": "agent_signals verified_decision rows from alert-engine are 100% CONTENT-EMPTY: 559 of 559 (100%) rows with signal_type='verified_decision' from from_agent='alert-engine' carry EMPTY payload='{}' — NOT a single non-empty one exists. ZERO verified_decision rows in the entire table have BOTH a non-empty payload AND a non-null/non-empty stock_code (i.e. zero well-formed rows exist). stock_code is NULL/empty on these stock-scoped rows. LIVE read-only named-volume immutable=1, scan_ts 2026-06-25T23:32Z, verbatim counts.",
+        "evidence": "559/559 (100%) verified_decision rows from alert-engine have payload='{}'. 0 verified_decision rows have BOTH non-empty payload AND non-null/non-empty stock_code. stock_code NULL/empty on these rows. Continuous, ongoing time range: MIN(created_at)=2026-06-13T07:59:53Z, MAX(created_at)=2026-06-25T09:00:07Z (the latest agent_signals row overall) => 12+ days, ongoing, not historical/stale. CONTRAST (explicitly NOT filed): fundamental_validation from bctc-analyst also shows null stock_code BUT its payloads are RICH (full BCTC analysis, ticker embedded in evidence_source) => that is a denormalization gap (stock in payload not column), MINOR, record-and-leave, NOT part of this finding.",
+        "root_cause": "CONVERGENCE THESIS — this is the THIRD distinct defect observed on the SAME alert-engine verified_decision emit path. (a) duplicate emission / double-fire (COUNT symptom) = router-dbsweep-20260625T2231Z-r5-agent-signals-identical-dup-doublefire. (b) orphan alert_id that does not resolve (LINKAGE symptom) = sau-20260625T1426-orphan-signals-regress. (c) THIS = empty {} payload + null stock_code (CONTENT symptom). These are almost certainly ONE root: the alert-engine verified_decision signal is constructed/emitted without populating payload, stock_code, or a valid alert_id, then sometimes fired twice. Dev-team should fix all three together at the single construction site, NOT piecemeal.",
+        "fix_direction": "PLAN-ONLY. Locate the alert-engine verified_decision emit/construction site and populate (1) payload = the decision detail, (2) stock_code = the ticker, (3) a resolvable alert_id (the semantic alerts.id per finding (b)) BEFORE emit. Add an emit-time guard that REFUSES to write a verified_decision with empty payload (fail-loud, NOT silent). Confirm with a self-confirming check that a freshly-emitted row has non-empty payload. Coordinate the single fix with (a) double-fire idempotency and (b) alert_id UUID-vs-semantic mismatch — same construction site.",
+        "verify_before_fix": "Confirm WHICH consumers read verified_decision.payload; if NONE read it, downgrade severity. Also confirm from_agent='alert-engine' maps to the Go alert-engine service vs a cowork agent before locking zone=dev-alert-engine.",
+        "cross_ref": [
+          "router-dbsweep-20260625T2231Z-r5-agent-signals-identical-dup-doublefire",
+          "sau-20260625T1426-orphan-signals-regress"
+        ],
+        "linked_signals": [
+          "router-dbsweep-20260625T2231Z-r5-agent-signals-identical-dup-doublefire (COUNT symptom — double-fire on same emit path)",
+          "sau-20260625T1426-orphan-signals-regress (LINKAGE symptom — orphan alert_id on same emit path)"
+        ],
+        "relationship": "THIRD symptom (CONTENT) of one shared alert-engine verified_decision emit-path root, alongside (a) COUNT/double-fire and (b) LINKAGE/orphan-alert_id. NOT a dup of either: (a) is about duplicate identical rows, (b) is about unresolvable alert_id FK; THIS is about empty payload + null stock_code on the SAME rows. Fix together at the single construction site.",
+        "scan_ts": "2026-06-25T23:32:00Z",
+        "router_note": "Minted by router DB-sweep tick scan_ts 2026-06-25T23:32Z. NET-NEW systemic content defect, convergence-thesis with (a) and (b). plan_only:true, no implementation.",
+        "triaged_at": "2026-06-25T23:55:29Z",
+        "triaged_by": "po",
+        "triaged_into": "FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE",
+        "po_decision": "MINTED BACKLOG FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE (P2/MEDIUM-HIGH, PLAN-ONLY) — NEW DISTINCT task, NOT folded. Fold-target FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH is already DONE-LIVE-VERIFIED + closed and its shipped fix (semantic id replacing crypto.randomUUID at taAlertScanJob.ts:258/bbAlertScanJob.ts:245) scoped alert_id ONLY — never payload/stock_code; cannot fold open work into a closed/verified task. CONTENT defect (empty {} payload + null stock_code) is a genuinely distinct column-set on the SAME emit construction site. Zone apps/mcp-server (NOT Go alert-engine — established by the DONE task's RAW grep). Convergence thesis: same emit site as (a) r5 double-fire + (b) DONE alert_id fix. Mandate: RAW-verify root LIVE first; fix MUST produce non-empty payload + non-null stock_code + correct semantic alert_id + fail-loud emit-time guard; acceptance = LIVE scan finds 0 malformed AND >=1 well-formed verified_decision row post-fix. READ not RESOLVED (open until fix ships)."
       }
     ],
     "last_triaged_at": "2026-06-25T22:06:25Z",
@@ -13378,6 +13419,33 @@
         "minted_by": "po",
         "minted_at": "2026-06-25T22:54:33Z",
         "note": "PLAN-ONLY (project_anomaly_task_bridge): minted BACKLOG, NOT promoted to ready (WIP=0). PRIORITY P2; escalate to HIGH ONLY if Telegram double-send is CONFIRMED. Do NOT fold into r2 (different table + cowork emitters)."
+      },
+      {
+        "id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE",
+        "title": "agent_signals verified_decision rows from alert-engine are 100% CONTENT-EMPTY (empty {} payload + null/empty stock_code). LIVE RAW (named volume vn-market-intelligence-mcp_market_data, read-only, immutable=1, scan_ts 2026-06-25T23:32Z): 559/559 (100%) verified_decision rows from from_agent='alert-engine' carry payload='{}'; ZERO verified_decision rows in the whole table have BOTH non-empty payload AND non-null/non-empty stock_code (i.e. zero well-formed rows exist); stock_code NULL/empty on these stock-scoped rows. Continuous/ongoing: MIN(created_at)=2026-06-13T07:59:53Z, MAX=2026-06-25T09:00:07Z (12+ days, not stale).",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "root_cause": "CONTENT defect: the verified_decision signal is constructed/emitted WITHOUT populating payload (left '{}') or stock_code (left NULL/empty). Same emit/construction site that defect (b) FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH already touched (apps/mcp-server scheduler scan jobs taAlertScanJob.ts / bbAlertScanJob.ts -> storeAlerts() -> agent_signals). (b) fixed alert_id (UUID->semantic) ONLY; it did NOT populate payload or stock_code, so this symptom remains. Convergence thesis: one root construction site emits verified_decision rows with empty payload + null stock_code (CONTENT) and previously a UUID alert_id (LINKAGE, now fixed) and sometimes fires twice (COUNT, r5).",
+        "generic_mandate": "RAW-verify the root LIVE before any code change (re-run on the named-volume DB read-only: SELECT COUNT(*) FROM agent_signals WHERE signal_type='verified_decision' AND from_agent='alert-engine' AND (payload='{}' OR payload IS NULL); and confirm ZERO rows have BOTH non-empty payload AND non-null stock_code) — DB-sweep finding, corroborate first (feedback_false_infra_failure_corroboration_gate). Then locate the verified_decision emit/construction site (start at the (b)-fixed sites taAlertScanJob.ts:258 + bbAlertScanJob.ts:245 -> storeAlerts) and POPULATE before emit: (1) payload = the decision detail (NOT '{}'), (2) stock_code = the ticker, (3) keep the now-correct SEMANTIC alert_id from (b). Add an EMIT-TIME GUARD that REFUSES (fail-loud, NOT silent-swallow — feedback_silent_swallow_serial_bugs) to write a verified_decision row with empty payload. Coordinate the single fix with (a) r5 double-fire idempotency and (b) the already-shipped alert_id fix — SAME construction site. VERIFY-DON'T-CLAIM final severity: confirm WHICH consumers READ verified_decision.payload before locking blast radius/severity (feedback_router_verify_raw_not_badges); if NONE read it, downgrade.",
+        "verification_gate": "LIVE acceptance check (RAW-verify against named-volume DB, read-only): after fix + rebuild, freshly-emitted verified_decision rows from alert-engine have non-empty payload AND non-null/non-empty stock_code AND a semantic alert_id that resolves to alerts.id; specifically a scan SELECT COUNT(*) FROM agent_signals WHERE signal_type='verified_decision' AND created_at>=<fix_ts> AND (payload='{}' OR payload IS NULL OR stock_code IS NULL OR stock_code='') returns 0 over >=2 fresh cycles; AND a positive check confirms >=1 WELL-FORMED verified_decision row exists (non-empty payload AND non-null stock_code) post-fix.",
+        "source_signal": "router-dbsweep-20260625T2332Z-r6-agent-signals-verified-decision-empty-payload-null-stockcode",
+        "cross_ref": [
+          "router-dbsweep-20260625T2231Z-r5-agent-signals-identical-dup-doublefire",
+          "sau-20260625T1426-orphan-signals-regress"
+        ],
+        "relationship": "THIRD distinct symptom (CONTENT) of ONE shared alert-engine verified_decision emit-path root, alongside (a) COUNT/double-fire (r5) and (b) LINKAGE/orphan-alert_id (DONE). NOT a dup of either: (a)=duplicate identical rows; (b)=unresolvable alert_id; THIS=empty payload + null stock_code on the SAME rows. NOT FOLDED into (b) because (b) is DONE-LIVE-VERIFIED + closed and its shipped fix scoped alert_id only (never payload/stock_code) — its verify gate is GREEN while this stays broken. Fix together at the single construction site.",
+        "related_board": [
+          "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH(done-live-verified — SAME emit site (taAlertScanJob.ts/bbAlertScanJob.ts->storeAlerts); fixed alert_id ONLY; proves the construction-site files for THIS payload+stock_code fix)",
+          "FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION(backlog, r5 — COUNT/double-fire on same emit path; coordinate the single-site fix, DISTINCT defect)",
+          "sau-20260625T1426-orphan-signals-regress(source of (b) — LINKAGE symptom)"
+        ],
+        "router_verified": true,
+        "minted_by": "po",
+        "minted_at": "2026-06-25T23:55:29Z",
+        "note": "PLAN-ONLY (project_anomaly_task_bridge): minted BACKLOG, NOT promoted to ready (WIP=0). PRIORITY P2 (MEDIUM-HIGH); confirm consumer reads of verified_decision.payload before escalating. Coordinate with the SAME construction site as the DONE alert_id fix + the backlog r5 double-fire — convergence thesis, three defects, one emit site."
       }
     ],
     "closed_sprints": [
@@ -25667,8 +25735,8 @@
     },
     "updated_at": "2026-06-24T17:42:54Z",
     "updated_by": "po (FEAT-PREDICTION-DAILY relocate in_progress->done code-complete)",
-    "last_triaged_at": "2026-06-25T22:54:33Z",
-    "last_triaged_by": "po-s116"
+    "last_triaged_at": "2026-06-25T23:55:29Z",
+    "last_triaged_by": "po-s117"
   },
   "updated_at": "2026-06-25T00:39:11Z",
   "updated_by": "po (PREDICTION-CLAIMS-DAILY-CADENCE mint)",
