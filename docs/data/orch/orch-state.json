@@ -24598,7 +24598,29 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
-    "in_progress": [
+    "in_progress": [],
+    "ready": [],
+    "review": [
+      {
+        "_adjudicated_by": "po",
+        "_updated_at": "2026-06-13T08:48:41Z",
+        "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md",
+        "created_at": "2026-06-11T19:27:17Z",
+        "created_by": "po",
+        "desc": "Brownfield analysis from docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md (APPROVED). Rule NFR-C-1 stale-flag Option A (handler) vs B (middleware). Probe reputation_scores trend distribution + design trend-delta fix (PO ruled A-16 DEGRADED in-scope). Split zone:multi fixes (endpoint+page): NFR-C-4 stockPerformance direction, NFR-C-5 foreign-flow stale_fields, NFR-C-7 reputation trend. Order: BROKEN->DEGRADED->NFR. Output design brief -> pm decomposes.",
+        "id": "ARCH-SHIP-WAVE-REAUDIT",
+        "owner": "architect",
+        "park_reason": "KEEP PARKED (design COMPLETE + valid, brief docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md 16.6KB on disk). NOT closeable: accept->pm-decomposition mints zone:multi subtasks spanning apps/mcp-server + apps/frontend (NFR-C-4/5/7). The apps/mcp-server lane is load-bearing — held by ARCH-CRON-SCHEDULER-RELIABILITY (Monday market-day gate) AND queued for BA-VN-MACRO-TOOLING WAVE-1 (Zone B/C mcp-server). UNPARK CONDITION: dispatch decomposition only once BOTH (a) ARCH-CRON umbrella closes to done_verified after today's market-day gate AND (b) BA-MACRO WAVE-1 mcp-server tasks land — then apps/mcp-server is free for the NFR-C endpoint+page fixes. Until then parking is the correct serialization, not neglect.",
+        "priority": "high",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "status": "PARKED",
+        "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
+        "updated_at": "2026-06-11T19:33:43Z",
+        "updated_by": "architect",
+        "zone": "multi",
+        "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
+        "po_reparked_at": "2026-06-15T06:35:17Z"
+      },
       {
         "id": "FIX-BCTC-SLA-THRESHOLD-360",
         "type": "FIX",
@@ -24636,29 +24658,6 @@
         "po_sibling_decision": "po-s113 2026-06-25T02:17:00Z: sibling FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL kept P3 backlog, sequenced AFTER this task (NOT merged) — orthogonal metric-semantics, may close no-op once this task's done_verified shows off-season SLA stable.",
         "owner": "dev-mcp-server",
         "started_at": "2026-06-25T02:45:29Z"
-      }
-    ],
-    "ready": [],
-    "review": [
-      {
-        "_adjudicated_by": "po",
-        "_updated_at": "2026-06-13T08:48:41Z",
-        "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md",
-        "created_at": "2026-06-11T19:27:17Z",
-        "created_by": "po",
-        "desc": "Brownfield analysis from docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md (APPROVED). Rule NFR-C-1 stale-flag Option A (handler) vs B (middleware). Probe reputation_scores trend distribution + design trend-delta fix (PO ruled A-16 DEGRADED in-scope). Split zone:multi fixes (endpoint+page): NFR-C-4 stockPerformance direction, NFR-C-5 foreign-flow stale_fields, NFR-C-7 reputation trend. Order: BROKEN->DEGRADED->NFR. Output design brief -> pm decomposes.",
-        "id": "ARCH-SHIP-WAVE-REAUDIT",
-        "owner": "architect",
-        "park_reason": "KEEP PARKED (design COMPLETE + valid, brief docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md 16.6KB on disk). NOT closeable: accept->pm-decomposition mints zone:multi subtasks spanning apps/mcp-server + apps/frontend (NFR-C-4/5/7). The apps/mcp-server lane is load-bearing — held by ARCH-CRON-SCHEDULER-RELIABILITY (Monday market-day gate) AND queued for BA-VN-MACRO-TOOLING WAVE-1 (Zone B/C mcp-server). UNPARK CONDITION: dispatch decomposition only once BOTH (a) ARCH-CRON umbrella closes to done_verified after today's market-day gate AND (b) BA-MACRO WAVE-1 mcp-server tasks land — then apps/mcp-server is free for the NFR-C endpoint+page fixes. Until then parking is the correct serialization, not neglect.",
-        "priority": "high",
-        "sprint": "SHIP-WAVE-REAUDIT",
-        "status": "PARKED",
-        "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
-        "updated_at": "2026-06-11T19:33:43Z",
-        "updated_by": "architect",
-        "zone": "multi",
-        "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
-        "po_reparked_at": "2026-06-15T06:35:17Z"
       }
     ],
     "qa": [],
