@@ -2,6 +2,16 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c387 · 2026-06-25T19:25:41Z
+### Audit Run Tier-3 (19:25 UTC 2026-06-25) — DB Data Integrity Sweep
+- Tier: 3 | DB checks: canonical-4 deterministic sweep | Counts: db1=835, db2=1, db3=0, c04=21
+- Canonical-4: MATCH baseline exactly (no change from #136)
+- History: entry #137 appended (scan_ts 2026-06-25T19:25:41Z)
+- Fresh OHLC violations (last 2d): 0 (NO regression)
+- Orphan-FK structural: alert_id NOT-EXISTS = 220 steady (tracked residue, RECORD-ONLY)
+- Anomalies: 0 NEW signals (all canonical counts stable)
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: 79 rows unchanged
+
 ## c386 · 2026-06-25T19:13:25Z
 ### Audit Run Tier-1 (19:13 UTC 2026-06-25) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP (all INTENDED host_runtime_set) | Health: 5/5 endpoints OK
@@ -58,15 +68,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - BCTC checks: B-09 PASS (0 ssc.gov.vn), B-13 PASS (0 stale pending); news-vps PASS (age 81min cadence 1h)
 - Anomalies: 0 NEW signals | Dedup: B-05/B-06 healthy-idle gate passed, B-11 analysis-age expected, C-06 already emitted by concurrent cycle
 - Status: HEALTHY | Signal-queue: 75 rows unchanged
-
-## c382 · 2026-06-25T18:31:16Z
-### Audit Run Tier-2 (18:30–18:31 UTC 2026-06-25) — Freshness Sweep
-- Tier: 2 | Sources: 27 checked | DB freshness: 4 spot checks
-- Cron health: 160+ jobs, all >98% success_rate, 0 fire-gaps
-- Pipeline health: 33/38 tickers OHLC ready, 3 TA oversold signals
-- VPS proxy: 3/4 routes ok (news, sbv, prices all fresh); bctc=off-season idle
-- Data freshness: all sources within SLA thresholds (bctc 12829min << 103381min threshold)
-- Rate limits: 14/14 sources ok, none at 100%
-- DB checks: C-06 WARN (market_messages=0 in 3h), C-07 ok (263 signals in 24h)
-- Anomalies: 1 NEW WARN (C-06 market_messages stale)
-- Status: DEGRADED | Signals: 1 posted | Signal-queue: 75 rows (+1)
