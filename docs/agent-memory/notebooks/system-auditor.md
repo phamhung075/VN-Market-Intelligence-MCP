@@ -2,6 +2,20 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c392 · 2026-06-25T22:40:48Z
+### Audit Run Tier-1 (22:40 UTC 2026-06-25) — Runtime Ping
+- Tier: 1 | Services: 12/12 UP (all INTENDED host_runtime_set) | Health: 5/5 endpoints OK
+- RAW-PROBE (22:40Z): all 12 containers Up with status=healthy
+  - [health] mcp-server:3000/health OK (HTTP 200)
+  - [health] api-gateway:4000/health OK (HTTP 200)
+  - [health] macro-indicators:5004/health OK (HTTP 200)
+  - [health] pdf-extractor:5001/health OK (HTTP 200)
+  - [health] frontend:3001/ OK (HTTP 200)
+- A-20 pdf-extractor multi-probe: [A-20-PROBE-1] 200 | [A-20-PROBE-2] 200 | [A-20-PROBE-3] 200 → 3/3 PASS
+- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 12.93% (<85% PASS) | A-32 Disk: 16% (<85% PASS)
+- Anomalies: 0 NEW (all checks PASS)
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: 79 rows unchanged
+
 ## c391 · 2026-06-25T22:31:08Z
 ### Audit Run Tier-2 (22:31 UTC 2026-06-25) — Freshness Sweep
 - Tier: 2 | DB spot-checks: 4/4 PASS | Cron jobs: all recent ✓ | Sources: post-outage recovery verified
