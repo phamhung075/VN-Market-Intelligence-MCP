@@ -1825,8 +1825,12 @@
         "type": "priority_recommendation",
         "summary": "Bump FIX-BCTC-SLA-THRESHOLD-360 (P3->P1): bctc-stale false-CRITICAL recurred 06-19/06-22x3/06-25, each burns auditor+router+telegram. Off-season threshold + 'host-down' inference from push-age are the root; queue=0 host-up every time.",
         "severity": "INFO",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "dedup_key": "bctc-sla-threshold-recur",
+        "resolved_at": "2026-06-25T02:15:29Z",
+        "resolved_by": "po-s112",
+        "resolution": "BUMPED FIX-BCTC-SLA-THRESHOLD-360 P3->P1 + PROMOTED backlog->ready (next_agent=dev-mcp-server). Recurrence RAW-verified (06-17/06-19/06-24/06-25, auto-deduped INFO but each spawns auditor+telegram+router cost). Scope corrected: router '120 vs 360' framing outdated — system-map SLA resolver already shipped; 3 real sub-roots (mcp get_sla_status legacy path diverges, 168h too tight for inter-quarter gap, push-age!=host-down). dedup_key set so future re-fires of this recommendation dedup not re-surface."
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
@@ -1965,8 +1969,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-24T17:20:00Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-25T02:15:29Z",
+    "_updated_by": "po-s112",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11383,24 +11387,6 @@
         ],
         "owner": null,
         "next_agent": "po"
-      },
-      {
-        "id": "FIX-BCTC-SLA-THRESHOLD-360",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "title": "get_sla_status BCTC threshold misconfig — 120min vs should be 360min/168h out-of-earnings-window (false CRITICAL)",
-        "desc": "get_sla_status BCTC freshness threshold uses 120min, producing false CRITICAL when out of the earnings filing window; expected ~360min (or 168h out-of-window). DISTINCT from FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL (excludes url_not_found terminal rows) and FIX-BCTC-QUEUE-MAXAGE-GATE (drops >30d-no-filing tickers) — those fix WHICH rows count; this fixes the numeric staleness threshold/window itself. RAW-confirm the live threshold value before changing. DoD: BCTC SLA does not report CRITICAL during a normal out-of-earnings-window quiet period when the pipeline is healthy. config-level fix.",
-        "files": [
-          "apps/mcp-server"
-        ],
-        "baseline_pass": false,
-        "size": "S",
-        "source": "health-recheck reports 3209-3237 (A10), router-deduped",
-        "created_at": "2026-06-18T11:36:53Z",
-        "created_by": "po"
       },
       {
         "id": "FIX-SBV-FETCHER-ZERO-VALUE-EMIT",
@@ -24572,7 +24558,43 @@
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). Any new script writing .task_board.head is a BUG — write .head instead. Restored by router tick 20260618T223046Z after po-s107 jq erroneously wrote here (head-drift recurrence)."
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-BCTC-SLA-THRESHOLD-360",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "title": "BCTC SLA false-CRITICAL off-season — recurring noise (P1): align mcp get_sla_status with the 168h resolver, widen inter-quarter quiet-gap threshold, and stop push-age->host-down inference",
+        "desc": "RECURRING false-CRITICAL (B-05/B-06 bctc-discover). RAW-verify (po-s112 2026-06-25): router framing '120 vs 360' is OUTDATED — the system-map.json bctc-discover SLA resolver is ALREADY shipped+correct (mode=earnings-window-dependent, out-of-window=168h). THREE real sub-roots, all in scope: (a) get_sla_status mcp tool still carries the legacy bctc 120min/360min config in DEFAULT_SLA_CONFIG (freshnessSlaChecker.ts), DISTINCT from the auditor's system-map resolver — the two SLA paths diverge; align get_sla_status to the same earnings-window resolver (or 168h out-of-window). (b) 168h out-of-window is still too tight for the genuine ~10-week INTER-QUARTER quiet gap (Apr-window-end->Jul-window-start): B-05 fired 199.7h, B-06 178h, both >168h yet pipeline healthy (queue=0, host-up) — off-season staleness is BY DESIGN; widen out-of-window threshold to cover the full inter-quarter gap (or gate staleness on time-since-expected-window-end, not wall-clock). (c) push-age->'vn-bctc-fetch unhealthy'/host-down inference is WRONG (feedback_bctc_lastpush_age_misread_as_crash): event-driven push-age is NOT a crash signal; the B-05/B-06 'VPS unhealthy' verdict must gate on service-state + queue (queue=0 + host-up = healthy idle), NOT push-age alone. DISTINCT from FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL (which rows count) and FIX-BCTC-QUEUE-MAXAGE-GATE (drops >30d-no-filing tickers). DoD: BCTC SLA + auditor B-05/B-06 do NOT report CRITICAL/HIGH/unhealthy during a normal off-season inter-quarter quiet period when queue=0 and the host is up; RAW-confirm via get_sla_status + a live auditor B-05/B-06 dry-run on today (06-25, off-window). config + check-logic fix.",
+        "files": [
+          "apps/mcp-server/src/domain/services/freshnessSlaChecker.ts",
+          "docs/data/system-map.json",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "baseline_pass": false,
+        "size": "S",
+        "source": "health-recheck reports 3209-3237 (A10), router-deduped",
+        "created_at": "2026-06-18T11:36:53Z",
+        "created_by": "po",
+        "blocking": false,
+        "priority_bumped": {
+          "from": "P3",
+          "to": "P1",
+          "by": "po-s112",
+          "at": "2026-06-25T02:15:29Z",
+          "rationale": "false-CRITICAL recurred 06-17/06-19/06-24/06-25; per-occurrence auditor+telegram+router burn now outweighs off-season low-harm"
+        },
+        "promoted_at": "2026-06-25T02:15:29Z",
+        "promoted_by": "po-s112",
+        "scope_corrected": {
+          "by": "po-s112",
+          "at": "2026-06-25T02:15:29Z",
+          "note": "router '120 vs 360' framing outdated; system-map resolver already shipped; 3 real sub-roots: (a) mcp get_sla_status legacy 120/360 path diverges from resolver, (b) 168h too tight for inter-quarter gap, (c) push-age!=host-down"
+        }
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
