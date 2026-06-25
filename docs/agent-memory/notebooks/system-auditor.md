@@ -1,6 +1,20 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c372 · 2026-06-25T16:13:08Z
+### Audit Run Tier-1 (16:13–16:13 UTC 2026-06-25) — Runtime Ping
+- Tier: 1 | Services: 12/12 up (mcp-server:37m, frontend:35h, macro:35h, pdf:9d, stock:10d, ta:10d, kinh-dich:10d, api-gateway:2w, rag:47m, news:2w, alert:2w, mcp-gateway:2w)
+- Health endpoints: 5/5 ok (mcp:3000, api-gateway:4000, macro:5004, pdf:5001, frontend:3001)
+- A-20 pdf-extractor multi-probe: 3/3 PASS (in-container HTTP 200 all probes)
+- RestartCount: mcp-server=0 (PASS); rag-service=120 (known FU-RAG-DEPLOY-MEMORY, RECORD-AND-LEAVE)
+- Memory: mcp-server=16.84% (PASS, <85%); clean recycle after 15:35 restart, mem reset expected
+- Disk: /=26% (PASS, <85%)
+- Cron health: 144+ jobs all success_rate≥98%, no fire-gaps detected
+- VPS proxy: prices/news/sbv all ok; bctc off-season idle (0 pushes/24h expected Q2)
+- B-05 gate: queue=38 pending/failed (not stuck); push 199.7h << 1714.5h SLA threshold = HEALTHY-IDLE, NO signal
+- Anomalies: 0 NEW signals (all checks PASS, no regressions)
+- Status: HEALTHY | Signals: 0 posted | Queue: 74 rows (c371→c372) | History: 131→132
+
 ## c371 · 2026-06-25T16:04:34Z
 ### Audit Run Tier-2 (16:02–16:04 UTC 2026-06-25) — Freshness Sweep
 - Tier: 2 | Cron: 144 jobs, all ≥98% success, 0 fire-gaps | Sources: 27 checked vs cadence thresholds
@@ -16,16 +30,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - Dedup: B-05/B-06/B-11/FX findings RECORD-AND-LEAVE (known recurrent patterns, no acute new anomaly)
 - Anomalies: 0 NEW signals | All rechecked findings KNOWN-BENIGN or dedup-matched
 - Status: HEALTHY | Signals: 0 posted | Queue: 73 rows unchanged | History: 131→132
-
-## c370 · 2026-06-25T16:03:51Z
-### Audit Run Tier-1 (16:02–16:03 UTC 2026-06-25) — Runtime Ping
-- Tier: 1 | Services: 12/12 up (mcp, api-gateway, frontend, macro, mcp-gateway, pdf, stock, ta, kinh-dich, alert, rag, news)
-- Health endpoints: 5/5 ok (mcp:3000, api-gateway:4000, macro:5004, pdf:5001, frontend:3001)
-- A-20 pdf-extractor multi-probe: 3/3 PASS (no event-loop stall)
-- RestartCount: mcp-server=0 (PASS)
-- Memory: mcp-server=17.83% (PASS, <85%)
-- Disk: /=26% (PASS, <85%)
-- Cron health: 144 jobs tracked, all success_rate≥98%, no fire-gaps
-- BCTC-aware gate: 38 pending items + off-season (push 211.4h << 1714.5h SLA threshold) = healthy idle, NO signal
-- Anomalies: 0 NEW signals emitted (all checks PASS, no regressions vs prior probes)
-- Status: HEALTHY | Signals: 0 posted | Queue: 73 rows unchanged | History: 130→131
