@@ -1803,6 +1803,17 @@
         "resolution": "part-real-check-bug-minted",
         "router_dup_of": "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
         "ground_truth": "RAW live pdf_extractor.db 2026-06-25T00:37Z (42233 rows): status DISTINCT = failed(40758)/processing(1376)/success(99); NO done status -> C-11 predicate status=done ALWAYS 0 (check-bug). Also success extracted_at is ISO-8601 T (2026-06-15T22:13:09) vs datetime() space -> strcompare bypass (2nd bug). Predicate fix minted FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE. DATA GAP (last success 2026-06-15 ~10d; 99.76% failure ratio) = out-of-earnings-season + historical accumulation, root tracked done_verified under FIX-BCTC-ENRICH-SILENT-0ROWS / FACTORY-PDF cluster -- NOT re-minted."
+      },
+      {
+        "id": "sau-b05-20260625-0144",
+        "ts": "2026-06-25T01:44:33Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover stale 199.7h (check B-05); VPS vn-bctc-fetch unhealthy",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
