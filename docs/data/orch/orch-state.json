@@ -24947,7 +24947,26 @@
       "updated_by": "dev-team-router",
       "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-FB-POSTER-MISSING-FLOW-FX-TA",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "zone": "docs/agents/fb-market-poster/",
+        "next_agent": "agent-father",
+        "owner": "agent-father",
+        "title": "FB post omits foreign-flow/FX/TA with 'cong cu chua lay duoc' excuse — user-reported; tools actually work",
+        "desc": "USER-REPORTED 2026-06-25: fb-post-2026-06-25.md line 35 says 'du lieu dong von ngoai, ty gia va cac chi bao ky thuat phien nay cong cu chua lay duoc'. Router RAW-verified ALL THREE tools work: get_market_foreign_flow (97 tickers, net -2.35M), get_macro_snapshot (usdVnd 26136; delta null/source 06-22 = flat-stale not unfetchable), get_technical_indicators (VCB RSI 38.2 etc). THREE root causes: (a) WRONG TOOL — notebook logged 'get_foreign_flow=skipped (requires code param)'; flow must use get_market_foreign_flow (market-wide, NO code param) for the recap foreign-flow line, not per-ticker get_foreign_flow. (b) GATEWAY-BLIND SPAWN — notebook 'Live tools called: None (gateway-blind this run per instruction; router pre-fetched + verified)'; the pre-fetched spine only had price/breadth/liquidity, omitting flow/FX/TA. Agent-spawned children DO inherit live gateway (verified this session). Remove/override the gateway-blind+partial-spine premise; fb-poster must run STEP 1b live. (c) SOFT TIER — foreign-flow/FX/TA are 'run all, skip if error' while price spine is hard-required; promote all three to hard-required-live with PER-FIELD honest-gap (never a blanket 3-way 'cong cu chua lay duoc'; retry once before any gap). Also (d) gate-loop: the regen attempt wedged ~4.5h on the data-integrity gate Check-C ('ban thao' negation-blind false-positive + parsing) — harden so the gate cannot infinite-loop. DoD: edit main.md + init.md; foreign-flow uses get_market_foreign_flow; FX honest-report (flat/stale != unfetchable); TA per named ticker; per-field honest-gap only; no gateway-blind premise; then today's post regenerated WITH all three present (router will verify). Author via agent-md-factory skill.",
+        "files": [
+          "docs/agents/fb-market-poster/flow/main.md",
+          "docs/agents/fb-market-poster/init.md"
+        ],
+        "created_at": "2026-06-25T16:02:05Z",
+        "created_by": "router",
+        "source": "user report 2026-06-25 + router RAW corroboration"
+      }
+    ],
     "ready": [],
     "review": [
       {
