@@ -12576,6 +12576,20 @@
     ],
     "done": [
       {
+        "id": "FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "owner": "dev-mcp-server",
+        "zone": "cross-service/",
+        "files": ["scripts/db-integrity-counts.sh", ".claude/commands/crons/cron-db-data-integrity.md"],
+        "title": "db-integrity helper BLINDED: sqlite3 -readonly on live WAL DB → all-NULL counts; switch to file:?immutable=1 + add probe-failure guard",
+        "commit": "8deab41e",
+        "done_verified_at": "2026-06-25T04:22:00Z",
+        "done_verified_by": "dev-mcp-server",
+        "verification": "Happy-path: 835/1/0/21, ohlcv_total=17610, exit 0. Forced-failure (bad DB path): exit 1 + [DB-INTEGRITY-COUNTS] PROBE FAILURE (exit 1): Error: unable to open database... History-append entry #106 embedded non-null counts. No rebuild required (scripts only)."
+      },
+      {
         "id": "DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION",
         "type": "FIX",
         "priority": "p2",
@@ -24620,46 +24634,13 @@
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE",
-      "next_agent": "dev-mcp-server",
-      "updated_at": "2026-06-25T04:14:58Z",
-      "updated_by": "dev-team-router"
+      "status": "done_verified",
+      "active_task_id": null,
+      "next_agent": null,
+      "updated_at": "2026-06-25T04:22:00Z",
+      "updated_by": "dev-mcp-server"
     },
-    "in_progress": [
-      {
-        "id": "FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE",
-        "type": "FIX",
-        "title": "db-integrity helper BLINDED: sqlite3 -readonly on live WAL DB → all-NULL counts; switch to file:?immutable=1 + add probe-failure guard",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "zone": "cross-service/",
-        "owner": "dev-mcp-server",
-        "next_agent": "ba",
-        "size": "FIX",
-        "files": [
-          "scripts/db-integrity-counts.sh",
-          "scripts/db-integrity-history-append.sh"
-        ],
-        "baseline_pass": "router RAW-verified DB healthy: canonical-4 835/1/0/21, ohlcv_total 17610, newest 06-25; this is TOOLING-ONLY, no DB incident",
-        "root_cause": "scripts/db-integrity-counts.sh:13 opens the live WAL-mode market.db with `sqlite3 -readonly \"${DB}\"`. After the mcp-server writer restarted (~4h pre-detection) and recreated market.db-shm (uid 501), the readonly sidecar (different uid) can no longer attach the writer-owned -shm to build the WAL index → SQLITE_READONLY(8) attempt to write a readonly database → query returns NOTHING → all canonical-4 counts emit as null + context empty. Reproduced 2x by router. market.db-wal is 0 bytes (NOT hot-WAL/corruption — DB is healthy).",
-        "fix_spec": "Change the open in scripts/db-integrity-counts.sh:13 from `sqlite3 -readonly \"${DB}\"` to `sqlite3 \"file:${DB}?immutable=1\"` (correct read-only-on-live-WAL pattern — bypasses WAL/-shm, reads the main DB file directly). Router confirmed this returns correct counts 835/1/0/21 + ohlcv_total 17610 against the actively-written live DB.",
-        "blast_radius": "scripts/db-integrity-history-append.sh calls this same helper, so docs/data/db-integrity-history.json records counts:null every tick until fixed — defeats the entire anti-hallucination telemetry mechanism. Fixing the one open line fixes BOTH paths. Router grep confirms db-integrity-counts.sh is the SOLE `sqlite3 -readonly` sidecar caller; still search repo for any OTHER sqlite3 -readonly sidecar callers and convert them.",
-        "dod": [
-          "scripts/db-integrity-counts.sh returns NON-NULL canonical-4 against the live WAL DB WHILE mcp-server is actively writing (use file:?immutable=1 open).",
-          "scripts/db-integrity-history-append.sh embeds the real (non-null) counts into docs/data/db-integrity-history.json.",
-          "Add a PROBE-FAILURE guard: a null/empty-counts result MUST be treated as a probe FAILURE — non-zero exit / loud error — NOT silently emitted as null. Today line 23 `|| true` + line 29 num() silently coerce non-numeric to null; that silent-emit path is the second half of the defect.",
-          "Repo-wide sweep: convert any OTHER `sqlite3 -readonly` sidecar callers to the immutable pattern."
-        ],
-        "generic_mandate": "Root-cause the readonly-on-live-WAL open pattern repo-wide, not just this one call site; the probe-failure guard must make ALL future blind-helper failures loud, not silent.",
-        "verification_gate": "RAW: run the patched helper against the LIVE WAL DB while mcp-server is writing → asserts non-null canonical-4 (835/1/0/21 class) + ohlcv_total>0; AND force a probe failure (e.g. bad DB path) → asserts non-zero exit / loud error (NOT a silent null JSON).",
-        "detected_by": "router DB-data sweep tick #106 (2026-06-25); RAW-verified root cause + fix + DoD pre-supplied",
-        "created_at": "2026-06-25T03:58:09Z",
-        "created_by": "po-triage-tick106",
-        "started_at": "2026-06-25T04:14:58Z",
-        "dispatched_by": "dev-team-router"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
