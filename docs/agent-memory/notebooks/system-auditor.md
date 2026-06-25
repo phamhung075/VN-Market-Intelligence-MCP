@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c383 · 2026-06-25T18:30:41Z
+### Audit Run Tier-2 (18:30 UTC 2026-06-25) — Freshness Sweep
+- Tier: 2 | Sources: 27 swept | Per-source all within SLA (bctc 12829min << 1714.5h threshold off-window)
+- Cron health: 160+ jobs ≥98% success, 0 fire-gaps; 5 recent cron checks all PASS
+- BCTC-discover: queue=38 active + host UP → healthy idle gate PASS (no B-05 emit per dedup rule)
+- VPS routes: 4/4 ok (prices/news/sbv/bctc); service health: 2 healthy, 2 idle (market-closed), 1 event-driven (bctc expected)
+- DB freshness: C-07 ok (263 signals 24h); C-06 0 msgs in 3h (off-market expected, dedup prior signal sau-2026-06-25T18:31:16Z)
+- BCTC checks: B-09 PASS (0 ssc.gov.vn), B-13 PASS (0 stale pending); news-vps PASS (age 81min cadence 1h)
+- Anomalies: 0 NEW signals | Dedup: B-05/B-06 healthy-idle gate passed, B-11 analysis-age expected, C-06 already emitted by concurrent cycle
+- Status: HEALTHY | Signal-queue: 75 rows unchanged
+
 ## c382 · 2026-06-25T18:31:16Z
 ### Audit Run Tier-2 (18:30–18:31 UTC 2026-06-25) — Freshness Sweep
 - Tier: 2 | Sources: 27 checked | DB freshness: 4 spot checks
