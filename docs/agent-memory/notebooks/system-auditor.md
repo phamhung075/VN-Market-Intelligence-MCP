@@ -1,6 +1,17 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c375 · 2026-06-25T16:54:49Z
+### Audit Run Tier-DATA (16:54–16:55 UTC 2026-06-25) — DB Data-Anomaly Sweep
+- Tier: DATA (read-only sidecar immutable=1) | Tables: 16 scanned | Anomalies: 0 NEW
+- Canonical-4 FROZEN (matched 100%): db1_ohlc_violations=835 (pre-2026-06-20 residue, FIX in_progress), db2_scale_gt100x=1 (DFF 1000x known), db3_vnindex_cache_rows=0 (on-demand empty by design), c04_low_confidence_reports=21 (BCTC enrichment fix in_progress)
+- Fresh data checks: daily_ohlcv=18408 (newest 2026-06-25, +0 fresh violations last 2d), market_prices=121 rows (freshest 15:45Z, staleness expected post-close 08:00Z), financial_reports=63 (net_revenue≤0=17 frozen), sbv_rates ok
+- Residue roster verified (RECORD-AND-LEAVE): agent_signals.alert_id orphans=220 (FIX DONE-LIVE-VERIFIED commit 1f999f27), one pending signal=stale (2026-06-16, known backlog sau-20260621T155518), scheduler_locks=(0 held, none stuck), deep_fetch_queue status='failed'=0, cron_job_runs all recent+success
+- Integrity: PRAGMA integrity_check(100)=ok; all table row counts nominal
+- History: append entry #132 (len 131→132, cap 200 ok); helper JSON stamped scan_ts + embedded counts
+- Anomalies: 0 NEW signals | 0 board-tracked fixes required | All findings KNOWN-BY-DESIGN or dedup-benign
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: 74 rows | History: 131→132
+
 ## c374 · 2026-06-25T16:44:05Z
 ### Audit Run Tier-1 (16:43–16:44 UTC 2026-06-25) — Runtime Ping
 - Tier: 1 | Services: 13/13 up (all INTENDED runtime set) | Health: 5/5 endpoints OK (mcp:3000, api-gateway:4000, macro:5004, pdf:5001, frontend:3001)
