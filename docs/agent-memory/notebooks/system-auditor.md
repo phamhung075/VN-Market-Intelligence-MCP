@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c355 · 2026-06-25T10:44:08Z
+### Audit Run Tier-1 Runtime Ping (10:43–10:44 UTC 2026-06-25)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
+- All containers healthy: mcp-server (6h, RestartCount=0, mem=60.64% 1.213GiB/2GiB PASS), rag-service (RestartCount=118 KNOWN-STANDING FU-RAG-DEPLOY-MEMORY)
+- A-20 pdf-extractor multi-probe: 3/3 HTTP 200 PASS | A-30 mcp-server mem 60.64% PASS | A-31 EPIPE=0 PASS | A-32 disk=26% PASS
+- Cron health: 160+ active jobs, all recent runs success ≥98% (sbvRatesRefreshJob 98.1%)
+- B-05 BCTC healthy-idle gate: push-age=206h vs SLA dynamic threshold=1704.5h (out-of-window June) — PASS
+- VPS proxy status: all services reachable via get_system_status circuit breakers (16 OK)
+- Anomalies: 0 new | Dedup: A-30 (known leak), A-21 (known rag-cycle), B-05 (healthy-idle) — all RECORD-AND-LEAVE per policy
+- Status: HEALTHY | Signals: 0 posted | Dashboard rows: 0 | Telegram: none
+
 ## c354 · 2026-06-25T10:32:20Z
 ### Audit Run Tier-2 Freshness Sweep (10:30–10:32 UTC 2026-06-25)
 - Tier: 2 | Cron checks: 159+ jobs all healthy ≥98% | Sources: 27 checked | VPS routes: 4 probed
@@ -59,12 +70,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-30 mcp-server mem 58% PASS (normal baseline post-build 04:40Z) | A-31 EPIPE=0 | A-32 disk=26%
 - B-05 BCTC healthy-idle (SLA gate applied, queue-dependent) PASS
 - Anomalies: 0 new | Dedup: none escalated | Status: HEALTHY | Signals: 0
-
-## c349 · 2026-06-25T09:13:31Z
-### Audit Run Tier-1 (09:13–09:14 UTC 2026-06-25)
-- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
-- Containers: mcp-server (5h, RestartCount=0 BUILD-04:40Z, mem=66.72% 1.334GiB/2GiB steady-climb), rag-service (36m, RestartCount=118 KNOWN FU-RAG-DEPLOY-MEMORY)
-- A-20 endpoints PASS (5/5) | A-30 mcp-server mem 66.72% normal climb | A-31 EPIPE=0 | A-32 disk=26%
-- B-05 BCTC push-age 199.7h << SLA 1714.5h (healthy-idle: queue=0 + host-up) PASS | VPS proxy 3/4 live
-- Pipeline health: 30/40 tickers fresh, 740 rows today
-- Anomalies: 0 new | Status: HEALTHY | Signals: 0
