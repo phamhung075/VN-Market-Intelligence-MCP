@@ -1,6 +1,16 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c373 · 2026-06-25T16:24:59Z
+### Audit Run Tier-3 (16:24–16:25 UTC 2026-06-25) — DB Data-Anomaly Sweep
+- Tier: 3 | Container tooling: 3/3 ok (pdftoppm, tesseract, vie-lang) | Inter-service: 4/4 ok
+- DB checks C-01–C-16: 16 checks, 16 PASS, 0 FAIL | WAL 4MB ok | Integrity ok
+- Canonical-4 baseline: db1=835 (MATCH, no regression), db2=0 (← was 1, now stable), db3=0, c04=21 (all MATCH)
+- Fresh OHLC violations (2d): 0 (PASS); C-08 orphaned alerts (24h): 1 (residue, BY-DESIGN)
+- History: append c373 (len 130→131); history cap=200 OK
+- Anomalies: 0 NEW signals (all checks PASS, all BY-DESIGN residues accounted)
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: unchanged | History: 131→132
+
 ## c372 · 2026-06-25T16:13:08Z
 ### Audit Run Tier-1 (16:13–16:13 UTC 2026-06-25) — Runtime Ping
 - Tier: 1 | Services: 12/12 up (mcp-server:37m, frontend:35h, macro:35h, pdf:9d, stock:10d, ta:10d, kinh-dich:10d, api-gateway:2w, rag:47m, news:2w, alert:2w, mcp-gateway:2w)
