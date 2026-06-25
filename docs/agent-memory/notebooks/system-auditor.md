@@ -2,6 +2,26 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c359 · 2026-06-25T11:55:42Z
+### DB Data-Anomaly Sweep Tier-DATA (11:54–11:55 UTC 2026-06-25) — Canonical-4 Frozen, All Findings Held Stable
+- Tier: DATA | Tables: 8 checked (canonical + anomaly-class ad-hoc) | Helper mode: deterministic db-integrity-counts.sh
+- Canonical-4 FROZEN (helper exit 0, immutable=1 verified): db1_ohlc_violations=835, db2_scale_gt100x=1, db3_vnindex_cache_rows=0, c04_low_confidence_reports=21
+- Context: daily_ohlcv_total=18251, newest_date=2026-06-25, market_prices_freshness=2026-06-25T11:15:02.994Z, fresh_ohlc_violations_last_2d=0
+- Data anomaly scan: market_prices_stale>4h=3 (post-close illiquid OPC/SMA/STG—expected), scheduler_locks_held=0 (RESOLVED), signal_outcomes_pending=72 (tracked), deep_fetch_queue_pending_stuck=0 (clean)
+- Anomalies found: 0 NEW REAL (all 8 findings BY-DESIGN or already-tracked) | No signals to write (verdict=REAL count: 0)
+- History: appended entry #122 (helper confirmed: scan_ts=2026-06-25T11:55:42Z, before=121, after=122, cap=200) ✓ | Signal queue: 72 rows (0 NEW)
+- Status: DATA-HEALTHY (canonical-4 frozen, zero fresh violations, all known anomalies held stable) | Signals: 0 posted | Telegram: none
+
+## c358 · 2026-06-25T11:26:16Z
+### DB Data-Anomaly Sweep Tier-DATA (11:24–11:26 UTC 2026-06-25) — Router-Verified Baseline
+- Tier: DATA | Tables: 14 checked (canonical + 10 ad-hoc) | Helper mode: deterministic db-integrity-counts.sh
+- Canonical-4 FROZEN (router-verified 11:24Z, immutable=1 helper exit 0): db1_ohlc_violations=835, db2_scale_gt100x=1, db3_vnindex_cache_rows=0, c04_low_confidence_reports=21
+- Context: daily_ohlcv_total=18251, newest_date=2026-06-25, market_prices_freshness=2026-06-25T11:15:02.994Z, fresh_ohlc_violations_last_2d=0
+- Data anomaly scan: signal_outcomes_pending=72 (tracked OPEN), deep_fetch_queue_terminal=582 (expected), market_prices_stale>4h=6 (post-close illiquid, OPC/SMA/STG), financial_reports_net_revenue<=0=17 (frozen by-design), financial_reports_NULL_net_revenue=14, scheduler_locks_held=0, cron_errors_24h=0
+- Anomalies found: 0 NEW REAL (all 15 findings BY-DESIGN or already-tracked per memory) | No signals to write (verdict=REAL count: 0)
+- History: appended entry #121 (helper confirmed: scan_ts=2026-06-25T11:26:16Z, before=120, after=121, cap=200) ✓ | Signal queue: 72 rows (0 NEW)
+- Status: DATA-HEALTHY (canonical-4 frozen, no fresh anomalies, all known defects held stable) | Signals: 0 posted | Telegram: none
+
 ## c357 · 2026-06-25T11:14:05Z
 ### Audit Run Tier-1 Runtime Ping (11:13–11:14 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
