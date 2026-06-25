@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c322 · 2026-06-25T02:14:18Z
+### Audit Run Tier-1 (02:14 UTC 2026-06-25)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
+- Containers all UP: mcp-server (2h healthy, RestartCount=1 expected), frontend (21h), macro-indicators (21h), pdf-extractor (9d), stock-price (9d), technical-analysis (9d), kinh-dich-service (10d), api-gateway (13d), rag-service (1h healthy, RestartCount=109 KNOWN-STANDING FU-RAG-DEPLOY OOM), news-fetch (2w), alert-engine (2w), mcp-gateway (2w)
+- A-20 pdf-extractor multi-probe: 3/3 passed 200 OK (event-loop responsive)
+- A-21 RestartCount: mcp-server=1 PASS | rag-service=109 KNOWN-STANDING (FU-RAG-DEPLOY 768MiB OOM cycle ~1/hr, no escalation)
+- A-30 mcp-server mem=33.24% (680.7/2048 MiB, PASS <85%) | A-32 disk=40% (20Gi free, PASS)
+- Cron: 100+ jobs all running, success rates ≥98%, no gaps
+- B-05/bctc-discover: 197.5h stale (RECORD-AND-LEAVE: VPS vn-bctc-fetch='unhealthy' cosmetic artifact, pending queue=0, no signal)
+- Anomalies: 0 new | Status: HEALTHY
+
 ## c321 · 2026-06-25T01:44:33Z
 ### Audit Run Tier-1 (01:44 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
@@ -18,13 +29,4 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-21 mcp-server RestartCount=1 (recent restart OK) | rag-service RestartCount=109 (KNOWN-STANDING FU-RAG-DEPLOY 768MiB OOM cycle, steady ~1/hr, no escalation)
 - A-30 mcp-server MemPerc=32.22% (660/2048 MiB, healthy <85%) | A-32 disk=39% (21Gi free, PASS)
 - Cron: 100+ jobs all running, latest success rates ≥98.1%, no gaps detected
-- Anomalies: 0 new | Status: HEALTHY
-
-## c319 · 2026-06-25T00:43:02Z
-### Audit Run Tier-1 (00:43 UTC 2026-06-25)
-- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
-- Containers all UP: mcp-server (59m healthy), frontend (19h healthy), macro-indicators (20h healthy), pdf-extractor (8d healthy), stock-price (9d healthy), technical-analysis (9d healthy), kinh-dich-service (10d healthy), api-gateway (13d healthy), rag-service (9h healthy), news-fetch (2w healthy), alert-engine (2w healthy), mcp-gateway (2w healthy)
-- A-21 mcp-server RestartCount=1 (recent restart OK) | rag-service RestartCount=108 (KNOWN-STANDING FU-RAG-DEPLOY chronic 768MiB OOM cycle, no escalation)
-- A-30 mcp-server MemPerc=27.44% (562/2048 MiB, healthy <85% ceiling) | A-32 disk=40% (20Gi free, PASS)
-- A-25..A-28 inter-svc connectivity: all services reporting OK via api-gateway /health
 - Anomalies: 0 new | Status: HEALTHY
