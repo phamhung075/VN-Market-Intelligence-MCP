@@ -2,6 +2,16 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c361 · 2026-06-25T12:54:42Z
+### DB Data-Anomaly Sweep Tier-DATA (12:54 UTC 2026-06-25) — Canonical-4 Frozen, 0 NEW Signals
+- Tier: DATA | Tables: 14 checked (daily_ohlcv, market_prices, market_prices_history, vn_index_cache, alerts, agent_signals, financial_reports, scheduler_locks, cron_job_runs, and ad-hoc scans)
+- Helper deterministic (immutable=1): db1_ohlc_violations=835 FROZEN, db2_scale_gt100x=1 FROZEN, db3_vnindex_cache_rows=0 FROZEN, c04_low_confidence_reports=21 FROZEN (all identical since #53)
+- Context: daily_ohlcv_total=18251, newest_date=2026-06-25, market_prices_freshness=2026-06-25T12:30:02Z (feed alive), fresh_ohlc_violations_last_2d=0
+- Anomaly scan: db1=835 pre-2026-06-20 residue (FIX-OHLCV-WRITER-INTEGRITY in_progress), db2=1 DFF unit conversion artifact (same fix), db3=0 vnindex on-demand cache (expected), c04=21 low-confidence PDF scans (by-design flagged), market_prices_stale>4h=3 illiquid OPC/SMA/STG (post-close expected), scheduler_locks_held=0 (resolved)
+- Findings: 7 total anomalies found | 0 NEW REAL | All 7 BY-DESIGN or already-tracked | No signals written | Dedup verified vs prior open rows
+- History: appended entry #124 (helper confirmed: scan_ts=2026-06-25T12:54:42Z, before=123, after=124, cap=200) ✓
+- Status: HEALTHY | Signals: 0 posted | Queue: 72 rows unchanged | Telegram: none
+
 ## c360 · 2026-06-25T12:26:21Z
 ### DB Data-Anomaly Sweep Tier-DATA (12:24–12:26 UTC 2026-06-25) — Canonical-4 Frozen, 0 NEW Signals
 - Tier: DATA | Tables: 8 checked (daily_ohlcv, market_prices, agent_signals, scheduler_locks, deep_fetch_queue, cron_job_runs, fred_series_daily, vn_index_cache)
