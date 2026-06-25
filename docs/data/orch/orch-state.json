@@ -1959,8 +1959,23 @@
         "type": "data_stale",
         "summary": "bctc-discover stale 230.5h (38 pending rows, vn-bctc-fetch unhealthy) — check B-05",
         "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "router_note": "RAW-INVESTIGATED router 2026-06-25T10:34Z: severity OVERSTATED, SAME root as B-14 (vn-bctc-fetch). Freshness PASSES by auditor own numbers (230.5h << 1714.5h off-season SLA — the FIX-BCTC-SLA-THRESHOLD-360 path holds). get_vps_proxy_health(bctc): last push 06-16 18:02, 0 pushes/24h, 0 ERRORS, 1 item. June is OFF-SEASON (BCTC quarterly, earnings months [1,4,7,10]; Q2 filings arrive July) → no new filings to fetch = expected idle, NOT an outage; 38 pending = off-season backlog (url_not_found/enrich_failed), not time-sensitive. So B-05 re-fires the off-season-false-CRITICAL through a queue+vps-health path that FIX-BCTC-SLA-THRESHOLD-360 only closed on the freshness path. router_dup_of=B-14. REAL residual (the only actionable bit): vn-bctc-fetch service shows unhealthy 6h+ with 0 errors — ambiguous benign-off-season-idle vs actually-broken; must be settled by dev-vps BEFORE July Q2 season or it silently fails. Router spawning ops-vps-fetch to RAW-diagnose. PO follow-up: extend the off-season/calendar gate to the B-05 queue+vps-health predicate (same class as B-11 layer-split, C-06/C-11).",
+        "resolution": "FALSE-CRITICAL confirmed by ops-vps-fetch SSH recon 2026-06-25T10:36Z: vn-bctc-fetch.service active(running) 14d, 0 restarts, no OOM; log shows 28 consecutive clean cycle exits (Queue:0 -> nothing to fetch), 0 errors/TLS/geo-block; last good push ACV Q1 06-16 HTTP200. Queue legitimately drained (9 non-filer SKIP tickers + TTL->0 on 06-18). OFF-SEASON correct, will auto-resume July Q2. The unhealthy flag = health probe keys on last-push-age vs static ~360min threshold, cannot distinguish IDLE from BROKEN. Same root as B-14, same class as memory bctc-lastpush-age-misread-as-crash. NO VPS action. Durable fix ALREADY EXISTS + recurring (documented ops c018 06-19): FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH (mark IDLE not UNHEALTHY when queue_total=0 AND service_running=true) — PO should PROMOTE it; this false-CRITICAL has now recurred 06-19->06-25.",
+        "router_verified": "router+ops-vps-fetch"
+      },
+      {
+        "id": "sau-20260625T1426-orphan-signals-regress",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "summary": "agent_signals: 220 orphaned alert_id FK violations (was 124 on 2026-06-24, +96 regression). Fresh: 29 created TODAY (2026-06-25T08:45:01Z newest). Orphans date-range 2026-06-22..2026-06-25. Material +96 growth indicates ongoing corruption in alert↔signal creation atomicity or cascading delete.",
+        "severity": "HIGH",
         "status": "NEW",
-        "payload_ref": null
+        "created_at": "2026-06-25T14:26:59Z",
+        "zone_owner": "dev-alert-engine",
+        "payload_ref": "docs/data/db-integrity-history.json entry #127",
+        "notes": "Prior signal sau-2026-06-24T00:28:53Z tracked 124 orphaned on 2026-06-22. Growth +96 in 2 days + 29 created TODAY indicate escalation. Investigation: (1) review alert.delete cascade constraints in schema, (2) probe alert creation vs agent_signal enqueue atomicity, (3) check alert GC cron timing vs signal link timing."
       }
     ],
     "last_triaged_at": "2026-06-25T07:00:00Z",
