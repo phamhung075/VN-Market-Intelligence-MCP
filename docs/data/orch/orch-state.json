@@ -1782,8 +1782,12 @@
         "type": "db_integrity_breach",
         "summary": "C-06 market_messages timestamp format mismatch (0 rows, expected >0)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-25T00:39:11Z",
+        "resolution": "false-positive-dismissed",
+        "router_dup_of": "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
+        "ground_truth": "RAW live market.db 2026-06-25T00:37Z: newest market_messages #867 sent_at=2026-06-24 19:51:07 (~4.8h ago, overnight pre-market ~07:37 VN); 3h=0 8h=2 24h=15. ALL 866 rows space-separated format, ZERO ISO-8601 T -> NO strcompare bypass; 0 is the TRUE overnight-quiet count, NOT a timestamp-format mismatch. Auditor diagnosis WRONG. Off-market-aware recalibration already tracked READY as FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE -- no new task minted."
       },
       {
         "id": "sau-c11-20260625t003213z",
@@ -1793,8 +1797,12 @@
         "type": "db_integrity_breach",
         "summary": "C-11 pdf_extractor done documents schema mismatch (0 rows, expected >0)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-25T00:39:11Z",
+        "resolution": "part-real-check-bug-minted",
+        "router_dup_of": "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
+        "ground_truth": "RAW live pdf_extractor.db 2026-06-25T00:37Z (42233 rows): status DISTINCT = failed(40758)/processing(1376)/success(99); NO done status -> C-11 predicate status=done ALWAYS 0 (check-bug). Also success extracted_at is ISO-8601 T (2026-06-15T22:13:09) vs datetime() space -> strcompare bypass (2nd bug). Predicate fix minted FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE. DATA GAP (last success 2026-06-15 ~10d; 99.76% failure ratio) = out-of-earnings-season + historical accumulation, root tracked done_verified under FIX-BCTC-ENRICH-SILENT-0ROWS / FACTORY-PDF cluster -- NOT re-minted."
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
@@ -12413,6 +12421,32 @@
         "source": "PO FB-quality audit 2026-06-24 — extends project_all_info_source_link_dropdown_recheck to the FB surface",
         "created_at": "2026-06-24T14:52:55Z",
         "created_by": "po-fb-audit"
+      },
+      {
+        "id": "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
+        "type": "FIX",
+        "severity": "LOW",
+        "priority": "low",
+        "size": "S",
+        "status": "BACKLOG",
+        "title": "system-auditor C-11 (pdf_documents) check predicate broken: queries status=done (never exists) + ISO-8601 vs datetime() strcompare bypass -> ALWAYS false-fails",
+        "description": "C-11 (docs/agents/system-auditor/flow/main.md L478 spec table + bun:sqlite probe) is: count(*) FROM pdf_documents WHERE status='done' AND extracted_at > datetime('now','-48 hours'). RAW live probe (pdf_extractor.db, 2026-06-25T00:37Z, 42233 rows): DISTINCT status = failed(40758)/processing(1376)/success(99) -- there is NO 'done' status, so the predicate ALWAYS returns 0 and C-11 false-fails on every scan. TWO bugs: (1) status literal 'done' must be 'success' (the real terminal-OK status); (2) extracted_at on success rows is ISO-8601 with T separator (e.g. 2026-06-15T22:13:09.472421) while datetime('now','-48 hours') returns space-separated, so the string compare bypasses (feedback_sqlite_iso8601_datetime_strcompare_bypass) and even after fixing the status literal the 48h window mis-evaluates. failed/processing rows have NULL extracted_at.",
+        "owner": "system-auditor",
+        "next_agent": "ba",
+        "zone": "docs/agents/system-auditor/",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "fix_spec": "Correct C-11 in BOTH the L478 spec table row AND any bun:sqlite probe block: (a) status='done' -> status='success' (verified the ONLY terminal-OK value; failed/processing are the other two). (b) Replace the ISO-8601-vs-datetime() string compare with an epoch-seconds compare so the 48h window evaluates correctly against the T-format column, e.g. WHERE status='success' AND strftime('%s',replace(extracted_at,'T',' ')) > strftime('%s','now','-48 hours'). GENERIC: no date literals. (c) C-11 is gated > 0 in the earnings window; an out-of-season 0 (Q2 filings land Jul-Aug) should be INFO not HIGH -- apply the same off-market/earnings-season-awareness pattern already prescribed for C-06 (FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE).",
+        "generic_mandate": "No date literals. Match real DB status values (probe DISTINCT status before asserting). Use epoch-seconds compare for any ISO-8601 timestamp column.",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "depends": [],
+        "sibling_of": "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE",
+        "distinct_from": "Data-gap root (last success 2026-06-15, 99.76% historical failure ratio) tracked under FIX-BCTC-ENRICH-SILENT-0ROWS (done_verified) + BCTC-EXTRACT-QUALITY/FACTORY-PDF cluster -- this task is ONLY the auditor check-predicate bug, NOT a re-mint of extraction-health work.",
+        "source": "po triage of sau-c11-20260625t003213z (RAW live pdf_extractor.db probe via docker exec bun:sqlite). Auditor check-bug, doc/flow-only, no rebuild.",
+        "created_at": "2026-06-25T00:39:11Z",
+        "created_by": "po-triage-20260625"
       }
     ],
     "closed_sprints": [
@@ -24559,7 +24593,7 @@
     "last_triaged_at": "2026-06-24T09:06:35Z",
     "last_triaged_by": "po"
   },
-  "updated_at": "2026-06-24T09:30:00Z",
+  "updated_at": "2026-06-25T00:39:11Z",
   "updated_by": "po (PREDICTION-CLAIMS-DAILY-CADENCE mint)",
   "meta": {
     "updated_at": "2026-06-18T12:34:24Z",
