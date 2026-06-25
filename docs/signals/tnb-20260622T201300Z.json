@@ -1,0 +1,8 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[tran-ngoc-bau] c103 BLOCKED — gateway wrapper unavailable in this session (failure mode A). 7th consecutive blocked cycle on local CLI spawn path (c97–c103: 2026-06-16 through 2026-06-22). ARCH-HEADLESS-GATEWAY-COWORK-NOPOST backlog item. Cloud RemoteTrigger cron path confirmed functional. SECONDARY OBSERVATION (file evidence only, not audited): unified-agent notebook shows morning (05:16Z) + EOD (08:45Z) dishes on Sunday 2026-06-22 — possible recurrence of F-SUNDAY-SCHEDULER-FIRE (c91). Recommend session reload or cron-path re-arm to unblock live audit. docs/handoffs/tnb-audit-latest.md updated with c103 status.",
+  "priority": "high",
+  "createdAt": "2026-06-22T20:13:00Z"
+}
