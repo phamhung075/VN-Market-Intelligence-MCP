@@ -1816,6 +1816,17 @@
         "payload_ref": null,
         "router_triage": "FALSE-POSITIVE — RAW-verified 01:47Z: VPS host UP (uptime 8d7h, polled 2m ago), bctc pending queue=0 (nothing to fetch), month=06 off-season. push-age 199.7h EXPECTED idle, not crash. 'unhealthy' flag = known cosmetic stale-fetch artifact (response_ms=0) tracked FIX-BCTC-SLA-THRESHOLD-360. Neither dedup-guard condition (host-down / stuck-queue) met.",
         "router_triaged_at": "2026-06-25T01:47:48Z"
+      },
+      {
+        "id": "router-bctc-sla-esc-20260625-0148",
+        "ts": "2026-06-25T01:48:45Z",
+        "from": "router",
+        "to": "po",
+        "type": "priority_recommendation",
+        "summary": "Bump FIX-BCTC-SLA-THRESHOLD-360 (P3->P1): bctc-stale false-CRITICAL recurred 06-19/06-22x3/06-25, each burns auditor+router+telegram. Off-season threshold + 'host-down' inference from push-age are the root; queue=0 host-up every time.",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
