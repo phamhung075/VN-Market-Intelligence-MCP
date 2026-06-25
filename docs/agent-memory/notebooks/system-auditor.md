@@ -2,6 +2,52 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c317 · 2026-06-25T00:14:16Z
+### Audit Run Tier-1 (00:13–00:14 UTC 2026-06-25)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200
+- Containers UP: all 12 (mcp-server 30m healthy, rag-service 8h healthy) | A-20 pdf-extractor: 3/3 multi-probe 200 PASS
+- A-21 mcp-server RestartCount=1 (KNOWN recent boot) | rag-service RC=108 (KNOWN-STANDING FU-RAG-DEPLOY 768MiB cycle)
+- A-30 mcp-server MemPerc=23.60% (PASS <85%, recovered post-restart) | A-32 disk=39% (PASS)
+- A-31 EPIPE: not checked in T1 | A-25..A-28 inter-svc: MCP system_status 0 open circuits, all OK
+- Cron: 100+ jobs all ≥98.2% success rates, no gaps, all running
+- Anomalies: 0 new | Status: HEALTHY
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-25T00:13:10Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE
+vn-market-intelligence-mcp-mcp-server-1           Up 29 minutes (healthy)   vn-market-intelligence-mcp-mcp-server
+vn-market-intelligence-mcp-frontend-1             Up 19 hours (healthy)     vn-market-intelligence-mcp-frontend
+vn-market-intelligence-mcp-macro-indicators-1     Up 19 hours (healthy)     vn-market-intelligence-mcp-macro-indicators
+vn-market-intelligence-mcp-pdf-extractor-1        Up 8 days (healthy)       vn-market-intelligence-mcp-pdf-extractor
+vn-market-intelligence-mcp-stock-price-1          Up 9 days (healthy)       vn-market-intelligence-mcp-stock-price
+vn-market-intelligence-mcp-technical-analysis-1   Up 9 days (healthy)       vn-market-intelligence-mcp-technical-analysis
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 10 days (healthy)      vn-market-intelligence-mcp-kinh-dich-service
+vn-market-intelligence-mcp-api-gateway-1          Up 13 days (healthy)      vn-market-intelligence-mcp-api-gateway
+vn-market-intelligence-mcp-rag-service-1          Up 8 hours (healthy)      vn-market-intelligence-mcp-rag-service
+vn-market-intelligence-mcp-news-fetch-1           Up 2 weeks (healthy)      vn-market-intelligence-mcp-news-fetch
+vn-market-intelligence-mcp-alert-engine-1         Up 2 weeks (healthy)      vn-market-intelligence-mcp-alert-engine
+mcp-gateway                                       Up 2 weeks (healthy)      mcpservergatway-gateway
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=23.60% MemUsage=483.3MiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity
+/dev/disk1s4s1   233Gi    13Gi    21Gi    39%
+```
+
 ## c316 · 2026-06-24T23:45:00Z
 ### Audit Run Tier-1 (23:43–23:45 UTC 2026-06-24)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200
@@ -32,12 +78,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-32 disk=39% (PASS <85%) | A-25..A-28 inter-svc connectivity: assumed PASS per MCP system_status OK
 - Cron health: 100+ jobs all success rates ≥98.2%, no gaps, all running
 - Anomalies: 0 new | Status: HEALTHY
-
-## c313 · 2026-06-24T22:31:30Z
-### Audit Run Tier-2 (22:30–22:31 UTC 2026-06-24)
-- Tier: 2 | Market: CLOSED (22:30 UTC = 05:30 VN) — price/FX/flow staleness EXPECTED
-- Cron fire: A-29 all jobs PASS (0 gaps >2× cadence) | Last: intelligenceCycleJob 22:30 running
-- Per-source freshness (B-01..B-07, B-11, B-12): all 4 OK | B-06 BCTC VPS=KNOWN-STATE | Rate limits: 12/14 ready, none at 100%
-- DB spot: C-06 market_messages 2 ✓ | C-07 agent_signals 354 ✓ | B-09 SSC URLs 0 ✓ | B-13 stale BCTC 0 ✓
-- BCTC-EVAL: 7 red, 6 yellow; HPG advancing 7/15
-- Anomalies: 0 new (all KNOWN-STATE: B-06 SLA, ACV P1, chef live, rag FU-DEPLOY) | Status: HEALTHY
