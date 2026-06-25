@@ -2,6 +2,14 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c352 · 2026-06-25T10:26:05Z
+### DB Data-Anomaly Sweep (10:24–10:26 UTC 2026-06-25)
+- Tier: DATA | Tables: 8 checked (daily_ohlcv, market_prices, alerts, agent_signals, vn_index_cache, financial_reports)
+- Canonical counts: db1_ohlc_violations=835 (frozen ≤600L), db2_scale_gt100x=1, db3_vnindex_cache=0, c04_lowconf=21
+- Anomalies found: 1 REAL (orphaned alert FK broken), 2 BY-DESIGN (vn_index_cache empty, market_prices stale illiquid)
+- NEW signals: 0 (orphaned-alert already tracked sau-c08-202606180038 TRIAGED+DEPLOYED b3ea96fa, recorded-leave)
+- Status: STEADY-STATE | History: 119 entries (appended 118→119)
+
 ## c351 · 2026-06-25T10:14:01Z
 ### Audit Run Tier-1 (10:13–10:14 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK | mcp-gateway UP
