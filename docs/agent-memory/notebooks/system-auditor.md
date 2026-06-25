@@ -2,6 +2,27 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c338 · 2026-06-25T06:14:28Z
+### Audit Run Tier-1 (06:13–06:14 UTC 2026-06-25)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
+- Containers all UP: mcp-server (2h14m, RestartCount=0 FRESH-REBUILD-04:38Z, OOMKilled=false), frontend (25h), macro-indicators (25h), pdf-extractor (9d), stock-price (9d), technical-analysis (9d), kinh-dich-service (10d), api-gateway (13d), rag-service (53m, RestartCount=117 KNOWN-STANDING FU-RAG-DEPLOY-MEMORY), news-fetch (2w), alert-engine (2w), headroom-proxy (12d), mcp-gateway (2w)
+- A-30 mcp-server mem=19.95% (408.5MiB/2GiB, PASS <85%) | A-31 EPIPE=0 | A-32 disk=26% (39Gi free, PASS)
+- B-05 BCTC healthy-idle: queue=38 pending, push-age=199.7h << SLA-1728.5h out-of-window, PASS
+- VPS proxy: prices/news/sbv OK; bctc stale (by-design off-season)
+- Crons: 100+ active, success rates ≥98%, no gaps
+- Anomalies: 0 new | Status: HEALTHY
+
+## c337 · 2026-06-25T05:56:31Z
+### DB DATA-ANOMALY SWEEP — Tier DATA (05:54–05:56Z)
+- **CANONICAL-4** (deterministic helper scan_ts 2026-06-25T05:54:41Z): db1_ohlc_violations=835, db2_scale_gt100x=1, db3_vnindex_cache_rows=0, c04_low_confidence_reports=21
+- **Baseline freshness**: daily_ohlcv_total=18250, newest_date=2026-06-25 (CURRENT), market_prices_freshness=2026-06-25T05:54:09Z (~1 min)
+- **TABLES CHECKED**: 16 high-value (daily_ohlcv, market_prices, financial_reports, alerts, agent_signals, signal_outcomes, deep_fetch_queue, macro_indicators, sbv_rates, market_messages, pdf_documents, scheduler_locks, vn_index_cache, sbv_rates, others)
+- **INTEGRITY CHECKS**: C-01(942 tickers)✓ C-02(1616 rows)✓ C-06(2 market_msgs 3h)✓ C-08(1 orphan-alert)✓ C-09(3 macro-cols)✓ C-10/C-11(PDF clean)✓ C-16(0 stale-pending)✓
+- **DATA QUALITY**: zero/neg-prices=0 | zero/neg-volumes=0 | dup(code,date)=0 | net_revenue≤0 recent=0 | expired-signals=4156(BY-DESIGN-GC-absent) | orphaned-signal_outcomes=1(prior-tracked) | deep_fetch_queue expired=573(lifecycle-clean)
+- **ANOMALIES**: 0 NEW detected — all canonical-4 counts STABLE (identical to prior 09-cycle baseline), fresh_ohlc_violations_last_2d=0 (no recent regressions), all stale/missing/dup/incorrect findings are BY-DESIGN or already-open signals
+- **HISTORY APPEND**: 109→110 entries (deterministic helper confirms length grew, scan_ts + counts embedded)
+- **STATUS**: STEADY-STATE — no new anomalies, no regressions detected, all data plausibility checks PASS
+
 ## c336 · 2026-06-25T05:43:45Z
 ### Audit Run Tier-1 (05:43–05:44 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
@@ -41,14 +62,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - Cron: 100+ jobs active, success rates ≥98%, no gaps detected
 - B-05 bctc-discover: push-age≈200h vs out-of-window threshold≈1714.5h; queue OK; HEALTHY-IDLE gate PASS
 - Anomalies: 0 new | Status: HEALTHY
-
-## c330 · 2026-06-25T04:17:51Z
-### Audit Run Tier-3 (04:14–04:18 UTC 2026-06-25)
-- Tier: 3 | Tables: 16 checked | Container tooling: 3/3 (pdftoppm, tesseract, vie) | Inter-service: 4/4 UP
-- **CRITICAL: C-12 market.db index corruption detected** — PRAGMA integrity_check failed: row 11335 missing from idx_mph_code_fetched
-- C-01: 877 distinct codes (PASS); C-02: 976 rows (PASS); C-03: 32 action codes (PASS); C-04: 0 low-conf last 7d (PASS)
-- C-05: 0 SSC URLs (PASS); C-06: 3 market_messages 3h (PASS); C-07: 234 signals 24h (PASS); C-08: 1 orphaned (transient)
-- C-09: 3 macro indicators Vietnam (PASS ≥3); C-10: 0 PDF failed 24h (PASS); C-11: 0 PDF done 48h (expected-empty Q2)
-- C-13: WAL 0 bytes (PASS); C-14: top-3 share=0.6% (PASS <60%); C-15: schema complete (PASS); C-16: 0 stale pending (PASS)
-- A-22–A-24 tooling: pdftoppm, tesseract, vie lang all present (PASS); A-25–A-28 inter-service: stock/ta/alert/pdf all 200 OK
-- Anomalies: 1 CRITICAL (C-12 index corruption) | Signal posted=1 | Status: DEGRADED
