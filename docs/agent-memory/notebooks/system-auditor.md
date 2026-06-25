@@ -2,6 +2,24 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c386 · 2026-06-25T19:13:25Z
+### Audit Run Tier-1 (19:13 UTC 2026-06-25) — Runtime Ping
+- Tier: 1 | Services: 12/12 UP (all INTENDED host_runtime_set) | Health: 5/5 endpoints OK
+- RAW-PROBE (19:13Z): docker ps -a all 12 containers Up (mcp-server 4h, rag-service 4h, frontend 38h, macro-indicators 38h, pdf-extractor 9d+, stock-price/ta/kinh-dich 10-11d, api-gateway/news-fetch/alert-engine 2w+, mcp-gateway 5w+)
+  - [health] mcp-server:3000/health OK (HTTP 200)
+  - [health] api-gateway:4000/health OK (HTTP 200)
+  - [health] macro-indicators:5004/health OK (HTTP 200)
+  - [health] pdf-extractor:5001/health OK (HTTP 200)
+  - [health] frontend:3001/ OK (HTTP 200)
+- A-20 pdf-extractor multi-probe: [A-20-PROBE-1] 200 | [A-20-PROBE-2] 200 | [A-20-PROBE-3] 200 → 3/3 PASS
+- RestartCount: mcp-server=0 PASS; rag-service=120 RECORD-ONLY (FU-RAG-DEPLOY-MEMORY standing known, no jump)
+- Memory: mcp-server 41.52% (850.2MiB/2GiB PASS <85%); disk / 27% capacity PASS <85%
+- EPIPE (30m): 0 count PASS
+- Cron: 160+ jobs all running, all ≥98% success_rate
+- System status: all circuit breakers OK, 0 open, mcp-server uptime 3h37m
+- Anomalies: 0 NEW signals
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: 75 rows unchanged
+
 ## c385 · 2026-06-25T18:56:25Z
 ### Audit Run Tier-3 (18:55–18:56 UTC 2026-06-25) — DB Data Integrity Sweep
 - Tier: 3 | DB checks: C-01–C-08 all scanned | Tables: daily_ohlcv, financial_reports, bctc_vps_queue, agent_signals, alerts, macro_indicators
