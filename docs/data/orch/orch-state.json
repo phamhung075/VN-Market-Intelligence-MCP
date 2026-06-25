@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-25T04:34:42Z",
-  "_updated_by": "router-repair",
+  "_updated_at": "2026-06-25T19:13:29Z",
+  "_updated_by": "po-s111",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -238,8 +238,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-25T03:00:00.695Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-25T19:13:29Z",
+    "_updated_by": "po-s111",
     "archive": [
       {
         "from": "system-auditor",
@@ -1342,7 +1342,7 @@
         "type": "db_integrity_breach",
         "summary": "vn_index_cache: table empty (0 rows), expected VNINDEX snapshot cache. vnIndexRefresh cron */5 2-8h may not be running.",
         "severity": "MEDIUM",
-        "status": "RESOLVED",
+        "status": "TRIAGED",
         "payload_ref": "docs/signals/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
@@ -1352,7 +1352,10 @@
         "acked_at": "2026-06-20T08:16:14Z",
         "po_disposition": "minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
         "router_status_reconcile": "READ→RESOLVED: disposition minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH which is DONE on board. Status lagged ground-truth; reconciled.",
-        "router_reconciled_at": "2026-06-21T02:41:28Z"
+        "router_reconciled_at": "2026-06-21T02:41:28Z",
+        "reopened_at": "2026-06-25T19:13:29Z",
+        "reopened_by": "po-s111",
+        "reopen_reason": "RECURS at 2026-06-25T19:06Z scan (0 rows). Prior resolution minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE) but did NOT address the true root (startup purge + market-hours-only refresh). Re-filed as router-dbsweep-20260625T1906Z-r1-vnindex-cache-startup-purge with correct root-cause. Recurring-bug-escalation."
       },
       {
         "id": "sau-2026-06-20T10:07:45Z",
@@ -1988,10 +1991,98 @@
         "payload_ref": null,
         "resolution": "FALSE-POSITIVE-INVERTED-PREDICATE",
         "router_verified": "ROUTER RAW-VERIFY 15:24Z: db1 helper(correct predicate low>open OR low>close)=835 UNCHANGED. Auditor used INVERTED predicate 'low<close' which counts ~11022 NORMAL valid rows (low below close = correct OHLC) as violations. Cited sample MBS 2026-06-23 low=20200<close=20300 is VALID. No writer regression. FALSE-POSITIVE inverted predicate. BUG Telegram msg 3052 = false alarm; do NOT touch the OHLCV writer."
+      },
+      {
+        "id": "sau-2026-06-25T18:31:16Z",
+        "ts": "2026-06-25T18:31:16Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "market_messages no recent data in 3h (check C-06)",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolution": "FALSE-POSITIVE router verify-raw 2026-06-25T18:35Z: market_messages pipeline HEALTHY. get_unreviewed_market_messages shows id 879 evening-summary @ 15:30:05 (rich real EOD content) + id 878 alert-digest @ 14:00 — normal cadence. The 0-in-3h is a BOUNDARY artifact (879 @ 15:30:05 fell ~1min outside the auditor 3h window starting 15:31:16) compounded by evening sparse-posting (no chef intraday/morning-briefing due in a closed-market evening window). Known market-hours-blind class — tracked FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (C-06 should key on last-post-AGE with calendar/market-hours-aware tolerance, not a fixed 3h count). No pipeline stall. Do not act.",
+        "router_verified": "router"
+      },
+      {
+        "id": "router-dbsweep-20260625T1906Z-r2-scheduler-double-register",
+        "ts": "2026-06-25T19:13:29Z",
+        "from": "dev-team",
+        "to": "dev-team",
+        "type": "repair_task_request",
+        "service": "mcp-server/scheduler",
+        "zone_owner": "dev-mcp-server",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "router_verified": true,
+        "router_verified_at": "2026-06-25T19:06:00Z",
+        "summary": "Scheduler DOUBLE-REGISTRATION. RAW cron_job_runs (last 2d): vnIndexRefreshJob fires TWICE per scheduled minute (e.g. 08:55:00 AND 08:55:01, both success rows_written=1); pollNewsJob fires 4-5x per scheduled minute (2026-06-24 14:30 x5). ROOT-CAUSE HYPOTHESIS: jobs registered more than once in the scheduler (duplicate registerJob/startScheduler call or re-entrant init). Impact: wasted compute + duplicate writes (directly feeds R3 kinhdich dups). FIX DIRECTION: audit scheduler registration path for duplicate handler registration; guarantee single registration per job (idempotent registry / startup guard). NOTE: distinct from the existing manual-x-cloud cowork double-fire signals (cowork-team-20260615T1620Z-gatherer-manual-cloud-doublefire) — this is IN-PROCESS scheduler re-registration, not dispatcher overlap.",
+        "evidence": "cron_job_runs: vnIndexRefreshJob 08:55:00 + 08:55:01 same minute; pollNewsJob 2026-06-24 14:30 x5",
+        "root_cause": "duplicate job registration in scheduler init (re-entrant startScheduler / duplicate registerJob)",
+        "related_board": [
+          "ARCH-CRON-SCHEDULER-RELIABILITY(done_verified)",
+          "FACTORY-SCHEDULER-job-table-registry(backlog)"
+        ]
+      },
+      {
+        "id": "router-dbsweep-20260625T1906Z-r3-kinhdich-dup-groups",
+        "ts": "2026-06-25T19:13:29Z",
+        "from": "dev-team",
+        "to": "dev-team",
+        "type": "repair_task_request",
+        "service": "mcp-server/intelligenceCycle-A4",
+        "zone_owner": "dev-mcp-server",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "router_verified": true,
+        "router_verified_at": "2026-06-25T19:06:00Z",
+        "summary": "kinhdich_readings has 1,534 duplicate (stock_code,timestamp,source) groups out of 45,454 rows. ROOT CAUSE: non-idempotent insert in the intelligenceCycle A4 hexagram batch, amplified by R2 double-fire (two inserts same second -> identical key). FIX DIRECTION: (a) fix R2 first; (b) make the A4 insert idempotent via CREATE UNIQUE INDEX on (stock_code,timestamp,source) — NOTE per memory: ALTER TABLE ADD ... UNIQUE is a SILENT NO-OP in SQLite, MUST use CREATE UNIQUE INDEX + INSERT OR IGNORE/REPLACE; (c) one-time dedup of existing 1534 groups (keep latest rowid per key).",
+        "evidence": "1534 dup (stock_code,timestamp,source) groups / 45454 total rows",
+        "root_cause": "non-idempotent A4 hexagram batch insert + R2 double-fire same-second key collision",
+        "depends": [
+          "router-dbsweep-20260625T1906Z-r2-scheduler-double-register"
+        ]
+      },
+      {
+        "id": "router-dbsweep-20260625T1906Z-r4-macro-indicators-empty-columns",
+        "ts": "2026-06-25T19:13:29Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "repair_task_request",
+        "service": "macro-store/macro_indicators",
+        "zone_owner": "dev-macro-indicators",
+        "severity": "LOW",
+        "status": "NEW",
+        "router_verified": true,
+        "router_verified_at": "2026-06-25T19:06:00Z",
+        "summary": "macro_indicators latest row (id=675, country=vietnam, fetched_at 2026-06-25 12:13) populates ONLY cpi/gdp_growth/interest_rate; unemployment_rate, inflation_rate, trade_balance, current_account, government_debt, budget_deficit, manufacturing_pmi, consumer_confidence, retail_sales are ALL EMPTY -> /dashboard/macro shows mostly blank fields. DATA-COMPLETENESS repair of the macro_indicators WRITER/fetcher. OVERLAP NOTE: macro-fetch-cluster signal (devteam-20260619T170200Z-macro-fetch-cluster, TRIAGED) item(3) covers FRED_API_KEY-unset -> get_ism_subcomponents + macro CALENDAR empty (manufacturing_pmi may be subsumed there). The OTHER empty columns (unemployment_rate/inflation_rate/trade_balance/current_account/government_debt/budget_deficit/consumer_confidence/retail_sales) are NOT covered by that cluster nor by TASK-MACRO-COMMODITY-DELTA (commodity deltas only) — file as the residual data-completeness gap. dev-team to scope which source feeds each column + whether the writer drops them.",
+        "evidence": "macro_indicators id=675 vietnam: only cpi/gdp_growth/interest_rate non-null",
+        "root_cause": "macro_indicators writer/fetcher populates 3 of 13 columns (residual gap not covered by macro-fetch-cluster)",
+        "related_signal": "devteam-20260619T170200Z-macro-fetch-cluster (partial overlap, item 3)"
+      },
+      {
+        "id": "router-dbsweep-20260625T1906Z-r1-vnindex-cache-startup-purge",
+        "ts": "2026-06-25T19:13:29Z",
+        "from": "dev-team",
+        "to": "dev-team",
+        "type": "repair_task_request",
+        "service": "mcp-server/vn_index_cache",
+        "zone_owner": "dev-mcp-server",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "recurring": true,
+        "router_verified": true,
+        "router_verified_at": "2026-06-25T19:06:00Z",
+        "summary": "RECURRING (db3 reopen): vn_index_cache = 0 rows RIGHT NOW. Prior fix FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (board=DONE) did NOT close the root. RAW evidence: cron_job_runs vnIndexRefreshJob status=success rows_written=1 at 08:45/08:50/08:55 (last market-hour runs); mcp-server container Up 4h (restarted ~15:00 UTC, AFTER last write). ROOT CAUSE (correct-thinking, not symptom): vn_index_cache is PURGED on mcp-server startup AND vnIndexRefresh runs market-hours ONLY (*/5 2-8 * * 1-5), so ANY off-hours restart leaves the cache empty until next Monday open. FIX DIRECTION: either (A) STOP purging vn_index_cache on startup (it is a latest-snapshot cache — no reason to purge), OR (B) add a startup backfill of the latest VNINDEX snapshot. Per recurring-bug-escalation policy (2+ failures same module).",
+        "evidence": "vn_index_cache=0 rows; vnIndexRefreshJob last success 08:55 rows_written=1; container Up 4h (restart ~15:00Z post-write)",
+        "root_cause": "startup purge of vn_index_cache + market-hours-only refresh window -> off-hours restart strands empty cache",
+        "supersedes_resolution_of": "sau-20260620T103002-db3 / FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH",
+        "recurrence_policy": "recurring-bug-escalation"
       }
     ],
-    "last_triaged_at": "2026-06-25T07:00:00Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-06-25T19:13:29Z",
+    "last_triaged_by": "po-s111"
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
