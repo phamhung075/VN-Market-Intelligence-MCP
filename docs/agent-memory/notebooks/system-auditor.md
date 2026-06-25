@@ -2,6 +2,16 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c360 · 2026-06-25T12:26:21Z
+### DB Data-Anomaly Sweep Tier-DATA (12:24–12:26 UTC 2026-06-25) — Canonical-4 Frozen, 0 NEW Signals
+- Tier: DATA | Tables: 8 checked (daily_ohlcv, market_prices, agent_signals, scheduler_locks, deep_fetch_queue, cron_job_runs, fred_series_daily, vn_index_cache)
+- Helper deterministic: db1_ohlc_violations=835, db2_scale_gt100x=1, db3_vnindex_cache_rows=0, c04_low_confidence_reports=21 (FROZEN)
+- Context: daily_ohlcv_total=18251, newest_date=2026-06-25, market_prices_freshness=2026-06-25T11:15:02Z, fresh_ohlc_violations_last_2d=0
+- Anomaly scan: market_prices_stale>4h=6 (BY-DESIGN post-close illiquid), market_prices_history_stale>4h=38519 (BY-DESIGN archive), agent_signals_unread=3295 (tracked sau-20260621T155518), scheduler_locks_held>24h=0 (resolved), deep_fetch_queue_failed/pending_stuck=0 (healthy)
+- Findings: 0 NEW REAL anomalies | All 8 findings BY-DESIGN or already-open per memory | No signals written
+- History: appended entry #122 → #123 (helper: scan_ts=2026-06-25T12:26:21Z, before=122, after=123, cap=200) ✓
+- Status: HEALTHY | Signals: 0 posted | Telegram: none
+
 ## c359 · 2026-06-25T11:55:42Z
 ### DB Data-Anomaly Sweep Tier-DATA (11:54–11:55 UTC 2026-06-25) — Canonical-4 Frozen, All Findings Held Stable
 - Tier: DATA | Tables: 8 checked (canonical + anomaly-class ad-hoc) | Helper mode: deterministic db-integrity-counts.sh
