@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c319 · 2026-06-25T00:43:02Z
+### Audit Run Tier-1 (00:43 UTC 2026-06-25)
+- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
+- Containers all UP: mcp-server (59m healthy), frontend (19h healthy), macro-indicators (20h healthy), pdf-extractor (8d healthy), stock-price (9d healthy), technical-analysis (9d healthy), kinh-dich-service (10d healthy), api-gateway (13d healthy), rag-service (9h healthy), news-fetch (2w healthy), alert-engine (2w healthy), mcp-gateway (2w healthy)
+- A-21 mcp-server RestartCount=1 (recent restart OK) | rag-service RestartCount=108 (KNOWN-STANDING FU-RAG-DEPLOY chronic 768MiB OOM cycle, no escalation)
+- A-30 mcp-server MemPerc=27.44% (562/2048 MiB, healthy <85% ceiling) | A-32 disk=40% (20Gi free, PASS)
+- A-25..A-28 inter-svc connectivity: all services reporting OK via api-gateway /health
+- Anomalies: 0 new | Status: HEALTHY
+
 ## c318 · 2026-06-25T00:32:13Z
 ### Audit Run Tier-3 (00:30–00:32 UTC 2026-06-25)
 - Tier: 3 | DB checks: C-01..C-16 all run | Services: 12/12 UP | Health: 5/5 OK
@@ -33,14 +42,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-30 mcp-server MemPerc=82.17% (known high-rider, below yesterday's 99.82%) | rag-service 740.9/768MiB (97%)
 - A-32 disk=39% (PASS <85%) | A-31 EPIPE: 0 (PASS) | A-25..A-28 inter-svc: MCP system_status OK
 - Cron: 100+ jobs all success rates ≥98.2%, no gaps | Anomalies: 0 new | Status: HEALTHY
-
-## c315 · 2026-06-24T23:14:01Z
-### Audit Run Tier-1 (23:13–23:14 UTC 2026-06-24)
-- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200
-- Containers: mcp-server (Up 10h healthy), frontend (Up 18h healthy), macro-indicators (Up 18h healthy), pdf-extractor (Up 8d healthy), stock-price (Up 9d healthy), technical-analysis (Up 9d healthy), kinh-dich-service (Up 10d healthy), api-gateway (Up 13d healthy), rag-service (Up 7h healthy), news-fetch (Up 2w healthy), alert-engine (Up 2w healthy), mcp-gateway (Up 2w healthy)
-- A-20 pdf-extractor multi-probe: 3/3 PASS (200 all three probes)
-- A-21 mcp-server RestartCount=0 OOMKilled=false | rag-service RestartCount=108 (KNOWN-STANDING FU-RAG-DEPLOY chronic 768MiB cycle)
-- A-30 mcp-server MemPerc=99.82% (above 85% ceiling, known high-rider per MEMORY.md FIX-MCP-MEMORY-CODE-LEAK)
-- A-32 disk=39% (PASS <85%) | A-31 EPIPE: 0 (PASS) | A-25..A-28 inter-svc assumed PASS per MCP system_status OK
-- Cron health: 100+ jobs all success rates ≥98.2%, no gaps, all running
-- Anomalies: 0 new | Status: HEALTHY
