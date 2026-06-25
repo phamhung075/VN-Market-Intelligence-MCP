@@ -2,6 +2,22 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c385 · 2026-06-25T18:56:25Z
+### Audit Run Tier-3 (18:55–18:56 UTC 2026-06-25) — DB Data Integrity Sweep
+- Tier: 3 | DB checks: C-01–C-08 all scanned | Tables: daily_ohlcv, financial_reports, bctc_vps_queue, agent_signals, alerts, macro_indicators
+- C-01: 1005 distinct codes (expected ≥25) — PASS
+- C-02: 1774 daily_ohlcv rows (1d window) — PASS
+- C-03: 32 Q1-2026 action_codes (BCTC) — PASS
+- C-04: 0 low-confidence <0.2 (7d) — PASS (IMPROVED from 21, FIX-BCTC-ENRICH-SILENT-0ROWS working)
+- C-05: 0 SSC.gov.vn URLs — PASS
+- C-06: 0 market_messages (3h, market closed) — INFO
+- C-07: 264 agent_signals (24h) — PASS
+- C-08: 1 orphaned alert (24h, within variance) — PASS
+- Canonical-4: db1=835 (hist), db2=1 (DFF), db3=0 (on-demand), c04=0 (improved)
+- Orphan-FK structural: alert_id NOT-EXISTS = 220 steady (unchanged)
+- Anomalies: 0 NEW signals
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: 75 rows unchanged | History: +1 entry (#136)
+
 ## c384 · 2026-06-25T18:44:22Z
 ### Audit Run Tier-1 (18:43–18:44 UTC 2026-06-25) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP (all INTENDED host_runtime_set) | Health: 4/5 endpoints OK (api-gateway transient curl-err, host-side 200 PASS)
