@@ -2,6 +2,16 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c362 · 2026-06-25T13:28:39Z
+### DB Data-Anomaly Sweep Tier-DATA (13:26–13:28 UTC 2026-06-25) — Canonical-4 FROZEN, 0 NEW Signals
+- Tier: DATA | Tables: 17 checked (daily_ohlcv, market_prices, market_prices_history, vn_index_cache, alerts, price_alerts, alert_engine_records, agent_signals, signal_outcomes, financial_reports, macro_indicators, sbv_rates, fred_series_daily, deep_fetch_queue, cron_job_runs, scheduler_locks, schema check)
+- Helper deterministic (immutable=1 verified): db1_ohlc_violations=835 FROZEN, db2_scale_gt100x=1 FROZEN, db3_vnindex_cache_rows=0 FROZEN, c04_low_confidence_reports=21 FROZEN (all ≡ since #53, identical to baseline)
+- Context: daily_ohlcv_total=18251, newest_date=2026-06-25, market_prices_freshness=2026-06-25T12:30:02Z (live), fresh_ohlc_violations_last_2d=0
+- Anomaly scan results: (1) db1=835 pre-2026-06-20 OHLCV violations (FIX-OHLCV-WRITER-INTEGRITY in_progress); (2) db2=1 DFF scale artifact; (3) db3=0 vnindex on-demand cache (expected); (4) c04=21 low-confidence PDF scans (FIX-BCTC-ENRICH-SILENT-0ROWS in_progress); (5) market_prices_stale>4h=116/118 post-close (3 expected illiquid: OPC/SMA/STG); (6) no (code,date) duplicates in daily_ohlcv (CLEAN); (7) scheduler_locks held=0 (resolved); (8) cron_job_runs: 142 crashed (pre-2026-06-20), 0 stuck; (9) vn_index_cache empty (on-demand); (10) signal_outcomes_pending=72 (already-tracked).
+- Dedup check: all 10 findings verified against history + orch-state signal_queue | All 10 BY-DESIGN or already board-tracked | Verdict: 0 NEW REAL anomalies
+- History: appended via deterministic helper (script/db-integrity-history-append.sh): entry #125 (before=124, after=125, cap=200) ✓ | Helper exit 0, counts embedded
+- Status: HEALTHY | Signals: 0 posted (all findings held as existing board tasks or natural state) | Queue: 72 rows unchanged | Telegram: none
+
 ## c361 · 2026-06-25T12:54:42Z
 ### DB Data-Anomaly Sweep Tier-DATA (12:54 UTC 2026-06-25) — Canonical-4 Frozen, 0 NEW Signals
 - Tier: DATA | Tables: 14 checked (daily_ohlcv, market_prices, market_prices_history, vn_index_cache, alerts, agent_signals, financial_reports, scheduler_locks, cron_job_runs, and ad-hoc scans)
