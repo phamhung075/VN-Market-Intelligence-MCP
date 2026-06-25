@@ -2,6 +2,27 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c340 · 2026-06-25T06:31:44Z
+### Audit Run Tier-2 (06:30–06:31 UTC 2026-06-25)
+- Tier: 2 | Data sources: 27 checked | Cron fire: all on-schedule | VPS proxy: 4/5 healthy
+- Cron gaps: 0 detected | Freshness checks: 1 stale (news 88min/30min threshold)
+- B-05 bctc-discover: PASS (SLA resolver: out-of-window threshold ~1714.5h, push-age 201.8h << threshold; queue=38 work, HEALTHY-IDLE PASS)
+- B-06 bctc-push: PASS (same SLA resolver) | B-09 SSC URLs: PASS (0 rows)
+- B-11 news (newsapi/reuters/vneconomy-rss/vnexpress-rss): WARN — 88min vs 30min threshold, last_fetch 2026-06-25T05:02Z
+- B-13 stale pending: PASS (0 rows) | B-14 vn-bctc-fetch VPS: UNHEALTHY (dedup, dev-vps routed)
+- C-06 market_messages(3h): 4 ✓ | C-07 agent_signals(24h): >0 ✓
+- Anomalies: 1 NEW (B-11 news WARN) | Dedup-skipped: 1 (B-14 VPS) | Status: DEGRADED
+
+## c339 · 2026-06-25T06:25:10Z
+### DB DATA-ANOMALY SWEEP — Tier DATA (06:24–06:25Z)
+- **CANONICAL-4** (deterministic helper scan_ts 2026-06-25T06:24:35Z): db1_ohlc_violations=835, db2_scale_gt100x=1, db3_vnindex_cache_rows=0, c04_low_confidence_reports=21
+- **Baseline freshness**: daily_ohlcv_total=18250, newest_date=2026-06-25 (CURRENT), market_prices_freshness=2026-06-25T06:24:04.711Z (~1 min)
+- **TABLES CHECKED**: 14 (daily_ohlcv, market_prices, financial_reports, deep_fetch_queue, agent_signals, signal_outcomes, vn_index_cache, others)
+- **INTEGRITY CHECKS**: FROZEN canonical-4 identical to prior scans (#53..#110), fresh_ohlc_violations_last_2d=0, all findings by-design-tracked or clean
+- **ANOMALIES**: 0 NEW detected — all canonical-4 FROZEN (835/1/0/21), no regressions, all stale/missing/dup/incorrect findings already tracked by FIX-OHLCV-WRITER-INTEGRITY, FIX-BCTC-ENRICH-SILENT-0ROWS
+- **HISTORY APPEND**: 110→111 entries (deterministic helper confirms length grew, scan_ts + counts embedded)
+- **STATUS**: STEADY-STATE — market data fresh, no new anomalies, no signals required
+
 ## c338 · 2026-06-25T06:14:28Z
 ### Audit Run Tier-1 (06:13–06:14 UTC 2026-06-25)
 - Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
@@ -52,13 +73,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - B-05 BCTC healthy-idle: queue=38 pending, push-age=199.7h << SLA-1714.5h out-of-window, PASS
 - DB C-01–C-16: C-01(942 tickers)✓ C-02(1616 rows)✓ C-03(32 actions Q1)✓ C-04(0 low-conf)✓ C-05(0 SSC URLs)✓ C-06(4 msgs 3h)✓ C-07(243 signals 24h)✓ C-08(1 orphan-alert-transient)✓ C-09(3 macro-ind)✓ C-10(0 PDF-fail)✓ C-11(0 PDF-done-off-season)✓ C-12(integrity=ok)✓ C-13(WAL=4.1MB)✓ C-14(top-3=0.4%)✓ C-15(schema✓)✓ C-16(0 stale-pending)✓
 - Anomalies: 0 new | Dedup-skipped: 0 | Status: HEALTHY
-
-## c331 · 2026-06-25T04:43:12Z
-### Audit Run Tier-1 (04:43–04:44 UTC 2026-06-25)
-- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
-- Containers all UP: mcp-server (4min, RestartCount=0 FRESH-REBUILD-04:38Z, OOMKilled=false), frontend (23h), macro-indicators (24h), pdf-extractor (9d), stock-price (9d), technical-analysis (9d), kinh-dich-service (10d), api-gateway (13d), rag-service (14min, RestartCount=114 KNOWN-STANDING FU-RAG-DEPLOY-MEMORY), news-fetch (2w), alert-engine (2w), mcp-gateway (2w)
-- A-20 pdf-extractor multi-probe: 3/3 passed HTTP 200 (event-loop responsive, healthy)
-- A-30 mcp-server mem=16.34% (334.6MiB/2GiB, PASS <85% — fresh start) | A-32 disk=25% (41Gi free, PASS)
-- Cron: 100+ jobs active, success rates ≥98%, no gaps detected
-- B-05 bctc-discover: push-age≈200h vs out-of-window threshold≈1714.5h; queue OK; HEALTHY-IDLE gate PASS
-- Anomalies: 0 new | Status: HEALTHY
