@@ -1950,6 +1950,17 @@
           "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
           "ADD-NEWS-SCOUT-INTRADAY-SLOT"
         ]
+      },
+      {
+        "id": "sau-b05-202606251030",
+        "ts": "2026-06-25T10:30:24Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover stale 230.5h (38 pending rows, vn-bctc-fetch unhealthy) — check B-05",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-25T07:00:00Z",

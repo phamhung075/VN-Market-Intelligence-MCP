@@ -2,6 +2,20 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c353 · 2026-06-25T10:30:24Z
+### Audit Run Tier-2 (10:30 UTC 2026-06-25)
+- Tier: 2 | Cron checks: 159+ jobs, all healthy ≥98% | Sources checked: 27 (fetch freshness + VPS routes)
+- Pipeline health: OHLCV 30+ tickers, backfill pending=false, TA ready
+- VPS routes: prices ok, news ok, sbv ok, bctc STALE (last push 2026-06-16 18:02, now 230.5h old)
+- B-05 BCTC gate: queue=38 actionable pending + VPS unhealthy → CRITICAL stale
+- B-06/B-07 VPS proxy: 3/4 routes ok (bctc down); rates ok; flow intact
+- B-09 SSC portal URLs: 0 non-skipped (PASS) | B-13 stale pending: 0 >72h (PASS)
+- C-06/C-07 DB freshness: market_messages 1 in 3h (PASS), agent_signals 272 in 24h (PASS)
+- Anomalies: 1 CRITICAL (B-05 bctc-discover + vn-bctc-fetch unhealthy)
+- Status: DEGRADED (VPS service down, BCTC pipeline blocked)
+- Signals: 1 posted (signal_id=7541, sau-b05-202606251030 CRITICAL)
+- Dedup: B-14 vn-bctc-fetch unhealthy (KNOWN, refresh dedup_key, no new escalation)
+
 ## c352 · 2026-06-25T10:26:05Z
 ### DB Data-Anomaly Sweep (10:24–10:26 UTC 2026-06-25)
 - Tier: DATA | Tables: 8 checked (daily_ohlcv, market_prices, alerts, agent_signals, vn_index_cache, financial_reports)
@@ -19,47 +33,6 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - B-05 BCTC healthy-idle gate PASS (queue-dependent, off-season idle by design)
 - Anomalies: 0 new | Dedup: A-30 (known leak), A-21 (known rag-cycle), B-05 (healthy-idle), B-11 (post-market slot) — all RECORD-AND-LEAVE per policy
 - Status: HEALTHY | Signals: 0 | Telegram: none
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-06-25T10:13:10Z ===
-
---- docker ps -a ---
-NAMES                                             STATUS                  IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 6 hours (healthy)    vn-market-intelligence-mcp-mcp-server           6 hours ago
-vn-market-intelligence-mcp-frontend-1             Up 29 hours (healthy)   vn-market-intelligence-mcp-frontend             29 hours ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 29 hours (healthy)   vn-market-intelligence-mcp-macro-indicators     29 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 9 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        9 days ago
-vn-market-intelligence-mcp-stock-price-1          Up 9 days (healthy)     vn-market-intelligence-mcp-stock-price          9 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 10 days (healthy)    vn-market-intelligence-mcp-technical-analysis   10 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 10 days (healthy)    vn-market-intelligence-mcp-kinh-dich-service    10 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 2 weeks (healthy)    vn-market-intelligence-mcp-api-gateway          2 weeks ago
-vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)    vn-market-intelligence-mcp-rag-service          2 weeks ago
-vn-market-intelligence-mcp-news-fetch-1           Up 2 weeks (healthy)    vn-market-intelligence-mcp-news-fetch           2 weeks ago
-vn-market-intelligence-mcp-alert-engine-1         Up 2 weeks (healthy)    vn-market-intelligence-mcp-alert-engine         2 weeks ago
-headroom-proxy                                    Up 12 days              headroom-proxy:local                            2 weeks ago
-mcp-gateway                                       Up 2 weeks (healthy)    mcpservergatway-gateway                         5 weeks ago
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=57.95% MemUsage=1.159GiB / 2GiB
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    40Gi    26%    393k  422M    0%   /
-
-A-20-PROBE-1: HTTP 200 PASS
-A-20-PROBE-2: HTTP 200 PASS
-A-20-PROBE-3: HTTP 200 PASS
-```
 
 ## c350 · 2026-06-25T09:43:44Z
 ### Audit Run Tier-1 (09:43–09:44 UTC 2026-06-25)
@@ -70,12 +43,3 @@ A-20-PROBE-3: HTTP 200 PASS
 - A-30 mcp-server mem 58% PASS (normal baseline post-build 04:40Z) | A-31 EPIPE=0 | A-32 disk=26%
 - B-05 BCTC healthy-idle (SLA gate applied, queue-dependent) PASS
 - Anomalies: 0 new | Dedup: none escalated | Status: HEALTHY | Signals: 0
-
-## c349 · 2026-06-25T09:13:31Z
-### Audit Run Tier-1 (09:13–09:14 UTC 2026-06-25)
-- Tier: 1 | Services: 12/12 host_runtime_set UP (healthy) | Health endpoints: 5/5 HTTP 200 OK
-- Containers: mcp-server (5h, RestartCount=0 BUILD-04:40Z, mem=66.72% 1.334GiB/2GiB steady-climb), rag-service (36m, RestartCount=118 KNOWN FU-RAG-DEPLOY-MEMORY)
-- A-20 endpoints PASS (5/5) | A-30 mcp-server mem 66.72% normal climb | A-31 EPIPE=0 | A-32 disk=26%
-- B-05 BCTC push-age 199.7h << SLA 1714.5h (healthy-idle: queue=0 + host-up) PASS | VPS proxy 3/4 live
-- Pipeline health: 30/40 tickers fresh, 740 rows today
-- Anomalies: 0 new | Status: HEALTHY | Signals: 0
