@@ -1905,6 +1905,29 @@
         "router_dup_of": "FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE",
         "sibling_recommendation": "Auditor C-12 index-coverage check must inherit the same readonly->file:?immutable=1 (or writer-native RW) open being shipped by FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE; current C-12 read a blinded/stale sidecar after the 5h-ago writer restart and also references a non-existent table name.",
         "router_verified": "router"
+      },
+      {
+        "id": "sau-20260625T063144Z",
+        "ts": "2026-06-25T06:31:44Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "news sources stale 88min (check B-11)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "router_note": "RAW-INVESTIGATED router 2026-06-25T06:33Z: NOT a fetch outage. Only 2 news slots exist — news-scout-offhours cron 0 */4 (4-hourly: ...04:00,08:00,12:00...) + news-scout-sentiment cron 0 5 (daily). Last news fetch 05:02Z produced 6 real signals (7477-7482); next scheduled 08:00Z. 88min age is ON-CADENCE for a 4-hourly design. The flag is a THRESHOLD-vs-CADENCE mismatch: B-11 asserts expected_cadence_hours=1h but no slot fetches hourly. PO DESIGN CALL (do not auto-act): EITHER (a) 1h SLA is intended → add a market-hours news slot (02-08 UTC) — genuine coverage gap; OR (b) 4h cadence is intended → recalibrate B-11 threshold to derive from the news slot cron SSOT (same predicate-drift class as C-06/C-11). No data is dead; not a panic."
+      },
+      {
+        "id": "sau-2026-06-25T06:32:59Z",
+        "ts": "2026-06-25T06:32:59Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "news-vps stale 89min (check B-11)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-24T01:05:00Z",
