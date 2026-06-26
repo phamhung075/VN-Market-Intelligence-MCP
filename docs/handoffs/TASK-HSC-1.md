@@ -122,3 +122,29 @@ None. This task unblocks HSC-2 (one-time eviction), HSC-3 (repoint flows), HSC-4
 - **Sprint brief:** docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md
 - **Signal:** docs/signals/orch-state-hot-cold-split-20260626T152808Z.json
 - **Atomic write contract:** docs/standards/orch-state-atomic-write.md (§2.3 of consolidate brief)
+
+---
+
+## [Developer] Implementation Record
+
+- **Files created:**
+  - `docs/data/orch/archive/.gitkeep` — cold-store directory placeholder
+  - `scripts/orch-cold-evict.sh` (470 lines) — reusable eviction script (executable)
+- **Files modified:**
+  - `docs/policies/dev-standards.md` — added CANONICAL pointer in §Script Persistence
+- **Verification:**
+  - `bash -n scripts/orch-cold-evict.sh` → PASS
+  - `shellcheck scripts/orch-cold-evict.sh` → PASS (0 warnings)
+  - `bash scripts/orch-cold-evict.sh --dry-run` → EXIT 0, preview counts valid
+  - Hot file byte-identical after dry-run (md5 verified)
+- **Dry-run eviction preview (live orch-state.json — 2,469,067 bytes):**
+  - done[]: 223 items would evict from hot
+  - done_verified[]: 141 items would evict from hot
+  - active_sprints[]: 15 terminal sprints would evict from hot
+  - signal_queue.rows[]: 63 terminal rows would evict from hot
+  - signal_queue.archive[]: 45 items would evict from hot
+  - New items to cold: 487 total
+  - Projected hot-file size: 957,211 bytes (−1,511,856 bytes / −61% reduction)
+- **Git commits:** a3953bb6 feat(scripts/orch-cold-evict): HSC-1 cold archive dir + eviction script / d02104d6 chore(orch-state): HSC-1 task → REVIEW lane
+- **Task lane:** HSC-1 moved in_progress → review in orch-state.json
+- **HSC-2..HSC-7 unblocked:** scripts/orch-cold-evict.sh exists and is verified
