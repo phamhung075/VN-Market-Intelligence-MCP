@@ -400,8 +400,8 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   HOT_TEMP=$(mktemp "${REPO_ROOT}/docs/data/orch/.hot-evict-XXXXXXXX.tmp")
   build_hot_temp "${MAPS}" "${HOT_TEMP}"
 
-  # Validate hot temp sentinel
-  jq -e '.head and .task_board and .signal_queue' "${HOT_TEMP}" >/dev/null \
+  # Validate hot temp sentinel (HSC-5: ._meta required after schema v4)
+  jq -e '.head and .task_board and .signal_queue and ._meta' "${HOT_TEMP}" >/dev/null \
     || { log "ABORT: hot temp sentinel failed — hot file NOT modified"; exit 1; }
   jq '.' "${HOT_TEMP}" >/dev/null \
     || { log "ABORT: hot temp invalid JSON — hot file NOT modified"; exit 1; }

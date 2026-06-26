@@ -195,7 +195,7 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
 ```
 `narrative.*` block is lazy-loaded only on explicit human-facing resume request — do NOT read at cold start.
 
-**v1 legacy (no `head` key):** field names were `status`/`activeTaskId`/`nextAgent`/`updatedAt` directly at root. Self-heal to v3 on next write (first writer detects `_schema` absent or < "v3" and writes v3 envelope).
+**v1 legacy (no `head` key):** field names were `status`/`activeTaskId`/`nextAgent`/`updatedAt` directly at root. Self-heal to v4 on next write (first writer detects `._meta.schema` absent or `< "v4"` and writes v4 envelope with canonical `_meta: {updated_at, updated_by, schema: "v4", ssot: true}`).
 
 - `head.status == "in_progress"` AND `head.next_agent` non-null AND `head.updated_at < 24h` →
   **WF-1 BLOCKED-task check (AC-WF1-5 — run FIRST, before S2 dispatcher-wrap):**

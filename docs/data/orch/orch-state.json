@@ -1,8 +1,4 @@
 {
-  "_schema": "v3",
-  "_ssot": true,
-  "_updated_at": "2026-06-26T19:43:58Z",
-  "_updated_by": "developer",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -6871,9 +6867,11 @@
         "priority": "normal",
         "size": "M",
         "type": "SPRINT-S",
-        "status": "BACKLOG",
+        "status": "done_verified",
         "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HSC-5"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HSC-5",
+        "done_at": "2026-06-26T20:05:59Z",
+        "done_by": "agent-father-hsc5"
       },
       {
         "id": "HSC-6",
@@ -6896,6 +6894,27 @@
         "status": "done_verified",
         "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#HSC-7"
+      },
+      {
+        "id": "TASK-MACRO-COMMODITY-DELTA",
+        "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
+        "sprint": "S2-DATA-HONESTY",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "size": "M",
+        "status": "BACKLOG",
+        "created_at": "2026-06-24",
+        "handoff": "docs/handoffs/BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL.md",
+        "files_to_touch": [
+          "pkg/domain/ports.go",
+          "pkg/infrastructure/repositories.go",
+          "pkg/infrastructure/repositories_test.go",
+          "pkg/application/usecases.go",
+          "pkg/application/dtos.go",
+          "pkg/application/usecases_test.go",
+          "cmd/server/main.go"
+        ],
+        "notes": "See [Architect] section in handoff for full design. 4 Q resolutions: Q1=18h rolling lookback, Q2=same-source-only usdVnd, Q3=raw prevFetchedAt *string, Q4=safe-degrade sufficient. No CGO, no new deps, modernc.org/sqlite already in go.mod."
       }
     ],
     "closed_sprints": [
@@ -7365,44 +7384,11 @@
     "last_triaged_at": "2026-06-26T15:26:11Z",
     "last_triaged_by": "po"
   },
-  "updated_at": "2026-06-26T19:43:58Z",
-  "updated_by": "developer",
-  "meta": {
-    "updated_at": "2026-06-26T05:31:34Z",
-    "updated_by": "po",
-    "last_po_triage": "2026-06-26T05:31:34Z",
-    "last_po_triage_by": "po"
-  },
   "_meta": {
-    "last_writer": "po-s103",
-    "last_write_at": "2026-06-18T09:35:49Z"
+    "updated_at": "2026-06-26T20:05:59Z",
+    "updated_by": "agent-father-hsc5",
+    "schema": "v4",
+    "ssot": true
   },
-  "metadata": {
-    "updated_at": "2026-06-18T06:33:41Z"
-  },
-  "meta_updated_at": "2026-06-18T10:33:48Z",
-  "last_tick": "20260622T2215Z",
-  "tasks_backlog": [
-    {
-      "id": "TASK-MACRO-COMMODITY-DELTA",
-      "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
-      "sprint": "S2-DATA-HONESTY",
-      "zone": "apps/macro-indicators/",
-      "owner": "dev-macro-indicators",
-      "size": "M",
-      "status": "BACKLOG",
-      "created_at": "2026-06-24",
-      "handoff": "docs/handoffs/BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL.md",
-      "files_to_touch": [
-        "pkg/domain/ports.go",
-        "pkg/infrastructure/repositories.go",
-        "pkg/infrastructure/repositories_test.go",
-        "pkg/application/usecases.go",
-        "pkg/application/dtos.go",
-        "pkg/application/usecases_test.go",
-        "cmd/server/main.go"
-      ],
-      "notes": "See [Architect] section in handoff for full design. 4 Q resolutions: Q1=18h rolling lookback, Q2=same-source-only usdVnd, Q3=raw prevFetchedAt *string, Q4=safe-degrade sufficient. No CGO, no new deps, modernc.org/sqlite already in go.mod."
-    }
-  ]
+  "last_tick": "20260622T2215Z"
 }

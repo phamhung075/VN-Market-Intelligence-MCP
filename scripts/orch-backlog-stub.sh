@@ -95,8 +95,8 @@ log() { echo "[orch-backlog-stub] $*" >&2; }
 # Step 1: Structural sentinel — abort early if hot file is malformed
 # =============================================================================
 log "Validating hot file: ${ORCH_STATE}"
-jq -e '.head and .task_board and .signal_queue' "${ORCH_STATE}" >/dev/null \
-  || { log "ABORT: hot file fails sentinel (.head/.task_board/.signal_queue missing)"; exit 1; }
+jq -e '.head and .task_board and .signal_queue and ._meta' "${ORCH_STATE}" >/dev/null \
+  || { log "ABORT: hot file fails sentinel (.head/.task_board/.signal_queue/._meta missing)"; exit 1; }
 
 # =============================================================================
 # Step 2: Ensure archive directory exists
@@ -276,8 +276,8 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   HOT_TEMP=$(mktemp "${REPO_ROOT}/docs/data/orch/.hot-stub-XXXXXXXX.tmp")
   build_hot_temp "${HOT_TEMP}"
 
-  # Validate hot temp sentinel
-  jq -e '.head and .task_board and .signal_queue' "${HOT_TEMP}" >/dev/null \
+  # Validate hot temp sentinel (HSC-5: ._meta required after schema v4)
+  jq -e '.head and .task_board and .signal_queue and ._meta' "${HOT_TEMP}" >/dev/null \
     || { log "ABORT: hot temp sentinel failed — hot file NOT modified"; exit 1; }
   jq empty "${HOT_TEMP}" >/dev/null \
     || { log "ABORT: hot temp invalid JSON — hot file NOT modified"; exit 1; }
