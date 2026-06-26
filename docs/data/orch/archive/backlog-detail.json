@@ -1,8 +1,8 @@
 {
   "_sentinel": "backlog-detail-v1",
   "created_at": "2026-06-26T19:51:45Z",
-  "updated_at": "2026-06-26T19:51:45Z",
-  "count": 318,
+  "updated_at": "2026-06-26T20:10:51Z",
+  "count": 319,
   "items": {
     "TASK17-FOREIGN-FLOW": {
       "baseline_pass": true,
@@ -6696,6 +6696,21 @@
       "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
       "depends_on": "HSC-1",
       "completed_at": "2026-06-26T19:36:41Z"
+    },
+    "FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE": {
+      "created_at": "2026-06-26T20:10:51Z",
+      "created_by": "po",
+      "priority": "normal",
+      "size": "M",
+      "type": "SPRINT-M",
+      "zone": "docs/data/orch/",
+      "status": "BACKLOG",
+      "desc": "FOLLOW-ON from ORCH-STATE-HOT-COLD-SPLIT (signed off 2026-06-26). The 7-task HSC sprint delivered -79% (2.46MB -> 537KB) but the brief's aspirational <150KB end-state needs work NOT in the HSC decomposition. Residual hot weight: task_board.active_sprints 220KB (18 live sprints) + decision_journal 23.5KB + sprint_goal 21KB. SCOPE: (1) sprint-lifecycle eviction — when an active_sprint reaches terminal (all tasks done_verified / SIGNED-OFF), evict the whole sprint object to cold closed_sprints; extend scripts/orch-cold-evict.sh criteria + wire into pm/dev-team sprint seal. (2) decision_journal ring-buffer (keep last N, evict remainder to cold). (3) sprint_goal prune stale entries. AC: hot orch-state.json <150KB; every genuinely-live sprint retained; jq sentinel (.head and .task_board and .signal_queue and ._meta) passes; orch-cold-evict idempotent. RECORD-ONLY — PO opened this stub at sign-off; do NOT execute now.",
+      "root_cause": "active_sprints has no terminal-sprint eviction path. HSC-1 evicts terminal done/done_verified/signal rows but a SPRINT object stays in active_sprints until manually closed, so 18 sprints (incl 1 null-status) accrete 220KB in-file. decision_journal + sprint_goal grow unbounded.",
+      "depends": [
+        "ORCH-STATE-HOT-COLD-SPLIT (signed-off 2026-06-26)"
+      ],
+      "source": "po sign-off 2026-06-26"
     }
   }
 }

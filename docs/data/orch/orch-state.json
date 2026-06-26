@@ -192,6 +192,14 @@
       "decision": "DECOMPOSED: FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 into TASK-OHLCV-WIC-1 (Writer F guard replacement, S) + TASK-OHLCV-WIC-2 (Writer H high/low coerce fix, S) + TASK-OHLCV-WIC-3 (board-only confirm CLASS3 superseded). Tier-1 parallel (independent files, no shared code), ready dev-mcp-server. Handoffs: docs/handoffs/TASK-OHLCV-WIC-1.md + docs/handoffs/TASK-OHLCV-WIC-2.md. Status: TODO→dev-mcp-server. WIC-1 reference pattern Writer E (ohlcvBackfill.ts:L206-218); WIC-2 parse-and-reject high/low (server.ts:L1262-1267). Risk flags: RISK-1 (WIC-1 import domain→domain direction verify), RISK-2 (WIC-2 VPS script may need numeric high/low, ops coordination needed).",
       "what_considered": "(A) single task mixing Writer F + Writer H — REJECTED: different files (priceBackfillService.ts vs server.ts), different concerns (add guard vs fix coerce). (B) 4+ tasks (splits per Writer + tests separate) — REJECTED: over-granular, false deps. (C) 2 tasks (WIC-1 Writer F + WIC-2 Writer H) — CHOSEN: respects atomic file scope, parallel safe, each ~2h.",
       "why_change": "Architect blueprint prescribes two shallow code gaps; PM atomizes into independent dev tasks with explicit handoff files (SSOT verify + AC + test mandate). WIC-3 is board-only (CLASS3 already marked superseded by architect at 867445e9). Done_verified gate: live cron-db-data-integrity re-sweep 0 NEW violations post-rebuild."
+    },
+    {
+      "agent": "po",
+      "task_id": "ORCH-STATE-HOT-COLD-SPLIT",
+      "timestamp": "2026-06-26T20:11:31Z",
+      "decision": "SIGNED-OFF + CLOSED ORCH-STATE-HOT-COLD-SPLIT. All 7 HSC tasks done_verified+committed; defined scope met. Hot orch-state.json 2,469,471->537,384 bytes (-79%); _meta.schema=v4; cold store live (archive/2026-06.json 1.49MB + backlog-detail.json 559KB); 18 active_sprints + active signal rows intact; sentinel passes. Recorded SIGNED-OFF in task_board.closed_sprints, cleared 6 HSC lane rows. Opened RECORD-ONLY follow-on FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE for the <150KB residual (do NOT execute now).",
+      "what_considered": "(A) Reject/reopen because hot is 537KB not the brief aspirational <150KB — REJECTED: the <150KB end-state was never in the 7-task HSC decomposition; the residual is active_sprints (220KB, 18 live sprints) + decision_journal (23.5KB) + sprint_goal (21KB), none of which any HSC task targeted. Holding the sprint open for unscoped work violates ship-completion. (B) Accept-at-scope + open follow-on stub for the residual — CHOSEN.",
+      "why_change": "Sign off on DEFINED scope (the 7 HSC tasks), which is genuinely met and verified live. The <150KB gap needs a NEW capability (sprint-lifecycle eviction of terminal active_sprints to cold + journal ring-buffer) = genuinely new scope -> recorded as FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE backlog stub, record-only."
     }
   ],
   "head": {
@@ -930,8 +938,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-26T04:56:14Z",
-    "_updated_by": "po-s120",
+    "_updated_at": "2026-06-26T20:10:51Z",
+    "_updated_by": "po-orchstate-signoff",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6850,52 +6858,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT"
       },
       {
-        "id": "HSC-3",
-        "title": "Repoint task-archive.md trigger+destination + narrow pm planning reads",
-        "zone": "docs/agents/pm/",
-        "priority": "high",
-        "size": "S",
-        "type": "SPRINT-S",
-        "status": "done_verified",
-        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HSC-3"
-      },
-      {
-        "id": "HSC-5",
-        "title": "Collapse 10 meta keys → _meta + schema v4 bump",
-        "zone": "docs/data/orch/ + docs/agents/ + .claude/skills/",
-        "priority": "normal",
-        "size": "M",
-        "type": "SPRINT-S",
-        "status": "done_verified",
-        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HSC-5",
-        "done_at": "2026-06-26T20:05:59Z",
-        "done_by": "agent-father-hsc5"
-      },
-      {
-        "id": "HSC-6",
-        "title": "Evict-on-terminal hook in pm + dev-team flows",
-        "zone": "docs/agents/pm/ + docs/agents/dev-team/",
-        "priority": "normal",
-        "size": "S",
-        "type": "SPRINT-S",
-        "status": "done_verified",
-        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HSC-6"
-      },
-      {
-        "id": "HSC-7",
-        "title": "Rewrite signal-dashboard §PRUNE to cold file eviction",
-        "zone": ".claude/skills/signal-dashboard/",
-        "priority": "normal",
-        "size": "S",
-        "type": "SPRINT-S",
-        "status": "done_verified",
-        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HSC-7"
-      },
-      {
         "id": "TASK-MACRO-COMMODITY-DELTA",
         "title": "Wire commodity_prices_history prev-close → compute oil/gold/usdVnd deltas",
         "sprint": "S2-DATA-HONESTY",
@@ -6915,6 +6877,17 @@
           "cmd/server/main.go"
         ],
         "notes": "See [Architect] section in handoff for full design. 4 Q resolutions: Q1=18h rolling lookback, Q2=same-source-only usdVnd, Q3=raw prevFetchedAt *string, Q4=safe-degrade sufficient. No CGO, no new deps, modernc.org/sqlite already in go.mod."
+      },
+      {
+        "id": "FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE",
+        "title": "Drive hot orch-state.json <150KB: sprint-lifecycle eviction (close terminal active_sprints to cold) + decision_journal/sprint_goal trim",
+        "priority": "normal",
+        "size": "M",
+        "type": "SPRINT-M",
+        "zone": "docs/data/orch/",
+        "status": "BACKLOG",
+        "sprint": "FU-ORCH-HOT-SUB150",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE"
       }
     ],
     "closed_sprints": [
@@ -6959,6 +6932,62 @@
             "title": "Investigate and repair 519 rows with low=0 contamination pattern (SM-2 + SM-3 scope miss)",
             "type": "FIX",
             "zone": "apps/mcp-server/"
+          }
+        ]
+      },
+      {
+        "id": "ORCH-STATE-HOT-COLD-SPLIT",
+        "label": "Hot/cold split of orch-state.json — evict terminal dead weight to append-only cold archive",
+        "status": "SIGNED-OFF",
+        "opened_at": "2026-06-26",
+        "closed_at": "2026-06-26T20:10:51Z",
+        "signed_off_by": "po",
+        "priority": "high",
+        "brief": "docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md",
+        "outcome": "Hot orch-state.json 2,469,471 -> 537,384 bytes (-79%). _meta.schema=v4; all 10 stale top-level meta keys + dead tasks_backlog removed. Cold store live: archive/2026-06.json (1.49MB = 367 done_tasks + 15 closed_sprints + 108 signal_rows) + backlog-detail.json (559KB, 318 stubbed items). All 18 active_sprints + active signal rows intact; jq sentinel (.head and .task_board and .signal_queue and ._meta) passes. All 7 HSC tasks done_verified + committed.",
+        "scope_note": "Brief aspirational end-state was <150KB hot; delivered 537KB (-79%). Residual is NOT in the 7-task HSC scope: task_board.active_sprints (18 live sprints, 220KB) + decision_journal (23.5KB) + sprint_goal (21KB). No HSC task targeted active_sprints/decision_journal prose. Follow-on opened record-only: FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE.",
+        "tasks": [
+          {
+            "id": "HSC-1",
+            "status": "done_verified",
+            "commit": "5b00897e",
+            "note": "scripts/orch-cold-evict.sh + orch-backlog-stub.sh + archive/ dir — QA PASS"
+          },
+          {
+            "id": "HSC-2",
+            "status": "done_verified",
+            "commit": "33603151,dcc5e691",
+            "note": "one-time eviction 2.47MB -> 932KB"
+          },
+          {
+            "id": "HSC-3",
+            "status": "done_verified",
+            "commit": "agent-father (Phase A)",
+            "note": "task-archive.md trigger+destination repoint + pm planning read-scope narrow"
+          },
+          {
+            "id": "HSC-4",
+            "status": "done_verified",
+            "commit": "ed9a785e",
+            "note": "backlog prose -> stubs + cold backlog-detail.json (318 items lazy-load); 932KB -> 525KB"
+          },
+          {
+            "id": "HSC-5",
+            "status": "done_verified",
+            "commit": "fb1eddfa",
+            "note": "10 meta keys -> single _meta, schema v3->v4; orphan TASK-MACRO-COMMODITY-DELTA rescued from dead tasks_backlog; zero live stale-refs"
+          },
+          {
+            "id": "HSC-6",
+            "status": "done_verified",
+            "commit": "agent-father (Phase A)",
+            "note": "evict-on-terminal hook in pm + dev-team post-cycle backstop"
+          },
+          {
+            "id": "HSC-7",
+            "status": "done_verified",
+            "commit": "agent-father (Phase A)",
+            "note": "signal-dashboard §PRUNE -> cold file eviction"
           }
         ]
       }
@@ -7294,42 +7323,7 @@
         "rebuild_required": "mcp-server"
       }
     ],
-    "done_verified": [
-      {
-        "id": "HSC-2",
-        "title": "One-time eviction of current orch-state.json terminal bloat",
-        "zone": "docs/data/orch/",
-        "owner": "pm+developer",
-        "priority": "high",
-        "size": "XS",
-        "type": "SPRINT-S",
-        "created_at": "2026-06-26T15:28:08Z",
-        "created_by": "pm",
-        "status": "done_verified",
-        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "depends_on": "HSC-1",
-        "completed_at": "2026-06-26T19:43:58Z",
-        "completed_by": "developer",
-        "verification": "HSC-2 executed: scripts/orch-cold-evict.sh ran against live SSOT. Hot: 2.47 MB → 954 KB. Cold: docs/data/orch/archive/2026-06.json (1.49 MB). Evicted: 224 done + 142 done_verified + 15 terminal sprints + 63 signal rows + 45 signal archive = 489 items. All active lanes intact. Commit: 33603151"
-      },
-      {
-        "id": "HSC-4",
-        "title": "Strip backlog prose to stubs; cold backlog-detail.json",
-        "zone": "docs/agents/pm/ + docs/data/orch/archive/",
-        "owner": "agent-father+developer",
-        "priority": "normal",
-        "size": "M",
-        "type": "SPRINT-S",
-        "created_at": "2026-06-26T15:28:08Z",
-        "created_by": "pm",
-        "status": "done_verified",
-        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "depends_on": "HSC-1",
-        "completed_at": "2026-06-26T19:53:58Z",
-        "completed_by": "developer",
-        "verification": "HSC-4 executed: scripts/orch-backlog-stub.sh ran against live SSOT. Backlog 318 items stripped to stubs (id+title+priority+size+type+zone+status+sprint+detail_ref). Full items written to docs/data/orch/archive/backlog-detail.json (318 keys). Reconciliation PASS: all 318 hot stub ids confirmed in cold. Hot: 954938B → 537037B (-418KB). Cold detail: 559186B. Lazy-load verified. dev-standards.md + pm/flow/main.md updated with canonical pointer."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "idle",
       "active_task_id": null,
@@ -7385,8 +7379,8 @@
     "last_triaged_by": "po"
   },
   "_meta": {
-    "updated_at": "2026-06-26T20:05:59Z",
-    "updated_by": "agent-father-hsc5",
+    "updated_at": "2026-06-26T20:11:31Z",
+    "updated_by": "po-orchstate-signoff",
     "schema": "v4",
     "ssot": true
   },

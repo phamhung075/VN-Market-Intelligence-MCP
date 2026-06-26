@@ -1,25 +1,25 @@
 # PO Notebook
 
-_Last: 2026-06-26T04:55:00Z_
+_Last: 2026-06-26T20:30:00Z_
 
-## This cycle — file-channel signal triage (dev-team tick 04:52Z, post-/mcp-reconnect)
-Triaged 4 cowork-dispatcher telemetry files in docs/signals/ (orch-state .signal_queue already done this session @1f8c6953 — did NOT re-touch). System fully recovered: gateway reconnected 04:23Z, chef-intraday DELIVERED-REAL 04:26Z, all 3 auditor tiers clean, WIP=0.
+## This cycle — SIGN-OFF + CLOSE ORCH-STATE-HOT-COLD-SPLIT
+Verified all 7 HSC tasks live (brief: docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md). DEFINED scope met → SIGNED-OFF + CLOSED.
 
-Dispositions:
-- #1 cowork-team-...T00:04Z (gateway "REACHED", later REFUTED) → ARCHIVED to processed/. Outage-window artifact.
-- #3 cowork-team-...T00-22Z-blind-correction (THIS_SESSION_BLIND; anti-fabrication HELD — blind news-scout self-refused) → ARCHIVED. Resolved.
-- #4 cowork-team-...T02-19Z-chef-intraday-skip-blind (SKIPPED_BLIND during VN hours) → ARCHIVED. chef DELIVERED-REAL 04:26Z post-reconnect.
-- #2 cowork-team-...T00:19Z (cowork_spawn_completion) → ARCHIVED, but extracted the REAL recurring defect → MINTED.
+RAW-verified before sign-off:
+- Hot orch-state.json = 537,384 bytes (-79% from 2,469,471); ._meta.schema=v4; all 10 stale top-level meta keys + dead tasks_backlog removed; sentinel (.head and .task_board and .signal_queue and ._meta) passes.
+- Cold store live: archive/2026-06.json (1.49MB = 367 done_tasks + 15 closed_sprints + 108 signal_rows) + backlog-detail.json (559KB, 318 stub details). HSC-1 scripts present (orch-cold-evict.sh + orch-backlog-stub.sh).
+- 18 active_sprints + active signal rows intact; backlog 318 rows, 317 carry detail_ref stubs.
+- Commits confirmed: 5b00897e(HSC-1 QA) / 33603151+dcc5e691(HSC-2) / ed9a785e(HSC-4) / fb1eddfa(HSC-5); HSC-3/6/7 agent-father Phase A.
 
-MINT (PLAN-ONLY, backlog, WIP held 0): **FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY** (FIX, M, zone:multi, next_agent:architect).
-- Defect RAW-confirmed in docs/agents/cowork-team/flow/last-fired.md Step 5b: last_fired bumped for WON_SLOTS = run_in_background spawn DISPATCH-success (AC-P1-7-1), NOT delivery proof. A spawn that dispatches then dies before writing its notebook still satisfies the 4h cadence gate → cowork-match-slots.js reads the bumped stamp → never re-offers → genuine miss MASKED. Observed: news-scout-offhours 00:00 fire bumped last_fired 00:02:36Z but no c108 cycle (siblings DID deliver → gateway up → spawn died before delivery). 2nd instance (after bctc-analyst-slot-3).
-- DISTINCT FROM done_verified FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER (30b9a7f8): that clobbered OTHER slots' stamps (monotonic guard); this advances a SINGLE slot on dispatch-success unbacked by delivery (monotonic guard does NOT catch — value is genuinely forward-moving).
-- Constraint for architect: spawns are fire-and-forget → cannot synchronously await delivery in one tick. Candidate designs (A deferred-confirm ledger / B post-spawn bounded poll / C artifact-driven cadence) in fix_spec — architect picks, BA decomposes.
-- Script scripts/po-s120-cowork-lastfired-decouple-delivery-mint.jq (idempotent, conservation +1, re-run delta 0).
+Close actions (atomic mtime-CAS writes, explicit-path commit):
+- Wrote SIGNED-OFF record to task_board.closed_sprints (outcome + scope_note + 7 task rows).
+- Cleared 6 HSC lane rows (HSC-3/5/6/7 were sitting in backlog[] w/ status done_verified; HSC-2/4 in done_verified[]).
+- Decision-journal entry stamped task_id=ORCH-STATE-HOT-COLD-SPLIT.
+- task_release task:ORCH-STATE-HOT-COLD-SPLIT → ok:false (TTL expired across sprint — acceptable).
 
-NOT triaged as dev (cowork data products, left for chef/digest): 5 bctc_signal_*_routine.json + 1 price_anomaly — remain in docs/signals/.
+RESIDUAL DECISION (honest scope): brief aspirational <150KB hot NOT met (delivered 537KB). Residual = active_sprints 220KB (18 live sprints) + decision_journal 23.5KB + sprint_goal 21KB — none targeted by any HSC task. Chose accept-at-scope + opened RECORD-ONLY follow-on **FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE** (SPRINT-M, backlog stub + cold detail). Needs NEW capability: sprint-lifecycle eviction of terminal active_sprints to cold + decision_journal ring-buffer + sprint_goal prune. Do NOT execute now.
 
 ## Carry-over
-- FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY backlog → needs architect design pass when WIP frees (route to architect; flow-doc/matcher split + agent-father for cowork-schedule.json).
-- Watch for a 3rd last_fired-decouple recurrence signal → escalate priority if it surfaces.
-- S2 DATA-HONESTY thread (prior cycle): both fixes rebuild_required, done_verified WITHHELD on live-varied probe.
+- FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE backlog → route to architect for sprint-lifecycle eviction design when WIP frees; extends scripts/orch-cold-evict.sh criteria + wires into pm/dev-team sprint seal.
+- 1 active_sprint carries null status — fold into the follow-on lifecycle pass (status hygiene).
+- FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY backlog still pending architect design pass.
