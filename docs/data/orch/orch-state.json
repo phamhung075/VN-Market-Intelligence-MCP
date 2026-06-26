@@ -13625,6 +13625,46 @@
         "source": "PO file-channel triage of cowork-dispatcher signals cowork-team-2026-06-26T00:19Z.json (cowork_spawn_completion, KNOWN-DEFECT corroborated) + cowork-team-2026-06-26T00-22Z-blind-correction.json. RAW-verified against docs/agents/cowork-team/flow/last-fired.md Step 5b. PLAN-ONLY, NOT promoted to ready (WIP=0). Recurring correctness defect (2nd observed instance after bctc-analyst-slot-3).",
         "created_at": "2026-06-26T04:56:14Z",
         "created_by": "po-s120"
+      },
+      {
+        "id": "FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "next_agent": "architect",
+        "route_to": "architect",
+        "owner": "architect",
+        "blocking": false,
+        "title": "task_claim owner_session is server-INSTANCE-scoped (pid+startupTs), not client-scoped -> concurrent clients on one mcp-server collapse to one owner identity -> re-entrant self-reclaim returns claimed:true -> mutual exclusion DEFEATED (cowork double-fire)",
+        "root_cause": "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts:52-56 SERVER_SESSION_ID is a single module-level const `pid-${process.pid}-ts-${startMs}` computed ONCE per process and stamped as owner_session on EVERY claim (L117) regardless of caller. Doc comment L18 (coordinationStore.ts) + L11/L20-21 (coordinationTools.ts) state owner_session SHOULD be the per-client Claude Code session id injected by the gateway, but the live value proves the unshipped Phase-2 fallback (process pid+boot) is active. Two concurrent clients sharing one mcp-server therefore get the IDENTICAL owner_session -> a second client's claim on a held lock is treated as a re-entrant SELF-reclaim -> claimed:true -> leader-lock + per-slot mutex CANNOT serialize concurrent dispatchers.",
+        "raw_verification": "router dev-team tick 2026-06-26T05:22Z + PO RAW-confirm via task_list_held: SIX concurrent locks across FOUR distinct owner_agents (dev-team, unified-agent, cowork-dispatcher, cowork-team) ALL carry the IDENTICAL owner_session pid-1-ts-1782423559593 (server uptime ~7.8h, matches auditor Tier-1 7h33m). Older locks from prior server lifetimes carry DIFFERENT ts (1782401745780, 1782362316958, ...) confirming owner_session rotates ONLY on mcp-server restart, NOT per client. Code root confirmed in coordinationTools.ts:52-56,117.",
+        "observed_impact": "cowork DOUBLE-FIRE this session: news-scout-sentiment spawned twice (a89c1b41@05:02 + a404d93d@05:03); chef slots fired twice (a29c5bcd@05:16 + parallel@05:21). BOUNDED not corrupting: published:<slot>:<date|hour> marker gate prevented double MARKET posts; gatherers have E3/exec-proof idempotency. Damage = wasted spawns/fetches, not bad data.",
+        "fix_options": "PLAN-ONLY for architect — DO NOT implement: (a) PREFERRED ship the already-documented Phase-2 — derive owner_session from the per-request MCP transport session (RequestHandlerExtra.sessionId) instead of the process-global SERVER_SESSION_ID const, so each client/connection gets a distinct token; (b) add an explicit owner-token arg to task_claim so re-entrancy is opt-in and cross-client claims correctly return claimed:false with current_holder. RAW-verify on the live lock table before/after (re-run task_list_held: two concurrent claimers must show DISTINCT owner_session).",
+        "recurring_escalation": "4th+ touch on the owner_session/leader-lock mechanism -> per feedback_recurring_bug_escalation architect MUST root-cause before any blind fix. This is the DURABLE root-fix that the prior band-aids deferred.",
+        "anchor_prior_art": [
+          "FU-LEADER-LOCK-OWNER-SESSION (DONE 2026-06-05) — fixed the OPPOSITE symptom (cross-RESTART false PEER-HELD suppression) via task_force_release_orphan band-aid; architect spike explicitly chose NOT to make owner_session per-client (deferred to Phase-2 = THIS task)",
+          "FIX-CWK-LEADER-LOCK-REBIND (DONE) — added owner_agent param path",
+          "FU-LOCKSTORE-EXPIRED-GC (DONE)",
+          "FIX-REFINE-LOCK-TTL-RECLAIM (done_verified)"
+        ],
+        "memory_ref": [
+          "feedback_gatherer_manual_cloud_doublefire",
+          "feedback_router_manual_drive_overlaps_devteam_loop",
+          "feedback_guaranteed_slot_week_key_double_post",
+          "feedback_recurring_bug_escalation",
+          "feedback_cowork_spawn_narrates_not_executes"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts",
+          "apps/mcp-server/src/infrastructure/db/coordinationStore.ts"
+        ],
+        "acceptance": "Read-verified not green-tick: two concurrent claimers (distinct gateway connections) on one mcp-server lifetime show DISTINCT owner_session in task_list_held; a second client claiming a held lock gets claimed:false + current_holder; existing own-restart orphan-release path (FU-LEADER-LOCK-OWNER-SESSION) still works; no double-leader window regression vs the 2026-06-02 dup-spawn discriminator.",
+        "source": "router dev-team inline tick 2026-06-26T05:22Z RAW-verified during signal drain; PO PLAN-ONLY mint (WIP stays 0)",
+        "created_at": "2026-06-26T05:31:34Z",
+        "created_by": "po",
+        "plan_only": true
       }
     ],
     "closed_sprints": [
@@ -25917,13 +25957,13 @@
     "last_triaged_at": "2026-06-25T23:55:29Z",
     "last_triaged_by": "po-s117"
   },
-  "updated_at": "2026-06-25T00:39:11Z",
-  "updated_by": "po (PREDICTION-CLAIMS-DAILY-CADENCE mint)",
+  "updated_at": "2026-06-26T05:31:34Z",
+  "updated_by": "po",
   "meta": {
-    "updated_at": "2026-06-25T09:11:15Z",
+    "updated_at": "2026-06-26T05:31:34Z",
     "updated_by": "po",
-    "last_po_triage": "2026-06-17T18:58:32Z",
-    "last_po_triage_by": "po-s101-bctc-discover-reroute"
+    "last_po_triage": "2026-06-26T05:31:34Z",
+    "last_po_triage_by": "po"
   },
   "_meta": {
     "last_writer": "po-s103",

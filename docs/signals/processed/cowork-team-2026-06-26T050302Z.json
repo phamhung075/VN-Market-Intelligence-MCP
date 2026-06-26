@@ -1,0 +1,28 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-26T050302Z",
+    "matched_slots": ["news-scout-sentiment"],
+    "won_slots": ["news-scout-sentiment"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/news-scout/flow/main.md"],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "OPEN",
+    "last_fired_timestamp": "2026-06-26T05:02:38.760Z",
+    "last_fired_slots": ["news-scout-sentiment"],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:00",
+    "leader_lock": "n/a_single_slot",
+    "note": "news-scout-sentiment due (cron 0 5 * * 1-5, last_fired 2026-06-25); claimed+spawned bg a404d93da8be0bfc6"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-26T050302Z"
+}
