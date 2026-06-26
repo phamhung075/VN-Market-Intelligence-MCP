@@ -30,6 +30,47 @@
 > Read in parallel before Step 1.
 - `docs/data/orch/orch-state.json` — structural sentinel + lane counts via jq slice only (NEVER cat full file to model context — `docs/standards/orch-state-access.md §1`)
 
+## § Sprint Eviction (runs before done/done_verified eviction)
+
+**Source:** `docs/architecture-briefs/2026-06-27-orch-state-schema-hardening.md` § 2  
+**Triggered:** always on entry to task-archive (sprint check is cheap; skips if zero evictable).
+
+**TERMINAL_SET:** `["DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED"]`
+
+1. Run eviction predicate to identify evictable sprints (all tasks in TERMINAL_SET):
+   ```bash
+   TERMINAL='["DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED"]'
+   EVICTABLE=$(jq --argjson T "$TERMINAL" '
+     [.task_board.active_sprints[]
+      | select(.id != null)
+      | select([ .tasks[]?.status ] | all(. as $s | $T | index($s) != null))
+      | .id
+     ]' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+   ```
+
+2. For each evictable sprint:
+   - Write full sprint object to `docs/data/orch/archive/YYYY-MM.json` under `.closed_sprints[]`
+   - Write one-line stub to `task_board.closed_sprints[]` in hot file:
+     ```json
+     { "id": "<id>", "title": "<label>", "closed_at": "<ISO-8601 UTC>",
+       "task_count": <n>, "detail_ref": "docs/data/orch/archive/YYYY-MM.json#closed_sprints/<id>" }
+     ```
+   - Remove from `active_sprints[]`
+
+3. Quarantine null-id sprints unconditionally (do not check task statuses):
+   - Write to cold archive under `.quarantine_nullid[]` as
+     `{ "id": "QUARANTINED-NULL-ID-<index>", "quarantine_reason": "null id", "tasks": [...] }`
+   - Remove from `active_sprints[]` (no hot-file stub — corrupt artifacts)
+
+4. **Validate before rename:** run `bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP"`.
+   On non-zero exit: `rm -f "$TMP"` and abort (leave live SSOT untouched).
+
+5. Atomic rename: `mv "$TMP" "$PROJECT_ROOT/docs/data/orch/orch-state.json"`
+
+**If zero evictable sprints and zero null-id sprints:** skip section, proceed to Step 1.
+
+---
+
 ## Steps
 
 1. **Verify bloat condition** — confirm trigger via jq slices:
@@ -60,11 +101,14 @@
    # script aborts before any rename on any validation failure.
    ```
 
-4. **Verify post-eviction state**:
+4. **Verify post-eviction state** (includes validate.sh gate — SHG-3):
    ```bash
+   # Full schema validation gate (SHG-3 — runs on the live file post-rename)
+   bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
+     || { echo "[pm/task-archive] ABORT: post-eviction validation failed"; exit 1; }
+
    DV_POST=$(jq '.task_board.done_verified | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
    DONE_POST=$(jq '.task_board.done | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
-   jq . "$PROJECT_ROOT/docs/data/orch/orch-state.json" > /dev/null  # JSON validity gate
    if [ "$DV_POST" -gt 0 ] || [ "$DONE_POST" -gt 10 ]; then
      echo "[pm/task-archive] ERROR: post-eviction counts unexpected (done=$DONE_POST, done_verified=$DV_POST)"
      task_release(task_id: "pm-archive-<ISO8601slug>")

@@ -15,7 +15,15 @@ The gate is: ops rebuilt the container (`docker compose up -d --build <svc>`) + 
 
 Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent market output) to validate the merged work behaves end-to-end.
 
-- **Approve** → update `docs/data/orch/orch-state.json` `.task_board` tasks to DONE + `.sprint_goal.entries[].status = "done"` (atomic write per §2.3) → release umbrella lock → return:
+- **Approve** → update `docs/data/orch/orch-state.json` `.task_board` tasks to DONE + `.sprint_goal.entries[].status = "done"` (atomic write per §2.3, with validate gate — SHG-3):
+  ```bash
+  TMP=$(mktemp "$PROJECT_ROOT/docs/data/orch/.po-write-XXXXXX.json")
+  jq '...' "$PROJECT_ROOT/docs/data/orch/orch-state.json" > "$TMP"
+  bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
+    || { rm -f "$TMP"; echo "[po/sprint-signoff] ABORTED: validation failed" >&2; exit 1; }
+  mv "$TMP" "$PROJECT_ROOT/docs/data/orch/orch-state.json"
+  ```
+  → release umbrella lock → return:
 
   **Release umbrella lock** → load skill: `.claude/skills/task-lock/SKILL.md`
   ```
@@ -29,7 +37,7 @@ Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent 
   PIPELINE: complete
   ```
 
-- **Reject** → open Backlog tasks for remaining issues in `docs/data/orch/orch-state.json` `.task_board.backlog[]` → release umbrella lock → return:
+- **Reject** → open Backlog tasks for remaining issues in `docs/data/orch/orch-state.json` `.task_board.backlog[]` (atomic write with validate gate — SHG-3, same pattern as Approve path) → release umbrella lock → return:
 
   **Release umbrella lock** → load skill: `.claude/skills/task-lock/SKILL.md`
   ```

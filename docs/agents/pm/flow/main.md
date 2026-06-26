@@ -98,7 +98,16 @@ blocks: []
 **3c-journal** (mandatory — before returning): skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<the sprint planning task_id from task_board — e.g. SPRINT-NNN or the PM task id>"]
 Write at minimum ONE entry per task you complete stamped with its task-id. Routine work: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.
 
-**3c.** Update `docs/data/orch/orch-state.json .task_board` (task status → TODO, atomic write per §2.3) → return task list with dependency tiers and zone per task:
+**3c.** Update `docs/data/orch/orch-state.json .task_board` (task status → TODO, atomic write per §2.3 — **MUST include validate gate**):
+```bash
+# atomic write pattern with validation gate (SHG-3)
+TMP=$(mktemp "$PROJECT_ROOT/docs/data/orch/.pm-write-XXXXXX.json")
+jq '...' "$PROJECT_ROOT/docs/data/orch/orch-state.json" > "$TMP"
+bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
+  || { rm -f "$TMP"; echo "[pm] ABORTED: validation failed" >&2; exit 1; }
+mv "$TMP" "$PROJECT_ROOT/docs/data/orch/orch-state.json"
+```
+Return task list with dependency tiers and zone per task:
 ```
 ## RETURN
 DONE: Tasks broken down, handoffs created for NNN-a, NNN-b, NNN-c

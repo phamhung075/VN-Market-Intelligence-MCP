@@ -53,6 +53,9 @@ if [ "$TERMINAL_SPRINT_N" -gt 0 ] || [ "$DONE_N" -gt 10 ] || [ "$DV_N" -gt 0 ]; 
   # Claim commit-mutex before running script
   # task_claim(task_kind="commit-mutex", task_id="dev-team-evict-<slug>", owner_agent="dev-team", ttl_seconds=120)
   bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"
+  # Validate gate (SHG-3): run after eviction script, before git commit
+  bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
+    || { echo "[dev-team/post-cycle] ABORT: post-eviction validation failed"; exit 1; }
   YYYYMM=$(date -u +%Y-%m)
   git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
   git commit -m "chore(tasks): cold-evict terminal sprints/done lanes → archive/${YYYYMM}.json"

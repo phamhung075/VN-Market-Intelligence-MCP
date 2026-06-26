@@ -49,9 +49,11 @@ UPDATED=$(echo "$CURRENT" | jq \
   --argjson row "$NEW_ROW" \
   '.signal_queue.rows += [$row] | .signal_queue._updated_at = now | .signal_queue._updated_by = "<agent-id>"')
 
-# 4. Atomic write
+# 4. Atomic write with validation gate (SHG-3)
 TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
 echo "$UPDATED" > "$TMP"
+bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
+  || { rm -f "$TMP"; echo "[dashboard/WRITE] ABORTED: validation failed" >&2; exit 1; }
 mv "$TMP" docs/data/orch/orch-state.json
 
 # 5. Validate JSON structure
@@ -108,13 +110,15 @@ NEW_ROWS=$(printf '%s' "$STATE" | jq \
 #    a. If payload_ref != null: Read payload file → add to context
 #    b. Note: type + summary → route to relevant flow step
 
-# 3. Mark each processed row NEW → READ (atomic write — modify only status of matched rows)
+# 3. Mark each processed row NEW → READ (atomic write with validate gate — SHG-3)
 STATE=$(cat docs/data/orch/orch-state.json) # bash-only pipeline — not surfaced to model (rule: docs/standards/orch-state-access.md §1)
 UPDATED=$(printf '%s' "$STATE" | jq \
   --arg agent "<my-agent-id>" \
   '(.signal_queue.rows[] | select(.to == $agent and .status == "NEW") | .status) |= "READ"')
 TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
 echo "$UPDATED" > "$TMP"
+bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
+  || { rm -f "$TMP"; echo "[dashboard/READ] ABORTED: validation failed" >&2; exit 1; }
 mv "$TMP" docs/data/orch/orch-state.json
 
 # 4. Update stored cache: {last_read_mtime, row_count}
@@ -203,6 +207,8 @@ UPDATED=$(printf '%s' "$STATE" | jq \
 ')
 TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
 printf '%s' "$UPDATED" > "$TMP"
+bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
+  || { rm -f "$TMP"; echo "[dashboard/PRUNE] ABORTED: validation failed" >&2; exit 1; }
 mv "$TMP" docs/data/orch/orch-state.json
 jq . docs/data/orch/orch-state.json > /dev/null || echo "ERROR: orch-state.json invalid after prune"
 

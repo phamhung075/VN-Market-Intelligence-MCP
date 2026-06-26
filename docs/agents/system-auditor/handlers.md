@@ -83,7 +83,7 @@ Parse commit timestamps. If any two commits to `docs/data/orch/orch-state.json` 
 
 **Step R-5 — Emit signal_queue rows**
 
-For each divergence found in Steps R-1 through R-4, append one row to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` per `.claude/skills/signal-dashboard/SKILL.md` § WRITE (atomic temp→rename):
+For each divergence found in Steps R-1 through R-4, append one row to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` per `.claude/skills/signal-dashboard/SKILL.md` § WRITE (atomic temp→validate→rename — SHG-3: validate.sh gate MUST run before rename):
 
 ```json
 {

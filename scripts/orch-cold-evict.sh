@@ -406,6 +406,10 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   jq '.' "${HOT_TEMP}" >/dev/null \
     || { log "ABORT: hot temp invalid JSON — hot file NOT modified"; exit 1; }
 
+  # SHG-3 write-gate: run orch-state-validate.sh before hot rename
+  bash "${REPO_ROOT}/scripts/orch-state-validate.sh" "${HOT_TEMP}" \
+    || { log "ABORT: orch-state-validate.sh failed — hot file NOT modified"; exit 1; }
+
   # ── CAS check: abort if hot file was modified during computation ──────────
   MTIME_AFTER=$(get_mtime "${ORCH_STATE}")
   if [[ "${MTIME_BEFORE}" != "${MTIME_AFTER}" ]]; then
