@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-26T11:12:28Z",
-  "_updated_by": "system-auditor",
+  "_updated_at": "2026-06-26T11:24:20Z",
+  "_updated_by": "po",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -30,11 +30,19 @@
       "decision": "DECOMPOSED: FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER into TASK-CWKSCH-1 (flow-doc FR-4 monotonic guard, S) + TASK-CWKSCH-2 (test helper + T-14/T-14b/T-14c, M). Tier-1 parallel, ready dev-mcp-server. Handoffs: docs/handoffs/TASK-CWKSCH-1.md + docs/handoffs/TASK-CWKSCH-2.md. Depends: TASK-CWKSCH-2 blocks_on TASK-CWKSCH-1. Status: TODO→dev-mcp-server. Queued: FOLLOW-ON-CWKSCH-3 backlog (matcher WARN, non-blocking). Risk flags: RISK-1 (T-14b load-bearing RED), RISK-3 (test count 13→16).",
       "what_considered": "(A) single task mixing prose+test — REJECTED: violates atomic rule. (B) 3+ tasks (helper/T14/T14b/T14c split) — REJECTED: over-granular, false deps. (C) 2 tasks (flow-doc + test) — CHOSEN: respects zones (docs/agents/cowork-team/flow/ vs apps/mcp-server/), single concern.",
       "why_change": "Architect atomizes: Interface layer (flow spec) vs Infrastructure layer (test). Enforces atomic 2h tasks; bundling would create ~3h mixing prose+TypeScript."
+    },
+    {
+      "by": "po",
+      "task_id": "INCIDENT-MCP-OOM-20260626",
+      "ts": "2026-06-26T11:24:20Z",
+      "decision": "Closed out mcp-server OOM-risk incident. Ops (a50237ed) safe single-service rebuild at 11:18Z: image fc22a892→0a12bd23 (container 0b3c6b11), mem 89.26%→17.8%, 12/12 peers intact, gateway live (get_market_snapshot OK). alert_id WRITER fix (commit 57a781a1: crypto.randomUUID→semantic alert-{code}-{alertType}-{daySlot}) now LIVE in deployed image — orphan alert_id accrual (+96/day) STOPPED; ~220 existing orphans now STATIC. Resolved auditor WARN signal sau-a30-202606261112 (NEW→RESOLVED). No .head OPS FLAG existed to replace (system-auditor 11:12:28Z rewrite produced clean minimal file); added canonical idle head with resolved note. No alert_id tracking task on board (task_board empty).",
+      "what_considered": "only path: 220 static orphans (39% of agent_signals.alert_id, accrual now stopped) — record-and-leave per memory feedback_agent_signals_alert_id_orphan_fk_active_regression; no backlog mint (low impact, no growth, backfill is optional cleanup not a defect).",
+      "why_change": "no change from plan"
     }
   ],
   "signal_queue": {
-    "_updated_at": "2026-06-26T11:12:28Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-26T11:24:20Z",
+    "_updated_by": "po",
     "rows": [
       {
         "id": "sau-a30-202606261112",
@@ -44,8 +52,12 @@
         "type": "microservice_degraded",
         "summary": "A-30 WARN: mcp-server memory 82.73% of 2GiB cap (climbing from 67.11% in 30min)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolution": "fixed",
+        "resolved_by": "ops/router",
+        "resolved_at": "2026-06-26T11:24:20Z",
+        "resolution_note": "mcp-server rebuilt 11:18Z (image fc22a892→0a12bd23); mem 89.26%→17.8%; in-process leak in stale image remediated; no reaccumulation expected."
       }
     ]
   },
@@ -61,5 +73,13 @@
   },
   "sprint_goal": {
     "entries": []
+  },
+  "head": {
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "mcp-server REBUILT 2026-06-26T11:18Z (image 0a12bd23) — alert_id fix 57a781a1 now LIVE; orphan alert_id accrual STOPPED (220 existing now static); session mem-leak cleared (89%→18%). Board clear, WIP=0.",
+    "updated_at": "2026-06-26T11:24:20Z",
+    "updated_by": "po"
   }
 }
