@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "orch",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "2026-06-26T08:49:38Z",
+  "payload": {
+    "tick_id": "2026-06-26T08:45:00Z",
+    "fire_time": "2026-06-26T08:49:38Z",
+    "outcome": "FIRE",
+    "matched": ["chef-eod"],
+    "won": ["chef-eod"],
+    "spawned": ["chef-eod"],
+    "agent_ids": {"chef-eod": "ad65ff418ae2bd9cc"},
+    "pressure_mode": "legacy",
+    "pressure_age_min": 30,
+    "drift_min": 2,
+    "session_blind": false,
+    "leader_lock": {
+      "first_claim": false,
+      "orphan_recovered": true,
+      "prior_owner_session": "pid-1-ts-1782423559593",
+      "orphan_heartbeat_age_s": 1898,
+      "reclaimed": true,
+      "note": "stale leader from ~08:17 tick (dead session); orphan-released + reclaimed; slot token released-then-reclaimed (no live peer)"
+    },
+    "last_fired_timestamp": "2026-06-26T08:49:38.771Z",
+    "last_fired_slots": ["chef-eod"],
+    "last_fired_write_errors": null,
+    "emit_pressure_state": {"success": true, "emitted_at": "2026-06-26T08:49:47.327Z", "stale_warning": true},
+    "publish_verify": {
+      "verified": true,
+      "market_msg_id": 893,
+      "sent_at": "2026-06-26 08:51:18",
+      "double_post": false,
+      "method": "RAW get_unreviewed_market_messages by content+id",
+      "note": "EOD dish 'Cuối phiên ngày 26/6' distinct from intraday ids 887(06:20)/890(07:19)/892(08:20); single post"
+    }
+  }
+}
