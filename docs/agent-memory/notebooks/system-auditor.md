@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c427 · 2026-06-26T11:12:28Z
+### Audit Run Tier-1 (11:12–11:12 UTC 2026-06-26) — Runtime Ping
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
+- RAW-PROBE (11:12:01Z):
+  - docker ps: 12/12 host_runtime_set UP [all "Up 14 hours (healthy)"]
+  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK
+  - [health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+- A-21 RestartCount: mcp-server=0 PASS | A-32 Disk: 24% PASS
+- **A-30 WARN**: mcp-server memory 82.73% of 2GiB (1.655GiB), climbing from 67.11% in 30min. Pending rebuild expected to resolve.
+- Anomalies: 1 NEW (W warn: A-30 memory pressure) | Status: DEGRADED-MINOR
+
 ## c426 · 2026-06-26T10:41:32Z
 ### Audit Run Tier-1 (10:41–10:42 UTC 2026-06-26) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
