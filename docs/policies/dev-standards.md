@@ -55,6 +55,20 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Owning flow: docs/agents/fb-market-poster/flow/main.md STEP 4b
 ```
 
+**CANONICAL: Orch-state cold eviction (ORCH-STATE-HOT-COLD-SPLIT HSC-1)**
+```bash
+# Dry-run (preview eviction counts + projected hot-file size, no writes):
+bash scripts/orch-cold-evict.sh --dry-run
+# Live eviction (MUST hold commit-mutex:main before calling):
+bash scripts/orch-cold-evict.sh
+# Override retention policy (env vars):
+KEEP_RECENT_DONE=10 DONE_MAX_AGE_DAYS=7 bash scripts/orch-cold-evict.sh --dry-run
+# Owning brief: docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md §3
+# Called from: HSC-2 (one-time migration); HSC-6 (pm/dev-team post-cycle hook)
+```
+Evicts done[], done_verified[], terminal active_sprints[], terminal signal_queue.rows[], and signal_queue.archive[] to docs/data/orch/archive/YYYY-MM.json.
+Atomic temp-then-rename; cold-first ordering; mtime-CAS retry; idempotent.
+
 **CANONICAL: Fleet worktree push backstop (TASK-AUTO-PUSH-A)**
 ```bash
 # No-op check (safe, never pushes unless ahead > threshold):
