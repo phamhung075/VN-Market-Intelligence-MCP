@@ -6888,6 +6888,75 @@
         "status": "BACKLOG",
         "sprint": "FU-ORCH-HOT-SUB150",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE"
+      },
+      {
+        "id": "SHG-1",
+        "title": "Create scripts/orch-state-validate.sh with G-1…G-6 checks",
+        "status": "TODO",
+        "owner": "developer",
+        "zone": "scripts/",
+        "priority": "HIGH",
+        "size": "XS",
+        "type": "TASK",
+        "depends": [],
+        "verify_note": "validate-script-creation"
+      },
+      {
+        "id": "SHG-2",
+        "title": "One-time migration: rewrite all non-canonical status values to canonical enum",
+        "status": "BACKLOG",
+        "owner": "pm",
+        "zone": "docs/data/orch/",
+        "priority": "HIGH",
+        "size": "XS",
+        "type": "TASK",
+        "depends": [
+          "SHG-1"
+        ],
+        "verify_note": "status-migration-enum"
+      },
+      {
+        "id": "SHG-3",
+        "title": "Wire scripts/orch-state-validate.sh into all orch-state write paths",
+        "status": "BACKLOG",
+        "owner": "agent-father",
+        "zone": "docs/agents/ + .claude/skills/ + scripts/",
+        "priority": "HIGH",
+        "size": "S",
+        "type": "TASK",
+        "depends": [
+          "SHG-1"
+        ],
+        "verify_note": "wire-validate-to-writes"
+      },
+      {
+        "id": "SHG-4",
+        "title": "Add deterministic sprint eviction § to task-archive.md; evict 13 terminal sprints & quarantine 2 null-id corrupt sprints",
+        "status": "BACKLOG",
+        "owner": "agent-father",
+        "zone": "docs/agents/pm/",
+        "priority": "HIGH",
+        "size": "S",
+        "type": "TASK",
+        "depends": [
+          "SHG-2"
+        ],
+        "verify_note": "sprint-eviction-rule"
+      },
+      {
+        "id": "SHG-5",
+        "title": "Uncomment exit 5 in validate.sh — G-5 becomes hard gate post-migration",
+        "status": "BACKLOG",
+        "owner": "developer",
+        "zone": "scripts/",
+        "priority": "NORMAL",
+        "size": "XS",
+        "type": "TASK",
+        "depends": [
+          "SHG-2",
+          "SHG-3"
+        ],
+        "verify_note": "hard-gate-promotion"
       }
     ],
     "closed_sprints": [
