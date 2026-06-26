@@ -26198,8 +26198,7 @@
       "updated_by": "dev-team-router",
       "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "HSC-1",
         "title": "Create cold archive directory + orch-cold-evict.sh script",
@@ -26210,11 +26209,12 @@
         "type": "SPRINT-S",
         "created_at": "2026-06-26T15:28:08Z",
         "created_by": "pm",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
         "depends_on": null
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
