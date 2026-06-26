@@ -2,6 +2,18 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c418 · 2026-06-26T07:13:18Z
+### Audit Run Tier-1 (07:12–07:13 UTC 2026-06-26) — Runtime Ping
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
+- RAW-PROBE (07:12:10Z):
+  - docker ps: 12/12 host_runtime_set + headroom-proxy + mcp-gateway UP [12x "Up 10 hours (healthy)"]
+  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK
+  - [health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+  - A-20-PROBE-1: HTTP 200 | A-20-PROBE-2: HTTP 200 | A-20-PROBE-3: HTTP 200 → 3/3 PASS
+- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 45.94% PASS | A-32 Disk: 24% PASS
+- MCP System: 16 circuits OK, uptime 9h 33m, cron health 100%, WAL 3.94MB ✓
+- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
+
 ## c417 · 2026-06-26T06:42:23Z
 ### Audit Run Tier-1 (06:41–06:42 UTC 2026-06-26) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
