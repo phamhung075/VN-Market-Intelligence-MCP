@@ -13817,6 +13817,39 @@
         "generic_mandate": "Derive publish-window-end + poll-cadence from config per source; do NOT hardcode per-source magic. The post-window relaxation + tolerance band must cover BOTH news and sbv_fx (and be safe for any once-per-window source).",
         "verification_gate": "On any post-10:00Z business-day time get_sla_status returns sbv_fx ok (not HIGH); news ok post-14:59Z. A genuine >1.5x stall DURING the live publish window still breaches. Add unit tests in freshnessSlaChecker.spec for business-day-post-window + single-cycle sawtooth tolerance.",
         "severity_note": "Auditor B-12-POST-MARKET emitted this as WARN (not HIGH); router live get_sla_status renders it HIGH. The HIGH severity on a 6-min once-per-day-FX poll slip with market CLOSED is the over-statement this task removes."
+      },
+      {
+        "id": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
+        "type": "FIX",
+        "title": "system-auditor signal-write emits a fresh minimal-scaffold orch-state document instead of read-modify-append -> a single signal-emitting auditor run COLLAPSES the whole board (backlog 312->0, signal_queue.rows 97->1, head nulled)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "zone": "multi",
+        "size": "M",
+        "sprint": null,
+        "baseline_pass": false,
+        "created_at": "2026-06-26T11:31:02Z",
+        "created_by": "po",
+        "plan_only": true,
+        "next_agent": "architect",
+        "recurring_bug_escalation": true,
+        "source_incident": "commit de595a44 (A-30 memory WARN run, 2026-06-26T11:12Z) overwrote docs/data/orch/orch-state.json with a 3.7KB minimal scaffold; recovered from last-good 15a09995 via commit d8978e93 (backlog->312, signal_rows->97, head idle).",
+        "files": [
+          "docs/agents/system-auditor/",
+          ".claude/skills/signal-dashboard/SKILL.md"
+        ],
+        "related": [
+          "FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY(DONE,wrong-KEY-not-full-doc)",
+          "FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK(done_verified)",
+          "FU-AUDITOR-D4-SIGNAL-ID(backlog)",
+          "lesson:jq-empty-guard-clobbers-ssot",
+          "lesson:qa-jq-nests-whole-doc-into-lane"
+        ],
+        "root_cause": "The system-auditor is contracted to ONLY append to .signal_queue.rows[], but its signal-write path (the signal-dashboard skill jq or the auditor flow orch-state write) emits a FRESH minimal-scaffold document rather than read-modify-append. It triggers ONLY on runs that emit a signal (signals_posted>=1 / signal_queue_rows_written>=1); clean 0-signal runs do not write orch-state and are harmless -- which is why dozens of clean auditor runs this session were fine and only the one signal-emitting run (de595a44) collapsed the board. Same SSOT-clobber family as jq-empty-guard-clobbers-ssot and qa-jq-nests-whole-doc-into-lane.",
+        "fix_spec": "Architect ROOT-CAUSE the auditor signal-write path BEFORE any fix (recurring-bug-escalation). The write MUST be a STRICT targeted append to .signal_queue.rows[] with: (a) a non-empty-input guard ([ -s tmp ] + jq -e) so an empty/failed jq never replaces the file; (b) a post-write CONSERVATION check that .task_board.backlog and .task_board.{ready,in_progress,review,done,done_verified} + active_sprints counts did NOT decrease -- abort+restore from the pre-write copy if they did; (c) atomic temp->rename. NEVER emit a full-document scaffold. INTERIM MITIGATION (already applied operationally by router): until the durable fix ships, system-auditor routes findings via Telegram BUG channel + notebook ONLY and does NOT write the orch-state signal_queue -- this removes the collapse trigger entirely.",
+        "generic_mandate": "Any agent/skill that writes orch-state.json MUST read-modify-write a targeted path, never emit a scaffold; guard with non-empty-input check + conservation check + atomic temp->rename. The conservation guard belongs in the shared signal-write helper so every emitter inherits it, not per-caller.",
+        "verification_gate": "Add a regression test that runs the auditor signal-write against a POPULATED board fixture (>=312 backlog, >=97 signal rows) with signals_posted>=1 and asserts: backlog length preserved, signal_queue.rows length == pre+N (only appended), head not nulled, all lanes remain arrays (no array->object nesting). Test must FAIL against the current scaffold-emitting code and PASS after the fix.",
+        "interim_mitigation": "Router operationally switched system-auditor to Telegram-BUG + notebook only (no orch-state signal_queue write) -- removes the collapse trigger until durable fix lands."
       }
     ],
     "closed_sprints": [
