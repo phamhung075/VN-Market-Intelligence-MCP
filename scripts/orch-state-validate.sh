@@ -2,7 +2,7 @@
 # scripts/orch-state-validate.sh
 # Write-gate validator for docs/data/orch/orch-state.json.
 # Implements G-1..G-6 checks against a candidate file passed as $1.
-# Exit 0 = valid. Non-zero = validation failed (hard gate: G-1..G-4, G-6 currently WARN).
+# Exit 0 = valid. Non-zero = validation failed (hard gates: G-1..G-5; G-6 = WARN-only).
 #
 # Wire-in pattern (before atomic rename):
 #   bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
@@ -84,11 +84,10 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# G-5: Task status values in canonical 11-value enum (WARN-only until migration)
+# G-5: Task status values in canonical 11-value enum (HARD gate — SHG-5)
 # Canonical enum: BACKLOG TODO IN_PROGRESS REVIEW QA DONE DONE_VERIFIED BLOCKED DEFERRED CANCELLED SKIPPED
 # Checks tasks in: active_sprints[].tasks[], backlog[], done[]
-# Phase-in: currently WARN (exit 0). After SHG-2 migration + SHG-3 wire-in verified,
-# uncomment the exit 5 line below (SHG-5 AC).
+# SHG-2 migration complete + SHG-3 wire-in verified → promoted to hard gate (exit 5).
 # ---------------------------------------------------------------------------
 ENUM='["BACKLOG","TODO","IN_PROGRESS","REVIEW","QA","DONE","DONE_VERIFIED","BLOCKED","DEFERRED","CANCELLED","SKIPPED"]'
 
@@ -119,8 +118,8 @@ if [ "$BAD_COUNT" -eq 0 ]; then
   _pass 5 "all task statuses are in canonical enum (0 offenders)"
 else
   _warn 5 "$BAD_COUNT non-canonical status value(s) — offenders: $BAD_STATUSES — run SHG-2 migration"
-  # SHG-5 AC: uncomment the next line after SHG-2 migration + SHG-3 wire-in are verified complete.
-  # exit 5  # HARD-GATE: enable post-migration (SHG-5)
+  # SHG-5 AC: promoted to hard gate — exit 5 active (SHG-2 migration + SHG-3 wire-in verified complete).
+  exit 5  # HARD-GATE: enabled (SHG-5)
 fi
 
 # ---------------------------------------------------------------------------

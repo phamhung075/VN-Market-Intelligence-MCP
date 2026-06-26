@@ -66,8 +66,8 @@ bash scripts/orch-state-validate.sh <path-to-candidate.json>
 # Wire-in targets (SHG-3): pm/main, pm/task-archive, dev-team/post-cycle,
 #   po/sprint-signoff, signal-dashboard, system-auditor, orch-cold-evict.sh
 ```
-G-1 (JSON valid) + G-2 (sentinel) + G-3 (lane types arrays) + G-4 (no null sprint IDs) = hard exits.
-G-5 (status enum) = WARN-only until SHG-2 migration + SHG-3 wire-in done (SHG-5 flips to hard).
+G-1 (JSON valid) + G-2 (sentinel) + G-3 (lane types arrays) + G-4 (no null sprint IDs) + G-5 (status enum) = hard exits.
+G-5 promoted to hard gate (SHG-5 — 2026-06-27): any non-canonical status now aborts write before rename.
 G-6 (last_tick skew >2h) = WARN-only.
 
 **CANONICAL: Orch-state cold eviction (ORCH-STATE-HOT-COLD-SPLIT HSC-1)**
