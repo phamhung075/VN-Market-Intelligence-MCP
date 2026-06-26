@@ -2,6 +2,18 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c424 · 2026-06-26T10:11:39Z
+### Audit Run Tier-1 (10:11–10:12 UTC 2026-06-26) — Runtime Ping
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
+- RAW-PROBE (10:11:39Z):
+  - docker ps: 12/12 host_runtime_set UP [all "Up 13 hours (healthy)"]
+  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK
+  - [health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+  - A-20-PROBE-1: HTTP 200 | A-20-PROBE-2: HTTP 200 | A-20-PROBE-3: HTTP 200 → 3/3 PASS
+- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 65.13% PASS | A-32 Disk: 24% PASS
+- MCP System: uptime 12h 32m 53s, cron 100+ jobs (100% success), 16 circuits OK, WAL 1.82MB ✓
+- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
+
 ## c423 · 2026-06-26T09:41:34Z
 ### Audit Run Tier-1 (09:41–09:42 UTC 2026-06-26) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
@@ -83,16 +95,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 41.06% PASS | A-32 Disk: 24% PASS
 - MCP System: 16 circuits OK, uptime 9h 2m, cron health 105/105 (100%), WAL 3.93MB ✓
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-
-## c416 · 2026-06-26T06:32:46Z
-### Audit Run Tier-2 (06:30–06:32 UTC 2026-06-26) — Freshness Sweep
-- Tier: 2 | Cron jobs: 100+ checked (100% healthy) | Sources: 15+ checked | VPS routes: 4/5 ok
-- A-29 (Cron Fire): all jobs last_run within 2×cadence, no gaps | Status: PASS
-- B-01 to B-12 (Source Freshness): all within SLA thresholds; applied SLA resolver for bctc-discover (off-window: 1714.5h threshold >> 240h age) | PASS
-- B-05/B-06 (BCTC): healthy idle gate applied (36 url_not_found + 2 enrich_failed off-season rows ≠ actionable work) | PASS
-- B-13 (Stale BCTC pending): 0 rows > 72h | PASS
-- C-06/C-07 (DB freshness spot): market_messages 3h=5 rows | agent_signals 24h=123 rows | PASS
-- VPS proxy: prices/news/sbv all ok (bctc off-season push 2026-06-16 18:02, known idle) | PASS
-- Rate limits: all 14 sources ready (B-12) | PASS
-- BCTC URLs: 0 SSC URLs in queue (B-09) | PASS
-- Anomalies: 0 NEW (all B-xx/C-spot checks PASS) | Dedup-skipped: 0 | Status: HEALTHY
