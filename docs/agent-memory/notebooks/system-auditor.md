@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c431 · 2026-06-26T13:11:51Z
+### Audit Run Tier-1 (13:11–13:12 UTC 2026-06-26) — Runtime Ping
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK
+- RAW-PROBE (13:11:40Z): all 12 host_runtime_set UP (mcp-server "Up 2 hours" healthy; others "Up 16 hours" healthy)
+  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK
+  - [health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 19.50% PASS | A-32 Disk: 24% PASS
+- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
+
 ## c430 · 2026-06-26T12:42:51Z
 ### Audit Run Tier-1 (12:42–12:43 UTC 2026-06-26) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
@@ -68,27 +77,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - B-05 BCTC Healthy-Idle Gate applied (queue=0, host UP, push-age 239h << 1752h threshold) → healthy idle
 - **1 NEW anomaly found**: sbv_fx post-market freshness breach (31min age vs 30min SLA; 1min overage; WARN severity)
 - Anomalies: 1 NEW (W warn) | 1 dedup-skipped (vn-bctc-fetch HTTP false-positive) | Status: DEGRADED-MINOR
-
-## c424 · 2026-06-26T10:11:39Z
-### Audit Run Tier-1 (10:11–10:12 UTC 2026-06-26) — Runtime Ping
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- RAW-PROBE (10:11:39Z):
-  - docker ps: 12/12 host_runtime_set UP [all "Up 13 hours (healthy)"]
-  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK
-  - [health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
-  - A-20-PROBE-1: HTTP 200 | A-20-PROBE-2: HTTP 200 | A-20-PROBE-3: HTTP 200 → 3/3 PASS
-- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 65.13% PASS | A-32 Disk: 24% PASS
-- MCP System: uptime 12h 32m 53s, cron 100+ jobs (100% success), 16 circuits OK, WAL 1.82MB ✓
-- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-
-## c423 · 2026-06-26T09:41:34Z
-### Audit Run Tier-1 (09:41–09:42 UTC 2026-06-26) — Runtime Ping
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- RAW-PROBE (09:41:34Z):
-  - docker ps: 12/12 host_runtime_set UP [all "Up 12 hours (healthy)"]
-  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK
-  - [health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
-  - A-20-PROBE-1: HTTP 200 | A-20-PROBE-2: HTTP 200 | A-20-PROBE-3: HTTP 200 → 3/3 PASS
-- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 59.87% PASS | A-32 Disk: 24% PASS
-- MCP System: uptime 12h 2m 56s, cron health 100+ jobs all success, WAL 3.93MB ✓
-- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
