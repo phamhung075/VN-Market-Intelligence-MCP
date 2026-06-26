@@ -2,6 +2,18 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c411 · 2026-06-26T04:28:58Z
+### Audit Run Tier-3 (04:28 UTC 2026-06-26) — Deep DB Integrity
+- Tier: 3 | Checks: A-01 to C-16 + tooling + connectivity
+- Runtime: 12/12 UP, health 5/5 OK, restart=0, mem=24.82%, disk=23%
+- C-01 to C-07: ALL PASS (902 tickers, 1001 rows, 32 Q1 reports, 0 SSC URLs, 125 signals)
+- C-08: 1 orphaned alert (known issue FIX-AGENT-SIGNALS-ALERT_ID-ORPHAN-FK, 220 total ~39%, record-and-leave per router)
+- C-09 to C-16: ALL PASS (macro 3/12 fields, 0 failed PDFs, 0 stale pending, WAL 3.94MB, DB integrity ok)
+- Tooling: pdftoppm ✓ tesseract ✓ vie ✓ | Connectivity: 4/4 services ✓ | EPIPE: 0
+- PDFs: 80 in /app/data/pdfs/ ✓ | B-05 BCTC: healthy-idle (queue=38 << 1715h threshold, off-season)
+- Doc audit: task_board 248/80 (WARN >80, alert PM); CLAUDE.md 46L; sprint_goal 12/15 (OK)
+- Anomalies: 0 NEW (C-08 existing) | Signals: 0 posted | Status: HEALTHY
+
 ## c410 · 2026-06-26T04:26:40Z
 ### Audit Run Tier-2 (04:26 UTC 2026-06-26) — Freshness Sweep
 - Tier: 2 | Crons: 100+ firing OK | Sources: 5/5 fresh | VPS routes: 5/5 OK
@@ -11,7 +23,6 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - DB spot checks: 3 messages in 3h, 125 signals in 24h (PASS)
 - Post-reconnect note: vn-bctc-fetch service UNHEALTHY on VPS (infrastructure, pre-existing from 00:00–04:23Z disconnect)
 - Anomalies: 0 NEW | Status: HEALTHY
-- Signals: 0 posted | Signal-queue: no changes
 
 ## c409 · 2026-06-26T04:25:05Z
 ### Audit Run Tier-1 (04:25 UTC 2026-06-26) — Runtime Ping
@@ -24,7 +35,6 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 24.19% PASS | A-32 Disk: 23% PASS
 - MCP System: all circuits OK, cron health 100%, DB WAL 3.94 MB ✓
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-- Signals: 0 posted | Signal-queue: no changes
 
 ## c408 · 2026-06-26T04:10:42Z
 ### Audit Run Tier-1 (04:10 UTC 2026-06-26) — Runtime Ping
