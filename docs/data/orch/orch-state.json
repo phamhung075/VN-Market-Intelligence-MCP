@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-26T11:30:00Z",
-  "_updated_by": "router-ssot-recovery",
+  "_updated_at": "2026-06-26T15:28:08Z",
+  "_updated_by": "pm",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -13867,6 +13867,91 @@
         "generic_mandate": "Any agent/skill that writes orch-state.json MUST read-modify-write a targeted path, never emit a scaffold; guard with non-empty-input check + conservation check + atomic temp->rename. The conservation guard belongs in the shared signal-write helper so every emitter inherits it, not per-caller.",
         "verification_gate": "Add a regression test that runs the auditor signal-write against a POPULATED board fixture (>=312 backlog, >=97 signal rows) with signals_posted>=1 and asserts: backlog length preserved, signal_queue.rows length == pre+N (only appended), head not nulled, all lanes remain arrays (no array->object nesting). Test must FAIL against the current scaffold-emitting code and PASS after the fix.",
         "interim_mitigation": "Router operationally switched system-auditor to Telegram-BUG + notebook only (no orch-state signal_queue write) -- removes the collapse trigger until durable fix lands."
+      },
+      {
+        "id": "HSC-2",
+        "title": "One-time eviction of current orch-state.json terminal bloat",
+        "zone": "docs/data/orch/",
+        "owner": "pm+developer",
+        "priority": "high",
+        "size": "XS",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "BACKLOG",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": "HSC-1"
+      },
+      {
+        "id": "HSC-3",
+        "title": "Repoint task-archive.md trigger+destination + narrow pm planning reads",
+        "zone": "docs/agents/pm/",
+        "owner": "agent-father",
+        "priority": "high",
+        "size": "S",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "BACKLOG",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": "HSC-1"
+      },
+      {
+        "id": "HSC-4",
+        "title": "Strip backlog prose to stubs; cold backlog-detail.json",
+        "zone": "docs/agents/pm/ + docs/data/orch/archive/",
+        "owner": "agent-father+developer",
+        "priority": "normal",
+        "size": "M",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "BACKLOG",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": "HSC-1"
+      },
+      {
+        "id": "HSC-5",
+        "title": "Collapse 10 meta keys → _meta + schema v4 bump",
+        "zone": "docs/data/orch/ + docs/agents/ + .claude/skills/",
+        "owner": "agent-father+developer",
+        "priority": "normal",
+        "size": "M",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "BACKLOG",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": "HSC-2",
+        "risk": "HIGHEST — inventory all 8 old-key writers before executing"
+      },
+      {
+        "id": "HSC-6",
+        "title": "Evict-on-terminal hook in pm + dev-team flows",
+        "zone": "docs/agents/pm/ + docs/agents/dev-team/",
+        "owner": "agent-father",
+        "priority": "normal",
+        "size": "S",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "BACKLOG",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": "HSC-1"
+      },
+      {
+        "id": "HSC-7",
+        "title": "Rewrite signal-dashboard §PRUNE to cold file eviction",
+        "zone": ".claude/skills/signal-dashboard/",
+        "owner": "agent-father",
+        "priority": "normal",
+        "size": "S",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "BACKLOG",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": "HSC-1"
       }
     ],
     "closed_sprints": [
@@ -26114,7 +26199,22 @@
       "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "HSC-1",
+        "title": "Create cold archive directory + orch-cold-evict.sh script",
+        "zone": "scripts/",
+        "owner": "developer",
+        "priority": "high",
+        "size": "S",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "READY",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": null
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
