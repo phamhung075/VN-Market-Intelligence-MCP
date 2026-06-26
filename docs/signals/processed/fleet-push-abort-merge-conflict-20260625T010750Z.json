@@ -1,0 +1,33 @@
+{
+  "from": "fleet-worktree-push",
+  "to": "po",
+  "type": "auto-push-abort",
+  "priority": "high",
+  "status": "TRIAGED",
+  "disposition": "HOLD — benign-divergence push-block; escalate to ops for clean-checkout worktree push (NOT in-place rebase)",
+  "payload": {
+    "reason": "merge-conflict",
+    "detail": "docs/agent-memory/notebooks/tran-ngoc-bau.md ",
+    "ahead": "21",
+    "behind": "131",
+    "threshold": "20",
+    "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+  },
+  "triage": {
+    "by": "po",
+    "at": "2026-06-25T01:15:01Z",
+    "decision": "HOLD",
+    "raw_verify": {
+      "ahead_behind_at_triage": "22 ahead / 131 behind (ahead grew 21->22 mid-triage = live bg-agent churn)",
+      "ahead_set_code_files": "NONE — ahead-set is 100% docs/ (system-auditor notebooks + orch chores + chef-gate fc364a51 flow-doc). Session code fixes already pushed (no apps/ in ahead-set).",
+      "behind_set_code_files": "NONE — behind-set is 100% docs/ (79 agent-memory + 6 signals + 1 agents + 1 handoffs). NO apps/, NO .ts/.test, NO CONTAM-7 test present. Origin carries no code we are missing.",
+      "conflict_file": "docs/agent-memory/notebooks/tran-ngoc-bau.md — append-only cycle-log notebook churned both sides; UNION-resolvable.",
+      "git_op_state": "clean (no rebase-merge/rebase-apply/MERGE_HEAD/index.lock)",
+      "dirty_tree": "172 files dirty — active cowork churn; bg agents present and committing"
+    },
+    "rationale": "Textbook benign-divergence push-block (memory: feedback_push_blocked_by_perpetual_dirty_tree + feedback_ci_green_gate_blocked_by_cloud_chore_divergence). Both directions are pure docs/agent-memory churn — zero code at risk, nothing lost, all work committed locally. The auto-push correctly aborted on the notebook merge-conflict; abort signal-tracking worked as designed. HOLD is safe: no data loss, no missing code. The only cost is unreconciled origin docs churn (now 131 behind, growing). Resolve via a CLEAN-CHECKOUT worktree push (scripts/fleet-worktree-push.sh) with the tran-ngoc-bau.md conflict UNION-resolved (keep both append-only sections). NEVER an in-place stash+rebase in the live tree — bg agents are active (ahead grew mid-triage) and an in-place rebase would strand them.",
+    "ops_handoff": "Escalate to ops: run scripts/fleet-worktree-push.sh from a clean worktree; if it re-aborts on the same UNION conflict, union-merge tran-ngoc-bau.md inside the worktree (both sides' sections) then push. Do NOT --force. Do NOT rebase the live tree.",
+    "no_in_place_rebase": true,
+    "no_force_push": true
+  }
+}

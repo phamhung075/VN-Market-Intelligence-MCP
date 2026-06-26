@@ -1,0 +1,95 @@
+{
+  "from": "cowork-team",
+  "to": "orch",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "2026-06-26T18:03:26Z",
+  "payload": {
+    "tick_id": "2026-06-26T18:00:00Z",
+    "fire_time": "2026-06-26T18:03:26Z",
+    "outcome": "FIRE",
+    "matched": [
+      "bctc-analyst-slot-2"
+    ],
+    "won": [
+      "bctc-analyst-slot-2"
+    ],
+    "spawned": [
+      "bctc-analyst-slot-2"
+    ],
+    "agent_ids": {
+      "bctc-analyst-slot-2": "ae2b6cfee076a2c1e"
+    },
+    "guaranteed_slot": false,
+    "pressure_mode": "legacy",
+    "pressure_mode_reason": "pressure-state emitted_at 17:32:33Z age ~30min > 20min → legacy; cadence gate skipped, matched slot passes raw",
+    "drift_min": 2,
+    "session_blind": false,
+    "leader_lock": {
+      "first_claim": false,
+      "orphan_recovered": false,
+      "own_held": false,
+      "heartbeat_renewed": false,
+      "claimed": false,
+      "holder": {
+        "owner_agent": "cowork-dispatcher",
+        "claimed_at": "2026-06-26T17:32:14Z",
+        "expires_at": "2026-06-26T18:32:14Z",
+        "heartbeat_at": "2026-06-26T17:32:14Z",
+        "ttl_inferred": 3600
+      },
+      "note": "leader lock held by external single-shot claimant (ttl=3600, NOT my 17:30 tick which used ttl=1800); heartbeat never renewed in ~30min → no live leader actively ticking (a live one would re-claim at 17:45/18:00). Leader lock SOFT/advisory; proceeded to HARD per-slot token which is the authoritative mutex."
+    },
+    "slot_tokens": {
+      "bctc-analyst-slot-2": {
+        "claimed": true,
+        "released": true
+      }
+    },
+    "last_fired_timestamp": "2026-06-26T18:03:26.710Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "emit_pressure_state": {
+      "success": true,
+      "emitted_at": "2026-06-26T18:03:32.463Z",
+      "cycle_snapshot_promoted": false,
+      "stale_warning": true
+    },
+    "publish_verify": "n/a MARKET — bctc-analyst ran mode=routine (calendar gate: no new ĐÃ NỘP vs c071; E2 guard PASS 18:02 UTC); notebook-only, no MARKET publish, no published-marker required",
+    "raw_verify": {
+      "verified": true,
+      "method": "RAW get_agent_signals(from_agent=bctc-analyst) by id + signal artifact content (jq scalar paths)",
+      "mode": "routine",
+      "cycle": "c072",
+      "signals_confirmed": [
+        {
+          "id": 7680,
+          "type": "FUNDAMENTAL_VALIDATION",
+          "stock": "FPT",
+          "confidence": "81%",
+          "expires": "2026-06-26 20:07:13",
+          "verdict": "EY_SPREAD +2.25pp CHEAP, F=7 M=0, OCF Q1 âm -2847.8ty (ESC-3 DATA-COV-LIM guard held), E3 cache hit #33, KD Khôn(2) cycle 12"
+        },
+        {
+          "id": 7681,
+          "type": "FUNDAMENTAL_VALIDATION",
+          "stock": "VCB",
+          "confidence": "75% PARTIAL",
+          "expires": "2026-06-26 20:07:17",
+          "verdict": "OCF/NI=1.37 LÀNH MẠNH, sentiment +0.07, KD Quẻ Bóc(23) BẤT LỢI 25% NEW c072 (cần xác nhận c073)"
+        }
+      ],
+      "no_emit": "ACB (confidence 60% < 0.65, OCF=0 data gap, sentiment -0.05)",
+      "escalations": "HPG DB-empty cycle 9 (BUG c071) + ACV DB-empty cycle 16 (P1 c065) re-flagged; both cross-team dev-team drains, not dispatcher work",
+      "note": "both signals present in DB (fresh 2h TTL, expiry 20:07 ~ 18:07 emit), from bctc-analyst, content matches badge exactly; FPT artifact real VN financials (net_profit 2476.8ty +19.8% YoY, ROE 28.3%, PE 13.8 vs sector 17.3); not fabricated. Carry-over c073 21:00Z: VCB KD Bóc(23) confirm, HPG cycle 10, ACV cycle 17, Fed TIGHTENING monitor"
+    }
+  },
+  "_processed": {
+    "fingerprint": "534bf4c67d22927c57279f9f76d7516775473994627b547ff44c1d5155052c13",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

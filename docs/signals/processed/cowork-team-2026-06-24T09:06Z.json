@@ -1,0 +1,26 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick_id": "2026-06-24T09:06Z",
+    "nominal_tick": "2026-06-24T09:00:00Z",
+    "drift_min": 6,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "matched_slots": ["refine-bctc-slot-1"],
+    "spawned": [],
+    "errors": [],
+    "skipped_already_fired": ["refine-bctc-slot-1"],
+    "classification": "SKIPPED_ALREADY_FIRED",
+    "reason": "refine-bctc-slot-1 (agent refine_bctc_md, cron 0 9, bctc-offmarket) matched, BUT last_fired = 2026-06-24T09:03:04Z — ~3 min before this 09:06 tick. The */15 master cron already fired + completed it at the 09:00 boundary. NOT re-spawned (double-fire guard).",
+    "recurring_pattern_ref": "This is the now-STANDING pattern (4th instance: bctc-analyst-slot-2 18:03, chef-evening 19:48, chef-intraday 08:16, chef-eod 08:46, refine-bctc 09:03): the master */15 cron fires each due slot ~3 min after its cron boundary and updates last_fired, but cowork-match-slots.js still returns the slot as due within the same drift window. The dispatcher's last_fired-age (< drift_min) double-fire guard suppresses the redundant manual spawn every time. Root cause flagged at 08:21Z for dev (cowork-match-slots same-window suppression vs fresh last_fired). No new action needed — guard is holding.",
+    "slot_detail": {
+      "refine-bctc-slot-1": {"agent": "refine_bctc_md", "flow_path": "docs/agents/refine_bctc_md/flow/main.md", "cron": "0 9 * * *", "guaranteed": false, "policy_id": "bctc-offmarket", "last_fired": "2026-06-24T09:03:04Z"}
+    },
+    "leader_lock": {"ok": true, "expires_at": 1782293779},
+    "note": "System fully autonomous: master cron owns the fan-out and updates last_fired; the manual dispatcher now mainly renews the leader lock + emits pressure + applies the double-fire guard on the recurring matcher false-due. Verify refine-bctc-slot-1's 09:03 run via its WORK log / get_bctc_refined rather than re-dispatching."
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-24T09:06:19Z"
+}

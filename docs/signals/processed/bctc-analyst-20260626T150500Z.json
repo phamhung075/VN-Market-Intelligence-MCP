@@ -1,0 +1,32 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[bctc-analyst] c071 HPG Q1-2026 DB TRONG cycle 8 (filed 2026-06-07, 19d elapsed) — get_bctc_full returns no data despite calendar ĐÃ NỘP. ACV Q1-2026 DB TRONG cycle 15 (filed 2026-06-16, 10d elapsed) — P1 escalated c065 unresolved. BCTC ingestion pipeline stalled for both tickers. BUG telegram msg 3060 sent.",
+  "priority": "high",
+  "createdAt": "2026-06-26T15:05:00Z",
+  "context": {
+    "hpg": {
+      "ticker": "HPG",
+      "quarter": "Q1-2026",
+      "filed_date": "2026-06-07",
+      "db_empty_cycle": 8,
+      "days_elapsed": 19,
+      "escalation_level": "secondary"
+    },
+    "acv": {
+      "ticker": "ACV",
+      "quarter": "Q1-2026",
+      "filed_date": "2026-06-16",
+      "db_empty_cycle": 15,
+      "days_elapsed": 10,
+      "escalation_level": "P1_unresolved_from_c065"
+    }
+  },
+  "_processed": {
+    "fingerprint": "3ebb16f5211668eb6939f0c1e400f170887ef4b97dc17f66fb63bdf5384aaf70",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

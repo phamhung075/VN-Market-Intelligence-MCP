@@ -1,0 +1,66 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "generated_at": "2026-06-24T21:13:00Z",
+  "cycle": "c066",
+  "slot": "bctc-analyst-slot-3",
+  "signal_bus_id": 7433,
+  "e3_cache": "HIT_cycle_27",
+  "product": "IT services (phần mềm xuất khẩu, tích hợp hệ thống), viễn thông FPT Telecom, giáo dục FPT Edu",
+  "customer": "Doanh nghiệp IT toàn cầu và trong nước, thuê bao viễn thông SME/hộ gia đình, sinh viên giáo dục",
+  "ops": "Biên lợi nhuận gộp 34.0%, OP margin 22.0%; OCF Q1 âm theo mùa vụ (-2,847ty), Q4/2025 bình thường hóa (+4,108ty); F-score=7 sức khỏe tài chính mạnh",
+  "mgmt": "Net profit +19.8% YoY Q1-2026; PE 13.8x vs ngành 17.3x (chiết khấu -20%); hướng dẫn FY nhiều quý liên tiếp đạt được; M-score=0 không phát hiện thao túng",
+  "valuation": {
+    "pe": 13.8,
+    "pb": 3.6,
+    "roe_pct": 28.3,
+    "ey_pct": 7.25,
+    "deposit_rate_pct": 5.0,
+    "ey_spread_pp": 2.25,
+    "verdict": "CHEAP",
+    "de_ratio": 0.40,
+    "cash_vnd_ty": 7993.6,
+    "net_profit_vnd_ty": 2476.8,
+    "net_revenue_vnd_ty": 12480.0
+  },
+  "forensics": {
+    "m_score": 0,
+    "f_score": 7,
+    "ocf_q1_vnd_ty": -2847.8,
+    "ocf_seasonal": true,
+    "esc_1": "PASS",
+    "esc_2": "PASS",
+    "esc_3": "DATA-COV-LIM (quarters=2)",
+    "esc_4": "PASS",
+    "esc_5": "SKIP-no-refined-units"
+  },
+  "kinhdich": {
+    "que": "Khon (2)",
+    "trend": "TRUNG TINH",
+    "signal": "GIU",
+    "confidence_pct": 38,
+    "cycles_stable": 6
+  },
+  "regime": {
+    "regime": "NEUTRAL",
+    "carry_spread_pp": 1.37,
+    "investment_clock": "CORE_VN Overheat (score=8)",
+    "gold_usd": 4000.7,
+    "brent_usd": 73.34,
+    "usd_vnd": 26131,
+    "vn_index": 1878.02
+  },
+  "alerts_24h": {
+    "macro_deviation": "Brent -2.22sigma below mean",
+    "sector_alerts": ["securities -1.11%", "banking -0.97%"],
+    "bds_alerts": ["NVL +5.28%", "VHM news_mention", "VIC news_mention"]
+  },
+  "carry_over_status": {
+    "ACV_Q1_2026": "DB empty cycle 6 — escalated c065 via submit_feedback P1",
+    "HPG_Q1_2026": "DB empty cycle 3 — Q4-2025 refine 7/15 partial",
+    "FPT_ESC3_guard": "DATA-COV-LIM 30d guard held (claimed c064)"
+  }
+}

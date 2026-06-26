@@ -1,0 +1,64 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Cho vay bán buôn và bán lẻ, ngoại hối, dịch vụ ngân hàng quốc tế",
+  "customer": "Doanh nghiệp nhà nước, tập đoàn lớn, xuất nhập khẩu",
+  "ops": "NII chiếm chủ yếu; biên OP 80.9% bank-typical; OCF/NI ratio 1.37 lành mạnh — thu nhập có chất lượng dòng tiền tốt",
+  "mgmt": "Vietcombank state-backed; lịch sử tín dụng bền vững; không có cảnh báo pháp lý",
+  "cycle": "c069",
+  "slot": "bctc-analyst-slot-2",
+  "timestamp": "2026-06-25T18:05Z",
+  "data_unchanged_from": "c068",
+  "financials": {
+    "net_profit_ty": 9462.1,
+    "nii_ty": 17421,
+    "op_margin_pct": 80.9,
+    "net_margin_pct": 54.3,
+    "eps_quarterly": 15,
+    "roe_quarterly_pct": 4.2,
+    "roe_annualized_est_pct": 16.8,
+    "total_assets_ty": 2550963.3,
+    "equity_ty": 224558.7,
+    "total_liabilities_ty": 2316932,
+    "ocf_ty": 12944.9,
+    "ocf_ni_ratio": 1.37,
+    "confidence": 0.75,
+    "refine_status": "PARTIAL"
+  },
+  "esc_gate": {
+    "esc1": "PASS",
+    "esc2": "PASS",
+    "esc3": "PASS",
+    "esc4": "PASS",
+    "esc5": "SKIP-EMPTY",
+    "escalation": false
+  },
+  "kd": {
+    "hexagram": "Khon-2",
+    "signal": "GIU",
+    "direction": "TRUNG_TINH",
+    "confidence": 0.38
+  },
+  "insider": "clean",
+  "legal": "clean",
+  "chain_findings": 0,
+  "sentiment": "STABLE",
+  "signal_ids": [
+    7567
+  ],
+  "data_gaps": [
+    "Cash=0 from PARTIAL refine",
+    "NIM missing",
+    "CASA ratio missing"
+  ],
+  "_processed": {
+    "fingerprint": "2360065470ca7b9ec0a999e34d84218bfdfd8eef89c88459a50c0cb26d7f06b3",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

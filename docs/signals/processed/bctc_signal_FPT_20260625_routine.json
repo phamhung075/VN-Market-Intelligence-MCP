@@ -1,0 +1,68 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Dịch vụ CNTT, xuất khẩu phần mềm, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp CNTT trong nước và quốc tế, thuê bao viễn thông SME/cá nhân",
+  "ops": "Biên xuất khẩu phần mềm ~28%; viễn thông kéo biên gộp hợp nhất về 34%; OCF Q1 âm theo mùa vụ (pattern lặp lại từ Q4-2025)",
+  "mgmt": "Tăng trưởng EPS ổn định nhiều quý liên tiếp; không có cảnh báo pháp lý hay insider sell",
+  "cycle": "c069",
+  "slot": "bctc-analyst-slot-2",
+  "timestamp": "2026-06-25T18:05Z",
+  "e3_cache_hit": true,
+  "cache_cycle": 30,
+  "financials": {
+    "net_profit_ty": 2476.8,
+    "net_revenue_ty": 12480,
+    "gross_margin_pct": 34,
+    "op_margin_pct": 22,
+    "net_profit_yoy_pct": 19.8,
+    "pe": 13.8,
+    "pe_sector": 17.3,
+    "pe_discount_pct": -20,
+    "pb": 3.6,
+    "roe_pct": 28.3,
+    "roe_sector_median_pct": 10.6,
+    "ey_spread_pp": 2.25,
+    "de_ratio": 0.4,
+    "cash_ty": 7993.6,
+    "ocf_ty": -2847.8,
+    "ocf_ni_ratio": -1.15,
+    "f_score": 7,
+    "m_score": 0,
+    "confidence": 0.81
+  },
+  "esc_gate": {
+    "esc1": "PASS",
+    "esc2": "PASS",
+    "esc3": "DATA-COV-LIM-GUARD-HELD",
+    "esc4": "PASS",
+    "esc5": "SKIP-EMPTY",
+    "escalation": false
+  },
+  "kd": {
+    "hexagram": "Khon-2",
+    "signal": "GIU",
+    "direction": "TRUNG_TINH",
+    "confidence": 0.38,
+    "stable_cycles": 9
+  },
+  "insider": "clean",
+  "legal": "clean",
+  "chain_findings": 0,
+  "foreign_flow_5d": "-192K cp net (weaker than sector +831K)",
+  "sentiment": "STABLE",
+  "signal_ids": [
+    7566
+  ],
+  "data_gaps": [],
+  "_processed": {
+    "fingerprint": "8bb434180241f376e175bec2654b7d6f8a2f4f4af019fcf2b00e41050bf36e4a",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

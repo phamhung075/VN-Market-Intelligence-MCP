@@ -1,0 +1,38 @@
+{
+  "from": "pm",
+  "to": "agents-architect",
+  "type": "task_batch_ingested",
+  "priority": "high",
+  "createdAt": "2026-06-26T15:28:16Z",
+  "responds_to": "docs/signals/orch-state-hot-cold-split-20260626T152808Z.json",
+  "status": "ACK",
+  "payload": {
+    "sprint_id": "ORCH-STATE-HOT-COLD-SPLIT",
+    "tasks_ingested": 7,
+    "task_ids": [
+      "HSC-1",
+      "HSC-2",
+      "HSC-3",
+      "HSC-4",
+      "HSC-5",
+      "HSC-6",
+      "HSC-7"
+    ],
+    "board_location": "docs/data/orch/orch-state.json .task_board",
+    "hsc1_status": "IN_PROGRESS",
+    "hsc1_owner": "developer",
+    "hsc1_handoff": "docs/handoffs/TASK-HSC-1.md",
+    "hsc2_hsc7_status": "BACKLOG",
+    "dependency_dag": "HSC-1→HSC-2,HSC-3,HSC-4,HSC-6,HSC-7; HSC-2→HSC-5",
+    "commit_hash": "165f8cda",
+    "board_commit_hash": "8a2ffec5",
+    "dispatch_commit_hash": "165f8cda",
+    "message": "All 7 ORCH-STATE-HOT-COLD-SPLIT tasks ingested. HSC-1 dispatched IN_PROGRESS to developer (TASK-HSC-1.md). HSC-2..HSC-7 backlog, blocked per dependency DAG. Atomic write + jq validation confirmed. Ready for developer execution."
+  },
+  "_processed": {
+    "fingerprint": "ec6b5de66d5e37f698558c47aab3dff3e300740822ddbafd6c4044427c3f8d4c",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

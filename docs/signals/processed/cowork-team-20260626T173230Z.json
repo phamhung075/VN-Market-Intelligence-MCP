@@ -1,0 +1,85 @@
+{
+  "from": "cowork-team",
+  "to": "orch",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "2026-06-26T17:32:30Z",
+  "payload": {
+    "tick_id": "2026-06-26T17:30:00Z",
+    "fire_time": "2026-06-26T17:32:30Z",
+    "outcome": "FIRE",
+    "matched": [
+      "digest-daily"
+    ],
+    "won": [
+      "digest-daily"
+    ],
+    "spawned": [
+      "digest-daily"
+    ],
+    "agent_ids": {
+      "digest-daily": "a5837b70bd4ae5363"
+    },
+    "guaranteed_slot": true,
+    "pressure_mode": "legacy",
+    "pressure_mode_reason": "pressure-state emitted_at 15:02:45Z age ~150min > 20min AND stale_warning=true → legacy; cadence gate skipped, matched slot passes raw (also guaranteed:true)",
+    "drift_min": 2,
+    "session_blind": false,
+    "leader_lock": {
+      "first_claim": true,
+      "orphan_recovered": false,
+      "own_held": false,
+      "heartbeat_renewed": false,
+      "note": "fresh claim — claimed:true clean; prior 15:02 leader lock (ttl 1800s) expired by 17:32"
+    },
+    "slot_tokens": {
+      "digest-daily": {
+        "claimed": true,
+        "released": true
+      }
+    },
+    "last_fired_timestamp": "2026-06-26T17:32:30.746Z",
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "last_fired_write_errors": null,
+    "emit_pressure_state": {
+      "success": true,
+      "emitted_at": "2026-06-26T17:32:33.882Z",
+      "cycle_snapshot_promoted": false
+    },
+    "publish_verify": "n/a MARKET — digest-predict daily prediction publishes to WORK channel only (dedup gate published:digest-daily:2026-06-26 claimed=true); no MARKET post, no MARKET double-publish risk",
+    "raw_verify": {
+      "verified": true,
+      "method": "notebook write artifact (docs/agent-memory/notebooks/digest-predict.md) — cycle marker section + actions log; create_prediction_claim has no read-back getter",
+      "notebook_cycle": "### Daily Predictions (17:31 UTC) 2026-06-26, 114L within 200L cap",
+      "claims_confirmed": [
+        {
+          "id": 12,
+          "stock": "POW",
+          "direction": "bullish",
+          "p": 0.65,
+          "horizon_days": 5,
+          "resolution": "2026-07-03",
+          "ref": "14.800 VND",
+          "target": ">15.000 VND",
+          "basis": "bullish 0.6554 FRESH + dual hexagram Quẻ59 Hoan↔Quẻ46 Thăng both THUẬN LỢI 100%, price +2.07%"
+        }
+      ],
+      "disqualified": [
+        "VHM bearish 0.6203 (Quẻ38 38% + price +3.51% contra)",
+        "VCB bearish 0.75 (Quẻ23 25% + bullish banking news contra)",
+        "VIC/GVR stale 30d",
+        "ACB stale 51d"
+      ],
+      "calibration": "Brier 0.1379 stable, regime NEUTRAL, DAMPENING_ACTIVE=false",
+      "note": "notebook cycle section matches agent badge exactly; create_prediction_claim id=12 in actions log; WORK telegram sent (not MARKET); real content (POW +2.07% today, dual-hexagram convergence), not fabricated. Carry-over: evidence UNTRUSTED systemic (LR=1.0 n=0, 10th cycle) + backtest 501 dev gap — open dev-team B-bucket signal"
+    }
+  },
+  "_processed": {
+    "fingerprint": "903f7a03574248d1fbf1919dd8b31001804499406b7bb46c256219b99776dbee",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

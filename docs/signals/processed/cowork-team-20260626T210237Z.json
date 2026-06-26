@@ -1,0 +1,93 @@
+{
+  "from": "cowork-team",
+  "to": "orch",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "2026-06-26T21:02:37Z",
+  "payload": {
+    "tick_id": "2026-06-26T21:00:00Z",
+    "fire_time": "2026-06-26T21:02:37Z",
+    "outcome": "FIRE",
+    "matched": [
+      "bctc-analyst-slot-3"
+    ],
+    "won": [
+      "bctc-analyst-slot-3"
+    ],
+    "spawned": [
+      "bctc-analyst-slot-3"
+    ],
+    "agent_ids": {
+      "bctc-analyst-slot-3": "aff48433d35e99a46"
+    },
+    "guaranteed_slot": false,
+    "pressure_mode": "legacy",
+    "pressure_mode_reason": "pressure-state emitted_at 20:17:58Z age ~44min > 20min AND stale_warning=true → legacy; cadence gate skipped, matched guaranteed:false slot (bctc-offmarket policy) passes raw",
+    "drift_min": 2,
+    "session_blind": false,
+    "leader_lock": {
+      "first_claim": true,
+      "orphan_recovered": false,
+      "own_held": false,
+      "heartbeat_renewed": false,
+      "claimed": true,
+      "stolen": true,
+      "note": "prior external single-shot claimant (claimed 19:47:21Z, ttl_inferred 3600 → expired 20:47:21Z) had lapsed; clean acquire stolen:true — now holding fresh leader lock ttl 1800. Per-slot HARD token also won claimed:true, no race."
+    },
+    "slot_tokens": {
+      "bctc-analyst-slot-3": {
+        "claimed": true,
+        "released": true
+      }
+    },
+    "last_fired_timestamp": "2026-06-26T21:02:37.379Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "emit_pressure_state": {
+      "success": true,
+      "emitted_at": "2026-06-26T21:02:44.680Z",
+      "cycle_snapshot_promoted": false,
+      "stale_warning": true
+    },
+    "publish_verify": "n/a MARKET — bctc-analyst is off-market financial analyst; writes notebook cycle log (full overwrite) + conditional docs/analysis-briefs/{TICKER}.md on mode=release + agent_signals on findings; no MARKET publish, no double-publish risk",
+    "raw_verify": {
+      "verified": true,
+      "agent_id": "aff48433d35e99a46",
+      "cycle": "c073",
+      "mode": "routine",
+      "method": "RAW get_agent_signals(from_agent=bctc-analyst) by id+type+source + notebook cycle marker + signal json files",
+      "signals_confirmed": [
+        {
+          "id": 7692,
+          "type": "FUNDAMENTAL_VALIDATION",
+          "stock": "FPT",
+          "conf": 0.81,
+          "status": "read",
+          "expires": "2026-06-26 23:05:51",
+          "verdict": "Q1-2026 E3 cache-hit cycle34; net profit 2,476.8ty +19.8% YoY; PE 13.8x vs sector 17.3x (-20% disc); EY_SPREAD +2.25pp CHEAP; F-score 7 M-score 0; KD Quẻ Khôn-2 GIỮ stable 13 cycles; insider clean"
+        },
+        {
+          "id": 7693,
+          "type": "FUNDAMENTAL_VALIDATION",
+          "stock": "VCB",
+          "conf": 0.75,
+          "status": "read",
+          "expires": "2026-06-26 23:05:59",
+          "verdict": "Q1-2026 E3 re-emit cycle5; NII 17,421ty net profit 9,462.1ty; OCF/NI 1.37 LÀNH MẠNH; ESC-2 0.37% PASS ESC-3 0.37 PASS; KD Quẻ Bóc-23 BẤT LỢI CONFIRMED 2 cycles (c072→c073), watch reversal; sentiment TĂNG +0.07"
+        }
+      ],
+      "exactly_two": "PASS — get_agent_signals returns exactly 2 from bctc-analyst (7692/7693), matches badge count; both consumed by alert-commander (status read)",
+      "no_signal_correct": "ACB conf 0.60 < 0.65 threshold + OCF=0 data gap → correctly NO signal (not fabricated to fill)",
+      "not_fabricated": true,
+      "note": "off-market analyst, no MARKET publish, no double-publish risk. Carry-over data-gap BUGs (HPG DB trống cycle10 escalated c071; ACV cycle17 P1 c065) are pre-existing dev-team escalations — NOT cowork-dispatcher action. 12 QUÁ HẠN Q1-2026 tickers unchanged. Q2 BCTC deadline 2026-07-31."
+    }
+  },
+  "_processed": {
+    "fingerprint": "c93861ec2169e9dadb819281493391b2a01f084660178578a2f549bf0dcbe979",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

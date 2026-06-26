@@ -1,0 +1,55 @@
+{
+  "ticker": "ACB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Cho vay bán lẻ và SME, bancassurance cross-sell",
+  "customer": "Khách hàng cá nhân thành thị, SME vốn lưu động",
+  "ops": "NII 6,989.2ty; biên ròng ngân hàng — OCF=0 trong dữ liệu PARTIAL (cần refine hoàn chỉnh); vốn chủ 98,751ty",
+  "mgmt": "ACB tăng trưởng tín dụng ổn định; cần theo dõi sentiment tiêu cực slope -0.13 trong 30 ngày",
+  "cycle": "c068",
+  "slot": "bctc-analyst-slot-1",
+  "timestamp": "2026-06-25T15:10Z",
+  "financials": {
+    "net_profit_ty": 4320.4,
+    "nii_ty": 6989.2,
+    "net_margin_pct": 61.8,
+    "roe_quarterly_pct": 4.4,
+    "total_assets_ty": 1030900.7,
+    "equity_ty": 98751.1,
+    "total_liabilities_ty": 932149.7,
+    "ocf_ty": 0,
+    "ocf_ni_ratio": 0,
+    "confidence": 0.6,
+    "refine_status": "PARTIAL"
+  },
+  "esc_gate": {
+    "esc1": "PASS",
+    "esc2": "PASS",
+    "esc3": "SKIP-OCF-ZERO-PARTIAL",
+    "esc4": "PASS",
+    "esc5": "SKIP-EMPTY",
+    "escalation": false
+  },
+  "kd": null,
+  "insider": "clean",
+  "legal": "clean",
+  "chain_findings": 0,
+  "sentiment": "DECLINING (slope -0.13)",
+  "signal_ids": [],
+  "data_gaps": [
+    "OCF=0 from PARTIAL refine",
+    "Cash=0",
+    "EPS missing",
+    "NIM/CASA missing"
+  ],
+  "note": "Confidence 60% PARTIAL — không emit fundamental_validation signal; dữ liệu chưa đủ tin cậy",
+  "_processed": {
+    "fingerprint": "66c828ec63d481ef6f13057315b304aa69aa0afe2b902ccb1257a9b7441dd137",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

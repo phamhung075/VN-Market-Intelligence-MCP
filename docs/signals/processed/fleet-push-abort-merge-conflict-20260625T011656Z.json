@@ -1,0 +1,15 @@
+{
+  "from": "fleet-worktree-push",
+  "to": "po",
+  "type": "auto-push-abort",
+  "priority": "high",
+  "payload": {
+    "reason": "merge-conflict",
+    "detail": "docs/agent-memory/notebooks/tran-ngoc-bau.md ",
+    "ahead": "22",
+    "behind": "131",
+    "threshold": "20",
+    "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+  },
+  "createdAt": "2026-06-25T01:16:56Z"
+}

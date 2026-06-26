@@ -1,0 +1,77 @@
+{
+  "from": "cowork-team",
+  "to": "orch",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "2026-06-26T19:47:37Z",
+  "payload": {
+    "tick_id": "2026-06-26T19:45:00Z",
+    "fire_time": "2026-06-26T19:47:37Z",
+    "outcome": "FIRE",
+    "matched": [
+      "chef-evening"
+    ],
+    "won": [
+      "chef-evening"
+    ],
+    "spawned": [
+      "chef-evening"
+    ],
+    "agent_ids": {
+      "chef-evening": "ac115d0d2c18ecfde"
+    },
+    "guaranteed_slot": true,
+    "pressure_mode": "legacy",
+    "pressure_mode_reason": "pressure-state emitted_at 18:03:32Z age ~104min > 20min AND stale_warning=true → legacy; cadence gate skipped, matched slot passes raw (also guaranteed:true)",
+    "drift_min": 2,
+    "session_blind": false,
+    "leader_lock": {
+      "first_claim": true,
+      "orphan_recovered": false,
+      "own_held": false,
+      "heartbeat_renewed": false,
+      "claimed": true,
+      "note": "fresh claim — claimed:true clean; prior 18:32-expiry leader lock long expired by 19:47"
+    },
+    "slot_tokens": {
+      "chef-evening": {
+        "claimed": true,
+        "released": true
+      }
+    },
+    "last_fired_timestamp": "2026-06-26T19:47:37.903Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "emit_pressure_state": {
+      "success": true,
+      "emitted_at": "2026-06-26T19:47:41.733Z",
+      "cycle_snapshot_promoted": false,
+      "stale_warning": true
+    },
+    "publish_verify": {
+      "verified": true,
+      "method": "RAW get_unreviewed_market_messages — actual MARKET post by content+id (not author/badge); get_market_message_digest for AC-6 count",
+      "market_post": {
+        "id": 896,
+        "from_agent": "mcp-user",
+        "message_type": "user_ask_reply",
+        "sent_at": "2026-06-26 19:48:44",
+        "paragraphs": 4,
+        "lang": "vi"
+      },
+      "content_match": "matches CHEF badge exactly: VN-Index +8.84, VHM +3.51%/VIC +1.33% real-estate lead on foreign inflow, banking +0.44% vs USD/VND 26,114, VinMetal 6M-ton/yr steel → HPG +0.43% vol 2.0x, KD Quẻ 36 Minh Di (caution), gold +2.09σ risk-off / oil -2.60, EY 7.05% vs deposit 5%",
+      "ac6_single_post": "PASS — exactly ONE evening dish ~19:48 among today's mcp-user posts (ids 884/885/887/890/892/893 are earlier morning/midday dishes at 05:20-08:51); no double-publish",
+      "not_fabricated": true,
+      "note": "WORK-channel TNB 6-layer detail also written (agent badge: DEGRADED quality, conviction MEDIUM, 3 convergence clusters — RE+FII, banking-stability macro-micro contradiction, steel expansion; L2 macro partial + L4 BCTC pillar gaps flagged). MARKET dish is the user-facing deliverable verified here."
+    },
+    "raw_verify": "see publish_verify — agent ac115d0d2c18ecfde completed 19:48 (158s, 17 tool_uses); MARKET dish id 896 RAW-confirmed by content+id, AC-6 PASS"
+  },
+  "_processed": {
+    "fingerprint": "d9377bd4111fc315ad3221453923978ada08fa3a977fb5747f48121ffa1c7208",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

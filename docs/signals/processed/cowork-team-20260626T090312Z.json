@@ -1,0 +1,72 @@
+{
+  "from": "cowork-team",
+  "to": "orch",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "2026-06-26T09:03:12Z",
+  "payload": {
+    "tick_id": "2026-06-26T09:00:00Z",
+    "fire_time": "2026-06-26T09:03:12Z",
+    "outcome": "FIRE",
+    "matched": [
+      "refine-bctc-slot-1"
+    ],
+    "won": [
+      "refine-bctc-slot-1"
+    ],
+    "spawned": [
+      "refine-bctc-slot-1"
+    ],
+    "agent_ids": {
+      "refine-bctc-slot-1": "a85298da85c9a834b"
+    },
+    "pressure_mode": "legacy",
+    "pressure_mode_reason": "stale_warning=true (age ~12.5min)",
+    "drift_min": 2,
+    "session_blind": false,
+    "leader_lock": {
+      "first_claim": false,
+      "orphan_recovered": false,
+      "own_held": true,
+      "heartbeat_renewed": true,
+      "note": "own prior reclaim from 08:49 chef-eod tick (same server session pid-1-ts-1782423559593); heartbeat ok:true → proceeded as leader, no orphan recovery"
+    },
+    "last_fired_timestamp": "2026-06-26T09:03:12.823Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "emit_pressure_state": {
+      "success": true,
+      "emitted_at": "2026-06-26T09:03:18.018Z",
+      "cycle_snapshot_promoted": false
+    },
+    "publish_verify": "n/a — DB-pathway worker, no MARKET publish",
+    "db_verify": {
+      "verified": true,
+      "method": "RAW get_bctc_refined by report_id",
+      "report_id": "c765098b-aad2-4c10-a66b-fddbf959a29d",
+      "filename": "GVR_2026_Q1.pdf",
+      "total_units_db": 21,
+      "this_fire_units": [
+        "unit-0014",
+        "unit-0015",
+        "unit-0016",
+        "unit-0017",
+        "unit-0018",
+        "unit-0019",
+        "unit-0020"
+      ],
+      "this_fire_refined_at_range": "2026-06-26 09:04:40 .. 09:05:33",
+      "cumulative_progress": "21/70 (30%)",
+      "status": "PARTIAL — 49 windows remain; resumes at slot-2 (14:00 UTC)",
+      "note": "agent badge (21/70) matches DB ground-truth; real VN financial content, not fabricated"
+    }
+  },
+  "_processed": {
+    "fingerprint": "727d2b1e755a52d0b38337bc6dd571b7579d26823c9ed5223b0bc0668d5e85d7",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

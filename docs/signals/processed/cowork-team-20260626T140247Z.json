@@ -1,0 +1,78 @@
+{
+  "from": "cowork-team",
+  "to": "orch",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "2026-06-26T14:02:47Z",
+  "payload": {
+    "tick_id": "2026-06-26T14:00:00Z",
+    "fire_time": "2026-06-26T14:02:47Z",
+    "outcome": "FIRE",
+    "matched": [
+      "refine-bctc-slot-2"
+    ],
+    "won": [
+      "refine-bctc-slot-2"
+    ],
+    "spawned": [
+      "refine-bctc-slot-2"
+    ],
+    "agent_ids": {
+      "refine-bctc-slot-2": "ac851f957a3e715b0"
+    },
+    "pressure_mode": "legacy",
+    "pressure_mode_reason": "pressure-state emitted_at 12:03:12Z age ~119min > 20min AND stale_warning=true → legacy; cadence gate skipped, matched slot passes raw",
+    "drift_min": 2,
+    "session_blind": false,
+    "leader_lock": {
+      "first_claim": true,
+      "orphan_recovered": false,
+      "own_held": false,
+      "heartbeat_renewed": false,
+      "note": "fresh claim — claimed:true clean; prior 12:03 leader lock (ttl 1800s) long expired by 14:02"
+    },
+    "slot_tokens": {
+      "refine-bctc-slot-2": {
+        "claimed": true,
+        "released": true
+      }
+    },
+    "last_fired_timestamp": "2026-06-26T14:02:47.162Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "emit_pressure_state": {
+      "success": true,
+      "emitted_at": "2026-06-26T14:02:53.687Z",
+      "cycle_snapshot_promoted": false
+    },
+    "publish_verify": "n/a — DB-pathway worker (refine_bctc_md), no MARKET Telegram publish",
+    "db_verify": {
+      "verified": true,
+      "method": "RAW get_bctc_refined by report_id",
+      "report_id": "c765098b-aad2-4c10-a66b-fddbf959a29d",
+      "filename": "GVR_2026_Q1.pdf",
+      "total_units_db": 28,
+      "this_fire_units": [
+        "unit-0021",
+        "unit-0022",
+        "unit-0023",
+        "unit-0024",
+        "unit-0025",
+        "unit-0026",
+        "unit-0027"
+      ],
+      "this_fire_refined_at_range": "2026-06-26 14:03:57 .. 14:05:11",
+      "cumulative_progress": "28/70 (40%)",
+      "status": "PARTIAL — 42 windows remain; resumes at next slot-2 (14:00 UTC tomorrow)",
+      "note": "agent badge (28/70) matches DB ground-truth (28 units); real VN content (GVR subsidiary list STT 88-120, associate companies, accounting policy 2.3-2.4), not fabricated"
+    }
+  },
+  "_processed": {
+    "fingerprint": "3ac4f4003d128dd20f5723bc98f7bcbbfef166b576a38c2bc287d61289296459",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

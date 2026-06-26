@@ -1,0 +1,126 @@
+{
+  "from": "cowork-team",
+  "to": "orch",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "2026-06-26T20:03:21Z",
+  "payload": {
+    "tick_id": "2026-06-26T20:00:00Z",
+    "fire_time": "2026-06-26T20:03:21Z",
+    "outcome": "FIRE",
+    "matched": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "agent_ids": {
+      "news-scout-offhours": "adadaa66d9a907cdb",
+      "market-watcher-offhours": "adaffe857e8849029"
+    },
+    "guaranteed_slot": false,
+    "pressure_mode": "legacy",
+    "pressure_mode_reason": "pressure-state emitted_at 19:47:41Z age ~16min AND stale_warning=true → legacy; cadence gate skipped, both matched 0-*/4 gatherer slots pass raw (gatherer-standard policy)",
+    "drift_min": 2,
+    "session_blind": false,
+    "leader_lock": {
+      "first_claim": false,
+      "orphan_recovered": false,
+      "own_held": false,
+      "heartbeat_renewed": false,
+      "claimed": false,
+      "holder": {
+        "owner_session": "pid-1-ts-1782472701913",
+        "owner_agent": "cowork-dispatcher",
+        "claimed_at": "2026-06-26T19:47:21Z",
+        "expires_at": "2026-06-26T20:47:21Z",
+        "heartbeat_at": "2026-06-26T19:47:21Z",
+        "ttl_inferred": 3600,
+        "claim_age_s": 920
+      },
+      "note": "leader lock held by external single-shot claimant (ttl_inferred=3600 ≠ my 1800; owner_session pid-1 = mcp-server instance, server-scoped per known feedback); heartbeat never renewed in ~15min → not a live co-leader running this contract (a live one re-claims/heartbeats each */15). Leader lock SOFT/advisory; proceeded to HARD per-slot tokens which atomically arbitrated — both claimed:true, no genuine race."
+    },
+    "slot_tokens": {
+      "news-scout-offhours": {
+        "claimed": true,
+        "released": true
+      },
+      "market-watcher-offhours": {
+        "claimed": true,
+        "released": true
+      }
+    },
+    "last_fired_timestamp": "2026-06-26T20:03:21.363Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "emit_pressure_state": {
+      "success": true,
+      "emitted_at": "2026-06-26T20:03:27.897Z",
+      "cycle_snapshot_promoted": false,
+      "stale_warning": true
+    },
+    "publish_verify": "n/a MARKET — news-scout and market-watcher are notebook-only gatherers (write docs/agent-memory/notebooks/{news-scout,market-watcher}.md full-overwrite cycle log); no MARKET publish, no published-marker, no double-publish risk",
+    "raw_verify": {
+      "market-watcher-offhours": {
+        "verified": true,
+        "agent_id": "adaffe857e8849029",
+        "method": "RAW notebook artifact (docs/agent-memory/notebooks/market-watcher.md cycle marker) + coverage-state.json write timestamps; 0 signals emitted so no get_agent_signals row to check",
+        "notebook_cycle": "## Cycle (20:00–20:05 UTC offhours) — 10 stocks, anomalies 0 (>2.5σ offhours floor), volume spikes 0 (>2.5x), VHM +3.51% subthreshold, breadth 125 up/196 down negative, regime NEUTRAL DXY 26114 US10Y 7.05% vs 5%; 21L within cap",
+        "coverage_state": "10 tickers (VNM/FPT/VCB/ACB/HPG/BID/SHB/EIB/VHM/VIC) stamped last_covered_market_watcher=2026-06-26T20:03:28Z",
+        "not_fabricated": true,
+        "note": "notebook-only gatherer, no MARKET publish; content matches agent badge exactly; real off-market snapshot (VN-Index 1871.91 +0.47%), clean no-anomaly cycle"
+      },
+      "news-scout-offhours": {
+        "verified": true,
+        "agent_id": "adadaa66d9a907cdb",
+        "cycle": "c112",
+        "method": "RAW get_agent_signals(from_agent=news-scout) by id+content + coverage-state.json write; 3/20 signal rate",
+        "signals_confirmed": [
+          {
+            "id": 7687,
+            "type": "URGENT_NEWS",
+            "stock": "CTG",
+            "impact": "9/10",
+            "expires": "2026-06-26 22:04:37",
+            "verdict": "MBS Q2-2026 banking forecast >45% (CTG lãi >11.000 tỷ); pillars EPS:bullish, phase=expansion"
+          },
+          {
+            "id": 7688,
+            "type": "CHAIN_CATALYST",
+            "scope": "macro",
+            "impact": "7/10",
+            "expires": "2026-06-26 22:04:50",
+            "verdict": "khối ngoại ~1.200 tỷ FII inflow reversal, Index +47; regime NEUTRAL adj_score 6"
+          },
+          {
+            "id": 7689,
+            "type": "CHAIN_CATALYST",
+            "scope": "sector",
+            "impact": "8/10",
+            "expires": "2026-06-26 22:04:54",
+            "verdict": "VinMetal thép 6M-ton/yr capex → HPG/HSG/NKG supply-chain; regime NEUTRAL adj_score 8, COC/EPS/POL bullish"
+          }
+        ],
+        "dedup": "0 suppressions (self 180m: c111 ended ~8h ago beyond window; sibling 15m: 32 alert-engine entries, no news_impact dupes); legal 0, crisis 0",
+        "coverage_state": "all 41 tickers stamped last_covered_news_scout=2026-06-26T20:04:00Z",
+        "not_fabricated": true,
+        "note": "all 3 present in DB from news-scout, content matches badge exactly, real VN content, 2h TTL (expiry ~22:04 from 20:04 emit); cross-corroborated by independent agents — CTG/MBS Q2 forecast also in alert-digest #894, VinMetal steel also in CHEF dish #896 + HPG alert. Notebook-only gatherer + signal emitter, no MARKET publish, no double-publish risk."
+      }
+    }
+  },
+  "_processed": {
+    "fingerprint": "dfe3e8f248aa6fea1a1bb68026fe2b3c741150652e0176d16685079ef0ab7f7f",
+    "processedAt": "2026-06-26T22:40:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
