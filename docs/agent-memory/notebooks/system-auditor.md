@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c425 · 2026-06-26T10:33:35Z
+### Audit Run Tier-2 (10:33 UTC 2026-06-26) — Freshness Sweep
+- Tier: 2 | Sources: 28 checked | Cron gaps: 0 | VPS routes: 4/4 OK (bctc tracked false-positive)
+- A-29 Cron Fire: all 100+ jobs firing on schedule ✓ | B-01–B-07 Freshness SLA: 27/28 PASS (post-market)
+- B-12 Rate Limits: all 0% wait ✓ | B-13 Stale BCTC: 0 rows >72h ✓ | C-06,C-07: 2 market_messages, 148 agent_signals ✓
+- B-05 BCTC Healthy-Idle Gate applied (queue=0, host UP, push-age 239h << 1752h threshold) → healthy idle
+- **1 NEW anomaly found**: sbv_fx post-market freshness breach (31min age vs 30min SLA; 1min overage; WARN severity)
+- Anomalies: 1 NEW (W warn) | 1 dedup-skipped (vn-bctc-fetch HTTP false-positive) | Status: DEGRADED-MINOR
+
 ## c424 · 2026-06-26T10:11:39Z
 ### Audit Run Tier-1 (10:11–10:12 UTC 2026-06-26) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS

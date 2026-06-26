@@ -2491,6 +2491,17 @@
         "resolved_at": "2026-06-26T04:33:13Z",
         "resolved_by": "po-s118",
         "resolution": "bctc off-season idle — no earnings filing window (Q2 lands Jul-Aug) => no PDF processing. Healthy-Idle Gate, expected-benign. C-11 status-predicate bug (queries status='done' which never exists) separately tracked: FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE (backlog). No new mint."
+      },
+      {
+        "id": "sau-20260626T103335Z",
+        "ts": "2026-06-26T10:33:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv_fx stale 31min post-market (check B-12-POST-MARKET)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-25T22:06:25Z",
