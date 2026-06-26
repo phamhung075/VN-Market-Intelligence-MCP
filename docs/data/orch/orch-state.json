@@ -2629,7 +2629,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-26T04:33:13Z",
+    "_updated_at": "2026-06-26T04:36:44Z",
     "_updated_by": "po-s118",
     "active_sprints": [
       {
@@ -13570,6 +13570,32 @@
         "distinct_from": "FU-AUDITOR-D4-SIGNAL-ID (D4 held-lock-no-row blind-spot) and the C-06/C-11/C-12/B-11 predicate fixes — this is the §4 size-cap WIP-vs-archival miscount only.",
         "source": "po triage of sau-2026-06-26T00:31:41Z (CRITICAL task_board overflow 248/cap80) during outage-artifact signal sweep. RAW status-breakdown via jq on orch-state.json. Auditor check-bug, doc/flow-only, no rebuild. PLAN-ONLY, not promoted to ready (WIP=0).",
         "created_at": "2026-06-26T04:33:13Z",
+        "created_by": "po-s118"
+      },
+      {
+        "id": "FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES",
+        "type": "FIX",
+        "severity": "LOW",
+        "priority": "low",
+        "size": "S",
+        "status": "BACKLOG",
+        "title": "system-auditor health-check probes an HTTP endpoint on non-HTTP services (vn-bctc-fetch = pure-bash systemd timer, no HTTP port) -> permanent false UNHEALTHY badge + wasted ops dispatch every audit",
+        "description": "RAW-verified by ops this cycle (agentId aedc7932, 2026-06-26): the auditor/health-check tool HTTP-probes vn-bctc-fetch (VPS), but that service is a pure-bash systemd timer with NO HTTP port -> connection-refused/0ms timeout -> permanent false UNHEALTHY on EVERY audit, even though the service runs its 6h cycles correctly (cycles 18:11Z, 00:11Z during outage, 04:32Z; ops confirmed 8/8 VPS services + 4/4 routes fresh). Recurring false infra alert: burns an ops dispatch per audit and trains the fleet to ignore UNHEALTHY badges (alert fatigue). Same false-positive class as the outage-artifact sweep (po-s118).",
+        "owner": "system-auditor",
+        "next_agent": "ba",
+        "zone": "docs/agents/system-auditor/",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "fix_spec": "BA/architect confirm zone first (auditor flow vs dev-mcp-server health-check tool). TWO options, RAW-verify before fix: (a) PREFERRED auditor-side — classify service type and for non-HTTP services check systemd active-state + log-freshness instead of an HTTP probe (no VPS code change); (b) service-side — add a lightweight /health endpoint to vn-bctc-fetch returning {status,last_cycle,queue_size}. Recommend (a).",
+        "generic_mandate": "Classify service transport before probing; non-HTTP services gate on systemd active + log/cycle freshness, NOT HTTP reachability. Corroboration gate before emitting UNHEALTHY (false-infra-failure lesson). No hardcoded service lists — derive from system-map.json.",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "depends": [],
+        "sibling_of": "FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
+        "distinct_from": "The C-06/C-11 DB-count predicate fixes and B-06 bctc-discover-stale freshness (different layer: this is HTTP-probe-on-non-HTTP-service health badging, not a DB row-count or push-age check).",
+        "source": "coordinator relay of ops RAW-verify (agentId aedc7932) 2026-06-26 outage-recovery cycle. PLAN-ONLY, not promoted to ready (WIP=0). No urgency (BCTC off-season).",
+        "created_at": "2026-06-26T04:36:44Z",
         "created_by": "po-s118"
       }
     ],
