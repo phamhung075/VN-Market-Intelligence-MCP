@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-26T19:32:37Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-26T19:43:58Z",
+  "_updated_by": "developer",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -10507,20 +10507,6 @@
         "interim_mitigation": "Router operationally switched system-auditor to Telegram-BUG + notebook only (no orch-state signal_queue write) -- removes the collapse trigger until durable fix lands."
       },
       {
-        "id": "HSC-2",
-        "title": "One-time eviction of current orch-state.json terminal bloat",
-        "zone": "docs/data/orch/",
-        "owner": "pm+developer",
-        "priority": "high",
-        "size": "XS",
-        "type": "SPRINT-S",
-        "created_at": "2026-06-26T15:28:08Z",
-        "created_by": "pm",
-        "status": "BACKLOG",
-        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "depends_on": "HSC-1"
-      },
-      {
         "id": "HSC-3",
         "title": "Repoint task-archive.md trigger+destination + narrow pm planning reads",
         "zone": "docs/agents/pm/",
@@ -10972,7 +10958,25 @@
         "rebuild_required": "mcp-server"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "HSC-2",
+        "title": "One-time eviction of current orch-state.json terminal bloat",
+        "zone": "docs/data/orch/",
+        "owner": "pm+developer",
+        "priority": "high",
+        "size": "XS",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "done_verified",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": "HSC-1",
+        "completed_at": "2026-06-26T19:43:58Z",
+        "completed_by": "developer",
+        "verification": "HSC-2 executed: scripts/orch-cold-evict.sh ran against live SSOT. Hot: 2.47 MB → 954 KB. Cold: docs/data/orch/archive/2026-06.json (1.49 MB). Evicted: 224 done + 142 done_verified + 15 terminal sprints + 63 signal rows + 45 signal archive = 489 items. All active lanes intact. Commit: 33603151"
+      }
+    ],
     "head": {
       "status": "idle",
       "active_task_id": null,
@@ -11027,8 +11031,8 @@
     "last_triaged_at": "2026-06-26T15:26:11Z",
     "last_triaged_by": "po"
   },
-  "updated_at": "2026-06-26T19:32:37Z",
-  "updated_by": "qa",
+  "updated_at": "2026-06-26T19:43:58Z",
+  "updated_by": "developer",
   "meta": {
     "updated_at": "2026-06-26T05:31:34Z",
     "updated_by": "po",
