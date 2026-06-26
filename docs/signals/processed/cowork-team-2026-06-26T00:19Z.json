@@ -1,0 +1,27 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_spawn_completion",
+  "payload": {
+    "tick_id": "2026-06-26T00:19:46Z",
+    "nominal_tick": "2026-06-26T00:15Z",
+    "drift_min": 4,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "classification": "RECOVERY_SPAWN (news-scout-offhours genuine miss)",
+    "reason": "00:00 master-cron fire bumped news-scout-offhours last_fired to 00:02:36Z but produced NO c108 notebook cycle (notebook stale c107/12:02Z, mtime 16:04Z). Sibling 00:02 spawns delivered real cycles (bctc-analyst c070-slot4 00:02-00:15; market-watcher 00:02 61-monitored) => gateway was up, so news-scout 00:02 spawn died before delivery. last_fired-bumped-without-delivery = the masking gap. Matcher no longer offers it (bumped last_fired satisfies 4h cadence). Dispatcher caught the drop with a marker-safe recovery spawn.",
+    "matched_slots": [],
+    "spawned": ["news-scout-offhours (recovery, agentId ae27a0e4cf0d34e37, run_in_background, marker-safe)"],
+    "skipped_already_fired": [],
+    "errors": [],
+    "watch_resolved": {
+      "bctc-analyst-slot-4": "DELIVERED-REAL (c070-slot4, cycle 00:02-00:15Z, mtime 00:11Z)",
+      "market-watcher-offhours": "DELIVERED-REAL (00:02 cycle, 61 monitored, mtime 00:05Z)",
+      "news-scout-offhours": "GENUINE-MISS -> recovery spawn in flight"
+    },
+    "leader_lock": "deferred (router-thread gateway tools unavailable; cron-spawned + Agent-spawned children hold real access)",
+    "note": "KNOWN-DEFECT corroborated: master-cron last_fired bump can decouple from actual delivery (here news-scout). Same class as the prior bctc-analyst-slot-3 master-cron gap. For PO/dev: cowork-match-slots.js / spawn-fanout should gate last_fired update on delivery confirmation (notebook/marker), not on spawn dispatch. Recovery spawn is marker-safe: dedup-blocks if already covered, delivers if not."
+  },
+  "priority": "warn",
+  "createdAt": "2026-06-26T00:19:46Z"
+}

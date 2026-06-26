@@ -1,0 +1,27 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_gateway_state_change",
+  "payload": {
+    "tick_id": "2026-06-26T00:04:41Z",
+    "nominal_tick": "2026-06-26T00:00Z",
+    "drift_min": 4,
+    "gateway_blind": false,
+    "mcp_servers": 1,
+    "classification": "SKIPPED_ALREADY_FIRED + GATEWAY_REACHED",
+    "reason": "Post-restart blind window CLOSED. market-watcher 00:02 master-cron cycle wrote real varied notebook (mtime 00:05:05Z; 61 monitored vs prior 41, NEUTRAL/DXY-STABLE/coverage-sweep) + gateway backend HTTP 200 (63ms) => gateway REACHED for cron-spawned subagents. Router-thread direct gateway tools still read deferred-disconnected (stale post-compact notice; reality overrides via real subagent cycle).",
+    "matched_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+    "spawned": [],
+    "skipped_already_fired": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+    "errors": [],
+    "slot_detail": {
+      "bctc-analyst-slot-4": {"cron": "0 0", "last_fired": "2026-06-26T00:02:36Z", "age_min": 2.1, "verdict": "SKIP master-cron-fresh", "delivery": "notebook still c069/18:05Z slot-2 -> 00:02 spawn likely in-flight background; E2 PASS (00:04 outside [02:00,08:00)); verify next tick"},
+      "news-scout-offhours": {"cron": "0 */4", "last_fired": "2026-06-26T00:02:36Z", "age_min": 2.1, "verdict": "SKIP master-cron-fresh", "delivery": "notebook still c107/12:02Z -> 00:02 spawn likely in-flight background; verify next tick"},
+      "market-watcher-offhours": {"cron": "0 */4", "last_fired": "2026-06-26T00:02:36Z", "age_min": 2.1, "verdict": "SKIP master-cron-fresh", "delivery": "DELIVERED-REAL: notebook 00:02 cycle 61 monitored, 0 anomalies, mtime 00:05:05Z"}
+    },
+    "leader_lock": "deferred (router-thread gateway tools unavailable; cron-spawned agents hold real access)",
+    "note": "Gateway transport reconnected post-restart. Double-fire guard applied: all 3 master-cron-fresh -> SKIP. WATCH: news-scout-offhours + bctc-analyst-slot-4 notebooks not yet refreshed; if still stale at 00:19 tick with last_fired stuck 00:02, do marker-safe recovery spawn."
+  },
+  "priority": "info",
+  "createdAt": "2026-06-26T00:04:41Z"
+}

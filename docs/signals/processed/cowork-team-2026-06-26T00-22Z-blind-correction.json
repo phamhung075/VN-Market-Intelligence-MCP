@@ -1,0 +1,24 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork_gateway_state_change",
+  "payload": {
+    "tick_id": "2026-06-26T00:22Z",
+    "supersedes": ["cowork-team-2026-06-26T00:04Z.json", "cowork-team-2026-06-26T00:19Z.json"],
+    "gateway_blind": true,
+    "mcp_servers": 1,
+    "classification": "THIS_SESSION_BLIND (corrected) — parallel healthy context delivering core slots",
+    "reason": "Marker-safe news-scout recovery spawn (agentId ae27a0e4cf0d34e37) returned with ONLY Read/Write/Edit, NO MCP tools => THIS session's Agent-spawned subagents are gateway-blind. Refutes the 00:04 'REACHED' call. The real 00:02 market-watcher + bctc deliveries came from a SEPARATE healthy context (parallel CLI session or transient reconnect-flap), NOT my session. curl backend HTTP 200 only proves backend up, not session-transport inheritance.",
+    "anti_fabrication": "CORRECT BEHAVIOR: the blind news-scout recovery agent DETECTED its blindness and REFUSED to fabricate — returned honest 'cannot deliver, no MCP access' instead of inventing news. No quarantine needed.",
+    "delivery_truth": {
+      "market-watcher-offhours-0000": "DELIVERED-REAL by separate healthy context (00:02 cycle, 61 monitored)",
+      "bctc-analyst-slot-4": "DELIVERED-REAL by separate healthy context (c070-slot4, 00:02-00:15)",
+      "news-scout-offhours-0000": "GENUINE MISS — un-run by healthy context (latest real cycle c108 @ 06-25T16:04Z; 20:00 + 00:00 slots both un-run); CANNOT recover from blind session (recovery spawn was blind). Next cron coverage 04:00 / sentiment 05:00."
+    },
+    "posture": "BLIND-SESSION: do NOT fan out data agents from this session (blind -> no delivery, though agents self-refuse fabrication). Rely on parallel healthy context + */15 cron. Verify deliveries via notebook artifacts, never assume they came from my spawns. User action required to reconnect THIS session's gateway transport (restart / MCP reconnect).",
+    "errors": ["news-scout recovery spawn blind (no MCP tools) — no delivery"],
+    "note": "Memory feedback_local_cowork_subagents_gateway_blind corrected: backend-curl-200 + other-context-notebook-freshness != my-session-REACHED. Only a spawn returning WITH mcp tools proves my fan-out capability."
+  },
+  "priority": "warn",
+  "createdAt": "2026-06-26T00:22Z"
+}

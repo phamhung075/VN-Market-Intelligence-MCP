@@ -1,24 +1,25 @@
 # PO Notebook
 
-_Last: 2026-06-23T17:27:00Z_
+_Last: 2026-06-26T04:55:00Z_
 
-## This cycle — S2 DATA-HONESTY thread kickoff (user-approved; RAW-verified live)
-Opened the approved real-data-only thread. RAW-probed all 4 items BEFORE tasking — 2 confirmed, 2 dropped.
+## This cycle — file-channel signal triage (dev-team tick 04:52Z, post-/mcp-reconnect)
+Triaged 4 cowork-dispatcher telemetry files in docs/signals/ (orch-state .signal_queue already done this session @1f8c6953 — did NOT re-touch). System fully recovered: gateway reconnected 04:23Z, chef-intraday DELIVERED-REAL 04:26Z, all 3 auditor tiers clean, WIP=0.
 
-CONFIRMED (tasked):
-- **FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION** (P1, ready LEAD, dev-mcp-server). Live named-vol /app/data/market.db (bun:sqlite): agent_signals confidence_score = 3316/3874 (86%) at literal 50; ALL recent verified_decision rows (dashboard SIGNALS dominant type) = 50, incl today 16:32Z. Prior FIX-SIGNAL-CONFIDENCE-DEFAULT-50 (done_verified on GREEN BUILD) only wired finding_data.confidence-carrying producers (agentSignalTools.ts:302-307); verified_decision producer supplies none → COLUMN DEFAULT 50 (agentSignalStore.ts:341 + schema-news.ts:104). REOPENED — plausibility-check gap (done_verified ≠ live-varied). Also harden read-fallback stockSignalsHandler.ts:224 `?? 50` → explicit unknown.
-- **FIX-MACRO-SNAPSHOT-DELTAS-NULL** (P2, ready, dev-macro-indicators). promoted backlog→ready. get_macro_snapshot LIVE 17:25Z: oil/gold/usdVndDelta=null, direction=unknown; vnIndexDelta=11.13 up. By-design gap (dtos.go L120-129, no prev-session persist). Fully specced.
+Dispositions:
+- #1 cowork-team-...T00:04Z (gateway "REACHED", later REFUTED) → ARCHIVED to processed/. Outage-window artifact.
+- #3 cowork-team-...T00-22Z-blind-correction (THIS_SESSION_BLIND; anti-fabrication HELD — blind news-scout self-refused) → ARCHIVED. Resolved.
+- #4 cowork-team-...T02-19Z-chef-intraday-skip-blind (SKIPPED_BLIND during VN hours) → ARCHIVED. chef DELIVERED-REAL 04:26Z post-reconnect.
+- #2 cowork-team-...T00:19Z (cowork_spawn_completion) → ARCHIVED, but extracted the REAL recurring defect → MINTED.
 
-DROPPED (RAW evidence):
-- conviction `=0.5` → convictionScorer.ts 0.5 are all documented neutral-fallbacks for genuinely-MISSING inputs (L34/169/179/192/252...), NOT a mask of computed data. NO task.
-- source-confidence `1.0` → finalizeBctcRefine/bctcCorrectionService source_confidence=1.0 is CORRECT semantics for human-confirmed BCTC corrections (100% confident by definition). NO task.
+MINT (PLAN-ONLY, backlog, WIP held 0): **FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY** (FIX, M, zone:multi, next_agent:architect).
+- Defect RAW-confirmed in docs/agents/cowork-team/flow/last-fired.md Step 5b: last_fired bumped for WON_SLOTS = run_in_background spawn DISPATCH-success (AC-P1-7-1), NOT delivery proof. A spawn that dispatches then dies before writing its notebook still satisfies the 4h cadence gate → cowork-match-slots.js reads the bumped stamp → never re-offers → genuine miss MASKED. Observed: news-scout-offhours 00:00 fire bumped last_fired 00:02:36Z but no c108 cycle (siblings DID deliver → gateway up → spawn died before delivery). 2nd instance (after bctc-analyst-slot-3).
+- DISTINCT FROM done_verified FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER (30b9a7f8): that clobbered OTHER slots' stamps (monotonic guard); this advances a SINGLE slot on dispatch-success unbacked by delivery (monotonic guard does NOT catch — value is genuinely forward-moving).
+- Constraint for architect: spawns are fire-and-forget → cannot synchronously await delivery in one tick. Candidate designs (A deferred-confirm ledger / B post-spawn bounded poll / C artifact-driven cadence) in fix_spec — architect picks, BA decomposes.
+- Script scripts/po-s120-cowork-lastfired-decouple-delivery-mint.jq (idempotent, conservation +1, re-run delta 0).
 
-DoD (the real bar): live VARIED real values vs named-vol DB / live tool — NOT green build. done_verified WITHHELD on both until a live probe shows non-constant confidence + signed non-null oil/gold/fx deltas.
-
-Mechanics: S2 sprint goal authored; head→lead→ba; ba→architect→pm→dev-{mcp-server,macro-indicators}→qa per zone. Script scripts/po-s111-s2-data-honesty-kickoff.jq (idempotent, conservation-guarded +1 mint, re-run delta 0). Committed 6fffe612.
+NOT triaged as dev (cowork data products, left for chef/digest): 5 bctc_signal_*_routine.json + 1 price_anomaly — remain in docs/signals/.
 
 ## Carry-over
-- S2 lead dispatched: head=FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION in_progress/next_agent=ba. Router to spawn ba (apps/mcp-server). Macro-delta queued ready[1] (dev-macro-indicators) behind it.
-- Both fixes rebuild_required:true — ops rebuild + LIVE re-probe gates done_verified, NOT tests.
-- Stale head was pointing at FIX-DB-INTEGRITY-TRAIL-GITRESET-DATALOSS (in_progress empty) — repointed at S2 lead this cycle.
-- PRED-RESOLVER-GAP-FIX (prior cycle) — verify if a recurrence signal surfaces.
+- FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY backlog → needs architect design pass when WIP frees (route to architect; flow-doc/matcher split + agent-father for cowork-schedule.json).
+- Watch for a 3rd last_fired-decouple recurrence signal → escalate priority if it surfaces.
+- S2 DATA-HONESTY thread (prior cycle): both fixes rebuild_required, done_verified WITHHELD on live-varied probe.

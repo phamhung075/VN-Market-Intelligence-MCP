@@ -2629,8 +2629,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-26T04:36:44Z",
-    "_updated_by": "po-s118",
+    "_updated_at": "2026-06-26T04:56:14Z",
+    "_updated_by": "po-s120",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -13597,6 +13597,34 @@
         "source": "coordinator relay of ops RAW-verify (agentId aedc7932) 2026-06-26 outage-recovery cycle. PLAN-ONLY, not promoted to ready (WIP=0). No urgency (BCTC off-season).",
         "created_at": "2026-06-26T04:36:44Z",
         "created_by": "po-s118"
+      },
+      {
+        "id": "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
+        "type": "FIX",
+        "severity": "MEDIUM",
+        "priority": "medium",
+        "size": "M",
+        "status": "BACKLOG",
+        "title": "cowork last_fired is bumped on spawn DISPATCH-success, not delivery proof -> a spawn that dies before writing its notebook still satisfies the cadence gate -> genuine slot misses are MASKED (matcher never re-offers)",
+        "description": "RAW-verified 2026-06-26 from cowork-dispatcher signals (00:19Z cowork_spawn_completion + 00:22Z blind-correction) and confirmed in docs/agents/cowork-team/flow/last-fired.md Step 5b: last_fired updates for WON_SLOTS where 'won' = the run_in_background spawn handle returned (AC-P1-7-1 'last_fired written after successful spawn'), NOT delivery confirmation (notebook mtime advance / marker file). A backgrounded spawn that dispatches then dies before delivering still bumps last_fired; cowork-match-slots.js then reads the bumped stamp, sees the 4h cadence satisfied, and never re-offers the slot -> the miss is invisible. OBSERVED: news-scout-offhours 00:00 master-cron fire bumped last_fired 00:02:36Z but produced NO c108 notebook cycle (latest real c108 @ 06-25T16:04Z; both 20:00 and 00:00 slots un-run), while sibling bctc-analyst-slot-4 + market-watcher-offhours DID deliver real cycles -> gateway was up -> the news-scout spawn died before delivery. Same masking class as the prior bctc-analyst-slot-3 master-cron gap. The dispatcher only caught it via an ad-hoc marker-safe recovery spawn (which then turned out blind) — there is no SYSTEMIC delivery-confirmation gate.",
+        "owner": "po",
+        "next_agent": "architect",
+        "zone": "multi",
+        "files": [
+          "docs/agents/cowork-team/flow/last-fired.md",
+          "docs/agents/cowork-team/flow/main.md",
+          "scripts/agents-flow/cowork-match-slots.js"
+        ],
+        "fix_spec": "ARCHITECT confirm zone split + design first (do NOT pre-commit to an approach). The hard constraint: spawns are run_in_background (fire-and-forget) so the dispatcher CANNOT synchronously await delivery within one tick. Candidate designs to evaluate: (A) DEFERRED-CONFIRM ledger — on spawn, record a pending_delivery{slot_id, dispatched_at, expected_artifact} marker and DO NOT bump last_fired; on a SUBSEQUENT tick, bump last_fired only if the slot's delivery artifact (notebook mtime > dispatched_at, or a per-slot delivery marker) advanced, else re-offer the slot (bounded retry budget to avoid thrash). (B) POST-SPAWN short delivery poll before the Step 5b write (bounded, < tick budget). (C) artifact-driven cadence — derive 'last delivered' from the slot's real delivery artifact mtime rather than a dispatch-stamped field, making last_fired advisory. Architect picks; BA decomposes into dev-ready fix_spec+files. cowork-schedule.json is _maintained_by agent-father via architect brief ONLY (never direct edit) — flow-doc + matcher changes route to dev-mcp-server / agent-father per the split.",
+        "generic_mandate": "Cadence suppression MUST be gated on DELIVERY PROOF, not dispatch success, for ALL fire-and-forget cowork slots (not just news-scout) — a slot whose spawn dispatched but never delivered must remain due. Applies to every */4h + guaranteed slot in cowork-schedule.json. No hardcoded slot lists — derive from the schedule.",
+        "verification_gate": "Simulate a slot whose spawn DISPATCHES successfully but produces NO delivery artifact (no notebook mtime advance / no marker) within the delivery window -> last_fired is NOT advanced (or the slot is re-offered next tick) AND the matcher re-offers it on the next cron period; a slot that DOES deliver advances last_fired exactly once and is correctly suppressed. Both behaviors covered by cowork-match-slots.test.js (or its successor). Confirm no re-fire thrash on a slow-but-eventually-delivering spawn (bounded retry).",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "depends": [],
+        "distinct_from": "FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER (done_verified 30b9a7f8) was a stale-base read-modify-write clobbering OTHER slots' stamps, fixed by a monotonic forward-only guard. THIS defect is a SINGLE slot's last_fired advanced on dispatch-success when its OWN delivery never occurred — the monotonic guard does NOT catch it (the bumped value is genuinely forward-moving, just unbacked by delivery).",
+        "source": "PO file-channel triage of cowork-dispatcher signals cowork-team-2026-06-26T00:19Z.json (cowork_spawn_completion, KNOWN-DEFECT corroborated) + cowork-team-2026-06-26T00-22Z-blind-correction.json. RAW-verified against docs/agents/cowork-team/flow/last-fired.md Step 5b. PLAN-ONLY, NOT promoted to ready (WIP=0). Recurring correctness defect (2nd observed instance after bctc-analyst-slot-3).",
+        "created_at": "2026-06-26T04:56:14Z",
+        "created_by": "po-s120"
       }
     ],
     "closed_sprints": [
