@@ -2,6 +2,16 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c448 · 2026-06-26T20:41:52Z
+### Audit Run Tier-1 (20:41–20:42 UTC 2026-06-26) — Runtime Ping
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK
+- RAW-PROBE (20:41:52Z):
+  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 26 minutes" (healthy, rebuilt); others "Up 23 hours" (healthy)]
+  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK
+  - [health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 12.70% (fresh post-rebuild baseline, FIX-MCP-MEMORY-CODE-LEAK tracked) | A-32 Disk: 24% PASS
+- Anomalies: 0 NEW (all A-xx checks PASS; dedup baseline applies) | Status: HEALTHY
+
 ## c447 · 2026-06-26T20:12:19Z
 ### Audit Run Tier-1 (20:11–20:12 UTC 2026-06-26) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK
@@ -45,12 +55,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
   - A-20-PROBE-1: HTTP 200 | A-20-PROBE-2: HTTP 200 | A-20-PROBE-3: HTTP 200 → 3/3 PASS
 - A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 53.11% (vs 51.23%@18:11, +1.88pt; ~6pt/h leak FIX-MCP-MEMORY-CODE-LEAK tracked, rebuild threshold ~70%) | A-32 Disk: 24% PASS
 - Anomalies: 0 NEW (all A-xx checks PASS; dedup baseline applies) | Status: HEALTHY
-
-## c443 · 2026-06-26T18:31:45Z
-### Audit Run Tier-2 (18:31–18:31 UTC 2026-06-26) — Freshness Sweep
-- Tier: 2 | Cron jobs: 100+ @ 100% success (A-29: PASS) | Sources: 7 checked | VPS routes: 4 checked | Rate limits: 14 OK
-- Cron fire gaps: NONE (all jobs firing on schedule, 100% success rate)
-- Per-source freshness: prices/news/sbv OK | bctc stale (dedup: off-season Q1→Q2 inter-quarter idle; tracked FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP)
-- VPS proxy: 3/4 UP (prices/news/sbv active; bctc 2026-06-16 last push — healthy idle, queue=0 gate applies, NOT CRITICAL)
-- DB spot checks: C-06 (0 msgs 3h, off-hours PASS) | C-07 (158 signals 24h PASS) | B-09 (0 SSC URLs PASS) | B-13 (0 stale pending PASS)
-- Anomalies: 0 NEW | Status: HEALTHY
