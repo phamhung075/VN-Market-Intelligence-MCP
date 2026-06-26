@@ -238,8 +238,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-25T22:37:11Z",
-    "_updated_by": "po-dbsweep-r5-triage",
+    "_updated_at": "2026-06-26T04:33:13Z",
+    "_updated_by": "po-s118",
     "archive": [
       {
         "from": "system-auditor",
@@ -851,6 +851,34 @@
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606260300",
+        "ts": "2026-06-26T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-26T04:33:13Z",
+        "resolved_by": "po-s118",
+        "resolution": "NOT a blind-run stale lock. RAW task_list_held: esc-datacov:FPT:Q1-2026:ESC-3 is ACTIVE (owner bctc-analyst, claimed 2026-06-24 PRE-outage, expires 2026-07-02, TTL 8d) — an INTENTIONAL ESC-3 data-coverage escalation lock with NO task_board row BY DESIGN (esc-datacov:* is not a task). NOT released (would drop a live ~6-day-remaining escalation). Recurring D4 blind-spot false-positive (prior dismissals po-s103/po-s76/po-s95). Durable fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE + FU-AUDITOR-D4-SIGNAL-ID (backlog)."
+      },
+      {
+        "id": "sau-d4-202606260300",
+        "ts": "2026-06-26T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock bctc-analyst-slot-2:2026-06-25 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-26T04:33:13Z",
+        "resolved_by": "po-s118",
+        "resolution": "stale lock from blind bctc-analyst run during MCP-disconnect; RAW task_list_held shows it already GC'd/expired (not present). task_release(owner_agent=bctc-analyst) returned ok:false (TTL expired) — LET-EXPIRE per lock-orphaned-by-rebuild lesson. No board row needed."
+      },
       {
         "id": "sau-d4-202606250300-a",
         "ts": "2026-06-25T03:00Z",
@@ -2401,8 +2429,68 @@
         "type": "signal_feedback",
         "summary": "A-12 FAIL: api-gateway health endpoint unreachable (HTTP CURL_ERR)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-26T04:33:13Z",
+        "resolved_by": "po-s118",
+        "resolution": "FALSE NOW — Docker host outage (~22:11Z 06-25) + Claude-session MCP-disconnect transient. Router RAW-verified gateway+api-gateway LIVE 04:27Z post-reconnect: get_market_snapshot VN-Index 1856.14 -0.37%, breadth 76/211/55 written 2026-06-26T04:27:20Z. No task minted."
+      },
+      {
+        "id": "sau-2026-06-26T00:31:41Z",
+        "ts": "2026-06-26T00:31:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "doc_size_breach",
+        "summary": "task_board overflow: 248 items (cap 80)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "read_at": "2026-06-26T04:33:13Z",
+        "read_by": "po-s118",
+        "triage_note": "FALSE-CRITICAL framing. RAW: predicate [.task_board.active_sprints[].tasks[]]|length=248 fired as designed (flow/main.md:399), but 242/248 (~97.6%) carry TERMINAL status (163 DONE, 40 DONE-LIVE-VERIFIED, 14 done, 7 done_verified + closed/cancelled/superseded); active WIP (ready+in_progress+qa+review)=1. The 80-cap counts lifetime-accumulated CLOSED sprint tasks, not active WIP, and emits CRITICAL doc_size_breach when the design action is the routine pm task-archive sub-flow. Minted FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY (P3/LOW, backlog, PLAN-ONLY)."
+      },
+      {
+        "id": "sau-2026-06-26T00:31:41Z-c06",
+        "ts": "2026-06-26T00:31:41Z",
+        "from": "system-auditor",
+        "to": "dev-mcp-server",
+        "type": "db_integrity_breach",
+        "summary": "C-06 market_messages 0 in 3h (expect >0)",
+        "severity": "WARN",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-26T04:33:13Z",
+        "resolved_by": "po-s118",
+        "resolution": "off-hours+outage transient — fired 00:31Z (pre-market 07:31 GMT+7) inside the host-outage window; expected 0. RAW-verified pipeline LIVE post-reconnect: snapshot 04:27Z, agent_signals 7593/7594 fresh (exp 05:00Z), cowork-slot chef-intraday:2026-06-26T04:15Z claimed 04:24Z (market-commentary writer running NOW), 06-25 chef-morning/chef-eod/digest-daily publish-locks present. Off-market C-06 false-positive class already tracked: FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE (ready). No new mint."
+      },
+      {
+        "id": "sau-2026-06-26T00:31:41Z-c08",
+        "ts": "2026-06-26T00:31:41Z",
+        "from": "system-auditor",
+        "to": "dev-mcp-server",
+        "type": "db_integrity_breach",
+        "summary": "C-08 orphaned_alerts: 1 orphans found (expect 0)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "read_at": "2026-06-26T04:33:13Z",
+        "read_by": "po-s118",
+        "router_dup_of": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
+        "triage_note": "1 orphan = known agent_signals alert_id orphan-FK class (record-and-leave; ~220 historical, ~29/day; tracked sau-20260625T1426). CRITICAL severity overstated for a single orphan. Anchored to FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID (backlog). No new mint."
+      },
+      {
+        "id": "sau-2026-06-26T00:31:41Z-c11",
+        "ts": "2026-06-26T00:31:41Z",
+        "from": "system-auditor",
+        "to": "dev-pdf-extractor",
+        "type": "db_integrity_breach",
+        "summary": "C-11 pdf_done: 0 in 48h (expect >0)",
+        "severity": "WARN",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-26T04:33:13Z",
+        "resolved_by": "po-s118",
+        "resolution": "bctc off-season idle — no earnings filing window (Q2 lands Jul-Aug) => no PDF processing. Healthy-Idle Gate, expected-benign. C-11 status-predicate bug (queries status='done' which never exists) separately tracked: FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE (backlog). No new mint."
       }
     ],
     "last_triaged_at": "2026-06-25T22:06:25Z",
@@ -2541,8 +2629,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-25T02:15:29Z",
-    "_updated_by": "po-s112",
+    "_updated_at": "2026-06-26T04:33:13Z",
+    "_updated_by": "po-s118",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -13457,6 +13545,32 @@
         "minted_by": "po",
         "minted_at": "2026-06-25T23:55:29Z",
         "note": "PLAN-ONLY (project_anomaly_task_bridge): minted BACKLOG, NOT promoted to ready (WIP=0). PRIORITY P2 (MEDIUM-HIGH); confirm consumer reads of verified_decision.payload before escalating. Coordinate with the SAME construction site as the DONE alert_id fix + the backlog r5 double-fire — convergence thesis, three defects, one emit site."
+      },
+      {
+        "id": "FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
+        "type": "FIX",
+        "severity": "LOW",
+        "priority": "low",
+        "size": "S",
+        "status": "BACKLOG",
+        "title": "system-auditor Size-cap §4 task_board>80 predicate counts lifetime-accumulated CLOSED sprint tasks, not active WIP -> recurring false-CRITICAL doc_size_breach",
+        "description": "docs/agents/system-auditor/flow/main.md:399 predicate `[.task_board.active_sprints[].tasks[]] | length > 80` fired CRITICAL doc_size_breach at 2026-06-26T00:31:41Z reporting 248 items. RAW status-breakdown of those 248: 242 (~97.6%) carry a TERMINAL status (163 DONE / 40 DONE-LIVE-VERIFIED / 14 done / 7 done_verified + CANCELLED/CLOSED-NO-CHANGE/CLOSED-NOT-REPRO/SUPERSEDED/DEFERRED); only ~6 are non-terminal (2 TODO, 3 BACKLOG, 1 blocked-probe5). Active WIP across ready+in_progress+qa+review = 1. active_sprints[].tasks[] is an append-only accumulation of completed sprint tasks, so this count grows without bound and the >80 gate fires CRITICAL to=po on every scan once enough sprints close. The 80-cap is meant to bound ACTIVE board size, not lifetime sprint history.",
+        "owner": "system-auditor",
+        "next_agent": "ba",
+        "zone": "docs/agents/system-auditor/",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "fix_spec": "Split the §4 size-cap into two checks. (a) ACTIVE-WIP gate: count [.task_board.ready,.task_board.in_progress,.task_board.qa,.task_board.review]|map(length)|add; alert (non-CRITICAL) only when active WIP exceeds a real WIP cap. (b) ARCHIVE-DEBT trigger: when active_sprints[].tasks[] accumulation (preferably excluding terminal-status tasks) exceeds a bloat threshold, route a routine INFO/LOW signal to pm to run the existing task-archive sub-flow (docs/agents/pm/flow/task-archive.md) — NOT a CRITICAL doc_size_breach. Stop counting DONE/done_verified/CANCELLED/CLOSED/SUPERSEDED tasks toward an active-WIP cap.",
+        "generic_mandate": "Count active-WIP lanes for WIP caps; exclude terminal-status tasks; route accumulation-bloat to the routine archive trigger at INFO/LOW severity, never CRITICAL. No hardcoded counts (read from orch-state).",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "depends": [],
+        "sibling_of": "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
+        "distinct_from": "FU-AUDITOR-D4-SIGNAL-ID (D4 held-lock-no-row blind-spot) and the C-06/C-11/C-12/B-11 predicate fixes — this is the §4 size-cap WIP-vs-archival miscount only.",
+        "source": "po triage of sau-2026-06-26T00:31:41Z (CRITICAL task_board overflow 248/cap80) during outage-artifact signal sweep. RAW status-breakdown via jq on orch-state.json. Auditor check-bug, doc/flow-only, no rebuild. PLAN-ONLY, not promoted to ready (WIP=0).",
+        "created_at": "2026-06-26T04:33:13Z",
+        "created_by": "po-s118"
       }
     ],
     "closed_sprints": [
