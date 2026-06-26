@@ -7864,7 +7864,20 @@
         "status": "TODO",
         "title": "Fix mcp-server runtime memory leak: accumulates 87% in 12h despite fresh start at 5%",
         "type": "FIX",
-        "zone": "apps/mcp-server"
+        "zone": "apps/mcp-server",
+        "next_agent": "architect",
+        "plan_only": true,
+        "corroboration_20260626T15Z": {
+          "observed_by": "router",
+          "at": "2026-06-26T15:45:47Z",
+          "verdict": "leak CONFIRMED ongoing — persists despite the 11:18Z rebuild (commit d8978e93-era, image 0a12bd23) which DID deploy the alert_id fix 57a781a1; leak is SEPARATE from the alert_id bug and lives in mcp-server current code",
+          "post_rebuild_creep_pct_of_2GiB_cap": "9.76%@11:42 -> 33%@15:11 -> 36.02%@15:41 (~6pt/h, monotonic, never recovers across readings = genuine leak not working-set noise)",
+          "pre_rebuild_creep_pct": "38% -> 89% over ~7h triggered the OOM-risk incident + emergency rebuild at 11:18Z",
+          "headroom_per_cycle": "~7-8h per rebuild before mem nears OOM",
+          "architect_recon": "heap snapshot diff over ~1h under load; identify the growing retainer. Suspects: unbounded in-memory cache (signal/dashboard/market caches), event-listener accumulation, gateway proxy per-call downstream connection/session handling (dialed-on-demand but possibly not released), retained large payloads",
+          "verification_gate_refined": "heap profile shows the retainer fixed AND mem stays flat (<+/-5pt) over a 6h soak under normal load (supersedes the prior <50%/72h gate)"
+        },
+        "interim_mitigation": "periodic mcp-server rebuild/restart cron (~every 6h) to keep mem under ~70% until the leak is fixed — single-service `docker compose build mcp-server && up -d --no-deps mcp-server` (preserve peers per feedback_rebuild_recreate_destroys_peers). Router has SURFACED this interim option to the user; USER decides whether to arm the cron."
       },
       {
         "created_at": "2026-06-10T04:35:51Z",
