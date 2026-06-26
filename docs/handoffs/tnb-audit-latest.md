@@ -1,67 +1,84 @@
-# TNB Audit — Cycle 98 — 2026-06-17T20:25Z (slot=tnb-audit, MCP BLOCKED — failure mode A)
+# TNB Audit — Cycle 99 — 2026-06-26T20:13Z (slot=tnb-audit, MCP BLOCKED — failure mode A)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **IMPROVING** (G3/G4/G6 cowork-schedule last_fired all updated to today for first time in 3+ cycles; morning+evening dishes PUBLISHED; news-scout 4 cycles EXCELLENT; bctc-analyst c062 GOOD)
+Direction: **STABLE** (layer scores 3.5/6 identical to c98; positive calibration improvement on evening quality verdict; G3/G4/G6 all PASS 4th+ consecutive day)
 
 ---
 
 ## Previous Handoff ACK
 
-c97 handoff (2026-06-16T20:13Z) — **ACK CONFIRMED** — PO ACK at 2026-06-16T21:27Z documented in tnb-audit-latest.md. Tasks: FIX-BCTC-BANK-SCALAR-MAPPING minted (HIGH, backlog). ARCH-HEADLESS-GATEWAY-COWORK-NOPOST on backlog + AC-FAILCLOSED spec authored po-s90.
+c98 (2026-06-24T20:13Z) ran in MCP-unavailable mode — no new handoff written. Last ACK'd handoff = tnb-audit-latest.md (2026-06-17T20:25Z), ACK by PO at 2026-06-17T21:28:33Z. No unACK'd findings pending.
 
 ---
 
 ## Session Mode
 
-MCP gateway not available in this spawned sub-agent session (failure mode A per bootstrap.md — `mcp__claude_ai_gateway__call_tool` not callable in this CLI context). Same pattern as c97, bctc-analyst c063+c064 (2026-06-17T15:00Z + 18:06Z). Systemic issue: multiple cowork sub-agent sessions blocked on 2026-06-17 afternoon/evening.
+MCP gateway not available (failure mode A — `mcp__gateway__call_tool` and `mcp__claude_ai_gateway__call_tool` both return "No such tool available" in this spawned sub-agent session). Same recurrent pattern as c97, c98, bctc-analyst c070, unified-agent morning slots.
 
 File-evidence audit from:
-- unified-agent notebook: Last updated 2026-06-17T19:45Z (morning 05:16Z PUBLISHED, EOD BLOCKED, evening 19:45Z PUBLISHED)
-- cowork-schedule.json: all 3 chef guaranteed slots last_fired updated on 2026-06-17 (MAJOR IMPROVEMENT)
-- bctc-analyst notebook: c062 (00:20Z GOOD), c063/c064 (BLOCKED MCP)
-- news-scout notebook: c111-c114 (4 cycles today, all EXCELLENT)
-- orch-state.json: head.status=idle updated_at=2026-06-17T11:46:39Z
+- unified-agent notebook: 2026-06-26 — evening 19:47Z, EOD 08:50Z, intraday 08:17Z + 07:20Z (all PUBLISHED with markers claimed)
+- cowork-schedule.json: all 3 guaranteed slots last_fired 2026-06-26
+- news-scout notebook: c109-c110 (2026-06-26T05:03-05:05Z)
+- bctc-analyst notebook: c070 (00:02Z MCP blocked), c071 (15:05Z MCP ACTIVE), c072 (18:12Z MCP ACTIVE)
+- market-watcher notebook: 2026-06-26T20:03Z
 
-Live cross-validation SKIPPED. Published marker gate SKIPPED (MCP unavailable). WORK report SKIPPED (MCP unavailable).
-
----
-
-## Chef Pipeline Coverage (Step 0.5) — 2026-06-17 (Tuesday)
-
-| Slot | last_fired (cowork-schedule) | Status |
-|------|------------------------------|--------|
-| chef-morning | 2026-06-17T05:23:00Z | FIRED + PUBLISHED (G3 PASS — first confirmed update 3+ cycles) |
-| chef-intraday | 2026-06-17T06:24:49Z | FIRED (convergence scan) |
-| chef-eod | 2026-06-17T08:50:59Z | FIRED (scheduler side) + UNPUBLISHED (MCP blocked in dish sub-agent session) |
-| chef-evening | 2026-06-17T19:52:52Z | FIRED + PUBLISHED (G6 PASS) |
-
-**G3/G4/G6 STATUS: MAJOR IMPROVEMENT** — all 3 guaranteed slot timestamps updated to today's date in cowork-schedule.json. Vs c97 where all 3 were stale (c97 c96: F-G3-G4-WORSENED). Scheduler-side dedup/update mechanism appears functional.
-
-**EOD dish gap:** The EOD slot fired and updated last_fired but the dish sub-agent session had MCP unavailable — no dish was synthesized or published. This is a separate issue from the scheduler-side update.
-
-`guaranteed_ok = PARTIAL | pipeline_degraded = PARTIAL (EOD unpublished — MCP sub-agent session issue)`
+Layer scores are INDICATIVE — cannot verify via live CHEF-DETAIL WORK or MARKET channel read.
 
 ---
 
-## Primary Audit: 2026-06-17 Dishes (file evidence only — no live WORK/MARKET read)
+## Chef Pipeline Coverage (Step 0.5) — 2026-06-26 (Friday)
 
-**NOTE: Per bootstrap.md and cowork-error-boundary SKILL, no audit findings derived from stale file evidence. Layer scores from file evidence are INDICATIVE only — not auditable without live CHEF-DETAIL WORK read.**
+| Slot | last_fired (cowork-schedule) | Notebook evidence | Status |
+|------|------------------------------|-------------------|--------|
+| chef-morning | 2026-06-26T05:20:40Z | No entry in notebook | FIRED + F-MORNING-NB-MISSING (16th+ cycle) |
+| chef-intraday | 2026-06-26T08:17:18Z | Marker claimed 08:17 (DEGRADED) | FIRED + PUBLISHED |
+| chef-intraday | (07:20Z via notebook) | Marker claimed 07:20 (DEGRADED) | FIRED + PUBLISHED |
+| chef-eod | 2026-06-26T08:49:38Z | Marker claimed 08:50 (DEGRADED) | FIRED + PUBLISHED |
+| chef-evening | 2026-06-26T19:47:37Z | Marker claimed 19:47 (DEGRADED) | FIRED + PUBLISHED |
 
-### Morning 05:16 (PUBLISHED — unified-agent notebook)
-- Notebook reports: Layers 1–6 walked, Quẻ 39 Kiển (caution), carry NEUTRAL is_estimate=false, yield CHEAP +2.05pp, USD/VND 26,113 BEARISH
-- Clusters: banking (gold safe-haven + FX 26,113 > 25,500 → VCB/ACB/BID) + RE (RSI oversold + Vingroup pivot → VIC/VHM/TCH)
-- AF-1/AF-2: OK (qualitative only, no live TA calls)
-- Layer scores: INDICATIVE PASS — cannot verify L2 EFFR-IORB sub-components or L6 gap-catalogue specifics
+`guaranteed_ok = TRUE | pipeline_degraded = FALSE`
 
-### EOD 08:50 (UNPUBLISHED — MCP blocked)
-- No dish synthesized. Notebook: "BLOCKED at Step 0: MCP tool-call mechanism unavailable"
-- No audit possible
+G3/G4/G6 PASS: all 3 guaranteed slot timestamps updated today. 4th+ consecutive day of guaranteed coverage.
 
-### Evening 19:45 (PUBLISHED — unified-agent notebook)
-- Notebook reports: Layers 1–6 walked, Quẻ 39 Kiển (carry-forward from morning), carry NEUTRAL is_estimate=false, FX tightening signal active
-- Clusters: banking FX pressure + RE oversold bounce (same as morning, signal #6403-#6405)
-- Layer scores: INDICATIVE PASS — cannot verify without live read
-- Note: evening macro snapshot reused from 19:13 refresh (notebook says "acceptable for preview window") — MONITORING flag
+---
+
+## Primary Audit: 2026-06-26 Dishes (INDICATIVE — file evidence only)
+
+**NOTE: Per bootstrap.md, no live CHEF-DETAIL WORK read possible. Layer scores are derived from unified-agent notebook self-reports, not from Telegram content audit.**
+
+### EOD 08:50 UTC — 3.5/6 NEEDS_ATTENTION
+
+| Layer | Status | Notes |
+|-------|--------|-------|
+| L1 (state transitions) | PASS | FX 26134 > 25500 BEARISH flagged; volume 2.0–2.3x accumulation/distribution signal |
+| L2 (US macro stack) | FAIL | macro_health snapshot unavailable; PMI/consumer sentiment/EFFR-IORB absent. Structural, 15+ cycles |
+| L3 (VN macro stack) | PARTIAL | USD/VND BEARISH + carry NEUTRAL documented; CPI/VIRA/FX reserves absent |
+| L4 (4-pillar valuation) | PARTIAL | Yield CHEAP (7.05% > 5%) + phase [transition, selective]; 2/4 pillars explicit; M2/EPS mixed |
+| L5 (Kinh Dịch) | PASS | Market Quẻ 36 Minh Di 64% BẤT LỢI; VHM Tỉnh 48 (MUA 56%), VIC Kiển 39 (MUA 61%), GVR Khôn 2 |
+| L6 (gap catalogue) | PASS | [gap: macro_health missing] [gap: technical_indicators unavailable]; conviction MEDIUM |
+
+Business context: ABSENT (F9, 25th+ cycle)
+
+### Evening 19:47 UTC — 3.5/6 NEEDS_ATTENTION
+
+| Layer | Status | Notes |
+|-------|--------|-------|
+| L1 (state transitions) | PASS | FX > 25500 causal chain documented; volume 2.0–2.3x; macro-micro contradiction noted |
+| L2 (US macro stack) | FAIL | macro_health estimate unavailable — structural (same as EOD) |
+| L3 (VN macro stack) | PARTIAL | USD/VND BEARISH + carry NEUTRAL; CPI/VIRA absent |
+| L4 (4-pillar valuation) | PARTIAL | 3/4 pillars aligned (improvement over EOD); [gap: BCTC earnings]; phase recovery, tier equity |
+| L5 (Kinh Dịch) | PASS | Quẻ 36 Minh Di NEGATIVE; per-ticker signals cited; macro-micro contradiction flagged not suppressed |
+| L6 (gap catalogue) | PARTIAL | Gaps enumerated (carry, TA, fundamental); less formal than EOD; conviction MEDIUM |
+
+Business context: ABSENT (F9)
+
+**POSITIVE: Evening quality verdict = DEGRADED (correct self-assessment). In c98 this was incorrectly "full". Calibration improvement confirmed this cycle.**
+
+---
+
+## Adversarial Gate (T-45)
+
+`adversarial_gate = PASS` — macro-micro contradiction between market Quẻ 36 Minh Di (BẤT LỢI/NEGATIVE 64%) and per-ticker BUY signals (VHM Tỉnh MUA, VIC Kiển MUA) explicitly noted and NOT suppressed in both EOD and Evening dishes. The contradiction is flagged as part of L6 gap awareness. Model: Báu vs Thành adversarial cross-examination met via hexagram-vs-price-action contradiction surface.
 
 ---
 
@@ -69,90 +86,87 @@ Live cross-validation SKIPPED. Published marker gate SKIPPED (MCP unavailable). 
 
 | # | Issue | Agent/Module | Severity | Category | Status |
 |---|-------|-------------|----------|----------|--------|
-| F-EOD-MCP-BLOCKED-20260617 | Chef-EOD sub-agent session (08:50Z) blocked at Step 0 — MCP gateway call_tool unavailable. Scheduler updated last_fired but dish never published. Same failure class as bctc-analyst c063+c064. Systemic MCP-gateway-unavailable in sub-agent contexts 2026-06-17 afternoon. Root: session context issue (sub-agent spawn context lacks MCP registration). | unified-agent / sub-agent MCP context | HIGH | infra | NEW c98 |
-| F-MCP-SUBAGENT-SYSTEMIC-2026-06-17 | Multiple cowork sub-agents blocked on MCP gateway on 2026-06-17: bctc-analyst c063 (15:00Z), c064 (18:06Z), tran-ngoc-bau c98 (20:25Z). Pattern: afternoon/evening sessions affected. Morning sessions appear to have worked (bctc c062 at 00:20Z, unified-agent morning at 05:16Z). May be related to MCP session evaporation / stale session after a midday event. | MCP gateway / sub-agent spawn | HIGH | infra | NEW c98 — escalate to ops |
-| F3 | PMI sub-components absent — persistent c82–c98 | unified-agent | MED | methodology | Structural — no tool delivers sub-components |
-| F4 | VIRA absent — persistent | unified-agent | MED | methodology | VPS scraper pending |
-| F9 | Business context absent — 24th consecutive cycle | unified-agent / chef | MED | methodology | Linked to BCTC scalar mapping fix |
-| F-BCTC-BANK-SCALAR-MAPPING | Bank B02-TCTD scalar summarizer: net_margin_pct=229157%, total_assets=0. FIX-BCTC-BANK-SCALAR-MAPPING minted (HIGH). CTG cycle 35+ CRITICAL. | dev-pdf-extractor / dev-mcp-server | HIGH | data-serve-integrity | CARRY-FORWARD — c97 MINTED |
-| F-MORNING-NB-MISSING | Morning notebook entry pruned — 15th+ consecutive cycle | unified-agent | MED | infra | NB-PRUNE-FIX open sprint |
-| F-GOLD-THRESHOLD-BREACH | Gold >$4,300 auto-cure gate — DEFERRED (MCP unavailable, cannot read CHEF-DETAIL WORK) | unified-agent | MED | methodology | DEFERRED to c99 |
-| F5 | Market hexagram — MONITORING (Quẻ 39 Kiển reported in both morning+evening via notebook) | kinh-dich-service | LOW | infra | MONITORING |
+| F-MORNING-NB-MISSING | Morning slot FIRES (cowork-schedule 05:20Z) but no notebook entry written — 16th+ consecutive cycle. Root: 200L notebook cap + 5 daily sessions → morning entry pruned. | unified-agent / notebook-prune | MED | infra | CARRY-FORWARD — NB-PRUNE-FIX open sprint |
+| F2 | L2 US macro stack structural fail — macro_health snapshot unavailable in all dishes, 15+ cycles. PMI sub-components and EFFR-IORB absent. | unified-agent / macro_health tool | MED | methodology | Structural — dev tool fix required |
+| F4 | L3 VN macro: VIRA absent, carry only (source_tier 2). CPI/FX reserves absent. | unified-agent / VPS VIRA scraper | MED | methodology | VPS scraper pending |
+| F9 | Business context absent — 25th consecutive cycle. No product/customer/ops/mgmt from bctc_signal_*/fundamental_*. | unified-agent / bctc-pipeline | MED | methodology | Linked to BCTC scalar fix |
+| F-HPG-DB-EMPTY | HPG Q1-2026 DB trống cycle 9 (filed 2026-06-07, 19d elapsed). BUG msg 3060 escalated c071. No dev fix yet. | dev-pdf-extractor | HIGH | data-serve-integrity | CARRY-FORWARD — awaiting dev fix |
+| F-ACV-DB-EMPTY | ACV Q1-2026 DB trống cycle 16 (filed 2026-06-16, 10d elapsed). P1 unresolved (c065). | dev-pdf-extractor | HIGH | data-serve-integrity | CARRY-FORWARD — P1 escalation unresolved |
+| F-12-TICKERS-OVERDUE | 12 tickers QUÁN HẠN Q1-2026 (BDI/BID/DAG/DLC/GAS/JSH/PLX/PPC/SIS/VDC/VEA/VNH). Q2 deadline 2026-07-31 (35d). | bctc-pipeline / dev | MED | data-serve-integrity | MONITORING — deadline approaching |
+| F-VCB-KD-TREND | VCB KD changed Quẻ Bóc (23) BẤT LỢI at c072 (from Khôn-2, stable c061-c071). First trend change in 11 cycles. | bctc-analyst / kinh-dich | MED | signal-quality | NEW c99 — confirm c073 |
+| F-PC1-LEGAL-RISK | PC1/Rox Energy disclosure violation — signal #7597 confidence 0.85. Utilities peer compliance watch (PPC/JSH/REE). | news-scout | MED | legal-risk | NEW c99 — monitor cascade |
 
-### Closed/Improved this cycle
+### Closed/Improved This Cycle
+
 | # | Issue | Verdict |
 |---|-------|---------|
-| F-G3-G4-WORSENED (c97) | cowork-schedule last_fired stale for all 3 guaranteed slots — IMPROVED: all 3 now show today's timestamps (05:23Z / 08:50Z / 19:52Z). F-G3-G4 appears RESOLVED at scheduler level. | IMPROVED — MONITORING (confirm continuity c99) |
+| F-EVENING-QUALITY-OVERCLAIM (c98) | Evening self-assessment now correctly DEGRADED (was "full" in c98 while L2/L4/L6 were partial). | IMPROVED — MONITORING (confirm c100) |
+| G3/G4/G6 stale cowork-schedule | All 3 guaranteed slots updated today (4th+ consecutive day). | CONFIRMED STABLE |
 
 ---
 
-## Agent Methodology Scores (c98 — indicative only, no live read)
+## Agent Methodology Scores (c99 — INDICATIVE)
 
-| Agent | Evidence | Verdict |
-|-------|----------|---------|
-| unified-agent (morning) | Notebook: 1–6 complete, carry is_estimate=false, phase declared [slowdown/transition], Kinh Dịch live | INDICATIVE GOOD — unverifiable without CHEF-DETAIL WORK |
-| unified-agent (evening) | Notebook: 1–6 complete, same clusters as morning, AF-GATE OK | INDICATIVE GOOD — unverifiable |
-| news-scout | c111-c114: 4 cycles, all critic_pass=0.8, dedup CLEAN, regime calibration correct | EXCELLENT (4 cycles 2026-06-17) |
-| bctc-analyst | c062 (00:20Z): M-score=0 F-score=7 FPT GOOD. c063/c064 BLOCKED. | c062 GOOD — afternoon BLOCKED |
-| market-watcher | Notebook stale (last 2026-06-15). No today entry visible. | MONITORING — notebook stale |
+| Agent | Cycles | 9-step Score | Verdict |
+|-------|--------|-------------|---------|
+| unified-agent (EOD) | 2026-06-26 08:50Z | 4/9 (D✗ E✗ F-partial; B✓ C✓ H✓) | NEEDS_ATTENTION (structural D/E/F gaps) |
+| unified-agent (Evening) | 2026-06-26 19:47Z | 4/9 (same pattern) | NEEDS_ATTENTION |
+| news-scout | c109-c110 (05:03-05:05Z) | GOOD — critic≥0.8 all, regime correct, causal chains present | GOOD (4th+ cycle EXCELLENT) |
+| bctc-analyst | c071-c072 (15:05Z, 18:12Z) | GOOD — forensic gates (M-score, F-score, OCF/NI) applied, escalations maintained | GOOD |
+| market-watcher | 20:03Z cycle | GOOD — regime NEUTRAL, breadth negative (125↑/196↓) correctly noted | GOOD |
 
----
-
-## Adversarial Gate (T-45)
-
-**adversarial_gate = CARRY-FORWARD PASS** — VIC inverted causality explicitly flagged in c97 evening dish (hexagram BUY vs price SELL). That event is within 7-day window (2026-06-16). Gate = PASS until next weekly reset.
-
-Log: `[adversarial] gate=PASS — carry-forward from c97 VIC inverted-causality challenge (2026-06-16). Verify live evidence in c99 once MCP restored.`
+Top gap pattern: D+E persistent structural (macro_health + VIRA) → 4/9 floor on unified-agent. Needs dev tool fix, not flow fix.
 
 ---
 
-## Auto-Cures Applied (c98)
+## Auto-Cures Applied (c99)
 
-None. F-GOLD-THRESHOLD-BREACH auto-cure gate deferred (MCP unavailable — cannot read live CHEF-DETAIL WORK). All other gaps require dev tasks or additional monitoring.
+None applied. All current methodology gaps are either:
+1. Structural / require dev tasks (macro_health, VIRA, BCTC scalar)
+2. Below 3-cycle threshold for specific new errors
+
+**Pending verification for c100:** Was c98 auto-cure proposal (evening quality gate) formally applied to unified-agent chef flow? Today's evidence (quality=DEGRADED) suggests it may be working correctly now. Verify via `docs/agents/unified-agent/flow/chef.md` step 8 quality gate check.
 
 ---
 
 ## Persisting Blockers
 
-1. **F-MCP-SUBAGENT-SYSTEMIC-2026-06-17 (HIGH, NEW):** Multiple cowork sub-agents (bctc-analyst c063/c064, tnb-audit c98) blocked on MCP gateway in afternoon/evening sub-agent sessions. Root investigation needed: ops/dev to check MCP session lifecycle + sub-agent spawn context. NOT reported as fleet down (morning sessions worked).
-2. **F-EOD-MCP-BLOCKED-20260617 (HIGH, NEW):** EOD dish not synthesized. Scheduler fired + updated last_fired but dish sub-agent MCP unavailable.
-3. **F-BCTC-BANK-SCALAR-MAPPING (HIGH, carry-forward):** Bank B02-TCTD scalar columns garbage. FIX-BCTC-BANK-SCALAR-MAPPING minted (po-s91). CTG cycle 35+ CRITICAL.
-4. **ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (CRITICAL class):** AC-FAILCLOSED spec authored (po-s90). agents-architect→agent-father lane. Chef.md Step 0.5 FAIL-CLOSED gate not yet shipped. Related to F-MCP-SUBAGENT issue.
-5. **VIRA scraper pending (MED):** Layer 3 E-gap — every cycle.
-6. **PMI sub-components absent (MED):** Layer 2 D-gap — every cycle.
-7. **F9 business context (MED, 24th cycle).**
-8. **F-MORNING-NB-MISSING (MED, 15th+ cycle):** NB-PRUNE-FIX in open_sprints.
+1. **F-MORNING-NB-MISSING (MED, 16th+ cycle):** NB-PRUNE-FIX in open sprints. Morning fires but notebook gets pruned by 200L cap.
+2. **F2 macro_health structural (MED):** L2 US macro stack absent every dish. macro_health tool degraded — dev task required.
+3. **F4 VIRA absent (MED):** VPS VIRA scraper not yet deployed. Layer 3 E-gap every cycle.
+4. **F9 business context absent (MED, 25th cycle):** BCTC scalar mapping fix prerequisite.
+5. **F-HPG-DB-EMPTY (HIGH, 19d elapsed):** BUG escalated msg 3060. Awaiting dev fix.
+6. **F-ACV-DB-EMPTY (HIGH, 10d elapsed):** P1 c065 unresolved. Two HIGH-priority data gaps.
+7. **F-12-TICKERS-OVERDUE (MED):** Q2 deadline 2026-07-31. 35 days to avoid repeat overdue wave.
+8. **MCP sub-agent session gap (ongoing):** tran-ngoc-bau audit cycles unable to use MCP gateway. Same class as ARCH-HEADLESS-GATEWAY-COWORK-NOPOST. Cannot send Telegram reports or claim publish mutex.
 
 ---
 
-## Positive Signals (c98)
+## Positive Signals (c99)
 
-- **G3/G4/G6 PASS — cowork-schedule last_fired all updated today.** MAJOR IMPROVEMENT vs c97 where all 3 were stale. Scheduler-side FIX-COWORK-GUARANTEED-BACKSTOP appears durable for 3rd+ consecutive day.
-- **Morning+evening dishes PUBLISHED** — only EOD missed (sub-agent MCP issue).
-- **news-scout EXCELLENT** — 4 cycles 2026-06-17, all 4 signals critic_pass=0.8. MWG insider (+founder buying ahead of IPO deadline), SSI ESOP capital raise, POW LNG expansion, gold safe-haven macro. Coverage clean.
-- **bctc-analyst c062 GOOD** — M-score=0 F-score=7 FPT, forensic gates applied (00:20Z cycle).
-- **Carry NEUTRAL is_estimate=false** — confirmed in morning+evening unified-agent sessions. Signal quality discipline maintained.
+- **G3/G4/G6 PASS — 4th+ consecutive day.** All 3 guaranteed slots fired + published today. Scheduler health durable.
+- **Evening quality verdict DEGRADED (correct).** Calibration improvement from c98 overclaim. Chef now correctly self-assesses when L2/L4/L6 are partial.
+- **news-scout EXCELLENT** — 7 signals on 2026-06-26 (PC1 legal_risk, VPB refinancing, VHM bond 6T, banking restructuring, VIC court win, energy infra 32T, tech/FII). All critic_pass≥0.8. Causal chains complete.
+- **bctc-analyst GOOD (MCP ACTIVE c071-c072)** — FPT F=7 M=0 cycle 33 stable. VCB OCF/NI=1.37 LÀNH MẠNH. Forensic gates clean.
+- **Adversarial gate PASS** — macro-micro contradiction explicitly noted and not suppressed in both dishes.
+- **Quẻ 36 Minh Di internally consistent** — EOD and Evening agree on market hexagram signal. Per-ticker signals coherent.
+- **VHM +3.51% RE sector catalyst explained** — FII inflow (news_impact) + bond raise 6T VND + Lotte/Phát Đạt smartcity = coherent bullish thesis with acknowledged contradictions.
 
 ---
 
-## Next Cycle Priorities (c99)
+## Next Cycle Priorities (c100)
 
-1. **F-MCP-SUBAGENT-SYSTEMIC investigation (CRITICAL):** ops/dev diagnose why afternoon/evening sub-agent sessions lack MCP gateway. Check MCP session lifecycle + spawn context (may be related to ARCH-HEADLESS-GATEWAY-COWORK-NOPOST root). Report to PO.
-2. **AC-FAILCLOSED sprint dispatch:** agents-architect review + agent-father flow edit for chef.md Step 0.5 FAIL-CLOSED gate. Check orch-state HEAD for dispatch status.
-3. **F-GOLD-THRESHOLD-BREACH auto-cure gate:** Once MCP restored, read CHEF-DETAIL WORK morning dish — if gold >$4,300 not cited as explicit L6 gap → apply auto-cure.
-4. **F-BCTC-BANK-SCALAR-MAPPING:** Check bctc-analyst notebook for CTG/VCB scalar result — any improvement?
-5. **G3/G4/G6 continuity:** Confirm 4th consecutive day cowork-schedule last_fired updated.
+1. **Verify evening-quality-overclaim auto-cure status** — read unified-agent chef.md step 8 quality gate. Confirm formal fix or log as ongoing structural gap.
+2. **F-VCB-KD-TREND-CHANGE confirmation** — bctc-analyst c073 should clarify if Quẻ Bóc (23) BẤT LỢI is sustained.
+3. **F-HPG-DB-EMPTY + F-ACV-DB-EMPTY** — check bctc-analyst c073+ for resolution.
+4. **F-12-TICKERS-OVERDUE countdown** — 35 days to Q2 deadline; flag to PO if not progressing.
+5. **MCP sub-agent session gap** — if MCP not available c100, escalate via signal file to ops for ARCH-HEADLESS priority.
 
 ---
 
 ## PO ACK
-- Read by: po
-- At: 2026-06-17T21:28:33Z
-- Tasks created: none (no new dispatch)
-- Disposition:
-  - **F-MCP-SUBAGENT-SYSTEMIC-2026-06-17 (HIGH) + F-EOD-MCP-BLOCKED-20260617 (HIGH)** → DEDUP into `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST` (backlog, agents-architect, dispatch_gate=monday). Router RAW-proved gateway UP first-hand this tick (emit_pressure_state round-trip @21:06:31Z). NOT a real outage — local-spawn connector artifact (sub-agent toolset `mcp__gateway__call_tool` not wired in the local CLI session; cloud RemoteTrigger path HAS the connector — bctc c062 00:20Z succeeded). Same class as the already-tracked epic; folded as a recurrence data-point. No new gateway-fix dispatch, no ops spawn, no double-post risk (published-marker gate intact).
-  - **2026-06-17 chef AF-gate false-green (gold 4360 vs live 4245.9, invented RSI on closed market)** → already covered: `FIX-CHEF-FABRICATED-TA-NUMBERS` (done_verified, invented-RSI root) + the `AC-FAILCLOSED` clause folded into ARCH-HEADLESS epic (AF-gate PASS-while-blocked / fail-open marker gate). The pending c99 reconcile (AC-FAILCLOSED / chef-double-post) resolves to: AC-FAILCLOSED ships via the Monday-gated ARCH-HEADLESS design lane → agents-architect → agent-father; NOT a new FIX this tick.
-  - F-BCTC-BANK-SCALAR-MAPPING (HIGH) → already minted (FIX-BCTC-BANK-SCALAR-MAPPING, po-s91, backlog). Carry-forward.
-  - F3/F4/F9/F-MORNING-NB-MISSING/F5 (MED/LOW) → structural/methodology, tracked in open sprints; no new task (capacity gated — WIP already at 2 coding lanes).
-- Positive ack: G3/G4/G6 PASS (cowork-schedule last_fired all updated today, 1st time 3+ cycles); morning+evening dishes PUBLISHED; news-scout 4 cycles EXCELLENT; bctc c062 GOOD. Direction IMPROVING acknowledged.
-- Skipped findings: none — all routed (deduped or capacity-deferred).
+2026-06-26T22:44:38Z (dev-team tick) — ACK c99 NEEDS_ATTENTION/STABLE. All findings already tracked on board; no new mints.
+- F-HPG-DB-EMPTY (HIGH, 19d) + F-ACV-DB-EMPTY (HIGH, 10d): root = FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP (P1, apps/mcp-server/, RECON-FIRST). PROMOTED backlog→dev-team this tick (WIP was 0). HPG-DISCOVER-CONSOLIDATED-PDF / HPG-REPARSE-POST-REBUILD remain TODO sub-tasks.
+- F2 macro_health (L2) / F4 VIRA (L3) / F9 business-context: structural dev-tool gaps already on backlog (FIX-MACRO-INDICATORS-EMPTY-COLUMNS, VIRA scraper, BCTC scalar). Carry-forward, no action this tick.
+- F-MORNING-NB-MISSING (16th cycle): NB-PRUNE-FIX open. F-VCB-KD-TREND / F-PC1-LEGAL-RISK: signal-quality/legal monitor-only, NOT dev work.
+- POSITIVE noted: evening quality verdict now correctly DEGRADED (calibration fix holding); G3/G4/G6 4th+ consecutive day.
