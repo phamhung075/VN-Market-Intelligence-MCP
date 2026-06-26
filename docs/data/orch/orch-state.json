@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-26T15:28:08Z",
-  "_updated_by": "pm",
+  "_updated_at": "2026-06-26T16:03:29Z",
+  "_updated_by": "developer",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -26211,22 +26211,7 @@
       "updated_by": "dev-team-router",
       "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
     },
-    "in_progress": [
-      {
-        "id": "HSC-1",
-        "title": "Create cold archive directory + orch-cold-evict.sh script",
-        "zone": "scripts/",
-        "owner": "developer",
-        "priority": "high",
-        "size": "S",
-        "type": "SPRINT-S",
-        "created_at": "2026-06-26T15:28:08Z",
-        "created_by": "pm",
-        "status": "IN_PROGRESS",
-        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "depends_on": null
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -26248,6 +26233,22 @@
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
         "po_reparked_at": "2026-06-15T06:35:17Z"
+      },
+      {
+        "id": "HSC-1",
+        "title": "Create cold archive directory + orch-cold-evict.sh script",
+        "zone": "scripts/",
+        "owner": "developer",
+        "priority": "high",
+        "size": "S",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "REVIEW",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": null,
+        "reviewed_at": "2026-06-26T16:03:29Z",
+        "reviewed_by": "developer"
       }
     ],
     "qa": [],
@@ -26272,8 +26273,8 @@
     "last_triaged_at": "2026-06-26T15:26:11Z",
     "last_triaged_by": "po"
   },
-  "updated_at": "2026-06-26T10:40:46Z",
-  "updated_by": "po",
+  "updated_at": "2026-06-26T16:03:29Z",
+  "updated_by": "developer",
   "meta": {
     "updated_at": "2026-06-26T05:31:34Z",
     "updated_by": "po",
