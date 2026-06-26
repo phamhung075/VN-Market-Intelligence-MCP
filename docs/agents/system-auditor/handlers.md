@@ -2,7 +2,7 @@
 
 # System Auditor — Handler Reference
 
-<!-- size-justification: ~102L — handler reference with one operational section per audit category; tightly coupled trigger/step/emit triples. +2L: expired:false filter + rationale line in Step R-1 (D4 false-positive fix). -->
+<!-- size-justification: ~112L — handler reference with one operational section per audit category; tightly coupled trigger/step/emit triples. +2L: expired:false filter + rationale line in Step R-1 (D4 false-positive fix). +10L: HSC-7 signal_queue cold-file scan note (D6 stub). -->
 
 ---
 
@@ -200,3 +200,37 @@ No WORK message, no DASHBOARD row.
 | D5-AC-2 | Any notebook > 150L → WORK telegram sent within the same Tier-2 cycle |
 | D5-AC-3 | Zero violations → no WORK message (no false positives) |
 | D5-AC-4 | Dedup: same notebook fires at most once per calendar day |
+
+---
+
+## D6: signal_queue Full-History Scan — Cold File Protocol (HSC-7)
+
+**Dimension:** D6 (stub — activate when full-history signal audit is needed)
+**Source brief:** `docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md §5.3`
+
+### Cold file contract (post-HSC-7)
+
+After HSC-7 activates, `signal_queue.rows[]` in the hot file contains ONLY active rows (status `NEW` or `TRIAGED`, or terminal rows younger than 24h). Historical terminal rows are in the cold archive.
+
+**Any full-history signal scan MUST load the cold file lazily:**
+```bash
+# Hot file — active rows only (NEW / < 24h terminal)
+jq '.signal_queue.rows[]' "$PROJECT_ROOT/docs/data/orch/orch-state.json"
+
+# Cold file — historical rows (load ONLY for forensic audit; NEVER in hot-path planning)
+YYYYMM=$(date -u +%Y-%m)
+COLD_FILE="$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
+if [ -f "$COLD_FILE" ]; then
+  jq '.signal_rows[]' "$COLD_FILE"
+fi
+```
+
+**DO NOT** scan only `signal_queue.rows[]` when doing a full-history audit — that will miss all pruned rows.
+**DO NOT** load the cold file in routine hot-path passes — it grows unboundedly and is not on the hot path.
+
+### Failure modes
+
+| Failure | Behavior |
+|---|---|
+| Cold file missing for current month | Log INFO: no cold rows yet for this month; hot rows only |
+| Cold file invalid JSON | Log WARN + BUG telegram; skip cold scan for this pass |

@@ -1,6 +1,6 @@
 ---
 name: signal-dashboard
-description: SSOT protocol for cowork agent signal communication via docs/data/orch/orch-state.json .signal_queue.rows[]. Covers write, read, ack, close, and prune operations. READ uses two-phase delta-read to eliminate full-file token cost.
+description: SSOT protocol for cowork agent signal communication via docs/data/orch/orch-state.json .signal_queue.rows[]. Covers write, read, ack, close, and prune operations. READ uses two-phase delta-read to eliminate full-file token cost. HSC-7 — PRUNE now evicts to cold file; signal_queue.archive[] lane removed.
 ---
 <!-- size-justification: ≤120L — hot-path only; Payload Pointer Discipline + Docs-to-read table moved to reference.md (load when writing large-payload signals or routing by type) -->
 
@@ -83,15 +83,27 @@ No cache → skip Phase 1, go straight to Phase 2. Missing orch-state.json or ab
 
 ---
 
-## PRUNE — MANDATORY after every drain/consume cycle
+## PRUNE — MANDATORY after every drain/consume cycle (HSC-7)
 
-Archive rows where `status == "RESOLVED" || (status == "READ" && ts < now() - 48h)` to `.signal_queue.archive[]`.
-Remove archived rows from `.signal_queue.rows[]`.
-Update `.signal_queue._updated_at` + `._updated_by`.
-Max 200 rows in `.signal_queue.rows[]` — prune oldest resolved/read first if approaching limit.
-NEW rows are NEVER pruned. This step is mandatory, not optional.
+Evict terminal rows to cold archive via `scripts/orch-cold-evict.sh` (NOT inline `archive[]` — lane removed).
 
-→ Full prune procedure: `.claude/skills/signal-dashboard/dashboard-protocol.md § PRUNE`
+**Criteria:** status IN (`READ`, `RESOLVED`, `SUPERSEDED`) AND row `ts` older than 24h.
+
+```bash
+bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"
+# Script evicts matching signal_queue.rows[] → docs/data/orch/archive/YYYY-MM.json (append-only)
+# Removes evicted rows from hot file .signal_queue.rows[] atomically.
+# signal_queue.archive[] is always fully cleared by the script (RC-1 fix: inline archive = dead weight).
+```
+
+**NEW rows are NEVER pruned.** Eviction failure → log BUG; skip prune; do not fail the drain cycle.
+
+**Full-history audit:** Historical signal rows live in `docs/data/orch/archive/YYYY-MM.json` (cold file).
+System-auditor forensic scans MUST load the cold file lazily (never load in hot planning path).
+
+Max 200 rows in `.signal_queue.rows[]` — if approaching limit without PRUNE running, call script immediately.
+
+→ Full prune procedure (including inline-jq equivalent): `.claude/skills/signal-dashboard/dashboard-protocol.md § PRUNE`
 
 ---
 

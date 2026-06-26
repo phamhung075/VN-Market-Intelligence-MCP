@@ -1,10 +1,10 @@
-<!-- size-justification: 170L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, and mandatory decision-journal step are all non-separable PM responsibilities executed in sequence -->
+<!-- size-justification: 185L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, mandatory decision-journal step, and HSC-3 terminal-lane bloat gate + HSC-6 done_verified eviction hook are all non-separable PM responsibilities executed in sequence -->
 # Project Manager — Main Flow
 
 **Tools:** `docs/agents/tools/package/pm.md`
 
 ## Input
-Architect design (task list + dependencies + layer assignments), current `docs/data/orch/orch-state.json` `.task_board`
+Architect design (task list + dependencies + layer assignments), current `docs/data/orch/orch-state.json` — hot-path slice only: `active_sprints` + `backlog[].{id,title,priority,size,type,zone,status}` (NO `done[]` / `done_verified[]` reads in the hot path — HSC-3)
 
 ## Output
 Atomic tasks in `docs/data/orch/orch-state.json` `.task_board` | `docs/handoffs/TASK_NNN.md` per task | Developer notified
@@ -37,16 +37,17 @@ Task status updates: `docs/data/orch/orch-state.json` `.task_board` tasks (atomi
 **1. Read context**
 
 ```bash
-# task_board count gate — run before any planning work
+# terminal-lane bloat gate — run before any planning work (HSC-3: replaces active_sprints task count > 80)
 # jq slice only — NEVER cat full file to model context (rule: docs/standards/orch-state-access.md §1)
-TASK_COUNT=$(jq '[.task_board.active_sprints[].tasks[]] | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
-if [ "$TASK_COUNT" -gt 80 ]; then
-  echo "[pm] task_board has $TASK_COUNT tasks > 80 — invoking task-archive sub-flow before continuing"
+DONE_N=$(jq '.task_board.done | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+DV_N=$(jq '.task_board.done_verified | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+if [ "$DONE_N" -gt 10 ] || [ "$DV_N" -gt 0 ]; then
+  echo "[pm] terminal-lane bloat: done[]=$DONE_N, done_verified[]=$DV_N — invoking task-archive sub-flow"
   # → Run sub-flow: docs/agents/pm/flow/task-archive.md, then resume here
 fi
 ```
 
-`docs/data/orch/orch-state.json` `.task_board` (task numbering) | Architect proposal | pm.md notebook (already read in Step 0b)
+`docs/data/orch/orch-state.json` — jq slice: `active_sprints` + `backlog[].{id,title,priority,size,type,zone,status}` (NEVER read `done[]` / `done_verified[]` in planning hot path — HSC-3) | Architect proposal | pm.md notebook (already read in Step 0b)
 
 **Notebooks:** Read `docs/agent-memory/notebooks/pm.md` only (done via Step 0b).
 If the architect handoff explicitly names another agent's notebook, read that one file only.
@@ -172,4 +173,12 @@ Before writing ANY signal row to `docs/data/orch/orch-state.json` `.signal_queue
 - WIP > 2 → hold, return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`
 - Task → Review → update `.task_board` status → return `NEXT: qa | review Task NNN branch task/NNN-kebab`
 - QA Done → **DJ-GATE-1** (before DONE flip): verify journal entry for task-id exists in `docs/agent-memory/decisions/sprint-<SPRINT_ID>-*.md`; if absent → status stays REVIEW, write `status_note: "journal-missing"`, `send_telegram(channel="work", message="[DJ-GATE-1] journal absent for <TASK_ID> — held REVIEW")`. Full gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
-- QA Done + journal present → update `.task_board` status DONE → unblock next → return `NEXT: developer | implement Task NNN+1`
+- QA Done + journal present → update `.task_board` status DONE → **HSC-6 eviction hook:** if task written to `done[]` or `done_verified[]`, immediately call cold eviction (under commit-mutex — see Pre-commit gate above):
+  ```bash
+  bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"
+  YYYYMM=$(date -u +%Y-%m)
+  git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
+  git commit -m "chore(tasks): done_verified eviction → archive/${YYYYMM}.json"
+  ```
+  **Invariant:** `done_verified[]` must never exceed 5 items in the hot file. Eviction failure → log BUG, continue (do not block planning cycle).
+  → unblock next → return `NEXT: developer | implement Task NNN+1`

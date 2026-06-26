@@ -35,6 +35,37 @@ If exit 0: silent.
 
 ---
 
+## Step 4.2 — Cold Eviction Backstop (HSC-6)
+
+Run after Step 4.1 exits cleanly. Checks for terminal sprints and bloated done lanes; evicts to cold if found. This ensures bloat never re-accumulates between pm/task-archive cycles.
+
+```bash
+TERMINAL_SPRINT_N=$(jq '[.task_board.active_sprints[] | select(
+  ((.status // "") | IN("DONE","done","DONE-WITH-CAVEATS","completed","SIGNED-OFF-PARTIAL")) or
+  ((.status // "") | startswith("BCTC-"))
+)] | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+
+DONE_N=$(jq '.task_board.done | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+DV_N=$(jq '.task_board.done_verified | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+
+if [ "$TERMINAL_SPRINT_N" -gt 0 ] || [ "$DONE_N" -gt 10 ] || [ "$DV_N" -gt 0 ]; then
+  echo "[dev-team/post-cycle] Terminal bloat: sprints=$TERMINAL_SPRINT_N done=$DONE_N done_verified=$DV_N — cold eviction"
+  # Claim commit-mutex before running script
+  # task_claim(task_kind="commit-mutex", task_id="dev-team-evict-<slug>", owner_agent="dev-team", ttl_seconds=120)
+  bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"
+  YYYYMM=$(date -u +%Y-%m)
+  git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
+  git commit -m "chore(tasks): cold-evict terminal sprints/done lanes → archive/${YYYYMM}.json"
+  # task_release(task_id: "dev-team-evict-<slug>")
+fi
+```
+
+**Mutex contract:** claim `commit-mutex:main` (TTL=120s) before calling script; release after git commit.  
+**Invariant (HSC-6):** `done_verified[]` never grows beyond 5 items in hot file after this hook is active.  
+Script exit non-zero → log BUG-channel Telegram; skip commit; continue to Step 4.5 (do not block compact).
+
+---
+
 ## Step 4.5 — Compact Checkpoint
 
 > Invariant: always `date -u +"%Y-%m-%dT%H:%M:%SZ"` — never speculative.

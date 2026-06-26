@@ -141,58 +141,81 @@ If orch-state.json missing → log `"[dashboard] orch-state.json not found — s
 
 ---
 
-## PRUNE — MANDATORY after every drain/consume cycle
+## PRUNE — MANDATORY after every drain/consume cycle (HSC-7)
 
 **Called from:** `docs/agents/dev-team/flow/drain-signals.md` after row consumption.
 Cowork equivalents must also call PRUNE after their consume step.
 
+**SCHEMA NOTE (HSC-7):** `.signal_queue.archive[]` lane is REMOVED from the hot file schema.
+Terminal rows are evicted to `docs/data/orch/archive/YYYY-MM.json` (cold file) via the eviction script.
+Do NOT write to `.signal_queue.archive[]` — that inline pattern was RC-1 root cause of file bloat.
+
+### Option A — Script (preferred)
+
 ```bash
-# 1. Identify rows to archive:
-#    - status == "RESOLVED" (immediate — no aging required)
-#    - status == "READ" AND ts < now() - 48h
-# 2. Move them to .signal_queue.archive[] (atomic write)
-# 3. Remove archived rows from .signal_queue.rows[]
-# 4. Update .signal_queue._updated_at + ._updated_by
-# 5. Enforce max 200 rows in .signal_queue.rows[] — prune oldest resolved/read first if at cap (RISK-6 guard)
+# Claim commit-mutex before calling script (script MUST run under mutex)
+# Call the eviction script — it handles cold write + hot trim atomically
+bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"
+# Commits both hot + cold files:
+YYYYMM=$(date -u +%Y-%m)
+git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
+git commit -m "chore(signals): drain + prune $(date -u +%Y%m%dT%H%M%SZ)"
+# Release commit-mutex after commit
+```
+
+### Option B — Inline jq (when script unavailable — e.g. cowork agent without bash exec)
+
+Eviction criteria: status IN (`READ`, `RESOLVED`, `SUPERSEDED`) AND `ts` older than 24h.
+
+```bash
+# 1. Identify rows to evict (status IN READ/RESOLVED/SUPERSEDED AND ts < now() - 24h)
+# 2. Remove evicted rows from .signal_queue.rows[] (atomic write — mtime-CAS guard required)
+# 3. Update .signal_queue._updated_at + ._updated_by
+# 4. Enforce max 200 rows in .signal_queue.rows[] — evict oldest terminal first if at cap
+# 5. Cold file append is the responsibility of the caller (write evicted rows to archive/YYYY-MM.json)
+# NOTE: .signal_queue.archive[] must be set to [] (not appended to — lane removed from schema)
 
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+CUTOFF_24H=$(($(date -u +%s) - 86400))
+
 STATE=$(cat docs/data/orch/orch-state.json) # bash-only pipeline — not surfaced to model (rule: docs/standards/orch-state-access.md §1)
 UPDATED=$(printf '%s' "$STATE" | jq \
   --arg now "$NOW" \
+  --argjson cutoff "$CUTOFF_24H" \
   --arg agent "<my-agent-id>" '
   . as $root |
-  # Rows to archive: RESOLVED, or READ + older than 48h
+  # Rows to evict: READ/RESOLVED/SUPERSEDED AND older than 24h
   (.signal_queue.rows | map(select(
-    .status == "RESOLVED" or
-    (.status == "READ" and (.ts | fromdateiso8601) < (now - 172800))
-  ))) as $to_archive |
-  # Rows to keep: everything else (including NEW — never prune NEW)
+    (.status | IN("READ","RESOLVED","SUPERSEDED")) and
+    ((try (.ts | fromdateiso8601) catch 0) < $cutoff)
+  ))) as $to_evict |
+  # Rows to keep: NEW (never evict) + terminal rows younger than 24h
   (.signal_queue.rows | map(select(
-    .status != "RESOLVED" and
-    not (.status == "READ" and (.ts | fromdateiso8601) < (now - 172800))
+    .status == "NEW" or
+    not ((.status | IN("READ","RESOLVED","SUPERSEDED")) and
+         ((try (.ts | fromdateiso8601) catch 0) < $cutoff))
   ))) as $to_keep |
   $root |
   .signal_queue.rows = $to_keep |
-  .signal_queue.archive += $to_archive |
+  .signal_queue.archive = [] |
   .signal_queue._updated_at = $now |
   .signal_queue._updated_by = $agent
 ')
 TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
-echo "$UPDATED" > "$TMP"
+printf '%s' "$UPDATED" > "$TMP"
 mv "$TMP" docs/data/orch/orch-state.json
 jq . docs/data/orch/orch-state.json > /dev/null || echo "ERROR: orch-state.json invalid after prune"
 
-# 6. Commit
 git add docs/data/orch/orch-state.json
 git commit -m "chore(signals): drain + prune $(date -u +%Y%m%dT%H%M%SZ)"
 ```
 
-Prune thresholds:
-- **RESOLVED** rows → moved to archive immediately
-- **READ** rows → moved to archive after 48h aging (`ts < now() - 48h`)
-- **NEW** rows → NEVER pruned
+Eviction thresholds (HSC-7 — replaces old 48h/immediate split):
+- **READ / RESOLVED / SUPERSEDED** rows older than 24h → evicted to cold
+- **NEW** rows → NEVER evicted (regardless of age)
 
-Archive: `.signal_queue.archive[]` — append-only log of pruned rows. Never read back for routing.
+Cold store: `docs/data/orch/archive/YYYY-MM.json` — append-only (via script or manual append).
+Full-history audit (system-auditor forensic scan): load cold file lazily; NEVER load in hot-path planning.
 Dedup key: `id` (unique per signal).
 
 **This step is mandatory, not optional.** `drain-signals.md` calls it after every consume pass.
