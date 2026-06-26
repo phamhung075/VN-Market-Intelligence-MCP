@@ -13905,9 +13905,10 @@
         "type": "SPRINT-S",
         "created_at": "2026-06-26T15:28:08Z",
         "created_by": "pm",
-        "status": "BACKLOG",
+        "status": "done_verified",
         "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "depends_on": "HSC-1"
+        "depends_on": "HSC-1",
+        "completed_at": "2026-06-26T19:36:41Z"
       },
       {
         "id": "HSC-4",
@@ -13948,9 +13949,10 @@
         "type": "SPRINT-S",
         "created_at": "2026-06-26T15:28:08Z",
         "created_by": "pm",
-        "status": "BACKLOG",
+        "status": "done_verified",
         "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "depends_on": "HSC-1"
+        "depends_on": "HSC-1",
+        "completed_at": "2026-06-26T19:36:41Z"
       },
       {
         "id": "HSC-7",
@@ -13962,9 +13964,10 @@
         "type": "SPRINT-S",
         "created_at": "2026-06-26T15:28:08Z",
         "created_by": "pm",
-        "status": "BACKLOG",
+        "status": "done_verified",
         "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "depends_on": "HSC-1"
+        "depends_on": "HSC-1",
+        "completed_at": "2026-06-26T19:36:41Z"
       }
     ],
     "closed_sprints": [
