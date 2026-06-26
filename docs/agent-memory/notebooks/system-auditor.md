@@ -2,6 +2,18 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c400 · 2026-06-26T00:40:45Z
+### Audit Run Tier-1 (00:40 UTC 2026-06-26) — Runtime Ping
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
+- RAW-PROBE (00:40:45Z):
+  - docker ps: all 12 containers Up (healthy) [RAW-PROBE L3-L14]
+  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK
+  - [health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+  - A-20-PROBE-1: HTTP 200 | A-20-PROBE-2: HTTP 200 | A-20-PROBE-3: HTTP 200 → 3/3 PASS
+- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 14.29% PASS | A-32 Disk: 17% PASS
+- Anomalies: 0 NEW (all A-xx checks PASS, api-gateway health now OK)
+- Status: HEALTHY | Signals: 0 posted | Signal-queue: no changes
+
 ## c399 · 2026-06-26T00:31:41Z
 ### Audit Run Tier-3 (00:31 UTC 2026-06-26)
 - Tier: 3 | Services: 12/12 UP | Health: 5/5 OK | DB checks: 16 run
@@ -38,30 +50,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 12.80% PASS | A-32 Disk: 16% PASS
 - Anomalies: 0 NEW (all A-xx checks PASS)
 - Status: HEALTHY | Signals: 0 posted | Signal-queue: no changes
-
-## c396 · 2026-06-25T23:40:17Z
-### Audit Run Tier-1 (23:40 UTC 2026-06-25) — Runtime Ping
-- Tier: 1 | Services: 12/12 UP (host_runtime_set) | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- RAW-PROBE (23:40Z):
-  - docker ps: all 12 containers Up (healthy)
-  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK
-  - [health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001 OK
-  - A-20-PROBE-1: HTTP 200 | A-20-PROBE-2: HTTP 200 | A-20-PROBE-3: HTTP 200 → 3/3 PASS
-- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 13.22% PASS | A-32 Disk: 16% PASS
-- Anomalies: 0 NEW (all A-xx checks PASS)
-- Status: HEALTHY | Signals: 0 posted | Signal-queue: no changes
-
-## c395 · 2026-06-25T23:11:35Z
-### Audit Run Tier-1 (23:11 UTC 2026-06-25) — Runtime Ping
-- Tier: 1 | Services: 12/12 UP (host_runtime_set) | Health: 5/5 OK
-- RAW-PROBE (23:11Z): all containers Up with status=healthy
-  - [health] mcp-server:3000/health OK (HTTP 200)
-  - [health] api-gateway:4000/health OK (HTTP 200)
-  - [health] macro-indicators:5004/health OK (HTTP 200)
-  - [health] pdf-extractor:5001/health OK (HTTP 200)
-  - [health] frontend:3001/ OK (HTTP 200)
-- A-20 pdf-extractor multi-probe: 3/3 PASS (HTTP 200 all)
-- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 13.44% (<85% PASS) | A-32 Disk: 16% (<85% PASS)
-- Anomalies: 0 NEW (all checks PASS)
-- Status: HEALTHY | Signals: 0 posted | Signal-queue: unchanged
-
