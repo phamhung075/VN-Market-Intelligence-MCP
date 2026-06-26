@@ -4967,7 +4967,9 @@
         "title": "Harden notebook-write AC-5 from advisory prose to BLOCKING (exit 1 -> force recompose) + commit headless-path hook backstop into repo",
         "zone": "cross-service/",
         "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
+        "status": "BACKLOG",
+        "verify_note": "corrupt-null"
       },
       {
         "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",

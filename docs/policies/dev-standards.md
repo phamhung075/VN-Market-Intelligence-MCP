@@ -55,6 +55,21 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Owning flow: docs/agents/fb-market-poster/flow/main.md STEP 4b
 ```
 
+**CANONICAL: Orch-state write-gate validator (ORCH-STATE-SCHEMA-HARDENING SHG-1)**
+```bash
+# Validate a candidate orch-state file before atomic rename (exit 0 = valid, non-zero = FAIL):
+bash scripts/orch-state-validate.sh <path-to-candidate.json>
+# Wire-in pattern (every orch-state write path, before mv):
+#   bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
+#     || { rm -f "$TMP"; echo "[orch-write] ABORTED: validation failed" >&2; exit 1; }
+# Owning brief: docs/architecture-briefs/2026-06-27-orch-state-schema-hardening.md § 4
+# Wire-in targets (SHG-3): pm/main, pm/task-archive, dev-team/post-cycle,
+#   po/sprint-signoff, signal-dashboard, system-auditor, orch-cold-evict.sh
+```
+G-1 (JSON valid) + G-2 (sentinel) + G-3 (lane types arrays) + G-4 (no null sprint IDs) = hard exits.
+G-5 (status enum) = WARN-only until SHG-2 migration + SHG-3 wire-in done (SHG-5 flips to hard).
+G-6 (last_tick skew >2h) = WARN-only.
+
 **CANONICAL: Orch-state cold eviction (ORCH-STATE-HOT-COLD-SPLIT HSC-1)**
 ```bash
 # Dry-run (preview eviction counts + projected hot-file size, no writes):
