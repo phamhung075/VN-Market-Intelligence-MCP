@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-26T16:03:29Z",
-  "_updated_by": "developer",
+  "_updated_at": "2026-06-26T19:32:37Z",
+  "_updated_by": "qa",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -19290,6 +19290,26 @@
     ],
     "done_verified": [
       {
+        "id": "HSC-1",
+        "title": "Create cold archive directory + orch-cold-evict.sh script",
+        "zone": "scripts/",
+        "owner": "developer",
+        "priority": "high",
+        "size": "S",
+        "type": "SPRINT-S",
+        "created_at": "2026-06-26T15:28:08Z",
+        "created_by": "pm",
+        "status": "done_verified",
+        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
+        "depends_on": null,
+        "reviewed_at": "2026-06-26T16:03:29Z",
+        "reviewed_by": "developer",
+        "qa_verdict": "APPROVED",
+        "qa_reviewed_at": "2026-06-26T19:32:37Z",
+        "qa_reviewed_by": "qa",
+        "closed_at": "2026-06-26T19:32:37Z"
+      },
+      {
         "id": "FIX-MACRO-SNAPSHOT-DELTAS-NULL",
         "epic": "S2-DATA-HONESTY",
         "type": "FIX",
@@ -26233,22 +26253,6 @@
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
         "po_reparked_at": "2026-06-15T06:35:17Z"
-      },
-      {
-        "id": "HSC-1",
-        "title": "Create cold archive directory + orch-cold-evict.sh script",
-        "zone": "scripts/",
-        "owner": "developer",
-        "priority": "high",
-        "size": "S",
-        "type": "SPRINT-S",
-        "created_at": "2026-06-26T15:28:08Z",
-        "created_by": "pm",
-        "status": "REVIEW",
-        "sprint": "ORCH-STATE-HOT-COLD-SPLIT",
-        "depends_on": null,
-        "reviewed_at": "2026-06-26T16:03:29Z",
-        "reviewed_by": "developer"
       }
     ],
     "qa": [],
@@ -26273,8 +26277,8 @@
     "last_triaged_at": "2026-06-26T15:26:11Z",
     "last_triaged_by": "po"
   },
-  "updated_at": "2026-06-26T16:03:29Z",
-  "updated_by": "developer",
+  "updated_at": "2026-06-26T19:32:37Z",
+  "updated_by": "qa",
   "meta": {
     "updated_at": "2026-06-26T05:31:34Z",
     "updated_by": "po",
