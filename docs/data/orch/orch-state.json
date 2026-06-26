@@ -13681,26 +13681,43 @@
         "plan_only": true
       },
       {
-        "id": "FIX-BCTC-ACV-Q1-2026-INGEST-GAP",
+        "id": "FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP",
         "type": "FIX",
         "status": "BACKLOG",
-        "priority": "P2",
+        "priority": "P1",
         "size": "M",
         "zone": "apps/mcp-server/",
         "next_agent": "bctc-analyst",
         "route_to": "bctc-analyst",
         "owner": "bctc-analyst",
         "blocking": false,
-        "title": "ACV Q1-2026 BCTC ingest gap: 5 discover/enrich cycles returned empty 8+ days post-filing — bctc-analyst blind to ACV Q1 financials",
-        "root_cause": "RECON-FIRST (PLAN-ONLY): bctc-analyst report (Telegram 3315) — ACV Q1-2026 filing exists 8+ days but 5 ingest cycles came back empty. Distinct from the off-season SLA false-positive (FIX-BCTC-SLA-THRESHOLD-360) and the cosmetic stale-fetch artifact: this is a SPECIFIC-ticker coverage gap (ACV filed, not ingested). Likely same enrich-silent-0-rows class as FIX-BCTC-ENRICH-SILENT-0ROWS OR a discover-listing gap for ACV specifically. Recon must confirm the ACV filing is published on HNX/source AND trace which pipeline stage drops it (discover vs pull vs enrich) before any code fix.",
+        "title": "Q1-2026 BCTC ingest/DISCOVERY gap (HPG + ACV): filed reports absent from DB (get_bctc_full -> 'Chưa có dữ liệu BCTC') while queue~0 reads 'healthy-idle' — filed-but-never-discovered/queued",
+        "root_cause": "RECON-FIRST (PLAN-ONLY): TWO Q1-2026 filings filed-per-calendar yet absent from the BCTC DB. HPG Q1-2026 filed 2026-06-07 (19d elapsed, cycle 8, report 3334); ACV Q1-2026 filed 2026-06-16 (10d elapsed, cycle 15, P1-escalated c065 unhandled, report 3315). RAW-verified 2026-06-26 by router: get_bctc_full(HPG) AND get_bctc_full(ACV) BOTH return 'Chưa có dữ liệu BCTC'. KEY TENSION: the auditor reports BCTC queue~=0 / healthy-idle, yet these specific filings are filed-but-missing — strongly implies a DISCOVERY-layer defect (filings never enumerated -> never queued), NOT merely a fetch/enrich drop. queue=0 'healthy-idle' is then a FALSE-GREEN that MASKS the gap. Distinct from the off-season SLA false-positive (FIX-BCTC-SLA-THRESHOLD-360) and the cosmetic stale-fetch artifact. NOTE the per-exchange split: HPG is HOSE-listed (primary discoverHosePdfUrls path) — its absence indicts the HOSE discovery path itself; ACV is UPCOM/HNX (c111-empty/c3-fallback + HNX-session-cookie path). Recon must (a) confirm BOTH filings are published on source (HOSE/HNX/SSC), then (b) trace WHICH stage drops each: DISCOVER (enumerate/list) vs PULL vs ENRICH — investigate discovery FIRST since queue=0 points there.",
         "anchor_prior_art": [
           "FIX-BCTC-ENRICH-SILENT-0ROWS",
-          "FIX-BCTC-SLA-THRESHOLD-360"
+          "FIX-BCTC-SLA-THRESHOLD-360",
+          "FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH",
+          "FIX-HNX-SESSION-COOKIE"
         ],
-        "source": "Telegram report 3315 (bctc-analyst, 2026-06-24T18:03Z); PO triage 2026-06-26 dev-team tick 05:52Z; RAW-verified distinct from off-season SLA falsepos",
+        "source": "Telegram report 3315 (bctc-analyst, 2026-06-24T18:03Z); PO triage 2026-06-26 dev-team tick 05:52Z; RAW-verified distinct from off-season SLA falsepos | BROADENED 2026-06-26 (po, dev-team tick ~15:2xZ) to fold report 3334 (HPG Q1-2026 + ACV recurrence) — multi-ticker discovery-layer gap; reports 3315+3334 both anchored here, no dup minted",
         "created_at": "2026-06-26T05:57:21Z",
         "created_by": "po",
-        "plan_only": true
+        "plan_only": true,
+        "broadened_from": "FIX-BCTC-ACV-Q1-2026-INGEST-GAP",
+        "tickers": [
+          "HPG",
+          "ACV"
+        ],
+        "discovery_gap_hypothesis": "Filed reports are never discovered/enumerated -> never queued -> bctc_vps_queue stays empty -> health probe reads queue_total=0 as 'healthy-idle'. Recon must check whether HPG/ACV Q1-2026 ever produced a discover row / queue row at all; if not, the defect is upstream of fetch (discovery), and the architect must investigate the discovery/listing stage, not just the fetch/enrich path.",
+        "healthy_idle_crosslink": "FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — the 'healthy-idle' verdict needs a GUARD against filed-but-unqueued reports: queue_total=0 is only truly healthy if there are no known-filed-but-uningested filings. Add a filed-vs-ingested reconciliation so a discovery gap can no longer hide behind a green idle badge.",
+        "anchored_reports": [
+          3315,
+          3334
+        ],
+        "raw_verification": "2026-06-26 router: get_bctc_full code=HPG -> 'Chưa có dữ liệu BCTC'; get_bctc_full code=ACV -> 'Chưa có dữ liệu BCTC'. Both genuinely absent.",
+        "discovery_owner": "architect",
+        "updated_at": "2026-06-26T15:26:11Z",
+        "updated_by": "po"
       },
       {
         "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
@@ -26137,10 +26154,10 @@
         }
       ]
     },
-    "updated_at": "2026-06-24T17:42:54Z",
-    "updated_by": "po (FEAT-PREDICTION-DAILY relocate in_progress->done code-complete)",
-    "last_triaged_at": "2026-06-25T23:55:29Z",
-    "last_triaged_by": "po-s117"
+    "updated_at": "2026-06-26T15:26:11Z",
+    "updated_by": "po",
+    "last_triaged_at": "2026-06-26T15:26:11Z",
+    "last_triaged_by": "po"
   },
   "updated_at": "2026-06-26T10:40:46Z",
   "updated_by": "po",
