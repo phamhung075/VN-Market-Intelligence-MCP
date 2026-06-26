@@ -69,6 +69,22 @@ KEEP_RECENT_DONE=10 DONE_MAX_AGE_DAYS=7 bash scripts/orch-cold-evict.sh --dry-ru
 Evicts done[], done_verified[], terminal active_sprints[], terminal signal_queue.rows[], and signal_queue.archive[] to docs/data/orch/archive/YYYY-MM.json.
 Atomic temp-then-rename; cold-first ordering; mtime-CAS retry; idempotent.
 
+**CANONICAL: Backlog stub migration + cold detail writer (ORCH-STATE-HOT-COLD-SPLIT HSC-4)**
+```bash
+# Dry-run (preview stub counts + projected hot-file size, no writes):
+bash scripts/orch-backlog-stub.sh --dry-run
+# Live migration (MUST hold commit-mutex:main before calling):
+bash scripts/orch-backlog-stub.sh
+# Override stub field set (comma-separated; default includes detail_ref):
+STUB_FIELDS="id,title,priority,size,type,zone,status,sprint,detail_ref" bash scripts/orch-backlog-stub.sh --dry-run
+# Owning brief: docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md §HSC-4
+# Called from: HSC-4 one-time migration; pm/flow/main.md when adding new backlog items
+```
+Strips prose from all backlog[] items in hot orch-state; moves full items (id-keyed) to
+docs/data/orch/archive/backlog-detail.json. Adds detail_ref pointer to every stub.
+Atomic temp-then-rename; cold-first ordering; mtime-CAS retry; idempotent (existing cold wins).
+Lazy-load full detail for one id: `jq '.items["<id>"]' docs/data/orch/archive/backlog-detail.json`
+
 **CANONICAL: Fleet worktree push backstop (TASK-AUTO-PUSH-A)**
 ```bash
 # No-op check (safe, never pushes unless ahead > threshold):

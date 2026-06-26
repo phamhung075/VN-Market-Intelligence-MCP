@@ -49,6 +49,15 @@ fi
 
 `docs/data/orch/orch-state.json` — jq slice: `active_sprints` + `backlog[].{id,title,priority,size,type,zone,status}` (NEVER read `done[]` / `done_verified[]` in planning hot path — HSC-3) | Architect proposal | pm.md notebook (already read in Step 0b)
 
+**HSC-4 lazy-load — full backlog detail (when promoting a specific item to sprint):**
+```bash
+# Load full detail for one backlog item by id (never load the whole file into context):
+jq '.items["<id>"]' "$PROJECT_ROOT/docs/data/orch/archive/backlog-detail.json"
+# When adding a NEW backlog item: write full object to backlog-detail.json first, then stub to hot.
+# One-time migration + ongoing stub-writer: bash scripts/orch-backlog-stub.sh
+# Owning brief: docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md §HSC-4
+```
+
 **Notebooks:** Read `docs/agent-memory/notebooks/pm.md` only (done via Step 0b).
 If the architect handoff explicitly names another agent's notebook, read that one file only.
 **Do NOT glob `docs/agent-memory/notebooks/*.md`** — unbounded glob pulls all notebooks (~7k+ L).
