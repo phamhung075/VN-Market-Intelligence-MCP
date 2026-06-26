@@ -2500,8 +2500,11 @@
         "type": "data_stale",
         "summary": "sbv_fx stale 31min post-market (check B-12-POST-MARKET)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-26T10:40:46Z",
+        "resolved_by": "po",
+        "resolution": "BENIGN marginal poll-cadence slip. RAW-verify: age 36->37min across the reading interval = SLA==poll-cadence(30min) sawtooth, NOT a stuck/degrading fetcher (a dead fetcher climbs monotonic into the hundreds, cf bctc@13796); news independently sawtoothed OK->32/30 in the same tick = cadence noise not a sbv-specific failure. Fri POST-MARKET: SBV FX won't change until Mon. Calibration gap (post-publish-window-on-business-day tight SLA + no tolerance band) folded into FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (backlog, PLAN-ONLY)."
       }
     ],
     "last_triaged_at": "2026-06-25T22:06:25Z",
@@ -13787,6 +13790,33 @@
         "created_at": "2026-06-26T05:57:21Z",
         "created_by": "po",
         "plan_only": true
+      },
+      {
+        "id": "FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE",
+        "type": "FIX",
+        "title": "SBV-FX (+news) SLA: post-publish-window relaxation + poll-cadence tolerance band",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "sprint": null,
+        "baseline_pass": false,
+        "created_at": "2026-06-26T10:40:46Z",
+        "created_by": "po",
+        "plan_only": true,
+        "source_signal": "sau-20260626T103335Z",
+        "files": [
+          "apps/mcp-server/src/domain/services/freshnessSlaChecker.ts"
+        ],
+        "related": [
+          "FIX-SLA-EXEMPT-NEWS-SBVFX(DONE,weekend-only)",
+          "ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD(stub)",
+          "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT"
+        ],
+        "root_cause": "getSlaThreshold() (freshnessSlaChecker.ts L646-652) applies the tight defaultThresholdMinutes (30) for the WHOLE VN business day whenever isVnSbvBusinessDay(now)==true. But SBV publishes FX once/day; its publish window ends 10:00 UTC (lastExpectedSbvWindowEnd L530). After 10:00Z no new sbv_fx arrives until the next business-day window, yet the 30-min tight SLA stays active all day -> age sawtooths against the ~30-min fetcher poll cadence and breaches HIGH at the top of every cycle (Fri 10:33Z age 37/30). The DONE FIX-SLA-EXEMPT-NEWS-SBVFX relaxes ONLY on non-business days (weekend/holiday); the post-publish-window-on-a-business-day window AND the SLA==poll-cadence sawtooth are uncovered. Same structural pattern hits news (tight 30-min SLA for the whole 00:00-14:59Z window vs ~30-min poll -> news sawtoothed OK->32/30 in the same tick). Same over-fire CLASS as B-11 (market-hours-blind) and C-06 (off-market).",
+        "fix_spec": "1) Post-window relaxation on business days: in the SBV branch, once now is PAST lastExpectedSbvWindowEnd for today, switch to (minutesSinceLastSbvWindowEnd + grace) instead of the tight 30-min -> the tight SLA applies DURING the expected publish window only, not all day. Mirror for news post-14:59Z. 2) Tolerance band so SLA never equals poll cadence: breach HIGH only when age > MAX(threshold*1.5, threshold + pollCadence); a 30-min SLA on a 30-min poller must not fire on a single-cycle slip. Apply uniformly to news + sbv_fx.",
+        "generic_mandate": "Derive publish-window-end + poll-cadence from config per source; do NOT hardcode per-source magic. The post-window relaxation + tolerance band must cover BOTH news and sbv_fx (and be safe for any once-per-window source).",
+        "verification_gate": "On any post-10:00Z business-day time get_sla_status returns sbv_fx ok (not HIGH); news ok post-14:59Z. A genuine >1.5x stall DURING the live publish window still breaches. Add unit tests in freshnessSlaChecker.spec for business-day-post-window + single-cycle sawtooth tolerance.",
+        "severity_note": "Auditor B-12-POST-MARKET emitted this as WARN (not HIGH); router live get_sla_status renders it HIGH. The HIGH severity on a 6-min once-per-day-FX poll slip with market CLOSED is the over-statement this task removes."
       }
     ],
     "closed_sprints": [
@@ -26079,7 +26109,7 @@
     "last_triaged_at": "2026-06-25T23:55:29Z",
     "last_triaged_by": "po-s117"
   },
-  "updated_at": "2026-06-26T05:31:34Z",
+  "updated_at": "2026-06-26T10:40:46Z",
   "updated_by": "po",
   "meta": {
     "updated_at": "2026-06-26T05:31:34Z",
