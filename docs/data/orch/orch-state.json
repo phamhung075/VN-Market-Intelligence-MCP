@@ -2392,6 +2392,17 @@
         "triaged_by": "po",
         "triaged_into": "FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE",
         "po_decision": "MINTED BACKLOG FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE (P2/MEDIUM-HIGH, PLAN-ONLY) — NEW DISTINCT task, NOT folded. Fold-target FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH is already DONE-LIVE-VERIFIED + closed and its shipped fix (semantic id replacing crypto.randomUUID at taAlertScanJob.ts:258/bbAlertScanJob.ts:245) scoped alert_id ONLY — never payload/stock_code; cannot fold open work into a closed/verified task. CONTENT defect (empty {} payload + null stock_code) is a genuinely distinct column-set on the SAME emit construction site. Zone apps/mcp-server (NOT Go alert-engine — established by the DONE task's RAW grep). Convergence thesis: same emit site as (a) r5 double-fire + (b) DONE alert_id fix. Mandate: RAW-verify root LIVE first; fix MUST produce non-empty payload + non-null stock_code + correct semantic alert_id + fail-loud emit-time guard; acceptance = LIVE scan finds 0 malformed AND >=1 well-formed verified_decision row post-fix. READ not RESOLVED (open until fix ships)."
+      },
+      {
+        "id": "sau-2026-06-26T00:10:15Z",
+        "ts": "2026-06-26T00:10:15Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: api-gateway health endpoint unreachable (HTTP CURL_ERR)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-25T22:06:25Z",
