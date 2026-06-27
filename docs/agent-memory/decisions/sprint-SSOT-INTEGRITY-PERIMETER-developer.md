@@ -67,8 +67,13 @@ ORCH-STATE VALIDATION FAILED (1 issue) — fix and retry:
 
 **why-change:** No divergence from task spec. Implementation matched directive §Point-1 (pre-write block) + §Point-2 (post-bash backstop) exactly. No TS changes needed in apps/mcp-server/src (SSOT-W1-SERVER-ENFORCE already wired by dev-mcp-server).
 
-**commit-sha:** (populated post-commit below)
+**commit-sha:** `14d88c23`
 
----
+Files in commit:
+- `scripts/agents-flow/orch-state-hook-prewrite.mjs` (new — PreToolUse bun hook)
+- `scripts/agents-flow/orch-state-hook-bash-backstop.sh` (new — PostToolUse bash backstop)
+- `docs/policies/dev-standards.md` (modified — CANONICAL pointer added)
+- `docs/agent-memory/decisions/sprint-SSOT-INTEGRITY-PERIMETER-developer.md` (this DJ entry)
 
-<!-- commit SHA appended after git commit -->
+Note: `.claude/settings.local.json` carries the hook wiring but is gitignored (machine-local);
+it persists on disk and is active for the current session.
