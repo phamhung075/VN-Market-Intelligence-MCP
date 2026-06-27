@@ -15,5 +15,11 @@
     "zone_owner": "dev-mcp-server (script) + dev-team flow doc",
     "suggested_sprint_class": "FIX",
     "verification_gate": "After fix, run bash scripts/orch-cold-evict.sh with a COMPLETE sprint present and confirm md5 changes + the sprint moves to archive/closed_sprints; hot-file active_sprints no longer contains COMPLETE entries."
+  },
+  "_processed": {
+    "fingerprint": "8e6e514dd458b31d57f36c98f41d5edd5a1d08d9de09321b7e48db7c594ddd1d",
+    "processedAt": "2026-06-27T16:10:06Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
