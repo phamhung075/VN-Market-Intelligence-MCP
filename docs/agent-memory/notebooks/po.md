@@ -1,22 +1,20 @@
 # PO Notebook
 
-_Last: 2026-06-27T08:35:40Z_
+_Last: 2026-06-27T12:05Z_
 
-## This cycle — RATIFY Zod-typed SSOT strategy into SSOT-INTEGRITY-PERIMETER
-User-directed mandate 2026-06-27: adopt Zod-typed SSOT schema + dual-point enforcement + auto-fix errors as the implementation strategy, REPLACING bash-jq-gate for ranks 1/3/4/12. Directive: docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md.
+## This cycle — HARDEN SSOT-INTEGRITY-PERIMETER DoD (po-s122) to close 4 deploy-surface gaps
+Router RAW-verified the deploy surface: 3/6 W1 Zod tasks DONE in source (SCHEMA-MODEL/VALIDATOR-CLI/SERVER-ENFORCE, tests green) but the perimeter is HALF-LIVE. Made the sprint DoD capture the gaps so a future SIGN-OFF can't false-green. Did NOT touch .head (stays FIX-CI-RED-EAC0CC65-BUNTEST) — let the dev-team loop clear CI-red first. Did NOT spawn/drive the dev build.
 
-Pre-flight (RAW): task_list_held -> 5 locks (cowork-leader, 2 published cowork-slots, esc-datacov:FPT bctc-analyst sprint-task, digest-sunday). NONE on any SSOT-* id. bctc esc-lock DISJOINT from SSOT -> no defer (feedback_devteam_lock_check). Did NOT spawn / double-drive — alive dev-team loop dispatches via head-resume.
+VERIFIED each gap on live orch-state by jq path, then ONE gated atomic write each (jq->temp->[-s]->jq empty->orch-state-validate.sh->mtime-CAS->rename):
+- GAP-1 REBUILD-TO-LIVE (false-green): container Up 16h vs SERVER-ENFORCE committed 12:46 -> Point-2 in source NOT live. MINTED SSOT-W1-OPS-REBUILD-ENFORCE (ops, depends 3 TS tasks; QA injects bad status server-side vs REBUILT image).
+- GAP-2 EVERY-WRITER-ROUTED: ORCH-APPLY-WRAPPER had title-intent but NO acceptance; orch-apply.sh absent; 10 files ref old bash gate. SET acceptance="0 direct hot-file writers remain".
+- GAP-3 DOC-SYNC: MINTED SSOT-W1-DOC-SYNC-WRITE-CONTRACT (pm: CLAUDE.md + dev-standards.md orch-apply.sh pointer + flow repoint). Hardening brief DECISION: directive is CANONICAL design-of-record, NOT back-filled.
+- GAP-4 RULE-PARITY: orchStateStore L178-183 EXCLUDES checkRefIntegrity; schema superRefine = head-RI ONLY; CLI Stage-1b lane-coherence WARN-only (72 live, verified), Stage-1c ref-integrity hard-block (0 dangling). 3-tier decision recorded in verification_gate.rule_parity + decision_journal + SSOT-W2-RULE-PARITY-PROMOTE.
 
-Did (ONE atomic gated CAS write: jq -> temp -> [-s]+jq empty -> conservation -> orch-state-validate.sh ALL-PASS -> mtime-CAS -> rename):
-- Re-shaped ranked_scope (15->16): Wave-1 = 6 Zod tasks. SSOT-W1-ZOD-SCHEMA-MODEL + ZOD-VALIDATOR-CLI + SERVER-ENFORCE -> dev-mcp-server (apps/mcp-server/); HOOK-ENFORCE + ORCH-APPLY-WRAPPER + BASH-SHIM -> developer (cross-service). Kept SSOT-W1-DATA-CLEAN (DONE) + HEAD-METADATA-COLLAPSE (G-7 now folded into schema .strict()). Each new task carries supersedes[] tracing old ranks 1/3/4/12.
-- Folded ADD-2 (5 backlog REVIEW relabels) + ADD-1 (READY enum) into SCHEMA-MODEL; referential (rank4) + 6 payload_ref rewrites into superRefine.
-- Rewrote ARCH-SSOT-INTEGRITY-PERIMETER desc -> authors hardening brief FROM the directive; input_directive field added; verification_gate now requires ADD-1 READY decision LOCKED before all-lane schema ships.
-- Stamped sprint: implementation_strategy + directive_ref + ratified_by=po-ratify-ssot-zod + chain (adds dev-mcp-server) + owners. decision_journal +1 (len 23).
-- .head UNCHANGED: ARCH-SSOT-INTEGRITY-PERIMETER -> architect [in_progress] (Action 4: architect first, else bootstrap deadlock).
+Conservation EXACT: flat lanes byte-stable (backlog 321/ready 2/done 17/...). Sprint tasks 9->11, ranked_scope 16->19, verification_gate added. Zod CLI stayed exit 0 / 72 warnings. Committed LOCAL-ONLY under commit-mutex (5ad3d2f0, explicit paths). DJ len 23->25.
 
 ## Carry-over
-- ADD-1 READY-bootstrap: PO endorses option-a (add READY as 12th StatusEnum value); architect LOCKS it in the brief BEFORE the all-lane schema ships — else gate hard-fails the sprint's own kickoff task.
-- Cascade: architect brief -> pm decomposes the 6 Wave-1 zone tasks -> dev-mcp-server/developer -> qa -> PO sign-off. PO does NOT spawn.
-- Dual-point is the completeness requirement: Claude hook is blind to in-process task_claim/scheduler writes -> orchStateStore.parse() is Point-2.
-- Wave-2 (ranks 9-12) + defer (13-16) recorded, NOT promoted. PO-owned later: rank-11 sprint_goal prune.
-- Push held: fleet-worktree-push launchd timer (commit local-only, dirty-tree-safe).
+- GAP-1/3 minted as wave-1 sprint tasks[]; sequence AFTER HOOK-ENFORCE/WRAPPER/SHIM land + CI-red clears. Dispatch is dev-team loop's job (head-resume) — PO does NOT spawn.
+- RULE-PARITY: Tier-1 structural blocks BOTH points NOW. Tier-2 ref-integrity safe to promote (0 dangling) via SSOT-W2-RULE-PARITY-PROMOTE. Tier-3 lane-coherence STAYS warn-only until 72->0 data true-up + Wave-2 call on whether backlog=>{BACKLOG} widens to admit DEFERRED/BLOCKED/TODO (72 are mostly legit-deferred, not corrupt) — promoting before clean throws every server write.
+- Wave-2 still: rank-9 signal-queue lifecycle, rank-11 sprint_goal prune (PO-owned), the new rank-9.5 rule-parity promote.
+- Push held: fleet-push launchd timer (commit local-only, dirty-tree-safe).
