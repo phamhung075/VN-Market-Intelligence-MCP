@@ -231,9 +231,9 @@
     "active_task_id": "SSOT-W1-OPS-REBUILD-ENFORCE",
     "next_agent": "ops",
     "next_action": "REBUILD: single-svc mcp-server (verify image ID post-rebuild); QA injects non-enum status via server write path, expects orchStateStore.parse throws (Point-2 LIVE enforcement)",
-    "updated_by": "pm",
-    "updated_at": "2026-06-27T14:52:17Z",
-    "note": "SSOT-W1-DOC-SYNC-WRITE-CONTRACT DONE (developer, commit 405f349d verified). CI GREEN (run 28289035838) — dispatch_gate satisfied. Advancing to OPS-REBUILD-ENFORCE (depends: W1-ZOD-SCHEMA-MODEL, W1-ZOD-VALIDATOR-CLI, W1-SERVER-ENFORCE; all DONE)."
+    "updated_by": "po",
+    "updated_at": "2026-06-27T15:26:25Z",
+    "note": "BASE RECONCILED (po-S4 2026-06-27T15:26Z): local main = origin/main = bfc9d5e5, contains 436f7376 (FIX-CI-RED-EAC0CC65-BUNTEST CI-green schema repair to orchStateSchema.ts). OPS-REBUILD-ENFORCE CLEARED to dispatch from local — apps/ tree byte-identical to CI-green run 28289035838; main-repo pre-push tsc OK. dispatch_gate (FIX-CI-RED clears) satisfied. PO does not run the rebuild. NOTE: origin HEAD moved 6bcbe2e5->bfc9d5e5 by this reconcile merge — NOT fresh divergence."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
