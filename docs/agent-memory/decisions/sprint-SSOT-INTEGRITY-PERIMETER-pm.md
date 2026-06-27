@@ -190,3 +190,28 @@
 **why-decision:** Router RAW-verified commit 405f349d genuine DONE (developer's decision-journal entry sprint-SSOT-INTEGRITY-PERIMETER-developer.md line 252 contains exact task-id SSOT-W1-DOC-SYNC-WRITE-CONTRACT; developer verified CLAUDE.md clause + dev-standards.md pointer + flow docs repointed + grep proves 0 raw orch-state.json writers remain outside orch-apply.sh). DJ-GATE-1 satisfied: this decision-journal STEP embeds task-id **SSOT-W1-DOC-SYNC-WRITE-CONTRACT-BOARD-FLIP** in markdown-bold format. Gate predicate evaluation: dispatch_gate requires "FIX-CI-RED-EAC0CC65-BUNTEST clears" = CI GREEN. Router CI-health probe tick reports CI GREEN. Gate SATISFIED. Advancing to rank-9 OPS-REBUILD-ENFORCE (all 3 dependencies W1-ZOD-SCHEMA-MODEL, W1-ZOD-VALIDATOR-CLI, W1-SERVER-ENFORCE are DONE; gate unblocked).
 
 **why-change:** WAVE-1 documentation tier closes (DOC-SYNC-WRITE-CONTRACT DONE). Sprint is now one dispatch away from OPS rebuild (rank-9, gate-unblocked). All structural enforcement (Zod schema, validators, write wrapper, bash shim, head collapse, doc sync) COMPLETE. Remaining work: OPS team rebuilds mcp-server to LIVE-enforce Point-2 validation, then QA verifies by injecting bad status → confirm server rejects (acceptance gate).
+
+---
+
+### STEP pm-S9 · pm · 2026-06-27T17:32:53Z
+**task-id:** SSOT-W1-ZOD-SCHEMA-MODEL
+
+**what-done:**
+- Flipped SSOT-W1-ZOD-SCHEMA-MODEL status IN_PROGRESS → DONE (developer-completed, commit e55208ad verified by router RAW-verify)
+- Updated task metadata in active_sprints[3].tasks: completed_at=2026-06-27T17:32:53Z, commit=e55208ad
+- Advanced canonical .head from SSOT-W1-ZOD-SCHEMA-MODEL → SSOT-W1-ZOD-VALIDATOR-CLI (rank-2)
+- Updated .head.status=idle, .head.next_action="Wave-1 execution NEXT: rank-2 SSOT-W1-ZOD-VALIDATOR-CLI ready for dispatch (scripts/ zone: bash CLI validator wrapper for orch-apply.sh). Ranks 3-6 remain audit-then-harden DELTA tasks. WIP=1."
+- Updated .head.active_task_id=null, .head.updated_at=2026-06-27T17:32:53Z, .head.updated_by=pm
+- Validated atomic write: 
+  - jq -e '.head': PASS
+  - bun scripts/orch-validate.mjs: exit 0 PASS (72 SHG coherence warnings, non-blocking)
+  - bash scripts/orch-state-validate.sh: G-1..G-6 all PASS
+- Applied write via gated wrapper: `jq ... orch-state.json | bash scripts/orch-apply.sh`
+
+**what-considered:**
+- Rank-2 (ZOD-VALIDATOR-CLI) as next: All ranks depend on Zod schema (rank-1). Rank-1 delivery unblocks the full SSOT-integrity perimeter; rank-2 is the natural immediate successor (scripts/ zone, ~2h scope, no dependencies). WIP=1 enforced (head=idle, no in-progress task).
+- Head placement: Router-verified rank-1 DONE; head transitions to idle (per pm discipline: ready≠auto-dispatch, next tick triage confirms). next_action names rank-2 as next dispatchable to clarify the sprint trajectory.
+
+**why-decision:** Router RAW-verified commit e55208ad (dev-mcp-server delivery, 3 zone-clean files, schema diff comments-only, tsc 0, orchStateSchema.test.ts 78/78, RED 1837a 5/5 + 1980-f2 44/44, index-check 0). QA DJ appended (qa-S2) and worker DJ present — DJ-GATE-1 satisfied. Worker completed the rank-1 schema audit+harden task (Point-1 Zod model enforcement). Sprint remains ACTIVE with 6 tasks total; 5 remain TODO; 1 DONE.
+
+**why-change:** Rank-1 delivery lands in sprint. Board-flip advances the head to idle state (WIP=1 respects cowork policy: max 1 in-progress task per sprint tick). Next tick can dispatch rank-2 via fresh triage; no auto-resume avoids re-dispatch collisions. Rank-2 is the natural next step in the audit-then-harden DELTA cascade (schema → validators → enforcement → wrapper → shim → collapse → docs).

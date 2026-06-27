@@ -227,12 +227,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "SSOT-W1-ZOD-SCHEMA-MODEL",
+    "status": "idle",
+    "active_task_id": null,
     "next_agent": "dev-mcp-server",
-    "next_action": "Wave-1 execution OPEN: dispatch dev-mcp-server on rank-1 SSOT-W1-ZOD-SCHEMA-MODEL (audit-then-harden DELTA only — schema ~95% shipped: add QA-1/3/4 test gates + .passthrough->.strict doc + reconcile RED 1837a/1980-f2; do NOT recreate shipped work). Unblocks ranks 2-6.",
-    "updated_by": "po",
-    "updated_at": "2026-06-27T17:13:45Z",
+    "next_action": "Wave-1 execution NEXT: rank-2 SSOT-W1-ZOD-VALIDATOR-CLI ready for dispatch (scripts/ zone: bash CLI validator wrapper for orch-apply.sh). Ranks 3-6 remain audit-then-harden DELTA tasks. WIP=1.",
+    "updated_by": "pm",
+    "updated_at": "2026-06-27T17:32:53Z",
     "note": "ARCH-SSOT-INTEGRITY-PERIMETER design complete; moved to done[]. SSOT-INTEGRITY-PERIMETER sprint created with 6 Wave-1 audit-then-harden tasks. Zone split: apps/mcp-server/ (2), scripts/ (3), .claude/ (1). Ready for dev-mcp-server to start rank-1 task."
   },
   "narrative": {
@@ -2430,7 +2430,7 @@
           {
             "id": "SSOT-W1-ZOD-SCHEMA-MODEL",
             "type": "dev",
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "title": "Audit + harden orchStateSchema.ts: all-9-lane nested Zod schema with .strict() + superRefine + checkLaneCoherence/checkRefIntegrity exported",
             "wave": 1,
             "rank": 1,
@@ -2444,7 +2444,9 @@
             "detail_ref": "docs/handoffs/SSOT-W1-ZOD-SCHEMA-MODEL.md",
             "verify_note": "QA-1 (all-lane status inject), QA-3 (unknown key reject), QA-4 (dangling ref reject) pass; tests cover Lane reuse across all 9; .passthrough→.strict progression documented; red 1837a/1980-f2 reconciled.",
             "dispatched_at": "2026-06-27T17:13:45Z",
-            "dispatched_by": "po"
+            "dispatched_by": "po",
+            "completed_at": "2026-06-27T17:32:53Z",
+            "commit": "e55208ad"
           },
           {
             "id": "SSOT-W1-ZOD-VALIDATOR-CLI",
