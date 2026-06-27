@@ -1,4 +1,4 @@
-<!-- size-justification: 220L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. -->
+<!-- size-justification: 227L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. +1L: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. -->
 # QA — Main Flow
 
 **Tools:** `docs/agents/tools/package/qa.md`
@@ -208,6 +208,7 @@ PIPELINE: continue
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+  Notebook-write class: **APPEND** (AC-6) — compose settled ≤200L body in memory (AC-3 drop-oldest loop if > 200L) before single Write. SSOT: `.claude/skills/notebook-write/SKILL.md`.
 
 **Skills available to this agent (lazy-load — load only when the task requires it):**
 - Browser/UI automation for E2E verification → skill: `.claude/skills/webapp-testing/SKILL.md` (trigger: QA task requires Playwright-based UI testing or verifying a web artifact beyond unit tests)
