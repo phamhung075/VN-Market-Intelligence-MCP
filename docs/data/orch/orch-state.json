@@ -2746,7 +2746,7 @@
             "owner": "dev-frontend",
             "zone": "apps/frontend/app/components/, apps/frontend/app/lib/hooks/",
             "size": "M",
-            "status": "REVIEW",
+            "status": "DONE",
             "depends": [
               "TASK-FFT-L2"
             ],
@@ -2760,7 +2760,7 @@
             "owner": "dev-frontend",
             "zone": "apps/frontend/app/routes/",
             "size": "M",
-            "status": "TODO",
+            "status": "READY",
             "depends": [
               "TASK-FFT-L3A"
             ],

@@ -197,3 +197,36 @@ function useFreshnessRevalidator(slaTierKey: SlaTierKey): void
 
 **To:** qa  
 **Next action:** QA pipeline on commit afbb0c99 — verify 46 new tests green, tsc clean, EC-1/EC-3/EC-4 null-guard paths, SLA threshold boundaries correct.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-27  
+**Verdict:** APPROVED  
+**Commit reviewed:** afbb0c99  
+**Round:** 1
+
+### Gate Results
+| Gate | Result |
+|---|---|
+| New tests (46) | 46/46 PASS |
+| Full suite | 1754 pass / 2 fail (pre-existing) |
+| tsc | EXIT 0 |
+| DDD | PASS |
+| Security | PASS |
+| mock-guard | EXIT 0 |
+
+### Pre-existing 2 Failures Verified
+Both failures in `QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.tsx` (QUE_DESCRIPTIONS key-count assertion). Last-touch d7167c0a predates afbb0c99 by multiple commits. L3A commit (`git show --stat afbb0c99 | grep que`) returns empty — no QUE files touched. Failures are QUE_DESCRIPTIONS 3-key vs 2-key expected schema mismatch; zero overlap with freshness code.
+
+### EC-1 Null-Guard Verified
+`FreshnessBadge.tsx:146` — `if (dataAsof === null)` fires before any `<ClientTimeString iso={dataAsof} />` render. Three B-section tests exercise this path including explicit `expect(() => render(...)).not.toThrow()`. RISK-5 is closed.
+
+### SLA Threshold SSOT Alignment Verified
+Module-level `SLA_TIERS` in both files cross-checked against `docs/data/frontend-data-coverage-map.json` § sla_tiers. All 6 tiers match exactly. D1 (bake at module level, no runtime fetch) is correct per architect spec.
+
+### Hook Cleanup Verified
+`useFreshnessRevalidator.ts:77` `return () => clearInterval(id)` is the useEffect cleanup. Test C proves: (1) clearInterval spy was called on unmount, (2) no new revalidator.revalidate() calls after unmount, (3) `setInterval` spy never called for passive tiers (daily/weekly/static).
+
+**Unblocks:** TASK-FFT-L3B
