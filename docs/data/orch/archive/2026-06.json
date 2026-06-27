@@ -11903,6 +11903,17 @@
       "done_verified_by": "router",
       "agent_father_commit": "ea267e78",
       "regen_verified": "fb-post-2026-06-25 mtime 18:12 — foreign-flow + FX(đi ngang 26.136) + TA(VCB RSI 38.2 etc) all present; excuse gone; RAW-verified by router"
+    },
+    {
+      "id": "FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP",
+      "type": "FIX",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "M",
+      "zone": "apps/mcp-server/",
+      "title": "Q1-2026 BCTC ingest/DISCOVERY gap (HPG + ACV): filed reports absent from DB (get_bctc_full -> 'Chưa có dữ liệu BCTC') while queue~0 reads 'healthy-idle' — filed-but-never-discovered/queued",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP",
+      "status_note": "Visibility fix only — REFINE stall now observable at /api/fetch-status. Underlying 47-report REFINE backlog NOT cleared by this task; see follow-up BCTC-REFINE-STALL-RETRIGGER."
     }
   ],
   "closed_sprints": [
