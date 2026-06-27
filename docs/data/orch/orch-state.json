@@ -235,11 +235,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
+    "status": "in_progress",
+    "active_task_id": "SSOT-W1-HOOK-ENFORCE",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server hardening SSOT-W1-HOOK-ENFORCE (rank-3 SSOT-INTEGRITY-PERIMETER). Zone .claude/settings.local.json + scripts/agents-flow/orch-state-hook-{prewrite.mjs,bash-backstop.sh}. Audit+test existing hooks, prove QA-5 gate blocks bad orch-state Write, verify error paths + non-regression. WIP=1 (dev slot); CLEAN-NB-SPLIT-TNB runs maint lane (router-mutexed, not a WIP slot). On worker return: RAW-verify hook+test green, DJ-GATE-1, flip board DONE, release task:SSOT-W1-HOOK-ENFORCE.",
     "updated_by": "dev-team",
-    "updated_at": "2026-06-27T20:42:36Z"
+    "updated_at": "2026-06-27T20:58:00Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2502,7 +2503,7 @@
           {
             "id": "SSOT-W1-HOOK-ENFORCE",
             "type": "dev",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "title": "Audit + harden hook enforcement: .claude/settings.local.json PreToolUse Write|Edit blocker + PostToolUse Bash backstop; verify inline-validate + reason-field generation",
             "wave": 1,
             "rank": 3,
@@ -2516,7 +2517,10 @@
             "created_at": "2026-06-27T16:50:00Z",
             "created_by": "pm-agent",
             "detail_ref": "docs/handoffs/SSOT-W1-HOOK-ENFORCE.md",
-            "verify_note": "QA-5 (Write of bad orch-state blocked, deny reason returned) pass; PreToolUse inline-validates and returns structured reason; PostToolUse matcher heuristic avoids unrelated Bash; both handle errors gracefully."
+            "verify_note": "QA-5 (Write of bad orch-state blocked, deny reason returned) pass; PreToolUse inline-validates and returns structured reason; PostToolUse matcher heuristic avoids unrelated Bash; both handle errors gracefully.",
+            "next_agent": "dev-mcp-server",
+            "dispatched_at": "2026-06-27T20:58:00Z",
+            "note": " | [dev-team 2026-06-27T20:58:00Z DISPATCH] PO BATCH (po aec6630260aa140c5, router RAW-verified: rank-3, dep ZOD-SCHEMA-MODEL=DONE, brief 4727B present, WIP=0). Owner dev-mcp-server, zone .claude/+scripts/agents-flow/. Audit+harden ~90%-wired orch-state hooks: QA-5 gate (Write of bad orch-state blocked w/ deny reason), PreToolUse inline-validate Write+Edit paths, PostToolUse bash matcher heuristic, error-path coverage. Zone-disjoint from CLEAN-NB-SPLIT-TNB (maint lane). Per-task lock task:SSOT-W1-HOOK-ENFORCE held by dev-team ttl5400. On return: RAW-verify hooks+tests, DJ-GATE-1 on DONE, flip board, release lock."
           },
           {
             "id": "SSOT-W1-SERVER-ENFORCE",
@@ -2742,7 +2746,7 @@
             "owner": "dev-frontend",
             "zone": "apps/frontend/app/components/, apps/frontend/app/lib/hooks/",
             "size": "M",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "depends": [
               "TASK-FFT-L2"
             ],
