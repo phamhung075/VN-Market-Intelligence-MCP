@@ -238,9 +238,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "idle — tick 2026-06-27T21:12Z closed: FIX-CI-RED-BA82F2F5-DWF-CADENCE + FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH both DONE (RAW-verified). Awaiting next dev-team cron.",
+    "next_action": "idle — tick 20260627T224000Z closed: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L DONE (qa.md treadmill root-caused — qa now APPEND-class write-time self-cap; qa.md 183L under cap). Awaiting next dev-team cron.",
     "updated_by": "dev-team",
-    "updated_at": "2026-06-27T22:09:16Z"
+    "updated_at": "2026-06-27T22:58:51Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5816,22 +5816,6 @@
         "detail_ref": null
       },
       {
-        "id": "FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "owner": "po",
-        "route_to": "agent-father",
-        "zone": "docs/agents/",
-        "plan_only": true,
-        "dedup_key": "qa-notebook-write-spec-selfcap-200L",
-        "title": "QA notebook-write step lacks 200L write-time self-cap — recurring re-prune treadmill (203L re-breach after MAINT prune)",
-        "created_at": "2026-06-27T18:48:31Z",
-        "created_by": "po",
-        "status_note": "Per repair_task_request 2026-06-27 + router-S1 recurrence flag (docs/agent-memory/decisions/sprint-MAINT-on-demand-router.md): re-pruning qa.md is forbidden (treadmill - fe93258b pruned 207->195, next QA cycle a7befb0c re-breached to 203). Durable fix = add WRITE-TIME self-cap/auto-trim to the QA agent notebook-write step (drop oldest cycle(s) when append would exceed 200L), enforced by the writer not an external janitor. Per feedback_agent_md_factory: agent-father invokes agent-md-factory skill first; agent .md is agent-father territory. AC: a QA cycle that would push qa.md >200L auto-trims at write-time, no external prune needed."
-      },
-      {
         "id": "BA-FRONTEND-FRESHNESS-TRANSPARENCY",
         "title": "Requirement spec: per-surface last-updated freshness indicator on every frontend data card",
         "owner": "ba",
@@ -6613,6 +6597,28 @@
         "note": "[dev-team 2026-06-27T21:26:10Z DISPATCH] PO BATCH (po a5635aaf, router RAW-verified). RECURRING-SYMPTOM GENERATOR: caps SSOT docs/data/file-size-caps.json pattern docs/agent-memory/notebooks/*.md (cap200) over-matches notebooks/archive/*.md (bash case * crosses /). Archives are by-design large (pruned-split history) -> every split mints a permanent false-breach (latest archive/tran-ngoc-bau-archive-20260627.md 398L). Root-cause fix: add archive/** carve-out to file-size-caps.json + matching exempt branch in scripts/agents-flow/context-bloat-backstop.sh; add regression assertion (archive/*.md exempt, top-level notebook *.md still breaches). Do NOT prune the archive. Owner developer (outside dev-* zones), on-main, commit-mutex serialized.",
         "completed_at": "2026-06-27T22:09:16Z",
         "verification": "DONE (router RAW): archive cap over-match fixed in f36855ff (file-size-caps.json exempt flag + backstop guard); bidirectional regression test 2/2 PASS (router ran it); DJ-GATE-1 marker present in developer journal."
+      },
+      {
+        "id": "FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L",
+        "type": "FIX",
+        "status": "DONE",
+        "priority": "P2",
+        "size": "S",
+        "owner": "agent-father",
+        "route_to": "agent-father",
+        "zone": "docs/agents/",
+        "plan_only": false,
+        "dedup_key": "qa-notebook-write-spec-selfcap-200L",
+        "title": "QA notebook-write step lacks 200L write-time self-cap — recurring re-prune treadmill (203L re-breach after MAINT prune)",
+        "created_at": "2026-06-27T18:48:31Z",
+        "created_by": "po",
+        "status_note": "Per repair_task_request 2026-06-27 + router-S1 recurrence flag (docs/agent-memory/decisions/sprint-MAINT-on-demand-router.md): re-pruning qa.md is forbidden (treadmill - fe93258b pruned 207->195, next QA cycle a7befb0c re-breached to 203). Durable fix = add WRITE-TIME self-cap/auto-trim to the QA agent notebook-write step (drop oldest cycle(s) when append would exceed 200L), enforced by the writer not an external janitor. Per feedback_agent_md_factory: agent-father invokes agent-md-factory skill first; agent .md is agent-father territory. AC: a QA cycle that would push qa.md >200L auto-trims at write-time, no external prune needed.",
+        "next": "qa",
+        "dispatched_at": "2026-06-27T22:48:52Z",
+        "note": "[dev-team 2026-06-27T22:48:52Z DISPATCH] PO BATCH (po a8c92191, router RAW-verified: backlog row real, qa has NO notebook-write class in file-size-caps.json = root cause). Recurring context_bloat_breach on qa.md (re-breaches every tick post-prune = STRUCTURAL). Durable fix: agent-father invokes agent-md-factory skill FIRST, adds write-time 200L self-cap to qa notebook-write step (oldest-cycle auto-trim at write) + assigns qa a notebook-write class. NO prune. DONE gate: a qa cycle exceeding 200L auto-trims at write AND context_bloat_breach for qa.md stops re-emitting. Owner agent-father, on-main, commit-mutex serialized.",
+        "completed_at": "2026-06-27T22:58:51Z",
+        "commit": "57916170",
+        "verification": "DONE (router RAW-verified, not relayed): commit 57916170 on main, 4 files. qa added to APPEND class in BOTH SSOTs (file-size-caps.json _note L17 + SKILL.md AC-6 table L83). AC-3 drop-oldest settled-write loop is real (SKILL.md L34-57). qa/flow/main.md L211 binds end-of-cycle write to AC-3 contract. DJ-GATE-1 marker present. qa.md currently 183L (<=200 — breach already resolved + structurally self-capping). Treadmill root-caused per feedback_qa_notebook_reprune_treadmill_escalate, NOT pruned."
       }
     ],
     "done_verified": [],
