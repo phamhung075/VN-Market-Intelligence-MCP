@@ -227,13 +227,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "ARCH-SSOT-INTEGRITY-PERIMETER",
-    "next_agent": "architect",
-    "next_action": "Dispatch architect to author docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md from the user directive + deep-audit; hands to pm to decompose Wave-1 into the 6 atomic zone tasks.",
-    "updated_by": "po",
-    "updated_at": "2026-06-27T16:42:52Z",
-    "note": "PO TRIAGE po-s123 2026-06-27T16:39Z: DISPATCHED ARCH-SSOT-INTEGRITY-PERIMETER (architect, doc-authoring, no relay). pendingSignals=0, NEW signals=0, CI GREEN, WIP=0 (WIP<=2 permits). Source material present: directive (7.9KB user-authored) + deep-audit (216KB) exist, deliverable not yet authored. Triaged-around twice prior; no remaining defer reason. ADD-1 READY-enum decision pre-endorsed (option-a) in task desc so the schema cannot strand its own kickoff. Brief LOCKS that decision first, then hands to pm for the 6 zone tasks."
+    "status": "ready",
+    "active_task_id": "SSOT-W1-ZOD-SCHEMA-MODEL",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Begin Wave-1 audit-then-harden: SSOT-W1-ZOD-SCHEMA-MODEL (apps/mcp-server/src/infrastructure/orchStateSchema.ts). Architect brief delivered; schema mostly complete — QA gates QA-1/3/4 + .passthrough→.strict progression + test coverage. Est. 2h.",
+    "updated_by": "pm-agent",
+    "updated_at": "2026-06-27T16:50:00Z",
+    "note": "ARCH-SSOT-INTEGRITY-PERIMETER design complete; moved to done[]. SSOT-INTEGRITY-PERIMETER sprint created with 6 Wave-1 audit-then-harden tasks. Zone split: apps/mcp-server/ (2), scripts/ (3), .claude/ (1). Ready for dev-mcp-server to start rank-1 task."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2418,6 +2418,128 @@
           }
         ],
         "last_evidence_at": "2026-06-23T17:29:59Z"
+      },
+      {
+        "id": "SSOT-INTEGRITY-PERIMETER",
+        "status": "ACTIVE",
+        "label": "SSOT Integrity Perimeter Hardening",
+        "goal": "Complete Wave-1 Zod schema hardening (6 audit-then-harden zone tasks); deliver dual-point enforcement (schema + hook + server), canonical wrapper, superset-proof shim. All writers validated; QA-1..QA-7 gates green.",
+        "priority": "high",
+        "opened_at": "2026-06-27T16:50:00Z",
+        "tasks": [
+          {
+            "id": "SSOT-W1-ZOD-SCHEMA-MODEL",
+            "type": "dev",
+            "status": "TODO",
+            "title": "Audit + harden orchStateSchema.ts: all-9-lane nested Zod schema with .strict() + superRefine + checkLaneCoherence/checkRefIntegrity exported",
+            "wave": 1,
+            "rank": 1,
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "size": "M",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "created_at": "2026-06-27T16:50:00Z",
+            "created_by": "pm-agent",
+            "detail_ref": "docs/handoffs/SSOT-W1-ZOD-SCHEMA-MODEL.md",
+            "verify_note": "QA-1 (all-lane status inject), QA-3 (unknown key reject), QA-4 (dangling ref reject) pass; tests cover Lane reuse across all 9; .passthrough→.strict progression documented; red 1837a/1980-f2 reconciled."
+          },
+          {
+            "id": "SSOT-W1-ZOD-VALIDATOR-CLI",
+            "type": "dev",
+            "status": "TODO",
+            "title": "Audit + harden scripts/orch-validate.mjs: Stage-0 dup-key tokenizer (pre-parse) + Stage-1 safeParse + Stage-1c ref-integrity hard-fail + auto-fix error contract",
+            "wave": 1,
+            "rank": 2,
+            "zone": "scripts/",
+            "priority": "high",
+            "size": "M",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "SSOT-W1-ZOD-SCHEMA-MODEL"
+            ],
+            "created_at": "2026-06-27T16:50:00Z",
+            "created_by": "pm-agent",
+            "detail_ref": "docs/handoffs/SSOT-W1-ZOD-VALIDATOR-CLI.md",
+            "verify_note": "QA-1, QA-2 (dup-key reject), QA-4 (ref integrity) pass; Stage-0 tokenizer handles escape correctly; auto-fix hints match issue.code mapping; exit codes 0/1/2/3 verified; full test suite green."
+          },
+          {
+            "id": "SSOT-W1-HOOK-ENFORCE",
+            "type": "dev",
+            "status": "TODO",
+            "title": "Audit + harden hook enforcement: .claude/settings.local.json PreToolUse Write|Edit blocker + PostToolUse Bash backstop; verify inline-validate + reason-field generation",
+            "wave": 1,
+            "rank": 3,
+            "zone": ".claude/",
+            "priority": "high",
+            "size": "S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "SSOT-W1-ZOD-SCHEMA-MODEL"
+            ],
+            "created_at": "2026-06-27T16:50:00Z",
+            "created_by": "pm-agent",
+            "detail_ref": "docs/handoffs/SSOT-W1-HOOK-ENFORCE.md",
+            "verify_note": "QA-5 (Write of bad orch-state blocked, deny reason returned) pass; PreToolUse inline-validates and returns structured reason; PostToolUse matcher heuristic avoids unrelated Bash; both handle errors gracefully."
+          },
+          {
+            "id": "SSOT-W1-SERVER-ENFORCE",
+            "type": "dev",
+            "status": "TODO",
+            "title": "Harden orchStateStore.ts: replace OrchStateTaskBoardTask.status escape-hatch union with z.infer<typeof StatusEnum>; verify safeParse() before every atomic write (task_claim, task_release, etc.); reconcile RED 1837a + 1980-f2",
+            "wave": 1,
+            "rank": 4,
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "size": "M",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "SSOT-W1-ZOD-SCHEMA-MODEL"
+            ],
+            "created_at": "2026-06-27T16:50:00Z",
+            "created_by": "pm-agent",
+            "detail_ref": "docs/handoffs/SSOT-W1-SERVER-ENFORCE.md",
+            "verify_note": "QA-6 (task_claim with bad status throws pre-rename), QA-7 (types compile, 1837a/1980-f2 green) pass; safeParse confirmed before rename in writeOrchStateAtomic."
+          },
+          {
+            "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
+            "type": "dev",
+            "status": "TODO",
+            "title": "Audit + hardening proof: scripts/orch-apply.sh canonical wrapper; proof all ~290/tick jq-patch writers route through it; add CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER pointer in dev-standards.md",
+            "wave": 1,
+            "rank": 5,
+            "zone": "scripts/",
+            "priority": "high",
+            "size": "S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "SSOT-W1-ZOD-VALIDATOR-CLI"
+            ],
+            "created_at": "2026-06-27T16:50:00Z",
+            "created_by": "pm-agent",
+            "detail_ref": "docs/handoffs/SSOT-W1-ORCH-APPLY-WRAPPER.md",
+            "verify_note": "QA-2 (dup-key in candidate rejected), QA-1 (bad status rejected) pass; codebase audit finds all jq patches route through wrapper; canonical pointer added to dev-standards.md."
+          },
+          {
+            "id": "SSOT-W1-BASH-SHIM",
+            "type": "dev",
+            "status": "TODO",
+            "title": "Audit + document scripts/orch-state-validate.sh: thin shim proof (G-1..G-5 superset) + full mcp-server test suite green post-schema-enforcement",
+            "wave": 1,
+            "rank": 6,
+            "zone": "scripts/",
+            "priority": "high",
+            "size": "S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "SSOT-W1-ZOD-VALIDATOR-CLI"
+            ],
+            "created_at": "2026-06-27T16:50:00Z",
+            "created_by": "pm-agent",
+            "detail_ref": "docs/handoffs/SSOT-W1-BASH-SHIM.md",
+            "verify_note": "QA-7 (z.infer types compile, full suite green, 1837a reconciled) pass; superset proof documented in shim header; existing callers unchanged."
+          }
+        ]
       }
     ],
     "archive": [
@@ -6142,17 +6264,7 @@
         "resolved_by": "claude-manager-helper",
         "resolved_sha": "fe93258b",
         "resolution": "verified + committed to main; router-flipped post-execution"
-      }
-    ],
-    "done_verified": [],
-    "head": {
-      "status": "deprecated",
-      "canonical_moved_to": ".head",
-      "deprecated_at": "2026-06-27T08:03:52Z",
-      "deprecated_by": "po-s121",
-      "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
-    },
-    "in_progress": [
+      },
       {
         "id": "ARCH-SSOT-INTEGRITY-PERIMETER",
         "type": "SPRINT-M",
@@ -6181,6 +6293,15 @@
         "dispatched_by": "po-s123"
       }
     ],
+    "done_verified": [],
+    "head": {
+      "status": "deprecated",
+      "canonical_moved_to": ".head",
+      "deprecated_at": "2026-06-27T08:03:52Z",
+      "deprecated_by": "po-s121",
+      "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
+    },
+    "in_progress": [],
     "ready": [],
     "review": [
       {
