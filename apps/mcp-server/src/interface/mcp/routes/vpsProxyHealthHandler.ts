@@ -136,6 +136,21 @@ interface RecentPushRow {
   pushed_at: string;
 }
 
+/**
+ * Query the freshest pushed_at timestamp across all vps_push_log rows.
+ * Returns ISO 8601 UTC string, or null when the table is empty.
+ *
+ * @param db - SQLite database instance (injected)
+ */
+export function queryVpsProxyHealthAsof(db: Database): string | null {
+  const row = db
+    .prepare<{ max_pushed_at: string | null }, []>(
+      "SELECT MAX(pushed_at) AS max_pushed_at FROM vps_push_log",
+    )
+    .get();
+  return row?.max_pushed_at ?? null;
+}
+
 export function handleVpsProxyHealth(
   _req: IncomingMessage,
   res: ServerResponse,
@@ -175,11 +190,14 @@ export function handleVpsProxyHealth(
       )
       .all() as RecentPushRow[];
 
+    const rawAsof = queryVpsProxyHealthAsof(db);
+
     const body = {
       ok: true,
       services,
       recent_pushes: recentPushes,
-      fetchedAt: new Date().toISOString(),
+      fetchedAt: now.toISOString(),
+      data_asof: rawAsof ?? now.toISOString(),
     };
 
     res.writeHead(200, { "Content-Type": "application/json" });

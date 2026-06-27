@@ -114,6 +114,12 @@ export interface AlertsResponse {
   items: AlertItem[];
   count: number;
   fetchedAt: string;
+  /**
+   * ISO 8601 UTC timestamp of the most recently triggered alert in the DB.
+   * Derived from MAX(triggered_at) across all alerts rows.
+   * Falls back to request time when the table is empty (no alerts yet).
+   */
+  data_asof: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -176,6 +182,21 @@ export function parseAffectedActionsJson(raw: string | null): AffectedAction[] {
 // ─────────────────────────────────────────────────────────────────────────────
 // Core query — exported for testability
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Query the freshest triggered_at timestamp across all alerts.
+ * Returns ISO 8601 UTC string, or null when the table is empty.
+ *
+ * @param db - SQLite database instance (injected)
+ */
+export function queryAlertsAsof(db: Database): string | null {
+  const row = db
+    .prepare<{ max_triggered_at: string | null }, []>(
+      "SELECT MAX(triggered_at) AS max_triggered_at FROM alerts",
+    )
+    .get();
+  return row?.max_triggered_at ?? null;
+}
 
 /**
  * Query alerts from the DB, newest triggered_at first.
@@ -269,11 +290,13 @@ export function handleGetAlerts(
     const severityParam = url.searchParams.get("severity") ?? undefined;
 
     const items = queryAlerts(db, limit, severityParam);
+    const rawAsof = queryAlertsAsof(db);
 
     const body: AlertsResponse = {
       items,
       count: items.length,
       fetchedAt: now.toISOString(),
+      data_asof: rawAsof ?? now.toISOString(),
     };
 
     res.writeHead(200, { "Content-Type": "application/json" });

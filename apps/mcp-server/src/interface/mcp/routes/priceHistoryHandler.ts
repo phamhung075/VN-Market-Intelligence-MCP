@@ -35,10 +35,30 @@ interface OhlcvRow {
   volume: number;
 }
 
+/**
+ * Query the freshest updated_at timestamp for a given ticker in daily_ohlcv.
+ * Returns ISO 8601 UTC string, or null when no rows exist for this ticker.
+ *
+ * @param db   - SQLite database instance (injected)
+ * @param code - Ticker symbol (e.g. "FPT", "VNINDEX")
+ */
+export function queryPriceHistoryAsof(db: Database, code: string): string | null {
+  const row = db
+    .prepare<{ max_updated_at: string | null }, [string]>(
+      "SELECT MAX(updated_at) AS max_updated_at FROM daily_ohlcv WHERE code = ?",
+    )
+    .get(code);
+  // Guard: daily_ohlcv.updated_at has DEFAULT '' — MAX('') = '' is falsy.
+  // Return null for empty sentinel so the caller falls back to request time.
+  const val = row?.max_updated_at;
+  return val && val.trim() ? val : null;
+}
+
 export function handlePriceHistory(
   req: IncomingMessage,
   res: ServerResponse,
   db: Database,
+  now: Date = new Date(),
 ): void {
   try {
     const url = new URL(req.url ?? "/", "http://localhost");
@@ -79,6 +99,8 @@ export function handlePriceHistory(
       return;
     }
 
+    const rawAsof = queryPriceHistoryAsof(db, rawCode);
+
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(
       JSON.stringify({
@@ -86,6 +108,7 @@ export function handlePriceHistory(
         days,
         count: rows.length,
         history: rows,
+        data_asof: rawAsof ?? now.toISOString(),
       }),
     );
   } catch (err) {

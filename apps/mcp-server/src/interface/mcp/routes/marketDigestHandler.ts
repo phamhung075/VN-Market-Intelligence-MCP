@@ -63,6 +63,12 @@ export interface MarketDigestResponse {
   items: MarketDigestItem[];
   count: number;
   fetchedAt: string;
+  /**
+   * ISO 8601 UTC timestamp of the freshest CHEF synthesis message served.
+   * Derived from MAX(sent_at) over the CHEF_SYNTHESIS_AGENTS rows in market_messages.
+   * Falls back to request time when the table is empty (no messages yet).
+   */
+  data_asof: string;
 }
 
 /** Raw SQLite row from market_messages. */
@@ -77,6 +83,24 @@ interface MarketMessageRow {
 // ─────────────────────────────────────────────────────────────────────────────
 // Core query — exported for testability
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Query the freshest sent_at timestamp across CHEF synthesis messages.
+ * Returns ISO 8601 UTC string, or null when the table is empty.
+ *
+ * @param db - SQLite database instance (injected)
+ */
+export function queryMarketDigestAsof(db: Database): string | null {
+  const placeholders = CHEF_SYNTHESIS_AGENTS.map(() => "?").join(", ");
+  const row = db
+    .prepare<{ max_sent_at: string | null }, (string)[]>(
+      `SELECT MAX(sent_at) AS max_sent_at
+       FROM market_messages
+       WHERE from_agent IN (${placeholders})`,
+    )
+    .get(...(CHEF_SYNTHESIS_AGENTS as string[]));
+  return row?.max_sent_at ?? null;
+}
 
 /**
  * Query the last `limit` MARKET synthesis messages from the DB.
@@ -136,11 +160,13 @@ export function handleGetMarketDigest(
 ): void {
   try {
     const items = queryMarketDigest(db, 3);
+    const rawAsof = queryMarketDigestAsof(db);
 
     const body: MarketDigestResponse = {
       items,
       count: items.length,
       fetchedAt: now.toISOString(),
+      data_asof: rawAsof ?? now.toISOString(),
     };
 
     res.writeHead(200, { "Content-Type": "application/json" });
