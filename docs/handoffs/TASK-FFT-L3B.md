@@ -233,3 +233,52 @@ All wired routes have `l3b_status: "WIRED"` in `docs/data/frontend-data-coverage
 `bctc-inspect` flagged as `SKIPPED_RAW_PROXY`.
 
 **To QA:** Ready for visual verification that every page shows the badge, colors are correct per SLA tier, and `sector-rotation` no longer shows inline time string.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-28
+**Verdict:** CHANGES_REQUESTED
+**Round:** 1
+
+### Gate Results
+
+| Gate | Result |
+|---|---|
+| tsc --noEmit | CLEAN (0 errors) |
+| vitest full suite | 1754 pass / 2 fail (2 pre-existing QUE_DESCRIPTIONS — git-confirmed predates 9bcb828b) |
+| e2e Playwright | 4/4 PASS |
+| DDD scan | PASS (no domain→infra imports) |
+| Security scan | PASS (no process.env, no secrets) |
+| mock-guard | N/A (no production source changes other than route wiring) |
+| bctc-inspect raw-proxy skip | VERIFIED GENUINE (no React default export; loader returns `new Response(html)` directly) |
+| DRY invariant | PASS (exactly 1 `export.*FreshnessBadge` — FreshnessBadge.tsx only) |
+| EC-8 sector-rotation | PASS (toLocaleTimeString removed; generatedAt used, not tradingDate; unconditional badge) |
+| alerts marketHoursOnly | PASS (confirmed line 553) |
+| foreign-flow marketHoursOnly | PASS (confirmed line 507) |
+| kinh-dich-reference STATIC | PASS ("Nội dung tĩnh" text in PageHeader.actions; no FreshnessBadge/hook per FR-5) |
+| generatedAt-over-asOf (6 routes) | PASS (sound decision; avoids midnight-UTC artifact; asOf text display preserved) |
+| NULL path (FreshnessBadge EC-1) | PASS (gray "Chưa có dữ liệu" when dataAsof=null; confirmed in component source) |
+
+### Blocking Issues
+
+**B-1** `apps/frontend/app/routes/dashboard.analysis.tsx:255`
+The loader sets `fetchedAt: new Date().toISOString()` — this is the server's execution timestamp, not any real data `generatedAt` from the endpoints. `KinhDichMarket.timestamp` is available in `market` (the `KinhDichMarket | null` in LoaderData). When the KD signal is 40 minutes old but the loader just ran, the badge shows green. This violates: "the badge must be fed the loader's real data_asof/generatedAt, never a baked or client-now timestamp."
+
+Fix: surface `market?.timestamp ?? null` as `kdGeneratedAt` in LoaderData return value; pass to the KD section badge. Separately surface a watchlist timestamp (see B-2).
+
+**B-2** `apps/frontend/app/routes/dashboard.analysis.tsx:1746,1756`
+The analysis page has two elements in the coverage map — `"kinh-dich market+readings"` (intraday) and `"watchlist prices/macro/brief"` (realtime). DoD: "Analysis pages with multiple elements: each element has its own `<FreshnessBadge>`". The implementation has ONE badge (intraday) using the baked `fetchedAt`. Missing:
+- A realtime badge for the watchlist/prices section (e.g., `slaTierKey="realtime"` with a representative watchlist price timestamp)
+- `useFreshnessRevalidator("realtime")` for 1-minute cadence (current intraday = 5-minute cadence, insufficient for realtime data)
+
+Fix: add a second badge in the watchlist section header using a representative price timestamp from `watchlistTiles`; call `useFreshnessRevalidator` with the more aggressive tier (realtime).
+
+### Non-Blocking Findings
+
+**N-1** `docs/data/frontend-data-coverage-map.json` — `kinh-dich-reference.l3b_status = "WIRED"` is incorrect. The route correctly renders "Nội dung tĩnh" plain text with no FreshnessBadge/useFreshnessRevalidator (correct per FR-5). The `l3b_status` should be `"STATIC_TEXT"` and the note should read "Static page per FR-5 — no badge/hook, renders 'Nội dung tĩnh' in PageHeader.actions". The implementation is correct; the SSOT documentation is misleading and may cause false positives if auditors verify l3b_status="WIRED" means a badge is present.
+
+**N-2** `apps/frontend/app/routes/dashboard.orchestration.tsx:176` — `fetchedAt = new Date().toISOString()` at loader time; `state.head.updated_at` is available at line 197 (`const tsField = state.head?.updated_at ?? state.last_updated_iso`). Recommend using `tsField` as the badge's `dataAsof` so the badge reflects actual orch-state age, not page load time. Non-blocking because orch data is event-driven (changes per agent cycle) and the event SLA (60 min) covers the gap.
+
+**To developer/fixer:** Fix B-1 and B-2 in `dashboard.analysis.tsx`. Optionally address N-1 (coverage map docs accuracy) and N-2 (orchestration timestamp) in the same pass.

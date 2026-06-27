@@ -62,3 +62,17 @@
 - mock-guard: PASS. Security: no process.env, no secrets. DDD: no infra imports in domain service.
 **why-decision:** All 5 QA verification items satisfied via direct RAW inspection. APPROVED.
 **why-change:** Work already on main (commit 1dd3c6d1); no branch to merge. DONE flip applied.
+
+---
+
+### STEP qa-S5 · qa · 2026-06-28T00:15:00Z
+**task-id:** TASK-FFT-L3B
+**what-done:** CHANGES_REQUESTED — 2 blocking issues in dashboard.analysis.tsx: baked loader timestamp + missing second badge for dual-element page.
+**what-considered:**
+- tsc EXIT 0; 1754/2 vitest (2 pre-existing QUE_DESCRIPTIONS last-touch d7167c0a, git show 9bcb828b confirms zero QUE file touches); 4/4 e2e PASS; DDD PASS; security PASS
+- 33 of 34 routes PASS: bctc-inspect raw-proxy skip genuine (loader=`new Response(html)`, no export default); kinh-dich-reference STATIC text correct per FR-5; EC-8 confirmed (toLocaleTimeString removed, generatedAt not tradingDate); marketHoursOnly=true on alerts+foreign-flow; generatedAt-over-asOf substitution sound for 6 weekly routes
+- BLOCKING-1: analysis.tsx:255 `fetchedAt: new Date().toISOString()` is baked loader-execution time. KinhDichMarket.timestamp IS available in `market` object. Badge at line 1756 always shows green on load — can't reflect KD data that was stale before loader ran.
+- BLOCKING-2: analysis.tsx has 1 badge (intraday) for a 2-element page (coverage map rows: kinh-dich=intraday, watchlist=realtime). DoD: "each element has its own <FreshnessBadge>". useFreshnessRevalidator("realtime") missing → watchlist refreshes at 5-min cadence instead of 1-min.
+- NON-BLOCKING: coverage map kinh-dich-reference l3b_status="WIRED" (incorrect — no badge wired, correct per FR-5, but docs inaccurate)
+**why-decision:** Trust-feature DoD explicitly flags analysis as multi-element example requiring per-element badges; dev checked the box but implementation has 1 badge and baked timestamp. Rubber-stamp would ship a badge that always reads "green" on load regardless of source freshness.
+**why-change:** From plan (APPROVED): 2 analysis.tsx DoD misses block.
