@@ -92,7 +92,8 @@ describe("1837a — orch-state.json schema (v4 reconcile)", () => {
     //                 canonical in 29+ router-d*.jq scripts since router-d13 onwards)
     //   qa          — task at final QA live-verify gate before done_verified (added 2026-06-13;
     //                 used by router-d1-refine-lock-ops-to-qa.jq and siblings)
-    const validStatuses = ["in_progress", "idle", "blocked", "stale", "review", "active", "qa"];
+    //   ready       — task ready to be picked up (added 2026-06-27; ADD-1 READY-bootstrap)
+    const validStatuses = ["in_progress", "idle", "blocked", "stale", "review", "active", "qa", "ready"];
     expect(validStatuses).toContain(state.head.status);
   });
 

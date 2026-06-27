@@ -320,6 +320,13 @@ function collectAllTaskIds(tb: z.infer<typeof TaskBoardSchema>): Set<string> {
 export const OrchStateSchema = z
   .object({
     _meta:                   MetaSchema.optional(),
+    // ── Legacy v3-style root-level metadata (optional; present in older snapshots
+    //    and in the OrchState TypeScript interface in orchStateStore.ts) ──────────
+    _schema:                 z.string().optional(),
+    _ssot:                   z.boolean().optional(),
+    _updated_at:             z.string().optional(),
+    _updated_by:             z.string().optional(),
+    // ─────────────────────────────────────────────────────────────────────────────
     dashboard_section_cache: z.record(z.unknown()).optional(),
     decision_journal:        z.array(z.record(z.unknown())).optional(),
     head:                    HeadSchema,

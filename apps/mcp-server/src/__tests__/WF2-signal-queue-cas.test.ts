@@ -280,7 +280,17 @@ describe("WF-2 CAS — writeHeadAtomic (FU-ORCH-HEAD-CAS)", () => {
   // T9 — happy path: head fields merged
   it("T9: happy path — head fields merged, other sections preserved", () => {
     const p = makeTmpPath(); paths.push(p);
-    plantState(p);
+    // Plant a state that includes task "WF-2" in active_sprints so the
+    // referential-integrity check in OrchStateSchema.superRefine passes.
+    // FIX-CI-RED-EAC0CC65-BUNTEST: schema strict() + superRefine require
+    // active_task_id to resolve to a task in task_board.
+    plantState(p, {
+      ...BASE_ORCH,
+      task_board: {
+        ...BASE_ORCH.task_board,
+        active_sprints: [{ id: "S-WF2", status: "active", tasks: [{ id: "WF-2", title: "WF-2 stub", owner: "dev", status: "IN_PROGRESS" }] }],
+      },
+    });
 
     const ok = writeHeadAtomic(p, {
       status: "in_progress",

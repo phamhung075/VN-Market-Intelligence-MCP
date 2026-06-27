@@ -4,7 +4,7 @@
 
 ## Known patterns / preferences
 
-- Kinh Dịch backtest 501 từ ≥2026-05-25 — cần dev-team B-bucket wiring
+- Kinh Dịch backtest 501 từ >=2026-05-25 — cần dev-team B-bucket wiring (carry-over 5+ chu kỳ)
 - FPT vị thế lỗ dai dẳng qua nhiều chu kỳ — theo dõi điều kiện cắt bớt
 - cascade rules 0 evaluated — win-rate pipeline không hoạt động, cần kiểm tra
 - VPB rủi ro kiểm toán cho vay Lạng Sơn — chưa giải quyết

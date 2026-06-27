@@ -92,6 +92,25 @@ export function ensureCorrelationStubColumn(db: Database): void {
   }
 }
 
+// ── ensureConfidenceScoreColumn ───────────────────────────────────────────────
+// FIX-CI-RED-EAC0CC65-BUNTEST: idempotent guard that adds the confidence_score
+// column to agent_signals when absent (mirrors ensureCorrelationStubColumn).
+//
+// The INSERT in storeAlerts / storeAlertsFromCommander always includes
+// confidence_score; tests that create agent_signals manually (without calling
+// initDatabase + schema-news.ts migrations) miss this column. The guard makes
+// the column available before any INSERT, keeping source behaviour identical
+// to production (where schema-news.ts ALTER TABLE runs at startup).
+function ensureConfidenceScoreColumn(db: Database): void {
+  try {
+    db.prepare("SELECT confidence_score FROM agent_signals LIMIT 0").all();
+    // Column already exists — no-op
+  } catch {
+    // Column absent — add it (plain ADD COLUMN, nullable INTEGER)
+    db.exec("ALTER TABLE agent_signals ADD COLUMN confidence_score INTEGER");
+  }
+}
+
 // ── hasAgentSignalsTable ────────────────────────────────────────────────────
 // AC-7: gracefully skip signal write if agent_signals table doesn't exist yet.
 function hasAgentSignalsTable(db: Database): boolean {
@@ -140,6 +159,7 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
   // before writing rows (idempotent, negligible overhead).
   if (hasAgentSignalsTable(db)) {
     ensureCorrelationStubColumn(db);
+    ensureConfidenceScoreColumn(db);
   }
 
   // FIX-ALERT-ORPHAN-CORRELATION: co-write agent_signals row for C-08 correlation.
@@ -233,6 +253,7 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
   // before writing rows (idempotent, negligible overhead).
   if (hasAgentSignalsTable(db)) {
     ensureCorrelationStubColumn(db);
+    ensureConfidenceScoreColumn(db);
   }
 
   // FIX-ALERT-ORPHAN-CORRELATION: co-write agent_signals row for C-08 correlation.
