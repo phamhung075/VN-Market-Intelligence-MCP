@@ -34,3 +34,15 @@
 - No arch concern: pure Interface layer (React component + hook), no new MCP tool, no cross-service HTTP, no domain service
 **why-decision:** All 5 QA requirements from handoff verified directly. No rubber-stamping of dev claims — ran tests live and cross-checked each critical path (null-guard, SLA SSOT alignment, cleanup). APPROVED.
 **why-change:** Work already on main (commit afbb0c99 on main); no branch to merge. DONE flip unblocks TASK-FFT-L3B.
+
+---
+
+### STEP qa-S3 · qa · 2026-06-27T23:45:00Z
+**task-id:** CLEAN-STALE-BRANCH-CI-RED-FIX-BUNTEST
+**what-done:** ABORTED stale-branch cleanup — worktree at scratchpad/ci-red-fix is dirty; cannot remove without discarding uncommitted changes.
+**what-considered:**
+- only: zero unique commits verified (`git log main..ci-red-fix-buntest --oneline` empty); branch is fully merged
+- Worktree dirty state: D apps/mcp-server/data, M bun.lock, M docs/agent-memory/modules/tool-usage-stats.json, + 3 untracked session files (docs/agent-memory/sessions/2026-06-27-{developer,ops,qa}.md)
+- Procedure is explicit: "if dirty, ABORT + report" — force-discard is forbidden when real uncommitted work may exist
+**why-decision:** Worktree contains modified tracked files (a deleted path + 2 modified files) — these may carry work not captured in any commit; per procedure, discarding without review is forbidden.
+**why-change:** Cannot proceed to worktree remove; manual inspection or agent session termination required before retry.
