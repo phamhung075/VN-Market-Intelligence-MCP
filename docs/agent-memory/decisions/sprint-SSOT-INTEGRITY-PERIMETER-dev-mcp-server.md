@@ -27,3 +27,15 @@
 - Include `checkRefIntegrity()` here (rejected per constraint-1) — 7 live dangling payload_refs would hard-block ALL server writes; tracked separately by SSOT-W1-FIX-DANGLING-PAYLOAD-REFS.
 **why-decision:** `safeParse` + reformatted multi-issue throw matches the directive's auto-fix error contract (path + message per issue, one-liner fix hint format); placement after round-trip ensures the fs guard and schema guard see the same bytes; schema-only scoping avoids the known dangling-ref blocker.
 **why-change:** no change from plan — task spec was precise; implementation matches directive §Step 2 + §Dual-point enforcement Point 2.
+
+---
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-27T11:58:00Z
+**task-id:** SSOT-W1-FIX-DANGLING-PAYLOAD-REFS
+**what-done:** Enumerated all non-null payload_refs in signal_queue.rows; confirmed docs/signals/db-integrity-history.json ABSENT, docs/data/db-integrity-history.json PRESENT; applied jq patch to temp file, validated [-s + jq -e .], atomic mv; orch-state-validate.sh PASS (7 gates), orch-schema-live-probe.mjs PASS; committed f29e297e (index-only, no -a).
+**what-considered:**
+- Repoint all 6 `docs/signals/db-integrity-history.json` refs (chosen — target file EXISTS at docs/data/)
+- Null row[33] `"docs/data/db-integrity-history.json entry #127"` (chosen — fragment suffix makes it an invalid path, no valid target)
+- Hand-edit the JSON (rejected — constraint-1 mandates jq-slice → temp → validate → mv atomic protocol)
+**why-decision:** jq atomic write is the only compliant protocol; 7 refs split cleanly into two cases (repoint 6, null 1); both validate gates pass confirming no structural regression.
+**why-change:** no change from plan — all 7 identified refs matched the task spec exactly.
