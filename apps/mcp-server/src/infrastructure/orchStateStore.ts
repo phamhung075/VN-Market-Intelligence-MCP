@@ -28,6 +28,7 @@
 import { writeFileSync, renameSync, readFileSync, existsSync, statSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { mkdirSync } from "node:fs";
+import { OrchStateSchema } from "./orchStateSchema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal OrchState shape (only sections touched by mcp-server writers)
@@ -171,6 +172,24 @@ export function writeOrchStateAtomic(path: string, data: object): void {
   if (!parsed.head || !parsed.task_board || !parsed.signal_queue) {
     throw new Error(
       "[atomic-write] missing required top-level section — refusing to write",
+    );
+  }
+  // ── §SSOT-W1-SERVER-ENFORCE: Zod schema-only validation (Point 2) ────────
+  // OrchStateSchema.parse validates structural/enum/lane shape — NOT file-ref
+  // integrity (checkRefIntegrity is deliberately excluded here; dangling
+  // payload_refs are tracked by SSOT-W1-FIX-DANGLING-PAYLOAD-REFS and must
+  // not block live writes).
+  // Throws BEFORE any fs operation so a bad write never lands on disk.
+  const schemaResult = OrchStateSchema.safeParse(parsed);
+  if (!schemaResult.success) {
+    const issues = schemaResult.error.issues;
+    const lines = issues.map((iss, i) => {
+      const pathStr = iss.path.length > 0 ? iss.path.join(".") : "(root)";
+      return `[${i + 1}] ${pathStr}: ${iss.message}`;
+    });
+    throw new Error(
+      `[atomic-write] ORCH-STATE SCHEMA VALIDATION FAILED (${issues.length} issue${issues.length === 1 ? "" : "s"}) — fix and retry:\n` +
+        lines.join("\n"),
     );
   }
   // ── fs operations only after guards pass ─────────────────────────────────
