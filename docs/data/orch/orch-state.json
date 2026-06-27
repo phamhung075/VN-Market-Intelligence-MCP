@@ -6117,6 +6117,22 @@
     ],
     "done": [
       {
+        "id": "TASK-FFT-L2",
+        "anchor": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
+        "title": "L2 data_asof Contract for 5 Handlers",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "zone": "apps/mcp-server/src/interface/mcp/routes/",
+        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
+        "completed_at": "2026-06-27T20:40:00Z",
+        "commits": [
+          "a384497a",
+          "56c0e4ac"
+        ],
+        "next": "pm",
+        "done_verified": true
+      },
+      {
         "closed_at": "2026-06-05T11:16:27Z",
         "created_at": "unknown",
         "id": "BCTC-CURRENT-404-INVESTIGATE",
@@ -6605,21 +6621,6 @@
           "at": "2026-06-27T08:03:52Z",
           "note": "enum-clean (C2): PARKED qualifier-as-status -> DEFERRED (deliberate serialization); park_reason retained verbatim as the qualifier prose. UNPARK CONDITION unchanged."
         }
-      },
-      {
-        "id": "TASK-FFT-L2",
-        "anchor": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
-        "title": "L2 data_asof Contract for 5 Handlers",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/src/interface/mcp/routes/",
-        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
-        "completed_at": "2026-06-27T20:20:00Z",
-        "commits": [
-          "a384497a",
-          "56c0e4ac"
-        ],
-        "next": "qa"
       }
     ],
     "qa": [],
