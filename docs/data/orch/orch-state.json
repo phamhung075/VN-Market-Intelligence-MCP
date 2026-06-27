@@ -220,12 +220,12 @@
   ],
   "head": {
     "status": "ready",
-    "active_task_id": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Clear the 7 dangling payload_ref entries in docs/data/orch/orch-state.json so Stage-1c ref-integrity (HOOK-ENFORCE/BASH-SHIM) can activate without hard-blocking live writes. Reconcile each signal_queue/lane payload_ref to an existing file or null it per SSOT-zod-validation-directive-2026-06-27.md.",
+    "active_task_id": "SSOT-W1-HOOK-ENFORCE",
+    "next_agent": "developer",
+    "next_action": "Extend .claude/settings.local.json PreToolUse hook to inline-validate orch-state.json writes; add PostToolUse backstop re-validation. Zone: apps/mcp-server/src/ + Claude hook infrastructure.",
     "updated_by": "pm",
-    "updated_at": "2026-06-27T10:54:40Z",
-    "note": "Rank-3 SSOT-W1-SERVER-ENFORCE DONE (754df2aa + 5321b4f5, router-verified GREEN). rank-4 HOOK-ENFORCE deferred — blocked by SSOT-W1-FIX-DANGLING-PAYLOAD-REFS; routing head to that prerequisite first."
+    "updated_at": "2026-06-27T11:22:54Z",
+    "note": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS prerequisite cleared (commit f29e297e verified). Advancing to rank-4 HOOK-ENFORCE: Point-1 enforcement via Claude hook (PreToolUse + PostToolUse). Depends on rank-1 ZOD-SCHEMA-MODEL and rank-2 ZOD-VALIDATOR-CLI."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2525,6 +2525,22 @@
             "depends": [],
             "type": "SPRINT-S",
             "status_note": "PARTIAL_DONE_DATA — po-s121 completed data collapse/dedup; remaining: dev retargets 3 regressor scripts"
+          },
+          {
+            "id": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",
+            "title": "Fix 7 dangling signal_queue payload_refs before Stage-1c enforcement",
+            "owner": "dev-mcp-server",
+            "status": "DONE",
+            "zone": "apps/mcp-server/src/",
+            "created_at": "2026-06-27T10:35:00Z",
+            "size": "M",
+            "depends": [
+              "SSOT-W1-ZOD-VALIDATOR-CLI"
+            ],
+            "type": "SPRINT-S",
+            "note": "Dangling refs fixed. Data commit f29e297e verified via DJ entry task-id:SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",
+            "done_by": "router",
+            "done_at": "2026-06-27T11:22:54Z"
           }
         ],
         "ranked_scope": [
@@ -2709,12 +2725,12 @@
         },
         "head": {
           "status": "ready",
-          "active_task_id": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",
-          "next_agent": "dev-mcp-server",
-          "next_action": "Clear the 7 dangling payload_ref entries in docs/data/orch/orch-state.json so Stage-1c ref-integrity (HOOK-ENFORCE/BASH-SHIM) can activate without hard-blocking live writes. Reconcile each signal_queue/lane payload_ref to an existing file or null it per SSOT-zod-validation-directive-2026-06-27.md.",
+          "active_task_id": "SSOT-W1-HOOK-ENFORCE",
+          "next_agent": "developer",
+          "next_action": "Extend .claude/settings.local.json PreToolUse hook to inline-validate orch-state.json writes; add PostToolUse backstop re-validation. Zone: apps/mcp-server/src/ + Claude hook infrastructure.",
           "updated_by": "pm",
-          "updated_at": "2026-06-27T10:54:40Z",
-          "note": "Rank-3 SSOT-W1-SERVER-ENFORCE DONE (754df2aa + 5321b4f5, router-verified GREEN). rank-4 HOOK-ENFORCE deferred — blocked by SSOT-W1-FIX-DANGLING-PAYLOAD-REFS; routing head to that prerequisite first."
+          "updated_at": "2026-06-27T11:22:54Z",
+          "note": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS prerequisite cleared (commit f29e297e verified). Advancing to rank-4 HOOK-ENFORCE: Point-1 enforcement via Claude hook (PreToolUse + PostToolUse). Depends on rank-1 ZOD-SCHEMA-MODEL and rank-2 ZOD-VALIDATOR-CLI."
         }
       }
     ],
@@ -5821,26 +5837,6 @@
         "zone": "multi",
         "title": "mock-guard.sh: tighten scan scope — exclude Go *_test.go (adjacent test stubs e.g. usecases_vmt_bop_test.go/handlers_vmt_failclose_test.go return https://stub.sbv.vn) AND untracked vendored cache (apps/*/~/.bun/install/cache). Both trip HARD-FAIL/CAUTION every dev-team post-cycle tick = false positives. Add *_test.go + ~/.bun to exclusion glob.",
         "detail_ref": null
-      },
-      {
-        "id": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",
-        "size": "M",
-        "sprint": "SSOT-INTEGRITY-PERIMETER",
-        "status": "BACKLOG",
-        "title": "Fix 7 dangling signal_queue payload_refs before Stage-1c enforcement",
-        "type": "SPRINT-S",
-        "zone": "apps/mcp-server/src/",
-        "created_at": "2026-06-27T10:35:00Z",
-        "priority": "P0",
-        "depends": [
-          "SSOT-W1-ZOD-VALIDATOR-CLI"
-        ],
-        "blocks": [
-          "SSOT-W1-HOOK-ENFORCE",
-          "SSOT-W1-BASH-SHIM"
-        ],
-        "note": "Rows 17,18,19,25,26,27 point to docs/signals/db-integrity-history.json (moved to docs/data/db-integrity-history.json); row 33 has malformed fragment ref. Stage-1c ref-check will hard-block all orch-state writes until fixed. Schema-only .parse (rank-3 SSOT-W1-SERVER-ENFORCE) safe to enforce first.",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SSOT-W1-FIX-DANGLING-PAYLOAD-REFS"
       }
     ],
     "closed_sprints": [
