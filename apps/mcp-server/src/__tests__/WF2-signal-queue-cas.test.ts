@@ -288,7 +288,7 @@ describe("WF-2 CAS — writeHeadAtomic (FU-ORCH-HEAD-CAS)", () => {
       ...BASE_ORCH,
       task_board: {
         ...BASE_ORCH.task_board,
-        active_sprints: [{ id: "S-WF2", status: "active", tasks: [{ id: "WF-2", status: "IN_PROGRESS" }] }],
+        active_sprints: [{ id: "S-WF2", status: "active", tasks: [{ id: "WF-2", title: "WF-2 stub", owner: "dev", status: "IN_PROGRESS" }] }],
       },
     });
 
