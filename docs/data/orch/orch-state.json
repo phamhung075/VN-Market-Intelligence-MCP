@@ -235,11 +235,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
+    "status": "in_progress",
+    "active_task_id": "VMT-3a-MACRO-INDICATORS-PMI",
+    "next_agent": "dev-macro-indicators",
+    "next_action": "dev-macro-indicators assessing VMT-3a (S&P Global VN Manufacturing PMI series + MA3 transform, register into macro-indicators handler). Zone apps/macro-indicators/ — isolated from ghost in_progress row TASK-FFT-L2 (apps/mcp-server, dispatched_at=null orphan, flagged for reconcile). Per-task lock task:VMT-3a-MACRO-INDICATORS-PMI held by dev-team (ttl5400). On worker return: RAW-verify build/serving, DJ-GATE-1, flip board, release lock. WIP=2 (cap).",
     "updated_by": "dev-team",
-    "updated_at": "2026-06-27T20:11:00Z"
+    "updated_at": "2026-06-27T20:21:05Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1768,7 +1769,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "M",
-            "status": "BLOCKED",
+            "status": "IN_PROGRESS",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -1781,13 +1782,15 @@
             "files_create": [
               "apps/macro-indicators/pkg/infrastructure/parsers_vmt_pmi.go"
             ],
-            "note": "S&P Global PMI press page (not geo-blocked). Main-server fetch, no VPS needed. MA3 transform pre-computed. Parallelizable with GSO/CPI probing.",
+            "note": "S&P Global PMI press page (not geo-blocked). Main-server fetch, no VPS needed. MA3 transform pre-computed. Parallelizable with GSO/CPI probing. | [dev-team 2026-06-27T20:21Z UNBLOCK+DISPATCH] Stale-BLOCKED orphan: sole dep VMT-D-VPSFETCH=DONE (gate satisfied), block_reason=null, dependent VMT-3b=DONE + handler VMT-7c=DONE_VERIFIED -> handler shipped WITHOUT a dedicated S&P Global VN PMI series. Router RAW-verified serving layer: get_vn_macro_indicators serves IIP (not PMI); only PMI is a TradingEconomics scalar feeding get_investment_clock_phase w/ gdp_growth fallback. Dispatched dev-macro-indicators ASSESSMENT-FIRST: confirm no-op vs implement PMI fetch+MA3+handler-register; if live S&P source unreachable -> report REAL blocker (NO fake data), router re-BLOCKs w/ documented reason + routes fetch-feasibility. Last open piece of VN-MACRO-TOOLING.",
             "unblocked_at": "2026-06-14T19:19:17Z",
             "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)",
             "probe5_gate_at": "2026-06-14T20:00:54Z",
             "probe5_note": "PMI source = S&P Global (NOT geo-blocked) — needs PROBE-5 characterization before parser; dev-macro-indicators runs the probe LOCALLY (no VPS). Held out of WAVE-2 serial chain per architect probe-fold.",
             "status_note": "HELD OUT OF WAVE-2 SERIAL CHAIN. S&P Global PMI not geo-blocked (dev-macro-indicators runs PROBE-5 locally before parser). Blocks VMT-3b in original dependency, but PROBE-5 is faster than NSO PROBE-3—dev can pursue PMI fetch in parallel with VPS probing.",
-            "gate_reason": "PROBE-5 pending (dev-local, not VPS)"
+            "gate_reason": "PROBE-5 pending (dev-local, not VPS)",
+            "next_agent": "dev-macro-indicators",
+            "dispatched_at": "2026-06-27T20:21:05Z"
           },
           {
             "id": "VMT-3b-MACRO-INDICATORS-GSO",
@@ -6573,18 +6576,7 @@
       "deprecated_by": "po-s121",
       "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
     },
-    "in_progress": [
-      {
-        "id": "TASK-FFT-L2",
-        "anchor": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
-        "title": "L2 data_asof Contract for 5 Handlers",
-        "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/src/interface/mcp/routes/",
-        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
-        "claimed_at": "2026-06-27T00:00:00Z"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -6613,6 +6605,21 @@
           "at": "2026-06-27T08:03:52Z",
           "note": "enum-clean (C2): PARKED qualifier-as-status -> DEFERRED (deliberate serialization); park_reason retained verbatim as the qualifier prose. UNPARK CONDITION unchanged."
         }
+      },
+      {
+        "id": "TASK-FFT-L2",
+        "anchor": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
+        "title": "L2 data_asof Contract for 5 Handlers",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/src/interface/mcp/routes/",
+        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
+        "completed_at": "2026-06-27T20:20:00Z",
+        "commits": [
+          "a384497a",
+          "56c0e4ac"
+        ],
+        "next": "qa"
       }
     ],
     "qa": [],
