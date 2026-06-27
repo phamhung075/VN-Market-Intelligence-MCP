@@ -54,6 +54,12 @@ function makeDb(): Database {
       error_msg   TEXT,
       duration_ms INTEGER DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS financial_reports (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      action_code  TEXT NOT NULL,
+      text_status  TEXT,
+      refine_status TEXT
+    );
   `);
   return db;
 }

@@ -71,6 +71,12 @@ function setupDb(): Database {
       vps_response_size_bytes INTEGER,
       circuit_breaker_state   TEXT
     );
+    CREATE TABLE IF NOT EXISTS financial_reports (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      action_code  TEXT NOT NULL,
+      text_status  TEXT,
+      refine_status TEXT
+    );
   `);
   return db;
 }
