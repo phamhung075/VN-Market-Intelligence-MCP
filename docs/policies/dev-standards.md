@@ -55,6 +55,20 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Owning flow: docs/agents/fb-market-poster/flow/main.md STEP 4b
 ```
 
+**CANONICAL: Orch-state Claude hook gate (SSOT-INTEGRITY-PERIMETER SSOT-W1-HOOK-ENFORCE)**
+```bash
+# PreToolUse gate — auto-wired in .claude/settings.local.json, no manual invocation needed.
+# To test: echo '{"tool_name":"Write","tool_input":{"file_path":"docs/data/orch/orch-state.json","content":"<json>"}}' \
+#   | bun scripts/agents-flow/orch-state-hook-prewrite.mjs
+# Exit 0 = allow. Exit 2 + {"decision":"block","reason":"..."} = blocked (schema violation).
+# PostToolUse Bash backstop:
+# bash scripts/agents-flow/orch-state-hook-bash-backstop.sh  (auto-fired; always exits 0)
+# Owning task: SSOT-W1-HOOK-ENFORCE; validator wired: bun scripts/orch-validate.mjs (same SSOT)
+```
+Both hook scripts call `bun scripts/orch-validate.mjs` — same canonical Zod validator as the CLI.
+PreToolUse validates BEFORE write lands (blocks on schema fail). PostToolUse backstop catches
+Bash shell writes that bypass the Write/Edit tools (surfaces warning; non-blocking).
+
 **CANONICAL: Orch-state Zod validator CLI (SSOT-INTEGRITY-PERIMETER SSOT-W1-ZOD-VALIDATOR-CLI)**
 ```bash
 # Validate docs/data/orch/orch-state.json (default path):
