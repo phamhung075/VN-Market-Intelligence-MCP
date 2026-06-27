@@ -1,7 +1,7 @@
-## Task Report TASK-FFT-L3B
+## Task Report TASK-FFT-L3B (Round 2 — Final)
 date: 2026-06-28
-outcome: CHANGES_REQUESTED
-commit: 9bcb828b
+outcome: APPROVED
+commit: 24bbecbf (fixer fix) | prior: 9bcb828b (developer)
 
 ## Test Results
 - Unit tests (targeted): n/a (route-wiring task; no new unit tests added in L3B)
@@ -63,4 +63,19 @@ Should be `"STATIC_TEXT"` with note "no badge/hook; renders 'Nội dung tĩnh' p
 Non-blocking (event SLA=60 min; orch data only changes per agent cycle).
 
 ## Merge Status
-NOT MERGED — CHANGES_REQUESTED. Fix B-1 + B-2 in dashboard.analysis.tsx, then re-submit for QA.
+APPROVED. Work on main (commit 24bbecbf). NO-BRANCH policy — no git merge required. TASK-FFT-L3B set to DONE in orch-state active_sprints[FRONTEND-FRESHNESS-TRANSPARENCY].
+
+## Round 2 Resolution (commit 24bbecbf)
+
+**B-1 FIXED:** `kdGeneratedAt = market?.timestamp ?? null` at analysis.tsx:258. Badge line 1763 uses `kdGeneratedAt`. Real KD signal timestamp propagated.
+
+**B-2 FIXED:** Two badges present — intraday KD (line 1763) + realtime watchlist (line 1801). Both revalidators added: `useFreshnessRevalidator("intraday")` at 1752 + `useFreshnessRevalidator("realtime")` at 1753. `watchlistDataAsof=null` is correct (WatchlistTileData has no timestamp field; EC-1 null-guard renders "Chưa có dữ liệu").
+
+**N-2 FIXED:** orchestration.tsx:201 `fetchedAt = tsField` (state.head?.updated_at ?? state.last_updated_iso) when state available.
+
+**N-1 FIXED:** coverage-map kinh-dich-reference.l3b_status="STATIC_TEXT" confirmed.
+
+**Runner discrepancy resolved:** Fixer's "202 fail" was bun:test artifact. Zone-standard `npm test` (vitest run) = 1754/2, identical to prior baseline.
+
+## Sprint Status
+FRONTEND-FRESHNESS-TRANSPARENCY — ALL tasks DONE: TASK-FFT-L2 + TASK-FFT-L3A + TASK-FFT-L3B + TASK-FFT-L4. Sprint complete.

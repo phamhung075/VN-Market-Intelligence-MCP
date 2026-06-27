@@ -325,3 +325,56 @@ Fix: add a second badge in the watchlist section header using a representative p
 - Coverage map SSOT corrected: static page no longer marked as "WIRED", preventing false audits
 
 **To QA:** All 4 issues addressed with minimum targeted changes. Freshness badges now surface real data timestamps (trust-critical). Both new badges render correctly. tsc clean, e2e pass, pre-existing test failures confirmed unrelated.
+
+---
+
+## [QA] Review Record — Round 2
+
+**Date:** 2026-06-28
+**Verdict:** APPROVED
+**Round:** 2 (final)
+
+### Gate Results
+
+| Gate | Result |
+|---|---|
+| tsc --noEmit | CLEAN (0 errors) |
+| vitest full suite (npm test) | 1754 pass / 2 fail (2 pre-existing QUE_DESCRIPTIONS — unchanged from Round 1 baseline) |
+| bun test discrepancy | RESOLVED — bun:test runner artifact (bun cannot run vitest-import files); zone-standard npm test (vitest run) is the authoritative gate |
+| e2e Playwright | 4/4 PASS (prior cycle) |
+| DDD scan | PASS |
+| Security scan | PASS |
+
+### B-1 Verified
+
+`dashboard.analysis.tsx:258` — `kdGeneratedAt: market?.timestamp ?? null` correctly surfaces the real KinhDichMarket.timestamp. Badge at line 1763 uses `kdGeneratedAt ?? null` (not `fetchedAt`). The KD badge now reflects actual signal age, not server load time.
+
+### B-2 Verified
+
+Two FreshnessBadge renders confirmed:
+- Line 1763: `<FreshnessBadge dataAsof={kdGeneratedAt ?? null} slaTierKey="intraday" />` (KD signal element)
+- Line 1801: `<FreshnessBadge dataAsof={watchlistDataAsof ?? null} slaTierKey="realtime" />` (watchlist element)
+
+Two useFreshnessRevalidator calls confirmed:
+- Line 1752: `useFreshnessRevalidator("intraday")` (5-min cadence for KD)
+- Line 1753: `useFreshnessRevalidator("realtime")` (1-min cadence for watchlist)
+
+`watchlistDataAsof=null` is correct — `WatchlistTileData` has no timestamp field (verified in `/apps/frontend/app/lib/api/client.ts:492`). EC-1 null-guard renders "Chưa có dữ liệu" in gray. This is honest and accurate given the current API shape.
+
+### N-2 Verified
+
+`dashboard.orchestration.tsx:201` — `fetchedAt = tsField` (`state.head?.updated_at ?? state.last_updated_iso`) when state is non-null. Falls back to `new Date()` only when state is null (error path). Badge at line 945 now reflects real orch-state age.
+
+### N-1 Verified
+
+`docs/data/frontend-data-coverage-map.json` — `kinh-dich-reference.l3b_status = "STATIC_TEXT"` confirmed. `l3b_note` updated to "Static page per FR-5 — no badge/hook, renders 'Nội dung tĩnh' in PageHeader.actions". SSOT is now accurate.
+
+### Sprint Status
+
+TASK-FFT-L3B is the final task of sprint FRONTEND-FRESHNESS-TRANSPARENCY. All four tasks are now DONE:
+- TASK-FFT-L2: DONE (QA cycle-327)
+- TASK-FFT-L3A: DONE (QA cycle-328)
+- TASK-FFT-L3B: DONE (QA cycle-331, this review)
+- TASK-FFT-L4: DONE (QA cycle-329)
+
+**Sprint FRONTEND-FRESHNESS-TRANSPARENCY is complete. NEXT: pm to close the sprint.**

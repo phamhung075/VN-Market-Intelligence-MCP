@@ -2760,12 +2760,13 @@
             "owner": "dev-frontend",
             "zone": "apps/frontend/app/routes/",
             "size": "M",
-            "status": "REVIEW",
+            "status": "DONE",
             "depends": [
               "TASK-FFT-L3A"
             ],
-            "commit": null,
-            "note": "Import and wire badge into all 34 routes. Refactor sector-rotation inline timestamp (EC-8)."
+            "commit": "24bbecbf",
+            "note": "Import and wire badge into all 34 routes. Refactor sector-rotation inline timestamp (EC-8).",
+            "completed_at": "2026-06-27T22:29:39Z"
           },
           {
             "id": "TASK-FFT-L4",

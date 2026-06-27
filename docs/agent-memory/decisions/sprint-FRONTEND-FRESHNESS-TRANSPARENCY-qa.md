@@ -76,3 +76,18 @@
 - NON-BLOCKING: coverage map kinh-dich-reference l3b_status="WIRED" (incorrect — no badge wired, correct per FR-5, but docs inaccurate)
 **why-decision:** Trust-feature DoD explicitly flags analysis as multi-element example requiring per-element badges; dev checked the box but implementation has 1 badge and baked timestamp. Rubber-stamp would ship a badge that always reads "green" on load regardless of source freshness.
 **why-change:** From plan (APPROVED): 2 analysis.tsx DoD misses block.
+
+---
+
+### STEP qa-S6 · qa · 2026-06-28T00:29:39Z
+**task-id:** TASK-FFT-L3B
+**what-done:** APPROVED TASK-FFT-L3B Round 2 re-gate (fixer commit 24bbecbf) — all 4 issues fixed, runner discrepancy resolved, sprint complete.
+**what-considered:**
+- Runner discrepancy: fixer ran `bun test` (bun:test runner) → 1534/202. Zone-standard is `npm test` (vitest run, per package.json `"test": "vitest run"`). Own run: 1754/2 — identical to prior baseline (2 pre-existing QUE_DESCRIPTIONS in QUE-TOOLTIP-DRY-1a + QUE-REFERENCE-PAGE-detail; shape test expects 2 keys, gets 3). 202 bun failures are pure runner-artifact (bun:test cannot run vitest-import tests). No regression.
+- B-1: kdGeneratedAt=market?.timestamp??null at loader:258; badge line 1763 uses kdGeneratedAt not fetchedAt. Real KD signal timestamp propagated correctly.
+- B-2: Two useFreshnessRevalidator calls (intraday:1752 + realtime:1753). Two badges: intraday at line 1763, realtime at line 1801. watchlistDataAsof=null is correct — WatchlistTileData has no timestamp field; EC-1 gray render is honest and correct.
+- N-2: orchestration.tsx fetchedAt overwritten to tsField (state.head?.updated_at) at line 201 when available. Fallback to new Date() only when state=null.
+- N-1: coverage-map kinh-dich-reference.l3b_status="STATIC_TEXT", l3b_note accurate. Verified via Python parse of JSON.
+- tsc EXIT 0. DDD PASS. Security PASS. No mock-guard required (route wiring, no fabrication path). Sprint board: L2+L3A+L3B+L4 all DONE.
+**why-decision:** All 4 issues verified by direct source inspection (not sub-agent relay). Runner discrepancy disproved by own npm test run. Sprint FRONTEND-FRESHNESS-TRANSPARENCY fully complete.
+**why-change:** No change from plan — all fixes landed correctly.
