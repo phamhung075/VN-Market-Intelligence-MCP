@@ -219,13 +219,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "SSOT-W1-SERVER-ENFORCE",
+    "status": "ready",
+    "active_task_id": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",
     "next_agent": "dev-mcp-server",
-    "next_action": "Wire OrchStateSchema.parse(next) into apps/mcp-server/src/infrastructure/orchStateStore.ts write path (throw on fail) — Point-2 server-side enforcement per SSOT-zod-validation-directive-2026-06-27.md. Schema-only .parse (NOT the CLI's Stage-1c ref check), so live-data dangling refs do NOT block it.",
+    "next_action": "Clear the 7 dangling payload_ref entries in docs/data/orch/orch-state.json so Stage-1c ref-integrity (HOOK-ENFORCE/BASH-SHIM) can activate without hard-blocking live writes. Reconcile each signal_queue/lane payload_ref to an existing file or null it per SSOT-zod-validation-directive-2026-06-27.md.",
     "updated_by": "pm",
-    "updated_at": "2026-06-27T10:35:00Z",
-    "note": "Rank-2 SSOT-W1-ZOD-VALIDATOR-CLI DONE (commit 8d37f164 + all AC-suite green). Head advanced to rank-3 SSOT-W1-SERVER-ENFORCE (both sprint and canonical heads synchronized). Dangling payload_ref finding recorded in backlog task SSOT-W1-FIX-DANGLING-PAYLOAD-REFS (must land before Stage-1c ref-check enforcement)."
+    "updated_at": "2026-06-27T10:54:40Z",
+    "note": "Rank-3 SSOT-W1-SERVER-ENFORCE DONE (754df2aa + 5321b4f5, router-verified GREEN). rank-4 HOOK-ENFORCE deferred — blocked by SSOT-W1-FIX-DANGLING-PAYLOAD-REFS; routing head to that prerequisite first."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2448,7 +2448,7 @@
             "id": "SSOT-W1-SERVER-ENFORCE",
             "title": "Point-2 enforcement: orchStateStore.ts write-path OrchStateSchema.parse(next) before atomic write; reconcile RED 1837a/1980-f2 tests",
             "owner": "dev-mcp-server",
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "zone": "apps/mcp-server/src/",
             "created_at": "2026-06-27T08:45:20Z",
             "size": "M",
@@ -2456,7 +2456,7 @@
               "SSOT-W1-ZOD-SCHEMA-MODEL"
             ],
             "type": "SPRINT-S",
-            "note": "Covers task_claim/task_release/scheduler writes"
+            "note": "Covers task_claim/task_release/scheduler writes. Router-RAW-verified GREEN (commits 754df2aa + 5321b4f5): typecheck pass + live schema-only parse PASSED on real orch-state.json"
           },
           {
             "id": "SSOT-W1-HOOK-ENFORCE",
@@ -2565,7 +2565,10 @@
             "supersedes": [
               "SSOT-W1-TS-SYNC-1837A(r12:RED)"
             ],
-            "title": "Point-2 enforcement: orchStateStore.ts write-path OrchStateSchema.parse(next) before atomic write, throw on fail (covers task_claim/task_release/coordinationTools/scheduler — invisible to any Claude hook); reconcile RED 1837a-pipeline-state.test.ts + 1980-f2-canon-schema.test.ts against the one schema; full mcp-server suite green"
+            "title": "Point-2 enforcement: orchStateStore.ts write-path OrchStateSchema.parse(next) before atomic write, throw on fail (covers task_claim/task_release/coordinationTools/scheduler — invisible to any Claude hook); reconcile RED 1837a-pipeline-state.test.ts + 1980-f2-canon-schema.test.ts against the one schema; full mcp-server suite green",
+            "status": "DONE",
+            "done_by": "router-dev-team",
+            "done_at": "2026-06-27T10:54:40Z"
           },
           {
             "rank": 4,
@@ -2705,13 +2708,13 @@
           "brief": "architect"
         },
         "head": {
-          "status": "in_progress",
-          "active_task_id": "SSOT-W1-SERVER-ENFORCE",
+          "status": "ready",
+          "active_task_id": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",
           "next_agent": "dev-mcp-server",
-          "next_action": "Wire OrchStateSchema.parse(next) into apps/mcp-server/src/infrastructure/orchStateStore.ts write path (throw on fail) — Point-2 server-side enforcement per SSOT-zod-validation-directive-2026-06-27.md. Schema-only .parse (NOT the CLI's Stage-1c ref check), so live-data dangling refs do NOT block it.",
+          "next_action": "Clear the 7 dangling payload_ref entries in docs/data/orch/orch-state.json so Stage-1c ref-integrity (HOOK-ENFORCE/BASH-SHIM) can activate without hard-blocking live writes. Reconcile each signal_queue/lane payload_ref to an existing file or null it per SSOT-zod-validation-directive-2026-06-27.md.",
           "updated_by": "pm",
-          "updated_at": "2026-06-27T10:35:00Z",
-          "note": "Rank-2 SSOT-W1-ZOD-VALIDATOR-CLI DONE (commit 8d37f164 + all AC-suite green). Head advanced to rank-3 SSOT-W1-SERVER-ENFORCE. Dangling payload_ref finding recorded in backlog task SSOT-W1-FIX-DANGLING-PAYLOAD-REFS (must land before Stage-1c ref-check enforcement)."
+          "updated_at": "2026-06-27T10:54:40Z",
+          "note": "Rank-3 SSOT-W1-SERVER-ENFORCE DONE (754df2aa + 5321b4f5, router-verified GREEN). rank-4 HOOK-ENFORCE deferred — blocked by SSOT-W1-FIX-DANGLING-PAYLOAD-REFS; routing head to that prerequisite first."
         }
       }
     ],

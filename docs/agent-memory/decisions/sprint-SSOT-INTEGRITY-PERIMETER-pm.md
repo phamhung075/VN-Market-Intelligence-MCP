@@ -22,3 +22,23 @@
 **why-decision:** Dev-mcp-server's decision journal (task-id SSOT-W1-ZOD-VALIDATOR-CLI) documented 7 genuine dangling refs (rows 17,18,19,25,26,27 + malformed row 33). Schema-only .parse (not Stage-1c ref check) is safe to enforce at rank-3. Full ref-integrity enforcement at rank-5+ requires clean data first.
 
 **why-change:** Head was stale at rank-2 (after rank-2 DONE); this cycle advances to rank-3 per SSOT-zod-validation-directive-2026-06-27.md Step 3. Synchronized both heads (sprint + canonical) to prevent re-dispatch bug (last tick showed head desync → rank-1 re-dispatch).
+
+---
+
+### STEP pm-S2 · pm · 2026-06-27T10:54:40Z
+**task-id:** SSOT-W1-SERVER-ENFORCE
+**what-done:**
+- Flipped SSOT-W1-SERVER-ENFORCE status IN_PROGRESS → DONE (router-RAW-verified: commits 754df2aa + 5321b4f5)
+- Updated tasks[2].note with router verification: "Router-RAW-verified GREEN (commits 754df2aa + 5321b4f5): typecheck pass + live schema-only parse PASSED on real orch-state.json"
+- Added ranked_scope[2].status = DONE + done_by/done_at metadata
+- Advanced BOTH heads (sprint + canonical, byte-identical) from SSOT-W1-SERVER-ENFORCE → SSOT-W1-FIX-DANGLING-PAYLOAD-REFS (backlog prerequisite, not rank-4 HOOK-ENFORCE)
+- Set next_agent = dev-mcp-server, status = ready, next_action = clear 7 dangling payload_refs
+- Validated atomically: G-1..G-6 all pass (orch-state-validate.sh exit 0)
+
+**what-considered:**
+- Whether rank-3 DONE blocks rank-4 (HOOK-ENFORCE): YES, it DEPENDS ON rank-1 (ZOD-SCHEMA) + rank-2 (CLI); rank-4 itself is BLOCKED by backlog task SSOT-W1-FIX-DANGLING-PAYLOAD-REFS
+- Head routing choice: SKIP rank-4, route to BLOCKER prerequisite (SSOT-W1-FIX-DANGLING-PAYLOAD-REFS); unblocking it clears 7 dangling signal_queue refs, then rank-4 ref-check enforcement can activate
+
+**why-decision:** Rank-3 completion blocks rank-4 via dependency graph (rank-4 declares blocks=["SSOT-W1-HOOK-ENFORCE","SSOT-W1-BASH-SHIM"]). Router-verified DONE with green typecheck + live parse. Backlog prerequisite is NOW ready-to-work; routing head there accelerates unblocking rather than queuing on rank-4's dependency.
+
+**why-change:** Router delivered rank-3 GREEN; head auto-advances per SSOT-zod-validation-directive Step 3. Dependency-aware routing (not sequential rank-4) unblocks the full Stage-1c ref-check tier.
