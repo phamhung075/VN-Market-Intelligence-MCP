@@ -98,7 +98,7 @@ bun scripts/orch-validate.mjs path/to/candidate.json
 Imports schema from apps/mcp-server/src/infrastructure/orchStateSchema.ts (single source of truth — never duplicated).
 Stage 0: raw-byte duplicate-key scan (pre-parse). Stage 1: OrchStateSchema.safeParse. Stage 1b: lane coherence (warn during SHG migration). Stage 1c: ref integrity (hard fail on dangling detail_ref / payload_ref).
 
-**CANONICAL: Orch-state write-gate validator (ORCH-STATE-SCHEMA-HARDENING SHG-1)**
+**CANONICAL: Orch-state write-gate validator (ORCH-STATE-SCHEMA-HARDENING SHG-1 / SSOT-W1-BASH-SHIM)**
 ```bash
 # Validate a candidate orch-state file before atomic rename (exit 0 = valid, non-zero = FAIL):
 bash scripts/orch-state-validate.sh <path-to-candidate.json>
@@ -109,9 +109,10 @@ bash scripts/orch-state-validate.sh <path-to-candidate.json>
 # Wire-in targets (SHG-3): pm/main, pm/task-archive, dev-team/post-cycle,
 #   po/sprint-signoff, signal-dashboard, system-auditor, orch-cold-evict.sh
 ```
-G-1 (JSON valid) + G-2 (sentinel) + G-3 (lane types arrays) + G-4 (no null sprint IDs) + G-5 (status enum) = hard exits.
-G-5 promoted to hard gate (SHG-5 — 2026-06-27): any non-canonical status now aborts write before rename.
-G-6 (last_tick skew >2h) = WARN-only.
+SHIM (SSOT-W1-BASH-SHIM, 2026-06-27): scripts/orch-state-validate.sh is now a thin shim that exec's
+`bun scripts/orch-validate.mjs "$@"`. All G-1..G-5 hard gates are covered by Stage 0 + Stage 1
+(superset: Zod checks 9 lanes vs former 3-lane G-5; READY added as 12th valid status).
+G-6 (last_tick skew warn-only) dropped — no exit-code impact. Caller contract unchanged (0=pass, non-zero=fail).
 
 **CANONICAL: Orch-state cold eviction (ORCH-STATE-HOT-COLD-SPLIT HSC-1)**
 ```bash

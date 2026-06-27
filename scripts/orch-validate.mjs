@@ -30,8 +30,9 @@
  *   Every failure prints, per issue: path, problem, expected, and a fix: hint.
  *   Hint mapper is keyed by Zod issue.code + whether the path ends in "status".
  *
- * SHIM: scripts/orch-state-validate.sh remains active for SHG G-1..G-6 bash checks.
- *   Wire-in to this validator is SSOT-W1-SERVER-ENFORCE (rank 3) — not this task.
+ * SHIM: scripts/orch-state-validate.sh is now a THIN SHIM that exec's this script.
+ *   G-1..G-5 hard gates are covered by Stage 0 + Stage 1 (superset proof in shim header).
+ *   Demoted by: SSOT-W1-BASH-SHIM (SSOT-INTEGRITY-PERIMETER sprint, 2026-06-27).
  */
 
 import { existsSync, readFileSync } from 'node:fs';

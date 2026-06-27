@@ -150,3 +150,44 @@ Output: (empty — 0 raw writers)
 **why-decision:** Stdin pipe idiom requires minimal call-site change (replace trailing `mv` with `| bash scripts/orch-apply.sh`). CAS at startup closes the race window between caller read and wrapper rename. REUSE orch-validate.mjs as hard-constrained — no duplicated schema logic.
 
 **why-change:** No divergence from task spec. All 13 call sites routed. Grep-0 proof confirmed. DJ-GATE-1 satisfied.
+
+---
+
+### STEP developer-S3 · developer · 2026-06-27
+
+**task-id:** SSOT-W1-BASH-SHIM
+
+**what-done:**
+- Demoted `scripts/orch-state-validate.sh` to a 7-line thin shim that exec's `bun scripts/orch-validate.mjs "$@"`
+- Updated stale SHIM comment in `scripts/orch-validate.mjs` (line 33-34) to reflect the demote
+- Updated `docs/policies/dev-standards.md` CANONICAL block for SHG-1 to document the shim + superset proof
+- Negative-path smoke tests on temp copies: G-1 equiv (invalid JSON → exit 2), G-2 equiv (missing .head → exit 2), G-4 equiv (null sprint id → exit 2), G-5 equiv (INVALID_STATUS → exit 2) — all non-zero as required
+- Both validators exit 0 on live `docs/data/orch/orch-state.json`
+- `pnpm check` (bun tsc --noEmit) passes — no TypeScript regressions
+- `git status --porcelain docs/data/orch/orch-state.json` = empty (live file untouched throughout)
+
+**superset-proof (G-1..G-5 → orch-validate.mjs):**
+
+| Gate | Former bash check | orch-validate.mjs coverage | Result |
+|------|------------------|--------------------------|--------|
+| G-1 JSON validity | `jq empty` → exit 1 | Stage 1 `JSON.parse` throws on malformed → exit 2 | COVERED |
+| G-2 Structural sentinel (.head/.task_board/.signal_queue) | `jq -e '.head != null and ...'` → exit 2 | OrchStateSchema: all 3 are required fields; null/absent → exit 2 | COVERED |
+| G-3 Lane types are arrays | jq type checks on 4 lanes → exit 3 | `Lane = z.array(TaskSchema)`; `z.array(SprintSchema)` for active_sprints; `z.array(SignalRowSchema)` for rows — type mismatch → exit 2 | COVERED |
+| G-4 No null sprint IDs | `select(.id == null)` count → exit 4 | `SprintSchema.id: z.string().min(1)` rejects null/absent → exit 2 | COVERED |
+| G-5 Status enum | 11-value enum, 3 lanes only → exit 5 | 12-value StatusEnum (READY added — PO ADD-1), ALL 9 task-bearing lanes — STRICTER | COVERED (superset) |
+| G-6 Skew warn-only | `head.last_tick/last_tick` diff > 2h → WARN, no exit change | Not carried forward | NOT COVERED but WARN-only → no exit-code impact |
+
+**Note on READY (G-5 enum delta):** former bash G-5 used an 11-value enum without READY. PO ratified READY as 12th valid status (ADD-1, 2026-06-27) in the Zod schema SSOT. Former bash rejection of READY was a stale-enum bug, not a guard to preserve. Demote closes that bug: READY is now accepted where valid, rejected-by-lane in Stage 1b coherence (warn during migration).
+
+**callers-verified:**
+1. `scripts/orch-cold-evict.sh:410` — `bash "${REPO_ROOT}/scripts/orch-state-validate.sh" "${HOT_TEMP}"` — passes absolute temp path; shim's exec propagates exit code correctly; verified passes with updated shim.
+2. `docs/agents/pm/flow/task-archive.md:110` — procedural bash instruction using absolute `$PROJECT_ROOT` path — caller contract unchanged (checks `|| exit 1`).
+3. `docs/agents/dev-team/flow/post-cycle.md:57` — procedural bash instruction using absolute `$PROJECT_ROOT` path — caller contract unchanged.
+4. `docs/agents/po/flow/main.md:249` — procedural reference; mentions shim path inline — not a code caller, documentation only.
+5. All remaining grep hits are documentation/handoff references — no code callers missed.
+
+**files-changed:**
+- `scripts/orch-state-validate.sh` (replaced with 7-line shim)
+- `scripts/orch-validate.mjs` (stale SHIM comment updated)
+- `docs/policies/dev-standards.md` (CANONICAL SHG-1 block updated with shim note)
+- `docs/agent-memory/decisions/sprint-SSOT-INTEGRITY-PERIMETER-developer.md` (this DJ entry)
