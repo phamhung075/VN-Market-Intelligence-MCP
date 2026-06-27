@@ -45,6 +45,12 @@ UTC Mon–Fri 02:00–08:59 → log `[refine-orchestrator] OFF-HOSE active` → 
    → `{ units: [{ unit_id }] }`
    `pushed_ids = Set(units.map(u => u.unit_id))`
 
+   **RESET-GUARD (T0):** Check if ANY prior unit is DONE:
+   ```
+   has_done_units = units.some(u => u.window_status === 'DONE')
+   ```
+   reset=true ONLY when report has zero prior pushed units AND no DONE units exist.
+
 6. `chunk = windows.filter(w => !pushed_ids.has(w.unit_id)).slice(0, 7)` (REFINE_CHUNK_SIZE=7)
    `chunk` empty → all windows pushed → go to Phase 3 (finalize) → EXIT.
 
@@ -62,9 +68,9 @@ Sub-flow logic (inline, not spawned — select by `window.page_type`):
 - `verify` → apply `docs/agents/refine_bctc_md/flow/disagreement-verify.md` logic
 
 ```
-is_first = (pushed_ids.size == 0 OR report.refine_status == 'FAILED')
-// reset:true on fresh PENDING start OR FAILED retry — wipes poisoned units before re-processing
-// (FAILED units flagged agent_error:no_spawn_path_option_y are not real refinements; discard is correct)
+is_first = (pushed_ids.size == 0 AND NOT has_done_units)
+// reset:true on fresh PENDING start only — never on reports with prior DONE units (RESET-GUARD T0)
+// Note: if has_done_units is true, log "[RESET-GUARD] Protecting N DONE units — forcing is_first=false (reset=false)" and continue
 
 for window in chunk:
   result = execute_sub_flow_logic(window)   // inline per page_type above

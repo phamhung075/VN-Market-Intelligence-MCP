@@ -13,6 +13,14 @@
   "decision_journal": [
     {
       "by": "ba",
+      "task_id": "BA-FRONTEND-FRESHNESS-TRANSPARENCY",
+      "ts": "2026-06-27T19:45:58Z",
+      "decision": "Spec complete. Surface reconciliation: all 35 live page routes match coverage-map rows — no gap. 8 rows_no_asof confirmed; 5 need L2 handler fix (marketDigest/alerts/qualityChecklist/priceHistory/vpsProxyHealth); kinh-dich-reference=STATIC (skip); cheb-synthesis=GAP (out of scope). 3 anchor tasks (FIX-L2/L3/L4) validated — collective coverage complete, no duplicates minted. Dev chain: TASK-FFT-L2 (dev-mcp-server, 5 handlers) → TASK-FFT-L3A (dev-frontend, shared FreshnessBadge+hook) → TASK-FFT-L3B (dev-frontend, 34 routes wired) → TASK-FFT-L4 (dev-mcp-server, coverage-map SLA). 4 architect open items. NEXT: architect.",
+      "what_considered": "(A) Re-mint separate tasks for each of the 5 L2 handler fixes — REJECTED (FIX-L2-FRESHNESS-DATAASOF-FIELDS already exists as anchor; all 5 handlers are same zone + same pattern; one task). (B) Treat STATIC kinh-dich-reference as needing L2 fix — REJECTED (hardcoded content, no write cadence, no data_asof possible). (C) Combine L3A+L3B into one task — REJECTED (shared primitives creation vs 34-route wiring are different concerns; L3A has no page-count scope creep risk; L3B has the large surface area). (D) FreshnessBadge as generic UI primitive in components/ui/ — REJECTED (product component with business logic, not a generic ShadCN wrapper; mirrors InfoCardExpand.tsx pattern not badge.tsx).",
+      "why_change": "no change from plan — spec follows PO SSOT (frontend-data-coverage-map.json) exactly; anchor task set validated; dev chain is dependency-minimal (L2 unblocks both L3A and L4 simultaneously)."
+    },
+    {
+      "by": "ba",
       "task_id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION",
       "ts": "2026-06-23T17:45:00Z",
       "decision": "BA spec complete. Three verified_decision write paths identified: Path A (dominant, alertStore.ts storeAlerts/storeAlertsFromCommander — co-write INSERT omits confidence_score → DEFAULT 50); Path B (agentSignalTools.ts post_signal without finding_data.confidence → undefined → DEFAULT 50); Path C (structural enabler: column DEFAULT 50 in schema-news.ts:104). Fix: wire alert.confidence_score with severity fallback (critical→90/high→75/warning→60/low→40) into Path A; pass null not undefined in Path B; remove DEFAULT in Path C; harden read-path ?? null in stockSignalsHandler:224. No backfill of 3316 legacy rows. NEXT: architect.",
@@ -229,11 +237,12 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "BCTC-REFINE-T0-RESET-GUARD",
-    "next_agent": "pm",
+    "next_agent": "agent-father",
     "next_action": "PM: dispatch T0-RESET-GUARD -> agent-father (agent-md-factory, P0 — must land before T1+T2). T1-CHUNKSIZE (agent-father) and T2-SLOTS (ops) are READY but depend on T0. T3-WATCHDOG BACKLOG P2: hold until T1+T2 verified draining. DO NOT spawn ad-hoc refine workers until T0 lands (reset=true clobber confirmed).",
     "updated_by": "architect",
     "updated_at": "2026-06-27T19:38:39Z",
-    "note": "PO disposition: OPTION-B throughput-drain. Consumer RAW-verified starved (get_bctc_full{VHM}=no-data; 47 docs pending). Refine pipeline is NOT broken (A1 falsified) — root constraint is drain throughput (14 windows/day). Levers verified real (REFINE_CHUNK_SIZE=7 hardcoded; 2 cowork slots)."
+    "note": "PO disposition: OPTION-B throughput-drain. Consumer RAW-verified starved (get_bctc_full{VHM}=no-data; 47 docs pending). Refine pipeline is NOT broken (A1 falsified) — root constraint is drain throughput (14 windows/day). Levers verified real (REFINE_CHUNK_SIZE=7 hardcoded; 2 cowork slots).",
+    "next_step": "dispatch T0-RESET-GUARD"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2650,7 +2659,7 @@
             "title": "Harden reset=true guard in refine_bctc_md: never clobber prior DONE units — P0 blocker for T1+T2",
             "owner": "agent-father",
             "type": "SPRINT-S",
-            "status": "READY",
+            "status": "IN_PROGRESS",
             "zone": "docs/agents/refine_bctc_md/",
             "created_at": "2026-06-27T19:38:39Z",
             "size": "XS",
@@ -5820,15 +5829,31 @@
         "id": "BA-FRONTEND-FRESHNESS-TRANSPARENCY",
         "title": "Requirement spec: per-surface last-updated freshness indicator on every frontend data card",
         "owner": "ba",
-        "next_agent": "ba",
-        "status": "BACKLOG",
+        "next_agent": "architect",
+        "status": "DONE",
         "priority": "high",
         "zone": "docs/agents/",
         "sprint_id": "FRONTEND-FRESHNESS-TRANSPARENCY",
         "created_at": "2026-06-27T19:39:52Z",
         "created_by": "po",
         "desc": "Spec the FRONTEND-FRESHNESS-TRANSPARENCY sprint. MUST: (a) reconcile docs/data/frontend-data-coverage-map.json against the LIVE frontend — verify EVERY rendered data surface (all routes/components) is a row, flag any missing; (b) validate the 3 existing un-promoted backlog anchors FIX-L2/L3/L4 cover every surface, do NOT re-mint them — reference them; (c) atomize into an ordered L2(dev-mcp-server data_asof)->L3(dev-frontend shared FreshnessBadge+useRevalidator hook)->L4(freshnessSlaMonitor+auditor) dev chain with per-task zone, DoD, and the coverage-map row-set each task must satisfy; (d) plain-Vietnamese timestamp label. Hand spec to architect for the shared-component + data_asof-contract design. Contract from LIVE payload not schema comment; data must carry source-link + recheck affordance (project_all_info_source_link_dropdown_recheck).",
-        "acceptance": "Spec enumerates every coverage-map surface, maps each to an L2/L3/L4 anchor task with zone+DoD, identifies any un-enumerated surface, and defines the shared FreshnessBadge + refresh-hook contract. PO-approvable."
+        "acceptance": "Spec enumerates every coverage-map surface, maps each to an L2/L3/L4 anchor task with zone+DoD, identifies any un-enumerated surface, and defines the shared FreshnessBadge + refresh-hook contract. PO-approvable.",
+        "closed_at": "2026-06-27T19:45:58Z",
+        "status_note": "Spec complete. REQ file: docs/handoffs/BA-FRONTEND-FRESHNESS-TRANSPARENCY.md. Zero PO blockers. 4 architect ratification items (ARCH-RATIFY-FFT-1 through FFT-4). NEXT: architect."
+      },
+      {
+        "id": "ARCH-FRONTEND-FRESHNESS-TRANSPARENCY",
+        "title": "Architect design: FreshnessBadge props contract + data_asof API surface normalization + L4 coverageMapFreshnessChecker DDD placement — FRONTEND-FRESHNESS-TRANSPARENCY sprint",
+        "owner": "architect",
+        "status": "TODO",
+        "zone": "apps/frontend/app/components/ + apps/frontend/app/lib/hooks/ + apps/mcp-server/src/interface/mcp/routes/ + apps/mcp-server/src/domain/services/",
+        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
+        "priority": "high",
+        "size": "S",
+        "type": "SPRINT-M",
+        "created_at": "2026-06-27T19:45:58Z",
+        "depends": [],
+        "note": "BA spec: docs/handoffs/BA-FRONTEND-FRESHNESS-TRANSPARENCY.md. Ratify ARCH-RATIFY-FFT-1 (FreshnessBadge file location), ARCH-RATIFY-FFT-2 (useFreshnessRevalidator hook location), ARCH-RATIFY-FFT-3 (coverageMapFreshnessChecker DDD placement), ARCH-RATIFY-FFT-4 (canonical data_asof key vs per-handler key). Design: FreshnessBadge props interface + SLA threshold constants + color logic; useFreshnessRevalidator contract; data_asof normalization pattern for 5 handlers; L4 domain service interface. Hand PM TASK-FFT-L2/L3A/L3B/L4 atomization."
       }
     ],
     "closed_sprints": [
