@@ -1,0 +1,19 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "medium",
+  "createdAt": "2026-06-27T16:02:21Z",
+  "dedup_key": "coldevict-terminal-sprint-status-drift-COMPLETE",
+  "payload": {
+    "check_id": "FIX-COLDEVICT-COMPLETE-STATUS-DRIFT",
+    "summary": "Cold-evict cannot evict PO-signed-off sprints because their status token 'COMPLETE' is not in the eviction predicate's terminal list.",
+    "detail": "PO SIGN-OFF (commit ca579ba0, 2026-06-27) sets task_board.active_sprints[].status = 'COMPLETE' to close a sprint. But scripts/orch-cold-evict.sh line 52 default TERMINAL_SPRINT_STATUSES = 'DONE,done,DONE-WITH-CAVEATS,completed,SIGNED-OFF-PARTIAL' does NOT include 'COMPLETE' (uppercase). The post-cycle.md Step 4.2 gate predicate (lines 43-46) has the same omission. Result: SSOT-INTEGRITY-PERIMETER signed off 11/11 -> COMPLETE this tick stayed in active_sprints[] after cold-evict ran (md5 byte-identical, zero items evicted). This is the FIRST COMPLETE sprint so no accumulation yet, but every future PO sign-off writes 'COMPLETE' -> terminal sprints will accumulate in the hot file unbounded, defeating the cold-evict bloat backstop (HSC-6).",
+    "observed_this_tick": "active_sprints COMPLETE=1 (SSOT-INTEGRITY-PERIMETER), evictable-under-current-predicate=0, hot file 461272 bytes.",
+    "root_cause": "Sprint-status vocabulary drift: PO sign-off convention writes 'COMPLETE'; cold-evict + post-cycle gate recognize only lowercase 'completed' / 'DONE' / 'SIGNED-OFF-PARTIAL'. Single-SSOT violation across two writers.",
+    "suggested_fix": "Reconcile to ONE canonical terminal-sprint vocabulary. Preferred: add 'COMPLETE' to (a) scripts/orch-cold-evict.sh TERMINAL_SPRINT_STATUSES default AND (b) docs/agents/dev-team/flow/post-cycle.md Step 4.2 gate IN(...) list, keeping both in sync. Alternative: change PO sign-off to write an already-recognized token. Decide which token is canonical and document it. After fix, next cold-evict tick will migrate SSOT-INTEGRITY-PERIMETER active_sprints -> closed_sprints/archive.",
+    "zone_owner": "dev-mcp-server (script) + dev-team flow doc",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "After fix, run bash scripts/orch-cold-evict.sh with a COMPLETE sprint present and confirm md5 changes + the sprint moves to archive/closed_sprints; hot-file active_sprints no longer contains COMPLETE entries."
+  }
+}
