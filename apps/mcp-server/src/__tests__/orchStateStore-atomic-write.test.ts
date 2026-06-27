@@ -23,12 +23,13 @@ function makeTmpPath(label: string): string {
 
 const SENTINEL_CONTENT = JSON.stringify({ _sentinel: "pre-existing" }, null, 2);
 
+// VALID_ORCH_STATE must match OrchStateSchema (SSOT-W1-SERVER-ENFORCE):
+//   - root keys restricted to OrchStateSchema (.strict()) — no legacy _schema/_ssot/_updated_at/_updated_by
+//   - _meta.schema replaces old root _schema field
+//   - head.status is required by HeadSchema
 const VALID_ORCH_STATE = {
-  _schema: "orch-state@1",
-  _ssot: true,
-  _updated_at: "2026-06-02T00:00:00Z",
-  _updated_by: "test",
-  head: { cycle: 1, last_activity: "2026-06-02T00:00:00Z" },
+  _meta: { schema: "v4", ssot: true, updated_at: "2026-06-02T00:00:00Z", updated_by: "test" },
+  head: { status: "IDLE" },
   task_board: {
     _updated_at: "2026-06-02T00:00:00Z",
     _updated_by: "test",
@@ -65,7 +66,7 @@ describe("writeOrchStateAtomic — §2.3 validate-before-rename sentinel", () =>
 
     expect(existsSync(target)).toBe(true);
     const onDisk = JSON.parse(readFileSync(target, "utf8"));
-    expect(onDisk._schema).toBe("orch-state@1");
+    expect(onDisk._meta?.schema).toBe("v4");
     expect(onDisk.head).toBeDefined();
     expect(onDisk.task_board).toBeDefined();
     expect(onDisk.signal_queue).toBeDefined();
