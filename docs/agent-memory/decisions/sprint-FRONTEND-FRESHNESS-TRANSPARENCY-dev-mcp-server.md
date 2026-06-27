@@ -6,6 +6,15 @@
 
 ---
 
+### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-06-27T21:25:00Z
+**task-id:** TASK-FFT-L4
+**what-done:** Created coverageMapFreshnessChecker.ts (pure domain, zero I/O) + extended freshnessSlaMonitorJob.ts with additive L4 second pass; 25 tests green; tsc clean; 166 tools.
+**what-considered:**
+- STALE_RISK suppression at domain level (don't return breach) vs scheduler level (postSignal gate)
+- marketDigest: use full CHEF agents SQL vs simple MAX(sent_at) without filter — used agents filter (matches L2)
+**why-decision:** Domain suppression is cleaner (FreshnessBreachReport has no status field); domain already has isVnMarketHours; suppressing at domain ensures scheduler always receives only actionable breaches.
+**why-change:** ARCH-RATIFY-FFT-3 injectable override = injectedRows (pre-parsed objects) not coverageMapPath (as BA spec said) — DDD rule: domain zero I/O.
+
 ### STEP dev-mcp-server-S1 · dev-mcp-server · 2026-06-27T20:15:00Z
 **task-id:** TASK-FFT-L2
 **what-done:** Added data_asof field to 5 handlers using real DB timestamp columns, with empty-sentinel guard in priceHistoryHandler.
