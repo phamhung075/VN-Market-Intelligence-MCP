@@ -244,3 +244,25 @@ Retargeted the 3 regressor scripts that still wrote to the deprecated `.task_boa
 - `scripts/po-vn-macro-tooling-sprint-open.jq` (removed `.task_board.head` string write; added retarget comment)
 - `scripts/po-s107-ohlcv-vnm-garbage-annotate-bump.jq` (retargeted `.task_board.head` → `.head`; added retarget comment)
 - `docs/agent-memory/decisions/sprint-SSOT-INTEGRITY-PERIMETER-developer.md` (this DJ entry)
+
+---
+
+### STEP developer-S5 · developer · 2026-06-27T00:00:00Z
+
+**task-id:** SSOT-W1-DOC-SYNC-WRITE-CONTRACT
+
+**what-done:**
+- Added `## Orch-State Hot File — Write Contract` clause to `CLAUDE.md` (4 lines; terse style)
+- Updated `docs/agents/po/flow/main.md` triage-scripts header: replaced `(atomic temp→verify→rename)` with explicit orch-apply.sh idiom + "NEVER raw temp→rename" rule
+- Updated `docs/agents/bctc-analyst/flow/main.md` lines 98+107: stale `(atomic temp→rename)` → `(via signal-dashboard SKILL §WRITE → orch-apply.sh)`
+- Updated `docs/agents/bctc-analyst/flow/deep-dive-opus.md` line 102: same stale parenthetical replaced
+- Updated `docs/agents/bctc-analyst/flow/esc-coverage-guard.md` line 68: same pattern replaced
+- `docs/policies/dev-standards.md`: NO EDIT — CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER already present (full pointer block at § Script Persistence)
+- `.claude/skills/dispatch/SKILL.md`: NO EDIT — pure dispatch table; no orch-state write instruction present
+
+**what-considered:**
+- only path: update header + stale comments; individual per-script usage lines in po/flow/main.md not rewritten (25+ entries, surgical header covers all)
+
+**why-decision:** Header-level rule in po/flow/main.md supersedes all per-script harness descriptions in one line. bctc-analyst files already delegate to signal-dashboard SKILL §WRITE (correct routing); stale parentheticals removed to avoid confusion.
+
+**why-change:** no change from plan

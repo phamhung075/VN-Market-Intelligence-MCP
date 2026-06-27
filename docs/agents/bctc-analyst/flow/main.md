@@ -95,7 +95,7 @@ IF any(esc_flags) == TRUE:
 
   ELSE:
     # 2. Emit esc-deep-dive-request to orch-state.json .signal_queue (SAFE-JSON — structured object).
-    # Per signal-dashboard SKILL.md §WRITE (atomic temp→rename).
+    # Per signal-dashboard SKILL.md §WRITE (→ orch-apply.sh; NEVER raw temp→rename).
     signal_row = {
       "id": "bca-{ts_compact}", "ts": "<ISO-8601 UTC>",
       "from": "bctc-analyst", "to": "dev-team",
@@ -104,7 +104,7 @@ IF any(esc_flags) == TRUE:
       "severity": "HIGH", "status": "NEW", "payload_ref": null,
       "payload": { trigger_id, ticker, quarter, report_id, guard_key, context, all_esc_fired }
     }
-    Append signal_row to orch-state.json .signal_queue.rows[] (atomic temp→rename).
+    Append signal_row to orch-state.json .signal_queue.rows[] (via signal-dashboard SKILL §WRITE → orch-apply.sh).
     LOG: "[ESC-DISPATCH] emitted for " + ticker + "/" + quarter + "/" + trigger_id
     # deep_dive_result NOT emitted here — Sonnet cannot run model-pinned Opus sub-flow.
     # dev-team dispatches bctc-analyst with model=claude-opus-4 on next drain tick.

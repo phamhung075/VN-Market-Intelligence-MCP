@@ -99,7 +99,7 @@ Emit to session state key `deep_dive_result`; caller appends to bctc_signal outp
 ## Output Signal (mandatory — emit after completing ANY ESC handler, including error path)
 
 After producing `deep_dive_result` session block, write to `orch-state.json` `.signal_queue.rows[]`
-(atomic temp→rename per signal-dashboard SKILL §WRITE). Shape:
+(via signal-dashboard SKILL §WRITE → orch-apply.sh; NEVER raw temp→rename). Shape:
 
 ```
 id: "bca-ddres-{ts_compact}", ts: <ISO-8601 UTC>, from: "bctc-analyst", to: "po",

@@ -65,7 +65,7 @@ IF coverage_limited_ids is non-empty:
           "guard_key": cov_guard_key, "guard_ttl_days": 30
         }
       }
-      Append cov_signal_row to orch-state.json .signal_queue.rows[] (atomic temp→rename).
+      Append cov_signal_row to orch-state.json .signal_queue.rows[] (via signal-dashboard SKILL §WRITE → orch-apply.sh).
       LOG: "[ESC-DISPATCH] DATA-COVERAGE-LIMITED emitted (ops, once per 30d): "
            + ticker + "/" + quarter + "/" + limited_id
       Append to bctc_signal: { "esc3_status": "DATA-COVERAGE-LIMITED",

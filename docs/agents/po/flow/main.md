@@ -220,7 +220,7 @@ Write at minimum ONE entry per task you complete stamped with its task-id. Routi
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
-**Reusable triage scripts** (idempotent backlog appends — atomic temp→verify→rename):
+**Reusable triage scripts** (idempotent backlog appends — ALL writes: `jq ... docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh"` — NEVER raw temp→rename; per-script harness descriptions are superseded by this rule):
 - `scripts/po-s50-origin-lag-triage.jq` — append a PLAN-ONLY task to `.task_board.backlog`, skipping if `id` already present.
 - `scripts/po-s51-cowork-guaranteed-backstop-groom.jq` — append a READY task to `.task_board.ready` (idempotent across all board arrays) + flip a tnb signal row NEW→RESOLVED in one atomic pass. Pattern reusable for any "groom one task + resolve its source signal" single-signal triage (`--arg now`, CAS-guard the rename).
 - `scripts/po-s52-chart-range-triage.jq` — dual-mutation triage: promotes `ALLZERO-OHLCV-FETCH` backlog→ready (scope + regression note) and idempotently appends `FIX-FE-CHART-PRICE-DOMAIN` to ready[]. Originated from 2026-06-14 user BUG report (zero-candle / sliver chart). Usage: `jq --arg now "$NOW" -f scripts/po-s52-chart-range-triage.jq docs/data/orch/orch-state.json`.

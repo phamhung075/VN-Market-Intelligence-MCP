@@ -40,6 +40,12 @@ mcp__gateway__call_tool(server="vn-market", tool="<tool_name>", arguments={...})
 All structural data (services, agents, zones, channels, sources, watchlist) lives in `docs/data/system-map.json`.
 Query with jq — never hardcode values. Full patterns: `.claude/skills/system-map-query/SKILL.md`
 
+## Orch-State Hot File — Write Contract
+EVERY write to `docs/data/orch/orch-state.json` MUST route via `scripts/orch-apply.sh`:
+`jq '<transform>' docs/data/orch/orch-state.json | bash scripts/orch-apply.sh`
+NEVER raw `mv`/`cp`/`>`/full-doc overwrite. Validates (Zod + dup-key), CAS-guards, atomic rename.
+Full spec: `docs/policies/dev-standards.md` CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER.
+
 ## Agent type does not exist → dispatch skill
 There is no `dev-team` agent type, no `orchestrator` agent type.
 Every intent maps to a real agent in `.claude/skills/dispatch/SKILL.md`.
