@@ -4,6 +4,76 @@
 
 ---
 
+## c99 · 2026-06-26T20:13Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (all 3 guaranteed slots fired + published; F-MORNING-NB-MISSING persists)
+
+**Session mode:** MCP gateway not available (failure mode A — gateway wrapper absent in session context). File-evidence audit from agent notebooks (all 2026-06-26). Layer scores INDICATIVE — cannot verify via live CHEF-DETAIL WORK read.
+
+**Previous handoff ACK:** tnb-audit-latest.md ACK'd by PO 2026-06-17T21:28:33Z. c98 (2026-06-24) ran MCP-unavailable, no new handoff produced.
+
+**Chef pipeline coverage (Step 0.5) — 2026-06-26:**
+- chef-morning: last_fired 2026-06-26T05:20:40Z — FIRED (cowork-schedule); no notebook entry (F-MORNING-NB-MISSING)
+- chef-intraday: 07:20Z + 08:17Z — FIRED + PUBLISHED (markers claimed)
+- chef-eod: last_fired 2026-06-26T08:49:38Z — FIRED + PUBLISHED
+- chef-evening: last_fired 2026-06-26T19:47:37Z — FIRED + PUBLISHED
+- guaranteed_ok=TRUE | pipeline_degraded=FALSE
+
+**Layer scores (INDICATIVE — from notebook evidence):**
+
+EOD (08:50 UTC) — 3.5/6 NEEDS_ATTENTION:
+- L1: PASS — FX 26134>25500 BEARISH ✓; volume 2.0–2.3x ✓; accumulation/distribution signal
+- L2: FAIL — macro_health snapshot unavailable; PMI/EFFR-IORB absent (structural, 15+ cycles)
+- L3: PARTIAL — USD/VND BEARISH + carry NEUTRAL; CPI/VIRA/FX reserves absent (F4 recurring)
+- L4: PARTIAL — yield CHEAP (7.05%>5%) + phase [transition, selective]; only 2/4 pillars (COC, Policy); M2/EPS mixed
+- L5: PASS — market Quẻ 36 Minh Di 64% BẤT LỢI; VHM Tỉnh 48 (MUA 56%), VIC Kiển 39 (MUA 61%), GVR Khôn 2 (THAN TRONG 48%)
+- L6: PASS — explicit gap tokens: [gap: macro_health missing] [gap: technical_indicators unavailable]; conviction MEDIUM
+- Business context: ABSENT (F9, 25th+ cycle)
+
+Evening (19:47 UTC) — 3.5/6 NEEDS_ATTENTION:
+- L1: PASS — FX >25500 causal chain ✓; volume 2.0–2.3x ✓; macro-micro contradiction noted
+- L2: FAIL — macro_health estimate unavailable (same structural gap)
+- L3: PARTIAL — USD/VND BEARISH + carry NEUTRAL; CPI/VIRA absent
+- L4: PARTIAL — 3/4 pillars aligned (improvement over EOD); [gap: BCTC earnings]; phase recovery, tier equity
+- L5: PASS — Quẻ 36 Minh Di NEGATIVE; per-ticker BUY signals; macro-micro contradiction with market hexagram noted
+- L6: PARTIAL — gaps enumerated (carry, TA, fundamental absent); less formal than EOD explicit tokens
+- Business context: ABSENT (F9)
+
+**POSITIVE: Evening quality verdict = DEGRADED (correct self-assessment vs c98 "full"). Calibration improvement confirmed.**
+
+**Adversarial gate (T-45):** PASS — macro-micro contradiction between market Quẻ 36 BẤT LỢI and per-ticker BUY signals (VHM, VIC, VRE) explicitly noted in both dishes; not suppressed.
+
+**9-step methodology scores (INDICATIVE):**
+- unified-agent (EOD + Evening): 4/9 NEEDS_ATTENTION (D=macro_health structural fail, E=VIRA absent, F partial)
+- news-scout (c109-c110): GOOD — 7 signals today (all critic≥0.8), regime NEUTRAL correct, causal chains present
+- bctc-analyst (c071-c072): GOOD — MCP ACTIVE, M-score/F-score computed, forensic gates applied, escalations maintained
+- market-watcher (20:03Z): GOOD — cycle complete, regime NEUTRAL, breadth correct
+
+**New findings:**
+- F-MORNING-NB-MISSING: 16th+ consecutive cycle (FIRED per cowork-schedule, no notebook entry)
+- F2 (L2 macro_health structural): persists — dev task required for macro_health tool
+- F4 (VIRA absent): persists — VPS scraper pending
+- F9 (business context): 25th+ cycle — BCTC pipeline dependency
+- F-HPG-DB-EMPTY: DB trống cycle 9 (filed 2026-06-07, 19d elapsed) — BUG msg 3060 escalated
+- F-ACV-DB-EMPTY: DB trống cycle 16 (filed 2026-06-16, 10d elapsed) — P1 c065 unresolved
+- F-12-TICKERS-OVERDUE: BDI/BID/DAG/DLC/GAS/JSH/PLX/PPC/SIS/VDC/VEA/VNH QUÁN HẠN Q1-2026; Q2 deadline 2026-07-31
+- NEW: VCB KD changed Quẻ Bóc (23) BẤT LỢI at c072 (from Khôn-2 c061-c071) — trend change; confirm c073
+- NEW: PC1 legal_risk disclosure violation — signal #7597 (confidence 0.85; utilities peer compliance watch)
+
+**Positive signals:**
+- G3/G4/G6 all PASS (4th+ consecutive day; cowork-schedule all updated today)
+- Evening quality verdict DEGRADED (correct calibration — c98 overclaim gap appears resolved)
+- news-scout EXCELLENT (7 signals, all high quality; VHM bond, VPB refinancing, VIC court win, energy infrastructure)
+- bctc-analyst GOOD (MCP ACTIVE c071; FPT F=7 M=0 stable; VCB OCF/NI=1.37 healthy)
+- Quẻ 36 Minh Di internally consistent (EOD + Evening agree; per-ticker signals coherent)
+
+**Auto-cures applied:** None
+**Pending verification:** Was c98 evening-quality-overclaim auto-cure formally applied to unified-agent chef flow? Evidence suggests quality gate now fires correctly. Confirm via flow file check c100.
+
+**Actions:** Handoff written | Signal file emitted | Notebook appended | Commit-mutex SKIPPED (MCP unavailable — C-2 FAIL-CLOSED) | WORK report SKIPPED (MCP unavailable)
+
+---
+
 ## c98 · 2026-06-24T20:13Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (EOD + Evening published; 3 intraday silent-exits honored correctly; dup msg 867 = dispatch bug not content bug)
