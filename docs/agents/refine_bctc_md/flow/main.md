@@ -5,7 +5,7 @@ agent:
   authored_by: claude-opus-4
   description: >
     Option-C leaf worker. get_bctc_pending_refine → skip pushed units via get_bctc_refined
-    → process next REFINE_CHUNK_SIZE=7 un-pushed windows inline (sequential) →
+    → process next REFINE_CHUNK_SIZE=12 un-pushed windows inline (sequential) →
     push_bctc_refined_unit per window → finalize_bctc_refine ONLY when all windows
     pushed. PARTIAL stays re-eligible. No nested spawn. No filesystem output.
 ---
@@ -51,7 +51,7 @@ UTC Mon–Fri 02:00–08:59 → log `[refine-orchestrator] OFF-HOSE active` → 
    ```
    reset=true ONLY when report has zero prior pushed units AND no DONE units exist.
 
-6. `chunk = windows.filter(w => !pushed_ids.has(w.unit_id)).slice(0, 7)` (REFINE_CHUNK_SIZE=7)
+6. `chunk = windows.filter(w => !pushed_ids.has(w.unit_id)).slice(0, 12)` (REFINE_CHUNK_SIZE=12)
    `chunk` empty → all windows pushed → go to Phase 3 (finalize) → EXIT.
 
 ## Phase 1 — Window Partition (server-side)

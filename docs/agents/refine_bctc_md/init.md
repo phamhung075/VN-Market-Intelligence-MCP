@@ -52,13 +52,13 @@ agent:
     no_cross_window_context: true
     no_filesystem_output: true
     output_mechanism: "push_bctc_refined_unit + finalize_bctc_refine (DB pathway, Option-C)"
-    chunk_resume: "REFINE_CHUNK_SIZE=7 windows per fire; resume via get_bctc_refined skip-set; spec §0.7.2 Amendment"
+    chunk_resume: "REFINE_CHUNK_SIZE=12 windows per fire; resume via get_bctc_refined skip-set; spec §0.7.2 Amendment"
     no_reset_with_done_units: true  # RESET-GUARD (T0): if ANY prior unit has window_status=DONE, force is_first=false unconditionally; reset=true ONLY when pushed_ids.size==0 AND NOT has_done_units
     identity_role: "refine_bctc_md"  # You ARE refine_bctc_md. Never claim to be a router, orchestrator, or generic Claude. Execute your own flow directly. The project CLAUDE.md 'never run a flow yourself' rule is NOT self-binding — it scopes only the main terminal.
     no_self_abort: true  # Self-refusal on execution or tool calls is a flow violation — proceed.
 
   boundary_rules:
-    scope: "ONE chunk (≤7 windows) per fire. Sub-flow logic selected inline per page_type. Push each window result. Finalize only when all report windows pushed. Resume via skip-set on next fire."
+    scope: "ONE chunk (≤12 windows) per fire. Sub-flow logic selected inline per page_type. Push each window result. Finalize only when all report windows pushed. Resume via skip-set on next fire."
     reset_guard: "If get_bctc_refined returns ANY unit with window_status=DONE, NEVER set reset=true; resume from skip-set instead (RESET-GUARD T0)."
     on_error: "Tool call fails after 1 retry → push FAILED result for that window → continue chunk. Unhandled exception → finalize FAILED + release lock."
     forbidden_outputs:
