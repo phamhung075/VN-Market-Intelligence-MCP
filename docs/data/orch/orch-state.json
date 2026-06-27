@@ -228,12 +228,12 @@
   ],
   "head": {
     "status": "ready",
-    "active_task_id": "SSOT-W1-DOC-SYNC-WRITE-CONTRACT",
-    "next_agent": "pm",
-    "next_action": "DOC-SYNC the orch-state write-contract: update CLAUDE.md + docs/policies/dev-standards.md + docs/agents/*/flow/ docs + .claude/skills/dispatch/SKILL.md. Zone: docs/",
+    "active_task_id": "SSOT-W1-OPS-REBUILD-ENFORCE",
+    "next_agent": "ops",
+    "next_action": "REBUILD: single-svc mcp-server (verify image ID post-rebuild); QA injects non-enum status via server write path, expects orchStateStore.parse throws (Point-2 LIVE enforcement)",
     "updated_by": "pm",
-    "updated_at": "2026-06-27T15:45:00Z",
-    "note": "SSOT-W1-HEAD-METADATA-COLLAPSE DONE (developer, commit 0874d780 verified). Advancing to rank-2 DOC-SYNC-WRITE-CONTRACT: all dependencies (W1-ORCH-APPLY-WRAPPER, W1-BASH-SHIM) DONE. OPS-REBUILD-ENFORCE deferred: has dispatch_gate (CI-clear required). "
+    "updated_at": "2026-06-27T14:52:17Z",
+    "note": "SSOT-W1-DOC-SYNC-WRITE-CONTRACT DONE (developer, commit 405f349d verified). CI GREEN (run 28289035838) — dispatch_gate satisfied. Advancing to OPS-REBUILD-ENFORCE (depends: W1-ZOD-SCHEMA-MODEL, W1-ZOD-VALIDATOR-CLI, W1-SERVER-ENFORCE; all DONE)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2587,7 +2587,7 @@
             "id": "SSOT-W1-DOC-SYNC-WRITE-CONTRACT",
             "title": "DOC-SYNC the orch-state write-contract: (a) CLAUDE.md add a clause 'route EVERY hot-file orch-state.json write via scripts/orch-apply.sh, never raw mv'; (b) docs/policies/dev-standards.md add orch-apply.sh as the canonical write pointer (orch-validate.mjs already listed); (c) repoint docs/agents/*/flow/ writers at orch-apply.sh; (d) .claude/skills/dispatch/SKILL.md if relevant.",
             "owner": "pm",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "docs/",
             "created_at": "2026-06-27T11:57:50Z",
             "created_by": "po-s122",
@@ -2599,7 +2599,10 @@
             "type": "FIX",
             "wave": 1,
             "verification_gate": "grep proves CLAUDE.md + dev-standards.md carry the orch-apply.sh write-contract clause AND 0 flow docs still instruct a raw mv/redirect into orch-state.json.",
-            "note": "Gap-3 (DOC-SYNC). Hardening brief NOT back-filled — the directive SSOT-zod-validation-directive-2026-06-27.md is the CANONICAL design-of-record (po-s122 decision; ADD-1/ADD-2 already resolved + shipped)."
+            "note": "Gap-3 (DOC-SYNC). Hardening brief NOT back-filled — the directive SSOT-zod-validation-directive-2026-06-27.md is the CANONICAL design-of-record (po-s122 decision; ADD-1/ADD-2 already resolved + shipped).",
+            "done_by": "developer",
+            "done_at": "2026-06-27T14:52:17Z",
+            "resolved_sha": "405f349d"
           }
         ],
         "ranked_scope": [

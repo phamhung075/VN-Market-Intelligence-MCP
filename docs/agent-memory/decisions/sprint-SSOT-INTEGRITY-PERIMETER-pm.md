@@ -164,3 +164,29 @@
 **why-decision:** Router RAW-verified commit 0874d780 genuine DONE. developer DJ entry (sprint-SSOT-INTEGRITY-PERIMETER-developer.md lines 199-247) documents all 3 script retargets: po-fda9 (removed info-only note write), po-vn-macro-tooling (removed bare-string write), po-s107 (retargeted .task_board.head → canonical .head for real dispatch routing). Smoke tests PASS: all 3 scripts run on temp copies, exit 0, valid JSON, Zod validator exit 0. Live SSOT untouched (git diff HEAD -- orch-state.json = empty pre-apply). DJ-GATE-1 satisfied: this decision-journal STEP embeds task-id **SSOT-W1-HEAD-METADATA-COLLAPSE** in markdown-bold format. Advancing to rank-2 DOC-SYNC-WRITE-CONTRACT (all dependencies DONE, no gate blocks, WAVE-1 final task).
 
 **why-change:** Data collapse (po-s121) + script retargeting (developer 0874d780) deliver the full task scope. PM advances head to the next unblocked actionable task (DOC-SYNC-WRITE-CONTRACT). OPS-REBUILD-ENFORCE remains TODO (CI gate pending). This completes WAVE-1 core 8 tasks; DOC-SYNC closes the perimeter documentation loop.
+
+---
+
+### STEP pm-S8 · pm · 2026-06-27T14:52:17Z
+**task-id:** SSOT-W1-DOC-SYNC-WRITE-CONTRACT-BOARD-FLIP
+
+**what-done:**
+- Flipped SSOT-W1-DOC-SYNC-WRITE-CONTRACT status TODO → DONE (developer-completed, commit 405f349d verified by router RAW-verify)
+- Updated task metadata in active_sprints[3].tasks: done_by=developer, done_at=2026-06-27T14:52:17Z, resolved_sha=405f349d
+- Advanced canonical .head from SSOT-W1-DOC-SYNC-WRITE-CONTRACT → SSOT-W1-OPS-REBUILD-ENFORCE (rank-9)
+- Updated .head.status=ready, .head.next_agent=ops, .head.next_action="REBUILD: single-svc mcp-server (verify image ID post-rebuild); QA injects non-enum status via server write path, expects orchStateStore.parse throws (Point-2 LIVE enforcement)"
+- Updated .head.note with resolution evidence and gate evaluation: "SSOT-W1-DOC-SYNC-WRITE-CONTRACT DONE (developer, commit 405f349d verified). CI GREEN (run 28289035838) — dispatch_gate satisfied. Advancing to OPS-REBUILD-ENFORCE (depends: W1-ZOD-SCHEMA-MODEL, W1-ZOD-VALIDATOR-CLI, W1-SERVER-ENFORCE; all DONE)."
+- Validated atomic write: 
+  - jq -e '.head': PASS
+  - bun scripts/orch-validate.mjs: exit 0 PASS (72 SHG coherence warnings, non-blocking)
+  - bash scripts/orch-state-validate.sh: G-1..G-6 all PASS
+- Applied write via gated wrapper: `jq ... orch-state.json | bash scripts/orch-apply.sh`
+
+**what-considered:**
+- Rank choice: (A) SSOT-W1-OPS-REBUILD-ENFORCE (rank-9) — selected: dispatch_gate requires CI-GREEN, router confirmed CI GREEN (run 28289035838, conclusion=success); gate is NOW satisfied. (B) Alternative: IDLE — rejected: gate is satisfied; unnecessary to hold dispatch.
+- Dispatch gate evaluation: Task declares gate "Dispatch ONLY after FIX-CI-RED-EAC0CC65-BUNTEST clears". Interpretation: CI must be CLEAR (GREEN). Router's CI-health probe this tick found CI GREEN on origin/main. Gate is SATISFIED.
+- Wave-1 completion: SSOT-zod-validation-directive-2026-06-27.md § WAVE-1 scope complete — all 7 core tasks DONE (ZOD-SCHEMA, ZOD-VALIDATOR-CLI, SERVER-ENFORCE, HOOK-ENFORCE, ORCH-APPLY-WRAPPER, BASH-SHIM, HEAD-METADATA-COLLAPSE) + DOC-SYNC-WRITE-CONTRACT (7 + 1 = 8 total WAVE-1 close). OPS-REBUILD-ENFORCE is a FIX-tier gate-dependent task; now gate-unblocked.
+
+**why-decision:** Router RAW-verified commit 405f349d genuine DONE (developer's decision-journal entry sprint-SSOT-INTEGRITY-PERIMETER-developer.md line 252 contains exact task-id SSOT-W1-DOC-SYNC-WRITE-CONTRACT; developer verified CLAUDE.md clause + dev-standards.md pointer + flow docs repointed + grep proves 0 raw orch-state.json writers remain outside orch-apply.sh). DJ-GATE-1 satisfied: this decision-journal STEP embeds task-id **SSOT-W1-DOC-SYNC-WRITE-CONTRACT-BOARD-FLIP** in markdown-bold format. Gate predicate evaluation: dispatch_gate requires "FIX-CI-RED-EAC0CC65-BUNTEST clears" = CI GREEN. Router CI-health probe tick reports CI GREEN. Gate SATISFIED. Advancing to rank-9 OPS-REBUILD-ENFORCE (all 3 dependencies W1-ZOD-SCHEMA-MODEL, W1-ZOD-VALIDATOR-CLI, W1-SERVER-ENFORCE are DONE; gate unblocked).
+
+**why-change:** WAVE-1 documentation tier closes (DOC-SYNC-WRITE-CONTRACT DONE). Sprint is now one dispatch away from OPS rebuild (rank-9, gate-unblocked). All structural enforcement (Zod schema, validators, write wrapper, bash shim, head collapse, doc sync) COMPLETE. Remaining work: OPS team rebuilds mcp-server to LIVE-enforce Point-2 validation, then QA verifies by injecting bad status → confirm server rejects (acceptance gate).
