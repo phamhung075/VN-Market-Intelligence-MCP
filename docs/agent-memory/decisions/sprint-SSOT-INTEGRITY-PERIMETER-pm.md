@@ -215,3 +215,29 @@
 **why-decision:** Router RAW-verified commit e55208ad (dev-mcp-server delivery, 3 zone-clean files, schema diff comments-only, tsc 0, orchStateSchema.test.ts 78/78, RED 1837a 5/5 + 1980-f2 44/44, index-check 0). QA DJ appended (qa-S2) and worker DJ present — DJ-GATE-1 satisfied. Worker completed the rank-1 schema audit+harden task (Point-1 Zod model enforcement). Sprint remains ACTIVE with 6 tasks total; 5 remain TODO; 1 DONE.
 
 **why-change:** Rank-1 delivery lands in sprint. Board-flip advances the head to idle state (WIP=1 respects cowork policy: max 1 in-progress task per sprint tick). Next tick can dispatch rank-2 via fresh triage; no auto-resume avoids re-dispatch collisions. Rank-2 is the natural next step in the audit-then-harden DELTA cascade (schema → validators → enforcement → wrapper → shim → collapse → docs).
+
+---
+
+### STEP pm-S10 · pm · 2026-06-27T18:00:00Z
+**task-id:** SSOT-W1-ZOD-VALIDATOR-CLI
+
+**what-done:**
+- Flipped SSOT-W1-ZOD-VALIDATOR-CLI status REVIEW → DONE in active_sprints[3].tasks[] (sprint-internal tracking, not top-level lane move)
+- Updated canonical .head: status → idle, active_task_id → null, next_agent → null
+- Updated .head.next_action = "Idle. Rank-3+ await PO triage next sprint cycle."
+- Updated .head.updated_by = pm, .head.updated_at = 2026-06-27T18:00:00Z
+- Updated .head.note with rank-2 completion summary: "rank-2 SSOT-W1-ZOD-VALIDATOR-CLI DONE (qa approved 2026-06-27). Waiting for rank-3 PO triage (next sprint cycle)."
+- Validated atomic write via orch-apply.sh: 
+  - bun scripts/orch-validate.mjs: exit 0 PASS
+  - bash scripts/orch-state-validate.sh: exit 0 PASS
+  - jq -e '.head': PASS
+- WIP discipline enforced: ranks 3-6 stay TODO (no rank-3 open this tick)
+
+**what-considered:**
+- Board placement: REVIEW→DONE is in-place flip inside sprint.tasks[] array (sprint-internal tracking). NOT moved to top-level lane. Rank-2 metadata persists in active_sprints[3].tasks[].
+- Head state: canonical .head transitions to idle (per pm discipline: WIP=0, next_agent=null). No auto-dispatch to rank-3; next tick PO triage opens rank-3 per sprint strategy.
+- Validator gate: both validators confirm exit 0 (Stage-0 dup-key + Stage-1 safeParse pass; 72 SHG coherence warnings non-blocking).
+
+**why-decision:** QA approved rank-2 delivery (commit 54b8f142 impl + a7befb0c QA report). Router RAW-verified: 103/103 tests pass, zone ACCEPTABLE, no production source changed. DJ-GATE-1 satisfied: this decision-journal STEP embeds task-id **SSOT-W1-ZOD-VALIDATOR-CLI** in markdown-bold format. Board-flip sets canonical head to idle, holding rank-3+ per WIP cap until next sprint cycle PO triage.
+
+**why-change:** Rank-2 QA approval lands on board. Head transitions to idle (WIP=0 discipline). Ranks 3-6 remain TODO per sprint WIP cap; next-tick PO decides rank-3 dispatch. This closes the rank-2 review cycle and positions sprint for rank-3 opener next PO triage.

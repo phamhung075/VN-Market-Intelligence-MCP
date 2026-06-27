@@ -227,13 +227,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "SSOT-W1-ZOD-VALIDATOR-CLI",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Execute Wave-1 rank-2 SSOT-W1-ZOD-VALIDATOR-CLI (zone scripts/). AUDIT-THEN-HARDEN DELTA: scripts/orch-validate.mjs ~95% shipped — harden Stage-0 tokenizer escape-seq + QA-2 dup-key gate + auto-fix issue.code contract completeness + exit-code 0/1/2/3 coverage + mcp-server test suite green. Handoff: docs/handoffs/SSOT-W1-ZOD-VALIDATOR-CLI.md. Do NOT recreate shipped validator. WIP=1.",
-    "updated_by": "po",
-    "updated_at": "2026-06-27T17:45:45Z",
-    "note": "rank-1 SSOT-W1-ZOD-SCHEMA-MODEL DONE (e55208ad, QA APPROVE, board-flip 84c7e4aa). Opening rank-2; ranks 3-6 stay TODO (WIP cap)."
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "Idle. Rank-3+ await PO triage next sprint cycle.",
+    "updated_by": "pm",
+    "updated_at": "2026-06-27T18:00:00Z",
+    "note": "rank-2 SSOT-W1-ZOD-VALIDATOR-CLI DONE (qa approved 2026-06-27). Waiting for rank-3 PO triage (next sprint cycle)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2451,7 +2451,7 @@
           {
             "id": "SSOT-W1-ZOD-VALIDATOR-CLI",
             "type": "dev",
-            "status": "REVIEW",
+            "status": "DONE",
             "title": "Audit + harden scripts/orch-validate.mjs: Stage-0 dup-key tokenizer (pre-parse) + Stage-1 safeParse + Stage-1c ref-integrity hard-fail + auto-fix error contract",
             "wave": 1,
             "rank": 2,
