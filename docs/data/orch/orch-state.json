@@ -228,12 +228,12 @@
   ],
   "head": {
     "status": "ready",
-    "active_task_id": "SSOT-W1-HOOK-ENFORCE",
+    "active_task_id": "SSOT-W1-ORCH-APPLY-WRAPPER",
     "next_agent": "developer",
-    "next_action": "Extend .claude/settings.local.json PreToolUse hook to inline-validate orch-state.json writes; add PostToolUse backstop re-validation. Zone: apps/mcp-server/src/ + Claude hook infrastructure.",
+    "next_action": "Implement scripts/orch-apply.sh wrapper routing all ~290/tick hot-file Bash writers through validation gate. Zone: scripts/",
     "updated_by": "pm",
-    "updated_at": "2026-06-27T11:22:54Z",
-    "note": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS prerequisite cleared (commit f29e297e verified). Advancing to rank-4 HOOK-ENFORCE: Point-1 enforcement via Claude hook (PreToolUse + PostToolUse). Depends on rank-1 ZOD-SCHEMA-MODEL and rank-2 ZOD-VALIDATOR-CLI."
+    "updated_at": "2026-06-27T12:59:02Z",
+    "note": "SSOT-W1-HOOK-ENFORCE DONE (developer, commit 14d88c23 verified). Advancing to rank-5 ORCH-APPLY-WRAPPER: gated wrapper routing every hot-file writer (po-s*/router-*.jq + orch-backlog-stub.sh + dev-team WF-1 head-reset). Depends on rank-2 ZOD-VALIDATOR-CLI."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2470,7 +2470,7 @@
             "id": "SSOT-W1-HOOK-ENFORCE",
             "title": "Point-1 enforcement: .claude/settings.local.json extend PreToolUse Write|Edit (orch-state.json validation) + PostToolUse Bash backstop",
             "owner": "developer",
-            "status": "TODO",
+            "status": "DONE",
             "zone": ".claude/settings/",
             "created_at": "2026-06-27T08:45:20Z",
             "size": "M",
@@ -2479,7 +2479,10 @@
               "SSOT-W1-ZOD-VALIDATOR-CLI"
             ],
             "type": "SPRINT-S",
-            "note": "Covers ~290/tick agent jq-patch + Claude hooks"
+            "note": "Covers ~290/tick agent jq-patch + Claude hooks",
+            "done_by": "developer",
+            "done_at": "2026-06-27T12:58:49Z",
+            "resolved_sha": "14d88c23"
           },
           {
             "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
@@ -2799,12 +2802,12 @@
         },
         "head": {
           "status": "ready",
-          "active_task_id": "SSOT-W1-HOOK-ENFORCE",
+          "active_task_id": "SSOT-W1-ORCH-APPLY-WRAPPER",
           "next_agent": "developer",
-          "next_action": "Extend .claude/settings.local.json PreToolUse hook to inline-validate orch-state.json writes; add PostToolUse backstop re-validation. Zone: apps/mcp-server/src/ + Claude hook infrastructure.",
+          "next_action": "Implement scripts/orch-apply.sh wrapper routing all ~290/tick hot-file Bash writers through validation gate. Zone: scripts/",
           "updated_by": "pm",
-          "updated_at": "2026-06-27T11:22:54Z",
-          "note": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS prerequisite cleared (commit f29e297e verified). Advancing to rank-4 HOOK-ENFORCE: Point-1 enforcement via Claude hook (PreToolUse + PostToolUse). Depends on rank-1 ZOD-SCHEMA-MODEL and rank-2 ZOD-VALIDATOR-CLI."
+          "updated_at": "2026-06-27T12:58:49Z",
+          "note": "SSOT-W1-HOOK-ENFORCE DONE (developer, commit 14d88c23 verified). Advancing to rank-5 ORCH-APPLY-WRAPPER: gated wrapper routing every hot-file writer (po-s*/router-*.jq + orch-backlog-stub.sh + dev-team WF-1 head-reset). Depends on rank-2 ZOD-VALIDATOR-CLI."
         },
         "verification_gate": {
           "_added_by": "po-s122",
