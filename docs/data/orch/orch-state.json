@@ -2718,71 +2718,6 @@
             "note": "Folds A2+C1. 2-hourly: Check1 COUNT(*) WHERE text_status=COMPLETE AND refine_status IN (PENDING,PARTIAL) AND parsed_at<now-86400; Check2 last cron_job_runs refine_bctc_md run>25h. MUST distinguish deep-but-draining from truly-stalled. Requires wrapRun in refine_bctc_md flow. Build AFTER T1+T2 deployed and verified draining."
           }
         ]
-      },
-      {
-        "id": "FRONTEND-FRESHNESS-TRANSPARENCY",
-        "label": "All frontend data must show last-update timestamp for freshness transparency",
-        "opened_at": "2026-06-27",
-        "priority": "high",
-        "status": "ACTIVE",
-        "evidence": "BA spec + architect cascade complete. Atomized into 4 dev tasks: L2 (5 handler data_asof fields), L3A (shared FreshnessBadge component), L3B (wire into 34 routes), L4 (coverage-map SLA monitor).",
-        "tasks": [
-          {
-            "id": "TASK-FFT-L2",
-            "title": "L2 data_asof contract for 5 handlers",
-            "type": "SPRINT-M",
-            "owner": "dev-mcp-server",
-            "zone": "apps/mcp-server/src/interface/mcp/routes/",
-            "size": "M",
-            "status": "TODO",
-            "depends": [],
-            "commit": null,
-            "note": "Add ISO 8601 data_asof field to 5 handler responses. Unblocks L3A and L4."
-          },
-          {
-            "id": "TASK-FFT-L3A",
-            "title": "Shared FreshnessBadge component + useFreshnessRevalidator hook",
-            "type": "SPRINT-M",
-            "owner": "dev-frontend",
-            "zone": "apps/frontend/app/components/, apps/frontend/app/lib/hooks/",
-            "size": "M",
-            "status": "DONE",
-            "depends": [
-              "TASK-FFT-L2"
-            ],
-            "commit": "afbb0c99",
-            "note": "Create FreshnessBadge + hook. Directory apps/frontend/app/lib/hooks/ must be created (RISK-4). Blocks L3B."
-          },
-          {
-            "id": "TASK-FFT-L3B",
-            "title": "Wire FreshnessBadge into all 34 page routes",
-            "type": "SPRINT-M",
-            "owner": "dev-frontend",
-            "zone": "apps/frontend/app/routes/",
-            "size": "M",
-            "status": "DONE",
-            "depends": [
-              "TASK-FFT-L3A"
-            ],
-            "commit": "24bbecbf",
-            "note": "Import and wire badge into all 34 routes. Refactor sector-rotation inline timestamp (EC-8).",
-            "completed_at": "2026-06-27T22:29:39Z"
-          },
-          {
-            "id": "TASK-FFT-L4",
-            "title": "Coverage-map-aware SLA monitor extension",
-            "type": "SPRINT-M",
-            "owner": "dev-mcp-server",
-            "zone": "apps/mcp-server/src/scheduler/system/, apps/mcp-server/src/domain/services/",
-            "size": "M",
-            "status": "DONE",
-            "depends": [
-              "TASK-FFT-L2"
-            ],
-            "commit": "1dd3c6d1",
-            "note": "New domain service coverageMapFreshnessChecker.ts + extend freshnessSlaMonitorJob.ts. Additive: existing 12-signal path unchanged."
-          }
-        ]
       }
     ],
     "archive": [
@@ -6118,25 +6053,88 @@
         "closed_at": "2026-06-27T00:20:00Z",
         "task_count": 1,
         "detail_ref": "docs/data/orch/archive/2026-06.json#closed_sprints/LOG-HYGIENE"
+      },
+      {
+        "id": "FRONTEND-FRESHNESS-TRANSPARENCY",
+        "label": "All frontend data must show last-update timestamp for freshness transparency",
+        "opened_at": "2026-06-27",
+        "priority": "high",
+        "status": "closed",
+        "evidence": "TASK-FFT-L2 (L2 data_asof contract) DONE, TASK-FFT-L3A (FreshnessBadge component) DONE, TASK-FFT-L3B (wired into 34 routes) DONE, TASK-FFT-L4 (coverage-map SLA monitor) DONE. All 4 tasks QA-APPROVED. Both apps/mcp-server and apps/frontend changed; rebuild needed for feature visibility.",
+        "tasks": [
+          {
+            "id": "TASK-FFT-L2",
+            "title": "L2 data_asof contract for 5 handlers",
+            "type": "SPRINT-M",
+            "owner": "dev-mcp-server",
+            "zone": "apps/mcp-server/src/interface/mcp/routes/",
+            "size": "M",
+            "status": "DONE",
+            "depends": [],
+            "commit": "commit-pending",
+            "note": "Add ISO 8601 data_asof field to 5 handler responses. Unblocks L3A and L4.",
+            "created_at": "2026-06-27T00:00:00Z",
+            "done_at": "2026-06-27T22:38:36Z",
+            "closed_at": "2026-06-27T22:38:36Z"
+          },
+          {
+            "id": "TASK-FFT-L3A",
+            "title": "Shared FreshnessBadge component + useFreshnessRevalidator hook",
+            "type": "SPRINT-M",
+            "owner": "dev-frontend",
+            "zone": "apps/frontend/app/components/",
+            "size": "M",
+            "status": "DONE",
+            "depends": [
+              "TASK-FFT-L2"
+            ],
+            "commit": "afbb0c99",
+            "note": "Create FreshnessBadge + hook. Directory apps/frontend/app/lib/hooks/ must be created (RISK-4). Blocks L3B.",
+            "created_at": "2026-06-27T00:00:00Z",
+            "done_at": "2026-06-27T23:00:00Z",
+            "closed_at": "2026-06-27T22:38:36Z"
+          },
+          {
+            "id": "TASK-FFT-L3B",
+            "title": "Wire FreshnessBadge into all 34 page routes",
+            "type": "SPRINT-M",
+            "owner": "dev-frontend",
+            "zone": "apps/frontend/app/routes/",
+            "size": "M",
+            "status": "DONE",
+            "depends": [
+              "TASK-FFT-L3A"
+            ],
+            "commit": "24bbecbf",
+            "note": "Import and wire badge into all 34 routes. Refactor sector-rotation inline timestamp (EC-8).",
+            "created_at": "2026-06-27T00:00:00Z",
+            "done_at": "2026-06-27T23:30:00Z",
+            "closed_at": "2026-06-27T22:38:36Z",
+            "completed_at": "2026-06-27T22:29:39Z"
+          },
+          {
+            "id": "TASK-FFT-L4",
+            "title": "Coverage-map-aware SLA monitor extension",
+            "type": "SPRINT-M",
+            "owner": "dev-mcp-server",
+            "zone": "apps/mcp-server/src/scheduler/system/",
+            "size": "M",
+            "status": "DONE",
+            "depends": [
+              "TASK-FFT-L2"
+            ],
+            "commit": "1dd3c6d1",
+            "note": "New domain service coverageMapFreshnessChecker.ts + extend freshnessSlaMonitorJob.ts. Additive: existing 12-signal path unchanged.",
+            "created_at": "2026-06-27T00:00:00Z",
+            "done_at": "2026-06-27T23:40:00Z",
+            "closed_at": "2026-06-27T22:38:36Z"
+          }
+        ],
+        "closed_at": "2026-06-27T22:38:36Z",
+        "note": "QA-APPROVED DONE: all 4 tasks verified. DEPLOY FLAG: ops rebuild of mcp-server + frontend required to make freshness badges go live on dashboard."
       }
     ],
     "done": [
-      {
-        "id": "TASK-FFT-L2",
-        "anchor": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
-        "title": "L2 data_asof Contract for 5 Handlers",
-        "owner": "dev-mcp-server",
-        "status": "DONE",
-        "zone": "apps/mcp-server/src/interface/mcp/routes/",
-        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
-        "completed_at": "2026-06-27T20:40:00Z",
-        "commits": [
-          "a384497a",
-          "56c0e4ac"
-        ],
-        "next": "pm",
-        "done_verified": true
-      },
       {
         "closed_at": "2026-06-05T11:16:27Z",
         "created_at": "unknown",
