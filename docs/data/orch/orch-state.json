@@ -228,12 +228,12 @@
   ],
   "head": {
     "status": "ready",
-    "active_task_id": "SSOT-W1-HEAD-METADATA-COLLAPSE",
-    "next_agent": "developer",
-    "next_action": "Retarget 3 regressor scripts off task_board.head stub (G-7 schema folded into Zod .strict()). Zone: scripts/",
+    "active_task_id": "SSOT-W1-DOC-SYNC-WRITE-CONTRACT",
+    "next_agent": "pm",
+    "next_action": "DOC-SYNC the orch-state write-contract: update CLAUDE.md + docs/policies/dev-standards.md + docs/agents/*/flow/ docs + .claude/skills/dispatch/SKILL.md. Zone: docs/",
     "updated_by": "pm",
-    "updated_at": "2026-06-27T14:00:00Z",
-    "note": "SSOT-W1-BASH-SHIM DONE (developer, commit 33b3f12b verified). Advancing to rank-8 HEAD-METADATA-COLLAPSE: retarget 3 regressor scripts. Data collapse/dedup DONE by po-s121; script retarget remaining for dev."
+    "updated_at": "2026-06-27T15:45:00Z",
+    "note": "SSOT-W1-HEAD-METADATA-COLLAPSE DONE (developer, commit 0874d780 verified). Advancing to rank-2 DOC-SYNC-WRITE-CONTRACT: all dependencies (W1-ORCH-APPLY-WRAPPER, W1-BASH-SHIM) DONE. OPS-REBUILD-ENFORCE deferred: has dispatch_gate (CI-clear required). "
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2536,13 +2536,16 @@
             "id": "SSOT-W1-HEAD-METADATA-COLLAPSE",
             "title": "Re-collapse task_board.head to po-s66 stub + retarget the 3 regressor scripts off task_board.head (G-7 schema folded into Zod .strict())",
             "owner": "developer",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "scripts/",
             "created_at": "2026-06-27T08:03:52Z",
             "size": "S",
             "depends": [],
             "type": "SPRINT-S",
-            "status_note": "PARTIAL_DONE_DATA — po-s121 completed data collapse/dedup; remaining: dev retargets 3 regressor scripts"
+            "status_note": "PARTIAL_DONE_DATA — po-s121 completed data collapse/dedup; remaining: dev retargets 3 regressor scripts",
+            "resolved_sha": "0874d780",
+            "done_at": "2026-06-27T15:45:00Z",
+            "done_by": "pm"
           },
           {
             "id": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",

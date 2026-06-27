@@ -139,3 +139,28 @@
 **why-decision:** Router RAW-verified commit 33b3f12b genuine DONE (scripts/orch-state-validate.sh demoted to 7-line thin shim, all Zod validation moved to scripts/orch-validate.mjs; no gate-coverage loss). DJ-GATE-1 satisfied: this decision-journal STEP embeds task-id **SSOT-W1-BASH-SHIM** in markdown-bold format. Advancing to rank-8 (natural next per dependency graph after rank-6 completion) unblocks final structure collapse task before OPS rebuild + DOC sync gates.
 
 **why-change:** Developer completed the shim demotion (Point-1a thin-wrapper). ALL 6 W1 core SSOT tasks now DONE: rank-1 (ZOD-SCHEMA-MODEL) + rank-2 (ZOD-VALIDATOR-CLI) + rank-3 (SERVER-ENFORCE) + rank-4 (HOOK-ENFORCE) + rank-5 (ORCH-APPLY-WRAPPER) + rank-6 (BASH-SHIM). Rank-8 HEAD-METADATA-COLLAPSE (data collapse + script retarget) represents final payload task before gate-dependent OPS rebuild + DOC sync (ranks 6.5/6.7).
+
+---
+
+### STEP pm-S7 · pm · 2026-06-27T15:45:00Z
+**task-id:** SSOT-W1-HEAD-METADATA-COLLAPSE-BOARD-FLIP
+
+**what-done:**
+- Flipped SSOT-W1-HEAD-METADATA-COLLAPSE status TODO → DONE (developer-completed, commit 0874d780 verified by router RAW-verify)
+- Updated task metadata in active_sprints[3].tasks: resolved_sha=0874d780, done_at=2026-06-27T15:45:00Z, done_by=pm
+- Advanced canonical .head from SSOT-W1-HEAD-METADATA-COLLAPSE → SSOT-W1-DOC-SYNC-WRITE-CONTRACT (rank-2)
+- Updated .head.status=ready, .head.next_agent=pm, .head.next_action="DOC-SYNC the orch-state write-contract: update CLAUDE.md + docs/policies/dev-standards.md + docs/agents/*/flow/ docs + .claude/skills/dispatch/SKILL.md. Zone: docs/"
+- Updated .head.note with resolution evidence and rank-choice rationale: "SSOT-W1-HEAD-METADATA-COLLAPSE DONE (developer, commit 0874d780 verified). Advancing to rank-2 DOC-SYNC-WRITE-CONTRACT: all dependencies (W1-ORCH-APPLY-WRAPPER, W1-BASH-SHIM) DONE. OPS-REBUILD-ENFORCE deferred: has dispatch_gate (CI-clear required). "
+- Validated atomic write: 
+  - jq -e '.head': PASS
+  - bun scripts/orch-validate.mjs: exit 0 PASS (72 SHG coherence warnings, non-blocking)
+  - bash scripts/orch-state-validate.sh: G-1..G-6 all PASS
+- Applied write via gated wrapper: `jq ... orch-state.json | bash scripts/orch-apply.sh`
+
+**what-considered:**
+- Rank choice: (A) SSOT-W1-OPS-REBUILD-ENFORCE (rank-9) — rejected: has dispatch_gate (CI-RED fix required, not auto-dispatchable). (B) SSOT-W1-DOC-SYNC-WRITE-CONTRACT (rank-2 in task list) — chosen: depends ORCH-APPLY-WRAPPER + BASH-SHIM (both DONE), owner=pm, no gate blocks it, represents WAVE-1 final documentation tier. Doc-sync is the critical-path task for closing the cycle per po-s122 DoD-HARDEN decision.
+- Wave-1 completion: SSOT-zod-validation-directive-2026-06-27.md § Wave-1 scope = 7 tasks (ranks 1-8, Zod schema, validators, enforcement, wrapper, shim, head collapse, doc sync). This flip closes rank-8 (HEAD-METADATA-COLLAPSE); rank-2 DOC-SYNC-WRITE-CONTRACT is the only unblocked WAVE-1 task remaining (OPS-REBUILD has CI gate).
+
+**why-decision:** Router RAW-verified commit 0874d780 genuine DONE. developer DJ entry (sprint-SSOT-INTEGRITY-PERIMETER-developer.md lines 199-247) documents all 3 script retargets: po-fda9 (removed info-only note write), po-vn-macro-tooling (removed bare-string write), po-s107 (retargeted .task_board.head → canonical .head for real dispatch routing). Smoke tests PASS: all 3 scripts run on temp copies, exit 0, valid JSON, Zod validator exit 0. Live SSOT untouched (git diff HEAD -- orch-state.json = empty pre-apply). DJ-GATE-1 satisfied: this decision-journal STEP embeds task-id **SSOT-W1-HEAD-METADATA-COLLAPSE** in markdown-bold format. Advancing to rank-2 DOC-SYNC-WRITE-CONTRACT (all dependencies DONE, no gate blocks, WAVE-1 final task).
+
+**why-change:** Data collapse (po-s121) + script retargeting (developer 0874d780) deliver the full task scope. PM advances head to the next unblocked actionable task (DOC-SYNC-WRITE-CONTRACT). OPS-REBUILD-ENFORCE remains TODO (CI gate pending). This completes WAVE-1 core 8 tasks; DOC-SYNC closes the perimeter documentation loop.
