@@ -5800,6 +5800,16 @@
         "title": "Re-trigger stalled BCTC REFINE pipeline — 47 reports text_status=COMPLETE / refine_status=PENDING since 2026-06-07 batch (HPG, ACV, +45)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-REFINE-STALL-RETRIGGER",
         "status_note": "The in-process spawn path in `bctcRefineJob.ts` was deleted (OPTION-Y ruling); refinement is now host-level via CC Agent/Task subagent fan-out using MCP entry points `get_bctc_pending_refine` → `push_bctc_refined_unit` → `finalize_bctc_refine`. Action: enumerate the 47 PENDING reports, fan out refine workers to clear the backlog, verify each flips refine_status=PENDING→DONE and PUBLISH unblocks, then RAW-confirm HPG + ACV appear in get_bctc_full. ROOT-CAUSE follow-up also needed: WHY did the fleet REFINE cron stall after 2026-06-07 and emit no alert for 20 days — owner should confirm the new `refine_pending` counter is wired into an alerting threshold, not just exposed. Origin: FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP."
+      },
+      {
+        "id": "FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
+        "size": "S",
+        "sprint": "INFRA-AUDIT",
+        "status": "TODO",
+        "type": "SPRINT-S",
+        "zone": "multi",
+        "title": "mock-guard.sh: tighten scan scope — exclude Go *_test.go (adjacent test stubs e.g. usecases_vmt_bop_test.go/handlers_vmt_failclose_test.go return https://stub.sbv.vn) AND untracked vendored cache (apps/*/~/.bun/install/cache). Both trip HARD-FAIL/CAUTION every dev-team post-cycle tick = false positives. Add *_test.go + ~/.bun to exclusion glob.",
+        "detail_ref": null
       }
     ],
     "closed_sprints": [
