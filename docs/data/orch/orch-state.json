@@ -2408,7 +2408,116 @@
         "goal": "Close the SSOT integrity perimeter; make the HARD gate enforce all lanes + dup-key + referential integrity; route every writer through one gated wrapper; then drain hot-file bloat.",
         "audit_source": "docs/handoffs/orch-state-deep-audit-2026-06-27.{md,json}",
         "chain": "po -> architect -> pm -> dev-mcp-server/developer -> qa -> po",
-        "tasks": [],
+        "tasks": [
+          {
+            "id": "SSOT-W1-ZOD-SCHEMA-MODEL",
+            "title": "MODEL FIRST apps/mcp-server/src/infrastructure/orchStateSchema.ts — ONE nested Zod schema (all 9 task-bearing lanes by construction) + StatusEnum SSOT + .strict() + superRefine lane-status coherence + referential integrity + z.infer exports",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/infrastructure/",
+            "created_at": "2026-06-27T08:45:20Z",
+            "size": "M",
+            "depends": [],
+            "type": "SPRINT-S",
+            "note": "See SSOT-zod-validation-directive-2026-06-27.md § Step 1"
+          },
+          {
+            "id": "SSOT-W1-ZOD-VALIDATOR-CLI",
+            "title": "scripts/orch-validate.mjs — 2-stage: Stage-0 raw-byte duplicate-JSON-key reject + Stage-1 OrchStateSchema.safeParse; auto-fix error contract",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "zone": "scripts/",
+            "created_at": "2026-06-27T08:45:20Z",
+            "size": "M",
+            "depends": [
+              "SSOT-W1-ZOD-SCHEMA-MODEL"
+            ],
+            "type": "SPRINT-S",
+            "note": "Depends on SSOT-W1-ZOD-SCHEMA-MODEL"
+          },
+          {
+            "id": "SSOT-W1-SERVER-ENFORCE",
+            "title": "Point-2 enforcement: orchStateStore.ts write-path OrchStateSchema.parse(next) before atomic write; reconcile RED 1837a/1980-f2 tests",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/",
+            "created_at": "2026-06-27T08:45:20Z",
+            "size": "M",
+            "depends": [
+              "SSOT-W1-ZOD-SCHEMA-MODEL"
+            ],
+            "type": "SPRINT-S",
+            "note": "Covers task_claim/task_release/scheduler writes"
+          },
+          {
+            "id": "SSOT-W1-HOOK-ENFORCE",
+            "title": "Point-1 enforcement: .claude/settings.local.json extend PreToolUse Write|Edit (orch-state.json validation) + PostToolUse Bash backstop",
+            "owner": "developer",
+            "status": "TODO",
+            "zone": ".claude/settings/",
+            "created_at": "2026-06-27T08:45:20Z",
+            "size": "M",
+            "depends": [
+              "SSOT-W1-ZOD-SCHEMA-MODEL",
+              "SSOT-W1-ZOD-VALIDATOR-CLI"
+            ],
+            "type": "SPRINT-S",
+            "note": "Covers ~290/tick agent jq-patch + Claude hooks"
+          },
+          {
+            "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
+            "title": "scripts/orch-apply.sh gated wrapper (write-temp → orch-validate.mjs CLI → CAS-mtime → atomic rename); route all hot-file Bash writers through it",
+            "owner": "developer",
+            "status": "TODO",
+            "zone": "scripts/",
+            "created_at": "2026-06-27T08:45:20Z",
+            "size": "L",
+            "depends": [
+              "SSOT-W1-ZOD-VALIDATOR-CLI"
+            ],
+            "type": "SPRINT-S",
+            "note": "Replaces 290 po-s*/router-*.jq apply patterns"
+          },
+          {
+            "id": "SSOT-W1-BASH-SHIM",
+            "title": "scripts/orch-state-validate.sh demote → thin shim exec'ing scripts/orch-validate.mjs; existing callers unchanged",
+            "owner": "developer",
+            "status": "TODO",
+            "zone": "scripts/",
+            "created_at": "2026-06-27T08:45:20Z",
+            "size": "S",
+            "depends": [
+              "SSOT-W1-ZOD-VALIDATOR-CLI"
+            ],
+            "type": "SPRINT-S",
+            "note": "ONE validation SSOT; replaces hardcoded bash enum"
+          },
+          {
+            "id": "SSOT-W1-DATA-CLEAN",
+            "title": "Relabel live non-enum statuses (PARKED→DEFERRED, 7x done_verified→DONE_VERIFIED)",
+            "owner": "po",
+            "status": "DONE_VERIFIED",
+            "zone": "docs/data/orch/",
+            "created_at": "2026-06-27T08:03:52Z",
+            "closed_at": "2026-06-27T08:03:52Z",
+            "size": "S",
+            "depends": [],
+            "type": "SPRINT-S",
+            "status_note": "DONE_VERIFIED by po-s121"
+          },
+          {
+            "id": "SSOT-W1-HEAD-METADATA-COLLAPSE",
+            "title": "Re-collapse task_board.head to po-s66 stub + retarget the 3 regressor scripts off task_board.head (G-7 schema folded into Zod .strict())",
+            "owner": "developer",
+            "status": "TODO",
+            "zone": "scripts/",
+            "created_at": "2026-06-27T08:03:52Z",
+            "size": "S",
+            "depends": [],
+            "type": "SPRINT-S",
+            "status_note": "PARTIAL_DONE_DATA — po-s121 completed data collapse/dedup; remaining: dev retargets 3 regressor scripts"
+          }
+        ],
         "ranked_scope": [
           {
             "rank": 1,
@@ -2585,6 +2694,15 @@
           "schema_server": "dev-mcp-server",
           "hook_scripts": "developer",
           "brief": "architect"
+        },
+        "head": {
+          "status": "in_progress",
+          "active_task_id": "SSOT-W1-ZOD-SCHEMA-MODEL",
+          "next_agent": "dev-mcp-server",
+          "next_action": "Dispatch to dev-mcp-server for MODEL FIRST: design ONE nested Zod schema covering all 9 lanes (orchStateSchema.ts). No deps — rank-1, dispatchable now.",
+          "updated_by": "pm",
+          "updated_at": "2026-06-27T08:45:20Z",
+          "note": "Architect brief complete (SSOT-zod-validation-directive-2026-06-27.md ratified 2026-06-27T08:35:40Z). PM atomized wave-1 ranks 1-8 into tasks[]. Head advanced to rank-1 (MODEL FIRST, no deps)."
         }
       }
     ],
