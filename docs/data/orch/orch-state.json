@@ -6524,6 +6524,56 @@
         "resolution": "cloud CI green on new SHA; 73 fails/16 files fixed",
         "resolved_at": "2026-06-27T12:29:00Z",
         "resolved_by": "dev-mcp-server"
+      },
+      {
+        "id": "FIX-COLDEVICT-TERMINAL-VOCAB-CANONICALIZE",
+        "type": "FIX",
+        "status": "DONE",
+        "size": "S",
+        "priority": "medium",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "zone": "scripts/ + dev-team-flow-doc",
+        "created_at": "2026-06-27T16:16:32Z",
+        "created_by": "po-s122-triage",
+        "title": "Reconcile bash cold-evict terminal-sprint vocab to the canonical Zod TERMINAL_SET (kill divergent hardcoded list)",
+        "desc": "ROOT FIX for the stranded-sprint signal (coldevict-complete-status-drift). PO OVERRIDES the signal's 'add COMPLETE' suggestion: COMPLETE is NOT in the canonical StatusEnum/TERMINAL_SET that SSOT-INTEGRITY-PERIMETER just shipped (apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET = {DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED}). Adding COMPLETE would re-create the divergent-hardcoded-vocab SSOT violation that sprint eliminated. PO already corrected the live stranded sprint status COMPLETE->DONE (evictable now; bash L52 already has DONE). This task removes the LATENT drift: scripts/orch-cold-evict.sh L52 default TERMINAL_SPRINT_STATUSES (currently DONE,done,DONE-WITH-CAVEATS,completed,SIGNED-OFF-PARTIAL) and docs/agents/dev-team/flow/post-cycle.md Step 4.2 gate IN(...) (L43-46) BOTH diverge from TERMINAL_SET. Reconcile both bash sites to the canonical TERMINAL_SET tokens (DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED), kept in sync, ideally sourced from one SSOT per the 'bash gate stops hardcoding its own enum' hardening-brief philosophy. Also add a one-line note to the PO sign-off flow (docs/agents/po/flow/main.md) that the canonical terminal sprint token is DONE (never COMPLETE). Do NOT touch the agent definition .md (init.md); flow + script only.",
+        "files": [
+          "scripts/orch-cold-evict.sh",
+          "docs/agents/dev-team/flow/post-cycle.md",
+          "docs/agents/po/flow/main.md"
+        ],
+        "verification_gate": "(1) scripts/orch-cold-evict.sh L52 default + post-cycle.md L43-46 IN(...) both list exactly the schema TERMINAL_SET tokens and stay in sync; (2) a synthetic active_sprint with status DONE_VERIFIED|CANCELLED|DEFERRED|SKIPPED evicts to archive on a --dry-run; (3) no path produces or relies on 'COMPLETE'; (4) po sign-off flow documents canonical token=DONE.",
+        "signal_ref": "docs/signals/processed/coldevict-complete-status-drift-20260627T160221Z.json",
+        "baseline_pass": true,
+        "resolved_at": "2026-06-27T16:27:17Z",
+        "resolved_by": "dev-mcp-server",
+        "resolved_sha": "5b203d88",
+        "resolution": "verified + committed to main; router-flipped post-execution"
+      },
+      {
+        "id": "MAINT-QA-NOTEBOOK-PRUNE-200L",
+        "type": "MAINT",
+        "status": "DONE",
+        "size": "XS",
+        "priority": "low",
+        "owner_agent": "claude-manager-helper",
+        "next_agent": "claude-manager-helper",
+        "zone": "docs/agent-memory/",
+        "created_at": "2026-06-27T16:16:32Z",
+        "created_by": "po-s122-triage",
+        "title": "Prune docs/agent-memory/notebooks/qa.md to <=200L (currently 207L, +7 over cap)",
+        "desc": "context-bloat-backstop-hook breach: qa.md 207L vs 200 cap (overage 7). QA notebooks are spec'd full-overwrite <=200L, so growth means the cycle-324 overwrite did not trim. Prune to <=200L (keep newest cycles, drop oldest). RECURRENCE CHECK: if qa.md re-breaches the next QA cycle after prune, the QA notebook full-overwrite write isn't trimming structurally -> escalate the notebook-write spec to agent-father, don't just re-prune.",
+        "files": [
+          "docs/agent-memory/notebooks/qa.md"
+        ],
+        "verification_gate": "wc -l docs/agent-memory/notebooks/qa.md <= 200 after prune; flag structural recurrence to agent-father if it re-breaches.",
+        "signal_ref": "docs/signals/processed/context-bloat-docs-agent-memory-notebooks-qa-md-2026-06-27T155326Z.json",
+        "baseline_pass": true,
+        "resolved_at": "2026-06-27T16:27:17Z",
+        "resolved_by": "claude-manager-helper",
+        "resolved_sha": "fe93258b",
+        "resolution": "verified + committed to main; router-flipped post-execution"
       }
     ],
     "done_verified": [],
@@ -6560,48 +6610,6 @@
         "input_directive": "docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md",
         "updated_at": "2026-06-27T08:35:40Z",
         "updated_by": "po-ratify-ssot-zod"
-      },
-      {
-        "id": "FIX-COLDEVICT-TERMINAL-VOCAB-CANONICALIZE",
-        "type": "FIX",
-        "status": "READY",
-        "size": "S",
-        "priority": "medium",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "zone": "scripts/ + dev-team-flow-doc",
-        "created_at": "2026-06-27T16:16:32Z",
-        "created_by": "po-s122-triage",
-        "title": "Reconcile bash cold-evict terminal-sprint vocab to the canonical Zod TERMINAL_SET (kill divergent hardcoded list)",
-        "desc": "ROOT FIX for the stranded-sprint signal (coldevict-complete-status-drift). PO OVERRIDES the signal's 'add COMPLETE' suggestion: COMPLETE is NOT in the canonical StatusEnum/TERMINAL_SET that SSOT-INTEGRITY-PERIMETER just shipped (apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET = {DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED}). Adding COMPLETE would re-create the divergent-hardcoded-vocab SSOT violation that sprint eliminated. PO already corrected the live stranded sprint status COMPLETE->DONE (evictable now; bash L52 already has DONE). This task removes the LATENT drift: scripts/orch-cold-evict.sh L52 default TERMINAL_SPRINT_STATUSES (currently DONE,done,DONE-WITH-CAVEATS,completed,SIGNED-OFF-PARTIAL) and docs/agents/dev-team/flow/post-cycle.md Step 4.2 gate IN(...) (L43-46) BOTH diverge from TERMINAL_SET. Reconcile both bash sites to the canonical TERMINAL_SET tokens (DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED), kept in sync, ideally sourced from one SSOT per the 'bash gate stops hardcoding its own enum' hardening-brief philosophy. Also add a one-line note to the PO sign-off flow (docs/agents/po/flow/main.md) that the canonical terminal sprint token is DONE (never COMPLETE). Do NOT touch the agent definition .md (init.md); flow + script only.",
-        "files": [
-          "scripts/orch-cold-evict.sh",
-          "docs/agents/dev-team/flow/post-cycle.md",
-          "docs/agents/po/flow/main.md"
-        ],
-        "verification_gate": "(1) scripts/orch-cold-evict.sh L52 default + post-cycle.md L43-46 IN(...) both list exactly the schema TERMINAL_SET tokens and stay in sync; (2) a synthetic active_sprint with status DONE_VERIFIED|CANCELLED|DEFERRED|SKIPPED evicts to archive on a --dry-run; (3) no path produces or relies on 'COMPLETE'; (4) po sign-off flow documents canonical token=DONE.",
-        "signal_ref": "docs/signals/processed/coldevict-complete-status-drift-20260627T160221Z.json",
-        "baseline_pass": true
-      },
-      {
-        "id": "MAINT-QA-NOTEBOOK-PRUNE-200L",
-        "type": "MAINT",
-        "status": "READY",
-        "size": "XS",
-        "priority": "low",
-        "owner_agent": "claude-manager-helper",
-        "next_agent": "claude-manager-helper",
-        "zone": "docs/agent-memory/",
-        "created_at": "2026-06-27T16:16:32Z",
-        "created_by": "po-s122-triage",
-        "title": "Prune docs/agent-memory/notebooks/qa.md to <=200L (currently 207L, +7 over cap)",
-        "desc": "context-bloat-backstop-hook breach: qa.md 207L vs 200 cap (overage 7). QA notebooks are spec'd full-overwrite <=200L, so growth means the cycle-324 overwrite did not trim. Prune to <=200L (keep newest cycles, drop oldest). RECURRENCE CHECK: if qa.md re-breaches the next QA cycle after prune, the QA notebook full-overwrite write isn't trimming structurally -> escalate the notebook-write spec to agent-father, don't just re-prune.",
-        "files": [
-          "docs/agent-memory/notebooks/qa.md"
-        ],
-        "verification_gate": "wc -l docs/agent-memory/notebooks/qa.md <= 200 after prune; flag structural recurrence to agent-father if it re-breaches.",
-        "signal_ref": "docs/signals/processed/context-bloat-docs-agent-memory-notebooks-qa-md-2026-06-27T155326Z.json",
-        "baseline_pass": true
       }
     ],
     "review": [
