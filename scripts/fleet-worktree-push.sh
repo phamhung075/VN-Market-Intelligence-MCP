@@ -273,39 +273,54 @@ if [ "$behind" -gt 0 ]; then
   else
     echo "[fleet-push] merging origin/main (${behind} chore commits)"
     if ! git -C "$WT_PATH" merge origin/main --no-edit 2>&1; then
-      # Merge failed — check if only orch-state.json is conflicted
+      # Merge failed — auto-resolve churn-doc conflicts; abort on real code/config.
       conflicted=$(git -C "$WT_PATH" diff --name-only --diff-filter=U 2>/dev/null || echo "")
+      # OURS-RESOLVABLE churn set: files where HEAD is authoritative or additive and
+      # carries NO reviewable code — keep HEAD (--ours) on any conflict here and
+      # continue the merge. Mirrors the behind-set BENIGN_RE classifier (line ~229):
+      #   orch-state.json     board SSOT (board mutations authoritative; chore additive)
+      #   docs/handoffs/      ACK ledgers (e.g. tnb-audit-latest.md) — rewritten every
+      #                       tick by whoever ACKs; local working copy is the live one
+      #   docs/agent-memory/  agent notebooks + health rechecks
+      #   docs/signals/       signal-bus files
+      #   *cowork-schedule.json  cadence ledger
+      #   *.md                any markdown (never executable code)
+      # (Was orch-state.json-ONLY: any OTHER conflicted file aborted the push, so the
+      #  perpetually-churned docs/handoffs/tnb-audit-latest.md HARD-ABORTED every tick
+      #  at ahead>threshold — feedback_push_backstop_stranded_by_tnb_audit_conflict.)
       # `grep -c` exits 1 on zero matches -> swallow with `|| true` + default 0
       # (chaining `|| echo 0` would emit "0\n0" and break `[ -gt ]` under set -e).
-      orch_conflicts=$(echo "$conflicted" | grep -c 'orch-state\.json' || true)
-      orch_conflicts=${orch_conflicts:-0}
-      other_conflicts=$(echo "$conflicted" | grep -v 'orch-state\.json' | grep -c '.' || true)
-      other_conflicts=${other_conflicts:-0}
+      OURS_RE='^(docs/data/orch/orch-state\.json|docs/handoffs/|docs/agent-memory/|docs/signals/|.*cowork-schedule\.json|.*\.md$)'
+      unresolvable=$(echo "$conflicted" | grep -v '^$' | grep -Ev "$OURS_RE" | grep -c '.' || true)
+      unresolvable=${unresolvable:-0}
 
-      if [ "$other_conflicts" -gt 0 ]; then
-        # Non-orch-state conflict — abort merge, abort push
+      if [ "$unresolvable" -gt 0 ]; then
+        # Conflict OUTSIDE the churn set = real code/config — abort, human reconciles.
         git -C "$WT_PATH" merge --abort 2>/dev/null || true
-        msg="[fleet-push] ABORT: merge conflict in non-orch-state file(s): $(echo "$conflicted" | grep -v 'orch-state\.json' | tr '\n' ' '). Manual resolve required."
+        bad_files=$(echo "$conflicted" | grep -v '^$' | grep -Ev "$OURS_RE" | tr '\n' ' ')
+        msg="[fleet-push] ABORT: merge conflict in non-auto-resolvable file(s): ${bad_files}. Manual resolve required."
         echo "$msg" >&2
         send_tg bug "$msg"
-        emit_abort_signal "merge-conflict" "$(echo "$conflicted" | grep -v 'orch-state\.json' | tr '\n' ' ')"
+        emit_abort_signal "merge-conflict" "$bad_files"
         exit 1
       fi
 
-      if [ "$orch_conflicts" -gt 0 ]; then
-        # orch-state.json conflict: keep HEAD (our board mutations are authoritative;
-        # cloud chore commits are additive _updated_at/_updated_by only — safe to discard).
-        echo "[fleet-push] orch-state.json conflict — keeping HEAD (--ours)"
-        git -C "$WT_PATH" checkout --ours docs/data/orch/orch-state.json
-        git -C "$WT_PATH" add docs/data/orch/orch-state.json
+      if [ -n "$(echo "$conflicted" | grep -v '^$')" ]; then
+        # All conflicts are churn docs — keep HEAD (--ours) on each, continue merge.
+        echo "[fleet-push] conflicts all auto-resolvable churn docs — keeping HEAD (--ours): $(echo "$conflicted" | tr '\n' ' ')"
+        while IFS= read -r f; do
+          [ -z "$f" ] && continue
+          git -C "$WT_PATH" checkout --ours -- "$f"
+          git -C "$WT_PATH" add -- "$f"
+        done <<< "$conflicted"
         GIT_EDITOR=true git -C "$WT_PATH" merge --continue 2>&1 || {
-          msg="[fleet-push] ABORT: merge --continue failed after orch-state.json --ours resolution."
+          msg="[fleet-push] ABORT: merge --continue failed after --ours churn-doc resolution."
           echo "$msg" >&2
           send_tg bug "$msg"
-          emit_abort_signal "merge-continue-fail" "orch-state.json --ours merge --continue failed"
+          emit_abort_signal "merge-continue-fail" "--ours churn-doc auto-resolution merge --continue failed"
           exit 1
         }
-        echo "[fleet-push] merge continued cleanly after orch-state.json --ours"
+        echo "[fleet-push] merge continued cleanly after --ours churn-doc resolution"
       fi
     fi
   fi
