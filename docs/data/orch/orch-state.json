@@ -228,12 +228,12 @@
   ],
   "head": {
     "status": "ready",
-    "active_task_id": "SSOT-W1-ORCH-APPLY-WRAPPER",
+    "active_task_id": "SSOT-W1-BASH-SHIM",
     "next_agent": "developer",
-    "next_action": "Implement scripts/orch-apply.sh wrapper routing all ~290/tick hot-file Bash writers through validation gate. Zone: scripts/",
+    "next_action": "Demote scripts/orch-state-validate.sh to thin shim that exec's the canonical scripts/orch-validate.mjs; update existing callers (no behavior change). Zone: scripts/",
     "updated_by": "pm",
-    "updated_at": "2026-06-27T12:59:02Z",
-    "note": "SSOT-W1-HOOK-ENFORCE DONE (developer, commit 14d88c23 verified). Advancing to rank-5 ORCH-APPLY-WRAPPER: gated wrapper routing every hot-file writer (po-s*/router-*.jq + orch-backlog-stub.sh + dev-team WF-1 head-reset). Depends on rank-2 ZOD-VALIDATOR-CLI."
+    "updated_at": "2026-06-27T13:36:02Z",
+    "note": "SSOT-W1-ORCH-APPLY-WRAPPER DONE (developer, commit 86286d26 verified). Advancing to rank-6 BASH-SHIM: demote validate.sh to thin wrapper. Depends on SSOT-W1-ZOD-VALIDATOR-CLI (DONE). Next task after: SSOT-W1-HEAD-METADATA-COLLAPSE (rank-8)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2488,7 +2488,7 @@
             "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
             "title": "scripts/orch-apply.sh gated wrapper (write-temp → orch-validate.mjs CLI → CAS-mtime → atomic rename); route all hot-file Bash writers through it",
             "owner": "developer",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "scripts/",
             "created_at": "2026-06-27T08:45:20Z",
             "size": "L",
@@ -2497,13 +2497,16 @@
             ],
             "type": "SPRINT-S",
             "note": "Replaces 290 po-s*/router-*.jq apply patterns",
-            "acceptance": "DONE = 0 direct hot-file writers remain: the ~290/tick po-s*/router-*.jq apply idiom + scripts/orch-backlog-stub.sh + dev-team flow head-reset (docs/agents/dev-team/flow/main.md direct mv) ALL route through scripts/orch-apply.sh. 'wrapper file exists' is NOT done. Verify: grep finds 0 raw `mv ... orch-state.json` / `> ...orch-state.json` writers outside orch-apply.sh."
+            "acceptance": "DONE = 0 direct hot-file writers remain: the ~290/tick po-s*/router-*.jq apply idiom + scripts/orch-backlog-stub.sh + dev-team flow head-reset (docs/agents/dev-team/flow/main.md direct mv) ALL route through scripts/orch-apply.sh. 'wrapper file exists' is NOT done. Verify: grep finds 0 raw `mv ... orch-state.json` / `> ...orch-state.json` writers outside orch-apply.sh.",
+            "done_by": "developer",
+            "done_at": "2026-06-27T13:36:02Z",
+            "resolved_sha": "86286d26"
           },
           {
             "id": "SSOT-W1-BASH-SHIM",
             "title": "scripts/orch-state-validate.sh demote → thin shim exec'ing scripts/orch-validate.mjs; existing callers unchanged",
             "owner": "developer",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "zone": "scripts/",
             "created_at": "2026-06-27T08:45:20Z",
             "size": "S",

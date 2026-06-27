@@ -89,3 +89,28 @@
 **why-decision:** Router RAW-verified commits (14d88c23 + bc4b8ce8) genuine DONE (block-test re-verified: hook returns exit 2 on invalid orch-state proposal, exit 0 on valid; validator reused = scripts/orch-validate.mjs rank-2 CLI, no duplicate schema). DJ-GATE-1 satisfied: decision-journal entry (this record, task-id SSOT-W1-HOOK-ENFORCE-BOARD-FLIP) documents task-id SSOT-W1-HOOK-ENFORCE flip to DONE. Advancing to rank-5 (natural next per dependency graph) unblocks critical GAP-2 (all 290 hot-file writers must route through orch-apply.sh wrapper).
 
 **why-change:** Developer completed Point-1 enforcement (Claude hook). All 3 core SSOT-integrity tasks now DONE: rank-1 (ZOD-SCHEMA-MODEL commit 754df2aa) + rank-2 (ZOD-VALIDATOR-CLI commit 8d37f164) + rank-3 (SERVER-ENFORCE commits 754df2aa+5321b4f5) + rank-4 (HOOK-ENFORCE commits 14d88c23+bc4b8ce8). Next tier (ORCH-APPLY-WRAPPER, BASH-SHIM, HEAD-METADATA-COLLAPSE, OPS-REBUILD-ENFORCE, DOC-SYNC) is unblocked per verification_gate.wave1_done_when. Rank-5 is the critical-path first move (GAP-2 routing).
+
+---
+
+### STEP pm-S5 · pm · 2026-06-27T13:36:02Z
+**task-id:** SSOT-W1-ORCH-APPLY-WRAPPER-BOARD-FLIP
+
+**what-done:**
+- Flipped SSOT-W1-ORCH-APPLY-WRAPPER status TODO → DONE (developer-completed, commit 86286d26 verified by router RAW-verify)
+- Updated task metadata in active_sprints[3].tasks: done_by=developer, done_at=2026-06-27T13:36:02Z, resolved_sha=86286d26
+- Advanced canonical .head from SSOT-W1-ORCH-APPLY-WRAPPER → SSOT-W1-BASH-SHIM (rank-6)
+- Updated .head.status=ready, .head.next_agent=developer, .head.next_action="Demote scripts/orch-state-validate.sh to thin shim that exec's the canonical scripts/orch-validate.mjs"
+- Updated .head.note with resolution evidence: "SSOT-W1-ORCH-APPLY-WRAPPER DONE (developer, commit 86286d26 verified). Advancing to rank-6 BASH-SHIM: demote validate.sh to thin wrapper. Depends on SSOT-W1-ZOD-VALIDATOR-CLI (DONE). Next task after: SSOT-W1-HEAD-METADATA-COLLAPSE (rank-8)."
+- Validated atomic write: 
+  - jq -e '.head': PASS
+  - bun scripts/orch-validate.mjs: exit 0 PASS (72 SHG coherence warnings, non-blocking)
+  - bash scripts/orch-state-validate.sh: G-1..G-6 all PASS
+- Applied write via gated wrapper: `jq ... orch-state.json | bash scripts/orch-apply.sh`
+
+**what-considered:**
+- Rank-6 (BASH-SHIM) vs rank-8 (HEAD-METADATA-COLLAPSE) as next: Rank-6 is natural successor (depends rank-2 ZOD-VALIDATOR-CLI which is DONE; no blockers). Head placement follows ranked_scope priority: BASH-SHIM is the immediate next actionable task. Rank-8 HEAD-METADATA-COLLAPSE depends both BASH-SHIM completion + re-collapse logic (wider scope, can wait for rank-6 to land first).
+- Dogfooding orch-apply.sh: Used the BRAND-NEW wrapper to apply the board-flip itself. This is the whole point of rank-5 task — the wrapper must route EVERY hot-file writer, including the PM's own board-flips. Proved it works atomically by piping jq output directly to `bash scripts/orch-apply.sh`.
+
+**why-decision:** Router RAW-verified commits (86286d26) genuine DONE (grep-proof: 0 raw writers outside orch-apply.sh wrapper found across codebase; all 13 call sites routed). DJ-GATE-1 satisfied: this decision-journal STEP embeds task-id **SSOT-W1-ORCH-APPLY-WRAPPER** in markdown-bold format. Advancing to rank-6 (natural next per dependency graph + wave-1 completion) unblocks final Stage-1c enforcement tier (bash shim + head collapse + ops rebuild).
+
+**why-change:** Developer completed Point-2a enforcement (gated write wrapper). The 5 GAP-2 critical-path tasks are now complete: rank-1 (ZOD-SCHEMA) + rank-2 (ZOD-VALIDATOR-CLI) + rank-3 (SERVER-ENFORCE) + rank-4 (HOOK-ENFORCE) + rank-5 (ORCH-APPLY-WRAPPER). Rank-6+ (BASH-SHIM, HEAD-METADATA-COLLAPSE, OPS-REBUILD, DOC-SYNC) represents the final hardening + documentation pass per SSOT-zod-validation-directive-2026-06-27.md wave-1 completion criteria.
