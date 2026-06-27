@@ -220,12 +220,12 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "SSOT-W1-ZOD-SCHEMA-MODEL",
+    "active_task_id": "SSOT-W1-ZOD-VALIDATOR-CLI",
     "next_agent": "dev-mcp-server",
-    "next_action": "Dispatch to dev-mcp-server for MODEL FIRST: design ONE nested Zod schema covering all 9 lanes (orchStateSchema.ts). No deps — rank-1, dispatchable now.",
+    "next_action": "Dispatch to dev-mcp-server for scripts/orch-validate.mjs — 2-stage validator (Stage-0 raw-byte dup-key scan + Stage-1 OrchStateSchema.safeParse). Rank-1 DONE; rank-3 SSOT-W1-SERVER-ENFORCE co-dispatchable.",
     "updated_by": "pm",
-    "updated_at": "2026-06-27T08:46:03Z",
-    "note": "Architect brief complete (SSOT-zod-validation-directive-2026-06-27.md ratified 2026-06-27T08:35:40Z). PM atomized wave-1 ranks 1-8 into tasks[]. Head advanced to rank-1 (MODEL FIRST, no deps)."
+    "updated_at": "2026-06-27T10:20:15Z",
+    "note": "Synced canonical top-level head to rank-2 SSOT-W1-ZOD-VALIDATOR-CLI (was stale at rank-1 after rank-1 DONE). Sprint head + top-level head now consistent. Prevents re-dispatch to DONE task."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
