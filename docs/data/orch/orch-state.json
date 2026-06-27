@@ -228,12 +228,12 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "BCTC-REFINE-A1",
-    "next_agent": "po",
-    "next_action": "PO disposition for BCTC-REFINE-STALL-RETRIGGER: A1 diagnosis proves refine_bctc_md is NOT broken (49 DONE units persisted; both stall premises false). DECIDE: close sprint as NO-BUG/phantom OR re-scope A2/B1/B2/C1 to a THROUGHPUT sprint (raise REFINE_CHUNK_SIZE / add cowork refine slots/day). A2/B1/B2/C1 still TODO pending PO call.",
-    "updated_by": "dev-team",
-    "updated_at": "2026-06-27T19:23:35Z",
-    "note": "A1 DONE (diagnostic). WIP slot free. Sprint premise falsified -> awaiting PO disposition; do NOT auto-dispatch A2/B1 (they may be cancelled). Refine pipeline healthy: dispatcher 2x/day, agent pushes persist, finalize gates on full doc."
+    "active_task_id": "BCTC-REFINE-STALL-RETRIGGER",
+    "next_agent": "architect",
+    "next_action": "Architect: spec SAFE values for the two throughput levers — (T1) max REFINE_CHUNK_SIZE that one refine_bctc_md fire completes reliably (token/latency bound) routed to agent-father for the agent-flow edit, and (T2) cowork refine slot count routed to ops for cowork-schedule.json. Goal: drain the 47-doc backlog (VHM/VIC/HPG Q1-2026) in days not weeks so get_bctc_full stops returning empty. Cancel B1/B2 (VIC discovery gap resolved — VIC now in refine queue); A2/C1 -> backlog P2 observability (T3).",
+    "updated_by": "po",
+    "updated_at": "2026-06-27T19:29:05Z",
+    "note": "PO disposition: OPTION-B throughput-drain. Consumer RAW-verified starved (get_bctc_full{VHM}=no-data; 47 docs pending). Refine pipeline is NOT broken (A1 falsified) — root constraint is drain throughput (14 windows/day). Levers verified real (REFINE_CHUNK_SIZE=7 hardcoded; 2 cowork slots)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6397,17 +6397,17 @@
     "ready": [
       {
         "id": "BCTC-REFINE-STALL-RETRIGGER",
-        "type": "OPERATIONAL",
-        "status": "REVIEW",
+        "type": "SPRINT-S",
+        "status": "READY",
         "priority": "P1",
-        "size": "M",
+        "size": "S",
         "zone": "multi",
-        "title": "Re-trigger stalled BCTC REFINE pipeline — 47 reports text_status=COMPLETE / refine_status=PENDING since 2026-06-07 batch (HPG, ACV, +45)",
+        "title": "Drain 47-doc BCTC refine backlog faster — consumer (get_bctc_full / bctc-analyst) RAW-verified starved; raise REFINE_CHUNK_SIZE + add cowork refine slots",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-REFINE-STALL-RETRIGGER",
         "status_note": "The in-process spawn path in `bctcRefineJob.ts` was deleted (OPTION-Y ruling); refinement is now host-level via CC Agent/Task subagent fan-out using MCP entry points `get_bctc_pending_refine` → `push_bctc_refined_unit` → `finalize_bctc_refine`. Action: enumerate the 47 PENDING reports, fan out refine workers to clear the backlog, verify each flips refine_status=PENDING→DONE and PUBLISH unblocks, then RAW-confirm HPG + ACV appear in get_bctc_full. ROOT-CAUSE follow-up also needed: WHY did the fleet REFINE cron stall after 2026-06-07 and emit no alert for 20 days — owner should confirm the new `refine_pending` counter is wired into an alerting threshold, not just exposed. Origin: FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP.",
-        "route_to": "pm",
-        "next_agent": "pm",
-        "recon_first": true,
+        "route_to": "architect",
+        "next_agent": "architect",
+        "recon_first": false,
         "promoted_at": "2026-06-27T18:48:31Z",
         "promoted_by": "po",
         "escalation": "c075 bctc-analyst bug-escalation 2026-06-27; 20+ days unaddressed (filed 2026-06-07); corroborated by WORK telegrams 3336 (VHM) + 3337 (VIC).",
@@ -6417,7 +6417,51 @@
           3336,
           3337
         ],
-        "review_note": "Architect recon complete 2026-06-27T19:15Z. Blueprint: docs/architecture-briefs/2026-06-27-bctc-refine-stall-retrigger.md. 3 tracks, 5 tasks. First: BCTC-REFINE-A1 ops re-arm (cowork CronCreate) — immediate, no dev. Then BCTC-REFINE-A2+B1 SPRINT-S."
+        "review_note": "Architect recon complete 2026-06-27T19:15Z. Blueprint: docs/architecture-briefs/2026-06-27-bctc-refine-stall-retrigger.md. 3 tracks, 5 tasks. First: BCTC-REFINE-A1 ops re-arm (cowork CronCreate) — immediate, no dev. Then BCTC-REFINE-A2+B1 SPRINT-S.",
+        "po_disposition": {
+          "decided_by": "po",
+          "decided_at": "2026-06-27T19:29:05Z",
+          "decision": "OPTION-B — RE-SCOPE to a focused THROUGHPUT-DRAIN sprint (NOT close-as-phantom). A real downstream consumer is RAW-verified starved right now.",
+          "raw_evidence": {
+            "consumer_starved": "get_bctc_full{code:VHM} = Chua co du lieu BCTC (probed 2026-06-27T19:24Z, AFTER the A1 diagnostic tick) — still no data.",
+            "backlog": "get_bctc_pending_refine = 47 docs PENDING, incl every major watchlist Q1-2026 BCTC: VHM(43w) VIC(40w) HPG(17w) MBB(55w) VPB(31w) VRE(19w) MWG(21w) NVL(41w) SSI(28w) VNM(32w) ACV(50w) GVR(70w).",
+            "why_blocked": "get_bctc_full only serves a ticker after finalize_bctc_refine, which gates total_pushed==windows.length. Until each doc fully completes its window-set the consumer sees nothing.",
+            "drain_rate": "2 cowork fires/day x REFINE_CHUNK_SIZE=7 = 14 windows/day against hundreds of pending windows -> weeks to drain -> consumer starved for weeks. Real throughput constraint, not make-work.",
+            "levers_verified_real": "REFINE_CHUNK_SIZE=7 is a hardcoded slice(0,7) in docs/agents/refine_bctc_md/flow/main.md L8/L48 + init.md L55/L60. Cowork has 2 refine slots (refine-bctc-slot-1/2) in docs/data/cowork-schedule.json. Both tunable."
+          },
+          "architect_track_disposition": {
+            "A1 re-arm cowork": "DONE / FALSIFIED — dispatcher proven alive (slots fired 2026-06-27 09:04Z + 14:04Z); 49 DONE units persisted for GVR. No bug.",
+            "B1 VIC queue reset": "CANCELLED — premise FALSE. VIC_2026_Q1.pdf is now IN the pending-refine queue (40 windows). VIC fetched+OCR'd since the brief; discovery gap RESOLVED.",
+            "B2 VPS re-discovery sweep + SSC regex": "CANCELLED as active work — no RAW-verified currently-starved ticker due to url_not_found-terminal. Latent debt only; stays in backlog, do NOT build now.",
+            "A2 server bctcRefineStalenessJob watchdog": "DEMOTE to backlog P2 — genuine durable observability, but MUST distinguish deep-but-draining from truly-stalled (original premise conflated them). Secondary to the drain fix.",
+            "C1 cron_job_runs wrapRun + freshnessSlaChecker refine signal": "FOLD into the A2 backlog item (T3) — same observability track."
+          },
+          "new_scope_subtasks": [
+            {
+              "id": "BCTC-REFINE-T1-CHUNKSIZE",
+              "route_to": "agent-father",
+              "zone": "docs/agents/refine_bctc_md/",
+              "priority": "P1",
+              "desc": "Raise REFINE_CHUNK_SIZE above 7 in refine flow main.md L8/L48 + init.md. Verification gate: determine the SAFE ceiling — as high as ONE fire reliably completes without per-fire token/context overflow or timeout; if chunk cannot safely exceed ~10-15, compensate via T2 slot count. Agent-flow edit -> routes via agent-md-factory."
+            },
+            {
+              "id": "BCTC-REFINE-T2-SLOTS",
+              "route_to": "ops",
+              "zone": "docs/data/cowork-schedule.json",
+              "priority": "P1",
+              "desc": "Add cowork refine slots (currently 2: 09:00/14:00 UTC) to e.g. 4/day to multiply drain rate. Sequential cron slots at distinct times — NOT a concurrent fan-out (respects host-starvation cap)."
+            },
+            {
+              "id": "BCTC-REFINE-T3-WATCHDOG",
+              "route_to": "dev-mcp-server",
+              "zone": "apps/mcp-server/src/scheduler/financial-reports/",
+              "priority": "P2",
+              "status": "BACKLOG-DEFERRED",
+              "desc": "Folds A2+C1: server-side refine-queue-depth watchdog that alerts when depth is high AND not draining (distinguishes deep-draining from stalled). Build AFTER the drain levers land."
+            }
+          ],
+          "immediate_note": "Router/cowork MAY spawn extra refine_bctc_md invocations now (idempotent, reset=true on first push) to start draining the 47 immediately while T1/T2 land — per architect RISK-3. PO sets tasks; does not spawn."
+        }
       }
     ],
     "review": [
