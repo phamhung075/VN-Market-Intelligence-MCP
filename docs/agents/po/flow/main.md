@@ -197,6 +197,8 @@ The script (committed 26807a41) owns all divergence-reconcile, tsc-gate, and pus
 | BA returned a spec for review (`docs/REQ_NNN.md`) | `po/review-ba-spec.md` |
 | QA signalled sprint complete (`reports/SPRINT_REPORT_NNN.md`) | `po/sprint-signoff.md` |
 
+**Sprint sign-off status (canonical token):** The Approve path in `po/sprint-signoff.md` MUST set `active_sprints[sprint_id].status = "DONE"` — a member of `TERMINAL_SET` per `apps/mcp-server/src/infrastructure/orchStateSchema.ts`. Do NOT write ad-hoc tokens (`COMPLETE`, `done`, `SIGNED-OFF-PARTIAL`, etc.): non-canonical values are not matched by the cold-eviction predicate (`scripts/orch-cold-evict.sh $TERMINAL_SPRINT_STATUSES`) and will strand the sprint in `active_sprints[]` indefinitely.
+
 Do not inline these workflows here — that's the whole point of the split.
 
 ---

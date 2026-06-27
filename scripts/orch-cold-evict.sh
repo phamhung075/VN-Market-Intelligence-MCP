@@ -49,7 +49,9 @@ MTIME_CAS_RETRIES="${MTIME_CAS_RETRIES:-3}"
 # Terminal sprint statuses: comma-separated list.
 # Sprints whose status field matches any of these are evicted from active_sprints[].
 # Sprints whose status field starts with "BCTC-" are also evicted (handled separately).
-TERMINAL_SPRINT_STATUSES="${TERMINAL_SPRINT_STATUSES:-DONE,done,DONE-WITH-CAVEATS,completed,SIGNED-OFF-PARTIAL}"
+# SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET
+# {DONE, DONE_VERIFIED, CANCELLED, DEFERRED, SKIPPED} — must match exactly; no ad-hoc aliases.
+TERMINAL_SPRINT_STATUSES="${TERMINAL_SPRINT_STATUSES:-DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED}"
 
 # Terminal signal statuses: comma-separated list.
 # Rows whose status field matches any of these are evicted from signal_queue.rows[].

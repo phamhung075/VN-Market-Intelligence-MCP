@@ -16,6 +16,15 @@
 **why-decision:** Root cause was false-green in `queryBctcCounts()`: it only read `bctc_vps_queue` (both HPG+ACV = 'done') and never checked `financial_reports.refine_status`; adding one SELECT surfaces the real 47-report stall.
 **why-change:** PO hypothesis said DISCOVER layer defect; recon disproved — actual gap is REFINE layer stall post June-7 fleet-cron halt.
 
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-27T12:00:00Z
+**task-id:** FIX-COLDEVICT-TERMINAL-VOCAB-CANONICALIZE
+**what-done:** Reconciled `TERMINAL_SPRINT_STATUSES` in `orch-cold-evict.sh` and Step 4.2 gate in `post-cycle.md` to exact `TERMINAL_SET` from `orchStateSchema.ts`; added canonical-token sign-off convention to `po/main.md`.
+**what-considered:**
+- Keep lowercase `done` alias for back-compat — rejected; StatusEnum requires uppercase; alias masks future drift.
+- Update only the script and leave gate in sync — rejected; DoD requires byte-equal sets in both predicates.
+**why-decision:** TERMINAL_SET in orchStateSchema.ts is the declared SSOT (lines 57-64); any list that diverges will silently fail to evict canonically-signed-off sprints (root cause of the COMPLETE-token strand).
+**why-change:** no change from plan; exact 3-file scope PO-authorized; live-data already remediated by PO.
+
 ### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-06-27T10:00:00Z
 **task-id:** SSOT-W1-ZOD-SCHEMA-MODEL
 **what-done:** Built `orchStateSchema.ts` — nested Zod SSOT with StatusEnum (12 values), all 9 task-bearing lanes via shared `Lane`, `.strict()` at root+TaskBoardSchema, `superRefine` for head.active_task_id RI; colocated 64-test suite; reconciled 1837a+1980 to match live v4 structure.

@@ -40,8 +40,10 @@ If exit 0: silent.
 Run after Step 4.1 exits cleanly. Checks for terminal sprints and bloated done lanes; evicts to cold if found. This ensures bloat never re-accumulates between pm/task-archive cycles.
 
 ```bash
+# Terminal sprint statuses — SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET
+# {DONE, DONE_VERIFIED, CANCELLED, DEFERRED, SKIPPED} — must match scripts/orch-cold-evict.sh $TERMINAL_SPRINT_STATUSES exactly.
 TERMINAL_SPRINT_N=$(jq '[.task_board.active_sprints[] | select(
-  ((.status // "") | IN("DONE","done","DONE-WITH-CAVEATS","completed","SIGNED-OFF-PARTIAL")) or
+  ((.status // "") | IN("DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED")) or
   ((.status // "") | startswith("BCTC-"))
 )] | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
 
