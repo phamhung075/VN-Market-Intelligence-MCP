@@ -227,13 +227,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "Idle. Rank-3+ await PO triage next sprint cycle.",
-    "updated_by": "pm",
-    "updated_at": "2026-06-27T18:00:00Z",
-    "note": "rank-2 SSOT-W1-ZOD-VALIDATOR-CLI DONE (qa approved 2026-06-27). Waiting for rank-3 PO triage (next sprint cycle)."
+    "status": "in_progress",
+    "active_task_id": "BCTC-REFINE-STALL-RETRIGGER",
+    "next_agent": "architect",
+    "next_action": "Architect recon-first: split VHM/VIC Q1-2026 BCTC 20-day escalation into refine-stall (47 docs) + VIC discovery-gap + 20-day-no-alert observability; brief dev/ops chain.",
+    "updated_by": "po",
+    "updated_at": "2026-06-27T18:48:31Z",
+    "note": "WIP=1: BCTC escalation (c075, 20+ days, corroborated WORK 3336/3337) outranks SSOT-PERIMETER rank-3 this tick. RAW-probe: VHM refine-stall, VIC discovery-gap, 47-doc refine queue. SSOT sprint resumes next cycle."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -979,8 +979,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": 1782576992,
-    "_updated_by": "po-s122-triage",
+    "_updated_at": "2026-06-27T18:48:31Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5634,17 +5634,6 @@
         "verify_note": "hard-gate-promotion"
       },
       {
-        "id": "BCTC-REFINE-STALL-RETRIGGER",
-        "type": "OPERATIONAL",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "operations",
-        "title": "Re-trigger stalled BCTC REFINE pipeline — 47 reports text_status=COMPLETE / refine_status=PENDING since 2026-06-07 batch (HPG, ACV, +45)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-REFINE-STALL-RETRIGGER",
-        "status_note": "The in-process spawn path in `bctcRefineJob.ts` was deleted (OPTION-Y ruling); refinement is now host-level via CC Agent/Task subagent fan-out using MCP entry points `get_bctc_pending_refine` → `push_bctc_refined_unit` → `finalize_bctc_refine`. Action: enumerate the 47 PENDING reports, fan out refine workers to clear the backlog, verify each flips refine_status=PENDING→DONE and PUBLISH unblocks, then RAW-confirm HPG + ACV appear in get_bctc_full. ROOT-CAUSE follow-up also needed: WHY did the fleet REFINE cron stall after 2026-06-07 and emit no alert for 20 days — owner should confirm the new `refine_pending` counter is wired into an alerting threshold, not just exposed. Origin: FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP."
-      },
-      {
         "id": "FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
         "size": "S",
         "sprint": "INFRA-AUDIT",
@@ -5653,6 +5642,22 @@
         "zone": "multi",
         "title": "mock-guard.sh: tighten scan scope — exclude Go *_test.go (adjacent test stubs e.g. usecases_vmt_bop_test.go/handlers_vmt_failclose_test.go return https://stub.sbv.vn) AND untracked vendored cache (apps/*/~/.bun/install/cache). Both trip HARD-FAIL/CAUTION every dev-team post-cycle tick = false positives. Add *_test.go + ~/.bun to exclusion glob.",
         "detail_ref": null
+      },
+      {
+        "id": "FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "owner": "po",
+        "route_to": "agent-father",
+        "zone": "docs/agents/",
+        "plan_only": true,
+        "dedup_key": "qa-notebook-write-spec-selfcap-200L",
+        "title": "QA notebook-write step lacks 200L write-time self-cap — recurring re-prune treadmill (203L re-breach after MAINT prune)",
+        "created_at": "2026-06-27T18:48:31Z",
+        "created_by": "po",
+        "status_note": "Per repair_task_request 2026-06-27 + router-S1 recurrence flag (docs/agent-memory/decisions/sprint-MAINT-on-demand-router.md): re-pruning qa.md is forbidden (treadmill - fe93258b pruned 207->195, next QA cycle a7befb0c re-breached to 203). Durable fix = add WRITE-TIME self-cap/auto-trim to the QA agent notebook-write step (drop oldest cycle(s) when append would exceed 200L), enforced by the writer not an external janitor. Per feedback_agent_md_factory: agent-father invokes agent-md-factory skill first; agent .md is agent-father territory. AC: a QA cycle that would push qa.md >200L auto-trims at write-time, no external prune needed."
       }
     ],
     "closed_sprints": [
@@ -6310,7 +6315,31 @@
       "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "BCTC-REFINE-STALL-RETRIGGER",
+        "type": "OPERATIONAL",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "multi",
+        "title": "Re-trigger stalled BCTC REFINE pipeline — 47 reports text_status=COMPLETE / refine_status=PENDING since 2026-06-07 batch (HPG, ACV, +45)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-REFINE-STALL-RETRIGGER",
+        "status_note": "The in-process spawn path in `bctcRefineJob.ts` was deleted (OPTION-Y ruling); refinement is now host-level via CC Agent/Task subagent fan-out using MCP entry points `get_bctc_pending_refine` → `push_bctc_refined_unit` → `finalize_bctc_refine`. Action: enumerate the 47 PENDING reports, fan out refine workers to clear the backlog, verify each flips refine_status=PENDING→DONE and PUBLISH unblocks, then RAW-confirm HPG + ACV appear in get_bctc_full. ROOT-CAUSE follow-up also needed: WHY did the fleet REFINE cron stall after 2026-06-07 and emit no alert for 20 days — owner should confirm the new `refine_pending` counter is wired into an alerting threshold, not just exposed. Origin: FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP.",
+        "route_to": "architect",
+        "next_agent": "architect",
+        "recon_first": true,
+        "promoted_at": "2026-06-27T18:48:31Z",
+        "promoted_by": "po",
+        "escalation": "c075 bctc-analyst bug-escalation 2026-06-27; 20+ days unaddressed (filed 2026-06-07); corroborated by WORK telegrams 3336 (VHM) + 3337 (VIC).",
+        "raw_probe": "PO RAW-probe 2026-06-27 via get_bctc_full: VHM='Chua co du lieu BCTC', VIC='Chua co du lieu BCTC'. get_bctc_pending_refine = 47 docs. VHM_2026_Q1.pdf IS in the refine queue (text_status=COMPLETE, refine_status=PENDING) = refine-stall. VIC ABSENT from refine queue = discovery/ingestion gap (PDF never fetched).",
+        "scope_note": "Architect recon-first: split the 20-day escalation into 3 roots. (1) REFINE-STALL: 47 docs incl VHM Q1-2026 (text-COMPLETE/refine-PENDING since 2026-06-07) -> drain via host refine fan-out (get_bctc_pending_refine -> push_bctc_refined_unit -> finalize_bctc_refine). (2) DISCOVERY-GAP: VIC Q1-2026 PDF never fetched (origin FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP) -> fix discovery. (3) OBSERVABILITY: refine cron stalled 20 days with NO alert -> wire refine_pending counter to an alerting threshold. Architect splits zones (mcp-server refine-cron+discovery+alerting + VPS fetch) and briefs the dev/ops chain.",
+        "corroborating_reports": [
+          3336,
+          3337
+        ]
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -6357,8 +6386,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-06-27T16:16:32Z",
-    "last_triaged_by": "po-s122-triage"
+    "last_triaged_at": "2026-06-27T18:48:31Z",
+    "last_triaged_by": "po"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

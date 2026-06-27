@@ -86,3 +86,12 @@
 - Resolve as recovered transient — CHOSEN. Two-layer freshness: pollNews 0-items at one 07:30Z poll-instant = raw-fetch layer, not analysis-layer outage (documented false-critical pattern).
 **why-decision:** No live outage, no recurrence, fetch layer healthy now — manufacturing a dev task would be a false-positive FIX.
 **why-change:** no change from plan.
+
+### STEP po-S10 · po · 2026-06-27T18:50Z
+**task-id:** BCTC-REFINE-STALL-RETRIGGER
+**what-done:** PROMOTED the live anchor backlog->ready (route_to=architect, recon_first, zone=multi) + dispatched via head(in_progress); chose it over SSOT rank-3 under WIP=1.
+**what-considered:**
+- Mint a NEW VHM/VIC FIX — REJECTED: duplicate. RAW-probe (get_bctc_full VHM/VIC = "Chua co du lieu", get_bctc_pending_refine = 47 docs incl VHM_2026_Q1.pdf text-COMPLETE/refine-PENDING) proves both are the already-tracked 2026-06-07 batch (refine-stall + VIC discovery-gap).
+- Continue SSOT rank-3 SSOT-W1-HOOK-ENFORCE — DEFERRED: audit-then-harden sprint outranked by a 20+day data-integrity escalation corroborated by LIVE user telegrams 3336/3337.
+**why-decision:** Recurring escalation (feedback_recurring_bug_escalation) + dedup-against-live-board: promote the P1 anchor, don't mint a dup; recon-first to architect to split 3 roots (refine-stall drain / VIC discovery / 20-day no-alert observability).
+**why-change:** no change from plan — escalation was the framed highest-priority candidate; RAW-probe confirmed real + already-tracked.
