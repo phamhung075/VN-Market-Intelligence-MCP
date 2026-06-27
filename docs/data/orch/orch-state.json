@@ -227,13 +227,13 @@
     }
   ],
   "head": {
-    "status": "ready",
-    "active_task_id": "SSOT-W1-OPS-REBUILD-ENFORCE",
-    "next_agent": "ops",
-    "next_action": "REBUILD: single-svc mcp-server (verify image ID post-rebuild); QA injects non-enum status via server write path, expects orchStateStore.parse throws (Point-2 LIVE enforcement)",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "idle — sprint SSOT-INTEGRITY-PERIMETER signed off 11/11; no queued work; next cron tick re-triages",
     "updated_by": "po",
-    "updated_at": "2026-06-27T15:26:25Z",
-    "note": "BASE RECONCILED (po-S4 2026-06-27T15:26Z): local main = origin/main = bfc9d5e5, contains 436f7376 (FIX-CI-RED-EAC0CC65-BUNTEST CI-green schema repair to orchStateSchema.ts). OPS-REBUILD-ENFORCE CLEARED to dispatch from local — apps/ tree byte-identical to CI-green run 28289035838; main-repo pre-push tsc OK. dispatch_gate (FIX-CI-RED clears) satisfied. PO does not run the rebuild. NOTE: origin HEAD moved 6bcbe2e5->bfc9d5e5 by this reconcile merge — NOT fresh divergence."
+    "updated_at": "2026-06-27T15:56:52Z",
+    "note": "SIGN-OFF SSOT-W1-OPS-REBUILD-ENFORCE -> DONE_VERIFIED (po 2026-06-27T15:56:52Z): Point-2 LIVE server-side Zod enforcement of orch-state status SHIPPED+PROVEN on running image 8aa222ab. Router re-ran injection: StatusEnum.parse('ROUTER_BOGUS') -> ZodError invalid_enum_value; 'DONE' parses. /health 200 toolCount 166; peers untouched. Sprint SSOT-INTEGRITY-PERIMETER now 11/11 terminal -> COMPLETE. No further pipeline work queued; head idle until next cron tick. Cold-evictable: the COMPLETE sprint object + its terminal tasks (router post-cycle 4.2 cold-evict)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -962,7 +962,7 @@
       },
       {
         "sprint_id": "SSOT-INTEGRITY-PERIMETER",
-        "status": "OPEN",
+        "status": "done",
         "priority": "high",
         "zone": "cross-service",
         "created_at": "2026-06-27T08:03:52Z",
@@ -972,7 +972,9 @@
         "scope_out": "Defer ranks 11/13/14/15 (mixed-representation closed-sprint migration, legacy hot-key cleanup, status state-machine docs + cold-resolution recipe, signal-row data hygiene).",
         "success_metric": "scripts/orch-state-validate.sh hard-fails on PARKED-in-review / lowercase done_verified / duplicate JSON keys / empty file / dangling refs across ALL task lanes (regression fixtures prove it); EVERY hot-file writer routes through scripts/orch-apply.sh; RED 1837a green + mcp-server TS reads live v4. Verified RAW with jq, never a green badge. Ship completion, not a slice.",
         "chain": "po (open + data-clean DONE) -> architect (hardening brief) -> pm (decompose Wave-1 zone tasks) -> dev-team/developer (gate+wrapper+TS) -> qa (live RAW verify) -> po (sign-off)",
-        "data_clean_done": "po-s121 2026-06-27: PARKED->DEFERRED, 7x done_verified->DONE_VERIFIED, task_board.head re-collapsed, dup updated_at/_by dropped — file gate-clean."
+        "data_clean_done": "po-s121 2026-06-27: PARKED->DEFERRED, 7x done_verified->DONE_VERIFIED, task_board.head re-collapsed, dup updated_at/_by dropped — file gate-clean.",
+        "closed_at": "2026-06-27T15:56:52Z",
+        "closed_by": "po"
       }
     ]
   },
@@ -2419,7 +2421,7 @@
       },
       {
         "id": "SSOT-INTEGRITY-PERIMETER",
-        "status": "ACTIVE",
+        "status": "COMPLETE",
         "opened_at": "2026-06-27T08:03:52Z",
         "opened_by": "po-s121",
         "goal": "Close the SSOT integrity perimeter; make the HARD gate enforce all lanes + dup-key + referential integrity; route every writer through one gated wrapper; then drain hot-file bloat.",
@@ -2567,7 +2569,7 @@
             "id": "SSOT-W1-OPS-REBUILD-ENFORCE",
             "title": "REBUILD-TO-LIVE: ops rebuilds mcp-server (single-svc, verify image ID) so OrchStateSchema.parse enforces Point-2 on LIVE task_claim/task_release/scheduler writes. SERVER-ENFORCE is in source (committed 12:46) but the running container predates it (Up 16h, bun loaded old src at boot, no hot-reload) -> Point-2 is NOT live. QA RAW-verifies by injecting a bad status server-side against the REBUILT container and confirming the LIVE server throws (directive Acceptance #6).",
             "owner": "ops",
-            "status": "TODO",
+            "status": "DONE_VERIFIED",
             "zone": "ops/rebuild",
             "created_at": "2026-06-27T11:57:50Z",
             "created_by": "po-s122",
@@ -2782,7 +2784,8 @@
             "owner": "ops",
             "effort": "S",
             "dep": "1,2,3",
-            "title": "REBUILD-TO-LIVE mcp-server so Point-2 OrchStateSchema.parse enforces on live writes; QA injects bad status server-side"
+            "title": "REBUILD-TO-LIVE mcp-server so Point-2 OrchStateSchema.parse enforces on live writes; QA injects bad status server-side",
+            "status": "DONE_VERIFIED"
           },
           {
             "rank": 6.7,
@@ -2842,7 +2845,10 @@
             "seventy_two_rows_cleaned_before_blocking": "YES — mandatory. Data true-up (72->0) gates lane-coherence promotion."
           },
           "design_of_record": "docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md is CANONICAL. The architect hardening brief (docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md) was NEVER authored; dev built straight from the directive + tests green + ADD-1 READY ratified (PO option-a) + ADD-2 shipped. DECISION (po-s122): do NOT back-fill the brief — it would duplicate the directive + the shipped schema for zero design value; remaining design surface (rule-parity tiering) is resolved in .rule_parity here. The directive stands as design-of-record."
-        }
+        },
+        "closed_at": "2026-06-27T15:56:52Z",
+        "closed_by": "po",
+        "signoff_note": "11/11 terminal; Point-2 LIVE Zod enforcement RAW-verified on image 8aa222ab by router + QA gate PASS"
       }
     ],
     "archive": [

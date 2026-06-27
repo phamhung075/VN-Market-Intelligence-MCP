@@ -41,3 +41,12 @@
 - defer reconcile / leave OPS-REBUILD HELD — REJECTED: every PO spawn is a triage tick, so deferring strands the sprint's last TODO (feedback_push_backstop_stranded). PO owns push; this IS the deliberate moment.
 **why-decision:** Reconcile-first is the only path that lets OPS-REBUILD deploy the CI-green schema. The fleet-push backstop correctly ABORTED (behind-set touches code) and deferred to PO — I did the deliberate conflict-analyzed merge it cannot. OPS-REBUILD-ENFORCE is now CLEARED to dispatch from local; head stays ready/ops (dispatcher item c). PO does NOT run the rebuild.
 **why-change:** No scope change — reconcile was prerequisite, not a plan deviation. The push-abort signal is dispositioned RESOLVED by this reconcile.
+
+### STEP po-S5 · po · 2026-06-27T15:57:22Z
+**task-id:** SSOT-W1-OPS-REBUILD-ENFORCE
+**what-done:** Final SIGN-OFF — flipped OPS-REBUILD-ENFORCE TODO->DONE_VERIFIED, sprint SSOT-INTEGRITY-PERIMETER ACTIVE->COMPLETE (11/11 terminal), sprint_goal entry OPEN->done, reset head->idle.
+**what-considered:**
+- DONE vs DONE_VERIFIED: chose DONE_VERIFIED — Point-2 LIVE Zod enforcement was PROVEN on the running image (router-reran injection + QA gate PASS), not source-only.
+- head idle vs arm-next: idle — no further pipeline work queued for this now-done task; leaving head at ready/ops would re-trigger dispatch next tick.
+**why-decision:** Gate PASSED and router independently RAW-verified live image 8aa222ab (StatusEnum.parse('ROUTER_BOGUS')->ZodError invalid_enum_value; 'DONE' parses; /health 200 toolCount 166; peers untouched 42h+). Live orch-state clean, all 3 validators rc=0.
+**why-change:** no change from plan — DoD's GAP-1 REBUILD-TO-LIVE satisfied with LIVE proof, warranting DONE_VERIFIED over plain DONE.
