@@ -62,10 +62,13 @@
      `{ "id": "QUARANTINED-NULL-ID-<index>", "quarantine_reason": "null id", "tasks": [...] }`
    - Remove from `active_sprints[]` (no hot-file stub — corrupt artifacts)
 
-4. **Validate before rename:** run `bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP"`.
-   On non-zero exit: `rm -f "$TMP"` and abort (leave live SSOT untouched).
-
-5. Atomic rename: `mv "$TMP" "$PROJECT_ROOT/docs/data/orch/orch-state.json"`
+4. **Apply via gated wrapper:** pipe candidate through orch-apply.sh (validates + CAS-mtime + atomic rename):
+   ```bash
+   cat "$TMP" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+     || { rm -f "$TMP"; echo "[pm/task-archive] ABORTED: orch-apply.sh failed" >&2; exit 1; }
+   rm -f "$TMP"
+   ```
+   On non-zero exit: candidate is NOT applied; live SSOT untouched.
 
 **If zero evictable sprints and zero null-id sprints:** skip section, proceed to Step 1.
 

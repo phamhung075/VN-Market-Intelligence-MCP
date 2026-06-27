@@ -18,11 +18,10 @@ Signal payload may include `handoff_delta: { last_read_anchor, last_read_at }` f
 > ```
 > // Fixer does not hold a sprint-task lock (QA holds it) — no task_release call needed.
 > // .head reset IS required so pipeline-resume guard clears.
-> tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+> now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 > jq --arg s "idle" --arg t "$now" --arg u "fixer" \
 >   '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
->   docs/data/orch/orch-state.json > "$tmp"
-> [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
+>   "docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
 > ```
 > Note: task remains in REVIEW state (QA verdict stands); PM will detect stuck-REVIEW and escalate.
 

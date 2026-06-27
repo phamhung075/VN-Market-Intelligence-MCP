@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# =============================================================================
+# scripts/orch-apply.sh — Single gated write path for the hot orch-state file
+# =============================================================================
+# Sprint: SSOT-INTEGRITY-PERIMETER
+# Task:   SSOT-W1-ORCH-APPLY-WRAPPER (rank 5, wave-1)
+# Canonical ref: docs/policies/dev-standards.md § Script Persistence
+#
+# PURPOSE:
+#   Every write to docs/data/orch/orch-state.json MUST flow through this
+#   script. It provides:
+#     1. Candidate reception from stdin (pipe idiom — minimal call-site churn)
+#     2. Temp file written to the same directory as the live file (same
+#        filesystem → mv(2) is POSIX-atomic)
+#     3. Validation via bun scripts/orch-validate.mjs (Zod schema + dup-key
+#        + coherence + ref integrity). NEVER duplicated here — single SSOT.
+#     4. CAS-mtime guard: mtime captured before stdin-read; re-checked before
+#        rename. Mismatch → ABORT with exit 2 so caller can retry.
+#     5. Atomic rename: temp → live file
+#
+# CALL PATTERN (canonical — minimal churn over existing jq idiom):
+#   jq '<filter>' docs/data/orch/orch-state.json | scripts/orch-apply.sh
+#
+#   Scripts using $PROJECT_ROOT:
+#   jq '<filter>' "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
+#     | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
+#
+# EXIT CODES:
+#   0  = success (candidate atomically applied to live file)
+#   1  = validation failed (dup-key / schema violation / dangling refs)
+#        — live file left UNTOUCHED
+#   2  = CAS mtime mismatch — concurrent writer detected; caller should retry
+#   3  = usage error (empty stdin, live file missing, I/O error)
+#
+# HARD CONSTRAINTS:
+#   - NEVER duplicate or reimplement validation logic — REUSE orch-validate.mjs
+#   - Live file is SACRED — on any failure, leave it untouched
+#   - Coherence WARNINGS from validator (exit 0 with stderr lines) are
+#     non-blocking: they do NOT abort the write
+#   - Temp file MUST live in docs/data/orch/ (same filesystem as live file)
+# =============================================================================
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LIVE_FILE="${REPO_ROOT}/docs/data/orch/orch-state.json"
+
+# ─── Portable mtime (macOS stat -f / Linux stat -c) ─────────────────────────
+get_mtime() {
+  if stat -f "%m" "$1" 2>/dev/null; then
+    return
+  fi
+  stat -c "%Y" "$1"
+}
+
+# ─── Guard: live file must exist ─────────────────────────────────────────────
+if [[ ! -f "${LIVE_FILE}" ]]; then
+  printf '[orch-apply] ERROR: live file not found: %s\n' "${LIVE_FILE}" >&2
+  exit 3
+fi
+
+# ─── CAS: capture live file mtime BEFORE reading stdin ───────────────────────
+# The jq caller already read the live file before this script started.
+# Capturing mtime here — at the earliest point in the script, before reading
+# stdin — gives us a snapshot as close to the caller's read as possible.
+# Any concurrent write that lands between the caller's read and our startup
+# will be caught by the final mtime re-check before rename.
+MTIME_BEFORE=$(get_mtime "${LIVE_FILE}")
+
+# ─── Write stdin to a temp file in the SAME directory ────────────────────────
+# MUST be in the same directory as LIVE_FILE (same filesystem mountpoint) so
+# that the final mv(2) is a POSIX-atomic rename, not a copy-then-delete.
+TMP=$(mktemp "${REPO_ROOT}/docs/data/orch/.orch-apply-XXXXXXXX.json")
+
+# Cleanup trap: remove temp on any exit (including early exits on failure).
+# If the mv succeeds, TMP is set to "" to make this a no-op.
+cleanup() {
+  set +e
+  [[ -n "${TMP:-}" && -f "${TMP}" ]] && rm -f "${TMP}"
+}
+trap cleanup EXIT
+
+# Read stdin into temp file
+if ! cat > "${TMP}"; then
+  printf '[orch-apply] ERROR: failed to read stdin into temp file\n' >&2
+  exit 3
+fi
+
+# Guard: temp file must be non-empty.
+# Empty stdin = broken pipe, upstream filter produced nothing, or filter error.
+if [[ ! -s "${TMP}" ]]; then
+  printf '[orch-apply] ERROR: stdin produced empty candidate — aborting (no write)\n' >&2
+  exit 3
+fi
+
+# ─── Validate candidate via canonical Zod validator ──────────────────────────
+# REUSE bun scripts/orch-validate.mjs — do NOT duplicate validation logic.
+#
+# Validator exit codes (from orch-validate.mjs):
+#   0 = Stage 0 + Stage 1 PASS
+#       (coherence WARNINGS emitted to stderr but exit is still 0 — non-blocking
+#        during SHG migration; do NOT abort on warnings)
+#   1 = Stage 0 fail: duplicate JSON keys detected in raw text
+#   2 = Stage 1 fail: schema violation (OrchStateSchema.safeParse) OR
+#       Stage 1c fail: dangling detail_ref / payload_ref
+#   3 = file not found / unreadable (should not occur — we created TMP above)
+#
+# All non-zero exits → ABORT. Live file remains untouched.
+validation_output=$(bun "${REPO_ROOT}/scripts/orch-validate.mjs" "${TMP}" 2>&1) || {
+  validator_exit=$?
+  printf '%s\n' "${validation_output}" >&2
+  printf '[orch-apply] ABORTED: validator exit %s — live file untouched\n' "${validator_exit}" >&2
+  exit 1
+}
+# Print any pass-message or coherence warnings (non-blocking; informational)
+[[ -n "${validation_output}" ]] && printf '%s\n' "${validation_output}" >&2
+
+# ─── CAS-mtime guard: re-check before rename ─────────────────────────────────
+# If the live file was modified between the caller's read and our rename,
+# our candidate is stale — it may have overwritten interleaved changes.
+# ABORT with a DISTINCT exit code (2) so the caller can retry:
+#   re-read the live file → re-apply the filter → pipe into orch-apply.sh again.
+MTIME_AFTER=$(get_mtime "${LIVE_FILE}")
+if [[ "${MTIME_BEFORE}" != "${MTIME_AFTER}" ]]; then
+  printf '[orch-apply] ABORTED: CAS mtime mismatch (before=%s after=%s) — concurrent write detected; caller should retry\n' \
+    "${MTIME_BEFORE}" "${MTIME_AFTER}" >&2
+  exit 2
+fi
+
+# ─── Atomic rename: temp → live file ─────────────────────────────────────────
+# TMP and LIVE_FILE are on the same filesystem (both under docs/data/orch/).
+# POSIX rename(2) is atomic: readers always see either the old or new content,
+# never a partial write.
+mv "${TMP}" "${LIVE_FILE}"
+TMP=""  # Prevent cleanup trap from trying to rm a file that no longer exists
+
+printf '[orch-apply] OK — candidate applied → %s\n' "${LIVE_FILE}" >&2
+exit 0

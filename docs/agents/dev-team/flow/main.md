@@ -205,11 +205,11 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
     docs/data/orch/orch-state.json | head -1)
   if [ "$task_status" = "BLOCKED" ]; then
     # BLOCKED task — reset head to idle so pipeline-resume never re-spawns it
-    tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
     jq --arg s "idle" --arg t "$now" --arg u "dev-team" \
       '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
-      docs/data/orch/orch-state.json > "$tmp"
-    [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
+      docs/data/orch/orch-state.json \
+      | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
     send_telegram(channel="work", "[dev-team] head task " + head_active_task + " is BLOCKED — head reset idle, routing to triage")
     JUMP TO drain-signals   # PO triage picks up from here
   fi

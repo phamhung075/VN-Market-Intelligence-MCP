@@ -55,6 +55,22 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Owning flow: docs/agents/fb-market-poster/flow/main.md STEP 4b
 ```
 
+**CANONICAL: Orch-state gated write wrapper (SSOT-INTEGRITY-PERIMETER SSOT-W1-ORCH-APPLY-WRAPPER)**
+```bash
+# ALL hot-file writes MUST route through this wrapper — NEVER write orch-state.json directly.
+# Canonical call-site idiom (minimal churn over existing jq pattern):
+#   jq '<filter>' docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
+# Exit 0 = success (candidate atomically applied).
+# Exit 1 = validation failed (dup-key / schema / dangling refs) — live file untouched.
+# Exit 2 = CAS mtime mismatch (concurrent writer) — caller should retry.
+# Exit 3 = usage error (empty stdin / live file missing).
+# Owning task: SSOT-W1-ORCH-APPLY-WRAPPER; validator wired: bun scripts/orch-validate.mjs (same SSOT)
+# Routed writers: po-s*/router-*.jq apply idiom, scripts/orch-backlog-stub.sh,
+#   scripts/orch-cold-evict.sh, dev-team WF-1 head-reset, signal-dashboard WRITE/READ/PRUNE,
+#   pm/flow/main.md task-status writes, po/sprint-signoff.md, developer/fixer/qa WF-1 STOP-RELEASE,
+#   fail-loud-protocol.md error boundary head-reset.
+```
+
 **CANONICAL: Orch-state Claude hook gate (SSOT-INTEGRITY-PERIMETER SSOT-W1-HOOK-ENFORCE)**
 ```bash
 # PreToolUse gate — auto-wired in .claude/settings.local.json, no manual invocation needed.

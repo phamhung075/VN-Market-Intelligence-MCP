@@ -49,17 +49,13 @@ UPDATED=$(echo "$CURRENT" | jq \
   --argjson row "$NEW_ROW" \
   '.signal_queue.rows += [$row] | .signal_queue._updated_at = now | .signal_queue._updated_by = "<agent-id>"')
 
-# 4. Atomic write with validation gate (SHG-3)
-TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
-echo "$UPDATED" > "$TMP"
-bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
-  || { rm -f "$TMP"; echo "[dashboard/WRITE] ABORTED: validation failed" >&2; exit 1; }
-mv "$TMP" docs/data/orch/orch-state.json
+# 4. Atomic write via single gated write path (SSOT-W1-ORCH-APPLY-WRAPPER)
+# orch-apply.sh validates the candidate (Zod schema + dup-key + refs) BEFORE rename.
+# No separate jq post-write check needed — validation is guaranteed by the wrapper.
+printf '%s' "$UPDATED" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+  || { echo "[dashboard/WRITE] ABORTED: orch-apply.sh failed" >&2; exit 1; }
 
-# 5. Validate JSON structure
-jq . docs/data/orch/orch-state.json > /dev/null || echo "ERROR: orch-state.json invalid after write"
-
-# 6. POST-WRITE READ-BACK SELF-CHECK (MANDATORY — kills false-green "row written")
+# 5. POST-WRITE READ-BACK SELF-CHECK (MANDATORY — kills false-green "row written")
 #    Assert the new row id is present inside .signal_queue.rows[] — NOT a top-level numeric key.
 ROW_ID=$(echo "$NEW_ROW" | jq -r '.id')
 FOUND=$(jq --arg id "$ROW_ID" '[ .signal_queue.rows[] | select(.id == $id) ] | length' docs/data/orch/orch-state.json 2>/dev/null)
@@ -110,16 +106,13 @@ NEW_ROWS=$(printf '%s' "$STATE" | jq \
 #    a. If payload_ref != null: Read payload file → add to context
 #    b. Note: type + summary → route to relevant flow step
 
-# 3. Mark each processed row NEW → READ (atomic write with validate gate — SHG-3)
+# 3. Mark each processed row NEW → READ (atomic write via gated write path)
 STATE=$(cat docs/data/orch/orch-state.json) # bash-only pipeline — not surfaced to model (rule: docs/standards/orch-state-access.md §1)
 UPDATED=$(printf '%s' "$STATE" | jq \
   --arg agent "<my-agent-id>" \
   '(.signal_queue.rows[] | select(.to == $agent and .status == "NEW") | .status) |= "READ"')
-TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
-echo "$UPDATED" > "$TMP"
-bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
-  || { rm -f "$TMP"; echo "[dashboard/READ] ABORTED: validation failed" >&2; exit 1; }
-mv "$TMP" docs/data/orch/orch-state.json
+printf '%s' "$UPDATED" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+  || { echo "[dashboard/READ] ABORTED: orch-apply.sh failed" >&2; exit 1; }
 
 # 4. Update stored cache: {last_read_mtime, row_count}
 #    (in .dashboard_section_cache for dev-team; in spawn-prompt for cowork agents)
@@ -205,12 +198,8 @@ UPDATED=$(printf '%s' "$STATE" | jq \
   .signal_queue._updated_at = $now |
   .signal_queue._updated_by = $agent
 ')
-TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
-printf '%s' "$UPDATED" > "$TMP"
-bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
-  || { rm -f "$TMP"; echo "[dashboard/PRUNE] ABORTED: validation failed" >&2; exit 1; }
-mv "$TMP" docs/data/orch/orch-state.json
-jq . docs/data/orch/orch-state.json > /dev/null || echo "ERROR: orch-state.json invalid after prune"
+printf '%s' "$UPDATED" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+  || { echo "[dashboard/PRUNE] ABORTED: orch-apply.sh failed" >&2; exit 1; }
 
 git add docs/data/orch/orch-state.json
 git commit -m "chore(signals): drain + prune $(date -u +%Y%m%dT%H%M%SZ)"

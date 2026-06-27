@@ -20,11 +20,10 @@ Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
 > // The dispatcher finally-block and TTL expiry (3600s) are the authoritative release paths.
 > call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
 > // ok=false acceptable — best-effort. Note: CHANGES_REQUESTED does NOT release (fixer holds lock — intentional).
-> tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+> now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 > jq --arg s "idle" --arg t "$now" --arg u "qa" \
 >   '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
->   docs/data/orch/orch-state.json > "$tmp"
-> [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
+>   "docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
 > ```
 > Then continue with the standard error-boundary exit (`send_telegram(channel="bug", message="[qa] tool failure — EXIT")` + drop signal + EXIT).
 > **DECISION JOURNAL RULE:** Terminal output is STATUS-ONLY (RETURN + caveman). All reasoning → `docs/agent-memory/decisions/sprint-<id>.md` via skill `.claude/skills/decision-journal/SKILL.md`.

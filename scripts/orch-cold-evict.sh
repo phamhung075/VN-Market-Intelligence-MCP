@@ -428,13 +428,29 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   mv "${COLD_TEMP}" "${COLD_FILE}"
   COLD_TEMP=""
 
-  # Cold is confirmed written — now safely update hot
-  log "Writing hot file (atomic rename): ${ORCH_STATE}"
-  mv "${HOT_TEMP}" "${ORCH_STATE}"
-  HOT_TEMP=""
-
-  SUCCESS=true
-  break
+  # Cold is confirmed written — now safely write hot via gated wrapper
+  log "Writing hot file (via orch-apply.sh gated write): ${ORCH_STATE}"
+  set +e
+  cat "${HOT_TEMP}" | bash "${REPO_ROOT}/scripts/orch-apply.sh"
+  apply_exit=${PIPESTATUS[1]}
+  set -e
+  if [[ ${apply_exit} -eq 0 ]]; then
+    rm -f "${HOT_TEMP}"
+    HOT_TEMP=""
+    SUCCESS=true
+    break
+  elif [[ ${apply_exit} -eq 2 ]]; then
+    # CAS mismatch in orch-apply.sh — retry outer loop
+    ATTEMPT=$((ATTEMPT + 1))
+    log "orch-apply.sh CAS mismatch (attempt ${ATTEMPT}/${MTIME_CAS_RETRIES}) — retrying"
+    rm -f "${HOT_TEMP}"
+    HOT_TEMP=""
+    sleep 1
+    continue
+  else
+    log "ABORT: orch-apply.sh validation failed (exit ${apply_exit}) — hot file NOT modified (cold was written)"
+    exit 1
+  fi
 done
 
 if [[ "${SUCCESS}" != "true" ]]; then

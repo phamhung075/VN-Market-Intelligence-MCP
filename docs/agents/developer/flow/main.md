@@ -68,11 +68,11 @@ Read handoff using delta-read skill:
    # WF-1 STOP-RELEASE (AC-WF1-1/2) — run BEFORE send_telegram + EXIT
    call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
    // ok=false acceptable (TTL expired) — best-effort cleanup
-   tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+   now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
    jq --arg s "idle" --arg t "$now" --arg u "developer" \
      '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
-     docs/data/orch/orch-state.json > "$tmp"
-   [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
+     docs/data/orch/orch-state.json \
+     | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
    send_telegram(channel="bug", message="[developer] STOP: depends_on not Done for task:" + task_id + " — head reset idle")
    ```
    EXIT (PIPELINE: blocked)

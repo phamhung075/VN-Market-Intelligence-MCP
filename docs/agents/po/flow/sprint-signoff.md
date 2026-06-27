@@ -15,13 +15,11 @@ The gate is: ops rebuilt the container (`docker compose up -d --build <svc>`) + 
 
 Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent market output) to validate the merged work behaves end-to-end.
 
-- **Approve** → update `docs/data/orch/orch-state.json` `.task_board` tasks to DONE + `.sprint_goal.entries[].status = "done"` (atomic write per §2.3, with validate gate — SHG-3):
+- **Approve** → update `docs/data/orch/orch-state.json` `.task_board` tasks to DONE + `.sprint_goal.entries[].status = "done"` (atomic write per §2.3 — route through orch-apply.sh):
   ```bash
-  TMP=$(mktemp "$PROJECT_ROOT/docs/data/orch/.po-write-XXXXXX.json")
-  jq '...' "$PROJECT_ROOT/docs/data/orch/orch-state.json" > "$TMP"
-  bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$TMP" \
-    || { rm -f "$TMP"; echo "[po/sprint-signoff] ABORTED: validation failed" >&2; exit 1; }
-  mv "$TMP" "$PROJECT_ROOT/docs/data/orch/orch-state.json"
+  jq '...' "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
+    | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+    || { echo "[po/sprint-signoff] ABORTED: orch-apply.sh failed" >&2; exit 1; }
   ```
   → release umbrella lock → return:
 

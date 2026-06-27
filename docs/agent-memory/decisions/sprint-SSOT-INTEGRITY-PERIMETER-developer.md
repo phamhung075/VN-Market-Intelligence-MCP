@@ -77,3 +77,76 @@ Files in commit:
 
 Note: `.claude/settings.local.json` carries the hook wiring but is gitignored (machine-local);
 it persists on disk and is active for the current session.
+
+---
+
+### STEP developer-S2 · developer · 2026-06-27
+
+**task-id:** SSOT-W1-ORCH-APPLY-WRAPPER
+
+**what-done:**
+- Created `scripts/orch-apply.sh`: single gated write path for `docs/data/orch/orch-state.json`
+  - Reads candidate JSON from stdin; writes to sibling temp file (same filesystem — POSIX atomic rename)
+  - CAS-mtime guard: capture mtime at startup, re-check before rename; mismatch → exit 2 (caller retries)
+  - Validation: `bun scripts/orch-validate.mjs <temp>` — exit 0 = proceed; non-zero = ABORT, live file untouched
+  - Atomic rename: `mv "${TMP}" "${LIVE_FILE}"` — exit 0 = success
+  - Exit codes: 0=success, 1=validation failed, 2=CAS mismatch, 3=usage error
+- Routed ALL hot-file writers through `scripts/orch-apply.sh` (13 call sites across 10 files)
+- Added canonical pointer to `docs/policies/dev-standards.md` § Script Persistence
+- Grep-0 proof: 0 raw `mv ...orch-state.json` or `> docs/data/orch/orch-state.json` writers remain outside the wrapper
+
+**what-considered:**
+
+1. Capture mtime after reading stdin vs at startup
+   - Chosen: capture at startup (before stdin read). The caller's jq already read the live file before the pipe
+     started; capturing early closes the race window between caller read and our CAS check.
+
+2. File-argument idiom vs stdin pipe idiom
+   - Chosen: stdin pipe (`jq '...' orch-state.json | bash scripts/orch-apply.sh`)
+   - Rejected file-arg: forces callers to manage their own temp file externally; duplicates work the wrapper should own.
+
+3. mtime helper — dual stat flavour
+   - macOS: `stat -f "%m"`, Linux: `stat -c "%Y"`. Single `get_mtime()` function tries BSD first, falls back to GNU.
+   - Rationale: macOS host dev + Linux VPS agents; avoids coreutils install dependency.
+
+4. Grep-0 proof pattern: `> .*orch-state\.json` vs `> docs/data/orch/orch-state\.json`
+   - Changed to full-path pattern. The wildcard pattern produced false positives from TypeScript arrow functions
+     (`=> p.includes("orch-state.json")`) and Telegram message strings containing `> — see orch-state.json`.
+   - Full path `> docs/data/orch/orch-state\.json` is precise and unambiguous.
+
+5. Markdown blockquote lines (fixer.md, qa.md): `>   docs/data/orch/orch-state.json \`
+   - Problem: jq continuation line on its own blockquote line matched `> .*orch-state\.json` grep pattern.
+   - Fix: merged last jq argument onto same line as pipe symbol (no `\` continuation for that line), so
+     `docs/data/orch/orch-state.json` never appears alone on a `> ` prefixed line in those files.
+
+**routed-writers:**
+- `scripts/orch-backlog-stub.sh` — `mv "${HOT_TEMP}" "${ORCH_STATE}"` → `cat | bash orch-apply.sh` + CAS retry on exit 2
+- `scripts/orch-cold-evict.sh` — same pattern
+- `docs/agents/dev-team/flow/main.md` Step 0b WF-1 head-reset
+- `docs/agents/developer/flow/main.md` WF-1 STOP-RELEASE
+- `docs/agents/fixer/flow/main.md` WF-1 STOP-RELEASE
+- `docs/agents/qa/flow/main.md` WF-1 STOP-RELEASE
+- `docs/agents/pm/flow/main.md` Step 3c atomic write
+- `docs/agents/pm/flow/task-archive.md` Steps 4-5
+- `docs/agents/po/flow/sprint-signoff.md` approve path
+- `docs/protocols/fail-loud-protocol.md` error boundary
+- `.claude/skills/signal-dashboard/dashboard-protocol.md` WRITE path
+- `.claude/skills/signal-dashboard/dashboard-protocol.md` READ path (mark NEW→READ)
+- `.claude/skills/signal-dashboard/dashboard-protocol.md` PRUNE Option B
+
+**grep-0-proof:**
+```
+grep -rn "mv.*orch-state\.json\|> docs/data/orch/orch-state\.json" . \
+  --include="*.sh" --include="*.md" --include="*.mjs" --include="*.ts" --include="*.js" \
+  | grep -v exclusions...
+Output: (empty — 0 raw writers)
+```
+
+**live-file-validators (all pass):**
+- `jq -e '.head'` → status=ready, active_task_id=SSOT-W1-ORCH-APPLY-WRAPPER
+- `bun scripts/orch-validate.mjs` → exit 0 (72 coherence warnings, SHG migration, non-blocking)
+- `bash scripts/orch-state-validate.sh` → G-1..G-6 all PASS
+
+**why-decision:** Stdin pipe idiom requires minimal call-site change (replace trailing `mv` with `| bash scripts/orch-apply.sh`). CAS at startup closes the race window between caller read and wrapper rename. REUSE orch-validate.mjs as hard-constrained — no duplicated schema logic.
+
+**why-change:** No divergence from task spec. All 13 call sites routed. Grep-0 proof confirmed. DJ-GATE-1 satisfied.
