@@ -46,3 +46,19 @@
 - Procedure is explicit: "if dirty, ABORT + report" — force-discard is forbidden when real uncommitted work may exist
 **why-decision:** Worktree contains modified tracked files (a deleted path + 2 modified files) — these may carry work not captured in any commit; per procedure, discarding without review is forbidden.
 **why-change:** Cannot proceed to worktree remove; manual inspection or agent session termination required before retry.
+
+---
+
+### STEP qa-S4 · qa · 2026-06-27T23:50:00Z
+**task-id:** TASK-FFT-L4
+**what-done:** APPROVED TASK-FFT-L4 — coverage-map-aware SLA self-policing second pass; all gate checks green.
+**what-considered:**
+- DDD INVARIANT (load-bearing): grep for fs/path/readFile/Bun.file in coverageMapFreshnessChecker.ts returned empty — zero filesystem imports; only `bun:sqlite` (type) + `./freshnessSlaChecker.js` (domain sibling). ARCH-RATIFY-FFT-3 satisfied.
+- Additive guarantee: L4 try/catch block appended AFTER existing 12-signal path (lines 453–522 of freshnessSlaMonitorJob.ts); SC-1 test confirms breaches=0, recoveries=0, escalations=0 with empty injected rows and fresh ages. Existing path untouched.
+- 25 new tests (CM-1..CM-10 + SC-1..SC-4): 25/25 PASS (live run). 115/115 across 7 freshness/SLA files PASS.
+- tsc: EXIT 0 (clean). scheduleCron=79 (unchanged). toolCount=166 (unchanged — L4 commit only touched 3 files, zero mcp-tools).
+- SLA thresholds: SLA_MAX_STALENESS_MIN matches coverage-map SSOT exactly (realtime=15, intraday=60, daily=1560, weekly=11520, event=1560, static=null). Field name `sla` (not `sla_tier`) matches actual JSON rows.
+- Full suite: Bun 1.3.13 JIT C++ crash at exit (626s elapsed — same known class as cycles 326–328); exit code 0; targeted suites all green.
+- mock-guard: PASS. Security: no process.env, no secrets. DDD: no infra imports in domain service.
+**why-decision:** All 5 QA verification items satisfied via direct RAW inspection. APPROVED.
+**why-change:** Work already on main (commit 1dd3c6d1); no branch to merge. DONE flip applied.
