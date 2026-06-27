@@ -235,12 +235,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "BCTC-REFINE-T3-WATCHDOG",
-    "next_agent": "dev-team",
-    "next_action": "T1+T2 DONE_VERIFIED+deployed (524a87cc chunk 7->12; 19764c0e +2 cowork slots; combined 4x12=48 windows/day target, ~36d drain vs 124d). T3-WATCHDOG stays BACKLOG (gated): dispatch ONLY after next scheduled refine slot fires AND draining RAW-verified via get_bctc_refined DONE-unit climb (NOT merely deployed). GVR re-drains organically from unit-0007 via now-guarded scheduled slots — NO ad-hoc drain workers (those caused the 49->7 clobber).",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
     "updated_by": "dev-team",
-    "updated_at": "2026-06-27T20:08:00Z"
+    "updated_at": "2026-06-27T20:11:00Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
