@@ -1,8 +1,59 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-23 00:00 UTC | **Sprint:** FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP
+**Last updated:** 2026-06-27T17:00 UTC | **Sprint:** SSOT-INTEGRITY-PERIMETER
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-27T17:00Z — SSOT-INTEGRITY-PERIMETER (DESIGN DONE)
+
+**Task:** ARCH-SSOT-INTEGRITY-PERIMETER | PLAN/DESIGN ONLY (no code) | zone: `apps/mcp-server/` + `scripts/` + `.claude/`
+**What was designed:** Architecture brief for the Zod-schema SSOT integrity perimeter. 5 sections: (1) orchStateSchema.ts as single SSOT — 12-value StatusEnum (READY=ADD-1, PO option-a ratified), TERMINAL_SET 5 values, all-9-lane nested schema via shared Lane type, TaskBoardSchema + OrchStateSchema with .strict(), superRefine for active_task_id ref integrity, checkLaneCoherence() (warn-only, exports separately) and checkRefIntegrity() with injected FileResolver. (2) orch-validate.mjs two-stage validator: Stage-0 dup-key tokenizer on raw text pre-parse (closes feedback_ssot_duplicate_key class), Stage-1 safeParse + Stage-1b coherence warn + Stage-1c ref integrity hard-fail, auto-fix error contract with per-issue path+problem+expected+fix hint. (3) Dual-point enforcement: Point-1 PreToolUse Write|Edit hook (orch-state-hook-prewrite.mjs) + PostToolUse Bash backstop (non-blocking), both wired in settings.local.json; Point-2 orchStateStore.ts safeParse() before every atomic rename. (4) orch-apply.sh: stdin→Zod-Stage-0+Stage-1→CAS-mtime→atomic-rename; orch-state-validate.sh thin shim; CANONICAL pointers in dev-standards.md. (5) Wave-1 6 atomic tasks for PM.
+**Key decisions:** ADD-1 READY required to avoid validator deadlocking the sprint's own ARCH task; Stage-0 MUST precede JSON.parse (silent last-wins corruption); lane coherence WARN-only until SHG-2+SHG-4 clears ~72 violations; dual-point is mandatory not redundant (hook blind to server-internal writes); all 6 Wave-1 task IDs follow existing code comment naming.
+**Output:** `docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md`
+**6 Wave-1 tasks for PM:** SSOT-W1-ZOD-SCHEMA-MODEL (apps/mcp-server) → SSOT-W1-ZOD-VALIDATOR-CLI (scripts/) → SSOT-W1-HOOK-ENFORCE (.claude/ + scripts/agents-flow/) → SSOT-W1-SERVER-ENFORCE (apps/mcp-server) → SSOT-W1-ORCH-APPLY-WRAPPER (scripts/) → SSOT-W1-BASH-SHIM (scripts/)
+**Risk-1 (HIGH):** OrchStateTaskBoardTask.status still typed as hand-maintained union with `| string` — must be replaced by z.infer<typeof StatusEnum> in SSOT-W1-SERVER-ENFORCE.
+
+## 2026-06-27T00:00Z — ORCH-STATE-SCHEMA-HARDENING (DESIGN DONE)
+
+**Task:** ORCH-STATE-SCHEMA-HARDENING | PLAN/DESIGN ONLY (no code) | zone: `docs/data/orch/` + `scripts/`
+**What was designed:** 4-problem schema-hardening brief for orch-state.json. (1) Status enum: 20+ spellings → 11 canonical uppercase values; full migration map with verify_note qualifier field. (2) Sprint eviction: deterministic TERMINAL_SET predicate; 13 of 18 active_sprints evictable today; null-id quarantine rule; closed_sprints[] stub format; insertion point in task-archive.md. (3) Task stub inside sprints: 10 hot fields kept; 33 prose/audit fields moved to backlog-detail.json via detail_ref — same pattern already used by backlog. (4) Write-gate: scripts/orch-state-validate.sh with 6 checks (G-1 JSON, G-2 sentinel, G-3 lane types, G-4 null sprint ids, G-5 status enum warn→hard, G-6 last_tick skew); wire-in targets enumerated; G-5 phased to hard gate post-migration.
+**Key design decisions:** G-5 starts WARN-only (never blocks a write before migration runs); verify_note is HOT (tiny, non-authoritative qualifier string — not prose); sprint eviction only fires when ALL tasks are in TERMINAL_SET (conservative); null-id sprints quarantined unconditionally.
+**Output:** `docs/architecture-briefs/2026-06-27-orch-state-schema-hardening.md`
+**5 tasks for PM:** SHG-1 (validate.sh, XS, dev) → SHG-2 (migration, XS, pm) → SHG-3 (wire-in, S, agent-father) → SHG-4 (sprint eviction rule, S, agent-father) → SHG-5 (hard gate, XS, dev)
+
+## 2026-06-24T13:12Z — FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON (DESIGN DONE)
+
+**Task:** FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON | BUG-FIX (BCTC-ANALYTICS-LAYER, P2) | zone: `apps/mcp-server/`
+**Chosen mechanism:** Option (a) — extend `get_bctc_pending_refine` NOT clause in Branches 2 & 3: change `window_status != 'DONE'` to `window_status NOT IN ('DONE', 'FAILED')`. Minimal single-token change per branch. Reuses existing composite index. Does not touch `finalizeBctcRefineTool.ts` (high-risk surface avoided).
+**FAILED retryability ruling:** All FAILED units treated as terminal for queue-exit. Transient-FAILED docs: safe to exclude — if retry succeeds they exit via DONE; if retry still fails, staying excluded is correct. REJECTED_SANITY NOT included in terminal set (stays non-terminal intentionally).
+**Test impact:** DV-FIX-A-2 assertion INVERTED (FAILED now terminal = excluded not included). 5 new DV-FIX-B-* tests added. Risk-2: BOTH Branch 2 and Branch 3 must be updated.
+**Atomization:** 1 task — TASK-HEADPOISON-1 | 2 files | dev-mcp-server → qa
+**Output:** `docs/handoffs/TASK_FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON.md`
+
+## 2026-06-24 — FIX-MACRO-SNAPSHOT-DELTAS-NULL (DESIGN DONE)
+
+**Task:** FIX-MACRO-SNAPSHOT-DELTAS-NULL | FEATURE-FIX (S2-DATA-HONESTY) | zone: `apps/macro-indicators/`
+**4 Q resolutions:**
+- Q1 (lookback): 18h rolling window kept. Calendar-day-aligned midnight UTC is ambiguous for global commodity markets (oil trades ~23h, SBV sets rate 01:00 UTC). Weekend/long-holiday → 36h upper stale bound → still compute if row found, stamp prevFetchedAt; nil if no row in 18–36h window.
+- Q2 (SBV cross-source): SAME-SOURCE-ONLY. Add `usdVndSBVOverride` bool in Execute(); suppress delta (nil/"unknown") when SBV override fires — cross-source SBV_official vs Yahoo_history is structurally misleading. Delta fires only when Yahoo serves both current and prev.
+- Q3 (prevFetchedAt): Raw `*string` ISO8601 UTC in DTO. Formatting concern belongs to UI.
+- Q4 (table ownership): Safe-degrade sufficient. No own write path. Mirrors VNIndex/daily_ohlcv pattern. 36h upper bound = implicit freshness gate; scheduler failure surfaces via auditor pipeline.
+**Key risks flagged:** RISK-3 (fixture-current delta = fabrication; gate on `*Live` flag); RISK-4 (SBV override post-resolveMarketPrices; captured via `usdVndSBVOverride`); RISK-1 (RFC3339Nano on fetched_at; consistent with existing adapters).
+**DDD/NO-CGO:** Fence-A/B/C intact. Port in domain, adapter in infra, wired in cmd/server/main.go. `modernc.org/sqlite` already in go.mod (no new dep, no CGO).
+**Atomization:** 1 task — TASK-MACRO-COMMODITY-DELTA | 7 files | dev-macro-indicators
+**Output:** Appended [Architect] section to `docs/handoffs/BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL.md`
+
+## 2026-06-23T18:10Z — FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION (DESIGN DONE)
+
+**Task:** FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION | BUG-FIX (S2-DATA-HONESTY, P1) | zone: `apps/mcp-server/` + `apps/frontend/`
+**4 ratifications:**
+- CONF-1: Severity-to-int → INLINE in alertStore.ts as `severityToConfidence()`. `SEVERITY_VI` map is string→ViLabel (interface layer), incompatible with numeric proxy + DDD violation if imported here. Single file = no drift.
+- CONF-2: `PostSignalInput.confidence_score` current type = `number | undefined` (default `= 50` in destructure). Widen to `number | null | undefined`, change default to `null`. Callers passing explicit numbers unaffected.
+- CONF-3: Alert-commander cowork path verified — does NOT require FR-6. Path B fix (null for absent finding_data.confidence) covers it. assembleBriefing.topConviction is a response struct field, NOT an agent_signals write. All `verified_decision` INSERT sites enumerated: A1=storeAlerts, A2=storeAlertsFromCommander, B=agentSignalTools MCP handler, C=DDL DEFAULT (structural enabler). Three callers confirmed, zero missed.
+- CONF-4: Frontend null-render requires SEPARATE sub-task (TASK-CONF-2). `client.ts:350` maps null confidence_score to `0` (not null); `domain/market.ts:217` typed as `number` (non-nullable); render guard at `dashboard.alerts.tsx:301` checks `typeof === "number"` (always true for 0). Three-file change in `apps/frontend/`, different zone from backend.
+**SQLite gotcha:** live column already exists (3316 rows prove it). DEFAULT removal only affects fresh DBs (`:memory:` test helpers included). 5 test `makeDb()` helpers carry `DEFAULT 50` and must be updated — self-confirming test failure mode prevented.
+**Atomization:** TASK-CONF-1 (dev-mcp-server, 5 files + tests, ~2h) → TASK-CONF-2 (dev-frontend, 3 files, ~1h, sequential after CONF-1 deploy).
+**Output:** Appended [Architect] section to `docs/handoffs/FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION-BA-spec.md`
 
 ## 2026-06-22T21:00Z — FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP (TEST FIX DONE)
 
