@@ -212,11 +212,12 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "ARCH-SSOT-INTEGRITY-PERIMETER",
-    "next_agent": "architect",
-    "updated_at": "2026-06-27T08:03:52Z",
-    "updated_by": "po-s121",
-    "note": "SSOT-INTEGRITY-PERIMETER opened (audit 2026-06-27). Data offenders cleaned (PARKED/done_verified/head/dup-meta). Dispatching architect to author the hardening brief; dev-team Step-0b head-resume spawns architect."
+    "active_task_id": "SSOT-W1-ZOD-SCHEMA-MODEL",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Dispatch to dev-mcp-server for MODEL FIRST: design ONE nested Zod schema covering all 9 lanes (orchStateSchema.ts). No deps — rank-1, dispatchable now.",
+    "updated_by": "pm",
+    "updated_at": "2026-06-27T08:46:03Z",
+    "note": "Architect brief complete (SSOT-zod-validation-directive-2026-06-27.md ratified 2026-06-27T08:35:40Z). PM atomized wave-1 ranks 1-8 into tasks[]. Head advanced to rank-1 (MODEL FIRST, no deps)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
