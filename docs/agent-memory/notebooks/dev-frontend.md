@@ -1,6 +1,23 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-24 | **Sprint:** S2-DATA-HONESTY
+**Last updated:** 2026-06-27 | **Sprint:** FRONTEND-FRESHNESS-TRANSPARENCY
+
+---
+
+## Session: 2026-06-27 (TASK-FFT-L3A — shared FreshnessBadge + useFreshnessRevalidator)
+
+**TASK-FFT-L3A REVIEW — FreshnessBadge + hook created, 46 tests GREEN, tsc clean**
+
+New files (commit afbb0c99):
+- `apps/frontend/app/components/FreshnessBadge.tsx` — null-guard EC-1, static EC-4, off-hours EC-3, green/amber/red thresholds, ClientTimeString delegation, isVnMarketHours() exported
+- `apps/frontend/app/lib/hooks/useFreshnessRevalidator.ts` — setInterval for realtime/intraday/event tiers; no-op for daily/weekly/static (EC-5); cleanup on unmount (NFR-A2)
+- `apps/frontend/app/__tests__/TASK-FFT-L3A-FreshnessBadge.test.tsx` — 34 tests covering isVnMarketHours, null path, static path, 15 tier×zone scenarios, EC-3 suppression, className
+- `apps/frontend/app/__tests__/TASK-FFT-L3A-useFreshnessRevalidator.test.ts` — 12 tests covering interval fires, no-op tiers, clearInterval on unmount
+
+Key pattern: `_now?: Date` injectable added to FreshnessBadge for deterministic color-threshold testing (same pattern as injectedSignalAges in mcp-server). Not in original spec — required for test isolation.
+Vitest: 1754 pass / 2 fail (2 pre-existing QUE_DESCRIPTIONS failures). tsc: EXIT 0.
+
+Zone health: FreshnessBadge + hook primitives ready; lib/hooks/ dir created; 46 new tests GREEN; L3B (route wiring) unblocked | HEALTHY
 
 ---
 
