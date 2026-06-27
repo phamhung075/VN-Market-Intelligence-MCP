@@ -6,6 +6,15 @@
 
 ---
 
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-27T23:45:00Z
+**task-id:** FIX-CI-RED-BA82F2F5-DWF-CADENCE
+**what-done:** Updated DWF-phase1-cadence.test.ts slot-count assertion 17→19; tsc clean; 51/51 pass.
+**what-considered:**
+- Fix test: update 17→19 to match real cowork-schedule.json state (chosen)
+- Delete or weaken assertion: ruled out — assertion is a SSOT guard, not a hard rule
+**why-decision:** Root cause = 19764c0e added refine-bctc-slot-3+slot-4 (T2 throughput, legitimate) without updating the count assertion. Test reflects schedule truth; correct fix is truth-update.
+**why-change:** No change from plan — straight test repair aligning assertion with committed schema.
+
 ### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-06-27T21:25:00Z
 **task-id:** TASK-FFT-L4
 **what-done:** Created coverageMapFreshnessChecker.ts (pure domain, zero I/O) + extended freshnessSlaMonitorJob.ts with additive L4 second pass; 25 tests green; tsc clean; 166 tools.
