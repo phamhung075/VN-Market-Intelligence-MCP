@@ -12,13 +12,28 @@
  * @module scheduler/system/freshnessSlaMonitorJob
  */
 
+import { resolve } from "node:path";
 import type { Database } from "bun:sqlite";
 import {
   checkDataFreshnessSla,
   isVnMarketHours,
   type SignalType,
 } from "../../domain/services/freshnessSlaChecker.js";
+import {
+  checkCoverageMapFreshness,
+  type CoverageMapRow,
+} from "../../domain/services/coverageMapFreshnessChecker.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
+
+/**
+ * Absolute path to the frontend data coverage map (SSOT for L4 self-policing).
+ * Resolved relative to this file's location:
+ *   apps/mcp-server/src/scheduler/system/ → ../../../../../docs/data/...
+ */
+const COVERAGE_MAP_JSON_PATH = resolve(
+  import.meta.dir,
+  "../../../../../docs/data/frontend-data-coverage-map.json"
+);
 
 /**
  * Escalation callback signature.
@@ -339,11 +354,21 @@ const MARKET_HOURS_ONLY_SIGNALS: SignalType[] = ["price", "foreign_flow"];
 /**
  * Runs the data freshness SLA monitor job.
  *
+ * Pass 1 (existing, unchanged): queries 12 internal signal-source DB tables for
+ * data age and escalates via escalateToCommander when SLA is breached.
+ *
+ * Pass 2 (TASK-FFT-L4 — additive): reads docs/data/frontend-data-coverage-map.json
+ * as SSOT and escalates when any frontend page data surface breaches its SLA tier.
+ * Uses checkCoverageMapFreshness() domain service (pure, zero I/O).
+ *
  * @param db Database instance (injectable for testing)
  * @param escalateToCommander Escalation callback (injectable for testing)
  * @param injectedSignalAges Optional pre-computed signal ages (for testing; omit in production)
  * @param now Current time override (for testing; omit in production)
  * @param sendWorkFn Optional WORK channel sender override (for testing; omit in production)
+ * @param injectedCoverageMapRows Optional pre-parsed coverage-map rows for test isolation.
+ *        When provided, the scheduler skips reading COVERAGE_MAP_JSON_PATH from disk.
+ *        In production (undefined), the scheduler reads the live JSON file via Bun.file().
  * @returns Job result summary
  */
 export async function runFreshnessSlaMonitor(
@@ -352,6 +377,7 @@ export async function runFreshnessSlaMonitor(
   injectedSignalAges?: Record<SignalType, number>,
   now: Date = new Date(),
   sendWorkFn: (msg: string) => Promise<unknown> = sendTelegramWork,
+  injectedCoverageMapRows?: CoverageMapRow[]
 ): Promise<{ breaches: number; recoveries: number; escalations: number }> {
   // Query current signal ages (or use injected ages for testing)
   const signalAges = injectedSignalAges ?? querySignalAges(db);
@@ -423,6 +449,77 @@ export async function runFreshnessSlaMonitor(
       console.warn("[sla-monitor] daily summary send failed:", err);
     }
   }
+
+  // ── TASK-FFT-L4: Coverage-map second pass ────────────────────────────────
+  // Additive: existing 12-signal path above runs first and is unchanged.
+  // This second pass reads the frontend coverage map as SSOT and escalates
+  // when any frontend page data surface breaches its SLA tier.
+  try {
+    // Resolve coverage-map rows: injected (test) or read live JSON (production)
+    let coverageMapRows: CoverageMapRow[];
+    if (injectedCoverageMapRows !== undefined) {
+      coverageMapRows = injectedCoverageMapRows;
+    } else {
+      const mapData = await Bun.file(COVERAGE_MAP_JSON_PATH).json() as {
+        rows: CoverageMapRow[];
+      };
+      coverageMapRows = mapData.rows;
+    }
+
+    const coverageMapBreaches = await checkCoverageMapFreshness(
+      coverageMapRows,
+      db,
+      now,
+      injectedCoverageMapRows
+    );
+
+    if (coverageMapBreaches.length > 0) {
+      // Lazy-import to mirror the pattern in escalateToCommander() and avoid
+      // circular-dep at module load time.
+      const { postSignal } = await import(
+        "../../infrastructure/db/agentSignalStore.js"
+      );
+
+      for (const breach of coverageMapBreaches) {
+        // STALE_RISK rows are already suppressed inside checkCoverageMapFreshness
+        // when outside market hours. The domain service handles the gate.
+        // Belt-and-suspenders: postSignal is only called for returned breaches.
+        const slaConfidenceScore =
+          breach.ageMinutes > breach.maxStalenessMin * 2 ? 90 : 70;
+
+        try {
+          postSignal(db, {
+            fromAgent: "freshness-sla-monitor",
+            toAgent: "alert-commander",
+            signalType: "urgent_news",
+            payload: {
+              title: `SLA BREACH: ${breach.pageId} data is ${breach.ageMinutes}min old (max ${breach.maxStalenessMin}min)`,
+              age_minutes: breach.ageMinutes,
+              threshold_minutes: breach.maxStalenessMin,
+              endpoint: breach.endpoint,
+              element: breach.elementId,
+              timestamp: breach.timestamp,
+            },
+            ttlMinutes: 60,
+            confidence_score: slaConfidenceScore,
+          });
+          escalations++;
+        } catch (signalErr) {
+          console.error(
+            `[sla-monitor] coverage-map breach signal failed for ${breach.pageId}:`,
+            signalErr
+          );
+        }
+      }
+    }
+  } catch (coverageErr) {
+    // Coverage-map second pass must never crash the existing 12-signal path.
+    console.warn(
+      "[sla-monitor] coverage-map second pass failed (non-fatal):",
+      coverageErr
+    );
+  }
+  // ── End TASK-FFT-L4 ──────────────────────────────────────────────────────
 
   return { breaches, recoveries, escalations };
 }
