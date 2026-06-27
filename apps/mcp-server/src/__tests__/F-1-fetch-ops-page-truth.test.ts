@@ -40,6 +40,12 @@ function setupDb(): Database {
       status       TEXT NOT NULL DEFAULT 'pending',
       created_at   TEXT NOT NULL DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS financial_reports (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      action_code   TEXT NOT NULL,
+      text_status   TEXT,
+      refine_status TEXT
+    );
     CREATE TABLE IF NOT EXISTS vps_push_log (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       service      TEXT NOT NULL,
@@ -180,7 +186,7 @@ describe("F-1 — handleFetchStatus (AC-3, AC-4)", () => {
     expect(typeof parsed.bctcPipeline).toBe("object");
   });
 
-  it("AC-3: bctcPipeline has pending/done/failed keys", () => {
+  it("AC-3: bctcPipeline has pending/done/failed/refine_pending keys", () => {
     const { res, body, status } = makeRes();
     const now = new Date("2026-06-06T12:00:00Z");
     handleFetchStatus(MOCK_REQ, res, db, now);
@@ -190,6 +196,8 @@ describe("F-1 — handleFetchStatus (AC-3, AC-4)", () => {
     expect(parsed.bctcPipeline).toHaveProperty("pending");
     expect(parsed.bctcPipeline).toHaveProperty("done");
     expect(parsed.bctcPipeline).toHaveProperty("failed");
+    expect(parsed.bctcPipeline).toHaveProperty("refine_pending");
+    expect(parsed.bctcPipeline.refine_pending).toBe(0); // empty table → 0
   });
 
   it("AC-4: sources[] is empty when rag_analyses has no rows", () => {
@@ -316,5 +324,40 @@ describe("F-1 — handleFetchStatus (AC-3, AC-4)", () => {
     expect(parsed.bctcPipeline.pending).toBe(2);
     expect(parsed.bctcPipeline.done).toBe(3);
     expect(parsed.bctcPipeline.failed).toBe(1);
+  });
+
+  it("FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP: refine_pending counts text=COMPLETE/refine=PENDING reports", () => {
+    // Simulates the June-2026 fleet-cron stall: bctc_vps_queue shows done=0 pending=0
+    // but financial_reports has 2 rows stuck at REFINE layer (text extracted, never table-parsed).
+    db.exec(`
+      INSERT INTO financial_reports (action_code, text_status, refine_status) VALUES
+        ('HPG', 'COMPLETE', 'PENDING'),
+        ('ACV', 'COMPLETE', 'PENDING'),
+        ('VCB', 'COMPLETE', 'DONE'),
+        ('MSN', 'PENDING',  'PENDING');
+    `);
+
+    const { res, body, status } = makeRes();
+    handleFetchStatus(MOCK_REQ, res, db, new Date());
+
+    expect(status()).toBe(200);
+    const parsed = JSON.parse(body());
+    // Only HPG + ACV qualify (text_status=COMPLETE AND refine_status=PENDING)
+    expect(parsed.bctcPipeline.refine_pending).toBe(2);
+  });
+
+  it("FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP: refine_pending=0 when no reports stalled", () => {
+    db.exec(`
+      INSERT INTO financial_reports (action_code, text_status, refine_status) VALUES
+        ('VCB', 'COMPLETE', 'DONE'),
+        ('FPT', 'COMPLETE', 'DONE');
+    `);
+
+    const { res, body, status } = makeRes();
+    handleFetchStatus(MOCK_REQ, res, db, new Date());
+
+    expect(status()).toBe(200);
+    const parsed = JSON.parse(body());
+    expect(parsed.bctcPipeline.refine_pending).toBe(0);
   });
 });

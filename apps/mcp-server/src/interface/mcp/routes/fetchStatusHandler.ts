@@ -28,7 +28,8 @@
  *       done: number,
  *       failed: number,
  *       deferred_infra: number,        // historical HIST-VPS-BACKFILL rows; sources gone/geo-dead
- *       blocked_pdf_extractor: number  // gated on A-20 architect fix (CPU-cgroup starvation)
+ *       blocked_pdf_extractor: number, // gated on A-20 architect fix (CPU-cgroup starvation)
+ *       refine_pending: number         // financial_reports: text_status=COMPLETE but refine_status=PENDING — refine-layer stall detector
  *     },
  *     fetchedAt: string   // ISO timestamp when this response was assembled
  *   }
@@ -41,7 +42,7 @@
  * Data sources:
  *   - sources[]     : rag_analyses table, GROUP BY source slug
  *   - vpsProxy{}    : getVpsProxyHealth() from vpsPushLogStore.ts
- *   - bctcPipeline{}: bctc_vps_queue table status counts
+ *   - bctcPipeline{}: bctc_vps_queue status counts + financial_reports refine_pending count
  *
  * Guard: source_url IS NOT NULL enforced in SQL WHERE clause (R-5).
  * DI contract: db injected by caller (server.ts). No getDb() here.
@@ -123,6 +124,13 @@ interface BctcQueueCounts {
   deferred_infra: number;
   /** Q1-2026 rows gated on A-20 architect fix (pdf-extractor CPU-cgroup starvation). */
   blocked_pdf_extractor: number;
+  /**
+   * financial_reports rows where text extraction is complete (text_status='COMPLETE')
+   * but table-parse refinement is still queued (refine_status='PENDING').
+   * Non-zero value means the fleet-cron refine pipeline is stalled.
+   * Root cause: FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP — 47 June-2026 reports stuck at REFINE.
+   */
+  refine_pending: number;
 }
 
 /**
@@ -184,12 +192,18 @@ function querySourceAges(db: Database, now: Date): SourceAgeRow[] {
 }
 
 /**
- * Query BCTC VPS queue counts by status.
+ * Query BCTC VPS queue counts by status, plus the refine-layer stall count.
  *
  * Includes explicit non-actionable statuses introduced by FIX-BCTC-VPS-QUEUE-STALE-TRIAGE:
  *   deferred_infra        — historical HIST-VPS-BACKFILL rows; sources geo-dead; not retryable.
  *   blocked_pdf_extractor — Q1-2026 rows gated on A-20 architect fix; re-queue after arch fix.
  * C-16 auditor check counts only `pending` rows >72h; non-actionable rows excluded by their status.
+ *
+ * refine_pending (FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP):
+ *   Counts financial_reports rows that completed text extraction (text_status='COMPLETE') but
+ *   whose table-parse (fleet-cron refinement) has not yet run (refine_status='PENDING').
+ *   This catches the false-green case where bctc_vps_queue shows pending=0/'healthy-idle'
+ *   while reports are actually stuck at the REFINE layer.
  */
 function queryBctcCounts(db: Database): BctcQueueCounts {
   const row = db
@@ -210,12 +224,25 @@ function queryBctcCounts(db: Database): BctcQueueCounts {
       blocked_pdf_extractor: number | null;
     } | null;
 
+  // Second query: refine-layer stall detector.
+  // Counts reports where PDF text was extracted (text_status='COMPLETE') but the
+  // agentic fleet-cron table-parse (refine_status) never ran.
+  const refineRow = db
+    .prepare(
+      `SELECT COUNT(*) AS cnt
+         FROM financial_reports
+        WHERE text_status = 'COMPLETE'
+          AND refine_status = 'PENDING'`,
+    )
+    .get() as { cnt: number } | null;
+
   return {
     pending: row?.pending ?? 0,
     done: row?.done ?? 0,
     failed: row?.failed ?? 0,
     deferred_infra: row?.deferred_infra ?? 0,
     blocked_pdf_extractor: row?.blocked_pdf_extractor ?? 0,
+    refine_pending: refineRow?.cnt ?? 0,
   };
 }
 
