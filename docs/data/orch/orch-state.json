@@ -2746,11 +2746,11 @@
             "owner": "dev-frontend",
             "zone": "apps/frontend/app/components/, apps/frontend/app/lib/hooks/",
             "size": "M",
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "depends": [
               "TASK-FFT-L2"
             ],
-            "commit": null,
+            "commit": "afbb0c99",
             "note": "Create FreshnessBadge + hook. Directory apps/frontend/app/lib/hooks/ must be created (RISK-4). Blocks L3B."
           },
           {
