@@ -6624,6 +6624,24 @@
           "at": "2026-06-27T08:03:52Z",
           "note": "enum-clean (C2): PARKED qualifier-as-status -> DEFERRED (deliberate serialization); park_reason retained verbatim as the qualifier prose. UNPARK CONDITION unchanged."
         }
+      },
+      {
+        "id": "TASK-FFT-L4",
+        "title": "Coverage-Map-Aware SLA Monitor Extension (L4 self-policing)",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
+        "anchor": "FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING",
+        "priority": "P2",
+        "type": "FIX",
+        "commits": [
+          "1dd3c6d1",
+          "718aa01c"
+        ],
+        "handoff": "docs/handoffs/TASK-FFT-L4.md",
+        "completed_at": "2026-06-27T21:25:00Z",
+        "next": "qa"
       }
     ],
     "qa": [],
