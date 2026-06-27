@@ -230,10 +230,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "idle — sprint SSOT-INTEGRITY-PERIMETER signed off 11/11; no queued work; next cron tick re-triages",
+    "next_action": "Triage 2026-06-27T16:09Z (dev-team tick): 2 ready[] rows dispatchable -> FIX-COLDEVICT-TERMINAL-VOCAB-CANONICALIZE (dev-mcp-server) + MAINT-QA-NOTEBOOK-PRUNE-200L (claude-manager-helper). Acute strand CLEARED: SSOT-INTEGRITY-PERIMETER status COMPLETE->DONE (now cold-evictable next post-cycle 4.2 tick).",
     "updated_by": "po",
-    "updated_at": "2026-06-27T15:56:52Z",
-    "note": "SIGN-OFF SSOT-W1-OPS-REBUILD-ENFORCE -> DONE_VERIFIED (po 2026-06-27T15:56:52Z): Point-2 LIVE server-side Zod enforcement of orch-state status SHIPPED+PROVEN on running image 8aa222ab. Router re-ran injection: StatusEnum.parse('ROUTER_BOGUS') -> ZodError invalid_enum_value; 'DONE' parses. /health 200 toolCount 166; peers untouched. Sprint SSOT-INTEGRITY-PERIMETER now 11/11 terminal -> COMPLETE. No further pipeline work queued; head idle until next cron tick. Cold-evictable: the COMPLETE sprint object + its terminal tasks (router post-cycle 4.2 cold-evict)."
+    "updated_at": "2026-06-27T16:16:32Z",
+    "note": "PO TRIAGE po-s122 2026-06-27T16:09Z: drained 2 signals. (1) coldevict-complete-status-drift: ROOT was MY sign-off writing non-canonical 'COMPLETE' (absent from StatusEnum/TERMINAL_SET that SSOT-INTEGRITY-PERIMETER just shipped). OVERRODE signal's 'add COMPLETE to predicates' suggestion (would re-create divergent-vocab SSOT violation). Data-true-up'd the stranded sprint COMPLETE->DONE now (bash L52 already recognizes DONE -> evictable) + minted FIX to reconcile bash predicates to schema TERMINAL_SET. (2) qa.md 207L bloat -> MAINT prune to claude-manager-helper. Head stays idle; router dispatches both from ready[]."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -979,8 +979,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": 1782561470,
-    "_updated_by": "po-s122",
+    "_updated_at": 1782576992,
+    "_updated_by": "po-s122-triage",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -2421,7 +2421,7 @@
       },
       {
         "id": "SSOT-INTEGRITY-PERIMETER",
-        "status": "COMPLETE",
+        "status": "DONE",
         "opened_at": "2026-06-27T08:03:52Z",
         "opened_by": "po-s121",
         "goal": "Close the SSOT integrity perimeter; make the HARD gate enforce all lanes + dup-key + referential integrity; route every writer through one gated wrapper; then drain hot-file bloat.",
@@ -2848,7 +2848,8 @@
         },
         "closed_at": "2026-06-27T15:56:52Z",
         "closed_by": "po",
-        "signoff_note": "11/11 terminal; Point-2 LIVE Zod enforcement RAW-verified on image 8aa222ab by router + QA gate PASS"
+        "signoff_note": "11/11 terminal; Point-2 LIVE Zod enforcement RAW-verified on image 8aa222ab by router + QA gate PASS",
+        "status_note": "po-s122 data true-up 2026-06-27T16:09Z: sign-off wrote non-canonical 'COMPLETE'; corrected to canonical TERMINAL_SET token DONE so HSC-6 cold-evict can archive it. See FIX-COLDEVICT-TERMINAL-VOCAB-CANONICALIZE."
       }
     ],
     "archive": [
@@ -6559,6 +6560,48 @@
         "input_directive": "docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md",
         "updated_at": "2026-06-27T08:35:40Z",
         "updated_by": "po-ratify-ssot-zod"
+      },
+      {
+        "id": "FIX-COLDEVICT-TERMINAL-VOCAB-CANONICALIZE",
+        "type": "FIX",
+        "status": "READY",
+        "size": "S",
+        "priority": "medium",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "zone": "scripts/ + dev-team-flow-doc",
+        "created_at": "2026-06-27T16:16:32Z",
+        "created_by": "po-s122-triage",
+        "title": "Reconcile bash cold-evict terminal-sprint vocab to the canonical Zod TERMINAL_SET (kill divergent hardcoded list)",
+        "desc": "ROOT FIX for the stranded-sprint signal (coldevict-complete-status-drift). PO OVERRIDES the signal's 'add COMPLETE' suggestion: COMPLETE is NOT in the canonical StatusEnum/TERMINAL_SET that SSOT-INTEGRITY-PERIMETER just shipped (apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET = {DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED}). Adding COMPLETE would re-create the divergent-hardcoded-vocab SSOT violation that sprint eliminated. PO already corrected the live stranded sprint status COMPLETE->DONE (evictable now; bash L52 already has DONE). This task removes the LATENT drift: scripts/orch-cold-evict.sh L52 default TERMINAL_SPRINT_STATUSES (currently DONE,done,DONE-WITH-CAVEATS,completed,SIGNED-OFF-PARTIAL) and docs/agents/dev-team/flow/post-cycle.md Step 4.2 gate IN(...) (L43-46) BOTH diverge from TERMINAL_SET. Reconcile both bash sites to the canonical TERMINAL_SET tokens (DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED), kept in sync, ideally sourced from one SSOT per the 'bash gate stops hardcoding its own enum' hardening-brief philosophy. Also add a one-line note to the PO sign-off flow (docs/agents/po/flow/main.md) that the canonical terminal sprint token is DONE (never COMPLETE). Do NOT touch the agent definition .md (init.md); flow + script only.",
+        "files": [
+          "scripts/orch-cold-evict.sh",
+          "docs/agents/dev-team/flow/post-cycle.md",
+          "docs/agents/po/flow/main.md"
+        ],
+        "verification_gate": "(1) scripts/orch-cold-evict.sh L52 default + post-cycle.md L43-46 IN(...) both list exactly the schema TERMINAL_SET tokens and stay in sync; (2) a synthetic active_sprint with status DONE_VERIFIED|CANCELLED|DEFERRED|SKIPPED evicts to archive on a --dry-run; (3) no path produces or relies on 'COMPLETE'; (4) po sign-off flow documents canonical token=DONE.",
+        "signal_ref": "docs/signals/processed/coldevict-complete-status-drift-20260627T160221Z.json",
+        "baseline_pass": true
+      },
+      {
+        "id": "MAINT-QA-NOTEBOOK-PRUNE-200L",
+        "type": "MAINT",
+        "status": "READY",
+        "size": "XS",
+        "priority": "low",
+        "owner_agent": "claude-manager-helper",
+        "next_agent": "claude-manager-helper",
+        "zone": "docs/agent-memory/",
+        "created_at": "2026-06-27T16:16:32Z",
+        "created_by": "po-s122-triage",
+        "title": "Prune docs/agent-memory/notebooks/qa.md to <=200L (currently 207L, +7 over cap)",
+        "desc": "context-bloat-backstop-hook breach: qa.md 207L vs 200 cap (overage 7). QA notebooks are spec'd full-overwrite <=200L, so growth means the cycle-324 overwrite did not trim. Prune to <=200L (keep newest cycles, drop oldest). RECURRENCE CHECK: if qa.md re-breaches the next QA cycle after prune, the QA notebook full-overwrite write isn't trimming structurally -> escalate the notebook-write spec to agent-father, don't just re-prune.",
+        "files": [
+          "docs/agent-memory/notebooks/qa.md"
+        ],
+        "verification_gate": "wc -l docs/agent-memory/notebooks/qa.md <= 200 after prune; flag structural recurrence to agent-father if it re-breaches.",
+        "signal_ref": "docs/signals/processed/context-bloat-docs-agent-memory-notebooks-qa-md-2026-06-27T155326Z.json",
+        "baseline_pass": true
       }
     ],
     "review": [
@@ -6607,8 +6650,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-06-27T11:57:50Z",
-    "last_triaged_by": "po-s122"
+    "last_triaged_at": "2026-06-27T16:16:32Z",
+    "last_triaged_by": "po-s122-triage"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
