@@ -377,3 +377,71 @@ PID: 4055475 (fresh)
 **Do NOT:** Mask a real crash with blind restart — this incident verified the service was genuinely working.
 
 **Outcome:** VPS infrastructure restored to baseline. Service running cleanly. Ready for BCTC season activation (next earnings window ~2026-07-07 for Q2 reports).
+
+## Rebuild: Point-2 LIVE Zod enforcement (2026-06-27T17:48Z)
+
+**Task:** Deploy commit 436f7376 — orchStateSchema.ts Point-2 Zod enforcement (StatusEnum frozen 11-value enum). QA gate for LIVE injection test.
+
+**Trigger:** PO-authorized SSOT-W1-OPS-REBUILD-ENFORCE; CI GREEN on origin/main bfc9d5e5; apps/ tree byte-identical to CI-green run 28289035838.
+
+### Rebuild Process
+```
+docker compose build mcp-server && docker compose up -d --no-deps mcp-server
+```
+
+**Timeline:**
+- 2026-06-27T17:47:33+02:00: Build started (docker compose build)
+- 2026-06-27T17:47:54+02:00: New image created (sha256:8aa222ab...)
+- 2026-06-27T17:47:54+02:00: Container recreated + started (healthy 32s)
+
+### Verification
+
+**CHECK 1: IMAGE BUILD FRESHNESS** — PASS
+- Old image: 2026-06-25 (2d old) (ID: sha256:7f366674cb5d65562ca43223e5c20d33bc1ef2c8a82862cb9d08bb1999501c99)
+- New image: 2026-06-27T17:47:54+02:00 (ID: sha256:8aa222ab225d386fcc9cd2102202eb1ad03cd5bad9df475a146b2b9893a4b172)
+- Build age: Fresh (13s old at verification)
+- Source layer: Layer #15 (COPY apps/mcp-server/src/) NOT CACHED — rebuild confirmed
+
+**CHECK 2: SCHEMA PRESENT & ENFORCED** — PASS
+- File: /app/src/infrastructure/orchStateSchema.ts (confirmed in running container)
+- StatusEnum: z.enum([BACKLOG, TODO, IN_PROGRESS, REVIEW, QA, ...]) (11-value frozen enum)
+- Validation path: status: StatusEnum (field enforces enum on parse)
+- Zod contract: orchStateStore.parse() will THROW on non-enum status values ✓
+
+**CHECK 3: CONTAINER RUNNING NEW IMAGE** — PASS
+- Container image ID: sha256:8aa222ab... (matches build)
+- StartedAt: 2026-06-27T17:47:54+02:00 (fresh)
+- Health: Up 32 seconds (healthy) ✓
+- Health endpoint: 200 OK {status: ok, toolCount: 166}
+- Ports: 3000/4004 live
+
+**CHECK 4: PEER SERVICES SURVIVED RECREATE** — PASS
+- All 10 peer services maintained CreatedAt (NO RECREATE):
+  - alert-engine (2026-06-10), api-gateway (2026-06-11), frontend (2026-06-24)
+  - kinh-dich (2026-06-14), macro-indicators (2026-06-24), news-fetch (2026-06-11)
+  - pdf-extractor (2026-06-16), rag-service (2026-06-11), stock-price (2026-06-15)
+  - technical-analysis (2026-06-15)
+- Fleet uptime: 42+ hours (peers unaffected) ✓
+- --no-deps honored ✓
+
+**CHECK 5: GATEWAY HEALTH** — PASS
+- /health (api-gateway:4000): all 9 downstream services "ok"
+- mcp service: 2ms latency ✓
+- Tool surface: 166 tools available ✓
+- No drops observed
+
+### Readiness for QA Point-2 Test
+
+| Requirement | Status | Evidence |
+|------------|--------|----------|
+| Running image contains orchStateSchema.ts | ✓ PASS | docker exec found file; grep confirms enum |
+| StatusEnum frozen in Zod | ✓ PASS | export const StatusEnum = z.enum([...]) |
+| Field validates against enum | ✓ PASS | status: StatusEnum in schema |
+| Container healthy | ✓ PASS | health endpoint 200 OK |
+| Peer containers UP | ✓ PASS | 10/10 peers unchanged CreatedAt |
+| Tool surface active | ✓ PASS | 166 tools, gateway latency <5ms |
+| Image ID changed | ✓ PASS | 7f366... → 8aa222... |
+| Source layer rebuilt | ✓ PASS | Layer #15 NOT CACHED |
+
+**Outcome:** Point-2 Zod enforcement deployed and running. QA READY for LIVE injection test. A non-enum status write via server path will trigger orchStateStore.parse THROW as expected.
+
