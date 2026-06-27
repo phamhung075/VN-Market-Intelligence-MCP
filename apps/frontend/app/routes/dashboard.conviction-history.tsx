@@ -36,6 +36,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -645,6 +647,7 @@ export default function ConvictionHistoryPage() {
     count,
     error,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("intraday");
 
   const isEmpty = !error && (count === 0 || !tradingDate);
 
@@ -658,17 +661,13 @@ export default function ConvictionHistoryPage() {
         title="Niềm tin AI theo cổ phiếu"
         subtitle="Điểm tin cậy (0–1) thể hiện mức độ AI tin rằng cổ phiếu sẽ tăng (Tăng), giảm (Giảm), hay đi ngang (Trung lập) trong ngắn hạn. Điểm càng cao, AI càng chắc chắn về xu hướng đó."
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
             {count > 0 && (
-              <span className="mr-3 font-medium text-slate-300">
+              <span className="mr-1 font-medium text-slate-300">
                 {count} mã
               </span>
             )}
-            {generatedAt && (
-              <span>
-                {new Date(generatedAt).toLocaleTimeString("vi-VN")}
-              </span>
-            )}
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="intraday" />
           </span>
         }
       />

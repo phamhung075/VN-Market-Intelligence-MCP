@@ -39,6 +39,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -557,6 +559,7 @@ function ClaimCard({ claim }: { claim: PredictionClaim }) {
 export default function PredictionClaimsPage() {
   const { calibration, claims, count, generatedAt, outcomeFilter, error } =
     useLoaderData<typeof loader>();
+  useFreshnessRevalidator("daily");
 
   const isEmpty = !error && claims.length === 0;
 
@@ -572,11 +575,7 @@ export default function PredictionClaimsPage() {
                 {count} dự báo
               </span>
             )}
-            {generatedAt && (
-              <span>
-                {new Date(generatedAt).toLocaleTimeString("vi-VN")}
-              </span>
-            )}
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="daily" />
           </span>
         }
       />

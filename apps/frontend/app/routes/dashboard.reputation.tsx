@@ -31,6 +31,8 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { safeFetch } from "~/lib/api/fetchUtils";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Điểm Uy tín Doanh nghiệp — VN Market Intelligence" },
@@ -294,8 +296,9 @@ function LeaderboardRow({
 // ---------------------------------------------------------------------------
 
 export default function ReputationPage() {
-  const { asOf, stale, staleByDays, summary, leaderboard, error } =
+  const { generatedAt, asOf, stale, staleByDays, summary, leaderboard, error } =
     useLoaderData<typeof loader>();
+  useFreshnessRevalidator("daily");
 
   const isEmpty = !error && summary.total === 0;
 
@@ -305,7 +308,8 @@ export default function ReputationPage() {
         title="Điểm Uy tín Doanh nghiệp"
         subtitle="Bảng xếp hạng rủi ro uy tín dựa trên phân tích cảm xúc tin tức — tín hiệu cảnh báo sớm"
         actions={
-          <span className="text-xs text-slate-500 text-right">
+          <span className="text-xs text-slate-500 text-right flex flex-col items-end gap-1">
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="daily" />
             {summary.total > 0 && (
               <span className="block font-medium text-slate-300">
                 {summary.total} mã theo dõi

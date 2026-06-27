@@ -37,6 +37,8 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { safeFetch } from "~/lib/api/fetchUtils";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Định giá & Cơ bản — VN Market Intelligence" },
@@ -410,8 +412,9 @@ function HighestRevenueYoyRow({
 // ---------------------------------------------------------------------------
 
 export default function FinancialsPage() {
-  const { asOf, stale, staleByDays, count, rows, summary, rankings, error } =
+  const { generatedAt, asOf, stale, staleByDays, count, rows, summary, rankings, error } =
     useLoaderData<typeof loader>();
+  useFreshnessRevalidator("weekly");
 
   const isEmpty = !error && rows.length === 0;
 
@@ -421,7 +424,8 @@ export default function FinancialsPage() {
         title="Định giá & Cơ bản"
         subtitle="Màn hình toàn thị trường — định giá, sinh lời và tăng trưởng"
         actions={
-          <span className="text-xs text-slate-500 text-right">
+          <span className="text-xs text-slate-500 text-right flex flex-col items-end gap-1">
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="weekly" />
             {count > 0 && (
               <span className="block font-medium text-slate-300">
                 {count} mã

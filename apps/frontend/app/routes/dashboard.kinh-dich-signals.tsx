@@ -52,6 +52,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { QueName } from "~/components/QueName";
 import { safeFetch } from "~/lib/api/fetchUtils";
 import { formatDateVi } from "~/lib/formatDate";
@@ -517,6 +519,7 @@ export default function KinhDichSignalsPage() {
     count,
     error,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("intraday");
 
   const isEmpty = !error && count === 0;
 
@@ -535,8 +538,8 @@ export default function KinhDichSignalsPage() {
             {tradingDate && (
               <span className="mr-3">Phiên {tradingDate}</span>
             )}
-            {generatedAt && (
-              <span>{new Date(generatedAt).toLocaleTimeString("vi-VN")}</span>
+            {generatedAt !== undefined && (
+              <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="intraday" />
             )}
           </span>
         }

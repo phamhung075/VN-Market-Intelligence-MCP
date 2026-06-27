@@ -47,6 +47,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link, useLocation } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -419,6 +421,7 @@ function EventRow({ event }: { event: CorporateEvent }) {
 
 export default function CorporateEventsPage() {
   const {
+    generatedAt,
     windowDays,
     since,
     asOf,
@@ -430,6 +433,7 @@ export default function CorporateEventsPage() {
     count,
     error,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("weekly");
 
   const { pathname, search } = useLocation();
   const currentPath = pathname + search;
@@ -467,7 +471,8 @@ export default function CorporateEventsPage() {
           (since ? ` (từ ${since}` + (asOf ? ` đến ${asOf})` : ")") : "")
         }
         actions={
-          <span className="text-xs text-slate-500 text-right">
+          <span className="text-xs text-slate-500 text-right flex flex-col items-end gap-1">
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="weekly" />
             {summary.distinctCodes > 0 && (
               <span className="block font-medium text-slate-300">
                 {summary.distinctCodes} mã · {summary.totalEvents} sự kiện

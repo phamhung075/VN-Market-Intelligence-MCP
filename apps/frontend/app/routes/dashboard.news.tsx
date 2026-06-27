@@ -23,6 +23,8 @@ import { useLoaderData } from "@remix-run/react";
 import { safeFetch } from "~/lib/api/fetchUtils";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Tin Tức — VN Market Intelligence" },
@@ -224,6 +226,7 @@ function NewsCard({ item }: { item: NewsSentimentItem }) {
 export default function NewsSentimentPage() {
   const { items, count, generated_at, stale_served, error } =
     useLoaderData<typeof loader>();
+  useFreshnessRevalidator("event");
 
   return (
     <div className="w-full space-y-6">
@@ -231,7 +234,8 @@ export default function NewsSentimentPage() {
         title="Tin Tức & Cảm Xúc Thị Trường"
         subtitle="Phân tích cảm xúc thị trường từ các nguồn tin tài chính"
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={generated_at ?? null} slaTierKey="event" />
             <ClientTimestamp iso={generated_at} />
           </span>
         }

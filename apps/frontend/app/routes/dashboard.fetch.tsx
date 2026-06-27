@@ -15,6 +15,8 @@ import type { MacroData, FetchStatus, FetchSourceStatus, VpsProxyServiceStatus }
 import { parseMacroSources, formatSourceAge, sourceStatusColor, sourceStatusLabel } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Fetch Operations — VN Market Intelligence" },
@@ -289,13 +291,15 @@ function MacroPanel({ macro }: { macro: MacroData | null }) {
 export default function FetchDashboard() {
   const { fetchStatus, macro, errors, fetchedAt } =
     useLoaderData<typeof loader>();
+  useFreshnessRevalidator("realtime");
 
   return (
     <div className="w-full space-y-6">
       <PageHeader
         title="Fetch Operations"
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={fetchedAt ?? null} slaTierKey="realtime" />
             Last updated: <ClientTimestamp iso={fetchedAt} />
           </span>
         }

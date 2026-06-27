@@ -48,6 +48,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -563,6 +565,7 @@ function GroupSection({
 
 export default function GlobalMarketsPage() {
   const {
+    generatedAt,
     currentAt,
     source,
     indicators,
@@ -571,6 +574,7 @@ export default function GlobalMarketsPage() {
     count,
     error,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("daily");
 
   const isEmpty = !error && count === 0;
 
@@ -593,7 +597,8 @@ export default function GlobalMarketsPage() {
         title="Bối cảnh thị trường toàn cầu"
         subtitle="Phong vũ biểu rủi ro thế giới — bối cảnh risk-on/risk-off cho thị trường VN"
         actions={
-          <span className="text-xs text-slate-500 text-right">
+          <span className="text-xs text-slate-500 text-right flex flex-col items-end gap-1">
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="daily" />
             {currentAt && (
               <span className="block">
                 Dữ liệu:{" "}

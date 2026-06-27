@@ -226,6 +226,7 @@ export default function KinhDichReferencePage() {
       <PageHeader
         title="Tra cứu Kinh Dịch — 64 quẻ"
         subtitle={`Toàn bộ 64 quẻ Kinh Dịch với giải thích chi tiết bằng tiếng Việt`}
+        actions={<span className="text-xs text-slate-500">Nội dung tĩnh</span>}
       />
 
       {/* Thanh tìm kiếm */}

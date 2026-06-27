@@ -41,6 +41,8 @@ import {
 } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { QueName } from "~/components/QueName";
 import { InfoCardExpand } from "~/components/InfoCardExpand";
 import {
@@ -1741,6 +1743,7 @@ export default function AnalysisDashboard() {
     errors,
     fetchedAt,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("intraday");
 
   const hasWatchlistPrices = Object.keys(watchlistTiles).length > 0;
 
@@ -1749,7 +1752,8 @@ export default function AnalysisDashboard() {
       <PageHeader
         title="Market Analysis"
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={fetchedAt ?? null} slaTierKey="intraday" />
             <ClientTimestamp iso={fetchedAt} />
           </span>
         }

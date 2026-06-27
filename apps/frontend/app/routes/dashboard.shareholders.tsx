@@ -40,6 +40,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -405,6 +407,7 @@ function RankingTableRow({ row }: { row: RankingRow }) {
 
 export default function ShareholdersPage() {
   const {
+    generatedAt,
     asOf,
     stale,
     staleByDays,
@@ -415,6 +418,7 @@ export default function ShareholdersPage() {
     ranking,
     error,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("weekly");
 
   // Base path for code selector links (strip query string).
   const basePath = "/dashboard/shareholders";
@@ -432,7 +436,8 @@ export default function ShareholdersPage() {
             : "Chọn mã để xem chi tiết"
         }
         actions={
-          <span className="text-xs text-slate-500 text-right">
+          <span className="text-xs text-slate-500 text-right flex flex-col items-end gap-1">
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="weekly" />
             {codes.length > 0 && (
               <span className="block font-medium text-slate-300">
                 {codes.length} mã

@@ -11,6 +11,8 @@ import type { PricePoint } from "~/domain/market";
 import type { Headline } from "~/domain/news";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Database Report — VN Market Intelligence" },
@@ -215,13 +217,15 @@ function HeadlineTable({ headlines }: { headlines: Headline[] }) {
 export default function DbDashboard() {
   const { prices, headlines, ticker, errors, fetchedAt } =
     useLoaderData<typeof loader>();
+  useFreshnessRevalidator("intraday");
 
   return (
     <div className="w-full space-y-6">
       <PageHeader
         title="Database Report"
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={fetchedAt ?? null} slaTierKey="intraday" />
             Last updated: <ClientTimestamp iso={fetchedAt} />
           </span>
         }

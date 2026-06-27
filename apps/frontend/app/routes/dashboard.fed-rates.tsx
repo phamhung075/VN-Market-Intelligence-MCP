@@ -30,6 +30,8 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { safeFetch } from "~/lib/api/fetchUtils";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Lãi suất Fed Mỹ — VN Market Intelligence" },
@@ -260,6 +262,7 @@ function SeriesRow({ row }: { row: FedRatesRow }) {
 
 export default function FedRatesPage() {
   const {
+    generatedAt,
     asOf,
     effr,
     iorb,
@@ -269,6 +272,7 @@ export default function FedRatesPage() {
     series,
     error,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("daily");
 
   const isEmpty = !error && sampleCount === 0;
 
@@ -281,7 +285,8 @@ export default function FedRatesPage() {
         title="Lãi suất Fed Mỹ"
         subtitle="EFFR · IORB · Chênh lệch thanh khoản — ảnh hưởng dòng vốn ngoại vào TTCK Việt Nam"
         actions={
-          <span className="text-xs text-slate-500 text-right">
+          <span className="text-xs text-slate-500 text-right flex flex-col items-end gap-1">
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="daily" />
             {sampleCount > 0 && (
               <span className="block font-medium text-slate-300">
                 {sampleCount} phiên

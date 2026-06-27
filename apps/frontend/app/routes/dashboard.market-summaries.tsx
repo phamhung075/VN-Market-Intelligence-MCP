@@ -47,6 +47,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, NavLink, useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -676,6 +678,8 @@ function ListView({
   data: Extract<LoaderData, { mode: "list" }>;
 }) {
   const { generatedAt, periods, items, count, selectedPeriod, error } = data;
+  useFreshnessRevalidator("daily");
+
   const isEmpty = !error && items.length === 0;
 
   return (
@@ -690,11 +694,7 @@ function ListView({
                 {count} báo cáo
               </span>
             )}
-            {generatedAt && (
-              <span>
-                {new Date(generatedAt).toLocaleTimeString("vi-VN")}
-              </span>
-            )}
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="daily" />
           </span>
         }
       />
@@ -745,7 +745,8 @@ function DetailView({
 }: {
   data: Extract<LoaderData, { mode: "detail" }>;
 }) {
-  const { item, error } = data;
+  const { item, error, generatedAt } = data;
+  useFreshnessRevalidator("daily");
 
   return (
     <div className="w-full space-y-6">
@@ -770,6 +771,7 @@ function DetailView({
             ? `Tổng hợp vào: ${new Date(item.createdAt).toLocaleString("vi-VN")}`
             : undefined
         }
+        actions={<FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="daily" />}
       />
 
       {/* Error banner */}

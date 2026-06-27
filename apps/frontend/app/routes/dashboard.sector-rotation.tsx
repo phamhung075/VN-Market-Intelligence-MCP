@@ -42,6 +42,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -432,6 +434,7 @@ export default function SectorRotationPage() {
     error,
     generatedAt,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("realtime");
 
   const isEmpty = !error && count === 0;
 
@@ -450,8 +453,8 @@ export default function SectorRotationPage() {
             {tradingDate && (
               <span>Phiên: {formatTradingDate(tradingDate)}</span>
             )}
-            {!tradingDate && generatedAt && (
-              <span>{new Date(generatedAt).toLocaleTimeString("vi-VN")}</span>
+            {generatedAt !== undefined && (
+              <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="realtime" />
             )}
           </span>
         }

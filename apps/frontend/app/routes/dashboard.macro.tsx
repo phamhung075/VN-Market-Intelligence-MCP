@@ -29,6 +29,8 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -333,6 +335,7 @@ export default function MacroRegimePage() {
     calendar,
     error,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("daily");
 
   const isUnavailable =
     data_source === "unavailable" || (!error && !signals && !indicators);
@@ -343,7 +346,8 @@ export default function MacroRegimePage() {
         title="Vĩ Mô & Bối Cảnh Thị Trường"
         subtitle="Tín hiệu hàng hóa, ngoại hối và giai đoạn kinh tế giúp bạn đánh giá môi trường đầu tư"
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={generated_at ?? null} slaTierKey="daily" />
             <ClientTimestamp iso={generated_at} />
           </span>
         }

@@ -39,6 +39,8 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -473,6 +475,7 @@ function SortHeader({
 export default function ForeignFlowPage() {
   const { tradingDate, items, summary, count, fetchedAt, error, stale_fields } =
     useLoaderData<typeof loader>();
+  useFreshnessRevalidator("realtime");
 
   const [sortKey, setSortKey] = useState<SortKey>("foreignVolume");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -501,7 +504,7 @@ export default function ForeignFlowPage() {
                 {count} mã
               </span>
             )}
-            <span>{fetchedAt ? new Date(fetchedAt).toLocaleTimeString("vi-VN") : ""}</span>
+            <FreshnessBadge dataAsof={fetchedAt ?? null} slaTierKey="realtime" marketHoursOnly={true} />
           </span>
         }
       />

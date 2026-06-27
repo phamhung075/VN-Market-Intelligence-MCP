@@ -30,6 +30,8 @@ import { useEffect, useState } from "react";
 import { safeFetch } from "~/lib/api/fetchUtils";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 // Polling interval for live data refresh (ms). Pause-on-hidden keeps the tab
 // from hammering the proxy while backgrounded.
@@ -883,6 +885,7 @@ function NarrativePanel({ narrative }: { narrative: Narrative | undefined }) {
 export default function OrchestrationDashboard() {
   const { state, error, fetchedAt, isStale } = useLoaderData<typeof loader>();
   const revalidator = useRevalidator();
+  useFreshnessRevalidator("event");
 
   // Client-side auto-refresh: poll every POLL_MS while the tab is visible.
   // Guards:
@@ -937,7 +940,8 @@ export default function OrchestrationDashboard() {
                 <span className="text-green-500 font-medium">LIVE</span>
               )}
             </span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-500 flex items-center gap-2">
+              <FreshnessBadge dataAsof={fetchedAt ?? null} slaTierKey="event" />
               <ClientTimestamp iso={fetchedAt} />
             </span>
           </div>

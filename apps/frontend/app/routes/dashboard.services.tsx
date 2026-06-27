@@ -26,6 +26,8 @@ import {
 } from "~/domain/health-compose";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 // Re-export pure compose functions so test files can import from either location.
 export type { RowDisplayState } from "~/domain/health-compose";
@@ -137,6 +139,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
 export default function ServerDashboard() {
   const { rows, overallStatus, checkedAt, error } =
     useLoaderData<typeof loader>();
+  useFreshnessRevalidator("realtime");
 
   // Top badge: driven by full fleet status.
   const topStatus = composeOverallStatus(rows, overallStatus);
@@ -147,8 +150,9 @@ export default function ServerDashboard() {
         <PageHeader
           title="Service Health"
           actions={
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-end gap-1">
               {topStatus && <StatusBadge status={topStatus} />}
+              <FreshnessBadge dataAsof={checkedAt ?? null} slaTierKey="realtime" />
             </div>
           }
         />

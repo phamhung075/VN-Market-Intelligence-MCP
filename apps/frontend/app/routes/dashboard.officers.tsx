@@ -41,6 +41,8 @@ import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { safeFetch } from "~/lib/api/fetchUtils";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Ban lãnh đạo & quản trị — VN Market Intelligence" },
@@ -367,6 +369,7 @@ function RankingTableRow({ row }: { row: RankingRow }) {
 
 export default function OfficersPage() {
   const {
+    generatedAt,
     asOf,
     codes,
     selectedCode,
@@ -375,6 +378,7 @@ export default function OfficersPage() {
     ranking,
     error,
   } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("daily");
 
   // Base path for code selector links (strip query string).
   const basePath = "/dashboard/officers";
@@ -392,7 +396,8 @@ export default function OfficersPage() {
             : "Chọn mã để xem chi tiết"
         }
         actions={
-          <span className="text-xs text-slate-500 text-right">
+          <span className="text-xs text-slate-500 text-right flex flex-col items-end gap-1">
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="daily" />
             {codes.length > 0 && (
               <span className="block font-medium text-slate-300">
                 {codes.length} mã

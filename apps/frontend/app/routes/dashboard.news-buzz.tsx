@@ -31,6 +31,8 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
@@ -266,6 +268,7 @@ function LeaderboardRow({
 export default function NewsBuzzPage() {
   const { generatedAt, windowStart, windowEnd, summary, leaderboard, error } =
     useLoaderData<typeof loader>();
+  useFreshnessRevalidator("event");
 
   const isEmpty = !error && summary.distinctCodes === 0;
 
@@ -286,11 +289,7 @@ export default function NewsBuzzPage() {
                 {windowStart ?? "?"} → {windowEnd ?? "?"}
               </span>
             )}
-            {generatedAt && (
-              <span className="block text-slate-600">
-                Cập nhật: {generatedAt}
-              </span>
-            )}
+            <FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="event" />
           </span>
         }
       />

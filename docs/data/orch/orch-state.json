@@ -2760,7 +2760,7 @@
             "owner": "dev-frontend",
             "zone": "apps/frontend/app/routes/",
             "size": "M",
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "depends": [
               "TASK-FFT-L3A"
             ],

@@ -1,6 +1,25 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-27 | **Sprint:** FRONTEND-FRESHNESS-TRANSPARENCY
+**Last updated:** 2026-06-28 | **Sprint:** FRONTEND-FRESHNESS-TRANSPARENCY
+
+---
+
+## Session: 2026-06-28 (TASK-FFT-L3B — FreshnessBadge wired into all 34 page routes)
+
+**TASK-FFT-L3B REVIEW — 32 routes wired, EC-8 done, tsc clean, 4/4 e2e PASS**
+
+Routes wired: 32 with FreshnessBadge + useFreshnessRevalidator; 1 STATIC (kinh-dich-reference: "Nội dung tĩnh" text); 1 raw proxy skip (bctc-inspect).
+
+Key patterns:
+- For routes where coverage map says `asOf` (date-only), used `generatedAt` (ISO) instead — avoids midnight-UTC display in badge's ClientTimeString. Added `generatedAt` to useLoaderData destructuring for: corporate-events, fed-rates, financials, officers, reputation, shareholders.
+- EC-8 (sector-rotation): removed conditional inline `toLocaleTimeString` block (`{!tradingDate && generatedAt && ...}`), replaced with unconditional `<FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="realtime" />`.
+- STALE_RISK routes (alerts, foreign-flow): both use `marketHoursOnly={true}`.
+- market-summaries: has ListView and DetailView sub-components — added `useFreshnessRevalidator("daily")` + FreshnessBadge to both.
+
+Vitest: 2 pre-existing QUE_DESCRIPTIONS failures (unchanged). tsc: EXIT 0. Playwright e2e: 4/4 PASS.
+Coverage map `l3b_status: "WIRED"` set on all 33 wired/text rows; bctc-inspect = `SKIPPED_RAW_PROXY`.
+
+Zone health: All 34 page routes addressed; FreshnessBadge visible in PageHeader.actions on every live data page; no hydration risk (ClientTimeString delegates to SSR-safe pattern) | HEALTHY
 
 ---
 
