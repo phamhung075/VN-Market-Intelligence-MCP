@@ -219,13 +219,22 @@
     }
   ],
   "head": {
-    "status": "ready",
-    "active_task_id": "SSOT-W1-HOOK-ENFORCE",
-    "next_agent": "developer",
-    "next_action": "Extend .claude/settings.local.json PreToolUse hook to inline-validate orch-state.json writes; add PostToolUse backstop re-validation. Zone: apps/mcp-server/src/ + Claude hook infrastructure.",
-    "updated_by": "pm",
-    "updated_at": "2026-06-27T11:22:54Z",
-    "note": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS prerequisite cleared (commit f29e297e verified). Advancing to rank-4 HOOK-ENFORCE: Point-1 enforcement via Claude hook (PreToolUse + PostToolUse). Depends on rank-1 ZOD-SCHEMA-MODEL and rank-2 ZOD-VALIDATOR-CLI."
+    "status": "in_progress",
+    "active_task_id": "FIX-CI-RED-EAC0CC65-BUNTEST",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Spawn dev-mcp-server isolation=worktree against origin/main HEAD eac0cc65; RECON-FIRST find the ONE shared break behind all 16 failing __tests__ files before fixing; verify CI green on a new HEAD SHA.",
+    "updated_by": "po",
+    "updated_at": "2026-06-27T11:44:55Z",
+    "note": "Repointed from SSOT-W1-HOOK-ENFORCE: persistent red main blocks the push gate, so the ci_red FIX preempts. Prior head dispatch stashed in .head.deferred_head — resume after CI green.",
+    "deferred_head": {
+      "status": "ready",
+      "active_task_id": "SSOT-W1-HOOK-ENFORCE",
+      "next_agent": "developer",
+      "next_action": "Extend .claude/settings.local.json PreToolUse hook to inline-validate orch-state.json writes; add PostToolUse backstop re-validation. Zone: apps/mcp-server/src/ + Claude hook infrastructure.",
+      "updated_by": "pm",
+      "updated_at": "2026-06-27T11:22:54Z",
+      "note": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS prerequisite cleared (commit f29e297e verified). Advancing to rank-4 HOOK-ENFORCE: Point-1 enforcement via Claude hook (PreToolUse + PostToolUse). Depends on rank-1 ZOD-SCHEMA-MODEL and rank-2 ZOD-VALIDATOR-CLI."
+    }
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6373,6 +6382,47 @@
     },
     "in_progress": [],
     "ready": [
+      {
+        "id": "FIX-CI-RED-EAC0CC65-BUNTEST",
+        "type": "FIX",
+        "title": "CI RED on main — bun test (73 fails / 16 files) — find shared root cause",
+        "status": "READY",
+        "priority": "P0",
+        "blocking": true,
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "isolation": "worktree",
+        "source_signal": "docs/signals/ci-red-eac0cc65-20260627114115.json",
+        "head_sha": "eac0cc654e417a48fc7d91cdfa6bdb4d77db923d",
+        "run_id": 28287805159,
+        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28287805159",
+        "not_flaky": "3 consecutive CI runs failed same bun test job (eac0cc65 11:26, e257f8a0 06-26 22:39, cb3b92da 06-26 18:38)",
+        "desc": "CI is persistently RED on origin/main HEAD eac0cc65: bun test fails 73 tests across 16 files (13336 pass/53 skip). RECON-FIRST MANDATE: 16 unrelated test files failing simultaneously after 142 commits of churn strongly indicates ONE SHARED ROOT CAUSE (a common helper/schema/import/migration/fixture broke), NOT 16 independent bugs. Per feedback_isolation_probe_before_cluster_triage: probe ALL 16 fails FIRST and find the single shared break BEFORE fixing any file individually; contamination != root. GIT: router local HEAD is 142 commits behind origin/main; the breakage lives in those 142 commits local lacks (parallel sessions pushed direct). To REPRODUCE you MUST work against origin/main code in an isolated worktree (git worktree add against origin/main HEAD) — do NOT stash+rebase main (feedback_push_blocked_by_perpetual_dirty_tree).",
+        "files": [
+          "apps/mcp-server/src/__tests__/1133-foreign-flow-alert-job",
+          "apps/mcp-server/src/__tests__/1307-ta-alert-scan-job",
+          "apps/mcp-server/src/__tests__/1309-bb-alert-scan-job",
+          "apps/mcp-server/src/__tests__/1407b-sla-market-hours-gate",
+          "apps/mcp-server/src/__tests__/1517-foreign-flow-alert-ohlcv-source",
+          "apps/mcp-server/src/__tests__/1837a-pipeline-state",
+          "apps/mcp-server/src/__tests__/1948a-improve-check-store",
+          "apps/mcp-server/src/__tests__/1948d-improvement-signal-writer",
+          "apps/mcp-server/src/__tests__/1977-orchestration-endpoint",
+          "apps/mcp-server/src/__tests__/DWF-phase1-cadence",
+          "apps/mcp-server/src/__tests__/FIX-ALERT-ORPHAN-CORRELATION",
+          "apps/mcp-server/src/__tests__/FIX-CASCADE-MACRO-CARD-REAL-DETAIL",
+          "apps/mcp-server/src/__tests__/FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR",
+          "apps/mcp-server/src/__tests__/FIX-EVIDENCE-PIPELINE-STARVED",
+          "apps/mcp-server/src/__tests__/WF2-signal-queue-cas",
+          "apps/mcp-server/src/__tests__/X1-dryrun-emit-seam",
+          "+ suspected shared source: common test helper / schema / migration / fixture imported by all 16"
+        ],
+        "baseline_pass": "DONE only when a CI run with conclusion=success lands on a HEAD SHA DIFFERENT from eac0cc654e417a48fc7d91cdfa6bdb4d77db923d. Local-green does NOT count (feedback_ci_green_gate_blocked_by_cloud_chore_divergence). Verification_gate from signal: ci_green_on_subsequent_push.",
+        "escalation": "If recon proves the break is structural (shared schema/contract change requiring redesign), escalate to SPRINT-S via architect rather than patching 16 files.",
+        "groomed_by": "po",
+        "groomed_at": "2026-06-27T11:44:55Z",
+        "created_at": "2026-06-27T11:44:55Z"
+      },
       {
         "id": "ARCH-SSOT-INTEGRITY-PERIMETER",
         "type": "SPRINT-M",
