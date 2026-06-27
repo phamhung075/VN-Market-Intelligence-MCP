@@ -220,12 +220,12 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "SSOT-W1-ZOD-VALIDATOR-CLI",
+    "active_task_id": "SSOT-W1-SERVER-ENFORCE",
     "next_agent": "dev-mcp-server",
-    "next_action": "Dispatch to dev-mcp-server for scripts/orch-validate.mjs — 2-stage validator (Stage-0 raw-byte dup-key scan + Stage-1 OrchStateSchema.safeParse). Rank-1 DONE; rank-3 SSOT-W1-SERVER-ENFORCE co-dispatchable.",
+    "next_action": "Wire OrchStateSchema.parse(next) into apps/mcp-server/src/infrastructure/orchStateStore.ts write path (throw on fail) — Point-2 server-side enforcement per SSOT-zod-validation-directive-2026-06-27.md. Schema-only .parse (NOT the CLI's Stage-1c ref check), so live-data dangling refs do NOT block it.",
     "updated_by": "pm",
-    "updated_at": "2026-06-27T10:20:15Z",
-    "note": "Synced canonical top-level head to rank-2 SSOT-W1-ZOD-VALIDATOR-CLI (was stale at rank-1 after rank-1 DONE). Sprint head + top-level head now consistent. Prevents re-dispatch to DONE task."
+    "updated_at": "2026-06-27T10:35:00Z",
+    "note": "Rank-2 SSOT-W1-ZOD-VALIDATOR-CLI DONE (commit 8d37f164 + all AC-suite green). Head advanced to rank-3 SSOT-W1-SERVER-ENFORCE (both sprint and canonical heads synchronized). Dangling payload_ref finding recorded in backlog task SSOT-W1-FIX-DANGLING-PAYLOAD-REFS (must land before Stage-1c ref-check enforcement)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2434,7 +2434,7 @@
             "id": "SSOT-W1-ZOD-VALIDATOR-CLI",
             "title": "scripts/orch-validate.mjs — 2-stage: Stage-0 raw-byte duplicate-JSON-key reject + Stage-1 OrchStateSchema.safeParse; auto-fix error contract",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "scripts/",
             "created_at": "2026-06-27T08:45:20Z",
             "size": "M",
@@ -2448,7 +2448,7 @@
             "id": "SSOT-W1-SERVER-ENFORCE",
             "title": "Point-2 enforcement: orchStateStore.ts write-path OrchStateSchema.parse(next) before atomic write; reconcile RED 1837a/1980-f2 tests",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "zone": "apps/mcp-server/src/",
             "created_at": "2026-06-27T08:45:20Z",
             "size": "M",
@@ -2706,12 +2706,12 @@
         },
         "head": {
           "status": "in_progress",
-          "active_task_id": "SSOT-W1-ZOD-VALIDATOR-CLI",
+          "active_task_id": "SSOT-W1-SERVER-ENFORCE",
           "next_agent": "dev-mcp-server",
-          "next_action": "Dispatch to dev-mcp-server for scripts/orch-validate.mjs — 2-stage validator (Stage-0 raw-byte dup-key scan + Stage-1 OrchStateSchema.safeParse). Rank-2 dispatchable after rank-1 DONE. Rank-3 SSOT-W1-SERVER-ENFORCE also unblocked (parallel-capable if slots available).",
+          "next_action": "Wire OrchStateSchema.parse(next) into apps/mcp-server/src/infrastructure/orchStateStore.ts write path (throw on fail) — Point-2 server-side enforcement per SSOT-zod-validation-directive-2026-06-27.md. Schema-only .parse (NOT the CLI's Stage-1c ref check), so live-data dangling refs do NOT block it.",
           "updated_by": "pm",
-          "updated_at": "2026-06-27T10:15:00Z",
-          "note": "Rank-1 SSOT-W1-ZOD-SCHEMA-MODEL DONE (commits bfb924f5 + 7b35efb5). Head advanced to rank-2 validator task per SSOT-zod-validation-directive-2026-06-27.md Step 3. Rank-3 SSOT-W1-SERVER-ENFORCE co-dispatchable."
+          "updated_at": "2026-06-27T10:35:00Z",
+          "note": "Rank-2 SSOT-W1-ZOD-VALIDATOR-CLI DONE (commit 8d37f164 + all AC-suite green). Head advanced to rank-3 SSOT-W1-SERVER-ENFORCE. Dangling payload_ref finding recorded in backlog task SSOT-W1-FIX-DANGLING-PAYLOAD-REFS (must land before Stage-1c ref-check enforcement)."
         }
       }
     ],
@@ -5818,6 +5818,26 @@
         "zone": "multi",
         "title": "mock-guard.sh: tighten scan scope — exclude Go *_test.go (adjacent test stubs e.g. usecases_vmt_bop_test.go/handlers_vmt_failclose_test.go return https://stub.sbv.vn) AND untracked vendored cache (apps/*/~/.bun/install/cache). Both trip HARD-FAIL/CAUTION every dev-team post-cycle tick = false positives. Add *_test.go + ~/.bun to exclusion glob.",
         "detail_ref": null
+      },
+      {
+        "id": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",
+        "size": "M",
+        "sprint": "SSOT-INTEGRITY-PERIMETER",
+        "status": "BACKLOG",
+        "title": "Fix 7 dangling signal_queue payload_refs before Stage-1c enforcement",
+        "type": "SPRINT-S",
+        "zone": "apps/mcp-server/src/",
+        "created_at": "2026-06-27T10:35:00Z",
+        "priority": "P0",
+        "depends": [
+          "SSOT-W1-ZOD-VALIDATOR-CLI"
+        ],
+        "blocks": [
+          "SSOT-W1-HOOK-ENFORCE",
+          "SSOT-W1-BASH-SHIM"
+        ],
+        "note": "Rows 17,18,19,25,26,27 point to docs/signals/db-integrity-history.json (moved to docs/data/db-integrity-history.json); row 33 has malformed fragment ref. Stage-1c ref-check will hard-block all orch-state writes until fixed. Schema-only .parse (rank-3 SSOT-W1-SERVER-ENFORCE) safe to enforce first.",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SSOT-W1-FIX-DANGLING-PAYLOAD-REFS"
       }
     ],
     "closed_sprints": [
