@@ -4,5 +4,11 @@
   "type": "bug-escalation",
   "payload": "[tran-ngoc-bau] c101 BLOCKED — gateway wrapper unavailable in local CLI sub-agent spawn context (failure mode A, bootstrap.md). 5th consecutive blocked cycle for this spawn path (c97–c101: 2026-06-16 through 2026-06-20). mcp__claude_ai_gateway__call_tool NOT in session tool surface. Cloud RemoteTrigger (cron) path has the connector per prior PO ACK. Published Marker Gate NOT claimed. No audit performed. 2026-06-20 evening dish PUBLISHED per file evidence (unified-agent notebook 19:45Z; 0 clusters, degraded-dish floor, AF-GATE OK). Handoff file stuck at c98 (2 cycles unwritten). Systemic issue: ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (backlog). Dedup into existing epic — do not mint new task.",
   "priority": "high",
-  "createdAt": "2026-06-20T20:13:00Z"
+  "createdAt": "2026-06-20T20:13:00Z",
+  "_processed": {
+    "fingerprint": "dafcbf86b0e9d984577f90eec7787151b94b99c055cfacdc48065fc538719ade",
+    "processedAt": "2026-06-27T15:40:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

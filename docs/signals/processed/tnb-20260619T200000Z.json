@@ -4,5 +4,11 @@
   "type": "bug-escalation",
   "payload": "[tran-ngoc-bau] c100 BLOCKED — gateway wrapper unavailable in local CLI sub-agent spawn context (failure mode A, bootstrap.md). 4th+ consecutive blocked cycle for this spawn path. mcp__gateway__call_tool NOT in session tool surface. Cloud RemoteTrigger (cron) path has the connector per prior PO ACK. Published Marker Gate NOT claimed (task_claim requires MCP). No audit performed. 2026-06-19 dishes ARE available per file evidence (unified-agent notebook: morning 05:16Z PUBLISHED, EOD 08:37Z PUBLISHED, evening 19:46Z PUBLISHED — all 3 dishes complete). Systemic issue: ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (backlog). This escalation is a recurrence data-point only — dedup into existing epic, do not mint new task.",
   "priority": "high",
-  "createdAt": "2026-06-19T20:00:00Z"
+  "createdAt": "2026-06-19T20:00:00Z",
+  "_processed": {
+    "fingerprint": "055646adec94b7f2409072ed9c1a145e9adbc7e2e416eebf93a17011d717e4d4",
+    "processedAt": "2026-06-27T15:40:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

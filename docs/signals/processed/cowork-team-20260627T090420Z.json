@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260627T090420Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "CLOSED",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": null
+    },
+    "last_fired_timestamp": "2026-06-27T09:04:08.000Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 12,
+    "note": "daily bctc-refine slot; pressure-state stale -> legacy mode; token won; bg spawn launched with cover-letter skip guard"
+  },
+  "priority": "low",
+  "createdAt": "20260627T090420Z",
+  "_processed": {
+    "fingerprint": "579eb8b6b451774496366cefcdc2afded409d48c3fcc04fdad026fa61982fb30",
+    "processedAt": "2026-06-27T09:10:13Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
