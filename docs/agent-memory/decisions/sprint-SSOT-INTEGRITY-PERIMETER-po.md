@@ -59,3 +59,12 @@
 - DISPATCH now — CHOSEN. Source material verified present: directive (7.9KB user-authored) + deep-audit (216KB) exist; deliverable not yet authored; doc-authoring is low-disruption (architect writes a NEW brief, no code/deploy/gate).
 **why-decision:** User-directed design directive with zero remaining blockers and a free coding board; the brief is the gate that lets pm decompose Wave-1 into the 6 atomic zone tasks. ADD-1 READY-enum decision pre-endorsed (option-a) in the task desc so the schema cannot strand its own kickoff.
 **why-change:** no change from plan — this is the deliberate dispatch the two prior defers were holding for.
+
+### STEP po-S7 · po · 2026-06-27T17:13:45Z
+**task-id:** SSOT-W1-ZOD-SCHEMA-MODEL
+**what-done:** OPENED Wave-1 execution — claimed board (head ready->in_progress, active=SSOT-W1-ZOD-SCHEMA-MODEL, next_agent=dev-mcp-server), flipped rank-1 task TODO->IN_PROGRESS in active_sprints[SSOT-INTEGRITY-PERIMETER], returned BATCH so dev-team Step 3 spawns dev-mcp-server. Design phase (architect brief->pm Wave-1 decomp) completed last tick.
+**what-considered:**
+- DEFER opening this tick — REJECTED: pendingSignals=0, NEW signals=0, CI GREEN bfc9d5e5, no divergence (origin behind local only), WIP=0 (room). Last tick was DESIGN; this tick is the intended EXECUTION open. No reason to hold.
+- OPEN rank-1 now — CHOSEN. Rank-1 is dep-free (unblocks 2-6); scoped audit-then-harden DELTA on ~95%-shipped orchStateSchema.ts (QA-1/3/4 gates + .passthrough->.strict doc + reconcile RED 1837a/1980-f2). Handoff + verify_note carry the delta scope so the worker can't recreate shipped work.
+**why-decision:** Every gate is clean and WIP=0 leaves a coding slot; the design->execution handoff is exactly what the pm Wave-1 decomp set up. Single dep-free rank-1 is the correct first dispatch.
+**why-change:** no change from plan — pm pre-set head ready/dev-mcp-server last tick; PO converts ready->in_progress to actually open the slot (ready is not router-auto-dispatched).
