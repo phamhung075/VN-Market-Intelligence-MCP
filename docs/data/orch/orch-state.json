@@ -236,13 +236,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "BCTC-REFINE-T1-CHUNKSIZE",
-    "next_agent": "pm",
-    "next_action": "T0-RESET-GUARD DONE_VERIFIED by agent-father (no code change — guard was correct). Dispatch T1-CHUNKSIZE (agent-father) and T2-SLOTS (ops) — both were blockedBy T0 and are now READY. agent-father owns T1 edit; ops owns T2 cowork-schedule.json add. T3-WATCHDOG remains BACKLOG P2 until T1+T2 verified draining. GVR re-drain from unit-0007 is a separate post-T0 step.",
-    "updated_by": "agent-father",
-    "updated_at": "2026-06-27T22:10:00Z",
-    "note": "T0 guard validated post-hoc by agent-father. DJ entry: docs/agent-memory/decisions/sprint-BCTC-REFINE-STALL-RETRIGGER-agent-father.md. No code change needed.",
-    "next_step": "dispatch T1+T2 fan-out"
+    "active_task_id": "BCTC-REFINE-T3-WATCHDOG",
+    "next_agent": "dev-team",
+    "next_action": "T1+T2 DONE_VERIFIED+deployed (524a87cc chunk 7->12; 19764c0e +2 cowork slots; combined 4x12=48 windows/day target, ~36d drain vs 124d). T3-WATCHDOG stays BACKLOG (gated): dispatch ONLY after next scheduled refine slot fires AND draining RAW-verified via get_bctc_refined DONE-unit climb (NOT merely deployed). GVR re-drains organically from unit-0007 via now-guarded scheduled slots — NO ad-hoc drain workers (those caused the 49->7 clobber).",
+    "updated_by": "dev-team",
+    "updated_at": "2026-06-27T20:08:00Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2672,7 +2670,7 @@
             "title": "Raise REFINE_CHUNK_SIZE 7->12 in refine_bctc_md flow docs",
             "owner": "agent-father",
             "type": "SPRINT-S",
-            "status": "READY",
+            "status": "DONE",
             "zone": "docs/agents/refine_bctc_md/",
             "created_at": "2026-06-27T19:38:39Z",
             "size": "XS",
@@ -2680,14 +2678,14 @@
             "depends": [
               "BCTC-REFINE-T0-RESET-GUARD"
             ],
-            "note": "Safe ceiling=12 (token bound: 12x8.9k=107k < Haiku 200k ctx at 75% budget; timeout: 12x39s=468s<<1800s TTL). Edit slice(0,7)->slice(0,12) in flow/main.md L8+L48 + init.md L55+L60; update REFINE_CHUNK_SIZE=7 metadata in both files. Route via agent-md-factory. T1 alone: 2x12=24 windows/day (+71%). BLOCKED until T0 lands."
+            "note": "Safe ceiling=12 (token bound: 12x8.9k=107k < Haiku 200k ctx at 75% budget; timeout: 12x39s=468s<<1800s TTL). Edit slice(0,7)->slice(0,12) in flow/main.md L8+L48 + init.md L55+L60; update REFINE_CHUNK_SIZE=7 metadata in both files. Route via agent-md-factory. T1 alone: 2x12=24 windows/day (+71%). BLOCKED until T0 lands. | DONE_VERIFIED 2026-06-27: commit 524a87cc; main.md L8+L54 + init.md L55+L61 all 7->12; .slice(0,12); T0 reset-guard (has_done_units/is_first/reset:is_first) intact-unmodified; DJ marker present; router RAW-verified."
           },
           {
             "id": "BCTC-REFINE-T2-SLOTS",
             "title": "Add refine-bctc-slot-3 (11:00 UTC) + slot-4 (16:30 UTC) to cowork-schedule.json",
             "owner": "ops",
             "type": "OPS",
-            "status": "READY",
+            "status": "DONE",
             "zone": "docs/data/cowork-schedule.json",
             "created_at": "2026-06-27T19:38:39Z",
             "size": "XS",
@@ -2695,7 +2693,7 @@
             "depends": [
               "BCTC-REFINE-T0-RESET-GUARD"
             ],
-            "note": "Two new sequential refine slots: 11:00 UTC (18:00 ICT off-market) + 16:30 UTC (23:30 ICT off-market). Both outside OFF-HOSE (02:00-08:59 UTC); no conflict bctc-analyst/chef-evening/tnb-audit/digest-daily. Combined T1+T2: 4x12=48 windows/day (~36-day drain vs 124-day current at 14/day). Trigger_prompt same pattern as slots 1+2; policy_id=bctc-offmarket; parallel_group=bctc-refine. BLOCKED until T0 lands."
+            "note": "Two new sequential refine slots: 11:00 UTC (18:00 ICT off-market) + 16:30 UTC (23:30 ICT off-market). Both outside OFF-HOSE (02:00-08:59 UTC); no conflict bctc-analyst/chef-evening/tnb-audit/digest-daily. Combined T1+T2: 4x12=48 windows/day (~36-day drain vs 124-day current at 14/day). Trigger_prompt same pattern as slots 1+2; policy_id=bctc-offmarket; parallel_group=bctc-refine. BLOCKED until T0 lands. | DONE_VERIFIED 2026-06-27: commit 19764c0e; 4 refine slots 09:00/11:00/14:00/16:30 UTC all enabled+bctc-offmarket+group=bctc-refine; cowork-schedule.json parses; DJ marker present; router RAW-verified."
           },
           {
             "id": "BCTC-REFINE-T3-WATCHDOG",
@@ -5594,9 +5592,11 @@
         "title": "L2 freshness fields: /api/market-digest (marketDigestHandler), /api/quality-checklist (qualityChecklist), /api/vps-proxy-health (vpsProxyHealthHandler) return NO top-level data_asof/generatedAt. Add a freshness field to each, REUSING the sectorRotationHandler.ts (generatedAt/tradingDate) pattern. Also covers alerts/priceHistory generatedAt per update_mechanic.L2_asof.",
         "type": "FIX",
         "priority": "P2",
-        "status": "BACKLOG",
+        "status": "IN_PROGRESS",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-L2-FRESHNESS-DATAASOF-FIELDS"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-L2-FRESHNESS-DATAASOF-FIELDS",
+        "owner": "dev-mcp-server",
+        "claimed_at": "2026-06-27T00:00:00Z"
       },
       {
         "id": "FIX-L3-FRONTEND-AUTOREFRESH-FRESHNESS-BADGE",
@@ -6574,7 +6574,18 @@
       "deprecated_by": "po-s121",
       "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "TASK-FFT-L2",
+        "anchor": "FIX-L2-FRESHNESS-DATAASOF-FIELDS",
+        "title": "L2 data_asof Contract for 5 Handlers",
+        "owner": "dev-mcp-server",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/src/interface/mcp/routes/",
+        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
+        "claimed_at": "2026-06-27T00:00:00Z"
+      }
+    ],
     "ready": [],
     "review": [
       {
