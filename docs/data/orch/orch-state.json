@@ -229,11 +229,11 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "BCTC-REFINE-A1",
-    "next_agent": "dev-team",
-    "next_action": "Router RAW-verified PO A1 NO-GO (refine dispatcher ALIVE, slots fired today; refine_bctc_md work-log empty, 47 stuck PENDING). /cron-cowork-team NOT run. Diagnostic refine_bctc_md spawn IN FLIGHT. On result: drains->dispatcher-spawn-path bug; zero-drain->agent-father. A2/B1 stay closed (WIP=1).",
+    "next_agent": "po",
+    "next_action": "PO disposition for BCTC-REFINE-STALL-RETRIGGER: A1 diagnosis proves refine_bctc_md is NOT broken (49 DONE units persisted; both stall premises false). DECIDE: close sprint as NO-BUG/phantom OR re-scope A2/B1/B2/C1 to a THROUGHPUT sprint (raise REFINE_CHUNK_SIZE / add cowork refine slots/day). A2/B1/B2/C1 still TODO pending PO call.",
     "updated_by": "dev-team",
-    "updated_at": "2026-06-27T19:16:49Z",
-    "note": "WIP=1: BCTC-REFINE-STALL-RETRIGGER A1 re-scoped to DIAGNOSE refine_bctc_md non-execution (NOT dispatcher re-arm; dispatcher proven alive). Downstream A2->C1, B1->B2 unchanged."
+    "updated_at": "2026-06-27T19:23:35Z",
+    "note": "A1 DONE (diagnostic). WIP slot free. Sprint premise falsified -> awaiting PO disposition; do NOT auto-dispatch A2/B1 (they may be cancelled). Refine pipeline healthy: dispatcher 2x/day, agent pushes persist, finalize gates on full doc."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2562,13 +2562,13 @@
             "title": "Diagnose why dispatched refine_bctc_md never executes (2x/day slots fire, zero work-log, 47 docs stuck PENDING)",
             "owner": "dev-team",
             "type": "OPS",
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "zone": ".claude/",
             "created_at": "2026-06-27T21:00:00Z",
             "size": "XS",
             "priority": "high",
             "depends": [],
-            "note": "RE-SCOPED from re-arm-dispatcher. PO A1 verification (commit 8d3ba910) = NO-GO, router RAW-verified: refine slots fired TODAY (slot-1 09:04Z, slot-2 14:04Z) so dispatcher ALIVE (architect 'dark since 06-07' premise FALSE); but get_agent_work_log{refine_bctc_md}=[] and get_bctc_pending_refine=47 all PENDING -> agent dispatched yet NEVER executes (spawn-narrates-not-executes). Router running ONE diagnostic refine_bctc_md spawn + RAW probe. Drains -> cowork dispatcher->agent spawn-path bug; zero-drain -> agent flow/spawnability defect -> agent-father. Do NOT run /cron-cowork-team (double-fire, fixes nothing)."
+            "note": "DONE 2026-06-27: diagnosis conclusive. RAW: bctc_refined_units has 49 DONE units for GVR (unit-0000..0048, all DONE); 42 pre-existed from prior cowork fires; agent does NOT call log_agent_work (empty work-log is NOT non-execution); doc stays PENDING until finalize_bctc_refine (gates total_pushed==windows.length). refine_bctc_md executes correctly end-to-end. BOTH premises (architect dispatcher-dark + router agent-never-executes) FALSIFIED. No bug; only slow throughput (14 units/day). DJ router-A1-DONE."
           },
           {
             "id": "BCTC-REFINE-A2",
