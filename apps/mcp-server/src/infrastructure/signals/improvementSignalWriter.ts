@@ -301,7 +301,8 @@ export async function appendDashboardRow(
       _ssot: true,
       _updated_at: createdAt,
       _updated_by: "system-auditor",
-      head: {},
+      // head.status is required by HeadSchema — use "idle" for a minimal shell
+      head: { status: "idle" },
       task_board: { _updated_at: createdAt, _updated_by: "system-auditor", active_sprints: [], backlog: [], archive: [] },
       signal_queue: { _updated_at: createdAt, _updated_by: "system-auditor", rows: [], archive: [] },
     };
