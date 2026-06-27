@@ -105,3 +105,23 @@ created_at: 2026-06-27T16:50:00Z
 **AC fixture (scripts/test-orch-validate-ac.mjs):** 29/29 — AC-1..AC-4 all PROVEN
 
 Zone health: bun test 103/103 GREEN (orchStateSchema.test.ts), tsc 0 errors, 166 tools intact, scheduler 3 cron.schedule | HEALTHY
+
+---
+
+## [QA] Review Record — 2026-06-27
+
+**Reviewer:** qa
+**Commit:** 54b8f142
+**Verdict: APPROVED**
+
+RAW-verified:
+- `bun test src/infrastructure/__tests__/orchStateSchema.test.ts` → **103 pass / 0 fail** (QA-observed)
+- `bun scripts/test-orch-validate-ac.mjs` → **29/29** (QA-observed)
+- `bun tsc --noEmit` → **0 errors** (QA-observed, no output = clean)
+- All 5 hardening items source-verified (tokenizer readString() logic, formatZodIssue() 5 mappers, exit paths, invocation contract)
+- Deprecated test file NOT touched by 54b8f142 (git show confirms empty diff on _deprecated/)
+
+**Zone verdict:** ACCEPTABLE — CLI integration tests co-located with schema suite, justified by shared schema SSOT dependency and bun test DoD gate alignment.
+
+**Report:** reports/TASK_REPORT_SSOT-W1-ZOD-VALIDATOR-CLI.md
+**DJ:** docs/agent-memory/decisions/sprint-SSOT-INTEGRITY-PERIMETER-qa.md § qa-S3
