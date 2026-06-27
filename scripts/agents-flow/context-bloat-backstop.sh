@@ -59,8 +59,9 @@ REL_PATH="${FILE_PATH#${PROJECT_ROOT}/}"
 MATCHED_CAP=""
 MATCHED_CLASS=""
 MATCHED_EXEMPT_SIBLING=""
+MATCHED_EXEMPT=""
 
-while IFS=$'\t' read -r pattern cap class exempt_sibling; do
+while IFS=$'\t' read -r pattern cap class exempt_sibling exempt_flag; do
   # Use bash glob-style match (fnmatch via case) — ** not natively supported
   # in bash case, but our patterns are shallow enough to work with simple globs.
   # For docs/agents/*/flow/**/*.md and .claude/skills/**/*.md we use an extended match.
@@ -69,13 +70,17 @@ while IFS=$'\t' read -r pattern cap class exempt_sibling; do
       MATCHED_CAP="$cap"
       MATCHED_CLASS="$class"
       MATCHED_EXEMPT_SIBLING="$exempt_sibling"
+      MATCHED_EXEMPT="$exempt_flag"
       break
       ;;
   esac
-done < <(jq -r '.caps[] | [.pattern, (.cap | tostring), .class, (.exempt_if_sibling // "")] | @tsv' "$CAPS_FILE" 2>/dev/null || true)
+done < <(jq -r '.caps[] | [.pattern, (.cap | tostring), .class, (.exempt_if_sibling // ""), (.exempt // false | tostring)] | @tsv' "$CAPS_FILE" 2>/dev/null || true)
 
 # --- Non-governed path → instant exit (hot path, no wc -l) ---
 [ -z "$MATCHED_CAP" ] && exit 0
+
+# --- EXEMPT flag: entry explicitly marked exempt (e.g. archive paths) → skip governance ---
+[ "$MATCHED_EXEMPT" = "true" ] && exit 0
 
 # --- EXEMPT-IF-SIBLING: vendor/third-party files are not ours to govern ---
 # If the matched cap declares an exempt_if_sibling filename and a sibling with

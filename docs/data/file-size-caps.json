@@ -4,6 +4,13 @@
   "_maintained_by": "agents-architect (policy) / agent-father (implementation)",
   "caps": [
     {
+      "pattern": "docs/agent-memory/notebooks/archive/*.md",
+      "cap": 9999,
+      "class": "agent-notebook-archive",
+      "exempt": true,
+      "_note": "Archive files produced by notebook splits are by-design large (hold pruned history). EXEMPT from the 200L cap. MUST be listed BEFORE docs/agent-memory/notebooks/*.md — bash case first-match-wins; without this entry, the wildcard *.md above would over-match archive paths (bash * matches across /)."
+    },
+    {
       "pattern": "docs/agent-memory/notebooks/*.md",
       "cap": 200,
       "class": "agent-notebook",

@@ -144,6 +144,14 @@ docs/data/orch/archive/backlog-detail.json. Adds detail_ref pointer to every stu
 Atomic temp-then-rename; cold-first ordering; mtime-CAS retry; idempotent (existing cold wins).
 Lazy-load full detail for one id: `jq '.items["<id>"]' docs/data/orch/archive/backlog-detail.json`
 
+**CANONICAL: Context-bloat backstop regression test (FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH)**
+```bash
+# Regression: T1 archive/*.md >200L → EXEMPT, T2 top-level notebooks/*.md >200L → BREACH
+bash scripts/agents-flow/context-bloat-backstop.test.sh
+# Exit 0 = both pass. Exit 1 = failure.
+# Owning brief: docs/architecture-briefs/2026-05-24-context-bloat-backstop-hook.md §2a
+```
+
 **CANONICAL: Fleet worktree push backstop (TASK-AUTO-PUSH-A)**
 ```bash
 # No-op check (safe, never pushes unless ahead > threshold):

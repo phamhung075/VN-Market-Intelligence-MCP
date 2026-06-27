@@ -84,6 +84,23 @@ The hook reads caps with a single `jq` expression from `docs/data/file-size-caps
 - `docs/signals/**` — signal bus files
 - `docs/architecture-briefs/**` — output artifacts
 - Anything not matching a `caps[].pattern` entry
+- `docs/agent-memory/notebooks/archive/*.md` — explicitly exempt via `"exempt": true` flag in caps entry (see §2a below)
+
+### §2a — Archive Carve-Out (FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH, 2026-06-27)
+
+**Problem:** Bash `case "$REL_PATH" in $pattern)` over-matches because `*` in a bash glob matches across `/`.
+Pattern `docs/agent-memory/notebooks/*.md` matched `docs/agent-memory/notebooks/archive/<x>.md`.
+Archives are by-design large (hold pruned history from notebook splits) → every split caused a permanent false-breach signal.
+
+**Fix (two coordinated edits):**
+
+1. `docs/data/file-size-caps.json` — added archive-specific entry with `"exempt": true` and `"cap": 9999` as the FIRST element in `caps[]` (before the `notebooks/*.md` entry). First-match-wins iteration picks this up first for archive paths.
+
+2. `scripts/agents-flow/context-bloat-backstop.sh` — jq query extended to extract `exempt` column; added guard `[ "$MATCHED_EXEMPT" = "true" ] && exit 0` immediately after the non-governed hot-path exit.
+
+**Regression test:** `bash scripts/agents-flow/context-bloat-backstop.test.sh`
+- T1: `archive/*.md` >200L → EXEMPT (0 signals) ✓
+- T2: top-level `notebooks/*.md` >200L → BREACH (signal emitted) ✓
 
 ---
 
