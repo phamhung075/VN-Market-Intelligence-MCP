@@ -228,12 +228,12 @@
   ],
   "head": {
     "status": "ready",
-    "active_task_id": "SSOT-W1-BASH-SHIM",
+    "active_task_id": "SSOT-W1-HEAD-METADATA-COLLAPSE",
     "next_agent": "developer",
-    "next_action": "Demote scripts/orch-state-validate.sh to thin shim that exec's the canonical scripts/orch-validate.mjs; update existing callers (no behavior change). Zone: scripts/",
+    "next_action": "Retarget 3 regressor scripts off task_board.head stub (G-7 schema folded into Zod .strict()). Zone: scripts/",
     "updated_by": "pm",
-    "updated_at": "2026-06-27T13:36:02Z",
-    "note": "SSOT-W1-ORCH-APPLY-WRAPPER DONE (developer, commit 86286d26 verified). Advancing to rank-6 BASH-SHIM: demote validate.sh to thin wrapper. Depends on SSOT-W1-ZOD-VALIDATOR-CLI (DONE). Next task after: SSOT-W1-HEAD-METADATA-COLLAPSE (rank-8)."
+    "updated_at": "2026-06-27T14:00:00Z",
+    "note": "SSOT-W1-BASH-SHIM DONE (developer, commit 33b3f12b verified). Advancing to rank-8 HEAD-METADATA-COLLAPSE: retarget 3 regressor scripts. Data collapse/dedup DONE by po-s121; script retarget remaining for dev."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2506,7 +2506,7 @@
             "id": "SSOT-W1-BASH-SHIM",
             "title": "scripts/orch-state-validate.sh demote → thin shim exec'ing scripts/orch-validate.mjs; existing callers unchanged",
             "owner": "developer",
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "zone": "scripts/",
             "created_at": "2026-06-27T08:45:20Z",
             "size": "S",
@@ -2514,7 +2514,10 @@
               "SSOT-W1-ZOD-VALIDATOR-CLI"
             ],
             "type": "SPRINT-S",
-            "note": "ONE validation SSOT; replaces hardcoded bash enum"
+            "note": "ONE validation SSOT; replaces hardcoded bash enum",
+            "done_by": "developer",
+            "done_at": "2026-06-27T14:00:00Z",
+            "resolved_sha": "33b3f12b"
           },
           {
             "id": "SSOT-W1-DATA-CLEAN",

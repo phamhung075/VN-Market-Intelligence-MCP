@@ -114,3 +114,28 @@
 **why-decision:** Router RAW-verified commits (86286d26) genuine DONE (grep-proof: 0 raw writers outside orch-apply.sh wrapper found across codebase; all 13 call sites routed). DJ-GATE-1 satisfied: this decision-journal STEP embeds task-id **SSOT-W1-ORCH-APPLY-WRAPPER** in markdown-bold format. Advancing to rank-6 (natural next per dependency graph + wave-1 completion) unblocks final Stage-1c enforcement tier (bash shim + head collapse + ops rebuild).
 
 **why-change:** Developer completed Point-2a enforcement (gated write wrapper). The 5 GAP-2 critical-path tasks are now complete: rank-1 (ZOD-SCHEMA) + rank-2 (ZOD-VALIDATOR-CLI) + rank-3 (SERVER-ENFORCE) + rank-4 (HOOK-ENFORCE) + rank-5 (ORCH-APPLY-WRAPPER). Rank-6+ (BASH-SHIM, HEAD-METADATA-COLLAPSE, OPS-REBUILD, DOC-SYNC) represents the final hardening + documentation pass per SSOT-zod-validation-directive-2026-06-27.md wave-1 completion criteria.
+
+---
+
+### STEP pm-S6 · pm · 2026-06-27T14:00:00Z
+**task-id:** SSOT-W1-BASH-SHIM-BOARD-FLIP
+
+**what-done:**
+- Flipped SSOT-W1-BASH-SHIM status IN_PROGRESS → DONE (developer-completed, commit 33b3f12b verified by router RAW-verify)
+- Updated task metadata in active_sprints[3].tasks: done_by=developer, done_at=2026-06-27T14:00:00Z, resolved_sha=33b3f12b
+- Advanced canonical .head from SSOT-W1-BASH-SHIM → SSOT-W1-HEAD-METADATA-COLLAPSE (rank-8)
+- Updated .head.status=ready, .head.next_agent=developer, .head.next_action="Retarget 3 regressor scripts off task_board.head stub (G-7 schema folded into Zod .strict()). Zone: scripts/"
+- Updated .head.note with resolution evidence: "SSOT-W1-BASH-SHIM DONE (developer, commit 33b3f12b verified). Advancing to rank-8 HEAD-METADATA-COLLAPSE: retarget 3 regressor scripts. Data collapse/dedup DONE by po-s121; script retarget remaining for dev."
+- Validated atomic write: 
+  - jq -e '.head': PASS
+  - bun scripts/orch-validate.mjs: exit 0 PASS (72 SHG coherence warnings, non-blocking)
+  - bash scripts/orch-state-validate.sh: G-1..G-6 all PASS
+- Applied write via gated wrapper: `jq ... orch-state.json | bash scripts/orch-apply.sh`
+
+**what-considered:**
+- Rank-8 (HEAD-METADATA-COLLAPSE) vs rank-6.5/6.7 (OPS-REBUILD, DOC-SYNC) as next: Rank-8 is the natural successor (depends rank-2 ZOD-VALIDATOR-CLI which is DONE; no blockers). Head placement follows ranked_scope priority: HEAD-METADATA-COLLAPSE represents the final core data/structure task before the FIX-only wave-2 tasks. Ranks 6.5/6.7 (OPS-REBUILD, DOC-SYNC) are gate-dependent (OPS blocks on CI-RED gate, DOC-SYNC blocks on BASH-SHIM completion which just landed) and require manual dispatch.
+- Wave-1 task sequencing: BASH-SHIM demotes validate.sh from hardcoded enum to thin shim — this unblocks the DOC-SYNC task (which lists BASH-SHIM as a dependency). HEAD-METADATA-COLLAPSE is the minimal-scope next step (just script retargeting, data collapse already DONE by po-s121).
+
+**why-decision:** Router RAW-verified commit 33b3f12b genuine DONE (scripts/orch-state-validate.sh demoted to 7-line thin shim, all Zod validation moved to scripts/orch-validate.mjs; no gate-coverage loss). DJ-GATE-1 satisfied: this decision-journal STEP embeds task-id **SSOT-W1-BASH-SHIM** in markdown-bold format. Advancing to rank-8 (natural next per dependency graph after rank-6 completion) unblocks final structure collapse task before OPS rebuild + DOC sync gates.
+
+**why-change:** Developer completed the shim demotion (Point-1a thin-wrapper). ALL 6 W1 core SSOT tasks now DONE: rank-1 (ZOD-SCHEMA-MODEL) + rank-2 (ZOD-VALIDATOR-CLI) + rank-3 (SERVER-ENFORCE) + rank-4 (HOOK-ENFORCE) + rank-5 (ORCH-APPLY-WRAPPER) + rank-6 (BASH-SHIM). Rank-8 HEAD-METADATA-COLLAPSE (data collapse + script retarget) represents final payload task before gate-dependent OPS rebuild + DOC sync (ranks 6.5/6.7).
