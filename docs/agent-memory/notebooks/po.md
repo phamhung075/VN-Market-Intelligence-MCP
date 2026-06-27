@@ -1,21 +1,22 @@
 # PO Notebook
 
-_Last: 2026-06-26T22:44:38Z_
+_Last: 2026-06-27T08:06:00Z_
 
-## This cycle — dev-team triage tick (routine)
-21 signals drained (11 cowork ticks, 5 routine bctc, 1 bctc-analyst, 2 context-bloat, 1 tnb, 2 orch-split ack). ALL routine/informational — none generate dev work. read_telegram_reports=empty, list_unresolved_reports=[]. Channels clean.
+## This cycle — open sprint SSOT-INTEGRITY-PERIMETER (from 2026-06-27 deep audit)
+Input: docs/handoffs/orch-state-deep-audit-2026-06-27.{md,json} (8-lens, 60-agent, 48 RAW findings). Verdict NEEDS-WORK: gate false-green across ~70% of lanes + dominant writer bypasses gate.
 
-Board: head idle since 2026-06-25, WIP=0. Dispatcher task list was STALE (REFINE-CRON-ARM / BCTC-PDF-PATH-BACKFILL / VMT-3a / VMT-D do NOT exist; 2 of 3 FB-gate tasks already DONE — only FIX-FB-JARGON-ENGLISH-WORD-LEAK still BACKLOG).
+Lock check FIRST: dev-team singleton + FIX-BCTC-Q1 lock held BUT BCTC work disjoint from SSOT; no lock on any SSOT task id; WIP=0 -> NOT overlapping -> proceed (not defer). Alive dev-team loop = my dispatch mechanism (head-resume), so I only feed the board.
 
-TNB c99 ACK'd (NEEDS_ATTENTION/STABLE): all findings already tracked, no new mints. HIGH carry-forwards F-HPG-DB-EMPTY (19d) + F-ACV-DB-EMPTY (10d) both root to FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP.
+Did (po-s121.jq, ONE atomic gated CAS-guarded write under commit-mutex, commit cf2f4f1b):
+- DATA-CLEAN (mandate seq 4a, file now gate-clean): PARKED->DEFERRED (park_reason kept) · 7x done_verified->DONE_VERIFIED (closed_sprints HSC-1..7) · task_board.head re-collapsed to po-s66 stub · dropped dup task_board.updated_at/_by.
+- OPEN sprint: sprint_goal.entries[] + lean active_sprints[] container (15-item ranked_scope, NO inline prose — avoids the 88.6KB anti-pattern Wave-2 fixes).
+- DISPATCH: ARCH-SSOT-INTEGRITY-PERIMETER -> ready[]; .head=in_progress/architect -> dev-team Step-0b spawns architect.
 
-Decision: PROMOTE 1 task (idle capacity, P1, recurring 9-19 cycles, root of 2 HIGH findings):
-- FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP (FIX, P1, apps/mcp-server/, RECON-FIRST) → dev-team this tick. Kept to WIP=1 to avoid over-parallel host starvation.
-
-Did NOT mint anything for routine signals. macro_health/VIRA/business-context = structural, already backlogged.
+RAW-VERIFY corrected the audit: the "7x lowercase done_verified" are at .task_board.closed_sprints[] NOT top-level .closed_sprints[]. Targeted real path.
 
 ## Carry-over
-- FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP dispatched — expect recon findings + spun-out FIXES (HOSE discovery path vs HNX cookie path). HPG-DISCOVER-CONSOLIDATED-PDF / HPG-REPARSE-POST-REBUILD are TODO sub-tasks.
-- F-VCB-KD-TREND (confirm c073) + F-PC1-LEGAL-RISK (cascade monitor) = signal-quality/legal, NOT dev work.
-- F-12-TICKERS-OVERDUE: Q2 deadline 2026-07-31 (35d) — flag if no progress.
-- Large FU-*/FACTORY-* backlog remains unpromoted (normal sprint-kickoff cadence, not hourly ticks).
+- Cascade armed: architect authors hardening brief (docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md) -> pm decomposes Wave-1 zone tasks (ranks 1-4,6-gate,12) -> dev -> qa -> PO sign-off. PO does NOT spawn (board-driven).
+- Wave-1 SEQUENCING is load-bearing: data-clean DONE -> THEN gate-extend+harden+hard-fail -> THEN orch-apply.sh wrapper routes EVERY writer -> THEN RED 1837a + mcp-server TS->v4 sync.
+- Wave-2 (ranks 7-10) + defer (11,13,14,15) recorded in ranked_scope, NOT promoted.
+- PO-owned later: rank-9 sprint_goal prune-on-close (audit: 11/12 entries map to non-active sprints — stale projection).
+- Push held: fleet-worktree-push launchd timer handles it (commit local-only, dirty-tree-safe).
