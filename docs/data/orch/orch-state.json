@@ -229,11 +229,11 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "BCTC-REFINE-A1",
-    "next_agent": "po",
-    "next_action": "PO verifies cowork ownership (no parallel dispatcher armed) + executes /cron-cowork-team re-arm (unblocks 47 BCTC docs). After A1 done, route A2+B1 parallel (both dev-mcp-server, can run in parallel: different files/queries).",
-    "updated_by": "pm",
-    "updated_at": "2026-06-27T19:05:50Z",
-    "note": "WIP=1: BCTC-REFINE-STALL-RETRIGGER (c075 escalation, 20+ days 47-doc stall + VIC discovery-gap + 0 observability). A1 seq-1 unblocks all downstream. Sequencing: A1→(A2||B1 parallel)→(C1 after A2, B2 after B1)."
+    "next_agent": "dev-team",
+    "next_action": "Router RAW-verified PO A1 NO-GO (refine dispatcher ALIVE, slots fired today; refine_bctc_md work-log empty, 47 stuck PENDING). /cron-cowork-team NOT run. Diagnostic refine_bctc_md spawn IN FLIGHT. On result: drains->dispatcher-spawn-path bug; zero-drain->agent-father. A2/B1 stay closed (WIP=1).",
+    "updated_by": "dev-team",
+    "updated_at": "2026-06-27T19:16:49Z",
+    "note": "WIP=1: BCTC-REFINE-STALL-RETRIGGER A1 re-scoped to DIAGNOSE refine_bctc_md non-execution (NOT dispatcher re-arm; dispatcher proven alive). Downstream A2->C1, B1->B2 unchanged."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2559,16 +2559,16 @@
         "tasks": [
           {
             "id": "BCTC-REFINE-A1",
-            "title": "Re-arm cowork CronCreate via /cron-cowork-team skill",
-            "owner": "po",
+            "title": "Diagnose why dispatched refine_bctc_md never executes (2x/day slots fire, zero work-log, 47 docs stuck PENDING)",
+            "owner": "dev-team",
             "type": "OPS",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "zone": ".claude/",
             "created_at": "2026-06-27T21:00:00Z",
             "size": "XS",
             "priority": "high",
             "depends": [],
-            "note": "CRITICAL GUARD: PO must verify no parallel cowork dispatcher is already armed (double-fire risk per feedback_router_cowork_defer_to_live_leader). Unblocks all 47 docs. Route to PO for explicit cowork-ownership verification before re-arm."
+            "note": "RE-SCOPED from re-arm-dispatcher. PO A1 verification (commit 8d3ba910) = NO-GO, router RAW-verified: refine slots fired TODAY (slot-1 09:04Z, slot-2 14:04Z) so dispatcher ALIVE (architect 'dark since 06-07' premise FALSE); but get_agent_work_log{refine_bctc_md}=[] and get_bctc_pending_refine=47 all PENDING -> agent dispatched yet NEVER executes (spawn-narrates-not-executes). Router running ONE diagnostic refine_bctc_md spawn + RAW probe. Drains -> cowork dispatcher->agent spawn-path bug; zero-drain -> agent flow/spawnability defect -> agent-father. Do NOT run /cron-cowork-team (double-fire, fixes nothing)."
           },
           {
             "id": "BCTC-REFINE-A2",
