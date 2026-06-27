@@ -216,6 +216,14 @@
       "decision": "FLIP TODO→DONE: apps/mcp-server/src/infrastructure/orchStateSchema.ts (530 LOC) + __tests__/orchStateSchema.test.ts (64 tests) — nested Zod SSOT schema covering all 9 lanes by construction, StatusEnum 12 values (READY added as ADD-1, PO-ratified), .strict()/.passthrough() per-lane, checkLaneCoherence() exported, superRefine reserved for head.active_task_id RI, TERMINAL_SET exported. Commits: bfb924f5 (feat) + 7b35efb5 (journal+notebook). Router verified GREEN: tsc exit=0, 64+49 tests pass, index-check exit=0, DJ-GATE-1 journal committed. ADVANCE HEAD: rank-2 SSOT-W1-ZOD-VALIDATOR-CLI (dep: rank-1) now dispatchable; rank-3 SSOT-W1-SERVER-ENFORCE (dep: rank-1) co-dispatchable.",
       "what_considered": "only path: verify router raw-test results (tsc, test count, index-check, journal present), check commits in log, advance head to next unblocked rank per ranked_scope sequence. Both rank-2 and rank-3 depend only on rank-1, so both unblock in parallel; set head to rank-2 per directive Step 3 sequencing.",
       "why_change": "Task DONE per acceptance criteria; board update closes the delivery gate per DJ-GATE-1 protocol (journal entry + DONE flip + commit) and re-arms dispatch lane for rank-2 specialist."
+    },
+    {
+      "agent": "po",
+      "task_id": "SSOT-INTEGRITY-PERIMETER",
+      "timestamp": "2026-06-27T11:59:38Z",
+      "decision": "DoD-HARDEN (po-s122) after router RAW-verified the deploy surface. GAP-3 hardening-brief: directive SSOT-zod-validation-directive-2026-06-27.md is CANONICAL design-of-record — do NOT back-fill SSOT-INTEGRITY-PERIMETER-hardening.md (never authored; ADD-1 READY ratified + ADD-2 shipped + tests green = zero remaining design value; back-fill would be doc-theater). GAP-4 dual-point RULE-PARITY (3-tier): Tier-1 STRUCTURAL (TaskSchema/StatusEnum-12/.strict()/head.active_task_id-RI) hard-blocks BOTH points NOW (parity confirmed). Tier-2 FILE-REF-INTEGRITY (detail_ref/payload_ref) hard-blocks CLI Stage-1c ONLY today — orchStateStore.ts L178-183 EXPLICITLY excludes checkRefIntegrity from Point-2; live data clean (0 dangling) so promote checkRefIntegrity into shared OrchStateSchema.superRefine (both points) via SSOT-W2-RULE-PARITY-PROMOTE. Tier-3 LANE-COHERENCE (ADD-2) WARN-only at CLI / absent from schema; 72 live violations (verified node orch-validate.mjs exit 0) MOSTLY legit-DEFERRED/BLOCKED backlog rows — KEEP warn-only, do NOT promote to blocking until (i) 72->0 data true-up AND (ii) Wave-2 design call on whether backlog=>{BACKLOG} widens to admit DEFERRED/BLOCKED/TODO. Promoting before data-clean throws EVERY server write. Full decision lives in active_sprints[SSOT-INTEGRITY-PERIMETER].verification_gate.",
+      "what_considered": "Gap-3: back-fill brief vs mark directive canonical -> canonical (no design value left). Gap-4: promote lane-coherence now vs keep warn-only -> warn-only (72 legit rows; blocking throws every server write). Tier-2 ref-integrity safe to promote now (0 dangling).",
+      "why_change": "Schema superRefine blocks head-RI ONLY; the two enforcement points carry DIFFERENT blocking sets (real asymmetry, not doc nicety) — DoD now gates rebuild-to-live + 0-bypass-writers + doc-sync + rule-parity so SIGN-OFF cannot false-green."
     }
   ],
   "head": {
@@ -978,8 +986,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": 1782548433.034888,
-    "_updated_by": "pm",
+    "_updated_at": 1782561470,
+    "_updated_by": "po-s122",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -2494,7 +2502,8 @@
               "SSOT-W1-ZOD-VALIDATOR-CLI"
             ],
             "type": "SPRINT-S",
-            "note": "Replaces 290 po-s*/router-*.jq apply patterns"
+            "note": "Replaces 290 po-s*/router-*.jq apply patterns",
+            "acceptance": "DONE = 0 direct hot-file writers remain: the ~290/tick po-s*/router-*.jq apply idiom + scripts/orch-backlog-stub.sh + dev-team flow head-reset (docs/agents/dev-team/flow/main.md direct mv) ALL route through scripts/orch-apply.sh. 'wrapper file exists' is NOT done. Verify: grep finds 0 raw `mv ... orch-state.json` / `> ...orch-state.json` writers outside orch-apply.sh."
           },
           {
             "id": "SSOT-W1-BASH-SHIM",
@@ -2550,6 +2559,44 @@
             "note": "Dangling refs fixed. Data commit f29e297e verified via DJ entry task-id:SSOT-W1-FIX-DANGLING-PAYLOAD-REFS",
             "done_by": "router",
             "done_at": "2026-06-27T11:22:54Z"
+          },
+          {
+            "id": "SSOT-W1-OPS-REBUILD-ENFORCE",
+            "title": "REBUILD-TO-LIVE: ops rebuilds mcp-server (single-svc, verify image ID) so OrchStateSchema.parse enforces Point-2 on LIVE task_claim/task_release/scheduler writes. SERVER-ENFORCE is in source (committed 12:46) but the running container predates it (Up 16h, bun loaded old src at boot, no hot-reload) -> Point-2 is NOT live. QA RAW-verifies by injecting a bad status server-side against the REBUILT container and confirming the LIVE server throws (directive Acceptance #6).",
+            "owner": "ops",
+            "status": "TODO",
+            "zone": "ops/rebuild",
+            "created_at": "2026-06-27T11:57:50Z",
+            "created_by": "po-s122",
+            "size": "S",
+            "depends": [
+              "SSOT-W1-ZOD-SCHEMA-MODEL",
+              "SSOT-W1-ZOD-VALIDATOR-CLI",
+              "SSOT-W1-SERVER-ENFORCE"
+            ],
+            "type": "FIX",
+            "wave": 1,
+            "dispatch_gate": "Dispatch ONLY after FIX-CI-RED-EAC0CC65-BUNTEST clears; ops-owned, NOT a coding-lane task — dev-team head-resume loop must not auto-grab. PO does not drive the rebuild.",
+            "verification_gate": "QA injects a non-enum status via a server-side write path (task_claim) against the REBUILT image and confirms orchStateStore throws (Point-2 LIVE). FALSE-GREEN GUARD: a source-only / typecheck / sidecar-parse pass is NOT acceptance — the LIVE running process must reject.",
+            "note": "Gap-1 (REBUILD-TO-LIVE false-green). memory: feedback_rebuild_after_dev_change + feedback_mcp_server_stale_image_mem_leak_rebuild_fixes."
+          },
+          {
+            "id": "SSOT-W1-DOC-SYNC-WRITE-CONTRACT",
+            "title": "DOC-SYNC the orch-state write-contract: (a) CLAUDE.md add a clause 'route EVERY hot-file orch-state.json write via scripts/orch-apply.sh, never raw mv'; (b) docs/policies/dev-standards.md add orch-apply.sh as the canonical write pointer (orch-validate.mjs already listed); (c) repoint docs/agents/*/flow/ writers at orch-apply.sh; (d) .claude/skills/dispatch/SKILL.md if relevant.",
+            "owner": "pm",
+            "status": "TODO",
+            "zone": "docs/",
+            "created_at": "2026-06-27T11:57:50Z",
+            "created_by": "po-s122",
+            "size": "S",
+            "depends": [
+              "SSOT-W1-ORCH-APPLY-WRAPPER",
+              "SSOT-W1-BASH-SHIM"
+            ],
+            "type": "FIX",
+            "wave": 1,
+            "verification_gate": "grep proves CLAUDE.md + dev-standards.md carry the orch-apply.sh write-contract clause AND 0 flow docs still instruct a raw mv/redirect into orch-state.json.",
+            "note": "Gap-3 (DOC-SYNC). Hardening brief NOT back-filled — the directive SSOT-zod-validation-directive-2026-06-27.md is the CANONICAL design-of-record (po-s122 decision; ADD-1/ADD-2 already resolved + shipped)."
           }
         ],
         "ranked_scope": [
@@ -2721,6 +2768,33 @@
             "effort": "S",
             "dep": "",
             "title": "Signal-row data hygiene — null-ts row + duplicate sau-d4 id + validator parseable-ts/unique-id check"
+          },
+          {
+            "rank": 6.5,
+            "id": "SSOT-W1-OPS-REBUILD-ENFORCE",
+            "wave": 1,
+            "owner": "ops",
+            "effort": "S",
+            "dep": "1,2,3",
+            "title": "REBUILD-TO-LIVE mcp-server so Point-2 OrchStateSchema.parse enforces on live writes; QA injects bad status server-side"
+          },
+          {
+            "rank": 6.7,
+            "id": "SSOT-W1-DOC-SYNC-WRITE-CONTRACT",
+            "wave": 1,
+            "owner": "pm",
+            "effort": "S",
+            "dep": "5,6",
+            "title": "DOC-SYNC write-contract: CLAUDE.md + dev-standards.md orch-apply.sh canonical pointer + flow writers repointed"
+          },
+          {
+            "rank": 9.5,
+            "id": "SSOT-W2-RULE-PARITY-PROMOTE",
+            "wave": 2,
+            "owner": "dev-mcp-server",
+            "effort": "M",
+            "dep": "data-true-up",
+            "title": "After 72->0 data true-up + rule-resolution, promote checkRefIntegrity + checkLaneCoherence into OrchStateSchema.superRefine (both points block) + rebuild"
           }
         ],
         "implementation_strategy": "zod-typed-ssot-schema + dual-point-enforcement + auto-fix-errors",
@@ -2740,6 +2814,28 @@
           "updated_by": "pm",
           "updated_at": "2026-06-27T11:22:54Z",
           "note": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS prerequisite cleared (commit f29e297e verified). Advancing to rank-4 HOOK-ENFORCE: Point-1 enforcement via Claude hook (PreToolUse + PostToolUse). Depends on rank-1 ZOD-SCHEMA-MODEL and rank-2 ZOD-VALIDATOR-CLI."
+        },
+        "verification_gate": {
+          "_added_by": "po-s122",
+          "_added_at": "2026-06-27T11:57:50Z",
+          "_rationale": "Router RAW-verified deployment surface 2026-06-27 (6-prober + live probe): 3/6 W1 Zod tasks DONE in source (SCHEMA-MODEL/VALIDATOR-CLI/SERVER-ENFORCE) but the perimeter is half-live. DoD hardened so SIGN-OFF cannot certify 'done' while the gaps below are open.",
+          "wave1_done_when": [
+            "All 6 W1 TS+script tasks DONE_VERIFIED (SCHEMA-MODEL, VALIDATOR-CLI, SERVER-ENFORCE, HOOK-ENFORCE, ORCH-APPLY-WRAPPER, BASH-SHIM) + SSOT-W1-HEAD-METADATA-COLLAPSE 3-script retarget DONE.",
+            "GAP-1 REBUILD-TO-LIVE: ops rebuilt mcp-server (single-svc, image-ID verified) so OrchStateSchema.parse enforces on LIVE task_claim/scheduler writes; QA RAW-verifies by injecting a bad status server-side and confirming the LIVE process throws (NOT a source/sidecar parse). Task: SSOT-W1-OPS-REBUILD-ENFORCE.",
+            "GAP-2 EVERY-WRITER-ROUTED: 0 direct hot-file writers remain — the ~290/tick po-s*/router-*.jq apply idiom + scripts/orch-backlog-stub.sh + dev-team flow head-reset all route through scripts/orch-apply.sh. 'wrapper file exists' is NOT sufficient. Acceptance encoded on SSOT-W1-ORCH-APPLY-WRAPPER.",
+            "GAP-3 DOC-SYNC: CLAUDE.md write-contract clause + dev-standards.md canonical orch-apply.sh pointer + flow writers repointed + dispatch SKILL if relevant. Task: SSOT-W1-DOC-SYNC-WRITE-CONTRACT.",
+            "GAP-4 RULE-PARITY documented + sequenced (see .rule_parity)."
+          ],
+          "rule_parity": {
+            "_decision_by": "po-s122",
+            "_evidence": "orchStateStore.ts L178-183 calls OrchStateSchema.safeParse and EXPLICITLY excludes checkRefIntegrity (dangling refs allowed at Point-2). Schema superRefine (L334) = head.active_task_id RI ONLY. checkLaneCoherence + checkRefIntegrity = standalone exports NOT wired into the blocking schema (orchStateSchema.ts L359-363 documents the deferral). CLI orch-validate.mjs: Stage-1b lane-coherence WARN-only (72 live violations, verified exit 0), Stage-1c ref-integrity HARD-BLOCK (0 dangling post FIX-DANGLING, verified).",
+            "tier1_structural_HARD_BLOCK_BOTH_POINTS_NOW": "TaskSchema shape + StatusEnum(12 incl READY) + .strict() unknown/dup-object-key reject + head.active_task_id referential integrity. Point-2 (orchStateStore.safeParse) and Point-3 (CLI Stage-1) enforce identically TODAY. Parity confirmed.",
+            "tier2_file_ref_integrity": "detail_ref/payload_ref dangling — TODAY hard-block at CLI Stage-1c ONLY; server schema superRefine deliberately excludes it (genuine asymmetry). Live data is now CLEAN (0 dangling). DECISION: promote checkRefIntegrity into the shared OrchStateSchema.superRefine via injected fs-resolver so BOTH points block — SAFE NOW because 0 dangling. Sequenced as SSOT-W2-RULE-PARITY-PROMOTE (needs fs-resolver wiring + rebuild). Until promoted, Point-1/Point-3 (hook+CLI) is the ref-integrity gate; uncovered path (server-internal write of a bad ref) is LOW exposure (refs are agent-jq-written, hook/CLI-covered once WRAPPER+HOOK land).",
+            "tier3_lane_coherence": "ADD-2 lane->status coherence — WARN-only at CLI, ABSENT from schema. 72 live violations (verified), MOSTLY legitimately-DEFERRED/BLOCKED/TODO backlog rows (not corrupt). DECISION: KEEP warn-only; do NOT promote to a blocking superRefine until BOTH (i) the data true-up cleans the 72 rows AND (ii) a Wave-2 design call resolves whether the backlog=>{BACKLOG} mapping WIDENS to admit DEFERRED/BLOCKED/TODO or the data relabels. Promoting before data-clean would make EVERY server write (task_claim/scheduler) throw — catastrophic. 72->0 data true-up is a HARD precondition for promotion.",
+            "promotion_task": "SSOT-W2-RULE-PARITY-PROMOTE (wave-2, dev-mcp-server): after data true-up, promote checkRefIntegrity + (rule-resolved) checkLaneCoherence into OrchStateSchema.superRefine + rebuild so both points block the same set.",
+            "seventy_two_rows_cleaned_before_blocking": "YES — mandatory. Data true-up (72->0) gates lane-coherence promotion."
+          },
+          "design_of_record": "docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md is CANONICAL. The architect hardening brief (docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md) was NEVER authored; dev built straight from the directive + tests green + ADD-1 READY ratified (PO option-a) + ADD-2 shipped. DECISION (po-s122): do NOT back-fill the brief — it would duplicate the directive + the shipped schema for zero design value; remaining design surface (rule-parity tiering) is resolved in .rule_parity here. The directive stands as design-of-record."
         }
       }
     ],
@@ -6495,12 +6591,12 @@
         }
       ]
     },
-    "last_triaged_at": "2026-06-26T15:26:11Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-06-27T11:57:50Z",
+    "last_triaged_by": "po-s122"
   },
   "_meta": {
-    "updated_at": "2026-06-27T08:03:52Z",
-    "updated_by": "po-s121",
+    "updated_at": "2026-06-27T11:57:50Z",
+    "updated_by": "po-s122",
     "schema": "v4",
     "ssot": true
   },
