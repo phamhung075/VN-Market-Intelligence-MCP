@@ -725,6 +725,260 @@ describe("TERMINAL_SET: sprint eviction predicate values", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// QA-1 — All-lane status enum injection (closes 3-of-9 false-green gap)
+//
+// SSOT-W1-ZOD-SCHEMA-MODEL acceptance gate.
+// Prior coverage: M3 covers backlog (lane 1), active_sprints (lane 8), done (lane 2).
+// This suite adds the 6 missing lanes: done_verified, in_progress, qa, ready,
+// review, closed_sprints. Together M3 + QA-1 guarantee all 9 lanes reject
+// invalid status values — "by construction" via the shared Lane type.
+//
+// Injected values: "PARKED" (common misuse), "done_verified" (lowercase mis-spell),
+// "FOLDED" (legacy pre-enum value).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Minimal valid OrchState fixture (no active_task_id — simpler base). */
+function makeNullHeadState(laneOverrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    _meta: { schema: "v4" },
+    head: { status: "idle", active_task_id: null, updated_by: "t", updated_at: "2026-01-01T00:00:00Z" },
+    signal_queue: { _updated_at: "2026-01-01T00:00:00Z", _updated_by: "t", rows: [], archive: [] },
+    task_board: {
+      active_sprints: [],
+      ...laneOverrides,
+    },
+  };
+}
+
+describe("QA-1 — All-lane status enum injection (9 of 9 lanes)", () => {
+  // lanes 1 (backlog), 8 (active_sprints), 2 (done) already covered by M3-a/b/c.
+  // lanes 3-7 + 9 are new coverage:
+
+  it("QA-1-done_verified: FOLDED in done_verified task is rejected", () => {
+    const state = makeNullHeadState({
+      done_verified: [{ id: "T1", status: "FOLDED", title: "bad" }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.code === "invalid_enum_value")).toBe(true);
+    }
+  });
+
+  it("QA-1-in_progress: done_verified (lowercase) in in_progress task is rejected", () => {
+    const state = makeNullHeadState({
+      in_progress: [{ id: "T2", status: "done_verified", title: "bad" }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.code === "invalid_enum_value")).toBe(true);
+    }
+  });
+
+  it("QA-1-qa: PARKED in qa task is rejected", () => {
+    const state = makeNullHeadState({
+      qa: [{ id: "T3", status: "PARKED", title: "bad" }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.code === "invalid_enum_value")).toBe(true);
+    }
+  });
+
+  it("QA-1-ready: FOLDED in ready task is rejected", () => {
+    const state = makeNullHeadState({
+      ready: [{ id: "T4", status: "FOLDED", title: "bad" }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.code === "invalid_enum_value")).toBe(true);
+    }
+  });
+
+  it("QA-1-review: PARKED in review task is rejected", () => {
+    const state = makeNullHeadState({
+      review: [{ id: "T5", status: "PARKED", title: "bad" }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.code === "invalid_enum_value")).toBe(true);
+    }
+  });
+
+  it("QA-1-closed_sprints: done_verified (lowercase) in closed_sprint task is rejected", () => {
+    const state = makeNullHeadState({
+      closed_sprints: [{
+        id: "SP-CLOSED", status: "DONE",
+        tasks: [{ id: "T6", status: "done_verified", title: "bad" }],
+      }],
+    });
+    const result = OrchStateSchema.safeParse(state);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.code === "invalid_enum_value")).toBe(true);
+    }
+  });
+
+  it("QA-1-all-9: summary — valid canonical status in all 9 lanes passes", () => {
+    // This is M3-d extracted as QA-1 canary: if all 9 accept valid values,
+    // the Lane type is correctly wired for all 9 lanes.
+    const state = {
+      _meta: { schema: "v4" },
+      head: { status: "in_progress", active_task_id: "A", updated_by: "t", updated_at: "2026-01-01T00:00:00Z" },
+      signal_queue: { _updated_at: "2026-01-01T00:00:00Z", _updated_by: "t", rows: [], archive: [] },
+      task_board: {
+        backlog:       [{ id: "A", status: "BACKLOG" }],       // lane 1
+        done:          [{ id: "B", status: "DONE" }],          // lane 2
+        done_verified: [{ id: "C", status: "DONE_VERIFIED" }], // lane 3
+        in_progress:   [{ id: "D", status: "IN_PROGRESS" }],  // lane 4
+        qa:            [{ id: "E", status: "QA" }],            // lane 5
+        ready:         [{ id: "F", status: "READY" }],         // lane 6
+        review:        [{ id: "G", status: "REVIEW" }],        // lane 7
+        active_sprints:  [{ id: "SP-1", status: "ACTIVE", tasks: [{ id: "H", status: "TODO" }] }],   // lane 8
+        closed_sprints:  [{ id: "SP-X", status: "DONE",   tasks: [{ id: "I", status: "DONE" }] }],  // lane 9
+      },
+    };
+    const result = OrchStateSchema.safeParse(state);
+    if (!result.success) {
+      console.error("[test] QA-1-all-9 FAIL:", JSON.stringify(result.error.issues, null, 2));
+    }
+    expect(result.success).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QA-3 — Unknown key under .strict() object rejected with unrecognized_keys
+//
+// SSOT-W1-ZOD-SCHEMA-MODEL acceptance gate.
+// .strict() on OrchStateSchema (root) and TaskBoardSchema reject any key not
+// enumerated in the schema. The error code is "unrecognized_keys". This class
+// of error previously allowed the dominant corruption pattern: "jq nests whole
+// orch-state doc as extra key into task_board."
+//
+// Auto-fix hint from orch-validate.mjs (Section 2.3):
+//   unrecognized_keys → "remove or migrate to cold storage (docs/data/orch/archive/)"
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("QA-3 — Unknown key under .strict() rejected (unrecognized_keys)", () => {
+  it("QA-3-root: unknown root key is rejected", () => {
+    const bad = { ...makeMinimalOrchState(), INJECTED_UNKNOWN_KEY: "malicious" };
+    const result = OrchStateSchema.safeParse(bad);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find(i => i.code === "unrecognized_keys");
+      expect(issue).toBeDefined();
+    }
+  });
+
+  it("QA-3-task_board: unknown task_board key is rejected with unrecognized_keys", () => {
+    const base = makeMinimalOrchState() as Record<string, unknown>;
+    const tb = base["task_board"] as Record<string, unknown>;
+    const bad = { ...base, task_board: { ...tb, INJECTED_TB_KEY: "garbage" } };
+    const result = OrchStateSchema.safeParse(bad);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find(i => i.code === "unrecognized_keys");
+      expect(issue).toBeDefined();
+      // Code contract: orch-validate.mjs maps unrecognized_keys →
+      //   "remove or migrate to cold storage (docs/data/orch/archive/backlog-detail.json)"
+      // This test verifies the schema produces the error code the CLI maps to that hint.
+    }
+  });
+
+  it("QA-3-nested-doc: whole orch-state doc as extra task_board key is rejected", () => {
+    const base = makeMinimalOrchState() as Record<string, unknown>;
+    const tb = base["task_board"] as Record<string, unknown>;
+    // Simulate the dominant corruption class: "jq nests whole doc into task_board"
+    const bad = { ...base, task_board: { ...tb, head: base["head"], signal_queue: base["signal_queue"] } };
+    const result = OrchStateSchema.safeParse(bad);
+    // head and signal_queue are not task_board keys → unrecognized_keys
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find(i => i.code === "unrecognized_keys");
+      expect(issue).toBeDefined();
+    }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QA-4 — checkRefIntegrity isolation (mock FileResolver)
+//
+// SSOT-W1-ZOD-SCHEMA-MODEL acceptance gate.
+// checkRefIntegrity() is exported and fully testable without filesystem access
+// via the injected FileResolver interface. This gate verifies the function is
+// exported, accepts a mock resolver, and correctly identifies dangling refs.
+//
+// See also R1 and R2 tests for additional coverage.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("QA-4 — checkRefIntegrity exported + mock FileResolver isolation", () => {
+  it("QA-4-export: checkRefIntegrity is exported from orchStateSchema", () => {
+    // If this import compiled, the export exists — this test is the runtime proof.
+    expect(typeof checkRefIntegrity).toBe("function");
+  });
+
+  it("QA-4-mock-pass: mock resolver that returns true → no issues", () => {
+    const state = OrchStateSchema.parse({
+      _meta: { schema: "v4" },
+      head: { status: "idle", active_task_id: null, updated_by: "t", updated_at: "2026-01-01T00:00:00Z" },
+      signal_queue: {
+        _updated_at: "2026-01-01T00:00:00Z", _updated_by: "t",
+        rows: [{ id: "s1", summary: "s", severity: "LOW", status: "NEW", payload_ref: "docs/signals/any.json" }],
+        archive: [],
+      },
+      task_board: {
+        backlog: [{ id: "T1", status: "BACKLOG", detail_ref: "docs/some/ref.md" }],
+        active_sprints: [],
+      },
+    });
+    const alwaysExists: FileResolver = () => true;
+    const issues = checkRefIntegrity(state, alwaysExists, "/project");
+    expect(issues).toHaveLength(0);
+  });
+
+  it("QA-4-mock-fail: mock resolver that returns false → dangling ref issue", () => {
+    const state = OrchStateSchema.parse({
+      _meta: { schema: "v4" },
+      head: { status: "idle", active_task_id: null, updated_by: "t", updated_at: "2026-01-01T00:00:00Z" },
+      signal_queue: {
+        _updated_at: "2026-01-01T00:00:00Z", _updated_by: "t",
+        rows: [{ id: "s1", summary: "s", severity: "LOW", status: "NEW", payload_ref: "docs/signals/deleted.json" }],
+        archive: [],
+      },
+      task_board: { backlog: [], active_sprints: [] },
+    });
+    const neverExists: FileResolver = () => false;
+    const issues = checkRefIntegrity(state, neverExists, "/project");
+    expect(issues.length).toBeGreaterThanOrEqual(1);
+    expect(issues[0]?.ref).toContain("deleted.json");
+    expect(issues[0]?.fix).toContain("/project/");
+  });
+
+  it("QA-4-sprint-detail-ref: dangling detail_ref in active_sprint task is flagged", () => {
+    const state = OrchStateSchema.parse({
+      _meta: { schema: "v4" },
+      head: { status: "idle", active_task_id: null, updated_by: "t", updated_at: "2026-01-01T00:00:00Z" },
+      signal_queue: { _updated_at: "2026-01-01T00:00:00Z", _updated_by: "t", rows: [], archive: [] },
+      task_board: {
+        backlog: [],
+        active_sprints: [{
+          id: "SP-1", status: "ACTIVE",
+          tasks: [{ id: "T1", status: "IN_PROGRESS", detail_ref: "docs/handoffs/NONEXISTENT.md" }],
+        }],
+      },
+    });
+    const neverExists: FileResolver = () => false;
+    const issues = checkRefIntegrity(state, neverExists, "/project");
+    expect(issues.length).toBeGreaterThanOrEqual(1);
+    expect(issues[0]?.path).toContain("active_sprints");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // T1 — z.infer types export check (compile-time; runtime is a no-op)
 // ─────────────────────────────────────────────────────────────────────────────
 

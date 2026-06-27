@@ -39,3 +39,11 @@
 - Hand-edit the JSON (rejected — constraint-1 mandates jq-slice → temp → validate → mv atomic protocol)
 **why-decision:** jq atomic write is the only compliant protocol; 7 refs split cleanly into two cases (repoint 6, null 1); both validate gates pass confirming no structural regression.
 **why-change:** no change from plan — all 7 identified refs matched the task spec exactly.
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-06-27T17:22:36Z
+**task-id:** SSOT-W1-ZOD-SCHEMA-MODEL
+**what-done:** Added QA-1 (6 missing lanes: done_verified/in_progress/qa/ready/review/closed_sprints), QA-3 (explicit unknown-key gate), QA-4 (checkRefIntegrity mock isolation); enhanced .passthrough() comments with SSOT-W1-SERVER-ENFORCE cross-link and promotion trigger criteria.
+**what-considered:**
+- Add tests by duplicating existing M3 pattern per lane vs parameterized loop
+- Explicit QA-1/3/4 describe blocks vs comments on existing tests
+**why-decision:** Explicit QA-N describe blocks satisfy acceptance-criteria naming; parameterized loop harder to parse in CI output.
+**why-change:** No change from plan — audit confirmed 95% shipped; delta is test coverage for 6 missing lanes + explicit QA gate labeling + schema comment cross-refs.

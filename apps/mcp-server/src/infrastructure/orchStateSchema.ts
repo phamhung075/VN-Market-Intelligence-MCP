@@ -105,7 +105,18 @@ export const TaskSchema = z
     notes: z.string().optional(),
     status_note: z.string().optional(),
   })
-  .passthrough(); // ← switch to .strict() post-SHG-5
+  /**
+   * .passthrough() → .strict() PROMOTION TRIGGER (post-SHG-5):
+   *   When: SSOT-W1-SERVER-ENFORCE (rank-4, sprint SSOT-INTEGRITY-PERIMETER) ships.
+   *   Gate: all active-sprint tasks migrated to hot-field stubs (id, title, status,
+   *         owner, zone, priority, size, type, depends, wave, verify_note, detail_ref).
+   *         Zero unknown-key warnings in `checkRefIntegrity()` run across live data.
+   *   Then: replace `.passthrough()` here with `.strict()` and update
+   *         OrchStateTaskBoardTask.status from the hand-maintained union to
+   *         z.infer<typeof StatusEnum> (removing the `| string` escape hatch).
+   *   Cross-ref: docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md §1.3
+   */
+  .passthrough(); // ← switch to .strict() post-SHG-5 (see SSOT-W1-SERVER-ENFORCE, rank-4)
 
 export type Task = z.infer<typeof TaskSchema>;
 
@@ -141,7 +152,16 @@ export const SprintSchema = z
     closed_at: z.string().optional(),
     priority: z.string().optional(),
   })
-  .passthrough(); // allow variant sprint fields (ranked_scope, evidence, task_count, etc.)
+  /**
+   * .passthrough() → .strict() PROMOTION TRIGGER (post-SHG-5):
+   *   When: SSOT-W1-SERVER-ENFORCE (rank-4) ships AND active vs closed sprint
+   *         key-sets converge (both carry the same hot-field subset).
+   *   Gate: closed_sprint stubs (id, title, closed_at, task_count, detail_ref) and
+   *         active sprints (id, status, tasks, ranked_scope, label, goal, opened_at)
+   *         must unify — or split into ActiveSprintSchema / ClosedSprintSchema.
+   *   Cross-ref: docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md §1.3
+   */
+  .passthrough(); // ← switch to .strict() post-SHG-5 (see SSOT-W1-SERVER-ENFORCE, rank-4)
 
 export type Sprint = z.infer<typeof SprintSchema>;
 
