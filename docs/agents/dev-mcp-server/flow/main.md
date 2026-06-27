@@ -165,6 +165,15 @@ git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD"
 
 ## Script Persistence — Canonical Pointers
 
+**CANONICAL: Orch-state Zod validator CLI (SSOT-INTEGRITY-PERIMETER SSOT-W1-ZOD-VALIDATOR-CLI)**
+```bash
+bun scripts/orch-validate.mjs                          # validate live docs/data/orch/orch-state.json
+bun scripts/orch-validate.mjs path/to/candidate.json   # validate any candidate before rename
+bun scripts/test-orch-validate-ac.mjs                  # run AC-1..AC-4 acceptance fixture
+```
+Exit 0 = Stage 0 + Stage 1 pass. Exit 1 = dup-key. Exit 2 = schema/ref fail. Exit 3 = file-not-found.
+Schema: apps/mcp-server/src/infrastructure/orchStateSchema.ts (SSOT — do NOT duplicate).
+
 **CANONICAL: Generic stranded seed-bar repair (FIX-OHLCV-STRANDED-ROWS-REPAIR-P1)**
 purgeStrandedSeedRows() in `apps/mcp-server/src/scheduler/market-data/allzeroOhlcvBackfill.ts`.
 Runs automatically at container startup (startScheduler.ts). Deletes rows with

@@ -55,6 +55,19 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 # Owning flow: docs/agents/fb-market-poster/flow/main.md STEP 4b
 ```
 
+**CANONICAL: Orch-state Zod validator CLI (SSOT-INTEGRITY-PERIMETER SSOT-W1-ZOD-VALIDATOR-CLI)**
+```bash
+# Validate docs/data/orch/orch-state.json (default path):
+bun scripts/orch-validate.mjs
+# Validate a specific candidate file (e.g., before atomic rename):
+bun scripts/orch-validate.mjs path/to/candidate.json
+# Exit 0 = Stage 0 + Stage 1 PASS. Exit 1 = dup-key. Exit 2 = schema/ref fail. Exit 3 = file-not-found.
+# Owning task: SSOT-W1-ZOD-VALIDATOR-CLI; directive: docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md § Step 3
+# Acceptance fixture: bun scripts/test-orch-validate-ac.mjs (exercises AC-1..AC-4)
+```
+Imports schema from apps/mcp-server/src/infrastructure/orchStateSchema.ts (single source of truth — never duplicated).
+Stage 0: raw-byte duplicate-key scan (pre-parse). Stage 1: OrchStateSchema.safeParse. Stage 1b: lane coherence (warn during SHG migration). Stage 1c: ref integrity (hard fail on dangling detail_ref / payload_ref).
+
 **CANONICAL: Orch-state write-gate validator (ORCH-STATE-SCHEMA-HARDENING SHG-1)**
 ```bash
 # Validate a candidate orch-state file before atomic rename (exit 0 = valid, non-zero = FAIL):
