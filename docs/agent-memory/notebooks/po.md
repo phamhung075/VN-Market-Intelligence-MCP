@@ -1,22 +1,22 @@
 # PO Notebook
 
-_Last: 2026-06-27T08:06:00Z_
+_Last: 2026-06-27T08:35:40Z_
 
-## This cycle — open sprint SSOT-INTEGRITY-PERIMETER (from 2026-06-27 deep audit)
-Input: docs/handoffs/orch-state-deep-audit-2026-06-27.{md,json} (8-lens, 60-agent, 48 RAW findings). Verdict NEEDS-WORK: gate false-green across ~70% of lanes + dominant writer bypasses gate.
+## This cycle — RATIFY Zod-typed SSOT strategy into SSOT-INTEGRITY-PERIMETER
+User-directed mandate 2026-06-27: adopt Zod-typed SSOT schema + dual-point enforcement + auto-fix errors as the implementation strategy, REPLACING bash-jq-gate for ranks 1/3/4/12. Directive: docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md.
 
-Lock check FIRST: dev-team singleton + FIX-BCTC-Q1 lock held BUT BCTC work disjoint from SSOT; no lock on any SSOT task id; WIP=0 -> NOT overlapping -> proceed (not defer). Alive dev-team loop = my dispatch mechanism (head-resume), so I only feed the board.
+Pre-flight (RAW): task_list_held -> 5 locks (cowork-leader, 2 published cowork-slots, esc-datacov:FPT bctc-analyst sprint-task, digest-sunday). NONE on any SSOT-* id. bctc esc-lock DISJOINT from SSOT -> no defer (feedback_devteam_lock_check). Did NOT spawn / double-drive — alive dev-team loop dispatches via head-resume.
 
-Did (po-s121.jq, ONE atomic gated CAS-guarded write under commit-mutex, commit cf2f4f1b):
-- DATA-CLEAN (mandate seq 4a, file now gate-clean): PARKED->DEFERRED (park_reason kept) · 7x done_verified->DONE_VERIFIED (closed_sprints HSC-1..7) · task_board.head re-collapsed to po-s66 stub · dropped dup task_board.updated_at/_by.
-- OPEN sprint: sprint_goal.entries[] + lean active_sprints[] container (15-item ranked_scope, NO inline prose — avoids the 88.6KB anti-pattern Wave-2 fixes).
-- DISPATCH: ARCH-SSOT-INTEGRITY-PERIMETER -> ready[]; .head=in_progress/architect -> dev-team Step-0b spawns architect.
-
-RAW-VERIFY corrected the audit: the "7x lowercase done_verified" are at .task_board.closed_sprints[] NOT top-level .closed_sprints[]. Targeted real path.
+Did (ONE atomic gated CAS write: jq -> temp -> [-s]+jq empty -> conservation -> orch-state-validate.sh ALL-PASS -> mtime-CAS -> rename):
+- Re-shaped ranked_scope (15->16): Wave-1 = 6 Zod tasks. SSOT-W1-ZOD-SCHEMA-MODEL + ZOD-VALIDATOR-CLI + SERVER-ENFORCE -> dev-mcp-server (apps/mcp-server/); HOOK-ENFORCE + ORCH-APPLY-WRAPPER + BASH-SHIM -> developer (cross-service). Kept SSOT-W1-DATA-CLEAN (DONE) + HEAD-METADATA-COLLAPSE (G-7 now folded into schema .strict()). Each new task carries supersedes[] tracing old ranks 1/3/4/12.
+- Folded ADD-2 (5 backlog REVIEW relabels) + ADD-1 (READY enum) into SCHEMA-MODEL; referential (rank4) + 6 payload_ref rewrites into superRefine.
+- Rewrote ARCH-SSOT-INTEGRITY-PERIMETER desc -> authors hardening brief FROM the directive; input_directive field added; verification_gate now requires ADD-1 READY decision LOCKED before all-lane schema ships.
+- Stamped sprint: implementation_strategy + directive_ref + ratified_by=po-ratify-ssot-zod + chain (adds dev-mcp-server) + owners. decision_journal +1 (len 23).
+- .head UNCHANGED: ARCH-SSOT-INTEGRITY-PERIMETER -> architect [in_progress] (Action 4: architect first, else bootstrap deadlock).
 
 ## Carry-over
-- Cascade armed: architect authors hardening brief (docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md) -> pm decomposes Wave-1 zone tasks (ranks 1-4,6-gate,12) -> dev -> qa -> PO sign-off. PO does NOT spawn (board-driven).
-- Wave-1 SEQUENCING is load-bearing: data-clean DONE -> THEN gate-extend+harden+hard-fail -> THEN orch-apply.sh wrapper routes EVERY writer -> THEN RED 1837a + mcp-server TS->v4 sync.
-- Wave-2 (ranks 7-10) + defer (11,13,14,15) recorded in ranked_scope, NOT promoted.
-- PO-owned later: rank-9 sprint_goal prune-on-close (audit: 11/12 entries map to non-active sprints — stale projection).
-- Push held: fleet-worktree-push launchd timer handles it (commit local-only, dirty-tree-safe).
+- ADD-1 READY-bootstrap: PO endorses option-a (add READY as 12th StatusEnum value); architect LOCKS it in the brief BEFORE the all-lane schema ships — else gate hard-fails the sprint's own kickoff task.
+- Cascade: architect brief -> pm decomposes the 6 Wave-1 zone tasks -> dev-mcp-server/developer -> qa -> PO sign-off. PO does NOT spawn.
+- Dual-point is the completeness requirement: Claude hook is blind to in-process task_claim/scheduler writes -> orchStateStore.parse() is Point-2.
+- Wave-2 (ranks 9-12) + defer (13-16) recorded, NOT promoted. PO-owned later: rank-11 sprint_goal prune.
+- Push held: fleet-worktree-push launchd timer (commit local-only, dirty-tree-safe).

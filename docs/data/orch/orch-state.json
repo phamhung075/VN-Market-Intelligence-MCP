@@ -200,6 +200,14 @@
       "decision": "SIGNED-OFF + CLOSED ORCH-STATE-HOT-COLD-SPLIT. All 7 HSC tasks done_verified+committed; defined scope met. Hot orch-state.json 2,469,471->537,384 bytes (-79%); _meta.schema=v4; cold store live (archive/2026-06.json 1.49MB + backlog-detail.json 559KB); 18 active_sprints + active signal rows intact; sentinel passes. Recorded SIGNED-OFF in task_board.closed_sprints, cleared 6 HSC lane rows. Opened RECORD-ONLY follow-on FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE for the <150KB residual (do NOT execute now).",
       "what_considered": "(A) Reject/reopen because hot is 537KB not the brief aspirational <150KB — REJECTED: the <150KB end-state was never in the 7-task HSC decomposition; the residual is active_sprints (220KB, 18 live sprints) + decision_journal (23.5KB) + sprint_goal (21KB), none of which any HSC task targeted. Holding the sprint open for unscoped work violates ship-completion. (B) Accept-at-scope + open follow-on stub for the residual — CHOSEN.",
       "why_change": "Sign off on DEFINED scope (the 7 HSC tasks), which is genuinely met and verified live. The <150KB gap needs a NEW capability (sprint-lifecycle eviction of terminal active_sprints to cold + journal ring-buffer) = genuinely new scope -> recorded as FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE backlog stub, record-only."
+    },
+    {
+      "agent": "po",
+      "task_id": "SSOT-INTEGRITY-PERIMETER",
+      "timestamp": "2026-06-27T08:35:40Z",
+      "decision": "RATIFIED (user-directed 2026-06-27) the Zod-typed SSOT schema + dual-point enforcement + auto-fix-errors strategy (docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md) — supersedes the bash-jq-gate approach for ranks 1/3/4/12 and closes audit ADD-1/ADD-2. Re-shaped Wave-1 ranked_scope into 6 tasks: SSOT-W1-ZOD-SCHEMA-MODEL + ZOD-VALIDATOR-CLI + SERVER-ENFORCE (dev-mcp-server, apps/mcp-server/); SSOT-W1-HOOK-ENFORCE + ORCH-APPLY-WRAPPER + BASH-SHIM (developer, cross-service). ONE orchStateSchema.ts validates all 9 lanes by construction (kills the 3-of-9 false-green), .strict() kills dup/legacy keys, superRefine encodes ADD-2 lane-status coherence + rank-4 referential integrity, z.infer regenerates the rank-12 hand-synced types; stage-0 raw scan catches duplicate JSON keys; dual-point (Claude hook + orchStateStore.parse) covers the in-process task_claim/scheduler writers no hook can see. Kept SSOT-W1-DATA-CLEAN (done po-s121). ADD-1 READY-bootstrap enum: PO endorses option-a (add READY as the 12th StatusEnum value); architect LOCKS it in the hardening brief BEFORE the all-lane schema ships, else the gate hard-fails on this sprint's own kickoff task (ARCH-SSOT-INTEGRITY-PERIMETER, ready[] status=READY). .head stays on ARCH-SSOT-INTEGRITY-PERIMETER -> architect; dev-team singleton loop executes via head-resume (PO did NOT spawn / double-drive). Commit local-only (fleet-push launchd timer pushes).",
+      "what_considered": "only path: user-directed mandate; bash-jq lane-by-lane re-creates the same forget-a-lane fragility the audit proved (3-of-9 false-green).",
+      "why_change": "superset upgrade — zod already a dep in apps/mcp-server, orchStateStore.ts is the server write path, z.infer deletes the hand-synced types; ONE artifact realizes ranks 1/3/4/12 + ADD-1/ADD-2."
     }
   ],
   "head": {
@@ -2399,47 +2407,82 @@
         "opened_by": "po-s121",
         "goal": "Close the SSOT integrity perimeter; make the HARD gate enforce all lanes + dup-key + referential integrity; route every writer through one gated wrapper; then drain hot-file bloat.",
         "audit_source": "docs/handoffs/orch-state-deep-audit-2026-06-27.{md,json}",
-        "chain": "po -> architect -> pm -> dev-team/developer -> qa -> po",
+        "chain": "po -> architect -> pm -> dev-mcp-server/developer -> qa -> po",
         "tasks": [],
         "ranked_scope": [
           {
             "rank": 1,
-            "id": "SSOT-W1-LANE-LIST-GATE",
+            "id": "SSOT-W1-ZOD-SCHEMA-MODEL",
             "wave": 1,
-            "owner": "architect+developer",
+            "owner": "dev-mcp-server",
             "effort": "M",
-            "dep": "5",
-            "title": "ONE canonical task-lane-list; extend G-5/G-3/G-4 to ALL task-bearing lanes incl closed_sprints[].tasks + PARKED-in-review regression fixture"
+            "dep": "",
+            "supersedes": [
+              "SSOT-W1-LANE-LIST-GATE(r1)",
+              "SSOT-W1-REFERENTIAL-GATES(r4)",
+              "SSOT-W1-TS-SYNC-1837A(r12:types)",
+              "SSOT-W1-HEAD-METADATA-COLLAPSE(r6:G-7)"
+            ],
+            "title": "MODEL FIRST apps/mcp-server/src/infrastructure/orchStateSchema.ts — ONE nested Zod schema (all 9 task-bearing lanes by construction -> 3-of-9 false-green structurally impossible) + StatusEnum SSOT (incl ADD-1 READY decision) + .strict() (reject unknown/dup/legacy keys; subsumes rank-6 G-7 incl task_board.head-must-be-stub) + superRefine lane-status coherence (ADD-2: relabel 5 backlog REVIEW rows) + referential integrity (rank-4 detail_ref/payload_ref via injected fs-resolver; rewrite 6 dangling payload_ref) + z.infer<OrchStateSchema> exports (deletes hand-synced rank-12 types)"
           },
           {
             "rank": 2,
-            "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
+            "id": "SSOT-W1-ZOD-VALIDATOR-CLI",
             "wave": 1,
-            "owner": "architect+developer",
-            "effort": "L",
-            "dep": "1,3,4",
-            "title": "scripts/orch-apply.sh gated wrapper — route EVERY hot-file writer (290 po-s*/router-*.jq apply idiom, orch-backlog-stub.sh, dev-team WF-1 head-reset, system-auditor) through orch-state-validate.sh"
+            "owner": "dev-mcp-server",
+            "effort": "M",
+            "dep": "1",
+            "supersedes": [
+              "SSOT-W1-GATE-STRUCTURAL(r3)"
+            ],
+            "title": "scripts/orch-validate.mjs — 2-stage: Stage-0 raw-byte duplicate-JSON-key reject (pre-JSON.parse; closes feedback_ssot_duplicate_key) + Stage-1 OrchStateSchema.safeParse; exit non-zero on fail + print auto-fix error contract (per issue: path/problem/expected/fix-hint keyed by issue.code+lane) to stderr"
           },
           {
             "rank": 3,
-            "id": "SSOT-W1-GATE-STRUCTURAL",
+            "id": "SSOT-W1-SERVER-ENFORCE",
             "wave": 1,
-            "owner": "developer",
+            "owner": "dev-mcp-server",
             "effort": "M",
-            "dep": "",
-            "title": "G-0 raw-byte duplicate-key reject + G-1 [-s] empty-file guard + G-6 tick-skew repair (compare .last_tick vs _meta.updated_at) + G-7 schema-key invariant"
+            "dep": "1",
+            "supersedes": [
+              "SSOT-W1-TS-SYNC-1837A(r12:RED)"
+            ],
+            "title": "Point-2 enforcement: orchStateStore.ts write-path OrchStateSchema.parse(next) before atomic write, throw on fail (covers task_claim/task_release/coordinationTools/scheduler — invisible to any Claude hook); reconcile RED 1837a-pipeline-state.test.ts + 1980-f2-canon-schema.test.ts against the one schema; full mcp-server suite green"
           },
           {
             "rank": 4,
-            "id": "SSOT-W1-REFERENTIAL-GATES",
+            "id": "SSOT-W1-HOOK-ENFORCE",
             "wave": 1,
             "owner": "developer",
             "effort": "M",
-            "dep": "",
-            "title": "Referential-integrity gates G-7/8/9 (detail_ref/payload_ref/orphan-warn) + rewrite 6 dangling payload_ref docs/signals/->docs/data/db-integrity-history.json"
+            "dep": "1,2",
+            "supersedes": [],
+            "title": "Point-1 enforcement: .claude/settings.local.json — extend PreToolUse Write|Edit (file_path ends orch-state.json -> inline-validate new content -> on fail permissionDecision:deny with the structured auto-fix reason fed back to the writing agent) + PostToolUse Bash backstop re-validates live orch-state.json; covers the ~290/tick agent jq-patch + Write/Edit writers a Claude hook CAN see"
           },
           {
             "rank": 5,
+            "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
+            "wave": 1,
+            "owner": "developer",
+            "effort": "L",
+            "dep": "2",
+            "supersedes": [
+              "SSOT-W1-ORCH-APPLY-WRAPPER(r2:bash-gate variant)"
+            ],
+            "title": "scripts/orch-apply.sh gated wrapper (write-temp -> orch-validate.mjs CLI -> CAS-mtime -> atomic rename) that EVERY hot-file Bash writer routes through (290 po-s*/router-*.jq apply idiom, orch-backlog-stub.sh, dev-team WF-1 head-reset, system-auditor); now calls the CLI, not bash lane-gates"
+          },
+          {
+            "rank": 6,
+            "id": "SSOT-W1-BASH-SHIM",
+            "wave": 1,
+            "owner": "developer",
+            "effort": "S",
+            "dep": "2",
+            "supersedes": [],
+            "title": "Demote scripts/orch-state-validate.sh -> thin shim exec'ing scripts/orch-validate.mjs (existing bash callers unchanged; ONE validation SSOT; bash gate stops hardcoding its own enum)"
+          },
+          {
+            "rank": 7,
             "id": "SSOT-W1-DATA-CLEAN",
             "wave": 1,
             "owner": "po",
@@ -2451,18 +2494,18 @@
             "done_at": "2026-06-27T08:03:52Z"
           },
           {
-            "rank": 6,
+            "rank": 8,
             "id": "SSOT-W1-HEAD-METADATA-COLLAPSE",
             "wave": 1,
             "owner": "po+developer",
-            "effort": "M",
+            "effort": "S",
             "dep": "",
-            "title": "Re-collapse task_board.head to po-s66 stub + drop dup updated_at/_by (po DONE) + add G-7 schema-key gate (dev) + retarget the 3 regressor scripts",
+            "title": "Re-collapse task_board.head to po-s66 stub + drop dup updated_at/_by (po DONE) + retarget the 3 regressor scripts off task_board.head (G-7 schema-key invariant now realized by orchStateSchema .strict() in SSOT-W1-ZOD-SCHEMA-MODEL)",
             "status": "PARTIAL_DONE_DATA",
-            "note": "data re-collapse + dedup DONE by po-s121; G-7 gate + script retarget queued for dev"
+            "note": "data re-collapse + dedup DONE by po-s121; G-7 folded into Zod .strict(); only the 3-script retarget remains for dev"
           },
           {
-            "rank": 7,
+            "rank": 9,
             "id": "SSOT-W2-SIGNAL-QUEUE-LIFECYCLE",
             "wave": 2,
             "owner": "agents-architect",
@@ -2471,16 +2514,16 @@
             "title": "Reconcile signal_queue lifecycle — drain 34 stuck-TRIAGED rows, fix dead terminal-sprint predicate + startswith(BCTC-) clause, co-evict dangling refs"
           },
           {
-            "rank": 8,
+            "rank": 10,
             "id": "SSOT-W2-PROSE-COLD-MIGRATION",
             "wave": 2,
             "owner": "pm",
             "effort": "M",
-            "dep": "1,2",
+            "dep": "1,5",
             "title": "Execute brief §3.6 active-sprint task-prose -> cold migration (88.6KB, 0/53 detail_ref) + stub-on-write rule to PM/dev-team task creation"
           },
           {
-            "rank": 9,
+            "rank": 11,
             "id": "SSOT-W2-SPRINT-GOAL-PRUNE",
             "wave": 2,
             "owner": "po",
@@ -2489,7 +2532,7 @@
             "title": "sprint_goal prune-on-close (entries subset of active_sprints) + wire eviction + normalize status vocab"
           },
           {
-            "rank": 10,
+            "rank": 12,
             "id": "SSOT-W2-DECISION-JOURNAL-ROTATION",
             "wave": 2,
             "owner": "architect",
@@ -2498,7 +2541,7 @@
             "title": "decision_journal collapse dual ts/timestamp to one ISO field + repair malformed ts + add _cap + wire rotation into orch-cold-evict.sh"
           },
           {
-            "rank": 11,
+            "rank": 13,
             "id": "SSOT-DEFER-MIXED-REPR-MIGRATION",
             "wave": "defer",
             "owner": "pm",
@@ -2507,16 +2550,7 @@
             "title": "Complete closed_sprint/backlog mixed-representation migration + delete 5 cold HSC orphans"
           },
           {
-            "rank": 12,
-            "id": "SSOT-W1-TS-SYNC-1837A",
-            "wave": 1,
-            "owner": "developer",
-            "effort": "M",
-            "dep": "",
-            "title": "Fix RED 1837a test + sync mcp-server OrchState TS types to live v4 + point newestUpdated() at _meta.updated_at"
-          },
-          {
-            "rank": 13,
+            "rank": 14,
             "id": "SSOT-DEFER-LEGACY-HOT-KEYS",
             "wave": "defer",
             "owner": "developer",
@@ -2525,7 +2559,7 @@
             "title": "Cleanup legacy/stale hot keys — _closed_signals_20260614, session_handoff_status, dashboard_section_cache 3-way drift, signal_queue.archive doc wording"
           },
           {
-            "rank": 14,
+            "rank": 15,
             "id": "SSOT-DEFER-STATE-MACHINE-DOCS",
             "wave": "defer",
             "owner": "architect",
@@ -2534,7 +2568,7 @@
             "title": "Document the 3 status state-machines + §2.5 cold-resolution recipe in orch-state-access.md + normalize signal severity + add severity to validator"
           },
           {
-            "rank": 15,
+            "rank": 16,
             "id": "SSOT-DEFER-SIGNAL-ROW-HYGIENE",
             "wave": "defer",
             "owner": "system-auditor",
@@ -2542,7 +2576,16 @@
             "dep": "",
             "title": "Signal-row data hygiene — null-ts row + duplicate sau-d4 id + validator parseable-ts/unique-id check"
           }
-        ]
+        ],
+        "implementation_strategy": "zod-typed-ssot-schema + dual-point-enforcement + auto-fix-errors",
+        "directive_ref": "docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md",
+        "ratified_at": "2026-06-27T08:35:40Z",
+        "ratified_by": "po-ratify-ssot-zod",
+        "owners": {
+          "schema_server": "dev-mcp-server",
+          "hook_scripts": "developer",
+          "brief": "architect"
+        }
       }
     ],
     "archive": [
@@ -6188,13 +6231,16 @@
         "created_at": "2026-06-27T08:03:52Z",
         "created_by": "po-s121",
         "title": "Author the SSOT integrity-perimeter hardening brief",
-        "desc": "Author docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md from docs/handoffs/orch-state-deep-audit-2026-06-27.json .roadmap. The brief MUST specify, with RAW jq exemplars: (1) ONE canonical task-lane-list jq def (all 9 status-bearing lanes incl closed_sprints[].tasks) extending G-5(enum)/G-3(lane-type)/G-4(null-id) to every lane + a PARKED-in-review regression fixture; (2) gate extensions G-0 raw-byte duplicate-key reject, G-1 empty-file [-s] guard, G-6 tick-skew repair (.last_tick vs _meta.updated_at), G-7 schema-key invariant incl the task_board.head-must-be-stub assertion, G-7/8/9 referential-integrity (detail_ref/payload_ref/orphan-warn); (3) the scripts/orch-apply.sh gated-wrapper contract (write-temp -> validate -> CAS-mtime rename) that EVERY hot-file writer routes through; (4) the data-clean jq spec already executed by po-s121 (PARKED/done_verified relabel, head re-collapse, dup-metadata drop) documented as the migration map; (5) the §2.5 read-standard cold-resolution recipe. Hand to pm to decompose Wave-1 into atomic zone tasks (ranks 1-4,6-gate,12). Data offenders already cleaned by po-s121 (dep rank-5 satisfied).",
+        "desc": "Author docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md FROM the user-directed design directive docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md (MANDATE 2026-06-27 — replaces the bash-jq-gate strategy with a Zod-typed SSOT schema + dual-point enforcement + auto-fix errors; realizes ranks 1/3/4/12 + closes audit ADD-1/ADD-2). The brief MUST:\n\n(1) DECIDE FIRST — lock the ADD-1 READY-bootstrap enum decision BEFORE any all-lane schema/gate ships, else it hard-fails on this sprint's own kickoff task (ARCH-SSOT-INTEGRITY-PERIMETER sits in ready[] with status=READY). PO endorses option-a: add READY as the 12th StatusEnum value (a ready[] lane exists -> READY is lane-coherent). Whichever is chosen MUST be encoded in StatusEnum so the schema cannot strand the kickoff.\n\n(2) Specify apps/mcp-server/src/infrastructure/orchStateSchema.ts: ONE nested Zod schema covering all 9 task-bearing lanes by construction (3-of-9 false-green structurally impossible — you cannot add a lane without it being validated); StatusEnum SSOT (bash gate + server stop hardcoding their own); .strict() (rejects unknown/dup/legacy keys, subsumes the rank-6 G-7 schema-key invariant incl task_board.head-must-be-stub); .superRefine() for (a) lane-status coherence ADD-2 [backlog=>{BACKLOG}, review=>{REVIEW}, qa=>{QA}, done=>{DONE,DONE_VERIFIED}, done_verified=>{DONE_VERIFIED}, ready=>{READY,TODO}, in_progress=>{IN_PROGRESS}] — relabel the 5 backlog REVIEW rows (FIX-EVIDENCE-PIPELINE-STARVED, FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0, FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE, FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP, FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING) as data true-up; (b) referential integrity (rank 4) — detail_ref + signal_queue.rows[].payload_ref resolve via an INJECTED fs-resolver (the pure schema stays unit-testable) — rewrite the 6 dangling docs/signals/->docs/data/db-integrity-history.json payload_ref. Export type OrchState = z.infer<typeof OrchStateSchema> (deletes the hand-synced rank-12 types).\n\n(3) Specify scripts/orch-validate.mjs (imports the compiled schema): Stage-0 raw-byte duplicate-JSON-key reject (MUST precede JSON.parse — Zod sees the collapsed object; closes feedback_ssot_duplicate_key) + Stage-1 OrchStateSchema.safeParse; exit non-zero on any fail + print the auto-fix error contract (per issue: path, problem, expected, and a fix: hint keyed by issue.code+lane).\n\n(4) Specify dual-point enforcement (the completeness requirement — a Claude hook is BLIND to in-process mcp-server writes, so BOTH points use the ONE schema): Point-1 .claude/settings.local.json — PreToolUse Write|Edit (file_path ends orch-state.json -> inline-validate -> on fail permissionDecision:deny with the structured reason fed back so the writing agent self-corrects and retries) + PostToolUse Bash backstop re-validates live; Point-2 orchStateStore.ts write path — OrchStateSchema.parse(next) before the atomic write, throw on fail (covers task_claim/task_release/coordinationTools/scheduler).\n\n(5) Specify scripts/orch-apply.sh gated wrapper (write-temp -> orch-validate.mjs CLI -> CAS-mtime -> atomic rename) routing all ~290 hot-file writers, and scripts/orch-state-validate.sh demoted to a thin shim exec'ing the CLI.\n\n(6) Reconcile RED 1837a-pipeline-state.test.ts + 1980-f2-canon-schema.test.ts against the one schema. Map every brief clause to the directive's 7 QA acceptance tests.\n\nHand to pm to decompose Wave-1 into the 6 atomic zone tasks: SSOT-W1-ZOD-SCHEMA-MODEL + SSOT-W1-ZOD-VALIDATOR-CLI + SSOT-W1-SERVER-ENFORCE (dev-mcp-server, apps/mcp-server/); SSOT-W1-HOOK-ENFORCE + SSOT-W1-ORCH-APPLY-WRAPPER + SSOT-W1-BASH-SHIM (developer, cross-service). Data offenders already cleaned by po-s121 (SSOT-W1-DATA-CLEAN done; dep rank-5 satisfied).",
         "depends_on": [
           "SSOT-W1-DATA-CLEAN(done po-s121)"
         ],
         "deliverable": "docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md",
-        "verification_gate": "pm can decompose the brief into atomic zone dev tasks with no open design questions; every gate clause has a RAW jq exemplar + a regression fixture.",
-        "audit_source": "docs/handoffs/orch-state-deep-audit-2026-06-27.json"
+        "verification_gate": "Brief LOCKS the ADD-1 READY enum decision before any all-lane schema ships; specifies orchStateSchema.ts (all-9-lane nested + StatusEnum + .strict() + superRefine lane-status-coherence + referential), orch-validate.mjs 2-stage incl stage-0 dup-key, dual-point enforcement (hook + orchStateStore.parse), orch-apply.sh wrapper + bash shim, and maps every clause to the directive's 7 QA acceptance tests; pm can decompose into the 6 atomic zone tasks with no open design question.",
+        "audit_source": "docs/handoffs/orch-state-deep-audit-2026-06-27.json",
+        "input_directive": "docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md",
+        "updated_at": "2026-06-27T08:35:40Z",
+        "updated_by": "po-ratify-ssot-zod"
       }
     ],
     "review": [
