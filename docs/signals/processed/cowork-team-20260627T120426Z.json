@@ -1,0 +1,39 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-dispatch-telemetry",
+  "priority": "info",
+  "createdAt": "2026-06-27T12:04:26.000Z",
+  "payload": {
+    "tick_utc": "2026-06-27T12:04:26.000Z",
+    "mode": "legacy",
+    "drift_min": 3,
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_timestamp": "2026-06-27T12:04:16.000Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "errors": [],
+    "session_blind": false,
+    "leader_lock": "claimed_fresh"
+  },
+  "_processed": {
+    "fingerprint": "ab64517ac14ca8789c325c45f948f922c46d1d4c2bbc20de9559321a6dd0c298",
+    "processedAt": "2026-06-27T12:43:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
