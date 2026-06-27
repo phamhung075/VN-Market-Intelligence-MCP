@@ -1,5 +1,62 @@
 # PM — Notebook
 
+## c321 BCTC-REFINE-STALL-RETRIGGER TASK ATOMIZATION · 2026-06-27T210000Z
+
+**PARENT:** Architect recon-first complete (docs/architecture-briefs/2026-06-27-bctc-refine-stall-retrigger.md), PO dispatch context with cowork ownership guard, WIP=1 active sprint
+
+**INPUT:** Architect 5-task blueprint (A1 ops + A2 watchdog + B1 vic-probe + B2 discovery-fix + C1 staleness-wiring), orch-state.json board (BCTC-REFINE-STALL-RETRIGGER parent in .head), critical cowork-ownership constraint from memory feedback_router_cowork_defer_to_live_leader
+
+**OUTPUT:** 5 atomic tasks atomized on task_board, all 5 TASK_NNN.md handoff files created (BCTC-REFINE-{A1,A2,B1,B2,C1}.md), orch-state updated atomically via orch-apply.sh, .head set to A1 (next_agent=po), decision journal recorded. WIP=1 constraint enforced (only A1 in active dispatch).
+
+**Atomization rationale:**
+- **Track (a) — Refine-Stall:** 47 docs stuck PENDING/PARTIAL. Root: cowork CronCreate not re-armed after session restart 2026-06-07. **A1 (XS ops)** unblocks TODAY via /cron-cowork-team skill (PO must verify no parallel cowork dispatcher — non-delegable to dev-team per memory feedback_router_cowork_defer_to_live_leader).
+- **Track (c) — Observability:** 20-day stall went silent (zero watchdog). **A2 (S watchdog)** + **C1 (S wiring)** add server-side staleness detection + cron_job_runs logging. Definitif closes observability gap.
+- **Track (b) — VIC Discovery-Gap:** VIC absent from financial_reports (parked as url_not_found after MAX_ENRICH_ATTEMPTS=5). **B1 (XS probe)** confirms hypothesis via RAW SQL query + manual reset. **B2 (S fix)** implements structural fix (re-discovery sweep OR regex patch per B1 findings).
+- **Sequencing:** Seq-1 A1 unblocks all; Seq-2 (A2||B1 parallel, disjoint zones/files); Seq-3 (C1 after A2 scaffolds signals, B2 after B1 confirms hypothesis).
+- **WIP=1:** .head.active_task_id = BCTC-REFINE-A1, next_agent = po. No parallel dev-team over-dispatch. Router will sequence A2+B1 wave after A1 completion.
+
+**Critical PM decision — Cowork Ownership Guard:**
+- A1 routed to `owner: "po"` (NOT dev-team). PO must verify (1) check cron_job_runs for recent refine_bctc_md runs, (2) check WORK channel logs, (3) confirm no parallel session owns cowork dispatcher (double-fire risk), (4) execute /cron-cowork-team skill.
+- This guard is CANONICAL per memory. Dev-team router MUST NOT blind-arm cowork crons.
+
+**Handoffs created:**
+1. **BCTC-REFINE-A1.md** (PO action, cowork re-arm, AC-1..AC-5: verify ownership + re-arm + enable + wait slot + probe refine_status flipping)
+2. **BCTC-REFINE-A2.md** (dev-mcp-server, staleness watchdog job, Check 1 queue depth + Check 2 drain-lapse, alert thresholds, unit tests)
+3. **BCTC-REFINE-B1.md** (dev-mcp-server, VIC RAW-probe + manual reset, 1 SQL query, hypothesis confirmation)
+4. **BCTC-REFINE-B2.md** (dev-vps-crawls, conditional structural fix per B1 findings: C-1 re-discovery sweep OR C-3 regex fix)
+5. **BCTC-REFINE-C1.md** (dev-mcp-server, staleness wiring: wrapRun logging + signal-type extension, depends on A2)
+
+**Board mutation (atomic via orch-apply.sh):**
+- Created BCTC-REFINE-STALL-RETRIGGER sprint in active_sprints with 5 tasks (status=TODO)
+- .head updated: active_task_id=BCTC-REFINE-A1, next_agent=po, next_action describes cowork verification + re-arm
+- Validators PASS (74 pre-existing SHG warnings only, non-blocking)
+
+**Decision journal:** docs/agent-memory/decisions/sprint-BCTC-REFINE-STALL-RETRIGGER-pm-decomposition.md (DJ-GATE-1..6: cowork guard enforcement, architect ratification, board mutation, handoff creation, WIP compliance, risk encoding)
+
+**Risks documented:**
+- **Risk-1 (HIGH):** Re-arm alone is band-aid. Without A2+C1 watchdog, future session restart re-stalls silently. A2+C1 are definitif closes.
+- **Risk-2 (MEDIUM):** VIC url_not_found is terminal/no-auto-retry. B1 reset is only same-day unblock. B2 structural fix required.
+- **Risk-3 (MEDIUM):** A2 Check 2 (drain-lapse detect) requires C1 landed. Interim: use heuristic if C1 delays.
+- **Risk-4 (LOW):** 47 docs drain speed ~23 days (2 slots/day). Router can accelerate with manual refine invocations (idempotent).
+
+**Done-verified gates (LIVE probe):**
+- **A1:** AC-1..AC-5 checked (verified no cowork conflict, re-armed, enabled, cron_job_runs shows refine, live probe shows refine_status flipping)
+- **A2:** AC-1..AC-5 verified (unit tests pass, live rebuild, WORK alert fires on test data)
+- **B1:** AC-1..AC-5 verified (probe executed, reset confirmed in DB, enricher re-attempted, findings documented)
+- **B2:** AC-1..AC-5 verified per confirmed hypothesis (sweep OR regex tests pass, live deployment verified)
+- **C1:** AC-1..AC-5 verified (wrapRun merged + compile clean, unit tests pass, live alert fires on old cron_job_runs)
+
+**Key PM decisions:**
+1. Enforced COWORK OWNERSHIP GUARD non-negotiably. A1 routed to PO, not dev-team.
+2. Accepted 5-task split as architect wrote it (no renegotiation, all ratified).
+3. WIP=1 constraint enforced (only A1 in active dispatch loop).
+4. Done-verified gates are LIVE-PROBE, not build-green (raw DB queries, cron_job_runs inspection, live alert verification).
+5. Risks documented for visibility (no surprises post-deployment).
+
+**Dispatch readiness:** ✅ BOARD COHERENT (orch-validate PASS). ✅ ALL 5 HANDOFFS CREATED. ✅ .head SET TO A1 (next_agent=po). ✅ PO READY TO EXECUTE A1 AFTER OWNERSHIP VERIFICATION. Router will sequence A2+B1 wave after A1 completion.
+
+---
+
 ## c320 FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION TASK ATOMIZATION · 2026-06-23T172813Z
 
 **PARENT:** BA spec finalized + Architect Brownfield Findings ratified (FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION-BA-spec.md § [Architect] Brownfield Findings, 4 RATIFICATIONS resolved)

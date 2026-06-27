@@ -228,12 +228,12 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "BCTC-REFINE-STALL-RETRIGGER",
-    "next_agent": "architect",
-    "next_action": "Architect recon-first: split VHM/VIC Q1-2026 BCTC 20-day escalation into refine-stall (47 docs) + VIC discovery-gap + 20-day-no-alert observability; brief dev/ops chain.",
-    "updated_by": "po",
-    "updated_at": "2026-06-27T18:48:31Z",
-    "note": "WIP=1: BCTC escalation (c075, 20+ days, corroborated WORK 3336/3337) outranks SSOT-PERIMETER rank-3 this tick. RAW-probe: VHM refine-stall, VIC discovery-gap, 47-doc refine queue. SSOT sprint resumes next cycle."
+    "active_task_id": "BCTC-REFINE-A1",
+    "next_agent": "po",
+    "next_action": "PO verifies cowork ownership (no parallel dispatcher armed) + executes /cron-cowork-team re-arm (unblocks 47 BCTC docs). After A1 done, route A2+B1 parallel (both dev-mcp-server, can run in parallel: different files/queries).",
+    "updated_by": "pm",
+    "updated_at": "2026-06-27T19:05:50Z",
+    "note": "WIP=1: BCTC-REFINE-STALL-RETRIGGER (c075 escalation, 20+ days 47-doc stall + VIC discovery-gap + 0 observability). A1 seq-1 unblocks all downstream. Sequencing: A1→(A2||B1 parallel)→(C1 after A2, B2 after B1)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2546,6 +2546,85 @@
             "created_by": "pm-agent",
             "detail_ref": "docs/handoffs/SSOT-W1-BASH-SHIM.md",
             "verify_note": "QA-7 (z.infer types compile, full suite green, 1837a reconciled) pass; superset proof documented in shim header; existing callers unchanged."
+          }
+        ]
+      },
+      {
+        "id": "BCTC-REFINE-STALL-RETRIGGER",
+        "title": "BCTC Refine-Stall + Discovery-Gap + Observability Hole — Root cause + 5-task decomposition",
+        "status": "ACTIVE",
+        "priority": "high",
+        "opened_at": "2026-06-27",
+        "evidence": "Architect recon-first: VHM refine queue stalled (47 docs, 20+ days, text_status=COMPLETE/refine_status=PENDING); VIC discovery-gap (absent from financial_reports); 0 staleness observability. Root causes: (a) cowork CronCreate not re-armed after session restart 2026-06-07, (b) VIC Q1-2026 PDF discovery lapsed or regex-mismatch, (c) server has zero watchdog on refine queue depth. Blueprint: 5-task atomization (A1 ops re-arm + A2 watchdog + B1 VIC reset + B2 discovery fix + C1 staleness wiring). Track (a) re-arm unblocks 47 docs TODAY; Tracks (b)(c) structural definitif fixes.",
+        "tasks": [
+          {
+            "id": "BCTC-REFINE-A1",
+            "title": "Re-arm cowork CronCreate via /cron-cowork-team skill",
+            "owner": "po",
+            "type": "OPS",
+            "status": "TODO",
+            "zone": ".claude/",
+            "created_at": "2026-06-27T21:00:00Z",
+            "size": "XS",
+            "priority": "high",
+            "depends": [],
+            "note": "CRITICAL GUARD: PO must verify no parallel cowork dispatcher is already armed (double-fire risk per feedback_router_cowork_defer_to_live_leader). Unblocks all 47 docs. Route to PO for explicit cowork-ownership verification before re-arm."
+          },
+          {
+            "id": "BCTC-REFINE-A2",
+            "title": "bctcRefineStalenessJob — server-side watchdog for refine queue depth + cowork-lapse detection",
+            "owner": "dev-mcp-server",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/scheduler/financial-reports/",
+            "created_at": "2026-06-27T21:00:00Z",
+            "size": "S",
+            "priority": "high",
+            "depends": [],
+            "note": "New cron job: every 2h, check (1) refine_pending_count aged >24h, (2) last refine_bctc_md run age (from cron_job_runs). Alert thresholds: queue staled→WARN, >5 docs→HIGH, drain lapsed >25h→HIGH. Closes observability gap that enabled 20-day silent stall. Depends on C1 for Check 2 (interim: use heuristic)."
+          },
+          {
+            "id": "BCTC-REFINE-B1",
+            "title": "RAW-probe VIC queue row; manually reset to pending,attempts=0 for re-discovery retry",
+            "owner": "dev-mcp-server",
+            "type": "FIX",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/scheduler/financial-reports/",
+            "created_at": "2026-06-27T21:00:00Z",
+            "size": "XS",
+            "priority": "medium",
+            "depends": [],
+            "note": "Single SQL query + manual UPDATE. Confirms hypothesis (VIC parked as url_not_found by enricher after MAX_ENRICH_ATTEMPTS=5 exhausted). Reset row to trigger re-discovery sweep. Findings inform B2 (C-1/C-2/C-3 root cause)."
+          },
+          {
+            "id": "BCTC-REFINE-B2",
+            "title": "Fix VIC discovery: (a) re-discovery sweep for url_not_found rows or (b) SSC title-match regex if C-3 confirmed",
+            "owner": "dev-vps-crawls",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "vps-scripts/",
+            "created_at": "2026-06-27T21:00:00Z",
+            "size": "S",
+            "priority": "medium",
+            "depends": [
+              "BCTC-REFINE-B1"
+            ],
+            "note": "Conditional fix based on B1 findings. (C-1) If PDF not indexed: add re-discovery sweep for url_not_found rows >30d old. (C-3) If regex-fail: fix _ssc_parse_rows() to match Vingroup title format. (C-2) If batch-cap: document, no code change."
+          },
+          {
+            "id": "BCTC-REFINE-C1",
+            "title": "Wire staleness observability: add wrapRun to refine_bctc_md; extend freshnessSlaChecker signal types",
+            "owner": "dev-mcp-server",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/scheduler/financial-reports/ + docs/agents/refine_bctc_md/",
+            "created_at": "2026-06-27T21:00:00Z",
+            "size": "S",
+            "priority": "medium",
+            "depends": [
+              "BCTC-REFINE-A2"
+            ],
+            "note": "Add SqliteJobRunRepository.wrapRun() to refine_bctc_md flow (log cycle completion to cron_job_runs). Extend freshnessSlaChecker with refine_queue_stale + refine_bctc_drain_lapsed signals. Enables Check 2 of A2 watchdog (detect when cowork agent goes dark)."
           }
         ]
       }
