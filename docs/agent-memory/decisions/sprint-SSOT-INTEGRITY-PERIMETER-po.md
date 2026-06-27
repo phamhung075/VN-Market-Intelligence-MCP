@@ -68,3 +68,21 @@
 - OPEN rank-1 now — CHOSEN. Rank-1 is dep-free (unblocks 2-6); scoped audit-then-harden DELTA on ~95%-shipped orchStateSchema.ts (QA-1/3/4 gates + .passthrough->.strict doc + reconcile RED 1837a/1980-f2). Handoff + verify_note carry the delta scope so the worker can't recreate shipped work.
 **why-decision:** Every gate is clean and WIP=0 leaves a coding slot; the design->execution handoff is exactly what the pm Wave-1 decomp set up. Single dep-free rank-1 is the correct first dispatch.
 **why-change:** no change from plan — pm pre-set head ready/dev-mcp-server last tick; PO converts ready->in_progress to actually open the slot (ready is not router-auto-dispatched).
+
+### STEP po-S8 · po · 2026-06-27T17:45Z
+**task-id:** SSOT-W1-ZOD-VALIDATOR-CLI
+**what-done:** OPENED Wave-1 rank-2 execution — head idle->in_progress (active=SSOT-W1-ZOD-VALIDATOR-CLI, next_agent=dev-mcp-server), flipped rank-2 TODO->IN_PROGRESS in active_sprints[SSOT-INTEGRITY-PERIMETER] with route_to=dev-mcp-server, returned BATCH so dev-team Step 3 spawns dev-mcp-server on the scripts/ zone.
+**what-considered:**
+- DEFER opening this tick — REJECTED: pendingSignals=0, NEW signals=0, CI GREEN bfc9d5e5, ahead=18<=20 (no push, no divergence), WIP=0 after rank-1 DONE last tick (commit e55208ad, QA APPROVE, board-flip 84c7e4aa). Room for exactly one execute-tier task.
+- OPEN rank-2 now — CHOSEN. rank-1 dep cleared (SSOT-W1-ZOD-SCHEMA-MODEL DONE; schema imports resolve). Handoff SSOT-W1-ZOD-VALIDATOR-CLI.md scopes the audit-then-harden DELTA: scripts/orch-validate.mjs ~95% shipped — harden Stage-0 tokenizer escape-seq, QA-2 dup-key gate, auto-fix issue.code contract completeness, exit-code 0/1/2/3 coverage. Worker scopes to delta, never recreates shipped validator.
+**why-decision:** WIP=1 single-slot open of the dep-cleared next rank; dev-mcp-server is the handoff-named owner of the scripts/ validator wrapper for orch-apply.sh. Ranks 3-6 stay TODO (WIP cap).
+**why-change:** no change from plan — pm pre-staged head next_agent=dev-mcp-server/next_action=rank-2 last tick; PO converts idle->in_progress to actually open the slot (ready/idle is not router-auto-dispatched per s109 head-resume rule).
+
+### STEP po-S9 · po · 2026-06-27T17:45Z
+**task-id:** (ambient — report triage)
+**what-done:** RESOLVED Telegram report id=3335 (analysis-agent pollNews 0-items) as monitoring/recovered-transient; NO dev task minted.
+**what-considered:**
+- Mint an ops/fetch FIX — REJECTED: market data fetch pipeline RAW-verified LIVE 17:44Z (VN-Index 1871.91 fresh vndirect, breadth+turnover flowing); report self-contradicts (3/7 sources active yet "all 0"); non-recurring (1 report/10h — a sustained outage re-fires every poll cycle); emitter priority=normal.
+- Resolve as recovered transient — CHOSEN. Two-layer freshness: pollNews 0-items at one 07:30Z poll-instant = raw-fetch layer, not analysis-layer outage (documented false-critical pattern).
+**why-decision:** No live outage, no recurrence, fetch layer healthy now — manufacturing a dev task would be a false-positive FIX.
+**why-change:** no change from plan.

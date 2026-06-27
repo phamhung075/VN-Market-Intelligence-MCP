@@ -227,13 +227,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
+    "status": "in_progress",
+    "active_task_id": "SSOT-W1-ZOD-VALIDATOR-CLI",
     "next_agent": "dev-mcp-server",
-    "next_action": "Wave-1 execution NEXT: rank-2 SSOT-W1-ZOD-VALIDATOR-CLI ready for dispatch (scripts/ zone: bash CLI validator wrapper for orch-apply.sh). Ranks 3-6 remain audit-then-harden DELTA tasks. WIP=1.",
-    "updated_by": "pm",
-    "updated_at": "2026-06-27T17:32:53Z",
-    "note": "ARCH-SSOT-INTEGRITY-PERIMETER design complete; moved to done[]. SSOT-INTEGRITY-PERIMETER sprint created with 6 Wave-1 audit-then-harden tasks. Zone split: apps/mcp-server/ (2), scripts/ (3), .claude/ (1). Ready for dev-mcp-server to start rank-1 task."
+    "next_action": "Execute Wave-1 rank-2 SSOT-W1-ZOD-VALIDATOR-CLI (zone scripts/). AUDIT-THEN-HARDEN DELTA: scripts/orch-validate.mjs ~95% shipped — harden Stage-0 tokenizer escape-seq + QA-2 dup-key gate + auto-fix issue.code contract completeness + exit-code 0/1/2/3 coverage + mcp-server test suite green. Handoff: docs/handoffs/SSOT-W1-ZOD-VALIDATOR-CLI.md. Do NOT recreate shipped validator. WIP=1.",
+    "updated_by": "po",
+    "updated_at": "2026-06-27T17:45:45Z",
+    "note": "rank-1 SSOT-W1-ZOD-SCHEMA-MODEL DONE (e55208ad, QA APPROVE, board-flip 84c7e4aa). Opening rank-2; ranks 3-6 stay TODO (WIP cap)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2451,7 +2451,7 @@
           {
             "id": "SSOT-W1-ZOD-VALIDATOR-CLI",
             "type": "dev",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "title": "Audit + harden scripts/orch-validate.mjs: Stage-0 dup-key tokenizer (pre-parse) + Stage-1 safeParse + Stage-1c ref-integrity hard-fail + auto-fix error contract",
             "wave": 1,
             "rank": 2,
@@ -2465,7 +2465,11 @@
             "created_at": "2026-06-27T16:50:00Z",
             "created_by": "pm-agent",
             "detail_ref": "docs/handoffs/SSOT-W1-ZOD-VALIDATOR-CLI.md",
-            "verify_note": "QA-1, QA-2 (dup-key reject), QA-4 (ref integrity) pass; Stage-0 tokenizer handles escape correctly; auto-fix hints match issue.code mapping; exit codes 0/1/2/3 verified; full test suite green."
+            "verify_note": "QA-1, QA-2 (dup-key reject), QA-4 (ref integrity) pass; Stage-0 tokenizer handles escape correctly; auto-fix hints match issue.code mapping; exit codes 0/1/2/3 verified; full test suite green.",
+            "route_to": "dev-mcp-server",
+            "next_agent": "dev-mcp-server",
+            "dispatched_at": "2026-06-27T17:45:45Z",
+            "dispatched_by": "po"
           },
           {
             "id": "SSOT-W1-HOOK-ENFORCE",
