@@ -69,3 +69,39 @@ created_at: 2026-06-27T16:50:00Z
 **Depends on:** SSOT-W1-ZOD-SCHEMA-MODEL (schema imports must succeed).
 
 **Time estimate:** 2h (tokenizer verification, auto-fix contract coverage, exit code testing, integration with mcp-server test suite).
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server (scripts/ zone extension — validator zone per handoff)
+- **Zone:** scripts/ + apps/mcp-server/src/infrastructure/__tests__/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/__tests__/orchStateSchema.test.ts` — added 25 integration tests (Stage-0 tokenizer, exit codes 0/1/2/3, auto-fix hints, invocation contract)
+  - `docs/agent-memory/decisions/sprint-SSOT-INTEGRITY-PERIMETER-dev-mcp-server.md` — S5 DJ entry
+  - `docs/handoffs/SSOT-W1-ZOD-VALIDATOR-CLI.md` — this implementation record
+- **Tests written:**
+  - `orchStateSchema.test.ts` — 25 new tests, all GREEN (78→103 total)
+  - `scripts/test-orch-validate-ac.mjs` — pre-existing, 29/29 GREEN (no changes)
+- **Git commits:** see below
+- **Type check:** clean (`bun tsc --noEmit` exit 0)
+- **bun test (orchStateSchema.test.ts):** 103 pass / 0 fail
+- **bun test (full suite baseline):** 13519 pass / 47 fail / 42 skip — 47 failures are pre-existing in `src/_deprecated/1302-technical-indicators.test.ts` (unrelated to this task; confirmed by running the file directly before changes)
+- **Tool count:** 166 tools — unchanged (no apps/mcp-server/src/ code changes)
+- **Scheduler count:** 3 cron.schedule entries — unchanged
+- **Docs updated:** NONE (scripts/orch-validate.mjs unchanged — no audit bugs found)
+- **Graphify:** skipped (no docs impacted)
+
+**Hardening items status:**
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| 1. Stage-0 tokenizer escape-sequence handling | DONE | QA-2-esc-a/b/c tests in orchStateSchema.test.ts — 3 escape-seq tests + 4 nesting tests pass |
+| 2. QA-2 duplicate-key gate | DONE | exit-1 tests in orchStateSchema.test.ts — Stage-0 detected before JSON.parse (exit 1 not 2) |
+| 3. Auto-fix issue.code contract completeness | DONE | 5 issue.code mappers tested: invalid_enum_value (status), unrecognized_keys, invalid_type, too_small, custom |
+| 4. Exit-code 0/1/2/3 coverage | DONE | 8 CLI exit-code tests covering all 4 paths in orchStateSchema.test.ts |
+| 5. mcp-server test suite green | DONE | 103/103 pass in orchStateSchema.test.ts; pre-existing failures (_deprecated) unchanged |
+
+**AC fixture (scripts/test-orch-validate-ac.mjs):** 29/29 — AC-1..AC-4 all PROVEN
+
+Zone health: bun test 103/103 GREEN (orchStateSchema.test.ts), tsc 0 errors, 166 tools intact, scheduler 3 cron.schedule | HEALTHY

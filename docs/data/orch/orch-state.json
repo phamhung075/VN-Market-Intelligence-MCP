@@ -2451,7 +2451,7 @@
           {
             "id": "SSOT-W1-ZOD-VALIDATOR-CLI",
             "type": "dev",
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "title": "Audit + harden scripts/orch-validate.mjs: Stage-0 dup-key tokenizer (pre-parse) + Stage-1 safeParse + Stage-1c ref-integrity hard-fail + auto-fix error contract",
             "wave": 1,
             "rank": 2,

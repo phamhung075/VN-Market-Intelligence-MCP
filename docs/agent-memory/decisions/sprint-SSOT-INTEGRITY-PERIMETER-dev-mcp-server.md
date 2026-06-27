@@ -47,3 +47,15 @@
 - Explicit QA-1/3/4 describe blocks vs comments on existing tests
 **why-decision:** Explicit QA-N describe blocks satisfy acceptance-criteria naming; parameterized loop harder to parse in CI output.
 **why-change:** No change from plan — audit confirmed 95% shipped; delta is test coverage for 6 missing lanes + explicit QA gate labeling + schema comment cross-refs.
+
+---
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-27T19:00:00Z
+**task-id:** SSOT-W1-ZOD-VALIDATOR-CLI
+**what-done:** Audited orch-validate.mjs (tokenizer correct, all 5 issue.code mappers present); added 25 integration tests to orchStateSchema.test.ts covering Stage-0 escape-seq/nesting, exit codes 0/1/2/3, auto-fix hint contract, and invocation contract. 78→103 pass in single test file.
+**what-considered:**
+- Export findDuplicateJsonKeys from orch-validate.mjs for unit-test (rejected — it's a .mjs with no named exports; subprocess integration tests prove the same thing end-to-end)
+- Add tests to test-orch-validate-ac.mjs vs orchStateSchema.test.ts (chosen mcp-server suite — DoD requires bun test in apps/mcp-server)
+- Test invalid_enum_value (non-status) case (not possible via current schema — all z.enum() fields named "status"; documented as defensive future-compat code)
+**why-decision:** Integration via spawnSync inside orchStateSchema.test.ts satisfies the "mcp-server test suite" DoD gate while testing the complete CLI pipeline. No orch-validate.mjs changes needed — audit confirmed tokenizer and all 5 mappers already correct.
+**why-change:** No tokenizer bugs found — audit confirmed implementation correct. Only gap was integration test coverage in mcp-server suite.

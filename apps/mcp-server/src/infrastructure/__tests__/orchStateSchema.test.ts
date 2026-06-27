@@ -24,7 +24,8 @@
 Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   OrchStateSchema,
@@ -62,6 +63,55 @@ import type {
 const PROJECT_ROOT = resolve(import.meta.dir, "../../../../..");
 
 const ORCH_STATE_PATH = resolve(PROJECT_ROOT, "docs/data/orch/orch-state.json");
+
+/** Absolute path to the canonical validator CLI. */
+const VALIDATOR_PATH = resolve(PROJECT_ROOT, "scripts/orch-validate.mjs");
+
+/** Counter for unique temp filenames per test run. */
+let _cliTmpCounter = 0;
+
+/**
+ * Write JSON (string or object) to a temp file, spawn the validator CLI,
+ * return the result. Temp file is always deleted in the finally block.
+ */
+function runCliValidator(content: string | object): {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+} {
+  const tmpFile = `/tmp/orchSchemaTest-${process.pid}-${++_cliTmpCounter}.json`;
+  const text = typeof content === "string" ? content : JSON.stringify(content, null, 2);
+  writeFileSync(tmpFile, text, "utf-8");
+  try {
+    const result = spawnSync(process.execPath, [VALIDATOR_PATH, tmpFile], {
+      encoding: "utf-8",
+      timeout: 15_000,
+    });
+    return {
+      exitCode: result.status ?? -1,
+      stdout: result.stdout ?? "",
+      stderr: result.stderr ?? "",
+    };
+  } finally {
+    try { unlinkSync(tmpFile); } catch { /* ignore cleanup errors */ }
+  }
+}
+
+/** Minimal valid orch-state object (no active_task_id). */
+function makeValidBase(): Record<string, unknown> {
+  return {
+    head: { status: "idle", active_task_id: null },
+    signal_queue: {
+      _updated_at: "2026-06-27T00:00:00Z",
+      _updated_by: "cli-test-fixture",
+      rows: [],
+    },
+    task_board: {
+      backlog: [{ id: "CLI-T1", status: "BACKLOG" }],
+      active_sprints: [],
+    },
+  };
+}
 
 function loadLiveOrchState(): unknown {
   try {
@@ -975,6 +1025,335 @@ describe("QA-4 — checkRefIntegrity exported + mock FileResolver isolation", ()
     const issues = checkRefIntegrity(state, neverExists, "/project");
     expect(issues.length).toBeGreaterThanOrEqual(1);
     expect(issues[0]?.path).toContain("active_sprints");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QA-2 — Stage-0 tokenizer: escape-sequence handling
+//        (SSOT-W1-ZOD-VALIDATOR-CLI hardening — rank 2)
+//
+// The recursive-descent tokenizer in scripts/orch-validate.mjs MUST:
+//   (a) NOT treat `\"` inside a JSON string key as a string terminator
+//   (b) Track duplicate keys independently per-object (new Set per parseObject call)
+//   (c) Detect duplicates at arbitrary nesting depth (>2 tested here)
+//   (d) NOT produce false-positives for same key name in sibling objects
+//
+// All tests go through the FULL validator CLI (subprocess) so escape-sequence
+// handling is proven end-to-end, not just by reading the source.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("QA-2 — Stage-0 tokenizer: escape-sequence correctness", () => {
+  it("QA-2-esc-a: key with `\\\"` inside it is NOT false-split (duplicate detected, exit 1)", () => {
+    // Raw JSON:  {"key\"with\"quotes": 1, "key\"with\"quotes": 2}
+    // The tokenizer must parse `key"with"quotes` as ONE key (not split at `\"`).
+    // Two occurrences → Stage-0 detects duplicate → exit 1.
+    const json = '{"key\\"with\\"quotes": 1, "key\\"with\\"quotes": 2}';
+    const r = runCliValidator(json);
+    // exit 1 = Stage-0 duplicate detected (not exit 2 = schema fail)
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("duplicate key");
+  });
+
+  it("QA-2-esc-b: keys with `\\\"` that DIFFER are not false-positives (exit != 1)", () => {
+    // Raw JSON:  {"key\"a\"": 1, "key\"b\"": 2}
+    // Different keys → Stage-0 must NOT report a duplicate.
+    // (Will exit 2 due to schema validation fail — that is expected and correct.)
+    const json = '{"key\\"a\\"": 1, "key\\"b\\"": 2}';
+    const r = runCliValidator(json);
+    // MUST NOT be exit 1 (no false duplicate detected)
+    expect(r.exitCode).not.toBe(1);
+  });
+
+  it("QA-2-esc-c: escape sequences \\n \\t \\r in key values do not confuse tokenizer", () => {
+    // Keys with other escape sequences should be handled without corrupting position state.
+    // Duplicate key with \\n inside → Stage-0 must still detect it.
+    const json = '{"key\\nwith\\nnewline": "v1", "key\\nwith\\nnewline": "v2"}';
+    const r = runCliValidator(json);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("duplicate key");
+  });
+});
+
+describe("QA-2 — Stage-0 tokenizer: nested-object independent key tracking", () => {
+  it("QA-2-nest-a: duplicate key at depth 2 (object-in-object) → exit 1", () => {
+    // {"outer": {"inner_dup": 1, "inner_dup": 2}}
+    const json = '{"outer": {"inner_dup": 1, "inner_dup": 2}}';
+    const r = runCliValidator(json);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("duplicate key");
+  });
+
+  it("QA-2-nest-b: duplicate key at depth 3 → exit 1 (before JSON.parse)", () => {
+    // {"a": {"b": {"c": 1, "c": 2}}}
+    const json = '{"a": {"b": {"c": 1, "c": 2}}}';
+    const r = runCliValidator(json);
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("duplicate key");
+  });
+
+  it("QA-2-nest-c: same key name in SIBLING objects is NOT a duplicate (no false-positive)", () => {
+    // {"obj1": {"id": 1}, "obj2": {"id": 2}} — "id" appears in two separate objects
+    // Stage-0 must track keys PER-OBJECT so this is NOT a duplicate.
+    const json = '{"obj1": {"id": 1}, "obj2": {"id": 2}}';
+    const r = runCliValidator(json);
+    // MUST NOT be exit 1
+    expect(r.exitCode).not.toBe(1);
+  });
+
+  it("QA-2-nest-d: duplicate at root level (depth 1) → exit 1 and Stage-1 never runs", () => {
+    // If Stage-0 works, exit code is 1 (not 2 which would mean schema fail ran first).
+    // Build raw JSON with duplicate "head" key at root.
+    const json =
+      '{"head":{"status":"first"},' +
+      '"head":{"status":"dup_clobbers"},' +
+      '"signal_queue":{"_updated_at":"2026-06-27T00:00:00Z","_updated_by":"test","rows":[]},' +
+      '"task_board":{"backlog":[],"active_sprints":[]}}';
+    const r = runCliValidator(json);
+    expect(r.exitCode).toBe(1);   // Stage-0, not Stage-1 (exit 2)
+    expect(r.stderr).toContain("Stage 0");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Validator CLI exit-code contract: 0 / 1 / 2 / 3
+// (SSOT-W1-ZOD-VALIDATOR-CLI hardening — rank 2)
+//
+// Exit 0 = Stage 0 + Stage 1 pass (coherence warnings non-blocking)
+// Exit 1 = Stage 0 fail: duplicate JSON keys in raw text
+// Exit 2 = Stage 1 fail: schema violation OR dangling ref
+// Exit 3 = file not found / unreadable
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Validator CLI exit-code contract: 0 (SSOT-W1-ZOD-VALIDATOR-CLI)", () => {
+  it("exit-0: valid minimal orch-state exits 0", () => {
+    const r = runCliValidator(makeValidBase());
+    expect(r.exitCode).toBe(0);
+    expect(r.stdout).toContain("PASS");
+  });
+
+  it("exit-0-with-coherence-warnings: coherence warnings are non-blocking (exit still 0)", () => {
+    // Task in wrong lane (TODO in backlog — coherence violation).
+    // Stage-0 and Stage-1 both pass; coherence check warns but does NOT block.
+    const state = {
+      ...makeValidBase(),
+      task_board: {
+        // TODO in backlog[] → coherence warning (allowed statuses: BACKLOG only)
+        backlog: [{ id: "CLI-WARN-T1", status: "TODO" }],
+        active_sprints: [],
+      },
+    };
+    const r = runCliValidator(state);
+    // Must still exit 0 despite coherence warning
+    expect(r.exitCode).toBe(0);
+    // Coherence warning should appear in stderr
+    expect(r.stderr).toContain("COHERENCE WARNINGS");
+  });
+});
+
+describe("Validator CLI exit-code contract: 1 (SSOT-W1-ZOD-VALIDATOR-CLI)", () => {
+  it("exit-1: duplicate JSON key in raw text → Stage-0 rejects, exit 1", () => {
+    const json = '{"dup_key": 1, "dup_key": 2}';
+    const r = runCliValidator(json);
+    expect(r.exitCode).toBe(1);
+  });
+
+  it("exit-1: stderr reports Stage 0 failure and not Stage 1", () => {
+    const json = '{"x": 1, "x": 2}';
+    const r = runCliValidator(json);
+    // Stage 0 message must be present; Stage 1 (schema) must NOT run
+    expect(r.stderr).toContain("Stage 0");
+    // Schema validation error messages would mention "VALIDATION FAILED" with issue counts
+    // When Stage-0 fails, Stage-1 is skipped entirely → no schema issue output
+    expect(r.stderr).not.toContain("invalid_enum_value");
+  });
+});
+
+describe("Validator CLI exit-code contract: 2 (SSOT-W1-ZOD-VALIDATOR-CLI)", () => {
+  it("exit-2: invalid status enum value → Stage-1 rejects, exit 2", () => {
+    const bad = {
+      ...makeValidBase(),
+      task_board: {
+        backlog: [{ id: "T1", status: "INVALID_STATUS_XYZ" }],
+        active_sprints: [],
+      },
+    };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+  });
+
+  it("exit-2: unknown root key (.strict() violation) → Stage-1 rejects, exit 2", () => {
+    const bad = { ...makeValidBase(), _INJECTED_UNKNOWN_KEY: "garbage" };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+  });
+
+  it("exit-2: dangling detail_ref → Stage-1c rejects, exit 2", () => {
+    const bad = {
+      ...makeValidBase(),
+      task_board: {
+        backlog: [{ id: "T-REF", status: "BACKLOG", detail_ref: "docs/handoffs/NONEXISTENT-CLI-TEST.md" }],
+        active_sprints: [],
+      },
+    };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    // Stage-1c message contains "dangling ref"
+    expect(r.stderr).toContain("Stage 1c");
+  });
+});
+
+describe("Validator CLI exit-code contract: 3 (SSOT-W1-ZOD-VALIDATOR-CLI)", () => {
+  it("exit-3: file not found → exit 3", () => {
+    // Run validator directly via spawnSync with a non-existent path
+    const result = spawnSync(process.execPath, [VALIDATOR_PATH, "/nonexistent/path/for-cli-test.json"], {
+      encoding: "utf-8",
+      timeout: 10_000,
+    });
+    expect(result.status).toBe(3);
+    expect(result.stderr).toContain("not found");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auto-fix error hint contract: issue.code mappers
+// (SSOT-W1-ZOD-VALIDATOR-CLI hardening — rank 2)
+//
+// The formatZodIssue() function in orch-validate.mjs must produce actionable
+// fix: hints keyed by Zod issue.code. Each mapper is tested below:
+//
+//   invalid_enum_value (status path): hint mentions "verify_note"
+//   unrecognized_keys:               hint mentions "cold storage"
+//   invalid_type:                    hint mentions expected type
+//   too_small:                       hint mentions "minimum"
+//   custom (superRefine):            hint extracted after "fix:" marker in message
+//
+// Note: invalid_enum_value (non-status path) is a defensive code branch — in the
+// current schema, all z.enum() fields are named "status" (StatusEnum). The branch
+// exists for forward-compatibility if a non-status enum field is added later.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Auto-fix hint: invalid_enum_value (status field)", () => {
+  it("hint-enum-status: stderr contains 'verify_note' for bad status value", () => {
+    const bad = {
+      ...makeValidBase(),
+      task_board: {
+        backlog: [{ id: "T1", status: "PARKED" }],
+        active_sprints: [],
+      },
+    };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    // The fix hint for a bad status field must mention verify_note
+    expect(r.stderr).toContain("verify_note");
+  });
+
+  it("hint-enum-status: stderr contains the bad value in the error message", () => {
+    const bad = {
+      ...makeValidBase(),
+      task_board: {
+        backlog: [{ id: "T1", status: "FOLDED" }],
+        active_sprints: [],
+      },
+    };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    expect(r.stderr).toContain("FOLDED");
+  });
+});
+
+describe("Auto-fix hint: unrecognized_keys (cold-storage migration hint)", () => {
+  it("hint-unrecognized-keys: stderr contains 'cold storage' for unknown root key", () => {
+    const bad = { ...makeValidBase(), _GARBAGE_KEY: "injected" };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    expect(r.stderr).toContain("cold storage");
+  });
+
+  it("hint-unrecognized-keys: stderr mentions the unknown key name", () => {
+    const bad = { ...makeValidBase(), MY_INJECTED_LEAK: "injected" };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    expect(r.stderr).toContain("MY_INJECTED_LEAK");
+  });
+});
+
+describe("Auto-fix hint: invalid_type (expected type name)", () => {
+  it("hint-invalid-type: stderr contains expected type for wrong-type field", () => {
+    // Set signal_queue to a string instead of an object → invalid_type
+    const bad = { ...makeValidBase(), signal_queue: "not_an_object" };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    // The hint must mention the expected type
+    expect(r.stderr).toContain("object");
+  });
+});
+
+describe("Auto-fix hint: too_small (minimum length hint)", () => {
+  it("hint-too-small: stderr contains 'minimum' for empty id field", () => {
+    // id: z.string().min(1) — empty string violates too_small
+    const bad = {
+      ...makeValidBase(),
+      task_board: {
+        backlog: [{ id: "", status: "BACKLOG" }],
+        active_sprints: [],
+      },
+    };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    expect(r.stderr).toContain("minimum");
+  });
+});
+
+describe("Auto-fix hint: custom (superRefine dangling active_task_id)", () => {
+  it("hint-custom-superRefine: stderr contains 'fix:' hint for dangling active_task_id", () => {
+    // head.active_task_id points to a non-existent task → custom superRefine issue
+    const bad = {
+      ...makeValidBase(),
+      head: { status: "in_progress", active_task_id: "GHOST-TASK-XYZ-CLI-TEST" },
+    };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    // The custom superRefine message embeds "fix:" followed by the hint text
+    expect(r.stderr).toContain("fix:");
+    expect(r.stderr).toContain("GHOST-TASK-XYZ-CLI-TEST");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Validator invocation contract: default-path and custom-path
+// (SSOT-W1-ZOD-VALIDATOR-CLI hardening — rank 2)
+//
+// bun scripts/orch-validate.mjs              → default: docs/data/orch/orch-state.json
+// bun scripts/orch-validate.mjs <path>       → use <path>
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Validator invocation contract (SSOT-W1-ZOD-VALIDATOR-CLI)", () => {
+  it("invocation-default: no-arg invocation reads docs/data/orch/orch-state.json (exit 0)", () => {
+    // Live orch-state has 73 coherence warnings but exits 0 (warnings are non-blocking).
+    const result = spawnSync(process.execPath, [VALIDATOR_PATH], {
+      encoding: "utf-8",
+      timeout: 15_000,
+    });
+    // Exit 0 = Stage 0 + Stage 1 pass (coherence warnings are non-blocking)
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("PASS");
+  });
+
+  it("invocation-custom-path: explicit path argument is used (not default)", () => {
+    // Validator must use the custom path and find the file there.
+    // A valid base at a custom path must exit 0.
+    const r = runCliValidator(makeValidBase()); // runCliValidator writes to tmpFile and passes it
+    expect(r.exitCode).toBe(0);
+    expect(r.stdout).toContain("PASS");
+  });
+
+  it("invocation-custom-path-not-found: custom path that does not exist → exit 3", () => {
+    const result = spawnSync(
+      process.execPath,
+      [VALIDATOR_PATH, "docs/nonexistent/path-for-invocation-test.json"],
+      { encoding: "utf-8", timeout: 10_000 }
+    );
+    expect(result.status).toBe(3);
   });
 });
 
