@@ -235,12 +235,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "SSOT-W1-HOOK-ENFORCE",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server hardening SSOT-W1-HOOK-ENFORCE (rank-3 SSOT-INTEGRITY-PERIMETER). Zone .claude/settings.local.json + scripts/agents-flow/orch-state-hook-{prewrite.mjs,bash-backstop.sh}. Audit+test existing hooks, prove QA-5 gate blocks bad orch-state Write, verify error paths + non-regression. WIP=1 (dev slot); CLEAN-NB-SPLIT-TNB runs maint lane (router-mutexed, not a WIP slot). On worker return: RAW-verify hook+test green, DJ-GATE-1, flip board DONE, release task:SSOT-W1-HOOK-ENFORCE.",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
     "updated_by": "dev-team",
-    "updated_at": "2026-06-27T20:58:00Z"
+    "updated_at": "2026-06-27T21:14:00Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2503,7 +2502,7 @@
           {
             "id": "SSOT-W1-HOOK-ENFORCE",
             "type": "dev",
-            "status": "IN_PROGRESS",
+            "status": "TODO",
             "title": "Audit + harden hook enforcement: .claude/settings.local.json PreToolUse Write|Edit blocker + PostToolUse Bash backstop; verify inline-validate + reason-field generation",
             "wave": 1,
             "rank": 3,
@@ -2519,8 +2518,8 @@
             "detail_ref": "docs/handoffs/SSOT-W1-HOOK-ENFORCE.md",
             "verify_note": "QA-5 (Write of bad orch-state blocked, deny reason returned) pass; PreToolUse inline-validates and returns structured reason; PostToolUse matcher heuristic avoids unrelated Bash; both handle errors gracefully.",
             "next_agent": "dev-mcp-server",
-            "dispatched_at": "2026-06-27T20:58:00Z",
-            "note": " | [dev-team 2026-06-27T20:58:00Z DISPATCH] PO BATCH (po aec6630260aa140c5, router RAW-verified: rank-3, dep ZOD-SCHEMA-MODEL=DONE, brief 4727B present, WIP=0). Owner dev-mcp-server, zone .claude/+scripts/agents-flow/. Audit+harden ~90%-wired orch-state hooks: QA-5 gate (Write of bad orch-state blocked w/ deny reason), PreToolUse inline-validate Write+Edit paths, PostToolUse bash matcher heuristic, error-path coverage. Zone-disjoint from CLEAN-NB-SPLIT-TNB (maint lane). Per-task lock task:SSOT-W1-HOOK-ENFORCE held by dev-team ttl5400. On return: RAW-verify hooks+tests, DJ-GATE-1 on DONE, flip board, release lock."
+            "dispatched_at": null,
+            "note": " | [dev-team 2026-06-27T20:58:00Z DISPATCH] PO BATCH (po aec6630260aa140c5, router RAW-verified: rank-3, dep ZOD-SCHEMA-MODEL=DONE, brief 4727B present, WIP=0). Owner dev-mcp-server, zone .claude/+scripts/agents-flow/. Audit+harden ~90%-wired orch-state hooks: QA-5 gate (Write of bad orch-state blocked w/ deny reason), PreToolUse inline-validate Write+Edit paths, PostToolUse bash matcher heuristic, error-path coverage. Zone-disjoint from CLEAN-NB-SPLIT-TNB (maint lane). Per-task lock task:SSOT-W1-HOOK-ENFORCE held by dev-team ttl5400. On return: RAW-verify hooks+tests, DJ-GATE-1 on DONE, flip board, release lock. | [dev-team 2026-06-27T21:14:00Z RE-QUEUE] Worker dev-mcp-server (a9a65f) DIED on terminal parse-error after 54 tool-uses/11min — NO STATUS, NO commit, NO clean return. RAW-probe of tree: it had (a) modified scripts/agents-flow/orch-state-hook-prewrite.mjs [finally{}->process.on('exit') temp-cleanup (finally never runs under process.exit in Bun/Node — real bug); bun/validator-spawn-fail allow-through -> BLOCK-HARD; added catch-all block], syntax-OK + brief-aligned BUT UNTESTED; (b) left UNTRACKED scripts/agents-flow/orch-state-hook.test.mjs (QA-5 test) + orch-schema-live-probe.mjs (probe). Router REVERTED prewrite.mjs to known-good (live SSOT-guard hook must NOT run untested block-hard semantics — risk: bun-absent in a spawned-agent PATH would block ALL orch-state writes = system wedge). Untracked test+probe left in tree as head-start (surfaced for PO/re-dispatch; not deleted — not router-authored). RE-DISPATCH (next tick) MUST: reproduce the 3 hardening changes WITH a passing QA-5 block-proof test (Write of bad orch-state status e.g. PARKED is BLOCKED + deny reason + never hits disk), VERIFY bun-missing block-hard cannot wedge router/agent orch-apply writes, evaluate/reuse the untracked test, then commit atomically + return STATUS. Parse-error likely transient model glitch — fresh re-dispatch advised."
           },
           {
             "id": "SSOT-W1-SERVER-ENFORCE",
