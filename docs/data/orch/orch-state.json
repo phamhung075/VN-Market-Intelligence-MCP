@@ -227,13 +227,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "Triage 2026-06-27T16:09Z (dev-team tick): 2 ready[] rows dispatchable -> FIX-COLDEVICT-TERMINAL-VOCAB-CANONICALIZE (dev-mcp-server) + MAINT-QA-NOTEBOOK-PRUNE-200L (claude-manager-helper). Acute strand CLEARED: SSOT-INTEGRITY-PERIMETER status COMPLETE->DONE (now cold-evictable next post-cycle 4.2 tick).",
+    "status": "in_progress",
+    "active_task_id": "ARCH-SSOT-INTEGRITY-PERIMETER",
+    "next_agent": "architect",
+    "next_action": "Dispatch architect to author docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md from the user directive + deep-audit; hands to pm to decompose Wave-1 into the 6 atomic zone tasks.",
     "updated_by": "po",
-    "updated_at": "2026-06-27T16:16:32Z",
-    "note": "PO TRIAGE po-s122 2026-06-27T16:09Z: drained 2 signals. (1) coldevict-complete-status-drift: ROOT was MY sign-off writing non-canonical 'COMPLETE' (absent from StatusEnum/TERMINAL_SET that SSOT-INTEGRITY-PERIMETER just shipped). OVERRODE signal's 'add COMPLETE to predicates' suggestion (would re-create divergent-vocab SSOT violation). Data-true-up'd the stranded sprint COMPLETE->DONE now (bash L52 already recognizes DONE -> evictable) + minted FIX to reconcile bash predicates to schema TERMINAL_SET. (2) qa.md 207L bloat -> MAINT prune to claude-manager-helper. Head stays idle; router dispatches both from ready[]."
+    "updated_at": "2026-06-27T16:42:52Z",
+    "note": "PO TRIAGE po-s123 2026-06-27T16:39Z: DISPATCHED ARCH-SSOT-INTEGRITY-PERIMETER (architect, doc-authoring, no relay). pendingSignals=0, NEW signals=0, CI GREEN, WIP=0 (WIP<=2 permits). Source material present: directive (7.9KB user-authored) + deep-audit (216KB) exist, deliverable not yet authored. Triaged-around twice prior; no remaining defer reason. ADD-1 READY-enum decision pre-endorsed (option-a) in task desc so the schema cannot strand its own kickoff. Brief LOCKS that decision first, then hands to pm for the 6 zone tasks."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6152,12 +6152,11 @@
       "deprecated_by": "po-s121",
       "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "ARCH-SSOT-INTEGRITY-PERIMETER",
         "type": "SPRINT-M",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "sprint": "SSOT-INTEGRITY-PERIMETER",
         "rank": 1,
         "wave": 1,
@@ -6176,10 +6175,13 @@
         "verification_gate": "Brief LOCKS the ADD-1 READY enum decision before any all-lane schema ships; specifies orchStateSchema.ts (all-9-lane nested + StatusEnum + .strict() + superRefine lane-status-coherence + referential), orch-validate.mjs 2-stage incl stage-0 dup-key, dual-point enforcement (hook + orchStateStore.parse), orch-apply.sh wrapper + bash shim, and maps every clause to the directive's 7 QA acceptance tests; pm can decompose into the 6 atomic zone tasks with no open design question.",
         "audit_source": "docs/handoffs/orch-state-deep-audit-2026-06-27.json",
         "input_directive": "docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md",
-        "updated_at": "2026-06-27T08:35:40Z",
-        "updated_by": "po-ratify-ssot-zod"
+        "updated_at": "2026-06-27T16:42:52Z",
+        "updated_by": "po-s123",
+        "dispatched_at": "2026-06-27T16:42:52Z",
+        "dispatched_by": "po-s123"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",

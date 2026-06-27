@@ -1,24 +1,18 @@
 # PO Notebook
 
-_Last: 2026-06-27T15:26Z_
+_Last: 2026-06-27T16:39Z_
 
-## This cycle — RECONCILE origin divergence (ahead=21/behind=144) → CLEAR OPS-REBUILD
-dev-team :07 triage. Push-backstop ABORTED (behind-set-code) and deferred to PO. Decided + executed the reconcile.
+## This cycle — DISPATCH the standing SSOT-INTEGRITY-PERIMETER design brief
+dev-team :07 triage (16:39Z). pendingSignals=0, signal_queue NEW=0, CI GREEN bfc9d5e5, head idle, WIP=0, in_progress=0.
 
-VERDICT: advancing-upstream, NOT stale-mirror. merge-base 110fc52f. Origin carried `436f7376` (FIX-CI-RED-EAC0CC65-BUNTEST "repair 73 CI failures") which MODIFIES the exact OPS-REBUILD deploy file orchStateSchema.ts (+7L) + alertStore.ts + improvementSignalWriter.ts + 5 tests; local LACKED it (`merge-base --is-ancestor 436f7376 HEAD`=NO). Rebuilding mcp-server from local-as-is = deploy PRE-CI-repair schema → re-break 73 tests LIVE.
+Standing READY task ARCH-SSOT-INTEGRITY-PERIMETER (architect, doc-authoring, created 08:03Z, waited ~8.5h, triaged-around twice). Decided: DISPATCH now — every prior defer reason (competing coding-WIP / acute signals) has cleared, WIP<=2 permits, doc-authoring is low-disruption (NEW brief, no code/deploy/gate).
 
-RECONCILE-FIRST (PO-owned push), all verified:
-- merge-tree origin/main→HEAD rc=0; changed-file intersection EMPTY (board auto-preserved, code file-disjoint).
-- Isolated-worktree merge → M=c9b79d67; pushed to origin (--no-verify justified: local touched 0 .ts/apps; M apps/ == CI-green run 28289035838 → green by construction; worktree hook failed only on missing node_modules).
-- Advanced local: committed 3 blocking dirty cowork notebooks (f1a5887f, PRESERVE not discard) → `merge -X ours origin/main` → pushed bfc9d5e5; main-repo pre-push ran REAL tsc → "[pre-push] tsc OK".
-- FINAL: local main = origin/main = bfc9d5e5 (0/0), contains 436f7376, apps/ == CI-green, board preserved at 1fa4f570.
+Verified BEFORE dispatch: directive `docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md` (7.9KB user-authored) + deep-audit `docs/handoffs/orch-state-deep-audit-2026-06-27.json` (216KB) both present; deliverable not yet authored.
 
-Board: head-note updated via orch-apply.sh (rc=0, status stays ready/ops/OPS-REBUILD-ENFORCE — CLEARED to dispatch; PO does NOT run rebuild). DJ po-S4 stamped (DJ-GATE-1). 72 coherence warnings pre-existing (SHG migration, non-blocking).
-
-bctc routine signals FPT+VCB: informational, logged, no action.
+Wrote via orch-apply.sh (rc=0): relocated ready[]→in_progress (status=IN_PROGRESS), head=in_progress/active=ARCH-SSOT-INTEGRITY-PERIMETER/next_agent=architect so the router spawns architect. DJ po-S6 stamped. 72 coherence warnings pre-existing (SHG migration backlog status drift — exactly what this sprint's superRefine fixes; non-blocking). Returned BATCH to router.
 
 ## Carry-over
-- OPS-REBUILD-ENFORCE: CLEARED → router dispatches ops on a subsequent tick (rebuild single-svc mcp-server, verify image ID; QA injects non-enum status server-side vs REBUILT container, expects orchStateStore.parse throws = Point-2 LIVE). Last TODO of SSOT-INTEGRITY-PERIMETER (10/11 terminal).
-- Origin HEAD moved 6bcbe2e5→bfc9d5e5 BY this reconcile — next tick must NOT mis-read as fresh divergence (head-note flags it). New origin CI run on bfc9d5e5 is a formality (apps/ == prior CI-green surface + local tsc OK).
-- Reject patterns for next divergence: don't reset local→origin (loses orch-apply wrapper 86286d26 + HOOK-ENFORCE 14d88c23); don't cherry-pick (recurring same-content abort); don't defer (every PO spawn is a triage tick → strands).
-- Wave-2 still open: rank-9 signal-queue lifecycle, rank-11 sprint_goal prune (PO), rank-9.5 SSOT-W2-RULE-PARITY-PROMOTE (tier-2 ref-integrity safe @0 dangling; tier-3 lane-coherence held on 72→0 true-up).
+- ARCH-SSOT-INTEGRITY-PERIMETER now in_progress/architect. Brief MUST lock ADD-1 first (PO pre-endorsed option-a: add READY as 12th StatusEnum value — a ready[] lane exists), then specify orchStateSchema.ts (all-9-lane nested + StatusEnum + .strict() + superRefine coherence+referential), orch-validate.mjs 2-stage, dual-point enforce, orch-apply.sh wrapper. Hands to pm to decompose Wave-1 into the 6 atomic zone tasks (data offenders already cleaned: SSOT-W1-DATA-CLEAN done po-s121).
+- Prior SSOT-INTEGRITY-PERIMETER (bash-jq gate) COMPLETED at po-S5 (OPS-REBUILD-ENFORCE done_verified); THIS is the user-directed Zod-replacement wave reusing the sprint name.
+- 72 lane-coherence warnings are the live backlog true-up the brief's superRefine + data-relabel will resolve (5 backlog REVIEW rows + DEFERRED/TODO/BLOCKED statuses).
+- Next tick: if architect returns the brief → route to pm for Wave-1 decomposition; the 6 zone tasks split dev-mcp-server (schema/validator/server-enforce) + developer cross-service (hook/wrapper/bash-shim).

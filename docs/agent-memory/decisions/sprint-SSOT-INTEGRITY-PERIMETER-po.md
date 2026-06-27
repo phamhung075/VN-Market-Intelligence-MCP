@@ -50,3 +50,12 @@
 - head idle vs arm-next: idle — no further pipeline work queued for this now-done task; leaving head at ready/ops would re-trigger dispatch next tick.
 **why-decision:** Gate PASSED and router independently RAW-verified live image 8aa222ab (StatusEnum.parse('ROUTER_BOGUS')->ZodError invalid_enum_value; 'DONE' parses; /health 200 toolCount 166; peers untouched 42h+). Live orch-state clean, all 3 validators rc=0.
 **why-change:** no change from plan — DoD's GAP-1 REBUILD-TO-LIVE satisfied with LIVE proof, warranting DONE_VERIFIED over plain DONE.
+
+### STEP po-S6 · po · 2026-06-27T16:39Z
+**task-id:** ARCH-SSOT-INTEGRITY-PERIMETER
+**what-done:** DISPATCHED the standing READY design task to architect (relocated ready[]->in_progress, status=IN_PROGRESS, head=in_progress/active=ARCH-SSOT-INTEGRITY-PERIMETER/next_agent=architect) so the router spawns architect to author docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md.
+**what-considered:**
+- DEFER a third time (the prior two triage-arounds were while coding-WIP/acute signals competed) — REJECTED: this tick pendingSignals=0, NEW signals=0, CI GREEN bfc9d5e5, WIP=0 (WIP<=2 permits), no acute strand. Every defer reason has cleared and the task has waited ~8.5h.
+- DISPATCH now — CHOSEN. Source material verified present: directive (7.9KB user-authored) + deep-audit (216KB) exist; deliverable not yet authored; doc-authoring is low-disruption (architect writes a NEW brief, no code/deploy/gate).
+**why-decision:** User-directed design directive with zero remaining blockers and a free coding board; the brief is the gate that lets pm decompose Wave-1 into the 6 atomic zone tasks. ADD-1 READY-enum decision pre-endorsed (option-a) in the task desc so the schema cannot strand its own kickoff.
+**why-change:** no change from plan — this is the deliberate dispatch the two prior defers were holding for.
