@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-27T17:00 UTC | **Sprint:** SSOT-INTEGRITY-PERIMETER
+**Last updated:** 2026-06-27T19:15 UTC | **Sprint:** BCTC-REFINE-STALL-RETRIGGER
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-27T19:15Z — BCTC-REFINE-STALL-RETRIGGER (DESIGN DONE)
+
+**Task:** BCTC-REFINE-STALL-RETRIGGER | RECON-FIRST BLUEPRINT | zone: `apps/mcp-server/` + `vps-scripts/` + `.claude/`
+**3-track decomposition:**
+- Track (a) REFINE-STALL: Option-Y deleted `runBctcRefineJob()` (no Claude CLI in container). Production drain is `refine_bctc_md` cowork agent at 09:00+14:00 UTC via cowork CronCreate. Session restart ~2026-06-07 killed the CronCreate → both slots stopped firing → 47 docs silently accumulated. Immediate fix: `/cron-cowork-team` re-arm (ops, 30s). Structural: new `bctcRefineStalenessJob` server-side watchdog (dev-mcp-server, SPRINT-S).
+- Track (b) VIC DISCOVERY-GAP: VIC HOSE-listed (SSC pathway, same as VHM). Root cause not confirmed — 3 candidates: C-1 late filing exhausted 5 enrichment attempts before PDF available; C-2 batch-size cap (20/run) pushed VIC below cutoff; C-3 SSC title-match regex miss. RAW-probe `bctc_vps_queue WHERE action_code='VIC'` required before fix. B1 = manual reset to pending; B2 = structural re-discovery sweep + optional regex fix. Route: dev-mcp-server (B1) + dev-vps-crawls (B2).
+- Track (c) OBSERVABILITY-HOLE: `freshnessSlaMonitorJob` has no `refine_pending` signal. No watchdog checks OCR-done-but-refine-stuck count. Definitif fix: new `bctcRefineStalenessJob` (interface/scheduler/financial-reports/) with 2-hourly check on `text_status='COMPLETE' AND refine_status IN ('PENDING','PARTIAL') AND parsed_at < now-24h`; WORK alert on >0 count, escalate at >5. Check 2: probe `cron_job_runs` for last refine_bctc_md run (requires additive wrapRun in agent flow). Route: dev-mcp-server.
+**First track under WIP=1:** BCTC-REFINE-A1 (ops re-arm, immediate). Followed by BCTC-REFINE-A2 + BCTC-REFINE-B1.
+**Output:** `docs/architecture-briefs/2026-06-27-bctc-refine-stall-retrigger.md`
+**5 tasks for PM:** BCTC-REFINE-A1 (ops, XS) → BCTC-REFINE-A2 (dev-mcp-server, S) → BCTC-REFINE-B1 (dev-mcp-server, XS) → BCTC-REFINE-B2 (dev-vps-crawls, S) → BCTC-REFINE-C1 (dev-mcp-server, S)
+**Risk-1 (HIGH):** Cowork-only drain = single point of failure; Track (c) watchdog is the definitif close on the 20-day blindness class.
 
 ## 2026-06-27T17:00Z — SSOT-INTEGRITY-PERIMETER (DESIGN DONE)
 

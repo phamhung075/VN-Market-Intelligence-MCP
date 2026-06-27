@@ -6319,15 +6319,15 @@
       {
         "id": "BCTC-REFINE-STALL-RETRIGGER",
         "type": "OPERATIONAL",
-        "status": "READY",
+        "status": "REVIEW",
         "priority": "P1",
         "size": "M",
         "zone": "multi",
         "title": "Re-trigger stalled BCTC REFINE pipeline — 47 reports text_status=COMPLETE / refine_status=PENDING since 2026-06-07 batch (HPG, ACV, +45)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCTC-REFINE-STALL-RETRIGGER",
         "status_note": "The in-process spawn path in `bctcRefineJob.ts` was deleted (OPTION-Y ruling); refinement is now host-level via CC Agent/Task subagent fan-out using MCP entry points `get_bctc_pending_refine` → `push_bctc_refined_unit` → `finalize_bctc_refine`. Action: enumerate the 47 PENDING reports, fan out refine workers to clear the backlog, verify each flips refine_status=PENDING→DONE and PUBLISH unblocks, then RAW-confirm HPG + ACV appear in get_bctc_full. ROOT-CAUSE follow-up also needed: WHY did the fleet REFINE cron stall after 2026-06-07 and emit no alert for 20 days — owner should confirm the new `refine_pending` counter is wired into an alerting threshold, not just exposed. Origin: FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP.",
-        "route_to": "architect",
-        "next_agent": "architect",
+        "route_to": "pm",
+        "next_agent": "pm",
         "recon_first": true,
         "promoted_at": "2026-06-27T18:48:31Z",
         "promoted_by": "po",
@@ -6337,7 +6337,8 @@
         "corroborating_reports": [
           3336,
           3337
-        ]
+        ],
+        "review_note": "Architect recon complete 2026-06-27T19:15Z. Blueprint: docs/architecture-briefs/2026-06-27-bctc-refine-stall-retrigger.md. 3 tracks, 5 tasks. First: BCTC-REFINE-A1 ops re-arm (cowork CronCreate) — immediate, no dev. Then BCTC-REFINE-A2+B1 SPRINT-S."
       }
     ],
     "review": [
