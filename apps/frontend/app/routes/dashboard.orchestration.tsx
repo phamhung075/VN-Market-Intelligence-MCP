@@ -173,8 +173,6 @@ function parseOrchStateDto(raw: unknown): OrchState {
 }
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {
-  const fetchedAt = new Date().toISOString();
-
   // Call the server-side proxy rather than mcp-server directly.
   // In SSR context the absolute URL is required; derive origin from process.env
   // (same pattern as other loaders that call internal proxy routes).
@@ -191,6 +189,7 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 
   const state = data ?? null;
   let isStale = false;
+  let fetchedAt = new Date().toISOString();
 
   if (state !== null) {
     // Staleness check — DTO uses last_updated_iso or head.updated_at.
@@ -198,6 +197,8 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
     if (tsField) {
       const age = Date.now() - new Date(tsField).getTime();
       isStale = age > STALE_THRESHOLD_MS;
+      // Use real data timestamp instead of server execution time
+      fetchedAt = tsField;
     }
   }
 

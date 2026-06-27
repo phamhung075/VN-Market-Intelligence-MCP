@@ -308,8 +308,8 @@
       "asof": null,
       "status": "STATIC",
       "fix": null,
-      "l3b_status": "WIRED",
-      "l3b_note": "FreshnessBadge + useFreshnessRevalidator wired in TASK-FFT-L3B"
+      "l3b_status": "STATIC_TEXT",
+      "l3b_note": "Static page per FR-5 — no badge/hook, renders 'Nội dung tĩnh' in PageHeader.actions"
     },
     {
       "page": "kinh-dich-signals",

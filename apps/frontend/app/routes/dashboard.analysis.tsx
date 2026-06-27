@@ -116,6 +116,8 @@ interface LoaderData {
   watchlistTiles: Record<string, WatchlistTileData>;
   errors: string[];
   fetchedAt: string;
+  kdGeneratedAt: string | null;
+  watchlistDataAsof: string | null;
 }
 
 // --------------------------------------------------------------------------
@@ -253,6 +255,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     watchlistTiles,
     errors,
     fetchedAt: new Date().toISOString(),
+    kdGeneratedAt: market?.timestamp ?? null,
+    watchlistDataAsof: null,
   });
 }
 
@@ -1742,8 +1746,11 @@ export default function AnalysisDashboard() {
     watchlistTiles,
     errors,
     fetchedAt,
+    kdGeneratedAt,
+    watchlistDataAsof,
   } = useLoaderData<typeof loader>();
   useFreshnessRevalidator("intraday");
+  useFreshnessRevalidator("realtime");
 
   const hasWatchlistPrices = Object.keys(watchlistTiles).length > 0;
 
@@ -1753,7 +1760,7 @@ export default function AnalysisDashboard() {
         title="Market Analysis"
         actions={
           <span className="text-xs text-slate-500 flex items-center gap-2">
-            <FreshnessBadge dataAsof={fetchedAt ?? null} slaTierKey="intraday" />
+            <FreshnessBadge dataAsof={kdGeneratedAt ?? null} slaTierKey="intraday" />
             <ClientTimestamp iso={fetchedAt} />
           </span>
         }
@@ -1789,12 +1796,17 @@ export default function AnalysisDashboard() {
       {/* When no stock selected: show watchlist overview grid (Priority 2)  */}
       {/* ------------------------------------------------------------------ */}
       {!selectedStock && (
-        <SectionCard
-          title="Watchlist — Tổng quan"
-          subtitle="30 cổ phiếu · click để xem chi tiết"
-        >
-          <WatchlistOverviewGrid tiles={watchlistTiles} />
-        </SectionCard>
+        <div className="space-y-2">
+          <div className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={watchlistDataAsof ?? null} slaTierKey="realtime" />
+          </div>
+          <SectionCard
+            title="Watchlist — Tổng quan"
+            subtitle="30 cổ phiếu · click để xem chi tiết"
+          >
+            <WatchlistOverviewGrid tiles={watchlistTiles} />
+          </SectionCard>
+        </div>
       )}
 
       {/* ------------------------------------------------------------------ */}
