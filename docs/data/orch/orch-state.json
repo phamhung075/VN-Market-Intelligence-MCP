@@ -203,12 +203,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "mcp-server REBUILT 2026-06-26T11:18Z (image 0a12bd23) — alert_id fix 57a781a1 now LIVE; orphan alert_id accrual STOPPED (220 existing now static); session mem-leak cleared (89%→18%). Board clear, WIP=0.",
-    "updated_at": "2026-06-26T11:24:20Z",
-    "updated_by": "po"
+    "status": "in_progress",
+    "active_task_id": "ARCH-SSOT-INTEGRITY-PERIMETER",
+    "next_agent": "architect",
+    "updated_at": "2026-06-27T08:03:52Z",
+    "updated_by": "po-s121",
+    "note": "SSOT-INTEGRITY-PERIMETER opened (audit 2026-06-27). Data offenders cleaned (PARKED/done_verified/head/dup-meta). Dispatching architect to author the hardening brief; dev-team Step-0b head-resume spawns architect."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -934,12 +934,26 @@
         "cron_spec": "Add daily slot to docs/data/cowork-schedule.json: slot_id=digest-predict-daily, cron 30 17 * * * (17:30 UTC daily = 00:30 VN next day, off-market; free window — no slot conflict; mirrors the old monday.md 00:30-UTC predict timing). agent/agent_id=digest-predict, parallel_group=digest, flow_path=docs/agents/digest-predict/flow/daily-predict.md, guaranteed=false, policy_id=null.",
         "immediate_catchup": "RECOMMENDED — data is 10 days stale (newest claim 2026-06-14, today 2026-06-24). Router MAY spawn digest-predict on-demand NOW to backfill fresh claims today via the daily synthesis flow once it ships; until the daily slot ships, a one-shot ad-hoc digest-predict run through the re-enabled prediction path is the catch-up.",
         "chain": "agents-architect (cadence+cap+dedup design brief) -> agent-father (init.md scope + daily-predict sub-flow + cowork-schedule.json daily slot) -> qa (live consecutive-day verification) ; immediate catch-up = router/digest-predict on-demand"
+      },
+      {
+        "sprint_id": "SSOT-INTEGRITY-PERIMETER",
+        "status": "OPEN",
+        "priority": "high",
+        "zone": "cross-service",
+        "created_at": "2026-06-27T08:03:52Z",
+        "created_by": "po",
+        "vision": "Close the SSOT integrity perimeter so an agent can never be misled about task state and no writer can corrupt the board. Make the HARD gate actually enforce what it claims (all task lanes, duplicate keys, referential integrity, schema keys), clean the live data offenders so it can flip to hard-fail without stranding the fleet, then route every hot-file writer through it. Begin draining the ~150KB of hot-file bloat/lifecycle drift in wave 2.",
+        "scope_in": "Wave 1 (must-fix): canonical task-lane-list extending G-5/G-3/G-4 to ALL task-bearing lanes incl closed_sprints[].tasks + PARKED regression fixture; G-0 raw-byte duplicate-key reject + G-1 empty-file guard + G-6 tick-skew repair + G-7 schema-key invariant; referential-integrity G-7/8/9 + fix 6 dangling payload_ref; scripts/orch-apply.sh gated wrapper routing EVERY hot-file writer; fix RED 1837a test + sync mcp-server OrchState TS types to live v4. Wave 2 (should-fix): signal_queue lifecycle drain; active-sprint prose->cold 88.6KB migration + stub-on-write; sprint_goal prune-on-close; decision_journal single-ts + _cap + rotation.",
+        "scope_out": "Defer ranks 11/13/14/15 (mixed-representation closed-sprint migration, legacy hot-key cleanup, status state-machine docs + cold-resolution recipe, signal-row data hygiene).",
+        "success_metric": "scripts/orch-state-validate.sh hard-fails on PARKED-in-review / lowercase done_verified / duplicate JSON keys / empty file / dangling refs across ALL task lanes (regression fixtures prove it); EVERY hot-file writer routes through scripts/orch-apply.sh; RED 1837a green + mcp-server TS reads live v4. Verified RAW with jq, never a green badge. Ship completion, not a slice.",
+        "chain": "po (open + data-clean DONE) -> architect (hardening brief) -> pm (decompose Wave-1 zone tasks) -> dev-team/developer (gate+wrapper+TS) -> qa (live RAW verify) -> po (sign-off)",
+        "data_clean_done": "po-s121 2026-06-27: PARKED->DEFERRED, 7x done_verified->DONE_VERIFIED, task_board.head re-collapsed, dup updated_at/_by dropped — file gate-clean."
       }
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-26T20:10:51Z",
-    "_updated_by": "po-orchstate-signoff",
+    "_updated_at": "2026-06-27T08:03:52Z",
+    "_updated_by": "po-s121",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -2377,6 +2391,158 @@
           }
         ],
         "last_evidence_at": "2026-06-23T17:29:59Z"
+      },
+      {
+        "id": "SSOT-INTEGRITY-PERIMETER",
+        "status": "ACTIVE",
+        "opened_at": "2026-06-27T08:03:52Z",
+        "opened_by": "po-s121",
+        "goal": "Close the SSOT integrity perimeter; make the HARD gate enforce all lanes + dup-key + referential integrity; route every writer through one gated wrapper; then drain hot-file bloat.",
+        "audit_source": "docs/handoffs/orch-state-deep-audit-2026-06-27.{md,json}",
+        "chain": "po -> architect -> pm -> dev-team/developer -> qa -> po",
+        "tasks": [],
+        "ranked_scope": [
+          {
+            "rank": 1,
+            "id": "SSOT-W1-LANE-LIST-GATE",
+            "wave": 1,
+            "owner": "architect+developer",
+            "effort": "M",
+            "dep": "5",
+            "title": "ONE canonical task-lane-list; extend G-5/G-3/G-4 to ALL task-bearing lanes incl closed_sprints[].tasks + PARKED-in-review regression fixture"
+          },
+          {
+            "rank": 2,
+            "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
+            "wave": 1,
+            "owner": "architect+developer",
+            "effort": "L",
+            "dep": "1,3,4",
+            "title": "scripts/orch-apply.sh gated wrapper — route EVERY hot-file writer (290 po-s*/router-*.jq apply idiom, orch-backlog-stub.sh, dev-team WF-1 head-reset, system-auditor) through orch-state-validate.sh"
+          },
+          {
+            "rank": 3,
+            "id": "SSOT-W1-GATE-STRUCTURAL",
+            "wave": 1,
+            "owner": "developer",
+            "effort": "M",
+            "dep": "",
+            "title": "G-0 raw-byte duplicate-key reject + G-1 [-s] empty-file guard + G-6 tick-skew repair (compare .last_tick vs _meta.updated_at) + G-7 schema-key invariant"
+          },
+          {
+            "rank": 4,
+            "id": "SSOT-W1-REFERENTIAL-GATES",
+            "wave": 1,
+            "owner": "developer",
+            "effort": "M",
+            "dep": "",
+            "title": "Referential-integrity gates G-7/8/9 (detail_ref/payload_ref/orphan-warn) + rewrite 6 dangling payload_ref docs/signals/->docs/data/db-integrity-history.json"
+          },
+          {
+            "rank": 5,
+            "id": "SSOT-W1-DATA-CLEAN",
+            "wave": 1,
+            "owner": "po",
+            "effort": "S",
+            "dep": "",
+            "title": "Relabel live non-enum statuses (PARKED->DEFERRED, 7x done_verified->DONE_VERIFIED)",
+            "status": "DONE_VERIFIED",
+            "done_by": "po-s121",
+            "done_at": "2026-06-27T08:03:52Z"
+          },
+          {
+            "rank": 6,
+            "id": "SSOT-W1-HEAD-METADATA-COLLAPSE",
+            "wave": 1,
+            "owner": "po+developer",
+            "effort": "M",
+            "dep": "",
+            "title": "Re-collapse task_board.head to po-s66 stub + drop dup updated_at/_by (po DONE) + add G-7 schema-key gate (dev) + retarget the 3 regressor scripts",
+            "status": "PARTIAL_DONE_DATA",
+            "note": "data re-collapse + dedup DONE by po-s121; G-7 gate + script retarget queued for dev"
+          },
+          {
+            "rank": 7,
+            "id": "SSOT-W2-SIGNAL-QUEUE-LIFECYCLE",
+            "wave": 2,
+            "owner": "agents-architect",
+            "effort": "M",
+            "dep": "",
+            "title": "Reconcile signal_queue lifecycle — drain 34 stuck-TRIAGED rows, fix dead terminal-sprint predicate + startswith(BCTC-) clause, co-evict dangling refs"
+          },
+          {
+            "rank": 8,
+            "id": "SSOT-W2-PROSE-COLD-MIGRATION",
+            "wave": 2,
+            "owner": "pm",
+            "effort": "M",
+            "dep": "1,2",
+            "title": "Execute brief §3.6 active-sprint task-prose -> cold migration (88.6KB, 0/53 detail_ref) + stub-on-write rule to PM/dev-team task creation"
+          },
+          {
+            "rank": 9,
+            "id": "SSOT-W2-SPRINT-GOAL-PRUNE",
+            "wave": 2,
+            "owner": "po",
+            "effort": "M",
+            "dep": "1",
+            "title": "sprint_goal prune-on-close (entries subset of active_sprints) + wire eviction + normalize status vocab"
+          },
+          {
+            "rank": 10,
+            "id": "SSOT-W2-DECISION-JOURNAL-ROTATION",
+            "wave": 2,
+            "owner": "architect",
+            "effort": "M",
+            "dep": "1",
+            "title": "decision_journal collapse dual ts/timestamp to one ISO field + repair malformed ts + add _cap + wire rotation into orch-cold-evict.sh"
+          },
+          {
+            "rank": 11,
+            "id": "SSOT-DEFER-MIXED-REPR-MIGRATION",
+            "wave": "defer",
+            "owner": "pm",
+            "effort": "M",
+            "dep": "1",
+            "title": "Complete closed_sprint/backlog mixed-representation migration + delete 5 cold HSC orphans"
+          },
+          {
+            "rank": 12,
+            "id": "SSOT-W1-TS-SYNC-1837A",
+            "wave": 1,
+            "owner": "developer",
+            "effort": "M",
+            "dep": "",
+            "title": "Fix RED 1837a test + sync mcp-server OrchState TS types to live v4 + point newestUpdated() at _meta.updated_at"
+          },
+          {
+            "rank": 13,
+            "id": "SSOT-DEFER-LEGACY-HOT-KEYS",
+            "wave": "defer",
+            "owner": "developer",
+            "effort": "M",
+            "dep": "1",
+            "title": "Cleanup legacy/stale hot keys — _closed_signals_20260614, session_handoff_status, dashboard_section_cache 3-way drift, signal_queue.archive doc wording"
+          },
+          {
+            "rank": 14,
+            "id": "SSOT-DEFER-STATE-MACHINE-DOCS",
+            "wave": "defer",
+            "owner": "architect",
+            "effort": "M",
+            "dep": "",
+            "title": "Document the 3 status state-machines + §2.5 cold-resolution recipe in orch-state-access.md + normalize signal severity + add severity to validator"
+          },
+          {
+            "rank": 15,
+            "id": "SSOT-DEFER-SIGNAL-ROW-HYGIENE",
+            "wave": "defer",
+            "owner": "system-auditor",
+            "effort": "S",
+            "dep": "",
+            "title": "Signal-row data hygiene — null-ts row + duplicate sau-d4 id + validator parseable-ts/unique-id check"
+          }
+        ]
       }
     ],
     "archive": [
@@ -5532,43 +5698,43 @@
         "tasks": [
           {
             "id": "HSC-1",
-            "status": "done_verified",
+            "status": "DONE_VERIFIED",
             "commit": "5b00897e",
             "note": "scripts/orch-cold-evict.sh + orch-backlog-stub.sh + archive/ dir — QA PASS"
           },
           {
             "id": "HSC-2",
-            "status": "done_verified",
+            "status": "DONE_VERIFIED",
             "commit": "33603151,dcc5e691",
             "note": "one-time eviction 2.47MB -> 932KB"
           },
           {
             "id": "HSC-3",
-            "status": "done_verified",
+            "status": "DONE_VERIFIED",
             "commit": "agent-father (Phase A)",
             "note": "task-archive.md trigger+destination repoint + pm planning read-scope narrow"
           },
           {
             "id": "HSC-4",
-            "status": "done_verified",
+            "status": "DONE_VERIFIED",
             "commit": "ed9a785e",
             "note": "backlog prose -> stubs + cold backlog-detail.json (318 items lazy-load); 932KB -> 525KB"
           },
           {
             "id": "HSC-5",
-            "status": "done_verified",
+            "status": "DONE_VERIFIED",
             "commit": "fb1eddfa",
             "note": "10 meta keys -> single _meta, schema v3->v4; orphan TASK-MACRO-COMMODITY-DELTA rescued from dead tasks_backlog; zero live stale-refs"
           },
           {
             "id": "HSC-6",
-            "status": "done_verified",
+            "status": "DONE_VERIFIED",
             "commit": "agent-father (Phase A)",
             "note": "evict-on-terminal hook in pm + dev-team post-cycle backstop"
           },
           {
             "id": "HSC-7",
-            "status": "done_verified",
+            "status": "DONE_VERIFIED",
             "commit": "agent-father (Phase A)",
             "note": "signal-dashboard §PRUNE -> cold file eviction"
           }
@@ -5999,15 +6165,37 @@
     ],
     "done_verified": [],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": null,
-      "updated_at": "2026-06-25T04:22:52Z",
-      "updated_by": "dev-team-router",
-      "note": "FIX-DB-INTEGRITY done_verified commit 8deab41e; FIX-DB-INTEGRITY-HELPER-READONLY-TO-IMMUTABLE"
+      "status": "deprecated",
+      "canonical_moved_to": ".head",
+      "deprecated_at": "2026-06-27T08:03:52Z",
+      "deprecated_by": "po-s121",
+      "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "ARCH-SSOT-INTEGRITY-PERIMETER",
+        "type": "SPRINT-M",
+        "status": "READY",
+        "sprint": "SSOT-INTEGRITY-PERIMETER",
+        "rank": 1,
+        "wave": 1,
+        "owner_agent": "architect",
+        "next_agent": "architect",
+        "zone": "cross-service",
+        "priority": "high",
+        "created_at": "2026-06-27T08:03:52Z",
+        "created_by": "po-s121",
+        "title": "Author the SSOT integrity-perimeter hardening brief",
+        "desc": "Author docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md from docs/handoffs/orch-state-deep-audit-2026-06-27.json .roadmap. The brief MUST specify, with RAW jq exemplars: (1) ONE canonical task-lane-list jq def (all 9 status-bearing lanes incl closed_sprints[].tasks) extending G-5(enum)/G-3(lane-type)/G-4(null-id) to every lane + a PARKED-in-review regression fixture; (2) gate extensions G-0 raw-byte duplicate-key reject, G-1 empty-file [-s] guard, G-6 tick-skew repair (.last_tick vs _meta.updated_at), G-7 schema-key invariant incl the task_board.head-must-be-stub assertion, G-7/8/9 referential-integrity (detail_ref/payload_ref/orphan-warn); (3) the scripts/orch-apply.sh gated-wrapper contract (write-temp -> validate -> CAS-mtime rename) that EVERY hot-file writer routes through; (4) the data-clean jq spec already executed by po-s121 (PARKED/done_verified relabel, head re-collapse, dup-metadata drop) documented as the migration map; (5) the §2.5 read-standard cold-resolution recipe. Hand to pm to decompose Wave-1 into atomic zone tasks (ranks 1-4,6-gate,12). Data offenders already cleaned by po-s121 (dep rank-5 satisfied).",
+        "depends_on": [
+          "SSOT-W1-DATA-CLEAN(done po-s121)"
+        ],
+        "deliverable": "docs/architecture-briefs/SSOT-INTEGRITY-PERIMETER-hardening.md",
+        "verification_gate": "pm can decompose the brief into atomic zone dev tasks with no open design questions; every gate clause has a RAW jq exemplar + a regression fixture.",
+        "audit_source": "docs/handoffs/orch-state-deep-audit-2026-06-27.json"
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -6021,13 +6209,20 @@
         "park_reason": "KEEP PARKED (design COMPLETE + valid, brief docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md 16.6KB on disk). NOT closeable: accept->pm-decomposition mints zone:multi subtasks spanning apps/mcp-server + apps/frontend (NFR-C-4/5/7). The apps/mcp-server lane is load-bearing — held by ARCH-CRON-SCHEDULER-RELIABILITY (Monday market-day gate) AND queued for BA-VN-MACRO-TOOLING WAVE-1 (Zone B/C mcp-server). UNPARK CONDITION: dispatch decomposition only once BOTH (a) ARCH-CRON umbrella closes to done_verified after today's market-day gate AND (b) BA-MACRO WAVE-1 mcp-server tasks land — then apps/mcp-server is free for the NFR-C endpoint+page fixes. Until then parking is the correct serialization, not neglect.",
         "priority": "high",
         "sprint": "SHIP-WAVE-REAUDIT",
-        "status": "PARKED",
+        "status": "DEFERRED",
         "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
         "updated_at": "2026-06-11T19:33:43Z",
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
-        "po_reparked_at": "2026-06-15T06:35:17Z"
+        "po_reparked_at": "2026-06-15T06:35:17Z",
+        "park_status_relabel": {
+          "from": "PARKED",
+          "to": "DEFERRED",
+          "by": "po-s121",
+          "at": "2026-06-27T08:03:52Z",
+          "note": "enum-clean (C2): PARKED qualifier-as-status -> DEFERRED (deliberate serialization); park_reason retained verbatim as the qualifier prose. UNPARK CONDITION unchanged."
+        }
       }
     ],
     "qa": [],
@@ -6047,14 +6242,12 @@
         }
       ]
     },
-    "updated_at": "2026-06-26T15:26:11Z",
-    "updated_by": "po",
     "last_triaged_at": "2026-06-26T15:26:11Z",
     "last_triaged_by": "po"
   },
   "_meta": {
-    "updated_at": "2026-06-26T20:11:31Z",
-    "updated_by": "po-orchstate-signoff",
+    "updated_at": "2026-06-27T08:03:52Z",
+    "updated_by": "po-s121",
     "schema": "v4",
     "ssot": true
   },
