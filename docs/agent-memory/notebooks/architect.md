@@ -1,8 +1,19 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-27T19:15 UTC | **Sprint:** BCTC-REFINE-STALL-RETRIGGER
+**Last updated:** 2026-06-27T19:38 UTC | **Sprint:** BCTC-REFINE-STALL-RETRIGGER (THROUGHPUT-DRAIN re-scope)
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-27T19:38Z — BCTC-REFINE-STALL-RETRIGGER (THROUGHPUT-DRAIN RE-SCOPE DONE)
+
+**Task:** BCTC-REFINE-STALL-RETRIGGER | Option-B re-scope | zone: `docs/agents/refine_bctc_md/` + `docs/data/cowork-schedule.json` + `apps/mcp-server/`
+**T0 (P0 reset-guard, agent-father):** RAW-confirmed clobber — GVR 49 DONE units → 7 after ad-hoc reset=true mis-fire. Fix: after `get_bctc_refined`, if ANY unit has window_status=DONE, force `is_first=false` unconditionally. `is_first = (pushed_ids.size == 0 AND NOT has_done_units)`. Route via agent-md-factory. GVR needs re-drain from unit-0007. T0 MUST ship before T1+T2.
+**T1 (P1 chunk size, agent-father):** Safe ceiling = **12** (token-bound: 12×8.9k=107k < Haiku 200k at 75% budget; timeout: 12×39s=468s << 1800s TTL). Edit `slice(0,7)→slice(0,12)` in `flow/main.md` L8+L48 + `init.md` L55+L60.
+**T2 (P1 slots, ops):** Add `refine-bctc-slot-3` at 11:00 UTC + `refine-bctc-slot-4` at 16:30 UTC. Both off-market, clear of all existing conflicts. Combined T1+T2: 4×12=48 windows/day (~36-day drain vs 124-day current).
+**T3 (P2 watchdog, dev-mcp-server, backlog):** Folds A2+C1. bctcRefineStalenessJob — MUST distinguish deep-but-draining from stalled (compare counts across consecutive 2h checks). Build after T1+T2 verified draining.
+**Board hygiene DONE:** Collapsed duplicate BCTC-REFINE-STALL-RETRIGGER from ready[] + active_sprints[] → single active_sprints[] entry with T0/T1/T2/T3 tasks. Both validators exit 0. `head.active_task_id` = BCTC-REFINE-T0-RESET-GUARD.
+**Output:** `docs/architecture-briefs/2026-06-27-bctc-refine-stall-retrigger.md` (refreshed with THROUGHPUT-DRAIN section); `docs/data/orch/orch-state.json` (applied via orch-apply.sh)
+**Next:** pm dispatches T0 → agent-father (via agent-md-factory) as P0 unblocking gate.
 
 ## 2026-06-27T19:15Z — BCTC-REFINE-STALL-RETRIGGER (DESIGN DONE)
 
