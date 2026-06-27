@@ -178,3 +178,55 @@ LIVE: 26 → 30
 ### Zone health observation
 
 Zone health: bun test 0 fail (new 20 tests green), 166 tools intact, scheduler unchanged | HEALTHY
+
+---
+
+## [QA] Review Record
+
+- **QA cycle:** 327
+- **Date:** 2026-06-27
+- **Verdict:** APPROVED
+- **DJ:** `docs/agent-memory/decisions/sprint-FRONTEND-FRESHNESS-TRANSPARENCY-qa.md` § qa-S1
+
+### Gate Results
+
+| Gate | Result | Notes |
+|------|--------|-------|
+| New tests (freshness-dataasof-handlers.test.ts) | 20/20 PASS | 47 expect() |
+| Regression (1985-alerts-endpoint.test.ts) | 34/34 PASS | 88 expect() |
+| bun tsc --noEmit | EXIT 0 | Clean |
+| Full suite | Bun 1.3.13 JIT C++ crash (known env bug, cycle-326 baseline) | Same URL, ~494s run, targeted files all green |
+| DDD scan | PASS | interface→infrastructure permitted; no domain→infra violations |
+| Security scan | PASS | No process.env, all SQL parameterized |
+| mock-guard | EXIT 0 (PASS) | No fabricated-data patterns |
+| toolCount | 166 | Unchanged |
+
+### Schema Deviation — QA Verification
+
+All 3 spec-column deviations verified correct via live PRAGMA table_info on `/app/data/market.db`:
+
+| Handler | Dev column | Live schema result |
+|---------|-----------|-------------------|
+| marketDigestHandler | `market_messages.sent_at` | EXISTS — confirmed; `market_summaries.generated_at` does not exist |
+| alertsHandler | `alerts.triggered_at` | EXISTS — confirmed; `alerts.updated_at` does not exist |
+| vpsProxyHealthHandler | `vps_push_log.pushed_at` | EXISTS — confirmed; `vps_push_log.created_at` does not exist |
+
+Live data values (non-hardcoded):
+- `market_messages MAX(sent_at)`: 2026-06-26 15:30:03
+- `alerts MAX(triggered_at)`: 2026-06-27T07:31:56.091Z
+- `vps_push_log MAX(pushed_at)`: 2026-06-27 20:23:02
+- `daily_ohlcv MAX(updated_at) FPT`: 2026-06-27 13:30:13
+
+### Empty-table sentinel
+
+- 4 of 5 handlers: MAX()=null → `data_asof = now.toISOString()` (fallback)
+- priceHistoryHandler: empty table → 404 (no data_asof on 404; correct); updated_at='' sentinel → falsy → null → fallback
+- qualityChecklistHandler: no DB store; request-time by design (RISK-2 JSDoc present)
+
+### Coverage-map accuracy
+
+rows_no_asof 8→2 confirmed: remaining 2 are STATIC (kinh-dich-reference, no endpoint) and GAP (cheb-synthesis, no endpoint yet) — correctly excluded.
+
+### Unblocks
+
+TASK-FFT-L2 DONE → unblocks TASK-FFT-L3A and TASK-FFT-L4.

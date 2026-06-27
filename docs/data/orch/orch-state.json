@@ -235,12 +235,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "VMT-3a-MACRO-INDICATORS-PMI",
-    "next_agent": "dev-macro-indicators",
-    "next_action": "dev-macro-indicators assessing VMT-3a (S&P Global VN Manufacturing PMI series + MA3 transform, register into macro-indicators handler). Zone apps/macro-indicators/ — isolated from ghost in_progress row TASK-FFT-L2 (apps/mcp-server, dispatched_at=null orphan, flagged for reconcile). Per-task lock task:VMT-3a-MACRO-INDICATORS-PMI held by dev-team (ttl5400). On worker return: RAW-verify build/serving, DJ-GATE-1, flip board, release lock. WIP=2 (cap).",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
     "updated_by": "dev-team",
-    "updated_at": "2026-06-27T20:21:05Z"
+    "updated_at": "2026-06-27T20:42:36Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1769,7 +1768,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "M",
-            "status": "IN_PROGRESS",
+            "status": "BLOCKED",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -1782,7 +1781,7 @@
             "files_create": [
               "apps/macro-indicators/pkg/infrastructure/parsers_vmt_pmi.go"
             ],
-            "note": "S&P Global PMI press page (not geo-blocked). Main-server fetch, no VPS needed. MA3 transform pre-computed. Parallelizable with GSO/CPI probing. | [dev-team 2026-06-27T20:21Z UNBLOCK+DISPATCH] Stale-BLOCKED orphan: sole dep VMT-D-VPSFETCH=DONE (gate satisfied), block_reason=null, dependent VMT-3b=DONE + handler VMT-7c=DONE_VERIFIED -> handler shipped WITHOUT a dedicated S&P Global VN PMI series. Router RAW-verified serving layer: get_vn_macro_indicators serves IIP (not PMI); only PMI is a TradingEconomics scalar feeding get_investment_clock_phase w/ gdp_growth fallback. Dispatched dev-macro-indicators ASSESSMENT-FIRST: confirm no-op vs implement PMI fetch+MA3+handler-register; if live S&P source unreachable -> report REAL blocker (NO fake data), router re-BLOCKs w/ documented reason + routes fetch-feasibility. Last open piece of VN-MACRO-TOOLING.",
+            "note": "S&P Global PMI press page (not geo-blocked). Main-server fetch, no VPS needed. MA3 transform pre-computed. Parallelizable with GSO/CPI probing. | [dev-team 2026-06-27T20:21Z UNBLOCK+DISPATCH] Stale-BLOCKED orphan: sole dep VMT-D-VPSFETCH=DONE (gate satisfied), block_reason=null, dependent VMT-3b=DONE + handler VMT-7c=DONE_VERIFIED -> handler shipped WITHOUT a dedicated S&P Global VN PMI series. Router RAW-verified serving layer: get_vn_macro_indicators serves IIP (not PMI); only PMI is a TradingEconomics scalar feeding get_investment_clock_phase w/ gdp_growth fallback. Dispatched dev-macro-indicators ASSESSMENT-FIRST: confirm no-op vs implement PMI fetch+MA3+handler-register; if live S&P source unreachable -> report REAL blocker (NO fake data), router re-BLOCKs w/ documented reason + routes fetch-feasibility. Last open piece of VN-MACRO-TOOLING. | [dev-team 2026-06-27T20:42Z HARVEST] Worker dev-macro-indicators returned BLOCKED (no code, no fake data — correct honest outcome). Flipped IN_PROGRESS->BLOCKED with documented block_reason (was null). Lock released, head idle. Path A/B/C decision -> PO triage.",
             "unblocked_at": "2026-06-14T19:19:17Z",
             "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)",
             "probe5_gate_at": "2026-06-14T20:00:54Z",
@@ -1790,7 +1789,8 @@
             "status_note": "HELD OUT OF WAVE-2 SERIAL CHAIN. S&P Global PMI not geo-blocked (dev-macro-indicators runs PROBE-5 locally before parser). Blocks VMT-3b in original dependency, but PROBE-5 is faster than NSO PROBE-3—dev can pursue PMI fetch in parallel with VPS probing.",
             "gate_reason": "PROBE-5 pending (dev-local, not VPS)",
             "next_agent": "dev-macro-indicators",
-            "dispatched_at": "2026-06-27T20:21:05Z"
+            "dispatched_at": "2026-06-27T20:21:05Z",
+            "block_reason": "S&P Global VN Manufacturing PMI + MA3 unreachable in-zone (dev-macro-indicators RAW-probe 2026-06-27, commit 0e2b5bcf). 3 confirmed blockers: (1) detail pages pmi.spglobal.com/Public/Home/PressRelease/{uuid} return HTTP 202+0B for direct AND VPS — JS-async server render Go net/http cannot resolve; (2) list page shows CURRENT MONTH ONLY (no ?year/month historical filter) so prior-month UUIDs undiscoverable -> cannot get 3 prints for MA3; (3) no PMI time-series in market.db (macro_indicators.manufacturing_pmi is single UPSERT scalar, tracked_indicators 0 PMI rows). DEPENDENCY to unblock (PO/architect DECISION): [A-primary] ops/crawler establishes Flaresolverr/headless-browser for spglobal detail pages -> dev-macro-indicators builds parser + pmi_monthly_history accumulation table (macro_vmt_cache pattern) + 2-month UUID backfill; [B] paid S&P Global PMI API (structured JSON time-series); [C] accept source_tier=3 proxy = existing TradingEconomics-republished PMI scalar as 1-pt series, is_estimate=true, ma3=null until history accrues -> REQUIRES explicit PO sign-off (router classified it NON-authoritative)."
           },
           {
             "id": "VMT-3b-MACRO-INDICATORS-GSO",
