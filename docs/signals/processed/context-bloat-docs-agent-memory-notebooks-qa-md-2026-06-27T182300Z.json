@@ -3,18 +3,18 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-06-20T18:32:45Z",
+  "createdAt": "2026-06-27T18:23:00Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/system-auditor.md",
-    "line_count": 206,
+    "file": "docs/agent-memory/notebooks/qa.md",
+    "line_count": 203,
     "cap": 200,
     "class": "agent-notebook",
-    "overage": 6,
+    "overage": 3,
     "action_required": "prune_or_split"
   },
   "_processed": {
-    "fingerprint": "ecdeab1aa487d088f6de66a63860e3aede926cf058fc9c69ed34274780cbe445",
-    "processedAt": "2026-06-20T18:40:52Z",
+    "fingerprint": "c925a5dbffffa0c336d238416996ef7c2d9407c8e3e9dca7308e4d39d43a8eb7",
+    "processedAt": "2026-06-27T18:41:39Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

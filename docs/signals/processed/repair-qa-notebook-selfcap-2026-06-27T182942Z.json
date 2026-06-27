@@ -1,0 +1,23 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "medium",
+  "dedup_key": "qa-notebook-write-spec-selfcap-200L",
+  "createdAt": "2026-06-27T18:29:42Z",
+  "payload": {
+    "title": "QA notebook-write spec lacks 200L self-cap — recurring breach (re-prune treadmill)",
+    "root_cause": "QA agent appends a cycle entry to docs/agent-memory/notebooks/qa.md every cycle with no self-cap. Prior maintenance task MAINT-QA-NOTEBOOK-PRUNE-200L pruned 207L→195L (commit fe93258b); the very next QA cycle (commit a7befb0c, +8L) re-breached to 203L. This is STRUCTURAL unbounded-append, not a one-off.",
+    "why_not_reprune": "Per router-S1 recurrence flag in docs/agent-memory/decisions/sprint-MAINT-on-demand-router.md: a re-breach after the next QA cycle must NOT be re-pruned (treadmill). The standing context_bloat_breach signal (to=claude-manager-helper) only triggers another prune.",
+    "requested_fix": "Route to agent-father: add self-cap / auto-trim logic to the QA agent's notebook-write step (drop oldest cycle(s) when append would exceed 200L), so the cap is enforced at write-time by the writer, not by an external janitor prune. Per feedback_agent_md_factory: invoke agent-md-factory skill first; agent .md changes are agent-father territory.",
+    "owner_route": "po -> agent-father",
+    "evidence": "wc -l docs/agent-memory/notebooks/qa.md = 203 (cap 200); router-S1 DJ recurrence flag; commits fe93258b (prune) then a7befb0c (re-breach)",
+    "plan_only": true
+  },
+  "_processed": {
+    "fingerprint": "afa4698461835aee4cbc4b07e878cef51f78c352792047a58ef138fdce05df13",
+    "processedAt": "2026-06-27T18:41:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
