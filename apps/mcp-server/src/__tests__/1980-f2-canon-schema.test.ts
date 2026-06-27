@@ -657,7 +657,13 @@ describe("T10 — OrchTaskDto banned fields absent", () => {
 
 describe("T11 — Live orch-state: real done[] from docs/data/orch/orch-state.json", () => {
 
-  it("T11-a: real orch-state.json has non-empty done[] (>=71 tasks expected)", () => {
+  // RECONCILED 2026-06-27 (SSOT-W1-ZOD-SCHEMA-MODEL):
+  // The >=71 threshold was set before ORCH-STATE-HOT-COLD-SPLIT (HSC-1..7) ran.
+  // Hot/cold split moved the bulk of done[] to cold archive (backlog-detail.json).
+  // Hot done[] now holds only the most recently completed tasks (threshold: >=1).
+  // Cold detail: docs/data/orch/archive/2026-06.json#closed_sprints
+
+  it("T11-a: real orch-state.json has at least one done[] task (hot file post-split)", () => {
     const { readOrchStateOrNull, getOrchStatePath } = require("../infrastructure/orchStateStore.js");
     const orchStatePath = getOrchStatePath(resolve(process.cwd(), "..", ".."));
     const state = readOrchStateOrNull(orchStatePath);
@@ -666,10 +672,11 @@ describe("T11 — Live orch-state: real done[] from docs/data/orch/orch-state.js
       return;
     }
     const done = state.task_board?.done ?? [];
-    expect(done.length).toBeGreaterThanOrEqual(71);
+    // Post-HSC split: hot file keeps a rolling window of done tasks; >=1 expected
+    expect(done.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("T11-b: buildOrchestrationDto on real state → done[] is non-empty", () => {
+  it("T11-b: buildOrchestrationDto on real state → done[] is non-empty array", () => {
     const { readOrchStateOrNull, getOrchStatePath } = require("../infrastructure/orchStateStore.js");
     const orchStatePath = getOrchStatePath(resolve(process.cwd(), "..", ".."));
     const state = readOrchStateOrNull(orchStatePath);
@@ -678,8 +685,9 @@ describe("T11 — Live orch-state: real done[] from docs/data/orch/orch-state.js
       return;
     }
     const dto = buildOrchestrationDto(state);
-    expect(dto.task_board.done.length).toBeGreaterThanOrEqual(71);
-    expect(dto.task_board.counts.done).toBeGreaterThanOrEqual(71);
+    // Post-HSC: done[] is a valid array (may be smaller than pre-split count of 71+)
+    expect(Array.isArray(dto.task_board.done)).toBe(true);
+    expect(dto.task_board.done.length).toBeGreaterThanOrEqual(1);
     expect(dto.task_board.counts.done).toBe(dto.task_board.done.length);
   });
 

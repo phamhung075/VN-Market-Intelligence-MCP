@@ -1,14 +1,19 @@
 /**
  * Task 1837a — OSC-2 migration: orch-state.json schema (was pipeline-state.json)
  *
- * These tests verify docs/data/orch/orch-state.json .head has the correct v3 schema
+ * These tests verify docs/data/orch/orch-state.json .head has the correct schema
  * and valid field values required for post-/compact pipeline resume.
  *
  * OSC-2: path re-pointed from docs/pipeline-state.json → docs/data/orch/orch-state.json.
  *        Interface updated from camelCase v2 → snake_case v3 head fields.
  *
- * AC-1: file exists with all required head fields (v3 schema)
- * AC-2: head.status is one of "in_progress" | "idle" | "blocked" | "stale"
+ * RECONCILED 2026-06-27 (SSOT-W1-ZOD-SCHEMA-MODEL):
+ *   Schema migrated v3→v4 (ORCH-STATE-HOT-COLD-SPLIT sprint).
+ *   Root `_schema` field moved to `_meta.schema = "v4"`.
+ *   AC-1 updated to check _meta.schema instead of _schema.
+ *
+ * AC-1: file exists, _meta.schema = "v4", head has all required fields
+ * AC-2: head.status is one of the valid pipeline statuses
  * AC-3: head.updated_at is a valid ISO date string
  */
 
@@ -21,7 +26,7 @@ const ORCH_STATE_PATH = resolve(
   "../../../../docs/data/orch/orch-state.json"
 );
 
-/** v3 orch-state.json head schema (snake_case) — live fields only */
+/** v4 orch-state.json head schema (snake_case) — live fields only */
 interface OrchStateHead {
   status: string;
   active_task_id: string | null;
@@ -30,8 +35,15 @@ interface OrchStateHead {
   updated_by: string;
 }
 
+interface OrchStateMeta {
+  schema: string;
+  ssot?: boolean;
+  updated_at?: string;
+  updated_by?: string;
+}
+
 interface OrchState {
-  _schema: string;
+  _meta?: OrchStateMeta;  // v4: schema version moved here (was root ._schema in v3)
   head: OrchStateHead;
   task_board: Record<string, unknown>;
   signal_queue: Record<string, unknown>;
@@ -42,10 +54,11 @@ function loadOrchState(): OrchState {
   return JSON.parse(raw) as OrchState;
 }
 
-describe("1837a — orch-state.json schema (v3)", () => {
-  it("AC-1: file exists and head has all required v3 fields", () => {
+describe("1837a — orch-state.json schema (v4 reconcile)", () => {
+  it("AC-1: file exists and _meta.schema is v4 with all required head fields", () => {
     const state = loadOrchState();
-    expect(state._schema).toBe("v3");
+    // v4: schema version now lives in _meta.schema (root ._schema removed in ORCH-STATE-HOT-COLD-SPLIT)
+    expect(state._meta?.schema).toBe("v4");
 
     const head = state.head;
     // v3 head fields actually present in the live orch-state.json (2026-06-09).
