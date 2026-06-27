@@ -43,4 +43,7 @@
 ))
 | .task_board._updated_at = $now
 | .task_board._updated_by = "po"
-| .task_board.head = { note: "FDA-9 (rag-service _distance fail-open fabricated-similarity) groomed READY; mcp-server zone untouched (frozen behind EVIDENCE-ACCUM gate)" }
+# RETARGET (SSOT-W1-HEAD-METADATA-COLLAPSE): removed the .task_board.head note write.
+# .task_board.head is the deprecated non-routing stub (orch-state-access.md §4).
+# This script does NOT dispatch via the head pointer — the groom note is already
+# captured in the task update above. No .head write needed here.

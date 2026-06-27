@@ -155,7 +155,10 @@ def sprint_obj($now):
           }]
           end
       )
-    | .task_board.head = "VN-MACRO-TOOLING sprint opened (PLANNING) — 7 tasks, BA spec gate next"
+    # RETARGET (SSOT-W1-HEAD-METADATA-COLLAPSE): removed .task_board.head string write.
+    # .task_board.head is the deprecated non-routing stub (orch-state-access.md §4).
+    # Sprint-open is a PLANNING-phase action with no head routing dispatch.
+    # The sprint container itself (active_sprints + sprint_goal) is the SSOT for this open.
     | .task_board._updated_at = $now
     | .task_board._updated_by = "po"
   end

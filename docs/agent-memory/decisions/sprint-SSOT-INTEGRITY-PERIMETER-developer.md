@@ -191,3 +191,56 @@ Output: (empty — 0 raw writers)
 - `scripts/orch-validate.mjs` (stale SHIM comment updated)
 - `docs/policies/dev-standards.md` (CANONICAL SHG-1 block updated with shim note)
 - `docs/agent-memory/decisions/sprint-SSOT-INTEGRITY-PERIMETER-developer.md` (this DJ entry)
+
+---
+
+### STEP developer-S4 · developer · 2026-06-27
+
+**task-id:** SSOT-W1-HEAD-METADATA-COLLAPSE
+
+**what-done:**
+Retargeted the 3 regressor scripts that still wrote to the deprecated `.task_board.head` field:
+
+1. `scripts/po-fda9-groom-ready.jq` — REMOVED the `.task_board.head = { note: "..." }` write.
+   The note was informational-only (no routing fields). The groom metadata is fully captured
+   by the task update in `.task_board.backlog`. No `.head` write needed.
+
+2. `scripts/po-vn-macro-tooling-sprint-open.jq` — REMOVED the `.task_board.head = "VN-MACRO-TOOLING sprint opened..."` write.
+   This wrote a bare string (not a valid object). The sprint-open is a PLANNING-phase action
+   with no head routing dispatch; the sprint container (active_sprints + sprint_goal) is the SSOT.
+
+3. `scripts/po-s107-ohlcv-vnm-garbage-annotate-bump.jq` — RETARGETED `.task_board.head = {...}` to `.head = {...}`.
+   This was a real dispatch routing write (status/active_task_id/next_agent) — the correct fix is
+   to route it to the canonical top-level `.head` (the field dev-team flow Step-0b, orch-state-access.md §4,
+   and router-d1-claim all read). The routing fields are preserved; only the field path changes.
+
+**what-considered:**
+1. For po-fda9 and po-vn-macro-tooling: remove vs. migrate the note to `.head`
+   - Rejected migration: neither script dispatches a task via the head pointer. A note in `.head`
+     without `active_task_id`/`next_agent` is not a routing signal and would be misleading.
+     Both scripts' purpose is expressed fully in their task-row mutations alone.
+2. For po-s107: remove the write entirely vs. retarget to `.head`
+   - Chose retarget: po-s107 explicitly sets `status: "ready"`, `active_task_id`, `next_agent`.
+     This IS a dispatch routing signal. Removing it would break the intended router cue.
+     Retargeting to `.head` is the correct minimal change — routing semantics preserved, field target corrected.
+3. Whether to add a retarget comment vs. silent edit
+   - Added brief inline `# RETARGET (SSOT-W1-HEAD-METADATA-COLLAPSE)` comment above each change site.
+     This makes the intent auditable for future PO scripts and matches the po-s66/po-s121 precedent
+     (those scripts already document why `.task_board.head` must not be written).
+
+**smoke-proof:**
+- All three scripts run against temp copy: jq exit 0, valid JSON, `.task_board.head.status = "deprecated"` preserved in all outputs.
+- Zod validator (`bun scripts/orch-validate.mjs`) exit 0 on all three script outputs.
+- Live SSOT: `git diff HEAD -- docs/data/orch/orch-state.json` = empty (not touched).
+
+**why-decision:** Minimal-blast-radius approach. Two scripts needed no routing signal at all → remove. One script had real routing intent → retarget. The DeprecatedHeadStubSchema in orchStateSchema.ts (TaskBoardSchema.head) now hard-gates re-inflation via `.strict()` — any future write of routing fields to `.task_board.head` would fail Stage 1 validation.
+
+**why-change:** No divergence from task spec. po-s121 note explicitly names these 3 scripts as the re-inflators: `po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router`. The SSOT-W1-HEAD-METADATA-COLLAPSE task scope (script retarget) is satisfied.
+
+**commit-sha:** (see commit below)
+
+**files-changed:**
+- `scripts/po-fda9-groom-ready.jq` (removed `.task_board.head` write; added retarget comment)
+- `scripts/po-vn-macro-tooling-sprint-open.jq` (removed `.task_board.head` string write; added retarget comment)
+- `scripts/po-s107-ohlcv-vnm-garbage-annotate-bump.jq` (retargeted `.task_board.head` → `.head`; added retarget comment)
+- `docs/agent-memory/decisions/sprint-SSOT-INTEGRITY-PERIMETER-developer.md` (this DJ entry)
