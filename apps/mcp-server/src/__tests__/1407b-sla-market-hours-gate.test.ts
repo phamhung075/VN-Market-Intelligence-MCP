@@ -56,6 +56,13 @@ const LABOUR_DAY_2026 = new Date("2026-05-01T04:00:00.000Z");
 // Monday 2026-05-04 04:00 UTC = first trading day after Labour Day holiday
 const FIRST_DAY_AFTER_HOLIDAY = new Date("2026-05-04T04:00:00.000Z");
 
+// Monday 2026-04-06 00:30 UTC = off-hours, within BCTC April earnings window (days 1–14).
+// FIX-CI-RED-EAC0CC65-BUNTEST: OFF_HOURS_DATE (Apr 27) is OUTSIDE the earnings window
+// so the BCTC threshold expands to minutesSinceLastWindowEnd+30 ≈ 17341 min, making
+// 400 min stale a non-breach. Use a date inside the window so the 360-min overnight
+// threshold applies and 400 > 360 correctly fires a breach.
+const BCTC_EARNINGS_WINDOW_DATE = new Date("2026-04-06T00:30:00.000Z");
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Off-hours stale-age anchors (clock-frozen, deterministic)
 //
@@ -233,12 +240,14 @@ describe("1407b — SLA monitor market-hours gate", () => {
   it("MH-3: off-hours + bctc stale 400 min → escalation IS called (24/7 source)", async () => {
     const { spy, calls } = makeEscalateSpy();
 
-    // bctc off-hours threshold = 360 min; 400 > 360 → breach
+    // bctc off-hours threshold inside earnings window = 360 min; 400 > 360 → breach.
+    // Uses BCTC_EARNINGS_WINDOW_DATE (Apr 6, inside Apr 1–14 window) so the fixed
+    // 360-min overnight threshold applies, not the inter-quarter expanded threshold.
     const result = await runFreshnessSlaMonitor(
       db,
       spy,
       staleAges("bctc", 400),
-      OFF_HOURS_DATE,
+      BCTC_EARNINGS_WINDOW_DATE,
       noopSendWork
     );
 

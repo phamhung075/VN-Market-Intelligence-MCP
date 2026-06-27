@@ -106,15 +106,17 @@ describe("AC-T1-4: getBaselineForSignalType returns most recent row", () => {
   test("returns the row with the latest checked_at", () => {
     const db = makeDb();
 
-    // Insert row with earlier checked_at by overriding via direct SQL
+    // Use relative dates (SQLite datetime expressions) so this test never expires.
+    // FIX-CI-RED-EAC0CC65-BUNTEST: replaced hardcoded '2026-05-27' dates which became
+    // >30 days old and were filtered out by the withinDays:30 window.
     db.prepare(
       `INSERT INTO improve_check_log (signal_type, dispatch_status, checked_at)
-       VALUES ('volume_spike', 'shadow', '2026-05-27T09:00:00Z')`,
+       VALUES ('volume_spike', 'shadow', datetime('now', '-2 days'))`,
     ).run();
 
     db.prepare(
       `INSERT INTO improve_check_log (signal_type, dispatch_status, checked_at)
-       VALUES ('volume_spike', 'shadow', '2026-05-27T10:00:00Z')`,
+       VALUES ('volume_spike', 'shadow', datetime('now', '-1 day'))`,
     ).run();
 
     const result = getBaselineForSignalType(db, "volume_spike", {
@@ -122,7 +124,7 @@ describe("AC-T1-4: getBaselineForSignalType returns most recent row", () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result!.checked_at).toBe("2026-05-27T10:00:00Z");
+    // The row with the LATER checked_at (id=2, '-1 day') is returned as most recent.
     expect(result!.id).toBe(2);
   });
 });
