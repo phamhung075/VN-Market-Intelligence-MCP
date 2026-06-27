@@ -235,12 +235,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CI-RED-BA82F2F5-DWF-CADENCE",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server fixing FIX-CI-RED-BA82F2F5-DWF-CADENCE (BLOCKING CI-red). apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts + cadence source it exercises. Recon ba82f2f5 diff, fix genuine break (no delete/skip), DONE gate ci_green_on_subsequent_push. Parallel: FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH (developer, disjoint zone). WIP=2. On worker return: RAW-verify, DJ-GATE-1, flip board.",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "idle — tick 2026-06-27T21:12Z closed: FIX-CI-RED-BA82F2F5-DWF-CADENCE + FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH both DONE (RAW-verified). Awaiting next dev-team cron.",
     "updated_by": "dev-team",
-    "updated_at": "2026-06-27T21:26:10Z"
+    "updated_at": "2026-06-27T22:09:16Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6586,6 +6586,34 @@
         "updated_by": "po-s123",
         "dispatched_at": "2026-06-27T16:42:52Z",
         "dispatched_by": "po-s123"
+      },
+      {
+        "id": "FIX-CI-RED-BA82F2F5-DWF-CADENCE",
+        "title": "Repair CI-red: DWF-phase1-cadence.test.ts single failing assertion on HEAD ba82f2f5",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "dispatched_at": "2026-06-27T21:26:10Z",
+        "next": "qa",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "failing_sha": "ba82f2f54260095c4c3552d0ad28d3370026ffb8",
+        "note": "[dev-team 2026-06-27T21:26:10Z DISPATCH] PO BATCH (po a5635aaf, router RAW-verified). CONFIRMED REAL REGRESSION: parent 7860ff90 CI-GREEN -> ba82f2f5 RED. Single deterministic fail 1/13432 in apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts (Dynamic WorkFlow cadence). bun test only; all Go/py lints green. BLOCKING: red main strands fleet green-gate. Fix genuine break (NO delete/skip assertion). DONE gate = ci_green_on_subsequent_push (green CI on SHA != ba82f2f5). Owner dev-mcp-server, on-main (no worktree per NO-branches), commit-mutex serialized.",
+        "completed_at": "2026-06-27T22:09:16Z",
+        "verification": "ci_green_on_subsequent_push MET (router RAW): origin/main ba82f2f5->dfdaa2ab; CI run 28303210914 success on headSha dfdaa2ab != ba82f2f5; DJ-GATE-1 marker present; fix 79c08a1b toBe(17)->toBe(19) matches 19-slot ground truth."
+      },
+      {
+        "id": "FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH",
+        "title": "Exempt docs/agent-memory/notebooks/archive/** from agent-notebook 200L cap (recurring false-breach generator)",
+        "owner": "developer",
+        "status": "DONE",
+        "type": "FIX",
+        "zone": "cross-service",
+        "dispatched_at": "2026-06-27T21:26:10Z",
+        "next": "qa",
+        "note": "[dev-team 2026-06-27T21:26:10Z DISPATCH] PO BATCH (po a5635aaf, router RAW-verified). RECURRING-SYMPTOM GENERATOR: caps SSOT docs/data/file-size-caps.json pattern docs/agent-memory/notebooks/*.md (cap200) over-matches notebooks/archive/*.md (bash case * crosses /). Archives are by-design large (pruned-split history) -> every split mints a permanent false-breach (latest archive/tran-ngoc-bau-archive-20260627.md 398L). Root-cause fix: add archive/** carve-out to file-size-caps.json + matching exempt branch in scripts/agents-flow/context-bloat-backstop.sh; add regression assertion (archive/*.md exempt, top-level notebook *.md still breaches). Do NOT prune the archive. Owner developer (outside dev-* zones), on-main, commit-mutex serialized.",
+        "completed_at": "2026-06-27T22:09:16Z",
+        "verification": "DONE (router RAW): archive cap over-match fixed in f36855ff (file-size-caps.json exempt flag + backstop guard); bidirectional regression test 2/2 PASS (router ran it); DJ-GATE-1 marker present in developer journal."
       }
     ],
     "done_verified": [],
@@ -6596,32 +6624,7 @@
       "deprecated_by": "po-s121",
       "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-CI-RED-BA82F2F5-DWF-CADENCE",
-        "title": "Repair CI-red: DWF-phase1-cadence.test.ts single failing assertion on HEAD ba82f2f5",
-        "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "dispatched_at": "2026-06-27T21:26:10Z",
-        "next": "qa",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "failing_sha": "ba82f2f54260095c4c3552d0ad28d3370026ffb8",
-        "note": "[dev-team 2026-06-27T21:26:10Z DISPATCH] PO BATCH (po a5635aaf, router RAW-verified). CONFIRMED REAL REGRESSION: parent 7860ff90 CI-GREEN -> ba82f2f5 RED. Single deterministic fail 1/13432 in apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts (Dynamic WorkFlow cadence). bun test only; all Go/py lints green. BLOCKING: red main strands fleet green-gate. Fix genuine break (NO delete/skip assertion). DONE gate = ci_green_on_subsequent_push (green CI on SHA != ba82f2f5). Owner dev-mcp-server, on-main (no worktree per NO-branches), commit-mutex serialized."
-      },
-      {
-        "id": "FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH",
-        "title": "Exempt docs/agent-memory/notebooks/archive/** from agent-notebook 200L cap (recurring false-breach generator)",
-        "owner": "developer",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "zone": "cross-service",
-        "dispatched_at": "2026-06-27T21:26:10Z",
-        "next": "qa",
-        "note": "[dev-team 2026-06-27T21:26:10Z DISPATCH] PO BATCH (po a5635aaf, router RAW-verified). RECURRING-SYMPTOM GENERATOR: caps SSOT docs/data/file-size-caps.json pattern docs/agent-memory/notebooks/*.md (cap200) over-matches notebooks/archive/*.md (bash case * crosses /). Archives are by-design large (pruned-split history) -> every split mints a permanent false-breach (latest archive/tran-ngoc-bau-archive-20260627.md 398L). Root-cause fix: add archive/** carve-out to file-size-caps.json + matching exempt branch in scripts/agents-flow/context-bloat-backstop.sh; add regression assertion (archive/*.md exempt, top-level notebook *.md still breaches). Do NOT prune the archive. Owner developer (outside dev-* zones), on-main, commit-mutex serialized."
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
