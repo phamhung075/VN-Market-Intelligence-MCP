@@ -227,22 +227,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CI-RED-EAC0CC65-BUNTEST",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Spawn dev-mcp-server isolation=worktree against origin/main HEAD eac0cc65; RECON-FIRST find the ONE shared break behind all 16 failing __tests__ files before fixing; verify CI green on a new HEAD SHA.",
-    "updated_by": "po",
-    "updated_at": "2026-06-27T11:44:55Z",
-    "note": "Repointed from SSOT-W1-HOOK-ENFORCE: persistent red main blocks the push gate, so the ci_red FIX preempts. Prior head dispatch stashed in .head.deferred_head — resume after CI green.",
-    "deferred_head": {
-      "status": "ready",
-      "active_task_id": "SSOT-W1-HOOK-ENFORCE",
-      "next_agent": "developer",
-      "next_action": "Extend .claude/settings.local.json PreToolUse hook to inline-validate orch-state.json writes; add PostToolUse backstop re-validation. Zone: apps/mcp-server/src/ + Claude hook infrastructure.",
-      "updated_by": "pm",
-      "updated_at": "2026-06-27T11:22:54Z",
-      "note": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS prerequisite cleared (commit f29e297e verified). Advancing to rank-4 HOOK-ENFORCE: Point-1 enforcement via Claude hook (PreToolUse + PostToolUse). Depends on rank-1 ZOD-SCHEMA-MODEL and rank-2 ZOD-VALIDATOR-CLI."
-    }
+    "status": "ready",
+    "active_task_id": "SSOT-W1-HOOK-ENFORCE",
+    "next_agent": "developer",
+    "next_action": "Extend .claude/settings.local.json PreToolUse hook to inline-validate orch-state.json writes; add PostToolUse backstop re-validation. Zone: apps/mcp-server/src/ + Claude hook infrastructure.",
+    "updated_by": "pm",
+    "updated_at": "2026-06-27T11:22:54Z",
+    "note": "SSOT-W1-FIX-DANGLING-PAYLOAD-REFS prerequisite cleared (commit f29e297e verified). Advancing to rank-4 HOOK-ENFORCE: Point-1 enforcement via Claude hook (PreToolUse + PostToolUse). Depends on rank-1 ZOD-SCHEMA-MODEL and rank-2 ZOD-VALIDATOR-CLI."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6466,23 +6457,12 @@
         "done_verified": true,
         "closed_at": "2026-06-25T15:31:55Z",
         "rebuild_required": "mcp-server"
-      }
-    ],
-    "done_verified": [],
-    "head": {
-      "status": "deprecated",
-      "canonical_moved_to": ".head",
-      "deprecated_at": "2026-06-27T08:03:52Z",
-      "deprecated_by": "po-s121",
-      "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
-    },
-    "in_progress": [],
-    "ready": [
+      },
       {
         "id": "FIX-CI-RED-EAC0CC65-BUNTEST",
         "type": "FIX",
         "title": "CI RED on main — bun test (73 fails / 16 files) — find shared root cause",
-        "status": "READY",
+        "status": "DONE",
         "priority": "P0",
         "blocking": true,
         "zone": "apps/mcp-server/",
@@ -6517,8 +6497,23 @@
         "escalation": "If recon proves the break is structural (shared schema/contract change requiring redesign), escalate to SPRINT-S via architect rather than patching 16 files.",
         "groomed_by": "po",
         "groomed_at": "2026-06-27T11:44:55Z",
-        "created_at": "2026-06-27T11:44:55Z"
-      },
+        "created_at": "2026-06-27T11:44:55Z",
+        "resolved_sha": "6bcbe2e5",
+        "resolution": "cloud CI green on new SHA; 73 fails/16 files fixed",
+        "resolved_at": "2026-06-27T12:29:00Z",
+        "resolved_by": "dev-mcp-server"
+      }
+    ],
+    "done_verified": [],
+    "head": {
+      "status": "deprecated",
+      "canonical_moved_to": ".head",
+      "deprecated_at": "2026-06-27T08:03:52Z",
+      "deprecated_by": "po-s121",
+      "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
+    },
+    "in_progress": [],
+    "ready": [
       {
         "id": "ARCH-SSOT-INTEGRITY-PERIMETER",
         "type": "SPRINT-M",
