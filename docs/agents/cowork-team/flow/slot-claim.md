@@ -35,11 +35,12 @@ For each slot in MATCHES, attempt per-work-item claim:
 # KEY: suffix-free cowork-slot:<slot_id> — R3 BLOCKING (no nominal_tick, no time suffix)
 # TTL: explicit 180s — R1 BLOCKING (never the default 3600s)
 result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "cowork-slot:" + slot.slot_id,
-  task_kind:   "cowork-slot",
-  owner_agent: "cowork-dispatcher",
-  ttl_seconds: 180,
-  payload:     JSON.stringify({ slot_id: slot.slot_id, agent: slot.agent, flow_path: slot.flow_path })
+  task_id:              "cowork-slot:" + slot.slot_id,
+  task_kind:            "cowork-slot",
+  owner_agent:          "cowork-dispatcher",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+  ttl_seconds:          180,
+  payload:              JSON.stringify({ slot_id: slot.slot_id, agent: slot.agent, flow_path: slot.flow_path })
 })
 ```
 
@@ -79,8 +80,8 @@ Only execute if WON_SLOTS is non-empty (skip on silent-exit path).
 
 ```
 call_tool(server="vn-market", tool="task_heartbeat", arguments={
-  task_id:     "cowork-leader",
-  owner_agent: "cowork-dispatcher"
+  task_id:              "cowork-leader",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID    // REQUIRED — P1-FINAL (TASK_1980)
 })
 ```
 

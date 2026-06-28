@@ -176,6 +176,41 @@ Once this task is DONE:
 
 ---
 
+## [QA] Review Record — 2026-06-28
+
+**Reviewer:** qa (TASK_1981 integrated gate)
+**Verdict:** APPROVED
+
+### Test Results
+- AC-A (Zod REQUIRED): 4/4 tools reject missing `owner_client_session` (isError=true). PASS.
+- AC-B (Session isolation): Session-B cannot heartbeat (`ok=false`) or release (`released:0`) Session-A's lock. PASS.
+- AC-C (Claim mutex): INSERT OR IGNORE single-winner, stale-steal, claim-after-release. PASS.
+- 8 failure-mode scenarios (brief §7 P1): 10 tests / 10 PASS. All 8 scenarios covered.
+- Full P1 test scope (131 tests): 131 PASS / 0 FAIL.
+- tsc: 0 errors. DDD: PASS. Security: PASS.
+
+### Baseline Diff
+- Baseline: c04f1819 (commit immediately before 9b6c0e33/P1-MCP-1)
+- P1-introduced failures in committed code: **ZERO**
+- 53 pre-existing failures in full suite: all timeout/network/VPS schema/refine-isolation — none P1-caused
+- DV-P2-4 was failing only due to uncommitted slot-claim.md P1 whitespace — fixed by QA (test regex + commit)
+
+### Deliverables
+- `apps/mcp-server/src/__tests__/1981-p1-failure-mode-matrix.test.ts` (8 scenarios, 10 tests)
+- `apps/mcp-server/src/__tests__/DWF-coordination-phase2.test.ts:322` (whitespace-tolerant regex fix)
+- `docs/agents/cowork-team/flow/slot-claim.md` (committed with `owner_client_session`)
+- `docs/agents/cowork-team/flow/spawn-fanout.md` (committed with `owner_client_session`)
+- `reports/TASK_REPORT_1981.md` (full verification record)
+
+### RAW Live Verify
+- Named-volume `coordination.db`: `owner_client_session` column at cid:9. Non-null values present for post-P1 claims.
+- Two-session collision test: ClaimA=1, ClaimB=0 (mutex holds), wrong-release no-op, correct-release confirmed.
+
+### Tasks Flipped
+TASK_1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981 → DONE via orch-apply.sh. P1.5 UNBLOCKED.
+
+---
+
 ## P1 Complete
 
 All 9 atomic tasks (MCP-1/2/3, AF-1/2/3/4, FINAL, REGRESSION) are DONE.

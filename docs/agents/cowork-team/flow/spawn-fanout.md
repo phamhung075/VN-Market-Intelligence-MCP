@@ -45,10 +45,11 @@ if SESSION_BLIND == true:
        1. Compute work_date = current VN date (GMT+7) in YYYY-MM-DD format
        2. Claim the published marker:
           publish_claim = call_tool(server="vn-market", tool="task_claim", arguments={
-            task_id:     "published:" + slot_id + ":" + work_date,
-            task_kind:   "cowork-slot",
-            owner_agent: "<agent_id>",
-            ttl_seconds: 100800   # 28h per ARCH-DECIDE-D (daily slots)
+            task_id:              "published:" + slot_id + ":" + work_date,
+            task_kind:            "cowork-slot",
+            owner_agent:          "<agent_id>",
+            owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+            ttl_seconds:          100800   # 28h per ARCH-DECIDE-D (daily slots)
           })
        3. if publish_claim.claimed == false:
             log "[cowork] publish blocked — already published work-id=" + slot_id + ":" + work_date
@@ -78,12 +79,13 @@ WORK_DATE=$(TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d)   # VN date (GMT+7)
 PUBLISHED_KEY="published:<slot_id>:${WORK_DATE}"
 
 MARKER_CLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     PUBLISHED_KEY,
-  task_kind:   "cowork-slot",
-  owner_agent: "<agent_id>",
-  ttl_seconds: 100800    # 28h for daily slots (ARCH-DECIDE-D)
-                         # Weekly slots (digest-sunday, tnb-audit): ttl_seconds = ~8 days
-                         # (see coordinationStore TTL cap)
+  task_id:              PUBLISHED_KEY,
+  task_kind:            "cowork-slot",
+  owner_agent:          "<agent_id>",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+  ttl_seconds:          100800    # 28h for daily slots (ARCH-DECIDE-D)
+                                  # Weekly slots (digest-sunday, tnb-audit): ttl_seconds = ~8 days
+                                  # (see coordinationStore TTL cap)
 }))
 
 if MARKER_CLAIM.claimed != true:
@@ -133,7 +135,8 @@ try:
   spawn agent for slot
 finally:
   call_tool(server="vn-market", tool="task_release", arguments={
-    task_id: "cowork-slot:" + slot.slot_id
+    task_id:              "cowork-slot:" + slot.slot_id,
+    owner_client_session: $CLAUDE_CODE_SESSION_ID    // REQUIRED — P1-FINAL (TASK_1980)
   })
   # ok=false is acceptable (already expired, stolen, or crashed) — ignore release errors
   # NOTE: key uses slot.slot_id (suffix-free) matching the claim in Step 4.6

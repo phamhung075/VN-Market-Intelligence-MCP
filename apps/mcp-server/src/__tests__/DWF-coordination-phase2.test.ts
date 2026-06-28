@@ -319,7 +319,9 @@ describe("DV-P2-4: Explicit ttl_seconds:180 present in cowork-team flow (R1 code
 
     // Every per-work-item task_claim (cowork-slot:<slot_id>) must have ttl_seconds: 180
     // Pattern: look for task_claim blocks with cowork-slot: key and ttl_seconds: 180
-    const hasExplicitTtl = content.includes("ttl_seconds: 180");
+    // P1-FINAL: field alignment in slot-claim.md uses extra spaces (owner_client_session added).
+    // Use regex /ttl_seconds:\s+180/ to match regardless of alignment whitespace.
+    const hasExplicitTtl = /ttl_seconds:\s+180/.test(content);
     expect(hasExplicitTtl).toBe(true);
   });
 
