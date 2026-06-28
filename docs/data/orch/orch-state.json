@@ -235,12 +235,12 @@
     }
   ],
   "head": {
-    "status": "READY",
-    "active_task_id": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-    "next_agent": "pm",
-    "next_action": "PM: decompose FR-1..FR-7 into atomic dev-pdf-extractor tasks per architect recommended sequencing (FR-3→FR-1→FR-2→FR-7→FR-5→FR-4→FR-6). All single zone apps/pdf-extractor/, sequential dispatch. Read [Architect] Brownfield Findings section in docs/handoffs/FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT.md.",
-    "updated_by": "architect",
-    "updated_at": "2026-06-28T07:31Z"
+    "status": "IN_PROGRESS",
+    "active_task_id": "TASK-301-FR3-ROMAN-NORM",
+    "next_agent": "dev-pdf-extractor",
+    "next_action": "Implement FR-3: Roman numeral OCR misread normalization in text_table_extractor.py. Add _ROMAN_OCR_NORMALIZE dict and normalization logic in _try_parse_roman_code_row(). See TASK-301-FR3-ROMAN-NORM handoff for detailed acceptance criteria.",
+    "updated_by": "pm",
+    "updated_at": "2026-06-28T07:44:57Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2730,6 +2730,187 @@
               "BCTC-REFINE-T2-SLOTS"
             ],
             "note": "Folds A2+C1. 2-hourly: Check1 COUNT(*) WHERE text_status=COMPLETE AND refine_status IN (PENDING,PARTIAL) AND parsed_at<now-86400; Check2 last cron_job_runs refine_bctc_md run>25h. MUST distinguish deep-but-draining from truly-stalled. Requires wrapRun in refine_bctc_md flow. Build AFTER T1+T2 deployed and verified draining."
+          }
+        ]
+      },
+      {
+        "id": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "name": "Fix BCTC table/column extraction overfit to FPT",
+        "status": "ACTIVE",
+        "zone": "apps/pdf-extractor/",
+        "description": "Generalize BCTC table/column detection across issuers (7 FRs: Roman normalization, code-range gate, label cleaning, notes-stop, dedup, section-boundary, VN-number robustness)",
+        "tasks": [
+          {
+            "id": "TASK-301-FR3-ROMAN-NORM",
+            "title": "FR-3: Roman numeral OCR misread normalization in text_table_extractor.py",
+            "type": "SPRINT-S",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "zone": "apps/pdf-extractor/",
+            "size": "S",
+            "priority": "high",
+            "depends": [],
+            "sequence": 1,
+            "fr_id": "FR-3",
+            "file": "apps/pdf-extractor/infrastructure/text_table_extractor.py",
+            "description": "Add OCR normalization table and apply to line-start token before Roman regex match. Handles Il→II, Ill→III, IIl→III, lV→IV, VlI→VII, VIl→VII, VIll→VIII, VlII→VIII. Add tests in test_b02_tctd_parser.py.",
+            "acceptance_criteria": [
+              "OCR normalization dict added at module level",
+              "Applied in _try_parse_roman_code_row() before regex match",
+              "Tests added: Il→II, Ill→III, IIl→III, lV→IV codes parse correctly",
+              "Non-regression: I, II, VIII (correct forms) still pass unchanged",
+              "Period guard remains active after normalization"
+            ]
+          },
+          {
+            "id": "TASK-302-FR1-CODE-RANGE",
+            "title": "FR-1: Layout-adaptive column-boundary detection (code-range gate) in text_table_extractor.py",
+            "type": "SPRINT-S",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "zone": "apps/pdf-extractor/",
+            "size": "XS",
+            "priority": "high",
+            "depends": [
+              "TASK-301-FR3-ROMAN-NORM"
+            ],
+            "sequence": 2,
+            "fr_id": "FR-1",
+            "file": "apps/pdf-extractor/infrastructure/text_table_extractor.py",
+            "description": "Change _CODE_VALUE_COL_RE from \\d{2,3} to \\d{3} (exactly 3 digits). Prevents 2-digit note refs from being captured as codes. VCB FM-VCB-1 remediates: note-ref 10 in 'Il 10 198.629.540' no longer matches code-only-column Layout 3.",
+            "acceptance_criteria": [
+              "_CODE_VALUE_COL_RE pattern changed from (\\d{2,3}) to (\\d{3})",
+              "Test: Layout 3 rejects '10 198.629.540' as code",
+              "Test: Layout 3 still accepts '270 88.089.621.779.862' as code=270",
+              "Test: FPT golden tests pass (270, 221 codes unchanged)",
+              "No regression on 2-digit income-stmt codes (1/2/4 layouts handle them)"
+            ]
+          },
+          {
+            "id": "TASK-303-FR2-LABEL-CLEAN",
+            "title": "FR-2: Trailing note-reference number stripping from label",
+            "type": "SPRINT-S",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "zone": "apps/pdf-extractor/",
+            "size": "S",
+            "priority": "high",
+            "depends": [
+              "TASK-302-FR1-CODE-RANGE"
+            ],
+            "sequence": 3,
+            "fr_id": "FR-2",
+            "file": "apps/pdf-extractor/infrastructure/text_table_extractor.py",
+            "description": "Add post-parse label-clean step in _parse_lines_to_rows(). Strip trailing \\s+\\d{1,3}$ from label if remaining label ≥5 chars. Fixes VCB FM-VCB-2: 'Chứng khoán kinh doanh 4' → 'Chứng khoán kinh doanh'.",
+            "acceptance_criteria": [
+              "Label-clean regex \\s+\\d{1,3}$ added after _try_parse_code_row()",
+              "Length guard: only strip if remaining label ≥5 characters",
+              "Test: 'Chứng khoán kinh doanh 4' → 'Chứng khoán kinh doanh'",
+              "Test: 'Quỹ phát triển khoa học 2025' unchanged (2025 is 4 digits)",
+              "Test added in test_b02_tctd_parser.py"
+            ]
+          },
+          {
+            "id": "TASK-304-FR7-NOTES-STOP",
+            "title": "FR-7: B02-TCTD notes-section boundary hard stop",
+            "type": "SPRINT-S",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "zone": "apps/pdf-extractor/",
+            "size": "S",
+            "priority": "high",
+            "depends": [
+              "TASK-303-FR2-LABEL-CLEAN"
+            ],
+            "sequence": 4,
+            "fr_id": "FR-7",
+            "file": "apps/pdf-extractor/infrastructure/text_table_extractor.py",
+            "description": "Add _is_notes_section_boundary() check in _parse_lines_to_rows(). Triggers on standalone note-item number ≥15 with period (26., 27.), or 'Thuyết minh'/'Ghi chú' header. Halts code-row extraction. Fixes VCB FM-VCB-7: note items 26, 27, 8 no longer absorbed as balance-sheet rows.",
+            "acceptance_criteria": [
+              "_NOTES_BOUNDARY_NUMBER_RE pattern added for \\d{2,}\\.$",
+              "_is_notes_section_boundary() function added",
+              "Halt flag set in _parse_lines_to_rows loop",
+              "Test: line '26.' triggers boundary stop",
+              "Test: 'Thuyết minh' header triggers boundary stop",
+              "Non-regression: FPT balance-sheet pages unaffected"
+            ]
+          },
+          {
+            "id": "TASK-305-FR5-DEDUP",
+            "title": "FR-5: Duplicate row prevention for multi-page summary codes",
+            "type": "SPRINT-S",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "zone": "apps/pdf-extractor/",
+            "size": "S",
+            "priority": "high",
+            "depends": [
+              "TASK-304-FR7-NOTES-STOP"
+            ],
+            "sequence": 5,
+            "fr_id": "FR-5",
+            "file": "apps/pdf-extractor/infrastructure/text_table_extractor.py",
+            "description": "Add _dedup_rows_within_section() in assemble(). Drop identical same-section duplicate rows (code, value_current pair identical to first occurrence). If values differ (OCR variant), emit both. Scope: within one assemble() call. Fixes HPG FM-HPG-2 and VNM FM-VNM-1: codes 140, 400 appearing on multiple pages dropped to single row.",
+            "acceptance_criteria": [
+              "_dedup_rows_within_section() function added",
+              "Called in assemble() before _apply_positional_cutoff",
+              "Same (code, value_current) pair: drop duplicate, log WARNING",
+              "Different values (OCR variant): emit both, log WARNING",
+              "Test: code 140 appears on page A and B → one row in output",
+              "Per-page _seen_codes dict (BT3-FIX-3 R3) kept as-is"
+            ]
+          },
+          {
+            "id": "TASK-306-FR4-SECTION-DETECT",
+            "title": "FR-4: Section-boundary content-signal detection in extract_tables_usecase.py",
+            "type": "SPRINT-S",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "zone": "apps/pdf-extractor/",
+            "size": "M",
+            "priority": "high",
+            "depends": [
+              "TASK-305-FR5-DEDUP"
+            ],
+            "sequence": 6,
+            "fr_id": "FR-4",
+            "file": "apps/pdf-extractor/application/extract_tables_usecase.py",
+            "description": "Add _detect_section_start(page_text) and _filter_pages_to_section(pages, section) in extract_tables_usecase.py. Detect income-statement/cash-flow/balance-sheet boundaries from Vietnamese keywords. Replace current single balance_sheet call with _filter_pages_to_section(). Fixes VCB FM-VCB-1: income-statement items no longer land in balance_sheet.",
+            "acceptance_criteria": [
+              "_INCOME_STMT_START_KEYWORDS and _CASH_FLOW_START_KEYWORDS lists added",
+              "_detect_section_start() returns income_statement/cash_flow/None",
+              "_filter_pages_to_section() filters pages per target_section",
+              "Called in execute() Path A instead of direct select_balance_sheet_section()",
+              "Test: income-statement keyword page excluded from balance_sheet call",
+              "Test: income_statement call selects contiguous run of target pages",
+              "Non-regression: FPT section filtering unchanged"
+            ]
+          },
+          {
+            "id": "TASK-307-FR6-VN-NUMBER",
+            "title": "FR-6: VN-number parenthetical parsing robustness (trace-first investigation)",
+            "type": "SPRINT-S",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "zone": "apps/pdf-extractor/",
+            "size": "S",
+            "priority": "high",
+            "depends": [
+              "TASK-306-FR4-SECTION-DETECT"
+            ],
+            "sequence": 7,
+            "fr_id": "FR-6",
+            "file": "apps/pdf-extractor/domain/primitives/vn_number_normalize/primitive.py",
+            "description": "TRACE-FIRST task. Add test vn_number_normalize('(1.992.671)') == '-1992671' to test_vn_number_normalize.py. If test PASSES (expected), bug is upstream in _parse_value_cells or token extraction. If FAILS, add defensive poppler-artifact space handler in _parse_value (e.g., '(1.992. 671)' → '(1.992.671)' before normalization). Fixes VCB FM-VCB-4: value -1.992671 should be -1992671.",
+            "acceptance_criteria": [
+              "Test added: vn_number_normalize('(1.992.671)') == '-1992671'",
+              "Test assertion checks pass (expected: existing code handles it)",
+              "If existing code passes test: investigation complete, upstream bug confirmed",
+              "If existing code fails test: add poppler-artifact space handler in _parse_value",
+              "Defensive regex added: (\\(\\d[\\d.]*)\\.\\s+(\\d[\\d.]*\\)) → \\1.\\2",
+              "FPT non-regression: '(586.166.744.274)' unchanged",
+              "All 12 existing vn_number_normalize tests remain GREEN"
+            ]
           }
         ]
       }
@@ -5910,6 +6091,97 @@
         ],
         "created_at": "2026-06-28T07:17:28Z",
         "created_by": "po"
+      },
+      {
+        "id": "327",
+        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "title": "FR-1 — Layout-adaptive column-boundary detection (code-range gate)",
+        "zone": "apps/pdf-extractor/",
+        "size": "S",
+        "status": "BACKLOG",
+        "depends_on": [
+          "326"
+        ],
+        "blocks": [
+          "328",
+          "329",
+          "330"
+        ],
+        "owner_agent": "dev-pdf-extractor"
+      },
+      {
+        "id": "328",
+        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "title": "FR-2 — Trailing note-ref stripping from label",
+        "zone": "apps/pdf-extractor/",
+        "size": "S",
+        "status": "BACKLOG",
+        "depends_on": [
+          "327"
+        ],
+        "blocks": [
+          "329",
+          "330"
+        ],
+        "owner_agent": "dev-pdf-extractor"
+      },
+      {
+        "id": "329",
+        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "title": "FR-7 — Notes-section hard stop",
+        "zone": "apps/pdf-extractor/",
+        "size": "S",
+        "status": "BACKLOG",
+        "depends_on": [
+          "328"
+        ],
+        "blocks": [
+          "330"
+        ],
+        "owner_agent": "dev-pdf-extractor"
+      },
+      {
+        "id": "330",
+        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "title": "FR-5 — Same-section duplicate-row prevention",
+        "zone": "apps/pdf-extractor/",
+        "size": "S",
+        "status": "BACKLOG",
+        "depends_on": [
+          "329"
+        ],
+        "blocks": [
+          "331"
+        ],
+        "owner_agent": "dev-pdf-extractor"
+      },
+      {
+        "id": "331",
+        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "title": "FR-4 — Section-boundary content-signal detection",
+        "zone": "apps/pdf-extractor/",
+        "size": "M",
+        "status": "BACKLOG",
+        "depends_on": [
+          "330"
+        ],
+        "blocks": [
+          "332"
+        ],
+        "owner_agent": "dev-pdf-extractor"
+      },
+      {
+        "id": "332",
+        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "title": "FR-6 — VN-number parenthetical parse robustness (trace-first)",
+        "zone": "apps/pdf-extractor/",
+        "size": "M",
+        "status": "BACKLOG",
+        "depends_on": [
+          "331"
+        ],
+        "blocks": [],
+        "owner_agent": "dev-pdf-extractor"
       }
     ],
     "closed_sprints": [
@@ -6794,6 +7066,22 @@
         "handoff": "docs/handoffs/TASK-FFT-L4.md",
         "completed_at": "2026-06-27T21:25:00Z",
         "next": "qa"
+      },
+      {
+        "id": "326",
+        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "title": "FR-3 — Roman numeral OCR normalization",
+        "zone": "apps/pdf-extractor/",
+        "size": "S",
+        "status": "REVIEW",
+        "depends_on": [],
+        "blocks": [
+          "327",
+          "328",
+          "329",
+          "330"
+        ],
+        "owner_agent": "dev-pdf-extractor"
       }
     ],
     "qa": [],
