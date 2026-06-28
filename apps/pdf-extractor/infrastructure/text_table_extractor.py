@@ -489,6 +489,90 @@ def _is_recognized_section_header(stripped: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# FR-7 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — Notes-section boundary detection
+# ---------------------------------------------------------------------------
+
+# Regex: standalone note-item number with trailing period — "26." "27." "28." etc.
+# Anchored: entire stripped line must be 2+ digits followed by a single period.
+# These are B02-TCTD Thuyết minh numbered note-item headers, one per line.
+# The ≥15 integer threshold is enforced in _is_notes_section_boundary().
+_NOTES_BOUNDARY_NUMBER_RE = re.compile(r"^\d{2,}\.$")
+
+# Diacritic-insensitive normalized keyword fragments for boundary detection.
+# Used together in _is_notes_section_boundary() Check 2: BOTH must be present
+# in the normalized line to confirm "Thuyết minh" (not just OCR fragment "Thuyết").
+# This prevents false-stops on column-header lines like "a ch . Thuyết"
+# where "THUY" is present but "MINH" is absent.
+#
+# Note: _NORM_THUY is also used as a LOCAL variable name inside
+# _is_three_block_layout() and _parse_three_block_layout() — those functions assign
+# their own copy (same value); no module-global conflict (Python local scope wins).
+_NORM_THUY = _norm("thuy")     # "THUY" — fragment of "Thuyết minh" / "Thuyet minh"
+_NORM_GHI_CHU = _norm("ghi chú")  # "GHI CHU" — matches "Ghi chú" and OCR variants
+
+
+def _is_notes_section_boundary(stripped: str) -> bool:
+    """
+    FR-7 — Detect entry into the Thuyết minh notes body (B02-TCTD).
+
+    Returns True on ANY of three conditions:
+
+    1. Standalone note-item number ≥15 with trailing period:
+       "26." → notes item 26 (triggers stop)
+       "15." → notes item 15 (triggers stop — lowest note-item threshold)
+       "14." → notes item 14 (does NOT trigger — still in valid B02-TCTD sub-codes)
+       Threshold ≥15 excludes valid B02-TCTD sub-item codes (1–14) while catching
+       the numbered Thuyết minh body (which starts at item 15+ in practice).
+
+    2. "Thuyết minh" standalone header on its own line.
+       Normalized via _norm() → matches "THUYẾT MINH", "Thuyet Minh", OCR variants.
+       Detection: _NORM_THUY ("THUY") is a substring of the normalized line.
+
+    3. "Ghi chú" standalone header.
+       Normalized: _NORM_GHI_CHU ("GHI CHU") is a substring of the normalized line.
+
+    False-stop safety:
+    - Real BCTC code rows ("I Tiền mặt 100.000", "270 Tổng cộng ...") do not contain
+      standalone ≥15-integer periods, "THUY", or "GHI CHU" → return False.
+    - Lines already filtered upstream (date-header "Thuyết 31/3/2026 31/12/2025",
+      unit headers, junk) never reach this function in _parse_lines_to_rows() because
+      FR-7 is checked AFTER the existing skip guards.
+    - FPT inline pages (B01-DN): no standalone "26." or "Thuyết minh" lines exist;
+      function always returns False → FPT is unaffected.
+
+    Non-regression:
+    - This function is PURE (no I/O, no imports, no state).
+    - Reuses _norm() (BT3-FIX5 Ruling C) for diacritic-insensitive matching.
+    - NFR-4: no issuer/ticker/form-type branch — detection is content-structural only.
+
+    DDD layer: infrastructure (pure text processing helper for _parse_lines_to_rows).
+    """
+    # Check 1: standalone note-item number ≥15 with trailing period ("26." "15." etc.)
+    m = _NOTES_BOUNDARY_NUMBER_RE.match(stripped)
+    if m:
+        # Extract the integer prefix (the regex guarantees \d{2,} at start)
+        num_match = re.match(r"^(\d+)", stripped)
+        if num_match and int(num_match.group(1)) >= 15:
+            return True
+
+    # Check 2: "Thuyết minh" standalone header (diacritic-insensitive).
+    # Requires BOTH "THUY" and "MINH" to be present in the normalized line.
+    # This prevents false-stops on OCR-fragmented column-header lines like
+    # "a ch . Thuyết" (only "THUY" present, "MINH" absent → correctly returns False).
+    # Real "Thuyết minh" as a full-phrase header normalizes to "THUYET MINH"
+    # which contains both substrings → correctly returns True.
+    norm_s = _norm(stripped)
+    if _NORM_THUY in norm_s and "MINH" in norm_s:
+        return True
+
+    # Check 3: "Ghi chú" standalone header (diacritic-insensitive)
+    if _NORM_GHI_CHU in norm_s:
+        return True
+
+    return False
+
+
+# ---------------------------------------------------------------------------
 # BT3-FIX5 Ruling B — Positional cutoff
 # ---------------------------------------------------------------------------
 
@@ -1181,6 +1265,10 @@ def _parse_lines_to_rows(
     # Track codes seen so far (for BT3-FIX-3 dedup guard — R3)
     _seen_codes: Dict[str, int] = {}  # code → count
 
+    # FR-7: notes-section hard-stop flag (reset per _parse_lines_to_rows call = per page).
+    # Once set True (boundary detected), all remaining lines in this page are skipped.
+    _in_notes_section: bool = False
+
     for line in lines:
         stripped = line.strip()
         if not stripped:
@@ -1222,6 +1310,29 @@ def _parse_lines_to_rows(
 
         # Skip line-continuation fragments (backslash-terminated or single-word with no code)
         if stripped.endswith("\\") and len(stripped.split()) <= 6 and not re.search(r"\d{2,3}", stripped):
+            continue
+
+        # FR-7: notes-section hard stop (B02-TCTD Thuyết minh boundary).
+        # Placed AFTER all existing skip guards so that date-header lines containing
+        # "Thuyết" (e.g. "Thuyết 31/3/2026 31/12/2025") are already filtered by the
+        # date-only-header check above and never reach this gate. This prevents
+        # false-stops on column-header lines that carry "Thuyết" as a column label
+        # alongside a date token.
+        #
+        # When the boundary fires (_is_notes_section_boundary returns True):
+        #   - _in_notes_section is set True (sticky for the remainder of this page)
+        #   - the boundary line itself is skipped (via the `if _in_notes_section` below)
+        #   - all subsequent lines are also skipped
+        #
+        # NFR-4: detection is content-structural only — no issuer/ticker/form branch.
+        if _is_notes_section_boundary(stripped):
+            _in_notes_section = True
+            logger.info(
+                "_parse_lines_to_rows: page %d notes-section boundary detected "
+                "at %r — halting code-row extraction (FR-7)",
+                page_num, stripped,
+            )
+        if _in_notes_section:
             continue
 
         # Try to match a code row (handles code-first and label-first layouts,

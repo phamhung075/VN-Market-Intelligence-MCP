@@ -33,6 +33,7 @@ import re
 import pytest
 from infrastructure.text_table_extractor import (
     TextTableExtractor,
+    _is_notes_section_boundary,
     _try_parse_code_row,
     _try_parse_roman_code_row,
 )
@@ -699,3 +700,270 @@ VI Cho vay khách hàng 5 1.727.390.880 1.648.549.996
         assert label_vi == "Cho vay khách hàng", (
             f"FR-2 must strip trailing note-ref '5' from label; got {label_vi!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# TC-B07: FR-7 — B02-TCTD notes-section boundary hard stop
+# (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT)
+# ---------------------------------------------------------------------------
+
+# Fixture: B02-TCTD page ending with Thuyết minh notes section.
+# Real layout: balance-sheet rows (Roman codes) followed by standalone note-item
+# numbers ("26.", "27.") and their sub-items ("6 Lãi cho vay...").
+# The hard stop must fire on "26." and prevent note sub-items from being
+# parsed as balance-sheet rows.
+_B02_PAGE_WITH_NOTES = """\
+Báo cáo tình hình tài chính hợp nhất
+31/3/2026 31/12/2025
+I Tiền mặt, vàng bạc 12.930.996 15.542.769
+II Tiền gửi NHNN 17.957.497 37.445.504
+III Cho vay khách hàng 581.521.607 522.474.362
+26.
+6 Lãi cho vay và phí phải thu 10.000 9.000
+27.
+7 Nợ khó đòi đã xử lý 5.000 4.000
+"""
+
+# Fixture: FPT inline page — B01-DN format, no notes-section trigger lines.
+# Must be fully unaffected by FR-7.
+_FPT_INLINE_PAGE = """\
+A. NGUON VON
+31/12/2025  31/12/2024
+A. TÀI SẢN NGAN HAN  100  58.102.970.741.619  45.535.942.846.453
+I. Tiền và các khoản tương đương tiền  110  10.540.181.640.920  9.315.440.438.884
+1. Tiền  111  8.084.826.991.114  6.725.619.929.289
+TỔNG CỘNG TÀI SẢN  270  88.089.621.779.862  71.999.995.678.620
+TỔNG CỘNG NGUỒN VỐN  440  88.089.621.779.862  71.999.995.678.620
+"""
+
+
+class TestFR7NotesSectionBoundary:
+    """
+    FR-7 unit tests — _is_notes_section_boundary() + integration with assemble().
+
+    DoD requirements verified here:
+    AC-1: _is_notes_section_boundary() exists and is importable.
+    AC-2: detects 3 conditions (standalone num ≥15 + period; Thuyết minh; Ghi chú).
+    AC-3: _parse_lines_to_rows() hard-stop stops extraction after boundary.
+    AC-4: threshold ≥15 prevents false-positive on codes 1–14.
+    AC-5: integration — "26." halts extraction; FPT pages unaffected.
+    AC-6: FPT non-regression — no early truncation on FPT inline pages.
+    AC-7: detection is purely content-structural (NFR-4 — no issuer branch).
+    """
+
+    # --- AC-2: boundary detection unit tests ---
+
+    def test_standalone_26_dot_triggers(self) -> None:
+        """Standalone '26.' (note item 26, ≥15) → boundary True."""
+        assert _is_notes_section_boundary("26.") is True, (
+            "'26.' must be detected as notes-section boundary (standalone num ≥15 + period)"
+        )
+
+    def test_standalone_27_dot_triggers(self) -> None:
+        """Standalone '27.' triggers."""
+        assert _is_notes_section_boundary("27.") is True
+
+    def test_standalone_15_dot_triggers(self) -> None:
+        """Standalone '15.' (boundary threshold — exactly ≥15) → True."""
+        assert _is_notes_section_boundary("15.") is True, (
+            "'15.' must trigger (≥15 threshold is inclusive)"
+        )
+
+    def test_standalone_14_dot_does_not_trigger(self) -> None:
+        """
+        AC-4: Standalone '14.' (below threshold) → False.
+        Codes 1–14 are valid B02-TCTD balance-sheet sub-items and must NOT stop
+        extraction. The ≥15 threshold specifically protects this range.
+        """
+        assert _is_notes_section_boundary("14.") is False, (
+            "'14.' must NOT trigger (num 14 < 15 threshold — valid B02-TCTD sub-code)"
+        )
+
+    def test_standalone_1_dot_does_not_trigger(self) -> None:
+        """'1.' (single digit, below threshold) → False."""
+        assert _is_notes_section_boundary("1.") is False
+
+    def test_thuy_et_minh_header_triggers(self) -> None:
+        """'Thuyết minh' standalone header → True (normalized keyword match)."""
+        assert _is_notes_section_boundary("Thuyết minh") is True
+
+    def test_thuyet_minh_uppercase_triggers(self) -> None:
+        """'THUYẾT MINH' (uppercase/diacritic-stripped OCR variant) → True."""
+        assert _is_notes_section_boundary("THUYẾT MINH") is True
+
+    def test_thuyet_minh_no_diacritic_triggers(self) -> None:
+        """'Thuyet minh' (OCR diacritic-dropped variant) → True."""
+        assert _is_notes_section_boundary("Thuyet minh") is True
+
+    def test_ghi_chu_header_triggers(self) -> None:
+        """'Ghi chú' standalone header → True."""
+        assert _is_notes_section_boundary("Ghi chú") is True
+
+    def test_ghi_chu_no_diacritic_triggers(self) -> None:
+        """'Ghi chu' (diacritic-dropped OCR variant) → True."""
+        assert _is_notes_section_boundary("Ghi chu") is True
+
+    def test_roman_code_row_does_not_trigger(self) -> None:
+        """
+        FALSE-STOP SAFETY: 'I Tiền mặt 100.000' (legitimate B02-TCTD row) → False.
+        Real statement rows must never be mistaken for notes boundaries.
+        """
+        assert _is_notes_section_boundary("I Tiền mặt 100.000") is False
+
+    def test_roman_code_II_does_not_trigger(self) -> None:
+        """'II Tiền gửi NHNN 17.957.497' → False."""
+        assert _is_notes_section_boundary("II Tiền gửi NHNN 17.957.497") is False
+
+    def test_3digit_bctc_code_row_does_not_trigger(self) -> None:
+        """'270 Tổng cộng tài sản 88.089.621.779.862' → False (FPT-style code row)."""
+        assert _is_notes_section_boundary("270 Tổng cộng tài sản 88.089.621.779.862") is False
+
+    def test_empty_string_does_not_trigger(self) -> None:
+        """Empty stripped line → False (guard against empty-string edge case)."""
+        assert _is_notes_section_boundary("") is False
+
+    def test_number_without_period_does_not_trigger(self) -> None:
+        """'26' (no trailing period) → False (check 1 requires period)."""
+        assert _is_notes_section_boundary("26") is False
+
+    def test_period_only_line_does_not_trigger(self) -> None:
+        """'.' (single period, no digit) → False."""
+        assert _is_notes_section_boundary(".") is False
+
+    # --- AC-3 / AC-5: integration tests using assemble() ---
+
+    def test_notes_boundary_halts_extraction(self) -> None:
+        """
+        Integration — AC-3/AC-5: page with balance-sheet rows then '26.' hard stop.
+        Rows before "26." (Roman codes I, II, III) must be extracted.
+        Rows after "26." (note sub-items 6, 7) must be dropped.
+        """
+        extractor = TextTableExtractor()
+        pages = [{"page_number": 5, "text": _B02_PAGE_WITH_NOTES}]
+        result = extractor.assemble(pages, "balance_sheet")
+        rows = result["rows"]
+
+        # Code rows before boundary must be present
+        codes = [r["code"] for r in rows if r["code"] is not None]
+        assert "I" in codes, "Roman code 'I' (before boundary) must be extracted"
+        assert "II" in codes, "Roman code 'II' (before boundary) must be extracted"
+        assert "III" in codes, "Roman code 'III' (before boundary) must be extracted"
+
+        # Note sub-items after boundary (note codes 6, 7) must NOT appear
+        # These are single-digit codes 6 and 7 — if the hard stop didn't fire
+        # they would be parsed by Layout 7 as code='6' and code='7' rows.
+        note_6_rows = [r for r in rows if r.get("code") == "6"]
+        note_7_rows = [r for r in rows if r.get("code") == "7"]
+        assert len(note_6_rows) == 0, (
+            "Note sub-item code='6' (after '26.' boundary) must NOT appear in rows; "
+            f"got {len(note_6_rows)} rows. FR-7 hard stop did not fire correctly."
+        )
+        assert len(note_7_rows) == 0, (
+            "Note sub-item code='7' (after '27.' boundary) must NOT appear in rows; "
+            f"got {len(note_7_rows)} rows. FR-7 hard stop did not fire correctly."
+        )
+
+    def test_boundary_line_itself_not_extracted_as_row(self) -> None:
+        """
+        The boundary line '26.' must not appear as a code row (code='26').
+        It is a note-item header, not a balance-sheet row.
+        """
+        extractor = TextTableExtractor()
+        pages = [{"page_number": 5, "text": _B02_PAGE_WITH_NOTES}]
+        result = extractor.assemble(pages, "balance_sheet")
+        rows = result["rows"]
+
+        boundary_rows = [r for r in rows if r.get("code") == "26"]
+        assert len(boundary_rows) == 0, (
+            "Note-item boundary '26.' must not be extracted as code='26' row; "
+            f"got {len(boundary_rows)} rows."
+        )
+
+    def test_thuyetminh_header_boundary_integration(self) -> None:
+        """
+        Integration: 'Thuyết minh' as a standalone header halts extraction.
+        Rows before the header must be extracted; rows after must be dropped.
+        """
+        page_text = """\
+Báo cáo tình hình tài chính
+31/3/2026 31/12/2025
+I Tiền mặt 12.930.996 15.542.769
+II Tiền gửi NHNN 17.957.497 37.445.504
+Thuyết minh
+26 Ghi chú đặc biệt 99.999 88.888
+"""
+        extractor = TextTableExtractor()
+        pages = [{"page_number": 1, "text": page_text}]
+        result = extractor.assemble(pages, "balance_sheet")
+        rows = result["rows"]
+
+        codes = [r["code"] for r in rows if r["code"] is not None]
+        assert "I" in codes, "Code 'I' before 'Thuyết minh' boundary must be extracted"
+        assert "II" in codes, "Code 'II' before 'Thuyết minh' boundary must be extracted"
+        # Code '26' after 'Thuyết minh' boundary must be absent
+        assert "26" not in codes, (
+            "Code '26' after 'Thuyết minh' boundary must be absent (FR-7 hard stop)"
+        )
+
+    # --- AC-6: FPT non-regression ---
+
+    def test_fpt_inline_page_unaffected(self) -> None:
+        """
+        AC-6 FPT non-regression: FPT B01-DN inline page has no standalone '26.'
+        or 'Thuyết minh' header → FR-7 does not fire → all FPT rows extracted.
+        Stage 6 non-regression: code 270 (Total Assets) and 440 (Total Equity+Liab)
+        must both be present.
+        """
+        extractor = TextTableExtractor()
+        pages = [{"page_number": 4, "text": _FPT_INLINE_PAGE}]
+        result = extractor.assemble(pages, "balance_sheet")
+        rows = result["rows"]
+
+        row_270 = next((r for r in rows if r.get("code") == "270"), None)
+        row_440 = next((r for r in rows if r.get("code") == "440"), None)
+        row_100 = next((r for r in rows if r.get("code") == "100"), None)
+
+        assert row_100 is not None, (
+            "FPT code 100 must still be extracted (FR-7 must not truncate FPT inline page)"
+        )
+        assert row_270 is not None, (
+            "FPT code 270 (Total Assets sentinel) must still be extracted — "
+            "FR-7 must not fire prematurely on FPT pages"
+        )
+        assert row_440 is not None, (
+            "FPT code 440 (Total Equity+Liab sentinel) must still be extracted — "
+            "FR-7 must not fire prematurely on FPT pages"
+        )
+        assert row_270["value_current"] == pytest.approx(88_089_621_779_862.0, rel=1e-6), (
+            "FPT code 270 value_current must be unchanged (88,089,621,779,862)"
+        )
+
+    def test_vcb_page5_with_thuyetminh_column_header_not_stopped(self) -> None:
+        """
+        FALSE-STOP SAFETY — critical regression guard:
+        VCB_2026Q1_PAGE5 contains 'Thuyết 31/3/2026 31/12/2025' as a column
+        header line. This line has 'THUY' but no 'MINH', so check 2 of
+        _is_notes_section_boundary() (requires BOTH) does NOT trigger.
+        Additionally it is a DATE-HEADER line (date + ≤4 tokens) filtered upstream.
+        Verify: code='I' (Tiền mặt) still appears after the column header.
+        """
+        # Unit test: 'Thuyết' alone (no 'minh') must NOT trigger the boundary
+        assert _is_notes_section_boundary("Thuyết") is False, (
+            "Standalone 'Thuyết' without 'minh' must NOT trigger boundary "
+            "(check 2 requires BOTH THUY+MINH to prevent OCR-fragment false-stops)"
+        )
+        assert _is_notes_section_boundary("a ch . Thuyết") is False, (
+            "'a ch . Thuyết' (FPT OCR column-header fragment) must NOT trigger boundary"
+        )
+
+        extractor = TextTableExtractor()
+        pages = [{"page_number": 5, "text": VCB_2026Q1_PAGE5}]
+        result = extractor.assemble(pages, "balance_sheet")
+        rows = result["rows"]
+
+        roman_i = [r for r in rows if r.get("code") == "I"]
+        assert len(roman_i) >= 1, (
+            "CRITICAL: code='I' (Tiền mặt) must be present after 'Thuyết 31/3/2026' "
+            "column header. FR-7 must NOT fire on OCR-fragmented column headers."
+        )
+        assert roman_i[0]["value_current"] == pytest.approx(12_930_996.0, rel=1e-4)
