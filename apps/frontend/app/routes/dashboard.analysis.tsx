@@ -55,6 +55,12 @@ import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
 import { formatChangePct } from "~/domain/formatters/change-pct.js";
 import { formatSignalTypeLabel } from "~/domain/formatters/signal-type-label.js";
 import { formatDateOnlyVi, formatSignalTimestamp } from "~/lib/formatDate";
+import { TechnicalZone } from "~/components/analysis/TechnicalZone";
+import { CorporateEventsZone } from "~/components/analysis/CorporateEventsZone";
+import { FinancialsZone } from "~/components/analysis/FinancialsZone";
+import { ReputationZone } from "~/components/analysis/ReputationZone";
+import { NewsBuzzZone } from "~/components/analysis/NewsBuzzZone";
+import { ConvictionHistoryZone } from "~/components/analysis/ConvictionHistoryZone";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -1837,6 +1843,54 @@ export default function AnalysisDashboard() {
         >
           <AiDeepDivePanel result={analysisBrief} ticker={selectedStock} />
         </SectionCard>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Zone components — wired in by FE-AHUB-INT-INTEGRATE serial closer  */}
+      {/* All zones are self-fetching via useFetcher — no loader dependency   */}
+      {/* ------------------------------------------------------------------ */}
+      {selectedStock && (
+        <>
+          {/* TechnicalZone — merged /dashboard/technical scoped to stock */}
+          <SectionCard title="Giá & Kỹ thuật" subtitle={selectedStock}>
+            <TechnicalZone stock={selectedStock} />
+          </SectionCard>
+
+          {/* Link → shareholders detail page */}
+          <div>
+            <Link
+              to={`/dashboard/shareholders?code=${selectedStock}`}
+              className="inline-block rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors"
+            >
+              Cơ cấu cổ đông {selectedStock} →
+            </Link>
+          </div>
+
+          {/* CorporateEventsZone — client-side filtered to stock */}
+          <CorporateEventsZone stock={selectedStock} />
+
+          {/* Link → officers detail page */}
+          <div>
+            <Link
+              to={`/dashboard/officers?code=${selectedStock}`}
+              className="inline-block rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors"
+            >
+              Ban lãnh đạo {selectedStock} →
+            </Link>
+          </div>
+
+          {/* FinancialsZone — client-side filtered to stock */}
+          <FinancialsZone stock={selectedStock} />
+
+          {/* ReputationZone — client-side filtered to stock */}
+          <ReputationZone stock={selectedStock} />
+
+          {/* NewsBuzzZone — client-side filtered to stock */}
+          <NewsBuzzZone stock={selectedStock} />
+
+          {/* ConvictionHistoryZone — server-filtered via ?symbol= */}
+          <ConvictionHistoryZone stock={selectedStock} />
+        </>
       )}
 
       {/* ------------------------------------------------------------------ */}

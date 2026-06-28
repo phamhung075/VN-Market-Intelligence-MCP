@@ -122,7 +122,7 @@ describe("TopNav — rendered DOM includes new label", () => {
       "Tổng Quan",
       "Danh Mục",
       "Cổ Phiếu",
-      "Kỹ Thuật",
+      // "Kỹ Thuật" removed — route deleted FE-AHUB-INT-INTEGRATE
       "Tin Tức",
       "Vĩ Mô",
       "Bản Tin AI",

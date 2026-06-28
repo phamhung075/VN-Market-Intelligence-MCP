@@ -4,7 +4,7 @@
  * TopNav SSOT count + new item guard for TASK-17 PAGE 19 (Tin tức nhắc đến / news-buzz).
  *
  * Asserts:
- *   1. ANALYST_NAV now has 25 items (was 24 before PAGE 19).
+ *   1. ANALYST_NAV now has 25 items (was 26 before FE-AHUB-INT-INTEGRATE removed /dashboard/technical).
  *   2. NAV_ITEMS total is 32 (ANALYST_NAV 25 + SYSTEM_NAV 7).
  *   3. 'Tin nhắc đến' item exists at /dashboard/news-buzz and is ENABLED.
  *   4. The new item is the last in ANALYST_NAV (appended at end).
@@ -35,8 +35,8 @@ function renderTopNav(initialPath = "/") {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — ANALYST_NAV count after PAGE 19 addition", () => {
-  it("exports exactly 26 analyst nav items (25 + Tra cứu Kinh Dịch from QUE-REFERENCE-PAGE-2)", () => {
-    expect(ANALYST_NAV).toHaveLength(26);
+  it("exports exactly 25 analyst nav items (after FE-AHUB-INT-INTEGRATE removed /dashboard/technical)", () => {
+    expect(ANALYST_NAV).toHaveLength(25);
   });
 });
 
@@ -45,9 +45,9 @@ describe("TopNav — ANALYST_NAV count after PAGE 19 addition", () => {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — NAV_ITEMS total after PAGE 19 addition", () => {
-  it("NAV_ITEMS is ANALYST_NAV (26) + SYSTEM_NAV (7) = 33 total (QUE-REFERENCE-PAGE-2 added)", () => {
+  it("NAV_ITEMS is ANALYST_NAV (25) + SYSTEM_NAV (7) = 32 total (FE-AHUB-INT-INTEGRATE removed /dashboard/technical)", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
-    expect(NAV_ITEMS).toHaveLength(33);
+    expect(NAV_ITEMS).toHaveLength(32);
   });
 
   it("SYSTEM_NAV still has 7 items (unchanged)", () => {
@@ -95,9 +95,9 @@ describe("TopNav — new item is last in ANALYST_NAV", () => {
     expect(secondLast!.to).toBe("/dashboard/reputation");
   });
 
-  it("ANALYST_NAV[25] is 'Tin nhắc đến' (zero-based index, after QUE-REFERENCE-PAGE-2 insertion)", () => {
-    expect(ANALYST_NAV[25]!.label).toBe("Tin nhắc đến");
-    expect(ANALYST_NAV[25]!.to).toBe("/dashboard/news-buzz");
+  it("ANALYST_NAV[24] is 'Tin nhắc đến' (zero-based index, after FE-AHUB-INT-INTEGRATE removal of Kỹ Thuật)", () => {
+    expect(ANALYST_NAV[24]!.label).toBe("Tin nhắc đến");
+    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/news-buzz");
   });
 });
 
@@ -111,13 +111,13 @@ describe("TopNav — rendered DOM includes new label", () => {
     expect(screen.getByText("Tin nhắc đến")).toBeTruthy();
   });
 
-  it("renders all 25 analyst nav labels", () => {
+  it("renders all 25 analyst nav labels (Kỹ Thuật removed FE-AHUB-INT-INTEGRATE)", () => {
     renderTopNav();
     const expectedLabels = [
       "Tổng Quan",
       "Danh Mục",
       "Cổ Phiếu",
-      "Kỹ Thuật",
+      // "Kỹ Thuật" removed — route deleted FE-AHUB-INT-INTEGRATE
       "Tin Tức",
       "Vĩ Mô",
       "Bản Tin AI",
@@ -171,13 +171,13 @@ describe("TopNav — regression guard: PAGE 18 tab still present", () => {
     expect(item!.comingSoon).toBeUndefined();
   });
 
-  it("ANALYST_NAV[24] is 'Uy tín DN' (index after QUE-REFERENCE-PAGE-2 insertion)", () => {
-    expect(ANALYST_NAV[24]!.label).toBe("Uy tín DN");
-    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/reputation");
+  it("ANALYST_NAV[23] is 'Uy tín DN' (index after FE-AHUB-INT-INTEGRATE removed Kỹ Thuật, shifting indices)", () => {
+    expect(ANALYST_NAV[23]!.label).toBe("Uy tín DN");
+    expect(ANALYST_NAV[23]!.to).toBe("/dashboard/reputation");
   });
 
-  it("ANALYST_NAV[25] is 'Tin nhắc đến' (the new PAGE 19 entry)", () => {
-    expect(ANALYST_NAV[25]!.label).toBe("Tin nhắc đến");
-    expect(ANALYST_NAV[25]!.to).toBe("/dashboard/news-buzz");
+  it("ANALYST_NAV[24] is 'Tin nhắc đến' (the PAGE 19 entry, index shifted by FE-AHUB-INT-INTEGRATE)", () => {
+    expect(ANALYST_NAV[24]!.label).toBe("Tin nhắc đến");
+    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/news-buzz");
   });
 });
