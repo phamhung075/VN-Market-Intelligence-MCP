@@ -28,6 +28,8 @@ NON-REGRESSION:
     B02-TCTD codes are ANCHORED (no trailing period): "I Tiền" is a data row.
 """
 
+import re
+
 import pytest
 from infrastructure.text_table_extractor import (
     TextTableExtractor,
@@ -569,4 +571,131 @@ class TestRomanOcrNormalization:
         )
         assert roman_ii[0]["value_current"] == pytest.approx(17_957_497.0, rel=1e-4), (
             "Normalized row code='II' must have value_current=17,957,497"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TC-B06: FR-2 — Trailing note-reference number stripping from label
+# (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT)
+# ---------------------------------------------------------------------------
+
+_FR2_STRIP_RE = re.compile(r'\s+\d{1,3}$')
+
+
+def _apply_fr2_label_clean(label: str) -> str:
+    """Mirror of the FR-2 label-clean logic in _parse_lines_to_rows()."""
+    cleaned = _FR2_STRIP_RE.sub('', label)
+    return cleaned if len(cleaned) >= 5 else label
+
+
+class TestFR2TrailingNoterefStrip:
+    """
+    FR-2 label-clean: strip trailing Thuyết-minh note-ref numbers from label.
+
+    AC-2: regex r'\\s+\\d{1,3}$' strips trailing whitespace + 1-3 digits.
+    AC-3: guard — only strip when remaining label ≥5 characters.
+
+    Test cases required by TASK_328 DoD:
+      1. Strip case:   "Chứng khoán kinh doanh 4" → "Chứng khoán kinh doanh"
+         (remaining ≥5 chars → strip)
+      2. Short-label guard: "Nợ 1" → NOT stripped
+         (remaining "Nợ" = 2 chars < 5 → guard fires, leave unchanged)
+      3. 4-digit year NOT matched by \\d{1,3}: "Quỹ phát triển khoa học 2025" → unchanged
+         (2025 is 4 digits → regex does not match → label unchanged regardless of guard)
+
+    NFR-4: all three cases are purely text-structural — no issuer/ticker branching.
+    """
+
+    def test_strip_trailing_1digit_noteref(self) -> None:
+        """
+        AC-1/AC-2: "Chứng khoán kinh doanh 4" → "Chứng khoán kinh doanh".
+        Trailing 1-digit note-ref stripped; remaining label is 24 chars ≥ 5.
+        """
+        label = "Chứng khoán kinh doanh 4"
+        result = _apply_fr2_label_clean(label)
+        assert result == "Chứng khoán kinh doanh", (
+            f"Trailing note-ref '4' must be stripped; got {result!r}"
+        )
+
+    def test_guard_protects_short_remaining_label(self) -> None:
+        """
+        AC-3: "Nợ 1" → NOT stripped.
+        After stripping '1', remaining = "Nợ" = 2 chars < 5 → guard prevents strip.
+        Incorrect strip would produce "Nợ", which is uninformative and too short.
+        """
+        label = "Nợ 1"
+        result = _apply_fr2_label_clean(label)
+        assert result == "Nợ 1", (
+            f"Short remaining label must not be stripped; got {result!r}"
+        )
+
+    def test_4digit_year_not_matched_by_regex(self) -> None:
+        """
+        AC-3 / AC-4: "Quỹ phát triển khoa học 2025" → unchanged.
+        '2025' is 4 digits — does not match \\d{1,3} — label is untouched by the regex.
+        The guard is not even reached because the regex finds no match.
+        """
+        label = "Quỹ phát triển khoa học 2025"
+        result = _apply_fr2_label_clean(label)
+        assert result == "Quỹ phát triển khoa học 2025", (
+            f"4-digit year '2025' must not be stripped; got {result!r}"
+        )
+
+    def test_strip_trailing_2digit_noteref(self) -> None:
+        """Trailing 2-digit note-ref stripped when remaining label ≥5 chars."""
+        label = "Dự phòng rủi ro cho vay khách hàng 12"
+        result = _apply_fr2_label_clean(label)
+        assert result == "Dự phòng rủi ro cho vay khách hàng", (
+            f"2-digit note-ref '12' must be stripped; got {result!r}"
+        )
+
+    def test_strip_trailing_3digit_noteref(self) -> None:
+        """Trailing 3-digit note-ref stripped when remaining label ≥5 chars."""
+        label = "Cho vay khách hàng 123"
+        result = _apply_fr2_label_clean(label)
+        assert result == "Cho vay khách hàng", (
+            f"3-digit note-ref '123' must be stripped; got {result!r}"
+        )
+
+    def test_label_without_trailing_digit_unchanged(self) -> None:
+        """Label with no trailing digit is returned unchanged."""
+        label = "Chứng khoán kinh doanh"
+        result = _apply_fr2_label_clean(label)
+        assert result == "Chứng khoán kinh doanh", (
+            f"Label without trailing digit must be unchanged; got {result!r}"
+        )
+
+    def test_end_to_end_vcb_label_strip_in_assembled_row(self) -> None:
+        """
+        End-to-end: assemble a VCB-style page containing
+        "IV Chứng khoán kinh doanh 4 14.096.911 11.832.577".
+        The assembled row must have label='Chứng khoán kinh doanh' (stripped),
+        not 'Chứng khoán kinh doanh 4' (contaminated).
+
+        AC-5 (FPT non-regression): the FPT fixture 'TỔNG CỘNG TÀI SẢN  270  ...'
+        produces label='' (code-only row) — no trailing digit, so FR-2 has no effect.
+        """
+        vcb_page_with_noteref = """\
+Báo cáo tình hình tài chính
+31/3/2026 31/12/2025
+IV Chứng khoán kinh doanh 4 14.096.911 11.832.577
+VI Cho vay khách hàng 5 1.727.390.880 1.648.549.996
+"""
+        extractor = TextTableExtractor()
+        pages = [{"page_number": 5, "text": vcb_page_with_noteref}]
+        result = extractor.assemble(pages, "balance_sheet")
+        rows = result["rows"]
+
+        iv_rows = [r for r in rows if r.get("code") == "IV"]
+        assert len(iv_rows) >= 1, "Row with code='IV' must be present"
+        label = iv_rows[0]["label"]
+        assert label == "Chứng khoán kinh doanh", (
+            f"FR-2 must strip trailing note-ref '4' from label; got {label!r}"
+        )
+
+        vi_rows = [r for r in rows if r.get("code") == "VI"]
+        assert len(vi_rows) >= 1, "Row with code='VI' must be present"
+        label_vi = vi_rows[0]["label"]
+        assert label_vi == "Cho vay khách hàng", (
+            f"FR-2 must strip trailing note-ref '5' from label; got {label_vi!r}"
         )

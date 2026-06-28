@@ -1230,6 +1230,16 @@ def _parse_lines_to_rows(
         if parsed is not None:
             code, label, values_rest = parsed
 
+            # FR-2: strip trailing Thuyết-minh note-ref number from label.
+            # Example: "Chứng khoán kinh doanh 4" → "Chứng khoán kinh doanh"
+            # Guard: only strip if the remaining label is still ≥5 characters
+            # (prevents stripping valid label-ending digits from short labels).
+            # Purely text-structural — no issuer/ticker context used (NFR-4).
+            _label_clean = re.sub(r'\s+\d{1,3}$', '', label)
+            if len(_label_clean) >= 5:
+                label = _label_clean
+            # else: leave label unchanged (trailing digit is part of the label content)
+
             # Split values_rest into individual value cells
             value_cells = _parse_value_cells(values_rest)
 
