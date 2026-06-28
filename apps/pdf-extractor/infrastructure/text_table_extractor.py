@@ -587,8 +587,12 @@ _CODE_ROW_LABEL_FIRST_RE = re.compile(
 # This pattern: code + single space + optional note fragment + value numeric token.
 # Constraint: line must contain a VN-format number (dot-thousands or plain digits).
 # The label is stored as "" (code-column block; no label on same line).
+# FR-1 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT): 3-digit structural BCTC code range;
+# 2-digit codes appear in inline layouts (L1/L2/L4), never in code-only-column.
+# This prevents 1-2 digit Thuyết-minh note-ref numbers (e.g. "10" in
+# "Il 10 198.629.540") from being falsely captured as structural codes.
 _CODE_VALUE_COL_RE = re.compile(
-    r"^\s*(\d{2,3})\s+(?:[-—\w\s]*?)(\d[\d.,]+(?:\.\d+)?|\(\d[\d.,]+\))\s*$"
+    r"^\s*(\d{3})\s+(?:[-—\w\s]*?)(\d[\d.,]+(?:\.\d+)?|\(\d[\d.,]+\))\s*$"
 )
 
 # Regex: BCTC label-code-value on same line with single spaces (FPT page 7 layout):

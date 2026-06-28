@@ -17,7 +17,7 @@ Coverage:
 """
 
 import pytest
-from infrastructure.text_table_extractor import TextTableExtractor
+from infrastructure.text_table_extractor import TextTableExtractor, _CODE_VALUE_COL_RE
 
 # ---------------------------------------------------------------------------
 # Shared fixture text helpers
@@ -331,3 +331,69 @@ class TestTablePushClientInstantiation:
         client = TablePushClient()
         # inspect signature — it must return a coroutine
         assert asyncio.iscoroutinefunction(client.push_table)
+
+
+# ---------------------------------------------------------------------------
+# FR-1: code-range gate — _CODE_VALUE_COL_RE must enforce 3-digit BCTC codes
+# Sprint: FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT / TASK_327
+# ---------------------------------------------------------------------------
+
+
+class TestFR1CodeRangeGate:
+    """
+    AC-3 / AC-4: _CODE_VALUE_COL_RE (Layout 3 code-only-column pattern) must:
+    - Reject 1-2 digit numbers (Thuyết-minh note-ref false-positives).
+    - Accept 3-digit BCTC structural codes (FPT golden non-regression).
+    """
+
+    def test_two_digit_note_ref_does_not_match(self) -> None:
+        """
+        AC-4 case 1: "10 198.629.540" must NOT match.
+        '10' is a Thuyết-minh note-ref number (2 digits), not a BCTC structural code.
+        The old r'\\d{2,3}' pattern captured it falsely as code='10' (FM-VCB-3).
+        """
+        line = "10 198.629.540"
+        m = _CODE_VALUE_COL_RE.match(line)
+        assert m is None, (
+            "Layout 3 must reject 2-digit codes — '10' is a note-ref, not a BCTC code"
+        )
+
+    def test_one_digit_number_does_not_match(self) -> None:
+        """1-digit numbers are also rejected (not structural codes)."""
+        line = "5 198.629.540"
+        m = _CODE_VALUE_COL_RE.match(line)
+        assert m is None, "Layout 3 must reject 1-digit numbers"
+
+    def test_three_digit_code_270_matches_fpt_golden(self) -> None:
+        """
+        AC-4 case 2: "270 88.089.621.779.862" must match with code='270'.
+        FPT golden non-regression: TỔNG CỘNG TÀI SẢN code 270 (Total Assets).
+        """
+        line = "270 88.089.621.779.862"
+        m = _CODE_VALUE_COL_RE.match(line)
+        assert m is not None, (
+            "Layout 3 must match 3-digit FPT code 270 (TỔNG CỘNG TÀI SẢN)"
+        )
+        assert m.group(1) == "270", f"code group must be '270', got {m.group(1)!r}"
+        assert m.group(2) == "88.089.621.779.862", (
+            f"value group must be '88.089.621.779.862', got {m.group(2)!r}"
+        )
+
+    def test_three_digit_code_221_with_note_ref_matches_fpt_golden(self) -> None:
+        """
+        FPT golden non-regression: "221 — 11 15.385.816.846.287".
+        Code=221, note-ref '11' between code and value, value=15.385.816.846.287.
+        """
+        line = "221 — 11 15.385.816.846.287"
+        m = _CODE_VALUE_COL_RE.match(line)
+        assert m is not None, (
+            "Layout 3 must match 3-digit FPT code 221 with intercalated note-ref"
+        )
+        assert m.group(1) == "221", f"code group must be '221', got {m.group(1)!r}"
+
+    def test_three_digit_code_300_matches(self) -> None:
+        """FPT golden: code 300 (Total Liabilities)."""
+        line = "300 44.338.155.487.272"
+        m = _CODE_VALUE_COL_RE.match(line)
+        assert m is not None, "Layout 3 must match 3-digit code 300"
+        assert m.group(1) == "300"
