@@ -176,3 +176,30 @@ After dev lands code:
 
 **OPS REBUILD REQUIRED BEFORE LIVE-VERIFY:**
 The host `./data/coordination.db` is the stale decoy. Migration-3 runs on container startup against the named-volume coordination.db. QA live-integration-check (task_claim intent kind, orphan-signal, session-presence; all 4 original kinds; redispatch_count=0 for existing rows) can only proceed AFTER ops rebuilds the mcp-server container. Do NOT claim "live-verified" before rebuild.
+
+---
+
+## [QA] Review Record — 2026-06-28T12:10:00Z
+
+**Verdict: APPROVED**
+
+**DoD-1 Live Integration (all via gateway HTTP on rebuilt image 41d976df):**
+- 1a intent: claimed:true → released:1 → re-claimed:true (round-trip) ✓
+- 1b orphan-signal: claimed:true + released:1 ✓
+- 1c session-presence: claimed:true + released:1 ✓
+- 1d original 4 kinds (cowork-slot, sprint-task, dashboard-row, commit-mutex): all claimed:true ✓
+- 1e "garbage": -32602 invalid_enum_value listing all 7 valid kinds — CHECK not degraded ✓
+
+**DoD-2 redispatch_count:** task_list_held on 11 live rows — every row has redispatch_count=0 ✓
+
+**DoD-3 Regression:** coordination suite 99+17/0 PASS; tsc 0 errors; isolation: wrong-session release→released:0, re-claim sees current_holder ✓. Full-suite baseline: 0 NEW failures vs pre-existing 53 timeout/network set (same set confirmed in TASK_1981 qa-S2).
+
+**DoD-4 WAL adjudication:** NON-BLOCKING — read-only probe artifact. WAL replayed on every SQLite open; server connection proves schema live; restart-durable without explicit checkpoint. Ops hardening recommendation (checkpoint in migration bootstrap) routed as non-blocking backlog note.
+
+**DDD:** PASS (domain/ zero infra imports; coordinationTools→infra direct import is pre-existing, not introduced by this task)
+**Security:** PASS (Bun.env only, parameterized SQL, mock-guard PASS, no secrets)
+**tsc:** 0 errors
+
+**Non-blocking backlog note (WAL hardening):** Consider adding `PRAGMA wal_checkpoint(TRUNCATE)` after Migration-3 table-recreate in a future hardening task to ensure WAL content is flushed to main DB file immediately post-migration. This eliminates confusion when external read-only tools probe the DB before the next auto-checkpoint. Not required for correctness.
+
+**TASK_1989 → DONE. P1.5 fan-out (TASK_1983, TASK_1984, TASK_1985, TASK_1986, TASK_1987, TASK_1988) UNBLOCKED.**

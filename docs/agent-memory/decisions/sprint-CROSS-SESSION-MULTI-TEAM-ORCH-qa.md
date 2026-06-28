@@ -6,6 +6,23 @@
 
 ---
 
+### STEP qa-S4 · qa · 2026-06-28T12:10:00Z
+**task-id:** TASK_1989
+**what-done:** Live integration + regression gate for Migration-3 7-kind TaskKind enum. All 5 DoD-D probes PASS; WAL adjudicated non-blocking. Flipped TASK_1989 → DONE.
+**what-considered:**
+- DoD-1a: intent claimed:true, released:1, re-claimed:true — claim/release round-trip verified live
+- DoD-1b: orphan-signal claimed:true + released ✓; DoD-1c: session-presence claimed:true + released ✓
+- DoD-1d: all 4 original kinds (cowork-slot, sprint-task, dashboard-row, commit-mutex) → claimed:true ✓
+- DoD-1e: "garbage" → -32602 enum rejection listing all 7 valid kinds ✓ (Zod gate not degraded to permissive)
+- DoD-2: task_list_held on 11 live rows — every row has redispatch_count=0 (NOT NULL DEFAULT 0 applied) ✓
+- DoD-3: coord suite 99/17-new pass / 0 fail; tsc 0 errors; same-key isolation holds (wrong-session release returns released:0, re-claim sees current_holder) ✓
+- WAL adjudication: read-only probe artifact — WAL replayed on every SQLite open; live server proves schema live; container restart would NOT lose migration. Non-blocking hardening note routed.
+- DDD: domain/ has zero infrastructure imports; coordinationTools→infrastructure import pre-existing (pre-TASK_1989). Security: Bun.env only, parameterized SQL, no secrets.
+**why-decision:** All 5 live-kind probes PASS, 0 new failures, isolation holds, WAL not blocking. APPROVED.
+**why-change:** no change from plan
+
+---
+
 ### STEP qa-S3 · qa · 2026-06-28T14:10:00Z
 **task-id:** FIX-VNM-BCTC-ROWS-DATA-LOSS-RECOVER
 **what-done:** Independent raw verification of VNM 2025Q4 data recovery — 94 rows confirmed on live named-volume, APPROVED.

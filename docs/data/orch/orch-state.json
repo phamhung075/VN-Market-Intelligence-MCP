@@ -6238,7 +6238,7 @@
         "type": "SPRINT-S",
         "zone": "apps/mcp-server/",
         "title": "P1-MCP: FIX-COORD-TASKKIND-ENUM-INTENT-GATE — Migration-3 7-kind schema",
-        "status": "REVIEW",
+        "status": "DONE",
         "priority": "P1",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1989-fix-coord-taskkind-enum-intent-gate.md",
@@ -6256,7 +6256,8 @@
         ],
         "created_at": "2026-06-28T11:40:00Z",
         "created_by": "pm",
-        "size": "M"
+        "size": "M",
+        "status_note": "qa APPROVED 2026-06-28T12:10:00Z — all 5 live-kind probes PASS, 0 new failures, WAL non-blocking"
       }
     ],
     "closed_sprints": [
