@@ -11,7 +11,10 @@
     "rev": 2,
     "summary": "Multi-team cross-session orchestration — four phases. P1: thread CLAUDE_CODE_SESSION_ID as owner_client_session into task_locks; rebind heartbeat/release matching ladder; delete self-held-heartbeat anti-pattern; CLAUDE.md step 2.5 PRE-CLAIM gate. P1.5: server-side reaper in gcExpiredLocks + 600s periodic timer; emit orphan-signal before GC-delete; router step 2.5 + dev-team Step 0a adoption probe; resume from checkpoint (not zero); poison-task escalation after N_MAX=3 re-dispatches. P2: presence registry via session-presence enum. P3: fire-time cron leader election.",
     "action_required": "decompose_into_atomic_frs_and_sequence",
-    "follow_on_agents": ["dev-mcp-server", "agent-father"],
+    "follow_on_agents": [
+      "dev-mcp-server",
+      "agent-father"
+    ],
     "po_decisions_required": [
       "P1 scope + sequencing before code lands",
       "P1.5 honest-bound acceptance: adoptable-not-self-healing for all-dead-sessions case",
@@ -55,5 +58,11 @@
       "feedback_headless_gateway_noPost_false_negative: backfill marker, never re-run; maps to cowork idempotency",
       "feedback_orchstate_fulldoc_overwrite_collapses_ssot: any board write via orch-apply.sh only"
     ]
+  },
+  "_processed": {
+    "fingerprint": "1edbf26247c3ffc6f5429522d21f9bff559669c94e87abe9774491b21187447a",
+    "processedAt": "2026-06-28T20:48:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

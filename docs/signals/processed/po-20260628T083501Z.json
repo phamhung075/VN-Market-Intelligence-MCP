@@ -1,0 +1,42 @@
+{
+  "from": "po",
+  "to": "pm",
+  "type": "po_signoff",
+  "priority": "high",
+  "createdAt": "2026-06-28T08:35:01Z",
+  "payload": {
+    "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+    "phase": "P1.5 — Liveness Detection + Orphan Work Takeover",
+    "verdict": "APPROVED-WITH-HARDENING",
+    "subject": "P1.5 decomposition is RELEASED. Architect §6.5 (brief rev 2) confirmed against 6 PO acceptance lenses.",
+    "decision_journal": "docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-po.md (po-S6..S9)",
+    "orch_state_ref": ".sprint_goal.entries[CROSS-SESSION-MULTI-TEAM-ORCH].p1_5.po_confirm",
+    "action_required": "decompose_p1_5_into_atomic_frs",
+    "sequencing_gate": "P1.5-* FRs blockedBy TASK_1980 (P1-FINAL REQUIRED-flip + remove owner_agent fallback) — NOT merely TASK_1973 (column add). Orphan attribution is unambiguous ONLY once no lock row carries NULL owner_client_session (grounds po-S2 owner_agent-transitional lock). Preferred: additionally gate the two AF adoption FRs (P1.5-AF-1/AF-2) on TASK_1981 (P1 regression green), since adoption rides on the flip being PROVEN.",
+    "locked_dod_additions": [
+      "DoD-P15-1 [P1.5-AF-2; router AF-1 DEFERS] — sprint-task adopter MUST git status --porcelain the zone + git checkout -- <file> every UNCOMMITTED live-effect edit to last-good BEFORE resuming; leave untracked artifacts + surface in board note; SHA=resume point, tree-hygiene=precondition; router never reverts; scoped to single-host shared-tree topology. (feedback_dead_worker_uncommitted_live_file_revert)",
+      "DoD-P15-2 [P1.5-AF-1/AF-2 + §6.5.5] — published-artifact existence probe in cowork-slot + cron-tick resume MUST be read-only task_list_held, NEVER task_heartbeat/task_claim (create-if-absent masks a never-fired publish). (feedback_guaranteed_slot_week_key_double_post #3)",
+      "DoD-P15-3 [P1.5-MCP-2 + P1.5-AF-1/AF-2 + poison test] — adopter MUST carry-forward redispatch_count from orphan-signal payload into the re-claim payload (else counter resets each adoption → N_MAX=3 never reached → guard inert). Escalation idempotent: BUG telegram once on transition to ESCALATED; later adopters seeing status==ESCALATED skip silently. Poison test MUST assert count CHAINS across 3 real adopt→die cycles, not a hand-set rc=3. (feedback_recurring_bug_escalation)",
+      "DoD-P15-4 [P1.5-MCP-2 scan predicate] — reaper emits orphan-signals ONLY for kinds with a defined resume contract (sprint-task, cowork-slot, cron-tick-with-published-checkpoint, dashboard-row) via an ALLOW-LIST — NOT the deny-list, which emits un-adoptable signals for commit-mutex/intent:*/cron-fire-claims. New kinds default to NOT-emitting.",
+      "DoD-P15-5 [P1.5-MCP-3 setInterval reaper] — 600s timer MUST wrap gcExpiredLocks in try/catch + log+continue on transient DB-busy; one uncaught error must NOT kill the interval (else all-sessions-dead gap silently re-opens). Test: inject GC error, assert timer fires next tick. (feedback_silent_swallow_serial_bugs)",
+      "DoD-P15-6 [all P1.5-AF docs] — §6.5.1 honest-bound line (zero live sessions = zero execution; reaper only makes work ADOPTABLE, never self-heals) carried verbatim into router step-2.5 SKILL + dev-team Step 0a flow + orphan-signal mechanism doc."
+    ],
+    "lenses_clean": [
+      "#1 honest-bound",
+      "#3 slow≠dead grace",
+      "#5 P1-dependency",
+      "#6 reaper-placement server-side"
+    ],
+    "lenses_hardened": [
+      "#2 continue≠restart (DoD-P15-1/2)",
+      "#4 poison-task cap (DoD-P15-3)"
+    ],
+    "do_not": "PO did NOT write P1.5 task_board FR entries (pm's job) and did NOT trigger code. P1 (TASK_1973..TASK_1981) is already decomposed + unchanged — do NOT re-open it."
+  },
+  "_processed": {
+    "fingerprint": "e14fc6447342365c9d8435f19aa4f8b5826259528c7c50bd8039d2cbf2ad24cc",
+    "processedAt": "2026-06-28T20:48:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
