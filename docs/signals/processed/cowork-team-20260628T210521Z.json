@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260628T210521Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "last_fired_timestamp": "2026-06-28T21:05:21.188Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 6,
+    "signal_backlog": 0,
+    "note": "bctc-analyst-slot-3 guaranteed off-market BCTC cycle (cron 0 21 UTC); fire-election WON; pressure adaptive (stale_warning=false, emitted 14min ago); bctc-offmarket+unknown-calendar -> _cron_fallback=true so cron governs; not a gatherer so no freshness downgrade; agent self-guards E2 market window"
+  },
+  "priority": "low",
+  "createdAt": "20260628T210521Z",
+  "_processed": {
+    "fingerprint": "3d6ed0ed210b46db32423edb23926cd3d7128ba1fe66d73b64019f79ed5a6947",
+    "processedAt": "2026-06-28T21:10:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
