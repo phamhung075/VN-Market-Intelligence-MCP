@@ -6098,7 +6098,7 @@
         "title": "FR-1 — Layout-adaptive column-boundary detection (code-range gate)",
         "zone": "apps/pdf-extractor/",
         "size": "S",
-        "status": "BACKLOG",
+        "status": "READY",
         "depends_on": [
           "326"
         ],
@@ -6977,6 +6977,18 @@
         "closed_at": "2026-06-28T07:24:33Z",
         "qa_verified_by": "qa",
         "qa_verification": "QA-VERIFIED 2026-06-28: curl /dashboard/alerts → 200. SSR body: 101 tr / 700 td / 59 amber tokens / 1 table; 0 error signatures (Cannot destructure/TypeError/Application Error). Fix dda89b1c: AlertSeverity union +warning (L52); case warning amber (L207-213); default: slate fallback (L226-234); KNOWN_SEVERITIES normalizeItemSeverity data boundary (L113-114). vitest 1754/1756 (2 pre-existing QUE_DESCRIPTIONS unchanged). tsc 0 errors."
+      },
+      {
+        "id": "326",
+        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "title": "FR-3 — Roman numeral OCR normalization",
+        "zone": "apps/pdf-extractor/",
+        "size": "S",
+        "status": "DONE",
+        "owner_agent": "dev-pdf-extractor",
+        "completed_at": "2026-06-28T08:00:00Z",
+        "next": "pm",
+        "verification": "DONE (qa cycle-332): 887/6-preexisting full suite, 58/58 targeted, sandbox G12 both tiers green, NFR-4 PASS, FPT non-regression PASS. commit cdc8b93f"
       }
     ],
     "done_verified": [],
@@ -7066,22 +7078,6 @@
         "handoff": "docs/handoffs/TASK-FFT-L4.md",
         "completed_at": "2026-06-27T21:25:00Z",
         "next": "qa"
-      },
-      {
-        "id": "326",
-        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "FR-3 — Roman numeral OCR normalization",
-        "zone": "apps/pdf-extractor/",
-        "size": "S",
-        "status": "REVIEW",
-        "depends_on": [],
-        "blocks": [
-          "327",
-          "328",
-          "329",
-          "330"
-        ],
-        "owner_agent": "dev-pdf-extractor"
       }
     ],
     "qa": [],

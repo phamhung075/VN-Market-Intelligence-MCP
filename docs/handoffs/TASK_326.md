@@ -159,3 +159,30 @@ def test_fr3_roman_ocr_normalize():
 **Depends on:** None (first in sequence)  
 **Blocks:** TASK_327, TASK_328, TASK_329, TASK_330 (all downstream text_table_extractor changes)  
 **Estimated:** ~2h (code + test + verify)
+
+---
+
+## [QA] Review Record (2026-06-28)
+
+**Verdict: APPROVED**
+**Commit reviewed:** cdc8b93f
+
+**NFR-4 check:** PASS — diff grep for issuer/ticker/form-id conditionals returned zero code matches (commit-message text only). Implementation is a plain Python dict lookup (`_ROMAN_OCR_NORMALIZE.get(first_token, first_token)`) keyed on optical OCR misread patterns only. No per-issuer branches introduced.
+
+**Backward safety / FPT non-regression:** PASS — full pytest suite: 887 pass / 6 pre-existing fail. All 6 failures are in `test_page_rasterizer.py` (4 PIL/PNG) and `test_ocr_unit_tesseract_retry.py` (2 PIL.Image.new). These are confirmed pre-existing and completely unrelated to FR-3. FPT golden codes all canonical (I, II, III, etc.) — none present in `_ROMAN_OCR_NORMALIZE` keys, so change is a no-op for FPT fixtures.
+
+**New test coverage:** 15 tests in `TestRomanOcrNormalization` — 58/58 targeted PASS:
+- 8 normalization pairs: Il→II, Ill→III, IIl→III, lV→IV, VlI→VII, VIl→VII, VIll→VIII, VlII→VIII (all PASS)
+- 5 canonical pass-through: II, III, IV, VII, VIII unchanged (PASS)
+- period guard active after normalization (PASS)
+- non-roman token untouched (PASS)
+- end-to-end VCB page5 assemble produces code="II" with value_current=17,957,497 (PASS)
+
+**Sandbox G12:** primitive tier 29 pass / 6 intentional-fail (known_bad honesty fixtures — by design); module tier 1 pass / 0 fail. Both unchanged from pre-FR-3 baseline.
+
+**AC checklist:** AC-1 through AC-7 all green per developer record. QA independently verified AC-2 (normalization before regex), AC-5 (period guard), AC-7 (NFR-4).
+
+**DJ:** `docs/agent-memory/decisions/sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md` § qa-S1
+**Report:** `reports/TASK_REPORT_326.md`
+
+TASK_327 (FR-1, backlog, depends_on=326) — dependency cleared, status flipped to READY.

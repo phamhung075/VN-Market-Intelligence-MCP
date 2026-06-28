@@ -178,6 +178,10 @@ Production fix: resetQ1UrlNotFound() removed from initFinancialReportsTables() i
 
 ---
 
+## cycle-332 · 2026-06-28 · TASK_326 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — APPROVED
+
+TASK_326 FR-3 Roman OCR normalize (cdc8b93f) | Verdict: APPROVED | 58/58 targeted PASS (15 new TestRomanOcrNormalization + 43 pre-existing). Full suite: 887 pass / 6 pre-existing fail (PIL/page_rasterizer — unrelated). NFR-4: ZERO per-issuer branches — EXACT-KEY dict only; diff grep clean. FPT golden non-regression: all FPT Roman codes canonical (none in _ROMAN_OCR_NORMALIZE keys → no-op pass-through). Period guard confirmed active (test_period_guard_still_active_after_normalization PASS). Sandbox G12: primitive 29 pass / 6 intentional-fail (known_bad fixtures by design); module 1 pass / 0 fail. orch-state: 326 review→done, 327 BACKLOG→READY (dependency cleared). DJ: sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md § qa-S1. Report: reports/TASK_REPORT_326.md.
+
 ## cycle-331 · 2026-06-28 · TASK-FFT-L3B (FRONTEND-FRESHNESS-TRANSPARENCY) — APPROVED (re-gate Round 2)
 
 TASK-FFT-L3B (24bbecbf) | Verdict: APPROVED | Runner discrepancy resolved: fixer's 202 bun:test failures = vitest-import incompatibility with bun:test runner; zone-standard npm test (vitest run) = 1754/2, identical to prior baseline. B-1 VERIFIED: kdGeneratedAt=market?.timestamp??null at analysis.tsx:258; badge line 1763 uses kdGeneratedAt not fetchedAt. B-2 VERIFIED: two badges present (intraday KD:1763 + realtime watchlist:1801); two revalidators (intraday:1752 + realtime:1753); watchlistDataAsof=null correct (WatchlistTileData no timestamp field; EC-1 gray). N-2 VERIFIED: orchestration.tsx:201 fetchedAt=tsField (state.head?.updated_at). N-1 VERIFIED: coverage-map kinh-dich-reference.l3b_status="STATIC_TEXT". tsc EXIT 0. orch-state DONE. Sprint FRONTEND-FRESHNESS-TRANSPARENCY COMPLETE: L2+L3A+L3B+L4 all DONE. DJ: sprint-FRONTEND-FRESHNESS-TRANSPARENCY-qa.md § qa-S6.
