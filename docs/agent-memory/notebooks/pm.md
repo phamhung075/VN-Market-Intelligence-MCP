@@ -1,5 +1,80 @@
 # PM — Notebook
 
+## c323 CROSS-SESSION-MULTI-TEAM-ORCH P1 DECOMPOSITION · 2026-06-28T083000Z
+
+**PARENT:** Architect brief complete (docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md), PO signed off with LOCKED DoD gate, decision journal recorded (docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-po.md)
+
+**INPUT:** PO signoff signal (docs/signals/po-20260628T081903Z.json), architect brief §8 Concrete Follow-On Tasks + §Sequencing Summary + §10 file anchors, sprint-vision entry in sprint_goal with P1.5 additive block (left untouched per instructions)
+
+**OUTPUT:** 9 atomic P1 FRs decomposed into atomic tasks (TASK_1973-1981), all 9 TASK_NNN.md handoff files created, task_board.backlog updated atomically via orch-apply.sh with correct dependency DAG, decision journal entry recorded. **P1.5/P2/P3 FRs explicitly HELD (not decomposed).**
+
+**P1 Atomization (9 tasks, ordered + parallel):**
+1. **TASK_1973 (P1-MCP-1, S):** SQL migration — ADD COLUMN owner_client_session TEXT (nullable) in migrateCoordinationTable transaction. FIRST, no deps. Blocks MCP-2 and MCP-3.
+2. **TASK_1974 (P1-MCP-2, M):** coordinationStore.ts matching-ladder rebind — claimTask/heartbeatTask/releaseTask/releaseOrphanTask. Gated on MCP-1. Blocks P1-FINAL.
+3. **TASK_1975 (P1-MCP-3, M):** coordinationTools.ts Zod schema + param threading. Gated on MCP-1. Blocks P1-FINAL.
+4. **TASK_1976 (P1-AF-1, S):** CLAUDE.md step 2.5 PRE-CLAIM gate insertion. Gated on MCP-1. Blocks P1-FINAL. (Can parallel MCP-2/3.)
+5. **TASK_1977 (P1-AF-2, M):** dispatch-claim SKILL lift to router scope + canonical task_id namespace per §3.1. Gated on MCP-1. Blocks P1-FINAL. (Can parallel MCP-2/3.)
+6. **TASK_1978 (P1-AF-3, S):** leader-lock.md delete self-held-heartbeat anti-pattern + session-id comparison branch. Gated on MCP-1, MCP-2. Blocks P1-FINAL.
+7. **TASK_1979 (P1-AF-4, M):** task-lock SKILL rebind authoritative key to owner_client_session. Gated on MCP-1, MCP-2. Blocks P1-FINAL.
+8. **TASK_1980 (P1-FINAL, S — LOCKED DoD gate):** Make owner_client_session REQUIRED in all tool schemas + remove owner_agent from all ownership WHERE predicates. Gated on MCP-2/3 + AF-1/2/3/4. Blocks P1-REGRESSION. **PO-mandated, non-negotiable (po-S2): if dropped, same-role multi-team bug silently re-opens.**
+9. **TASK_1981 (P1-REGRESSION, L):** Acceptance tests verifying all 8 failure-mode scenarios from brief §7 P1 matrix pass + regression test (two same-role sessions cannot self-heartbeat-claim). Gated on P1-FINAL. Closes P1.
+
+**Sequencing enforcement (dependency DAG in task_board):**
+- MCP-1 → MCP-2, MCP-3 (serial: column must exist before matching-ladder change)
+- All MCP-2, MCP-3, AF-1..4 → P1-FINAL (parallel: all callers must ship before the REQUIRED flip)
+- P1-FINAL → P1-REGRESSION (serial: gates must be live before acceptance testing)
+
+**Parallel wave structure (tier-1 after MCP-1 completes):**
+- Tier-1 (parallel): MCP-2 ∥ MCP-3 ∥ AF-1 ∥ AF-2 ∥ AF-3 ∥ AF-4 (6 independent tracks, all depend on MCP-1 only)
+- Tier-2 (serial, after all Tier-1 complete): P1-FINAL
+- Tier-3 (serial, after P1-FINAL): P1-REGRESSION
+
+**Critical PM decisions:**
+1. **P1 scope locked:** Only P1 FRs decomposed. P1.5 (orphan detection + work takeover) is additive and HELD (architect §P1.5 not yet landed in brief; PO pre-approved shape in sprint_goal .p1_5 block; decomposition deferred until architect section lands + PO re-confirms). P2/P3 remain HELD.
+2. **P1-FINAL is a point-of-no-return gate:** Marked as "LOCKED DoD gate (PO-mandated, non-negotiable)". If dropped or weakened, the same-role multi-team bug re-opens (two same-role sessions both fall through to role match). Enforced by code review + PO sign-off.
+3. **RAW-verify note encoded:** All MCP tasks must RAW-verify against LIVE coordination.db in the Docker named volume (host ./data/coordination.db is a stale decoy — encoded in every MCP task handoff).
+
+**Board mutation (atomic via orch-apply.sh):**
+- 9 tasks added to task_board.backlog with sprint="CROSS-SESSION-MULTI-TEAM-ORCH"
+- TASK_1973 status=TODO (ready to start), others status=BACKLOG (gated)
+- Dependency DAG encoded: depends_on / blocks fields per sequencing summary
+- Validators: 74 pre-existing SHG warnings (non-blocking), new tasks validated cleanly
+
+**Decision journal:** docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-pm-decomposition.md (PM-DJ-GATE: P1 scope lock, P1.5/P2/P3 held, atomic FR list, dependency DAG, RAW-verify notes)
+
+**Handoffs created (9 total):**
+- TASK_1973-p1-mcp-1-migration-sql.md
+- TASK_1974-p1-mcp-2-coordinationstore.md
+- TASK_1975-p1-mcp-3-coordinationtools.md
+- TASK_1976-p1-af-1-claude-md-step25.md
+- TASK_1977-p1-af-2-dispatch-claim-skill.md
+- TASK_1978-p1-af-3-leader-lock-delete-anti-pattern.md
+- TASK_1979-p1-af-4-task-lock-skill-rebind.md
+- TASK_1980-p1-final-required-flip-remove-fallback.md
+- TASK_1981-p1-regression-acceptance-tests.md
+
+**Risks & constraints:**
+- **Risk-1 (HIGH, locked):** Migration step 5 (P1-FINAL) cannot be dropped. If dropped, the same-role multi-team bug re-opens. Encoded as a PO-locked DoD gate; code review must verify EVERY WHERE clause in ownership decisions.
+- **Risk-2 (MEDIUM):** Pre-P1 rows (with NULL owner_client_session) become unreleasable after P1-FINAL. Natural GC via TTL, or manual cleanup if needed (documented in TASK_1980).
+- **Risk-3 (MEDIUM):** P1.5 depends on P1 (needs owner_client_session in every lock row to attribute expired locks to specific dead sessions). P1 does not block on P1.5 (independent), but P1.5 cannot ship before P1.
+- **Constraint:** All MCP tasks must RAW-verify against LIVE coordination.db (Docker named volume), not host ./data (stale decoy).
+
+**Done-verified gates (for PM to enforce on next cycle):**
+- P1 complete: TASK_1981 (acceptance tests) DONE_VERIFIED
+- All 8 failure-mode scenarios from brief §7 P1 matrix pass
+- Regression test confirms two same-role sessions cannot both proceed
+- Code review confirms EVERY ownership WHERE clause keys SOLELY on owner_client_session (no owner_agent ownership logic remains)
+- RAW-verify against LIVE coordination.db confirms all tests passed
+
+**Next steps:**
+- Dispatch TASK_1973 to dev-mcp-server (SQL migration, FIRST)
+- After TASK_1973 DONE, dispatch Tier-1 wave (MCP-2, MCP-3, AF-1/2/3/4) in parallel to respective agents
+- After all Tier-1 DONE, dispatch TASK_1980 (P1-FINAL) to dev-mcp-server
+- After TASK_1980 DONE, dispatch TASK_1981 (P1-REGRESSION) to qa + dev-mcp-server for acceptance testing
+- After TASK_1981 DONE_VERIFIED, mark P1 complete and escalate P1.5/P2/P3 decomposition to architect for §P1.5 landing + PO re-confirmation
+
+---
+
 ## c321 BCTC-REFINE-STALL-RETRIGGER TASK ATOMIZATION · 2026-06-27T210000Z
 
 **PARENT:** Architect recon-first complete (docs/architecture-briefs/2026-06-27-bctc-refine-stall-retrigger.md), PO dispatch context with cowork ownership guard, WIP=1 active sprint

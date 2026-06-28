@@ -6032,6 +6032,173 @@
         ],
         "blocks": [],
         "owner_agent": "dev-pdf-extractor"
+      },
+      {
+        "id": "TASK_1973",
+        "type": "SPRINT-S",
+        "zone": "apps/mcp-server/",
+        "title": "P1-MCP-1: SQL migration — add owner_client_session column",
+        "status": "TODO",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1973-p1-mcp-1-migration-sql.md",
+        "depends_on": [],
+        "blocks": [
+          "TASK_1974",
+          "TASK_1975"
+        ],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "TASK_1974",
+        "type": "SPRINT-M",
+        "zone": "apps/mcp-server/",
+        "title": "P1-MCP-2: coordinationStore.ts — matching-ladder rebind",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1974-p1-mcp-2-coordinationstore.md",
+        "depends_on": [
+          "TASK_1973"
+        ],
+        "blocks": [
+          "TASK_1980"
+        ],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "TASK_1975",
+        "type": "SPRINT-M",
+        "zone": "apps/mcp-server/",
+        "title": "P1-MCP-3: coordinationTools.ts — add param + stop server injection",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1975-p1-mcp-3-coordinationtools.md",
+        "depends_on": [
+          "TASK_1973"
+        ],
+        "blocks": [
+          "TASK_1980"
+        ],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "TASK_1976",
+        "type": "SPRINT-S",
+        "zone": ".claude/",
+        "title": "P1-AF-1: CLAUDE.md step 2.5 PRE-CLAIM gate",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1976-p1-af-1-claude-md-step25.md",
+        "depends_on": [
+          "TASK_1973"
+        ],
+        "blocks": [
+          "TASK_1980"
+        ],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "TASK_1977",
+        "type": "SPRINT-M",
+        "zone": ".claude/skills/",
+        "title": "P1-AF-2: dispatch-claim SKILL — lift to router scope",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1977-p1-af-2-dispatch-claim-skill.md",
+        "depends_on": [
+          "TASK_1973"
+        ],
+        "blocks": [
+          "TASK_1980"
+        ],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "TASK_1978",
+        "type": "SPRINT-S",
+        "zone": "docs/agents/cowork-team/",
+        "title": "P1-AF-3: leader-lock.md — delete self-held-heartbeat anti-pattern",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1978-p1-af-3-leader-lock-delete-anti-pattern.md",
+        "depends_on": [
+          "TASK_1973",
+          "TASK_1974"
+        ],
+        "blocks": [
+          "TASK_1980"
+        ],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "TASK_1979",
+        "type": "SPRINT-M",
+        "zone": ".claude/skills/",
+        "title": "P1-AF-4: task-lock SKILL — rebind authoritative key to owner_client_session",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1979-p1-af-4-task-lock-skill-rebind.md",
+        "depends_on": [
+          "TASK_1973",
+          "TASK_1974"
+        ],
+        "blocks": [
+          "TASK_1980"
+        ],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "TASK_1980",
+        "type": "SPRINT-S",
+        "zone": "apps/mcp-server/",
+        "title": "P1-FINAL: Make owner_client_session REQUIRED + remove owner_agent fallback (LOCKED DoD gate)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1980-p1-final-required-flip-remove-fallback.md",
+        "depends_on": [
+          "TASK_1974",
+          "TASK_1975",
+          "TASK_1976",
+          "TASK_1977",
+          "TASK_1978",
+          "TASK_1979"
+        ],
+        "blocks": [
+          "TASK_1981"
+        ],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm",
+        "note": "LOCKED DoD gate (PO-mandated, non-negotiable per po-S2). Point of no return."
+      },
+      {
+        "id": "TASK_1981",
+        "type": "SPRINT-L",
+        "zone": "apps/mcp-server/",
+        "title": "P1-REGRESSION: Acceptance tests — verify all 8 failure-mode scenarios pass",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1981-p1-regression-acceptance-tests.md",
+        "depends_on": [
+          "TASK_1980"
+        ],
+        "blocks": [],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm"
       }
     ],
     "closed_sprints": [
