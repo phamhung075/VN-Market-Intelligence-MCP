@@ -1124,8 +1124,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-28T18:40:00Z",
-    "_updated_by": "qa:FE-AHUB-QA-VERIFY",
+    "_updated_at": "2026-06-28T21:35:00Z",
+    "_updated_by": "qa:TASK_1995-P3-APPROVED",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -1606,7 +1606,7 @@
             "title": "P3-ARCH-1: Fire-time leader-election design addendum (5 items)",
             "owner": "agents-architect",
             "type": "SPRINT-S",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "docs/architecture-briefs/",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
@@ -1614,14 +1614,14 @@
             "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
             "depends": [],
             "note": "Design: (a) sub-daily period-key, (b) dispatcher-level vs per-slot, (c) dev-team SF-1 integration, (d) lease semantics, (e) OBSERVE-ONLY retirement. No code; runs in P2 shadow.",
-            "updated_at": "2026-06-28T17:19:22Z"
+            "updated_at": "2026-06-28T21:35:00Z"
           },
           {
             "id": "TASK_1994",
             "title": "P3-AF-1: Fire-time leader-election implementation",
             "owner": "agent-father",
             "type": "SPRINT-S",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "docs/agents/ + .claude/skills/",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
@@ -1631,8 +1631,8 @@
               "TASK_1993",
               "TASK_1992"
             ],
-            "note": "CHANGES_REQUESTED by QA (2026-06-28): DWF-coordination-phase2.test.ts:365 DV-P2-4 asserts ttl_seconds:1800+cowork-leader (old P1 design); TASK_1994 changed to 600+cron:cowork: but did not update test. +1 new failure vs 53-fail baseline. Fix: update test to P3 design. Route: agent-father.",
-            "updated_at": "2026-06-28T22:00:00Z",
+            "note": "APPROVED by QA (re-gate round 2, 2026-06-28): commit 1d2bbe46 fixed DWF-coordination-phase2.test.ts DV-P2-4 Step 0b to P3 contract (ttl_seconds:600, cron:cowork: prefix). Coordination suite: 111 pass / 0 fail. tsc: 0 errors. All DoD PASS.",
+            "updated_at": "2026-06-28T21:35:00Z",
             "completed_by": "agent-father",
             "completed_at": "2026-06-28T18:29:37Z"
           },
@@ -1641,7 +1641,7 @@
             "title": "P3-QA: Fire-time leader-election verification",
             "owner": "qa",
             "type": "SPRINT-S",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "docs/protocols/",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
@@ -1651,7 +1651,8 @@
               "TASK_1994"
             ],
             "note": "QA: parallel fire election, stale-leader reclaim, period-key dedup, no orphan work. 5 test harnesses + negative path (no OBSERVE-ONLY). 53-fail baseline-diff.",
-            "review_note": "FIX-DWF-commit 1d2bbe46: P3 DV-P2-4 test aligned (ttl 600, cron:cowork: prefix). 32/32 GREEN. Re-gate QA."
+            "review_note": "FIX-DWF-commit 1d2bbe46: P3 DV-P2-4 test aligned (ttl 600, cron:cowork: prefix). 32/32 GREEN. Re-gate QA.",
+            "updated_at": "2026-06-28T21:35:00Z"
           }
         ]
       },

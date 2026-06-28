@@ -1,5 +1,20 @@
 # Decision Journal — Sprint CROSS-SESSION-MULTI-TEAM-ORCH · qa
 
+### STEP qa-S8 · qa · 2026-06-28T21:35:00Z
+**task-id:** TASK_1995 (re-gate round 2)
+**what-done:** P3-QA re-verification after DoD-6 fix (commit 1d2bbe46). All 7 DoD PASS. Flipped TASK_1993/1994/1995 → DONE. P3 done_verified; sprint CROSS-SESSION-MULTI-TEAM-ORCH COMPLETE.
+**what-considered:**
+- DoD-6 fix verified RAW: DWF-coordination-phase2.test.ts 32 pass / 0 fail (was 31/1). Fix: `ttl_seconds: 1800`→`600` + `cowork-leader`→`cron:cowork:` + test renamed to AC-P3-FIRE-ELECTION.
+- Coordination suite (5 files): 111 pass / 0 fail. Expanded (7 files P1+P2+P3): 133 pass / 0 fail. tsc: 0 errors.
+- Full suite shows ~68 fail vs 53 baseline: +15 from concurrent peer session eb8b5309 editing UNRELATED test files — NOT P3. Isolation confirmed: zero new failures in coordination scope.
+- DoD-1..5 PASS unchanged from round 1 (behavioral via coordinationStore in-memory, 6/6, INV-GATEWAY-1).
+- DoD-7 PASS unchanged: doc consistency, period-key scheme, OBSERVE-ONLY retirement-gated.
+- MEMORY.md OBSERVE-ONLY retirement: flagged to PO/router, NOT edited by QA.
+**why-decision:** All DoD items GREEN after targeted test fix. Fire-time election correctness confirmed behavioral + doc consistent. Regression isolated to stale test (corrected by commit 1d2bbe46). Batch flip DONE appropriate.
+**why-change:** Round 1 CHANGES_REQUESTED → Round 2 APPROVED after DoD-6 targeted test fix
+
+---
+
 ### STEP qa-S7 · qa · 2026-06-28T18:45:00Z
 **task-id:** TASK_1995
 **what-done:** P3-QA gate for fire-time leader election (TASK_1994). Verdict: CHANGES_REQUESTED. DoD-1..5 PASS (behavioral); DoD-6 FAIL (+1 new failure); DoD-7 PASS (doc consistency). TASK_1994 → IN_PROGRESS; fixer = agent-father.

@@ -3,6 +3,30 @@
 **sprint:** CROSS-SESSION-MULTI-TEAM-ORCH
 **date:** 2026-06-28
 **qa-session:** 14f8039a-51ce-44f8-a7d9-0ddbe73b994e
+
+---
+
+### P3 FINAL VERDICT — APPROVED (Re-gate round 2)
+
+**DoD-6 fix landed:** commit 1d2bbe46 (peer session) updated `DWF-coordination-phase2.test.ts` DV-P2-4 Step 0b to P3 contract: `ttl_seconds:\s+600`, `cron:cowork:` prefix. DWF: 32 pass / 0 fail (was 31/1). Coordination suite: 111 pass / 0 fail. tsc: 0. All DoD items PASS.
+
+**DoD-1..7 final status:**
+
+| DoD | Check | Round 1 | Round 2 |
+|-----|-------|---------|---------|
+| DoD-1 | Double-fire prevention | PASS | — |
+| DoD-2 | Clean loser SF-1 release | PASS | — |
+| DoD-3 | Stale leader reclaim | PASS | — |
+| DoD-4 | Period-key collision/dedup | PASS | — |
+| DoD-5 | Period-key distinctness | PASS | — |
+| DoD-6 | Regression: +1 new fail → fixed | FAIL | PASS |
+| DoD-7 | Doc consistency + OBSERVE-ONLY gate | PASS | — |
+
+**P3 done_verified. Sprint CROSS-SESSION-MULTI-TEAM-ORCH COMPLETE: P1 + P1.5 + P2 + P3 all done_verified.**
+
+**MEMORY.md follow-up (flagged, NOT edited by QA):** OBSERVE-ONLY retirement is now activation-gate OPEN. Conventions `feedback_router_cowork_defer_to_live_leader` and `feedback_router_manual_drive_overlaps_devteam_loop` are superseded in code. Retirement update in MEMORY.md is owed to PO/router.
+
+---
 **verdict:** CHANGES_REQUESTED
 
 ### Test Results
