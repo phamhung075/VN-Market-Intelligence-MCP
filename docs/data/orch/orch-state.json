@@ -1102,6 +1102,23 @@
             ]
           }
         }
+      },
+      {
+        "sprint_id": "FRONTEND-ANALYSIS-HUB-CONSOLIDATION",
+        "status": "active",
+        "priority": "high",
+        "created_at": "2026-06-28T17:41:00Z",
+        "created_by": "po",
+        "origin": "user_feature_request",
+        "vision": "Make /dashboard/analysis?stock=<code> the single consolidated per-stock hub: merge the Technical page in as a stock-scoped zone (and retire the standalone /dashboard/technical route + fix its nav), embed stock-scoped Corporate-Events / Financials / Reputation / News-Buzz / Conviction-History zones, and add Shareholders + Officers nav buttons — all filtered to the selected stock-code.",
+        "scope_in": "8 user items. (1) Merge dashboard.technical.tsx content into analysis as a stock-scoped TechnicalZone, then DELETE dashboard.technical.tsx + fix/redirect TopNav Ky Thuat link. (2) Shareholders button -> /dashboard/shareholders?code=<code>. (3) Stock-scoped CorporateEvents zone. (4) Officers button -> /dashboard/officers?code=<code>. (5) Financials zone scoped to code. (6) Reputation zone scoped to code. (7) News-Buzz zone scoped to code. (8) Conviction-History zone scoped to code. Seam: each zone built as its OWN new component file under components/analysis/ (parallel), then ONE serialized integration task wires them + buttons into dashboard.analysis.tsx and removes technical.",
+        "scope_out": "NO backend endpoint changes — all data endpoints already serve the rows; per-stock scoping is done client-side in each zone (corporate-events/financials/reputation/news-buzz lack a ?code param and return full-universe rows that the zone filters by selected code; conviction-history already accepts ?symbol; officers/shareholders already accept ?code via button nav). NOT the FACTORY-FRONTEND-split-dashboard-analysis god-file refactor (separate backlog; this sprint deliberately ADDS via imported components to avoid worsening it). NOT page-layout redesign beyond adding zones+buttons. Does NOT touch CROSS-SESSION-MULTI-TEAM-ORCH / TASK_199x / live TASK_332.",
+        "success_metric": "QA loads the LIVE rebuilt frontend at http://localhost:3001/dashboard/analysis?stock=<code> and sees: all 6 embedded zones rendering ONLY the selected stock-code data; a Technical zone equivalent to the old /dashboard/technical filtered to that code; /dashboard/technical route 404/removed and the TopNav Ky Thuat link gone-or-redirected (no dead link); a Shareholders button navigating to /dashboard/shareholders?code=<code>; an Officers button navigating to /dashboard/officers?code=<code>. grep confirms 6 new zone components under components/analysis/ and dashboard.technical.tsx deleted; FE-HEADER-SSOT top-nav test + price-history-loader test updated green. DONE flips only after QA live-verify.",
+        "ssot": "apps/frontend/app/routes/dashboard.analysis.tsx",
+        "seam": "parallel per-zone component builds (distinct new files) -> single serialized integration+technical-removal closer -> ops frontend rebuild -> qa live-verify",
+        "zone": "frontend",
+        "po_signoff": "APPROVED",
+        "po_signoff_note": "User-directed sprint: PO owns decomposition AND fan-out per explicit user instruction; standard BA->architect->pm gate lifted for this composition-only restructure (data layer already in place). WIP cap raised to ~4 concurrent dev-frontend for this sprint."
       }
     ]
   },
@@ -2913,6 +2930,125 @@
               "BCTC-REFINE-T2-SLOTS"
             ],
             "note": "Folds A2+C1. 2-hourly: Check1 COUNT(*) WHERE text_status=COMPLETE AND refine_status IN (PENDING,PARTIAL) AND parsed_at<now-86400; Check2 last cron_job_runs refine_bctc_md run>25h. MUST distinguish deep-but-draining from truly-stalled. Requires wrapRun in refine_bctc_md flow. Build AFTER T1+T2 deployed and verified draining."
+          }
+        ]
+      },
+      {
+        "id": "FRONTEND-ANALYSIS-HUB-CONSOLIDATION",
+        "title": "Analysis page becomes the single consolidated per-stock hub (merge technical + embed 5 stock-scoped zones + 2 nav buttons)",
+        "status": "ACTIVE",
+        "priority": "high",
+        "opened_at": "2026-06-28T17:41:00Z",
+        "owner": "dev-frontend",
+        "seam": "4 parallel component builds (distinct new files, zone-isolated) -> 1 serial integration closer (sole editor of dashboard.analysis.tsx) -> ops rebuild -> qa live-verify",
+        "lock_reservations": "sprint-task locks task:FE-AHUB-W1..W4 reserved under dispatcher session eb8b5309 (ttl 1800s) + umbrella task:FRONTEND-ANALYSIS-HUB-CONSOLIDATION (ttl 3600s)",
+        "tasks": [
+          {
+            "id": "FE-AHUB-W1-TECHNICAL-ZONE",
+            "title": "Build components/analysis/TechnicalZone.tsx — merge the FULL dashboard.technical.tsx content into a reusable component scoped to a stock-code prop; consume api.price-history.$ticker.tsx. NEW FILE ONLY — do NOT edit dashboard.analysis.tsx.",
+            "owner": "dev-frontend",
+            "type": "FEATURE",
+            "status": "TODO",
+            "zone": "apps/frontend/app/components/analysis/TechnicalZone.tsx",
+            "created_at": "2026-06-28T17:41:00Z",
+            "size": "L",
+            "priority": "high",
+            "depends": [],
+            "status_note": "DISPATCH-READY parallel wave-1. sprint-task lock task:FE-AHUB-W1-TECHNICAL-ZONE reserved (dispatcher session eb8b5309). Worker self-re-claims under its OWN session on spawn.",
+            "note": "Port technical page chart/indicator UI into a <TechnicalZone code=...> component. Reuse existing charts under app/components/charts. Keep loader/fetch via the existing /api/price-history/<ticker> proxy. The standalone route removal happens in the INT closer, NOT here."
+          },
+          {
+            "id": "FE-AHUB-W2-CORPEVENTS-ZONE",
+            "title": "Build components/analysis/CorporateEventsZone.tsx — embed corporate-events filtered to the selected code. /api/corporate-events has no ?code param: fetch full-universe and CLIENT-SIDE filter rows by code. NEW FILE ONLY.",
+            "owner": "dev-frontend",
+            "type": "FEATURE",
+            "status": "TODO",
+            "zone": "apps/frontend/app/components/analysis/CorporateEventsZone.tsx",
+            "created_at": "2026-06-28T17:41:00Z",
+            "size": "M",
+            "priority": "high",
+            "depends": [],
+            "status_note": "DISPATCH-READY parallel wave-1. sprint-task lock task:FE-AHUB-W2-CORPEVENTS-ZONE reserved (dispatcher session eb8b5309).",
+            "note": "Reuse the rendering from dashboard.corporate-events.tsx but as a <CorporateEventsZone code=...>; filter the full-universe payload to rows matching code. Optional future backend ?code param is BACKLOG, not this sprint."
+          },
+          {
+            "id": "FE-AHUB-W3-FINANCIALS-ZONE",
+            "title": "Build components/analysis/FinancialsZone.tsx — embed financials showing ONLY the selected code. /api/financials returns full-universe (78 codes) with no params: CLIENT-SIDE filter by code. NEW FILE ONLY.",
+            "owner": "dev-frontend",
+            "type": "FEATURE",
+            "status": "TODO",
+            "zone": "apps/frontend/app/components/analysis/FinancialsZone.tsx",
+            "created_at": "2026-06-28T17:41:00Z",
+            "size": "M",
+            "priority": "high",
+            "depends": [],
+            "status_note": "DISPATCH-READY parallel wave-1. sprint-task lock task:FE-AHUB-W3-FINANCIALS-ZONE reserved (dispatcher session eb8b5309).",
+            "note": "Reuse dashboard.financials.tsx rendering as <FinancialsZone code=...>; select the single matching code row from the full-universe screener payload."
+          },
+          {
+            "id": "FE-AHUB-W4-SOCIAL-ZONES",
+            "title": "Build 3 components: components/analysis/ReputationZone.tsx + NewsBuzzZone.tsx + ConvictionHistoryZone.tsx — each scoped to the selected code. Reputation+news-buzz are full-universe -> client-side filter; conviction-history accepts ?symbol=<code>. NEW FILES ONLY.",
+            "owner": "dev-frontend",
+            "type": "FEATURE",
+            "status": "TODO",
+            "zone": "apps/frontend/app/components/analysis/SocialZones",
+            "created_at": "2026-06-28T17:41:00Z",
+            "size": "M",
+            "priority": "high",
+            "depends": [],
+            "status_note": "DISPATCH-READY parallel wave-1 (3 simple zones grouped into one worker to cap concurrency at 4). sprint-task lock task:FE-AHUB-W4-SOCIAL-ZONES reserved (dispatcher session eb8b5309).",
+            "note": "ReputationZone + NewsBuzzZone: fetch full-universe, filter to code. ConvictionHistoryZone: call /api/conviction-history?symbol=<code> (native filter). Mirror the rendering of the three standalone dashboard pages."
+          },
+          {
+            "id": "FE-AHUB-INT-INTEGRATE",
+            "title": "SERIAL CLOSER (sole editor of dashboard.analysis.tsx): import + place the 6 zone components + add Shareholders button (->/dashboard/shareholders?code=) + Officers button (->/dashboard/officers?code=); DELETE dashboard.technical.tsx; fix TopNav Ky Thuat link (remove or redirect to analysis) + update FE-HEADER-SSOT-top-nav.test.tsx + task17-p2-1b-price-history-loader.test.ts.",
+            "owner": "dev-frontend",
+            "type": "FEATURE",
+            "status": "BLOCKED",
+            "zone": "apps/frontend/app/routes/dashboard.analysis.tsx",
+            "created_at": "2026-06-28T17:41:00Z",
+            "size": "L",
+            "priority": "high",
+            "depends": [
+              "FE-AHUB-W1-TECHNICAL-ZONE",
+              "FE-AHUB-W2-CORPEVENTS-ZONE",
+              "FE-AHUB-W3-FINANCIALS-ZONE",
+              "FE-AHUB-W4-SOCIAL-ZONES"
+            ],
+            "status_note": "BLOCKED until all 4 component builds land. This is the ONLY task that edits the shared file dashboard.analysis.tsx -> single-owner serialization prevents the shared-file merge conflict. Keep additions minimal (import + place) to avoid worsening the god-file (see FACTORY-FRONTEND-split-dashboard-analysis backlog).",
+            "note": "Wire components, add 2 Link buttons, remove technical route + its nav link/tests. Commit explicit paths via commit-mutex. No -a/-am."
+          },
+          {
+            "id": "FE-AHUB-OPS-REBUILD",
+            "title": "Rebuild the frontend container so :3001 reflects the new analysis hub code (PO->ops standing rule after FE code changes).",
+            "owner": "ops",
+            "type": "OPS",
+            "status": "BLOCKED",
+            "zone": "infra/frontend",
+            "created_at": "2026-06-28T17:41:00Z",
+            "size": "S",
+            "priority": "high",
+            "depends": [
+              "FE-AHUB-INT-INTEGRATE"
+            ],
+            "status_note": "BLOCKED until INT lands. Single-service frontend rebuild (NOT down&&up of the whole compose — avoid killing peers).",
+            "note": "Rebuild only the frontend service image + recreate; verify image .Created > the INT commit time."
+          },
+          {
+            "id": "FE-AHUB-QA-VERIFY",
+            "title": "QA live-verify http://localhost:3001/dashboard/analysis?stock=<code>: all 6 zones scoped to the code, Technical zone equivalent present, /dashboard/technical removed + nav fixed, Shareholders + Officers buttons navigate correctly. DONE flips ONLY here after live verify.",
+            "owner": "qa",
+            "type": "QA",
+            "status": "BLOCKED",
+            "zone": "apps/frontend/",
+            "created_at": "2026-06-28T17:41:00Z",
+            "size": "M",
+            "priority": "high",
+            "depends": [
+              "FE-AHUB-OPS-REBUILD"
+            ],
+            "status_note": "BLOCKED until rebuild. DONE is QA gate after LIVE verification, never the dev worker's. Verify raw page, not badges.",
+            "note": "Test with at least 2 codes (e.g. FPT bank-vs-nonbank coverage). Confirm zone filtering shows only selected code rows."
           }
         ]
       }
