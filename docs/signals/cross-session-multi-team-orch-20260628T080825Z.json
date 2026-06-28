@@ -1,0 +1,24 @@
+{
+  "from": "agents-architect",
+  "to": "pm",
+  "type": "architecture_brief",
+  "priority": "high",
+  "createdAt": "2026-06-28T08:08:25Z",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md",
+    "slug": "cross-session-multi-team-orchestration",
+    "summary": "Multi-team cross-session mutex attribution fix: thread CLAUDE_CODE_SESSION_ID as owner_client_session into task_locks; rebind heartbeat/release matching ladder; delete self-held-heartbeat anti-pattern; insert CLAUDE.md step 2.5 PRE-CLAIM gate. Three phases: P1=attribution fix (unblocker), P2=presence registry, P3=fire-time cron leader election.",
+    "action_required": "decompose_into_atomic_frs_and_sequence",
+    "follow_on_agents": ["dev-mcp-server", "agent-father"],
+    "p1_tasks": [
+      "P1-MCP-1: migration SQL — ADD COLUMN owner_client_session TEXT (nullable, NOT UNIQUE)",
+      "P1-MCP-2: coordinationStore.ts matching-ladder rebind + release {ok,released} return shape",
+      "P1-MCP-3: coordinationTools.ts add owner_client_session param; stop server-side injection",
+      "P1-AF-1: CLAUDE.md step 2.5 PRE-CLAIM gate",
+      "P1-AF-2: dispatch-claim SKILL lift to router scope + namespace canonicalization",
+      "P1-AF-3: leader-lock.md delete self-held-heartbeat anti-pattern (lines 64-81)",
+      "P1-AF-4: task-lock SKILL rebind authoritative key to owner_client_session"
+    ],
+    "sequencing_constraint": "P1-MCP-1 (migration SQL) must land before P1-MCP-2 (matching-ladder switch)"
+  }
+}
