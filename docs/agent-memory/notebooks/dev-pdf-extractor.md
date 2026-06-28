@@ -6,47 +6,12 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Session: 2026-06-10 (BPE-DEV-5 + BPE-DEV-1 — BCTC prose extraction sprint)
+## Session: 2026-06-10 (BPE-DEV-5 + BPE-DEV-1 — BCTC prose extraction sprint) [ARCHIVED]
 
-**Task:** BPE-DEV-5 (size M) + BPE-DEV-1 (size M) — fix Tesseract SIGTERM under load + missing prose extraction.
-
-### BPE-DEV-5: BLOCKER-B (Tesseract SIGTERM) + missing thresholds
-
-- Added `MAX_TESSERACT_RETRIES=2` constant + `_tesseract_image_to_data()` retry wrapper (1.5s sleep between attempts)
-- Added `bctc-eval-thresholds.json` baked into image; two-path lookup: primary `/app/config/`, fallback project root
-- FPT Q1-2026 result: 0 empty units (was 13 empty); 14 table units with real markdown; 5 prose units stable
-- Tests: 5 new in `test_ocr_unit_tesseract_retry.py` (all AC1-AC4 PASS); 785 pass / 36 pre-existing fail (no regressions)
-- **Commit:** `c2069deb`
-
-### BPE-DEV-1: Missing prose extraction fix
-
-- Root cause: `ocr_unit()` declared `prose_lines=[]` but never appended → returned empty `stitched_markdown` for all prose units for 7+ sprints
-- Fix: ocr_unit() extended with `ocr_pages: Optional[List[Dict]]=None`; prose branch builds page→text map; skips blank pages; emits `_prose_no_text=True` when blank
-- Tests: 16/16 prose unit tests GREEN; 736/736 total unit tests PASS (no regressions)
-- **Commit:** `6e518935`
-
-**QA:** Both sessions REVIEW status. Zone healthy (0 empty layout units on FPT Q1-2026, all 46 pages covered).
-
----
-
-## Session: 2026-06-08 (A20-EVENTLOOP-ASYNC-TO-THREAD)
-
-**Task:** A20 — fix event loop blocking from `extract_tables()` + `extract_text_ocr()` (async def with no await).
-
-- Root cause: pdfplumber page iteration + pytesseract.image_to_string() ran synchronously on uvicorn event loop, blocking `/health` for 30-80s (40-80 page PDFs)
-- Fix: asyncio.to_thread() wrap — extracted sync bodies (`_extract_tables_sync` + `_extract_text_ocr_sync`); public methods thin wrappers
-- Tests: 2 new regression guards (TC-EE-1 + TC-EE-2) GREEN; full suite 850 passed, 40 pre-existing FU-DEBT, 1 skipped
-- **Outcome:** QA gate unblocked; ops rebuild pending
-
----
-
-## Session: 2026-06-07 (FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN)
-
-**Root cause:** 3 push clients called `urllib.request.urlopen()` directly in async methods, blocking event loop (up to 30s).
-
-- Fix: applied asyncio.to_thread(_do_request) pattern to layout_first_push_client.py, md_table_push_client.py, eval_push_client.py
-- Tests: 3 new (TC-PUSH-LF-1, TC-PUSH-MD-1, TC-PUSH-EVAL-1) GREEN; suite 848 passed (+3)
-- Alert: alert_adapter.py send_work_alert() has 5s urllib call — latent issue, low-frequency path only
+- BPE-DEV-5: Tesseract SIGTERM retry + bctc-eval-thresholds.json (commits c2069deb, 6e518935)
+- BPE-DEV-1: prose_lines never appended fix; 736/736 pass
+- A20: asyncio.to_thread wrap for extract_tables/extract_text_ocr
+- FIX-PDFX-PUSH-CLIENTS: asyncio.to_thread for 3 push clients
 
 ---
 
@@ -190,6 +155,25 @@ Both `ocr_adapter.py` and `ocr_worker.py` must be updated together when constant
 
 ### Commits
 `cf287f76` (worktree) → cherry-picked as `734ab5d5` (main) — fix(pdf-extractor/FIX-BCTC-BANK-PDF-OCR-RASTERIZE): ocr_worker wide-scan + PaddleOCR fallback
+
+### Status
+REVIEW → next_agent=qa
+
+---
+
+## Session: 2026-06-28 (TASK_330 — FR-5 same-section dedup)
+
+**Sprint:** FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT · FR-5 · P1 · S
+
+- Added `_dedup_rows_within_section(rows)` module-level function in `text_table_extractor.py` (after `_apply_positional_cutoff`, ~55L). Key = (code, value_current); exact match → drop + WARNING; different value → emit both + WARNING; code=None → always pass.
+- Wired into `TextTableExtractor.assemble()` BEFORE `_apply_positional_cutoff()` per architect blueprint.
+- 7 new tests in `TestFR5DedupRowsWithinSection`: exact dup collapse, OCR variant passthrough, code=None passthrough, FM-HPG-2 dual-code pattern, cross-section scope isolation, None==None edge case.
+- Unit suite: 927 pass / 6 pre-existing env fail (PIL ABI + page_rasterizer). +7 new green. Zero regressions.
+- Sandbox G12: primitive tier all pass (known_bad correctly false); module 1/1 GREEN.
+- NFR-4: zero per-issuer branches — (code, value_current) equality only.
+- **Commit:** `0ae36a0e`
+
+Zone health: no drift detected — test count growing (920→927), all new tests target-specific, no orphan fixtures.
 
 ### Status
 REVIEW → next_agent=qa
