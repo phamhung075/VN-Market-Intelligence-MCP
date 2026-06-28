@@ -1555,7 +1555,7 @@
             "title": "P2-AF-1: Dispatcher presence self-registration at dispatch time",
             "owner": "agent-father",
             "type": "SPRINT-S",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "docs/agents/ + .claude/skills/",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
@@ -1563,14 +1563,14 @@
             "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
             "depends": [],
             "note": "Implement dispatcher presence self-registration: claim session-presence task at dispatch (cowork-team Step 0b + dev-team Step 0). MCP foundation ALREADY SHIPPED in TASK_1989 — no rebuild required.",
-            "updated_at": "2026-06-28T17:20:14Z"
+            "updated_at": "2026-06-28T19:30:00Z"
           },
           {
             "id": "TASK_1991",
             "title": "P2-AF-2: Wire roster READ into router Step 2.5",
             "owner": "agent-father",
             "type": "SPRINT-S",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": ".claude/skills/ + CLAUDE.md",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
@@ -1579,14 +1579,15 @@
             "depends": [
               "TASK_1990"
             ],
-            "note": "Wire roster READ into router Step 2.5: before PRE-CLAIM, read task_list_held(kind='session-presence'). Enables TASK_1992 verification."
+            "note": "Wire roster READ into router Step 2.5: before PRE-CLAIM, read task_list_held(kind='session-presence'). Enables TASK_1992 verification.",
+            "updated_at": "2026-06-28T19:30:00Z"
           },
           {
             "id": "TASK_1992",
             "title": "P2-QA: LIVE-vs-DEPLOYED check + orphan-signals verify",
             "owner": "qa",
             "type": "SPRINT-S",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "docs/protocols/ + .claude/skills/",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
@@ -1596,7 +1597,8 @@
               "TASK_1990",
               "TASK_1991"
             ],
-            "note": "QA: verify presence registration works; cross-session read correct; TTL-expiry ZERO orphan-signals (proves reaper allow-list). Conditional rebuild only if live-probe finds fields undeployed."
+            "note": "QA: verify presence registration works; cross-session read correct; TTL-expiry ZERO orphan-signals (proves reaper allow-list). Conditional rebuild only if live-probe finds fields undeployed.",
+            "updated_at": "2026-06-28T19:30:00Z"
           },
           {
             "id": "TASK_1993",

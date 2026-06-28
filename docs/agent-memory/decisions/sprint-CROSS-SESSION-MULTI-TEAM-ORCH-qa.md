@@ -6,6 +6,20 @@
 
 ---
 
+### STEP qa-S6 · qa · 2026-06-28T19:30:00Z
+**task-id:** TASK_1992
+**what-done:** P2 presence registry QA gate — 25 DoD assertions PASS, full suite 53 fail=baseline, tsc 0 errors. Flipped TASK_1990/1991/1992 → DONE.
+**what-considered:**
+- DoD-1..4: in-memory DB script (25 assertions): claim→claimed:true, listHeldTasks returns owner_client_session+full payload (agent_id/host/started_at/current_task), cross-session roster (SESSION_B sees SESSION_A row with owner_client_session≠SESSION_B), release+reclaim updates payload.current_task in roster — all 25 PASS.
+- DoD-5 NEGATIVE+CONTRAST: same GC run: expired session-presence → 0 orphan-signals + original deleted; expired sprint-task → orphan-signal emitted (redispatch_count=1). deleted=2 (both originals). ORPHAN_EMIT_ALLOW_LIST confirmed at coordinationStore.ts:395-400. P1.5/P2 separation holds.
+- DoD-6 REGRESSION: authoritative run 53 fail = exact TASK_1989 baseline. Coordination suite 130/130 PASS. Known failures: FU-LOCKSTORE-EXPIRED-GC (5, written pre-P1.5; countRows includes orphan-signal rows), timeout/network/VPS-schema/refine-isolation (48). Zero new failures from TASK_1990/1991 docs-only changes.
+- DoD-7 DOC-CODE: listHeldTasks SELECT includes owner_client_session+payload (coordinationStore.ts:758-762). dispatch-claim SKILL Phase A.5 row structure + CLAUDE.md Phase A.5 log format reference correct field names. task-lock SKILL line 107 confirms P2 extension. ORPHAN_EMIT_ALLOW_LIST and reaper log both exclude session-presence.
+- Gateway not bound in sub-session (INV-GATEWAY-1) → behavioral checks via in-memory DB + unit test suite (same infrastructure as other P2 tests).
+**why-decision:** All 7 DoD gates GREEN. P2 presence registry fully verified: register, cross-session roster read, current_task update via release+reclaim, critical negative (no orphan-signal for dead session), regression-clean, doc-code consistent.
+**why-change:** no change from plan
+
+---
+
 ### STEP qa-S5 · qa · 2026-06-28T14:45:00Z
 **task-id:** TASK_1988
 **what-done:** P1.5 integrated acceptance gate — all 6 DoD checks PASS. Flipped TASK_1983/1984/1985/1986/1987/1988 → DONE. P1.5 done_verified. Liveness/takeover requirement SHIPPED.
