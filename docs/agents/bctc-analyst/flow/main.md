@@ -86,7 +86,8 @@ IF any(esc_flags) == TRUE:
   guard_key = "esc-deepdive:" + ticker + ":" + quarter + ":" + trigger_id
   guard = call_tool(server="vn-market", tool="task_claim", arguments={
     task_id: guard_key, task_kind: "sprint-task",
-    owner_agent: "bctc-analyst", ttl_seconds: 86400
+    owner_agent: "bctc-analyst", owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+    ttl_seconds: 86400
   })
 
   IF guard.claimed == FALSE:

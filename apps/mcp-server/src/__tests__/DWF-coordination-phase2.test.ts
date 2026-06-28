@@ -13,6 +13,9 @@
  * Clock mocking: direct SQL UPDATE on expires_at (coordinationStore uses
  * SQLite unixepoch('now') — do NOT mock Date.now()).
  *
+ * P1-FINAL (TASK_1980): owner_client_session is REQUIRED on claimTask/releaseTask.
+ * AC-SL-6/AC-SL-7: releaseOrphanTask now uses owner_client_session as sole key.
+ *
  * Sprint: DYN-WF-FOUNDATION
  * Task:   DWF-DEV-CROSS-4 (+ TTL-cap follow-up)
  * AC:     AC-P2-5-1, AC-P2-5-2, AC-P2-5-3, AC-P2-6-1, AC-P2-6-2, AC-P2-6-3, AC-P2-6-4, AC-P2-7-1, AC-P2-7-2
@@ -93,6 +96,7 @@ describe("DV-P2-1: Single-winner leader lock (AC-P2-5-1)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-1-A",
       ttl_seconds: 1800,
     });
 
@@ -101,6 +105,7 @@ describe("DV-P2-1: Single-winner leader lock (AC-P2-5-1)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-1-B",
       ttl_seconds: 1800,
     });
 
@@ -117,6 +122,7 @@ describe("DV-P2-1: Single-winner leader lock (AC-P2-5-1)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-1-DV-A",
       ttl_seconds: 1800,
     });
 
@@ -125,6 +131,7 @@ describe("DV-P2-1: Single-winner leader lock (AC-P2-5-1)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-1-DV-B",
       ttl_seconds: 1800,
     });
 
@@ -141,12 +148,13 @@ describe("DV-P2-1: Single-winner leader lock (AC-P2-5-1)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-1-leader",
       ttl_seconds: 1800,
     });
     expect(claim1.claimed).toBe(true);
 
-    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, owner_session)
-    releaseTask("cowork-leader", undefined, "cowork-dispatcher");
+    // P1-FINAL: (task_id, owner_client_session) — must match the claim
+    releaseTask("cowork-leader", "test-dwf-P2-1-leader");
 
     // Standby can now claim
     const claim2 = claimTask({
@@ -154,6 +162,7 @@ describe("DV-P2-1: Single-winner leader lock (AC-P2-5-1)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-1-standby",
       ttl_seconds: 1800,
     });
     expect(claim2.claimed).toBe(true);
@@ -174,6 +183,7 @@ describe("DV-P2-2: Suffix-free key blocks duplicate (R3 proof)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-2-first",
       ttl_seconds: 180,
     });
     expect(first.claimed).toBe(true);
@@ -184,6 +194,7 @@ describe("DV-P2-2: Suffix-free key blocks duplicate (R3 proof)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-2-retry",
       ttl_seconds: 180,
     });
     expect(retry.claimed).toBe(false); // idempotency: already claimed → skip
@@ -195,6 +206,7 @@ describe("DV-P2-2: Suffix-free key blocks duplicate (R3 proof)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-2-indep-A",
       ttl_seconds: 180,
     });
     expect(first.claimed).toBe(true);
@@ -205,6 +217,7 @@ describe("DV-P2-2: Suffix-free key blocks duplicate (R3 proof)", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-2-indep-B",
       ttl_seconds: 180,
     });
     expect(other.claimed).toBe(true); // different key → independent
@@ -232,6 +245,7 @@ describe("DV-P2-3: Tick-suffix would recreate the duplicate bug (R3 counter-test
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-3-tick1",
       ttl_seconds: 180,
     });
     expect(first.claimed).toBe(true);
@@ -244,6 +258,7 @@ describe("DV-P2-3: Tick-suffix would recreate the duplicate bug (R3 counter-test
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-3-tick2",
       ttl_seconds: 180,
     });
 
@@ -259,6 +274,7 @@ describe("DV-P2-3: Tick-suffix would recreate the duplicate bug (R3 counter-test
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-3-fix-A",
       ttl_seconds: 180,
     });
     expect(first.claimed).toBe(true);
@@ -269,6 +285,7 @@ describe("DV-P2-3: Tick-suffix would recreate the duplicate bug (R3 counter-test
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-3-fix-B",
       ttl_seconds: 180,
     });
     expect(second.claimed).toBe(false); // R3 fix: suffix-free key blocks duplicate
@@ -375,6 +392,7 @@ describe("DV-P2-5: Short TTL (180s) frees lock at 181s without heartbeat (AC-P2-
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-5-first",
       ttl_seconds: 180,
     });
     expect(first.claimed).toBe(true);
@@ -388,6 +406,7 @@ describe("DV-P2-5: Short TTL (180s) frees lock at 181s without heartbeat (AC-P2-
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-5-second",
       ttl_seconds: 180,
     });
     expect(second.claimed).toBe(true); // stale-steal succeeds: lock expired
@@ -411,6 +430,7 @@ describe("DV-P2-6: Default TTL (3600s) holds lock past 181s — starvation demon
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-6-starve",
       ttl_seconds: 3600, // DEFAULT — the dangerous path
     });
     expect(first.claimed).toBe(true);
@@ -428,6 +448,7 @@ describe("DV-P2-6: Default TTL (3600s) holds lock past 181s — starvation demon
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-6-starve-B",
       ttl_seconds: 3600,
     });
 
@@ -441,6 +462,7 @@ describe("DV-P2-6: Default TTL (3600s) holds lock past 181s — starvation demon
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-6-fix",
       ttl_seconds: 180, // CORRECT short TTL
     });
     expect(first.claimed).toBe(true);
@@ -453,6 +475,7 @@ describe("DV-P2-6: Default TTL (3600s) holds lock past 181s — starvation demon
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-dwf-P2-6-fix-B",
       ttl_seconds: 180,
     });
     expect(second.claimed).toBe(true); // freed: correct behavior
@@ -473,6 +496,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-pub-A",
       ttl_seconds: 100800, // 28h per ARCH-DECIDE-D
     });
 
@@ -487,6 +511,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-dup-A",
       ttl_seconds: 100800,
     });
 
@@ -496,6 +521,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-dup-B",
       ttl_seconds: 100800,
     });
 
@@ -519,6 +545,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-wrong-A",
       ttl_seconds: 100800,
     });
     wrongDesignSend(c1); // sends unconditionally — WRONG
@@ -528,6 +555,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-wrong-B",
       ttl_seconds: 100800,
     });
     wrongDesignSend(c2); // also sends — DUPLICATE — WRONG
@@ -550,6 +578,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-green-A",
       ttl_seconds: 100800,
     });
     correctDesignSend(c1);
@@ -559,6 +588,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-green-B",
       ttl_seconds: 100800,
     });
     correctDesignSend(c2);
@@ -573,6 +603,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-indep-A",
       ttl_seconds: 100800,
     });
 
@@ -582,6 +613,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-indep-B",
       ttl_seconds: 100800,
     });
     expect(nextDay.claimed).toBe(true); // AC-P2-7-3: different work-id → independent
@@ -593,6 +625,7 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "unified-agent",
+      owner_client_session: "test-dwf-P2-7-db",
       ttl_seconds: 100800,
     });
 
@@ -643,6 +676,7 @@ describe("DV-TTL-CAP: Weekly published-marker TTL cap = 691200s (ARCH-DECIDE-D f
       task_kind: "cowork-slot",
       owner_session: "session-weekly",
       owner_agent:   "unified-agent",
+      owner_client_session: "test-dwf-ttlcap-1",
       ttl_seconds:   WEEKLY_TTL,
     });
 
@@ -663,6 +697,7 @@ describe("DV-TTL-CAP: Weekly published-marker TTL cap = 691200s (ARCH-DECIDE-D f
       task_kind: "cowork-slot",
       owner_session: "session-weekly-2",
       owner_agent:   "unified-agent",
+      owner_client_session: "test-dwf-ttlcap-2",
       ttl_seconds:   WEEKLY_TTL + 1, // 691201 — above ceiling
     });
 
@@ -682,6 +717,7 @@ describe("DV-TTL-CAP: Weekly published-marker TTL cap = 691200s (ARCH-DECIDE-D f
       task_kind: "cowork-slot",
       owner_session: "session-weekly-3",
       owner_agent:   "tran-ngoc-bau",
+      owner_client_session: "test-dwf-ttlcap-3",
       ttl_seconds:   WEEKLY_TTL,
     });
 
@@ -706,6 +742,7 @@ describe("DV-TTL-CAP: Weekly published-marker TTL cap = 691200s (ARCH-DECIDE-D f
       task_kind: "cowork-slot",
       owner_session: "session-daily",
       owner_agent:   "unified-agent",
+      owner_client_session: "test-dwf-ttlcap-4-daily",
       ttl_seconds:   100800, // 28h daily belt
     });
     expect(daily.claimed).toBe(true);
@@ -716,6 +753,7 @@ describe("DV-TTL-CAP: Weekly published-marker TTL cap = 691200s (ARCH-DECIDE-D f
       task_kind: "cowork-slot",
       owner_session: "session-weekly-4",
       owner_agent:   "unified-agent",
+      owner_client_session: "test-dwf-ttlcap-4-weekly",
       ttl_seconds:   WEEKLY_TTL,
     });
     expect(weekly.claimed).toBe(true);
@@ -736,36 +774,34 @@ describe("DV-TTL-CAP: Weekly published-marker TTL cap = 691200s (ARCH-DECIDE-D f
 // ---------------------------------------------------------------------------
 // AC-SL-6 — Orphan lock (heartbeat_age > threshold) → released:true, re-claimable
 //
-// Simulates the 2026-06-05 incident: mcp-server restarted, new SERVER_SESSION_ID
-// can no longer heartbeat the old lock. The lock was claimed at 08:00:44Z and
-// the last heartbeat was at 08:00:44Z (no renewal). At 08:15Z the new process
-// detects heartbeat_age ~875s > 600s threshold → orphan-steal.
+// P1-FINAL (TASK_1980): releaseOrphanTask uses owner_client_session as the sole
+// ownership key. owner_agent fallback removed.
 //
-// GREEN path: releaseOrphanTask returns released:true, prior_owner_session is
-// the old session, heartbeat_age reflects the artificial age. After release,
-// a new session can claim the lock (INSERT OR IGNORE succeeds on absent row).
+// Simulates the 2026-06-05 incident: the lock was claimed but heartbeat went stale.
+// GREEN path: releaseOrphanTask returns released:true when heartbeat_age > threshold
+// AND owner_client_session matches. After release, a new session can re-claim.
 // ---------------------------------------------------------------------------
 
-describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true, re-claimable by new session", () => {
+describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true, re-claimable by new session (P1-FINAL)", () => {
   it("GREEN: stale heartbeat (age > 600s) triggers orphan release, lock re-claimable", () => {
+    const OWNER_SESSION = "test-sl6-owner-session";
+
     // Step 1: Old process claims the cowork-leader lock
     const claim = claimTask({
       task_id: "cowork-leader",
       task_kind: "cowork-slot",
-      owner_session: "pid-1-ts-1780613414482",  // old process session
+      owner_session: "pid-1-ts-1780613414482",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: OWNER_SESSION,
       ttl_seconds: 1800,
     });
     expect(claim.claimed).toBe(true);
 
     // Step 2: Simulate process restart — no heartbeat for 875 seconds
-    // (replicates the 08:00:44Z claim → 08:15Z check = ~875s gap)
     ageHeartbeat(testDb, "cowork-leader", 875);
 
-    // Step 3: New process calls releaseOrphanTask with the same owner_agent
-    // (owner_session is irrelevant — only owner_agent is checked)
-    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, threshold)
-    const orphanResult = releaseOrphanTask("cowork-leader", undefined, "cowork-dispatcher", 600);
+    // Step 3: P1-FINAL signature: (task_id, owner_client_session, threshold)
+    const orphanResult = releaseOrphanTask("cowork-leader", OWNER_SESSION, 600);
 
     expect(orphanResult.released).toBe(true);
     expect(orphanResult.reason).toBe("orphan_released");
@@ -776,8 +812,9 @@ describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true,
     const reclaim = claimTask({
       task_id: "cowork-leader",
       task_kind: "cowork-slot",
-      owner_session: "pid-1-ts-1780647098474",  // new process session after restart
+      owner_session: "pid-1-ts-1780647098474",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: "test-sl6-new-session",
       ttl_seconds: 1800,
     });
     expect(reclaim.claimed).toBe(true);
@@ -786,36 +823,44 @@ describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true,
   });
 
   it("GREEN: orphan release returns correct prior_owner_session for audit trail", () => {
+    const OWNER_SESSION = "test-sl6-audit-owner";
+
     claimTask({
       task_id: "cowork-leader-audit",
       task_kind: "cowork-slot",
       owner_session: "pid-42-ts-9999999",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: OWNER_SESSION,
       ttl_seconds: 1800,
     });
 
     ageHeartbeat(testDb, "cowork-leader-audit", 700);
 
-    const result = releaseOrphanTask("cowork-leader-audit", undefined, "cowork-dispatcher", 600);
+    // P1-FINAL: 3-param signature
+    const result = releaseOrphanTask("cowork-leader-audit", OWNER_SESSION, 600);
     expect(result.released).toBe(true);
     expect(result.prior_owner_session).toBe("pid-42-ts-9999999");
   });
 
-  it("GREEN: owner_agent mismatch → released:false (cross-agent theft blocked)", () => {
+  it("GREEN: wrong owner_client_session → released:false (lock_not_found — P1-FINAL anti-theft)", () => {
+    const OWNER_SESSION = "test-sl6-real-owner";
+    const INTRUDER_SESSION = "test-sl6-intruder";
+
     claimTask({
       task_id: "cowork-leader-cross",
       task_kind: "cowork-slot",
       owner_session: "pid-1-ts-old",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: OWNER_SESSION,
       ttl_seconds: 1800,
     });
 
     ageHeartbeat(testDb, "cowork-leader-cross", 900);
 
-    // Different agent tries to release — must be blocked
-    const result = releaseOrphanTask("cowork-leader-cross", undefined, "some-other-agent", 600);
+    // Different session tries to force-release — P1-FINAL: lock_not_found (owner_client_session mismatch)
+    const result = releaseOrphanTask("cowork-leader-cross", INTRUDER_SESSION, 600);
     expect(result.released).toBe(false);
-    expect(result.reason).toBe("owner_agent_mismatch");
+    expect(result.reason).toBe("lock_not_found"); // P1-FINAL: SELECT filters on owner_client_session
 
     // Original lock must still exist
     const row = testDb
@@ -825,7 +870,8 @@ describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true,
   });
 
   it("GREEN: lock_not_found → released:false, no error", () => {
-    const result = releaseOrphanTask("cowork-leader-nonexistent", undefined, "cowork-dispatcher", 600);
+    // P1-FINAL: 3-param signature
+    const result = releaseOrphanTask("cowork-leader-nonexistent", "any-test-session", 600);
     expect(result.released).toBe(false);
     expect(result.reason).toBe("lock_not_found");
   });
@@ -834,31 +880,32 @@ describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true,
 // ---------------------------------------------------------------------------
 // AC-SL-7 — Lock with FRESH heartbeat → released:false (dup-spawn safety preserved)
 //
-// A live concurrent session always heartbeats continuously. The dup-spawn case
-// (2026-06-02 fix) relies on the heartbeat-as-discriminator: if heartbeat_age
+// P1-FINAL (TASK_1980): uses owner_client_session as sole key.
+// A live concurrent session always heartbeats continuously. If heartbeat_age
 // ≤ threshold, the lock is held by a live process — do NOT steal it.
 //
 // GREEN path: releaseOrphanTask returns released:false with reason "heartbeat_fresh".
 // The DB row must NOT be deleted.
 // ---------------------------------------------------------------------------
 
-describe("AC-SL-7: Lock with fresh heartbeat → released:false (dup-spawn safety preserved)", () => {
+describe("AC-SL-7: Lock with fresh heartbeat → released:false (dup-spawn safety preserved, P1-FINAL)", () => {
   it("GREEN: fresh heartbeat (age ≤ 600s) blocks orphan-steal — live peer is protected", () => {
+    const LIVE_SESSION = "test-sl7-live-session";
+
     // Live peer claims the lock and heartbeats regularly
     const claim = claimTask({
       task_id: "cowork-leader",
       task_kind: "cowork-slot",
       owner_session: "pid-99-ts-live",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: LIVE_SESSION,
       ttl_seconds: 1800,
     });
     expect(claim.claimed).toBe(true);
 
     // Heartbeat is fresh (claimed just now — heartbeat_age ≈ 0s)
-    // We don't age it, so heartbeat_at = unixepoch('now') from the claim INSERT
-
-    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, threshold)
-    const orphanResult = releaseOrphanTask("cowork-leader", undefined, "cowork-dispatcher", 600);
+    // P1-FINAL: 3-param signature
+    const orphanResult = releaseOrphanTask("cowork-leader", LIVE_SESSION, 600);
 
     // Must NOT release — live process is heartbeating
     expect(orphanResult.released).toBe(false);
@@ -875,45 +922,54 @@ describe("AC-SL-7: Lock with fresh heartbeat → released:false (dup-spawn safet
   });
 
   it("GREEN: heartbeat aged to exactly threshold (=600s) → still NOT released (boundary: ≤ threshold)", () => {
+    const OWNER_SESSION = "test-sl7-boundary-session";
+
     claimTask({
       task_id: "cowork-leader-boundary",
       task_kind: "cowork-slot",
       owner_session: "pid-100-ts-boundary",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: OWNER_SESSION,
       ttl_seconds: 1800,
     });
 
     // Age to exactly the threshold — must NOT release (boundary is exclusive: > threshold)
     ageHeartbeat(testDb, "cowork-leader-boundary", 600);
 
-    const result = releaseOrphanTask("cowork-leader-boundary", undefined, "cowork-dispatcher", 600);
+    const result = releaseOrphanTask("cowork-leader-boundary", OWNER_SESSION, 600);
     expect(result.released).toBe(false);
     expect(result.reason).toBe("heartbeat_fresh");
   });
 
   it("GREEN: heartbeat aged to threshold+1 → released (boundary: > threshold triggers orphan)", () => {
+    const OWNER_SESSION = "test-sl7-plus1-session";
+
     claimTask({
       task_id: "cowork-leader-threshold-plus1",
       task_kind: "cowork-slot",
       owner_session: "pid-101-ts-old",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: OWNER_SESSION,
       ttl_seconds: 1800,
     });
 
     // One second past the threshold — now qualifies as orphan
     ageHeartbeat(testDb, "cowork-leader-threshold-plus1", 601);
 
-    const result = releaseOrphanTask("cowork-leader-threshold-plus1", undefined, "cowork-dispatcher", 600);
+    const result = releaseOrphanTask("cowork-leader-threshold-plus1", OWNER_SESSION, 600);
     expect(result.released).toBe(true);
     expect(result.reason).toBe("orphan_released");
   });
 
   it("GREEN: minimum threshold enforced at 120s (orphan_threshold_seconds=0 is clamped)", () => {
+    const OWNER_SESSION = "test-sl7-minthreshold-session";
+
     claimTask({
       task_id: "cowork-leader-min-threshold",
       task_kind: "cowork-slot",
       owner_session: "pid-102-ts-recent",
       owner_agent: "cowork-dispatcher",
+      owner_client_session: OWNER_SESSION,
       ttl_seconds: 1800,
     });
 
@@ -921,7 +977,7 @@ describe("AC-SL-7: Lock with fresh heartbeat → released:false (dup-spawn safet
     ageHeartbeat(testDb, "cowork-leader-min-threshold", 60);
 
     // threshold=0 gets clamped to 120 → heartbeat_age=60 ≤ 120 → NOT released
-    const result = releaseOrphanTask("cowork-leader-min-threshold", undefined, "cowork-dispatcher", 0);
+    const result = releaseOrphanTask("cowork-leader-min-threshold", OWNER_SESSION, 0);
     expect(result.released).toBe(false);
     expect(result.reason).toBe("heartbeat_fresh");
   });

@@ -15,6 +15,8 @@
  *   AC-6: migrateCoordinationTable() is idempotent (double-call safe)
  *   AC-7: listHeldTasks({ kind: "commit-mutex" }) works after migration
  *
+ * P1-FINAL (TASK_1980): owner_client_session is REQUIRED on all claimTask/releaseTask calls.
+ *
  * Design: docs/architecture-briefs/2026-05-24-commit-mutex-on-main/00-design.md
  * PO decision: docs/po-decisions/2026-05-24-commit-mutex-smoke-test-hold.md
  */
@@ -101,6 +103,7 @@ describe("AC-1: commit-mutex is a valid task_kind (CHECK allows it)", () => {
       task_kind: "commit-mutex",
       owner_session: "session-agent-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "test-cm-session-AC1",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 60,
       payload: JSON.stringify({ paths: ["apps/mcp-server/src/foo.ts"], intent: "test commit" }),
     });
@@ -138,6 +141,7 @@ describe("AC-2: singleton deny returns claimed=false WITH current_holder (not ba
       task_kind: "commit-mutex",
       owner_session: "session-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "test-cm-session-AC2-A",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 60,
     });
     expect(r1.claimed).toBe(true);
@@ -148,6 +152,7 @@ describe("AC-2: singleton deny returns claimed=false WITH current_holder (not ba
       task_kind: "commit-mutex",
       owner_session: "session-B",
       owner_agent: "dev-ta-server",
+      owner_client_session: "test-cm-session-AC2-B",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 60,
     });
     expect(r2.claimed).toBe(false);
@@ -174,12 +179,13 @@ describe("AC-3: release → re-claim cycle works for commit-mutex", () => {
       task_kind: "commit-mutex",
       owner_session: "session-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "test-cm-session-AC3-A",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 60,
     });
     expect(r1.claimed).toBe(true);
 
-    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, owner_session)
-    const rel = releaseTask("commit-mutex:main", undefined, "dev-mcp-server");
+    // P1-FINAL signature: (task_id, owner_client_session) — must match claim
+    const rel = releaseTask("commit-mutex:main", "test-cm-session-AC3-A");
     expect(rel.ok).toBe(true);
     expect((rel as { released?: number }).released).toBe(1); // row actually deleted
 
@@ -189,6 +195,7 @@ describe("AC-3: release → re-claim cycle works for commit-mutex", () => {
       task_kind: "commit-mutex",
       owner_session: "session-B",
       owner_agent: "dev-ta-server",
+      owner_client_session: "test-cm-session-AC3-B",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 60,
     });
     expect(r2.claimed).toBe(true);
@@ -208,6 +215,7 @@ describe("AC-4: stale-steal reclaim after TTL expiry", () => {
       task_kind: "commit-mutex",
       owner_session: "session-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "test-cm-session-AC4-A",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 60,
     });
     expect(r1.claimed).toBe(true);
@@ -221,6 +229,7 @@ describe("AC-4: stale-steal reclaim after TTL expiry", () => {
       task_kind: "commit-mutex",
       owner_session: "session-B",
       owner_agent: "dev-ta-server",
+      owner_client_session: "test-cm-session-AC4-B",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 60,
     });
     expect(r2.claimed).toBe(true);
@@ -342,6 +351,7 @@ describe("AC-6: migrateCoordinationTable() is idempotent (safe to call twice)", 
       task_kind: "commit-mutex",
       owner_session: "session-idempotent",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "test-cm-session-AC6",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 60,
     });
     expect(result.claimed).toBe(true);
@@ -360,6 +370,7 @@ describe("AC-7: listHeldTasks filters correctly by kind='commit-mutex'", () => {
       task_kind: "commit-mutex",
       owner_session: "session-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "test-cm-session-AC7-A",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 60,
     });
     // Also claim a sprint-task lock
@@ -368,6 +379,7 @@ describe("AC-7: listHeldTasks filters correctly by kind='commit-mutex'", () => {
       task_kind: "sprint-task",
       owner_session: "session-B",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "test-cm-session-AC7-B",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 3600,
     });
 

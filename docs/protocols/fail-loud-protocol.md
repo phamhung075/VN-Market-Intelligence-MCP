@@ -64,7 +64,7 @@ If ANY tool call or flow step fails after 1 retry:
 ```
 0. STOP-RELEASE (WF-1, AC-WF1-6) — run BEFORE steps 1-4:
    If holding a sprint-task lock:
-     call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+     call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id, owner_client_session: $CLAUDE_CODE_SESSION_ID })   // REQUIRED — P1-FINAL (TASK_1980)
      // ok=false acceptable (already expired) — best-effort cleanup
      // dev-* agents lack direct MCP gateway binding in the sub-agent context (F-8).
      // WF-3 resolved 2026-06-07: Option III codified (see docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md).

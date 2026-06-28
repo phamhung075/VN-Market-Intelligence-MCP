@@ -6112,7 +6112,7 @@
         "type": "SPRINT-S",
         "zone": "apps/mcp-server/",
         "title": "P1-FINAL: Make owner_client_session REQUIRED + remove owner_agent fallback (LOCKED DoD gate)",
-        "status": "BACKLOG",
+        "status": "REVIEW",
         "priority": "P1",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1980-p1-final-required-flip-remove-fallback.md",
@@ -6129,7 +6129,9 @@
         ],
         "created_at": "2026-06-28T08:30:00Z",
         "created_by": "pm",
-        "note": "LOCKED DoD gate (PO-mandated, non-negotiable per po-S2). Point of no return."
+        "note": "LOCKED DoD gate (PO-mandated, non-negotiable per po-S2). Point of no return.",
+        "updated_at": "2026-06-28T10:30:00Z",
+        "updated_by": "dev-mcp-server"
       },
       {
         "id": "TASK_1981",

@@ -115,6 +115,7 @@ PO receives on next drain tick → routes to market-watcher / alert-commander / 
 Then release the idempotency guard (best-effort; dev-team dispatcher also releases; TTL=86400s safety net):
 ```
 call_tool(server="vn-market", tool="task_release", arguments={
-  task_id: "esc-deepdive:" + ticker + ":" + quarter + ":" + trigger_id
+  task_id: "esc-deepdive:" + ticker + ":" + quarter + ":" + trigger_id,
+  owner_client_session: $CLAUDE_CODE_SESSION_ID   // REQUIRED — P1-FINAL (TASK_1980)
 })
 ```

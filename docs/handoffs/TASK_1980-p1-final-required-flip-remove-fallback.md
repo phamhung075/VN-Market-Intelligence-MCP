@@ -126,6 +126,51 @@ grep -A 10 "taskClaimSchema\|taskHeartbeatSchema" apps/mcp-server/src/interface/
 # Should show no `.optional()`
 ```
 
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/coordinationStore.ts` — `ClaimInput.owner_client_session`: `string | undefined` → `string` (required); `claimTask`: removed `?? null` fallback; `heartbeatTask`: new signature `(task_id, owner_client_session)`, single WHERE `owner_client_session=?`, fallback ladder deleted; `releaseTask`: same — sole key; `releaseOrphanTask`: SELECT now includes `AND owner_client_session = ?`, wrong session returns `lock_not_found`
+  - `apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts` — all 4 tool schemas: `.optional()` removed from `owner_client_session`; TRANSITIONAL FALLBACK note removed; `owner_agent` removed from heartbeat/release schemas; handlers simplified to 2-param calls
+  - `apps/mcp-server/src/scheduler/financial-reports/bctcRefineJob.ts` — added `owner_client_session: process.env["CLAUDE_CODE_SESSION_ID"] ?? \`bctc-refine-job-pid-${process.pid}\`` to production claimTask call
+  - **Doc callers updated (all now supply owner_client_session):**
+    - `docs/agents/bctc-analyst/flow/main.md` — task_claim guard
+    - `docs/agents/bctc-analyst/flow/deep-dive-opus.md` — task_release
+    - `docs/protocols/fail-loud-protocol.md` — task_release
+    - `docs/agents/tools/list/task_claim.md` — rewritten with REQUIRED field table
+    - `docs/agents/tools/list/task_heartbeat.md` — rewritten
+    - `docs/agents/tools/list/task_release.md` — rewritten
+    - `docs/agents/tools/list/task_force_release_orphan.md` — rewritten
+
+- **Tests written:**
+  - `apps/mcp-server/src/__tests__/1980-p1-final-required-flip.test.ts` — NEW: AC-A (Zod rejects missing field via InMemoryTransport), AC-B (session isolation: Session-B cannot heartbeat/release Session-A's lock), AC-C (claim mutex: INSERT OR IGNORE, stale-steal, claim-after-release) — 9 assertions, GREEN
+  - `apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts` — REWRITTEN: AC-8 replaced (session isolation, not server-restart), AC-9 removed (legacy path gone), AC-10 cases 4/8 removed (NULL-row fallback gone)
+  - `apps/mcp-server/src/__tests__/task-lock-coordination-tools.test.ts` — REWRITTEN: all calls use P1-FINAL 2-param signatures
+  - `apps/mcp-server/src/__tests__/commit-mutex-coordination.test.ts` — REWRITTEN: all claimTask + releaseTask calls updated
+  - `apps/mcp-server/src/__tests__/DWF-coordination-phase2.test.ts` — REWRITTEN: AC-SL-6/AC-SL-7 use `lock_not_found` (not `owner_agent_mismatch`)
+  - `apps/mcp-server/src/__tests__/FIX-REFINE-LOCK-TTL-RECLAIM.test.ts` — T3/T4 replaced (owner_agent fallback tests → P1-FINAL isolation tests); insertLockRow helper updated
+  - `apps/mcp-server/src/__tests__/FU-LOCKSTORE-EXPIRED-GC.test.ts` — 4 claimTask calls updated
+  - `apps/mcp-server/src/__tests__/FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts` — 11 claimTask calls + simulateDigestPublishGate updated
+  - `apps/mcp-server/src/__tests__/P1-MCP-1-owner-client-session-migration.test.ts` — 1 claimTask call updated
+  - `apps/mcp-server/src/__tests__/1982-quality-burndown-CHIJ.test.ts` — 1 claimTask call updated
+
+- **Git commits:** (see commit below)
+- **Type check:** CLEAN (`bun tsc --noEmit` exits 0, no output)
+- **bun test:** 13613 pass / 49 fail (49 are pre-existing: network timeouts, vps_push_log schema, orch-state SHG migration — NONE from P1-FINAL files) / 42 skip — Ran 13704 tests across 1132 files
+- **Tool count:** 166 tools (matches pre-task baseline — `bun scripts/gen-project-stats.ts --dry-run` + `/health` both confirm 166)
+- **Scheduler count:** 3 cron.schedule entries (unchanged — no scheduler files modified)
+- **Docker rebuild:** mcp-server rebuilt and restarted; `/health` returns `{"status":"ok","toolCount":166}` with fresh uptime
+- **Live DB verify:** `owner_client_session` column confirmed present in named-volume coordination DB; heartbeat/release WHERE clauses now filter solely on this column
+- **Docs updated:** task_claim/heartbeat/release/force_release_orphan tool docs rewritten with REQUIRED contract; bctc-analyst flow docs updated | flow docs (4 files above) updated
+
+- **AC code review:**
+  - `grep "WHERE.*owner_agent" coordinationStore.ts` → (none — PASS)
+  - `grep "optional.*owner_client_session" coordinationTools.ts` → (none — PASS)
+  - `owner_client_session: z.string()` confirmed in all 4 tool schemas (no `.optional()`)
+
+- **Graphify:** skipped (coordination store is infrastructure layer, not domain model)
+
 ## RETURN to PM
 
 Once this task is DONE (code review + QA RAW-verify):

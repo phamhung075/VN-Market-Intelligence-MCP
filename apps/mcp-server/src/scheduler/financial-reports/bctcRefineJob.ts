@@ -316,6 +316,7 @@ export async function refineOneReport(
     task_kind: "sprint-task",
     owner_session: `pid-${process.pid}`,
     owner_agent: "refine-orchestrator",
+    owner_client_session: process.env["CLAUDE_CODE_SESSION_ID"] ?? `bctc-refine-job-pid-${process.pid}`,
     ttl_seconds: 3600,
     payload: null,
   });

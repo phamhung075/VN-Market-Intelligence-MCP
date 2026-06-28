@@ -9,15 +9,19 @@
  *   AC-2: Concurrent INSERT OR IGNORE — only one wins
  *   AC-3: Stale-steal UPDATE succeeds when expires_at < now
  *   AC-4: Stale-steal UPDATE fails when expires_at > now
- *   AC-5: Heartbeat extends expires_at and validates owner_agent match
- *         (FIX-CWK-LEADER-LOCK-REBIND: same owner_agent succeeds across session change)
- *   AC-6: Release scoped to owner_agent — different agent cannot release
- *         (FIX-CWK-LEADER-LOCK-REBIND: same owner_agent succeeds across session change)
- *         P1-MCP-2: wrong-owner release returns {ok:true, released:0} (not an error)
+ *   AC-5: Heartbeat extends expires_at and validates owner_client_session match
+ *         (P1-FINAL: sole ownership key; wrong session fails anti-theft)
+ *   AC-6: Release scoped to owner_client_session
+ *         (P1-FINAL: wrong session returns {ok:true, released:0}, not an error)
  *   AC-7: List filtered by kind / agent / expired
- *   AC-8: FIX-CWK-LEADER-LOCK-REBIND — cross-restart heartbeat/release by same agent
- *   AC-9: Legacy path — no owner_client_session, session-match fallback
- *   AC-10: P1-MCP-2 — owner_client_session matching-ladder (new behavior)
+ *   AC-8: P1-FINAL SESSION ISOLATION — different sessions cannot steal each other's locks
+ *         (replaces FIX-CWK-LEADER-LOCK-REBIND owner_agent fallback tests, now REMOVED)
+ *   AC-10: P1-FINAL correctness — owner_client_session stored, returned in current_holder,
+ *          strict matching (cases 4 and 8 removed: pre-P1 NULL-row fallback is gone)
+ *
+ * Removed (P1-FINAL):
+ *   AC-9: Legacy path (no owner_agent / owner_session fallback) — REMOVED.
+ *   AC-10 cases 4 and 8: pre-P1 NULL-owner_client_session fallback — REMOVED.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
@@ -81,6 +85,7 @@ describe("AC-1: Successful claim creates row", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-team",
+      owner_client_session: "client-uuid-A",
       ttl_seconds: 900,
       payload: '{"slot_id":"news-scout"}',
     });
@@ -92,6 +97,7 @@ describe("AC-1: Successful claim creates row", () => {
     expect(row).not.toBeNull();
     expect(row!["owner_session"]).toBe("session-A");
     expect(row!["owner_agent"]).toBe("cowork-team");
+    expect(row!["owner_client_session"]).toBe("client-uuid-A");
     expect(row!["task_kind"]).toBe("cowork-slot");
     expect(row!["ttl_seconds"]).toBe(900);
     expect(row!["payload"]).toBe('{"slot_id":"news-scout"}');
@@ -103,6 +109,7 @@ describe("AC-1: Successful claim creates row", () => {
       task_kind: "sprint-task",
       owner_session: "session-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-uuid-1954b",
       ttl_seconds: 3600,
     });
 
@@ -128,6 +135,7 @@ describe("AC-2: Concurrent INSERT OR IGNORE — only one winner", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-team",
+      owner_client_session: "client-uuid-A",
       ttl_seconds: 900,
     });
     expect(r1.claimed).toBe(true);
@@ -138,16 +146,18 @@ describe("AC-2: Concurrent INSERT OR IGNORE — only one winner", () => {
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-team",
+      owner_client_session: "client-uuid-B",
       ttl_seconds: 900,
     });
     expect(r2.claimed).toBe(false);
 
-    // Row still owned by session-A
+    // Row still owned by session-A / client-uuid-A
     const row = getRow(testDb, taskId);
     expect(row!["owner_session"]).toBe("session-A");
+    expect(row!["owner_client_session"]).toBe("client-uuid-A");
   });
 
-  it("failed claim returns current_holder with correct owner info", () => {
+  it("failed claim returns current_holder with correct owner info including owner_client_session", () => {
     const taskId = "dash:po:1954-A-29-1";
 
     claimTask({
@@ -155,6 +165,7 @@ describe("AC-2: Concurrent INSERT OR IGNORE — only one winner", () => {
       task_kind: "dashboard-row",
       owner_session: "session-A",
       owner_agent: "dev-team",
+      owner_client_session: "client-uuid-winner",
       ttl_seconds: 1800,
     });
 
@@ -163,6 +174,7 @@ describe("AC-2: Concurrent INSERT OR IGNORE — only one winner", () => {
       task_kind: "dashboard-row",
       owner_session: "session-B",
       owner_agent: "dev-team",
+      owner_client_session: "client-uuid-loser",
       ttl_seconds: 1800,
     });
 
@@ -171,6 +183,7 @@ describe("AC-2: Concurrent INSERT OR IGNORE — only one winner", () => {
     expect(holder).not.toBeUndefined();
     expect(holder!["owner_session"]).toBe("session-A");
     expect(holder!["owner_agent"]).toBe("dev-team");
+    expect(holder!["owner_client_session"]).toBe("client-uuid-winner");
     expect(typeof holder!["expires_at"]).toBe("number");
   });
 });
@@ -189,6 +202,7 @@ describe("AC-3: Stale-steal succeeds when expires_at < now", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-team",
+      owner_client_session: "client-uuid-A",
       ttl_seconds: 900,
     });
     expect(r1.claimed).toBe(true);
@@ -202,15 +216,17 @@ describe("AC-3: Stale-steal succeeds when expires_at < now", () => {
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-team",
+      owner_client_session: "client-uuid-B",
       ttl_seconds: 900,
     });
 
     expect(r2.claimed).toBe(true);
     expect((r2 as { stolen?: boolean }).stolen).toBe(true);
 
-    // Row now owned by session-B
+    // Row now owned by session-B / client-uuid-B
     const row = getRow(testDb, taskId);
     expect(row!["owner_session"]).toBe("session-B");
+    expect(row!["owner_client_session"]).toBe("client-uuid-B");
   });
 });
 
@@ -228,6 +244,7 @@ describe("AC-4: Stale-steal fails when lock is still active", () => {
       task_kind: "sprint-task",
       owner_session: "session-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-uuid-A",
       ttl_seconds: 86400, // 24h — definitely not stale
     });
 
@@ -237,12 +254,14 @@ describe("AC-4: Stale-steal fails when lock is still active", () => {
       task_kind: "sprint-task",
       owner_session: "session-B",
       owner_agent: "dev-api-gateway",
+      owner_client_session: "client-uuid-B",
       ttl_seconds: 3600,
     });
 
     expect(r2.claimed).toBe(false);
     const holder = (r2 as { current_holder?: Record<string, unknown> }).current_holder;
     expect(holder!["owner_session"]).toBe("session-A");
+    expect(holder!["owner_client_session"]).toBe("client-uuid-A");
 
     // Row still owned by session-A (not stolen)
     const row = getRow(testDb, taskId);
@@ -251,13 +270,13 @@ describe("AC-4: Stale-steal fails when lock is still active", () => {
 });
 
 // ---------------------------------------------------------------------------
-// AC-5: Heartbeat extends expires_at + validates owner_agent
-// FIX-CWK-LEADER-LOCK-REBIND: heartbeat matches owner_agent (stable across
-// server restarts), not owner_session (changes on every boot).
+// AC-5: Heartbeat extends expires_at + validates owner_client_session
+// P1-FINAL (TASK_1980): heartbeat matches SOLELY on owner_client_session.
+// Fallback rungs (owner_agent, owner_session) removed.
 // ---------------------------------------------------------------------------
 
-describe("AC-5: Heartbeat protocol", () => {
-  it("heartbeat by owner_agent extends expires_at and returns ok=true", () => {
+describe("AC-5: Heartbeat protocol (P1-FINAL)", () => {
+  it("heartbeat by correct owner_client_session extends expires_at and returns ok=true", () => {
     const taskId = "task:1955a";
 
     claimTask({
@@ -265,18 +284,19 @@ describe("AC-5: Heartbeat protocol", () => {
       task_kind: "sprint-task",
       owner_session: "session-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-uuid-owner",
       ttl_seconds: 3600,
     });
 
     const rowBefore = getRow(testDb, taskId) as { expires_at: number };
-    // P1-MCP-2: pass undefined for owner_client_session → falls through to owner_agent ladder rung
-    const hbResult = heartbeatTask(taskId, undefined, "dev-mcp-server");
+    // P1-FINAL: pass owner_client_session only
+    const hbResult = heartbeatTask(taskId, "client-uuid-owner");
 
     expect(hbResult.ok).toBe(true);
     expect(hbResult.expires_at).toBeGreaterThanOrEqual(rowBefore.expires_at);
   });
 
-  it("heartbeat by wrong owner_agent returns ok=false (anti-theft preserved)", () => {
+  it("heartbeat by wrong owner_client_session returns ok=false (anti-theft)", () => {
     const taskId = "task:1955b";
 
     claimTask({
@@ -284,21 +304,22 @@ describe("AC-5: Heartbeat protocol", () => {
       task_kind: "sprint-task",
       owner_session: "session-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-uuid-owner",
       ttl_seconds: 3600,
     });
 
-    // Different agent tries to heartbeat — must fail (anti-theft)
-    const hbResult = heartbeatTask(taskId, undefined, "cowork-team");
+    // Different session tries to heartbeat — must fail (anti-theft)
+    const hbResult = heartbeatTask(taskId, "client-uuid-intruder");
     expect(hbResult.ok).toBe(false);
     expect(hbResult.expires_at).toBe(0);
 
     // Original lock untouched
     const row = getRow(testDb, taskId);
-    expect(row!["owner_agent"]).toBe("dev-mcp-server");
+    expect(row!["owner_client_session"]).toBe("client-uuid-owner");
   });
 
   it("heartbeat on non-existent task_id returns ok=false", () => {
-    const result = heartbeatTask("task:does-not-exist", undefined, "dev-mcp-server");
+    const result = heartbeatTask("task:does-not-exist", "client-uuid-any");
     expect(result.ok).toBe(false);
     expect(result.expires_at).toBe(0);
   });
@@ -311,27 +332,28 @@ describe("AC-5: Heartbeat protocol", () => {
       task_kind: "sprint-task",
       owner_session: "session-A",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-uuid-owner",
       ttl_seconds: 3600,
     });
 
     // Simulate TTL expiry
     manipulateExpiry(testDb, taskId, 1000);
 
-    // Same agent tries to heartbeat expired lock — must fail so steal path kicks in
-    const hbResult = heartbeatTask(taskId, undefined, "dev-mcp-server");
+    // Same session tries to heartbeat expired lock — must fail so steal path kicks in
+    const hbResult = heartbeatTask(taskId, "client-uuid-owner");
     expect(hbResult.ok).toBe(false);
     expect(hbResult.expires_at).toBe(0);
   });
 });
 
 // ---------------------------------------------------------------------------
-// AC-6: Release scoped to owner_agent
-// FIX-CWK-LEADER-LOCK-REBIND: release matches owner_agent (stable across
-// server restarts), not owner_session (changes on every boot).
+// AC-6: Release scoped to owner_client_session
+// P1-FINAL (TASK_1980): release matches SOLELY on owner_client_session.
+// Fallback rungs removed. Wrong-session release is a clean no-op.
 // ---------------------------------------------------------------------------
 
-describe("AC-6: Release scoped to owner_agent (P1-MCP-2: {ok:true,released:0|1} shape)", () => {
-  it("owner can release their own lock by owner_agent → {ok:true, released:1}", () => {
+describe("AC-6: Release scoped to owner_client_session (P1-FINAL: {ok:true,released:0|1} shape)", () => {
+  it("owner can release their own lock by owner_client_session → {ok:true, released:1}", () => {
     const taskId = "cowork-slot:news-scout:20260520T150000Z";
 
     claimTask({
@@ -339,11 +361,12 @@ describe("AC-6: Release scoped to owner_agent (P1-MCP-2: {ok:true,released:0|1} 
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-team",
+      owner_client_session: "client-uuid-owner",
       ttl_seconds: 900,
     });
 
-    // P1-MCP-2: pass undefined for owner_client_session → falls through to owner_agent ladder rung
-    const releaseResult = releaseTask(taskId, undefined, "cowork-team");
+    // P1-FINAL: release with matching owner_client_session
+    const releaseResult = releaseTask(taskId, "client-uuid-owner");
     expect(releaseResult.ok).toBe(true);
     expect((releaseResult as { released?: number }).released).toBe(1); // row actually deleted
 
@@ -351,7 +374,7 @@ describe("AC-6: Release scoped to owner_agent (P1-MCP-2: {ok:true,released:0|1} 
     expect(row).toBeNull(); // row deleted
   });
 
-  it("different owner_agent cannot release another agent's lock → {ok:true, released:0} (no-op, not error)", () => {
+  it("different owner_client_session cannot release another session's lock → {ok:true, released:0} (no-op, not error)", () => {
     const taskId = "cowork-slot:news-scout:20260520T160000Z";
 
     claimTask({
@@ -359,23 +382,24 @@ describe("AC-6: Release scoped to owner_agent (P1-MCP-2: {ok:true,released:0|1} 
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-team",
+      owner_client_session: "client-uuid-owner",
       ttl_seconds: 900,
     });
 
-    // Different agent tries to release — P1-MCP-2: returns {ok:true, released:0} (anti-theft via no-op)
-    const releaseResult = releaseTask(taskId, undefined, "dev-mcp-server");
+    // Different session tries to release — P1-FINAL: returns {ok:true, released:0} (anti-theft via no-op)
+    const releaseResult = releaseTask(taskId, "client-uuid-intruder");
     expect(releaseResult.ok).toBe(true);
     expect((releaseResult as { released?: number }).released).toBe(0); // no row deleted
 
-    // Row still exists, still owned by cowork-team
+    // Row still exists, still owned by client-uuid-owner
     const row = getRow(testDb, taskId);
     expect(row).not.toBeNull();
-    expect(row!["owner_agent"]).toBe("cowork-team");
+    expect(row!["owner_client_session"]).toBe("client-uuid-owner");
   });
 
   it("release on non-existent lock → {ok:true, released:0} (clean no-op, not error)", () => {
-    // P1-MCP-2: non-existent lock is a clean no-op, not an error
-    const result = releaseTask("task:does-not-exist", undefined, "cowork-team");
+    // P1-FINAL: non-existent lock is a clean no-op, not an error
+    const result = releaseTask("task:does-not-exist", "client-uuid-any");
     expect(result.ok).toBe(true);
     expect((result as { released?: number }).released).toBe(0);
   });
@@ -393,6 +417,7 @@ describe("AC-7: listHeldTasks filtered queries", () => {
       task_kind: "cowork-slot",
       owner_session: "session-A",
       owner_agent: "cowork-team",
+      owner_client_session: "client-uuid-A",
       ttl_seconds: 900,
     });
     claimTask({
@@ -400,6 +425,7 @@ describe("AC-7: listHeldTasks filtered queries", () => {
       task_kind: "sprint-task",
       owner_session: "session-B",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-uuid-B",
       ttl_seconds: 3600,
     });
     claimTask({
@@ -407,6 +433,7 @@ describe("AC-7: listHeldTasks filtered queries", () => {
       task_kind: "dashboard-row",
       owner_session: "session-C",
       owner_agent: "dev-team",
+      owner_client_session: "client-uuid-C",
       ttl_seconds: 1800,
     });
 
@@ -460,107 +487,109 @@ describe("AC-7: listHeldTasks filtered queries", () => {
 });
 
 // ---------------------------------------------------------------------------
-// AC-8: FIX-CWK-LEADER-LOCK-REBIND — zombie-lock prevention across restarts
+// AC-8: P1-FINAL SESSION ISOLATION
 //
-// Scenario: agent claims lock with session-A. Server restarts → new session
-// (session-B). heartbeat and release must still work because they now match
-// on owner_agent (stable), not owner_session (changed).
+// Replaced FIX-CWK-LEADER-LOCK-REBIND tests (owner_agent fallback).
+// After P1-FINAL, owner_agent fallback is REMOVED.
+// The same owner_agent with a DIFFERENT owner_client_session CANNOT renew
+// or release another session's lock. TTL expiry + task_force_release_orphan
+// are the recovery paths.
 //
 // 4 required cases:
-//   (1) same owner_agent heartbeats after session change → ok=true
-//   (2) same owner_agent releases after session change → ok=true
-//   (3) different owner_agent is still rejected → ok=false (anti-theft)
+//   (1) correct session heartbeats → ok=true (baseline)
+//   (2) different session CANNOT heartbeat (SAME owner_agent, DIFFERENT client_session → ok=false)
+//   (3) different session CANNOT release ({ok:true, released:0} no-op)
 //   (4) TTL-expiry steal still works for any agent → claimed=true stolen=true
 // ---------------------------------------------------------------------------
 
-describe("AC-8: FIX-CWK-LEADER-LOCK-REBIND — survive server restart", () => {
-  it("(1) same owner_agent can heartbeat after server restart (session change)", () => {
+describe("AC-8: P1-FINAL SESSION ISOLATION — different sessions cannot cross-operate", () => {
+  it("(1) correct session heartbeats → ok=true (baseline)", () => {
     const taskId = "cowork-leader";
 
-    // Claim with the OLD session (pre-restart)
     claimTask({
       task_id: taskId,
       task_kind: "cowork-slot",
-      owner_session: "pid-1234-ts-1748000000000", // old boot session
+      owner_session: "pid-1234-ts-1748000000000",
       owner_agent: "cowork-team",
+      owner_client_session: "client-session-original",
       ttl_seconds: 900,
     });
 
-    // Simulate server restart: new session id would be different
-    // but heartbeat uses owner_agent ladder rung (no owner_client_session)
-    const hbResult = heartbeatTask(taskId, undefined, "cowork-team"); // same agent, no client session
+    // Same session → heartbeat succeeds
+    const hbResult = heartbeatTask(taskId, "client-session-original");
     expect(hbResult.ok).toBe(true);
     expect(hbResult.expires_at).toBeGreaterThan(0);
   });
 
-  it("(2) same owner_agent can release after server restart (session change) → {ok:true, released:1}", () => {
-    const taskId = "cowork-leader-rel";
-
-    // Claim with the OLD session (pre-restart)
-    claimTask({
-      task_id: taskId,
-      task_kind: "cowork-slot",
-      owner_session: "pid-1234-ts-1748000000000", // old boot session
-      owner_agent: "cowork-team",
-      ttl_seconds: 900,
-    });
-
-    // Simulate server restart: release uses owner_agent ladder rung
-    const relResult = releaseTask(taskId, undefined, "cowork-team"); // same agent, no client session
-    expect(relResult.ok).toBe(true);
-    expect((relResult as { released?: number }).released).toBe(1);
-
-    const row = getRow(testDb, taskId);
-    expect(row).toBeNull(); // lock is gone
-  });
-
-  it("(3) different owner_agent rejected by heartbeat (ok=false) and release ({ok:true,released:0})", () => {
-    const taskId = "cowork-leader-theft";
+  it("(2) different session CANNOT heartbeat, even same owner_agent → ok=false (P1-FINAL anti-theft)", () => {
+    const taskId = "cowork-leader-hb";
 
     claimTask({
       task_id: taskId,
       task_kind: "cowork-slot",
       owner_session: "pid-1234-ts-1748000000000",
       owner_agent: "cowork-team",
+      owner_client_session: "client-session-original",
       ttl_seconds: 900,
     });
 
-    // A completely different agent tries to heartbeat — must fail (ok=false)
-    const hbResult = heartbeatTask(taskId, undefined, "dev-mcp-server");
+    // Different client session (simulates a new Claude Code terminal) — same agent, different session
+    // P1-FINAL: NO fallback to owner_agent; this must fail.
+    const hbResult = heartbeatTask(taskId, "client-session-new-terminal");
     expect(hbResult.ok).toBe(false);
+    expect(hbResult.expires_at).toBe(0);
 
-    // A completely different agent tries to release — P1-MCP-2: clean no-op {ok:true, released:0}
-    const relResult = releaseTask(taskId, undefined, "dev-mcp-server");
+    // Lock still held by original session
+    const row = getRow(testDb, taskId);
+    expect(row!["owner_client_session"]).toBe("client-session-original");
+  });
+
+  it("(3) different session CANNOT release → {ok:true, released:0} (no-op, anti-theft)", () => {
+    const taskId = "cowork-leader-rel";
+
+    claimTask({
+      task_id: taskId,
+      task_kind: "cowork-slot",
+      owner_session: "pid-1234-ts-1748000000000",
+      owner_agent: "cowork-team",
+      owner_client_session: "client-session-original",
+      ttl_seconds: 900,
+    });
+
+    // Different session tries to release — P1-FINAL: clean no-op
+    const relResult = releaseTask(taskId, "client-session-intruder");
     expect(relResult.ok).toBe(true);
     expect((relResult as { released?: number }).released).toBe(0);
 
-    // Lock still held by cowork-team
+    // Lock still exists — owned by original session
     const row = getRow(testDb, taskId);
     expect(row).not.toBeNull();
-    expect(row!["owner_agent"]).toBe("cowork-team");
+    expect(row!["owner_client_session"]).toBe("client-session-original");
   });
 
-  it("(4) TTL-expiry steal still works — any agent can steal after lock expires", () => {
+  it("(4) TTL-expiry steal still works — any session can steal after lock expires", () => {
     const taskId = "cowork-leader-steal";
 
-    // cowork-team claims (pre-restart session)
+    // Original session claims
     claimTask({
       task_id: taskId,
       task_kind: "cowork-slot",
       owner_session: "pid-1234-ts-1748000000000",
       owner_agent: "cowork-team",
+      owner_client_session: "client-session-original",
       ttl_seconds: 900,
     });
 
     // TTL expires (simulate)
     manipulateExpiry(testDb, taskId, 1000);
 
-    // Another agent OR same agent (new server instance) steals via task_claim
+    // New session steals via task_claim (TTL-expiry steal path)
     const stealResult = claimTask({
       task_id: taskId,
       task_kind: "cowork-slot",
-      owner_session: "pid-9999-ts-1748100000000", // new boot session
-      owner_agent: "cowork-team",                  // same logical agent
+      owner_session: "pid-9999-ts-1748100000000",
+      owner_agent: "cowork-team",
+      owner_client_session: "client-session-new",
       ttl_seconds: 900,
     });
 
@@ -569,128 +598,18 @@ describe("AC-8: FIX-CWK-LEADER-LOCK-REBIND — survive server restart", () => {
 
     // Verify new session is recorded
     const row = getRow(testDb, taskId);
-    expect(row!["owner_session"]).toBe("pid-9999-ts-1748100000000");
+    expect(row!["owner_client_session"]).toBe("client-session-new");
   });
 });
 
 // ---------------------------------------------------------------------------
-// AC-9: Legacy path (no owner_agent) — backward-compat + zombie documentation
+// AC-10: P1-FINAL owner_client_session — stored, returned in current_holder, strict matching
 //
-// Cases:
-//   (5) legacy heartbeat/release WITHOUT owner_agent, same session → ok=true
-//       (old behavior preserved: session-match path still works within same process)
-//   (6) legacy call without owner_agent after session change → ok=false
-//       (zombie path intentionally not silently fixed — documents the deprecated path)
+// Cases (1)(2)(3)(5)(6)(7) still valid.
+// Cases (4) and (8) REMOVED — pre-P1 NULL-row owner_agent fallback is gone (P1-FINAL).
 // ---------------------------------------------------------------------------
 
-describe("AC-9: Legacy path — no owner_agent, session-match fallback", () => {
-  it("(5) legacy heartbeat without owner_agent, same session → ok=true (old behavior preserved)", () => {
-    const taskId = "cowork-slot:legacy-hb:20260606T000000Z";
-    const session = "pid-8888-ts-1748200000000";
-
-    claimTask({
-      task_id: taskId,
-      task_kind: "cowork-slot",
-      owner_session: session,
-      owner_agent: "cowork-team",
-      ttl_seconds: 900,
-    });
-
-    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, owner_session)
-    // Deepest legacy: pass undefined for both client_session and owner_agent, use session
-    const hbResult = heartbeatTask(taskId, undefined, undefined, session);
-    expect(hbResult.ok).toBe(true);
-    expect(hbResult.expires_at).toBeGreaterThan(0);
-  });
-
-  it("(5) legacy release without owner_agent, same session → {ok:true, released:1} (old behavior preserved)", () => {
-    const taskId = "cowork-slot:legacy-rel:20260606T000000Z";
-    const session = "pid-8888-ts-1748200000000";
-
-    claimTask({
-      task_id: taskId,
-      task_kind: "cowork-slot",
-      owner_session: session,
-      owner_agent: "cowork-team",
-      ttl_seconds: 900,
-    });
-
-    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, owner_session)
-    const relResult = releaseTask(taskId, undefined, undefined, session);
-    expect(relResult.ok).toBe(true);
-    expect((relResult as { released?: number }).released).toBe(1);
-
-    const row = getRow(testDb, taskId);
-    expect(row).toBeNull(); // lock released
-  });
-
-  it("(6) legacy heartbeat without owner_agent, session changed → ok=false (zombie — intentional)", () => {
-    const taskId = "cowork-slot:legacy-zombie-hb:20260606T000000Z";
-    const oldSession = "pid-1111-ts-1748000000000";
-    const newSession = "pid-2222-ts-1748100000000"; // different process after restart
-
-    claimTask({
-      task_id: taskId,
-      task_kind: "cowork-slot",
-      owner_session: oldSession,
-      owner_agent: "cowork-team",
-      ttl_seconds: 900,
-    });
-
-    // Deepest legacy path: no client_session, no owner_agent → session mismatch → zombie
-    const hbResult = heartbeatTask(taskId, undefined, undefined, newSession);
-    expect(hbResult.ok).toBe(false);
-    expect(hbResult.expires_at).toBe(0);
-
-    // Lock still held by old session — zombie (no one can renew it without owner_agent or owner_client_session)
-    const row = getRow(testDb, taskId);
-    expect(row).not.toBeNull();
-    expect(row!["owner_session"]).toBe(oldSession);
-  });
-
-  it("(6) legacy release without owner_agent, session changed → {ok:true, released:0} (zombie no-op)", () => {
-    const taskId = "cowork-slot:legacy-zombie-rel:20260606T000000Z";
-    const oldSession = "pid-1111-ts-1748000000000";
-    const newSession = "pid-2222-ts-1748100000000"; // different process after restart
-
-    claimTask({
-      task_id: taskId,
-      task_kind: "cowork-slot",
-      owner_session: oldSession,
-      owner_agent: "cowork-team",
-      ttl_seconds: 900,
-    });
-
-    // Deepest legacy path: no client_session, no owner_agent → session mismatch
-    // P1-MCP-2: wrong session → {ok:true, released:0} (clean no-op, not ok=false)
-    const relResult = releaseTask(taskId, undefined, undefined, newSession);
-    expect(relResult.ok).toBe(true);
-    expect((relResult as { released?: number }).released).toBe(0);
-
-    // Lock still exists — must wait for TTL or use task_force_release_orphan
-    const row = getRow(testDb, taskId);
-    expect(row).not.toBeNull();
-    expect(row!["owner_agent"]).toBe("cowork-team");
-  });
-});
-
-// ---------------------------------------------------------------------------
-// AC-10: P1-MCP-2 — owner_client_session matching-ladder (new behavior)
-//
-// Sprint: CROSS-SESSION-MULTI-TEAM-ORCH
-// Cases:
-//   (1) claimTask with owner_client_session stores it in DB and returns it in current_holder
-//   (2) heartbeatTask with correct owner_client_session → ok=true
-//   (3) heartbeatTask with wrong owner_client_session → ok=false (anti-theft)
-//   (4) heartbeatTask with owner_client_session on pre-P1 row (NULL) → ok=true via owner_agent fallback
-//   (5) releaseTask with correct owner_client_session → {ok:true, released:1}
-//   (6) releaseTask with wrong owner_client_session → {ok:true, released:0} (no-op, not error)
-//   (7) two concurrent claims with distinct owner_client_session — only one wins;
-//       current_holder.owner_client_session shows the winner's session
-//   (8) releaseTask with owner_client_session on pre-P1 row → {ok:true, released:1} via owner_agent fallback
-// ---------------------------------------------------------------------------
-
-describe("AC-10: P1-MCP-2 — owner_client_session matching-ladder", () => {
+describe("AC-10: P1-FINAL — owner_client_session strict matching", () => {
   it("(1) claimTask with owner_client_session stores it in DB and returns it in current_holder on collision", () => {
     const taskId = "task:p1-mcp2-1";
 
@@ -736,8 +655,8 @@ describe("AC-10: P1-MCP-2 — owner_client_session matching-ladder", () => {
       ttl_seconds: 3600,
     });
 
-    // Heartbeat with matching client session → ok=true
-    const result = heartbeatTask(taskId, "uuid-session-correct", "dev-team");
+    // P1-FINAL: only 2 params
+    const result = heartbeatTask(taskId, "uuid-session-correct");
     expect(result.ok).toBe(true);
     expect(result.expires_at).toBeGreaterThan(0);
   });
@@ -755,36 +674,13 @@ describe("AC-10: P1-MCP-2 — owner_client_session matching-ladder", () => {
     });
 
     // Heartbeat with wrong client session → ok=false (different session cannot renew)
-    const result = heartbeatTask(taskId, "uuid-session-bbb", "dev-team");
+    const result = heartbeatTask(taskId, "uuid-session-bbb");
     expect(result.ok).toBe(false);
     expect(result.expires_at).toBe(0);
 
     // Lock untouched
     const row = getRow(testDb, taskId);
     expect(row!["owner_client_session"]).toBe("uuid-session-aaa");
-  });
-
-  it("(4) heartbeatTask with owner_client_session on pre-P1 row (NULL) → ok=true via owner_agent fallback", () => {
-    const taskId = "task:p1-mcp2-hb-pre-p1";
-
-    // Pre-P1 claim: NO owner_client_session
-    claimTask({
-      task_id: taskId,
-      task_kind: "sprint-task",
-      owner_session: "sess-A",
-      owner_agent: "dev-team",
-      // owner_client_session: NOT provided → NULL in DB
-      ttl_seconds: 3600,
-    });
-
-    // Verify NULL in DB
-    const row = getRow(testDb, taskId);
-    expect(row!["owner_client_session"]).toBeNull();
-
-    // New-style caller with client_session heartbeating a pre-P1 lock → matches via owner_agent fallback
-    const result = heartbeatTask(taskId, "uuid-session-new", "dev-team");
-    expect(result.ok).toBe(true);
-    expect(result.expires_at).toBeGreaterThan(0);
   });
 
   it("(5) releaseTask with correct owner_client_session → {ok:true, released:1}", () => {
@@ -799,7 +695,8 @@ describe("AC-10: P1-MCP-2 — owner_client_session matching-ladder", () => {
       ttl_seconds: 3600,
     });
 
-    const result = releaseTask(taskId, "uuid-session-owner", "dev-team");
+    // P1-FINAL: only 2 params
+    const result = releaseTask(taskId, "uuid-session-owner");
     expect(result.ok).toBe(true);
     expect((result as { released?: number }).released).toBe(1);
 
@@ -821,7 +718,7 @@ describe("AC-10: P1-MCP-2 — owner_client_session matching-ladder", () => {
     });
 
     // Wrong session tries to release — clean no-op, not an error
-    const result = releaseTask(taskId, "uuid-session-bbb", "dev-team");
+    const result = releaseTask(taskId, "uuid-session-bbb");
     expect(result.ok).toBe(true);
     expect((result as { released?: number }).released).toBe(0);
 
@@ -857,26 +754,5 @@ describe("AC-10: P1-MCP-2 — owner_client_session matching-ladder", () => {
     // Loser gets the winner's owner_client_session in current_holder
     const holder = (r2 as { current_holder?: Record<string, unknown> }).current_holder;
     expect(holder!["owner_client_session"]).toBe("uuid-session-aaa-111");
-  });
-
-  it("(8) releaseTask with owner_client_session on pre-P1 row (NULL) → {ok:true, released:1} via owner_agent fallback", () => {
-    const taskId = "task:p1-mcp2-rel-pre-p1";
-
-    // Pre-P1 claim: NO owner_client_session
-    claimTask({
-      task_id: taskId,
-      task_kind: "sprint-task",
-      owner_session: "sess-A",
-      owner_agent: "dev-team",
-      ttl_seconds: 3600,
-    });
-
-    // New-style caller releases a pre-P1 lock via owner_agent fallback
-    const result = releaseTask(taskId, "uuid-session-new", "dev-team");
-    expect(result.ok).toBe(true);
-    expect((result as { released?: number }).released).toBe(1);
-
-    const row = getRow(testDb, taskId);
-    expect(row).toBeNull(); // deleted via pre-P1 fallback
   });
 });

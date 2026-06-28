@@ -252,6 +252,7 @@ describe("FIX 4 — AC-FUNC-02: task_list_held owner + expires_at fields", () =>
       task_id: "test-lock-1982",
       task_kind: "sprint-task",
       owner_agent: "dev-mcp-batch-CHIJ",
+      owner_client_session: "test-session-1982-CHIJ",   // REQUIRED — P1-FINAL (TASK_1980)
       ttl_seconds: 300,
     });
 

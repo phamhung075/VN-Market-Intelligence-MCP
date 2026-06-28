@@ -17,10 +17,6 @@
  *   owner_session (DIAGNOSTIC): server-side process discriminator (pid + boot timestamp).
  *     Server-injected for diagnostics only. MUST NOT be used as the ownership key.
  *
- *   owner_agent (TRANSITIONAL FALLBACK): stable agent name across restarts.
- *     Used by the matching-ladder in coordinationStore when owner_client_session
- *     is absent (backward-compat with pre-P1 callers and rows).
- *
  * Security note:
  *   owner_client_session is a coordination PARAMETER agreed to among cooperative
  *   internal agents. It is NEVER logged or echoed as a credential.
@@ -97,12 +93,10 @@ export function registerCoordinationTools(server: McpServer): void {
         ),
       owner_client_session: z
         .string()
-        .optional()
         .describe(
-          "P1-MCP-3: CLAUDE_CODE_SESSION_ID of the calling terminal. " +
-            "AUTHORITATIVE ownership discriminator — pass your CLAUDE_CODE_SESSION_ID env var. " +
-            "Enables per-session collision prevention across parallel terminals running the same agent. " +
-            "Optional for backward-compat; TASK_1980 (P1-FINAL) will make it required.",
+          "P1-FINAL (TASK_1980): REQUIRED. CLAUDE_CODE_SESSION_ID of the calling terminal. " +
+            "SOLE ownership discriminator — pass $CLAUDE_CODE_SESSION_ID. " +
+            "Enables per-session collision prevention across parallel terminals running the same agent.",
         ),
       ttl_seconds: z
         .number()
@@ -127,8 +121,7 @@ export function registerCoordinationTools(server: McpServer): void {
         task_kind: task_kind as TaskKind,
         owner_session: SERVER_SESSION_ID,   // diagnostic only — NOT the ownership key
         owner_agent,
-        // exactOptionalPropertyTypes: never pass explicit undefined for optional fields
-        ...(owner_client_session !== undefined ? { owner_client_session } : {}),
+        owner_client_session,              // REQUIRED (P1-FINAL) — Zod validates presence
         ...(ttl_seconds !== undefined ? { ttl_seconds } : {}),
         payload: payload ?? null,
       });
@@ -152,8 +145,8 @@ export function registerCoordinationTools(server: McpServer): void {
       "A missed heartbeat after ttl_seconds allows the next claimer to steal the lock. " +
       "Returns ok=false if the lock was not found, already expired, or was stolen by another session (crash recovery). " +
       "If ok=false mid-task: commit safe partial state, send BUG telegram, EXIT — do not fight the steal. " +
-      "P1-MCP-3: match is PRIMARY on owner_client_session (per-session UUID), " +
-      "with transitional fallback to owner_agent (stable across server restarts).",
+      "P1-FINAL (TASK_1980): match is SOLELY on owner_client_session (per-session UUID). " +
+      "Fallback rungs removed — wrong session cannot renew another session's lock.",
     {
       task_id: z
         .string()
@@ -161,26 +154,14 @@ export function registerCoordinationTools(server: McpServer): void {
         .describe("The task_id of the lock to heartbeat. Must match what was passed to task_claim."),
       owner_client_session: z
         .string()
-        .optional()
         .describe(
-          "P1-MCP-3: CLAUDE_CODE_SESSION_ID of the calling terminal. " +
-            "PRIMARY ownership match — must match the value passed to task_claim. " +
-            "Pass this to survive mcp-server restarts with correct per-session discrimination.",
-        ),
-      owner_agent: z
-        .string()
-        .min(1)
-        .optional()
-        .describe(
-          "TRANSITIONAL FALLBACK — agent name for pre-P1 rows or when owner_client_session is absent. " +
-            "Must match the owner_agent from the original task_claim call.",
+          "P1-FINAL (TASK_1980): REQUIRED. CLAUDE_CODE_SESSION_ID of the calling terminal. " +
+            "Must match the value passed to task_claim. " +
+            "Wrong session returns ok=false (anti-theft).",
         ),
     },
-    async ({ task_id, owner_client_session, owner_agent }) => {
-      // PRIMARY: owner_client_session (new-style per-session match).
-      // TRANSITIONAL: owner_agent (FIX-CWK-LEADER-LOCK-REBIND, stable across restarts).
-      // LEGACY: SERVER_SESSION_ID as deepest fallback (zombie after restart).
-      const result = heartbeatTask(task_id, owner_client_session, owner_agent, SERVER_SESSION_ID);
+    async ({ task_id, owner_client_session }) => {
+      const result = heartbeatTask(task_id, owner_client_session);
       return {
         content: [
           {
@@ -196,8 +177,8 @@ export function registerCoordinationTools(server: McpServer): void {
   server.tool(
     "task_release",
     "Release a coordination lock on task completion. " +
-      "Scoped to owner_client_session (primary) or owner_agent (fallback) — cannot release another session's lock. " +
-      "P1-MCP-3: returns {ok:true, released:1} on success; {ok:true, released:0} when the lock " +
+      "Scoped solely to owner_client_session — cannot release another session's lock. " +
+      "P1-FINAL (TASK_1980): returns {ok:true, released:1} on success; {ok:true, released:0} when the lock " +
       "was not found, wrong owner, or already expired/stolen (clean no-op, NOT an error — " +
       "TTL expiry is the fallback recovery). {ok:false} only on DB error. Safe to call in finally blocks.",
     {
@@ -207,26 +188,14 @@ export function registerCoordinationTools(server: McpServer): void {
         .describe("The task_id of the lock to release. Must match what was passed to task_claim."),
       owner_client_session: z
         .string()
-        .optional()
         .describe(
-          "P1-MCP-3: CLAUDE_CODE_SESSION_ID of the calling terminal. " +
-            "PRIMARY ownership match — must match the value passed to task_claim. " +
-            "Wrong owner_client_session returns {ok:true, released:0} (no-op, not an error).",
-        ),
-      owner_agent: z
-        .string()
-        .min(1)
-        .optional()
-        .describe(
-          "TRANSITIONAL FALLBACK — agent name for pre-P1 rows or when owner_client_session is absent. " +
-            "Must match the owner_agent from the original task_claim call.",
+          "P1-FINAL (TASK_1980): REQUIRED. CLAUDE_CODE_SESSION_ID of the calling terminal. " +
+            "Must match the value passed to task_claim. " +
+            "Wrong session returns {ok:true, released:0} (no-op, anti-theft).",
         ),
     },
-    async ({ task_id, owner_client_session, owner_agent }) => {
-      // PRIMARY: owner_client_session (new-style per-session match).
-      // TRANSITIONAL: owner_agent (FIX-CWK-LEADER-LOCK-REBIND, stable across restarts).
-      // LEGACY: SERVER_SESSION_ID as deepest fallback.
-      const result = releaseTask(task_id, owner_client_session, owner_agent, SERVER_SESSION_ID);
+    async ({ task_id, owner_client_session }) => {
+      const result = releaseTask(task_id, owner_client_session);
       return {
         content: [
           {
@@ -292,7 +261,7 @@ export function registerCoordinationTools(server: McpServer): void {
   server.tool(
     "task_force_release_orphan",
     "Force-release a coordination lock whose heartbeat has gone stale (process died without releasing). " +
-      "P1-MCP-3: ownership is checked via owner_client_session (primary) or owner_agent (fallback). " +
+      "P1-FINAL (TASK_1980): ownership is checked SOLELY via owner_client_session. " +
       "Safe to call when heartbeat_at is stale — the call is a no-op when a live session " +
       "holds the lock (fresh heartbeat ≤ orphan_threshold_seconds old). " +
       "SAFETY: only releases when ownership matches AND heartbeat_at is older than the threshold. " +
@@ -308,18 +277,17 @@ export function registerCoordinationTools(server: McpServer): void {
         ),
       owner_client_session: z
         .string()
-        .optional()
         .describe(
-          "P1-MCP-3: CLAUDE_CODE_SESSION_ID that originally claimed the lock. " +
-            "PRIMARY ownership match for new-style locks. " +
-            "Falls through to owner_agent for pre-P1 rows (NULL client session).",
+          "P1-FINAL (TASK_1980): REQUIRED. CLAUDE_CODE_SESSION_ID that originally claimed the lock. " +
+            "SOLE ownership match — must match the value from the original task_claim call.",
         ),
       owner_agent: z
         .string()
         .min(1)
+        .optional()
         .describe(
-          "Agent name that originally claimed the lock. " +
-            "REQUIRED: transitional fallback for pre-P1 rows and cross-agent theft prevention.",
+          "DEPRECATED (P1-FINAL): ignored by the store; accepted for backward compat only. " +
+            "Ownership is now discriminated solely by owner_client_session.",
         ),
       orphan_threshold_seconds: z
         .number()
@@ -332,11 +300,10 @@ export function registerCoordinationTools(server: McpServer): void {
             "Locks with heartbeat_age ≤ threshold are NOT released (live-session safety).",
         ),
     },
-    async ({ task_id, owner_client_session, owner_agent, orphan_threshold_seconds }) => {
+    async ({ task_id, owner_client_session, orphan_threshold_seconds }) => {
       const result = releaseOrphanTask(
         task_id,
         owner_client_session,
-        owner_agent,
         orphan_threshold_seconds ?? 600,
       );
 

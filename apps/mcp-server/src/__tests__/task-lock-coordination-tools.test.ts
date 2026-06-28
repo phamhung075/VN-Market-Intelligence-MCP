@@ -2,7 +2,7 @@
  * Task-Lock System — coordinationTools integration tests
  *
  * Tests the MCP tool handlers (coordinationTools.ts) end-to-end by exercising
- * the registerd server.tool() handlers with a real in-memory coordination DB.
+ * the registered server.tool() handlers with a real in-memory coordination DB.
  *
  * Pattern: inject in-memory DB → call store functions directly → verify
  * responses match tool contract from brief §6.
@@ -12,6 +12,8 @@
  * would require a full transport stack. The handler logic is a thin wrapper
  * around coordinationStore, so store-level tests cover the core claims logic
  * while these tests verify the response shapes match the tool contract.
+ *
+ * P1-FINAL (TASK_1980): owner_client_session is now REQUIRED on all operations.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
@@ -56,6 +58,7 @@ describe("task_claim tool contract", () => {
       task_kind: "cowork-slot",
       owner_session: "mock-session-pid-1234",
       owner_agent: "cowork-team",
+      owner_client_session: "client-session-uuid-A",
       ttl_seconds: 900,
       payload: '{"slot_id":"test-slot"}',
     });
@@ -72,6 +75,7 @@ describe("task_claim tool contract", () => {
       task_kind: "cowork-slot",
       owner_session: "mock-session-pid-1234",
       owner_agent: "cowork-team",
+      owner_client_session: "client-session-uuid-A",
       ttl_seconds: 900,
     });
 
@@ -81,6 +85,7 @@ describe("task_claim tool contract", () => {
       task_kind: "cowork-slot",
       owner_session: "mock-session-pid-5678",
       owner_agent: "cowork-team",
+      owner_client_session: "client-session-uuid-B",
       ttl_seconds: 900,
     });
 
@@ -103,6 +108,7 @@ describe("task_claim tool contract", () => {
       task_kind: "sprint-task",
       owner_session: "old-session",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-session-old",
       ttl_seconds: 3600,
     });
 
@@ -114,6 +120,7 @@ describe("task_claim tool contract", () => {
       task_kind: "sprint-task",
       owner_session: "new-session",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-session-new",
       ttl_seconds: 3600,
     });
 
@@ -121,13 +128,14 @@ describe("task_claim tool contract", () => {
     expect((result as { stolen?: boolean }).stolen).toBe(true);
   });
 
-  it("TTL is clamped: min 60, max 86400", () => {
+  it("TTL is clamped: min 60, max 691200", () => {
     // Below min: should clamp to 60
     claimTask({
       task_id: "task:ttl-min-test",
       task_kind: "sprint-task",
       owner_session: "session-ttl",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-session-ttl",
       ttl_seconds: 1, // below min 60
     });
 
@@ -141,22 +149,22 @@ describe("task_claim tool contract", () => {
 
 // ---------------------------------------------------------------------------
 // task_heartbeat — tool contract verification
-// FIX-CWK-LEADER-LOCK-REBIND: heartbeat now takes owner_agent (stable) not owner_session
+// P1-FINAL (TASK_1980): heartbeat matches SOLELY on owner_client_session
 // ---------------------------------------------------------------------------
 
 describe("task_heartbeat tool contract", () => {
-  it("returns {ok: true, expires_at: <number>} on successful heartbeat by owner_agent", () => {
+  it("returns {ok: true, expires_at: <number>} on successful heartbeat by same session", () => {
     claimTask({
       task_id: "task:hb-ok",
       task_kind: "sprint-task",
       owner_session: "sess-hb",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-session-hb-owner",
       ttl_seconds: 3600,
     });
 
-    // P1-MCP-2: (task_id, owner_client_session, owner_agent, owner_session)
-    // Pass undefined for client_session → falls through to owner_agent ladder rung
-    const result = heartbeatTask("task:hb-ok", undefined, "dev-mcp-server");
+    // P1-FINAL: heartbeat with matching owner_client_session
+    const result = heartbeatTask("task:hb-ok", "client-session-hb-owner");
 
     // Tool contract: {ok: boolean, expires_at: number}
     expect(result.ok).toBe(true);
@@ -164,17 +172,18 @@ describe("task_heartbeat tool contract", () => {
     expect(result.expires_at).toBeGreaterThan(0);
   });
 
-  it("returns {ok: false, expires_at: 0} when different owner_agent tries to heartbeat", () => {
+  it("returns {ok: false, expires_at: 0} when different session tries to heartbeat (anti-theft)", () => {
     claimTask({
       task_id: "task:hb-stolen",
       task_kind: "sprint-task",
       owner_session: "sess-original",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-session-real-owner",
       ttl_seconds: 3600,
     });
 
-    // Different agent — anti-theft must reject this
-    const result = heartbeatTask("task:hb-stolen", undefined, "cowork-team");
+    // Different session — anti-theft must reject this
+    const result = heartbeatTask("task:hb-stolen", "client-session-intruder");
     expect(result.ok).toBe(false);
     expect(result.expires_at).toBe(0);
   });
@@ -182,36 +191,38 @@ describe("task_heartbeat tool contract", () => {
 
 // ---------------------------------------------------------------------------
 // task_release — tool contract verification
-// FIX-CWK-LEADER-LOCK-REBIND: release now takes owner_agent (stable) not owner_session
+// P1-FINAL (TASK_1980): release matches SOLELY on owner_client_session
 // ---------------------------------------------------------------------------
 
-describe("task_release tool contract (P1-MCP-2: {ok:true,released:0|1} shape)", () => {
-  it("returns {ok:true, released:1} when owner releases their lock by owner_agent", () => {
+describe("task_release tool contract (P1-FINAL: {ok:true,released:0|1} shape)", () => {
+  it("returns {ok:true, released:1} when owner releases their lock by session", () => {
     claimTask({
       task_id: "task:release-ok",
       task_kind: "sprint-task",
       owner_session: "sess-release",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-session-release-owner",
       ttl_seconds: 3600,
     });
 
-    // P1-MCP-2: (task_id, owner_client_session, owner_agent, owner_session)
-    const result = releaseTask("task:release-ok", undefined, "dev-mcp-server");
+    // P1-FINAL: release with matching owner_client_session
+    const result = releaseTask("task:release-ok", "client-session-release-owner");
     expect(result.ok).toBe(true);
     expect((result as { released?: number }).released).toBe(1);
   });
 
-  it("returns {ok:true, released:0} when different owner_agent tries to release (anti-theft no-op)", () => {
+  it("returns {ok:true, released:0} when different session tries to release (anti-theft no-op)", () => {
     claimTask({
       task_id: "task:release-denied",
       task_kind: "sprint-task",
       owner_session: "sess-owner",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "client-session-real-owner",
       ttl_seconds: 3600,
     });
 
-    // Different agent — P1-MCP-2: clean no-op {ok:true, released:0} (not an error)
-    const result = releaseTask("task:release-denied", undefined, "cowork-team");
+    // Different session — P1-FINAL: clean no-op {ok:true, released:0} (not an error)
+    const result = releaseTask("task:release-denied", "client-session-intruder");
     expect(result.ok).toBe(true);
     expect((result as { released?: number }).released).toBe(0);
   });
@@ -233,6 +244,7 @@ describe("task_list_held tool contract", () => {
       task_kind: "cowork-slot",
       owner_session: "sess-list",
       owner_agent: "cowork-team",
+      owner_client_session: "client-session-list",
       ttl_seconds: 900,
       payload: '{"slot_id":"list-test"}',
     });
@@ -257,11 +269,14 @@ describe("task_list_held tool contract", () => {
 
 // ---------------------------------------------------------------------------
 // End-to-end: claim → heartbeat → release cycle
+// P1-FINAL (TASK_1980): all operations use owner_client_session as sole key
 // ---------------------------------------------------------------------------
 
-describe("Full cycle: claim → heartbeat → release", () => {
+describe("Full cycle: claim → heartbeat → release (P1-FINAL)", () => {
   it("complete claim/heartbeat/release sequence is race-free", () => {
     const taskId = "sprint-task:full-cycle";
+    const ownerSession = "client-session-cycle-owner";
+    const otherSession = "client-session-cycle-other";
 
     // 1. Claim
     const claimResult = claimTask({
@@ -269,6 +284,7 @@ describe("Full cycle: claim → heartbeat → release", () => {
       task_kind: "sprint-task",
       owner_session: "sess-cycle",
       owner_agent: "dev-mcp-server",
+      owner_client_session: ownerSession,
       ttl_seconds: 3600,
       payload: '{"task_title":"Full cycle test"}',
     });
@@ -280,20 +296,21 @@ describe("Full cycle: claim → heartbeat → release", () => {
       task_kind: "sprint-task",
       owner_session: "sess-other",
       owner_agent: "dev-api-gateway",
+      owner_client_session: otherSession,
       ttl_seconds: 3600,
     });
     expect(competingClaim.claimed).toBe(false);
 
-    // 3. Heartbeat by owner_agent succeeds (P1-MCP-2: undefined client session → owner_agent ladder rung)
-    const hb = heartbeatTask(taskId, undefined, "dev-mcp-server");
+    // 3. Heartbeat by owner session succeeds
+    const hb = heartbeatTask(taskId, ownerSession);
     expect(hb.ok).toBe(true);
 
-    // 4. Heartbeat by competitor agent fails (anti-theft preserved)
-    const hb2 = heartbeatTask(taskId, undefined, "dev-api-gateway");
+    // 4. Heartbeat by competitor session fails (anti-theft preserved)
+    const hb2 = heartbeatTask(taskId, otherSession);
     expect(hb2.ok).toBe(false);
 
-    // 5. Release by owner_agent (P1-MCP-2: {ok:true, released:1})
-    const rel = releaseTask(taskId, undefined, "dev-mcp-server");
+    // 5. Release by owner session → {ok:true, released:1}
+    const rel = releaseTask(taskId, ownerSession);
     expect(rel.ok).toBe(true);
     expect((rel as { released?: number }).released).toBe(1);
 
@@ -303,6 +320,7 @@ describe("Full cycle: claim → heartbeat → release", () => {
       task_kind: "sprint-task",
       owner_session: "sess-other",
       owner_agent: "dev-api-gateway",
+      owner_client_session: otherSession,
       ttl_seconds: 3600,
     });
     expect(reClaim.claimed).toBe(true);

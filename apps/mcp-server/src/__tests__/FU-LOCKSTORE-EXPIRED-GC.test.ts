@@ -131,6 +131,7 @@ describe("TC-2: claimTask triggers opportunistic GC before inserting", () => {
       task_kind: "cowork-slot",
       owner_session: "session-new",
       owner_agent: "cowork-team",
+      owner_client_session: "test-gc-TC2-fresh",
       ttl_seconds: 900,
     });
 
@@ -147,6 +148,7 @@ describe("TC-2: claimTask triggers opportunistic GC before inserting", () => {
       task_kind: "sprint-task",
       owner_session: "session-active",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "test-gc-TC2-active",
       ttl_seconds: 3600,
     });
 
@@ -156,6 +158,7 @@ describe("TC-2: claimTask triggers opportunistic GC before inserting", () => {
       task_kind: "cowork-slot",
       owner_session: "session-B",
       owner_agent: "cowork-team",
+      owner_client_session: "test-gc-TC2-trigger",
       ttl_seconds: 900,
     });
 
@@ -237,6 +240,7 @@ describe("TC-5: listHeldTasks shows only live locks after GC", () => {
       task_kind: "cowork-slot",
       owner_session: "session-live",
       owner_agent: "cowork-team",
+      owner_client_session: "test-gc-TC5-live",
       ttl_seconds: 900,
     });
 

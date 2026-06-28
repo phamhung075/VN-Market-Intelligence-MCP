@@ -250,6 +250,7 @@ describe("AC-4: owner_client_session present on brand-new DB created via ensureC
       task_kind: "sprint-task",
       owner_session: "sess-fresh",
       owner_agent: "dev-mcp-server",
+      owner_client_session: "test-p1mcp1-fresh",
       ttl_seconds: 3600,
     });
     expect(result.claimed).toBe(true);

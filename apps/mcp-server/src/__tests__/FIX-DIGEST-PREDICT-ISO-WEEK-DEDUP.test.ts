@@ -244,8 +244,8 @@ describe("FIX-B: period date-range key is dedup-stable when week-labels diverge"
     const oldKeyW25 = "published:digest-sunday:2026-W25";  // buggy path
     const oldKeyW24 = "published:digest-sunday:2026-W24";  // correct path
     // Different keys → first claim wins, second claim ALSO wins (different lock)
-    const claim1 = claimTask({ task_id: oldKeyW25, task_kind: "cowork-slot", owner_session: "s-A", owner_agent: "digest-predict", ttl_seconds: 691200 });
-    const claim2 = claimTask({ task_id: oldKeyW24, task_kind: "cowork-slot", owner_session: "s-B", owner_agent: "digest-predict", ttl_seconds: 691200 });
+    const claim1 = claimTask({ task_id: oldKeyW25, task_kind: "cowork-slot", owner_session: "s-A", owner_agent: "digest-predict", owner_client_session: "test-fdpd-bugW25", ttl_seconds: 691200 });
+    const claim2 = claimTask({ task_id: oldKeyW24, task_kind: "cowork-slot", owner_session: "s-B", owner_agent: "digest-predict", owner_client_session: "test-fdpd-correctW24", ttl_seconds: 691200 });
     // ROOT CAUSE: BOTH claimed! → double-publish
     expect(claim1.claimed).toBe(true);
     expect(claim2.claimed).toBe(true);
@@ -278,6 +278,7 @@ describe("FIX-B: period date-range key is dedup-stable when week-labels diverge"
       task_kind:   "cowork-slot",
       owner_session: "rt-session-13h47",
       owner_agent: "digest-predict",
+      owner_client_session: "test-fdpd-rt-13h47",
       ttl_seconds: 691200,
     });
     expect(remoteTriggerClaim.claimed).toBe(true);
@@ -288,6 +289,7 @@ describe("FIX-B: period date-range key is dedup-stable when week-labels diverge"
       task_kind:   "cowork-slot",
       owner_session: "cli-session-13h52",
       owner_agent: "digest-predict",
+      owner_client_session: "test-fdpd-cli-13h52",
       ttl_seconds: 691200,
     });
     expect(cliClaim.claimed).toBe(false); // dedup holds: already published
@@ -299,7 +301,7 @@ describe("FIX-B: period date-range key is dedup-stable when week-labels diverge"
     const thisWeekKey = buildWeeklyPublishMarkerKey("digest-sunday", new Date("2026-06-14T13:47:00Z"));
     claimTask({
       task_id: thisWeekKey, task_kind: "cowork-slot",
-      owner_session: "s-this-week", owner_agent: "digest-predict", ttl_seconds: 691200,
+      owner_session: "s-this-week", owner_agent: "digest-predict", owner_client_session: "test-fdpd-this-week", ttl_seconds: 691200,
     });
 
     // Next week has a DIFFERENT period key → not blocked
@@ -308,7 +310,7 @@ describe("FIX-B: period date-range key is dedup-stable when week-labels diverge"
 
     const nextWeekClaim = claimTask({
       task_id: nextWeekKey, task_kind: "cowork-slot",
-      owner_session: "s-next-week", owner_agent: "digest-predict", ttl_seconds: 691200,
+      owner_session: "s-next-week", owner_agent: "digest-predict", owner_client_session: "test-fdpd-next-week", ttl_seconds: 691200,
     });
     expect(nextWeekClaim.claimed).toBe(true);
   });
@@ -338,6 +340,7 @@ describe("INTEGRATION: RemoteTrigger fire then CLI dispatcher tick → EXACTLY O
       task_kind:    "cowork-slot",
       owner_session: sessionId,
       owner_agent:  "digest-predict",
+      owner_client_session: `test-fdpd-gate-${sessionId}`,
       ttl_seconds:  691200,
     });
 
@@ -392,11 +395,11 @@ describe("INTEGRATION: RemoteTrigger fire then CLI dispatcher tick → EXACTLY O
     // Claim simulation
     const claimA = claimTask({
       task_id: keyA, task_kind: "cowork-slot",
-      owner_session: "s-A-hypothetical-w25", owner_agent: "digest-predict", ttl_seconds: 691200,
+      owner_session: "s-A-hypothetical-w25", owner_agent: "digest-predict", owner_client_session: "test-fdpd-sA-w25", ttl_seconds: 691200,
     });
     const claimB = claimTask({
       task_id: keyB, task_kind: "cowork-slot",
-      owner_session: "s-B-correct-w24", owner_agent: "digest-predict", ttl_seconds: 691200,
+      owner_session: "s-B-correct-w24", owner_agent: "digest-predict", owner_client_session: "test-fdpd-sB-w24", ttl_seconds: 691200,
     });
 
     const publishCount = [claimA.claimed, claimB.claimed].filter(Boolean).length;
@@ -411,11 +414,11 @@ describe("INTEGRATION: RemoteTrigger fire then CLI dispatcher tick → EXACTLY O
 
     const claim1 = claimTask({
       task_id: tnbKey13h47, task_kind: "cowork-slot",
-      owner_session: "tnb-session-1", owner_agent: "tran-ngoc-bau", ttl_seconds: 691200,
+      owner_session: "tnb-session-1", owner_agent: "tran-ngoc-bau", owner_client_session: "test-fdpd-tnb-1", ttl_seconds: 691200,
     });
     const claim2 = claimTask({
       task_id: tnbKey13h52, task_kind: "cowork-slot",
-      owner_session: "tnb-session-2", owner_agent: "tran-ngoc-bau", ttl_seconds: 691200,
+      owner_session: "tnb-session-2", owner_agent: "tran-ngoc-bau", owner_client_session: "test-fdpd-tnb-2", ttl_seconds: 691200,
     });
 
     const publishCount = [claim1.claimed, claim2.claimed].filter(Boolean).length;

@@ -12,8 +12,9 @@
  *
  * T1: expired lock IS reclaimed by next claimTask (stolen=true)
  * T2: live-heartbeating lock is NOT stolen (claimed=false)
- * T3: heartbeatTask with owner_agent survives a changed owner_session (rebuild sim)
- * T4: releaseTask with owner_agent survives a changed owner_session (rebuild sim)
+ * T3: P1-FINAL: heartbeatTask with correct owner_client_session renews lock
+ *     (P1-FINAL removed owner_agent fallback; sole key = owner_client_session)
+ * T4: P1-FINAL: releaseTask with correct owner_client_session deletes lock (anti-zombie)
  * T5: push_bctc_refined_unit double-push is idempotent (INSERT OR REPLACE — no dupe, last-write-wins)
  */
 
@@ -52,6 +53,7 @@ function insertLockRow(
     task_id: string;
     owner_session: string;
     owner_agent: string;
+    owner_client_session?: string;  // P1-FINAL: set to test isolation; NULL = pre-P1 row
     expiresAtOffset: number;  // seconds relative to now (negative = already expired)
     heartbeatAtOffset?: number; // seconds relative to now (default -60)
     ttl_seconds?: number;
@@ -61,14 +63,14 @@ function insertLockRow(
   const hbOffset = opts.heartbeatAtOffset ?? -60;
   db.prepare(`
     INSERT OR REPLACE INTO task_locks
-      (task_id, task_kind, owner_session, owner_agent,
+      (task_id, task_kind, owner_session, owner_agent, owner_client_session,
        claimed_at, expires_at, heartbeat_at, ttl_seconds)
-    VALUES (?, 'sprint-task', ?, ?,
+    VALUES (?, 'sprint-task', ?, ?, ?,
             unixepoch('now'),
             unixepoch('now') + ?,
             unixepoch('now') + ?,
             ?)
-  `).run(opts.task_id, opts.owner_session, opts.owner_agent, opts.expiresAtOffset, hbOffset, ttl);
+  `).run(opts.task_id, opts.owner_session, opts.owner_agent, opts.owner_client_session ?? null, opts.expiresAtOffset, hbOffset, ttl);
 }
 
 function getLockRow(db: Database, task_id: string): Record<string, unknown> | null {
@@ -121,6 +123,7 @@ describe("T1: expired lock is reclaimed via stale-steal", () => {
       task_kind: "sprint-task",
       owner_session: "pid-new-ts-new",
       owner_agent: "refine-orchestrator-new",
+      owner_client_session: "test-refine-T1-new",
       ttl_seconds: 1800,
     });
 
@@ -164,6 +167,7 @@ describe("T2: live lock is not stolen", () => {
       task_kind: "sprint-task",
       owner_session: "pid-new-ts-new",
       owner_agent: "refine-orchestrator-new",
+      owner_client_session: "test-refine-T2-new",
       ttl_seconds: 1800,
     });
 
@@ -184,30 +188,36 @@ describe("T2: live lock is not stolen", () => {
 });
 
 // ---------------------------------------------------------------------------
-// T3 — owner_agent heartbeat survives a changed owner_session (rebuild sim)
+// T3 — P1-FINAL: heartbeatTask with correct owner_client_session renews lock
 //
-// Setup: row has old owner_session (pre-rebuild).
-// Action: heartbeatTask called with same owner_agent but new session (post-rebuild).
-// Assert: ok=true, expires_at renewed (agent-path match, session ignored).
+// P1-FINAL removes the owner_agent fallback: heartbeat now matches SOLELY on
+// owner_client_session. This test proves the correct-session path works.
+//
+// Setup: claim lock with owner_client_session = "refine-session-T3".
+// Action: heartbeatTask called with same owner_client_session.
+// Assert: ok=true, expires_at renewed.
 // ---------------------------------------------------------------------------
 
-describe("T3: heartbeatTask with owner_agent survives owner_session change", () => {
-  it("heartbeat by owner_agent renews lock even when owner_session differs", () => {
-    const TASK_ID = "bctc-refine:T3-heartbeat-rebuild";
+describe("T3: P1-FINAL heartbeatTask with correct owner_client_session renews lock", () => {
+  it("heartbeat by same owner_client_session renews lock (P1-FINAL sole key)", () => {
+    const TASK_ID = "bctc-refine:T3-heartbeat-p1final";
+    const CLIENT_SESSION = "refine-client-session-T3";
 
-    // Insert lock with OLD session (as it was before rebuild)
-    insertLockRow(coordDb, {
+    // Claim the lock
+    const claimed = claimTask({
       task_id: TASK_ID,
-      owner_session: "pid-99-ts-old",
+      task_kind: "sprint-task",
+      owner_session: "pid-refine-1",
       owner_agent: "refine-orchestrator",
-      expiresAtOffset: +900,  // still active
+      owner_client_session: CLIENT_SESSION,
       ttl_seconds: 1800,
     });
+    expect(claimed.claimed).toBe(true);
 
     const rowBefore = getLockRow(coordDb, TASK_ID) as { expires_at: number };
 
-    // Simulate rebuild: heartbeat now called with NEW session but same owner_agent
-    const result = heartbeatTask(TASK_ID, "refine-orchestrator", "pid-1-ts-new");
+    // P1-FINAL: heartbeat with matching owner_client_session
+    const result = heartbeatTask(TASK_ID, CLIENT_SESSION);
 
     expect(result.ok).toBe(true);
     expect(result.expires_at).toBeGreaterThan(0);
@@ -216,35 +226,84 @@ describe("T3: heartbeatTask with owner_agent survives owner_session change", () 
     const rowAfter = getLockRow(coordDb, TASK_ID) as { expires_at: number };
     expect(rowAfter.expires_at).toBeGreaterThanOrEqual(rowBefore.expires_at);
   });
+
+  it("heartbeat by DIFFERENT owner_client_session is REJECTED (anti-theft, P1-FINAL)", () => {
+    const TASK_ID = "bctc-refine:T3-heartbeat-theft";
+    const OWNER_SESSION = "refine-owner-T3";
+    const THIEF_SESSION = "refine-thief-T3";
+
+    claimTask({
+      task_id: TASK_ID,
+      task_kind: "sprint-task",
+      owner_session: "pid-refine-1",
+      owner_agent: "refine-orchestrator",
+      owner_client_session: OWNER_SESSION,
+      ttl_seconds: 1800,
+    });
+
+    // P1-FINAL: different session cannot heartbeat
+    const result = heartbeatTask(TASK_ID, THIEF_SESSION);
+    expect(result.ok).toBe(false);
+    expect(result.expires_at).toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------
-// T4 — owner_agent releaseTask survives a changed owner_session (rebuild sim)
+// T4 — P1-FINAL: releaseTask with correct owner_client_session deletes lock
 //
-// Setup: row has old owner_session (pre-rebuild).
-// Action: releaseTask called with same owner_agent but new session (post-rebuild).
+// P1-FINAL removes the owner_agent fallback: release now matches SOLELY on
+// owner_client_session. This test proves the correct-session path works
+// and that a wrong session cannot release (anti-zombie).
+//
+// Setup: claim lock with owner_client_session = "refine-session-T4".
+// Action: releaseTask called with same owner_client_session.
 // Assert: ok=true, row COUNT()===0 (lock deleted, no zombie).
 // ---------------------------------------------------------------------------
 
-describe("T4: releaseTask with owner_agent survives owner_session change", () => {
-  it("release by owner_agent deletes lock even when owner_session differs", () => {
-    const TASK_ID = "bctc-refine:T4-release-rebuild";
+describe("T4: P1-FINAL releaseTask with correct owner_client_session deletes lock", () => {
+  it("release by same owner_client_session deletes lock (P1-FINAL sole key)", () => {
+    const TASK_ID = "bctc-refine:T4-release-p1final";
+    const CLIENT_SESSION = "refine-client-session-T4";
 
-    // Insert lock with OLD session (pre-rebuild)
-    insertLockRow(coordDb, {
+    claimTask({
       task_id: TASK_ID,
-      owner_session: "pid-99-ts-old",
+      task_kind: "sprint-task",
+      owner_session: "pid-refine-1",
       owner_agent: "refine-orchestrator",
-      expiresAtOffset: +900,  // still active (would be a zombie under legacy path)
+      owner_client_session: CLIENT_SESSION,
+      ttl_seconds: 1800,
     });
 
-    // Simulate rebuild: release called with NEW session but same owner_agent
-    const result = releaseTask(TASK_ID, "refine-orchestrator", "pid-1-ts-new");
+    // P1-FINAL: release with matching owner_client_session
+    const result = releaseTask(TASK_ID, CLIENT_SESSION);
 
     expect(result.ok).toBe(true);
 
-    // Lock row must be deleted (COUNT = 0)
+    // Lock row must be deleted (COUNT = 0) — no zombie
     expect(countLockRows(coordDb, TASK_ID)).toBe(0);
+  });
+
+  it("release by DIFFERENT owner_client_session is a no-op (lock survives, anti-zombie)", () => {
+    const TASK_ID = "bctc-refine:T4-release-theft";
+    const OWNER_SESSION = "refine-owner-T4";
+    const THIEF_SESSION = "refine-thief-T4";
+
+    claimTask({
+      task_id: TASK_ID,
+      task_kind: "sprint-task",
+      owner_session: "pid-refine-1",
+      owner_agent: "refine-orchestrator",
+      owner_client_session: OWNER_SESSION,
+      ttl_seconds: 1800,
+    });
+
+    // P1-FINAL: different session cannot release
+    const result = releaseTask(TASK_ID, THIEF_SESSION);
+    expect(result.ok).toBe(true);
+    expect((result as { released?: number }).released).toBe(0);
+
+    // Lock is still held by the real owner
+    expect(countLockRows(coordDb, TASK_ID)).toBe(1);
   });
 });
 
