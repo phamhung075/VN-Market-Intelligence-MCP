@@ -78,6 +78,8 @@ for (const base of files) {
   report.push(`${base} → ${result}`);
 }
 
+const countBefore = parseInt(execFileSync('sqlite3', [DB, 'SELECT COUNT(*) FROM signals_processed;'], { encoding: 'utf8' }).trim(), 10);
+
 if (stmts.length) {
   try {
     execFileSync('sqlite3', [DB], { input: stmts.join('\n') + '\n', encoding: 'utf8' });
@@ -86,14 +88,28 @@ if (stmts.length) {
   }
 }
 
-// §0a-2 prune: DB rows + processed/ files older than 7 days (field compare, both date formats)
-const cutoffCompact = new Date(Date.now() - 7 * 864e5).toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
-const cutoffIso = new Date(Date.now() - 7 * 864e5).toISOString();
+// §0a-2 prune: DB rows older than 7 days.
+// FIX-DRAIN-SIGNALS-DEDUP-PRUNE-STRCOMPARE: processed_at is stored as dash-ISO (YYYY-MM-DDTHH:MM:SSZ).
+// A compact cutoff (YYYYMMDDTHHMMSSZ) always string-compares > any dash-ISO value because
+// '-' (0x2D) < any digit (0x30), so the OR compact branch truncated the table on every drain.
+// Epoch-seconds comparison is format-agnostic and correct for dash-ISO via strftime('%s', ...).
+const cutoffEpoch = Math.floor((Date.now() - 7 * 864e5) / 1000);
+const cutoffIso = new Date(Date.now() - 7 * 864e5).toISOString().replace(/\.\d+Z$/, 'Z');
 try {
-  execFileSync('sqlite3', [DB, `DELETE FROM signals_processed WHERE processed_at < '${cutoffCompact}' OR processed_at < '${cutoffIso}';`]);
+  execFileSync('sqlite3', [DB, `DELETE FROM signals_processed WHERE CAST(strftime('%s', processed_at) AS INTEGER) < ${cutoffEpoch};`]);
 } catch (e) {
   console.log(`[drain-signals] WARN: DB prune failed (non-fatal): ${e.message}`);
 }
+
+// FAIL-LOUD fence: new inserts must survive the 7-day prune (spec §0a-2)
+if (stmts.length > 0) {
+  const countAfter = parseInt(execFileSync('sqlite3', [DB, 'SELECT COUNT(*) FROM signals_processed;'], { encoding: 'utf8' }).trim(), 10);
+  if (countAfter <= countBefore) {
+    console.error(`[drain-signals] FAIL-LOUD: inserted=${stmts.length} new signals but db_count did not increase (before=${countBefore} after=${countAfter}) — INSERT or prune regression; investigate immediately`);
+    process.exit(1);
+  }
+}
+
 let pruned = 0;
 for (const pf of fs.readdirSync(PROC).filter(f => f.endsWith('.json'))) {
   try {

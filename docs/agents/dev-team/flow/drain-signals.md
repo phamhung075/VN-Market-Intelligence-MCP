@@ -1,4 +1,4 @@
-<!-- size-justification: 126L — signal drain SSOT (mandatory-persist guard, 0a-D cross-team inbox drain, 0a-0..3 fingerprint+route logic, routing table). All sections are load-bearing; no safe extraction without losing trigger→action traceability. BGFAN-1 2026-06-07: header comment added (+2L). CANON-SCRIPT 2026-06-07: scripts/agents-flow/drain-signals.js pointer (+3L). CI-HEALTH-FIX-BRIDGE 2026-06-08: ci_red routing row added (+2L). -->
+<!-- size-justification: 129L — signal drain SSOT (mandatory-persist guard, 0a-D cross-team inbox drain, 0a-0..3 fingerprint+route logic, routing table). All sections are load-bearing; no safe extraction without losing trigger→action traceability. BGFAN-1 2026-06-07: header comment added (+2L). CANON-SCRIPT 2026-06-07: scripts/agents-flow/drain-signals.js pointer (+3L). CI-HEALTH-FIX-BRIDGE 2026-06-08: ci_red routing row added (+2L). FIX-DRAIN-SIGNALS-DEDUP-PRUNE-STRCOMPARE 2026-06-28: dash-ISO format + epoch-seconds prune + FAIL-LOUD fence (+3L). -->
 # Dev Team — Step 0a: Drain `docs/signals/`
 
 <!-- BGFAN-1: this file delegates spawn to drain-esc-dispatch.md (ESC-DISPATCH) which carries run_in_background=true. No direct Agent() call here. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
@@ -34,11 +34,12 @@ For each NEW row:
   claim_payload = {row_id: row.id, from: row.from, type: row.type}   # structured object, not a shell-built string
 
   result = call_tool(server="vn-market", tool="task_claim", arguments={
-    task_id:     row_key,
-    task_kind:   "dashboard-row",
-    owner_agent: "dev-team",
-    ttl_seconds: 1800,
-    payload:     JSON.stringify(claim_payload)   // live schema requires a SERIALIZED JSON STRING ("Expected string, received object" — verified 2026-06-05); build the object with bound params first, stringify last — never shell-concatenate
+    task_id:              row_key,
+    task_kind:            "dashboard-row",
+    owner_agent:          "dev-team",
+    owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+    ttl_seconds:          1800,
+    payload:              JSON.stringify(claim_payload)   // live schema requires a SERIALIZED JSON STRING ("Expected string, received object" — verified 2026-06-05); build the object with bound params first, stringify last — never shell-concatenate
   })
 
   if not result.claimed:
@@ -48,7 +49,7 @@ For each NEW row:
   // Claim succeeded — proceed with existing drain logic
   load payload if present → append to pendingSignals[] with source="dashboard"
   mark row NEW → READ
-  call_tool(server="vn-market", tool="task_release", arguments={ task_id: row_key })   // release per-row claim immediately after row consumed
+  call_tool(server="vn-market", tool="task_release", arguments={ task_id: row_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })   // release per-row claim immediately after row consumed
 
 If `orch-state.json` missing or `.signal_queue.rows` absent → log "[dev-team] signal_queue skip" and continue. Never fail-loud.
 
@@ -95,11 +96,15 @@ For each file:
 
 **0a-2 — Prune** (after batch, both stores):
 ```sh
-# processed_at stored compact-ISO YYYYMMDDTHHMMSSZ — use lexicographic compare, NOT datetime()
-cutoff=$(date -u +%Y%m%dT%H%M%SZ -d '7 days ago' 2>/dev/null || date -u -v-7d +%Y%m%dT%H%M%SZ)
-sqlite3 docs/signals/signals.db "DELETE FROM signals_processed WHERE processed_at < '${cutoff}';"
+# processed_at stored dash-ISO YYYY-MM-DDTHH:MM:SSZ (NOT compact-ISO).
+# NEVER compare dash-ISO rows against a compact cutoff: '-' (0x2D) < any digit (0x30) →
+# every dash-ISO processed_at strcompares < compact cutoff → total truncation bug.
+# Use epoch-seconds: strftime('%s', processed_at) is safe for dash-ISO in SQLite.
+cutoff_epoch=$(( $(date -u +%s) - 604800 ))
+sqlite3 docs/signals/signals.db "DELETE FROM signals_processed WHERE CAST(strftime('%s', processed_at) AS INTEGER) < ${cutoff_epoch};"
 ```
-Delete `docs/signals/processed/` files with `processedAt` (field value) older than 7 days — field compare, not mtime, correct as-is.
+Delete `docs/signals/processed/` files with `processedAt` (field value, dash-ISO) older than 7 days — field compare, not mtime, correct as-is.
+**FAIL-LOUD fence:** after INSERT + prune, if `inserted > 0` and `COUNT(*) ≤ count-before-insert` → log `FAIL-LOUD` + exit 1 (INSERT or prune regression).
 **Canonical script:** `scripts/agents-flow/drain-signals.js` (shipped 2026-06-07) implements §0a-1 + §0a-2 and MUST stay in sync with this spec. Edit the spec first, then the script.
 
 **Escape hatches:** Delete `processed/` copy + DB row → re-routes on next cycle. Or bump `createdAt` → new fingerprint.
