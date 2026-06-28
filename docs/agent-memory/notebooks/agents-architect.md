@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-24T15:04:57Z
-
-**Brief:** `docs/architecture-briefs/2026-06-24-prediction-daily-cadence.md`
-
-ARCH-PREDICTION-DAILY-CADENCE: prediction_claims producer starved since 2026-06-14 — Sprint 1949-T5 disabled monday.md (P-3..P-5 create_prediction_claim) but weekly.md only reads get_prediction_accuracy (never writes claims). Fix: create daily-predict.md reusing monday.md P-3..P-5 pipeline (cap=3/day), add same-day dedup gate in main.md (task_claim key published:digest-daily:YYYY-MM-DD TTL=86400s), add digest-daily cron slot (30 17 * * *) to cowork-schedule.json, update main.md dispatch table to route daily slot → daily-predict.md and Sunday → weekly.md (unchanged). Weekly ceiling raised to 15/week. Honest NO-OP when no ticker passes conviction threshold. weekly.md and monday.md untouched.
-
-**Signal dropped:** `docs/signals/prediction-daily-cadence-20260624T150457Z.json` → agent-father
-
----
-
 ## 2026-06-26T15:28:08Z
 
 **Brief:** `docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md`
@@ -27,3 +17,13 @@ ORCH-STATE-HOT-COLD-SPLIT: orch-state.json is 2.46 MB / 26,185 lines (53% evicta
 CROSS-SESSION-MULTI-TEAM-ORCH (rev 2): N sessions of same role share `owner_agent` → cannot be distinguished by heartbeat/release probes → double-fire + lock interference. Mutex sound; defeat is attribution-only. P1: thread `CLAUDE_CODE_SESSION_ID` as `owner_client_session` into task_locks; rebind matching ladder; delete self-held-heartbeat; CLAUDE.md step 2.5 PRE-CLAIM gate. P1.5 (liveness + orphan takeover): server-side reaper extends gcExpiredLocks to emit `orphan-signal` rows before GC-delete; 600s periodic timer covers all-sessions-dead case; adopter resumes from checkpoint (git SHA for sprint-task, published artifact for cowork) — never restarts; poison-task cap N_MAX=3 → BUG escalation; orch-state board flip via orch-apply.sh only. P2: session-presence registry. P3: fire-time cron leader election. Grounded lessons: spawn-retry-under-lag (slow≠dead grace), recurring-bug-escalation (N_MAX=3), guaranteed-slot-double-post (period-key dedup), chef-fabricated-publish + headless-no-post (idempotency). PO signoff required.
 
 **Signal dropped:** `docs/signals/cross-session-multi-team-orch-20260628T080825Z.json` → pm (rev 2)
+
+---
+
+## 2026-06-28T17:18:50Z
+
+**Brief:** `docs/architecture-briefs/2026-06-28-fire-time-leader-election-P3-addendum.md`
+
+CROSS-SESSION-MULTI-TEAM-ORCH P3 addendum: 5 items pinned. §A: tick-boundary period-key = floor(fire-time) to cron boundary → `cron:<flow>:YYYY-MM-DDTHH:MMZ`; distinct from `published:<kind>:<period>` artifact dedup (different TTL, purpose, task_id prefix). §B: dispatcher-level election (not per-slot); cowork pipeline is stateful — per-slot concurrent dispatch risks shared-state race with cadence/snapshot; existing Step 4.6 slot-claims are intra-dispatch dedup, unchanged. §C: SF-1 first (session-level), fire-election second (cross-session); fire-election loss releases SF-1 before EXIT; no deadlock. §D: TTL=600s (5× dispatch p99); no heartbeat (per-fire, not sticky); explicit task_release at flow exit; crash safety = TTL backstop + P1.5 orphan-signals. §E: retire 3 patterns — feedback_router_cowork_defer_to_live_leader, feedback_router_manual_drive_overlaps_devteam_loop (both memory-only), and sticky cowork-leader 1800s (executable in leader-lock.md); gate = P3-AF-1 ships + smoke tests pass; AF-1 backstop preserved. P3-MCP: NOT NEEDED — reuse cowork-slot + sprint-task task_kinds; task_id prefix discriminates.
+
+**Signal dropped:** `docs/signals/cross-session-multi-team-orch-20260628T080825Z.json` → pm (rev 2 — addendum companion; no new signal needed)
