@@ -1,6 +1,25 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-28 | **Sprint:** FRONTEND-FRESHNESS-TRANSPARENCY
+**Last updated:** 2026-06-28 | **Sprint:** FIX-FE-ALERTS-SEVERITY-DEFAULT-500
+
+---
+
+## Session: 2026-06-28 (FIX-FE-ALERTS-SEVERITY-DEFAULT-500 — alerts 500 fix)
+
+**FIX-FE-ALERTS-SEVERITY-DEFAULT-500 REVIEW — AlertSeverity extended, default: branch + normalisation, tsc clean, build OK**
+
+Root cause confirmed: `severityColours()` had no `default:` branch; live backend emits `severity:"warning"` → undefined destructure during SSR → 500.
+
+Approach chosen: extend `AlertSeverity` union to include `"warning"` as a first-class value (semantically correct — backend emits it as a real signal class). Belt-and-suspenders `default:` branch kept regardless. Data-boundary `normalizeItemSeverity()` coerces any future unknown values → `"medium"` before they reach the switch.
+
+Files changed: `apps/frontend/app/routes/dashboard.alerts.tsx` — 63 insertions, 8 deletions.
+Commit: `dda89b1c`
+
+Key pattern: KNOWN_SEVERITIES Set guards parseAlertsDto → normalizeItemSeverity → always a modeled value downstream.
+
+tsc: EXIT 0 | Vitest: 1754/1756 pass (2 pre-existing QUE_DESCRIPTIONS) | Remix SSR build: ✓ 694 kB
+
+Zone health: alerts route now handles all live severity values gracefully; warning renders with amber chip/badge/row accent | HEALTHY
 
 ---
 

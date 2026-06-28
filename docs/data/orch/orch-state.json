@@ -6674,7 +6674,7 @@
         "title": "Alerts dashboard 500 — severityColours() has no default branch; live backend emits severity:\"warning\" → undefined destructure SSR crash",
         "desc": "RAW root cause (live stack trace from frontend container + /api/alerts probe): /dashboard/alerts returns 500. Loader + /api/alerts proxy BOTH return 200 — NOT a backend/fetch failure. Crash is during SSR render of AlertRow: TypeError: Cannot destructure property row of severityColours(...) as it is undefined. severityColours() (apps/frontend/app/routes/dashboard.alerts.tsx:163-190) is a switch over only critical|high|medium|low with NO default branch. Live /api/alerts?limit=100 returns 100 items whose severity values are medium:61, high:18, warning:14, low:7 — the 14 warning items are a 5th value the frontend type AlertSeverity does not model, so severityColours(warning) returns undefined and `const {row}=severityColours(item.severity)` at line 396 throws → caught by root ErrorBoundary → 500. SEVERITY_LABEL[severity] and SummaryHeader counts[item.severity] share the same unhandled-value exposure.",
         "zone": "apps/frontend/",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P1",
         "next_agent": "dev-frontend",
         "origin": "user-bug-report",
