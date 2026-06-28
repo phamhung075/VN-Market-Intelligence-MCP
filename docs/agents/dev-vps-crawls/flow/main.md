@@ -1,4 +1,4 @@
-<!-- size-justification: 217L — 7-step VPS scraper orchestration (signal drain, recon, technique select+research, implement, wire, verify, signal QA) plus mandatory decision-journal step; Steps 3b/4/5 carry inline scaffolding that cannot be extracted without losing the self-contained VPS-only pattern -->
+<!-- size-justification: 222L — 7-step VPS scraper orchestration (signal drain, recon, technique select+research, implement, wire, verify, signal QA) plus mandatory decision-journal step; Steps 3b/4/5 carry inline scaffolding that cannot be extracted without losing the self-contained VPS-only pattern -->
 # dev-vps-crawls — Main Flow
 
 **Tools:** `docs/agents/tools/package/developer.md`
@@ -162,6 +162,10 @@ If endpoint returns error: debug scraper → Step 4d.
 ---
 
 ## Step 7 — Signal QA
+
+**Simplicity gate** (before REVIEW) → skill: `.claude/skills/simplicity-gate/SKILL.md`
+Run after scraper code is committed. Self-check: all 4 questions NO (or simplify + re-run).
+Certify in handoff Implementation Record before proceeding to QA signal.
 
 **Decision journal** (mandatory — before REVIEW):
 → skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active task_id from task_board>"]

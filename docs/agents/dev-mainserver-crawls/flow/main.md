@@ -1,4 +1,4 @@
-<!-- size-justification: 209L — technique research (Step 3b) and inline code scaffolding extracted to technique-research.md; remaining content is the 8-step scraper orchestration (drain signal, recon check, technique select, implement, wire, verify, RAM check, signal QA) plus mandatory decision-journal step at QA signal gate; all are atomic sequential flow with no further factoring seam -->
+<!-- size-justification: 213L — technique research (Step 3b) and inline code scaffolding extracted to technique-research.md; remaining content is the 8-step scraper orchestration (drain signal, recon check, technique select, implement, wire, verify, RAM check, signal QA) plus mandatory decision-journal step at QA signal gate; all are atomic sequential flow with no further factoring seam -->
 # dev-mainserver-crawls — Main Flow
 
 **Tools:** `docs/agents/tools/package/developer.md`
@@ -145,6 +145,10 @@ Do NOT modify docker-compose.yml — flag only.
 ---
 
 ## Step 8 — Signal QA
+
+**Simplicity gate** (before REVIEW) → skill: `.claude/skills/simplicity-gate/SKILL.md`
+Run after scraper code is committed. Self-check: all 4 questions NO (or simplify + re-run).
+Certify in handoff Implementation Record before proceeding to QA signal.
 
 **Decision journal** (mandatory — before REVIEW):
 → skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active task_id from task_board>"]

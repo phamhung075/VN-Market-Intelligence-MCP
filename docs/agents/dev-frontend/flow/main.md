@@ -1,4 +1,4 @@
-<!-- size-justification: 197L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, G12 DoD Gate (MVR render-gate + streak rule, blocking from Day 0), ESLint fence Phase-2 note, INV-GATEWAY-1 comments, implementation record template, mandatory decision-journal step, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
+<!-- size-justification: 207L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, G12 DoD Gate (MVR render-gate + streak rule, blocking from Day 0), ESLint fence Phase-2 note, INV-GATEWAY-1 comments, implementation record template, mandatory decision-journal step, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
 # dev-frontend — Main Flow
 
 **Zone:** `apps/frontend/`
@@ -101,6 +101,10 @@ Loaders call `app/lib/api/` — never call api-gateway `fetch` directly inside a
    **NEVER use `git commit -am` or `git commit -a`**
    # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
    # responsibility; this specialist commits directly (explicit paths) — no commit-mutex skill call here.
+
+**Simplicity gate** (before REVIEW) → skill: `.claude/skills/simplicity-gate/SKILL.md`
+Run after all tests GREEN and code committed. Self-check: all 4 questions NO (or simplify + re-run).
+Certify in handoff Implementation Record before proceeding to documentation review.
 
 ---
 

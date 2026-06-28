@@ -66,7 +66,7 @@ Read handoff using delta-read skill:
 4. `depends_on` not Done →
    ```
    # WF-1 STOP-RELEASE (AC-WF1-1/2) — run BEFORE send_telegram + EXIT
-   call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+   call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id, owner_client_session: $CLAUDE_CODE_SESSION_ID })
    // ok=false acceptable (TTL expired) — best-effort cleanup
    now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
    jq --arg s "idle" --arg t "$now" --arg u "developer" \
@@ -90,7 +90,7 @@ REPEAT per acceptance criterion
 → journal (MANDATORY per task): skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Step 0c / task_board claim>"] (after implementation approach is chosen — record WHY this option, not on terminal; routine work: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`)
 - **After each TDD loop** → heartbeat:
 ```
-call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
+call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id, owner_client_session: $CLAUDE_CODE_SESSION_ID })
 if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit partial, BUG telegram, EXIT)
 ```
 
@@ -105,6 +105,10 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
    **NEVER use `git commit -am` or `git commit -a`** — `-a` greedily absorbs staged index content from other sources, violating C2 atomicity (root cause: c47 incident, SHA `8bec73d3`).
    # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
    # responsibility; this specialist commits directly (explicit paths) — no commit-mutex skill call here.
+
+**Simplicity gate** (before REVIEW) → skill: `.claude/skills/simplicity-gate/SKILL.md`
+Run after all tests GREEN and code committed. Self-check: all 4 questions NO (or simplify + re-run).
+Certify in handoff Implementation Record before proceeding to doc update.
 
 **Doc update + graphify** (after code passes, before QA):
 1. Identify related docs touched by this task — check:

@@ -89,7 +89,7 @@ REPEAT per acceptance criterion
 ```
 - **After each TDD loop** → heartbeat:
 ```
-call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
+call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id, owner_client_session: $CLAUDE_CODE_SESSION_ID })
 if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit partial, BUG telegram, EXIT)
 ```
 
@@ -109,6 +109,10 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
    `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit` — format per `docs/policies/commit-convention.md`
    # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
    # responsibility; this specialist commits directly (explicit paths) — no commit-mutex skill call here.
+
+**Simplicity gate** (before REVIEW) → skill: `.claude/skills/simplicity-gate/SKILL.md`
+Run after all tests GREEN and code committed. Self-check: all 4 questions NO (or simplify + re-run).
+Certify in handoff Implementation Record before proceeding to documentation review.
 
 **Documentation review** (after code passes, before QA):
 → Run flow: `docs/agents/developer/flow/doc-review.md` with `SERVICE=<service>`
