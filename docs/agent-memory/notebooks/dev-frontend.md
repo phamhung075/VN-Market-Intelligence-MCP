@@ -1,6 +1,26 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-28 | **Sprint:** FIX-FE-ALERTS-SEVERITY-DEFAULT-500
+**Last updated:** 2026-06-28 | **Sprint:** FRONTEND-ANALYSIS-HUB-CONSOLIDATION
+
+---
+
+## Session: 2026-06-28 (FE-AHUB-W4-SOCIAL-ZONES — 3 stock-scoped analysis zone components)
+
+**FE-AHUB-W4-SOCIAL-ZONES REVIEW — 3 zone files built, 41 tests GREEN, tsc clean**
+
+Three new self-contained zone components added under `apps/frontend/app/components/analysis/`:
+
+1. `ReputationZone.tsx` — CLIENT-SIDE filter. Fetches `/api/reputation` (full universe, no per-code param) via `useFetcher`, filters `leaderboard` where `entry.code === stock`. Exports: `filterReputationEntry`, `filterReputationHistory`. Renders: risk badge (mapRiskLevel), trend label (mapTrend), sparkline from history map.
+
+2. `NewsBuzzZone.tsx` — CLIENT-SIDE filter. Fetches `/api/news-buzz` (full universe, 7-day rolling) via `useFetcher`, filters `leaderboard` where `entry.code === stock`. Exports: `filterNewsBuzzEntry`. Renders: negativity tier badge, 4 stat chips, ratio bar.
+
+3. `ConvictionHistoryZone.tsx` — NATIVE per-stock filter. Fetches `/api/conviction-history?symbol=${stock}` via `useFetcher` — the API returns only the requested ticker's data. Exports: `pickStockConvictionRow`, `pickStockSeries`. Renders: SignalBadge, ScoreBar, sparkline, stale tag.
+
+Pattern: `useFetcher` + `useEffect(() => { load(url); }, [load, stock])` — self-contained, no parent pre-fetch required. Route helpers (mapTrend, signalLabel etc.) imported from existing standalone pages.
+
+Commit: `4be9d552` | Files: 4 | Tests: 41/41 GREEN | tsc: EXIT 0
+
+Zone health: 3 new analysis zone components ready for integration into dashboard.analysis.tsx (INT closer's job); no regressions in existing 1824 tests | HEALTHY
 
 ---
 
