@@ -1532,6 +1532,100 @@
             "title": "get_bctc_pending_refine silently ignores ticker argument (probed live: {ticker:'CTG',limit:1} still returns ACB) AND no tool exists to fetch a specific report's windows by report_id. Blocks on-demand refine of REFINE-CRON-ARM verification-gate ticker CTG (c6b17c36-1f4f-48bc-a367-b48afc163ceb, PENDING, 0 units). Fix: honor the ticker filter in get_bctc_pending_refine, and/or add a get-windows-by-report_id tool.",
             "type": "FIX",
             "zone": "apps/mcp-server/src/"
+          },
+          {
+            "id": "TASK_1990",
+            "title": "P2-AF-1: Dispatcher presence self-registration at dispatch time",
+            "owner": "agent-father",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "docs/agents/ + .claude/skills/",
+            "created_at": "2026-06-28T12:50:00Z",
+            "priority": "high",
+            "size": "S",
+            "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+            "depends": [],
+            "note": "Implement dispatcher presence self-registration: claim session-presence task at dispatch (cowork-team Step 0b + dev-team Step 0). MCP foundation ALREADY SHIPPED in TASK_1989 — no rebuild required."
+          },
+          {
+            "id": "TASK_1991",
+            "title": "P2-AF-2: Wire roster READ into router Step 2.5",
+            "owner": "agent-father",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": ".claude/skills/ + CLAUDE.md",
+            "created_at": "2026-06-28T12:50:00Z",
+            "priority": "high",
+            "size": "S",
+            "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+            "depends": [
+              "TASK_1990"
+            ],
+            "note": "Wire roster READ into router Step 2.5: before PRE-CLAIM, read task_list_held(kind='session-presence'). Enables TASK_1992 verification."
+          },
+          {
+            "id": "TASK_1992",
+            "title": "P2-QA: LIVE-vs-DEPLOYED check + orphan-signals verify",
+            "owner": "qa",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "docs/protocols/ + .claude/skills/",
+            "created_at": "2026-06-28T12:50:00Z",
+            "priority": "high",
+            "size": "M",
+            "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+            "depends": [
+              "TASK_1990",
+              "TASK_1991"
+            ],
+            "note": "QA: verify presence registration works; cross-session read correct; TTL-expiry ZERO orphan-signals (proves reaper allow-list). Conditional rebuild only if live-probe finds fields undeployed."
+          },
+          {
+            "id": "TASK_1993",
+            "title": "P3-ARCH-1: Fire-time leader-election design addendum (5 items)",
+            "owner": "agents-architect",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "docs/architecture-briefs/",
+            "created_at": "2026-06-28T12:50:00Z",
+            "priority": "high",
+            "size": "M",
+            "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+            "depends": [],
+            "note": "Design: (a) sub-daily period-key, (b) dispatcher-level vs per-slot, (c) dev-team SF-1 integration, (d) lease semantics, (e) OBSERVE-ONLY retirement. No code; runs in P2 shadow."
+          },
+          {
+            "id": "TASK_1994",
+            "title": "P3-AF-1: Fire-time leader-election implementation",
+            "owner": "agent-father",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "docs/agents/ + .claude/skills/",
+            "created_at": "2026-06-28T12:50:00Z",
+            "priority": "high",
+            "size": "L",
+            "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+            "depends": [
+              "TASK_1993",
+              "TASK_1992"
+            ],
+            "note": "Implement per TASK_1993: fire-time leader-lock election; retire OBSERVE-ONLY; update cron-cowork-team/cron-detect-loop + dev-team SF-1. Must serialize with TASK_1990/1991."
+          },
+          {
+            "id": "TASK_1995",
+            "title": "P3-QA: Fire-time leader-election verification",
+            "owner": "qa",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "docs/protocols/",
+            "created_at": "2026-06-28T12:50:00Z",
+            "priority": "high",
+            "size": "L",
+            "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+            "depends": [
+              "TASK_1994"
+            ],
+            "note": "QA: parallel fire election, stale-leader reclaim, period-key dedup, no orphan work. 5 test harnesses + negative path (no OBSERVE-ONLY). 53-fail baseline-diff."
           }
         ]
       },
