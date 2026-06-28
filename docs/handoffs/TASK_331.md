@@ -236,6 +236,51 @@ def test_fr4_filter_pages_to_section():
     assert cf_pages[0]["page_num"] == 4
 ```
 
+## [QA] Review Record
+
+**Status:** APPROVED
+**QA agent:** qa
+**Date:** 2026-06-28
+**Commit reviewed:** 892c9efb
+
+### Verdict: APPROVED
+
+All checks passed. TASK_332 (FR-6) is unblocked.
+
+### AC checklist
+- [x] AC-1: `_detect_section_start(page_text: str) -> Optional[str]` present at L141
+- [x] AC-2: IS keywords (7 — accented + unaccented + B02-TCTD banking variant); CF keywords (4); returns "income_statement"/"cash_flow"/None. 8 `_detect_section_start` tests all PASS.
+- [x] AC-3: `_filter_pages_to_section(pages, target_section)` at L166 — balance_sheet calls `select_balance_sheet_section()` then excludes IS/CF pages; IS/CF select contiguous run. 6 filter tests PASS.
+- [x] AC-4: Both functions PURE (no I/O, no HTTP, no DB). Confirmed by inspection of L141-216.
+- [x] AC-5: `execute()` Path A (L496): `pages = _filter_pages_to_section(raw_pages, statement_section)` — manual if/else replaced.
+- [x] AC-6: 14 new FR-4 tests — all 14 PASS.
+- [x] AC-7: FPT non-regression: `test_fr4_fpt_non_regression_no_section_keywords` PASS — all FPT BS pages return None, none dropped. FPT live: exact_dup_count=0, Stage 6 GREEN.
+- [x] AC-8: Zero per-issuer branches — grep for `if issuer/if form/if ticker` in production diff returns empty. B01-DN + B02-TCTD share same keyword lists.
+- [x] AC-9: RISK-6 VCB re-extraction via recompute endpoint uses Path A (PO-confirmed).
+
+### DDD purity
+- `infrastructure/text_table_extractor.py`: ZERO changes in commit 892c9efb (git show --stat confirmed).
+- No static `from.*infrastructure` imports added. Dynamic `importlib.import_module("infrastructure.ocr_worker")` is pre-existing, not new.
+- Application → domain import: L90 `from domain.primitives.select_balance_sheet_section import select_balance_sheet_section` — correct direction.
+
+### Test results
+- Unit (target): **14/14 FR-4 tests PASS** (live run)
+- Full unit suite: **6 failed / 941 passed** — pre-existing baseline (PIL ABI + rasterizer; zero new failures)
+- Full pytest: **11 failed / 1080 passed** — pre-existing baseline unchanged
+- Sandbox G12 primitive tier: **29 PASS + 6 intentional-fail** (5 known_bad canaries + 1 failure_mismatch)
+- Sandbox G12 module tier: **1 PASS**
+
+### VCB section-routing effect
+- POST /api/bctc-eval/recompute/bdcfa5e0-093f-4da1-9412-07197c8e4c48 (VCB Q4-2025)
+- `cross_section_dup_count: 0` — FM-VCB-1 resolved; IS items no longer mis-filed under balance_sheet
+- Stage 4 remains RED due to code_coverage=0.393 (TASK_332/FR-6 dependency) + exact_dup_count=3 (within-section; expected)
+- Note: full VCB Stage 4 GREEN requires FR-6 (TASK_332, not yet done) — expected per task spec
+
+### Crash reconciliation
+Previous QA run crashed mid-execution (tool-call parse error after ~35 tool calls). Left TASK_331 cleanly in REVIEW status in orch-state — no partial flip, no partial [QA] Review Record. This is a full idempotent re-verification from scratch.
+
+---
+
 ## [QA] Acceptance Procedure
 
 1. Verify functions: `_detect_section_start()` and `_filter_pages_to_section()` added and pure (no I/O)

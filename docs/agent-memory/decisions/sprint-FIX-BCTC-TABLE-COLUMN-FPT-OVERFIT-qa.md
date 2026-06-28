@@ -6,6 +6,19 @@
 
 ---
 
+### STEP qa-S6 · qa · 2026-06-28T16:00Z
+**task-id:** TASK_331
+**what-done:** QA gate TASK_331 (FR-4 section-boundary content-signal detection) — APPROVED
+**what-considered:**
+- DDD purity (load-bearing): git show --stat 892c9efb confirms `apps/pdf-extractor/infrastructure/text_table_extractor.py` has ZERO diff lines — infra stays pure. Static grep for `from.*infrastructure` in application layer returns only pre-existing dynamic import via `importlib.import_module("infrastructure.ocr_worker")` inside execute() (not a new static import). `_detect_section_start` + `_filter_pages_to_section` both module-level pure functions — no I/O, no DB, no HTTP. Application imports domain primitive downward only: L90 `from domain.primitives.select_balance_sheet_section import select_balance_sheet_section` — correct direction.
+- NFR-4 (form-INVARIANT): grep for `if issuer`, `if form`, `if ticker` in production code returns empty. Same keyword lists used for B01-DN + B02-TCTD — B02-TCTD "kết quả hoạt động kinh doanh" (banking income stmt) listed in `_INCOME_STMT_START_KEYWORDS`. Zero per-issuer branches.
+- 14 FR-4 tests: all 14 PASS (live run) — IS accented/unaccented/B02-TCTD, CF accented/unaccented, None for BS/continuation, contiguous-run IS select (pages 2-3 stops at CF header p4), CF select, BS excludes IS pages, BS excludes CF pages, FPT non-regression (all BS pages return None), off-balance-sheet page stays in BS, case-insensitive detection.
+- Full unit: 6 failed / 941 passed — exact pre-existing baseline (PIL ABI + rasterizer; zero new failures). Full pytest: 11 failed / 1080 passed — exact pre-existing baseline. Sandbox G12 primitive tier: 29 PASS + 6 intentional-fail (5 known_bad + 1 failure_mismatch). Module tier: 1 PASS. All baselines match.
+- VCB section-routing effect: POST /api/bctc-eval/recompute/bdcfa5e0 → `cross_section_dup_count: 0` (FM-VCB-1 resolved — IS items no longer mis-filed under balance_sheet). Remaining Stage 4 red: code_coverage=0.393 (depends on FR-6/TASK_332) + exact_dup_count=3 (within-section; acceptable). FPT non-regression: exact_dup_count=0, cross_section_dup_count=1 (≤1), Stage 6 GREEN.
+- Crashed prior QA run: left TASK_331 cleanly in REVIEW status (no partial flip, no partial [QA] Review Record). Full idempotent re-verification run from scratch.
+**why-decision:** All 9 AC green, DDD purity confirmed at infra layer, VCB cross_section_dup_count=0 proves FM-VCB-1 resolved, FPT Stage 6 GREEN + dup ≤1, 0 new regressions — APPROVED
+**why-change:** no change from plan
+
 ### STEP qa-S5 · qa · 2026-06-28T14:00Z
 **task-id:** TASK_330
 **what-done:** QA gate TASK_330 (FR-5 same-section dedup `_dedup_rows_within_section`) — APPROVED
