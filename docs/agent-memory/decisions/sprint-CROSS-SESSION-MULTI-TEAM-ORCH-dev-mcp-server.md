@@ -21,3 +21,13 @@
 **why-change:** Point-of-no-return. After TASK_1974-1979 verified all callers supply the field, removing the fallback is safe. Keeping it would permanently defer the bug fix.
 
 **security-note:** owner_client_session is a coordination key — never echoed to logs or Telegram. Implementation confirmed: it is stored in DB and used in WHERE clauses only; never returned in health probes or log lines.
+
+---
+
+### DJ-GATE-1 · dev-mcp-server · 2026-06-28T11:50:00Z
+**task-id:** FIX-VNM-BCTC-ROWS-DATA-LOSS-RECOVER
+**what-done:** Restored VNM 2025Q4 bctc_table_rows from 94→0 (QA overwrite) by calling finalize_bctc_refine for report 4316f6d1-51ba-4912-a48c-dab5a64a2c81 via gateway MCP session. RECON confirmed bctc_refined_units (2 DONE units, 46+49 rows) survived the overwrite. Re-materialized 94 rows (BS=46, IS=22, CF=26).
+**what-considered:**
+- only path: PO-verified recovery — finalize_bctc_refine replays from surviving refined_units; no code change needed; no fabrication; no backup restore.
+**why-decision:** bctc_refined_units confirmed intact (both units window_status=DONE). Production finalize pathway reproduces rows deterministically from the same source the original refine used. Result is canonical, not hand-inserted.
+**why-change:** no change from plan
