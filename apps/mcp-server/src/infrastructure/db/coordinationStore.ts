@@ -83,6 +83,17 @@ function getCoordinationDb(): Database | null {
     // Create table on first open (idempotent)
     ensureCoordinationTable(db);
 
+    // Flush WAL → main DB file so that migration writes from the previous
+    // process are durable to the main file on every startup.  Without this,
+    // SQLite WAL mode retains migration frames in the WAL file; a fresh cold
+    // start that opens the DB before the WAL is auto-checkpointed reads the
+    // pre-migration schema from the main DB page cache — the "WAL-ghost"
+    // recurrence class (TASK_1989 / FIX-COORD-WAL-CHECKPOINT-POST-MIGRATION).
+    // TRUNCATE mode resets the WAL to zero bytes after checkpointing, which is
+    // optimal for startup: the next writer starts with a clean WAL.
+    db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+    console.info("[coordinationStore] WAL checkpoint (TRUNCATE) complete — coordination.db fully flushed to main file");
+
     _coordDb = db;
     return _coordDb;
   } catch (err) {
@@ -912,6 +923,13 @@ export function _reaperTick(dbOverride?: Database): number {
  *          prevent timer leaks in tests or when the server closes cleanly.
  */
 export function startPeriodicReaper(): ReturnType<typeof setInterval> {
+  // Eagerly open the coordination DB so the startup WAL checkpoint
+  // (PRAGMA wal_checkpoint(TRUNCATE) in getCoordinationDb) runs immediately
+  // at server startup — not lazily on first tool call.  This ensures
+  // migration frames are flushed to the main DB file before any reader
+  // could see a stale schema (WAL-ghost recurrence class, TASK_1989).
+  getCoordinationDb();
+
   console.info(
     "[coordinationStore] [reaper] periodic reaper armed" +
       " (interval=600s, grace=300s, allow-list=sprint-task|cowork-slot|dashboard-row)",
