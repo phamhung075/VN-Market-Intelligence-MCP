@@ -904,10 +904,42 @@ def _parse_value(raw: Optional[str]) -> Optional[float]:
     Apply vn_number_normalize then convert to float.
     On failure, try OCR-coercion for mixed comma/dot numbers.
     Returns None on any failure.
+
+    FR-6 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT): two OCR-artifact pre-processing
+    rules applied BEFORE vn_number_normalize to fix parenthetical VN number
+    corruption from poppler/Tesseract rendering:
+
+    Rule A — space artifact: "(1.992. 671)" → "(1.992.671)"
+        Mirrors the identical handler already in _find_code_in_line (~L269).
+        Without this rule, vn_number_normalize("(1.992. 671)") → None
+        (the space breaks _VN_INT_RE), giving value_current=None instead of
+        -1992671. Defense-in-depth for the None case.
+
+    Rule B — missing-dot artifact: "(1.992671)" → "(1.992.671)"
+        TRUE root cause of FM-VCB-4 (value_current=-1.992671):
+        OCR drops the middle thousands-separator dot, producing "(1.992671)".
+        vn_number_normalize treats "1.992671" as a plain decimal via
+        _PLAIN_NUMBER_RE → returns "-1.992671" → float = -1.992671 (WRONG).
+        Pattern: parenthetical with 1–3 digits + "." + exactly 6 digits =
+        two 3-digit VN thousands groups with the separator dot missing.
+        Only fires on this specific structure — backward-safe against FPT
+        large parens like "(586.166.744.274)" (>6 digits after first dot).
+
+    NFR-4: both rules are structural/OCR-artifact based — no issuer branching.
     """
     if raw is None:
         return None
     cleaned = str(raw).strip()
+
+    # FR-6 Rule A: normalize OCR-artifact space inside parenthetical VN number.
+    # e.g. "(1.992. 671)" → "(1.992.671)"
+    cleaned = re.sub(r"(\(\d[\d.]*)\.\s+(\d[\d.]*\))", r"\1.\2", cleaned)
+
+    # FR-6 Rule B: restore missing thousands-separator dot in parenthetical.
+    # e.g. "(1.992671)" → "(1.992.671)"
+    # Matches: "(" + 1-3 digits + "." + exactly 3 digits + exactly 3 digits + ")"
+    cleaned = re.sub(r"\((\d{1,3})\.(\d{3})(\d{3})\)", r"(\1.\2.\3)", cleaned)
+
     normalized = vn_number_normalize(cleaned)
     if normalized is None:
         # Try OCR-coercion (e.g. "44,338.155.487.272" → "44.338.155.487.272")

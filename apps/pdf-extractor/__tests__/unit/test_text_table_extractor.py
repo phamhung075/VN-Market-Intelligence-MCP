@@ -13,6 +13,7 @@ Coverage:
   - TC7: multi-page stitching (row_order increments globally)
   - TC8: period detection from header lines
   - TC9: empty input → empty rows
+  - FR-6: _parse_value OCR-artifact handlers (missing-dot + space artifact)
   - TC10: FPT golden balance-check (code 100 value matches anchor to the dong)
 """
 
@@ -21,6 +22,7 @@ from infrastructure.text_table_extractor import (
     TextTableExtractor,
     _CODE_VALUE_COL_RE,
     _dedup_rows_within_section,
+    _parse_value,
 )
 
 # ---------------------------------------------------------------------------
@@ -575,3 +577,64 @@ class TestFR5DedupRowsWithinSection:
         result = _dedup_rows_within_section(rows)
         assert len(result) == 1, "Both value_current=None → identical dup → first wins"
         assert result[0]["page_number"] == 1
+
+
+# ---------------------------------------------------------------------------
+# FR-6 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT): _parse_value OCR-artifact handlers
+# ---------------------------------------------------------------------------
+
+
+class TestParseValueFR6:
+    """
+    Tests for the two OCR-artifact pre-processing rules added to _parse_value
+    by FR-6 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT).
+
+    TRACE RESULT (dev trace 2026-06-28):
+        vn_number_normalize("(1.992.671)")  → "-1992671"  (canonical: CORRECT)
+        vn_number_normalize("(1.992. 671)") → None        (space artifact → None, fixed by Rule A)
+        vn_number_normalize("(1.992671)")   → "-1.992671" (missing-dot = TRUE FM-VCB-4 root cause)
+
+    The defensive test vn_number_normalize("(1.992.671)") == "-1992671" PASSES,
+    confirming the bug is upstream of vn_number_normalize.  The actual OCR
+    drops the middle thousands-separator dot, sending "(1.992671)" to
+    vn_number_normalize which routes it through _PLAIN_NUMBER_RE → decimal.
+    Both rules are backward-safe (verified against FPT large-parens fixtures).
+    NFR-4: no issuer branching — structural OCR-artifact detection only.
+    """
+
+    def test_fr6_rule_b_missing_dot_is_true_bug(self) -> None:
+        """
+        FR-6 Rule B (true FM-VCB-4 root cause): OCR drops the middle
+        thousands-separator dot in "(1.992.671)" → "(1.992671)".
+        _parse_value must restore the dot and return -1992671.0, not -1.992671.
+        """
+        assert _parse_value("(1.992671)") == pytest.approx(-1992671.0)
+        assert _parse_value("(1.921556)") == pytest.approx(-1921556.0)
+
+    def test_fr6_rule_a_space_artifact(self) -> None:
+        """
+        FR-6 Rule A (defense-in-depth): OCR inserts space after dot inside
+        parenthetical: "(1.992. 671)".  Without Rule A, vn_number_normalize
+        returns None.  After Rule A the space is removed → -1992671.0.
+        """
+        assert _parse_value("(1.992. 671)") == pytest.approx(-1992671.0)
+
+    def test_fr6_canonical_unchanged(self) -> None:
+        """
+        FR-6 backward-safety: canonical "(1.992.671)" must not be altered
+        by the new rules and must still parse to -1992671.0.
+        """
+        assert _parse_value("(1.992.671)") == pytest.approx(-1992671.0)
+
+    def test_fr6_fpt_large_parens_unaffected(self) -> None:
+        """
+        FR-6 FPT non-regression: "(586.166.744.274)" must not match Rule B
+        (more than 6 digits after the first dot) and must parse correctly.
+        """
+        assert _parse_value("(586.166.744.274)") == pytest.approx(-586166744274.0)
+
+    def test_fr6_fpt_another_large_parens(self) -> None:
+        """
+        FR-6 FPT non-regression: "(619.531.925.859)" must be unaffected.
+        """
+        assert _parse_value("(619.531.925.859)") == pytest.approx(-619531925859.0)

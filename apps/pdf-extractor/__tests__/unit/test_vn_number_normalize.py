@@ -172,3 +172,31 @@ def test_single_thousands_group():
     """"1.234" (single thousands group, no comma) → "1234" (VN integer rule)."""
     result = vn_number_normalize("1.234")
     assert result == "1234"
+
+
+# ---------------------------------------------------------------------------
+# FR-6 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT): parenthetical VCB assumption check
+# ---------------------------------------------------------------------------
+
+
+def test_vn_number_normalize_parenthetical_vcb():
+    """FR-6: parenthetical VN number parsing — core assumption check (VCB FM-VCB-4).
+
+    vn_number_normalize already handles the canonical form "(1.992.671)" correctly
+    via _PARENS_RE + _VN_INT_RE. These assertions PASS, confirming that the
+    FM-VCB-4 bug (value_current=-1.992671 instead of -1992671) is UPSTREAM of
+    vn_number_normalize: the OCR drops the middle thousands-separator dot,
+    producing "(1.992671)" which reaches _PLAIN_NUMBER_RE as decimal → -1.992671.
+    The fix is in _parse_value (infrastructure layer), not here.
+
+    TRACE RESULT (confirmed by dev trace, 2026-06-28):
+        vn_number_normalize("(1.992.671)")  → "-1992671"   ← PASSES (canonical OK)
+        vn_number_normalize("(1.992. 671)") → None         ← space artifact → None
+        vn_number_normalize("(1.992671)")   → "-1.992671"  ← missing-dot = TRUE BUG
+    """
+    # VCB FM-VCB-4 canonical cases — normalizer handles these correctly as-is
+    assert vn_number_normalize("(1.992.671)") == "-1992671"
+    assert vn_number_normalize("(1.921.556)") == "-1921556"
+
+    # FPT non-regression: large parenthetical form must still work after any change
+    assert vn_number_normalize("(586.166.744.274)") == "-586166744274"
