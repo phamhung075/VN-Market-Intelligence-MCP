@@ -235,12 +235,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "idle — tick 20260627T224000Z closed: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L DONE (qa.md treadmill root-caused — qa now APPEND-class write-time self-cap; qa.md 183L under cap). Awaiting next dev-team cron.",
-    "updated_by": "dev-team",
-    "updated_at": "2026-06-27T22:58:51Z"
+    "status": "in_progress",
+    "active_task_id": "FIX-FE-ALERTS-SEVERITY-DEFAULT-500",
+    "next_agent": "dev-frontend",
+    "next_action": "Dispatch dev-frontend to fix FIX-FE-ALERTS-SEVERITY-DEFAULT-500 — add default branch to severityColours() + defensive SEVERITY_LABEL/SummaryHeader + normalize warning→medium at parseAlertsDto; rebuild frontend; RAW-verify /dashboard/alerts returns 200 and renders. FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT remains queued in ready[] for ba behind this user-facing 500.",
+    "updated_by": "po",
+    "updated_at": "2026-06-28T07:05:37Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6667,8 +6667,49 @@
       "deprecated_by": "po-s121",
       "note": "DEPRECATED non-routing stub. Canonical head SSOT = top-level .head (orch-state-access.md §4). Any script writing routing fields here is a BUG (re-collapsed by po-s121 after po-vn-macro-tooling-sprint-open.jq / po-fda9-groom-ready.jq / dev-team-router re-inflated it — retarget those to .head; SSOT-INTEGRITY-PERIMETER ships the G-7 gate that hard-fails re-inflation)."
     },
-    "in_progress": [],
-    "ready": [],
+    "in_progress": [
+      {
+        "id": "FIX-FE-ALERTS-SEVERITY-DEFAULT-500",
+        "type": "FIX",
+        "title": "Alerts dashboard 500 — severityColours() has no default branch; live backend emits severity:\"warning\" → undefined destructure SSR crash",
+        "desc": "RAW root cause (live stack trace from frontend container + /api/alerts probe): /dashboard/alerts returns 500. Loader + /api/alerts proxy BOTH return 200 — NOT a backend/fetch failure. Crash is during SSR render of AlertRow: TypeError: Cannot destructure property row of severityColours(...) as it is undefined. severityColours() (apps/frontend/app/routes/dashboard.alerts.tsx:163-190) is a switch over only critical|high|medium|low with NO default branch. Live /api/alerts?limit=100 returns 100 items whose severity values are medium:61, high:18, warning:14, low:7 — the 14 warning items are a 5th value the frontend type AlertSeverity does not model, so severityColours(warning) returns undefined and `const {row}=severityColours(item.severity)` at line 396 throws → caught by root ErrorBoundary → 500. SEVERITY_LABEL[severity] and SummaryHeader counts[item.severity] share the same unhandled-value exposure.",
+        "zone": "apps/frontend/",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "next_agent": "dev-frontend",
+        "origin": "user-bug-report",
+        "root_cause": "severityColours() switch lacks default branch; backend emits unmodelled severity \"warning\" → undefined → destructure throw → SSR crash → root ErrorBoundary 500",
+        "fix_spec": "Make the severity render path total/defensive so an unknown severity NEVER throws: (1) add a default branch to severityColours() returning a neutral (slate/low) SeverityColour; (2) give SEVERITY_LABEL lookup + SummaryHeader counts a fallback for unmodelled values; (3) normalize at the parse boundary (parseAlertsDto / fetchAlertsData) — map known synonyms (warning→medium) and bucket any unknown to a safe default. Decide the warning→canonical mapping (recommend warning→medium) with BA/architect if product semantics matter. Layout-agnostic, no per-value special-casing beyond the synonym map.",
+        "verification_gate": "curl -s -o /dev/null -w %{http_code} http://localhost:3001/dashboard/alerts == 200 AND the page renders the alerts table/UI (not the ErrorBoundary fallback) with the live data set that contains severity:warning items; rebuild frontend then RAW re-probe.",
+        "size": "S",
+        "baseline_pass": "frontend build green",
+        "created_at": "2026-06-28T07:05:37Z",
+        "created_by": "po"
+      }
+    ],
+    "ready": [
+      {
+        "id": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "type": "SPRINT-M",
+        "title": "Generalize BCTC table/column extraction across issuers (de-overfit from FPT)",
+        "desc": "Table/column split layer in apps/pdf-extractor/infrastructure/text_table_extractor.py is overfit to FPT OCR layout (regexes built from FPT pages 4-5/7; BT3-FIX-2..5 all FPT-driven). Correct only for FPT; mis-maps columns / drops rows for all other issuers. Generalize column/table detection (layout-adaptive, NOT per-ticker special-case).",
+        "zone": "apps/pdf-extractor/",
+        "status": "READY",
+        "priority": "P1",
+        "next_agent": "ba",
+        "origin": "user-bug-report",
+        "handoff": "docs/handoffs/FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT.md",
+        "acceptance": "Correct code→label→period-value extraction RAW-verified on multiple real issuers: VCB (bank B02-TCTD) + HPG (non-bank industrial) + FPT non-regression; per-issuer bctc-eval detector gates green (value_blank_label_max=0 etc); sandbox G12 both tiers green; fix must be layout-adaptive not issuer-branched.",
+        "cascade": [
+          "ba",
+          "architect",
+          "pm",
+          "dev-pdf-extractor"
+        ],
+        "created_at": "2026-06-28T06:54:35Z",
+        "created_by": "po"
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -6733,7 +6774,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-06-27T18:48:31Z",
+    "last_triaged_at": "2026-06-28T06:54:35Z",
     "last_triaged_by": "po"
   },
   "_meta": {
