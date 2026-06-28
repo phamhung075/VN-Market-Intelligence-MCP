@@ -3934,10 +3934,11 @@
           "qa.md 207L (resolved via FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L)",
           "dev-pdf-extractor.md 240L (CLEAN-NB-TRIM-PDFX-2 backlog)",
           "dev-frontend.md 224L @ 2026-06-28T07:12:25Z (signal TRIAGED->processed)",
-          "architect.md 211L @ 2026-06-28T07:30:55Z (signal TRIAGED->processed)"
+          "architect.md 211L @ 2026-06-28T07:30:55Z (signal TRIAGED->processed)",
+          "pm.md 238L @ 2026-06-28T08:31:01Z (signal TRIAGED->processed)"
         ],
-        "recurrence_count": 4,
-        "escalation_note": "recurring-bug-escalation: 4 append-class agents breached post-qa-fix -> systemic enforcement gap, prioritize. annotated 2026-06-28T08:13:59Z"
+        "recurrence_count": 5,
+        "escalation_note": "recurring-bug-escalation: 5 append-class agents breached post-qa-fix -> systemic enforcement gap, prioritize. annotated 2026-06-28T08:48:22Z"
       },
       {
         "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
