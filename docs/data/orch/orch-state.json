@@ -1123,8 +1123,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-28T13:26:19Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-28T18:06:32Z",
+    "_updated_by": "po:FE-AHUB-board-advance",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -2948,13 +2948,13 @@
             "title": "Build components/analysis/TechnicalZone.tsx — merge the FULL dashboard.technical.tsx content into a reusable component scoped to a stock-code prop; consume api.price-history.$ticker.tsx. NEW FILE ONLY — do NOT edit dashboard.analysis.tsx.",
             "owner": "dev-frontend",
             "type": "FEATURE",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "apps/frontend/app/components/analysis/TechnicalZone.tsx",
             "created_at": "2026-06-28T17:41:00Z",
             "size": "L",
             "priority": "high",
             "depends": [],
-            "status_note": "DISPATCH-READY parallel wave-1. sprint-task lock task:FE-AHUB-W1-TECHNICAL-ZONE reserved (dispatcher session eb8b5309). Worker self-re-claims under its OWN session on spawn.",
+            "status_note": "BUILD COMPLETE — committed + tests green; PENDING QA live-verify (qa flips DONE_VERIFIED). Advanced by po session eb8b5309.",
             "note": "Port technical page chart/indicator UI into a <TechnicalZone code=...> component. Reuse existing charts under app/components/charts. Keep loader/fetch via the existing /api/price-history/<ticker> proxy. The standalone route removal happens in the INT closer, NOT here."
           },
           {
@@ -2962,13 +2962,13 @@
             "title": "Build components/analysis/CorporateEventsZone.tsx — embed corporate-events filtered to the selected code. /api/corporate-events has no ?code param: fetch full-universe and CLIENT-SIDE filter rows by code. NEW FILE ONLY.",
             "owner": "dev-frontend",
             "type": "FEATURE",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "apps/frontend/app/components/analysis/CorporateEventsZone.tsx",
             "created_at": "2026-06-28T17:41:00Z",
             "size": "M",
             "priority": "high",
             "depends": [],
-            "status_note": "DISPATCH-READY parallel wave-1. sprint-task lock task:FE-AHUB-W2-CORPEVENTS-ZONE reserved (dispatcher session eb8b5309).",
+            "status_note": "BUILD COMPLETE — committed + tests green; PENDING QA live-verify (qa flips DONE_VERIFIED). Advanced by po session eb8b5309.",
             "note": "Reuse the rendering from dashboard.corporate-events.tsx but as a <CorporateEventsZone code=...>; filter the full-universe payload to rows matching code. Optional future backend ?code param is BACKLOG, not this sprint."
           },
           {
@@ -2976,13 +2976,13 @@
             "title": "Build components/analysis/FinancialsZone.tsx — embed financials showing ONLY the selected code. /api/financials returns full-universe (78 codes) with no params: CLIENT-SIDE filter by code. NEW FILE ONLY.",
             "owner": "dev-frontend",
             "type": "FEATURE",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "apps/frontend/app/components/analysis/FinancialsZone.tsx",
             "created_at": "2026-06-28T17:41:00Z",
             "size": "M",
             "priority": "high",
             "depends": [],
-            "status_note": "DISPATCH-READY parallel wave-1. sprint-task lock task:FE-AHUB-W3-FINANCIALS-ZONE reserved (dispatcher session eb8b5309).",
+            "status_note": "BUILD COMPLETE — committed + tests green; PENDING QA live-verify (qa flips DONE_VERIFIED). Advanced by po session eb8b5309.",
             "note": "Reuse dashboard.financials.tsx rendering as <FinancialsZone code=...>; select the single matching code row from the full-universe screener payload."
           },
           {
@@ -2990,13 +2990,13 @@
             "title": "Build 3 components: components/analysis/ReputationZone.tsx + NewsBuzzZone.tsx + ConvictionHistoryZone.tsx — each scoped to the selected code. Reputation+news-buzz are full-universe -> client-side filter; conviction-history accepts ?symbol=<code>. NEW FILES ONLY.",
             "owner": "dev-frontend",
             "type": "FEATURE",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "apps/frontend/app/components/analysis/SocialZones",
             "created_at": "2026-06-28T17:41:00Z",
             "size": "M",
             "priority": "high",
             "depends": [],
-            "status_note": "DISPATCH-READY parallel wave-1 (3 simple zones grouped into one worker to cap concurrency at 4). sprint-task lock task:FE-AHUB-W4-SOCIAL-ZONES reserved (dispatcher session eb8b5309).",
+            "status_note": "BUILD COMPLETE — committed + tests green; PENDING QA live-verify (qa flips DONE_VERIFIED). Advanced by po session eb8b5309.",
             "note": "ReputationZone + NewsBuzzZone: fetch full-universe, filter to code. ConvictionHistoryZone: call /api/conviction-history?symbol=<code> (native filter). Mirror the rendering of the three standalone dashboard pages."
           },
           {
@@ -3004,7 +3004,7 @@
             "title": "SERIAL CLOSER (sole editor of dashboard.analysis.tsx): import + place the 6 zone components + add Shareholders button (->/dashboard/shareholders?code=) + Officers button (->/dashboard/officers?code=); DELETE dashboard.technical.tsx; fix TopNav Ky Thuat link (remove or redirect to analysis) + update FE-HEADER-SSOT-top-nav.test.tsx + task17-p2-1b-price-history-loader.test.ts.",
             "owner": "dev-frontend",
             "type": "FEATURE",
-            "status": "BLOCKED",
+            "status": "READY",
             "zone": "apps/frontend/app/routes/dashboard.analysis.tsx",
             "created_at": "2026-06-28T17:41:00Z",
             "size": "L",
@@ -3015,7 +3015,7 @@
               "FE-AHUB-W3-FINANCIALS-ZONE",
               "FE-AHUB-W4-SOCIAL-ZONES"
             ],
-            "status_note": "BLOCKED until all 4 component builds land. This is the ONLY task that edits the shared file dashboard.analysis.tsx -> single-owner serialization prevents the shared-file merge conflict. Keep additions minimal (import + place) to avoid worsening the god-file (see FACTORY-FRONTEND-split-dashboard-analysis backlog).",
+            "status_note": "UNBLOCKED — all 4 zone builds (W1 87871e06/68bbcfc4, W2 961ce5f8, W3 df70cb76, W4 4be9d552) landed REVIEW. DISPATCH-READY for serial INT closer (sole editor of dashboard.analysis.tsx).",
             "note": "Wire components, add 2 Link buttons, remove technical route + its nav link/tests. Commit explicit paths via commit-mutex. No -a/-am."
           },
           {
