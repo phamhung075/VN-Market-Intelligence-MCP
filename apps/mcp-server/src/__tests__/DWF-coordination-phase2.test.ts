@@ -362,20 +362,22 @@ describe("DV-P2-4: Explicit ttl_seconds:180 present in cowork-team flow (R1 code
     }
   });
 
-  it("Step 0b: leader lock claim must have ttl_seconds: 1800 (AC-P2-5-3)", () => {
+  it("Step 0b.2: leader lock claim must have ttl_seconds: 600 (P3 fire-time election, AC-P3-FIRE-ELECTION)", () => {
     // NB-COWORK-MAIN-SPLIT (2026-06-03): leader-lock logic moved from main.md to leader-lock.md
+    // P3-FIRE-ELECTION (TASK_1994): static cowork-leader (TTL=1800s sticky) replaced with
+    // cron:cowork:<TICK> fire-time election (TTL=600s, no heartbeat, per addendum §D.1).
     const content = readFileSync(LEADER_LOCK_FILE, "utf-8");
 
-    // Leader lock TTL must be explicit 1800 (2 × 15-min heartbeat).
-    // Whitespace-tolerant: doc formatting may use alignment spaces (e.g. "ttl_seconds:    1800").
-    expect(content).toMatch(/ttl_seconds:\s+1800/);
+    // Fire-election lock TTL must be 600s (crash-safety backstop; no heartbeat renewal).
+    // Whitespace-tolerant: doc formatting may use alignment spaces (e.g. "ttl_seconds:          600").
+    expect(content).toMatch(/ttl_seconds:\s+600/);
 
-    // Verify it's in the Step 0b section specifically
-    const step0bMatch = content.match(/##\s*Step 0b[\s\S]*?(?=##\s*Step)/);
+    // Verify it's in the Step 0b section specifically (Step 0b.2 in P3 doc; no subsequent ## Step header)
+    const step0bMatch = content.match(/##\s*Step 0b[\s\S]*?(?=##\s*Step|$)/);
     if (step0bMatch) {
       const step0b = step0bMatch[0];
-      expect(step0b).toMatch(/ttl_seconds:\s+1800/);
-      expect(step0b).toContain("cowork-leader");
+      expect(step0b).toMatch(/ttl_seconds:\s+600/);
+      expect(step0b).toContain("cron:cowork:");
     }
   });
 });
