@@ -638,6 +638,64 @@ def _apply_positional_cutoff(rows: List[Dict], statement_section: str) -> List[D
     return rows[: last_sentinel_idx + 1]
 
 
+def _dedup_rows_within_section(rows: List[Dict]) -> List[Dict]:
+    """
+    FR-5: Drop identical same-section duplicate rows (first occurrence wins).
+
+    Guard: only drops when (code, value_current) pair is IDENTICAL to first
+    occurrence.  If value_current DIFFERS (OCR variant / different period
+    column), BOTH rows are emitted and a WARNING is logged.
+
+    Scope: ONE assemble() call = one statement_section.  Cross-section
+    duplicates remain valid and are handled by Stage-4 eval.
+
+    Rows with code=None (section headers / separators) always pass through
+    unchanged — they carry no structural identity.
+
+    NFR-4: detection is (code, value_current) equality only.  Zero per-issuer
+    or per-ticker branches.
+    """
+    seen: dict[str, Optional[float]] = {}  # code → first value_current seen
+    out: List[Dict] = []
+    for row in rows:
+        code = row.get("code")
+        if code is None:
+            # Header / separator rows have no code identity — always emit.
+            out.append(row)
+            continue
+        vc = row.get("value_current")
+        if code not in seen:
+            seen[code] = vc
+            out.append(row)
+        else:
+            first_vc = seen[code]
+            if first_vc == vc:
+                # Exact (code, value_current) duplicate — drop, keep first.
+                logger.warning(
+                    "_dedup_rows_within_section: dropping identical dup "
+                    "code=%r value_current=%r (page=%r row_order=%r)",
+                    code,
+                    vc,
+                    row.get("page_number"),
+                    row.get("row_order"),
+                )
+                # is_duplicate=True: do NOT append
+            else:
+                # Same code, different value_current → OCR variant or
+                # different period column.  Emit both with a WARNING.
+                logger.warning(
+                    "_dedup_rows_within_section: code=%r OCR variant values "
+                    "%r vs %r — emitting both (page=%r row_order=%r)",
+                    code,
+                    first_vc,
+                    vc,
+                    row.get("page_number"),
+                    row.get("row_order"),
+                )
+                out.append(row)
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -1566,6 +1624,13 @@ class TextTableExtractor:
             )
 
             all_rows.extend(page_rows)
+
+        # FR-5: Same-section duplicate-row deduplication (post-stitch, pre-cutoff).
+        # Drops rows where (code, value_current) is IDENTICAL to a prior row in
+        # this assemble() call.  Same code with different value_current → both
+        # emitted (OCR variant / different period column).  Scope: within this
+        # single assemble() call only; cross-section dups remain valid.
+        all_rows = _dedup_rows_within_section(all_rows)
 
         # BT3-FIX5 Ruling B — Positional cutoff:
         # Drop all rows after the last sentinel code (270/440 for balance sheets).

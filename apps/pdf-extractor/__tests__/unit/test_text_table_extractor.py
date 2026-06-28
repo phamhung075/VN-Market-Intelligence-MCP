@@ -17,7 +17,11 @@ Coverage:
 """
 
 import pytest
-from infrastructure.text_table_extractor import TextTableExtractor, _CODE_VALUE_COL_RE
+from infrastructure.text_table_extractor import (
+    TextTableExtractor,
+    _CODE_VALUE_COL_RE,
+    _dedup_rows_within_section,
+)
 
 # ---------------------------------------------------------------------------
 # Shared fixture text helpers
@@ -397,3 +401,177 @@ class TestFR1CodeRangeGate:
         m = _CODE_VALUE_COL_RE.match(line)
         assert m is not None, "Layout 3 must match 3-digit code 300"
         assert m.group(1) == "300"
+
+
+# ---------------------------------------------------------------------------
+# FR-5: _dedup_rows_within_section — same-section duplicate-row prevention
+# ---------------------------------------------------------------------------
+
+
+class TestFR5DedupRowsWithinSection:
+    """
+    AC-1..AC-9 tests for _dedup_rows_within_section().
+
+    Covers:
+      - Identical (code, value_current) → first occurrence kept, second dropped.
+      - Same code, different value_current (OCR variant) → BOTH rows emitted.
+      - Rows with code=None (headers / separators) → always emitted.
+      - A unique row is untouched.
+      - Cross-section guard: function is called per assemble() call so cross-section
+        dups never reach it; this is validated by the integration-level multi-section
+        fixture below.
+
+    Pattern anchored on FM-HPG-2 (code='140' Hàng tồn kho and code='400'
+    Vốn chủ sở hữu appearing on cover-page summary AND detail page with identical
+    values).
+    """
+
+    # AC-2 + AC-7 sub-test 1: identical (code, value) → one row emitted (first wins)
+    def test_exact_dup_collapsed_to_first(self) -> None:
+        """
+        Identical (code='140', value_current=1_986_588_655) on two pages.
+        FM-HPG-2 pattern: cover-page summary + detail page both carry the same row.
+        First occurrence (page_number=1) must win.
+        """
+        rows = [
+            {
+                "code": "140",
+                "label": "Hàng tồn kho",
+                "value_current": 1_986_588_655,
+                "page_number": 1,
+                "row_order": 10,
+            },
+            {
+                "code": "140",
+                "label": "Hàng tồn kho",
+                "value_current": 1_986_588_655,  # identical value
+                "page_number": 2,
+                "row_order": 15,
+            },
+        ]
+        result = _dedup_rows_within_section(rows)
+        assert len(result) == 1, (
+            "Exact (code, value_current) dup must be collapsed to 1 row"
+        )
+        assert result[0]["page_number"] == 1, "First occurrence (page 1) must win"
+        assert result[0]["code"] == "140"
+
+    # AC-3 + AC-7 sub-test 2: different value_current → both rows emitted
+    def test_same_code_different_value_both_emitted(self) -> None:
+        """
+        Same code='140' but value_current differs between pages (OCR artifact
+        or genuinely different column selection).  Both rows must be emitted.
+        """
+        rows = [
+            {
+                "code": "140",
+                "label": "Hàng tồn kho",
+                "value_current": 1_986_588_655,
+                "page_number": 1,
+                "row_order": 10,
+            },
+            {
+                "code": "140",
+                "label": "Hàng tồn kho",
+                "value_current": 1_986_588_656,  # differs by 1 (OCR artifact)
+                "page_number": 2,
+                "row_order": 15,
+            },
+        ]
+        result = _dedup_rows_within_section(rows)
+        assert len(result) == 2, (
+            "Same code with DIFFERENT value_current must emit both rows (OCR variant)"
+        )
+        assert result[0]["value_current"] == 1_986_588_655
+        assert result[1]["value_current"] == 1_986_588_656
+
+    # AC-2: header/separator rows (code=None) always pass through
+    def test_header_rows_with_none_code_always_pass(self) -> None:
+        """
+        Rows with code=None are section headers / separators.
+        They carry no structural identity and must always be emitted regardless
+        of how many appear.
+        """
+        rows = [
+            {"code": None, "label": "A. TÀI SẢN NGẮN HẠN", "value_current": None, "page_number": 1, "row_order": 0},
+            {"code": "140", "label": "Hàng tồn kho", "value_current": 100, "page_number": 1, "row_order": 1},
+            {"code": None, "label": "B. TÀI SẢN DÀI HẠN", "value_current": None, "page_number": 1, "row_order": 2},
+        ]
+        result = _dedup_rows_within_section(rows)
+        assert len(result) == 3, "Header rows (code=None) must all pass through"
+        assert result[0]["label"] == "A. TÀI SẢN NGẮN HẠN"
+        assert result[2]["label"] == "B. TÀI SẢN DÀI HẠN"
+
+    # AC-7 sub-test 3 (cross-section guard): unique rows are untouched
+    def test_unique_rows_untouched(self) -> None:
+        """
+        A row with a unique (code, value_current) combination must pass through
+        without modification — no false drops.
+        """
+        rows = [
+            {"code": "100", "label": "TÀI SẢN NGẮN HẠN", "value_current": 5_000_000, "page_number": 1, "row_order": 0},
+            {"code": "200", "label": "TÀI SẢN DÀI HẠN", "value_current": 3_000_000, "page_number": 1, "row_order": 1},
+            {"code": "270", "label": "TỔNG CỘNG TÀI SẢN", "value_current": 8_000_000, "page_number": 1, "row_order": 2},
+        ]
+        result = _dedup_rows_within_section(rows)
+        assert len(result) == 3, "Unique rows must all pass through unchanged"
+
+    # FM-HPG-2 pattern: two duplicated codes (140 and 400) in same section
+    def test_fm_hpg2_two_duplicate_codes_both_collapsed(self) -> None:
+        """
+        FM-HPG-2: Both code='140' (Hàng tồn kho) AND code='400' (Vốn chủ sở hữu)
+        appear twice with identical values.  Both duplicates are dropped.
+        Result: 2 unique rows (one per code).
+        """
+        rows = [
+            # First occurrences (cover-page summary)
+            {"code": "140", "label": "Hàng tồn kho", "value_current": 1_986_588_655, "page_number": 1, "row_order": 5},
+            {"code": "400", "label": "Vốn chủ sở hữu", "value_current": 94_430_926_468_210, "page_number": 1, "row_order": 6},
+            # Duplicate occurrences (detail page — same values)
+            {"code": "140", "label": "Hàng tồn kho", "value_current": 1_986_588_655, "page_number": 3, "row_order": 20},
+            {"code": "400", "label": "Vốn chủ sở hữu", "value_current": 94_430_926_468_210, "page_number": 3, "row_order": 21},
+        ]
+        result = _dedup_rows_within_section(rows)
+        assert len(result) == 2, (
+            "FM-HPG-2: both duplicate codes must be collapsed; 2 unique rows remain"
+        )
+        # First occurrences win
+        assert result[0]["page_number"] == 1
+        assert result[1]["page_number"] == 1
+        assert {r["code"] for r in result} == {"140", "400"}
+
+    # AC-4 + AC-5: cross-section isolation (same code in different assemble() calls)
+    def test_same_code_across_two_separate_calls_emits_independently(self) -> None:
+        """
+        AC-4 scope guard: _dedup_rows_within_section() is called once per assemble()
+        call.  If code='140' appears in balance_sheet AND income_statement, they are
+        handled by SEPARATE assemble() calls.  Each call receives its own list and
+        cannot see the other section's rows.
+
+        This test verifies that two INDEPENDENT calls each emit their single row
+        (no cross-contamination via shared state).
+        """
+        balance_sheet_rows = [
+            {"code": "140", "label": "Hàng tồn kho", "value_current": 1_986_588_655, "page_number": 1, "row_order": 10},
+        ]
+        income_stmt_rows = [
+            {"code": "140", "label": "Doanh thu BH", "value_current": 9_999_999, "page_number": 5, "row_order": 0},
+        ]
+        bs_result = _dedup_rows_within_section(balance_sheet_rows)
+        is_result = _dedup_rows_within_section(income_stmt_rows)
+        assert len(bs_result) == 1, "balance_sheet call: code='140' row must be emitted"
+        assert len(is_result) == 1, "income_statement call: code='140' row must be emitted independently"
+
+    # value_current=None edge case: two rows with same code, both None → treated as identical
+    def test_both_none_value_current_treated_as_identical(self) -> None:
+        """
+        If value_current is None for both occurrences, they are identical (None == None)
+        → first wins, second dropped.
+        """
+        rows = [
+            {"code": "999", "label": "Label A", "value_current": None, "page_number": 1, "row_order": 0},
+            {"code": "999", "label": "Label A", "value_current": None, "page_number": 2, "row_order": 1},
+        ]
+        result = _dedup_rows_within_section(rows)
+        assert len(result) == 1, "Both value_current=None → identical dup → first wins"
+        assert result[0]["page_number"] == 1
