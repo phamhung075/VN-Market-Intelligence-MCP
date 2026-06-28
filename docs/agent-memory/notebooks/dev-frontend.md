@@ -4,332 +4,102 @@
 
 ---
 
-## Session: 2026-06-28 (FE-AHUB-W1-TECHNICAL-ZONE — stock-scoped technical analysis zone component)
+## Session: 2026-06-28 (FIX-DUPLICATE-CHART-ZONE — analysis page rendered two StockChart instances)
 
-**FE-AHUB-W1-TECHNICAL-ZONE REVIEW — TechnicalZone built, 32 tests GREEN, tsc clean**
+**FIX-DUPLICATE-CHART-ZONE DONE — removed stale bare StockChart from StockDetailPanel**
 
-New self-contained zone component: `apps/frontend/app/components/analysis/TechnicalZone.tsx`.
-Accepts `stock` prop. Fetches `/api/price-history/${stock}?days=90` via `useFetcher` (NATIVE per-stock
-endpoint — no client-side filtering needed). Re-fetches on stock change + 5 min auto-refresh (intraday SLA).
+Root: `dashboard.analysis.tsx` rendered `<StockChart prices={prices} height={560} />` inside `StockDetailPanel` (SSR-loaded data, bare chart, pre-zone-integration copy). `TechnicalZone` mounted separately at the same page level already provides the same 90-day OHLCV chart with richer context (auto-refresh 5min, freshness badge, live badge, period stats row, degraded/stale states).
 
-Full content of `/dashboard/technical` merged into zone:
-- LatestPriceStat: close + directional change (green/red arrow + delta%)
-- PriceChartSection: date-axis header (first/last date + price range annotation) + StockChart
-  - StockChart client-computes: Candle + MA20/50 + BB (pane 0) + RSI(14) (pane 1) + MACD(12,26,9) (pane 2)
-- StatsRow: period high/low, latest-session volume, trading-day count (poison-row filtered)
-- FreshnessBadge (intraday SLA) + ClientTimestamp in zone header
-- Stale banner (yellow), degraded banner (red), empty state, loading placeholder
+Fix: Removed the 4-line chart div block from `StockDetailPanel` (pre-`{/* Decision panel */}`) and the now-unused `import { StockChart }` at the top of the file. `TechnicalZone` ("Giá & Kỹ thuật" SectionCard) remains as sole chart zone.
 
-3 exported pure helpers for testability: `isPriceHistoryDto` (type guard), `derivePeriodStats` (period stats from
-candles, poison-row filtered), `candlesToPricePoints` (candle→PricePoint conversion for StockChart).
-32 unit tests GREEN (6 suites: DTO type guard, period stats, candle conversion, edge cases).
-
-Data gap: TA server-side indicators (RSI/MACD numeric values via /ta endpoint) NOT shown — gateway /ta
-path-rewrite pending (separate task). TA IS computed client-side by StockChart from candle data.
-
-Commit: `87871e06` (swept into FE-AHUB-W3 doc commit by concurrent agent) | Files: 2 | Tests: 32/32 GREEN | tsc: 0 errors
-
-Zone health: TechnicalZone ready for analysis hub INT integration; analysis/ directory has 6 zone components now; tsc 0 errors; 32 new + 1856 existing tests; 2 pre-existing QUE-TOOLTIP failures unrelated | HEALTHY
+Files changed: `apps/frontend/app/routes/dashboard.analysis.tsx` — 6 deletions.
+Commit: `b97bf990` | tsc: 0 errors | Rebuild: frontend-only (single service) — DONE, verified HTTP 200.
 
 ---
 
-## Session: 2026-06-28 (FE-AHUB-W3-FINANCIALS-ZONE — stock-scoped financials zone component)
+## Session: 2026-06-28 (FIX-DUPLICATE-TECHNICAL-HEADER — regression from FRONTEND-ANALYSIS-HUB-CONSOLIDATION)
 
-**FE-AHUB-W3-FINANCIALS-ZONE REVIEW — FinancialsZone built, 7 tests GREEN, tsc clean**
+**FIX-DUPLICATE-TECHNICAL-HEADER DONE — removed redundant zone-title text, freshness badge preserved**
 
-New self-contained zone component: `apps/frontend/app/components/analysis/FinancialsZone.tsx`.
-Accepts `stock` prop. Fetches `/api/financials` (full-universe, NO per-code param) via `useFetcher`.
-CLIENT-SIDE filter field: `FinancialsRow.code` (exact string match). Renders 11 financial metrics
-in a compact 4-col grid: revenue, net profit, EPS, P/E, P/B, ROE, ROA, D/E, profit margin, YoY growth.
-nim/npl intentionally omitted (NULL for all rows in the dataset). `FreshnessBadge` shows weekly SLA.
+Root: `TechnicalZone.tsx` lines 363-366 rendered a `{ticker}` span + `— Giá & Phân Tích Kỹ Thuật` text span inside a flex header — leftover from when TechnicalZone was the standalone `/dashboard/technical` page. Parent `SectionCard title="Giá & Kỹ thuật" subtitle={selectedStock}` at `dashboard.analysis.tsx:1855` already owns both pieces.
 
-Exported testable helper: `findFinancialsRow(rows, stockCode)` — pure function, 7 unit tests GREEN.
-Data gap: nim/npl bank metrics not available. No data-gap on any other field.
-Types and formatters imported from `~/routes/dashboard.financials` (all exported there).
+Fix: Removed inner `<div className="flex items-center gap-2">` block (ticker + title spans). Changed outer header div from `justify-between` to `justify-end`. `FreshnessBadge` + `ClientTimestamp` retained as sole header content (right-aligned) — satisfies FRONTEND-FRESHNESS-TRANSPARENCY standing requirement.
 
-Commit: `df70cb76` | Files: 2 | Tests: 7/7 GREEN | tsc: 0 errors
+File: `apps/frontend/app/components/analysis/TechnicalZone.tsx` — net -6 lines (2 insertions, 8 deletions).
+Tests: no assertion referenced header text; no test updates needed.
 
-Zone health: FinancialsZone ready for analysis hub INT integration; pre-existing 2 test failures (QUE-TOOLTIP) unrelated; 74/76 test files passing | HEALTHY
+Commit: `843f9cbc` | tsc: 0 errors | Tests: 1856 pass / 2 fail (pre-existing QUE-TOOLTIP/QUE_DESCRIPTIONS) | REBUILD_REQUIRED (ops)
+
+Zone health: TechnicalZone header deduplicated; FreshnessBadge+ClientTimestamp still render; 0 regressions | HEALTHY
 
 ---
 
-## Session: 2026-06-28 (FE-AHUB-W2-CORPEVENTS-ZONE — CorporateEventsZone component)
+## Session: 2026-06-28 (FIX-FE-ALERTS-SEVERITY-DEFAULT-500)
 
-**FE-AHUB-W2-CORPEVENTS-ZONE REVIEW — CorporateEventsZone built, 22 tests GREEN, tsc clean**
+**FIX-FE-ALERTS-SEVERITY-DEFAULT-500 DONE — AlertSeverity extended, default branch + normalisation, tsc clean**
 
-New component `apps/frontend/app/components/analysis/CorporateEventsZone.tsx`:
-- Accepts `stock: string` (UPPERCASE ticker) prop.
-- Fetches full `/api/corporate-events?days=90` universe via `useFetcher` once on mount.
-- Client-side filter on `event.code` field (API has no per-code param).
-- Exports: `filterStockEvents(events, stock)` + `deriveSortedCategories(events)` for unit tests.
-- States: loading skeleton, error banner, empty ("no events in 90d"), populated event list with CategoryBadge + FreshnessBadge header.
-- Reuses `categoryColorClass` + `CorporateEvent` types from `dashboard.corporate-events.tsx`.
-- Test file: `FE-AHUB-W2-CORPEVENTS-ZONE.test.ts` — 22 pure-logic assertions (suites 1-8).
-
-Client-side filter field: `event.code` (compared against `stock` prop — case-sensitive, UPPERCASE).
-API note: `api.corporate-events.tsx` accepts `?days` and `?type` only; no per-code param.
-
-Commit: `961ce5f8` | Files: 2 | Tests: 22/22 GREEN | tsc: EXIT 0
-
-Zone health: CorporateEventsZone ready for INT integration into dashboard.analysis.tsx by serialized closer; no regressions in existing 1824 tests; 2 pre-existing QUE_DESCRIPTIONS failures unrelated | HEALTHY
-
----
-
-## Session: 2026-06-28 (FE-AHUB-W4-SOCIAL-ZONES — 3 stock-scoped analysis zone components)
-
-**FE-AHUB-W4-SOCIAL-ZONES REVIEW — 3 zone files built, 41 tests GREEN, tsc clean**
-
-Three new self-contained zone components added under `apps/frontend/app/components/analysis/`:
-
-1. `ReputationZone.tsx` — CLIENT-SIDE filter. Fetches `/api/reputation` (full universe, no per-code param) via `useFetcher`, filters `leaderboard` where `entry.code === stock`. Exports: `filterReputationEntry`, `filterReputationHistory`. Renders: risk badge (mapRiskLevel), trend label (mapTrend), sparkline from history map.
-
-2. `NewsBuzzZone.tsx` — CLIENT-SIDE filter. Fetches `/api/news-buzz` (full universe, 7-day rolling) via `useFetcher`, filters `leaderboard` where `entry.code === stock`. Exports: `filterNewsBuzzEntry`. Renders: negativity tier badge, 4 stat chips, ratio bar.
-
-3. `ConvictionHistoryZone.tsx` — NATIVE per-stock filter. Fetches `/api/conviction-history?symbol=${stock}` via `useFetcher` — the API returns only the requested ticker's data. Exports: `pickStockConvictionRow`, `pickStockSeries`. Renders: SignalBadge, ScoreBar, sparkline, stale tag.
-
-Pattern: `useFetcher` + `useEffect(() => { load(url); }, [load, stock])` — self-contained, no parent pre-fetch required. Route helpers (mapTrend, signalLabel etc.) imported from existing standalone pages.
-
-Commit: `4be9d552` | Files: 4 | Tests: 41/41 GREEN | tsc: EXIT 0
-
-Zone health: 3 new analysis zone components ready for integration into dashboard.analysis.tsx (INT closer's job); no regressions in existing 1824 tests | HEALTHY
+Root: `severityColours()` had no `default:` branch; live backend emits `severity:"warning"` → undefined destructure during SSR → 500.
+Fix: Extended `AlertSeverity` union to include `"warning"` as first-class value; belt-and-suspenders `default:` branch kept. Data-boundary `normalizeItemSeverity()` coerces unknown values → `"medium"` before switch.
+File: `apps/frontend/app/routes/dashboard.alerts.tsx` — 63 insertions, 8 deletions.
+Commit: `dda89b1c` | tsc: EXIT 0 | Vitest: 1754/1756 pass | HEALTHY
 
 ---
 
 ## Session: 2026-06-28 (FE-AHUB-INT-INTEGRATE — serial closer wires 6 zones into analysis hub)
 
-**FE-AHUB-INT-INTEGRATE REVIEW — 6 zone components wired, dashboard.technical.tsx deleted, tsc 0 errors, 1856 tests pass**
+**FE-AHUB-INT-INTEGRATE DONE — 6 zones wired, dashboard.technical.tsx deleted, 1856 tests pass**
 
-Serial closer role: sole editor of `dashboard.analysis.tsx`. All 4 W1-W4 zone workers had landed component files; INT integrates them.
-
-Changes:
-- `dashboard.analysis.tsx`: imported + placed all 6 zone components (TechnicalZone, CorporateEventsZone, FinancialsZone, ReputationZone, NewsBuzzZone, ConvictionHistoryZone), each receiving `stock={selectedStock}`. Added Remix `<Link>` buttons to `/dashboard/shareholders?code=<stock>` and `/dashboard/officers?code=<stock>`. Zones are self-fetching; no loader changes needed.
-- `TopNav.tsx`: removed `{ to: "/dashboard/technical", label: "Kỹ Thuật" }` from ANALYST_NAV. Count: 26→25, NAV_ITEMS 33→32.
-- `dashboard.technical.tsx`: deleted via `git rm -f` (route no longer exists; content now lives in TechnicalZone).
-- 7 test files updated: FE-HEADER-SSOT-top-nav + task17-page14 through page19 nav tests — removed "Kỹ Thuật" from label regression guards, updated absolute counts, fixed hardcoded array indices in page19.
-
-Pitfall: removing ANALYST_NAV[3] shifts ALL subsequent indices. page19 test had ANALYST_NAV[24] and ANALYST_NAV[25] hardcoded — updated to [23] and [24]. Per-page tests (14-18) use `find()` by label so index-resilient; only the label list needed updating.
-
-Board: FE-AHUB-INT-INTEGRATE → REVIEW via orch-apply.sh.
-Commits: `b1b5213a` (code), `9023b481` (docs/board).
-Tests: 1856 pass / 2 fail (KNOWN QUE-TOOLTIP pre-existing, unrelated) | tsc: 0 errors
+`dashboard.analysis.tsx`: imported + placed TechnicalZone, CorporateEventsZone, FinancialsZone, ReputationZone, NewsBuzzZone, ConvictionHistoryZone (each `stock={selectedStock}`). Added Remix `<Link>` buttons for shareholders + officers.
+`TopNav.tsx`: removed `"Kỹ Thuật"` nav item (26→25 ANALYST_NAV, 33→32 NAV_ITEMS).
+`dashboard.technical.tsx`: deleted via `git rm -f`.
+7 test files updated: FE-HEADER-SSOT-top-nav + page14-19 nav tests. page19 fixed ANALYST_NAV[24/25]→[23/24] after index shift.
+Commits: `b1b5213a` (code), `9023b481` (docs/board). Tests: 1856/1858 | tsc: 0 | HEALTHY
 
 ---
 
-## Session: 2026-06-28 (FIX-FE-ALERTS-SEVERITY-DEFAULT-500 — alerts 500 fix)
+## Session: 2026-06-28 (FE-AHUB-W1-W4 — TechnicalZone, FinancialsZone, CorporateEventsZone, 3 Social Zones)
 
-**FIX-FE-ALERTS-SEVERITY-DEFAULT-500 REVIEW — AlertSeverity extended, default: branch + normalisation, tsc clean, build OK**
+**4 sprint tasks DONE — 6 zone components, 102 tests GREEN, tsc clean**
 
-Root cause confirmed: `severityColours()` had no `default:` branch; live backend emits `severity:"warning"` → undefined destructure during SSR → 500.
+- W1 `TechnicalZone.tsx`: useFetcher → `/api/price-history/${stock}?days=90`; LatestPriceStat+PriceChart+StatsRow; 3 exported helpers; 32 tests. Commit `87871e06`.
+- W3 `FinancialsZone.tsx`: client-side filter on `/api/financials` full universe; `findFinancialsRow()`; 7 tests. Commit `df70cb76`.
+- W2 `CorporateEventsZone.tsx`: client-side filter `/api/corporate-events?days=90`; `filterStockEvents` + `deriveSortedCategories`; 22 tests. Commit `961ce5f8`.
+- W4 `ReputationZone.tsx` + `NewsBuzzZone.tsx` (client-side filter) + `ConvictionHistoryZone.tsx` (native `/api/conviction-history?symbol=${stock}`); 41 tests. Commit `4be9d552`.
 
-Approach chosen: extend `AlertSeverity` union to include `"warning"` as a first-class value (semantically correct — backend emits it as a real signal class). Belt-and-suspenders `default:` branch kept regardless. Data-boundary `normalizeItemSeverity()` coerces any future unknown values → `"medium"` before they reach the switch.
-
-Files changed: `apps/frontend/app/routes/dashboard.alerts.tsx` — 63 insertions, 8 deletions.
-Commit: `dda89b1c`
-
-Key pattern: KNOWN_SEVERITIES Set guards parseAlertsDto → normalizeItemSeverity → always a modeled value downstream.
-
-tsc: EXIT 0 | Vitest: 1754/1756 pass (2 pre-existing QUE_DESCRIPTIONS) | Remix SSR build: ✓ 694 kB
-
-Zone health: alerts route now handles all live severity values gracefully; warning renders with amber chip/badge/row accent | HEALTHY
+All self-fetching via useFetcher + useEffect; no parent pre-fetch required. FreshnessBadge on each. HEALTHY
 
 ---
 
 ## Session: 2026-06-28 (TASK-FFT-L3B — FreshnessBadge wired into all 34 page routes)
 
-**TASK-FFT-L3B REVIEW — 32 routes wired, EC-8 done, tsc clean, 4/4 e2e PASS**
+**TASK-FFT-L3B DONE — 32 routes wired, EC-8 done, tsc clean, 4/4 e2e PASS**
 
-Routes wired: 32 with FreshnessBadge + useFreshnessRevalidator; 1 STATIC (kinh-dich-reference: "Nội dung tĩnh" text); 1 raw proxy skip (bctc-inspect).
-
-Key patterns:
-- For routes where coverage map says `asOf` (date-only), used `generatedAt` (ISO) instead — avoids midnight-UTC display in badge's ClientTimeString. Added `generatedAt` to useLoaderData destructuring for: corporate-events, fed-rates, financials, officers, reputation, shareholders.
-- EC-8 (sector-rotation): removed conditional inline `toLocaleTimeString` block (`{!tradingDate && generatedAt && ...}`), replaced with unconditional `<FreshnessBadge dataAsof={generatedAt ?? null} slaTierKey="realtime" />`.
-- STALE_RISK routes (alerts, foreign-flow): both use `marketHoursOnly={true}`.
-- market-summaries: has ListView and DetailView sub-components — added `useFreshnessRevalidator("daily")` + FreshnessBadge to both.
-
-Vitest: 2 pre-existing QUE_DESCRIPTIONS failures (unchanged). tsc: EXIT 0. Playwright e2e: 4/4 PASS.
-Coverage map `l3b_status: "WIRED"` set on all 33 wired/text rows; bctc-inspect = `SKIPPED_RAW_PROXY`.
-
-Zone health: All 34 page routes addressed; FreshnessBadge visible in PageHeader.actions on every live data page; no hydration risk (ClientTimeString delegates to SSR-safe pattern) | HEALTHY
+32 routes: FreshnessBadge + useFreshnessRevalidator; 1 STATIC (kinh-dich-reference); 1 skip (bctc-inspect raw proxy). Key: use `generatedAt` (ISO) not `asOf` (date-only) to avoid midnight-UTC display. STALE_RISK routes (alerts, foreign-flow) use `marketHoursOnly={true}`. market-summaries: FreshnessBadge in both ListView and DetailView.
+Vitest: 2 pre-existing QUE_DESCRIPTIONS failures (unchanged). tsc: EXIT 0. e2e: 4/4 PASS.
+Coverage map `l3b_status: "WIRED"` set on all 33 wired rows. HEALTHY
 
 ---
 
 ## Session: 2026-06-27 (TASK-FFT-L3A — shared FreshnessBadge + useFreshnessRevalidator)
 
-**TASK-FFT-L3A REVIEW — FreshnessBadge + hook created, 46 tests GREEN, tsc clean**
+**TASK-FFT-L3A DONE — FreshnessBadge + hook created, 46 tests GREEN, tsc clean**
 
-New files (commit afbb0c99):
-- `apps/frontend/app/components/FreshnessBadge.tsx` — null-guard EC-1, static EC-4, off-hours EC-3, green/amber/red thresholds, ClientTimeString delegation, isVnMarketHours() exported
-- `apps/frontend/app/lib/hooks/useFreshnessRevalidator.ts` — setInterval for realtime/intraday/event tiers; no-op for daily/weekly/static (EC-5); cleanup on unmount (NFR-A2)
-- `apps/frontend/app/__tests__/TASK-FFT-L3A-FreshnessBadge.test.tsx` — 34 tests covering isVnMarketHours, null path, static path, 15 tier×zone scenarios, EC-3 suppression, className
-- `apps/frontend/app/__tests__/TASK-FFT-L3A-useFreshnessRevalidator.test.ts` — 12 tests covering interval fires, no-op tiers, clearInterval on unmount
-
-Key pattern: `_now?: Date` injectable added to FreshnessBadge for deterministic color-threshold testing (same pattern as injectedSignalAges in mcp-server). Not in original spec — required for test isolation.
-Vitest: 1754 pass / 2 fail (2 pre-existing QUE_DESCRIPTIONS failures). tsc: EXIT 0.
-
-Zone health: FreshnessBadge + hook primitives ready; lib/hooks/ dir created; 46 new tests GREEN; L3B (route wiring) unblocked | HEALTHY
+New: `FreshnessBadge.tsx` (null-guard EC-1, static EC-4, off-hours EC-3, green/amber/red thresholds, `_now?:Date` injectable for test isolation); `useFreshnessRevalidator.ts` (setInterval for realtime/intraday/event; no-op for daily/weekly/static EC-5; cleanup on unmount). 46 new tests.
+Commit: `afbb0c99` | Vitest: 1754/1756 | tsc: 0 | HEALTHY
 
 ---
 
-## Session: 2026-06-24 (TASK-CONF-2 — S2-DATA-HONESTY null-confidence render)
+## Archive: 2026-06-14 to 2026-06-24 (condensed)
 
-**TASK-CONF-2 DONE — null confidence propagated end-to-end, renders "—" not "0%"**
-
-Changed files (commit 6a962dd6):
-- `apps/frontend/app/lib/api/client.ts` L350-351 — `confidence_score` null/absent now maps to `confidence=null` (not 0); real 0 still becomes 0.0
-- `apps/frontend/app/domain/market.ts` L217 — `AgentSignal.confidence` widened to `number | null`
-- `apps/frontend/app/routes/dashboard.analysis.tsx` — `confidenceLabel` accepts `number|null`: null → `{ text: "—", cls: "text-slate-600" }`; cascade panel inline guard also null-safe (L777)
-- `apps/frontend/app/__tests__/1938-stock-signals.test.ts` — old null-defaults-to-0 test updated; 2 new tests (explicit null→null, 0→0.0 legitimate-zero distinction); 14/14 GREEN
-
-Null-vs-0 distinction: explicit `!== null` check (not falsy) — legitimate 0 renders "0%"; absent renders "—".
-Panel scope: SIGNALS-LAST-10 + cascade panel fixed; ALERTS panel (`item.confidenceScore`, dashboard.alerts.tsx) already had its own guard, NOT touched (RISK-F-3).
-
-Vitest: 1708 pass / 2 fail (2 pre-existing QUE_DESCRIPTIONS failures, unrelated). tsc: EXIT 0.
-REBUILD_REQUIRED: YES (frontend container). AC-3 live verification pending ops rebuild + QA probe.
-
-Zone health: AgentSignal.confidence type-widened to number|null; null propagates cleanly API→mapper→domain→render; 3-file change, 0 regression | HEALTHY
+- **TASK-CONF-2** (06-24): `AgentSignal.confidence` widened to `number|null`; null→"—" not "0%"; 14 tests GREEN. Commit `6a962dd6`.
+- **FIX-INFOCARD-DROPDOWN-EXPAND** (06-16): `InfoCardExpand` + `FindingDataPanel` (Radix Collapsible); `findingData`+`source` fields in AgentSignal; 25 tests. Commit (DJ-GATE-1 cleared).
+- **FIX-CASCADE-CARD-INVALID-DATE** (06-16): `lib/formatDate.ts` (parseDate/formatDateVi/formatDateOnlyVi/formatSignalTimestamp); 4 brittle inline-date sites replaced; 33 tests. tsc: 0.
+- **FIX-ERRAUDIT-W2-FE-T4** (06-16): 28 Cluster A loaders migrated to `safeFetch`; `dashboard.vps` + analysis inline brief skipped; tsc: 0; 1637/1639. Commit `75a89a3b`.
+- **KINHDICH-HOVER-ENRICH-FE** (06-14): `gen-que-descriptions.ts` adds `hoverSummary`; codegen regen; `QueName.tsx` fallback `desc.hoverSummary ?? desc.coreMeaning`. tsc: 0.
+- **KINHDICH-HOVER-DETAIL** (06-14): `QueName.tsx` enriched with `QUE_DETAIL` 4-clause tooltip. tsc: 0.
 
 ---
 
-**Last updated:** 2026-06-16 | **Sprint:** INFOCARD-EXPAND-FETCH
-
----
-
-## Session: 2026-06-16 (FIX-INFOCARD-DROPDOWN-EXPAND — DJ-GATE-1 remediation)
-
-**DJ-GATE-1 REMEDIATED — added STEP dev-frontend-S2 to sprint-INFOCARD-EXPAND-FETCH-dev-frontend.md**
-
-Added decision journal entry for task-id FIX-INFOCARD-DROPDOWN-EXPAND documenting: Radix Collapsible chosen (keyboard + aria-expanded; existing dep); FIELD_LABELS is a UX label map not a data branch (humanLabel fallback = generic render of any Record<string,unknown>); honest empty-state when findingData+source both null; source rendered as clickable provenance link. Board flipped review → done (next_agent=ops). QA cycle-284 all-green on code/tests/tsc/genericity/empty-state; DJ was the sole blocker.
-
-Zone health: FIX-INFOCARD-DROPDOWN-EXPAND done (doc remediation only, no code change); DJ-GATE-1 cleared; ops rebuild batched with FIX-CASCADE-CARD-INVALID-DATE | HEALTHY
-
----
-
-## Session: 2026-06-16 (FIX-INFOCARD-DROPDOWN-EXPAND — REVIEW)
-
-**FIX-INFOCARD-DROPDOWN-EXPAND DONE — reusable expand-on-click primitive + full finding_data path**
-
-New/changed files:
-- `apps/frontend/app/components/InfoCardExpand.tsx` (NEW) — reusable `InfoCardExpand` + `FindingDataPanel` using Radix Collapsible; keyboard + aria-expanded; Vietnamese labels; honest empty-state; generic field render via FIELD_LABELS map
-- `apps/frontend/app/domain/market.ts` — `AgentSignal` extended with `findingData: Record<string,unknown>|null` + `source: string|null`
-- `apps/frontend/app/lib/api/client.ts` — `toAgentSignal` mapper updated to extract `finding_data` (object or JSON string) + `source` (top-level → findingData fallback)
-- `apps/frontend/app/routes/dashboard.analysis.tsx` — `MacroImpactPanel` and `StockSignalsPanel` both wired to `InfoCardExpand`; import added
-- `apps/frontend/app/__tests__/1938-stock-signals.test.ts` — `SAMPLE_SIGNAL` const updated with `findingData: null, source: null`
-- `apps/frontend/app/__tests__/FIX-INFOCARD-DROPDOWN-EXPAND.test.tsx` (NEW) — 25 tests: 8 mapping, 9 FindingDataPanel, 8 InfoCardExpand — all GREEN
-
-Test results: 1695 pass / 2 fail (2 pre-existing QUE_DESCRIPTIONS failures unrelated). tsc: EXIT 0.
-
-Zone health: expand-on-click wired to MacroImpactPanel + StockSignalsPanel; full finding_data path end-to-end; REBUILD_REQUIRED (FE container, batched by ops) | HEALTHY
-
----
-
-## Session: 2026-06-16 (FIX-CASCADE-CARD-INVALID-DATE — REVIEW)
-
-**FIX-CASCADE-CARD-INVALID-DATE DONE — 1 shared helper, 4 brittle sites replaced**
-
-Created `apps/frontend/app/lib/formatDate.ts` — 4 exports:
-- `parseDate(raw)`: normalises bare SQLite/ISO/millis/offset → Date|null (null on NaN/empty/garbage)
-- `formatDateVi(raw)`: full vi-VN locale date+time or "—"
-- `formatDateOnlyVi(raw)`: date-only vi-VN or "—"
-- `formatSignalTimestamp(raw)`: compact HH:mm (today) or MM-DD HH:mm (other day) or "—"
-
-Brittle sites replaced (BEFORE=4, AFTER=0):
-1. dashboard.analysis.tsx:780 — `new Date(sig.createdAt.replace(" ","T")+"Z").toLocaleDateString("vi-VN")` → `formatDateOnlyVi(sig.createdAt)`
-2. dashboard.analysis.tsx:1279–1292 — `formatSignalTime()` body (blind +Z, no NaN guard) → delegates to `formatSignalTimestamp()`
-3. dashboard.sector-cascade.tsx:218–227 — `formatHitAt()` body (try/catch, no NaN guard) → delegates to `formatDateVi()`
-4. dashboard.kinh-dich-signals.tsx:223–231 — `formatTimestamp()` body (same pattern) → delegates to `formatDateVi()`
-
-Test: 33 new tests in `app/__tests__/FIX-CASCADE-CARD-INVALID-DATE-formatDate.test.ts` — all GREEN.
-Vitest total: 1670/1672 pass (2 pre-existing QUE_DESCRIPTIONS failures unrelated). tsc: EXIT 0.
-
-Zone health: All timestamp renders now use shared formatDate helper; "Invalid Date" impossible in any cascade/signal card; helper is pre-backend-ISO-normalisation safe | HEALTHY
-
----
-
-## Session: 2026-06-16 (FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH — T4 complete)
-
-**FIX-ERRAUDIT-W2-FE-T4 DONE — 28 Cluster A dashboard loaders migrated to safeFetch**
-
-Tasks completed this session (T4 routes):
-- Named-helper routes (each: add import, add parseXxxDto, replace try/catch with safeFetch + error-guard return):
-  officers, financials, fed-rates, reputation, technical (fetchPriceHistory), bctc (fetchAnalysisBriefs)
-- Inline-loader routes (add parse function + safeFetch call directly in loader):
-  dashboard._index, dashboard.news, dashboard.orchestration, dashboard.quality-audit
-- Routes from prior session (same pattern): alerts, agm-plan-actual, conviction-history,
-  corporate-events, foreign-flow, global-markets, intel, kinh-dich-signals, macro,
-  market-summaries, news-buzz, prediction-claims, sector-cascade, sector-rotation, shareholders
-
-Key architectural patterns:
-- parseXxxDto(null) returns empty-shape struct (no throw) for safeFetch error-path recovery
-- For routes where tests expect null fields on error (macro: indicators/signals, financials: summary/rankings):
-  add `if (error !== null) { return { ...null-fields..., error }; }` guard in fetch helper
-- dashboard.vps.tsx: SKIPPED (uses proxyError not error, calls MCP_SERVER_BASE_URL directly)
-- dashboard.analysis.tsx inline brief fetch: SKIPPED (intentional 4xx error-body parsing, not simple safeFetch)
-- test updates: non-Error throw = not.toBeNull(); null body 200 = toBeNull() (parse(null) silent)
-- macro null body special-case: parse(null) returns empty stub with indicators obj, signals=null;
-  error stays null; test updated to reflect new contract
-
-tsc: 0 errors. vitest: 1637/1639 pass (2 pre-existing QUE_DESCRIPTIONS schema failures, unrelated).
-Commit: 75a89a3b — feat(frontend/FIX-ERRAUDIT-W2-FE-T4): migrate all 28 Cluster A dashboard loaders to safeFetch
-
-Zone health: All dashboard loaders now use bounded safeFetch (55s deadline); FETCH_DEADLINE_MS SSOT applied | HEALTHY
-
----
-
-## Session: 2026-06-14 (KINHDICH-HOVER-DETAIL)
-
-**KINHDICH-HOVER-DETAIL DONE (1-file change, tsc green)**
-- apps/frontend/app/components/QueName.tsx: added `import { QUE_DETAIL } from "~/lib/que-descriptions-detail.generated"`; added `const detail = QUE_DETAIL[hexagram]` lookup; replaced flat single-line render with enriched branch (coreMeaning + Trạng thái + Thuận + Cảnh báo + marketTrendLabel); FR-3 fallback (`desc.hoverSummary ?? desc.coreMeaning`) preserved when detail absent; FR-4 "Xem chi tiết →" deep-link kept unconditionally; max-w-xs bumped to max-w-sm for 4-clause fit; phases[] OMITTED (reference page only).
-- tsc --noEmit: EXIT 0 (no errors). One-file scope confirmed.
-
-Zone health: QueName tooltip enriched with full QUE_DETAIL (coreMeaning+state+favorable+warning+trend); fallback intact; peer containers untouched | HEALTHY
-
----
-
-## Session: 2026-06-14 (KINHDICH-HOVER-ENRICH-FE)
-
-**KINHDICH-HOVER-ENRICH-FE DONE (3-file change, tsc green)**
-- scripts/gen-que-descriptions.ts: added `hoverSummary: { vi; en }` to QueRefEntry interface; extracted + backtick-escaped `entry.hoverSummary.vi` in BLOCK 1 loop; emitted `hoverSummary` field per entry; added `hoverSummary?: string` with JSDoc to QueDescription interface in output template; updated field-mapping comment header.
-- apps/frontend/app/lib/que-descriptions.generated.ts: regenerated via `bun run scripts/gen-que-descriptions.ts` — 64 entries, 65 hoverSummary occurrences (64 + interface line), 0 entries < 80 chars, coreMeaning x64 intact, header comment preserved.
-- apps/frontend/app/components/QueName.tsx L75: `{desc.coreMeaning}` → `{desc.hoverSummary ?? desc.coreMeaning}` (coreMeaning fallback preserved).
-- tsc --noEmit: EXIT 0 (no errors). DRY mechanism intact (single SSOT→codegen→generated→QueName chain).
-- ARCH-RATIFY-FE-1 CONFIRMED. Flagging ops for frontend-only container rebuild.
-
-Zone health: KINHDICH hover tooltip enriched; 64 quẻ now show plain-VN 80–220 char summaries; peers untouched | HEALTHY
-
----
-
-
----
-
-## Archive: Earlier Sessions (2026-06-05 through 2026-05-25)
-
-**2026-06-06 (F-3 + FIX-ORCH-DONE-GRID-COLS):**
-- F-3 FETCH-OPS-PAGE-TRUTH: replaced Reuters/Bloomberg with real fetch-status (13 VN sources freshness, VPS proxy, BCTC pipeline); 380/380 Vitest GREEN
-- FIX-ORCH-DONE-GRID-COLS: extracted DONE_GRID const, moved status_note to banner; 363/363 Vitest GREEN
-
-**2026-06-05 (ARCH-ORCH-F3 + FE-HEADER-SSOT):**
-- ARCH-ORCH-F3: decision accordion on /dashboard/orchestration, StepCard inline, sprintId threaded; 26 new tests
-- FE-HEADER-SSOT: PageHeader SSOT component, 8 pages migrated; 320/320 Vitest GREEN (+7)
-
-**2026-06-04 (DSI-S1-FE-TYPE):** StockQuote.change→number|null, changePercent, staleness fields; 303/303 Vitest GREEN (+8)
-
-**2026-06-02 (FOU-3-FE, ORCH-DASH-LIVE, FE-AUDIT):**
-- 2-axis Service Health (container × capability), Live auto-refresh, VPS discrimination, 264–295 tests GREEN
-
-**2026-06-01 (FBT-DEV):** BCTC-inspect + bctc-eval splat proxies
-
-**2026-05-28 (BCTC-EVAL-FE + P2-H macro snapshot signals):**
-- shadcn: table/badge/collapsible; EvalStatus/EvalStage types; fetchBctcEvalList/Detail/Thresholds APIs; 204/204 Vitest GREEN
-- P2-H: MacroSignal + array→MacroSignalEntry + keyed object; Object.entries/values pattern; 183/183 GREEN
-
-**2026-05-26 (Phase 2 P2-A/B/C + P2-F):** ESLint fence (G4) installed + G10 blind-fix ("↑↑"→"↑"); 179/179 Vitest GREEN
-
-**2026-05-25:** Phase 1 MVR complete (P1-A + P1-B1..B4 + P1-C + P1-E); 179/179 Vitest GREEN; 4/4 Playwright GREEN
-
----
-
-**Current state (2026-06-12):** All REAUDIT + TASK-17 pages complete and REVIEW status. Full Tier 4 dashboard deployed. Frontend rebuilt post-FIX-FETCH-VERYSTALE-LABEL. tsc clean. 1518+ vitest GREEN.
-
+**Current state:** 77 test files; 1856 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-
-**Key patterns:** ClientTimestamp SSR→locale, hydration suppression per-element, Promise.allSettled() for parallel fetch, unknown + type guards (no any), .server suffix violation prevention
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; ClientTimestamp SSR-safe; unknown+type-guards (no any); DDD layers enforced.
