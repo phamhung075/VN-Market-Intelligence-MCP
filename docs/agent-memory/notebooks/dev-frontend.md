@@ -4,6 +4,35 @@
 
 ---
 
+## Session: 2026-06-28 (FE-AHUB-W1-TECHNICAL-ZONE — stock-scoped technical analysis zone component)
+
+**FE-AHUB-W1-TECHNICAL-ZONE REVIEW — TechnicalZone built, 32 tests GREEN, tsc clean**
+
+New self-contained zone component: `apps/frontend/app/components/analysis/TechnicalZone.tsx`.
+Accepts `stock` prop. Fetches `/api/price-history/${stock}?days=90` via `useFetcher` (NATIVE per-stock
+endpoint — no client-side filtering needed). Re-fetches on stock change + 5 min auto-refresh (intraday SLA).
+
+Full content of `/dashboard/technical` merged into zone:
+- LatestPriceStat: close + directional change (green/red arrow + delta%)
+- PriceChartSection: date-axis header (first/last date + price range annotation) + StockChart
+  - StockChart client-computes: Candle + MA20/50 + BB (pane 0) + RSI(14) (pane 1) + MACD(12,26,9) (pane 2)
+- StatsRow: period high/low, latest-session volume, trading-day count (poison-row filtered)
+- FreshnessBadge (intraday SLA) + ClientTimestamp in zone header
+- Stale banner (yellow), degraded banner (red), empty state, loading placeholder
+
+3 exported pure helpers for testability: `isPriceHistoryDto` (type guard), `derivePeriodStats` (period stats from
+candles, poison-row filtered), `candlesToPricePoints` (candle→PricePoint conversion for StockChart).
+32 unit tests GREEN (6 suites: DTO type guard, period stats, candle conversion, edge cases).
+
+Data gap: TA server-side indicators (RSI/MACD numeric values via /ta endpoint) NOT shown — gateway /ta
+path-rewrite pending (separate task). TA IS computed client-side by StockChart from candle data.
+
+Commit: `87871e06` (swept into FE-AHUB-W3 doc commit by concurrent agent) | Files: 2 | Tests: 32/32 GREEN | tsc: 0 errors
+
+Zone health: TechnicalZone ready for analysis hub INT integration; analysis/ directory has 6 zone components now; tsc 0 errors; 32 new + 1856 existing tests; 2 pre-existing QUE-TOOLTIP failures unrelated | HEALTHY
+
+---
+
 ## Session: 2026-06-28 (FE-AHUB-W3-FINANCIALS-ZONE — stock-scoped financials zone component)
 
 **FE-AHUB-W3-FINANCIALS-ZONE REVIEW — FinancialsZone built, 7 tests GREEN, tsc clean**

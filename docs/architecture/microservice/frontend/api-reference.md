@@ -250,6 +250,7 @@ Located under `apps/frontend/app/components/analysis/`. Each accepts a `stock: s
 | `NewsBuzzZone` | `NewsBuzzZone.tsx` | CLIENT-SIDE — `leaderboard.find(e => e.code === stock)` | `GET /api/news-buzz` (full universe, 7-day window) |
 | `ConvictionHistoryZone` | `ConvictionHistoryZone.tsx` | NATIVE — `?symbol=${stock}` passed to API | `GET /api/conviction-history?symbol=${stock}` |
 | `FinancialsZone` | `FinancialsZone.tsx` | CLIENT-SIDE — `rows.find(r => r.code === stock)` | `GET /api/financials` (full universe, ~78 rows; no per-code param) |
+| `TechnicalZone` | `TechnicalZone.tsx` | NATIVE — per-stock endpoint `GET /api/price-history/${stock}?days=90` | `GET /api/price-history/${stock}?days=90` (90-day OHLCV candles; re-fetches on stock change + 5 min auto-refresh) |
 
 ### Exported pure helpers (testable without DOM)
 
@@ -263,6 +264,8 @@ Located under `apps/frontend/app/components/analysis/`. Each accepts a `stock: s
 
 **FinancialsZone:** `findFinancialsRow(rows, stockCode)` → `FinancialsRow | null`
 
+**TechnicalZone:** `isPriceHistoryDto(value)` → `boolean`, `derivePeriodStats(candles)` → `PeriodStats | null`, `candlesToPricePoints(candles, ticker)` → `PricePoint[]`
+
 ### Loading lifecycle
 
 All zone components show an animated loading placeholder until `useFetcher.state === "idle"` AND `fetcher.data` is defined. The load is triggered once on mount (or when `stock` changes for ConvictionHistoryZone). FinancialsZone loads once on mount only — the full-universe payload is filtered client-side so stock changes do not require re-fetch.
@@ -272,6 +275,13 @@ All zone components show an animated loading placeholder until `useFetcher.state
 - `nim` and `npl` fields are NULL for all rows in the dataset (bank-only metrics, unpopulated) — intentionally omitted from the UI.
 - `eps = 0` is a legitimate value, rendered as "0" (not "—").
 - The `/api/financials` endpoint has NO per-stock query param — always returns all ~78 rows. Scoping is CLIENT-SIDE only via `FinancialsRow.code`.
+
+### Data constraints (TechnicalZone)
+
+- Candles with `close===0 && volume===0` are non-trading-day poison rows; `derivePeriodStats` and `PriceChartSection` filter them before computing high/low/range annotations — same predicate as `sanitizePrices()` in `StockChart/indicators.ts`.
+- TA indicators (RSI, MACD, Bollinger Bands) are **client-computed** by `StockChart` from candle data; no server-side TA values are expected or fabricated.
+- `stale_served=true` triggers an amber banner (cache fallback). `data_source="unavailable"` or a non-DTO proxy payload triggers the red degraded banner.
+- The proxy endpoint `GET /api/price-history/${stock}?days=90` re-fetches on stock prop change and auto-refreshes every 5 minutes (intraday SLA).
 
 ### Not-found state
 
