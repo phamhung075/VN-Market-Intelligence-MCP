@@ -6,6 +6,17 @@
 
 ---
 
+### STEP qa-S3 · qa · 2026-06-28T10:50Z
+**task-id:** 328
+**what-done:** QA gate TASK_328 (FR-2 trailing note-ref strip, re.sub r'\s+\d{1,3}$' + ≥5-char guard) — APPROVED
+**what-considered:**
+- Guard correctness (load-bearing): independent Python verification — "Chứng khoán kinh doanh 4"→cleaned_len=22≥5→STRIP PASS; "Nợ 1"→cleaned_len=2<5→NO-STRIP PASS; "Quỹ phát triển khoa học 2025"→4-digit no-match→unchanged PASS. Guard is on REMAINING length (len(_label_clean)), not original — code confirmed.
+- 7/7 TestFR2TrailingNoterefStrip PASS (independent live run). 122/122 targeted 3-file suite. Full unit suite: 899 pass / 6 fail (exact same pre-existing PIL ABI/OCR baseline as TASK_327). No new failures.
+- NFR-4: diff grep for issuer/ticker/form conditionals in production change — only matches are comment lines; zero per-issuer branches in 10-line production diff.
+- FPT non-regression: 122/122 including FPT Stage-6 tests, test_end_to_end_vcb_label_strip_in_assembled_row confirms FPT TỔNG CỘNG TÀI SẢN code-only rows unaffected (no trailing digit).
+**why-decision:** All 6 AC green, guard on remaining-length verified independently, NFR-4 clean, 0 new regressions
+**why-change:** no change from plan
+
 ### STEP qa-S2 · qa · 2026-06-28T10:30Z
 **task-id:** 327
 **what-done:** QA gate TASK_327 (FR-1 code-range gate _CODE_VALUE_COL_RE \d{2,3}→\d{3}) — APPROVED

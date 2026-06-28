@@ -235,12 +235,12 @@
     }
   ],
   "head": {
-    "status": "REVIEW",
-    "active_task_id": "327",
-    "next_agent": "qa",
-    "next_action": "QA verification for TASK_327: FR-1 code-range gate. Verify _CODE_VALUE_COL_RE uses \\\\d{3}, run TestFR1CodeRangeGate, confirm FPT non-regression. Handoff: docs/handoffs/TASK_327.md [QA] section.",
-    "updated_by": "dev-pdf-extractor",
-    "updated_at": "2026-06-28T00:00:00Z",
+    "status": "READY",
+    "active_task_id": "329",
+    "next_agent": "dev-pdf-extractor",
+    "next_action": "TASK_329 FR-7 — Notes-section hard stop (B02-TCTD). TASK_328 DONE (QA cycle-334 APPROVED). Handoff: docs/handoffs/TASK_329.md",
+    "updated_by": "qa",
+    "updated_at": "2026-06-28T10:55:00Z",
     "reconcile_note": "po retired duplicate pm decomposition (TASK-301..307); repointed head OFF already-done FR-3 (TASK-301==numeric 326, committed cdc8b93f) ONTO next undone FR-1 (327, already READY). Canonical scheme = numeric 326-332."
   },
   "narrative": {
@@ -1033,7 +1033,7 @@
         "created_at": "2026-06-28T08:18:28Z",
         "p1_5": {
           "phase": "P1.5 — Orphan Detection + Work Takeover",
-          "status": "APPROVED-IN-PRINCIPLE (additive); concrete FR decomposition HELD pending architect §P1.5 landing in the brief",
+          "status": "DECOMPOSITION RELEASED — po confirmed architect §6.5 (brief rev 2) on 2026-06-28T08:32:39Z (journal po-S6..S9). VERDICT: APPROVED-WITH-HARDENING.",
           "approved_at": "2026-06-28T08:21:49Z",
           "depends_on": "P1 (needs owner_client_session to attribute an expired lock to a SPECIFIC dead session so a DIFFERENT same-role session can adopt it — impossible under owner_agent role-key)",
           "may_parallel": "P2 (detection-by-staleness works pre-P2; detection precision improves once P2 presence roster lets the reaper cross-check an expired lock against the live-session roster)",
@@ -1048,14 +1048,67 @@
             "Honest ceiling (zero live sessions = zero execution) documented + accepted; reaper runs in always-on mcp-server",
             "RAW-verify against LIVE coordination.db in the Docker named volume"
           ],
-          "decomposition_gate": "pm: decompose P1 NOW. DO NOT decompose P1.5 into FRs until the architect's §P1.5 section lands in docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md AND po confirms. P1.5 is additive — it does NOT change or block P1.",
-          "scope_expansion_origin": "New user requirement relayed via coordinator 2026-06-28 (dead session strands its task; need detect-dead-session + takeover-and-continue). P1 attribution fix is UNCHANGED and is the prerequisite. Coordinator note carries no user authority; folded on merit."
+          "decomposition_gate": "RELEASED 2026-06-28T08:32:39Z: architect §6.5 landed + po confirmed. pm: decompose P1.5 into atomic FRs NOW, sequenced strictly AFTER P1. Bake the 6 locked DoD additions (po_confirm.locked_dod) into the named FRs. P1.5-* blockedBy TASK_1980 (P1-FINAL flip).",
+          "scope_expansion_origin": "New user requirement relayed via coordinator 2026-06-28 (dead session strands its task; need detect-dead-session + takeover-and-continue). P1 attribution fix is UNCHANGED and is the prerequisite. Coordinator note carries no user authority; folded on merit.",
+          "po_confirm": {
+            "verdict": "APPROVED-WITH-HARDENING",
+            "confirmed_at": "2026-06-28T08:32:39Z",
+            "confirmed_by": "po (session 14f8039a)",
+            "journal": "docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-po.md (po-S6..S9)",
+            "lenses_clean": [
+              "#1 honest-bound",
+              "#3 slow≠dead grace",
+              "#5 P1-dependency",
+              "#6 reaper-placement server-side"
+            ],
+            "lenses_hardened": [
+              "#2 continue≠restart",
+              "#4 poison-task cap"
+            ],
+            "sequencing_gate": "P1.5-* FRs blockedBy TASK_1980 (P1-FINAL REQUIRED-flip + remove owner_agent fallback) — NOT merely TASK_1973; orphan attribution is unambiguous only once no lock row carries NULL owner_client_session. Preferred: additionally gate the two AF adoption FRs on TASK_1981 (P1 regression green).",
+            "locked_dod": [
+              {
+                "id": "DoD-P15-1",
+                "fr": "P1.5-AF-2 (dev-team Step 0a sprint-task adoption); P1.5-AF-1 router DEFERS",
+                "clause": "Before resuming an adopted sprint-task the dev-team adopter MUST git status --porcelain the task zone and git checkout -- <file> every UNCOMMITTED live-effect edit (hook/config/schema/anything live-from-disk) to last-good; leave untracked artifacts in place + surface in board note. SHA=resume POINT, tree-hygiene=resume PRECONDITION. Router never reverts (routes, never implements). Clause scoped to single-host shared-tree topology; separate-clone resumes from last PUSHED commit.",
+                "grounds": "feedback_dead_worker_uncommitted_live_file_revert"
+              },
+              {
+                "id": "DoD-P15-2",
+                "fr": "P1.5-AF-1 + P1.5-AF-2 (resume-contract probe) + §6.5.5 doc",
+                "clause": "The published-artifact existence probe in the cowork-slot + cron-tick resume contract MUST be a read-only task_list_held, NEVER task_heartbeat/task_claim (create-if-absent masks a never-fired publish, defeating dedup).",
+                "grounds": "feedback_guaranteed_slot_week_key_double_post recurrence #3"
+              },
+              {
+                "id": "DoD-P15-3",
+                "fr": "P1.5-MCP-2 (reaper increment) + P1.5-AF-1/AF-2 (adopter payload) + P1.5 poison test",
+                "clause": "Adopter MUST propagate redispatch_count from the orphan-signal payload INTO the re-claim payload (carry-forward) — else the counter resets to 1 each adoption and N_MAX=3 is never reached (guard inert). Escalation idempotent: BUG telegram fires ONCE on transition to ESCALATED; a later adopter seeing status==ESCALATED skips silently. Poison test MUST assert the count CHAINS across 3 real adopt→die cycles, not a hand-set rc=3.",
+                "grounds": "feedback_recurring_bug_escalation"
+              },
+              {
+                "id": "DoD-P15-4",
+                "fr": "P1.5-MCP-2 (gcExpiredLocks scan predicate)",
+                "clause": "Reaper emits orphan-signals ONLY for kinds with a defined resume contract (sprint-task, cowork-slot, cron-tick-with-published-checkpoint, dashboard-row) via an ALLOW-LIST — NOT the current deny-list, which emits un-adoptable signals for commit-mutex/intent:*/cron-fire-claims (no resume row → adopter undefined behavior). New kinds default to NOT-emitting."
+              },
+              {
+                "id": "DoD-P15-5",
+                "fr": "P1.5-MCP-3 (setInterval reaper)",
+                "clause": "The 600s setInterval reaper MUST wrap gcExpiredLocks in try/catch and log+continue on a transient DB-busy; a single uncaught error must NOT kill the interval (else the all-sessions-dead gap silently re-opens). Test: inject a GC error, assert the timer still fires next tick.",
+                "grounds": "feedback_silent_swallow_serial_bugs"
+              },
+              {
+                "id": "DoD-P15-6",
+                "fr": "all P1.5-AF docs (router step-2.5 SKILL + dev-team Step 0a flow + orphan-signal mechanism doc)",
+                "clause": "§6.5.1 honest-bound line (zero live sessions = zero execution; reaper only makes work ADOPTABLE, never self-heals execution) MUST be carried verbatim into every doc that references this design."
+              }
+            ]
+          }
         }
       }
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-28T08:16:05Z",
+    "_updated_at": "2026-06-28T10:55:00Z",
     "_updated_by": "qa",
     "active_sprints": [
       {
@@ -5960,28 +6013,12 @@
         "created_by": "po"
       },
       {
-        "id": "328",
-        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "FR-2 — Trailing note-ref stripping from label",
-        "zone": "apps/pdf-extractor/",
-        "size": "S",
-        "status": "READY",
-        "depends_on": [
-          "327"
-        ],
-        "blocks": [
-          "329",
-          "330"
-        ],
-        "owner_agent": "dev-pdf-extractor"
-      },
-      {
         "id": "329",
         "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
         "title": "FR-7 — Notes-section hard stop",
         "zone": "apps/pdf-extractor/",
         "size": "S",
-        "status": "BACKLOG",
+        "status": "READY",
         "depends_on": [
           "328"
         ],
@@ -7018,6 +7055,18 @@
         "completed_at": "2026-06-28T08:16:05Z",
         "next": "dev-pdf-extractor",
         "verification": "DONE (qa cycle-333): 1030/12-preexisting full suite, 5/5 TestFR1CodeRangeGate, FPT 270/221/300 PASS, NFR-4 PASS, mock-guard EXIT 0. commit e939a422. 6→12 delta = scope expansion (integration tests), zero regressions."
+      },
+      {
+        "id": "328",
+        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "title": "FR-2 — Trailing note-ref stripping from label",
+        "zone": "apps/pdf-extractor/",
+        "size": "S",
+        "status": "DONE",
+        "owner_agent": "dev-pdf-extractor",
+        "completed_at": "2026-06-28T10:55:00Z",
+        "next": "dev-pdf-extractor",
+        "verification": "DONE (qa cycle-334): 899/6-preexisting full suite, 7/7 TestFR2TrailingNoterefStrip, 122/122 targeted, NFR-4 PASS, FPT non-regression PASS. Guard: remaining-len ≥5 verified independently. commit 774cfd69"
       }
     ],
     "done_verified": [],

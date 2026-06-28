@@ -129,6 +129,46 @@ Zero per-issuer branches. The strip predicate is `\s+\d{1,3}$` on the label stri
 
 ---
 
+## [QA] Review Record
+
+**Date:** 2026-06-28 | **Cycle:** 334 | **Verdict:** APPROVED
+
+### Pipeline results
+
+| Gate | Result |
+|---|---|
+| FR-2 targeted (7/7 TestFR2TrailingNoterefStrip) | PASS |
+| FPT 3-file targeted (122/122) | PASS |
+| Full unit suite | 899 pass / 6 fail (all pre-existing PIL-ABI/OCR env) |
+| DDD scan | PASS |
+| Security scan | PASS |
+| NFR-4 scan | PASS — zero per-issuer branches in diff |
+| mock-guard | N/A (Python zone) |
+
+### Guard correctness (independent)
+
+| Label | Regex match | len(cleaned) | Action |
+|---|---|---|---|
+| "Chứng khoán kinh doanh 4" | `\s+\d{1,3}$` matches " 4" | 22 ≥ 5 | STRIP |
+| "Nợ 1" | `\s+\d{1,3}$` matches " 1" | 2 < 5 | NO STRIP (guard) |
+| "Quỹ phát triển khoa học 2025" | no match (4-digit) | 28 (unchanged) | NO STRIP |
+
+Guard is on REMAINING `len(_label_clean)`, not original label length — confirmed at L1238.
+
+### AC checklist (QA verified)
+- [x] AC-1: post-parse label-clean step in `_parse_lines_to_rows()` after `_try_parse_code_row()` — L1231-1240
+- [x] AC-2: `re.sub(r'\s+\d{1,3}$', '', label)` applied — L1237
+- [x] AC-3: guard `if len(_label_clean) >= 5` — L1238
+- [x] AC-4: 7 tests cover all required cases — 7/7 PASS (live run)
+- [x] AC-5: FPT non-regression — 122/122 targeted suite PASS
+- [x] AC-6: NFR-4 — zero per-issuer branches in production diff
+
+**DJ:** `docs/agent-memory/decisions/sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md` § qa-S3
+**Report:** `reports/TASK_REPORT_328.md`
+**Unblocks:** TASK_329 (FR-7 notes-section hard stop) — status BACKLOG→READY
+
+---
+
 **Depends on:** TASK_327  
 **Blocks:** TASK_329, TASK_330  
 **Estimated:** ~2h (code + test + verify)
