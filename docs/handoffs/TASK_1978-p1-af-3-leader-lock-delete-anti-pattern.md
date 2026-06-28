@@ -94,6 +94,42 @@ wc -l docs/agents/cowork-team/flow/leader-lock.md
 grep -A 5 "owner_client_session" docs/agents/cowork-team/flow/leader-lock.md
 ```
 
+## [Developer] Implementation Record
+
+**Status:** REVIEW
+**Implemented by:** agent-father (edit mode, CROSS-SESSION-MULTI-TEAM-ORCH sprint)
+**Date:** 2026-06-28
+
+**File modified:** `docs/agents/cowork-team/flow/leader-lock.md`
+
+**Changes:**
+1. Deleted the self-held-heartbeat anti-pattern (former lines 64-81): removed the
+   `task_heartbeat` probe on `claimed:false` that used `owner_agent` to test self-ownership.
+   The `claimed:false` → `task_heartbeat(owner_agent="cowork-dispatcher")` → "self-held" path
+   is entirely gone. This path was the root cause of cowork double-fire (brief §1.2, Site 1).
+
+2. Replaced with session-id comparison:
+   ```
+   else:
+     owner_session = LEADER_CLAIM.current_holder.owner_client_session
+     if owner_session == $CLAUDE_CODE_SESSION_ID: renew + PROCEED
+     else: log + WORK telegram + EXIT
+   ```
+
+3. Updated `task_claim` call to include `owner_client_session: $CLAUDE_CODE_SESSION_ID`.
+
+4. Updated SESSION-SINGLETON GUARD comment and inline protocol comment to reflect P1 protocol
+   (no more heartbeat-probe OWN-HELD or ORPHAN-RECOVERY paths — these were the old protocol).
+
+5. Updated size-justification comment (113L → 96L).
+
+**AC verification:**
+- No `task_heartbeat` call on `claimed:false` for ownership check (anti-pattern deleted)
+- `owner_client_session` comparison is the sole discriminator for re-entrant vs peer
+- `$CLAUDE_CODE_SESSION_ID` used in heartbeat renewal (re-entrant path only)
+- WORK telegram sent on peer-held path
+- File reduced from 113L to 96L
+
 ## RETURN to PM
 
 Once this task is DONE:

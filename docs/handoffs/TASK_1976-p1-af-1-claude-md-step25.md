@@ -85,6 +85,29 @@ grep -A 10 "2.5 PRE-CLAIM" CLAUDE.md
 # Should show the PRE-CLAIM gate logic
 ```
 
+## [Developer] Implementation Record
+
+**Status:** REVIEW
+**Implemented by:** agent-father (edit mode, CROSS-SESSION-MULTI-TEAM-ORCH sprint)
+**Date:** 2026-06-28
+
+**File modified:** `CLAUDE.md` (project root)
+
+**Change:** Inserted step 2.5 PRE-CLAIM gate between step 2 (match intent → agent) and step 3
+(spawn). The gate calls `task_claim` with `task_id="intent:<agent>:<intent-key>"`,
+`task_kind="intent"`, `owner_client_session=$CLAUDE_CODE_SESSION_ID`, and `ttl_seconds=600`.
+On `claimed:true` → spawn inside try/finally that releases after agent completes. On
+`claimed:false` + peer session (different `owner_client_session`) → log PRE-CLAIM collision,
+`send_telegram(channel="work")`, EXIT. References `.claude/skills/dispatch-claim/SKILL.md`
+(lifted in TASK_1977). `$CLAUDE_CODE_SESSION_ID` passed as coordination parameter in spawn prompt.
+
+**AC verification:**
+- Step 2.5 PRE-CLAIM is present in CLAUDE.md between steps 2 and 3
+- Gate references dispatch-claim SKILL for normalization
+- `claimed:false` + peer → explicit collision log + WORK telegram + EXIT (no spawn)
+- `$CLAUDE_CODE_SESSION_ID` passed in spawn prompt as coordination parameter (NOT credential)
+- `task_release` in `finally` block after spawn completes
+
 ## RETURN to PM
 
 Once this task is DONE:

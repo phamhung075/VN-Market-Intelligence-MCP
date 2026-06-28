@@ -99,6 +99,34 @@ grep -E "intent:[a-z-]+:" .claude/skills/dispatch-claim/SKILL.md
 grep -i "owner_client_session" .claude/skills/dispatch-claim/SKILL.md
 ```
 
+## [Developer] Implementation Record
+
+**Status:** REVIEW
+**Implemented by:** agent-father (edit mode, CROSS-SESSION-MULTI-TEAM-ORCH sprint)
+**Date:** 2026-06-28
+
+**File modified:** `.claude/skills/dispatch-claim/SKILL.md` (full rewrite to router scope)
+
+**Change:** Lifted the skill from agent-scope (`sprint-task:` prefix) to router scope
+(`intent:<agent>:<intent-key>` prefix per brief §3.1). Key changes:
+- Added OWNERSHIP KEY section declaring `owner_client_session = $CLAUDE_CODE_SESSION_ID` as the
+  sole authoritative key; `owner_agent` is a label only.
+- Added Canonical `task_id` Namespace table (§3.1) covering all five scopes: intent, cron,
+  sprint-task, published, session-presence.
+- Replaced the inner agent-wrap pattern with a Router-Scope Dispatch Wrap (CLAUDE.md step 2.5)
+  showing correct `task_claim` invocation with `owner_client_session` and `task_kind="intent"`.
+- Added session-id comparison branch on `claimed:false` (re-entrant vs peer).
+- Added "Passing $CLAUDE_CODE_SESSION_ID to Subagents" section: pass as coordination parameter
+  in spawn prompt, never echo/log as credential.
+- Retained Two-Tier Model, sprint-task outer wrap, and Phase 4 reference commits.
+
+**AC verification:**
+- `intent:<agent>:<intent-key>` namespace documented and used in all new examples
+- `owner_client_session=$CLAUDE_CODE_SESSION_ID` required on every `task_claim` call
+- Spawn-prompt passing convention documented with explicit "DO NOT echo as credential" rule
+- Sprint-task outer wrap still present and aligned with dispatch table
+- File cites brief §3.1 (canonical namespace) and §2 (session identity scheme)
+
 ## RETURN to PM
 
 Once this task is DONE:

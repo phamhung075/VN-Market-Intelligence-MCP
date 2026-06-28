@@ -99,6 +99,46 @@ grep -E "(is.*mine|ownership.*check)" .claude/skills/task-lock/SKILL.md | grep -
 grep -i "transitional\|rollout window" .claude/skills/task-lock/SKILL.md
 ```
 
+## [Developer] Implementation Record
+
+**Status:** REVIEW
+**Implemented by:** agent-father (edit mode, CROSS-SESSION-MULTI-TEAM-ORCH sprint)
+**Date:** 2026-06-28
+
+**File modified:** `.claude/skills/task-lock/SKILL.md` (full rewrite to rebind ownership key)
+
+**Changes:**
+1. Added OWNERSHIP KEY section at the top declaring `owner_client_session = $CLAUDE_CODE_SESSION_ID`
+   as the SOLE AUTHORITATIVE KEY for all ownership probes. `owner_agent` explicitly labelled
+   NON-AUTHORITATIVE (human-readable label only).
+
+2. Updated Quick Reference — `task_claim` example now includes `owner_client_session` as REQUIRED.
+
+3. Added "On claimed:false — session-id comparison (NOT heartbeat probe)" section replacing the
+   old `owner_agent`-based ownership check. Explicitly calls out the deleted anti-pattern.
+
+4. Updated `task_heartbeat` example: added `owner_client_session=$CLAUDE_CODE_SESSION_ID`,
+   updated cadence rule to `heartbeat_cadence ≤ TTL / 3`.
+
+5. Updated `task_release` example: added `owner_client_session` and documented the new return
+   shape `{ok:true, released:0|1}` (no more `ok:false` for wrong owner).
+
+6. Updated `task_force_release_orphan` example: keyed on `owner_client_session`, not `owner_agent`.
+
+7. Added "Legacy Backward-Compat Fallback — TRANSITIONAL" section documenting the 3-rung matching
+   ladder and explicitly marking rung 2 (owner_agent fallback) as removed at TASK_1980/P1-FINAL.
+
+8. Updated "On claim-fail: stale-lock takeover check" to use `owner_client_session` comparison
+   instead of `owner_agent`.
+
+9. Added Phase Status entry for P1 (CROSS-SESSION-MULTI-TEAM-ORCH — IN FLIGHT 2026-06-28).
+
+**AC verification:**
+- "sole authoritative" + "owner_client_session" present at top of SKILL (grep target satisfied)
+- No "is-it-mine?" logic keys on `owner_agent` alone — all examples use `owner_client_session`
+- Legacy fallback explicitly labelled TRANSITIONAL with removal date at TASK_1980
+- Brief §2 (session identity) and §4 (heartbeat + stale reclaim) cited in file header
+
 ## RETURN to PM
 
 Once this task is DONE:

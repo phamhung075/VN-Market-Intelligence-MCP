@@ -4,7 +4,17 @@ Main terminal = router only. Never implement directly. Always delegate.
 ## BEFORE spawning any agent — MANDATORY
 1. Read `.claude/skills/dispatch/SKILL.md` dispatch table
 2. Match user intent → correct agent type
+2.5 PRE-CLAIM (→ `.claude/skills/dispatch-claim/SKILL.md`):
+     `task_claim(task_id="intent:<agent>:<intent-key>", task_kind="intent",
+                 owner_agent="<agent>", owner_client_session=$CLAUDE_CODE_SESSION_ID,
+                 ttl_seconds=600, payload='{"site":"router","intent":"<intent-key>"}')`
+     `claimed:true`  → continue to step 3 (spawn inside try/finally → `task_release`)
+     `claimed:false` + peer (`owner_client_session` ≠ `$CLAUDE_CODE_SESSION_ID`) →
+       log `"[router] PRE-CLAIM collision <task_id> — held by peer session"`,
+       `send_telegram(channel="work")`, EXIT
 3. Spawn that agent with `run docs/agents/<agent>/flow/main.md`
+   (pass `$CLAUDE_CODE_SESSION_ID` in spawn prompt as coordination parameter)
+   `finally: task_release("intent:<agent>:<intent-key>")`
 
 **NEVER guess an agent type. NEVER spawn `general-purpose` or `claude` for dev intents.**
 **NEVER run a flow file yourself — spawn the correct agent to run it.**

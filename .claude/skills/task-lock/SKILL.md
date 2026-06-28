@@ -2,6 +2,21 @@
 
 **Trigger:** agent implementing task_claim, task_heartbeat, or task_release
 **Full protocol:** `docs/protocols/task-lock-protocol.md` (load if implementing locks)
+**Session identity scheme:** `docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md` §2
+
+---
+
+## OWNERSHIP KEY — Authoritative (P1 — TASK_1979)
+
+`owner_client_session = $CLAUDE_CODE_SESSION_ID` is the **sole authoritative key** for ALL
+ownership probes: heartbeat, release, force-release, and "is-it-mine?" checks.
+
+`owner_agent` (role string) is retained as a **human-readable label** for logs, dashboards, and
+role-scoped filtering. It is **NON-AUTHORITATIVE** for ownership decisions. Two sessions running the
+same role (two dev teams, two analysis teams) share `owner_agent` — it cannot distinguish them.
+
+**Hard constraint (always enforce):** Never use `owner_agent` alone to answer "is this lock mine?"
+Always key on `owner_client_session`.
 
 ---
 
@@ -11,84 +26,138 @@
 
 ```
 result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "<kind>:<id>",        // e.g. "cowork-slot:news-scout:20260520T140000Z"
-  task_kind:   "cowork-slot",        // or "sprint-task" | "dashboard-row"
-  owner_agent: "<your-agent-name>",
-  ttl_seconds: 900,                  // 900 for cowork-slot, 3600 for sprint-task, 1800 for dashboard-row
-  payload:     '{"slot_id":"..."}' // optional JSON context
+  task_id:              "<kind>:<id>",          // e.g. "sprint-task:TASK_1974"
+  task_kind:            "sprint-task",           // or "cowork-slot" | "dashboard-row" | "intent"
+  owner_agent:          "<your-agent-name>",     // role label (NON-AUTHORITATIVE)
+  owner_client_session: $CLAUDE_CODE_SESSION_ID, // REQUIRED — authoritative key
+  ttl_seconds:          3600,                    // 900 cowork-slot · 3600 sprint-task · 1800 dashboard-row
+  payload:              '{"slot_id":"..."}' // optional JSON context
 })
 
-if result.claimed == false: SKIP this task (another session holds it)
-if result.claimed == true:  proceed + heartbeat every 5 min
+if result.claimed == true:   PROCEED + heartbeat every TTL/3
+if result.claimed == false:  → see "On claimed:false" below
 ```
 
-### Heartbeat every 5 min
+### On claimed:false — session-id comparison (NOT heartbeat probe)
 
 ```
-hb = call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "<id>" })
+# NEVER call task_heartbeat on claimed:false to determine ownership.
+# That is the deleted self-held-heartbeat anti-pattern (brief §1.2).
+# Use owner_client_session comparison instead.
+
+if result.current_holder.owner_client_session == $CLAUDE_CODE_SESSION_ID:
+  # Re-entrant: own prior lock from this session. Renew + PROCEED.
+  call_tool(server="vn-market", tool="task_heartbeat", arguments={
+    task_id:              "<id>",
+    owner_client_session: $CLAUDE_CODE_SESSION_ID
+  })
+  PROCEED
+
+else:
+  # Peer session holds it — SKIP/DEFER
+  log "[<agent>] SKIP task <task_id> — held by peer session " + current_holder.owner_client_session
+  send_telegram(channel="work", "[<agent>] SKIP collision — held by peer session")
+  SKIP this task
+```
+
+### Heartbeat every TTL/3 (mandatory cadence)
+
+```
+hb = call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id:              "<id>",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID  // required — session UUID
+})
 if hb.ok == false: lock stolen → commit partial state → BUG telegram → EXIT
 ```
+
+Cadence rule: heartbeat_cadence ≤ TTL / 3. Missing a beat before `expires_at + 300s` = orphan risk.
 
 ### Release on completion
 
 ```
-call_tool(server="vn-market", tool="task_release", arguments={ task_id: "<id>" })
-// ok=false is acceptable (already expired/stolen)
+call_tool(server="vn-market", tool="task_release", arguments={
+  task_id:              "<id>",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID  // required — must match claiming session
+})
+// Returns: {ok:true, released:1} if released; {ok:true, released:0} if wrong owner (clean no-op)
+// ok:false is NOT returned for wrong-owner (P1 return-shape change — see brief §4)
+```
+
+Releasing the wrong session's lock is **impossible by construction** — the WHERE clause won't match.
+
+### Force-release stale orphan (heartbeat-age-only, not owner_agent)
+
+```
+call_tool(server="vn-market", tool="task_force_release_orphan", arguments={
+  task_id:                  "<id>",
+  owner_client_session:     $CLAUDE_CODE_SESSION_ID,  // must be provided
+  orphan_threshold_seconds: 600                       // refuses if heartbeat_age ≤ 120s
+})
+// A peer may only force-release a lock if it is truly stale (heartbeat_age > threshold)
+// AND the holding session is dead. Cannot force-release a live session's lock.
 ```
 
 ### List held locks (debug)
 
 ```
 call_tool(server="vn-market", tool="task_list_held", arguments={
-  kind: "cowork-slot",    // optional filter
-  expired: true           // optional: show only stale locks
+  kind:    "cowork-slot",  // optional filter
+  expired: true            // optional: show only stale locks
 })
+// Output now includes owner_client_session + payload (P2 extension)
 ```
 
 ---
 
----
+## Legacy Backward-Compat Fallback — TRANSITIONAL
 
-## On claim-fail: migration check
-
-When `task_claim` returns `claimed: false`, check `docs/data/orch/orch-state.json .head` BEFORE treating as peer-session collision:
+During the migration rollout window (TASK_1973–1979), existing pre-P1 lock rows have
+`owner_client_session = NULL`. The matching ladder in `heartbeatTask` and `releaseTask` falls through:
 
 ```
-result = task_claim({task_id, task_kind, owner_agent, ttl_seconds, payload})
+1. If owner_client_session provided → match on it (canonical — USE THIS)
+2. Else if owner_agent provided → legacy owner_agent match (un-migrated callers only)
+3. Else owner_session (deepest legacy)
+```
+
+**TRANSITIONAL NOTE:** Rung 2 (owner_agent fallback) is removed at step 5 (TASK_1980 / P1-FINAL)
+once all callers pass `owner_client_session`. Do NOT rely on rung 2 in new code.
+
+---
+
+## On claim-fail: stale-lock takeover check
+
+When `task_claim` returns `claimed:false` and session-id differs, check for stale-lock before
+treating as live peer:
+
+```
+result = task_claim({task_id, task_kind, owner_agent, owner_client_session, ttl_seconds, payload})
 
 if not result.claimed:
-  ps = read $PROJECT_ROOT/docs/data/orch/orch-state.json | jq '.head'
   current = result.current_holder
   now_s = unix epoch seconds
 
-  bare_task_id = task_id.startsWith("task:") ? task_id.slice(5) : task_id
+  is_stale = (now_s - current.heartbeat_at) > 300   // heartbeat stale >5 min
 
-  is_logical_takeover = (
-    ps.active_task_id == bare_task_id
-    AND ps.next_agent == owner_agent
-    AND current.owner_agent == owner_agent
-    AND (now_s - current.heartbeat_at) > 300   // heartbeat stale >5 min
-  )
-
-  if is_logical_takeover:
+  if is_stale AND current.owner_client_session != $CLAUDE_CODE_SESSION_ID:
     log "[<agent>] stale-lock takeover detected for " + task_id + " — awaiting natural TTL expiry"
     send_telegram(channel="work", "[<agent>] takeover pending — TTL expires in " + (current.expires_at - now_s) + "s")
     EXIT cycle (return PIPELINE: blocked, NEXT: idle, reason: stale-lock-takeover)
-    // Next dev-team cron tick (15 min later) retries; by then TTL expired
+    // Next cron tick retries; by then TTL expired → stale-steal succeeds
   else:
-    // Real collision — peer session is actively heartbeating
-    log "[<agent>] SKIP task " + task_id + " — held by peer session " + current.owner_session.slice(0,8)
-    send_telegram(channel="work", "[<agent>] SKIP collision — held by " + current.owner_agent)
+    // Live peer — do not disturb
+    log "[<agent>] SKIP task " + task_id + " — held by live peer session " + current.owner_client_session
     SKIP this task
 ```
 
-Full design rationale: `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md` § 3.
+Full design rationale: `docs/architecture-briefs/2026-05-21-task-lock-phase3-devteam.md` §3.
 
 ---
 
 ## Dispatcher-Wrap Pattern (outer claim before Agent() spawn)
 
-→ See `.claude/skills/dispatch-claim/SKILL.md` — prevents duplicate spawn in multi-router race (Phase 4 / Sprint 1962c).
+→ See `.claude/skills/dispatch-claim/SKILL.md` — prevents duplicate spawn in multi-router race.
+Lifted to router scope (Phase 4 / Sprint 1962c → TASK_1977 router lift).
 
 ---
 
@@ -114,18 +183,22 @@ have this tool in their spawned tool surface (package omission, not an inheritan
 
 ---
 
-## Phase Status (as of 2026-05-20)
+## Phase Status (as of 2026-06-28)
 
 - Phase 1 SHIPPED 2026-05-20: coordination.db + 4 MCP tools (task_claim, task_heartbeat, task_release, task_list_held). Commits: 79ac45e9, b3d6ff80.
 - Phase 2 SHIPPED 2026-05-20: cowork-slot wiring (cowork-team Step 4.6 slot-locking). Final commit: 9357ac38.
 - Phase 3 SHIPPED 2026-05-20: sprint-task + dashboard-row wiring across dev-team flows.
   - 1960c (10 commits: 448eb7f3, 2a099357, 5e7ada82, dd5e5689, f0687912, a68fb93d, 00a0dd1b, 340a8e39, fa950e08, 31c47ea5): 8 flow .md files wired + tool packages updated.
   - 1960d smoke (commit 335dda54): 10/10 PASS (qa-1960d-approved.json).
-  - Model 2 (agent-self heartbeat): TTL=3600s for sprint-task, TTL=1800s for dashboard-row. Heartbeat every 5 min by the running agent.
-  - `orch-state.json .head` relationship: AUGMENT only (task-lock serializes writes; `.head` state preserved — task-lock does not replace orch-state).
+  - Model 2 (agent-self heartbeat): TTL=3600s for sprint-task, TTL=1800s for dashboard-row. Heartbeat every TTL/3 by the running agent.
+  - `orch-state.json .head` relationship: AUGMENT only (task-lock serializes writes; `.head` state preserved).
 - Phase 4 SHIPPED 2026-05-20: dispatcher-wrap (outer Agent() claim before spawn, release after spawn returns).
   - 1962c (7 sites, commits 592fe1c4..5ecf426c): S1 execute-tier, S2/S3/S4 main.md, S5 developer, S6 ba, S7 pm wired.
   - 1962d smoke (commit 404f2f8e): 10/10 PASS (multi-router collision prevention validated).
-  - Audit (commit 25d2d3d9): 0 FAILs, 5 WARNs resolved in 1962e cleanup (9d245315).
   - Model 1 (dispatcher holds outer claim): owner_agent = dispatcher identity; inner self-claim (Phase 3) kept as-is.
-  - Cross-link: `.claude/skills/dispatch-claim/SKILL.md` — full dispatcher-wrap pattern reference.
+- **P1 (CROSS-SESSION-MULTI-TEAM-ORCH) — IN FLIGHT 2026-06-28:**
+  - TASK_1979: rebind ownership from owner_agent → owner_client_session (this file).
+  - TASK_1973: owner_client_session column migration SQL.
+  - TASK_1974: coordinationStore matching-ladder rebind.
+  - All callers updated to pass owner_client_session=$CLAUDE_CODE_SESSION_ID.
+  - Legacy owner_agent fallback (rung 2) removed at TASK_1980 / P1-FINAL.

@@ -1,37 +1,32 @@
-<!-- size-justification: 113L — leader-lock claim + backstop-window defer gate (AF-1) + own-held/peer-held/orphan-recovery paths. Child of main.md. -->
+<!-- size-justification: 96L — leader-lock claim + backstop-window defer gate (AF-1) + session-id comparison (P1 TASK_1978). Child of main.md. -->
 <!-- AF-1-LEADER-LOCK-BACKSTOP-DEFER — brief: docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md §Primitive-1 -->
 <!-- SESSION-SINGLETON GUARD: This leader-lock is the cowork-team equivalent of the dev-team SF-1 session-singleton guard.
      It ensures exactly one cowork-dispatcher session leads each 15-min tick — same role, different mechanism.
-     Dev-team uses TTL-only (sprint-task kind, no owner_session). This lock uses owner_session + heartbeat rebind
-     + orphan recovery (more sophisticated — handles restart-orphan separately from peer-held).
+     P1 fix (TASK_1978 / CROSS-SESSION-MULTI-TEAM-ORCH): ownership keyed on owner_client_session (per-session UUID),
+     not owner_agent (role). claimed:true is unconditionally trusted. Self-held-heartbeat anti-pattern deleted.
+     On claimed:false: compare owner_client_session to $CLAUDE_CODE_SESSION_ID — equal = re-entrant, different = DEFER.
      Protocol doc: docs/protocols/task-lock-protocol.md § Session-Singleton Subclass. -->
 
 ## Step 0b — Claim cowork-leader lock (DWF-DEV-CROSS-4 Phase 2 — FR-P2-5)
 
 <!-- Leader lock: ensures exactly one session leads each tick.
-     WIN (claimed=true)            → proceed immediately.
-     OWN-HELD (claimed=false + heartbeat ok=true) → renew + proceed.
-       Own-held arises when Step 4.6b extended TTL beyond the next tick (1800s > 900s gap).
-       Heartbeat probe is the discriminator: renewal matches owner_agent (FIX-CWK-LEADER-LOCK-REBIND;
-       survives server restarts). NOTE: same-owner_agent peer could also renew — per-work-item
-       slot tokens (Step 4.6) remain the hard dup-spawn gate.
-     ORPHAN-RECOVERY (claimed=false + heartbeat ok=false + heartbeat_age > 600s):
-       mcp-server restart mints a new SERVER_SESSION_ID; the old lock row's owner_session
-       no longer matches → heartbeat returns ok=false, indistinguishable from a live peer.
-       Gate: if the lock's heartbeat_at is stale (>600s) the prior process is definitively dead —
-       force-release the orphan and re-claim. A live concurrent leader always has heartbeat_age ≤ 600s
-       (it heartbeats every tick), so this gate does NOT re-open the dup-spawn window (FU-LEADER-LOCK-OWNER-SESSION).
-     PEER-HELD (claimed=false + heartbeat ok=false + heartbeat_age ≤ 600s) → silent exit, no dispatch.
+     P1 protocol (TASK_1978 / CROSS-SESSION-MULTI-TEAM-ORCH):
+     WIN (claimed=true)     → proceed immediately. claimed:true is unconditionally trusted.
+     REENTRANT (claimed=false + owner_client_session == $CLAUDE_CODE_SESSION_ID)
+       → heartbeat to renew + proceed. Own prior lock within same session.
+     PEER-HELD (claimed=false + owner_client_session != $CLAUDE_CODE_SESSION_ID)
+       → DEFER: log + WORK telegram + EXIT. Do NOT attempt heartbeat for ownership check.
      TTL = 1800s (2 × 15-min heartbeat). MUST be explicit — never rely on default 3600s (AC-P2-5-3).
-     Heartbeat: after dispatch body (Step 4.6b), extend TTL from current time.
+     Heartbeat: after dispatch body (Step 4.6b), extend TTL from current time using owner_client_session.
      Dark window after force-recreate: max 1800s — see docs/protocols/dwf-ops-runbook.md. -->
 
 ```
 LEADER_CLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "cowork-leader",
-  task_kind:   "cowork-slot",
-  ttl_seconds: 1800,
-  owner_agent: "cowork-dispatcher"
+  task_id:              "cowork-leader",
+  task_kind:            "cowork-slot",
+  ttl_seconds:          1800,
+  owner_agent:          "cowork-dispatcher",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
 }))
 ```
 
@@ -61,53 +56,34 @@ if LEADER_CLAIM call errored or timed out:
 ```
 
 ```
+# P1 fix (TASK_1978 — CROSS-SESSION-MULTI-TEAM-ORCH):
+# claimed:true is authoritative — no heartbeat probe on claimed:false.
+# Self-held-heartbeat anti-pattern DELETED (lines 64-81 in pre-P1 file).
+# Ownership discriminated by owner_client_session (per-session UUID), not owner_agent (role).
+
 if LEADER_CLAIM.claimed == true:
-  # Fresh claim — this session just won the lock; proceed
+  # Fresh claim — this session won the lock exclusively. PROCEED.
   log "[cowork] leader lock claimed fresh — proceeding"
   → PROCEED (continue to Step 1)
 
 else:
-  # Lock held by someone. Disambiguate: own-held vs peer-held via heartbeat probe.
-  # task_heartbeat matches owner_agent (FIX-CWK-LEADER-LOCK-REBIND — stable across
-  # mcp-server restarts). BARE calls fall back to legacy owner_session → zombie after restart.
-  LEADER_HB=$(call_tool(server="vn-market", tool="task_heartbeat", arguments={
-    task_id:     "cowork-leader",
-    owner_agent: "cowork-dispatcher"
-  }))
+  # Lock held. Compare owner_client_session to discriminate:
+  # own prior lock (re-entrant within session) vs. live peer session.
+  # NEVER call task_heartbeat here for ownership check — deleted anti-pattern.
+  owner_session = LEADER_CLAIM.current_holder.owner_client_session
 
-  if LEADER_HB.ok == true:
-    # Heartbeat succeeded — THIS process holds the lock (renewed +1800s from now)
-    log "[cowork] leader lock self-held — heartbeated to " + LEADER_HB.expires_at + ", proceeding"
+  if owner_session == $CLAUDE_CODE_SESSION_ID:
+    # Same session — re-entrant lock. Renew + PROCEED.
+    log "[cowork-team] re-entry detected, renewing..."
+    call_tool(server="vn-market", tool="task_heartbeat", arguments={
+      task_id:              "cowork-leader",
+      owner_client_session: $CLAUDE_CODE_SESSION_ID
+    })
     → PROCEED (continue to Step 1)
 
   else:
-    # Heartbeat rejected — either restart-orphan or genuine live peer.
-    # Distinguish via orphan recovery BEFORE concluding peer-held.
-    ORPHAN=$(call_tool(server="vn-market", tool="task_force_release_orphan", arguments={
-      task_id:                   "cowork-leader",
-      owner_agent:               "cowork-dispatcher",
-      orphan_threshold_seconds:  600
-    }))
-
-    if ORPHAN.released == true:
-      # Prior holder was a restart-orphan (heartbeat_age > 600s — dead process).
-      # Re-claim immediately; if it succeeds this session becomes leader.
-      log "[cowork] orphan lock released (age=" + ORPHAN.heartbeat_age + "s) — re-claiming"
-      RECLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
-        task_id:     "cowork-leader",
-        task_kind:   "cowork-slot",
-        ttl_seconds: 1800,
-        owner_agent: "cowork-dispatcher"
-      }))
-      if RECLAIM.claimed == true:
-        log "[cowork] leader lock re-claimed after orphan recovery — proceeding"
-        → PROCEED (continue to Step 1)
-      else:
-        log "[cowork] orphan released but re-claim lost race — silent exit"
-        EXIT
-
-    else:
-      # ORPHAN.released == false → reason: "heartbeat fresh" → live peer holds it.
-      log "[cowork] leader lock held by live peer — silent exit"
-      EXIT
+    # Different session (or NULL transitional row) — peer session holds it. DEFER.
+    log "[cowork-team] peer session " + owner_session + " holds lock, deferring"
+    send_telegram(channel="work", "[cowork-team] DEFER: peer session holds cowork-slot lock")
+    EXIT
 ```
