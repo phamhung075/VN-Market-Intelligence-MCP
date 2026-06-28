@@ -50,6 +50,99 @@ intent:cowork-team:digest-daily         # cowork daily digest intent
 
 ---
 
+## Step 0a — Session-Presence Self-Registration
+
+**Fire once at dispatcher startup** — before Phase A orphan-adoption probe and Phase B
+PRE-CLAIM gate. Registers this running session in the coordination DB so peer sessions
+can enumerate live dispatchers via `task_list_held(kind="session-presence")`.
+
+`task_id = "session-presence:" + $CLAUDE_CODE_SESSION_ID` is per-session unique. On
+recurring cron ticks the row is already held by this session — heartbeat to renew; no
+re-create needed.
+
+```
+# Step 0a — Presence claim (session-level singleton)
+# Fires at every dispatcher startup; re-entrant on recurring cron ticks.
+
+started_at = $(date -u +"%Y-%m-%dT%H:%M:%SZ")   # wall-clock at this dispatcher tick
+
+presence_result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  task_kind:            "session-presence",           # REQUIRED — 7th enum kind (TASK_1989)
+  owner_agent:          "<dispatcher-role>",           # e.g. "dev-team", "cowork-dispatcher"
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,      # REQUIRED — authoritative ownership key
+  ttl_seconds:          1800,                          # 30 min; heartbeat every TTL/3 = 600s
+  payload:              {
+    agent_id:     "<dispatcher-id>",                   # e.g. "dev-team", "cowork-team"
+    host:         $(hostname),                         # machine identity for multi-host visibility
+    started_at:   started_at,                          # wall-clock at claim time (stable for session)
+    current_task: "dispatch-init"                      # advisory — see § Updating current_task
+  }
+})
+
+if presence_result.claimed == true:
+  log "[<dispatcher>] session-presence registered: " + $CLAUDE_CODE_SESSION_ID
+
+else:
+  if presence_result.current_holder.owner_client_session == $CLAUDE_CODE_SESSION_ID:
+    # Re-entrant tick within same session — heartbeat to renew TTL only
+    call_tool(server="vn-market", tool="task_heartbeat", arguments={
+      task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+      owner_client_session: $CLAUDE_CODE_SESSION_ID
+    })
+    log "[<dispatcher>] session-presence renewed (re-entrant tick)"
+
+  else:
+    # IMPOSSIBLE: task_id embeds $CLAUDE_CODE_SESSION_ID — no peer session can hold it.
+    # If this path fires: $CLAUDE_CODE_SESSION_ID is unset or env is misconfigured.
+    # Non-fatal — log BUG and PROCEED (presence is advisory, never a gate).
+    log "[<dispatcher>] WARN session-presence collision on session-presence:" + $CLAUDE_CODE_SESSION_ID + " — check env var"
+
+# Presence claim result is NEVER a gate — ALWAYS proceed to Phase A and Phase B.
+```
+
+### Updating `payload.current_task` mid-session
+
+`task_heartbeat` renews TTL only — it does **not** update payload fields (no payload_patch
+in the current MCP surface). To refresh `current_task` when the active task changes, use
+the release+reclaim pattern. Since `task_id` embeds `$CLAUDE_CODE_SESSION_ID`, no peer
+can steal it in the race window:
+
+```
+# Optional advisory update — release then immediately reclaim with new current_task
+call_tool(server="vn-market", tool="task_release", arguments={
+  task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  task_kind:            "session-presence",
+  owner_agent:          "<dispatcher-role>",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds:          1800,
+  payload:              { agent_id: "...", host: "...", started_at: "...", current_task: "<active-task-id>" }
+})
+```
+
+This is **optional and advisory** — the primary liveness signal is `heartbeat_at` freshness
+(is this session alive?). `current_task` is a best-effort observability field.
+
+### Non-Adoptable — Presence Rows Are NOT Work Locks
+
+> **P2 INVARIANT (do not break):** `session-presence` rows are explicitly excluded from
+> the reaper's `ORPHAN_EMIT_ALLOW_LIST` (coordinationStore.ts:392 — "NOT adoptable work").
+> When a session dies, its presence row stops receiving heartbeats and **simply EXPIRES/GCs —
+> it is NEVER converted to an `orphan-signal`, NEVER adopted, NEVER re-dispatched.**
+>
+> Presence row expiry = normal liveness signalling: "that session is gone."
+> It is NOT abandoned work. Do NOT treat a stale presence row as a signal to rescue work.
+>
+> Only `sprint-task`, `cowork-slot`, and `dashboard-row` generate `orphan-signal` rows (P1.5).
+> The Phase A orphan-adoption probe will never encounter `session-presence` rows in its results
+> (the reaper never emits them for that kind).
+
+---
+
 ## Pattern — Router-Scope Dispatch Wrap (CLAUDE.md step 2.5)
 
 ```

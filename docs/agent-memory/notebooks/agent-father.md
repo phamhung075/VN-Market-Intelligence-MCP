@@ -1,5 +1,15 @@
 # Agent Father — Notebook
 
+## 2026-06-28 — CROSS-SESSION-MULTI-TEAM-ORCH P2-AF-1 (TASK_1990)
+
+- Task: Dispatcher presence self-registration — docs/flow/skill only, zero rebuild
+- Files: `.claude/skills/dispatch-claim/SKILL.md` (§ Step 0a new), `.claude/skills/task-lock/SKILL.md` (§ Session-Presence Row — P2 new), `docs/agents/cowork-team/flow/main.md` (Step 0b split), `docs/agents/dev-team/flow/main.md` (PREFLIGHT presence claim + Step 3 heartbeat), `docs/handoffs/TASK_1990.md` ([Developer] section)
+- Payload structure: `{agent_id, host, started_at, current_task}` on all presence rows; `task_kind="session-presence"`, `ttl_seconds=1800`
+- Key constraint: task_heartbeat does NOT update payload (confirmed coordinationStore.ts:667-691); current_task update via release+reclaim (optional advisory)
+- Non-adoptable invariant sourced from code: `ORPHAN_EMIT_ALLOW_LIST` at coordinationStore.ts:395 explicitly excludes `session-presence` (line 392)
+- Presence placed BEFORE SF-1 in dev-team so session is visible even on early-exit ticks
+- Decision journal: `docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-p2-af1-agent-father.md`
+
 ## 2026-06-28 — CROSS-SESSION-MULTI-TEAM-ORCH P1.5-AF-1 + P1.5-AF-2
 
 - Tasks: TASK_1986 (router adoption probe) + TASK_1987 (dev-team orphan drain) → both REVIEW

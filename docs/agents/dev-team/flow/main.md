@@ -1,4 +1,4 @@
-<!-- size-justification: 375L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0a.5 CI-health probe (sub-flow pointer, +6L) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/0a.5/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). CI-HEALTH-FIX-BRIDGE 2026-06-08: Step 0a.5 CI probe sub-flow pointer (+6L). DEV-TEAM-TOOL-CONTRACT-CRON-OVERLAP 2026-06-14: SF-1 single-flight guard (task_claim dev-team-cron-singleton TTL=5400s) + GCC-PREFLIGHT read directive in Step 0-PREFLIGHT; SF-1 heartbeat at Step 3 entry; SF-1 release at jump:end (+20L). -->
+<!-- size-justification: 405L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0a.5 CI-health probe (sub-flow pointer, +6L) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/0a.5/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). CI-HEALTH-FIX-BRIDGE 2026-06-08: Step 0a.5 CI probe sub-flow pointer (+6L). DEV-TEAM-TOOL-CONTRACT-CRON-OVERLAP 2026-06-14: SF-1 single-flight guard (task_claim dev-team-cron-singleton TTL=5400s) + GCC-PREFLIGHT read directive in Step 0-PREFLIGHT; SF-1 heartbeat at Step 3 entry; SF-1 release at jump:end (+20L). P2-PRESENCE 2026-06-28 (TASK_1990): session-presence claim in PREFLIGHT before SF-1; heartbeat at Step 3 alongside SF-1 heartbeat (+30L). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 <!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
@@ -87,6 +87,31 @@ send_telegram(channel="work", message="[dev-team] cron START — actual fire {ts
 # Self-arm detect→plan loop (idempotent — skill Step 1 CronList guard makes this a no-op once armed)
 → skill: .claude/skills/cron-detect-loop/SKILL.md
 # Guarantees system-auditor Tier-1/2/3 + dev-team crons stay live while this always-on session runs.
+
+# P2-PRESENCE: session-presence self-registration — fires before SF-1 so this session is visible
+# even when SF-1 causes an early exit on duplicate-tick guard.
+# dispatch-claim SKILL § Step 0a is authoritative — this is the dev-team instantiation.
+# Non-adoptable: presence row expiry = liveness GC, NEVER orphan-signal.
+presence_result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  task_kind:            "session-presence",
+  owner_agent:          "dev-team",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds:          1800,
+  payload:              {
+    agent_id:     "dev-team",
+    host:         $(hostname),
+    started_at:   ts,           # reuse ts set above (UTC ISO string)
+    current_task: "preflight"
+  }
+})
+if not presence_result.claimed:
+  if presence_result.current_holder.owner_client_session == $CLAUDE_CODE_SESSION_ID:
+    call_tool(server="vn-market", tool="task_heartbeat", arguments={
+      task_id: "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+      owner_client_session: $CLAUDE_CODE_SESSION_ID
+    })
+# Presence result is NEVER a gate — always proceed to SF-1.
 
 # SF-1: SINGLE-FLIGHT GUARD — session-level cron overlap prevention (TTL-only, no owner-session binding)
 # Survives mcp-server restart: TTL clock continues; orphaned lock expiry is natural. → memory: lock_orphaned_by_rebuild
@@ -467,9 +492,17 @@ Architect MUST set `ZONE: apps/<service>/` in RETURN — PM propagates into hand
 ## Step 3 — Execution
 
 <!-- SF-1 heartbeat: renew singleton session lock at Step 3 entry to cover long sprint ticks beyond initial 5400s TTL -->
+<!-- P2-PRESENCE heartbeat: renew presence row alongside SF-1; update current_task to active task id -->
 ```
 call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "dev-team-cron-singleton", owner_client_session: $CLAUDE_CODE_SESSION_ID })
 # ok=false → lock stolen (peer recovered after stall) → log BUG + exit cleanly; do NOT fight the steal.
+
+# P2-PRESENCE: heartbeat presence row (renews TTL; payload.current_task advisory update via release+reclaim if desired)
+call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+# ok=false → presence row expired between PREFLIGHT and Step 3 (long tick) → non-fatal; reclaim on next tick
 ```
 
 → Run sub-flow: `docs/agents/dev-team/flow/execute-tier.md`

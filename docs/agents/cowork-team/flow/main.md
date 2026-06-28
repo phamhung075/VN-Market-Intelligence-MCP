@@ -1,4 +1,4 @@
-<!-- size-justification: ~113L — thin dispatcher; full logic extracted to 11 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-v2 2026-06-05: telemetry.md Step 6.0 uses call_tool emit_pressure_state (Option C). BGFAN-1 2026-06-07: background spawn mandate; actual spawns in spawn-fanout.md carry run_in_background=true. BG-1 2026-06-18: Step 0c blind-guard.md added. -->
+<!-- size-justification: ~135L — thin dispatcher; full logic extracted to 11 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-v2 2026-06-05: telemetry.md Step 6.0 uses call_tool emit_pressure_state (Option C). BGFAN-1 2026-06-07: background spawn mandate; actual spawns in spawn-fanout.md carry run_in_background=true. BG-1 2026-06-18: Step 0c blind-guard.md added. P2-PRESENCE 2026-06-28 (TASK_1990): Step 0b now claims session-presence BEFORE leader-lock (+22L inline). -->
 <!-- BGFAN-1: ALL Agent spawns from this dispatcher MUST use run_in_background=true. Cowork agents are independent → genuine parallel background fan-out. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
 # cowork-team — Master Cron Dispatcher
@@ -29,7 +29,7 @@ Fires every 15 min via `*/15 * * * *` CronCreate. Reads `docs/data/cowork-schedu
 | Step | What | Sub-flow |
 |---|---|---|
 | 0a | Drain signal_queue | inline below |
-| 0b | Claim cowork-leader lock | `leader-lock.md` |
+| 0b | Session-presence self-register + Claim cowork-leader lock | `dispatch-claim SKILL § Step 0a` (inline) then `leader-lock.md` |
 | 0c | Blind detection — gateway preflight | `blind-guard.md` |
 | 1–4b | Resolve UTC, match slots, drift guard, silent-exit, collision guard | `match-slots.md` |
 | 4.2–4.3 | Read pressure-state, calendar suppression | `pressure-read.md` |
@@ -52,9 +52,44 @@ Mark each processed row `NEW → READ` (atomic write). If orch-state.json missin
 
 ---
 
-## Step 0b — Leader lock
+## Step 0b — Presence + Leader lock
 
-→ Run sub-flow: `docs/agents/cowork-team/flow/leader-lock.md`
+<!-- P2-PRESENCE (TASK_1990): session-presence claim fires BEFORE leader-lock.
+     Registers this cowork-dispatcher session for cross-session observability.
+     dispatch-claim SKILL § Step 0a is authoritative — this is the cowork-team instantiation.
+     Non-adoptable: presence row expiry = liveness GC, never orphan-signal. -->
+
+**Step 0b.1 — Session-presence self-registration** (→ skill: `.claude/skills/dispatch-claim/SKILL.md` § Step 0a)
+
+```
+# P2-PRESENCE: register this dispatcher session before leader-lock
+# task_id is session-unique — re-entrant across recurring ticks (heartbeat on re-entry)
+
+presence_result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  task_kind:            "session-presence",
+  owner_agent:          "cowork-dispatcher",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds:          1800,
+  payload:              {
+    agent_id:     "cowork-team",
+    host:         $(hostname),
+    started_at:   $(date -u +"%Y-%m-%dT%H:%M:%SZ"),
+    current_task: "dispatch-init"
+  }
+})
+
+# Re-entrant tick: heartbeat to renew if already claimed by this session
+if not presence_result.claimed:
+  if presence_result.current_holder.owner_client_session == $CLAUDE_CODE_SESSION_ID:
+    call_tool(server="vn-market", tool="task_heartbeat", arguments={
+      task_id: "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+      owner_client_session: $CLAUDE_CODE_SESSION_ID
+    })
+# Always proceed — presence result is NEVER a gate.
+```
+
+**Step 0b.2 — Leader lock** → Run sub-flow: `docs/agents/cowork-team/flow/leader-lock.md`
 
 ---
 

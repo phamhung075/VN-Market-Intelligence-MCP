@@ -202,3 +202,82 @@ have this tool in their spawned tool surface (package omission, not an inheritan
   - TASK_1974: coordinationStore matching-ladder rebind.
   - All callers updated to pass owner_client_session=$CLAUDE_CODE_SESSION_ID.
   - Legacy owner_agent fallback (rung 2) removed at TASK_1980 / P1-FINAL.
+- **P2 (CROSS-SESSION-MULTI-TEAM-ORCH) — IN FLIGHT 2026-06-28:**
+  - TASK_1989: session-presence enum live in 7-kind CHECK + task_list_held returns payload.
+  - TASK_1990: dispatcher presence self-registration wired into cowork-team + dev-team flows.
+
+---
+
+## Session-Presence Row — P2 (non-adoptable)
+
+**Scope:** Dispatchers only (cowork-team, dev-team). Specialist sub-agents do NOT claim
+presence rows — only the outer dispatcher session that holds the gateway tool surface.
+
+### Claim at session startup
+
+```
+# At dispatcher startup (Step 0a via dispatch-claim SKILL)
+call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  task_kind:            "session-presence",
+  owner_agent:          "<dispatcher-role>",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds:          1800,           # 30 min — heartbeat every 600s (TTL/3)
+  payload:              {
+    agent_id:     "<dispatcher-id>",   # "dev-team" | "cowork-team"
+    host:         $(hostname),
+    started_at:   $(date -u +"%Y-%m-%dT%H:%M:%SZ"),
+    current_task: "dispatch-init"      # advisory; update via release+reclaim on task change
+  }
+})
+```
+
+Full claim pattern (including re-entrant handling) →
+`.claude/skills/dispatch-claim/SKILL.md` § Step 0a
+
+### Heartbeat loop — TTL renewal only
+
+```
+# Heartbeat every TTL/3 = 600s alongside other lock heartbeats
+hb = call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id:              "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+# hb.ok == false → presence row expired (session ran too long without heartbeat)
+# → reclaim with task_claim (do NOT treat as fatal; just re-register)
+```
+
+**Note:** `task_heartbeat` updates `heartbeat_at` and `expires_at` only — it does NOT update
+payload fields. `payload.current_task` is set at claim time and updated via release+reclaim.
+
+### Updating `payload.current_task` on task change (advisory)
+
+When the dispatcher identifies its active work item, optionally update `current_task`:
+
+```
+# Release + immediately reclaim with updated current_task
+# Safe: task_id is session-unique — no peer can steal it in the race window
+call_tool(server="vn-market", tool="task_release", arguments={
+  task_id: "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:   "session-presence:" + $CLAUDE_CODE_SESSION_ID,
+  task_kind: "session-presence",
+  owner_agent: "<dispatcher-role>",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds: 1800,
+  payload: { ..., current_task: "<active-task-id>" }
+})
+```
+
+This is **optional** — `heartbeat_at` freshness is the authoritative liveness signal.
+
+### Non-Adoptable (P2 invariant — do not break)
+
+`session-presence` is explicitly excluded from `ORPHAN_EMIT_ALLOW_LIST`
+(coordinationStore.ts:392). A dead session's presence row **silently GCs** when
+`expires_at` passes — no `orphan-signal` is emitted, no adoption probe fires.
+
+This is by design: presence row expiry means "session gone" — NOT "work abandoned."
+Only `sprint-task`, `cowork-slot`, and `dashboard-row` generate `orphan-signal` rows.
