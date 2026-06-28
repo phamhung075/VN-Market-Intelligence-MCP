@@ -866,3 +866,68 @@ export function _injectCoordinationDb(db: Database): void {
   _coordDb = db;
   _coordDbUnavailable = false;
 }
+
+// ---------------------------------------------------------------------------
+// P1.5-MCP-3 (TASK_1984) — Server-side periodic reaper
+// ---------------------------------------------------------------------------
+
+/**
+ * Execute one reaper tick: get the coordination DB and call gcExpiredLocks.
+ *
+ * Exported for unit testing: callers can pass a `dbOverride` to test the
+ * reaping logic directly without a real 600s wait. In production the
+ * startPeriodicReaper interval calls this with no arguments.
+ *
+ * Returns the count of rows deleted (0 if DB unavailable).
+ */
+export function _reaperTick(dbOverride?: Database): number {
+  const db = dbOverride ?? getCoordinationDb();
+  if (!db) {
+    console.warn("[coordinationStore] [reaper] DB unavailable — skipping tick");
+    return 0;
+  }
+  return gcExpiredLocks(db, 300);
+}
+
+/**
+ * Arm the server-side periodic reaper.
+ *
+ * Calls `gcExpiredLocks(db, 300)` every 600 seconds (10 minutes) so that
+ * orphan-signals are emitted and expired locks are GC'd even when NO client
+ * session is present (the "all sessions dead" case described in §6.5.1).
+ *
+ * DoD-P15-5: the interval callback wraps the tick in try/catch + logs errors
+ * on failure. ONE uncaught error inside the callback MUST NOT kill the
+ * interval — the timer must keep firing on subsequent 600s ticks.
+ *
+ * The `gcExpiredLocks` function is already try/catch guarded; the outer
+ * try/catch in the callback is a belt-and-suspenders for unexpected throws
+ * from future refactors.
+ *
+ * Intended to be called ONCE at server startup (after the coordination DB
+ * is open and migrations have run). Calling it multiple times produces
+ * multiple independent timers — callers are responsible for avoiding that.
+ *
+ * @returns The interval ID. Pass it to `clearInterval()` on shutdown to
+ *          prevent timer leaks in tests or when the server closes cleanly.
+ */
+export function startPeriodicReaper(): ReturnType<typeof setInterval> {
+  console.info(
+    "[coordinationStore] [reaper] periodic reaper armed" +
+      " (interval=600s, grace=300s, allow-list=sprint-task|cowork-slot|dashboard-row)",
+  );
+  return setInterval(() => {
+    try {
+      const deleted = _reaperTick();
+      if (deleted > 0) {
+        console.info(`[coordinationStore] [reaper] tick: ${deleted} expired row(s) GC'd`);
+      }
+    } catch (err) {
+      // DoD-P15-5: log + continue; MUST NOT kill the interval on transient errors
+      console.error(
+        "[coordinationStore] [reaper] gcExpiredLocks error (non-fatal — timer continues)",
+        err,
+      );
+    }
+  }, 600_000);
+}

@@ -61,3 +61,33 @@ Without this, expired locks are silently deleted (today's behavior) and their wo
 - `coordinator_test.ts` acceptance test: inject an expired lock row with `redispatch_count=0`, call `gcExpiredLocks`, verify orphan-signal row exists with `redispatch_count=1`, and original row is deleted
 - Manual SQL query on live coordination.db: verify `SELECT COUNT(*) FROM task_locks WHERE task_kind='orphan-signal'` increases after a lock expires
 - Regression: existing published:* and session-presence rows are still silently deleted (NOT emitted as orphan-signals)
+
+## [Developer] Implementation — TASK_1983
+
+**Commit:** `4db33600`
+**Status:** REVIEW
+**tsc:** 0 errors
+**Tests:** 41 pass / 0 fail (11 new AC-11 tests added to `task-lock-coordination-store.test.ts`)
+
+### What was changed
+
+**`apps/mcp-server/src/infrastructure/db/coordinationStore.ts`**
+- Added `ORPHAN_EMIT_ALLOW_LIST` constant (`sprint-task`, `cowork-slot`, `cron-tick-with-published-checkpoint`, `dashboard-row`). New kinds default to NOT-emitting — must opt-in.
+- Rewrote `gcExpiredLocks` to run in a single SQLite transaction (BEGIN/COMMIT/ROLLBACK):
+  - Phase 1: `SELECT` expired rows matching the ALLOW-LIST and `NOT LIKE 'published:%'`; for each, `INSERT OR REPLACE` an orphan-signal row with `owner_session='server-reaper'`, `owner_client_session=NULL`, `expires_at=now+7200`, and payload carrying `{original_task_id, original_task_kind, original_owner_client_session, owner_agent, last_payload, orphaned_at, redispatch_count: prior+1}`.
+  - Phase 2: `DELETE` all expired rows (adoptable + non-adoptable).
+- `excludeTaskId` propagated to both Phase 1 scan and Phase 2 delete.
+- `gcExpiredLocks` export type unchanged; signature unchanged; return value (deleted row count) unchanged.
+
+**`apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts`**
+- Added `gcExpiredLocks` to import list.
+- Added `describe("AC-11: gcExpiredLocks — orphan-signal emission")` suite with 11 tests covering: sprint-task, cowork-slot, dashboard-row emit; intent/commit-mutex/session-presence NOT emitted; published:* NOT emitted; grace window protection; excludeTaskId; INSERT OR REPLACE idempotency.
+
+### DoD compliance
+- **DoD-P15-3**: `redispatch_count: prior+1` carried from DB column into signal payload. ✓
+- **DoD-P15-4**: ALLOW-LIST (not deny-list); new kinds default to NOT-emitting. ✓
+- **Atomicity**: single transaction; no partial state. ✓
+- **Error handling**: outer try/catch logs non-fatal; claim path never blocked. ✓
+
+### Not yet verified (requires ops REBUILD + live container)
+- RAW-verify on live coordination.db (deferred to qa/TASK_1988).

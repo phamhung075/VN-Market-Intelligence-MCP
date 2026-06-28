@@ -44,6 +44,7 @@ import { incrementTool } from "../../infrastructure/telemetry/perCallCounterStor
 import { safeLogVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { ensurePoisonedQueueCleanup } from "./server-startup.js";
+import { startPeriodicReaper } from "../../infrastructure/db/coordinationStore.js";
 export {
   _staleTickers_lastNotifiedDate,
   _resetStaleTickers_lastNotifiedDate,
@@ -375,6 +376,14 @@ export async function createBunServer(
 
   // FIX-BCTC-SIZE-GUARD: reset 4 poisoned 'done' queue entries once at startup
   ensurePoisonedQueueCleanup();
+
+  // P1.5-MCP-3 (TASK_1984): Server-side periodic reaper — emits orphan-signals
+  // for expired adoptable locks every 600s so dead-session orphans are detected
+  // WITHOUT any client present (the "all sessions dead" case per §6.5.1).
+  // Grace window = 300s (5 min past expiry before a row is eligible).
+  // Fires even when no task_claim arrives — belt-and-suspenders beyond the
+  // opportunistic per-claim GC in claimTask.
+  const reaperIntervalId = startPeriodicReaper();
 
   // ── Task 1839a Phase 2: single DB handle for all HTTP route handlers ─────
   // One shared DB instance for all route handlers — opened once at startup.
@@ -2357,6 +2366,10 @@ export async function createBunServer(
     port: boundPort,
     toolCount,
     close(): Promise<void> {
+      // P1.5-MCP-3: clear the periodic reaper before closing so no stray ticks
+      // fire after the server shuts down (prevents timer-leak in tests and
+      // prevents DB access after the server lifetime ends).
+      clearInterval(reaperIntervalId);
       return new Promise<void>((resolve, reject) => {
         httpServer.close((err) => {
           if (err) {

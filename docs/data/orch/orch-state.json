@@ -6038,7 +6038,7 @@
         "type": "SPRINT-M",
         "zone": "apps/mcp-server/",
         "title": "P1.5-MCP-2: gcExpiredLocks — pre-GC emit orphan-signals",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P1.5",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1983-p15-mcp-2-gc-emit-logic.md",
@@ -6051,14 +6051,15 @@
           "TASK_1984"
         ],
         "created_at": "2026-06-28T08:45:00Z",
-        "created_by": "pm"
+        "created_by": "pm",
+        "status_note": "tsc 0 errors; 41 tests pass (11 new AC-11); commit 4db33600"
       },
       {
         "id": "TASK_1984",
         "type": "SPRINT-S",
         "zone": "apps/mcp-server/",
         "title": "P1.5-MCP-3: Server-side periodic reaper timer (600s setInterval)",
-        "status": "BACKLOG",
+        "status": "REVIEW",
         "priority": "P1.5",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1984-p15-mcp-3-periodic-reaper-timer.md",
@@ -6072,14 +6073,15 @@
           "TASK_1985"
         ],
         "created_at": "2026-06-28T08:45:00Z",
-        "created_by": "pm"
+        "created_by": "pm",
+        "status_note": "tsc 0; 8 tests pass; startPeriodicReaper + _reaperTick exported; server.ts wired"
       },
       {
         "id": "TASK_1985",
         "type": "SPRINT-S",
         "zone": "apps/mcp-server/",
         "title": "P1.5-MCP-4: listHeldTasks — add owner_agent filter + redispatch_count output",
-        "status": "BACKLOG",
+        "status": "REVIEW",
         "priority": "P1.5",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1985-p15-mcp-4-listheldtasks-filter.md",
@@ -6094,7 +6096,8 @@
           "TASK_1987"
         ],
         "created_at": "2026-06-28T08:45:00Z",
-        "created_by": "pm"
+        "created_by": "pm",
+        "status_note": "tsc 0; 67 tests pass (18 coordination-tools, 8 reaper-timer, 41 store); owner_agent filter + redispatch_count verified"
       },
       {
         "id": "TASK_1986",

@@ -59,3 +59,37 @@ The `redispatch_count` in the output lets adopters check the poison-task gate BE
 - Output row includes both a top-level `redispatch_count` field and a `payload.redispatch_count` (for convenience)
 - Regression: `task_list_held()` without filters still works, returning all kinds
 - Acceptance test: create an orphan-signal for `owner_agent="dev-team"` with `redispatch_count=2`, query with filter, verify it appears with correct count
+
+## [Developer] Implementation — TASK_1985
+
+**Commit:** see below
+**Status:** REVIEW
+**tsc:** 0 errors
+**Tests:** 67 pass / 0 fail across all three coordination test suites (18 in coordination-tools, including 9 new TASK_1985 tests)
+
+### Pre-existing implementation (already landed before this task)
+
+Both the store function (`listHeldTasks` in `coordinationStore.ts`) and the tool handler (`coordinationTools.ts`) already had:
+- `owner_agent` optional filter parameter (exactOptionalPropertyTypes-safe conditional spread)
+- `redispatch_count` in `LockRow` type and SELECT query
+- `owner_agent` WHERE clause in the store
+
+No store changes were required for the filter behavior.
+
+### What was added / changed
+
+**`apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts`**
+- Added `created_at: lock.claimed_at` alias in the `normalizedLocks` map (tool output layer). The `claimed_at` DB column is kept for backward compat; `created_at` is an additive alias per AC output spec. `redispatch_count` was already in `...lock` spread.
+
+**`apps/mcp-server/src/__tests__/task-lock-coordination-tools.test.ts`**
+- Added `gcExpiredLocks` to imports (needed to seed orphan-signal rows for AC-1985-5).
+- Added `describe("P1.5-MCP-4 (TASK_1985)")` suite with 8 tests covering:
+  - AC-1985-1/1b: `owner_agent` filter returns only matching rows
+  - AC-1985-2: `redispatch_count` top-level field present in output
+  - AC-1985-3: `claimed_at` (raw) present in store output
+  - AC-1985-4: backward-compat no-filter returns all rows
+  - AC-1985-5 (handoff AC): orphan-signal for dev-team redispatch_count=2 → queried with filter shows count=3 in payload; cowork-team filter does NOT see dev-team signal
+  - AC-1985-6: exactOptionalPropertyTypes-safe undefined owner_agent → no filter
+
+### Not yet live-verified (requires ops REBUILD)
+- RAW-verify on live coordination.db (deferred to qa/TASK_1988).

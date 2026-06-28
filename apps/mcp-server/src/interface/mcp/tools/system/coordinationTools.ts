@@ -250,9 +250,15 @@ export function registerCoordinationTools(server: McpServer): void {
       // Contract expects `owner` (alias of owner_agent) and `expires_at` as ISO string.
       // Keep owner_agent for backward compat; add owner alongside.
       // expires_at in DB is Unix epoch (integer seconds) — convert to ISO-8601 string.
+      //
+      // P1.5-MCP-4 (TASK_1985): add `created_at` alias for `claimed_at` so adopters
+      // reading orphan-signal rows get the expected field name from the AC output spec.
+      // `claimed_at` kept for backward compat; `created_at` is an additive alias.
+      // `redispatch_count` is already present via `...lock` spread (LockRow column).
       const normalizedLocks = result.locks.map((lock) => ({
         ...lock,
         owner: lock.owner_agent,
+        created_at: lock.claimed_at, // alias: same value as claimed_at (epoch seconds)
         expires_at: new Date(lock.expires_at * 1000).toISOString(),
       }));
 

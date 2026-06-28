@@ -55,3 +55,31 @@ The timer + try/catch gives the reaper resilience: a transient DB lock or I/O hi
 - Acceptance test passes: mock a DB error, verify timer survives and logs the error
 - Inspect mcp-server logs: `[coordination] gcExpiredLocks fired at 600s, 1200s, 1800s, ...` intervals (or similar logging)
 - Manual test: kill all sessions, wait 600s + 300s (within grace window orphan-signals should exist), new session comes online and sees `task_list_held(kind="orphan-signal")` rows
+
+## [Developer] Implementation — TASK_1984
+
+**Commit:** see below (committed with TASK_1985 bundle)
+**Status:** REVIEW
+**tsc:** 0 errors
+**Tests:** 8 pass / 0 fail (new `task-lock-reaper-timer.test.ts`)
+
+### What was changed
+
+**`apps/mcp-server/src/infrastructure/db/coordinationStore.ts`**
+- Added `_reaperTick(dbOverride?: Database): number` export — the tick function extracted from the interval closure for testability. Uses `dbOverride` (for tests) or `getCoordinationDb()` (production). Returns deleted row count.
+- Added `startPeriodicReaper(): ReturnType<typeof setInterval>` export — arms the 600s interval. Each tick calls `_reaperTick()` wrapped in try/catch (DoD-P15-5: errors logged, interval continues). Returns the interval ID for `clearInterval()` on shutdown.
+
+**`apps/mcp-server/src/interface/mcp/server.ts`**
+- Added import: `startPeriodicReaper` from coordinationStore.
+- Added `const reaperIntervalId = startPeriodicReaper()` call immediately after `ensurePoisonedQueueCleanup()` (startup, after tools registered).
+- Added `clearInterval(reaperIntervalId)` in `close()` before `httpServer.close()` to prevent timer-leak in tests.
+
+**`apps/mcp-server/src/__tests__/task-lock-reaper-timer.test.ts`** (new file)
+- AC-REAPER-1: `_reaperTick` with expired sprint-task → orphan-signal emitted, deleted=1.
+- AC-REAPER-2: `_reaperTick` with closed DB → returns 0, no throw.
+- AC-REAPER-3 (DoD-P15-5): simulate callback throwing → caught; next tick still executes.
+- AC-REAPER-4: `startPeriodicReaper` returns clearable interval ID.
+
+### Not yet live-verified (requires ops REBUILD)
+- Actual 600s wall-clock tick behavior (deferred to qa/TASK_1988)
+- Log lines `[coordinationStore] [reaper] tick: N expired row(s) GC'd` in container.

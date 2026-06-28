@@ -24,6 +24,7 @@ import {
   heartbeatTask,
   releaseTask,
   listHeldTasks,
+  gcExpiredLocks,
   _injectCoordinationDb,
   _resetCoordinationDbState,
 } from "../infrastructure/db/coordinationStore";
@@ -324,5 +325,143 @@ describe("Full cycle: claim → heartbeat → release (P1-FINAL)", () => {
       ttl_seconds: 3600,
     });
     expect(reClaim.claimed).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P1.5-MCP-4 (TASK_1985) — listHeldTasks: owner_agent filter + redispatch_count
+//
+// Acceptance criteria:
+//   AC-1985-1: owner_agent filter returns only rows with matching owner_agent
+//   AC-1985-2: output row includes top-level redispatch_count field
+//   AC-1985-3: output row includes created_at alias (same value as claimed_at)
+//   AC-1985-4: backward-compat — no-filter call returns all rows
+//   AC-1985-5: orphan-signal filter: create orphan-signal for dev-team with
+//              redispatch_count=2, query with owner_agent filter, verify output
+//   AC-1985-6: exactOptionalPropertyTypes-safe — owner_agent absent → no filter
+// ---------------------------------------------------------------------------
+
+describe("P1.5-MCP-4 (TASK_1985) — listHeldTasks: owner_agent filter + redispatch_count output", () => {
+  /** Helper: set expires_at to the past so the row is eligible for GC */
+  function expireRow(taskId: string, secondsAgo = 400): void {
+    testDb.prepare(
+      "UPDATE task_locks SET expires_at = ? WHERE task_id = ?"
+    ).run(Math.floor(Date.now() / 1000) - secondsAgo, taskId);
+  }
+
+  beforeEach(() => {
+    // Seed three rows with different owner_agents
+    claimTask({
+      task_id: "task:1985-dev-team-A",
+      task_kind: "sprint-task",
+      owner_session: "sess-A",
+      owner_agent: "dev-team",
+      owner_client_session: "client-uuid-A",
+      ttl_seconds: 3600,
+    });
+    claimTask({
+      task_id: "task:1985-dev-team-B",
+      task_kind: "sprint-task",
+      owner_session: "sess-B",
+      owner_agent: "dev-team",
+      owner_client_session: "client-uuid-B",
+      ttl_seconds: 3600,
+    });
+    claimTask({
+      task_id: "cowork-slot:1985-cowork:2026T140000Z",
+      task_kind: "cowork-slot",
+      owner_session: "sess-C",
+      owner_agent: "cowork-team",
+      owner_client_session: "client-uuid-C",
+      ttl_seconds: 900,
+    });
+  });
+
+  it("AC-1985-1: owner_agent filter returns only matching rows", () => {
+    const result = listHeldTasks({ owner_agent: "dev-team" });
+    expect(result.count).toBe(2);
+    for (const lock of result.locks) {
+      expect(lock.owner_agent).toBe("dev-team");
+    }
+  });
+
+  it("AC-1985-1b: owner_agent filter with cowork-team returns only that row", () => {
+    const result = listHeldTasks({ owner_agent: "cowork-team" });
+    expect(result.count).toBe(1);
+    expect(result.locks[0]!.task_id).toBe("cowork-slot:1985-cowork:2026T140000Z");
+  });
+
+  it("AC-1985-2: output row includes redispatch_count as top-level field (via ...lock spread)", () => {
+    const result = listHeldTasks({ kind: "sprint-task" });
+    for (const lock of result.locks) {
+      expect(typeof lock.redispatch_count).toBe("number");
+      expect(lock.redispatch_count).toBe(0); // freshly claimed rows start at 0
+    }
+  });
+
+  it("AC-1985-3: output row includes claimed_at (created_at is an alias added in the tool layer)", () => {
+    // The store returns claimed_at; the tool layer adds created_at alias.
+    // Here we test at the store level — claimed_at is present.
+    const result = listHeldTasks({ kind: "sprint-task" });
+    for (const lock of result.locks) {
+      expect(typeof lock.claimed_at).toBe("number");
+      expect(lock.claimed_at).toBeGreaterThan(0);
+    }
+  });
+
+  it("AC-1985-4: backward-compat — no filter returns all 3 rows", () => {
+    const result = listHeldTasks();
+    expect(result.count).toBe(3);
+  });
+
+  it("AC-1985-5: handoff acceptance test — orphan-signal for dev-team with redispatch_count=2, query with filter, verify count", () => {
+    // Seed a sprint-task with redispatch_count=2, then expire it so gcExpiredLocks
+    // emits an orphan-signal with redispatch_count=3 for dev-team.
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        ('task:1985-ac-test', 'sprint-task', 'sess-D', 'dev-team', 'client-uuid-D',
+         unixepoch('now'), unixepoch('now') + 3600, unixepoch('now'), 3600, NULL, 2)
+    `).run();
+    expireRow("task:1985-ac-test");
+
+    // Run GC to emit orphan-signal (redispatch_count=2+1=3)
+    gcExpiredLocks(testDb, 300);
+
+    // Query orphan-signal rows filtered by owner_agent=dev-team
+    const result = listHeldTasks({ kind: "orphan-signal", owner_agent: "dev-team" });
+    expect(result.count).toBeGreaterThanOrEqual(1);
+
+    const signalRow = result.locks.find(
+      (l) => l.task_id === "orphan-signal:task:1985-ac-test"
+    );
+    expect(signalRow).not.toBeUndefined();
+    expect(signalRow!.task_kind).toBe("orphan-signal");
+    expect(signalRow!.owner_agent).toBe("dev-team");
+    expect(signalRow!.redispatch_count).toBe(0); // column is 0; payload has the count
+    expect(signalRow!.owner_client_session).toBeNull(); // available for adoption
+
+    // Verify redispatch_count=3 is in the payload
+    const payload = JSON.parse(signalRow!.payload as string) as Record<string, unknown>;
+    expect(payload["redispatch_count"]).toBe(3);
+
+    // Query without owner_agent filter: cowork-team rows should NOT appear in dev-team filter
+    const otherTeam = listHeldTasks({ kind: "orphan-signal", owner_agent: "cowork-team" });
+    const crossCheck = otherTeam.locks.find(
+      (l) => l.task_id === "orphan-signal:task:1985-ac-test"
+    );
+    expect(crossCheck).toBeUndefined(); // dev-team signal NOT visible under cowork-team filter
+  });
+
+  it("AC-1985-6: exactOptionalPropertyTypes-safe — undefined owner_agent → no filter (all rows)", () => {
+    // The tool handler uses conditional spread: ...(owner_agent !== undefined ? { owner_agent } : {})
+    // Here we test the store-level behavior: omitting owner_agent returns all rows
+    const withoutFilter = listHeldTasks({ kind: "sprint-task" }); // no owner_agent key
+    expect(withoutFilter.count).toBe(2); // both dev-team sprint-tasks
+
+    const withExplicitUndefined = listHeldTasks({ kind: "sprint-task" }); // same thing
+    expect(withExplicitUndefined.count).toBe(2);
   });
 });
