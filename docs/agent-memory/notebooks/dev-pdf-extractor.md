@@ -177,3 +177,27 @@ Zone health: no drift detected — test count growing (920→927), all new tests
 
 ### Status
 REVIEW → next_agent=qa
+
+---
+
+## TASK_331 — FR-4 Section-boundary content-signal detection (2026-06-28)
+
+**Sprint:** FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT | **Zone:** apps/pdf-extractor/ | **Size:** M
+
+### Implementation
+- Added `_INCOME_STMT_START_KEYWORDS` (7 keywords) and `_CASH_FLOW_START_KEYWORDS` (4 keywords) as module-level constants in `extract_tables_usecase.py`.
+- `_detect_section_start(page_text)` — pure fn, returns "income_statement" / "cash_flow" / None.
+- `_filter_pages_to_section(pages, section)` — pure fn; BS: calls `select_balance_sheet_section()` then excludes IS/CF pages; IS/CF: contiguous run from first detected page.
+- Path A in `execute()` calls `_filter_pages_to_section()` (replaces if/else around `select_balance_sheet_section()`).
+- DDD: TextTableExtractor (infrastructure) untouched. Application imports domain primitive (allowed).
+
+### Test results
+- 14 new tests in `test_extract_tables_usecase.py` covering AC-2/AC-3/AC-7. All GREEN.
+- Unit suite: 6 pre-existing env fail / 941 pass (+14 new). Zero regressions.
+- Full suite: 11 pre-existing fail / 1080 pass. Zero regressions.
+- Sandbox G12: primitive 29 PASS + 6 intentional-fail; module 1 PASS.
+- NFR-4: zero per-issuer branches.
+- **Commit:** `892c9efb`
+
+### Status
+REVIEW → next_agent=qa
