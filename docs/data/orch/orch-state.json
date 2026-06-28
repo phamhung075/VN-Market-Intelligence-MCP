@@ -3837,7 +3837,19 @@
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
         "status": "BACKLOG",
-        "verify_note": "corrupt-null"
+        "verify_note": "corrupt-null",
+        "priority": "P2",
+        "impl_owner": "agent-father",
+        "dedup_anchor_for": "recurring-agent-notebook-200L-breach (write-time self-cap enforcement gap)",
+        "recurrence_note": "DURABLE generic fix. notebook-write SKILL AC-3/AC-6 already documents settled-write self-cap for the whole APPEND class (dev-frontend + agents-architect both listed), but AC-5 is advisory prose so breaches still ship. qa got a flow-level self-cap (FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L, done) yet OTHER append-class agents keep breaching -> per-agent annotation is whack-a-mole; the systemic fix is making AC-5 BLOCKING + headless-path hook backstop so EVERY append-class notebook self-caps at write time. Do NOT mint per-agent dev-frontend/architect tasks (treadmill). Do NOT external-re-prune the over-cap files: once this ships, each agent next notebook write auto drop-oldest to <=200L.",
+        "corroborating_breaches": [
+          "qa.md 207L (resolved via FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L)",
+          "dev-pdf-extractor.md 240L (CLEAN-NB-TRIM-PDFX-2 backlog)",
+          "dev-frontend.md 224L @ 2026-06-28T07:12:25Z (signal TRIAGED->processed)",
+          "architect.md 211L @ 2026-06-28T07:30:55Z (signal TRIAGED->processed)"
+        ],
+        "recurrence_count": 4,
+        "escalation_note": "recurring-bug-escalation: 4 append-class agents breached post-qa-fix -> systemic enforcement gap, prioritize. annotated 2026-06-28T08:13:59Z"
       },
       {
         "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
