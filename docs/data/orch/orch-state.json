@@ -1621,7 +1621,7 @@
             "title": "P3-AF-1: Fire-time leader-election implementation",
             "owner": "agent-father",
             "type": "SPRINT-S",
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "zone": "docs/agents/ + .claude/skills/",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
@@ -1632,7 +1632,7 @@
               "TASK_1992"
             ],
             "note": "CHANGES_REQUESTED by QA (2026-06-28): DWF-coordination-phase2.test.ts:365 DV-P2-4 asserts ttl_seconds:1800+cowork-leader (old P1 design); TASK_1994 changed to 600+cron:cowork: but did not update test. +1 new failure vs 53-fail baseline. Fix: update test to P3 design. Route: agent-father.",
-            "updated_at": "2026-06-28T18:29:37Z",
+            "updated_at": "2026-06-28T22:00:00Z",
             "completed_by": "agent-father",
             "completed_at": "2026-06-28T18:29:37Z"
           },
@@ -1641,7 +1641,7 @@
             "title": "P3-QA: Fire-time leader-election verification",
             "owner": "qa",
             "type": "SPRINT-S",
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "zone": "docs/protocols/",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
@@ -1650,7 +1650,8 @@
             "depends": [
               "TASK_1994"
             ],
-            "note": "QA: parallel fire election, stale-leader reclaim, period-key dedup, no orphan work. 5 test harnesses + negative path (no OBSERVE-ONLY). 53-fail baseline-diff."
+            "note": "QA: parallel fire election, stale-leader reclaim, period-key dedup, no orphan work. 5 test harnesses + negative path (no OBSERVE-ONLY). 53-fail baseline-diff.",
+            "review_note": "FIX-DWF-commit 1d2bbe46: P3 DV-P2-4 test aligned (ttl 600, cron:cowork: prefix). 32/32 GREEN. Re-gate QA."
           }
         ]
       },
