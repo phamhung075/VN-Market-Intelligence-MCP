@@ -5871,6 +5871,17 @@
         "created_at": "2026-06-28T03:45:16Z",
         "depends": [],
         "note": "PLAN-ONLY (NOT a code-passing repair). Root: the test tolerates non-fatal reduced-mode errors no such table: alerts / no such table: agent_signals — under CI per-file isolation the test DB lacks those tables so intelligence-cycle runs in reduced mode; the single-file CI run flaked 1 fail while parent dfdaa2ab was full-green and the file passes 5/5 deterministically locally (router 3 + po 2). Likely a per-file-isolation DB-schema/setup ordering race. AC: make the test DB setup deterministic (create/seed alerts + agent_signals schema in beforeAll, or make dead-path assertions independent of table presence) so the file passes under both full-suite and isolated CI runs. Provenance: docs/signals/processed/ci-red-fa891634-20260628034000.json (po_disposition=FLAKY_TRANSIENT_DISMISSED). Flaky tests erode the green-gate (CLAUDE.md detect-then-reduce-debt)."
+      },
+      {
+        "id": "FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE",
+        "title": "read_telegram_reports(status=\"new\") + list_unresolved_reports() re-surface tracked-but-deferred reports FOREVER (e.g. 3338 BCTC-extraction → FIX-BCTC-BANK-SUMMARY/SCALAR-MAPPING; 3339 D4 held-lock → FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE). PO already minted backlog fixes for them yet they keep returning status=new every tick because NO resolve/acknowledge tool exists to mark a report dispositioned-but-deferred. Each triage re-reads + re-confirms the same 2 rows (router risk: re-minting dups). PLAN-ONLY: design a report->backlog-link + an acknowledge/tracked status (NOT resolve — resolution belongs to the fix shipping) so dispositioned reports drop out of the status=new poll while the underlying fix stays tracked in backlog. Tool surface: read_telegram_reports / list_unresolved_reports in mcp-server.",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "plan_only": true,
+        "origin": "po-triage-20260628T053940Z recurring-nuisance",
+        "created_at": "2026-06-28T05:41:39Z"
       }
     ],
     "closed_sprints": [
