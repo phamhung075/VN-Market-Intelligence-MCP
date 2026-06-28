@@ -95,6 +95,26 @@ Zone health: 3 new analysis zone components ready for integration into dashboard
 
 ---
 
+## Session: 2026-06-28 (FE-AHUB-INT-INTEGRATE — serial closer wires 6 zones into analysis hub)
+
+**FE-AHUB-INT-INTEGRATE REVIEW — 6 zone components wired, dashboard.technical.tsx deleted, tsc 0 errors, 1856 tests pass**
+
+Serial closer role: sole editor of `dashboard.analysis.tsx`. All 4 W1-W4 zone workers had landed component files; INT integrates them.
+
+Changes:
+- `dashboard.analysis.tsx`: imported + placed all 6 zone components (TechnicalZone, CorporateEventsZone, FinancialsZone, ReputationZone, NewsBuzzZone, ConvictionHistoryZone), each receiving `stock={selectedStock}`. Added Remix `<Link>` buttons to `/dashboard/shareholders?code=<stock>` and `/dashboard/officers?code=<stock>`. Zones are self-fetching; no loader changes needed.
+- `TopNav.tsx`: removed `{ to: "/dashboard/technical", label: "Kỹ Thuật" }` from ANALYST_NAV. Count: 26→25, NAV_ITEMS 33→32.
+- `dashboard.technical.tsx`: deleted via `git rm -f` (route no longer exists; content now lives in TechnicalZone).
+- 7 test files updated: FE-HEADER-SSOT-top-nav + task17-page14 through page19 nav tests — removed "Kỹ Thuật" from label regression guards, updated absolute counts, fixed hardcoded array indices in page19.
+
+Pitfall: removing ANALYST_NAV[3] shifts ALL subsequent indices. page19 test had ANALYST_NAV[24] and ANALYST_NAV[25] hardcoded — updated to [23] and [24]. Per-page tests (14-18) use `find()` by label so index-resilient; only the label list needed updating.
+
+Board: FE-AHUB-INT-INTEGRATE → REVIEW via orch-apply.sh.
+Commits: `b1b5213a` (code), `9023b481` (docs/board).
+Tests: 1856 pass / 2 fail (KNOWN QUE-TOOLTIP pre-existing, unrelated) | tsc: 0 errors
+
+---
+
 ## Session: 2026-06-28 (FIX-FE-ALERTS-SEVERITY-DEFAULT-500 — alerts 500 fix)
 
 **FIX-FE-ALERTS-SEVERITY-DEFAULT-500 REVIEW — AlertSeverity extended, default: branch + normalisation, tsc clean, build OK**
