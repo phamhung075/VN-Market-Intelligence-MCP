@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture-brief",
+  "priority": "normal",
+  "payload": "docs/architecture-briefs/2026-06-28-simplicity-gate-skill.md",
+  "summary": "New skill: .claude/skills/simplicity-gate/SKILL.md — preventive minimalism self-check (4-question gate) for dev-* agents, fires after TDD GREEN before REVIEW flip. Wire into developer/flow/main.md, developer/flow/microservice-main.md, dev-frontend/flow/main.md, and all other dev-* specialist flows at the After-code→Documentation-review boundary.",
+  "createdAt": "2026-06-28T19:17:01Z"
+}
