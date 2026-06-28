@@ -249,6 +249,7 @@ Located under `apps/frontend/app/components/analysis/`. Each accepts a `stock: s
 | `ReputationZone` | `ReputationZone.tsx` | CLIENT-SIDE — `leaderboard.find(e => e.code === stock)` | `GET /api/reputation` (full universe) |
 | `NewsBuzzZone` | `NewsBuzzZone.tsx` | CLIENT-SIDE — `leaderboard.find(e => e.code === stock)` | `GET /api/news-buzz` (full universe, 7-day window) |
 | `ConvictionHistoryZone` | `ConvictionHistoryZone.tsx` | NATIVE — `?symbol=${stock}` passed to API | `GET /api/conviction-history?symbol=${stock}` |
+| `FinancialsZone` | `FinancialsZone.tsx` | CLIENT-SIDE — `rows.find(r => r.code === stock)` | `GET /api/financials` (full universe, ~78 rows; no per-code param) |
 
 ### Exported pure helpers (testable without DOM)
 
@@ -260,9 +261,17 @@ Located under `apps/frontend/app/components/analysis/`. Each accepts a `stock: s
 
 **ConvictionHistoryZone:** `pickStockConvictionRow(snapshot, stock)`, `pickStockSeries(series, stock)`
 
+**FinancialsZone:** `findFinancialsRow(rows, stockCode)` → `FinancialsRow | null`
+
 ### Loading lifecycle
 
-All three components show an animated loading placeholder until `useFetcher.state === "idle"` AND `fetcher.data` is defined. The load is triggered once on mount (or when `stock` changes for ConvictionHistoryZone).
+All zone components show an animated loading placeholder until `useFetcher.state === "idle"` AND `fetcher.data` is defined. The load is triggered once on mount (or when `stock` changes for ConvictionHistoryZone). FinancialsZone loads once on mount only — the full-universe payload is filtered client-side so stock changes do not require re-fetch.
+
+### Data constraints (FinancialsZone)
+
+- `nim` and `npl` fields are NULL for all rows in the dataset (bank-only metrics, unpopulated) — intentionally omitted from the UI.
+- `eps = 0` is a legitimate value, rendered as "0" (not "—").
+- The `/api/financials` endpoint has NO per-stock query param — always returns all ~78 rows. Scoping is CLIENT-SIDE only via `FinancialsRow.code`.
 
 ### Not-found state
 
