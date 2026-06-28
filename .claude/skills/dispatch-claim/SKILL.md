@@ -145,6 +145,112 @@ Do NOT remove either tier. They protect different race windows.
 
 ---
 
+## Orphan-Adoption Probe (P1.5-AF-1 — Fire BEFORE PRE-CLAIM)
+
+**Sprint:** CROSS-SESSION-MULTI-TEAM-ORCH · TASK_1986  
+**Spec:** `docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md` §6.5.3–§6.5.6
+
+> **Honest bound:** zero live sessions = zero execution; the reaper only makes work ADOPTABLE, it never self-heals execution.
+
+Before the router executes Step 2.5 PRE-CLAIM for any new dispatch, it MUST run this adoption probe
+to drain orphaned work from dead peer sessions first.
+
+```
+N_MAX = 3   # poison-task threshold — configurable per task_kind; global default is 3
+
+# --- Phase A: Orphan-Adoption Probe (BEFORE PRE-CLAIM) ---
+orphan_signals = call_tool(server="vn-market", tool="task_list_held", arguments={
+  kind:        "orphan-signal",
+  owner_agent: <dispatcher-role>   # e.g. "router", "dev-team", "cowork-dispatcher"
+})
+# task_list_held is READ-ONLY — NEVER use task_heartbeat/task_claim to probe published artifacts
+# DoD-P15-2: use task_list_held (read-only) to check published:<kind>:<period> artifacts at adoption time
+
+for each signal in orphan_signals:
+  original_task_id      = signal.payload.original_task_id
+  original_task_kind    = signal.payload.original_task_kind
+  redispatch_count      = signal.payload.redispatch_count   # DoD-P15-3: must carry forward
+  last_payload          = signal.payload.last_payload       # durable checkpoint
+
+  if redispatch_count >= N_MAX:
+    # --- Escalation path (idempotent) ---
+    if signal.payload.status == "ESCALATED":
+      # Already escalated by a prior adopter — skip silently; do NOT re-telegram
+      continue
+
+    # First escalation: alert BUG, extend TTL to +86400s, mark ESCALATED
+    send_telegram(channel="bug",
+      message="[orch] Orphan task {original_task_id} exceeded N_MAX=3 re-dispatches — ESCALATED. Last owner: {signal.payload.original_owner_client_session}. Manual intervention required.")
+    call_tool(server="vn-market", tool="task_heartbeat", arguments={
+      task_id:              "orphan-signal:" + original_task_id,
+      owner_client_session: $CLAUDE_CODE_SESSION_ID,
+      ttl_seconds:          86400,       # keep ESCALATED row visible for 24h
+      payload_patch:        {"status": "ESCALATED"}   # extend + mark
+    })
+    # Do NOT re-dispatch — stop here for this signal
+    continue
+
+  # --- Adoption path (redispatch_count < N_MAX) ---
+  adopt_result = call_tool(server="vn-market", tool="task_claim", arguments={
+    task_id:              original_task_id,       # stale-steal succeeds: reaper deleted original
+    task_kind:            original_task_kind,
+    owner_agent:          <dispatcher-role>,
+    owner_client_session: $CLAUDE_CODE_SESSION_ID,   # REQUIRED — authoritative key
+    ttl_seconds:          3600,
+    payload:              {"site": "orphan-adoption",
+                           "adopted_from": signal.payload.original_owner_client_session,
+                           "redispatch_count": redispatch_count}   # DoD-P15-3: carry forward
+  })
+
+  if adopt_result.claimed:
+    # Read checkpoint from signal payload per §6.5.5 resume-contract table
+    # sprint-task    → last_payload.git_sha (CONTINUE from last commit; do NOT restart)
+    # cowork-slot    → task_list_held(task_id="published:<kind>:<period>") — if present, skip (DoD-P15-2)
+    # dashboard-row  → re-compute + re-write (idempotent by design; no checkpoint needed)
+
+    # DoD-P15-1: router DEFERS tree-hygiene to dev-team Step 0a (P1.5-AF-2)
+    # Router routes, never implements. For sprint-task adoptions, spawn dev-team with checkpoint
+    # and let dev-team perform git status + git checkout revert BEFORE resuming.
+    try:
+      spawn <agent-for-original_task_kind>(
+        run docs/agents/<agent>/flow/main.md
+        coordination_session=$CLAUDE_CODE_SESSION_ID
+        task=<original_task_id>
+        checkpoint=<last_payload>
+        redispatch_count=<redispatch_count>
+        mode=adopt-resume
+      )   # run_in_background=true (BGFAN-1 mandate)
+    finally:
+      call_tool(server="vn-market", tool="task_release", arguments={
+        task_id:              "orphan-signal:" + original_task_id,
+        owner_client_session: $CLAUDE_CODE_SESSION_ID
+      })
+      # Release the ORIGINAL task_id claim AFTER dev-team confirms resume (or on failure)
+      # Inner self-claim inside the agent will heartbeat the original lock
+
+  else:
+    # Another live session adopted it concurrently — log and skip
+    log "[router] orphan-signal:{original_task_id} — adoption lost to peer; skip"
+
+# --- Phase B: PRE-CLAIM gate (existing Step 2.5) — runs AFTER adoption probe clears ---
+# Proceed with standard intent PRE-CLAIM as defined above (Pattern section)
+```
+
+**Dispatch scope for orphan-adoption:** the router fires the adoption probe for its own dispatcher
+role (e.g. `owner_agent="router"` or the role that spawned the dead session's work).
+`dev-team` orphan-signals are drained in dev-team Step 0a (TASK_1987), not here.
+The router adoption probe covers: `intent:*` claims and any router-owned sprint-task dispatches.
+
+**Resume contract summary (§6.5.5):**
+
+| original_task_kind | Checkpoint field | Resume action |
+|---|---|---|
+| `sprint-task` | `last_payload.git_sha` | Spawn dev-team with checkpoint SHA; dev-team performs tree-hygiene (DoD-P15-1) |
+| `cowork-slot` | probe `published:<kind>:<period>` via `task_list_held` | If published: skip (DoD-P15-2). Else resume from first unpublished sub-step |
+| `dashboard-row` | None — idempotent by design | Re-compute + re-write directly |
+
+---
+
 ## Reference Commits (Sprint 1962c — outer wrap origin)
 
 - `docs/agents/dev-team/flow/execute-tier.md` (S1) — `592fe1c4`

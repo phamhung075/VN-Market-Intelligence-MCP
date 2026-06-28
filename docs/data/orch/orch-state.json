@@ -6104,7 +6104,7 @@
         "type": "SPRINT-M",
         "zone": ".claude/skills/",
         "title": "P1.5-AF-1: Router step 2.5 — adoption probe for orphan-signals",
-        "status": "BACKLOG",
+        "status": "REVIEW",
         "priority": "P1.5",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1986-p15-af-1-router-adoption-probe.md",
@@ -6119,14 +6119,15 @@
           "TASK_1988"
         ],
         "created_at": "2026-06-28T08:45:00Z",
-        "created_by": "pm"
+        "created_by": "pm",
+        "status_note": "doc/skill edit done: dispatch-claim/SKILL.md orphan-adoption probe + CLAUDE.md step 2.5 Phase A; DoD-P15-1/2/3/6 baked; no rebuild required"
       },
       {
         "id": "TASK_1987",
         "type": "SPRINT-M",
         "zone": "docs/agents/dev-team/",
         "title": "P1.5-AF-2: Dev-team Step 0a — sprint-task adoption + tree-hygiene + board flip",
-        "status": "BACKLOG",
+        "status": "REVIEW",
         "priority": "P1.5",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1987-p15-af-2-devteam-adoption.md",
@@ -6141,7 +6142,8 @@
           "TASK_1988"
         ],
         "created_at": "2026-06-28T08:45:00Z",
-        "created_by": "pm"
+        "created_by": "pm",
+        "status_note": "flow doc edit done: dev-team/flow/main.md Step 0a-B orphan-signal adoption + tree-hygiene gate + board flip via orch-apply.sh; DoD-P15-1/2/3/6 baked; no rebuild required"
       },
       {
         "id": "TASK_1988",

@@ -27,11 +27,12 @@ agent_spawn_key = "task:on-demand:" + agent_id + ":" + $(date -u +"%Y%m%d")
 # INVARIANT (DRAIN-INJECTION-SAFE): no signal/payload/DASHBOARD field may appear in a shell command line.
 # Safe patterns: (a) jq --arg for bash SQL/JSON steps; (b) structured object passed to call_tool; (c) sqlite3 db < file.
 outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     agent_spawn_key,
-  task_kind:   "sprint-task",
-  owner_agent: "dev-team",
-  ttl_seconds: 3600,
-  payload:     "{\"site\":\"on-demand\",\"spawning\":\"" + agent_id + "\"}"   // JSON-encoded STRING passed via call_tool arguments — DRAIN-INJECTION-SAFE (no shell exposure)
+  task_id:              agent_spawn_key,
+  task_kind:            "sprint-task",
+  owner_agent:          "dev-team",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+  ttl_seconds:          3600,
+  payload:              "{\"site\":\"on-demand\",\"spawning\":\"" + agent_id + "\"}"   // JSON-encoded STRING passed via call_tool arguments — DRAIN-INJECTION-SAFE (no shell exposure)
 })
 if not outer_claim.claimed:
   log "[dev-team] SKIP on-demand " + agent_id + " — cron holds lock (" + outer_claim.current_holder.owner_agent + ")"
@@ -41,7 +42,7 @@ else:
   try:
     Agent(agent_id, context..., run_in_background=true)   # (background) — BGFAN-1
   finally:
-    call_tool(server="vn-market", tool="task_release", arguments={ task_id: agent_spawn_key })
+    call_tool(server="vn-market", tool="task_release", arguments={ task_id: agent_spawn_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
 ```
 Skill ref: `.claude/skills/task-lock/SKILL.md` § Dispatcher-Wrap Pattern.
 
@@ -90,11 +91,12 @@ send_telegram(channel="work", message="[dev-team] cron START — actual fire {ts
 # SF-1: SINGLE-FLIGHT GUARD — session-level cron overlap prevention (TTL-only, no owner-session binding)
 # Survives mcp-server restart: TTL clock continues; orphaned lock expiry is natural. → memory: lock_orphaned_by_rebuild
 sf_result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "dev-team-cron-singleton",
-  task_kind:   "sprint-task",
-  owner_agent: "dev-team",
-  ttl_seconds: 5400,          # 90min — 1.5× observed 99th-pct tick duration; TTL-only, no owner-session pin
-  payload:     {"site": "SF-1", "tick": ts}   # structured object — DRAIN-INJECTION-SAFE
+  task_id:              "dev-team-cron-singleton",
+  task_kind:            "sprint-task",
+  owner_agent:          "dev-team",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+  ttl_seconds:          5400,          # 90min — 1.5× observed 99th-pct tick duration
+  payload:              {"site": "SF-1", "tick": ts}   # structured object — DRAIN-INJECTION-SAFE
 })
 if not sf_result.claimed:
   log "[dev-team] SF-1 SKIP — session already running (holder: " + sf_result.current_holder.owner_agent + " since " + sf_result.current_holder.claimed_at + ")"
@@ -160,13 +162,142 @@ else:
 ---
 
 <!-- jump:drain-signals -->
-## Step 0a — Drain `docs/signals/`
+## Step 0a — Drain `docs/signals/` + Orphan-Signal Adoption
+
+> **Honest bound:** zero live sessions = zero execution; the reaper only makes work ADOPTABLE, it never self-heals execution.
+
+### Step 0a-A: Agent-signals drain
 
 → Run sub-flow: `docs/agents/dev-team/flow/drain-signals.md`
 
 Output: `pendingSignals[]` for Step 1, or empty.
 
-If empty AND `docs/data/orch/orch-state.json` `.task_board` empty AND no Telegram reports → JUMP TO `session-gate`.
+### Step 0a-B: Orphan-signal adoption (P1.5-AF-2 — Sprint CROSS-SESSION-MULTI-TEAM-ORCH · TASK_1987)
+
+After draining agent-signals, probe for adoptable orphaned sprint-tasks from dead dev-team sessions:
+
+```
+N_MAX = 3   # poison-task threshold (configurable; global default = 3)
+
+orphan_signals = call_tool(server="vn-market", tool="task_list_held", arguments={
+  kind:        "orphan-signal",
+  owner_agent: "dev-team"
+})
+# READ-ONLY probe — DoD-P15-2: NEVER use task_heartbeat/task_claim to probe published artifacts
+
+for each signal in orphan_signals where signal.payload.original_task_kind == "sprint-task":
+  original_task_id           = signal.payload.original_task_id
+  redispatch_count           = signal.payload.redispatch_count   # DoD-P15-3: carry forward
+  last_payload               = signal.payload.last_payload
+  dead_session               = signal.payload.original_owner_client_session
+  task_zone                  = signal.payload.zone ?? infer_from_task_id(original_task_id)
+
+  if redispatch_count >= N_MAX:
+    # Router P1.5-AF-1 handles escalation — dev-team SKIPS; do NOT re-dispatch
+    log "[dev-team] orphan-signal:{original_task_id} redispatch_count={redispatch_count} >= N_MAX — skip (router escalates)"
+    continue
+
+  # Claim the original task_id (stale-steal succeeds: reaper deleted the original row)
+  adopt_result = call_tool(server="vn-market", tool="task_claim", arguments={
+    task_id:              original_task_id,
+    task_kind:            "sprint-task",
+    owner_agent:          "dev-team",
+    owner_client_session: $CLAUDE_CODE_SESSION_ID,   # REQUIRED — authoritative key
+    ttl_seconds:          3600,
+    payload:              {"site": "orphan-adoption",
+                           "adopted_from": dead_session,
+                           "redispatch_count": redispatch_count}   # DoD-P15-3: carry forward
+  })
+
+  if not adopt_result.claimed:
+    log "[dev-team] orphan-signal:{original_task_id} — adoption lost to peer; skip"
+    continue
+
+  # --- DoD-P15-1 GATE: Tree-Hygiene PRECONDITION (MANDATORY — load-bearing) ---
+  # A dead worker's uncommitted edits are LIVE in the shared working tree and corrupt until reverted.
+  # This gate MUST run BEFORE any resume work. The checkpoint SHA is blind to live tree state.
+  #
+  # Run git status --porcelain scoped to the task zone:
+  uncommitted = $(git status --porcelain -- {task_zone} | grep -E '^[ M]M')
+  reverted_files = []
+  for each line in uncommitted:
+    filepath = line[3:]   # strip status prefix
+    git checkout -- {filepath}
+    reverted_files.append(filepath)
+    log "[dev-team] tree-hygiene: reverted uncommitted edit in {filepath} (dead session: {dead_session})"
+
+  # Leave untracked files in place (e.g. .DS_Store, build artifacts, node_modules/ if not tracked)
+  # Lines starting with '??' in git status are untracked — leave them
+
+  # Surface reverted list in board note (see board flip below)
+  tree_hygiene_note = "tree-hygiene: reverted " + len(reverted_files) + " file(s): " + join(reverted_files, ", ")
+  send_telegram(channel="work",
+    message="[dev-team] Adopted orphan task {original_task_id} from dead session {dead_session}. {tree_hygiene_note}")
+
+  # --- Read checkpoint from signal payload (§6.5.5 resume contract) ---
+  git_sha = last_payload.git_sha ?? null
+
+  if git_sha:
+    # Verify checkpoint is in repo history
+    sha_valid = $(git log --oneline -5 {git_sha} 2>&1 | grep -c {git_sha})
+    if sha_valid == 0:
+      send_telegram(channel="bug",
+        message="[dev-team] Orphan adoption {original_task_id}: git_sha {git_sha} not in history — cannot resume; skip")
+      call_tool(server="vn-market", tool="task_release", arguments={
+        task_id: original_task_id, owner_client_session: $CLAUDE_CODE_SESSION_ID
+      })
+      call_tool(server="vn-market", tool="task_release", arguments={
+        task_id: "orphan-signal:" + original_task_id, owner_client_session: $CLAUDE_CODE_SESSION_ID
+      })
+      continue
+    # Checkpoint valid — continue work from git_sha (DO NOT re-run already-committed steps)
+    log "[dev-team] resuming from checkpoint SHA={git_sha} (DoD-P15-3 redispatch_count={redispatch_count})"
+  else:
+    # No git SHA checkpoint — resume from board state (task_board entry is authoritative)
+    log "[dev-team] no git_sha checkpoint in orphan-signal payload; resuming from board state"
+
+  # --- Board flip: update assigned_to, leave status=in_progress (re-assign only) ---
+  # MUST route via scripts/orch-apply.sh (NEVER raw write — SSOT-W1-ORCH-APPLY-WRAPPER)
+  NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  # DoD-P15-2: check for cowork-slot or cron published artifact before re-running
+  # (sprint-task checkpoint is git SHA; this check is belt-and-suspenders for mixed-kind adoptions)
+  jq --arg tid "{original_task_id}" --arg now "$NOW" --arg note "{tree_hygiene_note}" \
+    --arg session "$CLAUDE_CODE_SESSION_ID" \
+    '(.task_board.active_sprints[].tasks[] | select(.id == $tid))
+     |= (.assigned_to = $session | .adopted_at = $now | .tree_hygiene_note = $note)' \
+    docs/data/orch/orch-state.json \
+    | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
+
+  # --- Release the orphan-signal row after successful adoption ---
+  call_tool(server="vn-market", tool="task_release", arguments={
+    task_id:              "orphan-signal:" + original_task_id,
+    owner_client_session: $CLAUDE_CODE_SESSION_ID
+  })
+
+  # --- Resume work ---
+  # Treat adopted task as the next task to execute — prepend to work queue
+  # Spawn the appropriate agent with checkpoint; dev-team owns the original task_id lock
+  Agent(<zone-agent>, prompt="run docs/agents/<zone-agent>/flow/main.md
+        coordination_session=$CLAUDE_CODE_SESSION_ID
+        task={original_task_id}
+        checkpoint={git_sha}
+        redispatch_count={redispatch_count}
+        mode=adopt-resume",
+        run_in_background=true)   # BGFAN-1
+  # Adoption path exits here — release original lock inside the spawned agent's finally block
+  JUMP TO end   # adopted task queued; do not process further signals in this tick
+```
+
+**Scope note:** Step 0a-B handles `original_task_kind="sprint-task"` only. `cowork-slot` and
+`dashboard-row` orphan-signals directed to `owner_agent="dev-team"` are rare edge cases;
+route to PO for manual triage if encountered (they carry a published-artifact checkpoint check
+per DoD-P15-2 that requires cowork context dev-team does not own).
+
+---
+
+**After Steps 0a-A and 0a-B:**
+
+If `pendingSignals[]` empty AND `docs/data/orch/orch-state.json` `.task_board` empty AND no Telegram reports → JUMP TO `session-gate`.
 
 ---
 
@@ -223,7 +354,8 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
   # Use structured object passed to call_tool (MCP gateway, no shell exposure).
   outer_claim  = call_tool(server="vn-market", tool="task_claim", arguments={
     task_id: resume_key, task_kind: "sprint-task",
-    owner_agent: "dev-team", ttl_seconds: 3600,
+    owner_agent: "dev-team", owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+    ttl_seconds: 3600,
     payload: "{\"site\":\"S2\",\"spawning\":\"" + head.next_agent + "\"}"   // JSON-encoded STRING passed via call_tool arguments — DRAIN-INJECTION-SAFE (no shell exposure)
   })
   if not outer_claim.claimed:
@@ -233,7 +365,7 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
     try:
       Agent(head.next_agent, context... + head.next_action, run_in_background=true)   # (background) — BGFAN-1; await task notification before next gate
     finally:
-      call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key })
+      call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
       # ok=false is acceptable (TTL expired or inner self-claim already released)
     JUMP TO execute
   ```
@@ -253,7 +385,8 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
 triage_key  = "task:po-triage-" + $(date -u +"%Y%m%d")   # e.g. task:po-triage-20260521
 outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id: triage_key, task_kind: "sprint-task",
-  owner_agent: "dev-team", ttl_seconds: 1800,
+  owner_agent: "dev-team", owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+  ttl_seconds: 1800,
   payload: "{\"site\":\"S3\",\"spawning\":\"po\"}"   // JSON-encoded STRING passed via call_tool arguments — DRAIN-INJECTION-SAFE (no shell exposure)
 })
 if not outer_claim.claimed:
@@ -266,7 +399,7 @@ if not outer_claim.claimed:
 → Return: `NOTHING` (→ idle EXIT) | `BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])`
 ```
 # After PO spawn returns:
-call_tool(server="vn-market", tool="task_release", arguments={ task_id: triage_key })
+call_tool(server="vn-market", tool="task_release", arguments={ task_id: triage_key, owner_client_session: $CLAUDE_CODE_SESSION_ID })
 ```
 
 ---
@@ -289,17 +422,18 @@ call_tool(server="vn-market", tool="task_release", arguments={ task_id: triage_k
 **S4 UNBLOCK dispatch:**
 ```
 result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "task:" + batch_id,
-  task_kind:   "sprint-task",   # live enum: cowork-slot|sprint-task|dashboard-row|commit-mutex — "dev-team" is NOT valid (verified 2026-06-05)
-  owner_agent: "dev-team",
-  ttl_seconds: 3600
+  task_id:              "task:" + batch_id,
+  task_kind:            "sprint-task",   # live enum: cowork-slot|sprint-task|dashboard-row|commit-mutex — "dev-team" is NOT valid (verified 2026-06-05)
+  owner_agent:          "dev-team",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+  ttl_seconds:          3600
 })
 if result.claimed:
   spawn {route_to} run_in_background=true   # (background) — BGFAN-1
   # DJ-GATE-1 (journal-before-DONE — canonical gate → docs/protocols/agent-chaining-protocol.md § Journal-before-DONE Gate):
   # Worker writes journal entry; if absent, router writes STEP via skill .claude/skills/decision-journal/SKILL.md § Write Entry [task_id: batch_id].
   # Gate: grep docs/agent-memory/decisions/sprint-*-*.md for "task-id:** {batch_id}" — absent → run skill, then flip.
-  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id })
+  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id, owner_client_session: $CLAUDE_CODE_SESSION_ID })
 else:
   log "[dev-team] SKIP UNBLOCK " + batch_id + " — held by " + result.current_holder.owner_agent
   EXIT
@@ -308,17 +442,18 @@ else:
 **S4 CLEAN dispatch:**
 ```
 result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "task:" + batch_id,
-  task_kind:   "sprint-task",   # live enum: cowork-slot|sprint-task|dashboard-row|commit-mutex — "dev-team" is NOT valid (verified 2026-06-05)
-  owner_agent: "dev-team",
-  ttl_seconds: 3600
+  task_id:              "task:" + batch_id,
+  task_kind:            "sprint-task",   # live enum: cowork-slot|sprint-task|dashboard-row|commit-mutex — "dev-team" is NOT valid (verified 2026-06-05)
+  owner_agent:          "dev-team",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
+  ttl_seconds:          3600
 })
 if result.claimed:
   spawn qa with branch list run_in_background=true   # (background) — BGFAN-1
   # DJ-GATE-1 (journal-before-DONE — canonical gate → docs/protocols/agent-chaining-protocol.md § Journal-before-DONE Gate):
   # CLEAN auto-close: router is sole actor → run skill .claude/skills/decision-journal/SKILL.md § Write Entry [task_id: batch_id] directly before flip.
   # Gate: grep docs/agent-memory/decisions/sprint-*-*.md for "task-id:** {batch_id}" — absent → run skill, then flip.
-  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id })
+  call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id, owner_client_session: $CLAUDE_CODE_SESSION_ID })
 else:
   log "[dev-team] SKIP CLEAN " + batch_id + " — held by " + result.current_holder.owner_agent
   EXIT
@@ -333,7 +468,7 @@ Architect MUST set `ZONE: apps/<service>/` in RETURN — PM propagates into hand
 
 <!-- SF-1 heartbeat: renew singleton session lock at Step 3 entry to cover long sprint ticks beyond initial 5400s TTL -->
 ```
-call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "dev-team-cron-singleton" })
+call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "dev-team-cron-singleton", owner_client_session: $CLAUDE_CODE_SESSION_ID })
 # ok=false → lock stolen (peer recovered after stall) → log BUG + exit cleanly; do NOT fight the steal.
 ```
 
@@ -374,6 +509,6 @@ All JUMP TO `end` paths converge here.
 
 ```
 # SF-1 release — always run on clean exit (TTL expiry is fallback for crash path)
-call_tool(server="vn-market", tool="task_release", arguments={ task_id: "dev-team-cron-singleton" })
+call_tool(server="vn-market", tool="task_release", arguments={ task_id: "dev-team-cron-singleton", owner_client_session: $CLAUDE_CODE_SESSION_ID })
 # ok=false is acceptable (TTL already expired after a long tick, or SF-1 was never claimed on SKIP path)
 ```

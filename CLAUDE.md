@@ -5,6 +5,13 @@ Main terminal = router only. Never implement directly. Always delegate.
 1. Read `.claude/skills/dispatch/SKILL.md` dispatch table
 2. Match user intent → correct agent type
 2.5 PRE-CLAIM (→ `.claude/skills/dispatch-claim/SKILL.md`):
+     **Phase A — Orphan-Adoption Probe (BEFORE new dispatch):**
+       `task_list_held(kind="orphan-signal", owner_agent=<dispatcher-role>)`
+       For each signal: if `redispatch_count < 3` → adopt (re-claim original, spawn agent with checkpoint);
+       if `redispatch_count >= 3` → escalate BUG once (idempotent: check `payload.status=="ESCALATED"`), skip.
+       Router DEFERS tree-hygiene to dev-team Step 0a (P1.5-AF-2) — never reverts uncommitted files itself.
+       Full probe pseudocode → `.claude/skills/dispatch-claim/SKILL.md` § Orphan-Adoption Probe
+     **Phase B — PRE-CLAIM gate (existing):**
      `task_claim(task_id="intent:<agent>:<intent-key>", task_kind="intent",
                  owner_agent="<agent>", owner_client_session=$CLAUDE_CODE_SESSION_ID,
                  ttl_seconds=600, payload='{"site":"router","intent":"<intent-key>"}')`

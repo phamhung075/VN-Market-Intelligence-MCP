@@ -81,3 +81,26 @@ Tree-hygiene is critical because the shared working tree is on the host and surv
 - Regression: dev-team still processes agent_signals as before (Step 0a signal drain unchanged except for the new orphan-signal loop)
 - Manual test: dead dev session leaves a modified file in its task zone, new dev-team session adopts, runs tree-hygiene, verifies the file is reverted, resumes from checkpoint
 - Board verification: adopted task shows `assigned_to` updated + reverted-files list in status note
+
+## [Developer] Implementation — TASK_1987
+
+**Status:** REVIEW  
+**Files modified:**
+- `docs/agents/dev-team/flow/main.md` — Step 0a restructured into Step 0a-A (agent-signals drain, sub-flow pointer unchanged) + Step 0a-B (new orphan-signal adoption loop inline). The final "JUMP TO session-gate" condition moved to after both sub-steps.
+
+**Step 0a-B implements (AC compliance):**
+
+- `task_list_held(kind="orphan-signal", owner_agent="dev-team")` — read-only probe; DoD-P15-2 note inline
+- Filter: `original_task_kind == "sprint-task"` AND `redispatch_count < N_MAX=3`
+- **DoD-P15-1 GATE (load-bearing):** `git status --porcelain -- {task_zone}` → grep `^[ M]M` → `git checkout -- <file>` for each uncommitted tracked file; untracked (`??`) left in place; reverted list surfaced in Telegram WORK message AND board note via orch-apply.sh
+- **DoD-P15-3:** `redispatch_count` read from `signal.payload.redispatch_count`; passed into re-claim `payload.redispatch_count` and into spawned agent's checkpoint prompt
+- Checkpoint: `last_payload.git_sha` verified via `git log --oneline -5 {git_sha}`; if not in history → release both locks + skip + BUG telegram
+- Resume: spawn zone-agent with `mode=adopt-resume` and `checkpoint`, `run_in_background=true` (BGFAN-1 mandate preserved)
+- Board flip: via `jq ... | bash scripts/orch-apply.sh` — sets `assigned_to=$CLAUDE_CODE_SESSION_ID`, `adopted_at`, `tree_hygiene_note`. NEVER raw write.
+- Orphan-signal release: `task_release("orphan-signal:<original_task_id>")` after successful board flip
+- `redispatch_count >= N_MAX`: skip entirely; explicit log. Router (P1.5-AF-1) handles escalation.
+- **DoD-P15-6:** honest-bound line present verbatim at top of Step 0a section: "zero live sessions = zero execution; the reaper only makes work ADOPTABLE, it never self-heals execution"
+
+**Scope note baked:** Step 0a-B handles `sprint-task` only; `cowork-slot`/`dashboard-row` orphan-signals directed to `dev-team` routed to PO for manual triage.
+
+**No code changes:** flow doc edit only; no rebuild required.

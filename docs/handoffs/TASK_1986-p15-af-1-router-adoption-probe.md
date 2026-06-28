@@ -76,3 +76,27 @@ Escalation ensures a broken task (crashes every adopter) does not loop forever. 
 - Acceptance test: inject an orphan-signal with `redispatch_count=3`, confirm router emits BUG telegram and marks ESCALATED, then skips re-dispatch
 - Acceptance test: same signal re-read by the router later, confirm no redundant BUG telegram (idempotent)
 - Manual verification: kill a dev-team session mid-sprint-task, wait for reaper, new dev-team session comes online and reads the orphan-signal before picking new work
+
+## [Developer] Implementation — TASK_1986
+
+**Status:** REVIEW  
+**Files modified:**
+- `.claude/skills/dispatch-claim/SKILL.md` — added `## Orphan-Adoption Probe (P1.5-AF-1 — Fire BEFORE PRE-CLAIM)` section (full pseudocode: probe call, adoption path, escalation path with idempotency check, tree-hygiene delegation, DoD-P15-1/2/3 inline, honest-bound line verbatim)
+- `CLAUDE.md` — extended step 2.5 with Phase A (Orphan-Adoption Probe) description + pointer to the new SKILL.md section; Phase B preserves the existing PRE-CLAIM gate unchanged
+
+**Contract alignment (exact orphan-signal payload from TASK_1983/1985 REVIEW):**
+- `task_id` = `"orphan-signal:<original_task_id>"` — queried via `task_list_held(kind="orphan-signal", owner_agent=<role>)`
+- `payload.redispatch_count` read at probe time; carried forward into re-claim payload (DoD-P15-3)
+- `payload.status == "ESCALATED"` idempotency check gates BUG telegram (fires once, then silently skips)
+- `task_heartbeat(task_id="orphan-signal:<original_task_id>", ttl_seconds=86400, payload_patch={"status":"ESCALATED"})` for escalation extension + mark
+- `task_release("orphan-signal:<original_task_id>")` after successful adoption claim
+
+**DoD compliance:**
+- DoD-P15-1: router defers tree-hygiene to dev-team Step 0a (P1.5-AF-2); NEVER reverts uncommitted files itself. Explicit note in pseudocode.
+- DoD-P15-2: `task_list_held` (read-only) used to probe orphan-signals AND for published-artifact checks at cowork-slot/cron adoption time. NOT `task_heartbeat`/`task_claim` create-if-absent.
+- DoD-P15-3: `redispatch_count` read from `signal.payload.redispatch_count` and passed into re-claim `payload.redispatch_count`. Explicit carry-forward in pseudocode.
+- DoD-P15-6: honest-bound line present verbatim at top of the Orphan-Adoption Probe section.
+- Escalation idempotency: `payload.status == "ESCALATED"` check gates BUG telegram; later adopters or the same adopter skip silently.
+- Probe fires before EVERY new dispatch (Phase A runs before Phase B on every step 2.5 execution).
+
+**No code changes:** doc/skill edit only; no rebuild required.
