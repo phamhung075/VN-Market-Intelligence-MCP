@@ -235,13 +235,13 @@
     }
   ],
   "head": {
-    "status": "READY",
-    "active_task_id": "329",
-    "next_agent": "dev-pdf-extractor",
-    "next_action": "TASK_329 FR-7 — Notes-section hard stop (B02-TCTD). TASK_328 DONE (QA cycle-334 APPROVED). Handoff: docs/handoffs/TASK_329.md",
-    "updated_by": "qa",
-    "updated_at": "2026-06-28T10:55:00Z",
-    "reconcile_note": "po retired duplicate pm decomposition (TASK-301..307); repointed head OFF already-done FR-3 (TASK-301==numeric 326, committed cdc8b93f) ONTO next undone FR-1 (327, already READY). Canonical scheme = numeric 326-332."
+    "status": "in_progress",
+    "active_task_id": "332",
+    "next_agent": "qa",
+    "next_action": "QA verify TASK_332 FR-6 VN-number parenthetical parse robustness. Check: (1) vn_number_normalize test passes for canonical (1.992.671); (2) _parse_value Rule A+B correct; (3) TestParseValueFR6 5 tests green; (4) full pytest 937 pass; (5) sandbox G12 both tiers green. Handoff: docs/handoffs/TASK_332.md [Developer] section.",
+    "updated_by": "po",
+    "updated_at": "2026-06-28T11:14:30Z",
+    "reconcile_note": "po cadence-guard tick 20260628T110944Z: live leader CONCLUDED (last commit 7880480c 10:39:23Z, 32min quiet past cron-interval threshold). Canonical head was STALE at 329 (TASK_329 APPROVED+done, committed ca1b95a6) — repointed onto REVIEW-lane disposition per numeric scheme 326-332: TASK_332 FR-6 parked REVIEW awaiting qa (leader intent in .task_board.head). 327-331 all APPROVED. qa runs tests only, does not write shared text_table_extractor.py."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
