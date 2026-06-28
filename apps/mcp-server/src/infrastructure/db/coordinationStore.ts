@@ -145,16 +145,20 @@ export function ensureCoordinationTable(db: Database): void {
 }
 
 /**
- * Migrate an existing task_locks table to add the 'commit-mutex' task_kind.
+ * Migrate an existing task_locks table through all pending schema changes.
+ * Safe to call on every startup — each migration is individually idempotent.
  *
- * SQLite cannot ALTER a CHECK constraint in-place.  We use the canonical
- * SQLite approach:
- *   1. CREATE new table with updated CHECK → copy existing rows → DROP old → RENAME.
+ * Migration 1 — add 'commit-mutex' task_kind (CHECK constraint widen):
+ *   SQLite cannot ALTER a CHECK constraint in-place.  We use the canonical
+ *   approach: CREATE new table with updated CHECK → copy rows → DROP old → RENAME.
  *   All inside a single transaction so zero rows are lost on failure.
+ *   Detection: read CREATE statement from sqlite_master; no-op if 'commit-mutex' present.
  *
- * Detection: read the existing CREATE statement from sqlite_master.
- * If it already contains 'commit-mutex' in the CHECK clause → no-op (idempotent).
- * This function is safe to call on every startup.
+ * Migration 2 — add owner_client_session column (P1-MCP-1, CROSS-SESSION-MULTI-TEAM-ORCH):
+ *   Adds nullable TEXT column for per-client-session ownership discriminator.
+ *   NOT UNIQUE: SQLite silently drops UNIQUE on ADD COLUMN (feedback_sqlite_add_column_unique_silent_noop).
+ *   Detection: PRAGMA table_info guard — no-op if column already present.
+ *   Existing rows get NULL (backward-compatible; matching ladder falls through to owner_agent).
  */
 export function migrateCoordinationTable(db: Database): void {
   const schemaRow = db
@@ -163,45 +167,62 @@ export function migrateCoordinationTable(db: Database): void {
 
   if (!schemaRow) return; // table does not exist yet (brand-new DB) — ensureCoordinationTable will create it
 
-  if (schemaRow.sql.includes("'commit-mutex'")) {
-    return; // already migrated — idempotent no-op
+  // ---- Migration 1: add 'commit-mutex' kind to CHECK constraint ----
+  // Requires table-recreate (SQLite cannot ALTER a CHECK in-place).
+  if (!schemaRow.sql.includes("'commit-mutex'")) {
+    // Migration needed: recreate table with updated CHECK constraint.
+    // Wrapped in a transaction so existing rows are preserved on any failure.
+    db.exec("BEGIN");
+    try {
+      db.exec(`
+        CREATE TABLE task_locks_v2 (
+          task_id          TEXT    NOT NULL,
+          task_kind        TEXT    NOT NULL CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row','commit-mutex')),
+          owner_session    TEXT    NOT NULL,
+          owner_agent      TEXT    NOT NULL,
+          claimed_at       INTEGER NOT NULL,
+          expires_at       INTEGER NOT NULL,
+          heartbeat_at     INTEGER NOT NULL,
+          ttl_seconds      INTEGER NOT NULL DEFAULT 3600,
+          payload          TEXT,
+          PRIMARY KEY (task_id)
+        )
+      `);
+      db.exec(`
+        INSERT INTO task_locks_v2
+          SELECT task_id, task_kind, owner_session, owner_agent,
+                 claimed_at, expires_at, heartbeat_at, ttl_seconds, payload
+          FROM task_locks
+      `);
+      db.exec("DROP TABLE task_locks");
+      db.exec("ALTER TABLE task_locks_v2 RENAME TO task_locks");
+      // Recreate indexes (dropped with the original table)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_expires_at ON task_locks(expires_at)`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_kind_agent ON task_locks(task_kind, owner_agent)`);
+      db.exec("COMMIT");
+      console.info("[coordinationStore] Migrated task_locks CHECK constraint: added 'commit-mutex' kind.");
+    } catch (err) {
+      db.exec("ROLLBACK");
+      console.error("[coordinationStore] Migration failed — rolled back. Existing rows preserved.", err);
+      throw err; // propagate so callers can enter refuse-all mode
+    }
   }
 
-  // Migration needed: recreate table with updated CHECK constraint.
-  // Wrapped in a transaction so existing rows are preserved on any failure.
-  db.exec("BEGIN");
-  try {
-    db.exec(`
-      CREATE TABLE task_locks_v2 (
-        task_id          TEXT    NOT NULL,
-        task_kind        TEXT    NOT NULL CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row','commit-mutex')),
-        owner_session    TEXT    NOT NULL,
-        owner_agent      TEXT    NOT NULL,
-        claimed_at       INTEGER NOT NULL,
-        expires_at       INTEGER NOT NULL,
-        heartbeat_at     INTEGER NOT NULL,
-        ttl_seconds      INTEGER NOT NULL DEFAULT 3600,
-        payload          TEXT,
-        PRIMARY KEY (task_id)
-      )
-    `);
-    db.exec(`
-      INSERT INTO task_locks_v2
-        SELECT task_id, task_kind, owner_session, owner_agent,
-               claimed_at, expires_at, heartbeat_at, ttl_seconds, payload
-        FROM task_locks
-    `);
-    db.exec("DROP TABLE task_locks");
-    db.exec("ALTER TABLE task_locks_v2 RENAME TO task_locks");
-    // Recreate indexes (dropped with the original table)
-    db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_expires_at ON task_locks(expires_at)`);
-    db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_kind_agent ON task_locks(task_kind, owner_agent)`);
-    db.exec("COMMIT");
-    console.info("[coordinationStore] Migrated task_locks CHECK constraint: added 'commit-mutex' kind.");
-  } catch (err) {
-    db.exec("ROLLBACK");
-    console.error("[coordinationStore] Migration failed — rolled back. Existing rows preserved.", err);
-    throw err; // propagate so callers can enter refuse-all mode
+  // ---- Migration 2: add owner_client_session column (P1-MCP-1) ----
+  // Uses ADD COLUMN — no table-recreate needed; idempotent via PRAGMA table_info guard.
+  // nullable TEXT, NOT UNIQUE (UNIQUE is silently dropped on ADD COLUMN in SQLite —
+  // see feedback_sqlite_add_column_unique_silent_noop).
+  // Existing rows get NULL; matching ladder in heartbeatTask/releaseTask falls through
+  // to owner_agent for un-migrated callers (backward-compatible).
+  const columns = db
+    .prepare("PRAGMA table_info(task_locks)")
+    .all() as Array<{ name: string }>;
+
+  const hasOwnerClientSession = columns.some((col) => col.name === "owner_client_session");
+
+  if (!hasOwnerClientSession) {
+    db.exec("ALTER TABLE task_locks ADD COLUMN owner_client_session TEXT");
+    console.info("[coordinationStore] Migrated task_locks: added owner_client_session column (nullable TEXT, P1-MCP-1).");
   }
 }
 

@@ -37,15 +37,92 @@ Add `owner_client_session TEXT` column to `task_locks` table (nullable, NOT UNIQ
 
 ## [Developer] Implementation Notes
 
-1. **SQL statement:** Add to `migrateCoordinationTable` transaction:
-   ```sql
-   ALTER TABLE task_locks ADD COLUMN owner_client_session TEXT;
-   -- nullable, NOT UNIQUE (UNIQUE silently dropped on ADD COLUMN in SQLite)
-   ```
-2. **Placement:** Locate `migrateCoordinationTable` in coordinationStore.ts (around line 159-206). Add the ALTER to the existing table migration block within the transaction.
-3. **Existing rows:** Will get NULL in the new column. No default needed; NULL signals "pre-P1 row, callers should use matching-ladder fallback" (implemented in P1-MCP-2).
-4. **RAW-verify:** After deployment, call `task_list_held()` against the LIVE coordination.db (via the running mcp-server container) and spot-check that the returned rows include a `owner_client_session` field (NULL for old rows, SOME-UUID for new claims).
-5. **No server restart needed for schema:** SQLite DDL is online-safe; the next `migrateCoordinationTable` call applies it. Callers using the old row format (without the column) will see NULL.
+### What Changed
+
+**File modified:** `apps/mcp-server/src/infrastructure/db/coordinationStore.ts`
+- Lines 147-230 (approximately): `migrateCoordinationTable` function restructured.
+  - Migration 1 (commit-mutex enum widen) converted from an early-return guard into a conditional block, so execution falls through to Migration 2.
+  - Migration 2 added: PRAGMA `table_info(task_locks)` guard checks for `owner_client_session` column; if absent, executes `ALTER TABLE task_locks ADD COLUMN owner_client_session TEXT`. Idempotent — no-op on repeat calls.
+
+**File created:** `apps/mcp-server/src/__tests__/P1-MCP-1-owner-client-session-migration.test.ts`
+- 10 tests across 6 AC groups covering: column addition on post-commit-mutex DB, NULL survival for existing rows, idempotency (double-call), brand-new DB path, nullable INSERT, NOT UNIQUE proof (two rows with same session UUID both insert).
+
+### SQL Applied
+
+```sql
+ALTER TABLE task_locks ADD COLUMN owner_client_session TEXT;
+-- nullable, NOT UNIQUE (UNIQUE silently dropped on ADD COLUMN in SQLite —
+-- feedback_sqlite_add_column_unique_silent_noop)
+```
+
+### Idempotency Mechanism
+
+```typescript
+const columns = db.prepare("PRAGMA table_info(task_locks)").all() as Array<{ name: string }>;
+const hasOwnerClientSession = columns.some((col) => col.name === "owner_client_session");
+if (!hasOwnerClientSession) {
+  db.exec("ALTER TABLE task_locks ADD COLUMN owner_client_session TEXT");
+}
+```
+
+Re-run-safe: PRAGMA check before ALTER ensures the ALTER only fires once per DB lifetime.
+
+### Build Status
+
+- TypeScript type check: CLEAN (`bun tsc --noEmit` — no output, no errors)
+- New tests: 10 pass, 0 fail
+- Regression suite (5 coordination test files, 63 tests total): 0 fail
+- Container rebuild: DONE (`docker compose build mcp-server && docker compose up -d --no-deps mcp-server`)
+
+### RAW Live-DB Verification (inside named-volume container)
+
+Container: `vn-market-intelligence-mcp-mcp-server-1` (Up, healthy after rebuild)
+
+Migration log line observed on first `listHeldTasks` call:
+```
+[coordinationStore] Migrated task_locks: added owner_client_session column (nullable TEXT, P1-MCP-1).
+```
+
+`PRAGMA table_info(task_locks)` output from live `/app/data/coordination.db` (named volume):
+
+```json
+[
+  {"cid":0,"name":"task_id","type":"TEXT","notnull":1,"dflt_value":null,"pk":1},
+  {"cid":1,"name":"task_kind","type":"TEXT","notnull":1,"dflt_value":null,"pk":0},
+  {"cid":2,"name":"owner_session","type":"TEXT","notnull":1,"dflt_value":null,"pk":0},
+  {"cid":3,"name":"owner_agent","type":"TEXT","notnull":1,"dflt_value":null,"pk":0},
+  {"cid":4,"name":"claimed_at","type":"INTEGER","notnull":1,"dflt_value":null,"pk":0},
+  {"cid":5,"name":"expires_at","type":"INTEGER","notnull":1,"dflt_value":null,"pk":0},
+  {"cid":6,"name":"heartbeat_at","type":"INTEGER","notnull":1,"dflt_value":null,"pk":0},
+  {"cid":7,"name":"ttl_seconds","type":"INTEGER","notnull":1,"dflt_value":"3600","pk":0},
+  {"cid":8,"name":"payload","type":"TEXT","notnull":0,"dflt_value":null,"pk":0},
+  {"cid":9,"name":"owner_client_session","type":"TEXT","notnull":0,"dflt_value":null,"pk":0}
+]
+```
+
+Column `cid:9` — `owner_client_session TEXT notnull:0 dflt_value:null` — confirmed present, nullable, no UNIQUE constraint.
+
+Existing rows after migration (all 5 pre-migration rows survive with NULL):
+```json
+[
+  {"task_id":"cowork-leader","task_kind":"cowork-slot","owner_agent":"cowork-dispatcher","owner_client_session":null},
+  {"task_id":"published:chef-evening:2026-06-28","task_kind":"cowork-slot","owner_agent":"unified-agent","owner_client_session":null},
+  {"task_id":"published:digest-daily:2026-06-27","task_kind":"cowork-slot","owner_agent":"digest-predict","owner_client_session":null},
+  {"task_id":"esc-datacov:FPT:Q1-2026:ESC-3","task_kind":"sprint-task","owner_agent":"bctc-analyst","owner_client_session":null},
+  {"task_id":"published:digest-sunday:2026-06-15/2026-06-21","task_kind":"cowork-slot","owner_agent":"digest-predict","owner_client_session":null}
+]
+```
+
+### Rebuild Status
+
+APPLIED AND VERIFIED LIVE. Container rebuilt and restarted with new code. Migration ran on first `listHeldTasks` call after restart. No further rebuild needed for this migration.
+
+### Non-goals (per task scope)
+
+- No changes to `coordinationTools.ts` (TASK_1975)
+- No changes to matching-ladder in `heartbeatTask`/`releaseTask` (TASK_1974)
+- No `owner_client_session` param added to tool schemas (TASK_1975)
+- `owner_client_session` intentionally nullable in P1 (REQUIRED flip is TASK_1980)
 
 ---
 

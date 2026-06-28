@@ -6071,23 +6071,6 @@
         "owner_agent": "dev-pdf-extractor"
       },
       {
-        "id": "TASK_1973",
-        "type": "SPRINT-S",
-        "zone": "apps/mcp-server/",
-        "title": "P1-MCP-1: SQL migration — add owner_client_session column",
-        "status": "TODO",
-        "priority": "P1",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "handoff": "docs/handoffs/TASK_1973-p1-mcp-1-migration-sql.md",
-        "depends_on": [],
-        "blocks": [
-          "TASK_1974",
-          "TASK_1975"
-        ],
-        "created_at": "2026-06-28T08:30:00Z",
-        "created_by": "pm"
-      },
-      {
         "id": "TASK_1974",
         "type": "SPRINT-M",
         "zone": "apps/mcp-server/",
@@ -7301,6 +7284,23 @@
         "handoff": "docs/handoffs/TASK-FFT-L4.md",
         "completed_at": "2026-06-27T21:25:00Z",
         "next": "qa"
+      },
+      {
+        "id": "TASK_1973",
+        "type": "SPRINT-S",
+        "zone": "apps/mcp-server/",
+        "title": "P1-MCP-1: SQL migration — add owner_client_session column",
+        "status": "REVIEW",
+        "priority": "P1",
+        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "handoff": "docs/handoffs/TASK_1973-p1-mcp-1-migration-sql.md",
+        "depends_on": [],
+        "blocks": [
+          "TASK_1974",
+          "TASK_1975"
+        ],
+        "created_at": "2026-06-28T08:30:00Z",
+        "created_by": "pm"
       }
     ],
     "qa": [],
