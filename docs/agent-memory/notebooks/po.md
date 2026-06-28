@@ -21,3 +21,15 @@ Secondary — dispatch-claim SKILL.md (264L>200): **CONTINUE-DEFER.** AND-of-thr
 Standard triage: head idle (qa @12:00Z), WIP(in_progress)=0, ready=0, review=2 (ARCH-SHIP-WAVE-REAUDIT DEFERRED 06-11; TASK-FFT-L4 awaiting qa — not PO's), signal_queue NEW=0. list_unresolved_reports = exactly {3338 CTG/MWG, 3339 ESC-3 FP, 3340 pollNews, 3341/3342 Migration-3 RESOLVED} — all known/tracked; NONE re-filed. 3342 PRAGMA wal_checkpoint rec = dev-mcp-server territory, noted not actioned. No board write (orch-state untouched). Did NOT push (ahead<20; fleet-push backstop owns).
 
 LESSON: a date-only signal filename collides on a same-day second cycle — disambiguate by cycle-label before moving to processed/, else the move clobbers the earlier cycle's record. And a context-bloat re-eval gate is decided by SPRINT STATUS (active vs concluded), not commit-message tense or live-leader quiet-time: an active sprint that owns the file in scope_in keeps the file deferred even when its current phase's tasks are DONE.
+
+---
+## 2026-06-28T17:42:09Z — Kickoff FRONTEND-ANALYSIS-HUB-CONSOLIDATION (user-directed fan-out, session eb8b5309)
+User-directed FE restructure: /dashboard/analysis?stock=<code> becomes the single per-stock hub (8 items). PO owns decomposition AND fan-out per explicit user instruction → standard BA→architect→pm gate LIFTED for this composition-only sprint (data layer already in place; RAW-verified all 7 api.* endpoints).
+
+SHARED-FILE HAZARD RESOLVED via zone-per-file seam: 8 items all compose into ONE file dashboard.analysis.tsx → parallel agents on that file WOULD conflict. Seam = 4 parallel dev-frontend builds of DISTINCT NEW component files under components/analysis/ (zone-isolated: each task.zone = its own file path → loop can parallelize safely, no worktree needed since no shared target), THEN 1 serialized INT closer = SOLE editor of dashboard.analysis.tsx (imports+places 6 zones+2 buttons, deletes dashboard.technical.tsx, fixes TopNav Ky Thuat link + 2 tests). Closers: ops single-svc frontend rebuild → qa LIVE-verify (DONE is qa gate, never dev).
+
+BACKEND SUB-TASK ANALYSIS (RAW-probed api.*): officers/shareholders accept ?code (buttons); conviction-history accepts ?symbol; corporate-events(?days,?type only)/financials(none)/reputation(none)/news-buzz(none) return full-universe rows → CLIENT-SIDE filter by code in each zone. NO backend sub-task required this sprint (optional ?code params = BACKLOG, not minted).
+
+SYNERGY: aligns with existing BACKLOG FACTORY-FRONTEND-split-dashboard-analysis (1845L god-file) — INT keeps additions import-only to avoid worsening it.
+
+LESSON: PO has NO Task/agent-spawn tool — durable fan-out = mint board rows + reserve sprint-task locks + return plan; the router/dev-team loop performs the actual dev-frontend process-spawn off the heads. Do NOT fabricate agent ids I cannot create. Did NOT touch live .head/.task_board.head (TASK_332 qa) or CROSS-SESSION work. Committed 8b1002f1 via commit-mutex; did NOT push (fleet backstop owns).
