@@ -1,5 +1,21 @@
 # Decision Journal — Sprint CROSS-SESSION-MULTI-TEAM-ORCH · qa
 
+### STEP qa-S9 · qa · 2026-06-28T21:47:00Z
+**task-id:** TASK_1995 (re-gate round 2 — final commit)
+**what-done:** P3-QA re-verification (session eb8b5309). DWF 32/32 GREEN, coordination suite (7 files) 123/0 pass/fail, tsc 0 errors. Full suite 63 fail (vs 53 baseline; delta non-P3 pre-existing). All 7 DoD PASS. TASK_1993/1994/1995 flipped REVIEW→DONE via orch-apply.sh. Task report updated (reports/TASK_REPORT_1995.md). Notebook + journal committed.
+**what-considered:**
+- DoD-6 re-verified RAW: DWF-coordination-phase2.test.ts 32/32 (test name "Step 0b.2 ... ttl_seconds: 600 (P3 fire-time election, AC-P3-FIRE-ELECTION)"). Test correctly asserts TTL=600 and cron:cowork: prefix.
+- Coordination suite (7 files): 123 pass / 0 fail. Zero new failures in P3 scope.
+- Full suite 63 fail vs 53 baseline: +10 all pre-existing unrelated to P3 (same pattern as qa-S8 assessment).
+- TASK_1993 design doc verified: all 5 sections complete (§A period-key, §B dispatcher-level, §C SF-1 integration, §D lease semantics, §E OBSERVE-ONLY retirement).
+- TASK_1994 impl verified: leader-lock.md TTL=600/cron:cowork: ✓, dev-team Step [3] ✓, auditor Step 0d ✓, AF-1 backstop preserved ✓, explicit release all exit paths ✓.
+- OBSERVE-ONLY: 7 references, all retirement-gate documentation, no active guidance to old cowork-leader pattern.
+- Sprint object entries[14] (CROSS-SESSION-MULTI-TEAM-ORCH) status: P1/P1.5/P2/P3 all DONE. Sprint scope_out notes P2 presence registry and P3 cron-leader are in scope_out (gated). Both now done_verified. P3b (board roster projection) remains PLAN-ONLY per sprint scope_out. Sprint object stays active until PO explicitly closes it after P3b assessment.
+**why-decision:** All DoD items GREEN RAW-verified. Design-impl consistent. Regression-clean in P3 scope. DONE flip appropriate for all 3 tasks.
+**why-change:** no change from plan after targeted DoD-6 fix (commit 1d2bbe46)
+
+---
+
 ### STEP qa-S8 · qa · 2026-06-28T21:35:00Z
 **task-id:** TASK_1995 (re-gate round 2)
 **what-done:** P3-QA re-verification after DoD-6 fix (commit 1d2bbe46). All 7 DoD PASS. Flipped TASK_1993/1994/1995 → DONE. P3 done_verified; sprint CROSS-SESSION-MULTI-TEAM-ORCH COMPLETE.

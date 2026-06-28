@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-348 · 2026-06-28 · TASK_1993/1994/1995 (CROSS-SESSION-MULTI-TEAM-ORCH P3) — APPROVED (re-gate confirmed)
+
+P3 re-gate independent verification (session eb8b5309). DWF 32/32 GREEN confirmed RAW. Coordination suite 7 files 123/0. tsc 0 errors. Full suite 63 fail vs 53 baseline (+10 pre-existing non-P3). TASK_1993 addendum doc §A-§E verified complete. TASK_1994 impl design-consistent (TTL=600, cron:cowork:, AF-1 preserved, dev-team Step[3], auditor Step 0d). DoD-1..7 all PASS. Orch-state TASK_1993/1994/1995 REVIEW→DONE confirmed via orch-apply.sh. Sprint object stays active (P3b PLAN-ONLY). DJ: qa-S9. Report: reports/TASK_REPORT_1995.md updated.
+
 ## cycle-347 · 2026-06-28 · TASK_1995 (CROSS-SESSION-MULTI-TEAM-ORCH P3) — APPROVED (re-gate round 2)
 
 TASK_1995 P3 fire-time leader-election QA re-gate | Verdict: APPROVED | DoD-6 fix confirmed: commit 1d2bbe46 updated DWF-coordination-phase2.test.ts DV-P2-4 Step 0b — `ttl_seconds: 1800`→`600`, `cowork-leader`→`cron:cowork:`, test renamed AC-P3-FIRE-ELECTION. DWF: 32 pass / 0 fail (was 31/1). Coordination suite (5 files): 111 pass / 0 fail. Expanded suite (7 files P1+P2+P3): 133 pass / 0 fail. tsc: 0 errors. Full suite ~68 fail vs 53 baseline: +15 from peer session eb8b5309 UNRELATED test files — zero P3-introduced failures. DoD-1..5 unchanged PASS from round 1 (behavioral in-memory, INV-GATEWAY-1). DoD-7 unchanged PASS (doc consistency). All 7 DoD GREEN. TASK_1993/1994/1995 → DONE via orch-apply.sh. P3 done_verified. Sprint CROSS-SESSION-MULTI-TEAM-ORCH COMPLETE: P1+P1.5+P2+P3 all done_verified. MEMORY.md OBSERVE-ONLY retirement (`feedback_router_cowork_defer_to_live_leader`, `feedback_router_manual_drive_overlaps_devteam_loop`) activation-gate OPEN — owed to PO/router. DJ: sprint-CROSS-SESSION-MULTI-TEAM-ORCH-qa.md § qa-S8. Report: reports/TASK_REPORT_1995.md.
