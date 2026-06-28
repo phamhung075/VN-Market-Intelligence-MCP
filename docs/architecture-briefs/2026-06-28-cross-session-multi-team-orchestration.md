@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-28
 **Author:** agents-architect
-**Status:** READY-FOR-PO-SIGNOFF
+**Status:** READY-FOR-PO-SIGNOFF — rev 2 (liveness detection + orphan takeover added)
 **Slug:** cross-session-multi-team-orchestration
 
 ---
@@ -260,6 +260,148 @@ about. Treat any board projection as read-derived (P3) only.
 
 ---
 
+## 6.5. Liveness Detection + Orphan Work Takeover
+
+### 6.5.0 The gap this closes
+
+P1/P2/P3 liberate the **lock** when a session dies (TTL expiry → stale-steal). But they do not
+re-dispatch or continue the **work**. The mutex frees the row; nobody resumes the task. This section
+closes that gap with an active detection + takeover layer.
+
+### 6.5.1 Honest bound — "all sessions dead"
+
+When every Claude Code session is dead, the mcp-server (PID 1, single shared container, always-on
+across all session deaths) is the only process still running. It cannot spawn agents; it can only
+make work **adoptable**. The guarantee is therefore:
+
+> Lock freed + durable progress markers intact + orphan signal persisted → state is clean and
+> resumable so the **next session to come online** (cron tick, human, or watchdog) can adopt without
+> restarting from zero.
+
+Do not imply a dead fleet self-heals execution. State this explicitly in every doc that references
+this design.
+
+### 6.5.2 Active reaper — server-side, not cron-based
+
+**Why not a cron job:** every cron is session-local. All sessions dead = no cron fires. The reaper
+MUST live in the mcp-server process itself.
+
+**Mechanism:** extend `gcExpiredLocks` (coordinationStore.ts:298-317) with a pre-GC phase. Today it
+silently `DELETE`s all rows where `expires_at < unixepoch('now') - graceSeconds`. Change to:
+
+1. **Scan:** `SELECT` rows WHERE `expires_at + graceSeconds < unixepoch('now')` AND `task_kind NOT
+   IN ('session-presence', 'orphan-signal')` AND `task_kind` NOT prefixed by `published:`.
+   (Presence rows dying = normal heartbeat stop; `published:*` rows are dedup sentinels, not work
+   units — both classes die silently as today.)
+
+2. **Emit orphan signal per row:** `INSERT OR REPLACE INTO task_locks` a new row with:
+   - `task_id = "orphan-signal:<original_task_id>"`
+   - `task_kind = "orphan-signal"` (new enum value, same migration pattern)
+   - `owner_agent = <original owner_agent>` (used for role-match filtering by adopters)
+   - `owner_client_session = NULL` (available for any session to adopt)
+   - `expires_at = unixepoch('now') + 7200` (2h adoption window)
+   - `payload = JSON.stringify({ original_task_id, original_task_kind, original_owner_client_session,
+     owner_agent, last_payload, orphaned_at: unixepoch('now'), redispatch_count: N })`
+   where `N` = prior `redispatch_count + 1` from the existing row's payload (default 0 if absent).
+
+3. **Delete original row** (existing GC behavior — preserves the stale-steal path for the next
+   `task_claim` call on the original `task_id`).
+
+**Add a server-side periodic timer** (`setInterval` or equivalent in the mcp-server startup path)
+that calls `gcExpiredLocks` with grace=300s every **600 seconds**. This ensures the reaper fires
+even when no `task_claim` call arrives (the zero-active-session case). The opportunistic per-claim
+GC (existing) remains as a belt-and-suspenders secondary trigger.
+
+**The reaper does NOT execute work.** It only marks state and emits adoptable signals into
+`task_locks`. No agent spawning, no direct task execution, no orch-state writes.
+
+### 6.5.3 Slow ≠ dead — grace window
+
+**Confusion hazard:** a slow agent (network lag, large LLM call, long git rebase) will miss a
+heartbeat tick without being dead. `feedback_spawn_retry_under_lag`: slow ≠ failed. False-orphaning
+a live-but-slow session corrupts its work.
+
+**Guard:** the reaper only emits an orphan signal when `expires_at + graceSeconds` elapses — NOT at
+`expires_at`. The existing `gcExpiredLocks(graceSeconds=300)` default already bakes in 5 min of
+grace. Callers setting `ttl_seconds=3600` for sprint-tasks and a `heartbeat` cadence of ≤ TTL/3
+(≤ 1200s) get **at least 5 min** of grace beyond TTL before the reaper fires. Set the periodic
+timer grace to `max(300, ttl/3)` per task_kind if the per-row TTL is accessible at scan time.
+
+**Rule:** `heartbeat_cadence ≤ TTL / 3` is mandatory (per §4). Any flow heartbeating less
+frequently than this MUST either shorten its cadence or extend its TTL before P1.5 ships, or it
+risks being incorrectly orphaned.
+
+### 6.5.4 Poison-task guard — escalate after N re-dispatches
+
+A task that crashes the holding session repeatedly (OOM, tool error loop, malformed data) must not
+infinite-loop through the orphan → adopt → crash cycle.
+
+**Mechanism:** `redispatch_count` lives in the `orphan-signal` row's `payload`. The adopter checks
+it before claiming:
+
+```
+if (orphan_signal.payload.redispatch_count >= N_MAX):
+    send_telegram(channel="bug",
+      message="[orch] Orphan task <task_id> exceeded N_MAX=3 re-dispatches — ESCALATED. Last owner: <owner_client_session>. Manual intervention required.")
+    UPDATE orphan-signal row: payload.status = "ESCALATED", expires_at = +86400  # keep visible for 24h
+    do NOT re-dispatch
+else:
+    claim original task_id, read checkpoint, resume
+```
+
+`N_MAX = 3` (configurable per task_kind in the claim tool payload). Cite
+`feedback_recurring_bug_escalation`: 2+ commits same module → block. The escalation signal surfaces
+on the BUG channel (not WORK) and stops re-queuing. An ESCALATED orphan-signal row persists for 24h
+for human inspection, then expires naturally.
+
+### 6.5.5 Resume contract — CONTINUE, not RESTART
+
+Per-kind durable progress markers. The adopter MUST read the checkpoint before doing any work:
+
+| task_kind | Durable progress marker | Resume action | Idempotency guard |
+|---|---|---|---|
+| `sprint-task` | Last `git commit` SHA in the repo + `orch-state.task_board[task_id].status` | Read orch-state board (via `task_list_held` + orch-apply.sh read path); detect partial commits; continue from last committed state. Do NOT re-run already-committed steps. | Git commit history is authoritative; board status is secondary. |
+| `cowork-slot` | `published:<kind>:<period>` existence in `task_locks` | `task_list_held(task_id="published:<kind>:<period>")` — if present and fresh, the period artifact is done; adopter is a no-op for this sub-step. Resume from the first unpublished sub-step only. | Guaranteed-slot double-post lesson: key on period date-range, never ISO week label. |
+| Cron tick | Fire-time claim `cron:<flow>:<period>` released by the dead session. The **output artifact** (`published:<kind>:<period>`) is the checkpoint. | If `published:*` artifact exists for the period → skip (idempotent, cite CHEF-fabricated-publish + headless-no-post lessons). Else claim + proceed. | Period-keyed dedup is the sole idempotency gate. |
+| `dashboard-row` | No sub-step state. Row is idempotent by design. | Re-compute and re-write. No resume needed. | N/A |
+
+**orch-state task_board status flip (sprint-task only):** when an adopter successfully claims an
+orphaned sprint-task:
+1. Adopter calls `jq '<transform>' docs/data/orch/orch-state.json | bash scripts/orch-apply.sh`
+   to flip `task_board[task_id].status` from `in_progress` → `in_progress` (re-assigned; update
+   `assigned_to` field if present in schema). NEVER raw write.
+2. If the board row is absent (task was removed), the adopter treats it as a fresh task and writes
+   the full row via orch-apply.sh.
+3. The orphan-signal row is deleted after successful adoption claim (the adopter calls `task_release`
+   on `orphan-signal:<task_id>` once the original task is reclaimed).
+
+**Dead-fleet case:** if no session claims the orphan-signal within its 2h TTL, the signal row
+expires and is itself GC'd silently. The board retains `in_progress` (stale but not corrupt). On
+the next online session: it re-scans orphan signals; if none, it reads the board for stale
+`in_progress` rows (as a fallback) and treats them as candidates for adoption after a staleness
+threshold. This fallback is PLAN-ONLY; the primary path is the orphan-signal row.
+
+### 6.5.6 Adoption point — where live sessions pick up orphaned work
+
+**Primary:** Router step 2.5 (P1) extended in P1.5: after the PRE-CLAIM probe, also call
+`task_list_held(kind="orphan-signal")` filtered by `owner_agent=<current dispatcher role>`. For each
+matching signal where `redispatch_count < N_MAX`:
+- Claim the original `task_id` (now free, stale-steal succeeds)
+- Read `last_payload` from the signal for checkpoint info
+- Resume from checkpoint per §6.5.5 table
+- Delete orphan-signal row via `task_release("orphan-signal:<task_id>")`
+
+**Secondary:** dev-team Step 0a signal drain (already reads `agent_signals`). Extend to also read
+`task_list_held(kind="orphan-signal")` as a sprint-task adoption source. A dev-team session that
+finds an orphaned sprint-task in its role scope claims + resumes it before picking new work from the
+backlog.
+
+**Depends on P1** (`owner_client_session` must be in the expired lock row so the orphan-signal
+payload carries the original session id, enabling the adopter to distinguish "this was owned by a
+dead different-session" vs "this is a prior lock from my own session that I should just re-claim").
+
+---
+
 ## 7. Phased Rollout
 
 ### P1 — Attribution Fix (The Unblocker)
@@ -305,6 +447,45 @@ about. Treat any board projection as read-derived (P3) only.
 | Clock source | Inspect all writes | Only `unixepoch('now')` server-side; no client `Date.now()`/ISO crosses the wire |
 | DB unavailable (F3) | Unreadable `coordination.db` | `{claimed:false, error:"db_unavailable"}` → dispatcher fails closed (no spawn) |
 | Read-before-fire cadence race | Two sessions on `*/15`, claim mid-tick | `claimed:true` is authoritative → second EXITs; protocol trusts the claim, not a pre-read |
+
+### P1.5 — Liveness Detection + Orphan Work Takeover
+
+**Goal:** sessions that die mid-task leave their work adoptable, not abandoned. The next live session
+resumes from the last checkpoint, not from zero.
+
+**Depends on:** P1 (need `owner_client_session` in every lock row so the orphan-signal payload
+identifies the dead session and the adopter's attribution is unambiguous).
+
+**Can run parallel to P2** (P2 adds the presence roster; P1.5 adds orphan detection; both read
+`task_list_held` in different `task_kind` slices and do not conflict).
+
+**Ships:**
+- `orphan-signal` enum value (same `migrateCoordinationTable` enum-widen pattern as `commit-mutex`
+  and `session-presence`)
+- `redispatch_count` INTEGER column in `task_locks` (nullable, default 0; additive SQL migration)
+- Pre-GC emit logic in `gcExpiredLocks` (coordinationStore.ts:298-317): scan, emit orphan-signal,
+  then delete — replacing the current silent DELETE
+- Server-side periodic reaper timer (600s interval; calls `gcExpiredLocks(grace=300)`)
+- Poison-task escalation gate: `task_list_held` checks `redispatch_count >= N_MAX` before adoption;
+  `N_MAX=3` configurable in payload
+- Router step 2.5 extended (adoption probe): `task_list_held(kind="orphan-signal")` before
+  dispatching new work
+- dev-team Step 0a extended: reads orphan-signal rows for sprint-task adoption
+- orch-state board flip for adopted sprint-tasks via `scripts/orch-apply.sh` (Zod tri-point,
+  NEVER raw write)
+- BUG-channel escalation emit on `redispatch_count >= N_MAX` (no re-dispatch)
+
+**P1.5 failure-mode tests:**
+
+| Test | Method | Pass criterion |
+|---|---|---|
+| Crash mid-sprint-task → reaped + re-dispatched + RESUMED (not restarted) | Session A claims `sprint-task:T`, commits partial work, dies. Wait TTL+300s. Session B comes online. | Reaper emits `orphan-signal:sprint-task:T`. Session B adopts: reads `last_payload.git_sha` as checkpoint, continues from last commit. Does NOT re-run already-committed steps. Board status flipped via orch-apply.sh. |
+| Crash mid-cowork → period artifact dedup prevents double-publish | Session A publishes sub-step 1 of a cowork-slot, then dies. Session B adopts. | Session B reads `published:<kind>:<period>` — sub-step 1 already present → skips it. Only runs remaining sub-steps. CHEF fabrication and headless-no-post traps not triggered. |
+| Slow-not-dead → NOT orphaned within grace window | Session A is alive but slow (long LLM call); misses one heartbeat tick but renews before `expires_at + 300s`. | No orphan-signal row emitted. Session A continues. Reaper scans after `expires_at + 300s`; row was renewed → no match. |
+| All sessions dead → state adoptable on next online | All sessions die. Reaper timer fires at 600s intervals. New session comes online after 15 min. | Orphan-signal rows exist in `task_locks` with 2h TTL. New session reads them via `task_list_held(kind="orphan-signal")` and adopts. Board retains `in_progress` (stale but uncorrupt) until adopter flips it. |
+| Poison-task → escalates after N_MAX=3, stops re-queuing | Session claims task, dies. Reaper signals. Session B adopts, dies. Repeat 3×. | On 4th orphan-signal emit: `redispatch_count=3 >= N_MAX=3` → BUG channel telegram, orphan-signal marked ESCALATED (expires_at+86400), NOT re-dispatched. |
+| Orphan-signal itself expires (no adopter) | Emit orphan-signal; no session comes online within 2h TTL. | Signal row expires; GC deletes it. Board retains stale `in_progress`. Next new session falls through to board-scan fallback (PLAN-ONLY in P1.5; full support in P2). No corruption. |
+| Orphan-signal adoption: wrong-role session ignores it | Orphan-signal for `owner_agent="dev-team"` is visible while a `digest-predict` dispatcher is online. | `digest-predict` reads `task_list_held(kind="orphan-signal", owner_agent="digest-predict")` → no match → does not adopt the dev-team signal. |
 
 ### P2 — Presence Registry
 
@@ -426,6 +607,55 @@ Edit the task-lock SKILL to declare `owner_client_session` as the authoritative 
 ownership probes. Remove the `owner_agent` ownership path from the "is-it-mine?" check. Retain
 `owner_agent` as a human-readable role label only.
 
+**P1.5-MCP-1 (migration SQL — orphan-signal enum + redispatch_count column):**
+```sql
+ALTER TABLE task_locks ADD COLUMN redispatch_count INTEGER DEFAULT 0;
+-- nullable/DEFAULT 0; existing rows get 0 (no regression)
+```
+Enum-widen `task_kind` CHECK to add `'orphan-signal'` in the same `migrateCoordinationTable`
+table-recreate transaction (precedent: lines 159-206). Verify via `task_list_held` that existing rows
+survive with `redispatch_count=0`.
+
+**P1.5-MCP-2 (gcExpiredLocks — pre-GC emit logic):**
+In `coordinationStore.ts:298-317`, before the DELETE statement:
+1. `SELECT task_id, task_kind, owner_agent, owner_client_session, payload, redispatch_count FROM task_locks WHERE expires_at + ? < unixepoch('now') AND task_kind NOT IN ('session-presence', 'orphan-signal') AND task_id NOT LIKE 'published:%'`
+2. For each row: `INSERT OR REPLACE INTO task_locks (task_id, task_kind, owner_agent, owner_client_session, expires_at, payload, redispatch_count, claimed_at, heartbeat_at) VALUES ('orphan-signal:<original_task_id>', 'orphan-signal', <owner_agent>, NULL, unixepoch('now')+7200, <json>, <redispatch_count+1>, unixepoch('now'), unixepoch('now'))`
+3. Then proceed with the existing DELETE.
+All in a single SQLite transaction. Non-fatal on error (log, continue — same as today).
+
+**P1.5-MCP-3 (server-side periodic reaper timer):**
+In mcp-server startup (server.ts or the coordination module init path), add:
+```typescript
+setInterval(() => { gcExpiredLocks(db, 300); }, 600_000);
+```
+The timer fires every 600s regardless of client activity. This is the only change needed — `gcExpiredLocks` gains the emit behavior in P1.5-MCP-2. Grace=300s, period=600s → orphan detected within 15 min of TTL expiry in the worst case (all-sessions-dead scenario).
+
+**P1.5-MCP-4 (coordinationTools.ts — task_list_held filter for orphan-signal):**
+Extend `listHeldTasks` to support `owner_agent` as an optional filter parameter (for role-scoped orphan-signal reads). Add `redispatch_count` to the output schema for orphan-signal rows.
+
+**P1.5-AF-1 (router step 2.5 — adoption probe extension):**
+Extend the step 2.5 PRE-CLAIM gate (P1-AF-1) with an adoption probe BEFORE claiming new work:
+```
+task_list_held(kind="orphan-signal", owner_agent=<current dispatcher role>)
+→ for each signal where redispatch_count < N_MAX=3:
+    claim original task_id (stale-steal succeeds — row was deleted by reaper)
+    read last_payload for checkpoint (git SHA, period artifact key, etc.)
+    resume from checkpoint per resume-contract table (§6.5.5)
+    release "orphan-signal:<task_id>" after successful claim
+→ for each signal where redispatch_count >= N_MAX:
+    send_telegram(channel="bug", message="[orch] Orphan task <task_id> ESCALATED: N_MAX=3 exceeded ...")
+    UPDATE orphan-signal payload.status = "ESCALATED" via task_heartbeat (extend TTL to +86400)
+    do NOT re-dispatch
+```
+Route via agent-md-factory discipline.
+
+**P1.5-AF-2 (dev-team Step 0a — sprint-task adoption):**
+In `docs/agents/dev-team/flow/main.md` Step 0a (signal drain): after reading `agent_signals`, also
+call `task_list_held(kind="orphan-signal", owner_agent="dev-team")`. For each matching signal with
+`original_task_kind="sprint-task"` and `redispatch_count < N_MAX`: apply the adoption flow above.
+After claiming, flip orch-state board via `scripts/orch-apply.sh` (NEVER raw write) to update
+`assigned_to` + leave `status=in_progress`. Route via agent-md-factory discipline.
+
 **P3-AF-1 (leader-lock.md + cron SKILLs — fire-time election):**
 Redesign `leader-lock.md` and `cron-cowork-team` / `cron-detect-loop` SKILLs to elect at fire-time
 via `task_claim(task_id="cron:<flow>:<period-key>", owner_client_session=…)`. After P1 and P2 land.
@@ -442,7 +672,11 @@ via `task_claim(task_id="cron:<flow>:<period-key>", owner_client_session=…)`. 
 | Clock | Reuse server-side `unixepoch('now')` — never client `Date.now()`/ISO |
 | Presence registry | Reuse `task_locks` + new `session-presence` enum value |
 | Claim-before-spawn gate | Reuse + lift `dispatch-claim` skill to router |
-| **New code only** | `owner_client_session` column; tool param; matching-ladder rebind; `{ok, released}` return shape; `session-presence` enum; `task_list_held` output fields; CLAUDE.md step 2.5 |
+| Liveness detection | Reuse `gcExpiredLocks` + server startup timer + new `orphan-signal` enum value |
+| Orphan adoption probe | Reuse `task_list_held` + router step 2.5 + dev-team Step 0a |
+| Poison-task escalation | Reuse `send_telegram(channel="bug")` + `redispatch_count` in payload |
+| Board status flip on adoption | Reuse `scripts/orch-apply.sh` (Zod tri-point, CAS, atomic rename) |
+| **New code only** | `owner_client_session` column; `redispatch_count` column; matching-ladder rebind; `{ok, released}` return shape; `session-presence` + `orphan-signal` enum values; pre-GC emit in `gcExpiredLocks`; periodic reaper timer; `task_list_held` output + owner_agent filter; CLAUDE.md step 2.5 (adoption probe extension) |
 
 No new database. No new service. No new file format.
 
@@ -470,17 +704,32 @@ No new database. No new service. No new file format.
 ## Sequencing Summary
 
 ```
-P1 FIRST (unblocker — makes claimed:true trustworthy):
-  P1-MCP-1 (migration SQL) → P1-MCP-2 (matching-ladder) → P1-MCP-3 (tool param)
-  in parallel: P1-AF-1 (CLAUDE.md) + P1-AF-2 (dispatch-claim) + P1-AF-3 (leader-lock) + P1-AF-4 (task-lock)
-  pm: decompose into atomic FRs; gate MCP-2/MCP-3 on MCP-1 completion
+P1 FIRST (unblocker — makes claimed:true trustworthy, lays owner_client_session foundation):
+  P1-MCP-1 (migration SQL: owner_client_session column)
+    → P1-MCP-2 (matching-ladder rebind)
+    → P1-MCP-3 (tool param; stop server-side injection)
+  in parallel: P1-AF-1 (CLAUDE.md step 2.5) + P1-AF-2 (dispatch-claim SKILL)
+             + P1-AF-3 (leader-lock delete self-held-heartbeat) + P1-AF-4 (task-lock rebind)
+  pm: gate MCP-2/MCP-3 on MCP-1; gate all AF tasks on MCP-1 completion
 
-P2 AFTER P1 (presence registry — independent of P3):
-  P2-MCP-1 (enum + output) then P2-AF-1 (roster read in step 2.5)
+P1.5 AFTER P1 (orphan detection + adoption — can run PARALLEL to P2):
+  P1.5-MCP-1 (migration SQL: orphan-signal enum + redispatch_count column)
+    → P1.5-MCP-2 (gcExpiredLocks pre-GC emit)
+    → P1.5-MCP-3 (periodic reaper timer)
+    → P1.5-MCP-4 (task_list_held owner_agent filter + redispatch_count output)
+  in parallel: P1.5-AF-1 (router step 2.5 adoption probe) + P1.5-AF-2 (dev-team Step 0a adoption)
+  pm: gate MCP-2/MCP-3/MCP-4 on MCP-1; gate AF tasks on MCP-4 completion
 
-P3 AFTER P1+P2 (fire-time cron election — closes the last cross-session gap):
+P2 AFTER P1 (presence registry — can run PARALLEL to P1.5):
+  P2-MCP-1 (session-presence enum + task_list_held output)
+    then P2-AF-1 (roster read wired into step 2.5)
+
+P3 AFTER P1 + P2 (fire-time cron election — closes the last cross-session gap):
   P3-AF-1 (leader-lock + cron SKILLs redesign) then implement
 ```
 
-**PO signoff needed on:** P1 scope + sequencing before any code lands. P3 standing decision
-(supersedes manual "single cowork owner" convention).
+**PO signoff needed on:**
+- P1 scope + sequencing before any code lands
+- P1.5 "all sessions dead" honest bound (best-effort adoptability, not guaranteed execution)
+- P1.5 N_MAX=3 poison-task threshold (or configure per task_kind)
+- P3 standing decision (supersedes manual "single cowork owner" convention)

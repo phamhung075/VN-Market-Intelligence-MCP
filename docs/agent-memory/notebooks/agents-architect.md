@@ -20,10 +20,10 @@ ORCH-STATE-HOT-COLD-SPLIT: orch-state.json is 2.46 MB / 26,185 lines (53% evicta
 
 ---
 
-## 2026-06-28T08:08:25Z
+## 2026-06-28T08:08:25Z (rev 2 — liveness extension added)
 
 **Brief:** `docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md`
 
-CROSS-SESSION-MULTI-TEAM-ORCH: N sessions of the same agent role (two dev teams, two analysis teams) share `owner_agent` and therefore cannot be distinguished by heartbeat/release/ownership probes — causing double-fire and lock interference. The mutex primitive (task_claim INSERT-OR-IGNORE) is sound; the defeat is attribution-only. Fix: thread `CLAUDE_CODE_SESSION_ID` (harness UUID, verified live, read nowhere in codebase) as `owner_client_session` into task_locks; rebind heartbeat/release matching ladder to it; delete self-held-heartbeat anti-pattern in leader-lock.md:64-81; insert CLAUDE.md step 2.5 PRE-CLAIM gate. Three phases: P1=attribution fix (unblocker, 7 atomic tasks split across dev-mcp-server+agent-father), P2=presence registry (session-presence enum + task_list_held output), P3=fire-time cron leader election (replaces operator-level OBSERVE-ONLY convention). Migration-before-switch sequencing constraint enforced. PO signoff required before code lands.
+CROSS-SESSION-MULTI-TEAM-ORCH (rev 2): N sessions of same role share `owner_agent` → cannot be distinguished by heartbeat/release probes → double-fire + lock interference. Mutex sound; defeat is attribution-only. P1: thread `CLAUDE_CODE_SESSION_ID` as `owner_client_session` into task_locks; rebind matching ladder; delete self-held-heartbeat; CLAUDE.md step 2.5 PRE-CLAIM gate. P1.5 (liveness + orphan takeover): server-side reaper extends gcExpiredLocks to emit `orphan-signal` rows before GC-delete; 600s periodic timer covers all-sessions-dead case; adopter resumes from checkpoint (git SHA for sprint-task, published artifact for cowork) — never restarts; poison-task cap N_MAX=3 → BUG escalation; orch-state board flip via orch-apply.sh only. P2: session-presence registry. P3: fire-time cron leader election. Grounded lessons: spawn-retry-under-lag (slow≠dead grace), recurring-bug-escalation (N_MAX=3), guaranteed-slot-double-post (period-key dedup), chef-fabricated-publish + headless-no-post (idempotency). PO signoff required.
 
-**Signal dropped:** `docs/signals/cross-session-multi-team-orch-20260628T080825Z.json` → pm
+**Signal dropped:** `docs/signals/cross-session-multi-team-orch-20260628T080825Z.json` → pm (rev 2)
