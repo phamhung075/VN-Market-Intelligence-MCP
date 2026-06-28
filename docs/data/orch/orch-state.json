@@ -3025,7 +3025,7 @@
             "title": "Rebuild the frontend container so :3001 reflects the new analysis hub code (PO->ops standing rule after FE code changes).",
             "owner": "ops",
             "type": "OPS",
-            "status": "BLOCKED",
+            "status": "REVIEW",
             "zone": "infra/frontend",
             "created_at": "2026-06-28T17:41:00Z",
             "size": "S",
