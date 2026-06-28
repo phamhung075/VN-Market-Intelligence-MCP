@@ -102,6 +102,36 @@ Add `owner_client_session: z.string().optional()` parameter to the Zod schemas f
 
 ---
 
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Sprint:** CROSS-SESSION-MULTI-TEAM-ORCH
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts` — module docstring updated; `task_claim` schema + handler: added `owner_client_session: z.string().optional()`, conditional-spread into claimTask; `task_heartbeat` schema + handler: added schema field, updated call to `heartbeatTask(task_id, owner_client_session, owner_agent, SERVER_SESSION_ID)`; `task_release` schema + handler: added schema field, updated call to `releaseTask(task_id, owner_client_session, owner_agent, SERVER_SESSION_ID)`, description updated for new `{ok:true,released:0|1}` shape; `task_force_release_orphan` schema + handler: added schema field, updated call to `releaseOrphanTask(task_id, owner_client_session, owner_agent, threshold)`.
+- **Tests written:** none (tool layer is thin wrapper; store-layer AC-10 covers the behavior; existing tools test updated)
+- **Type check:** clean (`bun tsc --noEmit` exit 0; `pnpm check` exit 0 including `exactOptionalPropertyTypes` — owner_client_session uses conditional spread)
+- **bun test (coordination suite):** 88 pass / 0 fail
+- **Tool count:** 166 — matches pre-task baseline
+- **Scheduler count:** unchanged
+- **Docs updated:** coordinationTools.ts module docstring (session identity model)
+- **Graphify:** skipped (no external docs impacted)
+
+**Key changes summary:**
+1. Server does NOT inject `owner_client_session` — only `SERVER_SESSION_ID` → `owner_session` (diagnostic)
+2. All 4 tool schemas (`task_claim`, `task_heartbeat`, `task_release`, `task_force_release_orphan`) accept `owner_client_session: z.string().optional()`
+3. Each handler extracts and threads `owner_client_session` from caller args into the corresponding store function
+4. `task_claim`: `...(owner_client_session !== undefined ? { owner_client_session } : {})` — never passes explicit `undefined` (exactOptionalPropertyTypes-safe)
+5. Backward-compat: callers that omit `owner_client_session` still work via the store's matching-ladder fallback to `owner_agent`
+
+**RAW-verify LIVE (gateway tool call via bun in container, 2026-06-28):**
+- `task_claim` with `owner_client_session:"session-aaa-111"` → `{claimed:true}`
+- Second claim with `owner_client_session:"session-bbb-222"` → `{claimed:false, current_holder.owner_client_session:"session-aaa-111"}`
+- `task_release` with wrong session → `{ok:true, released:0}`
+- `task_release` with correct session → `{ok:true, released:1}`
+
+---
+
 ## AC: RAW-Verify Against LIVE coordination.db
 
 After code lands and container rebuilds:

@@ -145,8 +145,8 @@ describe("DV-P2-1: Single-winner leader lock (AC-P2-5-1)", () => {
     });
     expect(claim1.claimed).toBe(true);
 
-    // Simulate leader exit via release (FIX-CWK-LEADER-LOCK-REBIND: pass owner_agent not owner_session)
-    releaseTask("cowork-leader", "cowork-dispatcher");
+    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, owner_session)
+    releaseTask("cowork-leader", undefined, "cowork-dispatcher");
 
     // Standby can now claim
     const claim2 = claimTask({
@@ -347,14 +347,15 @@ describe("DV-P2-4: Explicit ttl_seconds:180 present in cowork-team flow (R1 code
     // NB-COWORK-MAIN-SPLIT (2026-06-03): leader-lock logic moved from main.md to leader-lock.md
     const content = readFileSync(LEADER_LOCK_FILE, "utf-8");
 
-    // Leader lock TTL must be explicit 1800 (2 × 15-min heartbeat)
-    expect(content).toContain("ttl_seconds: 1800");
+    // Leader lock TTL must be explicit 1800 (2 × 15-min heartbeat).
+    // Whitespace-tolerant: doc formatting may use alignment spaces (e.g. "ttl_seconds:    1800").
+    expect(content).toMatch(/ttl_seconds:\s+1800/);
 
     // Verify it's in the Step 0b section specifically
     const step0bMatch = content.match(/##\s*Step 0b[\s\S]*?(?=##\s*Step)/);
     if (step0bMatch) {
       const step0b = step0bMatch[0];
-      expect(step0b).toContain("ttl_seconds: 1800");
+      expect(step0b).toMatch(/ttl_seconds:\s+1800/);
       expect(step0b).toContain("cowork-leader");
     }
   });
@@ -763,7 +764,8 @@ describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true,
 
     // Step 3: New process calls releaseOrphanTask with the same owner_agent
     // (owner_session is irrelevant — only owner_agent is checked)
-    const orphanResult = releaseOrphanTask("cowork-leader", "cowork-dispatcher", 600);
+    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, threshold)
+    const orphanResult = releaseOrphanTask("cowork-leader", undefined, "cowork-dispatcher", 600);
 
     expect(orphanResult.released).toBe(true);
     expect(orphanResult.reason).toBe("orphan_released");
@@ -794,7 +796,7 @@ describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true,
 
     ageHeartbeat(testDb, "cowork-leader-audit", 700);
 
-    const result = releaseOrphanTask("cowork-leader-audit", "cowork-dispatcher", 600);
+    const result = releaseOrphanTask("cowork-leader-audit", undefined, "cowork-dispatcher", 600);
     expect(result.released).toBe(true);
     expect(result.prior_owner_session).toBe("pid-42-ts-9999999");
   });
@@ -811,7 +813,7 @@ describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true,
     ageHeartbeat(testDb, "cowork-leader-cross", 900);
 
     // Different agent tries to release — must be blocked
-    const result = releaseOrphanTask("cowork-leader-cross", "some-other-agent", 600);
+    const result = releaseOrphanTask("cowork-leader-cross", undefined, "some-other-agent", 600);
     expect(result.released).toBe(false);
     expect(result.reason).toBe("owner_agent_mismatch");
 
@@ -823,7 +825,7 @@ describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true,
   });
 
   it("GREEN: lock_not_found → released:false, no error", () => {
-    const result = releaseOrphanTask("cowork-leader-nonexistent", "cowork-dispatcher", 600);
+    const result = releaseOrphanTask("cowork-leader-nonexistent", undefined, "cowork-dispatcher", 600);
     expect(result.released).toBe(false);
     expect(result.reason).toBe("lock_not_found");
   });
@@ -855,7 +857,8 @@ describe("AC-SL-7: Lock with fresh heartbeat → released:false (dup-spawn safet
     // Heartbeat is fresh (claimed just now — heartbeat_age ≈ 0s)
     // We don't age it, so heartbeat_at = unixepoch('now') from the claim INSERT
 
-    const orphanResult = releaseOrphanTask("cowork-leader", "cowork-dispatcher", 600);
+    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, threshold)
+    const orphanResult = releaseOrphanTask("cowork-leader", undefined, "cowork-dispatcher", 600);
 
     // Must NOT release — live process is heartbeating
     expect(orphanResult.released).toBe(false);
@@ -883,7 +886,7 @@ describe("AC-SL-7: Lock with fresh heartbeat → released:false (dup-spawn safet
     // Age to exactly the threshold — must NOT release (boundary is exclusive: > threshold)
     ageHeartbeat(testDb, "cowork-leader-boundary", 600);
 
-    const result = releaseOrphanTask("cowork-leader-boundary", "cowork-dispatcher", 600);
+    const result = releaseOrphanTask("cowork-leader-boundary", undefined, "cowork-dispatcher", 600);
     expect(result.released).toBe(false);
     expect(result.reason).toBe("heartbeat_fresh");
   });
@@ -900,7 +903,7 @@ describe("AC-SL-7: Lock with fresh heartbeat → released:false (dup-spawn safet
     // One second past the threshold — now qualifies as orphan
     ageHeartbeat(testDb, "cowork-leader-threshold-plus1", 601);
 
-    const result = releaseOrphanTask("cowork-leader-threshold-plus1", "cowork-dispatcher", 600);
+    const result = releaseOrphanTask("cowork-leader-threshold-plus1", undefined, "cowork-dispatcher", 600);
     expect(result.released).toBe(true);
     expect(result.reason).toBe("orphan_released");
   });
@@ -918,7 +921,7 @@ describe("AC-SL-7: Lock with fresh heartbeat → released:false (dup-spawn safet
     ageHeartbeat(testDb, "cowork-leader-min-threshold", 60);
 
     // threshold=0 gets clamped to 120 → heartbeat_age=60 ≤ 120 → NOT released
-    const result = releaseOrphanTask("cowork-leader-min-threshold", "cowork-dispatcher", 0);
+    const result = releaseOrphanTask("cowork-leader-min-threshold", undefined, "cowork-dispatcher", 0);
     expect(result.released).toBe(false);
     expect(result.reason).toBe("heartbeat_fresh");
   });

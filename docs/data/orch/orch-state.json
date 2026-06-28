@@ -6061,7 +6061,7 @@
         "type": "SPRINT-M",
         "zone": "apps/mcp-server/",
         "title": "P1-MCP-2: coordinationStore.ts — matching-ladder rebind",
-        "status": "BACKLOG",
+        "status": "REVIEW",
         "priority": "P1",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1974-p1-mcp-2-coordinationstore.md",
@@ -6072,14 +6072,16 @@
           "TASK_1980"
         ],
         "created_at": "2026-06-28T08:30:00Z",
-        "created_by": "pm"
+        "created_by": "pm",
+        "updated_at": "2026-06-28T11:15:00Z",
+        "updated_by": "dev-mcp-server"
       },
       {
         "id": "TASK_1975",
         "type": "SPRINT-M",
         "zone": "apps/mcp-server/",
         "title": "P1-MCP-3: coordinationTools.ts — add param + stop server injection",
-        "status": "BACKLOG",
+        "status": "REVIEW",
         "priority": "P1",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1975-p1-mcp-3-coordinationtools.md",
@@ -6090,7 +6092,9 @@
           "TASK_1980"
         ],
         "created_at": "2026-06-28T08:30:00Z",
-        "created_by": "pm"
+        "created_by": "pm",
+        "updated_at": "2026-06-28T11:15:00Z",
+        "updated_by": "dev-mcp-server"
       },
       {
         "id": "TASK_1980",

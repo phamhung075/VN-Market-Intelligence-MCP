@@ -1,28 +1,29 @@
 /**
  * Coordination Tools — Task-Lock System Phase 1
  *
- * 4 MCP tools for cross-session agent coordination:
- *   1. task_claim        — Claim a lock before exclusive work
- *   2. task_heartbeat    — Renew a held lock (prove-alive)
- *   3. task_release      — Release a lock on completion
- *   4. task_list_held    — List current locks for debugging
+ * 5 MCP tools for cross-session agent coordination:
+ *   1. task_claim              — Claim a lock before exclusive work
+ *   2. task_heartbeat          — Renew a held lock (prove-alive)
+ *   3. task_release            — Release a lock on completion
+ *   4. task_list_held          — List current locks for debugging
+ *   5. task_force_release_orphan — Release a stale orphaned lock
  *
- * Session UUID injection:
- *   owner_session is stamped server-side from the MCP transport session context.
- *   Agents pass owner_agent (their name); the server adds owner_session.
+ * Session identity model (P1-MCP-2 / P1-MCP-3, CROSS-SESSION-MULTI-TEAM-ORCH):
+ *   owner_client_session (AUTHORITATIVE): per-CLAUDE_CODE_SESSION_ID UUID.
+ *     Supplied by the CALLER via the tool input field; NOT injected server-side.
+ *     This is the ownership discriminator that makes cross-session collision prevention
+ *     work correctly when multiple Claude Code terminals run the same logical agent.
  *
- *   The McpServer SDK does not expose a stable per-call session ID via
- *   RequestHandlerExtra in the current version. As a safe fallback, we derive
- *   a stable discriminator from process.pid + server startup timestamp.
- *   This correctly discriminates between different OS processes (terminal sessions)
- *   while being deterministic within a single process lifetime.
+ *   owner_session (DIAGNOSTIC): server-side process discriminator (pid + boot timestamp).
+ *     Server-injected for diagnostics only. MUST NOT be used as the ownership key.
  *
- *   Phase 2: when the SDK exposes sessionId on RequestHandlerExtra, replace
- *   SERVER_SESSION_ID with the per-request transport session UUID.
+ *   owner_agent (TRANSITIONAL FALLBACK): stable agent name across restarts.
+ *     Used by the matching-ladder in coordinationStore when owner_client_session
+ *     is absent (backward-compat with pre-P1 callers and rows).
  *
- * Security note (brief §6):
- *   owner_session is NEVER taken from caller input — always server-injected.
- *   Callers pass owner_agent only. This prevents session spoofing.
+ * Security note:
+ *   owner_client_session is a coordination PARAMETER agreed to among cooperative
+ *   internal agents. It is NEVER logged or echoed as a credential.
  *
  * @module interface/mcp/tools/system/coordinationTools
  */
@@ -71,7 +72,8 @@ export function registerCoordinationTools(server: McpServer): void {
   server.tool(
     "task_claim",
     "Claim a coordination lock before starting exclusive work. Returns whether " +
-      "the claim succeeded and, on failure, who currently holds the lock. " +
+      "the claim succeeded and, on failure, who currently holds the lock (including " +
+      "their owner_client_session for cross-session diagnosis). " +
       "Use before any work that must not run concurrently across multiple Claude Code sessions: " +
       "cowork-slot (15-min scheduler slots), sprint-task (orch-state.json .task_board rows), dashboard-row (orch-state.json .signal_queue rows), " +
       "commit-mutex (fleet-wide git index critical section — task_id must be 'commit-mutex:main', ttl_seconds=60). " +
@@ -93,6 +95,15 @@ export function registerCoordinationTools(server: McpServer): void {
         .describe(
           "Agent name claiming this lock, e.g. 'cowork-team', 'dev-mcp-server', 'alert-commander'",
         ),
+      owner_client_session: z
+        .string()
+        .optional()
+        .describe(
+          "P1-MCP-3: CLAUDE_CODE_SESSION_ID of the calling terminal. " +
+            "AUTHORITATIVE ownership discriminator — pass your CLAUDE_CODE_SESSION_ID env var. " +
+            "Enables per-session collision prevention across parallel terminals running the same agent. " +
+            "Optional for backward-compat; TASK_1980 (P1-FINAL) will make it required.",
+        ),
       ttl_seconds: z
         .number()
         .int()
@@ -110,12 +121,14 @@ export function registerCoordinationTools(server: McpServer): void {
           "Optional JSON string with context: {slot_id?, task_title?, row_hash?, notes?}",
         ),
     },
-    async ({ task_id, task_kind, owner_agent, ttl_seconds, payload }) => {
+    async ({ task_id, task_kind, owner_agent, owner_client_session, ttl_seconds, payload }) => {
       const result = claimTask({
         task_id,
         task_kind: task_kind as TaskKind,
-        owner_session: SERVER_SESSION_ID,
+        owner_session: SERVER_SESSION_ID,   // diagnostic only — NOT the ownership key
         owner_agent,
+        // exactOptionalPropertyTypes: never pass explicit undefined for optional fields
+        ...(owner_client_session !== undefined ? { owner_client_session } : {}),
         ...(ttl_seconds !== undefined ? { ttl_seconds } : {}),
         payload: payload ?? null,
       });
@@ -137,28 +150,37 @@ export function registerCoordinationTools(server: McpServer): void {
     "Renew a held lock to prove the owning agent is still alive. " +
       "Call every 5 minutes during long-running tasks. " +
       "A missed heartbeat after ttl_seconds allows the next claimer to steal the lock. " +
-      "Returns ok=false if the lock was not found, already expired, or was stolen by another agent (crash recovery). " +
+      "Returns ok=false if the lock was not found, already expired, or was stolen by another session (crash recovery). " +
       "If ok=false mid-task: commit safe partial state, send BUG telegram, EXIT — do not fight the steal. " +
-      "FIX-CWK-LEADER-LOCK-REBIND: match is now on owner_agent (stable across server restarts) not server session id.",
+      "P1-MCP-3: match is PRIMARY on owner_client_session (per-session UUID), " +
+      "with transitional fallback to owner_agent (stable across server restarts).",
     {
       task_id: z
         .string()
         .min(1)
         .describe("The task_id of the lock to heartbeat. Must match what was passed to task_claim."),
+      owner_client_session: z
+        .string()
+        .optional()
+        .describe(
+          "P1-MCP-3: CLAUDE_CODE_SESSION_ID of the calling terminal. " +
+            "PRIMARY ownership match — must match the value passed to task_claim. " +
+            "Pass this to survive mcp-server restarts with correct per-session discrimination.",
+        ),
       owner_agent: z
         .string()
         .min(1)
         .optional()
         .describe(
-          "RECOMMENDED — pass your agent name to survive server restarts. " +
-            "Legacy calls without it match on the claim-time server session and go zombie after a restart " +
-            "(deprecated migration path). Must match the owner_agent from the original task_claim call.",
+          "TRANSITIONAL FALLBACK — agent name for pre-P1 rows or when owner_client_session is absent. " +
+            "Must match the owner_agent from the original task_claim call.",
         ),
     },
-    async ({ task_id, owner_agent }) => {
-      // New path: owner_agent provided → stable across server restarts.
-      // Legacy path: absent → fall back to this process's SERVER_SESSION_ID (zombie after restart).
-      const result = heartbeatTask(task_id, owner_agent, SERVER_SESSION_ID);
+    async ({ task_id, owner_client_session, owner_agent }) => {
+      // PRIMARY: owner_client_session (new-style per-session match).
+      // TRANSITIONAL: owner_agent (FIX-CWK-LEADER-LOCK-REBIND, stable across restarts).
+      // LEGACY: SERVER_SESSION_ID as deepest fallback (zombie after restart).
+      const result = heartbeatTask(task_id, owner_client_session, owner_agent, SERVER_SESSION_ID);
       return {
         content: [
           {
@@ -174,29 +196,37 @@ export function registerCoordinationTools(server: McpServer): void {
   server.tool(
     "task_release",
     "Release a coordination lock on task completion. " +
-      "Scoped to the calling owner_agent — cannot release another agent's lock. " +
-      "Returns ok=false if the lock was not found or already expired/stolen (not an error — " +
-      "TTL expiry is the fallback recovery). Safe to call in finally blocks. " +
-      "FIX-CWK-LEADER-LOCK-REBIND: match is now on owner_agent (stable across server restarts) not server session id.",
+      "Scoped to owner_client_session (primary) or owner_agent (fallback) — cannot release another session's lock. " +
+      "P1-MCP-3: returns {ok:true, released:1} on success; {ok:true, released:0} when the lock " +
+      "was not found, wrong owner, or already expired/stolen (clean no-op, NOT an error — " +
+      "TTL expiry is the fallback recovery). {ok:false} only on DB error. Safe to call in finally blocks.",
     {
       task_id: z
         .string()
         .min(1)
         .describe("The task_id of the lock to release. Must match what was passed to task_claim."),
+      owner_client_session: z
+        .string()
+        .optional()
+        .describe(
+          "P1-MCP-3: CLAUDE_CODE_SESSION_ID of the calling terminal. " +
+            "PRIMARY ownership match — must match the value passed to task_claim. " +
+            "Wrong owner_client_session returns {ok:true, released:0} (no-op, not an error).",
+        ),
       owner_agent: z
         .string()
         .min(1)
         .optional()
         .describe(
-          "RECOMMENDED — pass your agent name to survive server restarts. " +
-            "Legacy calls without it match on the claim-time server session and go zombie after a restart " +
-            "(deprecated migration path). Must match the owner_agent from the original task_claim call.",
+          "TRANSITIONAL FALLBACK — agent name for pre-P1 rows or when owner_client_session is absent. " +
+            "Must match the owner_agent from the original task_claim call.",
         ),
     },
-    async ({ task_id, owner_agent }) => {
-      // New path: owner_agent provided → stable across server restarts.
-      // Legacy path: absent → fall back to this process's SERVER_SESSION_ID (zombie after restart).
-      const result = releaseTask(task_id, owner_agent, SERVER_SESSION_ID);
+    async ({ task_id, owner_client_session, owner_agent }) => {
+      // PRIMARY: owner_client_session (new-style per-session match).
+      // TRANSITIONAL: owner_agent (FIX-CWK-LEADER-LOCK-REBIND, stable across restarts).
+      // LEGACY: SERVER_SESSION_ID as deepest fallback.
+      const result = releaseTask(task_id, owner_client_session, owner_agent, SERVER_SESSION_ID);
       return {
         content: [
           {
@@ -262,11 +292,10 @@ export function registerCoordinationTools(server: McpServer): void {
   server.tool(
     "task_force_release_orphan",
     "Force-release a coordination lock whose heartbeat has gone stale (process died without releasing). " +
-      "Intended for the leader-lock orphan-steal recovery path: after a mcp-server restart, " +
-      "the new process cannot heartbeat the old process's lock because SERVER_SESSION_ID changed. " +
+      "P1-MCP-3: ownership is checked via owner_client_session (primary) or owner_agent (fallback). " +
       "Safe to call when heartbeat_at is stale — the call is a no-op when a live session " +
       "holds the lock (fresh heartbeat ≤ orphan_threshold_seconds old). " +
-      "SAFETY: only releases when owner_agent matches AND heartbeat_at is older than the threshold. " +
+      "SAFETY: only releases when ownership matches AND heartbeat_at is older than the threshold. " +
       "A live concurrent session always heartbeats within the threshold window and is never stolen from. " +
       "After a successful release (released:true), re-claim normally with task_claim.",
     {
@@ -277,13 +306,20 @@ export function registerCoordinationTools(server: McpServer): void {
           "The task_id of the lock to release if orphaned. " +
             "Typically 'cowork-leader' for the leader-lock recovery path.",
         ),
+      owner_client_session: z
+        .string()
+        .optional()
+        .describe(
+          "P1-MCP-3: CLAUDE_CODE_SESSION_ID that originally claimed the lock. " +
+            "PRIMARY ownership match for new-style locks. " +
+            "Falls through to owner_agent for pre-P1 rows (NULL client session).",
+        ),
       owner_agent: z
         .string()
         .min(1)
         .describe(
           "Agent name that originally claimed the lock. " +
-            "Only locks with a matching owner_agent are eligible for orphan-release " +
-            "(prevents cross-agent theft).",
+            "REQUIRED: transitional fallback for pre-P1 rows and cross-agent theft prevention.",
         ),
       orphan_threshold_seconds: z
         .number()
@@ -293,14 +329,13 @@ export function registerCoordinationTools(server: McpServer): void {
         .describe(
           "Heartbeat age in seconds above which a lock is considered orphaned. " +
             "Default: 600 (10 min). Minimum: 120 (enforced server-side). " +
-            "A lock whose heartbeat_at is older than this threshold and whose " +
-            "owner_agent matches will be deleted. " +
             "Locks with heartbeat_age ≤ threshold are NOT released (live-session safety).",
         ),
     },
-    async ({ task_id, owner_agent, orphan_threshold_seconds }) => {
+    async ({ task_id, owner_client_session, owner_agent, orphan_threshold_seconds }) => {
       const result = releaseOrphanTask(
         task_id,
+        owner_client_session,
         owner_agent,
         orphan_threshold_seconds ?? 600,
       );

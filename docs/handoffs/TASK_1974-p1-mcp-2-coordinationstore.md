@@ -98,6 +98,43 @@ Extend `coordinationStore.ts` to thread `owner_client_session` through `claimTas
 
 ---
 
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Sprint:** CROSS-SESSION-MULTI-TEAM-ORCH
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/coordinationStore.ts` — ClaimInput, CurrentHolder, ReleaseResult, LockRow types; claimTask INSERT/UPDATE/SELECT; heartbeatTask matching-ladder; releaseTask matching-ladder + new return shape; releaseOrphanTask matching-ladder + ownership guard
+  - `apps/mcp-server/src/__tests__/task-lock-coordination-store.test.ts` — updated AC-5/6/8/9 call sites for new param order; AC-6/8/9 assertion updates for {ok:true,released:0|1}; added AC-10 (8 new tests for P1-MCP-2 behavior)
+  - `apps/mcp-server/src/__tests__/task-lock-coordination-tools.test.ts` — updated heartbeatTask/releaseTask call sites; updated releaseResult assertions
+  - `apps/mcp-server/src/__tests__/commit-mutex-coordination.test.ts` — updated releaseTask call site
+  - `apps/mcp-server/src/__tests__/DWF-coordination-phase2.test.ts` — updated releaseTask/releaseOrphanTask call sites; whitespace-tolerant ttl_seconds:1800 regex
+- **Tests written:** AC-10 block in task-lock-coordination-store.test.ts — 8 new assertions (P1-MCP-2 matching-ladder), GREEN
+- **Git commits:** see commit SHA in parent task report
+- **Type check:** clean (`bun tsc --noEmit` exit 0; `pnpm check` exit 0)
+- **bun test (coordination suite):** 88 pass / 0 fail (4 files: coordination-store, coordination-tools, commit-mutex, DWF-phase2)
+- **Tool count:** 166 — matches pre-task baseline (no tool change)
+- **Scheduler count:** 3 cron.schedule entries in startupHelpers.ts — unchanged (no scheduler files touched)
+- **Docs updated:** NONE (store-layer change only)
+- **Graphify:** skipped (no docs impacted)
+
+**Key changes summary:**
+1. `ClaimInput.owner_client_session?: string` — threads through INSERT + stale-steal UPDATE
+2. `CurrentHolder.owner_client_session: string | null` — returned on collision detection
+3. `ReleaseResult` type changed to `{ok:true; released:0|1} | {ok:false; error?:string}`
+4. `heartbeatTask(task_id, owner_client_session?, owner_agent?, owner_session?)` — 3-rung matching-ladder
+5. `releaseTask(task_id, owner_client_session?, owner_agent?, owner_session?)` — same ladder; wrong-owner = `{ok:true,released:0}` not error
+6. `releaseOrphanTask(task_id, owner_client_session|undefined, owner_agent, threshold?)` — ownership guard with matching-ladder
+
+**RAW-verify LIVE coordination.db (named-volume, 2026-06-28):**
+- Column `owner_client_session` confirmed: `PRAGMA table_info` returns it
+- First claim `session-aaa-111`: `{claimed:true}`
+- Second claim `session-bbb-222` (same task): `{claimed:false, current_holder.owner_client_session:"session-aaa-111"}`
+- Wrong-session release: `{ok:true, released:0}`
+- Correct-session release: `{ok:true, released:1}`, row gone
+
+---
+
 ## AC: RAW-Verify Against LIVE coordination.db
 
 After code lands and container rebuilds:

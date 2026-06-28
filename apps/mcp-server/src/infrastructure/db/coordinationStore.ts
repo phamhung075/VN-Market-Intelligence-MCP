@@ -237,6 +237,8 @@ export interface ClaimInput {
   task_kind: TaskKind;
   owner_session: string;
   owner_agent: string;
+  /** P1-MCP-2: per-client-session discriminator (CLAUDE_CODE_SESSION_ID). PRIMARY ownership key. */
+  owner_client_session?: string;
   ttl_seconds?: number;
   payload?: string | null;
 }
@@ -248,6 +250,8 @@ export type ClaimResult =
 export interface CurrentHolder {
   owner_session: string;
   owner_agent: string;
+  /** P1-MCP-2: populated for new-style claims; NULL for pre-P1 rows. */
+  owner_client_session: string | null;
   claimed_at: number;
   expires_at: number;
   heartbeat_at: number;
@@ -258,9 +262,15 @@ export interface HeartbeatResult {
   expires_at: number;
 }
 
-export interface ReleaseResult {
-  ok: boolean;
-}
+/**
+ * P1-MCP-2: discriminated union — {ok:true, released:0|1} | {ok:false, error?:string}.
+ * released=1: row was actually deleted.
+ * released=0: no-op (wrong owner, non-existent task) — NOT an error.
+ * ok=false: DB error only (fail-loud).
+ */
+export type ReleaseResult =
+  | { ok: true; released: 0 | 1 }
+  | { ok: false; error?: string };
 
 export interface OrphanReleaseResult {
   released: boolean;
@@ -274,6 +284,8 @@ export interface LockRow {
   task_kind: string;
   owner_session: string;
   owner_agent: string;
+  /** P1-MCP-2: per-client-session discriminator; NULL for pre-P1 rows. */
+  owner_client_session: string | null;
   claimed_at: number;
   expires_at: number;
   heartbeat_at: number;
@@ -371,11 +383,12 @@ export function claimTask(input: ClaimInput): ClaimResult {
 
   try {
     // Step 1 — INSERT OR IGNORE
+    // P1-MCP-2: include owner_client_session column (nullable; NULL for backward-compat callers).
     const insertStmt = db.prepare(`
       INSERT OR IGNORE INTO task_locks
-        (task_id, task_kind, owner_session, owner_agent, claimed_at, expires_at, heartbeat_at, ttl_seconds, payload)
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session, claimed_at, expires_at, heartbeat_at, ttl_seconds, payload)
       VALUES
-        (?, ?, ?, ?, unixepoch('now'), unixepoch('now') + ?, unixepoch('now'), ?, ?)
+        (?, ?, ?, ?, ?, unixepoch('now'), unixepoch('now') + ?, unixepoch('now'), ?, ?)
     `);
 
     const insertResult = insertStmt.run(
@@ -383,6 +396,7 @@ export function claimTask(input: ClaimInput): ClaimResult {
       input.task_kind,
       input.owner_session,
       input.owner_agent,
+      input.owner_client_session ?? null,
       ttl,
       ttl,
       input.payload ?? null,
@@ -394,15 +408,17 @@ export function claimTask(input: ClaimInput): ClaimResult {
     }
 
     // Step 2 — Stale-steal: UPDATE WHERE expires_at < unixepoch('now')
+    // P1-MCP-2: also SET owner_client_session on steal so the new holder's session is recorded.
     const stealStmt = db.prepare(`
       UPDATE task_locks
       SET
-        owner_session = ?,
-        owner_agent   = ?,
-        claimed_at    = unixepoch('now'),
-        expires_at    = unixepoch('now') + ?,
-        heartbeat_at  = unixepoch('now'),
-        ttl_seconds   = ?
+        owner_session        = ?,
+        owner_agent          = ?,
+        owner_client_session = ?,
+        claimed_at           = unixepoch('now'),
+        expires_at           = unixepoch('now') + ?,
+        heartbeat_at         = unixepoch('now'),
+        ttl_seconds          = ?
       WHERE
         task_id    = ?
         AND expires_at < unixepoch('now')
@@ -411,6 +427,7 @@ export function claimTask(input: ClaimInput): ClaimResult {
     const stealResult = stealStmt.run(
       input.owner_session,
       input.owner_agent,
+      input.owner_client_session ?? null,
       ttl,
       ttl,
       input.task_id,
@@ -422,8 +439,10 @@ export function claimTask(input: ClaimInput): ClaimResult {
     }
 
     // Step 3 — Lock genuinely held by another session. Read current holder.
+    // P1-MCP-2: include owner_client_session in the holder response so callers can see
+    // the discriminator of the winning session.
     const holderRow = db.prepare(`
-      SELECT owner_session, owner_agent, claimed_at, expires_at, heartbeat_at
+      SELECT owner_session, owner_agent, owner_client_session, claimed_at, expires_at, heartbeat_at
       FROM task_locks
       WHERE task_id = ?
     `).get(input.task_id) as CurrentHolder | null;
@@ -440,27 +459,23 @@ export function claimTask(input: ClaimInput): ClaimResult {
 /**
  * Renew a held lock's TTL (brief §4 heartbeat protocol).
  *
- * FIX-CWK-LEADER-LOCK-REBIND (Option A): match on owner_agent + task_id instead
- * of owner_session + task_id. owner_session is derived from process pid + boot
- * timestamp and changes on every mcp-server restart, causing pre-restart locks
- * to become zombies (heartbeat → ok=false). owner_agent is stable across restarts
- * (it is the agent's logical name, e.g. "cowork-team"), so same-agent callers
- * can renew their own lock across server restarts without requiring a steal cycle.
+ * P1-MCP-2 Matching-Ladder (CROSS-SESSION-MULTI-TEAM-ORCH):
+ *   1. owner_client_session (PRIMARY) — per-client-session UUID supplied by caller.
+ *      When provided, matches new-style rows (owner_client_session IS NOT NULL) first,
+ *      then falls through to pre-P1 rows (owner_client_session IS NULL) via owner_agent.
+ *   2. owner_agent (TRANSITIONAL FALLBACK) — stable across mcp-server restarts
+ *      (FIX-CWK-LEADER-LOCK-REBIND). Used when owner_client_session is absent.
+ *   3. owner_session (DEEPEST LEGACY) — process-scoped discriminator; zombies after restart.
+ *      Used when neither owner_client_session nor owner_agent is provided.
  *
- * Anti-theft property preserved: a DIFFERENT owner_agent still cannot renew
- * another agent's lock (the WHERE clause rejects it). owner_session is kept in
- * the row for diagnostics; it is updated on each successful heartbeat so the
- * diagnostic field stays current.
- *
- * Legacy path (owner_agent absent): match on owner_session instead (deprecated —
- * calls without owner_agent remain zombies after a server restart; migration path
- * is to add owner_agent to all callers). owner_session must be provided by the
- * tool layer when falling back to this path.
+ * Anti-theft: a different owner_client_session / owner_agent cannot renew another
+ * session's lock. TASK_1980 (P1-FINAL) will remove fallback rungs 2 and 3.
  */
 export function heartbeatTask(
   task_id: string,
-  owner_agent?: string,
-  owner_session?: string,
+  owner_client_session?: string,  // PRIMARY — P1-MCP-2
+  owner_agent?: string,           // TRANSITIONAL FALLBACK — FIX-CWK-LEADER-LOCK-REBIND
+  owner_session?: string,         // DEEPEST LEGACY
 ): HeartbeatResult {
   const db = getCoordinationDb();
   if (!db) return { ok: false, expires_at: 0 };
@@ -468,8 +483,24 @@ export function heartbeatTask(
   try {
     let result;
 
-    if (owner_agent) {
-      // New path (FIX-CWK-LEADER-LOCK-REBIND): match on stable owner_agent.
+    if (owner_client_session) {
+      // PRIMARY: match on owner_client_session for new-style rows.
+      // Pre-P1 fallback: if the row has owner_client_session IS NULL, match via owner_agent.
+      result = db.prepare(`
+        UPDATE task_locks
+        SET
+          heartbeat_at  = unixepoch('now'),
+          expires_at    = unixepoch('now') + ttl_seconds
+        WHERE
+          task_id = ?
+          AND (
+            (owner_client_session = ? AND owner_client_session IS NOT NULL)
+            OR (owner_client_session IS NULL AND owner_agent = ?)
+          )
+          AND expires_at >= unixepoch('now')
+      `).run(task_id, owner_client_session, owner_agent ?? "");
+    } else if (owner_agent) {
+      // TRANSITIONAL FALLBACK (FIX-CWK-LEADER-LOCK-REBIND): match on stable owner_agent.
       result = db.prepare(`
         UPDATE task_locks
         SET
@@ -481,8 +512,8 @@ export function heartbeatTask(
           AND expires_at >= unixepoch('now')
       `).run(task_id, owner_agent);
     } else {
-      // Legacy path: match on owner_session. Goes zombie after server restart.
-      // Deprecated — callers should migrate to passing owner_agent.
+      // DEEPEST LEGACY: match on owner_session. Goes zombie after server restart.
+      // Deprecated — callers should migrate to passing owner_agent or owner_client_session.
       result = db.prepare(`
         UPDATE task_locks
         SET
@@ -513,44 +544,53 @@ export function heartbeatTask(
 /**
  * Release a held lock (brief §5 release protocol).
  *
- * FIX-CWK-LEADER-LOCK-REBIND (Option A): match on owner_agent + task_id instead
- * of owner_session + task_id. owner_session changes on every mcp-server restart
- * causing pre-restart locks to become zombies (release → ok=false). owner_agent
- * is stable across restarts so same-agent callers can release their own lock
- * after a server restart without waiting for TTL expiry.
+ * P1-MCP-2 Matching-Ladder (CROSS-SESSION-MULTI-TEAM-ORCH):
+ *   1. owner_client_session (PRIMARY) — per-client-session UUID supplied by caller.
+ *   2. owner_agent (TRANSITIONAL FALLBACK) — stable across mcp-server restarts.
+ *   3. owner_session (DEEPEST LEGACY) — process-scoped; deprecated.
  *
- * Anti-theft property preserved: a DIFFERENT owner_agent cannot release another
- * agent's lock. Stolen-lock detection: if the lock was stolen by another agent
- * (different owner_agent) this DELETE affects 0 rows → ok=false, signaling the
- * original agent that its lock is gone. changes()=0 also covers: lock already
- * expired and GC'd, or lock never existed — both acceptable (not an error).
+ * Return shape (P1-MCP-2):
+ *   {ok:true, released:1}  — row was deleted (lock released by correct owner).
+ *   {ok:true, released:0}  — no-op: wrong owner, non-existent task, or expired+GC'd.
+ *                            This is NOT an error — callers can distinguish "released"
+ *                            from "did not own it" for diagnostics.
+ *   {ok:false, error}      — DB failure only (fail-loud).
  *
- * Legacy path (owner_agent absent): match on owner_session instead (deprecated —
- * calls without owner_agent remain zombies after a server restart; migration path
- * is to add owner_agent to all callers). owner_session must be provided by the
- * tool layer when falling back to this path.
+ * TASK_1980 (P1-FINAL) will remove fallback rungs 2 and 3.
  */
 export function releaseTask(
   task_id: string,
-  owner_agent?: string,
-  owner_session?: string,
+  owner_client_session?: string,  // PRIMARY — P1-MCP-2
+  owner_agent?: string,           // TRANSITIONAL FALLBACK — FIX-CWK-LEADER-LOCK-REBIND
+  owner_session?: string,         // DEEPEST LEGACY
 ): ReleaseResult {
   const db = getCoordinationDb();
-  if (!db) return { ok: false };
+  if (!db) return { ok: false, error: "db_unavailable" };
 
   try {
     let result;
 
-    if (owner_agent) {
-      // New path (FIX-CWK-LEADER-LOCK-REBIND): match on stable owner_agent.
+    if (owner_client_session) {
+      // PRIMARY: match on owner_client_session for new-style rows.
+      // Pre-P1 fallback: if the row has owner_client_session IS NULL, match via owner_agent.
+      result = db.prepare(`
+        DELETE FROM task_locks
+        WHERE task_id = ?
+          AND (
+            (owner_client_session = ? AND owner_client_session IS NOT NULL)
+            OR (owner_client_session IS NULL AND owner_agent = ?)
+          )
+      `).run(task_id, owner_client_session, owner_agent ?? "");
+    } else if (owner_agent) {
+      // TRANSITIONAL FALLBACK (FIX-CWK-LEADER-LOCK-REBIND): match on stable owner_agent.
       result = db.prepare(`
         DELETE FROM task_locks
         WHERE task_id    = ?
           AND owner_agent = ?
       `).run(task_id, owner_agent);
     } else {
-      // Legacy path: match on owner_session. Goes zombie after server restart.
-      // Deprecated — callers should migrate to passing owner_agent.
+      // DEEPEST LEGACY: match on owner_session. Goes zombie after server restart.
+      // Deprecated — callers should migrate to passing owner_agent or owner_client_session.
       result = db.prepare(`
         DELETE FROM task_locks
         WHERE task_id      = ?
@@ -558,10 +598,12 @@ export function releaseTask(
       `).run(task_id, owner_session ?? "");
     }
 
-    return { ok: result.changes === 1 };
+    // P1-MCP-2: changes()=0 is a clean no-op (wrong owner, non-existent, or GC'd).
+    // Return {ok:true, released:0} — not an error. Only DB throws are {ok:false}.
+    return { ok: true, released: result.changes === 1 ? 1 : 0 };
   } catch (err) {
     console.error("[coordinationStore] releaseTask error", err);
-    return { ok: false };
+    return { ok: false, error: "db_error" };
   }
 }
 
@@ -597,8 +639,8 @@ export function listHeldTasks(filter?: {
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const sql = `
-      SELECT task_id, task_kind, owner_session, owner_agent, claimed_at,
-             expires_at, heartbeat_at, ttl_seconds, payload
+      SELECT task_id, task_kind, owner_session, owner_agent, owner_client_session,
+             claimed_at, expires_at, heartbeat_at, ttl_seconds, payload
       FROM task_locks
       ${where}
       ORDER BY claimed_at DESC
@@ -615,26 +657,30 @@ export function listHeldTasks(filter?: {
 /**
  * Force-release an orphaned lock whose heartbeat has gone stale.
  *
+ * P1-MCP-2 Ownership matching-ladder:
+ *   1. owner_client_session (PRIMARY) — when provided:
+ *        • New-style rows (owner_client_session IS NOT NULL): must match exactly.
+ *        • Pre-P1 rows (owner_client_session IS NULL): fall through to owner_agent check.
+ *   2. owner_agent (REQUIRED FALLBACK) — always checked when client session absent or
+ *      when falling through from a pre-P1 row.
+ *
  * Safety gate (preserves the 2026-06-02 dup-spawn discriminator):
  *   DELETE only when ALL conditions hold:
  *     1. task_id matches
- *     2. owner_agent matches (prevents cross-agent orphan-steal)
+ *     2. ownership check passes (per matching-ladder above)
  *     3. heartbeat_at < unixepoch('now') - orphanThresholdSeconds
- *        (stale heartbeat = process died; if a live concurrent session holds
- *         the lock, it heartbeats continuously and this condition never fires)
+ *        (stale heartbeat = process died; a live session heartbeats continuously)
  *
- * Returns {released:false} WITHOUT modifying the DB when the heartbeat is
- * fresh (≤ orphanThresholdSeconds old), guaranteeing that a live peer or a
- * same-agent session that restarted within the threshold window is never
- * stolen from.
+ * Returns {released:false} WITHOUT modifying the DB when the heartbeat is fresh
+ * (≤ orphanThresholdSeconds old).
  *
- * Default orphanThresholdSeconds = 600 (10 min) — safe margin above the
- * 5-min heartbeat interval used by cowork-dispatcher.
+ * Default orphanThresholdSeconds = 600 (10 min).
  * Minimum enforced = 120s to prevent accidental near-instant theft.
  */
 export function releaseOrphanTask(
   task_id: string,
-  owner_agent: string,
+  owner_client_session: string | undefined,  // PRIMARY — P1-MCP-2 (pass undefined for legacy path)
+  owner_agent: string,                        // REQUIRED FALLBACK
   orphanThresholdSeconds = 600,
 ): OrphanReleaseResult {
   const db = getCoordinationDb();
@@ -646,13 +692,14 @@ export function releaseOrphanTask(
   try {
     // Read the current lock row before attempting deletion.
     const row = db.prepare(`
-      SELECT owner_session, owner_agent, heartbeat_at,
+      SELECT owner_session, owner_agent, owner_client_session, heartbeat_at,
              CAST(unixepoch('now') - heartbeat_at AS INTEGER) AS heartbeat_age
       FROM task_locks
       WHERE task_id = ?
     `).get(task_id) as {
       owner_session: string;
       owner_agent: string;
+      owner_client_session: string | null;
       heartbeat_at: number;
       heartbeat_age: number;
     } | null;
@@ -661,14 +708,39 @@ export function releaseOrphanTask(
       return { released: false, reason: "lock_not_found" };
     }
 
-    // Guard: wrong owner_agent — never steal another agent's lock.
-    if (row.owner_agent !== owner_agent) {
-      return {
-        released: false,
-        reason: "owner_agent_mismatch",
-        prior_owner_session: row.owner_session,
-        heartbeat_age: row.heartbeat_age,
-      };
+    // P1-MCP-2 ownership guard — matching-ladder:
+    if (owner_client_session) {
+      if (row.owner_client_session !== null) {
+        // New-style row: client session must match exactly.
+        if (row.owner_client_session !== owner_client_session) {
+          return {
+            released: false,
+            reason: "owner_client_session_mismatch",
+            prior_owner_session: row.owner_session,
+            heartbeat_age: row.heartbeat_age,
+          };
+        }
+      } else {
+        // Pre-P1 row (NULL client session): fall through to owner_agent check.
+        if (row.owner_agent !== owner_agent) {
+          return {
+            released: false,
+            reason: "owner_agent_mismatch",
+            prior_owner_session: row.owner_session,
+            heartbeat_age: row.heartbeat_age,
+          };
+        }
+      }
+    } else {
+      // Legacy path: check owner_agent (no client session provided).
+      if (row.owner_agent !== owner_agent) {
+        return {
+          released: false,
+          reason: "owner_agent_mismatch",
+          prior_owner_session: row.owner_session,
+          heartbeat_age: row.heartbeat_age,
+        };
+      }
     }
 
     // Guard: heartbeat is fresh — live process holds the lock; do NOT steal.
@@ -684,12 +756,25 @@ export function releaseOrphanTask(
     // Stale heartbeat — perform the conditional DELETE.
     // The WHERE clause re-checks the stale condition atomically so a concurrent
     // heartbeat that arrives between our SELECT and DELETE is not lost.
-    const result = db.prepare(`
-      DELETE FROM task_locks
-      WHERE task_id    = ?
-        AND owner_agent = ?
-        AND heartbeat_at < unixepoch('now') - ?
-    `).run(task_id, owner_agent, threshold);
+    // P1-MCP-2: DELETE uses matching-ladder in WHERE clause to be consistent.
+    let result;
+    if (owner_client_session && row.owner_client_session !== null) {
+      // New-style row: delete by client session + heartbeat age.
+      result = db.prepare(`
+        DELETE FROM task_locks
+        WHERE task_id              = ?
+          AND owner_client_session = ?
+          AND heartbeat_at < unixepoch('now') - ?
+      `).run(task_id, owner_client_session, threshold);
+    } else {
+      // Pre-P1 row or legacy path: delete by owner_agent + heartbeat age.
+      result = db.prepare(`
+        DELETE FROM task_locks
+        WHERE task_id    = ?
+          AND owner_agent = ?
+          AND heartbeat_at < unixepoch('now') - ?
+      `).run(task_id, owner_agent, threshold);
+    }
 
     if (result.changes === 1) {
       return {

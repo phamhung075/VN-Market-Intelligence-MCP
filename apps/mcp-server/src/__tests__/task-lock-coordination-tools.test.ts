@@ -154,8 +154,9 @@ describe("task_heartbeat tool contract", () => {
       ttl_seconds: 3600,
     });
 
-    // Pass owner_agent (stable across restarts) not owner_session
-    const result = heartbeatTask("task:hb-ok", "dev-mcp-server");
+    // P1-MCP-2: (task_id, owner_client_session, owner_agent, owner_session)
+    // Pass undefined for client_session → falls through to owner_agent ladder rung
+    const result = heartbeatTask("task:hb-ok", undefined, "dev-mcp-server");
 
     // Tool contract: {ok: boolean, expires_at: number}
     expect(result.ok).toBe(true);
@@ -173,7 +174,7 @@ describe("task_heartbeat tool contract", () => {
     });
 
     // Different agent — anti-theft must reject this
-    const result = heartbeatTask("task:hb-stolen", "cowork-team");
+    const result = heartbeatTask("task:hb-stolen", undefined, "cowork-team");
     expect(result.ok).toBe(false);
     expect(result.expires_at).toBe(0);
   });
@@ -184,8 +185,8 @@ describe("task_heartbeat tool contract", () => {
 // FIX-CWK-LEADER-LOCK-REBIND: release now takes owner_agent (stable) not owner_session
 // ---------------------------------------------------------------------------
 
-describe("task_release tool contract", () => {
-  it("returns {ok: true} when owner releases their lock by owner_agent", () => {
+describe("task_release tool contract (P1-MCP-2: {ok:true,released:0|1} shape)", () => {
+  it("returns {ok:true, released:1} when owner releases their lock by owner_agent", () => {
     claimTask({
       task_id: "task:release-ok",
       task_kind: "sprint-task",
@@ -194,12 +195,13 @@ describe("task_release tool contract", () => {
       ttl_seconds: 3600,
     });
 
-    // Pass owner_agent (stable across restarts) not owner_session
-    const result = releaseTask("task:release-ok", "dev-mcp-server");
-    expect(result).toMatchObject({ ok: true });
+    // P1-MCP-2: (task_id, owner_client_session, owner_agent, owner_session)
+    const result = releaseTask("task:release-ok", undefined, "dev-mcp-server");
+    expect(result.ok).toBe(true);
+    expect((result as { released?: number }).released).toBe(1);
   });
 
-  it("returns {ok: false} when different owner_agent tries to release (anti-theft)", () => {
+  it("returns {ok:true, released:0} when different owner_agent tries to release (anti-theft no-op)", () => {
     claimTask({
       task_id: "task:release-denied",
       task_kind: "sprint-task",
@@ -208,9 +210,10 @@ describe("task_release tool contract", () => {
       ttl_seconds: 3600,
     });
 
-    // Different agent — anti-theft must reject this
-    const result = releaseTask("task:release-denied", "cowork-team");
-    expect(result).toMatchObject({ ok: false });
+    // Different agent — P1-MCP-2: clean no-op {ok:true, released:0} (not an error)
+    const result = releaseTask("task:release-denied", undefined, "cowork-team");
+    expect(result.ok).toBe(true);
+    expect((result as { released?: number }).released).toBe(0);
   });
 });
 
@@ -281,17 +284,18 @@ describe("Full cycle: claim → heartbeat → release", () => {
     });
     expect(competingClaim.claimed).toBe(false);
 
-    // 3. Heartbeat by owner_agent succeeds (FIX: uses owner_agent not owner_session)
-    const hb = heartbeatTask(taskId, "dev-mcp-server");
+    // 3. Heartbeat by owner_agent succeeds (P1-MCP-2: undefined client session → owner_agent ladder rung)
+    const hb = heartbeatTask(taskId, undefined, "dev-mcp-server");
     expect(hb.ok).toBe(true);
 
     // 4. Heartbeat by competitor agent fails (anti-theft preserved)
-    const hb2 = heartbeatTask(taskId, "dev-api-gateway");
+    const hb2 = heartbeatTask(taskId, undefined, "dev-api-gateway");
     expect(hb2.ok).toBe(false);
 
-    // 5. Release by owner_agent (FIX: uses owner_agent not owner_session)
-    const rel = releaseTask(taskId, "dev-mcp-server");
+    // 5. Release by owner_agent (P1-MCP-2: {ok:true, released:1})
+    const rel = releaseTask(taskId, undefined, "dev-mcp-server");
     expect(rel.ok).toBe(true);
+    expect((rel as { released?: number }).released).toBe(1);
 
     // 6. Re-claim after release — should succeed
     const reClaim = claimTask({

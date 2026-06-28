@@ -178,9 +178,10 @@ describe("AC-3: release → re-claim cycle works for commit-mutex", () => {
     });
     expect(r1.claimed).toBe(true);
 
-    // A releases (FIX-CWK-LEADER-LOCK-REBIND: pass owner_agent not owner_session)
-    const rel = releaseTask("commit-mutex:main", "dev-mcp-server");
+    // P1-MCP-2 signature: (task_id, owner_client_session, owner_agent, owner_session)
+    const rel = releaseTask("commit-mutex:main", undefined, "dev-mcp-server");
     expect(rel.ok).toBe(true);
+    expect((rel as { released?: number }).released).toBe(1); // row actually deleted
 
     // B claims after release
     const r2 = claimTask({
