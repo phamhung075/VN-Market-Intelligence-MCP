@@ -445,3 +445,115 @@ docker compose build mcp-server && docker compose up -d --no-deps mcp-server
 
 **Outcome:** Point-2 Zod enforcement deployed and running. QA READY for LIVE injection test. A non-enum status write via server path will trigger orchStateStore.parse THROW as expected.
 
+
+## Rebuild: FE-AHUB-OPS-REBUILD single-service frontend rebuild (2026-06-28T20:25Z)
+
+**Task:** Rebuild frontend service to reflect new analysis hub code (6 zone components + integration + technical route removal).
+
+**Trigger:** FE-AHUB-INT-INTEGRATE landed (commit b1b5213a); PO standing rule requires ops rebuild post-FE code changes. Single-service rebuild ONLY (--no-deps to protect peers).
+
+### Rebuild Process
+```
+docker compose up -d --build frontend
+```
+
+**Timeline:**
+- 2026-06-28T20:25:43+02:00: Build started (docker compose up --build)
+- 2026-06-28T20:26:00Z: Frontend image built (npm build completed)
+- 2026-06-28T20:26:15Z: Container recreated + started (healthy at 14s)
+
+### Verification
+
+**CHECK 1: IMAGE BUILD** — PASS
+- Pre-rebuild image: sha256:49806d017ef3 (570MB)
+- Post-rebuild image: sha256:e4824114e710 (571MB)
+- Image ID changed: YES ✓
+
+**CHECK 2: CONTAINER RUNNING NEW IMAGE** — PASS
+- Container: vn-market-intelligence-mcp-frontend-1
+- Image: e4824114e710 (matches new build)
+- Status: Up 14 seconds (healthy) ✓
+- Port: 0.0.0.0:3001->3001/tcp live
+
+**CHECK 3: ROUTES VERIFIED** — PASS
+- NEW route `/dashboard/analysis?stock=FPT`: HTTP 200 ✓ (105KB response body)
+- OLD route `/dashboard/technical`: HTTP 404 (route removed) ✓
+- Technical zone integration: CONFIRMED (analysis page contains TechnicalZone component)
+
+**CHECK 4: PEER SERVICES SURVIVED RECREATE** — PASS
+- All peers remain UP (CreatedAt unchanged):
+  - alert-engine, api-gateway, kinh-dich-service, macro-indicators, news-fetch
+  - pdf-extractor, rag-service, stock-price, technical-analysis, mcp-server
+- Fleet stability: MAINTAINED ✓
+
+### Task Board Status Update
+
+- FE-AHUB-OPS-REBUILD: BLOCKED → IN_PROGRESS → REVIEW (commit 2ec383b2)
+- Board flip committed via orch-apply.sh (Zod validated)
+- Next: QA verification (FE-AHUB-QA-VERIFY unblocks on REVIEW)
+
+**Outcome:** Frontend rebuild successful. New image running with merged analysis hub zones. Old technical route removed. Peer services unaffected. Ready for QA live-verify.
+
+## Rebuild: 6f010173 — FIX-FIRE-ELECTION-ORPHAN-MINT-EXCLUDE (2026-06-29T00:19Z)
+
+**Task:** Single-service mcp-server rebuild to activate fix: reaper's gcExpiredLocks now excludes `task_id LIKE 'cron:%'` and `task_id = 'dev-team-cron-singleton'` from orphan-mint logic. Fix prevents garbage-minting of orphan-signals for fire-election and dev-team coordination cron locks.
+
+**Trigger:** Commit 6f010173 landed; test verified (coordination-store test 44/0 green); PO authorized rebuild in DoD. Live container still running old stale image; fix not active.
+
+### Rebuild Process
+```
+docker compose build mcp-server && docker compose up -d --no-deps mcp-server
+```
+
+**Timeline:**
+- 2026-06-29T00:18:58+02:00: Build started (docker compose build mcp-server)
+- 2026-06-29T00:19:23+02:00: New image built (sha256:bd07a150379...) — layers CACHED + src/ delta applied
+- 2026-06-29T00:19:28+02:00: Container recreated + started (healthy at +10s)
+
+### Verification
+
+**CHECK 1: IMAGE CHANGED** — PASS
+- OLD image: sha256:707131db12c9c00c7ff59de2eec25465a61c6784ee1fef47b442fb19b63bd36e
+- NEW image: sha256:bd07a1503791b1ba6a626781810eb0debc5112b5dd91b2e38ccb7cbc3128a643
+- ID drift: YES ✓
+
+**CHECK 2: CONTAINER HEALTH** — PASS
+- Container: vn-market-intelligence-mcp-mcp-server-1
+- Image: bd07a1503791... (matches new build)
+- Status: Up 5 seconds (healthy) ✓
+- Health endpoint: 200 OK | toolCount=166 | uptime=12.25s ✓
+
+**CHECK 3: EXCLUSION CODE LIVE** — PASS
+- Grep in running container: Line 480 coordinationStore.ts
+  ```
+  AND task_id NOT LIKE 'cron:%'
+  AND task_id != 'dev-team-cron-singleton'
+  ```
+- Reaper exclusion logic: ACTIVE ✓
+
+**CHECK 4: PEER SERVICES SURVIVED** — PASS
+- All peers remain UP + healthy:
+  - api-gateway: Up 4 hours (healthy) ✓
+  - frontend: Up 2 hours (healthy) ✓
+  - pdf-extractor: Up 11 hours (healthy) ✓
+  - (9 other services: alert-engine, kinh-dich-service, macro-indicators, news-fetch, rag-service, stock-price, technical-analysis + more: all healthy)
+- Single-svc rebuild constraint: HONORED (no peer restart) ✓
+
+**CHECK 5: COORDINATION.DB STATE** — PASS
+- coordination.db persisted (named volume): YES ✓
+- Total locks: 13 (6 orphan-signals, 0 cron-prefixed, 7 expired, 6 valid)
+- Pre-fix orphan-signal residue: Present (refine-orchestrator signals; TTL ~23:04Z) — expected
+- NEW cron-prefixed orphan-signals minted post-rebuild: NONE detected ✓
+
+**CHECK 6: DISPATCHER LOCKS PRESERVED** — PASS
+- dev-team dispatcher session 693817d0-118d-4411-ae8b-d47b8cbcf05e:
+  - No disturbance detected during rebuild
+  - SF-1 (dev-team-cron-singleton) + fire-election + presence row + on-demand mutex: untouched
+- Coordination state consistency: CONFIRMED ✓
+
+### Outcome
+
+Single-service mcp-server rebuild successful. New image running with fire-election orphan-mint exclusion active. Reaper will no longer garbage-mint orphan-signals for `cron:*` locks (fire-election ticks, dev-team singleton). Pre-fix residue orphan-signals will decay via TTL; no new ones generated post-rebuild. Peer services unaffected. Dispatcher state preserved. Ready for live ops.
+
+**Confidence:** HIGH — fix confirmed live; no regressions; constraint honored.
+
