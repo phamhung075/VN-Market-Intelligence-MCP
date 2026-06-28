@@ -23,7 +23,11 @@ from typing import Dict, List, Optional
 
 import pytest
 
-from application.extract_tables_usecase import ExtractTablesUseCase
+from application.extract_tables_usecase import (
+    ExtractTablesUseCase,
+    _detect_section_start,
+    _filter_pages_to_section,
+)
 
 # ---------------------------------------------------------------------------
 # FPT golden figures (from BT-0 spike eval — regression anchors)
@@ -546,3 +550,178 @@ def test_tc11_ocr_port_runs_in_worker_thread_not_event_loop():
         "ocr_pages ran on the event loop thread — "
         "asyncio.to_thread() was not used; this would block /health during OCR"
     )
+
+
+# ---------------------------------------------------------------------------
+# FR-4 — Section-boundary content-signal detection tests
+# ---------------------------------------------------------------------------
+
+
+def test_fr4_detect_section_start_income_statement_accented():
+    """
+    AC-2: page with income-statement Vietnamese title keyword → 'income_statement'.
+    Tests accented (diacritical) form.
+    """
+    page_text = "Báo cáo kết quả hoạt động kinh doanh\nNăm 2026\nDoanh thu thuần"
+    assert _detect_section_start(page_text) == "income_statement"
+
+
+def test_fr4_detect_section_start_income_statement_unaccented():
+    """
+    AC-2: diacritic-insensitive: unaccented IS keyword also detected.
+    """
+    page_text = "bao cao ket qua hoat dong kinh doanh\nnăm tài chính 2025"
+    assert _detect_section_start(page_text) == "income_statement"
+
+
+def test_fr4_detect_section_start_income_statement_b02_tctd():
+    """
+    AC-2: B02-TCTD banking income statement title (same keyword, no issuer branch).
+    """
+    page_text = "Kết quả hoạt động kinh doanh\nThu nhập lãi thuần"
+    assert _detect_section_start(page_text) == "income_statement"
+
+
+def test_fr4_detect_section_start_cash_flow():
+    """
+    AC-2: cash-flow section keyword → 'cash_flow'.
+    """
+    page_text = "Báo cáo lưu chuyển tiền tệ năm 2026\nHoạt động kinh doanh"
+    assert _detect_section_start(page_text) == "cash_flow"
+
+
+def test_fr4_detect_section_start_cash_flow_unaccented():
+    """
+    AC-2: diacritic-insensitive: unaccented CF keyword also detected.
+    """
+    page_text = "luu chuyen tien te\nHoat dong kinh doanh"
+    assert _detect_section_start(page_text) == "cash_flow"
+
+
+def test_fr4_detect_section_start_none_balance_sheet_page():
+    """
+    AC-2: balance-sheet page (no IS/CF keyword) → None.
+    """
+    page_text = "Tiền mặt\n100.000\nTiền gửi\n500.000\nTổng tài sản"
+    assert _detect_section_start(page_text) is None
+
+
+def test_fr4_detect_section_start_none_continuation_page():
+    """
+    AC-2: plain data page (no section header) → None (continuation page).
+    """
+    page_text = "Chi phí bán hàng 1.234.567\nChi phí quản lý 2.345.678"
+    assert _detect_section_start(page_text) is None
+
+
+def test_fr4_filter_pages_income_statement_selects_contiguous_run():
+    """
+    AC-3: income_statement call with mixed pages → contiguous IS run selected (pages 2-3).
+    Pages stop when CF header is encountered.
+    """
+    pages = [
+        {"text": "Tiền mặt 100.000\nTiền gửi 500.000", "page_number": 1},  # BS
+        {"text": "Báo cáo kết quả hoạt động kinh doanh\nDoanh thu 1.000.000", "page_number": 2},  # IS header
+        {"text": "Chi phí 500.000\nLợi nhuận gộp 500.000", "page_number": 3},  # IS continuation
+        {"text": "Báo cáo lưu chuyển tiền tệ\nHoạt động kinh doanh", "page_number": 4},  # CF header
+    ]
+    is_pages = _filter_pages_to_section(pages, "income_statement")
+    assert len(is_pages) == 2, f"Expected 2 IS pages, got {len(is_pages)}"
+    assert is_pages[0]["page_number"] == 2
+    assert is_pages[1]["page_number"] == 3
+
+
+def test_fr4_filter_pages_cash_flow_selects_correctly():
+    """
+    AC-3: cash_flow call → CF page selected; stops when no more pages.
+    """
+    pages = [
+        {"text": "Tiền mặt 100.000\nTiền gửi 500.000", "page_number": 1},  # BS
+        {"text": "Báo cáo kết quả hoạt động kinh doanh\nDoanh thu 1.000.000", "page_number": 2},  # IS header
+        {"text": "Chi phí 500.000", "page_number": 3},  # IS continuation
+        {"text": "Báo cáo lưu chuyển tiền tệ\nHoạt động kinh doanh", "page_number": 4},  # CF header
+    ]
+    cf_pages = _filter_pages_to_section(pages, "cash_flow")
+    assert len(cf_pages) == 1, f"Expected 1 CF page, got {len(cf_pages)}"
+    assert cf_pages[0]["page_number"] == 4
+
+
+def test_fr4_filter_pages_balance_sheet_excludes_is_pages():
+    """
+    AC-3: balance_sheet call with mixed pages → IS pages excluded from result.
+    Page 1 (no IS/CF header) is kept; page 2 (IS header) is excluded.
+    Note: select_balance_sheet_section() falls back to all pages when no BS markers
+    are found in the fixture; FR-4 then excludes the IS/CF pages.
+    """
+    pages = [
+        {"text": "Tiền mặt 100.000\nTiền gửi 500.000", "page_number": 1},  # BS continuation
+        {"text": "Báo cáo kết quả hoạt động kinh doanh\nDoanh thu 1.000.000", "page_number": 2},  # IS header
+    ]
+    bs_pages = _filter_pages_to_section(pages, "balance_sheet")
+    page_numbers = [p["page_number"] for p in bs_pages]
+    assert 2 not in page_numbers, (
+        f"IS page (page 2) must be excluded from balance_sheet, got: {page_numbers}"
+    )
+    assert 1 in page_numbers, (
+        f"Non-IS page (page 1) must remain in balance_sheet, got: {page_numbers}"
+    )
+
+
+def test_fr4_filter_pages_balance_sheet_excludes_cf_pages():
+    """
+    AC-3: balance_sheet call → CF pages excluded from result.
+    """
+    pages = [
+        {"text": "Nợ phải trả 1.000.000\nVốn chủ sở hữu 500.000", "page_number": 1},  # BS
+        {"text": "Báo cáo lưu chuyển tiền tệ\nHoạt động kinh doanh", "page_number": 2},  # CF header
+    ]
+    bs_pages = _filter_pages_to_section(pages, "balance_sheet")
+    page_numbers = [p["page_number"] for p in bs_pages]
+    assert 2 not in page_numbers, (
+        f"CF page (page 2) must be excluded from balance_sheet, got: {page_numbers}"
+    )
+
+
+def test_fr4_fpt_non_regression_no_section_keywords():
+    """
+    AC-7: FPT pages (no IS/CF section keywords) → all pages retained for balance_sheet.
+    FPT balance-sheet pages contain no income-statement or cash-flow section headers.
+    Verifies FR-4 does NOT re-route any FPT balance-sheet page wrongly.
+    """
+    fpt_pages = [
+        {"text": "270 88.089.621.779.862\nTỔNG CỘNG TÀI SẢN", "page_number": 4},
+        {"text": "300 44.338.155.487.272\nNỢ PHẢI TRẢ", "page_number": 5},
+        {"text": "400 43.751.466.292.590\nVỐN CHỦ SỞ HỮU", "page_number": 6},
+    ]
+    # _detect_section_start must return None for all FPT BS pages
+    for p in fpt_pages:
+        result = _detect_section_start(p["text"])
+        assert result is None, (
+            f"FPT page {p['page_number']} incorrectly detected as section '{result}'"
+        )
+    # _filter_pages_to_section for balance_sheet must not drop any FPT pages
+    # (select_balance_sheet_section may or may not filter — either way FR-4 keeps None pages)
+    bs_result = _filter_pages_to_section(fpt_pages, "balance_sheet")
+    # All FPT pages must remain (none have IS/CF keywords)
+    result_nums = [p["page_number"] for p in bs_result]
+    for p in fpt_pages:
+        assert p["page_number"] in result_nums, (
+            f"FPT page {p['page_number']} was wrongly dropped by FR-4 filter"
+        )
+
+
+def test_fr4_off_balance_sheet_page_stays_in_balance_sheet():
+    """
+    AC-3 / EC-3: off-balance-sheet pages (Cam kết ngoại bảng) contain no IS/CF
+    keywords → _detect_section_start returns None → remain in balance_sheet.
+    """
+    page_text = "Cam kết ngoại bảng\nBảo lãnh vay vốn 500.000\nCam kết khác 200.000"
+    assert _detect_section_start(page_text) is None
+
+
+def test_fr4_detect_section_start_case_insensitive():
+    """
+    AC-2: detection is case-insensitive (handles uppercase OCR output).
+    """
+    page_text = "BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH"
+    assert _detect_section_start(page_text) == "income_statement"

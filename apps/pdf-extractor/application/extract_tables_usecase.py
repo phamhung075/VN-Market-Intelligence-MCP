@@ -110,6 +110,113 @@ _BALANCE_TOLERANCE_VND = 1.0
 
 
 # ---------------------------------------------------------------------------
+# FR-4: Section-boundary content-signal detection constants
+#
+# Used by _detect_section_start() and _filter_pages_to_section() to route
+# pre-supplied pages to the correct BCTC statement section BEFORE calling
+# TextTableExtractor. Detection is diacritic-insensitive (via .lower());
+# both accented and unaccented forms are listed.
+#
+# Same keywords work for B01-DN (corporate) and B02-TCTD (bank) forms —
+# NO issuer branching. NFR-1 compliant.
+# ---------------------------------------------------------------------------
+
+_INCOME_STMT_START_KEYWORDS = [
+    "báo cáo kết quả hoạt động kinh doanh",
+    "bao cao ket qua hoat dong kinh doanh",
+    "kết quả hoạt động sản xuất kinh doanh",
+    "ket qua hoat dong san xuat kinh doanh",
+    "báo cáo thu nhập",
+    "bao cao thu nhap",
+    "kết quả hoạt động kinh doanh",  # B02-TCTD banking income statement title
+]
+_CASH_FLOW_START_KEYWORDS = [
+    "lưu chuyển tiền tệ",
+    "luu chuyen tien te",
+    "báo cáo lưu chuyển tiền tệ",
+    "bao cao luu chuyen tien te",
+]
+
+
+def _detect_section_start(page_text: str) -> Optional[str]:
+    """
+    Detect whether a page STARTS a new BCTC statement section.
+
+    Returns 'income_statement', 'cash_flow', or None (= balance_sheet / continuation).
+
+    Detection is by Vietnamese section-title keyword substring match on lowercased
+    page text. Pure: no I/O, no issuer context, no form-type branching (NFR-1).
+
+    Args:
+        page_text: Full text of a single PDF page (as OCR'd or extracted).
+
+    Returns:
+        'income_statement' — page contains an income-statement section header.
+        'cash_flow'        — page contains a cash-flow statement section header.
+        None               — no IS/CF section header found (balance_sheet or continuation).
+    """
+    lower = page_text.lower()
+    if any(kw in lower for kw in _INCOME_STMT_START_KEYWORDS):
+        return "income_statement"
+    if any(kw in lower for kw in _CASH_FLOW_START_KEYWORDS):
+        return "cash_flow"
+    return None
+
+
+def _filter_pages_to_section(
+    pages: List[Dict], target_section: str
+) -> List[Dict]:
+    """
+    Filter pre-supplied pages to those belonging to target_section.
+
+    Routing logic (DDD: application-layer orchestration — infra stays pure):
+    - balance_sheet:
+        Phase 1: call existing select_balance_sheet_section() domain primitive
+                 (keeps backward-compat with FPT OCR-variant BS markers).
+        Phase 2 (FR-4): exclude any page that detectably STARTS a conflicting
+                 section (income_statement / cash_flow). Resolves FM-VCB-1
+                 (income-statement items mis-filed under balance_sheet).
+    - income_statement / cash_flow:
+        Build a contiguous run: start from the first page whose
+        _detect_section_start() == target_section; include subsequent
+        continuation pages (no header); stop when a different section begins.
+
+    Pure: no I/O, no DB, no HTTP. Deterministic.
+
+    Args:
+        pages:          List of {page_number, text, ...} dicts (pre-supplied).
+        target_section: "balance_sheet" | "income_statement" | "cash_flow".
+
+    Returns:
+        Filtered list of page dicts belonging to target_section.
+    """
+    if target_section == "balance_sheet":
+        # Phase 1: existing BS section primitive (handles FPT OCR-variant markers)
+        bs_pages = select_balance_sheet_section(pages)
+        # Phase 2: FR-4 — exclude pages that start a conflicting section
+        return [
+            p for p in bs_pages
+            if _detect_section_start(p.get("text", "")) is None
+        ]
+    else:
+        # income_statement / cash_flow: select contiguous run of target-section pages
+        result: List[Dict] = []
+        in_section = False
+        for p in pages:
+            sig = _detect_section_start(p.get("text", ""))
+            if sig == target_section:
+                in_section = True
+                result.append(p)
+            elif in_section and sig is None:
+                # Continuation page (no section header) — still in this section
+                result.append(p)
+            elif in_section and sig != target_section:
+                # A different section started — stop collecting
+                break
+        return result
+
+
+# ---------------------------------------------------------------------------
 # Pure balance-check helper
 # ---------------------------------------------------------------------------
 
@@ -382,26 +489,26 @@ class ExtractTablesUseCase:
             # contiguous BS section pages. Applied here (Path A) so both paths
             # (A and B) feed only BS pages to the assembler.
             raw_pages = pre_supplied_pages
-            if statement_section == "balance_sheet":
-                pages = select_balance_sheet_section(raw_pages)
-                logger.info(
-                    "ExtractTablesUseCase: BS section filter: %d pre-supplied pages → "
-                    "%d BS pages (section=%s)",
-                    len(raw_pages),
+            # FR-4: route pages to the correct statement section using content-signal
+            # detection. _filter_pages_to_section() composes select_balance_sheet_section()
+            # (existing BS domain primitive) with new section-start keyword detection.
+            # TextTableExtractor (infrastructure) stays pure — zero change to infra layer.
+            pages = _filter_pages_to_section(raw_pages, statement_section)
+            logger.info(
+                "ExtractTablesUseCase: FR-4 section filter: %d pre-supplied pages → "
+                "%d %s pages",
+                len(raw_pages),
+                len(pages),
+                statement_section,
+            )
+            if statement_section == "balance_sheet" and len(pages) == len(raw_pages):
+                # Fallback: no BS or section-boundary markers found (non-standard layout)
+                logger.warning(
+                    "ExtractTablesUseCase: BS section filter found no markers in "
+                    "pre-supplied pages — using all %d pages (non-standard layout). "
+                    "Row count may be noisy.",
                     len(pages),
-                    statement_section,
                 )
-                if len(pages) == len(raw_pages):
-                    # No filter applied (fallback: no markers found — non-standard layout)
-                    logger.warning(
-                        "ExtractTablesUseCase: BS section filter found no markers in "
-                        "pre-supplied pages — using all %d pages (non-standard layout). "
-                        "Row count may be noisy.",
-                        len(pages),
-                    )
-            else:
-                # Non-balance-sheet sections: no section filter needed
-                pages = raw_pages
             logger.info(
                 "ExtractTablesUseCase: using %d pre-supplied pages after filtering (no OCR needed)",
                 len(pages),

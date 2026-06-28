@@ -6036,7 +6036,7 @@
         "title": "FR-4 — Section-boundary content-signal detection",
         "zone": "apps/pdf-extractor/",
         "size": "M",
-        "status": "READY",
+        "status": "REVIEW",
         "depends_on": [
           "330"
         ],
@@ -6045,7 +6045,9 @@
         ],
         "owner_agent": "dev-pdf-extractor",
         "ready_at": "2026-06-28T09:34:22Z",
-        "unblocked_by": "330"
+        "unblocked_by": "330",
+        "review_at": "2026-06-28T10:00:00Z",
+        "review_by": "dev-pdf-extractor"
       },
       {
         "id": "332",
