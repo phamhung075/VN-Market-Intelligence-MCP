@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-336 · 2026-06-28 · TASK_329 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — APPROVED
+
+TASK_329 FR-7 notes-section hard-stop (e0e30e83) | Verdict: APPROVED | THUY+MINH dual-token requirement (L565) independently confirmed in live code: `_is_notes_section_boundary("a ch . Thuyết")` → False (THUY present, MINH absent) — FPT 3-regression GENUINELY RESOLVED. Gate placement after all existing skip checks (date-header/junk/signature-date/backslash-fragment) at L1315, before _try_parse_code_row at L1340 — prevents false-stop on "Thuyết 31/3/2026..." column-header OCR fragments. 21/21 TestFR7NotesSectionBoundary PASS (live run). FPT non-regression: codes 100/270/440 present, code 270 value_current == 88,089,621,779,862.0. NFR-4 PASS: zero per-issuer/ticker/form branches in production diff. Full suite: 11 fail (1 fewer than dev baseline of 12, all pre-existing PIL-ABI/OCR env) / 1059 pass. orch-state: TASK_329 done DONE, TASK_330 backlog READY (unblocked). DJ: sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md § qa-S4. Report: reports/TASK_REPORT_329.md.
+
 ## cycle-335 · 2026-06-28 · TASK_1973 (CROSS-SESSION-MULTI-TEAM-ORCH) — APPROVED
 
 TASK_1973 P1-MCP-1 SQL migration (9b6c0e33) | Verdict: APPROVED | RAW-verified live named-volume /app/data/coordination.db via bun:sqlite in container: cid:9 owner_client_session TEXT notnull:0 PASS; NOT UNIQUE (2 rows same value both inserted+cleaned) PASS; NULL backfill 6/6 rows PASS; idempotency PRAGMA guard PASS. P1-MCP-1 new tests: 10/10 PASS. Coordination regression (5 files, 90 tests): 90/90 PASS on committed HEAD. 1 dirty-tree false-positive in DWF test (leader-lock.md TASK_1978 WIP, extrinsic); committed HEAD clear 32/32 PASS. tsc 0 errors. DDD PASS. Security PASS. orch-state TASK_1973 review→DONE via orch-apply.sh. Unblocks TASK_1974+1975. DJ: sprint-CROSS-SESSION-MULTI-TEAM-ORCH-qa.md § qa-S1. Report: reports/TASK_REPORT_1973.md.
@@ -184,14 +188,10 @@ Shell script gate (no bun test / tsc applicable). shellcheck exit 0 (re-confirme
 
 TASK_327 FR-1 code-range gate (e939a422) | Verdict: APPROVED | 5/5 TestFR1CodeRangeGate PASS (1-digit/2-digit rejected, FPT 270/221/300 match). Full suite: 1030 pass / 12 fail (all pre-existing). Scope reconcile: 6→12 = SCOPE EXPANSION (TASK_326 QA ran unit-only 893 tests = 887+6; current full suite 1043; proof: 898 unit-now - 5 new FR-1 tests = 893 exact). 6 extra = integration+top-level (PIL ABI, OCR/Tesseract unavailable on host, randomized-order flake). e939a422 touched 0 of 12 failing test files (git). 2 integration tests import TextTableExtractor class (not _CODE_VALUE_COL_RE); fail with rows_stored=0 = OCR pipeline unavailable on host. NFR-4 PASS: only diff-grep match = sprint-name comment. DDD PASS. Security PASS. mock-guard EXIT 0. orch-state: 327 READY→DONE, 328 BACKLOG→READY. DJ: sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md § qa-S2. Report: reports/TASK_REPORT_327.md.
 
-## cycle-332 · 2026-06-28 · TASK_326 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — APPROVED
-
-TASK_326 FR-3 Roman OCR normalize (cdc8b93f) | Verdict: APPROVED | 58/58 targeted PASS (15 new TestRomanOcrNormalization + 43 pre-existing). Full suite: 887 pass / 6 pre-existing fail (PIL/page_rasterizer — unrelated). NFR-4: ZERO per-issuer branches — EXACT-KEY dict only; diff grep clean. FPT golden non-regression: all FPT Roman codes canonical (none in _ROMAN_OCR_NORMALIZE keys → no-op pass-through). Period guard confirmed active (test_period_guard_still_active_after_normalization PASS). Sandbox G12: primitive 29 pass / 6 intentional-fail (known_bad fixtures by design); module 1 pass / 0 fail. orch-state: 326 review→done, 327 BACKLOG→READY (dependency cleared). DJ: sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md § qa-S1. Report: reports/TASK_REPORT_326.md.
-
 ## cycle-331 · 2026-06-28 · TASK-FFT-L3B (FRONTEND-FRESHNESS-TRANSPARENCY) — APPROVED (re-gate Round 2)
 
 TASK-FFT-L3B (24bbecbf) | Verdict: APPROVED | Runner discrepancy resolved: fixer's 202 bun:test failures = vitest-import incompatibility with bun:test runner; zone-standard npm test (vitest run) = 1754/2, identical to prior baseline. B-1 VERIFIED: kdGeneratedAt=market?.timestamp??null at analysis.tsx:258; badge line 1763 uses kdGeneratedAt not fetchedAt. B-2 VERIFIED: two badges present (intraday KD:1763 + realtime watchlist:1801); two revalidators (intraday:1752 + realtime:1753); watchlistDataAsof=null correct (WatchlistTileData no timestamp field; EC-1 gray). N-2 VERIFIED: orchestration.tsx:201 fetchedAt=tsField (state.head?.updated_at). N-1 VERIFIED: coverage-map kinh-dich-reference.l3b_status="STATIC_TEXT". tsc EXIT 0. orch-state DONE. Sprint FRONTEND-FRESHNESS-TRANSPARENCY COMPLETE: L2+L3A+L3B+L4 all DONE. DJ: sprint-FRONTEND-FRESHNESS-TRANSPARENCY-qa.md § qa-S6.
 
 ## Archive
 
-Older cycles (c250–c329): cycle-329=TASK-FFT-L4 APPROVED; cycle-328=TASK-FFT-L3A APPROVED; cycle-327=TASK-FFT-L2 APPROVED. See git history for full audit trail.
+Older cycles (c250–c332): cycle-332=TASK_326 FR-3 Roman OCR APPROVED; cycle-329=TASK-FFT-L4 APPROVED; cycle-328=TASK-FFT-L3A APPROVED; cycle-327=TASK-FFT-L2 APPROVED. See git history for full audit trail.

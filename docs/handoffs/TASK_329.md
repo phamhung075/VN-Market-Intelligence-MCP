@@ -217,3 +217,33 @@ def test_fr7_notes_hardstop():
 **Depends on:** TASK_328  
 **Blocks:** TASK_330  
 **Estimated:** ~2h (code + test + verify)
+
+---
+
+## [QA] Review Record — 2026-06-28
+
+**verdict:** APPROVED
+**commit:** e0e30e83
+**report:** reports/TASK_REPORT_329.md
+
+### Gate results
+
+**FPT 3-regression — GENUINELY RESOLVED (not masked):**
+- Live code L565: `if _NORM_THUY in norm_s and "MINH" in norm_s:` — dual-token requirement confirmed
+- `_is_notes_section_boundary("a ch . Thuyết")` → False (THUY present, MINH absent) — independently verified
+- test_vcb_page5_with_thuyetminh_column_header_not_stopped PASS
+- FPT codes 100/270/440 all present; code 270 value_current == 88,089,621,779,862.0
+
+**False-stop safety:**
+- Gate placement: FR-7 at L1315 confirmed AFTER all existing skip checks (date-header/junk/signature-date/backslash-fragment) and BEFORE _try_parse_code_row
+- "Thuyết 31/3/2026 31/12/2025" filtered upstream by date-header check AND lacks MINH — double protection
+- "a ch . Thuyết": THUY present, MINH absent → False ✓
+- test_fpt_inline_page_unaffected PASS (codes 100/270/440 present with correct values)
+
+**Tests:** 21/21 TestFR7NotesSectionBoundary PASS (independent live run). Covers: positive boundary (26., 15., Thuyết minh, Ghi chú), negative safety (14., roman codes, 3-digit codes, empty, OCR-fragment), integration (boundary halts extraction, boundary line not a row, Thuyết minh header, FPT non-regression, VCB OCR-fragment false-stop).
+
+**NFR-4:** PASS — diff grep for issuer/ticker/form conditionals: zero per-issuer branches in production code. All matches are comment/docstring lines only.
+
+**Full suite:** 11 fail / 1059 pass — 1 fewer failure than dev baseline of 12. All 11 failures are pre-existing env failures (PIL ABI, OCR-absent, rasterizer PDF-absent). Zero new failures.
+
+**TASK_330 unblocked:** dependency 329 DONE → TASK_330 (FR-5 dedup) moved to READY.

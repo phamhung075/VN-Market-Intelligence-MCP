@@ -6,6 +6,18 @@
 
 ---
 
+### STEP qa-S4 · qa · 2026-06-28T12:00Z
+**task-id:** 329
+**what-done:** QA gate TASK_329 (FR-7 notes-section hard-stop, _is_notes_section_boundary + _in_notes_section flag) — APPROVED
+**what-considered:**
+- THUY+MINH dual-token requirement (critical dev note): line 565 `if _NORM_THUY in norm_s and "MINH" in norm_s:` independently confirmed in live code. test_vcb_page5_with_thuyetminh_column_header_not_stopped asserts `_is_notes_section_boundary("a ch . Thuyết") is False` — PASS. FPT 3-regression is genuinely resolved (not masked): THUY alone on the FPT OCR fragment never triggers; MINH must also be present.
+- Gate placement: FR-7 gate at L1315-1336, confirmed AFTER all existing skip checks (date-header at L1282, junk at L1295, signature-date at L1302, backslash-fragment at L1312) and BEFORE _try_parse_code_row at L1340. "Thuyết 31/3/2026..." filtered upstream by date-header check + also lacks MINH — double protection.
+- NFR-4: diff grep for issuer/ticker/form conditionals in production code — zero per-issuer branches; all matches are comment/docstring lines only.
+- FPT non-regression: test_fpt_inline_page_unaffected PASS — codes 100/270/440 all present, code 270 value_current == 88,089,621,779,862.0 (exact). Full suite: 11 fail / 1059 pass (1 fewer failure than dev baseline of 12 — all remaining are pre-existing PIL-ABI/OCR/rasterizer env). No new failures introduced.
+- 21 tests in TestFR7NotesSectionBoundary (all PASS 21/21 in 0.24s): covers positive boundary (26., 15., Thuyết minh, Ghi chú), negative safety (14., roman codes, 3-digit BCTC codes, empty, "a ch . Thuyết"), integration (boundary halts extraction, boundary line itself not a row, Thuyết minh header integration, FPT non-regression, VCB OCR-fragment false-stop guard).
+**why-decision:** All 7 AC green, THUY+MINH dual-token fix independently verified in live code and in test, NFR-4 satisfied, 0 new regressions, critical FPT regression confirmed resolved not masked
+**why-change:** no change from plan
+
 ### STEP qa-S3 · qa · 2026-06-28T10:50Z
 **task-id:** 328
 **what-done:** QA gate TASK_328 (FR-2 trailing note-ref strip, re.sub r'\s+\d{1,3}$' + ≥5-char guard) — APPROVED
