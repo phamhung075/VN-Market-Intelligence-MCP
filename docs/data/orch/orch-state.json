@@ -235,12 +235,12 @@
     }
   ],
   "head": {
-    "status": "IN_PROGRESS",
+    "status": "REVIEW",
     "active_task_id": "327",
-    "next_agent": "dev-pdf-extractor",
-    "next_action": "Implement FR-1 (Layout 3 code-range gate: _CODE_VALUE_COL_RE \\d{2,3}->\\d{3}) per architect design §FR-1; handoff docs/handoffs/TASK_327.md. FR-3 (326) already DONE/committed.",
-    "updated_by": "po",
-    "updated_at": "2026-06-28T07:56:56Z",
+    "next_agent": "qa",
+    "next_action": "QA verification for TASK_327: FR-1 code-range gate. Verify _CODE_VALUE_COL_RE uses \\\\d{3}, run TestFR1CodeRangeGate, confirm FPT non-regression. Handoff: docs/handoffs/TASK_327.md [QA] section.",
+    "updated_by": "dev-pdf-extractor",
+    "updated_at": "2026-06-28T00:00:00Z",
     "reconcile_note": "po retired duplicate pm decomposition (TASK-301..307); repointed head OFF already-done FR-3 (TASK-301==numeric 326, committed cdc8b93f) ONTO next undone FR-1 (327, already READY). Canonical scheme = numeric 326-332."
   },
   "narrative": {
