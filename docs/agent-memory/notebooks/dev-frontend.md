@@ -4,6 +4,26 @@
 
 ---
 
+## Session: 2026-06-28 (FE-AHUB-W3-FINANCIALS-ZONE — stock-scoped financials zone component)
+
+**FE-AHUB-W3-FINANCIALS-ZONE REVIEW — FinancialsZone built, 7 tests GREEN, tsc clean**
+
+New self-contained zone component: `apps/frontend/app/components/analysis/FinancialsZone.tsx`.
+Accepts `stock` prop. Fetches `/api/financials` (full-universe, NO per-code param) via `useFetcher`.
+CLIENT-SIDE filter field: `FinancialsRow.code` (exact string match). Renders 11 financial metrics
+in a compact 4-col grid: revenue, net profit, EPS, P/E, P/B, ROE, ROA, D/E, profit margin, YoY growth.
+nim/npl intentionally omitted (NULL for all rows in the dataset). `FreshnessBadge` shows weekly SLA.
+
+Exported testable helper: `findFinancialsRow(rows, stockCode)` — pure function, 7 unit tests GREEN.
+Data gap: nim/npl bank metrics not available. No data-gap on any other field.
+Types and formatters imported from `~/routes/dashboard.financials` (all exported there).
+
+Commit: `df70cb76` | Files: 2 | Tests: 7/7 GREEN | tsc: 0 errors
+
+Zone health: FinancialsZone ready for analysis hub INT integration; pre-existing 2 test failures (QUE-TOOLTIP) unrelated; 74/76 test files passing | HEALTHY
+
+---
+
 ## Session: 2026-06-28 (FE-AHUB-W2-CORPEVENTS-ZONE — CorporateEventsZone component)
 
 **FE-AHUB-W2-CORPEVENTS-ZONE REVIEW — CorporateEventsZone built, 22 tests GREEN, tsc clean**
