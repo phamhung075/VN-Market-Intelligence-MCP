@@ -357,14 +357,8 @@ export function TechnicalZone({
 
   return (
     <div className="w-full space-y-6">
-      {/* Zone header — compact; parent analysis page owns the full PageHeader */}
-      <div className="flex items-center justify-between gap-4 pb-1 border-b border-slate-800">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-lg font-bold text-blue-400">
-            {ticker}
-          </span>
-          <span className="text-sm text-slate-500">— Giá & Phân Tích Kỹ Thuật</span>
-        </div>
+      {/* Zone header — freshness only; parent SectionCard owns title + stock subtitle */}
+      <div className="flex items-center justify-end gap-4 pb-1 border-b border-slate-800">
         {dto && (
           <span className="text-xs text-slate-500 flex items-center gap-2 shrink-0">
             <FreshnessBadge dataAsof={data_asof} slaTierKey="intraday" />
