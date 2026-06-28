@@ -142,3 +142,44 @@ Once this task is DONE (QA verified on LIVE coordination.db):
 - Unblock TASK_1974 (P1-MCP-2: coordinationStore.ts matching-ladder rebind)
 - Unblock TASK_1975 (P1-MCP-3: coordinationTools.ts params + stop server injection)
 - Allow P1-AF-* tasks (AF-1/2/3/4) to begin work (they depend only on migration being in-flight, not shipped)
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-28
+**Commit verified:** 9b6c0e33
+**Verdict:** APPROVED
+
+### RAW Probe — Live Named-Volume DB
+
+Container: `vn-market-intelligence-mcp-mcp-server-1` (Up, healthy)
+DB: `/app/data/coordination.db` (named volume — NOT host `./data`)
+
+**PRAGMA table_info(task_locks) — cid:9:**
+```json
+{"cid":9,"name":"owner_client_session","type":"TEXT","notnull":0,"dflt_value":null,"pk":0}
+```
+TYPE TEXT: PASS | notnull:0 (nullable): PASS
+
+**NOT UNIQUE proof:** Two rows inserted with same `owner_client_session = "qa-test-session-notuniq-probe"` — both succeeded. Cleanup confirmed (0 rows remaining). NOT UNIQUE: PASS
+
+**NULL backfill check:** All 6 pre-existing rows have `owner_client_session: null`. No backfill: PASS
+
+**Idempotency:** `PRAGMA table_info` guard detects column present → ALTER skipped on second startup. Idempotency: PASS
+
+### Test Suite
+
+| Suite | Pass | Fail |
+|---|---|---|
+| P1-MCP-1 new tests (10) | 10 | 0 |
+| Coordination regression (5 files, 90 total) | 90 | 0 |
+
+Note: 1 apparent failure in `DWF-coordination-phase2.test.ts` (`ttl_seconds: 1800` spacing) traced to uncommitted dirty-tree TASK_1978 WIP in `leader-lock.md`. Committed HEAD (`9b6c0e33`) has `ttl_seconds: 1800` (single space) — test passes on committed code. Not a TASK_1973 defect.
+
+### Checks
+
+- TypeScript: `bun tsc --noEmit` → 0 errors: PASS
+- DDD scan: no domain/application imports in additions: PASS
+- Security: no `process.env`, no secrets, DDL-only SQL: PASS
+- Mock-guard: test-only + infrastructure migration — no fabricated data paths: PASS

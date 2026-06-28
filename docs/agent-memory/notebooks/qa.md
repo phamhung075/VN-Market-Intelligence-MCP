@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-335 · 2026-06-28 · TASK_1973 (CROSS-SESSION-MULTI-TEAM-ORCH) — APPROVED
+
+TASK_1973 P1-MCP-1 SQL migration (9b6c0e33) | Verdict: APPROVED | RAW-verified live named-volume /app/data/coordination.db via bun:sqlite in container: cid:9 owner_client_session TEXT notnull:0 PASS; NOT UNIQUE (2 rows same value both inserted+cleaned) PASS; NULL backfill 6/6 rows PASS; idempotency PRAGMA guard PASS. P1-MCP-1 new tests: 10/10 PASS. Coordination regression (5 files, 90 tests): 90/90 PASS on committed HEAD. 1 dirty-tree false-positive in DWF test (leader-lock.md TASK_1978 WIP, extrinsic); committed HEAD clear 32/32 PASS. tsc 0 errors. DDD PASS. Security PASS. orch-state TASK_1973 review→DONE via orch-apply.sh. Unblocks TASK_1974+1975. DJ: sprint-CROSS-SESSION-MULTI-TEAM-ORCH-qa.md § qa-S1. Report: reports/TASK_REPORT_1973.md.
+
 ## cycle-334 · 2026-06-28 · TASK_328 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — APPROVED
 
 TASK_328 FR-2 trailing note-ref strip (774cfd69) | Verdict: APPROVED | 7/7 TestFR2TrailingNoterefStrip PASS (live run). 122/122 targeted 3-file suite. Full unit suite: 899 pass / 6 fail (exact TASK_327 baseline — all pre-existing PIL-ABI/OCR env). Guard correctness verified independently via Python: "Chứng khoán kinh doanh 4"→remaining_len=22≥5→STRIP PASS; "Nợ 1"→remaining_len=2<5→NO-STRIP PASS; "Quỹ phát triển khoa học 2025"→4-digit \d{1,3} no-match→unchanged PASS. Guard is on REMAINING len(_label_clean), not original — confirmed L1238. NFR-4 PASS: diff grep for issuer/ticker/form branches — only comment lines, zero production conditionals. FPT non-regression: 122/122 including FPT Stage-6 assemble paths, test_end_to_end_vcb_label_strip_in_assembled_row confirms TỔNG CỘNG TÀI SẢN code-only rows unaffected. orch-state: TASK_328 DONE, TASK_329 BACKLOG→READY, head active_task_id=329/status=READY. DJ: sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md § qa-S3. Report: reports/TASK_REPORT_328.md.
@@ -173,12 +177,6 @@ Verify-only task (baseline_pass=true). test-fleet-push-classifier.sh exit 0: 5/5
 Task: TASK-AUTO-PUSH-A | Impl commit: 26807a41 | Verdict: APPROVED | Board: review→done, next_agent=pm.
 
 Shell script gate (no bun test / tsc applicable). shellcheck exit 0 (re-confirmed independently). No-op path: ahead=11 ≤ 20 → exit 0, no worktree, no git ops. Divergence-abort path: PUSH_THRESHOLD=0 --dry-run → exit 1, 2 non-chore detected, bug telegram printed, no worktree leak. All 15 AC green: script 237L/755, PUSH_THRESHOLD=20 tunable, timestamped WT_PATH, trap EXIT INT TERM, divergence-reconcile, orch-state.json --ours, pnpm tsc gate, Telegram notif, no --force push, no hardcoded creds, dev-standards pointer. bg-agent safety guards correctly scoped to TASK-AUTO-PUSH-B-PO (brief §4.1). No push occurred during QA testing. DJ: sprint-ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP-qa.md.
-
-## cycle-294 · 2026-06-18 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — APPROVED (production fix ea5dc0eb)
-
-Task: FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH | Impl commit: ea5dc0eb | Verdict: APPROVED | Board: REVIEW→DONE, next_agent=router.
-
-Production fix: resetQ1UrlNotFound() removed from initFinancialReportsTables() in schema-financial-reports.ts. TERM-8 regression guard added (seeds url_not_found rows→re-runs initDatabase()→asserts rows stay terminal). CI per-file isolation: 13190/42skip/6fail vs baseline 13179/42/17 (net +11 pass, -11 fail). Failing files (5): 083-tool-analysis, 102-job-news-poll, 1227-source-health-empty-result, 1324-push-news-all-sources, TASK17-PAGE13 — ZERO overlap with 3 changed files; all in baseline. tsc: 0 errors. DDD PASS. Security PASS. mock-guard PASS (exit 0). Live DB (named volume): all 8 Q1-2026 rows url_not_found/attempts=7; 65 done untouched; zero_url_consecutive_cycles=243 STOPPED (idle-queue path). Container: fix text confirmed at /app/src/infrastructure/db/schema-financial-reports.ts:695. Genericity: Arm-2 uses `attempts<6` numeric cap only — no allowlist, no date literal. DJ: sprint-FE-PAGE-REORG-qa.md §qa-S9.
 
 ---
 
