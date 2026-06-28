@@ -3934,9 +3934,10 @@
           "dev-frontend.md 224L @ 2026-06-28T07:12:25Z (signal TRIAGED->processed)",
           "architect.md 211L @ 2026-06-28T07:30:55Z (signal TRIAGED->processed)",
           "pm.md 238L @ 2026-06-28T08:31:01Z (signal TRIAGED->processed)",
-          "dev-pdf-extractor.md 203L @ 2026-06-28T09:53:35Z (RE-BREACH; ALREADY in APPEND class per file-size-caps.json + SKILL.md AC-6 -> proves AC-5-advisory gap, NOT a membership gap; persisted commit 577d76a9; signal TRIAGED->processed)"
+          "dev-pdf-extractor.md 203L @ 2026-06-28T09:53:35Z (RE-BREACH; ALREADY in APPEND class per file-size-caps.json + SKILL.md AC-6 -> proves AC-5-advisory gap, NOT a membership gap; persisted commit 577d76a9; signal TRIAGED->processed)",
+          "pm.md 329L @ 2026-06-28T11:42:53Z (RE-BREACH; pm ALREADY APPEND-class per file-size-caps.json + SKILL.md AC-6 -> corroborates AC-5-advisory gap, NOT membership; persisted commit aa5a9c8a; signal TRIAGED->processed)"
         ],
-        "recurrence_count": 6,
+        "recurrence_count": 7,
         "escalation_note": "recurring-bug-escalation: 6 breaches across 5 append-class agents post-qa-fix; dev-pdf-extractor is now a SECOND-time breacher (240L then 203L). RAW-CORRECTION 2026-06-28T10:13:20Z: dev-pdf-extractor is ALREADY in the APPEND self-cap class -> systemic gap is confirmed = AC-5 must go advisory->BLOCKING (membership is complete). prioritize."
       },
       {
@@ -7400,22 +7401,11 @@
         },
         "signoff_at": "2026-06-28T11:40:37Z",
         "signoff_by": "po"
-      }
-    ],
-    "head": {
-      "status": "REVIEW",
-      "active_task_id": "332",
-      "next_agent": "qa",
-      "next_action": "QA verify TASK_332 FR-6 VN-number parenthetical parse robustness. Check: (1) vn_number_normalize test passes for canonical (1.992.671); (2) _parse_value Rule A+B correct; (3) TestParseValueFR6 5 tests green; (4) full pytest 937 pass; (5) sandbox G12 both tiers green. Handoff: docs/handoffs/TASK_332.md [Developer] section.",
-      "updated_by": "dev-pdf-extractor",
-      "updated_at": "2026-06-28T12:45:00Z"
-    },
-    "in_progress": [],
-    "ready": [
+      },
       {
         "id": "FIX-VNM-BCTC-ROWS-DATA-LOSS-RECOVER",
         "type": "FIX",
-        "status": "REVIEW",
+        "status": "DONE",
         "priority": "P1",
         "zone": "apps/mcp-server/",
         "next_agent": "dev-mcp-server",
@@ -7428,9 +7418,25 @@
         "claimed_at": "2026-06-28T13:00:00Z",
         "claimed_by": "dev-mcp-server",
         "completed_at": "2026-06-28T11:50:00Z",
-        "completed_by": "dev-mcp-server"
+        "completed_by": "dev-mcp-server",
+        "done_verified": true,
+        "closed_by": "po",
+        "closed_at": "2026-06-28T12:14:56Z",
+        "recovery_commit": "68c7b99a",
+        "approving_commit": "f3c09500",
+        "reconcile_note": "stale ready[] status-lag row; work landed (68c7b99a) + qa APPROVED (f3c09500) — RAW-verified 94 rows BS46/IS22/CF26; po reconcile tick 20260628T120946Z"
       }
     ],
+    "head": {
+      "status": "REVIEW",
+      "active_task_id": "332",
+      "next_agent": "qa",
+      "next_action": "QA verify TASK_332 FR-6 VN-number parenthetical parse robustness. Check: (1) vn_number_normalize test passes for canonical (1.992.671); (2) _parse_value Rule A+B correct; (3) TestParseValueFR6 5 tests green; (4) full pytest 937 pass; (5) sandbox G12 both tiers green. Handoff: docs/handoffs/TASK_332.md [Developer] section.",
+      "updated_by": "dev-pdf-extractor",
+      "updated_at": "2026-06-28T12:45:00Z"
+    },
+    "in_progress": [],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
