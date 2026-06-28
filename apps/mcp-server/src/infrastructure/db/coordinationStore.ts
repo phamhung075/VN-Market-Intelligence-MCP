@@ -397,11 +397,17 @@ export interface ListResult {
  * the schema is widened to include that kind.
  *
  * Explicitly NOT in the allow-list (silent GC only):
- *   - 'intent'           : transient router pre-claim gate — NOT adoptable work
- *   - 'commit-mutex'     : short-lived git-index lock — NOT adoptable work
- *   - 'orphan-signal'    : the signal itself — never re-signal a signal
- *   - 'session-presence' : P2 roster liveness probe — NOT adoptable work
- *   - 'published:*' ids  : dedup sentinels — NOT work units
+ *   - 'intent'                    : transient router pre-claim gate — NOT adoptable work
+ *   - 'commit-mutex'              : short-lived git-index lock — NOT adoptable work
+ *   - 'orphan-signal'             : the signal itself — never re-signal a signal
+ *   - 'session-presence'          : P2 roster liveness probe — NOT adoptable work
+ *   - 'published:*' ids           : dedup sentinels — NOT work units
+ *   - 'cron:*' ids                : fire-election coordination markers (e.g. cron:dev-team:<TICK>)
+ *                                   carry task_kind=sprint-task but are NOT adoptable work units;
+ *                                   orphan-minting them causes bogus zone-agent spawns in Step 0a-B.
+ *                                   Excluded by task_id prefix scan guard (NOT by kind — kind is
+ *                                   intentionally reused to avoid enum-drift).
+ *   - 'dev-team-cron-singleton'   : SF-1 leader-election singleton — same class as cron:* above.
  */
 const ORPHAN_EMIT_ALLOW_LIST = [
   "sprint-task",
@@ -453,7 +459,11 @@ export function gcExpiredLocks(db: Database, graceSeconds = 300, excludeTaskId?:
       // ---- Phase 1: pre-GC scan — emit orphan-signals for expired adoptable rows ----
       //
       // ALLOW-LIST filter (DoD-P15-4): only kinds with a defined resume contract.
-      // The scan also excludes 'published:*' task_ids (dedup sentinels, not work units)
+      // The scan also excludes:
+      //   - 'published:*' task_ids   : dedup sentinels, not work units
+      //   - 'cron:*' task_ids        : fire-election coordination markers (cron:dev-team:<TICK>)
+      //                                — NOT adoptable work; would cause bogus zone-agent spawns
+      //   - 'dev-team-cron-singleton': SF-1 singleton coordination marker — same class
       // and the excludeTaskId row being claimed right now (stale-steal path handles it).
       const kindPlaceholders = ORPHAN_EMIT_ALLOW_LIST.map(() => "?").join(",");
       const excludeClause = excludeTaskId !== undefined ? " AND task_id != ?" : "";
@@ -467,6 +477,8 @@ export function gcExpiredLocks(db: Database, graceSeconds = 300, excludeTaskId?:
            WHERE expires_at + ? < unixepoch('now')
              AND task_kind IN (${kindPlaceholders})
              AND task_id NOT LIKE 'published:%'
+             AND task_id NOT LIKE 'cron:%'
+             AND task_id != 'dev-team-cron-singleton'
              ${excludeClause}`,
         )
         .all(...scanParams) as Array<{

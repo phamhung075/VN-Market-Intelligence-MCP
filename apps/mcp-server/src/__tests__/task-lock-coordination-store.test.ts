@@ -1043,6 +1043,91 @@ describe("AC-11: gcExpiredLocks — orphan-signal emission (TASK_1983 / DoD-P15-
     expect(signalExcluded).toBeNull();
   });
 
+  // ---------------------------------------------------------------------------
+  // FIX-FIRE-ELECTION-ORPHAN-MINT-EXCLUDE: coordination key prefix exclusion
+  // cron:* and dev-team-cron-singleton carry task_kind=sprint-task (allow-listed)
+  // but must NOT mint orphan-signals — they are coordination markers, not work units.
+  // ---------------------------------------------------------------------------
+
+  it("does NOT emit orphan-signal for 'cron:dev-team:<TICK>' with task_kind=sprint-task (fire-election guard)", () => {
+    const fireElectionId = "cron:dev-team:2026-06-28T20:37Z";
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        (?, 'sprint-task', 'sess-fe', 'dev-team', 'client-uuid-fe',
+         unixepoch('now'), unixepoch('now') + 600, unixepoch('now'), 600,
+         '{"site":"fire-election"}', 0)
+    `).run(fireElectionId);
+    setExpired(testDb, fireElectionId, 400);
+
+    gcExpiredLocks(testDb, 300);
+
+    // Coordination marker silently deleted — no orphan-signal
+    const origRow = testDb.prepare("SELECT * FROM task_locks WHERE task_id = ?").get(fireElectionId);
+    expect(origRow).toBeNull();
+
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = ?"
+    ).get(`orphan-signal:${fireElectionId}`);
+    expect(signalRow).toBeNull();
+  });
+
+  it("does NOT emit orphan-signal for 'dev-team-cron-singleton' with task_kind=sprint-task (SF-1 guard)", () => {
+    const sf1Id = "dev-team-cron-singleton";
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        (?, 'sprint-task', 'sess-sf1', 'dev-team', 'client-uuid-sf1',
+         unixepoch('now'), unixepoch('now') + 600, unixepoch('now'), 600, NULL, 0)
+    `).run(sf1Id);
+    setExpired(testDb, sf1Id, 400);
+
+    gcExpiredLocks(testDb, 300);
+
+    // Coordination marker silently deleted — no orphan-signal
+    const origRow = testDb.prepare("SELECT * FROM task_locks WHERE task_id = ?").get(sf1Id);
+    expect(origRow).toBeNull();
+
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = ?"
+    ).get(`orphan-signal:${sf1Id}`);
+    expect(signalRow).toBeNull();
+  });
+
+  it("STILL emits orphan-signal for a normal sprint-task with non-coordination task_id (no regression)", () => {
+    // Verify exclusion is task_id-scoped only — real sprint-tasks still get signalled
+    const normalId = "task:FIX-SOME-REAL-BUG-123";
+    testDb.prepare(`
+      INSERT INTO task_locks
+        (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+         claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+      VALUES
+        (?, 'sprint-task', 'sess-real', 'dev-mcp-server', 'client-uuid-real',
+         unixepoch('now'), unixepoch('now') + 600, unixepoch('now'), 600,
+         '{"task_title":"fix real bug"}', 0)
+    `).run(normalId);
+    setExpired(testDb, normalId, 400);
+
+    gcExpiredLocks(testDb, 300);
+
+    // Original row GC'd
+    const origRow = testDb.prepare("SELECT * FROM task_locks WHERE task_id = ?").get(normalId);
+    expect(origRow).toBeNull();
+
+    // Orphan-signal IS emitted for the real work unit
+    const signalRow = testDb.prepare(
+      "SELECT * FROM task_locks WHERE task_id = ?"
+    ).get(`orphan-signal:${normalId}`);
+    expect(signalRow).not.toBeNull();
+    const payload = JSON.parse((signalRow as Record<string, unknown>)["payload"] as string) as Record<string, unknown>;
+    expect(payload["original_task_kind"]).toBe("sprint-task");
+    expect(payload["redispatch_count"]).toBe(1);
+  });
+
   it("INSERT OR REPLACE: second GC cycle overwrites stale orphan-signal with fresh one", () => {
     testDb.prepare(`
       INSERT INTO task_locks
