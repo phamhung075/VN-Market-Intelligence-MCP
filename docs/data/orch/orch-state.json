@@ -3006,7 +3006,7 @@
             "title": "SERIAL CLOSER (sole editor of dashboard.analysis.tsx): import + place the 6 zone components + add Shareholders button (->/dashboard/shareholders?code=) + Officers button (->/dashboard/officers?code=); DELETE dashboard.technical.tsx; fix TopNav Ky Thuat link (remove or redirect to analysis) + update FE-HEADER-SSOT-top-nav.test.tsx + task17-p2-1b-price-history-loader.test.ts.",
             "owner": "dev-frontend",
             "type": "FEATURE",
-            "status": "READY",
+            "status": "REVIEW",
             "zone": "apps/frontend/app/routes/dashboard.analysis.tsx",
             "created_at": "2026-06-28T17:41:00Z",
             "size": "L",
