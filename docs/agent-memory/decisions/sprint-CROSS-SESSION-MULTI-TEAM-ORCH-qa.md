@@ -6,6 +6,23 @@
 
 ---
 
+### STEP qa-S5 · qa · 2026-06-28T14:45:00Z
+**task-id:** TASK_1988
+**what-done:** P1.5 integrated acceptance gate — all 6 DoD checks PASS. Flipped TASK_1983/1984/1985/1986/1987/1988 → DONE. P1.5 done_verified. Liveness/takeover requirement SHIPPED.
+**what-considered:**
+- KILL/expire + ORPHAN: gcExpiredLocks emits orphan-signal with exact payload contract (task_id="orphan-signal:<original>", owner_session="server-reaper", owner_client_session=NULL, expires_at=now+7200, payload.redispatch_count=prior+1). Verified via AC-11 unit tests (11 tests, all green). Log emission confirmed in test output.
+- ADOPT: different owner_client_session stale-steals original task_id after GC. redispatch_count carries forward (prior=2 → payload shows 3). Two-role isolation proven.
+- ALLOW-LIST: sprint-task/cowork-slot/dashboard-row → signal emitted; intent/commit-mutex/session-presence → silently GC'd; published:* → GC'd regardless of task_kind. All 67 P1.5 tests PASS.
+- P1.5 unit suite: 67/67 PASS (task-lock-coordination-store.test.ts AC-1..11 + task-lock-reaper-timer.test.ts AC-REAPER-1..4 + coordination-tools). Migration tests: 130/130 PASS. tsc: 0 errors.
+- P1 CORE isolation: wrong-session heartbeat→ok:false, wrong-session release→released:0. 7-kind enum + REQUIRED owner_client_session intact. AC-5/6/8 all green.
+- Full suite baseline diff: 59 fail (vs 53 TASK_1989 baseline). Δ=+6 all in pre-existing timeout/network/VPS-schema variance category. Zero P1.5-introduced failures (all P1.5-touched test files green).
+- Doc-code consistency: dispatch-claim SKILL.md + dev-team/flow/main.md Step 0a-B reference exact payload keys from TASK_1983 coordinationStore.ts. task_id scheme matches. Tree-hygiene in TASK_1987 is "MANDATORY — load-bearing" gate, not prose. DoD-P15-6 honest-bound verbatim in both docs.
+- TASK_1982 (CANCELLED) stripped from TASK_1988.depends_on.
+**why-decision:** All 8 behavioral gates (kill/orphan/adopt/allow-list/regression/p1-core/full-suite/doc-code) GREEN. Integrated gate passes.
+**why-change:** no change from plan
+
+---
+
 ### STEP qa-S4 · qa · 2026-06-28T12:10:00Z
 **task-id:** TASK_1989
 **what-done:** Live integration + regression gate for Migration-3 7-kind TaskKind enum. All 5 DoD-D probes PASS; WAL adjudicated non-blocking. Flipped TASK_1989 → DONE.
