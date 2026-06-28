@@ -13,5 +13,11 @@
     "verification_gate": "After a >600s dev-team tick, task_list_held(kind=orphan-signal, owner_agent=dev-team) shows ZERO fire-election/SF-1 entries; 0a-B never attempts adoption of a coordination-key task_id.",
     "size_hint": "S",
     "dedupe_key": "FIRE-ELECTION-EPHEMERAL-LOCK-ORPHAN-MINT"
+  },
+  "_processed": {
+    "fingerprint": "7ec453f67143f2693e71f4ddb1b6638981e2939f1d75e1c7f2d7fa3662cc2bcc",
+    "processedAt": "2026-06-28T21:47:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
