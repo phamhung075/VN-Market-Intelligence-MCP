@@ -1,8 +1,14 @@
 # PO Notebook
 
-_Last: 2026-06-28T12:13Z_
+_Last: 2026-06-28T13:10Z_
 
-## This cycle — dev-team triage 20260628T120946Z: board+signal hygiene (live terminal owns CROSS-SESSION)
+## This cycle — dev-team triage 20260628T130946Z: DEFER dispatch-claim SKILL.md breach to live CROSS-SESSION leader
+
+Single-signal tick. NEW context_bloat_breach: `.claude/skills/dispatch-claim/SKILL.md` 264L (cap 200, overage 64, class=skill-file, to=claude-manager-helper, prune_or_split). RAW-verified wc -l=264 (real). **DECISION: DEFER (no FILE, no mint, no claude-manager-helper dispatch).** Root: `git log -- .claude/skills/dispatch-claim/SKILL.md` proves the 64L overage was added by commit 9b2ef39a `docs(CROSS-SESSION/P1.5-AF): orphan adoption probe (1986) + dev-team drain (1987) → REVIEW` — the live leader's in-flight CROSS-SESSION-MULTI-TEAM-ORCH sprint (tasks 1986/1987 currently in REVIEW, NOT done_verified). The added pseudocode is LOAD-BEARING (CLAUDE.md step 2.5 references the orphan-adoption probe), so it can't be pruned, only SPLIT — and a split now races the live editor mid-REVIEW + duplicates their territory ([[feedback_pm_decomposition_races_live_parallel_terminal]] + standing "defer all CROSS-SESSION/TASK_198x to live leader"). NOT an APPEND-class notebook → AC-5/HARDEN-NOTEBOOK playbook N/A. Signal LEFT in place (deferral ≠ resolution — NOT moved to processed/); re-evaluate for a SPLIT task once P1.5-AF reaches done_verified and the file stabilizes. Telegram 3338-3342 = exactly the known re-surfacers (no new id). Board: head idle, WIP=0, no actionable. 3 to:pm cross-session signals untouched (live-pm territory). Returned NOTHING (no dispatch).
+
+LESSON: a context-bloat breach on a HOT file actively grown THIS sprint-cycle by a live parallel leader is OWNED by that leader's sprint, not an orphaned prune candidate — DEFER, leave the signal for post-sign-off re-eval, never mint a split that races the in-flight editor.
+
+## Prev cycle — dev-team triage 20260628T120946Z: board+signal hygiene (live terminal owns CROSS-SESSION)
 
 A live parallel terminal is actively driving the board (manual-drive, no sprint lock; last commit f3c09500 @14:03, ~6min pre-tick) on CROSS-SESSION-MULTI-TEAM-ORCH / TASK_1989 enum-drift. DEFERRED all that to the live leader — touched NONE of it. My scope = signal backlog + board hygiene the live terminal isn't handling. Actions (all RAW-verified, orch-apply.sh): (1) FIX-VNM-BCTC-ROWS-DATA-LOSS-RECOVER ready[](status REVIEW)→done_verified[] — work landed 68c7b99a + qa APPROVED f3c09500 (git show: 94 rows BS46/IS22/CF26), pure stale status-lag reconcile, CAS-guarded. (2) pm.md 329L context-bloat: REAL breach but pm ALREADY APPEND-class (file-size-caps.json + SKILL AC-6) → did NOT re-prune (treadmill) / did NOT mint membership; corroborated anchor HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING (recurrence_count 6→7 + breach), signal→processed. (3) qa.md context-bloat NOW STALE (committed qa.md 201→45L, AC-3 self-cap worked) → signal→processed. LEFT 3 cross-session/po signals (all to:pm, live-pm territory). Telegram 3338/3339/3340 expected re-surfacers (not re-filed); 3341/3342 = TASK_1989 Migration-3 WAL-checkpoint = live-terminal, untouched. Returned NOTHING (no dispatch — WIP cap respected).
 
