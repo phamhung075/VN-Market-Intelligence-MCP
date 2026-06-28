@@ -6855,12 +6855,12 @@
     ],
     "done_verified": [],
     "head": {
-      "status": "READY",
+      "status": "REVIEW",
       "active_task_id": "328",
-      "next_agent": "dev-pdf-extractor",
-      "next_action": "TASK_328 FR-2 — Trailing note-ref stripping from label. TASK_327 DONE (QA cycle-333 APPROVED). Handoff: docs/handoffs/TASK_328.md",
-      "updated_by": "qa",
-      "updated_at": "2026-06-28T08:16:05Z"
+      "next_agent": "qa",
+      "next_action": "QA verify TASK_328 FR-2 trailing note-ref strip. Check _parse_lines_to_rows() label-clean step, TestFR2TrailingNoterefStrip 7/7 pass, FPT non-regression, guard correctness. Handoff: docs/handoffs/TASK_328.md [QA] section.",
+      "updated_by": "dev-pdf-extractor",
+      "updated_at": "2026-06-28T09:00:00Z"
     },
     "in_progress": [
       {
