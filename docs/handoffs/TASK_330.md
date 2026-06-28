@@ -226,3 +226,23 @@ def test_fr5_dedup_within_section():
 **Depends on:** TASK_329  
 **Blocks:** TASK_331  
 **Estimated:** ~2h (code + test + verify + FPT bonus check)
+
+## [QA] Review Record — 2026-06-28
+
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_330.md
+
+AC-1..AC-9: all green.
+
+- exact_dup_collapse: `test_exact_dup_collapsed_to_first` — 1 row, page_number=1 wins. PASS.
+- ocr_variant_passthrough (load-bearing): `test_same_code_different_value_both_emitted` — both rows emitted, values 1_986_588_655 and 1_986_588_656 preserved. PASS. Live code L683-695 else-branch confirmed: `out.append(row)` executes only on value mismatch path, never on exact-dup path. WARNING in OCR-variant path is observability noise only, not a collapse.
+- FM-HPG-2 dual-code: `test_fm_hpg2_two_duplicate_codes_both_collapsed` — code=140 + code=400 both collapsed to page 1 first occurrence. PASS.
+- Scope guard (AC-4): stateless local `seen` dict initialized per call. Cross-call contamination structurally impossible. Test confirms.
+- Call site (AC-6): L1633 dedup precedes L1639 positional cutoff. Confirmed.
+- NFR-4: grep for per-issuer/ticker branches in production diff — empty. PASS.
+- Full unit suite: 927 pass / 6 fail — all 6 pre-existing PIL-ABI + page_rasterizer env failures. Zero new failures. +7 FR-5 tests green.
+- Sandbox G12: 5/5 PASS.
+- Mock-guard: EXIT 0. DDD: PASS. Security: PASS.
+- FPT non-regression (AC-8): POST /api/bctc-eval/recompute/e71f845d-ffa5-48f9-8f09-30ac2cd09c65 → Stage 4 exact_dup_count=0 (BONUS: pre-existing 1 dropped), Stage 6 STRUCTURED_EXTRACT GREEN (golden rows preserved). Dup cannot increase — function only removes rows.
+
+**Unblocks:** TASK_331 (FR-4 section-boundary, application layer)

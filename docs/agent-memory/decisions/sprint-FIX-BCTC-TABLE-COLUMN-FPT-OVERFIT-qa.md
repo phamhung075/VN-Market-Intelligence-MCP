@@ -6,6 +6,20 @@
 
 ---
 
+### STEP qa-S5 · qa · 2026-06-28T14:00Z
+**task-id:** TASK_330
+**what-done:** QA gate TASK_330 (FR-5 same-section dedup `_dedup_rows_within_section`) — APPROVED
+**what-considered:**
+- Load-bearing distinction: exact (code, value_current) → drop second (first wins); same code + DIFFERENT value → emit both (OCR variant). Verified in live code L672-695: `if first_vc == vc:` → drop with WARNING; else → append with WARNING. Two separate WARNING paths — collapse path never executes the append. test_same_code_different_value_both_emitted asserts len(result)==2 + both values present (PASS).
+- FM-HPG-2 pattern: test_fm_hpg2_two_duplicate_codes_both_collapsed asserts len==2, both page_number==1 — both code=140 and code=400 duplicates collapsed correctly in one pass.
+- Scope guard: function uses local `seen` dict per call (no module-level state); test_same_code_across_two_separate_calls_emits_independently calls function twice independently — each emits its row; no cross-call contamination possible.
+- Call site: L1633 `all_rows = _dedup_rows_within_section(all_rows)` followed immediately by L1639 `all_rows = _apply_positional_cutoff(all_rows, statement_section)` — AC-6 confirmed.
+- FPT Stage 4 non-regression: POST /api/bctc-eval/recompute/e71f845d-ffa5-48f9-8f09-30ac2cd09c65 → exact_dup_count=0 (was 1 pre-fix = BONUS per PO), Stage 6 GREEN (golden rows preserved). Function drops, never adds rows — Stage 4 dup cannot increase.
+- NFR-4: grep for per-issuer/ticker branches returned empty — pure (code, value_current) equality only.
+- Full unit suite: 927 pass / 6 fail (all pre-existing PIL-ABI + page_rasterizer env, identical to dev baseline). +7 new FR-5 tests green (7/7 TestFR5DedupRowsWithinSection PASS). Sandbox G12 5/5 PASS. mock-guard EXIT 0. DDD PASS (no application/interface imports). Security PASS.
+**why-decision:** All 9 AC green, load-bearing OCR-variant passthrough independently confirmed in live code, FPT Stage 4 bonus improvement verified via live recompute, Stage 6 unaffected, 0 new regressions
+**why-change:** no change from plan
+
 ### STEP qa-S4 · qa · 2026-06-28T12:00Z
 **task-id:** 329
 **what-done:** QA gate TASK_329 (FR-7 notes-section hard-stop, _is_notes_section_boundary + _in_notes_section flag) — APPROVED

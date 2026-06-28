@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-337 · 2026-06-28 · TASK_330 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — APPROVED
+
+TASK_330 FR-5 same-section dedup (0ae36a0e) | Verdict: APPROVED | 7/7 TestFR5DedupRowsWithinSection PASS (live run). Load-bearing distinction: exact (code,value_current) → drop second (L672 `if first_vc == vc:` → no append); same code DIFFERENT value → emit both (L695 `out.append(row)` in else-branch). OCR-variant WARNING is observability only — confirmed separate code path. test_same_code_different_value_both_emitted asserts len==2+both values present; test_exact_dup_collapsed_to_first asserts len==1+page_number==1 wins. FM-HPG-2: test_fm_hpg2_two_duplicate_codes_both_collapsed — code=140+400 both collapsed to p1 first occurrence. Scope: local `seen` dict per call — stateless, zero cross-call contamination. Call site L1633 dedup before L1639 positional cutoff (AC-6). NFR-4: grep per-issuer/ticker → empty. Full unit suite: 927 pass / 6 fail (all pre-existing PIL-ABI + page_rasterizer env; +7 new FR-5 green). Sandbox G12 5/5 PASS. mock-guard EXIT 0. DDD PASS. Security PASS. FPT non-regression: POST /api/bctc-eval/recompute → Stage 4 exact_dup_count=0 (BONUS from pre-existing 1), Stage 6 GREEN. orch-state: 330 READY→DONE, 331 BACKLOG→READY. DJ: sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md § qa-S5. Report: reports/TASK_REPORT_330.md.
+
 ## cycle-336 · 2026-06-28 · TASK_329 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — APPROVED
 
 TASK_329 FR-7 notes-section hard-stop (e0e30e83) | Verdict: APPROVED | THUY+MINH dual-token requirement (L565) independently confirmed in live code: `_is_notes_section_boundary("a ch . Thuyết")` → False (THUY present, MINH absent) — FPT 3-regression GENUINELY RESOLVED. Gate placement after all existing skip checks (date-header/junk/signature-date/backslash-fragment) at L1315, before _try_parse_code_row at L1340 — prevents false-stop on "Thuyết 31/3/2026..." column-header OCR fragments. 21/21 TestFR7NotesSectionBoundary PASS (live run). FPT non-regression: codes 100/270/440 present, code 270 value_current == 88,089,621,779,862.0. NFR-4 PASS: zero per-issuer/ticker/form branches in production diff. Full suite: 11 fail (1 fewer than dev baseline of 12, all pre-existing PIL-ABI/OCR env) / 1059 pass. orch-state: TASK_329 done DONE, TASK_330 backlog READY (unblocked). DJ: sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md § qa-S4. Report: reports/TASK_REPORT_329.md.
@@ -170,18 +174,6 @@ Task: TASK-CWKSCH-1+2 | Impl commit: 30b9a7f8 | Verdict: APPROVED | Board: DONE�
 
 Smart-Skip: test-only + flow-doc — DDD/security/mock-guard scanned, no production source modified. G1 TARGETED PASS: bun test DWF-phase1-cadence.test.ts --no-cache → 51/0 (409ms, 157 expect() calls). G2 T-14b RED INDEPENDENTLY REPRODUCED: removed FR-4 guard from batchWriteLastFired → 50/1 (T-14b: received STALE_A "...:09.104Z", expected FIRED_B "...:14.104Z"); ONLY T-14b failed; guard restored → 51/0. G3 FULL SUITE ci-per-file-isolation.sh 16: 13159 pass / 42 skip / 40 fail; 12 failing files ALL DISJOINT from commit (083-tool-analysis, 102-job-news-poll, 1227-source-health-empty-result, 125-test-e2e-briefing, 1288-poll-news-shape, 1324-push-news-all-sources, 1332-pollnews-source-display-name, 1345a-reuters-fallback, 1398-pollnews-all-dark-cooldown, 1793-pollnews-cooldown-persist, 1821a-pollnews-cold-start-retry, 1898b-rss-degradation-regression — all pre-existing, zero overlap with changed files). G4 TSC: exit 0. G5 DDD PASS: no forbidden imports. G6 SECURITY PASS: no process.env, no secrets. G7 DIFF REVIEW: last-fired.md guard 3 lines in WON_SLOTS loop only; null branch explicit; fresh-read + atomic-rename NOT touched. G8 VERIFICATION GATE: T-14 (Writer-A owns slot-a only → both slots persist) + T-14b (adversarial stale stamp blocked by guard) = verification gate PASS. DJ: sprint-FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER-qa.md.
 
-## cycle-296 · 2026-06-18 · FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE — APPROVED
-
-Task: FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE | Verdict: APPROVED | Board: ready→done_verified.
-
-Verify-only task (baseline_pass=true). test-fleet-push-classifier.sh exit 0: 5/5 PASS. BENIGN_RE extracted live from shipped script — single SSOT, no drift possible. CASE A (load-bearing regression): Merge+docs(reports)+chore+.jq behind-set = code_touched=0 → push proceeds. CASE B/C/E: code/config in behind-set → ABORT (code_touched=1). bash -n: PASS on both scripts. Guard 1 confirmed fixed in po/flow/main.md lines 141-144: checks .git/rebase-merge|.git/rebase-apply|.git/MERGE_HEAD|.git/index.lock — NOT dirty-tree files. Live dry-run with PUSH_THRESHOLD=0: ABORT (origin behind-set contains scripts/fleet-worktree-push.sh + scripts/test-fleet-push-classifier.sh = real code — correct). No push during QA. DJ: sprint-FIX-AUTO-PUSH-GUARD1-DEFEATS-PURPOSE.md.
-
-## cycle-295 · 2026-06-18 · TASK-AUTO-PUSH-A (ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP) — APPROVED
-
-Task: TASK-AUTO-PUSH-A | Impl commit: 26807a41 | Verdict: APPROVED | Board: review→done, next_agent=pm.
-
-Shell script gate (no bun test / tsc applicable). shellcheck exit 0 (re-confirmed independently). No-op path: ahead=11 ≤ 20 → exit 0, no worktree, no git ops. Divergence-abort path: PUSH_THRESHOLD=0 --dry-run → exit 1, 2 non-chore detected, bug telegram printed, no worktree leak. All 15 AC green: script 237L/755, PUSH_THRESHOLD=20 tunable, timestamped WT_PATH, trap EXIT INT TERM, divergence-reconcile, orch-state.json --ours, pnpm tsc gate, Telegram notif, no --force push, no hardcoded creds, dev-standards pointer. bg-agent safety guards correctly scoped to TASK-AUTO-PUSH-B-PO (brief §4.1). No push occurred during QA testing. DJ: sprint-ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP-qa.md.
-
 ---
 
 ## cycle-333 · 2026-06-28 · TASK_327 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — APPROVED
@@ -194,4 +186,4 @@ TASK-FFT-L3B (24bbecbf) | Verdict: APPROVED | Runner discrepancy resolved: fixer
 
 ## Archive
 
-Older cycles (c250–c332): cycle-332=TASK_326 FR-3 Roman OCR APPROVED; cycle-329=TASK-FFT-L4 APPROVED; cycle-328=TASK-FFT-L3A APPROVED; cycle-327=TASK-FFT-L2 APPROVED. See git history for full audit trail.
+Older cycles (c250–c332): cycle-332=TASK_326 FR-3 Roman OCR APPROVED; cycle-329=TASK-FFT-L4 APPROVED; cycle-328=TASK-FFT-L3A APPROVED; cycle-327=TASK-FFT-L2 APPROVED; cycle-296=FIX-AUTO-PUSH-GUARD1 APPROVED; cycle-295=TASK-AUTO-PUSH-A APPROVED. See git history for full audit trail.
