@@ -6038,7 +6038,7 @@
         "type": "SPRINT-M",
         "zone": "apps/mcp-server/",
         "title": "P1.5-MCP-2: gcExpiredLocks — pre-GC emit orphan-signals",
-        "status": "BACKLOG",
+        "status": "IN_PROGRESS",
         "priority": "P1.5",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1983-p15-mcp-2-gc-emit-logic.md",

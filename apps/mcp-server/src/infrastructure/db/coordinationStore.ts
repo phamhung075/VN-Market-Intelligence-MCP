@@ -373,11 +373,47 @@ export interface ListResult {
 // ---------------------------------------------------------------------------
 
 /**
+ * ALLOW-LIST for orphan-signal emission (DoD-P15-4).
+ *
+ * Only task_kinds with a defined resume contract (§6.5.5 table) may emit
+ * orphan-signals before GC. New kinds default to NOT-emitting — must opt-in
+ * by adding to this list. This prevents runaway adoption signals for kinds
+ * that have no adoption mechanism.
+ *
+ * 'cron-tick-with-published-checkpoint' is listed in the §6.5.5 resume table
+ * but is not yet in the DB CHECK constraint. It is included here for
+ * forward-compatibility — the IN() predicate will simply never match until
+ * the schema is widened to include that kind.
+ *
+ * Explicitly NOT in the allow-list (silent GC only):
+ *   - 'intent'           : transient router pre-claim gate — NOT adoptable work
+ *   - 'commit-mutex'     : short-lived git-index lock — NOT adoptable work
+ *   - 'orphan-signal'    : the signal itself — never re-signal a signal
+ *   - 'session-presence' : P2 roster liveness probe — NOT adoptable work
+ *   - 'published:*' ids  : dedup sentinels — NOT work units
+ */
+const ORPHAN_EMIT_ALLOW_LIST = [
+  "sprint-task",
+  "cowork-slot",
+  "cron-tick-with-published-checkpoint", // future-compat; not yet in CHECK enum
+  "dashboard-row",
+] as const;
+
+/**
  * Delete expired tombstone rows from the task_locks table.
  *
- * Only removes rows whose `expires_at` is older than `(now - graceSeconds)`.
- * The grace window prevents racing a row that just expired but whose owner
- * may still be in the middle of a final heartbeat or release call.
+ * P1.5-MCP-2 (TASK_1983): pre-GC phase emits 'orphan-signal' rows for expired
+ * adoptable locks BEFORE deleting them, enabling peer sessions to detect and
+ * adopt stranded work. Emission is ALLOW-LIST gated (DoD-P15-4): only kinds
+ * in ORPHAN_EMIT_ALLOW_LIST produce signals; all others are silently GC'd.
+ *
+ * Atomicity: the entire pre-GC emit + DELETE runs inside a single SQLite
+ * transaction (all-or-nothing). If the transaction fails, no orphan-signals
+ * are emitted and the original rows are preserved.
+ *
+ * Only removes rows whose `expires_at + graceSeconds` has elapsed (i.e.
+ * `expires_at + grace < unixepoch('now')`). The grace window prevents racing
+ * a row that just expired but whose owner may still be finishing a release.
  *
  * Safe to call frequently (on every task_claim) because:
  *   - Expired rows are by definition free to reclaim.
@@ -396,22 +432,105 @@ export interface ListResult {
  *                      Default: 300 (5 min). Must be >= 0.
  * @param excludeTaskId Optional task_id to skip (used by claimTask to protect
  *                      the row it is about to steal via the Step-2 UPDATE).
- * @returns Number of rows deleted.
+ * @returns Number of rows deleted (all expired rows, including non-adoptable).
  */
 export function gcExpiredLocks(db: Database, graceSeconds = 300, excludeTaskId?: string): number {
   const grace = Math.max(0, graceSeconds);
   try {
-    let result;
-    if (excludeTaskId !== undefined) {
-      result = db.prepare(
-        `DELETE FROM task_locks WHERE expires_at < unixepoch('now') - ? AND task_id != ?`
-      ).run(grace, excludeTaskId);
-    } else {
-      result = db.prepare(
-        `DELETE FROM task_locks WHERE expires_at < unixepoch('now') - ?`
-      ).run(grace);
+    db.exec("BEGIN");
+    try {
+      // ---- Phase 1: pre-GC scan — emit orphan-signals for expired adoptable rows ----
+      //
+      // ALLOW-LIST filter (DoD-P15-4): only kinds with a defined resume contract.
+      // The scan also excludes 'published:*' task_ids (dedup sentinels, not work units)
+      // and the excludeTaskId row being claimed right now (stale-steal path handles it).
+      const kindPlaceholders = ORPHAN_EMIT_ALLOW_LIST.map(() => "?").join(",");
+      const excludeClause = excludeTaskId !== undefined ? " AND task_id != ?" : "";
+      const scanParams: (number | string)[] = [grace, ...ORPHAN_EMIT_ALLOW_LIST];
+      if (excludeTaskId !== undefined) scanParams.push(excludeTaskId);
+
+      const expiredAdoptable = db
+        .prepare(
+          `SELECT task_id, task_kind, owner_agent, owner_client_session, payload, redispatch_count
+           FROM task_locks
+           WHERE expires_at + ? < unixepoch('now')
+             AND task_kind IN (${kindPlaceholders})
+             AND task_id NOT LIKE 'published:%'
+             ${excludeClause}`,
+        )
+        .all(...scanParams) as Array<{
+        task_id: string;
+        task_kind: string;
+        owner_agent: string;
+        owner_client_session: string | null;
+        payload: string | null;
+        redispatch_count: number;
+      }>;
+
+      if (expiredAdoptable.length > 0) {
+        // One prepared statement reused for all rows (efficiency).
+        // owner_session = 'server-reaper' (synthetic server-side identity; NOT NULL column).
+        // owner_client_session = NULL (available for any session to adopt).
+        // expires_at = now + 7200 (2h adoption window, per §6.5.2).
+        // INSERT OR REPLACE: idempotent — a second GC cycle overwrites the stale signal.
+        const insertOrphan = db.prepare(`
+          INSERT OR REPLACE INTO task_locks
+            (task_id, task_kind, owner_session, owner_agent, owner_client_session,
+             claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count)
+          VALUES
+            (?, 'orphan-signal', 'server-reaper', ?, NULL,
+             unixepoch('now'), unixepoch('now') + 7200, unixepoch('now'), 7200, ?, 0)
+        `);
+
+        for (const row of expiredAdoptable) {
+          // Carry-forward redispatch_count (DoD-P15-3): increment prior column value.
+          // Default 0 if absent/NULL on pre-column rows (defensive guard).
+          const priorCount = row.redispatch_count ?? 0;
+          const signalPayload = JSON.stringify({
+            original_task_id: row.task_id,
+            original_task_kind: row.task_kind,
+            original_owner_client_session: row.owner_client_session,
+            owner_agent: row.owner_agent,
+            last_payload: row.payload,
+            orphaned_at: Math.floor(Date.now() / 1000),
+            redispatch_count: priorCount + 1,
+          });
+          insertOrphan.run(
+            `orphan-signal:${row.task_id}`,
+            row.owner_agent,
+            signalPayload,
+          );
+          console.info(
+            `[coordinationStore] gcExpiredLocks: orphan-signal emitted` +
+              ` task_id=orphan-signal:${row.task_id}` +
+              ` kind=${row.task_kind}` +
+              ` redispatch_count=${priorCount + 1}`,
+          );
+        }
+      }
+
+      // ---- Phase 2: delete ALL expired rows (adoptable + non-adoptable) ----
+      // Non-adoptable kinds (intent, commit-mutex, session-presence, orphan-signal)
+      // and published:* dedup sentinels are silently deleted without emitting.
+      let result;
+      if (excludeTaskId !== undefined) {
+        result = db
+          .prepare(
+            `DELETE FROM task_locks WHERE expires_at + ? < unixepoch('now') AND task_id != ?`,
+          )
+          .run(grace, excludeTaskId);
+      } else {
+        result = db
+          .prepare(`DELETE FROM task_locks WHERE expires_at + ? < unixepoch('now')`)
+          .run(grace);
+      }
+
+      db.exec("COMMIT");
+      return result.changes;
+    } catch (innerErr) {
+      db.exec("ROLLBACK");
+      throw innerErr;
     }
-    return result.changes;
   } catch (err) {
     // Non-fatal — log only; GC failure must not block the claim path.
     console.warn("[coordinationStore] gcExpiredLocks error (non-fatal)", err);
