@@ -274,10 +274,24 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-26T04:33:13Z",
-    "_updated_by": "po-s118",
+    "_updated_at": "2026-06-28T03:12:22Z",
+    "_updated_by": "po",
     "archive": [],
     "rows": [
+      {
+        "id": "sau-d4-202606280300",
+        "ts": "2026-06-28T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-28T03:12:22Z",
+        "resolved_by": "po",
+        "resolution": "known-FP: ESC-3 datacov escalation lock is LIVE (claimed ~3.5d ago, TTL 8d, expires 2026-07-02T15:04:16Z, owner bctc-analyst); board-row-less BY DESIGN per feedback_esc3_held_lock_no_board_row_is_legit; no dev-team code leverage; durable predicate fix already tracked as FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (backlog)"
+      },
       {
         "id": "sau-d4-202606240300",
         "ts": "2026-06-24T03:00Z",
@@ -834,7 +848,7 @@
         "triaged_by": "po"
       }
     ],
-    "last_triaged_at": "2026-06-25T22:06:25Z",
+    "last_triaged_at": "2026-06-28T03:12:22Z",
     "last_triaged_by": "po"
   },
   "sprint_goal": {
