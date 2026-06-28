@@ -239,6 +239,34 @@ Located in `apps/frontend/app/components/ui/`:
 - `card.tsx` — card container
 - `input.tsx` — form input
 
+## Analysis Hub — Stock-Scoped Zone Components
+
+Located under `apps/frontend/app/components/analysis/`. Each accepts a `stock: string` prop and is self-contained (uses `useFetcher` + `useEffect` to fetch its own data — no parent pre-fetch required).
+
+| Component | File | Filter strategy | API endpoint |
+|---|---|---|---|
+| `ReputationZone` | `ReputationZone.tsx` | CLIENT-SIDE — `leaderboard.find(e => e.code === stock)` | `GET /api/reputation` (full universe) |
+| `NewsBuzzZone` | `NewsBuzzZone.tsx` | CLIENT-SIDE — `leaderboard.find(e => e.code === stock)` | `GET /api/news-buzz` (full universe, 7-day window) |
+| `ConvictionHistoryZone` | `ConvictionHistoryZone.tsx` | NATIVE — `?symbol=${stock}` passed to API | `GET /api/conviction-history?symbol=${stock}` |
+
+### Exported pure helpers (testable without DOM)
+
+**ReputationZone:** `filterReputationEntry(leaderboard, stock)`, `filterReputationHistory(history, stock)`
+
+**NewsBuzzZone:** `filterNewsBuzzEntry(leaderboard, stock)`
+
+**ConvictionHistoryZone:** `pickStockConvictionRow(snapshot, stock)`, `pickStockSeries(series, stock)`
+
+### Loading lifecycle
+
+All three components show an animated loading placeholder until `useFetcher.state === "idle"` AND `fetcher.data` is defined. The load is triggered once on mount (or when `stock` changes for ConvictionHistoryZone).
+
+### Not-found state
+
+Reputation and NewsBuzz show a "no data for this ticker" message when the client-side filter returns `undefined`. ConvictionHistoryZone shows the same when `snapshot.length === 0`.
+
+---
+
 ## Error Handling
 
 All route components render an error banner when `errors.length > 0`:
