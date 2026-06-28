@@ -1,30 +1,22 @@
 # PO Notebook
 
-_Last: 2026-06-28T03:45Z_
+_Last: 2026-06-28T07:57Z_
 
-## This cycle — dev-team :39 triage -> NOTHING (flaky ci_red dismissed + de-flake filed PLAN-ONLY)
+## This cycle — RECONCILE dual-scheme collision on FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (commit 950906c4)
 
-Head idle (active_task_id=null). Board: in_progress=0, ready=0, review=2, qa=0, backlog 322->323, done=24. Git 0 ahead / 0 behind origin/main (HEAD=fa891634; PO push last tick caught origin up).
+Head-divergence: TWO decompositions of the same 7-FR sprint collided in zone apps/pdf-extractor/.
+- **LIVE parallel terminal (numeric scheme — CANONICAL):** flat board rows 326..332. Real committed progress: FR-3 done (cdc8b93f), 326 DONE; 327 FR-1 READY; 328-332 BACKLOG. Order matches architect seq EXACTLY (FR-3→FR-1→FR-2→FR-7→FR-5→FR-4→FR-6). Sprint tracked in in_progress[] + flat rows. Live terminal even created TASK_331/TASK_332 handoffs mid-reconcile.
+- **My pm worker (a85aa817, c7eda13c — DUPLICATE, retired):** TASK-301..307 nested in active_sprints[FIX-BCTC].tasks + head pointed at TASK-301 (==already-done FR-3). 7 dup handoffs. Pure duplicate — every FR already had a numeric equiv, so kept NONE of pm's.
 
-**ONE signal:** `ci_red` on HEAD fa891634 (run 28309775668), failing job `bun test`, file `1187-pollnews-dead-path.test.ts` — CI 13457 pass / 1 fail. dedup_key=`ci_red:fa891634...:bun test`.
+**Actions (single orch-apply.sh write + git rm + commit 950906c4):**
+1. head: repointed OFF TASK-301 (done FR-3) ONTO 327 (next undone FR-1, already READY), next_agent=dev-pdf-extractor. Guarded on startswith("TASK-30"). Stops router re-dispatching committed work / breaking on deleted handoff.
+2. Removed pm-only active_sprints[FIX-BCTC] container → dedups sprint double-listing (sprint now solely in in_progress[]).
+3. Deleted all 7 pm TASK-301..307-*.md (mine via pm cascade). Numeric TASK_326..332 = canonical set.
 
-**RAW re-confirm = FLAKY TRANSIENT, not a regression:**
-- HEAD fa891634 diff is DOCS-ONLY (po.md notebook + orch-state.json — my own prior triage commit) -> physically cannot cause a TS test regression.
-- Parent dfdaa2ab was full CI GREEN (run 28303210914).
-- Re-ran the file locally 2x -> 4 pass / 0 fail each (router 3 + po 2 = 5/5 deterministic PASS).
-- `no such table: alerts` / `no such table: agent_signals` are non-fatal expected reduced-mode dead-path errors the test explicitly tolerates (spy fetchers, no real network).
+Did NOT: dispatch dev-pdf-extractor (head set so dev-team router dispatches 327 next tick), flip 326 DONE→verified (QA gate), touch any live numeric row. Live rows verified intact post-commit. Push left to fleet-push timer.
 
-**Disposition (a) RESOLVE/DISMISS:** annotated `docs/signals/processed/ci-red-fa891634-20260628034000.json` with `po_disposition=FLAKY_TRANSIENT_DISMISSED` (RAW evidence + no_fix_dispatched=true). Signal already drained to processed/; ci-health-probe dedups on the SHA file -> will NOT re-surface for fa891634; verification_gate `ci_green_on_subsequent_push` self-satisfies next real push. No FIX sprint dispatched (would "repair" passing code).
+LESSON: when my own pm cascade duplicates a sprint a live terminal already drives with real commits — retire MY duplicate, keep theirs; repoint head off any already-done task; dedup the sprint container; CAS-guard the write (live terminal writes concurrently — 327 flipped BACKLOG→READY mid-triage).
 
-**Disposition (b) DE-FLAKE PLAN-ONLY:** filed `DEFLAKE-1187-POLLNEWS-DEAD-PATH` -> backlog (status BACKLOG, plan_only=true, zone apps/mcp-server/, priority low) via orch-apply.sh. No prior dup (0 hits). Root: CI per-file-isolation DB-schema/setup race (test DB lacks alerts/agent_signals tables -> reduced mode). NOT promoted (no urgency-driver; WIP=2 respected).
+## Prev cycle — USER BUG triage: BCTC table/column FPT-only → SPRINT-M cascade (FR-1..7, blockers B1-B5 resolved → architect → pm decomposed)
 
-**Returned NOTHING** — flaky signal disposed, de-flake is backlog-only (not dispatched). No genuine dev-team CODE leverage this tick.
-
-## Carry-over
-- DEFLAKE-1187-POLLNEWS-DEAD-PATH in backlog: PLAN-ONLY; promote only with a real urgency-driver (e.g. recurrence of the same flaky file on a fresh SHA).
-- review-lane(2): ARCH-SHIP-WAVE-REAUDIT DEFERRED + TASK-FFT-L4 REVIEW (awaiting qa) — both legit parked, untouched.
-- SSOT-W1-HOOK-ENFORCE: PO-DEFERRED pending QA-5 block-proof plan — do NOT re-dispatch without it.
-- CLEAN-deferred: ci-red-fix-buntest worktree @6bcbe2e5 (owner not concluded + tree dirty) — verify clean before worktree remove.
-- qa.md self-cap RESOLVED (183L) — re-prune/re-file FORBIDDEN.
-- FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE in backlog: durable ESC-3 auditor-FP fix; no driver to promote yet.
-- backlog=323 no urgency-driver -> no speculative WIP-fill (FORBIDDEN).
+User: BCTC table+column extraction correct ONLY for FPT. Root: text_table_extractor.py split regexes overfit to FPT OCR. Minted FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (P1, apps/pdf-extractor/). BA spec live-probed FR-1..7; B1 targets VCB/HPG/VNM/FPT locked; B2 FPT non-reg=Stage6 GREEN; B3 POST /api/bctc-eval/recompute/:id; B4 FACTORY-DOMAIN sequenced-after; B5 FR-4 in-scope. Architect design done (generalization mechanism per NFR-4). Then pm decomposed → the dual-scheme collision reconciled this cycle.
