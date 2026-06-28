@@ -4,6 +4,28 @@
 
 ---
 
+## Session: 2026-06-28 (FE-AHUB-W2-CORPEVENTS-ZONE — CorporateEventsZone component)
+
+**FE-AHUB-W2-CORPEVENTS-ZONE REVIEW — CorporateEventsZone built, 22 tests GREEN, tsc clean**
+
+New component `apps/frontend/app/components/analysis/CorporateEventsZone.tsx`:
+- Accepts `stock: string` (UPPERCASE ticker) prop.
+- Fetches full `/api/corporate-events?days=90` universe via `useFetcher` once on mount.
+- Client-side filter on `event.code` field (API has no per-code param).
+- Exports: `filterStockEvents(events, stock)` + `deriveSortedCategories(events)` for unit tests.
+- States: loading skeleton, error banner, empty ("no events in 90d"), populated event list with CategoryBadge + FreshnessBadge header.
+- Reuses `categoryColorClass` + `CorporateEvent` types from `dashboard.corporate-events.tsx`.
+- Test file: `FE-AHUB-W2-CORPEVENTS-ZONE.test.ts` — 22 pure-logic assertions (suites 1-8).
+
+Client-side filter field: `event.code` (compared against `stock` prop — case-sensitive, UPPERCASE).
+API note: `api.corporate-events.tsx` accepts `?days` and `?type` only; no per-code param.
+
+Commit: `961ce5f8` | Files: 2 | Tests: 22/22 GREEN | tsc: EXIT 0
+
+Zone health: CorporateEventsZone ready for INT integration into dashboard.analysis.tsx by serialized closer; no regressions in existing 1824 tests; 2 pre-existing QUE_DESCRIPTIONS failures unrelated | HEALTHY
+
+---
+
 ## Session: 2026-06-28 (FE-AHUB-W4-SOCIAL-ZONES — 3 stock-scoped analysis zone components)
 
 **FE-AHUB-W4-SOCIAL-ZONES REVIEW — 3 zone files built, 41 tests GREEN, tsc clean**

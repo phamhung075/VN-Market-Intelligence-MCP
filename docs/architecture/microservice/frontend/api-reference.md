@@ -245,11 +245,14 @@ Located under `apps/frontend/app/components/analysis/`. Each accepts a `stock: s
 
 | Component | File | Filter strategy | API endpoint |
 |---|---|---|---|
+| `CorporateEventsZone` | `CorporateEventsZone.tsx` | CLIENT-SIDE — `events.filter(e => e.code === stock)` | `GET /api/corporate-events?days=90` (full universe; no per-code param) |
 | `ReputationZone` | `ReputationZone.tsx` | CLIENT-SIDE — `leaderboard.find(e => e.code === stock)` | `GET /api/reputation` (full universe) |
 | `NewsBuzzZone` | `NewsBuzzZone.tsx` | CLIENT-SIDE — `leaderboard.find(e => e.code === stock)` | `GET /api/news-buzz` (full universe, 7-day window) |
 | `ConvictionHistoryZone` | `ConvictionHistoryZone.tsx` | NATIVE — `?symbol=${stock}` passed to API | `GET /api/conviction-history?symbol=${stock}` |
 
 ### Exported pure helpers (testable without DOM)
+
+**CorporateEventsZone:** `filterStockEvents(events, stock)` → `CorporateEvent[]`, `deriveSortedCategories(events)` → `string[]`
 
 **ReputationZone:** `filterReputationEntry(leaderboard, stock)`, `filterReputationHistory(history, stock)`
 
