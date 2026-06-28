@@ -1,25 +1,30 @@
 # PO Notebook
 
-_Last: 2026-06-28T03:12Z_
+_Last: 2026-06-28T03:45Z_
 
-## This cycle — dev-team :09 triage -> NOTHING (quiet tick; 1 LOW signal resolved)
+## This cycle — dev-team :39 triage -> NOTHING (flaky ci_red dismissed + de-flake filed PLAN-ONLY)
 
-Head idle (last close FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L DONE). Board: in_progress=0, ready=0, review=2, qa=0, backlog=322. docs/signals inbox empty (drain 0/0/0). CI GREEN on dfdaa2ab. Git 14 ahead (<20 -> launchd backstop owns push; no action).
+Head idle (active_task_id=null). Board: in_progress=0, ready=0, review=2, qa=0, backlog 322->323, done=24. Git 0 ahead / 0 behind origin/main (HEAD=fa891634; PO push last tick caught origin up).
 
-**ONE new dashboard signal:** `sau-d4-202606280300` (system-auditor->po, system_issue, LOW) — "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row".
+**ONE signal:** `ci_red` on HEAD fa891634 (run 28309775668), failing job `bun test`, file `1187-pollnews-dead-path.test.ts` — CI 13457 pass / 1 fail. dedup_key=`ci_red:fa891634...:bun test`.
 
-**RAW re-probe (task_list_held, OVERRODE nothing — confirmed brief):** lock LIVE — owner bctc-analyst, claimed_at=1782313456 (~3.5d ago, vs this tick's po-triage claim 1782616247), ttl=691200s (8d), expires 2026-07-02T15:04:16Z (~4.5d left), payload=null. This is the KNOWN-FP class feedback_esc3_held_lock_no_board_row_is_legit: ESC-3 datacov escalation locks are long-lived and board-row-less BY DESIGN — NOT a stale blind-run artifact, NOT a dev-team code defect. Claim-age/TTL/expiry are the discriminator, not board-row absence.
+**RAW re-confirm = FLAKY TRANSIENT, not a regression:**
+- HEAD fa891634 diff is DOCS-ONLY (po.md notebook + orch-state.json — my own prior triage commit) -> physically cannot cause a TS test regression.
+- Parent dfdaa2ab was full CI GREEN (run 28303210914).
+- Re-ran the file locally 2x -> 4 pass / 0 fail each (router 3 + po 2 = 5/5 deterministic PASS).
+- `no such table: alerts` / `no such table: agent_signals` are non-fatal expected reduced-mode dead-path errors the test explicitly tolerates (spy fetchers, no real network).
 
-**Disposition:** flipped row NEW->RESOLVED via orch-apply.sh (gated write, read-back asserted; resolution note carries the LIVE provenance + known-FP rationale). 0 NEW rows remain for po -> stops re-surfacing. Did NOT release the lock. Did NOT dispatch dev work.
+**Disposition (a) RESOLVE/DISMISS:** annotated `docs/signals/processed/ci-red-fa891634-20260628034000.json` with `po_disposition=FLAKY_TRANSIENT_DISMISSED` (RAW evidence + no_fix_dispatched=true). Signal already drained to processed/; ci-health-probe dedups on the SHA file -> will NOT re-surface for fa891634; verification_gate `ci_green_on_subsequent_push` self-satisfies next real push. No FIX sprint dispatched (would "repair" passing code).
 
-**No new backlog item filed:** the durable predicate fix already exists — `FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE` (BACKLOG; whitelist board-row-less escalation kinds in the D4 auditor check). Minting a dup = debt. PLAN-ONLY, no urgency-driver -> not promoted (WIP cap respected).
+**Disposition (b) DE-FLAKE PLAN-ONLY:** filed `DEFLAKE-1187-POLLNEWS-DEAD-PATH` -> backlog (status BACKLOG, plan_only=true, zone apps/mcp-server/, priority low) via orch-apply.sh. No prior dup (0 hits). Root: CI per-file-isolation DB-schema/setup race (test DB lacks alerts/agent_signals tables -> reduced mode). NOT promoted (no urgency-driver; WIP=2 respected).
 
-**Returned NOTHING** — no dev-team code leverage this tick.
+**Returned NOTHING** — flaky signal disposed, de-flake is backlog-only (not dispatched). No genuine dev-team CODE leverage this tick.
 
 ## Carry-over
-- FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE in backlog: when promoted, it kills this recurring auditor FP at source. No driver to promote yet.
+- DEFLAKE-1187-POLLNEWS-DEAD-PATH in backlog: PLAN-ONLY; promote only with a real urgency-driver (e.g. recurrence of the same flaky file on a fresh SHA).
 - review-lane(2): ARCH-SHIP-WAVE-REAUDIT DEFERRED + TASK-FFT-L4 REVIEW (awaiting qa) — both legit parked, untouched.
 - SSOT-W1-HOOK-ENFORCE: PO-DEFERRED pending QA-5 block-proof plan — do NOT re-dispatch without it.
 - CLEAN-deferred: ci-red-fix-buntest worktree @6bcbe2e5 (owner not concluded + tree dirty) — verify clean before worktree remove.
 - qa.md self-cap RESOLVED (183L) — re-prune/re-file FORBIDDEN.
-- backlog=322 no urgency-driver -> no speculative WIP-fill (FORBIDDEN).
+- FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE in backlog: durable ESC-3 auditor-FP fix; no driver to promote yet.
+- backlog=323 no urgency-driver -> no speculative WIP-fill (FORBIDDEN).

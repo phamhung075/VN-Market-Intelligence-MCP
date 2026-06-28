@@ -1,0 +1,48 @@
+{
+  "from": "ci-health-probe",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-06-28T03:40:00Z",
+  "dedup_key": "ci_red:fa891634b5dee5474ca528ce2b295c8f4870a1db:bun test",
+  "payload": {
+    "check_id": "CI-RED-fa891634",
+    "head_sha": "fa891634b5dee5474ca528ce2b295c8f4870a1db",
+    "run_id": 28309775668,
+    "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28309775668",
+    "conclusion": "failure",
+    "failing_jobs": [
+      {
+        "name": "bun test",
+        "conclusion": "failure",
+        "jobId": 83872379049
+      }
+    ],
+    "fingerprint": "f2214fd275003cd1603d7dd1c746486161de966570719125f713a8b6cde59079",
+    "zone_owner": "dev-team (CI fix)",
+    "summary": "CI RED on main HEAD fa891634b5dee5474ca528ce2b295c8f4870a1db: bun test",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "_processed": {
+    "fingerprint": "ffbd216e80887ba27bf383b07e02d597632344d7a1e00c32b93b89a0a6eb9579",
+    "processedAt": "2026-06-28T03:42:12Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  },
+  "po_disposition": {
+    "verdict": "FLAKY_TRANSIENT_DISMISSED",
+    "disposedBy": "po",
+    "disposedAt": "2026-06-28T03:45:00Z",
+    "no_fix_dispatched": true,
+    "rationale": "CI per-file-isolation transient, NOT a real code regression. No FIX sprint dispatched (would 'repair' passing code).",
+    "raw_evidence": [
+      "HEAD fa891634 diff is DOCS-ONLY (docs/agent-memory/notebooks/po.md + docs/data/orch/orch-state.json — the prior PO triage commit) — physically cannot cause a TypeScript test regression.",
+      "Parent commit dfdaa2ab was full CI GREEN (run 28303210914).",
+      "1187-pollnews-dead-path.test.ts re-run locally 5x deterministic (router 3 + po 2) = 4 pass / 0 fail every run.",
+      "'no such table: alerts' / 'no such table: agent_signals' are non-fatal expected reduced-mode dead-path errors the test explicitly tolerates (spy fetchers, no real network)."
+    ],
+    "verification_gate": "ci_green_on_subsequent_push — self-satisfies on next real push regardless; no action owed.",
+    "deflake_backlog": "DEFLAKE-1187-POLLNEWS-DEAD-PATH (PLAN-ONLY, filed to .task_board.backlog)"
+  }
+}

@@ -5858,6 +5858,19 @@
         "created_at": "2026-06-27T19:45:58Z",
         "depends": [],
         "note": "BA spec: docs/handoffs/BA-FRONTEND-FRESHNESS-TRANSPARENCY.md. Ratify ARCH-RATIFY-FFT-1 (FreshnessBadge file location), ARCH-RATIFY-FFT-2 (useFreshnessRevalidator hook location), ARCH-RATIFY-FFT-3 (coverageMapFreshnessChecker DDD placement), ARCH-RATIFY-FFT-4 (canonical data_asof key vs per-handler key). Design: FreshnessBadge props interface + SLA threshold constants + color logic; useFreshnessRevalidator contract; data_asof normalization pattern for 5 handlers; L4 domain service interface. Hand PM TASK-FFT-L2/L3A/L3B/L4 atomization."
+      },
+      {
+        "id": "DEFLAKE-1187-POLLNEWS-DEAD-PATH",
+        "title": "De-flake 1187-pollnews-dead-path.test.ts — CI per-file-isolation transient (passes 5/5 local, fails ~1/N under CI isolation)",
+        "owner": "po",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "type": "FIX",
+        "plan_only": true,
+        "created_at": "2026-06-28T03:45:16Z",
+        "depends": [],
+        "note": "PLAN-ONLY (NOT a code-passing repair). Root: the test tolerates non-fatal reduced-mode errors no such table: alerts / no such table: agent_signals — under CI per-file isolation the test DB lacks those tables so intelligence-cycle runs in reduced mode; the single-file CI run flaked 1 fail while parent dfdaa2ab was full-green and the file passes 5/5 deterministically locally (router 3 + po 2). Likely a per-file-isolation DB-schema/setup ordering race. AC: make the test DB setup deterministic (create/seed alerts + agent_signals schema in beforeAll, or make dead-path assertions independent of table presence) so the file passes under both full-suite and isolated CI runs. Provenance: docs/signals/processed/ci-red-fa891634-20260628034000.json (po_disposition=FLAKY_TRANSIENT_DISMISSED). Flaky tests erode the green-gate (CLAUDE.md detect-then-reduce-debt)."
       }
     ],
     "closed_sprints": [
