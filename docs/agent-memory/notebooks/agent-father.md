@@ -1,5 +1,14 @@
 # Agent Father — Notebook
 
+## 2026-06-28 — CROSS-SESSION-MULTI-TEAM-ORCH P2-AF-2 (TASK_1991)
+
+- Task: Wire roster READ (Phase A.5) into router step 2.5 — between orphan-probe (Phase A) and PRE-CLAIM (Phase B)
+- Files: `CLAUDE.md` (Phase A.5 block in step 2.5) + `.claude/skills/dispatch-claim/SKILL.md` (§ Phase A.5 new section)
+- Phase A.5 pattern: `task_list_held(kind="session-presence")` READ-ONLY; log compact roster; duplicate agent_id → WARN non-blocking; never gates dispatch
+- Ordering enforced: Phase A (orphan-probe) → Phase A.5 (roster read) → Phase B (PRE-CLAIM)
+- Decision journal: `docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-p2-af2-agent-father.md`
+- No rebuild required; zero runtime change
+
 ## 2026-06-28 — CROSS-SESSION-MULTI-TEAM-ORCH P2-AF-1 (TASK_1990)
 
 - Task: Dispatcher presence self-registration — docs/flow/skill only, zero rebuild

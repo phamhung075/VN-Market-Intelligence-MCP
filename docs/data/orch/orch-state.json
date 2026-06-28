@@ -1553,7 +1553,7 @@
             "title": "P2-AF-2: Wire roster READ into router Step 2.5",
             "owner": "agent-father",
             "type": "SPRINT-S",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": ".claude/skills/ + CLAUDE.md",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",

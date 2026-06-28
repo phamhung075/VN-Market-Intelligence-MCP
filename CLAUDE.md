@@ -11,6 +11,11 @@ Main terminal = router only. Never implement directly. Always delegate.
        if `redispatch_count >= 3` → escalate BUG once (idempotent: check `payload.status=="ESCALATED"`), skip.
        Router DEFERS tree-hygiene to dev-team Step 0a (P1.5-AF-2) — never reverts uncommitted files itself.
        Full probe pseudocode → `.claude/skills/dispatch-claim/SKILL.md` § Orphan-Adoption Probe
+     **Phase A.5 — Presence Roster Read (READ-ONLY advisory):**
+       `task_list_held(kind="session-presence")`
+       Log: `"[router] session-presence roster: [<agent_id>/<host>/<current_task>, ...]"` for each live row.
+       Same `agent_id` in multiple sessions → log `"[router] WARN: <agent_id> active in N sessions — potential overlap"`.
+       Advisory only — NEVER blocks dispatch. Full spec → `.claude/skills/dispatch-claim/SKILL.md` § Phase A.5
      **Phase B — PRE-CLAIM gate (existing):**
      `task_claim(task_id="intent:<agent>:<intent-key>", task_kind="intent",
                  owner_agent="<agent>", owner_client_session=$CLAUDE_CODE_SESSION_ID,

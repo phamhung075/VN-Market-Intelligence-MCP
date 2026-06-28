@@ -344,6 +344,66 @@ The router adoption probe covers: `intent:*` claims and any router-owned sprint-
 
 ---
 
+## Phase A.5 — Presence Roster Read (READ-ONLY advisory)
+
+**Sprint:** CROSS-SESSION-MULTI-TEAM-ORCH · TASK_1991  
+**Fires:** AFTER Phase A orphan-adoption probe, BEFORE Phase B PRE-CLAIM gate.  
+**Purpose:** Surface the live cross-team roster so the router sees who is working across all sessions before locking a new intent.
+
+```
+# Phase A.5 — Read presence roster (advisory; non-blocking)
+roster = call_tool(server="vn-market", tool="task_list_held", arguments={
+  kind: "session-presence"
+})
+
+# Result row structure:
+# {
+#   task_id:              "session-presence:<session-uuid>",
+#   task_kind:            "session-presence",
+#   owner_agent:          "<dispatcher-role>",          # e.g. "dev-team", "cowork-dispatcher"
+#   owner_client_session: "<session-uuid>",              # identity key
+#   payload: {
+#     agent_id:     "<dispatcher-id>",                   # e.g. "dev-team", "cowork-team"
+#     host:         "<hostname>",
+#     started_at:   "<ISO8601>",
+#     current_task: "<task-id or 'dispatch-init'>"      # advisory, best-effort
+#   },
+#   heartbeat_at: "<ISO8601>",
+#   expires_at:   "<ISO8601>"
+# }
+
+# Log compact roster for observability
+roster_summary = []
+for each row in roster:
+  roster_summary.append(row.payload.agent_id + "/" + row.payload.host + "/" + row.payload.current_task)
+
+log "[router] session-presence roster: [" + join(roster_summary, ", ") + "]"
+
+# Cross-session collision detection — same agent_id in multiple live sessions
+agent_id_counts = count_by(roster, field="payload.agent_id")
+for each (agent_id, count) in agent_id_counts:
+  if count > 1:
+    log "[router] WARN: " + agent_id + " active in " + count + " sessions — potential overlapping work"
+
+# Roster read is READ-ONLY advisory — ALWAYS proceed to Phase B regardless of result.
+# Zero rows = no peer sessions live (single-team / fresh startup) — proceed silently.
+# Same agent_id in N sessions = expected during multi-team ops (cowork-team parallel runs);
+# warn but allow.  Phase B PRE-CLAIM is the authoritative hard gate.
+```
+
+**Example log output (2 teams live):**
+```
+[router] session-presence roster: [dev-team/host-1/TASK_1990, cowork-dispatcher/host-1/dispatch-init, dev-team/host-2/TASK_500]
+[router] WARN: dev-team active in 2 sessions — potential overlapping work
+```
+
+**What this is NOT:**
+- Not a gate — never blocks dispatch, even on duplicate agent_id warning.
+- Not a replacement for Phase B PRE-CLAIM (that is the authoritative hard mutex).
+- Not an adoption probe — stale presence rows simply expire; they are never adopted (P2 INVARIANT in § Step 0a).
+
+---
+
 ## Reference Commits (Sprint 1962c — outer wrap origin)
 
 - `docs/agents/dev-team/flow/execute-tier.md` (S1) — `592fe1c4`
