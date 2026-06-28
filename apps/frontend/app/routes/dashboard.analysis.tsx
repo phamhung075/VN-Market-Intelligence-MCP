@@ -50,7 +50,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
-import { StockChart } from "~/components/charts/StockChart";
 import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
 import { formatChangePct } from "~/domain/formatters/change-pct.js";
 import { formatSignalTypeLabel } from "~/domain/formatters/signal-type-label.js";
@@ -1531,11 +1530,6 @@ function StockDetailPanel({
         sector={stockInfo?.sector ?? null}
         tiles={watchlistTiles}
       />
-
-      {/* Chart — full width, client-only render */}
-      <div className="border-b border-slate-700">
-        <StockChart prices={prices} height={560} />
-      </div>
 
       {/* Decision panel — synthesized buy/sell/hold */}
       <AnalysisDecision ta={ta} reading={reading} prices={prices} />
