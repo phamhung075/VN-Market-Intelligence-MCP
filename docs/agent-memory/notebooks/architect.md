@@ -1,8 +1,34 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-27T19:38 UTC | **Sprint:** BCTC-REFINE-STALL-RETRIGGER (THROUGHPUT-DRAIN re-scope)
+**Last updated:** 2026-06-28 07:30 UTC | **Sprint:** FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-28T07:30Z — FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (DESIGN DONE)
+
+**Task:** ARCH-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT | BUG-FIX (P1, SPRINT-M) | zone: `apps/pdf-extractor/` (single zone)
+**BUILD-STANDARD:** not-applicable (bug-fix/refactor, no new primitives)
+**7 FRs resolved:**
+- FR-1 (infra): `_CODE_VALUE_COL_RE` code group narrowed `\d{2,3}` → `\d{3}` — rejects 2-digit note-ref captured as code (Layout 3 false-positive). FPT non-regression: all FPT codes are 3-digit.
+- FR-2 (infra): post-parse label clean `re.sub(r'\s+\d{1,3}$', '', label)` with ≥5-char guard in `_parse_lines_to_rows`. "Chứng khoán kinh doanh 4" → "Chứng khoán kinh doanh".
+- FR-3 (infra): `_ROMAN_OCR_NORMALIZE` dict (Il→II, Ill→III, IIl→III, lV→IV, VlI→VII, VIl→VII, VIll→VIII, VlII→VIII) applied to line-start token in `_try_parse_roman_code_row` BEFORE `_ROMAN_CODE_RE.match()`.
+- FR-4 (application): NEW `_detect_section_start(page_text) → Optional[str]` + `_filter_pages_to_section(pages, section)` in `extract_tables_usecase.py`. Replaces direct `select_balance_sheet_section()` call with generalized section filter for all 3 section types. TextTableExtractor unchanged. Vietnamese section-title keywords, no issuer branches.
+- FR-5 (infra): NEW `_dedup_rows_within_section(rows)` in `assemble()` post-stitch (before positional cutoff). First-wins; identical (code, value_current) → drop + WARNING; different values → emit both + WARNING. Clears HPG/VNM exact_dup_count=0.
+- FR-6 (domain): RISK-1 — vn_number_normalize ALREADY handles "(1.992.671)" correctly via existing _VN_INT_RE path. The FM-VCB-4 bug is UPSTREAM in value-cell splitting. Defensive fix: apply poppler-artifact space handler `re.sub(r"(\(\d[\d.]*)\.\s+(\d[\d.]*\))", r"\1.\2", cleaned)` in `_parse_value` (mirrors existing handler at _find_code_in_line L250). Trace-first mandatory before dev ships.
+- FR-7 (infra): `_is_notes_section_boundary()` + `_in_notes_section` flag in `_parse_lines_to_rows`. Stops on standalone integer ≥15 with trailing period ("26.") or "Thuyết minh"/"Ghi chú" header.
+**Key risks:** RISK-1 HIGH (FR-6 fix target is upstream not vn_number_normalize — trace first); RISK-4 MEDIUM (FR-4 section keywords may over-filter if they appear in page footers — scope detection to first 30 lines); RISK-6 MEDIUM (FR-4 only covers Path A pre-supplied; Path B auto-locate unaffected).
+**Output:** `[Architect] Brownfield Findings` appended to `docs/handoffs/FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT.md`; decision journal: `docs/agent-memory/decisions/sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-architect.md`
+**Recommended PM sequencing:** FR-3 → FR-1 → FR-2 → FR-7 → FR-5 → FR-4 → FR-6 (trace-first). All single zone, sequential dispatch (shared file text_table_extractor.py).
+
+## 2026-06-27T20:00Z — FRONTEND-FRESHNESS-TRANSPARENCY (DESIGN DONE)
+
+**Task:** ARCH-FRONTEND-FRESHNESS-TRANSPARENCY | NEW-FEATURE (lean) | zone: `apps/frontend/` + `apps/mcp-server/`
+**4 ratifications:** (FFT-1) FreshnessBadge → `apps/frontend/app/components/FreshnessBadge.tsx` RATIFIED (mirrors InfoCardExpand.tsx; product-domain component, not UI primitive). (FFT-2) useFreshnessRevalidator → `apps/frontend/app/lib/hooks/useFreshnessRevalidator.ts` RATIFIED with FLAG (dev must create `lib/hooks/` dir — does not exist yet). (FFT-3) coverageMapFreshnessChecker → `apps/mcp-server/src/domain/services/coverageMapFreshnessChecker.ts` RATIFIED with DDD OVERRIDE: injectable is `injectedRows?: CoverageMapRow[]` NOT `coverageMapPath?: string` (domain must not do I/O; file-read stays in scheduler layer). (FFT-4) `data_asof` canonical key RATIFIED (single surface key regardless of internal DB column).
+**Key design decisions:** D1=SLA tier constants baked into FreshnessBadge (no runtime fetch). D2=null guard before ClientTimeString (ClientTimeString.iso is non-nullable; guard on dataAsof===null). D3=sector-rotation EC-8: use `generatedAt` (ISO 8601) as dataAsof, not `tradingDate` (date string). D4=qualityChecklist compute-time asof is correct by design; document in handler. D5=`runFreshnessSlaMonitor` gains `injectedCoverageMapRows?` param — backward-compatible. D6=sla_tiers expanded to named-field objects in TS constants.
+**Risk flags:** RISK-1 (MEDIUM, DDD override on FFT-3). RISK-2 (MEDIUM, qualityChecklist always-green by design). RISK-3 (LOW, sector-rotation generatedAt vs tradingDate). RISK-4 (LOW, lib/hooks dir missing). RISK-5 (MEDIUM, ClientTimeString null guard). RISK-6 (LOW, L4 perf negligible).
+**Multi-zone confirmed:** dev-mcp-server (L2+L4) + dev-frontend (L3A+L3B); PM atomizes into 4 tasks per BA chain.
+**Output:** `[Architect] Brownfield Findings` appended to `docs/handoffs/BA-FRONTEND-FRESHNESS-TRANSPARENCY.md`; decision journal: `docs/agent-memory/decisions/sprint-FRONTEND-FRESHNESS-TRANSPARENCY-architect.md`
+**Next:** pm atomizes TASK-FFT-L2/L3A/L3B/L4 and creates developer handoffs.
 
 ## 2026-06-27T19:38Z — BCTC-REFINE-STALL-RETRIGGER (THROUGHPUT-DRAIN RE-SCOPE DONE)
 

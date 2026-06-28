@@ -235,12 +235,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "READY",
     "active_task_id": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-    "next_agent": "architect",
-    "next_action": "Dispatch architect to design FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (FR-1..FR-7) — read handoff §PO RESOLUTION; state the generalization mechanism explicitly (NFR-4, zero per-issuer branches); FR-4 section-boundary detection confirmed in-scope (application layer).",
-    "updated_by": "po",
-    "updated_at": "2026-06-28T07:17:28Z"
+    "next_agent": "pm",
+    "next_action": "PM: decompose FR-1..FR-7 into atomic dev-pdf-extractor tasks per architect recommended sequencing (FR-3→FR-1→FR-2→FR-7→FR-5→FR-4→FR-6). All single zone apps/pdf-extractor/, sequential dispatch. Read [Architect] Brownfield Findings section in docs/handoffs/FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT.md.",
+    "updated_by": "architect",
+    "updated_at": "2026-06-28T07:31Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
