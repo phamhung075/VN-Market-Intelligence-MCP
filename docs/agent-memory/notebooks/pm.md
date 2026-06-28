@@ -49,6 +49,27 @@
 - TASK_1976-p1-af-1-claude-md-step25.md
 - TASK_1977-p1-af-2-dispatch-claim-skill.md
 
+## c325 P1 ENUM-DRIFT CORRECTIVE GATE FIX · 2026-06-28T113700Z
+
+**PARENT:** PO step po-S10 identified router pre-claim gate non-functional (step 2.5 task_kind="intent" → -32602). Root cause: deployed coordinationStore.ts CHECK + TS union + Zod enum all have only 4 kinds (cowork-slot, sprint-task, dashboard-row, commit-mutex); 'intent' absent. PO classified as class-level bug (same pattern as TASK_1976/1977 commit-mutex enum-drift).
+
+**INPUT:** PO decision (po-S10/po-S11: complete 7-kind taxonomy in ONE Migration-3, not piecemeal); router signal dogfooding proof; live enum mismatch verification
+
+**DECISION:**
+- **Only path:** ONE atomic Migration-3 in migrateCoordinationTable, with OWN detection guard (!!editing line-180 CHECK alone NO-OPS on live dbs; previous 'commit-mutex' guard already passed)
+- MUST recreate task_locks table (SQLite cannot ALTER CHECK in-place); follow Migration 1 precedent (PRAGMA legacy_alter_table pattern)
+- Complete 7-kind taxonomy (intent + orphan-signal + session-presence) now, inert CHECK values until callers ship per-phase
+
+**BOARD SURGERY:**
+1. **Mint TASK_1989** (FIX-COORD-TASKKIND-ENUM-INTENT-GATE): P1 priority, M size, zone apps/mcp-server/, depends TASK_1980, blocks TASK_1983-1988
+2. **Supersede TASK_1982:** status=CANCELLED, status_note="Superseded by TASK_1989 (enum-drift corrective P1 gate fix): full 7-kind schema migration replaces partial orphan-signal+redispatch_count scope"
+3. **Re-gate TASK_1983-1988:** all 6 now depend on TASK_1989 (ensures P1 schema lands before P1.5 gate logic; PO: "real intra-P1.5 dependency is the schema")
+
+**Handoff:** TASK_1989-fix-coord-taskkind-enum-intent-gate.md
+- Complete acceptance criteria: Migration-3 block with detection guard, all 3 sites widened (CHECK/TS/Zod), redispatch_count column folded in, RAW-verify against live named-volume db
+- QA DoD: live integration check (router PRE-CLAIM task_kind="intent" → claimed:true against rebuilt schema; close TASK_1981 store-level-only gap)
+- Post-ship: ops REBUILD mcp-server (post-code-change rule), qa regression, architect non-blocking doc-sync
+
 ## c324 CROSS-SESSION-MULTI-TEAM-ORCH P1.5 DECOMPOSITION · 2026-06-28T084500Z
 
 **PARENT:** PO released P1.5 decomposition (po-S6..S9 confirmed architect §6.5 against 6 PO acceptance lenses; APPROVED-WITH-HARDENING + 6 LOCKED DoD additions). P1 (TASK_1973-1981) already decomposed, left unchanged per instructions. HOLD P2/P3.
