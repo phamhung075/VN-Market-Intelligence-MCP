@@ -125,15 +125,17 @@ export function _resetCoordinationDbState(): void {
 export function ensureCoordinationTable(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS task_locks (
-      task_id          TEXT    NOT NULL,
-      task_kind        TEXT    NOT NULL CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row','commit-mutex')),
-      owner_session    TEXT    NOT NULL,
-      owner_agent      TEXT    NOT NULL,
-      claimed_at       INTEGER NOT NULL,
-      expires_at       INTEGER NOT NULL,
-      heartbeat_at     INTEGER NOT NULL,
-      ttl_seconds      INTEGER NOT NULL DEFAULT 3600,
-      payload          TEXT,
+      task_id              TEXT    NOT NULL,
+      task_kind            TEXT    NOT NULL CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row','commit-mutex','intent','orphan-signal','session-presence')),
+      owner_session        TEXT    NOT NULL,
+      owner_agent          TEXT    NOT NULL,
+      owner_client_session TEXT,
+      claimed_at           INTEGER NOT NULL,
+      expires_at           INTEGER NOT NULL,
+      heartbeat_at         INTEGER NOT NULL,
+      ttl_seconds          INTEGER NOT NULL DEFAULT 3600,
+      payload              TEXT,
+      redispatch_count     INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (task_id)
     )
   `);
@@ -224,13 +226,79 @@ export function migrateCoordinationTable(db: Database): void {
     db.exec("ALTER TABLE task_locks ADD COLUMN owner_client_session TEXT");
     console.info("[coordinationStore] Migrated task_locks: added owner_client_session column (nullable TEXT, P1-MCP-1).");
   }
+
+  // ---- Migration 3: widen CHECK to 7 kinds + add redispatch_count column ----
+  // Adds 'intent' (P1 router pre-claim gate), 'orphan-signal' (P1.5 reaper),
+  // 'session-presence' (P2 roster — inert, no caller yet).
+  // Also folds in redispatch_count INTEGER DEFAULT 0 (absorbed from TASK_1982, P1.5 reaper).
+  // Requires table-recreate (SQLite cannot ALTER a CHECK in-place) — same pattern as Migration 1.
+  // Detection: guard on 'intent' absent from sqlite_master.sql; no-op if already widened.
+  // CRITICAL: do NOT re-use the Migration-1 guard ('commit-mutex') — that guard already passed on
+  // live DBs and will never fire again. This migration needs its OWN detection expression.
+  if (!schemaRow.sql.includes("'intent'")) {
+    // Detect whether redispatch_count already exists (absorbed from TASK_1982; defensive guard).
+    // Must read PRAGMA fresh here — table may have been recreated by Migration 1 in this same call.
+    const preMig3Cols = db
+      .prepare("PRAGMA table_info(task_locks)")
+      .all() as Array<{ name: string }>;
+    const hasRedispatchCount = preMig3Cols.some((c) => c.name === "redispatch_count");
+
+    db.exec("BEGIN");
+    try {
+      db.exec(`
+        CREATE TABLE task_locks_v3 (
+          task_id              TEXT    NOT NULL,
+          task_kind            TEXT    NOT NULL CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row','commit-mutex','intent','orphan-signal','session-presence')),
+          owner_session        TEXT    NOT NULL,
+          owner_agent          TEXT    NOT NULL,
+          owner_client_session TEXT,
+          claimed_at           INTEGER NOT NULL,
+          expires_at           INTEGER NOT NULL,
+          heartbeat_at         INTEGER NOT NULL,
+          ttl_seconds          INTEGER NOT NULL DEFAULT 3600,
+          payload              TEXT,
+          redispatch_count     INTEGER NOT NULL DEFAULT 0,
+          PRIMARY KEY (task_id)
+        )
+      `);
+      // Copy all existing rows; use column value when already present, else default 0.
+      const redispatchSrc = hasRedispatchCount ? "redispatch_count" : "0";
+      db.exec(`
+        INSERT INTO task_locks_v3
+          SELECT task_id, task_kind, owner_session, owner_agent, owner_client_session,
+                 claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, ${redispatchSrc}
+          FROM task_locks
+      `);
+      db.exec("DROP TABLE task_locks");
+      db.exec("ALTER TABLE task_locks_v3 RENAME TO task_locks");
+      // Recreate indexes (dropped with the original table)
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_expires_at ON task_locks(expires_at)`);
+      db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_kind_agent ON task_locks(task_kind, owner_agent)`);
+      db.exec("COMMIT");
+      console.info(
+        "[coordinationStore] Migration 3: task_locks widened to 7 kinds " +
+          "(+intent, +orphan-signal, +session-presence) + redispatch_count column added.",
+      );
+    } catch (err) {
+      db.exec("ROLLBACK");
+      console.error("[coordinationStore] Migration 3 failed — rolled back. Existing rows preserved.", err);
+      throw err;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type TaskKind = "cowork-slot" | "sprint-task" | "dashboard-row" | "commit-mutex";
+export type TaskKind =
+  | "cowork-slot"
+  | "sprint-task"
+  | "dashboard-row"
+  | "commit-mutex"
+  | "intent"          // P1 router pre-claim gate (CROSS-SESSION-MULTI-TEAM-ORCH)
+  | "orphan-signal"   // P1.5 reaper — signals stale orphaned tasks (no caller until TASK_1983)
+  | "session-presence"; // P2 roster — session liveness probe (no caller yet, inert CHECK value)
 
 export interface ClaimInput {
   task_id: string;
@@ -291,6 +359,8 @@ export interface LockRow {
   heartbeat_at: number;
   ttl_seconds: number;
   payload: string | null;
+  /** P1.5 reaper: incremented when a task is force-redispatched; default 0. Added in Migration 3. */
+  redispatch_count: number;
 }
 
 export interface ListResult {
@@ -567,7 +637,7 @@ export function listHeldTasks(filter?: {
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const sql = `
       SELECT task_id, task_kind, owner_session, owner_agent, owner_client_session,
-             claimed_at, expires_at, heartbeat_at, ttl_seconds, payload
+             claimed_at, expires_at, heartbeat_at, ttl_seconds, payload, redispatch_count
       FROM task_locks
       ${where}
       ORDER BY claimed_at DESC

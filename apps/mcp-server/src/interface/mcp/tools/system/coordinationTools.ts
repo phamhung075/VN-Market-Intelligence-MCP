@@ -70,9 +70,13 @@ export function registerCoordinationTools(server: McpServer): void {
     "Claim a coordination lock before starting exclusive work. Returns whether " +
       "the claim succeeded and, on failure, who currently holds the lock (including " +
       "their owner_client_session for cross-session diagnosis). " +
-      "Use before any work that must not run concurrently across multiple Claude Code sessions: " +
-      "cowork-slot (15-min scheduler slots), sprint-task (orch-state.json .task_board rows), dashboard-row (orch-state.json .signal_queue rows), " +
-      "commit-mutex (fleet-wide git index critical section — task_id must be 'commit-mutex:main', ttl_seconds=60). " +
+      "Use before any work that must not run concurrently across multiple Claude Code sessions. " +
+      "Kinds: cowork-slot (15-min scheduler slots), sprint-task (orch-state.json .task_board rows), " +
+      "dashboard-row (orch-state.json .signal_queue rows), " +
+      "commit-mutex (fleet-wide git index critical section — task_id='commit-mutex:main', ttl_seconds=60), " +
+      "intent (router pre-claim gate — CLAUDE.md step 2.5 dispatch-claim SKILL), " +
+      "orphan-signal (P1.5 reaper — emit only, no manual caller), " +
+      "session-presence (P2 roster liveness probe — inert, no caller yet). " +
       "Call task_release when work completes. Call task_heartbeat every 5 min for long tasks.",
     {
       task_id: z
@@ -83,8 +87,14 @@ export function registerCoordinationTools(server: McpServer): void {
             "task:<task_id>, dash:<recipient>:<row_id>",
         ),
       task_kind: z
-        .enum(["cowork-slot", "sprint-task", "dashboard-row", "commit-mutex"])
-        .describe("Lock category. One of: cowork-slot | sprint-task | dashboard-row | commit-mutex"),
+        .enum(["cowork-slot", "sprint-task", "dashboard-row", "commit-mutex", "intent", "orphan-signal", "session-presence"])
+        .describe(
+          "Lock category. One of: cowork-slot | sprint-task | dashboard-row | commit-mutex | " +
+            "intent | orphan-signal | session-presence. " +
+            "intent = router pre-claim gate (CLAUDE.md step 2.5); " +
+            "orphan-signal = P1.5 reaper (no manual caller); " +
+            "session-presence = P2 liveness probe (inert, no caller yet).",
+        ),
       owner_agent: z
         .string()
         .min(1)
@@ -214,9 +224,9 @@ export function registerCoordinationTools(server: McpServer): void {
       "Does not modify any locks. Use to inspect which sessions are active and what work is claimed.",
     {
       kind: z
-        .enum(["cowork-slot", "sprint-task", "dashboard-row", "commit-mutex"])
+        .enum(["cowork-slot", "sprint-task", "dashboard-row", "commit-mutex", "intent", "orphan-signal", "session-presence"])
         .optional()
-        .describe("Filter by task_kind. Omit to return all kinds."),
+        .describe("Filter by task_kind. Omit to return all kinds (7 total)."),
       owner_agent: z
         .string()
         .optional()
