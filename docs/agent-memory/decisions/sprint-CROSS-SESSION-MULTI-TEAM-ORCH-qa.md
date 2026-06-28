@@ -1,5 +1,19 @@
 # Decision Journal — Sprint CROSS-SESSION-MULTI-TEAM-ORCH · qa
 
+### STEP qa-S7 · qa · 2026-06-28T18:45:00Z
+**task-id:** TASK_1995
+**what-done:** P3-QA gate for fire-time leader election (TASK_1994). Verdict: CHANGES_REQUESTED. DoD-1..5 PASS (behavioral); DoD-6 FAIL (+1 new failure); DoD-7 PASS (doc consistency). TASK_1994 → IN_PROGRESS; fixer = agent-father.
+**what-considered:**
+- DoD-1 DOUBLE-FIRE PREVENTION: behavioral test via coordinationStore in-memory (same code path as live MCP, INV-GATEWAY-1). Two distinct owner_client_session UUIDs claim same `cron:cowork:2026-06-28T18:30Z` → Session A: claimed:true; Session B: claimed:false + current_holder = Session A UUID. PASS.
+- DoD-2 CLEAN LOSER SF-1 RELEASE: leader wins fire-election (claimed:true); loser claims SF-1 (claimed:true); loser tries fire-election (claimed:false, holder=leader); loser releases SF-1 (released:1); next session claims SF-1 (claimed:true). SF-1 ordering per §C.3 confirmed. No orphaned SF-1. PASS.
+- DoD-3 STALE LEADER RECLAIM: T0 key held by dead session; T1 key (next boundary) claimed by new session (claimed:true). Different keys → no blocking. PASS.
+- DoD-4 PERIOD-KEY COLLISION/DEDUP: Two fires in same 15-min boundary floor to same key (cron:cowork:2026-06-28T14:30Z) → second deduped (claimed:false). Two fires in different boundaries → different keys → both lead independently. PASS.
+- DoD-5 PERIOD-KEY DISTINCTNESS: `published:market-digest:2026-06-23/2026-06-29` and `cron:cowork:2026-06-28T14:30Z` coexist as distinct rows; no cross-contamination. PASS.
+- DoD-6 REGRESSION: c44a295d is docs-only (all .md files). tsc 0 errors. Coordination suite (5 files): 110 pass, 1 FAIL. Failing test: DWF-coordination-phase2.test.ts:371 in `DV-P2-4 > Step 0b: leader lock claim must have ttl_seconds: 1800 (AC-P2-5-3)`. Root cause: TASK_1994 changed leader-lock.md TTL from 1800→600 and task_id from cowork-leader→cron:cowork:<TICK>, but did NOT update this test. The test was passing in HEAD~1 (before c44a295d). This is +1 new failure vs 53-fail baseline. FAIL.
+- DoD-7 DOC CONSISTENCY: period-key scheme verified consistent across all 5 flows (cowork, dev-team, auditor-t1/t2/t3) and dispatch-claim/cron-cowork-team/cron-detect-loop SKILLs. TTL=600s, no heartbeat, explicit release — verified across all 3 flows. OBSERVE-ONLY references: all documented as superseded-in-code with activation gate (TASK_1995). grep confirms no live flow instructs old cowork-leader as ACTIVE guidance — only RETIREMENT documentation. PASS.
+**why-decision:** DoD-6 fails (new test regression in DWF-coordination-phase2.test.ts). Per gate policy: ANY fail → CHANGES_REQUESTED. Fix scope: update DWF-coordination-phase2.test.ts lines 365-380 to assert new P3 design (ttl_seconds:600, task_id prefix cron:cowork:, not cowork-leader). Behavioral logic (DoD 1-5) is CORRECT — the implementation is sound; only the test is stale.
+**why-change:** no change from plan expected; TASK_1994 missed test update for DV-P2-4
+
 **Sprint goal:** Cross-session multi-team orchestration — P1 foundational layer
 **Agent:** qa
 **Started:** 2026-06-28T09:00:00Z

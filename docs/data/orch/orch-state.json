@@ -1621,7 +1621,7 @@
             "title": "P3-AF-1: Fire-time leader-election implementation",
             "owner": "agent-father",
             "type": "SPRINT-S",
-            "status": "REVIEW",
+            "status": "IN_PROGRESS",
             "zone": "docs/agents/ + .claude/skills/",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
@@ -1631,7 +1631,7 @@
               "TASK_1993",
               "TASK_1992"
             ],
-            "note": "Implement per TASK_1993: fire-time leader-lock election; retire OBSERVE-ONLY; update cron-cowork-team/cron-detect-loop + dev-team SF-1. Must serialize with TASK_1990/1991.",
+            "note": "CHANGES_REQUESTED by QA (2026-06-28): DWF-coordination-phase2.test.ts:365 DV-P2-4 asserts ttl_seconds:1800+cowork-leader (old P1 design); TASK_1994 changed to 600+cron:cowork: but did not update test. +1 new failure vs 53-fail baseline. Fix: update test to P3 design. Route: agent-father.",
             "updated_at": "2026-06-28T18:29:37Z",
             "completed_by": "agent-father",
             "completed_at": "2026-06-28T18:29:37Z"
@@ -1641,7 +1641,7 @@
             "title": "P3-QA: Fire-time leader-election verification",
             "owner": "qa",
             "type": "SPRINT-S",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "zone": "docs/protocols/",
             "created_at": "2026-06-28T12:50:00Z",
             "priority": "high",
