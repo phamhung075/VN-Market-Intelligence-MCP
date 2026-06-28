@@ -1,0 +1,17 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "normal",
+  "createdAt": "20260628T212103Z",
+  "payload": {
+    "check_id": "FIRE-ELECTION-EPHEMERAL-LOCK-ORPHAN-MINT",
+    "summary": "Reaper orphan-mints expired fire-election (and SF-1) coordination locks; dev-team flow 0a-B would mis-adopt them and spawn a garbage zone-agent.",
+    "root_cause": "fire-election locks (task_id=cron:dev-team:<TICK>) and SF-1 (dev-team-cron-singleton) use task_kind=sprint-task with TTL=600s/5400s. Any dev-team tick that runs longer than the fire-election TTL (600s) — routine when it ships FIX/sprint work; the 2026-06-28T20:37Z tick ran ~20min — lets the fire-election lock TTL-expire MID-TICK. The server reaper then mints an orphan-signal (original_task_kind=sprint-task) for it. Next tick's Step 0a-B orphan-adoption probe sees redispatch_count<3 and, per the literal pseudocode, task_claims the stale key (succeeds), finds NO board row (jq no-op), has no git_sha checkpoint, infer_from_task_id('cron:dev-team:...') yields a garbage zone, then Agent(<zone-agent>, task=cron:dev-team:<TICK>, mode=adopt-resume) — spawning a confused agent with no real work. Observed live this tick: 2 such orphans (cron:dev-team:2026-06-28T20:37Z [self], 2026-06-28T19:07Z [peer eb8b5309]).",
+    "evidence": "task_list_held(kind=orphan-signal, owner_agent=dev-team) returned 2 rows, both payload.last_payload.site=fire-election, no git_sha, no matching active_sprints task. Router did NOT adopt (RAW-probe recognized them as coordination markers).",
+    "recommended_fix": "Pick one (heartbeat is most consistent): (a) heartbeat the fire-election lock at Step 3 entry alongside SF-1 (main.md jump:execute already heartbeats dev-team-cron-singleton + session-presence — add cron:dev-team:<FIRE_TICK>); OR (b) exclude coordination-marker task_ids (cron:dev-team:*, dev-team-cron-singleton) from reaper orphan-signal minting in coordinationStore reaper, like session-presence is already excluded; OR (c) add a 0a-B guard that skips orphan-signals whose original_task_id matches the coordination-key prefix (cron:dev-team:* / dev-team-cron-singleton) — defense-in-depth even if (a)/(b) land.",
+    "verification_gate": "After a >600s dev-team tick, task_list_held(kind=orphan-signal, owner_agent=dev-team) shows ZERO fire-election/SF-1 entries; 0a-B never attempts adoption of a coordination-key task_id.",
+    "size_hint": "S",
+    "dedupe_key": "FIRE-ELECTION-EPHEMERAL-LOCK-ORPHAN-MINT"
+  }
+}
