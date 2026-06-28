@@ -152,3 +152,27 @@ After dev lands code:
 - `docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-po.md`
   - Step po-S10 (router gate non-functional + enum-drift root cause)
   - Step po-S11 (decisions B/C/D: complete 7-kind taxonomy in ONE Migration-3)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/coordinationStore.ts` — (1) `CREATE TABLE IF NOT EXISTS` updated to 7-kind CHECK + `owner_client_session` + `redispatch_count INTEGER DEFAULT 0`; (2) Migration-3 block added after Migration-2 (table-recreate pattern, detection guard `!schemaRow.sql.includes("'intent'")`); (3) `TaskKind` union expanded to 7 kinds; (4) `LockRow` interface gains `redispatch_count: number`; (5) `listHeldTasks` SELECT includes `redispatch_count`
+  - `apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts` — `task_claim` tool description updated; `task_kind` Zod `z.enum` widened to 7 values + describe string updated; `task_list_held` `kind` filter enum widened to 7 values
+- **Tests written:** `apps/mcp-server/src/__tests__/task-kind-intent-migration.test.ts` — 17 assertions, 10 ACs: intent/orphan-signal/session-presence accepted (AC-1..3), original 4 kinds regression (AC-4), Migration-3 upgrades 4-kind DB + preserves rows (AC-5..6), redispatch_count DEFAULT 0 (AC-7), redispatch_count preserved if already exists (AC-8), listHeldTasks returns redispatch_count (AC-9), full 3-migration cascade from oldest schema (AC-10)
+- **Git commits:** f01eb0f8 feat(CROSS-SESSION-MULTI-TEAM-ORCH/coordination): TASK_1989 widen TaskKind enum to 7 kinds + Migration-3
+- **Type check:** clean (`bun tsc --noEmit` — 0 errors, exactOptionalPropertyTypes-safe)
+- **bun test (coordination suite):** 99 pass / 0 fail (5 coordination test files)
+- **bun test (full suite):** 13636 pass / 53 fail — 53 failures are pre-existing network timeout tests (5000ms, require running containers); 0 new failures introduced
+- **Tool count:** 166 tools — matches pre-task baseline (no tool registration changed)
+- **Scheduler count:** 3 cron.schedule entries — matches pre-task baseline (no scheduler files touched)
+- **Docs updated:** NONE (no service docs impacted; architecture brief doc-sync is non-blocking per pm)
+- **Graphify:** skipped (no docs impacted)
+
+**Zone health:** bun test coordination 99 pass / 0 fail, 166 tools intact, 3 cron.schedule, tsc 0 errors | HEALTHY
+
+**OPS REBUILD REQUIRED BEFORE LIVE-VERIFY:**
+The host `./data/coordination.db` is the stale decoy. Migration-3 runs on container startup against the named-volume coordination.db. QA live-integration-check (task_claim intent kind, orphan-signal, session-presence; all 4 original kinds; redispatch_count=0 for existing rows) can only proceed AFTER ops rebuilds the mcp-server container. Do NOT claim "live-verified" before rebuild.

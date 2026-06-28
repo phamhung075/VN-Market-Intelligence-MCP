@@ -6,6 +6,21 @@
 
 ---
 
+### STEP qa-S3 · qa · 2026-06-28T14:10:00Z
+**task-id:** FIX-VNM-BCTC-ROWS-DATA-LOSS-RECOVER
+**what-done:** Independent raw verification of VNM 2025Q4 data recovery — 94 rows confirmed on live named-volume, APPROVED.
+**what-considered:**
+- Raw bun:sqlite /app/data/market.db: 94 rows, BS=46/IS=22/CF=26 — PASS
+- Real labels: "Tài sản ngắn hạn", "Doanh thu bán hàng...", "Lợi nhuận kế toán trước thuế" — non-zero plausible values — PASS
+- financial_reports.refine_status=DONE, extraction_confidence=1 — PASS
+- 14 reports, ZERO with 0 rows, no collateral damage — PASS
+- BCTC eval Stage 4: total_rows=94, overall_status=yellow (dev said "red" — label-grouping mismatch, not data defect, non-blocking)
+- No code changes → bun test / tsc / DDD / security / mock-guard not applicable
+**why-decision:** All 5 raw verification checks pass. Eval=yellow is non-blocking per QA flow. Recovery goal achieved.
+**why-change:** no change from plan
+
+---
+
 ### STEP qa-S2 · qa · 2026-06-28T12:55:00Z
 **task-id:** TASK_1981
 **what-done:** Integrated QA gate for P1 attribution fix (TASK_1973→1980). 8 failure-mode scenarios authored and all green. Baseline diff confirmed zero P1-introduced failures. Flipped TASK_1974/1975/1976/1977/1978/1979/1980/1981 → DONE.

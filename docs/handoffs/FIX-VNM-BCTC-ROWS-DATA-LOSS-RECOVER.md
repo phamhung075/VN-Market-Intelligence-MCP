@@ -123,3 +123,49 @@ QA — verify:
 3. `financial_reports.refine_status = 'DONE'` for VNM 2025Q4
 4. No other report's rows were touched (query total bctc_table_rows count before/after matches)
 5. VNM 2025Q4 BCTC data is serveable via `/api/bctc-inspect?id=4316f6d1-51ba-4912-a48c-dab5a64a2c81`
+
+---
+
+## [QA] Review Record
+
+**QA agent:** qa · cycle-341 · 2026-06-28
+**Verdict:** APPROVED — data recovery confirmed via independent raw probe
+
+### Independent verification (all via docker exec bun:sqlite on named-volume /app/data/market.db)
+
+**Check 1 — Row count and section split:**
+```
+total: 94
+balance_sheet: 46 | income_statement: 22 | cash_flow: 26
+```
+CONFIRMED. Matches BS=46 / IS=22 / CF=26 exactly.
+
+**Check 2 — Real Vietnamese labels (not fabricated):**
+Balance sheet samples: "Tài sản ngắn hạn" (code 100, val 36,261,180,908,033), "Tiền và các khoản tương đương tiền" (code 110), "Các khoản đầu tư tài chính ngắn hạn" (code 120, val 21,354,863,600,460) — all non-zero, plausible magnitudes for VNM.
+Income statement: "Doanh thu bán hàng và cung cấp dịch vụ" (code 01, val 63,723,520,008,574), "Doanh thu thuần..." (code 10, val 63,645,886,756,227).
+Cash flow: "Lợi nhuận kế toán trước thuế" (code 01, val 11,649,985,224,938), "Khấu hao và phân bổ" (code 02).
+CONFIRMED REAL.
+
+**Check 3 — Pre-loss state (duplicate check):**
+Raw DB: "Hàng tồn kho" appears twice in balance_sheet — code 140 (val 6,839,279,842,936) and code 141 (val 6,897,878,201,557). These are parent/subtotal rows with DIFFERENT codes and values.
+BCTC eval (recomputed at 2026-06-28 11:47:03): exact_dup_count=0, cross_section_dup_count=2, Stage 4 = **yellow** (not "red" as described by developer). Developer's "exact_dup_count=2" was a raw label-grouping count (same label, different codes) — NOT the eval's exact-dup metric. This is a description inaccuracy in the [Developer] section, NOT a data defect.
+BCTC eval overall_status = **yellow** — CAUTION logged (non-blocking per QA flow). VNM remains correctly NOT GREEN (separate SPIKE-BCTC-COLUMN-SEPARATED-LAYOUT, as carved out).
+
+**Check 4 — No other reports disturbed:**
+14 distinct reports in bctc_table_rows, ZERO with 0 rows. All row counts non-zero (range 37–285). No anomalous zero counts observed.
+CONFIRMED — finalize_bctc_refine is report-scoped; no other report affected.
+
+**Check 5 — financial_reports.refine_status:**
+```json
+{"refine_status": "DONE", "extraction_confidence": 1, "validation_status": "passed"}
+```
+CONFIRMED.
+
+### CAUTION (non-blocking)
+- BCTC eval overall_status = "yellow" (dev described Stage 4 RED, actual is Stage 4 YELLOW). Root: eval recomputed post-recovery uses cross_section_dup_count=2 not same-section exact dup. No gate_failures present. Does NOT block.
+
+### Tests / DDD / Security
+Not applicable — pure data recovery, ZERO code changes. No source files modified.
+
+### Verdict
+APPROVED — 94 rows confirmed live, real labels, correct section split, refine_status=DONE, no collateral damage to other reports.

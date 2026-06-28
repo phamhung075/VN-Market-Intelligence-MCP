@@ -235,12 +235,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-VNM-BCTC-ROWS-DATA-LOSS-RECOVER",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Dispatch dev-mcp-server: RECON-FIRST recover VNM 2025Q4 bctc_table_rows (94->0 from QA /extract-tables overwrite). Check bctc_refined_units report_id=4316f6d1 survived -> re-run finalizeBctcRefineTool. Sprint FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT SIGNED OFF (VCB+HPG+FPT GREEN); VNM carved to SPIKE-BCTC-COLUMN-SEPARATED-LAYOUT. See docs/handoffs/TASK_332.md [PO] Ruling.",
-    "updated_by": "po",
-    "updated_at": "2026-06-28T11:40:37Z"
+    "status": "idle",
+    "updated_at": "2026-06-28T12:00:14Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6238,7 +6237,7 @@
         "type": "SPRINT-S",
         "zone": "apps/mcp-server/",
         "title": "P1-MCP: FIX-COORD-TASKKIND-ENUM-INTENT-GATE — Migration-3 7-kind schema",
-        "status": "BACKLOG",
+        "status": "REVIEW",
         "priority": "P1",
         "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
         "handoff": "docs/handoffs/TASK_1989-fix-coord-taskkind-enum-intent-gate.md",
