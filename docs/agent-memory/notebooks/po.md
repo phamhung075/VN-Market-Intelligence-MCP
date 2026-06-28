@@ -1,22 +1,23 @@
 # PO Notebook
 
-_Last: 2026-06-28T07:57Z_
+_Last: 2026-06-28T08:19Z_
 
-## This cycle — RECONCILE dual-scheme collision on FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (commit 950906c4)
+## This cycle — SIGN-OFF: CROSS-SESSION-MULTI-TEAM-ORCH architect brief → APPROVED → pm
 
-Head-divergence: TWO decompositions of the same 7-FR sprint collided in zone apps/pdf-extractor/.
-- **LIVE parallel terminal (numeric scheme — CANONICAL):** flat board rows 326..332. Real committed progress: FR-3 done (cdc8b93f), 326 DONE; 327 FR-1 READY; 328-332 BACKLOG. Order matches architect seq EXACTLY (FR-3→FR-1→FR-2→FR-7→FR-5→FR-4→FR-6). Sprint tracked in in_progress[] + flat rows. Live terminal even created TASK_331/TASK_332 handoffs mid-reconcile.
-- **My pm worker (a85aa817, c7eda13c — DUPLICATE, retired):** TASK-301..307 nested in active_sprints[FIX-BCTC].tasks + head pointed at TASK-301 (==already-done FR-3). 7 dup handoffs. Pure duplicate — every FR already had a numeric equiv, so kept NONE of pm's.
+Architect brief READY-FOR-PO-SIGNOFF (`docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md`). Problem: 2+ same-role Claude sessions (2 dev teams / 2 analysis teams) can BOTH claim the SAME task — mutex (task_claim, task_id PK) is sound; only ATTRIBUTION is broken (heartbeat/release/is-mine key on owner_agent=role). Fix = thread harness UUID `CLAUDE_CODE_SESSION_ID` as `owner_client_session`, rebind every ownership decision to it. Additive, reuse-only — no new DB/service. Verified brief matches live code + project memory ground truth.
 
-**Actions (single orch-apply.sh write + git rm + commit 950906c4):**
-1. head: repointed OFF TASK-301 (done FR-3) ONTO 327 (next undone FR-1, already READY), next_agent=dev-pdf-extractor. Guarded on startswith("TASK-30"). Stops router re-dispatching committed work / breaking on deleted handoff.
-2. Removed pm-only active_sprints[FIX-BCTC] container → dedups sprint double-listing (sprint now solely in in_progress[]).
-3. Deleted all 7 pm TASK-301..307-*.md (mine via pm cascade). Numeric TASK_326..332 = canonical set.
+**VERDICT: APPROVED** (P1 scope + sequencing) with one DoD hardening locked.
 
-Did NOT: dispatch dev-pdf-extractor (head set so dev-team router dispatches 327 next tick), flip 326 DONE→verified (QA gate), touch any live numeric row. Live rows verified intact post-commit. Push left to fleet-push timer.
+1. **P1 sequencing APPROVED as briefed:** migration SQL (P1-MCP-1) BEFORE matching-ladder switch (P1-MCP-2); client-caller rollout BEFORE flipping `owner_client_session` to REQUIRED.
+2. **LOCKED DoD GATE (non-negotiable):** owner_agent fallback is TRANSITIONAL (rollout window only). Migration step 5 — make `owner_client_session` REQUIRED + remove owner_agent from the is-it-mine path — is MANDATORY, its own atomic FR, sequenced LAST. Dropping it re-opens the same-role multi-team bug. is-mine + heartbeat/release WHERE predicates key SOLELY on owner_client_session; owner_agent = label only.
+3. **P3 STANDING DECISION (po-owned) APPROVED IN PRINCIPLE:** code-enforced fire-time cron election supersedes manual cowork OBSERVE-ONLY / defer-to-live-leader. ACTIVATION GATE = P3 done_verified; manual convention authoritative until then (no gap). Memory-update retiring the convention owed at P3 sign-off.
+4. **Phase gating CONFIRMED:** P1 = unblocker (no dep), satisfies both explicit asks (check-before-claim = step 2.5 PRE-CLAIM gate; register id/time = owner_client_session + payload.started_at in every claim row). P2 depends P1; P3 depends P1+P2.
+5. **SCOPE EXPANSION folded (coordinator-relayed, no user authority — on merit):** dead session strands its task → P1.5 Orphan Detection + Work Takeover. APPROVED IN PRINCIPLE as ADDITIVE (after P1, may parallel P2); P1 is UNCHANGED and is the prerequisite (owner_client_session attributes an expired lock to a SPECIFIC dead session → a peer same-role session adopts + CONTINUES from durable checkpoint via stale-steal, idempotent, poison-escalate after N). Architect §P1.5 NOT yet in brief (still 486L) → P1.5 FR decomposition HELD until it lands + po confirm. ACCEPTED CEILING (limit not defect): zero live sessions = zero execution; reaper (mcp-server, not an agent runtime) only keeps state ADOPTABLE.
 
-LESSON: when my own pm cascade duplicates a sprint a live terminal already drives with real commits — retire MY duplicate, keep theirs; repoint head off any already-done task; dedup the sprint container; CAS-guard the write (live terminal writes concurrently — 327 flipped BACKLOG→READY mid-triage).
+**Artifacts:** sprint-vision entry `CROSS-SESSION-MULTI-TEAM-ORCH` (+`.p1_5`) in orch-state (orch-apply ×2, exit 0); decision journal `sprint-CROSS-SESSION-MULTI-TEAM-ORCH-po.md` (po-S1..S5); pm sign-off signal `docs/signals/po-20260628T081903Z.json`. **NEXT: pm** decomposes P1 per brief §8 + §Sequencing Summary into atomic FRs; holds P1.5 FRs pending architect §P1.5. Did NOT trigger code (board entries first).
 
-## Prev cycle — USER BUG triage: BCTC table/column FPT-only → SPRINT-M cascade (FR-1..7, blockers B1-B5 resolved → architect → pm decomposed)
+LESSON: on an architect brief sign-off, the load-bearing PO act is hardening the ACCEPTANCE BAR, not redesign — here, elevating the brief's implicit "step 5" (make-REQUIRED + drop role fallback) to an explicit blocking DoD FR, because a kept legacy role-match rung silently re-opens the very bug the design closes.
 
-User: BCTC table+column extraction correct ONLY for FPT. Root: text_table_extractor.py split regexes overfit to FPT OCR. Minted FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (P1, apps/pdf-extractor/). BA spec live-probed FR-1..7; B1 targets VCB/HPG/VNM/FPT locked; B2 FPT non-reg=Stage6 GREEN; B3 POST /api/bctc-eval/recompute/:id; B4 FACTORY-DOMAIN sequenced-after; B5 FR-4 in-scope. Architect design done (generalization mechanism per NFR-4). Then pm decomposed → the dual-scheme collision reconciled this cycle.
+## Prev cycle — RECONCILE dual-scheme collision FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (950906c4)
+
+Two decompositions of same 7-FR sprint collided in apps/pdf-extractor/. Kept LIVE numeric scheme (rows 326..332, real commits, matches architect seq); retired MY pm dup (TASK-301..307). Repointed head off done FR-3→327 (next undone FR-1); removed dup active_sprints container; deleted 7 pm handoffs. LESSON: when own pm cascade dups a live-driven sprint — retire mine, keep theirs, repoint head off done task, CAS-guard (live writes concurrently).

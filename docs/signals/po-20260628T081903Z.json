@@ -1,0 +1,26 @@
+{
+  "from": "po",
+  "to": "pm",
+  "type": "po_signoff",
+  "priority": "high",
+  "createdAt": "2026-06-28T08:19:03Z",
+  "status": "NEW",
+  "payload": {
+    "sprint_id": "CROSS-SESSION-MULTI-TEAM-ORCH",
+    "verdict": "APPROVED",
+    "brief": "docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md",
+    "architect_signal": "docs/signals/cross-session-multi-team-orch-20260628T080825Z.json",
+    "decision_journal": "docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-po.md",
+    "action_required": "decompose_into_atomic_frs_and_sequence",
+    "summary": "P1 scope + sequencing APPROVED. Decompose per brief §8 task list + §Sequencing Summary into atomic FRs. Honor: migration SQL (P1-MCP-1) BEFORE matching-ladder switch (P1-MCP-2); client-caller rollout (CLAUDE.md+SKILLs+flows) BEFORE flipping owner_client_session to REQUIRED. Do NOT trigger code — board entries first.",
+    "locked_dod_gate": "NON-NEGOTIABLE / blocking acceptance criterion: owner_agent is a TRANSITIONAL fallback rung permitted ONLY during rollout (brief migration steps 2-4). Migration STEP 5 -- make owner_client_session REQUIRED in the tool schema AND remove owner_agent from the is-it-mine path -- is MANDATORY and MUST be its own atomic FR, sequenced LAST after caller rollout. Dropping step 5 silently re-opens the same-role multi-team bug. The is-it-mine PROCEED/EXIT path + heartbeat/release ownership WHERE predicates must key SOLELY on owner_client_session; owner_agent retained only as a stored human-readable label, never a match predicate. Add a regression FR: two same-role sessions (identical owner_agent) cannot self-heartbeat-claim or release each other's locks.",
+    "p3_standing_decision": "APPROVED IN PRINCIPLE (po-owned): once P3 fire-time cron election is code-enforced AND RAW-verified live, it supersedes the manual operator conventions 'single human owner of cowork', 'cowork OBSERVE-ONLY', 'defer to live leader'. ACTIVATION GATE: takes effect ONLY at P3 done_verified; manual convention remains authoritative until then. A memory update retiring those conventions is owed at P3 sign-off.",
+    "phase_gating": "P1 = unblocker, no dependency, satisfies both explicit user asks (check-before-claim via step 2.5 PRE-CLAIM gate; register id+start-time via owner_client_session + payload.started_at in every claim row, returned in current_holder + task_list_held). P2 depends on P1 (presence roster). P3 depends on P1+P2 (cron election). P1.5 (see below) depends on P1, may parallel P2. Decompose P1 now; P1.5/P2/P3 stay PLAN-ONLY until their gate clears.",
+    "p1_5_additive_scope": "P1.5 — Orphan Detection + Work Takeover. APPROVED IN PRINCIPLE as an ADDITIVE phase (after P1, may parallel P2). DO NOT decompose P1.5 into FRs yet — its concrete architect §P1.5 section has NOT landed in the brief (still 486L). HOLD P1.5 FR decomposition until the architect's §P1.5 lands AND po confirms. P1.5 does NOT change or block P1. Mechanism: server-side reaper in the always-on mcp-server scans task_locks for expired locks attributable to a dead session, emits an idempotent re-dispatch signal with a durable-checkpoint pointer; a live session ADOPTS + CONTINUES from the checkpoint (task_board status / handoff / period-keyed artifact) via stale-steal under its own owner_client_session — NOT a restart; poison-task escalation after N retries. Why P1 is prerequisite: owner_client_session is required to attribute an expired lock to a SPECIFIC dead session so a DIFFERENT same-role session can adopt it. ACCEPTED DESIGN CEILING (limit, not defect): zero live sessions = zero execution; the reaper (a tool server, not an agent runtime) only keeps state ADOPTABLE for the next session online. P1.5 DoD shape is recorded in orch-state sprint_goal entry .p1_5.dod_shape.",
+    "owners": {
+      "dev-mcp-server": ["P1-MCP-1 migration SQL FIRST", "P1-MCP-2 coordinationStore matching-ladder + release {ok,released}", "P1-MCP-3 coordinationTools param + stop server-side injection + REQUIRED flip"],
+      "agent-father": ["P1-AF-1 CLAUDE.md step 2.5", "P1-AF-2 dispatch-claim SKILL lift + namespace", "P1-AF-3 leader-lock self-held-heartbeat delete", "P1-AF-4 task-lock SKILL rebind authoritative key"]
+    },
+    "raw_verify_note": "All MCP tasks RAW-verify against the LIVE coordination.db in the Docker named volume — host ./data/coordination.db is a stale decoy."
+  }
+}

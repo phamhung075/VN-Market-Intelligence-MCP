@@ -854,7 +854,7 @@
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
-    "_updated_at": "2026-06-27T19:39:52Z",
+    "_updated_at": "2026-06-28T08:21:49Z",
     "_updated_by": "po",
     "entries": [
       {
@@ -1016,6 +1016,41 @@
           "FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING"
         ],
         "zone": "multi"
+      },
+      {
+        "sprint_id": "CROSS-SESSION-MULTI-TEAM-ORCH",
+        "status": "active",
+        "vision": "Multiple independent Claude Code sessions running the SAME agent role (2+ dev teams, 2+ analysis teams, or more) must never both claim or fire the same work item. The raw mutex (task_claim, task_id PRIMARY KEY) is sound across sessions; ONLY attribution is broken (heartbeat/release/is-mine key on owner_agent=role, which cannot separate two same-role sessions). Fix: thread the harness per-session UUID (CLAUDE_CODE_SESSION_ID) into the lock row as owner_client_session and rebind every ownership decision to it. Authoritative key = per-session UUID EVERYWHERE, NEVER owner_agent. Additive, reuse-only: no new DB, service, or file format.",
+        "scope_in": "P1 ONLY now (the unblocker that makes claimed:true trustworthy across N same-role sessions): owner_client_session TEXT column in task_locks (nullable, NOT UNIQUE); owner_client_session param on task_claim/heartbeat/release/force_release_orphan; matching-ladder rebind in coordinationStore.ts; releaseTask return shape -> {ok:true, released:0|1}; DELETE self-held-heartbeat shortcut in leader-lock.md:64-81 (trust claimed:true, compare owner_client_session on claimed:false); CLAUDE.md step 2.5 PRE-CLAIM gate + lift dispatch-claim SKILL to router scope; task-lock SKILL rebind authoritative key; thread CLAUDE_CODE_SESSION_ID via spawn-prompt as a coordination parameter (never echoed as a credential). Owners: dev-mcp-server (MCP-1/2/3) + agent-father (AF-1/2/3/4).",
+        "scope_out": "P2 presence registry (session-presence enum value + task_list_held output fields) is GATED behind P1 done_verified. P3 fire-time cron leader election (replaces operator OBSERVE-ONLY convention) is GATED behind P1+P2. P3b board roster projection is PLAN-ONLY / read-derived. No mirroring of session ownership onto orch-state.json in P1/P2 (lock table is the presence SSOT). No new DB, service, or file format.",
+        "success_metric": "P1 done_verified ONLY when ALL hold, RAW-verified against the LIVE coordination.db in the Docker named volume (host ./data/coordination.db is a stale decoy): (1) owner_client_session is REQUIRED (not optional) in the tool input schema for task_claim/heartbeat/release/force_release_orphan; (2) the is-it-mine PROCEED/EXIT path keys SOLELY on owner_client_session, with NO owner_agent comparison remaining in any ownership-decision or release/heartbeat ownership WHERE predicate (owner_agent retained only as a stored human-readable role label, never a match predicate); (3) migration step 5 (make REQUIRED + remove owner_agent fallback rung from the is-mine path) IS SHIPPED; (4) regression test proves two same-role sessions with identical owner_agent cannot self-heartbeat-claim or release each other's locks (loser DEFERs); (5) the brief section 7 P1 failure-mode matrix passes: double-claim race, self-held false-positive (cowork double-fire), stale reclaim after crash, reclaim after mcp-server rebuild, release-by-wrong-session, clock-source server-side only, db-unavailable fail-closed, read-before-fire cadence race.",
+        "product_decision": "PO sign-off 2026-06-28 (po, session 14f8039a). VERDICT: APPROVED (P1 scope + sequencing) with one DoD hardening locked. (A) Sequencing APPROVED as briefed: migration SQL P1-MCP-1 BEFORE matching-ladder switch P1-MCP-2; client-caller rollout (CLAUDE.md + SKILLs + flow files) BEFORE flipping owner_client_session to REQUIRED. (B) LOCKED DoD GATE (non-negotiable, blocking acceptance criterion, not a nice-to-have): owner_agent is a TRANSITIONAL legacy fallback rung permitted ONLY during the rollout window (brief migration steps 2-4); migration step 5 -- make owner_client_session REQUIRED in the tool schema AND remove the owner_agent fallback from the is-it-mine path -- is MANDATORY. If step 5 is dropped, the owner_agent fallback silently re-opens the same-role multi-team bug. pm MUST encode step 5 as its own atomic FR with this acceptance criterion, gated last after caller rollout. (C) P3 STANDING DECISION, APPROVED IN PRINCIPLE: once P3 fire-time cron election is code-enforced AND RAW-verified live, it SUPERSEDES the manual operator conventions 'single human owner of cowork', 'cowork OBSERVE-ONLY', and 'defer to live leader' (project memory feedback_router_cowork_defer_to_live_leader + feedback_router_manual_drive_overlaps_devteam_loop). ACTIVATION GATE: supersession takes effect ONLY at P3 done_verified -- the manual convention REMAINS authoritative until then, so there is no gap window; a memory update retiring the conventions is owed at P3 sign-off. (D) Phase gating CONFIRMED: P1 has no dependency and functionally satisfies BOTH explicit user asks (check-before-claim = step 2.5 PRE-CLAIM gate; register id+start-time = owner_client_session + payload.started_at land in every claim row, returned via current_holder + task_list_held); P2 depends on P1 and elevates this to a first-class live-session roster; P3 depends on P1+P2.",
+        "po_signoff": "APPROVED",
+        "design_brief": "docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md",
+        "architect_signal": "docs/signals/cross-session-multi-team-orch-20260628T080825Z.json",
+        "next_agent": "pm",
+        "chain": "pm -> (dev-mcp-server + agent-father) -> qa",
+        "created_at": "2026-06-28T08:18:28Z",
+        "p1_5": {
+          "phase": "P1.5 — Orphan Detection + Work Takeover",
+          "status": "APPROVED-IN-PRINCIPLE (additive); concrete FR decomposition HELD pending architect §P1.5 landing in the brief",
+          "approved_at": "2026-06-28T08:21:49Z",
+          "depends_on": "P1 (needs owner_client_session to attribute an expired lock to a SPECIFIC dead session so a DIFFERENT same-role session can adopt it — impossible under owner_agent role-key)",
+          "may_parallel": "P2 (detection-by-staleness works pre-P2; detection precision improves once P2 presence roster lets the reaper cross-check an expired lock against the live-session roster)",
+          "mechanism": "Server-side reaper in the always-on mcp-server (the ONLY process alive across all session deaths) scans task_locks for expired locks (heartbeat_age > TTL) attributable to a dead session and emits an idempotent re-dispatch signal carrying a durable-checkpoint pointer; a live session ADOPTS and CONTINUES from the checkpoint (task_board status / handoff doc / period-keyed artifact) via stale-steal under its OWN owner_client_session — NOT a fresh restart; poison-task escalation after N retries stops infinite re-dispatch.",
+          "design_ceiling_accepted": "HONEST LIMIT, NOT A DEFECT: zero live sessions = zero execution. The reaper runs in mcp-server (a tool server, not an agent runtime) so it can only mark/keep state ADOPTABLE and emit the re-dispatch signal; actual takeover happens when the NEXT session comes online and reads that signal. Accepted by PO as an architectural limit.",
+          "dod_shape": [
+            "Reaper detects orphan = lock expired (heartbeat_age > TTL) AND owner_client_session attributable to a non-live session (staleness pre-P2; cross-checked vs presence roster post-P2)",
+            "Orphaned work becomes ADOPTABLE: reaper emits an idempotent re-dispatch signal carrying the durable-checkpoint pointer (task_id + task_board status + handoff path + period-key)",
+            "A live session ADOPTS and CONTINUES from the durable checkpoint (not restart); adoption claims the expired lock via stale-steal with the adopter's owner_client_session",
+            "Idempotent continuation — NO double-publish of a period-keyed artifact (reuse published:<kind>:<period-key> dedup; honor guaranteed-slot double-post lesson)",
+            "Poison-task escalation: after N failed adoptions, stop re-dispatch, mark poisoned, route to po/BUG (no infinite loop)",
+            "Honest ceiling (zero live sessions = zero execution) documented + accepted; reaper runs in always-on mcp-server",
+            "RAW-verify against LIVE coordination.db in the Docker named volume"
+          ],
+          "decomposition_gate": "pm: decompose P1 NOW. DO NOT decompose P1.5 into FRs until the architect's §P1.5 section lands in docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md AND po confirms. P1.5 is additive — it does NOT change or block P1.",
+          "scope_expansion_origin": "New user requirement relayed via coordinator 2026-06-28 (dead session strands its task; need detect-dead-session + takeover-and-continue). P1 attribution fix is UNCHANGED and is the prerequisite. Coordinator note carries no user authority; folded on merit."
+        }
       }
     ]
   },
