@@ -118,3 +118,33 @@ Confirm all 4 entries now appear. Log:
 
 If any entry still missing after CronCreate reported success → log WARN +
 `send_telegram(channel="bug", "[cron-detect-loop] WARN: CronCreate success but entry absent in CronList: <job>")`.
+
+---
+
+## P3-OBSERVE-ONLY-RETIREMENT (TASK_1994 — activation gate: TASK_1995)
+
+**What is superseded:**
+
+The operator convention `feedback_router_manual_drive_overlaps_devteam_loop` ("pick ONE owner — don't manually drive dev-team when cron loop is running") is superseded by the code-enforced SF-1 + fire-time election in `docs/agents/dev-team/flow/main.md`.
+
+Under P3:
+- Any session attempting dev-team claims SF-1 (`dev-team-cron-singleton`, TTL=5400s) first.
+- Then claims the fire-time election (`cron:dev-team:<TICK>`, TTL=600s).
+- SF-1 prevents one session from running two overlapping ticks.
+- Fire-election prevents two different sessions from both running the same tick.
+- The loser EXITs cleanly after releasing SF-1 — no operator discipline required.
+
+**Activation gate:**
+Same as cron-cowork-team skill: supersession takes effect in code from TASK_1994 merge. MEMORY.md retirement update owed at P3-QA (TASK_1995) sign-off.
+
+**dev-team period-key formula (reference):**
+`cron:dev-team:<TICK>` where `TICK` = largest scheduled minute in {07, 37} ≤ current_minute → `YYYY-MM-DDTHH:MMZ`.
+Example: fire at 14:09Z → TICK = "2026-06-28T14:07Z" (±2min jitter absorbed).
+
+**system-auditor period-key formulas (reference):**
+```
+Tier-1 (*/30): floor(minute/30)*30 → YYYY-MM-DDTHH:MMZ
+Tier-2 (0 */4): floor(hour/4)*4 → YYYY-MM-DDTHH:00Z
+Tier-3 (0 2 *): fixed YYYY-MM-DDT02:00Z
+```
+See `docs/architecture-briefs/2026-06-28-fire-time-leader-election-P3-addendum.md` §A for full spec.

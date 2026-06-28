@@ -105,3 +105,29 @@ CronList
 - `durable: true` makes the cron persist across CLI process restarts within the same session. It does NOT survive session-end (CLI exit / restart). That is why this skill exists.
 - The 12 RemoteTriggers (registered in claude.ai, not CLI) are the session-independent backstop for guaranteed slots. They fire independently of this dispatcher.
 - Full silence-detection + recovery procedure: `docs/protocols/cowork-master-cron-runbook.md`.
+
+---
+
+## P3-OBSERVE-ONLY-RETIREMENT (TASK_1994 — activation gate: TASK_1995)
+
+**What is superseded:**
+
+The operator convention `feedback_router_cowork_defer_to_live_leader` ("Router cowork OBSERVE-ONLY — parallel terminal owns cowork") is superseded by the code-enforced fire-time election in `docs/agents/cowork-team/flow/leader-lock.md`.
+
+Under P3:
+- Any session attempting the cowork dispatcher claims `cron:cowork:<TICK>` atomically.
+- Only the winner fires the full dispatch pipeline (Steps 0c–6).
+- The loser EXITs cleanly — no operator discipline required.
+- Cross-session mutual exclusion is now code-enforced, not operator-enforced.
+
+**Activation gate:**
+This supersession takes effect in code from TASK_1994 merge. The MEMORY.md pointer for `feedback_router_cowork_defer_to_live_leader` is marked SUPERSEDED ONLY after P3-QA (TASK_1995) passes its 3 smoke tests:
+1. Two sessions fire cowork tick simultaneously → exactly one {claimed:true}.
+2. Session loses fire-election → EXITs cleanly with WORK telegram.
+3. Dispatch completes → lock released → next tick elects fresh.
+
+Until TASK_1995 sign-off, the operator convention remains as FALLBACK (if the code gate fails, the operator convention prevents double-dispatch).
+
+**Period-key formula (reference):**
+`cron:cowork:<TICK>` where `TICK = floor(current_minute / 15) * 15 → YYYY-MM-DDTHH:MMZ`.
+See `docs/architecture-briefs/2026-06-28-fire-time-leader-election-P3-addendum.md` §A for full spec.

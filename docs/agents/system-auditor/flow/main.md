@@ -77,6 +77,70 @@ The extracted tier value MUST propagate to:
 
 ---
 
+## Step 0d — Fire-Time Election (P3 — TASK_1994)
+
+<!-- P3-FIRE-ELECTION: runs AFTER AUDIT_TIER extraction, BEFORE any tier-specific work.
+     Each tier has its own cron expression → its own TICK boundary → its own cron task_id.
+     task_kind="sprint-task" (consistent with SF-1 and existing sprint-task enum).
+     TTL=600s; no heartbeat. Explicit release at end of each tier's work body.
+     On election LOSS: EXIT cleanly (another session already leads this tick for this tier).
+     Spec: addendum §A.5 (tier flow-slugs), §C (P3-AF-1-c), §D (TTL + no heartbeat). -->
+
+```
+# Compute FIRE_TICK and audit_task_id based on AUDIT_TIER:
+
+if AUDIT_TIER == 1:
+  # cron expression: */30 * * * * (boundary minutes: :00, :30)
+  CURRENT_MIN_SA=$(date -u +%M)
+  BOUNDARY_MIN_SA=$(( (CURRENT_MIN_SA / 30) * 30 ))
+  FIRE_TICK=$(date -u +"%Y-%m-%dT%H:$(printf '%02d' $BOUNDARY_MIN_SA)Z")
+  FIRE_TASK_ID = "cron:auditor-t1:" + FIRE_TICK
+
+elif AUDIT_TIER == 2:
+  # cron expression: 0 */4 * * * (boundary hours: 00, 04, 08, 12, 16, 20)
+  CURRENT_HR_SA=$(date -u +%H)
+  BOUNDARY_HR_SA=$(( (CURRENT_HR_SA / 4) * 4 ))
+  FIRE_TICK=$(date -u +"%Y-%m-%dT$(printf '%02d' $BOUNDARY_HR_SA):00Z")
+  FIRE_TASK_ID = "cron:auditor-t2:" + FIRE_TICK
+
+elif AUDIT_TIER == 3:
+  # cron expression: 0 2 * * * (fixed: 02:00 UTC daily)
+  FIRE_TICK=$(date -u +"%Y-%m-%dT02:00Z")
+  FIRE_TASK_ID = "cron:auditor-t3:" + FIRE_TICK
+
+fire_result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              FIRE_TASK_ID,
+  task_kind:            "sprint-task",
+  owner_agent:          "system-auditor",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds:          600,
+  payload:              {"site": "fire-election", "tier": AUDIT_TIER, "tick": FIRE_TICK}
+})
+
+if fire_result.claimed == false:
+  fire_peer = fire_result.current_holder.owner_client_session
+  if fire_peer == $CLAUDE_CODE_SESSION_ID:
+    # Re-entrant (restart within same session mid-tick) — renew + proceed
+    log "[system-auditor] fire-election RE-ENTRANT tier=" + AUDIT_TIER + " tick=" + FIRE_TICK
+    call_tool(server="vn-market", tool="task_heartbeat", arguments={
+      task_id: FIRE_TASK_ID, owner_client_session: $CLAUDE_CODE_SESSION_ID
+    })
+    # proceed with tier work
+  else:
+    log "[system-auditor] fire-election SKIP tier=" + AUDIT_TIER + " tick=" + FIRE_TICK + " — peer=" + fire_peer
+    call_tool(server="vn-market", tool="send_telegram", arguments={
+      channel: "work",
+      message: "[system-auditor] Tier-" + AUDIT_TIER + " fire-election SKIP tick=" + FIRE_TICK + " (peer session leads)"
+    })
+    EXIT   # clean exit — no audit work; no orphan signals
+# else: claimed=true → won the election → proceed with tier work
+# Release FIRE_TASK_ID at end of tier's notebook-write + commit step (see each tier's end-of-cycle).
+```
+
+**Release convention:** call `task_release(task_id=FIRE_TASK_ID, owner_client_session=$CLAUDE_CODE_SESSION_ID)` at the very end of the tier's cycle (after notebook write + commit step). This is the final step before RETURN. TTL=600s is the crash-safety backstop; explicit release is the normal exit path.
+
+---
+
 ## Tier-1 — Runtime Ping
 
 → **lazy-load:** `docs/agents/system-auditor/flow/tier1-probe.md` (full probe protocol: probe.sh execution, RAW-PROBE fence, A-01..A-32 verdict rules, emit schema).
@@ -355,12 +419,12 @@ Also inspect the Tier-2 stale-source findings emitted above: any source with `se
      intent: `"chore(improve): D-IMPROVE emit {id}"`
 
      Executed protocol:
-     1. `call_tool(server="vn-market", tool="task_claim", arguments={task_id:"commit-mutex:main", task_kind:"commit-mutex", owner_agent:"system-auditor", ttl_seconds:60, payload:"{\"paths\":[\"docs/improvement-proposals/IMP-{id}.md\",\"docs/data/orch/orch-state.json\"],\"intent\":\"D-IMPROVE emit {id}\"}"})` — MCP error/db_unavailable → bug-telegram → SKIP commit → EXIT [C-2]; claimed=false, no current_holder → mechanism broken → bug-telegram → SKIP [C-2b]; contended (current_holder present) → backoff 6 retries ~125s → give-up → bug-telegram → SKIP.
+     1. `call_tool(server="vn-market", tool="task_claim", arguments={task_id:"commit-mutex:main", task_kind:"commit-mutex", owner_agent:"system-auditor", owner_client_session:$CLAUDE_CODE_SESSION_ID, ttl_seconds:60, payload:"{\"paths\":[\"docs/improvement-proposals/IMP-{id}.md\",\"docs/data/orch/orch-state.json\"],\"intent\":\"D-IMPROVE emit {id}\"}"})` — MCP error/db_unavailable → bug-telegram → SKIP commit → EXIT [C-2]; claimed=false, no current_holder → mechanism broken → bug-telegram → SKIP [C-2b]; contended (current_holder present) → backoff 6 retries ~125s → give-up → bug-telegram → SKIP.
      2. `git add -u docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md docs/data/orch/orch-state.json` (explicit -u form — avoids gitignore false-warn on tracked files).
      3. `git diff --cached --name-only` → if foreign path present: `git restore --staged <foreign>` (NEVER own paths); if still foreign after restore → release mutex → abort commit → log + bug-telegram.
      4. `git diff --cached --quiet` → if nothing staged: release mutex → skip commit → log.
      5. `git commit -m "chore(improve): D-IMPROVE emit {id}"` (NEVER -a/-am, NEVER add -f).
-     6. `call_tool(server="vn-market", tool="task_release", arguments={task_id:"commit-mutex:main"})` — ALWAYS, every exit path (success / skip / error).
+     6. `call_tool(server="vn-market", tool="task_release", arguments={task_id:"commit-mutex:main", owner_client_session:$CLAUDE_CODE_SESSION_ID})` — ALWAYS, every exit path (success / skip / error).
 
 **D-IMPROVE-3 — Log outcome:**
 After processing all candidates, log `"[D-IMPROVE] emitted {N} proposals, skipped {M} (duplicates), skipped {K} (bad candidates)"`.
@@ -658,16 +722,26 @@ own_paths: [`docs/agent-memory/notebooks/system-auditor.md`]
 intent: `"chore(memory/system-auditor): notebook YYYY-MM-DD tier-N"`
 
 Executed protocol:
-1. `call_tool(server="vn-market", tool="task_claim", arguments={task_id:"commit-mutex:main", task_kind:"commit-mutex", owner_agent:"system-auditor", ttl_seconds:60, payload:"{\"paths\":[\"docs/agent-memory/notebooks/system-auditor.md\"],\"intent\":\"notebook commit tier-N\"}"})` — MCP error/db_unavailable → bug-telegram → SKIP commit → EXIT [C-2]; claimed=false, no current_holder → mechanism broken → bug-telegram → SKIP [C-2b]; contended → backoff 6 retries ~125s → give-up → bug-telegram → SKIP.
+1. `call_tool(server="vn-market", tool="task_claim", arguments={task_id:"commit-mutex:main", task_kind:"commit-mutex", owner_agent:"system-auditor", owner_client_session:$CLAUDE_CODE_SESSION_ID, ttl_seconds:60, payload:"{\"paths\":[\"docs/agent-memory/notebooks/system-auditor.md\"],\"intent\":\"notebook commit tier-N\"}"})` — MCP error/db_unavailable → bug-telegram → SKIP commit → EXIT [C-2]; claimed=false, no current_holder → mechanism broken → bug-telegram → SKIP [C-2b]; contended → backoff 6 retries ~125s → give-up → bug-telegram → SKIP.
 2. `git add -u docs/agent-memory/notebooks/system-auditor.md` (explicit -u form — avoids gitignore false-warn on tracked files).
 3. `git diff --cached --name-only` → if foreign path: `git restore --staged <foreign>` (NEVER own path); still foreign after restore → release mutex → abort → log.
 4. `git diff --cached --quiet` → if nothing staged: release mutex → skip commit → log.
 5. `git commit -m "chore(memory/system-auditor): notebook YYYY-MM-DD tier-N"` (NEVER -a/-am).
-6. `call_tool(server="vn-market", tool="task_release", arguments={task_id:"commit-mutex:main"})` — ALWAYS, every exit path.
+6. `call_tool(server="vn-market", tool="task_release", arguments={task_id:"commit-mutex:main", owner_client_session:$CLAUDE_CODE_SESSION_ID})` — ALWAYS, every exit path.
 
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+
+**P3 Fire-Election Release (TASK_1994 — mandatory, runs here after notebook write + commit):**
+```
+call_tool(server="vn-market", tool="task_release", arguments={
+  task_id:              FIRE_TASK_ID,
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+# ok=false acceptable (TTL=600s expired on a very long audit cycle — crash-safety backstop).
+# FIRE_TASK_ID = "cron:auditor-t<N>:<FIRE_TICK>" set in Step 0d above.
+```
 
 ## Always Report (never skip)
 test data in prod | DB corruption | unbounded WAL | container down | cron not running | prod table 0 rows expected > 0 | pdftoppm/tesseract missing in mcp-server | SSC portal URLs in bctc_queue not skipped

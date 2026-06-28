@@ -35,10 +35,28 @@ Never fall back to `owner_agent` alone.
 | Scope | Prefix | Period-key rule |
 |---|---|---|
 | Router user-intent dispatch | `intent:<agent-role>:<intent-key>` | N/A |
-| Cron tick (fire-time claim) | `cron:<flow-slug>:<period-key>` | date-range string (`2026-06-23/2026-06-29`), never ISO week label |
+| Cron tick fire-time election | `cron:<flow-slug>:<YYYY-MM-DDTHH:MMZ>` | floor(fire_time) to scheduled boundary (ISO-8601 UTC, minute precision); see §Fire-Time Election below. DISTINCT from artifact dedup. |
 | Sprint task (outer dispatcher) | `sprint-task:<task-id>` | must match inner self-claim key exactly |
-| Published artifact dedup | `published:<kind>:<period-key>` | same period-key contract as cron |
+| Published artifact dedup | `published:<kind>:<period-key>` | daily or weekly date-range string (e.g. `2026-06-23/2026-06-29`); never conflate with fire-time election key |
 | Session presence | `session-presence:$CLAUDE_CODE_SESSION_ID` | per-session singleton |
+
+**Key distinction (P3 addendum §A.4):**
+
+| Property | `published:<kind>:<date-range>` | `cron:<flow>:<tick>` |
+|---|---|---|
+| Purpose | Prevent double-publish of same period artifact | Elect exactly one leader per cron fire |
+| Granularity | Daily or weekly | Per cron tick (minute resolution) |
+| TTL | 86400s / 691200s (never released) | 600s (explicit release at dispatch end) |
+| task_kind | `cowork-slot` (existing) | `cowork-slot` (cowork) / `sprint-task` (dev-team, auditor) |
+
+**Fire-time period-key examples (P3 fleet):**
+```
+cron:cowork:2026-06-28T14:30Z       # cowork */15 firing at 14:32 → floor to :30
+cron:dev-team:2026-06-28T14:07Z     # dev-team 7,37 firing at 14:08 → floor to :07
+cron:auditor-t1:2026-06-28T14:30Z   # auditor-t1 */30 firing at 14:32 → floor to :30
+cron:auditor-t2:2026-06-28T12:00Z   # auditor-t2 0 */4 firing at 12:03 → floor to 12:00
+cron:auditor-t3:2026-06-28T02:00Z   # auditor-t3 0 2 * * * — fixed time
+```
 
 Examples of `intent:` keys:
 ```
@@ -47,6 +65,64 @@ intent:agent-father:p1-af-1             # CLAUDE.md gate
 intent:qa:bctc-regression-suite         # QA regression tests
 intent:cowork-team:digest-daily         # cowork daily digest intent
 ```
+
+---
+
+## § Fire-Time Election (P3 — TASK_1994)
+
+**Purpose:** Replace the operator OBSERVE-ONLY convention with code-enforced per-tick leader election. Each cron tick claims `cron:<flow-slug>:<TICK>` atomically. Only `{claimed:true}` fires. The OBSERVE-ONLY conventions are superseded by this protocol once P3-QA (TASK_1995) smoke tests pass.
+
+**Layer:** dispatcher-level (one election per tick per flow). Per-slot Step 4.6 claims remain as intra-dispatch dedup within an elected session — separate, unchanged.
+
+**compute_tick_boundary helpers per cron expression:**
+
+```
+# */N minute interval (e.g. */15, */30):
+CURRENT_MIN=$(date -u +%M)
+BOUNDARY_MIN=$(( (CURRENT_MIN / N) * N ))
+TICK=$(date -u +"%Y-%m-%dT%H:$(printf '%02d' $BOUNDARY_MIN)Z")
+
+# M1,M2 enumerated minutes (e.g. "7,37 * * * *"):
+CURRENT_MIN=$(date -u +%M)
+if [ "$CURRENT_MIN" -ge 37 ]; then BOUND="37"; else BOUND="07"; fi
+TICK=$(date -u +"%Y-%m-%dT%H:${BOUND}Z")
+
+# 0 */H hourly (e.g. "0 */4 * * *"):
+CURRENT_HR=$(date -u +%H)
+BOUNDARY_HR=$(( (CURRENT_HR / H) * H ))
+TICK=$(date -u +"%Y-%m-%dT$(printf '%02d' $BOUNDARY_HR):00Z")
+
+# Fixed time (e.g. "0 2 * * *"):
+TICK=$(date -u +"%Y-%m-%dT02:00Z")
+```
+
+**Election pattern (generic):**
+```
+fire_result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              "cron:<flow-slug>:" + TICK,
+  task_kind:            "<cowork-slot for cowork | sprint-task for dev-team/auditor>",
+  owner_agent:          "<dispatcher-role>",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds:          600,
+  payload:              {"site": "fire-election", "tick": TICK}
+})
+if not fire_result.claimed:
+  if fire_result.current_holder.owner_client_session == $CLAUDE_CODE_SESSION_ID:
+    call_tool(server="vn-market", tool="task_heartbeat", arguments={
+      task_id: "cron:<flow-slug>:"+TICK, owner_client_session: $CLAUDE_CODE_SESSION_ID
+    })
+    # proceed (re-entrant)
+  else:
+    # peer leads; release any pre-acquired locks (e.g. dev-team SF-1) then EXIT
+    EXIT
+# Winner proceeds. Release at end of dispatch body (explicit task_release mandatory).
+```
+
+**Canonical implementations:** `docs/agents/cowork-team/flow/leader-lock.md` (cowork),
+`docs/agents/dev-team/flow/main.md` §Step [3] (dev-team), `docs/agents/system-auditor/flow/main.md` §Step 0d (auditor tiers).
+
+**OBSERVE-ONLY retirement gate:**
+The operator conventions `feedback_router_cowork_defer_to_live_leader` and `feedback_router_manual_drive_overlaps_devteam_loop` are superseded by this fire-election protocol. They remain authoritative FALLBACK until P3-QA (TASK_1995) passes its 3 smoke tests. Memory-file retirement update is owed at TASK_1995 sign-off.
 
 ---
 

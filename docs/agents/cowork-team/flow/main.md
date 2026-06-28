@@ -1,4 +1,4 @@
-<!-- size-justification: ~135L — thin dispatcher; full logic extracted to 11 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-v2 2026-06-05: telemetry.md Step 6.0 uses call_tool emit_pressure_state (Option C). BGFAN-1 2026-06-07: background spawn mandate; actual spawns in spawn-fanout.md carry run_in_background=true. BG-1 2026-06-18: Step 0c blind-guard.md added. P2-PRESENCE 2026-06-28 (TASK_1990): Step 0b now claims session-presence BEFORE leader-lock (+22L inline). -->
+<!-- size-justification: ~135L — thin dispatcher; full logic extracted to 11 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-v2 2026-06-05: telemetry.md Step 6.0 uses call_tool emit_pressure_state (Option C). BGFAN-1 2026-06-07: background spawn mandate; actual spawns in spawn-fanout.md carry run_in_background=true. BG-1 2026-06-18: Step 0c blind-guard.md added. P2-PRESENCE 2026-06-28 (TASK_1990): Step 0b now claims session-presence BEFORE leader-lock (+22L inline). P3-FIRE-ELECTION 2026-06-28 (TASK_1994): leader-lock.md redesigned to fire-time election cron:cowork:<tick> (TTL=600s); activation gate TASK_1995. -->
 <!-- BGFAN-1: ALL Agent spawns from this dispatcher MUST use run_in_background=true. Cowork agents are independent → genuine parallel background fan-out. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
 # cowork-team — Master Cron Dispatcher
@@ -29,7 +29,7 @@ Fires every 15 min via `*/15 * * * *` CronCreate. Reads `docs/data/cowork-schedu
 | Step | What | Sub-flow |
 |---|---|---|
 | 0a | Drain signal_queue | inline below |
-| 0b | Session-presence self-register + Claim cowork-leader lock | `dispatch-claim SKILL § Step 0a` (inline) then `leader-lock.md` |
+| 0b | Session-presence self-register + Fire-time election (P3 — cron:cowork:<tick>) | `dispatch-claim SKILL § Step 0a` (inline) then `leader-lock.md` |
 | 0c | Blind detection — gateway preflight | `blind-guard.md` |
 | 1–4b | Resolve UTC, match slots, drift guard, silent-exit, collision guard | `match-slots.md` |
 | 4.2–4.3 | Read pressure-state, calendar suppression | `pressure-read.md` |
@@ -89,7 +89,10 @@ if not presence_result.claimed:
 # Always proceed — presence result is NEVER a gate.
 ```
 
-**Step 0b.2 — Leader lock** → Run sub-flow: `docs/agents/cowork-team/flow/leader-lock.md`
+**Step 0b.2 — Fire-time election (P3)** → Run sub-flow: `docs/agents/cowork-team/flow/leader-lock.md`
+<!-- P3: leader-lock.md now implements per-tick cron:cowork:<TICK> election (TTL=600s, no heartbeat).
+     Session that wins proceeds to Step 0c. Loser EXITs cleanly. Release at end of Step 6 (telemetry.md).
+     TICK variable set in leader-lock.md persists through Steps 0c–6 for the release call. -->
 
 ---
 

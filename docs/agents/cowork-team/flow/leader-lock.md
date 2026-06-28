@@ -1,89 +1,114 @@
-<!-- size-justification: 96L — leader-lock claim + backstop-window defer gate (AF-1) + session-id comparison (P1 TASK_1978). Child of main.md. -->
+<!-- size-justification: 115L — P3 fire-time election; replaces sticky cowork-leader (TTL=1800s) with per-tick cron:cowork:<tick> claim (TTL=600s, no heartbeat); backstop-window defer gate (AF-1) preserved + reattached to FIRE_CLAIM; activation gate: P3-QA (TASK_1995) smoke-test sign-off required before OBSERVE-ONLY operator conventions are formally retired. -->
 <!-- AF-1-LEADER-LOCK-BACKSTOP-DEFER — brief: docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md §Primitive-1 -->
-<!-- SESSION-SINGLETON GUARD: This leader-lock is the cowork-team equivalent of the dev-team SF-1 session-singleton guard.
-     It ensures exactly one cowork-dispatcher session leads each 15-min tick — same role, different mechanism.
-     P1 fix (TASK_1978 / CROSS-SESSION-MULTI-TEAM-ORCH): ownership keyed on owner_client_session (per-session UUID),
-     not owner_agent (role). claimed:true is unconditionally trusted. Self-held-heartbeat anti-pattern deleted.
-     On claimed:false: compare owner_client_session to $CLAUDE_CODE_SESSION_ID — equal = re-entrant, different = DEFER.
-     Protocol doc: docs/protocols/task-lock-protocol.md § Session-Singleton Subclass. -->
+<!-- P3-FIRE-ELECTION (TASK_1994 / CROSS-SESSION-MULTI-TEAM-ORCH):
+     REPLACES: sticky cowork-leader TTL=1800s + heartbeat at Step 4.6b (RETIRED in P3).
+     NEW KEY: cron:cowork:<TICK> where TICK = floor(fire_time) to 15-min boundary, ISO-8601 UTC minute precision.
+     ACTIVATION: this file IS the shipped P3 standard. Old cowork-leader task_id and 1800s sticky design
+     are superseded as of TASK_1994 merge. Live sessions started before this commit run the old protocol
+     unaffected (they loaded the old file into memory). New sessions/ticks use this file.
+     OBSERVE-ONLY retirement: operator conventions (feedback_router_cowork_defer_to_live_leader,
+     feedback_router_manual_drive_overlaps_devteam_loop) are superseded by this code-enforced election.
+     Memory files remain authoritative FALLBACK until P3-QA (TASK_1995) smoke tests pass.
+     See .claude/skills/cron-cowork-team/SKILL.md § P3-OBSERVE-ONLY-RETIREMENT for retirement gate.
+     Design: docs/architecture-briefs/2026-06-28-fire-time-leader-election-P3-addendum.md §A §B §D §E -->
 
-## Step 0b — Claim cowork-leader lock (DWF-DEV-CROSS-4 Phase 2 — FR-P2-5)
+## Step 0b.2 — Fire-time election (P3 — replaces cowork-leader lock)
 
-<!-- Leader lock: ensures exactly one session leads each tick.
-     P1 protocol (TASK_1978 / CROSS-SESSION-MULTI-TEAM-ORCH):
-     WIN (claimed=true)     → proceed immediately. claimed:true is unconditionally trusted.
-     REENTRANT (claimed=false + owner_client_session == $CLAUDE_CODE_SESSION_ID)
-       → heartbeat to renew + proceed. Own prior lock within same session.
-     PEER-HELD (claimed=false + owner_client_session != $CLAUDE_CODE_SESSION_ID)
-       → DEFER: log + WORK telegram + EXIT. Do NOT attempt heartbeat for ownership check.
-     TTL = 1800s (2 × 15-min heartbeat). MUST be explicit — never rely on default 3600s (AC-P2-5-3).
-     Heartbeat: after dispatch body (Step 4.6b), extend TTL from current time using owner_client_session.
-     Dark window after force-recreate: max 1800s — see docs/protocols/dwf-ops-runbook.md. -->
+<!-- P3-FIRE-ELECTION PATTERN:
+     One claim per tick per session. The winner runs the full dispatch pipeline (Steps 0c–6).
+     Loser EXITs cleanly — no work assigned, no spawn.
+     Per-slot Step 4.6 claims (slot-claim.md) are UNCHANGED — they remain as intra-dispatch dedup
+     within an elected session. Step 4.6b leader heartbeat is RETIRED (no mid-tick heartbeat for fire-election).
+     Release: explicit task_release at end of Step 6 in telemetry.md. TTL=600s is crash-safety backstop only.
+     task_kind "cowork-slot" preserves consistency with pre-P3 task_list_held queries.
+     Spec: addendum §B.3 (dispatcher-level), §D.1 (TTL=600s, no heartbeat), §D.3 (explicit release). -->
+
+### compute_tick_boundary (*/15 * * * * expression)
 
 ```
-LEADER_CLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:              "cowork-leader",
+# Floor current UTC minute to nearest 15-min scheduled boundary.
+# Scheduled boundaries: :00, :15, :30, :45
+# Two sessions firing within ±2min jitter of the same boundary produce the SAME TICK key.
+CURRENT_MINUTE=$(date -u +%M)     # 0–59
+BOUNDARY_MINUTE=$(( (CURRENT_MINUTE / 15) * 15 ))
+TICK=$(date -u +"%Y-%m-%dT%H:$(printf '%02d' $BOUNDARY_MINUTE)Z")
+# Example: fire at 14:32Z → BOUNDARY_MINUTE=30 → TICK="2026-06-28T14:30Z"
+# Example: fire at 14:45Z → BOUNDARY_MINUTE=45 → TICK="2026-06-28T14:45Z"
+```
+
+### Fire claim
+
+```
+FIRE_CLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              "cron:cowork:" + TICK,
   task_kind:            "cowork-slot",
-  ttl_seconds:          1800,
   owner_agent:          "cowork-dispatcher",
-  owner_client_session: $CLAUDE_CODE_SESSION_ID
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds:          600,
+  payload:              {"site": "fire-election", "tick": TICK}
 }))
 ```
 
+### Backstop-Window Defer Gate (AF-1 — Root A fix — PRESERVED, reattached to FIRE_CLAIM)
+
 ```
-# Backstop-Window Defer Gate (AF-1 — Root A fix)
-# Key on the ERROR path only: when the task_claim call itself errors or times out
-# (tool call threw / no response), the lock state is UNREADABLE.
-# Do NOT treat an unreadable lock as lock-free — that is the root of the double-fire.
-if LEADER_CLAIM call errored or timed out:
-  # Check whether this tick falls inside the cloud backstop window.
-  # Gatherer backstop schedule is "0 */4" UTC → boundary hours = multiples of 4.
-  # The manual dispatcher fires 7 min after the boundary; cloud backstop fires ~12 min after.
-  # If the lock is unreadable within the first 15 min of a 4h-boundary hour, a live cloud
-  # peer is the most likely lock holder. Defer one tick (15 min latency << 4h slot cadence).
-  BOUNDARY_HOURS = {0, 4, 8, 12, 16, 20}   # offhours-gatherer "0 */4" cadence — generic rule
+# AF-1 gate: triggers on the ERROR path ONLY.
+# When FIRE_CLAIM call itself errors or times out (tool threw / no response),
+# the lock state is UNREADABLE. Do NOT treat as lock-free — that is the root of the double-fire.
+if FIRE_CLAIM call errored or timed out:
+  BOUNDARY_HOURS = {0, 4, 8, 12, 16, 20}   # offhours-gatherer "0 */4" cadence
   current_hour   = UTC_now.hour
-  current_minute = UTC_now.minute            # 0–59 within the hour
+  current_minute = UTC_now.minute
 
   if current_hour in BOUNDARY_HOURS AND current_minute < 15:
-    log "[cowork] leader-lock UNREADABLE within backstop window (hour=" + current_hour + " minute=" + current_minute + ") — DEFER one tick"
+    log "[cowork] fire-election UNREADABLE within backstop window (hour=" + current_hour + " minute=" + current_minute + ") — DEFER one tick"
     EXIT   # do NOT treat as lock-free; cloud backstop peer presumed to hold it
 
   else:
-    # Outside the backstop window — lock-unreadable is safe to treat as a transient error.
-    log "[cowork] leader-lock call error outside backstop window — PROCEEDING as if lock-free"
-    → PROCEED (continue to Step 1)
+    log "[cowork] fire-election call error outside backstop window — PROCEEDING as if uncontested"
+    → PROCEED (continue to Step 0c)
 ```
 
-```
-# P1 fix (TASK_1978 — CROSS-SESSION-MULTI-TEAM-ORCH):
-# claimed:true is authoritative — no heartbeat probe on claimed:false.
-# Self-held-heartbeat anti-pattern DELETED (lines 64-81 in pre-P1 file).
-# Ownership discriminated by owner_client_session (per-session UUID), not owner_agent (role).
+### Election result
 
-if LEADER_CLAIM.claimed == true:
-  # Fresh claim — this session won the lock exclusively. PROCEED.
-  log "[cowork] leader lock claimed fresh — proceeding"
-  → PROCEED (continue to Step 1)
+```
+# claimed:true is authoritative — no heartbeat probe.
+# Ownership discriminated by owner_client_session (per-session UUID), not owner_agent.
+
+if FIRE_CLAIM.claimed == true:
+  log "[cowork] fire-election WON tick=" + TICK + " → proceeding"
+  → PROCEED (continue to Step 0c)
 
 else:
-  # Lock held. Compare owner_client_session to discriminate:
-  # own prior lock (re-entrant within session) vs. live peer session.
-  # NEVER call task_heartbeat here for ownership check — deleted anti-pattern.
-  owner_session = LEADER_CLAIM.current_holder.owner_client_session
+  peer = FIRE_CLAIM.current_holder.owner_client_session
 
-  if owner_session == $CLAUDE_CODE_SESSION_ID:
-    # Same session — re-entrant lock. Renew + PROCEED.
-    log "[cowork-team] re-entry detected, renewing..."
+  if peer == $CLAUDE_CODE_SESSION_ID:
+    # Re-entrant: this session already holds the tick key (session restart mid-tick, same session).
+    log "[cowork] fire-election RE-ENTRANT tick=" + TICK + " — renewing + proceeding"
     call_tool(server="vn-market", tool="task_heartbeat", arguments={
-      task_id:              "cowork-leader",
+      task_id:              "cron:cowork:" + TICK,
       owner_client_session: $CLAUDE_CODE_SESSION_ID
     })
-    → PROCEED (continue to Step 1)
+    → PROCEED (continue to Step 0c)
 
   else:
-    # Different session (or NULL transitional row) — peer session holds it. DEFER.
-    log "[cowork-team] peer session " + owner_session + " holds lock, deferring"
-    send_telegram(channel="work", "[cowork-team] DEFER: peer session holds cowork-slot lock")
+    # Peer session leads this tick — EXIT cleanly (not an error).
+    log "[cowork] fire-election LOST tick=" + TICK + " — peer=" + peer + " → EXIT"
+    call_tool(server="vn-market", tool="send_telegram", arguments={
+      channel: "work",
+      message: "[cowork] fire-election SKIP tick=" + TICK + " (peer session leads)"
+    })
     EXIT
+```
+
+### Release (mandatory — runs in telemetry.md Step 6 after dispatch body completes)
+
+```
+# At end of Step 6 (telemetry.md) — the final step of the dispatch body:
+call_tool(server="vn-market", tool="task_release", arguments={
+  task_id:              "cron:cowork:" + TICK,
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+# ok=false is acceptable (TTL=600s expired on a very long dispatch body — crash-safety backstop).
+# See: docs/agents/cowork-team/flow/telemetry.md § P3 Fire-Election Release
 ```

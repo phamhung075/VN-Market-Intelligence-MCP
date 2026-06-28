@@ -1,4 +1,4 @@
-<!-- size-justification: 405L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0a.5 CI-health probe (sub-flow pointer, +6L) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/0a.5/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). CI-HEALTH-FIX-BRIDGE 2026-06-08: Step 0a.5 CI probe sub-flow pointer (+6L). DEV-TEAM-TOOL-CONTRACT-CRON-OVERLAP 2026-06-14: SF-1 single-flight guard (task_claim dev-team-cron-singleton TTL=5400s) + GCC-PREFLIGHT read directive in Step 0-PREFLIGHT; SF-1 heartbeat at Step 3 entry; SF-1 release at jump:end (+20L). P2-PRESENCE 2026-06-28 (TASK_1990): session-presence claim in PREFLIGHT before SF-1; heartbeat at Step 3 alongside SF-1 heartbeat (+30L). -->
+<!-- size-justification: 440L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0a.5 CI-health probe (sub-flow pointer, +6L) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/0a.5/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). CI-HEALTH-FIX-BRIDGE 2026-06-08: Step 0a.5 CI probe sub-flow pointer (+6L). DEV-TEAM-TOOL-CONTRACT-CRON-OVERLAP 2026-06-14: SF-1 single-flight guard (task_claim dev-team-cron-singleton TTL=5400s) + GCC-PREFLIGHT read directive in Step 0-PREFLIGHT; SF-1 heartbeat at Step 3 entry; SF-1 release at jump:end (+20L). P2-PRESENCE 2026-06-28 (TASK_1990): session-presence claim in PREFLIGHT before SF-1; heartbeat at Step 3 alongside SF-1 heartbeat (+30L). P3-FIRE-ELECTION 2026-06-28 (TASK_1994): Step [3] fire-time election after SF-1, before HEAD.lock guard; on loss release SF-1 + EXIT; FIRE_TICK release at jump:end (+35L). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 <!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
@@ -128,7 +128,60 @@ if not sf_result.claimed:
   call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", message: "[dev-team] cron SKIP — single-flight held by peer (TTL ~" + sf_result.current_holder.expires_in_s + "s)"})
   JUMP TO end   # exit immediately — do NOT run any step
 
-# SF-1 claimed — proceed with full cron tick
+# SF-1 claimed — proceed to fire-time election (Step [3])
+
+# P3-FIRE-ELECTION Step [3] — Cross-session tick dedup (NEW — TASK_1994)
+# Fires AFTER SF-1 (session-level guard), BEFORE HEAD.lock guard.
+# SF-1 ensures this session is not mid-tick from a prior tick. Fire-election ensures this
+# session leads THIS specific tick vs any other session attempting the same tick.
+# On election LOSS: release SF-1 (so this session can win SF-1 on next tick) then EXIT.
+# On election WIN: proceed with full HEAD.lock guard + dispatch pipeline.
+# Spec: addendum §C.2 (ordering), §C.3 (why SF-1 first), §C.4 (deadlock-free).
+
+# compute_tick_boundary for expression "7,37 * * * *" (boundary minutes: 07, 37)
+# Largest scheduled minute ≤ current_minute.
+CURRENT_MINUTE_FIREELECT=$(date -u +%M)
+if [ "$CURRENT_MINUTE_FIREELECT" -ge 37 ]; then
+  FIRE_TICK_BOUND="37"
+else
+  FIRE_TICK_BOUND="07"
+fi
+FIRE_TICK=$(date -u +"%Y-%m-%dT%H:${FIRE_TICK_BOUND}Z")
+# e.g. fire at 14:38Z → FIRE_TICK="2026-06-28T14:37Z"
+# e.g. fire at 14:09Z → FIRE_TICK="2026-06-28T14:07Z" (jitter absorbed)
+
+fire_result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              "cron:dev-team:" + FIRE_TICK,
+  task_kind:            "sprint-task",
+  owner_agent:          "dev-team",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds:          600,
+  payload:              {"site": "fire-election", "tick": FIRE_TICK}
+})
+
+if not fire_result.claimed:
+  fire_peer = fire_result.current_holder.owner_client_session
+  if fire_peer == $CLAUDE_CODE_SESSION_ID:
+    # Re-entrant: this session already holds this tick's key (restart within same session mid-tick).
+    log "[dev-team] fire-election RE-ENTRANT tick=" + FIRE_TICK + " — renewing + proceeding"
+    call_tool(server="vn-market", tool="task_heartbeat", arguments={
+      task_id:              "cron:dev-team:" + FIRE_TICK,
+      owner_client_session: $CLAUDE_CODE_SESSION_ID
+    })
+    # → proceed (SF-1 is held, fire-election renewed)
+  else:
+    # Peer session leads this tick — release SF-1 so this session is free for the next tick.
+    log "[dev-team] fire-election SKIP tick=" + FIRE_TICK + " — peer=" + fire_peer + " leads; releasing SF-1"
+    call_tool(server="vn-market", tool="send_telegram", arguments={
+      channel: "work",
+      message: "[dev-team] fire-election SKIP tick=" + FIRE_TICK + " (peer session leads)"
+    })
+    call_tool(server="vn-market", tool="task_release", arguments={
+      task_id:              "dev-team-cron-singleton",
+      owner_client_session: $CLAUDE_CODE_SESSION_ID
+    })
+    JUMP TO end   # EXIT cleanly — no head set, no dispatch, no orphan work
+# else: fire_result.claimed == true → won the election → FIRE_TICK is the active tick key
 
 # GCC-PREFLIGHT: load gateway call contract before any call_tool use
 → Read docs/standards/gateway-call-contract.md   (one file, ~60L, ~250 tokens — closes 6 recurring tool-call error classes)
@@ -544,4 +597,15 @@ All JUMP TO `end` paths converge here.
 # SF-1 release — always run on clean exit (TTL expiry is fallback for crash path)
 call_tool(server="vn-market", tool="task_release", arguments={ task_id: "dev-team-cron-singleton", owner_client_session: $CLAUDE_CODE_SESSION_ID })
 # ok=false is acceptable (TTL already expired after a long tick, or SF-1 was never claimed on SKIP path)
+
+# P3-FIRE-ELECTION release (TASK_1994) — run ONLY if fire-election was won (FIRE_TICK is set).
+# FIRE_TICK is not set when we reach jump:end via the SF-1 skip path (early exit before Step [3]).
+# On fire-election loss: we EXIT before jump:end (SF-1 released inline, fire-election not claimed).
+# All other jump:end paths (HEAD.lock, session-gate, post-cycle) have FIRE_TICK set.
+if FIRE_TICK is set:
+  call_tool(server="vn-market", tool="task_release", arguments={
+    task_id:              "cron:dev-team:" + FIRE_TICK,
+    owner_client_session: $CLAUDE_CODE_SESSION_ID
+  })
+  # ok=false acceptable (TTL=600s expired after long tick — crash-safety backstop served its purpose)
 ```

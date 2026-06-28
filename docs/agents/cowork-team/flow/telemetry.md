@@ -73,6 +73,26 @@ EOF
 
 ---
 
+---
+
+## P3 Fire-Election Release (mandatory — runs here, at end of Step 6)
+
+<!-- P3-FIRE-ELECTION (TASK_1994): explicit release of the fire-time election lock.
+     TICK was set in leader-lock.md Step 0b.2 compute_tick_boundary.
+     TTL=600s is the crash-safety backstop; this explicit release is the NORMAL exit path.
+     ok=false is acceptable (TTL expired on a pathologically long dispatch body — not an error).
+     Spec: addendum §D.3 (explicit release mandatory on every exit path). -->
+
+```
+call_tool(server="vn-market", tool="task_release", arguments={
+  task_id:              "cron:cowork:" + TICK,
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+# ok=false acceptable: TTL=600s expired (long tick) or already released (re-entrant restart).
+```
+
+---
+
 ## Error Guard
 
 Wrap Steps 3–5 in try/catch. On any unhandled error:
@@ -86,5 +106,13 @@ EOF
 ```
 
 `send_telegram(channel="work", message="[cowork-team] ERROR ${ISO} — <message> (step <N>)")`
+
+```
+# P3: release fire-election on error exit too (all exit paths)
+call_tool(server="vn-market", tool="task_release", arguments={
+  task_id:              "cron:cowork:" + TICK,
+  owner_client_session: $CLAUDE_CODE_SESSION_ID
+})
+```
 
 Then EXIT.

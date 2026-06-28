@@ -1,5 +1,17 @@
 # Agent Father — Notebook
 
+## 2026-06-28 — CROSS-SESSION-MULTI-TEAM-ORCH P3-AF-1 (TASK_1994)
+
+- Task: Fire-time leader election implementation — 5 items per P3 addendum (TASK_1993 REVIEW, design verified)
+- Period-key scheme: `cron:<flow-slug>:<YYYY-MM-DDTHH:MMZ>` where TICK = floor(fire_time) to scheduled boundary (ISO-8601 UTC, minute precision). Key insight: date-range string in dispatch-claim SKILL namespace table was the WRONG formula for fire-election (that's artifact dedup); corrected.
+- Election layer: DISPATCHER-LEVEL. Per-slot Step 4.6 claims unchanged.
+- SF-1 ordering (dev-team): SF-1 (TTL=5400s) first → fire-election (TTL=600s) second → on loss: release SF-1 + EXIT. Independent task_ids → no deadlock.
+- Lease: TTL=600s, NO heartbeat, explicit task_release at every exit path (normal + error).
+- 9 files modified; 1 full rewrite (leader-lock.md); handoff [Developer] written; notebook written.
+- Activation gate documented in 4 places; OBSERVE-ONLY conventions stay as FALLBACK until TASK_1995 P3-QA.
+- Live peer (eb8b5309, dev-team) protected: dev-team/flow/main.md changes are additive in PREFLIGHT body only; peer already past PREFLIGHT on current tick.
+- TASK_1994 → REVIEW via orch-apply.sh. Blocks: TASK_1995.
+
 ## 2026-06-28 — CROSS-SESSION-MULTI-TEAM-ORCH P2-AF-2 (TASK_1991)
 
 - Task: Wire roster READ (Phase A.5) into router step 2.5 — between orphan-probe (Phase A) and PRE-CLAIM (Phase B)

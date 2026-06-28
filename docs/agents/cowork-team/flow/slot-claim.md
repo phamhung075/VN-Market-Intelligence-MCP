@@ -67,22 +67,16 @@ if WON_SLOTS is empty:
 
 ---
 
-## Step 4.6b — Heartbeat leader lock (DWF-DEV-CROSS-4 Phase 2 — ARCH-DECIDE-B)
+## Step 4.6b — P3 RETIRED (leader heartbeat removed)
 
-<!-- After all per-work-item slots are processed (win or skip), renew the leader lock TTL.
-     This extends expires_at from current time by 1800s so a long dispatch body (tick-snapshot
-     write + pressure-state emit + fan-out) does not self-expire the leader lock mid-tick.
-     Pattern: explicit task_heartbeat on each tick win (ARCH-DECIDE-B: cleaner than reclaim).
-     ok=false: lock was stolen (another session won during this long tick) — log, proceed anyway
-     (we already won all per-work-item slots; dispatch body continues; no spawn gate here). -->
+<!-- P3-FIRE-ELECTION (TASK_1994): the sticky cowork-leader heartbeat is RETIRED.
+     The fire-time election lock (cron:cowork:<TICK>, TTL=600s) has NO mid-tick heartbeat
+     per the P3 design (addendum §D.2 — no heartbeat for per-fire locks).
+     The fire-election is held for the dispatch window only and released explicitly at
+     end of Step 6 (telemetry.md § P3 Fire-Election Release).
+     Per-slot Step 4.6 claims (above) are unchanged — they are intra-dispatch dedup
+     and are NOT affected by the retirement of the dispatcher-level leader heartbeat. -->
 
-Only execute if WON_SLOTS is non-empty (skip on silent-exit path).
-
-```
-call_tool(server="vn-market", tool="task_heartbeat", arguments={
-  task_id:              "cowork-leader",
-  owner_client_session: $CLAUDE_CODE_SESSION_ID    // REQUIRED — P1-FINAL (TASK_1980)
-})
-```
-
-On heartbeat failure (`ok=false`): log `"[cowork-team] leader heartbeat failed — lock may have been stolen; continuing dispatch"`. Do NOT abort — per-work-item tokens were already won.
+<!-- Step 4.6b is a NO-OP in P3. No action required here.
+     The fire-election (cron:cowork:<TICK>) was claimed in leader-lock.md Step 0b.2.
+     Release is in telemetry.md Step 6. -->
