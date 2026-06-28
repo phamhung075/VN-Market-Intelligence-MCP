@@ -1,5 +1,14 @@
 # Agent Father — Notebook
 
+## 2026-06-28 — CROSS-SESSION-MULTI-TEAM-ORCH P1.5-AF-1 + P1.5-AF-2
+
+- Tasks: TASK_1986 (router adoption probe) + TASK_1987 (dev-team orphan drain) → both REVIEW
+- Files: `.claude/skills/dispatch-claim/SKILL.md` (+Orphan-Adoption Probe section), `CLAUDE.md` (step 2.5 Phase A/B), `docs/agents/dev-team/flow/main.md` (Step 0a → 0a-A + 0a-B), both handoff [Developer] sections
+- Key pattern: Phase A probe (task_list_held read-only) fires BEFORE Phase B PRE-CLAIM on every dispatch; router DEFERS tree-hygiene to dev-team; dev-team does git status --porcelain + git checkout -- before any resume
+- All 4 DoD-P15 locks baked: 1=router defers hygiene, 2=task_list_held read-only for published artifacts, 3=redispatch_count carry-forward, 6=honest-bound line verbatim
+- Contract sourced from TASK_1983 [Developer] section: orphan-signal task_id = "orphan-signal:<original_task_id>"; payload carries {original_task_id, original_task_kind, original_owner_client_session, owner_agent, last_payload, orphaned_at, redispatch_count}
+- Commit: 9b2ef39a | push OK (tsc pass)
+
 ## 2026-06-17 — FIX-FB-POSTER-FABRICATES-STALE-EOD (P1)
 
 - Task: Edit fb-market-poster flow + init — anti-fabrication rules for per-ticker numeric spine
