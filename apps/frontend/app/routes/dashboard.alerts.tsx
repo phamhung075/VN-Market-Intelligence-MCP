@@ -7,7 +7,7 @@
  * Endpoint contract (GET /api/alerts?limit=100):
  *   {
  *     items: [
- *       { id: string, triggeredAt: ISO8601, severity: "low"|"medium"|"high"|"critical",
+ *       { id: string, triggeredAt: ISO8601, severity: "low"|"medium"|"warning"|"high"|"critical",
  *         signals: Signal[], affectedActions: [{code: string, expectedImpact: string, confidence: number}],
  *         message: string|null, read: 0|1, sentBy: string,
  *         confidenceScore: number|null, outcome: string|null }
@@ -35,6 +35,8 @@ import { useState } from "react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 import { safeFetch } from "~/lib/api/fetchUtils";
+import { FreshnessBadge } from "~/components/FreshnessBadge";
+import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
 
 export const meta: MetaFunction = () => [
   { title: "Cảnh Báo — VN Market Intelligence" },
@@ -44,7 +46,10 @@ export const meta: MetaFunction = () => [
 // Domain types — matched to GET /api/alerts DTO contract
 // ---------------------------------------------------------------------------
 
-export type AlertSeverity = "low" | "medium" | "high" | "critical";
+// "warning" is a live backend-emitted value (distinct semantic level between medium and high).
+// Extending the union keeps the type honest; a default: branch in severityColours() guards
+// against any future unmodeled values that bypass TypeScript at runtime.
+export type AlertSeverity = "low" | "medium" | "warning" | "high" | "critical";
 
 export interface AffectedAction {
   code: string;
@@ -80,6 +85,7 @@ export interface AlertsDto {
   items: AlertItem[];
   count: number;
   fetchedAt: string;
+  data_asof?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -90,6 +96,7 @@ export interface LoaderData {
   items: AlertItem[];
   count: number;
   fetchedAt: string;
+  data_asof: string | null;
   error: string | null;
 }
 
@@ -99,6 +106,25 @@ export interface LoaderData {
 //  as fetchIntelData in dashboard.intel.tsx)
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Data-boundary normalisation — severity guard
+// ---------------------------------------------------------------------------
+
+/** All severity values the frontend models. Used to reject unknown backend values at parse time. */
+const KNOWN_SEVERITIES = new Set<string>(["critical", "high", "warning", "medium", "low"]);
+
+/**
+ * Coerce a raw severity value from the API into a modeled AlertSeverity.
+ * Unknown values (any future backend addition beyond the current set) fall back
+ * to "medium" (neutral) so SSR never throws on an unrecognized string.
+ */
+function normalizeItemSeverity(raw: unknown): AlertSeverity {
+  if (typeof raw === "string" && KNOWN_SEVERITIES.has(raw)) {
+    return raw as AlertSeverity;
+  }
+  return "medium";
+}
+
 function parseAlertsDto(raw: unknown): AlertsDto {
   if (raw === null) {
     return { items: [], count: 0, fetchedAt: new Date().toISOString() };
@@ -107,7 +133,15 @@ function parseAlertsDto(raw: unknown): AlertsDto {
     throw new Error("Unexpected response shape from /api/alerts");
   }
   const dto = raw as AlertsDto;
-  const items = Array.isArray(dto.items) ? dto.items : [];
+  // Normalize each item's severity at the data boundary so downstream code
+  // (severityColours, SEVERITY_LABEL, SummaryHeader) always receives a modeled value.
+  const items: AlertItem[] = Array.isArray(dto.items)
+    ? dto.items.map((item: unknown) => {
+        if (typeof item !== "object" || item === null) return item as AlertItem;
+        const r = item as Record<string, unknown>;
+        return { ...r, severity: normalizeItemSeverity(r["severity"]) } as AlertItem;
+      })
+    : [];
   return {
     items,
     count: typeof dto.count === "number" ? dto.count : items.length,
@@ -132,7 +166,7 @@ export async function fetchAlertsData(
   const { data, error } = await safeFetch<AlertsDto>(url, parseAlertsDto, {
     label: "dashboard.alerts",
   });
-  return { items: data.items, count: data.count, fetchedAt: data.fetchedAt, error };
+  return { items: data.items, count: data.count, fetchedAt: data.fetchedAt, data_asof: data.data_asof ?? null, error };
 }
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {
@@ -170,6 +204,13 @@ function severityColours(severity: AlertSeverity): SeverityColour {
         badge: "bg-orange-900 text-orange-300 border border-orange-700",
         row: "border-l-2 border-orange-700",
       };
+    case "warning":
+      // Amber — visually distinct from high (orange) and medium (yellow).
+      return {
+        chip: "bg-amber-900 text-amber-300 border border-amber-700",
+        badge: "bg-amber-900 text-amber-300 border border-amber-700",
+        row: "border-l-2 border-amber-600",
+      };
     case "medium":
       return {
         chip: "bg-yellow-900 text-yellow-300 border border-yellow-700",
@@ -182,12 +223,22 @@ function severityColours(severity: AlertSeverity): SeverityColour {
         badge: "bg-slate-700 text-slate-300 border border-slate-600",
         row: "border-l-2 border-slate-600",
       };
+    default:
+      // Belt-and-suspenders: unreachable when all AlertSeverity values are handled above,
+      // but guards against runtime bypass (e.g. database stores an unmodeled value that
+      // slips past parseAlertsDto normalisation). Neutral/slate fallback — never throws.
+      return {
+        chip: "bg-slate-700 text-slate-300 border border-slate-600",
+        badge: "bg-slate-700 text-slate-300 border border-slate-600",
+        row: "border-l-2 border-slate-600",
+      };
   }
 }
 
 const SEVERITY_LABEL: Record<AlertSeverity, string> = {
   critical: "Nghiêm trọng",
   high: "Cao",
+  warning: "Cảnh báo",
   medium: "Trung bình",
   low: "Thấp",
 };
@@ -352,6 +403,7 @@ function SummaryHeader({
   const counts: Record<AlertSeverity, number> = {
     critical: 0,
     high: 0,
+    warning: 0,
     medium: 0,
     low: 0,
   };
@@ -367,7 +419,7 @@ function SummaryHeader({
         {total} cảnh báo
       </span>
       <div className="flex flex-wrap gap-2">
-        {(["critical", "high", "medium", "low"] as AlertSeverity[]).map(
+        {(["critical", "high", "warning", "medium", "low"] as AlertSeverity[]).map(
           (sev) =>
             counts[sev] > 0 ? (
               <SeverityChip key={sev} severity={sev} count={counts[sev]} />
@@ -479,6 +531,7 @@ const FILTER_OPTIONS: Array<{ value: AlertSeverity | "all"; label: string }> =
     { value: "all", label: "Tất cả" },
     { value: "critical", label: "Nghiêm trọng" },
     { value: "high", label: "Cao" },
+    { value: "warning", label: "Cảnh báo" },
     { value: "medium", label: "Trung bình" },
     { value: "low", label: "Thấp" },
   ];
@@ -520,7 +573,8 @@ function SeverityFilter({
 // ---------------------------------------------------------------------------
 
 export default function AlertsPage() {
-  const { items, count, fetchedAt, error } = useLoaderData<typeof loader>();
+  const { items, count, fetchedAt, data_asof, error } = useLoaderData<typeof loader>();
+  useFreshnessRevalidator("realtime");
   const [severityFilter, setSeverityFilter] = useState<AlertSeverity | "all">(
     "all"
   );
@@ -544,9 +598,10 @@ export default function AlertsPage() {
         title="Cảnh Báo Thị Trường"
         subtitle="Tín hiệu rủi ro và cảnh báo từ hệ thống giám sát AI — phân tích mức độ và hành động đề xuất"
         actions={
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 flex items-center gap-2">
+            <FreshnessBadge dataAsof={data_asof} slaTierKey="realtime" marketHoursOnly={true} />
             {count > 0 && (
-              <span className="mr-3 font-medium text-slate-300">
+              <span className="font-medium text-slate-300">
                 {count} cảnh báo
               </span>
             )}
