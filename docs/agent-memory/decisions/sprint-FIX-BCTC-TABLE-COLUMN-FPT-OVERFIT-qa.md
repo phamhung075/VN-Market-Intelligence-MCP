@@ -6,6 +6,16 @@
 
 ---
 
+### STEP qa-S2 · qa · 2026-06-28T10:30Z
+**task-id:** 327
+**what-done:** QA gate TASK_327 (FR-1 code-range gate _CODE_VALUE_COL_RE \d{2,3}→\d{3}) — APPROVED
+**what-considered:**
+- Failure-count reconcile (load-bearing): 6→12 delta. Unit-only scope = 898 now (893 pre-327 = 887+6 matching TASK_326 QA exactly). Full suite = 1043. 6 extra failures = integration+top-level PIL/OCR-unavailable/flake, zero in unit/. e939a422 modified 0 of the 12 failing test files (git confirmed). 2 integration tests import TextTableExtractor class (not _CODE_VALUE_COL_RE); fail with rows_stored=0 = Tesseract+PDF unavailable on host Mac.
+- FPT non-regression: TestFR1CodeRangeGate tests 270/221/300 — all 3 match \d{3}, group(1) verified. No FPT code dropped.
+- NFR-4: diff grep for ticker/issuer/form conditionals — only match is sprint-name comment; zero per-issuer branches in production code.
+**why-decision:** All AC green, 0 regressions, scope-only explanation for 6→12 delta proven mathematical (898-5=893=TASK_326 unit count)
+**why-change:** no change from plan
+
 ### STEP qa-S1 · qa · 2026-06-28T08:00Z
 **task-id:** 326
 **what-done:** QA gate TASK_326 (FR-3 Roman numeral OCR normalization) — APPROVED

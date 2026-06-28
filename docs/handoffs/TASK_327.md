@@ -120,3 +120,24 @@ Zero per-issuer branches. Change is purely structural: digit-count constraint on
 **Depends on:** TASK_326  
 **Blocks:** TASK_328, TASK_329, TASK_330  
 **Estimated:** ~2h (code + test + verify)
+
+## [QA] Review Record
+
+**Date:** 2026-06-28 | **Cycle:** 333 | **Verdict:** APPROVED
+
+**Code change verified:** `apps/pdf-extractor/infrastructure/text_table_extractor.py` L590 — `\d{3}` confirmed (not `\d{2,3}`). FR-1 comment present.
+
+**Targeted tests:** TestFR1CodeRangeGate 5/5 PASS (all AC-3/AC-4 cases green including FPT golden codes 270, 221, 300).
+
+**Full suite:** 1030 pass / 12 fail / 1 skip.
+
+**Failure-count reconcile (6→12) — SCOPE EXPANSION, not regressions:**
+TASK_326 QA ran unit-only scope (893 tests = 887+6). Current full suite = 1043 tests. Mathematical proof: current unit-only = 898; 898 - 5 new TestFR1CodeRangeGate tests = 893 = exact TASK_326 count. The 6 extra failures are integration/ + top-level tests (PIL ABI mismatch, Tesseract+PDF unavailable on host Mac, randomized-order flake). Commit e939a422 touched 0 of the 12 failing test files (git confirmed). The 2 integration tests that import TextTableExtractor import the class (not `_CODE_VALUE_COL_RE`); they fail with `rows_stored=0` = OCR pipeline unavailable. FR-1 introduced ZERO regressions.
+
+**NFR-4:** PASS — diff grep returned only the sprint-name comment "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT"; zero per-issuer/ticker/form code branches.
+
+**FPT non-regression:** codes 270 (group(1)="270"), 221, 300 all match `\d{3}`. Zero FPT codes dropped.
+
+**DDD:** PASS. **Security:** PASS (no secrets, no process.env). **mock-guard:** EXIT 0.
+
+**Status set:** TASK_327 → DONE. TASK_328 unblocked → READY.

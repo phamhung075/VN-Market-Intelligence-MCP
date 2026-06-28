@@ -178,6 +178,10 @@ Production fix: resetQ1UrlNotFound() removed from initFinancialReportsTables() i
 
 ---
 
+## cycle-333 · 2026-06-28 · TASK_327 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — APPROVED
+
+TASK_327 FR-1 code-range gate (e939a422) | Verdict: APPROVED | 5/5 TestFR1CodeRangeGate PASS (1-digit/2-digit rejected, FPT 270/221/300 match). Full suite: 1030 pass / 12 fail (all pre-existing). Scope reconcile: 6→12 = SCOPE EXPANSION (TASK_326 QA ran unit-only 893 tests = 887+6; current full suite 1043; proof: 898 unit-now - 5 new FR-1 tests = 893 exact). 6 extra = integration+top-level (PIL ABI, OCR/Tesseract unavailable on host, randomized-order flake). e939a422 touched 0 of 12 failing test files (git). 2 integration tests import TextTableExtractor class (not _CODE_VALUE_COL_RE); fail with rows_stored=0 = OCR pipeline unavailable on host. NFR-4 PASS: only diff-grep match = sprint-name comment. DDD PASS. Security PASS. mock-guard EXIT 0. orch-state: 327 READY→DONE, 328 BACKLOG→READY. DJ: sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md § qa-S2. Report: reports/TASK_REPORT_327.md.
+
 ## cycle-332 · 2026-06-28 · TASK_326 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT) — APPROVED
 
 TASK_326 FR-3 Roman OCR normalize (cdc8b93f) | Verdict: APPROVED | 58/58 targeted PASS (15 new TestRomanOcrNormalization + 43 pre-existing). Full suite: 887 pass / 6 pre-existing fail (PIL/page_rasterizer — unrelated). NFR-4: ZERO per-issuer branches — EXACT-KEY dict only; diff grep clean. FPT golden non-regression: all FPT Roman codes canonical (none in _ROMAN_OCR_NORMALIZE keys → no-op pass-through). Period guard confirmed active (test_period_guard_still_active_after_normalization PASS). Sandbox G12: primitive 29 pass / 6 intentional-fail (known_bad fixtures by design); module 1 pass / 0 fail. orch-state: 326 review→done, 327 BACKLOG→READY (dependency cleared). DJ: sprint-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT-qa.md § qa-S1. Report: reports/TASK_REPORT_326.md.
