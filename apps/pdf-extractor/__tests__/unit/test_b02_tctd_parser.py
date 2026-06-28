@@ -32,6 +32,7 @@ import pytest
 from infrastructure.text_table_extractor import (
     TextTableExtractor,
     _try_parse_code_row,
+    _try_parse_roman_code_row,
 )
 
 
@@ -411,4 +412,161 @@ class TestVcbValuePlausibility:
         assert len(different_pairs) >= 1, (
             "At least one row must have current ≠ prior "
             "(e.g. Tiền mặt: 12.930.996 vs 15.542.769)"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TC-B05: FR-3 — Roman numeral OCR misread normalization
+# (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT)
+# ---------------------------------------------------------------------------
+
+class TestRomanOcrNormalization:
+    """
+    _try_parse_roman_code_row must normalize OCR misread Roman numeral tokens
+    before regex matching.  The 8 exact-key pairs in _ROMAN_OCR_NORMALIZE cover
+    the most common Tesseract confusion of lowercase-l ('l') with uppercase-I ('I').
+
+    AC-6 acceptance criteria (from TASK_326.md):
+      - "Il Tiền gửi 17.957.497"   → code="II"  (Il  → II)
+      - "Ill X 10.000"              → code="III" (Ill → III)
+      - "IIl X 10.000"             → code="III" (IIl → III)
+      - "lV X 10.000"              → code="IV"  (lV  → IV)
+
+    Additional normalization pairs (architect-specified):
+      - "VlI X 10.000"             → code="VII"  (VlI  → VII)
+      - "VIl X 10.000"             → code="VII"  (VIl  → VII)
+      - "VIll X 10.000"            → code="VIII" (VIll → VIII)
+      - "VlII X 10.000"            → code="VIII" (VlII → VIII)
+
+    Non-regression:
+      - Canonical forms (II, III, IV, VII, VIII) pass through unchanged.
+      - Tokens not in the dict (e.g. plain text, 3-digit codes) are untouched.
+    """
+
+    def test_il_normalizes_to_II(self) -> None:
+        """'Il' (capital-I + lowercase-l) normalizes to 'II' before regex match."""
+        result = _try_parse_roman_code_row(
+            "Il Tiền gửi tại Ngân hàng Nhà nước 17.957.497 37.445.504"
+        )
+        assert result is not None, "OCR misread 'Il' must be normalized to 'II' and parse"
+        code, label, values_rest = result
+        assert code == "II", f"Expected code='II', got {code!r}"
+        assert "Tiền gửi" in label
+        assert "17.957.497" in values_rest or "37.445.504" in values_rest
+
+    def test_ill_normalizes_to_III(self) -> None:
+        """'Ill' (I + two lowercase-l) normalizes to 'III'."""
+        result = _try_parse_roman_code_row("Ill Hàng tồn kho 10.000 9.000")
+        assert result is not None, "OCR misread 'Ill' must be normalized to 'III' and parse"
+        code, _, _ = result
+        assert code == "III", f"Expected code='III', got {code!r}"
+
+    def test_IIl_normalizes_to_III(self) -> None:
+        """'IIl' (two uppercase-I + one lowercase-l) normalizes to 'III'."""
+        result = _try_parse_roman_code_row("IIl Tài sản cố định 10.000 9.000")
+        assert result is not None, "OCR misread 'IIl' must be normalized to 'III' and parse"
+        code, _, _ = result
+        assert code == "III", f"Expected code='III', got {code!r}"
+
+    def test_lV_normalizes_to_IV(self) -> None:
+        """'lV' (lowercase-l + V) normalizes to 'IV'."""
+        result = _try_parse_roman_code_row("lV Tài sản cố định 100.000.000 90.000.000")
+        assert result is not None, "OCR misread 'lV' must be normalized to 'IV' and parse"
+        code, _, _ = result
+        assert code == "IV", f"Expected code='IV', got {code!r}"
+
+    def test_VlI_normalizes_to_VII(self) -> None:
+        """'VlI' (V + lowercase-l + I) normalizes to 'VII'."""
+        result = _try_parse_roman_code_row("VlI Cho vay khách hàng 500.000 480.000")
+        assert result is not None, "OCR misread 'VlI' must be normalized to 'VII' and parse"
+        code, _, _ = result
+        assert code == "VII", f"Expected code='VII', got {code!r}"
+
+    def test_VIl_normalizes_to_VII(self) -> None:
+        """'VIl' (VI + lowercase-l) normalizes to 'VII'."""
+        result = _try_parse_roman_code_row("VIl Vốn và các quỹ 234.031.329 224.558.726")
+        assert result is not None, "OCR misread 'VIl' must be normalized to 'VII' and parse"
+        code, _, _ = result
+        assert code == "VII", f"Expected code='VII', got {code!r}"
+
+    def test_VIll_normalizes_to_VIII(self) -> None:
+        """'VIll' (VI + two lowercase-l) normalizes to 'VIII'."""
+        result = _try_parse_roman_code_row("VIll Lợi nhuận trước thuế 10.000 9.000")
+        assert result is not None, "OCR misread 'VIll' must be normalized to 'VIII' and parse"
+        code, _, _ = result
+        assert code == "VIII", f"Expected code='VIII', got {code!r}"
+
+    def test_VlII_normalizes_to_VIII(self) -> None:
+        """'VlII' (V + lowercase-l + II) normalizes to 'VIII'."""
+        result = _try_parse_roman_code_row("VlII Chi phí hoạt động 8.000 7.500")
+        assert result is not None, "OCR misread 'VlII' must be normalized to 'VIII' and parse"
+        code, _, _ = result
+        assert code == "VIII", f"Expected code='VIII', got {code!r}"
+
+    # --- Non-regression: canonical forms pass through unchanged ---
+
+    def test_canonical_II_unchanged(self) -> None:
+        """Canonical 'II' is not in the normalization dict → passes unchanged."""
+        result = _try_parse_roman_code_row("II Tiền gửi NHNN 17.957.497 37.445.504")
+        assert result is not None
+        code, _, _ = result
+        assert code == "II"
+
+    def test_canonical_III_unchanged(self) -> None:
+        """Canonical 'III' passes unchanged."""
+        result = _try_parse_roman_code_row("III Tiền gửi TCTD khác 581.521.607 522.474.362")
+        assert result is not None
+        code, _, _ = result
+        assert code == "III"
+
+    def test_canonical_IV_unchanged(self) -> None:
+        """Canonical 'IV' passes unchanged."""
+        result = _try_parse_roman_code_row("IV Chứng khoán kinh doanh 14.096.911 11.832.577")
+        assert result is not None
+        code, _, _ = result
+        assert code == "IV"
+
+    def test_canonical_VII_unchanged(self) -> None:
+        """Canonical 'VII' passes unchanged."""
+        result = _try_parse_roman_code_row("VII Vốn và các quỹ 234.031.329 224.558.726")
+        assert result is not None
+        code, _, _ = result
+        assert code == "VII"
+
+    def test_canonical_VIII_unchanged(self) -> None:
+        """Canonical 'VIII' passes unchanged."""
+        result = _try_parse_roman_code_row("VIII Lợi nhuận 10.000.000 9.000.000")
+        assert result is not None
+        code, _, _ = result
+        assert code == "VIII"
+
+    def test_non_roman_token_untouched(self) -> None:
+        """A non-Roman first token (e.g. plain 3-digit code) is not affected."""
+        # '270' is not in the normalization dict → returns None (not a Roman row)
+        result = _try_parse_roman_code_row("270 Tổng cộng 88.089.621.779.862")
+        assert result is None, "Non-Roman token '270' must not be parsed by Roman layout"
+
+    def test_period_guard_still_active_after_normalization(self) -> None:
+        """Period guard remains active: 'I. Some text 10.000' → None (section header)."""
+        result = _try_parse_roman_code_row("I. Tiền mặt 12.930.996")
+        assert result is None, "Period-suffix line must still be rejected after FR-3 normalization"
+
+    def test_vcb_page5_il_row_assembles_as_II(self) -> None:
+        """
+        End-to-end: VCB_2026Q1_PAGE5 contains 'Il Tiền gửi tại Ngân hàng Nhà nước'.
+        After FR-3, assemble() must produce a row with code='II' (not None or 'Il').
+        This was previously dropped (OCR misread not normalized → no match → row lost).
+        """
+        extractor = TextTableExtractor()
+        pages = [{"page_number": 5, "text": VCB_2026Q1_PAGE5}]
+        result = extractor.assemble(pages, "balance_sheet")
+        rows = result["rows"]
+        roman_ii = [r for r in rows if r.get("code") == "II"]
+        assert len(roman_ii) >= 1, (
+            "Row with code='II' must appear after normalizing OCR misread 'Il'. "
+            "VCB page 5 has 'Il Tiền gửi tại Ngân hàng Nhà nước 17.957.497' — "
+            "this was previously dropped because 'Il' did not match _ROMAN_CODE_RE."
+        )
+        assert roman_ii[0]["value_current"] == pytest.approx(17_957_497.0, rel=1e-4), (
+            "Normalized row code='II' must have value_current=17,957,497"
         )

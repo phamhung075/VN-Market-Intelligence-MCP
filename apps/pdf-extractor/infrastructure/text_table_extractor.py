@@ -171,6 +171,25 @@ _ROMAN_CODE_RE = re.compile(
     r"^(XIII|XII|XI|IX|VIII|VII|VI|IV|III|II|I|X|V)\s+(.+)$"
 )
 
+# FR-3 (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT): OCR misread normalization table.
+# Tesseract frequently confuses lowercase-l ('l') with uppercase-I ('I') in
+# Roman numeral tokens. This dict maps the 8 most common misread forms to their
+# canonical Roman numeral equivalents.
+# EXACT-KEY match only — applied to the first whitespace-delimited token in
+# _try_parse_roman_code_row() BEFORE _ROMAN_CODE_RE.match().
+# No substring / fuzzy / partial replacement: "Il" maps to "II" only when
+# the entire first token is "Il", never when "Il" appears inside another word.
+_ROMAN_OCR_NORMALIZE: dict = {
+    "Il": "II",     # lowercase-l misread as uppercase-I (2nd position)
+    "Ill": "III",   # two lowercase-l misread as two uppercase-I
+    "IIl": "III",   # one lowercase-l in third position
+    "lV": "IV",     # lowercase-l at start misread as uppercase-I
+    "VlI": "VII",   # lowercase-l in second position
+    "VIl": "VII",   # lowercase-l at end misread as uppercase-I
+    "VIll": "VIII", # two lowercase-l at end
+    "VlII": "VIII", # lowercase-l in second position, rest correct
+}
+
 # VN-format number pattern (positive or parenthetical-negative) for guard check.
 # Used to reject lines that have a Roman/digit code but no numeric value.
 _VN_NUMBER_GUARD_RE = re.compile(r"\(?\d[\d.,]+\d\)?")
@@ -304,7 +323,24 @@ def _try_parse_roman_code_row(stripped: str) -> Optional[tuple]:
       numeral word ("V. Tài sản dài hạn") from matching. Since we reject lines
       with a trailing period, the main risk is a label-only line starting with
       a Roman letter (unlikely in Vietnamese financial text).
+
+    FR-3 normalization:
+      Before regex matching, the first whitespace-delimited token is looked up in
+      _ROMAN_OCR_NORMALIZE. If found, it is replaced with the canonical form.
+      This is an EXACT-KEY match — only standalone misread tokens are normalized,
+      never substrings of other tokens. The canonical form is then used as the
+      stored code value.
     """
+    # FR-3: apply OCR misread normalization to the first whitespace-separated token.
+    # Handles cases where Tesseract renders 'Il' for 'II', 'Ill' for 'III', etc.
+    # EXACT-KEY match only — no substring/fuzzy/partial replacement.
+    parts = stripped.split(None, 1)
+    if parts:
+        first_token = parts[0]
+        normalized_token = _ROMAN_OCR_NORMALIZE.get(first_token, first_token)
+        if normalized_token != first_token:
+            stripped = normalized_token + (" " + parts[1] if len(parts) > 1 else "")
+
     m = _ROMAN_CODE_RE.match(stripped)
     if m is None:
         return None
