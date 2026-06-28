@@ -3935,10 +3935,11 @@
           "dev-pdf-extractor.md 240L (CLEAN-NB-TRIM-PDFX-2 backlog)",
           "dev-frontend.md 224L @ 2026-06-28T07:12:25Z (signal TRIAGED->processed)",
           "architect.md 211L @ 2026-06-28T07:30:55Z (signal TRIAGED->processed)",
-          "pm.md 238L @ 2026-06-28T08:31:01Z (signal TRIAGED->processed)"
+          "pm.md 238L @ 2026-06-28T08:31:01Z (signal TRIAGED->processed)",
+          "dev-pdf-extractor.md 203L @ 2026-06-28T09:53:35Z (RE-BREACH; ALREADY in APPEND class per file-size-caps.json + SKILL.md AC-6 -> proves AC-5-advisory gap, NOT a membership gap; persisted commit 577d76a9; signal TRIAGED->processed)"
         ],
-        "recurrence_count": 5,
-        "escalation_note": "recurring-bug-escalation: 5 append-class agents breached post-qa-fix -> systemic enforcement gap, prioritize. annotated 2026-06-28T08:48:22Z"
+        "recurrence_count": 6,
+        "escalation_note": "recurring-bug-escalation: 6 breaches across 5 append-class agents post-qa-fix; dev-pdf-extractor is now a SECOND-time breacher (240L then 203L). RAW-CORRECTION 2026-06-28T10:13:20Z: dev-pdf-extractor is ALREADY in the APPEND self-cap class -> systemic gap is confirmed = AC-5 must go advisory->BLOCKING (membership is complete). prioritize."
       },
       {
         "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
@@ -6299,6 +6300,20 @@
         "zone": ".claude/skills/",
         "title": "context-bloat (skill-file class): trim .claude/skills/task-lock/SKILL.md 204L → ≤200L (overage 4); owner claude-manager-helper; PLAN-ONLY",
         "detail_ref": "docs/signals/processed/context-bloat--claude-skills-task-lock-SKILL-md-2026-06-28T085444Z.json"
+      },
+      {
+        "id": "FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "size": "S",
+        "impl_owner": "claude-manager-helper",
+        "title": "context-bloat-backstop hook fires transient FPs on mid-write line counts -> add settle-read/debounce (re-read after short settle, or emit only on committed state)",
+        "plan_only": true,
+        "recurrence_note": "Router standing recommendation 3 consecutive ticks (20260628T0719/0730/1009). Prior transient FPs: qa.md 201L snapshot vs 197L committed; dev-pdf-extractor 214L snapshot vs 179L committed. The write-side fix (HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING) hardens the WRITER but does NOT stop the HOOK firing on transient mid-write states. Owner owns context-bloat governance hook (scripts/agents-flow/context-bloat-backstop.sh). PLAN-ONLY.",
+        "minted": "2026-06-28T10:13:20Z",
+        "minted_by": "po-triage-20260628T100957Z"
       }
     ],
     "closed_sprints": [
