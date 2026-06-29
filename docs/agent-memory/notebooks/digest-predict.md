@@ -1,6 +1,6 @@
 # Digest Predict — Notebook
 
-**Last updated:** 2026-06-26 17:31 UTC | **Sprint:** FEAT-PREDICTION-CLAIMS-DAILY-CADENCE
+**Last updated:** 2026-06-29 17:37 UTC | **Sprint:** FEAT-PREDICTION-CLAIMS-DAILY-CADENCE
 
 ## Known patterns / preferences
 
@@ -112,3 +112,26 @@
   - notebook write ✓
 - **carry_over**: FPT/VPB resolution 2026-07-01; POW resolution 2026-07-03; evidence UNTRUSTED systemic (LR=1.0 n=0 — 10th cycle); backtest 501 dev gap (10th cycle); FPT portfolio lỗ (giá 70.800 vs 80.300 mua)
 - **estimated_tokens**: 5500
+
+### Daily Predictions (17:37 UTC) 2026-06-29
+
+- **slot**: digest-daily (cron 30 17 * * *)
+- **dedup_gate**: PASS — task claimed: published:digest-daily:2026-06-29 (claimed=true, TTL 100800s)
+- **regime**: NEUTRAL — VN-Index 1.854,97 (-0,90%), BRENT $73,86 (+0,98%), GOLD $4.039,6 (-0,75%), USD/VND 26.121, carry NEUTRAL. DAMPENING_ACTIVE=true (calibration degrading Brier +0,076).
+- **calibration**: Brier 0,2135 degrading (+0,076 vs tuần trước) | 65% bucket over-confident (50% actual) | DAMPENING_ACTIVE=true
+- **market_hexagram**: Quẻ 15 Khiêm THUẬN LỢI (signal TIÊU CỰC 64%) + snapshot Quẻ 19 Lâm THUẬN LỢI 100%. Breadth: 187T/132G TÍCH CỰC. Thanh khoản 17.396 tỷ (+8,0%).
+- **context**: Ngày phân hóa — BĐS bị bán mạnh (VIC -4,74%, VHM -3,65%, VRE -2,67%) nhưng độ rộng tích cực. FII chain_catalyst: dịch chuyển từ ngân hàng/BĐS sang bluechips phi tài chính (impact=10, confidence=81).
+- **screened_fresh** (score_date=2026-06-29): VHM bearish=0,62, CTG bearish=0,75, VPB bearish=0,75, ACB bullish=0,56 (<0,6), MWG bullish=0,16 (<0,6), BID bearish=0,22 (<0,6)
+- **screened_stale**: VIC bullish=0,77 (33d), GAS bullish=0,76 (33d), GVR bullish=0,76 (33d)
+- **decisions**:
+  - VHM bearish=0,62: quẻ 63 Ký Tế THUẬN LỢI 63% mâu thuẫn bearish → LOẠI
+  - CTG bearish=0,75: quẻ 23 Bắc BẤT LỢI 25% hỗ trợ, nhưng cùng luận điểm FII banking với VPB id=11 đang hoạt động → LOẠI (không độc lập)
+  - VPB bearish=0,75: trùng claim id=11 đang hoạt động → LOẠI
+- **claims_created**: 0 — honest NO-OP (qualify_count=0)
+- **actions**:
+  - dedup gate task_claim ✓ (claimed=true, key=published:digest-daily:2026-06-29)
+  - log_agent_work id=1501 completed ✓
+  - send_telegram WORK ✓ (NO-OP notice với phân tích rotation đầy đủ)
+  - notebook write ✓
+- **carry_over**: FPT/VPB resolution 2026-07-01 (NGÀY MAI); POW resolution 2026-07-03; evidence UNTRUSTED systemic (LR=1.0 n=0 — 11th cycle); Brier 0,2135 degrading (tăng mạnh từ 0,1379) — cần dev-team calibration pipeline fix; backtest 501 gap (11th cycle)
+- **estimated_tokens**: 4500
