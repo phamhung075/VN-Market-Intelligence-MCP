@@ -118,3 +118,17 @@ Zone health: tsc clean, 31/0 new tests, toolCount=174 (+1), schedulerCount=3 unc
 - MOD: `registry.ts` — +1 registerMarketSentimentTools
 
 Zone health: tsc clean (EXIT 0), 36/0 new tests, 175/0 sentiment cluster, toolCount=175 (+1), no cron added | HEALTHY
+
+## 2026-06-30 — P0-5-INSIDER-SENTIMENT → REVIEW
+
+**Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
+
+- NEW: `domain/services/market-data/insiderSentimentCalculator.ts` — pure domain: computeWindowNetBuySell (price=0 WARN, vol=0 exclude), computeNormalizedScore (clamped [-1,+1], honest null), computeInsiderLabel (ACCUM/DIST/MIXED/NEUTRAL), computeLargeDeals (default 10B VND)
+- NEW: `infrastructure/db/insiderSentimentStore.ts` — READ-ONLY: getInsiderTxForSentiment (single 180d query), getLatestMarketCapBn, getMarketCapBnBulk (ROW_NUMBER window fn), getWatchlistCodes. No try/catch (P0-2 pattern).
+- NEW: `application/usecases/getInsiderSentiment.ts` — per-ticker + market-wide aggregation; normalization_basis='market_cap_proxy' hardcoded (QA hard gate NFR-P05-5); Gauge-Readiness 6-field contract; confidence 0.8/0.4/null
+- NEW: `interface/mcp/tools/market-data/insiderSentimentTools.ts` — MCP tool `get_insider_sentiment` (#178)
+- NEW: `__tests__/P0-5-insider-sentiment.test.ts` — 57 tests (14 ACs), 0 fail
+- MOD: `registry.ts` — +1 registerInsiderSentimentTools (#178)
+
+Zone health: tsc clean (EXIT 0), 57/0 new tests, 141/0 sibling cluster (P0-2+P0-4+P0-5+insider-tx), toolCount=176 (+1), scheduler=3 (unchanged) | HEALTHY

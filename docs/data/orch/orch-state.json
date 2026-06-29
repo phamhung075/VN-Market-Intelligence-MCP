@@ -1210,8 +1210,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-29T20:33:25Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-30T00:00:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8211,18 +8211,6 @@
         "note": "FR-1..5: confidence-weighted daily sentiment score (-1 to +1), z-score vs 60/90d baseline (null <21d per hard constraint + history_quality enum), EMA(5), bull/bear/neutral ratios, article-volume spike flag (>2×30d avg). Gauge-readiness: news_sentiment_z (null <21d, falls back to z_90d, includes history_quality field). NEW INDEX: idx_rag_sentiment_covering (created_at DESC, sentiment, confidence, impact_score) for 90d window performance. NEW FILES: marketSentimentCalculator.ts, getMarketSentimentIndex.ts, marketSentimentTools.ts. NO schema changes to rag_analyses (read-only). TEST: divide-by-zero guard (confidence=0), empty table → history_quality=EMPTY, unexpected sentiment values excluded + logged."
       },
       {
-        "id": "P0-5-INSIDER-SENTIMENT",
-        "title": "Insider-Transaction Net Sentiment: net buy-sell (30/90/180d), free-float normalized score, accumulation/distribution label, large deals",
-        "zone": "apps/mcp-server/src/",
-        "owner": "dev-mcp-server",
-        "type": "SPRINT-S",
-        "status": "READY",
-        "size": "M",
-        "priority": "high",
-        "depends": [],
-        "note": "FR-1..5: net buy-sell value per window (30/90/180d, null when <history), market_cap_bn proxy normalization (clamped [-1,+1]), ACCUMULATION/DISTRIBUTION/MIXED/NEUTRAL label, large-deal flags (>10B VND in 30d). Gauge-readiness: net_sentiment_score (null when market_cap_bn IS NULL, include normalization_basis='market_cap_proxy' field as QA hard gate). NEW FILES: insiderSentimentCalculator.ts, getInsiderSentiment.ts, insiderSentimentTools.ts. NO schema changes to insider_transactions (read-only). MANDATORY: include normalization_basis field + data_window_days counts in response. TEST: price=0 rows excluded, same insider buy+sell both counted, market_cap_bn=NULL → score=NULL, insider_transactions empty → NEUTRAL label."
-      },
-      {
         "id": "BREADTH-TIME-SERIES",
         "title": "Breadth Time-Series persister + A-D Line, RANA, McClellan, Zweig Thrust: forward-accruing only, 40-session McClellan warmup, 10-session Zweig trigger",
         "zone": "apps/mcp-server/src/scheduler/market-data/",
@@ -8297,6 +8285,18 @@
         "done_at": "2026-06-29T16:46:36Z",
         "updated_by": "qa",
         "updated_at": "2026-06-29T16:46:36Z"
+      },
+      {
+        "id": "P0-5-INSIDER-SENTIMENT",
+        "title": "Insider-Transaction Net Sentiment: net buy-sell (30/90/180d), free-float normalized score, accumulation/distribution label, large deals",
+        "zone": "apps/mcp-server/src/",
+        "owner": "dev-mcp-server",
+        "type": "SPRINT-S",
+        "status": "REVIEW",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "FR-1..5: net buy-sell value per window (30/90/180d, null when <history), market_cap_bn proxy normalization (clamped [-1,+1]), ACCUMULATION/DISTRIBUTION/MIXED/NEUTRAL label, large-deal flags (>10B VND in 30d). Gauge-readiness: net_sentiment_score (null when market_cap_bn IS NULL, include normalization_basis='market_cap_proxy' field as QA hard gate). NEW FILES: insiderSentimentCalculator.ts, getInsiderSentiment.ts, insiderSentimentTools.ts. NO schema changes to insider_transactions (read-only). MANDATORY: include normalization_basis field + data_window_days counts in response. TEST: price=0 rows excluded, same insider buy+sell both counted, market_cap_bn=NULL → score=NULL, insider_transactions empty → NEUTRAL label."
       }
     ],
     "qa": [],

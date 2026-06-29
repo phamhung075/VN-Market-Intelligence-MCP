@@ -65,3 +65,32 @@
 - Covering index: idempotent (CREATE INDEX IF NOT EXISTS), same file (schema-news.ts), no migration needed.
 
 **why-change:** No divergence from P0-4 spec. RISK-P0-4-Z-SCORE-HONESTY: resolved by enforcing <21d → both null + INSUFFICIENT (hard constraint). RISK-P0-4-COVERING-INDEX: resolved by adding idx_rag_sentiment_covering in schema-news.ts.
+
+---
+
+### STEP P0-5 · dev-mcp-server · 2026-06-30T00:00:00Z
+
+**task-id:** P0-5-INSIDER-SENTIMENT
+
+**what-done:**
+- Created `insiderSentimentCalculator.ts` (domain layer) — pure functions: computeWindowNetBuySell (price=0 WARN + vol=0 exclude), computeNormalizedScore (clamped [-1,+1], honest null when marketCapBn unavailable), computeInsiderLabel (ACCUMULATION/DISTRIBUTION/MIXED/NEUTRAL), computeLargeDeals (threshold 10B VND configurable).
+- Created `insiderSentimentStore.ts` (infrastructure) — getInsiderTxForSentiment (single 180d query; caller filters sub-windows), getLatestMarketCapBn, getMarketCapBnBulk (ROW_NUMBER window function), getWatchlistCodes. No try/catch (P0-2 pattern).
+- Created `getInsiderSentiment.ts` (application) — orchestrates store + domain; per-ticker (code supplied) and market-wide (code omitted, sums across watchlist) modes; Gauge-Readiness 6-field contract on net_sentiment_score; normalization_basis='market_cap_proxy' MANDATORY in all responses.
+- Created `insiderSentimentTools.ts` (interface) — registers `get_insider_sentiment` MCP tool (#178).
+- Registered tool in registry.ts; regenerated tool-registry.json and project-stats.json (toolCount 175→176).
+- Written 57 tests covering 14 ACs (57 pass, 0 fail). Gate 2a tsc EXIT 0. Full sibling suite (P0-2+P0-4+P0-5+insider-transactions = 141 tests) 0 fail.
+
+**what-considered:**
+- **180d window fetch strategy**: Option A (single 180d DB fetch + in-memory sub-window filter) vs Option B (3 separate DB queries for 30/90/180d). Chose A: same as P0-4 pattern (getRagRowsForWindow 90d + in-memory 30d/5d). Avoids 3 round-trips; rows180 is the superset.
+- **market-wide normalization denominator**: For code=omitted, sum of market_cap_bn across all watchlist tickers with non-null cap (excluding nulls from sum). Alternative (error on any null cap) would be too strict; sum of available caps is the honest proxy.
+- **computeWindowNetBuySell null logic**: Return null when distinctDates=0 (no valid buy/sell rows) — not 0.0. This is distinct from "zero activity" (where buy and sell perfectly cancel) which returns 0.0.
+- **exactOptionalPropertyTypes**: code? field required `as string` cast + conditional spread for ExactOptionalPropertyTypes compliance.
+- **NO schema changes**: insider_transactions is read-only (NFR-P05-1). No migration.
+
+**why-decision:**
+- DDD layering: domain (pure), infrastructure (DB access), application (orchestration), interface (MCP tool) — consistent with P0-2 + P0-4 patterns.
+- No try/catch in store: matches P0-2 (foreignRoomStore) and P0-4 (marketSentimentStore) patterns; tool handler's catch block is the correct error boundary.
+- normalization_basis='market_cap_proxy' ALWAYS present: QA hard gate NFR-P05-5 — never silently pass market_cap_bn proxy as true free-float. Field is hardcoded in the response struct, impossible to omit.
+- In-memory sub-window filtering: rows180 ⊃ rows90 ⊃ rows30 (always true because from_date is monotonic); avoids 3 DB round-trips; consistent with P0-4 pattern.
+
+**why-change:** No divergence from P0-5 spec. RISK-P0-5-NORMALIZATION-HONESTY resolved: normalization_basis field hardcoded in response type. RISK-P0-5-180D-DATA: data_window_days.d180 shows actual distinct dates in 180d window; null returned when 0 valid rows (not a minimum-day-count threshold).
