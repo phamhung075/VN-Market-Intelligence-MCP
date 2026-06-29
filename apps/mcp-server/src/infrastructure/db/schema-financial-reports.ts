@@ -726,6 +726,27 @@ export function initFinancialReportsTables(db: Database): void {
   // future pushes succeed even when the remote source URL is geo-blocked.
   // Idempotent: no-op after first run (rows already pending). Safe on startup.
   recoverStuckFetchingQueue(db);
+
+  // ── P0-2-FOREIGN-ROOM-SUITE: foreign_room_events table ────────────────────
+  // Additive schema migration — CREATE TABLE IF NOT EXISTS pattern.
+  // Detects ROOM_FULL (utilization ≥99%) and ROOM_REOPEN (<95% recovery) events
+  // per ticker. Written by vnstockTradingStatsRefresh job after each daily sweep.
+  // UNIQUE(code, event_date, event_type) ensures idempotency on re-runs.
+  // Owner: mcp-server (single-writer principle — dev-stock-price has ZERO changes).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS foreign_room_events (
+      id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+      code                  TEXT NOT NULL,
+      event_type            TEXT NOT NULL CHECK(event_type IN ('ROOM_FULL', 'ROOM_REOPEN')),
+      event_date            TEXT NOT NULL,
+      room_remaining_before INTEGER,
+      room_remaining_after  INTEGER,
+      created_at            TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(code, event_date, event_type)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_fre_code ON foreign_room_events(code)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_fre_date ON foreign_room_events(event_date DESC)`);
 }
 
 // ---------------------------------------------------------------------------

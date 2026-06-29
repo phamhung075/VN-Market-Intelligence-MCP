@@ -35,6 +35,15 @@ import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { Database } from "bun:sqlite";
+import {
+  getAllTickersHistory,
+  getLastRoomFullPerTicker,
+  upsertForeignRoomEvent,
+} from "../../infrastructure/db/foreignRoomStore.js";
+import {
+  computeRoomUtilization,
+  detectRoomEvent,
+} from "../../domain/services/market-data/foreignRoomAnalyzer.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Job name constants
@@ -173,6 +182,89 @@ function countFinancialRows(db: Database): number {
   } catch {
     return -1; // DB unavailable — skip delta measurement
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// P0-2-FOREIGN-ROOM-SUITE: Room event detection
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Detect and persist ROOM_FULL / ROOM_REOPEN events after a trading stats sweep.
+ *
+ * Reads the latest rows from vnstock_trading_stats (just upserted by the sweep),
+ * checks room utilization per ticker, and upserts events into foreign_room_events.
+ *
+ * UNIQUE(code, event_date, event_type) ensures idempotency — re-running the
+ * job over the same rows is a no-op.
+ *
+ * Called internally by runVnstockTradingStatsJob after a successful sweep.
+ * Injectable db for tests.
+ *
+ * @param db         - SQLite database instance
+ * @param sectorMap  - Optional sector mapping (unused in event detection)
+ * @returns          - Count of new events inserted
+ */
+export function detectAndPersistRoomEvents(db: Database): number {
+  let eventsInserted = 0;
+
+  try {
+    // Load latest rows per ticker (2 rows enough for today + previous-day context)
+    const allHistory = getAllTickersHistory(db, 3);
+
+    // Group by code
+    const byCode: Record<string, typeof allHistory> = {};
+    for (const row of allHistory) {
+      if (!byCode[row.code]) byCode[row.code] = [];
+      byCode[row.code]!.push(row);
+    }
+
+    // Load last ROOM_FULL events to detect ROOM_REOPEN
+    const lastFullEvents = getLastRoomFullPerTicker(db);
+
+    for (const [code, rows] of Object.entries(byCode)) {
+      if (rows.length === 0) continue;
+
+      const latest = rows[0]!;
+      const history = { code, sector: '', rows };
+      const utilization = computeRoomUtilization(history);
+      const utilPct = utilization.room_utilization_pct;
+
+      // Skip foreign-restricted tickers
+      if (utilization.foreign_restricted) continue;
+
+      const hadPriorFull = !!lastFullEvents[code];
+      const eventType = detectRoomEvent(utilPct, hadPriorFull);
+
+      if (!eventType) continue;
+
+      // Previous row for room_remaining_before
+      const prevRow = rows[1] ?? null;
+
+      const inserted = upsertForeignRoomEvent(db, {
+        code,
+        event_type: eventType,
+        event_date: latest.date,
+        room_remaining_before: prevRow?.foreign_room ?? null,
+        room_remaining_after: latest.foreign_room ?? null,
+      });
+
+      if (inserted) {
+        eventsInserted++;
+        logger.info(`[${JOB_NAME_TRADING_STATS}] room event detected`, {
+          code,
+          event_type: eventType,
+          date: latest.date,
+          utilization_pct: utilPct,
+        });
+      }
+    }
+  } catch (err) {
+    // Non-blocking: event detection failure must NOT abort the sweep result
+    const msg = err instanceof Error ? err.message : String(err);
+    logger.warn(`[${JOB_NAME_TRADING_STATS}] room event detection failed — skipping`, { error: msg });
+  }
+
+  return eventsInserted;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -395,6 +487,15 @@ export async function runVnstockTradingStatsJob(
       failed: result.failed,
       rowsWritten,
     });
+
+    // P0-2-FOREIGN-ROOM-SUITE: detect ROOM_FULL / ROOM_REOPEN events after sweep
+    // Non-blocking: any failure here is logged as WARN but does not affect rowsWritten.
+    if (rowsWritten > 0 || rowsBefore < 0) {
+      const newEvents = detectAndPersistRoomEvents(_getDb());
+      if (newEvents > 0) {
+        logger.info(`[${JOB_NAME_TRADING_STATS}] foreign room events persisted`, { count: newEvents });
+      }
+    }
 
     // FR-5: fail-loud on WORK channel when any tickers failed
     if (result.failed.length > 0) {

@@ -123,6 +123,7 @@ import { registerMacroIndicatorsVnTools } from "./macro/macroIndicatorsVnTools.j
 import { registerCpiComponentsTools } from "./macro/cpiComponentsTools.js"; // VMT-7d: get_cpi_components (#167)
 import { registerLiquidityStateTools } from "./macro/liquidityStateTools.js"; // VMT-7e: get_vn_liquidity_state (#168)
 import { registerScheduledTaskTools } from "./system/scheduledTaskTools.js"; // DEFERRED-TASK-SCHEDULER-MVP: schedule_task (#169), cancel_scheduled_task (#170), list_scheduled_tasks (#171), claim_due_scheduled_tasks (#172-P), complete_scheduled_task (#173-P), expire_scheduled_task (#174-P), fail_scheduled_task (#175-P) [P=privileged gateway-only]
+import { registerForeignRoomTools } from "./market-data/foreignRoomTools.js"; // P0-2-FOREIGN-ROOM-SUITE: get_foreign_room (#176)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -250,4 +251,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerCpiComponentsTools,            // VMT-7d: get_cpi_components (#167)
   registerLiquidityStateTools,           // VMT-7e: get_vn_liquidity_state (#168)
   registerScheduledTaskTools,            // DEFERRED-TASK-SCHEDULER-MVP: schedule_task (#169), cancel_scheduled_task (#170), list_scheduled_tasks (#171) + 4 privileged gateway helpers (#172-#175)
+  registerForeignRoomTools,             // P0-2-FOREIGN-ROOM-SUITE: get_foreign_room (#176)
 ];
