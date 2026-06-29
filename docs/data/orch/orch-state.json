@@ -3200,7 +3200,7 @@
             "id": "P0-1-VOLATILITY-INDICATORS",
             "title": "Volatility Primitives — RV10/20/60d, GK, ATR%, regime band, 252d drawdown + gauge scalar",
             "owner": "dev-technical-analysis",
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "zone": "apps/technical-analysis/",
             "size": "M",
             "opened_at": "2026-06-29",
