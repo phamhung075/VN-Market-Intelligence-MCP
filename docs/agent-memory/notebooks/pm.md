@@ -1,5 +1,46 @@
 # PM — Notebook
 
+## FEAT-NEWS-DECISION-RESUME DECOMPOSITION · 2026-06-29T162600Z
+
+**INPUT:** BA-FEAT-NEWS-DECISION-RESUME spec complete (docs/handoffs/BA-FEAT-NEWS-DECISION-RESUME.md), architect brownfield design §Dev-hop split with explicit FR grouping (Hop 1: FR-1/2/3, Hop 2: FR-4/5)
+
+**OUTPUT:** 2 atomic tasks (TASK-FEAT-NEWS-DR-HOP1, TASK-FEAT-NEWS-DR-HOP2) with tight coupling + rebuild orchestration, both handoff files created (TASK-FEAT-NEWS-DR-HOP1.md, TASK-FEAT-NEWS-DR-HOP2.md), task_board.ready updated via orch-apply.sh with HOP1 runnable now + HOP2 blocked_on HOP1, decision journal entry recorded.
+
+**Atomization (2 tasks, sequential with rebuild step between):**
+1. **TASK-FEAT-NEWS-DR-HOP1 (dev-mcp-server, M):** FR-1 (buildDecisionResume builder + DOMAIN_VN_LABEL + truncateAt120) + FR-2 (ADD COLUMN decision_resume TEXT to rag_analyses) + FR-3 (DTO pick-up in newsSentimentHandler). Status: TODO (runnable now, no deps). Blocks HOP2. Requires mcp-server container rebuild after completion.
+2. **TASK-FEAT-NEWS-DR-HOP2 (dev-frontend, S):** FR-4 (SentimentPill remap bullish→green/bearish→red) + FR-5 (decision_resume strip skim-first + impact_summary Collapsible collapse). Status: TODO (blocked by HOP1 + rebuild). Depends_on: TASK-FEAT-NEWS-DR-HOP1.
+
+**Sequencing:**
+- Tier-1 (start now): HOP1 only (dev-mcp-server independent work)
+- Ops rebuild (after HOP1 DONE): mcp-server container (single-service, not full down&&up)
+- Tier-2 (after rebuild verified): HOP2 (dev-frontend consumes live /api/news-sentiment DTO)
+
+**Risk flags propagated from Architect:**
+- RISK-3 (MEDIUM): TASK-17 helper insertRow() must extend with optional decision_resume param
+- RISK-5 (LOW): Frontend guard on `item.decision_resume != null && length > 0`
+- All edge cases (neutral→null, empty keywords, >3 tickers cap, unknown domain, >120 truncation) documented in handoffs with test cases
+
+**Board mutation (atomic via orch-apply.sh):**
+- 2 tasks added to task_board.ready with sprint="FEAT-NEWS-DECISION-RESUME"
+- HOP1 status=TODO (ready), HOP2 status=TODO (blocked by dependency)
+- Dependency: HOP2.depends_on=[HOP1]; HOP1.blocks=[HOP2]
+- Validators: passed, no coherence errors
+
+**Handoffs created (2 total):**
+- TASK-FEAT-NEWS-DR-HOP1.md (backend builder + DB + DTO; 7 AC)
+- TASK-FEAT-NEWS-DR-HOP2.md (frontend pill + card; 5 AC)
+
+**PM decisions:**
+1. **Multi-zone split:** Architect design is definitive; zone isolation (mcp-server vs frontend) is sound
+2. **Rebuild orchestration:** Single-service rebuild (mcp-server) handled by ops between hops; dev-team Step 3 will dispatch HOP2 only after rebuild verified
+3. **Language boundary:** Decision résumé is plain Vietnamese only; DOMAIN_VN_LABEL translation table is authoritative, enforced in builder
+4. **No fake data:** Builder derives from real classifier signals (neutralizeNews), no LLM or invention
+5. **Backfill policy:** Legacy NULL rows receive no recompute; frontend graceful omit
+
+**Decision journal:** docs/agent-memory/decisions/sprint-FEAT-NEWS-DECISION-RESUME-pm-decomp.md
+
+---
+
 ## c323 CROSS-SESSION-MULTI-TEAM-ORCH P1 DECOMPOSITION · 2026-06-28T083000Z
 
 **PARENT:** Architect brief complete (docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md), PO signed off with LOCKED DoD gate, decision journal recorded (docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-po.md)
