@@ -18,126 +18,56 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 (b) Go RSI ~1pt drift vs TS report path: candle-window divergence. TS report path `defaultComputeTa` uses `ORDER BY date ASC LIMIT 60`; TS fallback in `technicalIndicatorTools.ts` uses `date >= date('now', '-N days')`. When candle counts differ (production with >60 rows), Wilder smoothing diverges. Fix: pre-fetch closes on TS side and pass to Go, forcing identical candle set.
 
-**Wilder RSI algorithm match confirmed:** Both TS and Go use identical seed (mean of first `period` gain/loss deltas) and identical `k=1/period` smoothing. With same closes → RSI matches to floating-point precision.
-
 **Fix:**
-- `pkg/module/technical_analysis.go`: added `MA5/MA20/MA50` fields to `Result`; added fixed-period SMA(5/20/50) compute blocks (non-fatal, independent of `MAPeriod`).
-- `pkg/domain/models.go`: added `MA5/MA20/MA50 []float64` to `TechnicalIndicators`.
-- `pkg/application/dtos.go`: added `MA5/MA20/MA50 []float64` to `ComputeTAResponse` with `json:"ma5/ma20/ma50,omitempty"`.
-- `pkg/application/usecases.go`: mapped `indicators.MA5/MA20/MA50` into response.
-- `pkg/infrastructure/calculator.go`: mapped `res.MA5/MA20/MA50` into domain struct.
-- `pkg/module/technical_analysis_test.go`: added `wantMA5/MA20/MA50` fields; added 38-candle regression case; added `TestComputeMA5FixedPeriodIndependentOfMAPeriod`.
-- `clients.ts` (mcp-server): added `ma5?/ma20?/ma50?` to `TAServiceRawResponse`; mapper reads named fields instead of aliasing `sma→ma20`.
-- `technicalIndicatorTools.ts` (mcp-server): pre-fetches closes from DB (LIMIT 60, close>0, ASC) before Go call; passes as `closes` for RSI/MA alignment.
+- `pkg/module/technical_analysis.go`: added `MA5/MA20/MA50` fields; fixed-period SMA(5/20/50) compute blocks.
+- `pkg/domain/models.go`, `pkg/application/dtos.go`, `pkg/application/usecases.go`, `pkg/infrastructure/calculator.go`: MA5/MA20/MA50 propagated end-to-end.
+- `pkg/module/technical_analysis_test.go`: 38-candle regression + TestComputeMA5FixedPeriodIndependentOfMAPeriod.
+- `clients.ts` + `technicalIndicatorTools.ts` (mcp-server): named MA fields; pre-fetch closes for RSI/MA alignment.
 
-**Test results:** `go test ./...` — 11 packages GREEN. `go vet` clean. `go build ./cmd/...` OK. `pnpm check` clean.
-
-**REBUILD_REQUIRED:** YES — Go binary changed (module + domain + infrastructure). Ops must `docker compose build technical-analysis && docker compose up -d --no-deps technical-analysis`. Verify peers + named-vol DB intact (no `docker compose down`).
+**Test results:** `go test ./...` 11 packages GREEN. `go vet` clean. `go build ./cmd/...` OK. `pnpm check` clean. REBUILD_REQUIRED: YES.
 
 ---
 
 ### 2026-06-15 — FIX-TA-GOSVC-NA-DESPITE-DEPTH — Go service DB-backed path implemented
 
-**Task:** FIX-TA-GOSVC-NA-DESPITE-DEPTH
+**Task:** FIX-TA-GOSVC-NA-DESPITE-DEPTH (commit 33e7a094)
 
-**Status:** DONE — commit 33e7a094. REBUILD_REQUIRED: YES.
+**Status:** DONE — REBUILD_REQUIRED: YES.
 
-**Root cause (recon-confirmed):**
-- `SQLitePriceRepository.GetCandles` was a stub returning `errors.New("not implemented yet")`.
-- `ComputeTAUseCase.Execute()` silently returned `ComputeTAResponse{Symbol:...}` (empty) when `closes=[]`.
-- The mcp-server `computeTAIndicators({code:"VRE"})` sends symbol-only (no closes), hitting the dead DB path → `{"symbol":"VRE"}` response → RSI/MA20/BB N/A despite 38 rows in market.db.
-- The report path `defaultComputeTa` reads the SAME DB directly via TS and gets 38 rows correctly.
-
-**Query diff (root cause):**
-- Report path (TS): `SELECT date AS day, close AS close_price FROM daily_ohlcv WHERE code = ? ORDER BY date ASC LIMIT 60`
-- Go service (before fix): no query at all — stub path.
-- Go service (after fix): `SELECT date, close FROM daily_ohlcv WHERE code = ? ORDER BY date ASC LIMIT 60` — identical semantics.
+**Root cause:** `SQLitePriceRepository.GetCandles` was a stub → `ComputeTAUseCase.Execute()` returned empty response → RSI/MA20/BB N/A despite 38 rows in market.db.
 
 **Fix:**
-- `pkg/infrastructure/repositories.go`: implemented `GetCandles` via `database/sql` + `modernc.org/sqlite`; query mirrors TS path exactly.
-- `pkg/application/usecases.go`: added `PriceRepo` port; DB-backed path fetches candles → extracts closes → delegates to calculator.
-- `cmd/server/main.go`: pass `priceRepo` to `NewComputeTAUseCase`.
-- `cmd/sandbox/main.go`: add `noopPriceRepo` (sandbox credential-free contract preserved; panics if DB path exercised).
-- `pkg/infrastructure/repositories_test.go` (new): 5 tests — 38-row → non-null RSI regression gate, empty ticker, missing DB, limit cap, default-path.
+- `pkg/infrastructure/repositories.go`: `GetCandles` implemented via `database/sql` + `modernc.org/sqlite`; mirrors TS query exactly.
+- `pkg/application/usecases.go`: added `PriceRepo` port; DB-backed path fetches candles → closes → calculator.
+- `cmd/server/main.go`: pass `priceRepo` to use-case.
+- `cmd/sandbox/main.go`: `noopPriceRepo` (panics if DB path exercised — sandbox credential-free contract).
+- `pkg/infrastructure/repositories_test.go` (new): 5 tests.
 
-**Results:** `go test ./...` 9 packages GREEN. `go vet` clean. `go build ./cmd/...` OK. All sandbox scenarios green (25 primitive + 5 module).
-
-**REBUILD_REQUIRED:** YES — baked multi-stage image (no src bind-mount verified: volume is `market_data:/app/data` data only). Image created 2026-06-10, predates this fix. Ops must `docker compose build technical-analysis && docker compose up -d technical-analysis`.
+**Results:** `go test ./...` 9 packages GREEN. All sandbox 30 scenarios GREEN. REBUILD_REQUIRED: YES.
 
 ---
 
-### 2026-06-15 — FIX-RSI-REPORT-FAILCLOSED — report RSI path fail-close fix
+### 2026-06-29 — P0-1-VOLATILITY-INDICATORS — RV + ATR% + regime band + drawdown
 
-**Task:** FIX-RSI-REPORT-FAILCLOSED (zone apps/mcp-server/ — recon confirmed zone, not apps/technical-analysis/)
+**Task:** P0-1-VOLATILITY-INDICATORS (sprint MARKET-INDICATOR-DEPTH-P0)
 
-**Status:** REVIEW — commit ed77b9b0
+**Status:** REVIEW — REBUILD_REQUIRED: YES.
 
-**Recon findings (zone confirmed):**
-- The canonical tool `get_technical_indicators` in `technicalIndicatorTools.ts` correctly returns "RSI(14): N/A (cần tối thiểu 15 nến)" via `localComputeRSI(prices, 14)` which guards `prices.length < period + 1 = 15`.
-- The MARKET report RSI path is `defaultComputeTa()` in `assembleBriefing.ts:674`, called from: (a) `assembleBriefing` morning briefing Step 17, (b) `assembleEveningSummary` Step 4, (c) `franceSummaryJob` via `fetchTaSignals`. All three consume `defaultComputeTa`.
-- The bug: `Math.min(14, rows.length - 1)` as period. With 6 candles → period=5 → `computeRSILocal(prices, 5)` passes the `prices.length >= 6` guard and computes RSI. Result: VRE RSI 10.3 on 6 candles, VIC 7.4, VHM 9.8 published to MARKET.
+**Scope:** New `POST /ta/volatility-indicators`. Computes VN-Index RV 10/20/60d (close-to-close + Garman-Klass), per-stock ATR%(14), volatility regime band, 252d drawdown, `rv_20d_percentile` gauge scalar for Fear & Greed P1.
 
-**Fix (single-line):**
-- `assembleBriefing.ts:674` — changed `computeRSILocal(prices, Math.min(14, rows.length - 1))` → `computeRSILocal(prices, 14)`.
-- Guard raised from `rows.length < 8` → `rows.length < 15` (same threshold in both primary and fallback paths).
-- DRY: no change to the RSI math (already identical between both paths). Both already use the same `computeRSILocal` guard logic — only the adaptive period bypassed it.
+**Architecture (DDD three-tier):**
+- Domain: `OHLCVBar`, `VolatilityRegime` const, `VolatilityService` (7 pure methods), `OHLCVRepository` port.
+- Application: `ComputeVolatilityUseCase` — sandbox injection via `VNIndexBars`/`TickerBars`; DB via `SQLiteOHLCVRepository`.
+- Infrastructure: `GetOHLCV` — `daily_ohlcv WHERE code=? ORDER BY date ASC LIMIT 300`.
+- Interface: `handleVolatilityIndicators`, nil-guarded route in `NewRouter`.
 
-**Tests (TDD RED→GREEN):**
-- `FIX-RSI-REPORT-FAILCLOSED.test.ts` (new) — 9 TCs: A1-A5 = <15 candles → null (VRE/VIC/VHM class + canonical ref), B1-B3 = >=15 candles → report RSI == canonical RSI (exact floating-point match).
-- `1346-ta-adaptive-periods.test.ts` — updated TC-2/TC-3 (adaptive behavior removed; 10/14 rows now → null not TaSignal).
-- `1330-ta-daily-ohlcv.test.ts` — updated TC-2 (14 rows → null, not overbought TaSignal).
+**Partial release:** rv_60d_pct + drawdown_252d_pct return honest NULL until OHLCV-BACKFILL-P0 delivers ≥61/252 bars. RV10/20d, GK, ATR%, regime ship now.
 
-**Results:** tsc clean, 12940 pass (7 pre-existing failures unrelated to RSI). No new regressions.
+**Watchlist:** WATCHLIST_TICKERS env var (comma-separated). Docker build context excludes docs/. Ops must set from system-map.json .project.watchlist in docker-compose environment.
 
-**REBUILD_REQUIRED:** no — only application layer code changed, no service-level build.
+**Zone health:** 35+ unit tests PASS. Sandbox 35 scenarios GREEN (incl. volatility-null-propagation + volatility-partial-compute). go vet + golangci-lint clean. go build OK.
 
----
-
-### 2026-06-14 — ALLZERO-OHLCV-FETCH — chart-sliver/BB-fan data fix
-
-**Task:** ALLZERO-OHLCV-FETCH (zone apps/mcp-server/) — fix all-zero OHLCV rows poisoning BB window and chart Y-domain
-
-**Status:** REVIEW — commit 9088c052
-
-**Root cause:** Non-trading-day gap rows (0/0/0/0) in daily_ohlcv. Two sources:
-- Failed bulk fetch 2026-05-30: 103 tickers stamped with zeros (not skipped).
-- DPI-4 foreign-flow stub rows: `ohlcvForeignFlowStore` inserts open/high/low/close=0 placeholders that outlast the OHLCV write for some tickers (DAG, BCG etc.)
-- A zero inside the 20-period BB window: stdev detonates to ±35k, chart Y-axis anchors to 0.
-- Also VCB 2026-06-01 close=62.2 (thousand-VND, should be 62200) survived CONTAM-2..7.
-
-**Fix (TDD RED→GREEN, 5 AC tests):**
-1. `priceHistoryTools.ts` — added `AND close > 0` to `get_price_history` SQL. Immediate read-side guard for chart + BB + alerts.
-2. `allzeroOhlcvBackfill.ts` (new) — `purgeAllZeroRows(db)`: DELETE all 0/0/0/0 rows; `normalizeResidualContam(db)`: whole-row ×1000 for close<100 contaminated rows.
-3. `ALLZERO-OHLCV-FETCH.test.ts` (new) — 5 ACs covering zero exclusion, Min stat, DPI-4 stub exclusion, normalize fix.
-
-**Live migration:** 116 all-zero rows purged, 28346 thousand-VND rows re-normalized. Container rebuilt.
-
-**Probe (live):** SHB zero_rows=0 Min=13,550 BB=0.88% | VCB zero_rows=0 Min=59,900 BB=1.92% (2026-06-01 close=62200) | FPT zero_rows=0 Min=70,000 BB=2.14%. All BB widths well under 15%.
-
-**Lessons:** DPI-4 stub rows are by design (DDD race fix); the read-side `close>0` guard is the correct surgical fix. The taOhlcvBackfill already heals stubs on next cycle (detects corrupt_cnt>0 for low=0). Generic fix — no per-ticker hardcode.
-
----
-
-### 2026-06-08 — FIX-TA-GOLANGCI-CONFIG-V2 — migrate .golangci.yml to v2 schema
-
-**Task:** FIX-TA-GOLANGCI-CONFIG-V2 (Sprint CI-RED-RECONCILE)
-
-**Status:** REVIEW — commit d73c7a40. VERIFICATION GATE: GREEN ci.yml after subsequent push.
-
-**Root cause:** `apps/technical-analysis/.golangci.yml` was the only one of 6 service configs still using the v1 schema after the FIX-CI-LINT-STACK migration bumped golangci-lint-action to v7 (golangci-lint v2.0.2). golangci-lint v2 rejects any config without top-level `version: "2"` with exit 3 — config parse crash, not lint violations.
-
-**v1 → v2 changes applied:**
-1. Added `version: "2"` top-level.
-2. `run.go: "1.22"` removed (v2 dropped this key); replaced with `run.timeout: 120s`.
-3. `linters.disable-all: true` → `linters.default: none`.
-4. Top-level `linters-settings:` → `linters.settings:` nested under `linters:`.
-5. Removed `Main:` allow-list depguard rule (v2 sibling pattern; deny-list fences preserved intact).
-
-**Local verify:** `golangci-lint run` exits 1 (lint running, real violation surfaced), NOT 3 (config crash). The exit-1 violation (`cmd/sandbox/main.go:44` Fence-C) is pre-existing debt tracked as FIX-TA-SANDBOX-DEPGUARD.
-
-**DJ-GATE-1:** `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-technical-analysis.md`
-
-**Files changed:** `apps/technical-analysis/.golangci.yml`
+**Blocker for QA:** MCP tool `get_volatility_indicators` registration in apps/mcp-server OUT OF SCOPE (concurrent dev). QA must coordinate.
 
 ---
 
