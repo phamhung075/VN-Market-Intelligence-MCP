@@ -153,6 +153,47 @@ export function ensureCoordinationTable(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_expires_at ON task_locks(expires_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_task_locks_kind_agent ON task_locks(task_kind, owner_agent)`);
 
+  // Migration 4: scheduled_tasks table (deferred one-shot scheduler)
+  // SCAR AC-1: fire_at/deadline_at/created_at/fired_at = INTEGER epoch-seconds UTC. NEVER ISO8601.
+  // SCAR AC-2: dedup_key TEXT UNIQUE declared HERE in CREATE TABLE — NEVER via ADD COLUMN
+  //            (SQLite silently drops UNIQUE on ADD COLUMN: feedback_sqlite_add_column_unique_silent_noop).
+  // No new task_kind on task_locks (AC-7): this table is a separate entity.
+  // Same coordination.db — no new DB file.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS scheduled_tasks (
+      id             TEXT    NOT NULL PRIMARY KEY,
+      agent          TEXT    NOT NULL,
+      team           TEXT    NOT NULL CHECK(team IN ('COWORK','DEV')),
+      intent         TEXT    NOT NULL,
+      prompt         TEXT    NOT NULL,
+      fire_at        INTEGER NOT NULL,
+      deadline_at    INTEGER,
+      dedup_key      TEXT    UNIQUE,
+      reason         TEXT    NOT NULL,
+      origin_ref     TEXT,
+      max_attempts   INTEGER NOT NULL DEFAULT 1,
+      attempts       INTEGER NOT NULL DEFAULT 0,
+      status         TEXT    NOT NULL DEFAULT 'pending'
+                       CHECK(status IN ('pending','firing','fired','done','failed','expired','cancelled')),
+      created_at     INTEGER NOT NULL,
+      fired_at       INTEGER,
+      sweep_tick     TEXT,
+      error          TEXT
+    )
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_status_fire_at
+      ON scheduled_tasks(status, fire_at)
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_dedup_key
+      ON scheduled_tasks(dedup_key) WHERE dedup_key IS NOT NULL
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_scheduled_tasks_team_status
+      ON scheduled_tasks(team, status)
+  `);
+
   // Run in-place migrations for already-created tables with older schemas.
   migrateCoordinationTable(db);
 }
@@ -888,6 +929,243 @@ export function releaseOrphanTask(
 export function _injectCoordinationDb(db: Database): void {
   _coordDb = db;
   _coordDbUnavailable = false;
+}
+
+// ---------------------------------------------------------------------------
+// Scheduled Tasks — ST-3: Internal helpers (NOT registered as MCP tools directly)
+// These are called by the gateway-registered MCP tool wrappers in scheduledTaskTools.ts
+// (which ARE registered — see scheduledTaskTools.ts § Privileged Gateway Tools).
+// ---------------------------------------------------------------------------
+
+/** Scheduled task row shape returned from queries. */
+export interface ScheduledTaskRow {
+  id: string;
+  agent: string;
+  team: string;
+  intent: string;
+  prompt: string;
+  fire_at: number;
+  deadline_at: number | null;
+  dedup_key: string | null;
+  reason: string;
+  origin_ref: string | null;
+  max_attempts: number;
+  attempts: number;
+  status: string;
+  created_at: number;
+  fired_at: number | null;
+  sweep_tick: string | null;
+  error: string | null;
+}
+
+/**
+ * ST-3: Atomic pending→firing flip for all due rows.
+ *
+ * Single-statement UPDATE...RETURNING — atomic on WAL-mode SQLite.
+ * SCAR AC-1: nowEpoch MUST be a bound INTEGER parameter (Math.floor(Date.now()/1000)).
+ *            NEVER use datetime() or string comparison.
+ * SCAR AC-3: After this call, callers MUST check deadline_at before routing
+ *            (deadline check done by the MCP tool wrapper or sweeper Step 0b.3).
+ *
+ * Returns only rows that were just claimed (status flipped from pending→firing).
+ * Each row can only be claimed once (status='pending' is the exclusive gate).
+ */
+export function claimDueScheduledTasks(
+  db: Database,
+  nowEpoch: number,
+): ScheduledTaskRow[] {
+  try {
+    const rows = db
+      .prepare(
+        `UPDATE scheduled_tasks
+           SET status   = 'firing',
+               fired_at = ?,
+               attempts = attempts + 1
+         WHERE status = 'pending'
+           AND fire_at <= ?
+         RETURNING id, agent, team, intent, prompt, fire_at, deadline_at, dedup_key,
+                   reason, origin_ref, max_attempts, attempts, status, created_at,
+                   fired_at, sweep_tick, error`,
+      )
+      .all(nowEpoch, nowEpoch) as ScheduledTaskRow[];
+    return rows;
+  } catch (err) {
+    console.error("[coordinationStore] claimDueScheduledTasks error", err);
+    return [];
+  }
+}
+
+/**
+ * ST-3: Mark a scheduled task as fired (success path).
+ * Terminal state for MVP (D1: done is reserved for Phase-2 confirmation callback).
+ */
+export function completeScheduledTask(
+  db: Database,
+  id: string,
+  status: "fired" | "done",
+  sweepTick?: string,
+): void {
+  try {
+    db.prepare(
+      `UPDATE scheduled_tasks SET status = ?, sweep_tick = ? WHERE id = ?`,
+    ).run(status, sweepTick ?? null, id);
+  } catch (err) {
+    console.error("[coordinationStore] completeScheduledTask error", err);
+  }
+}
+
+/**
+ * ST-3: Mark a scheduled task as expired (deadline gate).
+ */
+export function expireScheduledTask(db: Database, id: string, sweepTick?: string): void {
+  try {
+    db.prepare(
+      `UPDATE scheduled_tasks SET status = 'expired', sweep_tick = ? WHERE id = ?`,
+    ).run(sweepTick ?? null, id);
+  } catch (err) {
+    console.error("[coordinationStore] expireScheduledTask error", err);
+  }
+}
+
+/**
+ * ST-3: Mark a scheduled task as failed (routing error path).
+ */
+export function failScheduledTask(
+  db: Database,
+  id: string,
+  error: string,
+  sweepTick?: string,
+): void {
+  try {
+    db.prepare(
+      `UPDATE scheduled_tasks SET status = 'failed', error = ?, sweep_tick = ? WHERE id = ?`,
+    ).run(error, sweepTick ?? null, id);
+  } catch (err) {
+    console.error("[coordinationStore] failScheduledTask error", err);
+  }
+}
+
+/**
+ * ST-3: Cancel a scheduled task by id (status → 'cancelled').
+ * Returns true if a row was actually updated.
+ */
+export function cancelScheduledTaskById(db: Database, id: string): boolean {
+  try {
+    const result = db.prepare(
+      `UPDATE scheduled_tasks
+         SET status = 'cancelled'
+       WHERE id = ?
+         AND status IN ('pending','firing')`,
+    ).run(id);
+    return result.changes === 1;
+  } catch (err) {
+    console.error("[coordinationStore] cancelScheduledTaskById error", err);
+    return false;
+  }
+}
+
+/**
+ * Get the current status + id of a scheduled task by dedup_key.
+ * Returns null if not found.
+ */
+export function getScheduledTaskByDedupKey(
+  db: Database,
+  dedupKey: string,
+): Pick<ScheduledTaskRow, "id" | "status"> | null {
+  try {
+    return db
+      .prepare(`SELECT id, status FROM scheduled_tasks WHERE dedup_key = ?`)
+      .get(dedupKey) as Pick<ScheduledTaskRow, "id" | "status"> | null;
+  } catch (err) {
+    console.error("[coordinationStore] getScheduledTaskByDedupKey error", err);
+    return null;
+  }
+}
+
+/**
+ * Get a scheduled task row by id.
+ * Returns null if not found.
+ */
+export function getScheduledTaskById(
+  db: Database,
+  id: string,
+): ScheduledTaskRow | null {
+  try {
+    return db
+      .prepare(`SELECT * FROM scheduled_tasks WHERE id = ?`)
+      .get(id) as ScheduledTaskRow | null;
+  } catch (err) {
+    console.error("[coordinationStore] getScheduledTaskById error", err);
+    return null;
+  }
+}
+
+/** Insert a new scheduled task row (used by schedule_task MCP tool). */
+export function insertScheduledTask(
+  db: Database,
+  row: Omit<ScheduledTaskRow, "attempts" | "status" | "fired_at" | "sweep_tick" | "error">,
+): void {
+  db.prepare(`
+    INSERT INTO scheduled_tasks
+      (id, agent, team, intent, prompt, fire_at, deadline_at, dedup_key,
+       reason, origin_ref, max_attempts, attempts, status, created_at,
+       fired_at, sweep_tick, error)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'pending', ?, NULL, NULL, NULL)
+  `).run(
+    row.id, row.agent, row.team, row.intent, row.prompt,
+    row.fire_at, row.deadline_at ?? null, row.dedup_key ?? null,
+    row.reason, row.origin_ref ?? null, row.max_attempts, row.created_at,
+  );
+}
+
+/** List scheduled tasks with optional filters (AC-10 audit). */
+export function listScheduledTasksDb(
+  db: Database,
+  filter?: {
+    status?: string;
+    team?: string;
+    due_before?: number;
+    limit?: number;
+  },
+): ScheduledTaskRow[] {
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (filter?.status) {
+    conditions.push("status = ?");
+    params.push(filter.status);
+  }
+  if (filter?.team) {
+    conditions.push("team = ?");
+    params.push(filter.team);
+  }
+  if (filter?.due_before !== undefined) {
+    conditions.push("fire_at <= ?");
+    params.push(filter.due_before);
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const limitVal = Math.min(filter?.limit ?? 50, 500);
+
+  return db
+    .prepare(`
+      SELECT id, agent, team, intent, prompt, fire_at, deadline_at, dedup_key,
+             reason, origin_ref, max_attempts, attempts, status, created_at,
+             fired_at, sweep_tick, error
+      FROM scheduled_tasks
+      ${where}
+      ORDER BY fire_at ASC
+      LIMIT ?
+    `)
+    .all(...params, limitVal) as ScheduledTaskRow[];
+}
+
+/**
+ * Expose the coordination DB for use by scheduled task MCP tools.
+ * Returns null if DB is unavailable — callers handle the null case.
+ */
+export function getCoordinationDbForScheduler(): Database | null {
+  return getCoordinationDb();
 }
 
 // ---------------------------------------------------------------------------

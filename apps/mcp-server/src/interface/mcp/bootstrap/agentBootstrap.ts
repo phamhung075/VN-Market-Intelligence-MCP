@@ -198,6 +198,10 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "get_system_status",
     "get_vps_proxy_health",
     "get_cron_health",
+    // DEFERRED-TASK-SCHEDULER-MVP: public scheduler tools
+    "schedule_task",
+    "cancel_scheduled_task",
+    "list_scheduled_tasks",
   ],
   qa_responder: [
     "get_pending_ask_questions",
@@ -273,6 +277,10 @@ const SKILL_MANIFEST: Record<string, string[]> = {
     "get_insider_transactions",
     "get_fed_liquidity_spread",
     "get_ism_subcomponents",
+    // DEFERRED-TASK-SCHEDULER-MVP: public scheduler tools
+    "schedule_task",
+    "cancel_scheduled_task",
+    "list_scheduled_tasks",
   ],
 };
 
