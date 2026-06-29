@@ -247,7 +247,7 @@
     "updated_at": "2026-06-29T20:58:04Z",
     "updated_by": "po",
     "active_task_id": "BA-DEFERRED-SCHEDULER",
-    "next_agent": "pm"
+    "next_agent": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6977,7 +6977,7 @@
         "id": "DTS-ST1-MIGRATION4-DDL",
         "title": "Migration 4: scheduled_tasks table in coordinationStore.ts — epoch-INTEGER cols, dedup_key UNIQUE in CREATE TABLE, status CHECK enum, 3 indexes",
         "owner": "dev-mcp-server",
-        "status": "BACKLOG",
+        "status": "TODO",
         "type": "SPRINT-S",
         "priority": "high",
         "zone": "apps/mcp-server/src/infrastructure/db/coordinationStore.ts",
@@ -6986,7 +6986,7 @@
         "files": [
           "apps/mcp-server/src/infrastructure/db/coordinationStore.ts"
         ],
-        "note": "Brief section c DDL verbatim. fire_at/deadline_at/created_at/fired_at = INTEGER epoch-seconds UTC, NEVER ISO8601. dedup_key TEXT UNIQUE declared INSIDE CREATE TABLE (NEVER ALTER TABLE ADD COLUMN ... UNIQUE — SQLite silently drops it: scar). status CHECK enum 7 states (pending/firing/fired/done/failed/expired/cancelled). team CHECK in (COWORK,DEV). 3 indexes (status+fire_at, dedup_key partial, team+status). Same coordination.db as task_locks — no new DB file.",
+        "note": "Brief section c DDL verbatim. fire_at/deadline_at/created_at/fired_at = INTEGER epoch-seconds UTC, NEVER ISO8601. dedup_key TEXT UNIQUE declared INSIDE CREATE TABLE (NEVER ALTER TABLE ADD COLUMN ... UNIQUE — SQLite silently drops it: scar). status CHECK enum 7 states (pending/firing/fired/done/failed/expired/cancelled). team CHECK in (COWORK,DEV). 3 indexes (status+fire_at, dedup_key partial, team+status). Same coordination.db as task_locks — no new DB file. [PO D1: Terminal state is 'fired'. 'done' stays in CHECK enum but reserved for Phase-2 — do NOT implement done-write path or mark_task_done tool. AC-11 verifies terminal-set = {fired,failed,expired,cancelled}.]",
         "verification_gate": "SELECT typeof(fire_at) returns integer; SELECT sql FROM sqlite_master WHERE name=scheduled_tasks contains UNIQUE on dedup_key AND the 7-state status CHECK; 3 indexes present.",
         "ac_gates": [
           "AC-1",
@@ -7012,7 +7012,7 @@
         "files": [
           "apps/mcp-server/src/infrastructure/db/coordinationStore.ts"
         ],
-        "note": "Brief section c internal helper. UPDATE WHERE status=pending AND fire_at<=:nowEpoch RETURNING ... (atomic single-winner per row, WAL + busy_timeout). nowEpoch = bound INTEGER param (Math.floor(Date.now()/1000)) — no datetime()/string compare. complete_scheduled_task / expire_scheduled_task = INTERNAL TS helpers (status-param UPDATE), NOT separate MCP tools. NO new task_kind on task_locks.",
+        "note": "Brief section c internal helper. UPDATE WHERE status=pending AND fire_at<=:nowEpoch RETURNING ... (atomic single-winner per row, WAL + busy_timeout). nowEpoch = bound INTEGER param (Math.floor(Date.now()/1000)) — no datetime()/string compare. complete_scheduled_task / expire_scheduled_task = INTERNAL TS helpers (status-param UPDATE), NOT separate MCP tools. NO new task_kind on task_locks. [PO D1: Terminal state 'fired' (not done). D3: This helper is part of the chain that routes to internal complete/expire/fail helpers.]",
         "verification_gate": "Atomic-claim test: two concurrent claim calls => each row claimed exactly once. WHERE uses bound integer fire_at<=:nowEpoch (no datetime()/string ops). complete/expire not registered as MCP tools.",
         "ac_gates": [
           "AC-1",
@@ -7062,7 +7062,7 @@
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/system/scheduledTaskTools.ts"
         ],
-        "note": "Brief section c contracts verbatim. schedule_task: require fire_at XOR delay_seconds; reject past fire_at (< now-60s); validate agent via AGENT_TEAM_MAP; deadline_at>fire_at; dedup_key collision returns existing id (idempotent, no double-insert). schedule_task writes ONLY scheduled_tasks in coordination.db — NEVER orch-state.json at insert. Tool description MUST carry the honest Phase-2 caveat (fires only while cowork loop live; deadline_at bounds staleness; 24/7 = Phase-2). list_scheduled_tasks returns sweep_tick/fired_at/error/status (get_cron_health-style audit).",
+        "note": "Brief section c contracts verbatim. schedule_task: require fire_at XOR delay_seconds; reject past fire_at (< now-60s); validate agent via AGENT_TEAM_MAP; deadline_at>fire_at; dedup_key collision returns existing id (idempotent, no double-insert). schedule_task writes ONLY scheduled_tasks in coordination.db — NEVER orch-state.json at insert. Tool description MUST carry the honest Phase-2 caveat (fires only while cowork loop live; deadline_at bounds staleness; 24/7 = Phase-2). list_scheduled_tasks returns sweep_tick/fired_at/error/status (get_cron_health-style audit). [PO D2: Public surface = exactly schedule_task/cancel_scheduled_task/list_scheduled_tasks. Internal helpers (claim_due/complete/expire/fail) must be gateway-reachable but absent from public agent packages — dev's choice on mechanism (privileged package vs single drain tool). D3: Companion file handling: drop 500-char threshold; DEV path ALWAYS writes docs/signals/one-shot-<id>.json with payload_ref. COWORK passes prompt directly to Agent().]",
         "verification_gate": "Callable via gateway; dedup collision returns existing id (no dup row); past fire_at rejected; description field contains the Phase-2 caveat; list returns terminal rows with non-null fired_at; schedule_task performs zero orch-state.json writes at insert.",
         "ac_gates": [
           "AC-8",
@@ -7088,7 +7088,7 @@
         "files": [
           "apps/mcp-server/src/ (agentBootstrap.ts + tool packages)"
         ],
-        "note": "Brief section h ST-4. Add the 3 new tool names to the applicable tool packages so any agent reaches them through the gateway wrapper. claim_due_scheduled_tasks / complete / expire stay INTERNAL (NOT registered as MCP tools).",
+        "note": "Brief section h ST-4. Add the 3 new tool names to the applicable tool packages so any agent reaches them through the gateway wrapper. claim_due_scheduled_tasks / complete / expire stay INTERNAL (NOT registered as MCP tools). [PO D2: Register the 3 public tools in public agent packages; keep the 4 internal helpers (claim_due/complete/expire/fail) absent from public packages.]",
         "verification_gate": "call_tool(server=vn-market, tool=schedule_task) resolves (not -32601 unknown tool); the 3 tools appear in list_server_tools(vn-market); internal claim/complete/expire do NOT.",
         "ac_gates": [],
         "created_by": "po",
@@ -7110,7 +7110,7 @@
         "files": [
           "docs/agents/cowork-team/flow/main.md"
         ],
-        "note": "Brief section d. Insert Step 0b.3 inline + a JUMP-TO table row, AFTER Step 0b (leader-lock WIN) so only the fire-election winner drains. Per claimed row: deadline check (now>deadline_at => expire, no spawn/signal); team=COWORK => PRE-CLAIM intent:one-shot:<id> (task_kind=intent, already deployed) then Agent(run_in_background=true), finally task_release; team=DEV => emit a SignalRowSchema row via jq --argjson + scripts/orch-apply.sh (NEVER raw orch-state write; NEVER shell-interpolate prompt/agent — injection scar). The sweeper is a RECURRING step inside the */15 cron, NEVER itself a scheduled_task (self-deleting sweeper strands the queue). agent-father review if flow ownership requires.",
+        "note": "Brief section d. Insert Step 0b.3 inline + a JUMP-TO table row, AFTER Step 0b (leader-lock WIN) so only the fire-election winner drains. Per claimed row: deadline check (now>deadline_at => expire, no spawn/signal); team=COWORK => PRE-CLAIM intent:one-shot:<id> (task_kind=intent, already deployed) then Agent(run_in_background=true), finally task_release; team=DEV => emit a SignalRowSchema row via jq --argjson + scripts/orch-apply.sh (NEVER raw orch-state write; NEVER shell-interpolate prompt/agent — injection scar). The sweeper is a RECURRING step inside the */15 cron, NEVER itself a scheduled_task (self-deleting sweeper strands the queue). agent-father review if flow ownership requires. [PO D1: Terminal state 'fired' (not done). D3: DEV signal path ALWAYS writes docs/signals/one-shot-<task.id>.json with {task: <full row>}, sets payload_ref to that path; drop 500-char threshold. COWORK passes prompt directly to Agent(). Never embed prompt in summary.]",
         "verification_gate": "Step 0b.3 present in main.md AFTER Step 0b + JUMP-TO row added; deadline-past row expires (no route); COWORK path claims intent:one-shot:<id> before Agent(); DEV path uses orch-apply.sh with --argjson bound vars (no interpolation); sweeper is not a scheduled_task row.",
         "ac_gates": [
           "AC-3",
@@ -7139,7 +7139,7 @@
         "files": [
           "apps/mcp-server/src/__tests__/scheduledTasks.test.ts"
         ],
-        "note": "Brief section h ST-7. Tests: (1) typeof(fire_at)=integer [AC-1]; (2) sqlite_master sql contains UNIQUE on dedup_key [AC-2]; (3) insert fire_at=now-10,deadline_at=now-5 => sweeper expires not routes [AC-3]; (4) dedup_key collision => existing id, no double-insert; (5) claim_due two-call atomic => each row claimed once.",
+        "note": "Brief section h ST-7. Tests: (1) typeof(fire_at)=integer [AC-1]; (2) sqlite_master sql contains UNIQUE on dedup_key [AC-2]; (3) insert fire_at=now-10,deadline_at=now-5 => sweeper expires not routes [AC-3]; (4) dedup_key collision => existing id, no double-insert; (5) claim_due two-call atomic => each row claimed once. [PO D1: AC-11 test must verify terminal-set = {fired,failed,expired,cancelled}; add test to check 'fired' is a valid terminal outcome per brief AC-11.]",
         "verification_gate": "pnpm --filter vn-market test green; all 5 assertions pass covering AC-1/AC-2/AC-3 + dedup + atomic claim.",
         "ac_gates": [
           "AC-1",
@@ -7164,7 +7164,7 @@
         "files": [
           "docs/architecture/microservice/mcp-server/"
         ],
-        "note": "Brief section h ST-8. Document the new table, the 3 MCP tools, the internal claim/complete/expire helpers, the addressed-not-picked routing model, and the honest Phase-2 caveat (true 24/7 headless firing is OUT of MVP).",
+        "note": "Brief section h ST-8. Document the new table, the 3 MCP tools, the internal claim/complete/expire helpers, the addressed-not-picked routing model, and the honest Phase-2 caveat (true 24/7 headless firing is OUT of MVP). [PO D2: Document the privilege boundary: public surface = 3 tools; internal helpers absent from public agent packages. D3: Document companion-file handling (always write for DEV path, never embed full prompt in summary).]",
         "verification_gate": "microservice doc lists the table + 3 tools + routing model + Phase-2 caveat.",
         "ac_gates": [
           "AC-9"
