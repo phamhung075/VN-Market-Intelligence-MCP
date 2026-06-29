@@ -126,6 +126,8 @@ import { registerScheduledTaskTools } from "./system/scheduledTaskTools.js"; // 
 import { registerForeignRoomTools } from "./market-data/foreignRoomTools.js"; // P0-2-FOREIGN-ROOM-SUITE: get_foreign_room (#176)
 import { registerMarketSentimentTools } from "./news-analysis/marketSentimentTools.js"; // P0-4-MARKET-SENTIMENT-INDEX: get_market_sentiment_index (#177)
 import { registerInsiderSentimentTools } from "./market-data/insiderSentimentTools.js"; // P0-5-INSIDER-SENTIMENT: get_insider_sentiment (#178)
+import { registerBreadthThrustTools } from "./market-data/breadthThrustTools.js"; // BREADTH-TIME-SERIES: get_breadth_thrust (#179)
+import { registerVolatilityIndicatorTools } from "./market-data/volatilityIndicatorTools.js"; // BREADTH-TIME-SERIES Part B: get_volatility_indicators (#180)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -256,4 +258,6 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerForeignRoomTools,             // P0-2-FOREIGN-ROOM-SUITE: get_foreign_room (#176)
   registerMarketSentimentTools,         // P0-4-MARKET-SENTIMENT-INDEX: get_market_sentiment_index (#177)
   registerInsiderSentimentTools,        // P0-5-INSIDER-SENTIMENT: get_insider_sentiment (#178)
+  registerBreadthThrustTools,           // BREADTH-TIME-SERIES: get_breadth_thrust (#179)
+  registerVolatilityIndicatorTools,     // BREADTH-TIME-SERIES Part B: get_volatility_indicators (#180)
 ];

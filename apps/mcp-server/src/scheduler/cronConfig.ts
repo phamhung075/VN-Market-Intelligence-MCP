@@ -206,6 +206,13 @@ export const CRONS = {
    *  walCheckpoint at 02:00+, ohlcvSanityCheckEarly at 00:45).
    *  Idempotent via writeOhlcvBatch ON CONFLICT — safe to re-run after data is present. */
   ohlcvHistoryBackfill:       Bun.env.CRON_OHLCV_HISTORY_BACKFILL                  ?? '40 1 * * *',
+  /** breadthHistoryPersister — BREADTH-TIME-SERIES (Sprint MARKET-INDICATOR-DEPTH-P0):
+   *  Persist daily HOSE breadth snapshot to market_breadth_history after market close.
+   *  08:37 UTC = 15:37 VN — ~52 min after HOSE close at 14:45 VN. Weekdays only.
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +7 from :30 pile-up (signalOutcomeJob+vnstockTradingStats
+   *  both at :30). Slot: FREE — between reputationCompute (08:33) and alertOutcomeJob (08:45).
+   *  FORWARD-ACCRUING ONLY: ON CONFLICT IGNORE + NFR-BR-1 source logging. */
+  breadthHistoryPersister:    Bun.env.CRON_BREADTH_HISTORY_PERSISTER                ?? '37 8 * * 1-5',
   /** ohlcvSanityCheck — CONTAM-5 full-table unit contamination scan: daily Mon-Fri 15:05 UTC (22:05 VN)
    *  Fires 5 min after ohlcvDailyAggregator (15:00 UTC) so aggregated rows are available.
    *  Scans last 7 days × watchlist tickers; sends BUG Telegram on any mixed-scale row.

@@ -78,6 +78,7 @@ import { runTasksMdJanitorJob } from './system/tasksMdJanitorJob.js'
 import { runRestartCadenceAlertJob } from './system/restartCadenceAlertJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
 import { runVnstockStartupProbe } from './financial-reports/vnstockStartupProbe.js'
+import { runBreadthHistoryPersisterJob, JOB_NAME_BREADTH_PERSISTER } from './market-data/breadthHistoryPersisterJob.js'
 import { runSchedulerWatchdog, WATCHDOG_MANIFEST } from './system/schedulerWatchdogJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
@@ -1235,5 +1236,22 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + restart-cadence-alert + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details + deep-fetch-vps + deep-fetch-main + scheduler-watchdog active`)
+  // 08:37 UTC Mon-Fri — Breadth History Persister — BREADTH-TIME-SERIES (Sprint MARKET-INDICATOR-DEPTH-P0)
+  // Fetches HOSE market breadth (advancing/declining/unchanged/ceiling/floor) from VnDirect
+  // vnmarket_prices and writes one row per session to market_breadth_history.
+  // FORWARD-ACCRUING ONLY: no backfill, ON CONFLICT IGNORE, NFR-BR-1 source logging.
+  // Slot: free between reputationCompute (08:33 UTC) and alertOutcomeJob (08:45 UTC).
+  scheduleCron(CRONS.breadthHistoryPersister, async () => {
+    await jobRunRepo.wrapRun(JOB_NAME_BREADTH_PERSISTER, async () => {
+      const result = await runBreadthHistoryPersisterJob(db)
+      if (result.inserted) {
+        log(`[breadth-persister] inserted session_date=${result.session_date}`)
+      } else if (result.skipped_reason) {
+        log(`[breadth-persister] skipped: ${result.skipped_reason} date=${result.session_date ?? 'n/a'}`)
+      }
+      return { rowsWritten: result.inserted ? 1 : 0 }
+    })
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + restart-cadence-alert + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details + deep-fetch-vps + deep-fetch-main + scheduler-watchdog + breadth-persister active`)
 }

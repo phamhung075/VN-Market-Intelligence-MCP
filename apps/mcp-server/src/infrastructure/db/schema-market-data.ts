@@ -142,4 +142,26 @@ export function initMarketDataTables(db: Database): void {
       fetched_at   TEXT NOT NULL
     )
   `);
+
+  // ── Market Breadth History (BREADTH-TIME-SERIES, Sprint MARKET-INDICATOR-DEPTH-P0) ──
+  // Append-only forward-accruing daily breadth table.
+  // FORWARD-ACCRUING ONLY — no backfill, no synthetic rows (NFR-BR-1).
+  // ON CONFLICT IGNORE: first write wins (idempotency, NFR-BR-2).
+  // McClellan warmup: ~40 sessions for EMA39 to stabilize.
+  // Zweig warmup: 14 sessions for thrust window.
+  // Writer: breadthHistoryPersisterJob (cron 37 8 * * 1-5 UTC = 15:37 VN, post-close).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS market_breadth_history (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_date TEXT    NOT NULL UNIQUE,
+      advancing    INTEGER NOT NULL,
+      declining    INTEGER NOT NULL,
+      unchanged    INTEGER NOT NULL,
+      ceiling      INTEGER NOT NULL,
+      floor        INTEGER NOT NULL,
+      total        INTEGER NOT NULL,
+      created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_mbh_date ON market_breadth_history(session_date DESC);
+  `);
 }

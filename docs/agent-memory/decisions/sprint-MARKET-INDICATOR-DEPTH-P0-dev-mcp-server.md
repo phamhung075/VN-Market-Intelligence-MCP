@@ -94,3 +94,41 @@
 - In-memory sub-window filtering: rows180 ⊃ rows90 ⊃ rows30 (always true because from_date is monotonic); avoids 3 DB round-trips; consistent with P0-4 pattern.
 
 **why-change:** No divergence from P0-5 spec. RISK-P0-5-NORMALIZATION-HONESTY resolved: normalization_basis field hardcoded in response type. RISK-P0-5-180D-DATA: data_window_days.d180 shows actual distinct dates in 180d window; null returned when 0 valid rows (not a minimum-day-count threshold).
+
+---
+
+### STEP BREADTH-TIME-SERIES · dev-mcp-server · 2026-06-30T00:00:00Z
+
+**task-id:** BREADTH-TIME-SERIES
+
+**what-done:**
+- Created `domain/services/market-data/breadthCalculator.ts` (domain layer) — pure functions: computeEMA (first-value seed), computeADL (cumulative running sum), computeRANA (ratio-adjusted net advances), computeMcLellanOsc (EMA19−EMA39, null for index < 38 i.e., < 39 sessions), computeMcLellanSummation (running sum of osc), computeFloorCeiling (>15% stocks at limit flag, >50% is_halt_day), computeZweigThrust (>61.5% advances / (adv+dec) for ≥10 consecutive sessions in last 14-session window), computeBreadthZScore (z of latest osc vs all non-null osc values; null when totalSessions < 21 or fewer than 2 non-null; returns 0 when std=0), computeHistoryQuality (INSUFFICIENT <10, WARMUP 10-39, SUFFICIENT ≥40), toGaugeScalar (6-field Gauge contract: value/unit/asof/source_tier/confidence/null_reason; confidence: 1.0=SUFFICIENT, 0.5=WARMUP, null=INSUFFICIENT).
+- Created `infrastructure/db/breadthHistoryStore.ts` — getAllBreadthHistory (all rows ASC), getRecentBreadthHistory (last N rows reversed to ASC), getBreadthHistoryCount (COUNT(*)), getAccruingSince (MIN session_date), upsertBreadthRow (INSERT OR IGNORE, returns changes>0).
+- Created `infrastructure/db/schema-market-data.ts` DDL addition — `market_breadth_history` table (id/session_date UNIQUE/advancing/declining/unchanged/ceiling/floor/total/created_at) + idx_mbh_date DESC index. ON CONFLICT IGNORE idempotency.
+- Created `application/usecases/getBreadthThrust.ts` — orchestrates store + domain; ADL history capped at 60 sessions; breadth_z_score exposed as Gauge scalar; returns {error:'no breadth history...'} when table empty (NFR-BR-3, never fabricates); history_quality enum in every response.
+- Created `scheduler/market-data/breadthHistoryPersisterJob.ts` — JOB_NAME_BREADTH_PERSISTER='breadthHistoryPersisterJob'; LIVE_FETCH_SOURCE logged on every run (NFR-BR-1); skip when all counters zero (synthetic guard); module-level `_isRunning` concurrency guard; `runBreadthHistoryPersisterJobCron()` wraps with recordJobRun returning {rowsWritten: result.inserted ? 1 : 0}. Cron slot: 37 8 * * 1-5.
+- Created `interface/mcp/tools/market-data/breadthThrustTools.ts` — registers `get_breadth_thrust` MCP tool (#179).
+- Created `interface/mcp/tools/market-data/volatilityIndicatorTools.ts` — registers `get_volatility_indicators` MCP tool (#180); proxies to computeVolatilityIndicators() at Go TA :5003; honest-NULL preserved (rv_60d_pct/drawdown_252d_pct null until Sprint-0 backfill); {error:'...'} on upstream failure (NFR-P01-1).
+- Extended `infrastructure/microservices/clients.ts` — added ComputeVolatilityRequest, TickerAtrResult, ComputeVolatilityResponse interfaces + computeVolatilityIndicators() function (POST /ta/volatility-indicators).
+- Added `scheduler/cronConfig.ts` entry: breadthHistoryPersister cron key.
+- Extended `scheduler/startScheduler.ts` — added scheduleCron block for CRONS.breadthHistoryPersister.
+- Registered both tools in `interface/mcp/tools/registry.ts`; regenerated tool-registry.json and project-stats.json (toolCount 176→178, market-data group 18→20).
+- Written 45 tests covering AC-1 through AC-20 (45 pass, 0 fail). `bun tsc --noEmit` EXIT 0.
+
+**what-considered:**
+- **Stale-handoff deviation (CRITICAL):** The task handoff doc cited `apps/technical-analysis/src/domain/services/BreadthService.ts` for McClellan/Zweig math. The task prompt explicitly flagged this as STALE — the TA zone is Go-primary hybrid; no new TS files belong there. ALL breadth math implemented as pure mcp-server domain service (`breadthCalculator.ts`). ZERO changes to apps/technical-analysis. This deviation is by design per the task's own stale-handoff override note.
+- **EMA seeding strategy:** Standard first-value seed (not Wilder simple-mean seeding for first N periods). This matches the conventional McClellan convention used by most implementations.
+- **McClellan null threshold:** Spec requires null until ≥39 sessions. Implemented as `if (i < 38) return null` (0-indexed: indices 0..37 = 38 items = <39 sessions). Verified via AC-5 (WARMUP 10-38 sessions) and AC-7 (both EMA arrays null at index 38 tested).
+- **breadth_z_score null conditions:** Multiple gates: totalSessions < 21 (spec gate), or fewer than 2 non-null osc values (can't compute std), or std=0 → return 0 not null. All handled in computeBreadthZScore.
+- **Part B scope (get_volatility_indicators):** Pure proxy to existing Go endpoint. No domain math added — the Go service already owns volatility computation. Only interface layer added.
+- **cronJobCount discrepancy:** gen-project-stats counts `cron.schedule()` calls but startScheduler.ts uses `scheduleCron()` wrapper — known pre-existing mismatch per project-stats _cronJobCountNote comment. Not a new regression introduced here.
+
+**why-decision:**
+- DDD layering: domain (pure) → infrastructure (DB access) → application (orchestration) → interface (MCP tool) — consistent with P0-2, P0-4, P0-5 patterns throughout the sprint.
+- All math self-contained in mcp-server domain: avoids cross-zone coupling to stale TA TS files; testable independently; no Go service dependency for breadth computations.
+- ON CONFLICT IGNORE: idempotent by design — running the cron twice on the same market session is a no-op (AC-2 verified). Prevents duplicate rows without requiring a separate existence check.
+- Forward-accruing only: No backfill loop avoids synthetic data risk. History builds naturally from first cron fire. history_quality enum communicates warmup state to callers honestly.
+- ADL capped at 60 sessions: Prevents unbounded payload growth; ADL trend readable from 60-session window.
+- Zweig 14-session window: matches the Zweig Breadth Thrust definition (10 consecutive sessions within a 14-session lookback window).
+
+**why-change:** STALE-HANDOFF deviation: TA paths stale/out-of-zone; math self-contained in mcp-server. All other specs followed exactly. NFR-BR-1 synthetic guard: skip when total=0 AND ceiling=0 AND floor=0. NFR-BR-3: {error:'no breadth history...'} on empty table. toolCount 176→178 regenerated via gen-tool-registry.ts + gen-project-stats.ts (never baked).

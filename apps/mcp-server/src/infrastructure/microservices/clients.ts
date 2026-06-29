@@ -186,6 +186,78 @@ export async function computeTAIndicators(req: ComputeTARequest): Promise<Comput
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Technical Analysis — Volatility Indicators (Part B: BREADTH-TIME-SERIES sprint)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Request body for POST /ta/volatility-indicators.
+ * All fields optional — the Go service derives inputs from daily_ohlcv.
+ */
+export interface ComputeVolatilityRequest {
+  /** If provided, restrict per-stock ATR% computation to these tickers. */
+  tickers?: string[];
+}
+
+/**
+ * Per-ticker ATR result from the Go TA service.
+ */
+export interface TickerAtrResult {
+  code:          string;
+  atr_pct_14d:  number | null;
+}
+
+/**
+ * Response from POST /ta/volatility-indicators.
+ * All gauge-ready scalars included. Null fields when data insufficient.
+ */
+export interface ComputeVolatilityResponse {
+  // Gauge-ready scalar (P1 Fear & Greed volatility leg)
+  rv_20d_percentile:  number | null;
+
+  // Realized volatility
+  rv_10d_pct:         number | null;
+  rv_20d_pct:         number | null;
+  rv_60d_pct:         number | null;
+
+  // Garman-Klass volatility
+  gk_vol_20d_pct:     number | null;
+
+  // Volatility regime
+  vol_regime:         string | null;
+  vol_regime_pct:     number | null;
+  history_sessions:   number | null;
+
+  // 252-day drawdown (requires Sprint-0 backfill completion)
+  drawdown_252d_pct:  number | null;
+
+  // Per-ticker ATR% (optional — populated when tickers are requested)
+  atr_by_ticker?:     TickerAtrResult[];
+
+  // Provenance
+  asof?:              string;
+  source_tier?:       number;
+}
+
+/**
+ * Call the Go TA service POST /ta/volatility-indicators.
+ * Throws on HTTP error — caller handles error envelope.
+ */
+export async function computeVolatilityIndicators(
+  req: ComputeVolatilityRequest = {},
+): Promise<ComputeVolatilityResponse> {
+  const url = `${BASE_URLS.ta}/ta/volatility-indicators`;
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  if (!response.ok) {
+    throw new Error(`[TA Service volatility] ${response.status}: ${await response.text()}`);
+  }
+  return response.json() as Promise<ComputeVolatilityResponse>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Macro Indicators Service
 // ─────────────────────────────────────────────────────────────────────────────
 

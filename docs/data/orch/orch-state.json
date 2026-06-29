@@ -8209,18 +8209,6 @@
         "priority": "high",
         "depends": [],
         "note": "FR-1..5: confidence-weighted daily sentiment score (-1 to +1), z-score vs 60/90d baseline (null <21d per hard constraint + history_quality enum), EMA(5), bull/bear/neutral ratios, article-volume spike flag (>2×30d avg). Gauge-readiness: news_sentiment_z (null <21d, falls back to z_90d, includes history_quality field). NEW INDEX: idx_rag_sentiment_covering (created_at DESC, sentiment, confidence, impact_score) for 90d window performance. NEW FILES: marketSentimentCalculator.ts, getMarketSentimentIndex.ts, marketSentimentTools.ts. NO schema changes to rag_analyses (read-only). TEST: divide-by-zero guard (confidence=0), empty table → history_quality=EMPTY, unexpected sentiment values excluded + logged."
-      },
-      {
-        "id": "BREADTH-TIME-SERIES",
-        "title": "Breadth Time-Series persister + A-D Line, RANA, McClellan, Zweig Thrust: forward-accruing only, 40-session McClellan warmup, 10-session Zweig trigger",
-        "zone": "apps/mcp-server/src/scheduler/market-data/",
-        "owner": "dev-mcp-server",
-        "type": "SPRINT-S",
-        "status": "READY",
-        "size": "M",
-        "priority": "high",
-        "depends": [],
-        "note": "BR-FR-1..6: NEW TABLE market_breadth_history (session_date UNIQUE, advancing/declining/unchanged/ceiling/floor/total), NEW CRON breadthHistoryPersister (37 8 * * 1-5), forward-accruing-only persistence (ON CONFLICT IGNORE), A-D line cumulative, RANA daily calc, McClellan Osc (EMA19/EMA39, null <39 sessions), McClellan Summation, floor-panic/ceiling-FOMO flags (>15% at limits), Zweig thrust (>61.5% for 10/14 sessions), accruing_since marker. Gauge-readiness: breadth_z_score (z of mclellan_osc vs rolling mean/stdev, null <21 sessions). NEW FILES: breadthHistoryPersisterJob.ts, BreadthService (TA), get_breadth_thrust tool. CRITICAL: NFR-BR-1 reject synthetic data; log live-fetch source. TEST: idempotency (ON CONFLICT IGNORE), history_quality INSUFFICIENT→WARMUP→SUFFICIENT transitions, Zweig 14-session window logic, floor/ceiling % calculations, McClellan null until 39 sessions. Scheduler assignment verified: minute 37 free in 08:xx weekdays."
       }
     ],
     "review": [
@@ -8297,6 +8285,18 @@
         "priority": "high",
         "depends": [],
         "note": "FR-1..5: net buy-sell value per window (30/90/180d, null when <history), market_cap_bn proxy normalization (clamped [-1,+1]), ACCUMULATION/DISTRIBUTION/MIXED/NEUTRAL label, large-deal flags (>10B VND in 30d). Gauge-readiness: net_sentiment_score (null when market_cap_bn IS NULL, include normalization_basis='market_cap_proxy' field as QA hard gate). NEW FILES: insiderSentimentCalculator.ts, getInsiderSentiment.ts, insiderSentimentTools.ts. NO schema changes to insider_transactions (read-only). MANDATORY: include normalization_basis field + data_window_days counts in response. TEST: price=0 rows excluded, same insider buy+sell both counted, market_cap_bn=NULL → score=NULL, insider_transactions empty → NEUTRAL label."
+      },
+      {
+        "id": "BREADTH-TIME-SERIES",
+        "title": "Breadth Time-Series persister + A-D Line, RANA, McClellan, Zweig Thrust: forward-accruing only, 40-session McClellan warmup, 10-session Zweig trigger",
+        "zone": "apps/mcp-server/src/scheduler/market-data/",
+        "owner": "dev-mcp-server",
+        "type": "SPRINT-S",
+        "status": "REVIEW",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "BR-FR-1..6: NEW TABLE market_breadth_history (session_date UNIQUE, advancing/declining/unchanged/ceiling/floor/total), NEW CRON breadthHistoryPersister (37 8 * * 1-5), forward-accruing-only persistence (ON CONFLICT IGNORE), A-D line cumulative, RANA daily calc, McClellan Osc (EMA19/EMA39, null <39 sessions), McClellan Summation, floor-panic/ceiling-FOMO flags (>15% at limits), Zweig thrust (>61.5% for 10/14 sessions), accruing_since marker. Gauge-readiness: breadth_z_score (z of mclellan_osc vs rolling mean/stdev, null <21 sessions). NEW FILES: breadthHistoryPersisterJob.ts, BreadthService (TA), get_breadth_thrust tool. CRITICAL: NFR-BR-1 reject synthetic data; log live-fetch source. TEST: idempotency (ON CONFLICT IGNORE), history_quality INSUFFICIENT→WARMUP→SUFFICIENT transitions, Zweig 14-session window logic, floor/ceiling % calculations, McClellan null until 39 sessions. Scheduler assignment verified: minute 37 free in 08:xx weekdays."
       }
     ],
     "qa": [],
