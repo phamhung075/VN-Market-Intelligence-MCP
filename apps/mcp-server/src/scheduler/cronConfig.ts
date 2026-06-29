@@ -199,6 +199,13 @@ export const CRONS = {
   deepFetchVps:               Bun.env.CRON_DEEP_FETCH_VPS                           ?? '*/5 * * * *',
   /** deepFetchMainJob — every 5 min, drain up to maxPlaywrightPerCycle=5 vps-failed rows via news-fetch Playwright — DFR-P2-MCP */
   deepFetchMain:              Bun.env.CRON_DEEP_FETCH_MAIN                          ?? '*/5 * * * *',
+  /** ohlcvHistoryBackfill — Sprint MARKET-INDICATOR-DEPTH-P0 Sprint-0: backfill 2yr daily bars
+   *  for VN-Index + watchlist (OHLCV-BACKFILL-P0). Runs daily at 02:40 UTC (09:40 VN).
+   *  After taOhlcvBackfill (01:30 UTC) and before market open (02:00 UTC).
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: :40 clears the :30 pile-up (taOhlcvBackfill at 01:30,
+   *  walCheckpoint at 02:00+, ohlcvSanityCheckEarly at 00:45).
+   *  Idempotent via writeOhlcvBatch ON CONFLICT — safe to re-run after data is present. */
+  ohlcvHistoryBackfill:       Bun.env.CRON_OHLCV_HISTORY_BACKFILL                  ?? '40 1 * * *',
   /** ohlcvSanityCheck — CONTAM-5 full-table unit contamination scan: daily Mon-Fri 15:05 UTC (22:05 VN)
    *  Fires 5 min after ohlcvDailyAggregator (15:00 UTC) so aggregated rows are available.
    *  Scans last 7 days × watchlist tickers; sends BUG Telegram on any mixed-scale row.

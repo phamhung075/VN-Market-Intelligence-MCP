@@ -47,6 +47,7 @@ import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.j
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
 import { runOhlcvSanityCheck } from './market-data/ohlcvSanityCheckJob.js'
 import { runTaOhlcvBackfill } from './market-data/taOhlcvBackfillJob.js'
+import { runOhlcvHistoryBackfill } from './market-data/ohlcvHistoryBackfillJob.js'
 import { purgeStrandedSeedRows } from './market-data/allzeroOhlcvBackfill.js'
 import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
@@ -684,6 +685,22 @@ export function startScheduler() {
   scheduleCron(CRONS.ohlcvStalenessCheck, async () => {
     await jobRunRepo.wrapRun('ohlcv-staleness-check', async () => {
       await runOhlcvStalenessCheck()
+    })
+  }, { timezone: 'UTC' })
+
+  // 01:40 UTC daily — OHLCV history backfill — OHLCV-BACKFILL-P0 (Sprint MARKET-INDICATOR-DEPTH-P0)
+  // Backfills 2yr of daily bars for VN-Index + all watchlist tickers from VnDirect api-finfo.
+  // Prerequisite unlock for P0-1 rv_60d + 252d-drawdown and P1 momentum family.
+  // Idempotent via writeOhlcvBatch ON CONFLICT IGNORE — safe to re-run daily.
+  // Fire-and-forget: non-blocking; errors per-ticker logged at WARN, not fatal.
+  scheduleCron(CRONS.ohlcvHistoryBackfill, async () => {
+    await jobRunRepo.wrapRun('ohlcv-history-backfill', async () => {
+      const result = await runOhlcvHistoryBackfill()
+      return {
+        rowsWritten: result.totalWritten,
+        tickers: result.tickersProcessed,
+        errors: result.errors.length,
+      }
     })
   }, { timezone: 'UTC' })
 

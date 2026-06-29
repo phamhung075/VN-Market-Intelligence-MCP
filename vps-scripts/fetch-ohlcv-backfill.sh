@@ -1,9 +1,10 @@
 #!/bin/bash
-# VN Market OHLCV History Backfill — Task 1351
+# VN Market OHLCV History Backfill — Task 1351 / OHLCV-BACKFILL-P0
 #
-# ONE-TIME script (not a systemd service). Fetches 60 days of daily OHLCV from
-# TCBS chart API for every ticker in the France server watchlist, then pushes
-# each ticker's bars to POST /api/push-ohlcv-history.
+# Script invoked by ohlcv-backfill-poll.sh when ohlcv_backfill_queue has pending
+# rows (done=0). Fetches ~2yr (730 days default) of daily OHLCV from TCBS chart
+# API for every ticker in the France server watchlist, then pushes each ticker's
+# bars to POST /api/push-ohlcv-history.
 #
 # Usage:
 #   OHLCV_API_URL=https://example.com/api/push-ohlcv-history \
@@ -27,7 +28,7 @@
 #    API_KEY         X-API-Key bearer token (VPS_PUSH_API_KEY)
 #
 #  Optional:
-#    DAYS            Number of trading days to backfill (default: 60)
+#    DAYS            Number of trading days to backfill (default: 730 = ~2yr)
 #    SLEEP_BETWEEN   Seconds to sleep between tickers (default: 1)
 #
 # ── TCBS chart API ───────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ set -euo pipefail
 OHLCV_API_URL="${OHLCV_API_URL:-__MCP_BASE__/api/push-ohlcv-history}"
 WATCHLIST_URL="${WATCHLIST_URL:-__MCP_BASE__/api/watchlist}"
 API_KEY="${API_KEY:-__API_KEY__}"
-DAYS="${DAYS:-60}"
+DAYS="${DAYS:-730}"
 SLEEP_BETWEEN="${SLEEP_BETWEEN:-1}"
 
 TCBS_BASE="https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/bars-long-term"

@@ -62,3 +62,27 @@ PO directives D1/D2/D3 binding. Commit 588b1031.
 **ST-8 (system.md):** Table schema, lifecycle, public/privileged surface, AGENT_TEAM_MAP, routing model, D2/D3/AC-9 documented.
 
 Zone health: bun tsc clean, 125 pass / 0 fail (core suite), toolCount=173 (168+7 new), scheduler=2 unchanged | HEALTHY
+
+## 2026-06-29 · OHLCV-BACKFILL-P0 — VPS trigger architecture (REVIEW)
+
+Sprint MARKET-INDICATOR-DEPTH-P0 task OHLCV-BACKFILL-P0.
+
+**Key discovery:** Both TCBS (`apipubaws.tcbs.com.vn`) and VnDirect (`api-finfo.vndirect.com.vn`) are geo-blocked from Docker/France. TCBS returns HTTP 404; VnDirect returns all-market snapshot ignoring `?code` filter.
+
+**Architecture decision:** `ohlcvHistoryBackfillJob.ts` uses VPS-mediated data path:
+1. Cron (01:40 UTC) checks bar depth per ticker in `daily_ohlcv`
+2. If any ticker < 500 bars: inserts `done=0` in `ohlcv_backfill_queue`
+3. VPS polls → runs `fetch-ohlcv-backfill.sh` DAYS=730 → pushes via `/api/push-ohlcv-history`
+
+**Test path:** `fetchFn` injection tests the `writeOhlcvBatch` pipeline (unit guard, normalizer, idempotent upsert). 10/10 pass, 22 expect() calls.
+
+**Files changed:**
+- NEW: `ohlcvHistoryBackfillJob.ts` — monitor + trigger job
+- NEW: `__tests__/OHLCV-BACKFILL-P0.test.ts` — 10 tests
+- MOD: `cronConfig.ts` — `ohlcvHistoryBackfill: '40 1 * * *'`
+- MOD: `startScheduler.ts` — +1 scheduleCron (total 80)
+- MOD: `vps-scripts/fetch-ohlcv-backfill.sh` — DAYS default 60 → 730
+
+**Current state:** 37/42 tickers have 47-48 bars (2026-04-23 → 2026-06-29). VPS queue trigger id=451 inserted. Expected ~500 bars/ticker after VPS 730-day run.
+
+Zone health: tsc clean, 48/0 OHLCV cluster, toolCount=166 unchanged, schedulerCount=80 | HEALTHY
