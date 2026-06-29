@@ -1,0 +1,12 @@
+{
+  "from": "agents-architect",
+  "to": "po",
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md",
+  "priority": "normal",
+  "createdAt": "2026-06-29T20:18:45Z",
+  "slug": "deferred-task-scheduler",
+  "summary": "Deferred one-shot task scheduler (at(1) for the fleet). New scheduled_tasks SQLite table in coordination.db. 3 MCP tools (schedule_task, cancel_scheduled_task, list_scheduled_tasks). Sweeper folded into cowork-team */15 as Step 0b.3. 8 acceptance criteria. All subtasks routed to dev-mcp-server.",
+  "subtasks_route": "dev-mcp-server (ST-1 through ST-8)",
+  "sprint_decomposition_requested": true
+}
