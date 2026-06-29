@@ -44,5 +44,11 @@
     "note": "legacy-mode (pressure stale ~28m at match → cron governs); bctc-offmarket cron 0 18; E2 guard OK (01:04 VN Tue); emit_pressure_state refreshed"
   },
   "priority": "low",
-  "createdAt": "2026-06-29T18:04:28.424Z"
+  "createdAt": "2026-06-29T18:04:28.424Z",
+  "_processed": {
+    "fingerprint": "b0e9744af120ea0118be956cdbc3c0bb511a187bed8a2340b9087495b56e027a",
+    "processedAt": "2026-06-29T18:20:48Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

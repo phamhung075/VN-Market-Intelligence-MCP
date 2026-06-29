@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "20260629T173441Z",
-    "matched_slots": ["digest-daily"],
-    "won_slots": ["digest-daily"],
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/digest-predict/flow/daily-predict.md"],
+    "spawned": [
+      "docs/agents/digest-predict/flow/daily-predict.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -17,10 +23,16 @@
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
-    "due_reasons": { "digest-daily": "cron" },
-    "cadence_minutes": { "digest-daily": null },
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
     "last_fired_timestamp": "2026-06-29T17:34:14.125Z",
-    "last_fired_slots": ["digest-daily"],
+    "last_fired_slots": [
+      "digest-daily"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -32,5 +44,11 @@
     "note": "Local CLI dispatcher tick 2026-06-29T17:30Z; digest-daily spawned background; agent self-dedups via published:digest-daily marker."
   },
   "priority": "low",
-  "createdAt": "20260629T173441Z"
+  "createdAt": "20260629T173441Z",
+  "_processed": {
+    "fingerprint": "0b124cbf1b8d7ed5df758e1cc5a2fc7618b40f98317e07101cf233faa4a3ee4e",
+    "processedAt": "2026-06-29T18:20:48Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -11,11 +11,11 @@
   "mgmt": "Government majority shareholder (74.8% state); conservative capital management; consistent profitability",
   "analysis": {
     "net_profit_tybvnd": 9462.1,
-    "net_revenue_tybvnd": 17421.0,
+    "net_revenue_tybvnd": 17421,
     "roe_quarterly": 0.042,
     "roe_annualized": 0.168,
     "pe": 14.1,
-    "sector_median_pe": 9.0,
+    "sector_median_pe": 9,
     "pe_premium_pct": 57,
     "ey_spread_pp": 2.09,
     "ey_verdict": "FAIR",
@@ -47,5 +47,11 @@
   "signal_id": 7942,
   "cycle_id": "20260629-1800",
   "emitted_at": "2026-06-29T18:10:00Z",
-  "yoy_note": "YoY comparison unavailable — PUB-7 period basis mismatch; only 1 period in DB"
+  "yoy_note": "YoY comparison unavailable — PUB-7 period basis mismatch; only 1 period in DB",
+  "_processed": {
+    "fingerprint": "87f8b8d02c47fa8003a64b390d269f72638402a8bdc305963a0baf81e4cbc4e9",
+    "processedAt": "2026-06-29T18:20:48Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

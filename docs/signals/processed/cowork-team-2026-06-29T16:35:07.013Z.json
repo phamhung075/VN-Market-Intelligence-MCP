@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-29T16:35:07.013Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
+    "last_fired_timestamp": "2026-06-29T16:34:44.122Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 8,
+    "signal_backlog": 3,
+    "note": "single-slot daily BCTC refine fire (refine_bctc_md, cron 30 16). Identity-assertion preamble applied vs open off-flow defect cow-20260629T120800. last_fired stamped with prev_last_fired backup; awaiting raw-verify of agent liveness."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-29T16:35:07.013Z",
+  "_processed": {
+    "fingerprint": "c9e13f269ca5b27809f19b00e71aa71f6cf17e062c1e8fbe87e385b972ee3abf",
+    "processedAt": "2026-06-29T18:20:48Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
