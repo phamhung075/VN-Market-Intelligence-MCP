@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-29T20:17:11Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "off_market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-06-29T20:17:11Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:13",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "tnb-audit guaranteed; audits CHEF evening dish (4 clusters) for 6-layer completeness; spawned background a6c1af34"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-29T20:17:11Z",
+  "_processed": {
+    "fingerprint": "8b0a20f28021b136a4b4975a57333ee4206c1a34c64aa801f2913344d161b19a",
+    "processedAt": "2026-06-29T20:21:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
