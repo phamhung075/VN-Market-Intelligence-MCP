@@ -1,0 +1,9 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-06-29T20:15:00Z",
+  "summary": "c102 NEEDS_ATTENTION — MCP blocked (6th consecutive); evening dish 4 clusters confirmed; F-QUALITY-VERDICT-SUSPICIOUS NEW (Step 7.5 carry-proxy L2 bypass risk); F-EOD-NB-MISSING-2026-06-29 NEW; 3 HIGH persisting (F-MCP, F-HPG, F-ACV)"
+}
