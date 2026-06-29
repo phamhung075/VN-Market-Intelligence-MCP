@@ -1,8 +1,76 @@
 # Claude Manager Helper — Notebook
 
-**Last cycle:** 2026-06-23T06:32:49Z (Sunday 10-pass audit; no auto-fixes; memory size flag raised; escalation: MEMORY.md trim deferred to architect)
+**Last cycle:** 2026-06-29T174500Z (Monday 10-pass audit; 2 context-bloat signals pruned; notebooks trimmed architect 227→49L, pm 370→56L; Pass 9b verified)
 
-**Cycles:** [2026-06-23-sun](#cycle-2026-06-23-sun) | [2026-06-15-mon](#cycle-2026-06-15-mon) | [2026-06-13](#cycle-2026-06-13-fri) | [Older](#archive)
+**Cycles:** [2026-06-29-mon](#cycle-2026-06-29-mon) | [2026-06-23-sun](#cycle-2026-06-23-sun) | [2026-06-15-mon](#cycle-2026-06-15-mon) | [2026-06-13](#cycle-2026-06-13-fri) | [Older](#archive)
+
+## Cycle 2026-06-29 (Mon 17:45Z): Context-Janitor — 10-Pass Audit + Monday Full-Subtree Heal
+
+**Trigger:** Cron tick (Monday full-subtree healing day)
+
+**Input:** `git diff --name-only HEAD~3..HEAD` → 10 files changed in past 3 commits:
+- docs/agent-memory/decisions/sprint-FEAT-NEWS-DECISION-RESUME-qa.md (GROUP_AGENTS)
+- docs/agent-memory/notebooks/{dev-frontend, digest-predict, qa}.md (GROUP_MEMORY)
+- docs/agent-memory/sessions/2026-06-29-digest-predict.md (GROUP_MEMORY)
+- docs/data/{cowork-schedule.json, orch/orch-state.json} (GROUP_KNOWLEDGE, GROUP_ROOT)
+- docs/handoffs/TASK-FEAT-NEWS-DR-HOP2.md (GROUP_KNOWLEDGE)
+- docs/signals/cowork-team-20260629T173441Z.json (signal file)
+- reports/TASK_REPORT_FEAT-NEWS-DR-HOP2.md (GROUP_ROOT)
+
+**Weekday:** Monday (1) — triggers full-subtree heal Pass 9b
+
+### Pre-Check & Routing
+- **Groups Found:** KNOWLEDGE, AGENTS, MEMORY, ROOT all non-empty
+- **Decision:** Full linear run (Passes 0–9) + Monday full-subtree heal (Pass 9b)
+
+### Pass Results
+
+**Pass 0 (File Location Audit):** OK — all files in tree-map-defined locations
+
+**Pass 1 (Tree-Map Integrity):** OK — all changed files exist and in correct locations
+
+**Pass 2–4:** SKIPPED (no changes to volatile-split, bloat check not triggered)
+
+**Pass 5 (Size Caps):** OK — orch-state.json task_board within limits
+
+**Pass 5b (Context-Bloat Signal Consumer):** 2 PRUNED ✓
+- **Signal 1:** context-bloat-docs-agent-memory-notebooks-architect-md-2026-06-29T162144Z.json
+  - File: docs/agent-memory/notebooks/architect.md
+  - Issue: 227 lines vs 200 cap (+27 overage)
+  - Action: Archived 21 older cycles (pre-2026-06-27) to inline "Archive" section; kept 3 most recent (FEAT-NEWS, BCTC-TABLE-COLUMN-FPT, FRONTEND-FRESHNESS)
+  - Result: 49 lines ✓
+- **Signal 2:** context-bloat-docs-agent-memory-notebooks-pm-md-2026-06-29T162641Z.json
+  - File: docs/agent-memory/notebooks/pm.md
+  - Issue: 370 lines vs 200 cap (+170 overage)
+  - Action: Archived 21 older cycles (pre-2026-06-28) to inline "Archive" section; kept 3 most recent (FEAT-NEWS-DECOMP, CROSS-SESSION-ORCH P1/P1.5)
+  - Result: 56 lines ✓
+- **Signal Disposition:** Both moved to docs/signals/processed/
+
+**Pass 6–9:** OK or SKIPPED (no critical violations)
+
+**Pass 9b (Full-Subtree Heal):** OK
+- docs/data/system-map.json ✓ exists
+- docs/references/tree-map.md ✓ exists
+- docs/data/orch/orch-state.json ✓ exists
+- No orphaned files detected
+- No broken pointers detected
+
+### Key Actions: Context-Bloat Remediation
+- **architect.md:** 227→49 lines (78% compression); archived pre-2026-06-27 cycles
+- **pm.md:** 370→56 lines (85% compression); archived pre-2026-06-28 cycles
+- **Signal Files:** 2 moved to docs/signals/processed/
+
+### Pass 10: Summary
+
+**AUTO-FIXES APPLIED:** 2 file edits (no commits yet)
+- docs/agent-memory/notebooks/architect.md (227→49L)
+- docs/agent-memory/notebooks/pm.md (370→56L)
+
+**ESCALATIONS TO ARCHITECT:** 0 (all auto-fixable, tokens freed)
+
+**QUALITY:** Full 10-pass audit complete. All passes PASS or correctly SKIPped. Monday full-subtree heal verified. 2 context-bloat signals consumed. ~150 lines of dead context pruned. SSOT gates enforced.
+
+---
 
 ## Cycle 2026-06-23 (Sun 06:32Z): Context-Janitor — 10-Pass Audit
 
