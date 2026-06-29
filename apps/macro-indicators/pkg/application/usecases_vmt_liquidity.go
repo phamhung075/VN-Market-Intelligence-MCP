@@ -26,6 +26,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/vn-market-intelligence/macro-indicators/pkg/domain"
@@ -83,6 +84,17 @@ type OMOInputs struct {
 	ParseOK bool
 	// ParseError holds the error message when ParseOK=false.
 	ParseError string
+
+	// P0-3-OMO-CURVE extensions:
+
+	// TenorRows holds per-row tenor rate and member participation data parsed from
+	// columns 1 (members) and 3 (rate) of the SBV OMO HTML table.
+	// Empty when no valid non-subtotal rows were found or when the HTML has <4 columns.
+	TenorRows []OMOTenorRowInput
+
+	// ParseWarnings collects non-fatal parse issues (missing rate cells, unknown tenors).
+	// A non-empty slice does NOT imply ParseOK=false.
+	ParseWarnings []string
 }
 
 // OMOProvider is the interface for fetching SBV OMO net outstanding.
@@ -97,28 +109,37 @@ type OMOProvider interface {
 
 // LiquidityStateUseCase orchestrates the five liquidity-state blocs.
 // Depends on PolicyRatesProvider + SJCFXProvider + OMOProvider (all injected interfaces).
+// P0-3-OMO-CURVE: also accepts OMODailyRepository for persistence + 5d rolling sum.
 // No infrastructure imports (Fence-B compliant).
 type LiquidityStateUseCase struct {
 	policyRatesProvider PolicyRatesProvider
 	sjcFXProvider       SJCFXProvider
 	omoProvider         OMOProvider
+	// omoDailyRepo is optional: if nil, OMOCurve fields requiring persistence return nil.
+	// Wired in cmd/server/main.go from SQLiteOMODailyRepository (Fence-C).
+	omoDailyRepo OMODailyRepository
 }
 
 // NewLiquidityStateUseCase creates a new LiquidityStateUseCase with injected deps.
 // policyRatesProvider: SBV HTML fetch + DB fallback adapter.
 // sjcFXProvider: market.db SJC+FX inputs adapter.
 // omoProvider: SBV OMO Liferay HTML fetch + parse adapter.
-// All are mandatory; nil values will cause Execute to return an error
-// (with IRS.IsEstimate=true + Interbank1W.IsEstimate=true enforced in errorLiquidityResponse).
+// omoDailyRepo: macro_indicators.db repository for sbv_omo_daily (P0-3). May be nil
+//   when the service starts without MACRO_DB_PATH (safe-degrade: OMOCurve = nil in response).
+//
+// policyRatesProvider, sjcFXProvider, and omoProvider are mandatory; nil values will
+// cause Execute to return an error (IRS.IsEstimate=true + Interbank1W.IsEstimate=true enforced).
 func NewLiquidityStateUseCase(
 	policyRatesProvider PolicyRatesProvider,
 	sjcFXProvider SJCFXProvider,
 	omoProvider OMOProvider,
+	omoDailyRepo OMODailyRepository,
 ) *LiquidityStateUseCase {
 	return &LiquidityStateUseCase{
 		policyRatesProvider: policyRatesProvider,
 		sjcFXProvider:       sjcFXProvider,
 		omoProvider:         omoProvider,
+		omoDailyRepo:        omoDailyRepo,
 	}
 }
 
@@ -214,6 +235,17 @@ func (uc *LiquidityStateUseCase) Execute(
 	// dttktt.sbv.gov.vn 100% packet loss from VPS. NO fetch attempted.
 	interbank := domain.BuildInterbankRate()
 
+	// --- P0-3-OMO-CURVE: implied short rates + persistence + stress label ---
+	// Only computed when OMO parse succeeded AND tenor rows are available.
+	// omoDailyRepo may be nil (safe-degrade: OMOCurve returns nil in response).
+	var omoCurve *OMOCurveDTO
+	if omoInputs.ParseOK && uc.omoDailyRepo != nil {
+		omoCurve = uc.computeOMOCurve(ctx, omoInputs, fetchedAt)
+	} else if omoInputs.ParseOK && len(omoInputs.TenorRows) > 0 {
+		// Repo not wired but we still have tenor data: compute rates without persistence.
+		omoCurve = uc.computeOMOCurveNoPersist(omoInputs)
+	}
+
 	return LiquidityStateResponse{
 		Status: "ok",
 		PolicyRates: PolicyRatesDTO{
@@ -261,9 +293,123 @@ func (uc *LiquidityStateUseCase) Execute(
 			IsEstimate:    interbank.IsEstimate,    // ALWAYS true — NEVER flip
 			BlockedReason: interbank.BlockedReason, // ALWAYS set
 		},
+		OMOCurve:  omoCurve, // nil when OMO parse failed (NFR-P03-2)
 		FetchedAt: fetchedAt,
 		Source:    liquiditySource,
 	}, nil
+}
+
+// computeOMOCurve runs the full P0-3-OMO-CURVE pipeline with persistence:
+//  1. Persist daily row to sbv_omo_daily (idempotent ON CONFLICT REPLACE).
+//  2. Compute implied short rates from tenor rows (domain service).
+//  3. Query 5-day rolling net injection + prev session rate.
+//  4. Derive liquidity stress label + gauge-ready score.
+//
+// Fail-open: errors from persistence/DB queries are logged and cause safe-degrade
+// (nil fields), not a failure of the whole liquidity-state response.
+func (uc *LiquidityStateUseCase) computeOMOCurve(
+	ctx context.Context,
+	omoInputs OMOInputs,
+	_ string, // fetchedAt (reserved for future rate caching)
+) *OMOCurveDTO {
+	// Convert application OMOTenorRowInput → domain OMOTenorEntry for domain service.
+	domainTenors := make([]domain.OMOTenorEntry, 0, len(omoInputs.TenorRows))
+	for _, r := range omoInputs.TenorRows {
+		domainTenors = append(domainTenors, domain.OMOTenorEntry{
+			OperationType:  r.OperationType,
+			TenorDays:      r.TenorDays,
+			VolumeBnVND:    r.VolumeBnVND,
+			WinningRatePct: r.WinningRatePct,
+			MemberWinRatio: r.MemberWinRatio,
+		})
+	}
+
+	// Compute implied short rates (pure domain function).
+	impliedRates := domain.ComputeImpliedShortRates(domainTenors)
+
+	// Persist daily row (write-on-fetch side effect, idempotent).
+	persistRow := OMODailyRow{
+		AuctionDate:         omoInputs.AuctionDate,
+		AddBnVND:            omoInputs.TotalAddBnVND,
+		AbsorbBnVND:         omoInputs.TotalAbsorbBnVND,
+		NetOutstandingBnVND: omoInputs.TotalAddBnVND - omoInputs.TotalAbsorbBnVND,
+		WeightedAvgRatePct:  impliedRates.WeightedAvgRatePct,
+	}
+	if err := uc.omoDailyRepo.Persist(ctx, persistRow); err != nil {
+		slog.Warn("omo_curve: persist daily row failed (degraded)", "error", err,
+			"auction_date", omoInputs.AuctionDate)
+		// Safe-degrade: return rates-only curve without 5d/stress fields.
+		return &OMOCurveDTO{
+			OmoRate7dPct:          impliedRates.Rate7dPct,
+			OmoRate14dPct:         impliedRates.Rate14dPct,
+			OmoRate28dPct:         impliedRates.Rate28dPct,
+			OmoWeightedAvgRatePct: impliedRates.WeightedAvgRatePct,
+			OmoMemberWinRatio:     impliedRates.MemberWinRatio,
+			LiquidityStress:       "NEUTRAL",
+			ParseWarnings:         omoInputs.ParseWarnings,
+		}
+	}
+
+	// Query 5-day net injection rolling sum.
+	net5d, netErr := uc.omoDailyRepo.NetInjection5d(ctx)
+	if netErr != nil {
+		slog.Warn("omo_curve: net_injection_5d query failed", "error", netErr)
+		net5d = OMONetInjection5dResult{}
+	}
+
+	// Query previous session's avg rate for TIGHT classification.
+	prevRate, prevErr := uc.omoDailyRepo.PrevWeightedAvgRate(ctx, omoInputs.AuctionDate)
+	if prevErr != nil {
+		slog.Warn("omo_curve: prev_rate query failed", "error", prevErr)
+		prevRate = nil
+	}
+
+	// Derive stress label + gauge-ready score (pure domain function).
+	stressLabel, stressScore := domain.DeriveStressResult(
+		net5d.NetInjection5dBnVND,
+		net5d.DaysInWindow,
+		impliedRates.WeightedAvgRatePct,
+		prevRate,
+	)
+
+	return &OMOCurveDTO{
+		OmoRate7dPct:          impliedRates.Rate7dPct,
+		OmoRate14dPct:         impliedRates.Rate14dPct,
+		OmoRate28dPct:         impliedRates.Rate28dPct,
+		OmoWeightedAvgRatePct: impliedRates.WeightedAvgRatePct,
+		OmoMemberWinRatio:     impliedRates.MemberWinRatio,
+		NetInjection5dBnVND:   net5d.NetInjection5dBnVND,
+		DaysInWindow:          net5d.DaysInWindow,
+		LiquidityStress:       stressLabel,
+		LiquidityStressScore:  stressScore,
+		ParseWarnings:         omoInputs.ParseWarnings,
+	}
+}
+
+// computeOMOCurveNoPersist computes implied rates from tenor rows without DB persistence.
+// Used when omoDailyRepo is nil (safe-degrade: repo not wired).
+// 5d net injection and stress score are not computable without DB history.
+func (uc *LiquidityStateUseCase) computeOMOCurveNoPersist(omoInputs OMOInputs) *OMOCurveDTO {
+	domainTenors := make([]domain.OMOTenorEntry, 0, len(omoInputs.TenorRows))
+	for _, r := range omoInputs.TenorRows {
+		domainTenors = append(domainTenors, domain.OMOTenorEntry{
+			OperationType:  r.OperationType,
+			TenorDays:      r.TenorDays,
+			VolumeBnVND:    r.VolumeBnVND,
+			WinningRatePct: r.WinningRatePct,
+			MemberWinRatio: r.MemberWinRatio,
+		})
+	}
+	impliedRates := domain.ComputeImpliedShortRates(domainTenors)
+	return &OMOCurveDTO{
+		OmoRate7dPct:          impliedRates.Rate7dPct,
+		OmoRate14dPct:         impliedRates.Rate14dPct,
+		OmoRate28dPct:         impliedRates.Rate28dPct,
+		OmoWeightedAvgRatePct: impliedRates.WeightedAvgRatePct,
+		OmoMemberWinRatio:     impliedRates.MemberWinRatio,
+		LiquidityStress:       "NEUTRAL", // cannot compute without 5d history
+		ParseWarnings:         omoInputs.ParseWarnings,
+	}
 }
 
 // degradedLiquidityResponse builds a LiquidityStateResponse with Status="degraded" for

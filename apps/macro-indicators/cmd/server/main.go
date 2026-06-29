@@ -122,10 +122,28 @@ func main() {
 	// omoAdapter: SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy, VMT-5b).
 	// interbank_1w: PERMANENTLY blocked (architect Decision B) — no adapter needed (domain builds it).
 	// No new excelize dep (HTML + SQLite only). go.mod UNCHANGED.
+	//
+	// P0-3-OMO-CURVE: omoDailyRepo opens macro_indicators.db (MACRO_DB_PATH env, default /app/data/macro_indicators.db).
+	// Safe-degrade: if repo init fails, omoDailyRepo=nil → LiquidityStateUseCase skips persistence
+	// and returns OMOCurve rates-only (no 5d net injection or stress score).
 	liquidityPolicyAdapter := &policyRatesAdapter{logger: logger}
 	liquiditySJCFXAdapter := &sjcFXAdapter{inner: infrastructure.NewSJCGoldFXAdapter()}
 	liquidityOMOAdapter := &omoAdapter{logger: logger}
-	liquidityStateUseCase := application.NewLiquidityStateUseCase(liquidityPolicyAdapter, liquiditySJCFXAdapter, liquidityOMOAdapter)
+
+	macroDBPath := envStr("MACRO_DB_PATH", "/app/data/macro_indicators.db")
+	omoDailyRepo, repoErr := infrastructure.NewSQLiteOMODailyRepository(macroDBPath)
+	if repoErr != nil {
+		slog.Warn("P0-3-OMO-CURVE: macro_indicators.db repo init failed — OMOCurve persistence disabled",
+			"error", repoErr, "macro_db_path", macroDBPath)
+		omoDailyRepo = nil
+	}
+
+	liquidityStateUseCase := application.NewLiquidityStateUseCase(
+		liquidityPolicyAdapter,
+		liquiditySJCFXAdapter,
+		liquidityOMOAdapter,
+		&omoDailyRepoAdapter{inner: omoDailyRepo},
+	)
 
 	router := iface.NewRouter(iface.RouterConfig{
 		Snapshot:           useCase,
@@ -156,6 +174,13 @@ func main() {
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
 			slog.Error("HTTP server shutdown error", "error", err)
+		}
+		// P0-3-OMO-CURVE: close macro_indicators.db on graceful shutdown
+		// (RISK-MACRO-DUAL-DB-LIFECYCLE mitigation — ensures WAL checkpoint completes).
+		if omoDailyRepo != nil {
+			if err := omoDailyRepo.Close(); err != nil {
+				slog.Warn("macro_indicators.db close error on shutdown", "error", err)
+			}
 		}
 		close(idleConnsClosed)
 	}()
@@ -388,10 +413,65 @@ func (a *omoAdapter) FetchOMO(ctx context.Context) (application.OMOInputs, error
 			ParseError: "OMO HTML parse: no add/absorb rows found",
 		}, nil
 	}
+	// P0-3-OMO-CURVE: convert infrastructure.OMOTenorRow → application.OMOTenorRowInput.
+	tenorRows := make([]application.OMOTenorRowInput, 0, len(result.Tenors))
+	for _, r := range result.Tenors {
+		tenorRows = append(tenorRows, application.OMOTenorRowInput{
+			OperationType:  r.OperationType,
+			TenorDays:      r.ParsedTenorDays,
+			VolumeBnVND:    r.VolumeBnVND,
+			WinningRatePct: r.WinningRatePct,
+			MemberWinRatio: r.MemberWinRatio,
+		})
+	}
 	return application.OMOInputs{
 		TotalAddBnVND:    result.TotalAddBnVND,
 		TotalAbsorbBnVND: result.TotalAbsorbBnVND,
 		AuctionDate:      result.AuctionDate,
 		ParseOK:          result.ParseOK,
+		TenorRows:        tenorRows,
+		ParseWarnings:    result.ParseWarnings,
 	}, nil
+}
+
+// ---------------------------------------------------------------------------
+// P0-3-OMO-CURVE composition-root adapter
+//
+// omoDailyRepoAdapter wraps infrastructure.SQLiteOMODailyRepository to implement
+// application.OMODailyRepository. Nil-safe: when inner is nil, all methods
+// return safe-degrade zero values (repo disabled via safe-degrade path).
+// Lives here (composition root — Fence-C compliant).
+// ---------------------------------------------------------------------------
+
+// omoDailyRepoAdapter implements application.OMODailyRepository.
+// Wraps *infrastructure.SQLiteOMODailyRepository for DDD Fence-B compliance.
+type omoDailyRepoAdapter struct {
+	inner *infrastructure.SQLiteOMODailyRepository
+}
+
+// Persist delegates to the inner SQLiteOMODailyRepository.
+// Returns nil when inner is nil (safe-degrade: repo not wired).
+func (a *omoDailyRepoAdapter) Persist(ctx context.Context, row application.OMODailyRow) error {
+	if a.inner == nil {
+		return nil
+	}
+	return a.inner.Persist(ctx, row)
+}
+
+// NetInjection5d delegates to the inner repository.
+// Returns empty result when inner is nil.
+func (a *omoDailyRepoAdapter) NetInjection5d(ctx context.Context) (application.OMONetInjection5dResult, error) {
+	if a.inner == nil {
+		return application.OMONetInjection5dResult{}, nil
+	}
+	return a.inner.NetInjection5d(ctx)
+}
+
+// PrevWeightedAvgRate delegates to the inner repository.
+// Returns nil when inner is nil.
+func (a *omoDailyRepoAdapter) PrevWeightedAvgRate(ctx context.Context, beforeDate string) (*float64, error) {
+	if a.inner == nil {
+		return nil, nil
+	}
+	return a.inner.PrevWeightedAvgRate(ctx, beforeDate)
 }

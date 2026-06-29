@@ -170,6 +170,12 @@ type LiquidityStateResponse struct {
 	// PERMANENTLY blocked: is_estimate=true, rate_1w_pct=null (architect Decision B).
 	Interbank1W InterbankRateDTO `json:"interbank_1w"`
 
+	// OMOCurve holds the P0-3-OMO-CURVE additive extension:
+	// per-tenor implied rates, 5-day rolling net injection, and liquidity stress.
+	// nil when OMO parse failed (ParseOK=false) — NFR-P03-2: existing net_outstanding still serves.
+	// Additive: all existing fields above are unchanged (NFR-P03-1).
+	OMOCurve *OMOCurveDTO `json:"omo_curve,omitempty"`
+
 	// FetchedAt is the UTC timestamp (RFC3339) of the overall snapshot.
 	FetchedAt string `json:"fetched_at"`
 

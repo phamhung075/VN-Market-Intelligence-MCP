@@ -82,7 +82,7 @@ func failOMOProvider() *stubOMOProvider {
 // TestLiquidityStateUseCase_NilPolicyProvider verifies nil-provider guard.
 // IRS.IsEstimate + Interbank1W.IsEstimate must be true even on this error path (fail-closed).
 func TestLiquidityStateUseCase_NilPolicyProvider(t *testing.T) {
-	uc := NewLiquidityStateUseCase(nil, &stubSJCFXProvider{}, goodOMOProvider())
+	uc := NewLiquidityStateUseCase(nil, &stubSJCFXProvider{}, goodOMOProvider(), nil)
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
 	if err == nil {
 		t.Error("expected error for nil policyRatesProvider")
@@ -110,6 +110,7 @@ func TestLiquidityStateUseCase_NilSJCFXProvider(t *testing.T) {
 		&stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5}},
 		nil,
 		goodOMOProvider(),
+		nil,
 	)
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
 	if err == nil {
@@ -134,6 +135,7 @@ func TestLiquidityStateUseCase_NilOMOProvider(t *testing.T) {
 	uc := NewLiquidityStateUseCase(
 		&stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5}},
 		&stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
+		nil,
 		nil,
 	)
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
@@ -222,7 +224,7 @@ func TestLiquidityStateUseCase_IRSIsEstimateAlwaysTrue(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			uc := NewLiquidityStateUseCase(tc.policyProvider, tc.sjcFXProvider, tc.omoProvider)
+			uc := NewLiquidityStateUseCase(tc.policyProvider, tc.sjcFXProvider, tc.omoProvider, nil)
 			resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
 
 			if tc.wantErr && err == nil {
@@ -260,6 +262,7 @@ func TestLiquidityStateUseCase_SJCAbsent_FailClosed(t *testing.T) {
 			SJCPriceMnVND: 0, // SJC absent from DB
 		}},
 		goodOMOProvider(),
+		nil,
 	)
 
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
@@ -311,6 +314,7 @@ func TestLiquidityStateUseCase_AnchorValues(t *testing.T) {
 			SJCPriceMnVND: 0, // SJC not in DB yet
 		}},
 		goodOMOProvider(), // June-12-2026: add=1217.45, absorb=0
+		nil,
 	)
 
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
@@ -394,6 +398,7 @@ func TestLiquidityStateUseCase_PolicyRatesFallback(t *testing.T) {
 		&stubPolicyRatesProvider{err: errors.New("SBV HTML fetch failed")},
 		&stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
 		goodOMOProvider(),
+		nil,
 	)
 
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
@@ -426,6 +431,7 @@ func TestLiquidityStateUseCase_OMOParseFailure(t *testing.T) {
 		&stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5, IsEstimate: false}},
 		&stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
 		failOMOProvider(),
+		nil,
 	)
 
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
@@ -473,6 +479,7 @@ func TestLiquidityStateUseCase_Interbank1W_AlwaysBlocked(t *testing.T) {
 				&stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5}},
 				&stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
 				tc.omoProvider,
+				nil,
 			)
 			resp, _ := uc.Execute(context.Background(), LiquidityStateRequest{})
 

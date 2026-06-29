@@ -361,7 +361,7 @@ func TestG3_Liquidity_NilProviders_StillError(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			uc := NewLiquidityStateUseCase(tc.policy, tc.sjcFX, tc.omoP)
+			uc := NewLiquidityStateUseCase(tc.policy, tc.sjcFX, tc.omoP, nil)
 			_, err := uc.Execute(context.Background(), LiquidityStateRequest{})
 			if err == nil {
 				t.Errorf("G3 FAIL [%s]: nil provider must return a non-nil error (wiring fault → HTTP 500)", tc.name)
@@ -496,7 +496,7 @@ func TestG4_Liquidity_PermanentInvariants(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			uc := NewLiquidityStateUseCase(tc.policy, tc.sjcFX, tc.omoP)
+			uc := NewLiquidityStateUseCase(tc.policy, tc.sjcFX, tc.omoP, nil)
 			resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
 
 			if tc.wantErr && err == nil {

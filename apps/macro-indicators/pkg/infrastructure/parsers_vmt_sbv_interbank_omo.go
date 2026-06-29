@@ -35,6 +35,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -52,6 +53,44 @@ const sbvOMOURL = "https://www.sbv.gov.vn/vi/web/sbv_portal/nghi%E1%BB%87p-v%E1%
 // 408KB page + Liferay overhead — 45s is conservative but safe.
 const omoFetchTimeout = 45 * time.Second
 
+// OMOTenorRow holds per-row data from one OMO auction result table row.
+// Extended by P0-3-OMO-CURVE to capture winning rate and member participation
+// from the columns previously discarded by collectOMORow.
+type OMOTenorRow struct {
+	// OperationType is the normalised ASCII operation type keyword
+	// ("mua ky han" for add, "ban ky han" or "tin phieu" for absorb).
+	OperationType string
+
+	// TenorText is the raw text from column 0 (e.g. "Mua kỳ hạn - Kỳ hạn 7 ngày").
+	TenorText string
+
+	// VolumeBnVND is the winning bid volume in billion VND (column 2).
+	VolumeBnVND float64
+
+	// WinningRatePct is the winning bid rate in % per annum (column 3, "Lãi suất").
+	// 0 when the cell was missing or unparseable; a ParseWarning is added upstream.
+	// VN decimal comma normalised to float before storing (e.g. "4,75" → 4.75).
+	WinningRatePct float64
+
+	// MembersParticipating is the count of members who participated in the auction
+	// parsed from column 1 "X/Y" format (X = participating).
+	// 0 when the cell is absent.
+	MembersParticipating int
+
+	// MembersWinning is the count of members who won the auction (Y from "X/Y").
+	// When only one number is present, MembersWinning = MembersParticipating.
+	MembersWinning int
+
+	// MemberWinRatio = MembersWinning / MembersParticipating (0.0–1.0).
+	// 0 when MembersParticipating = 0.
+	MemberWinRatio float64
+
+	// ParsedTenorDays is the extracted tenor in calendar days.
+	// 7, 14, 28 for standard OMO tenors; other values for non-standard (e.g. 35, 91).
+	// -1 when the tenor text could not be parsed.
+	ParsedTenorDays int
+}
+
 // OMOParseResult holds the parsed values from the SBV OMO Liferay HTML page.
 type OMOParseResult struct {
 	// TotalAddBnVND is the total Mua kỳ hạn (reverse-repo add) volume in billion VND.
@@ -68,6 +107,15 @@ type OMOParseResult struct {
 
 	// ParseOK is true when at least one add or absorb row was successfully parsed.
 	ParseOK bool
+
+	// Tenors holds per-row tenor rate and member participation data.
+	// P0-3-OMO-CURVE: populated from columns 1 (members) and 3 (rate) that were
+	// previously discarded. Empty slice when no valid non-subtotal rows are found.
+	Tenors []OMOTenorRow
+
+	// ParseWarnings collects non-fatal parse issues (missing rate cell, unknown tenor, etc.).
+	// A non-empty slice does NOT set ParseOK=false — only absent add/absorb rows do.
+	ParseWarnings []string
 }
 
 // FetchSBVOMOFromHTML fetches the SBV OMO Liferay HTML page and parses the auction result table.
@@ -168,17 +216,26 @@ func collectOMOFromDoc(n *html.Node, result *OMOParseResult) {
 	}
 }
 
-// collectOMORow processes a single <tr> node to extract OMO operation type and volume.
+// collectOMORow processes a single <tr> node to extract OMO operation type, volume,
+// winning rate (col 3) and member participation (col 1).
 //
 // Contract from live probe:
-//   - Column 0: Loại hình giao dịch (transaction type text)
+//   - Column 0: Loại hình giao dịch (transaction type text + tenor)
+//   - Column 1: Số thành viên tham gia/trúng thầu ("X/Y" or "X")
 //   - Column 2: Khối lượng trúng thầu (volume in billion VND)
+//   - Column 3: Lãi suất trúng thầu (%/năm) — new in P0-3-OMO-CURVE
 //
 // Rows identified as "tổng cộng" (subtotals) are skipped.
 // Operation classification:
 //   - "mua kỳ hạn" → add
 //   - "bán kỳ hạn" → absorb
 //   - "tín phiếu" → absorb
+//
+// P0-3-OMO-CURVE extensions:
+//   - Parses col[3] (rate) when present; adds ParseWarning on missing/invalid cell.
+//   - Parses col[1] (members X/Y) when present.
+//   - Parses tenor days from type text ("7 ngày" → 7, unknown → -1).
+//   - Appends an OMOTenorRow to result.Tenors for every non-subtotal, positive-volume row.
 func collectOMORow(tr *html.Node, result *OMOParseResult) {
 	// Collect all <td> cells in this row.
 	var cells []*html.Node
@@ -210,14 +267,164 @@ func collectOMORow(tr *html.Node, result *OMOParseResult) {
 	}
 
 	// Classify operation type.
+	var opType string
 	switch {
 	case strings.Contains(typeText, "mua ky han"):
 		result.TotalAddBnVND += volume
+		opType = "mua ky han"
 	case strings.Contains(typeText, "ban ky han"):
 		result.TotalAbsorbBnVND += volume
+		opType = "ban ky han"
 	case strings.Contains(typeText, "tin phieu"):
 		result.TotalAbsorbBnVND += volume
+		opType = "tin phieu"
 	}
+
+	// P0-3-OMO-CURVE: build OMOTenorRow from the extended columns.
+
+	// Column 1: member participation "X/Y" or "X".
+	membersParticipating, membersWinning := 0, 0
+	if len(cells) >= 2 {
+		memberText := strings.TrimSpace(extractText(cells[1]))
+		var warn string
+		membersParticipating, membersWinning, warn = parseMembersXY(memberText, rawType)
+		if warn != "" {
+			result.ParseWarnings = append(result.ParseWarnings, warn)
+		}
+	}
+
+	// Column 3: winning rate (%/năm).
+	winningRate := 0.0
+	if len(cells) >= 4 {
+		rateText := strings.TrimSpace(extractText(cells[3]))
+		if rateText == "" || rateText == "-" || rateText == "–" {
+			// Missing rate cell is normal for subtotal rows — already skipped above.
+			// For non-subtotal rows with empty rate, add a parse warning.
+			result.ParseWarnings = append(result.ParseWarnings, fmt.Sprintf(
+				"collectOMORow: missing rate cell for row %q (volume=%.2f)", rawType, volume))
+		} else {
+			winningRate = parseOMORate(rateText)
+			if winningRate == 0 {
+				result.ParseWarnings = append(result.ParseWarnings, fmt.Sprintf(
+					"collectOMORow: unparseable rate %q for row %q", rateText, rawType))
+			}
+		}
+	} else {
+		// Only 3 columns — no rate column in this HTML version.
+		result.ParseWarnings = append(result.ParseWarnings, fmt.Sprintf(
+			"collectOMORow: no rate column (only %d cells) for row %q", len(cells), rawType))
+	}
+
+	// Parse tenor days from the type text.
+	tenorDays := parseTenorDays(typeText)
+
+	// Member win ratio.
+	ratio := 0.0
+	if membersParticipating > 0 {
+		ratio = float64(membersWinning) / float64(membersParticipating)
+	}
+
+	result.Tenors = append(result.Tenors, OMOTenorRow{
+		OperationType:        opType,
+		TenorText:            rawType,
+		VolumeBnVND:          volume,
+		WinningRatePct:       winningRate,
+		MembersParticipating: membersParticipating,
+		MembersWinning:       membersWinning,
+		MemberWinRatio:       ratio,
+		ParsedTenorDays:      tenorDays,
+	})
+}
+
+// parseTenorDays extracts the tenor in calendar days from a normalised (lower-case ASCII)
+// OMO type text string containing the pattern "<N> ngay".
+//
+// Examples (normalised input):
+//
+//	"mua ky han - ky han 7 ngay"  → 7
+//	"mua ky han - ky han 14 ngay" → 14
+//	"tin phieu nhnn - 91 ngay"    → 91
+//	"mua ky han"                  → -1 (no tenor text)
+//
+// Returns -1 when the pattern is absent or the preceding token is not a positive integer.
+func parseTenorDays(typeTextNorm string) int {
+	const ngay = " ngay"
+	idx := strings.Index(typeTextNorm, ngay)
+	if idx < 0 {
+		return -1
+	}
+	before := strings.TrimSpace(typeTextNorm[:idx])
+	if before == "" {
+		return -1
+	}
+	parts := strings.Fields(before)
+	if len(parts) == 0 {
+		return -1
+	}
+	lastPart := parts[len(parts)-1]
+	days, err := strconv.Atoi(lastPart)
+	if err != nil || days <= 0 {
+		return -1
+	}
+	return days
+}
+
+// parseOMORate parses a Vietnamese rate string in %/năm format.
+// Accepts values with or without trailing "%" (e.g. "4,75%" or "4,75").
+// VN decimal: comma as decimal separator, period as thousands separator.
+// Returns 0 on parse failure or implausible value (>50%).
+func parseOMORate(s string) float64 {
+	s = strings.TrimSpace(s)
+	s = strings.TrimSuffix(s, "%")
+	s = strings.TrimSuffix(s, "/nam")  // trailing "/năm" (normalised) — defensive
+	s = strings.TrimSuffix(s, "/năm") // original
+	s = strings.TrimSpace(s)
+	if s == "" || s == "-" || s == "–" {
+		return 0
+	}
+	// Remove VN thousands separator (period) then convert decimal comma to dot.
+	s = strings.ReplaceAll(s, ".", "")
+	s = strings.ReplaceAll(s, ",", ".")
+	var val float64
+	if _, err := fmt.Sscanf(s, "%f", &val); err != nil {
+		return 0
+	}
+	// Sanity: OMO rates are 0–50% per annum.
+	if val <= 0 || val > 50 {
+		return 0
+	}
+	return val
+}
+
+// parseMembersXY parses the "Số thành viên tham gia/trúng thầu" column cell.
+// Format "X/Y" → (X, Y); "X" → (X, X) with a fallback warning.
+// Returns (0, 0, warning) on empty or unparseable input.
+// rowLabel is used only in the warning message.
+func parseMembersXY(s string, rowLabel string) (participating, winning int, warn string) {
+	s = strings.TrimSpace(s)
+	if s == "" || s == "-" || s == "–" {
+		return 0, 0, fmt.Sprintf("parseMembersXY: absent member cell for row %q", rowLabel)
+	}
+
+	slash := strings.Index(s, "/")
+	if slash >= 0 {
+		// "X/Y" format.
+		xPart := strings.TrimSpace(s[:slash])
+		yPart := strings.TrimSpace(s[slash+1:])
+		x, errX := strconv.Atoi(xPart)
+		y, errY := strconv.Atoi(yPart)
+		if errX != nil || errY != nil || x < 0 || y < 0 {
+			return 0, 0, fmt.Sprintf("parseMembersXY: cannot parse %q for row %q", s, rowLabel)
+		}
+		return x, y, ""
+	}
+
+	// Single number: "X" → (X, X) with fallback warning.
+	x, err := strconv.Atoi(s)
+	if err != nil || x < 0 {
+		return 0, 0, fmt.Sprintf("parseMembersXY: cannot parse single number %q for row %q", s, rowLabel)
+	}
+	return x, x, fmt.Sprintf("parseMembersXY: single number %q (no slash) for row %q — MembersWinning set to MembersParticipating", s, rowLabel)
 }
 
 // extractAuctionDate scans a text node for the pattern "ngày DD/MM/YYYY".
