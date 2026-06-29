@@ -130,3 +130,10 @@
 - commit-boundary: RULE 1 explicit 4 files ✓, RULE 2 zone (.claude/skills/ + docs/agents/ only) ✓, RULE 3 git show --name-only exact 4 ✓
 - Signal: docs/signals/agent-father-20260617T145010Z.json → board flip DESIGN-GATHERER-EXEC-PROOF-FAILLOUD in_progress → review; next_agent=qa
 - No rebuild required. PUSH held per brief. QA live test: next offhours gatherer ~16:00Z
+
+## c302 · 2026-06-29T00:00Z — TASK_1996 FB-COWORK-FOLD: add fb-daily + fb-weekend slots
+- Change: Added slots fb-daily (cron="15 9 * * 1-5", 09:15 UTC/16:15 VN) and fb-weekend (cron="13 13 * * 6,0", 13:13 UTC/20:13 VN) to docs/data/cowork-schedule.json; added fb-market-poster to cowork-team Team Boundary scheduled list in docs/agents/cowork-team/flow/main.md
+- Files modified: 2 (+ orch-state.json via orch-apply.sh)
+- Cascade: none — JSON is read live each tick; .md read at spawn; no rebuild needed
+- Validation: JSON parses (21 slots total), field set 19/19 matches digest-sunday template, no duplicate slot_ids, Team Boundary line 9 updated
+- Decision: fb-weekend minute shifted :07→:13 (boundary-safe near :15 dispatcher tick, within ±2); depends_on="chef-eod 08:45 UTC + 30min" for fb-daily per PO task note; policy_id=null (pure-cron guaranteed); cowork fold removes DST-sensitive France-local CronCreate dependency
