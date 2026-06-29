@@ -3206,6 +3206,17 @@
             "opened_at": "2026-06-29",
             "depends": [],
             "session": "d3292ca4-a9ab-471a-8d8c-d0c723546258"
+          },
+          {
+            "id": "P0-4-MARKET-SENTIMENT-INDEX",
+            "title": "Market-Wide News-Sentiment Z-Score — daily score, z-score (60/90d), EMA(5), bull/bear dispersion, article spike + gauge scalar",
+            "owner": "dev-mcp-server",
+            "status": "REVIEW",
+            "zone": "apps/mcp-server/",
+            "size": "M",
+            "opened_at": "2026-06-30",
+            "depends": [],
+            "session": "d3292ca4-a9ab-471a-8d8c-d0c723546258"
           }
         ]
       }

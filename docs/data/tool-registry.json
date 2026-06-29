@@ -1,7 +1,7 @@
 {
   "_maintained_by": "generator (do not hand-edit)",
-  "lastUpdated": "2026-06-29T22:18:02.401Z",
-  "totalCount": 174,
+  "lastUpdated": "2026-06-29T22:44:31.194Z",
+  "totalCount": 175,
   "groups": [
     {
       "name": "alerts",
@@ -150,13 +150,14 @@
     },
     {
       "name": "news-analysis",
-      "count": 13,
+      "count": 14,
       "tools": [
         "compare_stocks",
         "fetch_and_analyze",
         "get_agent_signals",
         "get_cascade_metrics",
         "get_cascade_outcomes",
+        "get_market_sentiment_index",
         "get_open_chain_findings",
         "get_recent_signals",
         "get_sentiment_trend",

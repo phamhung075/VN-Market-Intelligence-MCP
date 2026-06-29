@@ -33,3 +33,35 @@
 - UNIQUE(code, event_date, event_type) idempotency: re-running the job over same rows is a no-op — AC-9 verified.
 
 **why-change:** No divergence from P0-2 spec. RISK-P0-2-EVENT-DESIGN resolved by keeping all writes in mcp-server zone (dev-stock-price = ZERO changes).
+
+---
+
+### STEP P0-4 · dev-mcp-server · 2026-06-30T00:00:00Z
+
+**task-id:** P0-4-MARKET-SENTIMENT-INDEX
+
+**what-done:**
+- Created `marketSentimentCalculator.ts` (domain layer) — pure functions: computeDailyScores, computeZScores (with HARD CONSTRAINT: both null + INSUFFICIENT when <21 days), computeEMA5d (alpha=2/6, null <5d), computeDispersion5d, computeArticleSpike.
+- Created `marketSentimentStore.ts` (infrastructure) — `getRagRowsForWindow`: read-only query on rag_analyses, no try/catch (errors propagate to tool handler — P0-2 pattern).
+- Created `getMarketSentimentIndex.ts` (application) — orchestrates store + domain; computes 30d/5d sub-windows in-memory from the 90d fetch; exposes gauge-ready scalar `news_sentiment_z` = z_60d ?? z_90d.
+- Created `marketSentimentTools.ts` (interface) — registers `get_market_sentiment_index` MCP tool (#177).
+- Added covering index `idx_rag_sentiment_covering ON rag_analyses(created_at DESC, sentiment, confidence, impact_score)` to `schema-news.ts` (CREATE INDEX IF NOT EXISTS — idempotent) per NFR-P04-2.
+- Registered tool in `registry.ts`; regenerated `tool-registry.json` and `project-stats.json` (toolCount 174→175).
+- Written 36 tests covering all 12 ACs (36 pass, 0 fail).
+- `bun tsc --noEmit` EXIT 0; full sentiment test batch (175 tests) 0 fail; P0-2+P0-4 combined 67 pass, 0 fail.
+
+**what-considered:**
+- **Store try/catch**: Initially added try/catch returning `[]` on error. Reverted to match P0-2 pattern (no try/catch) so errors propagate to the tool handler's catch block — makes AC-9 testable with a closed DB.
+- **Z-score window**: "last 60 days" means the last 60 entries of the 90d daily series (not 60 calendar days from query). This gives z_60d based on the most recent 60 valid trading days.
+- **Gauge-ready scalar**: `news_sentiment_z = z_60d ?? z_90d`. When INSUFFICIENT/EMPTY, both are null so news_sentiment_z = null.
+- **today_daily_score**: Falls back to most recent available day if no data today (e.g., weekend/holiday). This makes the gauge meaningful even on non-trading days.
+- **article_volume_30d_avg**: Uses ALL rows (not just valid-sentiment rows) to count articles per day, matching spec FR-5.
+- **EMA seed**: First valid score seeds the EMA (standard practice). Null when <5 valid days.
+
+**why-decision:**
+- DDD layering: domain (pure), infrastructure (DB access), application (orchestration), interface (MCP tool) — consistent with P0-2 patterns.
+- No try/catch in store: matches P0-2 (foreignRoomStore) pattern; tool handler's catch block is the correct error boundary.
+- Population std (not sample std): the spec says "stdev of daily_score over last N days" — population std is appropriate since we use the full available window, not a sample.
+- Covering index: idempotent (CREATE INDEX IF NOT EXISTS), same file (schema-news.ts), no migration needed.
+
+**why-change:** No divergence from P0-4 spec. RISK-P0-4-Z-SCORE-HONESTY: resolved by enforcing <21d → both null + INSUFFICIENT (hard constraint). RISK-P0-4-COVERING-INDEX: resolved by adding idx_rag_sentiment_covering in schema-news.ts.

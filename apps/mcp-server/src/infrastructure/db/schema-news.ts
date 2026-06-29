@@ -51,6 +51,16 @@ export function initNewsTables(db: Database): void {
       WHERE source_url IS NOT NULL AND source_url != '';
   `);
 
+  // ── P0-4-MARKET-SENTIMENT-INDEX: covering index for 90d sentiment query ──
+  // NFR-P04-2: the GROUP BY daily score query scans 90 days of rag_analyses rows.
+  // A covering index on (created_at DESC, sentiment, confidence, impact_score)
+  // makes the 90d window query an index-only scan (no heap fetch for these columns).
+  // Idempotent: CREATE INDEX IF NOT EXISTS.
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_rag_sentiment_covering
+      ON rag_analyses(created_at DESC, sentiment, confidence, impact_score);
+  `);
+
   // ── EI-P2-2: data_env column on rag_analyses ─────────────────────────────
   // Idempotent: guarded ALTER TABLE (try/catch on column-exists error).
   // Existing rows get NULL. New rows stamped by pollNews / analysis write paths.
