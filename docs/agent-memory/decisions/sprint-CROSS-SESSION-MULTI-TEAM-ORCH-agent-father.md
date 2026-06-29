@@ -32,3 +32,15 @@
 - Option B: write-time self-cap via APPEND class registration (durable, mirrors qa fix commit 57916170)
 **why-decision:** Option B — write-time cap at the WRITER is the durable fix; prune-only is the treadmill that caused the recurring breach; mirrors closed qa fix exactly
 **why-change:** no change from PO problem statement; root confirmed (cmh absent from both SSOTs)
+
+### STEP qa-S1 · qa · 2026-06-29T00:00:00Z
+**task-id:** FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L
+**what-done:** Gated FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L — all 4 RAW gates PASS → APPROVED
+**what-considered:**
+- Gate 1: RAW grep both SSOTs — claude-manager-helper found in APPEND class row of SKILL.md AC-6 table AND in file-size-caps.json APPEND _note; parity confirmed
+- Gate 2: wc -l = 164L ≤ 200L confirmed
+- Gate 3: FENCE independently exercised on scratchpad copy (never touched production notebook): appended 37-line synthetic section (164→201L over-cap); awk AC-3 simulation dropped Archive + Cycle-2026-06-15 sections → 158L ≤200L; newest-3 retained (Cycle-2026-06-30-FENCE-TEST, Cycle-2026-06-29, Cycle-2026-06-23); original file confirmed at 164L
+- Gate 4: cmh flow/main.md End-of-cycle annotation identical to qa flow/main.md (same APPEND AC-6 + AC-3 ref) — same mechanism, not a divergent one-off
+- DJ-GATE-1: sprint file line 28 has task-id: FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L ✓
+**why-decision:** APPROVED — all gates pass RAW; durable fix mirrors closed qa treadmill (57916170)
+**why-change:** no change from plan

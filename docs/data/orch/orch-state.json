@@ -243,11 +243,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-29T18:26:15Z",
-    "updated_by": "po",
-    "active_task_id": "FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L",
-    "next_agent": "agent-father"
+    "status": "idle",
+    "updated_at": "2026-06-29T18:54:08Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7414,6 +7414,24 @@
         "completed_at": "2026-06-29T19:36:00Z",
         "updated_at": "2026-06-29T19:36:00Z",
         "updated_by": "qa"
+      },
+      {
+        "id": "FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L",
+        "status": "DONE",
+        "type": "FIX",
+        "size": "S",
+        "owner": "agent-father",
+        "zone": "cross-service/",
+        "priority": "high",
+        "sprint": "FIX-CMH-NOTEBOOK-WRITE-SELFCAP",
+        "created_at": "2026-06-29T18:26:15Z",
+        "next_agent": "qa",
+        "title": "claude-manager-helper notebook: add to notebook-write APPEND class (AC-6) + file-size-caps APPEND list — writer-enforced 200L self-cap (mirror qa fix 57916170)",
+        "note": "ROOT: claude-manager-helper (the JANITOR) is absent from the notebook-write APPEND-class table AND file-size-caps.json APPEND list, so its OWN notebook write has NO write-time self-cap. It prunes every OTHER agent's notebook (Pass 5b) but its own cycle write blows past 200L and re-emits context_bloat_breach every dev-team tick after every external prune — the EXACT treadmill qa hit (RESOLVED 2026-06-28 commit 57916170). RECURRENCE: breached 2026-06-13 (x2) + 2026-06-29 (226L, cap 200); today's breach occurred DURING cmh's own 'Pass 5b context-bloat remediation' audit (commit c4296d86) — self-inflicted. FIX (writer-enforced, mirror qa 57916170): (1) .claude/skills/notebook-write/SKILL.md AC-6 table — add claude-manager-helper to APPEND class (→ AC-2 retention + AC-3 settled-write drop-oldest + AC-2b intra-prune + AC-5 wc gate apply at write time); (2) docs/data/file-size-caps.json APPEND _note — add claude-manager-helper for SSOT parity; (3) docs/agents/claude-manager-helper/flow/main.md End-of-cycle/commit step — annotate explicit APPEND class + AC-3 ref so the writer self-caps BEFORE commit. Verify against qa precedent. AC: cmh notebook write self-caps to <=200L at write time; one prune to <=200L now; NO context_bloat_breach re-emit on the NEXT cmh cron tick after that prune. These are agent-definition/skill files -> agent-father owns; Invoke agent-md-factory skill.",
+        "reviewed_at": "2026-06-29T18:54:08Z",
+        "done_at": "2026-06-29T18:54:08Z",
+        "updated_by": "qa",
+        "updated_at": "2026-06-29T18:54:08Z"
       }
     ],
     "done_verified": [],
@@ -7439,20 +7457,6 @@
         "created_at": "2026-06-29T16:22:56Z",
         "title": "fb-market-poster idempotency: add date-keyed published-marker dedup claim before pipeline runs",
         "note": "FILE: docs/agents/fb-market-poster/flow/main.md. Add a cowork-standard published-marker claim at STEP 0 (before MODE ROUTER) keyed published:<slot_id>:<VN-DATE> (slot_id from the slot= prompt param; fallback \"fb-market-poster\" outside cowork), task_kind=cowork-slot, owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=100800 (28h). If claimed==false -> log already-published + EXIT before any tool calls/file write. Makes a same-day re-fire (cutover overlap or transport-lag double-spawn) a no-op (user-requested date-range dedup key). Weekend sub-flows (weekly-recap.md/weekly-prediction.md) run AFTER STEP 0 so they inherit the guard; verify no early-return path skips it. Invoke agent-md-factory skill."
-      },
-      {
-        "id": "FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L",
-        "status": "READY",
-        "type": "FIX",
-        "size": "S",
-        "owner": "agent-father",
-        "zone": "cross-service/",
-        "priority": "high",
-        "sprint": "FIX-CMH-NOTEBOOK-WRITE-SELFCAP",
-        "created_at": "2026-06-29T18:26:15Z",
-        "next_agent": "agent-father",
-        "title": "claude-manager-helper notebook: add to notebook-write APPEND class (AC-6) + file-size-caps APPEND list — writer-enforced 200L self-cap (mirror qa fix 57916170)",
-        "note": "ROOT: claude-manager-helper (the JANITOR) is absent from the notebook-write APPEND-class table AND file-size-caps.json APPEND list, so its OWN notebook write has NO write-time self-cap. It prunes every OTHER agent's notebook (Pass 5b) but its own cycle write blows past 200L and re-emits context_bloat_breach every dev-team tick after every external prune — the EXACT treadmill qa hit (RESOLVED 2026-06-28 commit 57916170). RECURRENCE: breached 2026-06-13 (x2) + 2026-06-29 (226L, cap 200); today's breach occurred DURING cmh's own 'Pass 5b context-bloat remediation' audit (commit c4296d86) — self-inflicted. FIX (writer-enforced, mirror qa 57916170): (1) .claude/skills/notebook-write/SKILL.md AC-6 table — add claude-manager-helper to APPEND class (→ AC-2 retention + AC-3 settled-write drop-oldest + AC-2b intra-prune + AC-5 wc gate apply at write time); (2) docs/data/file-size-caps.json APPEND _note — add claude-manager-helper for SSOT parity; (3) docs/agents/claude-manager-helper/flow/main.md End-of-cycle/commit step — annotate explicit APPEND class + AC-3 ref so the writer self-caps BEFORE commit. Verify against qa precedent. AC: cmh notebook write self-caps to <=200L at write time; one prune to <=200L now; NO context_bloat_breach re-emit on the NEXT cmh cron tick after that prune. These are agent-definition/skill files -> agent-father owns; Invoke agent-md-factory skill."
       }
     ],
     "review": [
