@@ -283,45 +283,8 @@
   "signal_queue": {
     "_updated_at": "2026-06-29T12:07Z",
     "_updated_by": "dev-team",
-    "archive": [
-      {
-        "id": "sau-d4-202606280300",
-        "ts": "2026-06-28T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "resolved_at": "2026-06-28T03:12:22Z",
-        "resolved_by": "po",
-        "resolution": "known-FP: ESC-3 datacov escalation lock is LIVE (claimed ~3.5d ago, TTL 8d, expires 2026-07-02T15:04:16Z, owner bctc-analyst); board-row-less BY DESIGN per feedback_esc3_held_lock_no_board_row_is_legit; no dev-team code leverage; durable predicate fix already tracked as FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (backlog)"
-      }
-    ],
+    "archive": [],
     "rows": [
-      {
-        "id": "sau-d4-202606290300",
-        "ts": "2026-06-29T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "sau-d4-202606290300",
-        "ts": "2026-06-29T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock esc-datacov:VCB:Q1-2026:ESC-3 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null
-      },
       {
         "id": "sau-d4-202606240300",
         "ts": "2026-06-24T03:00Z",
@@ -1165,6 +1128,22 @@
         "po_signoff": "APPROVED",
         "po_signoff_note": "User-directed sprint: PO owns decomposition AND fan-out per explicit user instruction; standard BA->architect->pm gate lifted for this composition-only restructure (data layer already in place). WIP cap raised to ~4 concurrent dev-frontend for this sprint.",
         "completed_at": "2026-06-28T18:40:00Z"
+      },
+      {
+        "sprint_id": "FB-COWORK-FOLD",
+        "status": "active",
+        "priority": "high",
+        "created_at": "2026-06-29T16:22:56Z",
+        "created_by": "po",
+        "origin": "user_feature_request",
+        "vision": "Fold the fb-market-poster into the cowork master dispatcher so it shares the single /cron-cowork-team re-arm path and survives session restarts — eliminating the standalone-cron evaporation failure that dropped Monday 2026-06-29's DAILY post, and retiring the France-local DST re-arm burden (cowork matches UTC).",
+        "scope_in": "(1) Add fb-daily (15 9 * * 1-5 = 09:15 UTC/16:15 VN) + fb-weekend (13 13 * * 6,0 = 13:13 UTC/20:13 VN) slots to cowork-schedule.json (policy_id:null legacy cron-match, guaranteed:true); weekend minute shifted :07->:13 to land in a */15 dispatcher tick window. (2) Add fb-market-poster to cowork-team Team Boundary scheduled list. (3) Add date-keyed published-marker dedup to fb-poster flow for idempotency. (4) Retire the 2 standalone durable CronCreate jobs (single owner) + deprecate the cron skill doc.",
+        "scope_out": "No change to fb-poster post-composition pipeline (STEP 1b-8). No change to the cowork matcher (already supports comma-DOW 6,0 and is UTC-native — verified by PO in cowork-match-slots.js). No weekend slot-split. Not touching other cowork slots.",
+        "success_metric": "After re-arm: a cowork */15 tick at 09:15 UTC Mon-Fri and 13:13 UTC Sat/Sun spawns fb-market-poster (verified in cowork telemetry / fb-post-YYYY-MM-DD.md written); CronList shows the 2 standalone fb crons GONE; a same-day double-dispatch is a no-op (published marker blocks 2nd run); /cron-cowork-team is the SOLE re-arm path.",
+        "zone": "cross-service",
+        "seam": "TASK_1996 (schedule+boundary) + TASK_1997 (dedup marker) parallel -> TASK_1998 (CronDelete, after both live) + TASK_1999 (doc deprecate)",
+        "po_signoff": "APPROVED",
+        "po_signoff_note": "User-directed composition/config change (no new feature logic) — PO owns decomposition; BA->architect->pm gate lifted per FRONTEND-ANALYSIS-HUB precedent. agent-md-factory discipline applies to all flow/agent .md edits."
       }
     ]
   },
@@ -6610,6 +6589,39 @@
           "B (agent-father/cowork-team flow): dispatcher gates FIRE telemetry + last_fired stamp on post-spawn liveness proof (notebook mtime advance), converting silent gap into loud failure + permitting re-fire instead of 4h blind window."
         ],
         "verification_gate": "Architect/agent-father design decision FIRST (PLAN-ONLY). Done-when: a cowork gatherer spawn that suffers identity displacement produces a loud IDENTITY_CHECK=FAIL (BUG telegram) rather than a fabricated success block + last_fired stamp; OR dispatcher refuses to stamp FIRE without notebook-mtime liveness proof."
+      },
+      {
+        "id": "TASK_1998",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "owner": "ops",
+        "zone": "cross-service",
+        "priority": "high",
+        "sprint": "FB-COWORK-FOLD",
+        "depends": [
+          "TASK_1996",
+          "TASK_1997"
+        ],
+        "created_at": "2026-06-29T16:22:56Z",
+        "title": "Retire the 2 standalone durable fb-market-poster CronCreate jobs (single owner)",
+        "note": "TOOL ACTION (router/main-terminal cron layer — CronList/CronDelete). ONLY after TASK_1996+TASK_1997 live. CronList -> find the 2 recurring durable fb-market-poster crons (Cron 1 weekday DAILY 15 11|15 10 * * 1-5; Cron 2 weekend 7 15|7 14 * * 6,0 — France-local) -> CronDelete both -> CronList confirm GONE. After this cowork dispatcher is SOLE owner; double-fire eliminated. Published marker (TASK_1997) covers any overlap before deletion lands."
+      },
+      {
+        "id": "TASK_1999",
+        "status": "BACKLOG",
+        "type": "CLEAN",
+        "size": "S",
+        "owner": "agent-father",
+        "zone": "docs",
+        "priority": "med",
+        "sprint": "FB-COWORK-FOLD",
+        "depends": [
+          "TASK_1996"
+        ],
+        "created_at": "2026-06-29T16:22:56Z",
+        "title": "Deprecate .claude/commands/crons/cron-fb-market-poster.md -> redirect to cowork slots",
+        "note": "FILE: .claude/commands/crons/cron-fb-market-poster.md. Mark RETIRED at top; replace CronCreate instructions with redirect: fb-market-poster now runs as cowork-schedule.json slots fb-daily + fb-weekend, re-armed via /cron-cowork-team (single path). Drop the France-local DST re-arm note (cowork UTC-native -> no seasonal re-arm). Keep a short historical pointer. Invoke agent-md-factory skill."
       }
     ],
     "closed_sprints": [
@@ -6886,18 +6898,6 @@
     ],
     "done": [
       {
-        "id": "329",
-        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "FR-7 — Notes-section hard stop",
-        "zone": "apps/pdf-extractor/",
-        "size": "S",
-        "status": "DONE",
-        "owner_agent": "dev-pdf-extractor",
-        "completed_at": "2026-06-28T12:00:00Z",
-        "next": "pm",
-        "verification": "DONE (qa cycle-336): 21/21 TestFR7NotesSectionBoundary PASS, full suite 11 fail (all pre-existing PIL-ABI/OCR), NFR-4 PASS, FPT regression RESOLVED (THUY+MINH dual-token L565), FPT codes 100/270/440 confirmed, code 270=88089621779862.0. commit e0e30e83"
-      },
-      {
         "closed_at": "2026-06-05T11:16:27Z",
         "created_at": "unknown",
         "id": "BCTC-CURRENT-404-INVESTIGATE",
@@ -7044,134 +7044,6 @@
         "title": "QA: live dashboard verify decision drilldown",
         "type": "sprint-task",
         "zone": "qa"
-      },
-      {
-        "id": "TASK-RSIFIX-1",
-        "type": "TASK",
-        "title": "Document canonical Go TA engine contract",
-        "priority": "P1",
-        "zone": "apps/technical-analysis/",
-        "owner": "dev-technical-analysis",
-        "sprint": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-        "created_at": "2026-06-21T00:00:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-06-21T00:00:00Z",
-        "updated_by": "dev-technical-analysis",
-        "status": "DONE",
-        "done_verified": true,
-        "done_verified_by": "qa-review",
-        "done_verified_reason": "Docs-only deliverable; file exists at docs/standards/ta-engine-contract.md with source-cited parameters (hard min=15 not 35, MA5/20/50 not MA100)",
-        "brief_file": "docs/handoffs/TASK-RSIFIX-1-ta-engine-contract.md",
-        "deliverable": "docs/standards/ta-engine-contract.md",
-        "blocks": [
-          "TASK-RSIFIX-2"
-        ],
-        "rebuild_required": false,
-        "done_at": "2026-06-21T04:00:00Z",
-        "done_by": "qa-review"
-      },
-      {
-        "id": "FIX-MACRO-FX-SIGMA-PHANTOM-EXTREME",
-        "type": "FIX",
-        "title": "USD/VND false-CRITICAL +5.28σ: rolling stdDev band pathologically tight",
-        "priority": "P1",
-        "severity": "HIGH",
-        "owner": "developer",
-        "dev_agent": "dev-macro-indicators",
-        "zone": "apps/mcp-server/",
-        "status": "DONE",
-        "done_verified": false,
-        "done_verified_reason": "PENDING gate G2: USD/VND currently frozen (stddev=0, classifyDeviation='normal'). Needs non-frozen FX day with small (<0.5%) drift exceeding 3σ to verify: must show 'elevated' NOT 'CRITICAL'. Math + 16 tests + baked marker confirm logic, but live-data gate requires real volatility event.",
-        "deferred_verification": {
-          "gate_id": "G2",
-          "trigger": "Next volatile USD/VND day (>0.5% move from baseline)",
-          "expected_outcome": "USD/VND CRITICAL should NOT fire; only 'elevated' level shows for true >0.5% drift",
-          "probe_method": "RAW-verify classifyDeviation on live sbv_rates with genuine volatility"
-        },
-        "created_at": "2026-06-20T22:24:47Z",
-        "created_by": "po-digest-quality-triage",
-        "updated_at": "2026-06-21T04:00:00Z",
-        "updated_by": "qa-review",
-        "commit": "dfb4e268",
-        "rebuild_required": true,
-        "done_at": "2026-06-21T04:00:00Z",
-        "done_by": "qa-review"
-      },
-      {
-        "id": "FIX-DIGEST-FOREIGN-FLOW-ZERO-PAD-TOPN",
-        "type": "FIX",
-        "title": "Evening digest Khối ngoại top-5 padded with zero-net rows",
-        "priority": "P2",
-        "severity": "MEDIUM",
-        "owner": "developer",
-        "dev_agent": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "status": "DONE",
-        "done_verified": true,
-        "done_verified_by": "qa-review",
-        "done_verified_reason": "QA LIVE-confirmed vs named-volume daily_ohlcv 2026-06-19: WITH-fix query (AND foreign_net_vol <> 0) returns 2 nonzero rows MWG|35469 + VNH|-40; WITHOUT-fix padded 5 with ACV/DFF/HBC zeros. Served path uses exact fix query.",
-        "created_at": "2026-06-20T22:24:47Z",
-        "created_by": "po-digest-quality-triage",
-        "updated_at": "2026-06-21T04:00:00Z",
-        "updated_by": "qa-review",
-        "commit": "b1d32758",
-        "rebuild_required": true,
-        "done_at": "2026-06-21T04:00:00Z",
-        "done_by": "qa-review"
-      },
-      {
-        "id": "TASK-RSIFIX-2",
-        "type": "TASK",
-        "title": "Rewire defaultComputeTa to Go TA engine: align candle window, min-candle gate=35, remove synthetic fallback, make async",
-        "priority": "P1",
-        "parent_id": "FIX-DIGEST-RSI-DUAL-ENGINE-DIVERGE",
-        "owner": "developer",
-        "dev_agent": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "status": "DONE",
-        "done_verified": false,
-        "done_verified_reason": "PENDING gate G1: next evening digest cycle (~19:37 UTC) must show RSI ≤0.1 convergence between alert-block and TA-block for ≥3 tickers (original bug was same-DB rowcount divergence; code live-confirmed serving real RSI + <35-candle null, but cross-block convergence needs live digest render)",
-        "deferred_verification": {
-          "gate_id": "G1",
-          "trigger": "Next evening digest cycle (post rebuild, expected ~2026-06-21T19:37Z)",
-          "expected_outcome": "RSI values from TA-Alert block match TA-section (defaultComputeTa) within 0.1pt for ≥3 watchlist tickers",
-          "probe_method": "RAW-read get_unreviewed_market_messages for evening_summary; cross-check alert-engine RSI vs defaultComputeTa output"
-        },
-        "created_at": "2026-06-21T00:00:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-06-21T04:00:00Z",
-        "updated_by": "qa-review",
-        "commit": "3e5a5a5a",
-        "rebuild_required": true,
-        "done_at": "2026-06-21T04:00:00Z",
-        "done_by": "qa-review"
-      },
-      {
-        "id": "FIX-DIGEST-BB-ALERT-LIQUIDITY-FLOOR",
-        "type": "FIX",
-        "title": "Suppress BB-break / TA alerts on sub-liquidity-threshold stocks",
-        "priority": "P3",
-        "severity": "LOW",
-        "owner": "developer",
-        "dev_agent": "dev-technical-analysis",
-        "zone": "apps/mcp-server/",
-        "status": "DONE",
-        "done_verified": false,
-        "done_verified_reason": "PENDING gate G3: next market-hours alert scan (02:00–08:00 UTC) must show NO BB/TA alert emitted for sub-100K-volume tickers (e.g. D2D) while liquid tickers still emit. Floor=100_000 confirmed in running container.",
-        "deferred_verification": {
-          "gate_id": "G3",
-          "trigger": "Next VN market-hours alert scan window (02:00–08:00 UTC)",
-          "expected_outcome": "No BB or RSI alert from sub-100K daily volume tickers (e.g. D2D with vol=6-77K); liquid tickers (e.g. VNH, MWG) still emit alerts when criteria met",
-          "probe_method": "RAW-read alert_signals for type IN ('ta_bb_breakout', 'ta_oversold', 'ta_bb_overbought'); verify ticker daily_ohlcv volume vs MIN_DAILY_VOLUME_FOR_ALERTS=100_000"
-        },
-        "created_at": "2026-06-20T22:24:47Z",
-        "created_by": "po-digest-quality-triage",
-        "updated_at": "2026-06-21T04:00:00Z",
-        "updated_by": "qa-review",
-        "commit": "2e762361",
-        "rebuild_required": true,
-        "done_at": "2026-06-21T04:00:00Z",
-        "done_by": "qa-review"
       },
       {
         "id": "FIX-NEWS-ANALYSIS-PIPELINE-STALL",
@@ -7349,34 +7221,6 @@
         "dispatched_by": "po-s123"
       },
       {
-        "id": "FIX-CI-RED-BA82F2F5-DWF-CADENCE",
-        "title": "Repair CI-red: DWF-phase1-cadence.test.ts single failing assertion on HEAD ba82f2f5",
-        "owner": "dev-mcp-server",
-        "status": "DONE",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "dispatched_at": "2026-06-27T21:26:10Z",
-        "next": "qa",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "failing_sha": "ba82f2f54260095c4c3552d0ad28d3370026ffb8",
-        "note": "[dev-team 2026-06-27T21:26:10Z DISPATCH] PO BATCH (po a5635aaf, router RAW-verified). CONFIRMED REAL REGRESSION: parent 7860ff90 CI-GREEN -> ba82f2f5 RED. Single deterministic fail 1/13432 in apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts (Dynamic WorkFlow cadence). bun test only; all Go/py lints green. BLOCKING: red main strands fleet green-gate. Fix genuine break (NO delete/skip assertion). DONE gate = ci_green_on_subsequent_push (green CI on SHA != ba82f2f5). Owner dev-mcp-server, on-main (no worktree per NO-branches), commit-mutex serialized.",
-        "completed_at": "2026-06-27T22:09:16Z",
-        "verification": "ci_green_on_subsequent_push MET (router RAW): origin/main ba82f2f5->dfdaa2ab; CI run 28303210914 success on headSha dfdaa2ab != ba82f2f5; DJ-GATE-1 marker present; fix 79c08a1b toBe(17)->toBe(19) matches 19-slot ground truth."
-      },
-      {
-        "id": "FIX-CTXBLOAT-ARCHIVE-CAP-OVERMATCH",
-        "title": "Exempt docs/agent-memory/notebooks/archive/** from agent-notebook 200L cap (recurring false-breach generator)",
-        "owner": "developer",
-        "status": "DONE",
-        "type": "FIX",
-        "zone": "cross-service",
-        "dispatched_at": "2026-06-27T21:26:10Z",
-        "next": "qa",
-        "note": "[dev-team 2026-06-27T21:26:10Z DISPATCH] PO BATCH (po a5635aaf, router RAW-verified). RECURRING-SYMPTOM GENERATOR: caps SSOT docs/data/file-size-caps.json pattern docs/agent-memory/notebooks/*.md (cap200) over-matches notebooks/archive/*.md (bash case * crosses /). Archives are by-design large (pruned-split history) -> every split mints a permanent false-breach (latest archive/tran-ngoc-bau-archive-20260627.md 398L). Root-cause fix: add archive/** carve-out to file-size-caps.json + matching exempt branch in scripts/agents-flow/context-bloat-backstop.sh; add regression assertion (archive/*.md exempt, top-level notebook *.md still breaches). Do NOT prune the archive. Owner developer (outside dev-* zones), on-main, commit-mutex serialized.",
-        "completed_at": "2026-06-27T22:09:16Z",
-        "verification": "DONE (router RAW): archive cap over-match fixed in f36855ff (file-size-caps.json exempt flag + backstop guard); bidirectional regression test 2/2 PASS (router ran it); DJ-GATE-1 marker present in developer journal."
-      },
-      {
         "id": "FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L",
         "type": "FIX",
         "status": "DONE",
@@ -7419,42 +7263,6 @@
         "qa_verification": "QA-VERIFIED 2026-06-28: curl /dashboard/alerts → 200. SSR body: 101 tr / 700 td / 59 amber tokens / 1 table; 0 error signatures (Cannot destructure/TypeError/Application Error). Fix dda89b1c: AlertSeverity union +warning (L52); case warning amber (L207-213); default: slate fallback (L226-234); KNOWN_SEVERITIES normalizeItemSeverity data boundary (L113-114). vitest 1754/1756 (2 pre-existing QUE_DESCRIPTIONS unchanged). tsc 0 errors."
       },
       {
-        "id": "326",
-        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "FR-3 — Roman numeral OCR normalization",
-        "zone": "apps/pdf-extractor/",
-        "size": "S",
-        "status": "DONE",
-        "owner_agent": "dev-pdf-extractor",
-        "completed_at": "2026-06-28T08:00:00Z",
-        "next": "pm",
-        "verification": "DONE (qa cycle-332): 887/6-preexisting full suite, 58/58 targeted, sandbox G12 both tiers green, NFR-4 PASS, FPT non-regression PASS. commit cdc8b93f"
-      },
-      {
-        "id": "327",
-        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "FR-1 — Layout-adaptive column-boundary detection (code-range gate)",
-        "zone": "apps/pdf-extractor/",
-        "size": "S",
-        "status": "DONE",
-        "owner_agent": "dev-pdf-extractor",
-        "completed_at": "2026-06-28T08:16:05Z",
-        "next": "dev-pdf-extractor",
-        "verification": "DONE (qa cycle-333): 1030/12-preexisting full suite, 5/5 TestFR1CodeRangeGate, FPT 270/221/300 PASS, NFR-4 PASS, mock-guard EXIT 0. commit e939a422. 6→12 delta = scope expansion (integration tests), zero regressions."
-      },
-      {
-        "id": "328",
-        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "FR-2 — Trailing note-ref stripping from label",
-        "zone": "apps/pdf-extractor/",
-        "size": "S",
-        "status": "DONE",
-        "owner_agent": "dev-pdf-extractor",
-        "completed_at": "2026-06-28T10:55:00Z",
-        "next": "dev-pdf-extractor",
-        "verification": "DONE (qa cycle-334): 899/6-preexisting full suite, 7/7 TestFR2TrailingNoterefStrip, 122/122 targeted, NFR-4 PASS, FPT non-regression PASS. Guard: remaining-len ≥5 verified independently. commit 774cfd69"
-      },
-      {
         "id": "TASK_1973",
         "type": "SPRINT-S",
         "zone": "apps/mcp-server/",
@@ -7471,88 +7279,6 @@
         "created_at": "2026-06-28T08:30:00Z",
         "created_by": "pm",
         "done_at": "2026-06-28T08:59:52Z",
-        "done_by": "qa"
-      },
-      {
-        "id": "TASK_1976",
-        "type": "SPRINT-S",
-        "zone": ".claude/",
-        "title": "P1-AF-1: CLAUDE.md step 2.5 PRE-CLAIM gate",
-        "status": "DONE",
-        "priority": "P1",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "handoff": "docs/handoffs/TASK_1976-p1-af-1-claude-md-step25.md",
-        "depends_on": [
-          "TASK_1973"
-        ],
-        "blocks": [
-          "TASK_1980"
-        ],
-        "updated_at": "2026-06-28T00:00:00Z",
-        "updated_by": "agent-father",
-        "done_at": "2026-06-28T13:00:00Z",
-        "done_by": "qa"
-      },
-      {
-        "id": "TASK_1977",
-        "type": "SPRINT-M",
-        "zone": ".claude/skills/",
-        "title": "P1-AF-2: dispatch-claim SKILL — lift to router scope",
-        "status": "DONE",
-        "priority": "P1",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "handoff": "docs/handoffs/TASK_1977-p1-af-2-dispatch-claim-skill.md",
-        "depends_on": [
-          "TASK_1973"
-        ],
-        "blocks": [
-          "TASK_1980"
-        ],
-        "updated_at": "2026-06-28T00:00:00Z",
-        "updated_by": "agent-father",
-        "done_at": "2026-06-28T13:00:00Z",
-        "done_by": "qa"
-      },
-      {
-        "id": "TASK_1978",
-        "type": "SPRINT-S",
-        "zone": "docs/agents/cowork-team/",
-        "title": "P1-AF-3: leader-lock.md — delete self-held-heartbeat anti-pattern",
-        "status": "DONE",
-        "priority": "P1",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "handoff": "docs/handoffs/TASK_1978-p1-af-3-leader-lock-delete-anti-pattern.md",
-        "depends_on": [
-          "TASK_1973",
-          "TASK_1974"
-        ],
-        "blocks": [
-          "TASK_1980"
-        ],
-        "updated_at": "2026-06-28T00:00:00Z",
-        "updated_by": "agent-father",
-        "done_at": "2026-06-28T13:00:00Z",
-        "done_by": "qa"
-      },
-      {
-        "id": "TASK_1979",
-        "type": "SPRINT-M",
-        "zone": ".claude/skills/",
-        "title": "P1-AF-4: task-lock SKILL — rebind authoritative key to owner_client_session",
-        "status": "DONE",
-        "priority": "P1",
-        "sprint": "CROSS-SESSION-MULTI-TEAM-ORCH",
-        "handoff": "docs/handoffs/TASK_1979-p1-af-4-task-lock-skill-rebind.md",
-        "depends_on": [
-          "TASK_1973",
-          "TASK_1974"
-        ],
-        "blocks": [
-          "TASK_1980"
-        ],
-        "updated_at": "2026-06-28T00:00:00Z",
-        "updated_by": "agent-father",
-        "done_at": "2026-06-28T13:00:00Z",
         "done_by": "qa"
       },
       {
@@ -7646,140 +7372,7 @@
         "done_by": "qa"
       }
     ],
-    "done_verified": [
-      {
-        "id": "330",
-        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "FR-5 — Same-section duplicate-row prevention",
-        "zone": "apps/pdf-extractor/",
-        "size": "S",
-        "status": "DONE",
-        "depends_on": [
-          "329"
-        ],
-        "blocks": [
-          "331"
-        ],
-        "owner_agent": "dev-pdf-extractor",
-        "done_at": "2026-06-28T09:34:22Z",
-        "done_by": "qa",
-        "done_verified": true,
-        "qa": "FR unit+zone+sandbox G12 GREEN (qa 2026-06-28, commit 5fe3b7a4)",
-        "qa_blocker_resolution": "VNM sprint-gate re-scoped OUT (column-separated layout = distinct root, FU-tracked). FR-6 itself GREEN.",
-        "closed_at": "2026-06-28T11:40:37Z",
-        "closed_by": "po"
-      },
-      {
-        "id": "331",
-        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "FR-4 — Section-boundary content-signal detection",
-        "zone": "apps/pdf-extractor/",
-        "size": "M",
-        "status": "DONE",
-        "depends_on": [
-          "330"
-        ],
-        "blocks": [
-          "332"
-        ],
-        "owner_agent": "dev-pdf-extractor",
-        "ready_at": "2026-06-28T09:34:22Z",
-        "unblocked_by": "330",
-        "review_at": "2026-06-28T10:00:00Z",
-        "review_by": "dev-pdf-extractor",
-        "done_at": "2026-06-28T10:11:23Z",
-        "done_by": "qa",
-        "done_verified": true,
-        "qa": "FR unit+zone+sandbox G12 GREEN (qa 2026-06-28, commit 5fe3b7a4)",
-        "qa_blocker_resolution": "VNM sprint-gate re-scoped OUT (column-separated layout = distinct root, FU-tracked). FR-6 itself GREEN.",
-        "closed_at": "2026-06-28T11:40:37Z",
-        "closed_by": "po"
-      },
-      {
-        "id": "332",
-        "sprint": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "title": "FR-6 — VN-number parenthetical parse robustness (trace-first)",
-        "zone": "apps/pdf-extractor/",
-        "size": "M",
-        "status": "DONE",
-        "depends_on": [
-          "331"
-        ],
-        "blocks": [],
-        "owner_agent": "dev-pdf-extractor",
-        "ready_at": "2026-06-28T10:11:23Z",
-        "unblocked_by": "331",
-        "done_verified": true,
-        "qa": "FR unit+zone+sandbox G12 GREEN (qa 2026-06-28, commit 5fe3b7a4)",
-        "qa_blocker_resolution": "VNM sprint-gate re-scoped OUT (column-separated layout = distinct root, FU-tracked). FR-6 itself GREEN.",
-        "closed_at": "2026-06-28T11:40:37Z",
-        "closed_by": "po"
-      },
-      {
-        "id": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "type": "SPRINT-M",
-        "zone": "apps/pdf-extractor/",
-        "title": "Generalize BCTC table/column extraction across issuers (de-overfit from FPT)",
-        "status": "DONE",
-        "priority": "P1",
-        "handoff": "docs/handoffs/FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT.md",
-        "ba_spec": "approved 2026-06-28 (FR-1..FR-7, NFR-1..4)",
-        "acceptance_reports": {
-          "VCB": "31f2a9a9 (2026Q1, B02-TCTD) — Stage4 GREEN via POST /api/bctc-eval/recompute",
-          "HPG": "918a7abd (2025Q4, B01-DN) — Stage4 GREEN (pre-fix dup=2)",
-          "VNM": "4316f6d1 (2025Q4, B01-DN) — Stage4 GREEN (pre-fix dup=2)",
-          "FPT": "e71f845d (2025Q4) — non-regression: Stage6 GREEN + Stage4 dup<=1"
-        },
-        "scope_out": [
-          "0-row pipeline class (->HPG-REPARSE-POST-REBUILD)",
-          "FACTORY-DOMAIN refactor (sequenced after)",
-          "FPT Stage4 residual dup (->FU-FPT-2025Q4-STAGE4-DUP)"
-        ],
-        "dod": "VCB+HPG+VNM Stage4 GREEN (label_cov>=0.90 code_cov>=0.80 exact_dup=0 value_blank_label=0) RAW-verified via recompute; FPT Stage6 GREEN; sandbox G12 both tiers GREEN; architect design states generalization mechanism (NFR-4)",
-        "cascade": [
-          "ba",
-          "architect",
-          "pm",
-          "dev-pdf-extractor"
-        ],
-        "updated_at": "2026-06-28T07:17:28Z",
-        "updated_by": "po",
-        "done_verified": true,
-        "resolution": "FPT-overfit root FIXED; generalization QA-RAW-verified GREEN on VCB(bank,31f2a9a9 Stage4)+HPG(non-bank,918a7abd Stage4)+FPT(e71f845d Stage6 non-reg). 7 FRs shipped (commit 5fe3b7a4), sandbox G12 both tiers GREEN.",
-        "rescoped_out": {
-          "VNM": "0-row = column-separated OCR layout (distinct root, predates sprint, NOT a 7-FR regression); VNM served by refine path not /extract-tables -> SPIKE-BCTC-COLUMN-SEPARATED-LAYOUT",
-          "data_loss": "VNM 94->0 rows (QA /extract-tables overwrote live) -> FIX-VNM-BCTC-ROWS-DATA-LOSS-RECOVER",
-          "process_guard": "FU-EXTRACT-VERIFY-SHADOW-NOT-LIVE",
-          "fr4_risk4": "FU-FR4-RISK4-30LINE-LIMIT"
-        },
-        "signoff_at": "2026-06-28T11:40:37Z",
-        "signoff_by": "po"
-      },
-      {
-        "id": "FIX-VNM-BCTC-ROWS-DATA-LOSS-RECOVER",
-        "type": "FIX",
-        "status": "DONE",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "title": "Restore VNM 2025Q4 bctc_table_rows (94->0, QA /extract-tables overwrote live)",
-        "desc": "RECON-FIRST: count bctc_refined_units WHERE report_id=4316f6d1 AND window_status=DONE. /extract-tables (pushBctcTableHandler) writes bctc_table_rows ONLY, NOT bctc_refined_units -> refined truth likely survived. If rows present: re-run finalizeBctcRefineTool for 4316f6d1 -> re-inserts 94 rows (no re-extraction/backup). If refined_units ALSO gone: escalate (no DB-backup script in scripts/ or launchd).",
-        "verification_gate": "VNM 4316f6d1 bctc_table_rows restored to 94 rows (BS46+IS22+CF26).",
-        "origin": "data-loss-incident TASK_332 QA 2026-06-28",
-        "created_at": "2026-06-28T11:40:37Z",
-        "created_by": "po",
-        "claimed_at": "2026-06-28T13:00:00Z",
-        "claimed_by": "dev-mcp-server",
-        "completed_at": "2026-06-28T11:50:00Z",
-        "completed_by": "dev-mcp-server",
-        "done_verified": true,
-        "closed_by": "po",
-        "closed_at": "2026-06-28T12:14:56Z",
-        "recovery_commit": "68c7b99a",
-        "approving_commit": "f3c09500",
-        "reconcile_note": "stale ready[] status-lag row; work landed (68c7b99a) + qa APPROVED (f3c09500) — RAW-verified 94 rows BS46/IS22/CF26; po reconcile tick 20260628T120946Z"
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "REVIEW",
       "active_task_id": "332",
@@ -7789,7 +7382,34 @@
       "updated_at": "2026-06-28T12:45:00Z"
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "TASK_1996",
+        "status": "READY",
+        "type": "FIX",
+        "size": "S",
+        "owner": "agent-father",
+        "zone": "cross-service",
+        "priority": "high",
+        "sprint": "FB-COWORK-FOLD",
+        "created_at": "2026-06-29T16:22:56Z",
+        "title": "Add fb-daily + fb-weekend slots to cowork-schedule.json + add fb-market-poster to cowork-team Team Boundary",
+        "note": "FILES: docs/data/cowork-schedule.json (.slots[] append 2) + docs/agents/cowork-team/flow/main.md (Team Boundary line 9 scheduled list). SLOT fb-daily: cron=\"15 9 * * 1-5\" (09:15 UTC/16:15 VN), agent=agent_id=fb-market-poster, parallel_group=fb-poster, flow_path=docs/agents/fb-market-poster/flow/main.md, trigger_prompt=\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily\", dish_type=fb_daily_post, guaranteed=true, policy_id=null, depends_on=\"chef-eod 08:45 UTC + 30min\", enabled=true, last_fired=null, trigger_id=null. SLOT fb-weekend: cron=\"13 13 * * 6,0\" (13:13 UTC/20:13 VN; minute shifted from :07 so it lands in a */15 dispatcher tick — dispatcher only wakes :00/:15/:30/:45 and matches cron-minute within +/-2 of floored 15-min tick), dish_type=fb_weekly_post, guaranteed=true, policy_id=null, depends_on=null, rest same. MODE ROUTER in fb main.md self-routes VN_DOW (1-5 DAILY / 6 RECAP / 0 PREDICTION) — slot param is informational. Matcher comma-DOW 6,0 verified supported (cowork-match-slots.js field()). Invoke agent-md-factory skill. cowork-schedule.json is agent-father-maintained."
+      },
+      {
+        "id": "TASK_1997",
+        "status": "READY",
+        "type": "FIX",
+        "size": "S",
+        "owner": "agent-father",
+        "zone": "docs/agents/fb-market-poster",
+        "priority": "high",
+        "sprint": "FB-COWORK-FOLD",
+        "created_at": "2026-06-29T16:22:56Z",
+        "title": "fb-market-poster idempotency: add date-keyed published-marker dedup claim before pipeline runs",
+        "note": "FILE: docs/agents/fb-market-poster/flow/main.md. Add a cowork-standard published-marker claim at STEP 0 (before MODE ROUTER) keyed published:<slot_id>:<VN-DATE> (slot_id from the slot= prompt param; fallback \"fb-market-poster\" outside cowork), task_kind=cowork-slot, owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=100800 (28h). If claimed==false -> log already-published + EXIT before any tool calls/file write. Makes a same-day re-fire (cutover overlap or transport-lag double-spawn) a no-op (user-requested date-range dedup key). Weekend sub-flows (weekly-recap.md/weekly-prediction.md) run AFTER STEP 0 so they inherit the guard; verify no early-return path skips it. Invoke agent-md-factory skill."
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -7863,5 +7483,7 @@
     "schema": "v4",
     "ssot": true
   },
-  "last_tick": "20260622T2215Z"
+  "last_tick": "20260622T2215Z",
+  "_updated_at": "2026-06-29T16:22:56Z",
+  "_updated_by": "po"
 }
