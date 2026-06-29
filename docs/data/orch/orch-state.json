@@ -7398,23 +7398,6 @@
         "note": "FILE: docs/agents/fb-market-poster/flow/main.md. Add a cowork-standard published-marker claim at STEP 0 (before MODE ROUTER) keyed published:<slot_id>:<VN-DATE> (slot_id from the slot= prompt param; fallback \"fb-market-poster\" outside cowork), task_kind=cowork-slot, owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=100800 (28h). If claimed==false -> log already-published + EXIT before any tool calls/file write. Makes a same-day re-fire (cutover overlap or transport-lag double-spawn) a no-op (user-requested date-range dedup key). Weekend sub-flows (weekly-recap.md/weekly-prediction.md) run AFTER STEP 0 so they inherit the guard; verify no early-return path skips it. Invoke agent-md-factory skill."
       },
       {
-        "id": "TASK-FEAT-NEWS-DR-HOP1",
-        "status": "TODO",
-        "type": "FEAT",
-        "size": "M",
-        "owner": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "sprint": "FEAT-NEWS-DECISION-RESUME",
-        "created_at": "2026-06-29T16:25:56Z",
-        "title": "NEWS-DECISION-RESUME Hop 1: Backend builder + DB + DTO",
-        "depends_on": [],
-        "blocks": [
-          "TASK-FEAT-NEWS-DR-HOP2"
-        ],
-        "note": "FR-1: buildDecisionResume() pure helper + DOMAIN_VN_LABEL + truncateAt120(). FR-2: ADD COLUMN decision_resume TEXT to rag_analyses. FR-3: DTO pick-up in newsSentimentHandler. Deliverable: /api/news-sentiment returns decision_resume per item. Rebuild: mcp-server container required after. Handoff: docs/handoffs/TASK-FEAT-NEWS-DR-HOP1.md"
-      },
-      {
         "id": "TASK-FEAT-NEWS-DR-HOP2",
         "status": "TODO",
         "type": "FEAT",
@@ -7494,6 +7477,25 @@
         "done_at": "2026-06-29T16:46:36Z",
         "updated_by": "qa",
         "updated_at": "2026-06-29T16:46:36Z"
+      },
+      {
+        "id": "TASK-FEAT-NEWS-DR-HOP1",
+        "status": "REVIEW",
+        "type": "FEAT",
+        "size": "M",
+        "owner": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "sprint": "FEAT-NEWS-DECISION-RESUME",
+        "created_at": "2026-06-29T16:25:56Z",
+        "title": "NEWS-DECISION-RESUME Hop 1: Backend builder + DB + DTO",
+        "depends_on": [],
+        "blocks": [
+          "TASK-FEAT-NEWS-DR-HOP2"
+        ],
+        "note": "FR-1: buildDecisionResume() pure helper + DOMAIN_VN_LABEL + truncateAt120(). FR-2: ADD COLUMN decision_resume TEXT to rag_analyses. FR-3: DTO pick-up in newsSentimentHandler. Deliverable: /api/news-sentiment returns decision_resume per item. Rebuild: mcp-server container required after. Handoff: docs/handoffs/TASK-FEAT-NEWS-DR-HOP1.md",
+        "owner_agent": "dev-mcp-server",
+        "updated_at": "2026-06-29T16:50:00Z"
       }
     ],
     "qa": [],

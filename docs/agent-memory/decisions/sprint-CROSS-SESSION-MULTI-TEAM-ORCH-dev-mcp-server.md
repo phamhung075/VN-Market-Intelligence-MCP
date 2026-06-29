@@ -31,3 +31,14 @@
 - only path: PO-verified recovery — finalize_bctc_refine replays from surviving refined_units; no code change needed; no fabrication; no backup restore.
 **why-decision:** bctc_refined_units confirmed intact (both units window_status=DONE). Production finalize pathway reproduces rows deterministically from the same source the original refine used. Result is canonical, not hand-inserted.
 **why-change:** no change from plan
+
+---
+
+### DJ-GATE-1 · dev-mcp-server · 2026-06-29T16:45:00Z
+**task-id:** TASK-FEAT-NEWS-DR-HOP1
+**what-done:** Implemented decision résumé backend (FR-1+FR-2+FR-3): DOMAIN_VN_LABEL+truncateAt120()+buildDecisionResume() in newsNormalizer.ts; ADD COLUMN decision_resume on rag_analyses; INSERT 19→20 params; newsSentimentHandler.ts DTO+SELECT+mapper+comment fix. Tests: 30 pass / 0 fail; tsc: clean.
+**what-considered:**
+- decision_resume as required field in AnalysisEntry: broke 20+ existing test fixtures → switched to optional (`?`) for brownfield compat; normalizeNews() always sets it.
+- Truncation at word boundary vs hard-cut: word-boundary (lastIndexOf " ") chosen per spec; hard-cut fallback if no space found.
+**why-decision:** Optional field avoids cascading fixture updates while preserving the domain invariant (normalizeNews always sets it; undefined→NULL in INSERT is correct SQLite behavior).
+**why-change:** No plan change; optional vs required interface field is an implementation detail not captured in the spec.

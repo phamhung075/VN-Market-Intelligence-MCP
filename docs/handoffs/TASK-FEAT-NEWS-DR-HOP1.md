@@ -121,3 +121,29 @@ Build the decision-résumé backend: extend AnalysisEntry with a new `decision_r
 5. TASK-17 tests extend with AC-NEW-1 and AC-NEW-2, all pass
 6. No English text in decision_resume values (language-boundary check)
 7. Deliverable gate curl command returns non-null decision_resume for new rows
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/domain/services/newsNormalizer.ts` — AnalysisEntry.decision_resume? field; DOMAIN_VN_LABEL (17 domains); truncateAt120(); buildDecisionResume() pure helper; normalizeNews() call + return
+  - `apps/mcp-server/src/infrastructure/db/schema-news.ts` — ADD COLUMN decision_resume TEXT (idempotent try/catch after body_text block)
+  - `apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts` — INSERT 19→20 params, decision_resume as 20th positional param
+  - `apps/mcp-server/src/interface/mcp/routes/newsSentimentHandler.ts` — RagAnalysisRow + NewsSentimentItem + SELECT + mapper + header comment fix (positive/negative → bullish/bearish)
+- **Tests written:**
+  - `apps/mcp-server/src/__tests__/FEAT-NEWS-DR-builder.test.ts` — 11 test cases: 5 FR-1 concrete + 5 edge cases + 1 DOMAIN_VN_LABEL coverage (GREEN)
+  - `apps/mcp-server/src/__tests__/TASK-17-news-sentiment-endpoint.test.ts` — extended: AC-NEW-1 + AC-NEW-2 (GREEN); insertRow() helper updated with decision_resume param
+- **Git commits:** `3fb056de feat(TASK-FEAT-NEWS-DR-HOP1): decision résumé backend — FR-1+FR-2+FR-3`
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test (targeted):** 30 pass / 0 fail
+- **Tool count:** 166 tools — unchanged (no tool added/modified)
+- **Scheduler count:** unchanged (no scheduler files touched)
+- **PRAGMA verify:** `PRAGMA table_info(rag_analyses)` → decision_resume column exists = true
+- **INSERT param count:** 20 ? placeholders confirmed in analysis.ts
+- **Docs updated:** handoff updated with implementation record | NONE other
+- **Graphify:** skipped (no docs/architecture files impacted)
+- **Rebuild required:** YES — mcp-server container rebuild required for ADD COLUMN migration to execute against the live named-volume DB. Ops dispatch after this task REVIEW.
+- **Live curl gate:** runs AFTER ops rebuild — cannot verify pre-rebuild. Note for QA: `curl -s http://localhost:3000/api/news-sentiment | jq '[.items[] | select(.sentiment == "bullish" or .sentiment == "bearish")] | first | {sentiment, decision_resume}'`

@@ -1,22 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-27 · TASK-FFT-L2 — L2 data_asof contract for 5 handlers (REVIEW)
-Sprint FRONTEND-FRESHNESS-TRANSPARENCY. Added top-level `data_asof` (ISO 8601 UTC) to all 5 L2 handlers. Spec had 3 column errors (market_summaries.generated_at does not exist; vps_push_log.created_at does not exist; alerts.updated_at does not exist) — applied contract-from-live-payload rule, used real schema columns: market_messages.sent_at, alerts.triggered_at, daily_ohlcv.updated_at, vps_push_log.pushed_at. qualityChecklistHandler = computed-on-read, no store (JSDoc comment added per RISK-2). daily_ohlcv.updated_at has DEFAULT '' sentinel — queryPriceHistoryAsof() guards with `val && val.trim()` before returning. 20 new tests (freshness-dataasof-handlers.test.ts): 2 per handler (with-data + empty-table fallback) + helper unit tests. Coverage map: rows_no_asof 8→2, L2 4→0, LIVE 26→30. Commits: a384497a (handlers+tests), 56c0e4ac (docs).
-Zone health: bun test 20/20 GREEN (freshness-dataasof-handlers), tsc 0 errors, 166 tools intact | HEALTHY
-
-## 2026-06-28 · TASK_1974 + TASK_1975 P1-MCP-2/3 — matching-ladder + tool schemas (REVIEW)
-Sprint CROSS-SESSION-MULTI-TEAM-ORCH. TASK_1974 (coordinationStore): 3-rung matching-ladder in heartbeatTask/releaseTask/releaseOrphanTask — (1) owner_client_session primary, (2) owner_agent transitional, (3) owner_session deepest legacy. ReleaseResult type changed to discriminated union {ok:true;released:0|1} | {ok:false;error?} — wrong-owner release is clean no-op (released:0) not error; DB failures remain {ok:false}. ClaimInput/CurrentHolder/LockRow types extended with owner_client_session. TASK_1975 (coordinationTools): Added owner_client_session:z.string().optional() to 4 tool schemas (task_claim/heartbeat/release/force_release_orphan). Server-side injection of owner_client_session REMOVED — only SERVER_SESSION_ID kept for owner_session (diagnostic). exactOptionalPropertyTypes-safe conditional spread in task_claim handler. All 4 call sites thread caller-supplied owner_client_session into store. Tests: 8 new AC-10 assertions (P1-MCP-2 matching-ladder); 4 test files updated (undefined 2nd arg in 30+ call sites); DWF whitespace-tolerant /ttl_seconds:\s+1800/ regex. RAW-verify LIVE named-volume: two-session race {claimed:false,current_holder.owner_client_session:"session-aaa-111"}, wrong-session release {ok:true,released:0}, correct-session {ok:true,released:1}. Both tasks flipped REVIEW via orch-apply.sh.
-Zone health: 88 pass / 0 fail (coordination suite), pnpm check 0 errors, 166 tools, scheduler unchanged | HEALTHY
-
-## 2026-06-28 · TASK_1989 FIX-COORD-TASKKIND-ENUM-INTENT-GATE — Migration-3 + 7-kind taxonomy (REVIEW)
-Sprint CROSS-SESSION-MULTI-TEAM-ORCH. Root cause: router PRE-CLAIM gate (CLAUDE.md step 2.5) called task_claim(task_kind="intent") but all 3 enum sites only had 4 kinds → -32602 rejection. Solution: atomic Migration-3 using table-recreate pattern (mirrors Migration-1 precedent). Detection guard: `!schemaRow.sql.includes("'intent'")` — own guard, does NOT reuse the Migration-1 guard which already passed on live DBs. New CHECK: 7 kinds (cowork-slot, sprint-task, dashboard-row, commit-mutex, intent, orphan-signal, session-presence). Also folds in `redispatch_count INTEGER DEFAULT 0` (absorbed from cancelled TASK_1982). Redispatch detection: PRAGMA table_info-guarded fresh-read inside the migration block to handle edge case where column already existed. All 3 sites widened in sync: SQLite CHECK + TS union TaskKind + Zod z.enum (both task_claim and task_list_held). LockRow interface gains redispatch_count:number; listHeldTasks SELECT includes it. 17 new tests (10 ACs). Full cascade test (AC-10) verifies oldest 3-kind DB hits all 3 migrations in one call. exactOptionalPropertyTypes-safe (no new optional fields added). Commit f01eb0f8. OPS REBUILD required for named-volume migration to run live. Pre-existing 53 test timeouts (network/server) unaffected.
-Zone health: bun test coordination 99 pass / 0 fail, tsc 0 errors, 166 tools intact, 3 cron.schedule | HEALTHY
-
-## 2026-06-28 · FIX-VNM-BCTC-ROWS-DATA-LOSS-RECOVER — data recovery (REVIEW)
-P1 data recovery: VNM 2025Q4 bctc_table_rows restored from 0→94 after QA /extract-tables overwrite. RECON confirmed bctc_refined_units survived (2 DONE units: unit-0001 row_count=46, unit-0002 row_count=49). Called finalize_bctc_refine via gateway (report_id=4316f6d1-51ba-4912-a48c-dab5a64a2c81, report_status=DONE). Response: {ok:true, rows_parsed:94, effective_status:DONE, beg7_override:false}. Live verify: BS=46, IS=22, CF=26 = 94 total; real Vietnamese labels; dup=2 pair (Hàng tồn kho) matches pre-loss shape. No code changed. Key lesson: report_id in task was 8-char prefix; full UUID needed for DB queries.
-Zone health: no code change; 166 tools intact; bun test 13613/49 pre-existing unchanged | HEALTHY
-
----
 ## 2026-06-28 — P1.5-MCP sub-chain (TASK_1983/1984/1985)
 
 **Sprint:** CROSS-SESSION-MULTI-TEAM-ORCH phase P1.5
@@ -47,3 +30,14 @@ Zone health: no code change; 166 tools intact; bun test 13613/49 pre-existing un
 
 Sprint CROSS-SESSION-MULTI-TEAM-ORCH P3. QA found DV-P2-4 in DWF-coordination-phase2.test.ts still asserting P2 contract (ttl_seconds:1800, "cowork-leader") after TASK_1994 changed leader-lock.md to P3 fire-time election (TTL=600s, "cron:cowork:"). ONE file changed: test name updated to "Step 0b.2 / AC-P3-FIRE-ELECTION"; regex updated /ttl_seconds:\s+1800/ → /ttl_seconds:\s+600/; step0bMatch lookahead extended with |$ to handle P3 single-section doc; "cowork-leader" → "cron:cowork:". tsc 0. DWF-phase2 file: 32 pass / 0 fail (was 31p/1f). Coordination suite 7 files: 172 pass / 0 fail. new-fail count = 0 vs 53 baseline.
 Zone health: tsc 0, 32/0 DWF-phase2, 172/0 coordination suite | HEALTHY
+
+## 2026-06-29 · TASK-FEAT-NEWS-DR-HOP1 — Decision résumé backend (REVIEW)
+
+Sprint FEAT-NEWS-DECISION-RESUME Hop 1. FR-1+FR-2+FR-3.
+FR-1 (domain): newsNormalizer.ts — DOMAIN_VN_LABEL (17 domains), truncateAt120(), buildDecisionResume() pure helper; AnalysisEntry.decision_resume? optional field; normalizeNews() computes + returns it.
+FR-2 (infra): schema-news.ts ADD COLUMN decision_resume TEXT (idempotent try/catch after body_text block); analysis.ts INSERT 19→20 params (decision_resume as 20th positional param via entry.decision_resume ?? null).
+FR-3 (interface): newsSentimentHandler.ts — RagAnalysisRow + NewsSentimentItem + SELECT + mapper; header comment fix (positive/negative → bullish/bearish).
+Tests: FEAT-NEWS-DR-builder.test.ts 11 cases GREEN; TASK-17 extended AC-NEW-1+2 (30 pass / 0 fail). tsc: clean. PRAGMA: decision_resume column exists (verified via in-memory SQLite probe).
+Rebuild: YES — ops rebuild required for ADD COLUMN migration to execute on live named-volume DB.
+Commit: 3fb056de.
+Zone health: bun test 30/0, tsc clean, 166 tools unchanged, scheduler unchanged | HEALTHY
