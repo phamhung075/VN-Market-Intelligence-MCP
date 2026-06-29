@@ -63,3 +63,26 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 **No code written, no files modified, no tests, no commit (BLOCKED — assessment only).**
 
 Zone health: 6 active endpoints healthy (IIP/trade/BOP/CPI/liquidity/snapshot); VMT-3a requires external dependency before implementation | HEALTHY
+
+---
+
+## Session 2026-06-29 (P0-3-OMO-CURVE — OMO short-rate curve + liquidity stress)
+
+**Task:** Extend `get_vn_liquidity_state` additively: parse SBV OMO per-tenor winning-rate + member-ratio columns, derive implied short-rate by tenor, net_injection_5d, liquidity-stress label.
+
+**Key decisions:**
+- OMO parser (`parsers_vmt_sbv_interbank_omo.go`): col[1] members X/Y + col[3] winning rate now parsed per row. Added `parseTenorDays`, `parseOMORate`, `parseMembersXY` helpers. VN decimal comma normalization ("4,75" → 4.75). Zero-rate rows excluded from implied rates.
+- Domain service (`services_vmt_omo.go`): `ComputeImpliedShortRates` buckets 7/14/28d + cross-tenor avg. `DeriveStressResult` strict boundaries (`< -20000` DRAIN, `> +20000` EASY, exactly ±20000 → NEUTRAL). Score nil when daysInWindow < 5.
+- Persistence: `sbv_omo_daily` in `macro_indicators.db` (MACRO_DB_PATH env). ON CONFLICT(auction_date) DO UPDATE — idempotent (NFR-P03-3). DD/MM/YYYY → YYYYMMDD `substr` trick for correct SQLite ordering.
+- `OMODailyRepository` interface in application (Fence-B). `SQLiteOMODailyRepository` in infrastructure (Fence-C via main.go only).
+- `LiquidityStateResponse` additive: `OMOCurve *OMOCurveDTO` (omitempty). Safe-degrade: nil repo → `computeOMOCurveNoPersist` (rate data without DB).
+
+**New files (8):**
+- `pkg/domain/models_vmt_omo.go`, `pkg/domain/services_vmt_omo.go`, `pkg/domain/services_vmt_omo_test.go`
+- `pkg/application/dtos_vmt_omo.go`, `pkg/application/usecases_vmt_omo_persist.go`
+- `pkg/infrastructure/repository_vmt_omo_daily.go`, `pkg/infrastructure/repository_vmt_omo_daily_test.go`
+- `pkg/infrastructure/parsers_vmt_sbv_interbank_omo_p03_test.go`
+
+**Test results:** 11 suites GREEN. G12 sandbox: primitive 18/18, module 2/2 PASS. Fences A/B/C PASS. go vet clean.
+**Commits:** cd8cfcc2 (impl) + c17e9f70 (orch REVIEW)
+Zone health: HEALTHY | P0-3-OMO-CURVE → REVIEW
