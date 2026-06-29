@@ -243,11 +243,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-29T19:26:00Z",
-    "updated_by": "agent-father",
-    "active_task_id": "HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
-    "next_agent": "qa"
+    "status": "idle",
+    "updated_at": "2026-06-29T19:35:25Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7440,7 +7440,7 @@
         "zone": "cross-service/",
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
-        "status": "DONE",
+        "status": "DONE_VERIFIED",
         "verify_note": "impl complete: Task A (SSOT 37 agents + AC-5 BLOCKING) + Task B (notebook-auto-prune.sh) + Task C (notebook-class-fence.sh) + Task D (hook wired in settings.local.json). fence --self-test PASS; full fence exit 0; scratchpad proof 559L→184L. qa to verify ACs.",
         "priority": "P1",
         "impl_owner": "agent-father",
@@ -7488,7 +7488,9 @@
         "design_done_at": "2026-06-29T00:00:00Z",
         "design_brief": "docs/architecture-briefs/2026-06-29-harden-notebook-write-gate-ac5.md",
         "impl_done_at": "2026-06-29T19:26:00Z",
-        "impl_done_by": "agent-father"
+        "impl_done_by": "agent-father",
+        "done_verified_at": "2026-06-29T19:35:25Z",
+        "done_verified_by": "qa"
       }
     ],
     "review": [
