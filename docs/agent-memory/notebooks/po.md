@@ -1,7 +1,15 @@
 # PO Notebook
 
-_Last: 2026-06-29T20:58Z_
+_Last: 2026-06-29T20:59Z_
 
+## Triage tick 2026-06-29T20:37Z — TNB c102 audit (SEPARATE PO = dev-team triage spawn, session 693817d0; peer below owns DEFERRED-SCHEDULER)
+TNB c102 NEEDS_ATTENTION. **Minted 1, deduped the rest.** Board write touched ONLY `.task_board.backlog` (370→371) — never head, never peer rows.
+- **F-QUALITY-VERDICT-SUSPICIOUS (NEW)** → MINT `FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR` (backlog, PLAN-ONLY, P2 → agent-father). RAW-read chef.md:388-439: `L2_OK` admits subjective "substantively walked" w/ no min-element floor → carry-only passes as full L2 walk → false QUALITY:full. Real spec hole (recurrence of F-EVENING-QUALITY-OVERCLAIM c98). Fix=require US PMI OR EFFR-IORB OR explicit gap token.
+- **F-MCP (HIGH)** → DEDUP `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST`. **RAW-PROBE: server LIVE** (get_market_snapshot real payload VN-Index 1854.97 @20:53Z). = headless-gateway-blind (tnb-side, failure-mode A), NOT outage. No infra mint, no ops route.
+- **F-EOD-NB-MISSING + F-MORNING-NB-MISSING** → DEDUP `NB-PRUNE-FIX` (notebook-overwrite class; EOD evidence strengthens it). F-HPG/F-ACV → IN SPRINT `FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP`. F2/F4/F9 structural-known; 12-tickers/VCB-KD/PC1 monitoring.
+- **Signal 2 (deferred-scheduler brief)** → PEER-OWNED (see section below: peer's PO advanced it ba→po→pm at 20:58Z). NOT re-decomposed; head LEFT AS-IS. **Signal 3 (context_bloat tnb)** → NOTHING known-dup (tnb.md 185L; `FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE` tracks the hook-coexistence root).
+
+---
 ## This cycle — REVIEW BA spec: BA-DEFERRED-SCHEDULER → APPROVED (chain ba→po→**pm**→dev-mcp-server→qa)
 
 Reviewed `docs/handoffs/BA-DEFERRED-SCHEDULER.md` vs the LOCKED brief (`docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md`). **Faithful 1:1 transposition** — all 12 ACs traced to blocking gates, all 8 STs covered (ST-1/3/6/2/4/5/7/8), **zero scope creep** (spec §0 mirrors the brief Phase-2 OUT list verbatim). BA reported NO blockers; none found. **APPROVED.**

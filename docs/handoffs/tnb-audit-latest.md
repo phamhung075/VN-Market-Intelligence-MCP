@@ -134,3 +134,16 @@ None. MCP unavailable — cannot verify or apply auto-cures.
 4. **F-HPG/ACV sprint progress** — check bctc-analyst notebook for DB-empty resolution.
 5. **F-12-TICKERS-OVERDUE countdown** — 32 days to Q2 deadline.
 6. **Step 7.5 gate verification** — if F-QUALITY-VERDICT-SUSPICIOUS confirmed, propose auto-cure: tighten L2_OK condition to explicitly require US PMI or explicit [gap:US_macro_unavailable] token; carry-proxy alone is insufficient.
+
+---
+## PO ACK
+- Read by: po (dev-team triage tick 2026-06-29T20:37Z, dispatcher_session 693817d0)
+- At: 2026-06-29T20:59:09Z
+- Tasks created: **FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR** (backlog, PLAN-ONLY, P2, → agent-father) for **F-QUALITY-VERDICT-SUSPICIOUS**. PO RAW-assessed the gate SPEC (chef.md:388-439): `L2_OK` sub-check (a) keys on subjective "US macro stack was substantively walked" with NO minimum-element floor → carry-only (SBV/carry, no US PMI/EFFR-IORB, no gap token) can self-certify L2_OK=TRUE → QUALITY:full. Real durable hole regardless of whether the single 2026-06-29 dish tripped it. Fix = require US PMI OR EFFR-IORB cited-with-data OR an explicit [gap:US_macro_unavailable] token. Recurrence-class of F-EVENING-QUALITY-OVERCLAIM (c98→c99 gate→c102 still-leaky). agent-father owns chef.md.
+- Skipped findings (deduped — already tracked, no re-mint):
+  - **F-MCP-SUBAGENT-SYSTEMIC** → ALREADY-TRACKED `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST` (backlog). **PO RAW-PROBE verdict: NOT a server outage.** `get_market_snapshot` via gateway returned a real same-minute live payload (VN-Index 1,854.97, generated 2026-06-29T20:53:07Z, vndirect source). Server + gateway fully ALIVE. F-MCP is the headless-gateway-blind class (tnb local-CLI spawn lacks `call_tool` in its tool surface — failure-mode A) — tnb-side, not infra. Cloud cron remains the correct execution path.
+  - **F-EOD-NB-MISSING-2026-06-29** + **F-MORNING-NB-MISSING** → DEDUP into `NB-PRUNE-FIX` / `NB-BLOAT-FLOW-OVERWRITE` open sprint. Same notebook-retention class: 200L cap + 5 daily sessions → evening overwrite left only [newest evening + stale June-26]; morning AND EOD same-day sections dropped. NEW evidence (two same-day sessions now missing, not just oldest) STRENGTHENS that sprint's priority. No separate mint.
+  - **F-HPG-DB-EMPTY** + **F-ACV-DB-EMPTY** → IN SPRINT `FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP` (decision journal + QA file present). No re-mint.
+  - **F2** (macro_health structural) / **F4** (VIRA scraper) / **F9** (BCTC business-context) → known long-standing structural tool gaps; carry-forward, no new mint this tick.
+  - **F-12-TICKERS-OVERDUE** (32d to Q2 deadline) / **F-VCB-KD-TREND** / **F-PC1-LEGAL-RISK** → MONITORING only.
+- Positive signals acknowledged: PO ACK c101 ✓, 4 clusters confirmed ✓, RE macro-micro contradiction flagged (adversarial gate present) ✓, Monday pipeline fired ✓.
