@@ -68,19 +68,19 @@ Write(path=<notebook_path>, content="# <Agent> — Notebook\n\n## c<NNN> · <ISO
 
 ### ≤200L gate (AC-5)
 
-After the single settled write, verify as a sanity check:
+After the single settled write, verify as a BLOCKING gate:
 ```bash
 NB_LINES=$(wc -l < "$NOTEBOOK_PATH" | tr -d ' ')
-[ "$NB_LINES" -gt 200 ] && echo "[notebook-write] BUG: compose logic failed — recompose + ONE more settled write"
+[ "$NB_LINES" -gt 200 ] && echo "[notebook-write] BUG: compose logic failed — MUST recompose until ≤200L"
 ```
-AC-5 is a verification gate, NOT a remediation loop. If it fires, fix Step 1 and re-write once.
+AC-5 is a BLOCKING gate. If the composed body exceeds 200L after Step 1, the agent MUST recompose (return to Step 1c, drop the next-oldest section) and re-run Steps 1d–1g until ≤200L — do not land the write with an over-cap file. The PostToolUse hook `scripts/agents-flow/notebook-auto-prune.sh` backstops this gate at write time; if the hook prunes the file, it means AC-3 Step 1 failed — treat as a BUG in the composing agent's flow.
 
 ### Two-class contract (AC-6)
 
 | Class | Agents | Contract | Cap |
 |---|---|---|---|
 | OVERWRITE | po (≤50L), market-watcher (≤80L) | Full-file replace each cycle; preamble + 1 section only | Template IS cap; post-write wc guard |
-| APPEND | unified-agent/CHEF, news-scout, bctc-analyst, agents-architect, digest-predict, fb-market-poster, system-auditor, ops, ops-vps-fetch, ops-mainserver-fetch, developer, dev-technical-analysis, dev-macro-indicators, dev-mcp-server, dev-stock-price, dev-kinh-dich, dev-frontend, dev-pdf-extractor, dev-rag-service, dev-alert-engine, dev-api-gateway, dev-vps-crawls, dev-mainserver-crawls, qa, claude-manager-helper | AC-2 retention + AC-3 settled-write + AC-2b intra-prune + AC-5 wc gate | ≤200L file; ≤60L/section |
+| APPEND | unified-agent/CHEF, news-scout, bctc-analyst, agents-architect, digest-predict, fb-market-poster, system-auditor, ops, ops-vps-fetch, ops-mainserver-fetch, developer, dev-technical-analysis, dev-macro-indicators, dev-mcp-server, dev-stock-price, dev-kinh-dich, dev-frontend, dev-pdf-extractor, dev-rag-service, dev-alert-engine, dev-api-gateway, dev-vps-crawls, dev-mainserver-crawls, qa, claude-manager-helper, pm, fixer, tran-ngoc-bau, code-janitor, ba, agent-father, alert-commander, architect, qa-responder, cowork-refactory-expert, market-analyst, idea-forge | AC-2 retention + AC-3 settled-write + AC-2b intra-prune + AC-5 wc gate | ≤200L file; ≤60L/section |
 
 `po` uses OVERWRITE (single-session state); CHEF/developer use APPEND (rolling history). Not a contradiction.
 
