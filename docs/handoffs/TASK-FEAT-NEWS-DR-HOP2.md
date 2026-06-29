@@ -102,3 +102,31 @@ Fix the frontend news card: remap `SentimentPill` to show green "Tích cực" fo
 5. No console errors, responsive layout on all viewports
 6. No English text in user-facing output (language-boundary check)
 7. Collapsible toggle is accessible and toggles correctly on click
+
+---
+
+## [QA] Review Record
+
+**QA verdict:** APPROVED
+**Date:** 2026-06-29T19:36:00Z
+**Commit reviewed:** 5dbd9c2c
+
+**Checks run:**
+- vitest: 27/27 pass (Suite 8 AC-NEW-1/2 + bearish + ITEM_WITH_CHIPS) / 0 fail
+- tsc: 0 errors
+- DDD: PASS (no infra/application imports)
+- Security: PASS (no secrets, no hardcoded data)
+- mock-guard: exit 0 (PASS)
+
+**FR-4 pill conformance:** PASS — Sentiment type = bullish|bearish|neutral|null; no positive/negative branch; green "Tích cực" for bullish, red "Tiêu cực" for bearish, grey "Trung lập" for neutral/null.
+
+**FR-5 résumé conformance:** PASS — strip above title, null-omit guard (item.decision_resume != null && length > 0), sentiment-matched color, Collapsible impact_summary (Xem thêm/Thu gọn, default collapsed), source link preserved.
+
+**Live :3001 proof:**
+- /dashboard/news → 200
+- Pill fix LIVE: SSR HTML border-green-700(x2)/border-red-700(x1) — bullish/bearish items render correct pills
+- Null-omit LIVE: 0 extra résumé strip elements (all 20 live rows legacy null, per NFR-4 backfill policy — expected)
+- Proxy end-to-end: decision_resume field present in DTO
+- Non-null résumé strip: proven by Suite 8 (injected populated values pass through parseNewsSentimentDto)
+
+**Sprint status:** FEAT-NEWS-DECISION-RESUME → done_verified (final hop)

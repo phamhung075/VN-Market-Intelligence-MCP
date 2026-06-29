@@ -25,3 +25,18 @@
 **residual:**
 - Live rows currently null (all legacy pre-rebuild). Per NFR-4 backfill policy, this is expected and correct. Frontend (HOP2) must guard with `item.decision_resume != null && ...` per RISK-5.
 - HOP2 (dev-frontend) is now UNBLOCKED.
+
+## Entry qa-S2
+
+**date:** 2026-06-29
+**agent:** qa
+**task-id:** TASK-FEAT-NEWS-DR-HOP2
+**verdict:** APPROVED
+
+**what-considered:**
+- FR-4 pill: Sentiment type = "bullish"|"bearish"|"neutral"|null (no positive/negative). SentimentPill branches: bullish→green Tích cực, bearish→red Tiêu cực, null/neutral→grey Trung lập. No leftover positive/negative branch. PASS.
+- FR-5 résumé strip: rendered ABOVE title row with `item.decision_resume != null && item.decision_resume.length > 0` guard. Color driven by sentiment. Null-omit path: no empty box rendered. Collapsible wraps impact_summary (default collapsed, Xem thêm/Thu gọn labels). Source link preserved. PASS.
+- Tests: 27/27 pass (Suite 8 AC-NEW-1/2 + bearish + ITEM_WITH_CHIPS passthrough). tsc: 0 errors. DDD: no infra/application imports. Security: no secrets. mock-guard exit 0.
+- Live :3001: /dashboard/news → 200. CSS confirms 2 green pills + 1 red pill rendered (border-green-700/border-red-700 in SSR HTML). No extra text-green-400/text-red-400 beyond pills → null-omit path confirmed (all 20 live rows have decision_resume=null per NFR-4 legacy backfill). Proxy end-to-end: decision_resume field present in DTO (null for legacy rows). FR-4 pill fix live-proven; FR-5 null-omit live-proven; non-null strip proven via Suite 8.
+
+**why-change:** no change from plan — all checks green, live proven where testable per spec boundary.
