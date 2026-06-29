@@ -7440,7 +7440,7 @@
         "zone": "cross-service/",
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
-        "status": "READY",
+        "status": "REVIEW",
         "verify_note": "corrupt-null",
         "priority": "P1",
         "impl_owner": "agent-father",
@@ -7458,7 +7458,7 @@
         ],
         "recurrence_count": 8,
         "escalation_note": "recurring-bug-escalation: 6 breaches across 5 append-class agents post-qa-fix; dev-pdf-extractor is now a SECOND-time breacher (240L then 203L). RAW-CORRECTION 2026-06-28T10:13:20Z: dev-pdf-extractor is ALREADY in the APPEND self-cap class -> systemic gap is confirmed = AC-5 must go advisory->BLOCKING (membership is complete). prioritize.",
-        "next_agent": "architect",
+        "next_agent": "agent-father",
         "design_owner": "architect",
         "promoted_at": "2026-06-29T19:02:34Z",
         "promoted_by": "po",
@@ -7484,7 +7484,9 @@
           ],
           "registered_but_breached": "dev-pdf-extractor IS in AC-6 yet breached 203L -> enforcement half (AC-5 advisory). BOTH halves needed."
         },
-        "dod": "0 notebook-writing flows in neither class (fence green) AND AC-5 blocking AND headless hook backstop committed AND wc -l of every docs/agent-memory/notebooks/*.md <=200 after one write-cycle (pm.md self-caps from 283L)."
+        "dod": "0 notebook-writing flows in neither class (fence green) AND AC-5 blocking AND headless hook backstop committed AND wc -l of every docs/agent-memory/notebooks/*.md <=200 after one write-cycle (pm.md self-caps from 283L).",
+        "design_done_at": "2026-06-29T00:00:00Z",
+        "design_brief": "docs/architecture-briefs/2026-06-29-harden-notebook-write-gate-ac5.md"
       }
     ],
     "review": [
