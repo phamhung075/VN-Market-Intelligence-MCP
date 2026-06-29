@@ -877,8 +877,11 @@
         "type": "agent_offflow",
         "summary": "market-watcher 12:00Z spawn ran router protocol not its flow — false-green, 0 work; news-scout clean. ID-overflow (1967-04)",
         "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/signals/cowork-agent-offflow-2026-06-29.md"
+        "status": "TRIAGED",
+        "payload_ref": "docs/signals/cowork-agent-offflow-2026-06-29.md",
+        "linked_task": "FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW",
+        "triaged_at": "2026-06-29T12:21:49Z",
+        "triaged_by": "po"
       }
     ],
     "last_triaged_at": "2026-06-28T03:12:22Z",
@@ -6536,6 +6539,28 @@
         "created_by": "pm",
         "size": "M",
         "status_note": "qa APPROVED 2026-06-28T12:10:00Z — all 5 live-kind probes PASS, 0 new failures, WAL non-blocking"
+      },
+      {
+        "id": "FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW",
+        "title": "Spawn-prompt-level identity/flow-entry preamble — stop cowork gatherer off-flow router-latch (1967-04 recurrence)",
+        "owner": "po",
+        "route_to": "agent-father",
+        "status": "BACKLOG",
+        "mode": "PLAN-ONLY",
+        "priority": "high",
+        "class": "recurring-bug-escalation",
+        "recurrence_of": "TASK_1967-04",
+        "zone": "docs/agents/",
+        "source_signal": "cow-20260629T120800",
+        "evidence": "docs/signals/cowork-agent-offflow-2026-06-29.md",
+        "created_at": "2026-06-29T12:21:49Z",
+        "created_by": "po",
+        "status_note": "2nd occurrence of 1967-04 SUCCESS->SILENT->FAILURE identity-overflow class. market-watcher spawn ac8d204f latched onto project-root CLAUDE.md router PRE-CLAIM protocol instead of its own flow/main.md; in-flow Step -0 identity guard is structurally bypassed (agent never enters the flow). RAW-verified: flow/main.md has no PRE-CLAIM/orphan/roster phases; notebook last cycle 08:05Z, no 12:00Z work; news-scout got identical spawn + ran clean -> non-deterministic, not deterministic flow bug.",
+        "design_options": [
+          "A (agent-father): unbypassable spawn-prompt preamble enforcing IDENTITY_CHECK + flow-entry BEFORE any router-protocol inheritance; suppress CLAUDE.md router dispatch behavior for cowork-spawned gatherers so overflow surfaces as loud IDENTITY_CHECK=FAIL not silent off-flow.",
+          "B (agent-father/cowork-team flow): dispatcher gates FIRE telemetry + last_fired stamp on post-spawn liveness proof (notebook mtime advance), converting silent gap into loud failure + permitting re-fire instead of 4h blind window."
+        ],
+        "verification_gate": "Architect/agent-father design decision FIRST (PLAN-ONLY). Done-when: a cowork gatherer spawn that suffers identity displacement produces a loud IDENTITY_CHECK=FAIL (BUG telegram) rather than a fabricated success block + last_fired stamp; OR dispatcher refuses to stamp FIRE without notebook-mtime liveness proof."
       }
     ],
     "closed_sprints": [
