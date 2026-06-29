@@ -8,5 +8,11 @@
   "slug": "deferred-task-scheduler",
   "summary": "Deferred one-shot task scheduler (at(1) for the fleet). New scheduled_tasks SQLite table in coordination.db. 3 MCP tools (schedule_task, cancel_scheduled_task, list_scheduled_tasks). Sweeper folded into cowork-team */15 as Step 0b.3. 8 acceptance criteria. All subtasks routed to dev-mcp-server.",
   "subtasks_route": "dev-mcp-server (ST-1 through ST-8)",
-  "sprint_decomposition_requested": true
+  "sprint_decomposition_requested": true,
+  "_processed": {
+    "fingerprint": "f1570acdbd55b3289da218d0757a8d188139dbe0ac487edc2c2c6d8e06a8cb36",
+    "processedAt": "2026-06-29T20:51:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
