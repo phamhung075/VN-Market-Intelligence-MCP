@@ -1,5 +1,61 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-29 | **Sprint:** FEAT-NEWS-DECISION-RESUME
+
+## FEAT-NEWS-DECISION-RESUME · 2026-06-29
+
+Spec complete. REQ file: `docs/handoffs/BA-FEAT-NEWS-DECISION-RESUME.md`. Zero PO blockers. NEXT: architect (zone=multi, 2 hops).
+
+Key BA findings: `rag_analyses.reasoning` is English machine-trace — jargon + language-boundary violation, cannot surface raw. DB sentiment = bullish/bearish/neutral but frontend `SentimentPill` maps only positive/negative → all cards render grey "Trung lập" (confirmed live bug). `impact_summary` = raw HTML excerpt, not a reason. All required signals (bullishMatched/bearishMatched/affectedDomains/affectedActions/sentiment/level) are computed inside `normalizeNews()` — deterministic Vietnamese template can be produced there without LLM. New `decision_resume` field: prefix "Tích cực"/"Tiêu cực" + sector/ticker context + first 2 matched keywords, capped at 120 chars. Neutral → null (no strip shown). Sector translation table (17 DomainType→VN) embedded in spec. 5 FRs across domain/infrastructure/interface layers. Dev chain: Hop1=dev-mcp-server (FR-1 builder + FR-2 DB + FR-3 DTO) → Hop2=dev-frontend (FR-4 pill fix + FR-5 card résumé). Hop2 depends on Hop1.
+
+Decision journal (task_id: BA-FEAT-NEWS-DECISION-RESUME):
+- what-considered: "(A) Fix SentimentPill at handler layer (server-side bullish→positive normalize) — REJECTED: domain truth not obscured at interface boundary. (B) Use existing reasoning field — REJECTED: English jargon + language-boundary violation. (C) Build résumé at DTO/handler layer — REJECTED: bullishMatched/bearishMatched/affectedActions only available in normalizeNews(). (D) Deterministic VN template in normalizeNews() — CHOSEN: all inputs present, no LLM, correct DDD layer."
+- why-change: "no change from PO scope"
+
+## FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT · 2026-06-28
+
+Spec complete. REQ file: `docs/handoffs/FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT.md` (BA spec appended to PO handoff). 5 PO blockers (B1=0-row-failures-pipeline-gap, B2=FPT non-regression scope, B3=VCB eval on-demand trigger, B4=FACTORY-DOMAIN overlap, B5=FR-4 section-boundary scope). NEXT: architect.
+
+Key BA findings (from live bctc_table_rows probe): VCB 2026Q1 (55 rows all in 'balance_sheet') shows 7 concrete failure modes — section-boundary failure (IS items in BS section), Thuyết minh note refs contaminating labels, Roman numeral OCR misreads ('Il'→'II', 'Ill'→'III') causing wrong code assignment, catastrophic paren-value parse ((1.992.671)→-1.99), missing II/III sections, code 'VI' collision, notes-section items absorbed. HPG 2025Q4 (85 rows: general+cash_flow, 0 income_statement) shows Stage 4 RED (dup_count=2: Hàng tồn kho and Vốn chủ sở hữu duplicated). VNM 2025Q4 (94 rows) Stage 4 RED (dup_count=2). FPT 2025Q4 (127 rows) already Stage 4 RED (dup_count=1) pre-fix — non-regression must be scoped to Stage 6 GREEN not Stage 4. 0-row failures for HPG 2026Q1/VNM 2026Q1/MWG/VHM confirmed as pipeline gaps (refine_status=PENDING, bctc_layout_units=0), NOT column-split bugs. 7 FRs across infrastructure and application DDD layers: FR-1 layout-adaptive col boundary, FR-2 trailing note-ref label strip, FR-3 Roman numeral OCR normalization table, FR-4 section-boundary content detection (application layer), FR-5 same-section dedup, FR-6 paren-VN-number parse, FR-7 notes-section hard stop.
+
+Decision journal (task_id: BA-FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT):
+- what-considered: "(A) VCB 2026Q1 bank target — ACCEPTED. (B) HPG 2026Q1 — REJECTED (0 rows pipeline gap); HPG 2025Q4 chosen. (C) FPT non-regression = Stage 4 GREEN — REJECTED (FPT pre-fix already RED); Stage 6 GREEN chosen. (D) FR-4 section-boundary in sprint scope — RECOMMENDED despite application-layer scope; without it VCB acceptance impossible. (E) FR-5 dedup in sprint — ACCEPTED (PO non-negotiable exact_dup_count=0 gate)."
+- why-change: "FM-VCB-1 section-boundary failure is as severe as column-split issues; treating as out-of-scope leaves VCB acceptance impossible."
+
+**Last updated:** 2026-06-27 | **Sprint:** FRONTEND-FRESHNESS-TRANSPARENCY
+
+## FRONTEND-FRESHNESS-TRANSPARENCY · 2026-06-27
+
+Spec complete. REQ file: `docs/handoffs/BA-FRONTEND-FRESHNESS-TRANSPARENCY.md`. Zero PO blockers. Four architect ratification items (ARCH-RATIFY-FFT-1 through FFT-4). NEXT: architect.
+
+Key BA findings: Surface reconciliation clean — all 35 live page routes match coverage-map rows; no surface missing. 8 `rows_no_asof` confirmed: 5 need L2 handler fix (marketDigest/alerts/qualityChecklist/priceHistory/vpsProxyHealth), 1 is STATIC (kinh-dich-reference, no fix needed), 1 is GAP (cheb-synthesis, out of scope). `ClientTimestamp`/`ClientTimeString` already exist for hydration-safe display. `useRevalidator` used in 3 files but not abstracted — `useFreshnessRevalidator` hook is new. No `FreshnessBadge` component exists. `sector-rotation` has inline time render (lines 453-454) — ONLY non-DRY surface to refactor. `freshnessSlaMonitorJob.ts` monitors 12 DB tables by raw SQL; L4 extension adds coverage-map reader as second pass (additive, non-destructive). 4 architect open items: FreshnessBadge file location, hook location, L4 domain service placement, canonical `data_asof` key.
+
+Decision journal (task_id: BA-FRONTEND-FRESHNESS-TRANSPARENCY):
+- what-considered: "(A) Re-mint per-handler tasks — REJECTED (FIX-L2 anchor covers all 5, same zone+pattern). (B) kinh-dich-reference as L2 fix — REJECTED (STATIC hardcoded, no writer, no data_asof possible). (C) Combine L3A+L3B — REJECTED (shared primitives vs 34-route wiring = distinct concerns). (D) FreshnessBadge as generic ui/ primitive — REJECTED (product component with business logic, mirrors InfoCardExpand.tsx not badge.tsx)."
+- why-change: "no change from plan — anchor set validated; chain is dependency-minimal (L2 unblocks L3A and L4 simultaneously)."
+
+## FIX-MACRO-SNAPSHOT-DELTAS-NULL · 2026-06-24
+
+Spec complete. REQ file: `docs/handoffs/BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL.md`. Zero PO blockers. Four architect open items. NEXT: architect.
+
+Key BA findings: Persistence grep conclusive — `commodity_prices_history` table EXISTS in the shared `market.db` named volume (1226 rows probed 2026-06-11, ~35/day, 51-day span, 100% brent/gold/usd_vnd coverage). The Go macro-indicators service reads `commodity_prices` (single-row upsert, no history), never `commodity_prices_history`. The fix is a new `CommodityHistoryPort` + `SQLiteCommodityHistoryRepository` that reads the history table with an 18h lookback cutoff (prior-session definition). Six FRs mapped across domain/infrastructure/application/interface layers. The `computeDelta` function already exists and handles nil-prev → (nil, "unknown"); only the "get a real prev" call is missing. `globalMarketsHandler.ts` already proves the exact query pattern (getBaselineRow). Main architect question: SBV-rate-override conflict (current usdVnd may be SBV-sourced, prev is Yahoo-sourced — same-source-only or cross-source delta?).
+
+Decision journal (task_id: BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL):
+- what-considered: "(A) Backfill commodity_prices with a prev-day column — REJECTED (would require a new write from the Go service, breaking read-only contract). (B) Cross-service HTTP call to /api/global-markets endpoint to get delta — REJECTED (service-to-service coupling, wrong layer). (C) New read-only adapter against commodity_prices_history (same named volume) — CHOSEN (read-only, same pattern as all existing adapters, table already fully populated). For 'prior' definition: (A) calendar-day-aligned midnight UTC — deferred to architect (timezone edge cases). (B) Fixed 18h lookback — RECOMMENDED to architect as the simplest correct initial rule (avoids timezone math)."
+- why-change: "commodity_prices_history is the only history table for these values; the fix is purely a new read path against an existing populated table, no schema change and no new writes."
+
+**Last updated:** 2026-06-23 | **Sprint:** FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION
+
+## FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION · 2026-06-23
+
+Spec complete. REQ file: `docs/handoffs/FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION-BA-spec.md`. Zero PO blockers. Four architect ratification items (ARCH-RATIFY-CONF-1 through CONF-4). NEXT: architect.
+
+Key BA findings: Three distinct `verified_decision` write paths all missing confidence. Path A (dominant, 86% of rows) = `storeAlerts` + `storeAlertsFromCommander` in `alertStore.ts` — co-write INSERT omits `confidence_score` column entirely, falls to column DEFAULT 50. The `Alert` object at call-site already carries `alert.confidence_score` (from alertGenerator.ts:296 when Signal objects carry it) — wire it directly; fallback = severity-to-int map (critical→90, high→75, warning/medium→60, low→40). Path B (minority) = `agentSignalTools.ts` MCP tool post_signal without `finding_data.confidence` → pass `null` not undefined, so DB stores NULL not DEFAULT. Path C = structural enabler = `DEFAULT 50` on `schema-news.ts:104` ALTER TABLE — remove the DEFAULT. Read-path `?? 50` at `stockSignalsHandler.ts:224` is currently dead (DB writes 50, never NULL) but must be hardened to `?? null` so genuine-absence is honest post-fix. No backfill of existing 3316 legacy rows. `assembleBriefing.ts` is NOT a write path for `agent_signals` — topConviction is a briefing struct field, not a DB write; ARCH-RATIFY-CONF-3 flags a possible cowork-agent path that may thread conviction score via `post_signal`.
+
+Decision journal (task_id: FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION):
+- what-considered: "(A) Wire conviction from assembleBriefing.topConviction into agent_signals — REJECTED as primary path (assembleBriefing does NOT post agent_signals; the topConviction value is a response field). (B) Severity-map fallback only — rejected as sole approach (ignores the already-computed alert.confidence_score in the Alert object). (C) Wire alert.confidence_score with severity-map fallback — CHOSEN (uses real computed value first, deterministic proxy only when absent). DEFAULT removal: (A) keep DEFAULT 50 and rely on explicit pass — rejected (leaves the mask in place for future callers); (B) remove DEFAULT entirely — chosen (honest: omission becomes NULL, not plausible-fake)."
+- why-change: "Three-path root cause; the column DEFAULT is the structural enabler across all paths; removing it + wiring real values + hardening read-path is the minimal correct fix set."
+
 **Last updated:** 2026-06-18 | **Sprint:** FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER
 
 ## FIX-COWORK-SCHEDULE-STALE-BASE-CLOBBER · 2026-06-18
