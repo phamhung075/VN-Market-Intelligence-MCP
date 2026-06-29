@@ -244,9 +244,9 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-29T20:18:44Z",
-    "updated_by": "po",
-    "active_task_id": "BA-INDICATOR-DEPTH-P0",
+    "updated_at": "2026-06-29T21:00:00Z",
+    "updated_by": "ba",
+    "active_task_id": "BA-DEFERRED-SCHEDULER",
     "next_agent": "ba"
   },
   "narrative": {
@@ -860,8 +860,8 @@
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
-    "_updated_at": "2026-06-29T20:33:25Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-29T21:15:00Z",
+    "_updated_by": "architect",
     "entries": [
       {
         "created_at": "2026-06-08T00:00:00Z",
@@ -1159,10 +1159,10 @@
         "roadmap_doc": "docs/roadmaps/vn-market-indicator-roadmap.md",
         "no_fake_data_gate": "BLOCKING per FR: any value that would require an invented distribution (e.g. a z-score over a history we do not really have) FAILS the gate — see roadmap §4 rejected items.",
         "gate": "Full cascade IN EFFECT (not lifted): BA spec -> PO review -> architect blueprint -> pm decomposition -> dev -> qa. These are genuinely new analytical features.",
-        "next_agent": "ba",
+        "next_agent": "pm",
         "chain": "ba -> po(review) -> architect -> pm -> (dev-technical-analysis + dev-stock-price + dev-macro-indicators + dev-rag-service + dev-mcp-server) -> qa",
         "zone": "multi",
-        "po_signoff": "PENDING",
+        "po_signoff": "GRANTED",
         "created_at": "2026-06-29T20:18:44Z"
       },
       {
@@ -7972,7 +7972,26 @@
       "updated_by": "dev-pdf-extractor",
       "updated_at": "2026-06-28T12:45:00Z"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "BA-DEFERRED-SCHEDULER",
+        "title": "Requirement spec for DEFERRED-TASK-SCHEDULER-MVP — at(1) one-shot scheduler (verify-loop MVP) from architect brief 2026-06-29",
+        "owner": "ba",
+        "status": "IN_PROGRESS",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "zone": "docs/agents/",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "next_agent": "ba",
+        "depends": [],
+        "note": "Write the REQ spec from docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md (architect DONE — design is LOCKED, do NOT relitigate table/tools/routing). The 8 implementation subtasks are already minted as backlog rows DTS-ST1..DTS-ST8 (all -> dev-mcp-server); the spec restates them, maps AC-1..AC-12 onto each, and restates the 3 G1/G2/G3 end-to-end use cases. Scope: verify-loop MVP ONLY — Phase-2 (headless launchd 24/7 sweeper, adaptive self-rescheduling, terminal-row pruning, firing-state recovery) is explicitly OUT. system-auditor = DEV/signal (confirmed). Chain: ba -> po(review) -> pm -> dev-mcp-server -> qa.",
+        "verification_gate": "REQ doc covers all 8 STs, maps AC-1..AC-12 to the STs as blocking gates, restates G1/G2/G3 use cases, and states Phase-2 scope_out explicitly.",
+        "brief": "docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md",
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z",
+        "started_at": "2026-06-29T21:00:00Z"
+      }
+    ],
     "ready": [
       {
         "id": "TASK_1997",
@@ -8058,23 +8077,6 @@
         "next_agent": "ba",
         "note": "Decompose the 6 P0 deliverables + the Sprint-0 OHLCV backfill into atomic FRs. SOURCE OF TRUTH = docs/roadmaps/vn-market-indicator-roadmap.md §3 (P0 block) + §5 (first sprint). HARD per-FR constraint: no-fake-data — every value computed ONLY from on-hand (daily_ohlcv, vnstock_trading_stats, rag_analyses, insider_transactions) or already-fetched (SBV OMO Liferay HTML, vnmarket_prices) data; NO new fabricated distributions. Breadth is FORWARD-ACCRUING (mark accruing_since, no backfill). Sequence the P0 indicators as listed (volatility -> foreign-room -> OMO-curve -> news-z -> insider). Owners per roadmap. Hand back to PO for spec review (po/review-ba-spec.md) before architect.",
         "created_at": "2026-06-29T20:18:44Z"
-      },
-      {
-        "id": "BA-DEFERRED-SCHEDULER",
-        "title": "Requirement spec for DEFERRED-TASK-SCHEDULER-MVP — at(1) one-shot scheduler (verify-loop MVP) from architect brief 2026-06-29",
-        "owner": "ba",
-        "status": "READY",
-        "type": "SPRINT-M",
-        "priority": "high",
-        "zone": "docs/agents/",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "next_agent": "ba",
-        "depends": [],
-        "note": "Write the REQ spec from docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md (architect DONE — design is LOCKED, do NOT relitigate table/tools/routing). The 8 implementation subtasks are already minted as backlog rows DTS-ST1..DTS-ST8 (all -> dev-mcp-server); the spec restates them, maps AC-1..AC-12 onto each, and restates the 3 G1/G2/G3 end-to-end use cases. Scope: verify-loop MVP ONLY — Phase-2 (headless launchd 24/7 sweeper, adaptive self-rescheduling, terminal-row pruning, firing-state recovery) is explicitly OUT. system-auditor = DEV/signal (confirmed). Chain: ba -> po(review) -> pm -> dev-mcp-server -> qa.",
-        "verification_gate": "REQ doc covers all 8 STs, maps AC-1..AC-12 to the STs as blocking gates, restates G1/G2/G3 use cases, and states Phase-2 scope_out explicitly.",
-        "brief": "docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md",
-        "created_by": "po",
-        "created_at": "2026-06-29T20:33:25Z"
       }
     ],
     "review": [

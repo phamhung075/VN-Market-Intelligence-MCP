@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-29 19:12 UTC | **Sprint:** CROSS-SESSION-MULTI-TEAM-ORCH
+**Last updated:** 2026-06-29 21:15 UTC | **Sprint:** MARKET-INDICATOR-DEPTH-P0
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-29T21:15Z — MARKET-INDICATOR-DEPTH-P0 (DESIGN DONE)
+
+**Task:** ARCH-MARKET-INDICATOR-DEPTH-P0 | NEW-FEATURE (lean) | zone: multi (mcp-server + technical-analysis + macro-indicators + stock-price)
+**BUILD-STANDARD:** lean (all 4 zones brownfield)
+**Key brownfield discovery:** macro-indicators is Go (not TypeScript as architecture doc states). Active code is in `pkg/` + `cmd/`. `src/_deprecated/` is dead. Risk-HIGH for dev working in wrong folder — PM must call this out explicitly.
+**3 ratifications:** (1) OMO-1 → Option A: sbv_omo_daily in dedicated macro_indicators.db (new env MACRO_DB_PATH); (2) INS-1 → accept market_cap_bn proxy, normalization_basis field mandatory; (3) B4 cron → 37 8 * * 1-5 (free slot, Lever C +7 offset from :30).
+**Design decisions:** P0-2 event detection relocated from dev-stock-price to mcp-server's vnstockFundamentalsJob (single-writer rule); get_omo_curve deferred to P1 (extend get_vn_liquidity_state for P0 only); OMO persistence = write-on-fetch side effect in LiquidityStateUseCase.
+**5 new tools** (toolCount must be re-derived): get_volatility_indicators, get_foreign_room, get_market_sentiment_index, get_insider_sentiment, get_breadth_thrust. Plus extending get_vn_liquidity_state (no new tool).
+**Risk flags:** RISK-MACRO-LANG-CONFUSION [HIGH], RISK-SPRINT0-WRITEPATH [HIGH], RISK-P0-4-COVERING-INDEX [MEDIUM], RISK-OMO-DUAL-DB-LIFECYCLE [MEDIUM].
+**Output:** `[Architect] Brownfield Findings` → `docs/handoffs/BA-MARKET-INDICATOR-DEPTH-P0.md`
+**Next:** pm atomizes into 7 tasks: Sprint-0 + P0-1 + P0-2 + P0-3 + P0-4 + P0-5 + Breadth (all parallel-dispatchable at kickoff).
 
 ## 2026-06-29T19:12Z — HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING (DESIGN DONE)
 
