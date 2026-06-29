@@ -244,10 +244,10 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-29T19:02:34Z",
-    "updated_by": "po",
+    "updated_at": "2026-06-29T19:26:00Z",
+    "updated_by": "agent-father",
     "active_task_id": "HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
-    "next_agent": "architect"
+    "next_agent": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7440,8 +7440,8 @@
         "zone": "cross-service/",
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
-        "status": "REVIEW",
-        "verify_note": "corrupt-null",
+        "status": "DONE",
+        "verify_note": "impl complete: Task A (SSOT 37 agents + AC-5 BLOCKING) + Task B (notebook-auto-prune.sh) + Task C (notebook-class-fence.sh) + Task D (hook wired in settings.local.json). fence --self-test PASS; full fence exit 0; scratchpad proof 559L→184L. qa to verify ACs.",
         "priority": "P1",
         "impl_owner": "agent-father",
         "dedup_anchor_for": "recurring-agent-notebook-200L-breach (write-time self-cap enforcement gap)",
@@ -7458,7 +7458,7 @@
         ],
         "recurrence_count": 8,
         "escalation_note": "recurring-bug-escalation: 6 breaches across 5 append-class agents post-qa-fix; dev-pdf-extractor is now a SECOND-time breacher (240L then 203L). RAW-CORRECTION 2026-06-28T10:13:20Z: dev-pdf-extractor is ALREADY in the APPEND self-cap class -> systemic gap is confirmed = AC-5 must go advisory->BLOCKING (membership is complete). prioritize.",
-        "next_agent": "agent-father",
+        "next_agent": "qa",
         "design_owner": "architect",
         "promoted_at": "2026-06-29T19:02:34Z",
         "promoted_by": "po",
@@ -7486,7 +7486,9 @@
         },
         "dod": "0 notebook-writing flows in neither class (fence green) AND AC-5 blocking AND headless hook backstop committed AND wc -l of every docs/agent-memory/notebooks/*.md <=200 after one write-cycle (pm.md self-caps from 283L).",
         "design_done_at": "2026-06-29T00:00:00Z",
-        "design_brief": "docs/architecture-briefs/2026-06-29-harden-notebook-write-gate-ac5.md"
+        "design_brief": "docs/architecture-briefs/2026-06-29-harden-notebook-write-gate-ac5.md",
+        "impl_done_at": "2026-06-29T19:26:00Z",
+        "impl_done_by": "agent-father"
       }
     ],
     "review": [
