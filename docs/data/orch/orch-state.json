@@ -8178,7 +8178,7 @@
         "zone": "apps/macro-indicators/pkg/",
         "owner": "dev-macro-indicators",
         "type": "SPRINT-S",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "size": "M",
         "priority": "high",
         "depends": [],
