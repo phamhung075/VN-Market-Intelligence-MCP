@@ -1,0 +1,48 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-29T08:21:11Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [
+      "chef-intraday"
+    ],
+    "downgraded": [],
+    "due_reasons": {},
+    "cadence_minutes": {
+      "chef-intraday": 120
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "SILENT",
+    "reason": "suppressed_cadence",
+    "nominal_tick": "08:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 6,
+    "signal_backlog": 0,
+    "note": "chef-intraday cron-window matched (13 2-8 * * 1-5, minute 13 hour 08 weekday) BUT cadence NOT due — last_fired 07:19:17Z + 120min = 09:19:17Z next eligible; elapsed 3571s < 7200s. Matcher ran LEGACY mode (stale_warning:true from 08:04:44Z emit oscillation) which bypasses the cadence gate and returned the raw cron match without due_reason. Dispatcher applied true-cadence guard and SUPPRESSED to prevent premature double-dish (chef-intraday marker is hour-counter-suffixed => no dedup backstop; cadence is sole guard). stale_warning cleared on 08:20:54Z emit => 08:30Z reverts to adaptive. Next chef-intraday ~09:13Z window."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-29T08:21:11Z",
+  "_processed": {
+    "fingerprint": "c46fcd20e0d91c708b286efcff6994c4ba0c868ea937506da72b69294526b7e2",
+    "processedAt": "2026-06-29T08:47:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
