@@ -132,3 +132,28 @@ Zone health: tsc clean (EXIT 0), 36/0 new tests, 175/0 sentiment cluster, toolCo
 - MOD: `registry.ts` — +1 registerInsiderSentimentTools (#178)
 
 Zone health: tsc clean (EXIT 0), 57/0 new tests, 141/0 sibling cluster (P0-2+P0-4+P0-5+insider-tx), toolCount=176 (+1), scheduler=3 (unchanged) | HEALTHY
+
+## 2026-06-30 — BREADTH-TIME-SERIES → REVIEW
+
+**Sprint:** MARKET-INDICATOR-DEPTH-P0 (LAST mcp-server task, Wave-2 FINAL)
+**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
+**Commit:** ee380fdf
+
+**Part A — market_breadth_history + get_breadth_thrust (#179):**
+- NEW: `domain/services/market-data/breadthCalculator.ts` — pure domain: EMA (first-value seed), ADL cumulative, RANA, McClellan Osc (null idx<38 i.e. <39 sessions), McClellan Summation, FloorCeiling (>15%/is_halt_day >50%), Zweig Thrust (>61.5% adv/(adv+dec) for 10 consecutive in 14-session window), breadth_z_score (null <21 sessions or std=0→0), history_quality enum (INSUFFICIENT/WARMUP/SUFFICIENT), 6-field GaugeReadyScalar (confidence: 1.0/0.5/null)
+- NEW: `infrastructure/db/breadthHistoryStore.ts` — getAllBreadthHistory (ASC), getRecentBreadthHistory, getBreadthHistoryCount, getAccruingSince (MIN date), upsertBreadthRow (INSERT OR IGNORE)
+- MOD: `infrastructure/db/schema-market-data.ts` — market_breadth_history DDL + idx_mbh_date DESC index
+- NEW: `application/usecases/getBreadthThrust.ts` — {error:'no breadth history...'} on empty (NFR-BR-3); ADL capped 60s
+- NEW: `scheduler/market-data/breadthHistoryPersisterJob.ts` — cron 37 8 * * 1-5; NFR-BR-1 LIVE_FETCH_SOURCE logged; skip if total=0 AND ceiling=0 AND floor=0 (synthetic guard); _isRunning concurrency guard; recordJobRun {rowsWritten: inserted?1:0}
+- NEW: `interface/mcp/tools/market-data/breadthThrustTools.ts` — MCP tool `get_breadth_thrust` (#179)
+- NEW: `__tests__/P0-BREADTH-TIME-SERIES.test.ts` — 45 tests (AC-1..AC-20), 0 fail
+- MOD: `scheduler/cronConfig.ts` — breadthHistoryPersister key
+- MOD: `scheduler/startScheduler.ts` — scheduleCron block for breadthHistoryPersister
+
+**Part B — get_volatility_indicators (#180) proxy:**
+- NEW: `interface/mcp/tools/market-data/volatilityIndicatorTools.ts` — proxies to Go TA :5003 POST /ta/volatility-indicators; honest-NULL: rv_60d_pct/drawdown_252d_pct null until Sprint-0 backfill; {error:'...'} on upstream failure (NFR-P01-1)
+- MOD: `infrastructure/microservices/clients.ts` — computeVolatilityIndicators(), ComputeVolatilityRequest/Response/TickerAtrResult types
+
+**STALE-HANDOFF deviation:** Handoff doc cited apps/technical-analysis/BreadthService.ts for McClellan/Zweig math. TA zone is Go-primary; all math implemented as pure mcp-server domain service. ZERO changes to apps/technical-analysis.
+
+Zone health: tsc clean (EXIT 0), 45/0 new tests, toolCount=178 (+2), orch-state BREADTH-TIME-SERIES→REVIEW | HEALTHY
