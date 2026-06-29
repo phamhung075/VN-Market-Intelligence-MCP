@@ -1,8 +1,24 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-28 07:30 UTC | **Sprint:** FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT
+**Last updated:** 2026-06-29 16:21 UTC | **Sprint:** FEAT-NEWS-DECISION-RESUME
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-29T16:21Z — FEAT-NEWS-DECISION-RESUME (DESIGN DONE)
+
+**Task:** ARCH-FEAT-NEWS-DECISION-RESUME | NEW-FEATURE (lean) | zone: `apps/mcp-server/` + `apps/frontend/` (multi)
+**BUILD-STANDARD:** lean (brownfield — both services exist; no new microservice)
+**5 FRs resolved across 2 hops:**
+- FR-1 (domain): `buildDecisionResume()` pure helper added to newsNormalizer.ts (~L820 helpers section). Inputs: `sentiment`, `level`, `affectedActions`, `affectedDomains`, `bullishMatched`, `bearishMatched` — all in scope at normalizeNews() return site (L958). `DOMAIN_VN_LABEL` const map (17 entries, `Partial<Record<string, string>>`) co-located. Neutral→null; hard-cap 120 via `truncateAt120()` helper.
+- FR-2 (infra): schema-news.ts ADD COLUMN pattern: `try { db.exec("ALTER TABLE rag_analyses ADD COLUMN decision_resume TEXT"); } catch {}` after existing `body_text` block (~L65). No UNIQUE. analysis.ts INSERT grows 19→20 params.
+- FR-3 (interface): newsSentimentHandler.ts — `RagAnalysisRow` + `NewsSentimentItem` + SELECT + mapper + header comment updated. No new imports.
+- FR-4 (interface): dashboard.news.tsx `Sentiment` type `positive/negative` → `bullish/bearish`; `SentimentPill` remap.
+- FR-5 (interface): dashboard.news.tsx `NewsCard` résumé strip before title row; `impact_summary` wrapped in Radix `Collapsible` (default collapsed, "Xem thêm"/"Thu gọn").
+**Key risks:** RISK-3 (MEDIUM — TASK-17 test `insertRow()` must be extended with optional `decision_resume` param for AC-NEW passthrough tests). RISK-4 (LOW — truncation off-by-one; test exactly-120 + 121+ cases).
+**Test deliverables:** NEW `FEAT-NEWS-DR-builder.test.ts` (10 unit tests: 5 BA examples + 5 edge cases). TASK-17 test extended with AC-NEW-1+AC-NEW-2.
+**Verify gate (Hop1):** `curl /api/news-sentiment | jq '[.items[] | select(.sentiment=="bullish")] | first | .decision_resume'` → non-null VN string ≤ 120 chars for new rows.
+**Output:** `[Architect] Brownfield Findings` appended to `docs/handoffs/BA-FEAT-NEWS-DECISION-RESUME.md`; decision journal: `docs/agent-memory/decisions/sprint-FEAT-NEWS-DECISION-RESUME-architect.md`
+**Next:** pm atomizes into TASK-FEAT-NEWS-DR-HOP1 (dev-mcp-server, ~2h) + TASK-FEAT-NEWS-DR-HOP2 (dev-frontend, ~1h, blocks_on HOP1).
 
 ## 2026-06-28T07:30Z — FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (DESIGN DONE)
 

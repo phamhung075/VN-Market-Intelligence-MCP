@@ -283,3 +283,136 @@ None. PO scoped fully. No questions remaining before dev start.
 6. `impact_summary` is hidden by default behind "Xem thêm" toggle.
 7. Cards with `decision_resume = null` (legacy rows) render without résumé strip, no layout regression.
 8. No English text in `decision_resume` values (language-boundary check).
+
+---
+
+## [Architect] Brownfield Findings
+
+**Architect task:** ARCH-FEAT-NEWS-DECISION-RESUME
+**Completed:** 2026-06-29T16:30Z
+**Zone:** multi — `apps/mcp-server/` (Hop 1) + `apps/frontend/` (Hop 2)
+**BUILD-STANDARD:** lean (existing services; no new microservice)
+**BUILD-STANDARD-REF:** docs/standards/microservice-build-standard.md
+
+---
+
+### Verified paths
+
+| FR | DDD Layer | File | Exact location |
+|---|---|---|---|
+| FR-1 builder | domain/services | `apps/mcp-server/src/domain/services/newsNormalizer.ts` | `AnalysisEntry` interface L34-67; `normalizeNews()` L833; `bullishMatched`/`bearishMatched` in scope at L872-873; return at L958 |
+| FR-2 schema | infrastructure | `apps/mcp-server/src/infrastructure/db/schema-news.ts` | ADD COLUMN pattern: L57 (`data_env`) and L64 (`body_text`) — identical idempotent try/catch; insert new line after L64 |
+| FR-2 INSERT | interface | `apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts` | `INSERT OR IGNORE INTO rag_analyses` prepared stmt L264-270; `.run(...)` positional params L275-295; currently 19 params |
+| FR-3 DTO | interface | `apps/mcp-server/src/interface/mcp/routes/newsSentimentHandler.ts` | `RagAnalysisRow` L74-87; `NewsSentimentItem` L90-102; `SELECT` L163-172; mapper return L190-202; header comment L37-44 |
+| FR-4 pill | interface | `apps/frontend/app/routes/dashboard.news.tsx` | `Sentiment` type L37; `SentimentPill` L131-152 |
+| FR-5 card | interface | `apps/frontend/app/routes/dashboard.news.tsx` | `NewsSentimentItem` L39-51; `NewsCard` L170-220; `impact_summary` inline para L201-205 |
+
+---
+
+### Reuse patterns
+
+- **ADD COLUMN migration** — established pattern at schema-news.ts L57+L64: `try { db.exec("ALTER TABLE rag_analyses ADD COLUMN <col> TEXT"); } catch { /* already exists */ }`. Append as the third rag_analyses ADD COLUMN block. **No UNIQUE** — plain TEXT nullable (project memory: ADD COLUMN UNIQUE is silent no-op on SQLite).
+- **Collapsible primitive** — `apps/frontend/app/components/ui/collapsible.tsx` exports `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` from `@radix-ui/react-collapsible`. Already used in the project (InfoCardExpand pattern). FR-5c wraps `impact_summary` in this exact primitive.
+- **DomainType import** — already imported in newsNormalizer.ts at L21 from `../../../bctc-schema.js`. The 17-entry translation table stays inside newsNormalizer.ts as a `const DOMAIN_VN_LABEL` — no new import needed.
+- **Existing test seam** — `apps/mcp-server/src/__tests__/TASK-17-news-sentiment-endpoint.test.ts` covers `queryNewsSentiment`. Its `insertRow()` helper at L72-80 uses an explicit column list (safe — doesn't break on new column). Dev must add a new AC to this file for `decision_resume` passthrough.
+
+---
+
+### Design decisions
+
+**D1 — `buildDecisionResume()` as a pure helper inside newsNormalizer.ts**
+New private function `buildDecisionResume(sentiment, level, affectedActions, affectedDomains, bullishMatched, bearishMatched): string | null` added to the domain helpers section (~L750-820 — below existing `computeImpactScore`/`computeConfidence`). Called at L955 (after reasoning, before return). No new imports. Stays within domain/services — no DDD violation.
+
+**D2 — `DOMAIN_VN_LABEL` as a const map in newsNormalizer.ts**
+`const DOMAIN_VN_LABEL: Partial<Record<string, string>>` with 17 FR-1 Note A entries. Using `Partial<Record<string, string>>` (not typed as `Record<DomainType, string>`) to enable the safe-fallback pattern: `DOMAIN_VN_LABEL[d] ?? null` — omit domain segment if unknown DomainType (per edge-case spec). Placed adjacent to the other domain-related constants.
+
+**D3 — Truncation function**
+`truncateAt120(s: string): string` — uses `s.slice(0, 120)` then `s.lastIndexOf(' ')` within the 120-char window to find the last word boundary. If no space found below limit, hard-cut at 120. Follows existing `truncateNewsSummary` pattern in `textUtils.ts` (adjacent file). Stays inline in newsNormalizer.ts (single use).
+
+**D4 — INSERT param count change (19 → 20)**
+The `INSERT OR IGNORE` at analysis.ts L264 uses positional `?` params. Dev adds `decision_resume` as the 20th column in the column list and `entry.decision_resume` (from `AnalysisEntry`) as the 20th param. The `AnalysisEntry` passed from `normalizeNews()` at L261 already carries the field after FR-1.
+
+**D5 — No changes to the pollNews write path**
+`analysis.ts` is the only writer that calls `normalizeNews()` and persists to `rag_analyses`. The pollNews scheduler writes via the same analysis tool call chain — no separate writer to update.
+
+**D6 — Frontend `parseNewsSentimentDto` passthrough**
+The existing `parseNewsSentimentDto` at dashboard.news.tsx L73-95 casts `raw as NewsSentimentDto` without field-by-field validation. After dev updates `NewsSentimentItem` to include `decision_resume: string | null`, the cast will carry the field through. No change needed to `parseNewsSentimentDto` itself.
+
+---
+
+### Risk flags
+
+| Risk | Severity | Detail |
+|---|---|---|
+| RISK-1 | LOW | `buildDecisionResume()` must use `bullishMatched` / `bearishMatched` from `normalizeNews()` scope. These are defined at L872-873 and are local vars — NOT exported. The helper is co-located inside newsNormalizer.ts so closure access is direct. No boundary issue. |
+| RISK-2 | LOW | `INSERT OR IGNORE` at analysis.ts L264: if `source_url` UNIQUE conflict causes the row to be skipped, `decision_resume` will never be written for that URL. This is correct and intentional — deduplication wins; the résumé is forfeit for the duplicate insert. |
+| RISK-3 | MEDIUM | TASK-17 test `insertRow()` helper currently includes an explicit 12-column INSERT. It does NOT include `decision_resume`. When dev adds the AC-NEW tests for `decision_resume` passthrough, the helper must be extended with an optional `decision_resume?: string | null` param. Failing to do so means the new ACs test a `null` path only — miss the non-null case. |
+| RISK-4 | LOW | Truncation edge case: if the composed résumé is exactly 120 chars, `lastIndexOf(' ')` inside `s.slice(0, 120)` may return the final char position — test must cover exactly-120 and 121+ cases to catch off-by-one. |
+| RISK-5 | LOW | After Hop 1 deploy + rebuild, all LEGACY rows have `decision_resume = NULL`. Hop 2 frontend must guard with `item.decision_resume != null && item.decision_resume.length > 0` — not `!!item.decision_resume` (empty string '' is falsy but the null check is sufficient per spec since the builder never emits empty-string, only null or a populated string). |
+
+---
+
+### Dev-hop split (for PM)
+
+**Hop 1 — `dev-mcp-server`** (FR-1 + FR-2 + FR-3)
+
+Files to create/modify:
+- MODIFY `apps/mcp-server/src/domain/services/newsNormalizer.ts`
+  - Add `decision_resume: string | null` to `AnalysisEntry` interface (~L67)
+  - Add `const DOMAIN_VN_LABEL` map after existing domain constants (~L820)
+  - Add `buildDecisionResume()` pure helper after `computeConfidence()` (~L820)
+  - Add `truncateAt120()` inline helper
+  - Call `buildDecisionResume()` inside `normalizeNews()` after reasoning (L950), add `decision_resume` to return object (L958)
+- MODIFY `apps/mcp-server/src/infrastructure/db/schema-news.ts`
+  - Append `try { db.exec("ALTER TABLE rag_analyses ADD COLUMN decision_resume TEXT"); } catch { /* already exists */ }` after the `body_text` block (~L65)
+- MODIFY `apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts`
+  - Add `decision_resume` to INSERT column list (~L266-270)
+  - Add `entry.decision_resume` to `.run(...)` positional params (~L295, becomes 20th param)
+- MODIFY `apps/mcp-server/src/interface/mcp/routes/newsSentimentHandler.ts`
+  - `RagAnalysisRow`: add `decision_resume: string | null` (~L87)
+  - SELECT: add `decision_resume` to column list (~L163-172)
+  - `NewsSentimentItem`: add `decision_resume: string | null` (~L101)
+  - mapper: add `decision_resume: row.decision_resume ?? null` (~L202)
+  - Header comment: fix `"positive" | "negative" | "neutral"` → `"bullish" | "bearish" | "neutral"` (~L37)
+- CREATE `apps/mcp-server/src/__tests__/FEAT-NEWS-DR-builder.test.ts`
+  - Unit tests for `buildDecisionResume()` — the 5 BA concrete examples (FR-1) + 5 edge cases (neutral→null, empty keywords defensive, >3 tickers cap, unknown domain, >120 char truncation)
+- MODIFY `apps/mcp-server/src/__tests__/TASK-17-news-sentiment-endpoint.test.ts`
+  - Extend `InsertParams` with optional `decision_resume?: string | null`
+  - Add `decision_resume` to `insertRow()` helper
+  - Add AC-NEW-1: non-null `decision_resume` in DB row passes through to DTO
+  - Add AC-NEW-2: null `decision_resume` in DB row → null in DTO item
+
+Deliverable gate (verify gate — contract-from-live-payload):
+```bash
+curl -s http://localhost:3000/api/news-sentiment | \
+  jq '[.items[] | select(.sentiment == "bullish" or .sentiment == "bearish")] | first | {sentiment, decision_resume}'
+```
+Expected: `{ "sentiment": "bullish"|"bearish", "decision_resume": "<VN string ≤120 chars>" }` (non-null for new rows only; legacy rows may still be null).
+
+Rebuild required: YES (container rebuild for mcp-server to execute ADD COLUMN migration).
+
+---
+
+**Hop 2 — `dev-frontend`** (FR-4 + FR-5) — sequential after Hop 1 + ops rebuild
+
+Files to create/modify:
+- MODIFY `apps/frontend/app/routes/dashboard.news.tsx` (single file, all FR-4 + FR-5 changes)
+  - `Sentiment` type (L37): `"positive" | "negative"` → `"bullish" | "bearish"`
+  - `NewsSentimentItem` (L39-51): add `decision_resume: string | null`
+  - `SentimentPill` (L131-152): replace `"positive"` branch with `"bullish"` (green), `"negative"` branch with `"bearish"` (red)
+  - `NewsCard` (L170-220):
+    - Add résumé strip BEFORE the title row `<div>` (L181): `{item.decision_resume ? <p className="text-xs font-semibold text-green-400 / text-red-400">{item.decision_resume}</p> : null}` — color driven by `item.sentiment`
+    - Wrap `impact_summary` paragraph (L201-205) in `Collapsible` / `CollapsibleTrigger` ("Xem thêm"/"Thu gọn") / `CollapsibleContent`; default collapsed; guard `item.impact_summary` non-null/non-empty
+
+Deliverable gate (live browser check):
+- `/dashboard/news` — bullish cards show green "Tích cực" pill + green résumé text above title
+- bearish cards show red "Tiêu cực" pill + red résumé text above title
+- impact_summary hidden behind "Xem thêm" toggle
+- Cards without résumé (legacy null rows) render identically to before (no layout shift)
+
+Rebuild required: YES (frontend SSR rebuild).
+
+---
+
+### Scan clean
+**true** ✓ — no DDD violations, no new imports across layer boundaries, no cross-service HTTP calls, no LLM calls.

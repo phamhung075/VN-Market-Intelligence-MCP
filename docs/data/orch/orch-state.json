@@ -244,10 +244,10 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-29T16:09:19Z",
-    "updated_by": "ba",
+    "updated_at": "2026-06-29T16:21:00Z",
+    "updated_by": "architect",
     "active_task_id": "FEAT-NEWS-DECISION-RESUME",
-    "next_agent": "agents-architect"
+    "next_agent": "pm"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
