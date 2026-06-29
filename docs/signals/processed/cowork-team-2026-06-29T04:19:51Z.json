@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-29T04:19:51Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 120
+    },
+    "last_fired_timestamp": "2026-06-29T04:19:40.993Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 6,
+    "signal_backlog": 0,
+    "note": "chef-intraday spawned (unified-agent, bg). tick-snapshot cache skipped (zero-blocker; agent falls back to direct get_cycle_bootstrap)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-29T04:19:51Z",
+  "_processed": {
+    "fingerprint": "b22df5b0af1aeb03e5bc1b04054ead46ca0f10bdf136a4a11d1c5911e0d64966",
+    "processedAt": "2026-06-29T04:47:13Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
