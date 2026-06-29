@@ -41,3 +41,24 @@ Tests: FEAT-NEWS-DR-builder.test.ts 11 cases GREEN; TASK-17 extended AC-NEW-1+2 
 Rebuild: YES — ops rebuild required for ADD COLUMN migration to execute on live named-volume DB.
 Commit: 3fb056de.
 Zone health: bun test 30/0, tsc clean, 166 tools unchanged, scheduler unchanged | HEALTHY
+
+## 2026-06-29 · DEFERRED-TASK-SCHEDULER-MVP — all 8 STs DONE (REVIEW)
+
+Sprint DEFERRED-TASK-SCHEDULER-MVP. Chain: ba→po(APPROVED)→pm→dev-mcp-server(this)→qa.
+PO directives D1/D2/D3 binding. Commit 588b1031.
+
+**ST-1+ST-3 (coordinationStore.ts):** Migration 4 — `scheduled_tasks` table. fire_at/deadline_at/created_at/fired_at = INTEGER epoch-seconds (AC-1). dedup_key UNIQUE in CREATE TABLE (AC-2 scar respected). 7-state CHECK enum. Atomic `claimDueScheduledTasks` helper + completeScheduledTask/expireScheduledTask/failScheduledTask/insertScheduledTask helpers.
+
+**ST-6 (agentTeamMap.ts):** Static AGENT_TEAM_MAP derived from agent-roster.md. `resolveAgentTeam()` returns null for unknown agents (fail-loud, AC-8). Declarative map — no switch statement.
+
+**ST-2 (scheduledTaskTools.ts):** 3 public tools (schedule_task, cancel_scheduled_task, list_scheduled_tasks) + 4 privileged gateway-only tools (claim_due, complete, expire, fail). D2 mechanism: helpers registered in server but absent from SKILL_MANIFEST packages. AC-9 honest Phase-2 caveat embedded in schedule_task description. AC-12: no orch-state.json write at insert.
+
+**ST-4 (registry.ts + agentBootstrap.ts):** 7 tools in registry; 3 public in dev_team + unified_coordinator packages only.
+
+**ST-5 (cowork-team/flow/main.md):** Step 0b.3 inserted after leader-lock WIN. JUMP-TO row added. Deadline gate, COWORK PRE-CLAIM (AC-5), DEV orch-apply.sh with --argjson (AC-6, AC-7). D3: always writes companion file docs/signals/one-shot-<id>.json. AC-4: recurring step, never a scheduled_task itself.
+
+**ST-7 (scheduledTasks.test.ts):** 23 tests, 0 failures. AC-1/AC-2/AC-3/AC-11 gates all pass. dedup idempotency, atomicity (two claims → only first wins), AC-8 resolveAgentTeam.
+
+**ST-8 (system.md):** Table schema, lifecycle, public/privileged surface, AGENT_TEAM_MAP, routing model, D2/D3/AC-9 documented.
+
+Zone health: bun tsc clean, 125 pass / 0 fail (core suite), toolCount=173 (168+7 new), scheduler=2 unchanged | HEALTHY
