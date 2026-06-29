@@ -1,5 +1,17 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-29 | **Sprint:** DEFERRED-TASK-SCHEDULER-MVP
+
+## DEFERRED-TASK-SCHEDULER-MVP · 2026-06-29
+
+Spec complete. REQ file: `docs/handoffs/BA-DEFERRED-SCHEDULER.md`. Zero PO blockers (design LOCKED per architect brief 2026-06-29). NEXT: po review then pm→dev-mcp-server→qa.
+
+Key BA findings: 8 STs all owned by dev-mcp-server. Domain entity = ScheduledTask (7-state lifecycle: pending→firing→fired/done/failed/expired/cancelled). Infrastructure = Migration 4 in coordinationStore.ts (coordination.db, same as task_locks — epoch-INTEGER cols, dedup_key UNIQUE in CREATE TABLE per AC-2 scar, 3 indexes). AGENT_TEAM_MAP sourced from system-map.json/agent-roster.md at startup (never hardcoded switch per AC-8). 3 MCP tools: schedule_task (fire_at XOR delay_seconds, idempotent dedup_key, honest Phase-2 caveat in description per AC-9, no orch-state write per AC-12), cancel_scheduled_task, list_scheduled_tasks (full audit fields per AC-10). Internal helpers not MCP-exposed: claim_due_scheduled_tasks, complete/expire/fail_scheduled_task. Cowork-team Step 0b.3 added after fire-election WIN: deadline gate → COWORK PRE-CLAIM spawn (task_kind=intent, deployed enum per AC-5) / DEV orch-apply.sh signal via --argjson bound vars (AC-6). No new task_kind on task_locks (AC-7). 3 advisory Q-non-blocking: Q1=done vs fired terminal (MVP=fired), Q2=claim_due_scheduled_tasks registration scope, Q3=long-prompt companion file threshold. G1/G2/G3 AT outlines mapped to 5 unit test assertions.
+
+Decision journal (task_id: BA-DEFERRED-SCHEDULER):
+- what-considered: "(A) claim_due_scheduled_tasks as MCP tool vs internal-only — brief says internal-only BUT Step 0b.3 calls it via call_tool; flagged as Q2 for dev-mcp-server to resolve registration scope. (B) done vs fired terminal state — CHECK enum has both; sweeper sets fired; Q1 flagged non-blocking; MVP uses fired as terminal. (C) All 12 ACs directly traceable to 8 STs — verified no AC is unassigned."
+- why-change: "no change from plan — design SSOT is the locked brief; spec faithfully transposes §c–h into FR/NFR/AT layers without deviation."
+
 **Last updated:** 2026-06-29 | **Sprint:** MARKET-INDICATOR-DEPTH-P0
 
 ## MARKET-INDICATOR-DEPTH-P0 · 2026-06-29

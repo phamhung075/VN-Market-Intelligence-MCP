@@ -244,10 +244,10 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-29T21:00:00Z",
+    "updated_at": "2026-06-29T21:05:00Z",
     "updated_by": "ba",
     "active_task_id": "BA-DEFERRED-SCHEDULER",
-    "next_agent": "ba"
+    "next_agent": "po"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1192,11 +1192,13 @@
           "AC-11",
           "AC-12"
         ],
-        "next_agent": "ba",
+        "next_agent": "po",
         "chain": "ba -> po(review) -> pm -> dev-mcp-server -> qa (architect: DONE — brief 2026-06-29)",
         "zone": "multi",
         "po_signoff": "PENDING",
-        "created_at": "2026-06-29T20:33:25Z"
+        "created_at": "2026-06-29T20:33:25Z",
+        "req_spec": "docs/handoffs/BA-DEFERRED-SCHEDULER.md",
+        "ba_handoff_at": "2026-06-29T21:05:00Z"
       }
     ]
   },
@@ -7961,6 +7963,26 @@
         "done_at": "2026-06-29T18:54:08Z",
         "updated_by": "qa",
         "updated_at": "2026-06-29T18:54:08Z"
+      },
+      {
+        "id": "BA-DEFERRED-SCHEDULER",
+        "title": "Requirement spec for DEFERRED-TASK-SCHEDULER-MVP — at(1) one-shot scheduler (verify-loop MVP) from architect brief 2026-06-29",
+        "owner": "ba",
+        "status": "REVIEW",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "zone": "docs/agents/",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "next_agent": "po",
+        "depends": [],
+        "note": "Write the REQ spec from docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md (architect DONE — design is LOCKED, do NOT relitigate table/tools/routing). The 8 implementation subtasks are already minted as backlog rows DTS-ST1..DTS-ST8 (all -> dev-mcp-server); the spec restates them, maps AC-1..AC-12 onto each, and restates the 3 G1/G2/G3 end-to-end use cases. Scope: verify-loop MVP ONLY — Phase-2 (headless launchd 24/7 sweeper, adaptive self-rescheduling, terminal-row pruning, firing-state recovery) is explicitly OUT. system-auditor = DEV/signal (confirmed). Chain: ba -> po(review) -> pm -> dev-mcp-server -> qa.",
+        "verification_gate": "REQ doc covers all 8 STs, maps AC-1..AC-12 to the STs as blocking gates, restates G1/G2/G3 use cases, and states Phase-2 scope_out explicitly.",
+        "brief": "docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md",
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z",
+        "started_at": "2026-06-29T21:00:00Z",
+        "completed_at": "2026-06-29T21:05:00Z",
+        "handoff": "docs/handoffs/BA-DEFERRED-SCHEDULER.md"
       }
     ],
     "done_verified": [],
@@ -7972,26 +7994,7 @@
       "updated_by": "dev-pdf-extractor",
       "updated_at": "2026-06-28T12:45:00Z"
     },
-    "in_progress": [
-      {
-        "id": "BA-DEFERRED-SCHEDULER",
-        "title": "Requirement spec for DEFERRED-TASK-SCHEDULER-MVP — at(1) one-shot scheduler (verify-loop MVP) from architect brief 2026-06-29",
-        "owner": "ba",
-        "status": "IN_PROGRESS",
-        "type": "SPRINT-M",
-        "priority": "high",
-        "zone": "docs/agents/",
-        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "next_agent": "ba",
-        "depends": [],
-        "note": "Write the REQ spec from docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md (architect DONE — design is LOCKED, do NOT relitigate table/tools/routing). The 8 implementation subtasks are already minted as backlog rows DTS-ST1..DTS-ST8 (all -> dev-mcp-server); the spec restates them, maps AC-1..AC-12 onto each, and restates the 3 G1/G2/G3 end-to-end use cases. Scope: verify-loop MVP ONLY — Phase-2 (headless launchd 24/7 sweeper, adaptive self-rescheduling, terminal-row pruning, firing-state recovery) is explicitly OUT. system-auditor = DEV/signal (confirmed). Chain: ba -> po(review) -> pm -> dev-mcp-server -> qa.",
-        "verification_gate": "REQ doc covers all 8 STs, maps AC-1..AC-12 to the STs as blocking gates, restates G1/G2/G3 use cases, and states Phase-2 scope_out explicitly.",
-        "brief": "docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md",
-        "created_by": "po",
-        "created_at": "2026-06-29T20:33:25Z",
-        "started_at": "2026-06-29T21:00:00Z"
-      }
-    ],
+    "in_progress": [],
     "ready": [
       {
         "id": "TASK_1997",
