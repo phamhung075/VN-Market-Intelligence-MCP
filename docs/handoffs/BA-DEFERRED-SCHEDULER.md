@@ -519,4 +519,46 @@ The following items are noted as implicit/advisory (dev-mcp-server should confir
 | ST-8 | `docs/architecture/microservice/mcp-server/` | dev-mcp-server | ST-2 | AC-9 |
 
 **PO sign-off status:** APPROVED 2026-06-29T20:56:06Z (see §0.1 PO Review Directives D1/D2/D3)
-**Next in chain:** pm (atomic task breakdown) → dev-mcp-server → qa
+**Next in chain:** pm (atomic task breakdown) → dev-mcp-server → **qa**
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/coordinationStore.ts` — ST-1 Migration 4 DDL + ST-3 internal helpers (+350L)
+  - `apps/mcp-server/src/interface/mcp/tools/system/scheduledTaskTools.ts` — ST-2 7 MCP tools (NEW, +380L)
+  - `apps/mcp-server/src/interface/mcp/tools/system/agentTeamMap.ts` — ST-6 AGENT_TEAM_MAP (NEW, +75L)
+  - `apps/mcp-server/src/interface/mcp/tools/registry.ts` — ST-4 register scheduledTaskTools (+2L)
+  - `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts` — ST-4 add 3 public tools to dev_team + unified_coordinator (+9L)
+  - `docs/agents/cowork-team/flow/main.md` — ST-5 Step 0b.3 inline + JUMP-TO row (+60L)
+  - `docs/architecture/microservice/mcp-server/system.md` — ST-8 full DTS section (+70L)
+  - `docs/data/tool-registry.json` — regenerated (173 tools)
+  - `docs/data/project-stats.json` — toolCount 166→173
+  - `docs/data/orch/orch-state.json` — all DTS-ST* DONE, head→qa
+- **Tests written:** `apps/mcp-server/src/__tests__/scheduledTasks.test.ts` — 23 assertions, all GREEN
+- **Git commits:** 588b1031, 4847cab1
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test:** 125 pass / 0 fail (core coordination + registry + scheduled-tasks suite)
+- **Tool count:** 173 tools — 168 old + 7 new (+3 public, +4 privileged gateway-only)
+- **Scheduler count:** 2 cron.schedule entries — unchanged
+- **Docs updated:** `docs/architecture/microservice/mcp-server/system.md` — new DTS section | `docs/agents/cowork-team/flow/main.md` — Step 0b.3
+- **AC gate coverage:**
+  - AC-1: fire_at = INTEGER (verified in test: typeof(fire_at)='integer')
+  - AC-2: dedup_key UNIQUE in CREATE TABLE sql (verified in test: sqlite_master sql contains UNIQUE)
+  - AC-3: deadline expiry — fire_at=now-10,deadline_at=now-5 → expires not routes (test passes)
+  - AC-4: Step 0b.3 is inside recurring */15 cron in cowork-team flow doc
+  - AC-5: COWORK path claims intent:one-shot:<id> (task_kind=intent) in step 0b.3 doc
+  - AC-6: DEV path uses orch-apply.sh with --argjson bound vars (doc + code)
+  - AC-7: no new task_kind on task_locks (reuses intent + sprint-task)
+  - AC-8: AGENT_TEAM_MAP sourced from roster; unknown agent → error (test passes)
+  - AC-9: Phase-2 caveat in schedule_task description
+  - AC-10: list_scheduled_tasks returns sweep_tick/fired_at/error/status (test passes)
+  - AC-11: terminal set = {fired,failed,expired,cancelled} (tests pass; fired is D1 success state)
+  - AC-12: schedule_task writes only scheduled_tasks (no orch-state.json write at insert)
+  - D1: terminal success = 'fired'; done reserved for Phase-2; no mark_task_done tool
+  - D2: 4 helpers registered in server (gateway-reachable by sweeper) but absent from public SKILL_MANIFEST packages
+  - D3: DEV signal path ALWAYS writes companion file docs/signals/one-shot-<id>.json, payload_ref set, full prompt never in summary
+- **Graphify:** skipped (no SSOT knowledge-graph docs impacted)
