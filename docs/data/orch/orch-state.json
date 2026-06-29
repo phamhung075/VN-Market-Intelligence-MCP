@@ -7384,21 +7384,8 @@
     "in_progress": [],
     "ready": [
       {
-        "id": "TASK_1996",
-        "status": "READY",
-        "type": "FIX",
-        "size": "S",
-        "owner": "agent-father",
-        "zone": "cross-service",
-        "priority": "high",
-        "sprint": "FB-COWORK-FOLD",
-        "created_at": "2026-06-29T16:22:56Z",
-        "title": "Add fb-daily + fb-weekend slots to cowork-schedule.json + add fb-market-poster to cowork-team Team Boundary",
-        "note": "FILES: docs/data/cowork-schedule.json (.slots[] append 2) + docs/agents/cowork-team/flow/main.md (Team Boundary line 9 scheduled list). SLOT fb-daily: cron=\"15 9 * * 1-5\" (09:15 UTC/16:15 VN), agent=agent_id=fb-market-poster, parallel_group=fb-poster, flow_path=docs/agents/fb-market-poster/flow/main.md, trigger_prompt=\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily\", dish_type=fb_daily_post, guaranteed=true, policy_id=null, depends_on=\"chef-eod 08:45 UTC + 30min\", enabled=true, last_fired=null, trigger_id=null. SLOT fb-weekend: cron=\"13 13 * * 6,0\" (13:13 UTC/20:13 VN; minute shifted from :07 so it lands in a */15 dispatcher tick — dispatcher only wakes :00/:15/:30/:45 and matches cron-minute within +/-2 of floored 15-min tick), dish_type=fb_weekly_post, guaranteed=true, policy_id=null, depends_on=null, rest same. MODE ROUTER in fb main.md self-routes VN_DOW (1-5 DAILY / 6 RECAP / 0 PREDICTION) — slot param is informational. Matcher comma-DOW 6,0 verified supported (cowork-match-slots.js field()). Invoke agent-md-factory skill. cowork-schedule.json is agent-father-maintained."
-      },
-      {
         "id": "TASK_1997",
-        "status": "READY",
+        "status": "DONE",
         "type": "FIX",
         "size": "S",
         "owner": "agent-father",
@@ -7489,6 +7476,20 @@
         "handoff": "docs/handoffs/TASK-FFT-L4.md",
         "completed_at": "2026-06-27T21:25:00Z",
         "next": "qa"
+      },
+      {
+        "id": "TASK_1996",
+        "status": "REVIEW",
+        "type": "FIX",
+        "size": "S",
+        "owner": "agent-father",
+        "zone": "cross-service",
+        "priority": "high",
+        "sprint": "FB-COWORK-FOLD",
+        "created_at": "2026-06-29T16:22:56Z",
+        "title": "Add fb-daily + fb-weekend slots to cowork-schedule.json + add fb-market-poster to cowork-team Team Boundary",
+        "note": "FILES: docs/data/cowork-schedule.json (.slots[] append 2) + docs/agents/cowork-team/flow/main.md (Team Boundary line 9 scheduled list). SLOT fb-daily: cron=\"15 9 * * 1-5\" (09:15 UTC/16:15 VN), agent=agent_id=fb-market-poster, parallel_group=fb-poster, flow_path=docs/agents/fb-market-poster/flow/main.md, trigger_prompt=\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily\", dish_type=fb_daily_post, guaranteed=true, policy_id=null, depends_on=\"chef-eod 08:45 UTC + 30min\", enabled=true, last_fired=null, trigger_id=null. SLOT fb-weekend: cron=\"13 13 * * 6,0\" (13:13 UTC/20:13 VN; minute shifted from :07 so it lands in a */15 dispatcher tick — dispatcher only wakes :00/:15/:30/:45 and matches cron-minute within +/-2 of floored 15-min tick), dish_type=fb_weekly_post, guaranteed=true, policy_id=null, depends_on=null, rest same. MODE ROUTER in fb main.md self-routes VN_DOW (1-5 DAILY / 6 RECAP / 0 PREDICTION) — slot param is informational. Matcher comma-DOW 6,0 verified supported (cowork-match-slots.js field()). Invoke agent-md-factory skill. cowork-schedule.json is agent-father-maintained.",
+        "reviewed_at": "2026-06-29T00:00:00Z"
       }
     ],
     "qa": [],

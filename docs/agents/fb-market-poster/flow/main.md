@@ -1,4 +1,4 @@
-<!-- size-justification: ~875L — +35L from 840L: PRIVACY-GUARD: added PRIVACY GUARD section (SSOT for all 3 modes) + STEP 4c privacy-leakage gate; prior entry preserved — +26L from 814L: MODE-ROUTER-3WAY: added MODE ROUTER section (Mon-Fri=DAILY/Sat=WEEKLY_RECAP/Sun=WEEKLY_PREDICTION), updated Input to 09:15 UTC/16:15 VN weekdays + 13:07 UTC/20:07 VN weekends, updated description for 3-mode operation, added Mode:DAILY to STEP 8 notebook format and RETURN block; prior entry preserved — +56L from 758L: FIX-FB-POSTER-MISSING-FLOW-FX-TA: (a) STEP 1b foreign-flow disambiguated: get_market_foreign_flow(arguments={}) is MARKET-WIDE tool (no code param) for Khối ngoại recap line; per-ticker get_foreign_flow only for deep dives — NOT for recap; (b) gateway-blind premise removed: agent MUST execute STEP 1b live every run; if genuinely gateway-blind (mcpServers==0) must report per-field explicitly, NOT silently omit; (c) foreign-flow+macro/FX+TA promoted to hard-required-live tier alongside price spine (same tier as get_market_snapshot); blanket "công cụ chưa lấy được" for all three FORBIDDEN — per-field honest-gap only; FX flat/stale (usdVndDelta=null) = "đi ngang/chưa cập nhật" NOT "unfetchable"; (d) STEP 4b gate-loop bounded: max 2 fix rounds; after 2 fails → honest-gap + proceed or EXIT — never infinite-loop; prior size-justification entries preserved -->
+<!-- size-justification: ~907L — +25L from 882L: TASK_1997-DEDUP-GATE: added STEP 0a publish-once dedup gate (task_kind=cowork-slot, key=published:fb-daily:<VN-DATE>, ttl_seconds=100800) before log_agent_work in STEP 0; guards against double-fire when standalone crons and cowork slots briefly overlap; prior entry preserved — +35L from 840L: PRIVACY-GUARD: added PRIVACY GUARD section (SSOT for all 3 modes) + STEP 4c privacy-leakage gate; prior entry preserved — +26L from 814L: MODE-ROUTER-3WAY: added MODE ROUTER section (Mon-Fri=DAILY/Sat=WEEKLY_RECAP/Sun=WEEKLY_PREDICTION), updated Input to 09:15 UTC/16:15 VN weekdays + 13:07 UTC/20:07 VN weekends, updated description for 3-mode operation, added Mode:DAILY to STEP 8 notebook format and RETURN block; prior entry preserved — +56L from 758L: FIX-FB-POSTER-MISSING-FLOW-FX-TA: (a) STEP 1b foreign-flow disambiguated: get_market_foreign_flow(arguments={}) is MARKET-WIDE tool (no code param) for Khối ngoại recap line; per-ticker get_foreign_flow only for deep dives — NOT for recap; (b) gateway-blind premise removed: agent MUST execute STEP 1b live every run; if genuinely gateway-blind (mcpServers==0) must report per-field explicitly, NOT silently omit; (c) foreign-flow+macro/FX+TA promoted to hard-required-live tier alongside price spine (same tier as get_market_snapshot); blanket "công cụ chưa lấy được" for all three FORBIDDEN — per-field honest-gap only; FX flat/stale (usdVndDelta=null) = "đi ngang/chưa cập nhật" NOT "unfetchable"; (d) STEP 4b gate-loop bounded: max 2 fix rounds; after 2 fails → honest-gap + proceed or EXIT — never infinite-loop; prior size-justification entries preserved -->
 # FB Market Poster — Main Flow
 
 ## SELF-IDENTITY GUARD (read first — non-negotiable)
@@ -79,6 +79,40 @@ Capture cycle start anchor:
 ```
 CYCLE_START_UTC = date -u +"%Y-%m-%dT%H:%M:%SZ"
 ```
+
+**STEP 0a — Publish-once dedup gate (DAILY path)**
+
+Before starting expensive data-gathering, claim a date-keyed published marker. Guards against double-fire when standalone crons and cowork slots (`fb-daily`) briefly overlap, and ensures any re-spawn of the same tick is a no-op.
+
+```
+# VN_DATE = today's calendar date in VN timezone (UTC+7).
+# Derive from CYCLE_START_UTC: add 7 hours, take the YYYY-MM-DD date part.
+# e.g. CYCLE_START_UTC="2026-06-29T02:15:00Z" → VN="2026-06-29T09:15:00+07" → VN_DATE="2026-06-29"
+VN_DATE   = date part of (CYCLE_START_UTC + 7h)          # YYYY-MM-DD in UTC+7
+DEDUP_KEY = "published:fb-daily:" + VN_DATE              # e.g. "published:fb-daily:2026-06-29"
+
+DEDUP_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  "task_id":              DEDUP_KEY,
+  "task_kind":            "cowork-slot",
+  "owner_agent":          "fb-market-poster",
+  "owner_client_session": $CLAUDE_CODE_SESSION_ID,
+  "ttl_seconds":          100800
+})
+```
+
+- `claimed: true` → first run for this VN date → proceed to `Log cycle start` below.
+- `claimed: false` → already published today → send WORK notification and EXIT cleanly (no re-post, no data gathering):
+
+```
+if DEDUP_CLAIM.claimed != true:
+  call_tool(server="vn-market", tool="send_telegram", arguments={
+    "channel": "work",
+    "message": "[fb-market-poster] dedup: already published for " + VN_DATE + " (slot=fb-daily) — skipping re-run"
+  })
+  EXIT with: "DONE: duplicate-daily-fb-post blocked | already published for date=" + VN_DATE + " | PIPELINE: no-op"
+```
+
+**Weekend note:** WEEKLY_RECAP and WEEKLY_PREDICTION modes jump to their sub-flows via the MODE ROUTER BEFORE reaching STEP 0. Their equivalent dedup key uses `published:fb-weekend:<VN-DATE>` and is inserted in the respective sub-flows (weekly-recap.md / weekly-prediction.md) — not here.
 
 Log cycle start:
 ```
