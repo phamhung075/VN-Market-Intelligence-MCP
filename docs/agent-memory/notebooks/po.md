@@ -1,25 +1,24 @@
 # PO Notebook
 
-_Last: 2026-06-29T19:02Z_
+_Last: 2026-06-29T20:18Z_
 
-## This cycle — RECURRING-BUG-ESCALATION: notebook self-cap (DEDUP, no new task)
+## This cycle — KICKOFF: MARKET-INDICATOR-DEPTH-P0 (verified indicator roadmap → first sprint)
 
-QA raised recurring-bug-escalation during FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L gate (PASSED, commit 80dc0e18). 2 point-patches in 2 days, same root (qa 57916170 06-28; cmh 80dc0e18 06-29) → memory rule "2+ same-module → escalate to DESIGN, not a 3rd patch" tripped.
+User directive: "more indices / deeper analysis so the helper (analyst) agents analyze better." A VERIFIED 56-agent gap analysis (supply-vs-demand mapped, every proposal adversarially checked vs the STANDING no-fake-data rule + VN data reachability) was already done — NOT re-done.
 
-**DECISION = SINGLE SYSTEMIC SWEEP, dedup'd into existing anchor — NO new task minted.**
-The board already carried `HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING` (backlog, P2) whose `dedup_anchor_for` is exactly "recurring-agent-notebook-200L-breach". Minting a parallel sweep = SSOT dup. Instead PROMOTED + EXTENDED it.
+**Persisted roadmap** → `docs/roadmaps/vn-market-indicator-roadmap.md` (new dir). 37 kept / 2 dropped; §3 P0/P1/P2, §4 DO-NOT-BUILD (fabrication-risk), §5 first sprint.
 
-**RAW-verified the two diagnoses are COMPLEMENTARY (both halves needed):**
-- MEMBERSHIP gap (router): pm(283L ACTIVE), fixer, tran-ngoc-bau, code-janitor, ba, agent-father, alert-commander, architect are NOT in SKILL.md AC-6 APPEND list.
-- ENFORCEMENT gap (existing task): dev-pdf-extractor IS registered yet breached 203L → AC-5 is advisory prose, so even registered agents ship over-cap.
+**Kicked off `MARKET-INDICATOR-DEPTH-P0`** (sprint_goal.entries + board, one atomic orch-apply write):
+- Sprint-0 OHLCV backfill (450-row queue exists; ~2yr daily bars VN-Index+watchlist via VPS dchart) = the single unlock for all † items.
+- 5 P0 in order: Volatility Primitives (dev-technical-analysis) → Foreign-Room Saturation (dev-stock-price+mcp) → SBV OMO Curve (dev-macro) → News-Sentiment Z (dev-rag/mcp) → Insider Net Sentiment (dev-mcp) + Breadth Time-Series (forward-accruing, accruing_since, NO backfill).
+- BA task `BA-INDICATOR-DEPTH-P0` → ready[]; head→ba; **FULL cascade IN EFFECT** (gate NOT lifted — genuinely new features; po_signoff PENDING BA spec review).
+- 21 backlog rows minted PLAN-ONLY: `IND-ROADMAP-LEDGER` + 16 `IND-P1-*` + 4 `IND-P2-*`. † items carry gated note (no depends array → no dangling ref). Fear&Greed = build-last. Rejected items NOT on board (roadmap §4 only).
 
-**Extended sweep_scope (4 parts):** (1) AUDIT all notebook writers; (2) BATCH-REGISTER unregistered into class across BOTH SSOTs in ONE change; (3) AC-5 advisory→BLOCKING + headless PostToolUse hook backstop (auto drop-oldest ≤200L even if a flow forgot — auto-caps pm.md 283L on next write, so NO separate prune, NO per-agent point-patch); (4) GUARD/fence: fail loud if any notebook-writing flow is in NEITHER class. recurrence_count→8.
-
-**Routed through architect (design pass) FIRST** — architect is policy owner of file-size-caps.json; cascade architect→agent-father(impl)→qa.
-
-**Board delta:** HARDEN backlog→ready (P2→P1, next_agent=architect); head idle→in_progress(architect, active=HARDEN). PIPELINE: 1 dispatch pending (architect).
+**Lessons applied:** no-fake-data (every FR computed from on-hand/already-fetched only) · orch-apply gated write (jq bug: `$ids|index(.id)` rebinds `.` to the array → bound the row first) · sprint-kickoff full-cascade vs composition-only gate-lift.
 
 ---
 ## Carry-over
-- FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L DONE 80dc0e18 (the 2nd point-patch that tripped this escalation).
-- FIX-DRAIN-SIGNALS-DEDUP-PRUNE-STRCOMPARE + FIX-COORD-WAL-CHECKPOINT (06-28 BATCH) — router-tracked.
+- NEXT: ba writes the requirement spec (ready[] BA-INDICATOR-DEPTH-P0); returns to PO for review (po/review-ba-spec.md) before architect.
+- Sprint umbrella lock `task:MARKET-INDICATOR-DEPTH-P0` claimed (sprint-task, ttl 3600).
+- 3 pre-existing intra-backlog dup ids (FIX-FB-GATE-* / FIX-FB-JARGON-*) — NOT mine, separate triage.
+- HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING (prior cycle) — router-tracked.
