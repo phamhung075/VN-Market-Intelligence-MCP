@@ -102,3 +102,19 @@ Zone health: tsc clean, 48/0 OHLCV cluster, toolCount=166 unchanged, schedulerCo
 - MOD: `registry.ts` — +1 registerForeignRoomTools
 
 Zone health: tsc clean, 31/0 new tests, toolCount=174 (+1), schedulerCount=3 unchanged | HEALTHY
+
+## 2026-06-30 — P0-4-MARKET-SENTIMENT-INDEX → REVIEW
+
+**Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
+**Commit:** 51b9e0b7
+
+- NEW: `domain/services/news-analysis/marketSentimentCalculator.ts` — pure domain: computeDailyScores, computeZScores (HARD: null+INSUFFICIENT <21d), computeEMA5d (alpha=1/3, null <5d), computeDispersion5d, computeArticleSpike
+- NEW: `infrastructure/db/marketSentimentStore.ts` — READ-ONLY getRagRowsForWindow (no writes, no try/catch — errors propagate to tool handler)
+- NEW: `application/usecases/getMarketSentimentIndex.ts` — orchestration; news_sentiment_z = z_60d ?? z_90d; history_quality always present; nowDate injection for tests
+- NEW: `interface/mcp/tools/news-analysis/marketSentimentTools.ts` — MCP tool `get_market_sentiment_index` (#177)
+- NEW: `__tests__/P0-4-market-sentiment-index.test.ts` — 36 tests (12 ACs), 0 fail
+- MOD: `schema-news.ts` — covering index `idx_rag_sentiment_covering` (created_at DESC, sentiment, confidence, impact_score) per NFR-P04-2
+- MOD: `registry.ts` — +1 registerMarketSentimentTools
+
+Zone health: tsc clean (EXIT 0), 36/0 new tests, 175/0 sentiment cluster, toolCount=175 (+1), no cron added | HEALTHY
