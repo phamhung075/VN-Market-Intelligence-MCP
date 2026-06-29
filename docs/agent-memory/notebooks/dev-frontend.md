@@ -1,6 +1,19 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-28 | **Sprint:** FRONTEND-ANALYSIS-HUB-CONSOLIDATION
+**Last updated:** 2026-06-29 | **Sprint:** FEAT-NEWS-DECISION-RESUME
+
+---
+
+## Session: 2026-06-29 (TASK-FEAT-NEWS-DR-HOP2 — decision résumé strip + SentimentPill remap)
+
+RESUMED after killed vitest step. Prior edits confirmed on disk and complete; no re-edits needed.
+
+FR-4: `type Sentiment = "bullish"|"bearish"|"neutral"|null`; SentimentPill green/red/grey (fixes live all-grey bug).
+FR-5: `decision_resume: string|null` on `NewsSentimentItem`; `NewsCard` renders résumé skim-first above title (null→omit); `impact_summary` wrapped in Collapsible default-collapsed ("Xem thêm"/"Thu gọn"); source link preserved.
+Test Suite 8 added: AC-NEW-1, AC-NEW-2, bearish passthrough, ITEM_WITH_CHIPS — 27/27 GREEN.
+tsc: 0 errors. Commits: `5dbd9c2c` (feat), `02a2131f` (orch-state). Task TASK-FEAT-NEWS-DR-HOP2: REVIEW.
+
+Zone health: 77+ test files; 27 new tests added this session; tsc 0 errors; Tier 4 news route complete | HEALTHY
 
 ---
 
