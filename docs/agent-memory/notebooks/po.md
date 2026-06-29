@@ -1,24 +1,23 @@
 # PO Notebook
 
-_Last: 2026-06-29T20:18Z_
+_Last: 2026-06-29T20:33Z_
 
-## This cycle — KICKOFF: MARKET-INDICATOR-DEPTH-P0 (verified indicator roadmap → first sprint)
+## This cycle — DECOMPOSE: DEFERRED-TASK-SCHEDULER-MVP (architect→po cascade)
 
-User directive: "more indices / deeper analysis so the helper (analyst) agents analyze better." A VERIFIED 56-agent gap analysis (supply-vs-demand mapped, every proposal adversarially checked vs the STANDING no-fake-data rule + VN data reachability) was already done — NOT re-done.
+APPROVED architect brief (`docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md`, 626L, design LOCKED with user — NOT relitigated). Decomposed into a verify-loop MVP sprint in ONE atomic orch-apply write:
 
-**Persisted roadmap** → `docs/roadmaps/vn-market-indicator-roadmap.md` (new dir). 37 kept / 2 dropped; §3 P0/P1/P2, §4 DO-NOT-BUILD (fabrication-risk), §5 first sprint.
+- **sprint_goal.entries** += `DEFERRED-TASK-SCHEDULER-MVP` (next_agent=ba; chain ba→po(review)→pm→dev-mcp-server→qa, architect DONE; 12 ac_gates; Phase-2 OUT).
+- **ready[]** += `BA-DEFERRED-SCHEDULER` (ba writes REQ spec).
+- **backlog[]** += 8 ST rows `DTS-ST1..ST8` (all → dev-mcp-server), depends DAG: ST-1 → {ST-3, ST-6} → ST-2 → {ST-4, ST-5, ST-7, ST-8}. Serialized on coordinationStore.ts file-overlap.
+- **AC-1..AC-12 mapped onto STs** as blocking QA gates (union verified = all 12 covered).
 
-**Kicked off `MARKET-INDICATOR-DEPTH-P0`** (sprint_goal.entries + board, one atomic orch-apply write):
-- Sprint-0 OHLCV backfill (450-row queue exists; ~2yr daily bars VN-Index+watchlist via VPS dchart) = the single unlock for all † items.
-- 5 P0 in order: Volatility Primitives (dev-technical-analysis) → Foreign-Room Saturation (dev-stock-price+mcp) → SBV OMO Curve (dev-macro) → News-Sentiment Z (dev-rag/mcp) → Insider Net Sentiment (dev-mcp) + Breadth Time-Series (forward-accruing, accruing_since, NO backfill).
-- BA task `BA-INDICATOR-DEPTH-P0` → ready[]; head→ba; **FULL cascade IN EFFECT** (gate NOT lifted — genuinely new features; po_signoff PENDING BA spec review).
-- 21 backlog rows minted PLAN-ONLY: `IND-ROADMAP-LEDGER` + 16 `IND-P1-*` + 4 `IND-P2-*`. † items carry gated note (no depends array → no dangling ref). Fear&Greed = build-last. Rejected items NOT on board (roadmap §4 only).
+**Open decision RULED:** system-auditor = **DEV(signal)** (confirmed brief default). It is excluded from the cowork-team dispatcher (Team Boundary) → spawning directly would violate it; G3 re-probe drains as a DEV signal_queue row, PO triage decides probe. No deviation.
 
-**Lessons applied:** no-fake-data (every FR computed from on-hand/already-fetched only) · orch-apply gated write (jq bug: `$ids|index(.id)` rebinds `.` to the array → bound the row first) · sprint-kickoff full-cascade vs composition-only gate-lift.
+**Lessons applied:** orch-apply gated write (jq builder in `-f` file — inline single-quote broke on embedded SQL `status='pending'`/`'integer'`) · WIP-respect = coding lane (dev-mcp-server in_progress=0; all STs BACKLOG, not force-promoted) · no new task_kind (reuse sprint-task election + intent PRE-CLAIM, both deployed).
 
 ---
 ## Carry-over
-- NEXT: ba writes the requirement spec (ready[] BA-INDICATOR-DEPTH-P0); returns to PO for review (po/review-ba-spec.md) before architect.
-- Sprint umbrella lock `task:MARKET-INDICATOR-DEPTH-P0` claimed (sprint-task, ttl 3600).
-- 3 pre-existing intra-backlog dup ids (FIX-FB-GATE-* / FIX-FB-JARGON-*) — NOT mine, separate triage.
-- HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING (prior cycle) — router-tracked.
+- NEXT: ba writes REQ spec for DEFERRED-TASK-SCHEDULER-MVP (ready[] BA-DEFERRED-SCHEDULER) → returns to PO review.
+- Two active BA sprints now: BA-INDICATOR-DEPTH-P0 (prior) + BA-DEFERRED-SCHEDULER — distinct intents, router serializes.
+- 90 pre-existing orch coherence warnings (status-in-lane drift, other sprints) — NOT mine; non-blocking.
+- Phase-2 horizons (headless 24/7 sweeper, adaptive retry, terminal-row prune, firing-recovery) explicitly scope_out.

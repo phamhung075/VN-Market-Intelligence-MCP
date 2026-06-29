@@ -860,7 +860,7 @@
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
-    "_updated_at": "2026-06-29T20:18:44Z",
+    "_updated_at": "2026-06-29T20:33:25Z",
     "_updated_by": "po",
     "entries": [
       {
@@ -1164,11 +1164,44 @@
         "zone": "multi",
         "po_signoff": "PENDING",
         "created_at": "2026-06-29T20:18:44Z"
+      },
+      {
+        "sprint_id": "DEFERRED-TASK-SCHEDULER-MVP",
+        "status": "active",
+        "priority": "high",
+        "created_by": "po",
+        "origin": "architect_brief",
+        "vision": "Give the fleet an at(1) one-shot deferred-task primitive complementing the recurring crons: any agent schedules a single deadline-bounded job addressed to a target agent's team, fired exactly once by the cowork-team */15 sweeper then forgotten — closing the result-verify (G1), future-info (G2), and bug-re-probe (G3) gaps a recurring cron cannot represent.",
+        "scope_in": "Verify-loop MVP, all 8 STs -> dev-mcp-server: (ST-1) Migration 4 scheduled_tasks table in coordination.db (epoch-INTEGER cols, dedup_key UNIQUE in CREATE TABLE, status CHECK enum, 3 indexes); (ST-3) claim_due_scheduled_tasks atomic pending->firing claim + internal complete/expire helpers; (ST-6) AGENT_TEAM_MAP sourced from system-map.json/agent-roster.md (fail-loud, never hardcoded); (ST-2) 3 MCP tools schedule_task/cancel_scheduled_task/list_scheduled_tasks; (ST-4) bootstrap allowlist registration; (ST-5) cowork-team Step 0b.3 sweeper (deadline gate, COWORK PRE-CLAIM spawn, DEV orch-apply.sh signal — addressed-not-picked routing); (ST-7) tests; (ST-8) microservice doc.",
+        "scope_out": "Phase-2 horizons NOT built: headless launchd 24/7 sweeper (one-shots fire only while the cowork loop is live — honest caveat carried in the tool description); adaptive retry / self-rescheduling; replacing fixed crons with scheduled_tasks; firing-state recovery sweeper; automatic terminal-row pruning (>14d). No new task_kind on task_locks (reuses sprint-task fire-election + intent PRE-CLAIM — both already in the deployed enum).",
+        "success_metric": "schedule_task/cancel/list callable via gateway; a scheduled one-shot fires exactly once through cowork-team Step 0b.3 into the correct team intake (COWORK spawn via PRE-CLAIM intent gate / DEV signal via orch-apply.sh); deadline-past rows expire without firing; all 12 AC RAW-live-verified by QA against the live server; unit tests green.",
+        "brief": "docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md",
+        "signal": "docs/signals/deferred-task-scheduler-20260629T201845Z.json",
+        "system_auditor_ruling": "CONFIRMED DEV(signal) per brief default — system-auditor is excluded from the cowork-team dispatcher (Team Boundary: maintenance agents are invoked by main terminal/self-cron, NEVER cowork-spawned). Routing the G3 bug-re-probe as a DEV signal_queue row preserves that boundary; PO triage decides whether to spawn a probe when the signal drains. No deviation from the brief.",
+        "ac_gates": [
+          "AC-1",
+          "AC-2",
+          "AC-3",
+          "AC-4",
+          "AC-5",
+          "AC-6",
+          "AC-7",
+          "AC-8",
+          "AC-9",
+          "AC-10",
+          "AC-11",
+          "AC-12"
+        ],
+        "next_agent": "ba",
+        "chain": "ba -> po(review) -> pm -> dev-mcp-server -> qa (architect: DONE — brief 2026-06-29)",
+        "zone": "multi",
+        "po_signoff": "PENDING",
+        "created_at": "2026-06-29T20:33:25Z"
       }
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-29T20:18:44Z",
+    "_updated_at": "2026-06-29T20:33:25Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -6921,6 +6954,205 @@
         "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
         "created_by": "po",
         "created_at": "2026-06-29T20:18:44Z"
+      },
+      {
+        "id": "DTS-ST1-MIGRATION4-DDL",
+        "title": "Migration 4: scheduled_tasks table in coordinationStore.ts — epoch-INTEGER cols, dedup_key UNIQUE in CREATE TABLE, status CHECK enum, 3 indexes",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "zone": "apps/mcp-server/src/infrastructure/db/coordinationStore.ts",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "depends": [],
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/coordinationStore.ts"
+        ],
+        "note": "Brief section c DDL verbatim. fire_at/deadline_at/created_at/fired_at = INTEGER epoch-seconds UTC, NEVER ISO8601. dedup_key TEXT UNIQUE declared INSIDE CREATE TABLE (NEVER ALTER TABLE ADD COLUMN ... UNIQUE — SQLite silently drops it: scar). status CHECK enum 7 states (pending/firing/fired/done/failed/expired/cancelled). team CHECK in (COWORK,DEV). 3 indexes (status+fire_at, dedup_key partial, team+status). Same coordination.db as task_locks — no new DB file.",
+        "verification_gate": "SELECT typeof(fire_at) returns integer; SELECT sql FROM sqlite_master WHERE name=scheduled_tasks contains UNIQUE on dedup_key AND the 7-state status CHECK; 3 indexes present.",
+        "ac_gates": [
+          "AC-1",
+          "AC-2",
+          "AC-7",
+          "AC-11"
+        ],
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z"
+      },
+      {
+        "id": "DTS-ST3-CLAIM-DUE-HELPER",
+        "title": "claim_due_scheduled_tasks(nowEpoch): atomic pending->firing UPDATE...RETURNING + internal complete/expire helpers (NOT MCP-exposed)",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "zone": "apps/mcp-server/src/infrastructure/db/coordinationStore.ts",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "depends": [
+          "DTS-ST1-MIGRATION4-DDL"
+        ],
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/coordinationStore.ts"
+        ],
+        "note": "Brief section c internal helper. UPDATE WHERE status=pending AND fire_at<=:nowEpoch RETURNING ... (atomic single-winner per row, WAL + busy_timeout). nowEpoch = bound INTEGER param (Math.floor(Date.now()/1000)) — no datetime()/string compare. complete_scheduled_task / expire_scheduled_task = INTERNAL TS helpers (status-param UPDATE), NOT separate MCP tools. NO new task_kind on task_locks.",
+        "verification_gate": "Atomic-claim test: two concurrent claim calls => each row claimed exactly once. WHERE uses bound integer fire_at<=:nowEpoch (no datetime()/string ops). complete/expire not registered as MCP tools.",
+        "ac_gates": [
+          "AC-1",
+          "AC-3",
+          "AC-7"
+        ],
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z"
+      },
+      {
+        "id": "DTS-ST6-AGENT-TEAM-MAP",
+        "title": "AGENT_TEAM_MAP: derive COWORK/DEV team from system-map.json + agent-roster.md at registration — fail-loud on unknown agent, NEVER a hardcoded switch",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "zone": "apps/mcp-server/src/",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "depends": [
+          "DTS-ST1-MIGRATION4-DDL"
+        ],
+        "files": [
+          "apps/mcp-server/src/ (scheduledTask roster classification helper)"
+        ],
+        "note": "Brief section b. Team classification sourced from docs/data/system-map.json / docs/references/agent-roster.md (loaded at startup or a build-baked registry derived from them) — NEVER an inline agent-equals-string switch. Unknown agent id => error (fail-loud), NEVER a silent default to DEV. The brief COWORK/DEV lists are a documentation snapshot, not code.",
+        "verification_gate": "Unknown agent id => schedule_task returns unknown-agent error and NO row inserted; known cowork agent => team=COWORK; known dev agent => team=DEV; grep proves no hardcoded agent->team switch in app code (map read from SSOT).",
+        "ac_gates": [
+          "AC-8"
+        ],
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z"
+      },
+      {
+        "id": "DTS-ST2-MCP-TOOLS",
+        "title": "scheduledTaskTools.ts: schedule_task / cancel_scheduled_task / list_scheduled_tasks — validate agent, idempotent dedup, honest-caveat description, auditable list",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "zone": "apps/mcp-server/src/interface/mcp/tools/system/scheduledTaskTools.ts",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "depends": [
+          "DTS-ST1-MIGRATION4-DDL",
+          "DTS-ST3-CLAIM-DUE-HELPER",
+          "DTS-ST6-AGENT-TEAM-MAP"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/scheduledTaskTools.ts"
+        ],
+        "note": "Brief section c contracts verbatim. schedule_task: require fire_at XOR delay_seconds; reject past fire_at (< now-60s); validate agent via AGENT_TEAM_MAP; deadline_at>fire_at; dedup_key collision returns existing id (idempotent, no double-insert). schedule_task writes ONLY scheduled_tasks in coordination.db — NEVER orch-state.json at insert. Tool description MUST carry the honest Phase-2 caveat (fires only while cowork loop live; deadline_at bounds staleness; 24/7 = Phase-2). list_scheduled_tasks returns sweep_tick/fired_at/error/status (get_cron_health-style audit).",
+        "verification_gate": "Callable via gateway; dedup collision returns existing id (no dup row); past fire_at rejected; description field contains the Phase-2 caveat; list returns terminal rows with non-null fired_at; schedule_task performs zero orch-state.json writes at insert.",
+        "ac_gates": [
+          "AC-8",
+          "AC-9",
+          "AC-10",
+          "AC-12"
+        ],
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z"
+      },
+      {
+        "id": "DTS-ST4-BOOTSTRAP-ALLOWLIST",
+        "title": "Register schedule_task/cancel_scheduled_task/list_scheduled_tasks in agentBootstrap.ts tool packages (reachable via gateway call_tool)",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "type": "SPRINT-S",
+        "priority": "medium",
+        "zone": "apps/mcp-server/src/",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "depends": [
+          "DTS-ST2-MCP-TOOLS"
+        ],
+        "files": [
+          "apps/mcp-server/src/ (agentBootstrap.ts + tool packages)"
+        ],
+        "note": "Brief section h ST-4. Add the 3 new tool names to the applicable tool packages so any agent reaches them through the gateway wrapper. claim_due_scheduled_tasks / complete / expire stay INTERNAL (NOT registered as MCP tools).",
+        "verification_gate": "call_tool(server=vn-market, tool=schedule_task) resolves (not -32601 unknown tool); the 3 tools appear in list_server_tools(vn-market); internal claim/complete/expire do NOT.",
+        "ac_gates": [],
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z"
+      },
+      {
+        "id": "DTS-ST5-SWEEPER-STEP-0B3",
+        "title": "cowork-team flow Step 0b.3: drain due one-shots after fire-election WIN — deadline gate, COWORK PRE-CLAIM spawn, DEV orch-apply.sh signal (recurring step, NOT a one-shot)",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "zone": "docs/agents/cowork-team/",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "depends": [
+          "DTS-ST3-CLAIM-DUE-HELPER",
+          "DTS-ST2-MCP-TOOLS"
+        ],
+        "files": [
+          "docs/agents/cowork-team/flow/main.md"
+        ],
+        "note": "Brief section d. Insert Step 0b.3 inline + a JUMP-TO table row, AFTER Step 0b (leader-lock WIN) so only the fire-election winner drains. Per claimed row: deadline check (now>deadline_at => expire, no spawn/signal); team=COWORK => PRE-CLAIM intent:one-shot:<id> (task_kind=intent, already deployed) then Agent(run_in_background=true), finally task_release; team=DEV => emit a SignalRowSchema row via jq --argjson + scripts/orch-apply.sh (NEVER raw orch-state write; NEVER shell-interpolate prompt/agent — injection scar). The sweeper is a RECURRING step inside the */15 cron, NEVER itself a scheduled_task (self-deleting sweeper strands the queue). agent-father review if flow ownership requires.",
+        "verification_gate": "Step 0b.3 present in main.md AFTER Step 0b + JUMP-TO row added; deadline-past row expires (no route); COWORK path claims intent:one-shot:<id> before Agent(); DEV path uses orch-apply.sh with --argjson bound vars (no interpolation); sweeper is not a scheduled_task row.",
+        "ac_gates": [
+          "AC-3",
+          "AC-4",
+          "AC-5",
+          "AC-6",
+          "AC-7"
+        ],
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z"
+      },
+      {
+        "id": "DTS-ST7-TESTS",
+        "title": "Unit tests: Migration 4 UNIQUE-verify (AC-2), epoch-typeof (AC-1), deadline expiry (AC-3), claim_due atomic single-winner, dedup_key collision idempotency",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "type": "SPRINT-S",
+        "priority": "medium",
+        "zone": "apps/mcp-server/src/__tests__/",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "depends": [
+          "DTS-ST1-MIGRATION4-DDL",
+          "DTS-ST3-CLAIM-DUE-HELPER",
+          "DTS-ST2-MCP-TOOLS"
+        ],
+        "files": [
+          "apps/mcp-server/src/__tests__/scheduledTasks.test.ts"
+        ],
+        "note": "Brief section h ST-7. Tests: (1) typeof(fire_at)=integer [AC-1]; (2) sqlite_master sql contains UNIQUE on dedup_key [AC-2]; (3) insert fire_at=now-10,deadline_at=now-5 => sweeper expires not routes [AC-3]; (4) dedup_key collision => existing id, no double-insert; (5) claim_due two-call atomic => each row claimed once.",
+        "verification_gate": "pnpm --filter vn-market test green; all 5 assertions pass covering AC-1/AC-2/AC-3 + dedup + atomic claim.",
+        "ac_gates": [
+          "AC-1",
+          "AC-2",
+          "AC-3"
+        ],
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z"
+      },
+      {
+        "id": "DTS-ST8-MICROSERVICE-DOC",
+        "title": "Record scheduled_tasks table + 3 tools + addressed-not-picked routing + Phase-2 caveat in docs/architecture/microservice/mcp-server/",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "type": "SPRINT-S",
+        "priority": "medium",
+        "zone": "docs/architecture/microservice/mcp-server/",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "depends": [
+          "DTS-ST2-MCP-TOOLS"
+        ],
+        "files": [
+          "docs/architecture/microservice/mcp-server/"
+        ],
+        "note": "Brief section h ST-8. Document the new table, the 3 MCP tools, the internal claim/complete/expire helpers, the addressed-not-picked routing model, and the honest Phase-2 caveat (true 24/7 headless firing is OUT of MVP).",
+        "verification_gate": "microservice doc lists the table + 3 tools + routing model + Phase-2 caveat.",
+        "ac_gates": [
+          "AC-9"
+        ],
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z"
       }
     ],
     "closed_sprints": [
@@ -7826,6 +8058,23 @@
         "next_agent": "ba",
         "note": "Decompose the 6 P0 deliverables + the Sprint-0 OHLCV backfill into atomic FRs. SOURCE OF TRUTH = docs/roadmaps/vn-market-indicator-roadmap.md §3 (P0 block) + §5 (first sprint). HARD per-FR constraint: no-fake-data — every value computed ONLY from on-hand (daily_ohlcv, vnstock_trading_stats, rag_analyses, insider_transactions) or already-fetched (SBV OMO Liferay HTML, vnmarket_prices) data; NO new fabricated distributions. Breadth is FORWARD-ACCRUING (mark accruing_since, no backfill). Sequence the P0 indicators as listed (volatility -> foreign-room -> OMO-curve -> news-z -> insider). Owners per roadmap. Hand back to PO for spec review (po/review-ba-spec.md) before architect.",
         "created_at": "2026-06-29T20:18:44Z"
+      },
+      {
+        "id": "BA-DEFERRED-SCHEDULER",
+        "title": "Requirement spec for DEFERRED-TASK-SCHEDULER-MVP — at(1) one-shot scheduler (verify-loop MVP) from architect brief 2026-06-29",
+        "owner": "ba",
+        "status": "READY",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "zone": "docs/agents/",
+        "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
+        "next_agent": "ba",
+        "depends": [],
+        "note": "Write the REQ spec from docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md (architect DONE — design is LOCKED, do NOT relitigate table/tools/routing). The 8 implementation subtasks are already minted as backlog rows DTS-ST1..DTS-ST8 (all -> dev-mcp-server); the spec restates them, maps AC-1..AC-12 onto each, and restates the 3 G1/G2/G3 end-to-end use cases. Scope: verify-loop MVP ONLY — Phase-2 (headless launchd 24/7 sweeper, adaptive self-rescheduling, terminal-row pruning, firing-state recovery) is explicitly OUT. system-auditor = DEV/signal (confirmed). Chain: ba -> po(review) -> pm -> dev-mcp-server -> qa.",
+        "verification_gate": "REQ doc covers all 8 STs, maps AC-1..AC-12 to the STs as blocking gates, restates G1/G2/G3 use cases, and states Phase-2 scope_out explicitly.",
+        "brief": "docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md",
+        "created_by": "po",
+        "created_at": "2026-06-29T20:33:25Z"
       }
     ],
     "review": [
