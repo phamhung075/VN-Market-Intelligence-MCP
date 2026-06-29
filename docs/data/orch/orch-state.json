@@ -244,10 +244,10 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-29T21:05:00Z",
-    "updated_by": "ba",
+    "updated_at": "2026-06-29T20:58:04Z",
+    "updated_by": "po",
     "active_task_id": "BA-DEFERRED-SCHEDULER",
-    "next_agent": "po"
+    "next_agent": "pm"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1192,13 +1192,20 @@
           "AC-11",
           "AC-12"
         ],
-        "next_agent": "po",
+        "next_agent": "pm",
         "chain": "ba -> po(review) -> pm -> dev-mcp-server -> qa (architect: DONE — brief 2026-06-29)",
         "zone": "multi",
-        "po_signoff": "PENDING",
+        "po_signoff": "APPROVED",
         "created_at": "2026-06-29T20:33:25Z",
         "req_spec": "docs/handoffs/BA-DEFERRED-SCHEDULER.md",
-        "ba_handoff_at": "2026-06-29T21:05:00Z"
+        "ba_handoff_at": "2026-06-29T21:05:00Z",
+        "po_signoff_at": "2026-06-29T20:58:04Z",
+        "po_review_directives": {
+          "D1_done_vs_fired": "MVP terminal success = fired; no done-write path, no mark_task_done tool; done stays in enum (Phase-2). AC-11 MVP terminal-set = {fired,failed,expired,cancelled}.",
+          "D2_helper_registration": "4 helpers (claim_due/complete/expire/fail) MUST be gateway-reachable by the sweeper; public surface = exactly schedule_task/cancel/list; no ordinary-agent privilege escalation; mechanism = dev choice (restricted package OR single privileged drain tool); relax §4.4 verify wording.",
+          "D3_prompt_companion_file": "DEV path ALWAYS writes companion docs/signals/one-shot-<id>.json + payload_ref (SignalRowSchema has no body field); summary stays one-liner; drop 500-char threshold.",
+          "ref": "docs/handoffs/BA-DEFERRED-SCHEDULER.md §0.1 + docs/agent-memory/decisions/sprint-DEFERRED-TASK-SCHEDULER-MVP-po.md po-S3"
+        }
       }
     ]
   },
@@ -3180,6 +3187,15 @@
           }
         ],
         "completed_at": "2026-06-29T19:36:00Z"
+      },
+      {
+        "id": "MARKET-INDICATOR-DEPTH-P0",
+        "label": "Market Indicator Depth — P0 primitives (7 atomic tasks): OHLCV backfill, volatility, foreign-room, OMO curve, news sentiment, insider sentiment, breadth time-series",
+        "status": "ACTIVE",
+        "opened_at": "2026-06-29",
+        "priority": "high",
+        "po_signoff": "GRANTED",
+        "tasks": []
       }
     ],
     "archive": [
@@ -7155,6 +7171,28 @@
         ],
         "created_by": "po",
         "created_at": "2026-06-29T20:33:25Z"
+      },
+      {
+        "id": "FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR",
+        "type": "FIX",
+        "zone": "agents",
+        "priority": "P2",
+        "size": "S",
+        "status": "BACKLOG",
+        "plan_only": true,
+        "next_agent": "agent-father",
+        "route_to": "agent-father",
+        "title": "chef.md Step 7.5 L2_OK admits carry-proxy as full L2 walk — tighten floor (require US PMI OR EFFR-IORB OR explicit [gap:US_macro_unavailable] token)",
+        "desc": "Step 7.5 sub-check (a) L2_OK keys on subjective \"US macro stack was substantively walked in Step 3\" with NO minimum-element floor (chef.md:400-402). A dish that walked ONLY the carry/FX posture (SBV/carry, chef.md:166) can self-certify L2_OK=TRUE -> QUALITY:full while the US-stack core (Manufacturing PMI chef.md:161 + Fed/EFFR-IORB spread chef.md:163) is silently absent and NO [gap:] token is written. Recurrence-class: F-EVENING-QUALITY-OVERCLAIM (c98) -> Step 7.5 gate added c99 -> still-leaky c102. FIX: redefine L2_OK = (US PMI cited with data) OR (EFFR-IORB spread cited with data) OR (explicit [gap:US_macro_unavailable]/[gap:macro_health_missing] token written) — carry-proxy alone is NOT a substantive L2 walk. agent-father owns chef.md.",
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md"
+        ],
+        "verification_gate": "After fix: a dish whose L2 cites ONLY SBV/carry (no US PMI, no EFFR-IORB, no gap token) MUST compute L2_OK=FALSE -> QUALITY:degraded. Verify by re-applying the deterministic gate to the 2026-06-29 evening dish input (carry-only) and asserting degraded.",
+        "recurrence_of": "F-EVENING-QUALITY-OVERCLAIM",
+        "source_signal": "tnb-audit c102 F-QUALITY-VERDICT-SUSPICIOUS",
+        "note": "PO RAW-assessed the gate SPEC (not the single live dish) — hole exists in the definition regardless of whether 2026-06-29 evening tripped it. PO read chef.md:388-439. Live-dish confirmation (was a gap token actually written?) deferred to TNB c103 WORK [CHEF-DETAIL] read; spec-fix is durable either way.",
+        "created_at": "2026-06-29T20:57:33Z",
+        "created_by": "po"
       }
     ],
     "closed_sprints": [
@@ -7968,12 +8006,12 @@
         "id": "BA-DEFERRED-SCHEDULER",
         "title": "Requirement spec for DEFERRED-TASK-SCHEDULER-MVP — at(1) one-shot scheduler (verify-loop MVP) from architect brief 2026-06-29",
         "owner": "ba",
-        "status": "REVIEW",
+        "status": "DONE",
         "type": "SPRINT-M",
         "priority": "high",
         "zone": "docs/agents/",
         "sprint": "DEFERRED-TASK-SCHEDULER-MVP",
-        "next_agent": "po",
+        "next_agent": "pm",
         "depends": [],
         "note": "Write the REQ spec from docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md (architect DONE — design is LOCKED, do NOT relitigate table/tools/routing). The 8 implementation subtasks are already minted as backlog rows DTS-ST1..DTS-ST8 (all -> dev-mcp-server); the spec restates them, maps AC-1..AC-12 onto each, and restates the 3 G1/G2/G3 end-to-end use cases. Scope: verify-loop MVP ONLY — Phase-2 (headless launchd 24/7 sweeper, adaptive self-rescheduling, terminal-row pruning, firing-state recovery) is explicitly OUT. system-auditor = DEV/signal (confirmed). Chain: ba -> po(review) -> pm -> dev-mcp-server -> qa.",
         "verification_gate": "REQ doc covers all 8 STs, maps AC-1..AC-12 to the STs as blocking gates, restates G1/G2/G3 use cases, and states Phase-2 scope_out explicitly.",
@@ -7982,7 +8020,9 @@
         "created_at": "2026-06-29T20:33:25Z",
         "started_at": "2026-06-29T21:00:00Z",
         "completed_at": "2026-06-29T21:05:00Z",
-        "handoff": "docs/handoffs/BA-DEFERRED-SCHEDULER.md"
+        "handoff": "docs/handoffs/BA-DEFERRED-SCHEDULER.md",
+        "po_signoff": "APPROVED",
+        "po_signoff_at": "2026-06-29T20:58:04Z"
       }
     ],
     "done_verified": [],
@@ -8080,6 +8120,90 @@
         "next_agent": "ba",
         "note": "Decompose the 6 P0 deliverables + the Sprint-0 OHLCV backfill into atomic FRs. SOURCE OF TRUTH = docs/roadmaps/vn-market-indicator-roadmap.md §3 (P0 block) + §5 (first sprint). HARD per-FR constraint: no-fake-data — every value computed ONLY from on-hand (daily_ohlcv, vnstock_trading_stats, rag_analyses, insider_transactions) or already-fetched (SBV OMO Liferay HTML, vnmarket_prices) data; NO new fabricated distributions. Breadth is FORWARD-ACCRUING (mark accruing_since, no backfill). Sequence the P0 indicators as listed (volatility -> foreign-room -> OMO-curve -> news-z -> insider). Owners per roadmap. Hand back to PO for spec review (po/review-ba-spec.md) before architect.",
         "created_at": "2026-06-29T20:18:44Z"
+      },
+      {
+        "id": "OHLCV-BACKFILL-P0",
+        "title": "Sprint-0: Backfill 2yr daily OHLCV bars (VN-Index + watchlist) from VPS dchart; drain 450-row queue",
+        "zone": "apps/mcp-server/src/scheduler/market-data/",
+        "owner": "dev-mcp-server",
+        "type": "SPRINT-S",
+        "status": "READY",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "FR-S0-1: drain ohlcv_backfill_queue (~450 rows, 2yr bars) via writeOhlcvBatch (NOT direct INSERT). FR-S0-2: backfill completion marker. NFR: idempotent, no fabrication, unit guard respected. Unlocks P0-1 rv_60d + 252d-drawdown and P1 momentum family. NEW FILE: ohlcvHistoryBackfillJob.ts"
+      },
+      {
+        "id": "P0-1-VOLATILITY-INDICATORS",
+        "title": "Volatility Primitives: RV (10/20/60d), Garman-Klass, ATR%(14), regime band, 252d drawdown",
+        "zone": "apps/technical-analysis/src/",
+        "owner": "dev-technical-analysis",
+        "type": "SPRINT-S",
+        "status": "READY",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "FR-1..5: RV10/20/60d (null <min bars), GK vol, ATR%, regime band (LOW/NORMAL/ELEVATED/CRISIS), 252d drawdown (null <252 bars). Gauge-readiness: rv_20d_percentile. RV10/20 + ATR% + regime ship immediately; rv_60d + drawdown return null until OHLCV-BACKFILL-P0 lands. NEW FILES: VolatilityService, get_volatility_indicators tool, SQLite VNINDEX queries. TEST: unit tests for null-propagation + edge cases."
+      },
+      {
+        "id": "P0-2-FOREIGN-ROOM-SUITE",
+        "title": "Foreign-Room Utilization & Saturation: room%, events (FULL/REOPEN), depletion velocity, flags, market/sector saturation",
+        "zone": "apps/mcp-server/src/",
+        "owner": "dev-mcp-server",
+        "type": "SPRINT-S",
+        "status": "READY",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "FR-1..5: room utilization%, ROOM_FULL/REOPEN events table + detection in vnstockFundamentalsJob.ts, 5d depletion velocity, ROOM_LOCKED + FULL_ROOM_SELL flags, cap-weighted market/sector saturation. Gauge-readiness: foreign_outflow_z_5d (null <20 sessions). NEW TABLE: foreign_room_events (UNIQUE code/date/type). NEW FILES: foreignRoomAnalyzer.ts, getForeignRoom.ts, foreignRoomTools.ts. DESIGN: event detection in mcp-server (not dev-stock-price). TEST: integration with vnstock_trading_stats, utilization ≥99%, null when max_holding_ratio=0."
+      },
+      {
+        "id": "P0-3-OMO-CURVE",
+        "title": "SBV OMO Short-Rate & Liquidity-Stress: parse tenors/rates/members, implied short-rate by tenor, net injection 5d, stress label",
+        "zone": "apps/macro-indicators/pkg/",
+        "owner": "dev-macro-indicators",
+        "type": "SPRINT-S",
+        "status": "READY",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "FR-1..5: extend OMOParseResult (tenors array + winning_rate_pct + parsed_tenor_days + member_win_ratio), implied short rate by tenor (7d/14d/28d), net injection 5d rolling, liquidity stress label (DRAIN/TIGHT/NEUTRAL/EASY). Gauge-readiness: liquidity_stress_score (null <5 auction dates). NEW TABLE: sbv_omo_daily (macro_indicators.db per ARCH-RATIFY-OMO-1). NEW FILES: parsers_vmt_sbv_interbank_omo.go extension, domain/services_vmt_omo.go, usecases_vmt_omo_persist.go, dtos_vmt_omo.go. PERSIST: write-on-fetch side effect in LiquidityStateUseCase (idempotent ON CONFLICT REPLACE). TEST: parse tenors, member ratios, zero-rate cells, VN decimal comma normalization. CRITICAL: Work in pkg/ NOT src/ (src/ deprecated)."
+      },
+      {
+        "id": "P0-4-MARKET-SENTIMENT-INDEX",
+        "title": "Market-Wide News-Sentiment Z-Score: daily sentiment score, z-score (60/90d baseline), EMA(5), bull/bear dispersion, article spike",
+        "zone": "apps/mcp-server/src/",
+        "owner": "dev-mcp-server",
+        "type": "SPRINT-S",
+        "status": "READY",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "FR-1..5: confidence-weighted daily sentiment score (-1 to +1), z-score vs 60/90d baseline (null <21d per hard constraint + history_quality enum), EMA(5), bull/bear/neutral ratios, article-volume spike flag (>2×30d avg). Gauge-readiness: news_sentiment_z (null <21d, falls back to z_90d, includes history_quality field). NEW INDEX: idx_rag_sentiment_covering (created_at DESC, sentiment, confidence, impact_score) for 90d window performance. NEW FILES: marketSentimentCalculator.ts, getMarketSentimentIndex.ts, marketSentimentTools.ts. NO schema changes to rag_analyses (read-only). TEST: divide-by-zero guard (confidence=0), empty table → history_quality=EMPTY, unexpected sentiment values excluded + logged."
+      },
+      {
+        "id": "P0-5-INSIDER-SENTIMENT",
+        "title": "Insider-Transaction Net Sentiment: net buy-sell (30/90/180d), free-float normalized score, accumulation/distribution label, large deals",
+        "zone": "apps/mcp-server/src/",
+        "owner": "dev-mcp-server",
+        "type": "SPRINT-S",
+        "status": "READY",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "FR-1..5: net buy-sell value per window (30/90/180d, null when <history), market_cap_bn proxy normalization (clamped [-1,+1]), ACCUMULATION/DISTRIBUTION/MIXED/NEUTRAL label, large-deal flags (>10B VND in 30d). Gauge-readiness: net_sentiment_score (null when market_cap_bn IS NULL, include normalization_basis='market_cap_proxy' field as QA hard gate). NEW FILES: insiderSentimentCalculator.ts, getInsiderSentiment.ts, insiderSentimentTools.ts. NO schema changes to insider_transactions (read-only). MANDATORY: include normalization_basis field + data_window_days counts in response. TEST: price=0 rows excluded, same insider buy+sell both counted, market_cap_bn=NULL → score=NULL, insider_transactions empty → NEUTRAL label."
+      },
+      {
+        "id": "BREADTH-TIME-SERIES",
+        "title": "Breadth Time-Series persister + A-D Line, RANA, McClellan, Zweig Thrust: forward-accruing only, 40-session McClellan warmup, 10-session Zweig trigger",
+        "zone": "apps/mcp-server/src/scheduler/market-data/",
+        "owner": "dev-mcp-server",
+        "type": "SPRINT-S",
+        "status": "READY",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "BR-FR-1..6: NEW TABLE market_breadth_history (session_date UNIQUE, advancing/declining/unchanged/ceiling/floor/total), NEW CRON breadthHistoryPersister (37 8 * * 1-5), forward-accruing-only persistence (ON CONFLICT IGNORE), A-D line cumulative, RANA daily calc, McClellan Osc (EMA19/EMA39, null <39 sessions), McClellan Summation, floor-panic/ceiling-FOMO flags (>15% at limits), Zweig thrust (>61.5% for 10/14 sessions), accruing_since marker. Gauge-readiness: breadth_z_score (z of mclellan_osc vs rolling mean/stdev, null <21 sessions). NEW FILES: breadthHistoryPersisterJob.ts, BreadthService (TA), get_breadth_thrust tool. CRITICAL: NFR-BR-1 reject synthetic data; log live-fetch source. TEST: idempotency (ON CONFLICT IGNORE), history_quality INSUFFICIENT→WARMUP→SUFFICIENT transitions, Zweig 14-session window logic, floor/ceiling % calculations, McClellan null until 39 sessions. Scheduler assignment verified: minute 37 free in 08:xx weekdays."
       }
     ],
     "review": [

@@ -23,6 +23,24 @@
 
 ---
 
+## 0.1 PO Review Directives (APPROVED 2026-06-29T20:56:06Z — binding on pm + dev-mcp-server)
+
+PO sign-off is **APPROVED**: this spec is a faithful 1:1 transposition of the LOCKED brief — all 12 ACs traced to blocking gates, all 8 STs covered, Phase-2 correctly held OUT (§0 mirrors the brief's horizon list verbatim). No scope creep, no blockers. The 3 advisory questions in §9 are ruled below — these directives **supersede** the "recommended resolution" notes in §9 where they differ.
+
+**D1 (rules Q1 — done vs fired):** MVP terminal success state is **`fired`**. Do NOT implement a `done`-write path and do NOT add a `mark_task_done` MCP tool. `done` STAYS in the CHECK enum (reserves the Phase-2 confirmation-callback value — harmless, never written by MVP code). **QA-critical:** AC-11 lifecycle-completeness must verify the **MVP terminal set = {`fired`, `failed`, `expired`, `cancelled`}**. The brief's AC-11 wording lists `done` instead of `fired` because it presumed a Phase-2 confirmation callback this MVP does not build — so the sweeper's success path ends in `fired`. ST-7 + QA verify `fired` as a valid terminal outcome; a row ending in `fired` is NOT a lifecycle-incompleteness failure.
+
+**D2 (rules Q2 — privileged-helper registration; resolves a spec/brief contradiction):** §3.2/§4.4 say the 4 helpers (`claim_due_scheduled_tasks`, `complete_scheduled_task`, `expire_scheduled_task`, `fail_scheduled_task`) are "internal TypeScript, NOT registered as MCP tools" — but §5.2 (and the brief §d) call them via `call_tool(server="vn-market", tool="claim_due_scheduled_tasks", …)`. The cowork-team Step 0b.3 sweeper is an **LLM agent that can only act through the gateway `call_tool` wrapper** — it cannot invoke an in-process TypeScript function. The contradiction is resolved as follows, binding:
+- The 4 helpers **MUST be gateway-reachable** by the sweeper (non-negotiable).
+- The **public tool surface MUST remain EXACTLY the 3 tools** `schedule_task` / `cancel_scheduled_task` / `list_scheduled_tasks`. Ordinary agents MUST NOT be able to fire-claim or force-complete a scheduled row (no privilege escalation).
+- **Mechanism is dev-mcp-server's choice:** either (a) register the 4 helpers in a privileged tool package excluded from the public/general agent packages, or (b) fold the whole claim→deadline-gate→complete/expire/fail sequence behind a single privileged orchestration tool (e.g. `drain_due_scheduled_tasks`) that the sweeper calls once. Either satisfies the invariant.
+- **Relax the §4.4 verification wording** from "internal helpers do not appear in `list_server_tools`" to "the 4 helpers are absent from the **public agent tool packages** (ordinary agents cannot invoke them)." Gateway-reachability requires server registration, so the helpers MAY appear in the raw server registry; the testable invariant is that they are NOT in a normal agent's package and the public surface is the 3 tools. dev-mcp-server documents the final privileged boundary in ST-8.
+
+**D3 (rules Q3 — long-prompt companion file):** RAW-verified `SignalRowSchema` (`apps/mcp-server/src/infrastructure/orchStateSchema.ts:175`) has **no `prompt`/`body` field**; it is `.passthrough()` but the consumer (dev-team Step 0a / signal-dashboard skill) reads **`payload_ref`** for the body. Therefore, drop the 500-char threshold: for the **DEV signal path, ALWAYS write the companion file** `docs/signals/one-shot-<task.id>.json` (`{task: <full row>}`) and set `payload_ref` to it; keep `summary` as the one-liner `[one-shot] <intent> → <agent>`. **NEVER embed the prompt in `summary`.** (COWORK path passes `prompt` directly to `Agent(prompt=…)` — no companion file.) If dev still wants a tiny-prompt embed optimization it MUST guarantee the full prompt is always retrievable by dev-team and document the rule in ST-8 — but companion-file-always is the directive.
+
+**Full PO reasoning:** `docs/agent-memory/decisions/sprint-DEFERRED-TASK-SCHEDULER-MVP-po.md` § STEP po-S3.
+
+---
+
 ## 1. Problem Statement (brief §a)
 
 The fleet has `cron(8)` (recurring) but no `at(1)` (one-shot, deadline-bounded). Three confirmed gaps a recurring cron cannot close:
@@ -500,5 +518,5 @@ The following items are noted as implicit/advisory (dev-mcp-server should confir
 | ST-7 | `apps/mcp-server/src/__tests__/scheduledTasks.test.ts` | dev-mcp-server | ST-1, ST-3, ST-2 | AC-1, AC-2, AC-3 |
 | ST-8 | `docs/architecture/microservice/mcp-server/` | dev-mcp-server | ST-2 | AC-9 |
 
-**PO sign-off status:** PENDING (this spec is the input for po → review step)
-**Next in chain:** po (review) → pm → dev-mcp-server → qa
+**PO sign-off status:** APPROVED 2026-06-29T20:56:06Z (see §0.1 PO Review Directives D1/D2/D3)
+**Next in chain:** pm (atomic task breakdown) → dev-mcp-server → qa
