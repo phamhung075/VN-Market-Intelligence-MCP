@@ -243,10 +243,10 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-29T16:21:00Z",
-    "updated_by": "architect",
-    "active_task_id": "FEAT-NEWS-DECISION-RESUME",
+    "status": "idle",
+    "updated_at": "2026-06-29T17:15:22Z",
+    "updated_by": "qa",
+    "active_task_id": null,
     "next_agent": "pm"
   },
   "narrative": {
@@ -7371,6 +7371,27 @@
         "created_by": "pm",
         "done_at": "2026-06-28T13:00:00Z",
         "done_by": "qa"
+      },
+      {
+        "id": "TASK-FEAT-NEWS-DR-HOP1",
+        "status": "DONE",
+        "type": "FEAT",
+        "size": "M",
+        "owner": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "sprint": "FEAT-NEWS-DECISION-RESUME",
+        "created_at": "2026-06-29T16:25:56Z",
+        "title": "NEWS-DECISION-RESUME Hop 1: Backend builder + DB + DTO",
+        "depends_on": [],
+        "blocks": [
+          "TASK-FEAT-NEWS-DR-HOP2"
+        ],
+        "note": "FR-1: buildDecisionResume() pure helper + DOMAIN_VN_LABEL + truncateAt120(). FR-2: ADD COLUMN decision_resume TEXT to rag_analyses. FR-3: DTO pick-up in newsSentimentHandler. Deliverable: /api/news-sentiment returns decision_resume per item. Rebuild: mcp-server container required after. Handoff: docs/handoffs/TASK-FEAT-NEWS-DR-HOP1.md",
+        "owner_agent": "dev-mcp-server",
+        "updated_at": "2026-06-29T16:50:00Z",
+        "completed_at": "2026-06-29T17:15:08Z",
+        "qa_verdict": "APPROVED"
       }
     ],
     "done_verified": [],
@@ -7477,25 +7498,6 @@
         "done_at": "2026-06-29T16:46:36Z",
         "updated_by": "qa",
         "updated_at": "2026-06-29T16:46:36Z"
-      },
-      {
-        "id": "TASK-FEAT-NEWS-DR-HOP1",
-        "status": "REVIEW",
-        "type": "FEAT",
-        "size": "M",
-        "owner": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "sprint": "FEAT-NEWS-DECISION-RESUME",
-        "created_at": "2026-06-29T16:25:56Z",
-        "title": "NEWS-DECISION-RESUME Hop 1: Backend builder + DB + DTO",
-        "depends_on": [],
-        "blocks": [
-          "TASK-FEAT-NEWS-DR-HOP2"
-        ],
-        "note": "FR-1: buildDecisionResume() pure helper + DOMAIN_VN_LABEL + truncateAt120(). FR-2: ADD COLUMN decision_resume TEXT to rag_analyses. FR-3: DTO pick-up in newsSentimentHandler. Deliverable: /api/news-sentiment returns decision_resume per item. Rebuild: mcp-server container required after. Handoff: docs/handoffs/TASK-FEAT-NEWS-DR-HOP1.md",
-        "owner_agent": "dev-mcp-server",
-        "updated_at": "2026-06-29T16:50:00Z"
       }
     ],
     "qa": [],
