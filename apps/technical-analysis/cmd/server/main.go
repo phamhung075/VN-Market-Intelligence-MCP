@@ -6,6 +6,12 @@
 // Sandbox security (charter §Security Clause):
 // reads ZERO secrets — only PORT (default 5003) and LOG_LEVEL (default "INFO").
 // No DB credentials, no API keys, no tokens in this process environment.
+//
+// Volatility use case additionally reads:
+//   WATCHLIST_TICKERS — comma-separated list of active ticker symbols for ATR%
+//   computation (e.g. "VNM,FPT,VCB,HPG,..."). When absent, ATR computation
+//   returns an empty list (non-fatal). Production: set from system-map.json
+//   .project.watchlist by the ops team in docker-compose environment.
 package main
 
 import (
@@ -15,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -33,11 +40,22 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
 
+	// --- TA indicators wiring (existing) ---
 	calculator := infrastructure.NewTACalculator()
 	priceRepo := infrastructure.NewSQLitePriceRepository()
 	_ = domain.NewCalculateTAService(priceRepo, calculator) // domain service wired (unused HTTP path)
 	useCase := application.NewComputeTAUseCase(calculator, priceRepo)
-	router := httpinterface.NewRouter(useCase, logger)
+
+	// --- P0-1 Volatility wiring ---
+	ohlcvRepo := infrastructure.NewSQLiteOHLCVRepository()
+	volSvc := domain.NewVolatilityService()
+	watchlist := parseWatchlist(envStr("WATCHLIST_TICKERS", ""))
+	if len(watchlist) == 0 {
+		slog.Warn("WATCHLIST_TICKERS not set — ATR% computation will return empty list; set env to enable")
+	}
+	volUseCase := application.NewComputeVolatilityUseCase(ohlcvRepo, volSvc, watchlist)
+
+	router := httpinterface.NewRouter(useCase, volUseCase, logger)
 
 	addr := fmt.Sprintf(":%s", port)
 	srv := &http.Server{
@@ -76,4 +94,20 @@ func envStr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// parseWatchlist splits a comma-separated ticker string into a trimmed slice.
+// Returns nil when input is empty (not an error — ATR computation is non-fatal).
+func parseWatchlist(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	tickers := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if t := strings.TrimSpace(p); t != "" {
+			tickers = append(tickers, t)
+		}
+	}
+	return tickers
 }

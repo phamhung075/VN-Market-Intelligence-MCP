@@ -15,14 +15,22 @@ import (
 )
 
 // NewRouter creates and returns a chi router with all routes registered.
-// useCase and logger are wired by the composition root (cmd/server/main.go).
-func NewRouter(useCase *application.ComputeTAUseCase, logger *slog.Logger) http.Handler {
+// useCase and volUseCase are wired by the composition root (cmd/server/main.go).
+// volUseCase may be nil during tests that only exercise /ta/indicators.
+func NewRouter(useCase *application.ComputeTAUseCase, volUseCase *application.ComputeVolatilityUseCase, logger *slog.Logger) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 
 	r.Get("/health", handleHealth())
 	r.Post("/ta/indicators", handleIndicators(useCase, logger))
+
+	// P0-1-VOLATILITY-INDICATORS: POST /ta/volatility-indicators
+	// volUseCase is non-nil in production; nil guard protects sandbox callers
+	// that have not wired the volatility use case.
+	if volUseCase != nil {
+		r.Post("/ta/volatility-indicators", handleVolatilityIndicators(volUseCase, logger))
+	}
 
 	return r
 }

@@ -1,0 +1,49 @@
+{
+  "service": "technical-analysis",
+  "category": "volatility-partial-compute",
+  "description": "POST /ta/volatility-indicators with 25 injected VNINDEX bars. RV10d and RV20d are non-null (≥11/21 bars); RV60d null (needs 61); GK non-null (≥20 bars); drawdown_252d null (needs 252). Verifies partial release pattern per P0-1 hard constraint.",
+  "input": {
+    "method": "POST",
+    "path": "/ta/volatility-indicators",
+    "body": {
+      "vnindex_bars": [
+        {"date":"2026-01-01","open":1194.00,"high":1212.00,"low":1188.00,"close":1200.0},
+        {"date":"2026-01-02","open":1198.97,"high":1217.05,"low":1192.95,"close":1205.0},
+        {"date":"2026-01-03","open":1203.95,"high":1222.10,"low":1197.90,"close":1210.0},
+        {"date":"2026-01-04","open":1208.92,"high":1227.15,"low":1202.85,"close":1215.0},
+        {"date":"2026-01-05","open":1213.90,"high":1232.20,"low":1207.80,"close":1220.0},
+        {"date":"2026-01-06","open":1218.88,"high":1237.25,"low":1212.75,"close":1225.0},
+        {"date":"2026-01-07","open":1223.85,"high":1242.30,"low":1217.70,"close":1230.0},
+        {"date":"2026-01-08","open":1228.83,"high":1247.35,"low":1222.65,"close":1235.0},
+        {"date":"2026-01-09","open":1233.80,"high":1252.40,"low":1227.60,"close":1240.0},
+        {"date":"2026-01-10","open":1238.78,"high":1257.45,"low":1232.55,"close":1245.0},
+        {"date":"2026-01-11","open":1243.75,"high":1262.50,"low":1237.50,"close":1250.0},
+        {"date":"2026-01-12","open":1248.72,"high":1267.55,"low":1242.45,"close":1255.0},
+        {"date":"2026-01-13","open":1253.70,"high":1272.60,"low":1247.40,"close":1260.0},
+        {"date":"2026-01-14","open":1258.67,"high":1277.65,"low":1252.35,"close":1265.0},
+        {"date":"2026-01-15","open":1263.65,"high":1282.70,"low":1257.30,"close":1270.0},
+        {"date":"2026-01-16","open":1268.62,"high":1287.75,"low":1262.25,"close":1275.0},
+        {"date":"2026-01-17","open":1273.60,"high":1292.80,"low":1267.20,"close":1280.0},
+        {"date":"2026-01-18","open":1278.58,"high":1297.85,"low":1272.15,"close":1285.0},
+        {"date":"2026-01-19","open":1283.55,"high":1302.90,"low":1277.10,"close":1290.0},
+        {"date":"2026-01-20","open":1288.53,"high":1307.95,"low":1282.05,"close":1295.0},
+        {"date":"2026-01-21","open":1293.50,"high":1313.00,"low":1287.00,"close":1300.0},
+        {"date":"2026-01-22","open":1298.47,"high":1318.05,"low":1291.95,"close":1305.0},
+        {"date":"2026-01-23","open":1303.45,"high":1323.10,"low":1296.90,"close":1310.0},
+        {"date":"2026-01-24","open":1308.42,"high":1328.15,"low":1301.85,"close":1315.0},
+        {"date":"2026-01-25","open":1313.40,"high":1333.20,"low":1306.80,"close":1320.0}
+      ],
+      "tickers": []
+    }
+  },
+  "expectedOutput": {
+    "statusCode": 200,
+    "rv_10d_pct_null": false,
+    "rv_20d_pct_null": false,
+    "rv_60d_pct_null": true,
+    "rv_20d_percentile_null": false,
+    "gk_vol_20d_pct_null": false,
+    "drawdown_252d_pct_null": true,
+    "vol_regime_present": true
+  }
+}

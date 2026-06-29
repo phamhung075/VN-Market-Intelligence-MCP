@@ -354,6 +354,14 @@ type serviceExpected struct {
 	ErrorPresent       *bool  `json:"error_present"`
 	// health-ok body assertion
 	Body map[string]interface{} `json:"body"`
+	// P0-1 volatility assertions
+	RV10dPctNull       *bool  `json:"rv_10d_pct_null"`
+	RV20dPctNull       *bool  `json:"rv_20d_pct_null"`
+	RV60dPctNull       *bool  `json:"rv_60d_pct_null"`
+	RV20dPercentileNull *bool `json:"rv_20d_percentile_null"`
+	Drawdown252dPctNull *bool `json:"drawdown_252d_pct_null"`
+	VolRegimePresent   *bool  `json:"vol_regime_present"`
+	GKVolNull          *bool  `json:"gk_vol_20d_pct_null"`
 }
 
 // serviceInputBody is the decoded POST body shape.
@@ -411,10 +419,22 @@ func (noopPriceRepo) GetCandles(symbol string, _ int) ([]domain.CandleStick, err
 	panic("sandbox: DB-backed path must not be called (scenario must supply closes) for symbol: " + symbol)
 }
 
+// noopOHLCVRepo satisfies the application.OHLCVRepo port for the sandbox.
+// Volatility scenarios inject bars via vnindex_bars/ticker_bars in the request body;
+// the DB-backed path must never be called in credential-free sandbox mode.
+type noopOHLCVRepo struct{}
+
+func (noopOHLCVRepo) GetOHLCV(symbol string, _ int) ([]domain.OHLCVBar, error) {
+	panic("sandbox: DB-backed OHLCV path must not be called (inject vnindex_bars/ticker_bars in request body) for: " + symbol)
+}
+
 func newTestServer() (*httptest.Server, func()) {
 	calc := &sandboxCalculator{}
 	useCase := application.NewComputeTAUseCase(calc, noopPriceRepo{})
-	router := httpinterface.NewRouter(useCase, slog.Default())
+	// Volatility use case: nil watchlist is non-fatal (tickers injected per-request in scenarios).
+	volSvc := domain.NewVolatilityService()
+	volUseCase := application.NewComputeVolatilityUseCase(noopOHLCVRepo{}, volSvc, nil)
+	router := httpinterface.NewRouter(useCase, volUseCase, slog.Default())
 	srv := httptest.NewServer(router)
 	return srv, srv.Close
 }
@@ -437,22 +457,28 @@ func runServiceScenario(scenarioPath string) (actual interface{}, diffs []string
 	// Build HTTP request.
 	var bodyReader io.Reader
 	if sc.Input.Method == http.MethodPost && sc.Input.Body != nil && string(sc.Input.Body) != "null" {
-		// Decode the scenario body, resolve closes from pattern if needed.
-		var inputBody serviceInputBody
-		_ = json.Unmarshal(sc.Input.Body, &inputBody)
-		if inputBody.Closes == nil && inputBody.ClosesCount != nil {
-			inputBody.Closes = resolveServiceCloses(inputBody)
+		if sc.Input.Path == "/ta/volatility-indicators" {
+			// Volatility endpoint: pass the body JSON through unchanged.
+			// The body may contain vnindex_bars / ticker_bars for sandbox injection.
+			bodyReader = bytes.NewReader(sc.Input.Body)
+		} else {
+			// TA indicators endpoint: decode, resolve closes from pattern if needed.
+			var inputBody serviceInputBody
+			_ = json.Unmarshal(sc.Input.Body, &inputBody)
+			if inputBody.Closes == nil && inputBody.ClosesCount != nil {
+				inputBody.Closes = resolveServiceCloses(inputBody)
+			}
+			// Re-encode as the actual request body.
+			encoded, encErr := json.Marshal(map[string]interface{}{
+				"symbol": inputBody.Symbol,
+				"period": inputBody.Period,
+				"closes": inputBody.Closes,
+			})
+			if encErr != nil {
+				return nil, nil, fmt.Errorf("encode request body: %w", encErr)
+			}
+			bodyReader = bytes.NewReader(encoded)
 		}
-		// Re-encode as the actual request body.
-		encoded, encErr := json.Marshal(map[string]interface{}{
-			"symbol": inputBody.Symbol,
-			"period": inputBody.Period,
-			"closes": inputBody.Closes,
-		})
-		if encErr != nil {
-			return nil, nil, fmt.Errorf("encode request body: %w", encErr)
-		}
-		bodyReader = bytes.NewReader(encoded)
 	}
 
 	req, reqErr := http.NewRequest(sc.Input.Method, url, bodyReader)
@@ -547,6 +573,30 @@ func runServiceScenario(scenarioPath string) (actual interface{}, diffs []string
 		_, hasError := respBody["error"]
 		if hasError != *sc.Expected.ErrorPresent {
 			diffs = append(diffs, fmt.Sprintf("error_present: got %v, want %v", hasError, *sc.Expected.ErrorPresent))
+		}
+	}
+
+	// P0-1 volatility assertions.
+	checkNullField := func(fieldName string, wantNull *bool) {
+		if wantNull == nil {
+			return
+		}
+		val, exists := respBody[fieldName]
+		isNull := !exists || val == nil
+		if isNull != *wantNull {
+			diffs = append(diffs, fmt.Sprintf("%s null: got %v, want %v", fieldName, isNull, *wantNull))
+		}
+	}
+	checkNullField("rv_10d_pct", sc.Expected.RV10dPctNull)
+	checkNullField("rv_20d_pct", sc.Expected.RV20dPctNull)
+	checkNullField("rv_60d_pct", sc.Expected.RV60dPctNull)
+	checkNullField("rv_20d_percentile", sc.Expected.RV20dPercentileNull)
+	checkNullField("drawdown_252d_pct", sc.Expected.Drawdown252dPctNull)
+	checkNullField("gk_vol_20d_pct", sc.Expected.GKVolNull)
+	if sc.Expected.VolRegimePresent != nil {
+		_, hasRegime := respBody["vol_regime"]
+		if hasRegime != *sc.Expected.VolRegimePresent {
+			diffs = append(diffs, fmt.Sprintf("vol_regime_present: got %v, want %v", hasRegime, *sc.Expected.VolRegimePresent))
 		}
 	}
 

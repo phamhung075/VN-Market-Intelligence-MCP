@@ -1,0 +1,29 @@
+{
+  "service": "technical-analysis",
+  "category": "volatility-null-propagation",
+  "description": "POST /ta/volatility-indicators with only 5 injected VNINDEX bars — all RV/GK/regime metrics null (insufficient data). Verifies honest null propagation per P0-1 AC.",
+  "input": {
+    "method": "POST",
+    "path": "/ta/volatility-indicators",
+    "body": {
+      "vnindex_bars": [
+        {"date":"2026-01-02","open":1240.0,"high":1252.0,"low":1235.0,"close":1248.0},
+        {"date":"2026-01-03","open":1248.0,"high":1261.0,"low":1244.0,"close":1255.0},
+        {"date":"2026-01-06","open":1255.0,"high":1267.0,"low":1250.0,"close":1263.0},
+        {"date":"2026-01-07","open":1263.0,"high":1270.0,"low":1258.0,"close":1267.0},
+        {"date":"2026-01-08","open":1267.0,"high":1275.0,"low":1262.0,"close":1271.0}
+      ],
+      "tickers": []
+    }
+  },
+  "expectedOutput": {
+    "statusCode": 200,
+    "rv_10d_pct_null": true,
+    "rv_20d_pct_null": true,
+    "rv_60d_pct_null": true,
+    "rv_20d_percentile_null": true,
+    "gk_vol_20d_pct_null": true,
+    "drawdown_252d_pct_null": true,
+    "vol_regime_present": true
+  }
+}
