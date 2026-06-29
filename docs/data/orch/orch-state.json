@@ -8167,11 +8167,13 @@
         "zone": "apps/mcp-server/src/",
         "owner": "dev-mcp-server",
         "type": "SPRINT-S",
-        "status": "READY",
+        "status": "REVIEW",
         "size": "M",
         "priority": "high",
         "depends": [],
-        "note": "FR-1..5: room utilization%, ROOM_FULL/REOPEN events table + detection in vnstockFundamentalsJob.ts, 5d depletion velocity, ROOM_LOCKED + FULL_ROOM_SELL flags, cap-weighted market/sector saturation. Gauge-readiness: foreign_outflow_z_5d (null <20 sessions). NEW TABLE: foreign_room_events (UNIQUE code/date/type). NEW FILES: foreignRoomAnalyzer.ts, getForeignRoom.ts, foreignRoomTools.ts. DESIGN: event detection in mcp-server (not dev-stock-price). TEST: integration with vnstock_trading_stats, utilization ≥99%, null when max_holding_ratio=0."
+        "note": "FR-1..5: room utilization%, ROOM_FULL/REOPEN events table + detection in vnstockFundamentalsJob.ts, 5d depletion velocity, ROOM_LOCKED + FULL_ROOM_SELL flags, cap-weighted market/sector saturation. Gauge-readiness: foreign_outflow_z_5d (null <20 sessions). NEW TABLE: foreign_room_events (UNIQUE code/date/type). NEW FILES: foreignRoomAnalyzer.ts, getForeignRoom.ts, foreignRoomTools.ts. DESIGN: event detection in mcp-server (not dev-stock-price). TEST: integration with vnstock_trading_stats, utilization ≥99%, null when max_holding_ratio=0.",
+        "review_started_at": "2026-06-30T00:00:00Z",
+        "review_owner": "qa"
       },
       {
         "id": "P0-3-OMO-CURVE",

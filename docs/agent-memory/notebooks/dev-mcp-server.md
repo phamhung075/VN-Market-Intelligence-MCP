@@ -86,3 +86,19 @@ Sprint MARKET-INDICATOR-DEPTH-P0 task OHLCV-BACKFILL-P0.
 **Current state:** 37/42 tickers have 47-48 bars (2026-04-23 → 2026-06-29). VPS queue trigger id=451 inserted. Expected ~500 bars/ticker after VPS 730-day run.
 
 Zone health: tsc clean, 48/0 OHLCV cluster, toolCount=166 unchanged, schedulerCount=80 | HEALTHY
+
+## 2026-06-30 — P0-2-FOREIGN-ROOM-SUITE → REVIEW
+
+**Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
+
+- NEW: `domain/services/market-data/foreignRoomAnalyzer.ts` — pure domain: 6 functions (utilization, velocity, flags, saturation, z-score, event detection)
+- NEW: `infrastructure/db/foreignRoomStore.ts` — store: getAllTickersHistory, getMarketWideDailyVelocities (LAG-5 CTE), upsertForeignRoomEvent
+- NEW: `application/usecases/getForeignRoom.ts` — orchestration use case
+- NEW: `interface/mcp/tools/market-data/foreignRoomTools.ts` — MCP tool `get_foreign_room` (#176)
+- NEW: `__tests__/P0-2-foreign-room-suite.test.ts` — 31 tests (11 ACs), 0 fail
+- MOD: `schema-financial-reports.ts` — added `foreign_room_events` DDL (additive)
+- MOD: `vnstockFundamentalsJob.ts` — detectAndPersistRoomEvents() post-sweep (non-blocking)
+- MOD: `registry.ts` — +1 registerForeignRoomTools
+
+Zone health: tsc clean, 31/0 new tests, toolCount=174 (+1), schedulerCount=3 unchanged | HEALTHY
