@@ -1,4 +1,4 @@
-<!-- size-justification: 175L — 10-pass audit dispatcher with JUMP-TO anchors per pass + Mon/Thu Pass-9b gate + Pass 5b context-bloat signal consumer; each pass body is a ≤8-line SKIP-IF stub, splitting per pass would explode file count for no gain. -->
+<!-- size-justification: 172L — 10-pass audit dispatcher with JUMP-TO anchors per pass + Mon/Thu Pass-9b gate + Pass 5b context-bloat signal consumer; each pass body is a ≤8-line SKIP-IF stub, splitting per pass would explode file count for no gain. +1L: FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. -->
 # Claude Manager Helper — Main Flow (10 Passes)
 
 **Tools:** `docs/agents/tools/package/claude-manager-helper.md`
@@ -145,6 +145,7 @@ Pass 9b Doc-Heal:  OK | N auto-fixes | K escalated
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+  Notebook-write class: **APPEND** (AC-6) — compose settled ≤200L body in memory (AC-3 drop-oldest loop if > 200L) before single Write. SSOT: `.claude/skills/notebook-write/SKILL.md`.
 
 **Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash
