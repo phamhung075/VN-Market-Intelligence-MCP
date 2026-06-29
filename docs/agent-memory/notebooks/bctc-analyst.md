@@ -1,16 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-06-23 18:10 UTC (c061-slot2) | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c058 · 2026-06-16T00:15Z
-### Analysis Cycle (00:00–00:15 UTC) — mode: mixed
-- E2 guard: PASS (00:00 UTC). Slot: bctc-analyst-slot-4. Log ID: 1394. Guard: claimed=true.
-- Mode: mixed. 1 routine (FPT, E3 cache hit cycle 20) + 4 release BLOCKED (CTG cycle 31 CRITICAL, VCB cycle 28, D2D cycle 28, VNM cycle 3).
-- Bug #2776: undeployed 31+ cycles. No re-escalation.
-- Regime: NEUTRAL (+1.38pp). EY CHEAP (+2.05pp). VN-Index 1,799.31.
-- MACRO: Gold $4,334.7 BULLISH. Brent $83.68 NEUTRAL. USD/VND 26,103 BEARISH.
-- FPT Q1-2026: E3 CACHE HIT cycle 20. Net profit 2,476.8ty (+19.8% YoY). PE 13.8x (-20% vs sector). ROE 28.3%. EY_SPREAD +2.25pp. M-score=0, F-score=7. ESC-3 DATA-COV-LIM. ESC-5 EMPTY-SKIP.
-- CTG/VCB/D2D/VNM: BLOCKED. Signals: #6246 FPT fundamental_validation (0.8) → alert-commander.
+**Last updated:** 2026-06-29 18:15 UTC (c062-slot2) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c059 · 2026-06-16T15:15Z
 ### Analysis Cycle (15:00–15:15 UTC) — mode: routine
@@ -31,10 +21,6 @@
 - FPT: E3 CACHE HIT cycle 22. KD: Quẻ 54 BAT LOI — unchanged. ESC-3 DATA-COV-LIM GUARD-HELD (~8d).
 - Signals: #6354 FPT fundamental_validation (0.8, critic 0.4).
 
-### Carry-over to c061
-- CTG/VCB/D2D/VNM: BLOCKED #2776. ACV: newly filed 2026-06-16 — monitor DB population.
-- KD BAT LOI caution vs strong FPT fundamental. HVN/POW/HPG catalysts pending.
-
 ## c061 · 2026-06-23T18:10Z
 ### Analysis Cycle (18:02–18:10 UTC) — mode: mixed
 - E2 guard: PASS (18:02 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-2. Log ID: 1422. Guard: claimed=true (bctc-slot-2:2026-06-21).
@@ -42,21 +28,29 @@
 - Bug #2776-class: ACV filed 2026-06-16 — Chưa có dữ liệu BCTC. Monitor.
 - Regime: NEUTRAL (carry +1.37pp, deposit 5.00% vs Fed 3.63%). Market EY 7.05% CHEAP (+2.05pp). VN-Index 1,869.04 (+11.13) — TĂNG MẠNH.
 - MACRO: Gold $4,149.6 BULLISH risk-off >$2,200. Brent $77.02 NEUTRAL. USD/VND 26,128 BEARISH. Investment clock Overheat/CORE_VN. CPI 5.46%.
-- Alerts: D2D CRITICAL volume 5.5x avg. GAS HIGH volume 3.2x avg. VPB HIGH volume 3.7x avg. NVL -5.02%. Điện sector giảm đồng loạt (-1.57% TB). BĐS -2.68% TB.
-- News: VIC 18,000ty khoản vay không tính vào hạn mức tín dụng (BULLISH). Ngân hàng định giá thấp +18% profit 2026 (BULLISH). Techcombank CEO: VN duy trì tăng trưởng (BULLISH). Brent -6 tuần liên tiếp Mỹ (BEARISH GAS/PLX).
-- FPT Q1-2026: E3 CACHE HIT cycle 23. Net profit 2,476.8ty (+19.8% YoY). PE 13.8x vs sector 17.3x (-20%). PB 3.6x. ROE 28.3% (2.7x sector median 10.6%). EY_SPREAD +2.25pp CHEAP. D/E 0.40x. Cash 7,993.6ty. OCF -2,847.8ty seasonal (ocf_ni_ratio=-1.15, financing +2,586ty). M-score=0, F-score=7.
-- ESC-1/2/4 PASS. ESC-3 DATA-COV-LIM (quarters_returned=1, guard reclaimed). ESC-5 SKIP-EMPTY.
-- KD: Quẻ Khôn (2) TRUNG TÍNH/GIỮ (38%) — CHANGED từ Quẻ 54 BAT LOI (c059-c060). Tích cực hơn.
-- Legal: clean. Insider: clean. Foreign flow: -106K cp net 5 phiên (yếu hơn ngành +1K cp net).
-- Chain findings: 0 (cycle_id 20260623-1800). Signal #7185 FPT fundamental_validation (0.8, critic 0.4).
-- Signal file: docs/signals/bctc_signal_FPT_20260623_routine.json
+- FPT Q1-2026: E3 CACHE HIT cycle 23. Net profit 2,476.8ty (+19.8% YoY). PE 13.8x vs sector 17.3x (-20%). M-score=0, F-score=7. KD: Quẻ Khôn TRUNG TÍNH GIỮ (38%).
+- Signal #7185 FPT fundamental_validation (0.8, critic 0.4).
 
-### Carry-over to c062 (next slot, 2026-06-23 21:00 UTC)
-- ACV cycle 2: DB trống. Monitor.
-- CTG/VCB/D2D/VNM: nhóm BLOCKED từ #2776 — không tái escalation.
-- FPT ESC-3: DATA-COV-LIM, guard reclaimed.
-- KD IMPROVED: Quẻ Khôn TRUNG TÍNH vs prior BAT LOI — monitor confirm next cycle.
-- VIC catalyst: 18,000ty cash về tài khoản — theo dõi fundamental BĐS recovery.
-- NVL -5.02%, BĐS sector -2.68%: theo dõi fundamental D2D/VRE/KBC.
-- Điện sector giảm đồng loạt: theo dõi POW LNG one-time revenue Q2 BCTC.
-- Gold $4,149.6 (giảm từ $4,365): risk-off hạ nhiệt nhẹ — theo dõi regime shift.
+## c062 · 2026-06-29T18:15Z
+### Analysis Cycle (18:00–18:15 UTC) — mode: mixed
+- E2 guard: PASS (18:00 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-2. Log ID: 1503. Guard: claimed=true.
+- Mode: mixed. 1 routine (FPT, E3 cache hit cycle 24) + 1 release (VCB Q1-2026 FIRST PROCESS). 4 BLOCKED (CTG #2776 corrupt, D2D/VNM/ACV DB trống).
+- CTG: Bug #2776 — validation failed 100% imbalance (Assets=0). Confidence 56%. No re-escalation.
+- D2D/VNM: Chưa có dữ liệu BCTC — DB trống. ACV cycle 3: DB trống. Filed 2026-06-16.
+- Regime: NEUTRAL (+1.37pp carry). EY 7.05% CHEAP (+2.05pp). VN-Index 1,854.97 (-16.94 — BĐS sell-off).
+- MACRO: Gold $4,039.6 BULLISH. Brent $73.86 NEUTRAL. USD/VND 26,121 BEARISH. Clock Overheat CPI 5.46%.
+- Alerts: BĐS đồng loạt HIGH: VIC -4.74% VHM -3.65% VRE -2.67% (-3.69% TB). ACB smart money accum +376K cp 3d HIGH. BID exit -146K cp 3d. HVN: Long Thành Dec 2026 + lãi 7,600ty MEDIUM. KBC tự doanh bán 300ty.
+- JSH CRITICAL legal: Chủ tịch Nguyễn Chơn Hùng bị bắt — governance risk elevated.
+- VCB Q1-2026 RELEASE: Net profit 9,462.1ty (+9.6% QoQ; YoY N/A PUB-7). PE 14.1x (+57% vs sector 9.0x). EY_spread +2.09pp FAIR. OCF/NI 1.37. ESC-2 PASS (0.37%). ESC-3 DATA-COV-LIM. ESC-5 SKIP-EMPTY. KD Quẻ 20 Quan TRUNG TÍNH GIỮ (38%). Verdict: in-line.
+- FPT Q1-2026: E3 CACHE HIT cycle 24. Net profit 2,476.8ty (+19.8% YoY). PE 13.8x (-20% sector). ROE 28.3%. M=0 F=7. KD Quẻ 2 Khôn TRUNG TÍNH GIỮ (38%) — unchanged from c061.
+- Signals: #7942 VCB fundamental_validation (0.75, critic 0.8) + #7943 FPT fundamental_validation (0.8, critic 0.8).
+- Files: bctc_signal_VCB_20260629_release.json + bctc_signal_FPT_20260629_routine.json.
+
+### Carry-over to c063 (next slot, 2026-06-29 21:00 UTC)
+- CTG: #2776 Assets=0 corrupt — no re-escalation.
+- D2D/VNM/ACV: DB trống — monitor population.
+- VCB: Q1-2026 processed in-line. YoY Q1-2025 missing — monitor DB.
+- JSH: Chủ tịch bị bắt — monitor governance developments.
+- BĐS sell-off: VIC/VHM/VRE/D2D/KBC — fundamental BCTC context pending (D2D still blocked).
+- ACB smart accumulation +376K cp — watch fundamental confirmation.
+- GAS/PVD: MBS dự báo Q2 lợi nhuận +380% — watch Q2 BCTC filing.

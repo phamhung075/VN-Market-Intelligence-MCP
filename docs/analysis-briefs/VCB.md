@@ -21,6 +21,24 @@
 
 Signal: fundamental_validation #3125 | Confidence: 0.65
 
+### VCB Q1 2026 — Released 2026-06-15
+| Metric | Current Q (Q1-2026) | vs Prior Q (Q4-2025)* | vs YoY Same Q (Q1-2025)† |
+|--------|---------------------|-----------------------|--------------------------|
+| Revenue (VND bn) | 17,421.0 | +7.7% | N/A |
+| Net Income (VND bn) | 9,462.1 | +9.6% | N/A |
+| EPS (VND) | 15 | N/A | N/A |
+| ROE (%) | 4.2% (quarterly, ~16.8% ann.) | +0.0 pp | N/A |
+| Debt/Equity | N/A (bank) | N/A | N/A |
+| Operating Margin (%) | 80.9% | N/A | N/A |
+| P/E (x) | 14.1 | sector median: 9.0 (+57% premium) | — |
+
+*QoQ: Q1-2026 vs Q4-2025 (only available prior period). True Q4→Q1 seasonality: Q1 typically stronger for banks on loan growth.*
+†YoY primary Q1-2025 not in DB — PUB-7 period basis mismatch. Comparison withheld to prevent false delta.
+
+**Verdict**: In-line — Net profit QoQ +9.6%; YoY primary unavailable; OCF/NI 1.37 healthy cash conversion.
+BCTC-EVAL: VCB Q1-2026 = ⬜ (unavailable — bctc-eval endpoint not reached this cycle)
+Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
+
 ## [News Scout] Headlines & Sentiment
 
 ## [Market Watcher] Price, Volume, Technicals

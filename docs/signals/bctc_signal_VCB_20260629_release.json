@@ -1,0 +1,51 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "release",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Retail and corporate lending, trade finance, forex services, bancassurance (VCB Life)",
+  "customer": "State-owned enterprises, corporate clients, growing retail mortgage and consumer segment",
+  "ops": "Net interest income 80.9% of revenue; OCF/NI 1.37 healthy; operating margin 80.9%",
+  "mgmt": "Government majority shareholder (74.8% state); conservative capital management; consistent profitability",
+  "analysis": {
+    "net_profit_tybvnd": 9462.1,
+    "net_revenue_tybvnd": 17421.0,
+    "roe_quarterly": 0.042,
+    "roe_annualized": 0.168,
+    "pe": 14.1,
+    "sector_median_pe": 9.0,
+    "pe_premium_pct": 57,
+    "ey_spread_pp": 2.09,
+    "ey_verdict": "FAIR",
+    "ocf_ni_ratio": 1.368,
+    "ocf_tybvnd": 12944.9,
+    "total_assets_tybvnd": 2550963.3,
+    "equity_tybvnd": 224558.7,
+    "confidence": 0.75
+  },
+  "kd": "Que 20 Quan TRUNG TINH GIU 38%",
+  "foreign_flow_5d_shares": "+91K cp net (VCB manh hon nganh)",
+  "legal_risk": "clean",
+  "insider": "clean",
+  "esc_results": {
+    "esc1": false,
+    "esc2": false,
+    "esc2_imbalance": 0.0037,
+    "esc3": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 1,
+    "esc4": false,
+    "esc5": false,
+    "esc5_note": "bctc_refined_units empty for VCB-Q1-2026 — skipping"
+  },
+  "e1_passes": {
+    "trick_confidence": "none",
+    "trick_summary": null,
+    "note": "refine_status=PARTIAL — limited forensic coverage; no tricks detected from available data"
+  },
+  "signal_id": 7942,
+  "cycle_id": "20260629-1800",
+  "emitted_at": "2026-06-29T18:10:00Z",
+  "yoy_note": "YoY comparison unavailable — PUB-7 period basis mismatch; only 1 period in DB"
+}
