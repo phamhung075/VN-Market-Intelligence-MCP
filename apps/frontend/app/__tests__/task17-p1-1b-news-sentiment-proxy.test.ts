@@ -21,7 +21,7 @@ import { describe, it, expect } from "vitest";
 // Types — mirror dashboard.news.tsx exactly
 // ---------------------------------------------------------------------------
 
-type Sentiment = "positive" | "negative" | "neutral" | null;
+type Sentiment = "bullish" | "bearish" | "neutral" | null;
 
 interface NewsSentimentItem {
   id: string;
@@ -35,6 +35,7 @@ interface NewsSentimentItem {
   affected_tickers: string[];
   affected_sectors: string[];
   impact_summary: string;
+  decision_resume: string | null;
 }
 
 interface NewsSentimentDto {
@@ -119,6 +120,7 @@ const HEALTHY_ITEM: NewsSentimentItem = {
   affected_tickers: [],
   affected_sectors: [],
   impact_summary: "GDP growth reported at 3% — broadly in line with consensus.",
+  decision_resume: null,
 };
 
 const HEALTHY_DTO: NewsSentimentDto = {
@@ -134,13 +136,14 @@ const ITEM_WITH_CHIPS: NewsSentimentItem = {
   title: "VCB tăng mạnh sau kết quả Q1",
   source: "https://cafef.vn/vcb",
   source_ts: "2026-06-11T09:00:00Z",
-  sentiment: "positive",
+  sentiment: "bullish",
   sentiment_score: 8.5,
-  impact_direction: "positive",
+  impact_direction: "bullish",
   confidence: 0.82,
   affected_tickers: ["VCB", "BID"],
   affected_sectors: ["banking"],
   impact_summary: "VCB reported strong Q1 earnings.",
+  decision_resume: "Tích cực cho VCB, BID: tăng trưởng, lợi nhuận",
 };
 
 // ---------------------------------------------------------------------------
@@ -301,7 +304,7 @@ describe("news-sentiment loader — unexpected JSON shape (non-fatal)", () => {
 // ---------------------------------------------------------------------------
 
 describe("news-sentiment — sentiment field values", () => {
-  const sentiments: Array<Sentiment> = ["positive", "negative", "neutral", null];
+  const sentiments: Array<Sentiment> = ["bullish", "bearish", "neutral", null];
 
   sentiments.forEach((sentiment) => {
     it(`sentiment="${String(sentiment)}" is preserved in parsed item`, () => {
@@ -337,5 +340,61 @@ describe("news-sentiment — empty tickers/sectors handled gracefully", () => {
       const result = parseNewsSentimentResponse(dto, REAL_TS);
       expect(result.items[0].affected_sectors).toEqual([]);
     }).not.toThrow();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 8 — FR-4/FR-5: decision_resume field passthrough (FEAT-NEWS-DR-HOP2)
+// ---------------------------------------------------------------------------
+
+describe("news-sentiment — decision_resume passthrough (FR-5)", () => {
+  it("AC-NEW-1: non-null decision_resume in DTO item passes through parsed result", () => {
+    const item: NewsSentimentItem = {
+      ...HEALTHY_ITEM,
+      sentiment: "bullish",
+      decision_resume: "Tích cực cho VCB, FPT: tăng trưởng, lợi nhuận",
+    };
+    const dto: NewsSentimentDto = { ...HEALTHY_DTO, items: [item] };
+    const result = parseNewsSentimentResponse(dto, REAL_TS);
+    expect(result.items[0].decision_resume).toBe(
+      "Tích cực cho VCB, FPT: tăng trưởng, lợi nhuận",
+    );
+  });
+
+  it("AC-NEW-2: null decision_resume in DTO item → null in parsed result", () => {
+    const item: NewsSentimentItem = {
+      ...HEALTHY_ITEM,
+      sentiment: "neutral",
+      decision_resume: null,
+    };
+    const dto: NewsSentimentDto = { ...HEALTHY_DTO, items: [item] };
+    const result = parseNewsSentimentResponse(dto, REAL_TS);
+    expect(result.items[0].decision_resume).toBeNull();
+  });
+
+  it("bearish item carries decision_resume through", () => {
+    const item: NewsSentimentItem = {
+      ...HEALTHY_ITEM,
+      sentiment: "bearish",
+      decision_resume: "Tiêu cực ngành ngân hàng: nợ xấu, lãi suất",
+    };
+    const dto: NewsSentimentDto = { ...HEALTHY_DTO, items: [item] };
+    const result = parseNewsSentimentResponse(dto, REAL_TS);
+    expect(result.items[0].decision_resume).toBe(
+      "Tiêu cực ngành ngân hàng: nợ xấu, lãi suất",
+    );
+    expect(result.items[0].sentiment).toBe("bearish");
+  });
+
+  it("ITEM_WITH_CHIPS carries decision_resume from fixture", () => {
+    const dto: NewsSentimentDto = {
+      ...HEALTHY_DTO,
+      items: [ITEM_WITH_CHIPS],
+      count: 1,
+    };
+    const result = parseNewsSentimentResponse(dto, REAL_TS);
+    expect(result.items[0].decision_resume).toBe(
+      "Tích cực cho VCB, BID: tăng trưởng, lợi nhuận",
+    );
   });
 });

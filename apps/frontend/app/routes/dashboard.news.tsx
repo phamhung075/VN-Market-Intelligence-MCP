@@ -9,7 +9,7 @@
  *     count: number,
  *     items: [ { id, title, source, source_ts, sentiment, sentiment_score,
  *                impact_direction, confidence, affected_tickers, affected_sectors,
- *                impact_summary } ] }
+ *                impact_summary, decision_resume } ] }
  *
  * items[] may be empty — renders a friendly empty state, never an error.
  * Upstream 5xx / network failure → shows error banner, never throws.
@@ -17,6 +17,7 @@
  *
  * Labels: plain Vietnamese — non-technical user.
  */
+import { useState } from "react";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
@@ -25,6 +26,11 @@ import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 import { FreshnessBadge } from "~/components/FreshnessBadge";
 import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
 
 export const meta: MetaFunction = () => [
   { title: "Tin Tức — VN Market Intelligence" },
@@ -34,7 +40,7 @@ export const meta: MetaFunction = () => [
 // Domain types — matched to GET /api/news-sentiment DTO
 // ---------------------------------------------------------------------------
 
-type Sentiment = "positive" | "negative" | "neutral" | null;
+type Sentiment = "bullish" | "bearish" | "neutral" | null;
 
 interface NewsSentimentItem {
   id: string;
@@ -48,6 +54,7 @@ interface NewsSentimentItem {
   affected_tickers: string[];
   affected_sectors: string[];
   impact_summary: string;
+  decision_resume: string | null;
 }
 
 interface NewsSentimentDto {
@@ -136,14 +143,14 @@ function SentimentPill({ sentiment }: { sentiment: Sentiment }) {
       </span>
     );
   }
-  if (sentiment === "positive") {
+  if (sentiment === "bullish") {
     return (
       <span className="inline-flex items-center rounded border border-green-700 bg-green-950 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-green-400">
         Tích cực
       </span>
     );
   }
-  // negative
+  // bearish
   return (
     <span className="inline-flex items-center rounded border border-red-700 bg-red-950 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-400">
       Tiêu cực
@@ -168,6 +175,7 @@ function Chip({ label }: { label: string }) {
 // ---------------------------------------------------------------------------
 
 function NewsCard({ item }: { item: NewsSentimentItem }) {
+  const [impactOpen, setImpactOpen] = useState(false);
   const tickers = Array.isArray(item.affected_tickers)
     ? item.affected_tickers
     : [];
@@ -175,8 +183,22 @@ function NewsCard({ item }: { item: NewsSentimentItem }) {
     ? item.affected_sectors
     : [];
 
+  const resumeColorClass =
+    item.sentiment === "bullish"
+      ? "text-green-400"
+      : item.sentiment === "bearish"
+        ? "text-red-400"
+        : "text-slate-400";
+
   return (
     <article className="rounded-lg border border-slate-700 bg-slate-800 p-4 space-y-3">
+      {/* Decision résumé strip — skim-first, only when non-null/non-empty */}
+      {item.decision_resume != null && item.decision_resume.length > 0 ? (
+        <p className={`text-xs font-semibold ${resumeColorClass}`}>
+          {item.decision_resume}
+        </p>
+      ) : null}
+
       {/* Title row: linked to source */}
       <div className="flex flex-wrap items-start gap-2">
         <a
@@ -197,11 +219,18 @@ function NewsCard({ item }: { item: NewsSentimentItem }) {
         <ClientTimestamp iso={item.source_ts} />
       </div>
 
-      {/* Impact summary */}
+      {/* Impact summary — collapsible, default collapsed */}
       {item.impact_summary ? (
-        <p className="text-xs leading-relaxed text-slate-400">
-          {item.impact_summary}
-        </p>
+        <Collapsible open={impactOpen} onOpenChange={setImpactOpen}>
+          <CollapsibleTrigger className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+            {impactOpen ? "Thu gọn" : "Xem thêm"}
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <p className="text-xs leading-relaxed text-slate-400 mt-1">
+              {item.impact_summary}
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
       ) : null}
 
       {/* Chips: affected tickers + sectors (only when present) */}
