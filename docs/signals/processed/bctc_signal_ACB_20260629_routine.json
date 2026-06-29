@@ -28,7 +28,7 @@
     "ESC-5": "PASS (confidence 60% > 0.50 threshold; refine=PARTIAL)"
   },
   "confidence": 0.65,
-  "bctc_confidence": 0.60,
+  "bctc_confidence": 0.6,
   "refine_status": "PARTIAL",
   "trick_summary": null,
   "trick_confidence": "none",
@@ -36,5 +36,11 @@
   "yoy_comparison": "UNAVAILABLE — chỉ có 1 kỳ báo cáo trong DB",
   "regime": "NEUTRAL (carry +1.37pp)",
   "investment_clock": "Overheat (CPI 5.46%)",
-  "generatedAt": "2026-06-29T21:12:00Z"
+  "generatedAt": "2026-06-29T21:12:00Z",
+  "_processed": {
+    "fingerprint": "2a8e027daeb2c5b110b346fb4c5a4e1e245f5581331aa4d89c847acf49781f3a",
+    "processedAt": "2026-06-29T21:20:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
