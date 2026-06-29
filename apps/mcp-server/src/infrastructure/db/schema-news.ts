@@ -63,6 +63,13 @@ export function initNewsTables(db: Database): void {
   // Idempotent: guarded ALTER TABLE (try/catch on column-exists error).
   try { db.exec("ALTER TABLE rag_analyses ADD COLUMN body_text TEXT"); } catch { /* already exists */ }
 
+  // ── FEAT-NEWS-DECISION-RESUME / FR-2: decision_resume column ─────────────
+  // Plain-Vietnamese one-liner "vì sao tốt/xấu" produced by buildDecisionResume()
+  // in newsNormalizer.ts. Nullable TEXT — legacy rows retain NULL (no backfill).
+  // NO UNIQUE constraint: SQLite ADD COLUMN UNIQUE is a silent no-op (project memory).
+  // Idempotent: guarded ALTER TABLE (try/catch on column-exists error).
+  try { db.exec("ALTER TABLE rag_analyses ADD COLUMN decision_resume TEXT"); } catch { /* already exists */ }
+
   // ── Agent Signal Bus (Task 242) ────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS agent_signals (

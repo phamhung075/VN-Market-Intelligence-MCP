@@ -7,7 +7,7 @@
  * Source: `rag_analyses` SQLite table (mcp-server owns market.db).
  * The table is populated by pollNews / VPS push-news pipeline and carries:
  *   – source_title / source_url / published_at / created_at
- *   – sentiment (positive | neutral | negative)
+ *   – sentiment (bullish | bearish | neutral)
  *   – impact_score (0–10), impact_direction (bullish | bearish | neutral)
  *   – confidence (0–1)
  *   – summary, tags (JSON array of affected tickers/domains)
@@ -34,13 +34,14 @@
  *         title:            string | null,
  *         source:           string | null,   // URL
  *         source_ts:        string,          // published_at ?? created_at
- *         sentiment:        "positive" | "negative" | "neutral" | null,
+ *         sentiment:        "bullish" | "bearish" | "neutral" | null,
  *         sentiment_score:  number | null,   // 0–10 (impact_score repurposed)
  *         impact_direction: string | null,   // bullish | bearish | neutral
  *         confidence:       number | null,   // 0–1
  *         affected_tickers: string[],        // extracted from tags JSON
  *         affected_sectors: string[],        // extracted from affected_domains JSON
- *         impact_summary:   string | null    // summary field (omitted if null/empty)
+ *         impact_summary:   string | null,   // summary field (omitted if null/empty)
+ *         decision_resume:  string | null    // plain-Vietnamese one-liner verdict (null for neutral/legacy)
  *       },
  *       ...
  *     ]
@@ -84,6 +85,7 @@ interface RagAnalysisRow {
   summary: string | null;
   tags: string | null;          // JSON array of strings
   affected_domains: string | null; // JSON array of strings
+  decision_resume: string | null;
 }
 
 /** One news+sentiment item in the response envelope. */
@@ -99,6 +101,7 @@ export interface NewsSentimentItem {
   affected_tickers: string[];
   affected_sectors: string[];
   impact_summary: string | null;
+  decision_resume: string | null;
 }
 
 /** Full response body for GET /api/news-sentiment. */
@@ -162,7 +165,7 @@ export function queryNewsSentiment(
     .prepare<RagAnalysisRow, [number]>(
       `SELECT id, source_title, source_url, published_at, created_at,
               sentiment, impact_score, impact_direction, confidence,
-              summary, tags, affected_domains
+              summary, tags, affected_domains, decision_resume
        FROM rag_analyses
        WHERE source_url IS NOT NULL
          AND source_url != ''
@@ -199,6 +202,7 @@ export function queryNewsSentiment(
       affected_tickers,
       affected_sectors,
       impact_summary,
+      decision_resume: row.decision_resume ?? null,
     };
   });
 }

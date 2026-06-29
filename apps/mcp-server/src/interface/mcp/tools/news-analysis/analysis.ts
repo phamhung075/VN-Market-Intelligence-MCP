@@ -266,8 +266,9 @@ export function registerAnalysisTools(server: McpServer): void {
              (id, created_at, level, source_url, source_title, source_type,
               published_at, sentiment, impact_score, impact_direction, confidence,
               time_horizon, summary, reasoning,
-              affected_countries, affected_domains, affected_actions, parent_ids, tags)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              affected_countries, affected_domains, affected_actions, parent_ids, tags,
+              decision_resume)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         );
 
         for (const entry of entries) {
@@ -292,6 +293,7 @@ export function registerAnalysisTools(server: McpServer): void {
               JSON.stringify(entry.affectedActions),
               JSON.stringify(entry.parentIds),
               JSON.stringify(entry.tags),
+              entry.decision_resume ?? null,
             );
           } catch (dbErr) {
             logger.warn("[fetch_and_analyze] SQLite insert failed for entry", {

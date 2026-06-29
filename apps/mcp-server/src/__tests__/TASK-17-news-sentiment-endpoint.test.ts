@@ -16,6 +16,8 @@
  * AC-13: stale_served is false when newest item is within 6 hours
  * AC-14: count matches items.length
  * AC-15: source_ts falls back to created_at when published_at is null
+ * AC-NEW-1 (FEAT-NEWS-DR): non-null decision_resume in DB row passes through to DTO
+ * AC-NEW-2 (FEAT-NEWS-DR): null decision_resume in DB row → null in DTO item
  *
  * DDD layer: interface + infrastructure tested together at the handler seam.
  * Isolation: in-memory SQLite, reset per test.
@@ -67,6 +69,8 @@ interface InsertParams {
   summary?: string | null;
   tags?: string | null;
   affected_domains?: string | null;
+  /** FEAT-NEWS-DR: optional decision_resume passthrough test param */
+  decision_resume?: string | null;
 }
 
 function insertRow(db: Database, p: InsertParams): void {
@@ -74,8 +78,8 @@ function insertRow(db: Database, p: InsertParams): void {
     `INSERT INTO rag_analyses
        (id, source_title, source_url, published_at, created_at, sentiment,
         impact_score, impact_direction, confidence, summary, tags, affected_domains,
-        level, embedding_text)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'macro', NULL)`,
+        level, embedding_text, decision_resume)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'macro', NULL, ?)`,
   ).run(
     p.id,
     p.source_title ?? null,
@@ -89,6 +93,7 @@ function insertRow(db: Database, p: InsertParams): void {
     p.summary ?? null,
     p.tags ?? null,
     p.affected_domains ?? null,
+    p.decision_resume ?? null,
   );
 }
 
@@ -395,5 +400,41 @@ describe("TASK-17 — handleGetNewsSentiment HTTP handler", () => {
 
   it("STALE_THRESHOLD_HOURS is exported and equals 6", () => {
     expect(STALE_THRESHOLD_HOURS).toBe(6);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEAT-NEWS-DR — decision_resume passthrough (AC-NEW-1, AC-NEW-2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("FEAT-NEWS-DR — decision_resume passthrough", () => {
+  it("AC-NEW-1: non-null decision_resume in DB row passes through to DTO", () => {
+    const db = getDb();
+    insertRow(db, {
+      id: "dr1",
+      source_url: "https://cafef.vn/dr1",
+      created_at: "2026-06-29T10:00:00Z",
+      sentiment: "bullish",
+      decision_resume: "Tích cực cho VCB, FPT: tăng trưởng, lợi nhuận",
+    });
+
+    const items = queryNewsSentiment(db, 1);
+    expect(items).toHaveLength(1);
+    expect(items[0]!.decision_resume).toBe("Tích cực cho VCB, FPT: tăng trưởng, lợi nhuận");
+  });
+
+  it("AC-NEW-2: null decision_resume in DB row → null in DTO item", () => {
+    const db = getDb();
+    insertRow(db, {
+      id: "dr2",
+      source_url: "https://cafef.vn/dr2",
+      created_at: "2026-06-29T10:00:00Z",
+      sentiment: "neutral",
+      decision_resume: null,
+    });
+
+    const items = queryNewsSentiment(db, 1);
+    expect(items).toHaveLength(1);
+    expect(items[0]!.decision_resume).toBeNull();
   });
 });

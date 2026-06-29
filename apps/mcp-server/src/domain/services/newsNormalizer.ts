@@ -64,6 +64,10 @@ export interface AnalysisEntry {
   /** Matched keywords, deduplicated, lowercase, max 10 */
   tags: string[];
   createdAt: string;
+  /** Plain-Vietnamese one-liner "vì sao tốt/xấu" — null for neutral sentiment.
+   *  Optional for backwards compat with manually-constructed test fixtures.
+   *  normalizeNews() always sets this field; manual constructions default undefined → NULL in DB. */
+  decision_resume?: string | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -819,6 +823,98 @@ function computeConfidence(level: AnalysisLevel, keywordCount: number): number {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Decision résumé helpers (FR-1 — FEAT-NEWS-DECISION-RESUME)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Vietnamese display labels for each DomainType.
+ * Partial<Record> enables safe fallback: DOMAIN_VN_LABEL[d] ?? null
+ * Unknown/unsupported DomainType → undefined → omit domain segment (no crash).
+ */
+export const DOMAIN_VN_LABEL: Partial<Record<string, string>> = {
+  oil_gas:       "dầu khí",
+  banking:       "ngân hàng",
+  real_estate:   "bất động sản",
+  steel:         "thép",
+  aviation:      "hàng không",
+  retail:        "bán lẻ",
+  tech:          "công nghệ",
+  utilities:     "điện",
+  agriculture:   "nông nghiệp",
+  insurance:     "bảo hiểm",
+  securities:    "chứng khoán",
+  pharma:        "dược phẩm",
+  logistics:     "vận tải",
+  gold_mining:   "vàng",
+  automotive:    "ô tô",
+  construction:  "xây dựng",
+  energy:        "năng lượng tái tạo",
+};
+
+/**
+ * Hard-cap at 120 characters, breaking at the last space before the limit.
+ * If no space is found before the limit, hard-cuts at 120.
+ * Returns the string unchanged if it is ≤ 120 chars.
+ */
+export function truncateAt120(s: string): string {
+  if (s.length <= 120) return s;
+  const window = s.slice(0, 120);
+  const lastSpace = window.lastIndexOf(" ");
+  return lastSpace > 0 ? s.slice(0, lastSpace) : window;
+}
+
+/**
+ * Build a plain-Vietnamese decision résumé from signals already computed in
+ * normalizeNews(). Pure function — no I/O, no LLM, no fabrication.
+ *
+ * Returns null for neutral sentiment (no verdict to surface).
+ * Algorithm per FR-1 spec (BA-FEAT-NEWS-DECISION-RESUME):
+ *   prefix → context suffix → keywords → compose → truncateAt120
+ */
+export function buildDecisionResume(
+  sentiment: Sentiment,
+  level: AnalysisLevel,
+  affectedActions: string[],
+  affectedDomains: DomainType[],
+  bullishMatched: string[],
+  bearishMatched: string[],
+): string | null {
+  if (sentiment === "neutral") return null;
+
+  // 1. Prefix
+  const prefix = sentiment === "bullish" ? "Tích cực" : "Tiêu cực";
+
+  // 2. Signal keywords — first 2 from the relevant matched list
+  const keywords =
+    sentiment === "bullish"
+      ? bullishMatched.slice(0, 2)
+      : bearishMatched.slice(0, 2);
+
+  // 3. Context suffix (priority: action tickers > domain > none)
+  let context = "";
+  if (level === "action" && affectedActions.length > 0) {
+    context = ` cho ${affectedActions.slice(0, 3).join(", ")}`;
+  } else if (affectedDomains.length > 0) {
+    const vnNames = affectedDomains
+      .slice(0, 2)
+      .map((d) => DOMAIN_VN_LABEL[d as string])
+      .filter((v): v is string => v != null);
+    if (vnNames.length > 0) {
+      context = ` ngành ${vnNames.join(", ")}`;
+    }
+  }
+
+  // 4. Compose
+  const body =
+    keywords.length > 0
+      ? `${prefix}${context}: ${keywords.join(", ")}`
+      : `${prefix}${context}: tín hiệu tổng hợp`;
+
+  // 5. Hard-cap
+  return truncateAt120(body);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Public API
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -952,6 +1048,16 @@ export function normalizeNews(item: RssItem): AnalysisEntry {
   // ── Confidence ───────────────────────────────────────────────────────────
   const confidence = computeConfidence(level, allMatchedKeywords.length);
 
+  // ── Decision résumé (FR-1 — FEAT-NEWS-DECISION-RESUME) ───────────────────
+  const decision_resume = buildDecisionResume(
+    sentiment,
+    level,
+    affectedActions,
+    affectedDomains,
+    bullishMatched,
+    bearishMatched,
+  );
+
   // ── ID ───────────────────────────────────────────────────────────────────
   const id = `analysis-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -975,5 +1081,6 @@ export function normalizeNews(item: RssItem): AnalysisEntry {
     parentIds: [],
     tags,
     createdAt: new Date().toISOString(),
+    decision_resume,
   };
 }
