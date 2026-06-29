@@ -1,5 +1,13 @@
 # Agent Father — Notebook
 
+## 2026-06-29 — FB-COWORK-FOLD tombstone (TASK_1999)
+
+- Change: Deprecate `.claude/commands/crons/cron-fb-market-poster.md` → tombstone/redirect to cowork slots
+- Files modified: 1 (.claude/commands/crons/cron-fb-market-poster.md)
+- Cascade: none (cron command doc; no agent definition affected)
+- Validation: 5/5 — DEPRECATED notice present; fb-daily + fb-weekend slot pointers present; DST note dropped with UTC-native rationale; :07→:13 minute change explained; rationale reframed as "implemented in cowork slots"
+- Decision: standalone CronCreate crons retired as part of FB-COWORK-FOLD sprint (TASK_1996-1999). Cowork dispatcher owns fb scheduling. agent-md-factory pre/post checklist applied.
+
 ## 2026-06-28 — CROSS-SESSION-MULTI-TEAM-ORCH P3-AF-1 (TASK_1994)
 
 - Task: Fire-time leader election implementation — 5 items per P3 addendum (TASK_1993 REVIEW, design verified)

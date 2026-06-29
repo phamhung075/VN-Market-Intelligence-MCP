@@ -6609,7 +6609,7 @@
       },
       {
         "id": "TASK_1999",
-        "status": "BACKLOG",
+        "status": "DONE",
         "type": "CLEAN",
         "size": "S",
         "owner": "agent-father",
