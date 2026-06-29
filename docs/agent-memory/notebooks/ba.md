@@ -1,5 +1,17 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-29 | **Sprint:** MARKET-INDICATOR-DEPTH-P0
+
+## MARKET-INDICATOR-DEPTH-P0 · 2026-06-29
+
+Spec complete. REQ file: `docs/handoffs/BA-MARKET-INDICATOR-DEPTH-P0.md`. 5 PO blockers (B1=Sprint-0 dispatch mode, B2=OMO DB location ARCH-RATIFY-OMO-1, B3=insider free-float ARCH-RATIFY-INS-1, B4=breadth persister scheduler slot, B5=P0-4 baseline adequacy). NEXT: PO review then architect.
+
+Key BA findings: 7 deliverables decomposed — Sprint-0 OHLCV backfill (450-row queue → writeOhlcvBatch path, no bypass writer), P0-1 Volatility (RV10/20/60d+GK+ATR%14+regime+252d-drawdown from daily_ohlcv, gated on Sprint-0 for 60d/252d), P0-2 Foreign-Room (new foreign_room_events table + utilization/velocity/ROOM_LOCKED/FULL_ROOM_SELL/cap-weighted-saturation from vnstock_trading_stats), P0-3 OMO Curve (extend OMOParseResult to capture Lãi suất+Số thành viên per row, new sbv_omo_daily table, net_injection_5d, liquidity_stress_score 0–1; bid-to-cover NOT sourceable → excluded), P0-4 News Z-Score (confidence-weighted daily_score + z vs 60/90d baseline from rag_analyses; z-score blocked when <21d data — honest null, NOT fabricated), P0-5 Insider Sentiment (net buy-sell VND 30/90/180d + free-float normalized + ACCUMULATION/DISTRIBUTION label + large-deal flag from insider_transactions), Breadth (new market_breadth_history table, forward-accruing only, ADL/RANA/McClellan/Zweig/floor-panic/ceiling-fomo). Gauge-readiness: each tool outputs one named scalar for P1 Fear & Greed composition (rv_20d_percentile/foreign_outflow_z_5d/liquidity_stress_score/news_sentiment_z/net_sentiment_score/breadth_z_score). DDD: domain = pure calc services, application = classification/aggregation, infrastructure = new tables + scheduler, interface = MCP handlers.
+
+Decision journal (task_id: BA-INDICATOR-DEPTH-P0):
+- what-considered: "(A) OMO DB location: macro-indicators own SQLite (zone-clean) vs shared market.db (cross-zone access) — DEFERRED to architect as ARCH-RATIFY-OMO-1. (B) Insider free-float: market_cap_bn proxy vs actual free-float shares (not in vnstock_trading_stats) — CHOSE market_cap_bn for P0 with ARCH-RATIFY-INS-1 flag. (C) Sprint-0 dispatch: inside PM decomposition vs separate parallel task — RECOMMENDED separate parallel task (P0-2/3/4/5 have no OHLCV dependency, should not wait). (D) Breadth history_quality: numeric day count only vs labelled tiers — CHOSE both (accruing_since + sessions_accrued + SUFFICIENT/WARMUP/INSUFFICIENT labels)."
+- why-change: "no change from roadmap §5 scope; spec transposes PO vision into FRs faithfully, no new fabrication paths opened."
+
 **Last updated:** 2026-06-29 | **Sprint:** FEAT-NEWS-DECISION-RESUME
 
 ## FEAT-NEWS-DECISION-RESUME · 2026-06-29
