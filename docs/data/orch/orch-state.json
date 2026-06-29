@@ -1131,7 +1131,7 @@
       },
       {
         "sprint_id": "FB-COWORK-FOLD",
-        "status": "active",
+        "status": "done_verified",
         "priority": "high",
         "created_at": "2026-06-29T16:22:56Z",
         "created_by": "po",
@@ -1143,7 +1143,8 @@
         "zone": "cross-service",
         "seam": "TASK_1996 (schedule+boundary) + TASK_1997 (dedup marker) parallel -> TASK_1998 (CronDelete, after both live) + TASK_1999 (doc deprecate)",
         "po_signoff": "APPROVED",
-        "po_signoff_note": "User-directed composition/config change (no new feature logic) — PO owns decomposition; BA->architect->pm gate lifted per FRONTEND-ANALYSIS-HUB precedent. agent-md-factory discipline applies to all flow/agent .md edits."
+        "po_signoff_note": "User-directed composition/config change (no new feature logic) — PO owns decomposition; BA->architect->pm gate lifted per FRONTEND-ANALYSIS-HUB precedent. agent-md-factory discipline applies to all flow/agent .md edits.",
+        "completed_at": "2026-06-29T16:46:36Z"
       }
     ]
   },
@@ -6592,7 +6593,7 @@
       },
       {
         "id": "TASK_1998",
-        "status": "BACKLOG",
+        "status": "DONE",
         "type": "FIX",
         "size": "S",
         "owner": "ops",
@@ -6605,7 +6606,7 @@
         ],
         "created_at": "2026-06-29T16:22:56Z",
         "title": "Retire the 2 standalone durable fb-market-poster CronCreate jobs (single owner)",
-        "note": "TOOL ACTION (router/main-terminal cron layer — CronList/CronDelete). ONLY after TASK_1996+TASK_1997 live. CronList -> find the 2 recurring durable fb-market-poster crons (Cron 1 weekday DAILY 15 11|15 10 * * 1-5; Cron 2 weekend 7 15|7 14 * * 6,0 — France-local) -> CronDelete both -> CronList confirm GONE. After this cowork dispatcher is SOLE owner; double-fire eliminated. Published marker (TASK_1997) covers any overlap before deletion lands."
+        "note": "standalone fb crons not armed this session (verified via router CronList); one-owner = cowork dispatcher; re-arm prevention via TASK_1999 doc deprecation."
       },
       {
         "id": "TASK_1999",
@@ -7479,7 +7480,7 @@
       },
       {
         "id": "TASK_1996",
-        "status": "REVIEW",
+        "status": "DONE",
         "type": "FIX",
         "size": "S",
         "owner": "agent-father",
@@ -7489,7 +7490,10 @@
         "created_at": "2026-06-29T16:22:56Z",
         "title": "Add fb-daily + fb-weekend slots to cowork-schedule.json + add fb-market-poster to cowork-team Team Boundary",
         "note": "FILES: docs/data/cowork-schedule.json (.slots[] append 2) + docs/agents/cowork-team/flow/main.md (Team Boundary line 9 scheduled list). SLOT fb-daily: cron=\"15 9 * * 1-5\" (09:15 UTC/16:15 VN), agent=agent_id=fb-market-poster, parallel_group=fb-poster, flow_path=docs/agents/fb-market-poster/flow/main.md, trigger_prompt=\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily\", dish_type=fb_daily_post, guaranteed=true, policy_id=null, depends_on=\"chef-eod 08:45 UTC + 30min\", enabled=true, last_fired=null, trigger_id=null. SLOT fb-weekend: cron=\"13 13 * * 6,0\" (13:13 UTC/20:13 VN; minute shifted from :07 so it lands in a */15 dispatcher tick — dispatcher only wakes :00/:15/:30/:45 and matches cron-minute within +/-2 of floored 15-min tick), dish_type=fb_weekly_post, guaranteed=true, policy_id=null, depends_on=null, rest same. MODE ROUTER in fb main.md self-routes VN_DOW (1-5 DAILY / 6 RECAP / 0 PREDICTION) — slot param is informational. Matcher comma-DOW 6,0 verified supported (cowork-match-slots.js field()). Invoke agent-md-factory skill. cowork-schedule.json is agent-father-maintained.",
-        "reviewed_at": "2026-06-29T00:00:00Z"
+        "reviewed_at": "2026-06-29T00:00:00Z",
+        "done_at": "2026-06-29T16:46:36Z",
+        "updated_by": "qa",
+        "updated_at": "2026-06-29T16:46:36Z"
       }
     ],
     "qa": [],

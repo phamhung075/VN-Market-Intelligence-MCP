@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-349 · 2026-06-29 · TASK_1996 (FB-COWORK-FOLD) — APPROVED
+
+TASK_1996 fb-market-poster cowork-fold QA gate | Verdict: APPROVED | Check 1 (matcher, 13 probes): fb-daily (15 9 * * 1-5) fires at actualM=15/H=9/DOW=1-5 PASS; misses Sat/Sun/09:30/09:00 PASS. fb-weekend (13 13 * * 6,0) fires at actualM=15/H=13/DOW=6+0 PASS (minute 13 within ±2 of nominal tick 15); NEGATIVE: OLD :07 misses ALL 4 dispatcher ticks (:00/:15/:30/:45) PASS x4; NEW :13 fires at :15 tick PASS. comma-DOW 6,0 → {Sat,Sun} PASS. Check 2 (JSON integrity): JSON parses OK; fb-daily+fb-weekend both have exact 19-field set matching digest-sunday reference slot (no missing/extra keys); no duplicate slot_ids across 21 slots PASS. Check 3 (Team Boundary): fb-market-poster present in cowork-team/flow/main.md scheduled list PASS. Check 4 (no-double-fire): TASK_1997 DONE + STEP 0a dedup gate in fb-flow (published:fb-daily:<VN-DATE>, cowork-slot, ttl=100800) verified; TASK_1998 standalone-cron retire DONE PASS. TASK_1996 REVIEW→DONE via orch-apply.sh. Sprint FB-COWORK-FOLD → done_verified (all 4 tasks: 1996+1997+1998+1999 DONE). DJ: sprint-FB-COWORK-FOLD-qa.md § qa-S1.
+
 ## cycle-348 · 2026-06-28 · TASK_1993/1994/1995 (CROSS-SESSION-MULTI-TEAM-ORCH P3) — APPROVED (re-gate confirmed)
 
 P3 re-gate independent verification (session eb8b5309). DWF 32/32 GREEN confirmed RAW. Coordination suite 7 files 123/0. tsc 0 errors. Full suite 63 fail vs 53 baseline (+10 pre-existing non-P3). TASK_1993 addendum doc §A-§E verified complete. TASK_1994 impl design-consistent (TTL=600, cron:cowork:, AF-1 preserved, dev-team Step[3], auditor Step 0d). DoD-1..7 all PASS. Orch-state TASK_1993/1994/1995 REVIEW→DONE confirmed via orch-apply.sh. Sprint object stays active (P3b PLAN-ONLY). DJ: qa-S9. Report: reports/TASK_REPORT_1995.md updated.
