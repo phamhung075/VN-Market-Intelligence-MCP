@@ -243,11 +243,11 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-29T18:54:08Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "updated_at": "2026-06-29T19:02:34Z",
+    "updated_by": "po",
+    "active_task_id": "HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
+    "next_agent": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4223,31 +4223,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#KD-BACKTEST-501-4X"
       },
       {
-        "id": "HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
-        "type": "FIX",
-        "title": "Harden notebook-write AC-5 from advisory prose to BLOCKING (exit 1 -> force recompose) + commit headless-path hook backstop into repo",
-        "zone": "cross-service/",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
-        "status": "BACKLOG",
-        "verify_note": "corrupt-null",
-        "priority": "P2",
-        "impl_owner": "agent-father",
-        "dedup_anchor_for": "recurring-agent-notebook-200L-breach (write-time self-cap enforcement gap)",
-        "recurrence_note": "DURABLE generic fix. notebook-write SKILL AC-3/AC-6 already documents settled-write self-cap for the whole APPEND class (dev-frontend + agents-architect both listed), but AC-5 is advisory prose so breaches still ship. qa got a flow-level self-cap (FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L, done) yet OTHER append-class agents keep breaching -> per-agent annotation is whack-a-mole; the systemic fix is making AC-5 BLOCKING + headless-path hook backstop so EVERY append-class notebook self-caps at write time. Do NOT mint per-agent dev-frontend/architect tasks (treadmill). Do NOT external-re-prune the over-cap files: once this ships, each agent next notebook write auto drop-oldest to <=200L.",
-        "corroborating_breaches": [
-          "qa.md 207L (resolved via FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L)",
-          "dev-pdf-extractor.md 240L (CLEAN-NB-TRIM-PDFX-2 backlog)",
-          "dev-frontend.md 224L @ 2026-06-28T07:12:25Z (signal TRIAGED->processed)",
-          "architect.md 211L @ 2026-06-28T07:30:55Z (signal TRIAGED->processed)",
-          "pm.md 238L @ 2026-06-28T08:31:01Z (signal TRIAGED->processed)",
-          "dev-pdf-extractor.md 203L @ 2026-06-28T09:53:35Z (RE-BREACH; ALREADY in APPEND class per file-size-caps.json + SKILL.md AC-6 -> proves AC-5-advisory gap, NOT a membership gap; persisted commit 577d76a9; signal TRIAGED->processed)",
-          "pm.md 329L @ 2026-06-28T11:42:53Z (RE-BREACH; pm ALREADY APPEND-class per file-size-caps.json + SKILL.md AC-6 -> corroborates AC-5-advisory gap, NOT membership; persisted commit aa5a9c8a; signal TRIAGED->processed)"
-        ],
-        "recurrence_count": 7,
-        "escalation_note": "recurring-bug-escalation: 6 breaches across 5 append-class agents post-qa-fix; dev-pdf-extractor is now a SECOND-time breacher (240L then 203L). RAW-CORRECTION 2026-06-28T10:13:20Z: dev-pdf-extractor is ALREADY in the APPEND self-cap class -> systemic gap is confirmed = AC-5 must go advisory->BLOCKING (membership is complete). prioritize."
-      },
-      {
         "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
         "type": "FIX",
         "priority": "P1",
@@ -7457,6 +7432,59 @@
         "created_at": "2026-06-29T16:22:56Z",
         "title": "fb-market-poster idempotency: add date-keyed published-marker dedup claim before pipeline runs",
         "note": "FILE: docs/agents/fb-market-poster/flow/main.md. Add a cowork-standard published-marker claim at STEP 0 (before MODE ROUTER) keyed published:<slot_id>:<VN-DATE> (slot_id from the slot= prompt param; fallback \"fb-market-poster\" outside cowork), task_kind=cowork-slot, owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=100800 (28h). If claimed==false -> log already-published + EXIT before any tool calls/file write. Makes a same-day re-fire (cutover overlap or transport-lag double-spawn) a no-op (user-requested date-range dedup key). Weekend sub-flows (weekly-recap.md/weekly-prediction.md) run AFTER STEP 0 so they inherit the guard; verify no early-return path skips it. Invoke agent-md-factory skill."
+      },
+      {
+        "id": "HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
+        "type": "FIX",
+        "title": "Harden notebook-write AC-5 from advisory prose to BLOCKING (exit 1 -> force recompose) + commit headless-path hook backstop into repo",
+        "zone": "cross-service/",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING",
+        "status": "READY",
+        "verify_note": "corrupt-null",
+        "priority": "P1",
+        "impl_owner": "agent-father",
+        "dedup_anchor_for": "recurring-agent-notebook-200L-breach (write-time self-cap enforcement gap)",
+        "recurrence_note": "DURABLE generic fix. notebook-write SKILL AC-3/AC-6 already documents settled-write self-cap for the whole APPEND class (dev-frontend + agents-architect both listed), but AC-5 is advisory prose so breaches still ship. qa got a flow-level self-cap (FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L, done) yet OTHER append-class agents keep breaching -> per-agent annotation is whack-a-mole; the systemic fix is making AC-5 BLOCKING + headless-path hook backstop so EVERY append-class notebook self-caps at write time. Do NOT mint per-agent dev-frontend/architect tasks (treadmill). Do NOT external-re-prune the over-cap files: once this ships, each agent next notebook write auto drop-oldest to <=200L.",
+        "corroborating_breaches": [
+          "qa.md 207L (resolved via FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L)",
+          "dev-pdf-extractor.md 240L (CLEAN-NB-TRIM-PDFX-2 backlog)",
+          "dev-frontend.md 224L @ 2026-06-28T07:12:25Z (signal TRIAGED->processed)",
+          "architect.md 211L @ 2026-06-28T07:30:55Z (signal TRIAGED->processed)",
+          "pm.md 238L @ 2026-06-28T08:31:01Z (signal TRIAGED->processed)",
+          "dev-pdf-extractor.md 203L @ 2026-06-28T09:53:35Z (RE-BREACH; ALREADY in APPEND class per file-size-caps.json + SKILL.md AC-6 -> proves AC-5-advisory gap, NOT a membership gap; persisted commit 577d76a9; signal TRIAGED->processed)",
+          "pm.md 329L @ 2026-06-28T11:42:53Z (RE-BREACH; pm ALREADY APPEND-class per file-size-caps.json + SKILL.md AC-6 -> corroborates AC-5-advisory gap, NOT membership; persisted commit aa5a9c8a; signal TRIAGED->processed)",
+          "cmh: FIX-CMH-NOTEBOOK-WRITE-SELFCAP-200L point-patch (commit 80dc0e18, 2026-06-29) = 2nd point-patch in 2 days; the cmh+qa pair are BOTH AC-6-registered yet each needed a flow-level patch -> proves headless enforcement (not per-flow wiring) is the durable fix. 8th corroborating breach/patch."
+        ],
+        "recurrence_count": 8,
+        "escalation_note": "recurring-bug-escalation: 6 breaches across 5 append-class agents post-qa-fix; dev-pdf-extractor is now a SECOND-time breacher (240L then 203L). RAW-CORRECTION 2026-06-28T10:13:20Z: dev-pdf-extractor is ALREADY in the APPEND self-cap class -> systemic gap is confirmed = AC-5 must go advisory->BLOCKING (membership is complete). prioritize.",
+        "next_agent": "architect",
+        "design_owner": "architect",
+        "promoted_at": "2026-06-29T19:02:34Z",
+        "promoted_by": "po",
+        "escalation_decision": "SINGLE SYSTEMIC SWEEP (dedup of router intent notebook-append-class-systemic-sweep into this existing dedup_anchor). 2 point-patches in 2 days (qa 57916170 2026-06-28; cmh 80dc0e18 2026-06-29) tripped recurring-bug-escalation. Per memory rule 2+ same-module -> escalate to DESIGN, not a 3rd point-patch. Routed through architect (policy owner of file-size-caps.json) for design pass, then agent-father impl, then qa.",
+        "cascade": "architect(design) -> agent-father(impl) -> qa(verify)",
+        "sweep_scope": [
+          "1. AUDIT: enumerate EVERY agent flow that writes docs/agent-memory/notebooks/*.md (End-of-cycle notebook step / notebook-write skill call); classify each APPEND vs OVERWRITE.",
+          "2. BATCH-REGISTER all unregistered active writers into the right class in ONE change across BOTH SSOTs (.claude/skills/notebook-write/SKILL.md AC-6 table + docs/data/file-size-caps.json note) + each flow End-of-cycle annotation. Close the class for the whole fleet, not per-breach.",
+          "3. ENFORCEMENT: make AC-5 advisory->BLOCKING + a headless PostToolUse hook backstop so the settled write auto drop-oldest <=200L EVEN IF a flow forgot to self-cap (closes the dev-pdf-extractor registered-yet-breached gap). This auto-caps pm.md (283L now) on its next write -> NO separate one-time prune task, NO external re-prune.",
+          "4. GUARD: a fence/CI check that FAILS LOUD if any notebook-writing flow is in NEITHER class (APPEND or OVERWRITE) AND that the headless hook is wired -> a NEW agent author cannot omit this again. This is what makes it a root-fix, not a 3rd patch."
+        ],
+        "membership_gap_raw_verified": {
+          "note": "RAW-verified 2026-06-29: these active writers are NOT in SKILL.md AC-6 APPEND list -> membership half of the root.",
+          "unregistered_writers": [
+            "pm(283L ACTIVE BREACH)",
+            "fixer(185L)",
+            "tran-ngoc-bau(185L)",
+            "code-janitor(165L)",
+            "ba(164L)",
+            "agent-father(147L)",
+            "alert-commander(142L)",
+            "architect(93L)"
+          ],
+          "registered_but_breached": "dev-pdf-extractor IS in AC-6 yet breached 203L -> enforcement half (AC-5 advisory). BOTH halves needed."
+        },
+        "dod": "0 notebook-writing flows in neither class (fence green) AND AC-5 blocking AND headless hook backstop committed AND wc -l of every docs/agent-memory/notebooks/*.md <=200 after one write-cycle (pm.md self-caps from 283L)."
       }
     ],
     "review": [
