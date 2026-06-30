@@ -141,3 +141,12 @@
 - Option B: Stub/mock at the Bun runtime globalThis.fetch level (used for some MCP tool tests).
 **why-decision:** Option A chosen — macroRegimeHandler pattern uses optional baseUrl param; extending that idiom to full function injection gives cleaner isolation for the 4 DB sources (sentiment, breadth, foreignRoom, breadth) and the macroFetch source. Section builders are pure functions; test fixtures are explicit and readable.
 **why-change:** No plan deviation. foreign_room tickers[] exclusion + honest-NULL per section + source_tier endpoint-assigned for liquidity all implemented per spec. toolCount unchanged at 182 (REST endpoint, not MCP tool).
+
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-30T06:30:00Z
+**task-id:** TASK-501-MOMENTUM-API-HANDLER
+**what-done:** Built GET /api/momentum-indicators REST endpoint (momentumIndicatorsHandler.ts) + server.ts registration + 37-test suite passing GREEN. No db param — all 4 sources remote HTTP via clients.ts. source_tier=3 all sections (ARCH-RATIFY M3).
+**what-considered:**
+- Option A: Mirror indicatorGaugesHandler.ts exactly (NO db param, 4-source Promise.allSettled, pure section builders, DI deps interface, honest-NULL per section).
+- Option B: Thread db handle for parity with P0 handler signature. Architect explicitly flagged NO db — all 4 P1 sources are remote HTTP compute-on-read, not local SQLite reads.
+**why-decision:** Option A strictly followed — architect flag takes precedence. All 4 client fns (computeROCMomentum/computeRelativeStrength/compute52WProximity/computeForeignAccumRank) already existed in clients.ts. Section builders NEVER forward .tickers[] arrays (NFR-6). null_reason synthesized per AC-4 exact strings.
+**why-change:** No plan deviation. 10/10 ACs PASS. toolCount 182 unchanged (REST endpoint, not MCP tool). Commit 034ad1d2.
