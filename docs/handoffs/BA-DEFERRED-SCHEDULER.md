@@ -562,3 +562,43 @@ The following items are noted as implicit/advisory (dev-mcp-server should confir
   - D2: 4 helpers registered in server (gateway-reachable by sweeper) but absent from public SKILL_MANIFEST packages
   - D3: DEV signal path ALWAYS writes companion file docs/signals/one-shot-<id>.json, payload_ref set, full prompt never in summary
 - **Graphify:** skipped (no SSOT knowledge-graph docs impacted)
+
+---
+
+## [QA] Review Record
+
+- **QA verdict:** APPROVED
+- **QA agent session:** f981431d-ca74-49ee-9eb4-efc4f06531eb
+- **QA reviewed at:** 2026-06-30T04:38Z
+- **Decision journal:** docs/agent-memory/decisions/sprint-DEFERRED-TASK-SCHEDULER-MVP-qa.md
+
+### Deployment Gate
+- Image SHA: `sha256:6c3bb23e...` created 2026-06-30T04:02:02Z (AFTER commit 588b1031 at 2026-06-29T21:33Z UTC) — DEPLOYED
+- `scheduled_tasks` table present in live `coordination.db` with correct DDL
+- All 7 tools (3 public + 4 privileged) gateway-reachable — LIVE VERIFIED
+
+### AC Gate Results (all PASS)
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| AC-1 | PASS | Live DB: fire_at INTEGER; Python probe: all time fields are int; claimDueScheduledTasks uses bound integer |
+| AC-2 | PASS | Live DB schema: `dedup_key TEXT UNIQUE` in CREATE TABLE; sqlite_autoindex_scheduled_tasks_2 auto-index confirms UNIQUE |
+| AC-3 | PASS | Live test: fire_at=now-10, deadline_at=now-5 → claimed firing → expired, NOT routed; unit test AC-3 PASS |
+| AC-4 | PASS | Step 0b.3 inside recurring */15 cron in cowork-team/flow/main.md (after leader-lock WIN); comment confirms AC-4 |
+| AC-5 | PASS | Flow doc: PRE-CLAIM `intent:one-shot:<id>` (task_kind="intent") before Agent() call — AC-7 verified no enum-drift |
+| AC-6 | PASS | Flow doc: DEV path uses `bash "$PROJECT_ROOT/scripts/orch-apply.sh"` with `--argjson row` bound vars; D3 companion file always written |
+| AC-7 | PASS | No new task_kind on task_locks; task_locks CHECK enum unchanged (7 kinds, all pre-existing) |
+| AC-8 | PASS | AGENT_TEAM_MAP declarative map in agentTeamMap.ts; live test: "not-a-real-agent" → {error:"unknown agent:..."} |
+| AC-9 | PASS | Caveat embedded in schedule_task tool description + microservice doc §Phase-2 Honest Caveat |
+| AC-10 | PASS | list_scheduled_tasks returns sweep_tick/fired_at/error/status; live test: fired row has fired_at=non-null, sweep_tick set |
+| AC-11 | PASS | D1: terminal set = {fired,failed,expired,cancelled} (NOT done as MVP terminal); invalid status 'in_progress' rejected by CHECK (unit test); all 4 terminals demonstrated live |
+| AC-12 | PASS | schedule_task calls insertScheduledTask() only; no orch-state.json write at insert (code + live verified) |
+| D1 | PASS | `fired` is success terminal; no mark_task_done tool; done stays in CHECK enum for Phase-2 |
+| D2 | PASS | 4 privileged helpers absent from agentBootstrap.ts packages; gateway-reachable via call_tool; ordinary agents blocked |
+| D3 | PASS | DEV path always writes companion file (no threshold); summary = one-liner; payload_ref set |
+
+### Test Results
+- `scheduledTasks.test.ts`: 23 tests / 0 fail (all AC gates covered)
+- Coordination suite (8 files): 156 tests / 0 fail
+- `bun tsc --noEmit`: clean (0 errors)
+- Full mcp-server suite: 14033 tests / 0 fail (exit 0; post-run Bun runtime panic = known Bun bug, not code failure)
