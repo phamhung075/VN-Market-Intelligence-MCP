@@ -245,10 +245,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
-    "next_agent": "pm",
-    "updated_at": "2026-06-30T20:45:00Z",
-    "updated_by": "architect",
-    "note": "Architect design DONE. Brief: docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md. Handoff: docs/handoffs/FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM.md. 4 proposed tasks: CONTAM-10-MIGRATION + CONTAM-10-WRITER + CONTAM-10-SANITY (parallel) + CONTAM-10-EXEC (sequential after MIGRATION QA). Task moved to REVIEW/pm."
+    "next_agent": "dev-team",
+    "updated_at": "2026-06-30T20:44:03Z",
+    "updated_by": "pm",
+    "note": "Decomposed into 4 child tasks: CONTAM-10-MIGRATION (scripts, parallel) + CONTAM-10-WRITER (mcp-server app, parallel) + CONTAM-10-SANITY (mcp-server scheduler, parallel) + CONTAM-10-EXEC (live-DB, sequential after MIGRATION). Code WIP=2 slots available. Dispatch when MIGRATION QA-verified for EXEC sequential gate."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-30T17:51:02Z",
-    "_updated_by": "one-shot-sweeper",
+    "_updated_at": "2026-06-30T20:39:54Z",
+    "_updated_by": "cowork-team-dispatcher",
     "archive": [],
     "rows": [
       {
@@ -1253,6 +1253,18 @@
         "triaged_at": "2026-06-30T06:50:25Z",
         "triaged_by": "po",
         "triage_note": "FIX-COWORK-CHEF-SAMETICK-MUTEX minted -> backlog[] (zone cross-service, dispatcher=main, owner cowork-refactory-expert). Robust fix A (same-tick CHEF mutex) per payload §06:21Z update; fix C (stale_warning) rejected as wrong lever (flag is correct). Consolidates DEFERRED FU-CHEF-MARKER-INFLOW (partial per-slot fix B). RAW-verified recurrence (chef-evening po-s90, chef-intraday c53a7df5)."
+      },
+      {
+        "id": "cow-20260630T2015-tnb-chef-l2-autocure",
+        "ts": "2026-06-30T20:39:54Z",
+        "created_at": "2026-06-30T20:39:54Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system_issue",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "tnb-audit c103 (20:15Z) audited 2026-06-30 CHEF evening dish (Que 36 Minh Di, RAW-verified legit at 19:45Z) and returned QUALITY:degraded vs chef self-reported QUALITY:full. Findings: L2=FAIL (chronic 17th-cycle US-macro gap — carry 1.37pp tier-3 proxy only, no PMI/EFFR-IORB, no [gap:US_macro_unavailable] token = confirmed quality-verdict overclaim root cause); L3=PARTIAL; business-context ABSENT (F9, 27th cycle). tran-ngoc-bau APPLIED AUTO-CURE to docs/agents/unified-agent/flow/chef.md Step 7.5 sub-check (a) [FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR, 3rd+ recurrence] — replaced vague L2_OK=\"substantively walked\" with concrete floor: numeric US PMI OR EFFR-IORB spread OR explicit gap token; carry-spread-alone excluded. Dispatcher RAW-verified the diff: scoped 12-line edit, sensible, honesty-improving, uncommitted (LIVE for next chef-morning cycle). ASKS: (1) agent-father review+promote the chef.md Step 7.5 fix to a tracked sprint; (2) dev-team Step 0a commit the uncommitted chef.md + tran-ngoc-bau.md notebook + tnb-audit-latest.md handoff; (3) root-cause the chronic US-macro DATA gap (deeper than gate wording — CHEF lacks PMI/EFFR-IORB source) and the F9 business-context 27-cycle absence. SECONDARY: tran-ngoc-bau agent-type has no gateway tools but its flow expects MCP (published-marker/WORK-BUG/commit-mutex/log_agent_work) — every cycle degrades to MCP-failure-mode-A (7 consecutive), so tnb findings always strand as uncommitted files needing dispatcher pickup; flag toolset/flow mismatch for agent-father. Dispatcher did NOT revert (sanctioned completed write) and did NOT commit (defers to dev-team Step 0a).",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ],
     "last_triaged_at": "2026-06-30T03:25:46Z",
@@ -1633,8 +1645,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-30T17:28:32Z",
-    "_updated_by": "po:s136:fb-launchd-firer-mint",
+    "_updated_at": "2026-06-30T20:44:03Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7910,6 +7922,35 @@
           "QA-AC6 on PASS: relocate FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL to done_verified (this is its withheld behavioral gate); on the weekend leg, gate is satisfied only after FIX-FB-WEEKEND-DEDUP-GATE ships."
         ],
         "depends_note": "Blocked until FB-LAUNCHD-OPS-INSTALL-VERIFY installs the agent(s). Weekend double-post leg additionally gated on FIX-FB-WEEKEND-DEDUP-GATE."
+      },
+      {
+        "id": "CONTAM-10-EXEC",
+        "title": "Human dry-run review → live migration run → serving-layer gateway probe (RS/ROC/52w test)",
+        "status": "BACKLOG",
+        "type": "TASK-E",
+        "zone": "live-DB",
+        "size": "M",
+        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "priority": "high",
+        "owner_agent": "developer",
+        "next_agent": "developer",
+        "depends": [
+          "CONTAM-10-MIGRATION"
+        ],
+        "detail_ref": null,
+        "created_at": "2026-06-30T20:44:03Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T20:44:03Z",
+        "updated_by": "pm",
+        "note": "Sequential: blocks on CONTAM-10-MIGRATION QA-PASS; depends on migration script QA verification",
+        "promoted_at": null,
+        "promoted_by": null,
+        "raw_evidence": null,
+        "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
+        "cascade": "developer (code implementation)",
+        "dispatched_at": null,
+        "dispatched_by": null,
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
       }
     ],
     "closed_sprints": [
@@ -10087,21 +10128,21 @@
       {
         "id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
         "title": "daily_ohlcv thousands-format contamination (close<1000) FPT/VHM -> roc 606x, 52w low 100.3",
-        "status": "REVIEW",
+        "status": "IN_PROGRESS",
         "type": "SPRINT-M",
         "zone": "apps/mcp-server/",
         "size": "M",
         "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
         "priority": "high",
         "owner_agent": "pm",
-        "next_agent": "pm",
+        "next_agent": "",
         "depends": null,
         "detail_ref": null,
         "created_at": "2026-06-30T19:00:03Z",
         "created_by": "dev-team",
-        "updated_at": "2026-06-30T20:45:00Z",
-        "updated_by": "architect",
-        "note": "dev-team RAW-verify (gateway, post-RC2): with TA svc fixed, get_roc_momentum FPT roc=606x and get_52w_proximity FPT low_52w=100.3 (vs high 99800, pct_from_low 698x) + VHM low_52w=100 -- caused by daily_ohlcv rows storing prices in THOUSANDS format (close=100.3 meaning 100300 VND) for ~Aug2025-Feb2026. RECURRENCE-ADJACENT: prior OHLCV-UNIT-CONTAM (closed) / CONTAM-6 repaired only the 'open<100 AND close>=1000' class; this NEW class has close<1000 so the old script misses it. PO triage: scope DB migration targeting close<1000 AND close>50 AND date window per affected code (verify exact predicate vs live rows first) + reflow derived columns. Serving-integrity: FPT/VHM momentum + 52w cards currently show garbage. Recurring-bug lens (feedback_recurring_bug_escalation): 2nd contamination class same table -- prefer a durable ingest-time unit-normalization guard over another one-off repair.",
+        "updated_at": "2026-06-30T20:42:10Z",
+        "updated_by": "dev-team",
+        "note": "DECOMPOSED into 4 child tasks (see ready + backlog lanes). Awaiting dev-team dispatch.",
         "promoted_at": "2026-06-30T20:20:07Z",
         "promoted_by": "po-s135",
         "raw_evidence": "gateway 2026-06-30T20:13Z: FPT h252 rs=594.07 / roc=606.29x d10; DHG h63 rs=922.59 + h126 918.06; VHM h126 rs=-1.066 / h252 rs=-1.350 p0 / roc=-0.998; VIC h252 rs=-1.349 p2.78 / roc=-0.998. >=4 watchlist tickers visibly degraded (more than the 3 first triaged).",
@@ -10120,11 +10161,94 @@
         "generic_mandate": "Ship the durable writer-side guard + sanity-job extension so this contamination class cannot re-accumulate; the repair migration alone does NOT close the sprint.",
         "verification_gate": "RAW (gateway, not badges): (1) get_relative_strength no-arg -> |rs|<=~3 for h63/h126/h252 on ALL watchlist tickers; (2) get_roc_momentum no-arg -> roc in a sane band (no 606x, no -0.998) for all; (3) VNINDEX get_price_history still ~1300-1900 with 253 bars (untouched); (4) a chosen legitimately-cheap stock untouched; (5) writer unit test: synthetic thousands-format push for a high-price ticker is normalized/rejected; (6) CONTAM-5 sanity job flags the new class.",
         "cascade": "architect (safe predicate design + writer-gap + reflow plan; brief per recurring-bug-escalation) -> pm (decompose into dev tasks) -> developer (apps/mcp-server).",
-        "dispatched_at": "2026-06-30T20:26:28Z",
-        "dispatched_by": "dev-team"
+        "dispatched_at": "2026-06-30T20:42:10Z",
+        "dispatched_by": "dev-team",
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "id": "CONTAM-10-MIGRATION",
+        "title": "Write + test repair migration for whole-row close<1000 contamination",
+        "status": "READY",
+        "type": "TASK-C",
+        "zone": "scripts/migrations/",
+        "size": "M",
+        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "priority": "high",
+        "owner_agent": "developer",
+        "next_agent": "developer",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T20:44:03Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T20:44:03Z",
+        "updated_by": "pm",
+        "note": "Code task; parallel safe (disjoint files)",
+        "promoted_at": null,
+        "promoted_by": null,
+        "raw_evidence": null,
+        "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
+        "cascade": "developer (code implementation)",
+        "dispatched_at": null,
+        "dispatched_by": null,
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
+      },
+      {
+        "id": "CONTAM-10-WRITER",
+        "title": "Writer guard fix (fetchCleanReferenceCloseMap) in ohlcvWriteService.ts",
+        "status": "READY",
+        "type": "TASK-C",
+        "zone": "apps/mcp-server/src/application/",
+        "size": "M",
+        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "priority": "high",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T20:44:03Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T20:44:03Z",
+        "updated_by": "pm",
+        "note": "Code task; parallel safe (disjoint files)",
+        "promoted_at": null,
+        "promoted_by": null,
+        "raw_evidence": null,
+        "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
+        "cascade": "developer (code implementation)",
+        "dispatched_at": null,
+        "dispatched_by": null,
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
+      },
+      {
+        "id": "CONTAM-10-SANITY",
+        "title": "Sanity job Pass 4 extension (anchor divergence scan) in ohlcvSanityCheckJob.ts",
+        "status": "READY",
+        "type": "TASK-C",
+        "zone": "apps/mcp-server/src/scheduler/",
+        "size": "M",
+        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "priority": "high",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T20:44:03Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T20:44:03Z",
+        "updated_by": "pm",
+        "note": "Code task; parallel safe (disjoint files)",
+        "promoted_at": null,
+        "promoted_by": null,
+        "raw_evidence": null,
+        "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
+        "cascade": "developer (code implementation)",
+        "dispatched_at": null,
+        "dispatched_by": null,
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -10217,6 +10341,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T07:53:47Z",
-  "_updated_by": "po-s135"
+  "_updated_at": "2026-06-30T20:44:03Z",
+  "_updated_by": "pm"
 }
