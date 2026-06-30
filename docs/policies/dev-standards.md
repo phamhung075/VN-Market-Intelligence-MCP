@@ -69,6 +69,8 @@ bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-f
 #   scripts/orch-cold-evict.sh, dev-team WF-1 head-reset, signal-dashboard WRITE/READ/PRUNE,
 #   pm/flow/main.md task-status writes, po/sprint-signoff.md, developer/fixer/qa WF-1 STOP-RELEASE,
 #   fail-loud-protocol.md error boundary head-reset.
+# Integration test (exit-code 0/1/2/3 + live-UNCHANGED guarantee): bash scripts/test/orch-apply-wrapper-tests.sh
+# Writer audit (all ~290/tick sites categorized): docs/signals/orch-state-writer-audit.json
 ```
 
 **CANONICAL: Orch-state Claude hook gate (SSOT-INTEGRITY-PERIMETER SSOT-W1-HOOK-ENFORCE)**

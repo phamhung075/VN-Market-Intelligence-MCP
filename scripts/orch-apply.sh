@@ -43,7 +43,10 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIVE_FILE="${REPO_ROOT}/docs/data/orch/orch-state.json"
+# Production: LIVE_FILE defaults to the canonical hot-file path.
+# Testing: override via ORCH_APPLY_LIVE_FILE_OVERRIDE to point at a throwaway fixture —
+#   this keeps the real orch-state.json untouched during negative-path tests.
+LIVE_FILE="${ORCH_APPLY_LIVE_FILE_OVERRIDE:-${REPO_ROOT}/docs/data/orch/orch-state.json}"
 
 # ─── Portable mtime (macOS stat -f / Linux stat -c) ─────────────────────────
 get_mtime() {
@@ -70,7 +73,7 @@ MTIME_BEFORE=$(get_mtime "${LIVE_FILE}")
 # ─── Write stdin to a temp file in the SAME directory ────────────────────────
 # MUST be in the same directory as LIVE_FILE (same filesystem mountpoint) so
 # that the final mv(2) is a POSIX-atomic rename, not a copy-then-delete.
-TMP=$(mktemp "${REPO_ROOT}/docs/data/orch/.orch-apply-XXXXXXXX.json")
+TMP=$(mktemp "$(dirname "${LIVE_FILE}")/.orch-apply-XXXXXXXX.json")
 
 # Cleanup trap: remove temp on any exit (including early exits on failure).
 # If the mv succeeds, TMP is set to "" to make this a no-op.

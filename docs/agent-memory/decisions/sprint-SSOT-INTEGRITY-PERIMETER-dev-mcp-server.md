@@ -83,3 +83,15 @@
 - Add over-rejection roundtrip guard as separate describe vs same block (chosen same block — atomic-write contract tests belong together)
 **why-decision:** `Status` import keeps the type DERIVED from schema (no hand-sync duplication); existing atomic-write test file is the right home for write-path guards; over-rejection roundtrip with all 12 StatusEnum values proves no legitimate write is blocked.
 **why-change:** No change from plan; 1837a+1980-f2 were already reconciled by S4 (SSOT-W1-ZOD-SCHEMA-MODEL); this session closes the remaining escape hatch + gates QA-6.
+
+---
+
+### STEP dev-mcp-server-S8 · dev-mcp-server · 2026-06-30T13:30:00Z
+**task-id:** SSOT-W1-ORCH-APPLY-WRAPPER
+**what-done:** Codebase audit (13 routed writers / 0 direct-Bash / 1 server-internal; audit JSON at docs/signals/orch-state-writer-audit.json); added ORCH_APPLY_LIVE_FILE_OVERRIDE + dirname-relative TMP to orch-apply.sh for testability; wrote scripts/test/orch-apply-wrapper-tests.sh (QA-1/QA-2/CAS/E3-empty/E3-NF/HAPPY — 19/19 PASS); added test+audit pointers to dev-standards.md CANONICAL entry.
+**what-considered:**
+- FIFO synchronization for CAS test (blocked BG at open — deadlocked on macOS stat second-precision)
+- exec 3<> FIFO read-write mode (timed out — stdin EOF not signalled correctly)
+- Process substitution `< <(sleep 0.5; printf ...)` with touch -t T_old (chosen — reliable: BG starts immediately, mtime gap is 6 years, CAS window reliable)
+**why-decision:** Process substitution provides an immediately-open pipe (no blocking on open), giving BG time to capture mtime_before = T_old before the touch sets T_now; the 6-year mtime gap eliminates same-second collisions; 19/19 tests pass.
+**why-change:** ORCH_APPLY_LIVE_FILE_OVERRIDE env var needed (1-line change to orch-apply.sh) — the handoff said "no edits needed if already wired" but the CAS integration test requires testability without touching the live file; minimal change, backward-compatible, zero production impact.
