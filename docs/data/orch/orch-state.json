@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "updated_at": "2026-06-30T04:44:15Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "DEFERRED-TASK-SCHEDULER-MVP APPROVED 2026-06-30 by qa — all 12 AC gates PASS"
+    "status": "in_progress",
+    "updated_at": "2026-06-30T05:07:02Z",
+    "updated_by": "dev-team",
+    "active_task_id": "BA-IND-P1-MOMENTUM-FRONTEND",
+    "next_agent": "ba",
+    "note": "SPRINT-M planning dispatched to ba — momentum-indicators REST aggregator (mcp-server) + dashboard.momentum cards (frontend); user-prioritized 2026-06-30; zone=multi → ba→architect(SPLIT)→pm→dev"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
