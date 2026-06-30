@@ -160,3 +160,13 @@
 - Option B: Thread db handle for parity with P0 handler signature. Architect explicitly flagged NO db — all 4 P1 sources are remote HTTP compute-on-read, not local SQLite reads.
 **why-decision:** Option A strictly followed — architect flag takes precedence. All 4 client fns (computeROCMomentum/computeRelativeStrength/compute52WProximity/computeForeignAccumRank) already existed in clients.ts. Section builders NEVER forward .tickers[] arrays (NFR-6). null_reason synthesized per AC-4 exact strings.
 **why-change:** No plan deviation. 10/10 ACs PASS. toolCount 182 unchanged (REST endpoint, not MCP tool). Commit 034ad1d2.
+
+### STEP dev-mcp-server-S7 · dev-mcp-server · 2026-06-30T14:30:00Z
+**task-id:** OHLCV-DEPTH-SUBTASK-A
+**what-done:** Hardened `vps-scripts/fetch-ohlcv-backfill.sh`: switched API source from TCBS (HTTP 404 from VPS — backend gone) to VNDirect; added R-1 normalizeThousandVnd (×1000 when close<100, thousand-VND confirmed VCB=62.2); added R-3 flat seed filter; added VNINDEX guard; added R-2 /api/ohlcv-codes fallback; added bars_pushed_total done-signal. Re-deployed to VPS. Acceptance test: 750 bars fetched, 746 inserted for VCB, range 2023-06-29..2026-06-30.
+**what-considered:**
+- Keep TCBS URL (broken) and report BLOCKED → rejected: VNDirect confirmed accessible from VPS with correct q=code:TICKER syntax.
+- Use VNDirect as primary (accessible, thousand-VND scale confirmed) → chosen.
+- Threshold close<100 vs max(OHLC)<100 → brief mandates close<100; known edge case at 100-102 VND for historical VCB bars (CONTAM repair covers it).
+**why-decision:** VNDirect works from VPS, returns per-ticker history with correct field mapping. TCBS endpoint completely inaccessible (x-backside-transport: FAIL FAIL from AWS NLB). Scale verified: VCB close=62.2 → 62,200 VND. All 5 required changes implemented. sha256 matched local↔VPS.
+**why-change:** API source switch was unplanned but necessary — TCBS migrated/removed its bars-long-term endpoint. SUBTASK-B unblocked: bars_pushed_total=N now in done POST body.

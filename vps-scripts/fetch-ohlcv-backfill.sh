@@ -1,143 +1,211 @@
 #!/bin/bash
 # VN Market OHLCV History Backfill — Task 1351 / OHLCV-BACKFILL-P0
+# Hardened: OHLCV-DEPTH-SUBTASK-A (2026-06-30)
 #
-# Script invoked by ohlcv-backfill-poll.sh when ohlcv_backfill_queue has pending
-# rows (done=0). Fetches ~2yr (730 days default) of daily OHLCV from TCBS chart
-# API for every ticker in the France server watchlist, then pushes each ticker's
-# bars to POST /api/push-ohlcv-history.
+# Changes from pre-hardening version:
+#   API-SRC: TCBS apipubaws.tcbs.com.vn returns HTTP 404 "Service not found" from VPS
+#            as of 2026-06-30 (x-backside-transport: FAIL FAIL — backend migrated/gone).
+#            Replaced with VNDirect api-finfo.vndirect.com.vn/v4/stock_prices which is
+#            accessible from VPS and returns per-ticker historical daily OHLCV.
+#   R-1:    normalizeThousandVnd — multiply OHLC ×1000 when close < 100.
+#            VNDirect RAW evidence (2026-06-30): VCB close=62.2 (thousand-VND = 62,200 VND actual).
+#            HPG close=23.3 (thousand-VND = 23,300 VND actual). Scale is thousand-VND for all stocks.
+#            Threshold close < 100 confirmed correct: all stocks trade < 100,000 VND/share on VNDirect.
+#   R-3:    flat seed filter — `select(.volume > 0 or (.open != .close))` drops bars where
+#            volume=0 AND open=close (TCBS/VNDirect non-trading reference bars).
+#   VNINDEX: VNDirect stock_prices endpoint has no index data (totalElements=0 for VNINDEX query).
+#            VNINDEX is not in watchlist. Guard added: skip with WARN if VNINDEX appears in code list
+#            (R-2 expansion may include it). Push payload would carry type=index when available.
+#   R-2:    Universe extension — try /api/ohlcv-codes first (SUBTASK-B adds this endpoint);
+#            fall back to /api/watchlist if endpoint returns 404 or empty codes.
+#   BARS:   Track bars_pushed_total across all tickers; pass to /api/ohlcv-backfill-done POST body.
+#            SUBTASK-B reads this to verify actual depth increase. Poll script still calls done
+#            (empty body) after this script exits — server handles double-call idempotently.
 #
-# Usage:
-#   OHLCV_API_URL=https://example.com/api/push-ohlcv-history \
-#   WATCHLIST_URL=https://example.com/api/watchlist \
+# Usage (full run, all codes):
+#   MCP_BASE=https://example.com \
 #   API_KEY=your-secret \
-#   bash vps-scripts/fetch-ohlcv-backfill.sh
+#   bash fetch-ohlcv-backfill.sh
 #
-# On VPS (localhost:3001 for France server proxy):
-#   OHLCV_API_URL=http://localhost:3001/api/push-ohlcv-history \
-#   WATCHLIST_URL=http://localhost:3001/api/watchlist \
-#   API_KEY="$VPS_PUSH_API_KEY" \
-#   bash /root/vps-scripts/fetch-ohlcv-backfill.sh
+# Usage (single-ticker test mode — acceptance gate):
+#   MCP_BASE=https://example.com \
+#   API_KEY=your-secret \
+#   DAYS=730 bash fetch-ohlcv-backfill.sh VCB
+#
+# On VPS (MCP_BASE inherited from poll script environment):
+#   DAYS=730 bash /root/fetch-ohlcv-backfill.sh VCB
 #
 # ── ENV VAR REFERENCE ────────────────────────────────────────────────────────
 #
 #  Required:
-#    OHLCV_API_URL   Full URL for push endpoint
-#                    e.g. https://example.com/api/push-ohlcv-history
-#    WATCHLIST_URL   Full URL to retrieve watchlist codes
-#                    e.g. https://example.com/api/watchlist
+#    MCP_BASE        Base URL of MCP server e.g. https://zenmidi.com
+#                    (or set OHLCV_API_URL/WATCHLIST_URL/CODES_URL/DONE_URL individually)
 #    API_KEY         X-API-Key bearer token (VPS_PUSH_API_KEY)
 #
 #  Optional:
-#    DAYS            Number of trading days to backfill (default: 730 = ~2yr)
-#    SLEEP_BETWEEN   Seconds to sleep between tickers (default: 1)
+#    OHLCV_API_URL   Full URL for push endpoint (default: ${MCP_BASE}/api/push-ohlcv-history)
+#    WATCHLIST_URL   Full URL for watchlist (default: ${MCP_BASE}/api/watchlist)
+#    CODES_URL       Full URL for all observed codes (default: ${MCP_BASE}/api/ohlcv-codes)
+#    DONE_URL        Full URL for backfill-done signal (default: ${MCP_BASE}/api/ohlcv-backfill-done)
+#    DAYS            Calendar days to backfill (default: 730 = ~2yr)
+#    SLEEP_BETWEEN   Seconds between ticker fetches (default: 1)
 #
-# ── TCBS chart API ───────────────────────────────────────────────────────────
-#   GET https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/bars-long-term
-#     ?ticker=VNM&type=stock&resolution=D&from=<unix>&to=<unix>
-#   Returns JSON: { data: [{ tradingDate, open, high, low, close, volume }, ...] }
-#   Prices are in full VND — do NOT multiply by 1000.
+# ── VNDirect stock_prices API ────────────────────────────────────────────────
+#   GET https://api-finfo.vndirect.com.vn/v4/stock_prices
+#     ?q=code:VCB&fromDate=YYYY-MM-DD&toDate=YYYY-MM-DD&sort=date&size=750
+#   Returns JSON: { data: [{ date, open, high, low, close, nmVolume, ... }], totalElements, ... }
+#   Prices in THOUSAND-VND — normalization ×1000 applied when close < 100.
+#   Accessible from VPS (Vietnam); geo-blocked from France Docker.
 #
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
-OHLCV_API_URL="${OHLCV_API_URL:-__MCP_BASE__/api/push-ohlcv-history}"
-WATCHLIST_URL="${WATCHLIST_URL:-__MCP_BASE__/api/watchlist}"
+MCP_BASE="${MCP_BASE:-__MCP_BASE__}"
 API_KEY="${API_KEY:-__API_KEY__}"
+OHLCV_API_URL="${OHLCV_API_URL:-${MCP_BASE}/api/push-ohlcv-history}"
+WATCHLIST_URL="${WATCHLIST_URL:-${MCP_BASE}/api/watchlist}"
+CODES_URL="${CODES_URL:-${MCP_BASE}/api/ohlcv-codes}"
+DONE_URL="${DONE_URL:-${MCP_BASE}/api/ohlcv-backfill-done}"
 DAYS="${DAYS:-730}"
 SLEEP_BETWEEN="${SLEEP_BETWEEN:-1}"
+SINGLE_TICKER="${1:-}"  # Optional positional arg: single-ticker test mode
 
-TCBS_BASE="https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/bars-long-term"
+VNDIRECT_BASE="https://api-finfo.vndirect.com.vn/v4/stock_prices"
+VNDIRECT_UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
-# Timestamp helpers
+# Timestamp helper
 ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
-echo "$(ts) === OHLCV BACKFILL START (days=${DAYS}) ==="
+# Date range (YYYY-MM-DD for VNDirect)
+TO_DATE=$(date -u +%Y-%m-%d)
+FROM_TS=$(( $(date -u +%s) - DAYS * 86400 ))
+FROM_DATE=$(date -u -d "@${FROM_TS}" +%Y-%m-%d 2>/dev/null || date -u -r "${FROM_TS}" +%Y-%m-%d)
 
-# ── Step 1: Fetch watchlist ──────────────────────────────────────────────────
+echo "$(ts) === OHLCV BACKFILL START (days=${DAYS}, range=${FROM_DATE}..${TO_DATE}) ==="
 
-WATCHLIST_RESP=$(curl -s --connect-timeout 15 --max-time 20 \
-  "$WATCHLIST_URL" \
-  -H "X-API-Key: $API_KEY" \
-  -H "User-Agent: VN-Market-VPS-Proxy/1.0")
+# ── Step 1: Resolve code list ────────────────────────────────────────────────
 
-if [ -z "$WATCHLIST_RESP" ]; then
-  echo "$(ts) FAIL: cannot reach MCP server ($WATCHLIST_URL)" >&2
-  exit 1
-fi
+if [ -n "$SINGLE_TICKER" ]; then
+  echo "$(ts) Single-ticker test mode: ${SINGLE_TICKER}"
+  CODES="$SINGLE_TICKER"
+else
+  # R-2: Try /api/ohlcv-codes (full daily_ohlcv universe) first;
+  #      fall back to /api/watchlist if endpoint not available.
+  CODES_RESP=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 15 --max-time 20 \
+    "$CODES_URL" -H "X-API-Key: $API_KEY" -H "User-Agent: VN-Market-VPS-Proxy/1.0" 2>/dev/null || echo "000")
 
-CODES=$(echo "$WATCHLIST_RESP" | jq -r '.codes[]' 2>/dev/null)
-if [ -z "$CODES" ]; then
-  echo "$(ts) FAIL: empty codes from watchlist" >&2
-  exit 1
+  if [ "$CODES_RESP" = "200" ]; then
+    CODES_BODY=$(curl -s --connect-timeout 15 --max-time 20 \
+      "$CODES_URL" -H "X-API-Key: $API_KEY" -H "User-Agent: VN-Market-VPS-Proxy/1.0")
+    CODES=$(echo "$CODES_BODY" | jq -r '.codes[]' 2>/dev/null || echo "")
+  fi
+
+  if [ -z "${CODES:-}" ]; then
+    echo "$(ts) /api/ohlcv-codes not available (HTTP ${CODES_RESP}), falling back to /api/watchlist"
+    WATCHLIST_RESP=$(curl -s --connect-timeout 15 --max-time 20 \
+      "$WATCHLIST_URL" -H "X-API-Key: $API_KEY" -H "User-Agent: VN-Market-VPS-Proxy/1.0")
+    if [ -z "$WATCHLIST_RESP" ]; then
+      echo "$(ts) FAIL: cannot reach MCP server ($WATCHLIST_URL)" >&2
+      exit 1
+    fi
+    CODES=$(echo "$WATCHLIST_RESP" | jq -r '.codes[]' 2>/dev/null || echo "")
+    if [ -z "$CODES" ]; then
+      echo "$(ts) FAIL: empty codes from watchlist" >&2
+      exit 1
+    fi
+  fi
 fi
 
 COUNT=$(echo "$CODES" | wc -l | tr -d ' ')
-echo "$(ts) Watchlist: $COUNT tickers to backfill"
+echo "$(ts) Code list: ${COUNT} ticker(s) to backfill"
 
-# ── Step 2: Compute time range ───────────────────────────────────────────────
-
-TO_TS=$(date -u +%s)
-FROM_TS=$(( TO_TS - DAYS * 86400 ))
-
-echo "$(ts) Time range: from $(date -u -d "@${FROM_TS}" +%Y-%m-%d 2>/dev/null || date -u -r "${FROM_TS}" +%Y-%m-%d) to $(date -u -d "@${TO_TS}" +%Y-%m-%d 2>/dev/null || date -u -r "${TO_TS}" +%Y-%m-%d)"
-
-# ── Step 3: Fetch + push each ticker ────────────────────────────────────────
+# ── Step 2: Fetch + push each ticker ────────────────────────────────────────
 
 TOTAL_OK=0
 TOTAL_SKIP=0
 TOTAL_ERR=0
+BARS_PUSHED_TOTAL=0
 
 while IFS= read -r TICKER; do
   [ -z "$TICKER" ] && continue
 
-  # Fetch OHLCV from TCBS
-  TCBS_RESP=$(curl -s --connect-timeout 10 --max-time 20 \
-    "${TCBS_BASE}?ticker=${TICKER}&type=stock&resolution=D&from=${FROM_TS}&to=${TO_TS}" \
-    -H "User-Agent: Mozilla/5.0 (compatible; VN-Market-Backfill/1.0)" \
-    -H "Referer: https://tcinvest.tcbs.com.vn/" 2>/dev/null || echo "")
+  # VNINDEX guard: VNDirect stock_prices has no index data (totalElements=0)
+  # type=index is preserved in push payload for future server-side handling.
+  if [ "$TICKER" = "VNINDEX" ]; then
+    echo "$(ts) WARN [VNINDEX]: VNDirect stock_prices endpoint has no index data — skipping (SUBTASK-B: add dedicated index fetch)"
+    TOTAL_SKIP=$(( TOTAL_SKIP + 1 ))
+    continue
+  fi
 
-  if [ -z "$TCBS_RESP" ]; then
-    echo "$(ts) WARN [$TICKER]: TCBS returned empty response — skipping"
+  # Fetch from VNDirect
+  # q=code:TICKER filter confirmed working from VPS (per-ticker historical data)
+  VNDIRECT_RESP=$(curl -s --connect-timeout 10 --max-time 30 \
+    "${VNDIRECT_BASE}?q=code:${TICKER}&fromDate=${FROM_DATE}&toDate=${TO_DATE}&sort=date&size=750" \
+    -H "User-Agent: ${VNDIRECT_UA}" \
+    -H "Accept: application/json" \
+    -H "Accept-Language: vi-VN,vi;q=0.9" 2>/dev/null || echo "")
+
+  if [ -z "$VNDIRECT_RESP" ]; then
+    echo "$(ts) WARN [${TICKER}]: VNDirect returned empty response — skipping"
     TOTAL_SKIP=$(( TOTAL_SKIP + 1 ))
     sleep "$SLEEP_BETWEEN"
     continue
   fi
 
-  # Check for error response
-  HAS_ERROR=$(echo "$TCBS_RESP" | jq -r '.code // empty' 2>/dev/null || echo "")
-  if [ -n "$HAS_ERROR" ] && [ "$HAS_ERROR" != "null" ] && [ "$HAS_ERROR" != "200" ]; then
-    echo "$(ts) WARN [$TICKER]: TCBS error code=$HAS_ERROR — skipping"
+  # Verify it's valid JSON with data array
+  DATA_LEN=$(echo "$VNDIRECT_RESP" | jq '.data | length' 2>/dev/null || echo "0")
+  if [ "$DATA_LEN" = "0" ]; then
+    echo "$(ts) SKIP [${TICKER}]: VNDirect returned 0 bars (suspended ticker or no data)"
     TOTAL_SKIP=$(( TOTAL_SKIP + 1 ))
     sleep "$SLEEP_BETWEEN"
     continue
   fi
 
-  # Extract bars — tradingDate is YYYY-MM-DD string, prices in full VND
-  BARS=$(echo "$TCBS_RESP" | jq -c '[
+  # Extract and normalize bars:
+  #   R-1: normalizeThousandVnd — multiply OHLC ×1000 when close < 100
+  #        VNDirect confirmed thousand-VND scale: VCB=62.2→62200, HPG=23.3→23300
+  #   R-3: flat seed filter — keep only bars with volume>0 OR open≠close
+  BARS=$(echo "$VNDIRECT_RESP" | jq -c '[
     .data[]? |
-    select(.open != null and .close != null) |
+    select(
+      .open  != null and (.open  | tonumber? // null) != null and
+      .close != null and (.close | tonumber? // null) != null and
+      .date  != null
+    ) |
     {
-      date:   (.tradingDate | split("T")[0]),
-      open:   (.open   | tonumber),
-      high:   (.high   | tonumber),
-      low:    (.low    | tonumber),
-      close:  (.close  | tonumber),
-      volume: (.volume | tonumber)
-    }
+      date:   .date,
+      open:   (.open          | tonumber),
+      high:   (.high          | tonumber),
+      low:    (.low           | tonumber),
+      close:  (.close         | tonumber),
+      volume: ((.nmVolume // 0) | tonumber)
+    } |
+    # R-1: normalizeThousandVnd (VNDirect thousand-VND → full VND)
+    if (.close > 0 and .close < 100) then
+      . + {
+        open:  (.open  * 1000),
+        high:  (.high  * 1000),
+        low:   (.low   * 1000),
+        close: (.close * 1000)
+      }
+    else . end |
+    # R-3: drop flat zero-volume seed bars
+    select(.volume > 0 or (.open != .close))
   ]' 2>/dev/null || echo "[]")
 
   BAR_COUNT=$(echo "$BARS" | jq 'length' 2>/dev/null || echo 0)
 
   if [ "$BAR_COUNT" -eq 0 ]; then
-    echo "$(ts) SKIP [$TICKER]: 0 bars from TCBS (market closed or index ticker)"
+    echo "$(ts) SKIP [${TICKER}]: 0 bars after normalization + seed filter"
     TOTAL_SKIP=$(( TOTAL_SKIP + 1 ))
     sleep "$SLEEP_BETWEEN"
     continue
   fi
 
   # Build push payload
-  PAYLOAD=$(jq -n --arg code "$TICKER" --argjson bars "$BARS" '{"code": $code, "bars": $bars}')
+  PAYLOAD=$(jq -n --arg code "$TICKER" --argjson bars "$BARS" \
+    '{"code": $code, "bars": $bars}')
 
   # Push to France server
   PUSH_RESP=$(curl -s --connect-timeout 10 --max-time 20 \
@@ -150,10 +218,14 @@ while IFS= read -r TICKER; do
   OK=$(echo "$PUSH_RESP" | jq -r '.ok // false' 2>/dev/null || echo "false")
 
   if [ "$OK" = "true" ]; then
-    echo "$(ts) OK [$TICKER]: $BAR_COUNT bars fetched, $INSERTED inserted"
+    echo "$(ts) OK [${TICKER}]: ${BAR_COUNT} bars fetched, ${INSERTED} inserted"
     TOTAL_OK=$(( TOTAL_OK + 1 ))
+    # Accumulate bars_pushed_total for done-signal contract
+    if echo "$INSERTED" | grep -qE '^[0-9]+$'; then
+      BARS_PUSHED_TOTAL=$(( BARS_PUSHED_TOTAL + INSERTED ))
+    fi
   else
-    echo "$(ts) ERR [$TICKER]: push failed — response: $PUSH_RESP"
+    echo "$(ts) ERR [${TICKER}]: push failed — response: ${PUSH_RESP}"
     TOTAL_ERR=$(( TOTAL_ERR + 1 ))
   fi
 
@@ -162,4 +234,21 @@ done <<< "$CODES"
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 
-echo "$(ts) === OHLCV BACKFILL DONE: ok=$TOTAL_OK skip=$TOTAL_SKIP err=$TOTAL_ERR ==="
+echo "$(ts) === OHLCV BACKFILL DONE: ok=${TOTAL_OK} skip=${TOTAL_SKIP} err=${TOTAL_ERR} bars_pushed_total=${BARS_PUSHED_TOTAL} ==="
+
+# Signal completion with bars_pushed_total (SUBTASK-B verifies depth server-side)
+# Note: ohlcv-backfill-poll.sh also POSTs done (empty body) after this script exits —
+#       server handles the double-call idempotently (marks done=1 again, no-op).
+if [ -n "${DONE_URL}" ] && [ "${DONE_URL}" != "__MCP_BASE__/api/ohlcv-backfill-done" ]; then
+  DONE_RESP=$(curl -s --connect-timeout 10 --max-time 20 \
+    -X POST "${DONE_URL}" \
+    -H "Content-Type: application/json" \
+    -H "X-API-Key: ${API_KEY}" \
+    -d "{\"bars_pushed_total\": ${BARS_PUSHED_TOTAL}}" 2>/dev/null || echo "")
+  DONE_OK=$(echo "$DONE_RESP" | jq -r '.ok // false' 2>/dev/null || echo "false")
+  if [ "$DONE_OK" = "true" ]; then
+    echo "$(ts) Done signal sent to ${DONE_URL}: bars_pushed_total=${BARS_PUSHED_TOTAL}"
+  else
+    echo "$(ts) WARN: done signal failed — response: ${DONE_RESP}" >&2
+  fi
+fi
