@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-06-30T23:10:31Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-06-30T23:29:07Z",
     "updated_by": "dev-team",
-    "note": "CONTAM-11 SPIKE CLOSED (in_progress->done, dev-team RAW-verified: commit 323b512b doc-only, ZERO live mutation PROVEN residual still 9869, bucket total 9368=true unanchored 9367, 5/5 bucket-b spot-checks confirm contamination). Classified the 9367 unanchored residual: (a) 6345 legit-cheap LEAVE, (b) 3023 contaminated-anchorless/9 tickers remediate. Follow-on CONTAM-11-REMEDIATE minted BACKLOG (destructive VPS-anchor repair, PO go/no-go like CONTAM-10-EXEC). Pipeline IDLE. Pending PO triage next tick: CONTAM-11-REMEDIATE + HVN deep_dive_result (refine fix -> dev-pdf-extractor). dev code WIP=0. Push gated (PO/human)."
+    "note": "PO triage 23:07Z BATCH applied. DISPATCHED dev-mcp-server (zone apps/mcp-server/) for BCTC refine fleet-drain (HVN Q1-2026 income/CF units never materialized -> cohort PENDING) BUNDLED with get_bctc_ocf SQL-column fix; disambiguation query FIRST. PARALLEL agent-father for FIX-CHEF-STEP75 (verify tnb c103 cure + commit live-uncommitted chef.md). WIP=2 dev-zone (both dev-mcp-server, serialized one agent). CONTAM-11-REMEDIATE DEFERRED (PO go-in-principle; sequenced to a dedicated off-hours tick after refine market.db writes settle + 2nd PO gate on VPS-anchor dry-run candidate count). Source signal bca-ddres-20260630T2258 (TRIAGED). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -282,7 +282,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-30T22:58:29Z",
+    "_updated_at": "2026-06-30T23:29:07Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1262,9 +1262,12 @@
         "to": "po",
         "type": "system_issue",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "TRIAGED",
         "summary": "tnb-audit c103 (20:15Z) audited 2026-06-30 CHEF evening dish (Que 36 Minh Di, RAW-verified legit at 19:45Z) and returned QUALITY:degraded vs chef self-reported QUALITY:full. Findings: L2=FAIL (chronic 17th-cycle US-macro gap — carry 1.37pp tier-3 proxy only, no PMI/EFFR-IORB, no [gap:US_macro_unavailable] token = confirmed quality-verdict overclaim root cause); L3=PARTIAL; business-context ABSENT (F9, 27th cycle). tran-ngoc-bau APPLIED AUTO-CURE to docs/agents/unified-agent/flow/chef.md Step 7.5 sub-check (a) [FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR, 3rd+ recurrence] — replaced vague L2_OK=\"substantively walked\" with concrete floor: numeric US PMI OR EFFR-IORB spread OR explicit gap token; carry-spread-alone excluded. Dispatcher RAW-verified the diff: scoped 12-line edit, sensible, honesty-improving, uncommitted (LIVE for next chef-morning cycle). ASKS: (1) agent-father review+promote the chef.md Step 7.5 fix to a tracked sprint; (2) dev-team Step 0a commit the uncommitted chef.md + tran-ngoc-bau.md notebook + tnb-audit-latest.md handoff; (3) root-cause the chronic US-macro DATA gap (deeper than gate wording — CHEF lacks PMI/EFFR-IORB source) and the F9 business-context 27-cycle absence. SECONDARY: tran-ngoc-bau agent-type has no gateway tools but its flow expects MCP (published-marker/WORK-BUG/commit-mutex/log_agent_work) — every cycle degrades to MCP-failure-mode-A (7 consecutive), so tnb findings always strand as uncommitted files needing dispatcher pickup; flag toolset/flow mismatch for agent-father. Dispatcher did NOT revert (sanctioned completed write) and did NOT commit (defers to dev-team Step 0a).",
-        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md",
+        "triaged_at": "2026-06-30T23:29:07Z",
+        "triaged_by": "dev-team",
+        "routed_task": "FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR"
       },
       {
         "id": "bca-ddres-20260630T2258",
@@ -1274,13 +1277,16 @@
         "to": "po",
         "type": "deep_dive_result",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "TRIAGED",
         "summary": "Deep dive HVN Q1-2026 ESC-2 -> flag_for_human_review (conf 0.93). Extraction failure: income statement + cash flow serve all-zero (impossible for operating airline >10000bn VND assets); B/S imbalance 2.7% is SECONDARY to incomplete asset-side capture (Cash=0). Root cause CORRECTED: NOT OCR (text_status=COMPLETE) but the REFINE stage (refine_status=PARTIAL) -- income B02-DN + cash-flow B03-DN units never materialized. Whole Q1-2026 cohort (MBB/VCI/TCH/VIX) sits at text_status=COMPLETE/refine_status=PENDING = fleet-wide refine backlog. ACTION for PO: route refine-pipeline fix (refine_bctc_md -> bctc_refined_units -> finalize_bctc_refine) to dev-pdf-extractor (disambiguation query in payload_ref); mark HVN Q1-2026 data unusable until refine re-run + identity re-validates; likely clears the fleet backlog not just HVN. SECONDARY low-pri: get_bctc_ocf SQL bug (no such column ocf_operating) breaks OCF forensic gate fleet-wide -- optional separate ticket.",
-        "payload_ref": "docs/handoffs/bctc-hvn-q1-2026-deepdive.md"
+        "payload_ref": "docs/handoffs/bctc-hvn-q1-2026-deepdive.md",
+        "triaged_at": "2026-06-30T23:29:07Z",
+        "triaged_by": "dev-team",
+        "routed_task": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN"
       }
     ],
-    "last_triaged_at": "2026-06-30T03:25:46Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-06-30T23:29:07Z",
+    "last_triaged_by": "dev-team"
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
@@ -7759,28 +7765,6 @@
         "created_at": "2026-06-29T20:33:25Z"
       },
       {
-        "id": "FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR",
-        "type": "FIX",
-        "zone": "agents",
-        "priority": "P2",
-        "size": "S",
-        "status": "BACKLOG",
-        "plan_only": true,
-        "next_agent": "agent-father",
-        "route_to": "agent-father",
-        "title": "chef.md Step 7.5 L2_OK admits carry-proxy as full L2 walk — tighten floor (require US PMI OR EFFR-IORB OR explicit [gap:US_macro_unavailable] token)",
-        "desc": "Step 7.5 sub-check (a) L2_OK keys on subjective \"US macro stack was substantively walked in Step 3\" with NO minimum-element floor (chef.md:400-402). A dish that walked ONLY the carry/FX posture (SBV/carry, chef.md:166) can self-certify L2_OK=TRUE -> QUALITY:full while the US-stack core (Manufacturing PMI chef.md:161 + Fed/EFFR-IORB spread chef.md:163) is silently absent and NO [gap:] token is written. Recurrence-class: F-EVENING-QUALITY-OVERCLAIM (c98) -> Step 7.5 gate added c99 -> still-leaky c102. FIX: redefine L2_OK = (US PMI cited with data) OR (EFFR-IORB spread cited with data) OR (explicit [gap:US_macro_unavailable]/[gap:macro_health_missing] token written) — carry-proxy alone is NOT a substantive L2 walk. agent-father owns chef.md.",
-        "files": [
-          "docs/agents/unified-agent/flow/chef.md"
-        ],
-        "verification_gate": "After fix: a dish whose L2 cites ONLY SBV/carry (no US PMI, no EFFR-IORB, no gap token) MUST compute L2_OK=FALSE -> QUALITY:degraded. Verify by re-applying the deterministic gate to the 2026-06-29 evening dish input (carry-only) and asserting degraded.",
-        "recurrence_of": "F-EVENING-QUALITY-OVERCLAIM",
-        "source_signal": "tnb-audit c102 F-QUALITY-VERDICT-SUSPICIOUS",
-        "note": "PO RAW-assessed the gate SPEC (not the single live dish) — hole exists in the definition regardless of whether 2026-06-29 evening tripped it. PO read chef.md:388-439. Live-dish confirmation (was a gap token actually written?) deferred to TNB c103 WORK [CHEF-DETAIL] read; spec-fix is durable either way.",
-        "created_at": "2026-06-29T20:57:33Z",
-        "created_by": "po"
-      },
-      {
         "id": "IND-P1-MOMENTUM-CONSUMER-WIRING",
         "tier": "P1",
         "title": "AC6 P1 Consumer-Wiring — wire the 4 LIVE P1 momentum/RS tools (get_roc_momentum / get_relative_strength / get_52w_proximity / get_foreign_accum_rank) into the helper-agent flows. Closes the AC6 gap left OPEN by IND-P1-CONSUMER-WIRING-AUDIT (which wired the 5 P0 tools ONLY). Tools shipping != agents using them — the CORE of the user's 'more indices so the helper agents analyze the market better' intent.",
@@ -10337,7 +10321,105 @@
       "updated_by": "pm",
       "updated_at": "2026-06-30T06:20:13Z"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
+        "type": "FIX",
+        "size": "M",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "route_to": "dev-mcp-server",
+        "dispatcher": "dev-team",
+        "baseline_pass": true,
+        "created_by": "dev-team",
+        "created_at": "2026-06-30T23:29:07Z",
+        "dispatched_at": "2026-06-30T23:29:07Z",
+        "dispatched_by": "dev-team",
+        "updated_at": "2026-06-30T23:29:07Z",
+        "updated_by": "dev-team",
+        "sprint": "BCTC-REFINE-FLEET-DRAIN",
+        "source_signal": "bca-ddres-20260630T2258",
+        "files": [
+          "apps/mcp-server/src/scheduler/financial-reports/bctcRefineJob.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts",
+          "apps/pdf-extractor/infrastructure/text_table_extractor.py"
+        ],
+        "title": "HVN Q1-2026 refine units (income B02-DN + cash-flow B03-DN) never materialized; whole Q1-2026 cohort stuck text_status=COMPLETE/refine_status=PENDING -- drain fleet refine backlog",
+        "desc": "From bctc-analyst HVN Q1-2026 ESC-2 deep-dive (conf 0.93, RAW-probed serving layer; payload docs/handoffs/bctc-hvn-q1-2026-deepdive.md). HVN serves income statement + cash flow ALL-ZERO (impossible for an operating airline >10000bn VND assets); refine_status=PARTIAL produced balance-sheet units only, never B02-DN/B03-DN. Cohort MBB/VCI/TCH/VIX sits text_status=COMPLETE/refine_status=PENDING = fleet refine backlog not draining. STEP 1 (disambiguation, dev has direct DB + UUID access): per-page OCR char-count for HVN income + cash-flow pages. If OCR text present but no units -> refine-stage bug in mcp-server (repair refine + finalize_bctc_refine, then drain fleet PENDING). If ~0 OCR chars on those pages -> alternate OCR page-window cap (_MAX_BS_PAGES=8 in apps/pdf-extractor/infrastructure/text_table_extractor.py) -> escalate that branch to dev-pdf-extractor. After fix: re-run refine for HVN, re-validate accounting identity A ~= L+E; flag HVN Q1-2026 unusable until it validates. NOTE: related backlog FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON is already DONE (fixed VCB Q1-2025 head-poison) -- verify whether fleet PENDING is still blocked by a different poisoned doc or is genuinely the units-never-produced bug. BUNDLED: do FIX-GET-BCTC-OCF-SQL-COLUMN in the same apps/mcp-server session after this. dev -> qa gate.",
+        "acceptance": [
+          "Run the per-page OCR char-count disambiguation query FIRST and record which branch (refine-stage vs OCR-page-window) applies in the findings doc.",
+          "HVN Q1-2026 income (B02-DN) + cash-flow (B03-DN) units materialize: get_bctc_full serves non-zero income + cash flow with refine_status=COMPLETE and accounting identity A ~= L+E re-validates.",
+          "Fleet Q1-2026 refine backlog (MBB/VCI/TCH/VIX) drains to refine_status=COMPLETE (or the genuinely-blocked docs are identified with a reason); zero regression to CONTAM-10 / daily_ohlcv data."
+        ]
+      },
+      {
+        "id": "FIX-GET-BCTC-OCF-SQL-COLUMN",
+        "type": "FIX",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "priority": "medium",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "route_to": "dev-mcp-server",
+        "dispatcher": "dev-team",
+        "baseline_pass": true,
+        "created_by": "dev-team",
+        "created_at": "2026-06-30T23:29:07Z",
+        "dispatched_at": "2026-06-30T23:29:07Z",
+        "dispatched_by": "dev-team",
+        "updated_at": "2026-06-30T23:29:07Z",
+        "updated_by": "dev-team",
+        "sprint": "BCTC-REFINE-FLEET-DRAIN",
+        "source_signal": "bca-ddres-20260630T2258",
+        "bundle_with": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcOcfTool.ts",
+          "apps/mcp-server/src/__tests__/1909b-get-bctc-ocf.test.ts"
+        ],
+        "title": "get_bctc_ocf SELECT references ocf_operating but live cash-flow schema lacks the column -> no such column: ocf_operating breaks OCF forensic gate fleet-wide",
+        "desc": "get_bctc_ocf (getBctcOcfTool.ts:132 SELECT) references ocf_operating; live cash-flow schema lacks the column -> runtime error 'no such column: ocf_operating', breaking the OCF forensic gate for ALL tickers (deep-dive RAW-reproduced). Reconcile the SELECT column names with the actual cash-flow table schema; update test 1909b-get-bctc-ocf.test.ts. Read-path only, NO DB mutation. BUNDLED secondary -- same dev-mcp-server session as FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN, done after the primary.",
+        "acceptance": [
+          "get_bctc_ocf returns OCF without the no-such-column error for a ticker with cash-flow data; SELECT column names match the live schema.",
+          "Test 1909b-get-bctc-ocf updated + green; no DB mutation; no regression to other financial-reports tools."
+        ]
+      },
+      {
+        "id": "FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR",
+        "type": "FIX",
+        "zone": "agents",
+        "priority": "P2",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "plan_only": false,
+        "next_agent": "agent-father",
+        "route_to": "agent-father",
+        "title": "chef.md Step 7.5 L2_OK admits carry-proxy as full L2 walk — tighten floor (require US PMI OR EFFR-IORB OR explicit [gap:US_macro_unavailable] token)",
+        "desc": "Step 7.5 sub-check (a) L2_OK keys on subjective \"US macro stack was substantively walked in Step 3\" with NO minimum-element floor (chef.md:400-402). A dish that walked ONLY the carry/FX posture (SBV/carry, chef.md:166) can self-certify L2_OK=TRUE -> QUALITY:full while the US-stack core (Manufacturing PMI chef.md:161 + Fed/EFFR-IORB spread chef.md:163) is silently absent and NO [gap:] token is written. Recurrence-class: F-EVENING-QUALITY-OVERCLAIM (c98) -> Step 7.5 gate added c99 -> still-leaky c102. FIX: redefine L2_OK = (US PMI cited with data) OR (EFFR-IORB spread cited with data) OR (explicit [gap:US_macro_unavailable]/[gap:macro_health_missing] token written) — carry-proxy alone is NOT a substantive L2 walk. agent-father owns chef.md.",
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md"
+        ],
+        "verification_gate": "After fix: a dish whose L2 cites ONLY SBV/carry (no US PMI, no EFFR-IORB, no gap token) MUST compute L2_OK=FALSE -> QUALITY:degraded. Verify by re-applying the deterministic gate to the 2026-06-29 evening dish input (carry-only) and asserting degraded.",
+        "recurrence_of": "F-EVENING-QUALITY-OVERCLAIM",
+        "source_signal": "tnb-audit c102 F-QUALITY-VERDICT-SUSPICIOUS",
+        "note": "PO RAW-assessed the gate SPEC (not the single live dish) — hole exists in the definition regardless of whether 2026-06-29 evening tripped it. PO read chef.md:388-439. Live-dish confirmation (was a gap token actually written?) deferred to TNB c103 WORK [CHEF-DETAIL] read; spec-fix is durable either way. | PROMOTED 23:07Z tick: tnb-audit c103 APPLIED the cure to chef.md (live-uncommitted M). agent-father to VERIFY the 12-line diff vs verification_gate (re-apply deterministic gate to a carry-only dish -> assert QUALITY:degraded) then COMMIT chef.md (agent-owned -- do NOT let Step 0a blind-commit a LIVE methodology change).",
+        "created_at": "2026-06-29T20:57:33Z",
+        "created_by": "po",
+        "owner": "agent-father",
+        "owner_agent": "agent-father",
+        "dispatcher": "dev-team",
+        "dispatched_at": "2026-06-30T23:29:07Z",
+        "dispatched_by": "dev-team",
+        "updated_at": "2026-06-30T23:29:07Z",
+        "updated_by": "dev-team"
+      }
+    ],
     "ready": [],
     "review": [
       {
