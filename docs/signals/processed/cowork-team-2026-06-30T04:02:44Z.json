@@ -1,0 +1,60 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-30T04:02:44Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "off-market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": "240",
+      "market-watcher-offhours": "240"
+    },
+    "last_fired_timestamp": "2026-06-30T04:02:44.000Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "offhours gatherer pair (news-scout + market-watcher) fired at 4h cadence boundary; both per-slot tokens won; agents spawned background per BGFAN-1"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-30T04:02:44Z",
+  "_processed": {
+    "fingerprint": "4ef3ccd33bd387fea34285bad74b306195b3266f3a9c6f8c4a189596d82eb0fb",
+    "processedAt": "2026-06-30T04:20:06Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
