@@ -558,19 +558,24 @@ export function registerTechnicalIndicatorTools(
         // ── Pre-fetch closes from DB for RSI/MA candle-window alignment ─────────
         // Passing closes to Go service ensures BOTH paths operate on identical data,
         // eliminating the ~1pt RSI drift from calendar-window vs row-count divergence.
-        // Query mirrors Go GetCandles + TS report defaultComputeTa: ORDER BY date ASC LIMIT 60.
+        // FIX-GET-TI-STALE-SOURCE: Query mirrors Go GetCandles fixed DESC/LIMIT/ASC pattern
+        // so we fetch the LATEST `lookbackDays` rows, not the OLDEST.
+        // Before fix: ORDER BY date ASC LIMIT 60 → returned oldest rows (stale 2023 data ~88k).
+        // After fix:  subquery DESC LIMIT ? → outer ORDER BY day ASC → latest rows (~62k).
         let prefetchedCloses: number[] | undefined;
         let lastPrice: number | null = null;
         if (resolvedDb) {
           try {
-            const candleRows = resolvedDb.query<CandleRow, [string]>(
-              `SELECT date AS day, close AS close_price
-                 FROM daily_ohlcv
-                WHERE code = ?
-                  AND close > 0
-                ORDER BY date ASC
-                LIMIT 60`,
-            ).all(code);
+            const candleRows = resolvedDb.query<CandleRow, [string, number]>(
+              `SELECT day, close_price
+                 FROM (SELECT date AS day, close AS close_price
+                         FROM daily_ohlcv
+                        WHERE code = ?
+                          AND close > 0
+                        ORDER BY date DESC
+                        LIMIT ?)
+                ORDER BY day ASC`,
+            ).all(code, lookbackDays);
             if (candleRows.length > 0) {
               prefetchedCloses = candleRows.map((r) => r.close_price);
               lastPrice = candleRows[candleRows.length - 1]!.close_price;
