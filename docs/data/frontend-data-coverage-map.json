@@ -34,9 +34,9 @@
     "pages": 35,
     "rows": 45,
     "LIVE": 35,
-    "DEPTH_THIN": 2,
+    "DEPTH_THIN": 6,
     "STALE_RISK": 2,
-    "GAP": 5,
+    "GAP": 1,
     "STATIC": 1,
     "L2": 0,
     "rows_no_asof": 2
@@ -630,8 +630,8 @@
       "cadence": "on-demand / daily",
       "sla": "daily",
       "asof": "computed_as_of",
-      "status": "GAP",
-      "fix": "GAP: flip to LIVE when get_roc_momentum REST endpoint deployed + card renders real data (TASK-501)",
+      "status": "DEPTH_THIN",
+      "fix": "DEPTH_THIN: endpoint live, momentum_factor_z null until ≥13-bar OHLCV history (fix WRITER/backfill, no flat-seed)",
       "l3b_status": "WIRED",
       "l3b_note": "FreshnessBadge(daily) + honest-NULL wired TASK-502-MOMENTUM-FRONTEND; data pending TASK-501"
     },
@@ -644,8 +644,8 @@
       "cadence": "on-demand / daily",
       "sla": "daily",
       "asof": "computed_as_of",
-      "status": "GAP",
-      "fix": "GAP: flip to LIVE when get_relative_strength REST endpoint deployed + card renders real data (TASK-501)",
+      "status": "DEPTH_THIN",
+      "fix": "DEPTH_THIN: endpoint live, market_rs_composite null until watchlist N≥5 tickers with OHLCV history",
       "l3b_status": "WIRED",
       "l3b_note": "FreshnessBadge(daily) + honest-NULL + low_sample_warning detail row wired TASK-502-MOMENTUM-FRONTEND"
     },
@@ -658,8 +658,8 @@
       "cadence": "on-demand / daily",
       "sla": "daily",
       "asof": "computed_as_of",
-      "status": "GAP",
-      "fix": "GAP: flip to LIVE when get_52w_proximity REST endpoint deployed + card renders real data (TASK-501)",
+      "status": "DEPTH_THIN",
+      "fix": "DEPTH_THIN: endpoint live, pct_above_ma200 null until tickers have ≥200-bar OHLCV history (denominator_ma200=0 now)",
       "l3b_status": "WIRED",
       "l3b_note": "FreshnessBadge(daily) + honest-NULL wired TASK-502-MOMENTUM-FRONTEND"
     },
@@ -672,8 +672,8 @@
       "cadence": "on-demand / daily",
       "sla": "daily",
       "asof": "computed_as_of",
-      "status": "GAP",
-      "fix": "GAP: flip to LIVE when get_foreign_accum_rank REST endpoint deployed + card renders real data (TASK-501)",
+      "status": "DEPTH_THIN",
+      "fix": "DEPTH_THIN: endpoint live, foreign_accum_z_market null until tickers have ≥5 days of flow data",
       "l3b_status": "WIRED",
       "l3b_note": "FreshnessBadge(daily) + honest-NULL wired TASK-502-MOMENTUM-FRONTEND"
     }

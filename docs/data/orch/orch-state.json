@@ -9315,7 +9315,11 @@
         "notes": "USER-PRIORITIZED — sequence AHEAD of the next-wave NEW-indicator build rows (IND-ROADMAP-LEDGER.next_wave_ranking: VN-YIELD-CURVE/SECTOR-RRG/FEAR-GREED). Those build MORE tools; this surfaces ALREADY-SHIPPED tools to the user who explicitly asked. PO does NOT spawn the cascade — dev-team cron adopts this ready[] row (claims + spawns ba) on next tick. Plan-only board mutation.",
         "evicted_from_ready_at": "2026-06-30T07:21:11Z",
         "evicted_by": "po",
-        "evict_note": "work SHIPPED via TASK-501-MOMENTUM-API-HANDLER + TASK-502-MOMENTUM-FRONTEND (both DONE_VERIFIED) in closed sprint MARKET-INDICATOR-DEPTH-P0 (closed_at 2026-06-30T06:20:13Z, commit dff7ee9e); cascade-kickoff row never evicted post-close; relocated to done_verified[] (conservation)"
+        "evict_note": "work SHIPPED via TASK-501-MOMENTUM-API-HANDLER + TASK-502-MOMENTUM-FRONTEND (both DONE_VERIFIED) in closed sprint MARKET-INDICATOR-DEPTH-P0 (closed_at 2026-06-30T06:20:13Z, commit dff7ee9e); cascade-kickoff row never evicted post-close; relocated to done_verified[] (conservation)",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T07:38:23Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — router RAW-verified DEPLOYMENT (not relayed from QA badge/ops report). Dev-team loop merged+QA-APPROVED TASK-501 (mcp-server GET /api/momentum-indicators aggregator) + TASK-502 (frontend dashboard.momentum 4-card + GaugeCard extract) but PM closed board WITHOUT deploy -> router found both endpoints 404 (stale containers). Remediated via ops single-service rebuild (NEVER down&&up): mcp-server 6c3bb23ec345->8b6bc8b9323c, frontend c693445f7d13->447eda538788, peers undisturbed. Router OWN curl: :3000/api/momentum-indicators 200 (4 sections all honest-NULL+null_reason+source_tier:3, zero fabrication); :3001/dashboard/momentum 200 renders 4 cards + null_reasons + Cập-nhật freshness badges (ErrorBoundary tokens = benign Remix manifest); :3001/api/momentum-indicators 200. coverage-map 4 momentum rows GAP->DEPTH_THIN (writer ok/data shallow — NOT LIVE; honest-NULL never overclaimed), summary GAP 5->1 DEPTH_THIN 2->6. Follow-up: shallow OHLCV/flow depth makes all 4 indicators null — separate data-backfill task to realize real readings (governing intent payoff). FRONTEND ship DONE."
       }
     ],
     "head": {
@@ -9420,6 +9424,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T06:50:25Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-06-30T07:38:23Z",
+  "_updated_by": "router:gate-close:BA-IND-P1-MOMENTUM-FRONTEND"
 }
