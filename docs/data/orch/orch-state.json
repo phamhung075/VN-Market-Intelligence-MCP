@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
-    "next_agent": "dev-team",
-    "updated_at": "2026-06-30T20:44:03Z",
-    "updated_by": "pm",
-    "note": "Decomposed into 4 child tasks: CONTAM-10-MIGRATION (scripts, parallel) + CONTAM-10-WRITER (mcp-server app, parallel) + CONTAM-10-SANITY (mcp-server scheduler, parallel) + CONTAM-10-EXEC (live-DB, sequential after MIGRATION). Code WIP=2 slots available. Dispatch when MIGRATION QA-verified for EXEC sequential gate."
+    "active_task_id": "CONTAM-10-MIGRATION",
+    "next_agent": "qa",
+    "updated_at": "2026-06-30T21:07:36Z",
+    "updated_by": "dev-team",
+    "note": "CONTAM-10-MIGRATION dev-DONE + dev-team RAW-verified (6227e7c8 in-HEAD, 3 explicit paths 945-ins, leak-CLEAN, per-ticker anchor + INDEX-excluded + dry-run/live-gate/confirm, 22/0 unit tests; Bun JIT shutdown crash cosmetic exit 0). DISPATCHED qa to gate the migration: run bun test scripts/migrations/__tests__/CONTAM-10-* + CANONICAL dev-standards pointer verify + dry-run on fixture + design-contract adherence (per-ticker anchor NOT blind close<1000, INDEX excluded). QA-PASS unblocks CONTAM-10-EXEC. CONTAM-10-WRITER (dev-mcp-server a1aebf81) STILL IN-FLIGHT (mcp-server single-svc rebuild). CONTAM-10-SANITY HELD in ready -- serialized behind WRITER (same mcp-server rebuild = race per docker-rebuild-race lesson). CONTAM-10-EXEC backlog (live-DB run + gateway probe; re-route owner developer->ops at dispatch -- dev has NO gateway). dev code WIP=1 (WRITER only; MIGRATION at QA != code slot). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1645,8 +1645,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-30T20:44:03Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-30T21:10:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10164,63 +10164,41 @@
         "dispatched_at": "2026-06-30T20:42:10Z",
         "dispatched_by": "dev-team",
         "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "CONTAM-10-MIGRATION",
         "title": "Write + test repair migration for whole-row close<1000 contamination",
-        "status": "READY",
+        "status": "REVIEW",
         "type": "TASK-C",
         "zone": "scripts/migrations/",
         "size": "M",
         "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
         "priority": "high",
         "owner_agent": "developer",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "depends": null,
         "detail_ref": null,
         "created_at": "2026-06-30T20:44:03Z",
         "created_by": "pm",
-        "updated_at": "2026-06-30T20:44:03Z",
-        "updated_by": "pm",
+        "updated_at": "2026-06-30T21:07:36Z",
+        "updated_by": "dev-team",
         "note": "Code task; parallel safe (disjoint files)",
         "promoted_at": null,
         "promoted_by": null,
         "raw_evidence": null,
         "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
         "cascade": "developer (code implementation)",
-        "dispatched_at": null,
-        "dispatched_by": null,
-        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
-      },
-      {
-        "id": "CONTAM-10-WRITER",
-        "title": "Writer guard fix (fetchCleanReferenceCloseMap) in ohlcvWriteService.ts",
-        "status": "READY",
-        "type": "TASK-C",
-        "zone": "apps/mcp-server/src/application/",
-        "size": "M",
-        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
-        "priority": "high",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "depends": null,
-        "detail_ref": null,
-        "created_at": "2026-06-30T20:44:03Z",
-        "created_by": "pm",
-        "updated_at": "2026-06-30T20:44:03Z",
-        "updated_by": "pm",
-        "note": "Code task; parallel safe (disjoint files)",
-        "promoted_at": null,
-        "promoted_by": null,
-        "raw_evidence": null,
-        "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
-        "cascade": "developer (code implementation)",
-        "dispatched_at": null,
-        "dispatched_by": null,
-        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
-      },
+        "dispatched_at": "2026-06-30T20:46:49Z",
+        "dispatched_by": "dev-team",
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "dev_commit": "6227e7c8",
+        "done_commits": [
+          "6227e7c8"
+        ],
+        "verification": "dev-team RAW-verify of dev deliverable (own git, NOT agent badge): 6227e7c8 IN-HEAD YES; scope EXACTLY 3 explicit paths (repair-ohlcv-unit-contamination-wholerow-lt1000.ts +452, __tests__/CONTAM-10-repair-ohlcv-wholerow-lt1000.test.ts +476, dev-standards.md +17 = 945 ins) NO -A leak; LEAK-SCAN-CLEAN; both files on disk. DESIGN-INTENT sanity: per-ticker anchor predicate (anchor=most recent <=180d bar close>=1000 AND vol>0; candidate ratio anchor_close/close >= 100 AND close<1000 -- NOT blind close<1000); INDEX_TICKERS (VNINDEX/VN30/HNXINDEX/HNX30/UPCOMINDEX) excluded from BOTH anchor AND candidate; newly-backfilled no-anchor -> skip safe; dry-run default + --live gate + readline confirm + BEGIN IMMEDIATE + post-verify; whole-row all-4-fields. Dev unit-tests 22/0 (exit 0; Bun 1.3.13 JIT shutdown crash AFTER assertions = cosmetic, not a fail). -> qa gate before CONTAM-10-EXEC live run."
+      }
+    ],
+    "ready": [
       {
         "id": "CONTAM-10-SANITY",
         "title": "Sanity job Pass 4 extension (anchor divergence scan) in ohlcvSanityCheckJob.ts",
@@ -10312,6 +10290,33 @@
         "updated_by": "qa",
         "updated_at": "2026-06-29T16:46:36Z",
         "next_agent": "qa"
+      },
+      {
+        "id": "CONTAM-10-WRITER",
+        "title": "Writer guard fix (fetchCleanReferenceCloseMap) in ohlcvWriteService.ts",
+        "status": "REVIEW",
+        "type": "TASK-C",
+        "zone": "apps/mcp-server/src/application/",
+        "size": "M",
+        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "priority": "high",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "qa",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T20:44:03Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T21:10:00Z",
+        "updated_by": "dev-mcp-server",
+        "note": "Code task; parallel safe (disjoint files)",
+        "promoted_at": null,
+        "promoted_by": null,
+        "raw_evidence": "commit=ec8b409c in-HEAD YES; explicit-paths=2 (ohlcvWriteService.ts +79, OHLCV-WHOLEROW-LT1000-writer-guard.test.ts +223); leak-clean; tsc 0 errors; bun test 3/0 (writer guard) + 14100/0 (full suite exit-code 0); tool-count=182 (unchanged); sched-count=3 (unchanged); mcp-server rebuilt Up healthy; peers untouched",
+        "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
+        "cascade": "developer (code implementation)",
+        "dispatched_at": "2026-06-30T20:46:49Z",
+        "dispatched_by": "dev-team",
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
       }
     ],
     "qa": [],

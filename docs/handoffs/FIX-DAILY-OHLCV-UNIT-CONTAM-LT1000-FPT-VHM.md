@@ -64,3 +64,30 @@ NEXT: pm | break into CONTAM-10-MIGRATION / CONTAM-10-WRITER / CONTAM-10-SANITY 
 HANDOFF: docs/handoffs/FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM.md
 PIPELINE: continue
 ```
+
+---
+
+## [Developer] Implementation Record — CONTAM-10-WRITER
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Task:** CONTAM-10-WRITER (writer-side durability fix — stops NEW whole-row close<1000 contamination at ingest)
+- **Files modified:**
+  - `apps/mcp-server/src/application/usecases/ohlcvWriteService.ts` — added `CLEAN_CLOSE_FLOOR` constant, `fetchCleanReferenceCloseMap` private function, `cleanRefMap` call in Stage 1, `effectivePrevClose` logic in Stage 3
+- **Tests written:** `apps/mcp-server/src/__tests__/OHLCV-WHOLEROW-LT1000-writer-guard.test.ts` — 3 assertions, all GREEN
+  - TC-WG-1: contaminated prevClose + cleanRef → ×1000 correction applied
+  - TC-WG-2: clean prevClose → effectivePrevClose = prevClose → no regression
+  - TC-WG-3: legitimately cheap stock (all-history close < 1000) → no cleanRef → no correction
+- **Git commits:** `ec8b409c fix(mcp-server/ohlcv): CONTAM-10-WRITER — writer guard for whole-row close<1000 contamination`
+  - in-HEAD: confirmed
+  - explicit-paths: `apps/mcp-server/src/application/usecases/ohlcvWriteService.ts` + `apps/mcp-server/src/__tests__/OHLCV-WHOLEROW-LT1000-writer-guard.test.ts` (NEVER `-A`)
+  - leak-clean: confirmed (no secrets/tokens in diff)
+- **Type check:** clean (bun tsc --noEmit — 0 errors)
+- **bun test:** 14100 pass / 0 fail (full suite, exit code 0); targeted: 3 pass / 0 fail (writer guard tests alone)
+- **Tool count:** 182 tools — matches pre-task baseline (no barrel change, no tool silenced)
+- **Scheduler count:** 3 cron.schedule entries — matches pre-task baseline (no scheduler file touched)
+- **Rebuild:** mcp-server image rebuilt (`docker compose up -d --build mcp-server`); Up 14s (healthy) confirmed; all peer containers untouched (technical-analysis ~1hr, frontend 14hrs, stock-price 18hrs, macro-indicators 20hrs, api-gateway/pdf-extractor 2 days, kinh-dich/news-fetch/alert-engine 4 days)
+- **DDD invariant:** `normalizeOhlcvToVnd` domain function UNCHANGED. Fix lives entirely in `application/usecases`. No new files in application layer (one private function + two variable assignments per brief).
+- **Docs updated:** NONE (no architecture/microservice doc touched)
+- **Graphify:** skipped (no docs impacted)
+- **Simplicity gate:** PASS — fetchCleanReferenceCloseMap mirrors fetchPrevCloseMap pattern, effectivePrevClose is a one-liner ternary; no over-engineering

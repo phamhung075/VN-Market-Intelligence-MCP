@@ -1,5 +1,39 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-30 — CONTAM-10-WRITER (OHLCV-UNIT-CONTAM-WHOLEROW-LT1000)
+
+**Sprint:** OHLCV-UNIT-CONTAM-WHOLEROW-LT1000
+**Session:** e71c7736-a95a-4040-b741-1d48454354f6
+**Task:** CONTAM-10-WRITER — writer-side durability fix (stops NEW whole-row close<1000 contamination at ingest)
+
+Root cause: `detectAndNormalizeScaleFromPrevClose` was blind when prevClose is itself contaminated (whole-series contamination → all historical FPT rows at ~130 → prevClose=130 → ratio≈1 → no correction for incoming contaminated row at close=130).
+
+Fix: added `fetchCleanReferenceCloseMap` (one batched JOIN, full-history scan for close>=1000 AND volume>0 per ticker) and `effectivePrevClose` ternary in Stage 1+3 of `writeOhlcvBatch`. Domain function `normalizeOhlcvToVnd` stays PURE/UNCHANGED — fix is application layer only.
+
+- MOD: `application/usecases/ohlcvWriteService.ts` (CLEAN_CLOSE_FLOOR const + fetchCleanReferenceCloseMap + cleanRefMap call + effectivePrevClose in Stage 3)
+- NEW: `__tests__/OHLCV-WHOLEROW-LT1000-writer-guard.test.ts` (3 tests: TC-WG-1 contaminated→corrected, TC-WG-2 clean→no-regression, TC-WG-3 cheap-stock→no-correction)
+- Commit: `ec8b409c` — 2 explicit paths, leak-clean, in-HEAD
+- tsc: 0 errors; bun test: 3/0 (guard) + 14100/0 (full suite, exit 0); tool-count=182; sched-count=3
+- Rebuild: mcp-server Up healthy, all peers untouched
+
+Zone health: bun test 0 fail, 182 tools intact, scheduler 3 cron.schedule (gen-project-stats verified) | HEALTHY
+
+## 2026-06-30 — TASK-VNINDEX-RS-B (RC3 Zone B durability)
+
+**Sprint:** TA-CONSUMER-STALE-INDICATORS (RC3)
+**Session:** e71c7736-a95a-4040-b741-1d48454354f6
+
+FR-B1: `push-ohlcv-history` hardcoded type="stock" → now reads optional `type` from payload (default "stock"). Zone A pushes VNINDEX with type:"index"; "index" exempts from stock range guard. 2-line change in server.ts + updated comment.
+
+FR-B2: `ohlcv-backfill-done` depth probe added separate VNINDEX count query. VNINDEX appended to `shallowCodes` when cnt < 252. Removed the "watchlist empty → skip" early-exit that would hide VNINDEX shortfalls. Logs `vnindex_depth` in "depth verified" path.
+
+- MOD: `interface/mcp/server.ts` (FR-B1 type extraction ~L1250, FR-B2 depth probe ~L1460)
+- NEW: `src/__tests__/TASK-VNINDEX-RS-B-durability.test.ts` (9 tests: 3xFR-B1 + 3xFR-B2)
+- MOD: `ohlcv-backfill-done-subtask-b.test.ts` BT-5 — seed VNINDEX 300 bars
+- MOD: `1360-ohlcv-backfill-queue.test.ts` TC-6 — seed VNINDEX 300 bars
+- Commit: `2969a0ef`
+- RAW: type:"index" open=50 → inserted=1 (index exempt), VNINDEX 753 live bars, RS 8/8 non-null, low_sample_warning=false, single-svc rebuild confirmed
+
 ## 2026-06-30 — FIX-GET-TI-STALE-SOURCE-MCP-SERVER
 
 **Sprint:** TA-CONSUMER-STALE-INDICATORS
