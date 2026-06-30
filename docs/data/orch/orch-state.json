@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-30T05:29:28Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-06-30T06:50:25Z",
+    "_updated_by": "po",
     "archive": [],
     "rows": [
       {
@@ -1248,8 +1248,11 @@
         "type": "system_issue",
         "summary": "Confirmed double-publish: chef-morning (MARKET msg 920 @05:24:47) + chef-intraday (msg 921 @05:25:44) — 2 near-duplicate CHEF dishes 57s apart. Root: pressure-state.stale_warning=true (transient) forced PRESSURE_MODE=legacy at Step 4.2, bypassing cadence gate that would have suppressed chef-intraday (off-market 240min default, 62min elapsed); plus no same-tick CHEF mutex. Blocks cowork-cron AC-6 (zero double-publish). RAW-verified vs MARKET channel. Detail+fixes in payload_ref.",
         "severity": "MEDIUM",
-        "status": "NEW",
-        "payload_ref": "docs/signals/cowork-chef-doublepublish-2026-06-30.md"
+        "status": "TRIAGED",
+        "payload_ref": "docs/signals/cowork-chef-doublepublish-2026-06-30.md",
+        "triaged_at": "2026-06-30T06:50:25Z",
+        "triaged_by": "po",
+        "triage_note": "FIX-COWORK-CHEF-SAMETICK-MUTEX minted -> backlog[] (zone cross-service, dispatcher=main, owner cowork-refactory-expert). Robust fix A (same-tick CHEF mutex) per payload §06:21Z update; fix C (stale_warning) rejected as wrong lever (flag is correct). Consolidates DEFERRED FU-CHEF-MARKER-INFLOW (partial per-slot fix B). RAW-verified recurrence (chef-evening po-s90, chef-intraday c53a7df5)."
       }
     ],
     "last_triaged_at": "2026-06-30T03:25:46Z",
@@ -7737,6 +7740,34 @@
         ],
         "verification_gate": "PASS when AC-1..AC-6 all GREEN: router RAW-greps the 6 flow trees and confirms each of the 4 P1 tools appears in >=1 flow with (a) a graceful honest-NULL guard and (b) an output-citation with direction+delta; no fabrication; field names matched to LIVE payloads.",
         "notes": "Mirror the proven P0 pattern (IND-P1-CONSUMER-WIRING-AUDIT, done_verified 2026-06-30, commit 7832cc1f — 64ins/7del additive across 6 flows). These are cowork agent .md FLOW changes, not service code -> route through the cowork-refactory-expert / agent-md path, NOT a dev-* zone specialist. Status=BACKLOG: next PO planning tick (or dev-team triage) promotes backlog->ready; PO does NOT spawn the cascade here (plan-only)."
+      },
+      {
+        "id": "FIX-COWORK-CHEF-SAMETICK-MUTEX",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "medium",
+        "zone": "cross-service/",
+        "owner": "cowork-refactory-expert",
+        "next_agent": "cowork-refactory-expert",
+        "dispatcher": "main",
+        "created_by": "po",
+        "created_at": "2026-06-30T06:50:25Z",
+        "sprint": "COWORK-RELIABILITY",
+        "title": "Same-tick CHEF mutual-exclusion in cowork dispatch — suppress non-guaranteed chef-* slots when a guaranteed chef slot matches the same tick, in BOTH pressure modes (closes legacy-mode cadence-bypass double-publish)",
+        "source_signal": "cow-20260630T0515-chef-doublepublish",
+        "payload_ref": "docs/signals/cowork-chef-doublepublish-2026-06-30.md",
+        "root_cause": "Two independent gaps both fire on the once-per-weekday 05:15 nominal tick where chef-morning cron (15 5) and chef-intraday cron (13 2-8) coincide: (1) pressure-state.stale_warning=true (DETERMINISTIC — cycle-snapshot age > _staleness_threshold_minutes=20, correctly reporting stale data) forces PRESSURE_MODE=legacy at Step 4.2; legacy mode sets CADENCE_MATCHES = raw MATCHES with NO filtering (pressure-cadence.md Step 4.5b), so the cadence gate that would have suppressed chef-intraday (off-market default 240min vs ~62min elapsed) is bypassed. (2) No same-tick CHEF mutex: published-marker keys differ per slot (published:chef-morning:DATE vs published:chef-intraday:DATE:HH) so they never collide, and chef-intraday's conditional logic does not detect the guaranteed morning dish that published 0-1min earlier.",
+        "fix_spec": "Fix A (robust, per payload §06:21Z): add an UNCONDITIONAL same-tick CHEF mutual-exclusion in the dispatch tick (runs in BOTH adaptive AND legacy modes, because legacy mode is entered LEGITIMATELY whenever pressure data is stale). After MATCHES is resolved (pressure-cadence.md Step 4.5b rebind, or match-slots.md Step 4b collision guard): if MATCHES contains a guaranteed chef-* slot (slot.guaranteed==true AND slot_id matches ^chef-), drop every non-guaranteed chef-* slot from MATCHES for that tick and log a suppression telemetry line. Do NOT touch emit_pressure_state / stale_warning (fix C) — the flag is deterministic and correctly reports stale snapshots; suppressing it would mask real staleness.",
+        "files": [
+          "docs/agents/cowork-team/flow/pressure-cadence.md (Step 4.5b — add unconditional same-tick CHEF mutex after MATCHES rebind; must run in BOTH modes)",
+          "docs/agents/cowork-team/flow/match-slots.md (Step 4b collision guard — alternate/co-located site; dev+architect pick the single canonical placement)",
+          "docs/agents/cowork-team/flow/spawn-fanout.md (Step 5 published-marker gate contract — verify cross-slot awareness if fix B self-skip is also adopted)"
+        ],
+        "consolidates": "FU-CHEF-MARKER-INFLOW (backlog, DEFERRED) — that task is the partial per-slot fix B (chef.md self-enforces published-marker with per-cadence-key granularity); the dispatcher-level same-tick mutex (fix A) is the durable superset. dev/architect to fold or close FU-CHEF-MARKER-INFLOW once A ships.",
+        "recurrence_note": "RECURRING CLASS: chef-evening double-post (po-s90 f8c12ca9, folded into ARCH-HEADLESS-GATEWAY-COWORK-NOPOST) + chef-intraday dedup-granularity (c53a7df5, folded into FU-CHEF-MARKER-INFLOW, never shipped) + now chef-morning+chef-intraday. NO durable code/flow fix has shipped — prior findings were folded into deferred tasks. This FIX is the consolidating durable root fix; do NOT add another per-slot patch.",
+        "verification_gate": "On the next weekday 05:15Z tick (chef-morning + chef-intraday coincidence) MARKET receives EXACTLY ONE CHEF dish. Forcing stale_warning=true (legacy mode) no longer produces a second chef-* MARKET post at the same tick. Closes cowork-cron AC-6 (zero double-publish).",
+        "dispatch_note": "DISPATCHER = main terminal (router) per dispatch table 'update cowork agents -> cowork-refactory-expert -> main'. This is a cowork-team flow .md change = maintenance-lane (mutex-wrapped, on-demand); NOT a dev-team-cron auto-adopt ready[] row. Avoids the po-s109 cowork-team dead-route. Router dispatches via the FIX BATCH route_to."
       }
     ],
     "closed_sprints": [
@@ -9373,6 +9404,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T04:13:33Z",
-  "_updated_by": "router:gate-close:IND-P1-MCP-REST-GAUGES-ENDPOINT"
+  "_updated_at": "2026-06-30T06:50:25Z",
+  "_updated_by": "po"
 }

@@ -1,22 +1,25 @@
 # PO Notebook
 
-_Last: 2026-06-30T05:01Z_
+_Last: 2026-06-30T06:50Z_
 
-## Tick 04:37Z — dev-team triage: 16 Telegram reports drained + 1 user-prioritized dispatch
+## Tick 06:37Z — dev-team triage: CHEF double-publish → FIX (recurring root)
 
-**Inbox 16 NEW (3338-3353) → ALL RESOLVED (inbox empty).** RAW-verified, not router badge:
-- **#3338 CTG/MWG data-integrity = duplicate.** Board already tracks root: `FIX-BCTC-BANK-SCALAR-MAPPING` (high, BACKLOG) title literally "bank B02-TCTD scalar summarizer garbage (net_margin_pct=229157%, total_assets=0)" = exact CTG (Vietinbank) 10x scale-error. MWG-empty under BCTC-EXTRACT-QUALITY. NO new mint.
-- **#3340/3345 pollNews 0-items = fixed/transient.** news-scout c97 @04:05Z today: 20 articles → 5 signals (#7987-7991); 7 consecutive strong cycles. Two-layer fetch-vs-analysis hiccup; analysis flowing. No ops escalation.
-- **#3341/3342 Migration-3 = duplicate/fixed** (WAL-checkpoint resolved, 3342 supersedes 3341).
-- **#3346-3351 active≠held IND-P1 = fixed** (head reset to done, task_list_held confirms NO IND-P1 locks → released; divergence reconciled).
-- **#3339/3343/3344/3352/3353 esc-datacov ESC-3 = wontfix** (legit 8d data-coverage locks; "no board row" by-design FP). Locks NOT released (VCB exp 07-06, FPT exp 07-02).
+**Inbox:** no new Telegram reports, list_unresolved=[], head IDLE. 1 NEW signal_queue row + 4 drained pendingSignals.
 
-**Dispatch (BATCH→router):** BA-IND-P1-MOMENTUM-FRONTEND only (SPRINT-M, ba, zone=multi, user_prioritized). User asked "add to frontend new implement" — 4 P1 momentum tools have 0 frontend surface; 5 P0 gauges already LIVE.
+**CHEF double-publish (cow-20260630T0515-chef-doublepublish, MEDIUM) → minted `FIX-COWORK-CHEF-SAMETICK-MUTEX` (backlog, S, zone cross-service/).** RAW-verified vs payload + 06:21Z update:
+- Root = (a) `stale_warning=true` (DETERMINISTIC, correct — snapshot >20min old) forces legacy mode → `CADENCE_MATCHES=raw MATCHES` no-filter (pressure-cadence.md 4.5b) → cadence gate bypassed; (b) no same-tick CHEF mutex (per-slot markers never collide).
+- **Fix = A (unconditional same-tick CHEF mutex, BOTH modes), NOT C (stale_warning is correct lever — do not touch).**
+- **RECURRING:** chef-evening (po-s90) + chef-intraday (c53a7df5→FU-CHEF-MARKER-INFLOW DEFERRED, never shipped). No durable fix ever landed → this consolidates them; FU-CHEF-MARKER-INFLOW folds in.
+- **Routing:** dispatch table "update cowork agents → cowork-refactory-expert → main". Maintenance-lane (NOT dev-cron auto-adopt) → minted to backlog[] dispatcher=main, BATCH route_to=cowork-refactory-expert (po-s109 dead-route guard). Signal NEW→TRIAGED.
 
-**WIP discipline:** did NOT promote FIX-BCTC-BANK-SCALAR-MAPPING (high) this tick — avoid 2 simultaneous multi-zone architect cascades + router said do-not-bulk-pull. Stays high-pri BACKLOG.
+**Skipped/noted:**
+- signal #4 stale_warning drift = SAME root as above → no separate task.
+- context-bloat ba.md(210/+10)/pm.md → NOTE only; HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING done_verified → self-cap on next write; per-agent mint = treadmill (warned against).
+- cowork-fire heartbeats (errors=[]) → informational.
+- Stale branch `ci-red-fix-buntest` (0 unmerged commits) → CLEAN→qa (low), returned in BATCH.
 
 ## Carry-over
-- **FIX-BCTC-BANK-SCALAR-MAPPING** (high, BACKLOG, zone=multi) is the next-up reliability fix — CTG/major-banks show total_assets=0 / net_margin 229157%. Promote on a dedicated BCTC grooming tick (overfit risk → needs fresh spec, not stale-promote). MWG-empty re-extraction folds under BCTC-EXTRACT-QUALITY.
-- HEAD idle/done after DEFERRED-TASK-SCHEDULER-MVP. Do NOT reopen it.
-- 2 legit bctc ESC-3 locks live (VCB/FPT) — expected, do not release.
-- Detail → `decisions/triage-20260630T0501Z-po.md`.
+- **FIX-COWORK-CHEF-SAMETICK-MUTEX** (backlog, dispatcher=main) awaits router dispatch to cowork-refactory-expert. Verification gate: next weekday 05:15Z coincidence tick → exactly ONE CHEF dish; forcing stale_warning=true no longer double-posts. Closes cowork-cron AC-6.
+- **FIX-BCTC-BANK-SCALAR-MAPPING** (high, BACKLOG, zone=multi) still next-up reliability fix — promote on dedicated BCTC grooming tick (overfit risk → fresh spec).
+- 2 legit bctc ESC-3 locks live (VCB exp 07-06 / FPT exp 07-02) — expected, do not release.
+- Detail → `decisions/triage-20260630T0637Z-po.md`.
