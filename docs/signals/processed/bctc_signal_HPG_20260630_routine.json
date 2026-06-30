@@ -40,5 +40,11 @@
   "investment_clock": "Overheat",
   "signal_id": 7966,
   "cycle_slot": "c064",
-  "emitted_at": "2026-06-30T00:08:00Z"
+  "emitted_at": "2026-06-30T00:08:00Z",
+  "_processed": {
+    "fingerprint": "c7c67035fc7b89ea83dbed41774bc34d75353d530c12370126af2700e0a8f9dd",
+    "processedAt": "2026-06-30T00:20:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

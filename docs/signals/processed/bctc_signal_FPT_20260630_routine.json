@@ -19,7 +19,7 @@
   "kd_signal": "TRUNG TÍNH GIỮ",
   "kd_confidence_pct": 38,
   "foreign_flow_5d_kshares": -104,
-  "confidence": 0.80,
+  "confidence": 0.8,
   "e3_cache_hit": true,
   "cache_cycle": 26,
   "esc_summary": {
@@ -27,5 +27,11 @@
   },
   "signal_id": 7965,
   "cycle_slot": "c064",
-  "emitted_at": "2026-06-30T00:08:00Z"
+  "emitted_at": "2026-06-30T00:08:00Z",
+  "_processed": {
+    "fingerprint": "86081945ce3bed9a3af461ab565db1509381f5686e63f1f2d3a796cf3ecca13e",
+    "processedAt": "2026-06-30T00:20:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

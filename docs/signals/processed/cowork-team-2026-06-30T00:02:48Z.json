@@ -1,0 +1,66 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-30T00:02:48Z",
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "off-market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cadence",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": 240,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "last_fired_timestamp": "2026-06-30T00:02:48Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "00:00Z off-market boundary; 3 gatherer/analyst slots fired on 240-min cadence (bctc daily 0 0, news+market 0 */4). AF-1 not triggered (clean fire-claim). pressure-state stale_warning:true → legacy mode."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-30T00:02:48Z",
+  "_processed": {
+    "fingerprint": "5c775e42b9b738dffdde5e1c85897f7814e046815f91c4b14d7d4301ec5d4fd1",
+    "processedAt": "2026-06-30T00:20:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
