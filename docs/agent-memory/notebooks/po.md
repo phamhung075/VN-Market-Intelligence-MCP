@@ -1,25 +1,24 @@
 # PO Notebook
 
-_Last: 2026-06-30T17:28Z_
+_Last: 2026-06-30T18:12Z_
 
-## Tick 17:28Z — Sprint kickoff FB-POSTER-LAUNCHD-FIRER (router req, coord d3292ca4)
+## Tick 18:12Z — Triage TA-CONSUMER-STALE-INDICATORS (dev-team finding, coord e71c7736)
 
-**Goal:** durable OS-level all-local launchd firer for the guaranteed FB slots (fb-daily 09:15Z Mon-Fri, fb-weekend 13:13Z Sat-Sun) — independent of any live Claude CLI session. Root cause: the */15 cowork dispatcher is session-scoped; 06-30 fb-daily 09:15Z missed (posted ~6h late) — project_cowork_guaranteed_slot_needs_live_cli_session.
+**Finding (RAW-verified by dev-team, do NOT re-probe):** OHLCV-depth epic done_verified (86daf9f1/5e4f75ea — daily_ohlcv 2yr depth, cross-restart persistence, price-history serves VCB 501 candles). But momentum/gauge cards are STILL honest-NULL for a NEW root in the TA CONSUMER layer, NOT depth. Explicit watchlist_tickers override STILL null → disproves the env-only diagnosis. SMOKING GUN: get_technical_indicators VCB ~88,000 vs get_price_history VCB (daily_ohlcv) 62,200 SAME day → TA Go svc :5003 serves stale/separate/split-mismatched data.
 
-**Minted (scripts/po-s136-*.jq | orch-apply.sh — Stage0/1 PASS, 96 pre-existing SHG warnings non-mine):**
-- sprint_goal entry FB-POSTER-LAUNCHD-FIRER (active).
-- ready[]: FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL (developer, LEAD) — wrapper scripts/fb-poster-headless.sh (claude -p --dangerously-skip-permissions, single flow only) + 2 DST-robust plists + install/verify script + doc pointers.
-- backlog[]: FIX-FB-WEEKEND-DEDUP-GATE (cowork-refactory-expert, ROUTER lane, parallel) | FB-LAUNCHD-OPS-INSTALL-VERIFY (ops, depends DEV) | FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP (qa, depends OPS+weekend-fix).
+**Scoped (cheap-first, diagnostic-gated — scripts/po-s135-*.jq | orch-apply.sh, Stage0/1 PASS, 97 pre-existing SHG warnings not mine):**
+- ready[]: OPS-TA-INDICATOR-STALE-DIAGNOSTIC (ops, P1, blocking, zone apps/technical-analysis/) — single-svc RESTART technical-analysis :5003 (NOT down&&up) then re-probe; GATES the expensive fixes (RC1 stale-cache resolves cheaply vs RC2/3/4 real bug).
+- backlog[] HELD on diag: FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE (dev-technical-analysis, apps/technical-analysis/) = RC2 split-mismatch + RC4 data_gap | FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (architect, multi) = RC3 absent VN-Index benchmark.
+- folded FIX-TA-INDICATORS-TIER3-ROUTING in-place (ALL-N/A premise EVOLVED to stale-VALUE post depth-fix; same root).
 
-**Key design calls:**
-- DOUBLE-POST GUARD = INHERITED: wrapper invokes the SAME flow → STEP 0a period-keyed task_claim `published:fb-daily:<VN-DATE>` (ttl 100800) dedups launchd vs cowork-*/15; first wins, other no-ops. Wrapper must NOT add a divergent key.
-- GAP FOUND (RAW-grep): weekly-recap.md + weekly-prediction.md have NO dedup gate — main.md claim is false. Weekend firer unsafe until FIX-FB-WEEKEND-DEDUP-GATE ships → made it a hard prerequisite.
-- DST = the "hard part": developer picks UTC self-gate vs dual-local-entry (AC3), mirror fleet-push.plist pattern. claude bin = /Users/admin/.local/bin/claude. Slot times from cowork-schedule.json SSOT (flow doc's 13:07Z is stale, use 13:13Z).
-- QA gate = OBSERVED fire (real post written) + dedup demo + survives-session-end. exists != fires.
-- head LEFT on the live OHLCV epic (session e71c7736) — no hijack.
+**Key calls:**
+- Diagnostic gets a CLAIMABLE row not a verdict — gate needs a board row (project_deferred_task_scheduler strand-lesson).
+- M2 set single-zone (apps/technical-analysis/) NOT multi — smoking gun is the TA svc; scope_note escalates to multi ONLY if root proves upstream in stock-price adjustment. Avoids a forced architect hop.
+- M3 cross-ref'd existing FIX-VNINDEX-CACHE-STARTUP-PURGE — if TA reads vn_index_cache, M3 COLLAPSES into it (reconcile-before-mint, no dup).
+- WIP unchanged (in_progress=0); ready 1→2; backlog +2. head LEFT idle — RETURN BATCH to dev-team router for dispatch (po-s132 pattern).
+- Foreign-flow accum_rank residual flagged OUT-OF-SCOPE (already tracked TASK17-FOREIGN-FLOW + FIX-FOREIGN-FLOW-COVERAGE + ARCH-DAILY-FOREIGN-FLOW-TABLE).
 
 ## Carry-over
-- FB-POSTER-LAUNCHD-FIRER: DEV in ready[] — dev-team cron adopts when WIP frees (OHLCV epic owns head, WIP=2). Router should ALSO dispatch FIX-FB-WEEKEND-DEDUP-GATE (cowork-refactory-expert lane, parallel-eligible).
-- On QA PASS → FB-LAUNCHD-DEV row's withheld behavioral gate satisfied → done_verified.
-- OHLCV-DEPTH epic (other session) — not my work this tick; head owned there.
-- Decision trail → decisions/sprint-FB-POSTER-LAUNCHD-FIRER-po.md (po-S1..S3).
+- Router: dispatch OPS-TA-INDICATOR-STALE-DIAGNOSTIC first (head→ops). Its verdict UNBLOCKS or SUPERSEDES the 2 held fixes (clear their `depends` / mark superseded).
+- If restart resolves all 3 tools → chain RESOLVED by RC1; close diag done_verified + supersede M2/M3.
+- Decision trail → decisions/sprint-TA-CONSUMER-STALE-INDICATORS-po.md (po-S1..S5).
