@@ -1,19 +1,22 @@
 # PO Notebook
 
-_Last: 2026-06-30T03:27Z_
+_Last: 2026-06-30T05:01Z_
 
-## Tick 03:07Z — D4 auditor FP batch dispositioned + recurring-predicate consolidated
+## Tick 04:37Z — dev-team triage: 16 Telegram reports drained + 1 user-prioritized dispatch
 
-**Batch:** 32 NEW `.signal_queue` rows (`sau-d4-202606300300`, system-auditor D4 03:00 audit) = 16 distinct ×2 double-emit. ALL false-positives, RAW-verified (not router badge):
-- **CLASS A** held-lock-no-board-row (8): 6 IND-P1 sprint-task locks + BA-IND-P1-MOMENTUM-RS held by LIVE peer `d3292ca4` (MARKET-INDICATOR-DEPTH-P0, fresh heartbeats, expire 04:15Z = reservations, not orphans); 2 esc-datacov ESC-3 = 8d-TTL bctc data-coverage guards (known-legit).
-- **CLASS B** active≠held mismatch (8): D4 asserts head.active_task_id must == every held sprint-task lock — WRONG under N-sprint concurrency (head=BA-DEFERRED-SCHEDULER while peer holds OTHER sprints' locks).
-- `head.active_task_id=BA-DEFERRED-SCHEDULER` confirmed untouched.
+**Inbox 16 NEW (3338-3353) → ALL RESOLVED (inbox empty).** RAW-verified, not router badge:
+- **#3338 CTG/MWG data-integrity = duplicate.** Board already tracks root: `FIX-BCTC-BANK-SCALAR-MAPPING` (high, BACKLOG) title literally "bank B02-TCTD scalar summarizer garbage (net_margin_pct=229157%, total_assets=0)" = exact CTG (Vietinbank) 10x scale-error. MWG-empty under BCTC-EXTRACT-QUALITY. NO new mint.
+- **#3340/3345 pollNews 0-items = fixed/transient.** news-scout c97 @04:05Z today: 20 articles → 5 signals (#7987-7991); 7 consecutive strong cycles. Two-layer fetch-vs-analysis hiccup; analysis flowing. No ops escalation.
+- **#3341/3342 Migration-3 = duplicate/fixed** (WAL-checkpoint resolved, 3342 supersedes 3341).
+- **#3346-3351 active≠held IND-P1 = fixed** (head reset to done, task_list_held confirms NO IND-P1 locks → released; divergence reconciled).
+- **#3339/3343/3344/3352/3353 esc-datacov ESC-3 = wontfix** (legit 8d data-coverage locks; "no board row" by-design FP). Locks NOT released (VCB exp 07-06, FPT exp 07-02).
 
-**Disposition:** 32 NEW→RESOLVED via 2× orch-apply.sh (signal_queue only, CAS rc=0). NEW count 0 on disk; 67 rows retained (status-flip, no drop). Skipped cold-evict (rows <24h; avoid extra write during peer sprint). Peer head/IND-P1/DEFERRED rows untouched (24 rows present).
+**Dispatch (BATCH→router):** BA-IND-P1-MOMENTUM-FRONTEND only (SPRINT-M, ba, zone=multi, user_prioritized). User asked "add to frontend new implement" — 4 P1 momentum tools have 0 frontend surface; 5 P0 gauges already LIVE.
 
-**Recurring fix (DEDUP, no near-dup mint):** annotated existing anchor `FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE` in-place → P2, next_agent=agent-father, folded CLASS B + widened scope to a concurrency-aware whitelist (long-TTL guards + live-peer reservation locks) + 4th-recurrence note. Double-emit ×2 already tracked by FU-AUDITOR-D4-SIGNAL-ID. PLAN-ONLY — stays backlog. Detail → `decisions/triage-20260630T0325Z-po.md`.
+**WIP discipline:** did NOT promote FIX-BCTC-BANK-SCALAR-MAPPING (high) this tick — avoid 2 simultaneous multi-zone architect cascades + router said do-not-bulk-pull. Stays high-pri BACKLOG.
 
 ## Carry-over
-- **orch-state disposition durable ON-DISK (uncommitted by design)** — committing the shared hot file would capture the peer's live IND-P1 board churn. Next orch-state committer (peer/dev-team loop) folds in the 32 RESOLVED + the P2 annotation. Re-flood already prevented (drain reads NEW only).
-- **Router owns dispatch** of IND-P1-MCP-REST-GAUGES-ENDPOINT — AFTER IND-P1-MCP-PROXY-INDICATORS + mcp-server rebuild. Stays backlog; do NOT promote (cron races).
-- agent-father: `FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE` now P2 with CLASS-A+B whitelist scope — fix kills 32 FP rows/D4-run.
+- **FIX-BCTC-BANK-SCALAR-MAPPING** (high, BACKLOG, zone=multi) is the next-up reliability fix — CTG/major-banks show total_assets=0 / net_margin 229157%. Promote on a dedicated BCTC grooming tick (overfit risk → needs fresh spec, not stale-promote). MWG-empty re-extraction folds under BCTC-EXTRACT-QUALITY.
+- HEAD idle/done after DEFERRED-TASK-SCHEDULER-MVP. Do NOT reopen it.
+- 2 legit bctc ESC-3 locks live (VCB/FPT) — expected, do not release.
+- Detail → `decisions/triage-20260630T0501Z-po.md`.
