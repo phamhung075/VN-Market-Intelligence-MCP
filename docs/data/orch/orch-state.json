@@ -3244,7 +3244,7 @@
           {
             "id": "SSOT-W1-SERVER-ENFORCE",
             "type": "dev",
-            "status": "TODO",
+            "status": "DONE_VERIFIED",
             "title": "Harden orchStateStore.ts: replace OrchStateTaskBoardTask.status escape-hatch union with z.infer<typeof StatusEnum>; verify safeParse() before every atomic write (task_claim, task_release, etc.); reconcile RED 1837a + 1980-f2",
             "wave": 1,
             "rank": 4,
@@ -3258,7 +3258,15 @@
             "created_at": "2026-06-27T16:50:00Z",
             "created_by": "pm-agent",
             "detail_ref": "docs/handoffs/SSOT-W1-SERVER-ENFORCE.md",
-            "verify_note": "QA-6 (task_claim with bad status throws pre-rename), QA-7 (types compile, 1837a/1980-f2 green) pass; safeParse confirmed before rename in writeOrchStateAtomic."
+            "verify_note": "QA-6 (task_claim with bad status throws pre-rename), QA-7 (types compile, 1837a/1980-f2 green) pass; safeParse confirmed before rename in writeOrchStateAtomic.",
+            "done_verified": true,
+            "done_verified_at": "2026-06-30T12:15:48Z",
+            "done_verified_by": "dev-team",
+            "done_commits": [
+              "45c67766"
+            ],
+            "qa_commit": "1f22f7c9",
+            "gate_result": "QA APPROVED 1f22f7c9; tsc=0; atomic-write 8/0; schema 103/0; orch-cluster 82/0; merge-gate green"
           },
           {
             "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
@@ -6441,10 +6449,15 @@
         "id": "FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
         "title": "DEPTH_THIN (a): market_prices_history is only ~2 trading days deep -> /api/sector-rotation runs in only1dAvailable=true mode. Backfill/retain market_prices_history to >=10 trading days by fixing the retention WRITER.",
         "type": "FIX",
-        "priority": "P3",
+        "priority": "P2",
         "status": "BACKLOG",
         "zone": "apps/stock-price/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
+        "rescoped_by": "po-s135",
+        "rescoped_at": "2026-06-30T07:53:47Z",
+        "target_depth": ">=63 trading sessions (5d sector-rotation + ~63d RRG tail)",
+        "distinct_from": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "momentum_depth_note": "THIS task owns market_prices_history (stock-price service, snapshot table read by get_sector_rotation) retention only. The daily_ohlcv (mcp-server) depth that starves roc/RS/52w/MA200 is a SEPARATE table owned by the P0 FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR — do NOT conflate."
       },
       {
         "id": "FIX-DEPTHTHIN-B-GATEWAY-TA-PATH-REWRITE",
@@ -7229,7 +7242,15 @@
               "data_readiness": "BLOCKED on ~200-session OHLCV history (still accruing)",
               "rationale": "%>MA50/%>MA200. DEFER until OHLCV depth reaches 200 sessions; then small (pure aggregation)."
             }
-          ]
+          ],
+          "live_depth_correction": {
+            "recorded_by": "po-s135",
+            "recorded_at": "2026-06-30T07:53:47Z",
+            "live_daily_ohlcv_depth": "~49 bars (uniform 2026-04-23 floor) — NOT the 126d this ranking assumed; the 2yr OHLCV-BACKFILL-P0 did NOT persist.",
+            "hard_prereq_gate": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR (P0) is a HARD prerequisite for ranks 2 (SECTOR-RRG ~63d), 5 (RISK-DECOMP), 7 (REGIONAL-DECOUPLING 60d), 16 (PARTICIPATION-BREADTH 200d) — all consume daily_ohlcv depth.",
+            "depth_independent_parallel": "rank 1 IND-P1-VN-YIELD-CURVE is depth-INDEPENDENT (TradingEconomics macro, no OHLCV) — the ONLY next-wave indicator not gated by daily_ohlcv depth; it can proceed in PARALLEL with the depth P0.",
+            "sequencing": "depth-P0 (critical path) || VN-YIELD-CURVE (parallel, depth-independent); ALL other OHLCV-derived indicators + IND-P1-MOMENTUM-CONSUMER-WIRING gate on depth-P0 GREEN."
+          }
         }
       },
       {
@@ -7698,7 +7719,8 @@
         "next_agent": "cowork-refactory-expert",
         "depends": [
           "IND-P1-CONSUMER-WIRING-AUDIT",
-          "BA-IND-P1-MOMENTUM-RS"
+          "BA-IND-P1-MOMENTUM-RS",
+          "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR"
         ],
         "audit_finding": "P1 momentum suite (5 tasks) reached done[] qa-APPROVED 2026-06-30 (reports/TASK_REPORT_IND-P1-MOMENTUM-SUITE.md). The 4 MCP proxy tools are LIVE-callable but AC6 ('tool consumed by >=1 helper agent') is an OPEN TRACKED GAP: IND-P1-CONSUMER-WIRING-AUDIT (done_verified, commit 7832cc1f) wired the 5 P0 tools ONLY. 0/6 helper flows currently reference get_roc_momentum / get_relative_strength / get_52w_proximity / get_foreign_accum_rank. Until wired, the 4 P1 tools deliver ZERO analyst value — the exact 'tools exist but agents do not consume them' failure the user named.",
         "new_p1_tools": [
@@ -7747,7 +7769,10 @@
           "AC-6 (closes umbrella AC6): success_metric 'each P1 indicator consumed by >=1 helper agent' is GREEN."
         ],
         "verification_gate": "PASS when AC-1..AC-6 all GREEN: router RAW-greps the 6 flow trees and confirms each of the 4 P1 tools appears in >=1 flow with (a) a graceful honest-NULL guard and (b) an output-citation with direction+delta; no fabrication; field names matched to LIVE payloads.",
-        "notes": "Mirror the proven P0 pattern (IND-P1-CONSUMER-WIRING-AUDIT, done_verified 2026-06-30, commit 7832cc1f — 64ins/7del additive across 6 flows). These are cowork agent .md FLOW changes, not service code -> route through the cowork-refactory-expert / agent-md path, NOT a dev-* zone specialist. Status=BACKLOG: next PO planning tick (or dev-team triage) promotes backlog->ready; PO does NOT spawn the cascade here (plan-only)."
+        "notes": "Mirror the proven P0 pattern (IND-P1-CONSUMER-WIRING-AUDIT, done_verified 2026-06-30, commit 7832cc1f — 64ins/7del additive across 6 flows). These are cowork agent .md FLOW changes, not service code -> route through the cowork-refactory-expert / agent-md path, NOT a dev-* zone specialist. Status=BACKLOG: next PO planning tick (or dev-team triage) promotes backlog->ready; PO does NOT spawn the cascade here (plan-only).",
+        "held_by": "po-s135",
+        "held_at": "2026-06-30T07:53:47Z",
+        "hold_reason": "Wiring agents to READ the 4 momentum tools delivers ZERO analytical value while roc/RS/52w/foreign_accum all return NULL (PO RAW-verified live 2026-06-30). GATE on FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR GREEN (roc/RS/52w real) + FIX-FOREIGN-FLOW-COVERAGE (the foreign_accum leg). Wire AFTER the readings are real."
       },
       {
         "id": "FIX-COWORK-CHEF-SAMETICK-MUTEX",
@@ -9339,7 +9364,41 @@
       "updated_at": "2026-06-30T06:20:13Z"
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "status": "READY",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "blocking": true,
+        "user_prioritized": true,
+        "zone": "apps/mcp-server/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "title": "daily_ohlcv persists only ~49 bars (uniform 2026-04-23 floor across ALL tickers) despite OHLCV-BACKFILL-P0 (2yr) — root-cause the WRITER/retention/backfill-lookback and persist >=252 bars (target ~504/2yr). Indicator-program CRITICAL PATH: unblocks roc/RS/52w momentum cards + volatility/breadth gauges + the OHLCV-derived next-wave indicators.",
+        "supersedes_depth_gap_of": "OHLCV-BACKFILL-P0",
+        "live_evidence": "PO RAW-probe 2026-06-30T07:5xZ via gateway get_price_history days=730: VCB/SSI/MWG/HPG ALL return EXACTLY 49 bars, ALL starting 2026-04-23 (uniform floor = retention/purge signature; SSI+MWG are NON-watchlist yet present => NOT a coverage gap). get_roc_momentum tickers:[] null_reason=insufficient_cross_section; get_relative_strength market_rs_composite=null low_sample_warning=true; foreign_accum z=null. daily_ohlcv is shared volume market_data:/app/data DB_PATH=/app/data/market.db read by mcp-server get_price_history AND the TA repo AND the momentum tools.",
+        "root_cause_hypotheses": "(1) startup purge trims daily_ohlcv on boot (known lesson: OHLCV startup-purge defeats the backfill seeder — fix the WRITER not the residue); (2) a scheduled retention DELETE keeps only last-N rows; (3) ohlcvHistoryBackfillJob.ts per-ticker lookback defaults ~50 bars. RAW-confirm via SELECT code,COUNT(*),MIN(date),MAX(date) FROM daily_ohlcv GROUP BY code on the LIVE named volume. FIX the WRITER/retention durably; NEVER flat-seed.",
+        "required_depth": "52w-high-proximity=252 bars; ROC-12-1=~252-273; MA200 & %>MA200=200; RS-12m=~252; Z-score/percentile headroom (rv_252d-drawdown, RRG, risk-decomp) => target 2yr (~504). FLOOR=252, TARGET=504.",
+        "verification_gate": "After fix+rebuild+RESTART: (a) get_price_history VCB days=730 >=252 (target ~504) bars; (b) GROUP BY code shows >=252 across the traded universe; (c) get_roc_momentum + get_relative_strength + compute52WProximity return NON-NULL with real tickers[]. PERSISTENCE proven by RE-PROBE AFTER a container restart (not merely post-backfill) — the restart re-probe is the durable gate, because the failure mode is purge-on-boot.",
+        "generic_mandate": "Fix the retention/writer durably for the full traded universe (do NOT special-case the watchlist); re-run the existing ohlcvHistoryBackfillJob to refill; prove cross-restart persistence.",
+        "unblocks": [
+          "IND-P1-MOMENTUM-CONSUMER-WIRING",
+          "IND-P1-SECTOR-RRG",
+          "IND-P1-RISK-DECOMPOSITION",
+          "IND-P1-REGIONAL-DECOUPLING",
+          "IND-P2-PARTICIPATION-BREADTH",
+          "momentum cards roc/RS/52w",
+          "P0 gauges breadth/volatility depth"
+        ],
+        "depends": [],
+        "created_by": "po-s135",
+        "created_at": "2026-06-30T07:53:47Z",
+        "updated_at": "2026-06-30T07:53:47Z"
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -9432,6 +9491,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T07:38:23Z",
-  "_updated_by": "router:gate-close:BA-IND-P1-MOMENTUM-FRONTEND"
+  "_updated_at": "2026-06-30T07:53:47Z",
+  "_updated_by": "po-s135"
 }
