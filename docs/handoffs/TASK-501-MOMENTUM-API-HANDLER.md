@@ -22,7 +22,7 @@ Implement REST aggregator `GET /api/momentum-indicators` as standalone handler (
 
 ### Acceptance Criteria
 
-- [ ] **AC-1: REST Handler Creation** — `apps/mcp-server/src/interface/mcp/routes/momentumIndicatorsHandler.ts` created (mirror `indicatorGaugesHandler.ts` pattern)
+- [x] **AC-1: REST Handler Creation** — `apps/mcp-server/src/interface/mcp/routes/momentumIndicatorsHandler.ts` created (mirror `indicatorGaugesHandler.ts` pattern)
   - Exports: `aggregateMomentumIndicators(deps?)` + `handleGetMomentumIndicators(req, res, deps?)`
   - **CRITICAL:** NO `db: Database` parameter (all 4 sources are remote HTTP via `clients.ts`, not local SQLite)
   - DTO types: `RocGauge`, `RelativeStrengthGauge`, `Proximity52WGauge`, `ForeignAccumGauge`, `MomentumIndicatorsDto` (see FR-A4 spec)
@@ -32,21 +32,21 @@ Implement REST aggregator `GET /api/momentum-indicators` as standalone handler (
     - `buildProximity52WSection(data: Compute52WProximityResponse): Proximity52WGauge`
     - `buildForeignAccumSection(data: ComputeForeignAccumRankResponse): ForeignAccumGauge`
 
-- [ ] **AC-2: Promise.allSettled Isolation** — 4 sections resolved in parallel; one rejection degrades ONLY that section to null
+- [x] **AC-2: Promise.allSettled Isolation** — 4 sections resolved in parallel; one rejection degrades ONLY that section to null
   - `Promise.allSettled([computeRoc(), computeRS(), compute52W(), computeForeignAccum()])`
   - All section builders check for null and synthesize `null_reason` per FR-A3 spec
   - Honest-NULL rendering: NEVER default-fill or fabricate
 
-- [ ] **AC-3: HTTP 200 Always** — catastrophic handler failure path returns 200 with all-null sections + `error` field (mirror P0 line 451–463)
+- [x] **AC-3: HTTP 200 Always** — catastrophic handler failure path returns 200 with all-null sections + `error` field (mirror P0 line 451–463)
   - `generated_at` ISO timestamp ALWAYS present
 
-- [ ] **AC-4: Section Builders — Honest NULL per FR-A3**
+- [x] **AC-4: Section Builders — Honest NULL per FR-A3**
   - `roc`: `momentum_factor_z null` when insufficient OHLCV (<13 bars) → `null_reason: "Insufficient OHLCV history — momentum_factor_z requires ≥13 bars"`
   - `relative_strength`: `market_rs_composite null` when N < 5 → `null_reason: "Watchlist too small — market_rs_composite requires N ≥ 5 tickers"` + passthrough `low_sample_warning`
   - `proximity_52w`: `pct_above_ma200 null` when `denominator_ma200 = 0` → `null_reason: "denominator_ma200 = 0 — no tickers have ≥200-bar OHLCV history"`
   - `foreign_accum`: `foreign_accum_z_market null` when < 5 tickers with ≥5 bars → `null_reason: "Insufficient tickers with ≥5 days of flow data"`
 
-- [ ] **AC-5: DI Interface for Testability (FR-A6)** — `MomentumIndicatorsDeps` interface:
+- [x] **AC-5: DI Interface for Testability (FR-A6)** — `MomentumIndicatorsDeps` interface:
   ```typescript
   interface MomentumIndicatorsDeps {
     computeRoc?: () => Promise<ComputeROCMomentumResponse>;
@@ -58,12 +58,12 @@ Implement REST aggregator `GET /api/momentum-indicators` as standalone handler (
   - Production: all undefined → real `clients.ts` implementations
   - Tests: inject stubs to avoid real service calls
 
-- [ ] **AC-6: Server.ts Route Registration (FR-A-REG)** — append to `apps/mcp-server/src/interface/mcp/server.ts`
+- [x] **AC-6: Server.ts Route Registration (FR-A-REG)** — append to `apps/mcp-server/src/interface/mcp/server.ts`
   - Import at L111 block (import `{ handleGetMomentumIndicators }`)
   - Route block after L2160 (after P0 indicator-gauges route): `app.get("/api/momentum-indicators", ...)`
   - Registration pattern: `await handleGetMomentumIndicators(req, res)` (no `db` argument)
 
-- [ ] **AC-7: Bun Test Suite** — `apps/mcp-server/src/__tests__/momentum-indicators.test.ts`
+- [x] **AC-7: Bun Test Suite** — `apps/mcp-server/src/__tests__/momentum-indicators.test.ts`
   - Test suites per FR-A8 spec (7 suites minimum):
     - All 4 sections fulfilled → full DTO
     - One section rejected → that section null, others populated
@@ -75,11 +75,11 @@ Implement REST aggregator `GET /api/momentum-indicators` as standalone handler (
   - DI stub injection pattern (mirror P0 tests)
   - `bun test` must PASS
 
-- [ ] **AC-8: No Real Service Calls in Tests (NFR-8)** — mock-guard clean (no real TA service / stock-price service URLs in test fixtures)
+- [x] **AC-8: No Real Service Calls in Tests (NFR-8)** — mock-guard clean (no real TA service / stock-price service URLs in test fixtures)
 
-- [ ] **AC-9: TypeScript Clean (NFR-7)** — `tsc --noEmit` exits 0 after changes
+- [x] **AC-9: TypeScript Clean (NFR-7)** — `tsc --noEmit` exits 0 after changes
 
-- [ ] **AC-10: source_tier Assignment (M3 decision)** — all 4 sections hardcoded `source_tier: 3` (estimate/compute, no live external fetch)
+- [x] **AC-10: source_tier Assignment (M3 decision)** — all 4 sections hardcoded `source_tier: 3` (estimate/compute, no live external fetch)
 
 ### Files to Read First (reference patterns)
 
@@ -150,10 +150,40 @@ Implement REST aggregator `GET /api/momentum-indicators` as standalone handler (
 
 ---
 
+## [Developer] Implementation Record
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/momentumIndicatorsHandler.ts` (new, 233L) — DTO types, DI interface, 4 section builders, aggregateMomentumIndicators, handleGetMomentumIndicators
+  - `apps/mcp-server/src/__tests__/momentum-indicators.test.ts` (new, 295L) — 37 tests, DI stub injection, section builder + isolation + HTTP 200 coverage
+  - `apps/mcp-server/src/interface/mcp/server.ts` (modified) — import + route registration GET /api/momentum-indicators (no db arg)
+- **Tests written:** `apps/mcp-server/src/__tests__/momentum-indicators.test.ts` — 37 assertions across 10 describe blocks, GREEN
+- **Git commits:** `034ad1d2` feat(mcp-server/TASK-501): GET /api/momentum-indicators REST aggregator
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test:** 14070 pass / 0 fail (full suite); 37 pass / 0 fail (momentum-indicators.test.ts)
+- **Tool count:** 182 tools — matches pre-task baseline (REST endpoint, not MCP tool)
+- **Scheduler count:** 3 cron.schedule entries — pre-existing state, no scheduler changes in this task
+- **Server health:** GET /health → {"status":"ok","toolCount":182} — startup clean
+- **Docs updated:** NONE — handler-only implementation, no microservice docs require update
+- **Graphify:** skipped (no docs impacted)
+
+### G12 Gate Evidence
+| Gate | Result |
+|------|--------|
+| bun test | 14070 pass / 0 fail |
+| tsc --noEmit | exit 0 (clean) |
+| /health | {"status":"ok","toolCount":182} |
+| toolCount | 182 (pre-task baseline maintained) |
+
+### Zone health
+Zone health: bun test 0 fail, 182 tools intact, server /health ok, tsc clean | HEALTHY
+
+---
+
 ## RETURN
 
 **Task ID:** TASK-501-MOMENTUM-API-HANDLER
 **Zone:** apps/mcp-server/
 **Blocks:** TASK-502-MOMENTUM-FRONTEND
-**Status:** TODO
+**Status:** REVIEW
 **Effort:** M (~2h)
