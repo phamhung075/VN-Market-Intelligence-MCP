@@ -23,6 +23,18 @@
 //   Flag any row where open=high AND high=low AND low=close AND volume=0
 //   AND date >= VN_TODAY (UTC+7) as synthetic_seed_bar and emit BUG.
 //   Catches the whole-universe seed write regardless of scale.
+//
+// FR-G4 (CONTAM-10-SANITY / Sprint OHLCV-UNIT-CONTAM-WHOLEROW-LT1000):
+//   Whole-row close<1000 anchor divergence scan.
+//   For each non-index ticker, queries the most recent bar in FULL history
+//   with close >= 1000 AND volume > 0 (the "clean anchor"). Then, for each
+//   row in the 7-day window, if anchor_close / row.close >= 100 AND
+//   row.close < 1000 → flags as whole_row_lt1000_scale.
+//   This detects the class that CONTAM-6 is structurally blind to: whole-row
+//   thousands-format contamination where ALL four OHLC fields are stored at
+//   the thousands scale (e.g., FPT close=130 vs clean anchor=130000, ratio=1000).
+//   Index tickers excluded via the same INDEX_TICKERS constant.
+//   One batched ROW_NUMBER() query builds the anchorCloseMap — not N+1.
 
 import { Database } from "bun:sqlite";
 import { validateOhlcvUnit } from "../../domain/services/market-data/ohlcvUnitGuard.js";
@@ -87,7 +99,7 @@ const SCALE_RATIO_LOW  = 0.002; // ratio below this → ÷1000 class (collapsed)
  * All-zero rows (BACKLOG_CONTAM_8) are skipped without sending Telegram.
  * Any contamination hit triggers a single BUG Telegram; all hits are returned.
  *
- * Three detector passes (all reuse the same sendBugFn / Telegram mechanism):
+ * Four detector passes (all reuse the same sendBugFn / Telegram mechanism):
  *
  * Pass 1 — intra-row unit guard (existing, CONTAM-1):
  *   validateOhlcvUnit rules: range / cross-field / hilo-ratio / plausibility.
@@ -102,6 +114,14 @@ const SCALE_RATIO_LOW  = 0.002; // ratio below this → ÷1000 class (collapsed)
  *   Flag any row where open=high=low=close AND volume=0 AND date >= VN_TODAY
  *   (UTC+7) as synthetic_seed_bar.  Catches whole-universe seed writes regardless
  *   of unit scale.
+ *
+ * Pass 4 — FR-G4 whole-row close<1000 anchor divergence scan (CONTAM-10-SANITY):
+ *   Builds anchorCloseMap (most recent clean bar per non-index ticker, close>=1000,
+ *   volume>0, across full history) via ONE batched ROW_NUMBER() query before the loop.
+ *   For each window row: if anchorClose / row.close >= 100 AND row.close < 1000 →
+ *   flag whole_row_lt1000_scale. Detects whole-row thousands-format contamination
+ *   (e.g. FPT close=130 vs anchor=130000) that CONTAM-6 predicate cannot see.
+ *   Index tickers excluded via INDEX_TICKERS constant (same set, no second copy).
  */
 export async function runOhlcvSanityCheck(
   deps?: OhlcvSanityCheckDeps,
@@ -215,6 +235,51 @@ export async function runOhlcvSanityCheck(
     priorCloseMap.set(`${r.code}__${r.window_date}`, r.prior_close);
   }
 
+  // ── FR-G4: Batched anchor-close fetch for Pass 4 (non-N+1) ──────────────
+  //
+  // For each non-index watchlist ticker, find the most recent bar in the FULL
+  // history with close >= 1000 AND volume > 0 (the "clean anchor").
+  //
+  // A single ROW_NUMBER() OVER (PARTITION BY code ORDER BY date DESC) query
+  // does this in one round-trip — mirrors the CTE in the repair migration
+  // (scripts/migrations/repair-ohlcv-unit-contamination-wholerow-lt1000.ts).
+  //
+  // Index tickers are excluded from BOTH the anchor query and Pass 4 check
+  // by reusing the existing INDEX_TICKERS constant — no second copy.
+  // The inline SQL IN-list is built from the constant (not user input → no
+  // injection risk).
+  //
+  // Result shape: Map<code, anchorClose>
+  // Codes with no clean history (legitimately cheap or no qualifying bar) are absent.
+
+  const indexTickersSql = [...INDEX_TICKERS].map((t) => `'${t}'`).join(",");
+  const nonIndexCodes = codes.filter((c) => !INDEX_TICKERS.has(c));
+
+  const anchorCloseMap = new Map<string, number>();
+  if (nonIndexCodes.length > 0) {
+    const anchorPlaceholders = nonIndexCodes.map(() => "?").join(", ");
+    const anchorRows = db
+      .prepare(
+        `SELECT code, anchor_close
+         FROM (
+           SELECT code,
+                  close AS anchor_close,
+                  ROW_NUMBER() OVER (PARTITION BY code ORDER BY date DESC) AS rn
+           FROM daily_ohlcv
+           WHERE close >= 1000
+             AND volume > 0
+             AND code IN (${anchorPlaceholders})
+             AND code NOT IN (${indexTickersSql})
+         ) ranked
+         WHERE rn = 1`,
+      )
+      .all(...nonIndexCodes) as Array<{ code: string; anchor_close: number }>;
+
+    for (const r of anchorRows) {
+      anchorCloseMap.set(r.code, r.anchor_close);
+    }
+  }
+
   // ── Main scan loop ────────────────────────────────────────────────────────
 
   let scanned = 0;
@@ -302,6 +367,42 @@ export async function runOhlcvSanityCheck(
         flag: `synthetic_seed_bar: O=H=L=C=${row.close} volume=0 date=${row.date}>=vnToday=${vnToday}`,
       });
     }
+
+    // ── Pass 4: FR-G4 whole-row close<1000 anchor divergence scan ────────
+    //
+    // Detects the whole-row thousands-format contamination class that
+    // CONTAM-6 predicate (open<100 OR low<100 AND close>=1000) is structurally
+    // blind to. When ALL four OHLC fields are stored at the thousands scale
+    // (e.g. FPT: close=130 instead of 130,000), the row is internally
+    // consistent at the ×1 scale and passes all intra-row checks.
+    //
+    // Condition: anchorClose / row.close >= 100 where anchorClose is the
+    // most recent clean bar (close>=1000) for this ticker in full history.
+    // The 100x threshold (not 1000x) gives headroom for large price moves
+    // while remaining far below the expected ×1000 contamination step.
+    //
+    // Index tickers are excluded (type check) — they have no stock-scale
+    // anchor and INDEX_TICKERS was already used to build anchorCloseMap.
+    // Legitimately cheap stocks (all-history close < 1000) have no anchor
+    // entry → absent from map → safely skipped.
+    if (type === "stock" && row.close > 0 && row.close < 1000) {
+      const anchorClose = anchorCloseMap.get(row.code);
+      if (anchorClose !== undefined && anchorClose >= 1000) {
+        const ratio = anchorClose / row.close;
+        if (ratio >= 100) {
+          hits.push({
+            code: row.code,
+            date: row.date,
+            open: row.open,
+            high: row.high,
+            low: row.low,
+            close: row.close,
+            volume: row.volume,
+            flag: `whole_row_lt1000_scale: ratio=${ratio.toFixed(1)} anchor=${anchorClose} row.close=${row.close}`,
+          });
+        }
+      }
+    }
   }
 
   if (hits.length === 0) {
@@ -315,11 +416,18 @@ export async function runOhlcvSanityCheck(
       `  ${h.code} ${h.date}: open=${h.open} high=${h.high} low=${h.low} close=${h.close} vol=${h.volume} → ${h.flag}`,
   );
   const overflow = hits.length > 10 ? `\n  ... +${hits.length - 10} more` : "";
+
+  // Pass 4 whole-row hits require the new repair migration (not CONTAM-6).
+  const hasWholeRowHits = hits.some((h) => h.flag.startsWith("whole_row_lt1000_scale"));
+  const actionLine = hasWholeRowHits
+    ? `Action: run repair-ohlcv-unit-contamination-wholerow-lt1000.ts --dry-run to assess whole-row contamination; for CONTAM-6 class (mixed-scale): run repair migration or force-run ohlcvDailyAggregator for affected dates.`
+    : `Action: run repair migration CONTAM-6 or force-run ohlcvDailyAggregator for affected dates.`;
+
   const msg =
     `[ohlcv-sanity] UNIT CONTAMINATION DETECTED — ${hits.length} row(s) in last 7 days\n` +
     hitLines.join("\n") +
     overflow +
-    `\nAction: run repair migration CONTAM-6 or force-run ohlcvDailyAggregator for affected dates.`;
+    `\n${actionLine}`;
 
   let sentBug = false;
   try {
