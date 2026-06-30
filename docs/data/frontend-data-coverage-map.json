@@ -31,12 +31,12 @@
     "_": "[max_staleness_min, client_refresh_ms]; VN market hrs=02:00-08:59 UTC Mon-Fri"
   },
   "summary": {
-    "pages": 34,
-    "rows": 41,
+    "pages": 35,
+    "rows": 45,
     "LIVE": 35,
     "DEPTH_THIN": 2,
     "STALE_RISK": 2,
-    "GAP": 1,
+    "GAP": 5,
     "STATIC": 1,
     "L2": 0,
     "rows_no_asof": 2
@@ -620,6 +620,62 @@
       "fix": null,
       "l3b_status": "WIRED",
       "l3b_note": "2 cards from 1 liquidity section; FreshnessBadge(daily) wired on both"
+    },
+    {
+      "page": "/dashboard/momentum",
+      "elem": "momentum_factor_z (roc gauge)",
+      "endpoint": "/api/momentum-indicators → roc section",
+      "store": "computed_roc (mcp-server compute from price_history)",
+      "writer": "get_roc_momentum → REST endpoint",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": "computed_as_of",
+      "status": "GAP",
+      "fix": "GAP: flip to LIVE when get_roc_momentum REST endpoint deployed + card renders real data (TASK-501)",
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) + honest-NULL wired TASK-502-MOMENTUM-FRONTEND; data pending TASK-501"
+    },
+    {
+      "page": "/dashboard/momentum",
+      "elem": "market_rs_composite (relative_strength gauge)",
+      "endpoint": "/api/momentum-indicators → relative_strength section",
+      "store": "computed_rs (mcp-server)",
+      "writer": "get_relative_strength → REST endpoint",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": "computed_as_of",
+      "status": "GAP",
+      "fix": "GAP: flip to LIVE when get_relative_strength REST endpoint deployed + card renders real data (TASK-501)",
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) + honest-NULL + low_sample_warning detail row wired TASK-502-MOMENTUM-FRONTEND"
+    },
+    {
+      "page": "/dashboard/momentum",
+      "elem": "net_new_highs + pct_above_ma50/ma200 (proximity_52w gauge)",
+      "endpoint": "/api/momentum-indicators → proximity_52w section",
+      "store": "computed_52w (mcp-server)",
+      "writer": "get_52w_proximity → REST endpoint",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": "computed_as_of",
+      "status": "GAP",
+      "fix": "GAP: flip to LIVE when get_52w_proximity REST endpoint deployed + card renders real data (TASK-501)",
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) + honest-NULL wired TASK-502-MOMENTUM-FRONTEND"
+    },
+    {
+      "page": "/dashboard/momentum",
+      "elem": "foreign_accum_z_market (foreign_accum gauge)",
+      "endpoint": "/api/momentum-indicators → foreign_accum section",
+      "store": "computed_foreign_accum (mcp-server)",
+      "writer": "get_foreign_accum_rank → REST endpoint",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": "computed_as_of",
+      "status": "GAP",
+      "fix": "GAP: flip to LIVE when get_foreign_accum_rank REST endpoint deployed + card renders real data (TASK-501)",
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) + honest-NULL wired TASK-502-MOMENTUM-FRONTEND"
     }
   ],
   "update_mechanic": {

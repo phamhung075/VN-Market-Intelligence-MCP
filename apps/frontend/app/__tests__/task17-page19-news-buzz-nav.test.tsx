@@ -35,8 +35,8 @@ function renderTopNav(initialPath = "/") {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — ANALYST_NAV count after PAGE 19 addition", () => {
-  it("exports exactly 26 analyst nav items (25 after PAGE-19 + 1 IND-P1-FRONTEND-GAUGE-CARDS)", () => {
-    expect(ANALYST_NAV).toHaveLength(26);
+  it("exports exactly 27 analyst nav items (25 after PAGE-19 + 1 IND-P1-FRONTEND-GAUGE-CARDS + 1 TASK-502-MOMENTUM-FRONTEND)", () => {
+    expect(ANALYST_NAV).toHaveLength(27);
   });
 });
 
@@ -45,9 +45,9 @@ describe("TopNav — ANALYST_NAV count after PAGE 19 addition", () => {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — NAV_ITEMS total after PAGE 19 addition", () => {
-  it("NAV_ITEMS is ANALYST_NAV (26) + SYSTEM_NAV (7) = 33 total (IND-P1-FRONTEND-GAUGE-CARDS added 'Chỉ Báo')", () => {
+  it("NAV_ITEMS is ANALYST_NAV (27) + SYSTEM_NAV (7) = 34 total (TASK-502 added 'Động Lực P1')", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
-    expect(NAV_ITEMS).toHaveLength(33);
+    expect(NAV_ITEMS).toHaveLength(34);
   });
 
   it("SYSTEM_NAV still has 7 items (unchanged)", () => {
@@ -81,18 +81,18 @@ describe("TopNav — 'Tin nhắc đến' new item", () => {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — PAGE 19 item position (IND-P1 appended after)", () => {
-  it("last ANALYST_NAV entry is now 'Chỉ Báo' (IND-P1 appended after PAGE-19)", () => {
+  it("last ANALYST_NAV entry is now 'Động Lực P1' (TASK-502 appended after IND-P1 'Chỉ Báo')", () => {
     const last = ANALYST_NAV.at(-1);
     expect(last).toBeDefined();
-    expect(last!.label).toBe("Chỉ Báo");
-    expect(last!.to).toBe("/dashboard/indicator-gauges");
+    expect(last!.label).toBe("Động Lực P1");
+    expect(last!.to).toBe("/dashboard/momentum");
   });
 
-  it("second-to-last ANALYST_NAV entry is 'Tin nhắc đến' (PAGE-19, shifted by IND-P1 append)", () => {
+  it("second-to-last ANALYST_NAV entry is 'Chỉ Báo' (IND-P1, shifted by TASK-502 append)", () => {
     const secondLast = ANALYST_NAV.at(-2);
     expect(secondLast).toBeDefined();
-    expect(secondLast!.label).toBe("Tin nhắc đến");
-    expect(secondLast!.to).toBe("/dashboard/news-buzz");
+    expect(secondLast!.label).toBe("Chỉ Báo");
+    expect(secondLast!.to).toBe("/dashboard/indicator-gauges");
   });
 
   it("ANALYST_NAV[24] is 'Tin nhắc đến' (index unchanged after IND-P1 append at [25])", () => {

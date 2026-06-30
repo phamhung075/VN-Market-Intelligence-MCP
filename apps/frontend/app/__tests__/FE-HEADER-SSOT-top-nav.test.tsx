@@ -28,8 +28,9 @@
  *     - "Uy tín DN" (/dashboard/reputation) is ENABLED — dashboard.reputation.tsx exists (TASK-17 PAGE 18).
  *     - "Tin nhắc đến" (/dashboard/news-buzz) is ENABLED — dashboard.news-buzz.tsx exists (TASK-17 PAGE 19).
  *     - "Chỉ Báo" (/dashboard/indicator-gauges) is ENABLED — dashboard.indicator-gauges.tsx exists (IND-P1-FRONTEND-GAUGE-CARDS).
+ *     - "Động Lực P1" (/dashboard/momentum) is ENABLED — dashboard.momentum.tsx exists (TASK-502-MOMENTUM-FRONTEND).
  *  3. SYSTEM_NAV has 7 ops/infra tabs (incl. bctc-eval + bctc-inspect; excl. db).
- *  4. NAV_ITEMS is the union (analyst + system) — 33 total (26 analyst + 7 system).
+ *  4. NAV_ITEMS is the union (analyst + system) — 34 total (27 analyst + 7 system).
  *     This is the SINGLE canonical absolute-total assertion — do NOT duplicate in per-page tests.
  *  5. The "Cổ Phiếu" tab links to /dashboard/analysis (the existing route) — NOT /dashboard/stock.
  *  6. comingSoon tabs render as disabled spans (aria-disabled="true"), NOT as links.
@@ -65,8 +66,8 @@ function renderTopNav(initialPath = "/") {
 }
 
 describe("TopNav — ANALYST_NAV canonical list", () => {
-  it("exports exactly 26 analyst nav items (live SSOT: through TASK-17 PAGE 19 + QUE-REFERENCE-PAGE-2 + IND-P1-FRONTEND-GAUGE-CARDS; /dashboard/technical removed FE-AHUB-INT-INTEGRATE)", () => {
-    expect(ANALYST_NAV).toHaveLength(26);
+  it("exports exactly 27 analyst nav items (live SSOT: through TASK-17 PAGE 19 + QUE-REFERENCE-PAGE-2 + IND-P1-FRONTEND-GAUGE-CARDS + TASK-502-MOMENTUM-FRONTEND; /dashboard/technical removed FE-AHUB-INT-INTEGRATE)", () => {
+    expect(ANALYST_NAV).toHaveLength(27);
   });
 
   it("contains first 9 analyst items in order with correct labels and comingSoon flags", () => {
@@ -192,9 +193,9 @@ describe("TopNav — SYSTEM_NAV canonical list", () => {
 });
 
 describe("TopNav — NAV_ITEMS union (backward compat)", () => {
-  it("NAV_ITEMS is the union of ANALYST_NAV + SYSTEM_NAV (33 items total: 26 analyst + 7 system; /dashboard/technical removed FE-AHUB-INT-INTEGRATE)", () => {
+  it("NAV_ITEMS is the union of ANALYST_NAV + SYSTEM_NAV (34 items total: 27 analyst + 7 system; /dashboard/technical removed FE-AHUB-INT-INTEGRATE)", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
-    expect(NAV_ITEMS).toHaveLength(33);
+    expect(NAV_ITEMS).toHaveLength(34);
   });
 
   it("Database tab (/dashboard/db) is absent from NAV_ITEMS (retired from nav per P0-5)", () => {
