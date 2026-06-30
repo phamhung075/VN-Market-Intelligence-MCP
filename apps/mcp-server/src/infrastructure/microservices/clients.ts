@@ -258,6 +258,228 @@ export async function computeVolatilityIndicators(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ROC Momentum (TA Service: POST /ta/roc-momentum)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ComputeROCMomentumRequest {
+  /** If provided, restrict computation to these tickers. */
+  tickers?: string[];
+}
+
+export interface ROCTickerResult {
+  ticker:       string;
+  roc_12_1:     number | null;
+  z_score:      number | null;
+  decile:       number | null;
+  label:        'MOMENTUM_LEADER' | 'NEUTRAL' | 'LAGGARD' | null;
+  null_reason?: string | null;
+}
+
+export interface ROCFactorReturnBucket {
+  decile:       number;
+  avg_return:   number | null;
+  ticker_count: number;
+}
+
+/**
+ * Response from POST /ta/roc-momentum.
+ * Honest-NULL: momentum_factor_z null when insufficient history (< 12+1 bars).
+ */
+export interface ComputeROCMomentumResponse {
+  tickers:               ROCTickerResult[];
+  factor_return_buckets: ROCFactorReturnBucket[];
+  momentum_factor_z:     number | null;
+  computed_as_of:        string;
+}
+
+/**
+ * Call the Go TA service POST /ta/roc-momentum.
+ * Throws on HTTP error — caller handles error envelope.
+ */
+export async function computeROCMomentum(
+  req: ComputeROCMomentumRequest = {},
+): Promise<ComputeROCMomentumResponse> {
+  const url = `${BASE_URLS.ta}/ta/roc-momentum`;
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  if (!response.ok) {
+    throw new Error(`[TA Service roc-momentum] ${response.status}: ${await response.text()}`);
+  }
+  return response.json() as Promise<ComputeROCMomentumResponse>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Relative Strength (TA Service: POST /ta/relative-strength)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ComputeRelativeStrengthRequest {
+  /** If provided, restrict computation to these tickers. */
+  tickers?: string[];
+}
+
+export interface RSTickerResult {
+  ticker:              string;
+  rs_63d_pct:          number | null;
+  rs_126d_pct:         number | null;
+  rs_252d_pct:         number | null;
+  mansfield_rs_63d:    number | null;
+  mansfield_rs_126d:   number | null;
+  mansfield_rs_252d:   number | null;
+  composite_rs_score:  number | null;
+  composite_label:     'STRONG' | 'NEUTRAL' | 'WEAK' | null;
+  null_reason?:        string | null;
+  low_sample_warning?: boolean | null;
+}
+
+/**
+ * Response from POST /ta/relative-strength.
+ * Honest-NULL: market_rs_composite null when watchlist too small (N < 5).
+ */
+export interface ComputeRelativeStrengthResponse {
+  tickers:             RSTickerResult[];
+  market_rs_composite: number | null;
+  low_sample_warning:  boolean;
+  computed_as_of:      string;
+}
+
+/**
+ * Call the Go TA service POST /ta/relative-strength.
+ * Throws on HTTP error — caller handles error envelope.
+ */
+export async function computeRelativeStrength(
+  req: ComputeRelativeStrengthRequest = {},
+): Promise<ComputeRelativeStrengthResponse> {
+  const url = `${BASE_URLS.ta}/ta/relative-strength`;
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  if (!response.ok) {
+    throw new Error(`[TA Service relative-strength] ${response.status}: ${await response.text()}`);
+  }
+  return response.json() as Promise<ComputeRelativeStrengthResponse>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 52-Week Proximity (TA Service: POST /ta/52w-proximity)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface Compute52WProximityRequest {
+  /** If provided, restrict computation to these tickers. */
+  tickers?: string[];
+}
+
+export interface ProximityTickerResult {
+  ticker:            string;
+  high_52w:          number | null;
+  low_52w:           number | null;
+  pct_from_52w_high: number | null;
+  pct_from_52w_low:  number | null;
+  above_ma50:        boolean | null;
+  above_ma200:       boolean | null;
+  proximity_label:   'AT_HIGH' | 'NEAR_HIGH' | 'MID_RANGE' | 'NEAR_LOW' | 'AT_LOW' | null;
+  new_high_today:    boolean | null;
+  null_reason?:      string | null;
+}
+
+export interface ProximityAggregate {
+  new_highs_count:   number;
+  new_lows_count:    number;
+  net_new_highs:     number;
+  pct_above_ma50:    number | null;
+  pct_above_ma200:   number | null;
+  denominator_ma200: number;
+}
+
+/**
+ * Response from POST /ta/52w-proximity.
+ * Honest-NULL: pct_above_ma200 null when denominator_ma200 = 0.
+ */
+export interface Compute52WProximityResponse {
+  tickers:           ProximityTickerResult[];
+  aggregate:         ProximityAggregate;
+  net_new_highs:     number;
+  denominator_ma200: number;
+  computed_as_of:    string;
+}
+
+/**
+ * Call the Go TA service POST /ta/52w-proximity.
+ * Throws on HTTP error — caller handles error envelope.
+ */
+export async function compute52WProximity(
+  req: Compute52WProximityRequest = {},
+): Promise<Compute52WProximityResponse> {
+  const url = `${BASE_URLS.ta}/ta/52w-proximity`;
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  if (!response.ok) {
+    throw new Error(`[TA Service 52w-proximity] ${response.status}: ${await response.text()}`);
+  }
+  return response.json() as Promise<Compute52WProximityResponse>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Foreign Accum Rank (Stock Price Service: POST /price/foreign-accum-rank)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ComputeForeignAccumRankRequest {
+  /** If provided, restrict computation to these tickers. */
+  tickers?: string[];
+}
+
+export interface ForeignAccumTickerResult {
+  ticker:                      string;
+  net_flow_5d_raw:             number | null;
+  net_flow_20d_raw:            number | null;
+  cum_net_flow_5d_normalized:  number | null;
+  cum_net_flow_20d_normalized: number | null;
+  z_score_5d:                  number | null;
+  rank:                        number | null;
+  label:                       'ACCUMULATING' | 'NEUTRAL' | 'DISTRIBUTING' | null;
+  room_exhaustion:             boolean | null;
+  null_reason?:                string | null;
+}
+
+/**
+ * Response from POST /price/foreign-accum-rank.
+ * Honest-NULL: foreign_accum_z_market null when < 5 tickers have ≥ 5 bars.
+ * room_exhaustion null per-ticker when foreign room data unavailable.
+ */
+export interface ComputeForeignAccumRankResponse {
+  tickers:                ForeignAccumTickerResult[];
+  foreign_accum_z_market: number | null;
+  adtv_unit:              string;
+  computed_as_of:         string;
+}
+
+/**
+ * Call the Go stock-price service POST /price/foreign-accum-rank.
+ * Throws on HTTP error — caller handles error envelope.
+ */
+export async function computeForeignAccumRank(
+  req: ComputeForeignAccumRankRequest = {},
+): Promise<ComputeForeignAccumRankResponse> {
+  const url = `${BASE_URLS.stockPrice}/price/foreign-accum-rank`;
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  if (!response.ok) {
+    throw new Error(`[Stock Price Service foreign-accum-rank] ${response.status}: ${await response.text()}`);
+  }
+  return response.json() as Promise<ComputeForeignAccumRankResponse>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Macro Indicators Service
 // ─────────────────────────────────────────────────────────────────────────────
 

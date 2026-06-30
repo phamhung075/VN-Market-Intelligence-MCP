@@ -1,7 +1,7 @@
 {
   "_maintained_by": "generator (do not hand-edit)",
-  "lastUpdated": "2026-06-29T23:44:49.120Z",
-  "totalCount": 178,
+  "lastUpdated": "2026-06-30T03:05:43.972Z",
+  "totalCount": 182,
   "groups": [
     {
       "name": "alerts",
@@ -127,12 +127,14 @@
     },
     {
       "name": "market-data",
-      "count": 20,
+      "count": 24,
       "tools": [
         "delete_price_alert",
         "diagnose_foreign_flow_circuit_breaker",
+        "get_52w_proximity",
         "get_breadth_thrust",
         "get_company_profile",
+        "get_foreign_accum_rank",
         "get_foreign_flow",
         "get_foreign_room",
         "get_insider_sentiment",
@@ -144,6 +146,8 @@
         "get_market_snapshot",
         "get_patterns",
         "get_price_history",
+        "get_relative_strength",
+        "get_roc_momentum",
         "get_technical_indicators",
         "get_ticker_intelligence",
         "get_volatility_indicators",

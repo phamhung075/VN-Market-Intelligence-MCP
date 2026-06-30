@@ -128,6 +128,10 @@ import { registerMarketSentimentTools } from "./news-analysis/marketSentimentToo
 import { registerInsiderSentimentTools } from "./market-data/insiderSentimentTools.js"; // P0-5-INSIDER-SENTIMENT: get_insider_sentiment (#178)
 import { registerBreadthThrustTools } from "./market-data/breadthThrustTools.js"; // BREADTH-TIME-SERIES: get_breadth_thrust (#179)
 import { registerVolatilityIndicatorTools } from "./market-data/volatilityIndicatorTools.js"; // BREADTH-TIME-SERIES Part B: get_volatility_indicators (#180)
+import { registerROCMomentumTools } from "./market-data/rocMomentumTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_roc_momentum (#181)
+import { registerRelativeStrengthTools } from "./market-data/relativeStrengthTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_relative_strength (#182)
+import { register52WProximityTools } from "./market-data/52wProximityTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_52w_proximity (#183)
+import { registerForeignAccumRankTools } from "./market-data/foreignAccumRankTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_foreign_accum_rank (#184)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -260,4 +264,8 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerInsiderSentimentTools,        // P0-5-INSIDER-SENTIMENT: get_insider_sentiment (#178)
   registerBreadthThrustTools,           // BREADTH-TIME-SERIES: get_breadth_thrust (#179)
   registerVolatilityIndicatorTools,     // BREADTH-TIME-SERIES Part B: get_volatility_indicators (#180)
+  registerROCMomentumTools,             // IND-P1-MCP-PROXY-INDICATORS: get_roc_momentum (#181)
+  registerRelativeStrengthTools,        // IND-P1-MCP-PROXY-INDICATORS: get_relative_strength (#182)
+  register52WProximityTools,            // IND-P1-MCP-PROXY-INDICATORS: get_52w_proximity (#183)
+  registerForeignAccumRankTools,        // IND-P1-MCP-PROXY-INDICATORS: get_foreign_accum_rank (#184)
 ];
