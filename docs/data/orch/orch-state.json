@@ -7745,7 +7745,7 @@
         "id": "FIX-COWORK-CHEF-SAMETICK-MUTEX",
         "type": "FIX",
         "size": "S",
-        "status": "BACKLOG",
+        "status": "DONE",
         "priority": "medium",
         "zone": "cross-service/",
         "owner": "cowork-refactory-expert",
@@ -7767,7 +7767,14 @@
         "consolidates": "FU-CHEF-MARKER-INFLOW (backlog, DEFERRED) — that task is the partial per-slot fix B (chef.md self-enforces published-marker with per-cadence-key granularity); the dispatcher-level same-tick mutex (fix A) is the durable superset. dev/architect to fold or close FU-CHEF-MARKER-INFLOW once A ships.",
         "recurrence_note": "RECURRING CLASS: chef-evening double-post (po-s90 f8c12ca9, folded into ARCH-HEADLESS-GATEWAY-COWORK-NOPOST) + chef-intraday dedup-granularity (c53a7df5, folded into FU-CHEF-MARKER-INFLOW, never shipped) + now chef-morning+chef-intraday. NO durable code/flow fix has shipped — prior findings were folded into deferred tasks. This FIX is the consolidating durable root fix; do NOT add another per-slot patch.",
         "verification_gate": "On the next weekday 05:15Z tick (chef-morning + chef-intraday coincidence) MARKET receives EXACTLY ONE CHEF dish. Forcing stale_warning=true (legacy mode) no longer produces a second chef-* MARKET post at the same tick. Closes cowork-cron AC-6 (zero double-publish).",
-        "dispatch_note": "DISPATCHER = main terminal (router) per dispatch table 'update cowork agents -> cowork-refactory-expert -> main'. This is a cowork-team flow .md change = maintenance-lane (mutex-wrapped, on-demand); NOT a dev-team-cron auto-adopt ready[] row. Avoids the po-s109 cowork-team dead-route. Router dispatches via the FIX BATCH route_to."
+        "dispatch_note": "DISPATCHER = main terminal (router) per dispatch table 'update cowork agents -> cowork-refactory-expert -> main'. This is a cowork-team flow .md change = maintenance-lane (mutex-wrapped, on-demand); NOT a dev-team-cron auto-adopt ready[] row. Avoids the po-s109 cowork-team dead-route. Router dispatches via the FIX BATCH route_to.",
+        "completed_at": "2026-06-30T06:37Z-tick",
+        "completed_by": "cowork-refactory-expert",
+        "done_commits": [
+          "6d080acf",
+          "d0ae24e6"
+        ],
+        "done_note": "Step 4.5c jq-native mutex SHIPPED (commit 6d080acf rewrites the false-green c2c2aa9f). Dispatcher RAW-verified: commits on disk, merge gate green (index-check/tree-verify/c2-alert exit=0), and re-ran committed logic independently — 4/4 cases PASS (chef-morning+chef-intraday→drop intraday keep morning; intraday-only→retain; morning-only→retain; mixed non-chef+both-chef→drop only intraday). BEHAVIORAL GATE PENDING runtime: next weekday 2026-07-01T05:15Z coincidence tick must yield EXACTLY ONE CHEF MARKET dish."
       }
     ],
     "closed_sprints": [
