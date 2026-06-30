@@ -142,6 +142,16 @@
 **why-decision:** Option A chosen — macroRegimeHandler pattern uses optional baseUrl param; extending that idiom to full function injection gives cleaner isolation for the 4 DB sources (sentiment, breadth, foreignRoom, breadth) and the macroFetch source. Section builders are pure functions; test fixtures are explicit and readable.
 **why-change:** No plan deviation. foreign_room tickers[] exclusion + honest-NULL per section + source_tier endpoint-assigned for liquidity all implemented per spec. toolCount unchanged at 182 (REST endpoint, not MCP tool).
 
+### STEP dev-mcp-server-S7 · dev-mcp-server · 2026-06-30T21:00:00Z
+**task-id:** OHLCV-DEPTH-SUBTASK-E
+**what-done:** Verified SSH access to Vinahost VPS (125.212.251.27); confirmed local `vps-scripts/fetch-ohlcv-backfill.sh` exists (6748B, executable); deployed it to VPS via scp + chmod +x; confirmed `-rwxr-xr-x 1 root root 6748 Jun 30 20:59 /root/fetch-ohlcv-backfill.sh` on VPS.
+**what-considered:**
+- only: No alternatives — SUBTASK-E is a pure ops gate (SSH verify + deploy if absent). Script absent on VPS so deploy path was the only path.
+**why-decision:** Script present locally and absent on VPS; scp+chmod is the documented deploy pathway per SUBTASK-E spec.
+**why-change:** No plan deviation. Local script was already authored (6748B); deployment was the sole action required.
+
+---
+
 ### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-30T06:30:00Z
 **task-id:** TASK-501-MOMENTUM-API-HANDLER
 **what-done:** Built GET /api/momentum-indicators REST endpoint (momentumIndicatorsHandler.ts) + server.ts registration + 37-test suite passing GREEN. No db param — all 4 sources remote HTTP via clients.ts. source_tier=3 all sections (ARCH-RATIFY M3).
