@@ -28,7 +28,7 @@
 import { writeFileSync, renameSync, readFileSync, existsSync, statSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { mkdirSync } from "node:fs";
-import { OrchStateSchema } from "./orchStateSchema";
+import { OrchStateSchema, type Status } from "./orchStateSchema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal OrchState shape (only sections touched by mcp-server writers)
@@ -64,8 +64,12 @@ export interface OrchStateSignalQueue {
  * Mandatory fields: id, title, owner, status, zone, created_at
  * Optional fields: task_id (legacy), status_note, closed_at, sprint, priority, size, type, files, depends, note, commit
  *
- * Closed status enum (no freeform variants):
- *   TODO | IN_PROGRESS | REVIEW | DONE | BLOCKED | CANCELLED | DEFERRED
+ * Status enum (12-value frozen set — derived from StatusEnum in orchStateSchema.ts):
+ *   BACKLOG | TODO | IN_PROGRESS | REVIEW | QA | DONE | DONE_VERIFIED |
+ *   BLOCKED | DEFERRED | CANCELLED | SKIPPED | READY
+ *
+ * SSOT-W1-SERVER-ENFORCE: status DERIVES from StatusEnum — no escape hatch.
+ * Constructing a task with status="PARKED" or any non-canonical value fails tsc.
  *
  * Banned fields (never written): desc, label, summary, resolved_id, task_id (as write target)
  *
@@ -86,7 +90,12 @@ export interface OrchStateTaskBoardTask {
   type?: string;
   owner: string;
   depends?: string | string[] | null;
-  status: "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE" | "BLOCKED" | "CANCELLED" | "DEFERRED" | string;
+  /**
+   * SSOT-W1-SERVER-ENFORCE Delta-1: type DERIVES from StatusEnum (orchStateSchema.ts).
+   * 12-value frozen set — no `| string` escape hatch.
+   * Any non-canonical value (e.g. "PARKED", "done", "DONE-LIVE-VERIFIED") fails tsc.
+   */
+  status: Status; // z.infer<typeof StatusEnum> — 12-value SSOT from orchStateSchema.ts
   size?: string | null;
   zone?: string;
   note?: string;

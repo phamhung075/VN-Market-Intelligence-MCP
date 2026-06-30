@@ -71,3 +71,15 @@
 - Env var on validator path only, not bun binary — rejected: test must cover BOTH infra fail paths per wedge-guard "QA MUST verify error-path"
 **why-decision:** Wedge-guard explicitly states "INFRASTRUCTURE failure → FAIL-OPEN; NEVER fail-closed-hard"; validator-missing is infrastructure (cannot determine validity). Env var overrides keep production hook unchanged while enabling deterministic test coverage of both fail-open paths.
 **why-change:** Prior worker's change (block on spawn-fail) was reverted by router; this session completes the original task scope + adds the missing wedge-guard compliance that was never committed.
+
+---
+
+### STEP dev-mcp-server-S7 · dev-mcp-server · 2026-06-30T10:05:00Z
+**task-id:** SSOT-W1-SERVER-ENFORCE
+**what-done:** Closed status escape hatch (Delta-1): changed `OrchStateTaskBoardTask.status` from `"TODO"|...|string` to `Status` (z.infer<typeof StatusEnum> — 12-value SSOT); added `type Status` to orchStateSchema import. Added QA-6 test (PARKED throws pre-rename + mtime unchanged) + valid-write roundtrip guard (over-rejection gate). tsc clean, 160 targeted tests pass, 1837a + 1980-f2 already green from prior sprint work.
+**what-considered:**
+- Import `Status` type alias vs inline `z.infer<typeof StatusEnum>` in field declaration (chosen Status — cleaner, self-documenting, already exported)
+- Add QA-6 as a new file vs append to existing orchStateStore-atomic-write.test.ts (chosen existing — stays cohesive with atomic-write contract, same describe block)
+- Add over-rejection roundtrip guard as separate describe vs same block (chosen same block — atomic-write contract tests belong together)
+**why-decision:** `Status` import keeps the type DERIVED from schema (no hand-sync duplication); existing atomic-write test file is the right home for write-path guards; over-rejection roundtrip with all 12 StatusEnum values proves no legitimate write is blocked.
+**why-change:** No change from plan; 1837a+1980-f2 were already reconciled by S4 (SSOT-W1-ZOD-SCHEMA-MODEL); this session closes the remaining escape hatch + gates QA-6.
