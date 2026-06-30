@@ -108,6 +108,8 @@ import { handleGetAnalysisBriefIndex } from "./routes/analysisBriefIndexHandler.
 import { handleGetNewsSentiment } from "./routes/newsSentimentHandler.js";
 // TASK-17 P1-2a: GET /api/macro-regime — macro snapshot reshaped for frontend
 import { handleGetMacroRegime } from "./routes/macroRegimeHandler.js";
+// IND-P1-MCP-REST-GAUGES-ENDPOINT: GET /api/indicator-gauges — 5 P0 indicators aggregated
+import { handleGetIndicatorGauges } from "./routes/indicatorGaugesHandler.js";
 // TASK-17 P2-1a: GET /api/price-history/:ticker — OHLC history DTO for frontend
 import { handleGetPriceHistory } from "./routes/priceHistoryServeHandler.js";
 // TASK-17 Alerts ENDPOINT WAVE: GET /api/alerts — live alerts table for dashboard
@@ -2144,6 +2146,16 @@ export async function createBunServer(
     // ── TASK-17 P1-2a: GET /api/macro-regime — macro snapshot for frontend ──
     if (method === "GET" && pathname === "/api/macro-regime") {
       await handleGetMacroRegime(req, res);
+      return;
+    }
+
+    // ── IND-P1-MCP-REST-GAUGES-ENDPOINT: GET /api/indicator-gauges ──────────
+    // Aggregates the 5 P0 indicator sources (volatility, sentiment, breadth,
+    // foreign_room, liquidity) into a single IndicatorGaugesDto response.
+    // Promise.allSettled: section-isolated — one failure degrades ONLY that section.
+    // Always returns 200; generated_at always set; honest-NULL per section.
+    if (method === "GET" && pathname === "/api/indicator-gauges") {
+      await handleGetIndicatorGauges(req, res, db);
       return;
     }
 

@@ -24,6 +24,13 @@
 | `FIX-MCP-CRASH-LOOP-D-wal-escalation.test.ts` | D-1 guardrail: `checkWalFileSize()` 4th-param `escalateFn` injection; NOT called when WAL ≤ 10 MB; called exactly once when WAL > 10 MB; receives byte count; rejection is non-fatal (7 tests) |
 | `FIX-MCP-CRASH-LOOP-A-restart-cadence.test.ts` | `runRestartCadenceAlertJob()`: 8 tests covering deploy-vs-crash discriminator via `mcpServerCleanShutdown` sentinel; 3-deploy false-positive pattern (2026-06-15 exact scenario); 2 crashes + 1 deploy → alert fires; 3 deploys → no alert; no predecessor → conservative no-crash; threshold tests retained (8 tests) |
 
+### REST Endpoint Handlers
+| Test File | Coverage |
+|-----------|----------|
+| `IND-P1-MCP-REST-GAUGES-ENDPOINT.test.ts` | 35 tests: GET /api/indicator-gauges — REG(exports), GEN(generated_at always set), 200(HTTP 200 even on section failures), ISO(Promise.allSettled section isolation — 4 partial-fail + all-fail), NULL(breadth null on error shape; sentiment passthrough; volatility null_reason synthesized), PROJ(foreign_room .market-only, no tickers[]), LIQ(ok:false→null, source_tier from is_estimate, null_reason from blocked_reason). Injectable deps (IndicatorGaugesDeps) — zero real HTTP or DB calls. |
+| `TASK-17-P1-2a-macro-regime.test.ts` | GET /api/macro-regime — upstream reshape, failure paths, oil impact→direction normalization |
+| `TASK-17-news-sentiment-endpoint.test.ts` | GET /api/news-sentiment — SQLite query, staleness detection, pagination |
+
 ### Market Data
 | Test File | Coverage |
 |-----------|----------|
