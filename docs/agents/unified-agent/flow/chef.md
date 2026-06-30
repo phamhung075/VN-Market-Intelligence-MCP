@@ -414,7 +414,18 @@ Before writing the notebook entry or the RETURN block, evaluate the following th
 
 ```
 # Sub-check (a) — US macro layer (L2) presence
-L2_OK = (US macro stack was substantively walked in Step 3)
+# MINIMUM FLOOR (AutoCure tran-ngoc-bau c103 2026-06-30 — FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR):
+# "Substantively walked" requires at least ONE of the following concrete US macro elements:
+#   - US PMI value cited (ideally with sub-components) from get_macro_snapshot Step 3
+#   - EFFR–IORB spread cited with a numeric value from get_macro_snapshot Step 3
+# Carry trade spread alone (e.g. "carry 1.37pp NEUTRAL") is NOT sufficient —
+# it is a source_tier-3 derived proxy of the US/VN rate differential and does NOT
+# represent a US macro stack walk (PMI, consumer sentiment, Fed liquidity plumbing).
+# If neither PMI nor EFFR-IORB data is available (macro_health unavailable), an
+# explicit gap token is REQUIRED — write [gap:macro_health_missing] or
+# [gap:US_macro_unavailable] in the Block B WORK message and in the L6 gap catalogue.
+L2_OK = (US PMI value cited in Step 3 with a numeric data point)
+        OR (EFFR-IORB spread cited in Step 3 with a numeric value)
         OR (at least one explicit gap token was written for L2,
             e.g. [gap:macro_health_missing] or [gap:US_macro_unavailable])
 
