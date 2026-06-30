@@ -245,10 +245,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-    "next_agent": "architect",
-    "updated_at": "2026-06-30T12:56:00Z",
+    "next_agent": "po",
+    "updated_at": "2026-06-30T13:28:31Z",
     "updated_by": "dev-team",
-    "note": "Tick 12:37Z dispatched 2 parallel sprints (live WIP->2, disjoint zones): [P0] FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR->architect (root-cause daily_ohlcv 49-bar floor: WRITER/retention/backfill-lookback; FIX WRITER not residue; NEVER flat-seed; zone apps/mcp-server/) || SSOT-W1-ORCH-APPLY-WRAPPER->dev-mcp-server (audit ~290 jq-writers route through wrapper + canonical pointer in dev-standards.md + QA-1/QA-2/CAS tests; zone scripts/). ci_red a3af26b6 triaged=flaky-divergence on stale orch-only origin HEAD (no router push: red-prepush-strands-fleet + bun-suite flaky; durable full-suite reconciliation owned by SSOT-W1-BASH-SHIM QA-7 next tick)."
+    "note": "Tick 12:37Z closeout. (1) SSOT-W1-ORCH-APPLY-WRAPPER -> DONE_VERIFIED: gate PASS (dev 0b696742, qa 51837269); orch-apply.sh hardened+backward-compat, 19/19 tests, perimeter closed (13 routed/0 direct/1 server-internal Zod-gated). (2) FIX-OHLCV-DEPTH epic: architect decompose DONE (brief 30659cca); brief_complete signal routes to PO next drain -> PO creates 5 sub-tasks, sequence E->A (ops SSH prereq). next_agent=po. (3) Deferred next tick: SSOT-W1-BASH-SHIM (owns full-suite ci_red reconciliation QA-7); 8-commit origin divergence push (PO-gated)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3271,7 +3271,7 @@
           {
             "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
             "type": "dev",
-            "status": "IN_PROGRESS",
+            "status": "DONE_VERIFIED",
             "title": "Audit + hardening proof: scripts/orch-apply.sh canonical wrapper; proof all ~290/tick jq-patch writers route through it; add CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER pointer in dev-standards.md",
             "wave": 1,
             "rank": 5,
@@ -3286,10 +3286,16 @@
             "created_by": "pm-agent",
             "detail_ref": "docs/handoffs/SSOT-W1-ORCH-APPLY-WRAPPER.md",
             "verify_note": "QA-2 (dup-key in candidate rejected), QA-1 (bad status rejected) pass; codebase audit finds all jq patches route through wrapper; canonical pointer added to dev-standards.md.",
-            "updated_at": "2026-06-30T12:56:00Z",
+            "updated_at": "2026-06-30T13:28:31Z",
             "updated_by": "dev-team",
             "dispatched_at": "2026-06-30T12:56:00Z",
-            "dispatched_by": "dev-team"
+            "dispatched_by": "dev-team",
+            "done_commits": [
+              "0b696742"
+            ],
+            "qa_commit": "51837269",
+            "qa_report": "docs/agent-memory/decisions/sprint-SSOT-INTEGRITY-PERIMETER-qa.md#qa-S6",
+            "gate_result": "PASS: index-check exit0, tree-verify exit0, 19/19 wrapper tests, live-SSOT byte-intact (before==after 390272b6), orch-apply.sh backward-compat verified (default LIVE_FILE unchanged + temp same-dir atomic-rename preserved), audit 13-routed/0-direct/1-server-internal(Zod-gated), commit index-only 5 files no-orch-state"
           },
           {
             "id": "SSOT-W1-BASH-SHIM",
@@ -9378,7 +9384,7 @@
         "user_prioritized": true,
         "zone": "apps/mcp-server/",
         "owner": "architect",
-        "next_agent": "architect",
+        "next_agent": "po",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
         "title": "daily_ohlcv persists only ~49 bars (uniform 2026-04-23 floor across ALL tickers) despite OHLCV-BACKFILL-P0 (2yr) — root-cause the WRITER/retention/backfill-lookback and persist >=252 bars (target ~504/2yr). Indicator-program CRITICAL PATH: unblocks roc/RS/52w momentum cards + volatility/breadth gauges + the OHLCV-derived next-wave indicators.",
         "supersedes_depth_gap_of": "OHLCV-BACKFILL-P0",
@@ -9399,10 +9405,14 @@
         "depends": [],
         "created_by": "po-s135",
         "created_at": "2026-06-30T07:53:47Z",
-        "updated_at": "2026-06-30T12:56:00Z",
+        "updated_at": "2026-06-30T13:28:31Z",
         "updated_by": "dev-team",
         "dispatched_at": "2026-06-30T12:56:00Z",
-        "dispatched_by": "dev-team"
+        "dispatched_by": "dev-team",
+        "architect_done": true,
+        "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "brief_commit": "30659cca",
+        "status_note": "EPIC: architect decompose DONE (brief 30659cca; root-cause PRIMARY=vps-scripts/ohlcv-backfill-poll.sh signals done=1 regardless of EXIT_CODE). brief_complete signal pending PO drain -> PO materializes 5 sub-tasks A-E; SEQUENCE E->A (SUBTASK-E ops SSH prereq blocks A). Stays IN_PROGRESS as parent epic; NOT router-decomposed."
       }
     ],
     "ready": [],
