@@ -6,6 +6,27 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-06-30 — TASK-VNINDEX-RS-C (FR-C1) — watchlist DB fallback at startup
+
+**Task:** TASK-VNINDEX-RS-C / FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS § Zone C. Commits: 5c1ab331, 341d2879.
+
+**Root cause:** `WATCHLIST_TICKERS` env absent from docker-compose.yml technical-analysis block; `cmd/server/main.go:46` defaulted to `""` → `parseWatchlist` → empty slice → all use cases wired with `watchlist=[]` → no-arg `/ta/roc-momentum` returned empty.
+
+**Fix (FR-C1):**
+- `cmd/server/main.go`: added `readWatchlistFromDB(dbPath)` helper (`database/sql` + `_ "modernc.org/sqlite"` explicit import). After `parseWatchlist` returns empty, reads `SELECT code FROM watchlist ORDER BY code` from the SQLite DB at `DB_PATH`. No hardcoded tickers.
+- `cmd/server/main_test.go` (new): 3 unit tests — WithRows (3-ticker seed, order verified), EmptyTable (no rows → no error), NoWatchlistTable (missing table → error, no panic).
+
+**RAW probes:**
+- Live `watchlist` table: 41 rows (ACB…VRE, no VNINDEX — correct).
+- Startup log post-rebuild: `"WATCHLIST_TICKERS not set — resolved from DB watchlist table" count=41`
+- `POST /ta/roc-momentum {}` → 41 tickers, 35 non-null ROC (was 0 before).
+
+**Gates:** `go build ./...` OK · `go vet ./...` OK · `go test ./...` all 10 packages GREEN · golangci-lint 0 issues · sandbox primitive+module scenarios GREEN.
+
+**No docker-compose.yml change** — no hardcode. Watchlist SSOT = SQLite `watchlist` table.
+
+---
+
 ### 2026-06-30 — FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE — stale data + global-limit + Tết gap
 
 **Task:** FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE (commit b6055728). REBUILD_REQUIRED: YES.
