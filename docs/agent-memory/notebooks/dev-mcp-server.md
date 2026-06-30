@@ -1,28 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-30 — BREADTH-TIME-SERIES → REVIEW
-
-**Sprint:** MARKET-INDICATOR-DEPTH-P0 (LAST mcp-server task, Wave-2 FINAL)
-**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
-**Commit:** ee380fdf
-
-**Part A — market_breadth_history + get_breadth_thrust (#179):**
-- NEW: `domain/services/market-data/breadthCalculator.ts` — pure domain: EMA (first-value seed), ADL cumulative, RANA, McClellan Osc (null idx<38 i.e. <39 sessions), McClellan Summation, FloorCeiling (>15%/is_halt_day >50%), Zweig Thrust (>61.5% adv/(adv+dec) for 10 consecutive in 14-session window), breadth_z_score (null <21 sessions or std=0→0), history_quality enum (INSUFFICIENT/WARMUP/SUFFICIENT), 6-field GaugeReadyScalar (confidence: 1.0/0.5/null)
-- NEW: `infrastructure/db/breadthHistoryStore.ts` — getAllBreadthHistory (ASC), getRecentBreadthHistory, getBreadthHistoryCount, getAccruingSince (MIN date), upsertBreadthRow (INSERT OR IGNORE)
-- MOD: `infrastructure/db/schema-market-data.ts` — market_breadth_history DDL + idx_mbh_date DESC index
-- NEW: `application/usecases/getBreadthThrust.ts` — {error:'no breadth history...'} on empty (NFR-BR-3); ADL capped 60s
-- NEW: `scheduler/market-data/breadthHistoryPersisterJob.ts` — cron 37 8 * * 1-5; NFR-BR-1 LIVE_FETCH_SOURCE logged; skip if total=0 AND ceiling=0 AND floor=0 (synthetic guard); _isRunning concurrency guard; recordJobRun {rowsWritten: inserted?1:0}
-- NEW: `interface/mcp/tools/market-data/breadthThrustTools.ts` — MCP tool `get_breadth_thrust` (#179)
-- NEW: `__tests__/P0-BREADTH-TIME-SERIES.test.ts` — 45 tests (AC-1..AC-20), 0 fail
-- MOD: `scheduler/cronConfig.ts` — breadthHistoryPersister key
-- MOD: `scheduler/startScheduler.ts` — scheduleCron block for breadthHistoryPersister
-
-**Part B — get_volatility_indicators (#180) proxy:**
-- NEW: `interface/mcp/tools/market-data/volatilityIndicatorTools.ts` — proxies to Go TA :5003 POST /ta/volatility-indicators; honest-NULL: rv_60d_pct/drawdown_252d_pct null until Sprint-0 backfill; {error:'...'} on upstream failure (NFR-P01-1)
-- MOD: `infrastructure/microservices/clients.ts` — computeVolatilityIndicators(), ComputeVolatilityRequest/Response/TickerAtrResult types
-
-Zone health: tsc clean (EXIT 0), 45/0 new tests, toolCount=178 (+2), orch-state BREADTH-TIME-SERIES→REVIEW | HEALTHY
-
 ## 2026-06-30 — IND-P1-MCP-PROXY-INDICATORS
 
 **Sprint:** MARKET-INDICATOR-DEPTH-P0
@@ -59,3 +36,22 @@ No MCP tools added (REST endpoint only) — toolCount=182 unchanged.
 Key design: IndicatorGaugesDeps injectable (5 fn overrides) — all 35 tests zero real HTTP/DB. foreign_room: ONLY .market scalars (never .tickers[]). liquidity source_tier endpoint-assigned: 2=live, 3=estimate. breadth=null on {error} shape.
 
 Zone health: tsc 0 errors, 35/35 new tests GREEN, toolCount=182 unchanged, scheduler=3 unchanged | HEALTHY
+
+## 2026-06-30 — TASK-501-MOMENTUM-API-HANDLER → REVIEW
+
+**Sprint:** BA-IND-P1-MOMENTUM-FRONTEND (dispatcher session e71c7736)
+**Commit:** 034ad1d2
+
+GET /api/momentum-indicators — aggregates 4 P1 momentum sources into MomentumIndicatorsDto.
+Pattern mirrors indicatorGaugesHandler.ts exactly. NO db param (ARCH-RATIFY M3 — all sources remote HTTP).
+source_tier=3 hardcoded per M3 decision; honest-NULL + null_reason per section; NEVER forwards .tickers[] arrays.
+
+- NEW: `interface/mcp/routes/momentumIndicatorsHandler.ts` — handleGetMomentumIndicators + aggregateMomentumIndicators + 4 pure section builders (ROC/RS/52W/ForeignAccum) + MomentumIndicatorsDto types + MomentumIndicatorsDeps DI interface
+- MOD: `interface/mcp/server.ts` — import + dispatch block at GET /api/momentum-indicators (no db arg)
+- NEW: `__tests__/momentum-indicators.test.ts` — 37 tests: REG/GEN/200/ISO/ROC/RS/PROX/FA/TIER all GREEN
+
+Key design: MomentumIndicatorsDeps injectable (4 fn overrides) — all 37 tests zero real HTTP.
+No .tickers[] in any section output (NFR-6). null_reason synthesized per AC-4 spec.
+10/10 ACs PASS. bun test 14070/0 (full suite).
+
+Zone health: tsc 0 errors, 37/37 new tests GREEN, toolCount=182 unchanged, /health ok | HEALTHY
