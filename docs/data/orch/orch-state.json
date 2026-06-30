@@ -247,7 +247,7 @@
     "updated_at": "2026-06-30T05:15:07Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-IND-P1-MOMENTUM-FRONTEND",
-    "next_agent": "pm",
+    "next_agent": "dev",
     "note": "architect dispatched — brownfield analysis + technical design + zone SPLIT (Zone A apps/mcp-server REST aggregator, Zone B apps/frontend cards); 4 ARCH-RATIFY items; then → pm decompose. BA spec: docs/handoffs/BA-IND-P1-MOMENTUM-FRONTEND.md"
   },
   "narrative": {
@@ -3625,6 +3625,50 @@
             "live_verified_at": "2026-06-30T00:42:00Z",
             "live_verified_by": "router",
             "live_verify_note": "Router RAW-verified LIVE e2e via gateway post-rebuild (3 svcs new image IDs): get_volatility_indicators REAL (rv_20d=14.78, regime=CRISIS, source_tier:3), get_vn_liquidity_state omo present (honest-NULL net_outstanding w/ blocked_reason), get_breadth_thrust honest-NULL (NFR-BR-3, accrual next trading day). No-fake-data contract held."
+          },
+          {
+            "id": "TASK-501-MOMENTUM-API-HANDLER",
+            "title": "Momentum Indicators REST Aggregator (Zone A: mcp-server)",
+            "owner": "dev-mcp-server",
+            "type": "feature",
+            "status": "TODO",
+            "zone": "apps/mcp-server/",
+            "size": "M",
+            "priority": "P1",
+            "sprint": "BA-IND-P1-MOMENTUM-FRONTEND",
+            "depends": [],
+            "created_at": "2026-06-30T05:45:00Z",
+            "files": [
+              "apps/mcp-server/src/interface/mcp/routes/momentumIndicatorsHandler.ts",
+              "apps/mcp-server/src/interface/mcp/server.ts",
+              "apps/mcp-server/src/__tests__/momentum-indicators.test.ts"
+            ],
+            "note": "Handler aggregates 4 P1 momentum tools (ROC, RS, 52W, FA) via Promise.allSettled; HTTP 200 always; honest-NULL per section. See docs/handoffs/TASK-501-MOMENTUM-API-HANDLER.md"
+          },
+          {
+            "id": "TASK-502-MOMENTUM-FRONTEND",
+            "title": "Momentum Indicators Dashboard (Zone B: frontend)",
+            "owner": "dev-frontend",
+            "type": "feature",
+            "status": "TODO",
+            "zone": "apps/frontend/",
+            "size": "L",
+            "priority": "P1",
+            "sprint": "BA-IND-P1-MOMENTUM-FRONTEND",
+            "depends": [
+              "TASK-501-MOMENTUM-API-HANDLER"
+            ],
+            "created_at": "2026-06-30T05:45:00Z",
+            "files": [
+              "apps/frontend/app/components/GaugeCard.tsx",
+              "apps/frontend/app/routes/api.momentum-indicators.tsx",
+              "apps/frontend/app/routes/dashboard.momentum.tsx",
+              "apps/frontend/app/components/TopNav.tsx",
+              "apps/frontend/app/__tests__/ind-p1-momentum-cards.test.ts",
+              "apps/frontend/app/__tests__/ind-p1-momentum-nav.test.tsx",
+              "docs/data/frontend-data-coverage-map.json"
+            ],
+            "note": "Extract GaugeCard to shared component (M1), create proxy + 4-card dashboard page (M2/M4 formatters), TopNav entry, tests, coverage-map GAP rows. Depends on TASK-501 DTO contract. See docs/handoffs/TASK-502-MOMENTUM-FRONTEND.md"
           }
         ],
         "po_final_signoff": "APPROVED_CODE — done_verified HELD to post-rebuild LIVE e2e",
