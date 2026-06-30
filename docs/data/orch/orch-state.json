@@ -246,9 +246,9 @@
     "status": "in_progress",
     "active_task_id": "OHLCV-DEPTH-PROD-BACKFILL-GATE",
     "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-30T16:20:18Z",
+    "updated_at": "2026-06-30T16:43:05Z",
     "updated_by": "dev-team",
-    "note": "Tick 16:07Z CLOSED. OHLCV-DEPTH-REBUILD DONE_VERIFIED (INFRA, no code commit) -- RAW-verified via Bash: NEW image f71a1743 deployed (was 8b6bc8b9), mcp-server healthy ~17s, SUBTASK-D [ohlcv-probe] + SUBTASK-B [ohlcv-backfill-done depth shortfall shallow_count=40 depth_floor=252] boot logs LIVE, B re-queue BOUNDED (retry 1->2 then idle, R-5 cap intact), peers UNTOUCHED, errors=[]. EPIC mechanism E+A+B+C+D+REBUILD COMPLETE -- all handlers now LIVE in deployed image. FINAL: OHLCV-DEPTH-PROD-BACKFILL-GATE promoted backlog->ready (dep satisfied, held cleared) -> dev-mcp-server runs full-universe R-2 backfill PROD run + brief-4 cross-restart gate (Gates 1-5) which DONE_VERIFIES the epic. Sequenced NEXT tick (16:37Z Step 0b resume) -- NOT piggybacked: GATE = heaviest unit (full-universe backfill + restart) deserves fresh tick; this tick already did rebuild+RAW-verify. WIP=1 (epic). Push gated (PO/human)."
+    "note": "Tick 16:37Z pipeline-resume: dispatched OHLCV-DEPTH-PROD-BACKFILL-GATE -> dev-mcp-server (background). FINAL gate of epic. Two phases: (1) full-universe R-2 OHLCV backfill PRODUCTION run via VPS pathway (geo-block R-4, REAL fetch only) for ALL traded tickers; B depth-probe re-queues shortfalls. (2) Brief-4 Gates 1-5: depth>=252 GROUP BY code across universe; PERSISTENCE re-probe AFTER container restart (durable gate -- failure mode purge-on-boot); non-watchlist universe >0 rows. dev-mcp-server has NO gateway tools -> it verifies via Bash/docker exec/sqlite3/curl-REST (DB depth + restart-persistence). dev-team RAW-verifies the TOOL-SERVING layer (get_price_history VCB 730, get_roc_momentum/get_relative_strength/compute_52w_proximity NON-NULL) via gateway on return. GATE done_verifies the EPIC. WIP=2 (epic+GATE). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1609,12 +1609,23 @@
         "qa_verdict": "APPROVED",
         "qa_at": "2026-06-30T04:44:21Z",
         "qa_session": "f981431d-ca74-49ee-9eb4-efc4f06531eb"
+      },
+      {
+        "sprint_id": "FB-POSTER-LAUNCHD-FIRER",
+        "status": "active",
+        "vision": "Guaranteed FB slots (fb-daily 09:15Z Mon-Fri, fb-weekend 13:13Z Sat-Sun) fire reliably via an OS-level, all-local macOS launchd LaunchAgent independent of any live Claude CLI session — closing the missed-slot gap caused by the session-scoped */15 cowork dispatcher (06-30 fb-daily 09:15Z missed, posted ~6h late).",
+        "scope_in": "scripts/fb-poster-headless.sh wrapper invoking `claude -p \"run docs/agents/fb-market-poster/flow/main.md slot=<slot>\" --dangerously-skip-permissions` headlessly (no prompts); DST-robust launchd LaunchAgent(s) at the guaranteed slots; idempotent install/uninstall/verify script (launchctl bootstrap/bootout); add the MISSING period-keyed dedup gate to the weekend sub-flows so the weekend firer is double-post-safe.",
+        "scope_out": "NO general bypass-everything wrapper (--dangerously-skip-permissions scoped to the single fb-market-poster flow ONLY); NO cloud RemoteTrigger (feedback_no_remote_trigger_all_local); NO change to FB post content/Vietnamese-language/no-fake-data honest-NULL; does NOT retire the cowork */15 dispatcher (launchd is an independent race-and-dedup backstop).",
+        "success_metric": "An OBSERVED real firing (near-future test slot or launchctl kickstart) with NO live Claude CLI session writes a real docs/social/fb-post-YYYY-MM-DD.md, AND a second same-period firing no-ops (period-keyed dedup demonstrated for BOTH fb-daily and fb-weekend).",
+        "root_cause_ref": "project_cowork_guaranteed_slot_needs_live_cli_session.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T17:28:32Z"
       }
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-30T13:52:29Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-30T17:28:32Z",
+    "_updated_by": "po:s136:fb-launchd-firer-mint",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7818,6 +7829,80 @@
           "d0ae24e6"
         ],
         "done_note": "Step 4.5c jq-native mutex SHIPPED (commit 6d080acf rewrites the false-green c2c2aa9f). Dispatcher RAW-verified: commits on disk, merge gate green (index-check/tree-verify/c2-alert exit=0), and re-ran committed logic independently — 4/4 cases PASS (chef-morning+chef-intraday→drop intraday keep morning; intraday-only→retain; morning-only→retain; mixed non-chef+both-chef→drop only intraday). BEHAVIORAL GATE PENDING runtime: next weekday 2026-07-01T05:15Z coincidence tick must yield EXACTLY ONE CHEF MARKET dish."
+      },
+      {
+        "id": "FIX-FB-WEEKEND-DEDUP-GATE",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "high",
+        "zone": "cross-service/",
+        "owner": "cowork-refactory-expert",
+        "next_agent": "cowork-refactory-expert",
+        "dispatcher": "main",
+        "parallel_eligible": true,
+        "created_by": "po",
+        "created_at": "2026-06-30T17:28:32Z",
+        "sprint": "FB-POSTER-LAUNCHD-FIRER",
+        "title": "Add the MISSING period-keyed publish-once dedup gate to the FB weekend sub-flows (weekly-recap.md + weekly-prediction.md)",
+        "root_cause": "PO RAW-grep 2026-06-30: docs/agents/fb-market-poster/flow/weekly-recap.md AND weekly-prediction.md contain NO task_claim / NO `published:` marker / NO dedup gate. main.md STEP 0a's 'Weekend note' CLAIMS the equivalent key `published:fb-weekend:<VN-DATE>` 'is inserted in the respective sub-flows' — it is NOT. The MODE ROUTER jumps to the sub-flows BEFORE main.md STEP 0a, so on Sat/Sun there is currently ZERO double-post protection. Shipping a weekend launchd firer alongside the cowork */15 without this would re-introduce the exact double-post class (feedback_guaranteed_slot_week_key_double_post).",
+        "fix_spec": "Add a STEP-0a-equivalent publish-once dedup gate at the TOP of BOTH weekly-recap.md and weekly-prediction.md (before expensive data-gathering): derive VN_DATE from CYCLE_START_UTC+7h, claim task_claim(task_id='published:fb-weekend:'+VN_DATE, task_kind='cowork-slot', owner_agent='fb-market-poster', ttl_seconds=100800); on claimed:false → send_telegram(work) + EXIT cleanly (no re-post). Mirror main.md STEP 0a EXACTLY (same kind, same ttl, same VN-DATE derivation). Then correct main.md's 'Weekend note' to point at the now-real gate.",
+        "verification_gate": "QA (FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP) demonstrates a second weekend firing in the same VN-DATE no-ops via the `published:fb-weekend:<VN-DATE>` marker.",
+        "dispatch_note": "DISPATCHER = main terminal (router) per dispatch table 'update cowork agents -> cowork-refactory-expert -> main'. fb-market-poster flow .md edit = cowork maintenance lane (router-dispatched), NOT a dev-team-cron auto-adopt ready[] row (avoids the po-s109 cowork-team dead-route). HARD PREREQUISITE for enabling the weekend launchd plist — the fb-daily firer can ship WITHOUT this (daily dedup already exists in main.md STEP 0a)."
+      },
+      {
+        "id": "FB-LAUNCHD-OPS-INSTALL-VERIFY",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "high",
+        "zone": "cross-service/",
+        "owner": "ops",
+        "next_agent": "ops",
+        "dispatcher": "dev-team",
+        "depends": [
+          "FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL"
+        ],
+        "created_by": "po",
+        "created_at": "2026-06-30T17:28:32Z",
+        "sprint": "FB-POSTER-LAUNCHD-FIRER",
+        "title": "Install + bootstrap the FB-poster LaunchAgent(s), verify loaded, surface privileged command to user if needed",
+        "deliverables": [
+          "Run `scripts/fb-poster-launchd-install.sh install` — copy plists to ~/Library/LaunchAgents + launchctl bootstrap gui/$(id -u).",
+          "Install the fb-daily LaunchAgent immediately (daily dedup already exists). HOLD the fb-weekend bootstrap until FIX-FB-WEEKEND-DEDUP-GATE is done_verified.",
+          "If gui/loginwindow-domain bootstrap requires a user-run privileged command, surface the EXACT `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.vn-market.fb-poster-daily.plist` to the user (config admin) to paste as `! <cmd>` — do NOT ask the user to make design decisions.",
+          "Verify via `launchctl print gui/$(id -u)/com.vn-market.fb-poster-daily` that the agent is loaded."
+        ],
+        "acceptance": "LaunchAgent(s) loaded + present in launchctl print. NOTE: loaded != fired — the OBSERVED-fire proof is FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP's job, not this one.",
+        "depends_note": "Blocked until FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL ships the plists + install script. Weekend enable additionally gated on FIX-FB-WEEKEND-DEDUP-GATE."
+      },
+      {
+        "id": "FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP",
+        "type": "FIX",
+        "size": "M",
+        "status": "BACKLOG",
+        "priority": "high",
+        "zone": "cross-service/",
+        "owner": "qa",
+        "next_agent": "qa",
+        "dispatcher": "dev-team",
+        "depends": [
+          "FB-LAUNCHD-OPS-INSTALL-VERIFY",
+          "FIX-FB-WEEKEND-DEDUP-GATE"
+        ],
+        "created_by": "po",
+        "created_at": "2026-06-30T17:28:32Z",
+        "sprint": "FB-POSTER-LAUNCHD-FIRER",
+        "title": "OBSERVED fire-verification + double-post-guard demonstration + survives-session-end (the critical 'exists != fires' gate)",
+        "acceptance": [
+          "QA-AC1 OBSERVED real firing: trigger a near-future test slot OR `launchctl kickstart -k gui/$(id -u)/com.vn-market.fb-poster-daily` and RAW-verify it writes a REAL docs/social/fb-post-YYYY-MM-DD.md (verify content + fresh mtime — launchctl list showing the job is NOT proof it ran).",
+          "QA-AC2 DOUBLE-POST GUARD demonstrated: a SECOND firing in the SAME period no-ops (daily: `published:fb-daily:<VN-DATE>` held → second run EXITs 'already published'; weekend: `published:fb-weekend:<VN-DATE>` after FIX-FB-WEEKEND-DEDUP-GATE). Demonstrate the cross-firer case too: a cowork */15 catch of the same slot after the launchd fire no-ops.",
+          "QA-AC3 SURVIVES SESSION-END (the whole point): a firing with NO Claude CLI session open — verify task_list_held(kind=session-presence) is empty at fire time AND the post is still written.",
+          "QA-AC4 no-fake-data: if data is thin the post is honest-NULL, NOT fabricated (RAW-read the produced post for fabrication).",
+          "QA-AC5 Vietnamese output unchanged.",
+          "QA-AC6 on PASS: relocate FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL to done_verified (this is its withheld behavioral gate); on the weekend leg, gate is satisfied only after FIX-FB-WEEKEND-DEDUP-GATE ships."
+        ],
+        "depends_note": "Blocked until FB-LAUNCHD-OPS-INSTALL-VERIFY installs the agent(s). Weekend double-post leg additionally gated on FIX-FB-WEEKEND-DEDUP-GATE."
       }
     ],
     "closed_sprints": [
@@ -9620,12 +9705,10 @@
         "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "brief_commit": "30659cca",
         "status_note": "EPIC P0: E (VPS deploy gate) + A (fetch-ohlcv-backfill.sh 71b5a5fb) + B (done-endpoint depth-probe+re-queue+R-5 cap c8557899) + C (taOhlcvBackfill MOMENTUM_MIN_BARS=252 cc491b4a) + D (ohlcvStartupProbe DEPTH_FLOOR=252 45fff717) + REBUILD (image f71a1743 deployed, B+D handlers LIVE) ALL DONE_VERIFIED. FINAL GATE: OHLCV-DEPTH-PROD-BACKFILL-GATE (full-universe R-2 backfill + brief-4 cross-restart gate) done_verifies epic. next_agent=dev-mcp-server."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "OHLCV-DEPTH-PROD-BACKFILL-GATE",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "type": "FIX",
         "size": "M",
         "priority": "P0",
@@ -9645,9 +9728,44 @@
         "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md#4-cross-restart-verification-gate-durable",
         "created_by": "po-s135",
         "created_at": "2026-06-30T15:23:52Z",
-        "updated_at": "2026-06-30T16:20:18Z",
+        "updated_at": "2026-06-30T16:43:05Z",
         "updated_by": "dev-team",
-        "status_note": "dev-mcp-server: full-universe R-2 OHLCV backfill PRODUCTION run (VPS pathway, real fetch only) + brief-4 Cross-Restart Verification Gate (Gates 1-5: depth>=252 / tool-layer serving / indicator-unlock / persistence-after-restart / non-watchlist-universe). This gate DONE_VERIFIES the epic. Boot logs already prove depth shortfall (40 tickers <252) -> backfill must deepen to >=252 then survive a restart. Sequenced NEXT tick (head.next_agent=dev-mcp-server) -- NOT piggybacked on rebuild tick."
+        "status_note": "dev-mcp-server: full-universe R-2 OHLCV backfill PRODUCTION run (VPS pathway, real fetch only) + brief-4 Cross-Restart Verification Gate (Gates 1-5: depth>=252 / tool-layer serving / indicator-unlock / persistence-after-restart / non-watchlist-universe). This gate DONE_VERIFIES the epic. Boot logs already prove depth shortfall (40 tickers <252) -> backfill must deepen to >=252 then survive a restart. Sequenced NEXT tick (head.next_agent=dev-mcp-server) -- NOT piggybacked on rebuild tick.",
+        "dispatched_at": "2026-06-30T16:43:05Z",
+        "dispatched_by": "dev-team"
+      }
+    ],
+    "ready": [
+      {
+        "id": "FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL",
+        "type": "SPRINT-M",
+        "size": "M",
+        "status": "READY",
+        "priority": "high",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "dispatcher": "dev-team",
+        "created_by": "po",
+        "created_at": "2026-06-30T17:28:32Z",
+        "sprint": "FB-POSTER-LAUNCHD-FIRER",
+        "title": "Headless fb-poster wrapper + DST-robust launchd LaunchAgent(s) + idempotent install/verify script",
+        "deliverables": [
+          "D1 scripts/fb-poster-headless.sh — invokes `claude -p \"<trigger_prompt>\" --dangerously-skip-permissions` HEADLESSLY (no option-select, no permission prompts). trigger_prompt + slot times READ from cowork-schedule.json SSOT (slot fb-daily / fb-weekend) via jq — NEVER hardcoded. Logs stdout+stderr to docs/agent-memory/sessions/fb-poster-headless.log (+ -error.log), mirroring fleet-push. NON-ZERO exit on claude failure. Self-gates on the UTC slot window for today's applicable VN day-of-week (DST-robust — see AC3); no-op + log otherwise. Blast radius = the SINGLE fb-market-poster flow ONLY.",
+          "D2 launchd/com.vn-market.fb-poster-daily.plist + launchd/com.vn-market.fb-poster-weekend.plist — mirror launchd/com.vn-market.fleet-push.plist structure (KeepAlive false; WorkingDirectory=repo root; StandardOut/ErrPath; EnvironmentVariables PATH MUST include /Users/admin/.local/bin [claude binary] + /Users/admin/.bun/bin + HOME=/Users/admin). DST decision is the HARD PART (AC3) — developer chooses + DOCUMENTS the approach in a plist header comment.",
+          "D3 scripts/fb-poster-launchd-install.sh — idempotent install | uninstall | verify (launchctl bootstrap gui/$UID | bootout | print). Copies plists to ~/Library/LaunchAgents. If gui-domain bootstrap needs a user-run privileged command, PRINT the EXACT command for the user (config admin) to paste — do NOT silently fail. Reproducible.",
+          "D4 doc pointers: docs/policies/dev-standards.md § Script Persistence (both scripts) + docs/standards/cron-jobs.md (new launchd timers, mirror the fleet-push § entry) + a pointer in the fb-market-poster flow owning doc."
+        ],
+        "acceptance": [
+          "AC1 wrapper runs fully headless (bypass-permissions, zero prompts), exits non-zero on failure, logs to the known path.",
+          "AC2 DOUBLE-POST GUARD inherited: the wrapper invokes the SAME flow, whose STEP 0a claims period-keyed task_claim `published:fb-daily:<VN-DATE>` (ttl 100800, kind cowork-slot) — first firer (launchd OR cowork */15) wins, the other no-ops. The wrapper MUST NOT add a second/divergent dedup key. (Weekend dedup is handled by FIX-FB-WEEKEND-DEDUP-GATE — hard prerequisite for the weekend plist.)",
+          "AC3 DST-robust: fires correctly under BOTH CET (UTC+1) and CEST (UTC+2) with NO manual edits across DST shifts. launchd StartCalendarInterval fires LOCAL time but slots are UTC — developer picks ONE of: (a) wrapper UTC self-gate + over-fire the launchd entry (e.g. fire at both candidate local times or poll), or (b) compute both local entries + document the caveat. Approach DOCUMENTED in the plist header.",
+          "AC4 slot times + trigger_prompt derived from cowork-schedule.json SSOT, never baked (no-hardcode-stats).",
+          "AC5 --dangerously-skip-permissions scoped to THIS single flow invocation only — not a general bypass wrapper.",
+          "AC6 Vietnamese output + no-fake-data honest-NULL pass-state unchanged (the wrapper changes NOTHING in the flow body)."
+        ],
+        "design_notes": "Mirror scripts/fleet-worktree-push.sh + launchd/com.vn-market.fleet-push.plist (the proven all-local OS-level firer pattern). SSOT slot truth: cowork-schedule.json fb-daily cron `15 9 * * 1-5` (09:15Z), fb-weekend cron `13 13 * * 6,0` (13:13Z). NOTE a doc discrepancy to reconcile: fb-market-poster/flow/main.md Input says weekend 13:07Z — SSOT cowork-schedule.json (13:13Z) WINS; flag for doc-sync, do not bake 13:07.",
+        "verification_gate": "Code committed + scripts executable + `bash scripts/fb-poster-launchd-install.sh --verify` runs clean. done_verified is WITHHELD until the OBSERVED-fire behavioral gate (FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP) passes — 'script exists' / 'launchctl list shows it' is NOT done (exists != fires)."
       }
     ],
     "review": [
