@@ -7582,24 +7582,6 @@
         "note": "PO RAW-assessed the gate SPEC (not the single live dish) — hole exists in the definition regardless of whether 2026-06-29 evening tripped it. PO read chef.md:388-439. Live-dish confirmation (was a gap token actually written?) deferred to TNB c103 WORK [CHEF-DETAIL] read; spec-fix is durable either way.",
         "created_at": "2026-06-29T20:57:33Z",
         "created_by": "po"
-      },
-      {
-        "id": "IND-P1-MCP-REST-GAUGES-ENDPOINT",
-        "tier": "P1",
-        "title": "MCP REST Gauges Endpoint — GET /api/indicator-gauges aggregating 5 P0 indicator tools into the frontend IndicatorGaugesDto (honest-NULL per section)",
-        "owner": "dev-mcp-server",
-        "zone": "apps/mcp-server",
-        "priority": "medium",
-        "status": "BACKLOG",
-        "plan_only": false,
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_by": "po",
-        "created_at": "2026-06-30T02:50:00Z",
-        "next_agent": "dev-mcp-server",
-        "handoff": "docs/handoffs/IND-P1-MCP-REST-GAUGES-ENDPOINT.md",
-        "completes": "IND-P1-FRONTEND-GAUGE-CARDS",
-        "dispatch_note": "Router-owned dispatch AFTER IND-P1-MCP-PROXY-INDICATORS + mcp-server rebuild complete (keep mcp-server rebuilds serial). Stays in backlog[] — do NOT promote to ready[]; the live dev-team cron dispatches from ready[]."
       }
     ],
     "closed_sprints": [
@@ -7893,7 +7875,11 @@
         "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md",
         "qa_verdict": "APPROVED",
         "qa_note": "Go domain tests ALL PASS (TestMomentumService_* suite: 8 tests). Full TA suite go test ./... PASS. Honest-NULL: null_reason per-ticker, momentum_factor_z null → transparent. HTTP handler registered router.go:50. DDD PASS (pkg/domain pure, no infra leakage). Source tier 3.",
-        "done_at": "2026-06-30T03:26:10Z"
+        "done_at": "2026-06-30T03:26:10Z",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T03:31:04Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — router RAW-verified QA APPROVED gate (commit 102fdf6f, not relayed). Go tests 19 TA + 7 stock-price PASS; MCP proxy 22/0; tsc 0; mock-guard 0; DDD interface-only; honest-NULL ...result passthrough. mcp-server image d358dd058a9e healthy; tool resolves live honest-NULL via gateway. tool-count 3-way=182. No cross-lane dup."
       },
       {
         "id": "IND-P1-RELATIVE-STRENGTH",
@@ -7913,7 +7899,11 @@
         "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md",
         "qa_verdict": "APPROVED",
         "qa_note": "Go domain tests ALL PASS (TestRSService_* suite: 5 tests). Full TA suite PASS. Honest-NULL: market_rs_composite null when N<5 + low_sample_warning:true transparent. HTTP handler registered router.go:53. DDD PASS.",
-        "done_at": "2026-06-30T03:26:10Z"
+        "done_at": "2026-06-30T03:26:10Z",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T03:31:04Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — router RAW-verified QA APPROVED gate (commit 102fdf6f, not relayed). Go tests 19 TA + 7 stock-price PASS; MCP proxy 22/0; tsc 0; mock-guard 0; DDD interface-only; honest-NULL ...result passthrough. mcp-server image d358dd058a9e healthy; tool resolves live honest-NULL via gateway. tool-count 3-way=182. No cross-lane dup."
       },
       {
         "id": "IND-P1-52W-HIGH-PROXIMITY",
@@ -7933,7 +7923,11 @@
         "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md",
         "qa_verdict": "APPROVED",
         "qa_note": "Go domain tests ALL PASS (TestProximityService_* suite: 8 tests). Full TA suite PASS. Honest-NULL: pct_above_ma200 null when denominator_ma200=0 transparent. HTTP handler registered router.go:56. DDD PASS.",
-        "done_at": "2026-06-30T03:26:10Z"
+        "done_at": "2026-06-30T03:26:10Z",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T03:31:04Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — router RAW-verified QA APPROVED gate (commit 102fdf6f, not relayed). Go tests 19 TA + 7 stock-price PASS; MCP proxy 22/0; tsc 0; mock-guard 0; DDD interface-only; honest-NULL ...result passthrough. mcp-server image d358dd058a9e healthy; tool resolves live honest-NULL via gateway. tool-count 3-way=182. No cross-lane dup."
       },
       {
         "id": "IND-P1-MCP-PROXY-INDICATORS",
@@ -7955,7 +7949,11 @@
         "router_lane_reconcile_note": "router moved backlog->review to match status=REVIEW + next=qa and align with sibling IND-P1 momentum tasks; mcp-server rebuild dispatched; awaiting QA gateway verification of all 4 tools",
         "qa_verdict": "APPROVED",
         "qa_note": "22 pass / 0 fail (REG-1..4, NULL-1..10, ERR-1..6, FWRD-1..2). tsc 0 errors. DDD PASS: interface/mcp/tools → infrastructure/microservices/clients.ts only. mock-guard PASS (exit 0). No process.env. Honest-NULL: ...result spread + {error} catch on all 4 tools. source_tier:3+fetched_at injected. AC6: TRACKED FOLLOW-UP GAP — P1 tools not yet in consumer flows (IND-P1-CONSUMER-WIRING-AUDIT covered P0 only); not a DoD blocker per router instructions.",
-        "done_at": "2026-06-30T03:26:10Z"
+        "done_at": "2026-06-30T03:26:10Z",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T03:31:04Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — router RAW-verified QA APPROVED gate (commit 102fdf6f, not relayed). Go tests 19 TA + 7 stock-price PASS; MCP proxy 22/0; tsc 0; mock-guard 0; DDD interface-only; honest-NULL ...result passthrough. mcp-server image d358dd058a9e healthy; tool resolves live honest-NULL via gateway. tool-count 3-way=182. No cross-lane dup."
       },
       {
         "id": "IND-P1-FOREIGN-ACCUM-RANK",
@@ -7978,7 +7976,11 @@
         "impl_note": "Tool POST /price/foreign-accum-rank implemented per FR-1 through FR-13. LIVE daily_ohlcv columns confirmed: foreign_buy_vol, foreign_sell_vol, foreign_net_vol, volume. Honest-NULL with null_reason emitted for: insufficient_flow_history (<5 bars), insufficient_20d_history (5-19 bars), zero_adtv, insufficient_cross_section (<3 tickers), room_event_not_found. Service rebuild needed before QA can live-verify.",
         "qa_verdict": "APPROVED",
         "qa_note": "Go domain tests ALL PASS (TestForeignAccumService_* suite: 7 tests). Full stock-price suite go test ./... PASS. Honest-NULL: foreign_accum_z_market null, room_exhaustion null per-ticker — transparent. HTTP handler registered router.go:48. DDD PASS. Endpoint: POST /price/foreign-accum-rank.",
-        "done_at": "2026-06-30T03:26:10Z"
+        "done_at": "2026-06-30T03:26:10Z",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T03:31:04Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — router RAW-verified QA APPROVED gate (commit 102fdf6f, not relayed). Go tests 19 TA + 7 stock-price PASS; MCP proxy 22/0; tsc 0; mock-guard 0; DDD interface-only; honest-NULL ...result passthrough. mcp-server image d358dd058a9e healthy; tool resolves live honest-NULL via gateway. tool-count 3-way=182. No cross-lane dup."
       },
       {
         "closed_at": "2026-06-05T11:16:27Z",
@@ -8805,6 +8807,53 @@
         "done_verified_at": "2026-06-30T04:35:00Z",
         "done_verified_by": "router",
         "gate_result": "PASS — router RAW-verified QA APPROVED gate 2026-06-30T04:35Z (not relayed). Commit 42fe866f real. 4 task test files green (45+13+26+15); tsc 0 errors; 2 full-suite fails PRE-EXISTING QUE-TOOLTIP (d7167c0a, unrelated). DDD interface-only. Honest-NULL LIVE on image c693445f: :3001/dashboard/indicator-gauges HTTP 200, 17 honest-NULL markers / 6 cards, no fabrication. Coverage-map 6c/5r mapping documented. Upstream /api/indicator-gauges 404 -> honest-NULL = frontend DoD; backend REST aggregator is a tracked follow-up gap, not a blocker. No cross-lane dup."
+      },
+      {
+        "id": "BA-IND-P1-MOMENTUM-RS",
+        "type": "SPRINT-M",
+        "tier": "P1",
+        "title": "BA spec — IND-P1 Momentum & Relative-Strength factor sub-wave: 4 NEW backend indicator tools (ROC-Momentum 12-1, Cross-Sectional Relative-Strength, 52W-High Proximity, Foreign-Accumulation Momentum Rank)",
+        "status": "DONE_VERIFIED",
+        "owner": "pm",
+        "next_agent": "qa",
+        "zone": "multi",
+        "priority": "medium",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
+        "created_by": "po-s132",
+        "created_at": "2026-06-30T01:33:06Z",
+        "children": [
+          "IND-P1-ROC-MOMENTUM",
+          "IND-P1-RELATIVE-STRENGTH",
+          "IND-P1-52W-HIGH-PROXIMITY",
+          "IND-P1-FOREIGN-ACCUM-RANK"
+        ],
+        "scope": "Spec 4 new derived indicator tools (all † gates now CLEARED — OHLCV backfill + Foreign-Room suite LIVE_VERIFIED 2026-06-30): (1) get_roc_momentum — Multi-Horizon ROC Momentum Factor 12-1 Jegadeesh-Titman skip-month, z-score/decile, factor-return series (closes DP backtest/Brier req); (2) get_relative_strength — Cross-Sectional RSC percentile 63/126/252d + Mansfield RS; (3) 52W-High Proximity + Net-New-Highs — %-from-52w-high/low, %>MA50/MA200, net-new-highs line; (4) Foreign-Accumulation Momentum Rank — ADTV-normalized 5/20d foreign net-flow z-rank + room_exhaustion flag (shares Foreign-Room suite). Source roadmap §3 P1 entries verbatim.",
+        "contract": "HARD no-fake-data gate (roadmap top-rule): every value computed from data already on hand / already fetched (Tier 1-3 real). Honest-NULL on absent source — same contract the 5 P0 tools hold (return null + blocked_reason/null_reason, NEVER a fabricated distribution). Each tool ships a gauge scalar + source_tier + fetched_at, and (folding the P0 FOLLOW-UP) co-located unit/confidence/null_reason.",
+        "cascade": "BA spec -> architect blueprint (MUST SPLIT multi-zone: 3x apps/technical-analysis [ROC, RS, 52W] + 1x apps/stock-price [Foreign-Accum-Rank]) -> pm decomposition into per-tool dev tasks (supersedes the 4 IND-P1-* placeholders) -> dev -> qa. Full gate IN EFFECT (roadmap §6) — genuinely new analytical features.",
+        "consumer_intent": "Serves the user STANDING intent 'more indices so the helper agents analyze the market better' — these are NEW indices for the analyst agents (MW/CHEF/AC/DP/TNB/NS), the direct continuation now that IND-P1-CONSUMER-WIRING-AUDIT proved the P0 consumption pattern (done_verified 3fd6e151).",
+        "gate_proof": "Unblocked: OHLCV-BACKFILL-P0 + P0-2-FOREIGN-ROOM-SUITE both done[] done_verified=true live_gate=LIVE_VERIFIED (router RAW-verified 2026-06-30); IND-P1-CONSUMER-WIRING-AUDIT done_verified (3fd6e151).",
+        "ba_spec_complete": true,
+        "ba_commit": "ba562100",
+        "ba_handoff": "docs/handoffs/BA-IND-P1-MOMENTUM-RS.md",
+        "ba_completed_at": "2026-06-30T01:50:00Z",
+        "arch_ratify_open": [
+          "ARCH-RATIFY-RS-1 (VN-Index cross-sectional RS = daily_ohlcv row only, no runtime fetch; confirm ticker_id)",
+          "ARCH-RATIFY-ROC-1 (ROC factor-return = compute-on-read P1)",
+          "ARCH-RATIFY-FAR-1 (ADTV unit vol-vs-VND; probe vnstock_trading_stats live)",
+          "ARCH-RATIFY-FAR-2 (ADTV normalization basis)",
+          "52W-MA200 denominator_ma200 field required (sample transparency for pct_above_ma200)"
+        ],
+        "reconciled_by": "router:ba-handoff-dedup",
+        "reconcile_note": "BA minted a duplicate DONE row in backlog[] and left this ready[] row un-transitioned (next_agent=ba). Router removed the dup and advanced this single row to next_agent=architect. BA spec verified sound (commit ba562100; 295-line handoff). Zone split MANDATORY downstream: 3x apps/technical-analysis (ROC, RS, 52W) + 1x apps/stock-price (foreign-accum-rank).",
+        "arch_completed_at": "2026-06-30T02:00:00Z",
+        "arch_handoff": "docs/handoffs/BA-IND-P1-MOMENTUM-RS.md",
+        "arch_note": "Brownfield complete. 5 ARCH-RATIFY resolved. 2 critical corrections: (1) foreign_buy_vol/sell_vol in daily_ohlcv NOT vnstock_trading_stats; (2) foreign_room_events event_type=ROOM_FULL not ROOM_LOCKED. Zone split confirmed: 3x dev-technical-analysis (ROC/RS/52W) + 1x dev-stock-price (foreign-accum). BUILD-STANDARD: lean. Ready for PM decomposition.",
+        "pm_decomposed_at": "2026-06-30T03:00:00Z",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T03:31:04Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — BA momentum/RS decomposition umbrella closed: all 5 children (ROC-MOMENTUM, RELATIVE-STRENGTH, 52W-HIGH-PROXIMITY, FOREIGN-ACCUM-RANK, MCP-PROXY-INDICATORS) QA-APPROVED + router done_verified 2026-06-30. AC6 P1 consumer-wiring tracked as follow-up."
       }
     ],
     "done_verified": [],
@@ -8889,49 +8938,6 @@
         "impl_done_by": "agent-father",
         "done_verified_at": "2026-06-29T19:35:25Z",
         "done_verified_by": "qa"
-      },
-      {
-        "id": "BA-IND-P1-MOMENTUM-RS",
-        "type": "SPRINT-M",
-        "tier": "P1",
-        "title": "BA spec — IND-P1 Momentum & Relative-Strength factor sub-wave: 4 NEW backend indicator tools (ROC-Momentum 12-1, Cross-Sectional Relative-Strength, 52W-High Proximity, Foreign-Accumulation Momentum Rank)",
-        "status": "IN_PROGRESS",
-        "owner": "pm",
-        "next_agent": "qa",
-        "zone": "multi",
-        "priority": "medium",
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_by": "po-s132",
-        "created_at": "2026-06-30T01:33:06Z",
-        "children": [
-          "IND-P1-ROC-MOMENTUM",
-          "IND-P1-RELATIVE-STRENGTH",
-          "IND-P1-52W-HIGH-PROXIMITY",
-          "IND-P1-FOREIGN-ACCUM-RANK"
-        ],
-        "scope": "Spec 4 new derived indicator tools (all † gates now CLEARED — OHLCV backfill + Foreign-Room suite LIVE_VERIFIED 2026-06-30): (1) get_roc_momentum — Multi-Horizon ROC Momentum Factor 12-1 Jegadeesh-Titman skip-month, z-score/decile, factor-return series (closes DP backtest/Brier req); (2) get_relative_strength — Cross-Sectional RSC percentile 63/126/252d + Mansfield RS; (3) 52W-High Proximity + Net-New-Highs — %-from-52w-high/low, %>MA50/MA200, net-new-highs line; (4) Foreign-Accumulation Momentum Rank — ADTV-normalized 5/20d foreign net-flow z-rank + room_exhaustion flag (shares Foreign-Room suite). Source roadmap §3 P1 entries verbatim.",
-        "contract": "HARD no-fake-data gate (roadmap top-rule): every value computed from data already on hand / already fetched (Tier 1-3 real). Honest-NULL on absent source — same contract the 5 P0 tools hold (return null + blocked_reason/null_reason, NEVER a fabricated distribution). Each tool ships a gauge scalar + source_tier + fetched_at, and (folding the P0 FOLLOW-UP) co-located unit/confidence/null_reason.",
-        "cascade": "BA spec -> architect blueprint (MUST SPLIT multi-zone: 3x apps/technical-analysis [ROC, RS, 52W] + 1x apps/stock-price [Foreign-Accum-Rank]) -> pm decomposition into per-tool dev tasks (supersedes the 4 IND-P1-* placeholders) -> dev -> qa. Full gate IN EFFECT (roadmap §6) — genuinely new analytical features.",
-        "consumer_intent": "Serves the user STANDING intent 'more indices so the helper agents analyze the market better' — these are NEW indices for the analyst agents (MW/CHEF/AC/DP/TNB/NS), the direct continuation now that IND-P1-CONSUMER-WIRING-AUDIT proved the P0 consumption pattern (done_verified 3fd6e151).",
-        "gate_proof": "Unblocked: OHLCV-BACKFILL-P0 + P0-2-FOREIGN-ROOM-SUITE both done[] done_verified=true live_gate=LIVE_VERIFIED (router RAW-verified 2026-06-30); IND-P1-CONSUMER-WIRING-AUDIT done_verified (3fd6e151).",
-        "ba_spec_complete": true,
-        "ba_commit": "ba562100",
-        "ba_handoff": "docs/handoffs/BA-IND-P1-MOMENTUM-RS.md",
-        "ba_completed_at": "2026-06-30T01:50:00Z",
-        "arch_ratify_open": [
-          "ARCH-RATIFY-RS-1 (VN-Index cross-sectional RS = daily_ohlcv row only, no runtime fetch; confirm ticker_id)",
-          "ARCH-RATIFY-ROC-1 (ROC factor-return = compute-on-read P1)",
-          "ARCH-RATIFY-FAR-1 (ADTV unit vol-vs-VND; probe vnstock_trading_stats live)",
-          "ARCH-RATIFY-FAR-2 (ADTV normalization basis)",
-          "52W-MA200 denominator_ma200 field required (sample transparency for pct_above_ma200)"
-        ],
-        "reconciled_by": "router:ba-handoff-dedup",
-        "reconcile_note": "BA minted a duplicate DONE row in backlog[] and left this ready[] row un-transitioned (next_agent=ba). Router removed the dup and advanced this single row to next_agent=architect. BA spec verified sound (commit ba562100; 295-line handoff). Zone split MANDATORY downstream: 3x apps/technical-analysis (ROC, RS, 52W) + 1x apps/stock-price (foreign-accum-rank).",
-        "arch_completed_at": "2026-06-30T02:00:00Z",
-        "arch_handoff": "docs/handoffs/BA-IND-P1-MOMENTUM-RS.md",
-        "arch_note": "Brownfield complete. 5 ARCH-RATIFY resolved. 2 critical corrections: (1) foreign_buy_vol/sell_vol in daily_ohlcv NOT vnstock_trading_stats; (2) foreign_room_events event_type=ROOM_FULL not ROOM_LOCKED. Zone split confirmed: 3x dev-technical-analysis (ROC/RS/52W) + 1x dev-stock-price (foreign-accum). BUILD-STANDARD: lean. Ready for PM decomposition.",
-        "pm_decomposed_at": "2026-06-30T03:00:00Z"
       }
     ],
     "review": [
@@ -8997,6 +9003,24 @@
         "updated_by": "qa",
         "updated_at": "2026-06-29T16:46:36Z",
         "next_agent": "qa"
+      },
+      {
+        "id": "IND-P1-MCP-REST-GAUGES-ENDPOINT",
+        "tier": "P1",
+        "title": "MCP REST Gauges Endpoint — GET /api/indicator-gauges aggregating 5 P0 indicator tools into the frontend IndicatorGaugesDto (honest-NULL per section)",
+        "owner": "dev-mcp-server",
+        "zone": "apps/mcp-server",
+        "priority": "medium",
+        "status": "REVIEW",
+        "plan_only": false,
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T02:50:00Z",
+        "next_agent": "qa",
+        "handoff": "docs/handoffs/IND-P1-MCP-REST-GAUGES-ENDPOINT.md",
+        "completes": "IND-P1-FRONTEND-GAUGE-CARDS",
+        "promoted_at": "2026-06-30T00:00:00Z"
       }
     ],
     "qa": [],
@@ -9026,6 +9050,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T02:58:00Z",
-  "_updated_by": "router:lane-reconcile:IND-P1-MCP-PROXY-INDICATORS"
+  "_updated_at": "2026-06-30T03:31:04Z",
+  "_updated_by": "router:gate-close:IND-P1-MOMENTUM-SUITE"
 }

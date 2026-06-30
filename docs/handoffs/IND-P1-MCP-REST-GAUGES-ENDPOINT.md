@@ -216,19 +216,19 @@ Examples valid TODAY (2026-06-30 live state):
 
 ## Definition of Done
 
-- [ ] `GET /api/indicator-gauges` registered in `server.ts` + handler in
+- [x] `GET /api/indicator-gauges` registered in `server.ts` + handler in
       `routes/indicatorGaugesHandler.ts`.
-- [ ] Response matches the frontend `IndicatorGaugesDto` field-for-field (5 sections +
+- [x] Response matches the frontend `IndicatorGaugesDto` field-for-field (5 sections +
       `generated_at`); verified by reading
       `apps/frontend/app/routes/dashboard.indicator-gauges.tsx` interfaces.
-- [ ] All 5 sources called in parallel via `Promise.allSettled`; one section failing/timing
+- [x] All 5 sources called in parallel via `Promise.allSettled`; one section failing/timing
       out does NOT fail the others; endpoint returns 200 with partial data.
-- [ ] `foreign_room` projects only `.market` scalars (no `tickers[]` array leak).
-- [ ] `liquidity` assigns an explicit `source_tier` (macro payload lacks one) and never blocks
-      on the remote fetch beyond its bounded deadline.
-- [ ] Honest-NULL preserved: every null section/scalar carries `null_reason` + `source_tier`;
+- [x] `foreign_room` projects only `.market` scalars (no `tickers[]` array leak).
+- [x] `liquidity` assigns an explicit `source_tier` (macro payload lacks one) and never blocks
+      on the remote fetch beyond its bounded deadline (deadlineMs: 15_000).
+- [x] Honest-NULL preserved: every null section/scalar carries `null_reason` + `source_tier`;
       zero fabricated / default-filled values.
-- [ ] `pnpm --filter vn-market check` (tsc) green.
+- [x] `pnpm --filter vn-market check` (tsc) green. (bun tsc --noEmit exit 0)
 - [ ] **Live verification (post-rebuild gate):** after ops rebuilds mcp-server, RAW-probe
       `GET http://localhost:3000/api/indicator-gauges` returns 200 with the DTO; cross-check
       each section against the corresponding live MCP tool output; load
@@ -236,6 +236,37 @@ Examples valid TODAY (2026-06-30 live state):
       available + honest-NULL where accruing (breadth gray today).
 - [ ] Coverage-map closes: `docs/data/frontend-data-coverage-map.json` 5 `indicator-gauges`
       rows flip `status: "GAP"` → `"OK"` with `asof` populated (post-live).
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/indicatorGaugesHandler.ts` [NEW — handler + types + 5 section builders + IndicatorGaugesDeps]
+  - `apps/mcp-server/src/interface/mcp/server.ts` [+import + dispatch block GET /api/indicator-gauges]
+  - `apps/mcp-server/src/__tests__/IND-P1-MCP-REST-GAUGES-ENDPOINT.test.ts` [NEW — 35 tests]
+  - `docs/architecture/microservice/mcp-server/testing.md` [REST Endpoint Handlers section added]
+- **Tests written:** `IND-P1-MCP-REST-GAUGES-ENDPOINT.test.ts` — 35 assertions, GREEN (96 expect() calls)
+- **Git commits:** 08a27cca feat(IND-P1-MCP-REST-GAUGES-ENDPOINT) | adc3eec0 chore(memory)
+- **Type check:** clean (bun tsc --noEmit exit 0)
+- **bun test (new file):** 35 pass / 0 fail
+- **bun test (full suite):** 14033 tests / exit 0 (known Bun JIT/C++ crash post-summary — NOT a code failure)
+- **Tool count:** 182 tools — unchanged (REST endpoint, not MCP tool)
+- **Scheduler count:** 3 cron.schedule entries — unchanged (no scheduler changes)
+- **Docs updated:** `docs/architecture/microservice/mcp-server/testing.md` — REST Endpoint Handlers section
+- **Graphify:** skipped (docs/architecture/ section was incremental table update, no graph topology change)
+- **Simplicity gate:** PASS — Q1 scope clean, Q2 section builders justified by codebase pattern + readability (same as macroRegimeHandler), Q3 senior-test clean, Q4 ratio <50% overhead
+
+**Design decisions:**
+- `IndicatorGaugesDeps`: all 5 source functions injectable — enables 35 tests with zero real HTTP or DB calls.
+- `foreign_room.tickers[]`: explicitly excluded; projection maps only `.market.market_saturation_pct` + `.market.foreign_outflow_z_5d` + top-level `.as_of_date`.
+- `liquidity.source_tier`: endpoint-assigned — 2 when `policy_rates.is_estimate=false` (live SBV), 3 when `is_estimate=true` (DB fallback). NEVER omitted.
+- `breadth`: returns `null` when `getBreadthThrust` returns `{error}` (NFR-BR-3 — history accruing).
+- `volatility.null_reason`: synthesized from `history_sessions` when `rv_20d_percentile` is null.
+
+**REBUILD REQUIRED:** ops must rebuild mcp-server before QA can live-verify the endpoint.
 
 ---
 
