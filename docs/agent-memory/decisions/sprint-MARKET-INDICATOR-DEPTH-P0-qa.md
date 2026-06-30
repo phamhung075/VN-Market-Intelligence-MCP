@@ -146,3 +146,19 @@
 - DoD decision (CRITICAL): upstream /api/indicator-gauges returns {"error":"Not found"} (mcp-server endpoint not yet deployed). Task zone=apps/frontend, scope is frontend-only. Proxy route comment says "when mcp-server endpoint is deployed." Coverage-map marks status="GAP" with fix="IND-P1-DEV-MCP-SERVER." Backend endpoint is separate task IND-P1-MCP-PROXY-INDICATORS (BACKLOG). Frontend task DoD is SATISFIED by honest-NULL rendering — no backend required.
 **why-decision:** APPROVED — all frontend gate criteria green; upstream not-deployed is expected, tracked as separate BACKLOG task; honest-NULL is the spec-compliant behavior.
 **why-change:** no change from plan.
+
+---
+
+### qa-S9 · qa · 2026-06-30T03:26:57Z
+**task-id:** IND-P1-ROC-MOMENTUM / IND-P1-RELATIVE-STRENGTH / IND-P1-52W-HIGH-PROXIMITY / IND-P1-FOREIGN-ACCUM-RANK / IND-P1-MCP-PROXY-INDICATORS
+**what-done:** QA gate for 5-task IND-P1 momentum suite — ALL APPROVED.
+**what-considered:**
+- Go tests (TA service): TestMomentumService_* (8 PASS), TestRSService_* (5 PASS), TestProximityService_* (8 PASS), full suite go test ./... PASS. HTTP handlers confirmed: router.go:50 (roc-momentum), :53 (relative-strength), :56 (52w-proximity).
+- Go tests (stock-price): TestForeignAccumService_* (7 PASS), full suite go test ./... PASS. Handler: router.go:48 (foreign-accum-rank).
+- MCP proxy: IND-P1-MCP-PROXY-INDICATORS.test.ts 22 pass / 0 fail (REG-1..4, NULL-1..10, ERR-1..6, FWRD-1..2). tsc 0 errors. mock-guard exit 0. DDD: interface→infrastructure only, no domain/application imports. No process.env in 4 tool files.
+- Honest-NULL: all 4 proxy tools use  spread (transparent passthrough) +  catch (never throws). null_reason, room_exhaustion null, pct_above_ma200 null, low_sample_warning:true all pass through unchanged.
+- AC6 follow-up: IND-P1-CONSUMER-WIRING-AUDIT (done_verified) covered P0 tools only. P1 tools not yet wired into consumer flows — TRACKED FOLLOW-UP GAP, not a DoD blocker per router instructions.
+- Tool-count SSOT: project-stats.json toolCount corrected 178→182 to match tool-registry.json totalCount=182 (both ground-truth sources). No service rebuild needed.
+- Cross-lane dup check: all 5 ids in unique lanes (0 duplicates).
+**why-decision:** APPROVED across all 5 tasks — code correct, tests green, DDD/security clean, honest-NULL discipline verified, Go endpoints registered, MCP proxy wired.
+**why-change:** no change from plan.

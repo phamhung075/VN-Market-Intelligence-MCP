@@ -281,8 +281,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-30T03:00:09.525Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-30T03:25:46Z",
+    "_updated_by": "po",
     "archive": [],
     "rows": [
       {
@@ -293,8 +293,9 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -304,8 +305,9 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:VCB:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -315,8 +317,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:BA-IND-P1-MOMENTUM-RS has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -326,8 +329,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-ROC-MOMENTUM has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -337,8 +341,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-RELATIVE-STRENGTH has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -348,8 +353,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-52W-HIGH-PROXIMITY has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -359,8 +365,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-FOREIGN-ACCUM-RANK has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -370,8 +377,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-MCP-PROXY-INDICATORS has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -381,8 +389,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=esc-datacov:FPT:Q1-2026:ESC-3",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -392,8 +401,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=esc-datacov:VCB:Q1-2026:ESC-3",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -403,8 +413,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:BA-IND-P1-MOMENTUM-RS",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -414,8 +425,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-ROC-MOMENTUM",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -425,8 +437,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-RELATIVE-STRENGTH",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -436,8 +449,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-52W-HIGH-PROXIMITY",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -447,8 +461,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-FOREIGN-ACCUM-RANK",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -458,8 +473,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-MCP-PROXY-INDICATORS",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -469,8 +485,9 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -480,8 +497,9 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:VCB:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -491,8 +509,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:BA-IND-P1-MOMENTUM-RS has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -502,8 +521,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-ROC-MOMENTUM has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -513,8 +533,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-RELATIVE-STRENGTH has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -524,8 +545,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-52W-HIGH-PROXIMITY has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -535,8 +557,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-FOREIGN-ACCUM-RANK has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -546,8 +569,9 @@
         "type": "system_issue",
         "summary": "held lock sprint-task:IND-P1-MCP-PROXY-INDICATORS has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -557,8 +581,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=esc-datacov:FPT:Q1-2026:ESC-3",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -568,8 +593,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=esc-datacov:VCB:Q1-2026:ESC-3",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -579,8 +605,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:BA-IND-P1-MOMENTUM-RS",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -590,8 +617,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-ROC-MOMENTUM",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -601,8 +629,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-RELATIVE-STRENGTH",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -612,8 +641,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-52W-HIGH-PROXIMITY",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -623,8 +653,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-FOREIGN-ACCUM-RANK",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606300300",
@@ -634,8 +665,9 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=BA-DEFERRED-SCHEDULER held=sprint-task:IND-P1-MCP-PROXY-INDICATORS",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
       },
       {
         "id": "sau-d4-202606240300",
@@ -1207,7 +1239,7 @@
         "triaged_by": "po"
       }
     ],
-    "last_triaged_at": "2026-06-28T03:12:22Z",
+    "last_triaged_at": "2026-06-30T03:25:46Z",
     "last_triaged_by": "po"
   },
   "sprint_goal": {
@@ -6094,10 +6126,14 @@
         "id": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
         "title": "system-auditor D4 divergence RECURRING (reports 3247, 3263, 3276): a held escalation lock (e.g. esc-datacov:FPT:Q1-2026:ESC-3) has NO matching orch-state .task_board row. Either D4 flags a genuinely orphaned/stale lock (escalation completed/abandoned but lock never released) or escalation locks are acquired without ever minting a board row. Distinct from FU-AUDITOR-D4-SIGNAL-ID (that=D4 signal-id collision at drain). This=the lock<->board CONSISTENCY gap D4 keeps reporting.",
         "type": "FIX",
-        "priority": "P3",
+        "priority": "P2",
         "status": "BACKLOG",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
+        "recurrence_note": "4th+ recurrence — sau-d4-202606300300 (2026-06-30T03:00Z, 16 distinct findings ×2 double-emit). Prior: reports 3247/3263/3276. PO RAW-verified 2026-06-30T03:25Z via task_list_held: all 32 rows false-positive.",
+        "scope_widened": "False-positive set is NOT only esc-datacov: it ALSO includes reservation/dispatch sprint-task locks held by a LIVE peer session (d3292ca4 MARKET-INDICATOR-DEPTH-P0 P1 wave: IND-P1-ROC-MOMENTUM/RELATIVE-STRENGTH/52W-HIGH/FOREIGN-ACCUM-RANK/MCP-PROXY + BA-IND-P1-MOMENTUM-RS). Correct fix = WHITELIST from held-lock-no-board-row: (a) long-TTL data-coverage guards (esc-datacov:*, 8d TTL); (b) sprint-task reservation/dispatch locks whose owner_client_session is LIVE and lock unexpired (a live-held unexpired lock is NOT orphaned).",
+        "class_b_folded": "2nd sub-fix, same root (D4 blind to cross-session multi-sprint concurrency): D4 ALSO false-flags 'orch-state/lock mismatch active=<head> held=<lock>' — it assumes head.active_task_id must equal EVERY held sprint-task lock. WRONG under N-sprint concurrency: head tracks ONE sprint (e.g. BA-DEFERRED-SCHEDULER) while a live peer legitimately holds OTHER sprints' locks. Fix: do NOT emit active≠held when the held lock belongs to a live concurrent session.",
+        "next_agent": "agent-father"
       },
       {
         "id": "FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL",
@@ -7548,23 +7584,6 @@
         "created_by": "po"
       },
       {
-        "id": "IND-P1-MCP-PROXY-INDICATORS",
-        "tier": "P1",
-        "title": "MCP Proxy Layer — Register 4 indicator tools",
-        "owner": "dev-mcp-server",
-        "zone": "apps/mcp-server",
-        "priority": "medium",
-        "status": "REVIEW",
-        "plan_only": false,
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_by": "pm",
-        "created_at": "2026-06-30T03:00:00Z",
-        "next_agent": "qa",
-        "specced_under": "BA-IND-P1-MOMENTUM-RS",
-        "handoff": "docs/handoffs/IND-P1-MCP-PROXY-INDICATORS.md"
-      },
-      {
         "id": "IND-P1-MCP-REST-GAUGES-ENDPOINT",
         "tier": "P1",
         "title": "MCP REST Gauges Endpoint — GET /api/indicator-gauges aggregating 5 P0 indicator tools into the frontend IndicatorGaugesDto (honest-NULL per section)",
@@ -7856,6 +7875,111 @@
       }
     ],
     "done": [
+      {
+        "id": "IND-P1-ROC-MOMENTUM",
+        "tier": "P1",
+        "title": "Multi-Horizon ROC Momentum Factor (12-1) † — Jegadeesh-Titman skip-month, z/decile, factor-return series",
+        "owner": "dev-technical-analysis",
+        "zone": "apps/technical-analysis",
+        "priority": "medium",
+        "status": "DONE",
+        "plan_only": false,
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
+        "created_at": "2026-06-29T20:18:44Z",
+        "next_agent": "qa",
+        "specced_under": "BA-IND-P1-MOMENTUM-RS",
+        "activated_by_pm_at": "2026-06-30T03:00:00Z",
+        "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md",
+        "qa_verdict": "APPROVED",
+        "qa_note": "Go domain tests ALL PASS (TestMomentumService_* suite: 8 tests). Full TA suite go test ./... PASS. Honest-NULL: null_reason per-ticker, momentum_factor_z null → transparent. HTTP handler registered router.go:50. DDD PASS (pkg/domain pure, no infra leakage). Source tier 3.",
+        "done_at": "2026-06-30T03:26:10Z"
+      },
+      {
+        "id": "IND-P1-RELATIVE-STRENGTH",
+        "tier": "P1",
+        "title": "Cross-Sectional Relative-Strength Rank † — RSC percentile (63/126/252d) + Mansfield RS",
+        "owner": "dev-technical-analysis",
+        "zone": "apps/technical-analysis",
+        "priority": "medium",
+        "status": "DONE",
+        "plan_only": false,
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
+        "created_at": "2026-06-29T20:18:44Z",
+        "next_agent": "qa",
+        "specced_under": "BA-IND-P1-MOMENTUM-RS",
+        "activated_by_pm_at": "2026-06-30T03:00:00Z",
+        "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md",
+        "qa_verdict": "APPROVED",
+        "qa_note": "Go domain tests ALL PASS (TestRSService_* suite: 5 tests). Full TA suite PASS. Honest-NULL: market_rs_composite null when N<5 + low_sample_warning:true transparent. HTTP handler registered router.go:53. DDD PASS.",
+        "done_at": "2026-06-30T03:26:10Z"
+      },
+      {
+        "id": "IND-P1-52W-HIGH-PROXIMITY",
+        "tier": "P1",
+        "title": "52-Week-High Proximity + Net-New-Highs † — %-from-52w-high/low, %>MA50/MA200",
+        "owner": "dev-technical-analysis",
+        "zone": "apps/technical-analysis",
+        "priority": "medium",
+        "status": "DONE",
+        "plan_only": false,
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
+        "created_at": "2026-06-29T20:18:44Z",
+        "next_agent": "qa",
+        "specced_under": "BA-IND-P1-MOMENTUM-RS",
+        "activated_by_pm_at": "2026-06-30T03:00:00Z",
+        "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md",
+        "qa_verdict": "APPROVED",
+        "qa_note": "Go domain tests ALL PASS (TestProximityService_* suite: 8 tests). Full TA suite PASS. Honest-NULL: pct_above_ma200 null when denominator_ma200=0 transparent. HTTP handler registered router.go:56. DDD PASS.",
+        "done_at": "2026-06-30T03:26:10Z"
+      },
+      {
+        "id": "IND-P1-MCP-PROXY-INDICATORS",
+        "tier": "P1",
+        "title": "MCP Proxy Layer — Register 4 indicator tools",
+        "owner": "dev-mcp-server",
+        "zone": "apps/mcp-server",
+        "priority": "medium",
+        "status": "DONE",
+        "plan_only": false,
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
+        "created_by": "pm",
+        "created_at": "2026-06-30T03:00:00Z",
+        "next_agent": "qa",
+        "specced_under": "BA-IND-P1-MOMENTUM-RS",
+        "handoff": "docs/handoffs/IND-P1-MCP-PROXY-INDICATORS.md",
+        "router_lane_reconciled_at": "2026-06-30T02:58:00Z",
+        "router_lane_reconcile_note": "router moved backlog->review to match status=REVIEW + next=qa and align with sibling IND-P1 momentum tasks; mcp-server rebuild dispatched; awaiting QA gateway verification of all 4 tools",
+        "qa_verdict": "APPROVED",
+        "qa_note": "22 pass / 0 fail (REG-1..4, NULL-1..10, ERR-1..6, FWRD-1..2). tsc 0 errors. DDD PASS: interface/mcp/tools → infrastructure/microservices/clients.ts only. mock-guard PASS (exit 0). No process.env. Honest-NULL: ...result spread + {error} catch on all 4 tools. source_tier:3+fetched_at injected. AC6: TRACKED FOLLOW-UP GAP — P1 tools not yet in consumer flows (IND-P1-CONSUMER-WIRING-AUDIT covered P0 only); not a DoD blocker per router instructions.",
+        "done_at": "2026-06-30T03:26:10Z"
+      },
+      {
+        "id": "IND-P1-FOREIGN-ACCUM-RANK",
+        "tier": "P1",
+        "title": "Foreign-Accumulation Momentum Rank — ADTV-normalized 5/20d foreign net-flow z-rank + room_exhaustion",
+        "owner": "dev-stock-price",
+        "zone": "apps/stock-price",
+        "priority": "medium",
+        "status": "DONE",
+        "plan_only": false,
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
+        "created_at": "2026-06-29T20:18:44Z",
+        "next_agent": "qa",
+        "specced_under": "BA-IND-P1-MOMENTUM-RS",
+        "activated_by_pm_at": "2026-06-30T03:00:00Z",
+        "handoff": "docs/handoffs/IND-P1-FOREIGN-ACCUM-SUITE.md",
+        "impl_done_at": "2026-06-30T04:30:00Z",
+        "impl_done_by": "dev-stock-price",
+        "impl_note": "Tool POST /price/foreign-accum-rank implemented per FR-1 through FR-13. LIVE daily_ohlcv columns confirmed: foreign_buy_vol, foreign_sell_vol, foreign_net_vol, volume. Honest-NULL with null_reason emitted for: insufficient_flow_history (<5 bars), insufficient_20d_history (5-19 bars), zero_adtv, insufficient_cross_section (<3 tickers), room_event_not_found. Service rebuild needed before QA can live-verify.",
+        "qa_verdict": "APPROVED",
+        "qa_note": "Go domain tests ALL PASS (TestForeignAccumService_* suite: 7 tests). Full stock-price suite go test ./... PASS. Honest-NULL: foreign_accum_z_market null, room_exhaustion null per-ticker — transparent. HTTP handler registered router.go:48. DDD PASS. Endpoint: POST /price/foreign-accum-rank.",
+        "done_at": "2026-06-30T03:26:10Z"
+      },
       {
         "closed_at": "2026-06-05T11:16:27Z",
         "created_at": "unknown",
@@ -8873,81 +8997,9 @@
         "updated_by": "qa",
         "updated_at": "2026-06-29T16:46:36Z",
         "next_agent": "qa"
-      },
-      {
-        "id": "IND-P1-ROC-MOMENTUM",
-        "tier": "P1",
-        "title": "Multi-Horizon ROC Momentum Factor (12-1) † — Jegadeesh-Titman skip-month, z/decile, factor-return series",
-        "owner": "dev-technical-analysis",
-        "zone": "apps/technical-analysis",
-        "priority": "medium",
-        "status": "REVIEW",
-        "plan_only": false,
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_at": "2026-06-29T20:18:44Z",
-        "next_agent": "qa",
-        "specced_under": "BA-IND-P1-MOMENTUM-RS",
-        "activated_by_pm_at": "2026-06-30T03:00:00Z",
-        "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md"
-      },
-      {
-        "id": "IND-P1-RELATIVE-STRENGTH",
-        "tier": "P1",
-        "title": "Cross-Sectional Relative-Strength Rank † — RSC percentile (63/126/252d) + Mansfield RS",
-        "owner": "dev-technical-analysis",
-        "zone": "apps/technical-analysis",
-        "priority": "medium",
-        "status": "REVIEW",
-        "plan_only": false,
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_at": "2026-06-29T20:18:44Z",
-        "next_agent": "qa",
-        "specced_under": "BA-IND-P1-MOMENTUM-RS",
-        "activated_by_pm_at": "2026-06-30T03:00:00Z",
-        "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md"
-      },
-      {
-        "id": "IND-P1-52W-HIGH-PROXIMITY",
-        "tier": "P1",
-        "title": "52-Week-High Proximity + Net-New-Highs † — %-from-52w-high/low, %>MA50/MA200",
-        "owner": "dev-technical-analysis",
-        "zone": "apps/technical-analysis",
-        "priority": "medium",
-        "status": "REVIEW",
-        "plan_only": false,
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_at": "2026-06-29T20:18:44Z",
-        "next_agent": "qa",
-        "specced_under": "BA-IND-P1-MOMENTUM-RS",
-        "activated_by_pm_at": "2026-06-30T03:00:00Z",
-        "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md"
       }
     ],
-    "qa": [
-      {
-        "id": "IND-P1-FOREIGN-ACCUM-RANK",
-        "tier": "P1",
-        "title": "Foreign-Accumulation Momentum Rank — ADTV-normalized 5/20d foreign net-flow z-rank + room_exhaustion",
-        "owner": "dev-stock-price",
-        "zone": "apps/stock-price",
-        "priority": "medium",
-        "status": "QA",
-        "plan_only": false,
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_at": "2026-06-29T20:18:44Z",
-        "next_agent": "qa",
-        "specced_under": "BA-IND-P1-MOMENTUM-RS",
-        "activated_by_pm_at": "2026-06-30T03:00:00Z",
-        "handoff": "docs/handoffs/IND-P1-FOREIGN-ACCUM-SUITE.md",
-        "impl_done_at": "2026-06-30T04:30:00Z",
-        "impl_done_by": "dev-stock-price",
-        "impl_note": "Tool POST /price/foreign-accum-rank implemented per FR-1 through FR-13. LIVE daily_ohlcv columns confirmed: foreign_buy_vol, foreign_sell_vol, foreign_net_vol, volume. Honest-NULL with null_reason emitted for: insufficient_flow_history (<5 bars), insufficient_20d_history (5-19 bars), zero_adtv, insufficient_cross_section (<3 tickers), room_event_not_found. Service rebuild needed before QA can live-verify."
-      }
-    ],
+    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
@@ -8974,6 +9026,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T02:50:00Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-06-30T02:58:00Z",
+  "_updated_by": "router:lane-reconcile:IND-P1-MCP-PROXY-INDICATORS"
 }
