@@ -245,10 +245,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "CONTAM-10-EXEC",
-    "next_agent": "ops",
-    "updated_at": "2026-06-30T21:27:28Z",
+    "next_agent": "po",
+    "updated_at": "2026-06-30T21:35:48Z",
     "updated_by": "dev-team",
-    "note": "WRITER CLOSED (review->done): code ec8b409c qa-APPROVED (a5e69aa2 read-only, no self-commit) + dev-team RAW-verified (6/6 design-contract, normalizeOhlcvToVnd unchanged, mcp-server healthy 18min no in-flight rebuild). DISPATCHED CONTAM-10-EXEC (ops): DRY-RUN on live DB + BASELINE serving probe -> RETURN count+baseline; --live HUMAN/PO-gated. CONTAM-10-SANITY HELD ready -- serialize behind EXEC (EXEC serving probe needs STABLE mcp-server; SANITY rebuilds it = conflict). Dispatch SANITY only after EXEC returns. dev code WIP=0 (EXEC=ops not a code slot). MIGRATION done. Push gated (PO/human)."
+    "note": "EXEC DRY-RUN complete + dev-team RAW-verified (7897 candidates real, NO mutation, anchors match exactly). --live HUMAN/PO-gated -> DISPATCHED po for go/no-go (backup + off-hours window + exec mechanism + ~9869-row residual); po is DECISION-ONLY, must NOT edit orch-state (dispatcher owns board). DISPATCHED CONTAM-10-SANITY (dev-mcp-server) in parallel -- Pass 4 anchor-divergence scan; single-svc mcp-server rebuild. SANITY is SOLE orch-writer (po decision-only -> no orch-write race). MIGRATION+WRITER done. dev code WIP=1 (SANITY). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10216,14 +10216,14 @@
         "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
         "priority": "high",
         "owner_agent": "ops",
-        "next_agent": "ops",
+        "next_agent": "po",
         "depends": [
           "CONTAM-10-MIGRATION"
         ],
         "detail_ref": null,
         "created_at": "2026-06-30T20:44:03Z",
         "created_by": "pm",
-        "updated_at": "2026-06-30T21:27:28Z",
+        "updated_at": "2026-06-30T21:35:48Z",
         "updated_by": "dev-team",
         "note": "DISPATCHED ops: DRY-RUN (NO --live) of repair migration on live named-volume DB via docker exec mcp-server + BASELINE serving probe (get_relative_strength/get_roc_momentum/get_52w_proximity for FPT/DHG/VHM/VIC) -> RETURN candidate-row count + baseline values. --live mutation is HUMAN/PO-gated (readline confirm) -- ops RETURNs, does NOT auto-fire. SANITY held: mcp-server must stay stable during EXEC probe.",
         "promoted_at": null,
@@ -10233,14 +10233,14 @@
         "cascade": "developer (code implementation)",
         "dispatched_at": "2026-06-30T21:27:28Z",
         "dispatched_by": "dev-team",
-        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
-      }
-    ],
-    "ready": [
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "dryrun_result": "DRY-RUN complete (no --live): 7897 candidate rows across 52 tickers. dev-team RAW-verified via own read-only DB probe (NOT agent badge): 17766 close<1000 non-index rows STILL PRESENT = dry-run did NOT mutate; per-ticker counts+anchors match ops EXACTLY (FPT 414/anchor 70200, DHG 619/93200, VHM 150/146000, VIC 241/214000, ACV 206/44000); index tickers excluded (48 index sub-1000 rows untouched). Baseline serving captured (RS/ROC/52w distorted by contamination, computed-on-read -> self-heal post-repair). Residual: 17766 total sub-1000 non-index vs 7897 anchored candidates -> ~9869 unanchored rows (legit-cheap or no-recent-anchor) conservatively SKIPPED this pass.",
+        "next_step": "--live mutation is HUMAN/PO-gated (readline confirm). Dispatched po for go/no-go: weigh (a) DB backup before destructive 7897-row UPDATE, (b) correct off-hours window per RF-3 (avoid VN market 02:00-08:00 UTC live writes), (c) execution mechanism (script needs literal 'yes'), (d) residual ~9869 unanchored rows. ops did NOT auto-fire."
+      },
       {
         "id": "CONTAM-10-SANITY",
         "title": "Sanity job Pass 4 extension (anchor divergence scan) in ohlcvSanityCheckJob.ts",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "type": "TASK-C",
         "zone": "apps/mcp-server/src/scheduler/",
         "size": "M",
@@ -10252,19 +10252,20 @@
         "detail_ref": null,
         "created_at": "2026-06-30T20:44:03Z",
         "created_by": "pm",
-        "updated_at": "2026-06-30T20:44:03Z",
-        "updated_by": "pm",
-        "note": "Code task; parallel safe (disjoint files)",
+        "updated_at": "2026-06-30T21:35:48Z",
+        "updated_by": "dev-team",
+        "note": "DISPATCHED dev-mcp-server (mcp-server now STABLE -- EXEC probe done, no in-flight rebuild). Add Pass 4 anchor-divergence scan to ohlcvSanityCheckJob.ts: flag rows where per-ticker recent clean anchor (close>=1000) is >=100x a same-ticker close<1000 bar (whole-row thousands contamination) that CONTAM-6 predicate is structurally blind to. INDEX tickers excluded. Single-svc mcp-server rebuild. dev -> qa.",
         "promoted_at": null,
         "promoted_by": null,
         "raw_evidence": null,
         "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
         "cascade": "developer (code implementation)",
-        "dispatched_at": null,
-        "dispatched_by": null,
+        "dispatched_at": "2026-06-30T21:35:48Z",
+        "dispatched_by": "dev-team",
         "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
