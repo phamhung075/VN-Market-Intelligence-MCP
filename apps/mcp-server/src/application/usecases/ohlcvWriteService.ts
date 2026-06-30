@@ -12,8 +12,10 @@
  * Pipeline (per-row, in order):
  *   1. FR-S1 seed-bar rejection  — skip rows where date >= vnToday AND volume=0 AND O=H=L=C
  *   2. normalizeOhlcvToVnd       — ×1000 when max(OHLC) < STOCK_MIN_VND (100)
- *   3. detectAndNormalizeScaleFromPrevClose — ×1000 when ratio vs DB prevClose >= 50
- *      prevClose sourced from ONE batched JOIN query (no N+1) — see fetchPrevCloseMap()
+ *   3. detectAndNormalizeScaleFromPrevClose — ×1000 when ratio vs effectivePrevClose >= 50
+ *      effectivePrevClose = cleanRef (full-history close>=1000) when prevClose is itself
+ *      contaminated (< CLEAN_CLOSE_FLOOR); otherwise = prevClose. Both sourced via ONE
+ *      batched JOIN query each — no N+1. See fetchPrevCloseMap() + fetchCleanReferenceCloseMap().
  *   4. validateOhlcvUnit         — fail-closed: reject + log BUG on out-of-range
  *   5. SQL upsert                — conflict clause selected by conflictStrategy
  *
@@ -249,6 +251,61 @@ function fetchPrevCloseMap(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Batched cleanRef query — CONTAM-10-WRITER (C.1 writer guard)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Minimum close (in full VND) that unambiguously identifies a clean, non-contaminated
+ * price row. Any close >= 1000 VND cannot be a thousands-scale leak (which would be
+ * < 1000 for stocks priced below 1,000,000 VND — i.e. all Vietnamese equities).
+ *
+ * DDD layer note: this constant lives in application/usecases because it supports the
+ * application-layer writer guard logic. The domain function normalizeOhlcvToVnd uses
+ * STOCK_MIN_VND (100) for a different purpose and remains unchanged.
+ */
+const CLEAN_CLOSE_FLOOR = 1000;
+
+/**
+ * Fetches the most recent CLEAN close per code — defined as close >= CLEAN_CLOSE_FLOOR
+ * (1000 VND) and volume > 0, searching the FULL history (no date cutoff).
+ *
+ * Used as a supplemental scale anchor when the standard prevClose from
+ * fetchPrevCloseMap is < CLEAN_CLOSE_FLOOR (possibly itself contaminated due to
+ * whole-series contamination where every historical row is at thousands scale).
+ *
+ * Returns Map<code, cleanRefClose>. Codes with no clean close (all-history close < 1000,
+ * i.e. legitimately cheap stocks) are absent from the map — caller gets 0.
+ *
+ * Single batched query — NO N+1.
+ *
+ * DDD layer: application/usecases (infrastructure access allowed here).
+ */
+function fetchCleanReferenceCloseMap(db: Database, codes: string[]): Map<string, number> {
+  if (codes.length === 0) return new Map();
+
+  const placeholders = codes.map(() => "?").join(",");
+  const sql = `
+    SELECT d.code, d.close
+    FROM daily_ohlcv d
+    INNER JOIN (
+      SELECT code, MAX(date) AS max_date
+      FROM daily_ohlcv
+      WHERE code IN (${placeholders})
+        AND close >= ${CLEAN_CLOSE_FLOOR}
+        AND volume > 0
+      GROUP BY code
+    ) latest ON d.code = latest.code AND d.date = latest.max_date
+  `;
+
+  const rows = db.prepare(sql).all(...codes) as Array<{
+    code: string;
+    close: number;
+  }>;
+
+  return new Map(rows.map((r) => [r.code, r.close]));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main export
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -283,10 +340,15 @@ export async function writeOhlcvBatch(
   // ── Stage 0: Collect unique codes for the batched prevClose fetch ──────────
   const uniqueCodes = [...new Set(rows.map((r) => r.code))];
 
-  // ── Stage 1 (batched): Fetch prevClose from DB — ONE query for all codes ───
+  // ── Stage 1 (batched): Fetch prevClose + cleanRef from DB — ONE query each ─
+  // prevClose: most recent real close strictly before vnToday (standard day-over-day anchor).
+  // cleanRef:  most recent full-history close >= CLEAN_CLOSE_FLOOR (1000 VND) AND volume > 0.
+  //            Used as fallback when prevClose is itself contaminated (whole-series case).
   // Architect §2.2: INNER JOIN on MAX(date) prior to vnToday with volume > 0.
   // Codes absent from the map had no prior real close → treated as 0 (no-op in guard).
   const prevCloseMap = fetchPrevCloseMap(db, uniqueCodes, vnToday);
+  // CONTAM-10-WRITER (C.1): supplemental clean-reference for contaminated-prevClose bootstrap gap.
+  const cleanRefMap  = fetchCleanReferenceCloseMap(db, uniqueCodes);
 
   // ── Stage 2: Prepare the upsert statement ─────────────────────────────────
   const upsertStmt = db.prepare(upsertSql);
@@ -361,7 +423,16 @@ export async function writeOhlcvBatch(
       // prevClose sourced from batched DB query (no N+1); 0 when no prior real row
       // (in which case both directions are skipped — only normalizeOhlcvToVnd applies).
       const prevClose = prevCloseMap.get(row.code) ?? 0;
-      const scaleResult = detectAndNormalizeScaleFromPrevClose(type, ohlcv, prevClose);
+      const cleanRef  = cleanRefMap.get(row.code)  ?? 0;
+      // CONTAM-10-WRITER (C.1): if the standard prevClose is itself contaminated
+      // (whole-series contamination → prevClose < CLEAN_CLOSE_FLOOR), substitute
+      // the clean historical reference so detectAndNormalizeScaleFromPrevClose
+      // can correctly detect the ÷1000 ratio and apply the ×1000 correction.
+      // For legitimately cheap stocks cleanRef is 0 → effectivePrevClose = prevClose (no change).
+      // Post-repair: prevClose >= CLEAN_CLOSE_FLOOR → effectivePrevClose = prevClose (no change).
+      const effectivePrevClose =
+        (prevClose < CLEAN_CLOSE_FLOOR && cleanRef >= CLEAN_CLOSE_FLOOR) ? cleanRef : prevClose;
+      const scaleResult = detectAndNormalizeScaleFromPrevClose(type, ohlcv, effectivePrevClose);
 
       if (scaleResult.rejected) {
         // ×N direction — implausible magnitude: reject bar, leave honest gap
