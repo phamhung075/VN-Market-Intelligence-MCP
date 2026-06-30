@@ -6,6 +6,19 @@
 
 ---
 
+### STEP ba-S2 · ba · 2026-06-30T04:37Z
+**task-id:** BA-IND-P1-MOMENTUM-FRONTEND
+**what-done:** Wrote FR/NFR spec for 2-zone delivery: Zone A = mcp-server REST aggregator GET /api/momentum-indicators (FR-A1..A8); Zone B = frontend proxy + 4 dashboard cards + TopNav + tests (FR-B1..B6). 4 ARCH-RATIFY items (non-blocking). 0 PO blockers.
+**what-considered:**
+- (A) Unified spec with no zone split → rejected (ZONE=MULTI directive requires explicit boundary for architect SPLIT)
+- (B) Pre-mint coverage-map LIVE rows now → rejected (PO Decision 3 AC-4 explicitly forbids; GAP rows are the AC, LIVE flip at QA gate)
+- (C) GaugeCard reuse vs inline → flagged ARCH-RATIFY-M1 (non-blocking); BA recommends shared component Option B
+- (D) source_tier for TA/stock-price responses: no field in client types → assigned 3 (compute), flagged ARCH-RATIFY-M3
+**why-decision:** Zone-explicit structure mirrors BA-IND-P1-MOMENTUM-RS precedent and PO Decision 3 wording; architect SPLITs into per-zone briefs. All 4 clients.ts functions confirmed (lines 299/352/414/467); no schema change needed.
+**why-change:** No change from PO Decision 3 plan — 2 deliverables, clients.ts data layer only, Promise.allSettled, HTTP 200 always, honest-NULL passthrough.
+
+---
+
 ### STEP ba-S1 · ba · 2026-06-29T20:23:00Z
 **task-id:** BA-INDICATOR-DEPTH-P0
 **what-done:** Produced full requirement spec for MARKET-INDICATOR-DEPTH-P0 — 7 deliverables (Sprint-0 backfill + 5 P0 indicators + breadth), 5 PO blockers, gauge-readiness contract, DDD layer mapping. Written to docs/handoffs/BA-MARKET-INDICATOR-DEPTH-P0.md.

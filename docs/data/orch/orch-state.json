@@ -247,7 +247,7 @@
     "updated_at": "2026-06-30T05:07:02Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-IND-P1-MOMENTUM-FRONTEND",
-    "next_agent": "ba",
+    "next_agent": "architect",
     "note": "SPRINT-M planning dispatched to ba — momentum-indicators REST aggregator (mcp-server) + dashboard.momentum cards (frontend); user-prioritized 2026-06-30; zone=multi → ba→architect(SPLIT)→pm→dev"
   },
   "narrative": {
