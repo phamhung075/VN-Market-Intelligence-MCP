@@ -132,3 +132,12 @@
 - Zweig 14-session window: matches the Zweig Breadth Thrust definition (10 consecutive sessions within a 14-session lookback window).
 
 **why-change:** STALE-HANDOFF deviation: TA paths stale/out-of-zone; math self-contained in mcp-server. All other specs followed exactly. NFR-BR-1 synthetic guard: skip when total=0 AND ceiling=0 AND floor=0. NFR-BR-3: {error:'no breadth history...'} on empty table. toolCount 176→178 regenerated via gen-tool-registry.ts + gen-project-stats.ts (never baked).
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-30T06:00:00Z
+**task-id:** IND-P1-MCP-REST-GAUGES-ENDPOINT
+**what-done:** Built GET /api/indicator-gauges REST endpoint in indicatorGaugesHandler.ts + registered in server.ts + 35-test suite passing.
+**what-considered:**
+- Option A: Injectable deps (IndicatorGaugesDeps) for all 5 source functions — enables test isolation without real DB or HTTP calls.
+- Option B: Stub/mock at the Bun runtime globalThis.fetch level (used for some MCP tool tests).
+**why-decision:** Option A chosen — macroRegimeHandler pattern uses optional baseUrl param; extending that idiom to full function injection gives cleaner isolation for the 4 DB sources (sentiment, breadth, foreignRoom, breadth) and the macroFetch source. Section builders are pure functions; test fixtures are explicit and readable.
+**why-change:** No plan deviation. foreign_room tickers[] exclusion + honest-NULL per section + source_tier endpoint-assigned for liquidity all implemented per spec. toolCount unchanged at 182 (REST endpoint, not MCP tool).
