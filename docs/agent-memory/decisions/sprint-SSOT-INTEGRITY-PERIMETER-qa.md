@@ -40,3 +40,57 @@
 - Full suite: Bun 1.3.13 C++ crash after 13633 tests (known env issue — not a code failure); target suite 103/103 clean.
 **why-decision:** tokenizer source-verified correct (readString() \" handling, per-object seen=new Set()); all 5 mappers present and exercised; all exit-code paths covered; AC 29/29 prove QA-1..QA-4; zone co-location justified by shared schema dependency and DoD gate alignment.
 **why-change:** No change from plan.
+
+---
+
+### STEP qa-S4 · qa · 2026-06-30T00:00:00Z
+**task-id:** SSOT-W1-HOOK-ENFORCE
+**session:** e71c7736-a95a-4040-b741-1d48454354f6
+**commit-gated:** e605aa05
+**verdict:** APPROVED
+
+**what-done:**
+Re-ran `bun test scripts/agents-flow/orch-state-hook.test.mjs` independently. Read prewrite.mjs source, all 18 test assertions, and `git show e605aa05` diff. Manually invoked the hook in all 4 critical paths (PARKED block, BACKLOG pass, validator-missing fail-open, bun-spawn-fail fail-open). Reviewed the bash backstop script.
+
+**test-run-stdout:**
+```
+bun test v1.3.13 (bf2e2cec)
+
+ 18 pass
+ 0 fail
+ 37 expect() calls
+Ran 18 tests across 2 files. [1497.00ms]
+```
+
+**AC-1 QA-5 (PARKED write blocked):**
+- Tests at lines 90-124 assert: exit code 2, stdout is `{"decision":"block","reason":"..."}`, reason contains "PARKED" + "BLOCKED", reason contains `BACKLOG|TODO|IN_PROGRESS` enum list. CONFIRMED.
+- Manually verified: `echo '...PARKED...' | bun orch-state-hook-prewrite.mjs` → `{"decision":"block","reason":"[orch-state-hook] BLOCKED: schema validation failed (exit 2): ..."}` + exit 2. CONFIRMED.
+- DISK-CONTENT GAP (non-blocking observation): The test does not read `orch-state.json` post-hook to assert "PARKED" is absent. This is architecturally impractical in a hook unit test — the hook never writes the proposed content to the target file; it only validates. The target file would be unchanged regardless of block/allow decision in this test context. The meaningful protection proof IS the exit-2 + block-JSON assertion, which Claude Code's hook protocol interprets as a hard block before any Write reaches disk. Disk-content check is vacuous at unit level; the criterion is met by the hook's contract.
+
+**AC-2 WEDGE-GUARD fail-open (the critical safety fix):**
+- Git diff confirms: validator-missing path changed from `block(...)` hard-block to `process.stderr.write(WARN) + process.exit(0)`. Single-line diff, unambiguous.
+- `ORCH_HOOK_VALIDATOR` and `ORCH_HOOK_BUN_BIN` env overrides added to prewrite.mjs for deterministic test coverage — both default to production values when absent.
+- WEDGE-GUARD tests (lines 287-360) pass env overrides via `spawnSync({ env: {...process.env, ...extraEnv} })` — these genuinely simulate infra failure (the nonexistent paths don't exist on disk; `existsSync` returns false / spawn throws ENOENT).
+- Test 1 (validator-missing × valid): exit 0, empty stdout, stderr contains 'WARN'. CONFIRMED.
+- Test 2 (validator-missing × PARKED): exit 0, empty stdout — invalid content still allowed through when validator absent. CONFIRMED.
+- Test 3 (bun-spawn-fail × PARKED): exit 0, empty stdout. CONFIRMED. (Minor: stderr warning is not explicitly asserted in this test — acceptable, stderr is optional surfacing not a blocking criterion.)
+- Test 4 (production regression gate): valid write with real validator → exit 0. CONFIRMED.
+- Manually verified: `ORCH_HOOK_VALIDATOR=/nonexistent ... | bun hook` → WARN to stderr, exit 0; `ORCH_HOOK_BUN_BIN=/nonexistent/bun ... | bun hook` → spawn error to stderr, exit 0. CONFIRMED.
+
+**AC-3 Block still works with real validator:**
+- QA-5 tests run WITHOUT any env overrides — they use the production validator path (`scripts/orch-validate.mjs`, confirmed to exist). Both PARKED and FOLDED writes are blocked (exit 2). Fail-open did NOT neuter blocking. CONFIRMED.
+
+**AC-4 Valid write + non-orch passthrough:**
+- AC-2 valid BACKLOG write → exit 0, empty stdout. CONFIRMED.
+- AC-4 (stdin parse error / empty stdin / null tool_name) → all exit 0. CONFIRMED.
+- AC-6 (non-orch Write/Edit: TypeScript file, markdown file) → exit 0, empty stdout. CONFIRMED.
+- AC-3 Bash backstop tests → always exits 0. CONFIRMED.
+
+**what-considered:**
+- Whether the env var overrides are a test-only seam that could be gamed in production: the overrides default to production values (`?? resolve(...)`) and require explicit env injection; they cannot be triggered by an agent's normal tool call. Acceptable.
+- Whether the `ORCH_HOOK_BUN_BIN` spawn-fail path correctly reaches `result.error` (not `result.status !== 0`): spawnSync with a nonexistent binary populates `result.error` with ENOENT — confirmed by manual test output.
+- Whether test file exercises real validator output format (BACKLOG|TODO|IN_PROGRESS in reason): confirmed by reading `orch-validate.mjs` line 59 and test line 123.
+- Bash backstop: read source — always exits 0 (non-blocking per design), PostToolUse. Correctly outside the PreToolUse blocking chain.
+
+**why-decision:** All 4 acceptance criteria verified. The wedge-guard critical safety property is correctly implemented and the tests genuinely exercise infra failure via env overrides. The one absent assertion (disk content check) is architecturally non-testable at hook unit level and the protection contract is met by the hook's exit-code/stdout protocol. 18/18 pass, 37 expect() calls, 0 regressions.
+**why-change:** No change from plan.
