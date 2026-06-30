@@ -1,6 +1,35 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-30 | **Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Last updated:** 2026-06-30 | **Sprint:** BA-IND-P1-MOMENTUM-FRONTEND
+
+---
+
+## Session: 2026-06-30 (TASK-502-MOMENTUM-FRONTEND — 4 P1 momentum gauge cards)
+
+**TASK-502-MOMENTUM-FRONTEND DONE — GaugeCard extracted, 4 momentum cards wired, nav added, honest-NULL enforced**
+
+Zone health: 81 test files; 1967 pass / 2 fail (pre-existing QUE-TOOLTIP); tsc 0 errors; Playwright 3/3 GREEN | HEALTHY
+
+Task: surface 4 P1 momentum scalars on `/dashboard/momentum`:
+  momentum_factor_z (ROC), market_rs_composite (RS), net_new_highs (52W), foreign_accum_z_market (FA).
+
+Files created:
+- `components/GaugeCard.tsx` — extracted from dashboard.indicator-gauges (AC-M1); adds expandContent prop
+- `routes/api.momentum-indicators.tsx` — transparent proxy (proxyUpstream pattern)
+- `routes/dashboard.momentum.tsx` — loader + 4 GaugeCards; parseMomentumIndicatorsDto; formatRSComposite; honest-NULL; InfoCardExpand dropdowns
+- `__tests__/ind-p1-momentum-cards.test.ts` — 10 suites, 49 cases GREEN
+- `__tests__/ind-p1-momentum-nav.test.tsx` — 7 suites, nav count + position
+
+Files updated:
+- `routes/dashboard.indicator-gauges.tsx` — inline GaugeCard removed; import from ~/components/GaugeCard
+- `components/TopNav.tsx` — 'Động Lực P1' at ANALYST_NAV[26] (26→27, 33→34 NAV_ITEMS)
+- `__tests__/FE-HEADER-SSOT-top-nav.test.tsx` — SSOT counts bumped 26→27, 33→34
+- `__tests__/ind-p1-indicator-gauges-nav.test.tsx` — count + position guards updated
+- `__tests__/task17-page19-news-buzz-nav.test.tsx` — count + position guards updated
+- `docs/data/frontend-data-coverage-map.json` — +4 GAP rows for /dashboard/momentum
+
+Commits: `8828a68e` (AC-M1 atomic extract), `24de1fe5` (feature)
+Pre-existing QUE-TOOLTIP failures (2) — unrelated to TASK-502; tracking from prior sessions.
 
 ---
 

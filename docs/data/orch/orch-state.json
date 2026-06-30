@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-30T05:15:07Z",
+    "updated_at": "2026-06-30T06:01:17Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-IND-P1-MOMENTUM-FRONTEND",
-    "next_agent": "dev",
-    "note": "architect dispatched — brownfield analysis + technical design + zone SPLIT (Zone A apps/mcp-server REST aggregator, Zone B apps/frontend cards); 4 ARCH-RATIFY items; then → pm decompose. BA spec: docs/handoffs/BA-IND-P1-MOMENTUM-FRONTEND.md"
+    "next_agent": "dev-frontend",
+    "note": "TASK-501 DONE_VERIFIED (qa APPROVED 10/10, gate a36e770b). TASK-502 dev-frontend in-flight — AC-M1 GaugeCard extract landed (8828a68e); awaiting feature commit + qa."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-30T03:25:46Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-30T05:29:28Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -1238,6 +1238,18 @@
         "linked_task": "FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW",
         "triaged_at": "2026-06-29T12:21:49Z",
         "triaged_by": "po"
+      },
+      {
+        "id": "cow-20260630T0515-chef-doublepublish",
+        "ts": "2026-06-30T05:29:28Z",
+        "created_at": "2026-06-30T05:29:28Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "Confirmed double-publish: chef-morning (MARKET msg 920 @05:24:47) + chef-intraday (msg 921 @05:25:44) — 2 near-duplicate CHEF dishes 57s apart. Root: pressure-state.stale_warning=true (transient) forced PRESSURE_MODE=legacy at Step 4.2, bypassing cadence gate that would have suppressed chef-intraday (off-market 240min default, 62min elapsed); plus no same-tick CHEF mutex. Blocks cowork-cron AC-6 (zero double-publish). RAW-verified vs MARKET channel. Detail+fixes in payload_ref.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-chef-doublepublish-2026-06-30.md"
       }
     ],
     "last_triaged_at": "2026-06-30T03:25:46Z",
@@ -3631,7 +3643,7 @@
             "title": "Momentum Indicators REST Aggregator (Zone A: mcp-server)",
             "owner": "dev-mcp-server",
             "type": "feature",
-            "status": "TODO",
+            "status": "DONE_VERIFIED",
             "zone": "apps/mcp-server/",
             "size": "M",
             "priority": "P1",
@@ -3643,14 +3655,14 @@
               "apps/mcp-server/src/interface/mcp/server.ts",
               "apps/mcp-server/src/__tests__/momentum-indicators.test.ts"
             ],
-            "note": "Handler aggregates 4 P1 momentum tools (ROC, RS, 52W, FA) via Promise.allSettled; HTTP 200 always; honest-NULL per section. See docs/handoffs/TASK-501-MOMENTUM-API-HANDLER.md"
+            "note": "Handler aggregates 4 P1 momentum tools (ROC, RS, 52W, FA) via Promise.allSettled; HTTP 200 always; honest-NULL per section. See docs/handoffs/TASK-501-MOMENTUM-API-HANDLER.md | 2026-06-30T06:01:17Z dev-team router gate-close: qa APPROVED 10/10 ACs (gate commit a36e770b, report TASK_REPORT_501.md); RAW-verified 37/37 tests + tsc0 + mock-guard0 + no-db-leak + no-tickers-forward + source_tier:3. DONE_VERIFIED."
           },
           {
             "id": "TASK-502-MOMENTUM-FRONTEND",
             "title": "Momentum Indicators Dashboard (Zone B: frontend)",
             "owner": "dev-frontend",
             "type": "feature",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "apps/frontend/",
             "size": "L",
             "priority": "P1",
