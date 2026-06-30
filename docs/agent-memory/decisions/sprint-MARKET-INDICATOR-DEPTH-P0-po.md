@@ -85,3 +85,12 @@ Router routes ops on this authorization. After rebuild → router/qa RAW-verify 
 - (c) Promote all 4 momentum placeholders straight to ready[] (skip the BA→architect→pm chain).
 **why-decision:** CHOSE (b). User's CORE intent is "more indices so the helper AGENTS analyze better" → backend momentum tools (coverage) outrank human-facing gauge cards (UX) per PO priority order; momentum is PRIMARY (NEXT=ba). Rejected (c): roadmap §6 keeps the full gate IN EFFECT (genuinely new analytical features need a BA spec → architect SPLIT of the multi-zone wave → pm decomposition); the IND-P1-* rows are placeholders, not specced dev tasks. Grouped all 4 under ONE BA spec (coherent factor family; architect splits 3× technical-analysis + 1× stock-price) to avoid 4 separate cascades + zone contention. Frontend runs in PARALLEL (apps/frontend + dev-frontend disjoint from backend) → no WIP starvation; honest-NULL contract carried, depends_polish kept SOFT. WIP respected: only +1 coding task (frontend) enters now; momentum stays design-lane until pm decomposes.
 **why-change:** No change from the po-S4 carry-over plan — this IS that predicted next planning tick (script renamed po-s131→po-s132 to keep the catalog monotonic; po-s131 was already taken by the po-S4 wiring tick, commit f1b9e959).
+
+### STEP po-S6 · po · 2026-06-30T02:52:04Z — BACKEND COMPLETION-GAP MINT (router-spawned scoping, coord d3292ca4)
+**task-id:** IND-P1-MCP-REST-GAUGES-ENDPOINT
+**what-done:** Minted ONE backlog row (status=BACKLOG, next_agent=dev-mcp-server, zone=apps/mcp-server) for the missing GET /api/indicator-gauges REST aggregator + authored handoff docs/handoffs/IND-P1-MCP-REST-GAUGES-ENDPOINT.md. Commit 885c017e (push held → fleet-push timer).
+**what-considered:**
+- Full PO→BA→architect→pm cascade vs PO-direct pm-spec.
+- ready[] (immediate dispatch) vs backlog[] (router sequences after proxy rebuild).
+**why-decision:** DIRECT pm-spec — contract is ALREADY pinned by the frontend IndicatorGaugesDto (dashboard.indicator-gauges.tsx L45-133) + proxy header; the 5 P0 source usecases are LIVE; aggregation is mechanical projection (no new domain logic) → a fresh BA/architect decomposition adds zero. backlog[] not ready[] — a live dev-team cron dispatches ready[]; router must dispatch THIS explicitly AFTER IND-P1-MCP-PROXY-INDICATORS + mcp-server rebuild so mcp-server rebuilds stay serial.
+**why-change:** no change from router scope.
