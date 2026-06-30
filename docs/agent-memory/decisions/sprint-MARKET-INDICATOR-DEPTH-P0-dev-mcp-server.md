@@ -170,3 +170,13 @@
 - Threshold close<100 vs max(OHLC)<100 → brief mandates close<100; known edge case at 100-102 VND for historical VCB bars (CONTAM repair covers it).
 **why-decision:** VNDirect works from VPS, returns per-ticker history with correct field mapping. TCBS endpoint completely inaccessible (x-backside-transport: FAIL FAIL from AWS NLB). Scale verified: VCB close=62.2 → 62,200 VND. All 5 required changes implemented. sha256 matched local↔VPS.
 **why-change:** API source switch was unplanned but necessary — TCBS migrated/removed its bars-long-term endpoint. SUBTASK-B unblocked: bars_pushed_total=N now in done POST body.
+
+### STEP dev-mcp-server-S8 · dev-mcp-server · 2026-06-30T15:00:00Z
+**task-id:** OHLCV-DEPTH-SUBTASK-B
+**what-done:** Extended `/api/ohlcv-backfill-done` handler: body parse (bars_pushed_total optional), depth probe via LEFT JOIN watchlist→daily_ohlcv (DEPTH_FLOOR=252), re-queue with retry_count+1 on shortfall, R-5 retry-storm cap (retry_count≥5 → sendTelegramBug, no re-queue). Schema migration: added retry_count column to ohlcv_backfill_queue (guarded ALTER TABLE). 5 BT-* tests written (body parse, empty body, re-queue, cap, success). Commit c8557899. tsc clean, 5 new tests pass, 9 existing 1360 tests pass, 92/92 combined.
+**what-considered:**
+- LEFT JOIN vs two separate queries: LEFT JOIN watchlist→daily_ohlcv returns codes with 0 bars without a separate codes fetch — cleaner and avoids placeholder injection.
+- Retry cap: query most recent done=1 row's retry_count (id DESC LIMIT 1) → increment for re-queue. Cap check: if current done row retry_count ≥ 5 → BUG (not next insert).
+- Depth probe advisory (non-fatal): wrap in inner try/catch; probe failure must never break the HTTP 200 response.
+**why-decision:** LEFT JOIN is the correct SQL pattern for "find rows with 0 matches in a joined table". Retry_count from last done row is the simplest durable counter without a separate sessions table. Inner try/catch isolation prevents probe failures from masking the UPDATE (already done when probe fires).
+**why-change:** No deviation from SUBTASK-B spec. R-5 cap implemented server-side as required.

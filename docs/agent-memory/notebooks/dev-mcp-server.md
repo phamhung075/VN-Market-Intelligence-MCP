@@ -55,3 +55,24 @@ No .tickers[] in any section output (NFR-6). null_reason synthesized per AC-4 sp
 10/10 ACs PASS. bun test 14070/0 (full suite).
 
 Zone health: tsc 0 errors, 37/37 new tests GREEN, toolCount=182 unchanged, /health ok | HEALTHY
+
+## 2026-06-30 — OHLCV-DEPTH-SUBTASK-B
+
+**Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Session:** e71c7736-a95a-4040-b741-1d48454354f6
+
+Server-side depth-probe + re-queue + retry-cap in POST /api/ohlcv-backfill-done.
+
+Key design decisions:
+- LEFT JOIN watchlist→daily_ohlcv returns zero-bar codes without dynamic IN clause.
+- retry_count column added to ohlcv_backfill_queue (guarded ALTER TABLE migration).
+- Depth probe wrapped in inner try/catch — non-fatal; HTTP 200 always returned if UPDATE succeeds.
+- Retry cap: query retry_count of last done=1 row (id DESC LIMIT 1) → if ≥5: BUG alert, no insert.
+- Empty body (secondary poll): `bodyStr.trim()` falsy → barsPushedTotal=null, probe still runs.
+
+Files changed:
+- MOD: `infrastructure/db/schema-market-data.ts` — retry_count column + guarded migration
+- MOD: `interface/mcp/server.ts` — sendTelegramBug import + extended handler (body parse + probe + re-queue + cap)
+- NEW: `__tests__/ohlcv-backfill-done-subtask-b.test.ts` — 5 BT-* tests GREEN
+
+Zone health: bun test 5 pass 0 fail (new), 9 pass 0 fail (existing 1360), 92 pass 0 fail (combined), tsc clean, toolCount=182 unchanged | HEALTHY
