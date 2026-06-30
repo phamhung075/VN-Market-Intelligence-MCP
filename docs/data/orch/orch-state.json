@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-    "next_agent": "po",
-    "updated_at": "2026-06-30T15:12:12Z",
+    "active_task_id": "OHLCV-DEPTH-SUBTASK-D",
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-06-30T15:47:21Z",
     "updated_by": "dev-team",
-    "note": "Tick 14:37Z CLOSED. SUBTASK-B DONE_VERIFIED (impl c8557899, memory d7ae4b0f): /api/ohlcv-backfill-done now parses bars_pushed_total, depth-probes watchlist (LEFT JOIN, 252-bar floor), re-queues done=0 retry_count+1 on shortfall, R-5 cap retry_count>=5 -> Telegram BUG no-requeue. Schema +retry_count (guarded ALTER). RAW-verify: merge gate 0/0/0(c2 benign), DJ-S8, tests RE-RUN host 5pass/0fail with observed branch logs. EPIC P0 mechanism (E+A+B) COMPLETE. REMAINING (next_agent=po): C/D P1 observability + mcp-server REBUILD (B inert until rebuild) + brief-4 cross-restart gate (after rebuild + full-universe backfill). WIP=1 (epic). origin/main advanced to c8557899 (prior divergence pushed externally); only d7ae4b0f unpushed."
+    "note": "Tick 15:07Z: SUBTASK-C DONE_VERIFIED (impl cc491b4a, memory 8a3735ea) -- MOMENTUM_MIN_BARS=252 threshold split, TA-35 gate unchanged, observability depth-insufficient logs; merge gate 0/0/0 (c2 benign), tests RE-RUN 16/16 + observed logs, tsc clean. CHAINED dispatch: SUBTASK-D -> dev-mcp-server (ohlcvStartupProbe DEPTH_FLOOR=252 shallow-alert, single Telegram WORK per startup, observability only). WIP=2 (epic+D): closing C dropped WIP to 1 then D dispatched. AFTER D done_verified: OHLCV-DEPTH-REBUILD (ops, held on C+D+B) single-svc force-recreate brings B+C+D live; then OHLCV-DEPTH-PROD-BACKFILL-GATE done_verifies epic. Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7820,48 +7820,52 @@
         "done_note": "Step 4.5c jq-native mutex SHIPPED (commit 6d080acf rewrites the false-green c2c2aa9f). Dispatcher RAW-verified: commits on disk, merge gate green (index-check/tree-verify/c2-alert exit=0), and re-ran committed logic independently — 4/4 cases PASS (chef-morning+chef-intraday→drop intraday keep morning; intraday-only→retain; morning-only→retain; mixed non-chef+both-chef→drop only intraday). BEHAVIORAL GATE PENDING runtime: next weekday 2026-07-01T05:15Z coincidence tick must yield EXACTLY ONE CHEF MARKET dish."
       },
       {
-        "id": "OHLCV-DEPTH-SUBTASK-C",
+        "id": "OHLCV-DEPTH-REBUILD",
         "status": "BACKLOG",
         "type": "FIX",
         "size": "S",
-        "priority": "P1",
-        "blocking": false,
+        "priority": "P0",
+        "blocking": true,
+        "held": true,
         "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
+        "owner": "ops",
+        "next_agent": "ops",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
         "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-        "title": "SUBTASK-C: taOhlcvBackfillJob threshold split (taOhlcvBackfillJob.ts:46,244) — add MOMENTUM_MIN_BARS=252; keep TA skip at 35 (no regression); log depth-insufficient tickers to INFO. Observability only (VNDirect geo-blocked, R-4).",
-        "depends": [],
-        "files": [
-          "apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts"
+        "depends": [
+          "OHLCV-DEPTH-SUBTASK-C",
+          "OHLCV-DEPTH-SUBTASK-D",
+          "OHLCV-DEPTH-SUBTASK-B"
         ],
-        "acceptance": "At 49 bars job logs depth-insufficient for all watchlist; after VPS backfill to 252+ no more depth-insufficient logs; TA-35 skip unchanged.",
+        "hold_reason": "HELD until SUBTASK-C + SUBTASK-D done_verified — rebuild brings B+C+D live in ONE force-recreate.",
+        "title": "OHLCV-DEPTH rebuild gate: ops single-svc REBUILD of mcp-server (force-recreate-with-build) — B's /api/ohlcv-backfill-done depth-probe + C taOhlcvBackfillJob MOMENTUM_MIN_BARS logs + D ohlcvStartupProbe shallow-alert are ALL INERT until this rebuild. NEVER down&&up (kills peers ~21min); single-service force-recreate-with-build only (feedback_rebuild_after_dev_change).",
+        "acceptance": "docker image ID for mcp-server changes; container UP healthy; peers (frontend/remix/api-gateway) untouched; B handler live (POST /api/ohlcv-backfill-done parses bars_pushed_total + depth-probes).",
         "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
-        "created_by": "po",
-        "created_at": "2026-06-30T13:52:29Z",
-        "baseline_pass": true
+        "created_by": "po-s135",
+        "created_at": "2026-06-30T15:23:52Z"
       },
       {
-        "id": "OHLCV-DEPTH-SUBTASK-D",
+        "id": "OHLCV-DEPTH-PROD-BACKFILL-GATE",
         "status": "BACKLOG",
         "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "blocking": false,
+        "size": "M",
+        "priority": "P0",
+        "blocking": true,
+        "held": true,
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
         "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-        "title": "SUBTASK-D: ohlcvStartupProbe depth alert (ohlcvStartupProbe.ts) — add DEPTH_FLOOR=252 alongside <8 sparse; tickers 8<=cnt<252 reported as 'shallow' (distinct from 'sparse') in single Telegram WORK alert per startup.",
-        "depends": [],
-        "files": [
-          "apps/mcp-server/src/scheduler/market-data/ohlcvStartupProbe.ts"
+        "depends": [
+          "OHLCV-DEPTH-REBUILD"
         ],
-        "acceptance": "After restart at 49-bar depth, probe sends one WORK alert listing 49-bar tickers as 'shallow (need 252)'.",
-        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
-        "created_by": "po",
-        "created_at": "2026-06-30T13:52:29Z",
-        "baseline_pass": true
+        "hold_reason": "HELD until OHLCV-DEPTH-REBUILD done — the §4 gate needs B live AND a full-universe production backfill (today only VCB is proven deep).",
+        "title": "OHLCV-DEPTH production backfill + Brief §4 cross-restart gate: (1) run full-universe R-2 backfill PRODUCTION run on VPS (hardened fetch-ohlcv-backfill.sh, ALL traded tickers not just VCB), B depth-probe verifies + re-queues shortfalls; (2) run Brief §4 Gates 1-5 (depth>=252 GROUP BY universe / get_price_history VCB 730 / get_roc_momentum+get_relative_strength+compute_52w_proximity NON-NULL / PERSISTENCE re-probe AFTER container restart / non-watchlist universe >0 historical rows). This gate done_verifies the EPIC.",
+        "acceptance": "Epic verification_gate verbatim: after fix+rebuild+RESTART (a) get_price_history VCB days=730 >=252 (target ~504); (b) GROUP BY code >=252 across traded universe; (c) get_roc_momentum + get_relative_strength + compute52WProximity NON-NULL with real tickers; PERSISTENCE proven by re-probe AFTER a container restart (the durable gate — failure mode is purge-on-boot).",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md#4-cross-restart-verification-gate-durable",
+        "created_by": "po-s135",
+        "created_at": "2026-06-30T15:23:52Z"
       }
     ],
     "closed_sprints": [
@@ -9507,6 +9511,43 @@
         ],
         "memory_commit": "d7ae4b0f",
         "verification": "dev-team RAW-verify (disk+logic+tests-rerun): impl commit c8557899 explicit-paths-only (server.ts+schema-market-data.ts+test, no orch-state, no -A leak); memory d7ae4b0f (notebook+DJ-S8). Merge gate index-check=0 tree-verify=0 c2-alert=benign(chore-memory touches decisions/DJ). DJ dev-mcp-server-S8 complete. Handler logic inspected REAL+CORRECT: bars_pushed_total number-guard (empty/non-JSON->null idempotent secondary poll still marks done=1); depth-probe LEFT JOIN watchlist->daily_ohlcv (cnt=0 for zero-bar codes); cnt<252 WARN; R-5 cap reads last done-row retry_count, >=5 -> sendTelegramBug + NO re-queue, else INSERT done=0 retry_count+1 (increments propagate across poll cycles); probe inner try/catch non-fatal (HTTP 200 preserved). Schema migration guarded PRAGMA table_info + ALTER TABLE ADD COLUMN retry_count DEFAULT 0 (not UNIQUE, no silent no-op). Tests RE-RUN on host bun 1.3.13 = 5 pass/0 fail/17 expects with observed logs: BT-1 bars=500, BT-2 empty-body null idempotent, BT-3 VTST:10 shortfall->requeue retry_count=1, BT-4 retry cap>=5->BUG+telegram-skip, BT-5 all>=252 depth-verified. NOTE: handler change INERT until mcp-server container REBUILD; brief-4 cross-restart gate deferred (needs rebuild + full-universe backfill run)."
+      },
+      {
+        "id": "OHLCV-DEPTH-SUBTASK-C",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "blocking": false,
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "title": "SUBTASK-C: taOhlcvBackfillJob threshold split (taOhlcvBackfillJob.ts:46,244) — add MOMENTUM_MIN_BARS=252; keep TA skip at 35 (no regression); log depth-insufficient tickers to INFO. Observability only (VNDirect geo-blocked, R-4).",
+        "depends": [],
+        "files": [
+          "apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts"
+        ],
+        "acceptance": "At 49 bars job logs depth-insufficient for all watchlist; after VPS backfill to 252+ no more depth-insufficient logs; TA-35 skip unchanged.",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T13:52:29Z",
+        "baseline_pass": true,
+        "next_agent": "dev-mcp-server",
+        "parallel_eligible": true,
+        "promoted_by": "po-s135",
+        "promoted_at": "2026-06-30T15:23:52Z",
+        "promote_note": "Batched into the SAME rebuild as SUBTASK-B (minimize single-svc force-recreate-with-build to ONE). Observability-only, no deps, parallel with sibling.",
+        "updated_at": "2026-06-30T15:47:21Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T15:31:37Z",
+        "dispatched_by": "dev-team",
+        "done_at": "2026-06-30T15:47:21Z",
+        "done_commits": [
+          "cc491b4a"
+        ],
+        "memory_commit": "8a3735ea",
+        "verification": "dev-team RAW-verify (disk+diff+tests-rerun+gate): impl cc491b4a explicit-paths-only (taOhlcvBackfillJob.ts + 1970 test, no orch-state, no server.ts, no -A leak); memory 8a3735ea (notebook + DJ SUBTASK-C step). MERGE GATE: index-check=0 tree-verify=0 (blocking PASS), c2-alert=0 (benign chore-memory touches DJ in decisions/). DJ-GATE-1 present. DIFF inspected REAL: const MOMENTUM_MIN_BARS=252 added alongside TA_MIN_ROWS=35; TA gate condition (cnt>=TA_MIN_ROWS AND corruptCnt===0) BYTE-IDENTICAL (comment-only change) -> NO TA regression; observability-only inner block increments momentumDepthInsufficient + logs [taOhlcvBackfill] depth-insufficient; result iface + early-returns + counter updated; NO new fetch/DB. Tests RE-RUN on host: 16 pass/0 fail/55 expect with OBSERVED logs (HPG 49, MWG 35, BID 50, FPT 35, VCB 35 bars; counter 1->2->3). tsc clean exit 0. toolCount 182 unchanged. INERT until mcp-server REBUILD (OHLCV-DEPTH-REBUILD held)."
       }
     ],
     "head": {
@@ -9557,6 +9598,37 @@
         "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "brief_commit": "30659cca",
         "status_note": "EPIC P0 mechanism COMPLETE: SUBTASK-E (VPS deploy gate) + A (fetch-ohlcv-backfill.sh VNDirect+normalize+R3+R2+bars_pushed_total, sha 71b5a5fb deployed) + B (server /api/ohlcv-backfill-done depth-probe+re-queue+R-5 cap, c8557899) all DONE_VERIFIED. REMAINING: (1) SUBTASK-C/D P1 observability (backlog, no deps); (2) mcp-server container REBUILD (B handler inert until rebuilt -- PO->ops single-svc force-recreate-with-build); (3) brief-4 Cross-Restart Verification Gate (depth>=252 / tool-layer / indicator-unlock / persistence-after-restart / non-watchlist-universe) runs AFTER rebuild + full-universe R-2 backfill run. next_agent=po prioritizes C/D + sequences rebuild/gate."
+      },
+      {
+        "id": "OHLCV-DEPTH-SUBTASK-D",
+        "status": "IN_PROGRESS",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "blocking": false,
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "title": "SUBTASK-D: ohlcvStartupProbe depth alert (ohlcvStartupProbe.ts) — add DEPTH_FLOOR=252 alongside <8 sparse; tickers 8<=cnt<252 reported as 'shallow' (distinct from 'sparse') in single Telegram WORK alert per startup.",
+        "depends": [],
+        "files": [
+          "apps/mcp-server/src/scheduler/market-data/ohlcvStartupProbe.ts"
+        ],
+        "acceptance": "After restart at 49-bar depth, probe sends one WORK alert listing 49-bar tickers as 'shallow (need 252)'.",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T13:52:29Z",
+        "baseline_pass": true,
+        "next_agent": "dev-mcp-server",
+        "parallel_eligible": true,
+        "promoted_by": "po-s135",
+        "promoted_at": "2026-06-30T15:23:52Z",
+        "promote_note": "Batched into the SAME rebuild as SUBTASK-B (minimize single-svc force-recreate-with-build to ONE). Observability-only, no deps, parallel with sibling.",
+        "updated_at": "2026-06-30T15:47:21Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T15:47:21Z",
+        "dispatched_by": "dev-team"
       }
     ],
     "ready": [],
