@@ -133,21 +133,20 @@ Telemetry fields added to Step 6 payload (for observability):
      Applies unconditionally to guarantee the mutex across all pressure states. -->
 
 ```
-# Read schedule to identify CHEF slots (all are in parallel_group="chef")
+# Read schedule to identify CHEF slots (jq-native with --argjson — no xargs string concat)
 SCHEDULE=$(cat docs/data/cowork-schedule.json)
 
-# Separate guaranteed from non-guaranteed CHEF slots
-GUARANTEED_CHEF_SLOTS=$(echo "$SCHEDULE" | jq -r '.slots[] | select(.parallel_group=="chef" AND .guaranteed==true) | .slot_id' | tr '\n' ' ')
-NON_GUARANTEED_CHEF=$(echo "$SCHEDULE" | jq -r '.slots[] | select(.parallel_group=="chef" AND .guaranteed==false) | .slot_id' | tr '\n' ' ')
+# Build arrays of guaranteed vs non-guaranteed CHEF slots (jq native — no shell string manipulation)
+G_ARR=$(echo "$SCHEDULE" | jq -c '[.slots[] | select(.parallel_group=="chef" and .guaranteed==true) | .slot_id]')
+NG_ARR=$(echo "$SCHEDULE" | jq -c '[.slots[] | select(.parallel_group=="chef" and .guaranteed==false) | .slot_id]')
 
-# If MATCHES has both guaranteed AND non-guaranteed CHEF slots, drop the non-guaranteed ones
-HAS_GUARANTEED=$(echo "$MATCHES" | jq -r "any(.[]; .slot_id | IN($(echo $GUARANTEED_CHEF_SLOTS | xargs -I{} echo '\"{}\"' | paste -sd ',' -)))")
-HAS_NON_GUARANTEED=$(echo "$MATCHES" | jq -r "any(.[]; .slot_id | IN($(echo $NON_GUARANTEED_CHEF | xargs -I{} echo '\"{}\"' | paste -sd ',' -)))")
+# Check if MATCHES contains both guaranteed AND non-guaranteed slots (using jq index() for membership)
+HAS_GUARANTEED=$(echo "$MATCHES" | jq --argjson g "$G_ARR" 'any(.[]; .slot_id as $s | ($g | index($s)) != null)')
+HAS_NON_GUARANTEED=$(echo "$MATCHES" | jq --argjson ng "$NG_ARR" 'any(.[]; .slot_id as $s | ($ng | index($s)) != null)')
 
 if [ "$HAS_GUARANTEED" = "true" ] && [ "$HAS_NON_GUARANTEED" = "true" ]; then
-  # Drop non-guaranteed CHEF slots; keep the rest
-  NON_GUARANTEED_LIST=$(echo "$NON_GUARANTEED_CHEF" | xargs -I{} echo '\"{}\"' | paste -sd ',' -)
-  MATCHES=$(echo "$MATCHES" | jq "map(select(.slot_id | IN($NON_GUARANTEED_LIST) | not))")
+  # Drop non-guaranteed CHEF slots; keep the rest (using jq index() for filtering)
+  MATCHES=$(echo "$MATCHES" | jq --argjson ng "$NG_ARR" 'map(select(.slot_id as $s | ($ng | index($s)) == null))')
   
   log "[cowork] CHEF mutex: dropped non-guaranteed CHEF slots; guaranteed CHEF slot will publish this tick"
   # Telemetry flag (added to Step 6 payload)
