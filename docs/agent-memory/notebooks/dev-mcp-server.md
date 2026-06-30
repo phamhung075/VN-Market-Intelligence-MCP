@@ -76,3 +76,24 @@ Files changed:
 - NEW: `__tests__/ohlcv-backfill-done-subtask-b.test.ts` — 5 BT-* tests GREEN
 
 Zone health: bun test 5 pass 0 fail (new), 9 pass 0 fail (existing 1360), 92 pass 0 fail (combined), tsc clean, toolCount=182 unchanged | HEALTHY
+
+## 2026-06-30 — OHLCV-DEPTH-SUBTASK-C
+
+**Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Session:** e71c7736-a95a-4040-b741-1d48454354f6
+**Commit:** cc491b4a
+
+Observability-only threshold split in taOhlcvBackfillJob. TA gate at 35 UNCHANGED.
+
+Key design decisions:
+- MOMENTUM_MIN_BARS=252 placed in the Constants section alongside TA_MIN_ROWS=35.
+- Depth check runs INSIDE the `if (cnt >= TA_MIN_ROWS && corruptCnt === 0)` branch — only tickers that passed the TA gate (covered path) can set the flag. Fetch-path tickers never inflate the counter.
+- Log format: `[taOhlcvBackfill] depth-insufficient: <code> <N> bars` — exact spec text from §2.2-C.
+- TaOhlcvBackfillResult extended with `momentumDepthInsufficient: number` (additive, backward-compatible).
+- 6 SUBTASK-C tests added: bars>=252 no flag; 49 bars flag set; bars<35 fetch path (no flag); boundary at 35; boundary at 252; multi-ticker mix.
+
+Files changed:
+- MOD: `scheduler/market-data/taOhlcvBackfillJob.ts` — MOMENTUM_MIN_BARS const + result type + gate split + summary log + return
+- MOD: `__tests__/1970-ta-ohlcv-backfill.test.ts` — 6 SUBTASK-C tests (16 total, all GREEN)
+
+Zone health: tsc clean (EXIT 0), 16 pass 0 fail (1970 suite), 68 pass 0 fail (3 related files), toolCount=182 unchanged, scheduler count unchanged | HEALTHY

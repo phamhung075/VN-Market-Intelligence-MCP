@@ -180,3 +180,14 @@
 - Depth probe advisory (non-fatal): wrap in inner try/catch; probe failure must never break the HTTP 200 response.
 **why-decision:** LEFT JOIN is the correct SQL pattern for "find rows with 0 matches in a joined table". Retry_count from last done row is the simplest durable counter without a separate sessions table. Inner try/catch isolation prevents probe failures from masking the UPDATE (already done when probe fires).
 **why-change:** No deviation from SUBTASK-B spec. R-5 cap implemented server-side as required.
+
+### STEP dev-mcp-server-S9 · dev-mcp-server · 2026-06-30T15:40:00Z
+**task-id:** OHLCV-DEPTH-SUBTASK-C
+**what-done:** Added `export const MOMENTUM_MIN_BARS = 252` constant alongside `TA_MIN_ROWS = 35` in `taOhlcvBackfillJob.ts`. Extended `TaOhlcvBackfillResult` with `momentumDepthInsufficient: number` field. Split the coverage gate: TA skip gate at 35 is UNCHANGED (no regression) — when a ticker passes the TA gate (cnt >= 35, no corrupt) but has cnt < 252, the new branch increments `momentumDepthInsufficient` and logs INFO `[taOhlcvBackfill] depth-insufficient: <code> <N> bars`. No fetch triggered, no DB writes beyond existing. 6 SUBTASK-C unit tests added (16 total in 1970 suite). Impl commit cc491b4a. tsc clean, 68 pass / 0 fail across 3 related test files.
+**what-considered:**
+- Counter placement: `momentumDepthInsufficient++` placed inside the `if (cnt >= TA_MIN_ROWS && corruptCnt === 0)` branch only — tickers below TA threshold never touch this counter, so the counter cannot be inflated by the fetch path.
+- Return type extension: adding `momentumDepthInsufficient` to `TaOhlcvBackfillResult` is additive and backward-compatible; existing consumers that ignore the field are unaffected (TypeScript structural typing).
+- Log format: `[taOhlcvBackfill] depth-insufficient: ${code} ${cnt} bars` — matches architect spec exactly (§2.2-C).
+- No cron-schedule change: observability log is in the existing per-ticker loop; cron-job count unchanged.
+**why-decision:** Pure observability split inside the already-existing covered branch. TA gate at 35 is the hard boundary for TA indicator viability; the 252 check is advisory only. Placing the depth check AFTER the `covered++` and BEFORE `continue` ensures TA coverage is accounted correctly and only then flags depth insufficiency.
+**why-change:** No deviation from SUBTASK-C spec. R-4 (VNDirect geo-blocked from Docker) confirmed: no fetch added. Actual fill remains VPS push pathway from SUBTASK-A+B.
