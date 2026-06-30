@@ -162,3 +162,24 @@
 - Cross-lane dup check: all 5 ids in unique lanes (0 duplicates).
 **why-decision:** APPROVED across all 5 tasks — code correct, tests green, DDD/security clean, honest-NULL discipline verified, Go endpoints registered, MCP proxy wired.
 **why-change:** no change from plan.
+
+---
+
+### qa-S10 · IND-P1-MCP-REST-GAUGES-ENDPOINT — APPROVED
+
+**task-id:** IND-P1-MCP-REST-GAUGES-ENDPOINT
+
+**what-considered:**
+- tsc --noEmit: 0 errors (exit 0).
+- bun test IND-P1-MCP-REST-GAUGES-ENDPOINT.test.ts: 35 pass / 0 fail across REG-1, GEN-1, 200-1, ISO-1/2, NULL-1/2/3, PROJ-1/2, LIQ-1/2/3/4 suites.
+- DDD: indicatorGaugesHandler.ts is interface/mcp/routes/. Imports: infrastructure/microservices/clients.js, infrastructure/fetchers/fetchDeadline.js, application/usecases/getMarketSentimentIndex.js, application/usecases/getBreadthThrust.js, application/usecases/getForeignRoom.js, interface/mcp/tools/macro/macroHttpClient.js (peer interface). Zero domain imports. No domain logic. PASS — interface→application+infrastructure is the intended REST aggregator shape.
+- Security: no process.env in handler, no hardcoded secrets, mock-guard exit 0.
+- Honest-NULL audit: all 5 sections carry real-fetched values or explicit null+null_reason. buildForeignRoomSection projects ONLY .market scalars (market_saturation_pct, foreign_outflow_z_5d) — never .tickers[]. buildLiquiditySection: source_tier=2 when is_estimate=false, source_tier=3 when is_estimate=true (ENDPOINT-ASSIGNED). Promise.allSettled → HTTP 200 even when all 5 sources fail.
+- Live curl http://localhost:3000/api/indicator-gauges: HTTP 200. volatility REAL (rv_20d_percentile=0.714, vol_regime="NORMAL"), sentiment REAL (news_sentiment_z=-1.35, SUFFICIENT), breadth null (accruing — honest-NULL), foreign_room REAL no tickers key (foreign_outflow_z_5d null, 7 sessions available), liquidity REAL (policy_refi_rate_pct=4.5, source_tier=3 is_estimate=true).
+- server.ts dispatch: `GET /api/indicator-gauges` at line 2157 — calls handleGetIndicatorGauges(req, res, db). Route correctly registered.
+- Tool count: project-stats.json toolCount=182 UNCHANGED (REST endpoint, not MCP tool). cronJobCount=2, schedulerFileCount=64 UNCHANGED.
+- Coverage map: 5 indicator-gauges GAP entries flipped to LIVE (volatility, sentiment, breadth, foreign_room, liquidity sections).
+- Board: IND-P1-MCP-REST-GAUGES-ENDPOINT review[]→done[] via orch-apply.sh, qa_verdict=APPROVED, status=DONE, next_agent unset.
+
+**why-decision:** APPROVED — all 7 gate checks PASS. 35/35 tests green, tsc clean, DDD shape correct (intended aggregator pattern), security clean, mock-guard PASS, honest-NULL discipline verified per-section, live endpoint confirmed HTTP 200 with 5-section real/honest-null data.
+**why-change:** no change from plan.
