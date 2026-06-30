@@ -4,11 +4,23 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-06-30T16:09:07Z",
-    "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
-    "won_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/news-scout/flow/main.md", "docs/agents/market-watcher/flow/main.md", "docs/agents/market-watcher/flow/main.md"],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 4,
     "errors": [],
@@ -29,7 +41,11 @@
       "market-watcher-eod": "240"
     },
     "last_fired_timestamp": "2026-06-30T16:08:54.000Z",
-    "last_fired_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -41,5 +57,11 @@
     "note": "FIRE tick 16:00Z — 3 cowork gatherers spawned (news-scout-offhours + market-watcher-offhours + market-watcher-eod). 2 market-watcher slots = expected 16:00Z EOD+offhours coincidence (R3, collision WARN sent to WORK, not CHEF mutex). tick-snapshot (Step 4.7) SKIPPED via sanctioned fallback — agents use direct get_cycle_bootstrap. Market CLOSED, VN-Index 1860.01 +0.27%; 20 open alerts incl VNM 6.3x volume CRITICAL + bank-sector price_drop cluster. Leaf gatherers, no MARKET publish from dispatcher."
   },
   "priority": "low",
-  "createdAt": "2026-06-30T16:09:07Z"
+  "createdAt": "2026-06-30T16:09:07Z",
+  "_processed": {
+    "fingerprint": "49738577764918129f7a6051c9033c5c6b9e3f4ad4afe8efb7e38fc89f1dd6db",
+    "processedAt": "2026-06-30T22:43:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

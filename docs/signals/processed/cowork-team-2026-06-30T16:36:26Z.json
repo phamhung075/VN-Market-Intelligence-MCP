@@ -45,5 +45,11 @@
     "note": "FIRE tick 16:30Z — 1 cowork gatherer spawned (refine-bctc-slot-4 / refine_bctc_md, bctc-offmarket policy, cadence-due last_fired 2026-06-28). Single non-chef slot: no collision, no calendar suppression (closed != weekend/holiday; bctc-offmarket runs off-market by design), no freshness downgrade (regime sideways, backlog 3), no CHEF mutex. tick-snapshot SKIPPED (refine_bctc consumes no market snapshot). Leaf BCTC-refine DB-pathway worker, no MARKET publish."
   },
   "priority": "low",
-  "createdAt": "2026-06-30T16:36:26Z"
+  "createdAt": "2026-06-30T16:36:26Z",
+  "_processed": {
+    "fingerprint": "b35bdcc529de0214d610cf08289ae7b50802238b94c26a08545ae463bf49e35b",
+    "processedAt": "2026-06-30T22:43:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

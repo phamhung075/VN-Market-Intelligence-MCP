@@ -1,0 +1,48 @@
+{
+  "ticker": "HVN",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "timestamp": "2026-06-30T18:10Z",
+  "cycle": "c066",
+  "slot": "bctc-analyst-slot-2",
+  "data_quality": "PARTIAL",
+  "data_quality_note": "BCTC Q1-2026 income statement all-zero (extraction failure); only balance sheet partially extracted. refine_status=PARTIAL.",
+  "confidence_score": 0.5,
+  "esc_flags": [
+    "ESC-2"
+  ],
+  "esc2_detail": {
+    "assets_total_mnvnd": 10807412.979,
+    "liabilities_total_mnvnd": 9939070.525,
+    "equity_total_mnvnd": 1160067.165,
+    "imbalance_pct": 2.7,
+    "threshold_pct": 0.5,
+    "result": "FIRE"
+  },
+  "esc3_result": "SKIPPED — net_profit=0",
+  "escalation_status": "PENDING",
+  "guard_key": "esc-deepdive:HVN:Q1-2026:ESC-2",
+  "total_assets_tybvnd": 10807.4,
+  "equity_tybvnd": 1160.1,
+  "total_liabilities_tybvnd": 9939.1,
+  "net_profit_tybvnd": 0,
+  "net_revenue_tybvnd": 0,
+  "pe": null,
+  "ey_spread_pp": null,
+  "valuation": "N/A — income data missing",
+  "sentiment_trend": "TIÊU CỰC (slope -0.07, 30d, 17 entries)",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "product": "Vận tải hàng không quốc tế và nội địa (Vietnam Airlines)",
+  "customer": "Hành khách nội địa và quốc tế; hàng hóa",
+  "ops": "Dữ liệu BCTC chưa đầy đủ — báo cáo kết quả KD bằng 0 (lỗi trích xuất OCR/pipeline); chỉ có bảng cân đối kế toán",
+  "mgmt": "Không thể đánh giá do dữ liệu bị thiếu — cần chạy lại pipeline PDF",
+  "_processed": {
+    "fingerprint": "b9fae4e50d62439dabff7f1a1588c542f3658b927fbe8739d2c1aee6e72b1865",
+    "processedAt": "2026-06-30T22:43:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-30T19:50:55Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "guaranteed": {
+      "chef-evening": true
+    },
+    "last_fired_timestamp": "2026-06-30T19:50:31.000Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 7,
+    "stale_warning_post_emit": true,
+    "note": "FIRE tick 19:45Z — chef-evening (unified-agent CHEF, guaranteed) spawned background. Evening synthesized MARKET dish, TNB 6-layer walk. Market CLOSED (VN evening, VN-Index 1860.01 +0.27%). Single guaranteed chef slot → no CHEF same-tick mutex. tick-snapshot (Step 4.7) SKIPPED via sanctioned fallback — agent uses get_cycle_bootstrap directly. stale_warning_post_emit:true = benign off-hours cycle-snapshot aging (market-hours-blind freshness), pressure_mode stays adaptive. Dispatcher does NOT publish to MARKET — leaf CHEF owns publish + published-marker gate. Post-completion RAW-verify pending (CHEF publish-integrity standing rule)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-30T19:50:55Z",
+  "_processed": {
+    "fingerprint": "7ed43b6f875e9cd47276cdcb71a00bd4750a1a4fc544572c15555a0e271393c3",
+    "processedAt": "2026-06-30T22:43:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
