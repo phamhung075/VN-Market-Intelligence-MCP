@@ -86,7 +86,7 @@ call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
 call_tool(server="vn-market", tool="get_breadth_thrust", arguments={})
 call_tool(server="vn-market", tool="get_vn_liquidity_state", arguments={})
 ```
-If successful: extract volatility regime (rv_10_pct/rv_20_pct/rv_60_pct, gk_vol_20d_pct), breadth indicators (mclellan_osc, mclellan_summation, zweig_max_consecutive, breadth_z_score), and liquidity state (omo.net_outstanding_bn_vnd with blocked_reason for honest-NULL, interbank_1w.rate_1w_pct, policy_rates fields). Store as MARKET_INDICATORS context. Use to enrich price anomaly interpretation (e.g., if volatility elevated or breadth weakening, adjust sigma threshold interpretation). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue with price analysis only.
+If successful: extract volatility regime (rv_10d_pct/rv_20d_pct/rv_60d_pct, gk_vol_20d_pct), breadth indicators (mclellan_osc, mclellan_summation, zweig_max_consecutive, breadth_z_score), and liquidity state (omo.net_outstanding_bn_vnd with blocked_reason for honest-NULL, interbank_1w.rate_1w_pct, policy_rates fields). Store as MARKET_INDICATORS context. Use to enrich price anomaly interpretation (e.g., if volatility elevated or breadth weakening, adjust sigma threshold interpretation). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue with price analysis only.
 
 **2b. Macro read** → skill: `.claude/skills/macro-health-read/SKILL.md`
 Store result as MACRO_HEALTH. Log any `is_estimate=true` tracks. The MACRO_HEALTH output feeds Step 4 signal enrichment.
