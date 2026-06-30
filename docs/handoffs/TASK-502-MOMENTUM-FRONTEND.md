@@ -208,10 +208,50 @@ Implement P1 momentum dashboard frontend: extract existing `GaugeCard` component
 
 ---
 
+## [Developer] Implementation Record
+
+- **Service:** frontend
+- **Zone:** apps/frontend/
+- **Build tier:** 4 (feature route + shared component, on top of existing Tier 3 api service layer)
+- **Files created:**
+  - `apps/frontend/app/components/GaugeCard.tsx:116L` — extracted from P0 page; adds expandContent prop (AC-M1)
+  - `apps/frontend/app/routes/api.momentum-indicators.tsx:55L` — transparent proxy (AC-1)
+  - `apps/frontend/app/routes/dashboard.momentum.tsx:320L` — loader, parseMomentumIndicatorsDto, formatRSComposite, fetchMomentumIndicators, 4 GaugeCards (AC-2, AC-M2, AC-M4)
+  - `apps/frontend/app/__tests__/ind-p1-momentum-cards.test.ts:310L` — 10 suites, 49 assertions (AC-5)
+  - `apps/frontend/app/__tests__/ind-p1-momentum-nav.test.tsx:135L` — 7 suites, nav entry guard (AC-6)
+  - `docs/agent-memory/decisions/sprint-MARKET-INDICATOR-DEPTH-P0-dev-frontend.md` — decision journal
+- **Files modified:**
+  - `apps/frontend/app/routes/dashboard.indicator-gauges.tsx` — removed inline GaugeCard; import from ~/components/GaugeCard (AC-M1)
+  - `apps/frontend/app/components/TopNav.tsx` — added "Động Lực P1" at ANALYST_NAV[26] (AC-3)
+  - `apps/frontend/app/__tests__/FE-HEADER-SSOT-top-nav.test.tsx` — bumped ANALYST_NAV 26→27, NAV_ITEMS 33→34
+  - `apps/frontend/app/__tests__/ind-p1-indicator-gauges-nav.test.tsx` — count + position guards updated
+  - `apps/frontend/app/__tests__/task17-page19-news-buzz-nav.test.tsx` — count + position guards updated
+  - `docs/data/frontend-data-coverage-map.json` — +4 GAP rows for /dashboard/momentum (AC-4)
+  - `docs/data/orch/orch-state.json` — TASK-502 IN_PROGRESS → REVIEW
+- **Tests written:**
+  - `ind-p1-momentum-cards.test.ts` — 49 assertions across 10 suites (parse/format/fetch), GREEN
+  - `ind-p1-momentum-nav.test.tsx` — 9 assertions across 7 suites (nav count, position, DOM render), GREEN
+- **Git commits:**
+  - `8828a68e` — feat(frontend/m1): extract GaugeCard component to shared location (AC-M1 atomic)
+  - `24de1fe5` — feat(frontend/task-502): P1 momentum dashboard — 4-card gauge page
+  - `f095ad0e` — chore(memory/dev-frontend): notebook + decision journal TASK-502
+- **Type check:** `tsc --noEmit` exits 0
+- **Service tests:** 1967 pass / 2 fail (pre-existing QUE_DESCRIPTIONS key-count failures, unrelated to TASK-502 — present before this task)
+- **G12 Playwright render-gate:** 3/3 PASS (`tests/e2e/render-check.spec.ts`)
+- **Docs updated:** `docs/data/frontend-data-coverage-map.json` — 4 GAP rows added; notebook + decision journal written
+- **Graphify:** skipped (no docs/architecture changes; only coverage-map + notebook)
+- **Simplicity gate:** all 4 questions NO — GaugeCard extraction is M1 mandate; proxy mirrors P0 exactly; page pattern follows established loader/parser/render model
+
+**Vitest summary:** 1967 passed | 2 failed (pre-existing) | 81 test files
+**Playwright summary:** 3 passed (render-check.spec.ts — G12 gate PASS)
+**tsc:** 0 errors
+
+---
+
 ## RETURN
 
 **Task ID:** TASK-502-MOMENTUM-FRONTEND
 **Zone:** apps/frontend/
 **Depends On:** TASK-501-MOMENTUM-API-HANDLER
-**Status:** TODO
+**Status:** REVIEW
 **Effort:** L (~4h)
