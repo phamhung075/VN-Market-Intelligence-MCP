@@ -1,5 +1,7 @@
 // Package http — HTTP interface layer for the technical-analysis service.
-// Routes: GET /health, POST /ta/indicators.
+// Routes: GET /health, POST /ta/indicators, POST /ta/volatility-indicators,
+//
+//	POST /ta/roc-momentum, POST /ta/relative-strength, POST /ta/52w-proximity.
 package http
 
 import (
@@ -14,22 +16,44 @@ import (
 	"github.com/vn-market-intelligence/technical-analysis/pkg/application"
 )
 
+// RouterConfig bundles all use cases and shared dependencies for the router.
+// Use cases may be nil — the corresponding route is not registered when nil.
+type RouterConfig struct {
+	UseCase     *application.ComputeTAUseCase
+	VolUseCase  *application.ComputeVolatilityUseCase
+	ROCUseCase  *application.ComputeROCMomentumUseCase
+	RSUseCase   *application.ComputeRelativeStrengthUseCase
+	ProxUseCase *application.Compute52WProximityUseCase
+	Logger      *slog.Logger
+}
+
 // NewRouter creates and returns a chi router with all routes registered.
-// useCase and volUseCase are wired by the composition root (cmd/server/main.go).
-// volUseCase may be nil during tests that only exercise /ta/indicators.
-func NewRouter(useCase *application.ComputeTAUseCase, volUseCase *application.ComputeVolatilityUseCase, logger *slog.Logger) http.Handler {
+// Accepts a RouterConfig to avoid parameter explosion as new use cases are added.
+// Nil use cases are skipped (guards sandbox callers that wire only a subset).
+func NewRouter(cfg RouterConfig) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 
 	r.Get("/health", handleHealth())
-	r.Post("/ta/indicators", handleIndicators(useCase, logger))
 
-	// P0-1-VOLATILITY-INDICATORS: POST /ta/volatility-indicators
-	// volUseCase is non-nil in production; nil guard protects sandbox callers
-	// that have not wired the volatility use case.
-	if volUseCase != nil {
-		r.Post("/ta/volatility-indicators", handleVolatilityIndicators(volUseCase, logger))
+	if cfg.UseCase != nil {
+		r.Post("/ta/indicators", handleIndicators(cfg.UseCase, cfg.Logger))
+	}
+
+	if cfg.VolUseCase != nil {
+		r.Post("/ta/volatility-indicators", handleVolatilityIndicators(cfg.VolUseCase, cfg.Logger))
+	}
+
+	// IND-P1 momentum tools.
+	if cfg.ROCUseCase != nil {
+		r.Post("/ta/roc-momentum", handleROCMomentum(cfg.ROCUseCase, cfg.Logger))
+	}
+	if cfg.RSUseCase != nil {
+		r.Post("/ta/relative-strength", handleRelativeStrength(cfg.RSUseCase, cfg.Logger))
+	}
+	if cfg.ProxUseCase != nil {
+		r.Post("/ta/52w-proximity", handle52WProximity(cfg.ProxUseCase, cfg.Logger))
 	}
 
 	return r

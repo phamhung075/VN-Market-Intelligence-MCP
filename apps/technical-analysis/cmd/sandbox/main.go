@@ -434,7 +434,12 @@ func newTestServer() (*httptest.Server, func()) {
 	// Volatility use case: nil watchlist is non-fatal (tickers injected per-request in scenarios).
 	volSvc := domain.NewVolatilityService()
 	volUseCase := application.NewComputeVolatilityUseCase(noopOHLCVRepo{}, volSvc, nil)
-	router := httpinterface.NewRouter(useCase, volUseCase, slog.Default())
+	// IND-P1 use cases are not wired in sandbox (no DB access; routes are nil-skipped).
+	router := httpinterface.NewRouter(httpinterface.RouterConfig{
+		UseCase:    useCase,
+		VolUseCase: volUseCase,
+		Logger:     slog.Default(),
+	})
 	srv := httptest.NewServer(router)
 	return srv, srv.Close
 }

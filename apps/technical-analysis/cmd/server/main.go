@@ -7,11 +7,14 @@
 // reads ZERO secrets — only PORT (default 5003) and LOG_LEVEL (default "INFO").
 // No DB credentials, no API keys, no tokens in this process environment.
 //
-// Volatility use case additionally reads:
-//   WATCHLIST_TICKERS — comma-separated list of active ticker symbols for ATR%
-//   computation (e.g. "VNM,FPT,VCB,HPG,..."). When absent, ATR computation
-//   returns an empty list (non-fatal). Production: set from system-map.json
-//   .project.watchlist by the ops team in docker-compose environment.
+// Environment variables:
+//
+//	PORT                — HTTP port (default 5003)
+//	LOG_LEVEL           — "DEBUG" enables debug logging
+//	WATCHLIST_TICKERS   — comma-separated active ticker symbols
+//	                      Used for ATR%, ROC momentum, RS, and 52w proximity.
+//	                      When absent, per-ticker outputs are empty lists (non-fatal).
+//	DB_PATH             — path to market.db (default ./data/market.db)
 package main
 
 import (
@@ -40,6 +43,11 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
 
+	watchlist := parseWatchlist(envStr("WATCHLIST_TICKERS", ""))
+	if len(watchlist) == 0 {
+		slog.Warn("WATCHLIST_TICKERS not set — ATR%/momentum/RS/52w outputs will return empty list; set env to enable")
+	}
+
 	// --- TA indicators wiring (existing) ---
 	calculator := infrastructure.NewTACalculator()
 	priceRepo := infrastructure.NewSQLitePriceRepository()
@@ -49,13 +57,31 @@ func main() {
 	// --- P0-1 Volatility wiring ---
 	ohlcvRepo := infrastructure.NewSQLiteOHLCVRepository()
 	volSvc := domain.NewVolatilityService()
-	watchlist := parseWatchlist(envStr("WATCHLIST_TICKERS", ""))
-	if len(watchlist) == 0 {
-		slog.Warn("WATCHLIST_TICKERS not set — ATR% computation will return empty list; set env to enable")
-	}
 	volUseCase := application.NewComputeVolatilityUseCase(ohlcvRepo, volSvc, watchlist)
 
-	router := httpinterface.NewRouter(useCase, volUseCase, logger)
+	// --- IND-P1 momentum tools wiring ---
+	multiTickerRepo := infrastructure.NewSQLiteMultiTickerOHLCVRepository()
+
+	// ROC Momentum.
+	momentumSvc := domain.NewMomentumService()
+	rocUseCase := application.NewComputeROCMomentumUseCase(multiTickerRepo, momentumSvc, watchlist)
+
+	// Relative Strength.
+	rsSvc := domain.NewRelativeStrengthService()
+	rsUseCase := application.NewComputeRelativeStrengthUseCase(multiTickerRepo, rsSvc, watchlist)
+
+	// 52W Proximity.
+	proxSvc := domain.NewProximityService()
+	proxUseCase := application.NewCompute52WProximityUseCase(multiTickerRepo, proxSvc, watchlist)
+
+	router := httpinterface.NewRouter(httpinterface.RouterConfig{
+		UseCase:     useCase,
+		VolUseCase:  volUseCase,
+		ROCUseCase:  rocUseCase,
+		RSUseCase:   rsUseCase,
+		ProxUseCase: proxUseCase,
+		Logger:      logger,
+	})
 
 	addr := fmt.Sprintf(":%s", port)
 	srv := &http.Server{
@@ -97,7 +123,7 @@ func envStr(key, fallback string) string {
 }
 
 // parseWatchlist splits a comma-separated ticker string into a trimmed slice.
-// Returns nil when input is empty (not an error — ATR computation is non-fatal).
+// Returns nil when input is empty (not an error — computations are non-fatal).
 func parseWatchlist(raw string) []string {
 	if raw == "" {
 		return nil
