@@ -110,6 +110,8 @@ import { handleGetNewsSentiment } from "./routes/newsSentimentHandler.js";
 import { handleGetMacroRegime } from "./routes/macroRegimeHandler.js";
 // IND-P1-MCP-REST-GAUGES-ENDPOINT: GET /api/indicator-gauges — 5 P0 indicators aggregated
 import { handleGetIndicatorGauges } from "./routes/indicatorGaugesHandler.js";
+// TASK-501-MOMENTUM-API-HANDLER: GET /api/momentum-indicators — 4 P1 momentum sources aggregated
+import { handleGetMomentumIndicators } from "./routes/momentumIndicatorsHandler.js";
 // TASK-17 P2-1a: GET /api/price-history/:ticker — OHLC history DTO for frontend
 import { handleGetPriceHistory } from "./routes/priceHistoryServeHandler.js";
 // TASK-17 Alerts ENDPOINT WAVE: GET /api/alerts — live alerts table for dashboard
@@ -2156,6 +2158,17 @@ export async function createBunServer(
     // Always returns 200; generated_at always set; honest-NULL per section.
     if (method === "GET" && pathname === "/api/indicator-gauges") {
       await handleGetIndicatorGauges(req, res, db);
+      return;
+    }
+
+    // ── TASK-501-MOMENTUM-API-HANDLER: GET /api/momentum-indicators ──────────
+    // Aggregates the 4 P1 momentum sources (ROC, RS, 52W, foreign accum) into a
+    // single MomentumIndicatorsDto response.
+    // Promise.allSettled: section-isolated — one failure degrades ONLY that section.
+    // Always returns 200; generated_at always set; honest-NULL per section.
+    // NO db arg: all 4 sources are remote HTTP via clients.ts (ARCH-RATIFY M3).
+    if (method === "GET" && pathname === "/api/momentum-indicators") {
+      await handleGetMomentumIndicators(req, res);
       return;
     }
 
