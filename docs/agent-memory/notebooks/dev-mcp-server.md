@@ -97,3 +97,16 @@ Files changed:
 - MOD: `__tests__/1970-ta-ohlcv-backfill.test.ts` — 6 SUBTASK-C tests (16 total, all GREEN)
 
 Zone health: tsc clean (EXIT 0), 16 pass 0 fail (1970 suite), 68 pass 0 fail (3 related files), toolCount=182 unchanged, scheduler count unchanged | HEALTHY
+
+## 2026-06-30 — OHLCV-DEPTH-SUBTASK-D
+
+**Sprint:** FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR / MARKET-INDICATOR-DEPTH-P0
+**Session:** e71c7736-a95a-4040-b741-1d48454354f6
+
+Observability-only addition to `ohlcvStartupProbe.ts`. Added `SPARSE_THRESHOLD=8` and `DEPTH_FLOOR=252` exported constants. Extended `OhlcvStartupProbeResult` with `shallowTickers[]` and `shallowSent`. Three-bucket classification: sparse (<8, existing), shallow (8–251, new), healthy (≥252, new). ONE aggregated Telegram WORK call per startup for all shallow tickers. Sparse alert and backfill path unchanged. 5 existing TCs updated (row counts shifted to healthy ≥252 range); 5 new SUBTASK-D TCs added covering all required assertions including single-call invariant.
+
+Files changed:
+- MOD: `scheduler/market-data/ohlcvStartupProbe.ts` — SPARSE_THRESHOLD + DEPTH_FLOOR constants; shallowTickers classification; early-return guard; Phase 3+4 wrapped in sparse-only guard; shallow ONE-message alert; updated result type + all return points
+- MOD: `__tests__/1352-ohlcv-startup-probe.test.ts` — TC-1/2/5 row counts updated to healthy range; 5 new SUBTASK-D TCs (10 total, all GREEN)
+
+Zone health: tsc clean (EXIT 0), 10 pass 0 fail (1352 suite), 27 pass 0 fail (3 ohlcv files), toolCount=182 unchanged, scheduler count unchanged | HEALTHY
