@@ -1245,6 +1245,10 @@ export async function createBunServer(
 
         const code = payload.code;
         const bars = payload.bars as Record<string, unknown>[];
+        // FR-B1: extract type from payload (default "stock" for backward compat).
+        // Zone A pushes VNINDEX with type:"index"; "index" exempts from stock range guard.
+        const type: "stock" | "index" =
+          (typeof payload.type === "string" && payload.type === "index") ? "index" : "stock";
 
         if (bars.length === 0) {
           res.writeHead(200, { "Content-Type": "application/json" });
@@ -1290,11 +1294,11 @@ export async function createBunServer(
             const low    = low_parsed;
             const volume = typeof bar.volume === "number" ? bar.volume : 0;
 
-            // CONTAM-3: unit guard — reject bars that are not full-VND scale
-            // TCBS data is always stock type (no index in backfill payload).
-            // Guard fails loud (log.error + skip) but never throws to preserve HTTP 200.
+            // CONTAM-3: unit guard — reject bars that are not full-VND scale.
+            // FR-B1: type from payload ("stock" default, "index" for VNINDEX); index exempt from
+            // stock range guard. Guard fails loud (log.error + skip) but never throws (HTTP 200).
             try {
-              const guardResult = validateOhlcvUnit(code, "stock", open, high, low, close);
+              const guardResult = validateOhlcvUnit(code, type, open, high, low, close);
               if (!guardResult.valid) {
                 log.error("[push-ohlcv-history] unit guard rejected", { code, date, reason: guardResult.reason });
                 skipped++;
@@ -1452,6 +1456,7 @@ export async function createBunServer(
         log.info("[ohlcv-backfill-done] marked done", { barsPushedTotal });
 
         // 2. Depth probe — verify watchlist code coverage against 252-bar floor
+        //    FR-B2: also verify VNINDEX depth (benchmark ticker — not in watchlist table)
         const DEPTH_FLOOR = 252;
         try {
           const depthRows = db.prepare<{ code: string; cnt: number }, []>(`
@@ -1461,51 +1466,59 @@ export async function createBunServer(
             GROUP BY w.code
           `).all();
 
-          if (depthRows.length === 0) {
-            log.info("[ohlcv-backfill-done] depth probe skipped: watchlist empty");
+          // FR-B2: check VNINDEX depth separately (not in watchlist; required by TA svc for RS)
+          const vnidxRow = db.prepare<{ cnt: number }, []>(
+            "SELECT COUNT(*) AS cnt FROM daily_ohlcv WHERE code = 'VNINDEX'"
+          ).get();
+          const vnindexDepth = vnidxRow?.cnt ?? 0;
+
+          const shallowCodes: { code: string; cnt: number }[] = depthRows.filter(
+            (r) => r.cnt < DEPTH_FLOOR,
+          );
+          if (vnindexDepth < DEPTH_FLOOR) {
+            shallowCodes.push({ code: "VNINDEX", cnt: vnindexDepth });
+          }
+
+          if (shallowCodes.length === 0) {
+            log.info("[ohlcv-backfill-done] depth verified: all watchlist tickers >=252 bars", {
+              watchlist_count: depthRows.length,
+              vnindex_depth: vnindexDepth,
+            });
           } else {
-            const shallowCodes = depthRows.filter((r) => r.cnt < DEPTH_FLOOR);
+            const shallowList = shallowCodes.map((r) => `${r.code}:${r.cnt}`).join(", ");
+            log.warn("[ohlcv-backfill-done] depth shortfall detected", {
+              shallow_count: shallowCodes.length,
+              codes: shallowList,
+              depth_floor: DEPTH_FLOOR,
+            });
 
-            if (shallowCodes.length === 0) {
-              log.info("[ohlcv-backfill-done] depth verified: all watchlist tickers >=252 bars", {
-                watchlist_count: depthRows.length,
+            // 3. Retry-storm cap check (R-5): read retry_count of last done row
+            const lastRow = db.prepare<{ retry_count: number }, []>(
+              "SELECT retry_count FROM ohlcv_backfill_queue WHERE done = 1 ORDER BY id DESC LIMIT 1"
+            ).get();
+            const currentRetryCount = lastRow?.retry_count ?? 0;
+
+            if (currentRetryCount >= 5) {
+              // R-5 cap: too many retries — escalate to BUG, do NOT re-queue
+              log.error("[ohlcv-backfill-done] retry cap reached (>=5), escalating to BUG", {
+                retry_count: currentRetryCount,
+                shallow_codes: shallowList,
               });
+              void sendTelegramBug(
+                `[OHLCV-DEPTH] VPS backfill stalled after ${currentRetryCount} retries.\n` +
+                `Shallow codes (< ${DEPTH_FLOOR} bars): ${shallowList}.\n` +
+                `Manual VPS investigation required.`
+              );
             } else {
-              const shallowList = shallowCodes.map((r) => `${r.code}:${r.cnt}`).join(", ");
-              log.warn("[ohlcv-backfill-done] depth shortfall detected", {
-                shallow_count: shallowCodes.length,
-                codes: shallowList,
-                depth_floor: DEPTH_FLOOR,
+              // Re-queue with incremented retry_count for next VPS poll cycle
+              const nextRetryCount = currentRetryCount + 1;
+              db.prepare(
+                "INSERT INTO ohlcv_backfill_queue (queued_at, done, retry_count) VALUES (datetime('now'), 0, ?)"
+              ).run(nextRetryCount);
+              log.info("[ohlcv-backfill-done] re-queued backfill due to depth shortfall", {
+                retry_count: nextRetryCount,
+                shallow_codes: shallowList,
               });
-
-              // 3. Retry-storm cap check (R-5): read retry_count of last done row
-              const lastRow = db.prepare<{ retry_count: number }, []>(
-                "SELECT retry_count FROM ohlcv_backfill_queue WHERE done = 1 ORDER BY id DESC LIMIT 1"
-              ).get();
-              const currentRetryCount = lastRow?.retry_count ?? 0;
-
-              if (currentRetryCount >= 5) {
-                // R-5 cap: too many retries — escalate to BUG, do NOT re-queue
-                log.error("[ohlcv-backfill-done] retry cap reached (>=5), escalating to BUG", {
-                  retry_count: currentRetryCount,
-                  shallow_codes: shallowList,
-                });
-                void sendTelegramBug(
-                  `[OHLCV-DEPTH] VPS backfill stalled after ${currentRetryCount} retries.\n` +
-                  `Shallow codes (< ${DEPTH_FLOOR} bars): ${shallowList}.\n` +
-                  `Manual VPS investigation required.`
-                );
-              } else {
-                // Re-queue with incremented retry_count for next VPS poll cycle
-                const nextRetryCount = currentRetryCount + 1;
-                db.prepare(
-                  "INSERT INTO ohlcv_backfill_queue (queued_at, done, retry_count) VALUES (datetime('now'), 0, ?)"
-                ).run(nextRetryCount);
-                log.info("[ohlcv-backfill-done] re-queued backfill due to depth shortfall", {
-                  retry_count: nextRetryCount,
-                  shallow_codes: shallowList,
-                });
-              }
             }
           }
         } catch (depthErr) {

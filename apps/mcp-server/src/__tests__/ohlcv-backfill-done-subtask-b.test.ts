@@ -167,12 +167,14 @@ describe("SUBTASK-B BT-4: retry_count >=5 → cap enforced, no new queue row", (
   });
 });
 
-// ── BT-5: All codes >=252 bars → no re-queue (success path) ─────────────────
+// ── BT-5: All codes >=252 bars (incl. VNINDEX) → no re-queue (success path) ──
 
 describe("SUBTASK-B BT-5: all codes >=252 bars → no re-queue", () => {
-  it("watchlist code with 300 bars (>=252) → depth verified, no re-queue inserted", async () => {
+  it("watchlist code with 300 bars (>=252) AND VNINDEX with 300 bars → depth verified, no re-queue inserted", async () => {
     seedWatchlistCode("VTST");
     seedOhlcvBars("VTST", 300);
+    // FR-B2: VNINDEX must also be >=252 for depth probe to report no shortfall
+    seedOhlcvBars("VNINDEX", 300);
     seedQueueRow(0, 0);
 
     const { status, json } = await postBackfillDone(JSON.stringify({ bars_pushed_total: 300 }));

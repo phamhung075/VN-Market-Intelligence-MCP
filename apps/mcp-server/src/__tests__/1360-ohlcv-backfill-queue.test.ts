@@ -138,6 +138,17 @@ describe("Task 1360 — POST /api/ohlcv-backfill-done: mark done", () => {
       INSERT INTO ohlcv_backfill_queue (queued_at, done) VALUES (datetime('now'), 0)
     `);
 
+    // FR-B2: seed VNINDEX with >=252 bars so depth probe does not trigger re-queue
+    const vnidxStmt = db.prepare(
+      "INSERT OR IGNORE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES ('VNINDEX', ?, 1200, 1220, 1180, 1210, 0, datetime('now'))"
+    );
+    db.transaction(() => {
+      for (let i = 0; i < 300; i++) {
+        const d = new Date(Date.now() - i * 86400000);
+        vnidxStmt.run(d.toISOString().slice(0, 10));
+      }
+    })();
+
     const res = await fetch(`${base}/api/ohlcv-backfill-done`, {
       method: "POST",
       headers: { "x-api-key": VALID_KEY },
@@ -146,7 +157,7 @@ describe("Task 1360 — POST /api/ohlcv-backfill-done: mark done", () => {
     const body = await res.json() as { ok: boolean };
     expect(body.ok).toBe(true);
 
-    // Verify row was marked done
+    // Verify row was marked done (and no re-queue was inserted since VNINDEX depth ok)
     const row = db.query<{ done: number }, []>(
       "SELECT done FROM ohlcv_backfill_queue WHERE done = 0"
     ).get();
