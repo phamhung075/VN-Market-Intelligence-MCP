@@ -8874,7 +8874,11 @@
         "qa_verdict": "APPROVED",
         "updated_at": "2026-06-30T04:10:00Z",
         "updated_by": "qa",
-        "done_at": "2026-06-30T04:10:00Z"
+        "done_at": "2026-06-30T04:10:00Z",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T04:13:33Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — router RAW-verified QA APPROVED gate (commit c890728a, not relayed). tsc 0; bun test 35/35; DDD interface->application+infrastructure (no domain logic; reuses 5 P0 usecases/clients, not re-impl, not re-invoked via MCP); security 0 process.env + mock-guard 0; honest-NULL all 5 sections (foreign_room .market-only, NO tickers[]; liquidity endpoint-assigned source_tier); Promise.allSettled -> HTTP 200 on partial. Endpoint live: mcp-server image 6c3bb23e healthy; router OWN probe GET :3000/api/indicator-gauges -> 200, 5 sections, breadth/foreign_room/liquidity honest-null+reason. toolCount 182 unchanged; coverage-map 5 indicator-gauges GAP->LIVE (LIVE 30->35); board single-occurrence no cross-lane dup."
       }
     ],
     "done_verified": [],
@@ -9053,6 +9057,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T03:31:04Z",
-  "_updated_by": "router:gate-close:IND-P1-MOMENTUM-SUITE"
+  "_updated_at": "2026-06-30T04:13:33Z",
+  "_updated_by": "router:gate-close:IND-P1-MCP-REST-GAUGES-ENDPOINT"
 }
