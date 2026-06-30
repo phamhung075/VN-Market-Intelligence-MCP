@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-30T12:09:07Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null
+    },
+    "last_fired_timestamp": "2026-06-30T12:07:51Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 7,
+    "signal_backlog": 1,
+    "note": "17th fire. 15 stacked */15 prompts (4h cron catch-up) collapsed to ONE nominal tick 12:00Z via fire-election idempotency. 2 offhours gatherer slots (0 */4) spawned background. PRESSURE_MODE=legacy (emit age 224min>20 threshold, AC-P1-6-2) so suppression/cadence skipped, raw match. calendar_status=closed (12:00Z=19:00 ICT weekday post-session). tick-snapshot skipped (gatherers fetch live by design). emit flipped stale_warning false->true (224min gap); benign — next offhours match 16:00Z, all intervening ticks SILENT. market-watcher=gatherer (no MARKET dish, no CHEF publish-verify). No chef slot this tick -> AC-6 N/A."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-30T12:09:07Z",
+  "_processed": {
+    "fingerprint": "b03fbaf24f4e6910a65eafb90727561bc7a862da34df905218bd5eadc363fc45",
+    "processedAt": "2026-06-30T12:41:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
