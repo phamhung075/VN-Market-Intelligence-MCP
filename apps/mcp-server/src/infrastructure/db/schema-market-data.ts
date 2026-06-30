@@ -120,12 +120,26 @@ export function initMarketDataTables(db: Database): void {
   // ── OHLCV Backfill Queue (Task 1361 / Sprint 123) ─────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS ohlcv_backfill_queue (
-      id         INTEGER PRIMARY KEY AUTOINCREMENT,
-      queued_at  TEXT NOT NULL DEFAULT (datetime('now')),
-      done       INTEGER NOT NULL DEFAULT 0
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      queued_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      done        INTEGER NOT NULL DEFAULT 0,
+      retry_count INTEGER NOT NULL DEFAULT 0
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_obq_done ON ohlcv_backfill_queue(done)`);
+
+  // Migration: add retry_count column if missing (SUBTASK-B FIX-OHLCV-DEPTH-PERSIST)
+  {
+    const obqCols = db
+      .prepare<{ name: string }, []>("PRAGMA table_info(ohlcv_backfill_queue)")
+      .all()
+      .map((r) => r.name);
+    if (!obqCols.includes("retry_count")) {
+      db.exec(
+        "ALTER TABLE ohlcv_backfill_queue ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0"
+      );
+    }
+  }
 
   // ── VN-Index Cache (FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH) ────────────────
   // Single-row cache for the latest VNINDEX snapshot. code is PRIMARY KEY so

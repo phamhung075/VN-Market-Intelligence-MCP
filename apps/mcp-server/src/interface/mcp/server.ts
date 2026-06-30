@@ -34,7 +34,7 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
-import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
+import { sendTelegramWork, sendTelegramBug } from "../../infrastructure/notifiers/telegram.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { toolRegistry } from "./tools/registry.js";
 import { getToolsForSkills } from "./bootstrap/agentBootstrap.js";
@@ -1420,7 +1420,10 @@ export async function createBunServer(
       return;
     }
 
-    // ── Task 1361: POST /api/ohlcv-backfill-done — VPS signals backfill complete ──
+    // ── Task 1361 / SUBTASK-B: POST /api/ohlcv-backfill-done — VPS signals backfill complete ──
+    // Accepts optional body: {"bars_pushed_total": N}
+    // Poll script secondary call sends empty body — idempotent (marks done=1 again, depth probe
+    // runs again; if already ≥252 bars no re-queue). R-5 retry-storm cap: retry_count ≥ 5 → BUG.
     if (method === "POST" && pathname === "/api/ohlcv-backfill-done") {
       const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
@@ -1429,10 +1432,89 @@ export async function createBunServer(
         res.end(JSON.stringify({ error: "Unauthorized" }));
         return;
       }
+
+      // Parse optional body — empty body / missing field → null (idempotent path)
+      let bodyStr = "";
+      for await (const chunk of req) bodyStr += chunk;
+      let barsPushedTotal: number | null = null;
       try {
-        db.prepare(
-          "UPDATE ohlcv_backfill_queue SET done = 1 WHERE done = 0"
-        ).run();
+        if (bodyStr.trim()) {
+          const parsed = JSON.parse(bodyStr) as { bars_pushed_total?: unknown };
+          if (typeof parsed?.bars_pushed_total === "number") {
+            barsPushedTotal = parsed.bars_pushed_total;
+          }
+        }
+      } catch { /* empty body or non-JSON — treat as null (idempotent secondary poll) */ }
+
+      try {
+        // 1. Mark all pending queue rows done
+        db.prepare("UPDATE ohlcv_backfill_queue SET done = 1 WHERE done = 0").run();
+        log.info("[ohlcv-backfill-done] marked done", { barsPushedTotal });
+
+        // 2. Depth probe — verify watchlist code coverage against 252-bar floor
+        const DEPTH_FLOOR = 252;
+        try {
+          const depthRows = db.prepare<{ code: string; cnt: number }, []>(`
+            SELECT w.code, COUNT(d.code) AS cnt
+            FROM watchlist w
+            LEFT JOIN daily_ohlcv d ON d.code = w.code
+            GROUP BY w.code
+          `).all();
+
+          if (depthRows.length === 0) {
+            log.info("[ohlcv-backfill-done] depth probe skipped: watchlist empty");
+          } else {
+            const shallowCodes = depthRows.filter((r) => r.cnt < DEPTH_FLOOR);
+
+            if (shallowCodes.length === 0) {
+              log.info("[ohlcv-backfill-done] depth verified: all watchlist tickers >=252 bars", {
+                watchlist_count: depthRows.length,
+              });
+            } else {
+              const shallowList = shallowCodes.map((r) => `${r.code}:${r.cnt}`).join(", ");
+              log.warn("[ohlcv-backfill-done] depth shortfall detected", {
+                shallow_count: shallowCodes.length,
+                codes: shallowList,
+                depth_floor: DEPTH_FLOOR,
+              });
+
+              // 3. Retry-storm cap check (R-5): read retry_count of last done row
+              const lastRow = db.prepare<{ retry_count: number }, []>(
+                "SELECT retry_count FROM ohlcv_backfill_queue WHERE done = 1 ORDER BY id DESC LIMIT 1"
+              ).get();
+              const currentRetryCount = lastRow?.retry_count ?? 0;
+
+              if (currentRetryCount >= 5) {
+                // R-5 cap: too many retries — escalate to BUG, do NOT re-queue
+                log.error("[ohlcv-backfill-done] retry cap reached (>=5), escalating to BUG", {
+                  retry_count: currentRetryCount,
+                  shallow_codes: shallowList,
+                });
+                void sendTelegramBug(
+                  `[OHLCV-DEPTH] VPS backfill stalled after ${currentRetryCount} retries.\n` +
+                  `Shallow codes (< ${DEPTH_FLOOR} bars): ${shallowList}.\n` +
+                  `Manual VPS investigation required.`
+                );
+              } else {
+                // Re-queue with incremented retry_count for next VPS poll cycle
+                const nextRetryCount = currentRetryCount + 1;
+                db.prepare(
+                  "INSERT INTO ohlcv_backfill_queue (queued_at, done, retry_count) VALUES (datetime('now'), 0, ?)"
+                ).run(nextRetryCount);
+                log.info("[ohlcv-backfill-done] re-queued backfill due to depth shortfall", {
+                  retry_count: nextRetryCount,
+                  shallow_codes: shallowList,
+                });
+              }
+            }
+          }
+        } catch (depthErr) {
+          // Depth probe is advisory — do not fail the HTTP response if probe fails
+          log.warn("[ohlcv-backfill-done] depth probe failed (non-fatal)", {
+            error: depthErr instanceof Error ? depthErr.message : String(depthErr),
+          });
+        }
+
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true }));
       } catch (err) {
