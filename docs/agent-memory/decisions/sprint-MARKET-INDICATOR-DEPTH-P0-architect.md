@@ -37,3 +37,13 @@
 - M4 low_sample_warning: suppress vs badge vs detail row — detail row is lowest coupling, honest transparency, no visual clutter of second badge.
 **why-decision:** Option B for GaugeCard (correct DDD placement; no route cross-coupling). Option A for formatRSComposite (YAGNI — only 1 consumer now). source_tier=3 endpoint-assigned (no source field in any of 4 client responses). low_sample_warning as detail row (transparent, low-coupling).
 **why-change:** KEY divergence from P0: P1 handler takes no `db` param (all sources are remote HTTP). BA spec confirms this; risk flag emitted for dev to read.
+
+### STEP architect-S4 · architect · 2026-06-30T08:30Z
+**task-id:** FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR
+**what-done:** RAW-confirmed 0 pre-2026-04-23 bars across 1431 tickers in live named volume; identified dual-path silent failure in VPS backfill pipeline; emitted brief with 5 sub-tasks.
+**what-considered:**
+- H1 startup purge (purgeStrandedSeedRows) — only deletes vol=0 AND O=H=L=C; real bars survive; ruled out as primary
+- H2 scheduled retention DELETE — no such code in any scheduler; ruled out
+- H3 VPS done=1 masking (ohlcv-backfill-poll.sh marks done regardless of exit code) + taOhlcvBackfillJob TA_MIN_ROWS=35 skips all 49-bar tickers
+**why-decision:** 457 done=1 queue entries + 0 historical bars is definitive proof of silent VPS failure; file:line confirmed: ohlcv-backfill-poll.sh:70-79 and taOhlcvBackfillJob.ts:46.
+**why-change:** durable fix requires VPS script hardening + server-side depth verification + observability layer; not just a threshold tweak.
