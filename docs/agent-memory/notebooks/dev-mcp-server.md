@@ -1,5 +1,24 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-30 — FIX-GET-TI-STALE-SOURCE-MCP-SERVER
+
+**Sprint:** TA-CONSUMER-STALE-INDICATORS
+**Session:** e71c7736-a95a-4040-b741-1d48454354f6
+
+Root cause: prefetch query in `technicalIndicatorTools.ts` used `ORDER BY date ASC LIMIT 60`, returning the OLDEST 60 rows from daily_ohlcv (VCB 2023 data ~88k). These stale closes were forwarded to the Go TA service as the `closes` array, producing stale MAs. The Go TA service's DB-backed path had already been fixed (RC2 b6055728 DESC/LIMIT/ASC), but the mcp-server prefetch was not updated to match.
+
+Fix: Changed prefetch to subquery `ORDER BY date DESC LIMIT ?` (using `lookbackDays`) then outer `ORDER BY day ASC` — mirrors Go GetCandles fixed pattern exactly.
+
+- MOD: `interface/mcp/tools/market-data/technicalIndicatorTools.ts` (prefetch query, [string,number] param)
+- Commit: `6d3cb4d0` — fix(mcp-server/ti): FIX-GET-TI-STALE-SOURCE-MCP-SERVER
+- Before: VCB MA5=88,120 MA20=88,840 MA50=78,751 price=87,000 (serving 2023 rows)
+- After: VCB MA5=61,480 MA20=61,620 MA50=61,612 price=62,200 (consistent ~62k)
+- HPG spot-check: MA5=23,470 price=23,300 (consistent)
+- Path: HTTP primary (prefetch stale → Go TA used stale `closes`). Fallback (date-range) unaffected.
+- Rebuild: single-svc `docker compose up -d --build mcp-server`
+
+Zone health: tsc clean, bun test 14088/0 fail (exit 0), toolCount=182, sched=3 | HEALTHY
+
 ## 2026-06-30 — IND-P1-MCP-PROXY-INDICATORS
 
 **Sprint:** MARKET-INDICATOR-DEPTH-P0
