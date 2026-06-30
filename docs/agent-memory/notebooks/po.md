@@ -1,21 +1,19 @@
 # PO Notebook
 
-_Last: 2026-06-30T02:50Z_
+_Last: 2026-06-30T03:27Z_
 
-## Tick 02:48Z — MINT backend completion-gap (router scoping, coord d3292ca4)
+## Tick 03:07Z — D4 auditor FP batch dispositioned + recurring-predicate consolidated
 
-**Gap:** `IND-P1-FRONTEND-GAUGE-CARDS` shipped (done_verified) but its data path hits `GET /api/indicator-gauges` on mcp-server — which DOES NOT EXIST → 404 → gauge dashboard degrades to honest-NULL **permanently**. No board row tracked it (only the done frontend row referenced it). Coverage-map flagged it GAP×5.
+**Batch:** 32 NEW `.signal_queue` rows (`sau-d4-202606300300`, system-auditor D4 03:00 audit) = 16 distinct ×2 double-emit. ALL false-positives, RAW-verified (not router badge):
+- **CLASS A** held-lock-no-board-row (8): 6 IND-P1 sprint-task locks + BA-IND-P1-MOMENTUM-RS held by LIVE peer `d3292ca4` (MARKET-INDICATOR-DEPTH-P0, fresh heartbeats, expire 04:15Z = reservations, not orphans); 2 esc-datacov ESC-3 = 8d-TTL bctc data-coverage guards (known-legit).
+- **CLASS B** active≠held mismatch (8): D4 asserts head.active_task_id must == every held sprint-task lock — WRONG under N-sprint concurrency (head=BA-DEFERRED-SCHEDULER while peer holds OTHER sprints' locks).
+- `head.active_task_id=BA-DEFERRED-SCHEDULER` confirmed untouched.
 
-**Action:** Minted ONE backlog row `IND-P1-MCP-REST-GAUGES-ENDPOINT` (status=BACKLOG, next_agent=dev-mcp-server, zone=apps/mcp-server, sprint=MARKET-INDICATOR-DEPTH-P0) via orch-apply (id-guarded, +1 row 368→369, all other lanes byte-stable, IND-P1-MCP-PROXY-INDICATORS untouched). Handoff `docs/handoffs/IND-P1-MCP-REST-GAUGES-ENDPOINT.md`. Commit **885c017e** (push held → fleet-push timer).
+**Disposition:** 32 NEW→RESOLVED via 2× orch-apply.sh (signal_queue only, CAS rc=0). NEW count 0 on disk; 67 rows retained (status-flip, no drop). Skipped cold-evict (rows <24h; avoid extra write during peer sprint). Peer head/IND-P1/DEFERRED rows untouched (24 rows present).
 
-**Scope decision:** DIRECT pm-spec (NOT full cascade) — contract already pinned by frontend `IndicatorGaugesDto` (dashboard.indicator-gauges.tsx L45-133) + proxy header; 5 P0 source usecases LIVE; aggregation = mechanical projection. Detail → decision file § po-S6.
-
-**Key build facts captured in handoff (verified live 2026-06-30):**
-- 5 sources reuse existing usecases (NOT re-invoke via MCP): `computeVolatilityIndicators` (clients.ts), `getMarketSentimentIndex`, `getBreadthThrust`, `getForeignRoom`, macro `macroFetch /liquidity-state`.
-- foreign_room MUST project from `.market` (2 scalars), NOT forward `tickers[~105]`. liquidity has NO source_tier → endpoint assigns. asof for volatility derived from fetched_at. breadth success-shape only readable from source (history empty live today → section null).
-- Error/timeout: Promise.allSettled, section-isolated null+null_reason, 200 even on partial; honest-NULL DoD (never fabricate/default-fill).
+**Recurring fix (DEDUP, no near-dup mint):** annotated existing anchor `FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE` in-place → P2, next_agent=agent-father, folded CLASS B + widened scope to a concurrency-aware whitelist (long-TTL guards + live-peer reservation locks) + 4th-recurrence note. Double-emit ×2 already tracked by FU-AUDITOR-D4-SIGNAL-ID. PLAN-ONLY — stays backlog. Detail → `decisions/triage-20260630T0325Z-po.md`.
 
 ## Carry-over
-- **Router owns dispatch** of IND-P1-MCP-REST-GAUGES-ENDPOINT — AFTER IND-P1-MCP-PROXY-INDICATORS + mcp-server rebuild (serial rebuilds). Stays in backlog[] until then; do NOT promote to ready[] (cron races).
-- Post-deploy: 5 `indicator-gauges` rows in `docs/data/frontend-data-coverage-map.json` flip GAP→OK + asof populated; this closes the gauge-dashboard completion.
-- ACTIVATION-GAP watch (pre-19:21Z sessions): occasional benign notebook 200L breaches until restart — NOT a regression.
+- **orch-state disposition durable ON-DISK (uncommitted by design)** — committing the shared hot file would capture the peer's live IND-P1 board churn. Next orch-state committer (peer/dev-team loop) folds in the 32 RESOLVED + the P2 annotation. Re-flood already prevented (drain reads NEW only).
+- **Router owns dispatch** of IND-P1-MCP-REST-GAUGES-ENDPOINT — AFTER IND-P1-MCP-PROXY-INDICATORS + mcp-server rebuild. Stays backlog; do NOT promote (cron races).
+- agent-father: `FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE` now P2 with CLASS-A+B whitelist scope — fix kills 32 FP rows/D4-run.
