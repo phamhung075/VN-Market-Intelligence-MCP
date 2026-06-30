@@ -23,3 +23,43 @@
 - Mint only buildable P1/P2; keep rejected as a DO-NOT-BUILD ledger in the doc
 **why-decision:** Rejected items would require fabrication (fail no-fake-data) — they are not work, so they stay in roadmap §4 only. † items carry gated:"OHLCV-backfill" notes (no `depends` array → avoids dangling-ref validation). Fear&Greed gauge tagged build-last (composes P0/P1 legs).
 **why-change:** No change from roadmap.
+
+---
+
+### STEP po-S3 · po · 2026-06-30T00:23:40Z — FINAL SIGN-OFF (QA gate PASS)
+**task-id:** MARKET-INDICATOR-DEPTH-P0
+
+**VERDICT: APPROVED (code-complete) — sprint gate PASS at the CODE level; done_verified HELD to the post-rebuild LIVE e2e probe (the sprint's own DoD).**
+
+**what-done:** Closing governance gate over QA's all-7-APPROVED sprint. RAW-verified the artifacts exist + are wired (not relaying QA badges): 5 new MCP tools present (registry.ts + 5 tool files); breadth persister cron wired (cronConfig.ts:215 `37 8 * * 1-5` + startScheduler.ts:1244); volatility route registered (router.go:32 `/ta/volatility-indicators`); OMO curve DTO + wiring present (dtos_vmt_liquidity.go:177 omitempty + usecases_vmt_liquidity.go). toolCount=178 (QA-derived registry.ts + project-stats.json, consistent). Ratified the architecture deviation, authorized deploy, reconciled the board to honest ground-truth.
+
+**1) PRODUCT-INTENT CONFIRMATION (origin: "more indices, deeper analysis, so the helper agents analyze better"):** CONFIRMED. The 7 deliverables close the exact analytical blind surfaces the sprint vision named: no risk-normalization layer → volatility primitives (RV/GK/ATR-Wilder/regime/252d-drawdown/rv_20d_percentile); no foreign-room saturation → utilization + outflow z-5d + ROOM_FULL/LOCKED events; no market-aggregate sentiment → news_sentiment_z (60/90d, INSUFFICIENT<21d); discarded OMO short-rates → liquidity-stress curve; no insider read → net buy/sell + ACCUMULATION/DISTRIBUTION label; no breadth history → McClellan/Zweig/A-D + breadth_z_score with a forward-accruing persister. Every value is z-scored / regime-aware / risk-normalized — a materially deeper read than the prior snapshot tooling, all built ONLY on on-hand/already-fetched data (no-fake-data gate held per QA's mock-guard PASS across all 7). Materially advances the intent for analyst / market-watcher / CHEF.
+
+**2) ARCHITECTURE RULING — BREADTH math placement: RATIFIED (mcp-server, breadthCalculator.ts) as FINAL. Solo ruling — no architect spawn needed.**
+- The original handoff's TS `BreadthService.ts` in technical-analysis is a STALE path: TA is now Go-primary (P0-1 volatility shipped in Go). Porting the McClellan/Zweig math to Go TA would be churn with ZERO consumer benefit — `get_breadth_thrust` is gateway-consumed regardless of host.
+- The router's relocation to mcp-server as a pure domain service is CONSISTENT with the P0-2/P0-4/P0-5 placement (all domain services in mcp-server). QA RAW-verified the math is CORRECT and DDD-pure (39-session McClellan warmup, Zweig 14-session, z-score 21-session gate, no infra imports). Self-contained, zero TA coupling.
+- NO follow-up TA-port task opened (would be debt-for-debt). CONDITIONAL backlog note only: revisit placement ONLY IF a future Go-native breadth consumer emerges or TA gains a first-party breadth endpoint need.
+
+**3) DEPLOY AUTHORIZATION: GRANTED.** Single-service rebuilds (`docker compose up -d --build <svc>`) — NEVER `down && up` (kills sibling containers ~21min, memory rebuild-recreate-destroys-peers):
+- `mcp-server` (tools #176-180 + breadth persister cron — image predates all)
+- `technical-analysis` (`/ta/volatility-indicators` route)
+- `macro-indicators` (omo_curve DTO extension)
+Router routes ops on this authorization. After rebuild → router/qa RAW-verify LIVE e2e GREEN (5 tools return REAL non-stub values; omo_curve present; volatility route 200; breadth persister fires; consumed by ≥1 helper agent) → THEN done_verified flip + sprint COMPLETE.
+
+**4) done_verified GATE — HELD (NOT a CHANGES_REQUESTED; the code is correct).** The sprint's own success_metric (sprint_goal.entries[17]) is binding: *"done_verified flips per-indicator ONLY after QA live-verify ... RAW-verified by QA against the live server."* QA verified CODE + UNIT only (stale images — explicitly stated). Marking done_verified now would be a false-green against the sprint's DoD + the standing "verify raw not badges / rebuild after dev change / no-fake-data" rules. Correct disposition = CODE-COMPLETE awaiting the mandated live probe (po-s100 precedent).
+
+**what-considered:**
+- (a) Flip all 7 → DONE_VERIFIED now + authorize rebuild as a deploy step. REJECTED — violates the sprint's explicit live-verify DoD; false-green class.
+- (b) Code-complete now (done[], done_verified:false, WITHHELD live gate), flip done_verified post-rebuild RAW-verify. CHOSEN — honest, DoD-faithful, po-s100/po-s85 precedent.
+- Board drift found + corrected: the live board did NOT match the router's "all 7 DONE_VERIFIED" framing — P0-1 + P0-4 sat in `ready[]` at `status:READY` (LIVE re-dispatch hazard: a dispatcher tick could re-spawn dev on already-shipped code), and the other 5 carried premature `DONE_VERIFIED` while misplaced across ready/in_progress/review (none in done_verified[]). Reconciled via scripts/po-s124 (relocate 7 → done[] code-complete + BA spec → done_verified; umbrella stays ACTIVE with a live-probe verification_gate).
+
+**why-decision:** APPROVED-CODE + deploy GRANTED + architecture RATIFIED. Sprint stays ACTIVE (not terminal) until the post-rebuild live RAW-verify clears — the only honest reading of its own DoD.
+
+**why-change:** Deviation from the router's "all 7 DONE_VERIFIED / sprint-complete" framing: the DONE_VERIFIED stamps were premature vs the sprint's live-verify success_metric, so I down-stamped them to CODE-COMPLETE (done_verified:false) and held the sprint open. Architecture: ratified the router's mcp-server placement (no change). 
+
+**FOLLOW-UPS surfaced to router (queue):**
+- **[NEXT — gate completion, not backlog]** Post-rebuild LIVE RAW-verify of all 7 → done_verified flip + umbrella → DONE (terminal/cold-evictable). Owner: router→ops(rebuild)→qa/router(verify).
+- **[P1]** Consumer-wiring verify: success_metric requires "each indicator consumed by ≥1 helper agent" — confirm analyst/market-watcher/CHEF flows actually CALL the 5 new tools via gateway; wire any that don't. (Necessary for the ORIGIN intent — tools shipping ≠ agents using them.)
+- **[P1]** Frontend gauge surfacing: expose the 6 gauge scalars (rv_20d_percentile, foreign_outflow_z_5d, news_sentiment_z, insider net_sentiment_score, breadth_z_score, liquidity_stress_score) as dashboard cards under the freshness-badge program (project_frontend_freshness_transparency).
+- **[P1]** Next indicator wave: the 16 IND-P1-* + 4 IND-P2-* rows already in backlog (rows 341-361); † momentum items unblock once OHLCV backfill is LIVE-confirmed.
+- **[P3 — gauge-contract polish, NON-BLOCKING, fold into P1]** (i) rv_20d_percentile scalar lacks co-located unit/confidence/null_reason (volatility proxy adds only source_tier+fetched_at); (ii) omo_curve absent from liquidityStateTools Zod schema (raw passthrough bypasses Zod validation).
