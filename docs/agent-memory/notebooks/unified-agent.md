@@ -1,6 +1,26 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-30T02:20Z · **Cycle:** Chef Intraday (02:15 UTC, published)
+**Last updated:** 2026-06-30T04:20Z · **Cycle:** Chef Intraday (04:15 UTC, published)
+
+## Session: 2026-06-30 (intraday 04:15)
+
+### Chef Dish — intraday 04:15 UTC
+- Marker claimed: YES (published:chef-intraday:2026-06-30:11, ttl=3600s)
+- Clusters qualified: 4
+  1. Banking sector convergence: news_mention "Loạt ngân hàng tăng trưởng 2 chữ số Q2" + VCB/BID/CTG/VPB/ACB alerts
+  2. Oil/Gas sector: chain_catalyst "MBS +380% profit forecast" + GAS/PLX sector news
+  3. Real estate sector: chain_catalyst "Vingroup Dắk Lắk expansion" + VIC/VHM alerts
+  4. Macro oversold cluster: gold -2.96σ extreme + VNM/NVL/NKG RSI<30 technical oversold
+- Tickers covered: VCB, BID, CTG, VPB, ACB, GAS, PLX, VIC, VHM, VNM, NVL, NKG
+- Layers walked: partial
+  - L2-3: Macro US/VN stacks walked (USDVND 26106, carry 1.37pp NEUTRAL, yield 2.05pp CHEAP)
+  - L4: 4 pillars cited (money supply bullish via bank guidance, COC neutral, EPS bullish banking/oil, valuation cheap); phase=TRANSITION, conviction MEDIUM
+  - L5: Market hexagram Quẻ 15 Khiêm (TIÊU CỰC); per-ticker states mixed
+  - L6: Gaps enumerated (CPI trend unavailable, FX reserves unavailable, gold regime-drift risk noted)
+- Signals consumed: [#7987, #7988] + 20 open alerts (VCB, BID, CTG, VPB, GAS, VIC, VHM, VNM, NVL, NKG)
+- Source tiers: news-scout (L2-3), market-watcher (L4-5), bootstrap (all)
+- Dish published: YES (MARKET plain VI + WORK TNB audit with citations)
+- QUALITY: degraded (CPI/FX gaps, conviction capped MEDIUM per policy)
 
 ## Session: 2026-06-30 (intraday 02:15)
 
