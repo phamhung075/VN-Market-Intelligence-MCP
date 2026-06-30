@@ -247,7 +247,7 @@
     "updated_at": "2026-06-30T05:15:07Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-IND-P1-MOMENTUM-FRONTEND",
-    "next_agent": "architect",
+    "next_agent": "pm",
     "note": "architect dispatched — brownfield analysis + technical design + zone SPLIT (Zone A apps/mcp-server REST aggregator, Zone B apps/frontend cards); 4 ARCH-RATIFY items; then → pm decompose. BA spec: docs/handoffs/BA-IND-P1-MOMENTUM-FRONTEND.md"
   },
   "narrative": {

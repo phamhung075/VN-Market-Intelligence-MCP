@@ -26,3 +26,14 @@
 - RouterConfig struct vs positional params for NewRouter() expansion.
 **why-decision:** daily_ohlcv is the single correct source for per-day foreign_buy_vol/foreign_sell_vol (probed live). Compute-on-read for factor-return (YAGNI). RouterConfig struct deferred — flow positional args acceptable for 3 new UCs; can refactor in P2 if needed.
 **why-change:** BA spec had 2 source-errors (vnstock_trading_stats for flow; ROOM_LOCKED label for event_type). Both corrected here with live schema evidence. ROOM_FULL/ROOM_REOPEN is the actual enum.
+
+### STEP architect-S3 · architect · 2026-06-30T05:30Z
+**task-id:** BA-IND-P1-MOMENTUM-FRONTEND
+**what-done:** Brownfield analysis for 2-zone P1 momentum frontend surface; ratified M1/M2/M3/M4; full DDD file map; risk flags emitted; PM split recommendation.
+**what-considered:**
+- M1 GaugeCard: Option A (export from route) → route cross-import violates Remix isolation; Option C (inline duplicate) → 50L dead copy, maintenance debt; Option B (extract to components/) → architecturally correct placement.
+- M2 formatRSComposite: Option B (shared util) → premature for 1 consumer; Option A (co-located in dashboard.momentum.tsx) → mirrors P0 pattern exactly.
+- M3 source_tier: none of 4 response types carry source_tier; compute-on-read from SQLite → tier 3 endpoint-assigned, consistent with buildVolatilitySection pattern.
+- M4 low_sample_warning: suppress vs badge vs detail row — detail row is lowest coupling, honest transparency, no visual clutter of second badge.
+**why-decision:** Option B for GaugeCard (correct DDD placement; no route cross-coupling). Option A for formatRSComposite (YAGNI — only 1 consumer now). source_tier=3 endpoint-assigned (no source field in any of 4 client responses). low_sample_warning as detail row (transparent, low-coupling).
+**why-change:** KEY divergence from P0: P1 handler takes no `db` param (all sources are remote HTTP). BA spec confirms this; risk flag emitted for dev to read.

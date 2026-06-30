@@ -409,3 +409,194 @@ Zone A → Zone B:
 | coverage-map GAP rows (plan-only) | PO Decision 3 AC-4 | FR-B4 |
 | TopNav ANALYST_NAV append | `TopNav.tsx` line 96 | FR-B3 |
 | Pure-logic test file (no jsdom) | `ind-p1-frontend-gauge-cards.test.ts` | FR-B5 |
+
+---
+
+## [Architect] Brownfield Findings
+
+**Produced:** 2026-06-30T05:30Z | **Sprint:** MARKET-INDICATOR-DEPTH-P0 | **Task:** BA-IND-P1-MOMENTUM-FRONTEND
+**BUILD-STANDARD:** lean (both zones brownfield — mcp-server and frontend exist, no new microservice)
+
+---
+
+### Zone
+
+- **Zone A:** `apps/mcp-server/` — new REST handler + server.ts registration + bun tests
+- **Zone B:** `apps/frontend/` — proxy route + dashboard page + TopNav + vitest tests + coverage-map rows
+- **Flag for PM:** SPLIT required — Zone A and Zone B are independent deliverables. Zone B depends on Zone A's DTO contract (not Zone A's deployment). Both zones can be developed in parallel against the `MomentumIndicatorsDto` contract.
+
+---
+
+### Verified Paths
+
+**Zone A — apps/mcp-server:**
+
+- `apps/mcp-server/src/interface/mcp/routes/indicatorGaugesHandler.ts` (465L) — P0 reference, fully verified. Pattern: DTO types → DI interface → section builders (pure) → aggregator (`Promise.allSettled`) → HTTP handler. Exact mirror target for P1 handler.
+- `apps/mcp-server/src/infrastructure/microservices/clients.ts` — 4 P1 client functions verified at declared lines:
+  - L299: `computeROCMomentum({})` → `ComputeROCMomentumResponse` (`momentum_factor_z: number | null`, `computed_as_of: string`, `tickers[]` — NEVER forward)
+  - L352: `computeRelativeStrength({})` → `ComputeRelativeStrengthResponse` (`market_rs_composite: number | null`, `low_sample_warning: boolean`, `computed_as_of: string`, `tickers[]` — NEVER forward)
+  - L414: `compute52WProximity({})` → `Compute52WProximityResponse` (`aggregate: ProximityAggregate` with `pct_above_ma50`, `pct_above_ma200`, `denominator_ma200`; top-level `net_new_highs`, `denominator_ma200`, `computed_as_of`; `tickers[]` — NEVER forward)
+  - L467: `computeForeignAccumRank({})` → `ComputeForeignAccumRankResponse` (`foreign_accum_z_market: number | null`, `adtv_unit: string`, `computed_as_of: string`, `tickers[]` — NEVER forward)
+- `apps/mcp-server/src/interface/mcp/server.ts` — indicator-gauges route registered at L2157. P1 route appends immediately after L2160 (`return;`), before L2162 (`// TASK-17 P2-1a`).
+- **CRITICAL DIVERGENCE from P0:** `aggregateIndicatorGauges(db, deps)` requires `db: Database` for local SQLite sources (sentiment, breadth, foreign_room). `aggregateMomentumIndicators(deps)` does NOT need `db` — all 4 P1 sources are remote HTTP calls (TA service + stock-price service). Server.ts registration: `await handleGetMomentumIndicators(req, res)` (no `db` param).
+
+**Zone B — apps/frontend:**
+
+- `apps/frontend/app/routes/api.indicator-gauges.tsx` (55L) — proxy pattern verified: `proxyUpstream(upstream, { method: "GET", headers: … }, { label: "…" })`. Mirror exactly with `api.momentum-indicators.tsx`.
+- `apps/frontend/app/routes/dashboard.indicator-gauges.tsx` (641L) — full pattern verified: loader → `safeFetch` → `parseDto` → `useLoaderData` → `useFreshnessRevalidator("daily")` → `GaugeCard` render.
+  - `GaugeCard` (L368–420): NOT exported. Currently inline. Must extract to shared component per M1 decision.
+  - `REGIME_COLOR_CLASSES` (L339–348): color map used by `GaugeCard`. Must co-migrate with `GaugeCard` to shared component.
+  - `formatZScore` (L263): exported. P1 page imports this from `dashboard.indicator-gauges.tsx` (re-export or direct import).
+- `apps/frontend/app/components/TopNav.tsx` — `ANALYST_NAV` array, last entry at L96: `{ to: "/dashboard/indicator-gauges", label: "Chỉ Báo" }`. New P1 entry appends at L97 (new line after L96 entry, before closing `]`).
+- `apps/frontend/app/components/InfoCardExpand.tsx` — Radix Collapsible wrapper. Takes `summary: ReactNode`, `findingData: object | null`, `source: string | null`. P1 card expand content: pass structured detail object as `findingData`; `source=null` (no external URL).
+- `apps/frontend/app/__tests__/ind-p1-frontend-gauge-cards.test.ts` — P0 test pattern file (pure-logic, no jsdom). New `ind-p1-momentum-cards.test.ts` mirrors this pattern.
+- `apps/frontend/app/__tests__/ind-p1-indicator-gauges-nav.test.tsx` — existing TopNav test for P0 entry. New `ind-p1-momentum-nav.test.tsx` follows same pattern for P1 entry.
+
+---
+
+### ARCH-RATIFY Decisions
+
+**M1 — GaugeCard sharing strategy: OPTION B — Extract to `~/components/GaugeCard.tsx`**
+
+Rationale: `GaugeCard` is a page-agnostic UI primitive (no domain logic, clean `GaugeCardProps` interface). Cross-importing between `routes/` files couples two page modules — violates Remix's route isolation convention and creates brittle circular dependency potential. Extracting to `components/` is the correct DDD placement for a shared UI component.
+
+**Migration impact on Zone B dev:** Two files must change atomically:
+1. Create `apps/frontend/app/components/GaugeCard.tsx` — extract `GaugeCardProps` interface, `REGIME_COLOR_CLASSES` constant, `GaugeCard` function component from `dashboard.indicator-gauges.tsx`.
+2. Extend `GaugeCardProps` with optional `expandContent?: React.ReactNode` for the P1 expand/collapse dropdown (backward-compatible: P0 page omits this prop, renders as before).
+3. Update `dashboard.indicator-gauges.tsx` — remove inline `GaugeCard` + `GaugeCardProps` + `REGIME_COLOR_CLASSES`, add `import { GaugeCard } from "~/components/GaugeCard"`.
+4. `dashboard.momentum.tsx` — `import { GaugeCard } from "~/components/GaugeCard"`.
+
+Dev must commit items 1–3 together (single buildable commit) before adding item 4 in the same or next commit. `tsc --noEmit` must be 0 after each commit.
+
+**P1 card expand content (per AC-3):** pass `expandContent` prop containing an inline Collapsible or `InfoCardExpand` with structured detail:
+```tsx
+expandContent={<InfoCardExpand
+  summary={<span>get_roc_momentum · apps/technical-analysis</span>}
+  findingData={{ computed_as_of: roc?.computed_as_of ?? null, null_reason: roc?.null_reason ?? null }}
+  source={null}
+/>}
+```
+
+**M2 — `formatRSComposite` location: OPTION A — define in `dashboard.momentum.tsx`, export**
+
+Rationale: All P0 format helpers (`formatZScore`, `formatVolatilityRegime`, `formatHistoryQuality`, `formatOmoBn`) are defined in `dashboard.indicator-gauges.tsx` and exported for tests. P1 follows the same co-location pattern. `formatZScore` is already exported from `dashboard.indicator-gauges.tsx`; P1 page imports it from there directly (no duplication).
+
+```typescript
+export function formatRSComposite(value: number | null): { label: string; color: "green" | "amber" | "gray" } {
+  if (value === null || value === undefined) return { label: "Chưa có dữ liệu", color: "gray" };
+  if (value > 0) return { label: "MẠNH", color: "green" };
+  if (value < 0) return { label: "YẾU", color: "amber" };
+  return { label: "TRUNG TÍNH", color: "amber" };
+}
+```
+
+**M3 — source_tier assignment: source_tier = 3 (estimate/compute) for all 4 sections**
+
+Confirmed: none of the 4 client response types carry a `source_tier` field. All 4 tools compute from persisted SQLite rows (daily_ohlcv) — no live external market API call at query time. Endpoint-assigns `source_tier = 3` in each section builder (identical to `buildVolatilitySection`'s `data.source_tier ?? 3` pattern).
+
+Defensive: `adtv_unit` from `ComputeForeignAccumRankResponse.adtv_unit` is always present per contract (`string`, not optional). However, defensive fallback `data.adtv_unit ?? "ADTV-normalized"` is applied in `buildForeignAccumSection` as the BA specified.
+
+**M4 — `low_sample_warning` badge modifier: SURFACE as detail row when true**
+
+`low_sample_warning: boolean` is always present in `RelativeStrengthGauge` DTO. Frontend renders it as an additional detail row on the RS card when `true`: `{ label: "Cảnh báo", value: "Mẫu ít tickers — kết quả có thể thiếu chính xác" }`. This is honest transparency without adding a second badge layer (which would clutter the card). The main `badge.color` for RS remains determined by `market_rs_composite` polarity.
+
+---
+
+### Design Decisions — Full File Map
+
+**Zone A — apps/mcp-server (dev-mcp-server task)**
+
+| File | Action | DDD Layer | Notes |
+|---|---|---|---|
+| `apps/mcp-server/src/interface/mcp/routes/momentumIndicatorsHandler.ts` | CREATE | interface | New file, ~180L. Exact mirror of `indicatorGaugesHandler.ts` minus db param. |
+| `apps/mcp-server/src/interface/mcp/server.ts` | MODIFY (append) | interface | 1 import line (L111 block) + 1 route block (~8L) after L2160. |
+| `apps/mcp-server/src/__tests__/momentum-indicators.test.ts` | CREATE | test | 7 test suites, bun test runner. DI stub injection pattern. |
+
+Handler signature delta vs P0:
+```typescript
+// P0 (needs db for local SQLite sources)
+export async function handleGetIndicatorGauges(req, res, db: Database, deps?)
+// P1 (no db — all sources are remote HTTP via clients.ts)
+export async function handleGetMomentumIndicators(req, res, deps?)
+export async function aggregateMomentumIndicators(deps?)
+```
+
+**Zone B — apps/frontend (dev-frontend task)**
+
+| File | Action | DDD Layer | Notes |
+|---|---|---|---|
+| `apps/frontend/app/components/GaugeCard.tsx` | CREATE | interface (UI primitive) | Extracted + extended from `dashboard.indicator-gauges.tsx`. Add `expandContent?: ReactNode`. |
+| `apps/frontend/app/routes/dashboard.indicator-gauges.tsx` | MODIFY (refactor) | interface | Remove inline GaugeCard + REGIME_COLOR_CLASSES. Import from `~/components/GaugeCard`. 1 import, ~55L removed. |
+| `apps/frontend/app/routes/api.momentum-indicators.tsx` | CREATE | interface | ~30L. Mirror `api.indicator-gauges.tsx` verbatim with path swap. |
+| `apps/frontend/app/routes/dashboard.momentum.tsx` | CREATE | interface | ~280L. 4 GaugeCard renders + `formatRSComposite` + `parseMomentumIndicatorsDto` + loader. |
+| `apps/frontend/app/components/TopNav.tsx` | MODIFY (append) | interface | +1 line after L96: `{ to: "/dashboard/momentum", label: "Động Lực P1" }`. |
+| `docs/data/frontend-data-coverage-map.json` | MODIFY (append) | infrastructure (SSOT) | +4 GAP rows for /dashboard/momentum. |
+| `apps/frontend/app/__tests__/ind-p1-momentum-cards.test.ts` | CREATE | test | Pure-logic vitest (no jsdom). 10 suites. |
+| `apps/frontend/app/__tests__/ind-p1-momentum-nav.test.tsx` | CREATE | test | TopNav ANALYST_NAV entry verify. |
+
+---
+
+### Risk Flags
+
+**RISK-M1-GAUGECARD-EXTRACT [MEDIUM]**
+Extracting `GaugeCard` from `dashboard.indicator-gauges.tsx` modifies a currently-working production file. Dev must: (1) create `components/GaugeCard.tsx`, (2) update `dashboard.indicator-gauges.tsx` import, (3) verify `tsc --noEmit` passes before proceeding to Zone B work. If TSC fails at step 2, the P0 gauge page breaks. Mitigation: single atomic commit containing all 3 changes.
+
+**RISK-M2-NO-DB-IN-HANDLER [LOW]**
+P1 handler signature differs from P0 (no `db: Database` param). Dev who copies P0 handler verbatim will introduce an unused `db` parameter and an unnecessary `Database` import. The BA spec explicitly states "call from clients.ts directly (NOT the MCP tool layer)" — confirm developer reads this constraint.
+
+**RISK-M3-REGIME-COLOR-CLASSES-MOVE [LOW]**
+`REGIME_COLOR_CLASSES` constant (L339 in `dashboard.indicator-gauges.tsx`) is used only by `GaugeCard`. It must migrate to `components/GaugeCard.tsx` during the GaugeCard extraction, otherwise the import from `dashboard.indicator-gauges.tsx` will have a dangling reference.
+
+**RISK-M4-SERVER-TS-IMPORT-BLOCK [LOW]**
+`server.ts` imports indicator-gauges handler at a dedicated comment block (L111). The P1 import must be added to the same block (not scattered). Append pattern: after `import { handleGetIndicatorGauges } from "./routes/indicatorGaugesHandler.js"`.
+
+---
+
+### Scan Clean
+
+- `apps/mcp-server/src/interface/mcp/routes/` — no existing `momentumIndicatorsHandler.ts` (confirmed via file listing)
+- `apps/frontend/app/routes/` — no existing `api.momentum-indicators.tsx` or `dashboard.momentum.tsx`
+- `apps/frontend/app/__tests__/` — no existing `ind-p1-momentum-cards.test.ts` or `ind-p1-momentum-nav.test.tsx`
+- `apps/frontend/app/components/` — no existing `GaugeCard.tsx` (component currently inline in dashboard page)
+- Scan clean: true ✓
+
+---
+
+### Sequencing for PM
+
+```
+Zone A (dev-mcp-server) — standalone:
+  1. Create momentumIndicatorsHandler.ts (~180L)
+  2. Register in server.ts (import + route block, ~10L change)
+  3. Create momentum-indicators.test.ts (7 suites)
+  Blocked by: nothing. Can start immediately.
+
+Zone B (dev-frontend) — parallel:
+  Step 1 (prerequisite, same task or separate):
+    Extract GaugeCard to ~/components/GaugeCard.tsx + update dashboard.indicator-gauges.tsx
+  Step 2 (main work):
+    api.momentum-indicators.tsx (proxy)
+    dashboard.momentum.tsx (4 cards)
+    TopNav.tsx (+1 entry)
+    coverage-map +4 GAP rows
+    ind-p1-momentum-cards.test.ts
+    ind-p1-momentum-nav.test.tsx
+  Blocked by: Zone B Step 1 (GaugeCard extract). Not blocked by Zone A deployment.
+  Production data rendering blocked by Zone A REST endpoint being live at :3000.
+```
+
+**PM split recommendation:** 2 tasks minimum, 3 tasks if GaugeCard extract warrants isolation:
+- TASK-MOMENTUM-A: dev-mcp-server (handler + registration + test)
+- TASK-MOMENTUM-B: dev-frontend (GaugeCard extract + new files + TopNav + tests + coverage-map)
+
+TASK-MOMENTUM-B has no hard dependency on TASK-MOMENTUM-A for implementation (frontend tests mock fetch). QA gate for real data rendering requires TASK-MOMENTUM-A deployed first.
+
+---
+
+## RETURN
+
+DONE: Technical design complete, brownfield findings written to docs/handoffs/BA-IND-P1-MOMENTUM-FRONTEND.md
+ZONE: multi — apps/mcp-server/ + apps/frontend/ (SPLIT required per zone)
+NEXT: pm | break design into atomic tasks and create developer handoffs
+HANDOFF: docs/handoffs/BA-IND-P1-MOMENTUM-FRONTEND.md
+PIPELINE: continue

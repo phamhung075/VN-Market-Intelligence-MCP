@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-30 02:00 UTC | **Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Last updated:** 2026-06-30 05:30 UTC | **Sprint:** MARKET-INDICATOR-DEPTH-P0
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-30T05:30Z — BA-IND-P1-MOMENTUM-FRONTEND (DESIGN DONE)
+
+**Task:** BA-IND-P1-MOMENTUM-FRONTEND | NEW-FEATURE (lean) | zone: multi (mcp-server + frontend)
+**BUILD-STANDARD:** lean (both zones brownfield — mcp-server and frontend exist)
+**4 ARCH-RATIFY resolved:** M1: GaugeCard → Option B (extract to ~/components/GaugeCard.tsx; extend with optional `expandContent?: ReactNode` for P1 expand dropdown; P0 page updated to import from new location). M2: formatRSComposite → Option A (co-located in dashboard.momentum.tsx, exported; mirrors P0 formatZScore pattern). M3: source_tier = 3 endpoint-assigned for all 4 sections (no source_tier field in any of 4 client responses; compute-on-read from SQLite). M4: low_sample_warning → detail row when true (transparent, no badge clutter).
+**Critical divergence from P0:** P1 handler takes NO `db: Database` param — all 4 sources are remote HTTP via clients.ts (TA service + stock-price service). Server.ts registration: `await handleGetMomentumIndicators(req, res)` (no db).
+**Zone A (apps/mcp-server):** 1 new handler file (~180L) + server.ts import+route (~10L change) + 1 test file (7 suites). Standalone, no dependency.
+**Zone B (apps/frontend):** GaugeCard extract (1 new + 1 modified file) + api.momentum-indicators.tsx + dashboard.momentum.tsx + TopNav +1 entry + coverage-map +4 GAP rows + 2 test files. RISK: GaugeCard extraction modifies working P0 production file — must commit atomically.
+**4 risk flags:** RISK-M1-GAUGECARD-EXTRACT [MEDIUM]; RISK-M2-NO-DB-IN-HANDLER [LOW]; RISK-M3-REGIME-COLOR-CLASSES-MOVE [LOW]; RISK-M4-SERVER-TS-IMPORT-BLOCK [LOW].
+**Output:** [Architect] Brownfield Findings → docs/handoffs/BA-IND-P1-MOMENTUM-FRONTEND.md
+**Next:** pm decomposes into 2 tasks: TASK-MOMENTUM-A (dev-mcp-server) + TASK-MOMENTUM-B (dev-frontend).
 
 ## 2026-06-30T02:00Z — BA-IND-P1-MOMENTUM-RS (DESIGN DONE)
 
