@@ -8299,6 +8299,80 @@
         "done_verified_by": "po",
         "po_signoff": "APPROVED",
         "po_signoff_at": "2026-06-30T00:25:47Z"
+      },
+      {
+        "id": "IND-P1-CONSUMER-WIRING-AUDIT",
+        "tier": "P1",
+        "title": "Consumer-Wiring Audit — wire the 5 LIVE P0 indicator tools into the 6 helper-agent flows (tools shipping != agents using them; the CORE of the user's 'more indices so the helper agents analyze the market better' intent)",
+        "owner": "cowork-refactory-expert",
+        "zone": "cross-service",
+        "priority": "high",
+        "status": "DONE",
+        "plan_only": false,
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T00:57:18Z",
+        "next_agent": "cowork-refactory-expert",
+        "materialized_as": "backlog-schema row, promoted to ready[] as the FIRST P1 sub-wave (po sequencing decision, po-s131)",
+        "promoted_at": "2026-06-30T00:57:18Z",
+        "promoted_by": "po",
+        "audit_finding": "LIVE grep audit 2026-06-30 (po): 0/6 consumer flows reference ANY of get_volatility_indicators / get_market_sentiment_index / get_foreign_room / get_breadth_thrust / get_vn_liquidity_state. TOTAL wiring gap — the P0 tools deliver ZERO analyst value until wired. NOTE: market-analyst references no gateway/market tools at all in its flow tree (verify its tool-call mechanism first); the other 5 flows DO call gateway market tools but NONE the new P0 set.",
+        "new_p0_tools": [
+          "get_volatility_indicators",
+          "get_market_sentiment_index",
+          "get_foreign_room (foreign-room suite)",
+          "get_breadth_thrust",
+          "get_vn_liquidity_state (omo_curve / liquidity-stress field)"
+        ],
+        "consumer_flows": [
+          "market-analyst",
+          "market-watcher",
+          "news-scout",
+          "unified-agent (CHEF)",
+          "digest-predict",
+          "alert-commander"
+        ],
+        "wiring_map": {
+          "market-analyst": [
+            "get_volatility_indicators",
+            "get_breadth_thrust",
+            "get_market_sentiment_index",
+            "get_foreign_room"
+          ],
+          "market-watcher": [
+            "get_volatility_indicators",
+            "get_breadth_thrust",
+            "get_vn_liquidity_state"
+          ],
+          "news-scout": [
+            "get_market_sentiment_index"
+          ],
+          "unified-agent": [
+            "get_volatility_indicators",
+            "get_market_sentiment_index",
+            "get_foreign_room",
+            "get_breadth_thrust"
+          ],
+          "digest-predict": [
+            "get_volatility_indicators",
+            "get_breadth_thrust"
+          ],
+          "alert-commander": [
+            "get_volatility_indicators",
+            "get_vn_liquidity_state",
+            "get_foreign_room"
+          ]
+        },
+        "generic_mandate": "For EACH of the 6 flows: (1) RAW-verify (grep the flow .md tree) which gateway tools it currently calls; (2) wire the verified new P0 tool(s) into the flow's analysis step via the gateway call_tool wrapper (server=vn-market, bare tool name); (3) honest-NULL handling — a tool may return honest-NULL/honest-error (breadth accrues forward, net_outstanding can be blocked_reason NULL); the flow MUST degrade gracefully and NEVER fabricate; (4) Vietnamese only for FB/MARKET output text, English for work. wiring_map is a RECOMMENDATION — do NOT add a tool to a flow where it has no analytical purpose.",
+        "verification_gate": "Sprint success_metric: 'each indicator consumed by >=1 helper agent'. PASS when: each of the 5 new P0 tools is called by >=1 helper flow (grep shows the tool name in the flow .md); each wired call has a graceful honest-NULL path; no fabrication; the cowork team flows still pass their own gates.",
+        "reviewed_by": "cowork-refactory-expert",
+        "review_completed_at": "2026-06-30T01:15:00Z",
+        "wiring_status": "COMPLETE - all 5 tools wired into >=1 consumer flow each",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T01:23:20Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — router RAW-verified all 4 verification_gate criteria GREEN 2026-06-30T01:23Z. C1: 5/5 P0 tools wired, per-flow distribution matches PO wiring_map exactly (volatility x5, breadth x4, sentiment x3, foreign_room x3, liquidity_state x2). C2: graceful honest-NULL/[SKIP] guard in every flow. C3: zero dead field names (no fabrication). C4: additive-only 64ins/7del across 6 flows (8f71ea26->34ef9ec9->7832cc1f), deletions=field-name corrections only. Field contract matched to LIVE payloads (probed get_market_sentiment_index/get_vn_liquidity_state/get_foreign_room) + breadth names verified vs getBreadthThrust.ts source."
       }
     ],
     "done_verified": [],
@@ -8383,76 +8457,6 @@
         "impl_done_by": "agent-father",
         "done_verified_at": "2026-06-29T19:35:25Z",
         "done_verified_by": "qa"
-      },
-      {
-        "id": "IND-P1-CONSUMER-WIRING-AUDIT",
-        "tier": "P1",
-        "title": "Consumer-Wiring Audit — wire the 5 LIVE P0 indicator tools into the 6 helper-agent flows (tools shipping != agents using them; the CORE of the user's 'more indices so the helper agents analyze the market better' intent)",
-        "owner": "cowork-refactory-expert",
-        "zone": "cross-service",
-        "priority": "high",
-        "status": "REVIEW",
-        "plan_only": false,
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_by": "po",
-        "created_at": "2026-06-30T00:57:18Z",
-        "next_agent": "cowork-refactory-expert",
-        "materialized_as": "backlog-schema row, promoted to ready[] as the FIRST P1 sub-wave (po sequencing decision, po-s131)",
-        "promoted_at": "2026-06-30T00:57:18Z",
-        "promoted_by": "po",
-        "audit_finding": "LIVE grep audit 2026-06-30 (po): 0/6 consumer flows reference ANY of get_volatility_indicators / get_market_sentiment_index / get_foreign_room / get_breadth_thrust / get_vn_liquidity_state. TOTAL wiring gap — the P0 tools deliver ZERO analyst value until wired. NOTE: market-analyst references no gateway/market tools at all in its flow tree (verify its tool-call mechanism first); the other 5 flows DO call gateway market tools but NONE the new P0 set.",
-        "new_p0_tools": [
-          "get_volatility_indicators",
-          "get_market_sentiment_index",
-          "get_foreign_room (foreign-room suite)",
-          "get_breadth_thrust",
-          "get_vn_liquidity_state (omo_curve / liquidity-stress field)"
-        ],
-        "consumer_flows": [
-          "market-analyst",
-          "market-watcher",
-          "news-scout",
-          "unified-agent (CHEF)",
-          "digest-predict",
-          "alert-commander"
-        ],
-        "wiring_map": {
-          "market-analyst": [
-            "get_volatility_indicators",
-            "get_breadth_thrust",
-            "get_market_sentiment_index",
-            "get_foreign_room"
-          ],
-          "market-watcher": [
-            "get_volatility_indicators",
-            "get_breadth_thrust",
-            "get_vn_liquidity_state"
-          ],
-          "news-scout": [
-            "get_market_sentiment_index"
-          ],
-          "unified-agent": [
-            "get_volatility_indicators",
-            "get_market_sentiment_index",
-            "get_foreign_room",
-            "get_breadth_thrust"
-          ],
-          "digest-predict": [
-            "get_volatility_indicators",
-            "get_breadth_thrust"
-          ],
-          "alert-commander": [
-            "get_volatility_indicators",
-            "get_vn_liquidity_state",
-            "get_foreign_room"
-          ]
-        },
-        "generic_mandate": "For EACH of the 6 flows: (1) RAW-verify (grep the flow .md tree) which gateway tools it currently calls; (2) wire the verified new P0 tool(s) into the flow's analysis step via the gateway call_tool wrapper (server=vn-market, bare tool name); (3) honest-NULL handling — a tool may return honest-NULL/honest-error (breadth accrues forward, net_outstanding can be blocked_reason NULL); the flow MUST degrade gracefully and NEVER fabricate; (4) Vietnamese only for FB/MARKET output text, English for work. wiring_map is a RECOMMENDATION — do NOT add a tool to a flow where it has no analytical purpose.",
-        "verification_gate": "Sprint success_metric: 'each indicator consumed by >=1 helper agent'. PASS when: each of the 5 new P0 tools is called by >=1 helper flow (grep shows the tool name in the flow .md); each wired call has a graceful honest-NULL path; no fabrication; the cowork team flows still pass their own gates.",
-        "reviewed_by": "cowork-refactory-expert",
-        "review_completed_at": "2026-06-30T01:15:00Z",
-        "wiring_status": "COMPLETE - all 5 tools wired into >=1 consumer flow each"
       }
     ],
     "review": [
@@ -8546,6 +8550,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T00:57:18Z",
-  "_updated_by": "po:s131:ind-p1-phase-scope"
+  "_updated_at": "2026-06-30T01:23:20Z",
+  "_updated_by": "router:gate-close:IND-P1-CONSUMER-WIRING-AUDIT"
 }
