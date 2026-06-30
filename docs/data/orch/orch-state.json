@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-30T06:17:55Z",
+    "status": "idle",
+    "updated_at": "2026-06-30T06:22:32Z",
     "updated_by": "dev-team",
-    "active_task_id": "BA-IND-P1-MOMENTUM-FRONTEND",
-    "next_agent": "pm",
-    "note": "Both TASK-501 + TASK-502 DONE_VERIFIED (sprint MARKET-INDICATOR-DEPTH-P0 / feature BA-IND-P1-MOMENTUM-FRONTEND). Handoff to pm: board closeout + advance head to idle."
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "Sprint MARKET-INDICATOR-DEPTH-P0 / feature BA-IND-P1-MOMENTUM-FRONTEND CLOSED (pm commit dff7ee9e moved sprint→closed_sprints; TASK-501+TASK-502 DONE_VERIFIED). Head idle — no active development queued. dev-team final close: RAW-verified pm left head non-idle, dispatcher corrected."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
