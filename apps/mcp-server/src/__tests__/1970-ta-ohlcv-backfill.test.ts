@@ -18,6 +18,7 @@ import { Database } from "bun:sqlite";
 import {
   runTaOhlcvBackfill,
   TA_MIN_ROWS,
+  MOMENTUM_MIN_BARS,
   type TaOhlcvBackfillDeps,
   type OhlcvRecord,
 } from "../scheduler/market-data/taOhlcvBackfillJob.js";
@@ -256,6 +257,116 @@ describe("Task 1970 — taOhlcvBackfillJob", () => {
     // But rows still inserted (best-effort)
     const rowCount = (db.prepare("SELECT COUNT(*) as cnt FROM daily_ohlcv WHERE code = 'KBC'").get() as { cnt: number }).cnt;
     expect(rowCount).toBe(10);
+  });
+
+  // ─── SUBTASK-C: MOMENTUM_MIN_BARS depth-insufficient observability ───────
+
+  it("SUBTASK-C-1: ticker with >= MOMENTUM_MIN_BARS bars → no depth-insufficient flag, fetch skipped", async () => {
+    // 252 bars → passes both TA gate and momentum depth gate
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("VCB");
+    seedCleanRows(db, "VCB", MOMENTUM_MIN_BARS);
+
+    let fetchCalled = false;
+    const result = await runTaOhlcvBackfill({
+      db,
+      fetchFn: async () => { fetchCalled = true; return []; },
+    });
+
+    expect(fetchCalled).toBe(false); // TA gate covers, no fetch
+    expect(result.covered).toBe(1);
+    expect(result.momentumDepthInsufficient).toBe(0); // no depth flag
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("SUBTASK-C-2: ticker with bars >= TA_MIN_ROWS but < MOMENTUM_MIN_BARS → flag set, no fetch", async () => {
+    // 49 bars = passes TA gate (35) but fails momentum gate (252)
+    // Real-world case: watchlist tickers after volume was initialized on 2026-04-23
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("HPG");
+    seedCleanRows(db, "HPG", 49);
+
+    let fetchCalled = false;
+    const result = await runTaOhlcvBackfill({
+      db,
+      fetchFn: async () => { fetchCalled = true; return []; },
+    });
+
+    expect(fetchCalled).toBe(false); // TA gate skips fetch — unchanged
+    expect(result.covered).toBe(1); // TA ok: counted as covered
+    expect(result.momentumDepthInsufficient).toBe(1); // depth flag set
+    expect(result.backfilled).toBe(0); // no fetch happened
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("SUBTASK-C-3: bars < TA_MIN_ROWS → TA-skip path NOT taken; fetch triggered; no depth-insufficient flag", async () => {
+    // 10 bars = below TA threshold → goes to fetch path (not the covered path)
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("FPT");
+    seedCleanRows(db, "FPT", 10);
+
+    const result = await runTaOhlcvBackfill({
+      db,
+      fetchFn: mockFetchSuccess(TA_MIN_ROWS), // fetch returns enough rows
+    });
+
+    // Since it's below TA_MIN_ROWS, covered path is NOT taken
+    // → depth-insufficient check inside covered branch is never executed
+    expect(result.momentumDepthInsufficient).toBe(0);
+    expect(result.covered).toBe(0); // not covered — went through fetch path
+    expect(result.backfilled).toBe(1); // fetch succeeded
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("SUBTASK-C-4: exactly TA_MIN_ROWS bars (35) and < MOMENTUM_MIN_BARS → depth-insufficient=1", async () => {
+    // Exactly at the TA boundary — passes TA gate, fails momentum gate
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("MWG");
+    seedCleanRows(db, "MWG", TA_MIN_ROWS);
+
+    let fetchCalled = false;
+    const result = await runTaOhlcvBackfill({
+      db,
+      fetchFn: async () => { fetchCalled = true; return []; },
+    });
+
+    expect(fetchCalled).toBe(false);
+    expect(result.covered).toBe(1);
+    expect(result.momentumDepthInsufficient).toBe(1);
+  });
+
+  it("SUBTASK-C-5: exactly MOMENTUM_MIN_BARS bars (252) → depth-insufficient=0", async () => {
+    // At the exact momentum boundary → no depth flag
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("VNM");
+    seedCleanRows(db, "VNM", MOMENTUM_MIN_BARS);
+
+    const result = await runTaOhlcvBackfill({
+      db,
+      fetchFn: async () => [],
+    });
+
+    expect(result.covered).toBe(1);
+    expect(result.momentumDepthInsufficient).toBe(0); // >= 252 → no flag
+  });
+
+  it("SUBTASK-C-6: multi-ticker — mix of depth states → correct momentumDepthInsufficient count", async () => {
+    // VCB: 260 bars → covered, no depth flag
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("VCB");
+    seedCleanRows(db, "VCB", 260);
+    // HPG: 49 bars → covered (TA ok), depth flag set
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("HPG");
+    seedCleanRows(db, "HPG", 49);
+    // BID: 50 bars → covered (TA ok), depth flag set
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("BID");
+    seedCleanRows(db, "BID", 50);
+    // SSI: 0 bars → fetch path (below TA), no depth flag
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("SSI");
+
+    const result = await runTaOhlcvBackfill({
+      db,
+      fetchFn: mockFetchSuccess(TA_MIN_ROWS),
+    });
+
+    expect(result.covered).toBe(3); // VCB + HPG + BID
+    expect(result.momentumDepthInsufficient).toBe(2); // HPG + BID (< 252)
+    expect(result.backfilled).toBe(1); // SSI fetched
+    expect(result.errors).toHaveLength(0);
   });
 
   // ─── AC-5b: empty watchlist ───────────────────────────────────────────────

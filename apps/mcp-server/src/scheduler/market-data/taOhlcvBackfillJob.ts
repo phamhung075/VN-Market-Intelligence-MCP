@@ -45,6 +45,16 @@ import { writeOhlcvBatch } from "../../application/usecases/ohlcvWriteService.js
  */
 export const TA_MIN_ROWS = 35;
 
+/**
+ * Minimum OHLCV bar depth required for momentum indicators (ROC-252, RS,
+ * 52-week proximity). One trading year = ~252 sessions.
+ * Observability only — when a covered ticker has bars >= TA_MIN_ROWS but
+ * < MOMENTUM_MIN_BARS, a depth-insufficient log entry is emitted and the
+ * momentumDepthInsufficient counter in the result is incremented.
+ * Actual depth fill comes from the VPS push pathway (SUBTASK-A+B).
+ */
+export const MOMENTUM_MIN_BARS = 252;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,6 +105,12 @@ export interface TaOhlcvBackfillResult {
   sparse: number;
   /** Per-ticker error strings for tickers where fetch or upsert failed */
   errors: string[];
+  /**
+   * Tickers that passed the TA coverage gate (>= TA_MIN_ROWS clean rows, no corrupt)
+   * but have bar depth < MOMENTUM_MIN_BARS (252). These are TA-ok but momentum-shallow.
+   * Observability only — no fetch is triggered; actual fill comes from VPS push pathway.
+   */
+  momentumDepthInsufficient: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -207,11 +223,11 @@ export async function runTaOhlcvBackfill(
     logger.warn("[taOhlcvBackfill] failed to read watchlist", {
       error: err instanceof Error ? err.message : String(err),
     });
-    return { covered: 0, backfilled: 0, sparse: 0, errors: [] };
+    return { covered: 0, backfilled: 0, sparse: 0, errors: [], momentumDepthInsufficient: 0 };
   }
 
   if (watchlist.length === 0) {
-    return { covered: 0, backfilled: 0, sparse: 0, errors: [] };
+    return { covered: 0, backfilled: 0, sparse: 0, errors: [], momentumDepthInsufficient: 0 };
   }
 
   // ─── Prepared statements ──────────────────────────────────────────────────
@@ -228,6 +244,7 @@ export async function runTaOhlcvBackfill(
   let covered = 0;
   let backfilled = 0;
   let sparse = 0;
+  let momentumDepthInsufficient = 0;
   const errors: string[] = [];
 
   for (let i = 0; i < watchlist.length; i++) {
@@ -240,9 +257,16 @@ export async function runTaOhlcvBackfill(
     const cnt = coverage?.cnt ?? 0;
     const corruptCnt = coverage?.corrupt_cnt ?? 0;
 
-    // Skip if already covered: enough rows AND no corrupt rows
+    // Skip if already covered: enough rows AND no corrupt rows (TA gate at 35 — unchanged)
     if (cnt >= TA_MIN_ROWS && corruptCnt === 0) {
       covered++;
+      // Observability: flag tickers that pass TA gate but lack momentum depth (252 bars)
+      if (cnt < MOMENTUM_MIN_BARS) {
+        momentumDepthInsufficient++;
+        logger.info(
+          `[taOhlcvBackfill] depth-insufficient: ${code} ${cnt} bars`,
+        );
+      }
       continue;
     }
 
@@ -315,8 +339,8 @@ export async function runTaOhlcvBackfill(
 
   const summary =
     `[taOhlcvBackfill] Complete: covered=${covered} backfilled=${backfilled} ` +
-    `sparse=${sparse} errors=${errors.length}`;
+    `sparse=${sparse} errors=${errors.length} momentumDepthInsufficient=${momentumDepthInsufficient}`;
   logger.info(summary);
 
-  return { covered, backfilled, sparse, errors };
+  return { covered, backfilled, sparse, errors, momentumDepthInsufficient };
 }
