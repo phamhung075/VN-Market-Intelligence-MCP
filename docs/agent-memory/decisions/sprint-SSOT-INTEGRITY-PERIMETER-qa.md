@@ -94,3 +94,51 @@ Ran 18 tests across 2 files. [1497.00ms]
 
 **why-decision:** All 4 acceptance criteria verified. The wedge-guard critical safety property is correctly implemented and the tests genuinely exercise infra failure via env overrides. The one absent assertion (disk content check) is architecturally non-testable at hook unit level and the protection contract is met by the hook's exit-code/stdout protocol. 18/18 pass, 37 expect() calls, 0 regressions.
 **why-change:** No change from plan.
+
+---
+
+### STEP qa-S5 · qa · 2026-06-30T12:14:00Z
+**task-id:** SSOT-W1-SERVER-ENFORCE
+**session:** e71c7736-a95a-4040-b741-1d48454354f6
+**commit-gated:** 45c67766
+**verdict:** APPROVED
+
+**what-done:**
+Independent disk-read verification of all three deltas in commit 45c67766. Ran all four mandated gate commands from apps/mcp-server/.
+
+**delta-verification:**
+
+Delta-1 (status escape hatch closed):
+- `orchStateStore.ts:98`: `status: Status;` confirmed — `Status` is `z.infer<typeof StatusEnum>` imported from orchStateSchema.ts. The old hand-authored union with `| string` escape hatch is gone; tsc proof: `bun tsc --noEmit` exits 0 with no errors.
+- `orchStateSchema.ts:85`: `status: StatusEnum` in TaskSchema — confirmed.
+- Other `status: z.string()` lines at 146 (SprintSchema), 182 (SignalRowSchema), 199 (SignalArchiveEntrySchema), 222 (HeadSchema), 267 (DeprecatedHeadStubSchema) — all correctly left as freeform `z.string()` because they track sprint state, signal queue status, and head pipeline state, which are not constrained by the 12-value task StatusEnum.
+
+Delta-2 (safeParse before rename):
+- `orchStateStore.ts:192-208`: `OrchStateSchema.safeParse(parsed)` invoked and throws at line 199 BEFORE `renameSync(tmp, path)` at line 208. All guard checks complete before any fs write/rename. Fail-loud: throws with structured error listing all Zod issues by path. No silent-swallow.
+
+Delta-3 (QA-6 test):
+- `orchStateStore-atomic-write.test.ts:183-217`: QA-6 test present and substantive.
+- mtime-before captured at line 189 via `statSync(target).mtimeMs` before the throw attempt.
+- mtime-after captured at line 215 and asserted `toBe(mtimeBefore)` at line 216 — proves no rename occurred (POSIX rename changes mtime).
+- Content assertion at line 213: `expect(afterContent).toBe(SENTINEL_CONTENT)` — original file unchanged.
+- Throw assertion at line 200: `"[atomic-write] ORCH-STATE SCHEMA VALIDATION FAILED"` — confirms safeParse path, not the shallow section-presence guard.
+- Over-rejection guard (lines 223-268): all 12 StatusEnum values exercised (BACKLOG, TODO, IN_PROGRESS, REVIEW, QA, DONE, DONE_VERIFIED, BLOCKED, DEFERRED, CANCELLED, SKIPPED, READY) across sprint.tasks[], backlog[], and ready[] lanes — confirms no false rejection of canonical data.
+
+**gate-results:**
+- `bun tsc --noEmit` → exit 0 (no errors)
+- `bun test src/__tests__/orchStateStore-atomic-write.test.ts` → 8 pass / 0 fail (26 expect() calls)
+- `bun test src/infrastructure/__tests__/orchStateSchema.test.ts` → 103 pass / 0 fail (672 expect() calls)
+- `bun test src/__tests__/1837a-pipeline-state.test.ts src/__tests__/1980-f2-canon-schema.test.ts src/__tests__/1977-orchestration-endpoint.test.ts src/__tests__/1979-orchestration-decisions.test.ts` → 82 pass / 0 fail (308 expect() calls)
+
+**ddd-security-scan:**
+- DDD: orchStateStore.ts is in infrastructure/, imports only from ./orchStateSchema (also infrastructure/). No domain-layer inversions.
+- Security: no new process.env references, no hardcoded secrets, no SQL/shell injection surface. safeParse is a pure Zod call.
+- Fail-loud: throws with explicit structured error message including all Zod issue paths before any fs operation. No silent swallow.
+
+**what-considered:**
+- Whether the over-rejection guard covers all 12 StatusEnum values: confirmed — BACKLOG and READY are in flat lanes, the other 10 are in active_sprints[].tasks[]. All 12 accepted.
+- Whether the existing `status: "NEW" | "READ" | "RESOLVED" | "PARTIAL" | "OPEN" | string` on `OrchStateSignalRow` (orchStateStore.ts:47) is a gap: no — signal rows are not TaskBoardTask rows and are not validated by StatusEnum; their status is tracked by SignalRowSchema which uses `z.string()`. Intentional and correct.
+- Whether `OrchStateTaskBoardSprint.status: string` (line 116) needs fixing: no — sprint status (e.g. "ACTIVE", "CLOSED") is not the task StatusEnum; SprintSchema also uses `z.string().optional()`. Both correctly left freeform.
+
+**why-decision:** All 3 deltas verified from disk. All 4 gate commands pass clean. DDD and security surfaces are clean. QA-6 mtime assertion is genuine (POSIX rename changes mtime; assertion fails if rename occurred). Over-rejection guard covers all 12 StatusEnum values end-to-end.
+**why-change:** No change from plan.
