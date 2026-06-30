@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-30T06:22:32Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+    "next_agent": "architect",
+    "updated_at": "2026-06-30T12:56:00Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "Sprint MARKET-INDICATOR-DEPTH-P0 / feature BA-IND-P1-MOMENTUM-FRONTEND CLOSED (pm commit dff7ee9e moved sprint→closed_sprints; TASK-501+TASK-502 DONE_VERIFIED). Head idle — no active development queued. dev-team final close: RAW-verified pm left head non-idle, dispatcher corrected."
+    "note": "Tick 12:37Z dispatched 2 parallel sprints (live WIP->2, disjoint zones): [P0] FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR->architect (root-cause daily_ohlcv 49-bar floor: WRITER/retention/backfill-lookback; FIX WRITER not residue; NEVER flat-seed; zone apps/mcp-server/) || SSOT-W1-ORCH-APPLY-WRAPPER->dev-mcp-server (audit ~290 jq-writers route through wrapper + canonical pointer in dev-standards.md + QA-1/QA-2/CAS tests; zone scripts/). ci_red a3af26b6 triaged=flaky-divergence on stale orch-only origin HEAD (no router push: red-prepush-strands-fleet + bun-suite flaky; durable full-suite reconciliation owned by SSOT-W1-BASH-SHIM QA-7 next tick)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3271,7 +3271,7 @@
           {
             "id": "SSOT-W1-ORCH-APPLY-WRAPPER",
             "type": "dev",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "title": "Audit + hardening proof: scripts/orch-apply.sh canonical wrapper; proof all ~290/tick jq-patch writers route through it; add CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER pointer in dev-standards.md",
             "wave": 1,
             "rank": 5,
@@ -3285,7 +3285,11 @@
             "created_at": "2026-06-27T16:50:00Z",
             "created_by": "pm-agent",
             "detail_ref": "docs/handoffs/SSOT-W1-ORCH-APPLY-WRAPPER.md",
-            "verify_note": "QA-2 (dup-key in candidate rejected), QA-1 (bad status rejected) pass; codebase audit finds all jq patches route through wrapper; canonical pointer added to dev-standards.md."
+            "verify_note": "QA-2 (dup-key in candidate rejected), QA-1 (bad status rejected) pass; codebase audit finds all jq patches route through wrapper; canonical pointer added to dev-standards.md.",
+            "updated_at": "2026-06-30T12:56:00Z",
+            "updated_by": "dev-team",
+            "dispatched_at": "2026-06-30T12:56:00Z",
+            "dispatched_by": "dev-team"
           },
           {
             "id": "SSOT-W1-BASH-SHIM",
@@ -9363,11 +9367,10 @@
       "updated_by": "pm",
       "updated_at": "2026-06-30T06:20:13Z"
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "type": "SPRINT-M",
         "size": "M",
         "priority": "P0",
@@ -9396,9 +9399,13 @@
         "depends": [],
         "created_by": "po-s135",
         "created_at": "2026-06-30T07:53:47Z",
-        "updated_at": "2026-06-30T07:53:47Z"
+        "updated_at": "2026-06-30T12:56:00Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T12:56:00Z",
+        "dispatched_by": "dev-team"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
