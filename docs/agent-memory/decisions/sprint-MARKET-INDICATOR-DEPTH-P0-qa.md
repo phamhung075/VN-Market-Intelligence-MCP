@@ -199,3 +199,13 @@
 - AC-4: 4 GAP rows for /dashboard/momentum present in coverage-map. Status stays GAP (TASK-501 backend deployed but upstream tools not yet producing data — honest-NULL renders correctly).
 **why-decision:** APPROVED — all 8 ACs + M-items verified via RAW code inspection + test execution. 2 vitest failures provably pre-existing (unrelated Kinh Dich feature, pre-502 commit).
 **why-change:** no change from plan.
+
+### STEP qa-S9 · qa · 2026-06-30T06:38Z
+**task-id:** CLEAN-STALE-BRANCH-CI-RED-FIX-BUNTEST
+**what-done:** Deleted stale local branch `ci-red-fix-buntest` (tip 6bcbe2e5) and removed its stale worktree from scratchpad tmp path.
+**what-considered:**
+- 0-unmerged proof: `git rev-list --count main..ci-red-fix-buntest` = 0; tip is ancestor of main (9a401d14). Safe to delete.
+- Worktree had uncommitted changes: `D apps/mcp-server/data`, `M bun.lock`, `M docs/agent-memory/modules/tool-usage-stats.json`, and 3 untracked 2026-06-27 session .md files — all in another session's scratchpad tmp (eb8b5309), disposable ci-red experiments.
+- Used `--force` on worktree remove due to uncommitted changes; `-d` (not -D) on branch as safety net.
+**why-decision:** Branch fully merged (0 unmerged), worktree path is another session's /private/tmp scratchpad — no value in uncommitted changes. NO-branches policy requires cleanup.
+**why-change:** no change from plan.

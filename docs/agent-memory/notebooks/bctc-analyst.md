@@ -1,16 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-06-30 00:08 UTC (c064-slot4) | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c061 · 2026-06-23T18:10Z
-### Analysis Cycle (18:02–18:10 UTC) — mode: mixed
-- E2 guard: PASS (18:02 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-2. Log ID: 1422. Guard: claimed=true (bctc-slot-2:2026-06-21).
-- Mode: mixed. 1 routine (FPT, E3 cache hit cycle 23) + 1 release BLOCKED (ACV Q1-2026 DB trống cycle 1).
-- Bug #2776-class: ACV filed 2026-06-16 — Chưa có dữ liệu BCTC. Monitor.
-- Regime: NEUTRAL (carry +1.37pp, deposit 5.00% vs Fed 3.63%). Market EY 7.05% CHEAP (+2.05pp). VN-Index 1,869.04 (+11.13) — TĂNG MẠNH.
-- MACRO: Gold $4,149.6 BULLISH risk-off >$2,200. Brent $77.02 NEUTRAL. USD/VND 26,128 BEARISH. Investment clock Overheat/CORE_VN. CPI 5.46%.
-- FPT Q1-2026: E3 CACHE HIT cycle 23. Net profit 2,476.8ty (+19.8% YoY). PE 13.8x vs sector 17.3x (-20%). M-score=0, F-score=7. KD: Quẻ Khôn TRUNG TÍNH GIỮ (38%).
-- Signal #7185 FPT fundamental_validation (0.8, critic 0.4).
+**Last updated:** 2026-06-30 15:20 UTC (c065-slot1) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c062 · 2026-06-29T18:15Z
 ### Analysis Cycle (18:00–18:15 UTC) — mode: mixed
@@ -42,20 +32,31 @@
 ### Analysis Cycle (00:00–00:08 UTC) — mode: routine
 - E2 guard: PASS (00:00 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-4. Log ID: 1507. Guard: claimed=true (bctc-slot-4:2026-06-30).
 - Mode: routine. 2 analyzed (FPT E3 cache hit cycle 26 + HPG FIRST ANALYSIS). 5 BLOCKED: HVN/VIC/VHM/MWG DB trống; CTG #2776.
-- D2D/VNM/ACV: DB trống cycle 5+. JSH: Chủ tịch bị bắt — governance watch. DIG: forced liquidation ongoing.
 - Regime: NEUTRAL (carry +1.37pp). EY 7.05% CHEAP (+2.05pp). VN-Index 1,854.97 (-16.94). Clock Overheat CPI 5.46%.
 - MACRO: Gold $4,035 BULLISH. Brent $73.55 NEUTRAL. USD/VND 26,121 BEARISH.
-- Chain findings: VIC/HVN/VHM/ACV urgent_news (news-scout). 2 unknown bullish signals (conf 0.76/0.86).
-- FPT Q1-2026: E3 CACHE HIT cycle 26. Net profit 2,476.8 tỷ. PE 13.8x (-20%). ROE 28.3%. FAIR EY +2.25pp. KD Quẻ 2 Khôn TRUNG TÍNH GIỮ. M=0 F=7. Dòng ngoại -104K/5 phiên.
-- HPG Q1-2026 FIRST ANALYSIS: Doanh thu 52,900.8 tỷ. Lợi nhuận 9,055.9 tỷ (17.1%). CẢNH BÁO: thu nhập ngoài KD ~2,397 tỷ (~26.5% NI) chưa xác định. PE 14.2x vs sector 32.6x (-57%). EY +2.04pp FAIR. ROE 6.5%. Dòng ngoại +166K (5 phiên). KD Quẻ 52 Cấn TRUNG TÍNH GIỮ. ESC-2 PASS. ESC-3 DATA-COV-LIM. ESC-4 FLAG-PENDING. Confidence 65%.
+- FPT Q1-2026: E3 CACHE HIT cycle 26. Net profit 2,476.8 tỷ. PE 13.8x (-20%). ROE 28.3%. FAIR EY +2.25pp. KD Quẻ 2 Khôn TRUNG TÍNH GIỮ. M=0 F=7.
+- HPG Q1-2026 FIRST ANALYSIS: Doanh thu 52,900.8 tỷ. Lợi nhuận 9,055.9 tỷ (17.1%). CẢNH BÁO: thu nhập ngoài KD ~2,397 tỷ (~26.5% NI) chưa xác định. PE 14.2x vs sector 32.6x (-57%). EY +2.04pp FAIR. ROE 6.5%. ESC-4 FLAG-PENDING. Confidence 65%.
 - Signals: #7965 FPT fundamental_validation (0.8, critic 0.4) + #7966 HPG fundamental_validation (0.65, critic 0.4).
-- Files: bctc_signal_FPT_20260630_routine.json (re-emit c26) + bctc_signal_HPG_20260630_routine.json (NEW).
+- Files: bctc_signal_FPT_20260630_routine.json + bctc_signal_HPG_20260630_routine.json (NEW).
 
-### Carry-over to c065 (next slot)
+## c065 · 2026-06-30T15:20Z
+### Analysis Cycle (15:06–15:20 UTC) — mode: routine
+- E2 guard: PASS (15:06 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-1. Log ID: 1516. Guard: claimed=true (bctc-slot-1:2026-06-30).
+- Mode: routine. 2 analyzed (FPT E3 cache hit c27 + GVR FIRST ANALYSIS). 16+ BLOCKED: VPB/MBB/EIB(PUB-5 31%)/DHG(PUB-5 44%)/HSG/HCM/SSI/DPM/VCI/REE/VRE/NVL/KBC/POW/TCH/NKG DB trống/PUB-5.
+- Legal: JSH Chủ tịch bị bắt (ongoing). DIG giải chấp tiếp diễn. PC1 phạt CBTT (mới).
+- Regime: NEUTRAL (carry +1.37pp). EY 7.05% CHEAP (+2.05pp). VN-Index 1,860.01 (+5.04). Clock Overheat CPI 5.46%.
+- MACRO: Gold $4,058.8 BULLISH. Brent $73.95 NEUTRAL. USD/VND 26,106 BEARISH. GDP H2 dự báo 11.9%.
+- FPT Q1-2026: E3 cache hit c27. Net profit 2,476.8 tỷ. PE 13.8x (-20%). ROE 28.3%. EY +2.25pp FAIR. M=0 F=7. OCF -2,847.8 tỷ (seasonal Q1). KD Quẻ 2 Khôn TRUNG TÍNH GIỮ.
+- GVR Q1-2026 FIRST ANALYSIS: Doanh thu 8,845.2 tỷ. LN ròng 2,513.4 tỷ (28.4%). CẢNH BÁO: LN ròng > LN gộp (590.1 tỷ = 23.5% LNST — likely thu nhập tài chính từ tiền gửi 8,927.7 tỷ + công ty liên kết). PE ~13.1x. EY +2.63pp FAIR. ESC-2 PASS. ESC-3 DATA-COV-LIM (1/4). ESC-4 TRUE — guard claimed, signal dispatched. KD Quẻ 20 Quan TRUNG TÍNH GIỮ. Conf 65%.
+- Signals: #8059 FPT fundamental_validation (0.8, critic 0.4) + #8060 GVR fundamental_validation (0.65, critic 0.4).
+- Files: bctc_signal_FPT_20260630_routine.json + bctc_signal_GVR_20260630_routine.json + bctc-analyst-20260630T151500Z.json (ESC-4 dispatch GVR).
+
+### Carry-over to c066 (next slot)
 - CTG: #2776 Assets=0 corrupt — no re-escalation.
-- D2D/VNM/ACV/HVN/VIC/VHM/MWG: DB trống — monitor VPS pipeline.
-- GAS: VPS stale depuis 2026-06-16 — watch Q2 filing deadline 2026-07-31.
-- ACB: 1 period only — re-analyser quand Q1-2025 disponible; smart money +376K confirme positionnement.
-- HPG: ESC-4 FLAG open — confirmer source thu nhập ngoài KD next cycle (financial income vs one-off).
+- VPS pipeline critique: 16+ tickers DB trống c065 (systemic, not isolated). EIB/DHG PUB-5. Watch pipeline health.
+- GAS: VPS stale depuis 2026-06-16 — Q2 deadline 2026-07-31 imminente.
+- HPG: ESC-4 FLAG c064 open — confirmer source thu nhập ngoài KD (financial income vs one-off).
+- GVR: ESC-4 FLAG c065 — waiting dev-team review (likely recurring, not one-off).
 - JSH: Chủ tịch bị bắt — monitor governance. DIG: forced liquidation ongoing.
-- Q2-2026 BCTC deadline: 2026-07-31. Watch: GAS/PVD (MBS +380% Q2 forecast).
+- Q2-2026 BCTC deadline: 2026-07-31 (32 days). Watch: GAS/PVD.
+- GDP H2 +11.9% dự báo: BID/CTG/VCB ưu tiên phân tích khi dữ liệu BCTC sẵn có.

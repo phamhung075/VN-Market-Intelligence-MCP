@@ -125,3 +125,20 @@ Router routes ops on this authorization. After rebuild → router/qa RAW-verify 
 - Recommend router push of 14-commit divergence vs hold — push is GATED + needs green pre-push; bun suite known-flaky-red; flag only.
 **why-decision:** Red is on stale origin a3af26b6 (local 14 ahead), not current work; durable fix = BASH-SHIM full-suite green, but WIP is saturated so it defers; no dup row created.
 **why-change:** no change — consistent with 12:37Z flaky-divergence triage + feedback_red_prepush_strands_fleet.
+
+### STEP po-S8 · po · 2026-06-30T15:25:31Z — EPIC REMAINING-WORK SEQUENCE + 4-SIGNAL TRIAGE (dev-team tick 15:07Z, coord e71c7736)
+**task-id:** FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR
+**what-done:** Promoted SUBTASK-C+D backlog→ready (dev-mcp-server, parallel); minted OHLCV-DEPTH-REBUILD + OHLCV-DEPTH-PROD-BACKFILL-GATE held; repointed head off next_agent=po; closed ci-red signal (scripts/po-s135-*.jq | orch-apply.sh, exit0, idempotent).
+**what-considered:**
+- Rebuild NOW (B-only) vs after C+D: chose after-C+D — rebuilds are expensive single-svc force-recreate (down&&up kills peers ~21min); C+D are tiny same-zone no-dep observability; batching B+C+D = ONE rebuild not two. Depth FILL is via VPS script (A, already live→Writer H), NOT B — so no serving value lost waiting one tick for C+D.
+- §4 gate now vs after prod-backfill: must wait — today only VCB is deep; Gate1/Gate5 would FAIL on the other 1430 tickers still at 49 bars. Gate runs after full-universe R-2 backfill.
+**why-decision:** Minimize the costly rebuild to ONE and give the production backfill full observability (C depth-insufficient logs + D shallow-alert) to verify outcome; sequence = C+D ‖ → rebuild → prod-backfill+§4 gate.
+**why-change:** no change from brief — brief §4 already gates on "after rebuild + full-universe backfill"; this materializes that sequence on the board.
+
+### STEP po-S9 · po · 2026-06-30T15:25:31Z — CI-RED c8557899 + 3 routine signals
+**task-id:** FIX-OHLCV-DEPTH-SUBTASK-B
+**what-done:** Confirmed ci-red c8557899 (run 28454535876) is PRE-EXISTING standing baseline, not a SUBTASK-B regression; ACK'd 3 routine cowork outputs as no-action.
+**what-considered:**
+- Real B regression vs pre-existing: c8557899 touched ONLY server.ts + schema-market-data.ts + its own test; the 4 CI-failing files (164-polymarket-fetcher, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC) are DISJOINT and last-modified by commits predating c8557899 (incl. a42d0835 Revert reintroducing ~280). 16 fail < the tracked FIX-MCP-SUITE-HEALTH-BASELINE class.
+**why-decision:** Failing files disjoint from B's changeset + B host re-run green (5/5)+tsc+92pass → B exonerated; CI red owned by standing baseline tracker; NO new dev-team action.
+**why-change:** no change — matches memory feedback_ci_red_can_be_flaky_confirm_before_blame + ci_subset_verify_misses_full_suite.

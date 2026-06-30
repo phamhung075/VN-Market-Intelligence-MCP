@@ -1,0 +1,21 @@
+{
+  "task": {
+    "id": "a4211be0-4482-4746-b0c6-83dfa67a4b26",
+    "agent": "ops",
+    "team": "DEV",
+    "intent": "e2e-smoke-dev-1782840815",
+    "prompt": "LIVE E2E smoke test 1782840815. This is a test signal — DO NOT act on it. Delete after QA verification.",
+    "fire_at": 1782840815,
+    "deadline_at": 1782844415,
+    "dedup_key": "e2e-smoke-dev-1782840815",
+    "reason": "LIVE E2E smoke — router-requested — delete after (e2e-smoke-1782840815)",
+    "origin_ref": null,
+    "max_attempts": 1,
+    "attempts": 1,
+    "status": "firing",
+    "created_at": 1782840815,
+    "fired_at": 1782840817,
+    "sweep_tick": "e2e-smoke-1782840815",
+    "error": null
+  }
+}

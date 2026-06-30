@@ -1,0 +1,34 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "esc-deep-dive-request",
+  "priority": "high",
+  "createdAt": "2026-06-30T15:15:00Z",
+  "payload": {
+    "trigger_id": "ESC-4",
+    "ticker": "GVR",
+    "quarter": "Q1-2026",
+    "report_id": null,
+    "guard_key": "esc-deepdive:GVR:Q1-2026:ESC-4",
+    "guard_claimed": true,
+    "context": {
+      "item_type": "non-operating income (likely recurring financial income from deposits + associates)",
+      "item_pct_NP": 23.5,
+      "item_amount_ty": 590.1,
+      "net_profit_ty": 2513.4,
+      "gross_profit_ty": 2336.7,
+      "bctc_validation_warning": "Net profit exceeds gross profit — possible non-operating income",
+      "hypothesis": "GVR holds 8,927.7 ty cash. Interest income at 5% = ~111 ty/Q. Remaining ~479 ty may be equity-method income from associates or asset disposal. NOT a going-concern event. Dev-team to confirm recurring vs one-off classification."
+    },
+    "all_esc_fired": [
+      "ESC-4"
+    ],
+    "note": "orch-state write blocked (no bash execution in this agent context). PO please route ESC-4 to dev-team for review. Signal bus: id=8060."
+  },
+  "_processed": {
+    "fingerprint": "9bea463a1a2a1796d8721757f466bc195736a395d4c06fcbc882ed4c51819f96",
+    "processedAt": "2026-06-30T15:14:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

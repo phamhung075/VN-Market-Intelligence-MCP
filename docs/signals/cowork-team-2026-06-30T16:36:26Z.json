@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-30T16:36:26Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cadence"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": "240"
+    },
+    "last_fired_timestamp": "2026-06-30T16:35:50.000Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 3,
+    "note": "FIRE tick 16:30Z — 1 cowork gatherer spawned (refine-bctc-slot-4 / refine_bctc_md, bctc-offmarket policy, cadence-due last_fired 2026-06-28). Single non-chef slot: no collision, no calendar suppression (closed != weekend/holiday; bctc-offmarket runs off-market by design), no freshness downgrade (regime sideways, backlog 3), no CHEF mutex. tick-snapshot SKIPPED (refine_bctc consumes no market snapshot). Leaf BCTC-refine DB-pathway worker, no MARKET publish."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-30T16:36:26Z"
+}

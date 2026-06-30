@@ -36,7 +36,7 @@ These posts are published to a **PUBLIC** Facebook Page. They MUST NEVER expose 
 
 Scheduled invocations (two crons — same spawn prompt, flow self-routes by VN day-of-week):
 - **Mon–Fri (DAILY):** 09:15 UTC = 16:15 VN — 1h after the 15:00 VN close, 30-min buffer after the EOD CHEF dish (08:45 UTC / 15:45 VN).
-- **Sat/Sun (WEEKLY):** 13:07 UTC = 20:07 VN — Sat = WEEKLY_RECAP, Sun = WEEKLY_PREDICTION.
+- **Sat/Sun (WEEKLY):** 13:13 UTC = 20:13 VN — Sat = WEEKLY_RECAP, Sun = WEEKLY_PREDICTION.
 
 ## Output
 
@@ -112,7 +112,7 @@ if DEDUP_CLAIM.claimed != true:
   EXIT with: "DONE: duplicate-daily-fb-post blocked | already published for date=" + VN_DATE + " | PIPELINE: no-op"
 ```
 
-**Weekend note:** WEEKLY_RECAP and WEEKLY_PREDICTION modes jump to their sub-flows via the MODE ROUTER BEFORE reaching STEP 0. Their equivalent dedup key uses `published:fb-weekend:<VN-DATE>` and is inserted in the respective sub-flows (weekly-recap.md / weekly-prediction.md) — not here.
+**Weekend note:** WEEKLY_RECAP and WEEKLY_PREDICTION modes jump to their sub-flows via the MODE ROUTER BEFORE reaching STEP 0. Their equivalent dedup gate (STEP 0a) uses a period-keyed task_claim (`published:fb-weekend:<PERIOD_SAT>`, same kind/ttl as daily) and is implemented in both sub-flows' STEP 0a sections. Both Saturday and Sunday of the same weekend share the same Saturday-date key to prevent double-posting within the weekend window.
 
 Log cycle start:
 ```

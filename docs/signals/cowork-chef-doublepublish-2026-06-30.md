@@ -77,3 +77,39 @@ The cycle-snapshot got **monotonically more stale** (57→72→87 min, never pro
 - **A (same-tick CHEF mutex)** remains the robust closer regardless of which mechanism is real — legacy mode (however entered) must still dedupe guaranteed-vs-conditional chef slots within one tick.
 - **D (new, cheap, addresses the corrected root cause):** guarantee Step 6.0 `emit_pressure_state` fires on **every** tick including silent ones (it is already specified as un-skippable in `telemetry.md` Step 6.0) — this alone keeps `stale_warning` honest and prevents the spurious legacy fallback that opens the double-publish window.
 - **C (suppress `stale_warning`)** remains the wrong lever; the flag is a useful staleness signal, just not the one the 06:21Z section described.
+
+## DATA POINT — 2026-06-30 07:24Z: emit-gap predicate ALSO does not cleanly fit (4th observation)
+
+Live `emit_pressure_state` at the 07:15Z tick (processed 07:24:15Z) returned **`stale_warning=true`**, `cycle_snapshot_promoted=false`. Updated table:
+
+| emit time | prev `emitted_at` | emit gap (min) | snapshot promoted | snapshot age | `stale_warning` |
+|---|---|---|---|---|---|
+| 06:21:10Z | 05:24Z | ~57 | false | ~57 | **true** |
+| 06:36:26Z | 06:21:10Z | ~15.3 | false | ~72 | false |
+| 06:51:29Z | 06:36:26Z | ~15.1 | false | ~87 | false |
+| 07:05:24Z | 06:51:29Z | ~13.9 | false | ~102 | false |
+| 07:24:15Z | 07:05:24Z | **~18.85** | false | ~121 | **true** |
+
+**This 18.85min gap → `true` breaks the "clean 20min emit-gap" hypothesis** from the 06:51Z correction (a 20min threshold predicts `false` at 18.85min). And snapshot-age was already ruled out (false at 72/87/102min). **Neither simple predicate fits all five points.** The true threshold appears to sit between ~15.3 (false) and ~18.85 (true) min — lower than 20 — OR the predicate is composite, OR the server clock differs by a couple minutes from wall-clock. **dev-team MUST read the `emit_pressure_state` source; do not build a fix on any black-box emit-gap guess including this one.**
+
+**Why the gap stretched to 18.85min even though every tick emitted (sharpens fix D):** the 07:00Z and 07:15Z ticks BOTH ran the mandatory Step 6.0 emit, yet the emits landed at 07:05 and 07:24 — ~19min apart — because each fire processes some minutes after its nominal tick (processing-latency jitter: +5min then +9min on a 15min cadence → 15+4=19min emit-to-emit). **So fix D ("emit on every tick") is necessary but NOT sufficient** if staleness is emit-gap-based with a ~20min (or tighter) threshold: consecutive late fires can cross it with no skipped tick. **Robust corollary to fix D:** measure staleness against the **nominal `tick_id`** (15min apart by construction) rather than wall-clock `emitted_at`, OR widen the threshold to comfortably exceed (cadence 15min + worst-case per-tick processing jitter). **Fix A (same-tick CHEF mutex) remains the unconditional closer** — it does not depend on resolving this predicate at all.
+
+**Operational impact today: none.** This `stale_warning=true` will push the 07:30Z tick into legacy mode, but 07:30 has no cron match; the only same-tick chef-morning+chef-intraday coincidence (the actual double-publish trigger) is the 05:15Z tick, already passed. The last intraday cron today is 08:15Z with no morning slot to collide with → no AC-6 risk for the remainder of 2026-06-30.
+
+**RAW-confirmed single dish (post-spawn verification, 07:26Z):** `get_unreviewed_market_messages` shows MARKET **id 923** @ 07:25:59Z as the *only* chef dish for the 07:15Z tick (VIC +1.1%, banking VCB/BID/CTG, gold −2.96σ, USD/VND 26106, VNM oversold — real content, not fabricated). No sibling chef post within the window. This bounds the defect empirically: even under the conditions that *would* trigger legacy mode next tick, a non-collision intraday tick produces exactly one dish. The double-publish is a property of the **05:15Z guaranteed+conditional same-tick coincidence** (ids 920+921), not of legacy mode or chef behavior in general — which is why **fix A (same-tick CHEF mutex)** is the targeted closer.
+
+## DATA POINT — 2026-06-30 08:07Z: silent-fast vs FIRE-late emit gap trips staleness (6th observation, tightest bracket + clean cause)
+
+Live `emit_pressure_state` at the 08:00Z tick (a **FIRE** tick — `news-scout-offhours` + `market-watcher-offhours`, both due on the `0 */4` offhours cadence) returned **`stale_warning=true`**, `cycle_snapshot_promoted=false`. Extended table (gap = wall-clock between consecutive `emitted_at`):
+
+| emit time | prev `emitted_at` | emit gap (min) | tick type | `stale_warning` |
+|---|---|---|---|---|
+| 07:36:08Z | 07:24:15Z | ~11.9 | silent | false |
+| 07:50:28Z | 07:36:08Z | ~14.3 | silent | false |
+| 08:07:29Z | 07:50:28Z | **~17.0** | **FIRE (2 spawns)** | **true** |
+
+**Tightens the threshold bracket to [~15.3 false → ~17.0 true]** (was [15.3 → 18.85]) — strongly implying the staleness cutoff is **≈16 min, well below 20**. This is the **cleanest instance yet of the fix-D-insufficiency mechanism** from the 07:24Z section, and it pins the *cause* concretely: the 08:00Z tick emitted **~7.5 min past nominal** because it did real work (claim 2 slot tokens, `get_cycle_bootstrap` + `get_macro_snapshot`, spawn 2 background agents, atomic `last_fired` write), while the prior 07:45Z **silent** tick emitted fast (~5 min past nominal). **silent-fast → FIRE-late emit timing = ~17 min apart on a nominal 15 min cadence, with ZERO skipped ticks.** Every tick ran the mandatory Step 6.0 emit, yet staleness still tripped — re-confirming **fix D ("emit every tick") is necessary but NOT sufficient.** The corollary is now twice-evidenced: **key staleness on the nominal `tick_id` (15 min apart by construction), not on wall-clock `emitted_at`** — OR widen the threshold to exceed `cadence(15) + worst-case fire-tick processing jitter(~8)`. **dev-team MUST still confirm against the `emit_pressure_state` source — black-box read.** **Fix A (same-tick CHEF mutex) remains the unconditional closer.**
+
+**Operational impact today: none.** This `stale_warning=true` pushes the 08:15Z tick into legacy mode, but at 08:15Z **only chef-intraday matches** (cron `13 2-8`; the chef-morning `15 5` guaranteed slot does NOT match) — no guaranteed+conditional same-tick coincidence → at most one dish → **no AC-6 double-publish risk**. 08:15Z is the last intraday cron of 2026-06-30.
+
+**Recovery confirmed (08:15Z emit) — staleness SELF-HEALS within one tick.** The very next tick's emit at **08:21:20Z** (gap from 08:07:29Z = **~13.9 min**, back below the ~16 min cutoff) returned **`stale_warning=false`**. So one late FIRE tick poisons **exactly one** following tick (which reads legacy), then the flag clears on the next emit. **Blast radius = 1 tick, non-cascading, self-recovering** — which caps the *severity* of the fix-D gap at LOW (a transient single-tick legacy-mode flip, never a stuck-legacy state). The danger is therefore narrow but real: it bites only if the *single poisoned tick* happens to be a guaranteed+conditional CHEF coincidence (e.g. the 05:15Z morning+intraday overlap) where legacy mode skips cadence/mutex suppression. Today's poisoned tick (08:15Z) was not such a coincidence → zero impact. **Fix A (same-tick CHEF mutex, suppression-mode-independent) still required** precisely because it closes the case regardless of which mode the poisoned tick lands in.

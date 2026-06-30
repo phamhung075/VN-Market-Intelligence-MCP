@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-30T15:05:51Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": "240"
+    },
+    "last_fired_timestamp": "2026-06-30T15:05:29.000Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 2,
+    "note": "bctc-analyst daily off-market routine analysis; bg agent aa032ded; notebook+analysis-brief writer, no MARKET publish, no CHEF verify"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-30T15:05:51Z",
+  "_processed": {
+    "fingerprint": "eacf5d7f54dc75ef70469330e76b88b023446c7d13ed2f5640593b757131bf1c",
+    "processedAt": "2026-06-30T15:14:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
