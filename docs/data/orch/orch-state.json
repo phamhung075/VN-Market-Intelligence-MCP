@@ -245,10 +245,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
-    "next_agent": "architect",
-    "updated_at": "2026-06-30T20:20:07Z",
-    "updated_by": "po-s135",
-    "note": "PO triage: FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000 RAW-CONFIRMED user-facing (gateway 20:13Z: FPT rs594/roc606x, DHG rs922, VHM/VIC -1.35/-0.998 artifacts across >=4 watchlist tickers). 2nd daily_ohlcv contamination class (whole-row close<1000) -> CONTAM-6 (close>=1000 clause) structurally misses it. Sprint OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 kicked off (sprint_goal + active_sprints), umbrella FIX promoted backlog->ready as SPRINT-M. DISPATCHING architect for safe per-ticker discontinuity predicate (EXCLUDE index rows) + durable writer guard + reflow plan; then pm decompose -> developer (apps/mcp-server). Push gated (PO/human)."
+    "next_agent": "pm",
+    "updated_at": "2026-06-30T20:45:00Z",
+    "updated_by": "architect",
+    "note": "Architect design DONE. Brief: docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md. Handoff: docs/handoffs/FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM.md. 4 proposed tasks: CONTAM-10-MIGRATION + CONTAM-10-WRITER + CONTAM-10-SANITY (parallel) + CONTAM-10-EXEC (sequential after MIGRATION QA). Task moved to REVIEW/pm."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10083,25 +10083,24 @@
       "updated_by": "pm",
       "updated_at": "2026-06-30T06:20:13Z"
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
         "title": "daily_ohlcv thousands-format contamination (close<1000) FPT/VHM -> roc 606x, 52w low 100.3",
-        "status": "READY",
+        "status": "REVIEW",
         "type": "SPRINT-M",
         "zone": "apps/mcp-server/",
         "size": "M",
         "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
         "priority": "high",
-        "owner_agent": "architect",
-        "next_agent": "architect",
+        "owner_agent": "pm",
+        "next_agent": "pm",
         "depends": null,
         "detail_ref": null,
         "created_at": "2026-06-30T19:00:03Z",
         "created_by": "dev-team",
-        "updated_at": "2026-06-30T20:20:07Z",
-        "updated_by": "po",
+        "updated_at": "2026-06-30T20:45:00Z",
+        "updated_by": "architect",
         "note": "dev-team RAW-verify (gateway, post-RC2): with TA svc fixed, get_roc_momentum FPT roc=606x and get_52w_proximity FPT low_52w=100.3 (vs high 99800, pct_from_low 698x) + VHM low_52w=100 -- caused by daily_ohlcv rows storing prices in THOUSANDS format (close=100.3 meaning 100300 VND) for ~Aug2025-Feb2026. RECURRENCE-ADJACENT: prior OHLCV-UNIT-CONTAM (closed) / CONTAM-6 repaired only the 'open<100 AND close>=1000' class; this NEW class has close<1000 so the old script misses it. PO triage: scope DB migration targeting close<1000 AND close>50 AND date window per affected code (verify exact predicate vs live rows first) + reflow derived columns. Serving-integrity: FPT/VHM momentum + 52w cards currently show garbage. Recurring-bug lens (feedback_recurring_bug_escalation): 2nd contamination class same table -- prefer a durable ingest-time unit-normalization guard over another one-off repair.",
         "promoted_at": "2026-06-30T20:20:07Z",
         "promoted_by": "po-s135",
@@ -10120,9 +10119,12 @@
         ],
         "generic_mandate": "Ship the durable writer-side guard + sanity-job extension so this contamination class cannot re-accumulate; the repair migration alone does NOT close the sprint.",
         "verification_gate": "RAW (gateway, not badges): (1) get_relative_strength no-arg -> |rs|<=~3 for h63/h126/h252 on ALL watchlist tickers; (2) get_roc_momentum no-arg -> roc in a sane band (no 606x, no -0.998) for all; (3) VNINDEX get_price_history still ~1300-1900 with 253 bars (untouched); (4) a chosen legitimately-cheap stock untouched; (5) writer unit test: synthetic thousands-format push for a high-price ticker is normalized/rejected; (6) CONTAM-5 sanity job flags the new class.",
-        "cascade": "architect (safe predicate design + writer-gap + reflow plan; brief per recurring-bug-escalation) -> pm (decompose into dev tasks) -> developer (apps/mcp-server)."
+        "cascade": "architect (safe predicate design + writer-gap + reflow plan; brief per recurring-bug-escalation) -> pm (decompose into dev tasks) -> developer (apps/mcp-server).",
+        "dispatched_at": "2026-06-30T20:26:28Z",
+        "dispatched_by": "dev-team"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",

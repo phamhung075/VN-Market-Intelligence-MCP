@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-30 19:11 UTC | **Sprint:** TA-CONSUMER-STALE-INDICATORS
+**Last updated:** 2026-06-30 20:45 UTC | **Sprint:** OHLCV-UNIT-CONTAM-WHOLEROW-LT1000
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-30T20:45Z — OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (DESIGN DONE)
+
+**Task:** FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM | BUG-FIX | zone: apps/mcp-server/ + scripts/migrations/
+**BUILD-STANDARD:** not-applicable (bug-fix, no new microservice)
+**Root cause confirmed:** CONTAM-6 predicate `(open<100 OR low<100) AND close>=1000` misses whole-row class where ALL fields < 1000. `normalizeOhlcvToVnd` only fires at max(OHLC)<100; `detectAndNormalizeScaleFromPrevClose` blind when entire series contaminated (prevClose also dirty → ratio≈1).
+**A (repair migration):** per-ticker anchor (most recent clean bar close>=1000 in last 180d). Candidate: `anchor/row.close >= 100 AND row.close < 1000 AND close > 0`. Exclude INDEX_TICKERS. Dry-run + human-confirm + BEGIN IMMEDIATE txn. New file: `scripts/migrations/repair-ohlcv-unit-contamination-wholerow-lt1000.ts`.
+**B (reflow):** NONE needed. RS/ROC/52w = computed-on-read by Go TA microservice (source_tier=3 confirmed in tool code + schema has zero materialized RS cols). Post-repair gateway probe only.
+**C.1 (writer guard):** Add `fetchCleanReferenceCloseMap` (full-history `close>=1000` batched query) in `ohlcvWriteService.ts`. Use as `effectivePrevClose` when standard prevClose < 1000. Domain function `normalizeOhlcvToVnd` unchanged (stays pure). C.2: Pass 4 in `ohlcvSanityCheckJob.ts` — per-ticker anchor divergence scan flagging whole-row close<1000 class; index tickers excluded; joins existing hits[]/BUG Telegram path.
+**PM decomposition:** 4 tasks: CONTAM-10-MIGRATION / CONTAM-10-WRITER / CONTAM-10-SANITY (parallel) + CONTAM-10-EXEC (sequential: blocks on MIGRATION QA-PASS).
+**Key risk:** RISK-1 [HIGH] anchor picks contaminated bar if recent 180d window entirely contaminated — mitigated by dry-run per-ticker report showing anchor_close values for human review.
+**Output:** `docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md` + `docs/handoffs/FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM.md`
 
 ## 2026-06-30T19:11Z — FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (DESIGN DONE)
 
