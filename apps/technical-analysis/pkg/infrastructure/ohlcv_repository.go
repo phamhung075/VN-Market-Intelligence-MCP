@@ -31,6 +31,9 @@ func NewSQLiteOHLCVRepository() *SQLiteOHLCVRepository {
 }
 
 // GetOHLCV returns up to limit full OHLCV bars for symbol, ordered oldest→newest.
+// FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE: inner subquery fetches the LATEST `limit`
+// rows (ORDER BY date DESC LIMIT ?); outer query re-orders oldest→newest.
+// This ensures volatility calculations use the most recent bars, not stale old bars.
 // When limit <= 0 it defaults to 300 (enough for drawdown + GK + RV60d history).
 func (r *SQLiteOHLCVRepository) GetOHLCV(symbol string, limit int) ([]domain.OHLCVBar, error) {
 	if limit <= 0 {
@@ -45,10 +48,12 @@ func (r *SQLiteOHLCVRepository) GetOHLCV(symbol string, limit int) ([]domain.OHL
 
 	rows, err := db.Query(
 		`SELECT date, open, high, low, close
-		   FROM daily_ohlcv
-		  WHERE code = ?
-		  ORDER BY date ASC
-		  LIMIT ?`,
+		   FROM (SELECT date, open, high, low, close
+		           FROM daily_ohlcv
+		          WHERE code = ?
+		          ORDER BY date DESC
+		          LIMIT ?)
+		  ORDER BY date ASC`,
 		symbol, limit,
 	)
 	if err != nil {

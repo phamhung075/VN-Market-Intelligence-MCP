@@ -44,14 +44,14 @@ func makeMomentumBars(n int, base, step float64) []domain.OHLCVBar {
 	return bars
 }
 
-// makeMomentumBarsWithGap creates bars with a gap > 5 days at position gapAfter.
-func makeMomentumBarsWithGap(n, gapAfter int, base, step float64) []domain.OHLCVBar {
+// makeMomentumBarsWithGap creates bars with a gap of gapDays calendar days at position gapAfter.
+// gapDays specifies the calendar-day jump introduced between bars[gapAfter] and bars[gapAfter+1].
+func makeMomentumBarsWithGap(n, gapAfter, gapDays int, base, step float64) []domain.OHLCVBar {
 	bars := makeMomentumBars(n, base, step)
 	if gapAfter > 0 && gapAfter < n-1 {
-		// Jump 10 days ahead for the bar after the gap.
 		t, _ := time.Parse("2006-01-02", bars[gapAfter].Date)
 		bars[gapAfter+1] = domain.OHLCVBar{
-			Date:  t.AddDate(0, 0, 10).Format("2006-01-02"),
+			Date:  t.AddDate(0, 0, gapDays).Format("2006-01-02"),
 			Close: bars[gapAfter+1].Close,
 		}
 	}
@@ -134,20 +134,42 @@ func TestMomentumService_ComputeROC_Formula(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Edge: gap >5 days → data_gap_too_large
+// Edge: gap >maxCalendarGap days → data_gap_too_large
 // ---------------------------------------------------------------------------
 
 func TestMomentumService_ComputeROC_GapTooLarge(t *testing.T) {
 	t.Parallel()
 	svc := domain.NewMomentumService()
 
-	bars := makeMomentumBarsWithGap(273, 100, 1000.0, 1.0)
+	// 20-day gap — exceeds maxCalendarGap (14) even after Tết-holiday allowance.
+	bars := makeMomentumBarsWithGap(273, 100, 20, 1000.0, 1.0)
 	roc, reason := svc.ComputeROC(bars)
 	if roc != nil {
 		t.Errorf("want nil ROC when gap present, got %f", *roc)
 	}
 	if reason == nil || *reason != "data_gap_too_large" {
 		t.Errorf("want null_reason='data_gap_too_large', got %v", reason)
+	}
+}
+
+// TestMomentumService_ComputeROC_TetGapAllowed verifies that a 10-day calendar gap
+// (representing the Vietnamese Tết / Lunar New Year market closure) does NOT trigger
+// data_gap_too_large.  Before FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE the check used
+// maxCalendarGap=5 which incorrectly rejected any series spanning Tết.
+func TestMomentumService_ComputeROC_TetGapAllowed(t *testing.T) {
+	t.Parallel()
+	svc := domain.NewMomentumService()
+
+	// 10-day gap — matches real Tết closure (e.g. 2026-02-13 → 2026-02-23).
+	bars := makeMomentumBarsWithGap(273, 100, 10, 1000.0, 1.0)
+	roc, reason := svc.ComputeROC(bars)
+	if roc == nil {
+		r := "<nil>"
+		if reason != nil {
+			r = *reason
+		}
+		t.Errorf("want valid ROC for 10-day Tết gap, got nil (reason=%s); "+
+			"maxCalendarGap too strict — must allow VN holiday closures", r)
 	}
 }
 

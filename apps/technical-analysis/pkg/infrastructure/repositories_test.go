@@ -208,3 +208,80 @@ func TestGetCandles_OsEnvDefault(t *testing.T) {
 		t.Log("GetCandles with default path: no error (market.db present in CWD)")
 	}
 }
+
+// TestGetCandles_ReturnsLatestNotOldest verifies that GetCandles returns the LATEST
+// N bars (ordered oldest→newest), not the oldest N bars.
+// Regression gate for FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE: the original bug caused
+// GetCandles to return the oldest 60 rows (2023 stale data with wrong prices)
+// instead of the most recent rows.
+func TestGetCandles_ReturnsLatestNotOldest(t *testing.T) {
+	const ticker = "VCB"
+
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "market.db")
+
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("open test DB: %v", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`CREATE TABLE daily_ohlcv (
+		code TEXT NOT NULL, date TEXT NOT NULL,
+		open REAL, high REAL, low REAL, close REAL NOT NULL
+	)`)
+	if err != nil {
+		t.Fatalf("create table: %v", err)
+	}
+
+	// Seed 50 OLD bars (2023) with close=1000 (stale price).
+	for i := 0; i < 50; i++ {
+		date := fmt.Sprintf("2023-01-%02d", 1+i%28)
+		if i >= 28 {
+			date = fmt.Sprintf("2023-02-%02d", 1+(i-28))
+		}
+		if _, err := db.Exec(
+			`INSERT INTO daily_ohlcv (code, date, open, high, low, close) VALUES (?, ?, ?, ?, ?, ?)`,
+			ticker, date, 1000, 1010, 990, 1000,
+		); err != nil {
+			t.Fatalf("insert old row %d: %v", i, err)
+		}
+	}
+	// Seed 50 NEW bars (2026) with close=62000 (correct recent price).
+	for i := 0; i < 50; i++ {
+		date := fmt.Sprintf("2026-01-%02d", 1+i%28)
+		if i >= 28 {
+			date = fmt.Sprintf("2026-02-%02d", 1+(i-28))
+		}
+		if _, err := db.Exec(
+			`INSERT INTO daily_ohlcv (code, date, open, high, low, close) VALUES (?, ?, ?, ?, ?, ?)`,
+			ticker, date, 62000, 62500, 61500, 62000,
+		); err != nil {
+			t.Fatalf("insert new row %d: %v", i, err)
+		}
+	}
+
+	t.Setenv("DB_PATH", dbPath)
+	repo := infrastructure.NewSQLitePriceRepository()
+
+	// Request limit=50: should return the LATEST 50 bars (2026, close=62000).
+	candles, err := repo.GetCandles(ticker, 50)
+	if err != nil {
+		t.Fatalf("GetCandles: %v", err)
+	}
+	if len(candles) != 50 {
+		t.Fatalf("want 50 candles, got %d", len(candles))
+	}
+
+	// Last bar must be from the recent 2026 window, not the stale 2023 window.
+	lastBar := candles[len(candles)-1]
+	if lastBar.Close < 50000 {
+		t.Errorf("GetCandles returned stale bars (last close=%.0f), want latest bars (close≈62000); "+
+			"regression: ORDER BY date ASC LIMIT bug re-introduced", lastBar.Close)
+	}
+	// First bar must also be from 2026 (all 50 returned bars should be recent).
+	firstBar := candles[0]
+	if firstBar.Close < 50000 {
+		t.Errorf("GetCandles[0] is stale (close=%.0f), want recent; oldest returned bar should be 2026", firstBar.Close)
+	}
+}

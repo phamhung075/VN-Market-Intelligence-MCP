@@ -195,3 +195,122 @@ func TestSQLiteMultiTickerOHLCVRepository_GetMultiTickerCandles_OrderedAsc(t *te
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE: all codes get latest bars (global-limit bug)
+// ---------------------------------------------------------------------------
+
+// TestGetMultiTickerCandles_AllCodesGetLatestBars is the regression gate for the
+// global-LIMIT bug that caused later-alphabetical codes (e.g. VCB, VHM) to receive
+// zero bars when early-alphabetical codes consumed the single global LIMIT.
+// With 10 codes × 500 bars and limit=300, totalLimit was 3000 — after consuming
+// FPT (739) + HPG (750) + MBB (750) ≈ 2239 rows, only 761 rows remained for
+// MSN..VHM, leaving VCB and later codes with 0 bars.
+// The fix uses per-code subqueries (latest N per code) so every code gets data.
+func TestGetMultiTickerCandles_AllCodesGetLatestBars(t *testing.T) {
+	// Use alphabetically-spread codes to expose the cutoff for late-alphabet codes.
+	codes := []string{"AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH", "III", "JJJ"}
+	const nBars = 500 // >> limit to exercise the per-code trim
+	const limit = 300
+
+	dbPath := createTestDB(t, codes, nBars)
+	t.Setenv("DB_PATH", dbPath)
+
+	repo := infrastructure.NewSQLiteMultiTickerOHLCVRepository()
+	result, err := repo.GetMultiTickerCandles(codes, limit)
+	if err != nil {
+		t.Fatalf("GetMultiTickerCandles: %v", err)
+	}
+
+	for _, code := range codes {
+		bars, ok := result[code]
+		if !ok {
+			t.Errorf("code %s missing from result — global-limit bug: late-alphabet codes starved", code)
+			continue
+		}
+		if len(bars) == 0 {
+			t.Errorf("code %s has 0 bars — global-limit bug not fixed", code)
+		}
+		if len(bars) != limit {
+			t.Errorf("code %s: want exactly %d bars (latest), got %d", code, limit, len(bars))
+		}
+	}
+}
+
+// TestGetMultiTickerCandles_ReturnsLatestBarsPerCode verifies that the repository
+// returns the LATEST N bars per code (not the oldest N), ordered oldest→newest.
+// Regression gate: old code returned oldest rows first due to ORDER BY date ASC
+// applied before the global LIMIT, so per-code trim selected "last N of the oldest M"
+// which still missed the most recent bars when global limit was hit early.
+func TestGetMultiTickerCandles_ReturnsLatestBarsPerCode(t *testing.T) {
+	const code = "VCB"
+	const limit = 50
+
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "market_test.db")
+
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`CREATE TABLE daily_ohlcv (
+		code TEXT NOT NULL, date TEXT NOT NULL,
+		open REAL, high REAL, low REAL, close REAL NOT NULL,
+		PRIMARY KEY (code, date)
+	)`)
+	if err != nil {
+		t.Fatalf("create table: %v", err)
+	}
+
+	// Seed 50 OLD bars (2023) with close=1000 (stale / wrong-unit price).
+	for i := 0; i < 50; i++ {
+		date := fmt.Sprintf("2023-01-%02d", 1+i%28)
+		if i >= 28 {
+			date = fmt.Sprintf("2023-02-%02d", 1+(i-28))
+		}
+		if _, err := db.Exec(
+			`INSERT INTO daily_ohlcv (code, date, open, high, low, close) VALUES (?, ?, ?, ?, ?, ?)`,
+			code, date, 1000, 1010, 990, 1000,
+		); err != nil {
+			t.Fatalf("insert old row %d: %v", i, err)
+		}
+	}
+	// Seed 50 NEW bars (2026) with close=62000 (correct recent price).
+	for i := 0; i < 50; i++ {
+		date := fmt.Sprintf("2026-01-%02d", 1+i%28)
+		if i >= 28 {
+			date = fmt.Sprintf("2026-02-%02d", 1+(i-28))
+		}
+		if _, err := db.Exec(
+			`INSERT INTO daily_ohlcv (code, date, open, high, low, close) VALUES (?, ?, ?, ?, ?, ?)`,
+			code, date, 62000, 62500, 61500, 62000,
+		); err != nil {
+			t.Fatalf("insert new row %d: %v", i, err)
+		}
+	}
+
+	t.Setenv("DB_PATH", dbPath)
+	repo := infrastructure.NewSQLiteMultiTickerOHLCVRepository()
+
+	// Request 50 bars — should get the LATEST 50 (all 2026, close=62000).
+	result, err := repo.GetMultiTickerCandles([]string{code}, limit)
+	if err != nil {
+		t.Fatalf("GetMultiTickerCandles: %v", err)
+	}
+	bars, ok := result[code]
+	if !ok {
+		t.Fatalf("code %s missing from result", code)
+	}
+	if len(bars) != limit {
+		t.Fatalf("want %d bars, got %d", limit, len(bars))
+	}
+	// All returned bars should be from 2026 (recent, close=62000).
+	for i, b := range bars {
+		if b.Close < 50000 {
+			t.Errorf("bar[%d] close=%.0f is stale (2023 data); want recent 2026 bars (close≈62000)", i, b.Close)
+			break
+		}
+	}
+}

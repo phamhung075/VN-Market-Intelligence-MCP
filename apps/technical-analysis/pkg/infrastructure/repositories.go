@@ -31,11 +31,14 @@ func NewSQLitePriceRepository() *SQLitePriceRepository {
 }
 
 // GetCandles returns up to `limit` daily candles for `symbol` ordered oldest→newest.
-// The query mirrors the mcp-server defaultComputeTa path exactly:
+// FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE: the inner subquery fetches the LATEST `limit`
+// rows (ORDER BY date DESC LIMIT ?) and the outer query re-orders them oldest→newest
+// so callers always receive the most recent bars, not the oldest.
 //
-//	SELECT date, close FROM daily_ohlcv WHERE code = ? ORDER BY date ASC LIMIT <limit>
+//	Before fix: ORDER BY date ASC LIMIT ? → returned oldest N bars (stale 2023 data)
+//	After fix:  subquery DESC LIMIT then outer ASC → returns latest N bars
 //
-// When limit <= 0 it defaults to 60 (matching the TS report path default).
+// When limit <= 0 it defaults to 60.
 func (r *SQLitePriceRepository) GetCandles(symbol string, limit int) ([]domain.CandleStick, error) {
 	if limit <= 0 {
 		limit = 60
@@ -48,7 +51,9 @@ func (r *SQLitePriceRepository) GetCandles(symbol string, limit int) ([]domain.C
 	defer db.Close()
 
 	rows, err := db.Query(
-		`SELECT date, close FROM daily_ohlcv WHERE code = ? ORDER BY date ASC LIMIT ?`,
+		`SELECT date, close
+		   FROM (SELECT date, close FROM daily_ohlcv WHERE code = ? ORDER BY date DESC LIMIT ?)
+		  ORDER BY date ASC`,
 		symbol, limit,
 	)
 	if err != nil {

@@ -25,8 +25,13 @@ const minBarsROC = 273
 const minCrossSection = 5
 
 // maxCalendarGap is the maximum allowed calendar-day gap between consecutive bars.
-// >5 calendar days between consecutive trading bars indicates 3+ missing sessions.
-const maxCalendarGap = 5
+// FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE: raised from 5 to 14 to accommodate the
+// Vietnamese Tết / Lunar New Year market closure, which causes a ~10-day calendar
+// gap (e.g. 2026-02-13 → 2026-02-23).  A 5-day threshold incorrectly rejected all
+// series that spanned Tết, producing false "data_gap_too_large" null results.
+// 14 days covers Tết + weekend combination while still catching true data outages
+// (missing weeks / months of data).
+const maxCalendarGap = 14
 
 // MomentumService provides pure calculation for cross-sectional ROC momentum.
 type MomentumService struct{}

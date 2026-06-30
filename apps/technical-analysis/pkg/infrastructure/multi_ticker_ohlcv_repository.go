@@ -1,21 +1,22 @@
 // Package infrastructure — SQLiteMultiTickerOHLCVRepository: reads OHLCV bars for
-// multiple ticker codes in a single IN-clause query from market.db.
+// multiple ticker codes using per-code subqueries from market.db.
 // Implements domain.MultiTickerOHLCVRepository.
+// FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE: replaced single IN-clause query with
+// per-code latest-N subqueries to fix global-LIMIT starvation and stale-data bugs.
 package infrastructure
 
 import (
 	"database/sql"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/vn-market-intelligence/technical-analysis/pkg/domain"
 
 	_ "modernc.org/sqlite"
 )
 
-// SQLiteMultiTickerOHLCVRepository fetches bars for a batch of ticker codes
-// using a single parameterized SQL query with an IN-clause.
+// SQLiteMultiTickerOHLCVRepository fetches the latest N OHLCV bars per ticker code
+// using independent per-code subqueries.
 // Watchlist size <= 50 tickers per the handoff contract.
 type SQLiteMultiTickerOHLCVRepository struct {
 	dbPath string
@@ -34,7 +35,25 @@ func NewSQLiteMultiTickerOHLCVRepository() *SQLiteMultiTickerOHLCVRepository {
 // GetMultiTickerCandles returns up to limit bars per code for each code in codes.
 // Returns a map[code][]OHLCVBar ordered oldest→newest per code.
 // Codes with zero rows are absent from the returned map (not an error).
-// The total SQL LIMIT is len(codes)*limit to bound memory usage.
+//
+// FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE: replaced the single IN-clause query with
+// per-code subqueries to eliminate two compounding bugs:
+//
+//  1. Global-LIMIT starvation: a single LIMIT of len(codes)*limit applied after
+//     ORDER BY code, date ASC caused early-alphabet codes (FPT, HPG) to consume the
+//     entire budget, leaving later-alphabet codes (VCB, VHM) with zero bars.
+//
+//  2. Stale-data direction: ORDER BY date ASC combined with a global LIMIT returned
+//     the OLDEST rows first; even when the per-code trim selected "last N of those
+//     returned", the window started from old contaminated data rather than the most
+//     recent bars.
+//
+// The fix uses one subquery per code:
+//
+//	SELECT ... FROM (SELECT ... WHERE code=? ORDER BY date DESC LIMIT ?) ORDER BY date ASC
+//
+// This guarantees every code independently receives its latest `limit` bars, ordered
+// oldest→newest for consumption by domain services.
 func (r *SQLiteMultiTickerOHLCVRepository) GetMultiTickerCandles(
 	codes []string,
 	limit int,
@@ -52,65 +71,53 @@ func (r *SQLiteMultiTickerOHLCVRepository) GetMultiTickerCandles(
 	}
 	defer db.Close()
 
-	// Build IN-clause placeholders: (?, ?, ...) with len(codes) slots.
-	placeholders := strings.Repeat("?,", len(codes))
-	placeholders = strings.TrimSuffix(placeholders, ",")
-
-	// Total row cap = len(codes) * limit to prevent unbounded memory.
-	totalLimit := len(codes) * limit
-
-	// Build args: code strings + totalLimit.
-	args := make([]interface{}, 0, len(codes)+1)
-	for _, c := range codes {
-		args = append(args, c)
-	}
-	args = append(args, totalLimit)
-
-	query := fmt.Sprintf(
-		`SELECT code, date, open, high, low, close
-		   FROM daily_ohlcv
-		  WHERE code IN (%s)
-		  ORDER BY code, date ASC
-		  LIMIT ?`,
-		placeholders,
-	)
-
-	rows, err := db.Query(query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("SQLiteMultiTickerOHLCVRepository: query: %w", err)
-	}
-	defer rows.Close()
-
 	result := make(map[string][]domain.OHLCVBar, len(codes))
-	for rows.Next() {
-		var (
-			code        string
-			bar         domain.OHLCVBar
-			open, high, low sql.NullFloat64
-		)
-		if err := rows.Scan(&code, &bar.Date, &open, &high, &low, &bar.Close); err != nil {
-			return nil, fmt.Errorf("SQLiteMultiTickerOHLCVRepository: scan: %w", err)
-		}
-		if open.Valid {
-			bar.Open = open.Float64
-		}
-		if high.Valid {
-			bar.High = high.Float64
-		}
-		if low.Valid {
-			bar.Low = low.Float64
-		}
-		result[code] = append(result[code], bar)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("SQLiteMultiTickerOHLCVRepository: iterate: %w", err)
-	}
 
-	// Per-code limit enforcement: trim to the latest `limit` bars if a code
-	// somehow returned more rows than expected (belt-and-suspenders).
-	for code, bars := range result {
-		if len(bars) > limit {
-			result[code] = bars[len(bars)-limit:]
+	for _, code := range codes {
+		rows, err := db.Query(
+			`SELECT date, open, high, low, close
+			   FROM (SELECT date, open, high, low, close
+			           FROM daily_ohlcv
+			          WHERE code = ?
+			          ORDER BY date DESC
+			          LIMIT ?)
+			  ORDER BY date ASC`,
+			code, limit,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("SQLiteMultiTickerOHLCVRepository: query %s: %w", code, err)
+		}
+
+		var bars []domain.OHLCVBar
+		for rows.Next() {
+			var (
+				bar             domain.OHLCVBar
+				open, high, low sql.NullFloat64
+			)
+			if err := rows.Scan(&bar.Date, &open, &high, &low, &bar.Close); err != nil {
+				_ = rows.Close()
+				return nil, fmt.Errorf("SQLiteMultiTickerOHLCVRepository: scan %s: %w", code, err)
+			}
+			if open.Valid {
+				bar.Open = open.Float64
+			}
+			if high.Valid {
+				bar.High = high.Float64
+			}
+			if low.Valid {
+				bar.Low = low.Float64
+			}
+			bars = append(bars, bar)
+		}
+		if err := rows.Close(); err != nil {
+			return nil, fmt.Errorf("SQLiteMultiTickerOHLCVRepository: close rows %s: %w", code, err)
+		}
+		if err := rows.Err(); err != nil {
+			return nil, fmt.Errorf("SQLiteMultiTickerOHLCVRepository: iterate %s: %w", code, err)
+		}
+
+		if len(bars) > 0 {
+			result[code] = bars
 		}
 	}
 
