@@ -6,6 +6,14 @@
 
 ---
 
+## c97 · 2026-06-30T04:05Z (off-hours, slot=news-scout-offhours)
+
+**20 articles analyzed: Oil 380% Q2 profit + Vingroup Top 15 SE Asia → 5 signals (#7987–#7991) | 2x chain_catalyst (oil/gas 8/10, real estate 8/10) + 3x urgent_news (GAS, VIC, VHM). Coverage: stale sweep identified ACB/HPG/BID (15d old), analyzed recent news (FPT ESOP, Baoviet Fund, gold decline, Vingroup ranking). Regime: NEUTRAL (oil $73.63 neutral band, gold $3981.6 >$3.9k safe-haven, USDVND 26106 >25k VND depreciation, carry 1.37pp NEUTRAL, yield CHEAP +2.05pp). Dedup: SELF_SIGNALS_CACHE=[] clean, SIBLING_WINDOW_CACHE checked. All NEW POSTED (critic_pass=0.8, 5/5 signals). No legal_risk detected. Search context timeout (non-fatal).**
+
+**Sentiment:** Bullish on oil/gas sector (8/10 earnings catalyst, GAS/PLX watchlist hit), Vingroup/Vinhomes real estate dominance (8/10 regional leadership). Mixed gold signal (-1.32% decline, risk-off). Market sentiment z=-1.35 bearish; bull 28%/bear 18%/neutral 53%. Hot_money_risk=false, gdp_warning_signal=false. Feedback: none. Metrics: 2 high-impact catalysts ≥8/10, 3 sector actors.
+
+---
+
 ## c96 · 2026-06-30T00:03Z (off-hours, slot=news-scout-offhours)
 
 **20 articles analyzed: Oil 380% profit forecast + Vingroup Top 15 SE Asia + Long Thành airport → 6 signals (#7959–#7964) | 2x chain_catalyst (oil/gas earnings, Vingroup ranking) + 4x urgent_news (VIC, VHM, HVN, ACV). Coverage: sweep-forced 0 (VNM, FPT, VCB, GAS, PLX, ACV, HVN recent). Regime: NEUTRAL (oil $73.55 neutral band, gold $4035 >$4k safe-haven, USDVND 26121 >25k depreciation, carry 1.37pp NEUTRAL, yield CHEAP +2.05pp). Dedup: SELF_SIGNALS_CACHE=[] clean, SIBLING_WINDOW_CACHE checked. All NEW POSTED (critic_pass=0.8–1.0, 6/6 signals). No legal_risk detected.**
