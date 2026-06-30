@@ -43,8 +43,12 @@ func main() {
 	tier3 := infrastructure.NewTier3Fetcher(marketDBPath)
 	historyRepo := infrastructure.NewSQLitePriceHistoryRepository(marketDBPath, ownDBPath)
 
+	// IND-P1-FOREIGN-ACCUM-RANK: Foreign flow and room event repositories
+	foreignFlowRepo := infrastructure.NewSQLiteForeignFlowRepository(marketDBPath)
+	roomEventRepo := infrastructure.NewSQLiteRoomEventRepository(marketDBPath)
+
 	// ── Delegate DDD wiring to wire.go ───────────────────────────────────────
-	mux := buildHandler(tier1, tier2, tier3, historyRepo)
+	mux := buildHandler(tier1, tier2, tier3, historyRepo, foreignFlowRepo, roomEventRepo)
 
 	// ── Listen ───────────────────────────────────────────────────────────────
 	addr := fmt.Sprintf(":%d", port)

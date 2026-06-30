@@ -8485,23 +8485,6 @@
         "specced_under": "BA-IND-P1-MOMENTUM-RS",
         "activated_by_pm_at": "2026-06-30T03:00:00Z",
         "handoff": "docs/handoffs/IND-P1-TECHNICAL-ANALYSIS-SUITE.md"
-      },
-      {
-        "id": "IND-P1-FOREIGN-ACCUM-RANK",
-        "tier": "P1",
-        "title": "Foreign-Accumulation Momentum Rank † — ADTV-normalized 5/20d foreign net-flow z-rank + room_exhaustion",
-        "owner": "dev-stock-price",
-        "zone": "apps/stock-price",
-        "priority": "medium",
-        "status": "IN_PROGRESS",
-        "plan_only": false,
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_at": "2026-06-29T20:18:44Z",
-        "next_agent": "dev-stock-price",
-        "specced_under": "BA-IND-P1-MOMENTUM-RS",
-        "activated_by_pm_at": "2026-06-30T03:00:00Z",
-        "handoff": "docs/handoffs/IND-P1-FOREIGN-ACCUM-SUITE.md"
       }
     ],
     "review": [
@@ -8569,7 +8552,28 @@
         "next_agent": "qa"
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "IND-P1-FOREIGN-ACCUM-RANK",
+        "tier": "P1",
+        "title": "Foreign-Accumulation Momentum Rank — ADTV-normalized 5/20d foreign net-flow z-rank + room_exhaustion",
+        "owner": "dev-stock-price",
+        "zone": "apps/stock-price",
+        "priority": "medium",
+        "status": "QA",
+        "plan_only": false,
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
+        "created_at": "2026-06-29T20:18:44Z",
+        "next_agent": "qa",
+        "specced_under": "BA-IND-P1-MOMENTUM-RS",
+        "activated_by_pm_at": "2026-06-30T03:00:00Z",
+        "handoff": "docs/handoffs/IND-P1-FOREIGN-ACCUM-SUITE.md",
+        "impl_done_at": "2026-06-30T04:30:00Z",
+        "impl_done_by": "dev-stock-price",
+        "impl_note": "Tool POST /price/foreign-accum-rank implemented per FR-1 through FR-13. LIVE daily_ohlcv columns confirmed: foreign_buy_vol, foreign_sell_vol, foreign_net_vol, volume. Honest-NULL with null_reason emitted for: insufficient_flow_history (<5 bars), insufficient_20d_history (5-19 bars), zero_adtv, insufficient_cross_section (<3 tickers), room_event_not_found. Service rebuild needed before QA can live-verify."
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",

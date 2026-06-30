@@ -78,8 +78,8 @@ func buildServer(
 ) *httptest.Server {
 	fetchUC := application.NewFetchPriceUseCase(r)
 	historyUC := application.NewPriceHistoryUseCase(h)
-
-	handler := httphandler.NewHandler(fetchUC, historyUC)
+	// Pass nil for ForeignAccumUseCase in legacy tests
+	handler := httphandler.NewHandler(fetchUC, historyUC, nil)
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)
 	return httptest.NewServer(mux)

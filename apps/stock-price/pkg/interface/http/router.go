@@ -22,16 +22,18 @@ import (
 
 // Handler holds all use cases and serves as the net/http handler collection.
 type Handler struct {
-	fetchUC   *application.FetchPriceUseCase
-	historyUC *application.PriceHistoryUseCase
+	fetchUC        *application.FetchPriceUseCase
+	historyUC      *application.PriceHistoryUseCase
+	foreignAccumUC *application.ForeignAccumUseCase
 }
 
 // NewHandler constructs the Handler.
 func NewHandler(
 	fetchUC *application.FetchPriceUseCase,
 	historyUC *application.PriceHistoryUseCase,
+	foreignAccumUC *application.ForeignAccumUseCase,
 ) *Handler {
-	return &Handler{fetchUC: fetchUC, historyUC: historyUC}
+	return &Handler{fetchUC: fetchUC, historyUC: historyUC, foreignAccumUC: foreignAccumUC}
 }
 
 // RegisterRoutes attaches all routes to the given mux.
@@ -42,6 +44,8 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /price/history", h.priceHistory)
 	// Also support path-param route from TS handlers.ts for backward compat
 	mux.HandleFunc("GET /price/history/", h.priceHistoryPathParam)
+	// IND-P1-FOREIGN-ACCUM-RANK: Foreign accumulation momentum rank
+	mux.HandleFunc("POST /price/foreign-accum-rank", h.foreignAccumRank)
 }
 
 // ── health ────────────────────────────────────────────────────────────────────
@@ -142,6 +146,17 @@ func (h *Handler) priceHistoryPathParam(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+// ── POST /price/foreign-accum-rank ────────────────────────────────────────────
+
+func (h *Handler) foreignAccumRank(w http.ResponseWriter, r *http.Request) {
+	if h.foreignAccumUC == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "foreign-accum-rank not configured"})
+		return
+	}
+	handler := NewForeignAccumHandler(h.foreignAccumUC)
+	handler.HandleForeignAccumRank(w, r)
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────

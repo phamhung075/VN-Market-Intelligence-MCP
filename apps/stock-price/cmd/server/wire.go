@@ -23,21 +23,27 @@ import (
 //
 // Layer wiring order:
 //  1. Module      — price_resolution.New(tier1, tier2, tier3)
-//  2. Application — FetchPriceUseCase + PriceHistoryUseCase
+//  2. Application — FetchPriceUseCase + PriceHistoryUseCase + ForeignAccumUseCase
 //  3. HTTP        — Handler.RegisterRoutes(mux)
 func buildHandler(
 	tier1, tier2, tier3 priceresolution.TierFetcher,
 	historyRepo domain.PriceHistoryPort,
+	foreignFlowRepo domain.ForeignFlowRepository,
+	roomEventRepo domain.RoomEventRepository,
 ) *http.ServeMux {
 	// ── Module ───────────────────────────────────────────────────────────────
 	priceModule := priceresolution.New(tier1, tier2, tier3)
 
+	// ── Domain Service ───────────────────────────────────────────────────────
+	foreignAccumService := domain.NewForeignAccumService(foreignFlowRepo, roomEventRepo)
+
 	// ── Application ──────────────────────────────────────────────────────────
 	fetchUC := application.NewFetchPriceUseCase(priceModule)
 	historyUC := application.NewPriceHistoryUseCase(historyRepo)
+	foreignAccumUC := application.NewForeignAccumUseCase(foreignAccumService)
 
 	// ── Interface/HTTP ────────────────────────────────────────────────────────
-	handler := httphandler.NewHandler(fetchUC, historyUC)
+	handler := httphandler.NewHandler(fetchUC, historyUC, foreignAccumUC)
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)
 
