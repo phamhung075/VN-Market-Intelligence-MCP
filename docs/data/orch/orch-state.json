@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "OHLCV-DEPTH-REBUILD",
-    "next_agent": "ops",
-    "updated_at": "2026-06-30T16:04:08Z",
+    "active_task_id": "OHLCV-DEPTH-PROD-BACKFILL-GATE",
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-06-30T16:20:18Z",
     "updated_by": "dev-team",
-    "note": "Tick 15:07Z: SUBTASK-D DONE_VERIFIED (impl 45fff717, memory b722c90b) -- ohlcvStartupProbe DEPTH_FLOOR=252 shallow classification, ONE aggregated WORK alert for 8<=cnt<252 tickers, sparse path unchanged, observability only; merge gate 0/0/0 (c2 benign), tests RE-RUN 10/10, tsc clean. EPIC mechanism E+A+B+C+D ALL DONE_VERIFIED. NEXT: OHLCV-DEPTH-REBUILD promoted backlog->ready (deps satisfied, held cleared) -> ops single-svc force-recreate-with-build (NEVER down&&up) brings B+C+D handlers live (inert until rebuild). Then OHLCV-DEPTH-PROD-BACKFILL-GATE (full-universe R-2 backfill + brief-4 cross-restart gate) done_verifies epic. Rebuild dispatched NEXT tick (16:07Z Step 0b resume) -- NOT piggybacked on this tick to avoid gateway disruption mid-tick. Push gated (PO/human)."
+    "note": "Tick 16:07Z CLOSED. OHLCV-DEPTH-REBUILD DONE_VERIFIED (INFRA, no code commit) -- RAW-verified via Bash: NEW image f71a1743 deployed (was 8b6bc8b9), mcp-server healthy ~17s, SUBTASK-D [ohlcv-probe] + SUBTASK-B [ohlcv-backfill-done depth shortfall shallow_count=40 depth_floor=252] boot logs LIVE, B re-queue BOUNDED (retry 1->2 then idle, R-5 cap intact), peers UNTOUCHED, errors=[]. EPIC mechanism E+A+B+C+D+REBUILD COMPLETE -- all handlers now LIVE in deployed image. FINAL: OHLCV-DEPTH-PROD-BACKFILL-GATE promoted backlog->ready (dep satisfied, held cleared) -> dev-mcp-server runs full-universe R-2 backfill PROD run + brief-4 cross-restart gate (Gates 1-5) which DONE_VERIFIES the epic. Sequenced NEXT tick (16:37Z Step 0b resume) -- NOT piggybacked: GATE = heaviest unit (full-universe backfill + restart) deserves fresh tick; this tick already did rebuild+RAW-verify. WIP=1 (epic). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7818,29 +7818,6 @@
           "d0ae24e6"
         ],
         "done_note": "Step 4.5c jq-native mutex SHIPPED (commit 6d080acf rewrites the false-green c2c2aa9f). Dispatcher RAW-verified: commits on disk, merge gate green (index-check/tree-verify/c2-alert exit=0), and re-ran committed logic independently — 4/4 cases PASS (chef-morning+chef-intraday→drop intraday keep morning; intraday-only→retain; morning-only→retain; mixed non-chef+both-chef→drop only intraday). BEHAVIORAL GATE PENDING runtime: next weekday 2026-07-01T05:15Z coincidence tick must yield EXACTLY ONE CHEF MARKET dish."
-      },
-      {
-        "id": "OHLCV-DEPTH-PROD-BACKFILL-GATE",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "blocking": true,
-        "held": true,
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-        "depends": [
-          "OHLCV-DEPTH-REBUILD"
-        ],
-        "hold_reason": "HELD until OHLCV-DEPTH-REBUILD done — the §4 gate needs B live AND a full-universe production backfill (today only VCB is proven deep).",
-        "title": "OHLCV-DEPTH production backfill + Brief §4 cross-restart gate: (1) run full-universe R-2 backfill PRODUCTION run on VPS (hardened fetch-ohlcv-backfill.sh, ALL traded tickers not just VCB), B depth-probe verifies + re-queues shortfalls; (2) run Brief §4 Gates 1-5 (depth>=252 GROUP BY universe / get_price_history VCB 730 / get_roc_momentum+get_relative_strength+compute_52w_proximity NON-NULL / PERSISTENCE re-probe AFTER container restart / non-watchlist universe >0 historical rows). This gate done_verifies the EPIC.",
-        "acceptance": "Epic verification_gate verbatim: after fix+rebuild+RESTART (a) get_price_history VCB days=730 >=252 (target ~504); (b) GROUP BY code >=252 across traded universe; (c) get_roc_momentum + get_relative_strength + compute52WProximity NON-NULL with real tickers; PERSISTENCE proven by re-probe AFTER a container restart (the durable gate — failure mode is purge-on-boot).",
-        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md#4-cross-restart-verification-gate-durable",
-        "created_by": "po-s135",
-        "created_at": "2026-06-30T15:23:52Z"
       }
     ],
     "closed_sprints": [
@@ -9560,62 +9537,10 @@
         ],
         "memory_commit": "b722c90b",
         "verification": "dev-team RAW-verify (disk+diff+tests-rerun+gate): impl 45fff717 explicit-paths-only (ohlcvStartupProbe.ts + 1352 test, no orch-state, no server.ts, no -A leak); memory b722c90b (notebook + DJ S10). MERGE GATE: index-check=0 tree-verify=0 (blocking PASS), c2-alert=0 (benign chore-memory touches DJ in decisions/). DJ-GATE-1 S10 present. DIFF inspected REAL: SPARSE_THRESHOLD=8 + DEPTH_FLOOR=252 exported consts; sparse path BYTE-EQUIVALENT (count<SPARSE_THRESHOLD == old count<8, same alert template; backfill Phase3+4 now guarded if sparseTickers.length>0 = identical behavior since prior code early-returned when no sparse); shallow bucket 8<=cnt<252 -> ONE aggregated sendWorkFn call (TD-4 5 tickers -> calls.length===1, TD-2 3 tickers -> length 1); healthy >=252 no action; shallow triggers NO backfill / NO DB write (observability only); result iface +shallowTickers[]+shallowSent additive backward-compat. Tests RE-RUN on host: 10 pass/0 fail/48 expect (74ms). tsc clean exit 0. INERT until mcp-server REBUILD."
-      }
-    ],
-    "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": null,
-      "next_action": null,
-      "updated_by": "pm",
-      "updated_at": "2026-06-30T06:20:13Z"
-    },
-    "in_progress": [
-      {
-        "id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-        "status": "IN_PROGRESS",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "blocking": true,
-        "user_prioritized": true,
-        "zone": "apps/mcp-server/",
-        "owner": "architect",
-        "next_agent": "ops",
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "title": "daily_ohlcv persists only ~49 bars (uniform 2026-04-23 floor across ALL tickers) despite OHLCV-BACKFILL-P0 (2yr) — root-cause the WRITER/retention/backfill-lookback and persist >=252 bars (target ~504/2yr). Indicator-program CRITICAL PATH: unblocks roc/RS/52w momentum cards + volatility/breadth gauges + the OHLCV-derived next-wave indicators.",
-        "supersedes_depth_gap_of": "OHLCV-BACKFILL-P0",
-        "live_evidence": "PO RAW-probe 2026-06-30T07:5xZ via gateway get_price_history days=730: VCB/SSI/MWG/HPG ALL return EXACTLY 49 bars, ALL starting 2026-04-23 (uniform floor = retention/purge signature; SSI+MWG are NON-watchlist yet present => NOT a coverage gap). get_roc_momentum tickers:[] null_reason=insufficient_cross_section; get_relative_strength market_rs_composite=null low_sample_warning=true; foreign_accum z=null. daily_ohlcv is shared volume market_data:/app/data DB_PATH=/app/data/market.db read by mcp-server get_price_history AND the TA repo AND the momentum tools.",
-        "root_cause_hypotheses": "(1) startup purge trims daily_ohlcv on boot (known lesson: OHLCV startup-purge defeats the backfill seeder — fix the WRITER not the residue); (2) a scheduled retention DELETE keeps only last-N rows; (3) ohlcvHistoryBackfillJob.ts per-ticker lookback defaults ~50 bars. RAW-confirm via SELECT code,COUNT(*),MIN(date),MAX(date) FROM daily_ohlcv GROUP BY code on the LIVE named volume. FIX the WRITER/retention durably; NEVER flat-seed.",
-        "required_depth": "52w-high-proximity=252 bars; ROC-12-1=~252-273; MA200 & %>MA200=200; RS-12m=~252; Z-score/percentile headroom (rv_252d-drawdown, RRG, risk-decomp) => target 2yr (~504). FLOOR=252, TARGET=504.",
-        "verification_gate": "After fix+rebuild+RESTART: (a) get_price_history VCB days=730 >=252 (target ~504) bars; (b) GROUP BY code shows >=252 across the traded universe; (c) get_roc_momentum + get_relative_strength + compute52WProximity return NON-NULL with real tickers[]. PERSISTENCE proven by RE-PROBE AFTER a container restart (not merely post-backfill) — the restart re-probe is the durable gate, because the failure mode is purge-on-boot.",
-        "generic_mandate": "Fix the retention/writer durably for the full traded universe (do NOT special-case the watchlist); re-run the existing ohlcvHistoryBackfillJob to refill; prove cross-restart persistence.",
-        "unblocks": [
-          "IND-P1-MOMENTUM-CONSUMER-WIRING",
-          "IND-P1-SECTOR-RRG",
-          "IND-P1-RISK-DECOMPOSITION",
-          "IND-P1-REGIONAL-DECOUPLING",
-          "IND-P2-PARTICIPATION-BREADTH",
-          "momentum cards roc/RS/52w",
-          "P0 gauges breadth/volatility depth"
-        ],
-        "depends": [],
-        "created_by": "po-s135",
-        "created_at": "2026-06-30T07:53:47Z",
-        "updated_at": "2026-06-30T16:04:08Z",
-        "updated_by": "dev-team",
-        "dispatched_at": "2026-06-30T12:56:00Z",
-        "dispatched_by": "dev-team",
-        "architect_done": true,
-        "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
-        "brief_commit": "30659cca",
-        "status_note": "EPIC P0 mechanism COMPLETE: E (VPS deploy gate) + A (fetch-ohlcv-backfill.sh VNDirect 71b5a5fb) + B (server done-endpoint depth-probe+re-queue+R-5 cap c8557899) + C (taOhlcvBackfill MOMENTUM_MIN_BARS=252 cc491b4a) + D (ohlcvStartupProbe DEPTH_FLOOR=252 shallow alert 45fff717) ALL DONE_VERIFIED. REMAINING: (1) OHLCV-DEPTH-REBUILD (ops, ready) single-svc force-recreate brings B+C+D live; (2) OHLCV-DEPTH-PROD-BACKFILL-GATE (full-universe R-2 backfill + brief-4 cross-restart gate) done_verifies epic. next_agent=ops."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "OHLCV-DEPTH-REBUILD",
-        "status": "TODO",
+        "status": "DONE_VERIFIED",
         "type": "FIX",
         "size": "S",
         "priority": "P0",
@@ -9637,9 +9562,92 @@
         "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "created_by": "po-s135",
         "created_at": "2026-06-30T15:23:52Z",
-        "updated_at": "2026-06-30T16:04:08Z",
+        "updated_at": "2026-06-30T16:20:18Z",
         "updated_by": "dev-team",
-        "status_note": "ops: single-svc force-recreate-with-build mcp-server (docker compose up -d --build --force-recreate mcp-server; NEVER down&&up -- kills peers ~21min). Brings B (done-endpoint depth-probe+re-queue), C (taOhlcvBackfill momentum-depth log), D (startup shallow alert) handlers LIVE -- all INERT until this rebuild. Dispatched next dev-team tick via head.next_agent=ops."
+        "status_note": "ops: single-svc force-recreate-with-build mcp-server (docker compose up -d --build --force-recreate mcp-server; NEVER down&&up -- kills peers ~21min). Brings B (done-endpoint depth-probe+re-queue), C (taOhlcvBackfill momentum-depth log), D (startup shallow alert) handlers LIVE -- all INERT until this rebuild. Dispatched next dev-team tick via head.next_agent=ops.",
+        "dispatched_at": "2026-06-30T16:13:43Z",
+        "dispatched_by": "dev-team",
+        "done_at": "2026-06-30T16:20:18Z",
+        "done_commits": [],
+        "verification": "dev-team RAW-verify via Bash (NOT ops badge): INFRA action, no code commit. (1) Running container vn-market-intelligence-mcp-mcp-server-1 (70bcf8dc) image = sha256:f71a1743 = NEW (OLD was 8b6bc8b9) confirmed via docker inspect -- image ID CHANGED. (2) Health=healthy Running=true, StartedAt 16:15:19Z, up 2min (~17s to healthy). (3) SUBTASK-D LIVE: boot log [ohlcv-probe] sparse tickers: BDI,DAG,DLC,JSH,SIS,VDC,VNH (DEPTH_FLOOR=252 classification ran). (4) SUBTASK-B LIVE: boot log [ohlcv-backfill-done] depth shortfall detected shallow_count=40 depth_floor=252 (LEFT JOIN watchlist->daily_ohlcv: 40 codes <252 bars -- most 47-49, BDI/DLC/JSH/SIS/VDC:0, VNH:7, TCH:35); re-queue retry_count 1->2 then IDLE (0 events last 60s) -- BOUNDED event-driven loop (1 increment per done-callback), R-5 cap intact (would trip BUG-telegram at >=5). (5) Peers UNTOUCHED: only mcp-server up 2min; all others hours/days (api-gw 46h, frontend 9h, macro 16h, stock-price/ta 14h) -- NO collateral recreate. (6) errors=[]. acceptance MET: image changed + healthy + peers untouched + B handler live. Depth shortfall is EXPECTED pre-VPS-backfill premise -> OHLCV-DEPTH-PROD-BACKFILL-GATE clears it."
+      }
+    ],
+    "head": {
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": null,
+      "next_action": null,
+      "updated_by": "pm",
+      "updated_at": "2026-06-30T06:20:13Z"
+    },
+    "in_progress": [
+      {
+        "id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "status": "IN_PROGRESS",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "blocking": true,
+        "user_prioritized": true,
+        "zone": "apps/mcp-server/",
+        "owner": "architect",
+        "next_agent": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "title": "daily_ohlcv persists only ~49 bars (uniform 2026-04-23 floor across ALL tickers) despite OHLCV-BACKFILL-P0 (2yr) — root-cause the WRITER/retention/backfill-lookback and persist >=252 bars (target ~504/2yr). Indicator-program CRITICAL PATH: unblocks roc/RS/52w momentum cards + volatility/breadth gauges + the OHLCV-derived next-wave indicators.",
+        "supersedes_depth_gap_of": "OHLCV-BACKFILL-P0",
+        "live_evidence": "PO RAW-probe 2026-06-30T07:5xZ via gateway get_price_history days=730: VCB/SSI/MWG/HPG ALL return EXACTLY 49 bars, ALL starting 2026-04-23 (uniform floor = retention/purge signature; SSI+MWG are NON-watchlist yet present => NOT a coverage gap). get_roc_momentum tickers:[] null_reason=insufficient_cross_section; get_relative_strength market_rs_composite=null low_sample_warning=true; foreign_accum z=null. daily_ohlcv is shared volume market_data:/app/data DB_PATH=/app/data/market.db read by mcp-server get_price_history AND the TA repo AND the momentum tools.",
+        "root_cause_hypotheses": "(1) startup purge trims daily_ohlcv on boot (known lesson: OHLCV startup-purge defeats the backfill seeder — fix the WRITER not the residue); (2) a scheduled retention DELETE keeps only last-N rows; (3) ohlcvHistoryBackfillJob.ts per-ticker lookback defaults ~50 bars. RAW-confirm via SELECT code,COUNT(*),MIN(date),MAX(date) FROM daily_ohlcv GROUP BY code on the LIVE named volume. FIX the WRITER/retention durably; NEVER flat-seed.",
+        "required_depth": "52w-high-proximity=252 bars; ROC-12-1=~252-273; MA200 & %>MA200=200; RS-12m=~252; Z-score/percentile headroom (rv_252d-drawdown, RRG, risk-decomp) => target 2yr (~504). FLOOR=252, TARGET=504.",
+        "verification_gate": "After fix+rebuild+RESTART: (a) get_price_history VCB days=730 >=252 (target ~504) bars; (b) GROUP BY code shows >=252 across the traded universe; (c) get_roc_momentum + get_relative_strength + compute52WProximity return NON-NULL with real tickers[]. PERSISTENCE proven by RE-PROBE AFTER a container restart (not merely post-backfill) — the restart re-probe is the durable gate, because the failure mode is purge-on-boot.",
+        "generic_mandate": "Fix the retention/writer durably for the full traded universe (do NOT special-case the watchlist); re-run the existing ohlcvHistoryBackfillJob to refill; prove cross-restart persistence.",
+        "unblocks": [
+          "IND-P1-MOMENTUM-CONSUMER-WIRING",
+          "IND-P1-SECTOR-RRG",
+          "IND-P1-RISK-DECOMPOSITION",
+          "IND-P1-REGIONAL-DECOUPLING",
+          "IND-P2-PARTICIPATION-BREADTH",
+          "momentum cards roc/RS/52w",
+          "P0 gauges breadth/volatility depth"
+        ],
+        "depends": [],
+        "created_by": "po-s135",
+        "created_at": "2026-06-30T07:53:47Z",
+        "updated_at": "2026-06-30T16:20:18Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T12:56:00Z",
+        "dispatched_by": "dev-team",
+        "architect_done": true,
+        "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "brief_commit": "30659cca",
+        "status_note": "EPIC P0: E (VPS deploy gate) + A (fetch-ohlcv-backfill.sh 71b5a5fb) + B (done-endpoint depth-probe+re-queue+R-5 cap c8557899) + C (taOhlcvBackfill MOMENTUM_MIN_BARS=252 cc491b4a) + D (ohlcvStartupProbe DEPTH_FLOOR=252 45fff717) + REBUILD (image f71a1743 deployed, B+D handlers LIVE) ALL DONE_VERIFIED. FINAL GATE: OHLCV-DEPTH-PROD-BACKFILL-GATE (full-universe R-2 backfill + brief-4 cross-restart gate) done_verifies epic. next_agent=dev-mcp-server."
+      }
+    ],
+    "ready": [
+      {
+        "id": "OHLCV-DEPTH-PROD-BACKFILL-GATE",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "blocking": true,
+        "held": false,
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "depends": [
+          "OHLCV-DEPTH-REBUILD"
+        ],
+        "hold_reason": "RESOLVED 2026-06-30: dep OHLCV-DEPTH-REBUILD DONE_VERIFIED (NEW image f71a1743 deployed, B+D handlers live) -> hold satisfied, promoted backlog->ready.",
+        "title": "OHLCV-DEPTH production backfill + Brief §4 cross-restart gate: (1) run full-universe R-2 backfill PRODUCTION run on VPS (hardened fetch-ohlcv-backfill.sh, ALL traded tickers not just VCB), B depth-probe verifies + re-queues shortfalls; (2) run Brief §4 Gates 1-5 (depth>=252 GROUP BY universe / get_price_history VCB 730 / get_roc_momentum+get_relative_strength+compute_52w_proximity NON-NULL / PERSISTENCE re-probe AFTER container restart / non-watchlist universe >0 historical rows). This gate done_verifies the EPIC.",
+        "acceptance": "Epic verification_gate verbatim: after fix+rebuild+RESTART (a) get_price_history VCB days=730 >=252 (target ~504); (b) GROUP BY code >=252 across traded universe; (c) get_roc_momentum + get_relative_strength + compute52WProximity NON-NULL with real tickers; PERSISTENCE proven by re-probe AFTER a container restart (the durable gate — failure mode is purge-on-boot).",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md#4-cross-restart-verification-gate-durable",
+        "created_by": "po-s135",
+        "created_at": "2026-06-30T15:23:52Z",
+        "updated_at": "2026-06-30T16:20:18Z",
+        "updated_by": "dev-team",
+        "status_note": "dev-mcp-server: full-universe R-2 OHLCV backfill PRODUCTION run (VPS pathway, real fetch only) + brief-4 Cross-Restart Verification Gate (Gates 1-5: depth>=252 / tool-layer serving / indicator-unlock / persistence-after-restart / non-watchlist-universe). This gate DONE_VERIFIES the epic. Boot logs already prove depth shortfall (40 tickers <252) -> backfill must deepen to >=252 then survive a restart. Sequenced NEXT tick (head.next_agent=dev-mcp-server) -- NOT piggybacked on rebuild tick."
       }
     ],
     "review": [
