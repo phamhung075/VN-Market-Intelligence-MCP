@@ -8306,7 +8306,11 @@
         "created_at": "2026-06-30T00:57:18Z",
         "done_at": "2026-06-30T04:30:00Z",
         "qa_verdict": "APPROVED",
-        "qa_note": "Tests: 45+13+26+15=99 new pass / 0 fail; 2 pre-existing QUE-TOOLTIP unrelated. TSC 0 errors. DDD PASS. mock-guard PASS. HTTP 200 + 17 honest-NULL markers live. DoD satisfied: frontend renders honest-NULL when upstream absent; backend IND-P1-MCP-PROXY-INDICATORS tracked in BACKLOG. Coverage-map 5 rows for 6 cards intentional (2 cards from 1 liquidity section, l3b_note documented)."
+        "qa_note": "Tests: 45+13+26+15=99 new pass / 0 fail; 2 pre-existing QUE-TOOLTIP unrelated. TSC 0 errors. DDD PASS. mock-guard PASS. HTTP 200 + 17 honest-NULL markers live. DoD satisfied: frontend renders honest-NULL when upstream absent; backend IND-P1-MCP-PROXY-INDICATORS tracked in BACKLOG. Coverage-map 5 rows for 6 cards intentional (2 cards from 1 liquidity section, l3b_note documented).",
+        "done_verified": true,
+        "done_verified_at": "2026-06-30T04:35:00Z",
+        "done_verified_by": "router",
+        "gate_result": "PASS — router RAW-verified QA APPROVED gate 2026-06-30T04:35Z (not relayed). Commit 42fe866f real. 4 task test files green (45+13+26+15); tsc 0 errors; 2 full-suite fails PRE-EXISTING QUE-TOOLTIP (d7167c0a, unrelated). DDD interface-only. Honest-NULL LIVE on image c693445f: :3001/dashboard/indicator-gauges HTTP 200, 17 honest-NULL markers / 6 cards, no fabrication. Coverage-map 6c/5r mapping documented. Upstream /api/indicator-gauges 404 -> honest-NULL = frontend DoD; backend REST aggregator is a tracked follow-up gap, not a blocker. No cross-lane dup."
       }
     ],
     "done_verified": [],
@@ -8600,6 +8604,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T01:48:51Z",
-  "_updated_by": "router:reconcile:BA-IND-P1-MOMENTUM-RS-handoff"
+  "_updated_at": "2026-06-30T04:35:00Z",
+  "_updated_by": "router:gate-close:IND-P1-FRONTEND-GAUGE-CARDS"
 }
