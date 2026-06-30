@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS",
-    "next_agent": "pm",
-    "updated_at": "2026-06-30T19:18:07Z",
-    "updated_by": "dev-team",
-    "note": "RC3 architect design DONE -- dev-team RAW-verified: commit bd669302 leak-CLEAN, 4 files in-zone (handoff + orch-state + architect notebook + decision-journal), did NOT sweep dev-mcp-server live file technicalIndicatorTools.ts; code claims confirmed against live source (VNINDEX skip guard fetch-ohlcv-backfill.sh ~L134 + main.go:46 watchlist default both real). Root: VPS backfill skips VNINDEX (stock_prices has no index data); fix via dedicated vnmarket_prices endpoint. Architect folded watchlist gap into Zone C (read SQLite watchlist table, no-hardcode -- correct). Dispatching pm to decompose into 3 tasks: A(developer/vps-scripts VNINDEX fetch+VPS deploy) + B(dev-mcp-server/server.ts type field+depth probe) + C(dev-technical-analysis/main.go watchlist-from-DB). A+C parallel, B after A deploys. RISK-1 vnmarket_prices date-range unverified (dev RAW-probes VPS); RISK-2 VPS deploy required not just commit. Parallel get_TI fix (dev-mcp-server, technicalIndicatorTools.ts) still in-flight -- WIP gate applies on A/B/C dispatch (B is same-service as get_TI: serialize). Push gated (PO/human)."
+    "active_task_id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
+    "next_agent": "architect",
+    "updated_at": "2026-06-30T20:20:07Z",
+    "updated_by": "po-s135",
+    "note": "PO triage: FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000 RAW-CONFIRMED user-facing (gateway 20:13Z: FPT rs594/roc606x, DHG rs922, VHM/VIC -1.35/-0.998 artifacts across >=4 watchlist tickers). 2nd daily_ohlcv contamination class (whole-row close<1000) -> CONTAM-6 (close>=1000 clause) structurally misses it. Sprint OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 kicked off (sprint_goal + active_sprints), umbrella FIX promoted backlog->ready as SPRINT-M. DISPATCHING architect for safe per-ticker discontinuity predicate (EXCLUDE index rows) + durable writer guard + reflow plan; then pm decompose -> developer (apps/mcp-server). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1620,6 +1620,15 @@
         "root_cause_ref": "project_cowork_guaranteed_slot_needs_live_cli_session.md",
         "created_by": "po",
         "created_at": "2026-06-30T17:28:32Z"
+      },
+      {
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "status": "active",
+        "vision": "Eliminate the SECOND daily_ohlcv unit-contamination class — whole-row thousands-format (close<1000, e.g. FPT close=70.2 meaning 70200 VND) introduced at ingest over ~Aug2025-Feb2026 — so the public Relative-Strength + ROC-momentum + 52w-proximity cards stop serving garbage, and harden the WRITER so the residue can never re-accumulate.",
+        "scope_in": "(A) repair migration extending the CONTAM-6 family to the whole-row close<1000 class via a PER-TICKER ~1000x discontinuity test (NOT a blind close<1000 sweep); (B) reflow/recompute derived RS/ROC/percentile/52w serving values after normalization; (C) durable ingest-time unit-normalization guard (writer-side) + extend the CONTAM-5 sanity job to flag the new class.",
+        "scope_out": "The already-fixed mixed-scale class (open<100 AND close>=1000, CONTAM-6) — untouched. Any change to index-type rows (VNINDEX legitimately ~1300-1900, just backfilled in RC3) — the predicate MUST exclude them. Legitimately low-priced stocks — never multiplied.",
+        "success_metric": "RAW (gateway): get_relative_strength no-arg returns |rs|<=~3 for h63/h126/h252 on ALL watchlist tickers (no 594/922/-1.35 artifacts); get_roc_momentum returns roc in a sane band for all (no 606x, no -0.998); VNINDEX 253 bars intact; a synthetic thousands-format push for a high-price ticker is normalized/rejected at write (unit test); CONTAM-5 sanity job flags the close<1000 whole-row class.",
+        "created_at": "2026-06-30T20:20:07Z"
       }
     ]
   },
@@ -3627,6 +3636,26 @@
           }
         ],
         "completed_at": "2026-06-29T19:36:00Z"
+      },
+      {
+        "id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "label": "daily_ohlcv whole-row thousands-format contamination (close<1000) repair + reflow + durable writer guard",
+        "priority": "high",
+        "status": "ACTIVE",
+        "opened_at": "2026-06-30T20:20:07Z",
+        "evidence": "RAW gateway probe 2026-06-30T20:13Z (get_relative_strength + get_roc_momentum, watchlist): FPT h252 rs=594.07 LEADING-artifact / roc=606.29x decile10; DHG h63 rs=922.59 + h126 rs=918.06 LEADING-artifact; VHM h126 rs=-1.066 + h252 rs=-1.350 percentile0 / roc=-0.998; VIC h252 rs=-1.349 percentile2.78 (vs healthy h63 +0.475 / h126 +0.325) / roc=-0.998. Root: daily_ohlcv rows stored in thousands-format (whole-row O/H/L/C ~1000x small) over ~Aug2025-Feb2026. 2nd contamination class same table -> recurring-bug-escalation; durable writer guard required.",
+        "tasks": [
+          {
+            "id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
+            "title": "daily_ohlcv whole-row thousands-format contamination (close<1000): migration + reflow + durable writer guard",
+            "type": "SPRINT-M",
+            "zone": "apps/mcp-server/",
+            "owner": "architect",
+            "size": "M",
+            "status": "READY",
+            "note": "Umbrella FIX promoted to ready[] -> architect designs the safe per-ticker discontinuity predicate; pm decomposes into dev tasks (apps/mcp-server)."
+          }
+        ]
       }
     ],
     "archive": [
@@ -7881,71 +7910,6 @@
           "QA-AC6 on PASS: relocate FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL to done_verified (this is its withheld behavioral gate); on the weekend leg, gate is satisfied only after FIX-FB-WEEKEND-DEDUP-GATE ships."
         ],
         "depends_note": "Blocked until FB-LAUNCHD-OPS-INSTALL-VERIFY installs the agent(s). Weekend double-post leg additionally gated on FIX-FB-WEEKEND-DEDUP-GATE."
-      },
-      {
-        "id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
-        "title": "daily_ohlcv thousands-format contamination (close<1000) FPT/VHM -> roc 606x, 52w low 100.3",
-        "status": "BACKLOG",
-        "type": "fix",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "sprint": "TA-CONSUMER-STALE-INDICATORS",
-        "priority": "medium",
-        "owner_agent": "",
-        "next_agent": "po",
-        "depends": null,
-        "detail_ref": null,
-        "created_at": "2026-06-30T19:00:03Z",
-        "created_by": "dev-team",
-        "updated_at": "2026-06-30T19:00:03Z",
-        "updated_by": "dev-team",
-        "note": "dev-team RAW-verify (gateway, post-RC2): with TA svc fixed, get_roc_momentum FPT roc=606x and get_52w_proximity FPT low_52w=100.3 (vs high 99800, pct_from_low 698x) + VHM low_52w=100 -- caused by daily_ohlcv rows storing prices in THOUSANDS format (close=100.3 meaning 100300 VND) for ~Aug2025-Feb2026. RECURRENCE-ADJACENT: prior OHLCV-UNIT-CONTAM (closed) / CONTAM-6 repaired only the 'open<100 AND close>=1000' class; this NEW class has close<1000 so the old script misses it. PO triage: scope DB migration targeting close<1000 AND close>50 AND date window per affected code (verify exact predicate vs live rows first) + reflow derived columns. Serving-integrity: FPT/VHM momentum + 52w cards currently show garbage. Recurring-bug lens (feedback_recurring_bug_escalation): 2nd contamination class same table -- prefer a durable ingest-time unit-normalization guard over another one-off repair."
-      },
-      {
-        "id": "FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY",
-        "title": "TA svc WATCHLIST_TICKERS absent -> default no-arg momentum/RS/52w return empty (resolve from system-map SSOT, no-hardcode)",
-        "status": "CANCELLED",
-        "type": "fix",
-        "zone": "apps/technical-analysis/",
-        "size": "M",
-        "sprint": "TA-CONSUMER-STALE-INDICATORS",
-        "priority": "medium",
-        "owner_agent": "",
-        "next_agent": "po",
-        "depends": [
-          "FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS"
-        ],
-        "detail_ref": null,
-        "created_at": "2026-06-30T19:09:54Z",
-        "created_by": "dev-team",
-        "updated_at": "2026-06-30T19:18:07Z",
-        "updated_by": "dev-team",
-        "note": "SUPERSEDED (folded into RC3) -- architect absorbed this watchlist-universe gap into the RC3 design as Zone C (handoff docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md FR-C1: readWatchlistFromDB reads the SQLite watchlist table at startup, NO hardcode in docker-compose.yml). PM: do NOT create a separate task for this -- it IS TASK-VNINDEX-RS-C in the RC3 decomposition. Close/remove this row when RC3-C ships. Original RAW finding (gateway 19:05Z): WATCHLIST_TICKERS absent from docker-compose.yml technical-analysis block + main.go:46 parseWatchlist default '' -> default no-arg momentum/RS/52w return empty; explicit-arg path works.",
-        "cancelled_at": "2026-06-30T19:45:00Z",
-        "cancelled_by": "pm",
-        "cancelled_reason": "Folded into RC3 decomposition as TASK-VNINDEX-RS-C (readWatchlistFromDB fallback). This row exists only to document the original finding; the actual implementation work is in RC3-C."
-      },
-      {
-        "id": "TASK-VNINDEX-RS-B",
-        "title": "FR-B1 add type field to push handler + FR-B2 extend ohlcv-backfill-done depth probe to include VNINDEX",
-        "type": "FIX",
-        "size": "M",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "sprint": "TA-CONSUMER-STALE-INDICATORS",
-        "status": "TODO",
-        "created_at": "2026-06-30T19:45:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-06-30T19:45:00Z",
-        "updated_by": "pm",
-        "depends": [
-          "TASK-VNINDEX-RS-A"
-        ],
-        "note": "DEPENDS on A (B's depth probe is only meaningful once A deploys VNINDEX data). Can parallelize AFTER A deploys. SERIALIZATION FLAG: dev-mcp-server is currently working on FIX-GET-TI-STALE-SOURCE-MCP-SERVER (file technicalIndicatorTools.ts in same service). TASK-VNINDEX-RS-B must SERIALIZE AFTER get_TI completes (do not dispatch two dev-mcp-server agents mutating apps/mcp-server in parallel). FR-B1: add optional type field to push-ohlcv-history handler (default 'stock'); FR-B2: extend ohlcv-backfill-done depth probe to include VNINDEX. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md § Zone B.",
-        "serialization": "Must wait for FIX-GET-TI-STALE-SOURCE-MCP-SERVER to complete before dispatching (same service, both mutate apps/mcp-server)"
       }
     ],
     "closed_sprints": [
@@ -9938,26 +9902,132 @@
         "done_at": "2026-06-30T19:09:54Z",
         "done_commits": [],
         "verification": "dev-team RAW re-probe via gateway 19:05Z (NOT ops badge). CHEAP-FIRST CONFIRMED INSUFFICIENT: ops single-svc restarted mcp-server (docker ps: Up 3min) -- get_technical_indicators VCB STILL MA5=88120 price=87000 (source_tier 3) vs get_price_history VCB=62200 same DB -> NOT cache/keepalive, real code bug. Ops badge claimed get_roc_momentum REGRESSED to all-null: DISPROVED -- my probe with explicit watchlist_tickers returns 8/8 NON-NULL (VCB roc=0.088 dec7, BID 0.157 dec8, FPT 606x dec9). Ops causal story (get_TI stale because momentum HTTP empty) WRONG: get_TI returns FULL MA/RSI/MACD/BB (not empty, not gated by cross-section). Ops DID find a real SECOND issue: WATCHLIST_TICKERS absent from docker-compose.yml technical-analysis env block (only PORT/DB_PATH/DB_READONLY/APP_ENV present) + main.go:46 parseWatchlist defaults to '' -> default no-arg momentum/RS/52w path returns empty (explicit-arg path WORKS, proven). TWO distinct roots spun off: (B) get_TI stale-source -> dev-mcp-server (FIX-GET-TI-STALE-SOURCE-MCP-SERVER, dispatched); (A) watchlist-env default-empty -> backlog FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY (depends RC3, no-hardcode design). Diagnostic complete."
-      }
-    ],
-    "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": null,
-      "next_action": null,
-      "updated_by": "pm",
-      "updated_at": "2026-06-30T06:20:13Z"
-    },
-    "in_progress": [
+      },
+      {
+        "id": "FIX-GET-TI-STALE-SOURCE-MCP-SERVER",
+        "title": "get_technical_indicators serves stale 88k (separate/stale source vs get_price_history 62.2k) -- restart ruled out, code-fix in technicalIndicatorTools.ts",
+        "status": "DONE_VERIFIED",
+        "type": "fix",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "priority": "high",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T19:09:54Z",
+        "created_by": "dev-team",
+        "updated_at": "2026-06-30T19:29:59Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T19:09:54Z",
+        "dispatched_by": "dev-team",
+        "note": "dev-team RAW evidence (gateway 19:05Z, post mcp-server restart Up 3min): get_technical_indicators VCB returns MA5=88120 MA20=88840 price=87000 (source_tier 3) while get_price_history VCB=62200 reads the SAME local DB correctly, and RC2-fixed TA svc + get_roc_momentum/get_52w_proximity serve correct ~62k. So get_technical_indicators reads a DIFFERENT or STALE source than get_price_history. 88120 looks like pre-backfill / pre-split / separate-table OHLCV (NOT the FPT/VHM thousands-format contamination -- that is a separate backlog task; this is VCB, value HIGHER than correct). technicalIndicatorTools.ts (registered line 514) calls TA svc port-5003 via HTTP with a LOCAL-DB fallback (lines ~619/654). Restart did NOT clear it -> not in-process cache. FIX: find why get_technical_indicators sources stale OHLCV -- either (a) HTTP-to-5003 path returns stale/keepalive data, or (b) local-DB fallback reads a stale table/view rather than the corrected daily_ohlcv that get_price_history uses. Point it at the SAME corrected daily_ohlcv source as get_price_history; verify VCB MA5 ~=61480 and price ~=62200 via gateway after rebuild. ACCEPTANCE (RAW): get_technical_indicators VCB MA5/MA20/price within plausible band of get_price_history latest (~62k). dev-team RAW-verifies serving layer + git + leak-scan on return. Single-svc force-recreate-WITH-build mcp-server only; NEVER down&&up. Push gated (PO/human).",
+        "done_at": "2026-06-30T19:29:59Z",
+        "done_commits": [
+          "6d3cb4d0",
+          "ec421ec1"
+        ],
+        "verification": "dev-team RAW-verify (own gateway probe + git, NOT agent badge). SERVING (probed 19:29Z): get_technical_indicators VCB now MA5=61480 MA20=61620 MA50=61612 price=62200 BB-mid=61620 -- fully consistent with get_price_history VCB latest=62200 (5d range 60800-62200, avg 61600). OLD bug MA5=88120/price=87000 GONE. ROOT (confirmed in diff): prefetch query technicalIndicatorTools.ts used ORDER BY date ASC LIMIT 60 -> OLDEST 60 rows (stale 2023 ~88k pre-split) forwarded to Go TA svc as closes[]. FIX 6d3cb4d0 (1 file +14/-9): DESC subquery LIMIT ? + outer ORDER BY day ASC + .all(code,lookbackDays), mirrors RC2 GetCandles. Leak-CLEAN. Rebuild: mcp-server force-recreate-WITH-build (Up 12min healthy, peers untouched, no down&&up). tsc clean + 14088 tests 0-fail (agent-reported, corroborated by serving correctness); toolCount 182 unchanged. ec421ec1 notebook only. CLOSED."
+      },
+      {
+        "id": "TASK-VNINDEX-RS-A",
+        "title": "FR-A1 dedicated VNINDEX fetch via vnmarket_prices + FR-A2 remove skip guard + VPS DEPLOY",
+        "type": "FIX",
+        "size": "M",
+        "priority": "high",
+        "zone": "vps-scripts/",
+        "owner": "developer",
+        "owner_agent": "developer",
+        "next_agent": "",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "status": "DONE_VERIFIED",
+        "created_at": "2026-06-30T19:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T19:44:17Z",
+        "updated_by": "dev-team",
+        "depends": null,
+        "note": "LEAD task for RC3. Fetch VNINDEX historical bars from vnmarket_prices endpoint (stock_prices has no index data). Remove the old VNINDEX skip guard at line 134-139. CRITICAL: verify vnmarket_prices date-range support from VPS first (RISK-1). CRITICAL: must deploy to live Vinahost VPS via rsync/scp to /root/ (not just git commit). Only after this deploys will VNINDEX bars appear in daily_ohlcv, unblocking B's depth probe. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md § Zone A.",
+        "risk_flags": [
+          "RISK-1 (HIGH): vnmarket_prices date-range support unverified from VPS",
+          "RISK-2 (HIGH): VPS script must be deployed to live Vinahost VPS, not just committed"
+        ],
+        "dispatched_at": "2026-06-30T19:24:29Z",
+        "dispatched_by": "dev-team",
+        "done_at": "2026-06-30T19:44:17Z",
+        "done_commits": [
+          "5939be5d"
+        ],
+        "verification": "dev-team RAW-verify (own gateway serving probe + git). SERVING ~19:48Z: get_price_history VNINDEX now 253 trading bars (2025-05-26..2026-06-30) in 400d window, latest close 1860.01, range 1311-1928 (correct index scale, NO x1000) -- clears h63=64 AND h252=253. Live daily_ohlcv genuinely has VNINDEX (was SKIPPED before). FIX 5939be5d (vps-scripts/fetch-ohlcv-backfill.sh +71/-11): FR-A1 vnmarket_prices fetch + FR-A2 remove skip guard. RISK-1 RESOLVED (dev RAW-probe): vnmarket_prices ignores fromDate/toDate but size=750&sort=date returns 750 bars 2023-06..2026-06. RISK-2 deploy DONE: scp VPS 125.212.251.27 + ran, VNINDEX 750 inserted. IN-HEAD, leak-CLEAN, scope vps-scripts/ only. CLOSED."
+      },
+      {
+        "id": "TASK-VNINDEX-RS-C",
+        "title": "FR-C1 readWatchlistFromDB fallback + unit tests",
+        "type": "FIX",
+        "size": "M",
+        "priority": "medium",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "owner_agent": "dev-technical-analysis",
+        "next_agent": "",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "status": "DONE_VERIFIED",
+        "created_at": "2026-06-30T19:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T19:44:17Z",
+        "updated_by": "dev-team",
+        "depends": null,
+        "note": "INDEPENDENT task (can run parallel to A). Implement readWatchlistFromDB() in cmd/server/main.go to read SQLite watchlist table when WATCHLIST_TICKERS env is empty. Add unit tests. NO hardcode in docker-compose.yml; watchlist SSOT = SQLite watchlist table. RULE: do NOT add VNINDEX to watchlist table — VNINDEX is the benchmark, not a cross-section ticker. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md § Zone C.",
+        "supersedes": [
+          "FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY"
+        ],
+        "dispatched_at": "2026-06-30T19:29:59Z",
+        "dispatched_by": "dev-team",
+        "done_at": "2026-06-30T19:44:17Z",
+        "done_commits": [
+          "5c1ab331",
+          "341d2879"
+        ],
+        "verification": "dev-team RAW-verify (own gateway serving probes + git). SERVING 19:42Z: get_roc_momentum NO-ARG now 41 tickers (was 0/empty), ~35 non-null roc (rest honest-null insufficient_history/data_gap) -- no-arg default path resolves watchlist from DB. COMBINED RC3 GATE PASS: get_relative_strength w/ explicit watchlist NON-NULL rs+percentile 8/8 tickers across h63/h126/h252 (VCB h63 rs=-0.029 pct62.5 + BID HPG VHM VIC SSI MSN FPT), market_rs_composite=43.75, low_sample_warning=false -- proves A benchmark + C universe wired end-to-end. FIX 5c1ab331 (main.go +45 readWatchlistFromDB fallback + main_test.go +101 3 tests) + 341d2879 (doc), apps/technical-analysis/ ONLY, IN-HEAD, leak-CLEAN, NO hardcoded tickers (FR-C1 no-hardcode OK). Gates build/vet/test/lint green. Rebuild single-svc up -d --build technical-analysis (Up healthy, mcp-server peer untouched). watchlist table EXISTS 41 rows named volume. NOTE FPT roc=606x / VHM/VIC ~-0.998 = KNOWN unit-contam (separate backlog FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM), NOT a C regression. CLOSED."
+      },
+      {
+        "id": "TASK-VNINDEX-RS-B",
+        "title": "FR-B1 add type field to push handler + FR-B2 extend ohlcv-backfill-done depth probe to include VNINDEX",
+        "type": "FIX",
+        "size": "M",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "status": "DONE_VERIFIED",
+        "created_at": "2026-06-30T19:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T20:08:00Z",
+        "updated_by": "dev-team",
+        "depends": [
+          "TASK-VNINDEX-RS-A"
+        ],
+        "note": "DEPENDS on A (B's depth probe is only meaningful once A deploys VNINDEX data). Can parallelize AFTER A deploys. SERIALIZATION FLAG: dev-mcp-server is currently working on FIX-GET-TI-STALE-SOURCE-MCP-SERVER (file technicalIndicatorTools.ts in same service). TASK-VNINDEX-RS-B must SERIALIZE AFTER get_TI completes (do not dispatch two dev-mcp-server agents mutating apps/mcp-server in parallel). FR-B1: add optional type field to push-ohlcv-history handler (default 'stock'); FR-B2: extend ohlcv-backfill-done depth probe to include VNINDEX. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md § Zone B.",
+        "serialization": "Must wait for FIX-GET-TI-STALE-SOURCE-MCP-SERVER to complete before dispatching (same service, both mutate apps/mcp-server)",
+        "dispatched_at": "2026-06-30T19:44:17Z",
+        "dispatched_by": "dev-team",
+        "done_at": "2026-06-30T20:08:00Z",
+        "done_commits": [
+          "2969a0ef"
+        ],
+        "verification": "dev-team RAW-verify (own git + gateway serving probes + docker ps, NOT agent badge). COMMIT 2969a0ef IN-HEAD, scope apps/mcp-server/ ONLY (server.ts +101/-47 + 3 test files; did NOT touch C main.go or A vps-scripts), leak-CLEAN. FR-B1 (code-evidence in committed diff): type extracted from payload, default stock backward-compat, index exempts from stock range guard via validateOhlcvUnit(code,type,...). FR-B2 (code-evidence): separate SELECT COUNT(*) WHERE code=VNINDEX depth query, pushes VNINDEX to shallowCodes if < DEPTH_FLOOR(252). REBUILD single-svc: mcp-server Up 8min healthy, all 10 peers untouched (long uptimes, not co-restarted) -- no down&&up. NO REGRESSION: get_price_history VNINDEX still 253 bars (2025-05-26..2026-06-30, range 1311-1928, latest 1860.01); get_relative_strength NON-NULL 8/8 tickers h63/h126/h252, market_rs_composite=43.75, low_sample_warning=false -- gate STAYS GREEN. CLOSED."
+      },
       {
         "id": "FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS",
         "type": "FIX",
         "size": "M",
-        "status": "IN_PROGRESS",
+        "status": "DONE_VERIFIED",
         "priority": "high",
         "zone": "multi",
         "owner": "architect",
-        "next_agent": "pm",
+        "next_agent": "",
         "dispatcher": "dev-team",
         "created_by": "po",
         "created_at": "2026-06-30T18:12:28Z",
@@ -9972,8 +10042,8 @@
         ],
         "scope_note": "zone=multi → architect SPLITs (apps/technical-analysis/ for the benchmark read + apps/mcp-server/ or apps/stock-price/ for the index OHLCV ingest/cache). RECONCILE against the two existing VN-Index tasks before minting any new ingest task: FIX-VNINDEX-CACHE-STARTUP-PURGE (BACKLOG, apps/mcp-server/, the recurring purge-on-boot root) + FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE-never-done_verified). If TA reads vn_index_cache, this collapses INTO FIX-VNINDEX-CACHE-STARTUP-PURGE — do NOT duplicate it.",
         "verification_gate": "RAW gateway re-probe GREEN: get_relative_strength non-null for the watchlist 8 (index benchmark present + sufficient depth). done_verified WITHHELD until this RAW probe passes.",
-        "updated_at": "2026-06-30T19:35Z",
-        "updated_by": "architect",
+        "updated_at": "2026-06-30T20:08:00Z",
+        "updated_by": "dev-team",
         "dispatched_at": "2026-06-30T19:00:03Z",
         "dispatched_by": "dev-team",
         "owner_agent": "architect",
@@ -9994,75 +10064,63 @@
           "TASK-VNINDEX-RS-B",
           "TASK-VNINDEX-RS-C"
         ],
-        "note": "PM DECOMPOSITION: Split RC3 into 3 atomic tasks per architect handoff. A (LEAD, vps-scripts): dedicated VNINDEX fetch + VPS deploy. B (dev-mcp-server): type field + depth probe. C (dev-technical-analysis): watchlist DB fallback. A must deploy to VPS first; B depends on A; C independent. RC3 parent holds acceptance gate verification. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md"
-      },
-      {
-        "id": "FIX-GET-TI-STALE-SOURCE-MCP-SERVER",
-        "title": "get_technical_indicators serves stale 88k (separate/stale source vs get_price_history 62.2k) -- restart ruled out, code-fix in technicalIndicatorTools.ts",
-        "status": "IN_PROGRESS",
-        "type": "fix",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "sprint": "TA-CONSUMER-STALE-INDICATORS",
-        "priority": "high",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "depends": null,
-        "detail_ref": null,
-        "created_at": "2026-06-30T19:09:54Z",
-        "created_by": "dev-team",
-        "updated_at": "2026-06-30T19:09:54Z",
-        "updated_by": "dev-team",
-        "dispatched_at": "2026-06-30T19:09:54Z",
-        "dispatched_by": "dev-team",
-        "note": "dev-team RAW evidence (gateway 19:05Z, post mcp-server restart Up 3min): get_technical_indicators VCB returns MA5=88120 MA20=88840 price=87000 (source_tier 3) while get_price_history VCB=62200 reads the SAME local DB correctly, and RC2-fixed TA svc + get_roc_momentum/get_52w_proximity serve correct ~62k. So get_technical_indicators reads a DIFFERENT or STALE source than get_price_history. 88120 looks like pre-backfill / pre-split / separate-table OHLCV (NOT the FPT/VHM thousands-format contamination -- that is a separate backlog task; this is VCB, value HIGHER than correct). technicalIndicatorTools.ts (registered line 514) calls TA svc port-5003 via HTTP with a LOCAL-DB fallback (lines ~619/654). Restart did NOT clear it -> not in-process cache. FIX: find why get_technical_indicators sources stale OHLCV -- either (a) HTTP-to-5003 path returns stale/keepalive data, or (b) local-DB fallback reads a stale table/view rather than the corrected daily_ohlcv that get_price_history uses. Point it at the SAME corrected daily_ohlcv source as get_price_history; verify VCB MA5 ~=61480 and price ~=62200 via gateway after rebuild. ACCEPTANCE (RAW): get_technical_indicators VCB MA5/MA20/price within plausible band of get_price_history latest (~62k). dev-team RAW-verifies serving layer + git + leak-scan on return. Single-svc force-recreate-WITH-build mcp-server only; NEVER down&&up. Push gated (PO/human)."
+        "note": "DECOMPOSED (pm 665b0d53) A+B+C. A (developer/vps-scripts VNINDEX backfill) DONE_VERIFIED 5939be5d. C (dev-technical-analysis/main.go watchlist-from-DB) DONE_VERIFIED 5c1ab331+341d2879. ACCEPTANCE GATE PASS (dev-team RAW 19:42Z): get_relative_strength NON-NULL rs+percentile 8/8 tickers h63/h126/h252, market_rs_composite=43.75, low_sample_warning=false -- VNINDEX benchmark + watchlist universe wired end-to-end. B (dev-mcp-server/server.ts FR-B1 type field + FR-B2 VNINDEX depth probe) DISPATCHED -- last child, durability follow-on (does NOT affect the RS gate already green). Epic closes when B DONE_VERIFIED. Push gated (PO/human).",
+        "done_at": "2026-06-30T20:08:00Z",
+        "done_commits": [
+          "5939be5d",
+          "5c1ab331",
+          "341d2879",
+          "2969a0ef"
+        ],
+        "verification": "dev-team RAW-verify: RC3 epic FULLY SHIPPED -- all 3 decomposed children DONE_VERIFIED + combined acceptance gate GREEN. A (developer/vps-scripts 5939be5d): VPS VNINDEX backfill via vnmarket_prices -> get_price_history VNINDEX 253 bars live (was skipped). C (dev-technical-analysis/main.go 5c1ab331+341d2879): readWatchlistFromDB fallback -> get_roc_momentum no-arg 41 tickers (was empty), NO hardcode. B (dev-mcp-server/server.ts 2969a0ef): FR-B1 type field (index exempt from stock guard) + FR-B2 VNINDEX depth probe -- durability hardening, single-svc rebuild, no regression. ACCEPTANCE GATE (dev-team RAW serving probe 20:08Z): get_relative_strength NON-NULL rs+percentile 8/8 tickers across h63/h126/h252, market_rs_composite=43.75, low_sample_warning=false -- VNINDEX benchmark + watchlist universe wired end-to-end. KNOWN-SEPARATE (NOT RC3): FPT h252 rs=594 / VHM/VIC negative RS artifacts = unit-contam backlog FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM (next=po). Push gated (PO/human). CLOSED."
       }
     ],
+    "head": {
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": null,
+      "next_action": null,
+      "updated_by": "pm",
+      "updated_at": "2026-06-30T06:20:13Z"
+    },
+    "in_progress": [],
     "ready": [
       {
-        "id": "TASK-VNINDEX-RS-A",
-        "title": "FR-A1 dedicated VNINDEX fetch via vnmarket_prices + FR-A2 remove skip guard + VPS DEPLOY",
-        "type": "FIX",
+        "id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
+        "title": "daily_ohlcv thousands-format contamination (close<1000) FPT/VHM -> roc 606x, 52w low 100.3",
+        "status": "READY",
+        "type": "SPRINT-M",
+        "zone": "apps/mcp-server/",
         "size": "M",
+        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
         "priority": "high",
-        "zone": "vps-scripts/",
-        "owner": "developer",
-        "owner_agent": "developer",
-        "next_agent": "developer",
-        "sprint": "TA-CONSUMER-STALE-INDICATORS",
-        "status": "TODO",
-        "created_at": "2026-06-30T19:45:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-06-30T19:45:00Z",
-        "updated_by": "pm",
+        "owner_agent": "architect",
+        "next_agent": "architect",
         "depends": null,
-        "note": "LEAD task for RC3. Fetch VNINDEX historical bars from vnmarket_prices endpoint (stock_prices has no index data). Remove the old VNINDEX skip guard at line 134-139. CRITICAL: verify vnmarket_prices date-range support from VPS first (RISK-1). CRITICAL: must deploy to live Vinahost VPS via rsync/scp to /root/ (not just git commit). Only after this deploys will VNINDEX bars appear in daily_ohlcv, unblocking B's depth probe. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md § Zone A.",
-        "risk_flags": [
-          "RISK-1 (HIGH): vnmarket_prices date-range support unverified from VPS",
-          "RISK-2 (HIGH): VPS script must be deployed to live Vinahost VPS, not just committed"
-        ]
-      },
-      {
-        "id": "TASK-VNINDEX-RS-C",
-        "title": "FR-C1 readWatchlistFromDB fallback + unit tests",
-        "type": "FIX",
-        "size": "M",
-        "priority": "medium",
-        "zone": "apps/technical-analysis/",
-        "owner": "dev-technical-analysis",
-        "owner_agent": "dev-technical-analysis",
-        "next_agent": "dev-technical-analysis",
-        "sprint": "TA-CONSUMER-STALE-INDICATORS",
-        "status": "TODO",
-        "created_at": "2026-06-30T19:45:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-06-30T19:45:00Z",
-        "updated_by": "pm",
-        "depends": null,
-        "note": "INDEPENDENT task (can run parallel to A). Implement readWatchlistFromDB() in cmd/server/main.go to read SQLite watchlist table when WATCHLIST_TICKERS env is empty. Add unit tests. NO hardcode in docker-compose.yml; watchlist SSOT = SQLite watchlist table. RULE: do NOT add VNINDEX to watchlist table — VNINDEX is the benchmark, not a cross-section ticker. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md § Zone C.",
-        "supersedes": [
-          "FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY"
-        ]
+        "detail_ref": null,
+        "created_at": "2026-06-30T19:00:03Z",
+        "created_by": "dev-team",
+        "updated_at": "2026-06-30T20:20:07Z",
+        "updated_by": "po",
+        "note": "dev-team RAW-verify (gateway, post-RC2): with TA svc fixed, get_roc_momentum FPT roc=606x and get_52w_proximity FPT low_52w=100.3 (vs high 99800, pct_from_low 698x) + VHM low_52w=100 -- caused by daily_ohlcv rows storing prices in THOUSANDS format (close=100.3 meaning 100300 VND) for ~Aug2025-Feb2026. RECURRENCE-ADJACENT: prior OHLCV-UNIT-CONTAM (closed) / CONTAM-6 repaired only the 'open<100 AND close>=1000' class; this NEW class has close<1000 so the old script misses it. PO triage: scope DB migration targeting close<1000 AND close>50 AND date window per affected code (verify exact predicate vs live rows first) + reflow derived columns. Serving-integrity: FPT/VHM momentum + 52w cards currently show garbage. Recurring-bug lens (feedback_recurring_bug_escalation): 2nd contamination class same table -- prefer a durable ingest-time unit-normalization guard over another one-off repair.",
+        "promoted_at": "2026-06-30T20:20:07Z",
+        "promoted_by": "po-s135",
+        "raw_evidence": "gateway 2026-06-30T20:13Z: FPT h252 rs=594.07 / roc=606.29x d10; DHG h63 rs=922.59 + h126 918.06; VHM h126 rs=-1.066 / h252 rs=-1.350 p0 / roc=-0.998; VIC h252 rs=-1.349 p2.78 / roc=-0.998. >=4 watchlist tickers visibly degraded (more than the 3 first triaged).",
+        "precedent": "Prior sprint OHLCV-UNIT-CONTAM: CONTAM-4 (writers D/E) / CONTAM-5 sanity job (apps/mcp-server/src/scheduler/market-data/ohlcvSanityCheckJob.ts, 15:05Z) / CONTAM-6 repair (scripts/migrations/repair-ohlcv-unit-contamination.ts, --dry-run + runRepair()) / CONTAM-7 test. CONTAM-6 WHERE = '(open<100 OR low<100) AND close>=1000' and only normalizes open/low -> structurally CANNOT see this whole-row close<1000 class. Writer normalizeOhlcvToVnd applies x1000 only when max(OHLC)<100 and detectAndNormalizeScaleFromPrevClose needs a clean prev_close -> gap when the whole recent series is contaminated.",
+        "deliverables": [
+          "A: repair migration extending the CONTAM-6 family to the whole-row close<1000 class. Detection = PER-TICKER ~1000x discontinuity test against the ticker's OWN clean reference level (NOT a blind close<1000 sweep). Reuse the --dry-run + runRepair() interface; dry-run report (ticker, date-range, row-count) for human-confirm BEFORE live UPDATE-in-txn. Verify the exact predicate against live rows first.",
+          "B: reflow/recompute derived RS/ROC/percentile/z-score/52w. FIRST determine whether these are materialized (stored) or computed-on-read (RS tool returned source_tier 3 live -> likely computed-on-read, in which case normalizing daily_ohlcv self-heals and only a re-probe is needed; reflow any materialized aggregate/cache e.g. ohlcvDailyAggregator output). RAW-verify the SERVING layer post-fix, not just the base table.",
+          "C: durable ingest-time unit-normalization guard (writer-side) closing the max(OHLC)<100 gap (a high-price stock contaminated in thousands sits at 100-1000, NOT <100) and the all-series-contaminated no-clean-prev_close gap. Fix the WRITER not just residue. Extend CONTAM-5 ohlcvSanityCheckJob to flag the whole-row close<1000 class."
+        ],
+        "critical_cautions": [
+          "EXCLUDE index-type rows: VNINDEX legitimately trades ~1300-1900 (253 bars just backfilled in RC3) and other indices sit in their own scale. The predicate MUST identify and skip index codes; verify the is_index flag / index-code set against the LIVE schema before any UPDATE.",
+          "NOT a blind close<1000 sweep: a stock whose ENTIRE series is ~100 is legitimately cheap and must NOT be x1000'd. Only touch a series with a ~1000x STEP within its own history.",
+          "Dry-run + human-confirm before any live mutation (CONTAM-6 precedent); UPDATE inside a single transaction.",
+          "Recurring-bug-escalation (feedback_recurring_bug_escalation): 2nd contamination class same table -> the durable WRITER guard (deliverable C) is the real exit criterion, not another one-off repair."
+        ],
+        "generic_mandate": "Ship the durable writer-side guard + sanity-job extension so this contamination class cannot re-accumulate; the repair migration alone does NOT close the sprint.",
+        "verification_gate": "RAW (gateway, not badges): (1) get_relative_strength no-arg -> |rs|<=~3 for h63/h126/h252 on ALL watchlist tickers; (2) get_roc_momentum no-arg -> roc in a sane band (no 606x, no -0.998) for all; (3) VNINDEX get_price_history still ~1300-1900 with 253 bars (untouched); (4) a chosen legitimately-cheap stock untouched; (5) writer unit test: synthetic thousands-format push for a high-price ticker is normalized/rejected; (6) CONTAM-5 sanity job flags the new class.",
+        "cascade": "architect (safe predicate design + writer-gap + reflow plan; brief per recurring-bug-escalation) -> pm (decompose into dev tasks) -> developer (apps/mcp-server)."
       }
     ],
     "review": [

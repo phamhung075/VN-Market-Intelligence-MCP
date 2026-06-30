@@ -1,24 +1,27 @@
 # PO Notebook
 
-_Last: 2026-06-30T18:12Z_
+_Last: 2026-06-30T20:21Z_
 
-## Tick 18:12Z — Triage TA-CONSUMER-STALE-INDICATORS (dev-team finding, coord e71c7736)
+## Tick 2026-06-30T20:21Z — Kickoff OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (dev-team triage, coord e71c7736)
 
-**Finding (RAW-verified by dev-team, do NOT re-probe):** OHLCV-depth epic done_verified (86daf9f1/5e4f75ea — daily_ohlcv 2yr depth, cross-restart persistence, price-history serves VCB 501 candles). But momentum/gauge cards are STILL honest-NULL for a NEW root in the TA CONSUMER layer, NOT depth. Explicit watchlist_tickers override STILL null → disproves the env-only diagnosis. SMOKING GUN: get_technical_indicators VCB ~88,000 vs get_price_history VCB (daily_ohlcv) 62,200 SAME day → TA Go svc :5003 serves stale/separate/split-mismatched data.
+**Finding (RAW-verified by ME via gateway 20:13Z — do NOT re-probe):** 2nd daily_ohlcv unit-contamination class, whole-row thousands-format (close<1000, e.g. FPT close=70.2 = 70200 VND) over ~Aug2025-Feb2026. Visible on the PUBLIC RS leaderboard across >=4 watchlist tickers (more than the 3 first triaged):
+- FPT: rs h252=594.07 (LEADING artifact) / roc=606.29x decile10
+- DHG: rs h63=922.59 + h126=918.06 (NEW — not in original triage)
+- VHM: rs h126=-1.066 / h252=-1.350 p0 / roc=-0.998
+- VIC: rs h252=-1.349 p2.78 (vs healthy h63 +0.475) / roc=-0.998
+FPT recent 7 bars are CLEAN (70,200) → contamination is in the PAST window, exactly as triage said.
 
-**Scoped (cheap-first, diagnostic-gated — scripts/po-s135-*.jq | orch-apply.sh, Stage0/1 PASS, 97 pre-existing SHG warnings not mine):**
-- ready[]: OPS-TA-INDICATOR-STALE-DIAGNOSTIC (ops, P1, blocking, zone apps/technical-analysis/) — single-svc RESTART technical-analysis :5003 (NOT down&&up) then re-probe; GATES the expensive fixes (RC1 stale-cache resolves cheaply vs RC2/3/4 real bug).
-- backlog[] HELD on diag: FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE (dev-technical-analysis, apps/technical-analysis/) = RC2 split-mismatch + RC4 data_gap | FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (architect, multi) = RC3 absent VN-Index benchmark.
-- folded FIX-TA-INDICATORS-TIER3-ROUTING in-place (ALL-N/A premise EVOLVED to stale-VALUE post depth-fix; same root).
+**Precedent (read, not re-derived):** prior sprint OHLCV-UNIT-CONTAM (CONTAM-4 writers / CONTAM-5 sanity job ohlcvSanityCheckJob.ts / CONTAM-6 repair scripts/migrations/repair-ohlcv-unit-contamination.ts / CONTAM-7 test). CONTAM-6 WHERE='(open<100 OR low<100) AND close>=1000' + normalizes only open/low → STRUCTURALLY misses this whole-row close<1000 class. Writer normalizeOhlcvToVnd fires x1000 only when max(OHLC)<100 → gap for mid-scale (100-1000) + all-series-contaminated (no clean prev_close).
+
+**Decision = CREATE SPRINT-M (not defer, not direct-FIX):** scripts/po-s135-*.jq | orch-apply.sh (Stage0/1 PASS; 97 pre-existing SHG warnings not mine). Conservation backlog -1 / ready +1 / active_sprints +1 / sprint_goal +1; idempotent (re-run delta 0). Promoted FIX backlog→ready (SPRINT-M, P3→high, next_agent=architect, 3 deliverables + 4 critical_cautions + verification_gate + generic_mandate). Repointed head→architect. Sprint umbrella lock claimed (task:OHLCV-UNIT-CONTAM-WHOLEROW-LT1000).
 
 **Key calls:**
-- Diagnostic gets a CLAIMABLE row not a verdict — gate needs a board row (project_deferred_task_scheduler strand-lesson).
-- M2 set single-zone (apps/technical-analysis/) NOT multi — smoking gun is the TA svc; scope_note escalates to multi ONLY if root proves upstream in stock-price adjustment. Avoids a forced architect hop.
-- M3 cross-ref'd existing FIX-VNINDEX-CACHE-STARTUP-PURGE — if TA reads vn_index_cache, M3 COLLAPSES into it (reconcile-before-mint, no dup).
-- WIP unchanged (in_progress=0); ready 1→2; backlog +2. head LEFT idle — RETURN BATCH to dev-team router for dispatch (po-s132 pattern).
-- Foreign-flow accum_rank residual flagged OUT-OF-SCOPE (already tracked TASK17-FOREIGN-FLOW + FIX-FOREIGN-FLOW-COVERAGE + ARCH-DAILY-FOREIGN-FLOW-TABLE).
+- architect-first (NOT ba/direct-dev): WHAT is clear, only safe-HOW is open. CRITICAL caution = predicate MUST be per-ticker ~1000x discontinuity, NOT blind close<1000, and MUST exclude index rows (VNINDEX ~1300-1900, RC3 253-bar backfill) + legit-cheap stocks.
+- recurring-bug-escalation: 2nd contam class same table → durable WRITER guard (deliverable C) is the real exit, not another one-off repair.
+- reflow (deliverable B): RS tool returns source_tier 3 LIVE → likely computed-on-read (self-heals post-normalize); architect determines materialized-vs-computed FIRST.
+- ahead=13 < push threshold 20 → no backstop push; fleet-push timer owns push.
 
 ## Carry-over
-- Router: dispatch OPS-TA-INDICATOR-STALE-DIAGNOSTIC first (head→ops). Its verdict UNBLOCKS or SUPERSEDES the 2 held fixes (clear their `depends` / mark superseded).
-- If restart resolves all 3 tools → chain RESOLVED by RC1; close diag done_verified + supersede M2/M3.
-- Decision trail → decisions/sprint-TA-CONSUMER-STALE-INDICATORS-po.md (po-S1..S5).
+- Router: head→architect dispatches design of safe predicate + writer-gap + reflow plan; then pm decompose → developer (apps/mcp-server).
+- Acceptance gate (RAW): get_relative_strength |rs|<=~3 all tickers + get_roc_momentum sane band; VNINDEX 253 bars untouched; writer unit-test rejects synthetic thousands push; CONTAM-5 flags close<1000 class.
+- Decision trail → decisions/sprint-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000-po.md (po-S1).
