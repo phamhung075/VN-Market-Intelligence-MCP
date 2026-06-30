@@ -15,3 +15,14 @@
 - Separate get_omo_curve tool: no known consumer in P0 needs time-series history directly. Defer to P1; extend get_vn_liquidity_state additively now.
 **why-decision:** Option A for OMO (zone-clean, 4-line change, no new write exception to market.db). Event detection in mcp-server (single writer rule). get_omo_curve deferred (YAGNI for P0).
 **why-change:** B4 cron assigned 37 8 * * 1-5 (verified free; +7 from :30 pile-up per Lever C pattern).
+
+### STEP architect-S2 · architect · 2026-06-30T02:00Z
+**task-id:** BA-IND-P1-MOMENTUM-RS
+**what-done:** Brownfield analysis + full technical blueprint for 4 P1 momentum/RS tools across 2 zones; resolved all 5 ARCH-RATIFY items via live code probe; emitted 9 risk flags; assigned DDD file paths; corrected 2 critical BA data-source errors.
+**what-considered:**
+- ARCH-RATIFY-FAR-1: vnstock_trading_stats vs daily_ohlcv for foreign flow — probed schema-financial-reports.ts; daily_ohlcv is the correct source (vnstock_trading_stats has NO buy/sell vol columns).
+- ARCH-RATIFY-RS-1: VNINDEX code confirmed "VNINDEX" via ohlcvHistoryBackfillJob.ts VNINDEX_CODE constant; vn_index_cache is latest-only, daily_ohlcv holds history.
+- Factor-return persistence: compute-on-read wins (no new table, no schema churn; P1 perf acceptable).
+- RouterConfig struct vs positional params for NewRouter() expansion.
+**why-decision:** daily_ohlcv is the single correct source for per-day foreign_buy_vol/foreign_sell_vol (probed live). Compute-on-read for factor-return (YAGNI). RouterConfig struct deferred — flow positional args acceptable for 3 new UCs; can refactor in P2 if needed.
+**why-change:** BA spec had 2 source-errors (vnstock_trading_stats for flow; ROOM_LOCKED label for event_type). Both corrected here with live schema evidence. ROOM_FULL/ROOM_REOPEN is the actual enum.

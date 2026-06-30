@@ -1,8 +1,21 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-29 21:15 UTC | **Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Last updated:** 2026-06-30 02:00 UTC | **Sprint:** MARKET-INDICATOR-DEPTH-P0
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-30T02:00Z — BA-IND-P1-MOMENTUM-RS (DESIGN DONE)
+
+**Task:** BA-IND-P1-MOMENTUM-RS | NEW-FEATURE (lean) | zone: multi (technical-analysis + stock-price)
+**BUILD-STANDARD:** lean (both zones brownfield Go services)
+**Critical brownfield discoveries:** (1) apps/technical-analysis is Go NOT TypeScript — active code is pkg/ + cmd/; src/ is DEAD. (2) vnstock_trading_stats has NO foreign_buy_vol/foreign_sell_vol — correct source is daily_ohlcv. (3) foreign_room_events event_type is ROOM_FULL/ROOM_REOPEN (NOT ROOM_LOCKED/FULL_ROOM_SELL as BA stated).
+**5 ARCH-RATIFY resolved:** RS-1: VNINDEX code in daily_ohlcv confirmed "VNINDEX"; ROC-1: compute-on-read; FAR-1+FAR-2: daily_ohlcv source + shares ADTV unit; 52W: denominator_ma200 in aggregate.
+**Zone 1 (apps/technical-analysis Go):** 3 tools via 3 new domain/service files + shared SQLiteMultiTickerOHLCVRepository (IN-clause batch read) + 3 handlers + router extension + 3 MCP tool proxies.
+**Zone 2 (apps/stock-price Go):** 1 tool via ForeignFlowRepository (reads daily_ohlcv) + RoomEventRepository (reads foreign_room_events) + domain service + 1 handler + 1 MCP proxy.
+**9 risk flags:** RISK-1+2 HIGH (data-source mismatch + event-type correction); RISK-3 HIGH (TS dead code); RISK-4-6 MEDIUM; RISK-7-9 LOW.
+**Feed-forward scalars:** momentum_factor_z, market_rs_composite, net_new_highs, foreign_accum_z_market (P1 Fear-Greed hooks).
+**Output:** [Architect] Brownfield Findings → docs/handoffs/BA-IND-P1-MOMENTUM-RS.md
+**Next:** pm decomposes into 2 per-zone task groups (dev-technical-analysis: 3 tools; dev-stock-price: 1 tool) + MCP proxy layer.
 
 ## 2026-06-29T21:15Z — MARKET-INDICATOR-DEPTH-P0 (DESIGN DONE)
 

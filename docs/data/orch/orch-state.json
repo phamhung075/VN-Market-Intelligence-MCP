@@ -8454,8 +8454,8 @@
         "tier": "P1",
         "title": "BA spec — IND-P1 Momentum & Relative-Strength factor sub-wave: 4 NEW backend indicator tools (ROC-Momentum 12-1, Cross-Sectional Relative-Strength, 52W-High Proximity, Foreign-Accumulation Momentum Rank)",
         "status": "READY",
-        "owner": "architect",
-        "next_agent": "architect",
+        "owner": "pm",
+        "next_agent": "pm",
         "zone": "multi",
         "priority": "medium",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
@@ -8485,7 +8485,10 @@
           "52W-MA200 denominator_ma200 field required (sample transparency for pct_above_ma200)"
         ],
         "reconciled_by": "router:ba-handoff-dedup",
-        "reconcile_note": "BA minted a duplicate DONE row in backlog[] and left this ready[] row un-transitioned (next_agent=ba). Router removed the dup and advanced this single row to next_agent=architect. BA spec verified sound (commit ba562100; 295-line handoff). Zone split MANDATORY downstream: 3x apps/technical-analysis (ROC, RS, 52W) + 1x apps/stock-price (foreign-accum-rank)."
+        "reconcile_note": "BA minted a duplicate DONE row in backlog[] and left this ready[] row un-transitioned (next_agent=ba). Router removed the dup and advanced this single row to next_agent=architect. BA spec verified sound (commit ba562100; 295-line handoff). Zone split MANDATORY downstream: 3x apps/technical-analysis (ROC, RS, 52W) + 1x apps/stock-price (foreign-accum-rank).",
+        "arch_completed_at": "2026-06-30T02:00:00Z",
+        "arch_handoff": "docs/handoffs/BA-IND-P1-MOMENTUM-RS.md",
+        "arch_note": "Brownfield complete. 5 ARCH-RATIFY resolved. 2 critical corrections: (1) foreign_buy_vol/sell_vol in daily_ohlcv NOT vnstock_trading_stats; (2) foreign_room_events event_type=ROOM_FULL not ROOM_LOCKED. Zone split confirmed: 3x dev-technical-analysis (ROC/RS/52W) + 1x dev-stock-price (foreign-accum). BUILD-STANDARD: lean. Ready for PM decomposition."
       },
       {
         "id": "IND-P1-FRONTEND-GAUGE-CARDS",
