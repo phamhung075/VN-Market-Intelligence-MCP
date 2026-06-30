@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-06-30T22:35:04Z",
+    "status": "in_progress",
+    "active_task_id": "CONTAM-11",
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-06-30T22:52:58Z",
     "updated_by": "dev-team",
-    "note": "CONTAM-10 sprint CLOSED -- parent epic FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM in_progress->done (4 children MIGRATION+WRITER+EXEC+SANITY all DONE). SANITY qa-APPROVED 0941d173, dispatcher RAW-verified {IS-HEAD, 3 qa-owned paths no code, detection-only via own grep, leak-clean}; qa-reported {11/11 pass4, 14111 full-suite, tsc 0}. Whole-row sub-1000 unit-contamination class now fully addressed: detection (Pass-4) live + repair (--live 7897 rows) applied + reference-close write-guard shipped. CONTAM-11 SPIKE in backlog (9869 unanchored residual, PLAN-ONLY, no predicate-widen) for PO triage. Pipeline IDLE -- next cron tick: PO triage (CONTAM-11 + pending docs/signals/). Push gated (PO/human)."
+    "note": "CONTAM-11 SPIKE DISPATCHED (dev-mcp-server, zone apps/mcp-server/, PLAN-ONLY, timebox 180min) per PO BATCH triage 22:37Z. Bucket ~9869 unanchored sub-1000 daily_ohlcv residual into legit-cheap vs contaminated-anchorless WITH EVIDENCE; propose remediation WITHOUT widening CONTAM-10 anchor predicate. Findings doc only, zero live mutation -- cannot regress the applied 7897-row repair. Dispatcher RAW-verified pre-dispatch: head idle, WIP=0, CONTAM-11 backlog-only no-dup, dep CONTAM-10-EXEC=done. SF-1 heartbeat ok (sole leader). dev code WIP=1 (spike, no-mutation). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7922,30 +7922,6 @@
           "QA-AC6 on PASS: relocate FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL to done_verified (this is its withheld behavioral gate); on the weekend leg, gate is satisfied only after FIX-FB-WEEKEND-DEDUP-GATE ships."
         ],
         "depends_note": "Blocked until FB-LAUNCHD-OPS-INSTALL-VERIFY installs the agent(s). Weekend double-post leg additionally gated on FIX-FB-WEEKEND-DEDUP-GATE."
-      },
-      {
-        "id": "CONTAM-11",
-        "type": "SPIKE",
-        "size": "M",
-        "status": "BACKLOG",
-        "priority": "medium",
-        "zone": "data-investigation/daily_ohlcv",
-        "owner": "",
-        "next_agent": "",
-        "dispatcher": "dev-team",
-        "depends": [
-          "CONTAM-10-EXEC"
-        ],
-        "created_by": "dev-team",
-        "created_at": "2026-06-30T22:03:33Z",
-        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
-        "title": "PLAN-ONLY: bucket residual ~9869 unanchored sub-1000 daily_ohlcv rows (no recent clean anchor)",
-        "note": "PO mandate 4f508cdb. Of 17766 sub-1000 non-index rows, 7897 anchored repaired by CONTAM-10 --live; ~9869 lack a recent clean anchor (close>=1000 within 180d). Investigate+bucket: (a) legitimately cheap stocks -> leave; (b) contaminated-but-anchor-less -> different strategy (longer anchor window / cross-source / sector-peer reference / manual review). DO NOT widen CONTAM-10 anchor predicate (anchor requirement = what makes the live pass safe). PO triage to schedule.",
-        "acceptance": [
-          "Classify each of the ~9869 rows into legit-cheap vs contaminated-anchorless buckets with evidence.",
-          "Propose a safe remediation strategy for the contaminated-anchorless bucket WITHOUT loosening the CONTAM-10 anchor predicate.",
-          "No auto-repair in this task (PLAN-ONLY)."
-        ]
       }
     ],
     "closed_sprints": [
@@ -10293,7 +10269,39 @@
       "updated_by": "pm",
       "updated_at": "2026-06-30T06:20:13Z"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "CONTAM-11",
+        "type": "SPIKE",
+        "size": "M",
+        "status": "IN_PROGRESS",
+        "priority": "medium",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "dispatcher": "dev-team",
+        "depends": [
+          "CONTAM-10-EXEC"
+        ],
+        "created_by": "dev-team",
+        "created_at": "2026-06-30T22:03:33Z",
+        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "title": "PLAN-ONLY: bucket residual ~9869 unanchored sub-1000 daily_ohlcv rows (no recent clean anchor)",
+        "note": "DISPATCHED dev-mcp-server (zone apps/mcp-server/ specialist -- owns daily_ohlcv table + CONTAM repair scripts). PO BATCH triage 22:37Z scheduled this SPIKE (dep CONTAM-10-EXEC=done, WIP=0, head idle). PLAN-ONLY: classify the ~9869 unanchored sub-1000 daily_ohlcv rows (no close>=1000 within 180d) into (a) legit-cheap-stock vs (b) contaminated-but-anchorless buckets WITH EVIDENCE via read-only DB probe; propose a safe remediation strategy for bucket (b) WITHOUT widening the CONTAM-10 anchor predicate (longer-window / cross-source / sector-peer reference / manual-review). NO auto-repair, NO live mutation -- produce a findings doc only. INDEX tickers excluded. timebox 180min. dev -> qa gate on findings-doc completeness. PO suggested next_agent=developer; dispatcher routes zone-specialist-first to dev-mcp-server.",
+        "acceptance": [
+          "Classify each of the ~9869 rows into legit-cheap vs contaminated-anchorless buckets with evidence.",
+          "Propose a safe remediation strategy for the contaminated-anchorless bucket WITHOUT loosening the CONTAM-10 anchor predicate.",
+          "No auto-repair in this task (PLAN-ONLY)."
+        ],
+        "owner_agent": "dev-mcp-server",
+        "mode": "spike",
+        "timebox": 180,
+        "updated_at": "2026-06-30T22:52:58Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T22:52:58Z",
+        "dispatched_by": "dev-team"
+      }
+    ],
     "ready": [],
     "review": [
       {
