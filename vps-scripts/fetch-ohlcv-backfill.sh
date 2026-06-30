@@ -14,8 +14,10 @@
 #   R-3:    flat seed filter — `select(.volume > 0 or (.open != .close))` drops bars where
 #            volume=0 AND open=close (TCBS/VNDirect non-trading reference bars).
 #   VNINDEX: VNDirect stock_prices endpoint has no index data (totalElements=0 for VNINDEX query).
-#            VNINDEX is not in watchlist. Guard added: skip with WARN if VNINDEX appears in code list
-#            (R-2 expansion may include it). Push payload would carry type=index when available.
+#            TASK-VNINDEX-RS-A (2026-06-30): FR-A1 adds dedicated Step 1.5 block that fetches
+#            from vnmarket_prices endpoint (size=750&sort=date — fromDate/toDate ignored by API).
+#            FR-A2 removes the old skip guard. 750 bars covers 2023-06-27..present (>253 bars).
+#            Push payload carries type=index for semantic correctness. No ×1000 normalisation.
 #   R-2:    Universe extension — try /api/ohlcv-codes first (SUBTASK-B adds this endpoint);
 #            fall back to /api/watchlist if endpoint returns 404 or empty codes.
 #   BARS:   Track bars_pushed_total across all tickers; pass to /api/ohlcv-backfill-done POST body.
@@ -72,6 +74,7 @@ SLEEP_BETWEEN="${SLEEP_BETWEEN:-1}"
 SINGLE_TICKER="${1:-}"  # Optional positional arg: single-ticker test mode
 
 VNDIRECT_BASE="https://api-finfo.vndirect.com.vn/v4/stock_prices"
+VNDIRECT_VNMARKET_BASE="https://api-finfo.vndirect.com.vn/v4/vnmarket_prices"
 VNDIRECT_UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
 # Timestamp helper
@@ -120,23 +123,80 @@ fi
 COUNT=$(echo "$CODES" | wc -l | tr -d ' ')
 echo "$(ts) Code list: ${COUNT} ticker(s) to backfill"
 
-# ── Step 2: Fetch + push each ticker ────────────────────────────────────────
-
+# ── Step 1.5: VNINDEX dedicated fetch ───────────────────────────────────────
+# FR-A1 (TASK-VNINDEX-RS-A): stock_prices has no index data; use vnmarket_prices.
+# NOTE: fromDate/toDate params are IGNORED by vnmarket_prices endpoint (probe
+# confirmed 2026-06-30 from VPS). Use size=750&sort=date to get latest 750 bars.
+# 750 bars covers ~3yr (probe: 2023-06-27..2026-06-30), well above h252=253 bars.
+# VNINDEX values (~1200-1900) do NOT need ×1000 normalization (close > 100).
+#
 TOTAL_OK=0
 TOTAL_SKIP=0
 TOTAL_ERR=0
 BARS_PUSHED_TOTAL=0
 
+echo "$(ts) === Fetching VNINDEX from vnmarket_prices (dedicated index endpoint) ==="
+
+VNINDEX_RESP=$(curl -s --connect-timeout 10 --max-time 30 \
+  "${VNDIRECT_VNMARKET_BASE}?q=code:VNINDEX&size=750&sort=date" \
+  -H "User-Agent: ${VNDIRECT_UA}" \
+  -H "Accept: application/json" 2>/dev/null || echo "")
+
+VNINDEX_LEN=$(echo "$VNINDEX_RESP" | jq '.data | length' 2>/dev/null || echo "0")
+
+if [ "${VNINDEX_LEN:-0}" -gt 0 ]; then
+  # Extract bars — no ×1000 normalisation: VNINDEX ~1200-1900, well above the
+  # close<100 thousand-VND threshold. Use accumulatedVol // nmVolume // 0 for
+  # field-name resilience across API versions (RISK-3).
+  VNINDEX_BARS=$(echo "$VNINDEX_RESP" | jq -c '[
+    .data[]? |
+    select(.date != null and .close != null and (.close | tonumber? // null) != null) |
+    {
+      date:   .date,
+      open:   ((.open  // .close) | tonumber),
+      high:   ((.high  // .close) | tonumber),
+      low:    ((.low   // .close) | tonumber),
+      close:  (.close             | tonumber),
+      volume: ((.accumulatedVol // .nmVolume // 0) | tonumber)
+    } |
+    select(.close > 0 and .open > 0 and .high > 0 and .low > 0)
+  ]' 2>/dev/null || echo "[]")
+
+  VNINDEX_BAR_COUNT=$(echo "$VNINDEX_BARS" | jq 'length' 2>/dev/null || echo 0)
+
+  if [ "${VNINDEX_BAR_COUNT:-0}" -gt 0 ]; then
+    VNINDEX_PAYLOAD=$(jq -n --arg code "VNINDEX" --argjson bars "$VNINDEX_BARS" \
+      '{"code": $code, "bars": $bars, "type": "index"}')
+    VNINDEX_PUSH=$(curl -s --connect-timeout 10 --max-time 20 \
+      -X POST "$OHLCV_API_URL" \
+      -H "Content-Type: application/json" \
+      -H "X-API-Key: $API_KEY" \
+      -d "$VNINDEX_PAYLOAD" 2>/dev/null || echo "")
+    VNINDEX_OK=$(echo "$VNINDEX_PUSH" | jq -r '.ok // false' 2>/dev/null || echo "false")
+    VNINDEX_INS=$(echo "$VNINDEX_PUSH" | jq -r '.inserted // 0' 2>/dev/null || echo "0")
+    echo "$(ts) OK [VNINDEX]: ${VNINDEX_BAR_COUNT} bars fetched from vnmarket_prices, ${VNINDEX_INS} inserted"
+    TOTAL_OK=$(( TOTAL_OK + 1 ))
+    if echo "$VNINDEX_INS" | grep -qE '^[0-9]+$'; then
+      BARS_PUSHED_TOTAL=$(( BARS_PUSHED_TOTAL + VNINDEX_INS ))
+    fi
+  else
+    echo "$(ts) SKIP [VNINDEX]: 0 usable bars after jq filter from vnmarket_prices response (len=${VNINDEX_LEN})"
+    TOTAL_SKIP=$(( TOTAL_SKIP + 1 ))
+  fi
+else
+  echo "$(ts) WARN [VNINDEX]: vnmarket_prices returned 0 records — endpoint unavailable or empty"
+  TOTAL_SKIP=$(( TOTAL_SKIP + 1 ))
+fi
+
+# ── Step 2: Fetch + push each ticker ────────────────────────────────────────
+
 while IFS= read -r TICKER; do
   [ -z "$TICKER" ] && continue
 
-  # VNINDEX guard: VNDirect stock_prices has no index data (totalElements=0)
-  # type=index is preserved in push payload for future server-side handling.
-  if [ "$TICKER" = "VNINDEX" ]; then
-    echo "$(ts) WARN [VNINDEX]: VNDirect stock_prices endpoint has no index data — skipping (SUBTASK-B: add dedicated index fetch)"
-    TOTAL_SKIP=$(( TOTAL_SKIP + 1 ))
-    continue
-  fi
+  # FR-A2 (TASK-VNINDEX-RS-A): VNINDEX skip guard removed. VNINDEX is now fetched
+  # by the dedicated vnmarket_prices block above (Step 1.5). If VNINDEX ever
+  # appears in the codes list, the stock_prices endpoint would return 0 rows
+  # and be skipped naturally at the DATA_LEN=0 guard below.
 
   # Fetch from VNDirect
   # q=code:TICKER filter confirmed working from VPS (per-ticker historical data)
