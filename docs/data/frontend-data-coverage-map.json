@@ -1,6 +1,6 @@
 {
   "_": "SSOT frontend data-freshness map. page->endpoint->store->writer->SLA->status->fix. Code-verified (cronConfig.ts UTC + handler->store trace + chef.md). Consumed by freshnessSlaMonitor/system-auditor/frontend-autorefresh/dev-backlog. Headline gaps sector-rotation+kinh-dich-signals+conviction-history were FALSE POSITIVES (all have live writers); only true gap = CHEF synthesis. Scope = plan+json only, no app code changed.",
-  "generated_at": "2026-06-28T00:00:00Z",
+  "generated_at": "2026-06-30T04:00:00Z",
   "fields": "page|route|elem|endpoint|store|writer|cadence(UTC)|sla|asof|status|fix",
   "status_legend": "LIVE | DEPTH_THIN(writer ok, data shallow) | STALE_RISK(market-hours only, by-design) | GAP(captured not persisted) | STATIC | L2(no data_asof field)",
   "sla_tiers": {
@@ -32,7 +32,7 @@
   },
   "summary": {
     "pages": 34,
-    "rows": 36,
+    "rows": 41,
     "LIVE": 30,
     "DEPTH_THIN": 2,
     "STALE_RISK": 2,
@@ -550,6 +550,76 @@
       "status": "GAP",
       "fix": "GAP-CHEF-SYNTHESIS: chef.md persist step (via agent-md-factory) -> docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json; then dev-mcp-server GET /api/cheb-synthesis + dev-frontend card. Optional: market-analyst, fb-market-poster same pattern",
       "l3b_status": "OUT_OF_SCOPE"
+    },
+    {
+      "page": "/dashboard/indicator-gauges",
+      "elem": "rv_20d_percentile + vol_regime (volatility gauge)",
+      "endpoint": "/api/indicator-gauges → volatility section",
+      "store": "computed_volatility (mcp-server in-memory compute from price_history)",
+      "writer": "get_volatility_indicators MCP tool → REST endpoint (IND-P1 dev-mcp-server)",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": null,
+      "status": "GAP",
+      "fix": "IND-P1-DEV-MCP-SERVER: add GET /api/indicator-gauges endpoint aggregating 5 P0 tools; frontend renders honest-NULL until deployed",
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) + useFreshnessRevalidator wired IND-P1-FRONTEND-GAUGE-CARDS; honest-NULL on 404/502"
+    },
+    {
+      "page": "/dashboard/indicator-gauges",
+      "elem": "news_sentiment_z + history_quality (sentiment gauge)",
+      "endpoint": "/api/indicator-gauges → sentiment section",
+      "store": "news_articles + sentiment scoring (mcp-server)",
+      "writer": "get_market_sentiment_index MCP tool → REST endpoint (IND-P1 dev-mcp-server)",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": null,
+      "status": "GAP",
+      "fix": "IND-P1-DEV-MCP-SERVER: same aggregated endpoint",
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) wired; history_quality SUFFICIENT/WARMUP/INSUFFICIENT badge"
+    },
+    {
+      "page": "/dashboard/indicator-gauges",
+      "elem": "breadth_z_score.value (breadth gauge)",
+      "endpoint": "/api/indicator-gauges → breadth section",
+      "store": "computed_breadth (mcp-server in-memory, min 21 sessions)",
+      "writer": "get_breadth_thrust MCP tool → REST endpoint (IND-P1 dev-mcp-server)",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": null,
+      "status": "GAP",
+      "fix": "IND-P1-DEV-MCP-SERVER: same aggregated endpoint; breadth may be null during warmup (<21 sessions)",
+      "l3b_status": "WIRED",
+      "l3b_note": "honest-NULL: breadth:null renders as 'chưa có dữ liệu' gray badge"
+    },
+    {
+      "page": "/dashboard/indicator-gauges",
+      "elem": "foreign_outflow_z_5d + market_saturation_pct (foreign room gauge)",
+      "endpoint": "/api/indicator-gauges → foreign_room section",
+      "store": "foreign_room_data (mcp-server)",
+      "writer": "get_foreign_room MCP tool → REST endpoint (IND-P1 dev-mcp-server)",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": null,
+      "status": "GAP",
+      "fix": "IND-P1-DEV-MCP-SERVER: same aggregated endpoint",
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) wired"
+    },
+    {
+      "page": "/dashboard/indicator-gauges",
+      "elem": "omo_net_outstanding_bn_vnd + policy_refi_rate_pct (liquidity gauges)",
+      "endpoint": "/api/indicator-gauges → liquidity section",
+      "store": "macro_indicators (omo_operations + policy_rates tables)",
+      "writer": "get_vn_liquidity_state MCP tool → REST endpoint (IND-P1 dev-mcp-server)",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": null,
+      "status": "GAP",
+      "fix": "IND-P1-DEV-MCP-SERVER: same aggregated endpoint; refi rate badge: ≤4.0→Nới lỏng, ≤5.0→Trung lập, >5.0→Thắt chặt",
+      "l3b_status": "WIRED",
+      "l3b_note": "2 cards from 1 liquidity section; FreshnessBadge(daily) wired on both"
     }
   ],
   "update_mechanic": {

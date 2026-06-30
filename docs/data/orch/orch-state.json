@@ -8489,36 +8489,6 @@
         "arch_completed_at": "2026-06-30T02:00:00Z",
         "arch_handoff": "docs/handoffs/BA-IND-P1-MOMENTUM-RS.md",
         "arch_note": "Brownfield complete. 5 ARCH-RATIFY resolved. 2 critical corrections: (1) foreign_buy_vol/sell_vol in daily_ohlcv NOT vnstock_trading_stats; (2) foreign_room_events event_type=ROOM_FULL not ROOM_LOCKED. Zone split confirmed: 3x dev-technical-analysis (ROC/RS/52W) + 1x dev-stock-price (foreign-accum). BUILD-STANDARD: lean. Ready for PM decomposition."
-      },
-      {
-        "id": "IND-P1-FRONTEND-GAUGE-CARDS",
-        "tier": "P1",
-        "title": "Frontend gauge cards for the 6 new P0 scalars (rv_20d_percentile, foreign_outflow_z_5d, news_sentiment_z, insider net_sentiment_score, breadth_z_score, liquidity_stress_score) under the freshness-badge program",
-        "owner": "dev-frontend",
-        "zone": "apps/frontend",
-        "priority": "medium",
-        "status": "READY",
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
-        "created_by": "po",
-        "created_at": "2026-06-30T00:57:18Z",
-        "scalars": [
-          "rv_20d_percentile",
-          "foreign_outflow_z_5d",
-          "news_sentiment_z",
-          "insider net_sentiment_score",
-          "breadth_z_score",
-          "liquidity_stress_score"
-        ],
-        "scope": "Add 6 gauge cards sourced from the LIVE P0 tools (get_volatility_indicators.rv_20d_percentile; foreign-room suite foreign_outflow_z_5d; get_market_sentiment_index news_sentiment_z; insider tool net_sentiment_score; get_breadth_thrust breadth_z_score; get_vn_liquidity_state liquidity_stress_score). Register each in docs/data/frontend-data-coverage-map.json with data_asof wiring.",
-        "freshness_program": "project_frontend_freshness_transparency — SSOT docs/data/frontend-data-coverage-map.json; each card: 'Cập nhật lúc' badge from data_asof, source-link + detail dropdown (project_all_info_source_link_dropdown_recheck), NEVER baked/client-now time; honest-NULL -> show null_reason not a fake value.",
-        "depends_polish": "Folds the P3 gauge-contract polish from sprint-MARKET-INDICATOR-DEPTH-P0-po.md FOLLOW-UPS: (i) rv_20d_percentile scalar lacks co-located unit/confidence/null_reason (volatility proxy adds only source_tier+fetched_at) — backend technical-analysis/mcp-server; (ii) omo_curve absent from liquidityStateTools Zod schema (raw passthrough bypasses Zod). Cards surface unit/confidence/null_reason where present; backend polish (i)+(ii) may need a sibling dev fix before honest confidence can render.",
-        "next_agent": "dev-frontend",
-        "promoted_at": "2026-06-30T01:33:06Z",
-        "promoted_by": "po-s132",
-        "parallel_eligible": true,
-        "parallel_note": "Disjoint zone (apps/frontend) + agent (dev-frontend) from the backend momentum sub-wave (apps/technical-analysis + apps/stock-price) -> safe to dispatch concurrently; no WIP/zone contention.",
-        "promote_note": "Gate met: IND-P1-CONSUMER-WIRING-AUDIT done_verified (3fd6e151) — 5 P0 tools LIVE-consumed by 6 helper flows; the 6 gauge scalars now carry REAL values worth surfacing. Honest-NULL: render null_reason where a scalar is absent, NEVER a fabricated value (project_frontend_freshness_transparency + project_all_info_source_link_dropdown). depends_polish (rv_20d_percentile unit/confidence/null_reason; omo_curve Zod) is SOFT — surface what is present; a sibling backend polish FIX may follow."
       }
     ],
     "review": [
@@ -8569,7 +8539,7 @@
       },
       {
         "id": "TASK_1996",
-        "status": "DONE",
+        "status": "REVIEW",
         "type": "FIX",
         "size": "S",
         "owner": "agent-father",
@@ -8582,7 +8552,23 @@
         "reviewed_at": "2026-06-29T00:00:00Z",
         "done_at": "2026-06-29T16:46:36Z",
         "updated_by": "qa",
-        "updated_at": "2026-06-29T16:46:36Z"
+        "updated_at": "2026-06-29T16:46:36Z",
+        "next_agent": "qa"
+      },
+      {
+        "id": "IND-P1-FRONTEND-GAUGE-CARDS",
+        "tier": "P1",
+        "title": "Frontend gauge cards for the 6 new P0 scalars (rv_20d_percentile, foreign_outflow_z_5d, news_sentiment_z, breadth_z_score, omo_net_outstanding_bn_vnd, policy_refi_rate_pct) under the freshness-badge program",
+        "owner": "dev-frontend",
+        "zone": "apps/frontend",
+        "priority": "medium",
+        "status": "REVIEW",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "created_by": "po",
+        "created_at": "2026-06-30T00:57:18Z",
+        "next_agent": "qa",
+        "review_submitted_at": "2026-06-30T04:00:00Z",
+        "review_note": "IND-P1-FRONTEND-GAUGE-CARDS COMPLETE: 6 gauge cards + nav entry + proxy route + honest-NULL. tsc 0 errors; vitest 77/79 (2 pre-existing QUE-TOOLTIP). Commit 0c724d58. frontend-data-coverage-map.json updated (+5 rows). CRITICAL DEPENDENCY: mcp-server /api/indicator-gauges endpoint not yet deployed — frontend gracefully renders honest-NULL on 404/502."
       }
     ],
     "qa": [],
