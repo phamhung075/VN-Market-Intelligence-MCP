@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "OHLCV-DEPTH-SUBTASK-A",
+    "active_task_id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
     "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-30T14:06:23Z",
+    "updated_at": "2026-06-30T14:36:09Z",
     "updated_by": "dev-team",
-    "note": "Tick 13:37Z (chained). SUBTASK-E DONE_VERIFIED (VPS deploy gate PASS: SSH re-probe -rwxr-xr-x 6748b sha256 344a5bc3==local; dev 2f947bdf). Dispatching SUBTASK-A -> dev-mcp-server: harden vps-scripts/fetch-ohlcv-backfill.sh (R-1 x1000-if-close<100 thousand-VND norm; R-3 filter flat zero-vol seed bars vol>0 or O!=C; R-2 FULL-universe SELECT DISTINCT code; VNINDEX type=index; pass bars_pushed_total to /api/ohlcv-backfill-done) + re-scp to VPS. WIP=2 (epic+A). B dep-blocked on A; C/D P1 deferred. ci_red a3af26b6=no-action (owned by BASH-SHIM). 15 commits ahead origin (push gated)."
+    "note": "Tick 13:37Z CLOSED. SUBTASK-A DONE_VERIFIED (33479360): fetch-ohlcv-backfill.sh hardened+redeployed (sha 71b5a5fb byte-identical), TCBS->VNDirect (TCBS 404), serving get_price_history(VCB,730)=502 bars 2024-07-01..2026-06-30 scaled 52.5k-96.8k -> depth persists, 49-bar floor refuted. Merge gate 0/0/0; DJ S7. NEXT DISPATCHABLE: OHLCV-DEPTH-SUBTASK-B (ready lane, dev-mcp-server, server.ts:1423-1444 done-endpoint verify+re-queue) -> 14:37Z fire dispatches after preflight signal-drain. Epic stays IN_PROGRESS (B/C/D + brief-4 cross-restart gate remain). WIP=1 (epic). 16 commits ahead origin (push gated). Epic-owner caveats: source TCBS->VNDirect material+adClose option; acceptance VCB-only; ~4 deep-2023 wrong-scale bars CONTAM-owned."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7820,30 +7820,6 @@
         "done_note": "Step 4.5c jq-native mutex SHIPPED (commit 6d080acf rewrites the false-green c2c2aa9f). Dispatcher RAW-verified: commits on disk, merge gate green (index-check/tree-verify/c2-alert exit=0), and re-ran committed logic independently — 4/4 cases PASS (chef-morning+chef-intraday→drop intraday keep morning; intraday-only→retain; morning-only→retain; mixed non-chef+both-chef→drop only intraday). BEHAVIORAL GATE PENDING runtime: next weekday 2026-07-01T05:15Z coincidence tick must yield EXACTLY ONE CHEF MARKET dish."
       },
       {
-        "id": "OHLCV-DEPTH-SUBTASK-B",
-        "status": "BACKLOG",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "blocking": true,
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-        "title": "SUBTASK-B: server-side verification in /api/ohlcv-backfill-done (server.ts:1423-1444) — accept {bars_pushed_total}; post-done depth-probe watchlist; if any cnt<252 WARN+re-queue done=0; retry_count>=5 -> Telegram BUG (R-5 retry-storm cap).",
-        "depends": [
-          "OHLCV-DEPTH-SUBTASK-A"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/server.ts"
-        ],
-        "acceptance": "After VPS real push, server logs depth-verified all watchlist >=252; subsequent restart no re-queue; retry cap enforced server-side.",
-        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
-        "created_by": "po",
-        "created_at": "2026-06-30T13:52:29Z",
-        "baseline_pass": true
-      },
-      {
         "id": "OHLCV-DEPTH-SUBTASK-C",
         "status": "BACKLOG",
         "type": "FIX",
@@ -9463,6 +9439,39 @@
           "2f947bdf"
         ],
         "verification": "dev-team SSH re-probe: /root/fetch-ohlcv-backfill.sh -rwxr-xr-x 6748b sha256 344a5bc3 == local source (byte-identical); merge gate index-check=0 tree-verify=0; DJ dev-mcp-server-S7. Deploy pathway (SSH+scp+chmod) proven; SUBTASK-A unblocked."
+      },
+      {
+        "id": "OHLCV-DEPTH-SUBTASK-A",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "blocking": true,
+        "zone": "cross-service/",
+        "owner": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "title": "SUBTASK-A: VPS script hardening — fetch-ohlcv-backfill.sh: jq normalizeThousandVnd (x1000 if close<100), filter flat zero-vol seed bars (vol>0 or O!=C), VNINDEX type=index, FULL-universe (SELECT DISTINCT code) per R-2, pass bars_pushed_total to /api/ohlcv-backfill-done.",
+        "depends": [
+          "OHLCV-DEPTH-SUBTASK-E"
+        ],
+        "files": [
+          "vps-scripts/fetch-ohlcv-backfill.sh"
+        ],
+        "acceptance": "DAYS=730 bash fetch-ohlcv-backfill.sh VCB -> server logs inserted>0 for recent AND historical bars; R-1 thousand-VND verified against live TCBS response.",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T13:52:29Z",
+        "baseline_pass": true,
+        "updated_at": "2026-06-30T14:36:09Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T14:06:23Z",
+        "dispatched_by": "dev-team",
+        "done_at": "2026-06-30T14:36:09Z",
+        "done_commits": [
+          "33479360"
+        ],
+        "verification": "dev-team RAW-verify (disk+live+serving): commit 33479360 HEAD, explicit-paths-only (script+DJ, no -A leak); deployed VPS sha256 71b5a5fb==local source byte-identical (-rwxr-xr-x 11796b); merge gate index-check=0 tree-verify=0 c2-alert=0; DJ dev-mcp-server-S7. Source switch TCBS->VNDirect JUSTIFIED (TCBS http=404 from VPS x-backside-transport FAIL; VNDirect live VCB real data). Serving get_price_history(VCB,730)=502 bars 2024-07-01..2026-06-30 scaled Min52500/Max96800/avg71700 VND -> R-1 norm works; 49-bar floor refuted, depth persists. CAVEATS non-blocking epic-owner: (1) source TCBS->VNDirect material + VNDirect exposes adClose -> architect decide raw vs adjusted; (2) acceptance single-ticker VCB only -> FULL-universe R-2 = SUBTASK-B + brief-4 gate; (3) ~4 deep-2023 wrong-scale bars (~100 VND, close>=100 edge of mandated threshold) OUTSIDE 730d serving window -> CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR owns."
       }
     ],
     "head": {
@@ -9513,37 +9522,37 @@
         "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "brief_commit": "30659cca",
         "status_note": "EPIC parent. PO materialized 5 sub-tasks A-E (po triage 13:37Z). DAG: E(prereq,ready)->A(vps-script)->B(server-verify); C,D=P1 observability independent. E dispatched THIS tick (WIP=2: epic+E). A,B,C,D in backlog awaiting E. Epic resumes PO sign-off when all children DONE_VERIFIED + cross-restart depth gate (>=252 bars persists post-restart) passes."
-      },
+      }
+    ],
+    "ready": [
       {
-        "id": "OHLCV-DEPTH-SUBTASK-A",
-        "status": "IN_PROGRESS",
+        "id": "OHLCV-DEPTH-SUBTASK-B",
+        "status": "TODO",
         "type": "FIX",
         "size": "M",
         "priority": "P0",
         "blocking": true,
-        "zone": "cross-service/",
+        "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
         "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-        "title": "SUBTASK-A: VPS script hardening — fetch-ohlcv-backfill.sh: jq normalizeThousandVnd (x1000 if close<100), filter flat zero-vol seed bars (vol>0 or O!=C), VNINDEX type=index, FULL-universe (SELECT DISTINCT code) per R-2, pass bars_pushed_total to /api/ohlcv-backfill-done.",
+        "title": "SUBTASK-B: server-side verification in /api/ohlcv-backfill-done (server.ts:1423-1444) — accept {bars_pushed_total}; post-done depth-probe watchlist; if any cnt<252 WARN+re-queue done=0; retry_count>=5 -> Telegram BUG (R-5 retry-storm cap).",
         "depends": [
-          "OHLCV-DEPTH-SUBTASK-E"
+          "OHLCV-DEPTH-SUBTASK-A"
         ],
         "files": [
-          "vps-scripts/fetch-ohlcv-backfill.sh"
+          "apps/mcp-server/src/interface/mcp/server.ts"
         ],
-        "acceptance": "DAYS=730 bash fetch-ohlcv-backfill.sh VCB -> server logs inserted>0 for recent AND historical bars; R-1 thousand-VND verified against live TCBS response.",
+        "acceptance": "After VPS real push, server logs depth-verified all watchlist >=252; subsequent restart no re-queue; retry cap enforced server-side.",
         "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "created_by": "po",
         "created_at": "2026-06-30T13:52:29Z",
         "baseline_pass": true,
-        "updated_at": "2026-06-30T14:06:23Z",
+        "updated_at": "2026-06-30T14:36:09Z",
         "updated_by": "dev-team",
-        "dispatched_at": "2026-06-30T14:06:23Z",
-        "dispatched_by": "dev-team"
+        "status_note": "Dep OHLCV-DEPTH-SUBTASK-A DONE_VERIFIED (33479360) -> promoted backlog->ready; next dev-team tick dispatches to dev-mcp-server (server.ts done-endpoint verify+re-queue)."
       }
     ],
-    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
