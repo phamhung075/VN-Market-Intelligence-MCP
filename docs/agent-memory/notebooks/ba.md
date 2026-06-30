@@ -1,5 +1,17 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-30 | **Sprint:** MARKET-INDICATOR-DEPTH-P0 (P1 sub-wave)
+
+## BA-IND-P1-MOMENTUM-RS · 2026-06-30
+
+Spec complete. REQ file: `docs/handoffs/BA-IND-P1-MOMENTUM-RS.md`. Zero PO blockers. Five ARCH-RATIFY items (all non-blocking). NEXT: architect (zone-split: 3× apps/technical-analysis + 1× apps/stock-price).
+
+Key BA findings: 4 tools decomposed — (1) `get_roc_momentum` (apps/technical-analysis): Jegadeesh-Titman 12-1 skip-month, z-score cross-sectional, decile rank 1–10, factor-return backward-look; needs 273 bars; closes DP backtest/Brier requirement. (2) `get_relative_strength` (apps/technical-analysis): 63/126/252d Mansfield RS + cross-sectional percentile; VN-Index MUST come from daily_ohlcv (no runtime fetch); partial result valid (63d real, 126d/252d null if insufficient). (3) `get_52w_proximity` (apps/technical-analysis): 52w high/low via max/min of 252-bar window; MA50 (50-bar) + MA200 (200-bar, honest-null if <200 bars); net-new-highs aggregate; denominator_ma200 field for sample transparency. (4) `get_foreign_accum_rank` (apps/stock-price): ADTV-normalized 5/20d foreign net-flow z-rank from vnstock_trading_stats; room_exhaustion from foreign_room_events; absent room_event → null NOT false (honest-null overrides default). Hard contracts: no-fake-data standing; honest-NULL + null_reason for all absence cases; null is DESIGNED PASS STATE. Zone split is mandatory — do NOT colocate in one service. Success metric per tool: consumed by >=1 helper agent (same bar as P0). Named scalar per tool for future Fear-Greed composition (momentum_factor_z / market_rs_composite / net_new_highs / foreign_accum_z_market).
+
+Decision journal (task_id: BA-IND-P1-MOMENTUM-RS):
+- what-considered: "(A) Foreign-Accum-Rank zone: all-TA vs stock-price — CHOSEN stock-price (data ownership: vnstock_trading_stats + foreign_room_events). (B) VN-Index source for RS: runtime fetch vs daily_ohlcv row — CHOSEN daily_ohlcv only (no cross-service, backfill LIVE). (C) room_exhaustion absent: false vs null — CHOSEN null+null_reason (absence ≠ no-exhaustion). (D) ROC factor-return: persist vs compute-on-read — CHOSEN compute-on-read for P1 (ARCH-RATIFY-ROC-1 to architect)."
+- why-change: "no change from roadmap §P1 scope — 4 placeholders faithfully transposed, no new fabrication paths, zone split enforces existing data ownership boundaries."
+
 **Last updated:** 2026-06-29 | **Sprint:** DEFERRED-TASK-SCHEDULER-MVP
 
 ## DEFERRED-TASK-SCHEDULER-MVP · 2026-06-29
