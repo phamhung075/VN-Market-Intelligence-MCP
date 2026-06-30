@@ -28,8 +28,15 @@ Guard logic reference: `apps/mcp-server/src/interface/mcp/tools/macro/macroSnaps
 
 > **Auto-cure note (TNB c53 2026-05-14):** 3-cycle evidence of off-hours news-fallback producing regime inconsistency (c51 10:03 UTC, c52 14:02 UTC, c53 15:04 UTC — all off-hours 2h cycles, news-fallback → TIGHTENING while macro snapshot returns NEUTRAL). Retry-once + conservative-tier warning added to reduce regime drift on tool timeout.
 
-**1. Context**
-`get_market_context(hours_back=6)` | `get_alerts(type="price")`
+**1. Context** (enriched with market indicators):
+```
+get_market_context(hours_back=6)
+get_alerts(type="price")
+call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
+call_tool(server="vn-market", tool="get_vn_liquidity_state", arguments={})
+call_tool(server="vn-market", tool="get_foreign_room", arguments={})
+```
+If market indicators available: extract volatility regime, liquidity stress, and foreign-room exhaustion. Use to contextualize alert thresholds (e.g., elevated volatility → lower threshold for price alerts; foreign room exhausted → higher conviction for flow-driven alerts). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and proceed with standard alert thresholds.
 
 **2. Legal + Crisis**
 `get_legal_risk_signals()` hit → mark CRITICAL

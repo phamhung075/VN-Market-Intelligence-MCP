@@ -38,6 +38,13 @@ Note: does NOT skip predictions entirely — predictions are still useful in TIG
 **P-2. Prerequisite** `get_evidence_summary(stock)` for ≥1 ticker
 All "No evidence" → `send_telegram(channel="work", message="[digest-predict] Daily prediction skipped: zero evidence.")` → EXIT
 
+**P-3. Market indicators context** (run at start of evidence gathering):
+```
+call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
+call_tool(server="vn-market", tool="get_breadth_thrust", arguments={})
+```
+If successful: extract volatility regime (rv_10/20/60d, GK vol) and breadth indicators (McClellan/Zweig). Use to contextualize individual ticker predictions (e.g., if market volatility is elevated or breadth is weakening, adjust confidence). If either tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue with ticker-level evidence only (no market context).
+
 **P-3. Evidence** per ticker `get_evidence_summary(stock)`
 Skip "No evidence" | parse: `bullish_score`, `bearish_score`, `neutral_score`, likelihood ratios
 

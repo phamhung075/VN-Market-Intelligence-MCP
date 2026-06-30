@@ -41,6 +41,14 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | `read_telegram_reports` | Unread Telegram messages and reports | — |
 | `get_macro_snapshot` | Macro regime snapshot (D-step COC) | `source?: string, regimeType?: string` |
 
+### Market Indicators (P0 Suite)
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_volatility_indicators` | Volatility metrics: rv_10/20/60d, GK vol, regime band, 252d drawdown (P0 indicator) | — |
+| `get_market_sentiment_index` | Market-wide news sentiment z-score, EMA5, dispersion (P0 indicator) | — |
+| `get_foreign_room` | Foreign-room suite: outflow z, room exhaustion (P0 indicator) | — |
+| `get_breadth_thrust` | McClellan/Zweig/breadth-z indicators for market breadth (P0 indicator) | — |
+
 ### Macro Intelligence (COC)
 | Tool | Purpose | Key Params |
 |------|---------|-----------|

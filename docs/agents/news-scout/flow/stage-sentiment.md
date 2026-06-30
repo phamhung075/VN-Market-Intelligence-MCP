@@ -27,6 +27,12 @@ For each ticker in STALE_TICKERS that is NOT already in the article-impacted set
 
 **2. Sentiment + impact**
 
+Market sentiment context (run at start of sentiment analysis):
+```
+call_tool(server="vn-market", tool="get_market_sentiment_index", arguments={})
+```
+If successful: extract `market_sentiment_z_score`, `sentiment_ema5`, `dispersion`. Use to contextualize individual article sentiment (e.g., if market_sentiment_z_score is already -2.0, a single bearish article has less marginal impact). If tool returns NULL or error: log `[SKIP] get_market_sentiment_index unavailable` and continue with article-level sentiment only (no market context).
+
 Score each article: -1.0 (bearish) to +1.0 (bullish).
 
 For watchlist hits, trace impact chain:

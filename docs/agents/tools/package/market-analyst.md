@@ -70,12 +70,21 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 | `get_market_foreign_flow` | Get market-wide foreign investor flow buy/sell | `period?: "1D" \| "1W" \| "1M"` |
 | `diagnose_foreign_flow_circuit_breaker` | Diagnose foreign flow circuit breaker trip reason | `breaker_id?: string` |
 | `reset_foreign_flow_circuit_breaker` | Reset foreign flow circuit breaker | `breaker_id?: string` |
+| `get_foreign_room` | Foreign-room suite: outflow z, room exhaustion (P0 indicator) | — |
 
 ### Accuracy & Calibration
 
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_label_accuracy_report` | Get accuracy report for signal labels | `label_type?: "alert" \| "signal"` |
+
+### Market Indicators (P0 Suite)
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_volatility_indicators` | Volatility metrics: rv_10/20/60d, GK vol, regime band, 252d drawdown (P0 indicator) | none required |
+| `get_breadth_thrust` | McClellan/Zweig/breadth-z indicators for market breadth (P0 indicator) | none required |
+| `get_market_sentiment_index` | Market-wide news sentiment z-score, EMA5, dispersion (P0 indicator) | none required |
 
 ### Macro & Regime Tools
 

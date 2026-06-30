@@ -80,7 +80,15 @@ Per stock: apply sector flags before emitting signal:
 - `DXY_SIGNAL=USD STRENGTHENING` + sector in (banking, realty) → `fx_pressure=true`
 - `US10Y_SIGNAL=RISK-OFF` + large-cap with high FII exposure → `pe_compression_risk=true`
 
-**2. Macro read** → skill: `.claude/skills/macro-health-read/SKILL.md`
+**2. Market indicators** (run in parallel with price analysis for enrichment context):
+```
+call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
+call_tool(server="vn-market", tool="get_breadth_thrust", arguments={})
+call_tool(server="vn-market", tool="get_vn_liquidity_state", arguments={})
+```
+If successful: extract volatility regime (rv_10/20/60d, GK vol), breadth indicators (McClellan/Zweig), and liquidity state (OMO, stress field). Store as MARKET_INDICATORS context. Use to enrich price anomaly interpretation (e.g., if volatility elevated or breadth weakening, adjust sigma threshold interpretation). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue with price analysis only.
+
+**2b. Macro read** → skill: `.claude/skills/macro-health-read/SKILL.md`
 Store result as MACRO_HEALTH. Log any `is_estimate=true` tracks. The MACRO_HEALTH output feeds Step 4 signal enrichment.
 
 **T-20 / oil→CPI:** Oil-shock pass-through to VN CPI is near-immediate (same month, all baskets). Drop the "lag" assumption. When oil spikes: immediately flag `cpi_pressure_imminent=true` without waiting for the next CPI print.

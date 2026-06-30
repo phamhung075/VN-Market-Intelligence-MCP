@@ -45,6 +45,13 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | `get_sector_comparison` | Compare a watchlist stock vs sector peers (PE/PB/ROE/price/FII) | `code: string` (required — watchlist ticker, e.g. "VCB") |
 | `get_market_snapshot` | VN-Index, foreign flow, trading halts, sector leaders | — |
 
+### Market Indicators (P0 Suite)
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_volatility_indicators` | Volatility metrics: rv_10/20/60d, GK vol, regime band, 252d drawdown (P0 indicator) | — |
+| `get_breadth_thrust` | McClellan/Zweig/breadth-z indicators for market breadth (P0 indicator) | — |
+| `get_vn_liquidity_state` | OMO curve + liquidity-stress field for market liquidity (P0 indicator) | — |
+
 ### Macro & Risk Analysis
 | Tool | Purpose | Key Params |
 |------|---------|-----------|

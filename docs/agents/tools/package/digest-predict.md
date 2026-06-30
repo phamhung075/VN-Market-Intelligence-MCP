@@ -39,6 +39,8 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | `get_market_snapshot` | Price, volume, sector sentiment, trading halt status | — |
 | `generate_market_summary` | Generate synthesized market report | `period?: "daily" \| "weekly"` |
 | `get_performance_attribution` | Attribution of returns to factors (sector, style, etc.) | — |
+| `get_volatility_indicators` | Market volatility metrics: rv_10/20/60d, GK vol, regime band, 252d drawdown (P0 indicator) | — |
+| `get_breadth_thrust` | McClellan/Zweig/breadth-z indicators (P0 indicator) | — |
 
 ### Financial Reports & Earnings
 | Tool | Purpose | Key Params |

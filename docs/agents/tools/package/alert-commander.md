@@ -48,6 +48,13 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | `get_market_snapshot` | Price, volume, sector sentiment, trading halt status | — |
 | `get_watchlist` | Current watchlist tickers and metadata | — |
 
+### Market Indicators (P0 Suite)
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_volatility_indicators` | Volatility metrics: rv_10/20/60d, GK vol, regime band, 252d drawdown (P0 indicator) | — |
+| `get_vn_liquidity_state` | OMO curve + liquidity-stress field for market liquidity (P0 indicator) | — |
+| `get_foreign_room` | Foreign-room suite: outflow z, room exhaustion (P0 indicator) | — |
+
 ### Signal Processing
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
