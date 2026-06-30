@@ -282,7 +282,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-30T17:34:26Z",
+    "_updated_at": "2026-06-30T17:51:02Z",
     "_updated_by": "one-shot-sweeper",
     "archive": [],
     "rows": [
@@ -1253,17 +1253,6 @@
         "triaged_at": "2026-06-30T06:50:25Z",
         "triaged_by": "po",
         "triage_note": "FIX-COWORK-CHEF-SAMETICK-MUTEX minted -> backlog[] (zone cross-service, dispatcher=main, owner cowork-refactory-expert). Robust fix A (same-tick CHEF mutex) per payload §06:21Z update; fix C (stale_warning) rejected as wrong lever (flag is correct). Consolidates DEFERRED FU-CHEF-MARKER-INFLOW (partial per-slot fix B). RAW-verified recurrence (chef-evening po-s90, chef-intraday c53a7df5)."
-      },
-      {
-        "id": "one-shot-a4211be0-4482-4746-b0c6-83dfa67a4b26",
-        "summary": "[one-shot] e2e-smoke-dev-1782840815 → ops",
-        "severity": "INFO",
-        "status": "NEW",
-        "ts": "2026-06-30T17:34:26Z",
-        "from": "cowork-team/one-shot-sweeper",
-        "to": "ops",
-        "type": "deferred_task",
-        "payload_ref": "docs/signals/one-shot-a4211be0-4482-4746-b0c6-83dfa67a4b26.json"
       }
     ],
     "last_triaged_at": "2026-06-30T03:25:46Z",
