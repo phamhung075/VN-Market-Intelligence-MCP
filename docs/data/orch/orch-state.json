@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+    "active_task_id": "OHLCV-DEPTH-SUBTASK-B",
     "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-30T14:36:09Z",
+    "updated_at": "2026-06-30T14:45:45Z",
     "updated_by": "dev-team",
-    "note": "Tick 13:37Z CLOSED. SUBTASK-A DONE_VERIFIED (33479360): fetch-ohlcv-backfill.sh hardened+redeployed (sha 71b5a5fb byte-identical), TCBS->VNDirect (TCBS 404), serving get_price_history(VCB,730)=502 bars 2024-07-01..2026-06-30 scaled 52.5k-96.8k -> depth persists, 49-bar floor refuted. Merge gate 0/0/0; DJ S7. NEXT DISPATCHABLE: OHLCV-DEPTH-SUBTASK-B (ready lane, dev-mcp-server, server.ts:1423-1444 done-endpoint verify+re-queue) -> 14:37Z fire dispatches after preflight signal-drain. Epic stays IN_PROGRESS (B/C/D + brief-4 cross-restart gate remain). WIP=1 (epic). 16 commits ahead origin (push gated). Epic-owner caveats: source TCBS->VNDirect material+adClose option; acceptance VCB-only; ~4 deep-2023 wrong-scale bars CONTAM-owned."
+    "note": "Tick 14:37Z dispatch: OHLCV-DEPTH-SUBTASK-B -> dev-mcp-server. Server-side /api/ohlcv-backfill-done verify+re-queue (server.ts:1423-1444): accept {bars_pushed_total}; post-done depth-probe watchlist; any cnt<252 WARN+re-queue done=0; retry_count>=5 -> Telegram BUG (R-5 retry-storm cap). Dep SUBTASK-A DONE_VERIFIED (33479360) satisfied. WIP=2 (epic+B). Drain clean (1 cowork-fire heartbeat errors=[] PO-noop; 0 NEW queue rows); CI ci_red a3af26b6 deduped (push-gated, BASH-SHIM-owned). SUBTASK-C/D P1 deferred. 20 commits ahead origin (push gated)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9522,12 +9522,10 @@
         "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "brief_commit": "30659cca",
         "status_note": "EPIC parent. PO materialized 5 sub-tasks A-E (po triage 13:37Z). DAG: E(prereq,ready)->A(vps-script)->B(server-verify); C,D=P1 observability independent. E dispatched THIS tick (WIP=2: epic+E). A,B,C,D in backlog awaiting E. Epic resumes PO sign-off when all children DONE_VERIFIED + cross-restart depth gate (>=252 bars persists post-restart) passes."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "OHLCV-DEPTH-SUBTASK-B",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "type": "FIX",
         "size": "M",
         "priority": "P0",
@@ -9548,11 +9546,14 @@
         "created_by": "po",
         "created_at": "2026-06-30T13:52:29Z",
         "baseline_pass": true,
-        "updated_at": "2026-06-30T14:36:09Z",
+        "updated_at": "2026-06-30T14:45:45Z",
         "updated_by": "dev-team",
-        "status_note": "Dep OHLCV-DEPTH-SUBTASK-A DONE_VERIFIED (33479360) -> promoted backlog->ready; next dev-team tick dispatches to dev-mcp-server (server.ts done-endpoint verify+re-queue)."
+        "status_note": "Dep OHLCV-DEPTH-SUBTASK-A DONE_VERIFIED (33479360) -> promoted backlog->ready; next dev-team tick dispatches to dev-mcp-server (server.ts done-endpoint verify+re-queue).",
+        "dispatched_at": "2026-06-30T14:45:45Z",
+        "dispatched_by": "dev-team"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
