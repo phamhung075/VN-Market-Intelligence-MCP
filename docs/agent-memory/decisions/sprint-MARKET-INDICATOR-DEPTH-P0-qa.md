@@ -132,3 +132,17 @@
 **Verdict:** ALL APPROVED — sprint gate PASS
 **Ops rebuild required:** mcp-server + technical-analysis + macro-indicators (all running stale images predating sprint commits). Live e2e confirmable only after rebuild.
 **why-change:** No divergence from plan. All code correct, all tests green, DDD/security clean across all 7 tasks.
+
+---
+
+### qa-S8 · qa · 2026-06-30T04:30:00Z
+**task-id:** IND-P1-FRONTEND-GAUGE-CARDS
+**what-done:** QA gate IND-P1-FRONTEND-GAUGE-CARDS — APPROVED; 6 P0 gauge cards frontend-only task.
+**what-considered:**
+- Tests: vitest run — ind-p1-frontend-gauge-cards.test.ts 45 pass / 0 fail; ind-p1-indicator-gauges-nav.test.tsx 13 pass / 0 fail; FE-HEADER-SSOT-top-nav.test.tsx 26 pass / 0 fail; task17-page19-news-buzz-nav.test.tsx 15 pass / 0 fail. Full suite 1918/2 pass (2 pre-existing QUE-TOOLTIP, commit d7167c0a, unrelated to this task).
+- TSC: 0 errors. DDD: no infra/application imports. mock-guard: PASS. process.env: established project-wide pattern for frontend routes (not Bun server — non-blocking).
+- Honest-NULL: 17 "Chưa có dữ liệu" markers rendered live on HTTP 200 page. No fabrication confirmed in source + live page.
+- Coverage-map: 5 rows for 6 cards — liquidity row 5 explicitly maps to 2 cards (l3b_note: "2 cards from 1 liquidity section"). Intentional and documented. Zero cards lack provenance.
+- DoD decision (CRITICAL): upstream /api/indicator-gauges returns {"error":"Not found"} (mcp-server endpoint not yet deployed). Task zone=apps/frontend, scope is frontend-only. Proxy route comment says "when mcp-server endpoint is deployed." Coverage-map marks status="GAP" with fix="IND-P1-DEV-MCP-SERVER." Backend endpoint is separate task IND-P1-MCP-PROXY-INDICATORS (BACKLOG). Frontend task DoD is SATISFIED by honest-NULL rendering — no backend required.
+**why-decision:** APPROVED — all frontend gate criteria green; upstream not-deployed is expected, tracked as separate BACKLOG task; honest-NULL is the spec-compliant behavior.
+**why-change:** no change from plan.
