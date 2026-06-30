@@ -94,3 +94,34 @@ Router routes ops on this authorization. After rebuild → router/qa RAW-verify 
 - ready[] (immediate dispatch) vs backlog[] (router sequences after proxy rebuild).
 **why-decision:** DIRECT pm-spec — contract is ALREADY pinned by the frontend IndicatorGaugesDto (dashboard.indicator-gauges.tsx L45-133) + proxy header; the 5 P0 source usecases are LIVE; aggregation is mechanical projection (no new domain logic) → a fresh BA/architect decomposition adds zero. backlog[] not ready[] — a live dev-team cron dispatches ready[]; router must dispatch THIS explicitly AFTER IND-P1-MCP-PROXY-INDICATORS + mcp-server rebuild so mcp-server rebuilds stay serial.
 **why-change:** no change from router scope.
+
+### STEP po-S7 · po · 2026-06-30T07:54:27Z — INDICATOR DEPTH-UNBLOCK TRIAGE (router FOCUSED directive, coord d3292ca4)
+**task-id:** FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR
+**what-done:** RAW-probed LIVE depth via gateway (get_price_history days=730: VCB/SSI/MWG/HPG ALL = exactly 49 bars, uniform 2026-04-23 floor; roc/RS/foreign tools tickers:[] NULL; sector_rotation only1d on separate market_prices table). Minted P0 SPRINT-M FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR→ready[] (architect-first), rescoped FIX-DEPTHTHIN-A P3→P2 (market_prices_history/sector-rotation, distinct table), HELD IND-P1-MOMENTUM-CONSUMER-WIRING on the P0, annotated IND-ROADMAP-LEDGER live_depth_correction. Via scripts/po-s135-*.jq | orch-apply.sh.
+**what-considered:**
+- Rescope FIX-DEPTHTHIN-A (10d→200d) to BE the momentum unblock — REJECTED: it targets market_prices_history (stock-price), a DIFFERENT table than the daily_ohlcv (mcp-server) that starves roc/RS/52w. Conflating them would point the stock-price fix at an mcp-server root.
+- Staged depths (10d→200d→2yr) — REJECTED: fixing the retention WRITER to keep 2yr is the SAME work as 10d; no incremental value, just re-run the existing backfill job once retention holds.
+- Re-open OHLCV-BACKFILL-P0 (done_verified) vs mint new — chose new supersedes_depth_gap_of (its live-verify only probed shallow rv_20d, never the deep 52w/ROC-12-1 consumers → false-green at depth).
+- Repoint .head vs leave idle — left idle (po-s134 precedent; dev-team triage adopts ready[]; avoids po-s109 dead-route strand).
+**why-decision:** Live depth is ONE shared daily_ohlcv (market_data volume) capped at ~49 bars by a retention/purge WRITER, not a coverage gap (non-watchlist SSI/MWG present). ROC-12-1 needs ~252-273 bars, 52w 252, MA200 200, RS 252 — 49 fails all → 3/4 cards NULL from ONE root. Target 2yr/504 (floor 252); persistence gate = cross-RESTART re-probe (failure mode = purge-on-boot). Consumer-wiring is worthless until readings are real → held. VN-YIELD-CURVE (next-wave rank1) is depth-independent → parallel.
+**why-change:** Refines router's single-root thesis — TWO depth stores (daily_ohlcv=momentum P0; market_prices_history=sector-rotation DEPTHTHIN-A); required depth is ~252-504 bars, not the task's 10d.
+
+### STEP po-S2 · po · 2026-06-30T13:53:08Z
+**task-id:** FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR
+**what-done:** Drained brief_complete signal; materialized architect's 5 sub-tasks (A-E) into board with DAG deps; dispatched only SUBTASK-E this tick.
+**what-considered:**
+- Dispatch E only vs E+A — A.depends=[E] (closeout E->A: ops SSH prereq blocks vps-script harden); A not eligible.
+- Dispatch P1 C/D in parallel (independent, apps/mcp-server) vs defer — would breach WIP (epic+E=2 already).
+- Epic next_agent po vs dev-mcp-server — repointed off po so router stops re-triaging the parent every tick; epic resumes PO at children sign-off.
+**why-decision:** WIP<=2 with epic counting as 1 leaves exactly one slot; E is the sole P0 prereq unblocking the A->B critical path, so it takes the slot. C/D (P1 observability) + A,B (dep-blocked) wait in backlog.
+**why-change:** no change — honors architect brief 30659cca + dev-team 12:37Z E->A sequencing.
+
+### STEP po-S3 · po · 2026-06-30T13:53:08Z
+**task-id:** CI-RED-a3af26b6
+**what-done:** Triaged ci_red on stale origin HEAD; created NO board row; deferred reconciliation owner SSOT-W1-BASH-SHIM to a later tick.
+**what-considered:**
+- Create a CI-RED board task vs dedup — grep found ZERO a3af26b6 rows; the full-suite reconciliation is already owned by SSOT-W1-BASH-SHIM (QA-7) — a new row duplicates it.
+- Dispatch BASH-SHIM now (dep ZOD-VALIDATOR-CLI=DONE -> eligible) vs defer — WIP already 2 (epic+E); cannot add a 3rd.
+- Recommend router push of 14-commit divergence vs hold — push is GATED + needs green pre-push; bun suite known-flaky-red; flag only.
+**why-decision:** Red is on stale origin a3af26b6 (local 14 ahead), not current work; durable fix = BASH-SHIM full-suite green, but WIP is saturated so it defers; no dup row created.
+**why-change:** no change — consistent with 12:37Z flaky-divergence triage + feedback_red_prepush_strands_fleet.

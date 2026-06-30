@@ -1613,8 +1613,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-30T06:20:13Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-30T13:52:29Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7818,6 +7818,98 @@
           "d0ae24e6"
         ],
         "done_note": "Step 4.5c jq-native mutex SHIPPED (commit 6d080acf rewrites the false-green c2c2aa9f). Dispatcher RAW-verified: commits on disk, merge gate green (index-check/tree-verify/c2-alert exit=0), and re-ran committed logic independently — 4/4 cases PASS (chef-morning+chef-intraday→drop intraday keep morning; intraday-only→retain; morning-only→retain; mixed non-chef+both-chef→drop only intraday). BEHAVIORAL GATE PENDING runtime: next weekday 2026-07-01T05:15Z coincidence tick must yield EXACTLY ONE CHEF MARKET dish."
+      },
+      {
+        "id": "OHLCV-DEPTH-SUBTASK-A",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "blocking": true,
+        "zone": "cross-service/",
+        "owner": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "title": "SUBTASK-A: VPS script hardening — fetch-ohlcv-backfill.sh: jq normalizeThousandVnd (x1000 if close<100), filter flat zero-vol seed bars (vol>0 or O!=C), VNINDEX type=index, FULL-universe (SELECT DISTINCT code) per R-2, pass bars_pushed_total to /api/ohlcv-backfill-done.",
+        "depends": [
+          "OHLCV-DEPTH-SUBTASK-E"
+        ],
+        "files": [
+          "vps-scripts/fetch-ohlcv-backfill.sh"
+        ],
+        "acceptance": "DAYS=730 bash fetch-ohlcv-backfill.sh VCB -> server logs inserted>0 for recent AND historical bars; R-1 thousand-VND verified against live TCBS response.",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T13:52:29Z",
+        "baseline_pass": true
+      },
+      {
+        "id": "OHLCV-DEPTH-SUBTASK-B",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "blocking": true,
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "title": "SUBTASK-B: server-side verification in /api/ohlcv-backfill-done (server.ts:1423-1444) — accept {bars_pushed_total}; post-done depth-probe watchlist; if any cnt<252 WARN+re-queue done=0; retry_count>=5 -> Telegram BUG (R-5 retry-storm cap).",
+        "depends": [
+          "OHLCV-DEPTH-SUBTASK-A"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/server.ts"
+        ],
+        "acceptance": "After VPS real push, server logs depth-verified all watchlist >=252; subsequent restart no re-queue; retry cap enforced server-side.",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T13:52:29Z",
+        "baseline_pass": true
+      },
+      {
+        "id": "OHLCV-DEPTH-SUBTASK-C",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "blocking": false,
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "title": "SUBTASK-C: taOhlcvBackfillJob threshold split (taOhlcvBackfillJob.ts:46,244) — add MOMENTUM_MIN_BARS=252; keep TA skip at 35 (no regression); log depth-insufficient tickers to INFO. Observability only (VNDirect geo-blocked, R-4).",
+        "depends": [],
+        "files": [
+          "apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts"
+        ],
+        "acceptance": "At 49 bars job logs depth-insufficient for all watchlist; after VPS backfill to 252+ no more depth-insufficient logs; TA-35 skip unchanged.",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T13:52:29Z",
+        "baseline_pass": true
+      },
+      {
+        "id": "OHLCV-DEPTH-SUBTASK-D",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "blocking": false,
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "title": "SUBTASK-D: ohlcvStartupProbe depth alert (ohlcvStartupProbe.ts) — add DEPTH_FLOOR=252 alongside <8 sparse; tickers 8<=cnt<252 reported as 'shallow' (distinct from 'sparse') in single Telegram WORK alert per startup.",
+        "depends": [],
+        "files": [
+          "apps/mcp-server/src/scheduler/market-data/ohlcvStartupProbe.ts"
+        ],
+        "acceptance": "After restart at 49-bar depth, probe sends one WORK alert listing 49-bar tickers as 'shallow (need 252)'.",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T13:52:29Z",
+        "baseline_pass": true
       }
     ],
     "closed_sprints": [
@@ -9384,7 +9476,7 @@
         "user_prioritized": true,
         "zone": "apps/mcp-server/",
         "owner": "architect",
-        "next_agent": "po",
+        "next_agent": "dev-mcp-server",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
         "title": "daily_ohlcv persists only ~49 bars (uniform 2026-04-23 floor across ALL tickers) despite OHLCV-BACKFILL-P0 (2yr) — root-cause the WRITER/retention/backfill-lookback and persist >=252 bars (target ~504/2yr). Indicator-program CRITICAL PATH: unblocks roc/RS/52w momentum cards + volatility/breadth gauges + the OHLCV-derived next-wave indicators.",
         "supersedes_depth_gap_of": "OHLCV-BACKFILL-P0",
@@ -9405,17 +9497,41 @@
         "depends": [],
         "created_by": "po-s135",
         "created_at": "2026-06-30T07:53:47Z",
-        "updated_at": "2026-06-30T13:28:31Z",
-        "updated_by": "dev-team",
+        "updated_at": "2026-06-30T13:52:29Z",
+        "updated_by": "po",
         "dispatched_at": "2026-06-30T12:56:00Z",
         "dispatched_by": "dev-team",
         "architect_done": true,
         "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "brief_commit": "30659cca",
-        "status_note": "EPIC: architect decompose DONE (brief 30659cca; root-cause PRIMARY=vps-scripts/ohlcv-backfill-poll.sh signals done=1 regardless of EXIT_CODE). brief_complete signal pending PO drain -> PO materializes 5 sub-tasks A-E; SEQUENCE E->A (SUBTASK-E ops SSH prereq blocks A). Stays IN_PROGRESS as parent epic; NOT router-decomposed."
+        "status_note": "EPIC parent. PO materialized 5 sub-tasks A-E (po triage 13:37Z). DAG: E(prereq,ready)->A(vps-script)->B(server-verify); C,D=P1 observability independent. E dispatched THIS tick (WIP=2: epic+E). A,B,C,D in backlog awaiting E. Epic resumes PO sign-off when all children DONE_VERIFIED + cross-restart depth gate (>=252 bars persists post-restart) passes."
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "id": "OHLCV-DEPTH-SUBTASK-E",
+        "status": "READY",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "blocking": true,
+        "zone": "cross-service/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "title": "SUBTASK-E: VPS script deployment gate (PREREQUISITE) — SSH the Vinahost VPS, verify /root/fetch-ohlcv-backfill.sh present+executable; if absent scp vps-scripts/fetch-ohlcv-backfill.sh root@VPS:/root/ then chmod +x. Confirm BEFORE any queue-row trigger. Blocks SUBTASK-A.",
+        "depends": [],
+        "files": [
+          "vps-scripts/fetch-ohlcv-backfill.sh"
+        ],
+        "acceptance": "SSH VPS: ls -la /root/fetch-ohlcv-backfill.sh shows executable; deploy pathway proven for SUBTASK-A re-deploy.",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T13:52:29Z",
+        "baseline_pass": true
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
