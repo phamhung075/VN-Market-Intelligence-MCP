@@ -166,6 +166,20 @@ PUSH_THRESHOLD=30 bash scripts/fleet-worktree-push.sh
 # Fallback flow: docs/agents/dev-team/flow/post-cycle.md § Step PUSH-BACKSTOP
 ```
 
+**CANONICAL: FB poster OS-level firer (FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL)**
+```bash
+# Dry-run (print what would fire, no claude invocation):
+bash scripts/cowork-fb-daily-firer.sh --dry-run
+# Live run (invoked by launchd every 15 min — script gates on UTC time window):
+bash scripts/cowork-fb-daily-firer.sh
+# Override claude binary path (env, no rebuild):
+CLAUDE_BIN=/path/to/claude bash scripts/cowork-fb-daily-firer.sh
+# Owning flow doc: docs/standards/cron-jobs.md § FB Poster Firer
+# Plist: launchd/com.vn-market.fb-daily-firer.plist
+# Slots: fb-daily (09:15Z Mon-Fri) + fb-weekend (13:13Z Sat-Sun)
+# OPS install: launchctl load ~/Library/LaunchAgents/com.vn-market.fb-daily-firer.plist
+```
+
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 
 **Maintenance (user directive 2026-06-07):** agents MAY update/upgrade an existing `scripts/` script to work better or optimize (fix bugs, harden, speed up, extend) — improving the shared script beats writing a parallel one-off. Rules: (1) if the script implements a flow spec, edit the spec first, then the script — they MUST stay in sync; (2) smoke-test after the change (clean no-op run at minimum); (3) keep the usage contract (CLI args/env/stdout) backward-compatible or update every caller + flow pointer in the same commit; (4) commit under commit-mutex.

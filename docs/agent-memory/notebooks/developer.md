@@ -1,5 +1,24 @@
 # Developer — Notebook
 
+**Last updated:** 2026-06-30 | **Cycle:** FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL
+
+## Session 2026-06-30 — FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL
+
+**Task:** Author launchd OS-level firer for fb-daily guaranteed slot (09:15Z Mon-Fri).
+**Zone:** cross-service/ (no dev-* specialist zone match) → developer handles directly.
+
+**Root cause:** cowork master CronCreate is session-scoped; RemoteTrigger backstop retired → fb-daily misses when CLI session is not live. Memory: project_cowork_guaranteed_slot_needs_live_cli_session.
+
+**What was built:**
+- `scripts/cowork-fb-daily-firer.sh` — bash wrapper; StartInterval cadence + internal UTC gate; fires `claude --dangerously-skip-permissions -p "run docs/agents/fb-market-poster/flow/main.md  slot=<slot>"`.
+- `launchd/com.vn-market.fb-daily-firer.plist` — StartInterval=900 (15 min), RunAtLoad=false, KeepAlive=false; plist validated OK via `plutil -lint`.
+- Time gates: Mon-Fri 09:00-09:29Z → slot=fb-daily; Sat-Sun 13:00-13:29Z → slot=fb-weekend (companion guaranteed slot, same agent).
+- Doc pointers: `docs/standards/cron-jobs.md` § FB Poster Firer + `docs/policies/dev-standards.md` § Script Persistence CANONICAL entry.
+
+**Key lesson:** DST-invariant gate pattern (StartInterval + `date -u` check in script) beats StartCalendarInterval for UTC-targeted jobs on France-timezone Mac. Proven by fleet-push precedent.
+**Dedup safety:** fb-market-poster flow's own `published:fb-daily:<VN-DATE>` marker (TTL=100800s) prevents double-publish if both this firer and Layer B cowork tick fire in same window.
+**OPS half:** FB-LAUNCHD-OPS-INSTALL-VERIFY (next_agent=ops) does the actual `launchctl load` + verify.
+
 **Last updated:** 2026-06-24 | **Cycle:** FIX-FB-GATE-HARDENING-BUNDLE
 
 ## Session 2026-06-24 — FIX-FB-GATE-HARDENING-BUNDLE (3 tasks batched)

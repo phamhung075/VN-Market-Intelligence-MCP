@@ -188,3 +188,30 @@ gateway dependency (which fail-closed in sub-agents). Threshold-gated → most 3
 Step 4.8 are retained as a SECONDARY opportunistic best-effort (harmless when they do run on a real router
 tick) but are NO LONGER the primary trigger — the launchd timer is authoritative.
 **References:** `docs/architecture-briefs/2026-06-18-auto-push-threshold-backstop.md` (§2 Options Evaluation — Option-A now selected)
+
+### FB Poster Firer (dedicated launchd timer — FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL)
+
+**Root cause closed:** The cowork-team master CronCreate dispatcher is session-scoped — CLI session end evaporates it. The cloud RemoteTrigger backstop is RETIRED (STANDING: no cloud RemoteTrigger — all local). Session end = fb-daily missed at 09:15Z with no recovery path (memory: `project_cowork_guaranteed_slot_needs_live_cli_session`).
+
+**Mechanism (now): dedicated launchd timer** — `com.vn-market.fb-daily-firer`.
+| Field | Value |
+|-------|-------|
+| Plist | `launchd/com.vn-market.fb-daily-firer.plist` (install to `~/Library/LaunchAgents/`) |
+| Cadence | `StartInterval` 900s (15 min, matching cowork dispatcher cadence) + `RunAtLoad false` |
+| Program | `bash scripts/cowork-fb-daily-firer.sh` |
+| Time gate | Script: Mon-Fri UTC 09:00–09:29 → slot=fb-daily; Sat-Sun UTC 13:00–13:29 → slot=fb-weekend |
+| Invocation | `claude --dangerously-skip-permissions -p "run docs/agents/fb-market-poster/flow/main.md  slot=<slot>"` |
+| Logs | `docs/agent-memory/sessions/fb-daily-firer{,-error}.log` |
+| KeepAlive | `false` — one-shot per interval; script exits 0/1 by design |
+
+**Slots covered** (from `docs/data/cowork-schedule.json`):
+- `fb-daily` — `cron: "15 9 * * 1-5"` (09:15 UTC Mon-Fri = 16:15 VN, `guaranteed: true`)
+- `fb-weekend` — `cron: "13 13 * * 6,0"` (13:13 UTC Sat-Sun = 20:13 VN, `guaranteed: true`)
+
+**Dedup:** The fb-market-poster flow claims `published:fb-daily:<VN-DATE>` (TTL=100800s/28h) before every `send_telegram` call (spawn-fanout.md § FR-P2-7). Even if this firer AND the live cowork dispatcher both fire, only the first winning claim publishes — same dual-layer coexistence model as chef-morning Layer A + Layer B.
+
+**Why StartInterval (not StartCalendarInterval):** The machine is in France (CEST = UTC+2 / CET = UTC+1). StartCalendarInterval uses local time → DST-sensitive. StartInterval with an internal UTC `date -u` gate in the script is DST-invariant. Most 15-min runs are sub-second no-ops (gate rejects non-window ticks immediately).
+
+**Install / re-arm** (OPS task FB-LAUNCHD-OPS-INSTALL-VERIFY): `launchctl load ~/Library/LaunchAgents/com.vn-market.fb-daily-firer.plist`.
+**Verify:** `launchctl list | grep fb-daily-firer` → PID column non-zero at 09:15Z Mon-Fri.
+**Flow pointer:** `docs/agents/cowork-team/flow/main.md` Step 5 (`spawn-fanout.md`) — launchd is the OS-level backstop that reproduces the same `Agent(fb-market-poster, ...)` spawn when no CLI session is live.

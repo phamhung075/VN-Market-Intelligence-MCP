@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.fb-daily-firer</string>
+
+  <!--
+    OS-level firer for fb-market-poster guaranteed slots (FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL).
+
+    ROOT CAUSE CLOSED: The cowork-team master dispatcher (*/15 CronCreate) is session-scoped.
+    When the CLI session ends the dispatcher evaporates. The cloud RemoteTrigger backstop is
+    RETIRED (STANDING: no cloud RemoteTrigger — all local; memory: no_remote_trigger_all_local).
+    Session end → fb-daily missed at 09:15Z with no recovery path.
+
+    This LaunchAgent fires scripts/cowork-fb-daily-firer.sh every 15 minutes (matching the
+    cowork dispatcher cadence). The script internally gates on UTC weekday + time window and
+    only invokes `claude --dangerously-skip-permissions -p` in the correct window.
+
+    SLOTS COVERED (from docs/data/cowork-schedule.json):
+      fb-daily  : cron "15 9 * * 1-5"  (09:15 UTC Mon-Fri = 16:15 VN)
+                  script gate: Mon-Fri UTC hour=09, minute 00-29
+      fb-weekend: cron "13 13 * * 6,0" (13:13 UTC Sat-Sun = 20:13 VN)
+                  script gate: Sat-Sun UTC hour=13, minute 00-29
+
+    WHY StartInterval (not StartCalendarInterval):
+      The machine is located in France (CEST = UTC+2 summer, CET = UTC+1 winter).
+      StartCalendarInterval uses LOCAL system time, making the schedule DST-sensitive.
+      A StartInterval of 900s (15 min) with an internal UTC-gate in the script is
+      DST-invariant — the gate uses `date -u` to check UTC time regardless of local TZ.
+      Most 15-min runs are sub-second no-ops (UTC gate rejects them immediately).
+      "Actually fires" beats "no new cron" — same principle as com.vn-market.fleet-push.
+
+    DEDUP: The fb-market-poster flow claims `published:fb-daily:<VN-DATE>` (TTL=100800s)
+      before every send_telegram call (spawn-fanout.md § FR-P2-7 Published Marker Gate).
+      Even if this firer fires at 09:00 AND 09:15, only the first winning claim publishes.
+      No plist-level dedup required.
+
+    COEXISTENCE WITH LAYER B: When the cowork master CronCreate is live (a CLI session is
+      active), BOTH may fire the 09:15Z slot. The published-marker gate prevents duplicate
+      posts. This is the same dual-layer pattern as chef-morning (Layer A RemoteTrigger +
+      Layer B CronCreate per docs/protocols/cowork-master-cron-runbook.md §1).
+
+    OWNING FLOW:   docs/agents/cowork-team/flow/main.md (Step 5 spawn-fanout.md)
+    SCRIPT:        scripts/cowork-fb-daily-firer.sh
+    SCHEDULE SSOT: docs/data/cowork-schedule.json (fb-daily + fb-weekend slots)
+    LOGS:          docs/agent-memory/sessions/fb-daily-firer{,-error}.log
+    INSTALL (OPS): launchctl load ~/Library/LaunchAgents/com.vn-market.fb-daily-firer.plist
+    VERIFY (OPS):  launchctl list | grep fb-daily-firer
+  -->
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/scripts/cowork-fb-daily-firer.sh</string>
+  </array>
+
+  <!-- Fire every 15 min (900s) to match the cowork */15 CronCreate cadence.
+       The script gates internally on UTC weekday + time window. Most runs exit
+       immediately (< 1s). The 09:15Z and 13:13Z slots get caught by the first
+       or second 15-min tick in the respective window. -->
+  <key>StartInterval</key>
+  <integer>900</integer>
+
+  <!-- Do NOT fire on plist load — only fire on the 15-min cadence.
+       RunAtLoad=true would fire at machine boot at an arbitrary time, likely
+       outside the UTC window (harmless, but noisy in logs). -->
+  <key>RunAtLoad</key>
+  <false/>
+
+  <!-- One-shot per interval. The claude -p process is synchronous but bounded
+       by the agent flow's own timeout. KeepAlive=false ensures launchd does
+       not restart a failed run (the next 15-min tick provides retry). -->
+  <key>KeepAlive</key>
+  <false/>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP</string>
+
+  <!-- Log destination — tail for firing history + error traces. -->
+  <key>StandardOutPath</key>
+  <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/sessions/fb-daily-firer.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/sessions/fb-daily-firer-error.log</string>
+
+  <!--
+    Environment for headless claude CLI invocation.
+    PATH: includes /Users/admin/.local/bin for the `claude` binary (verified via `which claude`).
+    HOME: required so claude can read ~/.config (API key + settings) and ~/.mcp.json.
+    CLAUDE_BIN: overridable path to the claude binary (consumed by the wrapper script).
+
+    NOTE: ANTHROPIC_API_KEY is read by the claude binary from its own config store
+    (~/.config/anthropic/ or equivalent), not from this plist. If the machine is
+    logged in via `claude login`, the key is cached there. The .env in the repo root
+    is sourced by the wrapper script for Telegram tokens (not the API key).
+  -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/Users/admin/.local/bin:/Users/admin/.bun/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+    <key>HOME</key>
+    <string>/Users/admin</string>
+    <key>CLAUDE_BIN</key>
+    <string>/Users/admin/.local/bin/claude</string>
+  </dict>
+</dict>
+</plist>
