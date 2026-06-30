@@ -183,3 +183,19 @@
 
 **why-decision:** APPROVED — all 7 gate checks PASS. 35/35 tests green, tsc clean, DDD shape correct (intended aggregator pattern), security clean, mock-guard PASS, honest-NULL discipline verified per-section, live endpoint confirmed HTTP 200 with 5-section real/honest-null data.
 **why-change:** no change from plan.
+
+---
+
+### qa-S11 · TASK-502-MOMENTUM-FRONTEND — APPROVED · 2026-06-30T08:15Z
+
+**task-id:** TASK-502-MOMENTUM-FRONTEND
+**what-done:** QA gate on P1 momentum frontend — GaugeCard extraction (AC-M1), proxy route (AC-1), 4-card dashboard (AC-2/M2/M4), TopNav entry (AC-3), coverage-map GAP rows (AC-4), vitest suites (AC-5/6), mock-guard (AC-7), tsc (AC-8).
+**what-considered:**
+- vitest RAW run: 1967 pass / 2 fail (same QUE_DESCRIPTIONS key-count failures as prior IND-P1-FRONTEND-GAUGE-CARDS gate cycle-353). Failing test files NOT in any TASK-502 commit diff; last modified in commit d7167c0a (2026-06-13, 17 days before TASK-502). Ruling: pre-existing, unrelated.
+- TASK-502 specific tests (ind-p1-momentum-cards + ind-p1-momentum-nav): 49/49 PASS across 17 suites. tsc: exit 0. Playwright G12: 3/3 PASS. mock-guard: exit 0.
+- DDD PASS: GaugeCard.tsx, api.momentum-indicators.tsx, dashboard.momentum.tsx import only interface-layer deps (fetchUtils, components, hooks). No domain/infra imports.
+- process.env pattern in proxy/dashboard loader = mirrors P0 reference exactly (api.indicator-gauges.tsx same pattern) — pre-existing, non-blocking.
+- AC-M1: backward-compat confirmed — P0 dashboard.indicator-gauges.tsx imports from ~/components/GaugeCard, omits expandContent prop (optional).
+- AC-4: 4 GAP rows for /dashboard/momentum present in coverage-map. Status stays GAP (TASK-501 backend deployed but upstream tools not yet producing data — honest-NULL renders correctly).
+**why-decision:** APPROVED — all 8 ACs + M-items verified via RAW code inspection + test execution. 2 vitest failures provably pre-existing (unrelated Kinh Dich feature, pre-502 commit).
+**why-change:** no change from plan.
