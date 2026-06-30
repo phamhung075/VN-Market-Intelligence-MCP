@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-06-30T18:04:46Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS",
+    "next_agent": "architect",
+    "updated_at": "2026-06-30T19:09:54Z",
     "updated_by": "dev-team",
-    "note": "OHLCV epic + final GATE done_verified (data layer: 2yr depth + cross-restart persistence, RAW-verified gateway+git). Indicator SERVING still null -- dev-team RAW-disproved agent env-only diagnosis (explicit-ticker override still null; TA svc port-5003 stale/split-mismatch data + missing VN-Index). Routed to PO for TA-consumer-layer follow-up. Push gated (PO/human)."
+    "note": "OPS-TA-GET-INDICATORS diagnostic DONE_VERIFIED (dev-team RAW re-probe: mcp-server restart did NOT fix get_TI -> code bug; ops momentum-regression claim DISPROVED, explicit-watchlist path 8/8 non-null; ops DID find real watchlist-env gap). Two distinct roots isolated + routed: (B) FIX-GET-TI-STALE-SOURCE-MCP-SERVER dispatched -> dev-mcp-server (get_TI reads stale source vs get_price_history 62.2k; point at corrected daily_ohlcv); (A) FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY -> backlog depends=[RC3] (default no-arg momentum/RS/52w empty; resolve watchlist from system-map SSOT, no-hardcode). RC3 FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS still in_progress (architect, VN-Index benchmark design, critical path). Plus backlog FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM (FPT roc 606x / VHM -0.998 confirmed, PO triage). dev WIP=2 (RC3 architect + dev-mcp-server get_TI). dev-team RAW-verifies each return. Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7855,32 +7855,6 @@
         "dispatch_note": "DISPATCHER = main terminal (router) per dispatch table 'update cowork agents -> cowork-refactory-expert -> main'. fb-market-poster flow .md edit = cowork maintenance lane (router-dispatched), NOT a dev-team-cron auto-adopt ready[] row (avoids the po-s109 cowork-team dead-route). HARD PREREQUISITE for enabling the weekend launchd plist — the fb-daily firer can ship WITHOUT this (daily dedup already exists in main.md STEP 0a)."
       },
       {
-        "id": "FB-LAUNCHD-OPS-INSTALL-VERIFY",
-        "type": "FIX",
-        "size": "S",
-        "status": "BACKLOG",
-        "priority": "high",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "next_agent": "ops",
-        "dispatcher": "dev-team",
-        "depends": [
-          "FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL"
-        ],
-        "created_by": "po",
-        "created_at": "2026-06-30T17:28:32Z",
-        "sprint": "FB-POSTER-LAUNCHD-FIRER",
-        "title": "Install + bootstrap the FB-poster LaunchAgent(s), verify loaded, surface privileged command to user if needed",
-        "deliverables": [
-          "Run `scripts/fb-poster-launchd-install.sh install` — copy plists to ~/Library/LaunchAgents + launchctl bootstrap gui/$(id -u).",
-          "Install the fb-daily LaunchAgent immediately (daily dedup already exists). HOLD the fb-weekend bootstrap until FIX-FB-WEEKEND-DEDUP-GATE is done_verified.",
-          "If gui/loginwindow-domain bootstrap requires a user-run privileged command, surface the EXACT `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.vn-market.fb-poster-daily.plist` to the user (config admin) to paste as `! <cmd>` — do NOT ask the user to make design decisions.",
-          "Verify via `launchctl print gui/$(id -u)/com.vn-market.fb-poster-daily` that the agent is loaded."
-        ],
-        "acceptance": "LaunchAgent(s) loaded + present in launchctl print. NOTE: loaded != fired — the OBSERVED-fire proof is FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP's job, not this one.",
-        "depends_note": "Blocked until FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL ships the plists + install script. Weekend enable additionally gated on FIX-FB-WEEKEND-DEDUP-GATE."
-      },
-      {
         "id": "FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP",
         "type": "FIX",
         "size": "M",
@@ -7909,52 +7883,44 @@
         "depends_note": "Blocked until FB-LAUNCHD-OPS-INSTALL-VERIFY installs the agent(s). Weekend double-post leg additionally gated on FIX-FB-WEEKEND-DEDUP-GATE."
       },
       {
-        "id": "FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE",
-        "type": "FIX",
-        "size": "M",
+        "id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
+        "title": "daily_ohlcv thousands-format contamination (close<1000) FPT/VHM -> roc 606x, 52w low 100.3",
         "status": "BACKLOG",
-        "priority": "high",
-        "zone": "apps/technical-analysis/",
-        "owner": "dev-technical-analysis",
-        "next_agent": "dev-technical-analysis",
-        "dispatcher": "dev-team",
-        "created_by": "po",
-        "created_at": "2026-06-30T18:12:28Z",
+        "type": "fix",
+        "zone": "apps/mcp-server/",
+        "size": "M",
         "sprint": "TA-CONSUMER-STALE-INDICATORS",
-        "title": "TA Go service (port 5003) serves STALE/SEPARATE/split-mismatched price data that does NOT reflect the backfilled daily_ohlcv. SMOKING GUN: get_technical_indicators VCB ~88,000 vs get_price_history VCB (daily_ohlcv) 62,200 SAME day 2026-06-30. Plus FPT get_52w_proximity low_52w=100.3 vs high_52w=99700 (split-adjustment artifact) + get_roc_momentum FPT/BID/CTG null_reason=data_gap_too_large (non-contiguous bars as TA reads them). Reconcile the TA service price source/adjustment pipeline to read the split-adjusted daily_ohlcv consistently.",
-        "root_cause": "TA service does NOT read (or reads a stale/separately-adjusted copy of) the backfilled daily_ohlcv. Covers RC2 (split-adjustment mismatch — 88k vs 62.2k, FPT 100.3 vs 99700) + RC4 (data_gap_too_large = non-contiguous gaps as the TA service reads the bars).",
-        "depends": [
-          "OPS-TA-INDICATOR-STALE-DIAGNOSTIC"
-        ],
-        "hold_reason": "HELD on OPS-TA-INDICATOR-STALE-DIAGNOSTIC. Only fires if the single-svc restart does NOT resolve (RC1 stale-cache disproved). If the diagnostic restart fixes it, this task is superseded.",
-        "scope_note": "Primary zone apps/technical-analysis/. If the diagnostic proves the split-adjustment root is UPSTREAM in the price-ingest/adjustment layer (apps/stock-price/), ESCALATE this row to zone=multi for an architect split before dispatch.",
-        "verification_gate": "RAW gateway re-probe GREEN: get_technical_indicators VCB price == get_price_history VCB same day; get_52w_proximity bounds split-consistent (no 100.3-vs-99700); get_roc_momentum non-null for the watchlist 8 with NO data_gap_too_large. done_verified WITHHELD until this RAW probe passes (exists/rebuilt != serving-correct — feedback_router_verify_raw_not_badges)."
+        "priority": "medium",
+        "owner_agent": "",
+        "next_agent": "po",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T19:00:03Z",
+        "created_by": "dev-team",
+        "updated_at": "2026-06-30T19:00:03Z",
+        "updated_by": "dev-team",
+        "note": "dev-team RAW-verify (gateway, post-RC2): with TA svc fixed, get_roc_momentum FPT roc=606x and get_52w_proximity FPT low_52w=100.3 (vs high 99800, pct_from_low 698x) + VHM low_52w=100 -- caused by daily_ohlcv rows storing prices in THOUSANDS format (close=100.3 meaning 100300 VND) for ~Aug2025-Feb2026. RECURRENCE-ADJACENT: prior OHLCV-UNIT-CONTAM (closed) / CONTAM-6 repaired only the 'open<100 AND close>=1000' class; this NEW class has close<1000 so the old script misses it. PO triage: scope DB migration targeting close<1000 AND close>50 AND date window per affected code (verify exact predicate vs live rows first) + reflow derived columns. Serving-integrity: FPT/VHM momentum + 52w cards currently show garbage. Recurring-bug lens (feedback_recurring_bug_escalation): 2nd contamination class same table -- prefer a durable ingest-time unit-normalization guard over another one-off repair."
       },
       {
-        "id": "FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS",
-        "type": "FIX",
-        "size": "M",
+        "id": "FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY",
+        "title": "TA svc WATCHLIST_TICKERS absent -> default no-arg momentum/RS/52w return empty (resolve from system-map SSOT, no-hardcode)",
         "status": "BACKLOG",
-        "priority": "high",
-        "zone": "multi",
-        "owner": "architect",
-        "next_agent": "architect",
-        "dispatcher": "dev-team",
-        "created_by": "po",
-        "created_at": "2026-06-30T18:12:28Z",
+        "type": "fix",
+        "zone": "apps/technical-analysis/",
+        "size": "M",
         "sprint": "TA-CONSUMER-STALE-INDICATORS",
-        "title": "get_relative_strength returns ALL 8 watchlist = null_reason 'index_data_absent' with low_sample_warning=FALSE → the VN-Index benchmark series the TA service uses for relative strength is MISSING (NOT a sample/env issue). Determine where TA reads its index benchmark and ingest/repair it so relative-strength can compute.",
-        "root_cause": "RC3 — VN-Index benchmark OHLCV series absent from the TA relative-strength path. Two candidate sources: (a) TA reads mcp-server vn_index_cache (purged-on-boot + market-hours-only refresh strands it=0 off-hours — see FIX-VNINDEX-CACHE-STARTUP-PURGE); (b) TA has its OWN index OHLCV ingest and the universe depth-backfill MISSED the index symbol → ingest VN-Index OHLCV depth mirroring the daily_ohlcv 2yr backfill.",
+        "priority": "medium",
+        "owner_agent": "",
+        "next_agent": "po",
         "depends": [
-          "OPS-TA-INDICATOR-STALE-DIAGNOSTIC"
+          "FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS"
         ],
-        "hold_reason": "HELD on OPS-TA-INDICATOR-STALE-DIAGNOSTIC (the restart will not fix an absent benchmark series, but the diagnostic confirms the source TA actually reads before committing the ingest/cache fix).",
-        "cross_ref": [
-          "FIX-VNINDEX-CACHE-STARTUP-PURGE",
-          "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH"
-        ],
-        "scope_note": "zone=multi → architect SPLITs (apps/technical-analysis/ for the benchmark read + apps/mcp-server/ or apps/stock-price/ for the index OHLCV ingest/cache). RECONCILE against the two existing VN-Index tasks before minting any new ingest task: FIX-VNINDEX-CACHE-STARTUP-PURGE (BACKLOG, apps/mcp-server/, the recurring purge-on-boot root) + FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE-never-done_verified). If TA reads vn_index_cache, this collapses INTO FIX-VNINDEX-CACHE-STARTUP-PURGE — do NOT duplicate it.",
-        "verification_gate": "RAW gateway re-probe GREEN: get_relative_strength non-null for the watchlist 8 (index benchmark present + sufficient depth). done_verified WITHHELD until this RAW probe passes."
+        "detail_ref": null,
+        "created_at": "2026-06-30T19:09:54Z",
+        "created_by": "dev-team",
+        "updated_at": "2026-06-30T19:09:54Z",
+        "updated_by": "dev-team",
+        "note": "dev-team RAW evidence (gateway + source 19:05Z): docker-compose.yml technical-analysis env block (lines 171-175) has NO WATCHLIST_TICKERS (only PORT=5003/DB_PATH/DB_READONLY=true/APP_ENV); main.go:46 watchlist:=parseWatchlist(envStr('WATCHLIST_TICKERS','')) defaults empty -> startup slog.Warn 'WATCHLIST_TICKERS not set -- ATR%/momentum/RS/52w outputs will return empty list'. IMPACT: callers that DO pass explicit watchlist_tickers get correct results (proven: 8/8 non-null), but the DEFAULT no-arg serving path (likely frontend/consumer cards) returns empty momentum/RS/52w. DO NOT just hardcode 33 tickers into docker-compose.yml -- violates no-hardcode (watchlist SSOT = docs/data/system-map.json .project.watchlist). DURABLE design (architect/po): TA svc should resolve its watchlist universe from system-map.json SSOT (mounted) at startup, or derive active tickers from the OHLCV DB -- not a hardcoded compose env. COUPLED to RC3: get_relative_strength needs BOTH VN-Index benchmark (RC3) AND the watchlist universe to serve non-null, so sequenced depends=[RC3]; architect may fold watchlist resolution into the RC3 RS implementation or keep separate. Same-service (technical-analysis) as RC3 -> serialize to avoid parallel-mutation conflict."
       }
     ],
     "closed_sprints": [
@@ -9782,27 +9748,53 @@
         "status_note": "EPIC P0: E (VPS deploy gate) + A (fetch-ohlcv-backfill.sh 71b5a5fb) + B (done-endpoint depth-probe+re-queue+R-5 cap c8557899) + C (taOhlcvBackfill MOMENTUM_MIN_BARS=252 cc491b4a) + D (ohlcvStartupProbe DEPTH_FLOOR=252 45fff717) + REBUILD (image f71a1743 deployed, B+D handlers LIVE) ALL DONE_VERIFIED. FINAL GATE: OHLCV-DEPTH-PROD-BACKFILL-GATE (full-universe R-2 backfill + brief-4 cross-restart gate) done_verifies epic. next_agent=dev-mcp-server.",
         "done_at": "2026-06-30T18:04:46Z",
         "verification": "EPIC DATA-LAYER scope DONE+DURABLE: daily_ohlcv 2yr depth (1145/1437 codes >=252, watchlist 36/41) + cross-restart PERSISTENCE (purge-on-boot defeated) RAW-verified via final GATE. Mechanism E+A+B+C+D+REBUILD+PROD-BACKFILL-GATE all done_verified. SERVING-VALUE goal (indicator non-null) NOT met -- blocked by DISTINCT TA-consumer-layer defect (TA svc port-5003 stale/split-mismatch data + missing VN-Index), routed to PO as new task. This epic = daily_ohlcv depth/persist (literal scope) = COMPLETE; indicator-serving is a separate service defect the depth-fix uncovered."
-      }
-    ],
-    "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": null,
-      "next_action": null,
-      "updated_by": "pm",
-      "updated_at": "2026-06-30T06:20:13Z"
-    },
-    "in_progress": [],
-    "ready": [
+      },
+      {
+        "id": "OPS-TA-INDICATOR-STALE-DIAGNOSTIC",
+        "type": "FIX",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "blocking": true,
+        "zone": "apps/technical-analysis/",
+        "owner": "ops",
+        "next_agent": "",
+        "dispatcher": "dev-team",
+        "created_by": "po",
+        "created_at": "2026-06-30T18:12:28Z",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "title": "Cheap-first diagnostic gate — single-svc RESTART technical-analysis (port 5003) then RE-PROBE momentum tools to disambiguate stale-cache (RC1) from a real data-source/split-mismatch bug (RC2/3/4). The OHLCV depth fix is DONE+DURABLE but indicator cards are STILL null; dev-team RAW-disproved the env-only diagnosis (explicit watchlist override still null).",
+        "deliverables": [
+          "D1 RESTART the technical-analysis service ONLY — single-svc (e.g. `docker compose restart technical-analysis`). NEVER `down && up` (destroys peers ~21min — feedback_rebuild_recreate_destroys_peers). Confirm all peer services stay UP after.",
+          "D2 RE-PROBE via gateway call_tool(server=vn-market): (a) get_technical_indicators VCB vs get_price_history VCB for 2026-06-30 — capture both prices RAW (was 88,000 vs 62,200); (b) get_roc_momentum / get_relative_strength / get_52w_proximity with EXPLICIT watchlist_tickers=[VCB,FPT,HPG,MWG,SSI,VNM,BID,CTG] — capture null_reason / low_sample_warning for each.",
+          "D3 VERDICT: classify which root cause is live and record it on this task's findings + as the dispatch signal for the held fixes."
+        ],
+        "acceptance": [
+          "AC1 restart was single-svc — peers verified still UP (not down&&up).",
+          "AC2 post-restart re-probe captured RAW from the gateway (price values + null_reasons), not relayed from a sub-agent badge.",
+          "AC3 verdict recorded: RC1 stale-in-memory-cache (prices now MATCH daily_ohlcv + tools non-null → RESOLVED; mark FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE + FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS superseded) OR RC2/3/4 real bug (still 88k / still null after restart → UNBLOCK both held fixes by clearing their `depends`)."
+        ],
+        "verification_gate": "This task GATES the expensive fixes. If single-svc restart makes get_technical_indicators VCB == get_price_history VCB (~62,200) AND the 3 momentum tools return non-null for the watchlist 8 → the whole chain is RESOLVED by the restart (RC1). Otherwise the restart proves the TA service reads a SEPARATE/split-mismatched source → the held fixes are the real work.",
+        "depends": [],
+        "note": "Blast radius = the technical-analysis (port 5003) service ONLY. PO does NOT run the restart — routed to ops. This is a CLAIMABLE diagnostic board row (a gate needs a row, not just a verdict — strand-lesson project_deferred_task_scheduler).",
+        "updated_at": "2026-06-30T18:26:27Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T18:18:31Z",
+        "dispatched_by": "dev-team",
+        "owner_agent": "ops",
+        "done_at": "2026-06-30T18:26:27Z",
+        "done_commits": [],
+        "verification": "dev-team RAW re-probe via gateway (NOT ops badge): RC1 stale-cache DISPROVED, RC2+RC3 CONFIRMED. technical-analysis container restarted 18:19:51Z (was 16h old), healthy, peer mcp-server untouched, no rebuild. POST-RESTART probes: get_technical_indicators VCB (TA svc port 5003) MA5=88120 price=87000 vs get_price_history VCB (daily_ohlcv) close=62200 same day -> ~40pct split/separate-source mismatch PERSISTS (RC2). get_roc_momentum 8/8 null (insufficient_history/data_gap_too_large), insufficient_cross_section -> TA OHLCV store shallow/gapped (folds into RC2). get_relative_strength 8/8 index_data_absent, market_rs_composite null -> VN-Index benchmark series ABSENT in TA svc (RC3). get_52w_proximity 3/8 compute but FPT low_52w=100.3 vs high_52w=99700 (pct_from_low 894pct) = split-unadjusted artifact (RC2 corroborated). Verdict: structural data-path bug, restart does not fix. Unblocks FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE (RC2 lead) + FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (RC3, sequenced after RC2). Probe-only task, no code commit."
+      },
       {
         "id": "FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL",
         "type": "SPRINT-M",
         "size": "M",
-        "status": "READY",
+        "status": "DONE_VERIFIED",
         "priority": "high",
         "zone": "cross-service/",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "",
         "dispatcher": "dev-team",
         "created_by": "po",
         "created_at": "2026-06-30T17:28:32Z",
@@ -9823,38 +9815,167 @@
           "AC6 Vietnamese output + no-fake-data honest-NULL pass-state unchanged (the wrapper changes NOTHING in the flow body)."
         ],
         "design_notes": "Mirror scripts/fleet-worktree-push.sh + launchd/com.vn-market.fleet-push.plist (the proven all-local OS-level firer pattern). SSOT slot truth: cowork-schedule.json fb-daily cron `15 9 * * 1-5` (09:15Z), fb-weekend cron `13 13 * * 6,0` (13:13Z). NOTE a doc discrepancy to reconcile: fb-market-poster/flow/main.md Input says weekend 13:07Z — SSOT cowork-schedule.json (13:13Z) WINS; flag for doc-sync, do not bake 13:07.",
-        "verification_gate": "Code committed + scripts executable + `bash scripts/fb-poster-launchd-install.sh --verify` runs clean. done_verified is WITHHELD until the OBSERVED-fire behavioral gate (FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP) passes — 'script exists' / 'launchctl list shows it' is NOT done (exists != fires)."
+        "verification_gate": "Code committed + scripts executable + `bash scripts/fb-poster-launchd-install.sh --verify` runs clean. done_verified is WITHHELD until the OBSERVED-fire behavioral gate (FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP) passes — 'script exists' / 'launchctl list shows it' is NOT done (exists != fires).",
+        "updated_at": "2026-06-30T18:39:35Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T18:26:27Z",
+        "dispatched_by": "dev-team",
+        "owner_agent": "developer",
+        "done_at": "2026-06-30T18:39:35Z",
+        "done_commits": [
+          "1739b624"
+        ],
+        "verification": "dev-team RAW-verify (git+disk, NOT agent badge): commit 1739b624 real, 6 files all in-zone (scripts/ launchd/ docs/ + decision+notebook), NO orch-state/unrelated sweep (explicit paths). Leak scan CLEAN (only code comments naming where ANTHROPIC_API_KEY lives, no secret values). scripts/cowork-fb-daily-firer.sh exists -rwxr-xr-x, bash -n OK, internal UTC gate fb-daily 09:00-09:29Z Mon-Fri + fb-weekend 13:00-13:29Z Sat-Sun, dedup via published:fb-daily marker, --dry-run + CLAUDE_BIN override, reads cowork-schedule.json SSOT (no hardcode). launchd/com.vn-market.fb-daily-firer.plist plutil-lint OK, Label=com.vn-market.fb-daily-firer StartInterval=900 RunAtLoad=false (DST-invariant via internal UTC gate). Pointers present in dev-standards.md + cron-jobs.md. DEV author-only half COMPLETE."
       },
       {
-        "id": "OPS-TA-INDICATOR-STALE-DIAGNOSTIC",
+        "id": "FB-LAUNCHD-OPS-INSTALL-VERIFY",
         "type": "FIX",
         "size": "S",
-        "status": "READY",
+        "status": "DONE_VERIFIED",
         "priority": "high",
-        "blocking": true,
-        "zone": "apps/technical-analysis/",
+        "zone": "cross-service/",
         "owner": "ops",
-        "next_agent": "ops",
+        "next_agent": "",
+        "dispatcher": "dev-team",
+        "depends": null,
+        "created_by": "po",
+        "created_at": "2026-06-30T17:28:32Z",
+        "sprint": "FB-POSTER-LAUNCHD-FIRER",
+        "title": "Install + bootstrap the FB-poster LaunchAgent(s), verify loaded, surface privileged command to user if needed",
+        "deliverables": [
+          "Run `scripts/fb-poster-launchd-install.sh install` — copy plists to ~/Library/LaunchAgents + launchctl bootstrap gui/$(id -u).",
+          "Install the fb-daily LaunchAgent immediately (daily dedup already exists). HOLD the fb-weekend bootstrap until FIX-FB-WEEKEND-DEDUP-GATE is done_verified.",
+          "If gui/loginwindow-domain bootstrap requires a user-run privileged command, surface the EXACT `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.vn-market.fb-poster-daily.plist` to the user (config admin) to paste as `! <cmd>` — do NOT ask the user to make design decisions.",
+          "Verify via `launchctl print gui/$(id -u)/com.vn-market.fb-poster-daily` that the agent is loaded."
+        ],
+        "acceptance": "LaunchAgent(s) loaded + present in launchctl print. NOTE: loaded != fired — the OBSERVED-fire proof is FB-LAUNCHD-QA-FIRE-VERIFY-DEDUP's job, not this one.",
+        "depends_note": "Blocked until FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL ships the plists + install script. Weekend enable additionally gated on FIX-FB-WEEKEND-DEDUP-GATE.",
+        "updated_at": "2026-06-30T18:44:23Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T18:39:35Z",
+        "dispatched_by": "dev-team",
+        "owner_agent": "ops",
+        "done_at": "2026-06-30T18:44:23Z",
+        "done_commits": [],
+        "verification": "dev-team RAW-verify (launchctl + disk + log, NOT ops badge): launchctl list shows com.vn-market.fb-daily-firer LOADED, last-exit 0, not running (correct -- only fires in UTC windows). ~/Library/LaunchAgents/com.vn-market.fb-daily-firer.plist is a SYMLINK -> repo SSOT launchd/com.vn-market.fb-daily-firer.plist (no file drift, repo stays single source of truth). CRITICAL safety: dry-run wrote NO published:fb-daily marker (CLEAN-no-publish-marker grep) -- the --dry-run at 18:41Z outside window correctly silent-no-op'd, did NOT publish. No error log. Install COMPLETE + safe. First REAL windowed fire observable next Mon-Fri 09:00-09:29Z via docs/agent-memory/sessions/fb-daily-firer.log. FB-LAUNCHD epic (DEV 1739b624 + OPS install) DONE -- launchd OS-level firer replaces session-scoped dispatcher that silently skipped guaranteed fb-daily slot."
+      },
+      {
+        "id": "FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE",
+        "type": "FIX",
+        "size": "M",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "next_agent": "",
         "dispatcher": "dev-team",
         "created_by": "po",
         "created_at": "2026-06-30T18:12:28Z",
         "sprint": "TA-CONSUMER-STALE-INDICATORS",
-        "title": "Cheap-first diagnostic gate — single-svc RESTART technical-analysis (port 5003) then RE-PROBE momentum tools to disambiguate stale-cache (RC1) from a real data-source/split-mismatch bug (RC2/3/4). The OHLCV depth fix is DONE+DURABLE but indicator cards are STILL null; dev-team RAW-disproved the env-only diagnosis (explicit watchlist override still null).",
-        "deliverables": [
-          "D1 RESTART the technical-analysis service ONLY — single-svc (e.g. `docker compose restart technical-analysis`). NEVER `down && up` (destroys peers ~21min — feedback_rebuild_recreate_destroys_peers). Confirm all peer services stay UP after.",
-          "D2 RE-PROBE via gateway call_tool(server=vn-market): (a) get_technical_indicators VCB vs get_price_history VCB for 2026-06-30 — capture both prices RAW (was 88,000 vs 62,200); (b) get_roc_momentum / get_relative_strength / get_52w_proximity with EXPLICIT watchlist_tickers=[VCB,FPT,HPG,MWG,SSI,VNM,BID,CTG] — capture null_reason / low_sample_warning for each.",
-          "D3 VERDICT: classify which root cause is live and record it on this task's findings + as the dispatch signal for the held fixes."
+        "title": "TA Go service (port 5003) serves STALE/SEPARATE/split-mismatched price data that does NOT reflect the backfilled daily_ohlcv. SMOKING GUN: get_technical_indicators VCB ~88,000 vs get_price_history VCB (daily_ohlcv) 62,200 SAME day 2026-06-30. Plus FPT get_52w_proximity low_52w=100.3 vs high_52w=99700 (split-adjustment artifact) + get_roc_momentum FPT/BID/CTG null_reason=data_gap_too_large (non-contiguous bars as TA reads them). Reconcile the TA service price source/adjustment pipeline to read the split-adjusted daily_ohlcv consistently.",
+        "root_cause": "TA service does NOT read (or reads a stale/separately-adjusted copy of) the backfilled daily_ohlcv. Covers RC2 (split-adjustment mismatch — 88k vs 62.2k, FPT 100.3 vs 99700) + RC4 (data_gap_too_large = non-contiguous gaps as the TA service reads the bars).",
+        "depends": null,
+        "hold_reason": "HELD on OPS-TA-INDICATOR-STALE-DIAGNOSTIC. Only fires if the single-svc restart does NOT resolve (RC1 stale-cache disproved). If the diagnostic restart fixes it, this task is superseded.",
+        "scope_note": "Primary zone apps/technical-analysis/. If the diagnostic proves the split-adjustment root is UPSTREAM in the price-ingest/adjustment layer (apps/stock-price/), ESCALATE this row to zone=multi for an architect split before dispatch.",
+        "verification_gate": "RAW gateway re-probe GREEN: get_technical_indicators VCB price == get_price_history VCB same day; get_52w_proximity bounds split-consistent (no 100.3-vs-99700); get_roc_momentum non-null for the watchlist 8 with NO data_gap_too_large. done_verified WITHHELD until this RAW probe passes (exists/rebuilt != serving-correct — feedback_router_verify_raw_not_badges).",
+        "updated_at": "2026-06-30T19:00:03Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T18:26:27Z",
+        "dispatched_by": "dev-team",
+        "owner_agent": "dev-technical-analysis",
+        "done_at": "2026-06-30T19:00:03Z",
+        "done_commits": [
+          "b6055728",
+          "1fec8fdf"
         ],
-        "acceptance": [
-          "AC1 restart was single-svc — peers verified still UP (not down&&up).",
-          "AC2 post-restart re-probe captured RAW from the gateway (price values + null_reasons), not relayed from a sub-agent badge.",
-          "AC3 verdict recorded: RC1 stale-in-memory-cache (prices now MATCH daily_ohlcv + tools non-null → RESOLVED; mark FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE + FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS superseded) OR RC2/3/4 real bug (still 88k / still null after restart → UNBLOCK both held fixes by clearing their `depends`)."
-        ],
-        "verification_gate": "This task GATES the expensive fixes. If single-svc restart makes get_technical_indicators VCB == get_price_history VCB (~62,200) AND the 3 momentum tools return non-null for the watchlist 8 → the whole chain is RESOLVED by the restart (RC1). Otherwise the restart proves the TA service reads a SEPARATE/split-mismatched source → the held fixes are the real work.",
-        "depends": [],
-        "note": "Blast radius = the technical-analysis (port 5003) service ONLY. PO does NOT run the restart — routed to ops. This is a CLAIMABLE diagnostic board row (a gate needs a row, not just a verdict — strand-lesson project_deferred_task_scheduler)."
+        "verification": "dev-team RAW-verify (git + gateway serving re-probe, NOT agent badge). GIT: b6055728 real, leak-CLEAN, msg matches 3 bugs (GetCandles/GetOHLCV ASC-LIMIT returned oldest N -> DESC subquery+ASC reorder; GetMultiTickerCandles global-LIMIT starved later-alphabet codes -> per-code subqueries; maxCalendarGap 5->14 for Tet 10-day closure); 1fec8fdf notebook; TA container rebuilt Up healthy; only orch-state dirty. SERVING (probed 18:51Z): get_roc_momentum 8/8 NON-NULL (VCB roc=0.088 dec7, factor_z=-0.353) was 8/8 null -> FIXED; get_52w_proximity 8/8 compute denom_ma200=8 (VCB hi76000/lo56700) was 3/8 -> FIXED; get_price_history VCB=62200 confirms daily_ohlcv correct. get_relative_strength still null but null_reason shifted index_data_absent -> insufficient_history (EXPECTED until RC3 VN-Index benchmark). SCOPE MET: TA Go svc port-5003 now reads corrected daily_ohlcv; momentum/52w serve real data. RESIDUALS spun off as separate-root tasks: get_technical_indicators still MA5=88120 (separate mcp-server local-DB fallback path -> OPS-TA-GET-INDICATORS-TOOL-STALE-FALLBACK); FPT roc=606x + FPT 52w low=100.3 + VHM low=100 = daily_ohlcv thousands-format contamination (-> FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM)."
+      },
+      {
+        "id": "OPS-TA-GET-INDICATORS-TOOL-STALE-FALLBACK",
+        "title": "get_technical_indicators serves stale 88k via local-DB fallback (TA svc fix did not reach it)",
+        "status": "DONE_VERIFIED",
+        "type": "fix",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "priority": "high",
+        "owner_agent": "ops",
+        "next_agent": "",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T19:00:03Z",
+        "created_by": "dev-team",
+        "updated_at": "2026-06-30T19:09:54Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T19:00:03Z",
+        "dispatched_by": "dev-team",
+        "note": "dev-team RAW-verify (gateway, post-RC2): get_technical_indicators VCB still MA5=88120 price=87000 while get_price_history VCB=62200 and RC2-fixed TA svc + get_roc_momentum/get_52w_proximity now serve correct ~62k. technicalIndicatorTools.ts calls TA svc port-5003 via HTTP with a LOCAL-DB fallback (lines 619/654) -- stale 88k means it is hitting the stale fallback (HTTP-to-5003 failing OR stale in-process cache in mcp-server). CHEAP-FIRST: ops single-svc 'docker restart' mcp-server (cache-clear, NOT down&&up, NO rebuild -- expect ~10s tool-surface blip, TTL-safe) then re-probe get_technical_indicators VCB via gateway (expect ~61480). If FIXED -> close (was stale cache/keepalive). If STILL 88120 -> real code bug in HTTP-to-5003 path or local-DB-fallback source -> escalate dev-mcp-server (gate). dev-team RAW-verifies on return.",
+        "done_at": "2026-06-30T19:09:54Z",
+        "done_commits": [],
+        "verification": "dev-team RAW re-probe via gateway 19:05Z (NOT ops badge). CHEAP-FIRST CONFIRMED INSUFFICIENT: ops single-svc restarted mcp-server (docker ps: Up 3min) -- get_technical_indicators VCB STILL MA5=88120 price=87000 (source_tier 3) vs get_price_history VCB=62200 same DB -> NOT cache/keepalive, real code bug. Ops badge claimed get_roc_momentum REGRESSED to all-null: DISPROVED -- my probe with explicit watchlist_tickers returns 8/8 NON-NULL (VCB roc=0.088 dec7, BID 0.157 dec8, FPT 606x dec9). Ops causal story (get_TI stale because momentum HTTP empty) WRONG: get_TI returns FULL MA/RSI/MACD/BB (not empty, not gated by cross-section). Ops DID find a real SECOND issue: WATCHLIST_TICKERS absent from docker-compose.yml technical-analysis env block (only PORT/DB_PATH/DB_READONLY/APP_ENV present) + main.go:46 parseWatchlist defaults to '' -> default no-arg momentum/RS/52w path returns empty (explicit-arg path WORKS, proven). TWO distinct roots spun off: (B) get_TI stale-source -> dev-mcp-server (FIX-GET-TI-STALE-SOURCE-MCP-SERVER, dispatched); (A) watchlist-env default-empty -> backlog FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY (depends RC3, no-hardcode design). Diagnostic complete."
       }
     ],
+    "head": {
+      "status": "idle",
+      "active_task_id": null,
+      "next_agent": null,
+      "next_action": null,
+      "updated_by": "pm",
+      "updated_at": "2026-06-30T06:20:13Z"
+    },
+    "in_progress": [
+      {
+        "id": "FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS",
+        "type": "FIX",
+        "size": "M",
+        "status": "REVIEW",
+        "priority": "high",
+        "zone": "multi",
+        "owner": "architect",
+        "next_agent": "pm",
+        "dispatcher": "dev-team",
+        "created_by": "po",
+        "created_at": "2026-06-30T18:12:28Z",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "title": "get_relative_strength returns ALL 8 watchlist = null_reason 'index_data_absent' with low_sample_warning=FALSE → the VN-Index benchmark series the TA service uses for relative strength is MISSING (NOT a sample/env issue). Determine where TA reads its index benchmark and ingest/repair it so relative-strength can compute.",
+        "root_cause": "RC3 — VN-Index benchmark OHLCV series absent from the TA relative-strength path. Two candidate sources: (a) TA reads mcp-server vn_index_cache (purged-on-boot + market-hours-only refresh strands it=0 off-hours — see FIX-VNINDEX-CACHE-STARTUP-PURGE); (b) TA has its OWN index OHLCV ingest and the universe depth-backfill MISSED the index symbol → ingest VN-Index OHLCV depth mirroring the daily_ohlcv 2yr backfill.",
+        "depends": null,
+        "hold_reason": "HELD on OPS-TA-INDICATOR-STALE-DIAGNOSTIC (the restart will not fix an absent benchmark series, but the diagnostic confirms the source TA actually reads before committing the ingest/cache fix).",
+        "cross_ref": [
+          "FIX-VNINDEX-CACHE-STARTUP-PURGE",
+          "FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH"
+        ],
+        "scope_note": "zone=multi → architect SPLITs (apps/technical-analysis/ for the benchmark read + apps/mcp-server/ or apps/stock-price/ for the index OHLCV ingest/cache). RECONCILE against the two existing VN-Index tasks before minting any new ingest task: FIX-VNINDEX-CACHE-STARTUP-PURGE (BACKLOG, apps/mcp-server/, the recurring purge-on-boot root) + FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE-never-done_verified). If TA reads vn_index_cache, this collapses INTO FIX-VNINDEX-CACHE-STARTUP-PURGE — do NOT duplicate it.",
+        "verification_gate": "RAW gateway re-probe GREEN: get_relative_strength non-null for the watchlist 8 (index benchmark present + sufficient depth). done_verified WITHHELD until this RAW probe passes.",
+        "updated_at": "2026-06-30T19:35Z",
+        "updated_by": "architect",
+        "dispatched_at": "2026-06-30T19:00:03Z",
+        "dispatched_by": "dev-team",
+        "owner_agent": "architect"
+      },
+      {
+        "id": "FIX-GET-TI-STALE-SOURCE-MCP-SERVER",
+        "title": "get_technical_indicators serves stale 88k (separate/stale source vs get_price_history 62.2k) -- restart ruled out, code-fix in technicalIndicatorTools.ts",
+        "status": "IN_PROGRESS",
+        "type": "fix",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "priority": "high",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T19:09:54Z",
+        "created_by": "dev-team",
+        "updated_at": "2026-06-30T19:09:54Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T19:09:54Z",
+        "dispatched_by": "dev-team",
+        "note": "dev-team RAW evidence (gateway 19:05Z, post mcp-server restart Up 3min): get_technical_indicators VCB returns MA5=88120 MA20=88840 price=87000 (source_tier 3) while get_price_history VCB=62200 reads the SAME local DB correctly, and RC2-fixed TA svc + get_roc_momentum/get_52w_proximity serve correct ~62k. So get_technical_indicators reads a DIFFERENT or STALE source than get_price_history. 88120 looks like pre-backfill / pre-split / separate-table OHLCV (NOT the FPT/VHM thousands-format contamination -- that is a separate backlog task; this is VCB, value HIGHER than correct). technicalIndicatorTools.ts (registered line 514) calls TA svc port-5003 via HTTP with a LOCAL-DB fallback (lines ~619/654). Restart did NOT clear it -> not in-process cache. FIX: find why get_technical_indicators sources stale OHLCV -- either (a) HTTP-to-5003 path returns stale/keepalive data, or (b) local-DB fallback reads a stale table/view rather than the corrected daily_ohlcv that get_price_history uses. Point it at the SAME corrected daily_ohlcv source as get_price_history; verify VCB MA5 ~=61480 and price ~=62200 via gateway after rebuild. ACCEPTANCE (RAW): get_technical_indicators VCB MA5/MA20/price within plausible band of get_price_history latest (~62k). dev-team RAW-verifies serving layer + git + leak-scan on return. Single-svc force-recreate-WITH-build mcp-server only; NEVER down&&up. Push gated (PO/human)."
+      }
+    ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",

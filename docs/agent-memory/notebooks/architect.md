@@ -1,8 +1,19 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-30 05:30 UTC | **Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Last updated:** 2026-06-30 19:11 UTC | **Sprint:** TA-CONSUMER-STALE-INDICATORS
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-30T19:11Z — FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (DESIGN DONE)
+
+**Task:** FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS | BUG-FIX (RC3) | zone: multi (vps-scripts + mcp-server)
+**BUILD-STANDARD:** lean (brownfield, no new service)
+**Root cause confirmed:** `vps-scripts/fetch-ohlcv-backfill.sh:134-139` — explicit VNINDEX skip guard with "SUBTASK-B: add dedicated index fetch" placeholder. VnDirect stock_prices has no index data; dedicated endpoint is `vnmarket_prices` (already used by `vnIndexRefreshJob.ts`).
+**No TA svc changes needed:** TA svc code is architecturally correct — `ComputeRelativeStrengthUseCase` prepends VNINDEX, `SQLiteMultiTickerOHLCVRepository` handles VNINDEX identically to stocks. Only data depth is missing.
+**3 FRs:** FR-A1: VPS script — add dedicated vnmarket_prices VNINDEX fetch block (size=750, no ×1000 normalization); FR-A2: Remove old skip guard; FR-B1: push handler — read type field from payload, pass to validateOhlcvUnit; FR-B2: ohlcv-backfill-done — extend depth probe to include VNINDEX.
+**Critical risk:** RISK-1 [HIGH] — vnmarket_prices fromDate/toDate support unverified from VPS; dev must RAW-probe before implementing. RISK-2 [HIGH] — VPS deploy required (not just commit). RISK-6 [LOW] — retry_count >= 5 cap may suppress re-queue on live ohlcv_backfill_queue.
+**Output:** `[Architect] Brownfield Findings` → `docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md`
+**Next:** pm splits into TASK-VNINDEX-RS-A (developer, vps-scripts) + TASK-VNINDEX-RS-B (dev-mcp-server).
 
 ## 2026-06-30T05:30Z — BA-IND-P1-MOMENTUM-FRONTEND (DESIGN DONE)
 
