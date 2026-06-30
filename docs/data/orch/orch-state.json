@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-30T20:39:54Z",
-    "_updated_by": "cowork-team-dispatcher",
+    "_updated_at": "2026-06-30T22:58:29Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -1265,6 +1265,18 @@
         "status": "NEW",
         "summary": "tnb-audit c103 (20:15Z) audited 2026-06-30 CHEF evening dish (Que 36 Minh Di, RAW-verified legit at 19:45Z) and returned QUALITY:degraded vs chef self-reported QUALITY:full. Findings: L2=FAIL (chronic 17th-cycle US-macro gap — carry 1.37pp tier-3 proxy only, no PMI/EFFR-IORB, no [gap:US_macro_unavailable] token = confirmed quality-verdict overclaim root cause); L3=PARTIAL; business-context ABSENT (F9, 27th cycle). tran-ngoc-bau APPLIED AUTO-CURE to docs/agents/unified-agent/flow/chef.md Step 7.5 sub-check (a) [FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR, 3rd+ recurrence] — replaced vague L2_OK=\"substantively walked\" with concrete floor: numeric US PMI OR EFFR-IORB spread OR explicit gap token; carry-spread-alone excluded. Dispatcher RAW-verified the diff: scoped 12-line edit, sensible, honesty-improving, uncommitted (LIVE for next chef-morning cycle). ASKS: (1) agent-father review+promote the chef.md Step 7.5 fix to a tracked sprint; (2) dev-team Step 0a commit the uncommitted chef.md + tran-ngoc-bau.md notebook + tnb-audit-latest.md handoff; (3) root-cause the chronic US-macro DATA gap (deeper than gate wording — CHEF lacks PMI/EFFR-IORB source) and the F9 business-context 27-cycle absence. SECONDARY: tran-ngoc-bau agent-type has no gateway tools but its flow expects MCP (published-marker/WORK-BUG/commit-mutex/log_agent_work) — every cycle degrades to MCP-failure-mode-A (7 consecutive), so tnb findings always strand as uncommitted files needing dispatcher pickup; flag toolset/flow mismatch for agent-father. Dispatcher did NOT revert (sanctioned completed write) and did NOT commit (defers to dev-team Step 0a).",
         "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
+      {
+        "id": "bca-ddres-20260630T2258",
+        "ts": "2026-06-30T22:58:29Z",
+        "created_at": "2026-06-30T22:58:29Z",
+        "from": "bctc-analyst",
+        "to": "po",
+        "type": "deep_dive_result",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "Deep dive HVN Q1-2026 ESC-2 -> flag_for_human_review (conf 0.93). Extraction failure: income statement + cash flow serve all-zero (impossible for operating airline >10000bn VND assets); B/S imbalance 2.7% is SECONDARY to incomplete asset-side capture (Cash=0). Root cause CORRECTED: NOT OCR (text_status=COMPLETE) but the REFINE stage (refine_status=PARTIAL) -- income B02-DN + cash-flow B03-DN units never materialized. Whole Q1-2026 cohort (MBB/VCI/TCH/VIX) sits at text_status=COMPLETE/refine_status=PENDING = fleet-wide refine backlog. ACTION for PO: route refine-pipeline fix (refine_bctc_md -> bctc_refined_units -> finalize_bctc_refine) to dev-pdf-extractor (disambiguation query in payload_ref); mark HVN Q1-2026 data unusable until refine re-run + identity re-validates; likely clears the fleet backlog not just HVN. SECONDARY low-pri: get_bctc_ocf SQL bug (no such column ocf_operating) breaks OCF forensic gate fleet-wide -- optional separate ticket.",
+        "payload_ref": "docs/handoffs/bctc-hvn-q1-2026-deepdive.md"
       }
     ],
     "last_triaged_at": "2026-06-30T03:25:46Z",
