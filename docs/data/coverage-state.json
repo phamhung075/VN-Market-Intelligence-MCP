@@ -2,7 +2,7 @@
   "_schema": "v1",
   "_ssot": true,
   "_updated_by": "news-scout",
-  "_updated_at": "2026-06-29T20:04:10Z",
+  "_updated_at": "2026-06-30T00:03:32Z",
   "_eod_completed": "2026-06-04T16:08:37Z",
   "tickers": {
     "VNM": {
@@ -19,15 +19,15 @@
     },
     "ACB": {
       "last_covered_news_scout": "2026-06-15T00:08:06Z",
-      "last_covered_market_watcher": "2026-06-15T00:06:37Z"
+      "last_covered_market_watcher": "2026-06-30T00:03:00Z"
     },
     "HPG": {
       "last_covered_news_scout": "2026-06-15T00:08:06Z",
-      "last_covered_market_watcher": "2026-06-15T00:06:37Z"
+      "last_covered_market_watcher": "2026-06-30T00:03:00Z"
     },
     "BID": {
       "last_covered_news_scout": "2026-06-15T00:08:06Z",
-      "last_covered_market_watcher": "2026-06-15T00:06:37Z"
+      "last_covered_market_watcher": "2026-06-30T00:03:00Z"
     },
     "SHB": {
       "last_covered_news_scout": "2026-06-15T00:08:06Z",
@@ -38,11 +38,11 @@
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "VHM": {
-      "last_covered_news_scout": "2026-06-29T20:04:10Z",
+      "last_covered_news_scout": "2026-06-30T00:03:32Z",
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "VIC": {
-      "last_covered_news_scout": "2026-06-29T20:04:10Z",
+      "last_covered_news_scout": "2026-06-30T00:03:32Z",
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "KBC": {
@@ -102,7 +102,7 @@
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "GAS": {
-      "last_covered_news_scout": "2026-06-29T20:04:10Z",
+      "last_covered_news_scout": "2026-06-30T00:03:32Z",
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "SSI": {
@@ -138,7 +138,7 @@
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "PLX": {
-      "last_covered_news_scout": "2026-06-29T20:04:10Z",
+      "last_covered_news_scout": "2026-06-30T00:03:32Z",
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "DAG": {
@@ -182,11 +182,11 @@
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "ACV": {
-      "last_covered_news_scout": "2026-06-29T20:04:10Z",
+      "last_covered_news_scout": "2026-06-30T00:03:32Z",
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "HVN": {
-      "last_covered_news_scout": "2026-06-29T20:04:10Z",
+      "last_covered_news_scout": "2026-06-30T00:03:32Z",
       "last_covered_market_watcher": "2026-06-15T00:06:37Z"
     },
     "MBB": {

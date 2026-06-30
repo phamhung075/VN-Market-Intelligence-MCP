@@ -1,0 +1,31 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services, software exports (FPT Software), telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore Japan/USA), SME telecom subscribers, university students",
+  "ops": "Q1-2026 net profit 2,476.8 tỷ (+19.8% YoY); gross margin 34%; operating margin 22%; software exports leading growth driver; FPT Telecom dragging blended margin",
+  "mgmt": "Consistent EPS growth delivery; M-score=0 (no manipulation signal); F-score=7 (strong financial health); FY guidance met 3 consecutive quarters; share buyback executed on schedule",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pp": 2.25,
+  "pe_x": 13.8,
+  "sector_pe_median": 17.3,
+  "pe_vs_sector_pct": -20,
+  "roe_pct": 28.3,
+  "sector_roe_median_pct": 10.6,
+  "kd_hex": "Quẻ 2 Khôn",
+  "kd_signal": "TRUNG TÍNH GIỮ",
+  "kd_confidence_pct": 38,
+  "foreign_flow_5d_kshares": -104,
+  "confidence": 0.80,
+  "e3_cache_hit": true,
+  "cache_cycle": 26,
+  "esc_summary": {
+    "ESC-3": "DATA-COVERAGE-LIMITED"
+  },
+  "signal_id": 7965,
+  "cycle_slot": "c064",
+  "emitted_at": "2026-06-30T00:08:00Z"
+}
