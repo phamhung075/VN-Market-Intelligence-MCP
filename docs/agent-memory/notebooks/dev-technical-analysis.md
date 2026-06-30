@@ -6,6 +6,36 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-06-30 — FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE — stale data + global-limit + Tết gap
+
+**Task:** FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE (commit b6055728). REBUILD_REQUIRED: YES.
+
+**Root causes (3 compounding bugs in infrastructure + domain):**
+
+(a) **GetCandles / GetOHLCV — ORDER BY date ASC LIMIT N returned OLDEST bars.**
+`ORDER BY date ASC LIMIT 60` fetched the 60 oldest rows (2023 stale data, VCB at 88k-92k range) instead of the most recent 60. Fix: inner subquery `ORDER BY date DESC LIMIT ?` + outer `ORDER BY date ASC` to always return latest N bars.
+
+(b) **GetMultiTickerCandles — global LIMIT starvation cut off later-alphabet codes.**
+Single IN-clause `LIMIT len(codes)*limit` applied after `ORDER BY code, date ASC`: FPT+HPG+MBB consumed the first 2200+ rows of a 2400 budget, leaving VCB/VHM/MSN/MWG with 0 bars → `insufficient_history` for 5/8 watchlist tickers. Fix: per-code subqueries (one `SELECT ... ORDER BY date DESC LIMIT ?` per ticker), eliminating the global budget entirely.
+
+(c) **maxCalendarGap=5 rejected Vietnamese Tết holiday (10-day closure).**
+VN market closes ~10 calendar days for Tết (e.g. 2026-02-13→2026-02-23). Gap check flagged this as `data_gap_too_large` for ALL tickers. Fix: raise constant from 5 to 14 (covers Tết + weekend margin, still catches multi-week true outages).
+
+**Files changed:** `pkg/infrastructure/repositories.go`, `pkg/infrastructure/ohlcv_repository.go`, `pkg/infrastructure/multi_ticker_ohlcv_repository.go`, `pkg/domain/momentum_service.go` + 3 test files (4 new tests RED→GREEN).
+
+**Results (before → after, probed post-rebuild):**
+- VCB MA5: 88,120 → 61,480 (reflects actual ~62,200 VCB close) ✓
+- VCB ROC: null → 0.088 (8.77% annual) ✓
+- VCB 52w: null → high=76k / low=56.7k ✓
+- 8/8 tickers: all return ROC + 52w data (was 0/8) ✓
+
+**Pre-existing DB contamination (not fixed here):**
+FPT/VHM daily_ohlcv stores prices in thousands format for Aug 2025 – Feb 2026 (e.g. close=100.3 instead of 100,300 VND). Requires a separate DB migration script (distinct from CONTAM-6/CONTAM-9 which target different contamination class). FPT ROC = 606x (artifact of thousands-vs-VND mismatch across 252-bar window). Out of scope for this task.
+
+**Zone health:** 12 packages GREEN. go vet clean. go build OK. Service healthy post-rebuild.
+
+---
+
 ### 2026-06-15 — FIX-TA-GOSVC-MA5-PRECISION — MA5 N/A regression + RSI drift fix
 
 **Task:** FIX-TA-GOSVC-MA5-PRECISION (commit d32f0a17)
