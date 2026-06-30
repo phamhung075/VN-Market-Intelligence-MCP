@@ -49,14 +49,14 @@ Pre-checks (project-root, notebook-read, Top-Down Framework) run before any JUMP
 [Thiên Thời] Global macro first
   REGIME (from get_macro_snapshot) → TIGHTENING | EASING | NEUTRAL
   DXY trend | US10Y level (RISK-OFF / RISK-ON) | Fed cycle position
-  Market volatility regime (from get_volatility_indicators): elevated/normal/compressed
-  Foreign investor room (from get_foreign_room): available/constrained/exhausted
+  Market volatility regime (from get_volatility_indicators): vol_regime field (elevated/normal/compressed)
+  Foreign investor room (from get_foreign_room): derive from tickers[].utilization.room_utilization_pct (high pct = constrained)
 
 [Địa Lợi] Vietnam domestic positioning
   VN CPI vs 4.5% target → SBV headroom (from macro snapshot)
   CARRY_REGIME → hot money or structural inflow?
   SBV policy priority: Growth (cắt lãi suất/bơm OMO) vs FX Stability (giữ/tăng lãi suất/hút OMO)
-  Market breadth (from get_breadth_thrust): McClellan/Zweig signal for sector rotation health
+  Market breadth (from get_breadth_thrust): mclellan_osc / mclellan_summation for sector rotation health + thrust_triggered for breakthrough confirmation
 
 [Nhân Hòa] Action timing — only when ≥3/5 aligned:
   □ REGIME=EASING
@@ -77,7 +77,7 @@ call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
 call_tool(server="vn-market", tool="get_breadth_thrust", arguments={})
 call_tool(server="vn-market", tool="get_foreign_room", arguments={})
 ```
-If successful: extract volatility regime, breadth indicators, foreign-room status for [Thiên Thời] / [Địa Lợi] sections above. If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and proceed with macro snapshot + financials only (degraded environment analysis).
+If successful: extract volatility regime (vol_regime), breadth indicators (mclellan_osc, mclellan_summation, thrust_triggered), foreign-room utilization (room_utilization_pct) for [Thiên Thời] / [Địa Lợi] sections above. If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and proceed with macro snapshot + financials only (degraded environment analysis).
 
 ---
 
@@ -91,7 +91,7 @@ If successful: extract volatility regime, breadth indicators, foreign-room statu
 <!-- jump:news-event -->
 ## News Event Analysis
 1. `fetch_and_analyze()` article + initial analysis
-2. Market sentiment context: `call_tool(server="vn-market", tool="get_market_sentiment_index", arguments={})` → extract market-wide sentiment z-score to contextualize individual article impact (article bullish when market_sentiment_z is already +2.0 has less marginal impact). If tool returns NULL or error: proceed with article-level sentiment only.
+2. Market sentiment context: `call_tool(server="vn-market", tool="get_market_sentiment_index", arguments={})` → extract market-wide sentiment z-score (news_sentiment_z or sentiment_z_60d) to contextualize individual article impact (article bullish when news_sentiment_z is already +2.0 has less marginal impact). If tool returns NULL or error: proceed with article-level sentiment only.
 3. `run_impact_chain()` → cascade to watchlist
 4. `get_alerts()` → watchlist stocks triggered?
 5. Session log → findings + recommendation

@@ -36,7 +36,7 @@ call_tool(server="vn-market", tool="get_volatility_indicators", arguments={})
 call_tool(server="vn-market", tool="get_vn_liquidity_state", arguments={})
 call_tool(server="vn-market", tool="get_foreign_room", arguments={})
 ```
-If market indicators available: extract volatility regime, liquidity stress, and foreign-room exhaustion. Use to contextualize alert thresholds (e.g., elevated volatility → lower threshold for price alerts; foreign room exhausted → higher conviction for flow-driven alerts). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and proceed with standard alert thresholds.
+If market indicators available: extract volatility regime (gk_vol_20d_pct, vol_regime), liquidity state (omo.net_outstanding_bn_vnd with blocked_reason for honest-NULL, interbank_1w.rate_1w_pct), and foreign-room exhaustion (derive from tickers[].utilization.room_utilization_pct — high pct = exhausted). Use to contextualize alert thresholds (e.g., elevated volatility → lower threshold for price alerts; OMO constrained → higher conviction for liquidity-driven alerts). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and proceed with standard alert thresholds.
 
 **2. Legal + Crisis**
 `get_legal_risk_signals()` hit → mark CRITICAL

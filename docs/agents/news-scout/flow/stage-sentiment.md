@@ -31,7 +31,7 @@ Market sentiment context (run at start of sentiment analysis):
 ```
 call_tool(server="vn-market", tool="get_market_sentiment_index", arguments={})
 ```
-If successful: extract `market_sentiment_z_score`, `sentiment_ema5`, `dispersion`. Use to contextualize individual article sentiment (e.g., if market_sentiment_z_score is already -2.0, a single bearish article has less marginal impact). If tool returns NULL or error: log `[SKIP] get_market_sentiment_index unavailable` and continue with article-level sentiment only (no market context).
+If successful: extract `news_sentiment_z` (or `sentiment_z_60d`), `sentiment_ema_5d`, and ratio fields `bull_ratio_5d` / `bear_ratio_5d` / `neutral_ratio_5d`. Use to contextualize individual article sentiment (e.g., if news_sentiment_z is already -2.0, a single bearish article has less marginal impact). If tool returns NULL or error: log `[SKIP] get_market_sentiment_index unavailable` and continue with article-level sentiment only (no market context).
 
 Score each article: -1.0 (bearish) to +1.0 (bullish).
 

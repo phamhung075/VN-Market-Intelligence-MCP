@@ -109,7 +109,7 @@ call_tool(server="vn-market", tool="get_market_sentiment_index", arguments={})
 call_tool(server="vn-market", tool="get_foreign_room", arguments={})
 call_tool(server="vn-market", tool="get_breadth_thrust", arguments={})
 ```
-If successful: extract volatility regime, market sentiment z-score, foreign-room status, and breadth indicators. Store as MARKET_INDICATORS context. Use to enrich Step 3 (Layer 2+3 VN stack — FII flow context via foreign-room and sentiment) and Step 4 (Layer 4 valuation — volatility/breadth context for conviction scoring). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue — these are enrichment sources only, not blockers.
+If successful: extract volatility regime (gk_vol_20d_pct, vol_regime), market sentiment z-score (news_sentiment_z, sentiment_ema_5d), foreign-room utilization (tickers[].utilization.room_utilization_pct — high pct = exhausted), and breadth indicators (mclellan_osc, mclellan_summation, breadth_z_score). Store as MARKET_INDICATORS context. Use to enrich Step 3 (Layer 2+3 VN stack — FII flow context via foreign-room and sentiment) and Step 4 (Layer 4 valuation — volatility/breadth context for conviction scoring). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and continue — these are enrichment sources only, not blockers.
 
 Note signal count + IDs for LOG step.
 
@@ -175,11 +175,11 @@ Mark any level-reporting-only gap in the draft for Layer 6 fix.
 - USD/VND vs 26,500 level (carry posture) — source: MACRO_HEALTH.fx
 - CPI trend (inflationary pressure) — source: MACRO_HEALTH.inflation.cpi_peaked (T-21)
 - FX reserves trend via VIRA data (not WiData — off-limits)
-- **Foreign-room context (P0 indicator):** When available, `get_foreign_room()` provides foreign-room exhaustion and outflow z-score. Use to refine FII flow thesis: high outflow z + room-exhausted state → severe carry unwind risk; normal room → standard carry analysis applies.
-- **Market sentiment context (P0 indicator):** `get_market_sentiment_index()` provides market-wide sentiment z-score. When FII thesis involves sentiment-driven inflow/outflow, correlate against this metric: sentiment_z > +2.0 while FII net-selling = divergence signal (profession vs retail).
+- **Foreign-room context (P0 indicator):** When available, `get_foreign_room()` provides per-ticker foreign-room utilization. Derive room exhaustion from high room_utilization_pct across watchlist. Use to refine FII flow thesis: high utilization (>80%) + rising rates → severe carry unwind risk; normal utilization → standard carry analysis applies.
+- **Market sentiment context (P0 indicator):** `get_market_sentiment_index()` provides market-wide sentiment z-score (news_sentiment_z). When FII thesis involves sentiment-driven inflow/outflow, correlate against this metric: sentiment_z > +2.0 while FII net-selling = divergence signal (profession vs retail).
 - **T-39 / BOP walk:** For any dish touching FX, banking, or trade: walk Current Account + Financial Account + E&O. The E&O line is the swing factor (FDI offshore parking). Source: `trade-fx-pressure-decomp` TRADE_FX.fx_incidence if available this cycle.
 
-**Thesis mapping:** US → VN via carry/FII flow chain. If US tightening → FII net-sell pressure on VN → document the transmission. Enrich with foreign-room exhaustion and market sentiment divergence signals if available.
+**Thesis mapping:** US → VN via carry/FII flow chain. If US tightening → FII net-sell pressure on VN → document the transmission. Enrich with foreign-room utilization and market sentiment divergence signals if available.
 
 **Electronics/IZ/banking sectors:** When any qualifying cluster involves these sectors, invoke `trade-fx-pressure-decomp` (skill: `.claude/skills/trade-fx-pressure-decomp/SKILL.md`) and incorporate TRADE_FX.fx_incidence and margin_trap_flag into the sector layer narrative. Degraded mode (TRADE_FX.is_estimate=true) → note gap explicitly.
 
@@ -203,9 +203,9 @@ Confidence scoring:
 
 **Volatility & Breadth Context (P0 indicators):**
 When available, use `get_volatility_indicators()` and `get_breadth_thrust()` to adjust conviction:
-- High volatility (GK vol elevated) + bullish thesis → cap conviction at MEDIUM (increased realization risk)
-- Weakening breadth (Zweig negative) + sector bullish thesis → flag divergence in Layer 6 (sector enthusiasm not supported by breadth)
-- Compressed volatility (regime band low) + bearish thesis → cap conviction at MEDIUM (asymmetric risk on volatility expansion)
+- High volatility (gk_vol_20d_pct elevated, vol_regime='high') + bullish thesis → cap conviction at MEDIUM (increased realization risk)
+- Weakening breadth (mclellan_osc negative, zweig_max_consecutive declining) + sector bullish thesis → flag divergence in Layer 6 (sector enthusiasm not supported by breadth)
+- Compressed volatility (vol_regime='compressed') + bearish thesis → cap conviction at MEDIUM (asymmetric risk on volatility expansion)
 
 **Cycle phase declaration (MANDATORY — TNB Step H):**
 After scoring pillars, declare the investment-clock phase and matching pyramid tier:
