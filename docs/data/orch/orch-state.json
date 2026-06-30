@@ -245,10 +245,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS",
-    "next_agent": "architect",
-    "updated_at": "2026-06-30T19:09:54Z",
+    "next_agent": "pm",
+    "updated_at": "2026-06-30T19:18:07Z",
     "updated_by": "dev-team",
-    "note": "OPS-TA-GET-INDICATORS diagnostic DONE_VERIFIED (dev-team RAW re-probe: mcp-server restart did NOT fix get_TI -> code bug; ops momentum-regression claim DISPROVED, explicit-watchlist path 8/8 non-null; ops DID find real watchlist-env gap). Two distinct roots isolated + routed: (B) FIX-GET-TI-STALE-SOURCE-MCP-SERVER dispatched -> dev-mcp-server (get_TI reads stale source vs get_price_history 62.2k; point at corrected daily_ohlcv); (A) FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY -> backlog depends=[RC3] (default no-arg momentum/RS/52w empty; resolve watchlist from system-map SSOT, no-hardcode). RC3 FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS still in_progress (architect, VN-Index benchmark design, critical path). Plus backlog FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM (FPT roc 606x / VHM -0.998 confirmed, PO triage). dev WIP=2 (RC3 architect + dev-mcp-server get_TI). dev-team RAW-verifies each return. Push gated (PO/human)."
+    "note": "RC3 architect design DONE -- dev-team RAW-verified: commit bd669302 leak-CLEAN, 4 files in-zone (handoff + orch-state + architect notebook + decision-journal), did NOT sweep dev-mcp-server live file technicalIndicatorTools.ts; code claims confirmed against live source (VNINDEX skip guard fetch-ohlcv-backfill.sh ~L134 + main.go:46 watchlist default both real). Root: VPS backfill skips VNINDEX (stock_prices has no index data); fix via dedicated vnmarket_prices endpoint. Architect folded watchlist gap into Zone C (read SQLite watchlist table, no-hardcode -- correct). Dispatching pm to decompose into 3 tasks: A(developer/vps-scripts VNINDEX fetch+VPS deploy) + B(dev-mcp-server/server.ts type field+depth probe) + C(dev-technical-analysis/main.go watchlist-from-DB). A+C parallel, B after A deploys. RISK-1 vnmarket_prices date-range unverified (dev RAW-probes VPS); RISK-2 VPS deploy required not just commit. Parallel get_TI fix (dev-mcp-server, technicalIndicatorTools.ts) still in-flight -- WIP gate applies on A/B/C dispatch (B is same-service as get_TI: serialize). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7904,7 +7904,7 @@
       {
         "id": "FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY",
         "title": "TA svc WATCHLIST_TICKERS absent -> default no-arg momentum/RS/52w return empty (resolve from system-map SSOT, no-hardcode)",
-        "status": "BACKLOG",
+        "status": "CANCELLED",
         "type": "fix",
         "zone": "apps/technical-analysis/",
         "size": "M",
@@ -7918,9 +7918,34 @@
         "detail_ref": null,
         "created_at": "2026-06-30T19:09:54Z",
         "created_by": "dev-team",
-        "updated_at": "2026-06-30T19:09:54Z",
+        "updated_at": "2026-06-30T19:18:07Z",
         "updated_by": "dev-team",
-        "note": "dev-team RAW evidence (gateway + source 19:05Z): docker-compose.yml technical-analysis env block (lines 171-175) has NO WATCHLIST_TICKERS (only PORT=5003/DB_PATH/DB_READONLY=true/APP_ENV); main.go:46 watchlist:=parseWatchlist(envStr('WATCHLIST_TICKERS','')) defaults empty -> startup slog.Warn 'WATCHLIST_TICKERS not set -- ATR%/momentum/RS/52w outputs will return empty list'. IMPACT: callers that DO pass explicit watchlist_tickers get correct results (proven: 8/8 non-null), but the DEFAULT no-arg serving path (likely frontend/consumer cards) returns empty momentum/RS/52w. DO NOT just hardcode 33 tickers into docker-compose.yml -- violates no-hardcode (watchlist SSOT = docs/data/system-map.json .project.watchlist). DURABLE design (architect/po): TA svc should resolve its watchlist universe from system-map.json SSOT (mounted) at startup, or derive active tickers from the OHLCV DB -- not a hardcoded compose env. COUPLED to RC3: get_relative_strength needs BOTH VN-Index benchmark (RC3) AND the watchlist universe to serve non-null, so sequenced depends=[RC3]; architect may fold watchlist resolution into the RC3 RS implementation or keep separate. Same-service (technical-analysis) as RC3 -> serialize to avoid parallel-mutation conflict."
+        "note": "SUPERSEDED (folded into RC3) -- architect absorbed this watchlist-universe gap into the RC3 design as Zone C (handoff docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md FR-C1: readWatchlistFromDB reads the SQLite watchlist table at startup, NO hardcode in docker-compose.yml). PM: do NOT create a separate task for this -- it IS TASK-VNINDEX-RS-C in the RC3 decomposition. Close/remove this row when RC3-C ships. Original RAW finding (gateway 19:05Z): WATCHLIST_TICKERS absent from docker-compose.yml technical-analysis block + main.go:46 parseWatchlist default '' -> default no-arg momentum/RS/52w return empty; explicit-arg path works.",
+        "cancelled_at": "2026-06-30T19:45:00Z",
+        "cancelled_by": "pm",
+        "cancelled_reason": "Folded into RC3 decomposition as TASK-VNINDEX-RS-C (readWatchlistFromDB fallback). This row exists only to document the original finding; the actual implementation work is in RC3-C."
+      },
+      {
+        "id": "TASK-VNINDEX-RS-B",
+        "title": "FR-B1 add type field to push handler + FR-B2 extend ohlcv-backfill-done depth probe to include VNINDEX",
+        "type": "FIX",
+        "size": "M",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "status": "TODO",
+        "created_at": "2026-06-30T19:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T19:45:00Z",
+        "updated_by": "pm",
+        "depends": [
+          "TASK-VNINDEX-RS-A"
+        ],
+        "note": "DEPENDS on A (B's depth probe is only meaningful once A deploys VNINDEX data). Can parallelize AFTER A deploys. SERIALIZATION FLAG: dev-mcp-server is currently working on FIX-GET-TI-STALE-SOURCE-MCP-SERVER (file technicalIndicatorTools.ts in same service). TASK-VNINDEX-RS-B must SERIALIZE AFTER get_TI completes (do not dispatch two dev-mcp-server agents mutating apps/mcp-server in parallel). FR-B1: add optional type field to push-ohlcv-history handler (default 'stock'); FR-B2: extend ohlcv-backfill-done depth probe to include VNINDEX. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md § Zone B.",
+        "serialization": "Must wait for FIX-GET-TI-STALE-SOURCE-MCP-SERVER to complete before dispatching (same service, both mutate apps/mcp-server)"
       }
     ],
     "closed_sprints": [
@@ -9928,7 +9953,7 @@
         "id": "FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS",
         "type": "FIX",
         "size": "M",
-        "status": "REVIEW",
+        "status": "IN_PROGRESS",
         "priority": "high",
         "zone": "multi",
         "owner": "architect",
@@ -9951,7 +9976,25 @@
         "updated_by": "architect",
         "dispatched_at": "2026-06-30T19:00:03Z",
         "dispatched_by": "dev-team",
-        "owner_agent": "architect"
+        "owner_agent": "architect",
+        "decomposed_at": "2026-06-30T19:45:00Z",
+        "decomposed_by": "pm",
+        "acceptance_gate": {
+          "description": "RC3 acceptance gate: after A is live on VPS and VNINDEX has >=64 bars in daily_ohlcv, get_relative_strength with explicit watchlist_tickers returns non-null rs+percentile for >=1 ticker (h63).",
+          "command": "mcp__gateway__call_tool(server=\"vn-market\", tool=\"get_relative_strength\", arguments={\"watchlist_tickers\":[\"VCB\",\"FPT\",\"HPG\",\"BID\",\"VHM\",\"VIC\",\"SSI\",\"MSN\"]})",
+          "condition": "rs non-null + percentile non-null for >=1 ticker (h63=64+ bars); full non-null across all 3 horizons for all tickers = h252 pass (253+ bars)",
+          "depends_on_tasks": [
+            "TASK-VNINDEX-RS-A",
+            "TASK-VNINDEX-RS-B",
+            "TASK-VNINDEX-RS-C"
+          ]
+        },
+        "decomposed_tasks": [
+          "TASK-VNINDEX-RS-A",
+          "TASK-VNINDEX-RS-B",
+          "TASK-VNINDEX-RS-C"
+        ],
+        "note": "PM DECOMPOSITION: Split RC3 into 3 atomic tasks per architect handoff. A (LEAD, vps-scripts): dedicated VNINDEX fetch + VPS deploy. B (dev-mcp-server): type field + depth probe. C (dev-technical-analysis): watchlist DB fallback. A must deploy to VPS first; B depends on A; C independent. RC3 parent holds acceptance gate verification. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md"
       },
       {
         "id": "FIX-GET-TI-STALE-SOURCE-MCP-SERVER",
@@ -9975,7 +10018,53 @@
         "note": "dev-team RAW evidence (gateway 19:05Z, post mcp-server restart Up 3min): get_technical_indicators VCB returns MA5=88120 MA20=88840 price=87000 (source_tier 3) while get_price_history VCB=62200 reads the SAME local DB correctly, and RC2-fixed TA svc + get_roc_momentum/get_52w_proximity serve correct ~62k. So get_technical_indicators reads a DIFFERENT or STALE source than get_price_history. 88120 looks like pre-backfill / pre-split / separate-table OHLCV (NOT the FPT/VHM thousands-format contamination -- that is a separate backlog task; this is VCB, value HIGHER than correct). technicalIndicatorTools.ts (registered line 514) calls TA svc port-5003 via HTTP with a LOCAL-DB fallback (lines ~619/654). Restart did NOT clear it -> not in-process cache. FIX: find why get_technical_indicators sources stale OHLCV -- either (a) HTTP-to-5003 path returns stale/keepalive data, or (b) local-DB fallback reads a stale table/view rather than the corrected daily_ohlcv that get_price_history uses. Point it at the SAME corrected daily_ohlcv source as get_price_history; verify VCB MA5 ~=61480 and price ~=62200 via gateway after rebuild. ACCEPTANCE (RAW): get_technical_indicators VCB MA5/MA20/price within plausible band of get_price_history latest (~62k). dev-team RAW-verifies serving layer + git + leak-scan on return. Single-svc force-recreate-WITH-build mcp-server only; NEVER down&&up. Push gated (PO/human)."
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "id": "TASK-VNINDEX-RS-A",
+        "title": "FR-A1 dedicated VNINDEX fetch via vnmarket_prices + FR-A2 remove skip guard + VPS DEPLOY",
+        "type": "FIX",
+        "size": "M",
+        "priority": "high",
+        "zone": "vps-scripts/",
+        "owner": "developer",
+        "owner_agent": "developer",
+        "next_agent": "developer",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "status": "TODO",
+        "created_at": "2026-06-30T19:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T19:45:00Z",
+        "updated_by": "pm",
+        "depends": null,
+        "note": "LEAD task for RC3. Fetch VNINDEX historical bars from vnmarket_prices endpoint (stock_prices has no index data). Remove the old VNINDEX skip guard at line 134-139. CRITICAL: verify vnmarket_prices date-range support from VPS first (RISK-1). CRITICAL: must deploy to live Vinahost VPS via rsync/scp to /root/ (not just git commit). Only after this deploys will VNINDEX bars appear in daily_ohlcv, unblocking B's depth probe. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md § Zone A.",
+        "risk_flags": [
+          "RISK-1 (HIGH): vnmarket_prices date-range support unverified from VPS",
+          "RISK-2 (HIGH): VPS script must be deployed to live Vinahost VPS, not just committed"
+        ]
+      },
+      {
+        "id": "TASK-VNINDEX-RS-C",
+        "title": "FR-C1 readWatchlistFromDB fallback + unit tests",
+        "type": "FIX",
+        "size": "M",
+        "priority": "medium",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "owner_agent": "dev-technical-analysis",
+        "next_agent": "dev-technical-analysis",
+        "sprint": "TA-CONSUMER-STALE-INDICATORS",
+        "status": "TODO",
+        "created_at": "2026-06-30T19:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T19:45:00Z",
+        "updated_by": "pm",
+        "depends": null,
+        "note": "INDEPENDENT task (can run parallel to A). Implement readWatchlistFromDB() in cmd/server/main.go to read SQLite watchlist table when WATCHLIST_TICKERS env is empty. Add unit tests. NO hardcode in docker-compose.yml; watchlist SSOT = SQLite watchlist table. RULE: do NOT add VNINDEX to watchlist table — VNINDEX is the benchmark, not a cross-section ticker. Handoff: docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md § Zone C.",
+        "supersedes": [
+          "FIX-TA-WATCHLIST-ENV-ABSENT-DEFAULT-EMPTY"
+        ]
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
