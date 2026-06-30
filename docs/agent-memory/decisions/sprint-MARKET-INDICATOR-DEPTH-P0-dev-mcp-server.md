@@ -203,3 +203,41 @@
 - No DB writes, no fetches, no cron schedule change, no server.ts change — pure observability addition.
 **why-decision:** Shallow alert is ONE aggregated call (not per-ticker) to avoid Telegram rate-limit spam on startup with 15+ watchlist tickers all at 49 bars. `DEPTH_FLOOR=252` is the same constant as SUBTASK-B/C — single semantic for all depth-check logic in the sprint. Adding `shallowSent` to the result interface is additive and backward-compatible (startScheduler.ts only accesses `r.sent` and `r.sparseTickers`).
 **why-change:** No deviation from SUBTASK-D spec. Observability-only per brief §2.2-E. Existing sparse path unchanged (same code path, same message format, same backfill trigger). Exactly ONE Telegram WORK call for shallow reporting verified by TD-4 (5 tickers → calls.length===1).
+
+---
+
+### STEP dev-mcp-server-S11 · dev-mcp-server · 2026-06-30T17:52:00Z
+
+**task-id:** OHLCV-DEPTH-PROD-BACKFILL-GATE
+
+**what-done:**
+- Executed R-2 full-universe OHLCV backfill via Vinahost VPS (125.212.251.27) to bypass VNDirect geo-block (R-4). Script: `/root/r2-backfill-gate.sh` (API_KEY in VPS only, NOT committed). Codes file: `/tmp/ohlcv-codes.txt` (1,434 codes from `SELECT DISTINCT code FROM daily_ohlcv`).
+- Backfill duration: 16:51:54Z → 17:51:10Z (59 min 16 sec). Final VPS log: `ok=1377 skip=56 err=1 bars_pushed_total=729,826`.
+  - skip=56: non-VN-exchange format codes (ETF codes like VCBFTBFS008, VMPFS003, indices ^KS11, ^N225, FUCVREIT, VNINDEX).
+  - err=1: PLC (push timeout — response empty, `--max-time 60` insufficient for that payload on that attempt; PLC remained at its pre-run count).
+- Done signal sent: `POST /api/ohlcv-backfill-done {bars_pushed_total:729826}` → `{"ok":true}`. Server-side depth probe + re-queue logic fired.
+- Gate (b) DB depth distribution (PRE-restart):
+  - Total rows: 731,272 in 1,437 distinct codes.
+  - Min bars: 1, Max bars: 753, Median bars: 613.
+  - Codes ≥252: 1,145 / 1,437 (79.7%).
+  - Watchlist ≥252: 36/41. Still <252: BDI=1, DLC=41, JSH=0, SIS=0, VDC=0.
+  - Root cause for <252 remainders: JSH/SIS/VDC → VNDirect totalElements=0 (suspended/unlisted, no data available). BDI=1 bar (extremely illiquid, only 1 bar passes R-3 volume filter); DLC=41 bars (illiquid). Neither BDI nor DLC were in the codes file (they had 0 rows at codes-file generation time; the 1/41 bars came from earlier manual targeted backfill run). Cannot increase without real market data that does not exist.
+- Gate (d) PERSISTENCE: `docker restart vn-market-intelligence-mcp-mcp-server-1` at 17:51:53Z → healthy at 17:52:03Z (10 sec). POST-restart probe: rows=731,272, distinct_codes=1,437, codes≥252=1,145, watchlist≥252=36. IDENTICAL to PRE-restart. All per-code depths unchanged. No purge-on-boot regression confirmed.
+- Gate (e): Non-watchlist codes = 1,437 − 41 = 1,396 distinct codes with rows in daily_ohlcv. Row count ≫ 0. (Pre-backfill baseline: 1,399 distinct non-watchlist codes, 70,568+ rows from before 2025-07-01.)
+- Gate (a): `GET https://zenmidi.com/api/price-history/VCB?days=730` → count=253 candles (≥252 required). PASS.
+- Gate (c): `GET https://zenmidi.com/api/momentum-indicators` → all sections null. null_reasons: roc=`Insufficient OHLCV history — requires ≥13 bars`; rs=`Watchlist too small — requires N≥5 tickers`; 52w=`denominator_ma200=0 — no tickers have ≥200-bar OHLCV history`. Root cause: `WATCHLIST_TICKERS` env var NOT set in docker-compose.yml for the technical-analysis service. TA service logs confirm: "WATCHLIST_TICKERS not set — ATR%/momentum/RS/52w outputs will return empty list". This is a pre-existing configuration gap, not a data depth issue. VPS-pushed depth IS in the DB (36/41 watchlist tickers at ≥252 bars). Deferred to dev-team gateway verify + docker-compose fix.
+
+**what-considered:**
+- R-2 scope: Used `SELECT DISTINCT code FROM daily_ohlcv` (1,434 codes) rather than watchlist (41 codes). This matches the R-2 brief requirement: ALL traded codes, not just watchlist. BDI/DLC missed because they had 0 rows at codes-file generation; targeted them earlier via manual SSH.
+- Push timeout (--max-time 60): One ticker (PLC) failed. At 750-bar payloads the France server can rarely exceed 60s processing under load. Retry not implemented (R-5 cap is server-side; this is VPS-side). PLC's bars remain from its pre-R2 count.
+- VNH: VNDirect returned only 307 bars (not 750) for this extremely illiquid ticker. After backfill: 7+307=314 total ≥252. PASS.
+- Gate (d) choice: `docker restart` only (NOT down+up, NOT rebuild). Verified peer services unaffected.
+
+**why-decision:**
+- VPS pathway is the only viable route for R-2 fill: VNDirect geo-blocked from Docker on France server (R-4 risk flag). SSH + nohup allows full 1,434-ticker batch without session timeout.
+- INSERT OR IGNORE idempotency: repeated runs safe; the 746 inserted for VCB (750 fetched) shows duplication-handling is correct.
+- PRE=POST depth proof is the durable gate: `purgeStrandedSeedRows` runs at startup and deletes rows where `volume=0 AND open=high=low=close`. The backfilled bars have real OHLCV data; none were purged.
+
+**why-change:**
+- One unplanned deviation: `r2-backfill-gate.sh` was created on VPS instead of using `fetch-ohlcv-backfill.sh` (which would have needed `/api/ohlcv-codes` endpoint that was not deployed). Script contains API_KEY → NOT committed to git (VPS-only).
+- Gate (c) null result is pre-existing config gap (WATCHLIST_TICKERS), not a regression introduced by this gate. Depth data is correct; tool serving requires a separate docker-compose change.

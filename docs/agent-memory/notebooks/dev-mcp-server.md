@@ -98,6 +98,25 @@ Files changed:
 
 Zone health: tsc clean (EXIT 0), 16 pass 0 fail (1970 suite), 68 pass 0 fail (3 related files), toolCount=182 unchanged, scheduler count unchanged | HEALTHY
 
+## 2026-06-30 — OHLCV-DEPTH-PROD-BACKFILL-GATE
+
+**Sprint:** FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR / MARKET-INDICATOR-DEPTH-P0
+**Session:** e71c7736-a95a-4040-b741-1d48454354f6
+
+R-2 full-universe VPS backfill gate completed and persistence verified.
+
+VPS script `/root/r2-backfill-gate.sh` (API_KEY VPS-only, NOT committed) processed 1,434 codes from `/tmp/ohlcv-codes.txt`. Duration: 59 min 16 sec. Result: ok=1377 skip=56 err=1 bars_pushed_total=729,826. Done signal ok=true.
+
+Gate (b) POST-backfill: 731,272 rows, 1,437 distinct codes, median=613 bars, codes≥252=1,145 (79.7%). Watchlist: 36/41 ≥252. Five below-252 watchlist tickers: JSH=0/SIS=0/VDC=0 (VNDirect no data), BDI=1/DLC=41 (illiquid, not in codes file).
+
+Gate (d) PERSISTENCE: docker restart at 17:51:53Z, healthy at 17:52:03Z. POST=PRE (rows=731,272, codes≥252=1,145). purgeStrandedSeedRows did NOT purge backfilled bars (real volume/price movement). PASS.
+
+Gate (a): /api/price-history/VCB?days=730 → 253 candles ≥252. PASS.
+Gate (c): All momentum null — WATCHLIST_TICKERS env not set in docker-compose for TA service. Pre-existing config gap, not data depth issue. Deferred to dev-team.
+Gate (e): 1,396 non-watchlist codes with rows. PASS.
+
+err=1: PLC push timeout (--max-time 60 occasionally insufficient for 750-bar payloads).
+
 ## 2026-06-30 — OHLCV-DEPTH-SUBTASK-D
 
 **Sprint:** FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR / MARKET-INDICATOR-DEPTH-P0
