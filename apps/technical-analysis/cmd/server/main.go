@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -32,6 +33,11 @@ import (
 	"github.com/vn-market-intelligence/technical-analysis/pkg/domain"
 	"github.com/vn-market-intelligence/technical-analysis/pkg/infrastructure"
 	httpinterface "github.com/vn-market-intelligence/technical-analysis/pkg/interface/http"
+
+	// Register modernc pure-Go SQLite driver under the "sqlite" name.
+	// Needed here so readWatchlistFromDB can call sql.Open("sqlite", ...) at startup
+	// even if infrastructure package init order is not guaranteed.
+	_ "modernc.org/sqlite"
 )
 
 func main() {
@@ -44,8 +50,17 @@ func main() {
 	slog.SetDefault(logger)
 
 	watchlist := parseWatchlist(envStr("WATCHLIST_TICKERS", ""))
+	// FR-C1: when WATCHLIST_TICKERS is absent or empty, resolve universe from the
+	// SQLite watchlist table (the SSOT — populated by mcp-server from system-map.json).
+	// Do NOT hardcode tickers here; the DB table is the single source of truth.
 	if len(watchlist) == 0 {
-		slog.Warn("WATCHLIST_TICKERS not set — ATR%/momentum/RS/52w outputs will return empty list; set env to enable")
+		dbPath := envStr("DB_PATH", "./data/market.db")
+		if rows, err := readWatchlistFromDB(dbPath); err == nil && len(rows) > 0 {
+			watchlist = rows
+			slog.Info("WATCHLIST_TICKERS not set — resolved from DB watchlist table", "count", len(watchlist))
+		} else {
+			slog.Warn("WATCHLIST_TICKERS not set and DB watchlist empty — RS/momentum outputs will be empty")
+		}
 	}
 
 	// --- TA indicators wiring (existing) ---
@@ -136,4 +151,32 @@ func parseWatchlist(raw string) []string {
 		}
 	}
 	return tickers
+}
+
+// readWatchlistFromDB fetches ticker codes from the SQLite watchlist table at dbPath.
+// Returns codes sorted alphabetically (ORDER BY code). Called once at startup when
+// WATCHLIST_TICKERS env is not set. DDD layer: composition root — wiring-only reads
+// are permitted here per the architect spec (p0-4-composition-root-plan-go.md §G3).
+func readWatchlistFromDB(dbPath string) ([]string, error) {
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	rows, err := db.Query("SELECT code FROM watchlist ORDER BY code")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var codes []string
+	for rows.Next() {
+		var code string
+		if err := rows.Scan(&code); err != nil {
+			continue
+		}
+		codes = append(codes, code)
+	}
+	return codes, rows.Err()
 }
