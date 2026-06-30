@@ -157,3 +157,28 @@ Zone health: tsc clean (EXIT 0), 57/0 new tests, 141/0 sibling cluster (P0-2+P0-
 **STALE-HANDOFF deviation:** Handoff doc cited apps/technical-analysis/BreadthService.ts for McClellan/Zweig math. TA zone is Go-primary; all math implemented as pure mcp-server domain service. ZERO changes to apps/technical-analysis.
 
 Zone health: tsc clean (EXIT 0), 45/0 new tests, toolCount=178 (+2), orch-state BREADTH-TIME-SERIES→REVIEW | HEALTHY
+
+## 2026-06-30 — IND-P1-MCP-PROXY-INDICATORS
+
+**Sprint:** MARKET-INDICATOR-DEPTH-P0
+**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
+
+### Task: IND-P1-MCP-PROXY-INDICATORS → REVIEW (commit 7e098482)
+
+Pure proxy wiring: 4 MCP tools (#181–#184) + 4 client functions in clients.ts.
+Pattern: identical to volatilityIndicatorTools.ts — import client fn, register server.tool(), try/catch → {error:'...'}.
+Honest-NULL discipline enforced: null fields pass through unchanged; room_exhaustion:null not coerced.
+
+- NEW: `market-data/rocMomentumTools.ts` — get_roc_momentum → POST /ta/roc-momentum (TA svc:5003)
+- NEW: `market-data/relativeStrengthTools.ts` — get_relative_strength → POST /ta/relative-strength (TA svc:5003)
+- NEW: `market-data/52wProximityTools.ts` — get_52w_proximity → POST /ta/52w-proximity (TA svc:5003)
+- NEW: `market-data/foreignAccumRankTools.ts` — get_foreign_accum_rank → POST /price/foreign-accum-rank (stock-price:5000)
+- MOD: `infrastructure/microservices/clients.ts` — 4 new typed client fns + response interfaces
+- MOD: `interface/mcp/tools/registry.ts` — 4 imports + 4 registrations (#181–#184)
+- NEW: `src/__tests__/IND-P1-MCP-PROXY-INDICATORS.test.ts` — 22 tests (globalThis.fetch stub pattern)
+- MOD: `docs/data/tool-registry.json` — regenerated via gen-tool-registry.ts (178→182)
+- MOD: `docs/data/orch/orch-state.json` — task BACKLOG→REVIEW via orch-apply.sh
+
+REBUILD NEEDED before QA can invoke tools via gateway.
+
+Zone health: tsc clean (EXIT 0), 22/0 new tests, toolCount=182 (+4), orch-state IND-P1-MCP-PROXY-INDICATORS→REVIEW | HEALTHY

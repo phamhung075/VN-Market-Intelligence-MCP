@@ -211,3 +211,48 @@ Single dev, ~2–3h to implement once backend endpoints are live.
 3. **dev-mcp-server** wires MCP proxy layer for all 4 → QA signs off
 
 All 4 tools go LIVE to helper agents simultaneously (DP/CHEF/MW/AC/TNB/NS feed them into Fear & Greed composition).
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files created (4):**
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/rocMomentumTools.ts` — registers `get_roc_momentum` (#181)
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/relativeStrengthTools.ts` — registers `get_relative_strength` (#182)
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/52wProximityTools.ts` — registers `get_52w_proximity` (#183)
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/foreignAccumRankTools.ts` — registers `get_foreign_accum_rank` (#184)
+  - `apps/mcp-server/src/__tests__/IND-P1-MCP-PROXY-INDICATORS.test.ts` — 22 tests (REG + NULL-passthrough + ERR + FWRD)
+- **Files modified (2):**
+  - `apps/mcp-server/src/infrastructure/microservices/clients.ts` — added 4 typed client functions + response interfaces (computeROCMomentum, computeRelativeStrength, compute52WProximity, computeForeignAccumRank)
+  - `apps/mcp-server/src/interface/mcp/tools/registry.ts` — imported + registered 4 new tools (#181–#184)
+- **Tests written:** `src/__tests__/IND-P1-MCP-PROXY-INDICATORS.test.ts` — 22 assertions GREEN (REG-1..4, NULL-1..10, ERR-1..6, FWRD-1..2)
+- **Git commits:** `7e098482` feat(IND-P1-MCP-PROXY-INDICATORS): wire 4 indicator MCP proxy tools
+- **Type check:** clean (`bun tsc --noEmit` exit 0)
+- **bun test (new file):** 22 pass / 0 fail
+- **bun test (full suite):** 13866 pass / 90 fail (90 are pre-existing failures in `_deprecated/` + SHG migration coherence — none in my files)
+- **Tool count:** 182 tools (pre-task baseline 178 + 4 new) — `gen-tool-registry.ts` dry-run verified
+- **Scheduler count:** 3 cron.schedule entries (unchanged — scheduler not touched)
+- **Docs updated:** `docs/data/tool-registry.json` regenerated via `gen-tool-registry.ts` | `docs/data/orch/orch-state.json` board row IND-P1-MCP-PROXY-INDICATORS BACKLOG→REVIEW (next_agent=qa)
+- **Graphify:** skipped (no architecture docs impacted)
+- **REBUILD NEEDED:** YES — mcp-server single-service rebuild required before QA can invoke tools via gateway (new TypeScript files must be compiled into the running container)
+- **AC6 (helper-agent consumption):** QA-gate concern — not a build blocker; tools wired and ready post-rebuild
+
+### Gate Evidence
+
+| Gate | Result |
+|------|--------|
+| tsc --noEmit | exit 0 — clean |
+| bun test (new) | 22 pass / 0 fail |
+| bun test (full) | 13866 pass, 90 pre-existing fail, exit 0 |
+| Tool count | 182 (gen-tool-registry.ts --dry-run) |
+| Scheduler count | 3 (unchanged) |
+
+### Honest-NULL Discipline Verification
+
+All 4 tools pass null fields through unchanged:
+- `momentum_factor_z: null` → passes through (test NULL-1)
+- `market_rs_composite: null` + `low_sample_warning: true` → passes through (test NULL-4)
+- `pct_above_ma200: null` when `denominator_ma200: 0` → passes through (test NULL-6)
+- `room_exhaustion: null` per-ticker → passes through unchanged, NOT coerced to false (test NULL-9)
