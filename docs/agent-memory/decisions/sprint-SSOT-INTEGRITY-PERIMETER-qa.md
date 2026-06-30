@@ -142,3 +142,98 @@ Delta-3 (QA-6 test):
 
 **why-decision:** All 3 deltas verified from disk. All 4 gate commands pass clean. DDD and security surfaces are clean. QA-6 mtime assertion is genuine (POSIX rename changes mtime; assertion fails if rename occurred). Over-rejection guard covers all 12 StatusEnum values end-to-end.
 **why-change:** No change from plan.
+
+---
+
+### STEP qa-S6 · qa · 2026-06-30T15:35:00Z
+**task-id:** SSOT-W1-ORCH-APPLY-WRAPPER
+**session:** e71c7736-a95a-4040-b741-1d48454354f6
+**commit-gated:** 0b696742
+**verdict:** APPROVED
+
+**what-done:**
+Independent re-run of `bash scripts/test/orch-apply-wrapper-tests.sh`. Captured live-SSOT shasum before and after. Read `orch-apply.sh` source and its diff in 0b696742. Read `docs/signals/orch-state-writer-audit.json` in full. Spot-checked 3 of the 13 claimed routed sites from disk. Verified commit file list and absence of `docs/data/orch/orch-state.json`.
+
+**test-run-stdout:**
+```
+PASS  QA-1 — PARKED status rejected → exit 1
+PASS  QA-1 — fixture UNCHANGED
+PASS  QA-1 — REAL live file UNCHANGED
+PASS  QA-2 — duplicate key rejected → exit 1
+PASS  QA-2 — fixture UNCHANGED
+PASS  QA-2 — REAL live file UNCHANGED
+PASS  CAS — mtime mismatch detected → exit 2
+PASS  CAS — fixture CONTENT unchanged (no rename occurred)
+PASS  CAS — trap cleanup removed TMP (no leftover temp files)
+PASS  CAS — REAL live file UNCHANGED
+PASS  E3-EMPTY — empty stdin → exit 3
+PASS  E3-EMPTY — fixture UNCHANGED
+PASS  E3-EMPTY — REAL live file UNCHANGED
+PASS  E3-NF — missing live file → exit 3
+PASS  E3-NF — REAL live file UNCHANGED
+PASS  HAPPY — valid candidate → exit 0
+PASS  HAPPY — fixture updated (rename applied)
+PASS  HAPPY — fixture content matches candidate
+PASS  HAPPY — REAL live file UNCHANGED
+
+─── orch-apply-wrapper-tests results ───
+PASS: 19 / 19
+```
+
+**live-SSOT integrity:**
+- BEFORE hash (shasum): `390272b609d8b76c8da4160d5800f2ac860cb302`
+- AFTER hash (shasum):  `390272b609d8b76c8da4160d5800f2ac860cb302`
+- IDENTICAL — confirmed no test touched the live SSOT.
+
+**gate-ACs:**
+
+AC QA-1 (PARKED → exit 1, live UNCHANGED):
+- 3/3 assertions PASS. The `ORCH_APPLY_LIVE_FILE_OVERRIDE` fixture mechanism isolates all negative-path tests. Validator correctly rejects "PARKED" (not in StatusEnum). Live file hash unchanged.
+
+AC QA-2 (dup-key → exit 1, live UNCHANGED):
+- 3/3 assertions PASS. Duplicate `_meta` key in candidate caught by Stage 0 raw-byte tokenizer before Zod Stage 1. Live file hash unchanged.
+
+AC CAS (mtime mismatch → exit 2, no rename, temp cleaned):
+- 4/4 assertions PASS. Process-substitution technique (sleep 0.5 delayed stdin) gives BG time to capture mtime_before = 2020 (touch -t 202001010000); main thread touches fixture to T_now before data arrives; 6-year mtime gap guarantees mismatch at any stat(2) second-precision. Trap cleanup verified (no leftover .orch-apply-*.json in fixture dir).
+
+AC audit complete + canonical pointer:
+- `docs/signals/orch-state-writer-audit.json` present (193 lines). Verdict field: "PERIMETER CLOSED. All ~290/tick orch-state.json writes are accounted for."
+- `docs/policies/dev-standards.md` L58-74: CANONICAL block present with call idiom, exit codes, routed-writers list, test pointer, and audit pointer. PASS.
+
+**backward-compat review (orch-apply.sh diff in 0b696742):**
+
+Two changes to `scripts/orch-apply.sh`:
+
+Change-1 — LIVE_FILE assignment:
+```diff
+-LIVE_FILE="${REPO_ROOT}/docs/data/orch/orch-state.json"
++LIVE_FILE="${ORCH_APPLY_LIVE_FILE_OVERRIDE:-${REPO_ROOT}/docs/data/orch/orch-state.json}"
+```
+When `ORCH_APPLY_LIVE_FILE_OVERRIDE` is unset (production): resolves to the same path as before. BACKWARD-COMPATIBLE.
+
+Change-2 — TMP directory derivation:
+```diff
+-TMP=$(mktemp "${REPO_ROOT}/docs/data/orch/.orch-apply-XXXXXXXX.json")
++TMP=$(mktemp "$(dirname "${LIVE_FILE}")/.orch-apply-XXXXXXXX.json")
+```
+When `ORCH_APPLY_LIVE_FILE_OVERRIDE` is unset: `dirname("${REPO_ROOT}/docs/data/orch/orch-state.json")` = `${REPO_ROOT}/docs/data/orch/` — identical to the hardcoded path. POSIX-atomic rename guarantee unchanged. When the env var IS set: TMP goes to the same directory as the fixture, preserving same-filesystem constraint for atomic rename correctness.
+BACKWARD-COMPATIBLE. Zero production behavior change.
+
+**audit spot-check (3 of 13 routed sites):**
+- `scripts/orch-backlog-stub.sh` L304-306: `cat "${HOT_TEMP}" | bash "${REPO_ROOT}/scripts/orch-apply.sh"` with CAS-retry loop. CONFIRMED ROUTED.
+- `scripts/orch-cold-evict.sh` L434-436: `cat "${HOT_TEMP}" | bash "${REPO_ROOT}/scripts/orch-apply.sh"` with CAS-retry loop. CONFIRMED ROUTED.
+- `.claude/skills/signal-dashboard/dashboard-protocol.md` L51-54, L90-93, L124-126: three separate orch-apply.sh invocations for WRITE/READ/PRUNE ops. CONFIRMED ROUTED.
+- Category-B direct-Bash: `grep -n "> *docs/data/orch/orch-state.json"` in all live script/flow files — 0 active code sites. Historical docs and test fixtures correctly classified. "Perimeter closed" claim SUBSTANTIATED.
+
+**commit hygiene (0b696742):**
+- Files in commit: sprint-SSOT-INTEGRITY-PERIMETER-dev-mcp-server.md, dev-standards.md, orch-state-writer-audit.json, orch-apply.sh, orch-apply-wrapper-tests.sh — 5 files only.
+- `docs/data/orch/orch-state.json` NOT in commit (remains as uncommitted modified file in working tree).
+- No -a leakage confirmed. CLEAN index-only commit.
+
+**what-considered:**
+- Whether the CAS timing (sleep 0.1 before touch, sleep 0.5 before data) is reliable on a loaded host: the 6-year mtime gap (T_old = year 2020 via touch -t 202001010000 vs T_now = year 2026) makes the CAS detection robust independent of sub-second timing jitter; only a same-second collision could cause false-pass, and that requires T_old = T_now at second precision — impossible with a 6-year gap.
+- Whether the audit search scope adequately covers all writers: scope excludes .claude/tmp/, docs/agent-memory/, docs/archive/ which are guaranteed non-executable flow docs. Live code paths confirmed by category_A_writers list vs grep proof. Acceptable scope.
+- Whether any writer not covered by category A, B, or C exists: no — the grep patterns (`jq.*>.*orch-state`, `jq.*|.*orch-state`, `mv.*orch-state\.json`, `cp.*orch-state\.json`, `> *docs/data/orch/orch-state`, `orch-apply\.sh`) cover all known direct/indirect write idioms.
+
+**why-decision:** All 5 gate checks PASS. 19/19 test assertions pass independently. Live SSOT hashes identical before/after (safety property enforced). Both orch-apply.sh changes are backward-compatible — production default path unchanged, POSIX-atomic rename invariant preserved. Audit substantiated by 3 spot-checked sites and 0 active direct-Bash sites. Commit is index-only with no orch-state.json contamination.
+**why-change:** No change from plan.
