@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-    "next_agent": "po",
-    "updated_at": "2026-06-30T13:28:31Z",
+    "active_task_id": "OHLCV-DEPTH-SUBTASK-E",
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-06-30T13:57:18Z",
     "updated_by": "dev-team",
-    "note": "Tick 12:37Z closeout. (1) SSOT-W1-ORCH-APPLY-WRAPPER -> DONE_VERIFIED: gate PASS (dev 0b696742, qa 51837269); orch-apply.sh hardened+backward-compat, 19/19 tests, perimeter closed (13 routed/0 direct/1 server-internal Zod-gated). (2) FIX-OHLCV-DEPTH epic: architect decompose DONE (brief 30659cca); brief_complete signal routes to PO next drain -> PO creates 5 sub-tasks, sequence E->A (ops SSH prereq). next_agent=po. (3) Deferred next tick: SSOT-W1-BASH-SHIM (owns full-suite ci_red reconciliation QA-7); 8-commit origin divergence push (PO-gated)."
+    "note": "Tick 13:37Z dispatch: OHLCV-DEPTH-SUBTASK-E (P0 prereq, VPS script deploy gate) -> dev-mcp-server. SSH Vinahost VPS, verify /root/fetch-ohlcv-backfill.sh present+executable (scp+chmod if absent); blocks SUBTASK-A. WIP=2 (epic FIX-OHLCV-DEPTH parent + E). Sub-tasks A-D in backlog (A dep on E; B dep on A; C/D P1 observability deferred). ci_red a3af26b6=no-action (0 board rows; durable reconciliation owned by SSOT-W1-BASH-SHIM, deferred WIP-saturated). 14 commits ahead origin/main (push gated)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9505,12 +9505,10 @@
         "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "brief_commit": "30659cca",
         "status_note": "EPIC parent. PO materialized 5 sub-tasks A-E (po triage 13:37Z). DAG: E(prereq,ready)->A(vps-script)->B(server-verify); C,D=P1 observability independent. E dispatched THIS tick (WIP=2: epic+E). A,B,C,D in backlog awaiting E. Epic resumes PO sign-off when all children DONE_VERIFIED + cross-restart depth gate (>=252 bars persists post-restart) passes."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "OHLCV-DEPTH-SUBTASK-E",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "type": "FIX",
         "size": "S",
         "priority": "P0",
@@ -9529,9 +9527,14 @@
         "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "created_by": "po",
         "created_at": "2026-06-30T13:52:29Z",
-        "baseline_pass": true
+        "baseline_pass": true,
+        "updated_at": "2026-06-30T13:57:18Z",
+        "updated_by": "dev-team",
+        "dispatched_at": "2026-06-30T13:57:18Z",
+        "dispatched_by": "dev-team"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
