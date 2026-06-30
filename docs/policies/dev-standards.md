@@ -46,6 +46,23 @@ Three-pass repair: A=mixed-unit open (open<100 AND open>0 AND low=0): open*1000 
 B=partial-zero open (open=0, not all-zero): open=close; C=remaining low=0 (close>=1000): low=ROUND(close*0.99).
 Excludes all-zero rows (separate defect). data_env preserved (RF-5).
 
+**CANONICAL: OHLCV whole-row contamination repair (CONTAM-10-WHOLEROW-LT1000)**
+```bash
+# Dry-run (per-ticker count + anchor_close + sample, no writes):
+bun run scripts/migrations/repair-ohlcv-unit-contamination-wholerow-lt1000.ts --dry-run
+
+# Live against named volume (docker exec — requires CONTAM-10-MIGRATION QA PASS):
+docker cp scripts/migrations/repair-ohlcv-unit-contamination-wholerow-lt1000.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/repair-ohlcv-wholerow.ts
+docker exec -it vn-market-intelligence-mcp-mcp-server-1 \
+  bun run /app/repair-ohlcv-wholerow.ts --live
+```
+Predicate: per-ticker anchor (most recent bar with close>=1000 AND volume>0 in last 180 days).
+Candidate: bar where anchor_close/bar.close>=100 AND bar.close<1000 (whole-row thousands scale).
+Fix: ALL FOUR OHLC fields ×1000. INDEX_TICKERS excluded (VNINDEX/VN30/HNXINDEX/HNX30/UPCOMINDEX).
+Legitimately cheap stocks skipped (no anchor found → skip). data_env preserved (RF-5).
+GATE: CONTAM-10-EXEC blocked on CONTAM-10-MIGRATION QA pass — do NOT run --live before QA.
+
 **CANONICAL: FB data-integrity plausibility gate (FIX-FB-POST-DATA-INTEGRITY-GATE)**
 ```bash
 # Check a post file before publish (run from repo root):
