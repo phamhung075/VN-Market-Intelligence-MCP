@@ -51,6 +51,7 @@ cat > docs/signals/cowork-team-${ISO}.json <<EOF
     "suppressed_calendar": ["<slot_ids suppressed in Step 4.3>"],
     "suppressed_cadence": ["<slot_ids skipped in Step 4.4>"],
     "downgraded": ["<slot_ids removed in Step 4.5>"],
+    "chef_mutex_applied": <true|false>,
     "due_reasons": { "<slot_id>": "<cadence|cron|first_run>" },
     "cadence_minutes": { "<slot_id>": "<N|null>" },
     "last_fired_timestamp": "<ISO8601 or null>",

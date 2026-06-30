@@ -117,3 +117,49 @@ Telemetry fields added to Step 6 payload (for observability):
   "cadence_minutes":      { "<slot_id>": <N|null> }
 }
 ```
+
+---
+
+## Step 4.5c — Same-tick CHEF mutual-exclusion (FIX-COWORK-CHEF-SAMETICK-MUTEX)
+
+<!-- INVARIANT: Exactly one CHEF dish per tick. When multiple CHEF slots match the same tick,
+     keep only the guaranteed slot; drop all non-guaranteed sibling slots.
+     Rationale: chef-morning, chef-eod, chef-evening are guaranteed (daily editorial);
+     chef-intraday is conditional (policy_id="chef-intraday", guaranteed=false).
+     On 05:15 UTC coincidence tick, both chef-morning + chef-intraday matched in legacy mode,
+     causing double-post to MARKET. This mutex enforces the invariant regardless of pressure_mode.
+     Source: docs/signals/cowork-chef-doublepublish-2026-06-30.md FIX-A.
+     Runs AFTER both pressure-mode branches complete (adaptive & legacy both reach here).
+     Applies unconditionally to guarantee the mutex across all pressure states. -->
+
+```
+# Read schedule to identify CHEF slots (all are in parallel_group="chef")
+SCHEDULE=$(cat docs/data/cowork-schedule.json)
+
+# Separate guaranteed from non-guaranteed CHEF slots
+GUARANTEED_CHEF_SLOTS=$(echo "$SCHEDULE" | jq -r '.slots[] | select(.parallel_group=="chef" AND .guaranteed==true) | .slot_id' | tr '\n' ' ')
+NON_GUARANTEED_CHEF=$(echo "$SCHEDULE" | jq -r '.slots[] | select(.parallel_group=="chef" AND .guaranteed==false) | .slot_id' | tr '\n' ' ')
+
+# If MATCHES has both guaranteed AND non-guaranteed CHEF slots, drop the non-guaranteed ones
+HAS_GUARANTEED=$(echo "$MATCHES" | jq -r "any(.[]; .slot_id | IN($(echo $GUARANTEED_CHEF_SLOTS | xargs -I{} echo '\"{}\"' | paste -sd ',' -)))")
+HAS_NON_GUARANTEED=$(echo "$MATCHES" | jq -r "any(.[]; .slot_id | IN($(echo $NON_GUARANTEED_CHEF | xargs -I{} echo '\"{}\"' | paste -sd ',' -)))")
+
+if [ "$HAS_GUARANTEED" = "true" ] && [ "$HAS_NON_GUARANTEED" = "true" ]; then
+  # Drop non-guaranteed CHEF slots; keep the rest
+  NON_GUARANTEED_LIST=$(echo "$NON_GUARANTEED_CHEF" | xargs -I{} echo '\"{}\"' | paste -sd ',' -)
+  MATCHES=$(echo "$MATCHES" | jq "map(select(.slot_id | IN($NON_GUARANTEED_LIST) | not))")
+  
+  log "[cowork] CHEF mutex: dropped non-guaranteed CHEF slots; guaranteed CHEF slot will publish this tick"
+  # Telemetry flag (added to Step 6 payload)
+  CHEF_MUTEX_APPLIED=true
+else
+  CHEF_MUTEX_APPLIED=false
+fi
+```
+
+**CHEF Mutex Invariant:** Exactly one CHEF dish per tick. GUARANTEED > NON-GUARANTEED.
+- **Guaranteed CHEF slots:** chef-morning, chef-eod, chef-evening (daily guaranteed; `guaranteed: true, policy_id: null`)
+- **Non-guaranteed CHEF slots:** chef-intraday (conditional on policy; `guaranteed: false, policy_id: "chef-intraday"`)
+- **Action:** When both guaranteed and non-guaranteed coexist in MATCHES, keep guaranteed, drop non-guaranteed.
+- **Applies to:** Both adaptive and legacy pressure modes (unconditional).
+- **Root cause closed:** cowork-chef-doublepublish-2026-06-30; prevents legacy-mode cadence-bypass double-posts.
