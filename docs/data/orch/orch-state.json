@@ -1645,7 +1645,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-30T21:10:00Z",
+    "_updated_at": "2026-06-30T21:56:43Z",
     "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
@@ -10240,21 +10240,21 @@
       {
         "id": "CONTAM-10-SANITY",
         "title": "Sanity job Pass 4 extension (anchor divergence scan) in ohlcvSanityCheckJob.ts",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "type": "TASK-C",
         "zone": "apps/mcp-server/src/scheduler/",
         "size": "M",
         "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
         "priority": "high",
         "owner_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "depends": null,
         "detail_ref": null,
         "created_at": "2026-06-30T20:44:03Z",
         "created_by": "pm",
-        "updated_at": "2026-06-30T21:35:48Z",
-        "updated_by": "dev-team",
-        "note": "DISPATCHED dev-mcp-server (mcp-server now STABLE -- EXEC probe done, no in-flight rebuild). Add Pass 4 anchor-divergence scan to ohlcvSanityCheckJob.ts: flag rows where per-ticker recent clean anchor (close>=1000) is >=100x a same-ticker close<1000 bar (whole-row thousands contamination) that CONTAM-6 predicate is structurally blind to. INDEX tickers excluded. Single-svc mcp-server rebuild. dev -> qa.",
+        "updated_at": "2026-06-30T21:56:43Z",
+        "updated_by": "dev-mcp-server",
+        "note": "Pass 4 anchor-divergence scan DONE. Commit dbaa318d: ohlcvSanityCheckJob.ts + OHLCV-WHOLEROW-LT1000-sanity-pass4.test.ts. 11 tests PASS. bun tsc clean. mcp-server rebuilt (Up healthy). DETECTION ONLY — no daily_ohlcv writes. Await QA APPROVED.",
         "promoted_at": null,
         "promoted_by": null,
         "raw_evidence": null,
