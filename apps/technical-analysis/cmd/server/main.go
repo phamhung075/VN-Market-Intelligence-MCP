@@ -13,7 +13,9 @@
 //	LOG_LEVEL           — "DEBUG" enables debug logging
 //	WATCHLIST_TICKERS   — comma-separated active ticker symbols
 //	                      Used for ATR%, ROC momentum, RS, and 52w proximity.
-//	                      When absent, per-ticker outputs are empty lists (non-fatal).
+//	                      When absent (FR-C1), universe is resolved from the SQLite
+//	                      watchlist table at DB_PATH. If that table is also empty,
+//	                      per-ticker outputs are empty lists (non-fatal).
 //	DB_PATH             — path to market.db (default ./data/market.db)
 package main
 
