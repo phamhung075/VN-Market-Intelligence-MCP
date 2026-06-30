@@ -44,7 +44,13 @@ import { spawnSync } from 'node:child_process';
 const SCRIPTS_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(SCRIPTS_DIR, '../..');
 const ORCHSTATE_PATH = resolve(PROJECT_ROOT, 'docs/data/orch/orch-state.json');
-const VALIDATOR_PATH = resolve(PROJECT_ROOT, 'scripts/orch-validate.mjs');
+
+// ORCH_HOOK_VALIDATOR — override validator path (test coverage for fail-open infra paths).
+// ORCH_HOOK_BUN_BIN  — override bun binary (test coverage for spawn-fail fail-open path).
+// Both overrides default to the production values when env vars are absent.
+const VALIDATOR_PATH =
+  process.env.ORCH_HOOK_VALIDATOR ?? resolve(PROJECT_ROOT, 'scripts/orch-validate.mjs');
+const BUN_BIN = process.env.ORCH_HOOK_BUN_BIN ?? 'bun';
 
 // ── Block helper ─────────────────────────────────────────────────────────────
 function block(reason) {
@@ -76,9 +82,15 @@ const filePath = String(hookInput?.tool_input?.file_path ?? '');
 if (!filePath.endsWith('orch-state.json')) process.exit(0);
 if (toolName !== 'Write' && toolName !== 'Edit') process.exit(0);
 
-// Validator must exist — if missing, this hook is misconfigured; block hard.
+// Validator missing = INFRASTRUCTURE failure (cannot determine validity) → FAIL-OPEN.
+// Wedge-guard binding decision: a spawned agent may have no bun in PATH; a hard block
+// there wedges every orch-state write = system wedge. Warn loudly; never block.
 if (!existsSync(VALIDATOR_PATH)) {
-  block(`canonical validator missing: ${VALIDATOR_PATH} (reinstall or run SSOT-W1-ZOD-VALIDATOR-CLI)`);
+  process.stderr.write(
+    `[orch-state-hook] WARN: validator not found at ${VALIDATOR_PATH} — ` +
+    `allowing write through (infrastructure fail-open; run SSOT-W1-ZOD-VALIDATOR-CLI to restore)\n`
+  );
+  process.exit(0);
 }
 
 const PROPOSAL_TMP = resolve(
@@ -132,7 +144,7 @@ try {
   writeFileSync(PROPOSAL_TMP, proposedContent, 'utf-8');
 
   // Invoke canonical Zod validator (same binary used by SSOT-W1-ZOD-VALIDATOR-CLI)
-  const result = spawnSync('bun', [VALIDATOR_PATH, PROPOSAL_TMP], {
+  const result = spawnSync(BUN_BIN, [VALIDATOR_PATH, PROPOSAL_TMP], {
     encoding: 'utf-8',
     cwd: PROJECT_ROOT,
     timeout: 15000, // 15s safety cap

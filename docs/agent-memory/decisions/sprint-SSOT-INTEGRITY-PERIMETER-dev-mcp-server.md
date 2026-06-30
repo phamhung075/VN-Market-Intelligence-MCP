@@ -59,3 +59,15 @@
 - Test invalid_enum_value (non-status) case (not possible via current schema — all z.enum() fields named "status"; documented as defensive future-compat code)
 **why-decision:** Integration via spawnSync inside orchStateSchema.test.ts satisfies the "mcp-server test suite" DoD gate while testing the complete CLI pipeline. No orch-validate.mjs changes needed — audit confirmed tokenizer and all 5 mappers already correct.
 **why-change:** No tokenizer bugs found — audit confirmed implementation correct. Only gap was integration test coverage in mcp-server suite.
+
+---
+
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-30T00:00:00Z
+**task-id:** SSOT-W1-HOOK-ENFORCE
+**what-done:** Applied wedge-guard to prewrite hook (3 changes): env var overrides ORCH_HOOK_VALIDATOR + ORCH_HOOK_BUN_BIN for testability; validator-missing changed from block() to fail-open (warn + exit 0); spawnSync now uses BUN_BIN. Added 4 new wedge-guard tests: validator-missing×valid, validator-missing×invalid, bun-spawn-fail×invalid, valid-write-regression. All 18 tests pass; tsc clean.
+**what-considered:**
+- Keep hard-block on validator missing (brief's original intent) — rejected: wedge-guard binding overrides brief; prior worker's hard-block on spawn-fail caused system wedge + task kill
+- Test spawn-fail by removing bun from PATH — rejected: bun needed to START the hook; env var override is the clean path
+- Env var on validator path only, not bun binary — rejected: test must cover BOTH infra fail paths per wedge-guard "QA MUST verify error-path"
+**why-decision:** Wedge-guard explicitly states "INFRASTRUCTURE failure → FAIL-OPEN; NEVER fail-closed-hard"; validator-missing is infrastructure (cannot determine validity). Env var overrides keep production hook unchanged while enabling deterministic test coverage of both fail-open paths.
+**why-change:** Prior worker's change (block on spawn-fail) was reverted by router; this session completes the original task scope + adds the missing wedge-guard compliance that was never committed.
