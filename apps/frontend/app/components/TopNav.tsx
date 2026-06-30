@@ -61,7 +61,8 @@ export type NavItem = {
  *   - /dashboard/financials      → dashboard.financials.tsx      EXISTS → enabled (label: "Định giá") — TASK-17 PAGE 16
  *   - /dashboard/fed-rates       → dashboard.fed-rates.tsx        EXISTS → enabled (label: "Lãi suất Fed") — TASK-17 PAGE 17
  *   - /dashboard/reputation      → dashboard.reputation.tsx       EXISTS → enabled (label: "Uy tín DN") — TASK-17 PAGE 18
- *   - /dashboard/news-buzz       → dashboard.news-buzz.tsx         EXISTS → enabled (label: "Tin nhắc đến") — TASK17-PAGE19
+ *   - /dashboard/news-buzz            → dashboard.news-buzz.tsx             EXISTS → enabled (label: "Tin nhắc đến") — TASK17-PAGE19
+ *   - /dashboard/indicator-gauges     → dashboard.indicator-gauges.tsx      EXISTS → enabled (label: "Chỉ Báo") — IND-P1-FRONTEND-GAUGE-CARDS
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -92,6 +93,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/fed-rates", label: "Lãi suất Fed" },
   { to: "/dashboard/reputation", label: "Uy tín DN" },
   { to: "/dashboard/news-buzz", label: "Tin nhắc đến" },
+  { to: "/dashboard/indicator-gauges", label: "Chỉ Báo" },
 ];
 
 /**
@@ -113,7 +115,7 @@ export const SYSTEM_NAV: NavItem[] = [
 
 /**
  * NAV_ITEMS — backward-compat union of all nav entries.
- * SSOT: ANALYST_NAV (25) + SYSTEM_NAV (7) = 32 total.
+ * SSOT: ANALYST_NAV (26) + SYSTEM_NAV (7) = 33 total.
  * Any consumer that iterates all routes should use this.
  * Active NAV = ANALYST_NAV (top level) + SYSTEM_NAV (System group).
  *

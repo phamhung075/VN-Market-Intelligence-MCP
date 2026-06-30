@@ -3,7 +3,7 @@
  *
  * Asserts that:
  *  1. TopNav renders the branding link "VN Market Intelligence"
- *  2. ANALYST_NAV has 25 primary analyst tabs (live SSOT as of QUE-REFERENCE-PAGE + TASK-17 through PAGE 19;
+ *  2. ANALYST_NAV has 26 primary analyst tabs (live SSOT as of QUE-REFERENCE-PAGE + TASK-17 through PAGE 19 + IND-P1-FRONTEND-GAUGE-CARDS;
  *     /dashboard/technical removed by FE-AHUB-INT-INTEGRATE — content merged into TechnicalZone in /dashboard/analysis).
  *     This is the SINGLE canonical absolute-count assertion for ANALYST_NAV — do NOT duplicate
  *     in per-page tests (task17-pageNN-*-nav.test.tsx).
@@ -27,8 +27,9 @@
  *     - "Lãi suất Fed" (/dashboard/fed-rates) is ENABLED — dashboard.fed-rates.tsx exists (TASK-17 PAGE 17).
  *     - "Uy tín DN" (/dashboard/reputation) is ENABLED — dashboard.reputation.tsx exists (TASK-17 PAGE 18).
  *     - "Tin nhắc đến" (/dashboard/news-buzz) is ENABLED — dashboard.news-buzz.tsx exists (TASK-17 PAGE 19).
+ *     - "Chỉ Báo" (/dashboard/indicator-gauges) is ENABLED — dashboard.indicator-gauges.tsx exists (IND-P1-FRONTEND-GAUGE-CARDS).
  *  3. SYSTEM_NAV has 7 ops/infra tabs (incl. bctc-eval + bctc-inspect; excl. db).
- *  4. NAV_ITEMS is the union (analyst + system) — 32 total (25 analyst + 7 system).
+ *  4. NAV_ITEMS is the union (analyst + system) — 33 total (26 analyst + 7 system).
  *     This is the SINGLE canonical absolute-total assertion — do NOT duplicate in per-page tests.
  *  5. The "Cổ Phiếu" tab links to /dashboard/analysis (the existing route) — NOT /dashboard/stock.
  *  6. comingSoon tabs render as disabled spans (aria-disabled="true"), NOT as links.
@@ -64,8 +65,8 @@ function renderTopNav(initialPath = "/") {
 }
 
 describe("TopNav — ANALYST_NAV canonical list", () => {
-  it("exports exactly 25 analyst nav items (live SSOT: through TASK-17 PAGE 19 + QUE-REFERENCE-PAGE-2; /dashboard/technical removed FE-AHUB-INT-INTEGRATE)", () => {
-    expect(ANALYST_NAV).toHaveLength(25);
+  it("exports exactly 26 analyst nav items (live SSOT: through TASK-17 PAGE 19 + QUE-REFERENCE-PAGE-2 + IND-P1-FRONTEND-GAUGE-CARDS; /dashboard/technical removed FE-AHUB-INT-INTEGRATE)", () => {
+    expect(ANALYST_NAV).toHaveLength(26);
   });
 
   it("contains first 9 analyst items in order with correct labels and comingSoon flags", () => {
@@ -191,9 +192,9 @@ describe("TopNav — SYSTEM_NAV canonical list", () => {
 });
 
 describe("TopNav — NAV_ITEMS union (backward compat)", () => {
-  it("NAV_ITEMS is the union of ANALYST_NAV + SYSTEM_NAV (32 items total: 25 analyst + 7 system; /dashboard/technical removed FE-AHUB-INT-INTEGRATE)", () => {
+  it("NAV_ITEMS is the union of ANALYST_NAV + SYSTEM_NAV (33 items total: 26 analyst + 7 system; /dashboard/technical removed FE-AHUB-INT-INTEGRATE)", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
-    expect(NAV_ITEMS).toHaveLength(32);
+    expect(NAV_ITEMS).toHaveLength(33);
   });
 
   it("Database tab (/dashboard/db) is absent from NAV_ITEMS (retired from nav per P0-5)", () => {
@@ -218,7 +219,7 @@ describe("TopNav — rendered output", () => {
     expect(screen.getByText("Hệ Thống")).toBeTruthy();
   });
 
-  it("renders all 25 analyst nav labels (Kỹ Thuật removed FE-AHUB-INT-INTEGRATE)", () => {
+  it("renders all 26 analyst nav labels (Kỹ Thuật removed FE-AHUB-INT-INTEGRATE; Chỉ Báo added IND-P1-FRONTEND-GAUGE-CARDS)", () => {
     renderTopNav();
     const expectedLabels = [
       "Tổng Quan",
@@ -246,6 +247,7 @@ describe("TopNav — rendered output", () => {
       "Lãi suất Fed",
       "Uy tín DN",
       "Tin nhắc đến",
+      "Chỉ Báo",
     ];
     for (const label of expectedLabels) {
       expect(screen.getByText(label)).toBeTruthy();
