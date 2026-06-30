@@ -62,3 +62,32 @@
 - ✓ Decision journal entry created
 
 **next:** Main terminal reads RETURN block, spawns dev-mcp-server for TASK-501 + dev-frontend for TASK-502 (parallel zone dispatch).
+
+### STEP pm-S3 · pm · 2026-06-30T06:30:00Z · Sprint closeout + board finalization
+
+**task-id:** BA-IND-P1-MOMENTUM-FRONTEND (sprint completion gate)
+
+**what-done:**
+1. Verified GROUND-TRUTH: Both child tasks DONE_VERIFIED (dispatcher RAW-verified):
+   - TASK-501-MOMENTUM-API-HANDLER: gate commit a36e770b, 37/37 tests, tsc0, mock-guard0, no-db-leak.
+   - TASK-502-MOMENTUM-FRONTEND: gate commit 4037be59 (HEAD), 49/49 tests, tsc0, Playwright 3/3; 2 QUE_DESCRIPTIONS pre-existing (d7167c0a).
+2. Moved sprint MARKET-INDICATOR-DEPTH-P0 from active_sprints[7] to closed_sprints (appended to closed_sprints[]).
+3. Set active_sprints[7] → removed from array to collapse index (array now length 7; indices 0–6 remain).
+4. Advanced head state: status → idle, active_task_id → null, next_agent → null, updated_by → pm, updated_at → now.
+5. Committed via orch-apply.sh (atomic write, validation PASS, CAS guard passed).
+
+**raw-verify (did NOT trust prompt):**
+- active_sprints length: was 8, now 7. Indices verified 0–6 unchanged.
+- closed_sprints appended: sprint object with status:closed, all 4 tasks (2 prior DONE, 2 new DONE_VERIFIED) intact.
+- head.status now idle; head.active_task_id null; head.next_agent null. No lingering task IDs.
+- Git HEAD unchanged (still 4037be59); staged-only orch-state.json committed; no tree dirty.
+
+**what-considered:**
+- (A) Move sprint to closed_sprints (per PM closeout convention) vs (B) archive to cold storage immediately. CHOSE (A) — closed_sprints is the hot lane for recent-closed items; PM flow step 5 defines archival as separate cold-eviction step (only TASKS flow to done_verified eviction, not sprints). Sprints remain in closed_sprints for retrospective audit trail.
+- Keep or clear head.active_task_id during closeout. CHOSE CLEAR (null) — head is now idle; no active development task. Next sprint opener will set new active_task_id.
+
+**why-decision:**
+- Dispatcher confirmed both child tasks complete (DONE_VERIFIED). Sprint parent BA-IND-P1-MOMENTUM-FRONTEND has no further PM planning work (decomposition complete, all dev tasks completed). Advancing to idle unblocks next sprint opener.
+- Closing the sprint (moving to closed_sprints) maintains audit trail while freeing active_sprints slot for next work. Head.idle signals system ready for new sprint input from BA/Architect.
+
+**why-change:** No change from PM closeout protocol (PM flow §Monitor → "QA Done + journal present → DONE flip → advance head to idle").
