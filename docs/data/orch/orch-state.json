@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CONTAM-10-SANITY",
-    "next_agent": "qa",
-    "updated_at": "2026-06-30T22:12:43Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-06-30T22:35:04Z",
     "updated_by": "dev-team",
-    "note": "CONTAM-10-EXEC CLOSED (in_progress->done): --live 7897-row repair SUCCEEDED + dev-team INDEPENDENTLY RAW-verified (host backup integrity=ok/restorable 17766 preserved, live contam 17766->9869, index 48 untouched, FPT/DHG/VHM/VIC/ACV lt1000=0, ops zero git footprint). DISPATCHING qa for CONTAM-10-SANITY (review, dbaa318d Pass-4) -- serialization released. CONTAM-11 SPIKE in backlog (residual 9869, PLAN-ONLY, dep EXEC now satisfied, PO triage). MIGRATION+WRITER+EXEC done; parent FIX-DAILY-OHLCV-UNIT-CONTAM closes on SANITY qa-PASS. dev code WIP=0 (SANITY=qa gate). Push gated (PO/human)."
+    "note": "CONTAM-10 sprint CLOSED -- parent epic FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM in_progress->done (4 children MIGRATION+WRITER+EXEC+SANITY all DONE). SANITY qa-APPROVED 0941d173, dispatcher RAW-verified {IS-HEAD, 3 qa-owned paths no code, detection-only via own grep, leak-clean}; qa-reported {11/11 pass4, 14111 full-suite, tsc 0}. Whole-row sub-1000 unit-contamination class now fully addressed: detection (Pass-4) live + repair (--live 7897 rows) applied + reference-close write-guard shipped. CONTAM-11 SPIKE in backlog (9869 unanchored residual, PLAN-ONLY, no predicate-widen) for PO triage. Pipeline IDLE -- next cron tick: PO triage (CONTAM-11 + pending docs/signals/). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9507,6 +9507,47 @@
         "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
         "dispatcher_verification": "dev-team RAW-verify (own git+docker, NOT agent badge): code dbaa318d IN-HEAD scope EXACTLY 2 paths (ohlcvSanityCheckJob.ts + sanity-pass4.test.ts) no -A; orch self-commit 423bc0fd scope orch-state.json only; Pass-4 daily_ohlcv access = FROM/SELECT only, ZERO UPDATE/INSERT/DELETE added (detection-only confirmed in diff); INDEX_TICKERS reused (spread + .has) no duplicate Set; LEAK-CLEAN; mcp-server Up 3min healthy + all 11 peers healthy (single-svc build, peers untouched); 11/11 pass4 + 84/84 zone suite + tsc 0-err. Lane corrected in_progress->review. -> qa gate.",
         "qa_verdict": "APPROVED"
+      },
+      {
+        "id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
+        "title": "daily_ohlcv thousands-format contamination (close<1000) FPT/VHM -> roc 606x, 52w low 100.3",
+        "status": "DONE",
+        "type": "SPRINT-M",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "priority": "high",
+        "owner_agent": "pm",
+        "next_agent": "",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T19:00:03Z",
+        "created_by": "dev-team",
+        "updated_at": "2026-06-30T22:35:04Z",
+        "updated_by": "dev-team",
+        "note": "DECOMPOSED into 4 child tasks (see ready + backlog lanes). Awaiting dev-team dispatch.",
+        "promoted_at": "2026-06-30T20:20:07Z",
+        "promoted_by": "po-s135",
+        "raw_evidence": "gateway 2026-06-30T20:13Z: FPT h252 rs=594.07 / roc=606.29x d10; DHG h63 rs=922.59 + h126 918.06; VHM h126 rs=-1.066 / h252 rs=-1.350 p0 / roc=-0.998; VIC h252 rs=-1.349 p2.78 / roc=-0.998. >=4 watchlist tickers visibly degraded (more than the 3 first triaged).",
+        "precedent": "Prior sprint OHLCV-UNIT-CONTAM: CONTAM-4 (writers D/E) / CONTAM-5 sanity job (apps/mcp-server/src/scheduler/market-data/ohlcvSanityCheckJob.ts, 15:05Z) / CONTAM-6 repair (scripts/migrations/repair-ohlcv-unit-contamination.ts, --dry-run + runRepair()) / CONTAM-7 test. CONTAM-6 WHERE = '(open<100 OR low<100) AND close>=1000' and only normalizes open/low -> structurally CANNOT see this whole-row close<1000 class. Writer normalizeOhlcvToVnd applies x1000 only when max(OHLC)<100 and detectAndNormalizeScaleFromPrevClose needs a clean prev_close -> gap when the whole recent series is contaminated.",
+        "deliverables": [
+          "A: repair migration extending the CONTAM-6 family to the whole-row close<1000 class. Detection = PER-TICKER ~1000x discontinuity test against the ticker's OWN clean reference level (NOT a blind close<1000 sweep). Reuse the --dry-run + runRepair() interface; dry-run report (ticker, date-range, row-count) for human-confirm BEFORE live UPDATE-in-txn. Verify the exact predicate against live rows first.",
+          "B: reflow/recompute derived RS/ROC/percentile/z-score/52w. FIRST determine whether these are materialized (stored) or computed-on-read (RS tool returned source_tier 3 live -> likely computed-on-read, in which case normalizing daily_ohlcv self-heals and only a re-probe is needed; reflow any materialized aggregate/cache e.g. ohlcvDailyAggregator output). RAW-verify the SERVING layer post-fix, not just the base table.",
+          "C: durable ingest-time unit-normalization guard (writer-side) closing the max(OHLC)<100 gap (a high-price stock contaminated in thousands sits at 100-1000, NOT <100) and the all-series-contaminated no-clean-prev_close gap. Fix the WRITER not just residue. Extend CONTAM-5 ohlcvSanityCheckJob to flag the whole-row close<1000 class."
+        ],
+        "critical_cautions": [
+          "EXCLUDE index-type rows: VNINDEX legitimately trades ~1300-1900 (253 bars just backfilled in RC3) and other indices sit in their own scale. The predicate MUST identify and skip index codes; verify the is_index flag / index-code set against the LIVE schema before any UPDATE.",
+          "NOT a blind close<1000 sweep: a stock whose ENTIRE series is ~100 is legitimately cheap and must NOT be x1000'd. Only touch a series with a ~1000x STEP within its own history.",
+          "Dry-run + human-confirm before any live mutation (CONTAM-6 precedent); UPDATE inside a single transaction.",
+          "Recurring-bug-escalation (feedback_recurring_bug_escalation): 2nd contamination class same table -> the durable WRITER guard (deliverable C) is the real exit criterion, not another one-off repair."
+        ],
+        "generic_mandate": "Ship the durable writer-side guard + sanity-job extension so this contamination class cannot re-accumulate; the repair migration alone does NOT close the sprint.",
+        "verification_gate": "RAW (gateway, not badges): (1) get_relative_strength no-arg -> |rs|<=~3 for h63/h126/h252 on ALL watchlist tickers; (2) get_roc_momentum no-arg -> roc in a sane band (no 606x, no -0.998) for all; (3) VNINDEX get_price_history still ~1300-1900 with 253 bars (untouched); (4) a chosen legitimately-cheap stock untouched; (5) writer unit test: synthetic thousands-format push for a high-price ticker is normalized/rejected; (6) CONTAM-5 sanity job flags the new class.",
+        "cascade": "architect (safe predicate design + writer-gap + reflow plan; brief per recurring-bug-escalation) -> pm (decompose into dev tasks) -> developer (apps/mcp-server).",
+        "dispatched_at": "2026-06-30T20:42:10Z",
+        "dispatched_by": "dev-team",
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "closure": "CONTAM-10 sprint COMPLETE -- all 4 children DONE. MIGRATION: per-ticker anchor repair migration. WRITER: ohlcvWriteService clean-reference write-guard. EXEC: --live 7897-row x1000 repair, dev-team INDEPENDENTLY RAW-verified vs host backup + live-DB (contam population 17766->9869, 48 index rows untouched, FPT/DHG/VHM/VIC/ACV lt1000=0, backup integrity=ok/restorable). SANITY: Pass-4 anchor-divergence detection in ohlcvSanityCheckJob.ts (dbaa318d), qa-APPROVED commit 0941d173. Dispatcher RAW-verified: commit IS-HEAD, scope EXACTLY 3 qa-owned paths (decision-journal+notebook+orch-state) NO code, detection-only confirmed via own grep (zero daily_ohlcv UPDATE/INSERT/DELETE in added lines), leak-clean. qa-REPORTED tests: 11/11 pass4 + 14111 full-suite + tsc 0-err. Residual 9869 unanchored rows -> CONTAM-11 (backlog SPIKE, PLAN-ONLY, anchor predicate NOT widened)."
       }
     ],
     "done_verified": [
@@ -10252,48 +10293,7 @@
       "updated_by": "pm",
       "updated_at": "2026-06-30T06:20:13Z"
     },
-    "in_progress": [
-      {
-        "id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
-        "title": "daily_ohlcv thousands-format contamination (close<1000) FPT/VHM -> roc 606x, 52w low 100.3",
-        "status": "IN_PROGRESS",
-        "type": "SPRINT-M",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
-        "priority": "high",
-        "owner_agent": "pm",
-        "next_agent": "",
-        "depends": null,
-        "detail_ref": null,
-        "created_at": "2026-06-30T19:00:03Z",
-        "created_by": "dev-team",
-        "updated_at": "2026-06-30T20:42:10Z",
-        "updated_by": "dev-team",
-        "note": "DECOMPOSED into 4 child tasks (see ready + backlog lanes). Awaiting dev-team dispatch.",
-        "promoted_at": "2026-06-30T20:20:07Z",
-        "promoted_by": "po-s135",
-        "raw_evidence": "gateway 2026-06-30T20:13Z: FPT h252 rs=594.07 / roc=606.29x d10; DHG h63 rs=922.59 + h126 918.06; VHM h126 rs=-1.066 / h252 rs=-1.350 p0 / roc=-0.998; VIC h252 rs=-1.349 p2.78 / roc=-0.998. >=4 watchlist tickers visibly degraded (more than the 3 first triaged).",
-        "precedent": "Prior sprint OHLCV-UNIT-CONTAM: CONTAM-4 (writers D/E) / CONTAM-5 sanity job (apps/mcp-server/src/scheduler/market-data/ohlcvSanityCheckJob.ts, 15:05Z) / CONTAM-6 repair (scripts/migrations/repair-ohlcv-unit-contamination.ts, --dry-run + runRepair()) / CONTAM-7 test. CONTAM-6 WHERE = '(open<100 OR low<100) AND close>=1000' and only normalizes open/low -> structurally CANNOT see this whole-row close<1000 class. Writer normalizeOhlcvToVnd applies x1000 only when max(OHLC)<100 and detectAndNormalizeScaleFromPrevClose needs a clean prev_close -> gap when the whole recent series is contaminated.",
-        "deliverables": [
-          "A: repair migration extending the CONTAM-6 family to the whole-row close<1000 class. Detection = PER-TICKER ~1000x discontinuity test against the ticker's OWN clean reference level (NOT a blind close<1000 sweep). Reuse the --dry-run + runRepair() interface; dry-run report (ticker, date-range, row-count) for human-confirm BEFORE live UPDATE-in-txn. Verify the exact predicate against live rows first.",
-          "B: reflow/recompute derived RS/ROC/percentile/z-score/52w. FIRST determine whether these are materialized (stored) or computed-on-read (RS tool returned source_tier 3 live -> likely computed-on-read, in which case normalizing daily_ohlcv self-heals and only a re-probe is needed; reflow any materialized aggregate/cache e.g. ohlcvDailyAggregator output). RAW-verify the SERVING layer post-fix, not just the base table.",
-          "C: durable ingest-time unit-normalization guard (writer-side) closing the max(OHLC)<100 gap (a high-price stock contaminated in thousands sits at 100-1000, NOT <100) and the all-series-contaminated no-clean-prev_close gap. Fix the WRITER not just residue. Extend CONTAM-5 ohlcvSanityCheckJob to flag the whole-row close<1000 class."
-        ],
-        "critical_cautions": [
-          "EXCLUDE index-type rows: VNINDEX legitimately trades ~1300-1900 (253 bars just backfilled in RC3) and other indices sit in their own scale. The predicate MUST identify and skip index codes; verify the is_index flag / index-code set against the LIVE schema before any UPDATE.",
-          "NOT a blind close<1000 sweep: a stock whose ENTIRE series is ~100 is legitimately cheap and must NOT be x1000'd. Only touch a series with a ~1000x STEP within its own history.",
-          "Dry-run + human-confirm before any live mutation (CONTAM-6 precedent); UPDATE inside a single transaction.",
-          "Recurring-bug-escalation (feedback_recurring_bug_escalation): 2nd contamination class same table -> the durable WRITER guard (deliverable C) is the real exit criterion, not another one-off repair."
-        ],
-        "generic_mandate": "Ship the durable writer-side guard + sanity-job extension so this contamination class cannot re-accumulate; the repair migration alone does NOT close the sprint.",
-        "verification_gate": "RAW (gateway, not badges): (1) get_relative_strength no-arg -> |rs|<=~3 for h63/h126/h252 on ALL watchlist tickers; (2) get_roc_momentum no-arg -> roc in a sane band (no 606x, no -0.998) for all; (3) VNINDEX get_price_history still ~1300-1900 with 253 bars (untouched); (4) a chosen legitimately-cheap stock untouched; (5) writer unit test: synthetic thousands-format push for a high-price ticker is normalized/rejected; (6) CONTAM-5 sanity job flags the new class.",
-        "cascade": "architect (safe predicate design + writer-gap + reflow plan; brief per recurring-bug-escalation) -> pm (decompose into dev tasks) -> developer (apps/mcp-server).",
-        "dispatched_at": "2026-06-30T20:42:10Z",
-        "dispatched_by": "dev-team",
-        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
