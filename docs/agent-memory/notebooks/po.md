@@ -1,24 +1,22 @@
 # PO Notebook
 
-_Last: 2026-06-30T00:24Z_
+_Last: 2026-06-30T00:57Z_
 
-## FINAL SIGN-OFF — Sprint MARKET-INDICATOR-DEPTH-P0 (QA gate PASS, all 7 APPROVED)
+## P1 PHASE SCOPED — Sprint MARKET-INDICATOR-DEPTH-P0 (P0 umbrella DONE_VERIFIED)
 
-**VERDICT: APPROVED (code-complete). done_verified HELD to post-rebuild LIVE e2e — NOT a terminal close.**
+P0 closed: 7 deliverables in done[] dv=true lg=LIVE_VERIFIED (router RAW-verified LIVE e2e; 3 svcs rebuilt 01a447be/d6383e96/f9ef2f18). OHLCV-BACKFILL-P0 + P0-2-FOREIGN-ROOM-SUITE LIVE → momentum/foreign gates clear.
 
-RAW-verified artifacts exist + wired (not relaying QA badges): 5 tools in registry.ts + tool files; breadth cron cronConfig.ts:215 `37 8 * * 1-5` + startScheduler.ts:1244; volatility route router.go:32; omo_curve DTO dtos_vmt_liquidity.go:177. toolCount=178.
+**Router spawned me (coord d3292ca4) to own the P1 lane. Did via `scripts/po-s131` (idempotent, orch-apply rc=0, conservation backlog+1/ready+1):**
+1. **MINTED both po-signoff follow-ups** — `IND-P1-CONSUMER-WIRING-AUDIT` + `IND-P1-FRONTEND-GAUGE-CARDS`.
+2. **SEQUENCED — consumer-wiring FIRST**: promoted IND-P1-CONSUMER-WIRING-AUDIT → ready[] (READY, cowork-refactory-expert, priority high). Carries LIVE grep ground truth (**0/6 helper flows consume ANY of the 5 new P0 tools** — total wiring gap) + a per-flow wiring_map. This is the literal core of the origin intent: tools shipping != agents using.
+3. **HELD new indicators at PLAN-ONLY**: unblocked 4 now-ungated items (ROC-MOMENTUM/RELATIVE-STRENGTH/52W-HIGH via OHLCV gate; FOREIGN-ACCUM-RANK via Foreign-Room gate) but kept BACKLOG/plan_only — wiring lands first, THEN promote the momentum wave (avoids building more unconsumed tools).
+4. Frontend gauge cards → backlog[] PLAN-ONLY (next planning tick; folds the P3 gauge-contract polish).
 
-**3 owned decisions:**
-1. **Architecture — RATIFIED solo** (no architect spawn): breadth math stays in mcp-server `breadthCalculator.ts` as FINAL. TA-TS path stale (TA now Go-primary); gateway-consumed regardless of host; QA verified math correct + DDD-pure. NO Go-TA port (debt-for-debt). Conditional revisit only if a Go-native breadth consumer emerges.
-2. **Deploy — GRANTED**: single-svc `up -d --build` for mcp-server + technical-analysis + macro-indicators (NEVER down&&up). Router routes ops.
-3. **done_verified — HELD**: sprint success_metric binds done_verified to LIVE-server RAW-verify; QA did code+unit ONLY (stale images). Flipping now = false-green vs the sprint's own DoD. Code-complete now; flip post-rebuild live GREEN (po-s100 precedent).
-
-**Board drift FOUND + corrected** (router framing "all 7 DONE_VERIFIED" was optimistic): P0-1/P0-4 sat in ready[] @status:READY = LIVE re-dispatch hazard; other 5 carried premature DONE_VERIFIED while misplaced. Reconciled via `scripts/po-s124-market-indicator-depth-p0-codecomplete-reconcile.jq` (relocate 7 → done[] code-complete + WITHHELD gate; BA spec → done_verified; umbrella stays ACTIVE + verification_gate). orch-apply rc=0, conservation 40→40.
-
-**Lock:** router holds task:MARKET-INDICATOR-DEPTH-P0 (coordination session) — NOT released (sprint not terminal). Router drives rebuild→verify→done_verified.
+**Head UNTOUCHED** — dev-team anomaly loop (session 693817d0/router) owns `.head` on BA-DEFERRED-SCHEDULER (DIFFERENT lane). Presence + orphan probe clean, no collision. No active_sprint opened (board-task suffices).
 
 ## Carry-over
-- NEXT (router): route ops single-svc rebuild (3 svcs) → router/qa RAW-verify LIVE → flip 7 done_verified + umbrella → DONE (terminal/cold-evictable).
-- FU queued in decision doc: [P1] consumer-wiring verify (each tool consumed by ≥1 helper agent — the ORIGIN intent); [P1] frontend gauge cards (6 scalars, freshness-badge); [P1] next wave IND-P1-*/P2-* (rows 341-361); [P3] gauge-contract polish (rv_20d_percentile co-located confidence; omo_curve missing from liquidityStateTools Zod).
+- NEXT: dev-team router PRE-CLAIMs + dispatches IND-P1-CONSUMER-WIRING-AUDIT (ready[], next_agent=cowork-refactory-expert) on its next triage tick. I do NOT spawn (no Task tool; not my lane to dispatch).
+- AFTER wiring in review/done: next planning tick promotes the momentum sub-wave (ROC + FOREIGN-ACCUM-RANK highest-leverage) + frontend cards.
+- P3 gauge polish folded into IND-P1-FRONTEND-GAUGE-CARDS.depends_polish (backend: rv_20d_percentile confidence; omo_curve missing from liquidityStateTools Zod).
 - 98 pre-existing orch coherence warnings (SHG migration, other sprints) — NOT mine; non-blocking.
-- Decision detail: `docs/agent-memory/decisions/sprint-MARKET-INDICATOR-DEPTH-P0-po.md` § po-S3.
+- Detail: `docs/agent-memory/decisions/sprint-MARKET-INDICATOR-DEPTH-P0-po.md` § po-S4.

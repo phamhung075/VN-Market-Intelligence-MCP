@@ -63,3 +63,15 @@ Router routes ops on this authorization. After rebuild → router/qa RAW-verify 
 - **[P1]** Frontend gauge surfacing: expose the 6 gauge scalars (rv_20d_percentile, foreign_outflow_z_5d, news_sentiment_z, insider net_sentiment_score, breadth_z_score, liquidity_stress_score) as dashboard cards under the freshness-badge program (project_frontend_freshness_transparency).
 - **[P1]** Next indicator wave: the 16 IND-P1-* + 4 IND-P2-* rows already in backlog (rows 341-361); † momentum items unblock once OHLCV backfill is LIVE-confirmed.
 - **[P3 — gauge-contract polish, NON-BLOCKING, fold into P1]** (i) rv_20d_percentile scalar lacks co-located unit/confidence/null_reason (volatility proxy adds only source_tier+fetched_at); (ii) omo_curve absent from liquidityStateTools Zod schema (raw passthrough bypasses Zod validation).
+
+---
+
+### STEP po-S4 · po · 2026-06-30T00:57:18Z — P1 PHASE SCOPE + SEQUENCE (router-spawned, coord d3292ca4)
+**task-id:** IND-P1-CONSUMER-WIRING-AUDIT
+**what-done:** P0 umbrella reached done_verified (7 deliverables done[] dv=true lg=LIVE_VERIFIED; OHLCV-BACKFILL-P0 + P0-2-FOREIGN-ROOM-SUITE LIVE). Via scripts/po-s131 (idempotent, orch-apply.sh): (M1) MINTED both po-signoff follow-ups — IND-P1-CONSUMER-WIRING-AUDIT + IND-P1-FRONTEND-GAUGE-CARDS; (M3) PROMOTED consumer-wiring → ready[] (READY, cowork-refactory-expert, priority high) as the FIRST P1 sub-wave; (M2) UNBLOCKED 4 now-ungated items (ROC-MOMENTUM/RELATIVE-STRENGTH/52W-HIGH-PROXIMITY via OHLCV gate; FOREIGN-ACCUM-RANK via Foreign-Room gate) — kept PLAN-ONLY BACKLOG. Head UNTOUCHED (dev-team anomaly lane owns BA-DEFERRED-SCHEDULER). Pre-write: presence + orphan probe clean, no lane collision.
+**what-considered:**
+- (a) Promote consumer-wiring + 1-3 new indicators (momentum/foreign-accum) together as the first sub-wave.
+- (b) Promote ONLY consumer-wiring; leave new indicators PLAN-ONLY unblocked for next tick.
+- (c) Open a formal P1 active_sprint vs board-task mechanism only.
+**why-decision:** CHOSE (b)+no-new-sprint. LIVE grep ground truth: 0/6 helper flows consume ANY of the 5 new P0 tools — building MORE unconsumed indicators before wiring the existing 5 LIVE ones repeats the exact "tools shipping != agents using" mistake the user named. Agents-first; wiring is the highest-leverage, fully-unblocked, zero-dependency move and the literal core of the origin intent. Row carries the audit_finding + a per-flow wiring_map so the executor scopes against real ground truth (no-fake-data). active_sprint omitted — same program (sprint tag MARKET-INDICATOR-DEPTH-P0), board-task suffices, avoids active_sprints churn.
+**why-change:** Deviates from the router brief's "(1a) consumer-wiring FIRST, then 1-3 highest-leverage new indicators" — I held the new indicators at PLAN-ONLY (unblocked) rather than promoting them this tick, so the wiring lands and proves the consumption pattern before more tools are built. Next planning tick promotes the momentum wave once wiring is in review/done.
