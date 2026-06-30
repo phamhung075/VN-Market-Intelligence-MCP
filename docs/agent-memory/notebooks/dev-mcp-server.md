@@ -1,23 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-30 — CONTAM-10-WRITER (OHLCV-UNIT-CONTAM-WHOLEROW-LT1000)
-
-**Sprint:** OHLCV-UNIT-CONTAM-WHOLEROW-LT1000
-**Session:** e71c7736-a95a-4040-b741-1d48454354f6
-**Task:** CONTAM-10-WRITER — writer-side durability fix (stops NEW whole-row close<1000 contamination at ingest)
-
-Root cause: `detectAndNormalizeScaleFromPrevClose` was blind when prevClose is itself contaminated (whole-series contamination → all historical FPT rows at ~130 → prevClose=130 → ratio≈1 → no correction for incoming contaminated row at close=130).
-
-Fix: added `fetchCleanReferenceCloseMap` (one batched JOIN, full-history scan for close>=1000 AND volume>0 per ticker) and `effectivePrevClose` ternary in Stage 1+3 of `writeOhlcvBatch`. Domain function `normalizeOhlcvToVnd` stays PURE/UNCHANGED — fix is application layer only.
-
-- MOD: `application/usecases/ohlcvWriteService.ts` (CLEAN_CLOSE_FLOOR const + fetchCleanReferenceCloseMap + cleanRefMap call + effectivePrevClose in Stage 3)
-- NEW: `__tests__/OHLCV-WHOLEROW-LT1000-writer-guard.test.ts` (3 tests: TC-WG-1 contaminated→corrected, TC-WG-2 clean→no-regression, TC-WG-3 cheap-stock→no-correction)
-- Commit: `ec8b409c` — 2 explicit paths, leak-clean, in-HEAD
-- tsc: 0 errors; bun test: 3/0 (guard) + 14100/0 (full suite, exit 0); tool-count=182; sched-count=3
-- Rebuild: mcp-server Up healthy, all peers untouched
-
-Zone health: bun test 0 fail, 182 tools intact, scheduler 3 cron.schedule (gen-project-stats verified) | HEALTHY
-
 ## 2026-06-30 — TASK-VNINDEX-RS-B (RC3 Zone B durability)
 
 **Sprint:** TA-CONSUMER-STALE-INDICATORS (RC3)
@@ -182,3 +164,24 @@ Files changed:
 - MOD: `__tests__/1352-ohlcv-startup-probe.test.ts` — TC-1/2/5 row counts updated to healthy range; 5 new SUBTASK-D TCs (10 total, all GREEN)
 
 Zone health: tsc clean (EXIT 0), 10 pass 0 fail (1352 suite), 27 pass 0 fail (3 ohlcv files), toolCount=182 unchanged, scheduler count unchanged | HEALTHY
+
+## 2026-07-01 — CONTAM-11 SPIKE (OHLCV-UNIT-CONTAM-WHOLEROW-LT1000)
+
+**Sprint:** OHLCV-UNIT-CONTAM-WHOLEROW-LT1000
+**Session:** e71c7736-a95a-4040-b741-1d48454354f6
+**Task:** CONTAM-11 — PLAN-ONLY spike: classify ~9,368 residual sub-1000 rows
+
+Two read-only Bun SQLite probes against named-volume market.db. Zero writes. 3-bucket classification:
+
+- **(a) legit-cheap true-cheap** (alltime_max<1000): 13 tickers, 4,519 rows — leave as-is
+- **(a) legit-cheap genuine-decline** (alltime_max>=1000, ratio<100x): 13 tickers, 1,826 rows — leave as-is
+- **(b) true-contaminated** (alltime_max>=1000, ratio>=100x): 9 tickers, 3,023 rows — remediate
+
+True-contaminated: BMP(591r,526x), MCH(589r,381x), HGM(408r,247x), PMC(385r,534x),
+KSV(359r,330x), TOS(351r,506x), AGX(257r,348x), TBD(79r,713x), STS(4r,540x).
+
+Remediation (PLAN-ONLY): Strategy A=VPS external anchor (all 9); Strategy B=540d window+ratio>=200
+floor (KSV+STS+TBD+TOS+AGX, 1,050 rows); Strategy C=official exchange CSV; Strategy D=manual queue.
+
+Findings: docs/agent-memory/decisions/sprint-CONTAM-11-bucket-classification-dev-mcp-server.md
+Zone health: PLAN-ONLY spike — no code change, no DB mutation | HEALTHY
