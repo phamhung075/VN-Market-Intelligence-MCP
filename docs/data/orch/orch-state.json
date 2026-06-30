@@ -9379,6 +9379,40 @@
         "evicted_from_ready_at": "2026-06-30T07:21:11Z",
         "evicted_by": "po",
         "evict_note": "terminal DONE row stale in ready[]; relocated to done[] (conservation, never dropped)"
+      },
+      {
+        "id": "CONTAM-10-MIGRATION",
+        "title": "Write + test repair migration for whole-row close<1000 contamination",
+        "status": "DONE",
+        "type": "TASK-C",
+        "zone": "scripts/migrations/",
+        "size": "M",
+        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "priority": "high",
+        "owner_agent": "developer",
+        "next_agent": "",
+        "depends": null,
+        "detail_ref": null,
+        "created_at": "2026-06-30T20:44:03Z",
+        "created_by": "pm",
+        "updated_at": "2026-06-30T21:07:36Z",
+        "updated_by": "dev-team",
+        "note": "Code task; parallel safe (disjoint files)",
+        "promoted_at": null,
+        "promoted_by": null,
+        "raw_evidence": null,
+        "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
+        "cascade": "developer (code implementation)",
+        "dispatched_at": "2026-06-30T20:46:49Z",
+        "dispatched_by": "dev-team",
+        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+        "dev_commit": "6227e7c8",
+        "done_commits": [
+          "6227e7c8"
+        ],
+        "verification": "dev-team RAW-verify of dev deliverable (own git, NOT agent badge): 6227e7c8 IN-HEAD YES; scope EXACTLY 3 explicit paths (repair-ohlcv-unit-contamination-wholerow-lt1000.ts +452, __tests__/CONTAM-10-repair-ohlcv-wholerow-lt1000.test.ts +476, dev-standards.md +17 = 945 ins) NO -A leak; LEAK-SCAN-CLEAN; both files on disk. DESIGN-INTENT sanity: per-ticker anchor predicate (anchor=most recent <=180d bar close>=1000 AND vol>0; candidate ratio anchor_close/close >= 100 AND close<1000 -- NOT blind close<1000); INDEX_TICKERS (VNINDEX/VN30/HNXINDEX/HNX30/UPCOMINDEX) excluded from BOTH anchor AND candidate; newly-backfilled no-anchor -> skip safe; dry-run default + --live gate + readline confirm + BEGIN IMMEDIATE + post-verify; whole-row all-4-fields. Dev unit-tests 22/0 (exit 0; Bun 1.3.13 JIT shutdown crash AFTER assertions = cosmetic, not a fail). -> qa gate before CONTAM-10-EXEC live run.",
+        "qa_verdict": "APPROVED",
+        "qa_at": "2026-06-30T23:00:00Z"
       }
     ],
     "done_verified": [
@@ -10164,38 +10198,6 @@
         "dispatched_at": "2026-06-30T20:42:10Z",
         "dispatched_by": "dev-team",
         "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000"
-      },
-      {
-        "id": "CONTAM-10-MIGRATION",
-        "title": "Write + test repair migration for whole-row close<1000 contamination",
-        "status": "REVIEW",
-        "type": "TASK-C",
-        "zone": "scripts/migrations/",
-        "size": "M",
-        "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
-        "priority": "high",
-        "owner_agent": "developer",
-        "next_agent": "qa",
-        "depends": null,
-        "detail_ref": null,
-        "created_at": "2026-06-30T20:44:03Z",
-        "created_by": "pm",
-        "updated_at": "2026-06-30T21:07:36Z",
-        "updated_by": "dev-team",
-        "note": "Code task; parallel safe (disjoint files)",
-        "promoted_at": null,
-        "promoted_by": null,
-        "raw_evidence": null,
-        "precedent": "See docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md",
-        "cascade": "developer (code implementation)",
-        "dispatched_at": "2026-06-30T20:46:49Z",
-        "dispatched_by": "dev-team",
-        "sprint_id": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
-        "dev_commit": "6227e7c8",
-        "done_commits": [
-          "6227e7c8"
-        ],
-        "verification": "dev-team RAW-verify of dev deliverable (own git, NOT agent badge): 6227e7c8 IN-HEAD YES; scope EXACTLY 3 explicit paths (repair-ohlcv-unit-contamination-wholerow-lt1000.ts +452, __tests__/CONTAM-10-repair-ohlcv-wholerow-lt1000.test.ts +476, dev-standards.md +17 = 945 ins) NO -A leak; LEAK-SCAN-CLEAN; both files on disk. DESIGN-INTENT sanity: per-ticker anchor predicate (anchor=most recent <=180d bar close>=1000 AND vol>0; candidate ratio anchor_close/close >= 100 AND close<1000 -- NOT blind close<1000); INDEX_TICKERS (VNINDEX/VN30/HNXINDEX/HNX30/UPCOMINDEX) excluded from BOTH anchor AND candidate; newly-backfilled no-anchor -> skip safe; dry-run default + --live gate + readline confirm + BEGIN IMMEDIATE + post-verify; whole-row all-4-fields. Dev unit-tests 22/0 (exit 0; Bun 1.3.13 JIT shutdown crash AFTER assertions = cosmetic, not a fail). -> qa gate before CONTAM-10-EXEC live run."
       }
     ],
     "ready": [
