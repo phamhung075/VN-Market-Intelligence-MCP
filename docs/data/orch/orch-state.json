@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "OHLCV-DEPTH-SUBTASK-B",
-    "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-30T14:45:45Z",
+    "active_task_id": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+    "next_agent": "po",
+    "updated_at": "2026-06-30T15:12:12Z",
     "updated_by": "dev-team",
-    "note": "Tick 14:37Z dispatch: OHLCV-DEPTH-SUBTASK-B -> dev-mcp-server. Server-side /api/ohlcv-backfill-done verify+re-queue (server.ts:1423-1444): accept {bars_pushed_total}; post-done depth-probe watchlist; any cnt<252 WARN+re-queue done=0; retry_count>=5 -> Telegram BUG (R-5 retry-storm cap). Dep SUBTASK-A DONE_VERIFIED (33479360) satisfied. WIP=2 (epic+B). Drain clean (1 cowork-fire heartbeat errors=[] PO-noop; 0 NEW queue rows); CI ci_red a3af26b6 deduped (push-gated, BASH-SHIM-owned). SUBTASK-C/D P1 deferred. 20 commits ahead origin (push gated)."
+    "note": "Tick 14:37Z CLOSED. SUBTASK-B DONE_VERIFIED (impl c8557899, memory d7ae4b0f): /api/ohlcv-backfill-done now parses bars_pushed_total, depth-probes watchlist (LEFT JOIN, 252-bar floor), re-queues done=0 retry_count+1 on shortfall, R-5 cap retry_count>=5 -> Telegram BUG no-requeue. Schema +retry_count (guarded ALTER). RAW-verify: merge gate 0/0/0(c2 benign), DJ-S8, tests RE-RUN host 5pass/0fail with observed branch logs. EPIC P0 mechanism (E+A+B) COMPLETE. REMAINING (next_agent=po): C/D P1 observability + mcp-server REBUILD (B inert until rebuild) + brief-4 cross-restart gate (after rebuild + full-universe backfill). WIP=1 (epic). origin/main advanced to c8557899 (prior divergence pushed externally); only d7ae4b0f unpushed."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9472,6 +9472,41 @@
           "33479360"
         ],
         "verification": "dev-team RAW-verify (disk+live+serving): commit 33479360 HEAD, explicit-paths-only (script+DJ, no -A leak); deployed VPS sha256 71b5a5fb==local source byte-identical (-rwxr-xr-x 11796b); merge gate index-check=0 tree-verify=0 c2-alert=0; DJ dev-mcp-server-S7. Source switch TCBS->VNDirect JUSTIFIED (TCBS http=404 from VPS x-backside-transport FAIL; VNDirect live VCB real data). Serving get_price_history(VCB,730)=502 bars 2024-07-01..2026-06-30 scaled Min52500/Max96800/avg71700 VND -> R-1 norm works; 49-bar floor refuted, depth persists. CAVEATS non-blocking epic-owner: (1) source TCBS->VNDirect material + VNDirect exposes adClose -> architect decide raw vs adjusted; (2) acceptance single-ticker VCB only -> FULL-universe R-2 = SUBTASK-B + brief-4 gate; (3) ~4 deep-2023 wrong-scale bars (~100 VND, close>=100 edge of mandated threshold) OUTSIDE 730d serving window -> CLEAN-OHLCV-INTEGRITY-RESIDUE-REPAIR owns."
+      },
+      {
+        "id": "OHLCV-DEPTH-SUBTASK-B",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "blocking": true,
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "sprint": "MARKET-INDICATOR-DEPTH-P0",
+        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
+        "title": "SUBTASK-B: server-side verification in /api/ohlcv-backfill-done (server.ts:1423-1444) — accept {bars_pushed_total}; post-done depth-probe watchlist; if any cnt<252 WARN+re-queue done=0; retry_count>=5 -> Telegram BUG (R-5 retry-storm cap).",
+        "depends": [
+          "OHLCV-DEPTH-SUBTASK-A"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/server.ts"
+        ],
+        "acceptance": "After VPS real push, server logs depth-verified all watchlist >=252; subsequent restart no re-queue; retry cap enforced server-side.",
+        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
+        "created_by": "po",
+        "created_at": "2026-06-30T13:52:29Z",
+        "baseline_pass": true,
+        "updated_at": "2026-06-30T15:12:12Z",
+        "updated_by": "dev-team",
+        "status_note": "Dep OHLCV-DEPTH-SUBTASK-A DONE_VERIFIED (33479360) -> promoted backlog->ready; next dev-team tick dispatches to dev-mcp-server (server.ts done-endpoint verify+re-queue).",
+        "dispatched_at": "2026-06-30T14:45:45Z",
+        "dispatched_by": "dev-team",
+        "done_at": "2026-06-30T15:12:12Z",
+        "done_commits": [
+          "c8557899"
+        ],
+        "memory_commit": "d7ae4b0f",
+        "verification": "dev-team RAW-verify (disk+logic+tests-rerun): impl commit c8557899 explicit-paths-only (server.ts+schema-market-data.ts+test, no orch-state, no -A leak); memory d7ae4b0f (notebook+DJ-S8). Merge gate index-check=0 tree-verify=0 c2-alert=benign(chore-memory touches decisions/DJ). DJ dev-mcp-server-S8 complete. Handler logic inspected REAL+CORRECT: bars_pushed_total number-guard (empty/non-JSON->null idempotent secondary poll still marks done=1); depth-probe LEFT JOIN watchlist->daily_ohlcv (cnt=0 for zero-bar codes); cnt<252 WARN; R-5 cap reads last done-row retry_count, >=5 -> sendTelegramBug + NO re-queue, else INSERT done=0 retry_count+1 (increments propagate across poll cycles); probe inner try/catch non-fatal (HTTP 200 preserved). Schema migration guarded PRAGMA table_info + ALTER TABLE ADD COLUMN retry_count DEFAULT 0 (not UNIQUE, no silent no-op). Tests RE-RUN on host bun 1.3.13 = 5 pass/0 fail/17 expects with observed logs: BT-1 bars=500, BT-2 empty-body null idempotent, BT-3 VTST:10 shortfall->requeue retry_count=1, BT-4 retry cap>=5->BUG+telegram-skip, BT-5 all>=252 depth-verified. NOTE: handler change INERT until mcp-server container REBUILD; brief-4 cross-restart gate deferred (needs rebuild + full-universe backfill run)."
       }
     ],
     "head": {
@@ -9493,7 +9528,7 @@
         "user_prioritized": true,
         "zone": "apps/mcp-server/",
         "owner": "architect",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "po",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
         "title": "daily_ohlcv persists only ~49 bars (uniform 2026-04-23 floor across ALL tickers) despite OHLCV-BACKFILL-P0 (2yr) — root-cause the WRITER/retention/backfill-lookback and persist >=252 bars (target ~504/2yr). Indicator-program CRITICAL PATH: unblocks roc/RS/52w momentum cards + volatility/breadth gauges + the OHLCV-derived next-wave indicators.",
         "supersedes_depth_gap_of": "OHLCV-BACKFILL-P0",
@@ -9514,43 +9549,14 @@
         "depends": [],
         "created_by": "po-s135",
         "created_at": "2026-06-30T07:53:47Z",
-        "updated_at": "2026-06-30T13:52:29Z",
-        "updated_by": "po",
+        "updated_at": "2026-06-30T15:12:12Z",
+        "updated_by": "dev-team",
         "dispatched_at": "2026-06-30T12:56:00Z",
         "dispatched_by": "dev-team",
         "architect_done": true,
         "brief_path": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
         "brief_commit": "30659cca",
-        "status_note": "EPIC parent. PO materialized 5 sub-tasks A-E (po triage 13:37Z). DAG: E(prereq,ready)->A(vps-script)->B(server-verify); C,D=P1 observability independent. E dispatched THIS tick (WIP=2: epic+E). A,B,C,D in backlog awaiting E. Epic resumes PO sign-off when all children DONE_VERIFIED + cross-restart depth gate (>=252 bars persists post-restart) passes."
-      },
-      {
-        "id": "OHLCV-DEPTH-SUBTASK-B",
-        "status": "IN_PROGRESS",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P0",
-        "blocking": true,
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "parent": "FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR",
-        "title": "SUBTASK-B: server-side verification in /api/ohlcv-backfill-done (server.ts:1423-1444) — accept {bars_pushed_total}; post-done depth-probe watchlist; if any cnt<252 WARN+re-queue done=0; retry_count>=5 -> Telegram BUG (R-5 retry-storm cap).",
-        "depends": [
-          "OHLCV-DEPTH-SUBTASK-A"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/server.ts"
-        ],
-        "acceptance": "After VPS real push, server logs depth-verified all watchlist >=252; subsequent restart no re-queue; retry cap enforced server-side.",
-        "detail_ref": "docs/architecture-briefs/2026-06-30-FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR.md",
-        "created_by": "po",
-        "created_at": "2026-06-30T13:52:29Z",
-        "baseline_pass": true,
-        "updated_at": "2026-06-30T14:45:45Z",
-        "updated_by": "dev-team",
-        "status_note": "Dep OHLCV-DEPTH-SUBTASK-A DONE_VERIFIED (33479360) -> promoted backlog->ready; next dev-team tick dispatches to dev-mcp-server (server.ts done-endpoint verify+re-queue).",
-        "dispatched_at": "2026-06-30T14:45:45Z",
-        "dispatched_by": "dev-team"
+        "status_note": "EPIC P0 mechanism COMPLETE: SUBTASK-E (VPS deploy gate) + A (fetch-ohlcv-backfill.sh VNDirect+normalize+R3+R2+bars_pushed_total, sha 71b5a5fb deployed) + B (server /api/ohlcv-backfill-done depth-probe+re-queue+R-5 cap, c8557899) all DONE_VERIFIED. REMAINING: (1) SUBTASK-C/D P1 observability (backlog, no deps); (2) mcp-server container REBUILD (B handler inert until rebuilt -- PO->ops single-svc force-recreate-with-build); (3) brief-4 Cross-Restart Verification Gate (depth>=252 / tool-layer / indicator-unlock / persistence-after-restart / non-watchlist-universe) runs AFTER rebuild + full-universe R-2 backfill run. next_agent=po prioritizes C/D + sequences rebuild/gate."
       }
     ],
     "ready": [],
