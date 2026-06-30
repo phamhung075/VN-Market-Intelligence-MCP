@@ -9576,6 +9576,16 @@
         "dispatched_at": "2026-06-30T22:52:58Z",
         "dispatched_by": "dev-team",
         "closure": "SPIKE COMPLETE + dev-team RAW-verified (own readonly live-DB probe + git, NOT agent badge): commit 323b512b doc-only (findings 294L + dev-mcp-server notebook), ZERO orch-state/code/scripts, leak-clean, in-HEAD. ZERO live mutation PROVEN: daily_ohlcv residual (close<1000 vol>0 non-index) STILL 9869 = CONTAM-10-EXEC baseline unchanged. Bucket math reconciled: agent total 9368 = true unanchored population 9367 (off-by-1 vol=0 edge row); correctly scoped to the genuinely-unanchored subset (the ~502 gap vs full 9869 residual = anchored-legit rows CONTAM-10 left by design, ratio<100). BUCKETS: (a) legit-cheap 6345 rows/26 tickers [4519 true-penny incl SLS/NTC/WCS/VCF + 1826 genuine-decline ratio<100x, VNZ largest 1.29x] -> LEAVE; (b) contaminated-anchorless 3023 rows/9 tickers [BMP 591/MCH 589/HGM 408/PMC 385/KSV 359/TOS 351/AGX 257/TBD 79/STS 4] -> remediate. Spot-checked 5/5 bucket-b (BMP/MCH/KSV/TBD/STS): all contamination signature alltime_max 72.5k-99.9k, serving ~100, ratio 714-999x, no 180d anchor (KSV borderline 181d). Remediation proposed WITHOUT predicate-widen: A=VPS-anchor fetch (primary, all 9), B=540d window ratio>=200x floor (KSV/STS/TBD/TOS/AGX), C=SSC/HOSE archive (BMP/MCH/PMC/HGM), D=manual-review queue. Follow-on CONTAM-11-REMEDIATE minted backlog (destructive x1000 UPDATE -> PO go/no-go). findings: docs/agent-memory/decisions/sprint-CONTAM-11-bucket-classification-dev-mcp-server.md"
+      },
+      {
+        "id": "FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR",
+        "type": "FIX",
+        "zone": "agents",
+        "status": "DONE",
+        "owner": "agent-father",
+        "done_at": "2026-07-01T00:08Z",
+        "commit": "b57869e9",
+        "verification": "PASS: carry-only→degraded ASSERT confirmed; full-walk→full ASSERT confirmed; gap-token→full ASSERT confirmed"
       }
     ],
     "done_verified": [
@@ -10389,35 +10399,6 @@
           "get_bctc_ocf returns OCF without the no-such-column error for a ticker with cash-flow data; SELECT column names match the live schema.",
           "Test 1909b-get-bctc-ocf updated + green; no DB mutation; no regression to other financial-reports tools."
         ]
-      },
-      {
-        "id": "FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR",
-        "type": "FIX",
-        "zone": "agents",
-        "priority": "P2",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "plan_only": false,
-        "next_agent": "agent-father",
-        "route_to": "agent-father",
-        "title": "chef.md Step 7.5 L2_OK admits carry-proxy as full L2 walk — tighten floor (require US PMI OR EFFR-IORB OR explicit [gap:US_macro_unavailable] token)",
-        "desc": "Step 7.5 sub-check (a) L2_OK keys on subjective \"US macro stack was substantively walked in Step 3\" with NO minimum-element floor (chef.md:400-402). A dish that walked ONLY the carry/FX posture (SBV/carry, chef.md:166) can self-certify L2_OK=TRUE -> QUALITY:full while the US-stack core (Manufacturing PMI chef.md:161 + Fed/EFFR-IORB spread chef.md:163) is silently absent and NO [gap:] token is written. Recurrence-class: F-EVENING-QUALITY-OVERCLAIM (c98) -> Step 7.5 gate added c99 -> still-leaky c102. FIX: redefine L2_OK = (US PMI cited with data) OR (EFFR-IORB spread cited with data) OR (explicit [gap:US_macro_unavailable]/[gap:macro_health_missing] token written) — carry-proxy alone is NOT a substantive L2 walk. agent-father owns chef.md.",
-        "files": [
-          "docs/agents/unified-agent/flow/chef.md"
-        ],
-        "verification_gate": "After fix: a dish whose L2 cites ONLY SBV/carry (no US PMI, no EFFR-IORB, no gap token) MUST compute L2_OK=FALSE -> QUALITY:degraded. Verify by re-applying the deterministic gate to the 2026-06-29 evening dish input (carry-only) and asserting degraded.",
-        "recurrence_of": "F-EVENING-QUALITY-OVERCLAIM",
-        "source_signal": "tnb-audit c102 F-QUALITY-VERDICT-SUSPICIOUS",
-        "note": "PO RAW-assessed the gate SPEC (not the single live dish) — hole exists in the definition regardless of whether 2026-06-29 evening tripped it. PO read chef.md:388-439. Live-dish confirmation (was a gap token actually written?) deferred to TNB c103 WORK [CHEF-DETAIL] read; spec-fix is durable either way. | PROMOTED 23:07Z tick: tnb-audit c103 APPLIED the cure to chef.md (live-uncommitted M). agent-father to VERIFY the 12-line diff vs verification_gate (re-apply deterministic gate to a carry-only dish -> assert QUALITY:degraded) then COMMIT chef.md (agent-owned -- do NOT let Step 0a blind-commit a LIVE methodology change).",
-        "created_at": "2026-06-29T20:57:33Z",
-        "created_by": "po",
-        "owner": "agent-father",
-        "owner_agent": "agent-father",
-        "dispatcher": "dev-team",
-        "dispatched_at": "2026-06-30T23:29:07Z",
-        "dispatched_by": "dev-team",
-        "updated_at": "2026-06-30T23:29:07Z",
-        "updated_by": "dev-team"
       }
     ],
     "ready": [],
