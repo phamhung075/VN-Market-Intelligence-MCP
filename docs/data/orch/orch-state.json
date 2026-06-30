@@ -7282,20 +7282,6 @@
         "note": "PO RAW-assessed the gate SPEC (not the single live dish) — hole exists in the definition regardless of whether 2026-06-29 evening tripped it. PO read chef.md:388-439. Live-dish confirmation (was a gap token actually written?) deferred to TNB c103 WORK [CHEF-DETAIL] read; spec-fix is durable either way.",
         "created_at": "2026-06-29T20:57:33Z",
         "created_by": "po"
-      },
-      {
-        "id": "BA-IND-P1-MOMENTUM-RS",
-        "title": "BA spec: P1 Momentum & RS wave — get_roc_momentum (apps/technical-analysis), get_relative_strength (apps/technical-analysis), get_52w_proximity (apps/technical-analysis), get_foreign_accum_rank (apps/stock-price). Spec: docs/handoffs/BA-IND-P1-MOMENTUM-RS.md. 0 PO blockers; 5 ARCH-RATIFY items (non-blocking). Next: architect (zone-split: 3x TA + 1x stock-price).",
-        "owner": "ba",
-        "status": "DONE",
-        "zone": "docs/handoffs/",
-        "created_at": "2026-06-30T01:41:01Z",
-        "closed_at": "2026-06-30T01:50:00Z",
-        "priority": "high",
-        "sprint": "MARKET-INDICATOR-DEPTH-P0",
-        "type": "SPRINT-M",
-        "size": "M",
-        "note": "Covers IND-P1-ROC-MOMENTUM + IND-P1-RELATIVE-STRENGTH + IND-P1-52W-HIGH-PROXIMITY + IND-P1-FOREIGN-ACCUM-RANK. All specced_under=BA-IND-P1-MOMENTUM-RS per roadmap annotation. Multi-zone split mandatory: 3x apps/technical-analysis, 1x apps/stock-price."
       }
     ],
     "closed_sprints": [
@@ -8468,8 +8454,8 @@
         "tier": "P1",
         "title": "BA spec — IND-P1 Momentum & Relative-Strength factor sub-wave: 4 NEW backend indicator tools (ROC-Momentum 12-1, Cross-Sectional Relative-Strength, 52W-High Proximity, Foreign-Accumulation Momentum Rank)",
         "status": "READY",
-        "owner": "ba",
-        "next_agent": "ba",
+        "owner": "architect",
+        "next_agent": "architect",
         "zone": "multi",
         "priority": "medium",
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
@@ -8486,7 +8472,20 @@
         "contract": "HARD no-fake-data gate (roadmap top-rule): every value computed from data already on hand / already fetched (Tier 1-3 real). Honest-NULL on absent source — same contract the 5 P0 tools hold (return null + blocked_reason/null_reason, NEVER a fabricated distribution). Each tool ships a gauge scalar + source_tier + fetched_at, and (folding the P0 FOLLOW-UP) co-located unit/confidence/null_reason.",
         "cascade": "BA spec -> architect blueprint (MUST SPLIT multi-zone: 3x apps/technical-analysis [ROC, RS, 52W] + 1x apps/stock-price [Foreign-Accum-Rank]) -> pm decomposition into per-tool dev tasks (supersedes the 4 IND-P1-* placeholders) -> dev -> qa. Full gate IN EFFECT (roadmap §6) — genuinely new analytical features.",
         "consumer_intent": "Serves the user STANDING intent 'more indices so the helper agents analyze the market better' — these are NEW indices for the analyst agents (MW/CHEF/AC/DP/TNB/NS), the direct continuation now that IND-P1-CONSUMER-WIRING-AUDIT proved the P0 consumption pattern (done_verified 3fd6e151).",
-        "gate_proof": "Unblocked: OHLCV-BACKFILL-P0 + P0-2-FOREIGN-ROOM-SUITE both done[] done_verified=true live_gate=LIVE_VERIFIED (router RAW-verified 2026-06-30); IND-P1-CONSUMER-WIRING-AUDIT done_verified (3fd6e151)."
+        "gate_proof": "Unblocked: OHLCV-BACKFILL-P0 + P0-2-FOREIGN-ROOM-SUITE both done[] done_verified=true live_gate=LIVE_VERIFIED (router RAW-verified 2026-06-30); IND-P1-CONSUMER-WIRING-AUDIT done_verified (3fd6e151).",
+        "ba_spec_complete": true,
+        "ba_commit": "ba562100",
+        "ba_handoff": "docs/handoffs/BA-IND-P1-MOMENTUM-RS.md",
+        "ba_completed_at": "2026-06-30T01:50:00Z",
+        "arch_ratify_open": [
+          "ARCH-RATIFY-RS-1 (VN-Index cross-sectional RS = daily_ohlcv row only, no runtime fetch; confirm ticker_id)",
+          "ARCH-RATIFY-ROC-1 (ROC factor-return = compute-on-read P1)",
+          "ARCH-RATIFY-FAR-1 (ADTV unit vol-vs-VND; probe vnstock_trading_stats live)",
+          "ARCH-RATIFY-FAR-2 (ADTV normalization basis)",
+          "52W-MA200 denominator_ma200 field required (sample transparency for pct_above_ma200)"
+        ],
+        "reconciled_by": "router:ba-handoff-dedup",
+        "reconcile_note": "BA minted a duplicate DONE row in backlog[] and left this ready[] row un-transitioned (next_agent=ba). Router removed the dup and advanced this single row to next_agent=architect. BA spec verified sound (commit ba562100; 295-line handoff). Zone split MANDATORY downstream: 3x apps/technical-analysis (ROC, RS, 52W) + 1x apps/stock-price (foreign-accum-rank)."
       },
       {
         "id": "IND-P1-FRONTEND-GAUGE-CARDS",
@@ -8610,6 +8609,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T01:35:09Z",
-  "_updated_by": "po-s132"
+  "_updated_at": "2026-06-30T01:48:51Z",
+  "_updated_by": "router:reconcile:BA-IND-P1-MOMENTUM-RS-handoff"
 }
