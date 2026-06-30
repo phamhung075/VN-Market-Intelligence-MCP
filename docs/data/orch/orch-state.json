@@ -8391,7 +8391,7 @@
         "owner": "cowork-refactory-expert",
         "zone": "cross-service",
         "priority": "high",
-        "status": "READY",
+        "status": "REVIEW",
         "plan_only": false,
         "sprint": "MARKET-INDICATOR-DEPTH-P0",
         "roadmap_ref": "docs/roadmaps/vn-market-indicator-roadmap.md",
@@ -8449,7 +8449,10 @@
           ]
         },
         "generic_mandate": "For EACH of the 6 flows: (1) RAW-verify (grep the flow .md tree) which gateway tools it currently calls; (2) wire the verified new P0 tool(s) into the flow's analysis step via the gateway call_tool wrapper (server=vn-market, bare tool name); (3) honest-NULL handling — a tool may return honest-NULL/honest-error (breadth accrues forward, net_outstanding can be blocked_reason NULL); the flow MUST degrade gracefully and NEVER fabricate; (4) Vietnamese only for FB/MARKET output text, English for work. wiring_map is a RECOMMENDATION — do NOT add a tool to a flow where it has no analytical purpose.",
-        "verification_gate": "Sprint success_metric: 'each indicator consumed by >=1 helper agent'. PASS when: each of the 5 new P0 tools is called by >=1 helper flow (grep shows the tool name in the flow .md); each wired call has a graceful honest-NULL path; no fabrication; the cowork team flows still pass their own gates."
+        "verification_gate": "Sprint success_metric: 'each indicator consumed by >=1 helper agent'. PASS when: each of the 5 new P0 tools is called by >=1 helper flow (grep shows the tool name in the flow .md); each wired call has a graceful honest-NULL path; no fabrication; the cowork team flows still pass their own gates.",
+        "reviewed_by": "cowork-refactory-expert",
+        "review_completed_at": "2026-06-30T01:15:00Z",
+        "wiring_status": "COMPLETE - all 5 tools wired into >=1 consumer flow each"
       }
     ],
     "review": [
