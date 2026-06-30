@@ -71,6 +71,27 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 ---
 
+---
+
+### 2026-06-30 — IND-P1-TECHNICAL-ANALYSIS-SUITE — 3 P1 momentum tools
+
+**Task:** IND-P1-TECHNICAL-ANALYSIS-SUITE (sprint MARKET-INDICATOR-DEPTH-P0, commit 4842fd6f)
+
+**Status:** REVIEW — REBUILD_REQUIRED: YES.
+
+**Scope:** 3 new tools in Go pkg/:
+- `POST /ta/roc-momentum` — 12-1 Jegadeesh-Titman ROC, cross-sectional z-score/decile, factor-return per decile, feed-forward scalar `momentum_factor_z`.
+- `POST /ta/relative-strength` — Mansfield RS vs VNINDEX (daily_ohlcv.code='VNINDEX', 48 rows confirmed), 63/126/252d horizons, cross-sectional percentile, feed-forward scalar `market_rs_composite`.
+- `POST /ta/52w-proximity` — 52w high/low, MA50/MA200 inline SMA, AT_HIGH/NEAR_HIGH/MID_RANGE/NEAR_LOW/AT_LOW labels, `net_new_highs` aggregate, `denominator_ma200` field.
+
+**Honest-NULL:** With ~48 bars in live DB, all tickers return null + null_reason ("insufficient_history") — designed PASS state per contract.
+
+**Architecture:** RouterConfig struct (replaces variadic NewRouter). SQLiteMultiTickerOHLCVRepository single IN-clause batch fetch. Domain services pure functions. 25 files, all go test + go vet GREEN.
+
+**Board:** IND-P1-ROC-MOMENTUM, IND-P1-RELATIVE-STRENGTH, IND-P1-52W-HIGH-PROXIMITY → review lane, next_agent=qa.
+
+---
+
 ## Archive
 
 [Archived to git history; retained: 3 most recent cycles. Full history in git log.]
