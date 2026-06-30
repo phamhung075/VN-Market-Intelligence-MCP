@@ -67,13 +67,14 @@ function seedOhlcv(db: Database, code: string, rowCount: number): void {
 
 describe("Task 1352 — ohlcv-startup-probe", () => {
 
-  // TC-1: sparse — 2 tickers with < 8 rows each (VNM=20 ok, FPT=5 sparse, VCB=0 sparse)
-  // sendWorkFn called once, message contains FPT(5) and VCB(0), does NOT mention VNM
+  // TC-1: sparse — 2 tickers with < 8 rows each (VNM=300 healthy, FPT=5 sparse, VCB=0 sparse)
+  // sendWorkFn called once (sparse alert only — VNM is healthy and not shallow),
+  // message contains FPT(5) and VCB(0), does NOT mention VNM.
   // sparseTickers.length === 2, sent === true
   it("TC-1: sparse tickers found — sendWorkFn called once, sparse list in message", async () => {
     const db = makeDb();
     seedWatchlist(db, ["VNM", "FPT", "VCB"]);
-    seedOhlcv(db, "VNM", 20);
+    seedOhlcv(db, "VNM", 300); // healthy (≥252) — no alert
     seedOhlcv(db, "FPT", 5);
     // VCB has 0 rows (absent from daily_ohlcv)
 
@@ -89,18 +90,19 @@ describe("Task 1352 — ohlcv-startup-probe", () => {
     const msg = calls[0] ?? "";
     expect(msg).toContain("FPT(5)");
     expect(msg).toContain("VCB(0)");
-    expect(msg).not.toContain("VNM(20)");
+    expect(msg).not.toContain("VNM");
     expect(msg).toContain("backfill");
     expect(result.sparseTickers).toHaveLength(2);
     expect(result.sent).toBe(true);
   });
 
-  // TC-2: populated — all tickers have >= 8 rows → sendWorkFn NOT called
-  it("TC-2: populated DB — sendWorkFn NOT called, sent === false", async () => {
+  // TC-2: healthy — all tickers have >= 252 rows (DEPTH_FLOOR) → sendWorkFn NOT called
+  // (Tickers with 8–251 rows are shallow and DO trigger an alert; healthy means ≥252.)
+  it("TC-2: healthy DB — sendWorkFn NOT called, sent === false", async () => {
     const db = makeDb();
     seedWatchlist(db, ["VNM", "FPT"]);
-    seedOhlcv(db, "VNM", 20);
-    seedOhlcv(db, "FPT", 15);
+    seedOhlcv(db, "VNM", 300); // healthy
+    seedOhlcv(db, "FPT", 300); // healthy
 
     const calls: string[] = [];
     const sendWorkFn = async (msg: string): Promise<boolean> => {
@@ -155,9 +157,9 @@ describe("Task 1352 — ohlcv-startup-probe", () => {
     expect(result?.sent).toBe(false);
   });
 
-  // TC-5: boundary — exactly 7 rows → sparse (included in alert)
-  //                  exactly 8 rows → NOT sparse (silent)
-  it("TC-5: boundary — 7 rows is sparse, 8 rows is silent", async () => {
+  // TC-5: boundary — exactly 7 rows → sparse (included in sparse alert)
+  //                  exactly 252 rows → healthy (silent — at DEPTH_FLOOR, not shallow)
+  it("TC-5: boundary — 7 rows is sparse, 252 rows is healthy/silent", async () => {
     // --- 7 rows (sparse) ---
     const db7 = makeDb();
     seedWatchlist(db7, ["HPG"]);
@@ -175,22 +177,158 @@ describe("Task 1352 — ohlcv-startup-probe", () => {
     expect(result7.sparseTickers).toHaveLength(1);
     expect(result7.sent).toBe(true);
 
-    // --- 8 rows (not sparse) ---
+    // --- 252 rows (healthy — at DEPTH_FLOOR, no alert) ---
+    const db252 = makeDb();
+    seedWatchlist(db252, ["HPG"]);
+    seedOhlcv(db252, "HPG", 252);
+
+    const calls252: string[] = [];
+    const sendFn252 = async (msg: string): Promise<boolean> => {
+      calls252.push(msg);
+      return true;
+    };
+
+    const result252 = await runOhlcvStartupProbe({ db: db252, sendWorkFn: sendFn252 });
+
+    expect(calls252).toHaveLength(0);
+    expect(result252.sparseTickers).toHaveLength(0);
+    expect(result252.sent).toBe(false);
+  });
+
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUBTASK-D — DEPTH_FLOOR shallow classification (FIX-OHLCV-DEPTH-PERSIST-DAILY-OHLCV-2YR)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("SUBTASK-D — ohlcv depth-floor shallow classification", () => {
+  // TD-1: cnt < 8 → sparse path unchanged
+  // Sparse alert still fires as before; backfill still triggered; shallowTickers empty.
+  it("TD-1: cnt<8 — sparse path unchanged, sparse alert fires, shallowTickers empty", async () => {
+    const db = makeDb();
+    seedWatchlist(db, ["VCB"]);
+    seedOhlcv(db, "VCB", 3); // sparse
+
+    const calls: string[] = [];
+    const sendWorkFn = async (msg: string): Promise<boolean> => {
+      calls.push(msg);
+      return true;
+    };
+
+    const result = await runOhlcvStartupProbe({ db, sendWorkFn, runBackfillFn: noopBackfill });
+
+    expect(result.sparseTickers).toHaveLength(1);
+    expect(result.sparseTickers[0]).toEqual({ code: "VCB", count: 3 });
+    expect(result.shallowTickers).toHaveLength(0);
+    expect(result.sent).toBe(true);
+    expect(result.shallowSent).toBe(false);
+    // Sparse alert was sent
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toContain("VCB(3)");
+    expect(calls[0]).toContain("backfill");
+  });
+
+  // TD-2: 8 <= cnt < 252 → classified as shallow + ONE aggregated alert (not per-ticker)
+  it("TD-2: 8<=cnt<252 — classified shallow, ONE aggregated Telegram WORK call, not per-ticker", async () => {
+    const db = makeDb();
+    seedWatchlist(db, ["HPG", "VCB", "FPT"]);
+    seedOhlcv(db, "HPG", 49);  // shallow
+    seedOhlcv(db, "VCB", 100); // shallow
+    seedOhlcv(db, "FPT", 200); // shallow
+
+    const calls: string[] = [];
+    const sendWorkFn = async (msg: string): Promise<boolean> => {
+      calls.push(msg);
+      return true;
+    };
+
+    const result = await runOhlcvStartupProbe({ db, sendWorkFn });
+
+    // Exactly ONE Telegram WORK call for all shallow tickers combined
+    expect(calls).toHaveLength(1);
+
+    // All three shallow tickers listed in the single message
+    expect(calls[0]).toContain("HPG(49)");
+    expect(calls[0]).toContain("VCB(100)");
+    expect(calls[0]).toContain("FPT(200)");
+    expect(calls[0]).toContain("252"); // references DEPTH_FLOOR
+
+    // Result fields
+    expect(result.sparseTickers).toHaveLength(0);
+    expect(result.shallowTickers).toHaveLength(3);
+    expect(result.sent).toBe(false);
+    expect(result.shallowSent).toBe(true);
+  });
+
+  // TD-3: cnt >= 252 → healthy, no alert at all
+  it("TD-3: cnt>=252 — healthy, no Telegram call, shallowTickers empty", async () => {
+    const db = makeDb();
+    seedWatchlist(db, ["VCB"]);
+    seedOhlcv(db, "VCB", 300); // healthy
+
+    const calls: string[] = [];
+    const sendWorkFn = async (msg: string): Promise<boolean> => {
+      calls.push(msg);
+      return true;
+    };
+
+    const result = await runOhlcvStartupProbe({ db, sendWorkFn });
+
+    expect(calls).toHaveLength(0);
+    expect(result.sparseTickers).toHaveLength(0);
+    expect(result.shallowTickers).toHaveLength(0);
+    expect(result.sent).toBe(false);
+    expect(result.shallowSent).toBe(false);
+  });
+
+  // TD-4: multiple shallow tickers → exactly ONE Telegram WORK call (not one per ticker)
+  it("TD-4: 5 shallow tickers → exactly 1 Telegram WORK call total", async () => {
+    const db = makeDb();
+    const tickers = ["A", "B", "C", "D", "E"];
+    seedWatchlist(db, tickers);
+    // Each ticker has a different count in 8–251 range
+    const counts = [8, 50, 100, 150, 251];
+    tickers.forEach((t, i) => seedOhlcv(db, t, counts[i] as number));
+
+    const calls: string[] = [];
+    const sendWorkFn = async (msg: string): Promise<boolean> => {
+      calls.push(msg);
+      return true;
+    };
+
+    await runOhlcvStartupProbe({ db, sendWorkFn });
+
+    // Must be EXACTLY ONE call regardless of ticker count
+    expect(calls).toHaveLength(1);
+  });
+
+  // TD-5: boundary — exactly 8 rows → shallow (alert), exactly 252 rows → healthy (no alert)
+  it("TD-5: boundary — 8 rows is shallow (alert), 252 rows is healthy (no alert)", async () => {
+    // --- 8 rows (shallow) ---
     const db8 = makeDb();
     seedWatchlist(db8, ["HPG"]);
     seedOhlcv(db8, "HPG", 8);
 
     const calls8: string[] = [];
-    const sendFn8 = async (msg: string): Promise<boolean> => {
-      calls8.push(msg);
-      return true;
-    };
+    await runOhlcvStartupProbe({
+      db: db8,
+      sendWorkFn: async (msg) => { calls8.push(msg); return true; },
+    });
 
-    const result8 = await runOhlcvStartupProbe({ db: db8, sendWorkFn: sendFn8 });
+    expect(calls8).toHaveLength(1); // shallow alert
+    expect(calls8[0]).toContain("HPG(8)");
 
-    expect(calls8).toHaveLength(0);
-    expect(result8.sparseTickers).toHaveLength(0);
-    expect(result8.sent).toBe(false);
+    // --- 252 rows (healthy — at DEPTH_FLOOR) ---
+    const db252 = makeDb();
+    seedWatchlist(db252, ["HPG"]);
+    seedOhlcv(db252, "HPG", 252);
+
+    const calls252: string[] = [];
+    await runOhlcvStartupProbe({
+      db: db252,
+      sendWorkFn: async (msg) => { calls252.push(msg); return true; },
+    });
+
+    expect(calls252).toHaveLength(0); // no alert — healthy
   });
-
 });
