@@ -388,18 +388,37 @@ function findByLabelExcluding(
  *    (FPT balance sheet rows land in "general" not "balance_sheet" due to layout gap).
  * 2. Among those, prefer rows where code is "280" or "270" over code "440" (equity side).
  * 3. If only code "440" found (Tổng cộng nguồn vốn = same value), accept it.
- * 4. Falls back to null only when no matching label found.
+ * 4. OCR-FALLBACK (FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN): when OCR degrades diacritics
+ *    (e.g. "TÀI SẢN" → "TÀI S᰺ N") the label pattern fails entirely. Fall back to VAS
+ *    codes that canonically map to total assets on Mẫu B01-DN:
+ *      code "280" = TỔNG CỘNG TÀI SẢN (asset side — preferred)
+ *      code "440" = Tổng cộng nguồn vốn / Total L&E (equity side — same value by identity)
+ *    English label fallback: "Total Assets" for fully-English balance sheets.
+ * 5. Falls back to null only when no matching label AND no canonical code found.
  *
  * The balance-identity invariant will catch any wrong pick downstream.
  */
 function findTotalAssetsCorporate(rows: AggregatorRow[]): number | null {
   // Grand-total label pattern: matches "TỔNG CỘNG TÀI SẢN", "TỔNG TÀI SẢN",
-  // and OCR-diacritic-degraded variants.
+  // OCR-diacritic-degraded variants, and English "Total Assets".
   const TOTAL_ASSETS_LABEL =
-    /t[oổ]ng\s+c[oộ]ng\s+t[aà]i\s+s[aả]n|t[oổ]ng\s+t[aà]i\s+s[aả]n/i;
+    /t[oổ]ng\s+c[oộ]ng\s+t[aà]i\s+s[aả]n|t[oổ]ng\s+t[aà]i\s+s[aả]n|\btotal\s+assets\b/i;
 
   const candidates = rows.filter((r) => TOTAL_ASSETS_LABEL.test(r.label));
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) {
+    // OCR-FALLBACK: diacritic degradation (e.g. HVN "TÀI S᰺ N") causes label pattern to fail.
+    // Try VAS codes that canonically map to total assets on Mẫu B01-DN.
+    // Prefer code "280" (asset side) over "440" (equity side — same numeric value by identity).
+    const code280 = rows.find(
+      (r) => r.code?.trim() === "280" && r.value_current !== null,
+    );
+    if (code280 !== undefined) return code280.value_current;
+    const code440 = rows.find(
+      (r) => r.code?.trim() === "440" && r.value_current !== null,
+    );
+    if (code440 !== undefined) return code440.value_current;
+    return null;
+  }
 
   // Among candidates, prefer is_summary_row=1
   const summaries = candidates.filter((r) => r.is_summary_row === 1);
@@ -566,6 +585,29 @@ const P_BANK_CODE_IX_NET_PROFIT_HINT = /l[oợ]i\s+nhu[aậ]n\s+sau\s+thu[eế]/
 //   Code "XIII"→ not used for income: no collision risk (aggregator uses IX for net_profit)
 // All mapped bank income codes (I, VIII, IX) now have labelHints. No further rounds needed.
 
+// ── English corporate label patterns (bilingual PDF support) ──────────────────
+//
+// FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN: refine subagent writes English H1 section
+// titles and English row labels for bilingual PDFs (e.g. HVN).  VAS codes are absent
+// from these rows (code=null) so code-based lookup fails entirely.  These patterns
+// provide label-based fallback on the corporate path (isBankPath=false guard at call-site).
+//
+// Income statement fallbacks (corporate B01-DN only):
+const P_CORP_NET_REVENUE_EN    = /\bnet\s+revenue\b/i;
+const P_CORP_GROSS_PROFIT_EN   = /\bgross\s+profit\b/i;
+const P_CORP_OPERATING_PROFIT_EN = /\boperating\s+profit\b/i;
+// "Profit after tax" / "Net profit after tax" — both map to net_profit (VAS code 60)
+const P_CORP_NET_PROFIT_EN     = /\bprofit\s+after\s+(?:corporate\s+income\s+)?tax\b/i;
+
+// Cash flow fallbacks (both corporate and bank path — English CF labels are universal):
+// "Net cash from operations" / "Net cash generated from operating activities" etc.
+const P_CORP_OPERATING_CF_EN   =
+  /\bnet\s+cash\s+(?:from|generated\s+(?:from|by)|used\s+in)\s+oper/i;
+const P_CORP_INVESTING_CF_EN   =
+  /\bnet\s+cash\s+(?:from|used\s+in)\s+invest/i;
+const P_CORP_FINANCING_CF_EN   =
+  /\bnet\s+cash\s+(?:from|used\s+in)\s+financ/i;
+
 // ── FIX-F label hint patterns ─────────────────────────────────────────────────
 
 /**
@@ -706,10 +748,18 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
       findByLabel(rows, "general", P_BANK_NET_REVENUE),
     );
   }
+  if (net_revenue === null && !isBankPath) {
+    // Corporate English label fallback (bilingual PDF — FIX-BCTC-REFINE-HVN)
+    net_revenue = scale(findByLabel(rows, "income_statement", P_CORP_NET_REVENUE_EN));
+  }
 
   // gross_profit: corporate code "20"; banks have no gross profit concept
-  const gross_profit = scale(findByCode(rows, "20"));
-  // No label fallback for gross_profit — absent for banks → NULL
+  let gross_profit = scale(findByCode(rows, "20"));
+  // No label fallback for gross_profit on bank path (gross_profit N/A for banks)
+  if (gross_profit === null && !isBankPath) {
+    // Corporate English label fallback (bilingual PDF — FIX-BCTC-REFINE-HVN)
+    gross_profit = scale(findByLabel(rows, "income_statement", P_CORP_GROSS_PROFIT_EN));
+  }
 
   // profit_before_tax: corporate code "50", bank code "VIII" (with labelHint) or label-based
   let profit_before_tax = scale(findByCode(rows, "50"));
@@ -743,6 +793,11 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
       findByLabel(rows, "income_statement", P_NET_PROFIT) ??
       findByLabel(rows, "general", P_NET_PROFIT),
     );
+  }
+  if (net_profit === null && !isBankPath) {
+    // Corporate English label fallback: "Profit after tax" / "Net profit after tax"
+    // (bilingual PDF — FIX-BCTC-REFINE-HVN)
+    net_profit = scale(findByLabel(rows, "income_statement", P_CORP_NET_PROFIT_EN));
   }
 
   // ── Balance sheet scalars ─────────────────────────────────────────────────────
@@ -793,7 +848,11 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
 
   // operating_profit: corporate code "30" in income_statement section ONLY.
   // ⚠️  code "30" also appears in cash_flow section (= investing_cf) — section filter is mandatory.
-  const operating_profit = scale(findByCode(rows, "30", undefined, "income_statement"));
+  let operating_profit = scale(findByCode(rows, "30", undefined, "income_statement"));
+  if (operating_profit === null && !isBankPath) {
+    // Corporate English label fallback (bilingual PDF — FIX-BCTC-REFINE-HVN)
+    operating_profit = scale(findByLabel(rows, "income_statement", P_CORP_OPERATING_PROFIT_EN));
+  }
 
   // cash: balance sheet code "110" — Tiền và các khoản tương đương tiền.
   // Present in "general" section for FPT; try both "general" and "balance_sheet".
@@ -809,9 +868,22 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
   //   code "20" income_statement = gross_profit; code "20" cash_flow = operating_cf
   //   code "30" income_statement = operating_profit; code "30" cash_flow = investing_cf
   //   code "40" income_statement = other_profit; code "40" cash_flow = financing_cf
-  const operating_cf = scale(findByCode(rows, "20", undefined, "cash_flow"));
-  const investing_cf = scale(findByCode(rows, "30", undefined, "cash_flow"));
-  const financing_cf = scale(findByCode(rows, "40", undefined, "cash_flow"));
+  let operating_cf = scale(findByCode(rows, "20", undefined, "cash_flow"));
+  if (operating_cf === null) {
+    // English label fallback (bilingual PDF / English-refined sections — FIX-BCTC-REFINE-HVN)
+    // "Net cash from operations" / "Net cash generated from operating activities"
+    operating_cf = scale(findByLabel(rows, "cash_flow", P_CORP_OPERATING_CF_EN));
+  }
+  let investing_cf = scale(findByCode(rows, "30", undefined, "cash_flow"));
+  if (investing_cf === null) {
+    // English label fallback: "Net cash from investing" / "Net cash used in investing activities"
+    investing_cf = scale(findByLabel(rows, "cash_flow", P_CORP_INVESTING_CF_EN));
+  }
+  let financing_cf = scale(findByCode(rows, "40", undefined, "cash_flow"));
+  if (financing_cf === null) {
+    // English label fallback: "Net cash from financing" / "Net cash used in financing activities"
+    financing_cf = scale(findByLabel(rows, "cash_flow", P_CORP_FINANCING_CF_EN));
+  }
 
   // capex: code "21" in cash_flow section — "Tiền chi mua sắm tài sản cố định..."
   // This is a negative number (cash outflow). Stored as-is (negative million VND).

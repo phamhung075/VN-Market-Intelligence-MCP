@@ -37,10 +37,10 @@ import { getDb } from "../../../../infrastructure/db/schema.js";
 // ── DB row type ───────────────────────────────────────────────────────────────
 
 interface BctcOcfRow {
-  ocf_operating: number | null;
-  ocf_investing: number | null;
-  ocf_financing: number | null;
-  confidence: number;
+  ocf_operating: number | null;   // aliased from operating_cf
+  ocf_investing: number | null;   // aliased from investing_cf
+  ocf_financing: number | null;   // aliased from financing_cf
+  confidence: number;             // aliased from extraction_confidence
   extraction_method: string | null;  // REAL DB column — per architect SD-2
 }
 
@@ -127,12 +127,14 @@ export function buildGetBctcOcfHandler(
     const { code, period_year, period_quarter } = parsed.data;
 
     // SELECT extraction_method from DB — REAL column (architect SD-2: do NOT hardcode)
+    // FIX-GET-BCTC-OCF-SQL-COLUMN: live schema uses operating_cf/investing_cf/financing_cf
+    // and extraction_confidence; alias to match BctcOcfRow interface and output envelope.
     const sql = `
       SELECT
-        ocf_operating,
-        ocf_investing,
-        ocf_financing,
-        confidence,
+        operating_cf   AS ocf_operating,
+        investing_cf   AS ocf_investing,
+        financing_cf   AS ocf_financing,
+        extraction_confidence AS confidence,
         extraction_method
       FROM financial_reports
       WHERE action_code = ?

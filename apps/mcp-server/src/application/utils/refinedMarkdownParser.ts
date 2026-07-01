@@ -41,10 +41,18 @@ export interface ParseResult {
 // ── Section header detection ───────────────────────────────────────────────────
 
 const SECTION_HEADERS: Array<{ pattern: RegExp; section: string }> = [
+  // Vietnamese patterns (original)
   { pattern: /BẢNG CÂN ĐỐI KẾ TOÁN/i, section: "balance_sheet" },
   { pattern: /BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH/i, section: "income_statement" },
   { pattern: /BÁO CÁO LƯU CHUYỂN TIỀN TỆ/i, section: "cash_flow" },
   { pattern: /THUYẾT MINH BÁO CÁO TÀI CHÍNH/i, section: "notes" },
+  // English patterns — bilingual / English-only refined markdown
+  // FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN: refine subagent writes English H1 section
+  // titles for bilingual PDFs; these fell through to "general", preventing BEQ-7 from
+  // completing section detection (hasCashFlow=false → PARTIAL forever).
+  { pattern: /\bBalance Sheet\b/i, section: "balance_sheet" },
+  { pattern: /\bIncome Statement\b/i, section: "income_statement" },
+  { pattern: /\bCash Flow Statement\b|\bStatement of Cash Flows?\b|\bCash and Cash Equivalents Position\b/i, section: "cash_flow" },
 ];
 
 function detectSection(text: string): string {

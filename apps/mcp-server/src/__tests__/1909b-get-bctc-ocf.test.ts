@@ -20,17 +20,20 @@ import { buildGetBctcOcfHandler } from "../interface/mcp/tools/financial-reports
 
 function makeTestDb(): InstanceType<typeof Database> {
   const db = new Database(":memory:");
+  // FIX-GET-BCTC-OCF-SQL-COLUMN: use live schema column names
+  // (operating_cf / investing_cf / financing_cf / extraction_confidence)
+  // so the test DB matches the column aliases in the SQL query.
   db.exec(`
     CREATE TABLE IF NOT EXISTS financial_reports (
-      id                INTEGER PRIMARY KEY AUTOINCREMENT,
-      action_code       TEXT    NOT NULL,
-      period_year       INTEGER NOT NULL,
-      period_quarter    INTEGER,
-      ocf_operating     REAL,
-      ocf_investing     REAL,
-      ocf_financing     REAL,
-      confidence        REAL    NOT NULL DEFAULT 0.0,
-      extraction_method TEXT
+      id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+      action_code            TEXT    NOT NULL,
+      period_year            INTEGER NOT NULL,
+      period_quarter         INTEGER,
+      operating_cf           REAL,
+      investing_cf           REAL,
+      financing_cf           REAL,
+      extraction_confidence  REAL    NOT NULL DEFAULT 0.0,
+      extraction_method      TEXT
     );
   `);
   return db;
@@ -51,8 +54,8 @@ function insertRow(db: InstanceType<typeof Database>, row: SeedRow): void {
   db.prepare(`
     INSERT INTO financial_reports
       (action_code, period_year, period_quarter,
-       ocf_operating, ocf_investing, ocf_financing,
-       confidence, extraction_method)
+       operating_cf, investing_cf, financing_cf,
+       extraction_confidence, extraction_method)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     row.action_code,
