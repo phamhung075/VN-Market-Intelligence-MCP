@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-07-01T15:49:20Z",
+    "status": "idle",
+    "updated_at": "2026-07-01T15:59:02Z",
     "updated_by": "dev-team",
-    "active_task_id": "MONEY-RADAR-P0-T4-QA-GATE",
-    "next_agent": "qa",
-    "note": "T2B index-axis fix DONE_VERIFIED (deployed mcp-server dc988a126dc1 + frontend 74bfe1c5b392; RAW live-probe: indexReturn5d=-0.576% non-null [was null], daily_ohlcv VNINDEX=754d, D2 UNKNOWN->CLEAR alive, /api/money-radar 200 score 0.093, honest-NULL intact). T3-DASHBOARD DONE_VERIFIED (/dashboard/money-radar 404->200, proxy byte-identical parity). Re-dispatched qa for terminal T4-QA-GATE (§6 Phase-0 DoD). qa must NOT require D2 FIRED on today's market-conditional data — 'D2 fires' = alive + test-proven, not forced. qa GREEN closes MONEY-RADAR-P0. SF-1 held through the gate. CCATO-T1 stays ready (not dispatched until sprint closes)."
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "MONEY-RADAR-P0 COMPLETE — all rows DONE_VERIFIED (T2-COMPOSITE, T2B-INDEX-AXIS-FIX, T3-DASHBOARD, T3B-REST-API, T4-QA-GATE). Terminal gate: qa a023bef9 APPROVE + dispatcher RAW re-verify (25/25 tests, /api/money-radar 200 score 0.093 honest-NULL intact, daily_ohlcv VNINDEX 754d, indexReturn5d=-0.576% non-null, dashboard 200, momentum 200). D1/D2 index axis repointed to daily_ohlcv (d7b5d1fb) — divergence detectors alive on live data (durable lesson feedback_composite_score_masks_dead_detector_pruned_table). No zero-fill: carry/volatility regime=0 confirmed real neutral (live logs clean). WIP freed (in_progress empty; ready=[CCATO-T1], review=[ARCH-SHIP-WAVE-REAUDIT]). NEXT cron tick: dispatch CCATO-T1-TRUTH-GATE-ENGINE (ready, next_agent=developer, cross-service). SF-1 released on clean exit — next tick claims fresh."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11454,23 +11454,13 @@
             "parity": "byte-identical score vs mcp-server :3000 direct — frontend proxy reaches the live endpoint"
           }
         }
-      }
-    ],
-    "head": {
-      "status": "in_progress",
-      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
-      "next_agent": "architect",
-      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
-      "updated_by": "dev-team",
-      "updated_at": "2026-07-01T06:26:45Z"
-    },
-    "in_progress": [
+      },
       {
         "id": "MONEY-RADAR-P0-T4-QA-GATE",
         "title": "qa gate: verify MONEY-RADAR-P0 Phase-0 DoD (§6) — composite returns real non-null on live data; D2 fires on a real historical example (index up + OBV slope negative → AMBER); dashboard renders with honest-NULL; NO momentum regression.",
         "owner": "qa",
-        "next_agent": "qa",
-        "status": "IN_PROGRESS",
+        "next_agent": "",
+        "status": "DONE_VERIFIED",
         "zone": "cross-service",
         "type": "QA",
         "size": "S",
@@ -11514,9 +11504,40 @@
             "(c) ops: single-svc rebuild frontend (batched with mcp-server rebuild after T2B lands) to ship a0e34a87 routes, then qa T4 re-gate"
           ],
           "qa_commit": "10e5c40a (not pushed)"
+        },
+        "qa_gate": {
+          "verdict": "APPROVE",
+          "by": "qa a023bef94d3447aef",
+          "gated_at": "2026-07-01T15:59:02Z",
+          "dod_items": {
+            "a_composite_nonnull": "PASS — /api/money-radar 200 score 0.0933 is_estimate=false null_reason=null",
+            "b_index_axis_alive": "PASS — 25/25 unit tests incl detectD2PriceVsObv FIRED fixture; live indexReturn5d=-0.576% non-null; getVnIndexDailyCloses reads daily_ohlcv (d7b5d1fb)",
+            "c_dashboard_honest_null": "PASS — /dashboard/money-radar 200; 39/39 card tests null->em-dash/gray/Chua-co-du-lieu",
+            "d_no_momentum_regression": "PASS — /api/momentum-indicators 200; handler+calculator absent from fix diffs"
+          }
+        },
+        "dispatcher_raw_reverify": {
+          "by": "dev-team RAW (independent, not relayed)",
+          "verified_at": "2026-07-01T15:59:02Z",
+          "unit_tests": "25 pass / 0 fail / 69 expect, test_exit=0",
+          "live_money_radar": "HTTP 200 score 0.09335501371506204 AMBER/sev1/[D4] coverage 0.769 is_estimate=false null_reason=null",
+          "honest_null": "foreign_outflow_z_5d + credit_flow_direction null (excluded); carry_regime=0/volatility_regime=0 = real neutral regime — live logs show NO regime-fetch failure (earlier 500s were test-harness-only); null-path selective (proven by foreign/credit null) => NOT zero-fill",
+          "daily_ohlcv_vnindex": "754 distinct days 2023-06-27..2026-07-01",
+          "dashboard_route": "GET :3001/dashboard/money-radar 200",
+          "momentum": "GET :3000/api/momentum-indicators 200",
+          "fix_commit": "d7b5d1fb repoints getVnIndexDailyCloses to daily_ohlcv (diff-confirmed +Source: daily_ohlcv / NOT market_prices_history)"
         }
       }
     ],
+    "head": {
+      "status": "in_progress",
+      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
+      "next_agent": "architect",
+      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
+      "updated_by": "dev-team",
+      "updated_at": "2026-07-01T06:26:45Z"
+    },
+    "in_progress": [],
     "ready": [
       {
         "id": "CCATO-T1-TRUTH-GATE-ENGINE",
