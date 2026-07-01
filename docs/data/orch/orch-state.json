@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-01T02:23:13Z",
+    "status": "review",
+    "active_task_id": "TASK_1996",
+    "next_agent": "qa",
+    "updated_at": "2026-07-01T02:58:54Z",
     "updated_by": "dev-team",
-    "note": "CI-RED-323b512b-FIX gate-CLOSED qa->DONE_VERIFIED (dev-team RAW-verified qa APPROVED: own 5-file 115/0 + own tsc exit0 + bctcRefineJob DDD + origin-CI-log proof run 28481690382). Origin CI red on 323b512b = exactly the 5 target files (17 fail) -> a PUSH clears it. dev WIP=0, qa lane empty, pipeline IDLE. NEXT: push-request to PO (16 local-ahead commits incl f4f1fb8c + 927d4e8f BCTC-refine; PO/human-gated); post-push CI-probe confirms origin-green -> fully resolves ci-red signal. Pending backlog: CONTAM-11-REMEDIATE (destructive VPS-anchor repair, PO go/no-go, off-hours tick)."
+    "note": "tick 2026-07-01T02:37Z: PO triage BATCH=NOTHING (no new dev code work). DISPATCHED qa (agent aaecff8d76de7d35b) on 2 stranded REVIEW rows in order: TASK_1996 (fb-market-poster guaranteed cowork slots, owner agent-father, deliverable committed 3f8f07ae) then TASK-FFT-L4 (coverage-map freshness SLA monitor, owner dev-mcp-server; next_agent field-drift reconciled by PO commit fe0b2907). dispatch-guard locks task:TASK_1996 + task:TASK-FFT-L4 HELD by dev-team ttl 2700 (prevents re-dispatch on 03:07Z tick while qa runs). CI-RED-323b512b-FIX FULLY RESOLVED: origin CI bun-test GREEN on d350ac88 (run 28489276831), ci-red-323b512b signal cleared. 4 infra telegram reports (pollNews night-zero id3354 + OHLCV-depth-stall id3355/3356/3357) closed by PO as known-recurring backlog (OPS-POLLNEWS-NIGHT-ZERO / OHLCV-DEPTH cluster) — no dev FIX, market OPEN. CONTAM-11-REMEDIATE deferred (destructive, off-hours only). On qa return: RAW-verify per-task verdicts vs OWN ground truth, release both guard locks, confirm gate-close."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
