@@ -1,0 +1,34 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-01T09:21:19Z",
+  "payload": {
+    "nominal_tick": "09:15",
+    "classification": "FIRE",
+    "matched": [
+      "fb-daily"
+    ],
+    "won": [
+      "fb-daily"
+    ],
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "drift_min": 4,
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "chef_mutex_applied": false,
+    "signal_backlog": 3,
+    "dev_queue_depth": 5,
+    "host_headroom_mb": 5632,
+    "note": "guaranteed daily FB post (cron 15 9 Mon-Fri; first fire this cycle, last_fired was null); adaptive (pre-emit stale_warning=false, age<20min); guaranteed so mode moot; no chef slot"
+  },
+  "_processed": {
+    "fingerprint": "4d576994019958227efaec4ec68010ce75b01ef4507554792adfee8f08cf8231",
+    "processedAt": "2026-07-01T09:45:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
