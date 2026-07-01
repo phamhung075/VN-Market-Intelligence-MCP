@@ -1,0 +1,46 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "nominal_tick": "08:00",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron"
+    },
+    "last_fired_timestamp": "2026-07-01T08:04:32.000Z",
+    "leader_lock": "acquired",
+    "signal_backlog": 5,
+    "devq": 5,
+    "host_headroom_mb": 4117,
+    "note": "08:00Z 0*/4 off-hours gatherers (news-scout + market-watcher); no chef slot this tick; legacy mode (stale_warning + emit-age>20min); market open (15:00 VN)."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-01T08:07:10Z",
+  "_processed": {
+    "fingerprint": "6ac69cfc8212e634c0ab5adbe87a35a4fa6d9e17c9273ff561b95ed328217452",
+    "processedAt": "2026-07-01T08:16:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

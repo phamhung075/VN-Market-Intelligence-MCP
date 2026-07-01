@@ -19,5 +19,11 @@
     "per-deal large-block direction",
     "Xtrackers ETF flow",
     "margin-per-account"
-  ]
+  ],
+  "_processed": {
+    "fingerprint": "61e07dd3404919033745a937abff1158de6864e5e4f9ca2f41e0fde128e83d71",
+    "processedAt": "2026-07-01T08:16:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
