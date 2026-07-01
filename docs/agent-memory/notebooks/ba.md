@@ -1,5 +1,15 @@
 # BA — Notebook
 
+**Last updated:** 2026-07-01 | **Sprint:** FIX-BCTC-BANK-SUMMARY-MAPPING
+
+## BA-FIX-BCTC-BANK-SUMMARY-MAPPING · 2026-07-01
+
+Spec complete. REQ file: `docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md`. Zero PO blockers. 13 numbered ACs (success_metric a-e carried verbatim as AC-5..AC-9). NEXT: architect — MANDATORY root-cause SPIKE (live gateway) FIRST, zone SPLIT after (3rd re-fire over 15d, feedback_recurring_bug_escalation).
+
+Key BA findings (live-probed named-volume market.db `vn-market-intelligence-mcp_market_data` via docker exec bun:sqlite — 5 decoy volumes confirmed live but unmounted): defect reconfirmed unchanged (CTG total_assets=0, net_margin_pct=229157%, confidence=0.5625, validation_status=low_confidence; VCB clean/passed). **CRITICAL counter-finding contesting the sprint's own defect_raw_evidence claim** ("raw extraction already correct for banks"): CTG `bctc_table_rows` show 20/55 (36%) rows with `code=NULL` and BOTH current+prior period numbers garbled into the `label` string (Roman-numeral/section headers unparsed), vs VCB 0/57 (0%) — clean `code="I"/"II"/"IV"/"VI"` with `value_current` populated. Also found CTG-only section-boundary contamination (IS lines tagged `statement_section='balance_sheet'`, same class as sibling sprint FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT's FM-VCB-1) and code collisions (`code="21"` reused ×4, `code="13"` reused ×2) — `findByCode` unreliable for CTG. This evidence is carried into architect's AC-1 SPIKE as a MUST-RECONCILE input — may mean `dev-pdf-extractor` owns part of the fix, not only `dev-mcp-server` `bctcScalarAggregator`. Grep-confirmed identity-serve-guard (`[CORRUPT DATA — SKIP]`) exists in exactly ONE handler (`get_financial_summary`, reports.ts) — its own test docstring self-scopes to that tool only; `get_bctc_full` (bctcFullTools.ts) and a 3rd path `compare_financials` (reports.ts, independent `fetchRow()`) both re-query `financial_reports` directly with NO guard call — BA classification: never-fired design-time scope gap, not a regression (architect/dev-mcp-server to ratify). Non-regression baselines pinned live: FPT 2026-Q1 already `validation_status=failed` pre-fix (unrelated cause, cross-linked to FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT — no-worse floor, not a fix target here); FPT 2025-Q4 (`passed_with_warnings`) and VNM 2025-Q4 (`passed`, identity holds exactly) are the clean reference rows; VNM 2026-Q1 is a 0-row/`refine_status=PENDING` pipeline gap (FIX-BCTC-ENRICH-SILENT-0ROWS territory, excluded — not a bank ticker either).
+
+Decision journal (task_id: BA-FIX-BCTC-BANK-SUMMARY-MAPPING): see `docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-SUMMARY-MAPPING-ba.md`.
+
 **Last updated:** 2026-07-01 | **Sprint:** DASH-CRON-RECHECK-TABLE
 
 ## BA-DASH-CRON-RECHECK-TABLE · 2026-07-01
