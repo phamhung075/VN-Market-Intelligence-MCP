@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-01T15:06:20Z",
+  "payload": {
+    "nominal_tick": "15:00",
+    "classification": "FIRE",
+    "matched": [
+      "bctc-analyst-slot-1"
+    ],
+    "won": [
+      "bctc-analyst-slot-1"
+    ],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "drift_min": 4,
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "chef_mutex_applied": false,
+    "signal_backlog": 3,
+    "dev_queue_depth": 5,
+    "host_headroom_mb": 5828,
+    "stale_warning": true,
+    "note": "daily BCTC analyst worker slot-1 (cron 0 15; off-market VN post-close 22:05); legacy via age>20min (pressure last emitted 11:05Z pre-tick, ~239min stale); server stale_warning:true (upstream cycle snapshot stale after ~3h host-inactive gap 11:30-14:45Z); no chef slot this tick"
+  }
+}
