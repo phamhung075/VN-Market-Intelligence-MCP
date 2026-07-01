@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-01T10:37:55Z",
+    "updated_at": "2026-07-01T10:47:23Z",
     "updated_by": "dev-team",
     "active_task_id": "MONEY-RADAR-P0-T2-COMPOSITE",
-    "next_agent": "fixer",
-    "note": "post-10:07Z: qa CHANGES_REQUESTED on T2 (0026f9e1) — 6/7 gates PASS, 0 honest-NULL violations, 1 wiring bug (foreign_accum_z_market null: {} args + client field tickers!=Go codes). RAW-verified in code. dispatched fixer (2-file targeted); ops rebuild + loop live gateway-probe AFTER fixer returns + reverify."
+    "next_agent": "ops",
+    "note": "fixer DONE 73b82471 (foreign_accum tickers->codes); loop RAW-verified tsc0/21tests/wiring; dispatched ops single-svc rebuild (deploy tool 182->183); loop gateway-probes live after; then review->done_verified"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8406,6 +8406,16 @@
         ],
         "acceptance": "docs/signals/ holds only signal-shaped files; drain auto-archives from/type-less files instead of re-skipping; no consumer of the 3 relocated paths broken (RAW-grep proof).",
         "note": "PLAN-ONLY, low pri. 3 producer-authored non-signals drain skips EVERY tick (lack from/type): orch-state-writer-audit.json (audit report), price_anomaly_20260629T1600.json + price_anomaly_20260630T0859.json (chef dish outputs). Root fix: (1) RAW-grep consumers BEFORE moving; (2) redirect producer output outside docs/signals/; (3) teach drain to auto-archive from/type-less files."
+      },
+      {
+        "id": "FIX-MOMENTUM-HANDLER-EMPTY-FOREIGN-ACCUM-CODES",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "low",
+        "zone": "dev-mcp-server",
+        "next_agent": "developer",
+        "depends_on": null,
+        "title": "momentumIndicatorsHandler.ts:270 computeForeignAccumRank({}) passes empty codes -> foreign_accum leg null on live (unset WATCHLIST_TICKERS env). Fix: pass {codes: watchlistCodes} like commit 73b82471, OR set WATCHLIST_TICKERS on stock-price container (root-fix for ALL {} callers)."
       }
     ],
     "closed_sprints": [
@@ -11254,7 +11264,7 @@
         "id": "MONEY-RADAR-P0-T2-COMPOSITE",
         "title": "dev-mcp-server: get_money_radar_composite MCP tool — wires the 8 LIVE reuse tools (§C2) + the 4 new oscillators, D1/D2/D3(Phase-0 form)/D4 divergence detectors, and honest-NULL rules HN-1..HN-7 into the composite schema (§4).",
         "owner": "dev-mcp-server",
-        "next_agent": "fixer",
+        "next_agent": "ops",
         "status": "REVIEW",
         "zone": "dev-mcp-server",
         "type": "FEATURE",
@@ -11295,6 +11305,14 @@
           "fix_scope": "pass {codes: watchlistCodes} + rename client field tickers->codes across all callers; unit regression test asserting body serializes codes",
           "non_blocking": "market_prices_history ~1d deep on live DB (pre-existing infra gap; D1/D2 resolve UNKNOWN honestly, not a commit bug)",
           "deploy_status": "container image 00:05:49Z predates commit 10:14:14Z; live toolCount 182 vs repo 183; ops single-svc rebuild required before servable"
+        },
+        "fixer_result": {
+          "by": "fixer",
+          "at": "2026-07-01T10:47:23Z",
+          "commit_sha": "73b82471",
+          "fix": "client request field tickers->codes (matches Go DTO json:codes) across both request-side callers; getMoneyRadarComposite passes {codes: watchlistCodes}",
+          "raw_verify": "loop-verified: tsc exit 0; 21/21 tests (20+REG-FIELD-NAME guard); no orphan request-side tickers; oscillators {tickers} left intact (correct per TA DTO)",
+          "deploy": "ops single-svc rebuild dispatched; loop gateway-probes get_money_radar_composite after rebuild"
         }
       }
     ],
