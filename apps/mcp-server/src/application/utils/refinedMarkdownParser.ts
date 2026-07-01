@@ -15,6 +15,8 @@
  * @module application/utils/refinedMarkdownParser
  */
 
+import { repairCorruptedRows } from "./bctcRowRepair.js";
+
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface BctcTableRow {
@@ -403,5 +405,9 @@ export function parseRefinedMarkdown(
     });
   }
 
-  return { rows, errors };
+  // FIX-BCTC-BANK-SUMMARY-MAPPING W2: repair the corruption-signature rows
+  // (code=null, values merged into label text) generically, structurally,
+  // for ANY bank-form ticker — see bctcRowRepair.ts. Rows not matching the
+  // exact corruption signature pass through unchanged (RISK-1 non-lossy).
+  return { rows: repairCorruptedRows(rows, parseVnNumber), errors };
 }
