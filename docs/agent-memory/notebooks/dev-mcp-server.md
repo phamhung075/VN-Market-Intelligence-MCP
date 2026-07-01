@@ -1,21 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-30 — TASK-VNINDEX-RS-B (RC3 Zone B durability)
-
-**Sprint:** TA-CONSUMER-STALE-INDICATORS (RC3)
-**Session:** e71c7736-a95a-4040-b741-1d48454354f6
-
-FR-B1: `push-ohlcv-history` hardcoded type="stock" → now reads optional `type` from payload (default "stock"). Zone A pushes VNINDEX with type:"index"; "index" exempts from stock range guard. 2-line change in server.ts + updated comment.
-
-FR-B2: `ohlcv-backfill-done` depth probe added separate VNINDEX count query. VNINDEX appended to `shallowCodes` when cnt < 252. Removed the "watchlist empty → skip" early-exit that would hide VNINDEX shortfalls. Logs `vnindex_depth` in "depth verified" path.
-
-- MOD: `interface/mcp/server.ts` (FR-B1 type extraction ~L1250, FR-B2 depth probe ~L1460)
-- NEW: `src/__tests__/TASK-VNINDEX-RS-B-durability.test.ts` (9 tests: 3xFR-B1 + 3xFR-B2)
-- MOD: `ohlcv-backfill-done-subtask-b.test.ts` BT-5 — seed VNINDEX 300 bars
-- MOD: `1360-ohlcv-backfill-queue.test.ts` TC-6 — seed VNINDEX 300 bars
-- Commit: `2969a0ef`
-- RAW: type:"index" open=50 → inserted=1 (index exempt), VNINDEX 753 live bars, RS 8/8 non-null, low_sample_warning=false, single-svc rebuild confirmed
-
 ## 2026-06-30 — FIX-GET-TI-STALE-SOURCE-MCP-SERVER
 
 **Sprint:** TA-CONSUMER-STALE-INDICATORS
@@ -185,3 +169,22 @@ floor (KSV+STS+TBD+TOS+AGX, 1,050 rows); Strategy C=official exchange CSV; Strat
 
 Findings: docs/agent-memory/decisions/sprint-CONTAM-11-bucket-classification-dev-mcp-server.md
 Zone health: PLAN-ONLY spike — no code change, no DB mutation | HEALTHY
+
+## 2026-07-01 — FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN + FIX-GET-BCTC-OCF-SQL-COLUMN
+
+**Session:** e71c7736-a95a-4040-b741-1d48454354f6
+**Commits:** 927d4e8f, eb788afe
+
+Three-layer bug in BCTC bilingual PDF pipeline. Root causes and fixes:
+
+(1) `SECTION_HEADERS` in `refinedMarkdownParser.ts` was Vietnamese-only. English headings from refine subagent (HVN bilingual PDF) fell to "general", blocking BEQ-7 → PARTIAL forever. Added English patterns.
+
+(2) `findTotalAssetsCorporate` in `bctcScalarAggregator.ts` regex failed on OCR-degraded "TÀI S᰺ N" (Lepcha U+1C3A). Added code 280/440 OCR fallback + English "Total Assets" label.
+
+(3) All English-section IS/CF rows have code=null. No corporate English label fallbacks existed. Added P_CORP_NET_REVENUE_EN, P_CORP_GROSS_PROFIT_EN, P_CORP_OPERATING_PROFIT_EN, P_CORP_NET_PROFIT_EN, P_CORP_OPERATING_CF_EN, P_CORP_INVESTING_CF_EN, P_CORP_FINANCING_CF_EN.
+
+Result: HVN Q1-2026 scalars fully populated (operating_cf=5,018,783M, investing_cf=-4,017,555M, refine_status=DONE). Fleet: 7 stuck-PARTIAL re-finalized, GVR→DONE.
+
+Secondary: `getBctcOcfTool.ts` SQL column aliases fixed (operating_cf AS ocf_operating etc.).
+
+Zone health: bun test 130 pass 0 fail (targeted suite), tsc clean, 182 tools intact, server health ok | HEALTHY
