@@ -5,32 +5,58 @@
   "mode": "routine",
   "beat_miss": null,
   "product": "Dịch vụ CNTT, xuất khẩu phần mềm (FPT Software), viễn thông (FPT Telecom), giáo dục (FPT Edu)",
-  "customer": "Doanh nghiệp IT trong nước và offshore (12% doanh thu từ Mỹ — chú ý: cảnh báo Magnificent 7 -$2.3T market cap), thuê bao viễn thông SME",
-  "ops": "LN ròng 2,476.8 tỷ Q1-2026; biên xuất khẩu phần mềm ~28%; FPT Telecom kéo biên hỗn hợp xuống; OCF Q1 thường âm do mùa vụ (-2,847.8 tỷ ghi nhận c065)",
-  "mgmt": "PE 13.8x vs sector ~17.3x (-20%); ROE 28.3% ổn định; EY spread +2.25pp FAIR; hướng dẫn FY2025 đạt 3 quý liên tiếp; cảnh báo: khối ngoại thoái FPT (VN30 rebalancing rumor)",
+  "customer": "Doanh nghiệp CNTT trong và ngoài nước (Nhật, Mỹ, Châu Âu), thuê bao viễn thông SME, sinh viên FPT Edu",
+  "ops": "Biên gross 34.0%, biên ròng 19.8%; OCF âm -2,847.8 tỷ Q1 do chu kỳ vốn lưu động (học phí + dự án phần mềm milestone billing); CAPEX -589 tỷ; financing CF +2,586 tỷ (vay bổ sung)",
+  "mgmt": "ROE 28.3% dẫn đầu ngành tech (sector 10.6%); PE 13.8x chiết khấu -20% vs sector; khối ngoại thoái nhẹ (VN30 rebalance) nhưng fundamental vẫn mạnh",
+  "trick_summary": "FPT Q1-2026 có dấu hiệu sai lệch dòng tiền hoạt động so với lợi nhuận (OCF/NI = -1.15). Nhiều khả năng do chu kỳ ghi nhận doanh thu giáo dục và hợp đồng phần mềm milestone, không phải dấu hiệu thao túng kế toán.",
+  "trick_confidence": "medium",
+  "trick_pass_versions": [
+    "balance-sheet-v1",
+    "pl-v1",
+    "cashflow-v1",
+    "rpt-v1"
+  ],
+  "esc_summary": {
+    "ESC-1": false,
+    "ESC-2": false,
+    "ESC-3": "DATA-COVERAGE-LIMITED",
+    "ESC-4": false
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+  "coverage_guard_held": true,
+  "quarters_returned": 1,
   "valuation": {
     "pe": 13.8,
+    "pe_vs_sector_pct": -20,
+    "pb": 3.6,
     "roe_pct": 28.3,
+    "ey_pct": 7.25,
     "ey_spread_pp": 2.25,
-    "valuation_verdict": "FAIR",
-    "sector_pe_discount_pct": -20
+    "verdict": "FAIR"
   },
-  "kinhdich": {
-    "que": 2,
-    "ten": "Khôn",
-    "xu_huong": "TRUNG TÍNH GIỮ",
-    "confidence": 0.7
+  "financials": {
+    "revenue_ty": 12480,
+    "net_profit_ty": 2476.8,
+    "gross_margin_pct": 34,
+    "net_margin_pct": 19.8,
+    "ocf_ty": -2847.8,
+    "ocf_ni_ratio": -1.15,
+    "total_assets_ty": 68586.1,
+    "equity_ty": 40122,
+    "cash_ty": 7993.6,
+    "de_ratio": 0.4
   },
-  "context": {
-    "insider_M": 0,
-    "insider_F": "khối ngoại thoái (VN30 rebalancing signal 2026-07-01)",
-    "news_today": "PLX có thể bị gạch VN30, khối ngoại thoái FPT — FPT có 12% doanh thu từ US (Mag7 spillover MEDIUM alert)"
-  },
-  "overall_verdict": "TRUNG TÍNH GIỮ — FAIR valuation, ROE cao nhưng rủi ro khối ngoại thoái ngắn hạn + US tech spillover",
-  "confidence": 0.8,
-  "e3_cache_hit": true,
-  "e3_cache_count": "c31",
-  "cycle": "c069",
-  "slot": "bctc-analyst-slot-1",
-  "emitted_at": "2026-07-01T15:15:00Z"
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "kinhdich": "Quẻ 23 Bác — BAT LOI, GIU (tiêu cực), độ tin cậy 25%",
+  "signal_id": 8173,
+  "cycle": "c070",
+  "slot": "bctc-analyst-slot-2",
+  "createdAt": "2026-07-01T18:15:00Z",
+  "_processed": {
+    "fingerprint": "5851274fcbd38b720adad9137ed3f265c16f5cd7de724c7f06864a0189a0a8e5",
+    "processedAt": "2026-07-01T22:18:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -1,0 +1,60 @@
+{
+  "ticker": "GVR",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Cao su thiên nhiên (mủ cốc, RSS), sản phẩm công nghiệp cao su, gỗ khai thác đồn điền, kinh doanh quỹ đất đồn điền",
+  "customer": "Nhà sản xuất lốp xe quốc tế (Bridgestone, Michelin, Yokohama), công nghiệp chế biến trong và ngoài nước, nhà đầu tư BĐS khu công nghiệp",
+  "ops": "Biên gộp 26.4%, biên ròng 28.4% (vượt biên gộp do 590 tỷ thu nhập ngoài HĐ chiếm 23.5% LN); B/S lành mạnh: nợ vay ≈0, tiền mặt 8,928 tỷ, vốn chủ 64,985 tỷ; OCF chưa trích xuất được",
+  "mgmt": "SOE dưới Bộ NN&PTNT; quỹ đất đồn điền cao su lớn là tài sản tiềm ẩn; thu nhập ngoài HĐ cần xác minh tính lặp lại (đất, lãi đầu tư hay phân phối từ công ty liên kết)",
+  "trick_summary": "GVR Q1-2026 không phát hiện dấu hiệu thao túng kế toán từ các pass B/S và P&L. Thu nhập ngoài hoạt động (590 tỷ, 23.5% LN ròng) vượt ngưỡng cảnh báo 15% — cần xác minh nguồn gốc và tính lặp lại để đánh giá chất lượng lợi nhuận.",
+  "trick_confidence": "low",
+  "trick_pass_versions": [
+    "balance-sheet-v1",
+    "pl-v1"
+  ],
+  "esc_summary": {
+    "ESC-1": false,
+    "ESC-2": false,
+    "ESC-3": "DATA-COVERAGE-LIMITED",
+    "ESC-4": true
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:GVR:Q1-2026:ESC-3",
+  "quarters_returned": 1,
+  "escalation_status": "PENDING",
+  "guard_key": "esc-deepdive:GVR:Q1-2026:ESC-4",
+  "valuation": {
+    "pe_est": 13.2,
+    "roe_quarterly_pct": 3.87,
+    "roe_annualized_pct": 15.5,
+    "ey_spread_pp_est": 2.6,
+    "verdict": "FAIR_ESTIMATED"
+  },
+  "financials": {
+    "revenue_ty": 8845.2,
+    "net_profit_ty": 2513.4,
+    "gross_profit_ty": 2336.7,
+    "operating_profit_ty": 1923.3,
+    "non_operating_income_ty": 590.1,
+    "non_op_pct_of_np": 23.5,
+    "total_assets_ty": 87178.9,
+    "equity_ty": 64984.7,
+    "cash_ty": 8927.7,
+    "long_term_debt_ty": 0.07,
+    "balance_sheet_check": "PASS_ZERO_IMBALANCE"
+  },
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "kinhdich": "Quẻ 12 Bỉ — BAT LOI, GIU (tiêu cực), độ tin cậy 25%",
+  "signal_id": 8174,
+  "cycle": "c070",
+  "slot": "bctc-analyst-slot-2",
+  "createdAt": "2026-07-01T18:15:00Z",
+  "_processed": {
+    "fingerprint": "9a00e744c9dfe9329873259f7c4d883474a535da27b986292307e53fa22bf8b7",
+    "processedAt": "2026-07-01T22:18:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

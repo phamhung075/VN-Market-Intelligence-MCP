@@ -1,0 +1,35 @@
+{
+  "id": "bca-20260701T181500Z",
+  "ts": "2026-07-01T18:15:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: GVR Q1-2026 ESC-4 — non-operating income 23.5% of net profit exceeds 15% threshold",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": "docs/signals/bctc_signal_GVR_20260701_routine.json",
+  "payload": {
+    "trigger_id": "ESC-4",
+    "ticker": "GVR",
+    "quarter": "Q1-2026",
+    "report_id": "GVR-Q1-2026",
+    "guard_key": "esc-deepdive:GVR:Q1-2026:ESC-4",
+    "context": {
+      "item_type": "non_operating_income",
+      "item_amount_ty": 590.1,
+      "item_pct_of_net_profit": 23.5,
+      "gross_profit_ty": 2336.7,
+      "net_profit_ty": 2513.4,
+      "note": "Net profit exceeds gross profit by 590.1 ty VND. Source unverified — possible SOE land transfer, associate equity income, or financial income on large cash balance (8,928 ty). Verify sustainability before bullish signal."
+    },
+    "all_esc_fired": [
+      "ESC-4"
+    ]
+  },
+  "_processed": {
+    "fingerprint": "e345cc2a66044654927b7b187605a03726b88a2b589f4414551d7448a8a8909c",
+    "processedAt": "2026-07-01T22:18:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

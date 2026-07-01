@@ -1,0 +1,84 @@
+{
+  "ticker": "HVN",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Vận tải hành khách và hàng hóa hàng không (nội địa + quốc tế), dịch vụ mặt đất và bảo dưỡng tàu bay qua công ty con",
+  "customer": "Hành khách nội địa/quốc tế, doanh nghiệp logistics hàng không, đối tác liên doanh sân bay (ACV, SCS)",
+  "ops": "Biên gộp 20.8%, biên hoạt động 10.4%, biên ròng 13.6% — LN ròng vượt LN hoạt động 929.2 tỷ (23.5% LN ròng) nhờ khoản mục ngoài HĐ chưa xác định rõ nguồn (thiếu dữ liệu footnote); OCF/NI = 1.27x lành mạnh, accruals âm nhẹ (-1.6% tổng tài sản) — chất lượng lợi nhuận tốt",
+  "mgmt": "Đang phục hồi từ nhiều năm âm vốn chủ sở hữu; theo tin tức lỗ lũy kế dự kiến hết năm 2032 nên chưa thể chia cổ tức dù có lãi lớn; ban lãnh đạo nhắc lại mục tiêu có lãi cả năm 2026",
+  "trick_summary": "HVN Q1-2026: B/S cân đối (imbalance ~0%), không phát hiện dấu hiệu thao túng kế toán từ pass B/S. Khoảng cách LN hoạt động vs LN ròng (929.2 tỷ, 23.5% LN ròng) vượt ngưỡng cảnh báo one-off 15% nhưng KHÔNG đủ bằng chứng cấp độ footnote/RPT (row_index/page_anchor) để xác nhận là one-off thực sự — không kích hoạt ESC-4 cứng, chỉ ghi nhận theo dõi.",
+  "trick_confidence": "low",
+  "trick_pass_versions": [
+    "balance-sheet-v1",
+    "pl-v1"
+  ],
+  "esc_summary": {
+    "ESC-1": false,
+    "ESC-2": false,
+    "ESC-3": "DATA-COVERAGE-LIMITED",
+    "ESC-4": false,
+    "ESC-5": false
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "coverage_guard_key": "esc-datacov:HVN:Q1-2026:ESC-3",
+  "quarters_returned": 1,
+  "esc2_detail": {
+    "assets_total_ty": 67051.9,
+    "liabilities_total_ty": 54308.4,
+    "equity_total_ty": 12743.6,
+    "imbalance_pct": 0.0000015
+  },
+  "esc5_detail": "get_bctc_refined(HVN-Q1-2026) returned no rows — refine not yet run, ESC-5 skipped gracefully",
+  "valuation": {
+    "pe": 7.6,
+    "pb": 11.7,
+    "roe_quarterly_pct": 30.98,
+    "roe_reliability": "low — annualization unreliable, thin equity base post multi-year negative-equity recovery, Q1 includes Tet seasonal travel peak",
+    "ey_pct": 13.16,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 8.16,
+    "verdict": "CHEAP",
+    "pb_vs_sector_median": "11.7x vs 3.3x (+256% premium)",
+    "pe_vs_sector_median": "7.6x vs 15.2x (-50% discount)",
+    "data_quality_note": "get_sector_comparison tool returned ROE=0.0% for HVN (conflicts with get_bctc_full ROE=30.98%) — used get_bctc_full raw structured_data as source of truth per serving-value verification protocol"
+  },
+  "balance_sheet_first_read": {
+    "pb_ratio": 11.7,
+    "balance_verdict": "WEAK",
+    "cash_pct_of_assets": 11.8,
+    "balance_flags": []
+  },
+  "financials": {
+    "revenue_ty": 29030.2,
+    "gross_profit_ty": 6025.6,
+    "operating_profit_ty": 3019.1,
+    "net_profit_ty": 3948.3,
+    "non_operating_gap_ty": 929.2,
+    "non_op_pct_of_np": 23.5,
+    "total_assets_ty": 67051.9,
+    "equity_ty": 12743.6,
+    "total_liabilities_ty": 54308.4,
+    "cash_ty": 7930.5,
+    "operating_cf_ty": 5018.8,
+    "ocf_ni_ratio": 1.27,
+    "balance_sheet_check": "PASS_ZERO_IMBALANCE"
+  },
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể cho HVN",
+  "legal_risk": "Không có tín hiệu rủi ro pháp lý riêng cho HVN trong 7 tín hiệu gần nhất (PC1/JSH/POM/DIG là các mã khác)",
+  "kinhdich": "Quẻ 64 Vị Tế — TRUNG TÍNH, GIỮ (tích cực), độ tin cậy 37-38%",
+  "investment_clock": "Phase: Overheat, CPI 5.46% (HIGH), growth_signal UP",
+  "confidence_overall_pct": 62,
+  "confidence_note": "PARTIAL — ESC-3 data-coverage-limited (1/4 quý), ROE tool discrepancy, thiếu bằng chứng footnote cho khoảng cách LN hoạt động/ròng",
+  "signal_id": 8183,
+  "cycle": "c071",
+  "slot": "bctc-analyst-slot-3",
+  "createdAt": "2026-07-01T21:17:00Z",
+  "_processed": {
+    "fingerprint": "cc3eaea2693788ccb4d00e042c7cce36b5051e782de8fb66ad025d48e63040c4",
+    "processedAt": "2026-07-01T22:18:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

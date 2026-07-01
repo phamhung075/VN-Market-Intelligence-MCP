@@ -1,0 +1,41 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-01T19:51:03Z",
+  "payload": {
+    "classification": "FIRE",
+    "tick_id": "2026-07-01T19:45Z",
+    "fire_time": "2026-07-01T19:49:32Z",
+    "matched": [
+      "chef-evening"
+    ],
+    "won": [
+      "chef-evening"
+    ],
+    "spawned": [
+      {
+        "slot": "chef-evening",
+        "agent": "unified-agent"
+      }
+    ],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "chef_mutex_applied": false,
+    "collision_agent": null,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "last_fired_timestamp": "2026-07-01T19:50:34.000Z",
+    "policy_id": null,
+    "guaranteed": true,
+    "note": "guaranteed chef-evening dish fired in legacy mode (pressure stale_warning=true, emit age 104min off-hours); gates 4.3-4.5 skipped raw; single non-mutex agent."
+  },
+  "_processed": {
+    "fingerprint": "eb7f8df535d672d121312b2caee50bc81bb0bcc134fbe57abea560421108b6d9",
+    "processedAt": "2026-07-01T22:18:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

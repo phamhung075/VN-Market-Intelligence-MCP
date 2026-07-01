@@ -1,0 +1,56 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-01T16:36:16Z",
+  "payload": {
+    "classification": "FIRE",
+    "tick": "2026-07-01T16:30Z",
+    "nominal_tick": "16:30",
+    "reason": "spawned",
+    "matched": [
+      "refine-bctc-slot-4"
+    ],
+    "won": [
+      "refine-bctc-slot-4"
+    ],
+    "spawned": [
+      "refine_bctc_md (refine-bctc-slot-4)"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "collision_agent": null,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
+    "last_fired_timestamp": "2026-07-01T16:35:36.000Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 1,
+    "policy_id": "bctc-offmarket",
+    "note": "Weekday off-hours FIRE: refine-bctc-slot-4 (bctc-offmarket, non-guaranteed) fired under legacy mode (pre-emit stale_warning=true, age>20). Post-emit pressure-state refreshed: stale_warning flipped to false, backlog 7->1, headroom 4051->4855MB as the 16:00Z cowork agents (news-scout/market-watcher x2) completed and their fresh cycle data promoted. Next tick reads adaptive. No chef slot -> mutex n/a. Single agent/single slot -> no collision."
+  },
+  "_processed": {
+    "fingerprint": "fb3f6aae559515d06726c1f35701e8a2e97b86be521c1c3365b686a2ec63d4b2",
+    "processedAt": "2026-07-01T22:18:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
