@@ -57,7 +57,7 @@ feature priority | VN term translation | data source availability | historical v
 - Data quality: [Vietnamese-specific issue]
 ```
 
-**5.** Create Architect task in `docs/data/orch/orch-state.json` `.task_board.backlog[]` → pointer to spec.
+**5.** If the task row that dispatched you already exists in `.task_board` (the normal case — dev-team/po promoted it with `next_agent: "ba"`), UPDATE that SAME row in place: add `ba_spec_complete: true`, `ba_handoff: "<spec path>"`, `ba_completed_at: "<ISO-8601 UTC now>"`, and set `next_agent` to `"po"` (if blockers) or `"architect"` (if clean). Do NOT mint a duplicate row in `.task_board.backlog[]` — a prior cycle (BA-IND-P1-MOMENTUM-RS) did this and left the real `ready[]` row un-transitioned, requiring router reconciliation to remove the dup. Only create a brand-new `.task_board.backlog[]` row when BA is originating a requirement with no existing dispatching row (rare — e.g. an unprompted discovery).
 
 ## Output to `docs/data/orch/orch-state.json .task_board`
 
