@@ -10494,7 +10494,11 @@
         ],
         "handoff": "docs/handoffs/TASK-FFT-L4.md",
         "completed_at": "2026-06-27T21:25:00Z",
-        "next": "qa"
+        "next": "qa",
+        "next_agent": "qa",
+        "updated_at": "2026-07-01T02:50:48Z",
+        "updated_by": "po",
+        "status_note": "RECONCILE(po 2026-07-01T02:50:48Z): legacy field `next:qa` migrated to `next_agent:qa` so dev-team router dispatches qa; router had read next_agent=\"\" and skipped. Code RAW-verified LANDED (coverageMapFreshnessChecker.ts + freshnessSlaMonitorJob.ts present; commits 1dd3c6d1+718aa01c). Claimable review row for qa sign-off."
       },
       {
         "id": "TASK_1996",
