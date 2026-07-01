@@ -532,6 +532,17 @@ const P_BANK_TOTAL_ASSETS_EXCLUDE = /n[oợ]|ngu[oồ]n\s+v[oố]n|ph[aả]i\s+t
 // Bank balance sheet: total liabilities (Tổng nợ phải trả)
 const P_BANK_TOTAL_LIABILITIES = /t[oổ]ng\s+n[oợ]\s+ph[aả]i\s+tr[aả]/i;
 
+// Bank total_liabilities exclusion: rows also containing "vốn chủ sở hữu" are the
+// combined liabilities+equity grand-total line — NOT the pure liabilities subtotal.
+// FIX-BCTC-BANK-SUMMARY-MAPPING (W4): same collision class as P_BANK_EQUITY_EXCLUDE
+// (FU-6c), discovered symmetrically — "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" contains
+// "tổng nợ phải trả" as a substring and, without this exclusion, can win over the pure
+// "TỔNG NỢ PHẢI TRẢ" subtotal row whenever the combined line happens to appear earlier
+// in row order (order-dependent false-pick — confirmed via fixture: combined-line-first
+// ordering caused total_liabilities to resolve to the total_assets value, tripping a
+// false BALANCE IDENTITY VIOLATED on an otherwise-clean bank reading).
+const P_BANK_TOTAL_LIABILITIES_EXCLUDE = /v[oố]n\s+ch[uủ]\s+s[oở]\s+h[uữ]u/i;
+
 // Bank balance sheet: equity (Vốn chủ sở hữu / Tổng vốn chủ sở hữu)
 const P_BANK_EQUITY = /v[oố]n\s+ch[uủ]\s+s[oở]\s+h[uữ]u/i;
 
@@ -824,9 +835,12 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
   // total_liabilities: corporate code "300" (Nợ phải trả)
   let total_liabilities = scale(findByCode(rows, "300"));
   if (total_liabilities === null) {
+    // Bank fallback: findByLabelExcluding (W4 fix) excludes the combined
+    // "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" grand-total line — mirrors the
+    // equity-side exclusion (P_BANK_EQUITY_EXCLUDE, FU-6c) for the same collision class.
     total_liabilities = scale(
-      findByLabel(rows, "balance_sheet", P_BANK_TOTAL_LIABILITIES) ??
-      findByLabel(rows, "general", P_BANK_TOTAL_LIABILITIES),
+      findByLabelExcluding(rows, "balance_sheet", P_BANK_TOTAL_LIABILITIES, P_BANK_TOTAL_LIABILITIES_EXCLUDE) ??
+      findByLabelExcluding(rows, "general",       P_BANK_TOTAL_LIABILITIES, P_BANK_TOTAL_LIABILITIES_EXCLUDE),
     );
   }
 
