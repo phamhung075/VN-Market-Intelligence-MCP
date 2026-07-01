@@ -281,8 +281,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-01T22:53:15Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-01T22:58:23Z",
+    "_updated_by": "po",
     "archive": [],
     "rows": [
       {
@@ -1486,7 +1486,7 @@
         "type": "data_stale",
         "summary": "bctc-discover stale 21711min (check B-05)",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "TRIAGED",
         "payload_ref": null
       }
     ],
@@ -1952,8 +1952,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-01T22:38:56Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-07-01T23:04:58Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8406,6 +8406,23 @@
         "next_agent": "developer",
         "depends_on": null,
         "title": "momentumIndicatorsHandler.ts:270 computeForeignAccumRank({}) passes empty codes -> foreign_accum leg null on live (unset WATCHLIST_TICKERS env). Fix: pass {codes: watchlistCodes} like commit 73b82471, OR set WATCHLIST_TICKERS on stock-price container (root-fix for ALL {} callers)."
+      },
+      {
+        "id": "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
+        "status": "BACKLOG",
+        "title": "Consolidate root-cause of Q1-2026 total_assets=0 across 6 non-bank tickers (VHM/REE/VIC/VNM/VRE/POW)",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "type": "SPIKE",
+        "mode": "spike",
+        "zone": "apps/mcp-server/",
+        "timebox": 120,
+        "priority": "high",
+        "created_at": "2026-07-01T22:59:30Z",
+        "created_by": "po",
+        "origin_report": "telegram#3368 bctc-analyst 2026-07-01T21:21Z",
+        "question": "Do VHM/REE/VIC/VNM/VRE/POW Q1-2026 total_assets=0 share ONE root cause or several? Classify each (column-separated OCR layout / missing BS section-total codes 100-400 / failed refine windows / OCR quality) and map to existing owners (FIX-REE-BS-SECTION-REGEX for REE, SPIKE-BCTC-COLUMN-SEPARATED-LAYOUT for VNM, W5-FU/CTG agentic-refine-repass pattern) OR flag NEW. Output a CONSOLIDATED remediation batch — do NOT mint duplicate per-ticker FIX tasks.",
+        "status_note": "Self-initiated from telegram#3368 (bctc-analyst WARNING, 2026-07-01T21:21Z): 6 non-bank tickers all total_assets=0 for Q1-2026, same signature as CTG (c069), DISTINCT from the bank-only FIX-BCTC-BANK-SUMMARY-MAPPING sprint. No task owns this holistically today; coverage is piecemeal (REE-regex, VNM-column-spike). Time-box 120m diagnosis -> consolidated remediation plan; reconcile against existing partial tasks before any per-ticker FIX. Report_ids: VHM/REE/VIC/VNM/VRE/POW-Q1-2026."
       }
     ],
     "closed_sprints": [
@@ -11811,7 +11828,44 @@
       "updated_by": "dev-team",
       "updated_at": "2026-07-01T06:26:45Z"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "B-05-FIX",
+        "status": "IN_PROGRESS",
+        "title": "B-05-FIX (VPS vn-bctc-fetch) — bctc-discover stale ~15d; corroborate then repair discover pipeline",
+        "owner": "po",
+        "next_agent": "ops-vps-fetch",
+        "route_to": "ops-vps-fetch",
+        "type": "UNBLOCK",
+        "zone": "cross-service/",
+        "priority": "high",
+        "created_at": "2026-07-01T22:58:23Z",
+        "created_by": "po",
+        "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
+        "status_note": "CRITICAL auditor data_stale (origin sau-2026-07-01T22:33:43Z). STEP 1 CORROBORATE (corroboration gate — do NOT mint a repair from a health badge): SSH VPS, inspect vn-bctc-fetch systemd timer + last-run journal, and run a LIVE HTTP discover recipe probe. IGNORE the auditor \"unhealthy\" HTTP badge — KNOWN FALSE POSITIVE (vn-bctc-fetch is a pure-bash systemd timer with NO HTTP port; see backlog FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES). REAL evidence = hard DB staleness 21711min (~15d) + ~38-item discover backlog not draining. STEP 2: if corroborated broken -> diagnose (network / anti-bot / page-restructure / dead-timer) and signal dev-vps-crawls for impl fix. If NOT broken (genuine no-new-report lull) -> close RESOLVED with live-probe evidence, no code change. AC: bctc-discover ingests fresh items (staleness < audit B-05 threshold) AND discover backlog drains; no B-05 signal_queue row for 7d.",
+        "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
+        "dispatched_at": "2026-07-01T23:04:58Z"
+      },
+      {
+        "id": "W5-FU-CTG-REFINE-96e36139",
+        "status": "IN_PROGRESS",
+        "title": "W5-FU: agentic-refine transcription pass for CTG 2026-Q1 (report_id 96e36139, 56 windows) -> re-run reingest-bctc-report.ts (unblocks W5 total_assets)",
+        "owner": "po",
+        "next_agent": "bctc-analyst",
+        "route_to": "refine_bctc_md",
+        "type": "UNBLOCK",
+        "zone": "multi",
+        "priority": "high",
+        "created_at": "2026-07-01T22:58:23Z",
+        "created_by": "po",
+        "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "unblocks": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
+        "status_note": "Follow-up to sprint FIX-BCTC-BANK-SUMMARY-MAPPING (closed PARTIAL: W1-W4 done_verified, W5 BLOCKED). Operational re-run, NOT a code sprint — do NOT route architect/pm, do NOT reopen W1-W4, do NOT re-qa W5 until re-ingest succeeds. Root cause: all 56 bctc_refined_units for report_id=96e36139-5dac-414d-8e4d-20a4725890d1 are FAILED/empty-markdown, so scripts/migrations/reingest-bctc-report.ts refuses (exit 3, data-loss guard is CORRECT). STEP 1: fresh agentic-refine transcription pass (get_bctc_pending_refine + push_bctc_refined_unit x56 windows via refine_bctc_md leaf workers) for this report_id. STEP 2: re-attempt \"bun scripts/migrations/reingest-bctc-report.ts --report-id 96e36139-5dac-414d-8e4d-20a4725890d1\" (hand STEP 2 to dev-mcp-server if analyst lacks script-run). AC-5/AC-10: total_assets unfreezes from 0 (RAW-probe named-volume market.db). NO fabricated data (no-fake-data policy).",
+        "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
+        "dispatched_at": "2026-07-01T23:04:58Z",
+        "route_note": "dispatcher route-corrected: STEP1 refine_bctc_md (leaf worker, 8 chunks resumable), STEP2 dev-mcp-server (bctc-analyst lacks Bash for reingest script) — PO desc already hedged STEP2"
+      }
+    ],
     "ready": [
       {
         "id": "ARCH-DASH-CRON-RECHECK-TABLE",
@@ -11973,7 +12027,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-01T01:16:37Z",
+    "last_triaged_at": "2026-07-01T22:58:23Z",
     "last_triaged_by": "po"
   },
   "_meta": {
