@@ -24,6 +24,10 @@ import { join, resolve } from "node:path";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { computePeriodDelta } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
 import {
+  checkBctcIdentityGuard,
+  buildBctcCorruptDataMessage,
+} from "../../../../domain/services/financial-reports/bctcIdentityGuard.js";
+import {
   fetchParseAndStoreBctc,
   type FetchParseAndStoreBctcParams,
   type QuarterString,
@@ -292,35 +296,28 @@ export function registerReportTools(
           };
         }
 
-        // ── Balance-sheet identity guard ──────────────────────────────────────
-        // OCR corruption fingerprint: total_assets <= 0 OR total_assets < equity_total.
-        // A valid balance sheet must satisfy: Total Assets >= Equity (equity is funded
-        // by assets). Serving these values raw produces nonsensical derived ratios
-        // (e.g. net_margin 229,157%, ROE undefined). Suppress and flag as corrupt.
+        // ── Balance-sheet identity guard (FIX-BCTC-BANK-SUMMARY-MAPPING W1) ────
+        // Shared with get_bctc_full / compare_financials — see bctcIdentityGuard.ts.
         // Third occurrence: VNM → VEA → CTG — guard at serve layer, not per-ticker patch.
-        if (row.total_assets <= 0 || row.total_assets < row.equity_total) {
-          const corruptReason = row.total_assets <= 0
-            ? `total_assets=${row.total_assets} (zero or negative — OCR extraction failure)`
-            : `total_assets=${row.total_assets} < equity_total=${row.equity_total} (balance-sheet identity violated)`;
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: [
-                  `=== ${actionCode} — ${row.sort_key} ===`,
-                  ``,
-                  `[CORRUPT DATA — SKIP]`,
-                  `This report has a balance-sheet identity violation and cannot be served.`,
-                  `Reason  : ${corruptReason}`,
-                  `Confidence: 0% (forced — corrupt flag)`,
-                  ``,
-                  `No derived ratios (margin, ROE, ROA, D/E) are shown — they would be meaningless.`,
-                  ``,
-                  `Action: Re-extract via /api/bctc-inspect or re-run the BCTC refine pipeline for ${actionCode} ${row.sort_key}.`,
-                ].join("\n"),
-              },
-            ],
-          };
+        {
+          const identityGuard = checkBctcIdentityGuard({
+            totalAssets: row.total_assets,
+            equityTotal: row.equity_total,
+          });
+          if (identityGuard.corrupt) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: buildBctcCorruptDataMessage(
+                    actionCode,
+                    row.sort_key,
+                    identityGuard.reason!,
+                  ),
+                },
+              ],
+            };
+          }
         }
 
         const lines: string[] = [
@@ -425,6 +422,38 @@ export function registerReportTools(
               },
             ],
           };
+        }
+
+        // ── Balance-sheet identity guard (FIX-BCTC-BANK-SUMMARY-MAPPING W1) ────
+        // compare_financials previously ran its OWN independent fetchRow() with
+        // NO guard call — never-fired scope gap. Check BOTH periods: a delta
+        // computed against a corrupt period is meaningless regardless of which
+        // side (period1/period2) is corrupt.
+        {
+          const guard1 = checkBctcIdentityGuard({
+            totalAssets: row1.total_assets,
+            equityTotal: row1.equity_total,
+          });
+          const guard2 = checkBctcIdentityGuard({
+            totalAssets: row2.total_assets,
+            equityTotal: row2.equity_total,
+          });
+          const failedGuard = guard1.corrupt ? guard1 : guard2.corrupt ? guard2 : null;
+          const failedRow = guard1.corrupt ? row1 : row2;
+          if (failedGuard) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: buildBctcCorruptDataMessage(
+                    actionCode,
+                    failedRow.sort_key,
+                    failedGuard.reason!,
+                  ),
+                },
+              ],
+            };
+          }
         }
 
         // Determine delta type: YoY if different year, QoQ if same year

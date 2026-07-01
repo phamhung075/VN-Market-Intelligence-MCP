@@ -27,6 +27,10 @@ import type { FinancialMetrics } from "../../../../domain/services/financial-rep
 import { isBankFormFromDb } from "../../../../domain/services/financial-reports/bctcFormType.js";
 import { validateFinancialReport } from "../../../../domain/services/financial-reports/bctcValidator.js";
 import { recomputeRatios } from "../../../../domain/services/financial-reports/bctcRatioRecompute.js";
+import {
+  checkBctcIdentityGuard,
+  buildBctcCorruptDataMessage,
+} from "../../../../domain/services/financial-reports/bctcIdentityGuard.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -966,6 +970,35 @@ export function registerBctcFullTools(
               },
             ],
           };
+        }
+
+        // ── Balance-sheet identity guard (FIX-BCTC-BANK-SUMMARY-MAPPING W1) ────
+        // get_bctc_full previously had ZERO "CORRUPT" check anywhere in this file —
+        // never-fired scope gap (guard was authored only in reports.ts's
+        // get_financial_summary). Fire BEFORE the PUB-1..8 publishability gate and
+        // BEFORE the BAL-1a ratio recompute — a corrupt identity must hard-block
+        // regardless of what the publishability heuristics or recompute would do.
+        // Shared with get_financial_summary / compare_financials — see
+        // domain/services/financial-reports/bctcIdentityGuard.ts.
+        {
+          const identityGuard = checkBctcIdentityGuard({
+            totalAssets: latestRow.total_assets,
+            equityTotal: latestRow.equity_total,
+          });
+          if (identityGuard.corrupt) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: buildBctcCorruptDataMessage(
+                    upperCode,
+                    latestRow.sort_key,
+                    identityGuard.reason!,
+                  ),
+                },
+              ],
+            };
+          }
         }
 
         // ── BAL-1a-BACKFILL: Recompute ratio columns from correct base scalars ──
