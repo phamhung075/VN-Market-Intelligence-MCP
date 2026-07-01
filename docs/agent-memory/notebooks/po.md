@@ -1,30 +1,25 @@
 # PO Notebook
 
-_Last: 2026-07-01T11:15Z_
+_Last: 2026-07-01T16:09Z_
 
-## Tick 2026-07-01T11:15Z — cowork-fire 11:06:11Z → RESOLVED-NO-TASK (coord 3340d049)
-- Signal: daily BCTC-refine slot-3 dispatch (cron 0 11), FIRE/spawned refine_bctc_md, no errors, calendar closed. Noise class → RESOLVED-NO-TASK, no mint.
-- pressure_mode=legacy = documented isStale→legacy fallback (~105min pressure gap expected off-market); NOT an anomaly. No dev BATCH dispatched.
-- WIP guard honored: Money-Radar P0 T3B-REST-API + T3-DASHBOARD in review (await ops rebuild → T4-QA-GATE close). CCATO-T1-TRUTH-GATE-ENGINE stays ready for next free slot.
+## Tick 2026-07-01T16:09Z — SELF-INITIATED sprint DASH-CRON-RECHECK-TABLE (user feature request, coord f981431d)
 
-## Tick 2026-07-01T08:24Z — REDUNDANT cross-session re-fire (dev-team tick 08:07Z, coord 3340d049)
+User asked: on /dashboard/orchestration add a CRON TABLE to RECHECK every scheduled cron vs its expected fire time (on-time/late/missed/stale/never). Scoped as a sprint + self-initiated the cascade.
 
-Spawned by dev-team to triage the money-radar brief as PRIMARY. RAW-verified board FIRST (redundant-respawn lesson): **MONEY-RADAR-P0 already fully minted by PEER session d3292ca4 at 08:14Z** (commit 4aedaf5d; board `_updated_by:po-money-radar-p0-sprint-mint`). Sprint in active_sprints (active/high, brief §11 verbatim); MONEY-RADAR-P0-T1-OSCILLATORS in ready[] (developer, zone=dev-technical-analysis); T2-COMPOSITE/T3-DASHBOARD/T4-QA-GATE held in backlog[]. Re-minting would dup SSOT keys → **NO re-mint**. dev-team loop adopts T1 from ready[].
+**Live verification before scoping (did NOT trust the pointers):**
+- `get_cron_health` (cronHealthTools.ts) exists but emits only last_run/last_status/success_rate — NO expected-vs-actual classification → that IS the gap (extend, don't rebuild).
+- Layer A SSOT = `CRONS` map in `apps/mcp-server/src/scheduler/cronConfig.ts` (~80 crons via scheduleCron()); NEVER hardcode the count (project-stats cronJobCount=2 is a stale probe artifact — its own note says live≈81).
+- Actual last-fire = `cronJobRunStore` `cron_job_runs` MAX(started_at)-per-job (double-log immune — same oracle schedulerWatchdogJob uses).
+- Existing expected-vs-actual classifier = `schedulerWatchdogJob` WATCHDOG_MANIFEST (16 jobs, cadence×threshold) → GENERALIZE to all Layer-A, don't diverge.
+- Data plane = frontend `/api/orchestration` proxy (api.orchestration.tsx) → mcp-server `orchestrationHandler.ts`. Mirror it: new `/api/cron-status` + `api.cron-status.tsx` + table on dashboard.orchestration.tsx.
+- Two-layer honesty: Layer-B CLI-session crons (.claude/commands/crons/*.md) = SESSION_SCOPED, NEVER MISSED.
 
-**RETURN: NOTHING (idle).** Primary done by peer; nothing new to dispatch.
+**Actions:** wrote sprint_goal entry + minted BA-DASH-CRON-RECHECK-TABLE → ready[] (next_agent=ba, zone=multi, SPRINT-M, user_prioritized) via scripts/po-s135 → orch-apply.sh (rc=0; entries 24→25, ready 1→2; 98 pre-existing SHG warnings, 0 new). Claimed sprint umbrella lock. Head untouched — dev-team cron adopts the ready BA task.
 
-**Signals triaged (all ACK, no dev-team action):**
-- context_bloat_breach ba.md 210L/200 (overage 10) — addressed to claude-manager-helper maintenance lane, NOT dev-team. Self-heals on ba's next notebook write (APPEND cap ≤200L). Class-closed lesson feedback_qa_notebook_reprune_treadmill_escalate. No BATCH.
-- cowork-fire ×3 (08:07/07:21/06:22) — informational dispatcher markers. Skip.
-
-**"Trash" in docs/signals/ root — CORRECTED, do NOT delete (router framing was wrong):**
-- `price_anomaly_20260629T1600.json` + `price_anomaly_20260630T0859.json` are NOT trash — they are a **designed market-watcher→CHEF dish-handoff artifact** (`market-watcher/init.md:19` "chef reads these for EOD/morning dishes"; eod.md:29 writes `docs/signals/price_anomaly_<ts>.json` per cycle). Drain correctly skips them (not `<agent>-<ISO>` bus signals). Deleting risks CHEF + recurs each cycle. Real (minor) gap = missing retention/rotation on that handoff; only 2 files/2d, CHEF reads latest → too low to file. LEFT untouched.
-- `orch-state-writer-audit.json` = load-bearing SSOT-W1 deliverable (referenced by dev-standards.md + 2 decision docs + handoff at that exact path). Misplaced in signals root but moving breaks 4 refs. LEFT untouched.
-
-No board mutation this tick. Committed po.md only.
+**RETURN: NEXT=ba** (write REQ spec + AC list for DASH-CRON-RECHECK-TABLE). PIPELINE: continue.
 
 ## Carry-over
-- MONEY-RADAR-P0 + NARRATIVE-TRUTH-CCATO-GATE both live: 2 READY (MR-P0-T1 + CCATO-T1) = dev-standards WIP limit. dev-team loop drives both.
-- FUTURE TICKS: do NOT "clean" docs/signals/price_anomaly_*.json — they feed CHEF dishes. If accumulation ever becomes real (>N files), file a market-watcher rotation FIX, do NOT ad-hoc rm.
-- 2 plan-only lows from 05:37Z tick (SPIKE-TICK-SNAPSHOT-DEADCODE, OPS-OHLCV-VPS-BACKFILL-STALL) await a free tick — not market-critical.
-- FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE still carries FREEZE spec for agent-father grooming.
+- 3 active sprints now: MONEY-RADAR-P0, NARRATIVE-TRUTH-CCATO-GATE, DASH-CRON-RECHECK-TABLE. ready[] = CCATO-T1 (developer) + BA-DASH-CRON-RECHECK-TABLE (ba). WIP: dev-team loop drives.
+- DASH-CRON-RECHECK-TABLE is READ-ONLY dashboard view — scope_out bars new always-on cron/alerting, auto-heal-from-UI, CRONS-map edits, Layer-B telemetry infra, and fixing individual broken crons (those are existing FIX-CRON-* tasks). Guard against BA/architect over-scoping into any of those.
+- Reuse mandate is the sprint's main risk lever: if dev rebuilds a parallel classifier instead of generalizing WATCHDOG_MANIFEST, verdicts will diverge from schedulerWatchdog — qa gate MUST parity-test.
+- do NOT "clean" docs/signals/price_anomaly_*.json — they feed CHEF dishes (market-watcher handoff).
