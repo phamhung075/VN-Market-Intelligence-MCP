@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-01T10:52:00Z",
+    "updated_at": "2026-07-01T11:08:30Z",
     "updated_by": "dev-team",
-    "active_task_id": "MONEY-RADAR-P0-T3-DASHBOARD",
-    "next_agent": "dev-frontend",
-    "note": "T2 DONE_VERIFIED (live serving). Dispatched dev-frontend on T3-DASHBOARD (/dashboard/money-radar route; mirror momentum.tsx; 4 GaugeCards §8; HN-6 null contract). CCATO-T1 stays ready for next tick."
+    "active_task_id": "MONEY-RADAR-P0-T3B-REST-API",
+    "next_agent": "dev-mcp-server",
+    "note": "T3-frontend delivered (commit a0e34a87; 4 GaugeCards; 4 HN-6 null blocks; tsc/tests green; template untouched) -> moved to review. RAW-verify exposed a cross-zone gap: frontend proxy consumes GET /api/money-radar but mcp-server never built that REST route (only the get_money_radar_composite tool). Minted + dispatched T3B-REST-API (dev-mcp-server) to build the bridge (mirror momentumIndicatorsHandler). T3 serving-value + T4 QA gate now block on T3B. CCATO-T1 stays ready."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11262,12 +11262,12 @@
     },
     "in_progress": [
       {
-        "id": "MONEY-RADAR-P0-T3-DASHBOARD",
-        "title": "dev-frontend: apps/frontend/app/routes/dashboard.money-radar.tsx — mirror dashboard.momentum.tsx; 4 GaugeCards (§8); honest-NULL render ('—' + gray FreshnessBadge + null_reason).",
-        "owner": "developer",
-        "next_agent": "developer",
+        "id": "MONEY-RADAR-P0-T3B-REST-API",
+        "title": "dev-mcp-server: expose GET /api/money-radar REST route — mirror momentumIndicatorsHandler.ts + server.ts /api/momentum-indicators block; call getMoneyRadarComposite usecase; return brief §4 shape. Unblocks T3 frontend serving-value + T4 QA gate.",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
         "status": "IN_PROGRESS",
-        "zone": "dev-frontend",
+        "zone": "dev-mcp-server",
         "type": "FEATURE",
         "size": "S",
         "priority": "high",
@@ -11275,19 +11275,18 @@
         "depends": [
           "MONEY-RADAR-P0-T2-COMPOSITE"
         ],
-        "created_at": "2026-07-01T08:18:21Z",
+        "created_at": "2026-07-01T11:08:30Z",
+        "dispatched_at": "2026-07-01T11:08:30Z",
         "files": [
-          "apps/frontend/app/routes/dashboard.money-radar.tsx (new)",
-          "apps/frontend/app/routes/dashboard.momentum.tsx (template, mirror exactly)",
-          "apps/frontend/app/components/GaugeCard.tsx",
-          "apps/frontend/app/components/FreshnessBadge.tsx"
+          "apps/mcp-server/src/interface/mcp/routes/moneyRadarHandler.ts (new, mirror momentumIndicatorsHandler.ts 340L)",
+          "apps/mcp-server/src/interface/mcp/server.ts (add GET /api/money-radar pathname block, mirror /api/momentum-indicators ~L2265)",
+          "apps/mcp-server/src/__tests__/money-radar-api.test.ts (new, mirror momentum-indicators.test.ts)"
         ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.3 + §8 (card spec) + §5 HN-6 (null contract)",
-        "generic_mandate": "Mirror dashboard.momentum.tsx structure EXACTLY: PageHeader (title='Radar Dòng Tiền', subtitle='Tổng hợp dòng vốn thị trường') + FreshnessBadge(dataAsof=generated_at, slaTierKey='daily') in actions; grid 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'; 4 GaugeCards per §8: [Dòng Tiền ← score.toFixed(2) | MẠNH/YẾU/TRUNG TÍNH], [Dòng Vốn Ngoại ← foreign_accum_z_market.toFixed(2) | GOM HÀNG/XÃ HÀNG], [Khối Lượng Nội Địa ← rel_vol_z_20.toFixed(2) | CAO/THẤP], [Tín Hiệu Phân Kỳ ← divergence.flag | PHÂN KỲ/KHÔNG RÕ]. HN-6 null contract NON-NEGOTIABLE: null scalar renders '—' + FreshnessBadge{label:'Chưa có dữ liệu',color:'gray'} + nullReason from composite null_reason — NEVER a fabricated number. FreshnessBadge SLA 'daily' (maxStalenessMin=1560). NO diacritics in CSS class names; Vietnamese only in displayed strings.",
-        "acceptance": "Route /dashboard/money-radar loads without error; loader reads the composite; non-null card shows formatted score + colored badge; null card shows '—' + gray badge + 'Chưa có dữ liệu' + null_reason (per HN-6); 4 GaugeCards present per §8. No diacritics in class names.",
-        "verification_gate": "qa RAW-loads the route: asserts non-null render + honest-NULL render ('—'/gray/reason) + 4 cards + FreshnessBadge 'daily' + no CSS-class diacritics; confirms it mirrors dashboard.momentum.tsx and does not regress the momentum route.",
-        "note": "Consumer surface. Depends T2 (needs the composite tool). Radar cards render non-null (depth-independent) while momentum cards honest-NULL — that contrast VALIDATES the architecture (§10), do NOT homogenize.",
-        "dispatched_at": "2026-07-01T10:52:00Z"
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §4 (L130-142 response shape) + §7 (L302 dev-mcp-server Phase-0 REST surface) + §11.3 (L305 frontend loader -> /api/money-radar)",
+        "generic_mandate": "Mirror the momentum REST bridge EXACTLY. (1) Create routes/moneyRadarHandler.ts mirroring momentumIndicatorsHandler.ts: handle GET /api/money-radar, call the SAME getMoneyRadarComposite usecase the get_money_radar_composite tool uses (apps/mcp-server/src/application/usecases/getMoneyRadarComposite.ts), serialize the §4 shape {score, delta_5d, divergence{flag,severity,detectors,null_reason}, coverage_pct, source_tier, is_estimate, null_reason, components, generated_at}. (2) Wire server.ts: add `if (method===\"GET\" && pathname===\"/api/money-radar\")` block mirroring the /api/momentum-indicators block near L2265. (3) Honest-NULL HN-1..HN-7: pass composite nulls THROUGH untouched — NEVER zero-fill; forward 4xx/5xx as-is; never fabricate. (4) Test: mirror momentum-indicators.test.ts. NO new usecase/domain logic — pure interface bridge over the existing usecase. Single-service: ops rebuilds mcp-server only.",
+        "acceptance": "GET /api/money-radar returns 200 with the §4 JSON shape from the live composite; nulls pass through (no zero-fill); content identical to get_money_radar_composite tool output; unit test mirrors momentum-indicators.test.ts and passes; tsc + lint:fence exit 0.",
+        "verification_gate": "After ops single-svc rebuild (docker compose build mcp-server && up -d --no-deps mcp-server; verify image ID CHANGED): RAW live-probe GET http://localhost:3000/api/money-radar returns non-null score matching the gateway get_money_radar_composite result; then /dashboard/money-radar renders real (non-'—') cards. qa route-load gate (T4) then closes the sprint.",
+        "note": "DISCOVERED-GAP (RAW-verify of T3): brief §11 scoped the MCP tool (T2) + frontend route (T3) but omitted the REST bridge the frontend proxy actually consumes (§11.3 loader -> /api/money-radar). momentum has BOTH surfaces (tool + /api/momentum-indicators); money-radar had only the tool. Honest completion of the frontend<->backend contract. Interface-only, small."
       }
     ],
     "ready": [
@@ -11342,6 +11341,65 @@
           "by": "po-s121",
           "at": "2026-06-27T08:03:52Z",
           "note": "enum-clean (C2): PARKED qualifier-as-status -> DEFERRED (deliberate serialization); park_reason retained verbatim as the qualifier prose. UNPARK CONDITION unchanged."
+        }
+      },
+      {
+        "id": "MONEY-RADAR-P0-T3-DASHBOARD",
+        "title": "dev-frontend: apps/frontend/app/routes/dashboard.money-radar.tsx — mirror dashboard.momentum.tsx; 4 GaugeCards (§8); honest-NULL render ('—' + gray FreshnessBadge + null_reason).",
+        "owner": "developer",
+        "next_agent": "",
+        "status": "REVIEW",
+        "zone": "dev-frontend",
+        "type": "FEATURE",
+        "size": "S",
+        "priority": "high",
+        "sprint": "MONEY-RADAR-P0",
+        "depends": [
+          "MONEY-RADAR-P0-T2-COMPOSITE",
+          "MONEY-RADAR-P0-T3B-REST-API"
+        ],
+        "created_at": "2026-07-01T08:18:21Z",
+        "files": [
+          "apps/frontend/app/routes/dashboard.money-radar.tsx (new)",
+          "apps/frontend/app/routes/dashboard.momentum.tsx (template, mirror exactly)",
+          "apps/frontend/app/components/GaugeCard.tsx",
+          "apps/frontend/app/components/FreshnessBadge.tsx"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.3 + §8 (card spec) + §5 HN-6 (null contract)",
+        "generic_mandate": "Mirror dashboard.momentum.tsx structure EXACTLY: PageHeader (title='Radar Dòng Tiền', subtitle='Tổng hợp dòng vốn thị trường') + FreshnessBadge(dataAsof=generated_at, slaTierKey='daily') in actions; grid 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'; 4 GaugeCards per §8: [Dòng Tiền ← score.toFixed(2) | MẠNH/YẾU/TRUNG TÍNH], [Dòng Vốn Ngoại ← foreign_accum_z_market.toFixed(2) | GOM HÀNG/XÃ HÀNG], [Khối Lượng Nội Địa ← rel_vol_z_20.toFixed(2) | CAO/THẤP], [Tín Hiệu Phân Kỳ ← divergence.flag | PHÂN KỲ/KHÔNG RÕ]. HN-6 null contract NON-NEGOTIABLE: null scalar renders '—' + FreshnessBadge{label:'Chưa có dữ liệu',color:'gray'} + nullReason from composite null_reason — NEVER a fabricated number. FreshnessBadge SLA 'daily' (maxStalenessMin=1560). NO diacritics in CSS class names; Vietnamese only in displayed strings.",
+        "acceptance": "Route /dashboard/money-radar loads without error; loader reads the composite; non-null card shows formatted score + colored badge; null card shows '—' + gray badge + 'Chưa có dữ liệu' + null_reason (per HN-6); 4 GaugeCards present per §8. No diacritics in class names.",
+        "verification_gate": "qa RAW-loads the route: asserts non-null render + honest-NULL render ('—'/gray/reason) + 4 cards + FreshnessBadge 'daily' + no CSS-class diacritics; confirms it mirrors dashboard.momentum.tsx and does not regress the momentum route.",
+        "note": "Consumer surface. Depends T2 (needs the composite tool). Radar cards render non-null (depth-independent) while momentum cards honest-NULL — that contrast VALIDATES the architecture (§10), do NOT homogenize.",
+        "dispatched_at": "2026-07-01T10:52:00Z",
+        "review_result": {
+          "reviewed_at": "2026-07-01T11:08:30Z",
+          "by": "dev-team",
+          "frontend_commit": "a0e34a87",
+          "files_created": [
+            "apps/frontend/app/routes/dashboard.money-radar.tsx",
+            "apps/frontend/app/routes/api.money-radar.tsx",
+            "apps/frontend/app/__tests__/money-radar-cards.test.ts"
+          ],
+          "checks": {
+            "tsc": "exit 0",
+            "eslint_fence": "exit 0",
+            "unit_tests": "39/39 pass",
+            "full_suite": "2006/2008 (2 pre-existing kinh-dich, unrelated)"
+          },
+          "raw_verified": {
+            "gauge_cards": 4,
+            "hn6_nullReason_blocks": 4,
+            "titles": [
+              "Dòng Tiền",
+              "Dòng Vốn Ngoại",
+              "Khối Lượng Nội Địa",
+              "Tín Hiệu Phân Kỳ"
+            ],
+            "template_files_unchanged": true,
+            "css_class_diacritics": false
+          },
+          "blocked_on": "MONEY-RADAR-P0-T3B-REST-API",
+          "blocker_reason": "Frontend proxy api.money-radar.tsx forwards to GET ${MCP_SERVER}/api/money-radar, but that REST route does NOT exist on mcp-server (only get_money_radar_composite MCP tool registered). Page 404s -> honest-NULL until T3B lands. Serving-value done_verified gates on T3B + ops single-svc rebuild + live /api/money-radar probe returning non-null score."
         }
       }
     ],
