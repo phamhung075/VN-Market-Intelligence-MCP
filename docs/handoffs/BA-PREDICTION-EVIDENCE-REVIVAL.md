@@ -134,3 +134,32 @@ Confirm whether PO wants `FIX-PREDICTION-SIGNALS-EMPTY` **decoupled** from work-
 - **application/agent-flow (docs/agents/**):** `news-scout`, `bctc-analyst`, `market-watcher` flows + tools_package docs (FR-2.1); `digest-predict/init.md` + `flow/daily-predict.md` (FR-3, pending B1).
 
 Multi-zone confirmed — architect must SPLIT into at minimum: (1) `apps/mcp-server/` dev-mcp-server hop [FR-1.1, FR-2.2, FR-1.2 if B4 confirms in-scope], (2) `docs/agents/` doc-flow hop [FR-2.1, FR-3 pending B1] — these two hops have NO file overlap and can run in parallel.
+
+---
+
+## 10. PO Review — APPROVED (reshaped) — 2026-07-01T06:22:43Z
+
+**Verdict:** APPROVED-RESHAPED. BA live-evidence trusted; PO re-verified the one load-bearing claim live via `get_evidence_summary(stock=CTG)` → returned 4 `foreign_flow_institutional [bearish]` fragments all `LR=1.00 (n=0) [UNTRUSTED]`, confirming FR-1.1: the tool masks the live TRUSTED n=18 bearish/5d row because it hardcodes the bullish/10d lookup regardless of the fragment's own direction. Monoculture (100% foreign_flow) also confirmed. Corrected root-cause accepted in full: the LR compute job (`baseRateComputationJob`, Task 1122) **exists and is healthy — input-starved, not missing.**
+
+### Blocker resolutions (each also stamped on the orch ready-row `.po_decisions`)
+
+- **B1 → Design B (advisory-only / docs-only).** The shipped code has **no** hard Sharpe pre-claim gate; the `sample_size<10 → LR=1.0` neutral-multiplier IS the intended behavior (claims still create, just without an evidence edge). Fix reduces to stripping the misleading "Sharpe>1.0 hard gate" language from `digest-predict/init.md` so the agent stops narrating a false structural blocker (12 consecutive cycles). The `COLD_START` confidence tier (design A) is **descoped** — it adds risk and would *reduce* emission, and is unnecessary because FR-1.1 surfaces the existing n=18 TRUSTED `foreign_flow_institutional/bearish` row to supply the directional edge. (If, after FR-1.1+FR-2.1 land, thin-sample restored types should contribute a *discounted* edge during ramp, that is a future enhancement, not this sprint.)
+
+- **B2 → IN-SCOPE as a mandatory diagnostic probe (FR-2.2), fix conditional.** `insider_accumulation` is the second wired producer and it has yielded **zero** fragments across ~2 months of daily "success" runs — the exact silent-empty-success class that caused the original starvation. Per no-fake-data / passive-health-masks-dead-data: the raw probe (`insider_transactions` volume vs `detectAccumulationStreaks` output over the same 30-day window) is **required for DoD**. If the probe shows a silent bug → fix it in the apps/mcp-server hop (same zone/bug-class, no scope balloon). If it shows honest-zero → document it as honest-zero (fix is a no-op). DoD = "probe done + verdict recorded (+ fix if silent-bug)."
+
+- **B3 → DECOUPLE.** `FIX-PREDICTION-SIGNALS-EMPTY` is `predictionMarketJob.ts` (Polymarket poll), structurally independent from the evidence→LR→claim chain — nothing in FR-1/FR-2 touches it. **Removed from this sprint's scope_in / DoD**; re-opened as an independent BACKLOG item with its own undiagnosed root (stalled job vs unpurged `t163-*` test-seed). Architect's SPLIT must **NOT** claim it auto-resolved. (Board: `specced_under` removed, `decoupled:true` stamped.)
+
+- **B4 → IN-SCOPE as the minimal cron-interval change (weekly → daily).** Same apps/mcp-server hop, low risk (`baseRateComputer` is a pure calc over existing rows). It removes an up-to-7-day LR-recompute latency that would otherwise make the `success_metric` verification flaky (a type crossing n≥10 on a Monday would show TRUSTED only the following Sunday). The **event-triggered** recompute (ARCH-RATIFY-PER-2 option B) is **rejected/deferred** — a bigger structural change than this sprint needs.
+
+### Reshaped scope — architect SPLIT into 2 parallel-safe hops (no file overlap)
+
+- **Hop 1 — `apps/mcp-server/` (dev-mcp-server):** FR-1.1 `get_evidence_summary` direction+horizon bug (+regression test per §6) [QUICK WIN — surfaces the n=18 TRUSTED row immediately]; FR-2.2 `insider_accumulation` zero-yield diagnosis (B2); FR-1.2 `baseRateComputationJob` cadence weekly→daily (B4).
+- **Hop 2 — `docs/agents/` (doc-flow, NOT dev-mcp-server):** FR-2.1 wire `record_evidence_fragment` into `news-scout` / `bctc-analyst` / `market-watcher` flows + tools_package docs (PRIMARY monoculture fix; reuse the seeded evidence_type names per ARCH-RATIFY-PER-3); FR-3 docs-only strip of the false Sharpe hard-gate language in `digest-predict/init.md` (B1 = design B).
+
+**Architect-ratify (PO concurs):** PER-1 honest-UNTRUSTED when no matching-horizon LR row (no interpolation); PER-2 cron-interval (accepted) not event-triggered; PER-3 reuse seeded evidence_type strings.
+
+### DoD clarification (to prevent a false-red at sign-off)
+
+`success_metric` condition-1 ("majority TRUSTED LR") is measured against the **existing recorded pairs at deploy** — FR-1.1 makes the foreign_flow monoculture pairs TRUSTED via the live n=18 row with no recompute needed. Newly-restored FR-2.1 types are **allowed to be in their sample-ramp** (n<10, LR=1.0 neutral): they satisfy condition-2 ("≥2 non-foreign_flow types present") but are **not required to be TRUSTED** within the 2-cycle window (honest ramp, §6). Condition-3 (new claim id>12 within 2 digest cycles) is satisfiable from FR-1.1's surfaced edge alone.
+
+**Chain advanced:** ready-row `next_agent → architect`; canonical `.head` repointed `in_progress / architect / BA-PREDICTION-EVIDENCE-REVIVAL` (was idle, WIP=0 — no active wave to preserve).
