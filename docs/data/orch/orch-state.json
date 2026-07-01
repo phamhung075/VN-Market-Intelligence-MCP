@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-07-01T16:20:15Z",
+    "status": "idle",
+    "updated_at": "2026-07-01T17:06:29Z",
     "updated_by": "dev-team",
-    "active_task_id": "CCATO-T1-TRUTH-GATE-ENGINE",
-    "next_agent": "developer",
-    "note": "Dispatched developer (background) on CCATO-T1-TRUTH-GATE-ENGINE (FEATURE, cross-service, sprint NARRATIVE-TRUTH-CCATO-GATE): build docs/data/claim-tool-map.json (no-hardcode negation lexicon + 5 dim->tool routings) + scripts/narrative-truth-gate.sh (gateway re-probe, exit!=0 on non-null contradiction, PASS-on-null, emit narrative_contradiction row to signal_queue via orch-apply) + scripts/test-narrative-truth-gate.sh (4 DoD assertions). spec_ref docs/architecture-briefs/2026-06-30-narrative-quality-ccato-gate.md S4.1-4.4. On developer completion: RAW-verify (run test harness, confirm 4 green + narrative_contradiction appended on FAIL path, PASS-on-null, determinism) -> review -> qa gate. SF-1 + task lock held through chain. PARALLEL: PO triaging 9 pending signals (incl HIGH bctc CTG Q1-2026 total_assets=0 validation-fail). BA-DASH-CRON-RECHECK-TABLE stays ready (WIP=2)."
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "CCATO-T1-TRUTH-GATE-ENGINE DONE_VERIFIED (dev c18ba298 + fixer 29aac30e + qa 9b2448d8 APPROVE + dispatcher RAW re-verify). Sprint NARRATIVE-TRUTH-CCATO-GATE remains OPEN: CCATO-T2-CLAIM-TRUTH-SKILL now UNBLOCKED (dep T1 satisfied, still backlog), CCATO-T3-FLOW-WIRING-6PT still blocked (dep T2). WIP=0 in_progress. NEXT-DISPATCH candidates by priority: (1) URGENT FIX-BCTC-BANK-SUMMARY-MAPPING P1 3rd-re-fire 15d total_assets=0 zone=apps/mcp-server/.../financial-reports/ dev-mcp-server per feedback_recurring_bug_escalation, (2) ARCH-DASH-CRON-RECHECK-TABLE ready/architect, (3) CCATO-T2 backlog. Dispatcher evaluating FIX-BCTC readiness next; SF-1 held pending that decision."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11555,23 +11555,13 @@
           "momentum": "GET :3000/api/momentum-indicators 200",
           "fix_commit": "d7b5d1fb repoints getVnIndexDailyCloses to daily_ohlcv (diff-confirmed +Source: daily_ohlcv / NOT market_prices_history)"
         }
-      }
-    ],
-    "head": {
-      "status": "in_progress",
-      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
-      "next_agent": "architect",
-      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
-      "updated_by": "dev-team",
-      "updated_at": "2026-07-01T06:26:45Z"
-    },
-    "in_progress": [
+      },
       {
         "id": "CCATO-T1-TRUTH-GATE-ENGINE",
         "title": "CCATO detection engine: claim-tool-map.json (negation lexicon + 5 dimension->tool routings, NO hardcode) + scripts/narrative-truth-gate.sh (live gateway re-probe, exit!=0 on non-null contradiction, PASS on null, emit narrative_contradiction to signal_queue) + DoD test harness",
         "owner": "developer",
         "next_agent": "developer",
-        "status": "IN_PROGRESS",
+        "status": "DONE_VERIFIED",
         "zone": "cross-service",
         "type": "FEATURE",
         "size": "M",
@@ -11590,9 +11580,24 @@
         "verification_gate": "qa RAW-runs scripts/test-narrative-truth-gate.sh; all 4 assertions green AND a narrative_contradiction row is confirmed appended to .signal_queue.rows on a FAIL path (via orch-apply.sh, no schema reject). PASS-on-null asserted with a stubbed/real null tool response.",
         "note": "Foundation atom of NARRATIVE-TRUTH-CCATO-GATE. No apps/mcp-server change (narrative_contradiction is a free-string `type`). Router live-verified ground truth: VNM RSI~20.3, get_foreign_flow VNM net 3d -85,985 shares.",
         "dispatched_at": "2026-07-01T16:20:15Z",
-        "dispatched_by": "dev-team"
+        "dispatched_by": "dev-team",
+        "done_verified_at": "2026-07-01T17:06:29Z",
+        "done_verified_by": "dev-team",
+        "dev_commit": "c18ba298",
+        "fixer_commit": "29aac30e",
+        "qa_commit": "9b2448d8",
+        "verify_note": "dispatcher RAW-verified: ran scripts/test-narrative-truth-gate.sh MYSELF x2 (10/10 pass, live narrative_contradiction count 0 before+after both runs, git diff orch-state.json clean, emit-schema-proof exercised on isolated copy via ORCH_APPLY_LIVE_FILE_OVERRIDE); qa ad0e93b2 independently APPROVED (shasum-pinned live file identical at 4 checkpoints, orch-apply.sh:49 override confirmed real, zero-hardcode grep clean, FAIL-on-non-null + honest-NULL-PASS(ANI) + determinism all live-verified). Non-blocking followup noted: S4.3 ±50char window implemented as full-sentence-scope match (zero FP/FN across fixtures) not documented as deviation in claim-tool-map.json _meta."
       }
     ],
+    "head": {
+      "status": "in_progress",
+      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
+      "next_agent": "architect",
+      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
+      "updated_by": "dev-team",
+      "updated_at": "2026-07-01T06:26:45Z"
+    },
+    "in_progress": [],
     "ready": [
       {
         "id": "ARCH-DASH-CRON-RECHECK-TABLE",
