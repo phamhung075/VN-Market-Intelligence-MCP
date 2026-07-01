@@ -1663,8 +1663,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-30T21:56:43Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-07-01T01:16:37Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7942,6 +7942,32 @@
           "BACKUP + drift-check before any UPDATE; off-hours window; PO go/no-go gate (destructive, mirrors CONTAM-10-EXEC).",
           "Post-verify 0 remaining contaminated rows for the 9 tickers + serving-layer RS/ROC/52w normalization; bucket-(a) 6345 legit-cheap rows untouched."
         ]
+      },
+      {
+        "id": "CI-RED-323b512b-FIX",
+        "type": "FIX",
+        "size": "M",
+        "status": "BACKLOG",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "owner": "",
+        "next_agent": "",
+        "dispatcher": "dev-team",
+        "created_by": "po",
+        "created_at": "2026-07-01T01:16:09Z",
+        "sprint": "CI-RED-323b512b",
+        "check_id": "CI-RED-323b512b",
+        "head_sha": "323b512b508acb7f0f4ef386ff75c335ed825aa1",
+        "title": "CI-RED-323b512b-FIX — CI RED bun test: repair 17 deterministic full-suite failures across 5 files (164-polymarket-fetcher, 183-alert-accuracy, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC)",
+        "root_cause": "PO triage 2026-07-01T01:07Z RAW-verified via gh: `CI` workflow `bun test` job (ci-per-file-isolation.sh) RED on origin/main HEAD 323b512b — 13874 pass / 53 skip / 17 fail across 5 files. DETERMINISTIC not flaky: 4 of 5 files (164-polymarket-fetcher, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC) fail identically across 3 consecutive pushes (runs 28466268273@18:15Z, 28473428976@20:22Z, 28481690382@23:07Z); 183-alert-accuracy newly red in latest run only. 323b512b is DOC-ONLY (CONTAM-11 spike md + notebook, zero code) so the red is PRE-EXISTING/inherited from main code state, NOT introduced by 323b512b. NOT fixed by the 12 local-ahead commits: git diff 323b512b..HEAD touches only BCTC-refine files (bctcScalarAggregator.ts / refinedMarkdownParser.ts / getBctcOcfTool.ts) + 2 BCTC test files — NONE of the 5 failing files — so a blind push does NOT clear the ci_red. RECURRING: prior FIX-CI-RED-EAC0CC65-BUNTEST (436f7376, 73 fails/16 files) + FIX-CI-RED-BA82F2F5-DWF-CADENCE (79c08a1b, slot count 17->19) already merged; DWF-cadence + bun-test RED AGAIN -> recurring-bug watch per feedback_recurring_bug_escalation.",
+        "fix_spec": "Dev diagnoses per-file (do NOT assume flaky — 3/3 deterministic reproduction). Per file: (a) assertion-drift (like the prior DWF-cadence slot-count fix) -> update the expected value to match current correct behavior; (b) genuine code regression -> fix the code; (c) CI-environment-dependent test (e.g. 164-polymarket-fetcher hits network with no VPS/API in CI) -> make the test CI-hermetic via mock/stub or an explicit skip-in-CI marker — NEVER delete coverage to force green. MANDATORY: run the FULL suite locally (bun test / scripts/ci-per-file-isolation.sh) before claiming green — subset-green != full-suite-green (feedback_ci_subset_verify_misses_full_suite).",
+        "verification_gate": "ci_green_on_subsequent_push: `gh run list --branch main --limit 3` shows the `CI` workflow conclusion=success for a push AFTER 323b512b508acb7f0f4ef386ff75c335ed825aa1 (all 5 files pass, 0 fail). Priority: high. Failing jobs: bun test.",
+        "acceptance": [
+          "All 5 files pass in scripts/ci-per-file-isolation.sh locally (0 fail): 164-polymarket-fetcher, 183-alert-accuracy, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC.",
+          "Full `bun test` suite fail-count = 0 (currently 17) — verified via a FULL-suite run, not a task-subset.",
+          "CI GREEN (`CI` workflow conclusion=success) on the subsequent push after 323b512b (verification_gate=ci_green_on_subsequent_push).",
+          "No test coverage deleted to force green; any CI-env-dependent test made hermetic (mock) not silently skipped."
+        ]
       }
     ],
     "closed_sprints": [
@@ -10487,8 +10513,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-06-30T00:57:18Z",
-    "last_triaged_by": "po:s131:ind-p1-phase-scope"
+    "last_triaged_at": "2026-07-01T01:16:37Z",
+    "last_triaged_by": "po"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
