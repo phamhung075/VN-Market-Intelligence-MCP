@@ -1,0 +1,89 @@
+{
+  "version": "1",
+  "_meta": {
+    "purpose": "SSOT for the CCATO Tier-1 narrative-truth gate. scripts/narrative-truth-gate.sh reads ALL negation lexicon + dimension->tool routing + argument-shape + no-data-response markers from THIS file at runtime. ZERO hardcode of lexicon/tools/tickers in the shell script.",
+    "spec_ref": "docs/architecture-briefs/2026-06-30-narrative-quality-ccato-gate.md S4.2 + S4.4",
+    "extension_notes": "Brief S4.2 defines negation_lexicon + dimensions[].{id,keywords,tool,requires_ticker}. This file additively extends each dimension with `arg_style` (how the .sh must shape the MCP tool-call arguments object for that tool's REAL input schema, gateway-verified 2026-07-01) and adds a top-level `tool_null_markers` array (substrings that classify a LIVE tool response as an honest no-data / honest-NULL answer, vs a populated answer). Both extensions are pure SSOT data — the script contains no dimension/tool/lexicon literals, only generic dispatch on these field values.",
+    "requires_ticker_semantics": "requires_ticker governs the CLAIM-side identifier reported in the narrative_contradiction signal's ticker_or_dim field (a specific ticker vs the dimension id). It does NOT mean the tool call itself is ticker-less — some tools (get_foreign_flow) still require a `code` argument even when requires_ticker=false at the claim level; for those, the script resolves a probe ticker via the first ticker mentioned anywhere in the post body (VN-ticker regex + non_ticker_tokens denylist, same extraction used for requires_ticker=true dimensions), never a hardcoded ticker.",
+    "arg_style_values": {
+      "ticker_code": "arguments = { code: <ticker> }",
+      "ticker_codes_array": "arguments = { codes: [<ticker>] }",
+      "no_ticker": "arguments = {} (tool takes no ticker argument)",
+      "ticker_actionCode_yoy": "arguments = { actionCode: <ticker>, period1: <latest fully-elapsed quarter, computed at runtime>, period2: <same quarter prior year> }"
+    },
+    "non_ticker_tokens_rationale": "VN-ticker extraction regex is [A-Z]{2,4} per brief S4.3 step 3. A bare regex over-matches common finance/report abbreviations (RSI, USD, GDP, VN, AI, ...). non_ticker_tokens is the exclusion denylist the script filters candidates through — same category of structural noise-token list already established as legitimate inline data in scripts/fb-data-integrity-gate.sh's NON_TICKERS set; kept here (not inline in the .sh) so the ticker-extraction denylist is also runtime-SSOT-driven, not a script literal.",
+    "deviations_from_brief": "market_snapshot.keywords deviates from the brief S4.2 literal example (which lists bare \"giá\" and \"phiên\"). RAW-tested against docs/social/fb-post-2026-06-30.md: both bare tokens collide with the ubiquitous VN finance phrase \"phiên này\" (= \"this session\"), which co-occurs with the VNM TA-absence sentence AND the foreign-flow-absence sentence — causing 2 phantom market_snapshot FAILs alongside the 2 intended contradictions. Tightened to compound phrases (\"khối lượng giao dịch\", \"giá đóng cửa\", \"độ rộng thị trường\") that do not appear in either DoD sentence, restoring precision to exactly the 2 documented CCATO instances. Verified via live re-probe run 2026-07-01."
+  },
+  "negation_lexicon": [
+    "không có dữ liệu",
+    "chưa có dữ liệu",
+    "chưa trả được",
+    "công cụ chưa trả",
+    "không trả được số",
+    "không đủ dữ liệu",
+    "thiếu dữ liệu",
+    "không truy xuất được",
+    "không có thông tin",
+    "không có dữ liệu kỹ thuật phiên này",
+    "NO_TA"
+  ],
+  "non_ticker_tokens": [
+    "VN", "MCP", "AI", "BOT", "UTC", "USD", "VND", "DXY", "IV", "EY", "RSI", "MACD",
+    "BB", "TA", "SSI", "CK", "EOD", "OK", "NA", "GDP", "CPI", "IIP", "NP", "ROE", "ROA",
+    "EPS", "Q1", "Q2", "Q3", "Q4", "FY", "YTD", "HOSE", "HNX", "UPCOM", "ETF", "IPO",
+    "PE", "PB", "OI", "SL", "TP", "EV", "EBITDA", "FCF", "DCF", "IRR", "NPV", "NAV",
+    "ESG", "CSR", "AGM", "EGM", "SGD", "EUR", "JPY", "CNY", "GBP", "CAD", "AUD", "NZD",
+    "CHF", "HKD", "TWD", "KRW", "THB", "PHP", "INR", "MYR", "IDR", "MA5", "MA20", "MA50",
+    "FDI", "FII", "IMF", "ADB", "WB", "SBV", "MOF", "GSO", "SSC", "OTC", "NFP", "PMI",
+    "PCE", "PPI", "OMO"
+  ],
+  "tool_null_markers": [
+    "không đủ dữ liệu",
+    "không có dữ liệu",
+    "chưa có dữ liệu",
+    "không tìm thấy dữ liệu",
+    "not found in database",
+    "period(s) not found",
+    "insufficient data",
+    "no data available",
+    "not enough data",
+    "en attente"
+  ],
+  "dimensions": [
+    {
+      "id": "technical_indicators",
+      "keywords": ["kỹ thuật", "RSI", "MACD", "Bollinger", "hỗ trợ", "kháng cự", "chỉ báo"],
+      "tool": "get_technical_indicators",
+      "requires_ticker": true,
+      "arg_style": "ticker_code"
+    },
+    {
+      "id": "foreign_flow",
+      "keywords": ["từng mã", "khối ngoại", "nước ngoài", "mua bán ròng", "dòng vốn ngoại chi tiết"],
+      "tool": "get_foreign_flow",
+      "requires_ticker": false,
+      "arg_style": "ticker_code"
+    },
+    {
+      "id": "macro",
+      "keywords": ["vĩ mô", "lãi suất", "tỷ giá", "lạm phát", "chính sách"],
+      "tool": "get_macro_snapshot",
+      "requires_ticker": false,
+      "arg_style": "no_ticker"
+    },
+    {
+      "id": "financials",
+      "keywords": ["lợi nhuận", "EPS", "báo cáo tài chính", "BCTC", "doanh thu"],
+      "tool": "compare_financials",
+      "requires_ticker": true,
+      "arg_style": "ticker_actionCode_yoy"
+    },
+    {
+      "id": "market_snapshot",
+      "keywords": ["thanh khoản", "khối lượng giao dịch", "giá đóng cửa", "độ rộng thị trường", "khối lượng"],
+      "tool": "get_market_snapshot",
+      "requires_ticker": true,
+      "arg_style": "ticker_codes_array"
+    }
+  ]
+}
