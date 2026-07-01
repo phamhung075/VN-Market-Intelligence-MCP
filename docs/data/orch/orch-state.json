@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-01T11:24:13Z",
+    "updated_at": "2026-07-01T15:01:37Z",
     "updated_by": "dev-team",
-    "active_task_id": "MONEY-RADAR-P0-T4-QA-GATE",
-    "next_agent": "qa",
-    "note": "T3B REST bridge DONE_VERIFIED (image 356040575580; GET /api/money-radar 200, byte-identical to get_money_radar_composite tool; honest-NULL intact; momentum unregressed; 404->200 baseline flip). T3 frontend unblocked (proxy reaches live endpoint). Dispatched qa for T4-QA-GATE — terminal Phase-0 DoD gate (§6): live composite non-null, D2 fires, dashboard route-load honest-NULL, no momentum regression. qa PASS closes MONEY-RADAR-P0."
+    "active_task_id": "MONEY-RADAR-P0-T2B-INDEX-AXIS-FIX",
+    "next_agent": "dev-mcp-server",
+    "note": "T4-QA-GATE returned REJECT(b), RAW-CONFIRMED by dispatcher: D1/D2 index axis (getVnIndexDailyCloses) reads 24h-pruned market_prices_history (VNINDEX distinct_days=1 live) instead of daily_ohlcv (754 days) -> indexReturn5d permanently null -> D2 can never fire live. Minted + dispatched T2B-INDEX-AXIS-FIX (dev-mcp-server) to repoint the query to daily_ohlcv (moneyRadarStore.ts:48-66). T4 bounced to backlog (blocked on T2B). T3-DASHBOARD stays in review, deploy-pending (frontend rebuild batched with mcp-server rebuild after T2B). Sprint MONEY-RADAR-P0 stays OPEN. Chain: T2B code -> RAW-verify -> ops rebuild mcp-server+frontend -> RAW live-probe (indexReturn5d non-null, D2 fires) -> re-dispatch qa T4 -> close sprint. CCATO-T1 stays ready (not dispatched until MONEY-RADAR-P0 closes / WIP frees)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3956,6 +3956,57 @@
       }
     ],
     "backlog": [
+      {
+        "id": "MONEY-RADAR-P0-T4-QA-GATE",
+        "title": "qa gate: verify MONEY-RADAR-P0 Phase-0 DoD (§6) — composite returns real non-null on live data; D2 fires on a real historical example (index up + OBV slope negative → AMBER); dashboard renders with honest-NULL; NO momentum regression.",
+        "owner": "qa",
+        "next_agent": "qa",
+        "status": "BACKLOG",
+        "zone": "cross-service",
+        "type": "QA",
+        "size": "S",
+        "priority": "high",
+        "sprint": "MONEY-RADAR-P0",
+        "depends": [
+          "MONEY-RADAR-P0-T1-OSCILLATORS",
+          "MONEY-RADAR-P0-T2-COMPOSITE",
+          "MONEY-RADAR-P0-T3-DASHBOARD",
+          "MONEY-RADAR-P0-T3B-REST-API",
+          "MONEY-RADAR-P0-T2B-INDEX-AXIS-FIX"
+        ],
+        "created_at": "2026-07-01T08:18:21Z",
+        "files": [
+          "apps/technical-analysis/",
+          "apps/mcp-server/src/interface/mcp/tools/market-data/",
+          "apps/frontend/app/routes/dashboard.money-radar.tsx"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §6 (Phase-0 DoD, demonstrable no-fabrication)",
+        "generic_mandate": "RAW-verify (no relaying sub-agent badges) all four §6 Phase-0 DoD items on LIVE data: (a) get_money_radar_composite (no ticker arg) returns a REAL non-null score with foreign accum z + OBV slope + rel-vol z + volatility regime all contributing non-null; the coverage_pct<0.5 path returns score=null + null_reason (NOT a zero). (b) D2 divergence fires on a real historical example — a session where VN-Index closed up while OBV slope was negative over the preceding 5 sessions → flag=AMBER, detectors=[\"D2\"]. (c) dashboard /dashboard/money-radar loads without error; null card '—' + gray badge + 'Chưa có dữ liệu'; non-null card formatted score + colored badge. (d) momentum cards (all-NULL) parallel with NO regression. Also spot-check honest-NULL: HN-2 coverage gate, HN-4 UNKNOWN-not-GREEN, HN-5 VWAP is_proxy=true.",
+        "acceptance": "All four §6 DoD items RAW-verified GREEN on live data + honest-NULL spot-checks pass. No fabricated number anywhere. Momentum route unregressed.",
+        "verification_gate": "qa signs off MONEY-RADAR-P0 → sprint_goal[MONEY-RADAR-P0].status=DONE ONLY when all four §6 DoD items pass RAW on live data. Any fabricated/zero-filled value on a thin-data path = REJECT back to the owning task.",
+        "note": "Terminal Phase-0 gate. Depends T1+T2+T3. HOLD-gated follow-ons (tự-doanh crawl, sector bucketing, agent wiring, CCATO wiring, Phase 1/2) mint separately AFTER this gate passes.",
+        "dispatched_at": "2026-07-01T11:24:13Z",
+        "serving_context": "T3B REST bridge GET /api/money-radar DEPLOYED + serving 200 (parity-verified byte-identical vs get_money_radar_composite tool). T3 frontend proxy now reaches a LIVE endpoint. Verify §6 item (c) dashboard route-load against the live route; the composite live-data non-null (item a) is already dispatcher-proven but RAW-re-verify per your mandate.",
+        "qa_result": {
+          "gated_at": "2026-07-01T15:01:37Z",
+          "by": "qa a7fe191d + dev-team RAW-verify",
+          "verdict": "REJECT(b)",
+          "items": {
+            "a_composite_nonnull": "PASS (live /api/money-radar score non-null, coverage-gate null path proven in T2 tests)",
+            "b_d2_fires": "FAIL — deployed D1/D2 index axis (getVnIndexDailyCloses moneyRadarStore.ts:48-66) reads market_prices_history, which pushPricesHandler.ts:239-242 hard-prunes to a rolling 24h window; computeIndexReturn needs >=6 distinct days -> indexReturn5d permanently null -> D2 can never fire live. RAW-confirmed by dev-team on market.db: market_prices_history VNINDEX distinct_days=1 (501 rows); daily_ohlcv VNINDEX distinct_days=754 (2023-06-27..2026-07-01). OBV axis already uses daily_ohlcv; only the index axis is mis-sourced.",
+            "c_dashboard_route_load": "CONDITIONAL — frontend code correct (commit a0e34a87) but the running frontend image predates it; /dashboard/money-radar + /api/money-radar 404 until a single-svc frontend rebuild.",
+            "d_momentum_no_regression": "PASS (/api/momentum-indicators 200, file untouched, tsc clean)",
+            "hn2_coverage_gate": "PASS",
+            "hn4_divergence_unknown_not_green": "PASS",
+            "hn5_degraded_vwap_is_proxy": "PASS (live :5003 VCB/FPT is_proxy=true)"
+          },
+          "remediation": [
+            "T2B (dev-mcp-server): repoint getVnIndexDailyCloses -> daily_ohlcv (moneyRadarStore.ts:48-66)",
+            "(c) ops: single-svc rebuild frontend (batched with mcp-server rebuild after T2B lands) to ship a0e34a87 routes, then qa T4 re-gate"
+          ],
+          "qa_commit": "10e5c40a (not pushed)"
+        }
+      },
       {
         "id": "TASK17-FOREIGN-FLOW",
         "size": "S",
@@ -11305,35 +11356,30 @@
     },
     "in_progress": [
       {
-        "id": "MONEY-RADAR-P0-T4-QA-GATE",
-        "title": "qa gate: verify MONEY-RADAR-P0 Phase-0 DoD (§6) — composite returns real non-null on live data; D2 fires on a real historical example (index up + OBV slope negative → AMBER); dashboard renders with honest-NULL; NO momentum regression.",
-        "owner": "qa",
-        "next_agent": "qa",
+        "id": "MONEY-RADAR-P0-T2B-INDEX-AXIS-FIX",
+        "title": "dev-mcp-server: repoint getVnIndexDailyCloses (D1/D2 index axis) from 24h-pruned market_prices_history to daily_ohlcv so indexReturn5d is non-null and D2 can fire live. Unblocks T4 qa gate + closes MONEY-RADAR-P0.",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
         "status": "IN_PROGRESS",
-        "zone": "cross-service",
-        "type": "QA",
+        "zone": "dev-mcp-server",
+        "type": "FIX",
         "size": "S",
         "priority": "high",
         "sprint": "MONEY-RADAR-P0",
         "depends": [
-          "MONEY-RADAR-P0-T1-OSCILLATORS",
-          "MONEY-RADAR-P0-T2-COMPOSITE",
-          "MONEY-RADAR-P0-T3-DASHBOARD",
-          "MONEY-RADAR-P0-T3B-REST-API"
+          "MONEY-RADAR-P0-T2-COMPOSITE"
         ],
-        "created_at": "2026-07-01T08:18:21Z",
+        "created_at": "2026-07-01T15:01:37Z",
+        "dispatched_at": "2026-07-01T15:01:37Z",
         "files": [
-          "apps/technical-analysis/",
-          "apps/mcp-server/src/interface/mcp/tools/market-data/",
-          "apps/frontend/app/routes/dashboard.money-radar.tsx"
+          "apps/mcp-server/src/infrastructure/db/moneyRadarStore.ts (getVnIndexDailyCloses L48-66 — swap source table)",
+          "apps/mcp-server/src/__tests__/ (add/extend a test proving >=6 distinct VNINDEX daily closes + D2 fires on an index-up + OBV-down fixture)"
         ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §6 (Phase-0 DoD, demonstrable no-fabrication)",
-        "generic_mandate": "RAW-verify (no relaying sub-agent badges) all four §6 Phase-0 DoD items on LIVE data: (a) get_money_radar_composite (no ticker arg) returns a REAL non-null score with foreign accum z + OBV slope + rel-vol z + volatility regime all contributing non-null; the coverage_pct<0.5 path returns score=null + null_reason (NOT a zero). (b) D2 divergence fires on a real historical example — a session where VN-Index closed up while OBV slope was negative over the preceding 5 sessions → flag=AMBER, detectors=[\"D2\"]. (c) dashboard /dashboard/money-radar loads without error; null card '—' + gray badge + 'Chưa có dữ liệu'; non-null card formatted score + colored badge. (d) momentum cards (all-NULL) parallel with NO regression. Also spot-check honest-NULL: HN-2 coverage gate, HN-4 UNKNOWN-not-GREEN, HN-5 VWAP is_proxy=true.",
-        "acceptance": "All four §6 DoD items RAW-verified GREEN on live data + honest-NULL spot-checks pass. No fabricated number anywhere. Momentum route unregressed.",
-        "verification_gate": "qa signs off MONEY-RADAR-P0 → sprint_goal[MONEY-RADAR-P0].status=DONE ONLY when all four §6 DoD items pass RAW on live data. Any fabricated/zero-filled value on a thin-data path = REJECT back to the owning task.",
-        "note": "Terminal Phase-0 gate. Depends T1+T2+T3. HOLD-gated follow-ons (tự-doanh crawl, sector bucketing, agent wiring, CCATO wiring, Phase 1/2) mint separately AFTER this gate passes.",
-        "dispatched_at": "2026-07-01T11:24:13Z",
-        "serving_context": "T3B REST bridge GET /api/money-radar DEPLOYED + serving 200 (parity-verified byte-identical vs get_money_radar_composite tool). T3 frontend proxy now reaches a LIVE endpoint. Verify §6 item (c) dashboard route-load against the live route; the composite live-data non-null (item a) is already dispatcher-proven but RAW-re-verify per your mandate."
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §6 (Phase-0 DoD: D2 fires on a real historical example — index up + OBV slope negative -> AMBER/[D2]) + §4 (response shape)",
+        "generic_mandate": "ROOT-CAUSE FIX (RAW-verified, not symptom). getVnIndexDailyCloses(db,days) at apps/mcp-server/src/infrastructure/db/moneyRadarStore.ts:48-66 currently SELECTs price,fetched_at FROM market_prices_history WHERE code='VNINDEX' — but pushPricesHandler.ts:239-242 hard-DELETEs that table below a rolling 24h cutoff by design (the comment at L232 says 'daily OHLCV already preserves the day summary for 2+ years'). Live proof: market_prices_history VNINDEX distinct_days=1 vs daily_ohlcv VNINDEX distinct_days=754. FIX: SELECT close, date FROM daily_ohlcv WHERE code='VNINDEX' ORDER BY date ASC, feeding the existing dedupToDailyCloses (date is already YYYY-MM-DD, one row/day, so dedup is a no-op safety net). Keep the same return contract (number[] ASC daily closes, last `days`). HONEST-NULL: do NOT fabricate — if daily_ohlcv is also thin (<6), still return what exists and let computeIndexReturn/upstream null-gate (never zero-fill). The OBV axis (computeObvSeries/computeMarketObvSlope) already reads daily_ohlcv — do NOT touch it; only the index axis is mis-sourced. Update the doc comment at L46 (Source: ...). No new usecase/domain logic — infrastructure data-access swap only.",
+        "acceptance": "getVnIndexDailyCloses returns >=6 distinct daily closes from daily_ohlcv on live data (was 1); a unit test proves >=6 closes AND that detectD2PriceVsObv fires (returns a D2 detector) on a fixture with index up + market OBV slope negative; tsc --noEmit + lint:fence exit 0; no zero-fill; momentum + OBV paths untouched.",
+        "verification_gate": "After ops single-svc rebuild of mcp-server (docker compose build mcp-server && up -d --no-deps mcp-server; verify image ID CHANGED): RAW live-probe GET http://localhost:3000/api/money-radar -> components include a non-null index-return-derived value and divergence.detectors can include D2 on the real historical example; then batch the frontend rebuild (item c) and re-dispatch qa (T4) for the terminal §6 gate.",
+        "note": "Bounced from T4-QA-GATE REJECT(b), RAW-confirmed by dispatcher (market.db counts). Serving-value defect class: the composite scored non-null via other axes so it looked done, but a whole detector family (D1/D2) was dead against live data because the index axis read a 24h-pruned table. Mirrors the T3B discovered-gap pattern — precise, small, infrastructure-only."
       }
     ],
     "ready": [
@@ -11447,7 +11493,8 @@
           },
           "blocked_on": null,
           "blocker_reason": "Frontend proxy api.money-radar.tsx forwards to GET ${MCP_SERVER}/api/money-radar, but that REST route does NOT exist on mcp-server (only get_money_radar_composite MCP tool registered). Page 404s -> honest-NULL until T3B lands. Serving-value done_verified gates on T3B + ops single-svc rebuild + live /api/money-radar probe returning non-null score.",
-          "unblocked_note": "T3B REST bridge deployed + serving (parity-verified vs tool); frontend proxy now reaches live /api/money-radar. Awaiting T4 qa route-load gate."
+          "unblocked_note": "T3B REST bridge deployed + serving (parity-verified vs tool); frontend proxy now reaches live /api/money-radar. Awaiting T4 qa route-load gate.",
+          "deploy_pending": "Frontend code correct (a0e34a87) but running frontend image predates it -> /dashboard/money-radar 404 live. Needs single-svc frontend rebuild, BATCHED with the mcp-server rebuild after T2B index-axis fix lands; then qa T4 re-gate confirms route-load + honest-NULL render."
         }
       }
     ],
