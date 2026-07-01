@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "TASK_1996",
-    "next_agent": "qa",
-    "updated_at": "2026-07-01T02:58:54Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-01T03:11:08Z",
     "updated_by": "dev-team",
-    "note": "tick 2026-07-01T02:37Z: PO triage BATCH=NOTHING (no new dev code work). DISPATCHED qa (agent aaecff8d76de7d35b) on 2 stranded REVIEW rows in order: TASK_1996 (fb-market-poster guaranteed cowork slots, owner agent-father, deliverable committed 3f8f07ae) then TASK-FFT-L4 (coverage-map freshness SLA monitor, owner dev-mcp-server; next_agent field-drift reconciled by PO commit fe0b2907). dispatch-guard locks task:TASK_1996 + task:TASK-FFT-L4 HELD by dev-team ttl 2700 (prevents re-dispatch on 03:07Z tick while qa runs). CI-RED-323b512b-FIX FULLY RESOLVED: origin CI bun-test GREEN on d350ac88 (run 28489276831), ci-red-323b512b signal cleared. 4 infra telegram reports (pollNews night-zero id3354 + OHLCV-depth-stall id3355/3356/3357) closed by PO as known-recurring backlog (OPS-POLLNEWS-NIGHT-ZERO / OHLCV-DEPTH cluster) — no dev FIX, market OPEN. CONTAM-11-REMEDIATE deferred (destructive, off-hours only). On qa return: RAW-verify per-task verdicts vs OWN ground truth, release both guard locks, confirm gate-close."
+    "note": "tick 2026-07-01T02:37Z CLOSED. qa (agent aaecff8d76de7d35b) APPROVED both stranded REVIEW rows -> DONE_VERIFIED at commit 77564b48. dev-team RAW-verified via OWN ground truth (NOT qa badge): 77564b48 scoped 6 qa-artifact files + leak-clean; deliverables present in HEAD (TASK_1996 = fb-daily 15 9 * * 1-5 + fb-weekend 13 13 * * 6,0 guaranteed slots + fb-market-poster cowork boundary; TASK-FFT-L4 = coverageMapFreshnessChecker.ts + freshnessSlaMonitorJob.ts, DDD layer-sep OK, tsc exit0, targets 25/25, full harness 13878 pass / 10 pre-existing-infra fails only). FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING backlog anchor resolves on this sign-off. Pipeline IDLE: dev WIP=0, qa lane empty, review lane = only ARCH-SHIP-WAVE-REAUDIT (DEFERRED). Local ahead-by-2 of origin fe0b2907 (3af22c24 + 77564b48) -- push PO/human-gated. CI-RED-323b512b-FIX resolved (origin green d350ac88). Pending backlog: CONTAM-11-REMEDIATE (destructive VPS-anchor, off-hours only)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10623,7 +10623,8 @@
         "next_agent": "pm",
         "qa_verdict": "APPROVED",
         "done_verified_at": "2026-07-01T03:15:00Z",
-        "done_verified_by": "qa"
+        "done_verified_by": "qa",
+        "qa_commit": "77564b48"
       },
       {
         "id": "TASK-FFT-L4",
@@ -10648,7 +10649,8 @@
         "status_note": "RECONCILE(po 2026-07-01T02:50:48Z): legacy field `next:qa` migrated to `next_agent:qa` so dev-team router dispatches qa; router had read next_agent=\"\" and skipped. Code RAW-verified LANDED (coverageMapFreshnessChecker.ts + freshnessSlaMonitorJob.ts present; commits 1dd3c6d1+718aa01c). Claimable review row for qa sign-off.",
         "qa_verdict": "APPROVED",
         "done_verified_at": "2026-07-01T03:15:00Z",
-        "done_verified_by": "qa"
+        "done_verified_by": "qa",
+        "qa_commit": "77564b48"
       }
     ],
     "head": {
