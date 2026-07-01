@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-01T00:23:09Z",
+    "status": "in_progress",
+    "active_task_id": "CI-RED-323b512b-FIX",
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-07-01T01:20:52Z",
     "updated_by": "dev-team",
-    "note": "BCTC-REFINE-FLEET-DRAIN sprint CLOSED (dev-team RAW-verified qa APPROVED + own serving-layer probe): FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN + FIX-GET-BCTC-OCF-SQL-COLUMN REVIEW->DONE. HVN Q1-2026 income/CF now materialized (bilingual English section detection + aggregator English label fallbacks + total_assets OCR-degraded code 280/440 fallback); get_bctc_ocf SQL aliases fixed. Pipeline IDLE. dev code WIP=0. Pending backlog: CONTAM-11-REMEDIATE (destructive VPS-anchor repair, PO go/no-go, off-hours tick). Push gated (PO/human)."
+    "note": "DISPATCHED dev-mcp-server (zone apps/mcp-server/) for CI-RED-323b512b-FIX: repair 17 deterministic bun-test full-suite failures across 5 test files (polymarket-fetcher/alert-accuracy/AR-refined-units-idempotency/DWF-phase1-cadence/FU-LOCKSTORE-EXPIRED-GC). RAW-verified genuine (not stale, not push-clearable). WIP=1 dev-zone. Push DEFERRED until fix lands + local full-suite green (PO/human-gated). dev -> qa gate."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7942,32 +7942,6 @@
           "BACKUP + drift-check before any UPDATE; off-hours window; PO go/no-go gate (destructive, mirrors CONTAM-10-EXEC).",
           "Post-verify 0 remaining contaminated rows for the 9 tickers + serving-layer RS/ROC/52w normalization; bucket-(a) 6345 legit-cheap rows untouched."
         ]
-      },
-      {
-        "id": "CI-RED-323b512b-FIX",
-        "type": "FIX",
-        "size": "M",
-        "status": "BACKLOG",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "owner": "",
-        "next_agent": "",
-        "dispatcher": "dev-team",
-        "created_by": "po",
-        "created_at": "2026-07-01T01:16:09Z",
-        "sprint": "CI-RED-323b512b",
-        "check_id": "CI-RED-323b512b",
-        "head_sha": "323b512b508acb7f0f4ef386ff75c335ed825aa1",
-        "title": "CI-RED-323b512b-FIX — CI RED bun test: repair 17 deterministic full-suite failures across 5 files (164-polymarket-fetcher, 183-alert-accuracy, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC)",
-        "root_cause": "PO triage 2026-07-01T01:07Z RAW-verified via gh: `CI` workflow `bun test` job (ci-per-file-isolation.sh) RED on origin/main HEAD 323b512b — 13874 pass / 53 skip / 17 fail across 5 files. DETERMINISTIC not flaky: 4 of 5 files (164-polymarket-fetcher, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC) fail identically across 3 consecutive pushes (runs 28466268273@18:15Z, 28473428976@20:22Z, 28481690382@23:07Z); 183-alert-accuracy newly red in latest run only. 323b512b is DOC-ONLY (CONTAM-11 spike md + notebook, zero code) so the red is PRE-EXISTING/inherited from main code state, NOT introduced by 323b512b. NOT fixed by the 12 local-ahead commits: git diff 323b512b..HEAD touches only BCTC-refine files (bctcScalarAggregator.ts / refinedMarkdownParser.ts / getBctcOcfTool.ts) + 2 BCTC test files — NONE of the 5 failing files — so a blind push does NOT clear the ci_red. RECURRING: prior FIX-CI-RED-EAC0CC65-BUNTEST (436f7376, 73 fails/16 files) + FIX-CI-RED-BA82F2F5-DWF-CADENCE (79c08a1b, slot count 17->19) already merged; DWF-cadence + bun-test RED AGAIN -> recurring-bug watch per feedback_recurring_bug_escalation.",
-        "fix_spec": "Dev diagnoses per-file (do NOT assume flaky — 3/3 deterministic reproduction). Per file: (a) assertion-drift (like the prior DWF-cadence slot-count fix) -> update the expected value to match current correct behavior; (b) genuine code regression -> fix the code; (c) CI-environment-dependent test (e.g. 164-polymarket-fetcher hits network with no VPS/API in CI) -> make the test CI-hermetic via mock/stub or an explicit skip-in-CI marker — NEVER delete coverage to force green. MANDATORY: run the FULL suite locally (bun test / scripts/ci-per-file-isolation.sh) before claiming green — subset-green != full-suite-green (feedback_ci_subset_verify_misses_full_suite).",
-        "verification_gate": "ci_green_on_subsequent_push: `gh run list --branch main --limit 3` shows the `CI` workflow conclusion=success for a push AFTER 323b512b508acb7f0f4ef386ff75c335ed825aa1 (all 5 files pass, 0 fail). Priority: high. Failing jobs: bun test.",
-        "acceptance": [
-          "All 5 files pass in scripts/ci-per-file-isolation.sh locally (0 fail): 164-polymarket-fetcher, 183-alert-accuracy, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC.",
-          "Full `bun test` suite fail-count = 0 (currently 17) — verified via a FULL-suite run, not a task-subset.",
-          "CI GREEN (`CI` workflow conclusion=success) on the subsequent push after 323b512b (verification_gate=ci_green_on_subsequent_push).",
-          "No test coverage deleted to force green; any CI-env-dependent test made hermetic (mock) not silently skipped."
-        ]
       }
     ],
     "closed_sprints": [
@@ -10429,7 +10403,50 @@
       "updated_by": "pm",
       "updated_at": "2026-06-30T06:20:13Z"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "CI-RED-323b512b-FIX",
+        "type": "FIX",
+        "size": "M",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "dispatcher": "dev-team",
+        "created_by": "po",
+        "created_at": "2026-07-01T01:16:09Z",
+        "sprint": "CI-RED-BUNTEST-DRAIN",
+        "check_id": "CI-RED-323b512b",
+        "head_sha": "323b512b508acb7f0f4ef386ff75c335ed825aa1",
+        "title": "CI-RED-323b512b-FIX — CI RED bun test: repair 17 deterministic full-suite failures across 5 files (164-polymarket-fetcher, 183-alert-accuracy, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC)",
+        "root_cause": "PO triage 2026-07-01T01:07Z RAW-verified via gh: `CI` workflow `bun test` job (ci-per-file-isolation.sh) RED on origin/main HEAD 323b512b — 13874 pass / 53 skip / 17 fail across 5 files. DETERMINISTIC not flaky: 4 of 5 files (164-polymarket-fetcher, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC) fail identically across 3 consecutive pushes (runs 28466268273@18:15Z, 28473428976@20:22Z, 28481690382@23:07Z); 183-alert-accuracy newly red in latest run only. 323b512b is DOC-ONLY (CONTAM-11 spike md + notebook, zero code) so the red is PRE-EXISTING/inherited from main code state, NOT introduced by 323b512b. NOT fixed by the 12 local-ahead commits: git diff 323b512b..HEAD touches only BCTC-refine files (bctcScalarAggregator.ts / refinedMarkdownParser.ts / getBctcOcfTool.ts) + 2 BCTC test files — NONE of the 5 failing files — so a blind push does NOT clear the ci_red. RECURRING: prior FIX-CI-RED-EAC0CC65-BUNTEST (436f7376, 73 fails/16 files) + FIX-CI-RED-BA82F2F5-DWF-CADENCE (79c08a1b, slot count 17->19) already merged; DWF-cadence + bun-test RED AGAIN -> recurring-bug watch per feedback_recurring_bug_escalation.",
+        "fix_spec": "Dev diagnoses per-file (do NOT assume flaky — 3/3 deterministic reproduction). Per file: (a) assertion-drift (like the prior DWF-cadence slot-count fix) -> update the expected value to match current correct behavior; (b) genuine code regression -> fix the code; (c) CI-environment-dependent test (e.g. 164-polymarket-fetcher hits network with no VPS/API in CI) -> make the test CI-hermetic via mock/stub or an explicit skip-in-CI marker — NEVER delete coverage to force green. MANDATORY: run the FULL suite locally (bun test / scripts/ci-per-file-isolation.sh) before claiming green — subset-green != full-suite-green (feedback_ci_subset_verify_misses_full_suite).",
+        "verification_gate": "ci_green_on_subsequent_push: `gh run list --branch main --limit 3` shows the `CI` workflow conclusion=success for a push AFTER 323b512b508acb7f0f4ef386ff75c335ed825aa1 (all 5 files pass, 0 fail). Priority: high. Failing jobs: bun test.",
+        "acceptance": [
+          "All 5 files pass in scripts/ci-per-file-isolation.sh locally (0 fail): 164-polymarket-fetcher, 183-alert-accuracy, AR-refined-units-idempotency, DWF-phase1-cadence, FU-LOCKSTORE-EXPIRED-GC.",
+          "Full `bun test` suite fail-count = 0 (currently 17) — verified via a FULL-suite run, not a task-subset.",
+          "CI GREEN (`CI` workflow conclusion=success) on the subsequent push after 323b512b (verification_gate=ci_green_on_subsequent_push).",
+          "No test coverage deleted to force green; any CI-env-dependent test made hermetic (mock) not silently skipped."
+        ],
+        "baseline_pass": false,
+        "files": [
+          "apps/mcp-server/src/__tests__/164-polymarket-fetcher.test.ts",
+          "apps/mcp-server/src/__tests__/183-alert-accuracy.test.ts",
+          "apps/mcp-server/src/__tests__/AR-refined-units-idempotency.test.ts",
+          "apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts",
+          "apps/mcp-server/src/__tests__/FU-LOCKSTORE-EXPIRED-GC.test.ts"
+        ],
+        "owner_agent": "dev-mcp-server",
+        "route_to": "dev-mcp-server",
+        "dispatched_at": "2026-07-01T01:20:52Z",
+        "dispatched_by": "dev-team",
+        "updated_at": "2026-07-01T01:20:52Z",
+        "updated_by": "dev-team",
+        "source_signal": "ci-red-323b512b-20260701004806",
+        "note": " | DISPATCHED :07Z tick to dev-mcp-server. dev-team RAW-verified: 17 deterministic full-suite failures (ci-per-file-isolation.sh) across 5 files, reproduce 3/3 across pushes 18:15Z/20:22Z/23:07Z; 13 local-ahead commits touch NONE of the 5 -> push will NOT clear. RECURRING watch: DWF-phase1-cadence red again after prior merged fix BA82F2F5 (assertion-drift treadmill) -> ROOT-CAUSE not band-aid; if genuine flaky-treadmill escalate architect. Verify via FULL bun test, never subset (feedback_ci_subset_verify_misses_full_suite). NEVER delete coverage to go green. verification_gate=ci_green_on_subsequent_push. dev -> qa gate."
+      }
+    ],
     "ready": [],
     "review": [
       {
