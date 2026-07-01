@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-01T00:06:40Z",
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cadence",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": "240",
+      "news-scout-offhours": "240",
+      "market-watcher-offhours": "240"
+    },
+    "last_fired_timestamp": "2026-07-01T00:06:30.000Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 4,
+    "note": "FIRE tick 00:00Z (UTC day rollover) — 3 cowork agents spawned: bctc-analyst-slot-4 (daily 0 0, ~24h since last), news-scout-offhours + market-watcher-offhours (0 */4, ~4h since last). Adaptive mode (stale_warning cleared at rollover); no calendar/cadence/freshness suppression (closed, all due, regime=sideways). Transient gateway dial EOF on market-watcher slot-token claim was retried once and succeeded — no fire impact. Leaf agents; no MARKET publish from dispatcher. Agent ids: bctc=aa0b85f06599d6cd2, news=ade379e35d166dc2b, watcher=a3084e95a14d0cefd."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-01T00:06:40Z",
+  "_processed": {
+    "fingerprint": "64acbe7c9e38ee75923416b0c00daaef24d90be87b31be58c5248b54fe4e2847",
+    "processedAt": "2026-07-01T00:43:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
