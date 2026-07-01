@@ -114,9 +114,35 @@ echo "--- (a)+(b): docs/social/fb-post-2026-06-30.md — two independent CCATO i
 if [[ ! -f "$FB_POST" ]]; then
   bad "(a)/(b): fixture not found: $FB_POST"
 else
-  RUN1_OUT="$(bash "$GATE" "$FB_POST" "fb-market-poster" 2>&1)"
+  # Create isolated orch-state copy to prevent test pollution of live signal_queue
+  NTG_TEST_ORCH_COPY="$(mktemp "${TMPDIR:-/tmp}/ntg-orch-XXXXXX.json")"
+  cp "$REPO_ROOT/docs/data/orch/orch-state.json" "$NTG_TEST_ORCH_COPY"
+
+  # Capture baseline narrative_contradiction count from live file
+  LIVE_NTC_BASELINE="$(jq '[.signal_queue.rows[]|select(.type=="narrative_contradiction")]|length' "$REPO_ROOT/docs/data/orch/orch-state.json")"
+
+  # Run with isolated copy — both ORCH_STATE and ORCH_APPLY_LIVE_FILE_OVERRIDE point to copy
+  RUN1_OUT="$(ORCH_STATE="$NTG_TEST_ORCH_COPY" ORCH_APPLY_LIVE_FILE_OVERRIDE="$NTG_TEST_ORCH_COPY" bash "$GATE" "$FB_POST" "fb-market-poster" 2>&1)"
   RUN1_RC=$?
   echo "$RUN1_OUT" | sed 's/^/  /'
+
+  # Check isolation assertions
+  COPY_NTC_AFTER="$(jq '[.signal_queue.rows[]|select(.type=="narrative_contradiction")]|length' "$NTG_TEST_ORCH_COPY")"
+  LIVE_NTC_AFTER="$(jq '[.signal_queue.rows[]|select(.type=="narrative_contradiction")]|length' "$REPO_ROOT/docs/data/orch/orch-state.json")"
+
+  if [[ $COPY_NTC_AFTER -gt 0 ]]; then
+    ok "isolation: narrative_contradiction emit validated on isolated copy ($COPY_NTC_AFTER rows)"
+  else
+    bad "isolation: expected >=1 narrative_contradiction rows on isolated copy, got $COPY_NTC_AFTER"
+  fi
+
+  if [[ "$LIVE_NTC_AFTER" == "$LIVE_NTC_BASELINE" ]]; then
+    ok "isolation: live orch-state.json narrative_contradiction count unchanged ($LIVE_NTC_BASELINE both baseline and after)"
+  else
+    bad "isolation: live orch-state.json pollution detected — baseline=$LIVE_NTC_BASELINE, after=$LIVE_NTC_AFTER"
+  fi
+
+  rm -f "$NTG_TEST_ORCH_COPY"
 
   if [[ $RUN1_RC -ne 0 ]]; then
     ok "(a)/(b) exit code: gate exited non-zero (rc=$RUN1_RC) — post BLOCKED"
