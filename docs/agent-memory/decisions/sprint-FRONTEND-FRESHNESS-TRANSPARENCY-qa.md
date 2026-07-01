@@ -91,3 +91,18 @@
 - tsc EXIT 0. DDD PASS. Security PASS. No mock-guard required (route wiring, no fabrication path). Sprint board: L2+L3A+L3B+L4 all DONE.
 **why-decision:** All 4 issues verified by direct source inspection (not sub-agent relay). Runner discrepancy disproved by own npm test run. Sprint FRONTEND-FRESHNESS-TRANSPARENCY fully complete.
 **why-change:** No change from plan — all fixes landed correctly.
+
+---
+
+### STEP qa-S7 · qa · 2026-07-01T03:10:00Z
+**task-id:** TASK-FFT-L4
+**what-done:** APPROVED TASK-FFT-L4 authoritative re-gate (stranded REVIEW row — board flip missed after original 2026-06-27 approval).
+**what-considered:**
+- Files RAW-verified in HEAD: coverageMapFreshnessChecker.ts (274L, domain/services) + freshnessSlaMonitorJob.ts (modified +97L, scheduler/system) + freshness-coverage-map-checker.test.ts (844L, __tests__). All three confirmed in commit 1dd3c6d1.
+- DDD INVARIANT (ARCH-RATIFY-FFT-3): grep for fs/path/readFile/Bun.file in coverageMapFreshnessChecker.ts = empty. Only imports: `bun:sqlite` type + `./freshnessSlaChecker.js` (domain sibling). PASS.
+- Scheduler (freshnessSlaMonitorJob.ts): `import { resolve } from "node:path"` + `Bun.file(COVERAGE_MAP_JSON_PATH).json()` in scheduler layer — correct; filesystem I/O stays outside domain.
+- Full harness (ci-per-file-isolation.sh P=8): 13878 pass / 42 skip / 36 fail. All 10 failing files pre-existing network/infra categories (083/102/1227/125/1288/1324/1332/1345a/1821a/1898b). TASK-FFT-L4 files not in failed list.
+- Target tests: 25/25 PASS. Freshness battery (3 files): 37/37 PASS. tsc: exit 0. mock-guard: exit 0. Security: no process.env, no secrets. SLA thresholds: all 6 tiers match coverage-map SSOT exactly.
+- Handoff already has [QA] Review Record from 2026-06-27 (APPROVED) — re-verified and confirmed unchanged.
+**why-decision:** Full AUTHORITATIVE gate re-run confirms original APPROVED verdict; zero regressions; DONE_VERIFIED flip applied.
+**why-change:** No implementation change — board-only state correction (stranded REVIEW → DONE_VERIFIED).

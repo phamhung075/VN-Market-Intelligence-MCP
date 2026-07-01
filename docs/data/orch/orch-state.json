@@ -282,10 +282,175 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-06-30T23:29:07Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-01T03:00:01.356Z",
+    "_updated_by": "system-auditor",
     "archive": [],
     "rows": [
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:VCB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-deepdive:GVR:Q1-2026:ESC-4 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock dev-team-cron-singleton has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-deepdive:HVN:Q1-2026:ESC-2 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:ACB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock TASK_1996 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock TASK-FFT-L4 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-datacov:FPT:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-datacov:VCB:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-deepdive:GVR:Q1-2026:ESC-4",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=TASK_1996 held=dev-team-cron-singleton",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-deepdive:HVN:Q1-2026:ESC-2",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-datacov:ACB:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607010300",
+        "ts": "2026-07-01T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=TASK_1996 held=TASK-FFT-L4",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
       {
         "id": "sau-d4-202606300300",
         "ts": "2026-06-30T03:00Z",
@@ -10438,6 +10603,52 @@
         "dev_commit": "f4f1fb8c",
         "qa_commit": "2c8a0879",
         "closure": "qa APPROVED (a2aa1d69, commit 2c8a0879) + dev-team RAW-verified (OWN ground truth, NOT badge): f4f1fb8c = 4 files all apps/mcp-server/ (164/DWF/FU-LOCKSTORE tests + bctcRefineJob.ts src), leak-clean. OWN 5-target run 115 pass/0 fail 345 expect; OWN tsc --noEmit exit 0. bctcRefineJob.ts DDD PASS (Bun.env, claimTask+releaseTask same ownerClientSession -> zombie-lock fixed). 0 coverage deleted (DWF floor guard >=19 retained; FU-LOCKSTORE countRows excludes orphan-signal side-effect; TC-5 scopes cowork-slot). Full-suite 25 local fails = 9 pre-existing LOCAL-ONLY infra files (Chromium /usr/bin missing / LanceDB warmup / VPS-net timeout / parallel-contention), unchanged since baseline dbaa318d + none import bctcRefineJob -> 0 introduced by f4f1fb8c. AUTHORITATIVE origin-CI proof: run 28481690382 red on 323b512b = EXACTLY the 5 target files (17 fail), NOT the 9 local infra files -> a PUSH WILL clear origin CI red. verification_gate=ci_green_on_subsequent_push: push PENDING (PO/human-gated); origin-green confirmed by a post-push CI-probe tick."
+      },
+      {
+        "id": "TASK_1996",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "size": "S",
+        "owner": "agent-father",
+        "zone": "cross-service",
+        "priority": "high",
+        "sprint": "FB-COWORK-FOLD",
+        "created_at": "2026-06-29T16:22:56Z",
+        "title": "Add fb-daily + fb-weekend slots to cowork-schedule.json + add fb-market-poster to cowork-team Team Boundary",
+        "note": "FILES: docs/data/cowork-schedule.json (.slots[] append 2) + docs/agents/cowork-team/flow/main.md (Team Boundary line 9 scheduled list). SLOT fb-daily: cron=\"15 9 * * 1-5\" (09:15 UTC/16:15 VN), agent=agent_id=fb-market-poster, parallel_group=fb-poster, flow_path=docs/agents/fb-market-poster/flow/main.md, trigger_prompt=\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily\", dish_type=fb_daily_post, guaranteed=true, policy_id=null, depends_on=\"chef-eod 08:45 UTC + 30min\", enabled=true, last_fired=null, trigger_id=null. SLOT fb-weekend: cron=\"13 13 * * 6,0\" (13:13 UTC/20:13 VN; minute shifted from :07 so it lands in a */15 dispatcher tick — dispatcher only wakes :00/:15/:30/:45 and matches cron-minute within +/-2 of floored 15-min tick), dish_type=fb_weekly_post, guaranteed=true, policy_id=null, depends_on=null, rest same. MODE ROUTER in fb main.md self-routes VN_DOW (1-5 DAILY / 6 RECAP / 0 PREDICTION) — slot param is informational. Matcher comma-DOW 6,0 verified supported (cowork-match-slots.js field()). Invoke agent-md-factory skill. cowork-schedule.json is agent-father-maintained.",
+        "reviewed_at": "2026-06-29T00:00:00Z",
+        "done_at": "2026-06-29T16:46:36Z",
+        "updated_by": "qa",
+        "updated_at": "2026-07-01T03:15:00Z",
+        "next_agent": "pm",
+        "qa_verdict": "APPROVED",
+        "done_verified_at": "2026-07-01T03:15:00Z",
+        "done_verified_by": "qa"
+      },
+      {
+        "id": "TASK-FFT-L4",
+        "title": "Coverage-Map-Aware SLA Monitor Extension (L4 self-policing)",
+        "owner": "dev-mcp-server",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
+        "anchor": "FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING",
+        "priority": "P2",
+        "type": "FIX",
+        "commits": [
+          "1dd3c6d1",
+          "718aa01c"
+        ],
+        "handoff": "docs/handoffs/TASK-FFT-L4.md",
+        "completed_at": "2026-06-27T21:25:00Z",
+        "next": "qa",
+        "next_agent": "pm",
+        "updated_at": "2026-07-01T03:15:00Z",
+        "updated_by": "qa",
+        "status_note": "RECONCILE(po 2026-07-01T02:50:48Z): legacy field `next:qa` migrated to `next_agent:qa` so dev-team router dispatches qa; router had read next_agent=\"\" and skipped. Code RAW-verified LANDED (coverageMapFreshnessChecker.ts + freshnessSlaMonitorJob.ts present; commits 1dd3c6d1+718aa01c). Claimable review row for qa sign-off.",
+        "qa_verdict": "APPROVED",
+        "done_verified_at": "2026-07-01T03:15:00Z",
+        "done_verified_by": "qa"
       }
     ],
     "head": {
@@ -10477,46 +10688,6 @@
           "at": "2026-06-27T08:03:52Z",
           "note": "enum-clean (C2): PARKED qualifier-as-status -> DEFERRED (deliberate serialization); park_reason retained verbatim as the qualifier prose. UNPARK CONDITION unchanged."
         }
-      },
-      {
-        "id": "TASK-FFT-L4",
-        "title": "Coverage-Map-Aware SLA Monitor Extension (L4 self-policing)",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "sprint": "FRONTEND-FRESHNESS-TRANSPARENCY",
-        "anchor": "FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING",
-        "priority": "P2",
-        "type": "FIX",
-        "commits": [
-          "1dd3c6d1",
-          "718aa01c"
-        ],
-        "handoff": "docs/handoffs/TASK-FFT-L4.md",
-        "completed_at": "2026-06-27T21:25:00Z",
-        "next": "qa",
-        "next_agent": "qa",
-        "updated_at": "2026-07-01T02:50:48Z",
-        "updated_by": "po",
-        "status_note": "RECONCILE(po 2026-07-01T02:50:48Z): legacy field `next:qa` migrated to `next_agent:qa` so dev-team router dispatches qa; router had read next_agent=\"\" and skipped. Code RAW-verified LANDED (coverageMapFreshnessChecker.ts + freshnessSlaMonitorJob.ts present; commits 1dd3c6d1+718aa01c). Claimable review row for qa sign-off."
-      },
-      {
-        "id": "TASK_1996",
-        "status": "REVIEW",
-        "type": "FIX",
-        "size": "S",
-        "owner": "agent-father",
-        "zone": "cross-service",
-        "priority": "high",
-        "sprint": "FB-COWORK-FOLD",
-        "created_at": "2026-06-29T16:22:56Z",
-        "title": "Add fb-daily + fb-weekend slots to cowork-schedule.json + add fb-market-poster to cowork-team Team Boundary",
-        "note": "FILES: docs/data/cowork-schedule.json (.slots[] append 2) + docs/agents/cowork-team/flow/main.md (Team Boundary line 9 scheduled list). SLOT fb-daily: cron=\"15 9 * * 1-5\" (09:15 UTC/16:15 VN), agent=agent_id=fb-market-poster, parallel_group=fb-poster, flow_path=docs/agents/fb-market-poster/flow/main.md, trigger_prompt=\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily\", dish_type=fb_daily_post, guaranteed=true, policy_id=null, depends_on=\"chef-eod 08:45 UTC + 30min\", enabled=true, last_fired=null, trigger_id=null. SLOT fb-weekend: cron=\"13 13 * * 6,0\" (13:13 UTC/20:13 VN; minute shifted from :07 so it lands in a */15 dispatcher tick — dispatcher only wakes :00/:15/:30/:45 and matches cron-minute within +/-2 of floored 15-min tick), dish_type=fb_weekly_post, guaranteed=true, policy_id=null, depends_on=null, rest same. MODE ROUTER in fb main.md self-routes VN_DOW (1-5 DAILY / 6 RECAP / 0 PREDICTION) — slot param is informational. Matcher comma-DOW 6,0 verified supported (cowork-match-slots.js field()). Invoke agent-md-factory skill. cowork-schedule.json is agent-father-maintained.",
-        "reviewed_at": "2026-06-29T00:00:00Z",
-        "done_at": "2026-06-29T16:46:36Z",
-        "updated_by": "qa",
-        "updated_at": "2026-06-29T16:46:36Z",
-        "next_agent": "qa"
       }
     ],
     "qa": [],
