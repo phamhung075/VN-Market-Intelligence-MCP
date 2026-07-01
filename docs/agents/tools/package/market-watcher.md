@@ -72,6 +72,13 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 |------|---------|-----------|
 | `post_agent_signal` | Post signal to inter-agent bus | `from_agent: string, to_agent: string, signal_type: string, payload: object` |
 
+### Evidence Pipeline (Prediction Engine)
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `record_evidence_fragment` | Record a directional evidence fragment (feeds nightly accumulator → `evidence_likelihood_ratios` → prediction claims) | `stock: string, evidence_type: string, direction: "bullish"\|"bearish"\|"neutral", magnitude: number (0-1), confidence: number (0-1), source_agent: string, ttl_days?: number (default 30)` |
+
+**Wired in:** `docs/agents/market-watcher/flow/cycle.md` § 1b Evidence Fragment Recording — emits `price_momentum_5d` (seeded, PRIMARY — reuses Step 1's `get_technical_indicators` call) and `price_momentum_20d` (net-new, honest cold-start) per stock priced this cycle, derived from the RSI/MACD/MA/BB `Tổng thể` consensus line (TASK-EVIDENCE-HOP2-AGENTS FR-2.1, live-verified). Full param reference: `docs/agents/tools/list/record_evidence_fragment.md`.
+
 ### Logging & Feedback
 | Tool | Purpose | Key Params |
 |------|---------|-----------|

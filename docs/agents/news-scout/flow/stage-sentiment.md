@@ -64,3 +64,32 @@ call_tool(server="vn-market", tool="get_watchlist", arguments={})
 - `EASING + bullish` → score × 1.2 | `EASING + bearish` → score × 0.8
 - `NEUTRAL` → no change
 - `CARRY_REGIME=HOT_MONEY_INFLOW` + carry spread parsed > 3% → set `hot_money_risk=true` for FII-related news
+
+**Evidence Fragment Recording** (TASK-EVIDENCE-HOP2-AGENTS FR-2.1 — feeds the prediction-engine LR pipeline; PMI/commodity/Brent-Gold triggers above are already computed by this point):
+
+For each scored article (Step 2 above) that maps to a specific watchlist ticker:
+```
+call_tool(server="vn-market", tool="record_evidence_fragment", arguments={
+  "stock": "<TICKER>",
+  "evidence_type": "news_sentiment_stock",
+  "direction": "bullish if score > 0.15, bearish if score < -0.15, else neutral",
+  "magnitude": "min(1.0, abs(score))",
+  "confidence": "clamp(impact_score / 10, 0.3, 0.95) if impact_score available, else 0.5",
+  "source_agent": "news-scout",
+  "ttl_days": 7
+})
+```
+
+For macro-wide articles (no specific watchlist ticker — PMI print, commodity-chain, Brent/Gold triggers above):
+```
+call_tool(server="vn-market", tool="record_evidence_fragment", arguments={
+  "stock": "MARKET",
+  "evidence_type": "news_sentiment_macro",
+  "direction": "bullish if score > 0.15, bearish if score < -0.15, else neutral",
+  "magnitude": "min(1.0, abs(score))",
+  "confidence": "clamp(impact_score / 10, 0.3, 0.95) if impact_score available, else 0.5",
+  "source_agent": "news-scout",
+  "ttl_days": 7
+})
+```
+`news_sentiment_stock` and `news_sentiment_macro` are the ACTUAL seeded `evidence_type` strings in `evidence_likelihood_ratios` (verify against `docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md` §0-C3 — do not invent new type names). `stock="MARKET"` mirrors the existing market-wide-ticker convention already used in the codebase (`kinhDichWrapper.ts` "MARKET"→VNINDEX mapping — live-verified, not guessed). `news_sentiment_stock` already carries a `bullish/n=16` frozen row near the n≥10 trust threshold — this is the single highest-value wiring for the evidence monoculture fix.

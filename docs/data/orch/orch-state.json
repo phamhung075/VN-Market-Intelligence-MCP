@@ -10944,12 +10944,12 @@
         "type": "SPRINT-M-HOP",
         "zone": "docs/agents/",
         "specialist": "agent-father",
-        "status": "READY",
+        "status": "REVIEW",
         "priority": "high",
         "created_at": "2026-07-01T06:49:50Z",
         "created_by": "pm",
         "owner": "agent-father",
-        "next_agent": "agent-father",
+        "next_agent": "qa",
         "depends": [],
         "size": "M",
         "parallel_safe_with": "TASK-EVIDENCE-HOP1-MCP",
@@ -10965,7 +10965,10 @@
           "docs/agents/tools/package/bctc-analyst.md",
           "docs/agents/tools/package/market-watcher.md",
           "docs/agents/digest-predict/init.md"
-        ]
+        ],
+        "updated_at": "2026-07-01T07:04:50Z",
+        "updated_by": "agent-father",
+        "qa_note": "hop2 docs-only wiring complete. FR-2.1: record_evidence_fragment wired into news-scout/flow/stage-sentiment.md (news_sentiment_stock+news_sentiment_macro), bctc-analyst/flow/stage-analyze.md (bctc_valuation_premium/bctc_roe_strong/bctc_roe_ratio/bctc_regulatory_compliance/bctc_report_overdue/bctc_net_profit), market-watcher/flow/cycle.md (price_momentum_5d/price_momentum_20d) + matching tools_package docs (news-scout.md/bctc-analyst.md/market-watcher.md). Also corrected stale docs/agents/tools/list/record_evidence_fragment.md (old thesis_id/content/source contract -> real stock/evidence_type/direction/magnitude/confidence/source_agent/ttl_days schema, live-verified against evidenceTools.ts). FR-3: stripped false Sharpe>1.0 hard-gate language from digest-predict/init.md (workflows.validate_prediction_claims steps + capabilities line 13). All evidence_type strings cross-checked live against evidence_likelihood_ratios (architecture brief SS0-C3) -- none invented. QA gate: verify each flow doc calls record_evidence_fragment with the exact seeded evidence_type/direction pairing + tool param names match evidenceTools.ts schema; runtime evidence_fragments diversity check is a 24-48h post-deploy follow-up per brief SS4, not blocking this docs-only review. hop1 (dev-mcp-server, apps/mcp-server/) runs in parallel, zero file overlap confirmed."
       }
     ],
     "review": [

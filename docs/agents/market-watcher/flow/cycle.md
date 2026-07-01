@@ -1,4 +1,4 @@
-<!-- size-justification: 191L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL); Step 0-sweep coverage-rotation floor added (coverage-state.json SSOT + atomic update); offhours threshold floor added (FIX-MW-OFFHOURS-DISPATCH, prepost-equivalent easing floor for 00Z/04Z/weekend fires); Step 0-GW gateway-availability gate added (FIX-COWORK-GATEWAY-GATE). -->
+<!-- size-justification: 253L (was 233L pre-existing drift, undocumented since header last read 191L) — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL); Step 0-sweep coverage-rotation floor added (coverage-state.json SSOT + atomic update); offhours threshold floor added (FIX-MW-OFFHOURS-DISPATCH, prepost-equivalent easing floor for 00Z/04Z/weekend fires); Step 0-GW gateway-availability gate added (FIX-COWORK-GATEWAY-GATE). +20L TASK-EVIDENCE-HOP2-AGENTS FR-2.1 (2026-07-01): Step 1b evidence-fragment recording — reuses Step 1's already-fetched get_technical_indicators output, cannot split without breaking the atomic per-ticker price-analysis loop. FLAG: file exceeds 200L flow-doc discipline pre- AND post-edit — pre-existing debt, out of this task's scope to split (would require a structural flow-file refactor, not a docs-wiring change). -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -79,6 +79,26 @@ For each ticker in STALE_TICKERS:
 Per stock: apply sector flags before emitting signal:
 - `DXY_SIGNAL=USD STRENGTHENING` + sector in (banking, realty) → `fx_pressure=true`
 - `US10Y_SIGNAL=RISK-OFF` + large-cap with high FII exposure → `pe_compression_risk=true`
+
+**1b. Evidence Fragment Recording** (TASK-EVIDENCE-HOP2-AGENTS FR-2.1 — feeds prediction-engine LR pipeline):
+
+`get_technical_indicators` returns a plain-text report ending in a conclusion block (live-verified `technicalIndicatorTools.ts:471-484`): `Kết luận: N/M chỉ báo TĂNG — <phrase>` then `Tổng thể: <TĂNG|GIẢM|TRUNG TÍNH>` (RSI/MACD/MA/BB direction-agreement consensus — no separate structured JSON fields exist). Parse the `Tổng thể` line: `TĂNG`→bullish, `GIẢM`→bearish, `TRUNG TÍNH`→neutral. Magnitude = `N/M` (tangCount/total from the `Kết luận` line for bullish, giamCount/total for bearish), clamped `[0.3, 1.0]`; neutral → `magnitude=0.3`.
+
+Per stock priced this cycle (reuse Step 1's `get_technical_indicators(code)` call — no new fetch):
+```
+call_tool(server="vn-market", tool="record_evidence_fragment", arguments={
+  "stock": "<TICKER>",
+  "evidence_type": "price_momentum_5d",
+  "direction": "<bullish|bearish|neutral per Tổng thể parse>",
+  "magnitude": "<consensus_ratio, clamp 0.3-1.0>",
+  "confidence": 0.6,
+  "source_agent": "market-watcher",
+  "ttl_days": 14
+})
+```
+Then re-run `get_technical_indicators(code, days=120)` (longer lookback than Step 1's default) and repeat with `evidence_type="price_momentum_20d"` (net-new type, no seeded LR rows yet — honest cold-start per architecture brief §0-C3/RISK-4, not a defect).
+
+`price_momentum_5d` is the PRIMARY seeded, near-trust-threshold target (bullish+bearish, `n=1` each, ready to accumulate) — highest-coverage wiring across the full watchlist every cycle. Do not invent other type names; these two are the only seeded/approved `price_momentum_*` strings (architecture brief §0-C3).
 
 **2. Market indicators** (run in parallel with price analysis for enrichment context):
 ```

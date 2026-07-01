@@ -1,4 +1,4 @@
-<!-- size-justification: 120L — merged routine + release pipelines + E1 trick-pass loop + E3 cache. Cannot split: routine/release share BCTC fetch/EY/forensic/chain-validation; E1 passes are sequential per-ticker; splitting loses pipeline continuity across mode branches. -->
+<!-- size-justification: 154L (was 131L pre-existing drift, undocumented) — merged routine + release pipelines + E1 trick-pass loop + E3 cache. Cannot split: routine/release share BCTC fetch/EY/forensic/chain-validation; E1 passes are sequential per-ticker; splitting loses pipeline continuity across mode branches. +23L TASK-EVIDENCE-HOP2-AGENTS FR-2.1 (2026-07-01): evidence-fragment recording steps 4c (routine) + R4 addendum (release) — reuses signals already computed in Steps 1-3/R4, no new fetch calls, cannot be split out without breaking the "reuse already-computed data" design intent. -->
 > Parent: [./cycle.md](./cycle.md)
 
 # BCTC Analyst — Stage 1-4: Analyze + Validate
@@ -57,6 +57,27 @@ G-Bond regime check (Pillar 5.2):
 
 **4b. Signal feedback → news-scout** (per financial-analyst pattern — accepted/rejected per chain finding)
 
+**4c. Evidence Fragment Recording** (TASK-EVIDENCE-HOP2-AGENTS FR-2.1 — feeds prediction-engine LR pipeline; runs for ALL watchlist tickers every routine cycle, reuses signals already computed in Steps 1-3, zero new BCTC parsing):
+
+Per ROUTINE_TICKER:
+- `valuation_verdict` (Step 2 EY_SPREAD classify) `EXPENSIVE`/`AVOID` → `evidence_type="bctc_valuation_premium"`, `direction="bearish"`, `magnitude=clamp(abs(EY_SPREAD)/3, 0.3, 1.0)`, `confidence=0.6` (`CHEAP`/`FAIR` → skip; seeded type is bearish-only, do not force a mismatched direction)
+- `roe` (Step 2 `get_bctc_full(code).roe`) `> 15%` → `evidence_type="bctc_roe_strong"`; `0% < roe <= 15%` → `evidence_type="bctc_roe_ratio"`; both `direction="bullish"`, `magnitude=clamp(roe/25, 0.3, 1.0)`, `confidence=0.6` (`roe <= 0%` → skip; both seeded types are bullish-only)
+- `get_legal_risk_signals()` (Step 3) flags any legal/regulatory risk → `evidence_type="bctc_regulatory_compliance"`, `direction="bearish"`, `magnitude=0.7`, `confidence=0.65`
+- overdue ticker per Step 1 (`get_earnings_calendar()` / `list_stored_pdfs()` missing-reports) → `evidence_type="bctc_report_overdue"`, `direction="bearish"`, `magnitude=0.5`, `confidence=0.55`
+
+```
+call_tool(server="vn-market", tool="record_evidence_fragment", arguments={
+  "stock": "<TICKER>",
+  "evidence_type": "<bctc_valuation_premium|bctc_roe_strong|bctc_roe_ratio|bctc_regulatory_compliance|bctc_report_overdue>",
+  "direction": "<bearish|bullish per rule above>",
+  "magnitude": "<per rule above>",
+  "confidence": "<per rule above>",
+  "source_agent": "bctc-analyst",
+  "ttl_days": 30
+})
+```
+All 5 types are the ACTUAL seeded `evidence_type` strings in `evidence_likelihood_ratios` (architecture brief §0-C3, live-verified). `bctc_revenue_growth` / `bctc_pe_ratio` / `bctc_debt_equity` were NEVER seeded (tool-docstring examples only) — do NOT use them.
+
 ---
 
 ## Release Mode (RELEASE_TICKERS only — processed first in mixed cycles)
@@ -86,6 +107,8 @@ If unavailable → `eval_status = "unknown"`.
 `post_agent_signal(type="fundamental_validation", beat_miss="beat|miss|in-line")`
 
 Compute `net_profit_delta_pct` (YoY). Set `beat_miss` verdict from YoY comparison.
+
+**Evidence Fragment Recording (Release mode)** — `beat_miss="miss"` → `record_evidence_fragment(stock=TICKER, evidence_type="bctc_net_profit", direction="bearish", magnitude=clamp(abs(net_profit_delta_pct)/20, 0.3, 1.0), confidence=0.65, source_agent="bctc-analyst", ttl_days=30)` (matches the seeded bearish direction, `n=1`). `beat_miss="beat"` → same call with `direction="bullish"` (net-new direction pair for this type — honest cold-start ramp, not a defect; architecture brief RISK-4). `in-line` → skip (no directional evidence).
 
 Emit signal file: `docs/signals/bctc_signal_{TICKER}_{YYYYMMDD}_release.json` including all business-context fields.
 

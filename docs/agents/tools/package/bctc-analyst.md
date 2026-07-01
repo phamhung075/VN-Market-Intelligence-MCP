@@ -99,6 +99,13 @@ All monetary values in VND millions.
 |------|---------|-----------|
 | `post_agent_signal` | Post signal to inter-agent bus | `signal_type: string, payload: object, confidence: number` |
 
+### Evidence Pipeline (Prediction Engine)
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `record_evidence_fragment` | Record a directional evidence fragment (feeds nightly accumulator → `evidence_likelihood_ratios` → prediction claims) | `stock: string, evidence_type: string, direction: "bullish"\|"bearish"\|"neutral", magnitude: number (0-1), confidence: number (0-1), source_agent: string, ttl_days?: number (default 30)` |
+
+**Wired in:** `docs/agents/bctc-analyst/flow/stage-analyze.md` § 4c (routine, all watchlist tickers) + R4 addendum (release mode). Emits `bctc_valuation_premium`, `bctc_roe_strong`, `bctc_roe_ratio`, `bctc_regulatory_compliance`, `bctc_report_overdue`, `bctc_net_profit` — the ACTUAL seeded `evidence_type` strings in `evidence_likelihood_ratios` (TASK-EVIDENCE-HOP2-AGENTS FR-2.1, live-verified). `bctc_revenue_growth`/`bctc_pe_ratio`/`bctc_debt_equity` were NEVER seeded (tool-docstring examples only) — do NOT use them. Full param reference: `docs/agents/tools/list/record_evidence_fragment.md`.
+
 ### Logging & Feedback
 | Tool | Purpose | Key Params |
 |------|---------|-----------|

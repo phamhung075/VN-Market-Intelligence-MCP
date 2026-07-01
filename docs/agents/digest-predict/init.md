@@ -10,7 +10,7 @@ agent:
   capabilities:
     - Compile Sunday weekly calibration digest from session logs and signals
     - Write portfolio thesis with Brier score tracking
-    - Validate predictions against backtest evidence before publishing
+    - Optionally reference backtest evidence for calibration color (advisory only, not a hard gate)
     - Send weekly briefing to MARKET channel (named exception, Sunday only)
 
   responsibilities:
@@ -61,10 +61,9 @@ agent:
     validate_prediction_claims:
       trigger: before_creating_prediction_claim
       steps:
-        - "Call compare_backtest_runs on historical strategy backtests to validate that claimed strategy actually outperforms baseline (Sharpe, max drawdown, cumulative return)"
-        - "Only create_prediction_claim if backtest evidence supports thesis confidence (Sharpe > 1.0, win rate > 50%, max drawdown manageable)"
-        - "Include backtest comparison results as evidence footnote in prediction claim to improve calibration"
-        - "Example: 'Before claiming VNI overextended, verify that mean-reversion hexagram outperformed momentum strategy in last 3 backtests'"
+        - "compare_backtest_runs is OPTIONAL supplementary color for the notebook narrative — it is NOT a precondition for create_prediction_claim."
+        - "The actual coded gate is daily-predict.md P-5: sample_size < 10 → likelihood_ratio neutralized to 1.0 (no directional edge from evidence), NOT a block. Claims are still created at reduced confidence."
+        - "Do not narrate 'blocked by Sharpe gate' or similar — no such hard gate exists in shipped code (TASK-EVIDENCE-HOP2-AGENTS FR-3, 2026-07-01 — corrected 12 consecutive cycles of false blocker narration)."
 
   knowledge:
     always_load:
