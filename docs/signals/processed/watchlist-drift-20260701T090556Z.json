@@ -16,5 +16,11 @@
     "severity": "low",
     "recommended": "resync the watchlist SQLite table from docs/data/system-map.json .project.watchlist (single fix corrects all 4 endpoints)"
   },
-  "createdAt": "2026-07-01T09:05:56Z"
+  "createdAt": "2026-07-01T09:05:56Z",
+  "_processed": {
+    "fingerprint": "c3272b28804de2e7b1053845b877095f810c889b896dd71d97975a112456bf29",
+    "processedAt": "2026-07-01T09:15:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-01T09:05:10Z",
+    "status": "in_progress",
+    "updated_at": "2026-07-01T09:26:35Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "MONEY-RADAR-P0-T1-OSCILLATORS DONE_VERIFIED (qa APPROVED, commit e19894035, live POST /ta/money-flow-oscillators on :5003). Sprint MONEY-RADAR-P0 continues: T2-COMPOSITE (backlog, dev-mcp-server, depends T1 now unblocked), T3-DASHBOARD, T4-QA-GATE. CCATO-T1-TRUTH-GATE-ENGINE in ready[] for next-tick dispatch."
+    "active_task_id": "MONEY-RADAR-P0-T2-COMPOSITE",
+    "next_agent": "dev-mcp-server",
+    "note": "tick 09:07Z: dispatch T2-COMPOSITE→dev-mcp-server; WIP=2 at cap (ready CCATO-T1 + in_progress T2); minted 2 deferred backlog (WATCHLIST-DRIFT-FIX, CLEAN-SIGNALS-DIR)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8313,30 +8313,6 @@
         "verification_gate": "qa confirms all 6 anchors present + each references the shared skill; fb STEP 4d + TNB Step 2 explicitly re-verified against DoD (e)/(f)."
       },
       {
-        "id": "MONEY-RADAR-P0-T2-COMPOSITE",
-        "title": "dev-mcp-server: get_money_radar_composite MCP tool — wires the 8 LIVE reuse tools (§C2) + the 4 new oscillators, D1/D2/D3(Phase-0 form)/D4 divergence detectors, and honest-NULL rules HN-1..HN-7 into the composite schema (§4).",
-        "owner": "developer",
-        "next_agent": "developer",
-        "status": "BACKLOG",
-        "zone": "dev-mcp-server",
-        "type": "FEATURE",
-        "size": "M",
-        "priority": "high",
-        "sprint": "MONEY-RADAR-P0",
-        "depends": [
-          "MONEY-RADAR-P0-T1-OSCILLATORS"
-        ],
-        "created_at": "2026-07-01T08:18:21Z",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/market-data/ (new get_money_radar_composite tool)"
-        ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.2 + §4 (composite schema + fusion) + §5 (HN-1..HN-7) + §3(L2 divergence) + §12 (reuse file:line)",
-        "generic_mandate": "REUSE-FIRST (§C2 — do NOT rebuild LIVE tools): get_foreign_flow, get_market_foreign_flow, get_foreign_accum_rank, get_foreign_room, get_carry_trade_signal, get_credit_flow_signal, get_macro_snapshot, get_volatility_indicators + daily_ohlcv.put_through_vol column + the 4 new T1 oscillators. Emit the §4 output schema per ticker/market {score|null, delta_5d|null, divergence{flag,severity,detectors,null_reason?}, coverage_pct, source_tier, is_estimate, null_reason|null, components}. Fusion = coverage-gated tier-weighted mean over NON-NULL components only (T1=1.0,T2=0.9,T3=0.7,T4=0.3). Divergence detectors: D1 index-vs-breadth (get_breadth_thrust), D2 price-vs-OBV, D3 Phase-0 form crowd-vs-foreign (get_market_foreign_flow + foreign_accum_z_market<0), D4 unconfirmed breakout (new high + rel-vol z<0); a detector fires ONLY when BOTH axes non-null over the same window, else flag=UNKNOWN + null_reason (HN-4). Honest-NULL NON-NEGOTIABLE: HN-1 never zero-fill null components (exclude from mean); HN-2 coverage_pct<0.5 → score=null + null_reason lists missing inputs; HN-3 credit-flow is_estimate=true → excluded/hard-down-weighted (DEFAULT_RE_CREDIT_TRILLION defaults NEVER enter as real); HN-4 divergence UNKNOWN-not-GREEN on null axis; HN-5 degraded VWAP is_proxy=true; HN-6 frontend null contract; HN-7 source_tier=min contributing tier (honest floor). All reuse tools reached via mcp gateway call_tool where cross-service.",
-        "acceptance": "get_money_radar_composite (no ticker arg) returns a REAL non-null score on live data with foreign accum z, OBV slope, rel-vol z, and volatility regime all contributing non-null; coverage_pct<0.5 path returns score=null + null_reason (NOT a zero-fill). D2 fires on a real historical example (index up + OBV slope negative → flag=AMBER, detectors=[\"D2\"]). A null divergence axis yields flag=UNKNOWN (never GREEN). credit-flow is_estimate=true is excluded/down-weighted, never fed as real. source_tier = min contributing tier.",
-        "verification_gate": "qa RAW-calls the tool on live data: asserts real non-null composite + honest coverage-gated null path + D2 AMBER on the real historical example + UNKNOWN-not-GREEN on a null axis + HN-3 credit-estimate exclusion + source_tier honest floor. No fabricated number on a thin-data path.",
-        "note": "Aggregation heart of MONEY-RADAR-P0. Depends T1 (needs the 4 oscillators). Reuse-first — the ONE genuinely new crawl (tự doanh) is Phase 1, out of scope."
-      },
-      {
         "id": "MONEY-RADAR-P0-T3-DASHBOARD",
         "title": "dev-frontend: apps/frontend/app/routes/dashboard.money-radar.tsx — mirror dashboard.momentum.tsx; 4 GaugeCards (§8); honest-NULL render ('—' + gray FreshnessBadge + null_reason).",
         "owner": "developer",
@@ -8390,6 +8366,46 @@
         "acceptance": "All four §6 DoD items RAW-verified GREEN on live data + honest-NULL spot-checks pass. No fabricated number anywhere. Momentum route unregressed.",
         "verification_gate": "qa signs off MONEY-RADAR-P0 → sprint_goal[MONEY-RADAR-P0].status=DONE ONLY when all four §6 DoD items pass RAW on live data. Any fabricated/zero-filled value on a thin-data path = REJECT back to the owning task.",
         "note": "Terminal Phase-0 gate. Depends T1+T2+T3. HOLD-gated follow-ons (tự-doanh crawl, sector bucketing, agent wiring, CCATO wiring, Phase 1/2) mint separately AFTER this gate passes."
+      },
+      {
+        "id": "WATCHLIST-DB-SYSMAP-DRIFT-FIX",
+        "title": "Resync live SQLite watchlist table from docs/data/system-map.json .project.watchlist (SSOT) — corrects /ta/money-flow-oscillators + /ta/roc-momentum + sibling TA endpoints",
+        "owner": "developer",
+        "next_agent": "developer",
+        "status": "BACKLOG",
+        "zone": "cross-service",
+        "type": "FIX",
+        "size": "S",
+        "priority": "low",
+        "sprint": "MONEY-RADAR-P0",
+        "depends": [],
+        "created_at": "2026-07-01T09:26:35Z",
+        "files": [
+          "docs/data/system-map.json (SSOT, read)",
+          "<watchlist seeder — dev to locate>"
+        ],
+        "acceptance": "live SQLite watchlist table equals system-map.json .project.watchlist active set (VEA absent, VNH correctly sectored as seafood); all TA endpoints return corrected universe.",
+        "note": "PLAN-ONLY / DEFERRED — do NOT dispatch until a WIP slot frees AND before MONEY-RADAR-P0-T3-DASHBOARD surfaces the universe. Source: qa repair_task_request WATCHLIST-DB-SYSMAP-DRIFT (non-blocking, found during T1 gate). Live SQLite watchlist=41 rows (populated 2026-04-27) drifted from system-map.json (~17 active missing, inactive VEA present, VNH mis-seeded real_estate→seafood per project_vnh_sector_misclassification). Pre-existing, service-wide, NOT introduced by T1. Grooming: confirm seeder location (may be single-zone apps/technical-analysis/)."
+      },
+      {
+        "id": "CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS",
+        "title": "Relocate 3 non-signal artifacts out of docs/signals/ + teach signal-drain to archive from/type-less files (stop per-tick re-skip)",
+        "owner": "developer",
+        "next_agent": "developer",
+        "status": "BACKLOG",
+        "zone": "cross-service",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "low",
+        "depends": [],
+        "created_at": "2026-07-01T09:26:35Z",
+        "files": [
+          "scripts/agents-flow/drain-signals.js",
+          "docs/signals/ (3 artifacts)",
+          "<chef/audit producer output path>"
+        ],
+        "acceptance": "docs/signals/ holds only signal-shaped files; drain auto-archives from/type-less files instead of re-skipping; no consumer of the 3 relocated paths broken (RAW-grep proof).",
+        "note": "PLAN-ONLY, low pri. 3 producer-authored non-signals drain skips EVERY tick (lack from/type): orch-state-writer-audit.json (audit report), price_anomaly_20260629T1600.json + price_anomaly_20260630T0859.json (chef dish outputs). Root fix: (1) RAW-grep consumers BEFORE moving; (2) redirect producer output outside docs/signals/; (3) teach drain to auto-archive from/type-less files."
       }
     ],
     "closed_sprints": [
@@ -11179,7 +11195,33 @@
       "updated_by": "dev-team",
       "updated_at": "2026-07-01T06:26:45Z"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "MONEY-RADAR-P0-T2-COMPOSITE",
+        "title": "dev-mcp-server: get_money_radar_composite MCP tool — wires the 8 LIVE reuse tools (§C2) + the 4 new oscillators, D1/D2/D3(Phase-0 form)/D4 divergence detectors, and honest-NULL rules HN-1..HN-7 into the composite schema (§4).",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "status": "IN_PROGRESS",
+        "zone": "dev-mcp-server",
+        "type": "FEATURE",
+        "size": "M",
+        "priority": "high",
+        "sprint": "MONEY-RADAR-P0",
+        "depends": [
+          "MONEY-RADAR-P0-T1-OSCILLATORS"
+        ],
+        "created_at": "2026-07-01T08:18:21Z",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/market-data/ (new get_money_radar_composite tool)"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.2 + §4 (composite schema + fusion) + §5 (HN-1..HN-7) + §3(L2 divergence) + §12 (reuse file:line)",
+        "generic_mandate": "REUSE-FIRST (§C2 — do NOT rebuild LIVE tools): get_foreign_flow, get_market_foreign_flow, get_foreign_accum_rank, get_foreign_room, get_carry_trade_signal, get_credit_flow_signal, get_macro_snapshot, get_volatility_indicators + daily_ohlcv.put_through_vol column + the 4 new T1 oscillators. Emit the §4 output schema per ticker/market {score|null, delta_5d|null, divergence{flag,severity,detectors,null_reason?}, coverage_pct, source_tier, is_estimate, null_reason|null, components}. Fusion = coverage-gated tier-weighted mean over NON-NULL components only (T1=1.0,T2=0.9,T3=0.7,T4=0.3). Divergence detectors: D1 index-vs-breadth (get_breadth_thrust), D2 price-vs-OBV, D3 Phase-0 form crowd-vs-foreign (get_market_foreign_flow + foreign_accum_z_market<0), D4 unconfirmed breakout (new high + rel-vol z<0); a detector fires ONLY when BOTH axes non-null over the same window, else flag=UNKNOWN + null_reason (HN-4). Honest-NULL NON-NEGOTIABLE: HN-1 never zero-fill null components (exclude from mean); HN-2 coverage_pct<0.5 → score=null + null_reason lists missing inputs; HN-3 credit-flow is_estimate=true → excluded/hard-down-weighted (DEFAULT_RE_CREDIT_TRILLION defaults NEVER enter as real); HN-4 divergence UNKNOWN-not-GREEN on null axis; HN-5 degraded VWAP is_proxy=true; HN-6 frontend null contract; HN-7 source_tier=min contributing tier (honest floor). All reuse tools reached via mcp gateway call_tool where cross-service.",
+        "acceptance": "get_money_radar_composite (no ticker arg) returns a REAL non-null score on live data with foreign accum z, OBV slope, rel-vol z, and volatility regime all contributing non-null; coverage_pct<0.5 path returns score=null + null_reason (NOT a zero-fill). D2 fires on a real historical example (index up + OBV slope negative → flag=AMBER, detectors=[\"D2\"]). A null divergence axis yields flag=UNKNOWN (never GREEN). credit-flow is_estimate=true is excluded/down-weighted, never fed as real. source_tier = min contributing tier.",
+        "verification_gate": "qa RAW-calls the tool on live data: asserts real non-null composite + honest coverage-gated null path + D2 AMBER on the real historical example + UNKNOWN-not-GREEN on a null axis + HN-3 credit-estimate exclusion + source_tier honest floor. No fabricated number on a thin-data path.",
+        "note": "Aggregation heart of MONEY-RADAR-P0. Depends T1 (needs the 4 oscillators). Reuse-first — the ONE genuinely new crawl (tự doanh) is Phase 1, out of scope.",
+        "dispatched_at": "2026-07-01T09:26:35Z"
+      }
+    ],
     "ready": [
       {
         "id": "CCATO-T1-TRUTH-GATE-ENGINE",

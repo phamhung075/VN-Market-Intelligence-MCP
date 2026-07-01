@@ -1,0 +1,42 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-01T08:52:07Z",
+  "payload": {
+    "nominal_tick": "08:45",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "matched_slots": [
+      "chef-eod"
+    ],
+    "won_slots": [
+      "chef-eod"
+    ],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "chef_mutex_applied": true,
+    "due_reasons": {
+      "chef-eod": "cron"
+    },
+    "last_fired_timestamp": "2026-07-01T08:50:48.000Z",
+    "leader_lock": "acquired",
+    "signal_backlog": 3,
+    "dev_queue_depth": 5,
+    "host_headroom_mb": 5953,
+    "note": "chef-eod end-of-day dish (cron 45 8, guaranteed, VN close ~15:50); legacy (pressure age>20min); sole chef slot -> mutex satisfied."
+  },
+  "_processed": {
+    "fingerprint": "22f70030230e54aaa5fc657e8e212afd6ac371a2139eabca5324f995f0fe3903",
+    "processedAt": "2026-07-01T09:15:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
