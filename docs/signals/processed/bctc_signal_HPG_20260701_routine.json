@@ -1,0 +1,75 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Sản xuất thép xây dựng, thép cuộn, ống thép; vật liệu xây dựng; bất động sản khu công nghiệp (Dung Quất, Hải Dương)",
+  "customer": "Nhà thầu xây dựng trong nước, xuất khẩu ASEAN (Campuchia, Lào, Myanmar — 15% doanh thu theo cảnh báo UOB/ASEAN investment flow)",
+  "ops": "Doanh thu Q1 52,900.8 tỷ; LN ròng 9,055.9 tỷ (17.1% biên net); LN gộp 8,365.1 tỷ (15.8%) — vượt bởi thu nhập tài chính 690.8 tỷ (7.6% LN ròng, mức thấp); Brent $72.07 (-2.88σ) giảm chi phí đầu vào than luyện; OCF chưa trích xuất được (extraction failure)",
+  "mgmt": "ROE 12.7% dẫn đầu ngành thép (sector median 2.9%); PE 14.2x chiết khấu -57% vs sector 32.6x; không có giao dịch insider trong 90 ngày gần đây",
+  "valuation": {
+    "pe": 14.2,
+    "pb": 1.7,
+    "roe_pct": 12.7,
+    "ey_spread_pp": 2.04,
+    "valuation_verdict": "FAIR",
+    "sector_pe_discount_pct": -57,
+    "sector_roe_premium_pp": 9.8
+  },
+  "balance_sheet": {
+    "total_assets_ty": 259327.5,
+    "equity_ty": 139781.8,
+    "total_liabilities_ty": 119545.7,
+    "cash_ty": 3614.8,
+    "de_ratio": 0.86,
+    "bs_validation": "PASS"
+  },
+  "esc_checks": {
+    "esc1": "FALSE",
+    "esc2": "PASS",
+    "esc3": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 1,
+    "esc3_coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+    "esc4": "FALSE",
+    "esc5": "FALSE_graceful",
+    "escalation_status": "no_escalation"
+  },
+  "trick_detection": {
+    "pass_1_balance_sheet": "CLEAN",
+    "pass_2_pl": "WARNING_low_severity: net_profit(9055.9) > gross_profit(8365.1) — thu nhập tài chính 690.8 tỷ",
+    "pass_3_cashflow": "SKIP_E4_OCF_zero",
+    "pass_4_rpt": "SKIP_no_row_data",
+    "pass_5_footnote": "SKIP_no_row_data",
+    "pass_6_segment": "SKIP_no_row_data",
+    "trick_summary": "HPG Q1-2026: LN ròng vượt LN gộp 690.8 tỷ — có thể do thu nhập tài chính từ tiền gửi/công ty liên kết (mức độ thấp, không phải thủ thuật kế toán)",
+    "trick_confidence": "low"
+  },
+  "kinhdich": {
+    "que": 21,
+    "ten": "Phệ Hạp",
+    "xu_huong": "THUẬN LỢI",
+    "khuyen_nghi": "THẬN TRỌNG (tích cực)",
+    "confidence": 0.5
+  },
+  "context": {
+    "regime": "NEUTRAL",
+    "ey_market_wide_spread_pp": 2.05,
+    "gold_signal": "BULLISH",
+    "brent_signal": "NEUTRAL_LOW",
+    "clock_phase": "Overheat",
+    "news_today": "UOB 450M USD HCMC tower (infrastructure demand), Brent -2.88sigma (input cost tailwind)",
+    "legal_risk": "none_direct_HPG"
+  },
+  "signal_id_fundamental_validation": 8157,
+  "evidence_fragments": [
+    {"id": 241, "type": "bctc_roe_ratio", "direction": "bullish", "magnitude": 0.508, "confidence": 0.6}
+  ],
+  "overall_verdict": "POSITIVE — PE chiết khấu -57% vs ngành, ROE 12.7% dẫn đầu, giá dầu thấp giảm chi phí đầu vào, nhu cầu xây dựng hạ tầng tích cực",
+  "confidence": 0.7,
+  "refine_status": "PARTIAL",
+  "source_tier": 2,
+  "cycle": "c069",
+  "slot": "bctc-analyst-slot-1",
+  "emitted_at": "2026-07-01T15:15:00Z"
+}

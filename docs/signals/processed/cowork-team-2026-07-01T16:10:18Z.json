@@ -1,0 +1,62 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-01T16:10:18Z",
+  "payload": {
+    "fire_time": "2026-07-01T16:10:18Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron",
+      "market-watcher-eod": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null,
+      "market-watcher-eod": null
+    },
+    "last_fired_timestamp": "2026-07-01T16:08:53.000Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 7,
+    "collision_agent": "market-watcher",
+    "note": "3-slot FIRE (16:00Z): news-scout-offhours (0 */4) + market-watcher offhours+eod (weekday 16:00 overlap 0*/4 ∩ 0 16 * * 1-5, R3 both spawn; market-watcher writes notebook only, no MARKET publish). legacy via stale_warning:true AND age>20min (pressure last emitted 15:05Z, ~64min). no chef slot. market closed (23:09 VN). server stale_warning:true — upstream cycle snapshot stale since ~3h host-inactive gap; no market-hours cycle to refresh regime/volatility."
+  }
+}
