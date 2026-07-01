@@ -112,6 +112,8 @@ import { handleGetMacroRegime } from "./routes/macroRegimeHandler.js";
 import { handleGetIndicatorGauges } from "./routes/indicatorGaugesHandler.js";
 // TASK-501-MOMENTUM-API-HANDLER: GET /api/momentum-indicators — 4 P1 momentum sources aggregated
 import { handleGetMomentumIndicators } from "./routes/momentumIndicatorsHandler.js";
+// MONEY-RADAR-P0-T3B-REST-API: GET /api/money-radar — Money Radar composite score REST bridge
+import { handleGetMoneyRadar } from "./routes/moneyRadarHandler.js";
 // TASK-17 P2-1a: GET /api/price-history/:ticker — OHLC history DTO for frontend
 import { handleGetPriceHistory } from "./routes/priceHistoryServeHandler.js";
 // TASK-17 Alerts ENDPOINT WAVE: GET /api/alerts — live alerts table for dashboard
@@ -2264,6 +2266,17 @@ export async function createBunServer(
     // NO db arg: all 4 sources are remote HTTP via clients.ts (ARCH-RATIFY M3).
     if (method === "GET" && pathname === "/api/momentum-indicators") {
       await handleGetMomentumIndicators(req, res);
+      return;
+    }
+
+    // ── MONEY-RADAR-P0-T3B-REST-API: GET /api/money-radar ────────────────────
+    // REST bridge for the Money Radar composite score — calls the SAME
+    // getMoneyRadarComposite usecase used by the get_money_radar_composite MCP
+    // tool (moneyRadarTools.ts), so the frontend dashboard and the MCP tool
+    // never diverge. Always returns 200; honest-NULL passthrough (HN-1..HN-7);
+    // generated_at always set.
+    if (method === "GET" && pathname === "/api/money-radar") {
+      await handleGetMoneyRadar(req, res, db);
       return;
     }
 
