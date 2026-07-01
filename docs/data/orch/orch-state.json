@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
-    "next_agent": "qa",
-    "updated_at": "2026-07-01T00:10Z",
-    "updated_by": "dev-mcp-server",
-    "note": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN + FIX-GET-BCTC-OCF-SQL-COLUMN both REVIEW. Bilingual section detection fix + aggregator English labels + OCF SQL aliases. HVN Q1-2026 operating_cf=5018783M verified non-zero. Route to qa."
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-01T00:23:09Z",
+    "updated_by": "dev-team",
+    "note": "BCTC-REFINE-FLEET-DRAIN sprint CLOSED (dev-team RAW-verified qa APPROVED + own serving-layer probe): FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN + FIX-GET-BCTC-OCF-SQL-COLUMN REVIEW->DONE. HVN Q1-2026 income/CF now materialized (bilingual English section detection + aggregator English label fallbacks + total_assets OCR-degraded code 280/440 fallback); get_bctc_ocf SQL aliases fixed. Pipeline IDLE. dev code WIP=0. Pending backlog: CONTAM-11-REMEDIATE (destructive VPS-anchor repair, PO go/no-go, off-hours tick). Push gated (PO/human)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9586,6 +9586,78 @@
         "done_at": "2026-07-01T00:08Z",
         "commit": "b57869e9",
         "verification": "PASS: carry-only→degraded ASSERT confirmed; full-walk→full ASSERT confirmed; gap-token→full ASSERT confirmed"
+      },
+      {
+        "id": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
+        "type": "FIX",
+        "size": "M",
+        "status": "DONE",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "",
+        "route_to": "dev-mcp-server",
+        "dispatcher": "dev-team",
+        "baseline_pass": true,
+        "created_by": "dev-team",
+        "created_at": "2026-06-30T23:29:07Z",
+        "dispatched_at": "2026-06-30T23:29:07Z",
+        "dispatched_by": "dev-team",
+        "updated_at": "2026-07-01T00:23:09Z",
+        "updated_by": "dev-team",
+        "sprint": "BCTC-REFINE-FLEET-DRAIN",
+        "source_signal": "bca-ddres-20260630T2258",
+        "files": [
+          "apps/mcp-server/src/scheduler/financial-reports/bctcRefineJob.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts",
+          "apps/pdf-extractor/infrastructure/text_table_extractor.py"
+        ],
+        "title": "HVN Q1-2026 refine units (income B02-DN + cash-flow B03-DN) never materialized; whole Q1-2026 cohort stuck text_status=COMPLETE/refine_status=PENDING -- drain fleet refine backlog",
+        "desc": "From bctc-analyst HVN Q1-2026 ESC-2 deep-dive (conf 0.93, RAW-probed serving layer; payload docs/handoffs/bctc-hvn-q1-2026-deepdive.md). HVN serves income statement + cash flow ALL-ZERO (impossible for an operating airline >10000bn VND assets); refine_status=PARTIAL produced balance-sheet units only, never B02-DN/B03-DN. Cohort MBB/VCI/TCH/VIX sits text_status=COMPLETE/refine_status=PENDING = fleet refine backlog not draining. STEP 1 (disambiguation, dev has direct DB + UUID access): per-page OCR char-count for HVN income + cash-flow pages. If OCR text present but no units -> refine-stage bug in mcp-server (repair refine + finalize_bctc_refine, then drain fleet PENDING). If ~0 OCR chars on those pages -> alternate OCR page-window cap (_MAX_BS_PAGES=8 in apps/pdf-extractor/infrastructure/text_table_extractor.py) -> escalate that branch to dev-pdf-extractor. After fix: re-run refine for HVN, re-validate accounting identity A ~= L+E; flag HVN Q1-2026 unusable until it validates. NOTE: related backlog FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON is already DONE (fixed VCB Q1-2025 head-poison) -- verify whether fleet PENDING is still blocked by a different poisoned doc or is genuinely the units-never-produced bug. BUNDLED: do FIX-GET-BCTC-OCF-SQL-COLUMN in the same apps/mcp-server session after this. dev -> qa gate.",
+        "acceptance": [
+          "Run the per-page OCR char-count disambiguation query FIRST and record which branch (refine-stage vs OCR-page-window) applies in the findings doc.",
+          "HVN Q1-2026 income (B02-DN) + cash-flow (B03-DN) units materialize: get_bctc_full serves non-zero income + cash flow with refine_status=COMPLETE and accounting identity A ~= L+E re-validates.",
+          "Fleet Q1-2026 refine backlog (MBB/VCI/TCH/VIX) drains to refine_status=COMPLETE (or the genuinely-blocked docs are identified with a reason); zero regression to CONTAM-10 / daily_ohlcv data."
+        ],
+        "reviewed_at": "2026-07-01T00:08Z",
+        "closure": "qa APPROVED (a50f498d) + dev-team RAW-verified (own serving-layer probe + git, NOT badge): commit 927d4e8f scoped apps/mcp-server/src + scripts/migrations + 2 tests, leak-clean, tree clean. SERVING VERIFIED: get_bctc_full(HVN,2026,Q1) income/CF non-zero (net_revenue 29,030,239M / operating_cf 5,018,783M), refine_status=DONE, balance identity 54,308,378 + 12,743,553 = 67,051,931 exact; get_bctc_ocf(HVN,2026,Q1) returns ocf_operating 5,018,783 with no no-such-column error. qa gate: task tests 12+8 pass, scalar regression 56 pass (banks VAS-code path intact, English IS fallbacks !isBankPath-guarded), BCTC smoke 105 pass, DDD+security PASS, tsc clean. Fleet drain: 7 stuck-PARTIAL re-finalized (GVR->DONE); ACB/HPG/VCB/VEA remain PARTIAL = pre-existing missing-section (bank B02-TCTD / OCR gap), not a regression."
+      },
+      {
+        "id": "FIX-GET-BCTC-OCF-SQL-COLUMN",
+        "type": "FIX",
+        "size": "S",
+        "status": "DONE",
+        "priority": "medium",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "next_agent": "",
+        "route_to": "dev-mcp-server",
+        "dispatcher": "dev-team",
+        "baseline_pass": true,
+        "created_by": "dev-team",
+        "created_at": "2026-06-30T23:29:07Z",
+        "dispatched_at": "2026-06-30T23:29:07Z",
+        "dispatched_by": "dev-team",
+        "updated_at": "2026-07-01T00:23:09Z",
+        "updated_by": "dev-team",
+        "sprint": "BCTC-REFINE-FLEET-DRAIN",
+        "source_signal": "bca-ddres-20260630T2258",
+        "bundle_with": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcOcfTool.ts",
+          "apps/mcp-server/src/__tests__/1909b-get-bctc-ocf.test.ts"
+        ],
+        "title": "get_bctc_ocf SELECT references ocf_operating but live cash-flow schema lacks the column -> no such column: ocf_operating breaks OCF forensic gate fleet-wide",
+        "desc": "get_bctc_ocf (getBctcOcfTool.ts:132 SELECT) references ocf_operating; live cash-flow schema lacks the column -> runtime error 'no such column: ocf_operating', breaking the OCF forensic gate for ALL tickers (deep-dive RAW-reproduced). Reconcile the SELECT column names with the actual cash-flow table schema; update test 1909b-get-bctc-ocf.test.ts. Read-path only, NO DB mutation. BUNDLED secondary -- same dev-mcp-server session as FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN, done after the primary.",
+        "acceptance": [
+          "get_bctc_ocf returns OCF without the no-such-column error for a ticker with cash-flow data; SELECT column names match the live schema.",
+          "Test 1909b-get-bctc-ocf updated + green; no DB mutation; no regression to other financial-reports tools."
+        ],
+        "reviewed_at": "2026-07-01T00:08Z",
+        "closure": "qa APPROVED (a50f498d) + dev-team RAW-verified (own serving-layer probe + git, NOT badge): commit 927d4e8f scoped apps/mcp-server/src + scripts/migrations + 2 tests, leak-clean, tree clean. SERVING VERIFIED: get_bctc_full(HVN,2026,Q1) income/CF non-zero (net_revenue 29,030,239M / operating_cf 5,018,783M), refine_status=DONE, balance identity 54,308,378 + 12,743,553 = 67,051,931 exact; get_bctc_ocf(HVN,2026,Q1) returns ocf_operating 5,018,783 with no no-such-column error. qa gate: task tests 12+8 pass, scalar regression 56 pass (banks VAS-code path intact, English IS fallbacks !isBankPath-guarded), BCTC smoke 105 pass, DDD+security PASS, tsc clean. Fleet drain: 7 stuck-PARTIAL re-finalized (GVR->DONE); ACB/HPG/VCB/VEA remain PARTIAL = pre-existing missing-section (bank B02-TCTD / OCR gap), not a regression."
       }
     ],
     "done_verified": [
@@ -10331,78 +10403,7 @@
       "updated_by": "pm",
       "updated_at": "2026-06-30T06:20:13Z"
     },
-    "in_progress": [
-      {
-        "id": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
-        "type": "FIX",
-        "size": "M",
-        "status": "REVIEW",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "qa",
-        "route_to": "dev-mcp-server",
-        "dispatcher": "dev-team",
-        "baseline_pass": true,
-        "created_by": "dev-team",
-        "created_at": "2026-06-30T23:29:07Z",
-        "dispatched_at": "2026-06-30T23:29:07Z",
-        "dispatched_by": "dev-team",
-        "updated_at": "2026-06-30T23:29:07Z",
-        "updated_by": "dev-team",
-        "sprint": "BCTC-REFINE-FLEET-DRAIN",
-        "source_signal": "bca-ddres-20260630T2258",
-        "files": [
-          "apps/mcp-server/src/scheduler/financial-reports/bctcRefineJob.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts",
-          "apps/pdf-extractor/infrastructure/text_table_extractor.py"
-        ],
-        "title": "HVN Q1-2026 refine units (income B02-DN + cash-flow B03-DN) never materialized; whole Q1-2026 cohort stuck text_status=COMPLETE/refine_status=PENDING -- drain fleet refine backlog",
-        "desc": "From bctc-analyst HVN Q1-2026 ESC-2 deep-dive (conf 0.93, RAW-probed serving layer; payload docs/handoffs/bctc-hvn-q1-2026-deepdive.md). HVN serves income statement + cash flow ALL-ZERO (impossible for an operating airline >10000bn VND assets); refine_status=PARTIAL produced balance-sheet units only, never B02-DN/B03-DN. Cohort MBB/VCI/TCH/VIX sits text_status=COMPLETE/refine_status=PENDING = fleet refine backlog not draining. STEP 1 (disambiguation, dev has direct DB + UUID access): per-page OCR char-count for HVN income + cash-flow pages. If OCR text present but no units -> refine-stage bug in mcp-server (repair refine + finalize_bctc_refine, then drain fleet PENDING). If ~0 OCR chars on those pages -> alternate OCR page-window cap (_MAX_BS_PAGES=8 in apps/pdf-extractor/infrastructure/text_table_extractor.py) -> escalate that branch to dev-pdf-extractor. After fix: re-run refine for HVN, re-validate accounting identity A ~= L+E; flag HVN Q1-2026 unusable until it validates. NOTE: related backlog FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON is already DONE (fixed VCB Q1-2025 head-poison) -- verify whether fleet PENDING is still blocked by a different poisoned doc or is genuinely the units-never-produced bug. BUNDLED: do FIX-GET-BCTC-OCF-SQL-COLUMN in the same apps/mcp-server session after this. dev -> qa gate.",
-        "acceptance": [
-          "Run the per-page OCR char-count disambiguation query FIRST and record which branch (refine-stage vs OCR-page-window) applies in the findings doc.",
-          "HVN Q1-2026 income (B02-DN) + cash-flow (B03-DN) units materialize: get_bctc_full serves non-zero income + cash flow with refine_status=COMPLETE and accounting identity A ~= L+E re-validates.",
-          "Fleet Q1-2026 refine backlog (MBB/VCI/TCH/VIX) drains to refine_status=COMPLETE (or the genuinely-blocked docs are identified with a reason); zero regression to CONTAM-10 / daily_ohlcv data."
-        ],
-        "reviewed_at": "2026-07-01T00:08Z"
-      },
-      {
-        "id": "FIX-GET-BCTC-OCF-SQL-COLUMN",
-        "type": "FIX",
-        "size": "S",
-        "status": "REVIEW",
-        "priority": "medium",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "qa",
-        "route_to": "dev-mcp-server",
-        "dispatcher": "dev-team",
-        "baseline_pass": true,
-        "created_by": "dev-team",
-        "created_at": "2026-06-30T23:29:07Z",
-        "dispatched_at": "2026-06-30T23:29:07Z",
-        "dispatched_by": "dev-team",
-        "updated_at": "2026-06-30T23:29:07Z",
-        "updated_by": "dev-team",
-        "sprint": "BCTC-REFINE-FLEET-DRAIN",
-        "source_signal": "bca-ddres-20260630T2258",
-        "bundle_with": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcOcfTool.ts",
-          "apps/mcp-server/src/__tests__/1909b-get-bctc-ocf.test.ts"
-        ],
-        "title": "get_bctc_ocf SELECT references ocf_operating but live cash-flow schema lacks the column -> no such column: ocf_operating breaks OCF forensic gate fleet-wide",
-        "desc": "get_bctc_ocf (getBctcOcfTool.ts:132 SELECT) references ocf_operating; live cash-flow schema lacks the column -> runtime error 'no such column: ocf_operating', breaking the OCF forensic gate for ALL tickers (deep-dive RAW-reproduced). Reconcile the SELECT column names with the actual cash-flow table schema; update test 1909b-get-bctc-ocf.test.ts. Read-path only, NO DB mutation. BUNDLED secondary -- same dev-mcp-server session as FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN, done after the primary.",
-        "acceptance": [
-          "get_bctc_ocf returns OCF without the no-such-column error for a ticker with cash-flow data; SELECT column names match the live schema.",
-          "Test 1909b-get-bctc-ocf updated + green; no DB mutation; no regression to other financial-reports tools."
-        ],
-        "reviewed_at": "2026-07-01T00:08Z"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
