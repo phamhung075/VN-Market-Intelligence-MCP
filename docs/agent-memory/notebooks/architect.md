@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-01 07:05 UTC | **Sprint:** PREDICTION-EVIDENCE-REVIVAL
+**Last updated:** 2026-07-01 18:20 UTC | **Sprint:** FIX-BCTC-BANK-SUMMARY-MAPPING
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-01T18:20Z — ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING (AC-1 SPIKE DONE, zone re-pinned)
+
+**Task:** ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING | 3rd re-fire recurrence-escalation | zone: apps/mcp-server/ (revised from sprint default `dev-pdf-extractor`)
+**BUILD-STANDARD:** not-applicable (bug-fix, in-zone, no new primitives)
+**Method:** `mcp__gateway__call_tool` unreachable this session — substituted `docker exec` against the SAME named-volume market.db + direct serve-path source read (equally RAW, more code-verified).
+**§3.2 REVISED (not simple-confirm):** extended probe found "Tổng tài sản" grand-total row absent from `bctc_table_rows` for BOTH CTG (20/55 null-code) AND VCB (0/57 null-code, held up as "clean") — bank-form-generic gap, not CTG-only. VCB's currently-correct total_assets traced NOT to the row-based bank mapper but to a lucky match in the separate non-bank-aware initial flat-text extractor (`balanceSheetExtractor.ts`), frozen in place by `finalizeBctcRefineTool.ts`'s documented Case-2 "skip-when-null, preserve prior" logic. `bctcScalarAggregator.ts` (the sprint's named suspect) is sound but upstream-starved, not broken.
+**§3.3 CONFIRMED** — guard exists only in `get_financial_summary`; zero guard code in `get_bctc_full`/`compare_financials`, ratifies BA's never-fired classification.
+**Zone re-pin:** `bctc_md_tables` (pdf-extractor→mcp-server bridge table) is NULL for both CTG/VCB current report_ids — rows arrived via the in-repo agentic-refine pipeline (`bctcRefineJob.ts` + `refinedMarkdownParser.ts`), not pdf-extractor's OCR. Overrides sprint's `route_to: dev-pdf-extractor` default — no dev-pdf-extractor task should be minted.
+**SPLIT — 5 units, dev-mcp-server only, W1∥W2∥W3∥W4 → W5:** W1 identity-serve-guard coverage (ships first, independent) · W2 generic markdown row-repair (pattern-based on ROMAN_SECTION + trailing-number signature) · W3 section-boundary-contamination guard (reuse FM-VCB-1 fix) · W4 bctcScalarAggregator fixtures incl. synthetic 3rd bank (AC-9) · W5 truthful validation_status + **operational re-ingest of CTG report_id 96e36139…** (code fix alone won't unfreeze total_assets=0).
+**Output:** `docs/architecture-briefs/2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md` + `[Architect] Brownfield Findings` → `docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md`
+**Next:** pm decomposes W1-W5, no dev-pdf-extractor task.
 
 ## 2026-07-01T07:05Z — BA-PREDICTION-EVIDENCE-REVIVAL (SPLIT DONE)
 
@@ -26,19 +38,8 @@
 **Key risk:** RISK-1 [HIGH] anchor picks contaminated bar if recent 180d window entirely contaminated — mitigated by dry-run per-ticker report showing anchor_close values for human review.
 **Output:** `docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md` + `docs/handoffs/FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM.md`
 
-## 2026-06-30T19:11Z — FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (DESIGN DONE)
-
-**Task:** FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS | BUG-FIX (RC3) | zone: multi (vps-scripts + mcp-server)
-**BUILD-STANDARD:** lean (brownfield, no new service)
-**Root cause confirmed:** `vps-scripts/fetch-ohlcv-backfill.sh:134-139` — explicit VNINDEX skip guard with "SUBTASK-B: add dedicated index fetch" placeholder. VnDirect stock_prices has no index data; dedicated endpoint is `vnmarket_prices` (already used by `vnIndexRefreshJob.ts`).
-**No TA svc changes needed:** TA svc code is architecturally correct — `ComputeRelativeStrengthUseCase` prepends VNINDEX, `SQLiteMultiTickerOHLCVRepository` handles VNINDEX identically to stocks. Only data depth is missing.
-**3 FRs:** FR-A1: VPS script — add dedicated vnmarket_prices VNINDEX fetch block (size=750, no ×1000 normalization); FR-A2: Remove old skip guard; FR-B1: push handler — read type field from payload, pass to validateOhlcvUnit; FR-B2: ohlcv-backfill-done — extend depth probe to include VNINDEX.
-**Critical risk:** RISK-1 [HIGH] — vnmarket_prices fromDate/toDate support unverified from VPS; dev must RAW-probe before implementing. RISK-2 [HIGH] — VPS deploy required (not just commit). RISK-6 [LOW] — retry_count >= 5 cap may suppress re-queue on live ohlcv_backfill_queue.
-**Output:** `[Architect] Brownfield Findings` → `docs/handoffs/FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS.md`
-**Next:** pm splits into TASK-VNINDEX-RS-A (developer, vps-scripts) + TASK-VNINDEX-RS-B (dev-mcp-server).
-
 ---
 
-## Archive (pre-2026-06-30T19:11Z)
+## Archive (pre-2026-06-30T20:45Z)
 
-[Older cycles archived to git history: BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]
+[Older cycles archived to git history: FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]

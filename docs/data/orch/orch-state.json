@@ -244,12 +244,12 @@
   ],
   "head": {
     "status": "planning",
-    "active_task_id": "ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING",
-    "next_agent": "architect",
-    "next_action": "architect runs the MANDATORY root-cause SPIKE FIRST (live gateway: get_bctc_full/compare_financials/get_financial_reports for CTG vs VCB vs FPT/VNM) to pin why VCB(bank) parses clean but CTG(bank) corrupts and decide the owning zone(s) (dev-mcp-server bctcScalarAggregator+serve-guard vs dev-pdf-extractor row-parse) BEFORE any code-patch task is minted (feedback_recurring_bug_escalation, 3rd re-fire) — see docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md AC-1/AC-11",
-    "updated_by": "ba",
-    "updated_at": "2026-07-01T17:32:18Z",
-    "note": "[ba 2026-07-01] Spec complete, 0 PO blockers: docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md (13 numbered ACs, success_metric a-e carried verbatim as AC-5..AC-9). CRITICAL live-probe finding (named-volume market.db, RAW-verified): CTG bctc_table_rows show 20/55 (36%) code=NULL rows with BOTH current+prior period values garbled into the label string (e.g. \"I. Tien gui tai NHNN 21.355.164 35.225.543\", value_current=NULL) vs VCB 0/57 (0%) null-code rows, clean Roman codes (I/II/IV/VI) with value_current populated — this CONTESTS the sprint's own defect_raw_evidence claim that raw extraction is already correct for banks; carried into AC-1 as a MUST-RECONCILE SPIKE input (may mean dev-pdf-extractor owns part of the fix, not only dev-mcp-server bctcScalarAggregator). Also grep-confirmed a 3RD unguarded serve path: compare_financials (reports.ts) independently re-queries financial_reports with no identity-guard call, alongside the already-known get_bctc_full gap — both added to co_owner_scope/AC-4 for dev-mcp-server. Non-regression baseline pinned live: FPT 2026-Q1 already validation_status=failed pre-fix (unrelated cause, cross-linked FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT, no-worse floor not a fix target); VNM 2026-Q1 is a 0-row/PENDING pipeline gap (FIX-BCTC-ENRICH-SILENT-0ROWS territory, excluded) — VNM 2025-Q4 (passed) is the correct non-regression reference. Minted ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING in ready[] (next_agent=architect) carrying the SPIKE mandate + AC-11 cascade-ordering gate (no dev-mcp-server/dev-pdf-extractor FIX task may be minted before the SPIKE brief exists). WIP unaffected (this is PLANNING)."
+    "active_task_id": "PM-FIX-BCTC-BANK-SUMMARY-MAPPING",
+    "next_agent": "pm",
+    "next_action": "pm decomposes FIX-BCTC-BANK-SUMMARY-MAPPING into 5 dev-mcp-server work units (W1-W5) per docs/architecture-briefs/2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md — W1 identity-serve-guard / W2 markdown row-repair / W3 section-boundary guard / W4 aggregator fixtures / W5 validation_status+re-ingest (sequenced after W2+W4). Do NOT mint dev-pdf-extractor tasks — zone re-pinned to apps/mcp-server/ only.",
+    "updated_by": "architect",
+    "updated_at": "2026-07-01T17:53:09Z",
+    "note": "[architect 2026-07-01] AC-1 SPIKE DONE. Live docker-exec probe vs named-volume market.db (gateway tool unreachable this session, substituted RAW-equivalent evidence + source-code cross-reference). REVISED §3.2: Tổng tài sản row absent from bctc_table_rows for BOTH CTG and VCB (not CTG-only) — VCB's correct total_assets is a frozen lucky value from the non-bank-aware initial extractor, not the row-based bank mapper; bctcScalarAggregator.ts is sound but upstream-starved. CONFIRMED §3.3 (guard never-fired on get_bctc_full/compare_financials). ZONE RE-PINNED: apps/mcp-server/ ONLY (bctc_md_tables NULL for both report_ids rules out dev-pdf-extractor as source) — overrides sprint default. 5-unit SPLIT minted as PM-FIX-BCTC-BANK-SUMMARY-MAPPING. Brief: docs/architecture-briefs/2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10137,6 +10137,40 @@
         "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
         "closed_at": "2026-07-01T17:32:18Z",
         "note": "Spec complete: docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md — 13 numbered ACs (success_metric a-e carried verbatim as AC-5..AC-9), 0 PO blockers. BA live-probe (2026-07-01, named-volume market.db) CONTESTS sprint's own defect_raw_evidence claim that raw extraction is already correct for banks: CTG bctc_table_rows show 20/55 (36%) code=NULL garbled-label rows vs VCB 0/57 (0%) — carried into AC-1 SPIKE as a MUST-RECONCILE input. Also found a 3rd unguarded serve path (compare_financials, reports.ts) alongside the known get_bctc_full gap — both added to AC-4/co_owner_scope. NEXT: architect (AC-1 SPIKE MANDATORY FIRST, then zone SPLIT)."
+      },
+      {
+        "id": "ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "title": "Architect root-cause SPIKE (MANDATORY FIRST, live gateway) for FIX-BCTC-BANK-SUMMARY-MAPPING: pin why VCB(bank) parses clean but CTG(bank) corrupts, decide owning zone(s) (dev-mcp-server bctcScalarAggregator/serve-guard vs dev-pdf-extractor row-parse), THEN SPLIT. Read BA spec docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md",
+        "owner": "architect",
+        "next_agent": "architect",
+        "status": "DONE",
+        "zone": "multi",
+        "type": "FIX",
+        "priority": "P1",
+        "recurrence_escalation": true,
+        "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "implements": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "co_owner": "dev-mcp-server",
+        "depends": [],
+        "created_at": "2026-07-01T17:32:18Z",
+        "files": [
+          "docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md",
+          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/bctcFormType.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/bctcValidator.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts",
+          "apps/mcp-server/src/__tests__/fix-bctc-identity-serve-guard.test.ts",
+          "apps/pdf-extractor/"
+        ],
+        "spec_ref": "docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md",
+        "spike_first": "MANDATORY — 3rd re-fire over 15 days (feedback_recurring_bug_escalation). AC-1 (spec section 7): live-gateway compare CTG vs VCB vs FPT vs VNM via get_bctc_full/compare_financials/get_financial_reports (mcp__gateway__call_tool, server=vn-market). MUST reconcile BA spec section 3.2 (raw bctc_table_rows for CTG: 20/55 code=NULL garbled-label rows vs VCB 0/57 — contests the sprint's own 'raw extraction already correct' framing) and section 3.3 (identity-serve-guard confirmed live/grep to fire ONLY in get_financial_summary reports.ts; get_bctc_full AND compare_financials both independently re-query financial_reports with NO guard call). Output = architect brief pinning owning zone(s) BEFORE any dev-mcp-server or dev-pdf-extractor code-patch task is minted (AC-11). pm MUST NOT decompose off this row directly — wait for the SPIKE brief.",
+        "generic_mandate": "GENERIC across ALL bank tickers / B02-TCTD forms — NO per-ticker allowlist, NO date-literal, NO special-case (isBankFormFromRows SSOT, bctcFormType.ts).",
+        "co_owner_scope": "dev-mcp-server co-owner: identity-serve-guard ENFORCEMENT extended to ALL financial_reports serve paths (get_financial_summary — already guarded; get_bctc_full + compare_financials — confirmed unguarded live/grep, BA classification = never-fired design-time scope gap, not a regression — architect/dev-mcp-server to ratify or override). HARD-BLOCK any identity-violated bank reading; never serve labeled garbage.",
+        "acceptance": "See docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md section 7, AC-1 through AC-13 (AC-5..AC-9 = sprint success_metric (a)-(e) verbatim). Architect runs SPIKE (AC-1) + pins owner + SPLITs; pm decomposes into per-zone dev tasks (dev-mcp-server and/or dev-pdf-extractor per SPIKE verdict); qa gates RAW-live (AC-13) vs the named-volume market.db (vn-market-intelligence-mcp_market_data), container rebuilt.",
+        "note": "AC-1 SPIKE done — live docker-exec probe vs named-volume market.db (mcp__gateway__call_tool unreachable this session; substituted equivalent RAW evidence + serve-path source-code cross-reference). §3.2 REVISED: \"Tổng tài sản\" grand-total row is absent from bctc_table_rows for BOTH CTG and VCB (bank-form-generic gap, not CTG-only) — VCB's currently-correct total_assets traced to a lucky match in the non-bank-aware initial flat-text extractor (balanceSheetExtractor.ts), frozen by finalizeBctcRefineTool.ts's documented Case-2 skip-when-null logic; bctcScalarAggregator.ts mapping logic is sound but upstream-starved, not broken. §3.3 CONFIRMED: guard fires only in get_financial_summary, zero guard in get_bctc_full/compare_financials. ZONE RE-PINNED to apps/mcp-server/ ONLY (overrides sprint's route_to:dev-pdf-extractor default) — bctc_md_tables (pdf-extractor bridge table) is NULL for both CTG/VCB report_ids; corruption traced to the in-repo agentic-refine pipeline (bctcRefineJob.ts + refinedMarkdownParser.ts), not pdf-extractor OCR. SPLIT (5 units, dev-mcp-server only): W1 identity-serve-guard coverage (ships first, independent) / W2 generic markdown row-repair (pattern-based, ROMAN_SECTION-anchored) / W3 section-boundary-contamination guard (reuse FM-VCB-1) / W4 bctcScalarAggregator fixtures incl. synthetic 3rd bank (AC-9) / W5 truthful validation_status + operational re-ingest of CTG report_id 96e36139-5dac-414d-8e4d-20a4725890d1 (code fix alone will NOT unfreeze total_assets=0). Brief: docs/architecture-briefs/2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md. Handoff: docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md.",
+        "closed_at": "2026-07-01T17:53:09Z"
       }
     ],
     "done_verified": [
@@ -11656,39 +11690,6 @@
         "spec_ref": "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md"
       },
       {
-        "id": "ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING",
-        "title": "Architect root-cause SPIKE (MANDATORY FIRST, live gateway) for FIX-BCTC-BANK-SUMMARY-MAPPING: pin why VCB(bank) parses clean but CTG(bank) corrupts, decide owning zone(s) (dev-mcp-server bctcScalarAggregator/serve-guard vs dev-pdf-extractor row-parse), THEN SPLIT. Read BA spec docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md",
-        "owner": "architect",
-        "next_agent": "architect",
-        "status": "READY",
-        "zone": "multi",
-        "type": "FIX",
-        "priority": "P1",
-        "recurrence_escalation": true,
-        "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
-        "implements": "FIX-BCTC-BANK-SUMMARY-MAPPING",
-        "co_owner": "dev-mcp-server",
-        "depends": [],
-        "created_at": "2026-07-01T17:32:18Z",
-        "files": [
-          "docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md",
-          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
-          "apps/mcp-server/src/domain/services/financial-reports/bctcFormType.ts",
-          "apps/mcp-server/src/domain/services/financial-reports/bctcValidator.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts",
-          "apps/mcp-server/src/__tests__/fix-bctc-identity-serve-guard.test.ts",
-          "apps/pdf-extractor/"
-        ],
-        "spec_ref": "docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md",
-        "spike_first": "MANDATORY — 3rd re-fire over 15 days (feedback_recurring_bug_escalation). AC-1 (spec section 7): live-gateway compare CTG vs VCB vs FPT vs VNM via get_bctc_full/compare_financials/get_financial_reports (mcp__gateway__call_tool, server=vn-market). MUST reconcile BA spec section 3.2 (raw bctc_table_rows for CTG: 20/55 code=NULL garbled-label rows vs VCB 0/57 — contests the sprint's own 'raw extraction already correct' framing) and section 3.3 (identity-serve-guard confirmed live/grep to fire ONLY in get_financial_summary reports.ts; get_bctc_full AND compare_financials both independently re-query financial_reports with NO guard call). Output = architect brief pinning owning zone(s) BEFORE any dev-mcp-server or dev-pdf-extractor code-patch task is minted (AC-11). pm MUST NOT decompose off this row directly — wait for the SPIKE brief.",
-        "generic_mandate": "GENERIC across ALL bank tickers / B02-TCTD forms — NO per-ticker allowlist, NO date-literal, NO special-case (isBankFormFromRows SSOT, bctcFormType.ts).",
-        "co_owner_scope": "dev-mcp-server co-owner: identity-serve-guard ENFORCEMENT extended to ALL financial_reports serve paths (get_financial_summary — already guarded; get_bctc_full + compare_financials — confirmed unguarded live/grep, BA classification = never-fired design-time scope gap, not a regression — architect/dev-mcp-server to ratify or override). HARD-BLOCK any identity-violated bank reading; never serve labeled garbage.",
-        "acceptance": "See docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md section 7, AC-1 through AC-13 (AC-5..AC-9 = sprint success_metric (a)-(e) verbatim). Architect runs SPIKE (AC-1) + pins owner + SPLITs; pm decomposes into per-zone dev tasks (dev-mcp-server and/or dev-pdf-extractor per SPIKE verdict); qa gates RAW-live (AC-13) vs the named-volume market.db (vn-market-intelligence-mcp_market_data), container rebuilt.",
-        "note": "ba(2026-07-01) cascade-kickoff hop 2/N. PO does NOT spawn — dev-team cron adopts this ready architect task."
-      },
-      {
         "id": "FIX-FE-HEADER-NAV-MONEY-RADAR",
         "status": "READY",
         "title": "Add Money Radar (Radar Dòng Tiền) to top-nav header — ANALYST_NAV entry + SSOT count sync + guard test",
@@ -11719,6 +11720,27 @@
         "verification_gate": "RAW-verify (developer + qa, not badge-relay): (a) run the FE-HEADER-SSOT test file — assert ANALYST_NAV.length===28 && NAV_ITEMS.length===35 && a money-radar entry exists enabled; (b) after frontend rebuild, curl the served dashboard and grep the rendered nav for an anchor href='/dashboard/money-radar' whose text is 'Radar Dòng Tiền'; (c) confirm tsc + full frontend test suite green (no unrelated nav drift).",
         "gate": "dev-frontend implement -> RAW-verify -> review -> qa -> done_verified",
         "parallel_note": "Zone apps/frontend/ is DISJOINT from the in-flight P1 FIX-BCTC-BANK-SUMMARY-MAPPING (dev-mcp-server/dev-pdf-extractor) and CCATO-T2/T3 (cross-service) work. P2 priority keeps it BEHIND those on the ready lane — it must NOT preempt. PO does NOT spawn dev-frontend; the existing dev-team loop adopts per SF-1 singleton discipline."
+      },
+      {
+        "id": "PM-FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "title": "Decompose FIX-BCTC-BANK-SUMMARY-MAPPING into 5 dev-mcp-server work units (W1-W5) per architect SPIKE brief — NO dev-pdf-extractor task",
+        "owner": "pm",
+        "next_agent": "pm",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "type": "FIX",
+        "priority": "P1",
+        "recurrence_escalation": true,
+        "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "implements": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "depends": [],
+        "created_at": "2026-07-01T17:53:09Z",
+        "created_by": "architect",
+        "spec_ref": "docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md",
+        "architecture_brief": "docs/architecture-briefs/2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md",
+        "split_summary": "W1 identity-serve-guard coverage (reports.ts compare_financials + bctcFullTools.ts get_bctc_full, factor into shared helper) — independent, ship first, satisfies AC-4/AC-7. W2 generic markdown row-repair (refinedMarkdownParser.ts, ROMAN_SECTION-anchored corruption-signature split) — parallel-safe with W1/W3/W4. W3 section-boundary-contamination guard (detectSection, reuse FM-VCB-1 fix) — parallel-safe. W4 bctcScalarAggregator.ts fixture hardening incl. CTG-shaped/VCB-shaped/synthetic-3rd-bank fixtures through all 3 serve tools (AC-9/AC-12) — parallel-safe. W5 truthful validation_status (finalizeBctcRefineTool.ts FR-6) + operational re-ingest of CTG report_id 96e36139-5dac-414d-8e4d-20a4725890d1 (SEQUENCED after W2+W4 deploy — a code fix alone will not unfreeze total_assets=0 due to Case-2 preserve-prior-value logic). Non-regression fixtures: FPT 2026-Q1 (failed, pre-existing floor) + FPT 2025-Q4 + VNM 2025-Q4 per BA §3.4. Dependency: W1|W2|W3|W4 parallel -> W5 -> qa AC-13 RAW re-probe. ZONE RE-PIN: apps/mcp-server/ ONLY — do NOT mint any dev-pdf-extractor task off this row (architect SPIKE evidence: bctc_md_tables NULL for both CTG/VCB current report_ids rules out the pdf-extractor push path as the source of the corrupted/absent rows).",
+        "acceptance": "docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md AC-2..AC-13 (AC-1/AC-11 satisfied by this row's existence). pm decomposes W1-W5 into dev-mcp-server TASK rows; qa gates AC-13 RAW-live vs named-volume market.db.",
+        "note": "[architect 2026-07-01] AC-1 SPIKE gate satisfied — mint per AC-11 cascade-ordering rule. pm MUST NOT mint dev-pdf-extractor tasks off this sprint (zone re-pinned to apps/mcp-server/ only, see architecture_brief)."
       }
     ],
     "review": [
@@ -11777,6 +11799,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-06-30T20:44:03Z",
-  "_updated_by": "pm"
+  "_updated_at": "2026-07-01T17:53:09Z",
+  "_updated_by": "architect"
 }
