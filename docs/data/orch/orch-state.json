@@ -1952,7 +1952,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-01T23:22:35Z",
+    "_updated_at": "2026-07-01T23:32:10Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -10255,6 +10255,26 @@
         "dispatched_at": "2026-07-01T23:04:58Z",
         "completed_at": "2026-07-01T23:22:35Z",
         "verdict_note": "dispatcher RAW-verified (recon.md raw curl evidence + signal json + notebook c020): CORROBORATED-BROKEN, root cause = EXTERNAL SSC portal outage (congbothongtin.ssc.gov.vn domain-wide HTTP 503, 6+ probes 23:07-23:16Z, no anti-bot signature). VPS infra fully healthy (3 systemd units active, 0 crashes); HNX/UPCOM paths working same-run. No restart performed - nothing VPS-side to fix. Staleness will persist until SSC portal recovers; auditor re-raises of B-05 route to this verdict. Follow-ups minted: B-05-FU-ENRICHER-LIVENESS (dev-mcp-server, dispatched), B-05-FU-SSC-503-RETRY (dev-vps-crawls, backlog)."
+      },
+      {
+        "id": "B-05-FU-ENRICHER-LIVENESS",
+        "status": "DONE",
+        "title": "B-05-FU — confirm bctcQueueEnricherJob liveness + reconcile 38-row bctc_vps_queue composition",
+        "owner": "dev-team",
+        "next_agent": "dev-mcp-server",
+        "route_to": "dev-mcp-server",
+        "type": "UNBLOCK",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-07-01T23:22:35Z",
+        "created_by": "dev-team-dispatcher",
+        "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
+        "parent_task": "B-05-FIX",
+        "status_note": "Per B-05-FIX recon (docs/vps-sources/bctc-discover-stale-15d/recon.md): the 38-row bctc_vps_queue backlog is NOT drained by the VPS 6h loop - draining depends on mcp-server bctcQueueEnricherJob calling VPS /proxy/bctc-discover/:ticker on demand. STEP 1: confirm the job is scheduled+firing (cron registry, last-run logs, live container). STEP 2: re-pull live bctc_vps_queue composition (status+ticker+exchange) from the NAMED-VOLUME DB and reconcile vs the 2026-06-25 c019 known set (HNX/UPCOM genuine non-filers BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA+variants). Report: (a) job firing yes/no + evidence, (b) backlog same historical set or grown with HOSE tickers now blocked by SSC outage. AC: raw evidence for both; NO code change unless job is provably dead (then minimal fix + rebuild per single-svc rule).",
+        "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
+        "dispatched_at": "2026-07-01T23:22:35Z",
+        "completed_at": "2026-07-01T23:32:10Z",
+        "verdict_note": "dispatcher RAW-verified: job ALIVE (cron_job_runs 6214 runs / 0 errors since 2026-04-23, */15 cadence, latest 23:15:01Z). Backlog GROWN 15->38: +23 HOSE rows created 2026-04-28/30, all false-terminal. Real root cause of non-drain is a code defect INDEPENDENT of SSC outage: incrementAttemptsStmt + markUrlNotFoundStmt (bctcQueueEnricherJob.ts:434-439) never set last_attempt, so Arm 2 grace-retry (last_attempt IS NOT NULL) structurally never fires; enrich_failed invisible to both arms. Proof: GAS Q4-2025 PDF live on hsx.vn since 2026-02-02, fetchable today via Strategy 0 (zero SSC dependency). Recurring class (2nd occurrence; PPC one-shot patch precedent) -> root fix task FIX-BCTC-ENRICHER-STUCK-BACKLOG dispatched. Recon: docs/vps-sources/bctc-discover-stale-15d/enricher-liveness.md"
       }
     ],
     "done_verified": [
@@ -11884,22 +11904,22 @@
         "route_note": "dispatcher route-corrected: STEP1 refine_bctc_md (leaf worker, 8 chunks resumable), STEP2 dev-mcp-server (bctc-analyst lacks Bash for reingest script) — PO desc already hedged STEP2"
       },
       {
-        "id": "B-05-FU-ENRICHER-LIVENESS",
+        "id": "FIX-BCTC-ENRICHER-STUCK-BACKLOG",
         "status": "IN_PROGRESS",
-        "title": "B-05-FU — confirm bctcQueueEnricherJob liveness + reconcile 38-row bctc_vps_queue composition",
+        "title": "FIX — enricher terminalizing stmts never set last_attempt; Arm 2 retry structurally dead; 23 HOSE rows false-terminal",
         "owner": "dev-team",
         "next_agent": "dev-mcp-server",
         "route_to": "dev-mcp-server",
-        "type": "UNBLOCK",
+        "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",
-        "created_at": "2026-07-01T23:22:35Z",
+        "created_at": "2026-07-01T23:32:10Z",
         "created_by": "dev-team-dispatcher",
         "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
-        "parent_task": "B-05-FIX",
-        "status_note": "Per B-05-FIX recon (docs/vps-sources/bctc-discover-stale-15d/recon.md): the 38-row bctc_vps_queue backlog is NOT drained by the VPS 6h loop - draining depends on mcp-server bctcQueueEnricherJob calling VPS /proxy/bctc-discover/:ticker on demand. STEP 1: confirm the job is scheduled+firing (cron registry, last-run logs, live container). STEP 2: re-pull live bctc_vps_queue composition (status+ticker+exchange) from the NAMED-VOLUME DB and reconcile vs the 2026-06-25 c019 known set (HNX/UPCOM genuine non-filers BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA+variants). Report: (a) job firing yes/no + evidence, (b) backlog same historical set or grown with HOSE tickers now blocked by SSC outage. AC: raw evidence for both; NO code change unless job is provably dead (then minimal fix + rebuild per single-svc rule).",
+        "parent_task": "B-05-FU-ENRICHER-LIVENESS",
+        "status_note": "Root fix for recurring bug class (2nd occurrence, PPC precedent reset-ppc-q4-2025.ts). Scope: (1) set last_attempt = datetime(now) in incrementAttemptsStmt + markUrlNotFoundStmt (bctcQueueEnricherJob.ts:434-439) so future terminalizations are Arm-2 retryable; (2) extend retry selection to cover status=enrich_failed with the same bounded grace-period + attempts guard; (3) one-time generalized reset of the 23 stuck HOSE url_not_found rows (created 2026-04-28/30, last_attempt NULL) to pending/attempts=0 so Arm 1 picks them up next */15 cycle via working hsx.vn Strategy 0. Tests: unit coverage that terminalizing writes set last_attempt + enrich_failed rows are selected. Then single-svc mcp-server rebuild (verify NEW image ID actually serving). RAW-verify DoD: after next */15 enricher cycle, GAS Q4-2025 row has source_url populated (hsx.vn path, independent of SSC outage). Evidence base: docs/vps-sources/bctc-discover-stale-15d/enricher-liveness.md",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
-        "dispatched_at": "2026-07-01T23:22:35Z"
+        "dispatched_at": "2026-07-01T23:32:10Z"
       }
     ],
     "ready": [
