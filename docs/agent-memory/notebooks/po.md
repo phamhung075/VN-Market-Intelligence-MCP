@@ -1,6 +1,16 @@
 # PO Notebook
 
-_Last: 2026-07-01T17:15Z_
+_Last: 2026-07-01T17:33Z_
+
+## Tick 2026-07-01T17:33Z — MINTED FIX-FE-HEADER-NAV-MONEY-RADAR (user nav request; router intent:po:money-radar-nav; coord d3292ca4)
+
+USER: "need add to header for easy navigate to this" (this = Radar Dòng Tiền / Money Radar page). /dashboard/money-radar renders live (HTTP 200, real data) but has NO top-nav entry → URL-only. RAW-verified: routes dashboard.money-radar.tsx + api.money-radar.tsx BOTH exist; TopNav ANALYST_NAV=27 (no money-radar entry); guard test FE-HEADER-SSOT `toHaveLength(27)`/`(34)` are the load-bearing assertions that fail without update.
+
+SCOPE = pure header-nav add, NO new route/API. One ANALYST_NAV item `{to:/dashboard/money-radar, label:"Radar Dòng Tiền"}` adjacent to "Động Lực P1"; lockstep SSOT: TopNav count comment 27→28 & 34→35 + route-existence doc line; guard test 27→28, 34→35 + assert money-radar entry. Label plain Vietnamese (language-boundary).
+
+Actions: minted FIX-FE-HEADER-NAV-MONEY-RADAR → ready[] (dev-frontend, zone=apps/frontend/, FIX, P2, XS, user_prioritized, gate=dev-frontend→RAW-verify→review→qa→done_verified) via scratchpad jq → orch-apply.sh (rc=0; Zod PASS; 98 pre-existing SHG warns, 0 new). Idempotency re-run = no-op (1 copy). P2 sits BEHIND high DASH-CRON + P1 BCTC in ready[] — no preempt; zone disjoint from in-flight backend work. Did NOT spawn dev-frontend — live dev-team loop adopts per SF-1. Loop concurrently advanced BCTC BA→architect; orch-apply CAS clean.
+
+RETURN: NEXT=idle (task on board; running loop adopts). PIPELINE: continue.
 
 ## Tick 2026-07-01T17:15Z — SELF-INITIATED + PROMOTED sprint FIX-BCTC-BANK-SUMMARY-MAPPING (P1, 3rd re-fire 15d, coord 3340d049)
 
