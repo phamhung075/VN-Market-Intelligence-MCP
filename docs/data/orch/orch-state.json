@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-01T09:26:35Z",
+    "updated_at": "2026-07-01T10:20:07Z",
     "updated_by": "dev-team",
     "active_task_id": "MONEY-RADAR-P0-T2-COMPOSITE",
-    "next_agent": "dev-mcp-server",
-    "note": "tick 09:07Z: dispatch T2-COMPOSITE→dev-mcp-server; WIP=2 at cap (ready CCATO-T1 + in_progress T2); minted 2 deferred backlog (WATCHLIST-DRIFT-FIX, CLEAN-SIGNALS-DIR)"
+    "next_agent": "qa",
+    "note": "tick 10:07Z: T2 dev DONE (0026f9e1); loop RAW-verify PASS (tsc0/20tests/honest-NULL real/registered); in_progress→review; dispatched qa live-data gate; ops single-svc rebuild AFTER qa PASS"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11195,33 +11195,7 @@
       "updated_by": "dev-team",
       "updated_at": "2026-07-01T06:26:45Z"
     },
-    "in_progress": [
-      {
-        "id": "MONEY-RADAR-P0-T2-COMPOSITE",
-        "title": "dev-mcp-server: get_money_radar_composite MCP tool — wires the 8 LIVE reuse tools (§C2) + the 4 new oscillators, D1/D2/D3(Phase-0 form)/D4 divergence detectors, and honest-NULL rules HN-1..HN-7 into the composite schema (§4).",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "zone": "dev-mcp-server",
-        "type": "FEATURE",
-        "size": "M",
-        "priority": "high",
-        "sprint": "MONEY-RADAR-P0",
-        "depends": [
-          "MONEY-RADAR-P0-T1-OSCILLATORS"
-        ],
-        "created_at": "2026-07-01T08:18:21Z",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/market-data/ (new get_money_radar_composite tool)"
-        ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.2 + §4 (composite schema + fusion) + §5 (HN-1..HN-7) + §3(L2 divergence) + §12 (reuse file:line)",
-        "generic_mandate": "REUSE-FIRST (§C2 — do NOT rebuild LIVE tools): get_foreign_flow, get_market_foreign_flow, get_foreign_accum_rank, get_foreign_room, get_carry_trade_signal, get_credit_flow_signal, get_macro_snapshot, get_volatility_indicators + daily_ohlcv.put_through_vol column + the 4 new T1 oscillators. Emit the §4 output schema per ticker/market {score|null, delta_5d|null, divergence{flag,severity,detectors,null_reason?}, coverage_pct, source_tier, is_estimate, null_reason|null, components}. Fusion = coverage-gated tier-weighted mean over NON-NULL components only (T1=1.0,T2=0.9,T3=0.7,T4=0.3). Divergence detectors: D1 index-vs-breadth (get_breadth_thrust), D2 price-vs-OBV, D3 Phase-0 form crowd-vs-foreign (get_market_foreign_flow + foreign_accum_z_market<0), D4 unconfirmed breakout (new high + rel-vol z<0); a detector fires ONLY when BOTH axes non-null over the same window, else flag=UNKNOWN + null_reason (HN-4). Honest-NULL NON-NEGOTIABLE: HN-1 never zero-fill null components (exclude from mean); HN-2 coverage_pct<0.5 → score=null + null_reason lists missing inputs; HN-3 credit-flow is_estimate=true → excluded/hard-down-weighted (DEFAULT_RE_CREDIT_TRILLION defaults NEVER enter as real); HN-4 divergence UNKNOWN-not-GREEN on null axis; HN-5 degraded VWAP is_proxy=true; HN-6 frontend null contract; HN-7 source_tier=min contributing tier (honest floor). All reuse tools reached via mcp gateway call_tool where cross-service.",
-        "acceptance": "get_money_radar_composite (no ticker arg) returns a REAL non-null score on live data with foreign accum z, OBV slope, rel-vol z, and volatility regime all contributing non-null; coverage_pct<0.5 path returns score=null + null_reason (NOT a zero-fill). D2 fires on a real historical example (index up + OBV slope negative → flag=AMBER, detectors=[\"D2\"]). A null divergence axis yields flag=UNKNOWN (never GREEN). credit-flow is_estimate=true is excluded/down-weighted, never fed as real. source_tier = min contributing tier.",
-        "verification_gate": "qa RAW-calls the tool on live data: asserts real non-null composite + honest coverage-gated null path + D2 AMBER on the real historical example + UNKNOWN-not-GREEN on a null axis + HN-3 credit-estimate exclusion + source_tier honest floor. No fabricated number on a thin-data path.",
-        "note": "Aggregation heart of MONEY-RADAR-P0. Depends T1 (needs the 4 oscillators). Reuse-first — the ONE genuinely new crawl (tự doanh) is Phase 1, out of scope.",
-        "dispatched_at": "2026-07-01T09:26:35Z"
-      }
-    ],
+    "in_progress": [],
     "ready": [
       {
         "id": "CCATO-T1-TRUTH-GATE-ENGINE",
@@ -11274,6 +11248,41 @@
           "by": "po-s121",
           "at": "2026-06-27T08:03:52Z",
           "note": "enum-clean (C2): PARKED qualifier-as-status -> DEFERRED (deliberate serialization); park_reason retained verbatim as the qualifier prose. UNPARK CONDITION unchanged."
+        }
+      },
+      {
+        "id": "MONEY-RADAR-P0-T2-COMPOSITE",
+        "title": "dev-mcp-server: get_money_radar_composite MCP tool — wires the 8 LIVE reuse tools (§C2) + the 4 new oscillators, D1/D2/D3(Phase-0 form)/D4 divergence detectors, and honest-NULL rules HN-1..HN-7 into the composite schema (§4).",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "status": "REVIEW",
+        "zone": "dev-mcp-server",
+        "type": "FEATURE",
+        "size": "M",
+        "priority": "high",
+        "sprint": "MONEY-RADAR-P0",
+        "depends": [
+          "MONEY-RADAR-P0-T1-OSCILLATORS"
+        ],
+        "created_at": "2026-07-01T08:18:21Z",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/market-data/ (new get_money_radar_composite tool)"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.2 + §4 (composite schema + fusion) + §5 (HN-1..HN-7) + §3(L2 divergence) + §12 (reuse file:line)",
+        "generic_mandate": "REUSE-FIRST (§C2 — do NOT rebuild LIVE tools): get_foreign_flow, get_market_foreign_flow, get_foreign_accum_rank, get_foreign_room, get_carry_trade_signal, get_credit_flow_signal, get_macro_snapshot, get_volatility_indicators + daily_ohlcv.put_through_vol column + the 4 new T1 oscillators. Emit the §4 output schema per ticker/market {score|null, delta_5d|null, divergence{flag,severity,detectors,null_reason?}, coverage_pct, source_tier, is_estimate, null_reason|null, components}. Fusion = coverage-gated tier-weighted mean over NON-NULL components only (T1=1.0,T2=0.9,T3=0.7,T4=0.3). Divergence detectors: D1 index-vs-breadth (get_breadth_thrust), D2 price-vs-OBV, D3 Phase-0 form crowd-vs-foreign (get_market_foreign_flow + foreign_accum_z_market<0), D4 unconfirmed breakout (new high + rel-vol z<0); a detector fires ONLY when BOTH axes non-null over the same window, else flag=UNKNOWN + null_reason (HN-4). Honest-NULL NON-NEGOTIABLE: HN-1 never zero-fill null components (exclude from mean); HN-2 coverage_pct<0.5 → score=null + null_reason lists missing inputs; HN-3 credit-flow is_estimate=true → excluded/hard-down-weighted (DEFAULT_RE_CREDIT_TRILLION defaults NEVER enter as real); HN-4 divergence UNKNOWN-not-GREEN on null axis; HN-5 degraded VWAP is_proxy=true; HN-6 frontend null contract; HN-7 source_tier=min contributing tier (honest floor). All reuse tools reached via mcp gateway call_tool where cross-service.",
+        "acceptance": "get_money_radar_composite (no ticker arg) returns a REAL non-null score on live data with foreign accum z, OBV slope, rel-vol z, and volatility regime all contributing non-null; coverage_pct<0.5 path returns score=null + null_reason (NOT a zero-fill). D2 fires on a real historical example (index up + OBV slope negative → flag=AMBER, detectors=[\"D2\"]). A null divergence axis yields flag=UNKNOWN (never GREEN). credit-flow is_estimate=true is excluded/down-weighted, never fed as real. source_tier = min contributing tier.",
+        "verification_gate": "qa RAW-calls the tool on live data: asserts real non-null composite + honest coverage-gated null path + D2 AMBER on the real historical example + UNKNOWN-not-GREEN on a null axis + HN-3 credit-estimate exclusion + source_tier honest floor. No fabricated number on a thin-data path.",
+        "note": "Aggregation heart of MONEY-RADAR-P0. Depends T1 (needs the 4 oscillators). Reuse-first — the ONE genuinely new crawl (tự doanh) is Phase 1, out of scope.",
+        "dispatched_at": "2026-07-01T09:26:35Z",
+        "commit_sha": "0026f9e1",
+        "raw_verify": {
+          "by": "dev-team",
+          "at": "2026-07-01T10:20:07Z",
+          "tsc": "exit0",
+          "unit_tests": "20/20 pass",
+          "honest_null": "HN-1..HN-7 confirmed in code",
+          "tool_registered": "registry#185 toolCount183",
+          "verdict": "loop-raw-verify PASS — awaiting qa live-data gate + ops rebuild"
         }
       }
     ],
