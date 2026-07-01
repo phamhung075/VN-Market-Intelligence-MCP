@@ -171,7 +171,9 @@ export async function getMoneyRadarComposite(db: Database): Promise<MoneyRadarCo
   // ── 2. foreign_accum_z_market (get_foreign_accum_rank, T3) ───────────────
   let foreignAccumZMarket: number | null = null;
   try {
-    const result = await computeForeignAccumRank({});
+    const result = await computeForeignAccumRank(
+      watchlistCodes.length > 0 ? { codes: watchlistCodes } : {}
+    );
     foreignAccumZMarket = result.foreign_accum_z_market;
     components.push({
       key: "foreign_accum_z_market",

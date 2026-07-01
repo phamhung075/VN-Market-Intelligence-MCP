@@ -473,3 +473,45 @@ describe("moneyRadarCalculator — OBV slope + index return + streak sign", () =
     expect(v).toBeLessThanOrEqual(1);
   });
 });
+
+// ===========================================================================
+// REGRESSION: ForeignAccumRank request serialization (field-name drift guard)
+// ===========================================================================
+
+describe("computeForeignAccumRank request serialization (REG-FIELD-NAME)", () => {
+  it("REG-FIELD-NAME: request body serializes field name as 'codes' (NOT 'tickers') to match Go service DTO", async () => {
+    const db = await makeDb();
+    seedWatchlist(db, ["TEST1", "TEST2"]);
+    const dates = dateSeq(8);
+    seedOhlcv(db, "TEST1", flatBars(dates));
+    seedOhlcv(db, "TEST2", flatBars(dates));
+
+    let capturedRequestBody: unknown | null = null;
+
+    // Stub fetch to capture the request body sent to /price/foreign-accum-rank
+    globalThis.fetch = (async (input: unknown, init?: RequestInit): Promise<Response> => {
+      const url = typeof input === "string" ? input : (input as URL).toString();
+      if (url.includes("/price/foreign-accum-rank")) {
+        if (init && typeof init.body === "string") {
+          capturedRequestBody = JSON.parse(init.body);
+        }
+        return stubOk({
+          tickers: [],
+          foreign_accum_z_market: 1.0,
+          adtv_unit: "shares",
+          computed_as_of: "2026-06-08T00:00:00Z",
+        });
+      }
+      return stubErr("unrouted");
+    }) as unknown as typeof globalThis.fetch;
+
+    await getMoneyRadarComposite(db);
+
+    // CRITICAL: the Go service expects 'codes', not 'tickers'
+    expect(capturedRequestBody).toBeDefined();
+    expect(capturedRequestBody).toHaveProperty("codes");
+    expect((capturedRequestBody as Record<string, unknown>).codes).toEqual(["TEST1", "TEST2"]);
+    // Must NOT have the old field name
+    expect((capturedRequestBody as Record<string, unknown>)).not.toHaveProperty("tickers");
+  });
+});

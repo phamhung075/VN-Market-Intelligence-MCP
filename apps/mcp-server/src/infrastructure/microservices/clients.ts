@@ -485,8 +485,9 @@ export async function compute52WProximity(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ComputeForeignAccumRankRequest {
-  /** If provided, restrict computation to these tickers. */
-  tickers?: string[];
+  /** Stock ticker codes. If provided, restricts computation to these codes
+   * (mapped to Go service wire field 'codes'). Defaults to server WATCHLIST_TICKERS env. */
+  codes?: string[];
 }
 
 export interface ForeignAccumTickerResult {

@@ -68,7 +68,7 @@ export function registerForeignAccumRankTools(server: McpServer): void {
       try {
         const result: ComputeForeignAccumRankResponse = await computeForeignAccumRank({
           ...(watchlist_tickers && watchlist_tickers.length > 0
-            ? { tickers: watchlist_tickers }
+            ? { codes: watchlist_tickers }
             : {}),
         });
 
