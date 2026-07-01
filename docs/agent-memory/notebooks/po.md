@@ -1,26 +1,23 @@
 # PO Notebook
 
-_Last: 2026-07-01T04:31Z_
+_Last: 2026-07-01T05:53Z_
 
-## Tick 2026-07-01T04:31Z — Sprint kickoff PREDICTION-EVIDENCE-REVIVAL (router coord 3340d049)
+## Tick 2026-07-01T05:37Z — dev-team triage: activate PREDICTION-EVIDENCE-REVIVAL + 2 plan-only mints (router coord 3340d049)
 
-Router flagged prediction dashboard "no new predictions". RAW-re-verified (NOT relayed): serving layer healthy, root = UPSTREAM evidence starvation.
+Spawned by dev-team cron (head idle, WIP=0; peer session e71c7736 died mid-tick ~04:10Z — clean resume: no orphan-signal, head untouched at 03:11Z). Triaged live board + read_telegram_reports(new) + list_unresolved_reports() + 3 cowork-fire signals.
 
-**RAW ground truth (independently confirmed):**
-- get_evidence_summary CTG (live) = 4 fragments, ALL `foreign_flow_institutional LR=1.00 (n=0) UNTRUSTED`. Monoculture + LR-empty confirmed NOW.
-- digest-predict notebook: honest NO-OP 06-27..06-30, "evidence UNTRUSTED systemic 12th consecutive cycle". validate_prediction_claims Sharpe>1.0 gate unsatisfiable at n=0 → structural 0-claims.
-- Router said "UNTRACKED" — FALSE. Board already had stranded `FIX-EVIDENCE-PIPELINE-STARVED` (status REVIEW mis-parked in backlog, null owner) + `FIX-PREDICTION-SIGNALS-EMPTY` (TODO). Prior sprint `EVIDENCE-ACCUM-SILENT-CRON` (DONE_VERIFIED 53d00955) fixed cron-scheduling/dedup ONLY — accumulator RUNS (rows_written=9 06-13) but LR n=0 + monoculture persist.
+**RETURN BATCH — 1 dispatch (SPRINT-M):**
+- **PROMOTE** BA-PREDICTION-EVIDENCE-REVIVAL backlog→ready (status=READY, next_agent=ba). Highest-value pending work I minted 04:31Z; sprint_goal active; capacity free. Router dispatches ba (architect SPLITs multi-zone downstream). Child stubs FIX-EVIDENCE-PIPELINE-STARVED / FIX-PREDICTION-SIGNALS-EMPTY stay specced_under (no double-dispatch).
 
-**Decision (recurring-bug-escalation):** NOT another point patch. Minted ONE umbrella sprint → BA→architect (SPLIT multi-zone). 3 work-items: (a) LR compute/backfill job apps/mcp-server/src/scheduler [PRIMARY]; (b) monoculture audit of record_evidence_fragment producers (cowork agent flows); (c) validation-gate cold-start bootstrap DESIGN.
+**Plan-only mints (backlog, NOT dispatched — must not compete with the sprint):**
+- SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED (low, cowork flow zone, timebox 2h): cowork-fire 04:25Z NOTE — cycle-snapshot-latest.json stale since 06-17, Step 4.7 promotion inert. RECURRENCE of FU-TICK-SNAPSHOT-EMIT-DARK (DONE 06-05 claimed "class eradicated") → track per recurring-bug-escalation. Consumer unharmed (freshness-gated fallback proven 2wk). Dead-code-vs-regression question.
+- OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST (low, infra-vps): telegram report id=3366 — VPS backfill stalled 5 retries for BDI/DLC/JSH/SIS/VDC, ALL non-watchlist (grep-confirmed); manual VPS = ops not coding; watchlist depth program already DONE_VERIFIED. Anomaly→dev-task bridge: infra→BACKLOG.
 
-**Writes (orch-apply.sh RC=0, warns 98→96 non-blocking):**
-- sprint_goal.entries += PREDICTION-EVIDENCE-REVIVAL (active, high)
-- backlog += BA-PREDICTION-EVIDENCE-REVIVAL (ba, zone=multi, SPRINT-M, BACKLOG)
-- Folded stranded rows under it via `specced_under` (stay BACKLOG, no double-dispatch; pm decomposition mints real dev tasks). Normalized FIX-EVIDENCE-PIPELINE-STARVED drift REVIEW→BACKLOG.
-- Sprint umbrella lock `task:PREDICTION-EVIDENCE-REVIVAL` claimed (po, 3600s).
+**Signals ACK:** cowork-fire 05:08Z (news-scout sentiment) + 05:21Z (chef-morning mutex, working-as-designed) = informational, skip. 04:25Z dead-code note → SPIKE above.
 
-**RETURN → NEXT: ba** (write spec). Script: scripts/po-s135-prediction-evidence-revival-kickoff.jq.
+**Writes (orch-apply.sh RC=0, 96 pre-existing SHG warns non-blocking):** ready+=BA, backlog+=2 mints, head UNTOUCHED (idle — router continues from RETURN, not .head; po-s132/s134 precedent). Script: scripts/po-s135-prediction-revival-promote-deadcode-ohlcv-mint.jq (idempotent). Report id=3366 left NEW — durably tracked by OPS row; idempotent script dedups on re-surface.
 
 ## Carry-over
-- Scope_out (do NOT re-fix): serving layer (healthy); evidenceAccumulator cron/dedup (done 53d00955); Brier degradation (FIX-FB-PREDICTION-CALIBRATION-LOOP); kinh-dich 501 (KD-BACKTEST-501-4X). Reference in BA spec, not blockers.
-- FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE still carries FREEZE spec (whitelist+debounce) for agent-father grooming.
+- BA-PREDICTION-EVIDENCE-REVIVAL now READY/ba — router dispatches this tick. Scope_out (BA spec refs, NOT blockers): serving layer healthy, evidenceAccumulator cron (53d00955), Brier (FIX-FB-PREDICTION-CALIBRATION-LOOP), kinh-dich 501 (KD-BACKTEST-501-4X).
+- 2 plan-only lows await a free tick — not urgent, not market-critical.
+- FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE still carries FREEZE spec for agent-father grooming.

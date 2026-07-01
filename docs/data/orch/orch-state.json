@@ -8156,18 +8156,39 @@
         ]
       },
       {
-        "id": "BA-PREDICTION-EVIDENCE-REVIVAL",
-        "title": "Requirement spec for PREDICTION-EVIDENCE-REVIVAL — revive starved evidence->LR->validation chain so digest-predict emits fresh prediction claims again",
-        "owner": "ba",
-        "next_agent": "ba",
+        "id": "SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED",
+        "title": "SPIKE: tick-snapshot Step 4.7 cycle-snapshot-latest.json stale since 06-17 — genuinely inert dead-code (remove) OR silently regressed (re-fix)?",
+        "owner": "po",
+        "next_agent": "cowork-refactory-expert",
         "status": "BACKLOG",
-        "zone": "multi",
-        "type": "SPRINT-M",
-        "priority": "high",
-        "sprint": "PREDICTION-EVIDENCE-REVIVAL",
-        "created_at": "2026-07-01T04:31:07Z",
-        "depends": [],
-        "note": "ROUTER-RAW + PO-RAW verified 2026-07-01. Dashboard shows no new predictions since id=12 POW (2026-06-26, 5+d). get_evidence_summary CTG/FPT = all foreign_flow_institutional LR=1.00 (n=0) UNTRUSTED. digest-predict validate_prediction_claims needs Sharpe>1.0 backtest -> unsatisfiable at n=0 -> structural NO-OP (notebook confirms honest no-op 06-27..06-30). THREE work-items for architect to SPLIT multi-zone: (a) LR compute/backfill job apps/mcp-server/src/scheduler/** [PRIMARY; folds stub FIX-EVIDENCE-PIPELINE-STARVED + symptom FIX-PREDICTION-SIGNALS-EMPTY]; (b) monoculture audit of record_evidence_fragment producers across cowork agent flows (docs/agents/**); (c) validation-gate cold-start bootstrap DESIGN. CONTEXT: prior EVIDENCE-ACCUM-SILENT-CRON (53d00955 DONE_VERIFIED) fixed cron-scheduling/dedup ONLY — accumulator RUNS (rows_written=9 06-13 live-verified) but LR sample n=0 + monoculture persist. Recurring-bug-escalation: architect brief before point patches."
+        "type": "SPIKE",
+        "mode": "spike",
+        "timebox": 120,
+        "priority": "low",
+        "plan_only": true,
+        "zone": "docs/agents/cowork-team/flow/",
+        "sprint": null,
+        "created_at": "2026-07-01T05:54:51Z",
+        "created_by": "po-s135",
+        "recurrence_anchor": "FU-TICK-SNAPSHOT-EMIT-DARK",
+        "question": "Step 4.7 of docs/agents/cowork-team/flow/tick-snapshot.md promotes cycle-snapshot-latest.json (read by pressure-emit for last_regime/last_volatility). File frozen since 2026-06-17 (per cowork-fire 04:25Z NOTE). Is the promotion path genuinely inert dead-code to REMOVE, or did the emit silently regress after FU-TICK-SNAPSHOT-EMIT-DARK (commit 29d7e944, 06-05) claimed the fence-abort class 'fully eradicated'? Deliverable: findings doc + recommendation (remove vs re-fix vs by-design-off-hours).",
+        "note": "LOW / HARMLESS. Consumer (pressure-emit) unharmed — freshness-gated fallback proven over 2wk (06-17..07-01). Flagged as candidate dead-code by chef-intraday cowork-fire 04:25Z. Tracked (not dispatched) because it is the 2nd dark-emit on this exact snapshot path after a fix that claimed eradication (recurring-bug-escalation). NOT market-critical; run on a free tick."
+      },
+      {
+        "id": "OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST",
+        "title": "OPS: VPS OHLCV backfill stalled after 5 retries for NON-watchlist shallow codes (BDI:1 DLC:41 JSH:0 SIS:0 VDC:0)",
+        "owner": "po",
+        "next_agent": "ops",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "low",
+        "plan_only": true,
+        "zone": "infra-vps",
+        "sprint": null,
+        "created_at": "2026-07-01T05:54:51Z",
+        "created_by": "po-s135",
+        "source_report_id": 3366,
+        "note": "Telegram report id=3366 (analysis-agent, normal, 2026-07-01T04:30Z): 'VPS backfill stalled after 5 retries; manual VPS investigation required'. ALL five codes are NON-watchlist (direct grep of system-map.json watchlist = none). The whole watchlist OHLCV-depth program is DONE_VERIFIED (SUBTASK-A..E, REBUILD, PROD-BACKFILL-GATE, PERSIST-DAILY-OHLCV-2YR). Manual VPS investigation = ops/infra, NOT a coding lane. Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG. Low priority — peripheral codes, no serving-layer impact. Related infra: BCTC-HIST-VPS-BACKFILL (DEFERRED, infra-vps)."
       }
     ],
     "closed_sprints": [
@@ -10723,7 +10744,25 @@
       "updated_at": "2026-06-30T06:20:13Z"
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "title": "Requirement spec for PREDICTION-EVIDENCE-REVIVAL — revive starved evidence->LR->validation chain so digest-predict emits fresh prediction claims again",
+        "owner": "ba",
+        "next_agent": "ba",
+        "status": "READY",
+        "zone": "multi",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "sprint": "PREDICTION-EVIDENCE-REVIVAL",
+        "created_at": "2026-07-01T04:31:07Z",
+        "depends": [],
+        "note": "ROUTER-RAW + PO-RAW verified 2026-07-01. Dashboard shows no new predictions since id=12 POW (2026-06-26, 5+d). get_evidence_summary CTG/FPT = all foreign_flow_institutional LR=1.00 (n=0) UNTRUSTED. digest-predict validate_prediction_claims needs Sharpe>1.0 backtest -> unsatisfiable at n=0 -> structural NO-OP (notebook confirms honest no-op 06-27..06-30). THREE work-items for architect to SPLIT multi-zone: (a) LR compute/backfill job apps/mcp-server/src/scheduler/** [PRIMARY; folds stub FIX-EVIDENCE-PIPELINE-STARVED + symptom FIX-PREDICTION-SIGNALS-EMPTY]; (b) monoculture audit of record_evidence_fragment producers across cowork agent flows (docs/agents/**); (c) validation-gate cold-start bootstrap DESIGN. CONTEXT: prior EVIDENCE-ACCUM-SILENT-CRON (53d00955 DONE_VERIFIED) fixed cron-scheduling/dedup ONLY — accumulator RUNS (rows_written=9 06-13 live-verified) but LR sample n=0 + monoculture persist. Recurring-bug-escalation: architect brief before point patches.",
+        "promoted_at": "2026-07-01T05:54:51Z",
+        "promoted_by": "po-s135",
+        "promotion_note": "dev-team tick 2026-07-01T05:37Z: head idle, WIP=0, capacity free. Highest-value pending work; dispatch first hop ba (SPRINT-M). architect SPLITs multi-zone downstream; child stubs stay specced_under. sprint_goal PREDICTION-EVIDENCE-REVIVAL active."
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
