@@ -110,12 +110,20 @@ function seedOhlcv(db: Database, code: string, bars: Array<{ date: string; close
   }
 }
 
-/** Seed market_prices_history VNINDEX rows, one per day (ASC closes). */
+/**
+ * Seed daily_ohlcv VNINDEX rows, one per day (ASC closes).
+ * MONEY-RADAR-P0-T2B-INDEX-AXIS-FIX: getVnIndexDailyCloses() reads
+ * daily_ohlcv (code='VNINDEX'), NOT market_prices_history — the latter is
+ * hard-deleted below a rolling 24h cutoff and can never hold >=6 distinct
+ * days live, which permanently starved D1/D2. Seed the same source the
+ * store now queries.
+ */
 function seedVnIndex(db: Database, dailyCloses: Array<{ date: string; price: number }>): void {
   for (const row of dailyCloses) {
     db.prepare(
-      `INSERT INTO market_prices_history (code, price, volume, fetched_at) VALUES ('VNINDEX', ?, 0, ?)`,
-    ).run(row.price, `${row.date}T08:00:00Z`);
+      `INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+       VALUES ('VNINDEX', ?, ?, ?, ?, ?, 0, ?)`,
+    ).run(row.date, row.price, row.price, row.price, row.price, new Date().toISOString());
   }
 }
 

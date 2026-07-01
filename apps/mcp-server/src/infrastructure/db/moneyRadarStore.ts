@@ -3,8 +3,11 @@
  *
  * Read-side queries backing get_money_radar_composite:
  *   - watchlist codes (reused pattern from correlationTools.ts)
- *   - VNINDEX daily closes (from market_prices_history, one sample per day —
- *     same dedup pattern as correlationTools.ts loadPriceHistory())
+ *   - VNINDEX daily closes (from daily_ohlcv, one sample per day — same
+ *     dedup pattern as correlationTools.ts loadPriceHistory(); MONEY-RADAR-P0-
+ *     T2B-INDEX-AXIS-FIX moved this off market_prices_history, which is
+ *     hard-deleted below a 24h rolling cutoff and cannot hold >=6 distinct
+ *     days)
  *   - per-ticker close+volume bars from daily_ohlcv (C1: close+volume only)
  *   - "new high" flag across the watchlist (D4 axis)
  * Write-side: money_radar_score_history INSERT OR IGNORE (forward-accruing,
@@ -43,26 +46,34 @@ export function getWatchlistCodes(db: Database): string[] {
  * Returns up to `days` most-recent distinct-day VNINDEX closes, ASC order
  * (oldest first). One sample per calendar day (last record of that day),
  * same dedup approach as correlationTools.ts loadPriceHistory().
- * Source: market_prices_history (code='VNINDEX'), written by vnIndexRefreshJob.
+ * Source: daily_ohlcv (code='VNINDEX') — long-lived OHLCV history (2+ years),
+ * NOT market_prices_history, which pushPricesHandler.ts hard-deletes below a
+ * rolling 24h cutoff (by design — daily_ohlcv already preserves the day
+ * summary). market_prices_history only ever holds ~1 distinct day live,
+ * which permanently starved computeIndexReturn (needs >=6 distinct days) and
+ * kept D1/D2 dead against live data (MONEY-RADAR-P0-T2B-INDEX-AXIS-FIX).
  */
 export function getVnIndexDailyCloses(db: Database, days = 30): number[] {
   interface Row {
-    price: number;
-    fetched_at: string;
+    close: number;
+    date: string;
   }
   let rows: Row[];
   try {
     rows = db
       .query<Row, []>(
-        `SELECT price, fetched_at FROM market_prices_history
+        `SELECT close, date FROM daily_ohlcv
          WHERE code = 'VNINDEX'
-         ORDER BY fetched_at ASC`,
+         ORDER BY date ASC`,
       )
       .all();
   } catch {
     return [];
   }
-  return dedupToDailyCloses(rows, days);
+  return dedupToDailyCloses(
+    rows.map((r) => ({ price: r.close, fetched_at: r.date })),
+    days,
+  );
 }
 
 interface FetchedRow {

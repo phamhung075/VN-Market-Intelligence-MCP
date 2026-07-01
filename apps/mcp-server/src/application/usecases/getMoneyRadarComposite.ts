@@ -16,7 +16,7 @@
  *   | carry_regime                  | getMacroSnapshot (clients.ts)                 | cross-service HTTP (macro-indicators :5004) |
  *   | credit_flow_direction         | getCreditFlowSignalHandler (creditFlowTools.ts) | in-process |
  *   | volatility_regime             | computeVolatilityIndicators (clients.ts)      | cross-service HTTP (technical-analysis :5003) |
- *   | index axis (D1/D2)            | getVnIndexDailyCloses (moneyRadarStore.ts) — market_prices_history | in-process SQL |
+ *   | index axis (D1/D2)            | getVnIndexDailyCloses (moneyRadarStore.ts) — daily_ohlcv (code='VNINDEX') | in-process SQL |
  *   | breadth axis (D1)             | getBreadthThrust (usecase) adl_history        | in-process |
  *
  * OBV-slope reuse rationale (deviation from naive "call T1 for everything"):
