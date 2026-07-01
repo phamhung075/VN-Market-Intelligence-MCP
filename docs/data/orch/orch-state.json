@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "idle",
+    "updated_at": "2026-07-01T09:05:10Z",
+    "updated_by": "dev-team",
     "active_task_id": null,
     "next_agent": null,
-    "updated_at": "2026-07-01T07:56:10Z",
-    "updated_by": "qa",
-    "note": "BA-PREDICTION-EVIDENCE-REVIVAL COMPLETE -- both hops (TASK-EVIDENCE-HOP1-MCP dev-mcp-server, TASK-EVIDENCE-HOP2-AGENTS agent-father) QA APPROVED and DONE_VERIFIED. Backlog FIX-CRON-REGISTRY-BASERATE-CADENCE-DRIFT filed for stale cron-registry/system-map doc text (non-blocking)."
+    "note": "MONEY-RADAR-P0-T1-OSCILLATORS DONE_VERIFIED (qa APPROVED, commit e19894035, live POST /ta/money-flow-oscillators on :5003). Sprint MONEY-RADAR-P0 continues: T2-COMPOSITE (backlog, dev-mcp-server, depends T1 now unblocked), T3-DASHBOARD, T4-QA-GATE. CCATO-T1-TRUTH-GATE-ENGINE in ready[] for next-tick dispatch."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11138,6 +11138,37 @@
         "qa_verdict": "APPROVED",
         "done_verified_at": "2026-07-01T07:56:10Z",
         "done_verified_by": "qa"
+      },
+      {
+        "id": "MONEY-RADAR-P0-T1-OSCILLATORS",
+        "title": "dev-technical-analysis (Go :5003): get_money_flow_oscillators — OBV, relative-volume z-score(20), up/down volume ratio, degraded close-only VWAP (is_proxy=true). The 4 ONLY Phase-0-shippable oscillators per field-constraint C1 (close+volume only, no H/L).",
+        "owner": "developer",
+        "next_agent": "",
+        "status": "DONE_VERIFIED",
+        "zone": "dev-technical-analysis",
+        "type": "FEATURE",
+        "size": "S",
+        "priority": "high",
+        "sprint": "MONEY-RADAR-P0",
+        "depends": [],
+        "created_at": "2026-07-01T08:18:21Z",
+        "files": [
+          "apps/technical-analysis/ (Go :5003 — new get_money_flow_oscillators endpoint over daily_ohlcv close+volume)"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.1 + §3(L1) + §2(C1) + §10 (TA stale-image mitigation)",
+        "generic_mandate": "Implement EXACTLY four oscillators, computed from daily_ohlcv close+volume on the live 76-bar depth: (1) OBV = cumulative sign(close_t − close_{t−1}) × volume_t (depth-independent, no window). (2) Relative-volume z-score(20) = (vol_t − mean_20) / std_20 (window 20 << 76). (3) Up/Down volume ratio = Σvol(up days) / Σvol(down days) over window. (4) Degraded VWAP = Σ(close×vol)/Σvol over window — MUST emit is_proxy=true (HN-5, C1: no true typical price without H/L). Field-constraint C1 is NON-NEGOTIABLE: get_price_history exposes ONLY close+volume — do NOT attempt MFI/CMF/A-D/Chaikin (they need H/L; FIELD-GATED, out of scope). Compute AFTER any TA :5003 deploy/restart + re-probe (not from a stale image — §10 risk).",
+        "acceptance": "get_money_flow_oscillators returns real non-null OBV, rel_vol_z_20, up_down_vol_ratio, and degraded_vwap (is_proxy=true) for a live watchlist ticker over the 76-bar depth. Values are plausible (OBV monotone-ish with tape; rel_vol_z within a sane band; ratio > 0; VWAP within the close range). is_proxy=true is present on the VWAP field. NO H/L-gated oscillator is emitted.",
+        "verification_gate": "qa RAW-calls the endpoint against a live ticker; asserts all 4 fields non-null + plausible + degraded VWAP carries is_proxy=true; confirms MFI/CMF/A-D/Chaikin are absent (FIELD-GATED). Re-probed AFTER TA :5003 restart to avoid stale-image false read.",
+        "note": "LEAD atom of MONEY-RADAR-P0 (no deps). Placed READY: CCATO-T1 (1 READY) + this = 2 READY = dev-standards WIP limit. Depth-independent — decoupled from the in-flight OHLCV-depth epic (C4).",
+        "claimed_at": "2026-07-01T08:34:10Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Dispatched dev-technical-analysis 2026-07-01T08:34:10Z. LEAD atom of MONEY-RADAR-P0, design-complete via brief §11.1 — dev implements directly (no architect/pm). Scope: apps/technical-analysis Go :5003 new get_money_flow_oscillators over daily_ohlcv close+volume — EXACTLY 4 oscillators (OBV, rel-vol z-score(20), up/down vol ratio, degraded VWAP is_proxy=true). C1 NON-NEGOTIABLE: no MFI/CMF/A-D/Chaikin. Compute AFTER TA :5003 restart+re-probe (§10 stale-image). Run go test/pnpm check BEFORE commit (RED-PREPUSH). Promote->review(qa) on green + commit.",
+        "commit": "e19894035de2ddb38facbb8346c2c33cc7f96655",
+        "review_note": "dev DONE 2026-07-01T08:58:18Z — get_money_flow_oscillators LIVE on TA :5003 (fresh container). Router RAW-probed VCB: obv/rel_vol_z_20/up_down_vol_ratio/degraded_vwap non-null, is_proxy=true, bars_used=100; 41-ticker default (generic); 4 honest-NULL thin tickers; C1 verified (no mfi/cmf/chaikin/ad_line). go build/vet/test EXIT 0. Awaiting qa verification gate.",
+        "qa_verdict": "APPROVED",
+        "verified_by": "qa",
+        "verified_at": "2026-07-01T09:05:10Z",
+        "verify_note": "qa a0ac0f58 APPROVED — 7/7 gate items RAW-verified on freshly-rebuilt container (live curl: 4 oscillators non-null, is_proxy=true, bars_used=100; C1 grep clean; go build/vet/test -count=1 green; commit e19894035 17f/+1007 task-scoped; DDD layering clean; DJ-GATE-1 2 entries). Non-blocking: watchlist DB<->system-map drift is pre-existing service-wide (sibling /ta/roc-momentum identical) — routed to PO signal."
       }
     ],
     "head": {
@@ -11173,28 +11204,6 @@
         "acceptance": "scripts/test-narrative-truth-gate.sh RAW-proves all four: (a) fb-post-2026-06-30.md body -> VNM TA absence-claim -> get_technical_indicators(VNM) non-null RSI~20.3 -> exit!=0 naming VNM+indicators; (b) foreign per-ticker line -> get_foreign_flow per-ticker non-null -> exit!=0; (c) honest-NULL response (OHLCV-depth-gated indicator returns null) -> exit 0 (PASS, no false-positive); (d) identical input body -> identical verdict across repeated runs (determinism).",
         "verification_gate": "qa RAW-runs scripts/test-narrative-truth-gate.sh; all 4 assertions green AND a narrative_contradiction row is confirmed appended to .signal_queue.rows on a FAIL path (via orch-apply.sh, no schema reject). PASS-on-null asserted with a stubbed/real null tool response.",
         "note": "Foundation atom of NARRATIVE-TRUTH-CCATO-GATE. No apps/mcp-server change (narrative_contradiction is a free-string `type`). Router live-verified ground truth: VNM RSI~20.3, get_foreign_flow VNM net 3d -85,985 shares."
-      },
-      {
-        "id": "MONEY-RADAR-P0-T1-OSCILLATORS",
-        "title": "dev-technical-analysis (Go :5003): get_money_flow_oscillators — OBV, relative-volume z-score(20), up/down volume ratio, degraded close-only VWAP (is_proxy=true). The 4 ONLY Phase-0-shippable oscillators per field-constraint C1 (close+volume only, no H/L).",
-        "owner": "developer",
-        "next_agent": "developer",
-        "status": "READY",
-        "zone": "dev-technical-analysis",
-        "type": "FEATURE",
-        "size": "S",
-        "priority": "high",
-        "sprint": "MONEY-RADAR-P0",
-        "depends": [],
-        "created_at": "2026-07-01T08:18:21Z",
-        "files": [
-          "apps/technical-analysis/ (Go :5003 — new get_money_flow_oscillators endpoint over daily_ohlcv close+volume)"
-        ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.1 + §3(L1) + §2(C1) + §10 (TA stale-image mitigation)",
-        "generic_mandate": "Implement EXACTLY four oscillators, computed from daily_ohlcv close+volume on the live 76-bar depth: (1) OBV = cumulative sign(close_t − close_{t−1}) × volume_t (depth-independent, no window). (2) Relative-volume z-score(20) = (vol_t − mean_20) / std_20 (window 20 << 76). (3) Up/Down volume ratio = Σvol(up days) / Σvol(down days) over window. (4) Degraded VWAP = Σ(close×vol)/Σvol over window — MUST emit is_proxy=true (HN-5, C1: no true typical price without H/L). Field-constraint C1 is NON-NEGOTIABLE: get_price_history exposes ONLY close+volume — do NOT attempt MFI/CMF/A-D/Chaikin (they need H/L; FIELD-GATED, out of scope). Compute AFTER any TA :5003 deploy/restart + re-probe (not from a stale image — §10 risk).",
-        "acceptance": "get_money_flow_oscillators returns real non-null OBV, rel_vol_z_20, up_down_vol_ratio, and degraded_vwap (is_proxy=true) for a live watchlist ticker over the 76-bar depth. Values are plausible (OBV monotone-ish with tape; rel_vol_z within a sane band; ratio > 0; VWAP within the close range). is_proxy=true is present on the VWAP field. NO H/L-gated oscillator is emitted.",
-        "verification_gate": "qa RAW-calls the endpoint against a live ticker; asserts all 4 fields non-null + plausible + degraded VWAP carries is_proxy=true; confirms MFI/CMF/A-D/Chaikin are absent (FIELD-GATED). Re-probed AFTER TA :5003 restart to avoid stale-image false read.",
-        "note": "LEAD atom of MONEY-RADAR-P0 (no deps). Placed READY: CCATO-T1 (1 READY) + this = 2 READY = dev-standards WIP limit. Depth-independent — decoupled from the in-flight OHLCV-depth epic (C4)."
       }
     ],
     "review": [

@@ -1,0 +1,20 @@
+{
+  "from": "qa",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "low",
+  "payload": {
+    "check_id": "WATCHLIST-DB-SYSMAP-DRIFT",
+    "origin": "qa a0ac0f58 non-blocking finding during MONEY-RADAR-P0-T1 gate",
+    "description": "live SQLite watchlist table drifted from system-map.json",
+    "detail": "DB watchlist table = 41 rows (last populated 2026-04-27); system-map.json .project.watchlist = 33 active / 34 total. ~17 active tickers missing from DB, ~25 stale/extra present (incl inactive VEA, mis-seeded VNH). Service-wide, pre-existing — sibling /ta/roc-momentum returns identical 41-ticker set. NOT introduced by T1 (no new hardcode in diff).",
+    "affected_endpoints": [
+      "/ta/money-flow-oscillators",
+      "/ta/roc-momentum",
+      "+2 sibling TA endpoints sharing the watchlist-injection var"
+    ],
+    "severity": "low",
+    "recommended": "resync the watchlist SQLite table from docs/data/system-map.json .project.watchlist (single fix corrects all 4 endpoints)"
+  },
+  "createdAt": "2026-07-01T09:05:56Z"
+}
