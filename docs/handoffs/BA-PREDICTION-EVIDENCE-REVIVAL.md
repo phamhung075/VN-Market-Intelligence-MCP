@@ -163,3 +163,37 @@ Multi-zone confirmed — architect must SPLIT into at minimum: (1) `apps/mcp-ser
 `success_metric` condition-1 ("majority TRUSTED LR") is measured against the **existing recorded pairs at deploy** — FR-1.1 makes the foreign_flow monoculture pairs TRUSTED via the live n=18 row with no recompute needed. Newly-restored FR-2.1 types are **allowed to be in their sample-ramp** (n<10, LR=1.0 neutral): they satisfy condition-2 ("≥2 non-foreign_flow types present") but are **not required to be TRUSTED** within the 2-cycle window (honest ramp, §6). Condition-3 (new claim id>12 within 2 digest cycles) is satisfiable from FR-1.1's surfaced edge alone.
 
 **Chain advanced:** ready-row `next_agent → architect`; canonical `.head` repointed `in_progress / architect / BA-PREDICTION-EVIDENCE-REVIVAL` (was idle, WIP=0 — no active wave to preserve).
+
+---
+
+## [Architect] Brownfield Findings — 2026-07-01T06:38Z
+
+**Full technical design:** `docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md` (read before implementing — contains 4 live-verified corrections to this handoff's §5/§9/§10, the completed FR-2.2 diagnostic probe with full root-cause chain, exact file:line pointers, and a critical two-file coupling risk in FR-1.2).
+
+- **Zone:** multi — 2 parallel-safe hops, NO file overlap (confirmed live, not just asserted):
+  - Hop 1 `apps/mcp-server/` → specialist `dev-mcp-server`
+  - Hop 2 `docs/agents/` → specialist **`agent-father`** (not a dev-* zone; `docs/agents/**` is absent from `system-map.json .project.zones[]` — per `.claude/skills/dispatch/SKILL.md`, agent-file/flow-doc lifecycle routes to `agent-father`, not generic `developer`)
+
+- **Verified paths (hop 1):**
+  - `apps/mcp-server/src/interface/mcp/tools/macro/evidenceTools.ts:172-311` (`get_evidence_summary`) — FR-1.1 hardcoded `(evidence_type,"bullish",10)` lookup at L238-244 + L249-254; fix reuses existing `likelihoodRatioStore.ts::getLikelihoodRatios` (no new SQL).
+  - `apps/mcp-server/src/scheduler/market-data/insiderCheckJob.ts:78-107` — `detectAccumulationStreaks` actually lives HERE (BA §9 pointed at `leadershipSignal.ts`, which does not contain it — corrected).
+  - `apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts:131-168`, `vps-scripts/vps-proxy-server.js:743-765` — FR-2.2 root-cause chain, live-probed (docker exec + docker logs): `insider_transactions` = 0 rows ever; every `insiderCheckJob` run for ~2 months logs `HTTP 502 for .../proxy/ssc-insider`; VPS proxy's own upstream fetch to `congbothongtin.ssc.gov.vn` is failing. Confirmed SILENT BUG, not honest-zero.
+  - `apps/mcp-server/src/scheduler/vpsProxyWatchdogJob.ts` — FR-2.2 fix target (extend existing 4-source freshness watchdog with a 5th `insider_transactions` reader), reuse not duplicate.
+  - `apps/mcp-server/src/scheduler/cronConfig.ts:62` + `apps/mcp-server/src/scheduler/macro/baseRateComputationJob.ts:299` — FR-1.2; BOTH must change together (`WEEKLY_CADENCE_MS` feeds the T4 `shouldSkipRecoveryReplay` dedup guard independently of the cron string — missing either half silently defeats the cadence upgrade).
+- **Verified paths (hop 2):**
+  - `docs/agents/tools/package/{news-scout,bctc-analyst,market-watcher}.md` — BA's cited filenames (`news-analysis.md`, `financial-analysis.md`, `report-analysis.md`, `market-analysis.md`) do not exist; corrected to actual `<agent-id>.md` convention.
+  - `docs/agents/news-scout/flow/stage-sentiment.md:36-66`, `docs/agents/bctc-analyst/flow/stage-analyze.md:8-90`, `docs/agents/market-watcher/flow/cycle.md:76-77` — FR-2.1 insertion points, each reusing signals the flow already computes (no new parsing).
+  - `docs/agents/digest-predict/init.md:13,60-67` — FR-3 `workflows.validate_prediction_claims` block, confirmed unreferenced by any flow step.
+
+- **Reuse patterns:**
+  - FR-1.1: extend `likelihoodRatioStore.ts::getLikelihoodRatios` (existing) instead of hand-rolled SQL — also retires a pre-existing minor DDD violation.
+  - FR-2.2: extend `vpsProxyWatchdogJob.ts` (existing 4-source pattern) instead of a new watchdog job.
+  - FR-2.1: reuse the ACTUALLY-seeded `evidence_likelihood_ratios` type strings (`bctc_roe_ratio`, `bctc_roe_strong`, `bctc_valuation_premium`, `bctc_regulatory_compliance`, `bctc_report_overdue`, `price_momentum_5d`, `news_sentiment_stock`, `news_sentiment_macro`) — live-probed; BA/PO's `bctc_revenue_growth`/`bctc_pe_ratio`/`bctc_debt_equity` are tool-docstring examples that were never actually seeded, corrected in the brief §0.
+
+- **Design decisions:** see architecture brief §1-2 for full per-FR designs (horizon-selection algorithm for FR-1.1, watchdog-extension design for FR-2.2, exact evidence-fragment derivation recipes for FR-2.1, advisory-language rewrite for FR-3).
+
+- **Scan clean:** true ✓ — one pre-existing minor DDD violation found (raw SQL in interface layer, evidenceTools.ts) and retired as a byproduct of the FR-1.1 fix; no new violations introduced.
+
+**BUILD-STANDARD:** not-applicable (bug-fix/refactor + docs-only flow wiring — no new microservice, no new primitives) — both hops.
+
+**Next:** pm — decompose into 2 tasks (hop1 → dev-mcp-server, hop2 → agent-father), no `blocks_on` between them.

@@ -245,10 +245,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
-    "next_agent": "architect",
-    "updated_at": "2026-07-01T06:22:43Z",
-    "updated_by": "po",
-    "note": "PO approved+reshaped ba spec 2026-07-01. Dispatch architect for multi-zone SPLIT. hop-1 apps/mcp-server: FR-1.1 get_evidence_summary direction bug (quick win) + FR-2.2 insider silent-empty diag + FR-1.2 cadence weekly->daily. hop-2 docs/agents: FR-2.1 producer diversification (PRIMARY) + FR-3 docs-only Sharpe language. No file overlap, parallel-safe. B1=advisory/docs-B; B2=in-scope diag; B3=decoupled(FIX-PREDICTION-SIGNALS-EMPTY); B4=daily cron in-scope. HANDOFF docs/handoffs/BA-PREDICTION-EVIDENCE-REVIVAL.md."
+    "next_agent": "pm",
+    "updated_at": "2026-07-01T06:44:22Z",
+    "updated_by": "architect",
+    "note": "Architect SPLIT done 2026-07-01: 2 parallel-safe hops, no file overlap. hop1 apps/mcp-server (dev-mcp-server): FR-1.1+FR-2.2(probe DONE, verdict=silent-bug)+FR-1.2. hop2 docs/agents (agent-father, not dev-*): FR-2.1(corrected evidence types)+FR-3. Brief: docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md. Dispatch pm to decompose into 2 tasks."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10748,12 +10748,12 @@
       }
     ],
     "head": {
-      "status": "idle",
-      "active_task_id": null,
-      "next_agent": null,
-      "next_action": null,
-      "updated_by": "pm",
-      "updated_at": "2026-06-30T06:20:13Z"
+      "status": "in_progress",
+      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
+      "next_agent": "architect",
+      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
+      "updated_by": "dev-team",
+      "updated_at": "2026-07-01T06:26:45Z"
     },
     "in_progress": [],
     "ready": [
@@ -10761,7 +10761,7 @@
         "id": "BA-PREDICTION-EVIDENCE-REVIVAL",
         "title": "Requirement spec for PREDICTION-EVIDENCE-REVIVAL — revive starved evidence->LR->validation chain so digest-predict emits fresh prediction claims again",
         "owner": "ba",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "status": "READY",
         "zone": "multi",
         "type": "SPRINT-M",
@@ -10814,7 +10814,48 @@
             "PER-3: reuse seeded evidence_type strings so 45 frozen LR rows recompute against same types"
           ]
         },
-        "po_note": "APPROVED w/ reshape. Corrected root-cause (BA live-probed named-volume DB, PO re-verified get_evidence_summary CTG live): LR job baseRateComputationJob EXISTS+healthy=INPUT-STARVED not missing; real work = monoculture producer diversification (FR-2.1) + get_evidence_summary direction bug (FR-1.1) + insider silent-empty diag (FR-2.2) + daily cadence (FR-1.2) + docs-only Sharpe language fix (FR-3/B1-B). Multi-zone confirmed -> architect SPLIT into 2 parallel-safe hops."
+        "po_note": "APPROVED w/ reshape. Corrected root-cause (BA live-probed named-volume DB, PO re-verified get_evidence_summary CTG live): LR job baseRateComputationJob EXISTS+healthy=INPUT-STARVED not missing; real work = monoculture producer diversification (FR-2.1) + get_evidence_summary direction bug (FR-1.1) + insider silent-empty diag (FR-2.2) + daily cadence (FR-1.2) + docs-only Sharpe language fix (FR-3/B1-B). Multi-zone confirmed -> architect SPLIT into 2 parallel-safe hops.",
+        "architect_completed_at": "2026-07-01T06:44:22Z",
+        "architect_brief": "docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md",
+        "split_hops": {
+          "hop1": {
+            "zone": "apps/mcp-server/",
+            "specialist": "dev-mcp-server",
+            "frs": [
+              "FR-1.1: get_evidence_summary direction+horizon fix (evidenceTools.ts:172-311)",
+              "FR-2.2: insider_accumulation silent-bug — extend vpsProxyWatchdogJob.ts with insider-freshness reader (probe DONE, verdict=SILENT BUG, VPS proxy 502)",
+              "FR-1.2: baseRateComputationJob cadence weekly->daily (cronConfig.ts:62 + baseRateComputationJob.ts:299 WEEKLY_CADENCE_MS -- 2-file coupling, must move together)"
+            ],
+            "files": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/evidenceTools.ts",
+              "apps/mcp-server/src/scheduler/vpsProxyWatchdogJob.ts",
+              "apps/mcp-server/src/scheduler/cronConfig.ts",
+              "apps/mcp-server/src/scheduler/macro/baseRateComputationJob.ts",
+              "docs/standards/cron-jobs.md"
+            ]
+          },
+          "hop2": {
+            "zone": "docs/agents/",
+            "specialist": "agent-father",
+            "note": "NOT a dev-* zone -- docs/agents/** absent from system-map.json .project.zones[]; per dispatch SKILL.md agent-file/flow-doc lifecycle routes to agent-father",
+            "frs": [
+              "FR-2.1: wire record_evidence_fragment into news-scout/bctc-analyst/market-watcher flows + tools_package docs (corrected seeded evidence_type set, see brief SS0 C3)",
+              "FR-3: strip false Sharpe>1.0 hard-gate language from digest-predict/init.md (B1=design B)"
+            ],
+            "files": [
+              "docs/agents/news-scout/flow/stage-sentiment.md",
+              "docs/agents/bctc-analyst/flow/stage-analyze.md",
+              "docs/agents/market-watcher/flow/cycle.md",
+              "docs/agents/tools/package/news-scout.md",
+              "docs/agents/tools/package/bctc-analyst.md",
+              "docs/agents/tools/package/market-watcher.md",
+              "docs/agents/digest-predict/init.md"
+            ]
+          },
+          "parallel_safe": true,
+          "no_file_overlap": true,
+          "corrections_to_ba_po_spec": "4 live-verified corrections in brief SS0: tools_package filenames, detectAccumulationStreaks location, seeded evidence_type set (bctc_revenue_growth/pe_ratio/debt_equity never seeded), FR-2.2 probe completed at design time with SILENT BUG verdict"
+        }
       }
     ],
     "review": [
