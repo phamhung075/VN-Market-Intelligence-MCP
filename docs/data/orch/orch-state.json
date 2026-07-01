@@ -245,10 +245,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
-    "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-30T23:29:07Z",
-    "updated_by": "dev-team",
-    "note": "PO triage 23:07Z BATCH applied. DISPATCHED dev-mcp-server (zone apps/mcp-server/) for BCTC refine fleet-drain (HVN Q1-2026 income/CF units never materialized -> cohort PENDING) BUNDLED with get_bctc_ocf SQL-column fix; disambiguation query FIRST. PARALLEL agent-father for FIX-CHEF-STEP75 (verify tnb c103 cure + commit live-uncommitted chef.md). WIP=2 dev-zone (both dev-mcp-server, serialized one agent). CONTAM-11-REMEDIATE DEFERRED (PO go-in-principle; sequenced to a dedicated off-hours tick after refine market.db writes settle + 2nd PO gate on VPS-anchor dry-run candidate count). Source signal bca-ddres-20260630T2258 (TRIAGED). Push gated (PO/human)."
+    "next_agent": "qa",
+    "updated_at": "2026-07-01T00:10Z",
+    "updated_by": "dev-mcp-server",
+    "note": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN + FIX-GET-BCTC-OCF-SQL-COLUMN both REVIEW. Bilingual section detection fix + aggregator English labels + OCF SQL aliases. HVN Q1-2026 operating_cf=5018783M verified non-zero. Route to qa."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
