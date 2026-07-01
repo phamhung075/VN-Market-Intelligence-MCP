@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c455 · 2026-07-01T22:33:58Z
+### Audit Run Tier-2 (22:31–22:34 UTC 2026-07-01) — Freshness Sweep
+- Tier: 2 | Sources: 27 checked | Cron jobs: 140 monitored | VPS routes: 4
+- Anomalies: 1 NEW CRITICAL (B-05 bctc-discover stale 21711min, 38 pending queue, vn-bctc-fetch unhealthy 15d)
+- DB Freshness: C-06 pass (1 msg/3h) | C-07 pass (151 signals/24h)
+- BCTC Safety: B-09 pass (0 SSC URLs) | B-13 pass (0 stale pending)
+- Rate Limits: 11/11 sources OK
+- Signal Row: sau-2026-07-01T22:33:43Z written (B-05 CRITICAL)
+- Signals Posted: 1 (post_agent_signal id=8188)
+- Status: DEGRADED
+
 ## c454 · 2026-07-01T22:13:56Z
 ### Audit Run Tier-1 (22:13–22:14 UTC 2026-07-01)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
