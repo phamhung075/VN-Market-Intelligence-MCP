@@ -10336,12 +10336,12 @@
         "id": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
         "type": "FIX",
         "size": "M",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "high",
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "owner_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "route_to": "dev-mcp-server",
         "dispatcher": "dev-team",
         "baseline_pass": true,
@@ -10365,18 +10365,19 @@
           "Run the per-page OCR char-count disambiguation query FIRST and record which branch (refine-stage vs OCR-page-window) applies in the findings doc.",
           "HVN Q1-2026 income (B02-DN) + cash-flow (B03-DN) units materialize: get_bctc_full serves non-zero income + cash flow with refine_status=COMPLETE and accounting identity A ~= L+E re-validates.",
           "Fleet Q1-2026 refine backlog (MBB/VCI/TCH/VIX) drains to refine_status=COMPLETE (or the genuinely-blocked docs are identified with a reason); zero regression to CONTAM-10 / daily_ohlcv data."
-        ]
+        ],
+        "reviewed_at": "2026-07-01T00:08Z"
       },
       {
         "id": "FIX-GET-BCTC-OCF-SQL-COLUMN",
         "type": "FIX",
         "size": "S",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "medium",
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "owner_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "route_to": "dev-mcp-server",
         "dispatcher": "dev-team",
         "baseline_pass": true,
@@ -10398,7 +10399,8 @@
         "acceptance": [
           "get_bctc_ocf returns OCF without the no-such-column error for a ticker with cash-flow data; SELECT column names match the live schema.",
           "Test 1909b-get-bctc-ocf updated + green; no DB mutation; no regression to other financial-reports tools."
-        ]
+        ],
+        "reviewed_at": "2026-07-01T00:08Z"
       }
     ],
     "ready": [],
