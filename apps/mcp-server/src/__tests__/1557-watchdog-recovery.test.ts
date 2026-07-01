@@ -17,6 +17,7 @@ const STALE = (): null => null;                                      // no data 
 // Fresh readers for Reuters/TE — prevent infinite staleness when DB has no tables
 const readReuters = FRESH;
 const readTe = FRESH;
+const readInsider = FRESH; // FR-2.2 — prevent infinite staleness in ok/restored assertions
 
 describe("TASK-1557 watchdog recovery MARKET alert", () => {
   beforeEach(() => {
@@ -40,6 +41,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readForeignFlow: FRESH,
       readReuters,
       readTe,
+      readInsider,
     });
 
     // Advance past cooldown so "ok" path runs without cooldown interference
@@ -56,6 +58,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readForeignFlow: FRESH,
       readReuters,
       readTe,
+      readInsider,
     });
 
     expect(result).toBe("restored");
@@ -77,6 +80,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readForeignFlow: FRESH,
       readReuters,
       readTe,
+      readInsider,
     });
 
     expect(result).toBe("ok");
@@ -99,6 +103,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readForeignFlow: FRESH,
       readReuters,
       readTe,
+      readInsider,
     });
 
     // Reset the flag explicitly
@@ -117,6 +122,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readForeignFlow: FRESH,
       readReuters,
       readTe,
+      readInsider,
     });
 
     expect(result).toBe("ok");

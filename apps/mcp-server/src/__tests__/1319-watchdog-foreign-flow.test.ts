@@ -20,6 +20,7 @@ const freshReaders = (now: Date) => ({
   readOhlcv:   () => new Date(now.getTime() - 5 * 60_000),
   readReuters: () => new Date(now.getTime() - 5 * 60_000),  // prevent infinite staleness
   readTe:      () => new Date(now.getTime() - 5 * 60_000),  // prevent infinite staleness
+  readInsider: () => new Date(now.getTime() - 5 * 60_000),  // prevent infinite staleness (FR-2.2)
 });
 
 describe("TASK-1319 watchdog foreign_flow staleness", () => {

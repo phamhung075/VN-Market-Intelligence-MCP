@@ -12,7 +12,8 @@
  *   LC-1. ohlcvDailyAggregator default is shifted to '3 15 * * 1-5' (+3min).
  *   LC-2. vnstockFundamentalsRefresh default is shifted to '5 1 * * 1' (+5min).
  *   LC-3. reputationCompute default is shifted to '33 8 * * *' (+3min).
- *   LC-4. baseRateComputation default is shifted to '7 19 * * 0' (+7min).
+ *   LC-4. baseRateComputation default is shifted to '7 19 * * *' (+7min; cadence
+ *         upgraded weekly→daily by BA-PREDICTION-EVIDENCE-REVIVAL FR-1.2/B4).
  *   LC-5. predictionResolution default is shifted to '35 16 * * *' (+5min).
  *   LC-6. calibrationReport default is shifted to '4 13 * * 0' (+4min).
  *   LC-7. cascadeBacktest default is shifted to '37 20 * * *' (+7min).
@@ -104,9 +105,9 @@ describe("T2-ARCH-CRON-RECOVER-JITTER — Lever C: 8 jitter-shifted job schedule
     }
   });
 
-  it("LC-4: baseRateComputation default is '7 19 * * 0' (+7min, joins minute=7 cluster)", () => {
+  it("LC-4: baseRateComputation default is '7 19 * * *' (+7min, daily cadence, joins minute=7 cluster)", () => {
     if (!Bun.env.CRON_BASE_RATE_COMPUTATION) {
-      expect(CRONS.baseRateComputation).toBe("7 19 * * 0");
+      expect(CRONS.baseRateComputation).toBe("7 19 * * *");
     }
   });
 
@@ -151,7 +152,7 @@ describe("T2-ARCH-CRON-RECOVER-JITTER — Lever C: 8 jitter-shifted job schedule
     //   Hour 8 UTC: signalOutcomeJob at :30, reputationCompute at :33 → 3min gap
     //   Hour 15 UTC weekdays: ohlcvDailyAggregator at :03 → unique
     //   Hour 16 UTC: predictionResolution at :35 → unique
-    //   Hour 19 UTC Sunday: baseRateComputation at :07 → joins verdictResolution :07 cluster
+    //   Hour 19 UTC daily: baseRateComputation at :07 → joins verdictResolution :07 cluster
     //   Hour 20 UTC: agmPlanRefresh at :30, cascadeBacktest at :37 → 7min gap
     //   Hour 23 UTC: dailyDashboard at :38 — no clash with eveningSummary at :30
 
@@ -173,7 +174,7 @@ describe("T2-ARCH-CRON-RECOVER-JITTER — Lever C: 8 jitter-shifted job schedule
       extractMinute(safe(CRONS.ohlcvDailyAggregator, "3 15 * * 1-5")),   // 3
       extractMinute(safe(CRONS.vnstockFundamentalsRefresh, "5 1 * * 1")), // 5
       extractMinute(safe(CRONS.reputationCompute, "33 8 * * *")),          // 33
-      extractMinute(safe(CRONS.baseRateComputation, "7 19 * * 0")),        // 7
+      extractMinute(safe(CRONS.baseRateComputation, "7 19 * * *")),        // 7
       extractMinute(safe(CRONS.predictionResolution, "35 16 * * *")),      // 35
       extractMinute(safe(CRONS.calibrationReport, "4 13 * * 0")),          // 4
       extractMinute(safe(CRONS.cascadeBacktest, "37 20 * * *")),           // 37

@@ -10916,12 +10916,12 @@
         "type": "SPRINT-M-HOP",
         "zone": "apps/mcp-server/",
         "specialist": "dev-mcp-server",
-        "status": "READY",
+        "status": "REVIEW",
         "priority": "high",
         "created_at": "2026-07-01T06:49:50Z",
         "created_by": "pm",
         "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "depends": [],
         "size": "M",
         "frs": [
@@ -10935,7 +10935,9 @@
           "apps/mcp-server/src/scheduler/cronConfig.ts",
           "apps/mcp-server/src/scheduler/macro/baseRateComputationJob.ts",
           "docs/standards/cron-jobs.md"
-        ]
+        ],
+        "updated_at": "2026-07-01T07:30:00Z",
+        "updated_by": "dev-mcp-server"
       },
       {
         "id": "TASK-EVIDENCE-HOP2-AGENTS",

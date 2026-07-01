@@ -40,6 +40,16 @@ import { logger } from "../infrastructure/logger.js";
  * alerting — avoids false alarms on brief lulls or VPS reboot. */
 const STALE_THRESHOLD_MS = 45 * 60 * 1000; // 45 minutes
 
+/** If the newest insider_transactions row is older than this, raise an alert.
+ * insiderCheckJob runs once daily (01:00 UTC) — not intraday like the other
+ * 4 sources. 4 days is generous enough to tolerate occasional legitimate
+ * zero-new-disclosure days while still catching a silent multi-day outage
+ * (FIX for FR-2.2: insider_transactions had 0 rows across ~2 months of
+ * "successful" daily runs — the VPS proxy's SSC-portal fetch was silently
+ * 502ing on every run and nothing surfaced that fact). See
+ * BA-PREDICTION-EVIDENCE-REVIVAL architecture brief §1 FR-2.2. */
+const INSIDER_STALE_MS = 4 * 24 * 60 * 60 * 1000; // 4 days
+
 /** Minimum wait between two stale-alerts during the same outage. */
 const ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -158,6 +168,31 @@ export function readLatestOhlcvTimestamp(): Date | null {
 }
 
 /**
+ * Most recent `insider_transactions.fetched_at` as a Date, or null if the
+ * table has never received a row (mirrors readLatestPriceTimestamp's
+ * try/catch-null pattern). FR-2.2 (BA-PREDICTION-EVIDENCE-REVIVAL hop1):
+ * closes the observability gap on insiderCheckJob's silent-empty-success —
+ * the job has recorded status='success' daily for ~2 months while the raw
+ * SSC-portal fetch (via the VPS proxy) 502'd on every single run.
+ * Exported for tests.
+ */
+export function readLatestInsiderTimestamp(): Date | null {
+  try {
+    const db = getDb();
+    const row = db
+      .query<{ ts: string | null }, []>(
+        "SELECT MAX(fetched_at) AS ts FROM insider_transactions",
+      )
+      .get();
+    if (!row?.ts) return null;
+    const d = new Date(row.ts);
+    return isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * One run of the watchdog. Exported for tests + manual invocation.
  *
  * Return values:
@@ -178,6 +213,7 @@ export async function runVpsProxyWatchdog(
     readForeignFlow?: () => Date | null;
     readReuters?:     () => Date | null;
     readTe?:          () => Date | null;
+    readInsider?:     () => Date | null;
   } = {},
 ): Promise<string> {
   const now = options.now ?? new Date();
@@ -192,10 +228,12 @@ export async function runVpsProxyWatchdog(
   const newsReader        = options.readNews        ?? readLatestNewsTimestamp;
   const ohlcvReader       = options.readOhlcv       ?? readLatestOhlcvTimestamp;
   const foreignFlowReader = options.readForeignFlow ?? readLatestForeignFlowTimestamp;
+  const insiderReader     = options.readInsider     ?? readLatestInsiderTimestamp;
   const latestPrice       = priceReader();
   const latestNews        = newsReader();
   const latestOhlcv       = ohlcvReader();
   const latestForeignFlow = foreignFlowReader();
+  const latestInsider     = insiderReader();
 
   const priceAgeMs       = latestPrice       ? now.getTime() - latestPrice.getTime()       : Infinity;
   const newsAgeMs        = latestNews        ? now.getTime() - latestNews.getTime()        : Infinity;
@@ -203,6 +241,8 @@ export async function runVpsProxyWatchdog(
   const ohlcvAgeMs       = latestOhlcv       ? now.getTime() - latestOhlcv.getTime()       : Infinity;
   // null = service has never written data (e.g. fresh deploy or empty DB) — treat as stale (Infinity), not fresh
   const foreignFlowAgeMs = latestForeignFlow ? now.getTime() - latestForeignFlow.getTime() : Infinity;
+  // insiderCheckJob is daily too — null = never received a disclosure row (FR-2.2 silent-bug case)
+  const insiderAgeMs     = latestInsider     ? now.getTime() - latestInsider.getTime()     : Infinity;
 
   const NEWS_STALE_MS         = STALE_THRESHOLD_MS;           // 45 min
   const OHLCV_STALE_MS        = 26 * 60 * 60 * 1000;         // 26 hours
@@ -240,6 +280,13 @@ export async function runVpsProxyWatchdog(
       ageMin: isFinite(foreignFlowAgeMs) ? Math.round(foreignFlowAgeMs / 60_000) : -1,
     });
   }
+  if (insiderAgeMs >= INSIDER_STALE_MS) {
+    stale.push({
+      service: "vn-ssc-insider-fetch",
+      latestStr: latestInsider ? latestInsider.toISOString() : "never",
+      ageMin: isFinite(insiderAgeMs) ? Math.round(insiderAgeMs / 60_000) : -1,
+    });
+  }
   if (stale.length === 0) {
     if (lastWasStale) {
       lastWasStale = false;
@@ -268,6 +315,16 @@ export async function runVpsProxyWatchdog(
     )
     .join("\n");
 
+  const insiderStale = stale.some((s) => s.service === "vn-ssc-insider-fetch");
+  const insiderNote = insiderStale
+    ? `\n\n` +
+      `vn-ssc-insider-fetch is NOT a VPS systemd unit — it is insiderCheckJob (mcp-server) ` +
+      `calling the VPS proxy's /proxy/ssc-insider route, which fetches congbothongtin.ssc.gov.vn ` +
+      `directly. A systemctl restart will not fix this. Root cause is tracked separately: ` +
+      `BACKLOG FIX-VPS-SSC-INSIDER-502 (zone vps-scripts/, needs live VPS SSH diagnosis of the ` +
+      `SSC portal fetch — may be an external outage/restructure, not code-fixable this sprint).`
+    : "";
+
   const message =
     `[VPS watchdog] Stale data detected — ${stale.length} source(s):\n` +
     `${staleLines}\n` +
@@ -285,7 +342,8 @@ export async function runVpsProxyWatchdog(
     `  journalctl -u vn-sbv-fetch -n 30\n` +
     `  journalctl -u vn-foreign-flow -n 30\n` +
     `\n` +
-    `If units are broken, redeploy: ./deploy-vinahost.sh`;
+    `If units are broken, redeploy: ./deploy-vinahost.sh` +
+    insiderNote;
 
   const notify =
     options.notify ??

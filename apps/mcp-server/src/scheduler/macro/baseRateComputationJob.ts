@@ -1,7 +1,9 @@
 /**
  * Task 1122 — baseRateComputationJob
  *
- * Weekly scheduler job (Sunday 19:00 UTC = 02:00 VN Monday) that:
+ * Daily scheduler job (19:07 UTC = 02:07 VN next day; cadence upgraded from
+ * weekly to daily by BA-PREDICTION-EVIDENCE-REVIVAL FR-1.2/B4 — see RISK-1 note
+ * on runBaseRateComputationJob below) that:
  * 1. Queries distinct (evidence_type, direction) pairs from evidence_fragments
  * 2. For each pair × each horizon in [5, 10, 20]:
  *    a. Counts resolvable fragments older than horizonDays
@@ -289,15 +291,23 @@ export async function runBaseRateComputation(
 /**
  * Cron wrapper for runBaseRateComputation.
  * Wraps with recordJobRun for observability.
- * Called weekly at Sunday 19:00 UTC (02:00 VN Monday) from jobs.ts.
+ * Called daily at 19:07 UTC (02:07 VN next day) from jobs.ts.
  *
- * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of weekly cadence (604.8s window = 6 days 1h12m)
+ * RISK-1 (BA-PREDICTION-EVIDENCE-REVIVAL FR-1.2): DAILY_CADENCE_MS below feeds
+ * shouldSkipRecoveryReplay (the T4 idempotency dedup guard) INDEPENDENTLY of the
+ * CRONS.baseRateComputation cron string in cronConfig.ts. Both were changed
+ * together in this same commit — if only the cron expression had moved and this
+ * constant had been left at the old weekly value, the daily cron tick would fire
+ * but shouldSkipRecoveryReplay would silently skip every run except the first
+ * one each week (a second silent-empty-success bug, self-inflicted by this fix).
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (86,400s * 0.9 = 21.6h window)
  */
 export async function runBaseRateComputationJob(): Promise<void> {
   const db = getDb();
 
-  const WEEKLY_CADENCE_MS = 604_800_000;
-  if (shouldSkipRecoveryReplay(db, "baseRateComputationJob", WEEKLY_CADENCE_MS)) return;
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(db, "baseRateComputationJob", DAILY_CADENCE_MS)) return;
 
   try {
     await recordJobRun(db, "baseRateComputationJob", async () => {

@@ -1,5 +1,6 @@
 /**
- * Task 1122 — baseRateComputer domain service + baseRateComputationJob weekly scheduler
+ * Task 1122 — baseRateComputer domain service + baseRateComputationJob daily scheduler
+ * (cadence upgraded weekly→daily by BA-PREDICTION-EVIDENCE-REVIVAL FR-1.2/B4)
  *
  * Tests for:
  * 1. computeRollingBaseRate — returns 0.5 with fewer than 10 windows
@@ -448,8 +449,8 @@ describe("Task 1122 — Base Rate Computation", () => {
       expect(CRONS).toHaveProperty("baseRateComputation");
     });
 
-    it("baseRateComputation cron defaults to 7 19 * * 0 (Sunday 19:07 UTC, T2-ARCH-CRON-RECOVER-JITTER Lever C: +7min offset)", () => {
-      expect((CRONS as Record<string, string>)["baseRateComputation"]).toBe("7 19 * * 0");
+    it("baseRateComputation cron defaults to 7 19 * * * (daily 19:07 UTC, T2-ARCH-CRON-RECOVER-JITTER Lever C: +7min offset; upgraded from weekly by FR-1.2/B4)", () => {
+      expect((CRONS as Record<string, string>)["baseRateComputation"]).toBe("7 19 * * *");
     });
   });
 });

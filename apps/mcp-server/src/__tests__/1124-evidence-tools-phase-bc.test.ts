@@ -169,6 +169,50 @@ describe("Task 1124 — evidence tools Phase B+C", () => {
       const text = await callTool("get_evidence_summary", { stock: "MWG" });
       expect(text).toContain("TRUSTED");
     });
+
+    // ── FR-1.1 regression suite (BA-PREDICTION-EVIDENCE-REVIVAL hop1) ──────────
+    // Direction+horizon-correct LR lookup — replaces the old hardcoded
+    // ("bullish", 10) query that masked real TRUSTED rows on other directions.
+
+    it("FR-1.1: surfaces a TRUSTED bearish/5d row instead of masking it with the old hardcoded bullish/10d lookup", async () => {
+      seedEvidenceScore(_testDb, "CTG", 0.2, 0.7, 0.1, 4);
+      seedEvidenceFragment(_testDb, "CTG", "foreign_flow_institutional", "bearish", 0.8, 0.8);
+      // The live TRUSTED row (n=18) FR-1.1 must surface for this bearish fragment.
+      seedLikelihoodRatio(_testDb, "foreign_flow_institutional", "bearish", 5, 2.1, 18);
+      // Untrusted bullish/10d row for the SAME evidence_type — the OLD hardcoded
+      // lookup would have picked this one regardless of the fragment's real direction.
+      seedLikelihoodRatio(_testDb, "foreign_flow_institutional", "bullish", 10, 1.0, 4);
+
+      const text = await callTool("get_evidence_summary", { stock: "CTG" });
+      expect(text).toContain("TRUSTED");
+      expect(text).toContain("LR=2.10");
+      expect(text).toContain("horizon=5d");
+      expect(text).toContain("n=18");
+      // Must NOT surface the untrusted bullish/10d row's sample_size instead.
+      expect(text).not.toContain("n=4");
+    });
+
+    it("FR-1.1: still surfaces a TRUSTED bullish/10d row when it is the only match (no regression for the previously-correct case)", async () => {
+      seedEvidenceScore(_testDb, "SSI", 0.6, 0.3, 0.1, 2);
+      seedEvidenceFragment(_testDb, "SSI", "bctc_revenue_growth", "bullish", 0.7, 0.7);
+      seedLikelihoodRatio(_testDb, "bctc_revenue_growth", "bullish", 10, 1.8, 15);
+
+      const text = await callTool("get_evidence_summary", { stock: "SSI" });
+      expect(text).toContain("TRUSTED");
+      expect(text).toContain("LR=1.80");
+      expect(text).toContain("n=15");
+      expect(text).toContain("horizon=10d");
+    });
+
+    it("FR-1.1: returns honest UNTRUSTED n=0 (no crash, no wrong pair) when no likelihood ratio row exists at any horizon", async () => {
+      seedEvidenceScore(_testDb, "VIC", 0.5, 0.4, 0.1, 1);
+      seedEvidenceFragment(_testDb, "VIC", "kinh_dich_signal", "neutral", 0.6, 0.6);
+      // No evidence_likelihood_ratios row seeded for kinh_dich_signal/neutral at any horizon.
+
+      const text = await callTool("get_evidence_summary", { stock: "VIC" });
+      expect(text).toContain("UNTRUSTED");
+      expect(text).toContain("LR=1.00 (n=0)");
+    });
   });
 
   // ── create_prediction_claim ───────────────────────────────────────────────────

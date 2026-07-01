@@ -26,8 +26,8 @@ import {
   getLatestEvidenceScore,
 } from "../../../../infrastructure/db/evidenceFragmentStore.js";
 import {
-  getLikelihoodRatio,
   getLikelihoodRatios,
+  type LikelihoodDirection,
 } from "../../../../infrastructure/db/likelihoodRatioStore.js";
 import {
   insertPredictionClaim,
@@ -174,7 +174,10 @@ export function registerEvidenceTools(
     "get_evidence_summary",
     "Returns the current evidence picture for a single stock: latest evidence scores, " +
       "top 5 contributing fragments by magnitude*confidence, and applicable likelihood ratios " +
-      "from evidence_likelihood_ratios for the bullish direction at 10-day horizon. " +
+      "from evidence_likelihood_ratios for EACH fragment's own direction. Among the available " +
+      "horizons (5/10/20 days) for that (evidence_type, direction) pair, the shortest horizon " +
+      "with sample_size >= 10 is preferred (TRUSTED); if none qualifies, the horizon with the " +
+      "largest sample_size is shown honestly as UNTRUSTED (no cross-horizon interpolation). " +
       "If no evidence has been accumulated yet for the stock, returns a clear message. " +
       "Data is at most 23 hours stale (sourced from nightly evidence_scores aggregate).",
     {
@@ -219,6 +222,19 @@ export function registerEvidenceTools(
           .all(ticker) as FragmentRow[];
 
         // Step 3+4: for each top fragment, get likelihood ratio + trust label
+        //
+        // FR-1.1 fix (BA-PREDICTION-EVIDENCE-REVIVAL hop1): the previous implementation
+        // hardcoded the lookup to ("bullish", 10) regardless of the fragment's own
+        // direction — masking real TRUSTED rows recorded under other directions/horizons
+        // (e.g. foreign_flow_institutional/bearish/5d, sample_size=18).
+        //
+        // Horizon-selection algorithm (reuses getLikelihoodRatios — no hand-rolled SQL):
+        //   1. Fetch all rows for (f.evidence_type, f.direction), ordered horizon_days ASC.
+        //   2. No rows → honest UNTRUSTED, sampleSize=0, likelihoodRatio=1.0, horizonDays=null.
+        //   3. Else prefer the first (shortest-horizon) row with sample_size >= 10 → TRUSTED.
+        //   4. Else pick the row with the largest sample_size (ties → smallest horizon,
+        //      guaranteed by ASC ordering + strict `>` comparison) → honest UNTRUSTED with
+        //      its real n. Never blend/average two horizons into a synthetic ratio.
         interface FragmentWithRatio {
           evidence_type: string;
           direction: string;
@@ -227,31 +243,39 @@ export function registerEvidenceTools(
           likelihoodRatio: number;
           trusted: boolean;
           sampleSize: number;
+          horizonDays: number | null;
         }
 
         const fragmentsWithRatios: FragmentWithRatio[] = fragments.map((f) => {
-          // Get full row to check sample_size for TRUSTED/UNTRUSTED label
-          interface RatioDbRow {
-            likelihood_ratio: number;
-            sample_size: number;
-          }
-          const ratioRow = database
-            .prepare(
-              `SELECT likelihood_ratio, sample_size
-               FROM evidence_likelihood_ratios
-               WHERE evidence_type = ? AND direction = ? AND horizon_days = ?`,
-            )
-            .get(f.evidence_type, "bullish", 10) as RatioDbRow | null;
-
-          const sampleSize = ratioRow?.sample_size ?? 0;
-          const trusted = sampleSize >= 10;
-          // getLikelihoodRatio returns 1.0 for missing/low-sample rows
-          const likelihoodRatio = getLikelihoodRatio(
+          const ratioRows = getLikelihoodRatios(
             database,
             f.evidence_type,
-            "bullish",
-            10,
+            f.direction as LikelihoodDirection,
           );
+
+          let sampleSize = 0;
+          let likelihoodRatio = 1.0;
+          let horizonDays: number | null = null;
+          let trusted = false;
+
+          if (ratioRows.length > 0) {
+            const trustedRow = ratioRows.find((r) => r.sample_size >= 10);
+            const chosen =
+              trustedRow ??
+              // No horizon is trusted — pick largest sample_size (ties → smallest horizon,
+              // preserved because ratioRows is horizon_days ASC and we only replace on strict >).
+              ratioRows.reduce((best, r) =>
+                r.sample_size > best.sample_size ? r : best,
+              );
+
+            sampleSize = chosen.sample_size;
+            horizonDays = chosen.horizon_days;
+            trusted = sampleSize >= 10;
+            // Defensive neutral-prior guard mirrors likelihoodRatioStore's own business rule
+            // (sample_size < 10 → likelihood_ratio always 1.0) in case a row was ever written
+            // outside upsertLikelihoodRatio's enforcement.
+            likelihoodRatio = trusted ? chosen.likelihood_ratio : 1.0;
+          }
 
           return {
             evidence_type: f.evidence_type,
@@ -261,6 +285,7 @@ export function registerEvidenceTools(
             likelihoodRatio,
             trusted,
             sampleSize,
+            horizonDays,
           };
         });
 
@@ -281,9 +306,8 @@ export function registerEvidenceTools(
         for (const f of fragmentsWithRatios) {
           const score = (f.magnitude * f.confidence).toFixed(4);
           const trustLabel = f.trusted ? "TRUSTED" : "UNTRUSTED";
-          const ratioStr = f.trusted
-            ? `LR=${f.likelihoodRatio.toFixed(2)}`
-            : `LR=1.00 (n=${f.sampleSize})`;
+          const horizonStr = f.horizonDays !== null ? `, horizon=${f.horizonDays}d` : "";
+          const ratioStr = `LR=${f.likelihoodRatio.toFixed(2)} (n=${f.sampleSize}${horizonStr})`;
           lines.push(
             `  - ${f.evidence_type} [${f.direction}] ` +
               `mag=${f.magnitude.toFixed(2)} conf=${f.confidence.toFixed(2)} ` +

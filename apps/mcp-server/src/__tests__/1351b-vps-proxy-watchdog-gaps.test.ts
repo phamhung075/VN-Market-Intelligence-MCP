@@ -36,6 +36,7 @@ function freshReaders(now: Date) {
     readNews: fresh(now),
     readOhlcv: tsAgo(now, 0), // OHLCV stale threshold is 26h — age 0 is always fresh
     readForeignFlow: fresh(now),
+    readInsider: fresh(now), // FR-2.2 — prevent infinite staleness in "ok"/"restored" assertions
   };
 }
 

@@ -17,6 +17,7 @@ const STALE = (): null => null;                                      // no data 
 // Fresh readers for Reuters/TE — prevent infinite staleness when DB has no tables
 const readReuters = FRESH;
 const readTe = FRESH;
+const readInsider = FRESH; // FR-2.2 — prevent infinite staleness in ok/restored assertions
 
 describe("TASK-1567: watchdog user alert failure logging", () => {
   beforeEach(() => {
@@ -41,6 +42,7 @@ describe("TASK-1567: watchdog user alert failure logging", () => {
       readForeignFlow: FRESH,
       readReuters,
       readTe,
+      readInsider,
     });
 
     // Return value should still be "alert-sent" (notifyUser failure is best-effort, silently ignored)
@@ -64,6 +66,7 @@ describe("TASK-1567: watchdog user alert failure logging", () => {
       readForeignFlow: FRESH,
       readReuters,
       readTe,
+      readInsider,
     });
 
     // Advance past cooldown and set stale to false (recovery)
@@ -83,6 +86,7 @@ describe("TASK-1567: watchdog user alert failure logging", () => {
       readForeignFlow: FRESH,
       readReuters,
       readTe,
+      readInsider,
     });
 
     expect(result).toBe("restored");

@@ -35,7 +35,7 @@ Live data → `docs/data/cron-registry.json`
 | Schedule | Job | Task |
 |----------|-----|------|
 | 16:00 UTC daily (23:00 VN) | `evidenceAccumulatorJob` — aggregates evidence fragments per stock into bullish/bearish scores | 1118 |
-| 19:00 UTC Sunday (02:00 VN Mon) | `baseRateComputationJob` — weekly recompute of per-signal-type base rates for calibration | 1122 |
+| 19:00 UTC daily (02:00 VN) | `baseRateComputationJob` — daily recompute of per-signal-type base rates for calibration (upgraded from weekly by BA-PREDICTION-EVIDENCE-REVIVAL FR-1.2/B4 — removes up-to-7-day LR-recompute latency; RISK-1: cron string + `DAILY_CADENCE_MS` T4 dedup guard must move together) | 1122 |
 | 16:30 UTC daily (23:30 VN) | `predictionResolutionJob` — resolves prediction claims whose horizon has expired; computes Brier score | 1125 |
 | 13:00 UTC Sunday (20:00 VN) | `calibrationReportJob` — weekly Brier score calibration report + Telegram digest to WORK | 1128 |
 | 08:13 UTC M-F (15:13 VN) | `foreignFlowAlertJob` — daily foreign flow smart-money scan; fires HIGH alerts + evidence fragments (moved from 09:30 → 08:13 UTC by Sprint 1949-T6; EOD chef reads at 08:37 UTC, 24min window) | 1133 |
@@ -101,6 +101,12 @@ Source: `apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts`
 `vpsProxyWatchdogJob.ts` — runs `*/10 2-8 * * 1-5` UTC (market hours).
 Reads `MAX(market_prices.updated_at)`. If >15 min stale → one Telegram WORK alert (30-min cooldown).
 **NEVER SSHes into VPS.** VPS liveness owned by systemd on Vinahost (`vn-price-fetch.service`, `Restart=always`).
+5th source added by BA-PREDICTION-EVIDENCE-REVIVAL FR-2.2: `readLatestInsiderTimestamp()` reads
+`MAX(insider_transactions.fetched_at)`; stale >4 days (job is daily, not intraday) → alerts
+`vn-ssc-insider-fetch` in the same consolidated message, observability-only (closes the silent-bug
+blind spot where `insiderCheckJob` recorded `status='success'` for ~2 months while the VPS proxy's
+SSC-portal fetch 502'd on every run). The actual VPS↔SSC connectivity fix is decoupled to backlog
+`FIX-VPS-SSC-INSIDER-502` (zone `vps-scripts/`), not attempted here.
 
 ## VPS Services (VPS-side only)
 

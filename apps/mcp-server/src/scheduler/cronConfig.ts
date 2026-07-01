@@ -56,10 +56,15 @@ export const CRONS = {
   cronHealthAlert:        Bun.env.CRON_HEALTH_ALERT                ?? '0 0 * * *',
   /** Evidence accumulator: daily 23:00 VN = 16:00 UTC — task 1118, Sprint 057 Phase A */
   evidenceAccumulator:    Bun.env.CRON_EVIDENCE_ACCUMULATOR        ?? '0 16 * * *',
-  /** Base rate recomputation: weekly Sunday 19:07 UTC = 02:07 VN Monday — task 1122, Sprint 059
+  /** Base rate recomputation: daily 19:07 UTC = 02:07 VN next day — task 1122, Sprint 059;
+   *  cadence upgraded weekly→daily by BA-PREDICTION-EVIDENCE-REVIVAL FR-1.2 (B4) — removes
+   *  the up-to-7-day LR-recompute latency for newly-restored evidence types.
+   *  RISK-1: paired 1:1 with WEEKLY_CADENCE_MS→DAILY_CADENCE_MS in baseRateComputationJob.ts —
+   *  the T4 shouldSkipRecoveryReplay dedup guard reads that constant independently of this
+   *  cron string; changing only one half silently no-ops the cadence upgrade.
    *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +7min offset from :00 pile-up cluster.
    *  Joins minute=7 cluster already used by verdictResolutionJob (architect §4.3). */
-  baseRateComputation:    Bun.env.CRON_BASE_RATE_COMPUTATION       ?? '7 19 * * 0',
+  baseRateComputation:    Bun.env.CRON_BASE_RATE_COMPUTATION       ?? '7 19 * * *',
   /** Prediction resolution: daily 16:35 UTC (after VN market close 15:30 VN) — task 1125, Sprint 059
    *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +5min offset clears :30 pile-up (ohlcvDailyAggregator now at :03). */
   predictionResolution:   Bun.env.CRON_PREDICTION_RESOLUTION       ?? '35 16 * * *',
