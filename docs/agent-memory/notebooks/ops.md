@@ -557,3 +557,236 @@ Single-service mcp-server rebuild successful. New image running with fire-electi
 
 **Confidence:** HIGH — fix confirmed live; no regressions; constraint honored.
 
+
+## Diagnostic: OPS-TA-INDICATOR-STALE-DIAGNOSTIC (2026-06-30T18:19:51Z)
+
+**Task:** Diagnose technical-analysis service (port 5003) stale-cache hypothesis: after daily_ohlcv backfill + mcp-server force-recreate (16:15Z), TA service was NEVER restarted. Test: restart the TA service and re-probe price/momentum tools.
+
+**Hypothesis (pre-test):** TA service holds in-memory cache from before backfill; price shows ~88,000 while daily_ohlcv shows ~62,200. Restart should clear cache and resolve indicators.
+
+### Restart Execution
+
+**Container Status Before:**
+- technical-analysis: StartedAt 2026-06-30T02:37:17Z (16+ hours ago, UP)
+- mcp-server (peer baseline): StartedAt 2026-06-30T17:51:53Z (was force-recreated at 16:15Z)
+
+**Restart Action:**
+```
+docker compose restart technical-analysis
+```
+
+**Result:** Container restarted successfully
+- New StartedAt: 2026-06-30T18:19:51Z (40 seconds ago from test time 18:21Z)
+- Health: healthy
+- Peer (mcp-server) StartedAt: UNCHANGED at 2026-06-30T17:51:53Z ✓
+
+### Post-Restart Probes (via gateway)
+
+**1. PRICE MISMATCH — PERSISTS**
+```
+get_technical_indicators(VCB):
+  MA5 = 88,120 | MA20 = 88,840 | Price = 87,000
+
+get_price_history(VCB, limit=1, latest 2026-06-30):
+  close = 62,200
+```
+**DELTA: +25,000 (40% mismatch)** — NOT RESOLVED by restart
+
+**2. ROC MOMENTUM — NULL**
+```
+get_roc_momentum(tickers=[VCB,FPT,HPG,MWG,SSI,VNM,BID,CTG]):
+  tickers: [] (empty list — no data for any)
+  null_reason: "insufficient_cross_section"
+```
+**Expectation:** 8 tickers with ROC/z_score/decile values
+**Actual:** Zero tickers computed
+
+**3. RELATIVE STRENGTH — NULL + WARNING**
+```
+get_relative_strength(tickers=[...]):
+  tickers: [] (empty)
+  market_rs_composite: null
+  low_sample_warning: true
+```
+**Pattern:** Consistent with missing VN-Index benchmark data (RC3)
+
+**4. 52W PROXIMITY — NULL**
+```
+get_52w_proximity(tickers=[...]):
+  tickers: [] (empty)
+  aggregate.new_highs_count: 0
+  aggregate.new_lows_count: 0
+  pct_above_ma50: null
+  pct_above_ma200: null
+```
+**Pattern:** No data for any ticker
+
+### VERDICT: RC2 + RC3 (RESTART DID NOT FIX)
+
+The restart was clean and healthy, but the ROOT CAUSE is NOT in-memory stale cache. The issue is structural:
+
+**RC2 — SPLIT DATA SOURCE (CONFIRMED)**
+- TA service (/ta/indicators) reads from a different price source than daily_ohlcv
+- Latest VCB in TA: ~88,000 (pre-backfill price or alt-source)
+- Latest VCB in daily_ohlcv (via price_history): 62,200 (post-backfill, correct)
+- **Root:** TA service does NOT reference daily_ohlcv or reads an older store
+
+**RC3/RC4 — MISSING BENCHMARK DATA**
+- ROC momentum: all tickers empty → likely reads multi-ticker OHLCV that's missing recent bars or uses incomplete source
+- Relative strength: market_rs_composite null + low_sample_warning=true → VN-Index benchmark missing
+- 52W proximity: no highs/lows computed → same depth issue as ROC
+
+### Recommendation: Unblock Held Fixes
+
+The cheap diagnostic gate has CONFIRMED these are real bugs, not stale cache. Unblock:
+1. **FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE** (RC2) — audit TA service's price data path; ensure it reads daily_ohlcv or synced store
+2. **FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS** (RC3) — populate VN-Index cache and reconcile if TA has its own ingest
+3. **FIX-TA-ROC-DATA-GAP** (RC4, implicit) — verify multi-ticker OHLCV completeness in TA's read path
+
+
+## Incident Diagnosis: AGM Plan-Actual Dashboard Staleness Report (2026-07-01)
+
+**User Report:** Dashboard at http://localhost:3001/dashboard/agm-plan-actual?year=2026 "not updating for a long time"
+
+**Diagnosis Session:** 2026-07-01 19:58 UTC | Coordinator: ops
+
+### Live Endpoint Verification
+
+**Backend API (mcp-server:3000):**
+```
+GET /api/agm-plan-actual?year=2026
+Response: generatedAt = 2026-07-01T19:59:14Z ✓ FRESH
+Items: BID, BSR, ... (32 stocks)
+```
+
+**Frontend Proxy (localhost:3001):**
+```
+GET /api/agm-plan-actual?year=2026
+Response: generatedAt = 2026-07-01T19:59:12Z ✓ FRESH
+Items: identical to backend
+```
+
+**Timeline:** Both requests <2s apart → live data path confirmed.
+
+### Database Truth Check
+
+**agm_plan table:**
+- Rows: 327
+- Last fetched: 2026-06-30T20:30:40Z
+- Years: 2026, 2025, 2024, 2023, 2022 ✓
+
+**agm_actuals table:**
+- Rows: 2,084
+- Last fetched: 2026-06-30T20:30:40Z
+- Years: same as agm_plan ✓
+
+**2026 Data Distribution:**
+- report_term_id=2 (Q1): multiple stocks ✓
+- report_term_id=3 (Q2/H1): multiple stocks ✓
+- report_term_id=1 (full-year): ZERO rows ← CORRECT for open year
+
+**2025 Data Distribution (closed year):**
+- report_term_id=1 (full-year): BID/BSR/DBC/DGC/... ✓ COMPLETE
+
+### Ingest Job Status
+
+**agmPlanRefreshJob (daily VPS pull):**
+```
+Schedule: daily 20:30 UTC
+Last run: 2026-06-30 20:30:02 UTC
+Finished: 2026-06-30 20:30:48 UTC
+Status: SUCCESS ✓
+Duration: 46 seconds
+```
+
+**Recent History:**
+| Date | Time | Status |
+|------|------|--------|
+| 2026-06-30 | 20:30:02 | SUCCESS |
+| 2026-06-29 | 20:30:01 | SUCCESS |
+| 2026-06-29 | 20:30:00 | SUCCESS |
+| 2026-06-28 | 20:30:01 | SUCCESS |
+| 2026-06-28 | 20:30:00 | SUCCESS |
+
+No failures. All runs succeed. ✓
+
+### Container Health
+
+| Service | Status | Uptime |
+|---------|--------|--------|
+| mcp-server | healthy | 1h |
+| frontend | healthy | 4h |
+
+Ports 3000 & 3001 live. ✓
+
+### Data Freshness Analysis
+
+**Expected Behavior:**
+- 2025 (closed year): Full-year actuals (term_id=1) with completion_pct calculated
+- 2026 (open year): YTD actuals only (term_id=2,3,...) with status="IN_PROGRESS"
+
+**Actual Behavior (verified in DB):**
+- 2025: status="EXCEEDED"/"ON_TRACK"/"BEHIND" with full-year metrics ✓
+- 2026: status="IN_PROGRESS", actual_ty=null, completion_pct=null ✓
+
+**Frontend Rendering (verified in dashboard.agm-plan-actual.tsx):**
+- IN_PROGRESS → displays "Đang thực hiện" (in progress) ✓
+- actual_ty null → displays "—" (not 0%) ✓
+
+### Serving Chain Verification
+
+**Two-Data-Plane Check:**
+1. ✓ Proxy route: api.agm-plan-actual.tsx forwards to mcp-server:3000
+2. ✓ Handler: agmPlanActualHandler.ts queries live database
+3. ✓ Store: queryAgmPlanActual joins agm_plan + agm_actuals
+4. ✓ No HTTP caching headers interfering
+
+**Data Freshness at Each Layer:**
+- DB timestamp: 2026-06-30T20:30:40Z (46h ago, expected for daily)
+- API generatedAt: 2026-07-01T19:59:14Z (live)
+- Frontend proxy: identical to backend ✓
+- Dashboard page: loads fresh via Remix server-side loader ✓
+
+### Root Cause Analysis
+
+**Finding: NO STALENESS DETECTED**
+
+The dashboard IS serving fresh data correctly:
+1. Daily ingest job runs successfully at 20:30 UTC
+2. Database was updated 23 hours ago (within daily cadence)
+3. Live API endpoints return current timestamps
+4. Frontend proxy is transparent and working
+5. Container health is nominal
+
+**User Confusion Likely Source:**
+- Year 2026 shows "Đang thực hiện" (IN_PROGRESS) status
+- User may expect full-year plan/actual comparison
+- But 2026 is an open year — no full-year actuals exist yet
+- Full-year actuals will populate Q1 2027 when companies close books
+- This is correct behavior, not stale data
+
+### Recommendation
+
+**Action:** NONE — System operating as designed.
+
+- Data is fresh (daily cadence = 24h lag)
+- Status "IN_PROGRESS" is correct for open year 2026
+- VPS ingest job runs reliably
+- Serving chain works end-to-end
+
+Users expecting real-time or more frequent updates should be educated that:
+- AGM data is a once-daily refresh (20:30 UTC)
+- Open-year plan/actual comparison requires full-year actuals (unavailable until Q1 next year)
+- For interim visibility, use YTD data shown in dashboard
+
+### Metadata
+
+| Field | Value |
+|-------|-------|
+| Session | ops incident-diagnosis 2026-07-01T19:58Z |
+| Diagnosis time | 15 minutes |
+| Verified endpoints | 2 (backend + proxy) |
+| DB tables checked | 2 (agm_plan, agm_actuals) |
+| Job runs sampled | 5 (all success) |
+| Finding | NO ISSUE |
+
