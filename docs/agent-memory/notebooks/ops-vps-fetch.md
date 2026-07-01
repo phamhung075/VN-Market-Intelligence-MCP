@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-06-16 19:00 UTC | **Sprint:** FIX-FOREIGN-FLOW-INTEGRITY-BREAK + FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL (triple recon)
+**Last updated:** 2026-07-01 23:20 UTC | **Sprint:** B-05-FIX (bctc-discover stale 15d, SSC outage corroborated)
 
 ---
 
@@ -14,7 +14,7 @@
 | sbv-rates | 2026-05-13 | healthy | none (Akamai present, not blocking) |
 | hsx-bctc | 2026-05-13 09:17 | FIXED (HNX params corrected) / HSX SPA unchanged | none |
 | hsx-bctc (api.hsx.vn) | 2026-05-15 04:45 | BLOCKER — /n/ JSON REST endpoints unreachable from VPS. Envoy route-level block, not geo-IP. | Envoy route table |
-| ssc-bctc-newsearch | 2026-06-16 12:40 | FUNCTIONAL — afrLoop+HNX session fixed; remaining queue = genuine non-filers. Transient 503 at ~12:00Z UTC daily. | none |
+| ssc-bctc-newsearch | 2026-07-01 23:16 | **BROKEN (external)** — whole domain 503 "no server available", non-transient 9+min, NOT the documented ~12:00Z daily window this time. Blocks discovery for 30/33 HOSE watchlist tickers (only viable path). Retry/backoff still unshipped. | none (genuine outage, not anti-bot) |
 | hnx-bctc-post-api | 2026-06-16 12:40 | FIXED — session warmup GET deployed; both NY+UPCOM warmup OK in live probes | ASP.NET session |
 
 ---
@@ -91,6 +91,26 @@ BCTC is quarterly; Q2 filings (earnings months 4/7/10) arrive mid-to-late July. 
 **38 backlog rows:** These are the url_not_found/enrich_failed items (BDI, DAG, DLC, JSH, SIS, VDC, VNH, VEA sub-variants). They are genuine non-filers or SSC-invisible tickers. Not time-sensitive off-season. Will re-enter fetch cycle automatically when Q2 filings appear in July.
 
 **B-14/B-05 classification: FALSE-CRITICAL.** Both alerts are health-monitor artifacts, not VPS failures.
+
+---
+
+## c020 · 2026-07-01T23:20Z · B-05-FIX — bctc-discover stale 15d: CORROBORATED-BROKEN (external SSC outage), VPS itself healthy
+
+Trigger: po dispatch B-05-FIX (CRITICAL, UNBLOCK) — auditor: bctc-discover stale 21711min (~15d), 38-item discover backlog not draining. Auditor "unhealthy" health badge on vn-bctc-fetch is a KNOWN false positive (no HTTP port) — ignored per task instructions; corroborated on hard evidence only.
+
+**VERDICT: CORROBORATED-BROKEN. Root cause = external source outage, NOT a VPS fault.**
+
+**VPS-side (all healthy):** `vn-bctc-fetch.service` active 5d, 0 crashes, 34 consecutive clean 6h cycles, log shows "Queue: 0 items pending" every cycle since Jun 19. `vn-bctc-enrich.timer/.service` active 3wk, 6h cadence, same "0 items (skip_enrichment=true)" pattern. `vn-vps-proxy.service` active 2wk3d, 51.8M mem, 0 restarts. Live public queue API `/api/bctc-fetch-queue` → `{"queue":[],"total":0}` right now.
+
+**Live probe (SSH, 2026-07-01T23:07–23:16Z):** `congbothongtin.ssc.gov.vn` returns HTTP 503 "No server is available to handle this request" on EVERY path (root, `/faces/NewsSearch`, even deprecated `/faces/SanGiaoDiv.xhtml`) — 6+ attempts over 9+ min, all 503, ~0.1-0.18s response (real HTTP reply, not a hang). No CF/anti-bot signature. Ran `discover-bctc-urls-browser.py` directly for VEA (UPCOM) and GAS (HOSE): HNX/UPCOM steps succeed (200, correct "no results" parse) — ONLY the SSC-CURL fallback step fails (503 at step1), confirming the fault is isolated to the SSC domain, not VPS network/geo-block.
+
+**Why it matters now:** 30/33 active watchlist tickers are HOSE-listed (system-map.json); HSX direct scraping is permanently out-of-scope (2026-05-13 recon, SPA needs browser session) — SSC-CURL is their ONLY discovery path. This outage sits right at Q2/2026 earnings SLA window open (system-map `bctc-discover.sla.earnings_window`: trigger_months=[7], window_days=14 → Jul 1–15 tightened to 24h threshold). Push-age 361.8h >> 24h.
+
+**38-backlog reconciliation:** auditor's own documented gate (`docs/agents/system-auditor/flow/main.md` § BCTC Healthy-Idle Gate) counts `bctc_vps_queue WHERE status IN (pending,url_not_found,enrich_failed)` — a raw DB count DIFFERENT from the public `/api/bctc-fetch-queue` HTTP endpoint (0, above). VPS's own 6h loop does NOT drain that table — draining depends on mcp-server's own `bctcQueueEnricherJob` calling the VPS `/proxy/bctc-discover/:ticker` route on demand (main-server-side, outside SSH-to-VPS scope). Auditor's CRITICAL classification is well-calibrated (BCTC_ACTIVE=38>0 → normal SLA compare applies), NOT a false positive this time.
+
+**No restart performed** — nothing on VPS was down to restart; fault is 100% external (SSC gov't portal backend).
+
+**Recon:** `docs/vps-sources/bctc-discover-stale-15d/recon.md`. **Signal:** `docs/signals/dev-vps-crawls-20260701T231736Z.json` → dev-vps-crawls (implement unshipped SSC-503 retry/backoff from c016 residual risk #1). **Handoff note:** backlog composition + bctcQueueEnricherJob liveness → dev-mcp-server (DB/main-server side, not mine).
 
 ---
 

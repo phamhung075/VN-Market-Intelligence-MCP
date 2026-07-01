@@ -1952,7 +1952,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-01T23:04:58Z",
+    "_updated_at": "2026-07-01T23:22:35Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -8423,6 +8423,22 @@
         "origin_report": "telegram#3368 bctc-analyst 2026-07-01T21:21Z",
         "question": "Do VHM/REE/VIC/VNM/VRE/POW Q1-2026 total_assets=0 share ONE root cause or several? Classify each (column-separated OCR layout / missing BS section-total codes 100-400 / failed refine windows / OCR quality) and map to existing owners (FIX-REE-BS-SECTION-REGEX for REE, SPIKE-BCTC-COLUMN-SEPARATED-LAYOUT for VNM, W5-FU/CTG agentic-refine-repass pattern) OR flag NEW. Output a CONSOLIDATED remediation batch — do NOT mint duplicate per-ticker FIX tasks.",
         "status_note": "Self-initiated from telegram#3368 (bctc-analyst WARNING, 2026-07-01T21:21Z): 6 non-bank tickers all total_assets=0 for Q1-2026, same signature as CTG (c069), DISTINCT from the bank-only FIX-BCTC-BANK-SUMMARY-MAPPING sprint. No task owns this holistically today; coverage is piecemeal (REE-regex, VNM-column-spike). Time-box 120m diagnosis -> consolidated remediation plan; reconcile against existing partial tasks before any per-ticker FIX. Report_ids: VHM/REE/VIC/VNM/VRE/POW-Q1-2026."
+      },
+      {
+        "id": "B-05-FU-SSC-503-RETRY",
+        "status": "BACKLOG",
+        "title": "B-05-FU — ship SSC-503 retry/backoff in _ssc_curl_search() (c016 residual risk, never shipped)",
+        "owner": "dev-team",
+        "next_agent": "dev-vps-crawls",
+        "route_to": "dev-vps-crawls",
+        "type": "FIX",
+        "zone": "vps-crawls/",
+        "priority": "medium",
+        "created_at": "2026-07-01T23:22:35Z",
+        "created_by": "dev-team-dispatcher",
+        "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
+        "parent_task": "B-05-FIX",
+        "status_note": "2026-06-16 recon flagged unfixed residual: discover script has NO retry on SSC 503 (returns None -> SKIP). Implement 1 retry + 60s backoff in _ssc_curl_search() step1 on VPS discover script. Signal file: docs/signals/processed/dev-vps-crawls-20260701T231736Z.json. NOTE: SSC portal currently in domain-wide outage (B-05-FIX verdict) - retry/backoff hardens recovery-window flakiness, it does NOT fix the outage. Not urgent while portal is down; dispatch when WIP allows."
       }
     ],
     "closed_sprints": [
@@ -10220,6 +10236,25 @@
         "note": "[architect 2026-07-01] AC-1 SPIKE gate satisfied — mint per AC-11 cascade-ordering rule. pm MUST NOT mint dev-pdf-extractor tasks off this sprint (zone re-pinned to apps/mcp-server/ only, see architecture_brief).",
         "done_at": "2026-07-01T18:03:03Z",
         "done_verified": false
+      },
+      {
+        "id": "B-05-FIX",
+        "status": "DONE",
+        "title": "B-05-FIX (VPS vn-bctc-fetch) — bctc-discover stale ~15d; corroborate then repair discover pipeline",
+        "owner": "po",
+        "next_agent": "ops-vps-fetch",
+        "route_to": "ops-vps-fetch",
+        "type": "UNBLOCK",
+        "zone": "cross-service/",
+        "priority": "high",
+        "created_at": "2026-07-01T22:58:23Z",
+        "created_by": "po",
+        "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
+        "status_note": "CRITICAL auditor data_stale (origin sau-2026-07-01T22:33:43Z). STEP 1 CORROBORATE (corroboration gate — do NOT mint a repair from a health badge): SSH VPS, inspect vn-bctc-fetch systemd timer + last-run journal, and run a LIVE HTTP discover recipe probe. IGNORE the auditor \"unhealthy\" HTTP badge — KNOWN FALSE POSITIVE (vn-bctc-fetch is a pure-bash systemd timer with NO HTTP port; see backlog FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES). REAL evidence = hard DB staleness 21711min (~15d) + ~38-item discover backlog not draining. STEP 2: if corroborated broken -> diagnose (network / anti-bot / page-restructure / dead-timer) and signal dev-vps-crawls for impl fix. If NOT broken (genuine no-new-report lull) -> close RESOLVED with live-probe evidence, no code change. AC: bctc-discover ingests fresh items (staleness < audit B-05 threshold) AND discover backlog drains; no B-05 signal_queue row for 7d.",
+        "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
+        "dispatched_at": "2026-07-01T23:04:58Z",
+        "completed_at": "2026-07-01T23:22:35Z",
+        "verdict_note": "dispatcher RAW-verified (recon.md raw curl evidence + signal json + notebook c020): CORROBORATED-BROKEN, root cause = EXTERNAL SSC portal outage (congbothongtin.ssc.gov.vn domain-wide HTTP 503, 6+ probes 23:07-23:16Z, no anti-bot signature). VPS infra fully healthy (3 systemd units active, 0 crashes); HNX/UPCOM paths working same-run. No restart performed - nothing VPS-side to fix. Staleness will persist until SSC portal recovers; auditor re-raises of B-05 route to this verdict. Follow-ups minted: B-05-FU-ENRICHER-LIVENESS (dev-mcp-server, dispatched), B-05-FU-SSC-503-RETRY (dev-vps-crawls, backlog)."
       }
     ],
     "done_verified": [
@@ -11830,23 +11865,6 @@
     },
     "in_progress": [
       {
-        "id": "B-05-FIX",
-        "status": "IN_PROGRESS",
-        "title": "B-05-FIX (VPS vn-bctc-fetch) — bctc-discover stale ~15d; corroborate then repair discover pipeline",
-        "owner": "po",
-        "next_agent": "ops-vps-fetch",
-        "route_to": "ops-vps-fetch",
-        "type": "UNBLOCK",
-        "zone": "cross-service/",
-        "priority": "high",
-        "created_at": "2026-07-01T22:58:23Z",
-        "created_by": "po",
-        "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
-        "status_note": "CRITICAL auditor data_stale (origin sau-2026-07-01T22:33:43Z). STEP 1 CORROBORATE (corroboration gate — do NOT mint a repair from a health badge): SSH VPS, inspect vn-bctc-fetch systemd timer + last-run journal, and run a LIVE HTTP discover recipe probe. IGNORE the auditor \"unhealthy\" HTTP badge — KNOWN FALSE POSITIVE (vn-bctc-fetch is a pure-bash systemd timer with NO HTTP port; see backlog FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES). REAL evidence = hard DB staleness 21711min (~15d) + ~38-item discover backlog not draining. STEP 2: if corroborated broken -> diagnose (network / anti-bot / page-restructure / dead-timer) and signal dev-vps-crawls for impl fix. If NOT broken (genuine no-new-report lull) -> close RESOLVED with live-probe evidence, no code change. AC: bctc-discover ingests fresh items (staleness < audit B-05 threshold) AND discover backlog drains; no B-05 signal_queue row for 7d.",
-        "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
-        "dispatched_at": "2026-07-01T23:04:58Z"
-      },
-      {
         "id": "W5-FU-CTG-REFINE-96e36139",
         "status": "IN_PROGRESS",
         "title": "W5-FU: agentic-refine transcription pass for CTG 2026-Q1 (report_id 96e36139, 56 windows) -> re-run reingest-bctc-report.ts (unblocks W5 total_assets)",
@@ -11864,6 +11882,24 @@
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:04:58Z",
         "route_note": "dispatcher route-corrected: STEP1 refine_bctc_md (leaf worker, 8 chunks resumable), STEP2 dev-mcp-server (bctc-analyst lacks Bash for reingest script) — PO desc already hedged STEP2"
+      },
+      {
+        "id": "B-05-FU-ENRICHER-LIVENESS",
+        "status": "IN_PROGRESS",
+        "title": "B-05-FU — confirm bctcQueueEnricherJob liveness + reconcile 38-row bctc_vps_queue composition",
+        "owner": "dev-team",
+        "next_agent": "dev-mcp-server",
+        "route_to": "dev-mcp-server",
+        "type": "UNBLOCK",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-07-01T23:22:35Z",
+        "created_by": "dev-team-dispatcher",
+        "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
+        "parent_task": "B-05-FIX",
+        "status_note": "Per B-05-FIX recon (docs/vps-sources/bctc-discover-stale-15d/recon.md): the 38-row bctc_vps_queue backlog is NOT drained by the VPS 6h loop - draining depends on mcp-server bctcQueueEnricherJob calling VPS /proxy/bctc-discover/:ticker on demand. STEP 1: confirm the job is scheduled+firing (cron registry, last-run logs, live container). STEP 2: re-pull live bctc_vps_queue composition (status+ticker+exchange) from the NAMED-VOLUME DB and reconcile vs the 2026-06-25 c019 known set (HNX/UPCOM genuine non-filers BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA+variants). Report: (a) job firing yes/no + evidence, (b) backlog same historical set or grown with HOSE tickers now blocked by SSC outage. AC: raw evidence for both; NO code change unless job is provably dead (then minimal fix + rebuild per single-svc rule).",
+        "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
+        "dispatched_at": "2026-07-01T23:22:35Z"
       }
     ],
     "ready": [

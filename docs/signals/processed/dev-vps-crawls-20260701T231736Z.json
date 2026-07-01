@@ -1,0 +1,25 @@
+{
+  "from": "ops-vps-fetch",
+  "to": "dev-vps-crawls",
+  "type": "recon-complete",
+  "payload": {
+    "source_name": "bctc-discover-stale-15d",
+    "recon_doc": "docs/vps-sources/bctc-discover-stale-15d/recon.md",
+    "anti_bot_type": "none",
+    "suggested_technique": null,
+    "trigger": "fetch_broken",
+    "task_ref": "B-05-FIX",
+    "root_cause": "external_source_outage",
+    "detail": "SSC congbothongtin.ssc.gov.vn returns persistent domain-wide HTTP 503 (confirmed live, non-transient over 9+ min, all paths). VPS-side systemd services (vn-bctc-fetch, vn-bctc-enrich.timer/.service, vn-vps-proxy) all healthy/active, zero errors. HNX/UPCOM discovery paths on same VPS/run currently functional. Not anti-bot, not VPS network, not dead timer. Blocks SSC-CURL discovery for 30/33 (91%) HOSE-listed watchlist tickers right at Q2/2026 earnings SLA window open (July 1-15, 24h threshold).",
+    "recommended_action": "Implement previously-flagged-but-unshipped SSC 503 retry/backoff (1 retry, 60s backoff) in discover-bctc-urls-browser.py _ssc_curl_search() step1 GET, per residual risk #1 in docs/vps-sources/bctc-pipeline-stale-5d/recon.md (2026-06-16, never implemented). Monitor SSC portal for recovery — external outage, no scraper/code fix can restore it directly.",
+    "handoff_note": "Backlog reconciliation (38-row bctc_vps_queue count vs 0-row public /api/bctc-fetch-queue; whether bctcQueueEnricherJob main-server-side is actively firing against VPS /proxy/bctc-discover/:ticker) is main-server/DB-side — route to dev-mcp-server, not VPS-side."
+  },
+  "priority": "high",
+  "createdAt": "2026-07-01T23:17:36Z",
+  "_processed": {
+    "fingerprint": "440b23319620746caded43038d351b6a95089f0fb1ae6525b04288d248ce16d5",
+    "processedAt": "2026-07-01T23:21:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
