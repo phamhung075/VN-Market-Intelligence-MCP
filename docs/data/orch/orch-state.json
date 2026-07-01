@@ -245,10 +245,21 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
-    "next_agent": "pm",
-    "updated_at": "2026-07-01T06:44:22Z",
-    "updated_by": "architect",
-    "note": "Architect SPLIT done 2026-07-01: 2 parallel-safe hops, no file overlap. hop1 apps/mcp-server (dev-mcp-server): FR-1.1+FR-2.2(probe DONE, verdict=silent-bug)+FR-1.2. hop2 docs/agents (agent-father, not dev-*): FR-2.1(corrected evidence types)+FR-3. Brief: docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md. Dispatch pm to decompose into 2 tasks."
+    "next_agent": "dev-mcp-server",
+    "updated_at": "2026-07-01T06:49:50Z",
+    "updated_by": "pm",
+    "note": "PM decomposition complete 2026-07-01T05:37Z. Parallel dispatch: hop1 dev-mcp-server (FR-1.1 direction+horizon bug + FR-2.2 watchdog + FR-1.2 cadence daily) + hop2 agent-father (FR-2.1 record_evidence_fragment wiring + FR-3 Sharpe-gate docs fix). No file overlap. Backlog: FIX-VPS-SSC-INSIDER-502 (VPS upstream diagnosis async).",
+    "parallel_dispatch": {
+      "mode": "simultaneous",
+      "agents": [
+        "dev-mcp-server",
+        "agent-father"
+      ],
+      "tasks": [
+        "TASK-EVIDENCE-HOP1-MCP",
+        "TASK-EVIDENCE-HOP2-AGENTS"
+      ]
+    }
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8201,6 +8212,22 @@
         "created_by": "po-s135",
         "source_report_id": 3366,
         "note": "Telegram report id=3366 (analysis-agent, normal, 2026-07-01T04:30Z): 'VPS backfill stalled after 5 retries; manual VPS investigation required'. ALL five codes are NON-watchlist (direct grep of system-map.json watchlist = none). The whole watchlist OHLCV-depth program is DONE_VERIFIED (SUBTASK-A..E, REBUILD, PROD-BACKFILL-GATE, PERSIST-DAILY-OHLCV-2YR). Manual VPS investigation = ops/infra, NOT a coding lane. Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG. Low priority — peripheral codes, no serving-layer impact. Related infra: BCTC-HIST-VPS-BACKFILL (DEFERRED, infra-vps)."
+      },
+      {
+        "id": "FIX-VPS-SSC-INSIDER-502",
+        "title": "FIX-VPS-SSC-INSIDER-502 — VPS proxy HTTP 502 on ssc-insider upstream (decoupled from BA-PREDICTION-EVIDENCE-REVIVAL)",
+        "type": "FIX",
+        "zone": "vps-scripts/",
+        "specialist": "developer",
+        "status": "TODO",
+        "priority": "medium",
+        "created_at": "2026-07-01T06:49:50Z",
+        "created_by": "pm",
+        "depends": [],
+        "size": "S",
+        "parent_sprint": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "decoupled_from": "TASK-EVIDENCE-HOP1-MCP",
+        "decoupling_reason": "FR-2.2 watchdog observability fix in apps/mcp-server; VPS upstream root-cause diagnosis deferred (requires live SSH, external portal may be down)"
       }
     ],
     "closed_sprints": [
@@ -10761,7 +10788,7 @@
         "id": "BA-PREDICTION-EVIDENCE-REVIVAL",
         "title": "Requirement spec for PREDICTION-EVIDENCE-REVIVAL — revive starved evidence->LR->validation chain so digest-predict emits fresh prediction claims again",
         "owner": "ba",
-        "next_agent": "pm",
+        "next_agent": "dev-mcp-server",
         "status": "READY",
         "zone": "multi",
         "type": "SPRINT-M",
@@ -10855,7 +10882,90 @@
           "parallel_safe": true,
           "no_file_overlap": true,
           "corrections_to_ba_po_spec": "4 live-verified corrections in brief SS0: tools_package filenames, detectAccumulationStreaks location, seeded evidence_type set (bctc_revenue_growth/pe_ratio/debt_equity never seeded), FR-2.2 probe completed at design time with SILENT BUG verdict"
-        }
+        },
+        "decomposed_at": "2026-07-01T06:49:50Z",
+        "decomposed_by": "pm",
+        "decomposed_tasks": [
+          {
+            "id": "TASK-EVIDENCE-HOP1-MCP",
+            "specialist": "dev-mcp-server"
+          },
+          {
+            "id": "TASK-EVIDENCE-HOP2-AGENTS",
+            "specialist": "agent-father"
+          }
+        ],
+        "decomposed_backlog": [
+          {
+            "id": "FIX-VPS-SSC-INSIDER-502"
+          }
+        ],
+        "dispatch_plan": "parallel: BOTH hop1 (dev-mcp-server) + hop2 (agent-father) simultaneously; no file overlap; WIP after dispatch = 2 (within limit); hop1 critical coupling: cronConfig.ts:62 + baseRateComputationJob.ts:299 must land same commit",
+        "parallel_dispatch": {
+          "first_hop": "TASK-EVIDENCE-HOP1-MCP",
+          "second_hop": "TASK-EVIDENCE-HOP2-AGENTS",
+          "safe_parallel": true,
+          "no_file_overlap": true
+        },
+        "verify_note": "PM decomposition complete 2026-07-01T05:37Z cycle. Decomposed into 2 READY child tasks (hop1 dev-mcp-server, hop2 agent-father) + 1 TODO backlog (FIX-VPS-SSC-INSIDER-502). Parent row held for dispatch routing, next_agent=dev-mcp-server."
+      },
+      {
+        "id": "TASK-EVIDENCE-HOP1-MCP",
+        "title": "TASK-EVIDENCE-HOP1-MCP — Hop 1: get_evidence_summary direction+horizon bug + insider freshness watchdog + baseRate cadence daily",
+        "parent_sprint": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "type": "SPRINT-M-HOP",
+        "zone": "apps/mcp-server/",
+        "specialist": "dev-mcp-server",
+        "status": "READY",
+        "priority": "high",
+        "created_at": "2026-07-01T06:49:50Z",
+        "created_by": "pm",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "depends": [],
+        "size": "M",
+        "frs": [
+          "FR-1.1: evidenceTools.ts:172-311 get_evidence_summary — replace hardcoded (bullish,10) lookup with fragment own direction+horizon using getLikelihoodRatios store; add regression test (3 cases per brief S1)",
+          "FR-2.2: extend vpsProxyWatchdogJob.ts with insider-freshness reader + INSIDER_STALE_MS threshold; probe completed with SILENT BUG verdict",
+          "FR-1.2: baseRateComputationJob cadence weekly->daily; CRITICAL: both cronConfig.ts:62 + baseRateComputationJob.ts:299 must change together"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/evidenceTools.ts",
+          "apps/mcp-server/src/scheduler/vpsProxyWatchdogJob.ts",
+          "apps/mcp-server/src/scheduler/cronConfig.ts",
+          "apps/mcp-server/src/scheduler/macro/baseRateComputationJob.ts",
+          "docs/standards/cron-jobs.md"
+        ]
+      },
+      {
+        "id": "TASK-EVIDENCE-HOP2-AGENTS",
+        "title": "TASK-EVIDENCE-HOP2-AGENTS — Hop 2: wire record_evidence_fragment into agent flows + strip false Sharpe gate language",
+        "parent_sprint": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "type": "SPRINT-M-HOP",
+        "zone": "docs/agents/",
+        "specialist": "agent-father",
+        "status": "READY",
+        "priority": "high",
+        "created_at": "2026-07-01T06:49:50Z",
+        "created_by": "pm",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "depends": [],
+        "size": "M",
+        "parallel_safe_with": "TASK-EVIDENCE-HOP1-MCP",
+        "frs": [
+          "FR-2.1: wire record_evidence_fragment into news-scout/bctc-analyst/market-watcher flows + correct tools_package docs; use REAL seeded evidence_type set",
+          "FR-3: digest-predict/init.md — strip false Sharpe>1.0 hard-gate language (B1=Design B, PO approved)"
+        ],
+        "files": [
+          "docs/agents/news-scout/flow/stage-sentiment.md",
+          "docs/agents/bctc-analyst/flow/stage-analyze.md",
+          "docs/agents/market-watcher/flow/cycle.md",
+          "docs/agents/tools/package/news-scout.md",
+          "docs/agents/tools/package/bctc-analyst.md",
+          "docs/agents/tools/package/market-watcher.md",
+          "docs/agents/digest-predict/init.md"
+        ]
       }
     ],
     "review": [

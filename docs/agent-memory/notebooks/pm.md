@@ -1,5 +1,29 @@
 # PM — Notebook
 
+## c320 BA-PREDICTION-EVIDENCE-REVIVAL SPRINT DECOMPOSITION · 2026-07-01T05:37Z
+
+**PARENT:** BA-PREDICTION-EVIDENCE-REVIVAL (SPRINT-M, high, zone=multi, active)
+**ARCHITECT:** Completed SPLIT into 2 parallel-safe hops; architecture brief docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md
+**INPUT:** Brief + handoff + PO-approved scope reshape (B1-B4 resolved); corrected 4 load-bearing BA/PO spec errors live-verified during brief
+
+**DECOMPOSITION PLAN:**
+- **Hop 1 (dev-mcp-server):** FR-1.1 (get_evidence_summary direction+horizon bug, surfaces live n=18 TRUSTED row) + FR-2.2 (insider-accumulation watchdog extension, probe done, verdict=SILENT BUG) + FR-1.2 (baseRateComputationJob cadence weekly→daily, CRITICAL two-file coupling: cronConfig.ts:62 + baseRateComputationJob.ts:299 must move together)
+- **Hop 2 (agent-father):** FR-2.1 (wire record_evidence_fragment into news-scout/bctc-analyst/market-watcher flows + corrected tools_package docs, use REAL seeded evidence_type set per brief §0 C3) + FR-3 (strip false Sharpe>1.0 hard-gate language from digest-predict/init.md, B1=Design B PO-approved)
+- **Backlog (decoupled):** FIX-VPS-SSC-INSIDER-502 (VPS upstream diagnosis async; FR-2.2 watchdog extends observability, root-cause chase deferred outside sprint scope per B2)
+
+**OUTPUT:** 3 orch-state rows created:
+1. TASK-EVIDENCE-HOP1-MCP (READY, specialist=dev-mcp-server, next_agent=dev-mcp-server, zone=apps/mcp-server/)
+2. TASK-EVIDENCE-HOP2-AGENTS (READY, specialist=agent-father, next_agent=agent-father, zone=docs/agents/)
+3. FIX-VPS-SSC-INSIDER-502 (TODO backlog, specialist=developer, parent_sprint=BA-PREDICTION-EVIDENCE-REVIVAL)
+
+**BOARD MUTATION:** Parent row status=READY (held for dispatch routing), decomposed_tasks=[hop1, hop2], decomposed_backlog=[fix], parallel_dispatch={mode:simultaneous, agents:[dev-mcp-server, agent-father], tasks:[hop1, hop2]}. Head updated: next_agent=dev-mcp-server, parallel_dispatch active. WIP after dispatch = 2 (within limit).
+
+**CRITICAL TRACKING (RISK-1 HIGH):** Hop1 FR-1.2 two-file coupling — cronConfig.ts:62 + baseRateComputationJob.ts:299 must land in same commit (missing either defeats cadence upgrade). Developer must annotate commit message with this coupling.
+
+**DISPATCH WAVE:** Parallel simultaneous: both hop1 + hop2 ready for dispatch NOW. Zero file overlap verified. Sequential constraint: none (parallel-safe). Parent row held, router/dispatcher will claim per-task + spawn both agents. Backlog row (FIX-VPS-SSC-INSIDER-502) status=TODO, awaits VPS live diagnosis.
+
+---
+
 ## Archive (pre-2026-06-28)
 
 [21 cycles archived: 2026-06-27 — 2026-06-23. Recent cycles retained above for active context.]
