@@ -54,7 +54,14 @@ function insertTombstone(
 }
 
 function countRows(db: Database): number {
-  const row = db.prepare("SELECT COUNT(*) AS c FROM task_locks").get() as { c: number };
+  // Exclude orphan-signal rows: gcExpiredLocks now emits 'orphan-signal' entries
+  // into task_locks as a side-effect (P1.5-MCP-2, TASK_1983) for every deleted
+  // cowork-slot / sprint-task tombstone. These helpers test the GC core behaviour
+  // (row deletion + survivor count) — orphan-signal book-keeping is a separate concern
+  // tested by the orphan-adoption suite.  Excluding them keeps assertions correct.
+  const row = db
+    .prepare("SELECT COUNT(*) AS c FROM task_locks WHERE task_kind != 'orphan-signal'")
+    .get() as { c: number };
   return row.c;
 }
 
@@ -244,11 +251,14 @@ describe("TC-5: listHeldTasks shows only live locks after GC", () => {
       ttl_seconds: 900,
     });
 
-    const listResult = listHeldTasks();
+    // Filter to cowork-slot kind: gcExpiredLocks emits orphan-signal rows (P1.5-MCP-2)
+    // for each deleted tombstone. listHeldTasks returns ALL rows including those signals.
+    // This assertion targets operational cowork-slot locks only — the GC core behaviour.
+    const listResult = listHeldTasks({ kind: "cowork-slot" });
     expect(listResult.count).toBe(1);
     expect(listResult.locks[0]!.task_id).toBe("live:slot:now");
 
-    // No expired rows remain
+    // No expired cowork-slot rows remain (orphan-signals have 2h TTL so are NOT expired)
     const expiredResult = listHeldTasks({ expired: true });
     expect(expiredResult.count).toBe(0);
   });

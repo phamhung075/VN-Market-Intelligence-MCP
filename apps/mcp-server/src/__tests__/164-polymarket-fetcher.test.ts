@@ -58,7 +58,7 @@ function buildClobResponse(
     items.map((item) => ({
       condition_id: item.condition_id,
       question: item.question,
-      end_date_iso: item.end_date_iso ?? "2026-06-30T00:00:00Z",
+      end_date_iso: item.end_date_iso ?? "2099-12-31T00:00:00Z",
       tokens: item.tokens ?? [
         { outcome: "Yes", price: 0.65 },
         { outcome: "No", price: 0.35 },

@@ -311,12 +311,19 @@ export async function refineOneReport(
 
   // ── Phase 0: Claim + readiness gate ───────────────────────────────────────
 
+  // owner_client_session must match between claimTask and releaseTask.
+  // P1-FINAL (TASK_1980): releaseTask matches solely on owner_client_session —
+  // passing a different value (e.g. "refine-orchestrator") causes a no-op release
+  // (lock stays held → subsequent runs are skipped until TTL expiry).
+  // Use Bun.env per dev-standards.md coding convention (never process.env).
+  const ownerClientSession = Bun.env["CLAUDE_CODE_SESSION_ID"] ?? `bctc-refine-job-pid-${process.pid}`;
+
   const claimResult = claimTask({
     task_id: taskId,
     task_kind: "sprint-task",
     owner_session: `pid-${process.pid}`,
     owner_agent: "refine-orchestrator",
-    owner_client_session: process.env["CLAUDE_CODE_SESSION_ID"] ?? `bctc-refine-job-pid-${process.pid}`,
+    owner_client_session: ownerClientSession,
     ttl_seconds: 3600,
     payload: null,
   });
@@ -509,10 +516,9 @@ export async function refineOneReport(
     } catch { /* ignore */ }
     throw err;
   } finally {
-    // Always release the task lock — match on owner_agent (stable across restarts)
-    // to correctly undo the claim above which used owner_agent:"refine-orchestrator".
-    // Previously passed pid-${process.pid} here which mismatched the claimed
-    // owner_agent and left the lock as a zombie until TTL expiry.
-    releaseTask(taskId, "refine-orchestrator");
+    // Always release the task lock using the same ownerClientSession used in claimTask.
+    // P1-FINAL (TASK_1980): releaseTask matches solely on owner_client_session — passing
+    // any other value (e.g. "refine-orchestrator") is a no-op and leaves a zombie lock.
+    releaseTask(taskId, ownerClientSession);
   }
 }

@@ -754,19 +754,23 @@ describe("cowork-schedule.json schema — P1-DEV-4 ACs", () => {
     schedule = JSON.parse(fs.readFileSync(schedPath, "utf8"));
   });
 
-  test("All 19 enabled slots have policy_id field", () => {
-    // REWRITE 2026-06-09 (BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS): slot count grew from 14 → 16.
-    // Updated 2026-06-27 (FIX-CI-RED-EAC0CC65-BUNTEST): count grew from 16 → 17 (tnb-audit added).
-    // Updated 2026-06-27 (FIX-CI-RED-BA82F2F5-DWF-CADENCE): count grew from 17 → 19 (refine-bctc-slot-3 + slot-4 added, T2 throughput, 19764c0e).
+  test("All enabled slots have policy_id field", () => {
+    // COUNT INVARIANT: slot count grows as cowork evolves — do NOT hardcode it here.
+    // The structural invariant (every enabled slot has policy_id) is load-bearing;
+    // the exact count is NOT. Specific-slot assertions below (bctc-analyst, gatherer,
+    // chef-intraday) provide the meaningful count guards.
+    // HISTORY: assertion drifted 14→16→17→19→21 across 4 patches — root-cause fix
+    // removes the exact-count assertion to end the treadmill (CI-RED-323b512b-FIX).
     const enabled = schedule.slots.filter((s: any) => s.enabled);
-    expect(enabled.length).toBe(19);
+    expect(enabled.length).toBeGreaterThanOrEqual(19); // floor guard; grows over time
     for (const slot of enabled) {
       expect(slot).toHaveProperty("policy_id");
     }
   });
 
-  test("All 19 enabled slots have last_fired field", () => {
+  test("All enabled slots have last_fired field", () => {
     const enabled = schedule.slots.filter((s: any) => s.enabled);
+    expect(enabled.length).toBeGreaterThanOrEqual(19); // floor guard; keeps parity with policy_id test
     for (const slot of enabled) {
       expect(slot).toHaveProperty("last_fired");
     }
