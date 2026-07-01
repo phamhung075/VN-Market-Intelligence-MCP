@@ -243,12 +243,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-01T17:06:29Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "CCATO-T1-TRUTH-GATE-ENGINE DONE_VERIFIED (dev c18ba298 + fixer 29aac30e + qa 9b2448d8 APPROVE + dispatcher RAW re-verify). Sprint NARRATIVE-TRUTH-CCATO-GATE remains OPEN: CCATO-T2-CLAIM-TRUTH-SKILL now UNBLOCKED (dep T1 satisfied, still backlog), CCATO-T3-FLOW-WIRING-6PT still blocked (dep T2). WIP=0 in_progress. NEXT-DISPATCH candidates by priority: (1) URGENT FIX-BCTC-BANK-SUMMARY-MAPPING P1 3rd-re-fire 15d total_assets=0 zone=apps/mcp-server/.../financial-reports/ dev-mcp-server per feedback_recurring_bug_escalation, (2) ARCH-DASH-CRON-RECHECK-TABLE ready/architect, (3) CCATO-T2 backlog. Dispatcher evaluating FIX-BCTC readiness next; SF-1 held pending that decision."
+    "status": "planning",
+    "active_task_id": "BA-FIX-BCTC-BANK-SUMMARY-MAPPING",
+    "next_agent": "ba",
+    "next_action": "ba writes the requirement spec + numbered AC list for FIX-BCTC-BANK-SUMMARY-MAPPING; cascade STARTS with the root-cause SPIKE (why VCB clean / CTG corrupt) before any code patch (feedback_recurring_bug_escalation)",
+    "updated_by": "po",
+    "updated_at": "2026-07-01T17:15:39Z",
+    "note": "[po-s136 2026-07-01T17:15:39Z] Self-initiated + PROMOTED sprint FIX-BCTC-BANK-SUMMARY-MAPPING (P1, 3rd re-fire 15d) into PLANNING. Minted BA-FIX-BCTC-BANK-SUMMARY-MAPPING -> ready[] (next_agent=ba, zone=multi). Cascade MANDATE: SPIKE-first (root-cause CTG-vs-VCB divergence, pin dev-mcp-server bctcScalarAggregator/serve vs dev-pdf-extractor parse) BEFORE any code patch; co-owner dev-mcp-server = identity-serve-guard enforcement on bank-form path; verification gate = CTG+VCB plausible + identity holds + magnitudes sane + hard-block on still-violated + non-regression FPT/VNM + generic (no allowlist). WIP still 0. Peer session f981431d owns DASH-CRON-RECHECK-TABLE (ARCH-* in ready) — untouched."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1919,6 +1920,25 @@
         "reuse_mandate": "Anti-rebuild: CRONS map = SSOT for Layer-A exprs (read, never hardcode); cronJobRunStore MAX(started_at) = last-fire (double-log immune); schedulerWatchdogJob WATCHDOG_MANIFEST cadence/threshold = classification parity source (generalize, do NOT diverge); get_cron_health = existing last_run/last_status (extend, do NOT duplicate); orchestrationHandler.ts + api.orchestration.tsx = the exact REST+proxy pattern to mirror.",
         "standing_acs": "Carries the standing gates: freshness 'Cap nhat luc' (SSOT frontend-data-coverage-map.json, never client-now); no-fake-data (honest-NULL: never-fired -> 'Chua tung chay', no fabricated timestamp); plain-Vietnamese user-facing copy (feedback_language_boundary — English for work artifacts); all-info source/detail affordance where a status needs explanation (why MISSED / why SESSION_SCOPED).",
         "created_at": "2026-07-01T16:09:02Z"
+      },
+      {
+        "sprint_id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "status": "active",
+        "priority": "high",
+        "created_by": "po",
+        "recurrence_escalation": true,
+        "origin": "PO self-initiated recurrence-escalation 2026-07-01: FIX-BCTC-BANK-SUMMARY-MAPPING is a P1 served-bank-data-integrity defect on its 3rd re-fire over 15 days (2026-06-16 mint PO-s70, 2026-06-21 reconfirm, 2026-07-01 ESC-2 bctc-analyst deep-dive signal bca-20260701T151500Z) that has NEVER been decomposed (no acceptance_criteria, no spec_ref). Dev-team dispatcher PROMOTED it into the PLANNING pipeline per PO's own 2026-07-01 escalation recommendation. Class: feedback_recurring_bug_escalation (2+ re-fires same module -> block until root-caused).",
+        "vision": "Bank (Mau B02-TCTD form) financial_reports scalar summaries MUST serve PLAUSIBLE, accounting-identity-consistent numbers generically across ALL bank tickers — or HARD-BLOCK as honest-NULL / confidence=0 with the dimension dropped — and MUST NEVER serve a labeled-garbage reading. No-fake-data goal #1.",
+        "defect_raw_evidence": "CTG 2026Q1 (signal bca-20260701T151500Z, guard esc-deepdive:CTG:Q1-2026:ESC-2): assets_total=0, liabilities_total=24,735,484,770, equity_total=244,904,306, net_revenue=3910 (~1000x off), net_profit=8,960,041, roe=3.66, confidence=0.56, validation_message='Assets (0) != Liabilities (24,735,484,770) + Equity (244,904,306) — mismatch 100.0%', refine_status=PARTIAL. B02-TCTD balance-sheet rows are squeezed into income-statement scalar columns (net_revenue/ebitda/net_margin_pct) and total_assets is dropped -> served at conf 56% with a 'Validation FAILED' LABEL instead of being hard-blocked. RAW extraction (bctc_table_rows) is already CORRECT for banks (CTG/VCB 2026Q1 = 55 real varied plausible rows, raw-verified vs named-volume market.db) — defect is PURELY the downstream scalar SUMMARIZER + serve path.",
+        "open_question": "VCB (bank) parses CLEAN (Net Revenue 17,421 ty, Total Assets 2,550,963.3 ty, Equity 224,558.7 ty, ROE 4.2%, conf 75%, PASS) but CTG (bank) CORRUPTS — likely a CTG-specific B02-TCTD layout/scale variant. This is a per-form-edge corruption, NOT a total bank outage.",
+        "recurrence_mandate": "3rd re-fire -> the cascade MUST START WITH A ROOT-CAUSE SPIKE, NOT a code patch (feedback_recurring_bug_escalation). Fix GENERICALLY via the structural bank-form discriminator (isBankFormFromRows / Roman+no-3digit B02-TCTD SSOT in bctcFormType.ts) — NO per-ticker allowlist, NO date-literal, NO special-case.",
+        "spike_mandate": "STEP 1 SPIKE (BA/architect, gateway-LIVE): pin WHY VCB(bank) parses clean but CTG(bank) corrupts. Compare LIVE via mcp__gateway__call_tool(server='vn-market', tool='compare_financials' / 'get_financial_reports' / 'get_bctc_full', ...) for CTG vs VCB vs FPT/VNM. DECIDE the true owning zone: dev-mcp-server bctcScalarAggregator (B02-TCTD row->scalar mapping; file lives in apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts) VS dev-pdf-extractor bank-form column/scale/row parse (apps/pdf-extractor). Likely a CTG B02-TCTD layout/scale variant. Architect SPLITs the multi-zone task per the SPIKE verdict.",
+        "co_owner_scope": "STEP 2 CO-OWNER (dev-mcp-server): identity-serve-guard ENFORCEMENT. FIX-BCTC-IDENTITY-SERVE-GUARD (merged 62ef64fe: total_assets<=0 OR total_assets<equity -> [CORRUPT DATA — SKIP], confidence=0, ratios suppressed; guard lives in apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts) is NOT firing on the bank-form labeled-serve path (CTG served conf 56% + 'Validation FAILED' label instead of confidence=0 [CORRUPT DATA — SKIP], despite assets=0 with non-zero liabilities = exactly the assets<=0 guard condition). Determine whether the guard REGRESSED, NEVER FIRED on the bank-form path, or was BYPASSED by the labeled-serve path; make it HARD-BLOCK any identity-violated bank reading (confidence=0 / suppress scalars) — never serve labeled garbage.",
+        "scope_in": "MULTI-zone (architect SPLITs after the SPIKE; pm decomposes). (1) SPIKE root-cause CTG-vs-VCB divergence + pin owner. (2) Generic bank B02-TCTD scalar-mapping fix: map bank balance-sheet rows into the correct scalar columns (or honestly NULL income-statement scalars that have no bank-form equivalent) — never squeeze balance-sheet rows into income-statement columns. (3) identity-serve-guard ENFORCEMENT on the bank-form serve path (dev-mcp-server co-owner). (4) qa gate RAW-live on the named-volume market.db.",
+        "scope_out": "NO per-ticker allowlist / date-literal / special-case (must be generic via isBankFormFromRows). NOT re-fixing raw table extraction (bctc_table_rows already correct for banks). NOT the FIX-DE-* interest-bearing-debt-decomposition chain. NOT FIX-BCTC-ENRICH-SILENT-0ROWS (0-rows raw extraction). NOT changing corporate (B01-DN) scalar mapping except to prove non-regression.",
+        "success_metric": "done_verified (/goal#1), RAW-verified vs the NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data, NOT host ./data decoy), container REBUILT after code change: (a) get_bctc_full(CTG) AND get_bctc_full(VCB) serve PLAUSIBLE bank scalar summaries — total_assets > 0 and consistent with total_liabilities+equity (accounting identity holds within ~1% tolerance), net_margin_pct within a plausible bank band (NOT 229157%), ebitda not an absurd 1e14 magnitude, net_revenue not ~1000x off; (b) validation_status no longer low_confidence SOLELY from the identity violation; (c) a bank reading that STILL violates the accounting identity is HARD-BLOCKED (confidence=0 / [CORRUPT DATA — SKIP] / corrupt scalars suppressed) — NEVER served as a labeled 'Validation FAILED' reading; (d) non-bank tickers FPT + VNM summaries NON-REGRESSED; (e) fix is GENERIC (structural bank-form discriminator, no per-ticker allowlist).",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "created_at": "2026-07-01T17:15:39Z"
       }
     ]
   },
@@ -11622,6 +11642,38 @@
           "apps/frontend/app/routes/dashboard.orchestration.tsx"
         ],
         "spec_ref": "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md"
+      },
+      {
+        "id": "BA-FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "title": "Requirement spec + AC list for FIX-BCTC-BANK-SUMMARY-MAPPING: root-cause SPIKE (why VCB clean / CTG corrupt) FIRST, then generic bank B02-TCTD scalar-mapping fix + identity-serve-guard enforcement (P1, 3rd re-fire 15d)",
+        "owner": "ba",
+        "next_agent": "ba",
+        "status": "READY",
+        "zone": "multi",
+        "type": "FIX",
+        "priority": "P1",
+        "recurrence_escalation": true,
+        "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "implements": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "co_owner": "dev-mcp-server",
+        "depends": [],
+        "created_at": "2026-07-01T17:15:39Z",
+        "files": [
+          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/bctcFormType.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts",
+          "apps/mcp-server/src/__tests__/fix-bctc-identity-serve-guard.test.ts",
+          "apps/pdf-extractor/"
+        ],
+        "spec_ref": "sprint_goal.entries[FIX-BCTC-BANK-SUMMARY-MAPPING]",
+        "spike_first": "MANDATORY — 3rd re-fire over 15 days -> the cascade STARTS with a root-cause SPIKE, NOT a code patch (feedback_recurring_bug_escalation). BA/architect FIRST pin WHY VCB(bank) parses clean but CTG(bank) corrupts by comparing LIVE (compare_financials / get_bctc_full for CTG vs VCB vs FPT/VNM via the gateway), then DECIDE the owning zone: dev-mcp-server bctcScalarAggregator (B02-TCTD row->scalar mapping) vs dev-pdf-extractor bank-form column/scale parse. Architect SPLITs per the SPIKE verdict. NO code patch is dispatched before the SPIKE pins the owner.",
+        "generic_mandate": "GENERIC across ALL bank tickers / B02-TCTD forms — NO per-ticker allowlist, NO date-literal, NO special-case. Detect bank-form structurally (reuse isBankFormFromRows / Roman+no-3digit B02-TCTD discriminator SSOT in bctcFormType.ts) and map bank balance-sheet rows into the correct scalar columns (or honestly NULL income-statement scalars that have no bank-form equivalent) — never squeeze balance-sheet rows into income-statement columns.",
+        "co_owner_scope": "dev-mcp-server co-owner: identity-serve-guard ENFORCEMENT — FIX-BCTC-IDENTITY-SERVE-GUARD (merged 62ef64fe) is NOT firing on the bank-form labeled-serve path (CTG served conf 56% + 'Validation FAILED' instead of confidence=0 [CORRUPT DATA — SKIP]). Determine if it regressed / never fired on bank-form / was bypassed; make it HARD-BLOCK any identity-violated bank reading (confidence=0 / suppress scalars), never serve labeled garbage. Extend apps/mcp-server/src/__tests__/fix-bctc-identity-serve-guard.test.ts to cover the bank-form path.",
+        "acceptance": "VERIFICATION GATE (carried verbatim from PO into ACs; see sprint_goal.entries[FIX-BCTC-BANK-SUMMARY-MAPPING].success_metric (a)-(e)): RAW-verified vs the NAMED-VOLUME market.db (NOT host ./data), container rebuilt — CTG + VCB serve PLAUSIBLE bank scalars + accounting identity holds within tolerance + magnitudes sane (net_margin NOT 229157%, ebitda not 1e14, net_revenue not ~1000x off) + a still-identity-violated bank reading is HARD-BLOCKED (confidence=0 / [CORRUPT DATA — SKIP], never labeled-garbage) + non-regression on FPT + VNM + fix is GENERIC (no allowlist). BA delivers docs REQ spec + numbered AC list; architect runs the SPIKE + pins owner + SPLITs; pm decomposes into per-zone dev tasks; qa gates RAW-live.",
+        "note": "PO-s136 recurrence-escalation cascade-kickoff (3rd re-fire, feedback_recurring_bug_escalation). Owning zone pinned by the SPIKE (dev-mcp-server scalar/serve is the primary suspect — bctcScalarAggregator + serve-guard both live in apps/mcp-server; dev-pdf-extractor row-parse is the alternative). PO does NOT spawn — dev-team cron adopts this ready BA task and spawns ba. WIP stays 0 (this is PLANNING; the FIX implementation row remains in backlog[] until architect/pm pull it into the sprint post-SPIKE)."
       }
     ],
     "review": [

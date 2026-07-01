@@ -1,6 +1,18 @@
 # PO Notebook
 
-_Last: 2026-07-01T16:09Z_
+_Last: 2026-07-01T17:15Z_
+
+## Tick 2026-07-01T17:15Z — SELF-INITIATED + PROMOTED sprint FIX-BCTC-BANK-SUMMARY-MAPPING (P1, 3rd re-fire 15d, coord 3340d049)
+
+Dispatcher PROMOTED this P1 row per my own 2026-07-01 escalation recommendation (feedback_recurring_bug_escalation: 3rd re-fire over 15 days — 06-16 mint PO-s70, 06-21 reconfirm, 07-01 ESC-2 bca-20260701T151500Z). NEVER decomposed before (no ACs, no spec_ref). Read full anchor + both po_reconfirm_log entries in backlog-detail.json before scoping.
+
+**Defect (served-metric integrity):** CTG 2026Q1 B02-TCTD balance-sheet rows squeezed into income-statement scalar columns → total_assets=0 (with total_liabilities=24.7B), net_margin_pct=229157%, identity 100% violated, served at conf 56% with a "Validation FAILED" LABEL instead of hard-blocked. VCB(bank) parses CLEAN — CTG-specific B02-TCTD layout/scale variant. Generic across ALL bank tickers.
+
+**SPIKE-first mandate (baked into BA kickoff):** 3rd re-fire → cascade STARTS with root-cause SPIKE, not a code patch. (1) BA/architect pin LIVE why VCB clean/CTG corrupt (compare_financials/get_bctc_full CTG vs VCB vs FPT/VNM) + DECIDE owning zone: dev-mcp-server bctcScalarAggregator.ts (bank B02-TCTD row→scalar map, ~1% identity check — file is in apps/mcp-server domain services) vs dev-pdf-extractor row/scale parse (separate Python app). (2) CO-OWNER dev-mcp-server: identity-serve-guard (62ef64fe, reports.ts CORRUPT-DATA-SKIP) NOT firing on bank-form labeled-serve path — regressed/never-fired/bypassed? hard-block identity-violated bank readings (conf=0). (3) Verification gate → verbatim ACs: CTG+VCB plausible + identity holds + magnitudes sane + non-regression FPT/VNM + generic (no allowlist).
+
+**Actions:** scripts/po-s136 → orch-apply.sh (rc=0; Zod PASS; 98 pre-existing SHG warnings, 0 new). M1 sprint_goal entry (spike_mandate+co_owner_scope+success_metric), M2 BA-FIX-BCTC-BANK-SUMMARY-MAPPING → ready[] (next_agent=ba, zone=multi, type=FIX, P1, co_owner=dev-mcp-server, spike_first), M3 head→ba (status=planning, active=BA task; GUARDED idle-or-ours so peer f981431d DASH ARCH untouched). Claimed sprint umbrella lock task:FIX-BCTC-BANK-SUMMARY-MAPPING (ttl 3600, session 3340d049). backlog-detail.json NOT edited (object/319 intact). Pre-existing FIX impl row left in backlog[] — WIP stays 0 (PLANNING).
+
+**RETURN: NEXT=ba** (write REQ spec + numbered AC list; SPIKE-first). PIPELINE: continue.
 
 ## Tick 2026-07-01T16:09Z — SELF-INITIATED sprint DASH-CRON-RECHECK-TABLE (user feature request, coord f981431d)
 
