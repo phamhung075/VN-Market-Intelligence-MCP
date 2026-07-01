@@ -243,23 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
-    "next_agent": "dev-mcp-server",
-    "updated_at": "2026-07-01T06:49:50Z",
-    "updated_by": "pm",
-    "note": "PM decomposition complete 2026-07-01T05:37Z. Parallel dispatch: hop1 dev-mcp-server (FR-1.1 direction+horizon bug + FR-2.2 watchdog + FR-1.2 cadence daily) + hop2 agent-father (FR-2.1 record_evidence_fragment wiring + FR-3 Sharpe-gate docs fix). No file overlap. Backlog: FIX-VPS-SSC-INSIDER-502 (VPS upstream diagnosis async).",
-    "parallel_dispatch": {
-      "mode": "simultaneous",
-      "agents": [
-        "dev-mcp-server",
-        "agent-father"
-      ],
-      "tasks": [
-        "TASK-EVIDENCE-HOP1-MCP",
-        "TASK-EVIDENCE-HOP2-AGENTS"
-      ]
-    }
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-01T07:56:10Z",
+    "updated_by": "qa",
+    "note": "BA-PREDICTION-EVIDENCE-REVIVAL COMPLETE -- both hops (TASK-EVIDENCE-HOP1-MCP dev-mcp-server, TASK-EVIDENCE-HOP2-AGENTS agent-father) QA APPROVED and DONE_VERIFIED. Backlog FIX-CRON-REGISTRY-BASERATE-CADENCE-DRIFT filed for stale cron-registry/system-map doc text (non-blocking)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -1868,7 +1857,7 @@
       },
       {
         "sprint_id": "PREDICTION-EVIDENCE-REVIVAL",
-        "status": "active",
+        "status": "done_verified",
         "priority": "high",
         "created_by": "po",
         "origin": "router_raw_verified_bug",
@@ -1885,7 +1874,9 @@
           "B3": "decoupled — independent backlog",
           "B4": "in-scope daily cron-interval"
         },
-        "dod_clarification": "success_metric cond-1 (majority TRUSTED LR) measured against EXISTING recorded pairs at deploy — FR-1.1 makes the foreign_flow monoculture pairs TRUSTED via the live n=18 bearish/5d row (no recompute needed). Newly-restored FR-2.1 types are ALLOWED to be in sample-ramp (n<10, LR=1.0 neutral): they satisfy cond-2 'present' but are NOT required TRUSTED within the 2-cycle window (honest ramp, BA S6). Cond-3 new claim id>12 is satisfiable within 2 cycles from FR-1.1's surfaced edge alone. FIX-PREDICTION-SIGNALS-EMPTY removed from DoD (B3 decoupled)."
+        "dod_clarification": "success_metric cond-1 (majority TRUSTED LR) measured against EXISTING recorded pairs at deploy — FR-1.1 makes the foreign_flow monoculture pairs TRUSTED via the live n=18 bearish/5d row (no recompute needed). Newly-restored FR-2.1 types are ALLOWED to be in sample-ramp (n<10, LR=1.0 neutral): they satisfy cond-2 'present' but are NOT required TRUSTED within the 2-cycle window (honest ramp, BA S6). Cond-3 new claim id>12 is satisfiable within 2 cycles from FR-1.1's surfaced edge alone. FIX-PREDICTION-SIGNALS-EMPTY removed from DoD (B3 decoupled).",
+        "completed_at": "2026-07-01T07:56:10Z",
+        "qa_verdict": "APPROVED"
       }
     ]
   },
@@ -8228,6 +8219,21 @@
         "parent_sprint": "BA-PREDICTION-EVIDENCE-REVIVAL",
         "decoupled_from": "TASK-EVIDENCE-HOP1-MCP",
         "decoupling_reason": "FR-2.2 watchdog observability fix in apps/mcp-server; VPS upstream root-cause diagnosis deferred (requires live SSH, external portal may be down)"
+      },
+      {
+        "id": "FIX-CRON-REGISTRY-BASERATE-CADENCE-DRIFT",
+        "title": "docs/data/cron-registry.json:36 + system-map.json .project.microservices[mcp-server].crons[baseRateComputation] still say weekly Sunday 19:00 UTC -- stale vs daily cadence shipped in 24d1a4b5 (TASK-EVIDENCE-HOP1-MCP FR-1.2). docs/standards/cron-jobs.md already updated correctly in that commit; these 2 registry files were not.",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "specialist": "developer",
+        "status": "TODO",
+        "priority": "low",
+        "created_at": "2026-07-01T07:56:10Z",
+        "created_by": "qa",
+        "depends": [],
+        "size": "S",
+        "parent_sprint": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "decoupling_reason": "pure doc-registry text drift, not a code defect -- flagged by dev-mcp-server as outside its file boundary, routed to backlog per QA judgment call (task instructions left the acceptable-vs-blocker decision to qa)."
       }
     ],
     "closed_sprints": [
@@ -10772,24 +10778,13 @@
         "done_verified_at": "2026-07-01T03:15:00Z",
         "done_verified_by": "qa",
         "qa_commit": "77564b48"
-      }
-    ],
-    "head": {
-      "status": "in_progress",
-      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
-      "next_agent": "architect",
-      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
-      "updated_by": "dev-team",
-      "updated_at": "2026-07-01T06:26:45Z"
-    },
-    "in_progress": [],
-    "ready": [
+      },
       {
         "id": "BA-PREDICTION-EVIDENCE-REVIVAL",
         "title": "Requirement spec for PREDICTION-EVIDENCE-REVIVAL — revive starved evidence->LR->validation chain so digest-predict emits fresh prediction claims again",
         "owner": "ba",
-        "next_agent": "dev-mcp-server",
-        "status": "READY",
+        "next_agent": "pm",
+        "status": "DONE_VERIFIED",
         "zone": "multi",
         "type": "SPRINT-M",
         "priority": "high",
@@ -10907,7 +10902,16 @@
           "safe_parallel": true,
           "no_file_overlap": true
         },
-        "verify_note": "PM decomposition complete 2026-07-01T05:37Z cycle. Decomposed into 2 READY child tasks (hop1 dev-mcp-server, hop2 agent-father) + 1 TODO backlog (FIX-VPS-SSC-INSIDER-502). Parent row held for dispatch routing, next_agent=dev-mcp-server."
+        "verify_note": "PM decomposition complete 2026-07-01T05:37Z cycle. Decomposed into 2 READY child tasks (hop1 dev-mcp-server, hop2 agent-father) + 1 TODO backlog (FIX-VPS-SSC-INSIDER-502). Parent row held for dispatch routing, next_agent=dev-mcp-server.",
+        "qa_verdict": "APPROVED",
+        "done_verified_at": "2026-07-01T07:56:10Z",
+        "done_verified_by": "qa",
+        "updated_at": "2026-07-01T07:56:10Z",
+        "updated_by": "qa",
+        "evicted_from_ready_at": "2026-07-01T07:56:10Z",
+        "evicted_by": "qa",
+        "evict_note": "terminal DONE_VERIFIED parent row after both hop QA gates (TASK-EVIDENCE-HOP1-MCP + TASK-EVIDENCE-HOP2-AGENTS) APPROVED -- relocated to done_verified[] per convention.",
+        "qa_note": "Both parallel-safe hops (dev-mcp-server, agent-father) independently RAW-verified and APPROVED. Sprint success_metric satisfiable: FR-1.1 surfaces live n=18 TRUSTED foreign_flow_institutional/bearish/5d row without recompute; FR-2.1 restores >=2 non-foreign_flow evidence types (bctc/news/price_momentum) into sample-ramp per honest-DoD clarification. Status COMPLETE per dispatch instruction mapped to enum value DONE_VERIFIED (StatusEnum has no COMPLETE value)."
       },
       {
         "id": "TASK-EVIDENCE-HOP1-MCP",
@@ -10916,12 +10920,12 @@
         "type": "SPRINT-M-HOP",
         "zone": "apps/mcp-server/",
         "specialist": "dev-mcp-server",
-        "status": "REVIEW",
+        "status": "DONE_VERIFIED",
         "priority": "high",
         "created_at": "2026-07-01T06:49:50Z",
         "created_by": "pm",
         "owner": "dev-mcp-server",
-        "next_agent": "qa",
+        "next_agent": "pm",
         "depends": [],
         "size": "M",
         "frs": [
@@ -10936,8 +10940,12 @@
           "apps/mcp-server/src/scheduler/macro/baseRateComputationJob.ts",
           "docs/standards/cron-jobs.md"
         ],
-        "updated_at": "2026-07-01T07:30:00Z",
-        "updated_by": "dev-mcp-server"
+        "updated_at": "2026-07-01T07:56:10Z",
+        "updated_by": "qa",
+        "qa_verdict": "APPROVED",
+        "done_verified_at": "2026-07-01T07:56:10Z",
+        "done_verified_by": "qa",
+        "qa_note": "RAW-verified commit 24d1a4b5 (15 files). Targeted tests 74/0 pass (8 touched files) + full suite 14025 pass/64 fail/4 err (Bun JIT panic, known). Isolation-probed 4 failing files (1146/1518/1875c/1898b) standalone -> all GREEN, confirms pre-existing parallel/network flakiness, zero hop1 regressions. tsc exit 0. mock-guard exit 0. FR-1.1 reuses getLikelihoodRatios (no hand-rolled SQL), honest-UNTRUSTED no-interpolation confirmed in diff. FR-2.2 watchdog observability-only, alert text points to FIX-VPS-SSC-INSIDER-502 not systemctl. FR-1.2 RISK-1 coupling (cronConfig.ts + DAILY_CADENCE_MS) confirmed same commit. docs/data/cron-registry.json + system-map.json weekly-cadence text left stale (not in commit file list) -> routed to BACKLOG FIX-CRON-REGISTRY-BASERATE-CADENCE-DRIFT, non-blocking. DJ: sprint-PREDICTION-EVIDENCE-REVIVAL-qa.md qa-S1. Report: reports/TASK_REPORT_TASK-EVIDENCE-HOP1-MCP.md."
       },
       {
         "id": "TASK-EVIDENCE-HOP2-AGENTS",
@@ -10946,12 +10954,12 @@
         "type": "SPRINT-M-HOP",
         "zone": "docs/agents/",
         "specialist": "agent-father",
-        "status": "REVIEW",
+        "status": "DONE_VERIFIED",
         "priority": "high",
         "created_at": "2026-07-01T06:49:50Z",
         "created_by": "pm",
         "owner": "agent-father",
-        "next_agent": "qa",
+        "next_agent": "pm",
         "depends": [],
         "size": "M",
         "parallel_safe_with": "TASK-EVIDENCE-HOP1-MCP",
@@ -10968,11 +10976,24 @@
           "docs/agents/tools/package/market-watcher.md",
           "docs/agents/digest-predict/init.md"
         ],
-        "updated_at": "2026-07-01T07:04:50Z",
-        "updated_by": "agent-father",
-        "qa_note": "hop2 docs-only wiring complete. FR-2.1: record_evidence_fragment wired into news-scout/flow/stage-sentiment.md (news_sentiment_stock+news_sentiment_macro), bctc-analyst/flow/stage-analyze.md (bctc_valuation_premium/bctc_roe_strong/bctc_roe_ratio/bctc_regulatory_compliance/bctc_report_overdue/bctc_net_profit), market-watcher/flow/cycle.md (price_momentum_5d/price_momentum_20d) + matching tools_package docs (news-scout.md/bctc-analyst.md/market-watcher.md). Also corrected stale docs/agents/tools/list/record_evidence_fragment.md (old thesis_id/content/source contract -> real stock/evidence_type/direction/magnitude/confidence/source_agent/ttl_days schema, live-verified against evidenceTools.ts). FR-3: stripped false Sharpe>1.0 hard-gate language from digest-predict/init.md (workflows.validate_prediction_claims steps + capabilities line 13). All evidence_type strings cross-checked live against evidence_likelihood_ratios (architecture brief SS0-C3) -- none invented. QA gate: verify each flow doc calls record_evidence_fragment with the exact seeded evidence_type/direction pairing + tool param names match evidenceTools.ts schema; runtime evidence_fragments diversity check is a 24-48h post-deploy follow-up per brief SS4, not blocking this docs-only review. hop1 (dev-mcp-server, apps/mcp-server/) runs in parallel, zero file overlap confirmed."
+        "updated_at": "2026-07-01T07:56:10Z",
+        "updated_by": "qa",
+        "qa_note": "RAW-verified commit 20264221 (10 files, docs-only). Live-probed evidence_likelihood_ratios (bun:sqlite named-volume market.db) -- confirmed FR-2.1 evidence_type/direction strings used in news-scout/bctc-analyst/market-watcher flow edits are 100% a subset of the live-seeded set (brief SS0-C3); zero invented types. record_evidence_fragment.md contract fix matches live evidenceTools.ts:77-122 schema exactly. FR-3 strips false Sharpe hard-gate language without touching the actually-coded P-5 gate; YAML of digest-predict/init.md parses OK post-edit. mock-guard N/A-PASS (no production source). bctc-analyst/flow/stage-analyze.md (154L) + market-watcher/flow/cycle.md (253L) exceed 120L split-policy threshold but both already carried pre-existing size-justification debt (131L/233L) before this task; small honestly-documented increment, judged non-blocking follow-up (not a new violation). DJ: sprint-PREDICTION-EVIDENCE-REVIVAL-qa.md qa-S2. Report: reports/TASK_REPORT_TASK-EVIDENCE-HOP2-AGENTS.md.",
+        "qa_verdict": "APPROVED",
+        "done_verified_at": "2026-07-01T07:56:10Z",
+        "done_verified_by": "qa"
       }
     ],
+    "head": {
+      "status": "in_progress",
+      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
+      "next_agent": "architect",
+      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
+      "updated_by": "dev-team",
+      "updated_at": "2026-07-01T06:26:45Z"
+    },
+    "in_progress": [],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
