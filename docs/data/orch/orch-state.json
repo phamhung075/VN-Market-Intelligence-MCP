@@ -3,9 +3,8 @@
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
     "po": {
-      "last_linecount": 5,
-      "last_mtime": 1781313960,
-      "section_name": "po"
+      "last_mtime": "2026-07-01T22:53:15Z",
+      "last_linecount": 86
     },
     "section_name": "po",
     "start_line": 8
@@ -282,8 +281,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-01T03:00:01.356Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-07-01T22:53:15Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -1487,7 +1486,7 @@
         "type": "data_stale",
         "summary": "bctc-discover stale 21711min (check B-05)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
