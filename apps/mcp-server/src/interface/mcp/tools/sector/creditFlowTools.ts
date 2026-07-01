@@ -118,10 +118,24 @@ export interface SurveyDistribution {
  * All 4 main params are optional (Task 1254). When not provided:
  *   - Mortgage rates: derived from latest SBV refinancing rate in DB (refi + 2.5%)
  *   - RE credit outstanding: uses DEFAULT_RE_CREDIT_TRILLION constant
+ *
+ * MONEY-RADAR-P0-T2-COMPOSITE (additive, non-breaking): the return object also
+ * carries `direction` ("up"|"down"|"neutral") and `is_estimate` (true when
+ * mortgage rate and/or YoY growth fell back to a hardcoded default — C3/HN-3)
+ * as structured fields, alongside the existing `content`/`survey_distribution`.
+ * The MCP tool registration below still returns only `content` to the wire
+ * protocol (extra object fields are ignored by the MCP SDK transport); the
+ * money-radar composite usecase calls this handler in-process and reads the
+ * structured fields directly instead of parsing the Vietnamese text block.
  */
 export async function getCreditFlowSignalHandler(
   input: GetCreditFlowSignalInput,
-): Promise<{ content: Array<{ type: "text"; text: string }>; survey_distribution: SurveyDistribution }> {
+): Promise<{
+  content: Array<{ type: "text"; text: string }>;
+  survey_distribution: SurveyDistribution;
+  direction: "up" | "down" | "neutral";
+  is_estimate: boolean;
+}> {
   // ── DB fallback for mortgage rates (Task 1254) ───────────────────────────
   let resolvedCurrentMortgage = input.currentMortgageRatePct;
   let resolvedPreviousMortgage = input.previousMortgageRatePct;
@@ -236,6 +250,13 @@ export async function getCreditFlowSignalHandler(
   return {
     content: [{ type: "text" as const, text: lines.join("\n") }],
     survey_distribution,
+    // MONEY-RADAR-P0-T2-COMPOSITE: structured fields for in-process consumers.
+    // isEstimate here covers mortgage-rate/YoY-growth fallback (C3/HN-3) — the
+    // reCreditRatioPct 20/19 static seed and DEFAULT_RE_CREDIT_TRILLION amount
+    // are always-on constants (never live), so is_estimate is effectively true
+    // whenever the caller omits explicit YoY inputs (the composite always does).
+    direction: signal.direction,
+    is_estimate: isEstimate,
   };
 }
 

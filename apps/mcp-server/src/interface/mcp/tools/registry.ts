@@ -132,6 +132,7 @@ import { registerROCMomentumTools } from "./market-data/rocMomentumTools.js"; //
 import { registerRelativeStrengthTools } from "./market-data/relativeStrengthTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_relative_strength (#182)
 import { register52WProximityTools } from "./market-data/52wProximityTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_52w_proximity (#183)
 import { registerForeignAccumRankTools } from "./market-data/foreignAccumRankTools.js"; // IND-P1-MCP-PROXY-INDICATORS: get_foreign_accum_rank (#184)
+import { registerMoneyRadarTools } from "./market-data/moneyRadarTools.js"; // MONEY-RADAR-P0-T2-COMPOSITE: get_money_radar_composite (#185)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -268,4 +269,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerRelativeStrengthTools,        // IND-P1-MCP-PROXY-INDICATORS: get_relative_strength (#182)
   register52WProximityTools,            // IND-P1-MCP-PROXY-INDICATORS: get_52w_proximity (#183)
   registerForeignAccumRankTools,        // IND-P1-MCP-PROXY-INDICATORS: get_foreign_accum_rank (#184)
+  registerMoneyRadarTools,              // MONEY-RADAR-P0-T2-COMPOSITE: get_money_radar_composite (#185)
 ];

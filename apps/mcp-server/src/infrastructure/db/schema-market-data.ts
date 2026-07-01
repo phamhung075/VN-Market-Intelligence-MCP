@@ -178,4 +178,22 @@ export function initMarketDataTables(db: Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_mbh_date ON market_breadth_history(session_date DESC);
   `);
+
+  // ── Money Radar Score History (MONEY-RADAR-P0-T2-COMPOSITE) ──────────────
+  // Append-only forward-accruing daily composite-score table.
+  // FORWARD-ACCRUING ONLY — no backfill, no synthetic rows (same discipline as
+  // market_breadth_history NFR-BR-1). ON CONFLICT IGNORE: first write per
+  // session_date wins (idempotency, NFR-BR-2 pattern).
+  // Purpose: delta_5d = score(t) - score(t-5) per §4 output schema — null when
+  // <6 accrued rows (honest, no fabricated trend on cold start).
+  // Writer: getMoneyRadarComposite usecase (best-effort write on every call).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS money_radar_score_history (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_date TEXT    NOT NULL UNIQUE,
+      score        REAL,
+      created_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_mrsh_date ON money_radar_score_history(session_date DESC);
+  `);
 }

@@ -258,6 +258,60 @@ export async function computeVolatilityIndicators(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Money Flow Oscillators (MONEY-RADAR-P0-T1-OSCILLATORS: POST /ta/money-flow-oscillators)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Request body for POST /ta/money-flow-oscillators. All fields optional. */
+export interface ComputeMoneyFlowOscillatorsRequest {
+  /** If provided, restricts computation to these tickers (else server watchlist). */
+  tickers?: string[];
+}
+
+/**
+ * Per-ticker Phase-0 money-flow oscillator result.
+ * FIELD-CONSTRAINT C1: close+volume only — no MFI/CMF/A-D-line/Chaikin here.
+ * OBV is a single cumulative snapshot (all available bars) — NOT a windowed
+ * slope. The Money Radar composite computes slope locally from daily_ohlcv
+ * (see domain/services/market-data/moneyRadarCalculator.ts computeMarketObvSlope)
+ * because this endpoint has no "as of N days ago" history param.
+ */
+export interface MoneyFlowTickerResult {
+  code: string;
+  obv: number | null;
+  rel_vol_z_20: number | null;
+  up_down_vol_ratio: number | null;
+  degraded_vwap: number | null;
+  /** Always true (HN-5) — degraded_vwap must never be presented as canonical VWAP. */
+  is_proxy: boolean;
+  bars_used: number;
+  null_reason?: string | null;
+}
+
+/** Response from POST /ta/money-flow-oscillators. */
+export interface ComputeMoneyFlowOscillatorsResponse {
+  tickers: MoneyFlowTickerResult[];
+}
+
+/**
+ * Call the Go TA service POST /ta/money-flow-oscillators.
+ * Throws on HTTP error — caller handles error envelope.
+ */
+export async function computeMoneyFlowOscillators(
+  req: ComputeMoneyFlowOscillatorsRequest = {},
+): Promise<ComputeMoneyFlowOscillatorsResponse> {
+  const url = `${BASE_URLS.ta}/ta/money-flow-oscillators`;
+  const response = await fetchWithRetry(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  if (!response.ok) {
+    throw new Error(`[TA Service money-flow-oscillators] ${response.status}: ${await response.text()}`);
+  }
+  return response.json() as Promise<ComputeMoneyFlowOscillatorsResponse>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ROC Momentum (TA Service: POST /ta/roc-momentum)
 // ─────────────────────────────────────────────────────────────────────────────
 

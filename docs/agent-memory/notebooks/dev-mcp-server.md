@@ -1,26 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-01 — CONTAM-11 SPIKE (OHLCV-UNIT-CONTAM-WHOLEROW-LT1000)
-
-**Sprint:** OHLCV-UNIT-CONTAM-WHOLEROW-LT1000
-**Session:** e71c7736-a95a-4040-b741-1d48454354f6
-**Task:** CONTAM-11 — PLAN-ONLY spike: classify ~9,368 residual sub-1000 rows
-
-Two read-only Bun SQLite probes against named-volume market.db. Zero writes. 3-bucket classification:
-
-- **(a) legit-cheap true-cheap** (alltime_max<1000): 13 tickers, 4,519 rows — leave as-is
-- **(a) legit-cheap genuine-decline** (alltime_max>=1000, ratio<100x): 13 tickers, 1,826 rows — leave as-is
-- **(b) true-contaminated** (alltime_max>=1000, ratio>=100x): 9 tickers, 3,023 rows — remediate
-
-True-contaminated: BMP(591r,526x), MCH(589r,381x), HGM(408r,247x), PMC(385r,534x),
-KSV(359r,330x), TOS(351r,506x), AGX(257r,348x), TBD(79r,713x), STS(4r,540x).
-
-Remediation (PLAN-ONLY): Strategy A=VPS external anchor (all 9); Strategy B=540d window+ratio>=200
-floor (KSV+STS+TBD+TOS+AGX, 1,050 rows); Strategy C=official exchange CSV; Strategy D=manual queue.
-
-Findings: docs/agent-memory/decisions/sprint-CONTAM-11-bucket-classification-dev-mcp-server.md
-Zone health: PLAN-ONLY spike — no code change, no DB mutation | HEALTHY
-
 ## 2026-07-01 — FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN + FIX-GET-BCTC-OCF-SQL-COLUMN
 
 **Session:** e71c7736-a95a-4040-b741-1d48454354f6
@@ -54,3 +33,18 @@ Three FRs per architecture brief §0-§1 corrected facts:
 Files: `interface/mcp/tools/macro/evidenceTools.ts`, `scheduler/vpsProxyWatchdogJob.ts`, `scheduler/cronConfig.ts`, `scheduler/macro/baseRateComputationJob.ts`, `docs/standards/cron-jobs.md`. Tests: 3 new FR-1.1 regression cases (`1124-evidence-tools-phase-bc.test.ts`), new `TASK-EVIDENCE-HOP1-MCP-watchdog-insider.test.ts` (5 cases), updated `readInsider` fresh-reader injection in 4 existing watchdog test files (313/1319/1351b/1557/1567), updated cadence-string assertions in `ARCH-CRON-recover-jitter.test.ts` + `1122-base-rate-computation-job.test.ts`.
 
 Zone health: tsc clean (EXIT 0), 131/131 pass (15 targeted files, evidence+watchdog+cadence). Full-suite run showed 60 pre-existing failures + a Bun C++ panic — isolation-probed 3 of them (1146-get-insider-transactions, 1518-foreign-flow, 1875c-record-signal-outcome-routing) standalone → all GREEN, confirming full-suite parallel-run flakiness unrelated to this diff, not a regression. orch: `TASK-EVIDENCE-HOP1-MCP`→REVIEW/qa via orch-apply.sh (Stage0+1 PASS). toolCount unchanged (no new MCP tools), scheduler count unchanged (no new cron entries, cadence-only change) | HEALTHY
+
+## 2026-07-01 — MONEY-RADAR-P0-T2-COMPOSITE → REVIEW
+
+**Sprint:** MONEY-RADAR-P0 (design-complete brief, T2 of 4)
+**Session:** 3340d049-0aec-46e7-879f-6a71324b98f1 (dev-team cron dispatcher)
+
+New `get_money_radar_composite` MCP tool (#185, market-wide, no ticker arg) per brief §4 schema. REUSE-FIRST: wires `get_foreign_flow`-family (queryMarketWideForeignFlow), `get_foreign_accum_rank`/`get_volatility_indicators`/`get_carry_trade_signal` (macro snapshot)/T1 oscillators via cross-service HTTP clients, `get_foreign_room`+`get_breadth_thrust` usecases in-process, `get_credit_flow_signal` in-process.
+
+Key deviation (documented in code + decision journal): T1 Go `/ta/money-flow-oscillators` OBV is a single cumulative-all-bars snapshot with no history param — no slope derivable from the endpoint. OBV *slope* (needed for D2 + the composite's obv_slope component) is recomputed locally from `daily_ohlcv` close+volume using the identical formula, aggregated as (#tickers-rising − #tickers-falling)/#resolved across the watchlist. The 3 other T1 fields (rel_vol_z_20, up_down_vol_ratio, degraded_vwap) ARE consumed via the new `computeMoneyFlowOscillators` HTTP client.
+
+Fusion = coverage-gated tier-weighted mean (T1=1.0/T2=0.9/T3=0.7/T4=0.3), non-null components only (HN-1), score=null when coverage<0.5 (HN-2). D1-D4 divergence detectors each UNKNOWN when either axis is null; overall flag never GREEN unless all 4 resolve non-fired (HN-4). credit_flow_direction fully EXCLUDED whenever is_estimate=true (HN-3) — extended `getCreditFlowSignalHandler` return with additive `direction`+`is_estimate` fields (non-breaking, MCP wire unaffected). degraded-VWAP component key self-labeled `degraded_vwap_proxy_z` (HN-5). `source_tier` = min tier across non-null contributors (HN-7). New forward-accruing `money_radar_score_history` table (mirrors `market_breadth_history` NFR-BR-1/2 pattern) backs `delta_5d` (null <6 accrued rows).
+
+Files: `domain/services/market-data/moneyRadarCalculator.ts` (new, pure), `infrastructure/db/moneyRadarStore.ts` (new), `application/usecases/getMoneyRadarComposite.ts` (new orchestrator), `interface/mcp/tools/market-data/moneyRadarTools.ts` (new), `infrastructure/microservices/clients.ts` (+computeMoneyFlowOscillators), `infrastructure/db/schema-market-data.ts` (+money_radar_score_history DDL), `interface/mcp/tools/sector/creditFlowTools.ts` (+direction/is_estimate), `interface/mcp/tools/registry.ts` (+registerMoneyRadarTools #185). Regenerated `docs/data/tool-registry.json` + `docs/data/project-stats.json` (toolCount 182→183, `bun scripts/gen-tool-registry.ts` + `gen-project-stats.ts`).
+
+Zone health: tsc clean (EXIT 0). New suite 20/20 pass (`MONEY-RADAR-P0-T2-COMPOSITE.test.ts`: DoD-1..4, HN-3/5/7, 11 pure calculator cases). tool-registry-parity 8/8 pass post-regen. Full-suite run: same pre-existing 60-fail/Bun-C++-panic pattern seen in prior TASK-EVIDENCE-HOP1-MCP cycle this session — re-isolated 1146/RAPID-B2/1518/1875c/251-mcp-tools/credit-flow suites standalone → all GREEN, confirms unrelated flakiness not a regression. orch: `MONEY-RADAR-P0-T2-COMPOSITE`→REVIEW/qa (dev-team loop owns SSOT flip — I am orch-state-blind). Deviation: no per-ticker mode (brief DoD is market-wide only); Phase-1 tự-doanh deliberately NOT stubbed as a permanently-null component (would deflate coverage_pct for a leg that can't resolve until Phase 1 crawl ships) | HEALTHY
