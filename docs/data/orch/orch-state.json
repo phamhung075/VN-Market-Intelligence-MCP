@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-01T15:59:02Z",
+    "status": "in_progress",
+    "updated_at": "2026-07-01T16:20:15Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "MONEY-RADAR-P0 COMPLETE — all rows DONE_VERIFIED (T2-COMPOSITE, T2B-INDEX-AXIS-FIX, T3-DASHBOARD, T3B-REST-API, T4-QA-GATE). Terminal gate: qa a023bef9 APPROVE + dispatcher RAW re-verify (25/25 tests, /api/money-radar 200 score 0.093 honest-NULL intact, daily_ohlcv VNINDEX 754d, indexReturn5d=-0.576% non-null, dashboard 200, momentum 200). D1/D2 index axis repointed to daily_ohlcv (d7b5d1fb) — divergence detectors alive on live data (durable lesson feedback_composite_score_masks_dead_detector_pruned_table). No zero-fill: carry/volatility regime=0 confirmed real neutral (live logs clean). WIP freed (in_progress empty; ready=[CCATO-T1], review=[ARCH-SHIP-WAVE-REAUDIT]). NEXT cron tick: dispatch CCATO-T1-TRUTH-GATE-ENGINE (ready, next_agent=developer, cross-service). SF-1 released on clean exit — next tick claims fresh."
+    "active_task_id": "CCATO-T1-TRUTH-GATE-ENGINE",
+    "next_agent": "developer",
+    "note": "Dispatched developer (background) on CCATO-T1-TRUTH-GATE-ENGINE (FEATURE, cross-service, sprint NARRATIVE-TRUTH-CCATO-GATE): build docs/data/claim-tool-map.json (no-hardcode negation lexicon + 5 dim->tool routings) + scripts/narrative-truth-gate.sh (gateway re-probe, exit!=0 on non-null contradiction, PASS-on-null, emit narrative_contradiction row to signal_queue via orch-apply) + scripts/test-narrative-truth-gate.sh (4 DoD assertions). spec_ref docs/architecture-briefs/2026-06-30-narrative-quality-ccato-gate.md S4.1-4.4. On developer completion: RAW-verify (run test harness, confirm 4 green + narrative_contradiction appended on FAIL path, PASS-on-null, determinism) -> review -> qa gate. SF-1 + task lock held through chain. PARALLEL: PO triaging 9 pending signals (incl HIGH bctc CTG Q1-2026 total_assets=0 validation-fail). BA-DASH-CRON-RECHECK-TABLE stays ready (WIP=2)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10093,6 +10093,18 @@
         ],
         "reviewed_at": "2026-07-01T00:08Z",
         "closure": "qa APPROVED (a50f498d) + dev-team RAW-verified (own serving-layer probe + git, NOT badge): commit 927d4e8f scoped apps/mcp-server/src + scripts/migrations + 2 tests, leak-clean, tree clean. SERVING VERIFIED: get_bctc_full(HVN,2026,Q1) income/CF non-zero (net_revenue 29,030,239M / operating_cf 5,018,783M), refine_status=DONE, balance identity 54,308,378 + 12,743,553 = 67,051,931 exact; get_bctc_ocf(HVN,2026,Q1) returns ocf_operating 5,018,783 with no no-such-column error. qa gate: task tests 12+8 pass, scalar regression 56 pass (banks VAS-code path intact, English IS fallbacks !isBankPath-guarded), BCTC smoke 105 pass, DDD+security PASS, tsc clean. Fleet drain: 7 stuck-PARTIAL re-finalized (GVR->DONE); ACB/HPG/VCB/VEA remain PARTIAL = pre-existing missing-section (bank B02-TCTD / OCR gap), not a regression."
+      },
+      {
+        "id": "BA-DASH-CRON-RECHECK-TABLE",
+        "title": "Requirement spec + AC list for DASH-CRON-RECHECK-TABLE",
+        "owner": "ba",
+        "status": "DONE",
+        "zone": "multi",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "sprint": "DASH-CRON-RECHECK-TABLE",
+        "closed_at": "2026-07-01T17:00:00Z",
+        "note": "Spec complete: docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md — 29 ACs, 5 ARCH-RATIFYs, 0 PO blockers. NEXT: architect SPLIT."
       }
     ],
     "done_verified": [
@@ -11553,14 +11565,13 @@
       "updated_by": "dev-team",
       "updated_at": "2026-07-01T06:26:45Z"
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "CCATO-T1-TRUTH-GATE-ENGINE",
         "title": "CCATO detection engine: claim-tool-map.json (negation lexicon + 5 dimension->tool routings, NO hardcode) + scripts/narrative-truth-gate.sh (live gateway re-probe, exit!=0 on non-null contradiction, PASS on null, emit narrative_contradiction to signal_queue) + DoD test harness",
         "owner": "developer",
         "next_agent": "developer",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "cross-service",
         "type": "FEATURE",
         "size": "M",
@@ -11577,13 +11588,17 @@
         "generic_mandate": "Script reads ALL negation lexicon + dimension->tool routing from docs/data/claim-tool-map.json at runtime — ZERO hardcode of lexicon/tools/tickers in the .sh. Re-probe via mcp gateway call_tool(server=\"vn-market\", tool=<dimension.tool>, arguments={code:ticker}) — NEVER mcp__vn-market__* direct. Every tool name in claim-tool-map.json (get_technical_indicators, get_foreign_flow, get_macro_snapshot, compare_financials, get_market_snapshot) MUST be gateway-verified to resolve before commit — no phantom tool names. Verdict: non-null/non-empty for the negated field => FAIL (exit!=0); null/empty => PASS. Signal emit on FAIL: write .signal_queue.rows[] via scripts/orch-apply.sh using the LIVE SignalRowSchema field `type`:\"narrative_contradiction\" (NOT signal_type) + id/summary/severity/status:NEW/from:<agent_id>/to:po/ts — see sprint_goal.po_determination_signal_type.",
         "acceptance": "scripts/test-narrative-truth-gate.sh RAW-proves all four: (a) fb-post-2026-06-30.md body -> VNM TA absence-claim -> get_technical_indicators(VNM) non-null RSI~20.3 -> exit!=0 naming VNM+indicators; (b) foreign per-ticker line -> get_foreign_flow per-ticker non-null -> exit!=0; (c) honest-NULL response (OHLCV-depth-gated indicator returns null) -> exit 0 (PASS, no false-positive); (d) identical input body -> identical verdict across repeated runs (determinism).",
         "verification_gate": "qa RAW-runs scripts/test-narrative-truth-gate.sh; all 4 assertions green AND a narrative_contradiction row is confirmed appended to .signal_queue.rows on a FAIL path (via orch-apply.sh, no schema reject). PASS-on-null asserted with a stubbed/real null tool response.",
-        "note": "Foundation atom of NARRATIVE-TRUTH-CCATO-GATE. No apps/mcp-server change (narrative_contradiction is a free-string `type`). Router live-verified ground truth: VNM RSI~20.3, get_foreign_flow VNM net 3d -85,985 shares."
-      },
+        "note": "Foundation atom of NARRATIVE-TRUTH-CCATO-GATE. No apps/mcp-server change (narrative_contradiction is a free-string `type`). Router live-verified ground truth: VNM RSI~20.3, get_foreign_flow VNM net 3d -85,985 shares.",
+        "dispatched_at": "2026-07-01T16:20:15Z",
+        "dispatched_by": "dev-team"
+      }
+    ],
+    "ready": [
       {
-        "id": "BA-DASH-CRON-RECHECK-TABLE",
-        "title": "Requirement spec + AC list for DASH-CRON-RECHECK-TABLE: /dashboard/orchestration Cron Recheck Table (expected schedule -> last actual fire -> status; two-layer honest)",
-        "owner": "ba",
-        "next_agent": "ba",
+        "id": "ARCH-DASH-CRON-RECHECK-TABLE",
+        "title": "Architect SPLIT for DASH-CRON-RECHECK-TABLE: dev-mcp-server (status-compute+REST) vs dev-frontend (proxy+table UI). Read BA spec docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
+        "owner": "architect",
+        "next_agent": "architect",
         "status": "READY",
         "zone": "multi",
         "type": "SPRINT-M",
@@ -11591,22 +11606,17 @@
         "user_prioritized": true,
         "sprint": "DASH-CRON-RECHECK-TABLE",
         "depends": [],
-        "created_at": "2026-07-01T16:09:02Z",
+        "created_at": "2026-07-01T17:00:00Z",
         "files": [
+          "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
           "apps/mcp-server/src/scheduler/cronConfig.ts",
-          "apps/mcp-server/src/infrastructure/db/cronJobRunStore.ts",
           "apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts",
           "apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts",
-          "apps/mcp-server/src/interface/mcp/tools/alerts/cronHealthTools.ts",
-          "apps/frontend/app/routes/dashboard.orchestration.tsx",
+          "apps/mcp-server/src/infrastructure/db/cronJobRunStore.ts",
           "apps/frontend/app/routes/api.orchestration.tsx",
-          ".claude/commands/crons/",
-          "docs/data/system-map.json"
+          "apps/frontend/app/routes/dashboard.orchestration.tsx"
         ],
-        "spec_ref": "sprint_goal.entries[DASH-CRON-RECHECK-TABLE]",
-        "generic_mandate": "BA reads the LIVE CRONS map for the Layer-A cron set (never bake the list/count), enumerates the Layer-B CLI crons from .claude/commands/crons/*.md + cron-detect-loop/cron-cowork-team skills, and specs a single READ-ONLY GET /api/cron-status endpoint (dev-mcp-server) + proxy route + table UI (dev-frontend). AC list MUST encode: the 5-state Layer-A status enum {ON_TIME,LATE,MISSED,STALE,NEVER_FIRED} with a cadence x threshold classifier that has PARITY with schedulerWatchdogJob; the Layer-B honesty rule (SESSION_SCOPED, never MISSED); the reuse mandate (CRONS/cronJobRunStore/WATCHDOG_MANIFEST/get_cron_health/orchestrationHandler — extend/mirror, never rebuild); and the standing freshness('Cap nhat luc') / no-fake-data(honest-NULL) / plain-Vietnamese-copy gates.",
-        "acceptance": "See sprint_goal.entries[DASH-CRON-RECHECK-TABLE].success_metric (a)-(e). BA delivers docs REQ spec + numbered AC list; architect SPLITs the multi-zone task (dev-mcp-server status-compute+REST vs dev-frontend proxy+table); pm decomposes into per-zone dev tasks; qa gates against the RAW success_metric.",
-        "note": "USER-PRIORITIZED cascade-kickoff (po-s135). Expected owner pair = dev-mcp-server + dev-frontend. PO does NOT spawn — dev-team cron adopts this ready BA task and spawns ba."
+        "spec_ref": "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md"
       }
     ],
     "review": [

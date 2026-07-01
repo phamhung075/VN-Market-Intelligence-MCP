@@ -1,5 +1,17 @@
 # BA — Notebook
 
+**Last updated:** 2026-07-01 | **Sprint:** DASH-CRON-RECHECK-TABLE
+
+## BA-DASH-CRON-RECHECK-TABLE · 2026-07-01
+
+Spec complete. REQ file: `docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md`. Zero PO blockers. Five ARCH-RATIFY items (non-blocking). NEXT: architect (zone SPLIT: dev-mcp-server status-compute+REST / dev-frontend proxy+table). 29 ACs total covering all 5 sprint success_metric (a)-(e) + 4 standing gates.
+
+Key BA findings (live-verified): CRONS map = 85 Layer-A entries (no hardcode — derived at runtime). Layer-B = 14 `.claude/commands/crons/*.md` command files + 4 cron-detect-loop crons + 1 cron-cowork-team master dispatcher. Critical job-name mismatch: CRONS key (e.g., `ohlcvDailyAggregator`) ≠ cron_job_runs DB name (e.g., `ohlcv-daily-aggregator`) — WATCHDOG_MANIFEST keys ARE the real DB names for 16 jobs; remaining crons need ARCH-RATIFY-CN-1 resolution strategy. `get_cron_health` gap confirmed: emits last_run/last_status but zero expected-vs-actual classify — that IS the sole compute gap. WATCHDOG_MANIFEST cadenceMs × thresholdMultiplier is the PARITY oracle — any job the watchdog would alert on MUST show MISSED/STALE (AC-9 gate). Layer-B SESSION_SCOPED honesty rule is AC-13/AC-14 — enforced as non-red always.
+
+Decision journal (task_id: BA-DASH-CRON-RECHECK-TABLE):
+- what-considered: "(A) Status enum: 4-value (watchdog only has healthy/stale) vs 5-value — CHOSEN 5-value (ON_TIME/LATE/MISSED/STALE/NEVER_FIRED) to expose the LATE zone between cadence and threshold, giving the user more signal. (B) Layer-B cron source: read .md files at startup vs static baked list — CHOSEN filesystem read at startup (aligns with 'never bake' mandate + ARCH-RATIFY-CN-5 for architect to ratify). (C) Layer-B last_fire: null vs SESSION_SCOPED label — CHOSEN null + SESSION_SCOPED status + reason field (honest-null, no fabrication)."
+- why-change: "No divergence from sprint vision. ARCH-RATIFY items added because cadence derivation for time-window-restricted expressions (EC-2) and job-name resolution (EC-1) are implementation decisions that need architect judgment, not BA scope-change."
+
 **Last updated:** 2026-07-01 | **Sprint:** PREDICTION-EVIDENCE-REVIVAL
 
 ## BA-PREDICTION-EVIDENCE-REVIVAL · 2026-07-01
