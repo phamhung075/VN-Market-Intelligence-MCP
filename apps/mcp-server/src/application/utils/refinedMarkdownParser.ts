@@ -57,9 +57,62 @@ const SECTION_HEADERS: Array<{ pattern: RegExp; section: string }> = [
   { pattern: /\bCash Flow Statement\b|\bStatement of Cash Flows?\b|\bCash and Cash Equivalents Position\b/i, section: "cash_flow" },
 ];
 
+// FIX-BCTC-BANK-SUMMARY-MAPPING W3: section-boundary-contamination guard.
+//
+// Brownfield reuse of FM-VCB-1 (sibling sprint FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT,
+// TASK_331 AC-2 `_detect_section_start()`): SAME root mechanism — a REAL
+// section-transition line in the source text is not recognized by keyword
+// match, so `currentSection` sticks on the prior value across a real section
+// boundary. Confirmed live for CTG 2026Q1 (BA §3.2 / architect brief §5 W3):
+// bank income-statement rows ("Lãi thuần từ hoạt động dịch vụ", "Chi phí
+// thuế TNDN hoãn lại") were tagged statement_section="balance_sheet".
+//
+// Reproduced structurally: when the refined-markdown transcription emits the
+// income-statement header WITHOUT the "BÁO CÁO " prefix (e.g. bare "KẾT QUẢ
+// HOẠT ĐỘNG KINH DOANH"), the exact-phrase SECTION_HEADERS patterns above
+// never match, `detected === "general"`, the transition is silently missed,
+// and `currentSection` (still "balance_sheet" from the prior table) leaks
+// into every subsequent row until a recognized header appears.
+//
+// Fix mirrors TASK_331 AC-2's own design exactly: (1) widen the keyword
+// coverage with the SAME synonym list FM-VCB-1 added (income_statement: bare
+// "kết quả hoạt động kinh doanh", "... sản xuất ...", "báo cáo thu nhập";
+// cash_flow: bare "lưu chuyển tiền tệ"); (2) fold Vietnamese diacritics
+// before matching so accent-rendering variance in the transcription cannot
+// defeat the match either — same "diacritic-insensitive keyword substring"
+// principle as TASK_331 AC-2. Generic across ALL section types and ALL bank
+// tickers — no per-ticker allowlist, no date literal.
+const FOLDED_SECTION_KEYWORDS: Array<{ keyword: string; section: string }> = [
+  { keyword: "BANG CAN DOI KE TOAN", section: "balance_sheet" },
+  { keyword: "KET QUA HOAT DONG KINH DOANH", section: "income_statement" },
+  { keyword: "KET QUA HOAT DONG SAN XUAT KINH DOANH", section: "income_statement" },
+  { keyword: "BAO CAO THU NHAP", section: "income_statement" },
+  { keyword: "LUU CHUYEN TIEN TE", section: "cash_flow" },
+  { keyword: "THUYET MINH BAO CAO TAI CHINH", section: "notes" },
+];
+
+/**
+ * Fold Vietnamese diacritics to plain ASCII (uppercased) for accent-
+ * insensitive keyword matching. Pure, deterministic. `đ`/`Đ` do not have a
+ * combining-mark NFD decomposition, so they are folded explicitly.
+ */
+function foldDiacritics(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // strip NFD combining diacritical marks
+    .replace(/[đĐ]/g, "d") // đ/Đ have no combining-mark decomposition
+    .toUpperCase();
+}
+
 function detectSection(text: string): string {
   for (const { pattern, section } of SECTION_HEADERS) {
     if (pattern.test(text)) return section;
+  }
+  // Fallback: diacritic-insensitive keyword match — see FOLDED_SECTION_KEYWORDS
+  // comment above (FIX-BCTC-BANK-SUMMARY-MAPPING W3 / FM-VCB-1 reuse).
+  const folded = foldDiacritics(text);
+  for (const { keyword, section } of FOLDED_SECTION_KEYWORDS) {
+    if (folded.includes(keyword)) return section;
   }
   return "general";
 }
