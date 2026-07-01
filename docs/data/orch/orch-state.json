@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-01T10:20:07Z",
+    "updated_at": "2026-07-01T10:37:55Z",
     "updated_by": "dev-team",
     "active_task_id": "MONEY-RADAR-P0-T2-COMPOSITE",
-    "next_agent": "qa",
-    "note": "tick 10:07Z: T2 dev DONE (0026f9e1); loop RAW-verify PASS (tsc0/20tests/honest-NULL real/registered); in_progress→review; dispatched qa live-data gate; ops single-svc rebuild AFTER qa PASS"
+    "next_agent": "fixer",
+    "note": "post-10:07Z: qa CHANGES_REQUESTED on T2 (0026f9e1) — 6/7 gates PASS, 0 honest-NULL violations, 1 wiring bug (foreign_accum_z_market null: {} args + client field tickers!=Go codes). RAW-verified in code. dispatched fixer (2-file targeted); ops rebuild + loop live gateway-probe AFTER fixer returns + reverify."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11254,7 +11254,7 @@
         "id": "MONEY-RADAR-P0-T2-COMPOSITE",
         "title": "dev-mcp-server: get_money_radar_composite MCP tool — wires the 8 LIVE reuse tools (§C2) + the 4 new oscillators, D1/D2/D3(Phase-0 form)/D4 divergence detectors, and honest-NULL rules HN-1..HN-7 into the composite schema (§4).",
         "owner": "dev-mcp-server",
-        "next_agent": "qa",
+        "next_agent": "fixer",
         "status": "REVIEW",
         "zone": "dev-mcp-server",
         "type": "FEATURE",
@@ -11283,6 +11283,18 @@
           "honest_null": "HN-1..HN-7 confirmed in code",
           "tool_registered": "registry#185 toolCount183",
           "verdict": "loop-raw-verify PASS — awaiting qa live-data gate + ops rebuild"
+        },
+        "qa_verdict": {
+          "verdict": "CHANGES_REQUESTED",
+          "by": "qa",
+          "at": "2026-07-01T10:37:55Z",
+          "gates_pass": "6/7",
+          "honest_null_violations": 0,
+          "fabrication": false,
+          "blocking": "foreign_accum_z_market deterministically null in prod: getMoneyRadarComposite.ts:174 passes computeForeignAccumRank({}) without codes; clients.ts ComputeForeignAccumRankRequest field tickers != Go DTO codes (foreign_accum_dtos.go:9). curl-verified {codes:[...41]} yields real value.",
+          "fix_scope": "pass {codes: watchlistCodes} + rename client field tickers->codes across all callers; unit regression test asserting body serializes codes",
+          "non_blocking": "market_prices_history ~1d deep on live DB (pre-existing infra gap; D1/D2 resolve UNKNOWN honestly, not a commit bug)",
+          "deploy_status": "container image 00:05:49Z predates commit 10:14:14Z; live toolCount 182 vs repo 183; ops single-svc rebuild required before servable"
         }
       }
     ],
