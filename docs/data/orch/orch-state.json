@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-01T11:08:30Z",
+    "updated_at": "2026-07-01T11:24:13Z",
     "updated_by": "dev-team",
-    "active_task_id": "MONEY-RADAR-P0-T3B-REST-API",
-    "next_agent": "dev-mcp-server",
-    "note": "T3-frontend delivered (commit a0e34a87; 4 GaugeCards; 4 HN-6 null blocks; tsc/tests green; template untouched) -> moved to review. RAW-verify exposed a cross-zone gap: frontend proxy consumes GET /api/money-radar but mcp-server never built that REST route (only the get_money_radar_composite tool). Minted + dispatched T3B-REST-API (dev-mcp-server) to build the bridge (mirror momentumIndicatorsHandler). T3 serving-value + T4 QA gate now block on T3B. CCATO-T1 stays ready."
+    "active_task_id": "MONEY-RADAR-P0-T4-QA-GATE",
+    "next_agent": "qa",
+    "note": "T3B REST bridge DONE_VERIFIED (image 356040575580; GET /api/money-radar 200, byte-identical to get_money_radar_composite tool; honest-NULL intact; momentum unregressed; 404->200 baseline flip). T3 frontend unblocked (proxy reaches live endpoint). Dispatched qa for T4-QA-GATE — terminal Phase-0 DoD gate (§6): live composite non-null, D2 fires, dashboard route-load honest-NULL, no momentum regression. qa PASS closes MONEY-RADAR-P0."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8313,34 +8313,6 @@
         "verification_gate": "qa confirms all 6 anchors present + each references the shared skill; fb STEP 4d + TNB Step 2 explicitly re-verified against DoD (e)/(f)."
       },
       {
-        "id": "MONEY-RADAR-P0-T4-QA-GATE",
-        "title": "qa gate: verify MONEY-RADAR-P0 Phase-0 DoD (§6) — composite returns real non-null on live data; D2 fires on a real historical example (index up + OBV slope negative → AMBER); dashboard renders with honest-NULL; NO momentum regression.",
-        "owner": "qa",
-        "next_agent": "qa",
-        "status": "BACKLOG",
-        "zone": "cross-service",
-        "type": "QA",
-        "size": "S",
-        "priority": "high",
-        "sprint": "MONEY-RADAR-P0",
-        "depends": [
-          "MONEY-RADAR-P0-T1-OSCILLATORS",
-          "MONEY-RADAR-P0-T2-COMPOSITE",
-          "MONEY-RADAR-P0-T3-DASHBOARD"
-        ],
-        "created_at": "2026-07-01T08:18:21Z",
-        "files": [
-          "apps/technical-analysis/",
-          "apps/mcp-server/src/interface/mcp/tools/market-data/",
-          "apps/frontend/app/routes/dashboard.money-radar.tsx"
-        ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §6 (Phase-0 DoD, demonstrable no-fabrication)",
-        "generic_mandate": "RAW-verify (no relaying sub-agent badges) all four §6 Phase-0 DoD items on LIVE data: (a) get_money_radar_composite (no ticker arg) returns a REAL non-null score with foreign accum z + OBV slope + rel-vol z + volatility regime all contributing non-null; the coverage_pct<0.5 path returns score=null + null_reason (NOT a zero). (b) D2 divergence fires on a real historical example — a session where VN-Index closed up while OBV slope was negative over the preceding 5 sessions → flag=AMBER, detectors=[\"D2\"]. (c) dashboard /dashboard/money-radar loads without error; null card '—' + gray badge + 'Chưa có dữ liệu'; non-null card formatted score + colored badge. (d) momentum cards (all-NULL) parallel with NO regression. Also spot-check honest-NULL: HN-2 coverage gate, HN-4 UNKNOWN-not-GREEN, HN-5 VWAP is_proxy=true.",
-        "acceptance": "All four §6 DoD items RAW-verified GREEN on live data + honest-NULL spot-checks pass. No fabricated number anywhere. Momentum route unregressed.",
-        "verification_gate": "qa signs off MONEY-RADAR-P0 → sprint_goal[MONEY-RADAR-P0].status=DONE ONLY when all four §6 DoD items pass RAW on live data. Any fabricated/zero-filled value on a thin-data path = REJECT back to the owning task.",
-        "note": "Terminal Phase-0 gate. Depends T1+T2+T3. HOLD-gated follow-ons (tự-doanh crawl, sector bucketing, agent wiring, CCATO wiring, Phase 1/2) mint separately AFTER this gate passes."
-      },
-      {
         "id": "WATCHLIST-DB-SYSMAP-DRIFT-FIX",
         "title": "Resync live SQLite watchlist table from docs/data/system-map.json .project.watchlist (SSOT) — corrects /ta/money-flow-oscillators + /ta/roc-momentum + sibling TA endpoints",
         "owner": "developer",
@@ -11250,23 +11222,13 @@
           "honest_null": "credit_flow_direction+foreign_outflow_z_5d null(excluded); score non-null per coverage>0.5",
           "verdict": "DONE_VERIFIED — end-to-end live serving confirmed"
         }
-      }
-    ],
-    "head": {
-      "status": "in_progress",
-      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
-      "next_agent": "architect",
-      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
-      "updated_by": "dev-team",
-      "updated_at": "2026-07-01T06:26:45Z"
-    },
-    "in_progress": [
+      },
       {
         "id": "MONEY-RADAR-P0-T3B-REST-API",
         "title": "dev-mcp-server: expose GET /api/money-radar REST route — mirror momentumIndicatorsHandler.ts + server.ts /api/momentum-indicators block; call getMoneyRadarComposite usecase; return brief §4 shape. Unblocks T3 frontend serving-value + T4 QA gate.",
         "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "next_agent": "",
+        "status": "DONE_VERIFIED",
         "zone": "dev-mcp-server",
         "type": "FEATURE",
         "size": "S",
@@ -11286,7 +11248,92 @@
         "generic_mandate": "Mirror the momentum REST bridge EXACTLY. (1) Create routes/moneyRadarHandler.ts mirroring momentumIndicatorsHandler.ts: handle GET /api/money-radar, call the SAME getMoneyRadarComposite usecase the get_money_radar_composite tool uses (apps/mcp-server/src/application/usecases/getMoneyRadarComposite.ts), serialize the §4 shape {score, delta_5d, divergence{flag,severity,detectors,null_reason}, coverage_pct, source_tier, is_estimate, null_reason, components, generated_at}. (2) Wire server.ts: add `if (method===\"GET\" && pathname===\"/api/money-radar\")` block mirroring the /api/momentum-indicators block near L2265. (3) Honest-NULL HN-1..HN-7: pass composite nulls THROUGH untouched — NEVER zero-fill; forward 4xx/5xx as-is; never fabricate. (4) Test: mirror momentum-indicators.test.ts. NO new usecase/domain logic — pure interface bridge over the existing usecase. Single-service: ops rebuilds mcp-server only.",
         "acceptance": "GET /api/money-radar returns 200 with the §4 JSON shape from the live composite; nulls pass through (no zero-fill); content identical to get_money_radar_composite tool output; unit test mirrors momentum-indicators.test.ts and passes; tsc + lint:fence exit 0.",
         "verification_gate": "After ops single-svc rebuild (docker compose build mcp-server && up -d --no-deps mcp-server; verify image ID CHANGED): RAW live-probe GET http://localhost:3000/api/money-radar returns non-null score matching the gateway get_money_radar_composite result; then /dashboard/money-radar renders real (non-'—') cards. qa route-load gate (T4) then closes the sprint.",
-        "note": "DISCOVERED-GAP (RAW-verify of T3): brief §11 scoped the MCP tool (T2) + frontend route (T3) but omitted the REST bridge the frontend proxy actually consumes (§11.3 loader -> /api/money-radar). momentum has BOTH surfaces (tool + /api/momentum-indicators); money-radar had only the tool. Honest completion of the frontend<->backend contract. Interface-only, small."
+        "note": "DISCOVERED-GAP (RAW-verify of T3): brief §11 scoped the MCP tool (T2) + frontend route (T3) but omitted the REST bridge the frontend proxy actually consumes (§11.3 loader -> /api/money-radar). momentum has BOTH surfaces (tool + /api/momentum-indicators); money-radar had only the tool. Honest completion of the frontend<->backend contract. Interface-only, small.",
+        "review_result": {
+          "reviewed_at": "2026-07-01T11:19:25Z",
+          "by": "dev-team",
+          "commit": "79806f2f",
+          "raw_verified": {
+            "tsc": "exit 0 (0 diagnostics)",
+            "bun_test": "9 pass / 0 fail / 23 expect (money-radar-api.test.ts)",
+            "route_wired": "server.ts:2278 GET /api/money-radar -> handleGetMoneyRadar(req,res,db)",
+            "handler_calls_usecase": "getMoneyRadarComposite(db) verbatim — no field remap, no null-mangle",
+            "honest_null": "catastrophic catch returns 200 all-null, never zero-fill (HN-1); divergence stays UNKNOWN not GREEN",
+            "momentum_untouched": true
+          },
+          "live_baseline": {
+            "probe": "GET localhost:3000/api/money-radar",
+            "http": 404,
+            "note": "route not yet in running container — single-svc rebuild required; momentum route 200 confirms server healthy"
+          },
+          "deploy_status": "PENDING_SINGLE_SVC_REBUILD"
+        },
+        "deploy_result": {
+          "deployed_at": "2026-07-01T11:24:13Z",
+          "by": "ops a161d311 + dev-team RAW-verify",
+          "image_before": "e1dbc72892f7",
+          "image_after": "356040575580",
+          "image_changed": true,
+          "container": "healthy, RestartCount 0",
+          "single_svc": "docker compose build mcp-server && up -d --no-deps mcp-server (peers untouched)"
+        },
+        "live_probe": {
+          "probed_at": "2026-07-01T11:24:13Z",
+          "by": "dev-team",
+          "rest_route": {
+            "url": "GET localhost:3000/api/money-radar",
+            "http": 200,
+            "score": -0.02005157574744573,
+            "divergence": "AMBER/sev1/[D4]",
+            "coverage_pct": 0.7692307692307692,
+            "source_tier": 2
+          },
+          "parity": "REST route == gateway get_money_radar_composite tool BYTE-IDENTICAL (same usecase) — frontend & tool never diverge",
+          "honest_null": "foreign_outflow_z_5d + credit_flow_direction null (excluded, not zero-filled); divergence AMBER not fabricated-GREEN; is_estimate false; foreign_accum_z_market=-6.0e-18 (T2 codes-fix serving via deployed REST path)",
+          "momentum_regression": "none (/api/momentum-indicators still 200)",
+          "baseline_flip": "404 -> 200 (route now in running image)"
+        }
+      }
+    ],
+    "head": {
+      "status": "in_progress",
+      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
+      "next_agent": "architect",
+      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
+      "updated_by": "dev-team",
+      "updated_at": "2026-07-01T06:26:45Z"
+    },
+    "in_progress": [
+      {
+        "id": "MONEY-RADAR-P0-T4-QA-GATE",
+        "title": "qa gate: verify MONEY-RADAR-P0 Phase-0 DoD (§6) — composite returns real non-null on live data; D2 fires on a real historical example (index up + OBV slope negative → AMBER); dashboard renders with honest-NULL; NO momentum regression.",
+        "owner": "qa",
+        "next_agent": "qa",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service",
+        "type": "QA",
+        "size": "S",
+        "priority": "high",
+        "sprint": "MONEY-RADAR-P0",
+        "depends": [
+          "MONEY-RADAR-P0-T1-OSCILLATORS",
+          "MONEY-RADAR-P0-T2-COMPOSITE",
+          "MONEY-RADAR-P0-T3-DASHBOARD",
+          "MONEY-RADAR-P0-T3B-REST-API"
+        ],
+        "created_at": "2026-07-01T08:18:21Z",
+        "files": [
+          "apps/technical-analysis/",
+          "apps/mcp-server/src/interface/mcp/tools/market-data/",
+          "apps/frontend/app/routes/dashboard.money-radar.tsx"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §6 (Phase-0 DoD, demonstrable no-fabrication)",
+        "generic_mandate": "RAW-verify (no relaying sub-agent badges) all four §6 Phase-0 DoD items on LIVE data: (a) get_money_radar_composite (no ticker arg) returns a REAL non-null score with foreign accum z + OBV slope + rel-vol z + volatility regime all contributing non-null; the coverage_pct<0.5 path returns score=null + null_reason (NOT a zero). (b) D2 divergence fires on a real historical example — a session where VN-Index closed up while OBV slope was negative over the preceding 5 sessions → flag=AMBER, detectors=[\"D2\"]. (c) dashboard /dashboard/money-radar loads without error; null card '—' + gray badge + 'Chưa có dữ liệu'; non-null card formatted score + colored badge. (d) momentum cards (all-NULL) parallel with NO regression. Also spot-check honest-NULL: HN-2 coverage gate, HN-4 UNKNOWN-not-GREEN, HN-5 VWAP is_proxy=true.",
+        "acceptance": "All four §6 DoD items RAW-verified GREEN on live data + honest-NULL spot-checks pass. No fabricated number anywhere. Momentum route unregressed.",
+        "verification_gate": "qa signs off MONEY-RADAR-P0 → sprint_goal[MONEY-RADAR-P0].status=DONE ONLY when all four §6 DoD items pass RAW on live data. Any fabricated/zero-filled value on a thin-data path = REJECT back to the owning task.",
+        "note": "Terminal Phase-0 gate. Depends T1+T2+T3. HOLD-gated follow-ons (tự-doanh crawl, sector bucketing, agent wiring, CCATO wiring, Phase 1/2) mint separately AFTER this gate passes.",
+        "dispatched_at": "2026-07-01T11:24:13Z",
+        "serving_context": "T3B REST bridge GET /api/money-radar DEPLOYED + serving 200 (parity-verified byte-identical vs get_money_radar_composite tool). T3 frontend proxy now reaches a LIVE endpoint. Verify §6 item (c) dashboard route-load against the live route; the composite live-data non-null (item a) is already dispatcher-proven but RAW-re-verify per your mandate."
       }
     ],
     "ready": [
@@ -11398,8 +11445,9 @@
             "template_files_unchanged": true,
             "css_class_diacritics": false
           },
-          "blocked_on": "MONEY-RADAR-P0-T3B-REST-API",
-          "blocker_reason": "Frontend proxy api.money-radar.tsx forwards to GET ${MCP_SERVER}/api/money-radar, but that REST route does NOT exist on mcp-server (only get_money_radar_composite MCP tool registered). Page 404s -> honest-NULL until T3B lands. Serving-value done_verified gates on T3B + ops single-svc rebuild + live /api/money-radar probe returning non-null score."
+          "blocked_on": null,
+          "blocker_reason": "Frontend proxy api.money-radar.tsx forwards to GET ${MCP_SERVER}/api/money-radar, but that REST route does NOT exist on mcp-server (only get_money_radar_composite MCP tool registered). Page 404s -> honest-NULL until T3B lands. Serving-value done_verified gates on T3B + ops single-svc rebuild + live /api/money-radar probe returning non-null score.",
+          "unblocked_note": "T3B REST bridge deployed + serving (parity-verified vs tool); frontend proxy now reaches live /api/money-radar. Awaiting T4 qa route-load gate."
         }
       }
     ],

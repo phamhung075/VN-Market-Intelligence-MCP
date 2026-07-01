@@ -1,0 +1,41 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-07-01T11:06:11.000Z",
+  "payload": {
+    "nominal_tick": "11:00",
+    "classification": "FIRE",
+    "matched": [
+      "refine-bctc-slot-3"
+    ],
+    "won": [
+      "refine-bctc-slot-3"
+    ],
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "drift_min": 4,
+    "pressure_mode": "legacy",
+    "calendar_status": "closed",
+    "chef_mutex_applied": false,
+    "signal_backlog": 3,
+    "dev_queue_depth": 5,
+    "host_headroom_mb": 5040,
+    "note": "daily BCTC refine worker slot-3 (cron 0 11; off-market VN post-close 18:04); legacy via age>20min (pressure emitted 09:21Z pre-tick, ~103min stale); no chef slot this tick"
+  },
+  "_processed": {
+    "fingerprint": "a24964e0154046bf075fbc4ab00aa9dcf3c3377799b45ef91b2541fa143ee462",
+    "processedAt": "2026-07-01T11:15:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  },
+  "_po_triage": {
+    "triagedBy": "po",
+    "session": "3340d049-0aec-46e7-879f-6a71324b98f1",
+    "disposition": "RESOLVED-NO-TASK",
+    "class": "noise/routine-cowork-fire",
+    "reason": "Successful daily BCTC-refine slot-3 dispatch (spawned refine_bctc_md, no errors, calendar closed). pressure_mode=legacy is the documented isStale->legacy graceful-degrade fallback (reference_isstale_stale_warning_forces_legacy); ~105min pressure gap is expected off-market (offhours gatherer/pressure cadence). No infra anomaly, no code bug. Not a dev task."
+  }
+}
