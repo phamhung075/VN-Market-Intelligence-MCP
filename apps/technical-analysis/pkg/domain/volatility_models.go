@@ -4,12 +4,17 @@ package domain
 
 // OHLCVBar represents a single OHLCV candle for volatility computation.
 // Distinct from CandleStick (which is close-only) — volatility needs full OHLCV.
+//
+// Volume was added for MONEY-RADAR-P0-T1-OSCILLATORS (money-flow oscillators need
+// close+volume only — C1 field-constraint, see money-radar brief §2). Zero-value is
+// safe for existing volatility/momentum/proximity callers that never populate it.
 type OHLCVBar struct {
-	Date  string
-	Open  float64
-	High  float64
-	Low   float64
-	Close float64
+	Date   string
+	Open   float64
+	High   float64
+	Low    float64
+	Close  float64
+	Volume float64
 }
 
 // VolatilityRegime is the classification label for the current volatility regime.

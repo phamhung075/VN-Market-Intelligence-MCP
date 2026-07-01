@@ -75,8 +75,8 @@ func (r *SQLiteMultiTickerOHLCVRepository) GetMultiTickerCandles(
 
 	for _, code := range codes {
 		rows, err := db.Query(
-			`SELECT date, open, high, low, close
-			   FROM (SELECT date, open, high, low, close
+			`SELECT date, open, high, low, close, volume
+			   FROM (SELECT date, open, high, low, close, volume
 			           FROM daily_ohlcv
 			          WHERE code = ?
 			          ORDER BY date DESC
@@ -91,10 +91,10 @@ func (r *SQLiteMultiTickerOHLCVRepository) GetMultiTickerCandles(
 		var bars []domain.OHLCVBar
 		for rows.Next() {
 			var (
-				bar             domain.OHLCVBar
-				open, high, low sql.NullFloat64
+				bar                     domain.OHLCVBar
+				open, high, low, volume sql.NullFloat64
 			)
-			if err := rows.Scan(&bar.Date, &open, &high, &low, &bar.Close); err != nil {
+			if err := rows.Scan(&bar.Date, &open, &high, &low, &bar.Close, &volume); err != nil {
 				_ = rows.Close()
 				return nil, fmt.Errorf("SQLiteMultiTickerOHLCVRepository: scan %s: %w", code, err)
 			}
@@ -106,6 +106,9 @@ func (r *SQLiteMultiTickerOHLCVRepository) GetMultiTickerCandles(
 			}
 			if low.Valid {
 				bar.Low = low.Float64
+			}
+			if volume.Valid {
+				bar.Volume = volume.Float64
 			}
 			bars = append(bars, bar)
 		}

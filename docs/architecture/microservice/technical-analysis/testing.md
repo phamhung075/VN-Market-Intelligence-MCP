@@ -81,3 +81,34 @@ env -i HOME=$HOME PATH=$PATH go run ./cmd/sandbox -audit
 ## Dashboard Trust Layer (G12)
 
 Per pilot charter G12 rule: no task is DONE until `go test ./...` is green AND all 30 scenarios pass the sandbox runner. The `cmd/sandbox` binary is the mechanised DoD gate.
+
+## MONEY-RADAR-P0-T1-OSCILLATORS (2026-07-01)
+
+`pkg/domain/money_flow_service_test.go` — 6 pure table-driven tests (no DB):
+insufficient-history (`<2` bars), insufficient-window (`>=2` but `<21` bars, OBV
+still real), sufficient-data all-4-fields-populated + plausibility (VWAP within
+close range, ratio `>0`), known-value z-score, zero-down-volume → nil (not
+`+Inf`), C1 regression guard (H/L=0 does not block the calc).
+
+`pkg/infrastructure/multi_ticker_ohlcv_repository_test.go` — 2 new tests:
+`TestGetMultiTickerCandles_VolumePopulated` (volume column scanned correctly),
+`TestGetMultiTickerCandles_NullVolumeDefaultsToZero` (NULL-safe scan, same
+pattern as open/high/low).
+
+**Note:** this feature is NOT wired into `cmd/sandbox` primitive/module tiers —
+same precedent as the P0-1 volatility and IND-P1 momentum/relative-strength/52w-
+proximity features, none of which added sandbox scenario coverage either (the
+sandbox harness is scoped to the original 5 primitives: RSI/MACD/BB/MA/Cross).
+Verification is via `go test ./...` (domain + infrastructure) plus a live
+RAW-probe against a rebuilt+restarted container (image ID confirmed changed;
+`docs/protocols/docker-deployment-runbook.md` § stale-image mitigation).
+
+Live probe (2026-07-01, post-rebuild, image `14cc6c62f857`):
+```
+POST /ta/money-flow-oscillators {"tickers":["VCB"]}
+→ {"code":"VCB","obv":17926690,"rel_vol_z_20":-2.100230853390725,
+   "up_down_vol_ratio":1.39130139275766,"degraded_vwap":61654.54866462252,
+   "is_proxy":true,"bars_used":100}
+```
+No `mfi`/`cmf`/`chaikin`/`ad_line` field present anywhere in the response
+(grep-verified) — C1 field-constraint honored.

@@ -1,7 +1,8 @@
 // Package http — HTTP interface layer for the technical-analysis service.
 // Routes: GET /health, POST /ta/indicators, POST /ta/volatility-indicators,
 //
-//	POST /ta/roc-momentum, POST /ta/relative-strength, POST /ta/52w-proximity.
+//	POST /ta/roc-momentum, POST /ta/relative-strength, POST /ta/52w-proximity,
+//	POST /ta/money-flow-oscillators.
 package http
 
 import (
@@ -19,12 +20,13 @@ import (
 // RouterConfig bundles all use cases and shared dependencies for the router.
 // Use cases may be nil — the corresponding route is not registered when nil.
 type RouterConfig struct {
-	UseCase     *application.ComputeTAUseCase
-	VolUseCase  *application.ComputeVolatilityUseCase
-	ROCUseCase  *application.ComputeROCMomentumUseCase
-	RSUseCase   *application.ComputeRelativeStrengthUseCase
-	ProxUseCase *application.Compute52WProximityUseCase
-	Logger      *slog.Logger
+	UseCase          *application.ComputeTAUseCase
+	VolUseCase       *application.ComputeVolatilityUseCase
+	ROCUseCase       *application.ComputeROCMomentumUseCase
+	RSUseCase        *application.ComputeRelativeStrengthUseCase
+	ProxUseCase      *application.Compute52WProximityUseCase
+	MoneyFlowUseCase *application.ComputeMoneyFlowUseCase
+	Logger           *slog.Logger
 }
 
 // NewRouter creates and returns a chi router with all routes registered.
@@ -54,6 +56,11 @@ func NewRouter(cfg RouterConfig) http.Handler {
 	}
 	if cfg.ProxUseCase != nil {
 		r.Post("/ta/52w-proximity", handle52WProximity(cfg.ProxUseCase, cfg.Logger))
+	}
+
+	// MONEY-RADAR-P0-T1 money-flow oscillators.
+	if cfg.MoneyFlowUseCase != nil {
+		r.Post("/ta/money-flow-oscillators", handleMoneyFlowOscillators(cfg.MoneyFlowUseCase, cfg.Logger))
 	}
 
 	return r

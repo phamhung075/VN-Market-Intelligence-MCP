@@ -257,7 +257,7 @@ func TestGetMultiTickerCandles_ReturnsLatestBarsPerCode(t *testing.T) {
 
 	_, err = db.Exec(`CREATE TABLE daily_ohlcv (
 		code TEXT NOT NULL, date TEXT NOT NULL,
-		open REAL, high REAL, low REAL, close REAL NOT NULL,
+		open REAL, high REAL, low REAL, close REAL NOT NULL, volume REAL,
 		PRIMARY KEY (code, date)
 	)`)
 	if err != nil {
@@ -311,6 +311,87 @@ func TestGetMultiTickerCandles_ReturnsLatestBarsPerCode(t *testing.T) {
 		if b.Close < 50000 {
 			t.Errorf("bar[%d] close=%.0f is stale (2023 data); want recent 2026 bars (close≈62000)", i, b.Close)
 			break
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// MONEY-RADAR-P0-T1-OSCILLATORS: Volume column is scanned correctly.
+// ---------------------------------------------------------------------------
+
+// TestGetMultiTickerCandles_VolumePopulated verifies that OHLCVBar.Volume is
+// scanned from the daily_ohlcv.volume column (added for money-flow oscillators;
+// previously only date/open/high/low/close were selected).
+func TestGetMultiTickerCandles_VolumePopulated(t *testing.T) {
+	const code = "VOLT"
+
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "market_test.db")
+
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`CREATE TABLE daily_ohlcv (
+		code TEXT NOT NULL, date TEXT NOT NULL,
+		open REAL, high REAL, low REAL, close REAL NOT NULL, volume REAL,
+		PRIMARY KEY (code, date)
+	)`)
+	if err != nil {
+		t.Fatalf("create table: %v", err)
+	}
+
+	wantVolumes := []float64{1_000_000, 1_500_000, 2_000_000}
+	for i, vol := range wantVolumes {
+		date := fmt.Sprintf("2026-01-%02d", i+1)
+		if _, err := db.Exec(
+			`INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			code, date, 60000.0, 60500.0, 59500.0, 60000.0+float64(i), vol,
+		); err != nil {
+			t.Fatalf("insert row %d: %v", i, err)
+		}
+	}
+
+	t.Setenv("DB_PATH", dbPath)
+	repo := infrastructure.NewSQLiteMultiTickerOHLCVRepository()
+	result, err := repo.GetMultiTickerCandles([]string{code}, 100)
+	if err != nil {
+		t.Fatalf("GetMultiTickerCandles: %v", err)
+	}
+	bars, ok := result[code]
+	if !ok {
+		t.Fatalf("code %s missing from result", code)
+	}
+	if len(bars) != len(wantVolumes) {
+		t.Fatalf("want %d bars, got %d", len(wantVolumes), len(bars))
+	}
+	for i, want := range wantVolumes {
+		if bars[i].Volume != want {
+			t.Errorf("bar[%d].Volume: got %.0f, want %.0f", i, bars[i].Volume, want)
+		}
+	}
+}
+
+// TestGetMultiTickerCandles_NullVolumeDefaultsToZero verifies the NullFloat64
+// defensive-scan pattern (matching open/high/low): a NULL volume column value
+// yields Volume=0, not a scan error, for legacy rows without volume data.
+func TestGetMultiTickerCandles_NullVolumeDefaultsToZero(t *testing.T) {
+	codes := []string{"NOVOL"}
+	// createTestDB's INSERT never sets volume — column value is NULL.
+	dbPath := createTestDB(t, codes, 5)
+	t.Setenv("DB_PATH", dbPath)
+
+	repo := infrastructure.NewSQLiteMultiTickerOHLCVRepository()
+	result, err := repo.GetMultiTickerCandles(codes, 100)
+	if err != nil {
+		t.Fatalf("GetMultiTickerCandles: %v", err)
+	}
+	bars := result["NOVOL"]
+	for i, b := range bars {
+		if b.Volume != 0 {
+			t.Errorf("bar[%d].Volume: got %.0f, want 0 (NULL volume defaults to zero)", i, b.Volume)
 		}
 	}
 }

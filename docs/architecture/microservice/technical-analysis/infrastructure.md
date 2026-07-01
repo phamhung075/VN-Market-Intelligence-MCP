@@ -56,6 +56,27 @@ WHERE code = ? AND fetched_at >= date('now', ? || ' days')
 GROUP BY date(fetched_at) ORDER BY day ASC
 ```
 
+## SQLiteMultiTickerOHLCVRepository — volume column added
+
+- **File:** `apps/technical-analysis/pkg/infrastructure/multi_ticker_ohlcv_repository.go`
+- MONEY-RADAR-P0-T1-OSCILLATORS extended the per-code subquery to also `SELECT volume`
+  (defensive `sql.NullFloat64` scan, matching the existing open/high/low pattern —
+  legacy rows with `NULL volume` default to `0`, not a scan error):
+
+```sql
+SELECT date, open, high, low, close, volume
+  FROM (SELECT date, open, high, low, close, volume
+          FROM daily_ohlcv
+         WHERE code = ?
+         ORDER BY date DESC
+         LIMIT ?)
+ ORDER BY date ASC
+```
+
+`SQLiteOHLCVRepository` (single-symbol, `ohlcv_repository.go`) was left unchanged —
+money-flow oscillators reuse the multi-ticker repo (same pattern as
+`/ta/roc-momentum`, `/ta/relative-strength`, `/ta/52w-proximity`).
+
 ## Environment Variables
 ```
 PORT    → 5003

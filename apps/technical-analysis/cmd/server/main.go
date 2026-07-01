@@ -91,13 +91,18 @@ func main() {
 	proxSvc := domain.NewProximityService()
 	proxUseCase := application.NewCompute52WProximityUseCase(multiTickerRepo, proxSvc, watchlist)
 
+	// --- MONEY-RADAR-P0-T1 money-flow oscillators wiring ---
+	moneyFlowSvc := domain.NewMoneyFlowService()
+	moneyFlowUseCase := application.NewComputeMoneyFlowUseCase(multiTickerRepo, moneyFlowSvc, watchlist)
+
 	router := httpinterface.NewRouter(httpinterface.RouterConfig{
-		UseCase:     useCase,
-		VolUseCase:  volUseCase,
-		ROCUseCase:  rocUseCase,
-		RSUseCase:   rsUseCase,
-		ProxUseCase: proxUseCase,
-		Logger:      logger,
+		UseCase:          useCase,
+		VolUseCase:       volUseCase,
+		ROCUseCase:       rocUseCase,
+		RSUseCase:        rsUseCase,
+		ProxUseCase:      proxUseCase,
+		MoneyFlowUseCase: moneyFlowUseCase,
+		Logger:           logger,
 	})
 
 	addr := fmt.Sprintf(":%s", port)
