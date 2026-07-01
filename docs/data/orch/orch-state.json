@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-01T15:01:37Z",
+    "updated_at": "2026-07-01T15:38:15Z",
     "updated_by": "dev-team",
     "active_task_id": "MONEY-RADAR-P0-T2B-INDEX-AXIS-FIX",
-    "next_agent": "dev-mcp-server",
-    "note": "T4-QA-GATE returned REJECT(b), RAW-CONFIRMED by dispatcher: D1/D2 index axis (getVnIndexDailyCloses) reads 24h-pruned market_prices_history (VNINDEX distinct_days=1 live) instead of daily_ohlcv (754 days) -> indexReturn5d permanently null -> D2 can never fire live. Minted + dispatched T2B-INDEX-AXIS-FIX (dev-mcp-server) to repoint the query to daily_ohlcv (moneyRadarStore.ts:48-66). T4 bounced to backlog (blocked on T2B). T3-DASHBOARD stays in review, deploy-pending (frontend rebuild batched with mcp-server rebuild after T2B). Sprint MONEY-RADAR-P0 stays OPEN. Chain: T2B code -> RAW-verify -> ops rebuild mcp-server+frontend -> RAW live-probe (indexReturn5d non-null, D2 fires) -> re-dispatch qa T4 -> close sprint. CCATO-T1 stays ready (not dispatched until MONEY-RADAR-P0 closes / WIP frees)."
+    "next_agent": "ops",
+    "note": "T2B index-axis fix RAW-VERIFIED GREEN + committed d7b5d1fb: getVnIndexDailyCloses repointed to daily_ohlcv; tsc 0; 25/25 tests incl detectD2PriceVsObv FIRED end-to-end (the REJECT-b DoD); OBV+momentum untouched. T2B -> review (deploy-pending). Dispatched ops for a BATCHED single-svc rebuild of mcp-server (index fix) + frontend (a0e34a87 money-radar routes, T3 item c). On ops return: RAW live-probe GET /api/money-radar (indexReturn5d-derived component non-null + D2 can fire) and /dashboard/money-radar route-load -> T2B+T3 done_verified -> re-dispatch qa T4 -> close MONEY-RADAR-P0. SF-1 held through chain. CCATO-T1 stays ready (not dispatched until sprint closes)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11354,34 +11354,7 @@
       "updated_by": "dev-team",
       "updated_at": "2026-07-01T06:26:45Z"
     },
-    "in_progress": [
-      {
-        "id": "MONEY-RADAR-P0-T2B-INDEX-AXIS-FIX",
-        "title": "dev-mcp-server: repoint getVnIndexDailyCloses (D1/D2 index axis) from 24h-pruned market_prices_history to daily_ohlcv so indexReturn5d is non-null and D2 can fire live. Unblocks T4 qa gate + closes MONEY-RADAR-P0.",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "zone": "dev-mcp-server",
-        "type": "FIX",
-        "size": "S",
-        "priority": "high",
-        "sprint": "MONEY-RADAR-P0",
-        "depends": [
-          "MONEY-RADAR-P0-T2-COMPOSITE"
-        ],
-        "created_at": "2026-07-01T15:01:37Z",
-        "dispatched_at": "2026-07-01T15:01:37Z",
-        "files": [
-          "apps/mcp-server/src/infrastructure/db/moneyRadarStore.ts (getVnIndexDailyCloses L48-66 — swap source table)",
-          "apps/mcp-server/src/__tests__/ (add/extend a test proving >=6 distinct VNINDEX daily closes + D2 fires on an index-up + OBV-down fixture)"
-        ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §6 (Phase-0 DoD: D2 fires on a real historical example — index up + OBV slope negative -> AMBER/[D2]) + §4 (response shape)",
-        "generic_mandate": "ROOT-CAUSE FIX (RAW-verified, not symptom). getVnIndexDailyCloses(db,days) at apps/mcp-server/src/infrastructure/db/moneyRadarStore.ts:48-66 currently SELECTs price,fetched_at FROM market_prices_history WHERE code='VNINDEX' — but pushPricesHandler.ts:239-242 hard-DELETEs that table below a rolling 24h cutoff by design (the comment at L232 says 'daily OHLCV already preserves the day summary for 2+ years'). Live proof: market_prices_history VNINDEX distinct_days=1 vs daily_ohlcv VNINDEX distinct_days=754. FIX: SELECT close, date FROM daily_ohlcv WHERE code='VNINDEX' ORDER BY date ASC, feeding the existing dedupToDailyCloses (date is already YYYY-MM-DD, one row/day, so dedup is a no-op safety net). Keep the same return contract (number[] ASC daily closes, last `days`). HONEST-NULL: do NOT fabricate — if daily_ohlcv is also thin (<6), still return what exists and let computeIndexReturn/upstream null-gate (never zero-fill). The OBV axis (computeObvSeries/computeMarketObvSlope) already reads daily_ohlcv — do NOT touch it; only the index axis is mis-sourced. Update the doc comment at L46 (Source: ...). No new usecase/domain logic — infrastructure data-access swap only.",
-        "acceptance": "getVnIndexDailyCloses returns >=6 distinct daily closes from daily_ohlcv on live data (was 1); a unit test proves >=6 closes AND that detectD2PriceVsObv fires (returns a D2 detector) on a fixture with index up + market OBV slope negative; tsc --noEmit + lint:fence exit 0; no zero-fill; momentum + OBV paths untouched.",
-        "verification_gate": "After ops single-svc rebuild of mcp-server (docker compose build mcp-server && up -d --no-deps mcp-server; verify image ID CHANGED): RAW live-probe GET http://localhost:3000/api/money-radar -> components include a non-null index-return-derived value and divergence.detectors can include D2 on the real historical example; then batch the frontend rebuild (item c) and re-dispatch qa (T4) for the terminal §6 gate.",
-        "note": "Bounced from T4-QA-GATE REJECT(b), RAW-confirmed by dispatcher (market.db counts). Serving-value defect class: the composite scored non-null via other axes so it looked done, but a whole detector family (D1/D2) was dead against live data because the index axis read a 24h-pruned table. Mirrors the T3B discovered-gap pattern — precise, small, infrastructure-only."
-      }
-    ],
+    "in_progress": [],
     "ready": [
       {
         "id": "CCATO-T1-TRUTH-GATE-ENGINE",
@@ -11495,6 +11468,47 @@
           "blocker_reason": "Frontend proxy api.money-radar.tsx forwards to GET ${MCP_SERVER}/api/money-radar, but that REST route does NOT exist on mcp-server (only get_money_radar_composite MCP tool registered). Page 404s -> honest-NULL until T3B lands. Serving-value done_verified gates on T3B + ops single-svc rebuild + live /api/money-radar probe returning non-null score.",
           "unblocked_note": "T3B REST bridge deployed + serving (parity-verified vs tool); frontend proxy now reaches live /api/money-radar. Awaiting T4 qa route-load gate.",
           "deploy_pending": "Frontend code correct (a0e34a87) but running frontend image predates it -> /dashboard/money-radar 404 live. Needs single-svc frontend rebuild, BATCHED with the mcp-server rebuild after T2B index-axis fix lands; then qa T4 re-gate confirms route-load + honest-NULL render."
+        }
+      },
+      {
+        "id": "MONEY-RADAR-P0-T2B-INDEX-AXIS-FIX",
+        "title": "dev-mcp-server: repoint getVnIndexDailyCloses (D1/D2 index axis) from 24h-pruned market_prices_history to daily_ohlcv so indexReturn5d is non-null and D2 can fire live. Unblocks T4 qa gate + closes MONEY-RADAR-P0.",
+        "owner": "dev-mcp-server",
+        "next_agent": "",
+        "status": "REVIEW",
+        "zone": "dev-mcp-server",
+        "type": "FIX",
+        "size": "S",
+        "priority": "high",
+        "sprint": "MONEY-RADAR-P0",
+        "depends": [
+          "MONEY-RADAR-P0-T2-COMPOSITE"
+        ],
+        "created_at": "2026-07-01T15:01:37Z",
+        "dispatched_at": "2026-07-01T15:01:37Z",
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/moneyRadarStore.ts (getVnIndexDailyCloses L48-66 — swap source table)",
+          "apps/mcp-server/src/__tests__/ (add/extend a test proving >=6 distinct VNINDEX daily closes + D2 fires on an index-up + OBV-down fixture)"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §6 (Phase-0 DoD: D2 fires on a real historical example — index up + OBV slope negative -> AMBER/[D2]) + §4 (response shape)",
+        "generic_mandate": "ROOT-CAUSE FIX (RAW-verified, not symptom). getVnIndexDailyCloses(db,days) at apps/mcp-server/src/infrastructure/db/moneyRadarStore.ts:48-66 currently SELECTs price,fetched_at FROM market_prices_history WHERE code='VNINDEX' — but pushPricesHandler.ts:239-242 hard-DELETEs that table below a rolling 24h cutoff by design (the comment at L232 says 'daily OHLCV already preserves the day summary for 2+ years'). Live proof: market_prices_history VNINDEX distinct_days=1 vs daily_ohlcv VNINDEX distinct_days=754. FIX: SELECT close, date FROM daily_ohlcv WHERE code='VNINDEX' ORDER BY date ASC, feeding the existing dedupToDailyCloses (date is already YYYY-MM-DD, one row/day, so dedup is a no-op safety net). Keep the same return contract (number[] ASC daily closes, last `days`). HONEST-NULL: do NOT fabricate — if daily_ohlcv is also thin (<6), still return what exists and let computeIndexReturn/upstream null-gate (never zero-fill). The OBV axis (computeObvSeries/computeMarketObvSlope) already reads daily_ohlcv — do NOT touch it; only the index axis is mis-sourced. Update the doc comment at L46 (Source: ...). No new usecase/domain logic — infrastructure data-access swap only.",
+        "acceptance": "getVnIndexDailyCloses returns >=6 distinct daily closes from daily_ohlcv on live data (was 1); a unit test proves >=6 closes AND that detectD2PriceVsObv fires (returns a D2 detector) on a fixture with index up + market OBV slope negative; tsc --noEmit + lint:fence exit 0; no zero-fill; momentum + OBV paths untouched.",
+        "verification_gate": "After ops single-svc rebuild of mcp-server (docker compose build mcp-server && up -d --no-deps mcp-server; verify image ID CHANGED): RAW live-probe GET http://localhost:3000/api/money-radar -> components include a non-null index-return-derived value and divergence.detectors can include D2 on the real historical example; then batch the frontend rebuild (item c) and re-dispatch qa (T4) for the terminal §6 gate.",
+        "note": "Bounced from T4-QA-GATE REJECT(b), RAW-confirmed by dispatcher (market.db counts). Serving-value defect class: the composite scored non-null via other axes so it looked done, but a whole detector family (D1/D2) was dead against live data because the index axis read a 24h-pruned table. Mirrors the T3B discovered-gap pattern — precise, small, infrastructure-only.",
+        "code_commit": "d7b5d1fb",
+        "review_result": {
+          "reviewed_at": "2026-07-01T15:38:15Z",
+          "by": "dev-team RAW-verify (dev-mcp-server a6c0b99d)",
+          "commit": "d7b5d1fb",
+          "raw_verified": {
+            "query_swap": "getVnIndexDailyCloses now SELECT close,date FROM daily_ohlcv WHERE code='VNINDEX' ORDER BY date ASC (was market_prices_history); return contract number[] ASC last-days preserved via .map adapter into dedupToDailyCloses",
+            "tsc": "exit 0, 0 diagnostics",
+            "bun_test": "25 pass / 0 fail / 69 expect across MONEY-RADAR-P0-T2B + T2-COMPOSITE",
+            "d2_fires_dod": "MONEY-RADAR-P0-T2B-INDEX-AXIS-FIX.test.ts asserts detectD2PriceVsObv(...).status=='FIRED' on index-up + market-OBV-down fixture; computeIndexReturn non-null with >=6 closes; market_prices_history sentinel(9999) non-leak",
+            "scope": "OBV axis (moneyRadarCalculator) + momentum handler UNTOUCHED; getMoneyRadarComposite change is doc-comment only; no zero-fill",
+            "honest_null": "getVnIndexDailyCloses returns [] on missing table / thin data -> upstream null-gate, never fabricates"
+          },
+          "deploy_status": "PENDING_BATCHED_REBUILD (mcp-server index-fix + frontend a0e34a87 money-radar routes)"
         }
       }
     ],
