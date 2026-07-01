@@ -196,6 +196,31 @@ docker exec vn-market-intelligence-mcp-mcp-server-1 \
 Deletes WHERE date='2026-06-16' AND volume=0 AND open=high AND high=low AND low=close AND data_env IS NULL.
 Idempotent — second run deletes 0 rows, exits 0. DB path from Bun.env["DB_PATH"] (named volume inside docker).
 
+**CANONICAL: BCTC finalize re-ingest runbook (FIX-BCTC-BANK-SUMMARY-MAPPING W5, AC-10)**
+```bash
+# Verify only (default — read-only, no writes, no MCP call):
+bun scripts/migrations/reingest-bctc-report.ts --report-id <report_id>
+
+# Apply — calls the LIVE finalize_bctc_refine MCP tool (reuses production code,
+# zero duplicated logic) ONLY when >=1 DONE bctc_refined_units window with
+# non-empty markdown exists for the report (refuses otherwise — exit 3 — to
+# avoid wiping bctc_table_rows with nothing to replace them):
+bun scripts/migrations/reingest-bctc-report.ts --report-id <report_id> --apply
+
+# Against the live named-volume DB (docker exec — recommended, matches the
+# repair-ohlcv-seed-candle precedent):
+docker cp scripts/migrations/reingest-bctc-report.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/reingest-bctc-report.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/reingest-bctc-report.ts --report-id <report_id>
+```
+Idempotent: already-plausible or confirm_status='CONFIRMED' rows are a no-op (exit 0).
+Zero-DONE-window rows are refused (exit 3) rather than silently wiped — a fresh
+agentic-refine transcription pass (get_bctc_pending_refine with report_id bypasses
+queue-eligibility filters by design, RF-3) is the required manual step first.
+Default target/documented example: CTG 2026-Q1, report_id=96e36139-5dac-414d-8e4d-20a4725890d1
+(frozen total_assets=0 — architect brief 2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING §2).
+
 ---
 
 ## Low-Confidence Reparse Runbook

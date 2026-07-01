@@ -1,24 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-01 — FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN + FIX-GET-BCTC-OCF-SQL-COLUMN
-
-**Session:** e71c7736-a95a-4040-b741-1d48454354f6
-**Commits:** 927d4e8f, eb788afe
-
-Three-layer bug in BCTC bilingual PDF pipeline. Root causes and fixes:
-
-(1) `SECTION_HEADERS` in `refinedMarkdownParser.ts` was Vietnamese-only. English headings from refine subagent (HVN bilingual PDF) fell to "general", blocking BEQ-7 → PARTIAL forever. Added English patterns.
-
-(2) `findTotalAssetsCorporate` in `bctcScalarAggregator.ts` regex failed on OCR-degraded "TÀI S᰺ N" (Lepcha U+1C3A). Added code 280/440 OCR fallback + English "Total Assets" label.
-
-(3) All English-section IS/CF rows have code=null. No corporate English label fallbacks existed. Added P_CORP_NET_REVENUE_EN, P_CORP_GROSS_PROFIT_EN, P_CORP_OPERATING_PROFIT_EN, P_CORP_NET_PROFIT_EN, P_CORP_OPERATING_CF_EN, P_CORP_INVESTING_CF_EN, P_CORP_FINANCING_CF_EN.
-
-Result: HVN Q1-2026 scalars fully populated (operating_cf=5,018,783M, investing_cf=-4,017,555M, refine_status=DONE). Fleet: 7 stuck-PARTIAL re-finalized, GVR→DONE.
-
-Secondary: `getBctcOcfTool.ts` SQL column aliases fixed (operating_cf AS ocf_operating etc.).
-
-Zone health: bun test 130 pass 0 fail (targeted suite), tsc clean, 182 tools intact, server health ok | HEALTHY
-
 ## 2026-07-01 — TASK-EVIDENCE-HOP1-MCP → REVIEW
 
 **Sprint:** BA-PREDICTION-EVIDENCE-REVIVAL (hop1, parallel-safe with hop2/agent-father)
@@ -48,3 +29,15 @@ Fusion = coverage-gated tier-weighted mean (T1=1.0/T2=0.9/T3=0.7/T4=0.3), non-nu
 Files: `domain/services/market-data/moneyRadarCalculator.ts` (new, pure), `infrastructure/db/moneyRadarStore.ts` (new), `application/usecases/getMoneyRadarComposite.ts` (new orchestrator), `interface/mcp/tools/market-data/moneyRadarTools.ts` (new), `infrastructure/microservices/clients.ts` (+computeMoneyFlowOscillators), `infrastructure/db/schema-market-data.ts` (+money_radar_score_history DDL), `interface/mcp/tools/sector/creditFlowTools.ts` (+direction/is_estimate), `interface/mcp/tools/registry.ts` (+registerMoneyRadarTools #185). Regenerated `docs/data/tool-registry.json` + `docs/data/project-stats.json` (toolCount 182→183, `bun scripts/gen-tool-registry.ts` + `gen-project-stats.ts`).
 
 Zone health: tsc clean (EXIT 0). New suite 20/20 pass (`MONEY-RADAR-P0-T2-COMPOSITE.test.ts`: DoD-1..4, HN-3/5/7, 11 pure calculator cases). tool-registry-parity 8/8 pass post-regen. Full-suite run: same pre-existing 60-fail/Bun-C++-panic pattern seen in prior TASK-EVIDENCE-HOP1-MCP cycle this session — re-isolated 1146/RAPID-B2/1518/1875c/251-mcp-tools/credit-flow suites standalone → all GREEN, confirms unrelated flakiness not a regression. orch: `MONEY-RADAR-P0-T2-COMPOSITE`→REVIEW/qa (dev-team loop owns SSOT flip — I am orch-state-blind). Deviation: no per-ticker mode (brief DoD is market-wide only); Phase-1 tự-doanh deliberately NOT stubbed as a permanently-null component (would deflate coverage_pct for a leg that can't resolve until Phase 1 crawl ships) | HEALTHY
+
+## 2026-07-01 — TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST (final unit, sprint FIX-BCTC-BANK-SUMMARY-MAPPING)
+
+**Session:** 3340d049-0aec-46e7-879f-6a71324b98f1 (dev-mcp-server, spawned directly, W1-W4 already committed by prior units)
+
+AC-6 SPIKE on `finalizeBctcRefineTool.ts`: BLOCK-4 (pre-existing FU-LF-VALIDATION-STATUS-REFLOW, e74dd0e1, unrelated to this sprint) already re-validates truthfully per finalize call, but its own 1%/5% relative-diff identity math can DIVERGE from the canonical FR-5 serve-path guard (W1's `bctcIdentityGuard.ts`) on a compensating-liabilities fixture — proved RED (wrote `validation_status='passed'` for a guard-corrupt row) then GREEN by wiring `checkBctcIdentityGuard` into BLOCK-4 (forces `failed` + notes cite the guard reason) and BLOCK-5 (forces `extraction_confidence=0`, was previously boostable to ~1.0 by section-completeness alone regardless of corruption). Confirm-clean fixture proves CTG's OWN real live numbers (total_assets=0 vs huge liabilities) already correctly triggered "failed" pre-fix via validateFinancialReport's garbage threshold — but the confidence-masking half of the bug DID hit CTG's real numbers (0.5625 stayed unforced pre-fix). Live probe (docker exec, read-only) also found the container's baked code already has W1+W4 but NOT W2/W3 — independently corroborates "old image, don't run live" from the dispatch brief.
+
+Authored `scripts/migrations/reingest-bctc-report.ts` (AC-10, NOT executed against the live report) — refuses to call finalize when 0 DONE windows have markdown (CTG's live state: all 56 units FAILED — calling now would wipe the 55 existing rows to zero), otherwise calls the live `finalize_bctc_refine` MCP tool over `/mcp` Streamable-HTTP (zero logic duplicated). Smoke-tested all 4 decision branches inside the container against scratch DBs (never the real market.db).
+
+New test `TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST.test.ts` (4 tests, 18 expect) — RED→GREEN proven by reverting the source fix via `git stash` mid-session and re-running (3/4 failed, confirming genuine defect incl. on CTG's real numbers).
+
+Zone health: tsc clean, 1240/1240 targeted BCTC-suite pass (115 files), full suite 13940 pass / 67 fail / 10 errors / 1 pre-existing Bun-C++-panic-at-teardown (same class as W2's prior full-suite note — none of the 67 fails touch bctc/finalize/validation) | HEALTHY

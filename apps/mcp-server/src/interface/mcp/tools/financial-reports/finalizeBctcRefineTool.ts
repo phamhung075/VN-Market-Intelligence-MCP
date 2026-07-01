@@ -37,6 +37,7 @@ import {
 } from "../../../../domain/services/financial-reports/bctcMagnitudeValidator.js";
 import { isBankFormFromRows } from "../../../../domain/services/financial-reports/bctcFormType.js";
 import { checkSectionCompleteness } from "../../../../domain/services/financial-reports/bctcSectionCompleteness.js";
+import { checkBctcIdentityGuard } from "../../../../domain/services/financial-reports/bctcIdentityGuard.js";
 import {
   aggregateScalars,
 } from "../../../../domain/services/financial-reports/bctcScalarAggregator.js";
@@ -1049,8 +1050,29 @@ export function buildFinalizeBctcRefineHandler(
             isBankForm: isBankForValidation,
           });
 
+          // FIX-BCTC-BANK-SUMMARY-MAPPING W5 (AC-6, FR-6): re-apply the
+          // canonical FR-5 identity guard (bctcIdentityGuard.ts, W1 — the SAME
+          // predicate the serve paths hard-block on) as the SSOT truthfulness
+          // check for the write path too. validateFinancialReport's own
+          // 1%/5% relative-diff math (above) is a finer-grained validator and
+          // can DIVERGE from the guard's simpler totalAssets<=0||totalAssets
+          // <equityTotal check in edge cases — e.g. a BLOCK-1 Case-2-frozen
+          // total_assets combined with a compensating/miscomputed
+          // total_liabilities can make the relative-diff math read as
+          // balance-exact (diff=0%) even though the guard correctly flags the
+          // row corrupt (assets funding equity is impossible). Without this,
+          // finalize could silently persist validation_status='passed' for a
+          // row the serve layer would hard-block as [CORRUPT DATA — SKIP] —
+          // exactly the "keeps a frozen value and serves it as if valid"
+          // defect class this task closes. Guard fires → status is ALWAYS
+          // 'failed', regardless of what the finer-grained validator concluded.
+          const identityGuardResult = checkBctcIdentityGuard({
+            totalAssets: valSrc.total_assets,
+            equityTotal: valSrc.equity_total,
+          });
+
           let newValidationStatus: string;
-          if (!valResult.isValid) {
+          if (identityGuardResult.corrupt || !valResult.isValid) {
             newValidationStatus = "failed";
           } else if (valResult.warnings.length > 0) {
             newValidationStatus = "passed_with_warnings";
@@ -1058,8 +1080,9 @@ export function buildFinalizeBctcRefineHandler(
             newValidationStatus = "passed";
           }
 
-          const newValidationNotes: string | null =
-            valResult.errors.length > 0
+          const newValidationNotes: string | null = identityGuardResult.corrupt
+            ? `FR-5 hard-block: ${identityGuardResult.reason}`
+            : valResult.errors.length > 0
               ? valResult.errors.join("; ")
               : valResult.warnings.length > 0
                 ? valResult.warnings.join("; ")
@@ -1075,6 +1098,7 @@ export function buildFinalizeBctcRefineHandler(
             is_valid: valResult.isValid,
             error_count: valResult.errors.length,
             warning_count: valResult.warnings.length,
+            identity_guard_corrupt: identityGuardResult.corrupt,
           });
         }
       } catch (valErr) {
@@ -1109,10 +1133,14 @@ export function buildFinalizeBctcRefineHandler(
           (confidenceCompleteness.hasIncomeStatement ? 0.4 : 0) +
           (confidenceCompleteness.hasCashFlow        ? 0.2 : 0);
 
-        interface ConfRow { extraction_confidence: number | null }
+        interface ConfRow {
+          extraction_confidence: number | null;
+          total_assets: number | null;
+          equity_total: number | null;
+        }
         const confRow = db
           .prepare<ConfRow, [string]>(
-            "SELECT extraction_confidence FROM financial_reports WHERE id = ?",
+            "SELECT extraction_confidence, total_assets, equity_total FROM financial_reports WHERE id = ?",
           )
           .get(report_id);
 
@@ -1120,7 +1148,33 @@ export function buildFinalizeBctcRefineHandler(
         // treat null as 0 so a refinedConfidence > 0 always overwrites.
         const currentConfidence: number = confRow?.extraction_confidence ?? 0;
 
-        if (refinedConfidence > currentConfidence) {
+        // FIX-BCTC-BANK-SUMMARY-MAPPING W5 (AC-6): a genuinely FR-5-corrupt
+        // row (balance-sheet identity violated per the SAME canonical guard
+        // used by the serve paths) must NEVER show a healthy confidence
+        // value, no matter how many sections the refined markdown covers.
+        // Section-completeness (below) is a TRANSCRIPTION-COVERAGE signal,
+        // not a DATA-CORRECTNESS signal — without this guard, a well-
+        // transcribed-but-uncorrectable corrupt reading (all 3 sections
+        // present, total_assets frozen at a bad value by BLOCK-1's Case-2)
+        // would have its extraction_confidence BOOSTED toward 1.0, silently
+        // misrepresenting corrupt data as maximally trustworthy — the same
+        // "serves it as if valid" defect class BLOCK-4 closes for
+        // validation_status. Hard override: corrupt → confidence forced to
+        // 0 unconditionally (bypasses the refined>current comparison below).
+        const identityGuardForConfidence = checkBctcIdentityGuard({
+          totalAssets: confRow?.total_assets,
+          equityTotal: confRow?.equity_total,
+        });
+
+        if (identityGuardForConfidence.corrupt) {
+          db.prepare(
+            "UPDATE financial_reports SET extraction_confidence = 0 WHERE id = ?",
+          ).run(report_id);
+          logger.warn(
+            "[finalize_bctc_refine] BLOCK-5 confidence forced to 0 — FR-5 identity guard corrupt",
+            { report_id, reason: identityGuardForConfidence.reason },
+          );
+        } else if (refinedConfidence > currentConfidence) {
           db.prepare(
             "UPDATE financial_reports SET extraction_confidence = ? WHERE id = ?",
           ).run(refinedConfidence, report_id);
