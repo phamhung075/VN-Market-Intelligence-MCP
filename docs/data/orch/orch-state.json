@@ -10749,7 +10749,7 @@
         "id": "BA-PREDICTION-EVIDENCE-REVIVAL",
         "title": "Requirement spec for PREDICTION-EVIDENCE-REVIVAL — revive starved evidence->LR->validation chain so digest-predict emits fresh prediction claims again",
         "owner": "ba",
-        "next_agent": "ba",
+        "next_agent": "po",
         "status": "READY",
         "zone": "multi",
         "type": "SPRINT-M",
@@ -10760,7 +10760,17 @@
         "note": "ROUTER-RAW + PO-RAW verified 2026-07-01. Dashboard shows no new predictions since id=12 POW (2026-06-26, 5+d). get_evidence_summary CTG/FPT = all foreign_flow_institutional LR=1.00 (n=0) UNTRUSTED. digest-predict validate_prediction_claims needs Sharpe>1.0 backtest -> unsatisfiable at n=0 -> structural NO-OP (notebook confirms honest no-op 06-27..06-30). THREE work-items for architect to SPLIT multi-zone: (a) LR compute/backfill job apps/mcp-server/src/scheduler/** [PRIMARY; folds stub FIX-EVIDENCE-PIPELINE-STARVED + symptom FIX-PREDICTION-SIGNALS-EMPTY]; (b) monoculture audit of record_evidence_fragment producers across cowork agent flows (docs/agents/**); (c) validation-gate cold-start bootstrap DESIGN. CONTEXT: prior EVIDENCE-ACCUM-SILENT-CRON (53d00955 DONE_VERIFIED) fixed cron-scheduling/dedup ONLY — accumulator RUNS (rows_written=9 06-13 live-verified) but LR sample n=0 + monoculture persist. Recurring-bug-escalation: architect brief before point patches.",
         "promoted_at": "2026-07-01T05:54:51Z",
         "promoted_by": "po-s135",
-        "promotion_note": "dev-team tick 2026-07-01T05:37Z: head idle, WIP=0, capacity free. Highest-value pending work; dispatch first hop ba (SPRINT-M). architect SPLITs multi-zone downstream; child stubs stay specced_under. sprint_goal PREDICTION-EVIDENCE-REVIVAL active."
+        "promotion_note": "dev-team tick 2026-07-01T05:37Z: head idle, WIP=0, capacity free. Highest-value pending work; dispatch first hop ba (SPRINT-M). architect SPLITs multi-zone downstream; child stubs stay specced_under. sprint_goal PREDICTION-EVIDENCE-REVIVAL active.",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/BA-PREDICTION-EVIDENCE-REVIVAL.md",
+        "ba_completed_at": "2026-07-01T06:13:23Z",
+        "ba_blockers": [
+          "B1: validate_prediction_claims Sharpe>1.0 — hard pre-claim gate (needs cold-start bootstrap design) vs advisory-only (matches current shipped code, docs-only fix)?",
+          "B2: insider_accumulation zero-yield (insiderCheckJob/detectAccumulationStreaks) diagnosis in-scope for this sprint DoD, or defer?",
+          "B3: decouple FIX-PREDICTION-SIGNALS-EMPTY from work-item (a) — code-distinct Polymarket pipeline (predictionMarketJob.ts), not the LR chain; confirm reopen independent vs keep folded without claiming auto-resolved.",
+          "B4: baseRateComputationJob cadence upgrade (weekly->daily) in-scope for this sprint DoD? Needed to plausibly hit sprint success_metric (new claim within 2 digest cycles) once monoculture fix lands."
+        ],
+        "ba_note": "Live-probed named-volume market.db overrides router framing: LR compute job (baseRateComputationJob) ALREADY EXISTS+healthy, input-starved not missing; found independent get_evidence_summary hardcoded-lookup bug masking the one live TRUSTED row; Sharpe gate traced to unwired digest-predict identity workflow, not a code gate; FIX-PREDICTION-SIGNALS-EMPTY traced to code-distinct Polymarket pipeline. See docs/handoffs/BA-PREDICTION-EVIDENCE-REVIVAL.md."
       }
     ],
     "review": [
