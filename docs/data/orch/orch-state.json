@@ -294,8 +294,10 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -305,8 +307,10 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:VCB:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -316,8 +320,10 @@
         "type": "system_issue",
         "summary": "held lock esc-deepdive:GVR:Q1-2026:ESC-4 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -327,8 +333,10 @@
         "type": "system_issue",
         "summary": "held lock dev-team-cron-singleton has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -338,8 +346,10 @@
         "type": "system_issue",
         "summary": "held lock esc-deepdive:HVN:Q1-2026:ESC-2 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -349,8 +359,10 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:ACB:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -360,8 +372,10 @@
         "type": "system_issue",
         "summary": "held lock TASK_1996 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -371,8 +385,10 @@
         "type": "system_issue",
         "summary": "held lock TASK-FFT-L4 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -382,8 +398,10 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-datacov:FPT:Q1-2026:ESC-3",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -393,8 +411,10 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-datacov:VCB:Q1-2026:ESC-3",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -404,8 +424,10 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-deepdive:GVR:Q1-2026:ESC-4",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -415,8 +437,10 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=TASK_1996 held=dev-team-cron-singleton",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -426,8 +450,10 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-deepdive:HVN:Q1-2026:ESC-2",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -437,8 +463,10 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=TASK_1996 held=esc-datacov:ACB:Q1-2026:ESC-3",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202607010300",
@@ -448,8 +476,10 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=TASK_1996 held=TASK-FFT-L4",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-01T03:21:59Z",
+        "resolution": "D4 false-positive — transient mid-dispatch snapshot @03:00Z. PO RAW-verified via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards released); 8 held locks all LEGIT-concurrent by design (SF-1 dev-team-cron-singleton, fire-election cron:dev-team:*, 5 esc-* escalations — escalation markers carry no board row per feedback_esc3_held_lock_no_board_row_is_legit). No genuine divergence. Predicate fix tracked: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE."
       },
       {
         "id": "sau-d4-202606300300",
@@ -6344,10 +6374,11 @@
         "status": "BACKLOG",
         "zone": "cross-service/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
-        "recurrence_note": "4th+ recurrence — sau-d4-202606300300 (2026-06-30T03:00Z, 16 distinct findings ×2 double-emit). Prior: reports 3247/3263/3276. PO RAW-verified 2026-06-30T03:25Z via task_list_held: all 32 rows false-positive.",
+        "recurrence_note": "5th+ recurrence — sau-d4-202607010300 (2026-07-01T03:00Z, reports 3358-3365, 15 signal rows = 8 no-board-row + 7 active=TASK_1996-vs-held mismatch). PO RAW-verified 2026-07-01 (2026-07-01T03:21:59Z) via task_list_held+.head: head IDLE (TASK_1996+TASK-FFT-L4 done_verified@77564b48, dispatch-guards task:TASK_1996/task:TASK-FFT-L4 RELEASED), 8 held locks ALL LEGIT (SF-1 singleton exp04:43Z, fire-election cron 03:07Z, esc-* ACB/VCB/FPT/HVN/GVR). ALL false-positive. Prior: sau-d4-202606300300; reports 3247/3263/3276.",
         "scope_widened": "False-positive set is NOT only esc-datacov: it ALSO includes reservation/dispatch sprint-task locks held by a LIVE peer session (d3292ca4 MARKET-INDICATOR-DEPTH-P0 P1 wave: IND-P1-ROC-MOMENTUM/RELATIVE-STRENGTH/52W-HIGH/FOREIGN-ACCUM-RANK/MCP-PROXY + BA-IND-P1-MOMENTUM-RS). Correct fix = WHITELIST from held-lock-no-board-row: (a) long-TTL data-coverage guards (esc-datacov:*, 8d TTL); (b) sprint-task reservation/dispatch locks whose owner_client_session is LIVE and lock unexpired (a live-held unexpired lock is NOT orphaned).",
         "class_b_folded": "2nd sub-fix, same root (D4 blind to cross-session multi-sprint concurrency): D4 ALSO false-flags 'orch-state/lock mismatch active=<head> held=<lock>' — it assumes head.active_task_id must equal EVERY held sprint-task lock. WRONG under N-sprint concurrency: head tracks ONE sprint (e.g. BA-DEFERRED-SCHEDULER) while a live peer legitimately holds OTHER sprints' locks. Fix: do NOT emit active≠held when the held lock belongs to a live concurrent session.",
-        "next_agent": "agent-father"
+        "next_agent": "agent-father",
+        "debounce_and_exclusion_spec": "FREEZE refinement (folded 2026-07-01T03:21:59Z, dev-team-requested @tick 2026-07-01T03:07Z): the D4 predicate MUST (1) EXCLUDE from BOTH the held-lock-no-board-row AND the active!=held-mismatch checks: persistent SF-1 `dev-team-cron-singleton`, fire-election `cron:dev-team:*`, and long-lived `esc-*` escalation locks — all are expected to be held CONCURRENTLY with any active task by design (SF-1=persistent leader, fire-election=per-tick, esc-*=1-8d escalation markers with no board row). (2) DEBOUNCE transient dispatch snapshots: require the head/lock mismatch to PERSIST across >1 consecutive audit cycle before emitting. The 03:00Z batch snapshotted MID-DISPATCH (dev-team commit 3af22c24 + qa flipping TASK_1996/TASK-FFT-L4 review->done_verified 02:58-03:15Z); every finding self-resolved within the same audit interval. 8 reports from ONE transient snapshot = auditor-predicate NOISE, not a live defect. Complements class_b_folded (live-concurrent-session guard) + scope_widened (whitelist) already on this row."
       },
       {
         "id": "FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL",
