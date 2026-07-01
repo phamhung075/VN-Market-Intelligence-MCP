@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-01T10:50:30Z",
+    "status": "in_progress",
+    "updated_at": "2026-07-01T10:52:00Z",
     "updated_by": "dev-team",
-    "active_task_id": "",
-    "next_agent": "",
-    "note": "MONEY-RADAR-P0-T2-COMPOSITE DONE_VERIFIED (73b82471 deployed img e1dbc728; live foreign_accum_z_market=-6.0e-18 non-null, was null pre-fix); ready=[CCATO-T1-TRUTH-GATE-ENGINE]; sprint MONEY-RADAR-P0 T3-DASHBOARD/T4-QA-GATE remain"
+    "active_task_id": "MONEY-RADAR-P0-T3-DASHBOARD",
+    "next_agent": "dev-frontend",
+    "note": "T2 DONE_VERIFIED (live serving). Dispatched dev-frontend on T3-DASHBOARD (/dashboard/money-radar route; mirror momentum.tsx; 4 GaugeCards §8; HN-6 null contract). CCATO-T1 stays ready for next tick."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8313,33 +8313,6 @@
         "verification_gate": "qa confirms all 6 anchors present + each references the shared skill; fb STEP 4d + TNB Step 2 explicitly re-verified against DoD (e)/(f)."
       },
       {
-        "id": "MONEY-RADAR-P0-T3-DASHBOARD",
-        "title": "dev-frontend: apps/frontend/app/routes/dashboard.money-radar.tsx — mirror dashboard.momentum.tsx; 4 GaugeCards (§8); honest-NULL render ('—' + gray FreshnessBadge + null_reason).",
-        "owner": "developer",
-        "next_agent": "developer",
-        "status": "BACKLOG",
-        "zone": "dev-frontend",
-        "type": "FEATURE",
-        "size": "S",
-        "priority": "high",
-        "sprint": "MONEY-RADAR-P0",
-        "depends": [
-          "MONEY-RADAR-P0-T2-COMPOSITE"
-        ],
-        "created_at": "2026-07-01T08:18:21Z",
-        "files": [
-          "apps/frontend/app/routes/dashboard.money-radar.tsx (new)",
-          "apps/frontend/app/routes/dashboard.momentum.tsx (template, mirror exactly)",
-          "apps/frontend/app/components/GaugeCard.tsx",
-          "apps/frontend/app/components/FreshnessBadge.tsx"
-        ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.3 + §8 (card spec) + §5 HN-6 (null contract)",
-        "generic_mandate": "Mirror dashboard.momentum.tsx structure EXACTLY: PageHeader (title='Radar Dòng Tiền', subtitle='Tổng hợp dòng vốn thị trường') + FreshnessBadge(dataAsof=generated_at, slaTierKey='daily') in actions; grid 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'; 4 GaugeCards per §8: [Dòng Tiền ← score.toFixed(2) | MẠNH/YẾU/TRUNG TÍNH], [Dòng Vốn Ngoại ← foreign_accum_z_market.toFixed(2) | GOM HÀNG/XÃ HÀNG], [Khối Lượng Nội Địa ← rel_vol_z_20.toFixed(2) | CAO/THẤP], [Tín Hiệu Phân Kỳ ← divergence.flag | PHÂN KỲ/KHÔNG RÕ]. HN-6 null contract NON-NEGOTIABLE: null scalar renders '—' + FreshnessBadge{label:'Chưa có dữ liệu',color:'gray'} + nullReason from composite null_reason — NEVER a fabricated number. FreshnessBadge SLA 'daily' (maxStalenessMin=1560). NO diacritics in CSS class names; Vietnamese only in displayed strings.",
-        "acceptance": "Route /dashboard/money-radar loads without error; loader reads the composite; non-null card shows formatted score + colored badge; null card shows '—' + gray badge + 'Chưa có dữ liệu' + null_reason (per HN-6); 4 GaugeCards present per §8. No diacritics in class names.",
-        "verification_gate": "qa RAW-loads the route: asserts non-null render + honest-NULL render ('—'/gray/reason) + 4 cards + FreshnessBadge 'daily' + no CSS-class diacritics; confirms it mirrors dashboard.momentum.tsx and does not regress the momentum route.",
-        "note": "Consumer surface. Depends T2 (needs the composite tool). Radar cards render non-null (depth-independent) while momentum cards honest-NULL — that contrast VALIDATES the architecture (§10), do NOT homogenize."
-      },
-      {
         "id": "MONEY-RADAR-P0-T4-QA-GATE",
         "title": "qa gate: verify MONEY-RADAR-P0 Phase-0 DoD (§6) — composite returns real non-null on live data; D2 fires on a real historical example (index up + OBV slope negative → AMBER); dashboard renders with honest-NULL; NO momentum regression.",
         "owner": "qa",
@@ -11287,7 +11260,36 @@
       "updated_by": "dev-team",
       "updated_at": "2026-07-01T06:26:45Z"
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "MONEY-RADAR-P0-T3-DASHBOARD",
+        "title": "dev-frontend: apps/frontend/app/routes/dashboard.money-radar.tsx — mirror dashboard.momentum.tsx; 4 GaugeCards (§8); honest-NULL render ('—' + gray FreshnessBadge + null_reason).",
+        "owner": "developer",
+        "next_agent": "developer",
+        "status": "IN_PROGRESS",
+        "zone": "dev-frontend",
+        "type": "FEATURE",
+        "size": "S",
+        "priority": "high",
+        "sprint": "MONEY-RADAR-P0",
+        "depends": [
+          "MONEY-RADAR-P0-T2-COMPOSITE"
+        ],
+        "created_at": "2026-07-01T08:18:21Z",
+        "files": [
+          "apps/frontend/app/routes/dashboard.money-radar.tsx (new)",
+          "apps/frontend/app/routes/dashboard.momentum.tsx (template, mirror exactly)",
+          "apps/frontend/app/components/GaugeCard.tsx",
+          "apps/frontend/app/components/FreshnessBadge.tsx"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-01-money-radar.md §11.3 + §8 (card spec) + §5 HN-6 (null contract)",
+        "generic_mandate": "Mirror dashboard.momentum.tsx structure EXACTLY: PageHeader (title='Radar Dòng Tiền', subtitle='Tổng hợp dòng vốn thị trường') + FreshnessBadge(dataAsof=generated_at, slaTierKey='daily') in actions; grid 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'; 4 GaugeCards per §8: [Dòng Tiền ← score.toFixed(2) | MẠNH/YẾU/TRUNG TÍNH], [Dòng Vốn Ngoại ← foreign_accum_z_market.toFixed(2) | GOM HÀNG/XÃ HÀNG], [Khối Lượng Nội Địa ← rel_vol_z_20.toFixed(2) | CAO/THẤP], [Tín Hiệu Phân Kỳ ← divergence.flag | PHÂN KỲ/KHÔNG RÕ]. HN-6 null contract NON-NEGOTIABLE: null scalar renders '—' + FreshnessBadge{label:'Chưa có dữ liệu',color:'gray'} + nullReason from composite null_reason — NEVER a fabricated number. FreshnessBadge SLA 'daily' (maxStalenessMin=1560). NO diacritics in CSS class names; Vietnamese only in displayed strings.",
+        "acceptance": "Route /dashboard/money-radar loads without error; loader reads the composite; non-null card shows formatted score + colored badge; null card shows '—' + gray badge + 'Chưa có dữ liệu' + null_reason (per HN-6); 4 GaugeCards present per §8. No diacritics in class names.",
+        "verification_gate": "qa RAW-loads the route: asserts non-null render + honest-NULL render ('—'/gray/reason) + 4 cards + FreshnessBadge 'daily' + no CSS-class diacritics; confirms it mirrors dashboard.momentum.tsx and does not regress the momentum route.",
+        "note": "Consumer surface. Depends T2 (needs the composite tool). Radar cards render non-null (depth-independent) while momentum cards honest-NULL — that contrast VALIDATES the architecture (§10), do NOT homogenize.",
+        "dispatched_at": "2026-07-01T10:52:00Z"
+      }
+    ],
     "ready": [
       {
         "id": "CCATO-T1-TRUTH-GATE-ENGINE",
