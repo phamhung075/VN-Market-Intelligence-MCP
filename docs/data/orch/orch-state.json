@@ -1485,8 +1485,8 @@
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
-    "_updated_at": "2026-06-29T21:15:00Z",
-    "_updated_by": "architect",
+    "_updated_at": "2026-07-01T04:31:07Z",
+    "_updated_by": "po",
     "entries": [
       {
         "created_at": "2026-06-08T00:00:00Z",
@@ -1854,12 +1854,24 @@
         "scope_out": "The already-fixed mixed-scale class (open<100 AND close>=1000, CONTAM-6) — untouched. Any change to index-type rows (VNINDEX legitimately ~1300-1900, just backfilled in RC3) — the predicate MUST exclude them. Legitimately low-priced stocks — never multiplied.",
         "success_metric": "RAW (gateway): get_relative_strength no-arg returns |rs|<=~3 for h63/h126/h252 on ALL watchlist tickers (no 594/922/-1.35 artifacts); get_roc_momentum returns roc in a sane band for all (no 606x, no -0.998); VNINDEX 253 bars intact; a synthetic thousands-format push for a high-price ticker is normalized/rejected at write (unit test); CONTAM-5 sanity job flags the close<1000 whole-row class.",
         "created_at": "2026-06-30T20:20:07Z"
+      },
+      {
+        "sprint_id": "PREDICTION-EVIDENCE-REVIVAL",
+        "status": "active",
+        "priority": "high",
+        "created_by": "po",
+        "origin": "router_raw_verified_bug",
+        "vision": "Prediction dashboard (/dashboard/prediction-claims) emits fresh daily claims again by reviving the starved evidence->likelihood-ratio->validation chain. 12+ consecutive digest-predict no-op cycles; serving layer (/api/prediction-claims) healthy 200 — root is UPSTREAM evidence starvation, NOT a frontend bug.",
+        "scope_in": "(a) evidence_likelihood_ratios n=0 everywhere -> find/build/repair the LR compute-or-backfill job in apps/mcp-server/src/scheduler/** (PRIMARY blocker; tracked stub FIX-EVIDENCE-PIPELINE-STARVED + symptom FIX-PREDICTION-SIGNALS-EMPTY fold here). (b) Evidence monoculture -> only foreign_flow_institutional fragments record; audit why news-scout/bctc-*/market-watcher/kinh-dich cowork agents stopped calling record_evidence_fragment. (c) Validation-gate cold-start bootstrap -> Sharpe>1.0 backtest gate unsatisfiable at n=0; architect design call on a bootstrap path so claims can emit before LR history accumulates.",
+        "scope_out": "Frontend/serving layer (healthy 200 — do NOT touch). Cron-scheduling/dedup of evidenceAccumulatorJob (ALREADY DONE_VERIFIED by EVIDENCE-ACCUM-SILENT-CRON commit 53d00955 — do NOT re-fix). Calibration Brier degradation (0.1379->0.2135 DAMPENING_ACTIVE) tracked separately (FIX-FB-PREDICTION-CALIBRATION-LOOP). kinh-dich backtest 501 tracked separately (KD-BACKTEST-501-4X).",
+        "success_metric": "get_evidence_summary shows n>0 TRUSTED LR on a majority of recorded fragment pairs AND >=2 non-foreign_flow fragment types present AND GET /api/prediction-claims returns a new claim (id>12) created within 2 digest cycles of deploy.",
+        "created_at": "2026-07-01T04:31:07Z"
       }
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-01T01:16:37Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-01T04:31:07Z",
+    "_updated_by": "po-s135-prediction-evidence-revival-kickoff",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -4766,11 +4778,13 @@
       {
         "id": "FIX-EVIDENCE-PIPELINE-STARVED",
         "priority": "high",
-        "status": "REVIEW",
+        "status": "BACKLOG",
         "title": "evidence pipeline STARVED (silent chain): evidence_fragments=0 rows (empty) -> evidenceAccumulatorJob reports success EVERY run but rows_written=0 since 2026-05-27 -> evidence_scores frozen 2026-05-27 (369 rows), evidence_likelihood_ratios frozen 2026-05-24 (45 rows). Root cause UPSTREAM: fragment producer stopped + fragments TTL-expired; accumulator starves -> writes 0 -> falsely reports success.",
         "type": "FIX",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-EVIDENCE-PIPELINE-STARVED"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-EVIDENCE-PIPELINE-STARVED",
+        "specced_under": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "status_note": "Folded under BA-PREDICTION-EVIDENCE-REVIVAL work-item (a) PRIMARY blocker (evidence_likelihood_ratios n=0). Stays BACKLOG — pm decomposition under the BA spec mints the real dev task; do NOT dispatch directly. Status normalized REVIEW->TODO 2026-07-01T04:31:07Z (drift: parked in backlog, never reviewed, null owner/commit)."
       },
       {
         "id": "FIX-PREDICTION-SIGNALS-EMPTY",
@@ -4779,7 +4793,9 @@
         "title": "prediction_signals poll green-but-empty: table frozen 2026-04-27 (45d, 6 rows) while predictionMarketPollJob ran 2026-06-11 17:30 status=success (predictionMarketPollJob + predictionResolutionJob both running). Poll executes, zero signals land 45d.",
         "type": "FIX",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PREDICTION-SIGNALS-EMPTY",
+        "specced_under": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "status_note": "Downstream symptom of the same starved chain (prediction_signals frozen 45d). In-scope for BA-PREDICTION-EVIDENCE-REVIVAL work-item (a). Stays BACKLOG — pm decomposition mints the dev task; do NOT dispatch directly. Annotated 2026-07-01T04:31:07Z."
       },
       {
         "id": "FIX-CRON-JOB-RUNS-DOUBLE-LOG",
@@ -8138,6 +8154,20 @@
           "BACKUP + drift-check before any UPDATE; off-hours window; PO go/no-go gate (destructive, mirrors CONTAM-10-EXEC).",
           "Post-verify 0 remaining contaminated rows for the 9 tickers + serving-layer RS/ROC/52w normalization; bucket-(a) 6345 legit-cheap rows untouched."
         ]
+      },
+      {
+        "id": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "title": "Requirement spec for PREDICTION-EVIDENCE-REVIVAL — revive starved evidence->LR->validation chain so digest-predict emits fresh prediction claims again",
+        "owner": "ba",
+        "next_agent": "ba",
+        "status": "BACKLOG",
+        "zone": "multi",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "sprint": "PREDICTION-EVIDENCE-REVIVAL",
+        "created_at": "2026-07-01T04:31:07Z",
+        "depends": [],
+        "note": "ROUTER-RAW + PO-RAW verified 2026-07-01. Dashboard shows no new predictions since id=12 POW (2026-06-26, 5+d). get_evidence_summary CTG/FPT = all foreign_flow_institutional LR=1.00 (n=0) UNTRUSTED. digest-predict validate_prediction_claims needs Sharpe>1.0 backtest -> unsatisfiable at n=0 -> structural NO-OP (notebook confirms honest no-op 06-27..06-30). THREE work-items for architect to SPLIT multi-zone: (a) LR compute/backfill job apps/mcp-server/src/scheduler/** [PRIMARY; folds stub FIX-EVIDENCE-PIPELINE-STARVED + symptom FIX-PREDICTION-SIGNALS-EMPTY]; (b) monoculture audit of record_evidence_fragment producers across cowork agent flows (docs/agents/**); (c) validation-gate cold-start bootstrap DESIGN. CONTEXT: prior EVIDENCE-ACCUM-SILENT-CRON (53d00955 DONE_VERIFIED) fixed cron-scheduling/dedup ONLY — accumulator RUNS (rows_written=9 06-13 live-verified) but LR sample n=0 + monoculture persist. Recurring-bug-escalation: architect brief before point patches."
       }
     ],
     "closed_sprints": [

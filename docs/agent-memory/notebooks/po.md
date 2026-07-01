@@ -1,23 +1,26 @@
 # PO Notebook
 
-_Last: 2026-07-01T03:07Z_
+_Last: 2026-07-01T04:31Z_
 
-## Tick 2026-07-01T03:07Z — D4 false-positive triage (dev-team, coord e71c7736)
+## Tick 2026-07-01T04:31Z — Sprint kickoff PREDICTION-EVIDENCE-REVIVAL (router coord 3340d049)
 
-8 telegram reports 3358-3365 + 15 NEW signal_queue rows, ALL `[system-auditor] D4 orch-state/lock diverge` from ONE 03:00Z snapshot. RAW-verified false-positive.
+Router flagged prediction dashboard "no new predictions". RAW-re-verified (NOT relayed): serving layer healthy, root = UPSTREAM evidence starvation.
 
-**RAW ground truth (independently confirmed, not relayed):**
-- `.head` IDLE (active_task_id=null). TASK_1996 + TASK-FFT-L4 both done_verified @77564b48; dispatch-guards `task:TASK_1996`/`task:TASK-FFT-L4` RELEASED (absent from task_list_held).
-- 8 held sprint-task locks NOW all LEGIT-concurrent: SF-1 `dev-team-cron-singleton` (exp04:43Z), fire-election `cron:dev-team:2026-07-01T03:07Z`, my own `task:po-triage-20260701`, 5 esc-* (ACB/VCB/FPT datacov, HVN/GVR deepdive; 1-8d TTLs, no board row = legit per feedback_esc3_held_lock_no_board_row_is_legit).
-- The 03:00Z audit snapshotted MID-DISPATCH (qa flipping the 2 review rows 02:58-03:15Z). Every finding self-resolved within one audit interval. No genuine divergence.
+**RAW ground truth (independently confirmed):**
+- get_evidence_summary CTG (live) = 4 fragments, ALL `foreign_flow_institutional LR=1.00 (n=0) UNTRUSTED`. Monoculture + LR-empty confirmed NOW.
+- digest-predict notebook: honest NO-OP 06-27..06-30, "evidence UNTRUSTED systemic 12th consecutive cycle". validate_prediction_claims Sharpe>1.0 gate unsatisfiable at n=0 → structural 0-claims.
+- Router said "UNTRACKED" — FALSE. Board already had stranded `FIX-EVIDENCE-PIPELINE-STARVED` (status REVIEW mis-parked in backlog, null owner) + `FIX-PREDICTION-SIGNALS-EMPTY` (TODO). Prior sprint `EVIDENCE-ACCUM-SILENT-CRON` (DONE_VERIFIED 53d00955) fixed cron-scheduling/dedup ONLY — accumulator RUNS (rows_written=9 06-13) but LR n=0 + monoculture persist.
 
-**Actions:**
-- (a) Acked all 8 reports via process_telegram_report(resolution=wontfix) — telegram msgs deleted, channel clean.
-- (b) Flipped 15 NEW `sau-d4-202607010300` rows → RESOLVED with provenance (orch-apply.sh RC=0; NEW 15→0, RESOLVED 32→47; 97 SHG warns non-blocking).
-- (c) D4 predicate ALREADY tracked → enriched `FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE` (BACKLOG, next_agent=agent-father) in-place, NO dup mint: recurrence_note→5th+ (3358-3365) + folded `debounce_and_exclusion_spec` = the 2 missing refinements (EXCLUDE SF-1/`cron:dev-team:*`/`esc-*` from both D4 checks; DEBOUNCE — require mismatch to persist >1 audit cycle). Complements existing scope_widened + class_b_folded.
+**Decision (recurring-bug-escalation):** NOT another point patch. Minted ONE umbrella sprint → BA→architect (SPLIT multi-zone). 3 work-items: (a) LR compute/backfill job apps/mcp-server/src/scheduler [PRIMARY]; (b) monoculture audit of record_evidence_fragment producers (cowork agent flows); (c) validation-gate cold-start bootstrap DESIGN.
 
-**RETURN = BATCH=NOTHING.** No dev code FIX. Predicate fix stays PLAN-ONLY backlog (agent-father owns system-auditor .md). Market OPEN — CONTAM-11-REMEDIATE stays deferred (off-hours only). No genuine divergence found.
+**Writes (orch-apply.sh RC=0, warns 98→96 non-blocking):**
+- sprint_goal.entries += PREDICTION-EVIDENCE-REVIVAL (active, high)
+- backlog += BA-PREDICTION-EVIDENCE-REVIVAL (ba, zone=multi, SPRINT-M, BACKLOG)
+- Folded stranded rows under it via `specced_under` (stay BACKLOG, no double-dispatch; pm decomposition mints real dev tasks). Normalized FIX-EVIDENCE-PIPELINE-STARVED drift REVIEW→BACKLOG.
+- Sprint umbrella lock `task:PREDICTION-EVIDENCE-REVIVAL` claimed (po, 3600s).
+
+**RETURN → NEXT: ba** (write spec). Script: scripts/po-s135-prediction-evidence-revival-kickoff.jq.
 
 ## Carry-over
-- FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE now carries the full FREEZE spec (whitelist + debounce). When agent-father grooms it: implement the exclusion-set + >1-cycle debounce in system-auditor D4 handler; that kills the whole false-positive class (5th+ recurrence).
-- FU-AUDITOR-D4-SIGNAL-ID (shared-signal-id collision) still open — orthogonal, low-urgency.
+- Scope_out (do NOT re-fix): serving layer (healthy); evidenceAccumulator cron/dedup (done 53d00955); Brier degradation (FIX-FB-PREDICTION-CALIBRATION-LOOP); kinh-dich 501 (KD-BACKTEST-501-4X). Reference in BA spec, not blockers.
+- FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE still carries FREEZE spec (whitelist+debounce) for agent-father grooming.
