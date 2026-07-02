@@ -4,8 +4,8 @@
     "last_mtime": "2026-06-06T16:22:41Z",
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-07-02T17:20:23Z",
-      "last_linecount": 50
+      "last_mtime": "2026-07-02T18:20:31Z",
+      "last_linecount": 43
     },
     "section_name": "po",
     "start_line": 8
@@ -282,7 +282,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T17:20:23Z",
+    "_updated_at": "2026-07-02T18:20:31Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -958,6 +958,17 @@
           "disposition": "sawtooth at tight 2GB cap (NOT pinned/no-GC): 60->99.67%@17:16Z, GC reclaimed ~800MiB to 59%@17:20Z (prior-tick RAW), back to 99.62%@17:46Z; ragged-edge OOM-kill risk -> restart churn",
           "escalated_to": "FIX-MCP-MEMORY-CODE-LEAK (promoted backlog->ready, next_agent=architect)"
         }
+      },
+      {
+        "id": "sau-2026-07-02T18:17:47Z",
+        "ts": "2026-07-02T18:17:47Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "api-gateway A-13 health endpoint failed (CURL error)",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",

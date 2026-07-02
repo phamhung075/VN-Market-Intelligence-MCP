@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-02T18-06-51Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": null
+    },
+    "last_fired_timestamp": "2026-07-02T18:06:09.000Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 1,
+    "note": "bctc-analyst-slot-2 cron-due (0 18 * * *); bctc-offmarket policy cron-fallback on calendar unknown; snapshot cycle-snapshot-18:05.json pre-staged; spawn background OK; slot token claimed+released"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-02T18-06-51Z",
+  "_processed": {
+    "fingerprint": "31c4cd0273b6f400c52f85f7f31211193eb5b3329f94a55b5a9fd5afc2e3f8dc",
+    "processedAt": "2026-07-02T18:19:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

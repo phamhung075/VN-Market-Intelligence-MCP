@@ -1,0 +1,64 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "product": "Ngân hàng quốc doanh top đầu — tín dụng doanh nghiệp lớn, bán lẻ, tài trợ thương mại, ngoại hối",
+  "customer": "Doanh nghiệp lớn (đặc biệt FDI/xuất khẩu), khách hàng bán lẻ thu nhập trung-cao, đối tác thanh toán quốc tế",
+  "ops": "Lợi nhuận ròng 9.462,1 tỷ (biên 54,3%); ROE annualized 16,7% dưới trung vị ngành 17,6%; NIM/chi phí vốn ổn định, thận trọng đúng khẩu vị ngân hàng quốc doanh",
+  "mgmt": "Cổ đông nhà nước chi phối; định giá thị trường premium (PE/PB) phản ánh niềm tin vào an toàn vốn + thương hiệu hơn là tăng trưởng lợi nhuận vượt trội",
+  "first_analysis": true,
+  "esc_gate": {
+    "esc1_result": "FALSE",
+    "esc2_result": "PASS — imbalance 0.37% (assets 2,550,963.3 tỷ vs liab+equity 2,541,490.7 tỷ)",
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 3,
+    "coverage_guard_key": "esc-datacov:VCB:Q1-2026:ESC-3",
+    "coverage_guard_held": true,
+    "esc4_result": "FALSE — no related_party_pct/one_off_pct signal available",
+    "esc5_result": "FALSE — no refined units found for report_id VCB_2026_Q1"
+  },
+  "trick_confidence": "low",
+  "trick_summary": "Không phát hiện dấu hiệu bất thường kế toán rõ ràng trong kỳ này; dữ liệu hiện có ở mức tổng hợp nên độ tin cậy chỉ mức thấp.",
+  "valuation": {
+    "verdict": "FAIR",
+    "pe": 14.1,
+    "pb": 2.2,
+    "ey_pct": 7.09,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.09,
+    "sector_median_pe": 9,
+    "sector_median_pb": 1.5,
+    "sector_median_roe_pct": 17.6,
+    "roe_annualized_pct": 16.7
+  },
+  "balance_sheet_first_read": {
+    "pb_ratio": 2.2,
+    "charter_capital_ratio": null,
+    "balance_flags": [],
+    "balance_verdict": "ACCEPTABLE",
+    "note": "charter_capital data unavailable this cycle; asset_coverage metric not meaningful for a bank balance sheet"
+  },
+  "cash_flow": {
+    "ocf_ni_ratio": 1.37,
+    "quarters_returned": 3
+  },
+  "insider_signals": "none found",
+  "legal_risk_signals": "none affecting VCB (PC1/JSH/POM/DIG unrelated)",
+  "kinhdich": {
+    "que": "48 - Tinh (Tỉnh)",
+    "xu_huong": "TRUNG TINH",
+    "khuyen_nghi": "GIU",
+    "do_tin_cay_pct": 38
+  },
+  "chain_validation": "0 open chain findings in last 30 minutes — no catalyst to confirm/contradict",
+  "regime": "NEUTRAL (carry +1.37pp)",
+  "confidence": 0.7,
+  "note": "search_similar_context timed out x2 (historical BCTC context) — non-blocking, core analysis unaffected",
+  "_processed": {
+    "fingerprint": "9d4c4e1fb3da3280a0152c5313ef2a3288516f2f44b05377401c755c6d57b013",
+    "processedAt": "2026-07-02T18:19:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
