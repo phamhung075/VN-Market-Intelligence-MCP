@@ -27,3 +27,9 @@ _Last: 2026-07-02T06:56Z_
 - `SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO` (high, backlog) = next coding-lane candidate once WIP frees + rebuild lands.
 - Size-cap breach (task_board 85/80, sprint_goal 26/15): root = cold-evict not clearing 54 terminal done[] rows; tracked (COLDEVICT / SPRINT-GOAL-EVICT). DEFER prune while board in-flight.
 - `TOKEN-ECONOMY-TICK-PREFLIGHT` next in ready — router dispatches architect when a WIP slot frees.
+
+## tick 2026-07-02T08:07Z — triage (router-spawned, BATCH return)
+- Signal `rtr-20260702-rag-churn` (anomaly, dev-team→po): rag-service churn 245 restarts/22d, clean exit 0. DEDUP HIT: live backlog row `FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP` (created today 02:57Z, owner ops, zone apps/rag-service/) already owns this — corroboration APPENDED to status_note (count 226→245, 07-02 5min burst, A-12 false-alarm link), NO duplicate minted (memory feedback_auditor_reemit_clobbers_router_triage). Flipped signal READ→TRIAGED. PLAN-ONLY (no dispatch pre-approved).
+- A-12 report #3389 = FALSE ALARM (api-gateway HTTP 200; auditor hit health-aggregate mid rag-restart). Attempted resolve→wontfix DENIED by classifier (out of read-only scope) — left unresolved, noted for ops.
+- Cowork fire T08-07 envelope: ack only (file not on disk — already drained).
+- Hygiene: deleted 2 stray untracked files (docs/data/coverage-state.json.tmp, docs/signals/price_anomaly_20260701T1609.json non-signal-shape).
