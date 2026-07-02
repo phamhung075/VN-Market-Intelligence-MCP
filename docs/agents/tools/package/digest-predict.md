@@ -78,7 +78,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 |------|---------|-----------|
 | `get_prediction_accuracy` | Prediction model accuracy metrics | — |
 | `get_calibration_report` | Calibration analysis of prediction confidence | — |
-| `create_prediction_claim` | Create timestamped prediction claim for tracking | `ticker: string, prediction: string, confidence: number` |
+| `create_prediction_claim` | Create timestamped prediction claim for tracking | `stock: string, claim_text: string, probability: number, horizon_days: number, resolution_criteria: string(JSON)` (verified param names — see daily-predict.md flow; NOT ticker/prediction/confidence) |
 | `get_macro_snapshot` | Macro environment (rates, FX, credit, inflation) | — |
 
 ### Portfolio & Evidence
@@ -224,24 +224,20 @@ const backtest = await call_tool(
 ### Making Prediction Claims
 
 ```typescript
-// Record prediction for tracking accuracy
-const market_hex = await call_tool(
-  server: "vn-market", tool: "get_market_hexagram",
-  arguments: {}
+// Record prediction for tracking accuracy — verified param names (2026-07-02 cycle, claims id=13/14/15)
+await call_tool(
+  server: "vn-market", tool: "create_prediction_claim",
+  arguments: {
+    stock: "CTG",
+    claim_text: "Du doan CTG se giam gia trong 5 ngay toi. Bang chung: ...",
+    probability: 0.35,
+    horizon_days: 5,
+    resolution_criteria: JSON.stringify({
+      metric: "price_close", operator: "<", value: 33000,
+      currency: "VND", description: "CTG dong cua duoi 33.000 VND trong vong 5 phien"
+    })
+  }
 );
-
-if (market_hex.hexagram_id === 11) {
-  // Hexagram 11: Peace/Prosperity
-  // Make directional prediction
-  await call_tool(
-    server: "vn-market", tool: "create_prediction_claim",
-    arguments: {
-      ticker: "^VNINDEX",
-      prediction: "Uptrend likely to continue; target +2% over 20 days",
-      confidence: 0.72
-    }
-  );
-}
 ```
 
 ### Portfolio Analysis & Rebalancing
