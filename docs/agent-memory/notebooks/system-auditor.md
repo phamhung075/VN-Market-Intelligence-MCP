@@ -1,6 +1,16 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c462 · 2026-07-02T01:15:14Z
+### Audit Run Tier-1 (01:15–01:16 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK
+- RAW-PROBE (01:15:14Z):
+  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 27min"; rag-service "Up 47min"; technical-analysis "Up 16h"; stock-price "Up 47h"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d" all healthy]
+  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+- A-21 RestartCount: mcp-server=1 ✓ (OOM 2026-07-01 already tracked) | A-30 Memory: 13.26% ✓ | A-32 Disk: 48% ✓
+- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
+- Signal: tier-1-rollup INFO posted (signal_id=8206)
+
 ## c461 · 2026-07-02T00:46:17Z
 ### Audit Run Tier-1 (00:45–00:46 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
@@ -11,6 +21,7 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-21 RestartCount: mcp-server=0 ✓ | A-30 Memory: 73.81% ✓ | A-32 Disk: 47% ✓
 - MCP System: get_system_status TOOL-UNAVAILABLE | get_cron_health TOOL-UNAVAILABLE
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
+
 ## c460 · 2026-07-02T02:30:22Z
 ### Audit Run Tier-3 (02:30–02:38 UTC 2026-07-02)
 - Tier: 3 | Checks: A(tooling+inter-svc), B(BCTC), C(DB 1–16) + Doc audit (1–6)
@@ -43,15 +54,4 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-21 RestartCount: mcp-server=0 ✓ | A-30 Memory: 56.39% ✓ | A-32 Disk: 48% ✓
 - MCP System: uptime 1h 17m, circuits OK, WAL 3.94MB ✓, 30 alerts/24h (4 HIGH/CRITICAL)
 - Cron Health: 140+ jobs monitored, 99.5% avg success (intelligenceCycle 99.5%, others ≥99%)
-- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-
-## c457 · 2026-07-01T23:15:06Z
-### Audit Run Tier-1 (23:15–23:16 UTC 2026-07-01) — Runtime Ping
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- RAW-PROBE (23:15:06Z):
-  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 47min" rebuild 22:27Z; rag-service "Up 34min" healthy; frontend "Up 8h"; technical-analysis "Up 14h"; stock-price "Up 45h"; macro-indicators "Up 47h"; others "Up 6d" all healthy]
-  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
-  - A-20-PROBE: 3/3 HTTP 200 PASS (event-loop healthy)
-- A-21 RestartCount: mcp-server=0 ✓ | A-30 Memory: 30.86% (632MiB/2GiB) ✓ | A-32 Disk: 46% ✓
-- MCP System: uptime 48m 42s (post-rebuild), circuits OK, WAL 3.93MB ✓, 30 alerts/24h (4 HIGH/CRITICAL)
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
