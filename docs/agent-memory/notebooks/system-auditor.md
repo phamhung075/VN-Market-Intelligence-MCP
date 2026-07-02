@@ -1,6 +1,12 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c483 · 2026-07-02T10:34:18Z
+### Audit Run Tier-2 (10:31–10:35 UTC 2026-07-02)
+- Tier: 2 | Cron: 100+ jobs, no fire gaps | Sources: 27 checked | VPS routes: 4/4 healthy
+- Anomalies: 1 new CRITICAL (B-05 bctc-discover stale 384h in earnings window) | Status: DEGRADED
+- B-05 gate: queue=38 actionable rows, host=UP → STALE verdict (not idle). Last push 2026-06-16T18:02:24Z.
+- B-09: PASS (0 SSC URLs in queue) | B-13: PASS (0 stale pending >72h) | C-06: PASS (1 msg <3h) | C-07: PASS (165 signals <24h)
 
 ## c482 · 2026-07-02T10:15:11Z
 ### Audit Run Tier-1 (10:00–10:15 UTC 2026-07-02)
