@@ -1,28 +1,18 @@
 # PO Notebook
 
-_Last: 2026-07-02T17:28Z_
+_Last: 2026-07-02T17:57Z_
 
-## Tick 2026-07-02T17:07Z — dev-team triage (coord d3292ca4): 8 signals, 0 new tasks → NOTHING
+## Tick 2026-07-02T17:37Z — dev-team triage (coord d3292ca4): 1 signal → BATCH(1 SPRINT-M)
 
-**RAW-verify (17:20-21Z):** all containers healthy; mcp-server:4000/health=200(0.005s), api-gw=200, frontend:3001=200; mcp-server StartedAt=10:15:34Z, RestartCount=3, OOMKilled=false, ExitCode=0; mem 59.05%→59.26% (1.181→1.185GiB).
-- **S1/2/3 health CURL_ERR (a01-mcp CRIT / a02-api / a12-fe):** RESOLVED false-positive. StartedAt 10:15Z PREDATES the 14:14Z window → no crash/restart at outage time; endpoints all 200 now. Auditor-FP probe-artifact class (same as archived 06:16/06:17Z rows).
-- **S4 restart count=3 (a21-mcp):** TRIAGED dup → OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. RestartCount resets ONLY on user-gated recreate → persists regardless of code; container stable 7h, ExitCode=0. Not independently actionable.
-- **S5 mem 99.67% (sau-1783012565):** TRIAGED dup → FIX-MCP-MEMORY-CODE-LEAK. Corroborated 99.67%@17:16Z but RAW re-probe @17:20Z = 59% → 812MiB RECLAIMED w/o restart → refutes hard leak, = transient spike+GC. Folded reclaim datapoint into existing task (diag: leak→transient/cap-tight). Near-OOM on 2GB cap still a watch.
-- **S8 cycle-snapshot promotion (file sig):** dup → SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED, ENRICHED note w/ root cause. emitPressureStateTool.ts snapPath=cycle-snapshot-<tickHHMM>.json, tick_id defaults to 15-min FLOOR (16:30); flow names by ACTUAL minute (16:34 on disk) → never matches → latest.json frozen (mtime 08:35Z). Alt server-side zone apps/mcp-server/.
-- **S6/S7 cowork telemetry:** informational, no action.
-Committed orch-state (2982bcba, explicit path). RETURN=NOTHING (no new/promotable task; WIP still parked, ready empty after prior HNX dispatch).
+**Inputs:** pendingSignals=1 (cowork-fire telemetry, routine); read_telegram_reports(new)=1 (A-30 mem WARN 17:16Z, from analysis-agent); list_unresolved_reports=[same A-30]; CI GREEN (HEAD 238de3a2); git=main only, ahead 113 (fleet-push timer owns push); head idle; WIP 1/2 (parked enricher user-gated — untouched); ready[] was EMPTY. TNB handoff=c103 (2026-06-30, chain already ACK'd through c102; stale, not re-processed).
 
-## Tick 2026-07-02T13:07Z — dev-team triage (coord d3292ca4): re-rank + promote → BATCH(1 FIX)
+**S1 cowork-fire (digest-daily won 17:30Z tick → digest-predict spawned):** ROUTINE. digest-predict since COMPLETED + router RAW-verified (3 claims id13/14/15 CTG/MBB bearish + VIC bullish, doc self-heal 5f924884). No task. Note carries the known SPIKE-TICK-SNAPSHOT filename mismatch (already tracked). ACK only.
 
-**Inputs clean:** pendingSignals=EMPTY; read_telegram_reports(new)=none; list_unresolved_reports=[]; CI GREEN (HEAD 238de3a2, run 28562309347); git=main only; head=idle (leave idle); WIP=1 = FIX-BCTC-ENRICHER-STUCK-BACKLOG (PARKED user-gated rebuild — untouched); ready[] was EMPTY → 1 free slot.
-
-**Decision — BCTC-HNX-SSL-HARDEN re-rank on corrected premise:** router recon (docs/vps-sources/hnx-tls-chain-2026-07-02.txt) FALSIFIED the 2026-07-07 expiry cliff — HNX renewed leaf Jun 18 2026, NotAfter 2027-01-03. Deadline urgency GONE → priority **high→medium**. REAL remaining driver = HNX server omits GlobalSign RSA OV SSL CA 2018 intermediate (openssl verify 21) so the June-1 hotfix `curl -k` (cert-verify OFF = MITM) is still live in /root/fetch-bctc.sh. Still worth doing = pure security-debt reduction (standing mandate).
-
-**Fills the free slot?** YES. Scanned backlog: no competing groomed candidate — the P0/P1 mass is the FACTORY maintainability epic (held PLAN-ONLY, needs architect sequencing) + dep-chained F1-*/SHG-*/CCATO-* clusters. HNX is the cleanest: deps satisfied (FIX-BCTC-VPS-FETCH-LEG-DEAD DONE), recon complete, size S, ops-route, zone cross-service/ (DISJOINT from in_progress apps/mcp-server task → no collision). Promoted backlog→ready via inline jq|orch-apply.sh: CORRECTED title (dropped false expiry claim) + desc/AC (real driver) + priority medium + next_agent=ops + promote stamps. Conservation OK (backlog 387→386, ready 0→1, others byte-stable; rc=0, 102 pre-existing SHG coherence warns non-blocking). RETURN=BATCH(1) → router dispatches ops. head left idle.
+**S2 A-30 mem WARN (sau-1783012565) — ESCALATED via EXISTING rows, NO dup:** Router's two-point read (99.67%@17:16Z→99.62%@17:46Z = "pinned/no-GC") is REFUTED by my OWN prior-tick RAW (17:20Z=59%, ~800MiB reclaimed w/o restart). Truth = RAPID SAWTOOTH slamming a TIGHT 2GB cap (60→99 in ~1h, GC reclaims ~800MiB, back to cap ~26min) — NOT a monotonic pinned leak. Correlates with OPS-MCP-RESTART-CHURN (49% unclean restarts, suspected OOM-kill → in-flight corruption). Recurring (A-30 06-19 / 06-20 CRITICAL 99.99% / 07-02) + reliability #1 + free slot → PROMOTED existing FIX-MCP-MEMORY-CODE-LEAK backlog→ready (next=architect); phase0 = rule out stale-image (rebuild-to-HEAD) / cap-too-tight BEFORE any code hunt; stamped signal po_upgrade. Applied via scripts/po-s139-mcp-mem-cap-churn-promote.jq | orch-apply.sh (backlog 386→385, ready 0→1, all else byte-stable; idempotent; framing corrected sawtooth). RETURN=BATCH(1 SPRINT-M). A-30 report resolution is out of PO tool scope (router/auditor owns) — closed via the escalation.
 
 ## Carry-over
-- WIP 1: `FIX-BCTC-ENRICHER-STUCK-BACKLOG` PARKED on user-gated mcp-server rebuild — do NOT unpark / plan container actions.
-- `ready[]` = `BCTC-HNX-SSL-HARDEN` (ops, medium, size S) — router dispatches to ops this tick.
-- Sibling `FIX-BCTC-VPS-FETCH-LEG-DEAD` DONE (revived the fetch leg); HNX-HARDEN is its hardening follow-up.
-- Prior ticks (T09:37/T10:37): head-dup collapse (po-s138) + signal_queue wedge repair + FIX-BCTC-VPS-FETCH-LEG-DEAD mint — all shipped.
-- Guards standing: `FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD` (architect groom), `FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP` (ops). Size-cap breach root (cold-evict not clearing terminal done[]) still DEFERRED while board in-flight.
+- ready[] = FIX-MCP-MEMORY-CODE-LEAK (architect, high, SPRINT-M) — router dispatches Step-2 planning this tick.
+- ARCHITECT diagnosis nuance: memory = SAWTOOTH + tight-2GB-cap + OOM-churn, NOT a slow 12h leak. Cheapest first: stale-image check (rebuild-to-HEAD, user-gated swap) + cap-vs-8GB-host-budget, THEN heap-profile.
+- WIP 1: FIX-BCTC-ENRICHER-STUCK-BACKLOG PARKED on user-gated rebuild — do NOT unpark / plan container actions.
+- review[5]: incl BCTC-HNX-SSL-HARDEN deploy-pending (user-gated ./scripts/deploy-vinahost.sh).
+- ahead 113 — fleet-push launchd timer owns push; PO never pushes.

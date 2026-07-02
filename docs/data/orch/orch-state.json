@@ -952,7 +952,12 @@
         "triaged_at": "2026-07-02T17:27:56Z",
         "disposition": "DUPLICATE",
         "linked_task": "FIX-MCP-MEMORY-CODE-LEAK",
-        "triage_note": "Corroborated 99.67% (1.993GiB/2GiB) at 17:16Z. RAW re-probe 17:20Z/17:21Z: 59.05%->59.26% (1.181->1.185GiB) -- 812MiB RECLAIMED without restart (StartedAt unchanged 10:15Z). Reclaimable memory refutes a hard monotonic leak; pattern is sawtooth (60->99.67->59) = transient heavy-op spike + GC, not unrecoverable leak. Still a near-OOM risk on the tight 2GB cap. Memory investigation already owned by TODO FIX-MCP-MEMORY-CODE-LEAK -- folded in as fresh evidence refining diagnosis from leak -> transient-spike/GC-lag/cap-too-tight. No new task."
+        "triage_note": "Corroborated 99.67% (1.993GiB/2GiB) at 17:16Z. RAW re-probe 17:20Z/17:21Z: 59.05%->59.26% (1.181->1.185GiB) -- 812MiB RECLAIMED without restart (StartedAt unchanged 10:15Z). Reclaimable memory refutes a hard monotonic leak; pattern is sawtooth (60->99.67->59) = transient heavy-op spike + GC, not unrecoverable leak. Still a near-OOM risk on the tight 2GB cap. Memory investigation already owned by TODO FIX-MCP-MEMORY-CODE-LEAK -- folded in as fresh evidence refining diagnosis from leak -> transient-spike/GC-lag/cap-too-tight. No new task.",
+        "po_upgrade": {
+          "at": "2026-07-02T17:57:06Z",
+          "disposition": "sawtooth at tight 2GB cap (NOT pinned/no-GC): 60->99.67%@17:16Z, GC reclaimed ~800MiB to 59%@17:20Z (prior-tick RAW), back to 99.62%@17:46Z; ragged-edge OOM-kill risk -> restart churn",
+          "escalated_to": "FIX-MCP-MEMORY-CODE-LEAK (promoted backlog->ready, next_agent=architect)"
+        }
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",
@@ -3674,17 +3679,6 @@
         "type": "FIX",
         "zone": "cross-service/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NEWS-VPS-CRASH-LOOP"
-      },
-      {
-        "id": "FIX-MCP-MEMORY-CODE-LEAK",
-        "priority": "high",
-        "size": "M",
-        "sprint": "BACKLOG",
-        "status": "TODO",
-        "title": "Fix mcp-server runtime memory leak: accumulates 87% in 12h despite fresh start at 5%",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK"
       },
       {
         "id": "EVAL-PUSH-DOUBLE-ENCODE",
@@ -9674,7 +9668,24 @@
         "dispatched_at": "2026-07-01T23:32:10Z"
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-MCP-MEMORY-CODE-LEAK",
+        "priority": "high",
+        "size": "M",
+        "sprint": "BACKLOG",
+        "status": "READY",
+        "title": "Fix mcp-server runtime memory leak: accumulates 87% in 12h despite fresh start at 5%",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK",
+        "next_agent": "architect",
+        "promoted_by": "po",
+        "promoted_at": "2026-07-02T17:57:06Z",
+        "promotion_reason": "RECURRING reliability escalation (A-30: 06-19, 06-20 CRITICAL 99.99%, 07-02). mcp-server memory SAWTOOTHS at the 2GB cap — NOT a monotonic pinned leak: 60.70%->99.67% in ~1h (17:16Z), GC reclaimed ~800MiB to 59% @17:20Z (RAW-probed prior PO tick), then back to 99.62% @17:46Z. Operating at the ragged edge of a TIGHT 2GB cap with ~800MiB working-set churn -> any allocation spike faster than GC = OOM-kill. Plausible ROOT of OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (49% unclean restarts, suspected Docker OOM-kill -> in-flight-state corruption: Bun-JIT/lock-orphan/mid-aggregator classes). Reliability = PO #1; free coding slot (WIP 1/2 parked-enricher, head idle).",
+        "phase0_directive": "ROOT-CAUSE FIRST (architect) — CHEAPEST candidates before any code hunt: (a) verify running mcp-server image == HEAD; many recent mcp-server commits => image likely STALE; per feedback_mcp_server_stale_image_mem_leak_rebuild_fixes a stale image is a KNOWN mem cause, ops rebuild-to-HEAD (user-gated swap) is cheapest. (b) assess whether the 2GB cap is simply too tight for the working set (cap bump vs Docker 8GB host budget — project_host_memory_panic). (c) ONLY if a fresh-from-HEAD image at an adequate cap still slams cap -> heap-profile the allocation hotspot / correlate with specific tool calls. Diagnosis = sawtooth + tight-cap + OOM-churn, NOT a slow monotonic leak."
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
