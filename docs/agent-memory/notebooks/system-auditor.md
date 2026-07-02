@@ -1,27 +1,27 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
-## c484 · 2026-07-02T10:46:00Z
-### Audit Run Tier-1 (10:30–10:46 UTC 2026-07-02)
+## c485 · 2026-07-02T11:15:11Z
+### Audit Run Tier-1 (11:00–11:15 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 PASS
-- Restart: mcp-server=3 ⚠ (↑ from 2 @10:15, new restart) | Memory: 13.87% ✓ | Disk: 46% ✓
-- Anomalies: 1 new WARN (A-21: restart threshold ≤2 exceeded) | Status: HEALTHY
+- Restart: mcp-server=3 ⚠ (known/dedup-tracked) | Memory: 29.91% ✓ | Disk: 46% ✓
+- Anomalies: 0 new (1 dedup-tracked A-21: restart threshold ≤2 exceeded) | Status: HEALTHY
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-07-02T10:44:41Z ===
+=== AUDITOR PROBE 2026-07-02T11:15:11Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                    IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 29 minutes (healthy)   33fea3bafe16                                    12 hours ago
-vn-market-intelligence-mcp-frontend-1             Up 19 hours (healthy)     74bfe1c5b392                                    19 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 59 minutes (healthy)   33fea3bafe16                                    13 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 20 hours (healthy)     74bfe1c5b392                                    20 hours ago
 vn-market-intelligence-mcp-technical-analysis-1   Up 26 hours (healthy)     vn-market-intelligence-mcp-technical-analysis   26 hours ago
 vn-market-intelligence-mcp-stock-price-1          Up 2 days (healthy)       vn-market-intelligence-mcp-stock-price          2 days ago
 vn-market-intelligence-mcp-macro-indicators-1     Up 2 days (healthy)       vn-market-intelligence-mcp-macro-indicators     2 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 3 days (healthy)       vn-market-intelligence-mcp-api-gateway          3 days ago
 vn-market-intelligence-mcp-pdf-extractor-1        Up 4 days (healthy)       vn-market-intelligence-mcp-pdf-extractor        4 days ago
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 6 days (healthy)       vn-market-intelligence-mcp-kinh-dich-service    2 weeks ago
-vn-market-intelligence-mcp-rag-service-1          Up 4 minutes (healthy)    vn-market-intelligence-mcp-rag-service          3 weeks ago
+vn-market-intelligence-mcp-rag-service-1          Up 2 minutes (healthy)    vn-market-intelligence-mcp-rag-service          3 weeks ago
 vn-market-intelligence-mcp-news-fetch-1           Up 6 days (healthy)       vn-market-intelligence-mcp-news-fetch           3 weeks ago
 vn-market-intelligence-mcp-alert-engine-1         Up 6 days (healthy)       vn-market-intelligence-mcp-alert-engine         3 weeks ago
 headroom-proxy                                    Up 6 days                 headroom-proxy:local                            3 weeks ago
@@ -38,7 +38,7 @@ mcp-gateway                                       Up 6 days (healthy)       mcps
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=3
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=13.87% MemUsage=284MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=29.91% MemUsage=612.6MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
@@ -52,6 +52,14 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 [A-20-PROBE-3] in-container HTTP 200
 A-20: PASS (3/3 probes); event-loop healthy.
 
+Note: Signal A-21 posted (signal_id=8285); BUG Telegram skipped (7-day dedup last @10:46Z). Signal row wrote OK.
+
+## c484 · 2026-07-02T10:46:00Z
+### Audit Run Tier-1 (10:30–10:46 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 PASS
+- Restart: mcp-server=3 ⚠ (↑ from 2 @10:15, new restart) | Memory: 13.87% ✓ | Disk: 46% ✓
+- Anomalies: 1 new WARN (A-21: restart threshold ≤2 exceeded) | Status: HEALTHY
+
 Note: Signal A-21 posted (signal_id=8281); BUG Telegram sent (msg_id=3138). Signal row write deferred (orch-state wedge: signal_queue.rows[43] dangling ref — PO repair routed).
 
 ## c483 · 2026-07-02T10:34:18Z
@@ -60,16 +68,3 @@ Note: Signal A-21 posted (signal_id=8281); BUG Telegram sent (msg_id=3138). Sign
 - Anomalies: 1 new CRITICAL (B-05 bctc-discover stale 384h in earnings window) | Status: DEGRADED
 - B-05 gate: queue=38 actionable rows, host=UP → STALE verdict (not idle). Last push 2026-06-16T18:02:24Z.
 - B-09: PASS (0 SSC URLs in queue) | B-13: PASS (0 stale pending >72h) | C-06: PASS (1 msg <3h) | C-07: PASS (165 signals <24h)
-
-## c482 · 2026-07-02T10:15:11Z
-### Audit Run Tier-1 (10:00–10:15 UTC 2026-07-02)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 PASS
-- Restart: mcp-server=2 ✓ | Memory: 85.05% ⚠ (↓ from 85.66% @09:45) | Disk: 46% ✓
-- Anomalies: 0 new (A-30 memory known/tracked, rebuild user-gated) | Status: HEALTHY
-
-## c481 · 2026-07-02T09:45:39Z
-### Audit Run Tier-1 (09:30–09:46 UTC 2026-07-02)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: host-side 3/3 PASS
-- Restart: mcp-server=2 ✓ | Memory: 85.66% ⚠ (trending ↑ from 71.56% at 09:16) | Disk: 46% ✓
-- Cron: 100+ jobs healthy, 99%+ success rate; no fire gaps detected
-- Anomalies: 0 new (A-30 memory is known/parked, rebuild queued) | Status: HEALTHY
