@@ -183,6 +183,19 @@ export function buildFinalizeBctcRefineHandler(
         source_confidence: number;
       }> = [];
 
+      // FIX-BCTC-BANK-BS-SECTION-CLASSIFIER: thread `statement_section` state
+      // across DONE units in page order. `doneUnits` is already `ORDER BY
+      // unit_id ASC` (query above), which matches page order for the
+      // zero-padded window IDs the agentic-refine scheduler assigns
+      // (unit-0001, unit-0002, ...). Real multi-page VN BCTC statements
+      // print their header line ("BẢNG CÂN ĐỐI KẾ TOÁN" etc.) once, on the
+      // FIRST page — a continuation unit with no header line of its own
+      // used to always fall back to "general" (reproduced: report_id
+      // 96e36139 unit-0003). parseRefinedMarkdown stays pure/stateless per
+      // call; this loop owns the ordering and carries `finalSection`
+      // forward as the next unit's `initialSection`.
+      let carrySection = "general";
+
       for (const unit of doneUnits) {
         if (!unit.markdown) continue;
 
@@ -193,7 +206,8 @@ export function buildFinalizeBctcRefineHandler(
           pageNumbers = [1];
         }
 
-        const parseResult = parseRefinedMarkdown(unit.markdown, report_id, pageNumbers);
+        const parseResult = parseRefinedMarkdown(unit.markdown, report_id, pageNumbers, carrySection);
+        carrySection = parseResult.finalSection;
 
         if (parseResult.errors.length > 0) {
           logger.warn("[finalize_bctc_refine] parser errors in unit", {

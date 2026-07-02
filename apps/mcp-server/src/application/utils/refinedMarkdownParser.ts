@@ -38,6 +38,15 @@ export interface BctcTableRow {
 export interface ParseResult {
   rows: BctcTableRow[];
   errors: string[];
+  /**
+   * FIX-BCTC-BANK-BS-SECTION-CLASSIFIER: the `statement_section` state this
+   * parse ended on. Callers that parse a report's DONE windows one unit at a
+   * time, in page order (finalizeBctcRefineTool.ts), thread this value back
+   * in as the NEXT unit's `initialSection` — see `parseRefinedMarkdown`'s
+   * `initialSection` param doc for why this matters (multi-page statements
+   * whose header line is printed once, not repeated on continuation pages).
+   */
+  finalSection: string;
 }
 
 // ── Section header detection ───────────────────────────────────────────────────
@@ -268,18 +277,33 @@ function isHeaderRow(cells: string[], isAfterSeparator: boolean): boolean {
  * @param markdown      Refined markdown string from bctc_refined_units
  * @param report_id     Report ID to stamp on each row
  * @param page_numbers  Page numbers for this unit (uses [0] for page_number)
- * @returns ParseResult with rows and any parsing errors
+ * @param initialSection FIX-BCTC-BANK-BS-SECTION-CLASSIFIER: `statement_section`
+ *   to start this unit in, defaulting to `"general"` (0-diff for every
+ *   existing caller). Real multi-page VN BCTC PDFs print a statement's
+ *   header ("BẢNG CÂN ĐỐI KẾ TOÁN" etc.) once, on its FIRST page, and never
+ *   repeat it on continuation pages. finalize_bctc_refine parses each
+ *   refined-markdown window (~= one PDF page range) as an ISOLATED unit —
+ *   without this param, a continuation unit that legitimately has no header
+ *   line of its own always falls back to "general" no matter what statement
+ *   its rows actually belong to (reproduced: report_id 96e36139 unit-0003,
+ *   the NGUỒN VỐN continuation of a balance sheet started in unit-0002,
+ *   mistagged statement_section=general). The caller threads the PRIOR
+ *   unit's `finalSection` (see ParseResult) into the NEXT unit's
+ *   `initialSection`, in page order — this function stays pure/stateless;
+ *   the caller owns the ordering.
+ * @returns ParseResult with rows, any parsing errors, and finalSection.
  */
 export function parseRefinedMarkdown(
   markdown: string,
   report_id: string,
   page_numbers: number[],
+  initialSection: string = "general",
 ): ParseResult {
   const rows: BctcTableRow[] = [];
   const errors: string[] = [];
 
   const pageNumber = page_numbers[0] ?? 1;
-  let currentSection = "general";
+  let currentSection = initialSection;
   let rowOrder = 0;
   let headerConsumed = false;
   let prevLineWasSeparator = false;
@@ -324,17 +348,32 @@ export function parseRefinedMarkdown(
       continue;
     }
 
-    // Header row — skip it (first non-separator row after table start)
-    if (!headerConsumed && !prevLineWasSeparator) {
-      // This is the header row (before separator)
-      headerConsumed = false;
-      prevLineWasSeparator = false;
-      continue;
-    }
-
-    // First data row after separator
-    if (!headerConsumed && prevLineWasSeparator) {
-      headerConsumed = true;
+    if (!headerConsumed) {
+      if (prevLineWasSeparator) {
+        // First data row right after a real |---| separator — the
+        // separator is an unambiguous header/data boundary, no further
+        // content check needed.
+        headerConsumed = true;
+      } else if (isHeaderRow(rawCells, false)) {
+        // Still waiting for the header to resolve, and this row IS the
+        // (all-non-numeric) header/label-only row itself — skip it.
+        prevLineWasSeparator = false;
+        continue;
+      } else {
+        // FIX-BCTC-BANK-BS-SECTION-CLASSIFIER: content-based recovery for a
+        // dropped |---| separator. Before this fix, `headerConsumed` could
+        // ONLY ever become true via a separator row — if the source
+        // markdown's separator line was lost in transcription (reproduced:
+        // report_id 96e36139 unit-0002, a Roman-numeral/bold-header B02a/
+        // TCTDHN balance-sheet table), EVERY row for the REST of the
+        // document was silently treated as "still waiting for the header"
+        // and dropped — 0 rows out of 34, no errors. A pipe-row containing
+        // any parseable numeric cell is structurally DATA, never a header
+        // (real BCTC header rows are label-only) — promote directly to
+        // data mode instead of waiting forever for a separator that will
+        // never arrive.
+        headerConsumed = true;
+      }
     }
 
     prevLineWasSeparator = false;
@@ -359,10 +398,19 @@ export function parseRefinedMarkdown(
     if (rawCells.length === 2) {
       [labelRaw, valueCurrentRaw] = rawCells as [string, string];
     } else if (rawCells.length === 3) {
-      // Heuristic: if first cell looks like a code (short, possibly numeric), treat as code
+      // Heuristic: if first cell looks like a code (short, possibly numeric), treat as code.
+      // FIX-BCTC-BANK-BS-SECTION-CLASSIFIER: a BLANK first cell is ALWAYS the
+      // [code(blank), label, value_current] layout, never [label, value_current,
+      // value_prior] with an empty label — a real BCTC data row can never have
+      // a nameless line item. The bank-form B02a/TCTDHN layout leaves "Mã số"
+      // blank for most sub-items (reproduced: report_id 96e36139 unit-0003),
+      // and the previous `firstCell !== ""` guard mis-routed exactly that case
+      // into the [label, value_current, value_prior] branch — the blank code
+      // cell became an empty `labelRaw`, tripping the "empty label after flag
+      // stripping" drop below and silently discarding the row's real data.
       const firstCell = rawCells[0]!.trim();
-      const looksLikeCode = /^\d{1,4}[a-z]?$/i.test(firstCell) || firstCell.length <= 6;
-      if (looksLikeCode && firstCell !== "") {
+      const looksLikeCode = firstCell === "" || /^\d{1,4}[a-z]?$/i.test(firstCell) || firstCell.length <= 6;
+      if (looksLikeCode) {
         [, labelRaw, valueCurrentRaw] = rawCells as [string, string, string];
         code = firstCell || null;
       } else {
@@ -462,5 +510,5 @@ export function parseRefinedMarkdown(
   // (code=null, values merged into label text) generically, structurally,
   // for ANY bank-form ticker — see bctcRowRepair.ts. Rows not matching the
   // exact corruption signature pass through unchanged (RISK-1 non-lossy).
-  return { rows: repairCorruptedRows(rows, parseVnNumber), errors };
+  return { rows: repairCorruptedRows(rows, parseVnNumber), errors, finalSection: currentSection };
 }

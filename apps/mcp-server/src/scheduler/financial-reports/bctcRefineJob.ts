@@ -458,10 +458,20 @@ export async function refineOneReport(
     // Write bctc_table_rows (parse DONE windows only, FAILED contribute nothing)
     db.transaction(() => {
       db.prepare("DELETE FROM bctc_table_rows WHERE report_id=?").run(reportId);
+      // FIX-BCTC-BANK-BS-SECTION-CLASSIFIER: same cross-unit section-carry
+      // fix as finalizeBctcRefineTool.ts's Phase 4 (the sibling
+      // materialization path for this same tool triad). `rawResults`
+      // preserves `windows`' original (page-sequential) order — see
+      // boundedPool.ts's `runBoundedPool` docstring/impl (`results[index]`
+      // fixed-index array, not completion order) — so filtering to DONE-only
+      // here still yields page order, the same ordering guarantee
+      // finalizeBctcRefineTool.ts relies on via `ORDER BY unit_id ASC`.
+      let carrySection = "general";
       const doneResults = rawResults.filter((r) => r.status === "DONE");
       for (const r of doneResults) {
         if (!r.markdown) continue;
-        const parsed = parseRefinedMarkdown(r.markdown, reportId, r.page_numbers);
+        const parsed = parseRefinedMarkdown(r.markdown, reportId, r.page_numbers, carrySection);
+        carrySection = parsed.finalSection;
         if (parsed.errors.length > 0) {
           logger.warn("[bctcRefine] parser errors in window", {
             reportId,
