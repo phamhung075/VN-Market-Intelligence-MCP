@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c497 · 2026-07-02T19:45:10Z
+### Audit Run Tier-1 (19:45–19:47 UTC 2026-07-02)
+- Tier: 1 | Fire-election: WON (tick=2026-07-02T19:30Z)
+- Services: 12/12 UP | Health: 5/5 OK (incl. frontend:3001 corroboration PASS)
+- A-20 pdf-extractor: 3/3 probes PASS
+- A-21: RestartCount=3 (DEDUP per briefing) | A-30: 99.98% memory (DEDUP KNOWN-TRIAGED)
+- A-32 disk: 49% ✓ | All crons OK (no fire gaps)
+- health_3001 corroboration: manual retries 3/3 HTTP 200 ✓, frontend container healthy (Running, no OOMKilled)
+- Anomalies: 0 new (transient :3001 issue resolved) | Status: HEALTHY
+- RAW-PROBE: 12/12 services UP (healthy), 5/5 health OK, A-20 3/3 PASS, disk 49%
+
 ## c496 · 2026-07-02T19:15:36Z
 ### Audit Run Tier-1 (19:14–19:15 UTC 2026-07-02)
 - Tier: 1 | Fire-election: WON (tick=2026-07-02T19:00Z)
@@ -40,11 +51,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - Restart count: 3 (dedup skip) | Disk: 49% ✓
 - Anomalies: 1 new (api-gateway A-13) | Dedup: 1 skipped (A-21, A-30 TRIAGED)
 - Status: DEGRADED | Signals: 1 emitted (signal_id=8320)
-
-## c492 · 2026-07-02T17:46:28Z
-### Audit Run Tier-1 (17:45–17:46 UTC 2026-07-02)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 PASS
-- A-30 WARN: mcp-server memory 99.62% of 2GiB (1.992GiB) [KNOWN-TRIAGED]
-- Persistent high-memory state (99.67% → 99.62%, no recovery) — sawtooth confirmed
-- Restart count: 3 (unchanged) | Disk: 47% ✓ | All health endpoints 200
-- Anomalies: 0 new (DEDUP) | Status: DEGRADED | Dedup: 2 skipped
