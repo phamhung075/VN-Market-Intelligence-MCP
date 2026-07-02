@@ -1033,8 +1033,12 @@
         "type": "signal_feedback",
         "summary": "A-01/A-12 CRITICAL: mcp-server unhealthy — health endpoint CURL_ERR",
         "severity": "CRITICAL",
-        "status": "READ",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-02T17:27:56Z",
+        "disposition": "FALSE-POSITIVE-RECOVERED",
+        "triage_note": "STALE from 14:14Z transient probe-failure window. RAW-verified 2026-07-02T17:21Z: mcp-server:4000/health=200(0.005s), api-gateway=200(0.004s), frontend:3001=200(0.018s); all 13 containers healthy. mcp-server StartedAt=2026-07-02T10:15:34Z predates the 14:14Z window (OOMKilled=false, ExitCode=0, no restart at outage time) -> transient CURL_ERR = probe-environment artifact (auditor-FP class, same as archived sau-2026-07-02T06:16:45Z/06:17:08Z). Recovered; no task."
       },
       {
         "id": "sau-2026-07-02T14:14:52Z-a02-api",
@@ -1044,8 +1048,12 @@
         "type": "signal_feedback",
         "summary": "A-02/A-12 WARN: api-gateway unhealthy — health endpoint CURL_ERR",
         "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-02T17:27:56Z",
+        "disposition": "FALSE-POSITIVE-RECOVERED",
+        "triage_note": "STALE from 14:14Z transient probe-failure window. RAW-verified 2026-07-02T17:21Z: mcp-server:4000/health=200(0.005s), api-gateway=200(0.004s), frontend:3001=200(0.018s); all 13 containers healthy. mcp-server StartedAt=2026-07-02T10:15:34Z predates the 14:14Z window (OOMKilled=false, ExitCode=0, no restart at outage time) -> transient CURL_ERR = probe-environment artifact (auditor-FP class, same as archived sau-2026-07-02T06:16:45Z/06:17:08Z). Recovered; no task."
       },
       {
         "id": "sau-2026-07-02T14:14:52Z-a21-mcp",
@@ -1055,8 +1063,13 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: mcp-server restart count=3 (threshold ≤2)",
         "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-02T17:27:56Z",
+        "disposition": "DUPLICATE",
+        "linked_task": "OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN",
+        "triage_note": "Factual: docker inspect RestartCount=3 (threshold <=2). Container stable Up 7h healthy, ExitCode=0, OOMKilled=false -> no active crash-loop; last restart 10:15Z. RestartCount only resets on user-gated container recreate (HARD-GATED) so the over-threshold reading persists regardless of any code fix -- not independently actionable this tick. Restart-churn root already tracked by backlog OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (49% unclean shutdowns). No new task."
       },
       {
         "id": "sau-2026-07-02T14:44Z-a12-fe",
@@ -1066,8 +1079,12 @@
         "type": "signal_feedback",
         "summary": "A-12 WARN: frontend health endpoint CURL_ERR — container running but unresponsive",
         "severity": "MED",
-        "status": "READ",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-02T17:27:56Z",
+        "disposition": "FALSE-POSITIVE-RECOVERED",
+        "triage_note": "STALE from 14:14Z transient probe-failure window. RAW-verified 2026-07-02T17:21Z: mcp-server:4000/health=200(0.005s), api-gateway=200(0.004s), frontend:3001=200(0.018s); all 13 containers healthy. mcp-server StartedAt=2026-07-02T10:15:34Z predates the 14:14Z window (OOMKilled=false, ExitCode=0, no restart at outage time) -> transient CURL_ERR = probe-environment artifact (auditor-FP class, same as archived sau-2026-07-02T06:16:45Z/06:17:08Z). Recovered; no task."
       },
       {
         "id": "sau-1783012565",
@@ -1077,8 +1094,13 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory 99.67% (1.993GiB/2GiB) — responsive but requires investigation",
         "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-02T17:27:56Z",
+        "disposition": "DUPLICATE",
+        "linked_task": "FIX-MCP-MEMORY-CODE-LEAK",
+        "triage_note": "Corroborated 99.67% (1.993GiB/2GiB) at 17:16Z. RAW re-probe 17:20Z/17:21Z: 59.05%->59.26% (1.181->1.185GiB) -- 812MiB RECLAIMED without restart (StartedAt unchanged 10:15Z). Reclaimable memory refutes a hard monotonic leak; pattern is sawtooth (60->99.67->59) = transient heavy-op spike + GC, not unrecoverable leak. Still a near-OOM risk on the tight 2GB cap. Memory investigation already owned by TODO FIX-MCP-MEMORY-CODE-LEAK -- folded in as fresh evidence refining diagnosis from leak -> transient-spike/GC-lag/cap-too-tight. No new task."
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",
@@ -7613,7 +7635,7 @@
         "created_by": "po-s135",
         "recurrence_anchor": "FU-TICK-SNAPSHOT-EMIT-DARK",
         "question": "Step 4.7 of docs/agents/cowork-team/flow/tick-snapshot.md promotes cycle-snapshot-latest.json (read by pressure-emit for last_regime/last_volatility). File frozen since 2026-06-17 (per cowork-fire 04:25Z NOTE). Is the promotion path genuinely inert dead-code to REMOVE, or did the emit silently regress after FU-TICK-SNAPSHOT-EMIT-DARK (commit 29d7e944, 06-05) claimed the fence-abort class 'fully eradicated'? Deliverable: findings doc + recommendation (remove vs re-fix vs by-design-off-hours).",
-        "note": "LOW / HARMLESS. Consumer (pressure-emit) unharmed — freshness-gated fallback proven over 2wk (06-17..07-01). Flagged as candidate dead-code by chef-intraday cowork-fire 04:25Z. Tracked (not dispatched) because it is the 2nd dark-emit on this exact snapshot path after a fix that claimed eradication (recurring-bug-escalation). NOT market-critical; run on a free tick."
+        "note": "LOW / HARMLESS. Consumer (pressure-emit) unharmed — freshness-gated fallback proven over 2wk (06-17..07-01). Flagged as candidate dead-code by chef-intraday cowork-fire 04:25Z. Tracked (not dispatched) because it is the 2nd dark-emit on this exact snapshot path after a fix that claimed eradication (recurring-bug-escalation). NOT market-critical; run on a free tick. || 2026-07-02 ROOT-CAUSE EVIDENCE (cowork-fire 16:38Z WATCH, PO-verified): promotion REGRESSED (not dead-code). emitPressureStateTool.ts promoteCycleSnapshot() reads snapPath=cycle-snapshot-<tickHHMM>.json where tickHHMM=tick_id HH:MM, defaulting to current 15-min FLOOR (nominal tick e.g. 16:30) when tick_id absent (lines ~232/347). Cowork flow writes snapshots named by ACTUAL clock minute (on-disk cycle-snapshot-16:34.json exists, 16:30 does not) because dispatcher fires 4-7min late -> snapPath never matches -> cycle_snapshot_promoted:false every tick -> latest.json frozen (mtime 08:35Z ~9h stale). RAW-verified live. Alt zone if server-side fix: apps/mcp-server/ (matcher tolerance: promote most-recent cycle-snapshot-*.json within staleness window, OR name flow snapshots by nominal tick). Spike deliberation remove-vs-refix still valid: consumer fallback proven 2wk."
       },
       {
         "id": "OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST",
