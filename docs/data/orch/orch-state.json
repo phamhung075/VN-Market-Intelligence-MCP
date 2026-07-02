@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-07-02T12:55:38Z",
-    "updated_by": "developer",
-    "active_task_id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
-    "next_agent": "pm",
-    "note": "TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 (auditor Tier-1 shell healthcheck) DONE — commit 9a8e7062. New scripts/agents-flow/auditor-tier1-probe.sh (PURE SHELL, no mcp-call.sh, R9) + auditor-tier1-probe.test.sh (32/32 mocked pass, shellcheck clean); verdict ALL_GREEN|FAILURE, heartbeat docs/data/auditor-tier1-last-healthy.json (R10). Folded A-20 3x in-container probe into docs/agents/system-auditor/probe.sh as SSOT (live-verified pass_count=3/3); annotated tier1-probe.md header. cron-detect-loop/SKILL.md Job 2 prompt updated (shell pre-gate first, spawn only non-ALL_GREEN or stale heartbeat >60min); Job 1/3/4 untouched. DJ: sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-developer.md STEP developer-S3. sprint closeout next (all 3 WUs shipped)."
+    "status": "idle",
+    "updated_at": "2026-07-02T13:01:21Z",
+    "updated_by": "pm",
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "[pm TOKEN-ECONOMY-TICK-PREFLIGHT closeout] All 3 WUs shipped: WU-1 f7d34918, WU-2 0d71d79c, WU-3 9a8e7062. Operational reminder: cron Jobs 1+2 prompts (self-arm sequence, shell pre-gates, spawn branches) only take effect when session-scoped crons are re-armed (next /cron-detect-loop invocation or session restart)—current in-session crons still carry old prompts. QA backlog entry created for cron-dev-team.md SSOT divergence; router dispatches QA separately."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7813,6 +7813,19 @@
         "created_at": "2026-07-02T09:57:07Z",
         "created_by": "po-s138",
         "status_note": "PLAN-ONLY (anomaly-task-bridge + recurring-bug-escalation: 2nd head-drift re-inflation). AC: a write that sets routing fields (active_task_id!=null OR next_agent!=null OR status in the routing set) on .task_board.head is REJECTED by the write path (Zod DeprecatedHeadStubSchema tightened from .passthrough() to reject routing keys, and/or scripts/orch-apply.sh guard) with a clear error; the deprecated redirect stub (status=deprecated, canonical_moved_to=.head, active_task_id=null) still validates. Root: po-s66 retargeted 3 known writer scripts but the guard was doc-only (G-7 comment); a new writer (dev-team flow) bypassed it — find & fix that writer too. Files: apps/mcp-server/src/infrastructure/orchStateSchema.ts (DeprecatedHeadStubSchema), scripts/orch-apply.sh. No dispatch pre-approved."
+      },
+      {
+        "id": "QA-CRON-DEV-TEAM-SSOT-DIVERGENCE",
+        "title": "QA decision: cron-detect-loop/SKILL.md Job 1 prompt divergence from cron-dev-team.md SSOT",
+        "owner": "qa",
+        "status": "BACKLOG",
+        "zone": "docs/",
+        "type": "qa-decision",
+        "priority": "normal",
+        "user_prioritized": false,
+        "depends": [],
+        "created_at": "2026-07-02T13:01:21Z",
+        "note": "[pm TOKEN-ECONOMY-TICK-PREFLIGHT closeout] WU-2 intentionally left cron-dev-team.md untouched while updating cron-detect-loop/SKILL.md Job 1 prompt with self-arm+script-branching logic (R6). Developer rationale: SKILL.md is implementation-detail doc; copying complex script-logic into a conceptual-shape reference (cron-dev-team.md) bloats it unnecessarily. However, SKILL.md documents its Job entries as 'verbatim copies' of cron-dev-team.md—the invariant is now broken. Decision: (A) sync cron-dev-team.md to include self-arm+script-branching text (true verbatim), OR (B) update SKILL.md SSOT pointer to document the intentional one-Job exception and leave cron-dev-team.md as-is."
       }
     ],
     "closed_sprints": [
@@ -9745,6 +9758,36 @@
         "completed_by": "ops",
         "verified_by": "router",
         "resolution": "Root cause = config drift: VPS ran stale discover-bctc-urls-browser.py without FIX-BCTC-SSC-503-RETRY (repo fix 6da9b030); SSC 503 maintenance killed discovery outright -> empty queue since 06-16. Ops scp-deployed repo version + live-tested retry path (503 -> 60s retry -> graceful fail). Transport leg confirmed alive (prices/news/sbv fresh). AC 'fresh bctc push <24h' NOT observable yet: queue legitimately empty (Q2 2026 reports unfiled + SSC maintenance) -> auto-recovers when filings start. Router RAW-verified: get_vps_proxy_health probe, commit c5dc17f1 journal-only scope, DJ-GATE-1 entry present, TLS evidence docs/vps-sources/hnx-tls-chain-2026-07-02.txt. TRIAGE NOTE: do NOT re-open on bctc staleness alone while queue is empty and SSC 503s persist; re-open only if queue non-empty with no push, or staleness persists >48h after Q2 filings appear."
+      },
+      {
+        "id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
+        "title": "Architect review + pm decomposition: script deterministic cron-tick preflights (WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck). Cuts ~80% idle-hours token burn; all mutex/election/injection gates preserved. Spec = brief.",
+        "owner": "architect",
+        "next_agent": "developer",
+        "status": "DONE",
+        "zone": "root",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "user_prioritized": true,
+        "sprint": "TOKEN-ECONOMY-TICK-PREFLIGHT",
+        "depends": [],
+        "created_at": "2026-07-01T21:05:00Z",
+        "files": [
+          "docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md",
+          "docs/agents/cowork-team/flow/main.md",
+          "docs/agents/dev-team/flow/main.md",
+          "docs/agents/system-auditor/flow/tier1-probe.md",
+          ".claude/skills/cron-cowork-team/SKILL.md",
+          ".claude/skills/cron-detect-loop/SKILL.md",
+          "scripts/agents-flow/cowork-match-slots.js"
+        ],
+        "spec_ref": "docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md",
+        "claimed_at": "2026-07-02T11:27:05Z",
+        "claimed_by": "router",
+        "dispatched_at": "2026-07-02T11:27:05Z",
+        "dispatch_note": "[pm 2026-07-02T00:00:00Z decomposition] DJ-GATE-1 journal: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-pm.md. WU-1 cowork-tick-preflight.sh (shared mcp-call.sh, retire autosilent, modify main.md) UNBLOCKS WU-2 dev-team-tick-preflight.sh (MUST modify cron-detect-loop/SKILL.md Job 1 prompt per R6: self-arm FIRST). WU-3 auditor-tier1-probe.sh INDEPENDENT (pure shell). All R1-R11 risk notes propagated. Expected: single commit, all 3 WUs, existing WIP slot.",
+        "handoff_ref": "docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md",
+        "row_note": "[router 2026-07-02T11:42:41Z] architect leg DONE (commit a9c2553e, RAW-verified: handoff 248L + DJ-GATE-1 journal + head->pm). Row synced to head: next_agent pm, zone root per handoff § Zone (route dev WUs to developer generic). Note: architect RETURN overclaimed a ready[]-row update that never landed — row was in in_progress[]; synced by router."
       }
     ],
     "done_verified": [
@@ -9858,36 +9901,6 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      },
-      {
-        "id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
-        "title": "Architect review + pm decomposition: script deterministic cron-tick preflights (WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck). Cuts ~80% idle-hours token burn; all mutex/election/injection gates preserved. Spec = brief.",
-        "owner": "architect",
-        "next_agent": "developer",
-        "status": "IN_PROGRESS",
-        "zone": "root",
-        "type": "SPRINT-S",
-        "priority": "high",
-        "user_prioritized": true,
-        "sprint": "TOKEN-ECONOMY-TICK-PREFLIGHT",
-        "depends": [],
-        "created_at": "2026-07-01T21:05:00Z",
-        "files": [
-          "docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md",
-          "docs/agents/cowork-team/flow/main.md",
-          "docs/agents/dev-team/flow/main.md",
-          "docs/agents/system-auditor/flow/tier1-probe.md",
-          ".claude/skills/cron-cowork-team/SKILL.md",
-          ".claude/skills/cron-detect-loop/SKILL.md",
-          "scripts/agents-flow/cowork-match-slots.js"
-        ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md",
-        "claimed_at": "2026-07-02T11:27:05Z",
-        "claimed_by": "router",
-        "dispatched_at": "2026-07-02T11:27:05Z",
-        "dispatch_note": "[pm 2026-07-02T00:00:00Z decomposition] DJ-GATE-1 journal: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-pm.md. WU-1 cowork-tick-preflight.sh (shared mcp-call.sh, retire autosilent, modify main.md) UNBLOCKS WU-2 dev-team-tick-preflight.sh (MUST modify cron-detect-loop/SKILL.md Job 1 prompt per R6: self-arm FIRST). WU-3 auditor-tier1-probe.sh INDEPENDENT (pure shell). All R1-R11 risk notes propagated. Expected: single commit, all 3 WUs, existing WIP slot.",
-        "handoff_ref": "docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md",
-        "row_note": "[router 2026-07-02T11:42:41Z] architect leg DONE (commit a9c2553e, RAW-verified: handoff 248L + DJ-GATE-1 journal + head->pm). Row synced to head: next_agent pm, zone root per handoff § Zone (route dev WUs to developer generic). Note: architect RETURN overclaimed a ready[]-row update that never landed — row was in in_progress[]; synced by router."
       }
     ],
     "ready": [],
