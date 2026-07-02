@@ -35,3 +35,8 @@ Insider: no activity | Brief action: Hold / Watch FDI flows
 
 **[Market Watcher] 16:05 UTC**
 Close: 75.000 VND | Daily: -1.45% | Sentiment: BULLISH (FPT + NVIDIA AI partnership; Vietnam's first dedicated AI breakthrough) | Insider: no activity | Brief action: Buy on dip — AI catalyst intact | Regime: NEUTRAL
+
+## EOD 2026-07-02
+
+**[Market Watcher] 16:07 UTC**
+Close: 72,500 VND | Daily: -0.55% | RSI: 42 | Volume: 5.69M (+2.1% avg) | YoY: -3.1% | Sentiment: Neutral | Brief action: Watch (downtrend from 76.5 peak; RSI below 50) | Regime: NEUTRAL

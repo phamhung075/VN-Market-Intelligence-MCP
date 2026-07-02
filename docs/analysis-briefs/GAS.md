@@ -16,3 +16,6 @@
 
 ## [Unified Agent] Quarterly Syntheses
 2026-05-14 16:00 | Close: 83,600 VND | RSI: N/A(16c) | Vol: 406.8K (N/A% avg) | YoY: N/A
+
+## [Market Watcher] EOD Updates
+2026-07-02 16:00 | Close: 77,300 VND | RSI: 35 | Vol: 453.5K (-45.2% avg) | YoY: -6.0% | Anomaly: YES — Low volume trading; downtrend from 85.2 peak; RSI oversold below 40 | Brief action: Watch | Regime: NEUTRAL

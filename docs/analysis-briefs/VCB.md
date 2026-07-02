@@ -50,3 +50,6 @@ Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
 
 ## [Unified Agent] Quarterly Syntheses
 2026-05-14 16:00 | Close: 61,000 VND | RSI: N/A(16c) | Vol: 561.2K (N/A% avg) | YoY: N/A
+
+## [Market Watcher] EOD Updates
+2026-07-02 16:00 | Close: 62,100 VND | RSI: 48 | Vol: 2.74M (-3.2% avg) | YoY: +2.5% | Regime: Neutral

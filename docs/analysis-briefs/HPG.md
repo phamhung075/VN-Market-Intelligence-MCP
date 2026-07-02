@@ -14,3 +14,4 @@
 2026-05-14 16:00 | Close: 27,050 VND | RSI: N/A(16c) | Vol: 1.40M (N/A% avg) | YoY: N/A
 2026-06-05 16:05 | Close: 23.750 VND | Daily: -0.84% | Sentiment: BEARISH (leadership share sale 6.6M shares at multi-year lows; insider sell signal) | Insider: INSIDER_SELL | Brief action: Reduce — insider sell signal contradicts Q1 bullish thesis | Regime: NEUTRAL
 2026-07-01 16:00 | Close: 23,450 VND (+0.64%) | RSI: 39.9 (oversold) | Vol: N/A | YoY: N/A | Regime: Neutral, HIGH news_mention on UOB Sg investment in HCMC | Brief action: Watch — Brent stable, structural steel demand support
+2026-07-02 16:00 | Close: 23,400 VND | RSI: 50 | Vol: 13.37M (+18.7% avg) | YoY: -1.3% | Sentiment: Neutral | Brief action: Hold (stable, elevated volume support) | Regime: NEUTRAL

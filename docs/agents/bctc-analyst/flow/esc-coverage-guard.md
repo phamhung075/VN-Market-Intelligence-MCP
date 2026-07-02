@@ -42,7 +42,10 @@ IF coverage_limited_ids is non-empty:
     cov_guard_key = "esc-datacov:" + ticker + ":" + quarter + ":" + limited_id
     cov_guard = call_tool(server="vn-market", tool="task_claim", arguments={
       task_id: cov_guard_key, task_kind: "sprint-task",
-      owner_agent: "bctc-analyst", ttl_seconds: 2592000   # 30 days
+      owner_agent: "bctc-analyst", owner_client_session: $CLAUDE_CODE_SESSION_ID,
+      ttl_seconds: 691200   # 8 days — task_claim tool-enforced max (live-verified 2026-07-02);
+                            # spec originally called for 30d (2592000s) but the tool rejects
+                            # anything > 691200 with a validation error. Use the 8-day cap.
     })
     IF cov_guard.claimed == FALSE:
       LOG: "[ESC-DISPATCH] COVERAGE-GUARD-HELD " + cov_guard_key + " — no re-emit"
@@ -62,13 +65,13 @@ IF coverage_limited_ids is non-empty:
           "root_task": "BCTC-HIST-VPS-BACKFILL",
           "note": "Multi-period accrual decomposition blocked by data coverage, not tool bug.
                    No Opus deep-dive warranted. Re-check when quarters_returned >= 4.",
-          "guard_key": cov_guard_key, "guard_ttl_days": 30
+          "guard_key": cov_guard_key, "guard_ttl_days": 8
         }
       }
       Write(path="docs/signals/bctc-analyst-{ts_compact}.json", content=cov_signal_row)
       # Write tool only — bctc-analyst has NO Bash (cannot run orch-apply.sh). Cross-Team Signal
       # Directory pattern: docs/protocols/agent-chaining-protocol.md § Cross-Team Signal Directory.
-      LOG: "[ESC-DISPATCH] DATA-COVERAGE-LIMITED emitted (file, ops, once per 30d): "
+      LOG: "[ESC-DISPATCH] DATA-COVERAGE-LIMITED emitted (file, ops, once per 8d): "
            + ticker + "/" + quarter + "/" + limited_id
       Append to bctc_signal: { "esc3_status": "DATA-COVERAGE-LIMITED",
         "coverage_guard_key": cov_guard_key, "quarters_returned": quarters_returned }

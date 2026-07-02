@@ -83,3 +83,17 @@
 **Sentiment:** Moderately bullish with macro risk hedging — gold spike (9/10 safe-haven, risk-off signal) + FDI inflow VIC (7/10 bullish FII domestic confidence) + global EV tech IPO (9/10 venture capital thaw post-2024 slump). Regime multiplier (NEUTRAL): no amplification. FDI entry bullish for real_estate/construction (VIC/VHM/VRE primary), tech upside from global risk-on recovery (FPT/SIS exposure to US VC markets). Gold spike creates macro defensive tilt (agriculture GVR/DAG under pressure via commodity deflation). Hot_money_risk=FALSE (carry 1.37pp NEUTRAL). cpi_pressure_risk=FALSE. gdp_warning_signal=FALSE.
 
 **Metrics:** 3 signals POSTED, critic=0.8 (PASS all). 20 articles, 3 high-impact (>=9/10). Coverage: 41 tickers current. Log #1545 open/close. Gateway OK. Tools: fetch OK, evidence OK. Cycle runtime clean.
+
+---
+
+## c113 · 2026-07-02T16:09Z (off-hours, slot=news-scout-offhours)
+
+**20 articles fetched & analyzed: VIC foreign capital inflow reversal (9/10 bullish FDI) + Gold price surge (9/10 macro risk-off safe-haven) + Global EV startup IPO ($2B+, 9/10 bullish tech venture recovery). Signals: 3x chain_catalyst posted (#8309 gold macro, #8310 VIC FDI real_estate, #8311 EV tech venture). Market sentiment z=+0.375 neutral-bullish (EMA 0.85, bull 27.3%/bear 17%/neutral 55.7%, 139 articles today). Regime: NEUTRAL (gold bullish +2.17% record 4139.6, oil neutral -0.76% $70.61, USDVND bearish 26105 >25k, carry 1.37pp NEUTRAL, yield CHEAP +2.05pp). Coverage: all 41 tickers updated to 2026-07-02T16:09Z (current, <48h threshold, no sweep batch). Dedup gates: SELF_SIGNALS_CACHE=[] clean, SIBLING_WINDOW_CACHE=43 (all-producers, no duplicates matched). Impact chains run: VIC primary (+9/10 FDI bullish), real_estate peer cascade (+5-6/10 secondary), gold macro domain (+9/10 safe-haven), tech EV IPO (+9/10 global recovery). Evidence fragments: 3 recorded (VIC +0.9 bullish, MARKET -0.9 bearish macro, FPT +0.9 bullish tech). No legal_risk detected. Search context timed out (non-fatal, caught at stage-fetch). Cycle status: SHIPPED (3 signals posted, critic 0.8 PASS all).**
+
+**Sentiment:** Moderately bullish with macro risk-off hedging — FDI entry VIC (9/10 bullish FII domestic confidence reversal) + EV IPO global venture recovery (9/10 tech sector thaw) + gold spike (9/10 safe-haven, risk-off signal creating defensive tilt). Regime multiplier (NEUTRAL): no amplification. Real_estate/banking FDI bullish (VIC/VHM/VRE primary hit, cascades to 8 banking stocks). Tech EV IPO signals global VC reallocation from crypto into hard assets (FPT/SIS exposure US VC market). Gold spike defensive (agriculture GVR/BDI/DLC potentially under pressure via commodity spillover). Hot_money_risk=FALSE (carry NEUTRAL 1.37pp, no >3% spread). cpi_pressure_risk=FALSE (oil band-neutral -0.76%). gdp_warning_signal=FALSE.
+
+**Metrics:** 3 signals POSTED (chain_catalyst all), critic_score=0.8 (PASS each). 20 articles fetched, 3 high-impact (>=9/10). Coverage: 41 tickers updated 2026-07-02T16:09Z. Log #1546 open/close. Gateway: OK. Tools: fetch OK, impact-chains OK, search timed out (non-fatal). Evidence: 3 fragments recorded. Notebook appended (this entry). Cycle runtime clean.
+
+---
+
+**Agent status:** news-scout 14/14 EXCELLENT (c100–c113). Dedup + regime multiplier + coverage sweep fully operational. Off-hours cadence stable (every 4h outside market hours). Critic threshold 0.8+ maintained. Next: 2026-07-02T20:09Z (off-hours cycle).

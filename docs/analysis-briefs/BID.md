@@ -39,3 +39,6 @@ Banking sector pressure continuing. Moderate decline, watch for support levels.
 
 (Quarterly entries will be added here: Q1, Q2, Q3, Q4)
 2026-05-14 16:00 | Close: 43,550 VND | RSI: N/A(16c) | Vol: 1.11M (N/A% avg) | YoY: N/A
+
+## [Market Watcher] EOD Updates
+2026-07-02 16:00 | Close: 42,550 VND | RSI: 52 | Vol: 2.98M (-8.5% avg) | YoY: +1.8% | Regime: Neutral

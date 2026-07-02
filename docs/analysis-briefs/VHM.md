@@ -41,3 +41,6 @@ Action: Reduce / Monitor support levels
 
 (Quarterly entries will be added here: Q1, Q2, Q3, Q4)
 2026-05-14 16:00 | Close: 157,000 VND | RSI: N/A(16c) | Vol: 554.3K (N/A% avg) | YoY: N/A
+
+## [Market Watcher] EOD Updates
+2026-07-02 16:00 | Close: 150,400 VND | RSI: 55 | Vol: 2.22M (-12.3% avg) | YoY: +0.8% | Sentiment: Neutral | Brief action: Hold (modest daily gain, real estate sector stable) | Regime: NEUTRAL

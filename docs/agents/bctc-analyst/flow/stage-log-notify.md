@@ -63,7 +63,7 @@ Release or mixed format:
 ```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
-(skip notebook-write step — already written above; keep session-log + doc-self-heal + self-critique)
+(skip notebook-write AND session-log steps — both would duplicate the notebook composition already done in 5a-5e above and violate the AC-3 single-settled-write invariant; keep doc-self-heal + self-critique only)
 
 ## Deadline Watch
 7 days before + missing → flag in session log

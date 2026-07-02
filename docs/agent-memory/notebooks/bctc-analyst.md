@@ -1,16 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-07-02 00:15 UTC (c071-slot4) | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c068 · 2026-07-01T00:15:00Z
-### Analysis Cycle (00:00–00:15 UTC) — mode: routine
-- E2 guard: PASS (00:00 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-4. Log ID: 1524. Guard: claimed=true (bctc-slot-4:2026-07-01).
-- Mode: routine. 2 analyzed: ACB FIRST ANALYSIS + FPT E3 cache hit c30. BLOCKED: ACV(x3)/VNM(x4)/MBB/MWG/SSI/VCI DB trống; DHG PUB-5 44%.
-- Regime: NEUTRAL (carry +1.37pp). EY 7.05% CHEAP (+2.05pp). VN-Index 1,860.01 (+5.04). Clock Overheat CPI 5.46%.
-- ACB Q1-2026 FIRST ANALYSIS: NII 6,989 tỷ. LN ròng 4,320.4 tỷ (ann 17,281 tỷ). PE 7.8x vs sector 9.1x (-14%). PB 1.3x vs 1.6x (-18%). ROE 17.6% (trên median 16.7%). EY +7.8pp CHEAP. ESC-2 PASS. ESC-3 DATA-COV-LIM (1/4, guard claimed 8d). ESC-4 PASS. KD Quẻ 58 Doai THUẬN LỢI (50%). Conf 65% PARTIAL.
-- FPT Q1-2026: E3 CACHE HIT c30. Net profit 2,476.8 tỷ. PE 13.8x (-20%). ROE 28.3%. EY +2.25pp FAIR. KD Quẻ 2 Khôn TRUNG TÍNH GIỮ.
-- Signals: #8087 ACB fundamental_validation (0.65, critic 0.2) + #8088 FPT fundamental_validation (0.8, critic 0.2).
-- Files: bctc_signal_ACB_20260701_routine.json (NEW) + bctc_signal_FPT_20260701_routine.json.
+**Last updated:** 2026-07-02 18:20 UTC (c072-slot2) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c069 · 2026-07-01T15:20Z
 ### Analysis Cycle (15:00–15:20 UTC) — mode: routine
@@ -43,4 +33,17 @@
 - HVN Q1-2026 FIRST ANALYSIS: DT 29,030.2 tỷ, LN ròng 3,948.3 tỷ (13.6%). PE 7.6x vs 15.2x (-50%). ROE 31.0% vs 16.7% (sector-comparison tool showed 0.0% — flagged tool discrepancy, used validated raw figure). EY +8.16pp CHEAP. B/S PASS (0% lệch). OCF/NI=1.27 healthy. ESC-3 DATA-COV-LIM (1/4, guard pre-held from an orphaned ~21:23 UTC attempt — no dup ops signal). ESC-4 FIRE: LN ròng vượt LN hoạt động 23.5% (929.2 tỷ, khả năng hoàn thuế/tài chính hậu tái cơ cấu) — dispatch BLOCKED: session has no Bash tool for orch-apply.sh write; guard claimed-then-released cleanly; BUG sent (msg 3116). KD Quẻ 64 Vị Tế TRUNG TÍNH GIU 38%.
 - Signals: #8194 FPT fundamental_validation (0.78, critic 1.0) + #8195 HVN fundamental_validation (0.6, critic 1.0). Evidence frags: id=272 FPT, id=273 HVN (bctc_roe_strong).
 - Files: bctc_signal_FPT_20260702_routine.json (NEW) + bctc_signal_HVN_20260702_routine.json (NEW).
-- Carry-over to c072: HVN ESC-4 deep-dive dispatch still pending (needs Bash-capable bctc-analyst session to claim+write orch-state); GVR ESC-4 (c070) still open with dev-team; CTG ESC-2 untested this cycle; Q2 deadline 2026-07-31 (29d). QUÁ HẠN unchanged: BDI/DAG/DLC/GAS/JSH/PLX/PPC/SIS/VDC/VEA/VNH.
+
+## c072 · 2026-07-02T18:20:00Z
+### Analysis Cycle (18:05–18:20 UTC) — mode: routine
+- E2 guard: PASS (18:05 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-2.
+- Mode: routine. 2 analyzed: VCB FIRST ANALYSIS + HVN re-verify (data unchanged vs c071; ESC-4 dispatch FIXED — c071 claimed-then-released guard w/o emitting, this cycle completed via Write-tool signal file, no Bash needed). BLOCKED: CTG/MBB/MWG/VRE corrupt (assets=0 or equity=0); VPB/DPM/D2D/KBC/NVL/HCM/VCI/SSI/ACV/NKG DB trống; GAS/PLX vps_stale 16d (last push 06-16, SLA 48h — breach, not new); DHG PUB-5 44%, EIB PUB-5 31%.
+- Regime: NEUTRAL (carry +1.37pp). EY 7.05% CHEAP. VN-Index 1,866.35 (-0.86 flat). Gold $4,124.6 BULLISH. Brent $71.42 NEUTRAL. USD/VND 26,105 BEARISH.
+- Legal: PC1/JSH/POM/DIG unchanged — none affect VCB/HVN.
+- VCB Q1-2026 FIRST ANALYSIS: LN ròng 9,462.1 tỷ (biên 54.3%). ROE 16.7% DƯỚI trung vị 17.6%. PE 14.1x/PB 2.2x PREMIUM ngành (median 9.0x/1.5x). EY +2.09pp FAIR. B/S PASS (0.37% lệch). OCF/NI=1.37 lành mạnh. ESC-1/2/4/5 PASS, ESC-3 DATA-COV-LIM (3/4, guard-held by peer). KD Quẻ 48 Tỉnh TRUNG TÍNH GIỮ 38%. Conf 70%.
+- HVN Q1-2026: PE 7.6x EY +8.16pp CHEAP. ESC-4 FIRE (LN ròng vượt HĐ 23.5%=929.2 tỷ) — dispatch file emitted this cycle. PB 11.7x → balance-sheet-first-read WEAK (recovery premium vs book, asset_coverage~0.45). ESC-3 DATA-COV-LIM guard-held (self, from c071). KD Quẻ 63 Ký Tế THUẬN LỢI GIỮ 100%.
+- Evidence frags: id=294 VCB bctc_roe_ratio + id=295-306 bctc_report_overdue (BDI/BID/DAG/DLC/GAS/JSH/PLX/PPC/SIS/VDC/VEA/VNH — BID re-appeared QUÁ HẠN this cycle, calendar flip vs c070/c071).
+- Signals: #8318 VCB (0.7, critic 0.8) + #8319 HVN (0.6, critic 0.8).
+- Files: bctc_signal_VCB_20260702_routine.json (NEW) + bctc_signal_HVN_20260702_routine.json + bctc-analyst-20260702T181600Z.json (ESC-4 HVN dispatch, completes c071 gap).
+- Carry-over to c073: GVR ESC-4 (c070) still open w/ dev-team; CTG ESC-2 remains corrupt (untestable); Q2 deadline 2026-07-31 (29d). QUÁ HẠN: BDI/BID/DAG/DLC/GAS/JSH/PLX/PPC/SIS/VDC/VEA/VNH (BID re-added). search_similar_context timed out x2 this cycle — monitor next cycle. GAS/PLX VPS proxy stale 16d (SLA 48h) — not newly escalated (age≠crash pattern), watch for continued breach.
+- Doc self-heal: fixed 2 items in [stage-log-notify.md, esc-coverage-guard.md] — (1) end-of-cycle note wrongly said "keep session-log" which would duplicate the notebook write (AC-3 violation), clarified to skip both notebook-write+session-log; (2) coverage-guard ttl_seconds=2592000 (30d) exceeds task_claim's live-verified max of 691200 (8d) — every cov-guard claim would 400 on first attempt at 30d; fixed to 691200 + updated guard_ttl_days payload field 30→8.
