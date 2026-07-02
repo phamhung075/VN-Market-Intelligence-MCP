@@ -376,7 +376,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "bctc-offmarket",
-      "last_fired": "2026-07-01T11:05:34.000Z",
+      "last_fired": "2026-07-02T11:07:03.000Z",
       "trigger_id": null,
       "_note": "Slot 3 of 4. Off-market confirmed (11:00 UTC = 18:00 ICT, 2h after 15:00 close). Outside OFF-HOSE window (02:00-08:59 UTC). Clear of bctc-analyst + chef-evening. T2 throughput addition."
     },
