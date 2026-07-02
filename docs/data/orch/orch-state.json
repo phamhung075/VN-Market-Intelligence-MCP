@@ -9665,7 +9665,7 @@
           "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
           "FIX-BCTC-BANK-SUMMARY-MAPPING"
         ],
-        "status_note": "[po-triage 2026-07-02T04:54:49Z] Route REVIEW->qa for CODE sign-off. Code complete (commits 2c7fb5b0+ff1bac44; router independently re-ran 13/13 suite GREEN). done_verified WITHHELD: LIVE behavioral DoD (B02a/TCTDHN bank-form BS section-classifier on rebuilt image) gated on the SAME user-approval mcp-server rebuild blocking A-30 + enricher deploy + W5 chain. QA may APPROVE-CODE now; live gate clears when operator ships the rebuild.",
+        "status_note": "qa-approved-code; done_verified withheld pending deploy-gated behavioral DoD",
         "promoted_at": "2026-07-02T03:59:20Z",
         "promoted_by": "po",
         "unblocks": [
@@ -9679,7 +9679,9 @@
         "review_note": "[dev-mcp-server 2026-07-02T04:34:20Z] commit 2c7fb5b0 — root cause: 3 defects in refinedMarkdownParser.ts (blank-Ma 3-cell row mis-routing dropped rows; missing-|---|-separator recovery so a lost separator no longer silently swallows every subsequent row as 'header'; statement_section carry-forward across ordered DONE units via new initialSection param + finalSection return, wired into finalizeBctcRefineTool.ts AND sibling bctcRefineJob.ts). bun test evidence: FIX-BCTC-BANK-BS-SECTION-CLASSIFIER.test.ts 13/13 pass (RC-1/RC-2/RC-3 isolation + full B02a/TCTDHN 2-unit fixture through aggregateScalars: total_assets=2924176928 total_liabilities=2735484770 equity_total=188692158 identity exact, balanceViolation=null + end-to-end finalize_bctc_refine integration test: balance_sheet row count >0, general leakage=0, stale scalars unfrozen to DoD values). Non-regression: 26-file bctc-materialization-adjacent suite 356/356 pass; full 1161-file mcp-server suite 14136 pass / 63 fail (all 63 pre-existing network/timeout/shared-state failures in unrelated suites -- 0 bctc/refine-related, confirmed via grep) / crashed post-summary on an unrelated Bun-engine C++ panic. tsc --noEmit clean. deploy verification (live CTG report_id 96e36139 re-ingest, total_assets unfreeze on named-volume market.db) remains gated on user-approved mcp-server container rebuild -- not attempted.",
         "reviewed_at": "2026-07-02T04:34:20Z",
         "route_to": "qa",
-        "po_disposition": "[po-triage 2026-07-02T04:54:49Z] Route REVIEW->qa for CODE sign-off. Code complete (commits 2c7fb5b0+ff1bac44; router independently re-ran 13/13 suite GREEN). done_verified WITHHELD: LIVE behavioral DoD (B02a/TCTDHN bank-form BS section-classifier on rebuilt image) gated on the SAME user-approval mcp-server rebuild blocking A-30 + enricher deploy + W5 chain. QA may APPROVE-CODE now; live gate clears when operator ships the rebuild."
+        "po_disposition": "[po-triage 2026-07-02T04:54:49Z] Route REVIEW->qa for CODE sign-off. Code complete (commits 2c7fb5b0+ff1bac44; router independently re-ran 13/13 suite GREEN). done_verified WITHHELD: LIVE behavioral DoD (B02a/TCTDHN bank-form BS section-classifier on rebuilt image) gated on the SAME user-approval mcp-server rebuild blocking A-30 + enricher deploy + W5 chain. QA may APPROVE-CODE now; live gate clears when operator ships the rebuild.",
+        "qa_verdict": "APPROVE-CODE",
+        "qa_at": "2026-07-02T05:06:41Z"
       }
     ],
     "qa": [],
@@ -9709,6 +9711,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-02T04:34:20Z",
-  "_updated_by": "dev-mcp-server"
+  "_updated_at": "2026-07-02T05:06:41Z",
+  "_updated_by": "qa"
 }
