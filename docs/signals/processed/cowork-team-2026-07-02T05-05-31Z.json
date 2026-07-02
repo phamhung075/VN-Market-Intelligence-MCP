@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-07-02T05:05:31Z",
-    "matched_slots": ["news-scout-sentiment"],
-    "won_slots": ["news-scout-sentiment"],
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/news-scout/flow/main.md"],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 3,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "news-scout-sentiment": "cadence" },
-    "cadence_minutes": { "news-scout-sentiment": 240 },
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": 240
+    },
     "last_fired_timestamp": "2026-07-02T05:05:31.486Z",
-    "last_fired_slots": ["news-scout-sentiment"],
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "tick-snapshot pre-step skipped (no mechanical assembly path for 8KB bootstrap payload; hand-retype risks data corruption) — news-scout instructed to use direct get_cycle_bootstrap fallback per cycle-bootstrap SKILL Step -1 miss path"
   },
   "priority": "low",
-  "createdAt": "2026-07-02T05:05:31Z"
+  "createdAt": "2026-07-02T05:05:31Z",
+  "_processed": {
+    "fingerprint": "945742cc559277949c9f0fd25ce52869290bffe3e3cfcd223ea7bf1f0e29515f",
+    "processedAt": "2026-07-02T05:19:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

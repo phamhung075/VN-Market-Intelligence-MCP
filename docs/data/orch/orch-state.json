@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_by": "qa",
-    "updated_at": "2026-07-01T22:40:19Z",
-    "note": "[qa 2026-07-01T22:40:19Z] FIX-BCTC-BANK-SUMMARY-MAPPING AC-13 terminal sprint-close COMPLETE (PARTIAL/GREEN): W1-W4 done_verified — single mcp-server rebuild confirmed (image 33fea3ba.../container 715ea5bbe6d1, W2/W3 source markers present in running image; 55/55 sprint unit tests + tsc 0 errors; live 3-serve-tool probe (get_financial_summary/get_bctc_full/compare_financials) on rebuilt server shows identity guard correctly hard-blocking corrupt CTG total_assets=0 across all 3 paths; VCB/FPT/HPG/VNM non-regression confirmed — values plausible, VNM's pre-existing PENDING/zero-refined-units state correctly honest-NULL blocked (not a new regression)). W5 BLOCKED — AC-10 CTG re-ingest (report_id=96e36139-5dac-414d-8e4d-20a4725890d1) refused exit 3 by reingest-bctc-report.ts's own data-loss guard (56/56 bctc_refined_units FAILED/empty-markdown, 0 DONE-with-markdown windows) — needs a fresh agentic-refine transcription task (dev-mcp-server/bctc-analyst scope, not fabricated here). Full evidence: reports/TASK_REPORT_FIX-BCTC-BANK-SUMMARY-MAPPING-AC13.md"
+    "status": "in_progress",
+    "updated_at": "2026-07-02T05:20:57Z",
+    "updated_by": "dev-team",
+    "active_task_id": "BA-MERGE-MONEY-RADAR-INTO-MOMENTUM",
+    "next_agent": "ba",
+    "note": "BA-MERGE claimed by dev-team tick 05:07Z — ba drafts merge spec (money-radar INTO momentum page, one surface, two card contracts preserved). On BA RETURN: pm decomposition next."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9457,6 +9457,59 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
+      },
+      {
+        "id": "BA-MERGE-MONEY-RADAR-INTO-MOMENTUM",
+        "status": "IN_PROGRESS",
+        "title": "MERGE money-radar dashboard INTO the momentum page (one unified surface) — BA spec",
+        "owner": "ba",
+        "next_agent": "ba",
+        "zone": "apps/frontend/",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "size": "S",
+        "user_prioritized": true,
+        "depends": [],
+        "created_at": "2026-07-02T04:37:13Z",
+        "created_by": "po",
+        "origin": "USER verbatim 2026-07-02: \"need merge money-radar to momentum\". PO product decisions locked below; BA writes the spec, pm decomposes, dev-frontend implements, qa gates. PO does NOT spawn — dev-team loop adopts when a frontend slot frees (WIP was 2/2 full on dev-mcp-server BCTC — DISJOINT zone).",
+        "product_decisions": {
+          "target": "dashboard.momentum.tsx becomes the SINGLE unified money-flow/indicator surface — renders TWO labelled sections: Section A = existing 4 momentum honest-NULL cards; Section B = the 4 money-radar non-null cards (moved from dashboard.money-radar.tsx). Final section headings/ordering + Vietnamese labels = BA/product detail (suggest 'Động Lực' + 'Radar Dòng Tiền').",
+          "loader": "Merge both feeds into the momentum loader via Promise.allSettled: fetch /api/momentum-indicators AND /api/money-radar independently so a failure of one section never blanks the other (the honest-NULL/non-null contrast must survive a single-feed outage).",
+          "money_radar_route_fate": "CONVERT dashboard.money-radar.tsx to a redirect loader → /dashboard/momentum (302). Do NOT delete the file (existing bookmarks/deep links must not 404). api.money-radar.tsx proxy STAYS (feeds the merged loader).",
+          "nav_fate": "ONE unified nav entry. Relabel the existing 'Động Lực P1' (/dashboard/momentum) entry so it is discoverable as carrying the money-flow radar too (final copy = BA detail). Do NOT add a separate 'Radar Dòng Tiền → /dashboard/money-radar' entry — that route is becoming a redirect; a second entry would be a doomed double-entry. The user's original 'reach radar from the header' need is satisfied by the unified entry.",
+          "supersedes": "This task ABSORBS FIX-FE-HEADER-NAV-MONEY-RADAR (that task's nav work is folded here; it is relocated to done[] as superseded-by-merge in the same triage pass).",
+          "routing": "Single zone apps/frontend/ → NO architect split. Chain: ba (spec) → pm (decompose) → dev-frontend (implement) → qa (RAW-live gate)."
+        },
+        "design_constraints": {
+          "do_not_homogenize": "HARD (brief docs/architecture-briefs/2026-07-01-money-radar.md §10): radar cards render non-null (depth-independent inputs); momentum cards render honest-NULL (OHLCV-depth-gated). The merged page MUST preserve BOTH behaviors distinctly — the contrast validates the architecture. Never zero-fill a radar null; never force-render a momentum null as non-null.",
+          "freshness": "Each card keeps its OWN FreshnessBadge; SLA tier 'daily' (maxStalenessMin=1560, 26h) for both card families. STANDING: 'Cập nhật lúc' freshness transparency preserved.",
+          "source_link": "STANDING all-info requirement: each card keeps its InfoCardExpand source-link + detail dropdown. No card loses its provenance surface in the merge.",
+          "language": "Plain Vietnamese for all user-facing copy (labels, section headings, null-state 'Chưa có dữ liệu'). Divergence enum tokens (GREEN/AMBER/RED/UNKNOWN) render as-is per brief §8; the human-facing badge stays Vietnamese."
+        },
+        "acceptance": [
+          "AC1: /dashboard/momentum serves ONE page with all 8 cards — 4 momentum (honest-NULL, OHLCV-depth-gated) + 4 money-radar (non-null, depth-independent) — each in its labelled section with its own FreshnessBadge + source-link dropdown.",
+          "AC2: The loader fetches /api/momentum-indicators AND /api/money-radar via Promise.allSettled; a forced failure of ONE feed leaves the other section rendering correctly (per-section isolation, page always HTTP 200).",
+          "AC3: do-NOT-homogenize preserved — radar cards render non-null on live data; momentum cards render honest-NULL when accruing/blocked ('Chưa có dữ liệu' + gray badge + null_reason); NO card contract is flattened to the other.",
+          "AC4: /dashboard/money-radar 302-redirects to /dashboard/momentum (deep links preserved, no 404, no dead route); api.money-radar.tsx proxy still serves 200.",
+          "AC5: TopNav.tsx has ONE unified enabled nav entry reaching the merged surface; NO separate /dashboard/money-radar nav entry is added; SSOT count comments + FE-HEADER-SSOT guard test updated in lockstep and GREEN; no unrelated nav entry reordered/relabelled/removed.",
+          "AC6: FIX-FE-HEADER-NAV-MONEY-RADAR is confirmed superseded (folded here) — not independently shipped as a second nav entry.",
+          "AC7: tsc + full frontend test suite GREEN; money-radar-cards.test.ts assertions preserved/migrated onto the merged momentum page; no momentum regression."
+        ],
+        "verification_gate": "RAW-verify (dev-frontend + qa, not badge-relay): (a) after frontend rebuild, curl /dashboard/momentum and confirm BOTH card families render (radar non-null values present; momentum honest-NULL where data accruing); (b) curl /dashboard/money-radar and confirm 302 → /dashboard/momentum; (c) grep rendered nav for ONE enabled anchor reaching the merged surface and ZERO anchor href='/dashboard/money-radar' nav entry; (d) FE-HEADER-SSOT test + full frontend suite + tsc GREEN.",
+        "gate": "ba spec → pm decompose → dev-frontend implement → RAW-verify → review → qa → done_verified",
+        "files": [
+          "apps/frontend/app/routes/dashboard.momentum.tsx",
+          "apps/frontend/app/routes/dashboard.money-radar.tsx",
+          "apps/frontend/app/routes/api.money-radar.tsx",
+          "apps/frontend/app/components/TopNav.tsx",
+          "apps/frontend/app/__tests__/FE-HEADER-SSOT-top-nav.test.tsx",
+          "apps/frontend/app/routes/__tests__/money-radar-cards.test.ts"
+        ],
+        "parallel_note": "Zone apps/frontend/ is DISJOINT from the in-flight P1 dev-mcp-server BCTC work (FIX-BCTC-ENRICHER-STUCK-BACKLOG + FIX-BCTC-BANK-BS-SECTION-CLASSIFIER). PO does NOT spawn; the dev-team loop adopts per SF-1 singleton discipline when a frontend slot frees. BA-spec authoring does not consume a coding-WIP slot.",
+        "claimed_at": "2026-07-02T05:20:57Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Dispatched ba 2026-07-02T05:20:57Z (tick 2026-07-02T05:07Z). SPRINT-S chain ba->pm->dev-frontend->qa. Zone apps/frontend/ — NOT gated on mcp-server rebuild. BA writes spec to docs/handoffs/BA-MERGE-MONEY-RADAR-INTO-MOMENTUM.md: one unified /dashboard/momentum surface carrying BOTH money-flow radar and momentum indicators without homogenizing the two card contracts."
       }
     ],
     "ready": [
@@ -9507,56 +9560,6 @@
           "scripts/agents-flow/cowork-match-slots.js"
         ],
         "spec_ref": "docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md"
-      },
-      {
-        "id": "BA-MERGE-MONEY-RADAR-INTO-MOMENTUM",
-        "status": "READY",
-        "title": "MERGE money-radar dashboard INTO the momentum page (one unified surface) — BA spec",
-        "owner": "ba",
-        "next_agent": "ba",
-        "zone": "apps/frontend/",
-        "type": "SPRINT-S",
-        "priority": "high",
-        "size": "S",
-        "user_prioritized": true,
-        "depends": [],
-        "created_at": "2026-07-02T04:37:13Z",
-        "created_by": "po",
-        "origin": "USER verbatim 2026-07-02: \"need merge money-radar to momentum\". PO product decisions locked below; BA writes the spec, pm decomposes, dev-frontend implements, qa gates. PO does NOT spawn — dev-team loop adopts when a frontend slot frees (WIP was 2/2 full on dev-mcp-server BCTC — DISJOINT zone).",
-        "product_decisions": {
-          "target": "dashboard.momentum.tsx becomes the SINGLE unified money-flow/indicator surface — renders TWO labelled sections: Section A = existing 4 momentum honest-NULL cards; Section B = the 4 money-radar non-null cards (moved from dashboard.money-radar.tsx). Final section headings/ordering + Vietnamese labels = BA/product detail (suggest 'Động Lực' + 'Radar Dòng Tiền').",
-          "loader": "Merge both feeds into the momentum loader via Promise.allSettled: fetch /api/momentum-indicators AND /api/money-radar independently so a failure of one section never blanks the other (the honest-NULL/non-null contrast must survive a single-feed outage).",
-          "money_radar_route_fate": "CONVERT dashboard.money-radar.tsx to a redirect loader → /dashboard/momentum (302). Do NOT delete the file (existing bookmarks/deep links must not 404). api.money-radar.tsx proxy STAYS (feeds the merged loader).",
-          "nav_fate": "ONE unified nav entry. Relabel the existing 'Động Lực P1' (/dashboard/momentum) entry so it is discoverable as carrying the money-flow radar too (final copy = BA detail). Do NOT add a separate 'Radar Dòng Tiền → /dashboard/money-radar' entry — that route is becoming a redirect; a second entry would be a doomed double-entry. The user's original 'reach radar from the header' need is satisfied by the unified entry.",
-          "supersedes": "This task ABSORBS FIX-FE-HEADER-NAV-MONEY-RADAR (that task's nav work is folded here; it is relocated to done[] as superseded-by-merge in the same triage pass).",
-          "routing": "Single zone apps/frontend/ → NO architect split. Chain: ba (spec) → pm (decompose) → dev-frontend (implement) → qa (RAW-live gate)."
-        },
-        "design_constraints": {
-          "do_not_homogenize": "HARD (brief docs/architecture-briefs/2026-07-01-money-radar.md §10): radar cards render non-null (depth-independent inputs); momentum cards render honest-NULL (OHLCV-depth-gated). The merged page MUST preserve BOTH behaviors distinctly — the contrast validates the architecture. Never zero-fill a radar null; never force-render a momentum null as non-null.",
-          "freshness": "Each card keeps its OWN FreshnessBadge; SLA tier 'daily' (maxStalenessMin=1560, 26h) for both card families. STANDING: 'Cập nhật lúc' freshness transparency preserved.",
-          "source_link": "STANDING all-info requirement: each card keeps its InfoCardExpand source-link + detail dropdown. No card loses its provenance surface in the merge.",
-          "language": "Plain Vietnamese for all user-facing copy (labels, section headings, null-state 'Chưa có dữ liệu'). Divergence enum tokens (GREEN/AMBER/RED/UNKNOWN) render as-is per brief §8; the human-facing badge stays Vietnamese."
-        },
-        "acceptance": [
-          "AC1: /dashboard/momentum serves ONE page with all 8 cards — 4 momentum (honest-NULL, OHLCV-depth-gated) + 4 money-radar (non-null, depth-independent) — each in its labelled section with its own FreshnessBadge + source-link dropdown.",
-          "AC2: The loader fetches /api/momentum-indicators AND /api/money-radar via Promise.allSettled; a forced failure of ONE feed leaves the other section rendering correctly (per-section isolation, page always HTTP 200).",
-          "AC3: do-NOT-homogenize preserved — radar cards render non-null on live data; momentum cards render honest-NULL when accruing/blocked ('Chưa có dữ liệu' + gray badge + null_reason); NO card contract is flattened to the other.",
-          "AC4: /dashboard/money-radar 302-redirects to /dashboard/momentum (deep links preserved, no 404, no dead route); api.money-radar.tsx proxy still serves 200.",
-          "AC5: TopNav.tsx has ONE unified enabled nav entry reaching the merged surface; NO separate /dashboard/money-radar nav entry is added; SSOT count comments + FE-HEADER-SSOT guard test updated in lockstep and GREEN; no unrelated nav entry reordered/relabelled/removed.",
-          "AC6: FIX-FE-HEADER-NAV-MONEY-RADAR is confirmed superseded (folded here) — not independently shipped as a second nav entry.",
-          "AC7: tsc + full frontend test suite GREEN; money-radar-cards.test.ts assertions preserved/migrated onto the merged momentum page; no momentum regression."
-        ],
-        "verification_gate": "RAW-verify (dev-frontend + qa, not badge-relay): (a) after frontend rebuild, curl /dashboard/momentum and confirm BOTH card families render (radar non-null values present; momentum honest-NULL where data accruing); (b) curl /dashboard/money-radar and confirm 302 → /dashboard/momentum; (c) grep rendered nav for ONE enabled anchor reaching the merged surface and ZERO anchor href='/dashboard/money-radar' nav entry; (d) FE-HEADER-SSOT test + full frontend suite + tsc GREEN.",
-        "gate": "ba spec → pm decompose → dev-frontend implement → RAW-verify → review → qa → done_verified",
-        "files": [
-          "apps/frontend/app/routes/dashboard.momentum.tsx",
-          "apps/frontend/app/routes/dashboard.money-radar.tsx",
-          "apps/frontend/app/routes/api.money-radar.tsx",
-          "apps/frontend/app/components/TopNav.tsx",
-          "apps/frontend/app/__tests__/FE-HEADER-SSOT-top-nav.test.tsx",
-          "apps/frontend/app/routes/__tests__/money-radar-cards.test.ts"
-        ],
-        "parallel_note": "Zone apps/frontend/ is DISJOINT from the in-flight P1 dev-mcp-server BCTC work (FIX-BCTC-ENRICHER-STUCK-BACKLOG + FIX-BCTC-BANK-BS-SECTION-CLASSIFIER). PO does NOT spawn; the dev-team loop adopts per SF-1 singleton discipline when a frontend slot frees. BA-spec authoring does not consume a coding-WIP slot."
       }
     ],
     "review": [
