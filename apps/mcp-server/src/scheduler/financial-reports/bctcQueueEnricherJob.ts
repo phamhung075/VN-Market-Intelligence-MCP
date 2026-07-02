@@ -15,6 +15,15 @@
  * - FIX-BCTC-ZERO-URL-ALERT (2026-06-16): Added consecutive-zero-URL cycle counter
  *   persisted in bctc_health_state (SQLite). Fires a BUG Telegram alert when
  *   counter >= 2 during an active earnings window, deduped to <=1 alert / 6h.
+ * - FIX-BCTC-ENRICHER-STUCK-BACKLOG (2026-07-02): incrementAttemptsStmt and
+ *   markUrlNotFoundStmt now also set last_attempt = datetime('now') (previously
+ *   only the orphan-resync statement did this), so rows they terminalize can
+ *   actually satisfy Arm 2's grace-period predicate instead of being permanently
+ *   excluded. Arm 2 also extended to select 'enrich_failed' rows (same
+ *   grace-period + attempts<6 bound), which were previously invisible to both
+ *   arms. 2nd occurrence of this bug class (1st: reset-ppc-q4-2025.ts one-row
+ *   hand patch) — this is the root fix. See
+ *   docs/vps-sources/bctc-discover-stale-15d/enricher-liveness.md.
  *
  * Design:
  * - Dequeues max 20 items with source_url = NULL or a placeholder value per run.
@@ -267,21 +276,37 @@ export async function runBctcQueueEnricherJob(opts: {
   //     resolves real URLs — FIX 1405b)
   //   - status = 'pending'
   //
-  // Arm 2 — TASK-1943a: Grace-period auto-retry for url_not_found rows:
-  //   - status = 'url_not_found' (exhausted MAX_ENRICH_ATTEMPTS previously)
+  // Arm 2 — TASK-1943a: Grace-period auto-retry for url_not_found rows.
+  // FIX-BCTC-ENRICHER-STUCK-BACKLOG (2026-07-02): also covers 'enrich_failed'
+  // rows under the identical bound — that status was previously invisible to
+  // BOTH arms (a design gap, not a timing issue). Same grace-period + attempts
+  // cap applies to both terminal statuses; no unbounded retry is introduced.
+  //   - status IN ('url_not_found', 'enrich_failed') (exhausted MAX_ENRICH_ATTEMPTS
+  //     previously, or failed PDF parse/enrichment downstream)
   //   - last_attempt IS NOT NULL AND last_attempt < datetime('now', '-7 days')
   //     (grace period expired — SSC may have published late filings)
   //   - attempts < 6 (MAX_ENRICH_ATTEMPTS + 1 cap prevents infinite churn)
   //
-  // Effect: rows permanently parked at url_not_found after 7+ days get one
-  // more discovery pass. If still no URL → re-marked url_not_found (expected).
-  // This prevents permanent calendar blindspots when SSC is slow to publish.
+  // Effect: rows permanently parked at url_not_found/enrich_failed after 7+
+  // days get one more discovery pass. If still no URL → re-marked
+  // url_not_found (expected). This prevents permanent calendar blindspots
+  // when SSC is slow to publish, and closes the previous structural gap where
+  // rows terminalized by incrementAttemptsStmt/markUrlNotFoundStmt never had
+  // last_attempt set (see below) and so could NEVER satisfy this arm's
+  // `last_attempt IS NOT NULL` predicate — a permanent false-terminal.
   //
   // FIX-CTG-1 (2026-06-03): include period_year and period_quarter in SELECT so
   // each row is enriched with its OWN quarter's PDF URL, not the current year/Q4 default.
   // Previously the SELECT discarded these fields → discoverHosePdfUrls defaulted to
   // year=currentYear, quarter="Q4" → Q3/Q2 rows were corrupted with a Q1-2026 URL.
   let queueItems: Array<{ id: number; action_code: string; attempts: number; period_year: number; period_quarter: string }> = [];
+
+  // FIX-BCTC-ENRICHER-STUCK-BACKLOG (2026-07-02): tracks whether this DB's
+  // bctc_vps_queue table has the last_attempt column. Some older/simplified
+  // test-fixture schemas omit it (see the ARM1_ONLY_SQL fallback below) — the
+  // UPDATE statements further down must degrade the same way the SELECT does,
+  // or they throw "no such column: last_attempt" on those schemas.
+  let lastAttemptColumnAvailable = true;
 
   // Primary query includes both Arm 1 (normal pending) and Arm 2 (grace-period retry).
   // Falls back to Arm 1 only if last_attempt column is absent (e.g. older schema).
@@ -312,7 +337,7 @@ export async function runBctcQueueEnricherJob(opts: {
         AND status = 'pending'
       )
       OR (
-        status = 'url_not_found'
+        status IN ('url_not_found', 'enrich_failed')
         AND last_attempt IS NOT NULL
         AND last_attempt < datetime('now', '-7 days')
         AND attempts < 6
@@ -333,6 +358,7 @@ export async function runBctcQueueEnricherJob(opts: {
       // Older schema without last_attempt column — fall back to Arm 1 only.
       // This handles test DBs with simplified schemas and pre-migration DBs.
       logger.debug("[bctcQueueEnricher] last_attempt column absent — grace-period arm disabled");
+      lastAttemptColumnAvailable = false;
       try {
         queueItems = db
           .query<{ id: number; action_code: string; attempts: number; period_year: number; period_quarter: string }, [number]>(
@@ -431,11 +457,27 @@ export async function runBctcQueueEnricherJob(opts: {
   );
   // Task 1782: increment attempts on every no-URL run so the max-attempts gate
   // can fire and mark exhausted rows as 'url_not_found'.
+  //
+  // FIX-BCTC-ENRICHER-STUCK-BACKLOG (2026-07-02): both statements now also set
+  // last_attempt = datetime('now') — matching the orphan-resync statement
+  // above, which already did this. Without it, rows terminalized here could
+  // NEVER satisfy Arm 2's `last_attempt IS NOT NULL` predicate and were
+  // permanently excluded from grace-period re-discovery (root cause of the
+  // 23-row false-terminal HOSE backlog; see
+  // docs/vps-sources/bctc-discover-stale-15d/enricher-liveness.md).
+  //
+  // Schema-guarded like the SELECT above: when last_attempt is absent
+  // (lastAttemptColumnAvailable=false), fall back to the pre-fix SQL so
+  // older/simplified test-fixture schemas don't throw "no such column".
   const incrementAttemptsStmt = db.prepare<void, [number]>(
-    `UPDATE bctc_vps_queue SET attempts = attempts + 1 WHERE id = ?`,
+    lastAttemptColumnAvailable
+      ? `UPDATE bctc_vps_queue SET attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`
+      : `UPDATE bctc_vps_queue SET attempts = attempts + 1 WHERE id = ?`,
   );
   const markUrlNotFoundStmt = db.prepare<void, [number]>(
-    `UPDATE bctc_vps_queue SET status = 'url_not_found', attempts = attempts + 1 WHERE id = ?`,
+    lastAttemptColumnAvailable
+      ? `UPDATE bctc_vps_queue SET status = 'url_not_found', attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`
+      : `UPDATE bctc_vps_queue SET status = 'url_not_found', attempts = attempts + 1 WHERE id = ?`,
   );
 
   // ── Discover URLs for each item ───────────────────────────────────────────
