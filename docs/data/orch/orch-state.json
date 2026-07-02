@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T19:00:27Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-02T21:19:50Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -995,6 +995,17 @@
         "payload_ref": null,
         "po_triage_note": "RESOLVED off-market FP: fired 01:34 VN (18:34Z), outside VN session 02:00-08:00Z; SBV does not publish overnight so 47min staleness is the expected idle state, not an incident (feedback_auditor_freshness_threshold_market_hours_blind). Severity CRITICAL->INFO. Durable root-cause fix already tracked: FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (BACKLOG) + ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD (TODO). No new task. Re-verify next open 02:00Z.",
         "po_triaged_at": "2026-07-02T19:00:27Z"
+      },
+      {
+        "id": "sau-a21-202607022116",
+        "ts": "2026-07-02T21:16:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 mcp-server RestartCount=4 (baseline 3) — gradual restart pattern",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-02T19:00:27Z",

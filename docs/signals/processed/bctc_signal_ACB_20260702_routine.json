@@ -1,0 +1,59 @@
+{
+  "ticker": "ACB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Ngan hang ban le va SME — cho vay, tien gui, bancassurance, the tin dung.",
+  "customer": "Khach hang ca nhan do thi va doanh nghiep SME, tap trung phan khuc ban le.",
+  "ops": "Thu nhap lai thuan 6.989,2 ty; LN rong 4.320,4 ty (bien 61.8% tren thu nhap lai thuan); ROE quy 4.4% (~17.6% annualized, ngang median nganh 16.7%).",
+  "mgmt": "Chi 1 ky bao cao — chua du du lieu lich su de danh gia track record quan tri; theo doi them cac quy toi.",
+  "first_analysis": true,
+  "valuation": {
+    "pe": 7.8,
+    "pe_sector_median": 9.1,
+    "pb": 1.3,
+    "pb_sector_median": 1.6,
+    "pb_verdict": "DISCOUNT -18%",
+    "earning_yield_pct": 12.82,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 7.82,
+    "valuation_verdict": "CHEAP"
+  },
+  "balance_sheet_check": {
+    "assets_total_bn": 1030900.7,
+    "liabilities_total_bn": 932149.7,
+    "equity_total_bn": 98751.1,
+    "imbalance_pct": 0.00001,
+    "esc2_result": false
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "esc3_quarters_returned": 1,
+  "esc3_coverage_guard_held": true,
+  "esc3_coverage_guard_key": "esc-datacov:ACB:Q1-2026:ESC-3",
+  "esc3_note": "Guard already held by a peer bctc-analyst session (claimed ~2026-07-01T00:14Z) — no duplicate ops signal emitted this cycle.",
+  "esc4_result": false,
+  "esc5_result": "skipped — report_id not exposed via get_bctc_full response",
+  "insider_signals": "Khong co tin hieu giao dich noi bo dang ke trong thoi gian gan day.",
+  "legal_risk": "Khong co tin hieu rui ro phap ly gan voi ACB trong 7 tin hieu quet duoc.",
+  "sentiment_trend_30d": "GIAM (tieu cuc, slope -0.11, 4 bullish/1 bearish/7 muc)",
+  "kinhdich": {
+    "que": "46 - Thang",
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 100
+  },
+  "trick_confidence": "none",
+  "trick_summary": "Khong the chay day du 6-pass trick detection: bctc_table_rows/bctc_balance_checks/report_id khong duoc expose qua bo cong cu bctc-analyst (chi co du lieu tong hop tu get_bctc_full). Khong co bang chung de xac lap phat hien gian lan.",
+  "trick_pass_versions": [],
+  "regime": "NEUTRAL",
+  "carry_spread_pp": 1.37,
+  "cycle_id": "20260702-2100",
+  "generated_at": "2026-07-02T21:12:00Z",
+  "_processed": {
+    "fingerprint": "e1f5d2be1d0f46ca716b30760ba9982406025846719a46ee7c5cef61d5077c51",
+    "processedAt": "2026-07-02T21:19:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "ticker": "GVR",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Cao su thien nhien, san pham go, cho thue khu cong nghiep — tap doan cao su quoc doanh.",
+  "customer": "Khach hang cong nghiep (lop xe, che bien go), doanh nghiep thue KCN.",
+  "ops": "Doanh thu 8.845,2 ty; LN rong 2.513,4 ty (bien 28.4%); nhung LN rong vuot LN hoat dong 590,1 ty (23.5% LN rong) tu thu ngoai hoat dong chua ro nguon goc.",
+  "mgmt": "ESC-4 tai phat — du lieu khong doi tu 2026-06-07; guard 24h TTL cua c070 da het han khong co phan hoi tu dev-team; da redispatch phien nay.",
+  "first_analysis": false,
+  "data_unchanged_since": "2026-06-07T11:06:21.515Z",
+  "valuation": {
+    "pe": null,
+    "pe_sector_median": 8.9,
+    "pb": null,
+    "pb_sector_median": 1.6,
+    "valuation_verdict": "N/A - PE/PB khong kha dung cho GVR (thieu gia thi truong join)"
+  },
+  "balance_sheet_check": {
+    "assets_total_bn": 87178.9,
+    "liabilities_total_bn": 22194.2,
+    "equity_total_bn": 64984.7,
+    "imbalance_pct": 1e-7,
+    "esc2_result": false
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "esc3_quarters_returned": 1,
+  "esc3_coverage_guard_held": true,
+  "esc3_coverage_guard_key": "esc-datacov:GVR:Q1-2026:ESC-3",
+  "esc4_result": true,
+  "esc4_dispatch_status": "REDISPATCHED",
+  "esc4_guard_key": "esc-deepdive:GVR:Q1-2026:ESC-4",
+  "esc4_signal_file": "docs/signals/bctc-analyst-20260702T211200Z.json",
+  "esc5_result": "skipped — report_id not exposed via get_bctc_full response",
+  "insider_signals": "Khong co tin hieu giao dich noi bo dang ke trong thoi gian gan day.",
+  "legal_risk": "Khong co tin hieu rui ro phap ly gan voi GVR trong 7 tin hieu quet duoc.",
+  "kinhdich": {
+    "que": "31 - Ham",
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 63
+  },
+  "trick_confidence": "none",
+  "trick_summary": "Khong the chay day du 6-pass trick detection: bctc_table_rows/bctc_balance_checks/report_id khong duoc expose qua bo cong cu bctc-analyst. ESC-4 duoc xac dinh qua kiem tra tong hop (LN rong vs LN hoat dong), khong qua trick-pass rieng.",
+  "trick_pass_versions": [],
+  "regime": "NEUTRAL",
+  "carry_spread_pp": 1.37,
+  "cycle_id": "20260702-2100",
+  "generated_at": "2026-07-02T21:12:00Z",
+  "_processed": {
+    "fingerprint": "44e6737b55961953070241cede39987e596fda5e77390a5da3418499f95818a6",
+    "processedAt": "2026-07-02T21:19:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

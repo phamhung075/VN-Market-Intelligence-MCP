@@ -45,5 +45,11 @@
     "note": "preflight WORK verdict; bctc-offmarket cron fallback (calendar unknown); snapshot cycle-snapshot-21:05.json written; emit_pressure_state ok but cycle_snapshot_promoted=false + stale_warning=true (server-side recompute) — next tick likely legacy path"
   },
   "priority": "low",
-  "createdAt": "2026-07-02T21:07:07Z"
+  "createdAt": "2026-07-02T21:07:07Z",
+  "_processed": {
+    "fingerprint": "9ff322ae3598648fb1a87d98decdbd4404a70c19131f00d1547b1e9a87974269",
+    "processedAt": "2026-07-02T21:19:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
