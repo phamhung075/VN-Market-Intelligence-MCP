@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-02T00:00:00Z",
-    "updated_by": "pm",
+    "updated_at": "2026-07-02T12:12:10Z",
+    "updated_by": "developer",
     "active_task_id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
     "next_agent": "developer",
-    "note": "TOKEN-ECONOMY-TICK-PREFLIGHT — pm decomposition DONE. 3 WU tasks created (DJ-GATE-1 journal: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-pm.md). Route all dev tasks to developer (generic), not dev-service specialist (zone=root constraint). WU-1 cowork silent-path (UNBLOCKS WU-2), WU-2 dev-team SF-1-first, WU-3 auditor Tier-1 (INDEPENDENT). Next: developer starts WU-1."
+    "note": "TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 (cowork silent-path preflight) DONE — commit f7d34918. New scripts/agents-flow/mcp-call.sh + cowork-tick-preflight.sh (SILENT/WORK/LOST_ELECTION/DEFER/ERROR verdicts), main.md Step 0 + JUMP-TO table (fallback pseudocode kept verbatim), leader-lock.md/blind-guard.md/match-slots.md annotated, dead cowork-tick-autosilent.sh retired (R5). 20/20 mocked regression tests pass, shellcheck clean. DJ: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-developer.md. Next: WU-2 (dev-team SF-1-first preflight, depends WU-1 mcp-call.sh, ready) + WU-3 (auditor Tier-1 shell healthcheck, independent) both dispatchable to developer (generic, zone=root)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
