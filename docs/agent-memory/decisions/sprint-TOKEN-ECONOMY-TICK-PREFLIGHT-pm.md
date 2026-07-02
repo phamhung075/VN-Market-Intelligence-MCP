@@ -156,3 +156,49 @@ On ERROR or full-path failure: script exits non-zero → LLM falls back to origi
 3. developer: WU-3 (auditor-tier1-probe.sh, extend probe.sh, modify cron-detect-loop/SKILL.md Job 2, annotate tier1-probe.md)
 
 **Coordination:** CLAUDE_CODE_SESSION_ID=d3292ca4-a9ab-471a-8d8c-d0c723546258 (router session, no cross-session lock required for pm→dev handoff; same session thread).
+
+---
+
+### STEP pm-CLOSEOUT · pm · 2026-07-02T15:45:00Z
+**task-id:** TOKEN-ECONOMY-TICK-PREFLIGHT
+**what-done:** Validated all 3 WUs against DoD and developer-journal deviations; moved sprint to done lane; created QA backlog entry; set head to idle.
+
+**what-considered:**
+
+**WU-1 verdict: ACCEPT**
+- Developer corrected brief's inaccuracies (mcp_call naming vs typo prose, signal_queue schema field mismatch, pressure_mode missing from live schema) against brownfield reality (live `orch-state.json`, real tool signatures, live-tested transport).
+- Fixed real bash-brace-parsing bug (`"${var:-{}}"` → `{}}` corruption) — necessary correctness fix.
+- All deviations maintain R1-R5 risk boundaries; corrections strengthen accuracy without changing architecture.
+- Test verdict: 20/20 mocked regression pass, live-verified mcp-call transport against real mcp-server.
+
+**WU-2 verdict: ACCEPT with QA flag**
+- Lock semantics (R7) correctly implemented: two distinct SKIP paths preserved (SF-1 fail = no-hold; fire-election lost = release SF-1 then skip); verified by tests T3/T4.
+- Error handling (R8) strengthened beyond WU-1: added `_is_json()` guard on SF-1/fire-election/presence responses (T7/T8 verify malformed JSON → ERROR, not silent SKIP masking transport failure as lock contention).
+- Fire-election ERROR releases SF-1 (prevents self-inflicted 90-min deadlock on re-entrant claim); documented in script header; verified by T6/T8.
+- Presence step honors main.md's "never a gate" instruction: best-effort, logged on failure, always proceeds to SF-1 (T9/T10 verify RUN reachable despite presence error).
+- START telegram dropped from script (token-economy tradeoff; <2 tool calls DoD constraint); survives in ERROR-fallback body.
+- gcc-preflight anchor split (jump-to SKILL constraint: anchor must sit immediately above heading, not mid-fenced-code); split into two headed sub-sections, both verbatim.
+- **QA Flag (documented in WU-2 developer-S2):** `cron-dev-team.md` deliberately left untouched. SKILL.md documents Job entries as "verbatim copies" but WU-2 modified only `.claude/skills/cron-detect-loop/SKILL.md` Job 1 prompt, not the SSOT file. Developer rationale: SKILL.md is implementation-detail doc; copying complex self-arm+script-branching logic into conceptual-shape reference (cron-dev-team.md) bloats it. However, the "verbatim copy" invariant is now broken. QA decision routing: (A) sync cron-dev-team.md to include self-arm+script-branching (true verbatim SSOT), OR (B) update SKILL.md SSOT pointer to document the intentional one-Job exception and leave cron-dev-team.md as-is. Created backlog entry QA-CRON-DEV-TEAM-SSOT-DIVERGENCE; router dispatches QA separately.
+- Test verdict: 37/37 mocked regression pass; zero real task_claim/task_heartbeat/task_release calls; re-verified WU-1 (20/20) still passes (no interference).
+
+**WU-3 verdict: ACCEPT**
+- Deviations resolve underspecified prose without changing R9/R10 architectural boundaries:
+  - Mem-creep: single-point 85% threshold (consistent with A-30 WARN boundary, not a true trend detector); acceptable for pre-gate tripwire role — full graduated severity work deferred to subagent on FAILURE.
+  - Endpoint scope: literal implementation (curl :3000/health + curl :3001/, not full 5-endpoint sweep); matches brief's "fast narrow tripwire" intent; full-fleet sweep stays exclusively in subagent's probe.sh on any FAILURE.
+  - Passive-health-masking: two complementary layers — (a) script verifies heartbeat write succeeds (downgrades to FAILURE if write fails, T14 injected-fault proven), (b) SKILL.md Job 2 prompt does cross-tick staleness check (>60min heartbeat age → escalate despite ALL_GREEN verdict). Reconciles DoD "not just process-up" concern (script layer) with "check last-success-age" assignment to LLM/data-file (deliverable 4).
+  - `last_healthy_at` on FAILURE: reports PREVIOUS green timestamp from existing heartbeat file (or "never" if never succeeded), not current-run timestamp — useful for staleness detection even on failing ticks (T12/T13 proven).
+  - A-20 fold-in: kept signal emission + verdict logic in tier1-probe.md (unchanged), moved only evidence-collection loop into probe.sh (SSOT for probe's job). Honors R9 ("no new tool calls from probe.sh") and keeps MCP-dependent logic out of pure-shell script.
+  - bash 3.2.57 compat: avoided arrays (bash 4.4+ only), used string accumulator; used bash 2.0+ idiom `${!#}` for last positional arg (confirmed working on live 3.2.57).
+- Test verdict: 32/32 mocked regression pass (function-override on docker/curl/df, zero real calls); live-verified end-to-end against running fleet (RC=0, heartbeat written, A-20 pass_count=3/3); re-verified WU-1/WU-2 full suite (32+20+37=89 tests, all pass, no interference).
+
+**why-decision:** All three WUs' implementations are brownfield-sound and correctly propagate the architect's R1-R11 risk notes. Deviations are narrowly scoped (prose inaccuracies corrected against live schema, underspecified algorithm details resolved within risk boundaries, repo invariant constraints satisfied). Lock semantics byte-identical to original flows (R7 verified). Error handling explicit (R8 strengthened). No new orch-state writes, heartbeat-file isolation preserved (R10), probe.sh evidence-collection SSOT (R9). QA flag documented and routed as a separate backlog entry per PM flow § 4 (blocked tasks + deviations).
+
+**why-change:** No architecture change from PM/architect plan. All deviations are documented in developer journal as implementation-detail corrections and necessary guardrails.
+
+**orch-state updates:**
+- `.task_board.in_progress`: removed TOKEN-ECONOMY-TICK-PREFLIGHT
+- `.task_board.done`: added TOKEN-ECONOMY-TICK-PREFLIGHT (unchanged task object)
+- `.task_board.backlog`: added QA-CRON-DEV-TEAM-SSOT-DIVERGENCE (status=BACKLOG, owner=qa, depends=[])
+- `.head`: status=idle, active_task_id=null, next_agent=null, updated_by=pm; note includes operational reminder (cron re-arm needed for prompt changes to take effect) + QA routing note
+
+**Note:** Cron Jobs 1+2 prompt text changes (self-arm sequence, shell pre-gates, spawn branches) only take effect when session-scoped crons are re-armed — next `/cron-detect-loop` invocation or session restart. Current in-session crons still carry pre-sprint prompts. No immediate operational impact; full effect on next cron re-arm.
