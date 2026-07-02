@@ -1,4 +1,4 @@
-<!-- size-justification: ~195L — thin dispatcher; full logic extracted to 11 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-v2 2026-06-05: telemetry.md Step 6.0 uses call_tool emit_pressure_state (Option C). BGFAN-1 2026-06-07: background spawn mandate; actual spawns in spawn-fanout.md carry run_in_background=true. BG-1 2026-06-18: Step 0c blind-guard.md added. P2-PRESENCE 2026-06-28 (TASK_1990): Step 0b now claims session-presence BEFORE leader-lock (+22L inline). P3-FIRE-ELECTION 2026-06-28 (TASK_1994): leader-lock.md redesigned to fire-time election cron:cowork:<tick> (TTL=600s); activation gate TASK_1995. DEFERRED-TASK-SCHEDULER-MVP 2026-06-29: Step 0b.3 added after leader-lock WIN — drains due one-shot scheduled tasks (+55L inline). -->
+<!-- size-justification: ~195L — thin dispatcher; full logic extracted to 11 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-v2 2026-06-05: telemetry.md Step 6.0 uses call_tool emit_pressure_state (Option C). BGFAN-1 2026-06-07: background spawn mandate; actual spawns in spawn-fanout.md carry run_in_background=true. BG-1 2026-06-18: Step 0c blind-guard.md added. P2-PRESENCE 2026-06-28 (TASK_1990): Step 0b now claims session-presence BEFORE leader-lock (+22L inline). P3-FIRE-ELECTION 2026-06-28 (TASK_1994): leader-lock.md redesigned to fire-time election cron:cowork:<tick> (TTL=600s); activation gate TASK_1995. DEFERRED-TASK-SCHEDULER-MVP 2026-06-29: Step 0b.3 added after leader-lock WIN — drains due one-shot scheduled tasks (+55L inline). TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 2026-07-02: new Step 0 — deterministic scripts/agents-flow/cowork-tick-preflight.sh replaces Steps 0a-4b on the common SILENT/WORK path (+~45L); original inline pseudocode below is UNCHANGED, kept verbatim as the ERROR-fallback path. -->
 <!-- BGFAN-1: ALL Agent spawns from this dispatcher MUST use run_in_background=true. Cowork agents are independent → genuine parallel background fan-out. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
 # cowork-team — Master Cron Dispatcher
@@ -43,6 +43,60 @@ Fires every 15 min via `*/15 * * * *` CronCreate. Reads `docs/data/cowork-schedu
 | 6 + Error Guard | Write telemetry signal; Step 6.0 call_tool emit_pressure_state (mandatory, un-skippable); Step 6.1 conditional signal write; unhandled error boundary | `telemetry.md` |
 
 ---
+
+## Step 0 — Cowork Preflight (TOKEN-ECONOMY-TICK-PREFLIGHT WU-1)
+
+Run the deterministic preflight script FIRST and capture its one-line JSON verdict — on the
+common SILENT/WORK path this replaces the LLM-narrated Steps 0a-4b below entirely (~80% of
+ticks are silent off-hours/no-due-work; this cuts that to one bash call + a short JSON reply).
+
+```bash
+VERDICT_JSON=$(bash "$PROJECT_ROOT/scripts/agents-flow/cowork-tick-preflight.sh")
+PREFLIGHT_RC=$?
+VERDICT=$(echo "$VERDICT_JSON" | jq -r '.verdict')
+```
+
+Script SSOT: `scripts/agents-flow/cowork-tick-preflight.sh` (uses shared `scripts/agents-flow/mcp-call.sh`). Requires `$CLAUDE_CODE_SESSION_ID` in the environment.
+
+### JUMP-TO table (preflight verdict)
+
+| Verdict | Action |
+|---|---|
+| `SILENT` | Done. Script already emitted pressure state (Step 8) and released the election lock. No LLM read of Steps 0a-6 needed. EXIT. |
+| `WORK` | Election lock is HELD by this session. Continue at **§ WORK continuation** below — do NOT re-run Steps 0b/0b.3/0c/1-4b, they are already satisfied by the script's Steps 2-6. |
+| `LOST_ELECTION` | Done. Script already sent the `work`-channel telegram (peer session leads this tick). EXIT. |
+| `DEFER` | Done. AF-1 backstop-window defer — retries automatically at the next 15-min tick. EXIT. |
+| `ERROR` | Script hit a transport/tool/local-guard failure (`$VERDICT_JSON.detail` has why). Election lock state is undefined. Fall back to the full original inline pseudocode below (Steps 0a/0b/0b.3/0c/1-4b — unchanged, never deleted) — read from **Step 0a** onward as if the script never ran. |
+
+### § WORK continuation
+
+The script already: registered presence (Step 2), won the fire-time election (Step 3 — lock
+HELD, released later by `telemetry.md` Step 6 P3 release, unchanged), claimed due one-shots
+(Step 4 — `$VERDICT_JSON.one_shots[]` carries the FULL claimed task objects, R2), confirmed the
+gateway is not blind (Step 5), and matched slots (Step 6 — `$VERDICT_JSON.slots[]` carries full
+slot objects). **Do NOT re-call `claim_due_scheduled_tasks` or `cowork-match-slots.js`** —
+re-claiming would find the rows already flipped to `firing`, orphaning them (R2).
+
+1. **Drain signal_queue** — the script only did a READ-ONLY count for the SILENT gate (R4); run
+   the real drain-and-route-and-mark-READ body of Step 0a below against the live
+   `.signal_queue.rows[]`.
+2. **Route one-shots** — for each object in `$VERDICT_JSON.one_shots[]`, run the routing body of
+   Step 0b.3 below (deadline gate → PRE-CLAIM intent gate + background spawn for `team=="COWORK"`
+   rows / signal_queue emission for `team=="DEV"` rows → `complete_scheduled_task`) directly on
+   the already-claimed object — skip the `claim_due_scheduled_tasks` call itself (already done).
+3. **Slots** — treat `$VERDICT_JSON.slots[]` as `MATCHES` and `$VERDICT_JSON.drift_min` as
+   `DRIFT_MIN`; run Step 4b (collision-detection guard) only — skip Steps 1-3 and Step 4 silent-exit
+   (already computed by the script; WORK implies at least one of slots/one_shots/new_signals is non-empty).
+4. **Continue unchanged** at Steps 4.2-4.3 (`pressure-read.md`), 4.4-4.5b (`pressure-cadence.md`),
+   4.6-4.6b (`slot-claim.md`), 4.7 (`tick-snapshot.md`), 4.8 (`pressure-emit.md`), 5
+   (`spawn-fanout.md`), 5b (`last-fired.md`), 6 (`telemetry.md` — the P3 election-lock release
+   stays the single release point on the WORK path).
+
+---
+
+<!-- FALLBACK BODY (TOKEN-ECONOMY-TICK-PREFLIGHT WU-1): reached only when the Step 0 preflight
+     script returns ERROR verdict (full re-read, execute from here) or as the source body for the
+     targeted WORK-continuation steps referenced above. Kept verbatim — never deleted. -->
 
 ## Step 0a — Drain `docs/data/orch/orch-state.json .signal_queue` (cross-team inbox)
 

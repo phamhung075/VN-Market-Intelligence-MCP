@@ -1,28 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-02 | **Cycle:** FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT
-
-## Session 2026-06-14 — FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY (doc-only)
-
-**Task:** Codify `docker builder prune -f` as unconditional final step in `docs/agents/ops/flow/docker.md`.
-
-**Root cause:** 3rd recurrence (2026-05-27, 2026-06-07, 2026-06-14) of host disk-full from Docker build-cache accumulation. A ≥2/day rule existed in memory but was never in the flow. Third occurrence ENOSPC-blocked a QA agent at 97% / 6.7 Gi free; recovery reclaimed 18.62 GB.
-
-**Fix — 4 locations in docs/agents/ops/flow/docker.md:**
-1. FORBIDDEN § "Rebuild after code change" one-liner: appended `&& docker builder prune -f`.
-2. Docker Commands § REBUILD mcp-server comment: appended `&& docker builder prune -f` after `sleep 5`.
-3. New § WHY: Builder Prune Is Mandatory After Every Rebuild: 3 recurrences, safety properties, generic_mandate (host-wide, never scope to mcp-server only).
-4. Post-Rebuild Health Verification § Final step: prune block AFTER health checks pass, BEFORE notebook write; abolished ≥2/day heuristic.
-
-**Pattern:** Undocumented recurring-cost rules must be codified as mandatory unconditional steps — memory-reliant heuristics always recur.
-
-## Session 2026-06-07 — FIX-CI-LINT-STACK (cross-service CI fix)
-
-**Task:** Bump golangci-lint-action v6.1.1 -> v7.0.0 at 6 sites; delete kinh-dich-ts-lint job.
-
-**Learning:** golangci-lint-action v7 supports v2 schema only and requires explicit `version: v2.0` input (shown in action README). v6 installed v1 binary which rejected v2 config with exit-3. The stale TS lint job (kinh-dich rebooted TS->Go 2026-05-24) had no eslint.config so would never pass — dead CI debt.
-
-**Pattern:** CI schema version mismatch (linter binary vs config version) always shows as exit-3 with "you are using a configuration file for version X with version Y". Verify action major version tracks linter major version.
+**Last updated:** 2026-07-02 | **Cycle:** TOKEN-ECONOMY-TICK-PREFLIGHT-WU-1
 
 ## Session 2026-06-21 — FIX-FB-GATE-SECTOR-NAME-VALIDATOR (AUDIT-FB-GATE-PROSE-HARDENING)
 
@@ -53,3 +31,18 @@
 **Proof (fixtures only, never live SSOT):** `bun scripts/orch-validate.mjs <fixture-with-CLOSED>` → exit 2, Stage 1d message. `cat <fixture> | ORCH_APPLY_LIVE_FILE_OVERRIDE=<fixture> bash scripts/orch-apply.sh` → exit 1, fixture file byte-unchanged. Full cold-evict end-to-end dry-run against a scratch copy (env-var override) before touching live data.
 
 **Tests:** `apps/mcp-server/src/__tests__/TASK-FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT.test.ts` (5 tests, RED→GREEN), `bun tsc --noEmit` clean, full suite 14132 pass (pre-existing unrelated 54 fail/4 errors — CI-RED-RECONCILE backlog, confirmed unrelated by running the orchStateSchema-scoped subset alone: 108/108 pass).
+
+## Session 2026-07-02 — TOKEN-ECONOMY-TICK-PREFLIGHT-WU-1 (cowork silent-path preflight)
+
+**Task:** New `scripts/agents-flow/mcp-call.sh` (shared JSON-RPC-over-curl MCP helper) + `scripts/agents-flow/cowork-tick-preflight.sh` (deterministic Steps 1-8, verdicts SILENT/WORK/LOST_ELECTION/DEFER/ERROR) — first script-level MCP tool callers in this repo.
+**Zone:** root (docs/agents/cowork-team/flow + .claude/skills + scripts/agents-flow) — no apps/ touch.
+
+**Live-verified MCP-from-shell contract:** POST http://localhost:3000/mcp is STATELESS (no `initialize` handshake needed). Response is SSE-framed (`event: message`/`data: {...}`), tool errors surface as `.result.isError==true` + plain-text message, NOT a JSON-RPC `.error` field. HTTP 200 in both success and tool-error cases.
+
+**Bash gotcha found+fixed:** `"${var:-{}}"` (parameter-expansion default of a literal `{}`) silently corrupts to `{}}` due to bash's brace-parsing ambiguity — confirmed with a minimal repro. Fix: two-step default (`"${var:-}"` then `[ -z ] && var='{}'`), never collapse to one expansion when the default itself contains `{}`.
+
+**Brief-vs-live-schema deviations (documented, not blocking):** brief pseudocode referenced `route_to` (real field is `to`), `.pressure_mode` in pressure-state.json (field doesn't exist — 9-key schema confirmed from `emitPressureStateTool.ts`), and a `zone` field on scheduled-task rows (doesn't exist on `ScheduledTaskRow`). Implemented against the real, source-verified schema each time; full rationale in `docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-developer.md`.
+
+**Testing pattern for MCP-calling bash scripts:** source the script under test (guarded by `[[ BASH_SOURCE == 0 ]]` so sourcing doesn't auto-exec), then override `mcp_call()` as a stub dispatching on tool name — avoids all real side-effecting calls (`claim_due_scheduled_tasks`/`emit_pressure_state`). CAUTION: assertions on stub call-count/order must go through a FILE (not a plain var) if the function-under-test is invoked via `$(...)` command substitution — that's a subshell, plain-var writes inside it are lost. 20/20 tests pass.
+
+**Deleted:** `scripts/agents-flow/cowork-tick-autosilent.sh` (R5 — dead code, zero doc references, bypassed commit-mutex via raw `git -c user.name=...`).

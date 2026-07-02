@@ -272,3 +272,30 @@ The flow switches between:
 - **Backward compatibility (AF-1):** DEFER verdict on backstop-window errors preserves existing silent-tick retry logic (retries in next 15-min tick rather than failing loud).
 - **Injection safety:** All MPC calls use `jq --arg name --argjson args` — request bodies built safely, never interpolated.
 - **Lock semantics:** SILENT releases election lock; WORK holds it for main.md telemetry to manage.
+
+---
+
+## [Developer] Implementation Record
+
+- **Files modified:**
+  - `scripts/agents-flow/mcp-call.sh` (NEW, 155L) — shared `mcp_call <tool> <json_args>` bash+jq+curl helper. SSE-parse (`event: message`/`data: {...}`), `.result.isError` error surfacing, transport-failure fallback (`$MCP_HTTP_URL` default `http://localhost:3000/mcp` → `https://zenmidi.com/vn-market/mcp`), DRAIN-INJECTION-SAFE (`jq -n --arg/--argjson` only).
+  - `scripts/agents-flow/cowork-tick-preflight.sh` (NEW, 243L) — Steps 1-8, verdicts `SILENT|WORK|LOST_ELECTION|DEFER|ERROR`, exit 0=SILENT/1=other. Test seams (`PREFLIGHT_ROOT`, `MCP_JSON_PATH`, `ORCH_STATE_PATH`, `PRESSURE_STATE_PATH`, `SLOT_MATCHER_CMD`) default to real project paths/script — only overridden by the test harness.
+  - `scripts/agents-flow/cowork-tick-preflight.test.sh` (NEW, 200L) — 20 mocked regression tests (function-override on `mcp_call` after sourcing; zero real `claim_due_scheduled_tasks`/`emit_pressure_state` calls).
+  - `scripts/agents-flow/cowork-tick-autosilent.sh` — DELETED (R5, dead code, zero references, incompatible mutex-bypassing strategy).
+  - `docs/agents/cowork-team/flow/main.md` — new "Step 0 — Cowork Preflight" section + verdict JUMP-TO table + explicit 4-point "§ WORK continuation" mapping, inserted before the original `## Step 0a` heading. Original Steps 0a/0b/0b.3/0c/1-4b kept 100% verbatim below (annotated as the ERROR-fallback / WORK-continuation source body — never deleted).
+  - `docs/agents/cowork-team/flow/leader-lock.md`, `blind-guard.md`, `match-slots.md` — header annotations noting they are now reached via the preflight script's Step 3/5/6 on the common path, and are the ERROR-fallback body otherwise.
+  - `.claude/skills/cron-cowork-team/SKILL.md` — doc-note: `CronCreate prompt:` unchanged (still points at `main.md`, which now internally preflights).
+- **Tests written:** `scripts/agents-flow/cowork-tick-preflight.test.sh` — 20/20 GREEN (SILENT/WORK/WORK-via-signal/ERROR×3/LOST_ELECTION/R3-safe-default, plus lock-release assertions for SILENT/WORK/LOST_ELECTION). `mcp-call.sh` transport/SSE-parse live-verified against the running mcp-server (`task_list_held` read-only success + unknown-tool `isError=true` shape) — not re-asserted as a persisted test (live, non-deterministic state).
+- **Git commits:** pending (see below — one commit covers all WU-1 deliverables).
+- **tsc status:** N/A — no TypeScript touched (bash + markdown only).
+- **Full suite:** N/A (bash scripts, not part of `bun test`) — `shellcheck -x -S warning` clean on all 3 scripts; regression suite 20/20 pass.
+- **Docs updated:** `docs/agents/cowork-team/flow/main.md`, `leader-lock.md`, `blind-guard.md`, `match-slots.md`, `.claude/skills/cron-cowork-team/SKILL.md` (all above) | `docs/WORK.md` deliberately SKIPPED — last commit touching it is 2026-05-22 (5+ weeks stale across dozens of completed tasks since); treated as a superseded legacy log, not the live SSOT (task_board/decision-journal/handoff are).
+- **Graphify:** skipped — `/graphify docs --update --no-viz` is an interactive-session slash-command skill (`~/.claude/skills/graphify/SKILL.md`), not invocable from this background flow context; flagging for a follow-up interactive-session pass rather than silently omitting the note.
+- **Simplicity gate:** PASS — Q1 scope clean (env-var test seams justified by AC-6 fault-injection requirement, not speculative), Q2 no single-use abstractions beyond one readability-driven `_step8_silent_release()` split (mirrors the source spec's own Step 8 boundary), Q3 senior-test clean (2-level curl/parse split, each doing distinct real work), Q4 ratio <50% overhead (line counts within the handoff's own ~150L/~200-250L estimates).
+
+**Deviations from brief pseudocode (brownfield-verified corrections — full rationale in `docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-developer.md`):**
+1. `mpc_call`/`$MPC_HTTP_URL` (AC-1 typo) → implemented as `mcp_call`/`$MCP_HTTP_URL` (consistent with every other section + the file name).
+2. R2 one_shots field list included `zone`, which does not exist on `ScheduledTaskRow` — passed through the full claimed object instead of a hand-picked (and stale) field list.
+3. Step 7 SILENT-gate pseudocode used `route_to=="cowork-team"` — real schema is `.signal_queue.rows[].to ∈ {po, tran-ngoc-bau, unified-agent, alert-commander}` (matches `main.md` Step 0a) — implemented against the live schema.
+4. Step 8 `pressure_mode` is not a persisted field of `pressure-state.json`'s 9-key schema — passed `"unknown"` (server treats it as inert/tracing-only).
+5. WORK-continuation ("Continue at Step 4.2") was too terse to preserve R2 (one-shot routing must still run)/R4 (real signal drain must still run) — wrote an explicit 4-point mapping in `main.md` instead.

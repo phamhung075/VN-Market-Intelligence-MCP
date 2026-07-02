@@ -1,4 +1,11 @@
 <!-- size-justification: 80L — cohesive slot-matching block: resolve UTC, run matcher script, drift guard, silent-exit if no matches, collision-detection guard. Child of main.md. -->
+<!-- TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 (2026-07-02): on the normal SILENT/WORK path Steps 1-3
+     (resolve UTC, run cowork-match-slots.js, drift guard) now run deterministically inside
+     scripts/agents-flow/cowork-tick-preflight.sh Step 6 — same script, invoked as-is, no
+     reimplementation. This file's Steps 1-3 are reached only on the preflight script's ERROR
+     verdict (fallback — see main.md § JUMP-TO table). Step 4b (collision-detection guard) is
+     REUSED on the WORK path too — main.md § WORK continuation runs it directly against
+     `$VERDICT_JSON.slots[]`. Kept verbatim — never deleted. -->
 
 ## Step 1 — Resolve current UTC
 

@@ -1,4 +1,10 @@
 <!-- size-justification: 47L — Step 0c: gateway-free blind detection. Child of main.md. BG-1 2026-06-18. -->
+<!-- TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 (2026-07-02): on the normal SILENT/WORK path the primary
+     check (.mcpServers count) now runs inside scripts/agents-flow/cowork-tick-preflight.sh Step
+     5 — but the script maps ANY blind result straight to verdict=ERROR (it cannot express the
+     "continue dispatcher-local without spawning" nuance below). This file is reached only on
+     that ERROR verdict (fallback — see main.md § JUMP-TO table), where its real SESSION_BLIND
+     continue-without-spawn logic applies unchanged. Kept verbatim — never deleted. -->
 
 ## Step 0c — Blind detection (gateway-free preflight)
 

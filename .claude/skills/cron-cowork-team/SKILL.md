@@ -105,6 +105,11 @@ CronList
 - `durable: true` makes the cron persist across CLI process restarts within the same session. It does NOT survive session-end (CLI exit / restart). That is why this skill exists.
 - The 12 RemoteTriggers (registered in claude.ai, not CLI) are the session-independent backstop for guaranteed slots. They fire independently of this dispatcher.
 - Full silence-detection + recovery procedure: `docs/protocols/cowork-master-cron-runbook.md`.
+- **TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 (2026-07-02):** the `CronCreate prompt:` text below is
+  UNCHANGED — it still just points at `docs/agents/cowork-team/flow/main.md`. main.md itself now
+  opens with a deterministic `scripts/agents-flow/cowork-tick-preflight.sh` preflight call that
+  short-circuits the common SILENT/WORK tick (~80% off-hours/no-due-work ticks) before any
+  LLM-narrated pseudocode reads. See main.md § Step 0 JUMP-TO table.
 
 ---
 

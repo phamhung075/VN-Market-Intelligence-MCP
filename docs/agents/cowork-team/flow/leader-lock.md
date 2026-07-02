@@ -1,4 +1,10 @@
 <!-- size-justification: 115L — P3 fire-time election; replaces sticky cowork-leader (TTL=1800s) with per-tick cron:cowork:<tick> claim (TTL=600s, no heartbeat); backstop-window defer gate (AF-1) preserved + reattached to FIRE_CLAIM; activation gate: P3-QA (TASK_1995) smoke-test sign-off required before OBSERVE-ONLY operator conventions are formally retired. -->
+<!-- TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 (2026-07-02): on the normal SILENT/WORK path this logic
+     now runs deterministically inside scripts/agents-flow/cowork-tick-preflight.sh Step 3
+     (fire-time election claim, AF-1 backstop-defer gate, LOST_ELECTION telegram). This file is
+     reached only on the preflight script's ERROR verdict (fallback — see main.md § JUMP-TO
+     table) or by an agent following the WORK-continuation cross-reference. Kept verbatim as the
+     canonical fallback body — never deleted. -->
 <!-- AF-1-LEADER-LOCK-BACKSTOP-DEFER — brief: docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md §Primitive-1 -->
 <!-- P3-FIRE-ELECTION (TASK_1994 / CROSS-SESSION-MULTI-TEAM-ORCH):
      REPLACES: sticky cowork-leader TTL=1800s + heartbeat at Step 4.6b (RETIRED in P3).
