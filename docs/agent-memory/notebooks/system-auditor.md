@@ -2,6 +2,19 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c459 · 2026-07-02T00:27:38Z
+### Audit Run Tier-1 (00:26–00:27 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
+- RAW-PROBE (00:26:01Z):
+  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 2h"; rag-service "Up 15m"; technical-analysis "Up 16h"; stock-price "Up 46h"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d" all healthy]
+  - [health] mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+  - A-20-PROBE: 3/3 HTTP 200 PASS (event-loop healthy)
+- A-21 RestartCount: mcp-server=0 ✓ | A-30 Memory: 96.81% ⚠ WARN (1.936GiB/2GiB) | A-32 Disk: 48% ✓
+- MCP System: uptime 1h 59m, circuits OK, WAL 3.93MB ✓, 30 alerts/24h (4 HIGH/CRITICAL)
+- Cron Health: 140+ jobs, 99.5% avg success rate (2 recent crashes: marketScanJob:close, vnstockTradingStatsRefresh non-blocking)
+- Anomalies: 1 NEW WARN (A-30 memory pressure) | Status: DEGRADED
+- Signal: A-30 WARN posted (signal_id=8196, signal_row=sau-2026-07-02T00:27:05Z)
+
 ## c458 · 2026-07-01T23:45:27Z
 ### Audit Run Tier-1 (23:44–23:46 UTC 2026-07-01) — Runtime Ping
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
@@ -35,24 +48,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-21 RestartCount: mcp-server=0 ✓ | A-30 Memory: 14.87% ✓ | A-32 Disk: 51% ✓
 - MCP System: uptime 17m 38s, circuits OK, WAL 3.93MB ✓, 30 alerts/24h (4 HIGH/CRITICAL)
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-
-## c455 · 2026-07-01T22:33:58Z
-### Audit Run Tier-2 (22:31–22:34 UTC 2026-07-01) — Freshness Sweep
-- Tier: 2 | Sources: 27 checked | Cron jobs: 140 monitored | VPS routes: 4
-- Anomalies: 1 NEW CRITICAL (B-05 bctc-discover stale 21711min, 38 pending queue, vn-bctc-fetch unhealthy 15d)
-- DB Freshness: C-06 pass (1 msg/3h) | C-07 pass (151 signals/24h)
-- BCTC Safety: B-09 pass (0 SSC URLs) | B-13 pass (0 stale pending)
-- Rate Limits: 11/11 sources OK
-- Signal Row: sau-2026-07-01T22:33:43Z written (B-05 CRITICAL)
-- Signals Posted: 1 (post_agent_signal id=8188)
-- Status: DEGRADED
-
-## c454 · 2026-07-01T22:13:56Z
-### Audit Run Tier-1 (22:13–22:14 UTC 2026-07-01)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- RAW-PROBE (22:13:56Z):
-  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 4 hours" (healthy); rag-service "Up ~1h"; technical-analysis "Up 13 hours"; stock-price "Up 44 hours"; macro-indicators "Up 46 hours"; others "Up 3–6 days" (all healthy)]
-  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
-  - A-20-PROBE-1: HTTP 200 | A-20-PROBE-2: HTTP 200 | A-20-PROBE-3: HTTP 200 → 3/3 PASS
-- A-21 RestartCount: mcp-server=0 PASS | A-30 Memory: 57.90% (elevated but normal, 1.158GiB/2GiB) | A-32 Disk: 47% PASS (15Gi avail)
-- Anomalies: 0 NEW | Status: HEALTHY
