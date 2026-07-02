@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-02T05:20:57Z",
+    "updated_at": "2026-07-02T05:33:32Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-MERGE-MONEY-RADAR-INTO-MOMENTUM",
-    "next_agent": "ba",
-    "note": "BA-MERGE claimed by dev-team tick 05:07Z — ba drafts merge spec (money-radar INTO momentum page, one surface, two card contracts preserved). On BA RETURN: pm decomposition next."
+    "next_agent": "pm",
+    "note": "BA spec RAW-verified; dispatching pm to decompose into dev-frontend work unit(s)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9463,7 +9463,7 @@
         "status": "IN_PROGRESS",
         "title": "MERGE money-radar dashboard INTO the momentum page (one unified surface) — BA spec",
         "owner": "ba",
-        "next_agent": "ba",
+        "next_agent": "dev-frontend",
         "zone": "apps/frontend/",
         "type": "SPRINT-S",
         "priority": "high",
@@ -9503,13 +9503,23 @@
           "apps/frontend/app/routes/dashboard.money-radar.tsx",
           "apps/frontend/app/routes/api.money-radar.tsx",
           "apps/frontend/app/components/TopNav.tsx",
+          "apps/frontend/app/__tests__/money-radar-cards.test.ts",
+          "apps/frontend/app/__tests__/ind-p1-momentum-nav.test.tsx",
           "apps/frontend/app/__tests__/FE-HEADER-SSOT-top-nav.test.tsx",
-          "apps/frontend/app/routes/__tests__/money-radar-cards.test.ts"
+          "docs/data/frontend-data-coverage-map.json"
         ],
         "parallel_note": "Zone apps/frontend/ is DISJOINT from the in-flight P1 dev-mcp-server BCTC work (FIX-BCTC-ENRICHER-STUCK-BACKLOG + FIX-BCTC-BANK-BS-SECTION-CLASSIFIER). PO does NOT spawn; the dev-team loop adopts per SF-1 singleton discipline when a frontend slot frees. BA-spec authoring does not consume a coding-WIP slot.",
         "claimed_at": "2026-07-02T05:20:57Z",
         "claimed_by": "dev-team",
-        "dispatch_note": "Dispatched ba 2026-07-02T05:20:57Z (tick 2026-07-02T05:07Z). SPRINT-S chain ba->pm->dev-frontend->qa. Zone apps/frontend/ — NOT gated on mcp-server rebuild. BA writes spec to docs/handoffs/BA-MERGE-MONEY-RADAR-INTO-MOMENTUM.md: one unified /dashboard/momentum surface carrying BOTH money-flow radar and momentum indicators without homogenizing the two card contracts."
+        "dispatch_note": "ba step done (commit 39faede4, spec 11 sections / 10 ACs, RAW-verified by dispatcher) — pm decomposition next per spec §11",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/BA-MERGE-MONEY-RADAR-INTO-MOMENTUM.md",
+        "updated_at": "2026-07-02T18:45:00Z",
+        "decomposed_tasks": [
+          "WU-1-MERGE-PAGES",
+          "WU-2-COVERAGE-MAP"
+        ],
+        "pm_decomposition_complete": true
       }
     ],
     "ready": [
