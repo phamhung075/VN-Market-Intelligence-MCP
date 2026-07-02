@@ -1057,6 +1057,17 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T14:44Z-a12-fe",
+        "ts": "2026-07-02T14:44:57Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 WARN: frontend health endpoint CURL_ERR — container running but unresponsive",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",
