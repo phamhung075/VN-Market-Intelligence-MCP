@@ -9557,6 +9557,34 @@
         "qa_report": "reports/TASK_REPORT_BA-MERGE-MONEY-RADAR-INTO-MOMENTUM.md",
         "verified_at": "2026-07-02T06:09:08Z",
         "verified_by": "qa RAW-live gate APPROVED (d7f899ca); dispatcher RAW-verified report+commit-scope+orch-state-untouched"
+      },
+      {
+        "id": "ARCH-DASH-CRON-RECHECK-TABLE",
+        "title": "Architect SPLIT for DASH-CRON-RECHECK-TABLE: dev-mcp-server (status-compute+REST) vs dev-frontend (proxy+table UI). Read BA spec docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
+        "owner": "architect",
+        "next_agent": "architect",
+        "status": "DONE",
+        "zone": "multi",
+        "type": "SPRINT-M",
+        "priority": "high",
+        "user_prioritized": true,
+        "sprint": "DASH-CRON-RECHECK-TABLE",
+        "depends": [],
+        "created_at": "2026-07-01T17:00:00Z",
+        "files": [
+          "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
+          "apps/mcp-server/src/scheduler/cronConfig.ts",
+          "apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts",
+          "apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts",
+          "apps/mcp-server/src/infrastructure/db/cronJobRunStore.ts",
+          "apps/frontend/app/routes/api.orchestration.tsx",
+          "apps/frontend/app/routes/dashboard.orchestration.tsx"
+        ],
+        "spec_ref": "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
+        "dispatched_at": "2026-07-02T06:30:30Z",
+        "dispatched_by": "po",
+        "completed_at": "2026-07-02T06:52:00Z",
+        "note": "Brief: docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md (7 risk flags verified, 16-pair job_name table verified, DDD layer map, CN-1..CN-5 resolutions). Commit fa4cfc12. RAW-verified by router 2026-07-02T06:52Z. Consumed by PM decomposition (commit 15db7fa6): TASK-DASH-CRON-1 (dev-mcp-server) + TASK-DASH-CRON-2 (dev-frontend) added to ready[]. Architect work complete."
       }
     ],
     "done_verified": [],
@@ -9586,32 +9614,6 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      },
-      {
-        "id": "ARCH-DASH-CRON-RECHECK-TABLE",
-        "title": "Architect SPLIT for DASH-CRON-RECHECK-TABLE: dev-mcp-server (status-compute+REST) vs dev-frontend (proxy+table UI). Read BA spec docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
-        "owner": "architect",
-        "next_agent": "architect",
-        "status": "IN_PROGRESS",
-        "zone": "multi",
-        "type": "SPRINT-M",
-        "priority": "high",
-        "user_prioritized": true,
-        "sprint": "DASH-CRON-RECHECK-TABLE",
-        "depends": [],
-        "created_at": "2026-07-01T17:00:00Z",
-        "files": [
-          "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
-          "apps/mcp-server/src/scheduler/cronConfig.ts",
-          "apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts",
-          "apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts",
-          "apps/mcp-server/src/infrastructure/db/cronJobRunStore.ts",
-          "apps/frontend/app/routes/api.orchestration.tsx",
-          "apps/frontend/app/routes/dashboard.orchestration.tsx"
-        ],
-        "spec_ref": "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
-        "dispatched_at": "2026-07-02T06:30:30Z",
-        "dispatched_by": "po"
       }
     ],
     "ready": [
