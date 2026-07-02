@@ -20,6 +20,7 @@ import { CRONS } from "../scheduler/cronConfig.js";
 import { WATCHDOG_MANIFEST } from "../scheduler/system/schedulerWatchdogJob.js";
 import type { CadenceManifest } from "../application/cron/cronStatusCompute.js";
 import type { CronStatusRowB } from "../infrastructure/cron/layerBCronRegistry.js";
+import { _resetLayerBCronCacheForTests } from "../infrastructure/cron/layerBCronRegistry.js";
 
 const VALID_STATUSES = new Set(["ON_TIME", "LATE", "MISSED", "STALE", "NEVER_FIRED"]);
 
@@ -334,5 +335,36 @@ describe("handleGetCronStatus — HTTP handler", () => {
     const rowB = bodyB.layer_a.find((r) => r.job_name_db === "ohlcv-daily-aggregator");
     expect(rowA?.status).toBe("ON_TIME"); // dbA has the fresh row
     expect(rowB?.status).toBe("NEVER_FIRED"); // dbB never received it — no cross-db leakage
+  });
+
+  it("REGRESSION: default commandsDir (zero-arg) with missing .claude/commands/crons → 503 error response (not unhandled throw)", () => {
+    // Regression test for TASK-DASH-CRON-1 QA CHANGES_REQUESTED.
+    // Production server.ts:2136 calls handleGetCronStatus(req, res, db) with NO
+    // commandsDirArg override. In the rebuilt container (WORKDIR=/app), the
+    // default resolve(process.cwd(), ".claude", "commands", "crons") points to
+    // /app/.claude/commands/crons which does NOT exist without the docker-compose.yml
+    // volume mount (DASH-CRON-FIX-SCOPE-1).
+    // This test ensures: (1) the missing dir throws ENOENT on getLayerBCronRows,
+    // (2) try/catch at line 108 catches it, (3) response is 503 JSON {error}, NOT
+    // an unhandled exception that crashes the HTTP server.
+    _resetLayerBCronCacheForTests(); // Clear memoization cache so this test reloads
+    const db = makeDbWithCronTable();
+    const { res, getStatus, getBody, getHeaders } = makeMockRes();
+    const mockReq = {} as IncomingMessage;
+
+    // Pass a non-existent directory to simulate the container's state BEFORE the
+    // fix is deployed (no volume mount, no .claude/commands/crons at /app/).
+    const nonExistentDir = "/nonexistent/fake/path/to/.claude/commands/crons";
+
+    handleGetCronStatus(mockReq, res, db, new Date(), nonExistentDir);
+
+    // Verify: 503, JSON {error} with a message, handler does NOT crash.
+    expect(getStatus()).toBe(503);
+    expect(getHeaders()["Content-Type"]).toBe("application/json");
+    const parsed = JSON.parse(getBody()) as { error: string };
+    expect(typeof parsed.error).toBe("string");
+    expect(parsed.error.length).toBeGreaterThan(0);
+    // Confirm the error mentions the actual missing directory (ENOENT message).
+    expect(parsed.error).toContain("ENOENT");
   });
 });

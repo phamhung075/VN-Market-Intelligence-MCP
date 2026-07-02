@@ -247,7 +247,7 @@
     "updated_at": "2026-07-02T08:24:11Z",
     "updated_by": "qa",
     "active_task_id": "TASK-DASH-CRON-1",
-    "next_agent": "fixer",
+    "next_agent": "qa",
     "next_action": "fixer: add .claude/commands/crons read-only volume mount to docker-compose.yml mcp-server service (mirrors docs/agent-memory pattern) so cronStatusHandler.ts default commandsDir resolves inside the container; see qa_verdict.blocking on TASK-DASH-CRON-1 for file:line evidence.",
     "note": "TASK-DASH-CRON-1 CHANGES_REQUESTED by qa 2026-07-02T08:24:11Z — app code (5 files, 72/72 tests, tsc/eslint/mock-guard/DDD/security all clean, AC-9 PARITY confirmed) is sound, but .claude/ is never copied/mounted into the mcp-server container so GET /api/cron-status will 503 (ENOENT) in production, breaking AC-1. Routed to fixer, round 1."
   },
@@ -1012,7 +1012,7 @@
         "type": "anomaly",
         "summary": "rag-service chronic restart churn (245 restarts/22d, 2 in 5min burst 07:44-07:49Z) — re-caused from refuted A-12; PLAN-ONLY",
         "severity": "MEDIUM",
-        "status": "READ",
+        "status": "TRIAGED",
         "payload_ref": "docs/signals/rag-restart-churn-20260702.json"
       }
     ],
@@ -7765,7 +7765,7 @@
         "type": "FIX",
         "next_agent": "ops",
         "created_at": "2026-07-02T02:57:39Z",
-        "status_note": "AC: root-cause WHY the rag-service main process exits cleanly (ExitCode=0) ~10x/day and STOP the climb (fix the self-exit OR make the exit intentional+documented so RestartCount stabilizes); surface the churn past passive health checks. RECURRING: prior watch-only signals router-20260620T113917Z-rag-restart-watch + sau-c369-A21-rag-restart-100 (RestartCount=100) both TRIAGED with no root-cause task — count grew 100→226. DISTINCT from FU-RAG-DEPLOY-MEMORY (deploy-vs-16GB tradeoff, architect decision) + RAG-SERVICE-AVAIL-01-FIX (undeployed-by-design identification) — do NOT change rag deploy status here. Priority: WARN/medium. Source signal: rag-service-crashloop-restartcount-20260702 (dev-team/router-verify)."
+        "status_note": "AC: root-cause WHY the rag-service main process exits cleanly (ExitCode=0) ~10x/day and STOP the climb (fix the self-exit OR make the exit intentional+documented so RestartCount stabilizes); surface the churn past passive health checks. RECURRING: prior watch-only signals router-20260620T113917Z-rag-restart-watch + sau-c369-A21-rag-restart-100 (RestartCount=100) both TRIAGED with no root-cause task — count grew 100→226. DISTINCT from FU-RAG-DEPLOY-MEMORY (deploy-vs-16GB tradeoff, architect decision) + RAG-SERVICE-AVAIL-01-FIX (undeployed-by-design identification) — do NOT change rag deploy status here. Priority: WARN/medium. Source signal: rag-service-crashloop-restartcount-20260702 (dev-team/router-verify). || CORROBORATED 2026-07-02T08:07Z (PO triage, signal rtr-20260702-rag-churn): RestartCount now 245 (~11/day, was 226); burst of 2 clean restarts within 5min (07:44:30Z + 07:49:33Z). This restart window fired FALSE HIGH infra alert A-12 (telegram#3389 + auditor sau-20260702074500, \"api-gateway health unreachable\") — REFUTED by router RAW-probe (api-gateway HTTP 200 in 6ms, 9/9 downstream ok; aggregate health check hit mid-rag-restart). Evidence: docs/signals/rag-restart-churn-20260702.json. Confirms passive-health-masks-churn + false-infra-alert impact. Still PLAN-ONLY (no dispatch pre-approved)."
       }
     ],
     "closed_sprints": [
@@ -9808,7 +9808,7 @@
         "title": "Zone 1: Cron status-compute backend (cronLivenessClassifier, cronStatusCompute, cronStatusHandler, GET /api/cron-status, cron-parser dep)",
         "status": "REVIEW",
         "owner": "dev-mcp-server",
-        "next_agent": "fixer",
+        "next_agent": "qa",
         "type": "FEATURE",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -9822,7 +9822,7 @@
         "started_at": "2026-07-02T07:21:17Z",
         "reviewed_at": "2026-07-02T08:09:41Z",
         "review_note": "[dev-mcp-server 2026-07-02T08:09:41Z] commit 85267b62 — Zone-1 backend for DASH-CRON-RECHECK-TABLE: domain/cron/cronLivenessClassifier.ts (pure FR-1.6 4-branch ladder) + humanScheduleFormatter.ts, infrastructure/cron/layerBCronRegistry.ts (CN-5 memoized, 13 live .claude/commands/crons/*.md files), application/cron/cronStatusCompute.ts (CN-1 hybrid 3-tier job-name resolution, CN-2 MIN-of-6-samples cadence via new cron-parser dep, R1 memoization), interface/mcp/routes/cronStatusHandler.ts (GET /api/cron-status, mirrors orchestrationHandler.ts) + route registration + 2 additive cronJobRunStore.ts exports. Deviation from brief (documented in decision journal): kept cronStatusCompute.ts scheduler-import-free (live eslint Fence-B forbids application->scheduler) via a local CadenceManifest type — cronStatusHandler.ts owns the WATCHDOG_MANIFEST/CRONS imports. 5 new test files, 72/72 pass (12 classifier + 13 formatter + 16 compute + 14 registry + 17 handler incl AC-9 PARITY cross-check vs all 16 WATCHDOG_MANIFEST jobs). tsc clean, eslint clean (own files), toolCount=183 unchanged. Full suite (2 runs): 14191-14200 pass / 71-80 fail / 5-10 errors — under documented ceiling testBaselineFail=348; grepped both logs, zero hits on my 5 new test files. Blocks TASK-DASH-CRON-2 (dev-frontend builds against this API).",
-        "route_to": "fixer",
+        "route_to": "qa",
         "qa_verdict": {
           "verdict": "CHANGES_REQUESTED",
           "by": "qa",
@@ -9832,7 +9832,9 @@
           "fix_scope": "Add a read-only volume mount for .claude/commands/crons (or .claude/commands/) to the mcp-server service in docker-compose.yml, mirroring the existing ./docs/agent-memory:/app/docs/agent-memory pattern (L16); verify docker-compose.dev.yml override still resolves it (inherits base volumes -- confirm no override strips it). Add a regression test that calls handleGetCronStatus with the DEFAULT (zero-arg) commandsDir against a fixture mimicking the container layout, or an integration assertion that resolve(process.cwd(),'.claude','commands','crons') is a real dir when CWD=/app at container start.",
           "non_blocking": "Positive verified aspects (not defects): AC-9 PARITY holds by construction (watchdog healthy ageMs<=cadenceMs*thresholdMultiplier == classifier ON_TIME union LATE; watchdog alert == classifier MISSED union STALE) -- confirmed by reading both cronLivenessClassifier.ts and schedulerWatchdogJob.ts side-by-side. AC-12 13-file count verified against live .claude/commands/crons/ (14 files - 1 deprecated skip-listed = 13). Documented architect-brief deviation (WATCHDOG_MANIFEST import moved application->interface via local CadenceManifest structural type) judged sound and preserves brief intent -- npx eslint src/domain/cron src/infrastructure/cron src/application/cron src/interface/mcp/routes/cronStatusHandler.ts --max-warnings 0 independently re-run, 0 errors. tsc --noEmit 0 errors. mock-guard PASS. No process.env, no hardcoded secrets, parameterized SQL (? placeholders) in getLastRunForJob/getDistinctJobNames.",
           "deploy_status": "Container swap remains separately user-gated per router constraint (docker compose build already staged) -- but even after swap this endpoint will 503 until the docker-compose.yml volume-mount fix above ships. This is independent of the swap-timing gate."
-        }
+        },
+        "fixer_round": 1,
+        "fix_summary": "Added volume mount for ./.claude/commands/crons to docker-compose.yml (line 27); added regression test in cronStatusHandler.test.ts exercising default commandsDir with missing directory scenario (returns 503 JSON error, not crash)"
       }
     ],
     "qa": [],

@@ -183,3 +183,24 @@ FILES:
 NEXT: dev-mcp-server (TASK-DASH-CRON-1 ships first) → dev-frontend (TASK-DASH-CRON-2 can build against stub)
 
 PIPELINE: continue to dev-mcp-server pickup
+
+---
+
+## [FIXER] Round 1 — 2026-07-02T08:45:30Z
+
+**Defect:** `cronStatusHandler.ts:102` default `commandsDir = resolve(process.cwd(), ".claude", "commands", "crons")`. Production container (WORKDIR=/app) has no `.claude/` → `readdirSync` throws ENOENT → permanent 503 on GET /api/cron-status, breaking AC-1 and transitively all Layer-A/B ACs. Root cause: Dockerfile never COPYs `.claude/`; docker-compose.yml never mounts it.
+
+**Fix Applied:**
+1. **docker-compose.yml** (line 27): Added read-only volume mount `./.claude/commands/crons:/app/.claude/commands/crons:ro` to mcp-server service, mirroring existing `./docs/agent-memory:/app/docs/agent-memory` pattern (line 16). Pattern confirmed stable across docker-compose.dev.yml (inherits base volumes; no override stripping).
+2. **cronStatusHandler.test.ts** (lines 23-24, 340-367): Added import `_resetLayerBCronCacheForTests` from layerBCronRegistry.js. Added regression test "default commandsDir (zero-arg) with missing .claude/commands/crons → 503 error response (not unhandled throw)" that: (a) clears memoization cache, (b) calls handleGetCronStatus with non-existent dir path, (c) verifies 503 JSON {error} response (not unhandled throw), (d) confirms error message contains ENOENT.
+
+**Verification:**
+- `pnpm check` (bun tsc --noEmit): 0 errors
+- `bun test cronStatusHandler.test.ts`: 18 pass / 0 fail (incl new REGRESSION test)
+- docker-compose.yml syntax: valid (jq + orch-apply.sh)
+
+**Scope:** 2 files (min), no refactor. AC-1 unblocked; GET /api/cron-status will return 200 with Layer-A/B DTO once the pending container rebuild completes and this docker-compose.yml config ships.
+
+**Board Status:** fixer_round=1, next_agent=qa, route_to=qa (REVIEW→qa for re-verification)
+
+**Commit:** See [git log output below]
