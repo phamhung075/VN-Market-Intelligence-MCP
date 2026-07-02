@@ -1031,45 +1031,6 @@
         "severity": "CRITICAL",
         "status": "TRIAGED",
         "payload_ref": null
-      },
-      {
-        "id": "qa-followup-signal-routing-rows-20260702",
-        "summary": "[qa-followup] drain-signals.md 0a-3 + po/triage-signals.md lack dedicated routing rows for types data-coverage-gap (to:ops) and deep_dive_result (to:po) — both fall to generic catch-all (log+skip+WORK). No silent loss, but no automated action. Add explicit routing rows.",
-        "severity": "INFO",
-        "status": "RESOLVED",
-        "ts": "2026-07-02T02:40:49Z",
-        "from": "dev-team/qa-gate",
-        "to": "po",
-        "type": "repair_task_request",
-        "payload_ref": null,
-        "resolved_by": "po",
-        "resolved_at": "2026-07-02T02:57:39Z"
-      },
-      {
-        "id": "qa-followup-stagelog-bash-nobash-agent-20260702",
-        "summary": "[qa-followup] docs/agents/bctc-analyst/flow/stage-log-notify.md lines ~39/45 contain bash blocks (date/wc/git add+commit) that the no-Bash bctc-analyst tool package cannot execute — latent defect predating 881e38f1. Convert to Read/Write/call_tool steps or reassign the commit stage.",
-        "severity": "INFO",
-        "status": "RESOLVED",
-        "ts": "2026-07-02T02:40:49Z",
-        "from": "dev-team/qa-gate",
-        "to": "po",
-        "type": "repair_task_request",
-        "payload_ref": null,
-        "resolved_by": "po",
-        "resolved_at": "2026-07-02T02:57:39Z"
-      },
-      {
-        "id": "rag-service-crashloop-restartcount-20260702",
-        "summary": "[router-verify] rag-service chronic restart loop: RestartCount=226 (~10/day over 3-week container life), latest restarts 01:51Z and 02:38Z today, ExitCode=0 OOMKilled=false — container exits cleanly and restart policy relaunches; passive health checks mask the churn. Needs ops/dev-rag-service root-cause (likely process self-exit).",
-        "severity": "WARN",
-        "status": "RESOLVED",
-        "ts": "2026-07-02T02:52:24Z",
-        "from": "dev-team/router-verify",
-        "to": "po",
-        "type": "repair_task_request",
-        "payload_ref": null,
-        "resolved_by": "po",
-        "resolved_at": "2026-07-02T02:57:39Z"
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",

@@ -1,6 +1,18 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c466 · 2026-07-02T02:49:34Z
+### Audit Run Tier-1 (02:30–02:49 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS ✓
+- RAW-PROBE (02:48:36Z):
+  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 2h"; technical-analysis "Up 18h"; stock-price "Up 2d"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d"; rag-service "Up 9m" all healthy]
+  - [health] mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+  - [A-20-PROBE-1] in-container HTTP 200 | [A-20-PROBE-2] HTTP 200 | [A-20-PROBE-3] HTTP 200
+- A-21 RestartCount: mcp-server=1 ✓ | A-30 Memory: 45.07% ✓ | A-32 Disk: 48% ✓
+- MCP System: uptime 2h 2m, circuits OK (16/16), WAL 3.94MB ✓, 33 alerts/24h
+- Cron Health: 100+ jobs, 99%+ success rate; noted: marketScanJob:close 80%, vnstockTradingStatsRefresh 87.5%
+- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
+
 ## c465 · 2026-07-02T02:42:05Z
 ### Audit Run Tier-2 (02:30–02:42 UTC 2026-07-02)
 - Tier: 2 | Freshness sweep: 6/11+ checks completed (54% completion due to docker exec permission boundary)
@@ -28,11 +40,4 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
   - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 59m"; technical-analysis "Up 17h"; stock-price "Up 47h"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d"; rag-service "Up 1m" all healthy]
   - [health] mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
 - A-21 RestartCount: mcp-server=1 ✓ (expected post-restart cycle) | A-30 Memory: 24.02% ✓ | A-32 Disk: 48% ✓
-- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-
-## c462 · 2026-07-02T01:15:14Z
-### Audit Run Tier-1 (01:15–01:16 UTC 2026-07-02)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK
-- RAW-PROBE (01:15:14Z): 12/12 host_runtime_set UP, all health endpoints 200 OK
-- A-21 RestartCount: mcp-server=1 ✓ (OOM 2026-07-01 already tracked) | A-30 Memory: 13.26% ✓
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
