@@ -1024,6 +1024,39 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T14:14:52Z-a01-mcp",
+        "ts": "2026-07-02T14:14:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-01/A-12 CRITICAL: mcp-server unhealthy — health endpoint CURL_ERR",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T14:14:52Z-a02-api",
+        "ts": "2026-07-02T14:14:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-02/A-12 WARN: api-gateway unhealthy — health endpoint CURL_ERR",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T14:14:52Z-a21-mcp",
+        "ts": "2026-07-02T14:14:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 WARN: mcp-server restart count=3 (threshold ≤2)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",

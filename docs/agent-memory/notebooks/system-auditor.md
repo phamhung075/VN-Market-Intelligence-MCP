@@ -1,6 +1,40 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c488 · 2026-07-02T14:14:52Z
+### Audit Run Tier-1 (14:00–14:15 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP (docker ps) | Health: 3/5 OK, 2/5 FAIL | A-20: 3/3 PASS
+- CRITICAL: mcp-server unhealthy (docker ps) + CURL_ERR on 3000/health [RAW-PROBE L4, L16]
+- WARN: api-gateway unhealthy (docker ps) + CURL_ERR on 4000/health [RAW-PROBE L10, L15]
+- WARN: mcp-server restart_count=3 (threshold ≤2) [RAW-PROBE L25]
+- Memory: 60.39% ✓ | Disk: 47% ✓ | Isolation: per-service (Docker healthy)
+- Anomalies: 2 new (mcp-server + api-gateway CURL_ERR REGRESSION) | Status: CRITICAL
+- MCP unavailable (get_system_status timeout) — mcp-server unreachable
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-07-02T14:14:52Z ===
+--- docker ps -a ---
+mcp-server-1: Up 4 hours (unhealthy) | api-gateway-1: Up 3 days (unhealthy)
+frontend-1: Up 23 hours (unhealthy) | technical-analysis-1: Up 29 hours (healthy)
+stock-price-1: Up 2 days (healthy) | macro-indicators-1: Up 2 days (healthy)
+pdf-extractor-1: Up 4 days (healthy) | kinh-dich-service-1: Up 6 days (healthy)
+rag-service-1: Up 36 minutes (healthy) | news-fetch-1: Up 6 days (healthy)
+alert-engine-1: Up 6 days (healthy) | mcp-gateway: Up 6 days (healthy)
+--- health endpoints ---
+[health] mcp-server:3000/health FAIL (HTTP CURL_ERR) | api-gateway:4000/health FAIL (CURL_ERR)
+[health] macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+--- restart count ---
+RestartCount=3 (threshold=2 exceeded)
+--- memory pressure ---
+MemPerc=60.39% (< 85% OK)
+--- disk df -h / ---
+Capacity=47% (< 85% OK)
+--- pdf-extractor multi-probe (A-20) ---
+[A-20-PROBE-1] HTTP 200 | [A-20-PROBE-2] HTTP 200 | [A-20-PROBE-3] HTTP 200 (pass_count=3/3)
+=== PROBE DONE ===
+```
+
 ## c487 · 2026-07-02T12:46:01Z
 ### Audit Run Tier-1 (12:30–12:46 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 PASS
