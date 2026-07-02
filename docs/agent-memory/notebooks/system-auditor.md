@@ -2,6 +2,18 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c470 · 2026-07-02T04:45:28Z
+### Audit Run Tier-1 (04:30–04:45 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 PASS ✓
+- RAW-PROBE (04:45:00Z):
+  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 4h (healthy)"; api-gateway "Up 3d"; frontend "Up 13h"; technical-analysis "Up 20h"; stock-price "Up 2d"; macro-indicators "Up 2d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; rag-service "Up 14m"; news-fetch "Up 6d"; alert-engine "Up 6d"; mcp-gateway "Up 6d"]
+  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+  - [A-20-PROBE-1/2/3] all in-container HTTP 200
+- A-21 RestartCount: mcp-server=1 ✓ | A-30 Memory: 85.51% ⚠ CRITICAL (threshold exceeded) | A-32 Disk: 38% ✓
+- MCP System: uptime 3h 58m, circuits OK (16/16), WAL 0B ✓
+- Anomalies: 1 CRITICAL (A-30 memory 85.51% exceeds hard threshold 85% — climbing trend ~25pp/h) | Status: DEGRADED
+- Signal #8226 posted; orch-state signal_queue row sau-2026-07-02T04:45Z appended
+
 ## c469 · 2026-07-02T04:17:53Z
 ### Audit Run Tier-1 (04:00–04:17 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 PASS ✓
@@ -29,11 +41,4 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK
 - RAW-PROBE: 12/12 UP; A-21 RestartCount mcp-server=1 ✓; A-32 Disk 48% ✓
 - A-20 multi-probe: SKIPPED (boundary — docker exec permission denied)
-- Anomalies: 0 NEW | Status: HEALTHY
-
-## c466 · 2026-07-02T02:49:34Z
-### Audit Run Tier-1 (02:30–02:49 UTC 2026-07-02)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS ✓
-- RAW-PROBE (02:48:36Z): 12/12 UP; [A-20-PROBE-1/2/3] all HTTP 200
-- A-21 RestartCount: mcp-server=1 ✓ | A-30 Memory: 45.07% ✓ | A-32 Disk: 48% ✓
 - Anomalies: 0 NEW | Status: HEALTHY
