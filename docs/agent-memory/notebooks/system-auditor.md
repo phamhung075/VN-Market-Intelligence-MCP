@@ -1,6 +1,17 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c463 · 2026-07-02T01:46:19Z
+### Audit Run Tier-1 (01:30–01:47 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: TOOL-DENIED (docker exec prohibited)
+- RAW-PROBE (01:46:44Z):
+  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 59m"; technical-analysis "Up 17h"; stock-price "Up 47h"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d"; rag-service "Up 1m" all healthy]
+  - [health] mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+- A-21 RestartCount: mcp-server=1 ✓ (expected post-restart cycle) | A-30 Memory: 24.02% ✓ | A-32 Disk: 48% ✓
+- MCP System: uptime 59m 55s, circuits OK, WAL 3.93MB ✓, 30 alerts/24h (4 HIGH/CRITICAL)
+- Cron Health: 140+ jobs, 99.5%+ success rate (recent crashes: marketScanJob:close 80%, vnstockTradingStatsRefresh 88% — non-blocking)
+- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
+
 ## c462 · 2026-07-02T01:15:14Z
 ### Audit Run Tier-1 (01:15–01:16 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK
