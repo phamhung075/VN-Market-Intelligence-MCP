@@ -1,6 +1,30 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-02 | **Sprint:** MERGE-MONEY-RADAR-INTO-MOMENTUM
+**Last updated:** 2026-07-02 | **Sprint:** DASH-CRON-RECHECK-TABLE
+
+---
+
+## Session: 2026-07-02 (TASK-DASH-CRON-2 — Cron Recheck Table UI, Zone 2)
+
+**TASK-DASH-CRON-2 DONE (implementation) — CronRecheckTable added to /dashboard/orchestration**
+
+Zone health: 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP); tsc 0 errors; Playwright 4/4 GREEN (verified against a fresh isolated local dev server — see GOTCHA below) | HEALTHY
+
+Task: build `GET /api/cron-status` proxy + `CronRecheckTable` UI section per `docs/handoffs/TASK-DASH-CRON-2.md` — Zone 2 of DASH-CRON-RECHECK-TABLE sprint, depends on TASK-DASH-CRON-1 (dev-mcp-server, APPROVED r3 commit `82907e5d`).
+
+Files created:
+- `routes/api.cron-status.tsx` — proxy, byte-for-byte mirror of `api.orchestration.tsx` (FR-4.1)
+- `__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts` — 41 assertions: `parseCronStatusDto`, `normalizeCronStatusA/B`, `normalizeCronRowA/B`, `cronStatusBadgeClasses`, `CRON_STATUS_LABELS`, `cronLayerLabel`
+
+Files updated:
+- `routes/dashboard.orchestration.tsx` — CronStatusDto types + `parseCronStatusDto` (mirrors `parseOrchStateDto`); loader `Promise.all`'s `/api/cron-status` alongside `/api/orchestration` (CN-4, parallel, no added latency); `CronRecheckTable`/`CronLayerTable`/`CronStatusBadge` components, rendered OUTSIDE the `state ? (...) : (...)` conditional (independent surface, AC-16/AC-25); RECHECK reuses existing `revalidator`; 2nd `FreshnessBadge` (slaTierKey=realtime); Layer-A/B visually distinct sub-sections; Layer-B `status` unconditionally forced `SESSION_SCOPED` (stronger than spec minimum — defends AC-14/NFR-7 even under malformed upstream); "Chưa từng chạy" for null `last_fire` (AC-20); all VN copy (AC-28)
+- `docs/data/frontend-data-coverage-map.json` — +1 row incl. `route` field (BA's own FR-6 example omitted it; architect-flagged), rows 49→50, LIVE 39→40
+
+GOTCHA (load-bearing for future Playwright runs): port 3001 is bound by the LIVE `frontend` Docker container (stale image, un-rebuilt) — Playwright's `webServer.reuseExistingServer: !CI` silently piggybacks on it instead of spawning a fresh dev server, which would false-green the G12 gate against OLD code with zero signal on the actual diff. Fix: `PLAYWRIGHT_PORT=<unused> npm run test:e2e` forces a genuinely fresh local Vite server on an unused port. No Docker container touched/rebuilt/restarted.
+
+Container note: mcp-server rebuild for Zone 1 still user-gated — `GET /api/cron-status` 404s live today; proxy relays as-is, loader degrades to empty-shape DTO, table shows "Không có dữ liệu." until the rebuild ships (expected, not a defect).
+
+Commit: `b563c0d2` (code+tests+docs), `3a29d352` (orch-state board) | tsc: 0 errors | vitest: 2047 pass / 2 pre-existing fail | Playwright: 4/4 GREEN (isolated port)
 
 ---
 
@@ -55,33 +79,6 @@ Pre-existing QUE-TOOLTIP failures (2) — unrelated to TASK-502; tracking from p
 
 ---
 
-## Session: 2026-06-30 (IND-P1-FRONTEND-GAUGE-CARDS — 6 P0 indicator gauge cards)
-
-**IND-P1-FRONTEND-GAUGE-CARDS DONE — 6 gauge cards wired, nav added, honest-NULL enforced**
-
-Task: surface 6 live P0 indicator scalars on `/dashboard/indicator-gauges`:
-  rv_20d_percentile, news_sentiment_z, breadth_z_score.value,
-  foreign_outflow_z_5d, omo_net_outstanding_bn_vnd, policy_refi_rate_pct.
-
-Files created:
-- `routes/dashboard.indicator-gauges.tsx` — loader + 6 GaugeCards; honest-NULL (null → "chưa có dữ liệu" + gray badge)
-- `routes/api.indicator-gauges.tsx` — transparent proxy (proxyUpstream) to mcp-server
-- `__tests__/ind-p1-frontend-gauge-cards.test.ts` — 12 suites, ~60 cases (parse/format/fetch helpers)
-- `__tests__/ind-p1-indicator-gauges-nav.test.tsx` — 7 suites (nav count + position)
-
-Files updated:
-- `components/TopNav.tsx` — added 'Chỉ Báo' at ANALYST_NAV[25] (25→26, 32→33 NAV_ITEMS)
-- `__tests__/FE-HEADER-SSOT-top-nav.test.tsx` — SSOT counts bumped 25→26, 32→33
-- `__tests__/task17-page19-news-buzz-nav.test.tsx` — count + position guards updated
-- `docs/data/frontend-data-coverage-map.json` — +5 rows (rows 37-41, all GAP/WIRED)
-
-CRITICAL DEPENDENCY: mcp-server `/api/indicator-gauges` endpoint not yet deployed.
-Frontend renders honest-NULL on 404/502 — never fabricates. Backend task: IND-P1-DEV-MCP-SERVER.
-
-tsc: 0 errors | vitest: 79 files (77 pass, 2 pre-existing QUE-TOOLTIP) | Commits: `0c724d58`, `1ce9a777`
-
----
-
-**Current state:** 82 test files; 2006 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
+**Current state:** 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize, e.g. dashboard.momentum.tsx's momentum vs radar families).
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize); Playwright G12 gate must run with an unused `PLAYWRIGHT_PORT` override if the live frontend Docker container occupies :3001 (reuseExistingServer piggybacks on it otherwise, false-greening against stale code).
