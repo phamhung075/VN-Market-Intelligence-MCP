@@ -1501,6 +1501,50 @@
         "severity": "MED",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T02:30:00Z-C06",
+        "ts": "2026-07-02T02:30:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages stale (check C-06)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T02:30:01Z-C11",
+        "ts": "2026-07-02T02:30:01Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "pdf_documents stale (check C-11)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T02:30:02Z-SC1",
+        "ts": "2026-07-02T02:30:02Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "size_cap_breach",
+        "summary": "orch-state task_board at 85/80 (check SIZEDOC-01)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T02:30:03Z-SC2",
+        "ts": "2026-07-02T02:30:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "size_cap_breach",
+        "summary": "orch-state sprint_goal at 26/15 (check SIZEDOC-02)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-30T23:29:07Z",
@@ -1965,7 +2009,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-02T00:22:36Z",
+    "_updated_at": "2026-07-02T00:43:24Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -4842,13 +4886,15 @@
       },
       {
         "id": "CI-TEST-04-FIX",
-        "priority": "normal",
+        "priority": "high",
         "size": "S",
         "status": "BACKLOG",
         "title": "Fix CI-TEST-04: Is the bun test fail count at or below baseline (<=348 native fails per project-stats.json)",
         "type": "fix",
         "zone": "qa",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CI-TEST-04-FIX"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CI-TEST-04-FIX",
+        "status_note": "[po-triage 2026-07-02T00:36Z] FOLDED ci_red CI-RED-e2d693ed (run 28531497267, failing job \"bun test\", origin main HEAD e2d693ed) into this baseline task — same failing job, no duplicate CI row minted. NOTE: e2d693ed is a pure PO doc/orch commit (po DASH-CRON-RECHECK-TABLE self-initiate) and CANNOT itself regress bun test → this is a pre-existing baseline breach, NOT a regression introduced by that commit. MANDATE (flaky scar): confirm the failure with a local bun test run (or a CI re-run) BEFORE blaming any commit. Context: 2 CI-red fixes already sit in REVIEW (FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP, FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING) and 37 local commits are unpushed → re-check CI after the next fleet-push. verification_gate=ci_green_on_subsequent_push (gh run list --branch main shows conclusion=success for a push AFTER e2d693ed). Cross-ref CI-TEST-02-FIX (overall CI passing on main).",
+        "origin_signal": "ci-red-e2d693ed-20260702002853"
       },
       {
         "id": "DS-OBS-01-FIX",
@@ -11930,9 +11976,26 @@
         "created_by": "dev-team-dispatcher",
         "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
         "parent_task": "B-05-FU-ENRICHER-LIVENESS",
-        "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers).",
+        "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
+      },
+      {
+        "id": "FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH",
+        "title": "bctc-analyst cannot dispatch ESC-3/ESC-4 escalations — flow mandates a jq | scripts/orch-apply.sh .signal_queue write but the analyst runtime has NO Bash (only Read/Write/Edit/call_tool). RECURRING: HVN Q1-2026 ESC-4 blocked (msg 3116), FPT Q1-2026 E3-cache verify skipped (no shell/compute tool). Fix: re-route escalation dispatch through a Write-based signal FILE that the dev-team drain converts to signal_queue (analyst HAS Write, same pattern as its routine signals), OR grant Bash via agent-father.",
+        "type": "FIX",
+        "priority": "high",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "route_to": "agent-father",
+        "created_at": "2026-07-02T00:36:11Z",
+        "created_by": "po-triage-signals",
+        "origin_signal": "bctc_signal_HVN_20260702_routine (msg 3116, signal_id 8195)",
+        "status_note": "AC: an ESC-3/ESC-4 escalation fires and produces a signal_queue row / board entry WITHOUT any no-Bash BUG telegram — i.e. bctc-analyst can dispatch escalations from a Bash-less session. Cross-ref FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (auditor-predicate side of the same lock<->board gap). The HVN Q1-2026 ESC-4 deep-dive itself = low-urgency next-quarter one-off-profit (23.5%, 929.2 ty VND, likely non-recurring tax credit) monitoring; guard esc-deepdive:HVN:Q1-2026:ESC-4 was released cleanly so it self-heals on the next Bash-capable analyst cycle — no data lost. [dispatcher 2026-07-02T00:43:24Z] Dispatched to agent-father (FIX direct tier, WIP 2/2).",
+        "started_at": "2026-07-02T00:43:24Z",
+        "assigned_to": "agent-father"
       }
     ],
     "ready": [
