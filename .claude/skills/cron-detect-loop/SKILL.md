@@ -11,7 +11,12 @@ description: >
 
 **Trigger:** `/cron-detect-loop`
 **Purpose:** Re-arm 4 session-scoped crons for the anomaly-detection→dev-team-planning loop.
-**SSOT cron values:** `.claude/commands/crons/cron-dev-team.md` + `cron-system-auditor.md`
+**SSOT:** This file (Step 2 below) is the operational SSOT — the `CronCreate` prompt bodies here
+are exactly what gets registered on every re-arm. `.claude/commands/crons/cron-dev-team.md` +
+`cron-system-auditor.md` are manual/ad-hoc reference docs for one-off cron setup outside this
+auto-re-arm flow; their Job 1 / Tier-1 prompt text has diverged from this file's (see Step 2 note)
+since 2026-07-02 (TOKEN-ECONOMY-TICK-PREFLIGHT WU-2/WU-3) — cadence (`cron` expression) values stay
+identical across both, only prompt-body text may differ.
 
 ---
 
@@ -50,16 +55,23 @@ If any subset is missing → proceed to Step 2 for ONLY the missing entries.
 
 ## Step 2 — Register missing crons
 
-SSOT: `.claude/commands/crons/cron-dev-team.md` + `cron-system-auditor.md`
-— re-sync if cadence changes there. Values below are verbatim copies.
+The `CronCreate` prompt bodies below ARE the operational SSOT — this is what `/cron-detect-loop`
+actually registers. `.claude/commands/crons/cron-dev-team.md` + `cron-system-auditor.md` hold the
+plain conceptual-shape prompts for manual/ad-hoc cron setup; Job 1 (dev-team) and Job 2
+(system-auditor Tier-1) below have diverged from those files' simpler form (self-arm+script-branching
+and shell-pre-gate+stale-heartbeat-guard logic respectively — see each Job's inline note) because
+that logic only makes sense inside this auto-re-arm loop. Job 3/4 remain byte-identical to
+`cron-system-auditor.md`'s Tier-2/Tier-3 sections. Cron cadence (`cron` expression) values stay in
+sync across all files regardless — re-sync those here if cadence changes in the command files.
 
 Only execute CronCreate for entries NOT found in Step 1.
 
 **Job 1 — dev-team every 30 min**
 
-> TOKEN-ECONOMY-TICK-PREFLIGHT WU-2 (R6, 2026-07-02): this prompt now diverges from the plain
-> "Read and execute main.md" template in `.claude/commands/crons/cron-dev-team.md` — this is the
-> ONE deliberate exception to that file's "verbatim copy" rule. Rationale: `CronCreate`/`CronList`/
+> TOKEN-ECONOMY-TICK-PREFLIGHT WU-2 (R6, 2026-07-02): this prompt diverges from the plain
+> "Read and execute main.md" template in `.claude/commands/crons/cron-dev-team.md` — that file
+> stays the simple manual/ad-hoc reference (see Step 2 SSOT note above); this file (the one
+> actually re-armed) carries the extra logic. Rationale: `CronCreate`/`CronList`/
 > `CronDelete` are Claude Code CLI-native tools, unreachable from `scripts/agents-flow/
 > dev-team-tick-preflight.sh`'s curl transport, so self-arm can only be LLM-narrated — it must run
 > FIRST, on every tick (RUN and SKIP alike), independent of which session wins the SF-1/fire-election
@@ -83,7 +95,8 @@ CronCreate(
 > `mcp-call.sh`) FIRST; the `system-auditor` subagent is launched only on a non-`ALL_GREEN`
 > verdict OR a stale heartbeat (passive-health-masking guard below — a silently dead probe must
 > not look healthy). `docs/agents/system-auditor/flow/tier1-probe.md` is unchanged and is read in
-> full by the subagent whenever it is spawned.
+> full by the subagent whenever it is spawned. This diverges from `cron-system-auditor.md`'s plain
+> Tier-1 form — that file stays the simple manual/ad-hoc reference (see Step 2 SSOT note above).
 
 ```
 CronCreate(

@@ -1,5 +1,11 @@
 Create dev-team cron with CronCreate:
 
+> Manual/ad-hoc reference only. `.claude/skills/cron-detect-loop/SKILL.md` (Job 1) is the
+> operational SSOT for the prompt actually registered by `/cron-detect-loop` — it has carried
+> self-arm+script-branching logic since 2026-07-02 (TOKEN-ECONOMY-TICK-PREFLIGHT WU-2) that the
+> plain form below intentionally omits (keeps this file simple for one-off manual setup). The
+> `cron` cadence below stays in sync with SKILL.md; only the prompt body differs.
+
 - **cron**: `7,37 * * * *` (every 30 min, at :07 and :37 — off the :00/:30 fleet-load marks and offset from system-auditor Tier-1 which runs at :00/:30)
 - **recurring**: true
 - **durable**: true  (persist across session restarts — required for unattended operation)

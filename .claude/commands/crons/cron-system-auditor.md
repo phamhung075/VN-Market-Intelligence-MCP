@@ -4,6 +4,13 @@ Create system-auditor crons with CronCreate (three tiers). Run all three.
 
 ## Tier-1 — Runtime Ping (every 30 min)
 
+> Manual/ad-hoc reference only. `.claude/skills/cron-detect-loop/SKILL.md` (Job 2) is the
+> operational SSOT for the prompt actually registered by `/cron-detect-loop` — it has run a pure
+> shell pre-gate (`scripts/agents-flow/auditor-tier1-probe.sh`) + stale-heartbeat guard since
+> 2026-07-02 (TOKEN-ECONOMY-TICK-PREFLIGHT WU-3) that the plain form below intentionally omits
+> (keeps this file simple for one-off manual setup). The `cron` cadence below stays in sync with
+> SKILL.md; only the prompt body differs. Tier-2/Tier-3 below remain byte-identical to SKILL.md.
+
 - **cron**: `*/30 * * * *`
 - **recurring**: true
 - **durable**: true
