@@ -1,6 +1,15 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c465 · 2026-07-02T02:42:05Z
+### Audit Run Tier-2 (02:30–02:42 UTC 2026-07-02)
+- Tier: 2 | Freshness sweep: 6/11+ checks completed (54% completion due to docker exec permission boundary)
+- Sources checked: price (0m ✓), news (1m ✓), sbv_fx (10m ✓), foreign_flow (0m ✓), rate_limits (0% ✓), macro (0m ✓)
+- Known issue: B-05/B-06 bctc-discover stale 21958min (15d, last VPS push 2026-06-16 18:02:24) — previously reported 2026-07-01T22:33:43Z, TRIAGED, dedup-skip
+- Skipped checks: A-29 (cron), C-06/C-07 (DB), B-09/B-13 (BCTC schema), D-BCTC-EVAL, D-IMPROVE — all require docker exec
+- VPS service health: vn-bctc-fetch UNHEALTHY (response=0, uptime 15d 8h 37m); other 4 services healthy
+- Anomalies: 0 NEW (dedup B-05 is known) | Status: DEGRADED (BCTC pipeline unavailable, auditor function degraded)
+
 ## c464 · 2026-07-02T02:15:35Z
 ### Audit Run Tier-1 (02:00–02:15 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: TOOL-DENIED (docker exec prohibited)
@@ -19,40 +28,11 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
   - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 59m"; technical-analysis "Up 17h"; stock-price "Up 47h"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d"; rag-service "Up 1m" all healthy]
   - [health] mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
 - A-21 RestartCount: mcp-server=1 ✓ (expected post-restart cycle) | A-30 Memory: 24.02% ✓ | A-32 Disk: 48% ✓
-- MCP System: uptime 59m 55s, circuits OK, WAL 3.93MB ✓, 30 alerts/24h (4 HIGH/CRITICAL)
-- Cron Health: 140+ jobs, 99.5%+ success rate (recent crashes: marketScanJob:close 80%, vnstockTradingStatsRefresh 88% — non-blocking)
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
 
 ## c462 · 2026-07-02T01:15:14Z
 ### Audit Run Tier-1 (01:15–01:16 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK
-- RAW-PROBE (01:15:14Z):
-  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 27min"; rag-service "Up 47min"; technical-analysis "Up 16h"; stock-price "Up 47h"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d" all healthy]
-  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
-- A-21 RestartCount: mcp-server=1 ✓ (OOM 2026-07-01 already tracked) | A-30 Memory: 13.26% ✓ | A-32 Disk: 48% ✓
+- RAW-PROBE (01:15:14Z): 12/12 host_runtime_set UP, all health endpoints 200 OK
+- A-21 RestartCount: mcp-server=1 ✓ (OOM 2026-07-01 already tracked) | A-30 Memory: 13.26% ✓
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-- Signal: tier-1-rollup INFO posted (signal_id=8206)
-
-## c461 · 2026-07-02T00:46:17Z
-### Audit Run Tier-1 (00:45–00:46 UTC 2026-07-02)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- RAW-PROBE (00:46:17Z):
-  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 2h"; rag-service "Up 18m"; technical-analysis "Up 16h"; stock-price "Up 46h"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d" all healthy]
-  - [health] mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
-  - A-20-PROBE: 3/3 HTTP 200 PASS (event-loop healthy)
-- A-21 RestartCount: mcp-server=0 ✓ | A-30 Memory: 73.81% ✓ | A-32 Disk: 47% ✓
-- MCP System: get_system_status TOOL-UNAVAILABLE | get_cron_health TOOL-UNAVAILABLE
-- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-
-## c459 · 2026-07-02T00:27:38Z
-### Audit Run Tier-1 (00:26–00:27 UTC 2026-07-02)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- RAW-PROBE (00:26:01Z):
-  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 2h"; rag-service "Up 15m"; technical-analysis "Up 16h"; stock-price "Up 46h"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d" all healthy]
-  - [health] mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
-  - A-20-PROBE: 3/3 HTTP 200 PASS (event-loop healthy)
-- A-21 RestartCount: mcp-server=0 ✓ | A-30 Memory: 96.81% ⚠ WARN (1.936GiB/2GiB) | A-32 Disk: 48% ✓
-- MCP System: uptime 1h 59m, circuits OK, WAL 3.93MB ✓, 30 alerts/24h (4 HIGH/CRITICAL)
-- Cron Health: 140+ jobs, 99.5% avg success rate (2 recent crashes: marketScanJob:close, vnstockTradingStatsRefresh non-blocking)
-- Anomalies: 1 NEW WARN (A-30 memory pressure) | Status: DEGRADED
-- Signal: A-30 WARN posted (signal_id=8196, signal_row=sau-2026-07-02T00:27:05Z)
