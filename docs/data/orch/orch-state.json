@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-02T11:39:56Z",
-    "updated_by": "architect",
+    "updated_at": "2026-07-02T00:00:00Z",
+    "updated_by": "pm",
     "active_task_id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
-    "next_agent": "pm",
-    "note": "TOKEN-ECONOMY-TICK-PREFLIGHT — architect review DONE. Blueprint + 11 risk notes + file-level change map written to handoff. ZONE=root (no apps/<service> touch; route dev tasks to developer generic). PM decomposes 3 WU tasks next (WU-2 depends on WU-1 shared mcp-call.sh helper; WU-3 independent)."
+    "next_agent": "developer",
+    "note": "TOKEN-ECONOMY-TICK-PREFLIGHT — pm decomposition DONE. 3 WU tasks created (DJ-GATE-1 journal: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-pm.md). Route all dev tasks to developer (generic), not dev-service specialist (zone=root constraint). WU-1 cowork silent-path (UNBLOCKS WU-2), WU-2 dev-team SF-1-first, WU-3 auditor Tier-1 (INDEPENDENT). Next: developer starts WU-1."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9863,7 +9863,7 @@
         "id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
         "title": "Architect review + pm decomposition: script deterministic cron-tick preflights (WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck). Cuts ~80% idle-hours token burn; all mutex/election/injection gates preserved. Spec = brief.",
         "owner": "architect",
-        "next_agent": "pm",
+        "next_agent": "developer",
         "status": "IN_PROGRESS",
         "zone": "root",
         "type": "SPRINT-S",
@@ -9885,7 +9885,7 @@
         "claimed_at": "2026-07-02T11:27:05Z",
         "claimed_by": "router",
         "dispatched_at": "2026-07-02T11:27:05Z",
-        "dispatch_note": "[dispatcher 2026-07-02 tick 11:07Z] SPRINT-S per Step 2 matrix: architect review -> pm decomposition. Spec = docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md. WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck. All mutex/election/injection gates MUST be preserved.",
+        "dispatch_note": "[pm 2026-07-02T00:00:00Z decomposition] DJ-GATE-1 journal: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-pm.md. WU-1 cowork-tick-preflight.sh (shared mcp-call.sh, retire autosilent, modify main.md) UNBLOCKS WU-2 dev-team-tick-preflight.sh (MUST modify cron-detect-loop/SKILL.md Job 1 prompt per R6: self-arm FIRST). WU-3 auditor-tier1-probe.sh INDEPENDENT (pure shell). All R1-R11 risk notes propagated. Expected: single commit, all 3 WUs, existing WIP slot.",
         "handoff_ref": "docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md",
         "row_note": "[router 2026-07-02T11:42:41Z] architect leg DONE (commit a9c2553e, RAW-verified: handoff 248L + DJ-GATE-1 journal + head->pm). Row synced to head: next_agent pm, zone root per handoff § Zone (route dev WUs to developer generic). Note: architect RETURN overclaimed a ready[]-row update that never landed — row was in in_progress[]; synced by router."
       }
