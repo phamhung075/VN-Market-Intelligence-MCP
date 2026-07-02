@@ -1,0 +1,85 @@
+depth=0 C = VN, ST = Hanoi, L = Hanoi, O = HANOI STOCK EXCHANGE, CN = hnx.vn
+verify error:num=20:unable to get local issuer certificate
+verify return:1
+depth=0 C = VN, ST = Hanoi, L = Hanoi, O = HANOI STOCK EXCHANGE, CN = hnx.vn
+verify error:num=21:unable to verify the first certificate
+verify return:1
+depth=0 C = VN, ST = Hanoi, L = Hanoi, O = HANOI STOCK EXCHANGE, CN = hnx.vn
+verify return:1
+CONNECTED(00000003)
+---
+Certificate chain
+ 0 s:C = VN, ST = Hanoi, L = Hanoi, O = HANOI STOCK EXCHANGE, CN = hnx.vn
+   i:C = BE, O = GlobalSign nv-sa, CN = GlobalSign RSA OV SSL CA 2018
+   a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Jun 18 09:06:37 2026 GMT; NotAfter: Jan  3 09:06:37 2027 GMT
+-----BEGIN CERTIFICATE-----
+MIIGPjCCBSagAwIBAgIMYzAYMB1D5H6KLg/OMA0GCSqGSIb3DQEBCwUAMFAxCzAJ
+BgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMSYwJAYDVQQDEx1H
+bG9iYWxTaWduIFJTQSBPViBTU0wgQ0EgMjAxODAeFw0yNjA2MTgwOTA2MzdaFw0y
+NzAxMDMwOTA2MzdaMF0xCzAJBgNVBAYTAlZOMQ4wDAYDVQQIEwVIYW5vaTEOMAwG
+A1UEBxMFSGFub2kxHTAbBgNVBAoTFEhBTk9JIFNUT0NLIEVYQ0hBTkdFMQ8wDQYD
+VQQDEwZobngudm4wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCpDwk3
+s8iiPTcgIn+Ho1R0uDxL2omnFSDA0ljEETqe2vJt5v7fQ33R94wsG7uISuPmyNjf
+x0EvN/cnODulfUc5QiEP0i2OsxAwSjTiN9RSo6mX/xsDJ3YGGspj9jKjetAvUn5E
+FUc1or3zqWqzZo1qQz5GSsaGn+kPOWvcLRHNKqqE15h4zOsAweDAS6q/yRleXM5E
+ocC7js1G75/Za0T68wj2gbvDev1p4rF4Rie7zjsuoNM/BhhpXhrl4WETyg7gH8i4
+xx7CUP+s7L/LictWVW8u2Xk1sSDn/9u9Osjp+DZHFDmxMNJ00Nn/y3W0gXZv17SS
+jp6CCxJM54D2tj7VAgMBAAGjggMJMIIDBTAOBgNVHQ8BAf8EBAMCBaAwDAYDVR0T
+AQH/BAIwADCBjgYIKwYBBQUHAQEEgYEwfzBEBggrBgEFBQcwAoY4aHR0cDovL3Nl
+Y3VyZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvZ3Nyc2FvdnNzbGNhMjAxOC5jcnQw
+NwYIKwYBBQUHMAGGK2h0dHA6Ly9vY3NwLmdsb2JhbHNpZ24uY29tL2dzcnNhb3Zz
+c2xjYTIwMTgwVgYDVR0gBE8wTTBBBgkrBgEEAaAyARQwNDAyBggrBgEFBQcCARYm
+aHR0cHM6Ly93d3cuZ2xvYmFsc2lnbi5jb20vcmVwb3NpdG9yeS8wCAYGZ4EMAQIC
+MBsGA1UdEQQUMBKCBmhueC52boIIKi5obngudm4wHQYDVR0lBBYwFAYIKwYBBQUH
+AwEGCCsGAQUFBwMCMB8GA1UdIwQYMBaAFPjvf/LNeGeo3m+PJI2I8YcDArPrMB0G
+A1UdDgQWBBSM+jzY2dF3HVykTbage3km6LCfITCCAX4GCisGAQQB1nkCBAIEggFu
+BIIBagFoAHYAHJ9oLOn68EVpUPgbloqH3dsyENhM5siy44JSSsTPWZ8AAAGe2fuI
+fQAABAMARzBFAiEAsYw1nG+7+ECj1I0UjgX/KDMzNVQH0QWbaiHq0aHhvN4CIA/3
+7iZDSl3IqYyzE6JTB7N4ENvt4UiP46xvU11ZI7jUAHYATGPcmOWcHauI9h6KPd6u
+j6tEozd7X5uUw/uhnPzBviYAAAGe2fuGnAAABAMARzBFAiB9+Chk2ft2ljUC5cCD
+tiZZYzJRm10AP8MYQIsyTs7AmwIhAMxSeAtz6i5XwaTsIJCtry1Fz5t7grt8l6dW
+1p48oBlzAHYAYEyar3p/d18B1Ab8kg3ImesLHH34yVIb+voXdzuXi8kAAAGe2fuH
+yQAABAMARzBFAiASOJ7xbxlHTvcaFLIVZQGeG+F+Dj5tCLh2SwUuPTP8TwIhAKAN
+AJmBivNrvUCPoa1r8jNqLhnibRkEE1ghKI5aoHnBMA0GCSqGSIb3DQEBCwUAA4IB
+AQACSwzQTVqbiG0RNY4R5/N0yR25yHGXJWLDEeTIMfSpqlWnZNmAeJeGB91goXNl
+NUtPe9AYOjxaf/RdVHzHVdR6/nMH8e2kHaD9K2OECUjtQ1clF7IkeqcROi4LFC1y
+uvEG5IGIyGzbqbWgdGBKXA/alGMDQCjB3WCFce3BNsyy6M+oafkw4CqPlohScFfH
+yd98s48DL7JRvvtpQ+JtC2V8PtfxAhmpp8EA+C4wPPjuLsDwKBiNkBzAMSE+Ht1H
+wPFXlkT3MbQyHkOR6H+kOFJ7lGMO7h9H4DnBzpndgkgC7tdUcR8FWlei5aEFk+Pf
+aJti4OLtBghYWPeL/3rjvu0S
+-----END CERTIFICATE-----
+---
+Server certificate
+subject=C = VN, ST = Hanoi, L = Hanoi, O = HANOI STOCK EXCHANGE, CN = hnx.vn
+issuer=C = BE, O = GlobalSign nv-sa, CN = GlobalSign RSA OV SSL CA 2018
+---
+No client certificate CA names sent
+Peer signing digest: SHA512
+Peer signature type: RSA
+Server Temp Key: ECDH, prime256v1, 256 bits
+---
+SSL handshake has read 2097 bytes and written 438 bytes
+Verification error: unable to verify the first certificate
+---
+New, TLSv1.2, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+Server public key is 2048 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-RSA-AES256-GCM-SHA384
+    Session-ID: 9110CFEA8892A7CA2569914883269B9BD6ABF0CE0D697E8D07AD1D206435FC31
+    Session-ID-ctx: 
+    Master-Key: 5B4C9E8F2D572FF3F0B172B30D6268FDFD36E7E6A8C8E556402F83EB7B8839F68D51A6333F50A9060C16E84C88A02BB6
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    Start Time: 1782990843
+    Timeout   : 7200 (sec)
+    Verify return code: 21 (unable to verify the first certificate)
+    Extended master secret: no
+---
+DONE
