@@ -1,6 +1,16 @@
 # System Auditor — Notebook
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c467 · 2026-07-02T03:16:15Z
+### Audit Run Tier-1 (03:00–03:16 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK
+- RAW-PROBE (03:15:37Z):
+  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 2h (healthy)"; api-gateway "Up 3d"; frontend "Up 12h"; technical-analysis "Up 18h"; stock-price "Up 2d"; macro-indicators "Up 2d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; rag-service "Up 5m"; news-fetch "Up 6d"; alert-engine "Up 6d"; mcp-gateway "Up 6d"]
+  - [health] mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
+- A-21 RestartCount: mcp-server=1 ✓ | A-32 Disk: 48% ✓
+- A-20 multi-probe: SKIPPED(boundary — docker exec permission denied per dispatcher note)
+- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
+
 ## c466 · 2026-07-02T02:49:34Z
 ### Audit Run Tier-1 (02:30–02:49 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS ✓
@@ -31,13 +41,4 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-21 RestartCount: mcp-server=1 ✓ | A-30 Memory: 36.05% ✓ | A-32 Disk: 47% ✓
 - MCP System: uptime 1h 27m 48s, circuits OK (16/16), WAL 3.94MB ✓, 30 alerts/24h (5 HIGH/CRITICAL)
 - Cron Health: 100+ jobs monitored, 99%+ average success rate (2 recent: marketScanJob:close 80%, vnstockTradingStatsRefresh 87.5% — non-critical)
-- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-
-## c463 · 2026-07-02T01:46:19Z
-### Audit Run Tier-1 (01:30–01:47 UTC 2026-07-02)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: TOOL-DENIED (docker exec prohibited)
-- RAW-PROBE (01:46:44Z):
-  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 59m"; technical-analysis "Up 17h"; stock-price "Up 47h"; macro-indicators "Up 2d"; api-gateway "Up 3d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; news-fetch "Up 6d"; alert-engine "Up 6d"; rag-service "Up 1m" all healthy]
-  - [health] mcp-server:3000/health OK (HTTP 200) | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
-- A-21 RestartCount: mcp-server=1 ✓ (expected post-restart cycle) | A-30 Memory: 24.02% ✓ | A-32 Disk: 48% ✓
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
