@@ -1,6 +1,28 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-30 | **Sprint:** BA-IND-P1-MOMENTUM-FRONTEND
+**Last updated:** 2026-07-02 | **Sprint:** MERGE-MONEY-RADAR-INTO-MOMENTUM
+
+---
+
+## Session: 2026-07-02 (MERGE-MONEY-RADAR-INTO-MOMENTUM — merge money-radar into momentum)
+
+**WU-1-MERGE-PAGES + WU-2-COVERAGE-MAP DONE — /dashboard/momentum now carries BOTH momentum (Section A) + money-radar (Section B)**
+
+Zone health: 82 test files; 2006 pass / 2 fail (pre-existing QUE-TOOLTIP); tsc 0 errors; Playwright 4/4 GREEN | HEALTHY
+
+Task: merge `/dashboard/money-radar` (MONEY-RADAR-P0) into `/dashboard/momentum` (TASK-502) per `docs/handoffs/BA-MERGE-MONEY-RADAR-INTO-MOMENTUM.md` — one unified page, two distinct DTO/parser/formatter families (do-not-homogenize preserved, AC3/AC10).
+
+Files updated:
+- `routes/dashboard.momentum.tsx` — Section B ("Radar Dòng Tiền") ported verbatim, colocated (PM-RATIFY-1, no new `app/lib/moneyRadar/`); merged `loader()` via `Promise.allSettled(fetchMomentumIndicators, fetchMoneyRadarComposite)` — per-feed isolation (AC2); page FreshnessBadge = older(momentum.generated_at, radar.generated_at); h2 headings added per section
+- `routes/dashboard.money-radar.tsx` — collapsed to loader-only 302 redirect → `/dashboard/momentum` (AC4, no default export — loader always redirects before render)
+- `components/TopNav.tsx` — `ANALYST_NAV[26]` relabeled "Động Lực P1" → "Động Lực & Dòng Tiền" (same position/route; SSOT 27/34 unchanged)
+- `__tests__/money-radar-cards.test.ts` — import path only (FR-2.4)
+- `__tests__/ind-p1-momentum-nav.test.tsx` — 6 label assertions + DOM assertion relabeled
+- `__tests__/ind-p1-indicator-gauges-nav.test.tsx`, `__tests__/task17-page19-news-buzz-nav.test.tsx` — 1 hardcoded "Động Lực P1" regression-guard assertion each (found beyond BA's file-inventory grep, fixed same commit)
+- `docs/data/frontend-data-coverage-map.json` — +4 rows for `/dashboard/momentum` radar scalars (score, foreign_accum_z_market, rel_vol_z_20, divergence.flag), status LIVE; rows 45→49, LIVE 35→39
+
+Commit: `ced952ca` | tsc: 0 errors | vitest: 2006 pass / 2 pre-existing fail | Playwright: 4/4 GREEN
+Manual RAW-verify: curl /dashboard/momentum → 200, both `aria-label="Chỉ báo..."` sections present; curl /dashboard/money-radar → 302 → /dashboard/momentum.
 
 ---
 
@@ -60,32 +82,6 @@ tsc: 0 errors | vitest: 79 files (77 pass, 2 pre-existing QUE-TOOLTIP) | Commits
 
 ---
 
-## Session: 2026-06-29 (TASK-FEAT-NEWS-DR-HOP2 — decision résumé strip + SentimentPill remap)
-
-RESUMED after killed vitest step. Prior edits confirmed on disk and complete; no re-edits needed.
-
-FR-4: `type Sentiment = "bullish"|"bearish"|"neutral"|null`; SentimentPill green/red/grey (fixes live all-grey bug).
-FR-5: `decision_resume: string|null` on `NewsSentimentItem`; `NewsCard` renders résumé skim-first above title (null→omit); `impact_summary` wrapped in Collapsible default-collapsed ("Xem thêm"/"Thu gọn"); source link preserved.
-Test Suite 8 added: AC-NEW-1, AC-NEW-2, bearish passthrough, ITEM_WITH_CHIPS — 27/27 GREEN.
-tsc: 0 errors. Commits: `5dbd9c2c` (feat), `02a2131f` (orch-state). Task TASK-FEAT-NEWS-DR-HOP2: REVIEW.
-
-Zone health: 77+ test files; 27 new tests added this session; tsc 0 errors; Tier 4 news route complete | HEALTHY
-
----
-
-## Session: 2026-06-28 (FIX-DUPLICATE-CHART-ZONE — analysis page rendered two StockChart instances)
-
-**FIX-DUPLICATE-CHART-ZONE DONE — removed stale bare StockChart from StockDetailPanel**
-
-Root: `dashboard.analysis.tsx` rendered `<StockChart prices={prices} height={560} />` inside `StockDetailPanel` (SSR-loaded data, bare chart, pre-zone-integration copy). `TechnicalZone` mounted separately at the same page level already provides the same 90-day OHLCV chart with richer context (auto-refresh 5min, freshness badge, live badge, period stats row, degraded/stale states).
-
-Fix: Removed the 4-line chart div block from `StockDetailPanel` (pre-`{/* Decision panel */}`) and the now-unused `import { StockChart }` at the top of the file. `TechnicalZone` ("Giá & Kỹ thuật" SectionCard) remains as sole chart zone.
-
-Files changed: `apps/frontend/app/routes/dashboard.analysis.tsx` — 6 deletions.
-Commit: `b97bf990` | tsc: 0 errors | Rebuild: frontend-only (single service) — DONE, verified HTTP 200.
-
----
-
-**Current state:** 79 test files; 1918 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
+**Current state:** 82 test files; 2006 pass / 2 fail (pre-existing QUE-TOOLTIP schema); tsc 0 errors.
 **Tech stack:** Remix 2 + TypeScript 5 strict + Tailwind 3 + shadcn/ui + Vitest + Playwright
-**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced.
+**Key patterns:** useFetcher self-fetching zones; FreshnessBadge(intraday/daily/weekly SLA); safeFetch bounded; honest-NULL (null_reason + gray badge, never fabricate); DDD layers enforced; route-colocated DTO/parser/formatter families kept textually distinct across merged pages (do-not-homogenize, e.g. dashboard.momentum.tsx's momentum vs radar families).
