@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c496 · 2026-07-02T19:15:36Z
+### Audit Run Tier-1 (19:14–19:15 UTC 2026-07-02)
+- Tier: 1 | Fire-election: WON (tick=2026-07-02T19:00Z)
+- Services: 12/12 UP | Health endpoints: 4/5 OK | A-20 pdf-extractor: 3/3 PASS
+- A-13: api-gateway curl FAIL (FALSE POSITIVE, host-side curl missing) | A-30: 100.00% memory (KNOWN-TRIAGED)
+- A-21: RestartCount=3 (dedup, no change) | Disk: 49% ✓ | All crons OK
+- Anomalies: 0 new (DEDUP+TRIAGED) | Status: HEALTHY
+- RAW-PROBE: 13/13 containers UP, 4/5 health OK, A-20 3/3 PASS
+
 ## c495 · 2026-07-02T18:48:38Z
 ### Audit Run Tier-1 (18:48–18:50 UTC 2026-07-02)
 - Tier: 1 | Fire-election: WON (tick=2026-07-02T18:30Z)
