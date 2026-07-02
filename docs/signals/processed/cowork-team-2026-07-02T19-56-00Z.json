@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-02T19:56:00Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-07-02T19:55:32.000Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "WORK tick via preflight; single guaranteed slot chef-evening spawned background (BGFAN-1); tick snapshot docs/data/cycle-snapshot-19:54.json staged for chef; emit_pressure_state success (stale_warning=true server-side)"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-02T19:56:00Z",
+  "_processed": {
+    "fingerprint": "344627c00b972953c9fa0f0ad4cdd7a65f53798c6c8434c09dbbfa416f7d0d94",
+    "processedAt": "2026-07-02T20:23:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

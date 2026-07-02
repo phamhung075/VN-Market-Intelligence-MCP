@@ -1,0 +1,46 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "cowork-fire",
+  "priority": "P3",
+  "createdAt": "2026-07-02T20:21:45Z",
+  "payload": {
+    "tick": "2026-07-02T20:15Z",
+    "classification": "FIRE",
+    "drift_min": 3,
+    "pressure_mode": "legacy",
+    "legacy_reason": "stale_warning_flag (pressure-state.json emitted 20:09:04Z carries server-computed stale_warning:true — AC-P1-6-3 fallback, known condition)",
+    "calendar_status": "unknown",
+    "matched": [
+      "tnb-audit"
+    ],
+    "won": [
+      "tnb-audit"
+    ],
+    "all_held": false,
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "tnb-audit": "cron 13 20 * * * (guaranteed daily; last_fired 2026-06-30 — 07-01 slot missed)"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "chef_mutex_applied": false,
+    "one_shots": [],
+    "new_signals": 0,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "snapshot_file": "docs/data/cycle-snapshot-20:19.json",
+    "last_fired_timestamp": "2026-07-02T20:21:37.000Z",
+    "errors": []
+  },
+  "_processed": {
+    "fingerprint": "168c14bba0930675b76633deb6d8452169571d3a7e9f7aff751657e3be8481a8",
+    "processedAt": "2026-07-02T20:23:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
