@@ -2,6 +2,58 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c477 · 2026-07-02T07:45:00Z
+### Audit Run Tier-1 (07:30–07:45 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 4/5 OK (api-gateway CURL_ERR) | A-20: 3/3 PASS
+- Restart: mcp-server=2 ✓ | Memory: 27.47% ✓ | Disk: 42% ✓
+- Cron: 100+ jobs, 99%+ success rate; marketScanJob:close legacy crash (80%, off-hours)
+- Anomalies: 1 WARN (A-12 api-gateway:4000/health probe CURL_ERR) | Signal #8240 posted | orch-state row added
+- Status: DEGRADED (api-gateway health endpoint transient connectivity issue during probe window)
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-07-02T07:45:00Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 59 minutes (healthy)   vn-market-intelligence-mcp-mcp-server           9 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 16 hours (healthy)     74bfe1c5b392                                    16 hours ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 23 hours (healthy)     vn-market-intelligence-mcp-technical-analysis   23 hours ago
+vn-market-intelligence-mcp-stock-price-1          Up 2 days (healthy)       vn-market-intelligence-mcp-stock-price          2 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 2 days (healthy)       vn-market-intelligence-mcp-macro-indicators     2 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 days (healthy)       vn-market-intelligence-mcp-api-gateway          3 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 3 days (healthy)       vn-market-intelligence-mcp-pdf-extractor        3 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 6 days (healthy)       vn-market-intelligence-mcp-kinh-dich-service    2 weeks ago
+vn-market-intelligence-mcp-rag-service-1          Up 27 seconds (healthy)   vn-market-intelligence-mcp-rag-service          3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 6 days (healthy)       vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 6 days (healthy)       vn-market-intelligence-mcp-alert-engine         3 weeks ago
+mcp-gateway                                       Up 6 days (healthy)       mcpservergatway-gateway                         6 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health FAIL (HTTP CURL_ERR) [L31]
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- A-20 multi-probe pdf-extractor ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=2
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=27.47% MemUsage=562.7MiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    19Gi    42%    393k  195M    0%   /
+
+=== PROBE DONE ===
+```
+
 ## c476 · 2026-07-02T07:16:11Z
 ### Audit Run Tier-1 (07:00–07:16 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 PASS
@@ -15,15 +67,3 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - Restart: mcp-server=1 ✓ | Memory: 88.69% ⚠ (known condition) | Disk: 41% ✓
 - Cron: 100+ jobs, 99%+ success rate; 1 legacy crash (marketScanJob:close, 80%, off-hours)
 - Anomalies: 0 new | Status: HEALTHY
-
-## c474 · 2026-07-02T06:35:33Z
-### Audit Run Tier-2 (06:30–06:35 UTC 2026-07-02)
-- Tier: 2 | Cron: 100+ jobs healthy (100%+ success rate) | Sources: 27 checked
-- Freshness: 4/5 sources PASS (ssc-iboard, news-vps, sbv-vps, foreign-flow) | 1 CRITICAL (bctc-discover)
-- VPS Proxy: 4/4 active routes OK | 1 STALE (bctc, last push 2026-06-16T18:02Z, >15d)
-- VPS Service: 4/5 healthy | 1 UNHEALTHY (vn-bctc-fetch, status down)
-- SLA: bctc-discover 369.9h old vs 24h threshold (earnings-window, Q2 in-window) — CRITICAL
-- DB Freshness: market_messages 3h (C-06 PASS) | agent_signals 135/24h (C-07 PASS) | BCTC URLs clean (B-09 PASS) | no stale pending (B-13 PASS)
-- B-05 Gate: queue has 38 actionable rows (pending+failed+url_not_found) — NOT healthy-idle
-- Anomalies: 1 CRITICAL (B-05 BCTC data_stale: queue active but VPS service down) | Signal #8238 posted | orch-state row added
-- Status: DEGRADED (VPS bctc-fetch offline, pipeline stalled since quarterly push)
