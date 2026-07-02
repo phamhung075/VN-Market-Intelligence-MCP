@@ -282,10 +282,131 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T02:52:24Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-02T03:00:01.027Z",
+    "_updated_by": "system-auditor",
     "archive": [],
     "rows": [
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:VCB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:ACB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-deepdive:CTG:Q1-2026:ESC-2 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:HPG:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-deepdive:GVR:Q1-2026:ESC-4 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:GVR:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:HVN:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock dev-team-cron-singleton has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock cron:dev-team:2026-07-02T02:37Z has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607020300",
+        "ts": "2026-07-02T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock po-triage-20260702 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
       {
         "id": "sau-d4-202606240300",
         "ts": "2026-06-24T03:00Z",
@@ -915,38 +1036,44 @@
         "id": "qa-followup-signal-routing-rows-20260702",
         "summary": "[qa-followup] drain-signals.md 0a-3 + po/triage-signals.md lack dedicated routing rows for types data-coverage-gap (to:ops) and deep_dive_result (to:po) — both fall to generic catch-all (log+skip+WORK). No silent loss, but no automated action. Add explicit routing rows.",
         "severity": "INFO",
-        "status": "READ",
+        "status": "RESOLVED",
         "ts": "2026-07-02T02:40:49Z",
         "from": "dev-team/qa-gate",
         "to": "po",
         "type": "repair_task_request",
-        "payload_ref": null
+        "payload_ref": null,
+        "resolved_by": "po",
+        "resolved_at": "2026-07-02T02:57:39Z"
       },
       {
         "id": "qa-followup-stagelog-bash-nobash-agent-20260702",
         "summary": "[qa-followup] docs/agents/bctc-analyst/flow/stage-log-notify.md lines ~39/45 contain bash blocks (date/wc/git add+commit) that the no-Bash bctc-analyst tool package cannot execute — latent defect predating 881e38f1. Convert to Read/Write/call_tool steps or reassign the commit stage.",
         "severity": "INFO",
-        "status": "READ",
+        "status": "RESOLVED",
         "ts": "2026-07-02T02:40:49Z",
         "from": "dev-team/qa-gate",
         "to": "po",
         "type": "repair_task_request",
-        "payload_ref": null
+        "payload_ref": null,
+        "resolved_by": "po",
+        "resolved_at": "2026-07-02T02:57:39Z"
       },
       {
         "id": "rag-service-crashloop-restartcount-20260702",
         "summary": "[router-verify] rag-service chronic restart loop: RestartCount=226 (~10/day over 3-week container life), latest restarts 01:51Z and 02:38Z today, ExitCode=0 OOMKilled=false — container exits cleanly and restart policy relaunches; passive health checks mask the churn. Needs ops/dev-rag-service root-cause (likely process self-exit).",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "RESOLVED",
         "ts": "2026-07-02T02:52:24Z",
         "from": "dev-team/router-verify",
         "to": "po",
         "type": "repair_task_request",
-        "payload_ref": null
+        "payload_ref": null,
+        "resolved_by": "po",
+        "resolved_at": "2026-07-02T02:57:39Z"
       }
     ],
-    "last_triaged_at": "2026-06-30T23:29:07Z",
-    "last_triaged_by": "dev-team"
+    "last_triaged_at": "2026-07-02T02:57:39Z",
+    "last_triaged_by": "po"
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
@@ -1156,8 +1283,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-02T02:40:49Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-02T02:57:39Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7664,6 +7791,42 @@
           "FIX-BCTC-BANK-SUMMARY-MAPPING"
         ],
         "status_note": "Report 96e36139-5dac-414d-8e4d-20a4725890d1 (CTG 2026-Q1). Markdown->bctc_table_rows materialization in finalize_bctc_refine drops the bank-form balance sheet: unit-0002 (pages 4-5, TAI SAN side, 34 rows, ends TONG TAI SAN CO=2,924,176,928 trieu) entirely absent; unit-0003 (page 6, NGUON VON side) only 8/29 rows survive, mistagged statement_section=general. Post-apply sections: cash_flow=35 general=399 notes=6, balance_sheet=0 (VCB same-form baseline: 57). Suspected trigger: B02a/TCTDHN shape — Roman-numeral item hierarchy, mostly-blank Ma(Code) column, bold section headers (**A. TAI SAN** / **B. NO PHAI TRA VA VON CHU SO HUU**). ALSO fix wrong-row frozen scalars from prior pass: equity_total=244,904,306 is actually Section-7 note total (correct 188,692,158); total_liabilities=24,735,484,770 vs correct 2,735,484,770. DoD: after classifier fix, re-run scripts/migrations/reingest-bctc-report.ts --apply for this report_id -> balance_sheet rows >0 incl. pages 4-5; CTG total_assets=2,924,176,928 (trieu-dong unit as stored per peer VCB=2,550,963,342); equity_total/total_liabilities corrected; FR-5 identity passes; VCB/FPT byte-identical non-regression. Diagnosis evidence: STEP2 worker run 2026-07-02T00:1xZ + dispatcher RAW-probes."
+      },
+      {
+        "id": "FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE",
+        "title": "FIX — add routing rows for signal types data-coverage-gap (→ops) + deep_dive_result (→po) in drain-signals.md §0a-3 + po/triage-signals.md (both currently hit the generic catch-all)",
+        "owner": "po",
+        "status": "BACKLOG",
+        "zone": "cross-service",
+        "priority": "low",
+        "type": "FIX",
+        "next_agent": "agent-father",
+        "created_at": "2026-07-02T02:57:39Z",
+        "status_note": "AC: docs/agents/dev-team/flow/drain-signals.md §0a-3 AND docs/agents/po/flow/triage-signals.md each carry an explicit routing row for type=data-coverage-gap (route→ops) and type=deep_dive_result (route→po) with a defined action. A live deep_dive_result signal (bca-ddres-20260630T2258) already hit the catch-all — no silent loss but no automated action. Priority: INFO/low. Source signal: qa-followup-signal-routing-rows-20260702 (dev-team/qa-gate). Route: agent-father (agent-flow-doc edit)."
+      },
+      {
+        "id": "FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH",
+        "title": "FIX — bctc-analyst stage-log-notify.md L39-49 (wc -l AC-5 check + git add/commit) are Bash blocks the no-Bash analyst package cannot run; routine notebook-commit stage silently unexecutable",
+        "owner": "po",
+        "status": "BACKLOG",
+        "zone": "cross-service",
+        "priority": "low",
+        "type": "FIX",
+        "next_agent": "agent-father",
+        "created_at": "2026-07-02T02:57:39Z",
+        "status_note": "AC: docs/agents/bctc-analyst/flow/stage-log-notify.md carries ZERO Bash blocks — convert L39-42 (wc -l AC-5 sanity), L45-49 (git add/commit stage 5d), and the date -u idiom (L12-14) to Read/Write/call_tool steps OR reassign the notebook-commit stage to a Bash-capable path. DISTINCT from DONE FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH (that fixed escalation-dispatch, NOT the routine notebook commit). Latent defect predates 881e38f1. Priority: INFO/low. Source signal: qa-followup-stagelog-bash-nobash-agent-20260702 (dev-team/qa-gate). Route: agent-father (agent-flow-doc + tool-package)."
+      },
+      {
+        "id": "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP",
+        "title": "FIX — rag-service chronic clean-exit restart loop: RestartCount=226 (~10/day, 3-week container life); ExitCode=0 OOMKilled=false → process self-exits + restart-policy relaunches; passive health masks churn. RECURRING (prior watch signals @100/@A21)",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "zone": "apps/rag-service/",
+        "priority": "medium",
+        "type": "FIX",
+        "next_agent": "ops",
+        "created_at": "2026-07-02T02:57:39Z",
+        "status_note": "AC: root-cause WHY the rag-service main process exits cleanly (ExitCode=0) ~10x/day and STOP the climb (fix the self-exit OR make the exit intentional+documented so RestartCount stabilizes); surface the churn past passive health checks. RECURRING: prior watch-only signals router-20260620T113917Z-rag-restart-watch + sau-c369-A21-rag-restart-100 (RestartCount=100) both TRIAGED with no root-cause task — count grew 100→226. DISTINCT from FU-RAG-DEPLOY-MEMORY (deploy-vs-16GB tradeoff, architect decision) + RAG-SERVICE-AVAIL-01-FIX (undeployed-by-design identification) — do NOT change rag deploy status here. Priority: WARN/medium. Source signal: rag-service-crashloop-restartcount-20260702 (dev-team/router-verify)."
       }
     ],
     "closed_sprints": [

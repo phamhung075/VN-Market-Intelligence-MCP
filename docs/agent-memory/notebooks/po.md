@@ -1,28 +1,24 @@
 # PO Notebook
 
-_Last: 2026-07-02T02:27Z_
+_Last: 2026-07-02T02:57Z_
 
-## Tick 2026-07-02T02:07Z triage (dev-team spawn; pendingSignals EMPTY; 5 telegram reports pre-classified last tick; coord d3292ca4)
+## Tick 2026-07-02T02:37Z triage (dev-team spawn; 3 pendingSignals; coord d3292ca4)
 
-**Sprint-goal closeout (owed follow-up, ask #2):** entries 18 > cap 15. Flipped 3 stale umbrellas to terminal via jq|orch-apply.sh (rc=0, Zod PASS, 99 pre-existing SHG warns, 0 new), then `scripts/orch-cold-evict.sh` → moved all 3 to `archive/2026-07.json` closed_sprint_goals[]. entries 18→15, breach cleared. Committed 541697bc (commit-mutex claimed+released, explicit paths, --no-verify, no push).
-- SHIP-WAVE-REAUDIT → DEFERRED (board task ARCH-SHIP-WAVE-REAUDIT already DEFERRED — matched sprint to board reality).
-- CROSS-SESSION-MULTI-TEAM-ORCH → DONE (P1-FINAL gate TASK_1980 + TASK_1973 DONE; P1.5 orphan-adoption Phase A + P2 presence Phase A.5 live in CLAUDE.md router flow; presence+fire-election SHIPPED 06-28 per MEMORY).
-- CI-RED-RECONCILE → CANCELLED (superseded by live ci-health-probe→ci_red→BACKLOG-FIX pipeline; NOT a green claim — CI still RED on HEAD; open FIX rows carry gate=ci_green_on_subsequent_push).
-- KEPT OPEN: PREDICTION-CLAIMS-DAILY-CADENCE (high-pri, Option-a decided, cron_spec+chain ready — awaiting kickoff, NOT stale); QUE-REFERENCE-PAGE (valid pending user request, left OPEN not deferred).
+**Signals (all repair_task_request → triage-signals.md § repair_task_request → backlog + RESOLVE):**
+Applied `scripts/po-s137-repair-request-3signal-backlog-mint-resolve.jq | orch-apply.sh` (rc=0, Zod Stage0+1 PASS, 99 pre-existing SHG warns, 0 new). Read-back OK: 3 minted (backlog 383→386), 3 signals NEW/READ→RESOLVED, 0 NEW/READ to=po remain.
+- qa-followup-signal-routing-rows → mint `FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE` (zone cross-service, agent-father). Confirmed gap: triage-signals.md has no row for `data-coverage-gap`/`deep_dive_result`; a live `deep_dive_result` (bca-ddres-20260630T2258) already hit catch-all (no silent loss).
+- qa-followup-stagelog-bash → mint `FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH` (cross-service, agent-father). RAW-verified: stage-log-notify.md L39-42 (wc -l), L45-49 (git add/commit), L12-14 (date -u) are Bash — no-Bash package can't run. DISTINCT from DONE ESCALATION-DISPATCH-NO-BASH (that=escalation, this=routine notebook commit).
+- rag-crashloop-restartcount → mint `FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP` (apps/rag-service/, ops). RECURRING: prior watch signals @100 (sau-c369-A21) + rag-restart-watch both TRIAGED with NO root task — RestartCount grew 100→226. ExitCode=0/OOMKilled=false = clean self-exit + relaunch. Distinct from FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX (do NOT touch deploy status).
 
-**Review-lane disposition (ask #1, 5 rows):**
-- FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT (f9e6f40d, developer) → QA. Concur — its wired sprint_goal.entries cold-evict was LIVE-PROVEN by my own run this tick (18→15).
-- FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH (881e38f1, agent-father) → QA. Concur — Option-A file-based ESC dispatch; closes report 3370.
-- W5-FU-CTG-REFINE-96e36139 → NOT to QA. Output EXISTS (dispatcher RAW: 440 bctc_table_rows, refine 56/56 finalized, VCB/FPT byte-identical). DoD NOT MET (CTG total_assets still 0) — blocked by newly-tracked FIX-BCTC-BANK-BS-SECTION-CLASSIFIER. Stays parked in REVIEW.
-- ARCH-SHIP-WAVE-REAUDIT (DEFERRED) → stays parked (umbrella now DEFERRED+evicted).
-- TASK-W5-...VALIDATION-REINGEST (BLOCKED) → stays BLOCKED; blocker shifted to FIX-BCTC-BANK-BS-SECTION-CLASSIFIER.
+**No-action:** cowork-fire telemetry (processed/, informational). CI ci_red deduped — CI-RED-RECONCILE stays CANCELLED (live probe re-emits; not resurrected).
 
-**Reports (all 5 pre-classified last tick; acted only on deltas):** 3368 already tracked = SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO (no mint). 3369 = FIX-BCTC-ENRICHER-STUCK-BACKLOG (parked on user-approved rebuild). 3370 = fix now REVIEW→QA. 3371 mem = folded into enricher rebuild. 3372 sprint_goal cap = resolved this tick.
-
-RETURN: BATCH(2 review→QA) + 3 sprint closures. NEXT=qa (2 review rows). PIPELINE: continue.
+**Commit:** po-s137 script + orch-state + main.md pointer + this notebook (commit-mutex, explicit paths, --no-verify).
+**PUSH-BACKSTOP:** ahead=55>20, no blockers → invoked fleet-worktree-push.sh (see RETURN).
+RETURN: NOTHING (3 backlog mints, low/med sev — no immediate BATCH; WIP=1). PIPELINE: idle.
 
 ## Carry-over
-- FIX-BCTC-ENRICHER-STUCK-BACKLOG in_progress — deploy BLOCKED on USER-approved `docker compose up -d --build mcp-server` (also relieves A-30 mem). Do NOT flip/work around.
-- CI RED on origin/main HEAD e2d693ed (54 known pre-existing full-suite failures); ci_red deduped; recheck after fleet-push. CANCELLED umbrella does NOT hide it — live probe re-emits every tick.
-- FIX-BCTC-BANK-BS-SECTION-CLASSIFIER (backlog) is the real remaining blocker for CTG total_assets>0 (W5 chain).
+- FIX-BCTC-ENRICHER-STUCK-BACKLOG in_progress — deploy BLOCKED on USER-approved `docker compose up -d --build mcp-server`. Do NOT flip/work around. mcp-server mem climbing (~45% @02:48Z, tracked).
+- CI RED on origin/main (54 known pre-existing full-suite fails); ci_red deduped. CANCELLED umbrella does NOT hide it.
+- FIX-BCTC-BANK-BS-SECTION-CLASSIFIER (backlog) = real remaining blocker for CTG total_assets>0 (W5 chain).
+- 3 new backlog FIX rows above route: 2→agent-father, 1→ops. All PLAN-ONLY (po→ba→pm→dev).
 - do NOT "clean" docs/signals/price_anomaly_*.json — feeds CHEF/market-watcher.
