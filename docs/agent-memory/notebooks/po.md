@@ -1,24 +1,30 @@
 # PO Notebook
 
-_Last: 2026-07-02T02:57Z_
+_Last: 2026-07-02T03:59Z_
 
-## Tick 2026-07-02T02:37Z triage (dev-team spawn; 3 pendingSignals; coord d3292ca4)
+## Tick 2026-07-02T03:37Z triage (dev-team spawn; 1 pendingSignal; coord d3292ca4)
 
-**Signals (all repair_task_request → triage-signals.md § repair_task_request → backlog + RESOLVE):**
-Applied `scripts/po-s137-repair-request-3signal-backlog-mint-resolve.jq | orch-apply.sh` (rc=0, Zod Stage0+1 PASS, 99 pre-existing SHG warns, 0 new). Read-back OK: 3 minted (backlog 383→386), 3 signals NEW/READ→RESOLVED, 0 NEW/READ to=po remain.
-- qa-followup-signal-routing-rows → mint `FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE` (zone cross-service, agent-father). Confirmed gap: triage-signals.md has no row for `data-coverage-gap`/`deep_dive_result`; a live `deep_dive_result` (bca-ddres-20260630T2258) already hit catch-all (no silent loss).
-- qa-followup-stagelog-bash → mint `FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH` (cross-service, agent-father). RAW-verified: stage-log-notify.md L39-42 (wc -l), L45-49 (git add/commit), L12-14 (date -u) are Bash — no-Bash package can't run. DISTINCT from DONE ESCALATION-DISPATCH-NO-BASH (that=escalation, this=routine notebook commit).
-- rag-crashloop-restartcount → mint `FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP` (apps/rag-service/, ops). RECURRING: prior watch signals @100 (sau-c369-A21) + rag-restart-watch both TRIAGED with NO root task — RestartCount grew 100→226. ExitCode=0/OOMKilled=false = clean self-exit + relaunch. Distinct from FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX (do NOT touch deploy status).
+**Signal:** cowork-fire telemetry (chef-intraday :26-vs-:15 late fire, drift 12min, spawned OK, no errors) — informational, already in processed/. No task. (triage-signals.md § cowork → skip+log.)
 
-**No-action:** cowork-fire telemetry (processed/, informational). CI ci_red deduped — CI-RED-RECONCILE stays CANCELLED (live probe re-emits; not resurrected).
+**RAW-verify OVERRODE the pre-gathered badge (verify-raw-not-badges):** dispatcher said TASK-W5-...-VALIDATION-REINGEST is a "qa-gate → done candidate (dev b630277c, bun 4/4)". RAW board says otherwise → NO qa gate:
+- TASK-W5 row status=BLOCKED; the b630277c/bun-4/4 is a stale `review_note` badge. AC-10 (CTG total_assets unfreeze from 0) is UNMET on live named-volume market.db.
+- W5-FU-CTG-REFINE-96e36139 (was REVIEW) EXECUTED (refine 56/56 DONE, reingest --apply exit0, 440 rows, VCB/FPT byte-identical) but DoD NOT MET — total_assets still 0. NOT a refine failure: refined md has TONG TAI SAN CO=2,924,176,928 trieu; root = finalize BS section classifier lands 0 balance_sheet rows (VCB baseline 57), drops unit-0002 pages4-5, mistags unit-0003.
 
-**Commit:** po-s137 script + orch-state + main.md pointer + this notebook (commit-mutex, explicit paths, --no-verify).
-**PUSH-BACKSTOP:** ahead=55>20, no blockers → invoked fleet-worktree-push.sh (see RETURN).
-RETURN: NOTHING (3 backlog mints, low/med sev — no immediate BATCH; WIP=1). PIPELINE: idle.
+**Action (self, atomic via `scripts/po-s138-...jq | orch-apply.sh`, rc=0, Zod S0+1 PASS, 100 pre-existing SHG warns, 0 new):**
+- M1 PROMOTE FIX-BCTC-BANK-BS-SECTION-CLASSIFIER backlog→ready (root of W5 chain; direct-to-dev FIX, dev-mcp-server, apps/mcp-server/). Read-back: ready[4], gone from backlog.
+- M2 W5-FU-CTG-REFINE-96e36139 review REVIEW→BLOCKED (depends+blocked_on=classifier) — no longer a false qa candidate.
+- M3 TASK-W5 depends += classifier; blocked_on repointed (prior blocker=refine pass is DONE).
+
+**Dispatch (WIP: enricher in_progress[1] blocked; +classifier = 2, at limit):** BATCH([FIX-BCTC-BANK-BS-SECTION-CLASSIFIER]) → router claims+spawns dev-mcp-server. Head left idle (BATCH is the dispatch; no head-repoint → no double-spawn). Chose data-integrity root over completable FE-nav (reliability > UX).
+
+**Deploy bottleneck flagged to dispatcher:** enricher + classifier + whole W5 chain all gate on ONE user action — approve `docker compose up -d --build mcp-server`. Code phases doable/bun-verifiable now; they batch into that one rebuild.
+
+**Commit:** po-s138 script + orch-state + this notebook (commit-mutex, explicit paths, --no-verify). PUSH held (fleet-push timer).
+RETURN: BATCH (1 FIX). PIPELINE: dev-mcp-server (classifier, code-complete then deploy-gated).
 
 ## Carry-over
-- FIX-BCTC-ENRICHER-STUCK-BACKLOG in_progress — deploy BLOCKED on USER-approved `docker compose up -d --build mcp-server`. Do NOT flip/work around. mcp-server mem climbing (~45% @02:48Z, tracked).
-- CI RED on origin/main (54 known pre-existing full-suite fails); ci_red deduped. CANCELLED umbrella does NOT hide it.
-- FIX-BCTC-BANK-BS-SECTION-CLASSIFIER (backlog) = real remaining blocker for CTG total_assets>0 (W5 chain).
-- 3 new backlog FIX rows above route: 2→agent-father, 1→ops. All PLAN-ONLY (po→ba→pm→dev).
-- do NOT "clean" docs/signals/price_anomaly_*.json — feeds CHEF/market-watcher.
+- FIX-BCTC-ENRICHER-STUCK-BACKLOG in_progress — deploy BLOCKED on USER-approved mcp-server rebuild. Do NOT flip/work around.
+- FIX-BCTC-BANK-BS-SECTION-CLASSIFIER now ready[] (was backlog) = root for CTG total_assets>0; deploy-gated same as enricher (batch one rebuild).
+- W5-FU + TASK-W5 both BLOCKED-on-classifier in review[] — do NOT qa-gate until classifier reflows balance_sheet rows.
+- 3 ready[] non-mcp tasks (ARCH-DASH-CRON, FIX-FE-HEADER-NAV, TOKEN-ECONOMY) deferred — dispatch when a WIP slot frees.
+- CI GREEN on origin/main HEAD (per dispatcher). do NOT "clean" docs/signals/price_anomaly_*.json — feeds CHEF/market-watcher.

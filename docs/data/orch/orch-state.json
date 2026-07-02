@@ -7614,25 +7614,6 @@
         "status_note": "2026-06-16 recon flagged unfixed residual: discover script has NO retry on SSC 503 (returns None -> SKIP). Implement 1 retry + 60s backoff in _ssc_curl_search() step1 on VPS discover script. Signal file: docs/signals/processed/dev-vps-crawls-20260701T231736Z.json. NOTE: SSC portal currently in domain-wide outage (B-05-FIX verdict) - retry/backoff hardens recovery-window flakiness, it does NOT fix the outage. Not urgent while portal is down; dispatch when WIP allows."
       },
       {
-        "id": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER",
-        "status": "BACKLOG",
-        "title": "CTG B02a/TCTDHN: finalize_bctc_refine balance-sheet section classifier drops/mistags rows — total_assets frozen 0 despite correct refined markdown",
-        "owner": "dev-team",
-        "next_agent": "dev-mcp-server",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "created_at": "2026-07-02T00:20:47Z",
-        "created_by": "dev-team-dispatcher",
-        "parent_task": "W5-FU-CTG-REFINE-96e36139",
-        "related": [
-          "FIX-REE-BS-SECTION-REGEX",
-          "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
-          "FIX-BCTC-BANK-SUMMARY-MAPPING"
-        ],
-        "status_note": "Report 96e36139-5dac-414d-8e4d-20a4725890d1 (CTG 2026-Q1). Markdown->bctc_table_rows materialization in finalize_bctc_refine drops the bank-form balance sheet: unit-0002 (pages 4-5, TAI SAN side, 34 rows, ends TONG TAI SAN CO=2,924,176,928 trieu) entirely absent; unit-0003 (page 6, NGUON VON side) only 8/29 rows survive, mistagged statement_section=general. Post-apply sections: cash_flow=35 general=399 notes=6, balance_sheet=0 (VCB same-form baseline: 57). Suspected trigger: B02a/TCTDHN shape — Roman-numeral item hierarchy, mostly-blank Ma(Code) column, bold section headers (**A. TAI SAN** / **B. NO PHAI TRA VA VON CHU SO HUU**). ALSO fix wrong-row frozen scalars from prior pass: equity_total=244,904,306 is actually Section-7 note total (correct 188,692,158); total_liabilities=24,735,484,770 vs correct 2,735,484,770. DoD: after classifier fix, re-run scripts/migrations/reingest-bctc-report.ts --apply for this report_id -> balance_sheet rows >0 incl. pages 4-5; CTG total_assets=2,924,176,928 (trieu-dong unit as stored per peer VCB=2,550,963,342); equity_total/total_liabilities corrected; FR-5 identity passes; VCB/FPT byte-identical non-regression. Diagnosis evidence: STEP2 worker run 2026-07-02T00:1xZ + dispatcher RAW-probes."
-      },
-      {
         "id": "FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE",
         "title": "FIX — add routing rows for signal types data-coverage-gap (→ops) + deep_dive_result (→po) in drain-signals.md §0a-3 + po/triage-signals.md (both currently hit the generic catch-all)",
         "owner": "po",
@@ -9481,6 +9462,33 @@
           "scripts/agents-flow/cowork-match-slots.js"
         ],
         "spec_ref": "docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md"
+      },
+      {
+        "id": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER",
+        "status": "READY",
+        "title": "CTG B02a/TCTDHN: finalize_bctc_refine balance-sheet section classifier drops/mistags rows — total_assets frozen 0 despite correct refined markdown",
+        "owner": "dev-team",
+        "next_agent": "dev-mcp-server",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-07-02T00:20:47Z",
+        "created_by": "dev-team-dispatcher",
+        "parent_task": "W5-FU-CTG-REFINE-96e36139",
+        "related": [
+          "FIX-REE-BS-SECTION-REGEX",
+          "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
+          "FIX-BCTC-BANK-SUMMARY-MAPPING"
+        ],
+        "status_note": "Report 96e36139-5dac-414d-8e4d-20a4725890d1 (CTG 2026-Q1). Markdown->bctc_table_rows materialization in finalize_bctc_refine drops the bank-form balance sheet: unit-0002 (pages 4-5, TAI SAN side, 34 rows, ends TONG TAI SAN CO=2,924,176,928 trieu) entirely absent; unit-0003 (page 6, NGUON VON side) only 8/29 rows survive, mistagged statement_section=general. Post-apply sections: cash_flow=35 general=399 notes=6, balance_sheet=0 (VCB same-form baseline: 57). Suspected trigger: B02a/TCTDHN shape — Roman-numeral item hierarchy, mostly-blank Ma(Code) column, bold section headers (**A. TAI SAN** / **B. NO PHAI TRA VA VON CHU SO HUU**). ALSO fix wrong-row frozen scalars from prior pass: equity_total=244,904,306 is actually Section-7 note total (correct 188,692,158); total_liabilities=24,735,484,770 vs correct 2,735,484,770. DoD: after classifier fix, re-run scripts/migrations/reingest-bctc-report.ts --apply for this report_id -> balance_sheet rows >0 incl. pages 4-5; CTG total_assets=2,924,176,928 (trieu-dong unit as stored per peer VCB=2,550,963,342); equity_total/total_liabilities corrected; FR-5 identity passes; VCB/FPT byte-identical non-regression. Diagnosis evidence: STEP2 worker run 2026-07-02T00:1xZ + dispatcher RAW-probes.",
+        "promoted_at": "2026-07-02T03:59:20Z",
+        "promoted_by": "po",
+        "unblocks": [
+          "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
+          "W5-FU-CTG-REFINE-96e36139"
+        ],
+        "deploy_gate": "CODE phase (classifier fix + unit fixtures) is bun-test-verifiable NOW; DoD (CTG total_assets unfreezes from 0, live) needs the mcp-server rebuild that is currently user-approval-gated — batches with FIX-BCTC-ENRICHER-STUCK-BACKLOG into one rebuild.",
+        "po_promoted_note": "[po 2026-07-02T03:59:20Z] Root of stuck W5 chain. Refined markdown is correct (TONG TAI SAN CO=2,924,176,928 trieu) but the finalize BS section classifier lands 0 balance_sheet rows (VCB baseline 57), drops unit-0002 pages 4-5, mistags unit-0003. Direct-to-dev FIX (no BA/architect). Likely files: apps/mcp-server/src/application/utils/refinedMarkdownParser.ts (dirty in tree — Step-0a tree-hygiene owns adopt/revert) + finalizeBctcRefineTool.ts."
       }
     ],
     "review": [
@@ -9530,6 +9538,7 @@
           "AC-10 CTG re-ingest (96e36139-5dac-414d-8e4d-20a4725890d1) unfreezes total_assets from 0"
         ],
         "depends": [
+          "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER",
           "TASK-W2-FIX-BCTC-BANK-SUMMARY-MAPPING-ROW-REPAIR",
           "TASK-W4-FIX-BCTC-BANK-SUMMARY-MAPPING-AGGREGATOR-FIXTURES"
         ],
@@ -9542,11 +9551,13 @@
         "qa_ac13_verified_at": "2026-07-01T22:38:56Z",
         "qa_ac13_report_ref": "reports/TASK_REPORT_FIX-BCTC-BANK-SUMMARY-MAPPING-AC13.md",
         "qa_ac13_note": "AC-6 (validation_status truthful hard-block) unit-verified GREEN (55/55 pass incl TASK-W5 test file) but its live-path and AC-10 (CTG total_assets unfreeze) both require finalize_bctc_refine to run against real CTG data. reingest-bctc-report.ts --report-id 96e36139-5dac-414d-8e4d-20a4725890d1 REFUSED (exit 3): 56/56 bctc_refined_units are FAILED/empty-markdown (0 DONE-with-markdown windows) — data-loss guard correctly refuses to wipe existing bctc_table_rows for nothing. total_assets remains frozen at 0 (RAW-probed on named volume market.db post-rebuild). Remedy (per script's own printed step, out of qa scope): fresh agentic-refine transcription pass for this report_id (get_bctc_pending_refine + push_bctc_refined_unit x56 windows) is dev-mcp-server/bctc-analyst domain work, not fabricated here (no-fake-data policy).",
-        "blocked_on": "Fresh agentic-refine transcription pass for report_id=96e36139-5dac-414d-8e4d-20a4725890d1 (CTG 2026-Q1) — mint a follow-up task, not further qa review."
+        "blocked_on": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER — the agentic-refine pass (prior blocker) is DONE; remaining blocker is the finalize BS section classifier dropping balance_sheet rows so CTG total_assets stays 0 (AC-10 unmet).",
+        "blocker_reconciled": true,
+        "po_reconciled_at": "2026-07-02T03:59:20Z"
       },
       {
         "id": "W5-FU-CTG-REFINE-96e36139",
-        "status": "REVIEW",
+        "status": "BLOCKED",
         "title": "W5-FU: agentic-refine transcription pass for CTG 2026-Q1 (report_id 96e36139, 56 windows) -> re-run reingest-bctc-report.ts (unblocks W5 total_assets)",
         "owner": "po",
         "next_agent": "bctc-analyst",
@@ -9562,7 +9573,12 @@
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:04:58Z",
         "route_note": "dispatcher route-corrected: STEP1 refine_bctc_md (leaf worker, 8 chunks resumable), STEP2 dev-mcp-server (bctc-analyst lacks Bash for reingest script) — PO desc already hedged STEP2",
-        "review_note": "[dispatcher 2026-07-02T00:20:47Z] EXECUTED, DoD BLOCKED by NEW bug -> FIX-BCTC-BANK-BS-SECTION-CLASSIFIER. Refine 56/56 DONE finalized (rows_parsed=440, effective_status=PARTIAL/BEG7-override). STEP2 reingest --apply exit 0, guard passed, finalize re-ran DELETE+INSERT (440 bctc_table_rows). Non-regression PASS: VCB/FPT byte-identical before/after. DoD NOT MET: CTG total_assets still 0 — NOT a refine failure: refined markdown contains TONG TAI SAN CO=2,924,176,928 (trieu, =2.924e15 VND, internally consistent with unit-0003 NO PHAI TRA+VON CHU SO HUU sum). Root cause: finalize section classifier drops all unit-0002 rows (pages 4-5 absent from bctc_table_rows) and mistags unit-0003 (8/29 as general); 0 balance_sheet-tagged rows vs VCB 57. RAW-corroborated by dispatcher post-apply. Residual scars carried to QA notes: unit-0002 row-misalignment flags, unit-0035/unit-0051 honest-NULLs (designed PASS)."
+        "review_note": "[dispatcher 2026-07-02T00:20:47Z] EXECUTED, DoD BLOCKED by NEW bug -> FIX-BCTC-BANK-BS-SECTION-CLASSIFIER. Refine 56/56 DONE finalized (rows_parsed=440, effective_status=PARTIAL/BEG7-override). STEP2 reingest --apply exit 0, guard passed, finalize re-ran DELETE+INSERT (440 bctc_table_rows). Non-regression PASS: VCB/FPT byte-identical before/after. DoD NOT MET: CTG total_assets still 0 — NOT a refine failure: refined markdown contains TONG TAI SAN CO=2,924,176,928 (trieu, =2.924e15 VND, internally consistent with unit-0003 NO PHAI TRA+VON CHU SO HUU sum). Root cause: finalize section classifier drops all unit-0002 rows (pages 4-5 absent from bctc_table_rows) and mistags unit-0003 (8/29 as general); 0 balance_sheet-tagged rows vs VCB 57. RAW-corroborated by dispatcher post-apply. Residual scars carried to QA notes: unit-0002 row-misalignment flags, unit-0035/unit-0051 honest-NULLs (designed PASS).",
+        "depends": [
+          "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER"
+        ],
+        "blocked_on": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER — refine+reingest EXECUTED (56/56 DONE, 440 rows) but CTG total_assets still 0; root is the finalize BS section classifier, NOT a refine failure. Do NOT qa-gate until the classifier fix reflows balance_sheet rows.",
+        "po_reconciled_at": "2026-07-02T03:59:20Z"
       }
     ],
     "qa": [],
