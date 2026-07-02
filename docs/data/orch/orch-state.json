@@ -243,12 +243,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-02T08:58:45Z",
-    "updated_by": "qa",
-    "note": "TASK-DASH-CRON-1 closed APPROVED r3"
+    "status": "in_progress",
+    "updated_at": "2026-07-02T09:02:12Z",
+    "updated_by": "dev-team",
+    "active_task_id": "TASK-DASH-CRON-2",
+    "next_agent": "dev-frontend",
+    "next_action": "dev-frontend implements Zone 2 Cron Recheck Table UI per TASK-DASH-CRON-2; on return route qa",
+    "note": "TASK-DASH-CRON-1 closed APPROVED r3 (82907e5d); CRON-2 unblocked and claimed by router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9686,6 +9687,25 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
+      },
+      {
+        "id": "TASK-DASH-CRON-2",
+        "title": "Zone 2: Cron Recheck Table UI (api.cron-status.tsx proxy, CronRecheckTable component, coverage-map row, depends on Zone 1)",
+        "owner": "dev-frontend",
+        "size": "M",
+        "zone": "apps/frontend/",
+        "status": "IN_PROGRESS",
+        "type": "FEATURE",
+        "priority": "high",
+        "depends": [
+          "TASK-DASH-CRON-1"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-02T06:54:00Z",
+        "claimed_at": "2026-07-02T09:02:12Z",
+        "claimed_by": "router",
+        "next_agent": "dev-frontend",
+        "dispatch_note": "Dispatched dev-frontend 2026-07-02T09:02:12Z. Zone 1 (TASK-DASH-CRON-1) APPROVED r3: /api/cron-status endpoint + compose mount shipped (container rebuild pending user gate). Zone 2 scope: api.cron-status.tsx Remix proxy route, CronRecheckTable component, coverage-map row."
       }
     ],
     "ready": [
@@ -9712,21 +9732,6 @@
           "scripts/agents-flow/cowork-match-slots.js"
         ],
         "spec_ref": "docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md"
-      },
-      {
-        "id": "TASK-DASH-CRON-2",
-        "title": "Zone 2: Cron Recheck Table UI (api.cron-status.tsx proxy, CronRecheckTable component, coverage-map row, depends on Zone 1)",
-        "owner": "dev-frontend",
-        "size": "M",
-        "zone": "apps/frontend/",
-        "status": "TODO",
-        "type": "FEATURE",
-        "priority": "high",
-        "depends": [
-          "TASK-DASH-CRON-1"
-        ],
-        "blocks": [],
-        "created_at": "2026-07-02T06:54:00Z"
       }
     ],
     "review": [
