@@ -32,8 +32,8 @@
   },
   "summary": {
     "pages": 35,
-    "rows": 49,
-    "LIVE": 39,
+    "rows": 50,
+    "LIVE": 40,
     "DEPTH_THIN": 6,
     "STALE_RISK": 2,
     "GAP": 1,
@@ -732,6 +732,19 @@
       "fix": null,
       "l3b_status": "WIRED",
       "l3b_note": "FreshnessBadge(daily) wired MERGE-MONEY-RADAR-INTO-MOMENTUM; flag=UNKNOWN (HN-4) is the honest-null-equivalent state, not GREEN"
+    },
+    {
+      "page": "orchestration",
+      "route": "/dashboard/orchestration",
+      "elem": "cron recheck table",
+      "endpoint": "/api/cron-status",
+      "store": "cron_job_runs (MAX(started_at)) + CRONS map",
+      "writer": "node-cron scheduler (mcp-server container)",
+      "cadence": "on-demand (user recheck)",
+      "sla": "realtime",
+      "asof": "fetched_at",
+      "status": "LIVE",
+      "fix": null
     }
   ],
   "update_mechanic": {

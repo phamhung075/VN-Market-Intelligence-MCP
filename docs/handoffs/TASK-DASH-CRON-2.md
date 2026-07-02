@@ -164,3 +164,52 @@ FILES:
 NEXT: dev-mcp-server (TASK-DASH-CRON-1) → dev-frontend (TASK-DASH-CRON-2)
 
 PIPELINE: dev-mcp-server pickup, Zone 2 stages for dev-frontend after Zone 1 ships
+
+---
+
+## [Developer] Implementation Record — 2026-07-02 (dev-frontend)
+
+- **Service:** frontend
+- **Zone:** `apps/frontend/`
+- **Build tier:** 4 (feature routes + UI components, built on the existing Tier 1-3 API service layer)
+- **Simplicity gate:** certified — no new dependency, no new abstraction layer; `CronRecheckTable` follows the exact panel-component pattern already established in this file (`TaskBoardPanel`, `SignalQueuePanel`, `SprintGoalPanel`, `NarrativePanel`).
+
+**Zone 1 status at implementation time:** TASK-DASH-CRON-1 APPROVED round 3 (commit `82907e5d`) — `GET /api/cron-status` shipped in source + `docker-compose.yml` volume mount for `.claude/commands/crons`. The running `mcp-server` container has **not** been rebuilt yet (user-gated). Per dispatch constraint, this is EXPECTED: the endpoint returns a live 404 against the running container today; `api.cron-status.tsx` relays that 404 as-is (never masks as 500), and the loader's `safeFetch` degrades to the empty-shape DTO — table renders "Không có dữ liệu." in both sub-sections until the rebuild ships. No workaround attempted; no docker command run.
+
+**Files created:**
+- `apps/frontend/app/routes/api.cron-status.tsx` — resource-route proxy, byte-for-byte mirror of `api.orchestration.tsx` (FR-4.1).
+- `apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts` — 41 pure-function assertions covering `parseCronStatusDto`, `normalizeCronStatusA/B`, `normalizeCronRowA/B`, `cronStatusBadgeClasses`, `CRON_STATUS_LABELS`, `cronLayerLabel`, and the never-fired display branch.
+
+**Files modified:**
+- `apps/frontend/app/routes/dashboard.orchestration.tsx`:
+  - Added `CronStatus`/`CronStatusRowA`/`CronStatusRowB`/`CronStatusDto` types + `parseCronStatusDto` (mirrors `parseOrchStateDto`), with row-level normalization that (a) drops rows missing `name`, (b) clamps any Layer-A `status` outside the 5-value enum to `NEVER_FIRED`, and (c) unconditionally forces every Layer-B row's `status` to `SESSION_SCOPED` regardless of what upstream sends — the stronger defense NFR-7 requires (AC-14 must hold even under a malformed/adversarial upstream response, not just a well-formed one).
+  - Loader: added a second `safeFetch<CronStatusDto>` call, `Promise.all`'d with the existing `/api/orchestration` fetch (CN-4, parallel — no added latency). Extended `LoaderData` with `cronStatus` (never null — `parse(null)` returns the empty-shape struct per the `safeFetch<T>` contract) and `cronStatusError`.
+  - Added `CronStatusBadge`, `CronLayerTable`, `CronRecheckTable` components. Rendered as a new section titled "Kiểm Tra Lịch Cron" placed after the existing Narrative section, **outside** the `state ? (...) : (...)` conditional so it always renders even if `/api/orchestration` itself is down (AC-16, AC-25 — independent data surfaces, independent render path).
+  - RECHECK button ("Kiểm tra lại") calls the page's existing `revalidator.revalidate()` — no second refresh mechanism (AC-21, CN-4).
+  - Freshness badge reuses `<FreshnessBadge dataAsof={cronStatus.fetched_at || null} slaTierKey="realtime" />` — a second instance scoped to the cron table (AC-22).
+  - Layer-A/Layer-B render as two separate `CronLayerTable` calls under distinct sub-headers ("Cron máy chủ" / "Cron phiên làm việc") — always visually distinct by construction (AC-18).
+  - `last_fire == null` renders "Chưa từng chạy" (AC-20); `expected_next_fire == null` renders "—".
+  - All column headers, status labels, and section copy are plain Vietnamese; no raw enum tokens (e.g. `ON_TIME`) are ever rendered as display text (AC-28).
+- `docs/data/frontend-data-coverage-map.json` — appended the FR-6 row (with the `route` field the BA/architect flagged as missing from their own example) to `.rows`; `.summary.rows` 49→50, `.summary.LIVE` 39→40.
+
+**Tests written:** `apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts` — 41 assertions, GREEN. (No dedicated test file for `api.cron-status.tsx`'s `loader` export — Remix strips the `loader` export under the project's jsdom vitest environment, same documented constraint noted in `task17-alerts-loader.test.ts`; the route is a verbatim mirror of the already-covered `proxyUpstream` pattern, matching the zero-dedicated-test precedent for every other `api.*.tsx` proxy route in this codebase.)
+
+**Type check:** clean — `npx tsc --noEmit` → 0 errors.
+
+**Service tests:** `npm test` → 2047 pass / 2 fail (both pre-existing, documented `QUE-TOOLTIP` baseline failures unrelated to this task — `QUE_DESCRIPTIONS[i]` has 3 own keys not 2; confirmed pre-existing via `git status` showing zero local changes to those files). +41 net new passing tests vs the prior 2006/2 baseline.
+
+**G12 render-gate (MVR — mandatory):**
+- IMPORTANT caveat found and corrected during verification: port 3001 is bound by the **live `frontend` Docker container** (stale image, pre-dates this change). Playwright's `webServer.reuseExistingServer: !CI` silently piggybacks on that container instead of spawning a fresh local dev server, which would have produced a false-green G12 run (proving nothing about this diff). Re-ran with `PLAYWRIGHT_PORT=3012 npm run test:e2e` to force a genuinely fresh local Vite dev server on an unused port — no Docker container touched, no rebuild/restart attempted.
+- `npm test` → 2047 pass / 2 fail (pre-existing, see above).
+- `PLAYWRIGHT_PORT=3012 npm run test:e2e` → **4/4 PASS** (`smoke.spec.ts` ×1 + `render-check.spec.ts` ×3), confirmed against fresh local source.
+- Manual DOM confirmation (temporary spec, removed before commit): navigated to `/dashboard/orchestration` on the fresh local server — "Kiểm Tra Lịch Cron", "Kiểm tra lại", "Cron máy chủ", and "Cron phiên làm việc" all visible; no "Application Error" / "Internal Server Error"; console showed the EXPECTED `[safeFetch][dashboard.cron-status] upstream 404` (graceful degrade, not a crash).
+
+**Docs updated:** `docs/data/frontend-data-coverage-map.json` (FR-6 row, +1 row/+1 LIVE) | this handoff.
+**Graphify:** skipped — no `docs/architecture/microservice/frontend/` structural doc changed (route/component addition follows an existing documented pattern 1:1; no new API contract, layer, or convention introduced).
+
+## RETURN
+
+DONE: Implementation complete — SERVICE=frontend, TIER=4, CHANGED=[apps/frontend/app/routes/api.cron-status.tsx (new), apps/frontend/app/routes/dashboard.orchestration.tsx (edit), apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts (new), docs/data/frontend-data-coverage-map.json (edit)], NEW_PASS=41, tsc clean
+NEXT: qa | run full QA pipeline on TASK-DASH-CRON-2 — verify AC-16..AC-25, AC-28 against the diff; note Zone-1 container rebuild is still pending (user-gated), so live end-to-end (real cron data, not empty-shape degrade) cannot be verified until that ships — this is a known, accepted gap, not a defect in this diff
+HANDOFF: docs/handoffs/TASK-DASH-CRON-2.md
+PIPELINE: continue
