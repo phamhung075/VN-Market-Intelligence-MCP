@@ -555,3 +555,97 @@ export function checkRefIntegrity(
 
   return issues;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 11. SPRINT-GOAL TERMINAL-STATUS CANONICALIZATION (write-time drift guard)
+//
+// Task: FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT
+//
+// .sprint_goal is validated only as z.record(z.unknown()).optional() (§8) — its
+// .entries[] shape is NOT schema-enforced (full typing is SSOT-W2-SPRINT-GOAL-PRUNE,
+// backlogged). This guard closes the specific recurring-8x drift class WITHOUT
+// waiting for that full schema: sprint sign-off paths write non-canonical
+// terminal-status synonyms/case-variants (CLOSED, COMPLETE, done, done_verified, ...)
+// that scripts/orch-cold-evict.sh's TERMINAL_SET-driven predicate can never match,
+// so the sprint entry is stranded forever and .sprint_goal.entries grows unbounded
+// (26 seen, cap 15; feedback_coldevict_complete_status_drift).
+//
+// SPRINT_GOAL_TERMINAL_ALIASES: uppercase(raw status) -> canonical TERMINAL_SET
+// token. An entry is a violation iff its raw status uppercases to a mapped alias
+// but is NOT already byte-identical to the canonical token — i.e. this is a
+// narrow "close but not canonical" check, not a full status enum. Non-terminal
+// tokens (OPEN, active, PLANNING, ACTIVE, ...) are deliberately untouched:
+// closing those sprints is a PO editorial act, out of scope here (see task
+// § OUT OF SCOPE).
+//
+// Called by:
+//   - scripts/orch-validate.mjs (Stage 1d — hard fail, mirrors checkRefIntegrity)
+//   - orchStateStore.ts server-side write path (rides next user-approved rebuild)
+//
+// Kept in lock-step with the identical alias map in
+// scripts/fix-sprint-goal-status-drift-evict-normalize.jq (the one-time AC-1
+// normalizer) — both must recognize exactly the same drift shapes.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const SPRINT_GOAL_TERMINAL_ALIASES: Readonly<Record<string, Status>> = {
+  DONE: "DONE",
+  CLOSED: "DONE",
+  COMPLETE: "DONE",
+  COMPLETED: "DONE",
+  DONE_VERIFIED: "DONE_VERIFIED",
+  CANCELLED: "CANCELLED",
+  CANCELED: "CANCELLED",
+  DEFERRED: "DEFERRED",
+  SKIPPED: "SKIPPED",
+};
+
+export interface SprintGoalStatusIssue {
+  sprintId: string;
+  index: number;
+  status: string;
+  canonical: Status;
+  fix: string;
+}
+
+/**
+ * Check `.sprint_goal.entries[].status` for non-canonical terminal-status
+ * drift (synonyms/case-variants of the TERMINAL_SET tokens). Returns an array
+ * of issues (empty = fully canonical, or no sprint_goal/entries present).
+ *
+ * Deliberately accepts a loosely-typed `doc` (not `OrchState`) because
+ * `.sprint_goal` is currently `z.record(z.unknown())` in OrchStateSchema — this
+ * lets the same function validate throwaway fixture objects and raw
+ * `JSON.parse` output identically (no schema coupling required).
+ */
+export function checkSprintGoalStatusCanonical(
+  doc: Record<string, unknown>,
+): SprintGoalStatusIssue[] {
+  const issues: SprintGoalStatusIssue[] = [];
+  const sprintGoal = doc["sprint_goal"];
+  if (sprintGoal == null || typeof sprintGoal !== "object") return issues;
+  const entries = (sprintGoal as Record<string, unknown>)["entries"];
+  if (!Array.isArray(entries)) return issues;
+
+  entries.forEach((entry, index) => {
+    if (entry == null || typeof entry !== "object") return;
+    const e = entry as Record<string, unknown>;
+    const status = e["status"];
+    if (typeof status !== "string" || status.length === 0) return;
+    const sprintId = typeof e["sprint_id"] === "string" ? (e["sprint_id"] as string) : "(no-sprint_id)";
+    const canonical = SPRINT_GOAL_TERMINAL_ALIASES[status.toUpperCase()];
+    if (canonical != null && status !== canonical) {
+      issues.push({
+        sprintId,
+        index,
+        status,
+        canonical,
+        fix:
+          `sprint_goal.entries[${index}] (sprint_id="${sprintId}").status: "${status}" is a ` +
+          `non-canonical terminal-status token — write "${canonical}" instead (matches ` +
+          `TERMINAL_SET so scripts/orch-cold-evict.sh can evict it).`,
+      });
+    }
+  });
+
+  return issues;
+}

@@ -19,6 +19,11 @@
  *   Stage 1: OrchStateSchema.safeParse(JSON.parse(text))
  *     Stage 1b: checkLaneCoherence() — WARN-only during SHG migration (~72 violations expected)
  *     Stage 1c: checkRefIntegrity() — hard fail on dangling detail_ref / payload_ref
+ *     Stage 1d: checkSprintGoalStatusCanonical() — hard fail on non-canonical
+ *       .sprint_goal.entries[].status terminal-status drift (CLOSED/COMPLETE/done/
+ *       done_verified, etc. instead of DONE/DONE_VERIFIED/...). Closes the recurring-8x
+ *       drift class from task FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT that defeated
+ *       scripts/orch-cold-evict.sh's TERMINAL_SET eviction predicate.
  *
  * EXIT CODES:
  *   0  = Stage 0 + Stage 1 pass (coherence warnings do NOT cause non-zero exit during migration)
@@ -46,6 +51,7 @@ import {
   OrchStateSchema,
   checkLaneCoherence,
   checkRefIntegrity,
+  checkSprintGoalStatusCanonical,
 } from '../apps/mcp-server/src/infrastructure/orchStateSchema.ts';
 
 // ─── Paths ────────────────────────────────────────────────────────────────────
@@ -408,6 +414,33 @@ if (refIssues.length > 0) {
     const ri = refIssues[i];
     process.stderr.write(`[${i + 1}] ${ri.path}: ${ri.message}\n`);
     process.stderr.write(`    fix: ${ri.fix}\n`);
+  }
+  process.exit(2);
+}
+
+// ── Stage 1d: sprint_goal terminal-status canonicalization (hard fail) ────────
+//
+// Rejects non-canonical terminal-status drift in .sprint_goal.entries[].status
+// (CLOSED/COMPLETE/done/done_verified/CANCELED/COMPLETED instead of the
+// canonical DONE/DONE_VERIFIED/CANCELLED/DEFERRED/SKIPPED TERMINAL_SET tokens).
+// Task: FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT AC-2 (durable write-time guard).
+// Operates on raw `parsed` (not `result.data`) — sprint_goal is an untyped
+// z.record(z.unknown()) field, so this works identically against fixtures.
+
+const sprintGoalIssues = checkSprintGoalStatusCanonical(parsed);
+
+if (sprintGoalIssues.length > 0) {
+  const c = sprintGoalIssues.length;
+  process.stderr.write(
+    `\nORCH-STATE VALIDATION FAILED — Stage 1d (${c} sprint_goal status drift issue${c !== 1 ? 's' : ''}) — fix and retry:\n`
+  );
+  for (let i = 0; i < c; i++) {
+    const si = sprintGoalIssues[i];
+    process.stderr.write(
+      `[${i + 1}] sprint_goal.entries[${si.index}] (sprint_id="${si.sprintId}").status: "${si.status}" is not canonical.\n`
+    );
+    process.stderr.write(`    expected: ${si.canonical}\n`);
+    process.stderr.write(`    fix: ${si.fix}\n`);
   }
   process.exit(2);
 }

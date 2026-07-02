@@ -1,161 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-06-30 | **Cycle:** CONTAM-10-MIGRATION
-
-## Session 2026-06-30 — FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL
-
-**Task:** Author launchd OS-level firer for fb-daily guaranteed slot (09:15Z Mon-Fri).
-**Zone:** cross-service/ (no dev-* specialist zone match) → developer handles directly.
-
-**Root cause:** cowork master CronCreate is session-scoped; RemoteTrigger backstop retired → fb-daily misses when CLI session is not live. Memory: project_cowork_guaranteed_slot_needs_live_cli_session.
-
-**What was built:**
-- `scripts/cowork-fb-daily-firer.sh` — bash wrapper; StartInterval cadence + internal UTC gate; fires `claude --dangerously-skip-permissions -p "run docs/agents/fb-market-poster/flow/main.md  slot=<slot>"`.
-- `launchd/com.vn-market.fb-daily-firer.plist` — StartInterval=900 (15 min), RunAtLoad=false, KeepAlive=false; plist validated OK via `plutil -lint`.
-- Time gates: Mon-Fri 09:00-09:29Z → slot=fb-daily; Sat-Sun 13:00-13:29Z → slot=fb-weekend (companion guaranteed slot, same agent).
-- Doc pointers: `docs/standards/cron-jobs.md` § FB Poster Firer + `docs/policies/dev-standards.md` § Script Persistence CANONICAL entry.
-
-**Key lesson:** DST-invariant gate pattern (StartInterval + `date -u` check in script) beats StartCalendarInterval for UTC-targeted jobs on France-timezone Mac. Proven by fleet-push precedent.
-**Dedup safety:** fb-market-poster flow's own `published:fb-daily:<VN-DATE>` marker (TTL=100800s) prevents double-publish if both this firer and Layer B cowork tick fire in same window.
-**OPS half:** FB-LAUNCHD-OPS-INSTALL-VERIFY (next_agent=ops) does the actual `launchctl load` + verify.
-
-**Last updated:** 2026-06-24 | **Cycle:** FIX-FB-GATE-HARDENING-BUNDLE
-
-## Session 2026-06-24 — FIX-FB-GATE-HARDENING-BUNDLE (3 tasks batched)
-
-**Task:** FIX-FB-JARGON-WEEKDAY-ORDINAL-COLLISION + FIX-FB-GATE-TEMPLATE-STRUCTURE-VALIDATOR + FIX-FB-GATE-CURRENCY-UNIT-GUARD
-**Zone:** scripts/ (cross-service) → developer handles directly.
-
-**TASK 1 — weekday/ordinal fix (fb-jargon-gate.sh Group E):**
-Vietnamese weekday names when used as DAY NAMES are always capitalised ("Thứ Hai", "Thứ Ba"). Ordinal enumerators ("Thứ nhất/hai/ba" = firstly/secondly/thirdly) use lowercase. Removing the `-i` flag from `grep -ni` in the weekday check makes it case-sensitive — correctly blocking "Thứ Hai" declared for a non-Monday date, and NOT blocking "Thứ hai" ordinal in body prose.
-Result: fb-post-2026-06-14.md (Chủ nhật post with "Thứ nhất/hai/ba" ordinals) → PASS; real wrong-weekday synthetic → FAIL. Zero regression on 06-23 (Thứ Ba) / 06-24 (Thứ Tư).
-
-**TASK 2 — structural template validator (Check-G, fb-data-integrity-gate.sh):**
-5 sub-checks: G1 canonical header / G2 verbatim disclaimer + fence / G3 hashtag block (mandatory 5 tags, no diacritics) / G4 no raw markdown (##, **bold**, | table |) / G5 word ceiling ≤1300.
-Also fixed a pre-existing `set -euo pipefail` silent-abort: `grep -vE` on the POST_TICKERS extraction pipeline exits 1 when 0 tickers pass the filter (all excluded) — now guarded with `(set +o pipefail; ...)`. This was the actual root of the `feedback_fb_poster_gate_false_green` pattern (gate aborted silently at Step 1, no violations counted, but exit was caught by a calling pipeline as exit 1 then lost).
-
-**TASK 3 — currency-unit guard (Check-F, fb-data-integrity-gate.sh):**
-Line-level co-occurrence: VN-ticker + `$NNN`/`USD NNN` (range 5-9999) on same line → BLOCK. False-positive guards: commodity lines (thùng/oz/barrel skip), FX-pair lines (USD/VND skip), macro-aggregate lines (tỷ USD skip), NON_TICKERS exclusion set, range filter. All guards verified against real posts and synthetic fixtures.
-
-## Session 2026-06-18 — TASK-AUTO-PUSH-A fleet-worktree-push.sh (ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP)
-
-**Task:** Create `scripts/fleet-worktree-push.sh` — worktree-isolated push backstop.
-**Zone:** scripts/ (cross-service, no dev-* specialist match) → developer handles directly.
-
-**Problem context:** Cowork churn keeps main working tree perpetually dirty; `git pull --rebase` in commit-mutex retry path fails → push lag accumulates (103 unpushed 2026-06-17, 149 unpushed 2026-06-15). Need a backstop that pushes from a clean worktree without touching the dirty main tree.
-
-**What was built:**
-- `scripts/fleet-worktree-push.sh` — 185L bash, set -euo pipefail, proven recipe from po-s84/po-s98.
-- PUSH_THRESHOLD=20 tunable header constant; no-op when ahead <= threshold.
-- Cleanup trap on EXIT/INT/TERM → always removes worktree + `git worktree prune`.
-- Divergence-reconcile: classifies behind-set via `git log HEAD..origin/main --pretty=format:"%s"` → aborts on non-chore commits (sends BUG telegram), merges chore-only.
-- orch-state.json merge conflict → `--ours` (HEAD authoritative; cloud chore = additive _updated_at only).
-- node_modules symlink so pre-push hook resolves deps without copy.
-- `pnpm --filter vn-market check` tsc gate → abort if red (never push around red tree).
-- Telegram notifications via curl to TELEGRAM_INFO_WORK_CHANNEL_ID (success) / TELEGRAM_REPORT_BUG_CHANNEL_ID (abort).
-- `--dry-run` flag: prints all actions, never pushes, prints telegram calls to stderr.
-
-**DoD evidence:**
-- shellcheck: exit 0 clean; SC1091+SC2329 suppressed with inline directives (documented).
-- No-op path: `bash scripts/fleet-worktree-push.sh` with ahead=9 <= 20 → exits 0 "nothing to do", no worktree created.
-- Abort path: `PUSH_THRESHOLD=0 bash scripts/fleet-worktree-push.sh --dry-run` → detected 2 non-chore commits in behind-set, correctly aborted, worktree cleanup confirmed.
-
-**Docs updated:** `docs/policies/dev-standards.md` § Script Persistence — CANONICAL pointer added.
-
-## Session 2026-06-17 — FIX-FB-POST-DATA-INTEGRITY-GATE (cross-service scripts task)
-
-**Task:** Build reusable plausibility gate at `scripts/fb-data-integrity-gate.sh`.
-**Zone:** cross-service (scripts/) — no dev-* specialist match → developer handles directly.
-
-**Root cause context:** `fb-jargon-gate.sh` checks jargon tokens only; it passed both fabricated FB drafts (VRE −9.4%, VHM −8.5%) on 2026-06-17. These values exceed the HOSE ±7% daily price limit — physically impossible. Root: no numeric sanity check existed.
-
-**What was built:**
-- `scripts/fb-data-integrity-gate.sh` — 175L bash gate, 4 check groups (A=HOSE-limit, B=live-delta, C=selloff-contradiction, D=VN-Index), exits non-zero on BLOCK.
-- Live data from `http://localhost:3000/mcp/api/prices/batch?tickers=VNINDEX,...` — established REST endpoint used by the frontend watchlist, no new transport.
-- Optional `$3` pre-fetched snapshot JSON for headless/offline contexts.
-
-**Key design choices:**
-- Check-C (selloff narrative) uses negation filtering to avoid false-positive on "không phải bán tháo" denial phrases.
-- Soft-skip if API unavailable (curl 8s timeout) — gate degrades gracefully, does not block on infra error.
-- Exit discipline: `exit 0` ONLY when `$VIOLATIONS -eq 0`; `exit 1` on block (avoids the fb-jargon-gate-false-green trap).
-
-**Self-verify:**
-- Clean post `fb-post-2026-06-17.md` → `[PASS]` exit 0.
-- VRE −9.4% injected → `[BLOCK] Check-A HOSE-price-limit + Check-B live-delta` exit 1.
-
-**Docs updated:** `docs/policies/dev-standards.md` § Script Persistence — CANONICAL pointer added.
-
-## Session 2026-06-02 — SIG-FOLLOWUP-DRYRUN X-1 (sprint SELF-IMPROVE-GATE)
-
-**Task:** X-1 — Prove D-IMPROVE lane-B emit seam end-to-end (synthetic dry-run).
-
-**Finding:** Default emit path (Step 12 `else` branch) had a wiring gap — `appendDashboardRow` called without `orchStatePath` injectable, so all tests injecting `writeProposalFn` skipped this path entirely. The real `writeImprovementProposal` + `appendDashboardRow` code path was never exercised in tests.
-
-**Fix:** Added `orchStatePath?: string` to `SelfImproveOrchestratorDeps`; threaded through `appendDashboardRow` call (+9 lines). Minimal change, no behavior change in production (undefined = real path preserved).
-
-**Test added:** `apps/mcp-server/src/__tests__/X1-dryrun-emit-seam.test.ts` — 3 tests, all NO `writeProposalFn` injected (forces default path):
-1. Main X-1: synthetic DEGRADED → doc written + signal_queue row appended (both sinked to temp)
-2. Cooldown idempotency: second run blocked by cooldown guard
-3. PERSISTENTLY_LOW variant: also emits LANE-B on default path
-
-**Verdict:** PROVEN-WORKING (3/3 pass, 65 prior tests pass, bun tsc clean). Commit: 6a8c87ac.
-**No rebuild needed:** flow/test/script-only change (no mcp-server runtime code changed, only injectable dep threaded).
-
-## Session c212 — Dev-Team Orchestration (JUMP-TO: drain-signals → PO triage → dispatch)
-
-**Preflight:** NO HEAD.lock. Worktree prune: clean. PASS.
-
-**Gate assessment (20:59Z):**
-- OBSERVE-1951b: CLOSED (gate was 20:34Z, 25 min past). AC-6 PASS → 1951d UNBLOCKED.
-- 1948 gate: 2026-05-20T07:22Z — future, still blocked.
-- OBSERVE-1953g: 2026-05-21T02:30Z — future, observing.
-
-**Drain signals (12):** All stale/resolved — moved to processed/. No new PO triage needed (already planned via po-1955-sprint-plan.json signal).
-
-**TASKS.md updates:** OBSERVE-1951b→Done, Sprint-1956→Done (11/11), 1954a AC-3 PASS, stale Backlog entries removed, TASKS.md=80 lines.
-
-**Dispatch:** dev-mcp-server→1955a (HIGH FIX dailyDashboardJob path) + ops→1951d (cutover 12 RemoteTriggers). WIP=2/2.
-
-## Session c178 — Task 1952f (chef-intraday trigger_prompt MCP URL)
-
-**Task:** 1952f — Append MCP URL to `chef-intraday` trigger_prompt in `docs/data/cowork-schedule.json`.
-
-**Root cause confirmed:** cowork-team/main.md Step 5 spawns unified-agent using `trigger_prompt` verbatim. The field lacked `\nMCP: https://zenmidi.com/vn-market/mcp`. Unified-agent exited without tools.
-
-**Narrowest-fix analysis:**
-- `news-scout-market`, `market-watcher-market`, `alert-commander-market` → `trigger_error: "API_MIN_INTERVAL"`, no `trigger_id`, produce results via master dispatcher already. NOT modified.
-- Only `chef-intraday` has the failure. One field change.
-
-**Files changed:**
-- `docs/data/cowork-schedule.json` — `chef-intraday.trigger_prompt` appended `\nMCP: https://zenmidi.com/vn-market/mcp`
-- `docs/TASKS.md` — 1952f added to Done
-- `docs/agent-memory/notebooks/developer.md` — this update
-
-**Pipeline state:** c178 DONE. Commit on main.
-
-## Session 2026-05-31 — NB-PRUNE-1 (sprint NB-PRUNE-FIX)
-
-**Task:** NB-PRUNE-1 — fix notebook-write prune anchor mismatch (skill-only change, .claude/skills/).
-**Zone:** .claude/skills/ + agent flows — disjoint from apps/mcp-server/ peer work.
-
-**What was done:**
-- Replaced `^## c[0-9]` anchor with `^## ` in notebook-write/SKILL.md.
-- New algorithm: detect all level-2 headings via `grep -c "^## "`, preserve pre-first-## preamble,
-  retain last 3 sections regardless of heading format (c-format, ISO-timestamp, Session:).
-- AC-5 hard guard (≤200L) loop iterates on oldest-section prune until compliant.
-- Added TODO comment for po/developer invocation-note contradiction (deferred, scope-risk).
-- Skill file: 104L (cap 120L). No flow files changed.
-- Commit: 7166db01
-
-**Repro proof (fixtures at /tmp — originals NOT mutated):**
-- agents-architect.md (## ISO-ts format): 316L → 27L, 3 sections, preamble intact.
-- ops.md (## Session: format): 5871L → 344L (prune pass) → 117L (guard loop), newest session retained.
-- Both: wc -l ≤ 200. Last-3 retained verified via grep "^## ".
-
-**Contradiction note:** po/main.md L126 "OVERWRITE ≤50L" vs developer/flow/main.md L125 "append c<NNN>".
-  Left as TODO in skill. QA should flag if po notebooks exceed 200L in future.
-
-**NEXT:** QA — NB-PRUNE-1 ready for deliberate-violation verification.
+**Last updated:** 2026-07-02 | **Cycle:** FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT
 
 ## Session 2026-06-14 — FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY (doc-only)
 
@@ -193,3 +38,18 @@ Line-level co-occurrence: VN-ticker + `$NNN`/`USD NNN` (range 5-9999) on same li
 **Learning:** Proximity-window sector matching (120 chars) is too aggressive for Vietnamese financial prose where multiple sectors are discussed in the same paragraph. Tight parenthesised-label matching (pattern `TICKER (...)`) targets the fabrication signal without false-positives.
 
 **Commit:** eceee94a
+
+## Session 2026-07-02 — FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT
+
+**Task:** sprint_goal.entries over cap (26/15) — 8 terminal sprints stranded by non-canonical status drift.
+**Zone:** multi (scripts/ + apps/mcp-server/ + orch SSOT) → developer handles directly (generic lead).
+
+**Root cause (deeper than dispatched):** `.sprint_goal.entries[]` and `.task_board.active_sprints[]` are TWO SEPARATE arrays. `scripts/orch-cold-evict.sh`'s TERMINAL_SPRINT_STATUSES predicate had NEVER touched `.sprint_goal.entries[]` at all (zero grep hits pre-fix) — only canonicalizing the 8 tokens would not have made the eviction script actually drop them.
+
+**AC-1 (mechanical):** `scripts/fix-sprint-goal-status-drift-evict-normalize.jq` — generic alias-map normalizer (CLOSED/COMPLETE/COMPLETED→DONE, done→DONE, done_verified→DONE_VERIFIED, CANCELED→CANCELLED), applied via `jq -f ... | orch-apply.sh`. Then extended `scripts/orch-cold-evict.sh` (new `rm_sprint_goal`/`new_cold_sprint_goal_set` maps, cold target `.closed_sprint_goals[]`) and ran it live: `.sprint_goal.entries` 26→18, 8 items moved to `docs/data/orch/archive/2026-07.json` with canonical status preserved.
+
+**AC-2 (durable):** `checkSprintGoalStatusCanonical()` added to `orchStateSchema.ts` (same alias map, exported) + wired as Stage 1d hard-fail in `scripts/orch-validate.mjs` (which `orch-apply.sh` already calls) — any future write with a drifted terminal-status token is rejected (exit 2) before it touches the live file. Also extended `docs/agents/dev-team/flow/post-cycle.md` Step 4.2 bloat-trigger to count `.sprint_goal.entries[]` terminal entries (previously only checked active_sprints/done/done_verified — the gap that let this reach 26 unnoticed). Server-side (orchStateStore.ts) parity rides the next user-approved mcp-server rebuild — not done here per hard constraint (no docker build/exec).
+
+**Proof (fixtures only, never live SSOT):** `bun scripts/orch-validate.mjs <fixture-with-CLOSED>` → exit 2, Stage 1d message. `cat <fixture> | ORCH_APPLY_LIVE_FILE_OVERRIDE=<fixture> bash scripts/orch-apply.sh` → exit 1, fixture file byte-unchanged. Full cold-evict end-to-end dry-run against a scratch copy (env-var override) before touching live data.
+
+**Tests:** `apps/mcp-server/src/__tests__/TASK-FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT.test.ts` (5 tests, RED→GREEN), `bun tsc --noEmit` clean, full suite 14132 pass (pre-existing unrelated 54 fail/4 errors — CI-RED-RECONCILE backlog, confirmed unrelated by running the orchStateSchema-scoped subset alone: 108/108 pass).

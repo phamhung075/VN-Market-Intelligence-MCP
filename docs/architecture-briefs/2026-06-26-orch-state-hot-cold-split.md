@@ -133,7 +133,8 @@ Backlog items carry full free-text prose in `desc`, `note`, and `root_cause` fie
   "month": "YYYY-MM",
   "created_at": "<ISO-8601 UTC>",
   "done_tasks": [ /* full task objects evicted from done/done_verified */ ],
-  "closed_sprints": [ /* full sprint objects evicted from active_sprints */ ],
+  "closed_sprints": [ /* full sprint objects evicted from task_board.active_sprints */ ],
+  "closed_sprint_goals": [ /* full sprint_goal entry objects evicted from sprint_goal.entries — added FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT (2026-07-02); separate array, keyed by sprint_id not id, same TERMINAL_SPRINT_STATUSES predicate as closed_sprints */ ],
   "signal_rows": [ /* full row objects evicted from signal_queue.rows + archive */ ],
   "backlog_detail": [ /* full backlog items with desc/note/root_cause */ ]
 }

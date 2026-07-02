@@ -47,11 +47,19 @@ TERMINAL_SPRINT_N=$(jq '[.task_board.active_sprints[] | select(
   ((.status // "") | startswith("BCTC-"))
 )] | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
 
+# sprint_goal.entries[] — SEPARATE array from active_sprints[] above, keyed by sprint_id not id
+# (FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT, 2026-07-02). Entries must already carry canonical tokens —
+# scripts/orch-validate.mjs Stage 1d rejects drifted writes at source, so this predicate needs no
+# alias/case-insensitive fallback (unlike the one-time scripts/fix-sprint-goal-status-drift-evict-normalize.jq).
+SPRINT_GOAL_TERMINAL_N=$(jq '[(.sprint_goal.entries // [])[] | select(
+  .sprint_id != null and ((.status // "") | IN("DONE","DONE_VERIFIED","CANCELLED","DEFERRED","SKIPPED"))
+)] | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+
 DONE_N=$(jq '.task_board.done | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
 DV_N=$(jq '.task_board.done_verified | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
 
-if [ "$TERMINAL_SPRINT_N" -gt 0 ] || [ "$DONE_N" -gt 10 ] || [ "$DV_N" -gt 0 ]; then
-  echo "[dev-team/post-cycle] Terminal bloat: sprints=$TERMINAL_SPRINT_N done=$DONE_N done_verified=$DV_N — cold eviction"
+if [ "$TERMINAL_SPRINT_N" -gt 0 ] || [ "$SPRINT_GOAL_TERMINAL_N" -gt 0 ] || [ "$DONE_N" -gt 10 ] || [ "$DV_N" -gt 0 ]; then
+  echo "[dev-team/post-cycle] Terminal bloat: sprints=$TERMINAL_SPRINT_N sprint_goal=$SPRINT_GOAL_TERMINAL_N done=$DONE_N done_verified=$DV_N — cold eviction"
   # Claim commit-mutex before running script
   # task_claim(task_kind="commit-mutex", task_id="dev-team-evict-<slug>", owner_agent="dev-team", ttl_seconds=120)
   bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"

@@ -7,6 +7,11 @@
 # Evicts terminal records from docs/data/orch/orch-state.json (HOT) to the
 # monthly cold archive at docs/data/orch/archive/YYYY-MM.json (COLD).
 #
+# FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT (2026-07-02): extended to also evict terminal
+# .sprint_goal.entries[] (cold target: .closed_sprint_goals[]) — a SEPARATE array
+# from task_board.active_sprints[], keyed by sprint_id not id, previously untouched
+# by this script (root cause of sprint_goal.entries growing past its 15-entry cap).
+#
 # Usage:
 #   scripts/orch-cold-evict.sh [--dry-run]
 #
@@ -47,10 +52,16 @@ DONE_MAX_AGE_DAYS="${DONE_MAX_AGE_DAYS:-7}"       # evict done[] older than N da
 MTIME_CAS_RETRIES="${MTIME_CAS_RETRIES:-3}"
 
 # Terminal sprint statuses: comma-separated list.
-# Sprints whose status field matches any of these are evicted from active_sprints[].
-# Sprints whose status field starts with "BCTC-" are also evicted (handled separately).
+# Sprints whose status field matches any of these are evicted from active_sprints[]
+# AND from sprint_goal.entries[] (FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT — same predicate,
+# two independent arrays; sprint_goal.entries[] is keyed by sprint_id not id).
+# Sprints whose status field starts with "BCTC-" are also evicted (handled separately;
+# active_sprints[] only — sprint_goal.entries[] has no BCTC-* status convention).
 # SSOT: apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET
 # {DONE, DONE_VERIFIED, CANCELLED, DEFERRED, SKIPPED} — must match exactly; no ad-hoc aliases.
+# Callers MUST canonicalize sprint_goal.entries[].status BEFORE this predicate can match —
+# see scripts/fix-sprint-goal-status-drift-evict-normalize.jq (one-time) and
+# scripts/orch-validate.mjs Stage 1d (write-time guard, prevents recurrence).
 TERMINAL_SPRINT_STATUSES="${TERMINAL_SPRINT_STATUSES:-DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED}"
 
 # Terminal signal statuses: comma-separated list.
@@ -106,8 +117,9 @@ mkdir -p "${ARCHIVE_DIR}"
 # This keeps the output well under ARG_MAX so it can be passed via --argjson.
 #
 # Output fields:
-#   rm_done, rm_dv, rm_sprint, rm_sig_rows  — {id:true} removal maps for hot
-#   new_cold_done_set, new_cold_sprint_set, new_cold_signal_set — {id:true} for cold select
+#   rm_done, rm_dv, rm_sprint, rm_sprint_goal, rm_sig_rows  — {id:true} removal maps for hot
+#   new_cold_done_set, new_cold_sprint_set, new_cold_sprint_goal_set, new_cold_signal_set
+#     — {id:true} for cold select
 #   n_evict_* counts
 # =============================================================================
 compute_id_maps() {
@@ -115,6 +127,7 @@ compute_id_maps() {
   local cold_done="$2"
   local cold_sprint="$3"
   local cold_signal="$4"
+  local cold_sprint_goal="$5"
 
   jq \
     --argjson keep_n      "${KEEP_RECENT_DONE}" \
@@ -124,6 +137,7 @@ compute_id_maps() {
     --argjson cold_done   "${cold_done}" \
     --argjson cold_sprint "${cold_sprint}" \
     --argjson cold_signal "${cold_signal}" \
+    --argjson cold_sprint_goal "${cold_sprint_goal}" \
     '
       # ── parse config ─────────────────────────────────────────────────────
       ($term_sprint | split(",")) as $ts_arr |
@@ -134,6 +148,7 @@ compute_id_maps() {
       ($cold_done   | map({key: (. // ""), value: true}) | from_entries) as $cd_set   |
       ($cold_sprint | map({key: (. // ""), value: true}) | from_entries) as $cs_set   |
       ($cold_signal | map({key: (. // ""), value: true}) | from_entries) as $csig_set |
+      ($cold_sprint_goal | map({key: (. // ""), value: true}) | from_entries) as $csg_set |
 
       # ── done[]: sort DESC; evict beyond keep_n AND older than cutoff ─────
       (.task_board.done // []
@@ -174,6 +189,18 @@ compute_id_maps() {
 
       [$all_terminal_sprint_ids[] | select($cs_set[.] != true)] as $new_sprint_ids |
 
+      # ── sprint_goal.entries[]: terminal status (FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT) ─
+      # Distinct array from active_sprints[] above (same predicate, keyed by sprint_id
+      # not id). Caller MUST have already canonicalized status tokens (see
+      # scripts/fix-sprint-goal-status-drift-evict-normalize.jq) — this predicate does
+      # ONLY exact TERMINAL_SET matching, no alias/case-insensitive fallback.
+      [.sprint_goal.entries // [] | .[] | select(
+          .sprint_id != null and ((.status // "") | IN($ts_arr[]))
+        ) | .sprint_id
+      ] as $all_terminal_sprint_goal_ids |
+
+      [$all_terminal_sprint_goal_ids[] | select($csg_set[.] != true)] as $new_sprint_goal_ids |
+
       # ── signal_queue.rows[]: terminal statuses ───────────────────────────
       [.signal_queue.rows // [] | .[] | select(
           .id != null and (.status | IN($tsig_arr[]))
@@ -190,27 +217,30 @@ compute_id_maps() {
       # ── output: IDs and lookup maps only (NOT full objects) ──────────────
       {
         # {id: true} removal maps for hot file transformation
-        rm_done:     ($all_terminal_done_ids | map({key: ., value: true}) | from_entries),
-        rm_dv:       ($all_terminal_dv_ids   | map({key: ., value: true}) | from_entries),
-        rm_sprint:   ($all_terminal_sprint_ids | map({key: ., value: true}) | from_entries),
-        rm_sig_rows: ($all_terminal_sig_row_ids | map({key: ., value: true}) | from_entries),
+        rm_done:        ($all_terminal_done_ids | map({key: ., value: true}) | from_entries),
+        rm_dv:          ($all_terminal_dv_ids   | map({key: ., value: true}) | from_entries),
+        rm_sprint:      ($all_terminal_sprint_ids | map({key: ., value: true}) | from_entries),
+        rm_sprint_goal: ($all_terminal_sprint_goal_ids | map({key: ., value: true}) | from_entries),
+        rm_sig_rows:    ($all_terminal_sig_row_ids | map({key: ., value: true}) | from_entries),
 
         # {id: true} sets for selecting new items to cold
         # done + done_verified share the same cold target (done_tasks[])
-        new_cold_done_set:   (($new_done_ids + $new_dv_ids) | map({key: ., value: true}) | from_entries),
-        new_cold_sprint_set: ($new_sprint_ids | map({key: ., value: true}) | from_entries),
+        new_cold_done_set:        (($new_done_ids + $new_dv_ids) | map({key: ., value: true}) | from_entries),
+        new_cold_sprint_set:      ($new_sprint_ids | map({key: ., value: true}) | from_entries),
+        new_cold_sprint_goal_set: ($new_sprint_goal_ids | map({key: ., value: true}) | from_entries),
         # rows + archive share the same cold target (signal_rows[])
         new_cold_signal_set: (($new_sig_row_ids + $new_sig_arch_ids) | map({key: ., value: true}) | from_entries),
 
         # Counts for reporting
-        n_evict_done:     ($all_terminal_done_ids | length),
-        n_evict_dv:       ($all_terminal_dv_ids | length),
-        n_evict_sprints:  ($all_terminal_sprint_ids | length),
-        n_evict_sig_rows: ($all_terminal_sig_row_ids | length),
-        n_evict_sig_arch: ($all_sig_archive_ids | length),
+        n_evict_done:        ($all_terminal_done_ids | length),
+        n_evict_dv:          ($all_terminal_dv_ids | length),
+        n_evict_sprints:     ($all_terminal_sprint_ids | length),
+        n_evict_sprint_goal: ($all_terminal_sprint_goal_ids | length),
+        n_evict_sig_rows:    ($all_terminal_sig_row_ids | length),
+        n_evict_sig_arch:    ($all_sig_archive_ids | length),
         n_new_cold: (
           ($new_done_ids | length) + ($new_dv_ids | length) +
-          ($new_sprint_ids | length) +
+          ($new_sprint_ids | length) + ($new_sprint_goal_ids | length) +
           ($new_sig_row_ids | length) + ($new_sig_arch_ids | length)
         )
       }
@@ -233,9 +263,10 @@ build_cold_temp() {
       --argjson maps  "${maps}" \
       --slurpfile hot "${ORCH_STATE}" \
       '
-        ($maps.new_cold_done_set)   as $cd_set   |
-        ($maps.new_cold_sprint_set) as $cs_set   |
-        ($maps.new_cold_signal_set) as $csig_set |
+        ($maps.new_cold_done_set)        as $cd_set   |
+        ($maps.new_cold_sprint_set)      as $cs_set   |
+        ($maps.new_cold_sprint_goal_set) as $csg_set  |
+        ($maps.new_cold_signal_set)      as $csig_set |
 
         (
           (($hot[0].task_board.done // []) + ($hot[0].task_board.done_verified // [])) |
@@ -246,13 +277,18 @@ build_cold_temp() {
           [.[] | select((.id // "") as $id | $cs_set[$id] == true)]
         ) as $new_sprints |
         (
+          $hot[0].sprint_goal.entries // [] |
+          [.[] | select((.sprint_id // "") as $id | $csg_set[$id] == true)]
+        ) as $new_sprint_goals |
+        (
           (($hot[0].signal_queue.rows // []) + ($hot[0].signal_queue.archive // [])) |
           [.[] | select((.id // "") as $id | $csig_set[$id] == true)]
         ) as $new_signals |
 
-        .done_tasks     += $new_done    |
-        .closed_sprints += $new_sprints |
-        .signal_rows    += $new_signals
+        .done_tasks          += $new_done          |
+        .closed_sprints      += $new_sprints       |
+        .closed_sprint_goals  = ((.closed_sprint_goals // []) + $new_sprint_goals) |
+        .signal_rows         += $new_signals
       ' "${COLD_FILE}" > "${output}"
   else
     # Create new cold file with schema from §3.2 of brief.
@@ -261,9 +297,10 @@ build_cold_temp() {
       --arg     month "${MONTH}" \
       --arg     now   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
       '
-        ($maps.new_cold_done_set)   as $cd_set   |
-        ($maps.new_cold_sprint_set) as $cs_set   |
-        ($maps.new_cold_signal_set) as $csig_set |
+        ($maps.new_cold_done_set)        as $cd_set   |
+        ($maps.new_cold_sprint_set)      as $cs_set   |
+        ($maps.new_cold_sprint_goal_set) as $csg_set  |
+        ($maps.new_cold_signal_set)      as $csig_set |
         {
           month:      $month,
           created_at: $now,
@@ -274,6 +311,10 @@ build_cold_temp() {
           closed_sprints: [
             .task_board.active_sprints // [] | .[] |
             select((.id // "") as $id | $cs_set[$id] == true)
+          ],
+          closed_sprint_goals: [
+            .sprint_goal.entries // [] | .[] |
+            select((.sprint_id // "") as $id | $csg_set[$id] == true)
           ],
           signal_rows: [
             ((.signal_queue.rows // []) + (.signal_queue.archive // [])) |
@@ -299,6 +340,7 @@ build_hot_temp() {
       .task_board.done           |= [.[] | select((.id // "") as $id | $maps.rm_done[$id]     != true)] |
       .task_board.done_verified  |= [.[] | select((.id // "") as $id | $maps.rm_dv[$id]       != true)] |
       .task_board.active_sprints |= [.[] | select((.id // "") as $id | $maps.rm_sprint[$id]   != true)] |
+      .sprint_goal.entries       |= [.[] | select((.sprint_id // "") as $id | $maps.rm_sprint_goal[$id] != true)] |
       .signal_queue.rows         |= [.[] | select((.id // "") as $id | $maps.rm_sig_rows[$id] != true)] |
       .signal_queue.archive       = []
     ' "${ORCH_STATE}" > "${output}"
@@ -306,7 +348,7 @@ build_hot_temp() {
 
 # =============================================================================
 # Helper: read cold-known IDs from existing cold file (for idempotency)
-# Sets globals: COLD_DONE_IDS, COLD_SPRINT_IDS, COLD_SIGNAL_IDS
+# Sets globals: COLD_DONE_IDS, COLD_SPRINT_IDS, COLD_SPRINT_GOAL_IDS, COLD_SIGNAL_IDS
 # =============================================================================
 read_cold_ids() {
   if [[ -f "${COLD_FILE}" ]]; then
@@ -314,10 +356,14 @@ read_cold_ids() {
       || { log "ABORT: existing cold file structure invalid: ${COLD_FILE}"; exit 1; }
     COLD_DONE_IDS=$(jq '[.done_tasks[].id // ""]' "${COLD_FILE}")
     COLD_SPRINT_IDS=$(jq '[.closed_sprints[].id // ""]' "${COLD_FILE}")
+    # closed_sprint_goals is new-additive (FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT) —
+    # `// []` default so pre-existing cold files without this key still parse.
+    COLD_SPRINT_GOAL_IDS=$(jq '[(.closed_sprint_goals // [])[].sprint_id // ""]' "${COLD_FILE}")
     COLD_SIGNAL_IDS=$(jq '[.signal_rows[].id // ""]' "${COLD_FILE}")
   else
     COLD_DONE_IDS='[]'
     COLD_SPRINT_IDS='[]'
+    COLD_SPRINT_GOAL_IDS='[]'
     COLD_SIGNAL_IDS='[]'
   fi
 }
@@ -331,11 +377,12 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   CURRENT_SIZE=$(wc -c < "${ORCH_STATE}" | tr -d ' ')
 
   read_cold_ids
-  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}")
+  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}")
 
   N_DONE=$(echo "${MAPS}"    | jq '.n_evict_done')
   N_DV=$(echo "${MAPS}"      | jq '.n_evict_dv')
   N_SPRINTS=$(echo "${MAPS}" | jq '.n_evict_sprints')
+  N_SPRINT_GOAL=$(echo "${MAPS}" | jq '.n_evict_sprint_goal')
   N_SIG_R=$(echo "${MAPS}"   | jq '.n_evict_sig_rows')
   N_SIG_A=$(echo "${MAPS}"   | jq '.n_evict_sig_arch')
   N_NEW=$(echo "${MAPS}"     | jq '.n_new_cold')
@@ -350,6 +397,7 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   log "  done[]              would evict: ${N_DONE} items from hot"
   log "  done_verified[]     would evict: ${N_DV} items from hot"
   log "  active_sprints[]    would evict: ${N_SPRINTS} items from hot"
+  log "  sprint_goal.entries[] would evict: ${N_SPRINT_GOAL} items from hot"
   log "  signal_queue.rows[] would evict: ${N_SIG_R} items from hot"
   log "  signal_queue.archive[] evict:   ${N_SIG_A} items from hot"
   log "  New items to append to cold:    ${N_NEW}"
@@ -378,15 +426,16 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   read_cold_ids
 
   # ── Pass 1: compute ID maps (small output, safe for --argjson) ────────────
-  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}")
+  MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}")
 
   log "Attempt $((ATTEMPT + 1))/${MTIME_CAS_RETRIES}: ID maps computed"
-  log "  done[]:            $(echo "${MAPS}" | jq '.n_evict_done') to evict from hot"
-  log "  done_verified[]:   $(echo "${MAPS}" | jq '.n_evict_dv') to evict from hot"
-  log "  active_sprints[]:  $(echo "${MAPS}" | jq '.n_evict_sprints') to evict from hot"
-  log "  signal rows[]:     $(echo "${MAPS}" | jq '.n_evict_sig_rows') to evict from hot"
-  log "  signal archive[]:  $(echo "${MAPS}" | jq '.n_evict_sig_arch') to evict from hot"
-  log "  New items to cold: $(echo "${MAPS}" | jq '.n_new_cold')"
+  log "  done[]:              $(echo "${MAPS}" | jq '.n_evict_done') to evict from hot"
+  log "  done_verified[]:     $(echo "${MAPS}" | jq '.n_evict_dv') to evict from hot"
+  log "  active_sprints[]:    $(echo "${MAPS}" | jq '.n_evict_sprints') to evict from hot"
+  log "  sprint_goal.entries[]: $(echo "${MAPS}" | jq '.n_evict_sprint_goal') to evict from hot"
+  log "  signal rows[]:       $(echo "${MAPS}" | jq '.n_evict_sig_rows') to evict from hot"
+  log "  signal archive[]:    $(echo "${MAPS}" | jq '.n_evict_sig_arch') to evict from hot"
+  log "  New items to cold:   $(echo "${MAPS}" | jq '.n_new_cold')"
 
   # ── Pass 2a: Build cold temp ─────────────────────────────────────────────
   COLD_TEMP=$(mktemp "${ARCHIVE_DIR}/.cold-evict-XXXXXXXX.tmp")
