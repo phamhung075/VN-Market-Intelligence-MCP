@@ -1,6 +1,16 @@
 # PO Notebook
 
-_Last: 2026-07-02T13:23Z_
+_Last: 2026-07-02T17:28Z_
+
+## Tick 2026-07-02T17:07Z — dev-team triage (coord d3292ca4): 8 signals, 0 new tasks → NOTHING
+
+**RAW-verify (17:20-21Z):** all containers healthy; mcp-server:4000/health=200(0.005s), api-gw=200, frontend:3001=200; mcp-server StartedAt=10:15:34Z, RestartCount=3, OOMKilled=false, ExitCode=0; mem 59.05%→59.26% (1.181→1.185GiB).
+- **S1/2/3 health CURL_ERR (a01-mcp CRIT / a02-api / a12-fe):** RESOLVED false-positive. StartedAt 10:15Z PREDATES the 14:14Z window → no crash/restart at outage time; endpoints all 200 now. Auditor-FP probe-artifact class (same as archived 06:16/06:17Z rows).
+- **S4 restart count=3 (a21-mcp):** TRIAGED dup → OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN. RestartCount resets ONLY on user-gated recreate → persists regardless of code; container stable 7h, ExitCode=0. Not independently actionable.
+- **S5 mem 99.67% (sau-1783012565):** TRIAGED dup → FIX-MCP-MEMORY-CODE-LEAK. Corroborated 99.67%@17:16Z but RAW re-probe @17:20Z = 59% → 812MiB RECLAIMED w/o restart → refutes hard leak, = transient spike+GC. Folded reclaim datapoint into existing task (diag: leak→transient/cap-tight). Near-OOM on 2GB cap still a watch.
+- **S8 cycle-snapshot promotion (file sig):** dup → SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED, ENRICHED note w/ root cause. emitPressureStateTool.ts snapPath=cycle-snapshot-<tickHHMM>.json, tick_id defaults to 15-min FLOOR (16:30); flow names by ACTUAL minute (16:34 on disk) → never matches → latest.json frozen (mtime 08:35Z). Alt server-side zone apps/mcp-server/.
+- **S6/S7 cowork telemetry:** informational, no action.
+Committed orch-state (2982bcba, explicit path). RETURN=NOTHING (no new/promotable task; WIP still parked, ready empty after prior HNX dispatch).
 
 ## Tick 2026-07-02T13:07Z — dev-team triage (coord d3292ca4): re-rank + promote → BATCH(1 FIX)
 
