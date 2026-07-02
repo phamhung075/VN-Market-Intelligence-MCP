@@ -2,3 +2,7 @@
 [2026-07-01T09:10:58Z] --- fb-daily-firer: slot=fb-daily DOW=3 9:10Z ---
 [2026-07-01T09:10:58Z] invoking: /Users/admin/.local/bin/claude --dangerously-skip-permissions -p 'run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily'
 [2026-07-01T09:10:58Z] invoking: /Users/admin/.local/bin/claude --dangerously-skip-permissions -p 'run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily'
+[2026-07-02T09:12:27Z] --- fb-daily-firer: slot=fb-daily DOW=4 9:12Z ---
+[2026-07-02T09:12:27Z] --- fb-daily-firer: slot=fb-daily DOW=4 9:12Z ---
+[2026-07-02T09:12:27Z] invoking: /Users/admin/.local/bin/claude --dangerously-skip-permissions -p 'run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily'
+[2026-07-02T09:12:27Z] invoking: /Users/admin/.local/bin/claude --dangerously-skip-permissions -p 'run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily'
