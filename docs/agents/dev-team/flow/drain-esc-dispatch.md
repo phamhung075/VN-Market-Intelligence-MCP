@@ -1,6 +1,10 @@
-<!-- size-justification: 63L — ESC-DISPATCH handler extracted from drain-signals.md (brief §3.2/§6) to
+<!-- size-justification: 87L — ESC-DISPATCH handler extracted from drain-signals.md (brief §3.2/§6) to
      keep drain-signals.md under 120L cap. All 6 handler steps are load-bearing and cannot be split
-     further without losing trigger→action traceability. BGFAN-1 2026-06-07: run_in_background=true added to Agent spawn (+3L). -->
+     further without losing trigger→action traceability. BGFAN-1 2026-06-07: run_in_background=true added to Agent spawn (+3L).
+     FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH 2026-07-02: dual-source (dashboard|file) row handling
+     added — bctc-analyst has no Bash and now emits escalations as docs/signals/*.json files; steps 2
+     and 6 branch on row.source so file-sourced rows (already archived by drain-signals.js) are not
+     double-marked (+21L). -->
 <!-- BGFAN-1: spawn uses run_in_background=true per canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
 > Parent: [drain-signals.md](./drain-signals.md) — invoked per 0a-3 routing row for type=`esc-deep-dive-request`
@@ -12,7 +16,11 @@ Called from drain-signals.md 0a-3 when a NEW row with `type=esc-deep-dive-reques
 
 ## Input
 
-Signal row payload (read from `.signal_queue.rows[]`):
+Signal row payload — row may originate from EITHER drain path (bctc-analyst has no Bash, so the
+file path below is now the canonical one; the queue path remains for other producers):
+- `source="dashboard"` — read from orch-state.json `.signal_queue.rows[]` (0a-D)
+- `source="file"` — drained from `docs/signals/*.json` (0a-1); already archived to `processed/`
+  by `scripts/agents-flow/drain-signals.js` by the time this handler runs.
 ```json
 { "trigger_id", "ticker", "quarter", "report_id", "guard_key", "context", "all_esc_fired" }
 ```
@@ -41,8 +49,9 @@ spawn_claim = call_tool(server="vn-market", tool="task_claim", arguments={
 })
 IF NOT spawn_claim.claimed:
   LOG: "[ESC-DISPATCH] SKIP spawn for " + ticker + "/" + quarter + " — spawn_key held by peer"
-  # Mark row READ; do NOT release guard_key (Opus not dispatched yet).
-  mark signal row status → READ
+  # Mark row READ (dashboard rows only — file rows are already archived); do NOT release guard_key
+  # (Opus not dispatched yet).
+  IF row.source == "dashboard": mark signal row status → READ
   EXIT handler
 
 # 3. Spawn bctc-analyst with model=claude-opus-4 to run ONLY deep-dive-opus.md.
@@ -64,8 +73,10 @@ finally:
 #    TTL=86400 is a safety net; explicit release is best-effort (graceful on failure).
 call_tool(server="vn-market", tool="task_release", arguments={ task_id: guard_key })
 
-# 6. Mark esc-deep-dive-request row RESOLVED.
-mark signal row status → RESOLVED
+# 6. Mark esc-deep-dive-request row RESOLVED (only meaningful for a live orch-state.json row).
+IF row.source == "dashboard": mark signal row status → RESOLVED
+ELSE: no-op — file-sourced row (source="file") is already archived to docs/signals/processed/
+      by the canonical drain script; there is no live row left to mark.
 LOG: "[ESC-DISPATCH] complete: " + ticker + "/" + quarter + "/" + trigger_id
 ```
 

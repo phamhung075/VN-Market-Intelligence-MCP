@@ -65,8 +65,10 @@ IF coverage_limited_ids is non-empty:
           "guard_key": cov_guard_key, "guard_ttl_days": 30
         }
       }
-      Append cov_signal_row to orch-state.json .signal_queue.rows[] (via signal-dashboard SKILL §WRITE → orch-apply.sh).
-      LOG: "[ESC-DISPATCH] DATA-COVERAGE-LIMITED emitted (ops, once per 30d): "
+      Write(path="docs/signals/bctc-analyst-{ts_compact}.json", content=cov_signal_row)
+      # Write tool only — bctc-analyst has NO Bash (cannot run orch-apply.sh). Cross-Team Signal
+      # Directory pattern: docs/protocols/agent-chaining-protocol.md § Cross-Team Signal Directory.
+      LOG: "[ESC-DISPATCH] DATA-COVERAGE-LIMITED emitted (file, ops, once per 30d): "
            + ticker + "/" + quarter + "/" + limited_id
       Append to bctc_signal: { "esc3_status": "DATA-COVERAGE-LIMITED",
         "coverage_guard_key": cov_guard_key, "quarters_returned": quarters_returned }

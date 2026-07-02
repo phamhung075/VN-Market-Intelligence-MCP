@@ -98,8 +98,11 @@ Emit to session state key `deep_dive_result`; caller appends to bctc_signal outp
 
 ## Output Signal (mandatory — emit after completing ANY ESC handler, including error path)
 
-After producing `deep_dive_result` session block, write to `orch-state.json` `.signal_queue.rows[]`
-(via signal-dashboard SKILL §WRITE → orch-apply.sh; NEVER raw temp→rename). Shape:
+After producing `deep_dive_result` session block, write it as a signal FILE — this sub-flow runs
+under the bctc-analyst tool package (NO Bash — cannot run orch-apply.sh or write orch-state.json
+directly). Use the Cross-Team Signal Directory pattern instead
+(docs/protocols/agent-chaining-protocol.md § Cross-Team Signal Directory):
+`Write(path="docs/signals/bctc-analyst-{ts_compact}.json", content=<shape below>)`. Shape:
 
 ```
 id: "bca-ddres-{ts_compact}", ts: <ISO-8601 UTC>, from: "bctc-analyst", to: "po",

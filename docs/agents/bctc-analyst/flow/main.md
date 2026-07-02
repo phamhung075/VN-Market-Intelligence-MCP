@@ -95,8 +95,11 @@ IF any(esc_flags) == TRUE:
     Append to bctc_signal: { "escalation_status": "GUARD-HELD", "guard_key": guard_key }
 
   ELSE:
-    # 2. Emit esc-deep-dive-request to orch-state.json .signal_queue (SAFE-JSON — structured object).
-    # Per signal-dashboard SKILL.md §WRITE (→ orch-apply.sh; NEVER raw temp→rename).
+    # 2. Emit esc-deep-dive-request as a signal FILE — bctc-analyst has NO Bash (cannot run
+    # orch-apply.sh, cannot write orch-state.json). Use the Cross-Team Signal Directory pattern
+    # instead (docs/protocols/agent-chaining-protocol.md § Cross-Team Signal Directory) — the SAME
+    # Write-tool mechanism the analyst already uses for routine bctc_signal_*.json files.
+    # SAFE-JSON — structured object, no shell interpolation.
     signal_row = {
       "id": "bca-{ts_compact}", "ts": "<ISO-8601 UTC>",
       "from": "bctc-analyst", "to": "dev-team",
@@ -105,8 +108,10 @@ IF any(esc_flags) == TRUE:
       "severity": "HIGH", "status": "NEW", "payload_ref": null,
       "payload": { trigger_id, ticker, quarter, report_id, guard_key, context, all_esc_fired }
     }
-    Append signal_row to orch-state.json .signal_queue.rows[] (via signal-dashboard SKILL §WRITE → orch-apply.sh).
-    LOG: "[ESC-DISPATCH] emitted for " + ticker + "/" + quarter + "/" + trigger_id
+    Write(path="docs/signals/bctc-analyst-{ts_compact}.json", content=signal_row)   # Write tool only — no Bash
+    LOG: "[ESC-DISPATCH] emitted (file) for " + ticker + "/" + quarter + "/" + trigger_id
+    # dev-team drain-signals.md §0a-1 picks up the file on next tick → routes to ESC-DISPATCH
+    # (drain-esc-dispatch.md), which claims the spawn mutex and dispatches the Opus deep-dive.
     # deep_dive_result NOT emitted here — Sonnet cannot run model-pinned Opus sub-flow.
     # dev-team dispatches bctc-analyst with model=claude-opus-4 on next drain tick.
     Append to bctc_signal: { "escalation_status": "PENDING", "guard_key": guard_key }
