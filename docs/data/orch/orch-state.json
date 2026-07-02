@@ -4,7 +4,7 @@
     "last_mtime": "2026-06-06T16:22:41Z",
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-07-02T00:27:54Z",
+      "last_mtime": "2026-07-02T04:20:50Z",
       "last_linecount": 40
     },
     "section_name": "po",
@@ -282,7 +282,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T03:19:06Z",
+    "_updated_at": "2026-07-02T04:20:50Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -909,6 +909,17 @@
         "summary": "bctc-discover stale 21711min (check B-05)",
         "severity": "CRITICAL",
         "status": "TRIAGED",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-t1-20260702T0417",
+        "ts": "2026-07-02T04:17:53Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 mcp-server memory climbing (82.66%) - fix d9280133 blocked on approval",
+        "severity": "HIGH",
+        "status": "READ",
         "payload_ref": null
       }
     ],
