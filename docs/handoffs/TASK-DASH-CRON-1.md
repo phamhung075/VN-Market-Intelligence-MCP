@@ -203,4 +203,70 @@ PIPELINE: continue to dev-mcp-server pickup
 
 **Board Status:** fixer_round=1, next_agent=qa, route_to=qa (REVIEW→qa for re-verification)
 
-**Commit:** See [git log output below]
+**Commit:** 126a94d2b12c3c6797a984b0d0d94864eb068a90
+
+---
+
+## [QA] Review Record — 2026-07-02T08:42:34Z — CHANGES_REQUESTED (round 2)
+
+Delta review of commit 126a94d2 (4 files: docker-compose.yml,
+cronStatusHandler.test.ts, orch-state.json, this handoff) — round-1 sweep not
+redone.
+
+**Round-1 blocker CONFIRMED FIXED.** `docker-compose.yml:27` mounts
+`./.claude/commands/crons:/app/.claude/commands/crons:ro`. Verified
+independently: `apps/mcp-server/Dockerfile` `WORKDIR /app` (L18) +
+`CMD ["bun", "run", "src/index.ts"]` (no cwd change) — mount target
+`/app/.claude/commands/crons` matches `cronStatusHandler.ts:102`'s
+`resolve(process.cwd(), ".claude", "commands", "crons")` exactly.
+`docker compose config` (base only): source=`<repo>/.claude/commands/crons`,
+target=`/app/.claude/commands/crons`, `read_only: true`. `docker compose -f
+docker-compose.yml -f docker-compose.dev.yml config`: dev override declares
+no `volumes:` block for `mcp-server`, confirmed the base mount survives the
+merge (still present in merged output). Host `.claude/commands/crons/` has
+13 `.md` files (matches AC-12). AC-1 will be unblocked once the pending
+container rebuild ships. (Note: only `docker compose config` was run —
+validate-only, per instruction never to run `up`/`restart`/`build`.)
+
+**BLOCKING (1 issue, round 2):**
+`apps/mcp-server/src/__tests__/cronStatusHandler.test.ts:359` — the new
+REGRESSION test (titled "default commandsDir (zero-arg) ... → 503") calls
+`handleGetCronStatus(mockReq, res, db, new Date(), nonExistentDir)` — an
+**explicit 5th arg**. This short-circuits `cronStatusHandler.ts:102`'s
+`const commandsDir = commandsDirArg ?? resolve(process.cwd(), ".claude",
+"commands", "crons")` before `resolve(process.cwd(), ...)` ever executes.
+This is the identical defect class flagged in round 1 — restated verbatim
+as the round-1 board `fix_scope`: *"Add a regression test that calls
+handleGetCronStatus with the DEFAULT (zero-arg) commandsDir against a
+fixture mimicking the container layout, OR an integration assertion that
+resolve(process.cwd(),'.claude','commands','crons') is a real dir when
+CWD=/app at container start."* Neither option was implemented. Every
+`handleGetCronStatus(...)` call site in the file (lines 278, 293, 308, 326,
+327, 359) passes an explicit 5th arg (`LIVE_CRONS_DIR` or `nonExistentDir`)
+— `cronStatusHandler.ts:102`'s `resolve(process.cwd(), ...)` branch is
+never executed anywhere in this test suite. The test's own title says
+"zero-arg"; its body contradicts the title.
+
+**Fix scope for fixer (round 2):** In `cronStatusHandler.test.ts`, make the
+REGRESSION test call `handleGetCronStatus(mockReq, res, db, new Date())`
+with **no 5th arg**, stubbing `process.cwd()` (e.g. `spyOn(process,
+"cwd").mockReturnValue(<fixture dir without .claude/commands/crons>)`,
+restore after) so the real default-resolution line executes and resolves to
+a nonexistent path — keep the existing 503 JSON `{error}` assertions.
+Minimum: edit 1 test, ~10 lines, no new files.
+
+**Re-verified, non-blocking:** `bun test src/__tests__/cronStatusHandler.test.ts`
+→ 18/18 pass. `bun tsc --noEmit` → 0 errors. `npx eslint
+src/__tests__/cronStatusHandler.test.ts` → ignored (`eslint.config.mjs:30`
+deliberately excludes `src/__tests__/**` — pre-existing project convention,
+not a round-2 regression). `git show 126a94d2 --stat` → exactly the 4 files
+described in the fixer's own round-1 record; no scope creep.
+
+Round 2 — routed to fixer (fixer_round=1 < 2, this becomes round-2 attempt).
+
+## RETURN
+
+DONE: QA round-2 review complete — 1 issue found (see [QA] Review Record round 2 above)
+NEXT: fixer | rewrite cronStatusHandler.test.ts:359 REGRESSION test to exercise the true zero-arg default (no commandsDirArg), per fix scope above
+HANDOFF: docs/handoffs/TASK-DASH-CRON-1.md
+PIPELINE: continue

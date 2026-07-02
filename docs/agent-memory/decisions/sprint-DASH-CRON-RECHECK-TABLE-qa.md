@@ -47,3 +47,20 @@ test-suite gap — round 1, routed to fixer (not architect).
 (all 5 new files + route registration are correct and well-tested); the gap
 is an infra-provisioning omission (docker-compose.yml volume mount) that
 none of BA/architect/dev's briefs anticipated.
+
+### STEP qa-S2 · qa · 2026-07-02T08:42:34Z
+**task-id:** TASK-DASH-CRON-1
+**what-done:** Delta-reviewed fixer round-1 commit 126a94d2 (4 files). Verified
+docker-compose.yml mount matches Dockerfile WORKDIR/CMD, `docker compose
+config` valid (base + dev-override merge), 18/18 tests pass, tsc 0 errors,
+no scope creep (git show --stat).
+**what-considered:**
+- Prod fix (compose mount): CORRECT — round-1 blocker resolved.
+- New REGRESSION test (L359): passes explicit `nonExistentDir` as 5th arg,
+  short-circuiting `commandsDirArg ?? resolve(process.cwd(),...)` — never
+  exercises the real zero-arg default, same defect class restated verbatim
+  in round-1 fix_scope, unaddressed.
+**why-decision:** CHANGES_REQUESTED (round 2) — test claims "zero-arg" in
+its title but injects an explicit path; provides false regression coverage.
+**why-change:** Prod defect fixed as planned; test-coverage gap is new
+finding, narrower scope than round 1 (1-line test edit, not infra).
