@@ -2,6 +2,16 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c498 · 2026-07-02T20:19:45Z
+### Audit Run Tier-1 (20:00–20:20 UTC 2026-07-02)
+- Tier: 1 | Fire-election: WON (tick=2026-07-02T20:00Z) | Services: 12/12 UP
+- Health endpoints: 5/5 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
+- A-20 pdf-extractor multi-probe: 3/3 PASS (event-loop healthy)
+- A-21: RestartCount=3 (PASS, dedup baseline ≤3) | A-32 disk: 47% PASS (<85%)
+- A-30: 99.99% memory (SUPPRESSED — KNOWN-TRIAGED per briefing, swap pending)
+- Crons: All OK (no fire gaps, success_rate≥80%)
+- Anomalies: 0 new | Dedup-suppressed: 1 (A-30 KNOWN-TRIAGED) | Status: HEALTHY
+
 ## c497 · 2026-07-02T19:45:10Z
 ### Audit Run Tier-1 (19:45–19:47 UTC 2026-07-02)
 - Tier: 1 | Fire-election: WON (tick=2026-07-02T19:30Z)
