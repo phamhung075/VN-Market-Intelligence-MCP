@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-02T14:05:12Z",
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-2": null
+    },
+    "last_fired_timestamp": "2026-07-02T14:04:27.000Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "14:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 0,
+    "note": "preflight WORK verdict; refine_bctc_md spawned background; slot token claimed+released; pressure emitted (cycle_snapshot_promoted=false, known user-gated mcp-server rebuild)"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-02T14:05:12Z",
+  "_processed": {
+    "fingerprint": "a45f1c430e798252ed63e2a7e62522b0580e2a65adad42436fe87a7bb9fa541b",
+    "processedAt": "2026-07-02T17:18:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

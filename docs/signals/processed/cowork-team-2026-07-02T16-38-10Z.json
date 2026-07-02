@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-02T16:38:10Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
+    "last_fired_timestamp": "2026-07-02T16:36:29.000Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 386,
+    "signal_backlog": 4,
+    "note": "Adaptive mode restored (stale_warning cleared by 16:18:37Z legacy-tick emit — AC-P1-6-3 self-heal loop verified end-to-end). Single cron-due slot refine-bctc-slot-4 spawned bg (daily 30 16 * * *). WATCH finding: cycle-snapshot-latest.json promotion silently failing since 06:31Z — emit_pressure_state returns cycle_snapshot_promoted:false on 16:00Z and 16:30Z ticks despite fresh cycle-snapshot-16:05/16:34.json on disk; suspect tick-snapshot.md FILE_TICK=$(date -u +%H:%M) (actual minute) never matches promotion matcher (nominal tick minute) when dispatcher fires 4-7min late, i.e. always. Impact soft: consumers fall back to direct get_cycle_bootstrap (Step -1 miss path). Needs dev-mcp-server look at promotion matcher OR flow fix to name snapshot by nominal tick. 4 NEW to=po auditor rows still ride peer dev-team drain."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-02T16:38:10Z",
+  "_processed": {
+    "fingerprint": "bd9fdd771a8f8bfa00fff7e24444851aa9dd07a6fa0a569ac7840608a8f2c536",
+    "processedAt": "2026-07-02T17:18:33Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
