@@ -9863,9 +9863,9 @@
         "id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
         "title": "Architect review + pm decomposition: script deterministic cron-tick preflights (WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck). Cuts ~80% idle-hours token burn; all mutex/election/injection gates preserved. Spec = brief.",
         "owner": "architect",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "status": "IN_PROGRESS",
-        "zone": "multi",
+        "zone": "root",
         "type": "SPRINT-S",
         "priority": "high",
         "user_prioritized": true,
@@ -9885,7 +9885,9 @@
         "claimed_at": "2026-07-02T11:27:05Z",
         "claimed_by": "router",
         "dispatched_at": "2026-07-02T11:27:05Z",
-        "dispatch_note": "[dispatcher 2026-07-02 tick 11:07Z] SPRINT-S per Step 2 matrix: architect review -> pm decomposition. Spec = docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md. WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck. All mutex/election/injection gates MUST be preserved."
+        "dispatch_note": "[dispatcher 2026-07-02 tick 11:07Z] SPRINT-S per Step 2 matrix: architect review -> pm decomposition. Spec = docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md. WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck. All mutex/election/injection gates MUST be preserved.",
+        "handoff_ref": "docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md",
+        "row_note": "[router 2026-07-02T11:42:41Z] architect leg DONE (commit a9c2553e, RAW-verified: handoff 248L + DJ-GATE-1 journal + head->pm). Row synced to head: next_agent pm, zone root per handoff § Zone (route dev WUs to developer generic). Note: architect RETURN overclaimed a ready[]-row update that never landed — row was in in_progress[]; synced by router."
       }
     ],
     "ready": [],
