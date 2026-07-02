@@ -282,7 +282,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T00:27:54Z",
+    "_updated_at": "2026-07-02T01:00:06Z",
     "_updated_by": "dev-team",
     "archive": [
       {
@@ -1545,6 +1545,17 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "devteam-mockguard-fp-20260702T010006Z",
+        "summary": "mock-guard HARD-FAIL exit=1 — FALSE POSITIVE class: all hits inside apps/mcp-server/~/.bun/install/cache/ (stray bun install cache in repo tree: 26MB, untracked, NOT gitignored; matches are third-party ajv/zod TODO markers, not production source). Proposed: janitor task — delete apps/mcp-server/~, add .gitignore entry, add mock-guard exclusion for dependency-cache paths. No fabricated-data-in-production evidence.",
+        "severity": "WARN",
+        "status": "NEW",
+        "ts": "2026-07-02T01:00:06Z",
+        "from": "dev-team/post-cycle",
+        "to": "po",
+        "type": "system-issue",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-30T23:29:07Z",
@@ -2009,7 +2020,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-02T00:43:24Z",
+    "_updated_at": "2026-07-02T00:56:13Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -11979,23 +11990,6 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      },
-      {
-        "id": "FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH",
-        "title": "bctc-analyst cannot dispatch ESC-3/ESC-4 escalations — flow mandates a jq | scripts/orch-apply.sh .signal_queue write but the analyst runtime has NO Bash (only Read/Write/Edit/call_tool). RECURRING: HVN Q1-2026 ESC-4 blocked (msg 3116), FPT Q1-2026 E3-cache verify skipped (no shell/compute tool). Fix: re-route escalation dispatch through a Write-based signal FILE that the dev-team drain converts to signal_queue (analyst HAS Write, same pattern as its routine signals), OR grant Bash via agent-father.",
-        "type": "FIX",
-        "priority": "high",
-        "status": "IN_PROGRESS",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "route_to": "agent-father",
-        "created_at": "2026-07-02T00:36:11Z",
-        "created_by": "po-triage-signals",
-        "origin_signal": "bctc_signal_HVN_20260702_routine (msg 3116, signal_id 8195)",
-        "status_note": "AC: an ESC-3/ESC-4 escalation fires and produces a signal_queue row / board entry WITHOUT any no-Bash BUG telegram — i.e. bctc-analyst can dispatch escalations from a Bash-less session. Cross-ref FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (auditor-predicate side of the same lock<->board gap). The HVN Q1-2026 ESC-4 deep-dive itself = low-urgency next-quarter one-off-profit (23.5%, 929.2 ty VND, likely non-recurring tax credit) monitoring; guard esc-deepdive:HVN:Q1-2026:ESC-4 was released cleanly so it self-heals on the next Bash-capable analyst cycle — no data lost. [dispatcher 2026-07-02T00:43:24Z] Dispatched to agent-father (FIX direct tier, WIP 2/2).",
-        "started_at": "2026-07-02T00:43:24Z",
-        "assigned_to": "agent-father"
       }
     ],
     "ready": [
@@ -12160,6 +12154,24 @@
         "dispatched_at": "2026-07-01T23:04:58Z",
         "route_note": "dispatcher route-corrected: STEP1 refine_bctc_md (leaf worker, 8 chunks resumable), STEP2 dev-mcp-server (bctc-analyst lacks Bash for reingest script) — PO desc already hedged STEP2",
         "review_note": "[dispatcher 2026-07-02T00:20:47Z] EXECUTED, DoD BLOCKED by NEW bug -> FIX-BCTC-BANK-BS-SECTION-CLASSIFIER. Refine 56/56 DONE finalized (rows_parsed=440, effective_status=PARTIAL/BEG7-override). STEP2 reingest --apply exit 0, guard passed, finalize re-ran DELETE+INSERT (440 bctc_table_rows). Non-regression PASS: VCB/FPT byte-identical before/after. DoD NOT MET: CTG total_assets still 0 — NOT a refine failure: refined markdown contains TONG TAI SAN CO=2,924,176,928 (trieu, =2.924e15 VND, internally consistent with unit-0003 NO PHAI TRA+VON CHU SO HUU sum). Root cause: finalize section classifier drops all unit-0002 rows (pages 4-5 absent from bctc_table_rows) and mistags unit-0003 (8/29 as general); 0 balance_sheet-tagged rows vs VCB 57. RAW-corroborated by dispatcher post-apply. Residual scars carried to QA notes: unit-0002 row-misalignment flags, unit-0035/unit-0051 honest-NULLs (designed PASS)."
+      },
+      {
+        "id": "FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH",
+        "title": "bctc-analyst cannot dispatch ESC-3/ESC-4 escalations — flow mandates a jq | scripts/orch-apply.sh .signal_queue write but the analyst runtime has NO Bash (only Read/Write/Edit/call_tool). RECURRING: HVN Q1-2026 ESC-4 blocked (msg 3116), FPT Q1-2026 E3-cache verify skipped (no shell/compute tool). Fix: re-route escalation dispatch through a Write-based signal FILE that the dev-team drain converts to signal_queue (analyst HAS Write, same pattern as its routine signals), OR grant Bash via agent-father.",
+        "type": "FIX",
+        "priority": "high",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "route_to": "agent-father",
+        "created_at": "2026-07-02T00:36:11Z",
+        "created_by": "po-triage-signals",
+        "origin_signal": "bctc_signal_HVN_20260702_routine (msg 3116, signal_id 8195)",
+        "status_note": "AC: an ESC-3/ESC-4 escalation fires and produces a signal_queue row / board entry WITHOUT any no-Bash BUG telegram — i.e. bctc-analyst can dispatch escalations from a Bash-less session. Cross-ref FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (auditor-predicate side of the same lock<->board gap). The HVN Q1-2026 ESC-4 deep-dive itself = low-urgency next-quarter one-off-profit (23.5%, 929.2 ty VND, likely non-recurring tax credit) monitoring; guard esc-deepdive:HVN:Q1-2026:ESC-4 was released cleanly so it self-heals on the next Bash-capable analyst cycle — no data lost. [dispatcher 2026-07-02T00:43:24Z] Dispatched to agent-father (FIX direct tier, WIP 2/2).",
+        "started_at": "2026-07-02T00:43:24Z",
+        "assigned_to": "agent-father",
+        "review_note": "[dispatcher 2026-07-02T00:56:13Z] agent-father DONE, Option A — ESC-1..5 dispatch re-routed to docs/signals/ file writes via Write tool (bctc-analyst has no Bash; orch-apply.sh contract unreachable). Commit 881e38f1, 6 files (bctc-analyst main/esc-coverage-guard/deep-dive-opus + dev-team drain-esc-dispatch dual-source row.source branch + drain-signals source=file tag + DJ journal). RAW-verified by dispatcher: commit stat matches 6 files, DJ-GATE-1 journal grep hit. Production precedent confirmed: processed/bctc-analyst-20260630T151500Z.json drained end-to-end."
       }
     ],
     "qa": [],
