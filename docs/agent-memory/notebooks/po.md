@@ -1,6 +1,14 @@
 # PO Notebook
 
-_Last: 2026-07-02T06:30Z_
+_Last: 2026-07-02T06:56Z_
+
+## Tick 2026-07-02T06:37Z — dev-team triage (coord d3292ca4): B-05 re-raise → route to existing verdict, NO new mint
+
+**Signal `sau-20260702-0635-b05` (auditor data_stale CRITICAL, bctc-discover 369.9h) + report 3388 (msg 3134):** RE-RAISE of the SAME B-05 already definitively triaged yesterday. Queue row READ→RESOLVED (triage_note in-row); report 3388 claimed + resolved `duplicate` (msg deleted). NO backlog minted.
+
+**REFUTED the dispatcher evidence packet's false premise.** Packet claimed a NEW second root cause = "VPS-side dead vn-bctc-fetch service (host rebooted 06-16, service never restarted)" and suggested a dedicated VPS-restoration BACKLOG task. That premise is wrong per B-05-FIX RAW SSH verdict (2026-07-01T23:22Z, <24h old): VPS infra HEALTHY — 3 systemd units ACTIVE, 0 crashes, HNX/UPCOM discover working same-run. `vn-bctc-fetch UNHEALTHY` from get_vps_service_health is a KNOWN FALSE POSITIVE — it's a pure-bash systemd timer with NO HTTP port, probed via HTTP (backlog `FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES`). The "uptime 15d ≈ outage start" is coincidence; systemd timers are enabled → survive reboot, and yesterday's SSH found the units live. Minting the suggested task = duplicate + false premise + the exact "wasted ops dispatch every audit" that FP-backlog warns against → REJECTED.
+
+**Real roots (both already tracked, unchanged since yesterday):** (1) external SSC portal domain-wide 503 outage (`B-05-FU-SSC-503-RETRY` backlog, not VPS-side, not ours to fix); (2) enricher `last_attempt` code defect — fix committed d9280133 + 8/8 tests, deploy PARKED user-gated (`FIX-BCTC-ENRICHER-STUCK-BACKLOG` IN_PROGRESS, status_note confirms still parked as of 00:36Z). B-05-FIX verdict standing order: "auditor re-raises of B-05 route to this verdict." Cowork-team fire signal = informational, ack-only. Hygiene (price_anomaly_20260701T1609.json non-envelope inbox file + coverage-state.json.tmp) noted, low-pri, not touched mid-tick.
 
 ## Tick 2026-07-02T06:07Z — dev-team triage (coord d3292ca4): 7 reports resolved, ARCH-DASH → WIP
 
