@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-02T13:38:51Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "BCTC-HNX-SSL-HARDEN repo scope shipped (073fa27f) -> review lane, deploy-pending on user-gated ./scripts/deploy-vinahost.sh. WIP now 1/2 (parked enricher). Tick 2026-07-02T13:07Z closed."
+    "status": "active",
+    "updated_at": "2026-07-02T18:41:05Z",
+    "updated_by": "router",
+    "active_task_id": "FIX-MCP-MEM-CAP-BUMP-REBUILD",
+    "next_agent": "ops",
+    "note": "Track-1 mem mitigation dispatched to ops (background): compose cap 2g->3g repo edit + user-gated rebuild/swap commands. Tick 2026-07-02T18:07Z Step 3."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T18:20:31Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-02T18:37:40Z",
+    "_updated_by": "router-keyrepair",
     "archive": [],
     "rows": [
       {
@@ -982,8 +982,8 @@
         "payload_ref": null
       },
       {
-        "id": "sau-sbv-",
-        "ts": "",
+        "id": "sau-sbv-202607021834",
+        "ts": "2026-07-02T18:34:09Z",
         "from": "system-auditor",
         "to": "po",
         "type": "data_stale",
@@ -9720,16 +9720,14 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "FIX-MCP-MEM-CAP-BUMP-REBUILD",
         "title": "mcp-server mem: cap 2g->3g compose edit (repo) + rebuild-to-HEAD & single-svc swap (user-gated)",
         "type": "FIX",
         "size": "S",
         "priority": "high",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "cross-service",
         "owner": "po",
         "next_agent": "ops",
@@ -9744,9 +9742,13 @@
           "docker-compose.yml",
           "docker-compose.dev.yml"
         ],
-        "baseline_pass": true
+        "baseline_pass": true,
+        "updated_at": "2026-07-02T18:41:05Z",
+        "updated_by": "router",
+        "assignee": "ops"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
