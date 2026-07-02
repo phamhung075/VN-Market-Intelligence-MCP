@@ -30,11 +30,29 @@
     "esc4_one_off_flag": false,
     "trick_confidence": "medium",
     "trick_summary": "Khong phat hien dau hieu thao tung ke toan moi. OCF/NI am la do bien dong von luu dong quy 1 (chi phi tra truoc/cac khoan phai thu tang), khong phai loi nhuan gia tao. So lieu bao cao khong doi so voi chu ky truoc (cung ma OCR/gia tri).",
-    "trick_pass_versions": ["balance-sheet-v1", "pl-v1", "cashflow-v1", "rpt-v1", "footnote-v1", "segment-v1"],
+    "trick_pass_versions": [
+      "balance-sheet-v1",
+      "pl-v1",
+      "cashflow-v1",
+      "rpt-v1",
+      "footnote-v1",
+      "segment-v1"
+    ],
     "note": "E3 hash-based cache verification unavailable this session (no shell/compute tool bound) - trick conclusion carried forward from prior full 6-pass run (cycle c070, 2026-07-01) since underlying value_current fields are byte-identical this cycle."
   },
-  "kinhdich": { "hexagram": "Bac (23)", "trend": "BAT LOI", "signal": "GIU", "confidence_pct": 25 },
+  "kinhdich": {
+    "hexagram": "Bac (23)",
+    "trend": "BAT LOI",
+    "signal": "GIU",
+    "confidence_pct": 25
+  },
   "chain_validation": "1 unattributed bullish chain_catalyst in window (stock_code=unknown, conf 0.72) - cannot map to FPT specifically",
   "cycle_ts_utc": "2026-07-02T00:15:00Z",
-  "agent_signal_id": 8194
+  "agent_signal_id": 8194,
+  "_processed": {
+    "fingerprint": "01da887fc92e5f1485f82cd3e7c9f749da66a6614abbf693d76500bed847485d",
+    "processedAt": "2026-07-02T00:28:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

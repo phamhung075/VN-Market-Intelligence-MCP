@@ -3,8 +3,9 @@
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
     "po": {
-      "last_mtime": "2026-07-01T22:53:15Z",
-      "last_linecount": 86
+      "section_name": "po",
+      "last_mtime": "2026-07-02T00:27:54Z",
+      "last_linecount": 40
     },
     "section_name": "po",
     "start_line": 8
@@ -281,10 +282,9 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-01T22:58:23Z",
-    "_updated_by": "po",
-    "archive": [],
-    "rows": [
+    "_updated_at": "2026-07-02T00:27:54Z",
+    "_updated_by": "dev-team",
+    "archive": [
       {
         "id": "sau-d4-202607010300",
         "ts": "2026-07-01T03:00Z",
@@ -863,7 +863,9 @@
         "status": "RESOLVED",
         "payload_ref": null,
         "triage_note": "po:false-positive auditor-D4 — held-lock-no-board-row(legit long-TTL esc-datacov 8d guard + live-peer-d3292ca4 reservation sprint-task locks) + active≠held under multi-sprint concurrency; durable fix FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE; double-emit FU-AUDITOR-D4-SIGNAL-ID"
-      },
+      }
+    ],
+    "rows": [
       {
         "id": "sau-d4-202606240300",
         "ts": "2026-06-24T03:00Z",
@@ -1487,6 +1489,17 @@
         "summary": "bctc-discover stale 21711min (check B-05)",
         "severity": "CRITICAL",
         "status": "TRIAGED",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T00:27:05Z",
+        "ts": "2026-07-02T00:27:05Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 WARN: mcp-server memory pressure 96.81%",
+        "severity": "MED",
+        "status": "READ",
         "payload_ref": null
       }
     ],

@@ -15,7 +15,7 @@
     "pe_vs_sector_pct": -50,
     "pb": 11.7,
     "sector_pb_median": 3.3,
-    "roe_pct": 31.0,
+    "roe_pct": 31,
     "sector_roe_median_pct": 16.7,
     "roe_source": "get_bctc_full (confidence 100%, validation passed) - NOTE: get_sector_comparison tool returned ROE=0.0% for HVN, inconsistent with the validated raw figure; flagged as a tool data-quality discrepancy, raw validated figure used per BCTC Citation Trust Protocol (green).",
     "earning_yield_pct": 13.16,
@@ -45,13 +45,31 @@
     "esc5_status": "FALSE (get_bctc_refined returned no rows for report_id='HVN' - ticker code used as fallback probe since get_bctc_full did not expose a report_id field; graceful no-error per protocol)",
     "trick_confidence": "medium",
     "trick_summary": "Bang can doi ke toan can bang tuyet doi (0% lech). OCF/NI=1.27 lanh manh, khong co dau hieu thao tung dong tien. Tuy nhien loi nhuan rong vuot loi nhuan hoat dong 23.5% (929.2 ty VND), nhieu kha nang tu khoan hoan thue/thu nhap tai chinh khong thuong xuyen hau tai co cau - can theo doi tinh lap lai duoc cua muc loi nhuan nay trong cac quy toi.",
-    "trick_pass_versions_completed": ["balance-sheet-v1", "cashflow-v1"],
-    "trick_pass_versions_skipped": ["rpt-v1", "footnote-v1", "segment-v1"],
+    "trick_pass_versions_completed": [
+      "balance-sheet-v1",
+      "cashflow-v1"
+    ],
+    "trick_pass_versions_skipped": [
+      "rpt-v1",
+      "footnote-v1",
+      "segment-v1"
+    ],
     "trick_pass_skip_reason": "prose_sections=[] (empty) returned by get_bctc_full for HVN - no footnote/RPT/segment text available to mine; E4 Block Rule applied (footnote linkage missing, no page_anchor available either) - passes skipped with WARNING logged rather than fabricating findings."
   },
-  "kinhdich": { "hexagram": "Vi Te (64)", "trend": "TRUNG TINH", "signal": "GIU", "confidence_pct": 38 },
+  "kinhdich": {
+    "hexagram": "Vi Te (64)",
+    "trend": "TRUNG TINH",
+    "signal": "GIU",
+    "confidence_pct": 38
+  },
   "chain_validation": "1 unattributed bullish chain_catalyst in window (stock_code=unknown, conf 0.72) - cannot map to HVN specifically",
   "insider_signals": "SKIPPED - get_insider_signals requires outstandingShares (required param); no reliable live source found this cycle for HVN's post-recapitalization share count. Logged as data gap rather than estimated to avoid fabricating a derived ownership-pct figure.",
   "cycle_ts_utc": "2026-07-02T00:15:00Z",
-  "agent_signal_id": 8195
+  "agent_signal_id": 8195,
+  "_processed": {
+    "fingerprint": "456a939f07d7c4677851896673dfba5e44b7077279492fc66707f5592aaa716b",
+    "processedAt": "2026-07-02T00:28:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
