@@ -969,6 +969,28 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-02T18:34:09Z",
+        "ts": "2026-07-02T18:34:09Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover stale 381.85h (check B-05)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-sbv-",
+        "ts": "",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "sbv-vps stale 47min (check B-06)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",
@@ -7723,6 +7745,27 @@
         "created_at": "2026-07-02T09:57:07Z",
         "created_by": "po-s138",
         "status_note": "PLAN-ONLY (anomaly-task-bridge + recurring-bug-escalation: 2nd head-drift re-inflation). AC: a write that sets routing fields (active_task_id!=null OR next_agent!=null OR status in the routing set) on .task_board.head is REJECTED by the write path (Zod DeprecatedHeadStubSchema tightened from .passthrough() to reject routing keys, and/or scripts/orch-apply.sh guard) with a clear error; the deprecated redirect stub (status=deprecated, canonical_moved_to=.head, active_task_id=null) still validates. Root: po-s66 retargeted 3 known writer scripts but the guard was doc-only (G-7 comment); a new writer (dev-team flow) bypassed it — find & fix that writer too. Files: apps/mcp-server/src/infrastructure/orchStateSchema.ts (DeprecatedHeadStubSchema), scripts/orch-apply.sh. No dispatch pre-approved."
+      },
+      {
+        "id": "FIX-MCP-MEMORY-CODE-LEAK",
+        "priority": "high",
+        "size": "M",
+        "sprint": "BACKLOG",
+        "status": "BACKLOG",
+        "title": "Fix mcp-server runtime memory leak: accumulates 87% in 12h despite fresh start at 5%",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK",
+        "next_agent": "pm",
+        "promoted_by": "po",
+        "promoted_at": "2026-07-02T17:57:06Z",
+        "promotion_reason": "RECURRING reliability escalation (A-30: 06-19, 06-20 CRITICAL 99.99%, 07-02). mcp-server memory SAWTOOTHS at the 2GB cap — NOT a monotonic pinned leak: 60.70%->99.67% in ~1h (17:16Z), GC reclaimed ~800MiB to 59% @17:20Z (RAW-probed prior PO tick), then back to 99.62% @17:46Z. Operating at the ragged edge of a TIGHT 2GB cap with ~800MiB working-set churn -> any allocation spike faster than GC = OOM-kill. Plausible ROOT of OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (49% unclean restarts, suspected Docker OOM-kill -> in-flight-state corruption: Bun-JIT/lock-orphan/mid-aggregator classes). Reliability = PO #1; free coding slot (WIP 1/2 parked-enricher, head idle).",
+        "phase0_directive": "ROOT-CAUSE FIRST (architect) — CHEAPEST candidates before any code hunt: (a) verify running mcp-server image == HEAD; many recent mcp-server commits => image likely STALE; per feedback_mcp_server_stale_image_mem_leak_rebuild_fixes a stale image is a KNOWN mem cause, ops rebuild-to-HEAD (user-gated swap) is cheapest. (b) assess whether the 2GB cap is simply too tight for the working set (cap bump vs Docker 8GB host budget — project_host_memory_panic). (c) ONLY if a fresh-from-HEAD image at an adequate cap still slams cap -> heap-profile the allocation hotspot / correlate with specific tool calls. Diagnosis = sawtooth + tight-cap + OOM-churn, NOT a slow monotonic leak.",
+        "held": true,
+        "parked_by": "po",
+        "parked_at": "2026-07-02T18:35:20Z",
+        "recon_complete": "architect phase-0 recon DONE (commit d028803e) — brief docs/architecture-briefs/2026-07-02-mcp-mem-sawtooth-recon.md. Findings: (a) image 6 commits stale but NONE touch mem-relevant code (rebuild=owed hygiene, not the fix); (b) 2GB cap tight, host has 4.37GiB free -> bump to 3GiB; (c) CONCRETE hotspot: initDatabase() (schema.ts:148) has NO already-init guard, awaited at 68 tool-handler call-sites -> full ~3300-line DDL+backfill sweep every tool call, stacks with per-request McpServer rebuild (server.ts:481).",
+        "hold_reason": "TWO-TRACK. Track-1 (immediate, SEPARATE task FIX-MCP-MEM-CAP-BUMP-REBUILD in ready[]): cap 2g->3g repo edit + rebuild-to-HEAD, user-gated swap. Track-2 (THIS task, next_agent=pm decompose into dev-mcp-server): initDatabase() init-guard (Step-3(i), mirror existing getDb() singleton guard) + optional per-request McpServer reuse (Step-3(ii), MUST preserve Bun-JIT Symbol-corruption workaround). PARKED pending UNPARK-GATE: [Track-1 rebuild+swap SHIPPED] AND [post-swap docker stats re-sampled 24-48h shows sawtooth RECURS at the new 3GiB cap] (expected per source evidence). Cheapest-sufficient-first: do NOT decompose the code fix until the cheaper cap+rebuild is proven insufficient. PO deferred pm-relay this tick."
       }
     ],
     "closed_sprints": [
@@ -9681,20 +9724,27 @@
     ],
     "ready": [
       {
-        "id": "FIX-MCP-MEMORY-CODE-LEAK",
-        "priority": "high",
-        "size": "M",
-        "sprint": "BACKLOG",
-        "status": "READY",
-        "title": "Fix mcp-server runtime memory leak: accumulates 87% in 12h despite fresh start at 5%",
+        "id": "FIX-MCP-MEM-CAP-BUMP-REBUILD",
+        "title": "mcp-server mem: cap 2g->3g compose edit (repo) + rebuild-to-HEAD & single-svc swap (user-gated)",
         "type": "FIX",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MCP-MEMORY-CODE-LEAK",
-        "next_agent": "architect",
+        "size": "S",
+        "priority": "high",
+        "status": "READY",
+        "zone": "cross-service",
+        "owner": "po",
+        "next_agent": "ops",
+        "created_at": "2026-07-02T18:35:20Z",
         "promoted_by": "po",
-        "promoted_at": "2026-07-02T17:57:06Z",
-        "promotion_reason": "RECURRING reliability escalation (A-30: 06-19, 06-20 CRITICAL 99.99%, 07-02). mcp-server memory SAWTOOTHS at the 2GB cap — NOT a monotonic pinned leak: 60.70%->99.67% in ~1h (17:16Z), GC reclaimed ~800MiB to 59% @17:20Z (RAW-probed prior PO tick), then back to 99.62% @17:46Z. Operating at the ragged edge of a TIGHT 2GB cap with ~800MiB working-set churn -> any allocation spike faster than GC = OOM-kill. Plausible ROOT of OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (49% unclean restarts, suspected Docker OOM-kill -> in-flight-state corruption: Bun-JIT/lock-orphan/mid-aggregator classes). Reliability = PO #1; free coding slot (WIP 1/2 parked-enricher, head idle).",
-        "phase0_directive": "ROOT-CAUSE FIRST (architect) — CHEAPEST candidates before any code hunt: (a) verify running mcp-server image == HEAD; many recent mcp-server commits => image likely STALE; per feedback_mcp_server_stale_image_mem_leak_rebuild_fixes a stale image is a KNOWN mem cause, ops rebuild-to-HEAD (user-gated swap) is cheapest. (b) assess whether the 2GB cap is simply too tight for the working set (cap bump vs Docker 8GB host budget — project_host_memory_panic). (c) ONLY if a fresh-from-HEAD image at an adequate cap still slams cap -> heap-profile the allocation hotspot / correlate with specific tool calls. Diagnosis = sawtooth + tight-cap + OOM-churn, NOT a slow monotonic leak."
+        "promoted_at": "2026-07-02T18:35:20Z",
+        "parent": "FIX-MCP-MEMORY-CODE-LEAK",
+        "brief_ref": "docs/architecture-briefs/2026-07-02-mcp-mem-sawtooth-recon.md",
+        "desc": "TRACK-1 immediate mitigation from architect recon (brief above). (a) REPO EDIT (normal change, ALLOWED, commit now): docker-compose.yml:71 memory: 2g -> 3g AND docker-compose.dev.yml:34 memory: 2g -> 3g (dev-override parity). (b) USER-GATED (emit commands to user, DO NOT execute — container swap is user-gated per hard constraint): docker compose build mcp-server (rebuild-to-HEAD, 6 commits of BCTC/cron-status fixes owed as hygiene), then docker compose up -d --no-deps mcp-server (single-service recreate ONLY — never down/up-all, never --no-deps down). (c) RAW post-verify per brief §User-Gate Commands: docker inspect image ID changed + docker stats mem dropped to low baseline; then re-sample stats over 24-48h — if the sawtooth recurs at 3GiB (expected per source evidence) that satisfies the FIX-MCP-MEMORY-CODE-LEAK Track-2 unpark gate.",
+        "acceptance": "compose carries 3g in BOTH docker-compose.yml + docker-compose.dev.yml; user-gate rebuild+swap commands emitted to user (WORK/telegram); ops does NOT run the swap itself. Post-swap: new image ID live + mem baseline reset (RAW-verified).",
+        "files": [
+          "docker-compose.yml",
+          "docker-compose.dev.yml"
+        ],
+        "baseline_pass": true
       }
     ],
     "review": [
