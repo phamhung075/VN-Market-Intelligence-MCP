@@ -119,6 +119,59 @@ Build the backend status-compute logic for the Cron Recheck Table: domain classi
 - Exclude skill files (would double-count 5 crons — BA FR-2.1 correction).
 - Matches EC-5 precedent: "restart to reflect changes" contract (same as CN-4's static metadata).
 
+## [QA] Review Record — 2026-07-02T08:24:11Z — CHANGES_REQUESTED (round 1)
+
+Reviewed commit 85267b62. Application code: PASS on all checks — 5 new test
+files RAW-run 72/72 pass; `bun tsc --noEmit` 0 errors; `npx eslint` on the 5
+new files 0 errors (confirms the live Fence-B application→scheduler ban and
+validates the documented architect-brief deviation — the CadenceManifest
+structural-type workaround in cronStatusCompute.ts preserves the brief's
+functional intent); `mock-guard.sh` PASS; DDD greps clean (no
+domain→infra/application, no application→scheduler); security clean (no
+`process.env`, no hardcoded secrets, parameterized SQL `?` placeholders in
+`getLastRunForJob`/`getDistinctJobNames`). AC-9 PARITY cross-checked directly
+against `runSchedulerWatchdog()` (`apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts`):
+watchdog "healthy" (`ageMs <= cadenceMs × thresholdMultiplier`) is exactly the
+union of classifier `ON_TIME` + `LATE`; watchdog "alert" is exactly the union
+of classifier `MISSED` + `STALE` — PARITY holds by construction. AC-12
+13-file count verified against the live `.claude/commands/crons/` tree.
+
+**BLOCKING (1 issue):** `apps/mcp-server/src/interface/mcp/routes/cronStatusHandler.ts:102`
+default `commandsDir = resolve(process.cwd(), ".claude", "commands", "crons")`.
+`apps/mcp-server/src/interface/mcp/server.ts:2136` calls
+`handleGetCronStatus(req, res, db)` with **no** `commandsDirArg` override, so
+production always hits this default. `apps/mcp-server/Dockerfile` (`WORKDIR /app`
+line 18; `COPY` list lines 51-63: package.json/bun.lock, `src/`, tsconfig.json,
+bctc-schema.ts, mcp.config.json) never copies `.claude`. `docker-compose.yml`'s
+`mcp-server` service volumes (lines 11-27: `./data`, `./data/pdfs`,
+`./mcp.config.json`, `./reports`, `./docs/agent-memory`, `./docs/data*`,
+`./docs/signals`, `./docs/analysis-briefs`) never mount `.claude`;
+`docker-compose.dev.yml`'s override declares no `volumes:` block for
+`mcp-server` (inherits the same gap). Confirmed via `grep -i claude
+docker-compose*.yml` (0 hits) and `docker compose config` (valid, no `.claude`
+anywhere). At runtime `process.cwd() === "/app"`, so
+`readdirSync('/app/.claude/commands/crons')` will throw `ENOENT`;
+`handleGetCronStatus`'s own try/catch (line 108) converts this into a
+permanent `503 {error}` response — `GET /api/cron-status` will **never**
+return 200 once the pending container image swap ships, breaking AC-1 and
+transitively every Layer-A/B AC (the DTO build aborts before any row is
+emitted). Both new test files (`cronStatusHandler.test.ts:31`,
+`layerBCronRegistry.test.ts:165`) inject an explicit `LIVE_CRONS_DIR`
+resolved relative to `bun test`'s cwd (`apps/mcp-server`) — this is why
+72/72 pass locally without ever exercising the zero-arg default branch that
+`server.ts` actually calls in production.
+
+**Fix scope for fixer:** add a read-only volume mount for
+`.claude/commands/crons` (or `.claude/commands/`) to the `mcp-server` service
+in `docker-compose.yml`, mirroring the existing
+`./docs/agent-memory:/app/docs/agent-memory` pattern (line 16); confirm
+`docker-compose.dev.yml`'s override still resolves it. Add a regression test
+that exercises `handleGetCronStatus`'s default (zero-arg) `commandsDir`
+resolution against a fixture that mimics the container's actual layout, so
+this class of gap fails loudly next time.
+
+Round 1 — routed to fixer (not architect).
+
 ## RETURN
 
 DONE: Decomposed DASH-CRON-RECHECK-TABLE into 2 atomic tasks. Handoff TASK-DASH-CRON-1 (Zone 1, dev-mcp-server) created with 25 ACs, risk flags, and detailed file specs.
