@@ -1,8 +1,19 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-02 12:10 UTC | **Sprint:** MERGE-MONEY-RADAR-INTO-MOMENTUM
+**Last updated:** 2026-07-02 18:17 UTC | **Sprint:** MERGE-MONEY-RADAR-INTO-MOMENTUM
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-02T18:17Z — FIX-MCP-MEMORY-CODE-LEAK (PHASE-0 RECON DONE, no fix shipped)
+
+**Task:** FIX-MCP-MEMORY-CODE-LEAK | SPRINT-M (BACKLOG→ready, PO-promoted 17:57Z) | zone: apps/mcp-server/
+**BUILD-STANDARD:** not-applicable (bug-fix/perf recon, in-zone, no new primitives)
+**PO's sawtooth-at-tight-cap diagnosis corroborated live mid-session**: caught mcp-server AT 99.98%/2GiB (docker stats, 2 samples 30s apart, RAW not stale) with CPU 108%.
+**(a) Stale image ruled OUT as sufficient explanation:** running image 6 commits behind HEAD (built 2026-07-01T22:27:13Z), but diffed each of the 6 pending commits against schema.ts/server.ts/DB-init files — zero overlap; none are memory fixes. Rebuild is owed hygiene only.
+**(b) Cap is tight, host has room:** `docker info` MemTotal=7.75GiB budget; live fleet sum only ~3.38GiB (43.6%) → 4.37GiB free; mcp-server already the largest single consumer. Recommend cap 2GiB→3GiB (`docker-compose.yml:71` + `docker-compose.dev.yml:34`).
+**(c) Found the concrete allocation hotspot via source read (not guessed):** `initDatabase()` (`schema.ts:148`) has NO already-initialized guard (unlike its own sibling `getDb()` 4 lines above) and is called via `await initDatabase()` at 68 confirmed call-sites inside MCP tool-handler bodies (e.g. literally line 1 of `get_alerts`) — every call re-runs the full 3300-line 10-domain-slice DDL+backfill sweep. Stacks with `createMcpServerInstance()` (`server.ts:335`) rebuilding the full ~146-tool registry fresh on EVERY `/mcp` POST (intentional Bun-JIT-Symbol-corruption workaround, but costly). Live `docker logs` during recon showed both firing every few seconds under concurrent agent load — matches the sawtooth shape. Designed (not implemented) a 2-step profiling approach (log-correlation first, JSC heap-snapshot diff second) + ranked fix candidates (`initDatabase` guard first, `McpServer`-reuse second) for the follow-up dev task.
+**Output:** `docs/architecture-briefs/2026-07-02-mcp-mem-sawtooth-recon.md`
+**Next:** pm — two tracks: (1) user-gated config-only swap (cap bump + rebuild) ships now, no dev task; (2) dev-mcp-server task for the `initDatabase()` init-guard once (1) ships and sawtooth confirmed to persist.
 
 ## 2026-07-02T12:10Z — TOKEN-ECONOMY-TICK-PREFLIGHT (BLUEPRINT DONE)
 
@@ -25,20 +36,8 @@
 **Output:** `docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md` + `[Architect] Brownfield Findings` → `docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md`
 **Next:** pm decomposes 2 dev-* work units (dev-mcp-server ships first; dev-frontend can build against stub).
 
-## 2026-07-01T18:20Z — ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING (AC-1 SPIKE DONE, zone re-pinned)
-
-**Task:** ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING | 3rd re-fire recurrence-escalation | zone: apps/mcp-server/ (revised from sprint default `dev-pdf-extractor`)
-**BUILD-STANDARD:** not-applicable (bug-fix, in-zone, no new primitives)
-**Method:** `mcp__gateway__call_tool` unreachable this session — substituted `docker exec` against the SAME named-volume market.db + direct serve-path source read (equally RAW, more code-verified).
-**§3.2 REVISED (not simple-confirm):** extended probe found "Tổng tài sản" grand-total row absent from `bctc_table_rows` for BOTH CTG (20/55 null-code) AND VCB (0/57 null-code, held up as "clean") — bank-form-generic gap, not CTG-only. VCB's currently-correct total_assets traced NOT to the row-based bank mapper but to a lucky match in the separate non-bank-aware initial flat-text extractor (`balanceSheetExtractor.ts`), frozen in place by `finalizeBctcRefineTool.ts`'s documented Case-2 "skip-when-null, preserve prior" logic. `bctcScalarAggregator.ts` (the sprint's named suspect) is sound but upstream-starved, not broken.
-**§3.3 CONFIRMED** — guard exists only in `get_financial_summary`; zero guard code in `get_bctc_full`/`compare_financials`, ratifies BA's never-fired classification.
-**Zone re-pin:** `bctc_md_tables` (pdf-extractor→mcp-server bridge table) is NULL for both CTG/VCB current report_ids — rows arrived via the in-repo agentic-refine pipeline (`bctcRefineJob.ts` + `refinedMarkdownParser.ts`), not pdf-extractor's OCR. Overrides sprint's `route_to: dev-pdf-extractor` default — no dev-pdf-extractor task should be minted.
-**SPLIT — 5 units, dev-mcp-server only, W1∥W2∥W3∥W4 → W5:** W1 identity-serve-guard coverage (ships first, independent) · W2 generic markdown row-repair (pattern-based on ROMAN_SECTION + trailing-number signature) · W3 section-boundary-contamination guard (reuse FM-VCB-1 fix) · W4 bctcScalarAggregator fixtures incl. synthetic 3rd bank (AC-9) · W5 truthful validation_status + **operational re-ingest of CTG report_id 96e36139…** (code fix alone won't unfreeze total_assets=0).
-**Output:** `docs/architecture-briefs/2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md` + `[Architect] Brownfield Findings` → `docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md`
-**Next:** pm decomposes W1-W5, no dev-pdf-extractor task.
-
 ---
 
-## Archive (pre-2026-07-01T18:20Z)
+## Archive (pre-2026-07-02T06:50Z)
 
-[Older cycles archived to git history: BA-PREDICTION-EVIDENCE-REVIVAL (2026-07-01T07:05Z, evidence_type corrections + FR-2.2 VPS proxy 502 root cause + 2-hop split), OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (2026-06-30T20:45Z, per-ticker anchor repair migration + writer guard + sanity pass 4), FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]
+[Older cycles archived to git history: ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING (2026-07-01T18:20Z, AC-1 spike + bank-form-generic gap + W1-W5 split), BA-PREDICTION-EVIDENCE-REVIVAL (2026-07-01T07:05Z, evidence_type corrections + FR-2.2 VPS proxy 502 root cause + 2-hop split), OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (2026-06-30T20:45Z, per-ticker anchor repair migration + writer guard + sanity pass 4), FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]
