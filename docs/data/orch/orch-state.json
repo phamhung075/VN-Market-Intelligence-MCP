@@ -9808,7 +9808,7 @@
         "title": "Zone 1: Cron status-compute backend (cronLivenessClassifier, cronStatusCompute, cronStatusHandler, GET /api/cron-status, cron-parser dep)",
         "status": "REVIEW",
         "owner": "dev-mcp-server",
-        "next_agent": "fixer",
+        "next_agent": "qa",
         "type": "FEATURE",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -9822,7 +9822,7 @@
         "started_at": "2026-07-02T07:21:17Z",
         "reviewed_at": "2026-07-02T08:09:41Z",
         "review_note": "[dev-mcp-server 2026-07-02T08:09:41Z] commit 85267b62 — Zone-1 backend for DASH-CRON-RECHECK-TABLE: domain/cron/cronLivenessClassifier.ts (pure FR-1.6 4-branch ladder) + humanScheduleFormatter.ts, infrastructure/cron/layerBCronRegistry.ts (CN-5 memoized, 13 live .claude/commands/crons/*.md files), application/cron/cronStatusCompute.ts (CN-1 hybrid 3-tier job-name resolution, CN-2 MIN-of-6-samples cadence via new cron-parser dep, R1 memoization), interface/mcp/routes/cronStatusHandler.ts (GET /api/cron-status, mirrors orchestrationHandler.ts) + route registration + 2 additive cronJobRunStore.ts exports. Deviation from brief (documented in decision journal): kept cronStatusCompute.ts scheduler-import-free (live eslint Fence-B forbids application->scheduler) via a local CadenceManifest type — cronStatusHandler.ts owns the WATCHDOG_MANIFEST/CRONS imports. 5 new test files, 72/72 pass (12 classifier + 13 formatter + 16 compute + 14 registry + 17 handler incl AC-9 PARITY cross-check vs all 16 WATCHDOG_MANIFEST jobs). tsc clean, eslint clean (own files), toolCount=183 unchanged. Full suite (2 runs): 14191-14200 pass / 71-80 fail / 5-10 errors — under documented ceiling testBaselineFail=348; grepped both logs, zero hits on my 5 new test files. Blocks TASK-DASH-CRON-2 (dev-frontend builds against this API).",
-        "route_to": "fixer",
+        "route_to": "qa",
         "qa_verdict": {
           "verdict": "CHANGES_REQUESTED",
           "by": "qa",
@@ -9834,7 +9834,7 @@
           "non_blocking": "Round-1 positive findings still hold (app code sound: AC-9 PARITY, DDD/security clean, parameterized SQL -- see qa_verdict_round1 for full detail). Round-2 additional verified: bun test src/__tests__/cronStatusHandler.test.ts -> 18/18 pass; bun tsc --noEmit -> 0 errors; eslint -- src/__tests__/** is deliberately ignore-listed in eslint.config.mjs:30 (pre-existing project convention: Fence-A/B do not apply to test files, NOT a round-2 regression); git show 126a94d2 --stat confirms exactly the 4 files described in the fixers own round-1 record (docker-compose.yml, cronStatusHandler.test.ts, orch-state.json, TASK-DASH-CRON-1.md) -- no scope creep.",
           "deploy_status": "Docker-compose mount fix is CORRECT and resolves AC-1 once the container rebuild ships -- this part of round 1 is fully resolved, no further action needed on the compose file. Container swap remains separately user-gated per router constraint. Remaining round-2 blocker is test-coverage only (regression test does not protect the fixed code path from future regressions), not a production defect."
         },
-        "fixer_round": 1,
+        "fixer_round": 2,
         "fix_summary": "Added volume mount for ./.claude/commands/crons to docker-compose.yml (line 27); added regression test in cronStatusHandler.test.ts exercising default commandsDir with missing directory scenario (returns 503 JSON error, not crash)",
         "qa_verdict_round1": {
           "verdict": "CHANGES_REQUESTED",

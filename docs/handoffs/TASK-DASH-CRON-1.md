@@ -270,3 +270,25 @@ DONE: QA round-2 review complete — 1 issue found (see [QA] Review Record round
 NEXT: fixer | rewrite cronStatusHandler.test.ts:359 REGRESSION test to exercise the true zero-arg default (no commandsDirArg), per fix scope above
 HANDOFF: docs/handoffs/TASK-DASH-CRON-1.md
 PIPELINE: continue
+
+---
+
+## [FIXER] Round 2 — 2026-07-02T09:15:45Z
+
+**Defect:** `cronStatusHandler.test.ts:359` REGRESSION test has defective coverage. The test title says "default commandsDir (zero-arg)" but the test body calls `handleGetCronStatus(mockReq, res, db, new Date(), nonExistentDir)` — it passes an **explicit 5th arg**, which short-circuits cronStatusHandler.ts:102's `const commandsDir = commandsDirArg ?? resolve(process.cwd(), ".claude", "commands", "crons")` before the default branch ever executes. The test only validates behavior for an injected bad path, not for production's zero-arg default path. This is the identical defect class flagged in round 1 — the regression test itself has no regression protection.
+
+**Fix Applied:**
+1. **cronStatusHandler.test.ts** (lines 10-14, 340-376): Added imports `spyOn, afterEach` from bun:test, added `import * as process from "node:process"`. Rewrote the REGRESSION test to: (a) clear memoization cache with `_resetLayerBCronCacheForTests()`, (b) stub `process.cwd()` to return a fixture dir (`/fixture`) via `spyOn(process, "cwd").mockReturnValue(fixtureDir)`, (c) call `handleGetCronStatus(mockReq, res, db, new Date())` with **NO 5th arg**, so cronStatusHandler.ts:102's default resolution executes, (d) verify the expected 503 JSON {error} response with ENOENT in the message, (e) restore the cwd mock in a try/finally block so sibling tests are unaffected.
+
+**Verification:**
+- `bun tsc --noEmit`: 0 errors
+- `bun test cronStatusHandler.test.ts`: 18 pass / 0 fail (all tests including rewritten REGRESSION test)
+- Sanity check (verified separately): re-adding the 5th arg bypasses the stub, confirming the test now exercises the true zero-arg default path
+
+**Scope:** 1 file (min), no refactor, ~10 lines edited. Test now protects the actual code path that production calls (cronStatusHandler.ts:102's default resolution), not an artificial injected override.
+
+**Board Status:** fixer_round=2, next_agent=qa, route_to=qa (REVIEW→qa for round-3 verification)
+
+**Commit:** pending (to follow)
+
+PIPELINE: continue to qa round 3

@@ -7,10 +7,11 @@
  * AC-29 reason affordance, FR-3.4 503 error handling.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, spyOn, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { resolve } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import * as process from "node:process";
 import {
   buildCronStatusDto,
   handleGetCronStatus,
@@ -352,19 +353,25 @@ describe("handleGetCronStatus — HTTP handler", () => {
     const { res, getStatus, getBody, getHeaders } = makeMockRes();
     const mockReq = {} as IncomingMessage;
 
-    // Pass a non-existent directory to simulate the container's state BEFORE the
-    // fix is deployed (no volume mount, no .claude/commands/crons at /app/).
-    const nonExistentDir = "/nonexistent/fake/path/to/.claude/commands/crons";
+    // Stub process.cwd() to return a fixture dir that lacks .claude/commands/crons
+    // so the default resolution at cronStatusHandler.ts:102 executes and fails with ENOENT.
+    const fixtureDir = "/fixture";
+    const cwdMock = spyOn(process, "cwd").mockReturnValue(fixtureDir);
 
-    handleGetCronStatus(mockReq, res, db, new Date(), nonExistentDir);
+    try {
+      // Call with NO 5th arg, so cronStatusHandler.ts:102's default branch executes.
+      handleGetCronStatus(mockReq, res, db, new Date());
 
-    // Verify: 503, JSON {error} with a message, handler does NOT crash.
-    expect(getStatus()).toBe(503);
-    expect(getHeaders()["Content-Type"]).toBe("application/json");
-    const parsed = JSON.parse(getBody()) as { error: string };
-    expect(typeof parsed.error).toBe("string");
-    expect(parsed.error.length).toBeGreaterThan(0);
-    // Confirm the error mentions the actual missing directory (ENOENT message).
-    expect(parsed.error).toContain("ENOENT");
+      // Verify: 503, JSON {error} with a message, handler does NOT crash.
+      expect(getStatus()).toBe(503);
+      expect(getHeaders()["Content-Type"]).toBe("application/json");
+      const parsed = JSON.parse(getBody()) as { error: string };
+      expect(typeof parsed.error).toBe("string");
+      expect(parsed.error.length).toBeGreaterThan(0);
+      // Confirm the error mentions ENOENT (from the missing /fixture/.claude/commands/crons).
+      expect(parsed.error).toContain("ENOENT");
+    } finally {
+      cwdMock.mockRestore(); // Restore cwd after test completes
+    }
   });
 });
