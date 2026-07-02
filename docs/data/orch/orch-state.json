@@ -3301,30 +3301,6 @@
     ],
     "backlog": [
       {
-        "id": "BCTC-HNX-SSL-HARDEN",
-        "title": "Replace VPS bctc curl -k with --cacert pinning (HNX leaf cert expires 2026-07-07)",
-        "status": "BACKLOG",
-        "owner": "po",
-        "route_to": "ops",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "priority": "high",
-        "size": "S",
-        "depends": [
-          "FIX-BCTC-VPS-FETCH-LEG-DEAD"
-        ],
-        "created_at": "2026-07-02T11:02:57Z",
-        "created_by": "po",
-        "files": [
-          "vps-scripts/fetch-bctc.sh",
-          "scripts/deploy-vinahost.sh"
-        ],
-        "baseline_pass": true,
-        "desc": "Follow-up to FIX-BCTC-VPS-FETCH-LEG-DEAD — SEQUENCE AFTER it revives the leg. June-1 hotfix (commit e22427aa) uses insecure curl -k (cert verification off) in vps-scripts/fetch-bctc.sh. HNX leaf cert expires 2026-07-07 (~5d) -> a second break is due within a week even if revived. Harden: replace -k with --cacert pinning against the full HNX CA chain (bundle it). Needs recon output from Entry 1 to confirm TLS path + capture working chain. AC: fetch succeeds with cert verification ON (no -k) and survives past 2026-07-07.",
-        "deps_satisfied_at": "2026-07-02T11:20:56Z",
-        "recon_note": "[router 2026-07-02] Dependency FIX-BCTC-VPS-FETCH-LEG-DEAD DONE -> dispatchable (route ops). PREMISE CORRECTED by recon evidence (docs/vps-sources/hnx-tls-chain-2026-07-02.txt): HNX renewed leaf cert Jun 18 2026, NotAfter Jan 3 2027 -> NO 2026-07-07 expiry cliff. Remaining driver: server omits GlobalSign RSA OV SSL CA 2018 intermediate (openssl verify code 21) -> curl -k workaround still live in /root/fetch-bctc.sh. Deadline pressure removed; PO may re-rank priority."
-      },
-      {
         "id": "TASK17-FOREIGN-FLOW",
         "size": "S",
         "sprint": "TASK-17",
@@ -9905,7 +9881,36 @@
         "dispatched_at": "2026-07-01T23:32:10Z"
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "id": "BCTC-HNX-SSL-HARDEN",
+        "title": "Replace VPS bctc curl -k with --cacert pinning + add missing GlobalSign intermediate to HNX served chain",
+        "status": "READY",
+        "owner": "po",
+        "route_to": "ops",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "priority": "medium",
+        "size": "S",
+        "depends": [
+          "FIX-BCTC-VPS-FETCH-LEG-DEAD"
+        ],
+        "created_at": "2026-07-02T11:02:57Z",
+        "created_by": "po",
+        "files": [
+          "vps-scripts/fetch-bctc.sh",
+          "scripts/deploy-vinahost.sh"
+        ],
+        "baseline_pass": true,
+        "desc": "PREMISE CORRECTED (recon docs/vps-sources/hnx-tls-chain-2026-07-02.txt, 2026-07-02): HNX renewed the leaf cert Jun 18 2026, NotAfter Jan 3 2027 — there is NO 2026-07-07 expiry cliff; deadline pressure removed, priority downgraded high->medium (security-hardening debt, not an outage race). REAL driver: the HNX server omits the GlobalSign RSA OV SSL CA 2018 intermediate from the served chain (openssl verify code 21 unable-to-verify-first-cert), so the June-1 hotfix (commit e22427aa) still runs insecure curl -k (cert verification OFF = MITM exposure) in /root/fetch-bctc.sh on the VPS. Harden: bundle the GlobalSign RSA OV SSL CA 2018 intermediate + root into a CA bundle and replace curl -k with curl --cacert <bundle> pinning in vps-scripts/fetch-bctc.sh; ensure scripts/deploy-vinahost.sh ships the bundle. AC: bctc fetch succeeds with cert verification ON (no -k), openssl verify returns 0 against the pinned bundle, and fetch keeps working past 2026-07-07 (leaf valid to 2027-01-03).",
+        "deps_satisfied_at": "2026-07-02T11:20:56Z",
+        "recon_note": "[router 2026-07-02] Dependency FIX-BCTC-VPS-FETCH-LEG-DEAD DONE -> dispatchable (route ops). PREMISE CORRECTED by recon evidence (docs/vps-sources/hnx-tls-chain-2026-07-02.txt): HNX renewed leaf cert Jun 18 2026, NotAfter Jan 3 2027 -> NO 2026-07-07 expiry cliff. Remaining driver: server omits GlobalSign RSA OV SSL CA 2018 intermediate (openssl verify code 21) -> curl -k workaround still live in /root/fetch-bctc.sh. Deadline pressure removed; PO may re-rank priority.",
+        "next_agent": "ops",
+        "promoted_at": "2026-07-02T13:23:04Z",
+        "promoted_by": "po",
+        "rerank_note": "[po 2026-07-02 dev-team tick T13:07Z] Re-ranked high->medium: router-corrected recon falsified the 2026-07-07 expiry-cliff premise (leaf valid to 2027-01-03). Remaining value = eliminate live insecure curl -k on the VPS fetch leg (reduce security debt per standing mandate). Deps satisfied (FIX-BCTC-VPS-FETCH-LEG-DEAD DONE), recon complete, size S, ops-route, disjoint zone from in_progress FIX-BCTC-ENRICHER-STUCK-BACKLOG — cleanest groomed candidate for the one free WIP slot; promoted backlog->ready."
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
