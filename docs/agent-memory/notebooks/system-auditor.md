@@ -2,6 +2,13 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c475 · 2026-07-02T06:46:16Z
+### Audit Run Tier-1 (06:30–06:46 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 probes PASS
+- Restart: mcp-server=1 ✓ | Memory: 88.69% ⚠ (known condition) | Disk: 41% ✓
+- Cron: 100+ jobs, 99%+ success rate; 1 legacy crash (marketScanJob:close, 80%, off-hours)
+- Anomalies: 0 new | Status: HEALTHY
+
 ## c474 · 2026-07-02T06:35:33Z
 ### Audit Run Tier-2 (06:30–06:35 UTC 2026-07-02)
 - Tier: 2 | Cron: 100+ jobs healthy (100%+ success rate) | Sources: 27 checked
