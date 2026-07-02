@@ -243,13 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-07-02T08:51:50Z",
-    "updated_by": "dev-team",
-    "active_task_id": "TASK-DASH-CRON-1",
-    "next_agent": "qa",
-    "next_action": "qa round-3 delta review of TASK-DASH-CRON-1: verify rewritten REGRESSION test (commit a1689b0e) exercises the true zero-arg default via process.cwd stub, no 5th arg; APPROVE or CHANGES_REQUESTED",
-    "note": "fixer round 2 complete (a1689b0e); head flipped fixer->qa by router (fixer omitted head flip)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-07-02T08:58:45Z",
+    "updated_by": "qa",
+    "note": "TASK-DASH-CRON-1 closed APPROVED r3"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9607,6 +9606,57 @@
         "dispatched_by": "po",
         "completed_at": "2026-07-02T06:52:00Z",
         "note": "Brief: docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md (7 risk flags verified, 16-pair job_name table verified, DDD layer map, CN-1..CN-5 resolutions). Commit fa4cfc12. RAW-verified by router 2026-07-02T06:52Z. Consumed by PM decomposition (commit 15db7fa6): TASK-DASH-CRON-1 (dev-mcp-server) + TASK-DASH-CRON-2 (dev-frontend) added to ready[]. Architect work complete."
+      },
+      {
+        "id": "TASK-DASH-CRON-1",
+        "title": "Zone 1: Cron status-compute backend (cronLivenessClassifier, cronStatusCompute, cronStatusHandler, GET /api/cron-status, cron-parser dep)",
+        "status": "DONE",
+        "owner": "dev-mcp-server",
+        "type": "FEATURE",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "size": "M",
+        "created_at": "2026-07-02T06:54:00Z",
+        "claimed_at": "2026-07-02T07:21:17Z",
+        "blocks": [
+          "TASK-DASH-CRON-2"
+        ],
+        "depends": [],
+        "started_at": "2026-07-02T07:21:17Z",
+        "reviewed_at": "2026-07-02T08:09:41Z",
+        "review_note": "[dev-mcp-server 2026-07-02T08:09:41Z] commit 85267b62 — Zone-1 backend for DASH-CRON-RECHECK-TABLE: domain/cron/cronLivenessClassifier.ts (pure FR-1.6 4-branch ladder) + humanScheduleFormatter.ts, infrastructure/cron/layerBCronRegistry.ts (CN-5 memoized, 13 live .claude/commands/crons/*.md files), application/cron/cronStatusCompute.ts (CN-1 hybrid 3-tier job-name resolution, CN-2 MIN-of-6-samples cadence via new cron-parser dep, R1 memoization), interface/mcp/routes/cronStatusHandler.ts (GET /api/cron-status, mirrors orchestrationHandler.ts) + route registration + 2 additive cronJobRunStore.ts exports. Deviation from brief (documented in decision journal): kept cronStatusCompute.ts scheduler-import-free (live eslint Fence-B forbids application->scheduler) via a local CadenceManifest type — cronStatusHandler.ts owns the WATCHDOG_MANIFEST/CRONS imports. 5 new test files, 72/72 pass (12 classifier + 13 formatter + 16 compute + 14 registry + 17 handler incl AC-9 PARITY cross-check vs all 16 WATCHDOG_MANIFEST jobs). tsc clean, eslint clean (own files), toolCount=183 unchanged. Full suite (2 runs): 14191-14200 pass / 71-80 fail / 5-10 errors — under documented ceiling testBaselineFail=348; grepped both logs, zero hits on my 5 new test files. Blocks TASK-DASH-CRON-2 (dev-frontend builds against this API).",
+        "route_to": "qa",
+        "qa_verdict": {
+          "verdict": "APPROVED",
+          "by": "qa",
+          "at": "2026-07-02T08:58:45Z",
+          "round": 3,
+          "note": "Delta review (ROUND 3) of fixer round-2 commit a1689b0e (3 files: cronStatusHandler.test.ts, orch-state.json, handoff). Round-1 blocker (docker-compose.yml volume mount) and round-2 blocker (regression test bypass) already confirmed fixed in prior rounds -- not re-reviewed. Verified: (1) cronStatusHandler.ts:102 `commandsDirArg ?? resolve(process.cwd(),\".claude\",\"commands\",\"crons\")` unchanged; (2) rewritten REGRESSION test (cronStatusHandler.test.ts:341-376) calls handleGetCronStatus(mockReq,res,db,new Date()) with NO 5th arg -- commandsDirArg is undefined so the real default-resolution line executes; process.cwd() stubbed to /fixture via spyOn; layerBCronRegistry module-level memoization cache reset via _resetLayerBCronCacheForTests() so readdirSync genuinely re-fires; stub restored in finally -- no bypass remains. (3) bun tsc --noEmit: 0 errors. (4) bun test src/__tests__/cronStatusHandler.test.ts: 18/18 pass. (5) Sanity inversion: /fixture does not exist on filesystem (guarantees ENOENT); real .claude/commands/crons (14 files) would make readdirSync succeed instead -- proves the test's pass/fail is genuinely coupled to the stubbed path, i.e. load-bearing, not vacuous. Smart-Skip applied: diff is test-only (production cronStatusHandler.ts untouched this round) so DDD/security/mock-guard scans skipped per flow Smart-Skip rule. Journal: docs/agent-memory/decisions/sprint-DASH-CRON-RECHECK-TABLE-qa.md STEP qa-S3."
+        },
+        "fixer_round": 2,
+        "fix_summary": "Added volume mount for ./.claude/commands/crons to docker-compose.yml (line 27); added regression test in cronStatusHandler.test.ts exercising default commandsDir with missing directory scenario (returns 503 JSON error, not crash)",
+        "qa_verdict_round1": {
+          "verdict": "CHANGES_REQUESTED",
+          "by": "qa",
+          "at": "2026-07-02T08:24:11Z",
+          "round": 1,
+          "blocking": "apps/mcp-server/src/interface/mcp/routes/cronStatusHandler.ts:102 default commandsDir=resolve(process.cwd(),'.claude','commands','crons'); server.ts:2136 calls handleGetCronStatus(req,res,db) with NO commandsDirArg override -> production always uses this default. apps/mcp-server/Dockerfile WORKDIR=/app (L18), COPY list (L51-63: package.json/bun.lock, src/, tsconfig.json, bctc-schema.ts, mcp.config.json) has NO .claude copy. docker-compose.yml mcp-server volumes (L11-27: ./data, ./data/pdfs, ./mcp.config.json, ./reports, ./docs/agent-memory, ./docs/data*, ./docs/signals, ./docs/analysis-briefs) has NO .claude mount; docker-compose.dev.yml override has no volumes block for mcp-server (inherits same gap). Confirmed: grep -i claude docker-compose*.yml = 0 hits; docker compose config valid. readdirSync('/app/.claude/commands/crons') will throw ENOENT in the rebuilt container -> handleGetCronStatus's own try/catch (line 108) converts this into a permanent 503 {error} -> GET /api/cron-status will NEVER return 200 post-swap, breaking AC-1 and transitively every Layer-A/B AC (DTO build aborts before any row is emitted). Both new test files (cronStatusHandler.test.ts:31, layerBCronRegistry.test.ts:165) inject an explicit LIVE_CRONS_DIR relative to bun test's cwd (apps/mcp-server) -- this is why 72/72 pass locally but the code's own zero-arg default branch (the one server.ts actually calls) was never exercised.",
+          "fix_scope": "Add a read-only volume mount for .claude/commands/crons (or .claude/commands/) to the mcp-server service in docker-compose.yml, mirroring the existing ./docs/agent-memory:/app/docs/agent-memory pattern (L16); verify docker-compose.dev.yml override still resolves it (inherits base volumes -- confirm no override strips it). Add a regression test that calls handleGetCronStatus with the DEFAULT (zero-arg) commandsDir against a fixture mimicking the container layout, or an integration assertion that resolve(process.cwd(),'.claude','commands','crons') is a real dir when CWD=/app at container start.",
+          "non_blocking": "Positive verified aspects (not defects): AC-9 PARITY holds by construction (watchdog healthy ageMs<=cadenceMs*thresholdMultiplier == classifier ON_TIME union LATE; watchdog alert == classifier MISSED union STALE) -- confirmed by reading both cronLivenessClassifier.ts and schedulerWatchdogJob.ts side-by-side. AC-12 13-file count verified against live .claude/commands/crons/ (14 files - 1 deprecated skip-listed = 13). Documented architect-brief deviation (WATCHDOG_MANIFEST import moved application->interface via local CadenceManifest structural type) judged sound and preserves brief intent -- npx eslint src/domain/cron src/infrastructure/cron src/application/cron src/interface/mcp/routes/cronStatusHandler.ts --max-warnings 0 independently re-run, 0 errors. tsc --noEmit 0 errors. mock-guard PASS. No process.env, no hardcoded secrets, parameterized SQL (? placeholders) in getLastRunForJob/getDistinctJobNames.",
+          "deploy_status": "Container swap remains separately user-gated per router constraint (docker compose build already staged) -- but even after swap this endpoint will 503 until the docker-compose.yml volume-mount fix above ships. This is independent of the swap-timing gate."
+        },
+        "completed_at": "2026-07-02T08:58:45Z",
+        "qa_verdict_round2": {
+          "verdict": "CHANGES_REQUESTED",
+          "by": "qa",
+          "at": "2026-07-02T08:42:34Z",
+          "round": 2,
+          "prior_round_resolved": "Round-1 blocker CONFIRMED FIXED: docker-compose.yml:27 mounts ./.claude/commands/crons:/app/.claude/commands/crons:ro (commit 126a94d2). Verified: Dockerfile WORKDIR=/app (L18) + CMD [\"bun\",\"run\",\"src/index.ts\"] (no cwd change) matches resolve(process.cwd(),\".claude\",\"commands\",\"crons\") exactly; `docker compose config` shows source=<repo>/.claude/commands/crons target=/app/.claude/commands/crons read_only=true; `docker compose -f docker-compose.yml -f docker-compose.dev.yml config` confirms dev override (no volumes: block for mcp-server) still inherits the mount via merge; host .claude/commands/crons/ has 13 .md files (matches AC-12). Production GET /api/cron-status will resolve a real dir once the pending container rebuild ships.",
+          "blocking": "apps/mcp-server/src/__tests__/cronStatusHandler.test.ts:359 -- the new REGRESSION test (added in commit 126a94d2, titled \"default commandsDir (zero-arg) ... -> 503\") calls handleGetCronStatus(mockReq, res, db, new Date(), nonExistentDir) -- it passes an EXPLICIT 5th arg (commandsDirArg=nonExistentDir), which short-circuits cronStatusHandler.ts:102 (const commandsDir = commandsDirArg ?? resolve(process.cwd(), \".claude\", \"commands\", \"crons\")) BEFORE resolve(process.cwd(), ...) ever executes. This is the same defect class flagged in round 1, restated verbatim as the round-1 board fix_scope (\"Add a regression test that calls handleGetCronStatus with the DEFAULT (zero-arg) commandsDir ... OR an integration assertion that resolve(process.cwd(),...) is a real dir when CWD=/app\") -- neither option was implemented. Grep of every handleGetCronStatus(...) call site in the file (lines 278, 293, 308, 326, 327, 359) confirms ALL SIX pass an explicit 5th arg (LIVE_CRONS_DIR or nonExistentDir) -- cronStatusHandler.ts:102s resolve(process.cwd(), ...) expression is never executed anywhere in this test file. The tests only assert behavior for an explicit-injected bad path, not for the real production zero-arg default path. Test title says \"zero-arg\" but the test body contradicts its own title.",
+          "fix_scope": "In cronStatusHandler.test.ts, make the REGRESSION test actually exercise the zero-arg default: call handleGetCronStatus(mockReq, res, db, new Date()) with NO 5th arg, while stubbing process.cwd() (e.g. spyOn(process, \"cwd\").mockReturnValue(<fixture dir without .claude/commands/crons>), restore after) so cronStatusHandler.ts:102s resolve(process.cwd(), \".claude\",\"commands\",\"crons\") line actually executes and resolves to a nonexistent path -- then keep the existing 503 JSON {error} assertions. Minimum: edit 1 test, ~10 lines, no new files.",
+          "non_blocking": "Round-1 positive findings still hold (app code sound: AC-9 PARITY, DDD/security clean, parameterized SQL -- see qa_verdict_round1 for full detail). Round-2 additional verified: bun test src/__tests__/cronStatusHandler.test.ts -> 18/18 pass; bun tsc --noEmit -> 0 errors; eslint -- src/__tests__/** is deliberately ignore-listed in eslint.config.mjs:30 (pre-existing project convention: Fence-A/B do not apply to test files, NOT a round-2 regression); git show 126a94d2 --stat confirms exactly the 4 files described in the fixers own round-1 record (docker-compose.yml, cronStatusHandler.test.ts, orch-state.json, TASK-DASH-CRON-1.md) -- no scope creep.",
+          "deploy_status": "Docker-compose mount fix is CORRECT and resolves AC-1 once the container rebuild ships -- this part of round 1 is fully resolved, no further action needed on the compose file. Container swap remains separately user-gated per router constraint. Remaining round-2 blocker is test-coverage only (regression test does not protect the fixed code path from future regressions), not a production defect."
+        }
       }
     ],
     "done_verified": [],
@@ -9802,50 +9852,6 @@
         "po_disposition": "[po-triage 2026-07-02T04:54:49Z] Route REVIEW->qa for CODE sign-off. Code complete (commits 2c7fb5b0+ff1bac44; router independently re-ran 13/13 suite GREEN). done_verified WITHHELD: LIVE behavioral DoD (B02a/TCTDHN bank-form BS section-classifier on rebuilt image) gated on the SAME user-approval mcp-server rebuild blocking A-30 + enricher deploy + W5 chain. QA may APPROVE-CODE now; live gate clears when operator ships the rebuild.",
         "qa_verdict": "APPROVE-CODE",
         "qa_at": "2026-07-02T05:06:41Z"
-      },
-      {
-        "id": "TASK-DASH-CRON-1",
-        "title": "Zone 1: Cron status-compute backend (cronLivenessClassifier, cronStatusCompute, cronStatusHandler, GET /api/cron-status, cron-parser dep)",
-        "status": "REVIEW",
-        "owner": "dev-mcp-server",
-        "next_agent": "qa",
-        "type": "FEATURE",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "size": "M",
-        "created_at": "2026-07-02T06:54:00Z",
-        "claimed_at": "2026-07-02T07:21:17Z",
-        "blocks": [
-          "TASK-DASH-CRON-2"
-        ],
-        "depends": [],
-        "started_at": "2026-07-02T07:21:17Z",
-        "reviewed_at": "2026-07-02T08:09:41Z",
-        "review_note": "[dev-mcp-server 2026-07-02T08:09:41Z] commit 85267b62 — Zone-1 backend for DASH-CRON-RECHECK-TABLE: domain/cron/cronLivenessClassifier.ts (pure FR-1.6 4-branch ladder) + humanScheduleFormatter.ts, infrastructure/cron/layerBCronRegistry.ts (CN-5 memoized, 13 live .claude/commands/crons/*.md files), application/cron/cronStatusCompute.ts (CN-1 hybrid 3-tier job-name resolution, CN-2 MIN-of-6-samples cadence via new cron-parser dep, R1 memoization), interface/mcp/routes/cronStatusHandler.ts (GET /api/cron-status, mirrors orchestrationHandler.ts) + route registration + 2 additive cronJobRunStore.ts exports. Deviation from brief (documented in decision journal): kept cronStatusCompute.ts scheduler-import-free (live eslint Fence-B forbids application->scheduler) via a local CadenceManifest type — cronStatusHandler.ts owns the WATCHDOG_MANIFEST/CRONS imports. 5 new test files, 72/72 pass (12 classifier + 13 formatter + 16 compute + 14 registry + 17 handler incl AC-9 PARITY cross-check vs all 16 WATCHDOG_MANIFEST jobs). tsc clean, eslint clean (own files), toolCount=183 unchanged. Full suite (2 runs): 14191-14200 pass / 71-80 fail / 5-10 errors — under documented ceiling testBaselineFail=348; grepped both logs, zero hits on my 5 new test files. Blocks TASK-DASH-CRON-2 (dev-frontend builds against this API).",
-        "route_to": "qa",
-        "qa_verdict": {
-          "verdict": "CHANGES_REQUESTED",
-          "by": "qa",
-          "at": "2026-07-02T08:42:34Z",
-          "round": 2,
-          "prior_round_resolved": "Round-1 blocker CONFIRMED FIXED: docker-compose.yml:27 mounts ./.claude/commands/crons:/app/.claude/commands/crons:ro (commit 126a94d2). Verified: Dockerfile WORKDIR=/app (L18) + CMD [\"bun\",\"run\",\"src/index.ts\"] (no cwd change) matches resolve(process.cwd(),\".claude\",\"commands\",\"crons\") exactly; `docker compose config` shows source=<repo>/.claude/commands/crons target=/app/.claude/commands/crons read_only=true; `docker compose -f docker-compose.yml -f docker-compose.dev.yml config` confirms dev override (no volumes: block for mcp-server) still inherits the mount via merge; host .claude/commands/crons/ has 13 .md files (matches AC-12). Production GET /api/cron-status will resolve a real dir once the pending container rebuild ships.",
-          "blocking": "apps/mcp-server/src/__tests__/cronStatusHandler.test.ts:359 -- the new REGRESSION test (added in commit 126a94d2, titled \"default commandsDir (zero-arg) ... -> 503\") calls handleGetCronStatus(mockReq, res, db, new Date(), nonExistentDir) -- it passes an EXPLICIT 5th arg (commandsDirArg=nonExistentDir), which short-circuits cronStatusHandler.ts:102 (const commandsDir = commandsDirArg ?? resolve(process.cwd(), \".claude\", \"commands\", \"crons\")) BEFORE resolve(process.cwd(), ...) ever executes. This is the same defect class flagged in round 1, restated verbatim as the round-1 board fix_scope (\"Add a regression test that calls handleGetCronStatus with the DEFAULT (zero-arg) commandsDir ... OR an integration assertion that resolve(process.cwd(),...) is a real dir when CWD=/app\") -- neither option was implemented. Grep of every handleGetCronStatus(...) call site in the file (lines 278, 293, 308, 326, 327, 359) confirms ALL SIX pass an explicit 5th arg (LIVE_CRONS_DIR or nonExistentDir) -- cronStatusHandler.ts:102s resolve(process.cwd(), ...) expression is never executed anywhere in this test file. The tests only assert behavior for an explicit-injected bad path, not for the real production zero-arg default path. Test title says \"zero-arg\" but the test body contradicts its own title.",
-          "fix_scope": "In cronStatusHandler.test.ts, make the REGRESSION test actually exercise the zero-arg default: call handleGetCronStatus(mockReq, res, db, new Date()) with NO 5th arg, while stubbing process.cwd() (e.g. spyOn(process, \"cwd\").mockReturnValue(<fixture dir without .claude/commands/crons>), restore after) so cronStatusHandler.ts:102s resolve(process.cwd(), \".claude\",\"commands\",\"crons\") line actually executes and resolves to a nonexistent path -- then keep the existing 503 JSON {error} assertions. Minimum: edit 1 test, ~10 lines, no new files.",
-          "non_blocking": "Round-1 positive findings still hold (app code sound: AC-9 PARITY, DDD/security clean, parameterized SQL -- see qa_verdict_round1 for full detail). Round-2 additional verified: bun test src/__tests__/cronStatusHandler.test.ts -> 18/18 pass; bun tsc --noEmit -> 0 errors; eslint -- src/__tests__/** is deliberately ignore-listed in eslint.config.mjs:30 (pre-existing project convention: Fence-A/B do not apply to test files, NOT a round-2 regression); git show 126a94d2 --stat confirms exactly the 4 files described in the fixers own round-1 record (docker-compose.yml, cronStatusHandler.test.ts, orch-state.json, TASK-DASH-CRON-1.md) -- no scope creep.",
-          "deploy_status": "Docker-compose mount fix is CORRECT and resolves AC-1 once the container rebuild ships -- this part of round 1 is fully resolved, no further action needed on the compose file. Container swap remains separately user-gated per router constraint. Remaining round-2 blocker is test-coverage only (regression test does not protect the fixed code path from future regressions), not a production defect."
-        },
-        "fixer_round": 2,
-        "fix_summary": "Added volume mount for ./.claude/commands/crons to docker-compose.yml (line 27); added regression test in cronStatusHandler.test.ts exercising default commandsDir with missing directory scenario (returns 503 JSON error, not crash)",
-        "qa_verdict_round1": {
-          "verdict": "CHANGES_REQUESTED",
-          "by": "qa",
-          "at": "2026-07-02T08:24:11Z",
-          "round": 1,
-          "blocking": "apps/mcp-server/src/interface/mcp/routes/cronStatusHandler.ts:102 default commandsDir=resolve(process.cwd(),'.claude','commands','crons'); server.ts:2136 calls handleGetCronStatus(req,res,db) with NO commandsDirArg override -> production always uses this default. apps/mcp-server/Dockerfile WORKDIR=/app (L18), COPY list (L51-63: package.json/bun.lock, src/, tsconfig.json, bctc-schema.ts, mcp.config.json) has NO .claude copy. docker-compose.yml mcp-server volumes (L11-27: ./data, ./data/pdfs, ./mcp.config.json, ./reports, ./docs/agent-memory, ./docs/data*, ./docs/signals, ./docs/analysis-briefs) has NO .claude mount; docker-compose.dev.yml override has no volumes block for mcp-server (inherits same gap). Confirmed: grep -i claude docker-compose*.yml = 0 hits; docker compose config valid. readdirSync('/app/.claude/commands/crons') will throw ENOENT in the rebuilt container -> handleGetCronStatus's own try/catch (line 108) converts this into a permanent 503 {error} -> GET /api/cron-status will NEVER return 200 post-swap, breaking AC-1 and transitively every Layer-A/B AC (DTO build aborts before any row is emitted). Both new test files (cronStatusHandler.test.ts:31, layerBCronRegistry.test.ts:165) inject an explicit LIVE_CRONS_DIR relative to bun test's cwd (apps/mcp-server) -- this is why 72/72 pass locally but the code's own zero-arg default branch (the one server.ts actually calls) was never exercised.",
-          "fix_scope": "Add a read-only volume mount for .claude/commands/crons (or .claude/commands/) to the mcp-server service in docker-compose.yml, mirroring the existing ./docs/agent-memory:/app/docs/agent-memory pattern (L16); verify docker-compose.dev.yml override still resolves it (inherits base volumes -- confirm no override strips it). Add a regression test that calls handleGetCronStatus with the DEFAULT (zero-arg) commandsDir against a fixture mimicking the container layout, or an integration assertion that resolve(process.cwd(),'.claude','commands','crons') is a real dir when CWD=/app at container start.",
-          "non_blocking": "Positive verified aspects (not defects): AC-9 PARITY holds by construction (watchdog healthy ageMs<=cadenceMs*thresholdMultiplier == classifier ON_TIME union LATE; watchdog alert == classifier MISSED union STALE) -- confirmed by reading both cronLivenessClassifier.ts and schedulerWatchdogJob.ts side-by-side. AC-12 13-file count verified against live .claude/commands/crons/ (14 files - 1 deprecated skip-listed = 13). Documented architect-brief deviation (WATCHDOG_MANIFEST import moved application->interface via local CadenceManifest structural type) judged sound and preserves brief intent -- npx eslint src/domain/cron src/infrastructure/cron src/application/cron src/interface/mcp/routes/cronStatusHandler.ts --max-warnings 0 independently re-run, 0 errors. tsc --noEmit 0 errors. mock-guard PASS. No process.env, no hardcoded secrets, parameterized SQL (? placeholders) in getLastRunForJob/getDistinctJobNames.",
-          "deploy_status": "Container swap remains separately user-gated per router constraint (docker compose build already staged) -- but even after swap this endpoint will 503 until the docker-compose.yml volume-mount fix above ships. This is independent of the swap-timing gate."
-        }
       }
     ],
     "qa": [],

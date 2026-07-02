@@ -64,3 +64,34 @@ no scope creep (git show --stat).
 its title but injects an explicit path; provides false regression coverage.
 **why-change:** Prod defect fixed as planned; test-coverage gap is new
 finding, narrower scope than round 1 (1-line test edit, not infra).
+
+### STEP qa-S3 · qa · 2026-07-02T10:55Z
+**task-id:** TASK-DASH-CRON-1
+**what-done:** Delta-reviewed fixer round-2 commit a1689b0e (3 files:
+cronStatusHandler.test.ts, orch-state.json, handoff). Read
+cronStatusHandler.ts:94-113 — confirmed line 102
+`commandsDirArg ?? resolve(process.cwd(), ".claude","commands","crons")`.
+Read rewritten REGRESSION test (lines 341-376): calls
+`handleGetCronStatus(mockReq, res, db, new Date())` with **no 5th arg**
+(so `commandsDirArg` is `undefined`, `??` falls through to
+`resolve(process.cwd(),...)`), stubs `process.cwd()` to `/fixture` via
+`spyOn`, resets the `layerBCronRegistry` module-level memoization cache
+first (`_resetLayerBCronCacheForTests()` — confirmed `readdirSync` /
+`_cachedRows` in layerBCronRegistry.ts:104,140-152, so the cache-reset is
+necessary for the stub to actually re-trigger `readdirSync`), restores the
+stub in `finally`. Ran `bun tsc --noEmit` (0 errors) and
+`bun test src/__tests__/cronStatusHandler.test.ts` (18/18 pass, incl.
+rewritten REGRESSION test). Sanity inversion: confirmed `/fixture` does not
+exist on the filesystem (guarantees ENOENT) and that the real
+`.claude/commands/crons` (14 files) would make `readdirSync` succeed —
+proves the test's pass/fail is genuinely coupled to the stubbed path's
+existence, not vacuous.
+**what-considered:** Smart-Skip — change is test-only (production
+cronStatusHandler.ts untouched this round), so DDD/security greps and
+mock-guard skipped per flow's Smart-Skip rule; ran unit+regression+tsc only.
+**why-decision:** APPROVED (round 3). Zero-arg default branch is now
+genuinely exercised — no bypass remains; the same test would fail (200
+instead of 503, no ENOENT) if the stubbed cwd resolved to a real crons dir,
+confirming load-bearing coverage.
+**why-change:** No change from plan — only path was fixer's round-2 diff
+addressing the exact round-2 blocking issue verbatim; all checks green.

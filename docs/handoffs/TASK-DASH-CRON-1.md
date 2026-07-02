@@ -289,6 +289,62 @@ PIPELINE: continue
 
 **Board Status:** fixer_round=2, next_agent=qa, route_to=qa (REVIEW→qa for round-3 verification)
 
-**Commit:** pending (to follow)
+**Commit:** a1689b0e36c9fa6f89e3621fbb30a34869cddd22
 
 PIPELINE: continue to qa round 3
+
+---
+
+## [QA] Round 3 — 2026-07-02T08:58Z — APPROVED
+
+Delta review of fixer round-2 commit `a1689b0e` (3 files:
+`cronStatusHandler.test.ts`, `orch-state.json`, this handoff). Round-1
+(docker-compose.yml volume mount) and round-2 (regression-test bypass)
+blockers were already confirmed fixed in prior rounds — not re-reviewed.
+
+**Verified:**
+1. `apps/mcp-server/src/interface/mcp/routes/cronStatusHandler.ts:102` —
+   `const commandsDir = commandsDirArg ?? resolve(process.cwd(), ".claude",
+   "commands", "crons")` unchanged from round 2.
+2. Rewritten REGRESSION test
+   (`apps/mcp-server/src/__tests__/cronStatusHandler.test.ts:341-376`) calls
+   `handleGetCronStatus(mockReq, res, db, new Date())` with **no 5th arg** —
+   `commandsDirArg` is `undefined`, so the `??` operator genuinely falls
+   through to `resolve(process.cwd(), ...)`; `process.cwd()` is stubbed to
+   `/fixture` via `spyOn(process, "cwd")`;
+   `layerBCronRegistry.ts`'s module-level memoization cache
+   (`_cachedRows`, lines 140/144-147) is reset first via
+   `_resetLayerBCronCacheForTests()` so `readdirSync` genuinely re-fires
+   against the stubbed path instead of returning a stale cached result; the
+   stub is restored in a `finally` block. No bypass remains — the test's own
+   title ("zero-arg") now matches its body.
+3. `bun tsc --noEmit` → 0 errors.
+4. `bun test src/__tests__/cronStatusHandler.test.ts` → 18/18 pass (incl. the
+   rewritten REGRESSION test).
+5. **Sanity inversion (proves the test is load-bearing):** confirmed
+   `/fixture` does not exist on the filesystem (`ls -d /fixture` → No such
+   file or directory), guaranteeing `readdirSync("/fixture/.claude/commands/crons")`
+   throws `ENOENT`. Confirmed the real `.claude/commands/crons/` (14 files)
+   would make `readdirSync` succeed instead — so if the stubbed cwd pointed
+   at an existing crons dir, the handler would return 200 (not 503/ENOENT),
+   and the test's `expect(getStatus()).toBe(503)` / `toContain("ENOENT")`
+   assertions would fail. This confirms the test's pass/fail is genuinely
+   coupled to the stubbed path's non-existence — not vacuous.
+
+**Smart-Skip applied:** diff is test-only (production `cronStatusHandler.ts`
+untouched this round) — DDD/security greps and `mock-guard.sh` skipped per
+flow's Smart-Skip rule; ran unit + regression + tsc only.
+
+**Verdict:** APPROVED (round 3). TASK-DASH-CRON-1 moved to `task_board.done`,
+`qa_verdict` round=3 APPROVED (round 1 and round 2 verdicts preserved as
+`qa_verdict_round1` / `qa_verdict_round2`), `head` flipped to idle. Journal:
+`docs/agent-memory/decisions/sprint-DASH-CRON-RECHECK-TABLE-qa.md` STEP
+qa-S3. Unblocks `TASK-DASH-CRON-2` (dev-frontend, was `blocks` dependent on
+this task).
+
+## RETURN
+
+DONE: QA round-3 review complete — APPROVED, TASK-DASH-CRON-1 closed
+NEXT: pm | mark TASK-DASH-CRON-1 done, unblock TASK-DASH-CRON-2 (dev-frontend)
+HANDOFF: docs/handoffs/TASK-DASH-CRON-1.md
+PIPELINE: continue
