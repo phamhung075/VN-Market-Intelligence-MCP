@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T01:00:06Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-02T01:21:01Z",
+    "_updated_by": "dev-team-drain",
     "archive": [],
     "rows": [
       {
@@ -919,7 +919,7 @@
         "type": "db_integrity_breach",
         "summary": "market_messages stale (check C-06)",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -930,7 +930,7 @@
         "type": "db_integrity_breach",
         "summary": "pdf_documents stale (check C-11)",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -941,7 +941,7 @@
         "type": "size_cap_breach",
         "summary": "orch-state task_board at 85/80 (check SIZEDOC-01)",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -952,14 +952,14 @@
         "type": "size_cap_breach",
         "summary": "orch-state sprint_goal at 26/15 (check SIZEDOC-02)",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
         "id": "devteam-mockguard-fp-20260702T010006Z",
         "summary": "mock-guard HARD-FAIL exit=1 — FALSE POSITIVE class: all hits inside apps/mcp-server/~/.bun/install/cache/ (stray bun install cache in repo tree: 26MB, untracked, NOT gitignored; matches are third-party ajv/zod TODO markers, not production source). Proposed: janitor task — delete apps/mcp-server/~, add .gitignore entry, add mock-guard exclusion for dependency-cache paths. No fabricated-data-in-production evidence.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-07-02T01:00:06Z",
         "from": "dev-team/post-cycle",
         "to": "po",
