@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c495 · 2026-07-02T18:48:38Z
+### Audit Run Tier-1 (18:48–18:50 UTC 2026-07-02)
+- Tier: 1 | Fire-election: WON (tick=2026-07-02T18:30Z)
+- Services: 12/12 UP | Health endpoints: 5/5 OK | A-20 pdf-extractor: 3/3 PASS
+- A-21: RestartCount=3 (WARN, DEDUP c493) | A-30: 99.98% memory (WARN, KNOWN-TRIAGED)
+- Disk: 49% ✓ | Cron: all OK, no fire gaps
+- Anomalies: 0 new (DEDUP+TRIAGED) | Status: HEALTHY
+- RAW-PROBE: All 12 services UP, 5/5 health endpoints OK, A-20 multi-probe 3/3 PASS
+
 ## c494 · 2026-07-02T18:32:02Z
 ### Audit Run Tier-2 (18:32–18:35 UTC 2026-07-02)
 - Tier: 2 | Fire-election: WON (tick=2026-07-02T16:00Z)
@@ -11,15 +20,8 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
   - B-06 CRITICAL: sbv-vps stale 47min vs 30min SLA threshold
   - B-01 ssc-iboard OK | B-04 foreign-flow OK | B-12 news OK
   - Rate-limits: all sources OK (none at 100%)
-- DB spot checks (Tier-2 subset):
-  - C-06: 0 messages <3h (market closed 08:59Z, expected FP)
-  - C-07: 177 signals <24h (PASS)
-  - B-09: 0 SSC URLs in queue (PASS)
-  - B-13: 0 stale pending BCTC (PASS)
-- BCTC eval: skipped (D-BCTC-EVAL requires report-specific query)
-- Anomalies: 2 NEW (B-05, B-06 CRITICAL)
-- Signals: 2 posted (id=8324 bctc, id=8325 sbv) + 2 orch-state rows written
-- Telegram: 2 BUG alerts sent | Status: CRITICAL
+- DB spot checks (Tier-2 subset): C-06: 0 messages <3h (market closed 08:59Z, expected FP) | C-07: 177 signals <24h (PASS) | B-09: 0 SSC URLs (PASS) | B-13: 0 stale pending (PASS)
+- Anomalies: 2 NEW (B-05, B-06 CRITICAL) | Signals: 2 posted + 2 orch-state rows written | Status: CRITICAL
 
 ## c493 · 2026-07-02T18:16:09Z
 ### Audit Run Tier-1 (18:16–18:17 UTC 2026-07-02)
