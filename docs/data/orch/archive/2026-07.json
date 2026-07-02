@@ -2586,6 +2586,118 @@
       "dod_clarification": "success_metric cond-1 (majority TRUSTED LR) measured against EXISTING recorded pairs at deploy — FR-1.1 makes the foreign_flow monoculture pairs TRUSTED via the live n=18 bearish/5d row (no recompute needed). Newly-restored FR-2.1 types are ALLOWED to be in sample-ramp (n<10, LR=1.0 neutral): they satisfy cond-2 'present' but are NOT required TRUSTED within the 2-cycle window (honest ramp, BA S6). Cond-3 new claim id>12 is satisfiable within 2 cycles from FR-1.1's surfaced edge alone. FIX-PREDICTION-SIGNALS-EMPTY removed from DoD (B3 decoupled).",
       "completed_at": "2026-07-01T07:56:10Z",
       "qa_verdict": "APPROVED"
+    },
+    {
+      "created_at": "2026-06-08T00:00:00Z",
+      "sprint_id": "CI-RED-RECONCILE",
+      "status": "CANCELLED",
+      "vision": "Fix CI RED on main — root-cause each failing cluster (schema drift, mock contamination, dead tests, assertion logic). DoD: gh run list --limit 1 -> success.",
+      "closed_at": "2026-07-02T02:27:33Z",
+      "close_note": "[po 2026-07-02T02:07Z triage] Superseded by the live ci-health-probe -> ci_red signal -> BACKLOG FIX pipeline (docs/agents/po/flow/triage-signals.md ci_red row). Granular FIX tasks (verification_gate=ci_green_on_subsequent_push) + the every-tick probe now own CI-red reconciliation. NOT a green claim: CI is still RED on HEAD; tracking moved off the stale 2026-06-08 manual umbrella, not resolved."
+    },
+    {
+      "created_at": "2026-06-11T19:13:09Z",
+      "created_by": "po",
+      "priority": "high",
+      "scope_in": "LIVE behavioral re-audit of the 17 TASK-17 endpoint+page pairs (alerts, foreign-flow, agm-plan-actual, prediction-claims, conviction-history, market-summaries, sector-rotation, sector-cascade, kinh-dich-signals, global-markets, corporate-events, shareholders, officers, financials, fed-rates, reputation, news-buzz) + the 2 mcp-server fixes (FIX-VNSTOCK-FUNDAMENTALS, FIX-EVIDENCE-PIPELINE-STARVED). Each: curl live endpoint AND open frontend loader path; judge correct/non-empty/well-shaped/directional. IMPROVEMENT LANE: technically-200 but weak counts as a problem — empty arrays without stale flags, prose where JSON expected, missing direction/delta on market data, stale data not flagged, frontend rendering payload poorly. Fix ALL DEGRADED/BROKEN; rebuild containers after code change; re-verify live post-rebuild.",
+      "scope_out": "NOT redoing the 44-check quality burn-down (239 PASS already). NOT touching BCTC/OCR pipeline sprints. NOT new pages/endpoints beyond the ship wave. The 2 WARN + 3 needs_review residuals from the burn-down fold in ONLY if they touch a ship-wave endpoint/page.",
+      "sprint_id": "SHIP-WAVE-REAUDIT",
+      "status": "DEFERRED",
+      "success_metric": "Every one of the 19 audited items has a GOOD verdict with live raw-payload evidence at QA sign-off. Zero DEGRADED/BROKEN remaining. Improvement-lane items (weak-but-200) resolved or explicitly DEFERRED-PRODUCT with rationale. Containers rebuilt + re-verified live post-fix. Ship completion, not slices.",
+      "vision": "Re-audit the last ship wave (TASK-17 dashboard: 17 GET /api/* endpoints + 17 frontend pages, + FIX-VNSTOCK-FUNDAMENTALS f4f5ce65, + FIX-EVIDENCE-PIPELINE-STARVED 27eaece9) on LIVE behavior, not lint. User signal: 'many code not give best result' = shipped pages return suboptimal/empty/wrong-shaped data in real use. Every endpoint+page pair gets a LIVE probe verdict GOOD/DEGRADED/BROKEN with raw-payload evidence (verify raw values not badges; live DB = named volume not host ./data; contract from live payload not schema comment). Then triage every DEGRADED/BROKEN into fix tasks and drive the dev chain to DONE with QA-green live verification.",
+      "zone": "multi",
+      "closed_at": "2026-07-02T02:27:33Z",
+      "close_note": "[po 2026-07-02T02:07Z triage] Deferred to match board reality: task ARCH-SHIP-WAVE-REAUDIT sits DEFERRED in the review lane. Ship-wave re-audit parked; re-open when the 19 ship-wave endpoint/page pairs are re-prioritized."
+    },
+    {
+      "sprint_id": "CROSS-SESSION-MULTI-TEAM-ORCH",
+      "status": "DONE",
+      "vision": "Multiple independent Claude Code sessions running the SAME agent role (2+ dev teams, 2+ analysis teams, or more) must never both claim or fire the same work item. The raw mutex (task_claim, task_id PRIMARY KEY) is sound across sessions; ONLY attribution is broken (heartbeat/release/is-mine key on owner_agent=role, which cannot separate two same-role sessions). Fix: thread the harness per-session UUID (CLAUDE_CODE_SESSION_ID) into the lock row as owner_client_session and rebind every ownership decision to it. Authoritative key = per-session UUID EVERYWHERE, NEVER owner_agent. Additive, reuse-only: no new DB, service, or file format.",
+      "scope_in": "P1 ONLY now (the unblocker that makes claimed:true trustworthy across N same-role sessions): owner_client_session TEXT column in task_locks (nullable, NOT UNIQUE); owner_client_session param on task_claim/heartbeat/release/force_release_orphan; matching-ladder rebind in coordinationStore.ts; releaseTask return shape -> {ok:true, released:0|1}; DELETE self-held-heartbeat shortcut in leader-lock.md:64-81 (trust claimed:true, compare owner_client_session on claimed:false); CLAUDE.md step 2.5 PRE-CLAIM gate + lift dispatch-claim SKILL to router scope; task-lock SKILL rebind authoritative key; thread CLAUDE_CODE_SESSION_ID via spawn-prompt as a coordination parameter (never echoed as a credential). Owners: dev-mcp-server (MCP-1/2/3) + agent-father (AF-1/2/3/4).",
+      "scope_out": "P2 presence registry (session-presence enum value + task_list_held output fields) is GATED behind P1 done_verified. P3 fire-time cron leader election (replaces operator OBSERVE-ONLY convention) is GATED behind P1+P2. P3b board roster projection is PLAN-ONLY / read-derived. No mirroring of session ownership onto orch-state.json in P1/P2 (lock table is the presence SSOT). No new DB, service, or file format.",
+      "success_metric": "P1 done_verified ONLY when ALL hold, RAW-verified against the LIVE coordination.db in the Docker named volume (host ./data/coordination.db is a stale decoy): (1) owner_client_session is REQUIRED (not optional) in the tool input schema for task_claim/heartbeat/release/force_release_orphan; (2) the is-it-mine PROCEED/EXIT path keys SOLELY on owner_client_session, with NO owner_agent comparison remaining in any ownership-decision or release/heartbeat ownership WHERE predicate (owner_agent retained only as a stored human-readable role label, never a match predicate); (3) migration step 5 (make REQUIRED + remove owner_agent fallback rung from the is-mine path) IS SHIPPED; (4) regression test proves two same-role sessions with identical owner_agent cannot self-heartbeat-claim or release each other's locks (loser DEFERs); (5) the brief section 7 P1 failure-mode matrix passes: double-claim race, self-held false-positive (cowork double-fire), stale reclaim after crash, reclaim after mcp-server rebuild, release-by-wrong-session, clock-source server-side only, db-unavailable fail-closed, read-before-fire cadence race.",
+      "product_decision": "PO sign-off 2026-06-28 (po, session 14f8039a). VERDICT: APPROVED (P1 scope + sequencing) with one DoD hardening locked. (A) Sequencing APPROVED as briefed: migration SQL P1-MCP-1 BEFORE matching-ladder switch P1-MCP-2; client-caller rollout (CLAUDE.md + SKILLs + flow files) BEFORE flipping owner_client_session to REQUIRED. (B) LOCKED DoD GATE (non-negotiable, blocking acceptance criterion, not a nice-to-have): owner_agent is a TRANSITIONAL legacy fallback rung permitted ONLY during the rollout window (brief migration steps 2-4); migration step 5 -- make owner_client_session REQUIRED in the tool schema AND remove the owner_agent fallback from the is-it-mine path -- is MANDATORY. If step 5 is dropped, the owner_agent fallback silently re-opens the same-role multi-team bug. pm MUST encode step 5 as its own atomic FR with this acceptance criterion, gated last after caller rollout. (C) P3 STANDING DECISION, APPROVED IN PRINCIPLE: once P3 fire-time cron election is code-enforced AND RAW-verified live, it SUPERSEDES the manual operator conventions 'single human owner of cowork', 'cowork OBSERVE-ONLY', and 'defer to live leader' (project memory feedback_router_cowork_defer_to_live_leader + feedback_router_manual_drive_overlaps_devteam_loop). ACTIVATION GATE: supersession takes effect ONLY at P3 done_verified -- the manual convention REMAINS authoritative until then, so there is no gap window; a memory update retiring the conventions is owed at P3 sign-off. (D) Phase gating CONFIRMED: P1 has no dependency and functionally satisfies BOTH explicit user asks (check-before-claim = step 2.5 PRE-CLAIM gate; register id+start-time = owner_client_session + payload.started_at land in every claim row, returned via current_holder + task_list_held); P2 depends on P1 and elevates this to a first-class live-session roster; P3 depends on P1+P2.",
+      "po_signoff": "APPROVED",
+      "design_brief": "docs/architecture-briefs/2026-06-28-cross-session-multi-team-orchestration.md",
+      "architect_signal": "docs/signals/cross-session-multi-team-orch-20260628T080825Z.json",
+      "next_agent": "pm",
+      "chain": "pm -> (dev-mcp-server + agent-father) -> qa",
+      "created_at": "2026-06-28T08:18:28Z",
+      "p1_5": {
+        "phase": "P1.5 — Orphan Detection + Work Takeover",
+        "status": "DECOMPOSITION RELEASED — po confirmed architect §6.5 (brief rev 2) on 2026-06-28T08:32:39Z (journal po-S6..S9). VERDICT: APPROVED-WITH-HARDENING.",
+        "approved_at": "2026-06-28T08:21:49Z",
+        "depends_on": "P1 (needs owner_client_session to attribute an expired lock to a SPECIFIC dead session so a DIFFERENT same-role session can adopt it — impossible under owner_agent role-key)",
+        "may_parallel": "P2 (detection-by-staleness works pre-P2; detection precision improves once P2 presence roster lets the reaper cross-check an expired lock against the live-session roster)",
+        "mechanism": "Server-side reaper in the always-on mcp-server (the ONLY process alive across all session deaths) scans task_locks for expired locks (heartbeat_age > TTL) attributable to a dead session and emits an idempotent re-dispatch signal carrying a durable-checkpoint pointer; a live session ADOPTS and CONTINUES from the checkpoint (task_board status / handoff doc / period-keyed artifact) via stale-steal under its OWN owner_client_session — NOT a fresh restart; poison-task escalation after N retries stops infinite re-dispatch.",
+        "design_ceiling_accepted": "HONEST LIMIT, NOT A DEFECT: zero live sessions = zero execution. The reaper runs in mcp-server (a tool server, not an agent runtime) so it can only mark/keep state ADOPTABLE and emit the re-dispatch signal; actual takeover happens when the NEXT session comes online and reads that signal. Accepted by PO as an architectural limit.",
+        "dod_shape": [
+          "Reaper detects orphan = lock expired (heartbeat_age > TTL) AND owner_client_session attributable to a non-live session (staleness pre-P2; cross-checked vs presence roster post-P2)",
+          "Orphaned work becomes ADOPTABLE: reaper emits an idempotent re-dispatch signal carrying the durable-checkpoint pointer (task_id + task_board status + handoff path + period-key)",
+          "A live session ADOPTS and CONTINUES from the durable checkpoint (not restart); adoption claims the expired lock via stale-steal with the adopter's owner_client_session",
+          "Idempotent continuation — NO double-publish of a period-keyed artifact (reuse published:<kind>:<period-key> dedup; honor guaranteed-slot double-post lesson)",
+          "Poison-task escalation: after N failed adoptions, stop re-dispatch, mark poisoned, route to po/BUG (no infinite loop)",
+          "Honest ceiling (zero live sessions = zero execution) documented + accepted; reaper runs in always-on mcp-server",
+          "RAW-verify against LIVE coordination.db in the Docker named volume"
+        ],
+        "decomposition_gate": "RELEASED 2026-06-28T08:32:39Z: architect §6.5 landed + po confirmed. pm: decompose P1.5 into atomic FRs NOW, sequenced strictly AFTER P1. Bake the 6 locked DoD additions (po_confirm.locked_dod) into the named FRs. P1.5-* blockedBy TASK_1980 (P1-FINAL flip).",
+        "scope_expansion_origin": "New user requirement relayed via coordinator 2026-06-28 (dead session strands its task; need detect-dead-session + takeover-and-continue). P1 attribution fix is UNCHANGED and is the prerequisite. Coordinator note carries no user authority; folded on merit.",
+        "po_confirm": {
+          "verdict": "APPROVED-WITH-HARDENING",
+          "confirmed_at": "2026-06-28T08:32:39Z",
+          "confirmed_by": "po (session 14f8039a)",
+          "journal": "docs/agent-memory/decisions/sprint-CROSS-SESSION-MULTI-TEAM-ORCH-po.md (po-S6..S9)",
+          "lenses_clean": [
+            "#1 honest-bound",
+            "#3 slow≠dead grace",
+            "#5 P1-dependency",
+            "#6 reaper-placement server-side"
+          ],
+          "lenses_hardened": [
+            "#2 continue≠restart",
+            "#4 poison-task cap"
+          ],
+          "sequencing_gate": "P1.5-* FRs blockedBy TASK_1980 (P1-FINAL REQUIRED-flip + remove owner_agent fallback) — NOT merely TASK_1973; orphan attribution is unambiguous only once no lock row carries NULL owner_client_session. Preferred: additionally gate the two AF adoption FRs on TASK_1981 (P1 regression green).",
+          "locked_dod": [
+            {
+              "id": "DoD-P15-1",
+              "fr": "P1.5-AF-2 (dev-team Step 0a sprint-task adoption); P1.5-AF-1 router DEFERS",
+              "clause": "Before resuming an adopted sprint-task the dev-team adopter MUST git status --porcelain the task zone and git checkout -- <file> every UNCOMMITTED live-effect edit (hook/config/schema/anything live-from-disk) to last-good; leave untracked artifacts in place + surface in board note. SHA=resume POINT, tree-hygiene=resume PRECONDITION. Router never reverts (routes, never implements). Clause scoped to single-host shared-tree topology; separate-clone resumes from last PUSHED commit.",
+              "grounds": "feedback_dead_worker_uncommitted_live_file_revert"
+            },
+            {
+              "id": "DoD-P15-2",
+              "fr": "P1.5-AF-1 + P1.5-AF-2 (resume-contract probe) + §6.5.5 doc",
+              "clause": "The published-artifact existence probe in the cowork-slot + cron-tick resume contract MUST be a read-only task_list_held, NEVER task_heartbeat/task_claim (create-if-absent masks a never-fired publish, defeating dedup).",
+              "grounds": "feedback_guaranteed_slot_week_key_double_post recurrence #3"
+            },
+            {
+              "id": "DoD-P15-3",
+              "fr": "P1.5-MCP-2 (reaper increment) + P1.5-AF-1/AF-2 (adopter payload) + P1.5 poison test",
+              "clause": "Adopter MUST propagate redispatch_count from the orphan-signal payload INTO the re-claim payload (carry-forward) — else the counter resets to 1 each adoption and N_MAX=3 is never reached (guard inert). Escalation idempotent: BUG telegram fires ONCE on transition to ESCALATED; a later adopter seeing status==ESCALATED skips silently. Poison test MUST assert the count CHAINS across 3 real adopt→die cycles, not a hand-set rc=3.",
+              "grounds": "feedback_recurring_bug_escalation"
+            },
+            {
+              "id": "DoD-P15-4",
+              "fr": "P1.5-MCP-2 (gcExpiredLocks scan predicate)",
+              "clause": "Reaper emits orphan-signals ONLY for kinds with a defined resume contract (sprint-task, cowork-slot, cron-tick-with-published-checkpoint, dashboard-row) via an ALLOW-LIST — NOT the current deny-list, which emits un-adoptable signals for commit-mutex/intent:*/cron-fire-claims (no resume row → adopter undefined behavior). New kinds default to NOT-emitting."
+            },
+            {
+              "id": "DoD-P15-5",
+              "fr": "P1.5-MCP-3 (setInterval reaper)",
+              "clause": "The 600s setInterval reaper MUST wrap gcExpiredLocks in try/catch and log+continue on a transient DB-busy; a single uncaught error must NOT kill the interval (else the all-sessions-dead gap silently re-opens). Test: inject a GC error, assert the timer still fires next tick.",
+              "grounds": "feedback_silent_swallow_serial_bugs"
+            },
+            {
+              "id": "DoD-P15-6",
+              "fr": "all P1.5-AF docs (router step-2.5 SKILL + dev-team Step 0a flow + orphan-signal mechanism doc)",
+              "clause": "§6.5.1 honest-bound line (zero live sessions = zero execution; reaper only makes work ADOPTABLE, never self-heals execution) MUST be carried verbatim into every doc that references this design."
+            }
+          ]
+        }
+      },
+      "closed_at": "2026-07-02T02:27:33Z",
+      "close_note": "[po 2026-07-02T02:07Z triage] Shipped + operational. P1-FINAL gate TASK_1980 (owner_client_session REQUIRED-flip + owner_agent fallback removal) DONE; TASK_1973 DONE. P1.5 orphan-adoption (Phase A) + P2 presence roster (Phase A.5) are live-referenced in CLAUDE.md router flow; presence+fire-election SHIPPED 2026-06-28 (project memory). Umbrella closed; mechanism live."
     }
   ]
 }
