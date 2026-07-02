@@ -213,3 +213,32 @@ DONE: Implementation complete — SERVICE=frontend, TIER=4, CHANGED=[apps/fronte
 NEXT: qa | run full QA pipeline on TASK-DASH-CRON-2 — verify AC-16..AC-25, AC-28 against the diff; note Zone-1 container rebuild is still pending (user-gated), so live end-to-end (real cron data, not empty-shape degrade) cannot be verified until that ships — this is a known, accepted gap, not a defect in this diff
 HANDOFF: docs/handoffs/TASK-DASH-CRON-2.md
 PIPELINE: continue
+
+## [QA] Review Record — 2026-07-02 (round 1)
+
+**Verdict: APPROVED**
+
+RAW-gated commit `b563c0d2`. Every claim in the dev-frontend Implementation Record was independently reproduced from a clean state, not relayed:
+- `apps/frontend/app/__tests__/TASK-DASH-CRON-2-cron-recheck-table.test.ts` → 41/41 PASS (own run).
+- `npx tsc --noEmit` → 0 errors (own run).
+- Full `npx vitest run` → 2047 pass / 2 fail — both failures confirmed pre-existing (`QUE-REFERENCE-PAGE-detail.test.ts`, `QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.tsx`, `QUE_DESCRIPTIONS[i]` 3-vs-2-own-keys), neither file touched by this diff.
+- `bash scripts/audits/mock-guard.sh --files "apps/frontend/app/routes/api.cron-status.tsx apps/frontend/app/routes/dashboard.orchestration.tsx"` → exit 0 PASS.
+- DDD grep (`infrastructure`/`application` imports) and secret grep on both modified production files → 0 hits.
+- `PLAYWRIGHT_PORT=3012 npx playwright test` → 4/4 PASS, own RAW run against a genuinely fresh local Vite server (confirmed :3001 is the live stale-image Docker container per the dispatch caveat; not touched).
+- Independent 3rd manual verification: own throwaway `PORT=3013 npm run dev` instance (killed after) — `curl /dashboard/orchestration` → HTTP 200; "Kiểm Tra Lịch Cron"/"Kiểm tra lại"/"Cron máy chủ"/"Cron phiên làm việc" all present; both layers show "Không có dữ liệu." (matches live `/api/cron-status` 404, Zone-1 container rebuild still pending, as documented); honest error banner rendered ("Không thể tải trạng thái cron — upstream 404"); `/api/orchestration` independently confirmed HTTP 200 on the same server (AC-23); zero "Application Error"/"Internal Server Error" strings (AC-24).
+- `docs/data/frontend-data-coverage-map.json` — independently recomputed via python3/json: `summary.rows=50` and `summary.LIVE=40` both match the actual array contents; new row carries the mandatory `route` field.
+- Code-read confirmed `CronRecheckTable` renders AFTER the `state ? (...) : (...)` block closes (dashboard.orchestration.tsx:1318, block spans 1284-1316) — AC-16/AC-25 hold by construction. `normalizeCronStatusB` unconditionally forces `SESSION_SCOPED` — AC-14/NFR-7 holds even under adversarial upstream (verified in source + 6 dedicated tests). `dataAsof={cronStatus.fetched_at || null}` correctly folds the empty-shape DTO's `fetched_at: ""` to `null` (avoids an `Invalid Date` edge case `?? null` would have missed).
+
+AC map — all PASS: AC-16, AC-17 (no truncation, grep-confirmed), AC-18, AC-19, AC-20, AC-21, AC-22, AC-23, AC-24, AC-25, AC-28, AC-14/NFR-7.
+
+No blocking issues found. Board: `TASK-DASH-CRON-2` moved `task_board.review` → `task_board.done`, `qa_verdict` round=1 APPROVED.
+
+Journal: `docs/agent-memory/decisions/sprint-DASH-CRON-RECHECK-TABLE-qa.md` STEP qa-S4.
+Report: `reports/TASK_REPORT_TASK-DASH-CRON-2.md`.
+
+## RETURN
+
+DONE: QA review complete — TASK-DASH-CRON-2 APPROVED round 1, no blocking issues
+NEXT: pm | mark TASK-DASH-CRON-2 done, sprint DASH-CRON-RECHECK-TABLE (both tasks DONE — TASK-DASH-CRON-1 + TASK-DASH-CRON-2) ready for done_verified stamp
+HANDOFF: docs/handoffs/TASK-DASH-CRON-2.md
+PIPELINE: continue

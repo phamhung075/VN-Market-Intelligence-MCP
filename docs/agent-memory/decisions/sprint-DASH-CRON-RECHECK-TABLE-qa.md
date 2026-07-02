@@ -95,3 +95,33 @@ instead of 503, no ENOENT) if the stubbed cwd resolved to a real crons dir,
 confirming load-bearing coverage.
 **why-change:** No change from plan — only path was fixer's round-2 diff
 addressing the exact round-2 blocking issue verbatim; all checks green.
+
+### STEP qa-S4 · qa · 2026-07-02T09:36Z
+**task-id:** TASK-DASH-CRON-2
+**what-done:** RAW-gated commit b563c0d2 (Zone-2 frontend, round 1). Ran named
+test 41/41 PASS, full vitest 2047 pass/2 fail (both pre-existing QUE-TOOLTIP,
+confirmed exact match to dev's claim), tsc 0 errors, mock-guard exit 0, DDD
+grep clean. Playwright RAW-ran on a genuinely fresh PLAYWRIGHT_PORT=3012
+server (independent of dev's own run) — 4/4 PASS. Independently spun a 3rd
+throwaway dev server (port 3013, killed after) and curl'd
+/dashboard/orchestration live: HTTP 200, all 4 VN section/labels present,
+both layers show "Không có dữ liệu." (empty-shape degrade, /api/cron-status
+404 confirmed live), honest error banner rendered, /api/orchestration
+independently confirmed 200 (AC-23 no regression), zero error strings.
+**what-considered:**
+- Code-read confirmed CronRecheckTable sits AFTER the state?(...):(...) block
+  closes (line 1318, outside line 1284-1316) — AC-16/AC-25 hold by
+  construction, not just by claim.
+- normalizeCronStatusB unconditionally returns SESSION_SCOPED regardless of
+  _raw — AC-14/NFR-7 holds even under adversarial upstream, verified in
+  source + 6 dedicated tests.
+- dataAsof={cronStatus.fetched_at || null} (not ?? null) correctly converts
+  the empty-shape DTO's fetched_at:"" to null before FreshnessBadge, avoiding
+  an Invalid Date edge case ?? null would have missed.
+- coverage-map rows/LIVE counts (50/40) independently recomputed via
+  python3/json against the live file, not trusted from the diff header.
+**why-decision:** APPROVED (round 1). Every claim in the handoff was
+independently reproduced from a clean state rather than relayed — all green,
+no blocking issues found.
+**why-change:** No change from plan — only path was the single dev-frontend
+diff addressing every listed AC; nothing to route to fixer/architect.

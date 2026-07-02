@@ -243,13 +243,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-07-02T11:20:00Z",
-    "updated_by": "dev-frontend",
-    "active_task_id": "TASK-DASH-CRON-2",
-    "next_agent": "qa",
-    "next_action": "qa reviews TASK-DASH-CRON-2 (frontend Cron Recheck Table UI, commit b563c0d2) against AC-16..AC-25 + AC-28; note Zone-1 mcp-server container rebuild still user-gated so live end-to-end cron data cannot be verified yet (accepted gap) — verify code correctness + graceful-degrade behavior instead",
-    "note": "TASK-DASH-CRON-2 implementation complete (dev-frontend), moved in_progress -> review, route_to=qa"
+    "status": "idle",
+    "updated_at": "2026-07-02T09:38:10Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": "pm"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9658,6 +9656,37 @@
           "non_blocking": "Round-1 positive findings still hold (app code sound: AC-9 PARITY, DDD/security clean, parameterized SQL -- see qa_verdict_round1 for full detail). Round-2 additional verified: bun test src/__tests__/cronStatusHandler.test.ts -> 18/18 pass; bun tsc --noEmit -> 0 errors; eslint -- src/__tests__/** is deliberately ignore-listed in eslint.config.mjs:30 (pre-existing project convention: Fence-A/B do not apply to test files, NOT a round-2 regression); git show 126a94d2 --stat confirms exactly the 4 files described in the fixers own round-1 record (docker-compose.yml, cronStatusHandler.test.ts, orch-state.json, TASK-DASH-CRON-1.md) -- no scope creep.",
           "deploy_status": "Docker-compose mount fix is CORRECT and resolves AC-1 once the container rebuild ships -- this part of round 1 is fully resolved, no further action needed on the compose file. Container swap remains separately user-gated per router constraint. Remaining round-2 blocker is test-coverage only (regression test does not protect the fixed code path from future regressions), not a production defect."
         }
+      },
+      {
+        "id": "TASK-DASH-CRON-2",
+        "title": "Zone 2: Cron Recheck Table UI (api.cron-status.tsx proxy, CronRecheckTable component, coverage-map row, depends on Zone 1)",
+        "owner": "dev-frontend",
+        "size": "M",
+        "zone": "apps/frontend/",
+        "status": "DONE",
+        "type": "FEATURE",
+        "priority": "high",
+        "depends": [
+          "TASK-DASH-CRON-1"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-02T06:54:00Z",
+        "claimed_at": "2026-07-02T09:02:12Z",
+        "claimed_by": "router",
+        "next_agent": "qa",
+        "dispatch_note": "Dispatched dev-frontend 2026-07-02T09:02:12Z. Zone 1 (TASK-DASH-CRON-1) APPROVED r3: /api/cron-status endpoint + compose mount shipped (container rebuild pending user gate). Zone 2 scope: api.cron-status.tsx Remix proxy route, CronRecheckTable component, coverage-map row.",
+        "reviewed_at": "2026-07-02T11:20:00Z",
+        "review_note": "[dev-frontend 2026-07-02T11:20:00Z] commit b563c0d2 — api.cron-status.tsx proxy (mirrors api.orchestration.tsx) + CronRecheckTable/CronLayerTable/CronStatusBadge on dashboard.orchestration.tsx, Promise.all-fetched alongside /api/orchestration (CN-4, no added latency). Layer-A status clamped to NEVER_FIRED on malformed enum; Layer-B status unconditionally forced SESSION_SCOPED (AC-14/NFR-7 holds even under adversarial upstream data). Renders independent of the /api/orchestration fetch (AC-16/AC-25). coverage-map +1 row (route field, rows 49->50, LIVE 39->40). tsc 0 errors; vitest 2047 pass/2 pre-existing QUE-TOOLTIP fail (+41 net new); Playwright G12 4/4 GREEN re-verified on an isolated PLAYWRIGHT_PORT=3012 local dev server after discovering :3001 is bound by the live (stale, un-rebuilt) frontend container which would have false-greened reuseExistingServer. mcp-server container rebuild for Zone 1 still user-gated pending — GET /api/cron-status 404s live today; relayed as-is, loader degrades to empty-shape DTO, table shows Không có dữ liệu. until the rebuild ships (expected, not a defect).",
+        "updated_at": "2026-07-02T09:38:10Z",
+        "updated_by": "qa",
+        "completed_at": "2026-07-02T09:38:10Z",
+        "qa_verdict": {
+          "verdict": "APPROVED",
+          "by": "qa",
+          "at": "2026-07-02T09:38:10Z",
+          "round": 1,
+          "note": "RAW-gated commit b563c0d2 — independently reproduced (not relayed): 41/41 named tests, tsc 0 errors, full suite 2047/2 (2 pre-existing QUE-TOOLTIP unrelated), mock-guard exit 0, DDD/security clean, own PLAYWRIGHT_PORT=3012 e2e 4/4 PASS, own 3rd throwaway dev-server (port 3013) live curl of /dashboard/orchestration confirmed HTTP 200 + all VN copy present + honest 404 error banner + /api/orchestration unaffected (AC-23) + zero app-error strings (AC-24). CronRecheckTable confirmed rendered outside the state?(...):(...) conditional (AC-16/AC-25 hold by construction). normalizeCronStatusB unconditionally forces SESSION_SCOPED (AC-14/NFR-7). coverage-map rows=50/LIVE=40 independently recomputed and matched. All ACs (16,17,18,19,20,21,22,23,24,25,28) PASS. Journal: sprint-DASH-CRON-RECHECK-TABLE-qa.md STEP qa-S4."
+        }
       }
     ],
     "done_verified": [],
@@ -9838,28 +9867,6 @@
         "po_disposition": "[po-triage 2026-07-02T04:54:49Z] Route REVIEW->qa for CODE sign-off. Code complete (commits 2c7fb5b0+ff1bac44; router independently re-ran 13/13 suite GREEN). done_verified WITHHELD: LIVE behavioral DoD (B02a/TCTDHN bank-form BS section-classifier on rebuilt image) gated on the SAME user-approval mcp-server rebuild blocking A-30 + enricher deploy + W5 chain. QA may APPROVE-CODE now; live gate clears when operator ships the rebuild.",
         "qa_verdict": "APPROVE-CODE",
         "qa_at": "2026-07-02T05:06:41Z"
-      },
-      {
-        "id": "TASK-DASH-CRON-2",
-        "title": "Zone 2: Cron Recheck Table UI (api.cron-status.tsx proxy, CronRecheckTable component, coverage-map row, depends on Zone 1)",
-        "owner": "dev-frontend",
-        "size": "M",
-        "zone": "apps/frontend/",
-        "status": "REVIEW",
-        "type": "FEATURE",
-        "priority": "high",
-        "depends": [
-          "TASK-DASH-CRON-1"
-        ],
-        "blocks": [],
-        "created_at": "2026-07-02T06:54:00Z",
-        "claimed_at": "2026-07-02T09:02:12Z",
-        "claimed_by": "router",
-        "next_agent": "qa",
-        "dispatch_note": "Dispatched dev-frontend 2026-07-02T09:02:12Z. Zone 1 (TASK-DASH-CRON-1) APPROVED r3: /api/cron-status endpoint + compose mount shipped (container rebuild pending user gate). Zone 2 scope: api.cron-status.tsx Remix proxy route, CronRecheckTable component, coverage-map row.",
-        "route_to": "qa",
-        "reviewed_at": "2026-07-02T11:20:00Z",
-        "review_note": "[dev-frontend 2026-07-02T11:20:00Z] commit b563c0d2 — api.cron-status.tsx proxy (mirrors api.orchestration.tsx) + CronRecheckTable/CronLayerTable/CronStatusBadge on dashboard.orchestration.tsx, Promise.all-fetched alongside /api/orchestration (CN-4, no added latency). Layer-A status clamped to NEVER_FIRED on malformed enum; Layer-B status unconditionally forced SESSION_SCOPED (AC-14/NFR-7 holds even under adversarial upstream data). Renders independent of the /api/orchestration fetch (AC-16/AC-25). coverage-map +1 row (route field, rows 49->50, LIVE 39->40). tsc 0 errors; vitest 2047 pass/2 pre-existing QUE-TOOLTIP fail (+41 net new); Playwright G12 4/4 GREEN re-verified on an isolated PLAYWRIGHT_PORT=3012 local dev server after discovering :3001 is bound by the live (stale, un-rebuilt) frontend container which would have false-greened reuseExistingServer. mcp-server container rebuild for Zone 1 still user-gated pending — GET /api/cron-status 404s live today; relayed as-is, loader degrades to empty-shape DTO, table shows Không có dữ liệu. until the rebuild ships (expected, not a defect)."
       }
     ],
     "qa": [],
