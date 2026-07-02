@@ -1,0 +1,10 @@
+{
+  "last_healthy_at": "2026-07-02T12:40:54Z",
+  "checks": {
+    "docker_ps": "PASS",
+    "health_3000": "PASS",
+    "health_3001": "PASS",
+    "disk": "PASS",
+    "mem_creep": "PASS"
+  }
+}

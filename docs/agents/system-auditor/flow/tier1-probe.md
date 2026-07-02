@@ -1,4 +1,17 @@
-<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). size-justification: ~130L — FIX-AUDITOR-A20-MULTIPROBE 2026-06-08 adds A-20 multi-probe discriminator section (~28L); exceeds 120L cap by design; extraction to separate file would add lazy-load overhead on every T1 cycle where pdf-extractor is in host_runtime_set (i.e. always). -->
+<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). size-justification: ~155L — FIX-AUDITOR-A20-MULTIPROBE 2026-06-08 adds A-20 multi-probe discriminator section (~28L); TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 2026-07-02 adds this SSOT header note (~10L); exceeds 120L cap by design; extraction to separate file would add lazy-load overhead on every T1 cycle where pdf-extractor is in host_runtime_set (i.e. always). -->
+<!-- TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 (2026-07-02, R9/R10): this subagent is
+     now only spawned by a shell-first pre-gate, scripts/agents-flow/
+     auditor-tier1-probe.sh (invoked by cron-detect-loop/SKILL.md Job 2) —
+     verdict=ALL_GREEN writes a heartbeat and skips spawning entirely,
+     verdict=FAILURE (or a stale heartbeat per Job 2's passive-health-
+     masking guard) spawns this subagent to run the FULL walk-through
+     below, unchanged. Separately, docs/agents/system-auditor/probe.sh is
+     now the SSOT evidence collector for A-20 too (see its own
+     "--- pdf-extractor in-container multi-probe (A-20) ---" section) —
+     PROBE_OUT already carries the 3 probe results + pass_count by the time
+     you reach § A-20 below; the pseudocode there is kept as a fallback
+     reference only (e.g. stale cached PROBE_OUT) — do not re-run it if
+     PROBE_OUT already has the "[A-20-PROBE-*]" lines. -->
 # Tier-1 — Runtime Ping (detail)
 
 **Wall time target: < 120s. Scope: container liveness + health endpoint + restart count + memory + disk.**

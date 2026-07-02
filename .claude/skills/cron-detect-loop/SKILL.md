@@ -77,13 +77,21 @@ CronCreate(
 ```
 
 **Job 2 — system-auditor Tier-1 (runtime ping)**
+
+> TOKEN-ECONOMY-TICK-PREFLIGHT WU-3 (R9/R10, 2026-07-02): this prompt now runs a PURE SHELL
+> pre-gate (`scripts/agents-flow/auditor-tier1-probe.sh` — docker/curl/df, no MCP calls, no
+> `mcp-call.sh`) FIRST; the `system-auditor` subagent is launched only on a non-`ALL_GREEN`
+> verdict OR a stale heartbeat (passive-health-masking guard below — a silently dead probe must
+> not look healthy). `docs/agents/system-auditor/flow/tier1-probe.md` is unchanged and is read in
+> full by the subagent whenever it is spawned.
+
 ```
 CronCreate(
   description : "system-auditor Tier-1 runtime ping",
   cron        : "*/30 * * * *",
   recurring   : true,
   durable     : true,
-  prompt      : "Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md\nAUDIT_TIER=1\nMCP: https://zenmidi.com/vn-market/mcp"
+  prompt      : "Run: bash scripts/agents-flow/auditor-tier1-probe.sh and read its one-line JSON verdict (fields: verdict, detail, last_healthy_at). Passive-health-masking guard (check every tick, even after ALL_GREEN — stale green is not green): read docs/data/auditor-tier1-last-healthy.json's .last_healthy_at (jq -r), compute its age in minutes against the current UTC time. If verdict=ALL_GREEN AND heartbeat age <= 60min (~2 tick periods): done, log '[cron-detect-loop] T1 ALL_GREEN (heartbeat fresh)', do NOT spawn a subagent. Otherwise (verdict=FAILURE, OR verdict=ALL_GREEN but heartbeat age > 60min, OR the script/heartbeat file is unreadable): Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md\nAUDIT_TIER=1\nMCP: https://zenmidi.com/vn-market/mcp"
 )
 ```
 

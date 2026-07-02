@@ -68,5 +68,29 @@ echo "--- disk df -h / ---"
 df -h / 2>&1 || echo "[PROBE] df FAILED: $?"
 echo ""
 
+# ── pdf-extractor in-container multi-probe (A-20, FIX-AUDITOR-A20-MULTIPROBE) ─
+# Folded in from docs/agents/system-auditor/flow/tier1-probe.md (TOKEN-ECONOMY-
+# TICK-PREFLIGHT WU-3, R9): probe.sh is the single SSOT evidence collector —
+# the majority-vote verdict + signal-emit logic still live in tier1-probe.md
+# (they make MCP calls; this script never does). A single host-side 200 is not
+# sufficient to pass A-20 — a transient 200 between Tesseract runs masked real
+# event-loop stalls (c103 false-green saga); 3 in-container exec probes with
+# 5s spacing distinguish a live event loop from a wedged one (HTTP 000 = wedged).
+echo "--- pdf-extractor in-container multi-probe (A-20) ---"
+PDF_CTR=$(docker ps --format '{{.Names}}' 2>/dev/null | grep 'pdf-extractor' | head -1)
+if [ -z "$PDF_CTR" ]; then
+  echo "[A-20] SKIP in-container probes — pdf-extractor container not found (A-11 already CRITICAL)"
+else
+  pass_count=0
+  for i in 1 2 3; do
+    result=$(docker exec "$PDF_CTR" curl -s -o /dev/null -w "%{http_code}" -m 5 http://localhost:5001/health 2>/dev/null || echo "000")
+    echo "[A-20-PROBE-${i}] in-container HTTP ${result}"
+    [ "$result" = "200" ] && pass_count=$((pass_count + 1))
+    [ "$i" -lt 3 ] && sleep 5
+  done
+  echo "[A-20] pass_count=${pass_count}/3"
+fi
+echo ""
+
 echo "=== PROBE DONE ==="
 exit 0
