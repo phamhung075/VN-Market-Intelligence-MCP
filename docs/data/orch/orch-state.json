@@ -933,7 +933,9 @@
         "summary": "A-30 CRITICAL: mcp-server memory 85.51% (threshold 85%)",
         "severity": "CRITICAL",
         "status": "READ",
-        "payload_ref": null
+        "payload_ref": null,
+        "po_triaged_at": "2026-07-02T04:54:49Z",
+        "po_disposition": "CONSUMED. Hard threshold CROSSED 85.51% (>85% cap; +2.85pp/28min from 82.66% @04:17Z = OOM-kill trajectory). status kept READ (honest cold-evictable terminal; A-30 live+unresolved so NOT RESOLVED=false-green). ONE CRITICAL WORK escalation sent for THIS state-transition (distinct from 04:17Z climbing-warning row = not spam). NO dup dev/ops task: single user-gated mcp-server rebuild ALREADY folded into FIX-BCTC-ENRICHER-STUCK-BACKLOG (fix d9280133; A-30 FOLD noted 00:36Z). Deploy stays USER-APPROVAL-GATED = NO work-around (no restart-substitute/docker exec/cp/down&&up). In-boundary mitigation none (diag=ops; deploy=operator)."
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",
@@ -9651,7 +9653,7 @@
         "status": "REVIEW",
         "title": "CTG B02a/TCTDHN: finalize_bctc_refine balance-sheet section classifier drops/mistags rows — total_assets frozen 0 despite correct refined markdown",
         "owner": "dev-team",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -9663,7 +9665,7 @@
           "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
           "FIX-BCTC-BANK-SUMMARY-MAPPING"
         ],
-        "status_note": "Report 96e36139-5dac-414d-8e4d-20a4725890d1 (CTG 2026-Q1). Markdown->bctc_table_rows materialization in finalize_bctc_refine drops the bank-form balance sheet: unit-0002 (pages 4-5, TAI SAN side, 34 rows, ends TONG TAI SAN CO=2,924,176,928 trieu) entirely absent; unit-0003 (page 6, NGUON VON side) only 8/29 rows survive, mistagged statement_section=general. Post-apply sections: cash_flow=35 general=399 notes=6, balance_sheet=0 (VCB same-form baseline: 57). Suspected trigger: B02a/TCTDHN shape — Roman-numeral item hierarchy, mostly-blank Ma(Code) column, bold section headers (**A. TAI SAN** / **B. NO PHAI TRA VA VON CHU SO HUU**). ALSO fix wrong-row frozen scalars from prior pass: equity_total=244,904,306 is actually Section-7 note total (correct 188,692,158); total_liabilities=24,735,484,770 vs correct 2,735,484,770. DoD: after classifier fix, re-run scripts/migrations/reingest-bctc-report.ts --apply for this report_id -> balance_sheet rows >0 incl. pages 4-5; CTG total_assets=2,924,176,928 (trieu-dong unit as stored per peer VCB=2,550,963,342); equity_total/total_liabilities corrected; FR-5 identity passes; VCB/FPT byte-identical non-regression. Diagnosis evidence: STEP2 worker run 2026-07-02T00:1xZ + dispatcher RAW-probes.",
+        "status_note": "[po-triage 2026-07-02T04:54:49Z] Route REVIEW->qa for CODE sign-off. Code complete (commits 2c7fb5b0+ff1bac44; router independently re-ran 13/13 suite GREEN). done_verified WITHHELD: LIVE behavioral DoD (B02a/TCTDHN bank-form BS section-classifier on rebuilt image) gated on the SAME user-approval mcp-server rebuild blocking A-30 + enricher deploy + W5 chain. QA may APPROVE-CODE now; live gate clears when operator ships the rebuild.",
         "promoted_at": "2026-07-02T03:59:20Z",
         "promoted_by": "po",
         "unblocks": [
@@ -9675,7 +9677,9 @@
         "assigned": "dev-mcp-server",
         "started_at": "2026-07-02T04:22:48Z",
         "review_note": "[dev-mcp-server 2026-07-02T04:34:20Z] commit 2c7fb5b0 — root cause: 3 defects in refinedMarkdownParser.ts (blank-Ma 3-cell row mis-routing dropped rows; missing-|---|-separator recovery so a lost separator no longer silently swallows every subsequent row as 'header'; statement_section carry-forward across ordered DONE units via new initialSection param + finalSection return, wired into finalizeBctcRefineTool.ts AND sibling bctcRefineJob.ts). bun test evidence: FIX-BCTC-BANK-BS-SECTION-CLASSIFIER.test.ts 13/13 pass (RC-1/RC-2/RC-3 isolation + full B02a/TCTDHN 2-unit fixture through aggregateScalars: total_assets=2924176928 total_liabilities=2735484770 equity_total=188692158 identity exact, balanceViolation=null + end-to-end finalize_bctc_refine integration test: balance_sheet row count >0, general leakage=0, stale scalars unfrozen to DoD values). Non-regression: 26-file bctc-materialization-adjacent suite 356/356 pass; full 1161-file mcp-server suite 14136 pass / 63 fail (all 63 pre-existing network/timeout/shared-state failures in unrelated suites -- 0 bctc/refine-related, confirmed via grep) / crashed post-summary on an unrelated Bun-engine C++ panic. tsc --noEmit clean. deploy verification (live CTG report_id 96e36139 re-ingest, total_assets unfreeze on named-volume market.db) remains gated on user-approved mcp-server container rebuild -- not attempted.",
-        "reviewed_at": "2026-07-02T04:34:20Z"
+        "reviewed_at": "2026-07-02T04:34:20Z",
+        "route_to": "qa",
+        "po_disposition": "[po-triage 2026-07-02T04:54:49Z] Route REVIEW->qa for CODE sign-off. Code complete (commits 2c7fb5b0+ff1bac44; router independently re-ran 13/13 suite GREEN). done_verified WITHHELD: LIVE behavioral DoD (B02a/TCTDHN bank-form BS section-classifier on rebuilt image) gated on the SAME user-approval mcp-server rebuild blocking A-30 + enricher deploy + W5 chain. QA may APPROVE-CODE now; live gate clears when operator ships the rebuild."
       }
     ],
     "qa": [],

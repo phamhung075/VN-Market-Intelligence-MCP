@@ -1,30 +1,26 @@
 # PO Notebook
 
-_Last: 2026-07-02T04:37Z_
+_Last: 2026-07-02T04:54Z_
 
-## Tick 2026-07-02T04:35Z — USER feature request: "need merge money-radar to momentum" (coord d3292ca4)
+## Tick 2026-07-02T04:37Z — dev-team triage: A-30 hard-cap crossed + classifier QA routing (coord d3292ca4)
 
-**Intent:** consolidate the two parallel dashboard surfaces (/dashboard/money-radar + /dashboard/momentum, both built from the same mirror template) into ONE unified momentum page. Both feeder APIs already serve HTTP 200 → PURE frontend (apps/frontend/), NO backend/mcp-server work.
+**pendingSignals[]:** (1) CRITICAL A-30 mcp-server mem 85.51% — HARD threshold (>85%) crossed, +2.85pp/28min from 82.66%; (2) INFO cowork FIRE telemetry — routine, already drained by dev-team (ceb4018c), no action.
 
-**Product decisions locked (into the BA task spec):**
-- Merge target: dashboard.momentum.tsx renders TWO labelled sections — 4 momentum honest-NULL cards + 4 money-radar non-null cards; loader fetches BOTH feeds via Promise.allSettled (per-section isolation).
-- do-NOT-homogenize (brief §10, HARD): radar cards stay non-null/depth-independent, momentum cards stay honest-NULL/OHLCV-depth-gated; each keeps own FreshnessBadge('daily') + InfoCardExpand source-link.
-- money-radar route fate: CONVERT to redirect loader → /dashboard/momentum (preserve deep links; NOT delete; api.money-radar.tsx proxy stays as feeder).
-- nav fate: ONE unified nav entry (relabel momentum entry); do NOT add a separate radar entry.
-- chain: ba → pm → dev-frontend → qa. Single zone → NO architect split.
+**Signal #8226 (sau-2026-07-02T04:45Z) posture — hard-cap crossed:**
+- Added `po_disposition` + `po_triaged_at`; kept status=READ (A-30 live+unresolved → NOT RESOLVED=false-green; READ stays cold-evictable, TRIAGED is not).
+- Sent ONE CRITICAL WORK escalation for THIS state transition (distinct from the 82.66% climbing-warning I sent at 04:25Z — not spam). Framed the one-rebuild-clears-4 message.
+- NO dup dev/ops task: the user-gated `docker compose up -d --build mcp-server` is already folded into FIX-BCTC-ENRICHER-STUCK-BACKLOG (fix d9280133, A-30 FOLD 00:36Z). Deploy stays USER-APPROVAL-GATED — NO work-around (no restart-substitute/exec/cp/down&&up).
 
-**Board actions (po-s138, orch-apply rc=0):**
-- MINT `BA-MERGE-MONEY-RADAR-INTO-MOMENTUM` → ready[] (ba, apps/frontend/, SPRINT-S, priority high, user_prioritized). PO does NOT spawn — WIP 2/2 full (both dev-mcp-server BCTC), disjoint zone → dev-team loop adopts when a frontend slot frees.
-- SUPERSEDE `FIX-FE-HEADER-NAV-MONEY-RADAR` → ready[]→done[] (DONE, done_verified:false, resolution=superseded-by-merge). Its nav work is folded into the merge; a separate entry pointing at a soon-to-be-redirect route = doomed double-entry.
-- APPEND sprint_goal vision entry.
-- Conservation verified: ready 3→3, done 53→54, sprint_goal 15→16; idempotent re-run byte-identical.
+**FIX-BCTC-BANK-BS-SECTION-CLASSIFIER (router handed QA routing to PO):**
+- Routed REVIEW→qa (next_agent+route_to=qa), kept status=REVIEW. Code complete (2c7fb5b0+ff1bac44; router re-ran 13/13 GREEN) → QA can APPROVE-CODE now.
+- done_verified WITHHELD: live behavioral DoD gated on the SAME blocked rebuild (code-complete ≠ done_verified). Stamped the withhold note.
 
-**Verify:** live SSOT confirms mint in ready[] + supersede in done[]. Zod S0+S1 PASS, 100 pre-existing SHG coherence warns (0 new). Commit orch-state + script + journal + notebook (commit-mutex, explicit paths, --no-verify, local-only; fleet-push timer pushes).
+**Board (orch-apply rc=0, 2 mutations):** signal_queue row +po_disposition; review[] classifier next_agent=dev-mcp-server→qa. RAW-verified both landed. Zod S0+S1 PASS, 100 pre-existing SHG coherence warns (0 new). RETURN=NOTHING (no new backlog to plan — dispositions + board flip only).
 
 ## Carry-over
-- BA-MERGE-MONEY-RADAR-INTO-MOMENTUM waiting in ready[] — dev-team loop dispatches ba when it ticks (BA-spec authoring does not consume a coding-WIP slot). PO does NOT spawn.
-- FIX-FE-HEADER-NAV-MONEY-RADAR is SUPERSEDED (no longer a live ready task) — do NOT re-mint or dispatch it; its scope lives inside the merge.
-- FIX-BCTC-ENRICHER-STUCK-BACKLOG + FIX-BCTC-BANK-BS-SECTION-CLASSIFIER both in_progress, deploy-gated on user `up -d --build mcp-server`. Do NOT flip/work around.
-- W5-FU-CTG-REFINE + TASK-W5 BLOCKED in review[] — do NOT qa-gate until classifier reflows balance_sheet rows.
-- A-30 mcp-server mem: escalated (user rebuild only). If next tick ≥85% → re-escalate.
-- 2 ready[] non-mcp remaining (ARCH-DASH-CRON, TOKEN-ECONOMY) + the new merge task — dispatch as slots free.
+- A-30 memory: escalated at hard-cap (85.51%). Sole fix = operator rebuild. If next tick still climbing/≥85% → the escalation stands; do NOT re-spam unless a NEW threshold band (e.g. ≥95%/OOM) is crossed.
+- ONE operator `up -d --build mcp-server` clears 4 gated items: A-30 + FIX-BCTC-ENRICHER deploy + FIX-BCTC-BANK-BS-SECTION-CLASSIFIER live-DoD + W5 CTG chain. Do NOT work around; do NOT mint dup tasks.
+- FIX-BCTC-BANK-BS-SECTION-CLASSIFIER now next_agent=qa in review[] — router dispatches QA for code sign-off; done_verified stays withheld pending rebuild.
+- FIX-BCTC-ENRICHER-STUCK-BACKLOG in_progress, code DONE, deploy PARKED on operator — do NOT unpark/work around.
+- W5-FU-CTG-REFINE + TASK-W5 BLOCKED in review[] — do NOT qa-gate until CTG refine re-run.
+- ready[]: ARCH-DASH-CRON-RECHECK-TABLE, TOKEN-ECONOMY-TICK-PREFLIGHT (architect), BA-MERGE-MONEY-RADAR-INTO-MOMENTUM (ba, no coding-WIP slot) — router dispatches as slots free. PO does NOT spawn.
