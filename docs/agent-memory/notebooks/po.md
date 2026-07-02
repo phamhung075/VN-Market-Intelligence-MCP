@@ -1,6 +1,16 @@
 # PO Notebook
 
-_Last: 2026-07-02T21:28Z_
+_Last: 2026-07-02T21:54Z_
+
+## Tick 2026-07-02T21:54Z — dev-team incremental triage: 1 signal → 0 new tasks (annotate existing)
+
+**Input:** pendingSignals=1 (rtr-auditor-orchwrite-20260702T2121, router→po, repair_task_request, warn; already READ by dev-team 0a-D @21:49Z). Single-row incremental — did NOT redo 21:28Z triage.
+
+**Signal:** system-auditor run c500 (2026-07-02T21:16Z) wrote `.signal_queue.rows[]` via raw `jq>/tmp && mv` instead of the mandated `jq '<t>' orch-state.json | bash scripts/orch-apply.sh` wrapper (SSOT-W1-ORCH-APPLY-WRAPPER bypass). Row content valid, no corruption this cycle; contract untested since c501 (21:30Z) had 0 signals. Durable fix = auditor flow-doc write-contract hardening via agent-father (NOT dev-team).
+
+**Verdict = ANNOTATE, no new task (dedup).** Searched all open lanes (backlog/in_progress/ready/review) for auditor|orch-apply|write-contract → existing covering task **FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT** (P1, BACKLOG, recurring-bug-esc, zone multi). The signal payload itself names this as the "prior sibling incident" and flags "2nd write-contract incident class." Same root cause (auditor bypasses orch-apply.sh) + same durable fix (flow-doc mandate every orch-state write route via orch-apply.sh — the wrapper already implements the non-empty+conservation+atomic guards this task's generic_mandate specifies). Root incident=full-doc-overwrite de595a44; c500=raw-jq>/tmp+mv variant. Minting a 2nd task = duplicate → SKIP.
+
+**Writes (orch-apply, --arg bound, injection-safe):** signal row rtr-auditor-orchwrite-20260702T2121 READ→TRIAGED (triaged_by po, triage_note recording annotate+dedup+durable-fix); FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT += status_note (SCOPE BROADENED + 2ND INCIDENT, orch-apply.sh mandate, chain architect root-cause→agent-father flow-doc) + surfaced next_agent=architect onto hot entry (was cold-detail only). No backlog count change (389). RETURN=NOTHING (0 dev dispatch). PO never pushes.
 
 ## Tick 2026-07-02T18:37Z — dev-team triage: architect recon-return + 6 signals → BATCH(1 FIX)
 

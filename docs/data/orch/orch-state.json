@@ -1018,11 +1018,14 @@
         "priority": "P2",
         "severity": "warn",
         "summary": "auditor c500 bypassed orch-apply.sh writing signal_queue (raw jq>/tmp+mv) — flow-doc fix via agent-father",
-        "status": "READ",
+        "status": "TRIAGED",
         "ts": "2026-07-02T21:24:03Z",
         "payload": "{\"detail\":\"system-auditor c500 wrote .signal_queue row via raw jq>/tmp && mv — bypasses scripts/orch-apply.sh (Zod+CAS+atomic, CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER) and stages in /tmp (must be project-local scratch). Row content valid, no corruption this cycle. Prior sibling incident: auditor full-doc overwrite collapsed SSOT. Durable fix = auditor flow §2.3 atomic-write spec must route via orch-apply.sh. Routing: agents-architect→agent-father (flow-doc owner), NOT dev-team. Evidence: transcript a3a1dc6b938fbcac1 bash (jq $JQ_FILTER > /tmp/orch-state-new.json; mv → orch-state.json)\",\"zone\":\"agent-father\",\"recurrence\":\"2nd write-contract incident class for system-auditor\"}",
         "read_at": "2026-07-02T21:49:49Z",
-        "read_by": "dev-team"
+        "read_by": "dev-team",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-02T21:54:06Z",
+        "triage_note": "Annotated existing covering task FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT (P1, recurring-bug-esc). c500 raw jq>/tmp+mv bypass = 2nd incident of the same system-auditor orch-state write-contract class (root incident=full-doc-overwrite de595a44). No new task minted (dedup). Durable fix (architect root-cause -> agent-father flow-doc): mandate ALL auditor orch-state writes route via scripts/orch-apply.sh (SSOT-W1-ORCH-APPLY-WRAPPER). No corruption this cycle; contract untested since c501 had 0 signals."
       }
     ],
     "last_triaged_at": "2026-07-02T19:00:27Z",
@@ -6266,7 +6269,9 @@
         "zone": "multi",
         "size": "M",
         "sprint": null,
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
+        "status_note": "[po 2026-07-02] SCOPE BROADENED + 2ND INCIDENT (recurring): system-auditor c500 (2026-07-02T21:16Z) bypassed scripts/orch-apply.sh writing .signal_queue.rows[] via raw `jq>/tmp && mv` (signal rtr-auditor-orchwrite-20260702T2121). Same write-contract class as root full-doc-overwrite incident. Durable fix must mandate EVERY auditor orch-state write route via `jq \"<t>\" orch-state.json | bash scripts/orch-apply.sh` (SSOT-W1-ORCH-APPLY-WRAPPER) — the wrapper already implements the non-empty+conservation+atomic guards in generic_mandate. Chain: architect root-cause -> agent-father flow-doc (docs/agents/system-auditor/flow/*.md write-contract section).",
+        "next_agent": "architect"
       },
       {
         "id": "TASK-MACRO-COMMODITY-DELTA",
