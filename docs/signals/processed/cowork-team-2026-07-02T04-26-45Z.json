@@ -1,0 +1,53 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-02T04:26:45Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 10,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "OPEN",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cron-match"
+    },
+    "cadence_minutes": {},
+    "last_fired_timestamp": "2026-07-02T04:26:20.000Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 1,
+    "note": "one-shot sweep empty; 0 NEW cowork rows; snapshot REUSED docs/data/cycle-snapshot-04:06.json (18min old, chef refreshes load-bearing data itself per flow fallback); chef told marker gate = VN hour 11 (hour-10 marker from 03:30Z run still live); spawn backgrounded per BGFAN-1; slot token released post-spawn"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-02T04:26:45Z",
+  "_processed": {
+    "fingerprint": "0bdae6126b8c0ef83e76acf4aa4b5e5213aa681949ba1173f0d4762c1a6bc1b9",
+    "processedAt": "2026-07-02T04:48:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
