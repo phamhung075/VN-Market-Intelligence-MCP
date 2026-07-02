@@ -244,12 +244,12 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-02T08:42:34Z",
-    "updated_by": "qa",
+    "updated_at": "2026-07-02T08:51:50Z",
+    "updated_by": "dev-team",
     "active_task_id": "TASK-DASH-CRON-1",
-    "next_agent": "fixer",
-    "next_action": "fixer: rewrite the round-1 REGRESSION test in cronStatusHandler.test.ts to call handleGetCronStatus with NO 5th arg (true zero-arg default) while stubbing process.cwd() to a dir lacking .claude/commands/crons, instead of injecting an explicit nonExistentDir; see qa_verdict.blocking on TASK-DASH-CRON-1 for exact file:line evidence.",
-    "note": "TASK-DASH-CRON-1 round-2 CHANGES_REQUESTED by qa 2026-07-02T08:42:34Z -- round-1 production blocker (missing .claude volume mount) is CONFIRMED FIXED and verified (docker compose config valid, Dockerfile WORKDIR/CMD match mount target, dev override inherits mount, host dir has 13 files). New round-2 blocker is test-only: the added REGRESSION test (cronStatusHandler.test.ts:359) injects an explicit nonExistentDir as the 5th arg instead of exercising the true zero-arg default (cronStatusHandler.ts:102), so it never protects the fixed code path from future regressions -- same defect class as round 1, restated verbatim in the round-1 fix_scope, still unaddressed. Routed to fixer for round 2 (fixer_round=1 < 2)."
+    "next_agent": "qa",
+    "next_action": "qa round-3 delta review of TASK-DASH-CRON-1: verify rewritten REGRESSION test (commit a1689b0e) exercises the true zero-arg default via process.cwd stub, no 5th arg; APPROVE or CHANGES_REQUESTED",
+    "note": "fixer round 2 complete (a1689b0e); head flipped fixer->qa by router (fixer omitted head flip)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
