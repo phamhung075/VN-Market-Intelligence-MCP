@@ -1,16 +1,17 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-06-08T13:52Z | **Sprint:** DEEPFETCH-RAG-REDESIGN DFR-P2-VPS
+**Last updated:** 2026-07-02T13:35Z | **Sprint:** BCTC-HNX-SSL-HARDEN
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
 
 ---
 
-## Identity
+## Cycle Record — 2026-07-02T13:35Z BCTC-HNX-SSL-HARDEN REVIEW (deploy user-gated)
 
-Agent: VPS Crawler Developer
-Role: Lightweight HTTP scraper implementation on Vinahost VPS
-Zone: dev-zone (VPS scraper code)
+Task: BCTC-HNX-SSL-HARDEN — replace VPS bctc curl -k with --cacert pinning. Commit 073fa27f. Deploy NOT run (user-gated).
+Root cause: owa.hnx.vn omits GlobalSign RSA OV SSL CA 2018 intermediate from served chain (verify code 21) — Jun-1 hotfix (e22427aa) worked around with insecure `curl -k`.
+Fix: vps-scripts/hnx-ca-bundle.pem (new, intermediate fetched from AIA CA-Issuers URL in the live HNX leaf cert + GlobalSign Root CA - R3) + fetch-bctc.sh curl --cacert /root/hnx-ca-bundle.pem + deploy-vinahost.sh ships the bundle.
+Evidence: `openssl verify -CAfile hnx-ca-bundle.pem <recon leaf>` → OK rc=0. Live: `curl --cacert hnx-ca-bundle.pem https://owa.hnx.vn/` → "SSL certificate verify ok." (HTTP 403 is app-layer WAF).
 
 ---
 
