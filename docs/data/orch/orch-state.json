@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-02T11:20:56Z",
+    "status": "in_progress",
+    "updated_at": "2026-07-02T11:27:05Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "FIX-BCTC-VPS-FETCH-LEG-DEAD -> done (ops, RAW-verified by router 2026-07-02T11:20Z). WIP=1 (FIX-BCTC-ENRICHER-STUCK-BACKLOG parked on user-gated mcp-server rebuild). Next dev-team tick may dispatch TOKEN-ECONOMY-TICK-PREFLIGHT (ready) and/or BCTC-HNX-SSL-HARDEN (backlog top, deps satisfied, premise-corrected)."
+    "active_task_id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
+    "next_agent": "architect",
+    "note": "TOKEN-ECONOMY-TICK-PREFLIGHT claimed by router (ready-lane dispatch, tick 11:07Z) — architect reviews brief then pm decomposes (SPRINT-S). WIP=2: enricher task parked on user-gated rebuild. BCTC-HNX-SSL-HARDEN waits in backlog (deps satisfied, premise corrected)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9858,15 +9858,13 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
         "title": "Architect review + pm decomposition: script deterministic cron-tick preflights (WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck). Cuts ~80% idle-hours token burn; all mutex/election/injection gates preserved. Spec = brief.",
         "owner": "architect",
         "next_agent": "architect",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "multi",
         "type": "SPRINT-S",
         "priority": "high",
@@ -9883,9 +9881,14 @@
           ".claude/skills/cron-detect-loop/SKILL.md",
           "scripts/agents-flow/cowork-match-slots.js"
         ],
-        "spec_ref": "docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md"
+        "spec_ref": "docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md",
+        "claimed_at": "2026-07-02T11:27:05Z",
+        "claimed_by": "router",
+        "dispatched_at": "2026-07-02T11:27:05Z",
+        "dispatch_note": "[dispatcher 2026-07-02 tick 11:07Z] SPRINT-S per Step 2 matrix: architect review -> pm decomposition. Spec = docs/architecture-briefs/2026-07-01-token-economy-tick-preflight.md. WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck. All mutex/election/injection gates MUST be preserved."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
