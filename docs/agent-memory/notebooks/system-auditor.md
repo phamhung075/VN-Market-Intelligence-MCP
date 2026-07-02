@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c460 · 2026-07-02T02:30:22Z
+### Audit Run Tier-3 (02:30–02:38 UTC 2026-07-02)
+- Tier: 3 | Checks: A(tooling+inter-svc), B(BCTC), C(DB 1–16) + Doc audit (1–6)
+- Findings: 4 NEW WARN — C-06 market_messages stale; C-11 pdf_documents stale; SIZEDOC-01 task_board 85/80; SIZEDOC-02 sprint_goal 26/15
+- DB checks: C-01✓ C-02✓ C-03✓ C-04✓ C-05✓ | C-06⚠(0 msgs/3h) C-07✓ C-08✓ C-09✓ C-10✓ | C-11⚠(0 done/48h) C-12✓ C-13✓(4.1MB) | C-14✓ C-15✓ C-16✓
+- Tooling: pdftoppm✓ tesseract✓ vie✓ | Services: stock-price✓ ta✓ alert✓ pdf✓ | EPIPE:0✓ | BCTC PDF:80✓
+- Doc audit: MEMORY.md index OK | CLAUDE.md 74L✓ | task_board 85/80⚠ | sprint_goal 26/15⚠
+- Status: DEGRADED (4 WARN signals 8199–8202→PO)
+
 ## c459 · 2026-07-02T00:27:38Z
 ### Audit Run Tier-1 (00:26–00:27 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
@@ -36,15 +45,4 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
   - A-20-PROBE: 3/3 HTTP 200 PASS (event-loop healthy)
 - A-21 RestartCount: mcp-server=0 ✓ | A-30 Memory: 30.86% (632MiB/2GiB) ✓ | A-32 Disk: 46% ✓
 - MCP System: uptime 48m 42s (post-rebuild), circuits OK, WAL 3.93MB ✓, 30 alerts/24h (4 HIGH/CRITICAL)
-- Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
-
-## c456 · 2026-07-01T22:44:16Z
-### Audit Run Tier-1 (22:44–22:45 UTC 2026-07-01) — Runtime Ping
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- RAW-PROBE (22:44:16Z):
-  - docker ps: 12/12 host_runtime_set UP (mcp-server "Up 17min" rebuild 22:27Z; rag-service "Up 3min" healthy; others "Up 3–46h" all healthy)
-  - [health] mcp-server:3000/health OK | api-gateway:4000/health OK | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ OK
-  - A-20-PROBE: 3/3 HTTP 200 PASS
-- A-21 RestartCount: mcp-server=0 ✓ | A-30 Memory: 14.87% ✓ | A-32 Disk: 51% ✓
-- MCP System: uptime 17m 38s, circuits OK, WAL 3.93MB ✓, 30 alerts/24h (4 HIGH/CRITICAL)
 - Anomalies: 0 NEW (all A-xx checks PASS) | Status: HEALTHY
