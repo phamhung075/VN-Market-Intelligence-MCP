@@ -4,11 +4,20 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-07-02T05:26:08Z",
-    "matched_slots": ["chef-morning", "chef-intraday"],
-    "won_slots": ["chef-morning", "chef-intraday"],
+    "matched_slots": [
+      "chef-morning",
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-morning",
+      "chef-intraday"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/unified-agent/flow/chef.md (slot=chef-morning)", "docs/agents/unified-agent/flow/chef.md (slot=chef-intraday)"],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md (slot=chef-morning)",
+      "docs/agents/unified-agent/flow/chef.md (slot=chef-intraday)"
+    ],
     "silent": false,
     "drift_min": 8,
     "errors": [],
@@ -18,10 +27,19 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "chef-morning": "cron", "chef-intraday": "cron" },
-    "cadence_minutes": { "chef-morning": null, "chef-intraday": null },
+    "due_reasons": {
+      "chef-morning": "cron",
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-morning": null,
+      "chef-intraday": null
+    },
     "last_fired_timestamp": "2026-07-02T05:26:08.000Z",
-    "last_fired_slots": ["chef-morning", "chef-intraday"],
+    "last_fired_slots": [
+      "chef-morning",
+      "chef-intraday"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +51,11 @@
     "note": "legacy mode (stale_warning:true per AC-P1-6-3). Same-agent R3 multi-slot: unified-agent matched chef-morning (guaranteed) + chef-intraday (conditional) — both spawned, WARN sent; intraday instructed to no-op unless convergence beyond morning dish. tick-snapshot pre-step skipped (no mechanical assembly path) — both agents instructed to use direct get_cycle_bootstrap fallback per cycle-bootstrap SKILL Step -1 miss path."
   },
   "priority": "low",
-  "createdAt": "2026-07-02T05:26:08Z"
+  "createdAt": "2026-07-02T05:26:08Z",
+  "_processed": {
+    "fingerprint": "972810c61cefaed061257723481be7e1a7bde0df116e1c66d430501f97c9d730",
+    "processedAt": "2026-07-02T05:48:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

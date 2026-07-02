@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-02T05:33:32Z",
+    "updated_at": "2026-07-02T05:39:55Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-MERGE-MONEY-RADAR-INTO-MOMENTUM",
-    "next_agent": "pm",
-    "note": "BA spec RAW-verified; dispatching pm to decompose into dev-frontend work unit(s)"
+    "next_agent": "dev-frontend",
+    "note": "pm decomposition RAW-verified (67ea779d, WU-1+WU-2); dev-frontend executing both WUs"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -936,6 +936,17 @@
         "payload_ref": null,
         "po_triaged_at": "2026-07-02T04:54:49Z",
         "po_disposition": "CONSUMED. Hard threshold CROSSED 85.51% (>85% cap; +2.85pp/28min from 82.66% @04:17Z = OOM-kill trajectory). status kept READ (honest cold-evictable terminal; A-30 live+unresolved so NOT RESOLVED=false-green). ONE CRITICAL WORK escalation sent for THIS state-transition (distinct from 04:17Z climbing-warning row = not spam). NO dup dev/ops task: single user-gated mcp-server rebuild ALREADY folded into FIX-BCTC-ENRICHER-STUCK-BACKLOG (fix d9280133; A-30 FOLD noted 00:36Z). Deploy stays USER-APPROVAL-GATED = NO work-around (no restart-substitute/docker exec/cp/down&&up). In-boundary mitigation none (diag=ops; deploy=operator)."
+      },
+      {
+        "id": "sau-2026-07-02T05:44Z",
+        "ts": "2026-07-02T05:44:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 CRITICAL: mcp-server memory 99.66% (OOM-kill imminent; trend 85.51% → 98.96% → 99.66% in 1h)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",
