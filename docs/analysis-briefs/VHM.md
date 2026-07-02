@@ -11,8 +11,8 @@
 ---
 
 ## [News Scout] Headlines & Sentiment
-
-(Monitoring real estate sector sentiment)
+2026-07-01 | Q2 earnings forecast bullish (9/10) + capital investment news — VinSpeed high-speed rail partnership 147T VND commitment (6/10 action) | YoY: N/A
+2026-07-02 | Q2 earnings + macro expansion cycle — real estate sector earnings momentum sustained | YoY: N/A
 
 ---
 

@@ -6,6 +6,16 @@
 
 ---
 
+## c110 · 2026-07-02T05:07Z (batch_sentiment, slot=news-scout-sentiment)
+
+**20 articles analyzed: Q2 earnings consensus bullish (9/10) + Global EV startup IPO bullish (9/10 tech momentum) + Gold price spike (10/10 macro risk-off) → 2 signals posted (#8228 earnings cascade, #8229 EV-tech catalyst). Coverage: batch sentiment ledger updated for VCB/BID/FPT/VHM/VIC (major earnings impact) + all 41 watchlist tickers marked 2026-07-02T05:07Z. Regime: NEUTRAL (gold bullish +0.55% safe-haven +1σ, oil neutral $70.89, USDVND bearish 26105, carry NEUTRAL 1.37pp, yield CHEAP +2.05pp). Dedup: SELF_SIGNALS_CACHE=[#8222 FED-banking, #8223 gold-macro from c109, 50min old — gold dedup SUPPRESSED], new earnings/EV signals POSTED (critic_pass=0.8, 2/2 signals). Market sentiment z=+1.281 bullish (EMA 1.08, bull 27.7%/bear 16.8%/neutral 55.5%, 45 articles today slight dip). Evidence fragments: 5 recorded (MARKET×2, FPT/VCB/VHM stock sentiment). No legal_risk detected. Search context timed out (non-fatal). Cycle status: SHIPPED (2 new signals, batch sentiment ledger complete).**
+
+**Sentiment:** Moderately bullish — Q2 earnings consensus (9/10) drives wide 41-stock cascade, particularly strong in banking/real_estate/tech sectors. EV startup global IPO ($2B+) signals venture confidence in tech-utilities electrification pivot. Gold spike (+0.55%) creates macro risk-off tone but not dominant. Regime multiplier (NEUTRAL): no amplification. Banking FII-friendly (earnings + macro momentum), real estate construction capex tailwind, tech benefiting from global VC inflow. Hot_money_risk=FALSE (carry NEUTRAL 1.37pp). cpi_pressure_risk=FALSE (oil band-neutral). gdp_warning_signal=FALSE (Q2 guidance positive). Market breadth: earnings season momentum sustained, tech sector outperformance confirmed.
+
+**Metrics:** 2 chain_catalyst signals POSTED (earnings #8228 critic=0.8, EV-IPO #8229 critic=0.8). 20 articles fetched, 5 high-impact (>=6/10 each). Coverage: 41 tickers updated to 2026-07-02T05:07Z. Gateway: OK. Tools: fetch/impact-chains OK, search timed out (caught non-fatal). Session log: #1542 opened/closed. Analysis briefs: VCB/BID/VHM/VIC/FPT sentiment tagged. Notebook appended (this entry). Cycle runtime 3m14s clean.
+
+---
+
 ## c106 · 2026-07-01T16:12Z (off-hours, slot=news-scout-offhours)
 
 **20 articles analyzed: Foreign flow reversal (8/10 bullish) + Gold spike macro risk (8/10 bearish) + VN30 expansion (8/10 bullish) + Brent ease (7/10 bullish) → 7 signals (#8159–#8165) | 4x urgent_news (VPB/VIC/HPG/FPT) + 3x chain_catalyst (FII reversal, gold safe-haven, Brent deflation). Coverage: VPB/VIC/HPG direct watchlist hits, FPT macro exposure, 41-stock market cascade. Regime: NEUTRAL (oil $71.33 -2.04% deflation, gold $4092.6 +1.66% safe-haven, USDVND 26106 bearish >25k, carry 1.37pp NEUTRAL, yield CHEAP +2.05pp). Dedup: SELF_SIGNALS_CACHE=[] clean, SIBLING_WINDOW_CACHE checked, all NEW POSTED (critic_pass=0.8, 7/7 signals). Market sentiment z=+0.197 neutral-bullish (EMA 0.847, bull 27%/bear 17%/neutral 56%, 136 articles today). Evidence fragments: 6 recorded (FPT/HPG/VPB/VIC/GAS/MARKET). No legal_risk detected. Search context timeout (non-fatal).**
@@ -50,6 +60,16 @@
 
 ---
 
-**Agent methodology:** news-scout 12/12 EXCELLENT (12 consecutive cycles c96–c108). Dedup + regime multiplier + coverage-state sweep fully operational. Off-hours cadence stable. Critic threshold maintained 0.8+.
+## c109 · 2026-07-02T04:10Z (off-hours, slot=news-scout-offhours)
 
-**Current regime:** TIGHTENING (VND depreciation >25k, gold bullish safe-haven, yield premium cheap, carry NEUTRAL). Market sentiment z=+0.26 stable. Coverage current (no stale sweep needed). Next batch_sentiment: 2026-07-02T05:00Z (ledger append).
+**20 articles fetched & analyzed: FED no-rate-hike signal (8/10 bullish) + Gold spike safe-haven (7/10 bullish macro) + Gold bearish (10/10) + Corporate earnings mixed (9/10) + Foreign flow reversal (8/10). Signals: 2x chain_catalyst posted (#8222 FED banking easing, #8223 gold macro, critic=0.8 each, ttl=120m). Market sentiment z=+1.427 bullish (EMA 1.12, bull 28%/bear 17%/neutral 55%, 442 articles 5-day). Regime: NEUTRAL (gold bullish +0.73%, oil neutral -0.26%, USDVND bearish 26105, carry NEUTRAL 1.37pp, yield CHEAP +2.05pp). Coverage: all 41 tickers current (4h since last c108, <48h staleness). Dedup gates: SELF_SIGNALS_CACHE=[] clean, SIBLING_WINDOW_CACHE=8 (alert-engine VERIFIED_DECISION, no duplicates). Impact chains: 41-stock FED cascade (6-8/10 bullish secondary), gold domain isolated (6-7/10). Evidence fragments: 2 recorded (MARKET macro bullish×2). No legal_risk detected. Cycle status: NOMINAL (2 signals posted, threshold conservative 0.8).**
+
+**Sentiment:** Moderately bullish — FED easing signal (8/10 rates pivot) + gold spike (7/10 safe-haven) compound market relief. Regime multiplier (NEUTRAL): no amplification applied. Banking sector FII-friendly (BID/VCB/ACB/CTG/VPB/EIB/MBB direct hits on FED signal). Macro breadth: 41-stock positive cascade, mixed gold/commodity themes. Hot_money_risk=FALSE (carry NEUTRAL, no >3% spread). cpi_pressure_risk=FALSE (oil neutral deflation). gdp_warning_signal=FALSE.
+
+**Metrics:** 2 chain_catalyst signals POSTED, critic_score=0.8 (PASS each). 20 articles fetched, 15 high-impact (>=6/10), 2 signals eligible post-dedup. Coverage: 41 tickers updated to 2026-07-02T04:10Z. Gateway: OK. Tools: all operational. Session log: #1541 opened/closed. Notebook appended (this entry). Cycle runtime 2m03s clean.
+
+---
+
+**Agent methodology:** news-scout 13/13 EXCELLENT (13 consecutive cycles c96–c109). Dedup + regime multiplier + coverage-state sweep fully operational. Off-hours cadence stable. Critic threshold maintained 0.8+.
+
+**Current regime:** NEUTRAL (VND depreciation >25k, gold bullish safe-haven +0.73%, yield CHEAP +2.05pp spread, carry NEUTRAL 1.37pp). Market sentiment z=+1.427 bullish. Coverage current (no stale sweep needed). Next batch_sentiment: 2026-07-02T05:00Z (ledger append).

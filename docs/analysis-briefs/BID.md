@@ -11,8 +11,8 @@
 ---
 
 ## [News Scout] Headlines & Sentiment
-
-(Monitoring banking sector sentiment)
+2026-07-01 | Q2 earnings forecast bullish (9/10) — analyst consensus upgrades 68 companies including BID; banking sector tailwind | YoY: N/A
+2026-07-02 | Q2 earnings consensus strong (9/10) + FED/macro easing context — banking exposure to policy softening | YoY: N/A
 
 ---
 
