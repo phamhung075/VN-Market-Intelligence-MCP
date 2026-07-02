@@ -1,26 +1,21 @@
 # PO Notebook
 
-_Last: 2026-07-02T04:54Z_
+_Last: 2026-07-02T06:30Z_
 
-## Tick 2026-07-02T04:37Z — dev-team triage: A-30 hard-cap crossed + classifier QA routing (coord d3292ca4)
+## Tick 2026-07-02T06:07Z — dev-team triage (coord d3292ca4): 7 reports resolved, ARCH-DASH → WIP
 
-**pendingSignals[]:** (1) CRITICAL A-30 mcp-server mem 85.51% — HARD threshold (>85%) crossed, +2.85pp/28min from 82.66%; (2) INFO cowork FIRE telemetry — routine, already drained by dev-team (ceb4018c), no action.
+**Reports — all substance already board-tracked → resolved + channel cleaned, NO new mint:**
+- 3368 bctc non-bank total_assets=0 (VHM/REE/VIC/VNM/VRE/POW Q1-26 OCR fail) → DUP of `SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO` (backlog high, dev-mcp-server, zone apps/mcp-server).
+- 3369 auditor B-05 bctc-discover stale 21711min / 38 pending / vn-bctc-fetch 15d → DUP: root fix `FIX-BCTC-ENRICHER-STUCK-BACKLOG` (in_progress, USER-GATED rebuild) + `B-05-FU-ENRICHER-LIVENESS` DONE. Downstream of user-gated rebuild — no new task.
+- 3372 Tier-3 → DUP: C-06=`FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE`, C-11=`FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE` (broken predicate = always-false FP), size-cap root=`FIX-COLDEVICT-TERMINAL-VOCAB-CANONICALIZE`+`FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT` (54 terminal rows stuck in done[]). Size-cap = ctx-bloat on LIVE board → DEFER in-flight, plan-only, NO prune this tick.
+- 3384 OHLCV-DEPTH VPS backfill stall (BDI/DLC/JSH/SIS/VDC non-watchlist) → DUP of `OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST` (backlog low, ops, infra-vps).
+- 3385 A-30 mem 82.66% → duplicate (known-pinned, fix d9280133, rebuild user-gated). 3386 A-12 FAIL → wontfix (router probe refuted: 4000/health=200, 3001=200, docker-healthy). 3387 dev-team correction → wontfix (informational).
 
-**Signal #8226 (sau-2026-07-02T04:45Z) posture — hard-cap crossed:**
-- Added `po_disposition` + `po_triaged_at`; kept status=READ (A-30 live+unresolved → NOT RESOLVED=false-green; READ stays cold-evictable, TRIAGED is not).
-- Sent ONE CRITICAL WORK escalation for THIS state transition (distinct from the 82.66% climbing-warning I sent at 04:25Z — not spam). Framed the one-rebuild-clears-4 message.
-- NO dup dev/ops task: the user-gated `docker compose up -d --build mcp-server` is already folded into FIX-BCTC-ENRICHER-STUCK-BACKLOG (fix d9280133, A-30 FOLD 00:36Z). Deploy stays USER-APPROVAL-GATED — NO work-around (no restart-substitute/exec/cp/down&&up).
-
-**FIX-BCTC-BANK-BS-SECTION-CLASSIFIER (router handed QA routing to PO):**
-- Routed REVIEW→qa (next_agent+route_to=qa), kept status=REVIEW. Code complete (2c7fb5b0+ff1bac44; router re-ran 13/13 GREEN) → QA can APPROVE-CODE now.
-- done_verified WITHHELD: live behavioral DoD gated on the SAME blocked rebuild (code-complete ≠ done_verified). Stamped the withhold note.
-
-**Board (orch-apply rc=0, 2 mutations):** signal_queue row +po_disposition; review[] classifier next_agent=dev-mcp-server→qa. RAW-verified both landed. Zod S0+S1 PASS, 100 pre-existing SHG coherence warns (0 new). RETURN=NOTHING (no new backlog to plan — dispositions + board flip only).
+**Board (orch-apply rc=0, 100 pre-existing SHG coherence warns, 0 new):** promoted `ARCH-DASH-CRON-RECHECK-TABLE` ready→in_progress + head=in_progress/architect (user-prioritized SPRINT-M > internal SPRINT-S; BA handoff `docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md` ready). WIP 2/2. `TOKEN-ECONOMY-TICK-PREFLIGHT` stays ready (next up). No tasks minted — every report already covered.
 
 ## Carry-over
-- A-30 memory: escalated at hard-cap (85.51%). Sole fix = operator rebuild. If next tick still climbing/≥85% → the escalation stands; do NOT re-spam unless a NEW threshold band (e.g. ≥95%/OOM) is crossed.
-- ONE operator `up -d --build mcp-server` clears 4 gated items: A-30 + FIX-BCTC-ENRICHER deploy + FIX-BCTC-BANK-BS-SECTION-CLASSIFIER live-DoD + W5 CTG chain. Do NOT work around; do NOT mint dup tasks.
-- FIX-BCTC-BANK-BS-SECTION-CLASSIFIER now next_agent=qa in review[] — router dispatches QA for code sign-off; done_verified stays withheld pending rebuild.
-- FIX-BCTC-ENRICHER-STUCK-BACKLOG in_progress, code DONE, deploy PARKED on operator — do NOT unpark/work around.
-- W5-FU-CTG-REFINE + TASK-W5 BLOCKED in review[] — do NOT qa-gate until CTG refine re-run.
-- ready[]: ARCH-DASH-CRON-RECHECK-TABLE, TOKEN-ECONOMY-TICK-PREFLIGHT (architect), BA-MERGE-MONEY-RADAR-INTO-MOMENTUM (ba, no coding-WIP slot) — router dispatches as slots free. PO does NOT spawn.
+- WIP 2/2: `FIX-BCTC-ENRICHER-STUCK-BACKLOG` (user-gated rebuild) + `ARCH-DASH-CRON-RECHECK-TABLE` (architect SPLIT dispatching). No more promotions until a slot frees.
+- ONE operator `up -d --build mcp-server` clears: A-30 mem + FIX-BCTC-ENRICHER deploy + bctc-discover staleness (3369). Do NOT work around / re-mint.
+- `SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO` (high, backlog) = next coding-lane candidate once WIP frees + rebuild lands.
+- Size-cap breach (task_board 85/80, sprint_goal 26/15): root = cold-evict not clearing 54 terminal done[] rows; tracked (COLDEVICT / SPRINT-GOAL-EVICT). DEFER prune while board in-flight.
+- `TOKEN-ECONOMY-TICK-PREFLIGHT` next in ready — router dispatches architect when a WIP slot frees.

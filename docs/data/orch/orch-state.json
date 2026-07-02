@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-02T06:09:08Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "BA-MERGE-MONEY-RADAR-INTO-MOMENTUM done_verified (qa APPROVED d7f899ca); head idle"
+    "status": "in_progress",
+    "updated_at": "2026-07-02T06:30:30Z",
+    "updated_by": "po",
+    "active_task_id": "ARCH-DASH-CRON-RECHECK-TABLE",
+    "next_agent": "architect",
+    "note": "ARCH-DASH-CRON-RECHECK-TABLE promoted ready→in_progress (user-prioritized SPRINT-M; BA handoff docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md); architect SPLIT dispatch. WIP 2/2."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9570,15 +9570,13 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "ARCH-DASH-CRON-RECHECK-TABLE",
         "title": "Architect SPLIT for DASH-CRON-RECHECK-TABLE: dev-mcp-server (status-compute+REST) vs dev-frontend (proxy+table UI). Read BA spec docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
         "owner": "architect",
         "next_agent": "architect",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "multi",
         "type": "SPRINT-M",
         "priority": "high",
@@ -9595,8 +9593,12 @@
           "apps/frontend/app/routes/api.orchestration.tsx",
           "apps/frontend/app/routes/dashboard.orchestration.tsx"
         ],
-        "spec_ref": "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md"
-      },
+        "spec_ref": "docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md",
+        "dispatched_at": "2026-07-02T06:30:30Z",
+        "dispatched_by": "po"
+      }
+    ],
+    "ready": [
       {
         "id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
         "title": "Architect review + pm decomposition: script deterministic cron-tick preflights (WU-1 cowork silent-path script, WU-2 dev-team SF-1-first preflight, WU-3 auditor Tier-1 shell healthcheck). Cuts ~80% idle-hours token burn; all mutex/election/injection gates preserved. Spec = brief.",
