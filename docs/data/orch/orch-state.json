@@ -1004,8 +1004,11 @@
         "type": "signal_feedback",
         "summary": "A-21 mcp-server RestartCount=4 (baseline 3) — gradual restart pattern",
         "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "triage_note": "PO triage 2026-07-02: CONFIRMING evidence for the mcp-server OOM/memory story, NOT new scope. In-place restart (RestartCount 3->4, mem 95.28%->15.89% @c500) = the 2GB-cap OOM-kill that FIX-MCP-MEM-CAP-BUMP-REBUILD (review, swap-pending) mitigates. Annotated mem-cap review_note + OPS-MCP-RESTART-CHURN status_note; recommended ops re-emit the user-gate swap nudge. No rebuild dispatched (user gate honored). No new task minted.",
+        "triaged_by": "po",
+        "triaged_at": "2026-07-02T21:28:10Z"
       },
       {
         "id": "rtr-auditor-orchwrite-20260702T2121",
@@ -1245,8 +1248,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-02T13:07:32Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-07-02T21:28:10Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5749,7 +5752,8 @@
         "priority": "P2",
         "status": "BACKLOG",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN",
+        "status_note": " || CORROBORATED 2026-07-02T21:28:10Z (po triage, signal sau-a21-202607022116): fresh in-place mcp-server restart RestartCount 3->4 with memory collapse 95.28%->15.89% @c500 = another OOM/crash restart (in-flight-state-corruption class this task tracks). Root mitigation = FIX-MCP-MEM-CAP-BUMP-REBUILD (review, swap-pending on USER gate) + FIX-MCP-MEMORY-CODE-LEAK (parked). Still folded under the mem-cap/leak track — no separate dispatch."
       },
       {
         "id": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
@@ -7735,7 +7739,7 @@
         "type": "FIX",
         "next_agent": "agent-father",
         "created_at": "2026-07-02T02:57:39Z",
-        "status_note": "AC: docs/agents/dev-team/flow/drain-signals.md §0a-3 AND docs/agents/po/flow/triage-signals.md each carry an explicit routing row for type=data-coverage-gap (route→ops) and type=deep_dive_result (route→po) with a defined action. A live deep_dive_result signal (bca-ddres-20260630T2258) already hit the catch-all — no silent loss but no automated action. Priority: INFO/low. Source signal: qa-followup-signal-routing-rows-20260702 (dev-team/qa-gate). Route: agent-father (agent-flow-doc edit)."
+        "status_note": "AC: docs/agents/dev-team/flow/drain-signals.md §0a-3 AND docs/agents/po/flow/triage-signals.md each carry an explicit routing row for type=data-coverage-gap (route→ops) and type=deep_dive_result (route→po) with a defined action. A live deep_dive_result signal (bca-ddres-20260630T2258) already hit the catch-all — no silent loss but no automated action. Priority: INFO/low. Source signal: qa-followup-signal-routing-rows-20260702 (dev-team/qa-gate). Route: agent-father (agent-flow-doc edit). || SCOPE EXTENSION (po 2026-07-02): ALSO add a routing row for esc-deep-dive-request (bctc-analyst -> analysis/market-analyst owner). This is the ROOT of the GVR Q1-2026 ESC-4 redispatch loop: bctc-analyst emits esc-deep-dive-request to=dev-team, dev-team cannot action a financial-analysis question, the 24h guard TTL-expires unresolved (c070) and bctc-analyst re-nudges (this tick). ESC deep-dives are ANALYSIS work, not dev — the missing routing row makes them loop forever. Add the row so ESC deep-dives get a real (analysis) owner and stop TTL-looping."
       },
       {
         "id": "FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH",
@@ -7806,6 +7810,29 @@
         "title": "chef.md cleanup releases published:<slot>:<date> marker post-publish — defeats FR-P2-7 dup-post gate (2x 2026-07-02: chef-morning + chef-evening)",
         "status_note": "REPAIR (router repair_task_request createdAt 2026-07-02T20:01:29Z, transcript-proven, 2x same-day = recurring-bug threshold). Root cause: chef.md claims published:chef-<slot>:<VN-date> (task_kind=cowork-slot, ttl 100800s) before send_telegram per FR-P2-7, then task_release on the SAME marker in its cleanup/finally after publishing — re-opens the dup gate immediately (marker meant to hold ~28h). FIX: cleanup releases ONLY dispatcher slot tokens / heartbeat locks, NEVER published:<slot>:<date> markers (TTL-expiry only); add explicit DO-NOT-RELEASE note at the FR-P2-7 claim step. SWEEP other publisher flows for the same release-in-cleanup pattern: fb-market-poster, digest-predict, news-scout, market-watcher, bctc-analyst (their 2026-07-02 markers were still held at report time -> only chef drifts today, but verify contract). ROUTE (out-of-dev-scope, per FU-CHEF-MARKER-INFLOW precedent): agent-flow .md contract edit -> agents-architect contract review (irreversible MARKET double-publish safety) -> agent-father flow edit via agent-md-factory; NOT dev-team apps/ code. Files: docs/agents/unified-agent/flow/chef.md (+ sweep the 5 flows). Workaround ACTIVE: dispatcher re-arms marker after RAW-verify (done both occurrences). KIN FU-CHEF-MARKER-INFLOW (claim-side / key-granularity, DEFERRED) — this is the RELEASE-side facet of the same marker contract. AC: a chef re-fire of an already-published slot on the same VN-date exits WITHOUT a 2nd send_telegram; task_list_held shows the published:<slot>:<date> marker still held immediately post-publish; no dispatcher re-arm needed for 7d.",
         "created_at": "2026-07-02T20:33:16Z"
+      },
+      {
+        "id": "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING",
+        "title": "search_similar_context RECURRING timeout (BUG#3144, bctc-analyst c071/c072/c073 = 3 consecutive cycles). mcp-server tool (analysis.ts:511) delegates to rag-service over HTTP :5002 via ragHttpClient (analysis.ts:563); the timeout is a CLIENT-VISIBLE symptom of the rag-service clean-exit restart-loop. Fix: (a) client-side fail-soft in the mcp-server tool — on rag timeout/down, degrade to an empty result + WARN instead of surfacing a hard timeout that blocks bctc-analyst (mirror the existing analysis.ts:84 'service-down: omit block entirely' pattern); (b) resolve the rag-service restart-loop root.",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "medium",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "pm",
+        "status_note": "RECURRING-BUG durable entry (2+ occ -> board per feedback_recurring_bug_escalation). Source: telegram BUG msg#3144 (from bctc-analyst). LINKED ROOT: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (rag-service RestartCount 226->245, clean-exit restart loop; passive health masks churn). AC: no BUG-channel search_similar_context timeout for 3 consecutive bctc-analyst cycles AND (rag-service RestartCount stabilizes OR the tool degrades gracefully with zero analyst-blocking). Priority: medium.",
+        "created_at": "2026-07-02T21:28:10Z"
+      },
+      {
+        "id": "FU-TCH-BCTC-COVERAGE",
+        "title": "TCH newly DB-trong (empty BCTC data) — data-coverage gap. bctc-analyst 2026-07-02 finished triaging 29/29 filed watchlist tickers: 6 analyzed / 11 DB-trong (incl. newly-found TCH) / 10 corrupt / 2 low-confidence. TCH has no usable BCTC rows in the live DB -> backfill/re-ingest TCH Q1-2026 (VPS bctc fetch -> refine -> reingest) so bctc-analyst can cover it.",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "status_note": "Data-coverage note from bctc-analyst carry-over advisory (fresh-ticker supply exhausted; next cycles rotate re-verify). Low urgency — single ticker. AC: get_bctc_full returns non-empty Q1-2026 rows for TCH (no longer DB-trong).",
+        "created_at": "2026-07-02T21:28:10Z"
       }
     ],
     "closed_sprints": [
@@ -9943,10 +9970,10 @@
           "docker-compose.dev.yml"
         ],
         "baseline_pass": true,
-        "updated_at": "2026-07-02T18:43:27Z",
-        "updated_by": "router",
+        "updated_at": "2026-07-02T21:28:10Z",
+        "updated_by": "po",
         "assignee": "ops",
-        "review_note": "Repo scope COMPLETE 2026-07-02T18:43:27Z: commit 4dbf7ef0 — docker-compose.yml:71 + docker-compose.dev.yml:34 memory 2g->3g (mcp-server only; docker compose config renders 3GiB, no other service changed; RAW-verified by router). SWAP PENDING (user-gated): user must run docker compose build mcp-server then docker compose up -d --no-deps mcp-server. Post-swap AC: new image ID, mem baseline low, re-sample sawtooth 24-48h @3GiB — outcome feeds unpark gate of FIX-MCP-MEMORY-CODE-LEAK (parked, pm)."
+        "review_note": "Repo scope COMPLETE 2026-07-02T18:43:27Z: commit 4dbf7ef0 — docker-compose.yml:71 + docker-compose.dev.yml:34 memory 2g->3g (mcp-server only; docker compose config renders 3GiB, no other service changed; RAW-verified by router). SWAP PENDING (user-gated): user must run docker compose build mcp-server then docker compose up -d --no-deps mcp-server. Post-swap AC: new image ID, mem baseline low, re-sample sawtooth 24-48h @3GiB — outcome feeds unpark gate of FIX-MCP-MEMORY-CODE-LEAK (parked, pm). || CORROBORATION 2026-07-02T21:28:10Z (po triage, signal sau-a21-202607022116, system-auditor A-21 HIGH): mcp-server RestartCount 3->4 with in-place memory collapse 95.28%->15.89% @c500 — a crash/OOM in-place restart RESET the sawtooth (the exact OOM-at-2GB-cap failure this Track-1 cap-bump mitigates). Container STILL runs the OLD 2g image (user-gated build+up NOT yet executed) -> restarts CONTINUE until the swap lands. URGENCY RAISED: ops should re-emit the user-gate swap commands (docker compose build mcp-server ; docker compose up -d --no-deps mcp-server). No gate work-around performed."
       }
     ],
     "qa": [],
@@ -9976,6 +10003,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-02T06:09:08Z",
-  "_updated_by": "dev-team"
+  "_updated_at": "2026-07-02T21:28:10Z",
+  "_updated_by": "po"
 }

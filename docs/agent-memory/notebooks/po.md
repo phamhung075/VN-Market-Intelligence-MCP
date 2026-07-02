@@ -1,6 +1,6 @@
 # PO Notebook
 
-_Last: 2026-07-02T20:34Z_
+_Last: 2026-07-02T21:28Z_
 
 ## Tick 2026-07-02T18:37Z — dev-team triage: architect recon-return + 6 signals → BATCH(1 FIX)
 
@@ -40,8 +40,26 @@ _Last: 2026-07-02T20:34Z_
 
 **Writes:** board via orch-apply (--slurpfile/--rawfile bound, injection-safe): backlog+=FIX-CHEF-PUBLISHED-MARKER-RELEASE (status BACKLOG to match lane), GAP-CHEF-SYNTHESIS-A status_note annotated; TNB ## PO ACK appended; 2 telegrams resolved. RETURN=BATCH(1). PO never pushes.
 
+## Tick 2026-07-02T21:28Z — dev-team triage: 6 inputs (2 GVR + ACB + cowork + A-21 queue + BUG#3144) → 2 new backlog + 3 annotations, 0 dev dispatch
+
+**Inputs:** pendingSignals=4 (drained→processed/): esc-deep-dive-request GVR ESC-4 REDISPATCH + GVR routine re-verify + ACB routine + cowork-FIRE; orch signal_queue row sau-a21-202607022116 (A-21 mcp-server RestartCount 3→4, mem 95.28%→15.89% @c500); recurring-bug telegram BUG#3144 (search_similar_context timeout c071/c072/c073). Board: head idle, ready 0, in_progress 1 (parked enricher, untouched), review 6, backlog 387→389.
+
+**GVR Q1-2026 ESC-4 (redispatch, items 1+3) = ANALYSIS work, NOT dev → route to market-analyst; NO dev board task.** Non-op income 590.1 ty = 23.5% of net profit (>15% thresh); single-period, byte-identical since 2026-06-07 — a STABLE standing finding, not a new surprise. For a rubber/KCN SOE conglomerate a large non-op line (land/disposal/financial income) is structurally normal → PO characterizes it as an accepted analytical note, not fraud/beat-miss. ROOT of the c070→this-tick redispatch loop = esc-deep-dive-request has NO analysis owner: bctc-analyst emits to=dev-team, dev-team can't action a financial question, 24h guard TTL-expires, re-nudge repeats. Fix = routing, not content → annotated **FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE** (backlog) to ALSO add a routing row for esc-deep-dive-request→analysis/market-analyst. dev-team next tick: dispatch market-analyst for the GVR breakdown (or analysis cowork loop picks it up). PO can't spawn this tick.
+
+**ACB routine (item 2) = informational, no action.** First-analysis, CHEAP (PE 7.8 vs sector 9.1, PB 1.3 DISCOUNT -18%, EY spread +7.82pp), balance-sheet PASS, ESC-4 false. Healthy analysis output; investment-thesis data point, not dev work. Logged only.
+
+**cowork-FIRE (item 4) = low telemetry, ACK no-task.** bctc-analyst-slot-3 fired ok; cycle_snapshot_promoted=false + stale_warning=true = known isStale→legacy behavior (reference_isstale_stale_warning_forces_legacy). No pattern worth a task.
+
+**A-21 mcp-server restart (item 5) = CONFIRMING evidence, NOT new scope; NO gate work-around.** In-place restart (RestartCount 3→4, mem collapse 95.28%→15.89% @c500) = the 2GB-cap OOM-kill already diagnosed. Container STILL on OLD 2g image (user-gated build+up NOT run) → restarts continue until swap lands. Annotated **FIX-MCP-MEM-CAP-BUMP-REBUILD** review_note (urgency raised; ops should re-emit the user-gate swap cmds) + **OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN** status_note; flipped queue row READ→TRIAGED. Did NOT dispatch rebuild (user gate). Did NOT unpark FIX-MCP-MEMORY-CODE-LEAK (its unpark gate = post-swap 24-48h re-sample, unchanged).
+
+**search_similar_context recurring timeout (item 6) = new durable backlog entry.** No prior board entry (dedup miss). Tool is mcp-server (analysis.ts:511) delegating to rag-service HTTP :5002 via ragHttpClient (analysis.ts:563) → the timeout is a CLIENT symptom of the rag-service clean-exit restart loop. Minted **FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING** (BACKLOG, medium, cross-service/, next_agent pm): (a) client-side fail-soft (degrade to empty+WARN, mirror analysis.ts:84 service-down pattern) so a rag-down doesn't block bctc-analyst; (b) resolve rag restart-loop root (LINKED FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP). Source BUG#3144.
+
+**TCH data-coverage (item 7 advisory) = new low-pri note.** bctc-analyst finished 29/29 filed watchlist tickers (6 analyzed / 11 DB-trống incl. newly-found TCH / 10 corrupt / 2 low-conf); fresh-ticker supply exhausted, next cycles rotate re-verify. TCH newly DB-trống → minted **FU-TCH-BCTC-COVERAGE** (BACKLOG, P3, apps/mcp-server/): backfill/re-ingest TCH Q1-2026. AC: get_bctc_full non-empty for TCH.
+
+**Writes:** orch-apply (--rawfile/--slurpfile bound, injection-safe): review_note append (mem-cap), 2 status_note appends (restart-churn + deepdive-routing), signal row A-21→TRIAGED, backlog += FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING + FU-TCH-BCTC-COVERAGE (387→389, no dup ids). RETURN = 2 backlog adds + 3 annotations; 0 dev dispatch (dev-team routes next tick). PO never pushes.
+
 ## Carry-over
-- ready[]=FIX-MCP-MEM-CAP-BUMP-REBUILD (ops, cross-service, S) — router dispatches Step-3 FIX this tick; compose edit is a repo change, rebuild+swap USER-GATED (do NOT execute).
+- ready[] EMPTY. FIX-MCP-MEM-CAP-BUMP-REBUILD now in review[] (repo scope SHIPPED 4dbf7ef0, swap-pending USER gate) — A-21 restart evidence corroborates urgency; ops should re-emit swap cmds (`docker compose build mcp-server` ; `docker compose up -d --no-deps mcp-server`). Do NOT execute the swap (user gate).
 - backlog: FIX-MCP-MEMORY-CODE-LEAK PARKED held (pm) — unpark only when cap+rebuild shipped AND sawtooth persists 24-48h @3GiB. Do NOT decompose earlier.
 - in_progress=1 FIX-BCTC-ENRICHER-STUCK-BACKLOG PARKED on user gate — do NOT unpark. B-05 (bctc-discover stale, 38 pending) is SUBSUMED here (38 = enricher backlog). Recurring B-05 CRITICAL re-fires expected until operator rebuild ships; keep TRIAGED-subsumed, do NOT re-mint. If B-05 persists AFTER the rebuild drains the queue → done_verified re-check of discover-leg DONE tasks (B-05-FIX / FIX-BCTC-VPS-FETCH-LEG-DEAD).
 - B-06 sbv-vps stale = off-market FP class; auto-resolve INFO on off-hours re-fires. Durable fix tracked: FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE + ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD.
@@ -50,4 +68,7 @@ _Last: 2026-07-02T20:34Z_
 - NEW backlog: FIX-CHEF-PUBLISHED-MARKER-RELEASE (cross-service/, S) — chef.md cleanup releases published marker post-publish (recurring 2x). Route agents-architect→agent-father (agent-md-factory), NOT dev-team. Sweep 5 publisher flows. Kin FU-CHEF-MARKER-INFLOW.
 - GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST now also carries the TNB F-TNB-MISSED-CYCLE-EVIDENCE-LOSS driver (per-date/slot dish persist survives notebook rotation) — bump when picked up.
 - TNB ACK chain current through c104 (c103+c104 ACK'd 20:33Z). c105 will re-verify F-ACV-DB-EMPTY after enricher rebuild.
+- NEW backlog (21:28Z): **FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING** (cross-service/, medium, next_agent pm) — recurring BUG#3144, client fail-soft + rag restart-loop root (kin FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP). **FU-TCH-BCTC-COVERAGE** (apps/mcp-server/, P3) — TCH newly DB-trống, backfill Q1-2026.
+- GVR Q1-2026 ESC-4 = analysis (market-analyst), NOT dev — dev-team next tick dispatch market-analyst for the non-op-income breakdown; durable loop-fix folded into FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE (add esc-deep-dive-request→analysis routing row). bctc-analyst may re-nudge once more until the routing row ships.
+- A-21 (sau-a21-202607022116) TRIAGED = confirming OOM/restart evidence for the mem-cap/leak track; no separate dispatch. Watch: after the user runs the gated 3g swap, re-sample sawtooth 24-48h → feeds FIX-MCP-MEMORY-CODE-LEAK unpark gate.
 - ahead of origin — fleet-push launchd timer owns push; PO never pushes.
