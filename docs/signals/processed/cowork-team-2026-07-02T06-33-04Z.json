@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-02T06:33:04Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 13,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "last_fired_timestamp": "2026-07-02T06:32:23.000Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 1,
+    "note": "cron fired 12min late (drift_min=13, WARN sent); pressure-state stale (25min>20) forced legacy mode; chef-intraday spawned backgrounded with snapshot 06:30; emit_pressure_state ok but stale_warning=true + cycle_snapshot_promoted=false persist"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-02T06:33:04Z",
+  "_processed": {
+    "fingerprint": "31ce29219e0e93e69ebc05cbf09a4dd917066e2312b5d977505039857ecc0148",
+    "processedAt": "2026-07-02T06:50:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
