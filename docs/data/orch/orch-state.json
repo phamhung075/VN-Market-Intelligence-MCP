@@ -284,49 +284,7 @@
   "signal_queue": {
     "_updated_at": "2026-07-02T17:20:23Z",
     "_updated_by": "dev-team",
-    "archive": [
-      {
-        "id": "sau-2026-07-02T06:16:45Z",
-        "ts": "2026-07-02T06:16:45Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-12 FAIL: api-gateway health endpoint — container up but HTTP not responding",
-        "severity": "HIGH",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "triaged_at": "2026-07-02T06:21:02Z",
-        "router_triage": "FALSE POSITIVE — router isolation probe 06:18Z: curl localhost:4000/health = 200 in 0.17s, /healthz = 200; docker ps shows api-gateway Up 3 days (healthy). Auditor CURL_ERR was probe-environment artifact (known auditor-FP class)."
-      },
-      {
-        "id": "sau-2026-07-02T06:17:08Z",
-        "ts": "2026-07-02T06:17:08Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-12 FAIL: frontend health endpoint — container up but HTTP not responding",
-        "severity": "MED",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "triaged_at": "2026-07-02T06:21:02Z",
-        "router_triage": "FALSE POSITIVE — router isolation probe 06:18Z: curl localhost:3001/ = 200; docker ps shows frontend Up 15 hours (healthy). /healthz 404 is endpoint naming, not an outage. Auditor CURL_ERR was probe-environment artifact."
-      },
-      {
-        "id": "sau-20260702-0635-b05",
-        "ts": "2026-07-02T06:35:33Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "bctc-discover stale 369.9h (check B-05)",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "triaged_by": "po",
-        "triaged_at": "2026-07-02T06:56:30Z",
-        "resolution": "duplicate-superseded-by-B-05-FIX",
-        "triage_note": "Auditor RE-RAISE of B-05 (bctc-discover stale ~15d). Definitively triaged 2026-07-01 (B-05-FIX DONE, RAW SSH-verified): VPS infra healthy (3 systemd units active, 0 crashes); vn-bctc-fetch UNHEALTHY = KNOWN FALSE POSITIVE (non-HTTP systemd timer probed via HTTP, see FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES). Real roots: (1) external SSC portal 503 outage (B-05-FU-SSC-503-RETRY); (2) enricher last_attempt code defect fixed d9280133, deploy PARKED user-gated (FIX-BCTC-ENRICHER-STUCK-BACKLOG IN_PROGRESS). NO new task: false premise + duplicate."
-      }
-    ],
+    "archive": [],
     "rows": [
       {
         "id": "sau-d4-202606240300",
@@ -954,56 +912,6 @@
         "payload_ref": null
       },
       {
-        "id": "sau-t1-20260702T0417",
-        "ts": "2026-07-02T04:17:53Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-30 mcp-server memory climbing (82.66%) - fix d9280133 blocked on approval",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null,
-        "po_triaged_at": "2026-07-02T04:25:59Z",
-        "po_disposition": "CONSUMED. status kept READ (honest cold-evictable terminal; A-30 live+unresolved so NOT RESOLVED=false-green; TRIAGED non-evictable so avoided). Escalation UPGRADED to WORK (urgency 82.66%/near-85%-cap + rebuild-only guardrail auditor-3385 lacked). No dev task (fix d9280133 committed, deploy user-gated not coding lane, WIP 2/2). No runbook (single cmd already stated everywhere). No in-boundary mitigation (restart/exec/cp forbidden; diag=ops)."
-      },
-      {
-        "id": "sau-2026-07-02T04:45Z",
-        "ts": "2026-07-02T04:45:28Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "A-30 CRITICAL: mcp-server memory 85.51% (threshold 85%)",
-        "severity": "CRITICAL",
-        "status": "READ",
-        "payload_ref": null,
-        "po_triaged_at": "2026-07-02T04:54:49Z",
-        "po_disposition": "CONSUMED. Hard threshold CROSSED 85.51% (>85% cap; +2.85pp/28min from 82.66% @04:17Z = OOM-kill trajectory). status kept READ (honest cold-evictable terminal; A-30 live+unresolved so NOT RESOLVED=false-green). ONE CRITICAL WORK escalation sent for THIS state-transition (distinct from 04:17Z climbing-warning row = not spam). NO dup dev/ops task: single user-gated mcp-server rebuild ALREADY folded into FIX-BCTC-ENRICHER-STUCK-BACKLOG (fix d9280133; A-30 FOLD noted 00:36Z). Deploy stays USER-APPROVAL-GATED = NO work-around (no restart-substitute/docker exec/cp/down&&up). In-boundary mitigation none (diag=ops; deploy=operator)."
-      },
-      {
-        "id": "sau-2026-07-02T05:44Z",
-        "ts": "2026-07-02T05:44:48Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-30 CRITICAL: mcp-server memory 99.66% (OOM-kill imminent; trend 85.51% → 98.96% → 99.66% in 1h)",
-        "severity": "CRITICAL",
-        "status": "READ",
-        "payload_ref": null,
-        "triaged_at": "2026-07-02T06:21:02Z",
-        "router_triage": "KNOWN-PINNED duplicate: mcp-server memory crisis already fully triaged — fix d9280133 committed, single-svc rebuild USER-GATED (docker compose up -d --build mcp-server). No new action for po; standing reminder issued every user-facing message. restart_count still 1, no OOM-kill."
-      },
-      {
-        "id": "sau-20260702074500",
-        "ts": "2026-07-02T07:45:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-12 FAIL: api-gateway health endpoint unreachable",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
         "id": "rtr-20260702-rag-churn",
         "ts": "2026-07-02T07:52:08Z",
         "from": "dev-team",
@@ -1013,47 +921,6 @@
         "severity": "MEDIUM",
         "status": "TRIAGED",
         "payload_ref": "docs/signals/processed/rag-restart-churn-20260702.json"
-      },
-      {
-        "id": "sau-20260702T111455Z",
-        "ts": "2026-07-02T11:14:55Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-21 WARN: mcp-server restart count=3 (threshold ≤2)",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "sau-2026-07-02T14:14:52Z-a01-mcp",
-        "ts": "2026-07-02T14:14:52Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-01/A-12 CRITICAL: mcp-server unhealthy — health endpoint CURL_ERR",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "triaged_by": "po",
-        "triaged_at": "2026-07-02T17:27:56Z",
-        "disposition": "FALSE-POSITIVE-RECOVERED",
-        "triage_note": "STALE from 14:14Z transient probe-failure window. RAW-verified 2026-07-02T17:21Z: mcp-server:4000/health=200(0.005s), api-gateway=200(0.004s), frontend:3001=200(0.018s); all 13 containers healthy. mcp-server StartedAt=2026-07-02T10:15:34Z predates the 14:14Z window (OOMKilled=false, ExitCode=0, no restart at outage time) -> transient CURL_ERR = probe-environment artifact (auditor-FP class, same as archived sau-2026-07-02T06:16:45Z/06:17:08Z). Recovered; no task."
-      },
-      {
-        "id": "sau-2026-07-02T14:14:52Z-a02-api",
-        "ts": "2026-07-02T14:14:52Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-02/A-12 WARN: api-gateway unhealthy — health endpoint CURL_ERR",
-        "severity": "HIGH",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "triaged_by": "po",
-        "triaged_at": "2026-07-02T17:27:56Z",
-        "disposition": "FALSE-POSITIVE-RECOVERED",
-        "triage_note": "STALE from 14:14Z transient probe-failure window. RAW-verified 2026-07-02T17:21Z: mcp-server:4000/health=200(0.005s), api-gateway=200(0.004s), frontend:3001=200(0.018s); all 13 containers healthy. mcp-server StartedAt=2026-07-02T10:15:34Z predates the 14:14Z window (OOMKilled=false, ExitCode=0, no restart at outage time) -> transient CURL_ERR = probe-environment artifact (auditor-FP class, same as archived sau-2026-07-02T06:16:45Z/06:17:08Z). Recovered; no task."
       },
       {
         "id": "sau-2026-07-02T14:14:52Z-a21-mcp",
@@ -1070,21 +937,6 @@
         "disposition": "DUPLICATE",
         "linked_task": "OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN",
         "triage_note": "Factual: docker inspect RestartCount=3 (threshold <=2). Container stable Up 7h healthy, ExitCode=0, OOMKilled=false -> no active crash-loop; last restart 10:15Z. RestartCount only resets on user-gated container recreate (HARD-GATED) so the over-threshold reading persists regardless of any code fix -- not independently actionable this tick. Restart-churn root already tracked by backlog OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (49% unclean shutdowns). No new task."
-      },
-      {
-        "id": "sau-2026-07-02T14:44Z-a12-fe",
-        "ts": "2026-07-02T14:44:57Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-12 WARN: frontend health endpoint CURL_ERR — container running but unresponsive",
-        "severity": "MED",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "triaged_by": "po",
-        "triaged_at": "2026-07-02T17:27:56Z",
-        "disposition": "FALSE-POSITIVE-RECOVERED",
-        "triage_note": "STALE from 14:14Z transient probe-failure window. RAW-verified 2026-07-02T17:21Z: mcp-server:4000/health=200(0.005s), api-gateway=200(0.004s), frontend:3001=200(0.018s); all 13 containers healthy. mcp-server StartedAt=2026-07-02T10:15:34Z predates the 14:14Z window (OOMKilled=false, ExitCode=0, no restart at outage time) -> transient CURL_ERR = probe-environment artifact (auditor-FP class, same as archived sau-2026-07-02T06:16:45Z/06:17:08Z). Recovered; no task."
       },
       {
         "id": "sau-1783012565",
@@ -8590,59 +8442,6 @@
         "zone": "qa"
       },
       {
-        "id": "FIX-NEWS-ANALYSIS-PIPELINE-STALL",
-        "type": "FIX",
-        "status": "CANCELLED",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "owner": "dev-mcp-server",
-        "title": "News fetch->analysis pipeline stalled ~100min during market hours (last analysis 05:02Z); manual fetch did not recover",
-        "desc": "Router RAW-corroborated (sau-2026-06-25T06:32:59Z): get_market_context last news analysis=2026-06-25T05:02Z, persistent ~100min into a weekday afternoon session. vn-news-fetch VPS service is HEALTHY+polling (15min cadence) and TA alerts still flow (06:15) — so it is the NEWS fetch->push-news->intelligenceCycleJob analysis path specifically, not a full outage. Router triggered trigger_news_vps_fetch(dry_run=false) at 06:36Z; last-analysis did NOT advance (still 05:02 at 06:42). CORROBORATION GATE (feedback_false_infra_failure_corroboration_gate): FIRST confirm root cause before blaming infra — distinguish (a) genuine no-new-unique-items / dedup saturation across 14 RSS feeds (would be benign) vs (b) real break (VPS fetch returns empty/cached, push-news ingestion failing, or intelligenceCycleJob not running/erroring). Check VPS /tmp/news-debug-*.log, push-news endpoint, intelligenceCycleJob scheduler logs + last-run, and the news_articles/analysis_history write recency. DoD: identify root cause with evidence; if a real break, fix it and RAW-verify new analysis lands (last-analysis advances past 05:02 with a fresh item); if genuinely no-new-items, document that + (optional) widen sources or adjust the SLA so it doesn't false-fire. Full mcp-server check green before commit.",
-        "files": [
-          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts"
-        ],
-        "created_at": "2026-06-25T06:44:45Z",
-        "created_by": "router",
-        "source": "system-auditor B-11 + router RAW corroboration",
-        "closed_at": "2026-06-25T07:00:00Z",
-        "closed_by": "po",
-        "close_reason": "FALSE-PREMISE / SUPERSEDED. Created 06:44Z from the router_verify (06:37Z) that predated the router's own deeper re-investigation (06:42Z). PO RAW-verify 06:44Z: news push DID land (06:30:01, 06:43:53, Stale=no, 0err) and 'last analysis 05:02Z' = news-scout-sentiment slot last_fired 05:02:55Z (on 4h+daily analysis cadence, next slot 08:00Z). There is NO fetch->analysis pipeline stall: trigger_news_vps_fetch triggers raw FETCH (succeeded), analysis only runs on the news-scout slot cron — so 'manual fetch did not advance last-analysis' is expected, not a break. Root cause is the same layer-confusion as B-11. Superseded by FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT (predicate split) + ADD-NEWS-SCOUT-INTRADAY-SLOT (coverage). No dev-mcp-server work needed.",
-        "superseded_by": [
-          "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
-          "ADD-NEWS-SCOUT-INTRADAY-SLOT"
-        ]
-      },
-      {
-        "id": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH",
-        "type": "FIX",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server",
-        "status": "DONE_VERIFIED",
-        "title": "alert-engine verified_decision emit writes UUID into agent_signals.alert_id instead of semantic alerts.id (220 orphans, +96/day)",
-        "desc": "ROOT CAUSE (router RAW-verified live bun rw handle, immutable=1, 2026-06-25T14:40Z): LOGICAL orphan, NOT a DB FK/cascade issue (agent_signals.alert_id is TEXT/nullable/NO FK; PRAGMA foreign_key_list empty — auditor cascading-delete hypothesis is WRONG). 4248 signals; 3689 NULL alert_id (legit non-alert sources); 559 non-null → 339 MATCH alerts.id, 220 ORPHAN. ALL 220 orphans are signal_type=verified_decision emitted by alert-engine. alerts.id uses SEMANTIC keys (alert-POW-volume_spike-2026-06-25T08, alert-news-VIC-...); the 220 orphans carry UUID alert_ids (ad5d2c63-...) so refs never resolve. ID-SCHEME MISMATCH: the verified_decision emit path writes a UUID into alert_id instead of the semantic alerts.id. Growing +96/day (124 on 06-24 → 220 on 06-25), newest 08:45:01Z. Not data-loss (signals intact); alert↔signal join broken for 220 rows + accruing. FIX TARGET: make the verified_decision emit path persist the SEMANTIC alerts.id (or unify the two id schemes).",
-        "files": "apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts (line 254 UUID->semantic id); apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts (line 241 UUID->semantic id); new test apps/mcp-server/src/__tests__/FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH.test.ts",
-        "verify": "new verified_decision alert_ids match alerts.id semantic format AND orphan count stops growing (220 stops accruing; no new UUID-shaped alert_ids appear for verified_decision rows)",
-        "baseline_pass": "alert-engine Go build green + existing alert-engine tests pass before change (touched-file CI must stay green; full-suite is DoD)",
-        "source_signal": "sau-20260625T1426-orphan-signals-regress",
-        "created_at": "2026-06-25T14:46:25Z",
-        "created_by": "po",
-        "sprint": "dev-team-triage",
-        "claimed_at": "2026-06-25T14:47:35Z",
-        "claimed_by": "dev-team",
-        "next_agent": "qa",
-        "dispatch_note": "ZONE-CORRECTION (2026-06-25T14:53:58Z): dev-alert-engine RAW-investigated + reported zone mismatch — bug is NOT in apps/alert-engine (Go has ZERO agent_signals/verified_decision code; router confirmed grep empty). Real source: apps/mcp-server (TypeScript). Two scan-job emitters set alert id = crypto.randomUUID() which propagates via storeAlerts() into agent_signals.alert_id: (1) apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts:254 ; (2) apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts:241. FIX: replace UUID with semantic id 'alert-${code}-${alertType}-${daySlot}' (daySlot=triggeredAt.slice(0,10); alertType already computed). Matches alerts.id pattern alert-HVN-ta_overbought-2026-06-25. fingerprint (scan:code:alertType:daySlot) still owns UNIQUE dedup so deterministic id is safe. Re-routed apps/alert-engine -> apps/mcp-server, dispatched dev-mcp-server.",
-        "rerouted_from_zone": "apps/alert-engine",
-        "rerouted_at": "2026-06-25T14:53:58Z",
-        "commit": "57a781a14ed86aa828011c0651e8286805f4d3d0",
-        "dev_completed_at": "2026-06-25T15:10:47Z",
-        "qa_note": "dev-mcp-server fix live (router raw-verified): taAlertScanJob.ts:258 + bbAlertScanJob.ts:245 emit semantic id alert-{code}-{alertType}-{daySlot} replacing crypto.randomUUID(); storeAlerts propagates alert.id->agent_signals.alert_id. New test 5/5 pass. tsc clean. 107 suite fails pre-existing (none in touched files). VERIFY: (a) format matches alerts.id, (b) UUID writer eliminated so orphans stop accruing. Existing 220 orphans out-of-scope backfill.",
-        "done_verified": true,
-        "closed_at": "2026-06-25T15:31:55Z",
-        "rebuild_required": "mcp-server"
-      },
-      {
         "id": "FIX-CI-RED-EAC0CC65-BUNTEST",
         "type": "FIX",
         "title": "CI RED on main — bun test (73 fails / 16 files) — find shared root cause",
@@ -9845,90 +9644,7 @@
         "row_note": "[qa 2026-07-02T13:07:32Z] Decision B (bless divergence): cron-detect-loop/SKILL.md declared operational SSOT for CronCreate prompt bodies (Job 1/2 diverge intentionally from cron-dev-team.md/cron-system-auditor.md, which are now downgraded to manual/ad-hoc reference docs with explicit cross-pointer). Commit a1e346b8 (trailer-amended by router from 85df9241)."
       }
     ],
-    "done_verified": [
-      {
-        "id": "TASK-DASH-CRON-1",
-        "title": "Zone 1: Cron status-compute backend (cronLivenessClassifier, cronStatusCompute, cronStatusHandler, GET /api/cron-status, cron-parser dep)",
-        "status": "DONE",
-        "owner": "dev-mcp-server",
-        "type": "FEATURE",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "size": "M",
-        "created_at": "2026-07-02T06:54:00Z",
-        "claimed_at": "2026-07-02T07:21:17Z",
-        "blocks": [
-          "TASK-DASH-CRON-2"
-        ],
-        "depends": [],
-        "started_at": "2026-07-02T07:21:17Z",
-        "reviewed_at": "2026-07-02T08:09:41Z",
-        "review_note": "[dev-mcp-server 2026-07-02T08:09:41Z] commit 85267b62 — Zone-1 backend for DASH-CRON-RECHECK-TABLE: domain/cron/cronLivenessClassifier.ts (pure FR-1.6 4-branch ladder) + humanScheduleFormatter.ts, infrastructure/cron/layerBCronRegistry.ts (CN-5 memoized, 13 live .claude/commands/crons/*.md files), application/cron/cronStatusCompute.ts (CN-1 hybrid 3-tier job-name resolution, CN-2 MIN-of-6-samples cadence via new cron-parser dep, R1 memoization), interface/mcp/routes/cronStatusHandler.ts (GET /api/cron-status, mirrors orchestrationHandler.ts) + route registration + 2 additive cronJobRunStore.ts exports. Deviation from brief (documented in decision journal): kept cronStatusCompute.ts scheduler-import-free (live eslint Fence-B forbids application->scheduler) via a local CadenceManifest type — cronStatusHandler.ts owns the WATCHDOG_MANIFEST/CRONS imports. 5 new test files, 72/72 pass (12 classifier + 13 formatter + 16 compute + 14 registry + 17 handler incl AC-9 PARITY cross-check vs all 16 WATCHDOG_MANIFEST jobs). tsc clean, eslint clean (own files), toolCount=183 unchanged. Full suite (2 runs): 14191-14200 pass / 71-80 fail / 5-10 errors — under documented ceiling testBaselineFail=348; grepped both logs, zero hits on my 5 new test files. Blocks TASK-DASH-CRON-2 (dev-frontend builds against this API).",
-        "route_to": "qa",
-        "qa_verdict": {
-          "verdict": "APPROVED",
-          "by": "qa",
-          "at": "2026-07-02T08:58:45Z",
-          "round": 3,
-          "note": "Delta review (ROUND 3) of fixer round-2 commit a1689b0e (3 files: cronStatusHandler.test.ts, orch-state.json, handoff). Round-1 blocker (docker-compose.yml volume mount) and round-2 blocker (regression test bypass) already confirmed fixed in prior rounds -- not re-reviewed. Verified: (1) cronStatusHandler.ts:102 `commandsDirArg ?? resolve(process.cwd(),\".claude\",\"commands\",\"crons\")` unchanged; (2) rewritten REGRESSION test (cronStatusHandler.test.ts:341-376) calls handleGetCronStatus(mockReq,res,db,new Date()) with NO 5th arg -- commandsDirArg is undefined so the real default-resolution line executes; process.cwd() stubbed to /fixture via spyOn; layerBCronRegistry module-level memoization cache reset via _resetLayerBCronCacheForTests() so readdirSync genuinely re-fires; stub restored in finally -- no bypass remains. (3) bun tsc --noEmit: 0 errors. (4) bun test src/__tests__/cronStatusHandler.test.ts: 18/18 pass. (5) Sanity inversion: /fixture does not exist on filesystem (guarantees ENOENT); real .claude/commands/crons (14 files) would make readdirSync succeed instead -- proves the test's pass/fail is genuinely coupled to the stubbed path, i.e. load-bearing, not vacuous. Smart-Skip applied: diff is test-only (production cronStatusHandler.ts untouched this round) so DDD/security/mock-guard scans skipped per flow Smart-Skip rule. Journal: docs/agent-memory/decisions/sprint-DASH-CRON-RECHECK-TABLE-qa.md STEP qa-S3."
-        },
-        "fixer_round": 2,
-        "fix_summary": "Added volume mount for ./.claude/commands/crons to docker-compose.yml (line 27); added regression test in cronStatusHandler.test.ts exercising default commandsDir with missing directory scenario (returns 503 JSON error, not crash)",
-        "qa_verdict_round1": {
-          "verdict": "CHANGES_REQUESTED",
-          "by": "qa",
-          "at": "2026-07-02T08:24:11Z",
-          "round": 1,
-          "blocking": "apps/mcp-server/src/interface/mcp/routes/cronStatusHandler.ts:102 default commandsDir=resolve(process.cwd(),'.claude','commands','crons'); server.ts:2136 calls handleGetCronStatus(req,res,db) with NO commandsDirArg override -> production always uses this default. apps/mcp-server/Dockerfile WORKDIR=/app (L18), COPY list (L51-63: package.json/bun.lock, src/, tsconfig.json, bctc-schema.ts, mcp.config.json) has NO .claude copy. docker-compose.yml mcp-server volumes (L11-27: ./data, ./data/pdfs, ./mcp.config.json, ./reports, ./docs/agent-memory, ./docs/data*, ./docs/signals, ./docs/analysis-briefs) has NO .claude mount; docker-compose.dev.yml override has no volumes block for mcp-server (inherits same gap). Confirmed: grep -i claude docker-compose*.yml = 0 hits; docker compose config valid. readdirSync('/app/.claude/commands/crons') will throw ENOENT in the rebuilt container -> handleGetCronStatus's own try/catch (line 108) converts this into a permanent 503 {error} -> GET /api/cron-status will NEVER return 200 post-swap, breaking AC-1 and transitively every Layer-A/B AC (DTO build aborts before any row is emitted). Both new test files (cronStatusHandler.test.ts:31, layerBCronRegistry.test.ts:165) inject an explicit LIVE_CRONS_DIR relative to bun test's cwd (apps/mcp-server) -- this is why 72/72 pass locally but the code's own zero-arg default branch (the one server.ts actually calls) was never exercised.",
-          "fix_scope": "Add a read-only volume mount for .claude/commands/crons (or .claude/commands/) to the mcp-server service in docker-compose.yml, mirroring the existing ./docs/agent-memory:/app/docs/agent-memory pattern (L16); verify docker-compose.dev.yml override still resolves it (inherits base volumes -- confirm no override strips it). Add a regression test that calls handleGetCronStatus with the DEFAULT (zero-arg) commandsDir against a fixture mimicking the container layout, or an integration assertion that resolve(process.cwd(),'.claude','commands','crons') is a real dir when CWD=/app at container start.",
-          "non_blocking": "Positive verified aspects (not defects): AC-9 PARITY holds by construction (watchdog healthy ageMs<=cadenceMs*thresholdMultiplier == classifier ON_TIME union LATE; watchdog alert == classifier MISSED union STALE) -- confirmed by reading both cronLivenessClassifier.ts and schedulerWatchdogJob.ts side-by-side. AC-12 13-file count verified against live .claude/commands/crons/ (14 files - 1 deprecated skip-listed = 13). Documented architect-brief deviation (WATCHDOG_MANIFEST import moved application->interface via local CadenceManifest structural type) judged sound and preserves brief intent -- npx eslint src/domain/cron src/infrastructure/cron src/application/cron src/interface/mcp/routes/cronStatusHandler.ts --max-warnings 0 independently re-run, 0 errors. tsc --noEmit 0 errors. mock-guard PASS. No process.env, no hardcoded secrets, parameterized SQL (? placeholders) in getLastRunForJob/getDistinctJobNames.",
-          "deploy_status": "Container swap remains separately user-gated per router constraint (docker compose build already staged) -- but even after swap this endpoint will 503 until the docker-compose.yml volume-mount fix above ships. This is independent of the swap-timing gate."
-        },
-        "completed_at": "2026-07-02T08:58:45Z",
-        "qa_verdict_round2": {
-          "verdict": "CHANGES_REQUESTED",
-          "by": "qa",
-          "at": "2026-07-02T08:42:34Z",
-          "round": 2,
-          "prior_round_resolved": "Round-1 blocker CONFIRMED FIXED: docker-compose.yml:27 mounts ./.claude/commands/crons:/app/.claude/commands/crons:ro (commit 126a94d2). Verified: Dockerfile WORKDIR=/app (L18) + CMD [\"bun\",\"run\",\"src/index.ts\"] (no cwd change) matches resolve(process.cwd(),\".claude\",\"commands\",\"crons\") exactly; `docker compose config` shows source=<repo>/.claude/commands/crons target=/app/.claude/commands/crons read_only=true; `docker compose -f docker-compose.yml -f docker-compose.dev.yml config` confirms dev override (no volumes: block for mcp-server) still inherits the mount via merge; host .claude/commands/crons/ has 13 .md files (matches AC-12). Production GET /api/cron-status will resolve a real dir once the pending container rebuild ships.",
-          "blocking": "apps/mcp-server/src/__tests__/cronStatusHandler.test.ts:359 -- the new REGRESSION test (added in commit 126a94d2, titled \"default commandsDir (zero-arg) ... -> 503\") calls handleGetCronStatus(mockReq, res, db, new Date(), nonExistentDir) -- it passes an EXPLICIT 5th arg (commandsDirArg=nonExistentDir), which short-circuits cronStatusHandler.ts:102 (const commandsDir = commandsDirArg ?? resolve(process.cwd(), \".claude\", \"commands\", \"crons\")) BEFORE resolve(process.cwd(), ...) ever executes. This is the same defect class flagged in round 1, restated verbatim as the round-1 board fix_scope (\"Add a regression test that calls handleGetCronStatus with the DEFAULT (zero-arg) commandsDir ... OR an integration assertion that resolve(process.cwd(),...) is a real dir when CWD=/app\") -- neither option was implemented. Grep of every handleGetCronStatus(...) call site in the file (lines 278, 293, 308, 326, 327, 359) confirms ALL SIX pass an explicit 5th arg (LIVE_CRONS_DIR or nonExistentDir) -- cronStatusHandler.ts:102s resolve(process.cwd(), ...) expression is never executed anywhere in this test file. The tests only assert behavior for an explicit-injected bad path, not for the real production zero-arg default path. Test title says \"zero-arg\" but the test body contradicts its own title.",
-          "fix_scope": "In cronStatusHandler.test.ts, make the REGRESSION test actually exercise the zero-arg default: call handleGetCronStatus(mockReq, res, db, new Date()) with NO 5th arg, while stubbing process.cwd() (e.g. spyOn(process, \"cwd\").mockReturnValue(<fixture dir without .claude/commands/crons>), restore after) so cronStatusHandler.ts:102s resolve(process.cwd(), \".claude\",\"commands\",\"crons\") line actually executes and resolves to a nonexistent path -- then keep the existing 503 JSON {error} assertions. Minimum: edit 1 test, ~10 lines, no new files.",
-          "non_blocking": "Round-1 positive findings still hold (app code sound: AC-9 PARITY, DDD/security clean, parameterized SQL -- see qa_verdict_round1 for full detail). Round-2 additional verified: bun test src/__tests__/cronStatusHandler.test.ts -> 18/18 pass; bun tsc --noEmit -> 0 errors; eslint -- src/__tests__/** is deliberately ignore-listed in eslint.config.mjs:30 (pre-existing project convention: Fence-A/B do not apply to test files, NOT a round-2 regression); git show 126a94d2 --stat confirms exactly the 4 files described in the fixers own round-1 record (docker-compose.yml, cronStatusHandler.test.ts, orch-state.json, TASK-DASH-CRON-1.md) -- no scope creep.",
-          "deploy_status": "Docker-compose mount fix is CORRECT and resolves AC-1 once the container rebuild ships -- this part of round 1 is fully resolved, no further action needed on the compose file. Container swap remains separately user-gated per router constraint. Remaining round-2 blocker is test-coverage only (regression test does not protect the fixed code path from future regressions), not a production defect."
-        }
-      },
-      {
-        "id": "TASK-DASH-CRON-2",
-        "title": "Zone 2: Cron Recheck Table UI (api.cron-status.tsx proxy, CronRecheckTable component, coverage-map row, depends on Zone 1)",
-        "owner": "dev-frontend",
-        "size": "M",
-        "zone": "apps/frontend/",
-        "status": "DONE",
-        "type": "FEATURE",
-        "priority": "high",
-        "depends": [
-          "TASK-DASH-CRON-1"
-        ],
-        "blocks": [],
-        "created_at": "2026-07-02T06:54:00Z",
-        "claimed_at": "2026-07-02T09:02:12Z",
-        "claimed_by": "router",
-        "next_agent": "qa",
-        "dispatch_note": "Dispatched dev-frontend 2026-07-02T09:02:12Z. Zone 1 (TASK-DASH-CRON-1) APPROVED r3: /api/cron-status endpoint + compose mount shipped (container rebuild pending user gate). Zone 2 scope: api.cron-status.tsx Remix proxy route, CronRecheckTable component, coverage-map row.",
-        "reviewed_at": "2026-07-02T11:20:00Z",
-        "review_note": "[dev-frontend 2026-07-02T11:20:00Z] commit b563c0d2 — api.cron-status.tsx proxy (mirrors api.orchestration.tsx) + CronRecheckTable/CronLayerTable/CronStatusBadge on dashboard.orchestration.tsx, Promise.all-fetched alongside /api/orchestration (CN-4, no added latency). Layer-A status clamped to NEVER_FIRED on malformed enum; Layer-B status unconditionally forced SESSION_SCOPED (AC-14/NFR-7 holds even under adversarial upstream data). Renders independent of the /api/orchestration fetch (AC-16/AC-25). coverage-map +1 row (route field, rows 49->50, LIVE 39->40). tsc 0 errors; vitest 2047 pass/2 pre-existing QUE-TOOLTIP fail (+41 net new); Playwright G12 4/4 GREEN re-verified on an isolated PLAYWRIGHT_PORT=3012 local dev server after discovering :3001 is bound by the live (stale, un-rebuilt) frontend container which would have false-greened reuseExistingServer. mcp-server container rebuild for Zone 1 still user-gated pending — GET /api/cron-status 404s live today; relayed as-is, loader degrades to empty-shape DTO, table shows Không có dữ liệu. until the rebuild ships (expected, not a defect).",
-        "updated_at": "2026-07-02T09:38:10Z",
-        "updated_by": "qa",
-        "completed_at": "2026-07-02T09:38:10Z",
-        "qa_verdict": {
-          "verdict": "APPROVED",
-          "by": "qa",
-          "at": "2026-07-02T09:38:10Z",
-          "round": 1,
-          "note": "RAW-gated commit b563c0d2 — independently reproduced (not relayed): 41/41 named tests, tsc 0 errors, full suite 2047/2 (2 pre-existing QUE-TOOLTIP unrelated), mock-guard exit 0, DDD/security clean, own PLAYWRIGHT_PORT=3012 e2e 4/4 PASS, own 3rd throwaway dev-server (port 3013) live curl of /dashboard/orchestration confirmed HTTP 200 + all VN copy present + honest 404 error banner + /api/orchestration unaffected (AC-23) + zero app-error strings (AC-24). CronRecheckTable confirmed rendered outside the state?(...):(...) conditional (AC-16/AC-25 hold by construction). normalizeCronStatusB unconditionally forces SESSION_SCOPED (AC-14/NFR-7). coverage-map rows=50/LIVE=40 independently recomputed and matched. All ACs (16,17,18,19,20,21,22,23,24,25,28) PASS. Journal: sprint-DASH-CRON-RECHECK-TABLE-qa.md STEP qa-S4."
-        }
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
