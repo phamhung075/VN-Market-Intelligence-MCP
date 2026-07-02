@@ -54,7 +54,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "chef-intraday",
-      "last_fired": "2026-07-02T06:32:23.000Z",
+      "last_fired": "2026-07-02T07:31:32.000Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "deleted",
