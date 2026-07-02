@@ -244,12 +244,12 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-02T09:02:12Z",
-    "updated_by": "dev-team",
+    "updated_at": "2026-07-02T11:20:00Z",
+    "updated_by": "dev-frontend",
     "active_task_id": "TASK-DASH-CRON-2",
-    "next_agent": "dev-frontend",
-    "next_action": "dev-frontend implements Zone 2 Cron Recheck Table UI per TASK-DASH-CRON-2; on return route qa",
-    "note": "TASK-DASH-CRON-1 closed APPROVED r3 (82907e5d); CRON-2 unblocked and claimed by router"
+    "next_agent": "qa",
+    "next_action": "qa reviews TASK-DASH-CRON-2 (frontend Cron Recheck Table UI, commit b563c0d2) against AC-16..AC-25 + AC-28; note Zone-1 mcp-server container rebuild still user-gated so live end-to-end cron data cannot be verified yet (accepted gap) — verify code correctness + graceful-degrade behavior instead",
+    "note": "TASK-DASH-CRON-2 implementation complete (dev-frontend), moved in_progress -> review, route_to=qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9687,25 +9687,6 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      },
-      {
-        "id": "TASK-DASH-CRON-2",
-        "title": "Zone 2: Cron Recheck Table UI (api.cron-status.tsx proxy, CronRecheckTable component, coverage-map row, depends on Zone 1)",
-        "owner": "dev-frontend",
-        "size": "M",
-        "zone": "apps/frontend/",
-        "status": "IN_PROGRESS",
-        "type": "FEATURE",
-        "priority": "high",
-        "depends": [
-          "TASK-DASH-CRON-1"
-        ],
-        "blocks": [],
-        "created_at": "2026-07-02T06:54:00Z",
-        "claimed_at": "2026-07-02T09:02:12Z",
-        "claimed_by": "router",
-        "next_agent": "dev-frontend",
-        "dispatch_note": "Dispatched dev-frontend 2026-07-02T09:02:12Z. Zone 1 (TASK-DASH-CRON-1) APPROVED r3: /api/cron-status endpoint + compose mount shipped (container rebuild pending user gate). Zone 2 scope: api.cron-status.tsx Remix proxy route, CronRecheckTable component, coverage-map row."
       }
     ],
     "ready": [
@@ -9857,6 +9838,28 @@
         "po_disposition": "[po-triage 2026-07-02T04:54:49Z] Route REVIEW->qa for CODE sign-off. Code complete (commits 2c7fb5b0+ff1bac44; router independently re-ran 13/13 suite GREEN). done_verified WITHHELD: LIVE behavioral DoD (B02a/TCTDHN bank-form BS section-classifier on rebuilt image) gated on the SAME user-approval mcp-server rebuild blocking A-30 + enricher deploy + W5 chain. QA may APPROVE-CODE now; live gate clears when operator ships the rebuild.",
         "qa_verdict": "APPROVE-CODE",
         "qa_at": "2026-07-02T05:06:41Z"
+      },
+      {
+        "id": "TASK-DASH-CRON-2",
+        "title": "Zone 2: Cron Recheck Table UI (api.cron-status.tsx proxy, CronRecheckTable component, coverage-map row, depends on Zone 1)",
+        "owner": "dev-frontend",
+        "size": "M",
+        "zone": "apps/frontend/",
+        "status": "REVIEW",
+        "type": "FEATURE",
+        "priority": "high",
+        "depends": [
+          "TASK-DASH-CRON-1"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-02T06:54:00Z",
+        "claimed_at": "2026-07-02T09:02:12Z",
+        "claimed_by": "router",
+        "next_agent": "qa",
+        "dispatch_note": "Dispatched dev-frontend 2026-07-02T09:02:12Z. Zone 1 (TASK-DASH-CRON-1) APPROVED r3: /api/cron-status endpoint + compose mount shipped (container rebuild pending user gate). Zone 2 scope: api.cron-status.tsx Remix proxy route, CronRecheckTable component, coverage-map row.",
+        "route_to": "qa",
+        "reviewed_at": "2026-07-02T11:20:00Z",
+        "review_note": "[dev-frontend 2026-07-02T11:20:00Z] commit b563c0d2 — api.cron-status.tsx proxy (mirrors api.orchestration.tsx) + CronRecheckTable/CronLayerTable/CronStatusBadge on dashboard.orchestration.tsx, Promise.all-fetched alongside /api/orchestration (CN-4, no added latency). Layer-A status clamped to NEVER_FIRED on malformed enum; Layer-B status unconditionally forced SESSION_SCOPED (AC-14/NFR-7 holds even under adversarial upstream data). Renders independent of the /api/orchestration fetch (AC-16/AC-25). coverage-map +1 row (route field, rows 49->50, LIVE 39->40). tsc 0 errors; vitest 2047 pass/2 pre-existing QUE-TOOLTIP fail (+41 net new); Playwright G12 4/4 GREEN re-verified on an isolated PLAYWRIGHT_PORT=3012 local dev server after discovering :3001 is bound by the live (stale, un-rebuilt) frontend container which would have false-greened reuseExistingServer. mcp-server container rebuild for Zone 1 still user-gated pending — GET /api/cron-status 404s live today; relayed as-is, loader degrades to empty-shape DTO, table shows Không có dữ liệu. until the rebuild ships (expected, not a defect)."
       }
     ],
     "qa": [],
