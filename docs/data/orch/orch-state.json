@@ -8151,6 +8151,66 @@
         },
         "done_verified_at": "2026-06-30T00:42:00Z",
         "closed_at": "2026-06-30T06:20:13Z"
+      },
+      {
+        "id": "DASH-CRON-RECHECK-TABLE",
+        "status": "done_verified",
+        "opened_at": "2026-07-02T06:54:00Z",
+        "closed_at": "2026-07-02T09:44:28Z",
+        "priority": "high",
+        "label": "Cron Recheck Table — Layer-A (server) vs Layer-B (CLI-session) cron liveness classification",
+        "tasks": [
+          {
+            "id": "TASK-DASH-CRON-1",
+            "title": "Zone 1: Cron status-compute backend (cronLivenessClassifier, cronStatusCompute, cronStatusHandler, GET /api/cron-status, cron-parser dep)",
+            "owner": "dev-mcp-server",
+            "status": "DONE",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "size": "M",
+            "created_at": "2026-07-02T06:54:00Z",
+            "reviewed_at": "2026-07-02T08:09:41Z",
+            "completed_at": "2026-07-02T08:58:45Z",
+            "qa_verdict": {
+              "verdict": "APPROVED",
+              "by": "qa",
+              "at": "2026-07-02T08:58:45Z",
+              "round": 3,
+              "note": "Delta review (ROUND 3) of fixer round-2 commit a1689b0e (3 files: cronStatusHandler.test.ts, orch-state.json, handoff). Round-1 blocker (docker-compose.yml volume mount) and round-2 blocker (regression test bypass) already confirmed fixed in prior rounds -- not re-reviewed. Verified: (1) cronStatusHandler.ts:102 `commandsDirArg ?? resolve(process.cwd(),\".claude\",\"commands\",\"crons\")` unchanged; (2) rewritten REGRESSION test (cronStatusHandler.test.ts:341-376) calls handleGetCronStatus(mockReq,res,db,new Date()) with NO 5th arg -- commandsDirArg is undefined so the real default-resolution line executes; process.cwd() stubbed to /fixture via spyOn; layerBCronRegistry module-level memoization cache reset via _resetLayerBCronCacheForTests() so readdirSync genuinely re-fires; stub restored in finally -- no bypass remains. (3) bun tsc --noEmit: 0 errors. (4) bun test src/__tests__/cronStatusHandler.test.ts: 18/18 pass. (5) Sanity inversion: /fixture does not exist on filesystem (guarantees ENOENT); real .claude/commands/crons (14 files) would make readdirSync succeed instead -- proves the test's pass/fail is genuinely coupled to the stubbed path, i.e. load-bearing, not vacuous. Smart-Skip applied: diff is test-only (production cronStatusHandler.ts untouched this round) so DDD/security/mock-guard scans skipped per flow Smart-Skip rule. Journal: docs/agent-memory/decisions/sprint-DASH-CRON-RECHECK-TABLE-qa.md STEP qa-S3."
+            },
+            "depends": [],
+            "blocks": [
+              "TASK-DASH-CRON-2"
+            ],
+            "type": "FEATURE"
+          },
+          {
+            "id": "TASK-DASH-CRON-2",
+            "title": "Zone 2: Cron Recheck Table UI (api.cron-status.tsx proxy, CronRecheckTable component, coverage-map row, depends on Zone 1)",
+            "owner": "dev-frontend",
+            "status": "DONE",
+            "zone": "apps/frontend/",
+            "priority": "high",
+            "size": "M",
+            "created_at": "2026-07-02T06:54:00Z",
+            "reviewed_at": "2026-07-02T11:20:00Z",
+            "completed_at": "2026-07-02T09:38:10Z",
+            "qa_verdict": {
+              "verdict": "APPROVED",
+              "by": "qa",
+              "at": "2026-07-02T09:38:10Z",
+              "round": 1,
+              "note": "RAW-gated commit b563c0d2 — independently reproduced (not relayed): 41/41 named tests, tsc 0 errors, full suite 2047/2 (2 pre-existing QUE-TOOLTIP unrelated), mock-guard exit 0, DDD/security clean, own PLAYWRIGHT_PORT=3012 e2e 4/4 PASS, own 3rd throwaway dev-server (port 3013) live curl of /dashboard/orchestration confirmed HTTP 200 + all VN copy present + honest 404 error banner + /api/orchestration unaffected (AC-23) + zero app-error strings (AC-24). CronRecheckTable confirmed rendered outside the state?(...):(...) conditional (AC-16/AC-25 hold by construction). normalizeCronStatusB unconditionally forces SESSION_SCOPED (AC-14/NFR-7). coverage-map rows=50/LIVE=40 independently recomputed and matched. All ACs (16,17,18,19,20,21,22,23,24,25,28) PASS. Journal: sprint-DASH-CRON-RECHECK-TABLE-qa.md STEP qa-S4."
+            },
+            "depends": [
+              "TASK-DASH-CRON-1"
+            ],
+            "blocks": [],
+            "type": "FEATURE"
+          }
+        ],
+        "evidence": "Both zone tasks (TASK-DASH-CRON-1: backend status-compute, TASK-DASH-CRON-2: frontend proxy+UI) approved by QA with full coverage (RAW-verified, not relayed). Zone 1 backend delivers /api/cron-status endpoint with cronLivenessClassifier (4-branch status ladder: ON_TIME/LATE/MISSED/STALE), infrastructure registry of 13 live crons from .claude/commands, and 72/72 passing tests. Zone 2 frontend delivers api.cron-status proxy route, CronRecheckTable component with independent Promise.all fetch, and coverage-map integration. Both layers tested independently; honest degradation to empty-shape DTO when /api/cron-status 404s (container rebuild pending user gate). Known caveat: Zone 1 live data upload (/api/cron-status) and frontend container swap user-gated pending.",
+        "note": "Sprint closed 2026-07-02 after both tasks APPROVED by QA (TASK-DASH-CRON-1 round 3 APPROVED, TASK-DASH-CRON-2 round 1 APPROVED). Both moved to done_verified via PM closeout. Decision journal: docs/agent-memory/decisions/sprint-DASH-CRON-RECHECK-TABLE-qa.md (complete with STEP qa-S1 through qa-S4)."
       }
     ],
     "done": [
@@ -9605,7 +9665,9 @@
         "dispatched_by": "po",
         "completed_at": "2026-07-02T06:52:00Z",
         "note": "Brief: docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md (7 risk flags verified, 16-pair job_name table verified, DDD layer map, CN-1..CN-5 resolutions). Commit fa4cfc12. RAW-verified by router 2026-07-02T06:52Z. Consumed by PM decomposition (commit 15db7fa6): TASK-DASH-CRON-1 (dev-mcp-server) + TASK-DASH-CRON-2 (dev-frontend) added to ready[]. Architect work complete."
-      },
+      }
+    ],
+    "done_verified": [
       {
         "id": "TASK-DASH-CRON-1",
         "title": "Zone 1: Cron status-compute backend (cronLivenessClassifier, cronStatusCompute, cronStatusHandler, GET /api/cron-status, cron-parser dep)",
@@ -9689,7 +9751,6 @@
         }
       }
     ],
-    "done_verified": [],
     "head": {
       "status": "in_progress",
       "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
