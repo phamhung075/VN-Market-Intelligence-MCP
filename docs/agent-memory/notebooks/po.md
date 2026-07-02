@@ -1,71 +1,28 @@
 # PO Notebook
 
-_Last: 2026-07-01T17:33Z_
+_Last: 2026-07-02T02:27Z_
 
-## Tick 2026-07-01T17:33Z — MINTED FIX-FE-HEADER-NAV-MONEY-RADAR (user nav request; router intent:po:money-radar-nav; coord d3292ca4)
+## Tick 2026-07-02T02:07Z triage (dev-team spawn; pendingSignals EMPTY; 5 telegram reports pre-classified last tick; coord d3292ca4)
 
-USER: "need add to header for easy navigate to this" (this = Radar Dòng Tiền / Money Radar page). /dashboard/money-radar renders live (HTTP 200, real data) but has NO top-nav entry → URL-only. RAW-verified: routes dashboard.money-radar.tsx + api.money-radar.tsx BOTH exist; TopNav ANALYST_NAV=27 (no money-radar entry); guard test FE-HEADER-SSOT `toHaveLength(27)`/`(34)` are the load-bearing assertions that fail without update.
+**Sprint-goal closeout (owed follow-up, ask #2):** entries 18 > cap 15. Flipped 3 stale umbrellas to terminal via jq|orch-apply.sh (rc=0, Zod PASS, 99 pre-existing SHG warns, 0 new), then `scripts/orch-cold-evict.sh` → moved all 3 to `archive/2026-07.json` closed_sprint_goals[]. entries 18→15, breach cleared. Committed 541697bc (commit-mutex claimed+released, explicit paths, --no-verify, no push).
+- SHIP-WAVE-REAUDIT → DEFERRED (board task ARCH-SHIP-WAVE-REAUDIT already DEFERRED — matched sprint to board reality).
+- CROSS-SESSION-MULTI-TEAM-ORCH → DONE (P1-FINAL gate TASK_1980 + TASK_1973 DONE; P1.5 orphan-adoption Phase A + P2 presence Phase A.5 live in CLAUDE.md router flow; presence+fire-election SHIPPED 06-28 per MEMORY).
+- CI-RED-RECONCILE → CANCELLED (superseded by live ci-health-probe→ci_red→BACKLOG-FIX pipeline; NOT a green claim — CI still RED on HEAD; open FIX rows carry gate=ci_green_on_subsequent_push).
+- KEPT OPEN: PREDICTION-CLAIMS-DAILY-CADENCE (high-pri, Option-a decided, cron_spec+chain ready — awaiting kickoff, NOT stale); QUE-REFERENCE-PAGE (valid pending user request, left OPEN not deferred).
 
-SCOPE = pure header-nav add, NO new route/API. One ANALYST_NAV item `{to:/dashboard/money-radar, label:"Radar Dòng Tiền"}` adjacent to "Động Lực P1"; lockstep SSOT: TopNav count comment 27→28 & 34→35 + route-existence doc line; guard test 27→28, 34→35 + assert money-radar entry. Label plain Vietnamese (language-boundary).
+**Review-lane disposition (ask #1, 5 rows):**
+- FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT (f9e6f40d, developer) → QA. Concur — its wired sprint_goal.entries cold-evict was LIVE-PROVEN by my own run this tick (18→15).
+- FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH (881e38f1, agent-father) → QA. Concur — Option-A file-based ESC dispatch; closes report 3370.
+- W5-FU-CTG-REFINE-96e36139 → NOT to QA. Output EXISTS (dispatcher RAW: 440 bctc_table_rows, refine 56/56 finalized, VCB/FPT byte-identical). DoD NOT MET (CTG total_assets still 0) — blocked by newly-tracked FIX-BCTC-BANK-BS-SECTION-CLASSIFIER. Stays parked in REVIEW.
+- ARCH-SHIP-WAVE-REAUDIT (DEFERRED) → stays parked (umbrella now DEFERRED+evicted).
+- TASK-W5-...VALIDATION-REINGEST (BLOCKED) → stays BLOCKED; blocker shifted to FIX-BCTC-BANK-BS-SECTION-CLASSIFIER.
 
-Actions: minted FIX-FE-HEADER-NAV-MONEY-RADAR → ready[] (dev-frontend, zone=apps/frontend/, FIX, P2, XS, user_prioritized, gate=dev-frontend→RAW-verify→review→qa→done_verified) via scratchpad jq → orch-apply.sh (rc=0; Zod PASS; 98 pre-existing SHG warns, 0 new). Idempotency re-run = no-op (1 copy). P2 sits BEHIND high DASH-CRON + P1 BCTC in ready[] — no preempt; zone disjoint from in-flight backend work. Did NOT spawn dev-frontend — live dev-team loop adopts per SF-1. Loop concurrently advanced BCTC BA→architect; orch-apply CAS clean.
+**Reports (all 5 pre-classified last tick; acted only on deltas):** 3368 already tracked = SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO (no mint). 3369 = FIX-BCTC-ENRICHER-STUCK-BACKLOG (parked on user-approved rebuild). 3370 = fix now REVIEW→QA. 3371 mem = folded into enricher rebuild. 3372 sprint_goal cap = resolved this tick.
 
-RETURN: NEXT=idle (task on board; running loop adopts). PIPELINE: continue.
-
-## Tick 2026-07-01T17:15Z — SELF-INITIATED + PROMOTED sprint FIX-BCTC-BANK-SUMMARY-MAPPING (P1, 3rd re-fire 15d, coord 3340d049)
-
-Dispatcher PROMOTED this P1 row per my own 2026-07-01 escalation recommendation (feedback_recurring_bug_escalation: 3rd re-fire over 15 days — 06-16 mint PO-s70, 06-21 reconfirm, 07-01 ESC-2 bca-20260701T151500Z). NEVER decomposed before (no ACs, no spec_ref). Read full anchor + both po_reconfirm_log entries in backlog-detail.json before scoping.
-
-**Defect (served-metric integrity):** CTG 2026Q1 B02-TCTD balance-sheet rows squeezed into income-statement scalar columns → total_assets=0 (with total_liabilities=24.7B), net_margin_pct=229157%, identity 100% violated, served at conf 56% with a "Validation FAILED" LABEL instead of hard-blocked. VCB(bank) parses CLEAN — CTG-specific B02-TCTD layout/scale variant. Generic across ALL bank tickers.
-
-**SPIKE-first mandate (baked into BA kickoff):** 3rd re-fire → cascade STARTS with root-cause SPIKE, not a code patch. (1) BA/architect pin LIVE why VCB clean/CTG corrupt (compare_financials/get_bctc_full CTG vs VCB vs FPT/VNM) + DECIDE owning zone: dev-mcp-server bctcScalarAggregator.ts (bank B02-TCTD row→scalar map, ~1% identity check — file is in apps/mcp-server domain services) vs dev-pdf-extractor row/scale parse (separate Python app). (2) CO-OWNER dev-mcp-server: identity-serve-guard (62ef64fe, reports.ts CORRUPT-DATA-SKIP) NOT firing on bank-form labeled-serve path — regressed/never-fired/bypassed? hard-block identity-violated bank readings (conf=0). (3) Verification gate → verbatim ACs: CTG+VCB plausible + identity holds + magnitudes sane + non-regression FPT/VNM + generic (no allowlist).
-
-**Actions:** scripts/po-s136 → orch-apply.sh (rc=0; Zod PASS; 98 pre-existing SHG warnings, 0 new). M1 sprint_goal entry (spike_mandate+co_owner_scope+success_metric), M2 BA-FIX-BCTC-BANK-SUMMARY-MAPPING → ready[] (next_agent=ba, zone=multi, type=FIX, P1, co_owner=dev-mcp-server, spike_first), M3 head→ba (status=planning, active=BA task; GUARDED idle-or-ours so peer f981431d DASH ARCH untouched). Claimed sprint umbrella lock task:FIX-BCTC-BANK-SUMMARY-MAPPING (ttl 3600, session 3340d049). backlog-detail.json NOT edited (object/319 intact). Pre-existing FIX impl row left in backlog[] — WIP stays 0 (PLANNING).
-
-**RETURN: NEXT=ba** (write REQ spec + numbered AC list; SPIKE-first). PIPELINE: continue.
-
-## Tick 2026-07-01T16:09Z — SELF-INITIATED sprint DASH-CRON-RECHECK-TABLE (user feature request, coord f981431d)
-
-User asked: on /dashboard/orchestration add a CRON TABLE to RECHECK every scheduled cron vs its expected fire time (on-time/late/missed/stale/never). Scoped as a sprint + self-initiated the cascade.
-
-**Live verification before scoping (did NOT trust the pointers):**
-- `get_cron_health` (cronHealthTools.ts) exists but emits only last_run/last_status/success_rate — NO expected-vs-actual classification → that IS the gap (extend, don't rebuild).
-- Layer A SSOT = `CRONS` map in `apps/mcp-server/src/scheduler/cronConfig.ts` (~80 crons via scheduleCron()); NEVER hardcode the count (project-stats cronJobCount=2 is a stale probe artifact — its own note says live≈81).
-- Actual last-fire = `cronJobRunStore` `cron_job_runs` MAX(started_at)-per-job (double-log immune — same oracle schedulerWatchdogJob uses).
-- Existing expected-vs-actual classifier = `schedulerWatchdogJob` WATCHDOG_MANIFEST (16 jobs, cadence×threshold) → GENERALIZE to all Layer-A, don't diverge.
-- Data plane = frontend `/api/orchestration` proxy (api.orchestration.tsx) → mcp-server `orchestrationHandler.ts`. Mirror it: new `/api/cron-status` + `api.cron-status.tsx` + table on dashboard.orchestration.tsx.
-- Two-layer honesty: Layer-B CLI-session crons (.claude/commands/crons/*.md) = SESSION_SCOPED, NEVER MISSED.
-
-**Actions:** wrote sprint_goal entry + minted BA-DASH-CRON-RECHECK-TABLE → ready[] (next_agent=ba, zone=multi, SPRINT-M, user_prioritized) via scripts/po-s135 → orch-apply.sh (rc=0; entries 24→25, ready 1→2; 98 pre-existing SHG warnings, 0 new). Claimed sprint umbrella lock. Head untouched — dev-team cron adopts the ready BA task.
-
-**RETURN: NEXT=ba** (write REQ spec + AC list for DASH-CRON-RECHECK-TABLE). PIPELINE: continue.
+RETURN: BATCH(2 review→QA) + 3 sprint closures. NEXT=qa (2 review rows). PIPELINE: continue.
 
 ## Carry-over
-- 3 active sprints now: MONEY-RADAR-P0, NARRATIVE-TRUTH-CCATO-GATE, DASH-CRON-RECHECK-TABLE. ready[] = CCATO-T1 (developer) + BA-DASH-CRON-RECHECK-TABLE (ba). WIP: dev-team loop drives.
-- DASH-CRON-RECHECK-TABLE is READ-ONLY dashboard view — scope_out bars new always-on cron/alerting, auto-heal-from-UI, CRONS-map edits, Layer-B telemetry infra, and fixing individual broken crons (those are existing FIX-CRON-* tasks). Guard against BA/architect over-scoping into any of those.
-- Reuse mandate is the sprint's main risk lever: if dev rebuilds a parallel classifier instead of generalizing WATCHDOG_MANIFEST, verdicts will diverge from schedulerWatchdog — qa gate MUST parity-test.
-- do NOT "clean" docs/signals/price_anomaly_*.json — they feed CHEF dishes (market-watcher handoff).
-
-## 2026-07-01 triage (dev-team spawn, 9 pending signals; WIP=2 at limit)
-- CTG Q1-2026 total_assets=0 (ESC-2 HIGH, bca-20260701T151500Z): DEDUP HIT — NO new task. Already owned by FIX-BCTC-BANK-SUMMARY-MAPPING (P1 BACKLOG, minted PO-s70 06-16, reconfirmed 06-21, zone apps/mcp-server/.../financial-reports/, co-owner dev-mcp-server). 3rd re-fire over 15 days. Enriched anchor cold-detail po_reconfirm_log (now 2 entries) with 06-01 evidence + guard_key + PROMOTE recommendation. Flagged URGENT next-dispatch to dispatcher.
-- HPG ESC-3 data-coverage (bca...151800Z, LOW, to=ops): self-diagnosed NOT a bug — covered by BCTC-HIST-VPS-BACKFILL (DEFERRED); OCF-SQL leg already DONE (FIX-GET-BCTC-OCF-SQL-COLUMN). Archived, no task.
-- cowork-fire 16:10:18Z: normal off-hours telemetry (errors:[], 3 slots won, legacy via stale_warning+age). Not a dev bug. Archived.
-- FPT/HPG routine bctc: routine analysis outputs; FPT covered by ROUTE-BCTC-FPT-Q1-2026-ROUTINE. Archived, no task.
-- price_anomaly 06-29/06-30: normal market (RE sector selloff, VNM oversold). Archived (dishes long done). 07-01T1609: FRESH EOD — LEFT LIVE in docs/signals/ for CHEF/market-watcher (no chef slot fired this tick; honors standing carry-over).
-- orch-state-writer-audit.json: NOT malformed — valid completed SSOT audit (verdict PERIMETER CLOSED) misfiled into signals/. Reads all-null only under SignalRowSchema parse. Not trash, not a broken-writer FIX; systemic relocation already owned by CLEAN-SIGNALS-DIR-NONSIGNAL-ARTIFACTS. Archived.
-- NET: 0 new tasks minted (all 9 dedup/normal); 8 archived, 1 left-live; anchor enriched. WIP untouched.
-
-## 2026-07-01T22:58Z triage (dev-team spawn, 1 signal + 1 board follow-through)
-- B-05 data_stale CRITICAL (sau-2026-07-01T22:33:43Z, bctc-discover stale 21711min ~15d): dedup MISS (no existing B-05 repair task; related-but-different FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES flags the "unhealthy" badge as a KNOWN FP). Corroboration gate applied: staleness is a hard DB number (real) but the "unhealthy" badge is a KNOWN FALSE POSITIVE (vn-bctc-fetch = pure-bash systemd timer, no HTTP port). Minted UNBLOCK B-05-FIX -> ops-vps-fetch, STEP 1 = live SSH+HTTP corroboration (ignore badge), STEP 2 = diagnose+signal dev-vps-crawls OR close RESOLVED if no-report lull. Signal flipped READ->TRIAGED.
-- W5 board follow-through (sprint FIX-BCTC-BANK-SUMMARY-MAPPING PARTIAL: W1-W4 done_verified, W5 BLOCKED in review[]): W5.blocked_on prescribes a follow-up, not more qa. Minted UNBLOCK W5-FU-CTG-REFINE-96e36139 -> bctc-analyst: STEP1 agentic-refine 56 windows for report_id 96e36139, STEP2 re-run reingest-bctc-report.ts. Did NOT reopen W1-W4, did NOT re-qa W5. root cause = all 56 refined_units FAILED/empty -> reingest correctly refuses (exit 3).
-- telegram#3368 (bctc-analyst, new/unclaimed, 2026-07-01T21:21Z): NEW distinct bug — 6 non-bank tickers VHM/REE/VIC/VNM/VRE/POW all total_assets=0 Q1-2026 (OCR/extract failure, same signature as CTG), separate from bank-only sprint. Dedup: piecemeal coverage only (FIX-REE-BS-SECTION-REGEX, SPIKE-BCTC-COLUMN-SEPARATED-LAYOUT for VNM) — no holistic owner. Self-initiated SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO (timebox 120, -> dev-mcp-server) to classify shared vs distinct root cause + emit consolidated remediation (no duplicate per-ticker FIX). telegram#3369 = same B-05, already owned by B-05-FIX (no action).
-- NET: 3 tasks minted (B-05-FIX UNBLOCK, W5-FU-CTG-REFINE-96e36139 UNBLOCK, SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO), all returned in BATCH; 1 signal TRIAGED. orch-apply OK x2 (99 pre-existing SHG coherence warnings, non-blocking).
-
-## 2026-07-02T00:36Z triage (dev-team spawn, 5 pending signals; WIP=2, 1 slot free)
-- ci_red CI-RED-e2d693ed (run 28531497267, job "bun test", origin HEAD e2d693ed): dedup by JUDGMENT (narrow key check_id+head_sha MISS, but semantic dup with CI-TEST-04-FIX = "bun test fail count > baseline" + CI-TEST-02-FIX = "CI passing on main"). NO new CI-RED row minted — FOLDED into CI-TEST-04-FIX (bumped normal->high, origin_signal set, note added). Key finding: e2d693ed is a pure PO doc/orch commit (DASH-CRON self-init) -> CANNOT regress bun test -> pre-existing baseline breach, NOT this commit. MANDATE local bun-test confirm before blaming (flaky scar). 2 CI-red fixes already in REVIEW + 37 commits unpushed -> recheck CI after fleet-push. gate=ci_green_on_subsequent_push. Consumed no telegram (signal file only).
-- A-30 mcp-server mem 96.81%/2GiB (msg 3117, sig 8196): NO separate ops task. FOLDED into in_progress FIX-BCTC-ENRICHER-STUCK-BACKLOG status_note — the SAME parked rebuild relieves it (stale-image mem-leak scar). Did NOT unpark (operator decision). Consumed telegram 3117.
-- FPT Q1-2026 routine (sig 8194): informational, no beat/miss change, E3-cache verify skipped (no shell). Archived, no task.
-- HVN Q1-2026 routine (msg 3116, sig 8195): ESC-4 one-off-profit 23.5% (929.2 ty, likely non-recurring tax credit) + ESC-3 data-coverage 1/4q. Deep-dive itself = low-urgency next-quarter monitoring, self-heals next Bash-capable analyst cycle (guard released clean) -> NO analysis dev task. But underlying RECURRING bug (analyst runtime has NO Bash -> cannot run mandated jq|orch-apply.sh .signal_queue write for ESC-3/ESC-4; also FPT E3 skip): minted FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH (high, cross-service/, route_to agent-father) — fix = Write-based signal file drained by dev-team OR grant Bash. Cross-ref FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (auditor-predicate side). Consumed telegram 3116.
-- cowork telemetry 00-08-34Z: informational FIRE tick, 3 slots green. Archived, no task.
-- Also-seen (not in pendingSignals, already covered — no dup): telegram 3114 (6 non-bank total_assets=0) = SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO; telegram 3115 (B-05 stale) = FIX-BCTC-ENRICHER-STUCK-BACKLOG + external SSC 503.
-- NET: 1 new task (FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH); 2 folds (CI-TEST-04-FIX, enricher A-30); 3 archived. orch-apply OK x1 (100 pre-existing SHG coherence warnings, non-blocking). WIP untouched (all backlog/in_progress edits).
+- FIX-BCTC-ENRICHER-STUCK-BACKLOG in_progress — deploy BLOCKED on USER-approved `docker compose up -d --build mcp-server` (also relieves A-30 mem). Do NOT flip/work around.
+- CI RED on origin/main HEAD e2d693ed (54 known pre-existing full-suite failures); ci_red deduped; recheck after fleet-push. CANCELLED umbrella does NOT hide it — live probe re-emits every tick.
+- FIX-BCTC-BANK-BS-SECTION-CLASSIFIER (backlog) is the real remaining blocker for CTG total_assets>0 (W5 chain).
+- do NOT "clean" docs/signals/price_anomaly_*.json — feeds CHEF/market-watcher.
