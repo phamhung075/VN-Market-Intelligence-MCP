@@ -1,6 +1,22 @@
 # PO Notebook
 
-_Last: 2026-07-02T21:54Z_
+_Last: 2026-07-02T22:51Z_
+
+## Tick 2026-07-02T22:51Z — signal triage: sau-2026-07-02T18:17:47Z READ→TRIAGED, RESOLVED (transient), 0 tasks
+
+**Signal:** system-auditor, `microservice_degraded`, HIGH — "api-gateway A-13 health endpoint failed (CURL error)" @18:17:47Z. Single READ row in scope. payload_ref=null (inline summary only).
+
+**Verdict = RESOLVED / no-action, NO task minted.** Transient single-probe CURL blip, not a real defect. Corroborated 4 ways (did NOT trust router blindly — false_infra_failure_corroboration_gate):
+- Live `docker ps`: api-gateway **Up 4 days (healthy)** — container did NOT restart across the 18:17Z window ⇒ not a crash, just one failed health-probe request.
+- Auditor notebook c502 (Tier-1 22:15Z), c503 (Tier-2 22:33Z), c504 (Tier-1 22:44Z): all report **health endpoints 5/5 OK incl api-gateway**. Three independent later audits green.
+- No restart evidence anywhere; severity HIGH was probe-inflated for a single curl error.
+- Precedent: A-12 (sau-20260620T043756Z) = api-gateway /health 1.6–3.0s latency @3s-curl-boundary, self-recovered, TRIAGED INFO.
+
+**Flakiness pattern watch (NOT yet task-worthy):** 2 curl-boundary/timeout events on api-gateway /health ~12d apart (06-20 latency, 07-02 curl error), both self-recovered w/ no restart. Below the 2-same-bug escalation bar (different symptoms, both transient, healthy in between). If a **3rd** health-probe timeout/curl-error hits within a comparable window → mint a real flakiness/health-probe-timeout-hardening FIX. Not now — minting today = false-infra-failure noise task.
+
+**Dedup:** no existing api-gateway health-flakiness task (nothing to skip; nothing minted). Router-named neighbors (ESC4-HEURISTIC-FIX-TAXBASIS-SOE, BCTC-REPORT-ID-LOOKUP-TOOL, FIX-MCP-MEM-CAP-BUMP-REBUILD, BCTC-HNX-SSL-HARDEN) all unrelated.
+
+**Write:** orch-apply (all --arg bound: id/now/who; no signal-text interpolation). Row READ→TRIAGED (triaged_by=po, triaged_at=22:51:14Z, disposition=RESOLVED); bumped signal_queue.last_triaged_at/_by + _updated_at/_by. READ rows remaining = 0. 0 backlog change (389 unchanged). PO never pushes.
 
 ## Tick 2026-07-02T21:54Z — dev-team incremental triage: 1 signal → 0 new tasks (annotate existing)
 
