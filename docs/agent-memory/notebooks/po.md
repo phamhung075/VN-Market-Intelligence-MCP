@@ -1,6 +1,6 @@
 # PO Notebook
 
-_Last: 2026-07-02T19:00Z_
+_Last: 2026-07-02T20:34Z_
 
 ## Tick 2026-07-02T18:37Z — dev-team triage: architect recon-return + 6 signals → BATCH(1 FIX)
 
@@ -26,11 +26,28 @@ _Last: 2026-07-02T19:00Z_
 
 **Writes:** signal_queue rows S1→TRIAGED (CRITICAL kept), S2→RESOLVED (INFO) via orch-apply (bound --arg, injection-safe); read-back verified. RETURN=NOTHING.
 
+## Tick 2026-07-02T20:33Z — dev-team triage: 4 signals + TNB c104 + 2 telegrams → BATCH(1 FIX backlog)
+
+**Inputs:** pendingSignals=4 (3 cowork-FIRE telemetry + 1 router repair_task_request); TNB c104 handoff (NEEDS_ATTENTION, delivered via coordinator not drain — TNB skipped signal drop); telegram(new)=2 (B-05 #3395, B-06 #3396, re-fires); WIP: in_progress=1 (parked enricher, untouched), review=6, backlog 386→387.
+
+**Signal 4 (router repair_task_request, P2) = ACTIONABLE.** chef.md cleanup/finally `task_release`s the `published:<slot>:<date>` marker AFTER publishing → re-opens FR-P2-7 dup gate immediately (2x same-day 2026-07-02 chef-morning+chef-evening, transcript-proven = recurring). Dedup: FU-CHEF-MARKER-INFLOW (DEFERRED) is the CLAIM-side/granularity facet — NOT this RELEASE-side bug → distinct. Minted **FIX-CHEF-PUBLISHED-MARKER-RELEASE** (BACKLOG, S, cross-service/, kin FU-CHEF-MARKER-INFLOW). ROUTE = out-of-dev-scope agent-flow .md contract edit → agents-architect (irreversible MARKET double-publish safety) → agent-father via agent-md-factory (NOT dev-team apps/). Workaround ACTIVE (dispatcher re-arms marker). AC: re-fire of published slot same VN-date exits w/o 2nd send; marker survives cleanup (task_list_held). Sweep 5 other publisher flows for same pattern.
+
+**Signals 1-3 (cowork-FIRE P3) = routine telemetry, ACK no-task.** (1) chef-evening FIRE. (2) news-scout+market-watcher offhours, pressure_mode=legacy/stale_warning = known isStale→legacy behavior. (3) tnb-audit guaranteed-daily backfill (07-01 slot missed → fired 07-02) = backfill working as designed. No pattern worth a task.
+
+**TNB c104 triage (NEEDS_ATTENTION).** ACK'd c103+c104 in one pass (resolves F-PO-ACK-MISSING-c103; c103 file rotated by c104 overwrite). c103 AUTO-CURE (agent-father chef.md Step 7.5) VERIFIED EFFECTIVE by c104 (3/3 dishes degraded+gap-tokens) → no agent-father action. HIGH findings all deduped: F-TNB-MISSED-CYCLE-EVIDENCE-LOSS→FOLDED into GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST (annotated w/ audit-retention driver + L1-L6 scope-extension); F-MCP-SUBAGENT-SYSTEMIC→ARCH-HEADLESS-GATEWAY-COWORK-NOPOST; F-ACV-DB-EMPTY→MONITORED under parked FIX-BCTC-ENRICHER-STUCK-BACKLOG reset-migration (no per-ticker dup; re-verify c105). 0 new tasks from TNB.
+
+**Telegrams #3395 (B-05 bctc-discover 381.85h/38pending) + #3396 (B-06 sbv-vps 47min) → process_telegram_report resolution="monitoring", messages deleted.** Both re-fires of known conditions with durable fixes tracked (B-05 subsumed by parked enricher; B-06 off-market FP → FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE). NOTE: unlike the 18:37Z carry-over, PO **did** have process_telegram_report this session (gateway present) + flow inputs mandated triage → resolved directly, no router handoff needed.
+
+**Writes:** board via orch-apply (--slurpfile/--rawfile bound, injection-safe): backlog+=FIX-CHEF-PUBLISHED-MARKER-RELEASE (status BACKLOG to match lane), GAP-CHEF-SYNTHESIS-A status_note annotated; TNB ## PO ACK appended; 2 telegrams resolved. RETURN=BATCH(1). PO never pushes.
+
 ## Carry-over
 - ready[]=FIX-MCP-MEM-CAP-BUMP-REBUILD (ops, cross-service, S) — router dispatches Step-3 FIX this tick; compose edit is a repo change, rebuild+swap USER-GATED (do NOT execute).
 - backlog: FIX-MCP-MEMORY-CODE-LEAK PARKED held (pm) — unpark only when cap+rebuild shipped AND sawtooth persists 24-48h @3GiB. Do NOT decompose earlier.
 - in_progress=1 FIX-BCTC-ENRICHER-STUCK-BACKLOG PARKED on user gate — do NOT unpark. B-05 (bctc-discover stale, 38 pending) is SUBSUMED here (38 = enricher backlog). Recurring B-05 CRITICAL re-fires expected until operator rebuild ships; keep TRIAGED-subsumed, do NOT re-mint. If B-05 persists AFTER the rebuild drains the queue → done_verified re-check of discover-leg DONE tasks (B-05-FIX / FIX-BCTC-VPS-FETCH-LEG-DEAD).
 - B-06 sbv-vps stale = off-market FP class; auto-resolve INFO on off-hours re-fires. Durable fix tracked: FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE + ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD.
 - review[5] incl BCTC-HNX-SSL-HARDEN deploy-pending (user-gated ./scripts/deploy-vinahost.sh).
-- A-13/A-30 telegram reports: resolution out of PO tool scope (process_telegram_report = dev-team/router); flagged A-13 FP verdict in RETURN for router to action.
+- Telegram-report resolution IS available to PO when spawned with gateway (process_telegram_report worked this session; supersedes the earlier "out of PO tool scope" note which was a no-gateway session). B-05 #3395 + B-06 #3396 resolved monitoring 20:33Z.
+- NEW backlog: FIX-CHEF-PUBLISHED-MARKER-RELEASE (cross-service/, S) — chef.md cleanup releases published marker post-publish (recurring 2x). Route agents-architect→agent-father (agent-md-factory), NOT dev-team. Sweep 5 publisher flows. Kin FU-CHEF-MARKER-INFLOW.
+- GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST now also carries the TNB F-TNB-MISSED-CYCLE-EVIDENCE-LOSS driver (per-date/slot dish persist survives notebook rotation) — bump when picked up.
+- TNB ACK chain current through c104 (c103+c104 ACK'd 20:33Z). c105 will re-verify F-ACV-DB-EMPTY after enricher rebuild.
 - ahead of origin — fleet-push launchd timer owns push; PO never pushes.

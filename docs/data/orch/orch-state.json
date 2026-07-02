@@ -6047,7 +6047,8 @@
         "priority": "P1",
         "status": "BACKLOG",
         "zone": "docs/agents/unified-agent/flow/chef.md",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST",
+        "status_note": "[po-triage c104 2026-07-02] TNB F-TNB-MISSED-CYCLE-EVIDENCE-LOSS (HIGH, NEW) folds here: a missed TNB slot (2026-07-01) plus unified-agent.md 200L notebook rotation permanently destroyed that day's audit trail (0/6 layers auditable). This per-DATE/per-SLOT persist (docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json) IS the durable fix — adds audit-evidence-retention as a 2nd driver alongside frontend-queryability. SCOPE EXTENSION: the persisted artifact should carry enough L1-L6 layer-walk detail (per-ticker conviction, sector phase, regime+confidence, known_gaps + gap tokens) that a later TNB audit can reconstruct the dish without the rotated notebook. Priority stays P1."
       },
       {
         "id": "GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD",
@@ -7770,6 +7771,18 @@
         "parked_at": "2026-07-02T18:35:20Z",
         "recon_complete": "architect phase-0 recon DONE (commit d028803e) — brief docs/architecture-briefs/2026-07-02-mcp-mem-sawtooth-recon.md. Findings: (a) image 6 commits stale but NONE touch mem-relevant code (rebuild=owed hygiene, not the fix); (b) 2GB cap tight, host has 4.37GiB free -> bump to 3GiB; (c) CONCRETE hotspot: initDatabase() (schema.ts:148) has NO already-init guard, awaited at 68 tool-handler call-sites -> full ~3300-line DDL+backfill sweep every tool call, stacks with per-request McpServer rebuild (server.ts:481).",
         "hold_reason": "TWO-TRACK. Track-1 (immediate, SEPARATE task FIX-MCP-MEM-CAP-BUMP-REBUILD in ready[]): cap 2g->3g repo edit + rebuild-to-HEAD, user-gated swap. Track-2 (THIS task, next_agent=pm decompose into dev-mcp-server): initDatabase() init-guard (Step-3(i), mirror existing getDb() singleton guard) + optional per-request McpServer reuse (Step-3(ii), MUST preserve Bun-JIT Symbol-corruption workaround). PARKED pending UNPARK-GATE: [Track-1 rebuild+swap SHIPPED] AND [post-swap docker stats re-sampled 24-48h shows sawtooth RECURS at the new 3GiB cap] (expected per source evidence). Cheapest-sufficient-first: do NOT decompose the code fix until the cheaper cap+rebuild is proven insufficient. PO deferred pm-relay this tick."
+      },
+      {
+        "id": "FIX-CHEF-PUBLISHED-MARKER-RELEASE",
+        "type": "FIX",
+        "size": "S",
+        "owner": "po",
+        "status": "BACKLOG",
+        "sprint": "COWORK-RELIABILITY",
+        "zone": "cross-service/",
+        "title": "chef.md cleanup releases published:<slot>:<date> marker post-publish — defeats FR-P2-7 dup-post gate (2x 2026-07-02: chef-morning + chef-evening)",
+        "status_note": "REPAIR (router repair_task_request createdAt 2026-07-02T20:01:29Z, transcript-proven, 2x same-day = recurring-bug threshold). Root cause: chef.md claims published:chef-<slot>:<VN-date> (task_kind=cowork-slot, ttl 100800s) before send_telegram per FR-P2-7, then task_release on the SAME marker in its cleanup/finally after publishing — re-opens the dup gate immediately (marker meant to hold ~28h). FIX: cleanup releases ONLY dispatcher slot tokens / heartbeat locks, NEVER published:<slot>:<date> markers (TTL-expiry only); add explicit DO-NOT-RELEASE note at the FR-P2-7 claim step. SWEEP other publisher flows for the same release-in-cleanup pattern: fb-market-poster, digest-predict, news-scout, market-watcher, bctc-analyst (their 2026-07-02 markers were still held at report time -> only chef drifts today, but verify contract). ROUTE (out-of-dev-scope, per FU-CHEF-MARKER-INFLOW precedent): agent-flow .md contract edit -> agents-architect contract review (irreversible MARKET double-publish safety) -> agent-father flow edit via agent-md-factory; NOT dev-team apps/ code. Files: docs/agents/unified-agent/flow/chef.md (+ sweep the 5 flows). Workaround ACTIVE: dispatcher re-arms marker after RAW-verify (done both occurrences). KIN FU-CHEF-MARKER-INFLOW (claim-side / key-granularity, DEFERRED) — this is the RELEASE-side facet of the same marker contract. AC: a chef re-fire of an already-published slot on the same VN-date exits WITHOUT a 2nd send_telegram; task_list_held shows the published:<slot>:<date> marker still held immediately post-publish; no dispatcher re-arm needed for 7d.",
+        "created_at": "2026-07-02T20:33:16Z"
       }
     ],
     "closed_sprints": [
