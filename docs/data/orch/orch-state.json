@@ -1018,9 +1018,11 @@
         "priority": "P2",
         "severity": "warn",
         "summary": "auditor c500 bypassed orch-apply.sh writing signal_queue (raw jq>/tmp+mv) — flow-doc fix via agent-father",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-07-02T21:24:03Z",
-        "payload": "{\"detail\":\"system-auditor c500 wrote .signal_queue row via raw jq>/tmp && mv — bypasses scripts/orch-apply.sh (Zod+CAS+atomic, CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER) and stages in /tmp (must be project-local scratch). Row content valid, no corruption this cycle. Prior sibling incident: auditor full-doc overwrite collapsed SSOT. Durable fix = auditor flow §2.3 atomic-write spec must route via orch-apply.sh. Routing: agents-architect→agent-father (flow-doc owner), NOT dev-team. Evidence: transcript a3a1dc6b938fbcac1 bash (jq $JQ_FILTER > /tmp/orch-state-new.json; mv → orch-state.json)\",\"zone\":\"agent-father\",\"recurrence\":\"2nd write-contract incident class for system-auditor\"}"
+        "payload": "{\"detail\":\"system-auditor c500 wrote .signal_queue row via raw jq>/tmp && mv — bypasses scripts/orch-apply.sh (Zod+CAS+atomic, CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER) and stages in /tmp (must be project-local scratch). Row content valid, no corruption this cycle. Prior sibling incident: auditor full-doc overwrite collapsed SSOT. Durable fix = auditor flow §2.3 atomic-write spec must route via orch-apply.sh. Routing: agents-architect→agent-father (flow-doc owner), NOT dev-team. Evidence: transcript a3a1dc6b938fbcac1 bash (jq $JQ_FILTER > /tmp/orch-state-new.json; mv → orch-state.json)\",\"zone\":\"agent-father\",\"recurrence\":\"2nd write-contract incident class for system-auditor\"}",
+        "read_at": "2026-07-02T21:49:49Z",
+        "read_by": "dev-team"
       }
     ],
     "last_triaged_at": "2026-07-02T19:00:27Z",
