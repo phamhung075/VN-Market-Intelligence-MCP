@@ -1,0 +1,40 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "CNTT: xuat khau phan mem, tich hop he thong, vien thong (FPT Telecom), giao duc (FPT Edu)",
+  "customer": "Doanh nghiep trong/ngoai nuoc (offshore IT), thue bao vien thong ban le, sinh vien FPT Edu",
+  "ops": "Bien loi nhuan gop 34.0%, hoat dong 22.0%; ROE 28.3% dan dau nganh cong nghe (median 10.6%)",
+  "mgmt": "Dinh gia FAIR nhat quan nhieu quy lien tiep; OCF/NI am (-1.15x) do bien dong von luu dong Q1, khong phai dau hieu thao tung",
+  "valuation": {
+    "pe": 13.8,
+    "sector_pe_median": 17.3,
+    "pe_vs_sector_pct": -20,
+    "pb": 3.6,
+    "sector_pb_median": 1.5,
+    "roe_pct": 28.3,
+    "sector_roe_median_pct": 10.6,
+    "earning_yield_pct": 7.25,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.25,
+    "valuation_verdict": "FAIR"
+  },
+  "forensic": {
+    "net_profit_bn_vnd": 2476.8,
+    "operating_cf_bn_vnd": -2847.8,
+    "ocf_ni_ratio": -1.15,
+    "esc2_balance_check": "PASS (0% imbalance)",
+    "esc3_status": "SKIP (E3 cache path - see note)",
+    "esc4_one_off_flag": false,
+    "trick_confidence": "medium",
+    "trick_summary": "Khong phat hien dau hieu thao tung ke toan moi. OCF/NI am la do bien dong von luu dong quy 1 (chi phi tra truoc/cac khoan phai thu tang), khong phai loi nhuan gia tao. So lieu bao cao khong doi so voi chu ky truoc (cung ma OCR/gia tri).",
+    "trick_pass_versions": ["balance-sheet-v1", "pl-v1", "cashflow-v1", "rpt-v1", "footnote-v1", "segment-v1"],
+    "note": "E3 hash-based cache verification unavailable this session (no shell/compute tool bound) - trick conclusion carried forward from prior full 6-pass run (cycle c070, 2026-07-01) since underlying value_current fields are byte-identical this cycle."
+  },
+  "kinhdich": { "hexagram": "Bac (23)", "trend": "BAT LOI", "signal": "GIU", "confidence_pct": 25 },
+  "chain_validation": "1 unattributed bullish chain_catalyst in window (stock_code=unknown, conf 0.72) - cannot map to FPT specifically",
+  "cycle_ts_utc": "2026-07-02T00:15:00Z",
+  "agent_signal_id": 8194
+}

@@ -1,22 +1,22 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-06-30 16:09 UTC | **Sprint:** 2026-Q2
+**Last updated:** 2026-07-02 00:11 UTC | **Sprint:** P2-2026-06
 
 ## Carry-over
-Real estate sector weakness (VIC -4.74%, VHM -3.65%, VRE -2.67%); VNM oversold (RSI=20.3, -2.32% flagged 04:04Z). Banking sector multi-name dip (3 mains avg -1.15%). Volatility NORMAL (14% 20d RV).
+Banking stabilizing (VPB +2.59%, CTG +1.33%, MBB +2.18%); real estate weak (-2.04% VHM, -2.30% KBC); VNM neutral (+0.73%). Volatility NORMAL (14.39% 20d RV). Brent 71.15, USD/VND 26106.
 
-## Cycle (16:00–16:09 UTC, offhours post-close)
-- Stocks: 39 priced | Anomalies: 0 (threshold: 2.5σ offhours floor, no new breaches) | Volume spikes: 0 (market closed) | Chain confirms: 0
-- Regime: NEUTRAL (14% vol) | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: none | pe_risk: none
-- VNM monitored (2.58σ, duplicate suppressed: same close 54.8k, signal emitted 04:04Z)
-- Sweep forced: SHB, HUT, DIG (15d stale); no anomalies detected
+## Cycle (00:11–00:12 UTC, offhours sweep)
+- Stocks: 3 swept | Anomalies: 0 (offhours, closed market, duplicate guard) | Spikes: 0 | Chains: 1 (unknown ticker)
+- Sweep: DGC, VJC, GEX (last covered 2026-06-15, 17 days stale) — coverage rotation
+- Regime: NEUTRAL | Volatility: NORMAL (14.39% 20d RV, 31st %ile)
+- Vol regime: NORMAL; Drawdown 252d: 16.38%; Source tier: 3
 
-## Metrics (cycle 2026-06-30 16:00 UTC)
+## Metrics (2026-07-02 00:11 UTC)
 | Field | Value |
 |---|---|
-| cycles_run | 3 |
-| items_fetched | 39 |
+| cycles_run | 1 |
+| items_fetched | 3 |
 | signals_emitted | 0 |
-| signals_suppressed | 1 |
-| sweep_tickers_forced | 3 |
-| coverage_state_updated | yes |
+| signals_suppressed | 0 |
+| sweep_forced | 3 |
+| coverage_updated | pending |
 | exit_status | complete |
