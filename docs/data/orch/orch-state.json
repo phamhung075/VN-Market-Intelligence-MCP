@@ -243,11 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-02T09:38:10Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": "pm"
+    "status": "in_progress",
+    "updated_at": "2026-07-02T11:02:57Z",
+    "updated_by": "dev-team",
+    "active_task_id": "FIX-BCTC-VPS-FETCH-LEG-DEAD",
+    "next_agent": "ops",
+    "note": "FIX-BCTC-VPS-FETCH-LEG-DEAD claimed by router (PO BATCH 10:37Z tick) — ops runs VPS SSH recon-first revive of dead bctc fetch leg. CRITICAL SLA 24h (earnings window Jul 1-14). Promote -> done on AC: fresh VPS bctc push <24h + healthy leg. Follow-up BCTC-HNX-SSL-HARDEN parked in backlog behind it."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3288,6 +3289,28 @@
       }
     ],
     "backlog": [
+      {
+        "id": "BCTC-HNX-SSL-HARDEN",
+        "title": "Replace VPS bctc curl -k with --cacert pinning (HNX leaf cert expires 2026-07-07)",
+        "status": "BACKLOG",
+        "owner": "po",
+        "route_to": "ops",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "priority": "high",
+        "size": "S",
+        "depends": [
+          "FIX-BCTC-VPS-FETCH-LEG-DEAD"
+        ],
+        "created_at": "2026-07-02T11:02:57Z",
+        "created_by": "po",
+        "files": [
+          "vps-scripts/fetch-bctc.sh",
+          "scripts/deploy-vinahost.sh"
+        ],
+        "baseline_pass": true,
+        "desc": "Follow-up to FIX-BCTC-VPS-FETCH-LEG-DEAD — SEQUENCE AFTER it revives the leg. June-1 hotfix (commit e22427aa) uses insecure curl -k (cert verification off) in vps-scripts/fetch-bctc.sh. HNX leaf cert expires 2026-07-07 (~5d) -> a second break is due within a week even if revived. Harden: replace -k with --cacert pinning against the full HNX CA chain (bundle it). Needs recon output from Entry 1 to confirm TLS path + capture working chain. AC: fetch succeeds with cert verification ON (no -k) and survives past 2026-07-07."
+      },
       {
         "id": "TASK17-FOREIGN-FLOW",
         "size": "S",
@@ -9791,6 +9814,33 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
+      },
+      {
+        "id": "FIX-BCTC-VPS-FETCH-LEG-DEAD",
+        "title": "bctc-discover STALE 384h — VPS bctc FETCH leg dead (recon-first revive)",
+        "status": "IN_PROGRESS",
+        "owner": "dev-team",
+        "next_agent": "ops",
+        "route_to": "ops",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "priority": "critical",
+        "size": "S",
+        "sla_hours": 24,
+        "created_at": "2026-07-02T11:02:57Z",
+        "created_by": "po",
+        "origin_signal": "8280",
+        "origin_report": "3391",
+        "files": [
+          "vps-scripts/fetch-bctc.sh",
+          "scripts/deploy-vinahost.sh"
+        ],
+        "baseline_pass": true,
+        "claimed_at": "2026-07-02T11:02:57Z",
+        "claimed_by": "router",
+        "dispatched_at": "2026-07-02T11:02:57Z",
+        "desc": "CRITICAL. Dispatcher RAW-verified: VPS last bctc push 2026-06-16T18:02:24Z (384h), prices/news/sbv legs healthy -> transport ALIVE, bctc FETCH leg DEAD (isolated). Earnings window Jul 1-14, SLA 24h. RECON FIRST (ops): SSH-probe the VPS bctc leg + raw-trigger ONE on-demand fetch to isolate discovery vs transport vs fetch before any code change. Likely same shape as June-1 HNX TLS incident (owa.hnx.vn incomplete chain; hotfixed curl -k in /root/fetch-bctc.sh, repo copy vps-scripts/fetch-bctc.sh deployed via scripts/deploy-vinahost.sh, commit e22427aa). Apply fix per evidence. AC: fresh VPS bctc push <24h old + get_vps_proxy_health shows bctc leg healthy.",
+        "dispatch_note": "[dispatcher 2026-07-02 tick 10:37Z] PO BATCH entry 1 — ops-lane (VPS SSH recon + deploy), NOT generic developer. Recon-first per feedback_isolation_probe_before_cluster_triage. Capture TLS chain evidence for follow-up BCTC-HNX-SSL-HARDEN (backlog, sequenced after this) but do NOT harden in this task."
       }
     ],
     "ready": [
