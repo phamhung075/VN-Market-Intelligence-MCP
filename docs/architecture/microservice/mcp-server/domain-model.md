@@ -90,6 +90,16 @@
 | `sparkline.ts` | ASCII price visualization |
 | `stockSearch.ts` | Ticker normalization + search |
 
+## Cron Domain (DASH-CRON-RECHECK-TABLE, TASK-DASH-CRON-1)
+**Files:** `apps/mcp-server/src/domain/cron/` — zero imports, pure (Fence-A compliant)
+
+| Module | Export | Logic |
+|--------|--------|-------|
+| `cronLivenessClassifier.ts` | `classifyCronLiveness(nowMs, lastFireMs, cadenceMs, thresholdMultiplier): CronLivenessStatus` | 4-branch ladder: `null`→NEVER_FIRED; `age<=cadenceMs`→ON_TIME; `age<=cadenceMs×threshold`→LATE; `age<=cadenceMs×3`→MISSED; else STALE. Strict refinement of `schedulerWatchdogJob`'s binary healthy/alert split — guarantees AC-9 PARITY by construction. |
+| `humanScheduleFormatter.ts` | `buildHumanSchedule(cronExpr): string` | Hand-rolled formatter for the ~10 cron-expression shapes in `cronConfig.ts` (every-N-min, restricted-hour window, every-N-hour, hourly-at-:MM, comma-list, daily/weekdays/weekly/monthly/quarterly HH:MM). Unrecognized shape → honest raw-expression passthrough (NFR-1, never fabricates). |
+
+`CronLivenessStatus = "ON_TIME" | "LATE" | "MISSED" | "STALE" | "NEVER_FIRED"`
+
 ## Repository Interfaces
 - `IWatchlistRepository`, `IMarketPriceRepository`
 - `IKinhDichScoreRepository`, `IHexagramRepository`

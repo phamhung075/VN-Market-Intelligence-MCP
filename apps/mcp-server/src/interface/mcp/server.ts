@@ -87,6 +87,7 @@ import { handleBctcInspectFlags } from "./routes/bctcFlagsHandler.js"; // HC-DEV
 import { handleBctcInspectCorrect } from "./routes/bctcCorrectHandler.js"; // HC-DEV-3: POST /api/bctc-inspect/correct/{doc_id}
 import { handleBctcInspectConfirm, handleBctcInspectConfirmReset } from "./routes/bctcConfirmHandler.js"; // HC-DEV-3: POST /api/bctc-inspect/confirm/{doc_id}[/reset]
 import { handleGetOrchestration } from "./routes/orchestrationHandler.js"; // OSC-4a: GET /api/orchestration
+import { handleGetCronStatus } from "./routes/cronStatusHandler.js"; // TASK-DASH-CRON-1: GET /api/cron-status
 import { getOrchStatePath } from "../../infrastructure/orchStateStore.js";
 import { handleGetQualityChecklist } from "./routes/qualityChecklistHandler.js"; // QUALITY-AUDIT Phase 1: GET /api/quality-checklist
 // FE-REROUTE Phase 1+2: new REST read endpoints for frontend pages (FE-RR-1..6 + FE-RR-13/14)
@@ -2125,6 +2126,14 @@ export async function createBunServer(
     if (method === "GET" && pathname === "/api/orchestration") {
       const orchPath = getOrchStatePath(process.cwd());
       handleGetOrchestration(req, res, orchPath);
+      return;
+    }
+
+    // ── TASK-DASH-CRON-1: GET /api/cron-status — Layer-A + Layer-B cron liveness ──
+    // Read-only (NFR-4). Shares no mutable state with GET /api/orchestration (AC-25).
+    // Returns 200+DTO on success; 503 JSON {error} on any unhandled exception (FR-3.4).
+    if (method === "GET" && pathname === "/api/cron-status") {
+      handleGetCronStatus(req, res, db);
       return;
     }
 

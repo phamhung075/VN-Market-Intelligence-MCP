@@ -130,6 +130,15 @@ finally:
 
 **Circuit breaker integration:** `syncVnstockData.ts` tracks `consecutiveOpens`; after `FAIL_THRESHOLD=3` failures opens for `RESET_MS=2h` (doubles on each open: 2h→4h→8h)
 
+## Cron Status Infrastructure (DASH-CRON-RECHECK-TABLE, TASK-DASH-CRON-1)
+
+### apps/mcp-server/src/infrastructure/cron/layerBCronRegistry.ts
+`parseLayerBCrons(commandsDir)` parses `.claude/commands/crons/*.md` ONLY (13 live files; `cron-fb-market-poster.md` DEPRECATED, skip-listed via `DEPRECATED_LAYER_B_FILES`). Primary regex `` - **cron**: `<expr>` `` (12 files, multi-cron numbered `#1/#2/#3`); fallback `# Schedule: '<expr>'` used only when primary yields 0 matches (`cron-refine-bctc.md`). Excludes `cron-detect-loop`/`cron-cowork-team` skill files — they verbatim-copy 5 crons already in the command files (would double-count, AC-12). `getLayerBCronRows(commandsDir)` — CN-5 module-level memoized singleton, parsed once at server startup (test reset hook: `_resetLayerBCronCacheForTests`).
+
+### apps/mcp-server/src/infrastructure/db/cronJobRunStore.ts (2 new additive exports)
+- `getLastRunForJob(db, jobName)` — single-job `MAX(started_at)` + status, same `status IN ('success','error')` filter as `schedulerWatchdogJob.queryLastStartedAt` (CN-3 parity).
+- `getDistinctJobNames(db)` — `SELECT DISTINCT job_name FROM cron_job_runs`, used by `cronStatusCompute`'s CN-1 tier-2 fallback.
+
 ## Repositories (6 SQLite implementations)
 - `SqliteWatchlistRepository`, `SqliteMarketPriceRepository`
 - `SqliteKinhDichScoreRepository`, `SqliteHexagramRepository`

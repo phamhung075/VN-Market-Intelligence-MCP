@@ -30,6 +30,11 @@
 | `IND-P1-MCP-REST-GAUGES-ENDPOINT.test.ts` | 35 tests: GET /api/indicator-gauges — REG(exports), GEN(generated_at always set), 200(HTTP 200 even on section failures), ISO(Promise.allSettled section isolation — 4 partial-fail + all-fail), NULL(breadth null on error shape; sentiment passthrough; volatility null_reason synthesized), PROJ(foreign_room .market-only, no tickers[]), LIQ(ok:false→null, source_tier from is_estimate, null_reason from blocked_reason). Injectable deps (IndicatorGaugesDeps) — zero real HTTP or DB calls. |
 | `TASK-17-P1-2a-macro-regime.test.ts` | GET /api/macro-regime — upstream reshape, failure paths, oil impact→direction normalization |
 | `TASK-17-news-sentiment-endpoint.test.ts` | GET /api/news-sentiment — SQLite query, staleness detection, pagination |
+| `cronStatusHandler.test.ts` | GET /api/cron-status — 17 tests: AC-1..7 endpoint correctness, AC-8/AC-9 PARITY gate cross-checked against `classifyCronLiveness` for all 16 `WATCHDOG_MANIFEST` jobs, AC-10/AC-11 boundaries, AC-25 no-shared-mutable-state across independent db instances, FR-3.4 503 on unhandled exception. In-memory SQLite, no live server. |
+| `cronStatusCompute.test.ts` | `resolveJobNameDb`/`deriveCadenceMs`/`buildLayerARow` — 16 tests: CN-1 all 16 static pairs + normalized fallback + honest no-match, CN-2 EC-2/EC-4 exact cadence values, R1 memoization (compute-count assertion). |
+| `cronLivenessClassifier.test.ts` | `classifyCronLiveness` — 12 tests: all 5 branches + exact boundary values (inclusive `<=` at each threshold). |
+| `humanScheduleFormatter.test.ts` | `buildHumanSchedule` — 13 tests: every shape in `cronConfig.ts` + NFR-1 honest-passthrough fallback. |
+| `layerBCronRegistry.test.ts` | `parseLayerBCrons`/`getLayerBCronRows` — 14 tests: primary/fallback regex, deprecated skip-list, multi-cron numbering, drift-detector WARN, CN-5 memoization, live `.claude/commands/crons/` integration (AC-12). |
 
 ### Market Data
 | Test File | Coverage |

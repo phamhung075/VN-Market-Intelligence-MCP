@@ -1,20 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-01 — TASK-EVIDENCE-HOP1-MCP → REVIEW
-
-**Sprint:** BA-PREDICTION-EVIDENCE-REVIVAL (hop1, parallel-safe with hop2/agent-father)
-**Session:** 3340d049-0aec-46e7-879f-6a71324b98f1 (dev-team cron dispatcher)
-
-Three FRs per architecture brief §0-§1 corrected facts:
-
-- **FR-1.1** — `evidenceTools.ts::get_evidence_summary` hardcoded `(evidence_type,"bullish",10)` LR lookup masked the live TRUSTED `foreign_flow_institutional/bearish/5d` row (n=18). Fixed via `getLikelihoodRatios(db, type, f.direction)`: prefer shortest-horizon row with `sample_size>=10` (TRUSTED); else largest-sample row honestly UNTRUSTED (no cross-horizon interpolation). Display now shows `horizon=Nd`. No hand-rolled SQL — reuses store fn, retires a pre-existing DDD violation.
-- **FR-2.2** — `vpsProxyWatchdogJob.ts` extended with `readLatestInsiderTimestamp()` (5th source, `INSIDER_STALE_MS=4d`), closing the silent-empty-success gap (`insider_transactions` 0 rows across ~2mo of "success" runs — VPS proxy 502 to SSC portal). Observability-only; alert message notes the fix is decoupled to BACKLOG `FIX-VPS-SSC-INSIDER-502` (already filed by pm).
-- **FR-1.2** — `baseRateComputationJob` cadence weekly→daily. RISK-1 two-file coupling closed in one commit: `cronConfig.ts:62` (`'7 19 * * 0'`→`'7 19 * * *'`) + `baseRateComputationJob.ts` (`WEEKLY_CADENCE_MS`→`DAILY_CADENCE_MS=86_400_000`, feeds `shouldSkipRecoveryReplay`).
-
-Files: `interface/mcp/tools/macro/evidenceTools.ts`, `scheduler/vpsProxyWatchdogJob.ts`, `scheduler/cronConfig.ts`, `scheduler/macro/baseRateComputationJob.ts`, `docs/standards/cron-jobs.md`. Tests: 3 new FR-1.1 regression cases (`1124-evidence-tools-phase-bc.test.ts`), new `TASK-EVIDENCE-HOP1-MCP-watchdog-insider.test.ts` (5 cases), updated `readInsider` fresh-reader injection in 4 existing watchdog test files (313/1319/1351b/1557/1567), updated cadence-string assertions in `ARCH-CRON-recover-jitter.test.ts` + `1122-base-rate-computation-job.test.ts`.
-
-Zone health: tsc clean (EXIT 0), 131/131 pass (15 targeted files, evidence+watchdog+cadence). Full-suite run showed 60 pre-existing failures + a Bun C++ panic — isolation-probed 3 of them (1146-get-insider-transactions, 1518-foreign-flow, 1875c-record-signal-outcome-routing) standalone → all GREEN, confirming full-suite parallel-run flakiness unrelated to this diff, not a regression. orch: `TASK-EVIDENCE-HOP1-MCP`→REVIEW/qa via orch-apply.sh (Stage0+1 PASS). toolCount unchanged (no new MCP tools), scheduler count unchanged (no new cron entries, cadence-only change) | HEALTHY
-
 ## 2026-07-01 — MONEY-RADAR-P0-T2-COMPOSITE → REVIEW
 
 **Sprint:** MONEY-RADAR-P0 (design-complete brief, T2 of 4)
@@ -41,3 +26,15 @@ Authored `scripts/migrations/reingest-bctc-report.ts` (AC-10, NOT executed again
 New test `TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST.test.ts` (4 tests, 18 expect) — RED→GREEN proven by reverting the source fix via `git stash` mid-session and re-running (3/4 failed, confirming genuine defect incl. on CTG's real numbers).
 
 Zone health: tsc clean, 1240/1240 targeted BCTC-suite pass (115 files), full suite 13940 pass / 67 fail / 10 errors / 1 pre-existing Bun-C++-panic-at-teardown (same class as W2's prior full-suite note — none of the 67 fails touch bctc/finalize/validation) | HEALTHY
+
+## 2026-07-02 — TASK-DASH-CRON-1 (Zone 1, sprint DASH-CRON-RECHECK-TABLE) → REVIEW
+
+**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258 (router-dispatched)
+
+Built the backend status-compute for the Cron Recheck Table: `domain/cron/cronLivenessClassifier.ts` (pure, FR-1.6 4-branch ladder, zero imports), `domain/cron/humanScheduleFormatter.ts` (pure, ~10 cron shapes + honest passthrough), `infrastructure/cron/layerBCronRegistry.ts` (parses `.claude/commands/crons/*.md`, 13 live files, CN-5 memoized singleton), `application/cron/cronStatusCompute.ts` (CN-1 hybrid 3-tier job-name resolution, CN-2 MIN-of-6-samples cadence via new `cron-parser` dep, R1 memoization contract), `interface/mcp/routes/cronStatusHandler.ts` (`GET /api/cron-status`, mirrors `orchestrationHandler.ts`) + 4-line route registration in `server.ts` + 2 additive exports on `cronJobRunStore.ts`.
+
+**Deviation from architect brief (documented, verified via live eslint):** the brief placed `WATCHDOG_MANIFEST` reads and `buildHumanSchedule` inside `cronStatusCompute.ts` (application), but the LIVE `eslint.config.mjs` Fence-B rule (`boundaries/dependencies`, error-level) forbids application→scheduler imports — `schedulerWatchdogJob.ts` physically lives under `src/scheduler/`. Kept `cronStatusCompute.ts` scheduler-import-free via a local structural `CadenceManifest` type; `cronStatusHandler.ts` (interface, unrestricted) owns the real `WATCHDOG_MANIFEST`/`CRONS` imports and passes values down as params. `buildHumanSchedule` moved to a second pure domain file so both infra and application can import it downward without inverting Fence-A/B. `npx eslint src/ --max-warnings 0` clean (only pre-existing unrelated Fence-B error in `getMoneyRadarComposite.ts`, confirmed via `git log` — not mine).
+
+Files: 4 new (domain×2, infra×1, application×1) + 1 new interface route + 2 edits (`cronJobRunStore.ts` +2 exports, `server.ts` +import+4L route) + `package.json` (+`cron-parser` dep, verified absent, network install confirmed). 5 new test files, 72/72 pass (12 classifier + 13 formatter + 16 compute + 14 registry + 17 handler incl. AC-9 PARITY cross-check against all 16 `WATCHDOG_MANIFEST` jobs).
+
+Zone health: tsc clean, eslint clean (own files), tools=183 (unchanged, no new MCP tool), server boot verified via `bun run src/index.ts` (loaded cleanly to the `listen()` call, EADDRINUSE expected — port 3000 owned by the live user-gated container, not restarted). Full suite: 14191-14200 pass / 71-80 fail / 5-10 errors across two runs (14313 tests, 1166 files) — cross-run count variance + a Bun-1.3.13 C++ teardown panic confirm pre-existing flakiness (documented ceiling `project-stats.json testBaselineFail=348`, both runs well under); grepped both full logs for all 5 new test-file names — zero hits, confirming none of mine failed | HEALTHY

@@ -237,6 +237,66 @@ export async function recordJobRun(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// getLastRunForJob — DASH-CRON-RECHECK-TABLE Zone 1 (TASK-DASH-CRON-1)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Return the single most-recent completed run for one job.
+ *
+ * Same `status IN ('success','error')` filter as
+ * `schedulerWatchdogJob.queryLastStartedAt` — CN-3: a job that ran but failed
+ * still fired its tick (cadence not broken); only a missing or very-old row
+ * indicates a missed fire. 'running' and 'crashed' rows are excluded (mirrors
+ * watchdog behavior — do not "fix" this here, it would break AC-9 PARITY).
+ *
+ * Additive export — no signature change to any existing export in this module.
+ *
+ * @param db      Database connection
+ * @param jobName Resolved DB job_name (may differ from the CRONS map key)
+ * @returns       Most-recent started_at + its status, or nulls when never run
+ */
+export function getLastRunForJob(
+  db: Database,
+  jobName: string,
+): { last_started_at: string | null; last_status: CronJobRunStatus | null } {
+  const row = db
+    .prepare<{ started_at: string; status: CronJobRunStatus }, [string]>(
+      `SELECT started_at, status
+       FROM cron_job_runs
+       WHERE job_name = ?
+         AND status IN ('success', 'error')
+       ORDER BY started_at DESC
+       LIMIT 1`,
+    )
+    .get(jobName);
+
+  return {
+    last_started_at: row?.started_at ?? null,
+    last_status: row?.status ?? null,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// getDistinctJobNames — DASH-CRON-RECHECK-TABLE Zone 1 (TASK-DASH-CRON-1)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Distinct `job_name` values ever recorded in `cron_job_runs`.
+ *
+ * Used by cronStatusCompute's CN-1 tier-2 normalized-match fallback to resolve
+ * a CRONS map key to its real DB job_name when the key is not one of the 16
+ * WATCHDOG_MANIFEST-covered jobs (tier-1 static map).
+ *
+ * Additive export — no signature change to any existing export in this module.
+ */
+export function getDistinctJobNames(db: Database): string[] {
+  const rows = db
+    .prepare<{ job_name: string }, []>(`SELECT DISTINCT job_name FROM cron_job_runs`)
+    .all();
+  return rows.map((r) => r.job_name);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // getCronJobHealthSummary
 // ─────────────────────────────────────────────────────────────────────────────
 
