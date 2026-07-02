@@ -56,13 +56,23 @@ SSOT: `.claude/commands/crons/cron-dev-team.md` + `cron-system-auditor.md`
 Only execute CronCreate for entries NOT found in Step 1.
 
 **Job 1 — dev-team every 30 min**
+
+> TOKEN-ECONOMY-TICK-PREFLIGHT WU-2 (R6, 2026-07-02): this prompt now diverges from the plain
+> "Read and execute main.md" template in `.claude/commands/crons/cron-dev-team.md` — this is the
+> ONE deliberate exception to that file's "verbatim copy" rule. Rationale: `CronCreate`/`CronList`/
+> `CronDelete` are Claude Code CLI-native tools, unreachable from `scripts/agents-flow/
+> dev-team-tick-preflight.sh`'s curl transport, so self-arm can only be LLM-narrated — it must run
+> FIRST, on every tick (RUN and SKIP alike), independent of which session wins the SF-1/fire-election
+> locks. `main.md` Step 0-PREFLIGHT no longer reads this skill itself (see `docs/agents/dev-team/
+> flow/main.md` jump:preflight-fallback annotation).
+
 ```
 CronCreate(
   description : "dev-team every 30 min — signal drain + task planning",
   cron        : "7,37 * * * *",
   recurring   : true,
   durable     : true,
-  prompt      : "Read and execute docs/agents/dev-team/flow/main.md\nMCP: https://zenmidi.com/vn-market/mcp"
+  prompt      : "Self-arm FIRST (idempotent): read and execute .claude/skills/cron-detect-loop/SKILL.md (re-registers this session's own crons). Then run: bash scripts/agents-flow/dev-team-tick-preflight.sh (requires $CLAUDE_CODE_SESSION_ID) and read its one-line JSON verdict. On verdict=RUN: read and execute docs/agents/dev-team/flow/main.md starting at the gcc-preflight anchor (script already handled presence/SF-1/fire-election locks — do NOT re-run those steps). On verdict=SKIP: done, no further reads needed. On verdict=ERROR: read and execute docs/agents/dev-team/flow/main.md from the top (original inline pseudocode, unabridged fallback).\nMCP: https://zenmidi.com/vn-market/mcp"
 )
 ```
 

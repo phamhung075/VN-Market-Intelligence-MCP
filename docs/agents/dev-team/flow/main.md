@@ -1,7 +1,6 @@
-<!-- size-justification: 440L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0a.5 CI-health probe (sub-flow pointer, +6L) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/0a.5/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). CI-HEALTH-FIX-BRIDGE 2026-06-08: Step 0a.5 CI probe sub-flow pointer (+6L). DEV-TEAM-TOOL-CONTRACT-CRON-OVERLAP 2026-06-14: SF-1 single-flight guard (task_claim dev-team-cron-singleton TTL=5400s) + GCC-PREFLIGHT read directive in Step 0-PREFLIGHT; SF-1 heartbeat at Step 3 entry; SF-1 release at jump:end (+20L). P2-PRESENCE 2026-06-28 (TASK_1990): session-presence claim in PREFLIGHT before SF-1; heartbeat at Step 3 alongside SF-1 heartbeat (+30L). P3-FIRE-ELECTION 2026-06-28 (TASK_1994): Step [3] fire-time election after SF-1, before HEAD.lock guard; on loss release SF-1 + EXIT; FIRE_TICK release at jump:end (+35L). -->
-# Dev Team — Cron Orchestration Flow (Thin Dispatcher)
-
+<!-- size-justification: 440L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0a.5 CI-health probe (sub-flow pointer, +6L) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/0a.5/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). CI-HEALTH-FIX-BRIDGE 2026-06-08: Step 0a.5 CI probe sub-flow pointer (+6L). DEV-TEAM-TOOL-CONTRACT-CRON-OVERLAP 2026-06-14: SF-1 single-flight guard (task_claim dev-team-cron-singleton TTL=5400s) + GCC-PREFLIGHT read directive in Step 0-PREFLIGHT; SF-1 heartbeat at Step 3 entry; SF-1 release at jump:end (+20L). P2-PRESENCE 2026-06-28 (TASK_1990): session-presence claim in PREFLIGHT before SF-1; heartbeat at Step 3 alongside SF-1 heartbeat (+30L). P3-FIRE-ELECTION 2026-06-28 (TASK_1994): Step [3] fire-time election after SF-1, before HEAD.lock guard; on loss release SF-1 + EXIT; FIRE_TICK release at jump:end (+35L). TOKEN-ECONOMY-TICK-PREFLIGHT WU-2 2026-07-02: new Step 0-PREFLIGHT — deterministic scripts/agents-flow/dev-team-tick-preflight.sh replaces the presence/SF-1/fire-election chain on the common RUN/SKIP path (+~28L); original inline pseudocode split into jump:preflight-fallback (presence/SF-1/fire-election, ERROR-fallback only) + jump:gcc-preflight (GCC-PREFLIGHT/HEAD.lock/worktree-GC, shared RUN+fallback continuation) — both UNCHANGED, kept verbatim. -->
 <!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
+# Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 ## Team Boundary (Sprint 2026-05-31 — expanded)
 
@@ -75,9 +74,41 @@ JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
 ---
 
 <!-- jump:preflight -->
-## Step 0-PREFLIGHT — HEAD.lock Guard + Worktree GC
+## Step 0-PREFLIGHT — Dev-team Tick Preflight (TOKEN-ECONOMY-TICK-PREFLIGHT WU-2)
 
-> Full algorithm + escalation tree → `docs/protocols/head-lock-self-cure.md`
+Run the deterministic preflight script FIRST and capture its one-line JSON verdict — this
+replaces the LLM-narrated presence/SF-1/fire-election chain below on the common RUN/SKIP path
+(risk notes R6/R7/R8, `docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md`). Self-arm (cron-detect-loop
+re-registration) is **no longer read from here** — `CronCreate`/`CronList`/`CronDelete` are Claude
+Code CLI-native tools, unreachable from a curl-based script, so self-arm now fires FIRST, on every
+tick (RUN and SKIP alike), from the `.claude/skills/cron-detect-loop/SKILL.md` Job 1 `CronCreate`
+`prompt:` text itself — before this script even runs.
+
+```bash
+VERDICT_JSON=$(bash "$PROJECT_ROOT/scripts/agents-flow/dev-team-tick-preflight.sh")
+PREFLIGHT_RC=$?
+VERDICT=$(echo "$VERDICT_JSON" | jq -r '.verdict')
+```
+
+Script SSOT: `scripts/agents-flow/dev-team-tick-preflight.sh` (uses shared
+`scripts/agents-flow/mcp-call.sh`). Requires `$CLAUDE_CODE_SESSION_ID` in the environment.
+
+### JUMP-TO table (preflight verdict)
+
+| Verdict | Action |
+|---|---|
+| `RUN` | SF-1 (`dev-team-cron-singleton`, TTL=5400) + fire-election (`cron:dev-team:<tick>`, TTL=600) locks are HELD by this session. **Do NOT re-run presence/SF-1/fire-election below** — JUMP TO `gcc-preflight` (GCC-PREFLIGHT read + HEAD.lock/worktree-GC), skipping the START telegram/self-arm/presence/SF-1/fire-election steps entirely (already satisfied by the script). Both locks stay held for the rest of the dispatch body — release-at-end (`telemetry`/`jump:end`) is unchanged. |
+| `SKIP` | Done. Script already sent the `work`-channel telegram and preserved R7 lock semantics: SF-1-claim-failed → nothing released (never held it); fire-election-lost-after-SF-1-won → SF-1 released. EXIT — no further reads needed. |
+| `ERROR` | Script hit a transport/malformed-response/local-guard failure (`$VERDICT_JSON.detail` has why — lock state may be undefined). JUMP TO `preflight-fallback` below (unchanged, never deleted) — read from there as if the script never ran. |
+
+---
+
+<!-- jump:preflight-fallback -->
+## Step 0-PREFLIGHT-FALLBACK — Original Presence/SF-1/Fire-Election (ERROR-fallback only)
+
+> Reached ONLY on `ERROR` verdict from `scripts/agents-flow/dev-team-tick-preflight.sh` above (or
+> when this flow is run manually / pre-WU-2). Kept verbatim below, never deleted — R6/R7/R8
+> fallback guarantee, see `docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md` § Design decisions.
 
 ```
 ts          = $(date -u +%Y%m%dT%H%M%SZ)
@@ -182,7 +213,16 @@ if not fire_result.claimed:
     })
     JUMP TO end   # EXIT cleanly — no head set, no dispatch, no orphan work
 # else: fire_result.claimed == true → won the election → FIRE_TICK is the active tick key
+```
 
+<!-- jump:gcc-preflight -->
+## Step 0-PREFLIGHT-CONTINUE — GCC-PREFLIGHT + HEAD.lock Guard + Worktree GC
+
+> Reached from BOTH the `RUN` verdict above (script already handled presence/SF-1/fire-election —
+> no duplicate work) AND as the natural continuation of `preflight-fallback` immediately above it
+> on the `ERROR` path. Same content either way.
+
+```
 # GCC-PREFLIGHT: load gateway call contract before any call_tool use
 → Read docs/standards/gateway-call-contract.md   (one file, ~60L, ~250 tokens — closes 6 recurring tool-call error classes)
 
