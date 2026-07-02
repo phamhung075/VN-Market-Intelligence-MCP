@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-02T13:01:21Z",
-    "updated_by": "pm",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "[pm TOKEN-ECONOMY-TICK-PREFLIGHT closeout] All 3 WUs shipped: WU-1 f7d34918, WU-2 0d71d79c, WU-3 9a8e7062. Operational reminder: cron Jobs 1+2 prompts (self-arm sequence, shell pre-gates, spawn branches) only take effect when session-scoped crons are re-armed (next /cron-detect-loop invocation or session restart)—current in-session crons still carry old prompts. QA backlog entry created for cron-dev-team.md SSOT divergence; router dispatches QA separately."
+    "status": "in_progress",
+    "updated_at": "2026-07-02T13:29:52Z",
+    "updated_by": "dev-team",
+    "active_task_id": "BCTC-HNX-SSL-HARDEN",
+    "next_agent": "dev-vps-crawls",
+    "note": "BCTC-HNX-SSL-HARDEN claimed — ops replaces VPS curl -k hotfix with --cacert pinned GlobalSign bundle + deploy-script ship. Premise corrected 2026-07-02 (no expiry cliff; missing-intermediate driver). Promote -> done on AC pass (verification ON fetch + openssl verify rc=0). [scope split: deploy user-gated, worker dev-vps-crawls repo-only]"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9879,13 +9879,11 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "BCTC-HNX-SSL-HARDEN",
         "title": "Replace VPS bctc curl -k with --cacert pinning + add missing GlobalSign intermediate to HNX served chain",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "owner": "po",
         "route_to": "ops",
         "type": "FIX",
@@ -9905,12 +9903,16 @@
         "desc": "PREMISE CORRECTED (recon docs/vps-sources/hnx-tls-chain-2026-07-02.txt, 2026-07-02): HNX renewed the leaf cert Jun 18 2026, NotAfter Jan 3 2027 — there is NO 2026-07-07 expiry cliff; deadline pressure removed, priority downgraded high->medium (security-hardening debt, not an outage race). REAL driver: the HNX server omits the GlobalSign RSA OV SSL CA 2018 intermediate from the served chain (openssl verify code 21 unable-to-verify-first-cert), so the June-1 hotfix (commit e22427aa) still runs insecure curl -k (cert verification OFF = MITM exposure) in /root/fetch-bctc.sh on the VPS. Harden: bundle the GlobalSign RSA OV SSL CA 2018 intermediate + root into a CA bundle and replace curl -k with curl --cacert <bundle> pinning in vps-scripts/fetch-bctc.sh; ensure scripts/deploy-vinahost.sh ships the bundle. AC: bctc fetch succeeds with cert verification ON (no -k), openssl verify returns 0 against the pinned bundle, and fetch keeps working past 2026-07-07 (leaf valid to 2027-01-03).",
         "deps_satisfied_at": "2026-07-02T11:20:56Z",
         "recon_note": "[router 2026-07-02] Dependency FIX-BCTC-VPS-FETCH-LEG-DEAD DONE -> dispatchable (route ops). PREMISE CORRECTED by recon evidence (docs/vps-sources/hnx-tls-chain-2026-07-02.txt): HNX renewed leaf cert Jun 18 2026, NotAfter Jan 3 2027 -> NO 2026-07-07 expiry cliff. Remaining driver: server omits GlobalSign RSA OV SSL CA 2018 intermediate (openssl verify code 21) -> curl -k workaround still live in /root/fetch-bctc.sh. Deadline pressure removed; PO may re-rank priority.",
-        "next_agent": "ops",
+        "next_agent": "dev-vps-crawls",
         "promoted_at": "2026-07-02T13:23:04Z",
         "promoted_by": "po",
-        "rerank_note": "[po 2026-07-02 dev-team tick T13:07Z] Re-ranked high->medium: router-corrected recon falsified the 2026-07-07 expiry-cliff premise (leaf valid to 2027-01-03). Remaining value = eliminate live insecure curl -k on the VPS fetch leg (reduce security debt per standing mandate). Deps satisfied (FIX-BCTC-VPS-FETCH-LEG-DEAD DONE), recon complete, size S, ops-route, disjoint zone from in_progress FIX-BCTC-ENRICHER-STUCK-BACKLOG — cleanest groomed candidate for the one free WIP slot; promoted backlog->ready."
+        "rerank_note": "[po 2026-07-02 dev-team tick T13:07Z] Re-ranked high->medium: router-corrected recon falsified the 2026-07-07 expiry-cliff premise (leaf valid to 2027-01-03). Remaining value = eliminate live insecure curl -k on the VPS fetch leg (reduce security debt per standing mandate). Deps satisfied (FIX-BCTC-VPS-FETCH-LEG-DEAD DONE), recon complete, size S, ops-route, disjoint zone from in_progress FIX-BCTC-ENRICHER-STUCK-BACKLOG — cleanest groomed candidate for the one free WIP slot; promoted backlog->ready.",
+        "claimed_at": "2026-07-02T13:26:46Z",
+        "claimed_by": "router",
+        "dispatch_note": "Dispatched ops 2026-07-02T13:26:46Z. FIX (size S) — replace curl -k in vps-scripts/fetch-bctc.sh with --cacert pinned bundle (GlobalSign RSA OV SSL CA 2018 intermediate + root); scripts/deploy-vinahost.sh ships the bundle; redeploy to VPS /root/fetch-bctc.sh. Recon: docs/vps-sources/hnx-tls-chain-2026-07-02.txt. Accepts: fetch OK with verification ON (no -k); openssl verify rc=0 against pinned bundle; leaf valid to 2027-01-03 so no 07-07 race. SCOPE SPLIT 2026-07-02T13:29:52Z: live-VPS deploy denied by permission classifier (remote prod write, user-gated) — worker re-routed ops->dev-vps-crawls, repo-only (bundle + script edits + offline openssl verify, commit, NO ssh/deploy). Deploy = user runs scripts/deploy-vinahost.sh. Row stays IN_PROGRESS -> flip to review/deploy-pending on worker return."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
