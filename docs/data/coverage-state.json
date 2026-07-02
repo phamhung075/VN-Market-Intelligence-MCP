@@ -2,7 +2,7 @@
   "_schema": "v1",
   "_ssot": true,
   "_updated_by": "news-scout",
-  "_updated_at": "2026-07-02T05:07:00Z",
+  "_updated_at": "2026-07-02T08:10:00Z",
   "_eod_completed": "2026-06-04T16:08:37Z",
   "tickers": {
     "VNM": {
@@ -135,7 +135,7 @@
     },
     "BSR": {
       "last_covered_news_scout": "2026-07-02T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-15T00:06:37Z"
+      "last_covered_market_watcher": "2026-07-02T08:09:00Z"
     },
     "PLX": {
       "last_covered_news_scout": "2026-07-02T05:07:00Z",
@@ -147,7 +147,7 @@
     },
     "DBC": {
       "last_covered_news_scout": "2026-07-02T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-15T00:06:37Z"
+      "last_covered_market_watcher": "2026-07-02T08:09:00Z"
     },
     "GVR": {
       "last_covered_news_scout": "2026-07-02T05:07:00Z",
@@ -155,7 +155,7 @@
     },
     "BDI": {
       "last_covered_news_scout": "2026-07-02T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-15T00:06:37Z"
+      "last_covered_market_watcher": "2026-07-02T08:09:00Z"
     },
     "DLC": {
       "last_covered_news_scout": "2026-07-02T05:07:00Z",

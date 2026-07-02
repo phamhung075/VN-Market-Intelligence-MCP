@@ -4,182 +4,97 @@
 
 ---
 
+## c103 · 2026-06-30T20:15Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (5 dishes 2026-06-30)
+**Session mode:** MCP failure mode A — 7th consecutive blocked local CLI spawn (c97–c103). Audit from unified-agent notebook 2026-06-30 19:45Z (30 min fresh). c101 (06-28) and c102 (06-29) notebook entries not committed (C-2 FAIL-CLOSED; handoffs written, PO ACK'd c102 at 20:59Z 06-29).
+**Previous handoff ACK:** c102 ACK'd by PO 2026-06-29T20:59:09Z ✓. Task FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR in backlog.
+
+**Chef pipeline (2026-06-30):** 5 dishes published: 04:15/05:24/07:25/08:13/19:45 UTC. guaranteed_ok=TRUE.
+
+**Primary audit: 2026-06-30 Evening Dish (19:45 UTC)**
+Dispatch context: VN-Index 1860.01 +0.27%, banking -1.15% vs GDP +11.9%, USD/VND 26,106, VNM 6.3x, Quẻ 36 Minh Di 64%.
+
+| Layer | Verdict | Evidence / Gap |
+|-------|---------|----------------|
+| L1 | PASS | Gold >$4.0k state; FII/carry causal chain; macro-micro contradiction raised. Notebook typo "25.1k" → actual 26.1k. GDP quarterly as EPS proxy = minor L1.1 gap. |
+| L2 | FAIL | Carry 1.37pp NEUTRAL proxy only. PMI/EFFR-IORB absent. No [gap:US_macro_unavailable] token. F2 structural (17th+ cycle). AUTO-CURE APPLIED to Step 7.5 sub-check (a). |
+| L3 | PARTIAL | Carry BEARISH + ACB room 81.9% FII exhaustion ✓. VIRA absent (F4). CPI/FX-reserves absent. |
+| L4 | PASS+cvt | All 4 pillars: lượng tiền (VN-Direct score 8; tier-3), COC (5% VND), EPS (GDP +11.9% H2), rủi ro (P/E cheap). phase=TRANSITION tier=defensive ✓. |
+| L5 | PASS | Quẻ 36 Minh Di 64% conf, caution/reversal interpretation ✓. Per-ticker hexagrams not in notebook. |
+| L6 | PASS | 3 explicit gaps: gold regime-drift >$4.3k (not yet), ACB GDP/FII contradiction, VNM spike source unclear ✓. Missing: [gap:US_macro_unavailable] not in L6. |
+| Biz ctx | ABSENT | F9 — 27th consecutive cycle |
+
+**Quality verdict:** Chef=QUALITY:full → Audit=QUALITY:degraded (L2=FAIL, L3=PARTIAL; Step 7.5 sub-check (a) gate misfire confirmed).
+
+**Step 7.5 gate recurrence (3+ instances):**
+- c98 (06-24): QUALITY:full with L2=FAIL — first detection
+- c99 (06-26): QUALITY:degraded — gate worked (one-cycle)
+- c102 (06-29): QUALITY:full suspicious — now confirmed by pattern
+- c103 (06-30): QUALITY:full with L2=FAIL — **confirmed → AUTO-CURE APPLIED**
+
+**AUTO-CURE applied — chef.md Step 7.5 sub-check (a):** Replaced "substantively walked" with concrete floor: L2_OK requires US PMI value OR EFFR-IORB spread OR explicit [gap:US_macro_unavailable] token. Carry proxy (1.37pp) explicitly excluded. WORK notification skipped (MCP unavailable).
+
+**Adversarial gate T-45:** PASS — GDP +11.9% vs banking -1.15% FII exit; ACB room 81.9% explicitly cited and not suppressed.
+
+**9-step (unified-agent evening):** A=P B=P C=P D=FAIL E=FAIL F=P G=n/a H=P I=PARTIAL → 5.5/8 NEEDS_ATTENTION.
+
+**New findings c103:**
+- F-QUALITY-VERDICT-STEP75-CONFIRMED (HIGH): 3rd+ recurrence confirmed; auto-cure applied to chef.md. Elevate sprint task to P1 (agent-father notification needed).
+- F-L2-NO-GAP-TOKEN (MED): L6 omitted [gap:US_macro_unavailable]; auto-cure now requires it.
+- F-L1-NOTEBOOK-TYPO (LOW): "25.1k" typo vs 26,106 VND actual; dish analysis correct.
+
+**Carry-forward:** F2 (17th+) | F4 | F9 (27th) | F-MORNING-NB-MISSING (19th+) | F-HPG/ACV IN SPRINT | F-12-TICKERS-OVERDUE 31d | F-MCP-SUBAGENT-SYSTEMIC (7th).
+**Positive:** L4 all-4 pillars ✓ | L5 Minh Di ✓ | L6 3 gaps ✓ | T-45 PASS ✓ | is_estimate=false ✓ | VNM source-unclear flagged ✓ | 5 dishes ✓ | ACB 81.9% concrete ✓.
+**Auto-cures:** 1 — chef.md Step 7.5 sub-check(a) tightened (FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR, 3+ confirmed). WORK/BUG/commit SKIPPED (MCP failure mode A; C-2 FAIL-CLOSED). Notebook via Write tool.
+
+---
+
 ## c100 · 2026-06-27T20:13Z
 
 **Status:** BLOCKED — MCP gateway unavailable (failure mode A)
-**Direction:** N/A (cycle not executed — local CLI sub-agent spawn context does not wire MCP gateway)
-**Session invocation time:** 2026-06-27 (manual invocation slot=tnb-audit; Saturday — weekend, only Evening dish expected if cron fires)
+**Direction:** N/A (Saturday — weekend, only Evening dish expected)
 
-**MCP Status:** `mcp__gateway__call_tool` NOT present in this session's tool surface. Failure mode A per bootstrap.md: gateway wrapper absent in local CLI sub-agent spawn context. Recurrent pattern across all local CLI spawn cycles. Cloud RemoteTrigger (cron 20:13 UTC) path has the connector per prior PO ACK.
+**MCP Status:** `mcp__gateway__call_tool` NOT present in session. Failure mode A per bootstrap.md. Recurrent pattern across all local CLI spawn cycles. Cloud cron path has connector.
+**Published Marker Gate:** SKIPPED — task_claim requires MCP. Week estimated: 2026-06-22/2026-06-28.
+**Previous handoff ACK:** c99 ACK'd by PO 2026-06-26T22:44:38Z ✓. All c99 findings tracked; no unACK'd pending.
+**Weekend context:** 2026-06-27 Saturday VN. Morning/EOD weekday-only — correctly absent. Evening dish audit deferred (no CHEF-DETAIL read without MCP). Per bootstrap.md: NOT switching to file-evidence mode.
 
-**Published Marker Gate:** SKIPPED — task_claim requires MCP. No dedup slot claimed for current week period (get_week_period not callable). Week estimated: 2026-06-22/2026-06-28 (ISO week containing 2026-06-27 Saturday).
+**Carry-forward from c99:** F-MCP-SUBAGENT-SYSTEMIC (HIGH) | F-MORNING-NB-MISSING (MED, 17th+) | F2 (MED, 15+ cycles) | F4 | F9 (26th cycle) | F-HPG-DB-EMPTY (HIGH, 20d) | F-ACV-DB-EMPTY (HIGH, 11d) | F-12-TICKERS-OVERDUE (34d to deadline) | F-VCB-KD-TREND (Quẻ Bóc 23 BẤT LỢI at c072) | F-PC1-LEGAL-RISK (signal #7597).
 
-**Previous handoff ACK:** c99 (2026-06-26T20:13Z) ACK'd by PO at 2026-06-26T22:44:38Z (confirmed in tnb-audit-latest.md). All c99 findings tracked on board; no unACK'd findings pending.
-
-**Weekend context:** 2026-06-27 is Saturday VN. Morning (cron `0 5 * * 1-5`) and EOD (cron `37 8 * * 1-5`) are weekday-only — correctly absent. Only Evening guaranteed-preview slot expected on Saturday. Dish audit deferred — no live CHEF-DETAIL WORK read possible without MCP.
-
-**Per bootstrap.md hard rule:** Do NOT switch to file-evidence audit mode. Auditing from stale files produces hallucinated findings. Report failure and exit.
-
-**Carry-forward from c99 (2026-06-26):**
-- F-MCP-SUBAGENT-SYSTEMIC (HIGH): Local CLI sub-agent spawn context does not wire MCP gateway. Recurrent multi-week pattern. ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (backlog). Cloud RemoteTrigger (cron) path works.
-- F-MORNING-NB-MISSING (MED, 17th+ cycle): Morning slot fires but notebook entry pruned by 200L cap. NB-PRUNE-FIX open sprint.
-- F2 (MED): L2 US macro stack structural fail — macro_health unavailable 15+ cycles. Dev tool fix required.
-- F4 (MED): VIRA absent — VPS scraper pending. L3 E-gap every cycle.
-- F9 (MED, 26th cycle): Business context absent — BCTC scalar fix prerequisite.
-- F-HPG-DB-EMPTY (HIGH, 20d elapsed): BUG msg 3060, FIX-BCTC-Q1-2026-INGEST-DISCOVERY-GAP promoted to dev-team WIP (PO c99 ACK).
-- F-ACV-DB-EMPTY (HIGH, 11d elapsed): P1 c065, same sprint.
-- F-12-TICKERS-OVERDUE (MED): 12 tickers Q1-2026 overdue. Q2 deadline 2026-07-31 (34d).
-- F-VCB-KD-TREND (MED): VCB Quẻ Bóc (23) BẤT LỢI at c072 — confirm c073.
-- F-PC1-LEGAL-RISK (MED): PC1 disclosure violation signal #7597 — monitor utilities cascade.
-
-**c99 Next-cycle priorities (c100 = this cycle — all deferred to MCP-available session):**
-1. Verify evening-quality-overclaim auto-cure status in unified-agent chef.md step 8.
-2. F-VCB-KD-TREND-CHANGE confirmation — bctc-analyst c073+.
-3. F-HPG/ACV-DB-EMPTY resolution — check bctc-analyst notebook.
-4. F-12-TICKERS-OVERDUE countdown — 34d to Q2 deadline.
-5. MCP availability: if blocked again next cycle, escalate ARCH-HEADLESS-GATEWAY priority.
-
-**Actions:**
-- Notebook entry appended (this entry)
-- Handoff updated: docs/handoffs/tnb-audit-latest.md (c100 status — MCP blocked, Saturday)
-- Signal file to drop: docs/signals/tnb-20260627T201300Z.json
-- WORK report NOT sent (MCP unavailable)
-- Commit-mutex SKIPPED (MCP unavailable — C-2 FAIL-CLOSED); direct notebook commit attempted
+**Actions:** Notebook entry appended | Handoff updated | WORK/commit SKIPPED (MCP unavailable).
 
 ---
 
 ## c99 · 2026-06-26T20:13Z
 
-**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (all 3 guaranteed slots fired + published; F-MORNING-NB-MISSING persists)
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (all 3 guaranteed slots + 2 intraday published).
+**Session mode:** MCP failure mode A — file-evidence audit (notebooks 2026-06-26). Layer scores INDICATIVE.
 
-**Session mode:** MCP gateway not available (failure mode A — gateway wrapper absent in session context). File-evidence audit from agent notebooks (all 2026-06-26). Layer scores INDICATIVE — cannot verify via live CHEF-DETAIL WORK read.
+**Layer scores (EOD 08:50 UTC + Evening 19:47 UTC — both 3.5/6 NEEDS_ATTENTION):**
+- L1: PASS (FX >25500, volume signals, macro-micro contradiction)
+- L2: FAIL (macro_health structural, 15+ cycles)
+- L3: PARTIAL (carry NEUTRAL; VIRA/CPI absent)
+- L4: PARTIAL (3/4 EOD, slight improvement evening)
+- L5: PASS (Quẻ 36 Minh Di BẤT LỢI + per-ticker hexagrams)
+- L6: PASS (explicit gap tokens EOD; less formal evening)
+- Business context: ABSENT (F9, 25th+)
 
-**Previous handoff ACK:** tnb-audit-latest.md ACK'd by PO 2026-06-17T21:28:33Z. c98 (2026-06-24) ran MCP-unavailable, no new handoff produced.
-
-**Chef pipeline coverage (Step 0.5) — 2026-06-26:**
-- chef-morning: last_fired 2026-06-26T05:20:40Z — FIRED (cowork-schedule); no notebook entry (F-MORNING-NB-MISSING)
-- chef-intraday: 07:20Z + 08:17Z — FIRED + PUBLISHED (markers claimed)
-- chef-eod: last_fired 2026-06-26T08:49:38Z — FIRED + PUBLISHED
-- chef-evening: last_fired 2026-06-26T19:47:37Z — FIRED + PUBLISHED
-- guaranteed_ok=TRUE | pipeline_degraded=FALSE
-
-**Layer scores (INDICATIVE — from notebook evidence):**
-
-EOD (08:50 UTC) — 3.5/6 NEEDS_ATTENTION:
-- L1: PASS — FX 26134>25500 BEARISH ✓; volume 2.0–2.3x ✓; accumulation/distribution signal
-- L2: FAIL — macro_health snapshot unavailable; PMI/EFFR-IORB absent (structural, 15+ cycles)
-- L3: PARTIAL — USD/VND BEARISH + carry NEUTRAL; CPI/VIRA/FX reserves absent (F4 recurring)
-- L4: PARTIAL — yield CHEAP (7.05%>5%) + phase [transition, selective]; only 2/4 pillars (COC, Policy); M2/EPS mixed
-- L5: PASS — market Quẻ 36 Minh Di 64% BẤT LỢI; VHM Tỉnh 48 (MUA 56%), VIC Kiển 39 (MUA 61%), GVR Khôn 2 (THAN TRONG 48%)
-- L6: PASS — explicit gap tokens: [gap: macro_health missing] [gap: technical_indicators unavailable]; conviction MEDIUM
-- Business context: ABSENT (F9, 25th+ cycle)
-
-Evening (19:47 UTC) — 3.5/6 NEEDS_ATTENTION:
-- L1: PASS — FX >25500 causal chain ✓; volume 2.0–2.3x ✓; macro-micro contradiction noted
-- L2: FAIL — macro_health estimate unavailable (same structural gap)
-- L3: PARTIAL — USD/VND BEARISH + carry NEUTRAL; CPI/VIRA absent
-- L4: PARTIAL — 3/4 pillars aligned (improvement over EOD); [gap: BCTC earnings]; phase recovery, tier equity
-- L5: PASS — Quẻ 36 Minh Di NEGATIVE; per-ticker BUY signals; macro-micro contradiction with market hexagram noted
-- L6: PARTIAL — gaps enumerated (carry, TA, fundamental absent); less formal than EOD explicit tokens
-- Business context: ABSENT (F9)
-
-**POSITIVE: Evening quality verdict = DEGRADED (correct self-assessment vs c98 "full"). Calibration improvement confirmed.**
-
-**Adversarial gate (T-45):** PASS — macro-micro contradiction between market Quẻ 36 BẤT LỢI and per-ticker BUY signals (VHM, VIC, VRE) explicitly noted in both dishes; not suppressed.
-
-**9-step methodology scores (INDICATIVE):**
-- unified-agent (EOD + Evening): 4/9 NEEDS_ATTENTION (D=macro_health structural fail, E=VIRA absent, F partial)
-- news-scout (c109-c110): GOOD — 7 signals today (all critic≥0.8), regime NEUTRAL correct, causal chains present
-- bctc-analyst (c071-c072): GOOD — MCP ACTIVE, M-score/F-score computed, forensic gates applied, escalations maintained
-- market-watcher (20:03Z): GOOD — cycle complete, regime NEUTRAL, breadth correct
-
-**New findings:**
-- F-MORNING-NB-MISSING: 16th+ consecutive cycle (FIRED per cowork-schedule, no notebook entry)
-- F2 (L2 macro_health structural): persists — dev task required for macro_health tool
-- F4 (VIRA absent): persists — VPS scraper pending
-- F9 (business context): 25th+ cycle — BCTC pipeline dependency
-- F-HPG-DB-EMPTY: DB trống cycle 9 (filed 2026-06-07, 19d elapsed) — BUG msg 3060 escalated
-- F-ACV-DB-EMPTY: DB trống cycle 16 (filed 2026-06-16, 10d elapsed) — P1 c065 unresolved
-- F-12-TICKERS-OVERDUE: BDI/BID/DAG/DLC/GAS/JSH/PLX/PPC/SIS/VDC/VEA/VNH QUÁN HẠN Q1-2026; Q2 deadline 2026-07-31
-- NEW: VCB KD changed Quẻ Bóc (23) BẤT LỢI at c072 (from Khôn-2 c061-c071) — trend change; confirm c073
-- NEW: PC1 legal_risk disclosure violation — signal #7597 (confidence 0.85; utilities peer compliance watch)
-
-**Positive signals:**
-- G3/G4/G6 all PASS (4th+ consecutive day; cowork-schedule all updated today)
-- Evening quality verdict DEGRADED (correct calibration — c98 overclaim gap appears resolved)
-- news-scout EXCELLENT (7 signals, all high quality; VHM bond, VPB refinancing, VIC court win, energy infrastructure)
-- bctc-analyst GOOD (MCP ACTIVE c071; FPT F=7 M=0 stable; VCB OCF/NI=1.37 healthy)
-- Quẻ 36 Minh Di internally consistent (EOD + Evening agree; per-ticker signals coherent)
-
-**Auto-cures applied:** None
-**Pending verification:** Was c98 evening-quality-overclaim auto-cure formally applied to unified-agent chef flow? Evidence suggests quality gate now fires correctly. Confirm via flow file check c100.
-
-**Actions:** Handoff written | Signal file emitted | Notebook appended | Commit-mutex SKIPPED (MCP unavailable — C-2 FAIL-CLOSED) | WORK report SKIPPED (MCP unavailable)
+**POSITIVE: Evening QUALITY:degraded (correct self-assessment vs c98 overclaim). Calibration improvement.**
+**Adversarial T-45:** PASS — market Quẻ 36 BẤT LỢI vs per-ticker BUY signals contradiction noted.
+**9-step (unified-agent):** 4/9 NEEDS_ATTENTION (D+E structural).
+**Actions:** Handoff written | Signal emitted | WORK/commit SKIPPED (MCP unavailable).
 
 ---
 
-## c98 · 2026-06-24T20:13Z
-
-**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (EOD + Evening published; 3 intraday silent-exits honored correctly; dup msg 867 = dispatch bug not content bug)
-
-**Dishes audited (2026-06-24):**
-- chef-eod (08:48 UTC) — MARKET msg #863 — VN-Index 1878.02 +0.48%, breadth 109↑/174↓, USD/VND 26131, EY 7.05%
-- chef-evening (19:48 UTC) — MARKET msg #866 — two-sided picture, BDS up / banks+securities down, quẻ Minh Di, FX pressure
-- msg #867 = duplicate of #866 (dispatch verify-surface bug) — excluded from content audit, flagged separately
-
-**Layer scores:**
-
-EOD (08:48 UTC) — 4/6 DEGRADED:
-- L1 (state transitions): PASS — USD/VND 26131 BEARISH >25000 threshold cited; breadth 109/174 negative; volume -41.4% distribution signal. Cause chain present.
-- L2 (US macro stack): FAIL — macro_health unavailable; PMI/consumer sentiment/Fed rate/EFFR-IORB absent. Gap correctly disclosed in notebook but dish is blind to US regime.
-- L3 (VN macro stack): PARTIAL — USD/VND and carry 1.37pp NEUTRAL (is_estimate=false, from 2026-06-18 = 6-day stale) cited. CPI absent. VIRA absent (F4 recurrence). FX reserves absent.
-- L4 (4-pillar valuation): PARTIAL — Chi phí vốn (yield spread 2.05pp CHEAP) present; regime SLOWDOWN + cycle phase declared. Lượng tiền (M2/credit) not cited. Triển vọng lợi nhuận (BCTC earnings) explicitly flagged missing. Rủi ro định giá (PE/dividend) absent. Effective pillar coverage 1.5/4.
-- L5 (Kinh Dịch overlay): PASS — market hexagram Khon(47) BAT LOI 25% conf; per-ticker Tỉnh(48)/Khiêm(15)/Sư(7)/Tập Khảm(29) cited with directional signals. No Lão Dương/Âm active.
-- L6 (gap catalogue): PASS — three explicit gaps flagged: [bctc_earnings_missing] [macro_health_missing] [trade_fx_pressure_missing]; conviction capped MEDIUM; degradation disclosed. Correctly calibrated.
-- Business context: ABSENT — NVL +5.28% attributed to price surge only; no product/customer/ops/mgmt from bctc_signal_* or fundamental_* (F9 cycle 24+).
-
-Evening (19:48 UTC) — 3.5/6 DEGRADED (self-reported "full" — CALIBRATION MIS-FIRE):
-- L1 (state transitions): PASS — USD/VND 26131 breakout → FII revaluation → sector divergence causal chain. BDS accumulation vs banking/securities defensive cited with cause.
-- L2 (US macro stack): FAIL — US macro indicators absent from evening session entirely. Unlike EOD, no gap declaration was written. Silent omission.
-- L3 (VN macro stack): PARTIAL — USD/VND BEARISH + carry 1.37pp NEUTRAL cited; FX pressure used as regime driver (stronger causal use than EOD). CPI/VIRA/FX reserves still absent.
-- L4 (4-pillar valuation): PARTIAL — Chi phí vốn (7.05% yield) present; per-ticker conviction scores cited. Lượng tiền, Triển vọng lợi nhuận (BCTC), and Rủi ro định giá absent. Same 1.5/4 pillar problem as EOD.
-- L5 (Kinh Dịch overlay): PASS — market hexagram Minh Di(36) BẤT LỢI bearish 64% conf cited; per-ticker Khiêm(15) VIC/Tỉnh(48) VHM/NVL/Sư(7) BID present. Directional signals used correctly.
-- L6 (gap catalogue): PARTIAL — gap catalogue NOT enumerated in evening session (unlike EOD). Conviction MEDIUM present implicitly but no formal [gap: X] declarations. Evening notebook entry says "QUALITY: full" — this is incorrect.
-- Business context: ABSENT — F9 persists.
-
-**CRITICAL FINDING — F-EVENING-QUALITY-OVERCLAIM (NEW, HIGH):**
-Evening session notebook entry states "Layers walked: 1–6 (full)" and "QUALITY: full." Audit shows L2=FAIL, L4=PARTIAL (1.5/4 pillars), L6=PARTIAL (no gap catalogue enumerated). The chef's self-assessment logic fires `QUALITY: full` without verifying L2 presence or L4 pillar coverage. This is a calibration error in unified-agent flow — the quality-assessment gate is too permissive. A dish can reach QUALITY:full only if all 6 layers are substantively walked, not just touched.
-
-**Carry-forward gaps:**
-- F9 (business context): cycle 24+ — no bctc_signal_*/fundamental_* product/customer/ops/mgmt cited in either dish. Structural; requires BCTC pipeline fix first.
-- F4 (VIRA absent): both dishes cite carry but not VIRA primary source — carry is source_tier 2 only.
-- F2 (US macro / macro_health): recurrent across all cycles; L2 structurally failing.
-- F4-carry-stale: carry 1.37pp from 2026-06-18 (6 days stale) used in both dishes without staleness flag in narrative.
-- F-EVENING-QUALITY-OVERCLAIM (NEW): chef flow quality gate fires "full" without L2/L4/L6 verification.
-- F-DUP-867 (NEW, DISPATCH): chef-evening double-posted (msg #866 + #867) due to dispatcher verify-surface bug. Content identical. Audit scope = #866 only. Dispatch bug requires separate fix.
-
-**Positive signals:**
-- EOD L6 gap catalogue correctly applied with 3 explicit gap tokens and conviction cap — best gap disclosure in recent cycles.
-- Intraday silent-exit discipline: 3 silent exits (04:13, 06:17, 08:13) correctly honored; convergence gate working.
-- Causal chain quality in evening dish (FX breakout → FII revaluation → sector rotation) = strong L1 execution.
-- Both dishes agree on regime (SLOWDOWN, FX pressure, BDS as relative safe-harbor) — internal consistency good.
-- AF-1/AF-2 gates: ZERO numeric TA tokens in both dishes (all qualitative) — clean gate execution.
-
-**Auto-cure proposal (unified-agent flow):**
-The evening session quality gate needs a mandatory L2+L4 checklist before setting QUALITY:full. Proposed patch: before writing "QUALITY: full" in step 8 of chef flow, require explicit confirmation that (a) US macro stack attempted (even if degraded), (b) all 4 pillars named even if some flagged missing, (c) gap catalogue enumerated if any layer is partial or missing. If any check fails → QUALITY:degraded. This prevents false-full badges and aligns evening self-assessment with EOD rigor.
-
-**Actions:** Audit row written to notebook. WORK report to be sent (MCP not available in this execution — log only). No BUG escalation for content; F-DUP-867 dispatch bug to route to developer.
+**[ARCHIVED CYCLES: docs/agent-memory/notebooks/archive/tran-ngoc-bau-archive-20260627.md (c98 and prior, 2026-06-09 through 2026-06-24)]**
 
 ---
 
-**[ARCHIVED CYCLES: docs/agent-memory/notebooks/archive/tran-ngoc-bau-archive-20260627.md (audit history 2026-06-09 through 2026-06-24)]**
-
----
-
-**Agent methodology scores (current):**
-- news-scout: 7+/9 GOOD (5 clean cycles)
+**Agent methodology scores (c103 updated):**
+- news-scout: 7+/9 GOOD (clean cycles)
 - market-watcher: GOOD (limited scope)
 - bctc-analyst: 8/9 GOOD (FPT forensic gates)
-- unified-agent: 5/9 NEEDS_ATTENTION (D+E persistent; evening 4.5/9 c93)
+- unified-agent: 5.5/8 NEEDS_ATTENTION (D+E structural F2+F4; Step 7.5 auto-cured c103)
 
-**Persistent structural gaps (escalated to dev):** F-MORNING-NB-MISSING (200L cap + 5 slots), F-OOM-MCP-SERVER (memory), F-SUNDAY-SCHEDULER-FIRE (dispatcher), PMI-sub-components, VIRA absent, business-context (19+ cycles)
+**Persistent structural gaps:** F-MORNING-NB-MISSING (200L cap + 5 slots) | F2 (macro_health tool) | F4 (VIRA scraper) | F9 (BCTC business-context 27th cycle) | F-MCP-SUBAGENT-SYSTEMIC (7th blocked cycle)

@@ -7093,3 +7093,53 @@ To github.com:phamhung075/VN-Market-Intelligence-MCP.git
 [fleet-push] ahead (9) <= threshold (20) — nothing to do
 [fleet-push] ahead=10 threshold=20
 [fleet-push] ahead (10) <= threshold (20) — nothing to do
+[fleet-push] ahead=14 threshold=20
+[fleet-push] ahead (14) <= threshold (20) — nothing to do
+[fleet-push] ahead=0 threshold=20
+[fleet-push] ahead (0) <= threshold (20) — nothing to do
+[fleet-push] ahead=3 threshold=20
+[fleet-push] ahead (3) <= threshold (20) — nothing to do
+[fleet-push] ahead=8 threshold=20
+[fleet-push] ahead (8) <= threshold (20) — nothing to do
+[fleet-push] ahead=13 threshold=20
+[fleet-push] ahead (13) <= threshold (20) — nothing to do
+[fleet-push] ahead=0 threshold=20
+[fleet-push] ahead (0) <= threshold (20) — nothing to do
+[fleet-push] ahead=4 threshold=20
+[fleet-push] ahead (4) <= threshold (20) — nothing to do
+[fleet-push] ahead=10 threshold=20
+[fleet-push] ahead (10) <= threshold (20) — nothing to do
+[fleet-push] ahead=14 threshold=20
+[fleet-push] ahead (14) <= threshold (20) — nothing to do
+[fleet-push] ahead=17 threshold=20
+[fleet-push] ahead (17) <= threshold (20) — nothing to do
+[fleet-push] ahead=21 threshold=20
+[fleet-push] behind=0
+[fleet-push] creating worktree at /tmp/fleet-push-wt-1782860775
+[fleet-push] symlinked node_modules
+[fleet-push] running pre-push tsc check (bounded 180s)...
+
+> vn-market@1.0.0 check /private/tmp/fleet-push-wt-1782860775/apps/mcp-server
+> bun tsc --noEmit
+
+[fleet-push] tsc check passed
+[fleet-push] pushing 21 commits to origin/main...
+[pre-push] running: pnpm --filter vn-market check (tsc from apps/mcp-server)
+
+> vn-market@1.0.0 check /private/tmp/fleet-push-wt-1782860775/apps/mcp-server
+> bun tsc --noEmit
+
+[pre-push] tsc OK
+To github.com:phamhung075/VN-Market-Intelligence-MCP.git
+   34f7b4da..323b512b  HEAD -> main
+[fleet-push] push succeeded
+[fleet-push] ahead=4 threshold=20
+[fleet-push] ahead (4) <= threshold (20) — nothing to do
+[fleet-push] ahead=5 threshold=20
+[fleet-push] ahead (5) <= threshold (20) — nothing to do
+[fleet-push] ahead=10 threshold=20
+[fleet-push] ahead (10) <= threshold (20) — nothing to do
+[fleet-push] ahead=11 threshold=20
+[fleet-push] ahead (11) <= threshold (20) — nothing to do
+[fleet-push] ahead=14 threshold=20
+[fleet-push] ahead (14) <= threshold (20) — nothing to do

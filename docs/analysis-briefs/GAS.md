@@ -7,6 +7,7 @@
 2026-05-18 | Brent crude surge +2.91σ to 111.06 USD/bbl drives oil_gas sector momentum. GAS +5.15% to 94.000 VND breakout confirmed at watchlist trigger. Sector tailwind bullish, but regime TIGHTENING + carry -0.33% FII_OUTFLOW_RISK limits sustainability. Short-term tactical opportunity, medium-term macro headwind. | YoY: strongest momentum May 2026
 2026-05-01 | Oil & retail: Giá gas tăng thêm hơn 100.000 đồng bình 45kg, riêng Gas Petrolimex giữ giá ổn định. Bullish for GAS pricing power vs retail competition. | YoY: strong Q1 gas pricing environment
 2026-05-01 | Price: 75.200 VND (+2.31%) — strong momentum aligned with positive sector news
+2026-07-01 | Q2 earnings forecast bullish (9/10) — analyst consensus upgrades, oil/gas sector catalyst; Brent $73.19 NEUTRAL band | YoY: N/A
 
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-12 16:00 | Close: 76,500 VND | RSI: N/A | Vol: 1.56M (185% avg) | YoY: N/A

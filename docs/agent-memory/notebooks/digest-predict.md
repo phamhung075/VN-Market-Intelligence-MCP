@@ -1,13 +1,14 @@
 # Digest Predict — Notebook
 
-**Last updated:** 2026-06-29 17:37 UTC | **Sprint:** FEAT-PREDICTION-CLAIMS-DAILY-CADENCE
+**Last updated:** 2026-07-01 17:38 UTC | **Sprint:** FEAT-PREDICTION-CLAIMS-DAILY-CADENCE
 
 ## Known patterns / preferences
 
-- Kinh Dịch backtest 501 từ >=2026-05-25 — cần dev-team B-bucket wiring (carry-over 5+ chu kỳ)
-- FPT vị thế lỗ dai dẳng qua nhiều chu kỳ — theo dõi điều kiện cắt bớt
+- Kinh Dịch backtest 501 từ >=2026-05-25 — cần dev-team B-bucket wiring (carry-over 13+ chu kỳ)
+- FPT vị thế lỗ dai dẳng qua nhiều chu kỳ — 5.000cp @ 80.300, giá hiện 72.900 (lỗ ~9,2%)
 - cascade rules 0 evaluated — win-rate pipeline không hoạt động, cần kiểm tra
 - VPB rủi ro kiểm toán cho vay Lạng Sơn — chưa giải quyết
+- Calibration đang degrading: Brier 0.2135 (+0.076 vs tuần trước) — 2 FP mới hôm nay (id=10 FPT, id=11 VPB)
 
 ## Cycle — 15:05 UTC (catch-up one-off)
 
@@ -135,3 +136,50 @@
   - notebook write ✓
 - **carry_over**: FPT/VPB resolution 2026-07-01 (NGÀY MAI); POW resolution 2026-07-03; evidence UNTRUSTED systemic (LR=1.0 n=0 — 11th cycle); Brier 0,2135 degrading (tăng mạnh từ 0,1379) — cần dev-team calibration pipeline fix; backtest 501 gap (11th cycle)
 - **estimated_tokens**: 4500
+
+### Daily Predictions (17:37 UTC) 2026-06-30
+
+- **slot**: digest-daily (cron 30 17 * * * — H1 cuối kỳ)
+- **dedup_gate**: PASS — task claimed: published:digest-daily:2026-06-30 (claimed=true, TTL 86400s)
+- **regime**: NEUTRAL — VN-Index 1.860,01 (+5,04pts), BRENT $73,62 NEUTRAL, GOLD $4.044,3 BULLISH (safe-haven), USD/VND 26.106 BEARISH, carry 1,37pp NEUTRAL, EY 7,05% CHEAP, inv-clock 8/10 CORE_VN. Volatility NORMAL rv_20d=14,4% (71st pct). DAMPENING_ACTIVE=true (Brier 0,2135 +0,076 degrading, ×0,90).
+- **calibration**: Brier 0,2135 degrading (+0,076) | 65% bucket over-confident (50% actual) | DAMPENING_ACTIVE=true
+- **market_hexagram**: Quẻ 36 Minh Di BẤT LỢI 64% (TIÊU CỰC — ánh sáng bị thương, cần ẩn nhẫn)
+- **context**: Ngày cuối H1 2026. VN-Index +4% nửa đầu năm. GDP H2 dự báo +11,9% (lợi cho BID/CTG/VCB). VNM CRITICAL volume spike 6,3× (-2,32%). chain_catalyst: commodity inflation risk H2 (impact=7, COC:headwind, M2:headwind, phase=slowdown).
+- **screened** (score_date=2026-06-30 FRESH): CTG bearish=0,75, VCB bearish=0,75, VHM bearish=0,6203, VNM bearish=0,5305, SSI bearish=0,3867, BID bearish=0,2195 — tất cả UNTRUSTED LR=1,0 n=0
+- **decisions**:
+  - CTG bearish=0,75: Quẻ 8 Ty THUẬN LỢI 100% MÂU THUẪN trực tiếp + GDP +11,9% H2 state-bank-bullish + giá +0,15% → LOẠI
+  - VCB bearish=0,75: Quẻ 45 Tuy THUẬN LỢI MÂU THUẪN + GDP +11,9% H2 (VCB hưởng lợi trực tiếp) + giá +0,32% → LOẠI
+  - VHM bearish=0,6203: Quẻ 64 Vi Tế TRUNG TÍNH 38% (không xác nhận) + giá +1,00% phục hồi phản xu hướng + UNTRUSTED + validate_prediction_claims Sharpe>1,0 gate không thỏa (12th cycle dev gap) → LOẠI
+  - VNM bearish=0,5305: dưới ngưỡng P-4 (<0,6) dù CRITICAL volume spike 6,3× (-2,32%) → không đủ điều kiện
+- **claims_created**: 0 — honest NO-OP (qualify_count_effective=0 sau lọc mâu thuẫn)
+- **actions**:
+  - dedup gate task_claim ✓ (claimed=true, key=published:digest-daily:2026-06-30)
+  - log_agent_work id=1519 running ✓
+  - send_telegram WORK ✓ (NO-OP notice H1 cuối kỳ)
+  - notebook write ✓
+- **carry_over**: FPT/VPB resolution 2026-07-01 (NGÀY MAI — cần theo dõi sát); POW resolution 2026-07-03 (giá hiện 14.700 < mục tiêu 15.000); evidence UNTRUSTED systemic (LR=1,0 n=0 — 12th cycle liên tiếp — dev-team fix URGENT); Brier 0,2135 degrading; VNM anomaly volume cần theo dõi; GDP H2 +11,9% catalyst mới cho banking sector
+- **estimated_tokens**: 5500
+
+### Daily Predictions (17:38 UTC) 2026-07-01
+
+- **slot**: digest-daily (cron 30 17 * * * — H2 ngày đầu tiên)
+- **dedup_gate**: PASS — task claimed: published:digest-daily:2026-07-01 (claimed=true, TTL 86400s)
+- **regime**: NEUTRAL — VN-Index 1.867,21 (+7,2pts H2 debut), BRENT $71,37 (-2,70% NEUTRAL), GOLD $4.087 (+1,53% BULLISH risk-off), USD/VND 26.106 BEARISH, carry 1,37pp NEUTRAL, EY 7,05% CHEAP, inv-clock 8/10 CORE_VN. DAMPENING_ACTIVE=true (Brier 0,2135 +0,076 degrading, ×0,90).
+- **calibration**: Brier 0,2135 degrading (+0,076) | 65% bucket over-confident | DAMPENING_ACTIVE=true
+- **resolution_today**: id=10 FPT bearish p=0,75 → giá 72.900 (+3,85% vs ref 70.800) → **FALSE POSITIVE** | id=11 VPB bearish p=0,75 → giá 27.700 (+2,59% vs ref 26.550) → **FALSE POSITIVE**
+- **chain_catalyst**: FII đảo chiều mua ròng đầu tháng 7 (impact=7, conf=75) | Gold surge safe-haven (impact=8) | Oil supply easing -2,70% (impact=7)
+- **vol_regime**: NORMAL rv_20d=14,39% (31st pct) | ADL today +60 (vs -10 hôm qua) | breadth HISTORY_INSUFFICIENT (2 sessions)
+- **screened_fresh** (score_date=2026-07-01 FRESH): FPT bearish=0,6268 (TRUSTED LR=0,50 n=18), CTG bearish=0,75 (TRUSTED LR=0,50 n=18), VPB bearish=0,75 (TRUSTED LR=0,50 n=18), BID bearish=0,238 (<0,6), SSI bearish=0,387 (<0,6), MWG bullish=0,158 (UNTRUSTED <0,6)
+- **screened_stale**: VIC bullish=0,7667 (score_date 2026-05-27, 35d) → LOẠI stale
+- **decisions**:
+  - FPT bearish=0,6268: final_p=0,6268×0,50×0,90=0,28 (<50%); giá +3,85% hôm nay mâu thuẫn; claim id=10 vừa resolve FALSE POSITIVE cùng luận điểm → LOẠI
+  - CTG bearish=0,75: final_p=0,75×0,50×0,90=0,34 (<50%); GDP H2 +11,9% trực tiếp lợi NH nhà nước; FII mua ròng hôm nay → LOẠI
+  - VPB bearish=0,75: claim id=11 vừa resolve FALSE POSITIVE (+2,59%); FII mua ròng 300 tỷ VPB; volume 3,8× → LOẠI
+- **claims_created**: 0 — honest NO-OP (qualify_count_effective=0 sau lọc mâu thuẫn + xác suất <50%)
+- **actions**:
+  - dedup gate task_claim ✓ (claimed=true, key=published:digest-daily:2026-07-01)
+  - log_agent_work id=1536 running ✓
+  - send_telegram WORK ✓ (NO-OP notice với resolution report FP)
+  - notebook write ✓
+- **carry_over**: POW resolution 2026-07-03 (giá 14.600 < target 15.000 — cần theo dõi); Brier degrading (2 FP mới hôm nay — calibration sẽ worsens further); FPT portfolio lỗ user (5.000cp @ 80.300, giá 72.900, lỗ ~9,2%); evidence TRUSTED (LR=0,50 cho banking+FPT) nhưng mô hình bearish lag so với FII buying reversal H2; backtest 501 dev gap (13th cycle)
+- **estimated_tokens**: 5500
