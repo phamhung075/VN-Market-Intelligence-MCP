@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T01:21:01Z",
-    "_updated_by": "dev-team-drain",
+    "_updated_at": "2026-07-02T02:40:49Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -910,6 +910,28 @@
         "severity": "CRITICAL",
         "status": "TRIAGED",
         "payload_ref": null
+      },
+      {
+        "id": "qa-followup-signal-routing-rows-20260702",
+        "summary": "[qa-followup] drain-signals.md 0a-3 + po/triage-signals.md lack dedicated routing rows for types data-coverage-gap (to:ops) and deep_dive_result (to:po) — both fall to generic catch-all (log+skip+WORK). No silent loss, but no automated action. Add explicit routing rows.",
+        "severity": "INFO",
+        "status": "NEW",
+        "ts": "2026-07-02T02:40:49Z",
+        "from": "dev-team/qa-gate",
+        "to": "po",
+        "type": "repair_task_request",
+        "payload_ref": null
+      },
+      {
+        "id": "qa-followup-stagelog-bash-nobash-agent-20260702",
+        "summary": "[qa-followup] docs/agents/bctc-analyst/flow/stage-log-notify.md lines ~39/45 contain bash blocks (date/wc/git add+commit) that the no-Bash bctc-analyst tool package cannot execute — latent defect predating 881e38f1. Convert to Read/Write/call_tool steps or reassign the commit stage.",
+        "severity": "INFO",
+        "status": "NEW",
+        "ts": "2026-07-02T02:40:49Z",
+        "from": "dev-team/qa-gate",
+        "to": "po",
+        "type": "repair_task_request",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-06-30T23:29:07Z",
@@ -1123,7 +1145,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-02T01:59:40Z",
+    "_updated_at": "2026-07-02T02:40:49Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -9293,6 +9315,47 @@
         "status_note": "RAW-verified: apps/mcp-server/~/.bun/install/cache exists (26MB, untracked, gitignored .gitignore:5 -> no force-add risk). Dead debt + sole source of mock-guard --full exit-1 FALSE POSITIVE tripping every dev-team post-cycle. Fix = rm -rf 'apps/mcp-server/~'. Detector hardening ALREADY tracked as FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO (TODO) — do NOT duplicate. Verify: dir gone; scripts/audits/mock-guard.sh --full no longer hits that path. S4 qa chore — outside dev WIP count. | CLOSED 2026-07-02T01:59:13Z: dir deleted (RAW: dir gone, 0 tracked, mock-guard re-run zero ~-cache hits); DJ-GATE-1 journal STEP qa-S1 verified; S4 auto-close by dispatcher.",
         "completed_at": "2026-07-02T01:59:13Z",
         "completed_by": "qa"
+      },
+      {
+        "id": "FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT",
+        "status": "DONE",
+        "title": "sprint_goal over cap (26/15): 8 terminal sprints stranded by non-canonical status drift that defeats cold-evict (recurring 8x)",
+        "owner": "dev-team",
+        "next_agent": "developer",
+        "type": "FIX",
+        "zone": "multi",
+        "size": "M",
+        "priority": "medium",
+        "created_at": "2026-07-02T01:35:26Z",
+        "created_by": "dev-team-dispatcher",
+        "related": [
+          "FIX-SPRINT-STATUS-ENUM",
+          "feedback_coldevict_complete_status_drift"
+        ],
+        "status_note": "READY-FOR-QA 2026-07-02T01:59:40Z: commit f9e6f40d. AC-1: entries 26->18, 8 tokens normalized, evicted to archive .closed_sprint_goals[] (RAW-verified). AC-2: Stage 1d write-time guard in orchStateSchema.ts checkSprintGoalStatusCanonical() + orch-validate.mjs, live-proven both paths; post-cycle.md 4.2 bloat-trigger extended to sprint_goal.entries. Scoped tests 108/108, tsc clean, shellcheck clean; full-suite 54 fails pre-existing (CI-RED-RECONCILE). REMAINING: server-side orchStateStore.ts parity rides next user-approved mcp-server rebuild. | QA APPROVE 2026-07-02T02:40:49Z: all 4 ACs RAW-verified (scoped tests 5/5, Stage 1d neg-path fixture exit 2 / pos-path exit 0, shellcheck clean, tsc clean, entries=15 zero drifted). REMAINING (tracked, not blocking): server-side orchStateStore.ts Stage-1d parity rides next user-approved mcp-server rebuild.",
+        "review_note": "READY-FOR-QA 2026-07-02T01:59:40Z: commit f9e6f40d. AC-1: entries 26->18, 8 tokens normalized, evicted to archive .closed_sprint_goals[] (RAW-verified). AC-2: Stage 1d write-time guard in orchStateSchema.ts checkSprintGoalStatusCanonical() + orch-validate.mjs, live-proven both paths; post-cycle.md 4.2 bloat-trigger extended to sprint_goal.entries. Scoped tests 108/108, tsc clean, shellcheck clean; full-suite 54 fails pre-existing (CI-RED-RECONCILE). REMAINING: server-side orchStateStore.ts parity rides next user-approved mcp-server rebuild.",
+        "completed_at": "2026-07-02T02:40:49Z",
+        "completed_by": "qa"
+      },
+      {
+        "id": "FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH",
+        "title": "bctc-analyst cannot dispatch ESC-3/ESC-4 escalations — flow mandates a jq | scripts/orch-apply.sh .signal_queue write but the analyst runtime has NO Bash (only Read/Write/Edit/call_tool). RECURRING: HVN Q1-2026 ESC-4 blocked (msg 3116), FPT Q1-2026 E3-cache verify skipped (no shell/compute tool). Fix: re-route escalation dispatch through a Write-based signal FILE that the dev-team drain converts to signal_queue (analyst HAS Write, same pattern as its routine signals), OR grant Bash via agent-father.",
+        "type": "FIX",
+        "priority": "high",
+        "status": "DONE",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "route_to": "agent-father",
+        "created_at": "2026-07-02T00:36:11Z",
+        "created_by": "po-triage-signals",
+        "origin_signal": "bctc_signal_HVN_20260702_routine (msg 3116, signal_id 8195)",
+        "status_note": "[dispatcher 2026-07-02T00:56:13Z] agent-father DONE, Option A — ESC-1..5 dispatch re-routed to docs/signals/ file writes via Write tool (bctc-analyst has no Bash; orch-apply.sh contract unreachable). Commit 881e38f1, 6 files (bctc-analyst main/esc-coverage-guard/deep-dive-opus + dev-team drain-esc-dispatch dual-source row.source branch + drain-signals source=file tag + DJ journal). RAW-verified by dispatcher: commit stat matches 6 files, DJ-GATE-1 journal grep hit. Production precedent confirmed: processed/bctc-analyst-20260630T151500Z.json drained end-to-end. | QA APPROVE 2026-07-02T02:40:49Z: commit 881e38f1 verified — 3 ESC write points converted to Write(docs/signals/), tool surface matches no-Bash package, drain routing closed for esc-deep-dive-request, frontmatter intact. Two pre-existing non-blocking gaps signalled to po (routing rows for data-coverage-gap/deep_dive_result; stage-log-notify.md bash blocks).",
+        "started_at": "2026-07-02T00:43:24Z",
+        "assigned_to": "agent-father",
+        "review_note": "[dispatcher 2026-07-02T00:56:13Z] agent-father DONE, Option A — ESC-1..5 dispatch re-routed to docs/signals/ file writes via Write tool (bctc-analyst has no Bash; orch-apply.sh contract unreachable). Commit 881e38f1, 6 files (bctc-analyst main/esc-coverage-guard/deep-dive-opus + dev-team drain-esc-dispatch dual-source row.source branch + drain-signals source=file tag + DJ journal). RAW-verified by dispatcher: commit stat matches 6 files, DJ-GATE-1 journal grep hit. Production precedent confirmed: processed/bctc-analyst-20260630T151500Z.json drained end-to-end.",
+        "completed_at": "2026-07-02T02:40:49Z",
+        "completed_by": "qa"
       }
     ],
     "done_verified": [],
@@ -9486,43 +9549,6 @@
         "dispatched_at": "2026-07-01T23:04:58Z",
         "route_note": "dispatcher route-corrected: STEP1 refine_bctc_md (leaf worker, 8 chunks resumable), STEP2 dev-mcp-server (bctc-analyst lacks Bash for reingest script) — PO desc already hedged STEP2",
         "review_note": "[dispatcher 2026-07-02T00:20:47Z] EXECUTED, DoD BLOCKED by NEW bug -> FIX-BCTC-BANK-BS-SECTION-CLASSIFIER. Refine 56/56 DONE finalized (rows_parsed=440, effective_status=PARTIAL/BEG7-override). STEP2 reingest --apply exit 0, guard passed, finalize re-ran DELETE+INSERT (440 bctc_table_rows). Non-regression PASS: VCB/FPT byte-identical before/after. DoD NOT MET: CTG total_assets still 0 — NOT a refine failure: refined markdown contains TONG TAI SAN CO=2,924,176,928 (trieu, =2.924e15 VND, internally consistent with unit-0003 NO PHAI TRA+VON CHU SO HUU sum). Root cause: finalize section classifier drops all unit-0002 rows (pages 4-5 absent from bctc_table_rows) and mistags unit-0003 (8/29 as general); 0 balance_sheet-tagged rows vs VCB 57. RAW-corroborated by dispatcher post-apply. Residual scars carried to QA notes: unit-0002 row-misalignment flags, unit-0035/unit-0051 honest-NULLs (designed PASS)."
-      },
-      {
-        "id": "FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH",
-        "title": "bctc-analyst cannot dispatch ESC-3/ESC-4 escalations — flow mandates a jq | scripts/orch-apply.sh .signal_queue write but the analyst runtime has NO Bash (only Read/Write/Edit/call_tool). RECURRING: HVN Q1-2026 ESC-4 blocked (msg 3116), FPT Q1-2026 E3-cache verify skipped (no shell/compute tool). Fix: re-route escalation dispatch through a Write-based signal FILE that the dev-team drain converts to signal_queue (analyst HAS Write, same pattern as its routine signals), OR grant Bash via agent-father.",
-        "type": "FIX",
-        "priority": "high",
-        "status": "REVIEW",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "route_to": "agent-father",
-        "created_at": "2026-07-02T00:36:11Z",
-        "created_by": "po-triage-signals",
-        "origin_signal": "bctc_signal_HVN_20260702_routine (msg 3116, signal_id 8195)",
-        "status_note": "AC: an ESC-3/ESC-4 escalation fires and produces a signal_queue row / board entry WITHOUT any no-Bash BUG telegram — i.e. bctc-analyst can dispatch escalations from a Bash-less session. Cross-ref FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (auditor-predicate side of the same lock<->board gap). The HVN Q1-2026 ESC-4 deep-dive itself = low-urgency next-quarter one-off-profit (23.5%, 929.2 ty VND, likely non-recurring tax credit) monitoring; guard esc-deepdive:HVN:Q1-2026:ESC-4 was released cleanly so it self-heals on the next Bash-capable analyst cycle — no data lost. [dispatcher 2026-07-02T00:43:24Z] Dispatched to agent-father (FIX direct tier, WIP 2/2).",
-        "started_at": "2026-07-02T00:43:24Z",
-        "assigned_to": "agent-father",
-        "review_note": "[dispatcher 2026-07-02T00:56:13Z] agent-father DONE, Option A — ESC-1..5 dispatch re-routed to docs/signals/ file writes via Write tool (bctc-analyst has no Bash; orch-apply.sh contract unreachable). Commit 881e38f1, 6 files (bctc-analyst main/esc-coverage-guard/deep-dive-opus + dev-team drain-esc-dispatch dual-source row.source branch + drain-signals source=file tag + DJ journal). RAW-verified by dispatcher: commit stat matches 6 files, DJ-GATE-1 journal grep hit. Production precedent confirmed: processed/bctc-analyst-20260630T151500Z.json drained end-to-end."
-      },
-      {
-        "id": "FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT",
-        "status": "REVIEW",
-        "title": "sprint_goal over cap (26/15): 8 terminal sprints stranded by non-canonical status drift that defeats cold-evict (recurring 8x)",
-        "owner": "dev-team",
-        "next_agent": "developer",
-        "type": "FIX",
-        "zone": "multi",
-        "size": "M",
-        "priority": "medium",
-        "created_at": "2026-07-02T01:35:26Z",
-        "created_by": "dev-team-dispatcher",
-        "related": [
-          "FIX-SPRINT-STATUS-ENUM",
-          "feedback_coldevict_complete_status_drift"
-        ],
-        "status_note": "ROOT CAUSE (recurring 8x): sprint sign-off paths write non-canonical status tokens the cold-evict predicate never matches. scripts/orch-cold-evict.sh uses TERMINAL_SPRINT_STATUSES=DONE,DONE_VERIFIED,CANCELLED,DEFERRED,SKIPPED (SSOT apps/mcp-server/src/infrastructure/orchStateSchema.ts TERMINAL_SET) but 8 terminal entries carry drifted tokens -> never evict -> sprint_goal.entries grows unbounded (26, cap 15). The 8: BCTC-PROSE-EXTRACT(CLOSED), GO-FLEET-DEPLOY(COMPLETE), QUE-TOOLTIP-DRY/SSOT-INTEGRITY-PERIMETER/FRONTEND-ANALYSIS-HUB-CONSOLIDATION/DEFERRED-TASK-SCHEDULER-MVP(done), FB-COWORK-FOLD/PREDICTION-EVIDENCE-REVIVAL(done_verified). AC-1 mechanical: normalize the 8 -> canonical DONE/DONE_VERIFIED via jq|orch-apply.sh (bound --arg only), run scripts/orch-cold-evict.sh, verify entries 26->18. AC-2 durable: enforce canonical sprint status at write-time in orch-apply.sh local validation path (container rebuild is user-gated; server-side schema enforcement rides next approved rebuild). Scars: feedback_coldevict_complete_status_drift, feedback_negative_path_test_corrupts_live_ssot (fixtures only, never live SSOT). OUT OF SCOPE: PO sprint-closure review of stale OPEN/active sprints (CI-RED-RECONCILE, CROSS-SESSION-MULTI-TEAM-ORCH close candidates) — separate PO act.",
-        "review_note": "READY-FOR-QA 2026-07-02T01:59:40Z: commit f9e6f40d. AC-1: entries 26->18, 8 tokens normalized, evicted to archive .closed_sprint_goals[] (RAW-verified). AC-2: Stage 1d write-time guard in orchStateSchema.ts checkSprintGoalStatusCanonical() + orch-validate.mjs, live-proven both paths; post-cycle.md 4.2 bloat-trigger extended to sprint_goal.entries. Scoped tests 108/108, tsc clean, shellcheck clean; full-suite 54 fails pre-existing (CI-RED-RECONCILE). REMAINING: server-side orchStateStore.ts parity rides next user-approved mcp-server rebuild."
       }
     ],
     "qa": [],
