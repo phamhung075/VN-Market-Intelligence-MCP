@@ -2,19 +2,21 @@
  * ind-p1-momentum-nav.test.tsx
  *
  * TopNav SSOT count + new item guard for TASK-502-MOMENTUM-FRONTEND
- * (Động Lực P1 / /dashboard/momentum).
+ * (relabeled "Động Lực & Dòng Tiền" / /dashboard/momentum per
+ * MERGE-MONEY-RADAR-INTO-MOMENTUM — same array position/route, new copy
+ * since the merged page now also carries the former money-radar content).
  *
  * Asserts:
  *   1. ANALYST_NAV now has 27 items (was 26 before this addition).
  *   2. NAV_ITEMS total is 34 (ANALYST_NAV 27 + SYSTEM_NAV 7).
- *   3. 'Động Lực P1' item exists at /dashboard/momentum and is ENABLED.
+ *   3. 'Động Lực & Dòng Tiền' item exists at /dashboard/momentum and is ENABLED.
  *   4. The new item is the last in ANALYST_NAV (appended after 'Chỉ Báo').
  *   5. TopNav renders the new label in the DOM.
  *   6. The new tab renders as a NavLink (not a disabled span).
  *   7. Regression guard: 'Chỉ Báo' {to: "/dashboard/indicator-gauges"} still present.
  *
  * Sprint: BA-IND-P1-MOMENTUM-FRONTEND
- * Task:   TASK-502-MOMENTUM-FRONTEND AC-6
+ * Task:   TASK-502-MOMENTUM-FRONTEND AC-6 (relabel: MERGE-MONEY-RADAR-INTO-MOMENTUM AC8)
  */
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -39,7 +41,7 @@ function renderTopNav(initialPath = "/") {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — ANALYST_NAV count after TASK-502 addition", () => {
-  it("exports exactly 27 analyst nav items (TASK-502 added 'Động Lực P1')", () => {
+  it("exports exactly 27 analyst nav items (TASK-502 added 'Động Lực & Dòng Tiền')", () => {
     expect(ANALYST_NAV).toHaveLength(27);
   });
 });
@@ -60,22 +62,22 @@ describe("TopNav — NAV_ITEMS total after TASK-502 addition", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Suite 3: new 'Động Lực P1' item
+// Suite 3: new 'Động Lực & Dòng Tiền' item
 // ---------------------------------------------------------------------------
 
-describe("TopNav — 'Động Lực P1' new item", () => {
+describe("TopNav — 'Động Lực & Dòng Tiền' new item", () => {
   it("exists in ANALYST_NAV", () => {
-    const item = ANALYST_NAV.find((n) => n.label === "Động Lực P1");
+    const item = ANALYST_NAV.find((n) => n.label === "Động Lực & Dòng Tiền");
     expect(item).toBeDefined();
   });
 
   it("points to /dashboard/momentum", () => {
-    const item = ANALYST_NAV.find((n) => n.label === "Động Lực P1");
+    const item = ANALYST_NAV.find((n) => n.label === "Động Lực & Dòng Tiền");
     expect(item!.to).toBe("/dashboard/momentum");
   });
 
   it("is ENABLED (no comingSoon flag)", () => {
-    const item = ANALYST_NAV.find((n) => n.label === "Động Lực P1");
+    const item = ANALYST_NAV.find((n) => n.label === "Động Lực & Dòng Tiền");
     expect(item!.comingSoon).toBeUndefined();
   });
 });
@@ -85,10 +87,10 @@ describe("TopNav — 'Động Lực P1' new item", () => {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — new item is last in ANALYST_NAV", () => {
-  it("last ANALYST_NAV entry is 'Động Lực P1'", () => {
+  it("last ANALYST_NAV entry is 'Động Lực & Dòng Tiền'", () => {
     const last = ANALYST_NAV.at(-1);
     expect(last).toBeDefined();
-    expect(last!.label).toBe("Động Lực P1");
+    expect(last!.label).toBe("Động Lực & Dòng Tiền");
     expect(last!.to).toBe("/dashboard/momentum");
   });
 
@@ -99,8 +101,8 @@ describe("TopNav — new item is last in ANALYST_NAV", () => {
     expect(secondLast!.to).toBe("/dashboard/indicator-gauges");
   });
 
-  it("ANALYST_NAV[26] is 'Động Lực P1' (zero-based, appended after 'Chỉ Báo')", () => {
-    expect(ANALYST_NAV[26]!.label).toBe("Động Lực P1");
+  it("ANALYST_NAV[26] is 'Động Lực & Dòng Tiền' (zero-based, appended after 'Chỉ Báo')", () => {
+    expect(ANALYST_NAV[26]!.label).toBe("Động Lực & Dòng Tiền");
     expect(ANALYST_NAV[26]!.to).toBe("/dashboard/momentum");
   });
 });
@@ -110,9 +112,9 @@ describe("TopNav — new item is last in ANALYST_NAV", () => {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — rendered DOM includes new label", () => {
-  it("renders 'Động Lực P1' label", () => {
+  it("renders 'Động Lực & Dòng Tiền' label", () => {
     renderTopNav();
-    expect(screen.getByText("Động Lực P1")).toBeTruthy();
+    expect(screen.getByText("Động Lực & Dòng Tiền")).toBeTruthy();
   });
 });
 

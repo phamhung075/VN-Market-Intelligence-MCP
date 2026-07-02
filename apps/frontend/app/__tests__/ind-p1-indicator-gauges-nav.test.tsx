@@ -39,7 +39,7 @@ function renderTopNav(initialPath = "/") {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — ANALYST_NAV count after IND-P1 addition", () => {
-  it("exports exactly 27 analyst nav items (TASK-502 added 'Động Lực P1' after IND-P1 'Chỉ Báo')", () => {
+  it("exports exactly 27 analyst nav items (TASK-502 added 'Động Lực & Dòng Tiền' after IND-P1 'Chỉ Báo')", () => {
     expect(ANALYST_NAV).toHaveLength(27);
   });
 });
@@ -85,10 +85,10 @@ describe("TopNav — 'Chỉ Báo' new item", () => {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — new item is last in ANALYST_NAV", () => {
-  it("last ANALYST_NAV entry is now 'Động Lực P1' (TASK-502 appended after 'Chỉ Báo')", () => {
+  it("last ANALYST_NAV entry is now 'Động Lực & Dòng Tiền' (TASK-502 appended after 'Chỉ Báo'; relabeled MERGE-MONEY-RADAR-INTO-MOMENTUM)", () => {
     const last = ANALYST_NAV.at(-1);
     expect(last).toBeDefined();
-    expect(last!.label).toBe("Động Lực P1");
+    expect(last!.label).toBe("Động Lực & Dòng Tiền");
     expect(last!.to).toBe("/dashboard/momentum");
   });
 

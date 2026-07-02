@@ -45,7 +45,7 @@ describe("TopNav — ANALYST_NAV count after PAGE 19 addition", () => {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — NAV_ITEMS total after PAGE 19 addition", () => {
-  it("NAV_ITEMS is ANALYST_NAV (27) + SYSTEM_NAV (7) = 34 total (TASK-502 added 'Động Lực P1')", () => {
+  it("NAV_ITEMS is ANALYST_NAV (27) + SYSTEM_NAV (7) = 34 total (TASK-502 added 'Động Lực & Dòng Tiền')", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
     expect(NAV_ITEMS).toHaveLength(34);
   });
@@ -81,10 +81,10 @@ describe("TopNav — 'Tin nhắc đến' new item", () => {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — PAGE 19 item position (IND-P1 appended after)", () => {
-  it("last ANALYST_NAV entry is now 'Động Lực P1' (TASK-502 appended after IND-P1 'Chỉ Báo')", () => {
+  it("last ANALYST_NAV entry is now 'Động Lực & Dòng Tiền' (TASK-502 appended after IND-P1 'Chỉ Báo'; relabeled MERGE-MONEY-RADAR-INTO-MOMENTUM)", () => {
     const last = ANALYST_NAV.at(-1);
     expect(last).toBeDefined();
-    expect(last!.label).toBe("Động Lực P1");
+    expect(last!.label).toBe("Động Lực & Dòng Tiền");
     expect(last!.to).toBe("/dashboard/momentum");
   });
 

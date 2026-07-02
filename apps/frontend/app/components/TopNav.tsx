@@ -63,7 +63,7 @@ export type NavItem = {
  *   - /dashboard/reputation      → dashboard.reputation.tsx       EXISTS → enabled (label: "Uy tín DN") — TASK-17 PAGE 18
  *   - /dashboard/news-buzz            → dashboard.news-buzz.tsx             EXISTS → enabled (label: "Tin nhắc đến") — TASK17-PAGE19
  *   - /dashboard/indicator-gauges     → dashboard.indicator-gauges.tsx      EXISTS → enabled (label: "Chỉ Báo") — IND-P1-FRONTEND-GAUGE-CARDS
- *   - /dashboard/momentum             → dashboard.momentum.tsx              EXISTS → enabled (label: "Động Lực P1") — TASK-502-MOMENTUM-FRONTEND
+ *   - /dashboard/momentum             → dashboard.momentum.tsx              EXISTS → enabled (label: "Động Lực & Dòng Tiền") — TASK-502-MOMENTUM-FRONTEND; also carries the former /dashboard/money-radar content (MERGE-MONEY-RADAR-INTO-MOMENTUM)
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -95,7 +95,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/reputation", label: "Uy tín DN" },
   { to: "/dashboard/news-buzz", label: "Tin nhắc đến" },
   { to: "/dashboard/indicator-gauges", label: "Chỉ Báo" },
-  { to: "/dashboard/momentum", label: "Động Lực P1" },
+  { to: "/dashboard/momentum", label: "Động Lực & Dòng Tiền" },
 ];
 
 /**

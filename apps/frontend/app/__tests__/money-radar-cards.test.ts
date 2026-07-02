@@ -25,8 +25,8 @@ import {
   formatDivergenceBadge,
   formatDivergenceScalar,
   fetchMoneyRadarComposite,
-} from "~/routes/dashboard.money-radar";
-import type { MoneyRadarCompositeDto } from "~/routes/dashboard.money-radar";
+} from "~/routes/dashboard.momentum";
+import type { MoneyRadarCompositeDto } from "~/routes/dashboard.momentum";
 
 // ---------------------------------------------------------------------------
 // Fixtures — modeled on the live sample from the brief (2026-07-01)

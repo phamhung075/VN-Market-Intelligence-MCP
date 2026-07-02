@@ -32,8 +32,8 @@
   },
   "summary": {
     "pages": 35,
-    "rows": 45,
-    "LIVE": 35,
+    "rows": 49,
+    "LIVE": 39,
     "DEPTH_THIN": 6,
     "STALE_RISK": 2,
     "GAP": 1,
@@ -676,6 +676,62 @@
       "fix": "DEPTH_THIN: endpoint live, foreign_accum_z_market null until tickers have ≥5 days of flow data",
       "l3b_status": "WIRED",
       "l3b_note": "FreshnessBadge(daily) + honest-NULL wired TASK-502-MOMENTUM-FRONTEND"
+    },
+    {
+      "page": "/dashboard/momentum",
+      "elem": "score (Radar Dòng Tiền composite gauge)",
+      "endpoint": "/api/money-radar → score",
+      "store": "computed_money_radar (mcp-server compute)",
+      "writer": "get_money_radar_composite → REST endpoint",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": "generated_at",
+      "status": "LIVE",
+      "fix": null,
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) wired MERGE-MONEY-RADAR-INTO-MOMENTUM (backfills pre-existing zero-coverage gap opened 2026-07-01); renders non-null on live data (depth-independent, unlike momentum's DEPTH_THIN siblings)"
+    },
+    {
+      "page": "/dashboard/momentum",
+      "elem": "components.foreign_accum_z_market (Dòng Vốn Ngoại gauge)",
+      "endpoint": "/api/money-radar → components.foreign_accum_z_market",
+      "store": "computed_money_radar (mcp-server compute)",
+      "writer": "get_money_radar_composite → REST endpoint",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": "generated_at",
+      "status": "LIVE",
+      "fix": null,
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) wired MERGE-MONEY-RADAR-INTO-MOMENTUM; null only when coverage_pct < 0.5 (HN-6), not depth-gated like momentum's foreign_accum sibling"
+    },
+    {
+      "page": "/dashboard/momentum",
+      "elem": "components.rel_vol_z_20 (Khối Lượng Nội Địa gauge)",
+      "endpoint": "/api/money-radar → components.rel_vol_z_20",
+      "store": "computed_money_radar (mcp-server compute)",
+      "writer": "get_money_radar_composite → REST endpoint",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": "generated_at",
+      "status": "LIVE",
+      "fix": null,
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) wired MERGE-MONEY-RADAR-INTO-MOMENTUM"
+    },
+    {
+      "page": "/dashboard/momentum",
+      "elem": "divergence.flag (Tín Hiệu Phân Kỳ D1-D4 gauge)",
+      "endpoint": "/api/money-radar → divergence.flag",
+      "store": "computed_money_radar (mcp-server compute)",
+      "writer": "get_money_radar_composite → REST endpoint",
+      "cadence": "on-demand / daily",
+      "sla": "daily",
+      "asof": "generated_at",
+      "status": "LIVE",
+      "fix": null,
+      "l3b_status": "WIRED",
+      "l3b_note": "FreshnessBadge(daily) wired MERGE-MONEY-RADAR-INTO-MOMENTUM; flag=UNKNOWN (HN-4) is the honest-null-equivalent state, not GREEN"
     }
   ],
   "update_mechanic": {
