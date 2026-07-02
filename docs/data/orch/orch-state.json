@@ -4,8 +4,8 @@
     "last_mtime": "2026-06-06T16:22:41Z",
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-07-02T06:21:02Z",
-      "last_linecount": 42
+      "last_mtime": "2026-07-02T08:20:19Z",
+      "last_linecount": 44
     },
     "section_name": "po",
     "start_line": 8
@@ -283,8 +283,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T07:52:08Z",
-    "_updated_by": "dev-team-router-triage",
+    "_updated_at": "2026-07-02T08:20:19Z",
+    "_updated_by": "dev-team",
     "archive": [
       {
         "id": "sau-2026-07-02T06:16:45Z",
@@ -311,6 +311,21 @@
         "payload_ref": null,
         "triaged_at": "2026-07-02T06:21:02Z",
         "router_triage": "FALSE POSITIVE — router isolation probe 06:18Z: curl localhost:3001/ = 200; docker ps shows frontend Up 15 hours (healthy). /healthz 404 is endpoint naming, not an outage. Auditor CURL_ERR was probe-environment artifact."
+      },
+      {
+        "id": "sau-20260702-0635-b05",
+        "ts": "2026-07-02T06:35:33Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover stale 369.9h (check B-05)",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-07-02T06:56:30Z",
+        "resolution": "duplicate-superseded-by-B-05-FIX",
+        "triage_note": "Auditor RE-RAISE of B-05 (bctc-discover stale ~15d). Definitively triaged 2026-07-01 (B-05-FIX DONE, RAW SSH-verified): VPS infra healthy (3 systemd units active, 0 crashes); vn-bctc-fetch UNHEALTHY = KNOWN FALSE POSITIVE (non-HTTP systemd timer probed via HTTP, see FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES). Real roots: (1) external SSC portal 503 outage (B-05-FU-SSC-503-RETRY); (2) enricher last_attempt code defect fixed d9280133, deploy PARKED user-gated (FIX-BCTC-ENRICHER-STUCK-BACKLOG IN_PROGRESS). NO new task: false premise + duplicate."
       }
     ],
     "rows": [
@@ -979,21 +994,6 @@
         "router_triage": "KNOWN-PINNED duplicate: mcp-server memory crisis already fully triaged — fix d9280133 committed, single-svc rebuild USER-GATED (docker compose up -d --build mcp-server). No new action for po; standing reminder issued every user-facing message. restart_count still 1, no OOM-kill."
       },
       {
-        "id": "sau-20260702-0635-b05",
-        "ts": "2026-07-02T06:35:33Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "bctc-discover stale 369.9h (check B-05)",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "triaged_by": "po",
-        "triaged_at": "2026-07-02T06:56:30Z",
-        "resolution": "duplicate-superseded-by-B-05-FIX",
-        "triage_note": "Auditor RE-RAISE of B-05 (bctc-discover stale ~15d). Definitively triaged 2026-07-01 (B-05-FIX DONE, RAW SSH-verified): VPS infra healthy (3 systemd units active, 0 crashes); vn-bctc-fetch UNHEALTHY = KNOWN FALSE POSITIVE (non-HTTP systemd timer probed via HTTP, see FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES). Real roots: (1) external SSC portal 503 outage (B-05-FU-SSC-503-RETRY); (2) enricher last_attempt code defect fixed d9280133, deploy PARKED user-gated (FIX-BCTC-ENRICHER-STUCK-BACKLOG IN_PROGRESS). NO new task: false premise + duplicate."
-      },
-      {
         "id": "sau-20260702074500",
         "ts": "2026-07-02T07:45:00Z",
         "from": "system-auditor",
@@ -1012,7 +1012,7 @@
         "type": "anomaly",
         "summary": "rag-service chronic restart churn (245 restarts/22d, 2 in 5min burst 07:44-07:49Z) — re-caused from refuted A-12; PLAN-ONLY",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/rag-restart-churn-20260702.json"
       }
     ],
