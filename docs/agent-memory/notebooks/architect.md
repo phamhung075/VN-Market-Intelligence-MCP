@@ -1,8 +1,18 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-02 06:50 UTC | **Sprint:** DASH-CRON-RECHECK-TABLE
+**Last updated:** 2026-07-02 12:10 UTC | **Sprint:** MERGE-MONEY-RADAR-INTO-MOMENTUM
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-02T12:10Z — TOKEN-ECONOMY-TICK-PREFLIGHT (BLUEPRINT DONE)
+
+**Task:** TOKEN-ECONOMY-TICK-PREFLIGHT | SPRINT-S user_prioritized | zone: root (docs/agents + .claude/skills + scripts/agents-flow — NO apps/<service> touch)
+**BUILD-STANDARD:** not-applicable (bug-fix/perf-refactor, in-zone, no new primitives)
+**Live-verified the sprint's central unknown** (not trusted from the brief): raw `curl -X POST http://localhost:3000/mcp` JSON-RPC `tools/call`, **no prior `initialize` handshake**, succeeds — server runs stateless mode (`WebStandardStreamableHTTPServerTransport({})`, fresh transport+McpServer per request, no `sessionIdGenerator`). Response is SSE-framed (`event: message\ndata: {...}`); errors surface as `.result.isError==true` with a plain-text (non-JSON) message — **not** a JSON-RPC `.error` field (tested live with an unknown tool name). This closes the highest-risk unknown for WU-1/WU-2's `mcp-call.sh` shared helper.
+**3-WU split (matches brief), zone=root not apps/:** WU-1 `cowork-tick-preflight.sh` (presence+fire-election+one-shot-claim+blind-guard+slot-match, reusing `cowork-match-slots.js` unchanged — it's already adaptive-mode self-contained) · WU-2 `dev-team-tick-preflight.sh` (SF-1+fire-election; R6: `CronList`/`CronCreate` are CLI-native tools unreachable from a script, so the self-arm cron-detect-loop call cannot be scripted — must move into the CronCreate prompt text itself, the ONLY WU needing a functional prompt-string change) · WU-3 `auditor-tier1-probe.sh` (pure-shell, no MCP call needed — `docs/agents/system-auditor/probe.sh` already IS the evidence collector, extend not duplicate; fold in A-20 3x-probe).
+**11 risk notes written to handoff** incl.: R2 (WU-1 verdict must carry FULL slot/task objects, not IDs — `claim_due_scheduled_tasks` is one-shot atomic, re-calling on WORK-continuation would orphan rows), R4 (brief's WU-1 step-list vs flow-doc-update paragraph disagree on signal_queue scope — reconciled as read-only count in script, drain+route stays inline WORK-path-only), R5 (found pre-existing UNWIRED `scripts/agents-flow/cowork-tick-autosilent.sh` — incompatible design: no MCP mutex, raw git commit bypassing commit-mutex, contradicts telemetry.md Step 6.1 silent-skip rule — recommend retire), R8 (WU-2 brief omits explicit ERROR verdict; constraint #4 requires one, normalized), R10 (WU-3 heartbeat must NOT target the notebook — bypasses mutex-guarded settled-write — recommend new dedicated state file).
+**Output:** `docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md`
+**Next:** pm decomposes 3 WU tasks; WU-2 depends on WU-1's shared `mcp-call.sh`; WU-3 fully independent/parallelizable.
 
 ## 2026-07-02T06:50Z — ARCH-DASH-CRON-RECHECK-TABLE (SPLIT DONE)
 
@@ -27,18 +37,8 @@
 **Output:** `docs/architecture-briefs/2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md` + `[Architect] Brownfield Findings` → `docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md`
 **Next:** pm decomposes W1-W5, no dev-pdf-extractor task.
 
-## 2026-07-01T07:05Z — BA-PREDICTION-EVIDENCE-REVIVAL (SPLIT DONE)
-
-**Task:** BA-PREDICTION-EVIDENCE-REVIVAL | SPRINT-M | zone: multi (apps/mcp-server + docs/agents)
-**BUILD-STANDARD:** not-applicable (bug-fix/refactor + docs-only flow wiring, no new microservice)
-**4 live corrections to BA/PO spec:** `detectAccumulationStreaks` lives in `insiderCheckJob.ts` not `leadershipSignal.ts`; tools_package filenames are `<agent-id>.md` (news-scout/bctc-analyst/market-watcher) not news-analysis/financial-analysis/report-analysis/market-analysis.md (don't exist); real seeded evidence_type set is bctc_roe_ratio/roe_strong/valuation_premium/regulatory_compliance/report_overdue + price_momentum_5d + news_sentiment_stock/macro — NOT bctc_revenue_growth/pe_ratio/debt_equity (never seeded, tool-docstring examples only); FR-2.2 probe DONE live at design time (not deferred to dev).
-**FR-2.2 live-verified verdict:** SILENT BUG confirmed — `insider_transactions`=0 rows ever, `insiderCheckJob` reports status=success/rows_written=0 every run for ~2mo, root cause = VPS proxy 502 (congbothongtin.ssc.gov.vn upstream failing from the VPS itself). Fix scoped IN-ZONE per PO no-scope-balloon: extend `vpsProxyWatchdogJob.ts` with a 5th insider-freshness reader (makes the failure visible); decouple the actual VPS/SSC connectivity chase to a new BACKLOG item (needs live VPS SSH, may be an unfixable external-portal outage).
-**SPLIT — 2 parallel-safe hops, no file overlap:** Hop1 `apps/mcp-server` (dev-mcp-server): FR-1.1 `get_evidence_summary` direction+horizon fix (reuse `getLikelihoodRatios`, no interpolation) + FR-2.2 watchdog extension + FR-1.2 cadence weekly→daily (2-file coupling: `cronConfig.ts` + `WEEKLY_CADENCE_MS`/`shouldSkipRecoveryReplay` must move together or the upgrade silently no-ops). Hop2 `docs/agents` (agent-father, NOT dev-* — zone absent from system-map.json): FR-2.1 producer wiring (corrected seeded types) + FR-3 strip false Sharpe hard-gate language from `digest-predict/init.md`.
-**Output:** `docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md` + `[Architect] Brownfield Findings` → `docs/handoffs/BA-PREDICTION-EVIDENCE-REVIVAL.md`
-**Next:** pm decomposes into TASK hop1 (dev-mcp-server) + TASK hop2 (agent-father), no `blocks_on`.
-
 ---
 
-## Archive (pre-2026-07-01T07:05Z)
+## Archive (pre-2026-07-01T18:20Z)
 
-[Older cycles archived to git history: OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (2026-06-30T20:45Z, per-ticker anchor repair migration + writer guard + sanity pass 4), FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]
+[Older cycles archived to git history: BA-PREDICTION-EVIDENCE-REVIVAL (2026-07-01T07:05Z, evidence_type corrections + FR-2.2 VPS proxy 502 root cause + 2-hop split), OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (2026-06-30T20:45Z, per-ticker anchor repair migration + writer guard + sanity pass 4), FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]

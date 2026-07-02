@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-07-02T11:27:05Z",
-    "updated_by": "dev-team",
+    "updated_at": "2026-07-02T11:39:56Z",
+    "updated_by": "architect",
     "active_task_id": "TOKEN-ECONOMY-TICK-PREFLIGHT",
-    "next_agent": "architect",
-    "note": "TOKEN-ECONOMY-TICK-PREFLIGHT claimed by router (ready-lane dispatch, tick 11:07Z) — architect reviews brief then pm decomposes (SPRINT-S). WIP=2: enricher task parked on user-gated rebuild. BCTC-HNX-SSL-HARDEN waits in backlog (deps satisfied, premise corrected)."
+    "next_agent": "pm",
+    "note": "TOKEN-ECONOMY-TICK-PREFLIGHT — architect review DONE. Blueprint + 11 risk notes + file-level change map written to handoff. ZONE=root (no apps/<service> touch; route dev tasks to developer generic). PM decomposes 3 WU tasks next (WU-2 depends on WU-1 shared mcp-call.sh helper; WU-3 independent)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
