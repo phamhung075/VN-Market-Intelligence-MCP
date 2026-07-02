@@ -108,6 +108,11 @@ $SCP vps-scripts/fetch-bctc-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-bctc-loop.sh
 $SCP vps-scripts/vn-bctc-fetch.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-bctc-fetch.service
 # Sprint-1953d: deploy discover script (VPS-only before 1953a; now tracked in repo)
 $SCP vps-scripts/discover-bctc-urls-browser.py ${VH_USER}@${VH_IP}:/root/discover-bctc-urls-browser.py
+# BCTC-HNX-SSL-HARDEN: ship the GlobalSign intermediate+root bundle so
+# fetch-bctc.sh can pin TLS verification via --cacert /root/hnx-ca-bundle.pem
+# instead of the insecure -k flag (owa.hnx.vn omits the intermediate from
+# its served chain — see vps-scripts/hnx-ca-bundle.pem header for provenance).
+$SCP vps-scripts/hnx-ca-bundle.pem ${VH_USER}@${VH_IP}:/root/hnx-ca-bundle.pem
 rm "$TMP"
 
 $SSH << 'BCTCEOF'
