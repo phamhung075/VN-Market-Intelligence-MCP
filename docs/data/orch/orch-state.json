@@ -1011,7 +1011,7 @@
         "summary": "rag-service chronic restart churn (245 restarts/22d, 2 in 5min burst 07:44-07:49Z) — re-caused from refuted A-12; PLAN-ONLY",
         "severity": "MEDIUM",
         "status": "TRIAGED",
-        "payload_ref": "docs/signals/rag-restart-churn-20260702.json"
+        "payload_ref": "docs/signals/processed/rag-restart-churn-20260702.json"
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",
