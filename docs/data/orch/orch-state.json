@@ -7764,6 +7764,19 @@
         "next_agent": "ops",
         "created_at": "2026-07-02T02:57:39Z",
         "status_note": "AC: root-cause WHY the rag-service main process exits cleanly (ExitCode=0) ~10x/day and STOP the climb (fix the self-exit OR make the exit intentional+documented so RestartCount stabilizes); surface the churn past passive health checks. RECURRING: prior watch-only signals router-20260620T113917Z-rag-restart-watch + sau-c369-A21-rag-restart-100 (RestartCount=100) both TRIAGED with no root-cause task — count grew 100→226. DISTINCT from FU-RAG-DEPLOY-MEMORY (deploy-vs-16GB tradeoff, architect decision) + RAG-SERVICE-AVAIL-01-FIX (undeployed-by-design identification) — do NOT change rag deploy status here. Priority: WARN/medium. Source signal: rag-service-crashloop-restartcount-20260702 (dev-team/router-verify). || CORROBORATED 2026-07-02T08:07Z (PO triage, signal rtr-20260702-rag-churn): RestartCount now 245 (~11/day, was 226); burst of 2 clean restarts within 5min (07:44:30Z + 07:49:33Z). This restart window fired FALSE HIGH infra alert A-12 (telegram#3389 + auditor sau-20260702074500, \"api-gateway health unreachable\") — REFUTED by router RAW-probe (api-gateway HTTP 200 in 6ms, 9/9 downstream ok; aggregate health check hit mid-rag-restart). Evidence: docs/signals/rag-restart-churn-20260702.json. Confirms passive-health-masks-churn + false-infra-alert impact. Still PLAN-ONLY (no dispatch pre-approved)."
+      },
+      {
+        "id": "FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD",
+        "title": "FIX — enforce G-7 at the orch-apply WRITE GATE: .task_board.head was re-inflated with routing fields (2nd occurrence; po-s66 collapsed it 2026-06-15, dev-team re-inflated 2026-07-01). DeprecatedHeadStubSchema uses .passthrough() so routing keys pass Zod silently — reject active_task_id/next_agent/routing-status on .task_board.head at write time.",
+        "owner": "architect",
+        "next_agent": "architect",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "type": "FIX",
+        "priority": "medium",
+        "created_at": "2026-07-02T09:57:07Z",
+        "created_by": "po-s138",
+        "status_note": "PLAN-ONLY (anomaly-task-bridge + recurring-bug-escalation: 2nd head-drift re-inflation). AC: a write that sets routing fields (active_task_id!=null OR next_agent!=null OR status in the routing set) on .task_board.head is REJECTED by the write path (Zod DeprecatedHeadStubSchema tightened from .passthrough() to reject routing keys, and/or scripts/orch-apply.sh guard) with a clear error; the deprecated redirect stub (status=deprecated, canonical_moved_to=.head, active_task_id=null) still validates. Root: po-s66 retargeted 3 known writer scripts but the guard was doc-only (G-7 comment); a new writer (dev-team flow) bypassed it — find & fix that writer too. Files: apps/mcp-server/src/infrastructure/orchStateSchema.ts (DeprecatedHeadStubSchema), scripts/orch-apply.sh. No dispatch pre-approved."
       }
     ],
     "closed_sprints": [
@@ -9752,12 +9765,13 @@
       }
     ],
     "head": {
-      "status": "in_progress",
-      "active_task_id": "BA-PREDICTION-EVIDENCE-REVIVAL",
-      "next_agent": "architect",
-      "next_action": "multi-zone SPLIT (apps/mcp-server + docs/agents)",
-      "updated_by": "dev-team",
-      "updated_at": "2026-07-01T06:26:45Z"
+      "status": "deprecated",
+      "canonical_moved_to": ".head",
+      "deprecated_at": "2026-07-02T09:57:07Z",
+      "deprecated_by": "po-s138",
+      "active_task_id": null,
+      "next_agent": null,
+      "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
     "in_progress": [
       {
@@ -9947,8 +9961,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-01T22:58:23Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-07-02T09:57:07Z",
+    "last_triaged_by": "po-s138"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

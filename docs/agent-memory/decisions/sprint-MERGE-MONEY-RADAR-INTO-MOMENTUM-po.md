@@ -43,3 +43,14 @@
 - Silent vs escalate → escalate ONCE: 85% hard-cap crossing is a distinct state transition from the 82.66% climbing-warning I already sent (not spam).
 **why-decision:** Deploy is USER-APPROVAL-GATED and MUST NOT be worked around; PO's only in-boundary lever is the escalation + honest board disposition.
 **why-change:** no change from plan (carry-over said "if next tick ≥85% → re-escalate").
+
+### STEP po-S5 · po · 2026-07-02T09:57:07Z
+**task-id:** FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (+ board-hygiene: .task_board.head collapse, BA-PREDICTION-EVIDENCE-REVIVAL disposition)
+**what-done:** Collapsed re-inflated `.task_board.head` → non-routing deprecated stub (top-level `.head` untouched); recorded BA-PREDICTION-EVIDENCE-REVIVAL as abandoned/superseded; minted PLAN-ONLY write-gate guard (po-s138); moved orphan rag-churn signal → processed/.
+**what-considered:**
+- `.task_board.head`: delete key vs collapse to stub → collapse (schema `DeprecatedHeadStubSchema.optional()` allows absence, but po-s66 precedent + G-7 keep a redirect stub so a legacy reader sees `.head` redirect, not a phantom active_task_id).
+- BA-PREDICTION-EVIDENCE-REVIVAL: resurrect as backlog row vs abandon → abandon; no real board row ever existed; concrete work already on board (FIX-EVIDENCE-PIPELINE-STARVED real root + FIX-VPS-SSC-INSIDER-502 decoupled dep). Resurrecting = phantom-umbrella theater.
+- rag-churn signal: mint new task vs dedup → dedup; FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP already owns it (status_note corroborated 08:07Z) + signal_queue TRIAGED. Only file disposition remained.
+- Guard task: skip vs mint → mint PLAN-ONLY; 2nd head re-inflation (po-s66 fixed 1st) = recurring-bug-escalation; `.passthrough()` let routing keys bypass Zod at the write gate — doc-only G-7 is insufficient.
+**why-decision:** Single canonical head SSOT = top-level `.head`; a non-routing stub eliminates the dup-key/last-wins misread hazard while the guard task durably stops re-inflation at write time (not just doc).
+**why-change:** no change from plan — dev-team triage inputs #2/#3 handled exactly as scoped; RETURN=NOTHING (nothing dispatch-ready; WIP parked user-gated).
