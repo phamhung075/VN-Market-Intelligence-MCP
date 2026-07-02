@@ -112,6 +112,7 @@ Use `date -u` exclusively — same UTC source as the session log guard (1865a).
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 **6.** Update `docs/data/orch/orch-state.json` `.task_board` task status (atomic write per §2.3) → return:
+> Validator requires `head.active_task_id` to resolve to a real `task_board` entry (backlog/in_progress/ready/active_sprints). If the PM handoff task_id you set does not already exist as a row (e.g. a fresh sprint kickoff with no prior PM task), mint a `task_board.ready[]` entry for it in the SAME jq transform as the `.head` write — otherwise `orch-apply.sh` aborts with a dangling-reference validation error (verified 2026-07-02).
 ```
 ## RETURN
 DONE: Technical design complete, brownfield findings written to docs/handoffs/TASK_NNN.md

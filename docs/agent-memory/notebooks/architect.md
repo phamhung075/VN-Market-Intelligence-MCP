@@ -1,8 +1,19 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-01 18:20 UTC | **Sprint:** FIX-BCTC-BANK-SUMMARY-MAPPING
+**Last updated:** 2026-07-02 06:50 UTC | **Sprint:** DASH-CRON-RECHECK-TABLE
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-02T06:50Z — ARCH-DASH-CRON-RECHECK-TABLE (SPLIT DONE)
+
+**Task:** ARCH-DASH-CRON-RECHECK-TABLE | SPRINT-M user-prioritized | zone: multi (apps/mcp-server + apps/frontend, explicit BA SPLIT confirmed correct)
+**BUILD-STANDARD:** lean (both zones exist)
+**5 ARCH-RATIFY items resolved live** (not guessed): CN-1 job_name resolution = hybrid — static 16-pair reverse-map for WATCHDOG_MANIFEST jobs (verified only 1/16 pairs is a literal string match; a pure normalize-and-strip-"Job" heuristic provably fails on `summaryJob:daily`→CRONS-key `summaryDaily` since "Job" sits mid-string not as a suffix) + normalized-DISTINCT-scan fallback for the other ~68 non-manifest crons. CN-2 restricted-window/comma-list cadence = ONE generic algorithm (MIN successive delta across 6 `cron-parser`-sampled upcoming fires) — hand-verified it derives 10min for `vpsProxyWatchdog` (`*/10 2-8 * * 1-5`) and 30min for `restartCadenceAlert` (`15,45 * * * *`) with zero per-expression special-casing. CN-5 Layer-B SSOT = filesystem-read `.claude/commands/crons/*.md` ONLY.
+**Real brownfield correction to BA spec (FR-2.1 double-count):** BA named 3 Layer-B sources as disjoint (14 command files + cron-detect-loop's 4 crons + cron-cowork-team's 1 cron) — live read shows `cron-detect-loop/SKILL.md` and `cron-cowork-team/SKILL.md` are re-arm automation docs that VERBATIM-COPY cron values already declared in `cron-dev-team.md`/`cron-system-auditor.md`/`cron-cowork-team.md` (SKILL.md's own text: "SSOT cron values... re-sync if cadence changes there... values below are verbatim copies"). Parsing both would double-count 5 crons. Also found `cron-fb-market-poster.md` is DEPRECATED (2026-06-28 FB-COWORK-FOLD, folded into cowork-team `*/15` dispatcher) with ZERO standalone crons, and `cron-refine-bctc.md` uses a different comment-format header than the other 12 files — a naive single-regex Layer-B parser would silently miscount on both. AC-12's "14 files minimum" corrected to "13 live cron-bearing command files" — flagged to PM/QA, not silently patched.
+**New dependency decision:** `cron-parser` added (verified absent from repo entirely, not even transitively via `node-cron` which only depends on `uuid`) — `node-cron`'s public API has no next/prev-fire computation and its internal `convert-expression`/`time-matcher` modules are unexported (unsafe deep-import).
+**Perf flag (load-bearing, not optional):** dev-frontend's CN-4 choice (combine into existing loader, reuse the page's existing 5s auto-poll for the RECHECK mechanism) makes Zone-1 static-metadata memoization (cadenceMs/job_name_db resolution computed once per process, not per-request) a HARD requirement — flagged explicitly so dev doesn't skip it under time pressure.
+**Output:** `docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md` + `[Architect] Brownfield Findings` → `docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md`
+**Next:** pm decomposes 2 dev-* work units (dev-mcp-server ships first; dev-frontend can build against stub).
 
 ## 2026-07-01T18:20Z — ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING (AC-1 SPIKE DONE, zone re-pinned)
 
@@ -26,20 +37,8 @@
 **Output:** `docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md` + `[Architect] Brownfield Findings` → `docs/handoffs/BA-PREDICTION-EVIDENCE-REVIVAL.md`
 **Next:** pm decomposes into TASK hop1 (dev-mcp-server) + TASK hop2 (agent-father), no `blocks_on`.
 
-## 2026-06-30T20:45Z — OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (DESIGN DONE)
-
-**Task:** FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM | BUG-FIX | zone: apps/mcp-server/ + scripts/migrations/
-**BUILD-STANDARD:** not-applicable (bug-fix, no new microservice)
-**Root cause confirmed:** CONTAM-6 predicate `(open<100 OR low<100) AND close>=1000` misses whole-row class where ALL fields < 1000. `normalizeOhlcvToVnd` only fires at max(OHLC)<100; `detectAndNormalizeScaleFromPrevClose` blind when entire series contaminated (prevClose also dirty → ratio≈1).
-**A (repair migration):** per-ticker anchor (most recent clean bar close>=1000 in last 180d). Candidate: `anchor/row.close >= 100 AND row.close < 1000 AND close > 0`. Exclude INDEX_TICKERS. Dry-run + human-confirm + BEGIN IMMEDIATE txn. New file: `scripts/migrations/repair-ohlcv-unit-contamination-wholerow-lt1000.ts`.
-**B (reflow):** NONE needed. RS/ROC/52w = computed-on-read by Go TA microservice (source_tier=3 confirmed in tool code + schema has zero materialized RS cols). Post-repair gateway probe only.
-**C.1 (writer guard):** Add `fetchCleanReferenceCloseMap` (full-history `close>=1000` batched query) in `ohlcvWriteService.ts`. Use as `effectivePrevClose` when standard prevClose < 1000. Domain function `normalizeOhlcvToVnd` unchanged (stays pure). C.2: Pass 4 in `ohlcvSanityCheckJob.ts` — per-ticker anchor divergence scan flagging whole-row close<1000 class; index tickers excluded; joins existing hits[]/BUG Telegram path.
-**PM decomposition:** 4 tasks: CONTAM-10-MIGRATION / CONTAM-10-WRITER / CONTAM-10-SANITY (parallel) + CONTAM-10-EXEC (sequential: blocks on MIGRATION QA-PASS).
-**Key risk:** RISK-1 [HIGH] anchor picks contaminated bar if recent 180d window entirely contaminated — mitigated by dry-run per-ticker report showing anchor_close values for human review.
-**Output:** `docs/architecture-briefs/2026-06-30-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000.md` + `docs/handoffs/FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM.md`
-
 ---
 
-## Archive (pre-2026-06-30T20:45Z)
+## Archive (pre-2026-07-01T07:05Z)
 
-[Older cycles archived to git history: FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]
+[Older cycles archived to git history: OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (2026-06-30T20:45Z, per-ticker anchor repair migration + writer guard + sanity pass 4), FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]

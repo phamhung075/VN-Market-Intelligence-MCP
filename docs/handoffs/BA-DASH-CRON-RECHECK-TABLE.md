@@ -422,3 +422,44 @@ The architect must SPLIT this into two independent zones:
 | Standing: source/detail on MISSED/STALE | AC-29 |
 
 Total ACs: **29**
+
+---
+
+## [Architect] Brownfield Findings
+
+- **Zone:** multi — SPLIT into `apps/mcp-server/` (Zone 1) + `apps/frontend/` (Zone 2). Full brief: `docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md`
+- **BUILD-STANDARD:** lean (both zones already exist — new feature, not new service)
+
+**Verified paths (Zone 1):**
+- `apps/mcp-server/src/scheduler/cronConfig.ts` — 85 CRONS keys read live (not hardcoded in any output; count read at runtime).
+- `apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts:112-224` — `WATCHDOG_MANIFEST` (16 jobs) + `CANONICAL_WATCHDOG_JOB_NAMES`; existing public exports, read-only reuse, no modification.
+- `apps/mcp-server/src/infrastructure/db/cronJobRunStore.ts` — extend with 2 additive exports (`getLastRunForJob`, `getDistinctJobNames`); zero signature changes to existing exports.
+- `apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts` — exact pattern to mirror for `cronStatusHandler.ts`.
+- `apps/mcp-server/src/interface/mcp/server.ts:2125` — exact registration block to mirror for `GET /api/cron-status`.
+- `.claude/commands/crons/*.md` (14 files) — verified NOT uniform format; 2 files break a naive single-regex parse (see Design decisions).
+
+**Reuse patterns:**
+- Extend `cronJobRunStore.ts` rather than duplicate the `MAX(started_at)` query pattern already proven in `schedulerWatchdogJob.queryLastStartedAt`.
+- Read `WATCHDOG_MANIFEST` directly (import, no copy) for the 16-job cadence/threshold source of truth — guarantees AC-9 PARITY by construction rather than by convention.
+- `dashboard.orchestration.tsx`'s existing `revalidator` (line 888, already drives the page's 5s auto-poll) is reused for the RECHECK button — no second refresh mechanism built.
+
+**Design decisions (full detail + rationale in the brief):**
+- **CN-1 (job_name resolution):** hybrid — static 16-pair reverse-map (verified table in brief §2) + normalized-match against runtime `DISTINCT job_name` scan + honest CRONS-key-as-probe fallback.
+- **CN-2 (restricted-window cadence):** `cadenceMs` = MIN successive delta across next N=6 `cron-parser`-sampled occurrences — one generic algorithm, no per-expression special-casing (handles EC-2 + EC-4 uniformly).
+- **CN-3 (crashed status):** excluded from primary oracle (parity with existing watchdog filter); optional `reason` enrichment only.
+- **CN-4 (loader pattern):** combined into existing loader via `Promise.all` (parallel fetch); makes Zone-1 memoization load-bearing (see Risk R1).
+- **CN-5 (Layer-B parse):** filesystem-read at startup, memoized — **only** `.claude/commands/crons/*.md` (13 live files), NOT the 2 re-arm skill files (would double-count 5 crons — see Risk R2, a real correction to BA FR-2.1).
+- **New dependency:** `cron-parser` — verified absent from repo entirely; `node-cron`'s public API has no next/prev-fire computation and its internals are unexported/unsafe to deep-import.
+
+**Risk flags:** 7 flagged in the brief §5 — R1 (perf, memoization load-bearing), R2 (BA FR-2.1 double-counts Layer-B sources — AC-12 wording correction needed), R3 (2 of 14 command files break naive single-regex parse), R4 (new `cron-parser` dependency), R5 (3 manifest jobs inherit a pre-existing weekend-gap under-coverage — must NOT be "fixed" here, would violate AC-9 PARITY), R6 (DDD — no new violation), R7 (all changes additive, zero regression risk to `get_cron_health`/`GET /api/orchestration`).
+
+**Scan clean:** true ✓
+
+---
+
+## RETURN
+DONE: Technical design complete, brownfield findings written to `docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md`
+ZONE: multi — `apps/mcp-server/` + `apps/frontend/` (SPLIT, see brief §1)
+NEXT: pm | decompose into 2 dev-* work units (dev-mcp-server ships first; dev-frontend can build against a stub) per `docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md`
+HANDOFF: docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md
+PIPELINE: continue
