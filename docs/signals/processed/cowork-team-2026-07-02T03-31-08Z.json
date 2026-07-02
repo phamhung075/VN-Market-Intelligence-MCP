@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-07-02T03:31:08Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 12,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "OPEN",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "last_fired_timestamp": "2026-07-02T03:30:42.000Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "03:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 0,
+    "note": "Late fire (:26 vs :15 nominal, drift 12min — session busy on prior dev-team tick). Single match chef-intraday (cron 13 2-8 * * 1-5, weekday morning session). Spawned unified-agent background with published-marker gate reminder. stale_warning=true on emit (cycle-snapshot stale since 2026-06-02) keeps pressure_mode=legacy."
+  },
+  "priority": "low",
+  "createdAt": "2026-07-02T03:31:08Z",
+  "_processed": {
+    "fingerprint": "16ea0dd5ea55cbd3dc0d7d8f10f0bda722918679a91c2a09fe491893b0f86311",
+    "processedAt": "2026-07-02T03:50:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
