@@ -4,8 +4,8 @@
     "last_mtime": "2026-06-06T16:22:41Z",
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-07-02T04:49:13Z",
-      "last_linecount": 41
+      "last_mtime": "2026-07-02T06:21:02Z",
+      "last_linecount": 42
     },
     "section_name": "po",
     "start_line": 8
@@ -282,9 +282,36 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-02T04:49:13Z",
+    "_updated_at": "2026-07-02T06:21:02Z",
     "_updated_by": "dev-team",
-    "archive": [],
+    "archive": [
+      {
+        "id": "sau-2026-07-02T06:16:45Z",
+        "ts": "2026-07-02T06:16:45Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: api-gateway health endpoint — container up but HTTP not responding",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_at": "2026-07-02T06:21:02Z",
+        "router_triage": "FALSE POSITIVE — router isolation probe 06:18Z: curl localhost:4000/health = 200 in 0.17s, /healthz = 200; docker ps shows api-gateway Up 3 days (healthy). Auditor CURL_ERR was probe-environment artifact (known auditor-FP class)."
+      },
+      {
+        "id": "sau-2026-07-02T06:17:08Z",
+        "ts": "2026-07-02T06:17:08Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-12 FAIL: frontend health endpoint — container up but HTTP not responding",
+        "severity": "MED",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_at": "2026-07-02T06:21:02Z",
+        "router_triage": "FALSE POSITIVE — router isolation probe 06:18Z: curl localhost:3001/ = 200; docker ps shows frontend Up 15 hours (healthy). /healthz 404 is endpoint naming, not an outage. Auditor CURL_ERR was probe-environment artifact."
+      }
+    ],
     "rows": [
       {
         "id": "sau-d4-202606240300",
@@ -945,8 +972,10 @@
         "type": "signal_feedback",
         "summary": "A-30 CRITICAL: mcp-server memory 99.66% (OOM-kill imminent; trend 85.51% → 98.96% → 99.66% in 1h)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "triaged_at": "2026-07-02T06:21:02Z",
+        "router_triage": "KNOWN-PINNED duplicate: mcp-server memory crisis already fully triaged — fix d9280133 committed, single-svc rebuild USER-GATED (docker compose up -d --build mcp-server). No new action for po; standing reminder issued every user-facing message. restart_count still 1, no OOM-kill."
       }
     ],
     "last_triaged_at": "2026-07-02T02:57:39Z",

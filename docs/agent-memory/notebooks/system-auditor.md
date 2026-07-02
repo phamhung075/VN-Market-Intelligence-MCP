@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c473 · 2026-07-02T06:17:27Z
+### Audit Run Tier-1 (06:00–06:17 UTC 2026-07-02)
+- Tier: 1 | Services: 12/12 UP | Health: 3/5 OK (2 FAIL) | A-20: BLOCKED-DOCKER-EXEC
+- RAW-PROBE (2026-07-02T06:17:27Z):
+  - docker ps: 12/12 host_runtime_set UP [mcp-server "Up 5h (healthy)"; api-gateway "Up 3d"; frontend "Up 15h"; technical-analysis "Up 21h"; stock-price "Up 2d"; macro-indicators "Up 2d"; pdf-extractor "Up 3d"; kinh-dich "Up 6d"; rag-service "Up 13m"; news-fetch "Up 6d"; alert-engine "Up 6d"; mcp-gateway "Up 6d"]
+  - [health] mcp-server:3000/health OK | api-gateway:4000/health FAIL (CURL_ERR) ✗ | macro-indicators:5004/health OK | pdf-extractor:5001/health OK | frontend:3001/ FAIL (CURL_ERR) ✗
+- A-21 RestartCount: mcp-server=1 ✓ | A-30 Memory: 99.95% ⚠⚠⚠ KNOWN-PINNED (no OOM, restart=1 ≤2, fix d9280133 committed user-gated rebuild) | A-32 Disk: 41% ✓
+- MCP System: uptime 5h 28m 28s, circuits OK (16/16), WAL 0B ✓; cron 100+ jobs 99%+ success
+- Anomalies: 2 NEW (A-12 api-gateway WARN signal #8235, frontend INFO signal #8236; orch-state rows sau-2026-07-02T06:16:45Z, sau-2026-07-02T06:17:08Z) | Status: DEGRADED
+- Note: A-20 multi-probe skipped (docker exec blocked by constraint per init.md); api-gateway + frontend health probes hitting CURL_ERR despite containers UP
+
 ## c472 · 2026-07-02T05:44:48Z
 ### Audit Run Tier-1 (05:30–05:45 UTC 2026-07-02)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20: 3/3 PASS ✓
