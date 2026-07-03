@@ -1,0 +1,14 @@
+{
+  "tick": "2026-07-03T16:00:00Z",
+  "verdict": "WORK",
+  "emitted_by": "router",
+  "new_signals_drained": 0,
+  "market_calendar": "closed",
+  "fired_slots": [
+    {"slot_id": "news-scout-offhours", "agent": "news-scout", "due_reason": "cadence"},
+    {"slot_id": "market-watcher-offhours", "agent": "market-watcher", "due_reason": "cadence", "coalesced_into": "market-watcher-eod"},
+    {"slot_id": "market-watcher-eod", "agent": "market-watcher", "due_reason": "cadence"}
+  ],
+  "spawned_agents": ["news-scout", "market-watcher"],
+  "note": "3 due off-hours slots; market-watcher offhours+eod coalesced to one cycle (notebook full-overwrite race avoidance). news-scout + market-watcher spawned background per BGFAN-1. Auditor Tier-1 16:00Z spawned separately via detect-loop cron."
+}
