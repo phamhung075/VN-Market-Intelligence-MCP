@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-02T18:43:27Z",
-    "updated_by": "router",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "FIX-MCP-MEM-CAP-BUMP-REBUILD repo scope shipped (4dbf7ef0) -> review lane, swap-pending on user-gated compose build+up. WIP 1/2 (parked enricher). Tick 2026-07-02T18:07Z fully closed."
+    "status": "in_progress",
+    "updated_at": "2026-07-03T03:34:45Z",
+    "updated_by": "dev-team",
+    "active_task_id": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION",
+    "next_agent": "developer",
+    "note": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION claimed — developer fixes matcher stdout pollution + preflight 2>&1 capture. Promote -> review on green verify + commit."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7360,24 +7360,6 @@
         ],
         "status_note": "AC (doc-only): (1) scripts/auditor-notebook-commit.sh appends the required Claude-Session commit trailer per docs/policies/commit-convention.md; (2) system-auditor flow gets one doc line clarifying election-release ownership — a router-held fire-election lock is NEVER released by the auditor subagent (left to TTL). Non-urgent.",
         "blocking": false
-      },
-      {
-        "id": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION",
-        "status": "BACKLOG",
-        "title": "cowork slot-matcher diagnostics pollute preflight JSON parse -> cadence-skip ticks fall back to full flow (defeats token-economy preflight)",
-        "owner": "po",
-        "next_agent": "developer",
-        "zone": "cross-service",
-        "type": "FIX",
-        "priority": "normal",
-        "size": "S",
-        "created_at": "2026-07-03T03:31:15Z",
-        "files": [
-          "scripts/agents-flow/cowork-match-slots.js",
-          "scripts/agents-flow/cowork-tick-preflight.sh"
-        ],
-        "status_note": "AC: a cadence-skip/suppress tick yields a clean verdict JSON (no false ERROR \"non-JSON output\"); diagnostics still visible on stderr; exit!=0 error path still surfaces matcher stderr in verdict. ROOT (2 files): (1) cowork-match-slots.js writes diagnostics to stdout via console.log at L203 (cadence suppress) + L228 (cadence skip) while its ONLY intended stdout is the JSON contract (process.stdout.write @L267). (2) cowork-tick-preflight.sh:204 slot_result=$(eval \"$SLOT_MATCHER_CMD\" 2>&1) folds stderr INTO the buffer that L209 jq -c .slots parses — so console.log->console.error ALONE (report suggestion) is INSUFFICIENT; the 2>&1 still merges them. Fix BOTH diagnostics->console.error AND change preflight L204 to capture stdout(JSON) separately from stderr, preserving the exit!=0 error-message path (L206). Impact: every in-tick cadence-skip -> jq parse fails -> ERROR verdict -> expensive full flow instead of cheap SILENT path, partially defeating parent sprint TOKEN-ECONOMY-TICK-PREFLIGHT (DONE). Low severity (fallback runs) but recurring token-cost regression + noisy false-ERROR verdicts. Source: telegram report 3417 (2026-07-03T03:23:48Z), first occurrence.",
-        "source_report": 3417
       }
     ],
     "closed_sprints": [
@@ -9389,6 +9371,27 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
+      },
+      {
+        "id": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION",
+        "status": "IN_PROGRESS",
+        "title": "cowork slot-matcher diagnostics pollute preflight JSON parse -> cadence-skip ticks fall back to full flow (defeats token-economy preflight)",
+        "owner": "po",
+        "next_agent": "developer",
+        "zone": "cross-service",
+        "type": "FIX",
+        "priority": "normal",
+        "size": "S",
+        "created_at": "2026-07-03T03:31:15Z",
+        "files": [
+          "scripts/agents-flow/cowork-match-slots.js",
+          "scripts/agents-flow/cowork-tick-preflight.sh"
+        ],
+        "status_note": "AC: a cadence-skip/suppress tick yields a clean verdict JSON (no false ERROR \"non-JSON output\"); diagnostics still visible on stderr; exit!=0 error path still surfaces matcher stderr in verdict. ROOT (2 files): (1) cowork-match-slots.js writes diagnostics to stdout via console.log at L203 (cadence suppress) + L228 (cadence skip) while its ONLY intended stdout is the JSON contract (process.stdout.write @L267). (2) cowork-tick-preflight.sh:204 slot_result=$(eval \"$SLOT_MATCHER_CMD\" 2>&1) folds stderr INTO the buffer that L209 jq -c .slots parses — so console.log->console.error ALONE (report suggestion) is INSUFFICIENT; the 2>&1 still merges them. Fix BOTH diagnostics->console.error AND change preflight L204 to capture stdout(JSON) separately from stderr, preserving the exit!=0 error-message path (L206). Impact: every in-tick cadence-skip -> jq parse fails -> ERROR verdict -> expensive full flow instead of cheap SILENT path, partially defeating parent sprint TOKEN-ECONOMY-TICK-PREFLIGHT (DONE). Low severity (fallback runs) but recurring token-cost regression + noisy false-ERROR verdicts. Source: telegram report 3417 (2026-07-03T03:23:48Z), first occurrence.",
+        "source_report": 3417,
+        "claimed_at": "2026-07-03T03:34:45Z",
+        "claimed_by": "router",
+        "dispatch_note": "Dispatched developer 2026-07-03T03:34:45Z. Two-file fix per PO triage (report 3417): (1) scripts/agents-flow/cowork-match-slots.js L203+L228 console.log->console.error (stdout stays JSON-only, sole emit at L267); (2) scripts/agents-flow/cowork-tick-preflight.sh:204 capture stdout(JSON) separately from stderr while preserving the exit!=0 error-message path (L206) that surfaces matcher stderr in the verdict. AC: cadence-skip/suppress tick yields clean verdict JSON (no false ERROR non-JSON output); diagnostics still visible on stderr; exit!=0 path still surfaces matcher stderr."
       }
     ],
     "ready": [],
