@@ -1,5 +1,51 @@
 # PM — Notebook
 
+## c321 SPIKE-BCTC-CTG-BS-REALDATA-ROOT ARCHITECT DISPOSITION APPLICATION · 2026-07-03T07:45Z
+
+**MANDATE:** Apply architect disposition for SPIKE-BCTC-CTG-BS-REALDATA-ROOT (architect complete, committed 2026-07-03) — mint 2 new composite tasks, mark 1 superseded, stub 1 backlog, re-parent 2 W5 blocked rows.
+
+**ARCHITECT BRIEF:** docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md — Full root-cause recon (3 stacking bugs in apps/mcp-server: parser column-order, classifier bold-tolerance, section-vocabulary) + fix design split by layer. Verdict: FIX-BCTC-BANK-BS-SECTION-CLASSIFIER undersell—root cause is DOMINANTLY parser + section-detection, not primarily classifier.
+
+**INPUT:**
+- Architect disposition field in .task_board.review[FIX-BCTC-BANK-BS-SECTION-CLASSIFIER]
+- Current orch-state.json .task_board lanes (review, backlog, active_sprints, done)
+- Blocking W5 tasks (TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST in review, W5-FU-CTG-REFINE-96e36139 in active_sprints)
+
+**OUTPUT:** 4 orch-state rows created/modified:
+1. **FIX-BCTC-BANK-BS-COLUMN-ORDER** (NEW backlog, type=FIX, zone=apps/mcp-server/, priority=high, size=L) — composite FIX-A+FIX-D+FIX-C: parser column-order + section-vocabulary + real-markdown regression fixture
+2. **FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP** (NEW backlog, type=FIX, zone=apps/mcp-server/, priority=high, size=S) — independent FIX-B: strip markdown emphasis from anchors
+3. **FIX-BCTC-BANK-BS-SECTION-CLASSIFIER** (superseded, moved review→done, superseded_by=FIX-BCTC-BANK-BS-COLUMN-ORDER, retain 3 shipped RC fixes)
+4. **FIX-BCTC-BANK-SUMMARY-MAPPING** (marked DONE/superseded, scope fully owned by #1)
+
+**BOARD MUTATIONS:**
+- .task_board.backlog += [FIX-BCTC-BANK-BS-COLUMN-ORDER, FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP] (2 new)
+- .task_board.review -= [FIX-BCTC-BANK-BS-SECTION-CLASSIFIER] (remove from review)
+- .task_board.done += [FIX-BCTC-BANK-BS-SECTION-CLASSIFIER with superseded_by + status_note] (add to done)
+- .task_board.backlog[FIX-BCTC-BANK-SUMMARY-MAPPING].status = "DONE", superseded_by = "FIX-BCTC-BANK-BS-COLUMN-ORDER"
+- .task_board.review[TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST].blocked_on = "FIX-BCTC-BANK-BS-COLUMN-ORDER — <root cause rationale>"
+- .task_board.active_sprints[W5-FU-CTG-REFINE-96e36139].blocked_on = "FIX-BCTC-BANK-BS-COLUMN-ORDER — <root cause rationale>"
+
+**CRITICAL TRACKING (INSIGHT):**
+- Architect probe unmasked 3 independent bugs stacking: parser positional assumption (DOMINANT, drops 0/56 CTG units pre-DB) + classifier bold-intolerance + section-vocabulary gap. Prior cycles (W1-W4) failed because root cause was incorrectly localized to the classifier alone → narrow patches failed.
+- **Real-data mandate enforced:** FIX-C regression fixture MUST capture live unit-0002/0003/0038 from `get_bctc_refined(96e36139-5dac-414d-8e4d-20a4725890d1)` verbatim. Hand-written fixtures diverging from reality is the exact anti-pattern that produced 2 DoD-cycle failures.
+- FIX-A + FIX-D are prerequisites (§5 of brief: aggregator section-fallback depends on BOTH); both must ship with FIX-C regression gate in ONE PR. Do NOT split further.
+- FIX-B independent, can ship in parallel — generic defect (affects any bank ticker with bold-wrapped codes).
+
+**HANDOFFS CREATED:**
+1. docs/handoffs/FIX-BCTC-BANK-BS-COLUMN-ORDER.md (L, composite FIX-A+FIX-D+FIX-C, unblocks W5)
+2. docs/handoffs/FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP.md (S, independent FIX-B, parallel-safe)
+
+**NEXT AGENT:** dev-mcp-server (both tasks route to same zone; no dispatch ordering constraint between them — PO-triage determines which dev spawns first). Head.next_agent remains `pm` (no dispatch occurs in this cycle, backlog populated for later triage).
+
+**KEY PM DECISIONS:**
+1. Accepted architect disposition as-written — no renegotiation
+2. Re-scoped FIX-BCTC-BANK-BS-SECTION-CLASSIFIER as SUPERSEDED, NOT re-open for 4th narrow patch (recurring-bug bar, 2+ failed cycles → block)
+3. Preserved all 3 RC fixes (commit 2c7fb5b0) as real non-regressions; FIX-A/FIX-D do NOT revert them
+4. Enforced real-data gate: FIX-C fixture from live `get_bctc_refined` verbatim, NOT synthetic
+5. Minted both tasks to backlog (NOT ready) — they are ready for dispatch, but head remains idle per flow mandate (pm never dispatches directly)
+
+---
+
 ## c320 BA-PREDICTION-EVIDENCE-REVIVAL SPRINT DECOMPOSITION · 2026-07-01T05:37Z
 
 **PARENT:** BA-PREDICTION-EVIDENCE-REVIVAL (SPRINT-M, high, zone=multi, active)
