@@ -2913,6 +2913,19 @@
       "triaged_at": "2026-07-02T06:56:30Z",
       "resolution": "duplicate-superseded-by-B-05-FIX",
       "triage_note": "Auditor RE-RAISE of B-05 (bctc-discover stale ~15d). Definitively triaged 2026-07-01 (B-05-FIX DONE, RAW SSH-verified): VPS infra healthy (3 systemd units active, 0 crashes); vn-bctc-fetch UNHEALTHY = KNOWN FALSE POSITIVE (non-HTTP systemd timer probed via HTTP, see FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES). Real roots: (1) external SSC portal 503 outage (B-05-FU-SSC-503-RETRY); (2) enricher last_attempt code defect fixed d9280133, deploy PARKED user-gated (FIX-BCTC-ENRICHER-STUCK-BACKLOG IN_PROGRESS). NO new task: false premise + duplicate."
+    },
+    {
+      "id": "sau-sbv-202607021834",
+      "ts": "2026-07-02T18:34:09Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "data_stale",
+      "summary": "sbv-vps stale 47min (check B-06)",
+      "severity": "INFO",
+      "status": "RESOLVED",
+      "payload_ref": null,
+      "po_triage_note": "RESOLVED off-market FP: fired 01:34 VN (18:34Z), outside VN session 02:00-08:00Z; SBV does not publish overnight so 47min staleness is the expected idle state, not an incident (feedback_auditor_freshness_threshold_market_hours_blind). Severity CRITICAL->INFO. Durable root-cause fix already tracked: FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (BACKLOG) + ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD (TODO). No new task. Re-verify next open 02:00Z.",
+      "po_triaged_at": "2026-07-02T19:00:27Z"
     }
   ],
   "backlog_detail": [],
