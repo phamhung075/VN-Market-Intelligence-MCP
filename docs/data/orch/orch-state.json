@@ -3743,7 +3743,9 @@
         "title": "system-auditor flow commit step uses non-explicit git add — swept in-flight peer (architect) working-tree edits into commit f05795c3 alongside its own notebook (7 files, msg claimed notebook-only). Benign this time (peer edits were correct + headed for commit), latent concurrent-commit-race / wrong-attribution bug.",
         "type": "FIX",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC",
+        "folded_under": "FIX-AUDITOR-COMMIT-MUTEX-SKIP",
+        "folded_at": "2026-07-03T00:29:56Z"
       },
       {
         "id": "FIX-SCHEMA-DRIFT-P5-SELFHEAL",
@@ -7881,6 +7883,56 @@
         "priority": "MED",
         "created_at": "2026-07-02T22:24:53Z",
         "status_note": "Src signal rtr-esc4-heuristic-fix-20260702T2203. Gap: no tool maps ticker+period -> report_id UUID once refine_status=DONE, so get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells are permanently unreachable for completed reports. AC-1: expose report_id on get_bctc_full return OR add get_bctc_report_lookup(ticker,quarter). AC-2: with the returned/looked-up report_id, the 3 downstream tools resolve a completed (refine_status=DONE) report. AC-3 (optional): extend get_bctc_series fields enum with other_income/financial_income/other_expense. DONE: a completed report report_id is retrievable via a documented tool call AND the 3 downstream tools resolve it. next_agent=dev-mcp-server."
+      },
+      {
+        "id": "FIX-AUDITOR-COMMIT-MUTEX-SKIP",
+        "type": "FIX",
+        "size": "S",
+        "priority": "high",
+        "status": "TODO",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "title": "FIX-AUDITOR-COMMIT-MUTEX-SKIP (system-auditor) — route notebook commit through blessed script that claims/releases commit-mutex + explicit pathspec (consolidates NONEXPLICIT-PATHSPEC)",
+        "created_at": "2026-07-03T00:29:56Z",
+        "created_by": "po",
+        "origin_signal": "router-20260703T0018Z-commit-mutex-skip",
+        "consolidates": [
+          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        ],
+        "related": [
+          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        ],
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "scripts/auditor-notebook-commit.sh"
+        ],
+        "status_note": "AC: system-auditor T1 notebook commit routes through ONE blessed script (pattern: scripts/orch-apply.sh, scripts/fleet-worktree-push.sh) that internally (a) claims commit-mutex (task_kind=commit-mutex) before + releases in finally, (b) uses EXPLICIT pathspec only (never bare/-A git add), (c) prints a RAW-verifiable marker line. Mutex cannot be skipped by flow-step drift. Verify: 3 consecutive auditor T1 runs each show a paired commit-mutex claim+release in transcript AND commit only the intended notebook paths (no peer working-tree sweep). Router P2 (recurring: 2nd occurrence 22:44Z 07-02 + 00:14Z 07-03 commit 11be6d74d; paired counterexamples 23:00Z/23:30Z 0b4f49e88). CONSOLIDATES FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC (DEFERRED): the blessed script explicit-pathspec requirement fixes BOTH the mutex-skip and the non-explicit-add peer-sweep bugs in the same commit step — one root-cause fix (feedback_recurring_bug_escalation, concurrent-commit-race class)."
+      },
+      {
+        "id": "REFLOW-MBB-Q1-2026",
+        "type": "FIX",
+        "size": "M",
+        "priority": "medium",
+        "status": "BLOCKED",
+        "owner": "po",
+        "zone": "multi",
+        "next_agent": "bctc-analyst",
+        "route_to": "refine_bctc_md",
+        "title": "REFLOW-MBB-Q1-2026 — re-extract/reingest MBB Q1-2026 BCTC vs merged bank-mapping fix (total_assets=666.7B corrupt, equity=0; predates a46131cf)",
+        "created_at": "2026-07-03T00:29:56Z",
+        "created_by": "po",
+        "origin_signal": "bctc-analyst-20260703T001500Z",
+        "related": [
+          "W5-FU-CTG-REFINE-96e36139",
+          "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER",
+          "FIX-MCP-MEM-CAP-BUMP-REBUILD"
+        ],
+        "depends": [
+          "FIX-MCP-MEM-CAP-BUMP-REBUILD",
+          "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER"
+        ],
+        "status_note": "ESC-DISPATCH DECISION (po, router-deferred esc-deep-dive-request bca-20260703T001500Z): OPTION (a) MINT REFLOW, NO Opus deep-dive. MBB total_assets=666.7B VND / equity=0 / validation FAILED (imbalance 14.9%) is implausible-corrupt (feedback_nonzero_values_need_plausibility_check), NOT a real manipulation finding. Record published 2026-06-07T11:25:24Z PREDATES FIX-BCTC-BANK-SUMMARY-MAPPING merge (a46131cf, 2026-07-01) — same failure class as CTG (notebook c072). Deep dive on unusable figures wastes an Opus run (feedback_derived_column_fix_needs_reflow). Idempotency guard esc-deepdive:MBB:Q1-2026:ESC-2 HELD until 2026-07-04T00:08Z. BLOCKED-ON: user-gated mcp-server rebuild — the merged bank-mapping fixes (a46131cf + classifier 2c7fb5b0) are NOT live yet; reflowing before deploy hits the SAME classifier bug CTG hit (0 balance_sheet rows). SAME deploy gate as W5-FU-CTG-REFINE + FIX-BCTC-ENRICHER + FIX-MCP-MEM-CAP-BUMP. STEP 0: RAW-probe bctc_reports for MBB Q1-2026 report_id (null in signal). STEP 1: IF refined_units FAILED/empty -> fresh agentic-refine pass (refine_bctc_md leaf workers, like W5-FU-CTG). STEP 2: reingest-bctc-report.ts --report-id <mbb> against the DEPLOYED classifier fix (dev-mcp-server; analyst lacks Bash). AC: total_assets unfreezes to plausible hundreds-of-trillions scale, equity!=0, ESC-2 identity PASS (Assets=Liab+Equity), RAW-probe named-volume market.db. NO fabricated data. Do NOT dispatch until the rebuild lands."
       }
     ],
     "closed_sprints": [
