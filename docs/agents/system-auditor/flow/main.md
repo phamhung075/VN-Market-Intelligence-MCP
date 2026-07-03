@@ -1,4 +1,4 @@
-<!-- size-justification: ~628L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. FIX-AUDITOR-FLOW-RESIDUALS (2026-06-07) weekend-aware C-01/C-02/C-14 + Tier-2 docker-exec residuals host-side + L438 signal-row embedded in emit steps + OUTPUT-CONTRACT mandate. FIX-AUDITOR-DB-LIVENESS (2026-06-07) bun:sqlite readonly exec replacing dead host-side sqlite3 path; dynamic container-name resolution; Tier-2/Tier-3 docker exec name literals fixed. FIX-AUDITOR-SQL-MODIFIERS (2026-06-08) long-form SQLite datetime modifiers + NULL-guard (short-form '-Nh'/'-Nd' returns NULL, caused C-06/C-07 false CRITICAL and C-08/C-10/C-16/B-13 silent false-PASS). FIX-BCTC-VPS-QUEUE-STALE-TRIAGE (2026-06-08) C-16/B-13 exclude deferred_infra + blocked_pdf_extractor statuses; only actionable pending rows counted. FIX-C09-SCHEMA-MISMATCH (2026-06-09) C-09 rewritten: DISTINCT country→non-null indicator count on vietnam row; threshold ≥8→≥3 (a95c514a introduced mismatch; TRADING_ECONOMICS_API_KEY absent caps cols at 3). Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
+<!-- size-justification: ~628L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. FIX-AUDITOR-FLOW-RESIDUALS (2026-06-07) weekend-aware C-01/C-02/C-14 + Tier-2 docker-exec residuals host-side + L438 signal-row embedded in emit steps + OUTPUT-CONTRACT mandate. FIX-AUDITOR-DB-LIVENESS (2026-06-07) bun:sqlite readonly exec replacing dead host-side sqlite3 path; dynamic container-name resolution; Tier-2/Tier-3 docker exec name literals fixed. FIX-AUDITOR-SQL-MODIFIERS (2026-06-08) long-form SQLite datetime modifiers + NULL-guard (short-form '-Nh'/'-Nd' returns NULL, caused C-06/C-07 false CRITICAL and C-08/C-10/C-16/B-13 silent false-PASS). FIX-BCTC-VPS-QUEUE-STALE-TRIAGE (2026-06-08) C-16/B-13 exclude deferred_infra + blocked_pdf_extractor statuses; only actionable pending rows counted. FIX-C09-SCHEMA-MISMATCH (2026-06-09) C-09 rewritten: DISTINCT country→non-null indicator count on vietnam row; threshold ≥8→≥3 (a95c514a introduced mismatch; TRADING_ECONOMICS_API_KEY absent caps cols at 3). FIX-AUDITOR-COMMIT-MUTEX-SKIP (2026-07-03, +14L) replaces the notebook-commit narrated claim/add/verify/commit/release sequence with one call to the blessed script scripts/auditor-notebook-commit.sh (executed trap-guarded mutex claim/release + explicit pathspec — fixes both the mutex-skip and the folded FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC bug). Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -717,19 +717,33 @@ AC-5 gate after write: `wc -l < notebook.md` → if >200: fix Step 1 and re-writ
 
 <!-- NB-AUDITOR-SETTLED-WRITE: replaced two-write pattern (append then trim) with AC-3 single settled write. BCTC-EVAL-SNAPSHOT folded into this write (was a separate early write in D-BCTC-EVAL — now held in memory until here). PostToolUse hook sees ≤200L exactly once. -->
 Then:
-**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
-own_paths: [`docs/agent-memory/notebooks/system-auditor.md`]
-intent: `"chore(memory/system-auditor): notebook YYYY-MM-DD tier-N"`
+**Commit (mutex-paired blessed script — FIX-AUDITOR-COMMIT-MUTEX-SKIP, 2026-07-03):** the narrated
+claim/add/verify/commit/release sequence below was non-deterministically SKIPPING the mutex claim
+(flow-step drift on prose is unreliable for a hard invariant) and, separately, was folding a
+concurrent peer's working-tree edits into the notebook commit (non-explicit pathspec, f05795c3).
+Both are now executed bash, not narrated steps — the model calls ONE script and branches on its
+marker output:
 
-Executed protocol:
-1. `call_tool(server="vn-market", tool="task_claim", arguments={task_id:"commit-mutex:main", task_kind:"commit-mutex", owner_agent:"system-auditor", owner_client_session:$CLAUDE_CODE_SESSION_ID, ttl_seconds:60, payload:"{\"paths\":[\"docs/agent-memory/notebooks/system-auditor.md\"],\"intent\":\"notebook commit tier-N\"}"})` — MCP error/db_unavailable → bug-telegram → SKIP commit → EXIT [C-2]; claimed=false, no current_holder → mechanism broken → bug-telegram → SKIP [C-2b]; contended → backoff 6 retries ~125s → give-up → bug-telegram → SKIP.
-2. `git add -u docs/agent-memory/notebooks/system-auditor.md` (explicit -u form — avoids gitignore false-warn on tracked files).
-3. `git diff --cached --name-only` → if foreign path: `git restore --staged <foreign>` (NEVER own path); still foreign after restore → release mutex → abort → log.
-4. `git diff --cached --quiet` → if nothing staged: release mutex → skip commit → log.
-5. `git commit -m "chore(memory/system-auditor): notebook YYYY-MM-DD tier-N"` (NEVER -a/-am).
-6. `call_tool(server="vn-market", tool="task_release", arguments={task_id:"commit-mutex:main", owner_client_session:$CLAUDE_CODE_SESSION_ID})` — ALWAYS, every exit path.
+```bash
+bash scripts/auditor-notebook-commit.sh \
+  "chore(memory/system-auditor): notebook YYYY-MM-DD tier-N" \
+  docs/agent-memory/notebooks/system-auditor.md
+```
+(`CLAUDE_CODE_SESSION_ID` must already be exported in the shell env; `AUDITOR_COMMIT_OWNER_AGENT`
+defaults to `system-auditor`.) The script internally claims/releases `commit-mutex:main`
+(task_kind=`commit-mutex`) BEFORE/after the git operation via a bash `trap ... EXIT` — the claim
+can never be skipped by construction — and stages/commits ONLY the explicit path given (never
+`-A`/`-u`/`.`). Full protocol + marker contract: script header comment.
+
+**Verdict handling (branch on the first stdout line):**
+- `[auditor-commit] mutex-paired commit <sha> paths=<n>` → commit succeeded, mutex claimed+released paired. Continue.
+- `[auditor-commit] SKIP no-staged-changes ...` → nothing to commit this cycle. Continue (not an error).
+- `[auditor-commit] SKIP mutex-claim-failed ...` → per (d): NOT fatal to the audit — skip this cycle's notebook commit, continue the flow, retry next tick. Send bug-telegram only if this reason also fired last cycle (avoid alert-spam on transient contention).
+- `[auditor-commit] ABORT ...` (foreign-path-after-restore / git-commit-failed) → bug-telegram (`[system-auditor] auditor-notebook-commit ABORT: <marker line>`) — not a normal skip, investigate.
+- `[auditor-commit] ERROR ...` → usage/config bug in the flow wiring itself (e.g. `CLAUDE_CODE_SESSION_ID` unset) → bug-telegram, EXIT.
 
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
+Script: `scripts/auditor-notebook-commit.sh` (pointer per `docs/policies/dev-standards.md` § Script Persistence).
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
