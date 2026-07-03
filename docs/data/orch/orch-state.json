@@ -528,6 +528,17 @@
         "triaged_by": "po",
         "triaged_at": "2026-07-03T19:49:38Z",
         "triage_note": "acknowledged + linked to backlog FIX-MCP-MEMORY-CODE-LEAK (NOT resolved)"
+      },
+      {
+        "id": "sau-20260703T223423Z",
+        "ts": "2026-07-03T22:34:23Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-push stale 432h in earnings window (check B-05)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
