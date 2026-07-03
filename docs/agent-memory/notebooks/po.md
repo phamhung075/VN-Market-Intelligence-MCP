@@ -1,6 +1,18 @@
 # PO Notebook
 
-_Last: 2026-07-03T21:07Z_
+_Last: 2026-07-03T21:49Z_
+
+## Tick 2026-07-03T21:49Z (router-dispatched) — SPRINT DECISION on SPIKE-HSX-STRATEGY0-0URLS (PREMISE FALSIFIED)
+
+**Context:** SPIKE done_verified (router RAW-verified, commit eac9a3c16) + independent same-day architect brief `docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md` corroborates. VERDICT: HSX Strategy-0 is NOT broken for current/recent quarters — live re-test of the UNMODIFIED prod `fetchHsxBctcUrls`/`discoverHosePdfUrls` returned valid PDF URLs for all 8 named tickers @ Q4-2025/Q1-2026. The "0 URLs" traces to an ops-recon test-harness bug (`quarter:4` numeric vs required `"Q4"` string → `.toUpperCase()` TypeError → silent `[]`). The 328 `deferred_infra` rows = STATIC by-design-excluded population from FIX-BCTC-VPS-QUEUE-STALE-TRIAGE (2026-06-08, PREDATES 06-16). This SUPERSEDES my prior "Strategy-0 = PRIMARY dead-root" framing (21:07Z + 20:07Z entries below) — it came from the same falsified ops recon. 06-16 actionable backlog ALREADY done_verified (FIX-BCTC-ENRICHER-STUCK-BACKLOG + FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD).
+
+**3-part decision:**
+- **(a) RETIRE the superseded "Strategy-0 broken / PRIMARY dead-root" framing.** NO live actionable task exists to close — the framing lived only in the router head (already SUPERSEDED) + the done_verified SPIKE item (`spike_verdict=PREMISE_FALSIFIED`). Durable GUARD written to `decision_journal`: dev-team planning MUST NOT re-mint a Strategy-0 current-quarter discovery fix.
+- **(b) MINT cheap loop-closer → VERIFY-BCTC-STRATEGY0-QUARTER-PARAM-CONTRACT** (FIX/S/low, backlog TODO, zone `apps/mcp-server/`). Confirm the numeric-quarter type-mismatch (rule out a transient WAF blip), add a regression guard test for the quarter-must-be-string contract, + a one-line SUPERSEDED stamp on the ops.md RECON section. Permanently kills the false signal (ops.md still asserts "0 URLs"/"not HOSE-listed").
+- **(c) KEEP DEFERRED the ~293-row historical backfill** (discretionary feature, NOT an incident; current quarters work; active Q2-2026 earnings window → dev focus stays on current-quarter throughput + the 2 queued bctc-analyst signals). NO new row (no-duplication) — folded the SPIKE's confirmed root cause (`fetchMediafileUrls` `pageIndex=1` no-pagination + `fileType!==".pdf"` drops `"application/pdf"` MIME older entries; hsxBctcFetcher.ts:328-330/:358), the turnkey 2-change revival scope, and the SEPARATE architect-gated SELECT-arm queue-policy dependency into the existing DEFERRED `BCTC-ENRICHER-OLD-QUARTERS`.
+
+**Writes:** `scripts/po-strategy0-spike-decision.jq` → orch-apply exit 0 (backlog +1 → 401; decision_journal +1 → 28; BCTC-ENRICHER-OLD-QUARTERS note/verify_note enriched, status unchanged; 105 pre-existing SHG coherence warns non-blocking). `.head` UNTOUCHED (router owns tick/head/fire-election). No push (fleet-push timer owns). Provenance "po (router-dispatched)" — no session UUID.
+_FYI (not this dispatch): 2 bctc-analyst signals (GVR ESC-4 esc-deep-dive + corrupt-cluster data-quality) route to me via the next dev-team drain._
 
 ## Tick 2026-07-03T21:07Z (router-dispatched) — ELEVATE discovery root: SPIKE-HSX-STRATEGY0-0URLS
 
