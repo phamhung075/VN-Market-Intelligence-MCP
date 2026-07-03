@@ -2,6 +2,17 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c513 · 2026-07-03T02:41:56Z
+### Audit Run Tier-2 (02:41–02:41 UTC 2026-07-03)
+- Tier: 2 | Fire-election: ROUTER-HELD (skip claim/release)
+- Cron fire check: 96+ jobs all healthy (100% success rates)
+- Per-source freshness: 1 CRITICAL (B-05 bctc-discover, 390h stale, earnings window 24h SLA)
+- VPS routes: 4/5 healthy (vn-bctc-fetch UNHEALTHY, 16d uptime, no recent push)
+- DB freshness spot checks: C-06/C-07/B-09/B-13 all PASS (market_messages 3, agent_signals 155, SSC URLs 0, stale pending 0)
+- BCTC eval: 12 red + 9 yellow reports (snapshot held, no baseline to detect deltas)
+- Improvement proposals: None from shadow/worsened in last 24h
+- Anomalies: 1 new (1 CRITICAL bctc-discover stale during earnings window)
+- Status: CRITICAL
 ## c512 · 2026-07-03T02:15:24Z
 ### Audit Run Tier-1 (02:14–02:15 UTC 2026-07-03)
 - Tier: 1 | Fire-election: DISPATCHER-HELD (skip claim/release per coordination)
