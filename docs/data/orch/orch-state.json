@@ -282,10 +282,131 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T02:53:40Z",
-    "_updated_by": "dev-team-drain",
+    "_updated_at": "2026-07-03T03:00:04.879Z",
+    "_updated_by": "system-auditor",
     "archive": [],
     "rows": [
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:VCB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:ACB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:HPG:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:GVR:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:HVN:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-deepdive:GVR:Q1-2026:ESC-4 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-deepdive:MBB:Q1-2026:ESC-2 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock cron:dev-team:2026-07-03T02:37Z has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock dev-team-cron-singleton has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock cron:auditor-t1:2026-07-03T02:30Z has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607030300",
+        "ts": "2026-07-03T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock po-triage-20260703 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
       {
         "id": "sau-20260703T024117Z",
         "ts": "2026-07-03T02:41:17Z",
@@ -300,7 +421,15 @@
           "router_note": "router triage 2026-07-03T02:45Z: suspected KNOWN cause — bctc-discover last fetch 2026-06-16 + vn-bctc-fetch VPS route unhealthy aligns with HNX SSL outage; fix BCTC-HNX-SSL-HARDEN is deploy-pending behind user gate (scripts/deploy-vinahost.sh). PO: verify freshness recovers post-deploy before spawning any new deep-dive; do NOT self-resolve until fetch confirmed green."
         },
         "_read_at": "2026-07-03T02:53:40Z",
-        "_read_by": "dev-team-drain"
+        "_read_by": "dev-team-drain",
+        "po_disposition": {
+          "by": "po",
+          "at": "2026-07-03T03:03:24Z",
+          "verdict": "KNOWN-CAUSE-DEPLOY-PENDING — kept READ (pending), NOT self-resolved",
+          "linked_task": "BCTC-HNX-SSL-HARDEN",
+          "linked_task_lane": "review",
+          "note": "bctc-discover staleness (last fetch 2026-06-16T20:42:55Z, 38 pending queue items, vn-bctc-fetch VPS route unhealthy ~16d) aligns with the HNX SSL outage. Durable fix BCTC-HNX-SSL-HARDEN is code-complete/in-review but DEPLOY-PENDING behind the user gate (scripts/deploy-vinahost.sh must be run by the user). No new deep-dive spawned. Row STAYS pending: RESOLVE only after post-deploy freshness verification confirms bctc-discover fetch recovers GREEN within the 24h earnings-window SLA."
+        }
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
@@ -7131,31 +7260,6 @@
         "status_note": "Src signal rtr-esc4-heuristic-fix-20260702T2203. Gap: no tool maps ticker+period -> report_id UUID once refine_status=DONE, so get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells are permanently unreachable for completed reports. AC-1: expose report_id on get_bctc_full return OR add get_bctc_report_lookup(ticker,quarter). AC-2: with the returned/looked-up report_id, the 3 downstream tools resolve a completed (refine_status=DONE) report. AC-3 (optional): extend get_bctc_series fields enum with other_income/financial_income/other_expense. DONE: a completed report report_id is retrievable via a documented tool call AND the 3 downstream tools resolve it. next_agent=dev-mcp-server."
       },
       {
-        "id": "FIX-AUDITOR-COMMIT-MUTEX-SKIP",
-        "type": "FIX",
-        "size": "S",
-        "priority": "high",
-        "status": "REVIEW",
-        "owner": "po",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "title": "FIX-AUDITOR-COMMIT-MUTEX-SKIP (system-auditor) — route notebook commit through blessed script that claims/releases commit-mutex + explicit pathspec (consolidates NONEXPLICIT-PATHSPEC)",
-        "created_at": "2026-07-03T00:29:56Z",
-        "created_by": "po",
-        "origin_signal": "router-20260703T0018Z-commit-mutex-skip",
-        "consolidates": [
-          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
-        ],
-        "related": [
-          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
-        ],
-        "files": [
-          "docs/agents/system-auditor/flow/main.md",
-          "scripts/auditor-notebook-commit.sh"
-        ],
-        "status_note": "AC: system-auditor T1 notebook commit routes through ONE blessed script (pattern: scripts/orch-apply.sh, scripts/fleet-worktree-push.sh) that internally (a) claims commit-mutex (task_kind=commit-mutex) before + releases in finally, (b) uses EXPLICIT pathspec only (never bare/-A git add), (c) prints a RAW-verifiable marker line. Mutex cannot be skipped by flow-step drift. Verify: 3 consecutive auditor T1 runs each show a paired commit-mutex claim+release in transcript AND commit only the intended notebook paths (no peer working-tree sweep). Router P2 (recurring: 2nd occurrence 22:44Z 07-02 + 00:14Z 07-03 commit 11be6d74d; paired counterexamples 23:00Z/23:30Z 0b4f49e88). CONSOLIDATES FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC (DEFERRED): the blessed script explicit-pathspec requirement fixes BOTH the mutex-skip and the non-explicit-add peer-sweep bugs in the same commit step — one root-cause fix (feedback_recurring_bug_escalation, concurrent-commit-race class). || REVIEW 2026-07-03T00:53Z (router): shipped 2325d9755+5ac3fa523 (script 217L trap-guarded claim/release, flow main.md L728 wired) + journal bbe29cbf6. Live-tested 4 scenarios vs real gateway incl contended-SKIP + foreign-path restore; markers RAW-verified (8 runs). Merge gate green (index-check, tree-verify, c2). REMAINING AC (observation): 3 consecutive auditor T1/T3 runs each showing [auditor-commit] mutex-paired marker via the script — first candidate run is next T1 tick. || OBS 2/3 PASS (router, T1 tick 2026-07-03T01:30Z): notebook commit a2b1513bf via scripts/auditor-notebook-commit.sh — script verdict line '[auditor-commit] mutex-paired commit a2b1513bf paths=1' RAW-verified in transcript, explicit pathspec 1 file, mutex claim/release internal+trap-guarded. Run 1/3 = fd9e7ce12 (tick 01:00Z). Run 3/3 candidate = T1 tick 02:00Z. DONE-gate reviewer notes: (i) script does not append Claude-Session trailer to notebook commits (spec gap, outside AC); (ii) auditor attempted fire-election release against dispatcher instruction — permission gate denied it, lock correctly left to TTL; consider flow-doc line clarifying release ownership when dispatcher holds the election. || OBS 3/3 PASS + AC COMPLETE (router, T1 tick 2026-07-03T02:00Z): notebook commit 673225129 via blessed script, verdict line '[auditor-commit] mutex-paired commit 673225129 paths=1' RAW-verified, commit touches ONLY the notebook (1 file), zero manual lock calls in transcript (uncontaminated briefing — no marker/mutex instructions given). Three consecutive runs: fd9e7ce12 (01:00Z) / a2b1513bf (01:30Z) / 673225129 (02:00Z), each mutex-paired + explicit-pathspec via scripts/auditor-notebook-commit.sh. Observation AC met — eligible for REVIEW->DONE flip at next PO triage (owner=po). Carry-over reviewer notes from run 2/3 still apply (trailer spec gap; election-release ownership doc line)."
-      },
-      {
         "id": "REFLOW-MBB-Q1-2026",
         "type": "FIX",
         "size": "M",
@@ -7179,6 +7283,59 @@
           "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER"
         ],
         "status_note": "ESC-DISPATCH DECISION (po, router-deferred esc-deep-dive-request bca-20260703T001500Z): OPTION (a) MINT REFLOW, NO Opus deep-dive. MBB total_assets=666.7B VND / equity=0 / validation FAILED (imbalance 14.9%) is implausible-corrupt (feedback_nonzero_values_need_plausibility_check), NOT a real manipulation finding. Record published 2026-06-07T11:25:24Z PREDATES FIX-BCTC-BANK-SUMMARY-MAPPING merge (a46131cf, 2026-07-01) — same failure class as CTG (notebook c072). Deep dive on unusable figures wastes an Opus run (feedback_derived_column_fix_needs_reflow). Idempotency guard esc-deepdive:MBB:Q1-2026:ESC-2 HELD until 2026-07-04T00:08Z. BLOCKED-ON: user-gated mcp-server rebuild — the merged bank-mapping fixes (a46131cf + classifier 2c7fb5b0) are NOT live yet; reflowing before deploy hits the SAME classifier bug CTG hit (0 balance_sheet rows). SAME deploy gate as W5-FU-CTG-REFINE + FIX-BCTC-ENRICHER + FIX-MCP-MEM-CAP-BUMP. STEP 0: RAW-probe bctc_reports for MBB Q1-2026 report_id (null in signal). STEP 1: IF refined_units FAILED/empty -> fresh agentic-refine pass (refine_bctc_md leaf workers, like W5-FU-CTG). STEP 2: reingest-bctc-report.ts --report-id <mbb> against the DEPLOYED classifier fix (dev-mcp-server; analyst lacks Bash). AC: total_assets unfreezes to plausible hundreds-of-trillions scale, equity!=0, ESC-2 identity PASS (Assets=Liab+Equity), RAW-probe named-volume market.db. NO fabricated data. Do NOT dispatch until the rebuild lands."
+      },
+      {
+        "id": "CI-RED-c5b5f885-FIX",
+        "title": "CI-RED-c5b5f885-FIX — CI RED on main HEAD c5b5f885: bun test (run 28632717350)",
+        "type": "FIX",
+        "status": "TODO",
+        "owner": "po",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "plan_only": true,
+        "created_at": "2026-07-03T03:03:24Z",
+        "created_by": "po",
+        "origin_signal": "ci_red:c5b5f885b48889aa19c0779eb4efdfa254e46654:bun test",
+        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28632717350",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC (verification_gate=ci_green_on_subsequent_push): gh run list --branch main --limit 5 shows conclusion=success for a push AFTER c5b5f885b48889aa19c0779eb4efdfa254e46654. VERIFY-FIRST (memory ci_red_can_be_flaky): the failing SHA c5b5f885b PREDATES local HEAD by 13 unpushed commits, one of which (31caeefcd, FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING rag client-side fail-soft, now done_verified) fixes the recurring search_similar_context test TIMEOUT that most plausibly caused this 'bun test' red. Do NOT re-run the workflow and do NOT dispatch coding until the NEXT fleet-push CI result is inspected — this row most likely closes as resolved-by-chain (GREEN). It only becomes a real coding FIX if the subsequent push is still RED on 'bun test' for a DIFFERENT root. Priority: high. Failing jobs: bun test.",
+        "depends": [
+          "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING"
+        ]
+      },
+      {
+        "id": "FIX-SEARCH-1466-MOCK-MODULE-POLLUTION",
+        "title": "1466-sync-db-corruption-bail.test.ts mock.module pollution (reviewer follow-up)",
+        "type": "FIX",
+        "status": "TODO",
+        "owner": "po",
+        "priority": "low",
+        "zone": "apps/mcp-server/",
+        "plan_only": true,
+        "created_at": "2026-07-03T03:03:24Z",
+        "created_by": "po",
+        "origin": "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING reviewer follow-up (done_verified e753110da)",
+        "status_note": "AC: 1466-sync-db-corruption-bail.test.ts afterAll mock.module leaks module state to subsequent tests (bun test cross-test contamination flagged by worker + QA reviewer). Scope the mock (mock.restore / per-file mock isolation) so no cross-test module pollution; targeted test + full suite green. Test-hygiene, non-urgent.",
+        "blocking": false
+      },
+      {
+        "id": "FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC",
+        "title": "auditor-notebook-commit.sh commit-trailer spec + election-release ownership doc line (reviewer follow-up)",
+        "type": "CLEAN",
+        "status": "TODO",
+        "owner": "po",
+        "priority": "low",
+        "zone": "cross-service/",
+        "plan_only": true,
+        "created_at": "2026-07-03T03:03:24Z",
+        "created_by": "po",
+        "origin": "FIX-AUDITOR-COMMIT-MUTEX-SKIP DONE-gate reviewer notes (done_verified 2325d9755)",
+        "files": [
+          "scripts/auditor-notebook-commit.sh",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "status_note": "AC (doc-only): (1) scripts/auditor-notebook-commit.sh appends the required Claude-Session commit trailer per docs/policies/commit-convention.md; (2) system-auditor flow gets one doc line clarifying election-release ownership — a router-held fire-election lock is NEVER released by the auditor subagent (left to TTL). Non-urgent.",
+        "blocking": false
       }
     ],
     "closed_sprints": [
@@ -9105,7 +9262,64 @@
         "row_note": "[qa 2026-07-02T13:07:32Z] Decision B (bless divergence): cron-detect-loop/SKILL.md declared operational SSOT for CronCreate prompt bodies (Job 1/2 diverge intentionally from cron-dev-team.md/cron-system-auditor.md, which are now downgraded to manual/ad-hoc reference docs with explicit cross-pointer). Commit a1e346b8 (trailer-amended by router from 85df9241)."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING",
+        "title": "search_similar_context RECURRING timeout (BUG#3144, bctc-analyst c071/c072/c073 = 3 consecutive cycles). mcp-server tool (analysis.ts:511) delegates to rag-service over HTTP :5002 via ragHttpClient (analysis.ts:563); the timeout is a CLIENT-VISIBLE symptom of the rag-service clean-exit restart-loop. Fix: (a) client-side fail-soft in the mcp-server tool — on rag timeout/down, degrade to an empty result + WARN instead of surfacing a hard timeout that blocks bctc-analyst (mirror the existing analysis.ts:84 'service-down: omit block entirely' pattern); (b) resolve the rag-service restart-loop root.",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "status_note": "RECURRING-BUG durable entry (2+ occ -> board per feedback_recurring_bug_escalation). Source: telegram BUG msg#3144 (from bctc-analyst). LINKED ROOT: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (rag-service RestartCount 226->245, clean-exit restart loop; passive health masks churn). AC: no BUG-channel search_similar_context timeout for 3 consecutive bctc-analyst cycles AND (rag-service RestartCount stabilizes OR the tool degrades gracefully with zero analyst-blocking). Priority: medium. || 2026-07-03T02:30Z router: worker a78cc5eb DONE — RAW-verified (explicit-path stack 31caeefcd+1a9cda30b == claimed file set; pnpm check green on HEAD post-merge; index-check PASS; tree-verify HEAD PASS, lower-commit rc=1 = cherry-pick-verifier artifact, combined diff clean; c2 WARN benign journal-in-decisions; DJ-GATE-1 journal committed; no docker/push; mutex claim errored at transport -> zone RUN-SOLO fallback). IN_PROGRESS->REVIEW. QA spawned background. Reviewer note: 1466-sync-db-corruption-bail.test.ts afterAll mock.module pollution flagged by worker as follow-up candidate. || 2026-07-03T02:48Z router: QA APPROVED (RAW-verified: 7/7 targeted tests, pnpm check green, full suite under baseline, mock-guard PASS, no forbidden actions). Report reports/TASK_REPORT_FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING.md committed. Stays REVIEW — eligible DONE at PO triage. Reviewer follow-up candidate: 1466-sync-db-corruption-bail.test.ts mock.module pollution.",
+        "created_at": "2026-07-02T21:28:10Z",
+        "promoted_at": "2026-07-03T01:34:10Z",
+        "promoted_by": "po",
+        "promotion_note": "4th consecutive occurrence (BUG#3144 c071/c072/c073 + telegram 3397 2026-07-02T21:15Z). Blocks bctc-analyst Step 2b historical-BCTC context for ALL tickers every window. SCOPED to part-(a): client-side fail-soft in the mcp-server tool (analysis.ts:511/563 ragHttpClient) — on rag timeout/down, degrade to empty result + WARN (mirror analysis.ts:84 service-down omit-block pattern); do NOT hard-timeout-block the analyst. Part-(b) rag-service restart-loop root stays tracked in FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (backlog). AC per original task.",
+        "assigned_to": "dev-mcp-server",
+        "started_at": "2026-07-03T01:40:47Z",
+        "done_verified": true,
+        "verified_by": "po",
+        "verified_at": "2026-07-03T03:03:24Z",
+        "signoff_note": "PO triage sign-off (tick 2026-07-03T02:37Z): QA APPROVED 2026-07-03T02:48Z — RAW-verified 7/7 targeted tests, pnpm check green, full suite under baseline, mock-guard PASS. Fix commits 31caeefcd+1a9cda30b (mcp-server rag client-side fail-soft). Report reports/TASK_REPORT_FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING.md (e753110da). Reviewer follow-up spun to backlog FIX-SEARCH-1466-MOCK-MODULE-POLLUTION.",
+        "followups": [
+          "FIX-SEARCH-1466-MOCK-MODULE-POLLUTION"
+        ]
+      },
+      {
+        "id": "FIX-AUDITOR-COMMIT-MUTEX-SKIP",
+        "type": "FIX",
+        "size": "S",
+        "priority": "high",
+        "status": "DONE_VERIFIED",
+        "owner": "po",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "title": "FIX-AUDITOR-COMMIT-MUTEX-SKIP (system-auditor) — route notebook commit through blessed script that claims/releases commit-mutex + explicit pathspec (consolidates NONEXPLICIT-PATHSPEC)",
+        "created_at": "2026-07-03T00:29:56Z",
+        "created_by": "po",
+        "origin_signal": "router-20260703T0018Z-commit-mutex-skip",
+        "consolidates": [
+          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        ],
+        "related": [
+          "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC"
+        ],
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "scripts/auditor-notebook-commit.sh"
+        ],
+        "status_note": "AC: system-auditor T1 notebook commit routes through ONE blessed script (pattern: scripts/orch-apply.sh, scripts/fleet-worktree-push.sh) that internally (a) claims commit-mutex (task_kind=commit-mutex) before + releases in finally, (b) uses EXPLICIT pathspec only (never bare/-A git add), (c) prints a RAW-verifiable marker line. Mutex cannot be skipped by flow-step drift. Verify: 3 consecutive auditor T1 runs each show a paired commit-mutex claim+release in transcript AND commit only the intended notebook paths (no peer working-tree sweep). Router P2 (recurring: 2nd occurrence 22:44Z 07-02 + 00:14Z 07-03 commit 11be6d74d; paired counterexamples 23:00Z/23:30Z 0b4f49e88). CONSOLIDATES FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC (DEFERRED): the blessed script explicit-pathspec requirement fixes BOTH the mutex-skip and the non-explicit-add peer-sweep bugs in the same commit step — one root-cause fix (feedback_recurring_bug_escalation, concurrent-commit-race class). || REVIEW 2026-07-03T00:53Z (router): shipped 2325d9755+5ac3fa523 (script 217L trap-guarded claim/release, flow main.md L728 wired) + journal bbe29cbf6. Live-tested 4 scenarios vs real gateway incl contended-SKIP + foreign-path restore; markers RAW-verified (8 runs). Merge gate green (index-check, tree-verify, c2). REMAINING AC (observation): 3 consecutive auditor T1/T3 runs each showing [auditor-commit] mutex-paired marker via the script — first candidate run is next T1 tick. || OBS 2/3 PASS (router, T1 tick 2026-07-03T01:30Z): notebook commit a2b1513bf via scripts/auditor-notebook-commit.sh — script verdict line '[auditor-commit] mutex-paired commit a2b1513bf paths=1' RAW-verified in transcript, explicit pathspec 1 file, mutex claim/release internal+trap-guarded. Run 1/3 = fd9e7ce12 (tick 01:00Z). Run 3/3 candidate = T1 tick 02:00Z. DONE-gate reviewer notes: (i) script does not append Claude-Session trailer to notebook commits (spec gap, outside AC); (ii) auditor attempted fire-election release against dispatcher instruction — permission gate denied it, lock correctly left to TTL; consider flow-doc line clarifying release ownership when dispatcher holds the election. || OBS 3/3 PASS + AC COMPLETE (router, T1 tick 2026-07-03T02:00Z): notebook commit 673225129 via blessed script, verdict line '[auditor-commit] mutex-paired commit 673225129 paths=1' RAW-verified, commit touches ONLY the notebook (1 file), zero manual lock calls in transcript (uncontaminated briefing — no marker/mutex instructions given). Three consecutive runs: fd9e7ce12 (01:00Z) / a2b1513bf (01:30Z) / 673225129 (02:00Z), each mutex-paired + explicit-pathspec via scripts/auditor-notebook-commit.sh. Observation AC met — eligible for REVIEW->DONE flip at next PO triage (owner=po). Carry-over reviewer notes from run 2/3 still apply (trailer spec gap; election-release ownership doc line).",
+        "done_verified": true,
+        "verified_by": "po",
+        "verified_at": "2026-07-03T03:03:24Z",
+        "signoff_note": "PO triage sign-off (tick 2026-07-03T02:37Z): observation ACs 3/3 met across 3 consecutive auditor T1 ticks (fd9e7ce12 01:00Z / a2b1513bf 01:30Z / 673225129 02:00Z), each mutex-paired + explicit-pathspec via scripts/auditor-notebook-commit.sh. Shipped 2325d9755+5ac3fa523. Reviewer follow-ups spun to backlog FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC.",
+        "followups": [
+          "FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC"
+        ]
+      }
+    ],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
@@ -9133,23 +9347,6 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      },
-      {
-        "id": "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING",
-        "title": "search_similar_context RECURRING timeout (BUG#3144, bctc-analyst c071/c072/c073 = 3 consecutive cycles). mcp-server tool (analysis.ts:511) delegates to rag-service over HTTP :5002 via ragHttpClient (analysis.ts:563); the timeout is a CLIENT-VISIBLE symptom of the rag-service clean-exit restart-loop. Fix: (a) client-side fail-soft in the mcp-server tool — on rag timeout/down, degrade to an empty result + WARN instead of surfacing a hard timeout that blocks bctc-analyst (mirror the existing analysis.ts:84 'service-down: omit block entirely' pattern); (b) resolve the rag-service restart-loop root.",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "status_note": "RECURRING-BUG durable entry (2+ occ -> board per feedback_recurring_bug_escalation). Source: telegram BUG msg#3144 (from bctc-analyst). LINKED ROOT: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (rag-service RestartCount 226->245, clean-exit restart loop; passive health masks churn). AC: no BUG-channel search_similar_context timeout for 3 consecutive bctc-analyst cycles AND (rag-service RestartCount stabilizes OR the tool degrades gracefully with zero analyst-blocking). Priority: medium. || 2026-07-03T02:30Z router: worker a78cc5eb DONE — RAW-verified (explicit-path stack 31caeefcd+1a9cda30b == claimed file set; pnpm check green on HEAD post-merge; index-check PASS; tree-verify HEAD PASS, lower-commit rc=1 = cherry-pick-verifier artifact, combined diff clean; c2 WARN benign journal-in-decisions; DJ-GATE-1 journal committed; no docker/push; mutex claim errored at transport -> zone RUN-SOLO fallback). IN_PROGRESS->REVIEW. QA spawned background. Reviewer note: 1466-sync-db-corruption-bail.test.ts afterAll mock.module pollution flagged by worker as follow-up candidate. || 2026-07-03T02:48Z router: QA APPROVED (RAW-verified: 7/7 targeted tests, pnpm check green, full suite under baseline, mock-guard PASS, no forbidden actions). Report reports/TASK_REPORT_FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING.md committed. Stays REVIEW — eligible DONE at PO triage. Reviewer follow-up candidate: 1466-sync-db-corruption-bail.test.ts mock.module pollution.",
-        "created_at": "2026-07-02T21:28:10Z",
-        "promoted_at": "2026-07-03T01:34:10Z",
-        "promoted_by": "po",
-        "promotion_note": "4th consecutive occurrence (BUG#3144 c071/c072/c073 + telegram 3397 2026-07-02T21:15Z). Blocks bctc-analyst Step 2b historical-BCTC context for ALL tickers every window. SCOPED to part-(a): client-side fail-soft in the mcp-server tool (analysis.ts:511/563 ragHttpClient) — on rag timeout/down, degrade to empty result + WARN (mirror analysis.ts:84 service-down omit-block pattern); do NOT hard-timeout-block the analyst. Part-(b) rag-service restart-loop root stays tracked in FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (backlog). AC per original task.",
-        "assigned_to": "dev-mcp-server",
-        "started_at": "2026-07-03T01:40:47Z"
       }
     ],
     "ready": [],
@@ -9356,7 +9553,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-02T22:24:53Z",
+    "last_triaged_at": "2026-07-03T03:03:24Z",
     "last_triaged_by": "po"
   },
   "_meta": {
