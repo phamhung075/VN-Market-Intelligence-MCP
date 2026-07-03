@@ -45,5 +45,11 @@
     "note": "single-slot off-market bctc fire (cron 0 18); tick-snapshot skipped (single consumer / token-economy, zero-blocker fallback); bctc-analyst spawned background a34a3d27; E2 off-market OK"
   },
   "priority": "low",
-  "createdAt": "2026-07-03T18:13:19Z"
+  "createdAt": "2026-07-03T18:13:19Z",
+  "_processed": {
+    "fingerprint": "0605fd9c5929e3fc345c3443e222a376694d68715acda028f3016b379f44d916",
+    "processedAt": "2026-07-03T18:22:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
