@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-03T06:03:53Z",
-    "updated_by": "dev-team",
+    "updated_at": "2026-07-03T07:15:00Z",
+    "updated_by": "architect",
     "active_task_id": null,
     "next_agent": "pm",
-    "note": "FIX-BCTC-ENRICHER-STUCK-BACKLOG promoted review->done_verified (qa PASS, commit 14b955802, RAW-verified). SPIKE-BCTC-CTG-BS-REALDATA-ROOT still in_progress (architect in flight) — head remains active on it. System-auditor signal sau-t1-2026-07-03T05:56:45Z (rag-service RestartCount=294 WARN) queued for drain. BCTC-HNX-SSL-HARDEN awaits manual deploy."
+    "note": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT DONE (architect, corrective head-fix — prior head note was stale from a concurrent commit race, task_board.done row already correctly reflects DONE) -> docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md. Root cause: refinedMarkdownParser.ts column-order swap (dominant) + bctcFormType.ts classifier bold-intolerance + detectSection vocabulary gap, all apps/mcp-server. FIX-BCTC-BANK-BS-SECTION-CLASSIFIER left in REVIEW with architect_disposition recommending supersede/split into FIX-BCTC-BANK-BS-COLUMN-ORDER + FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP, next_agent=pm."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",

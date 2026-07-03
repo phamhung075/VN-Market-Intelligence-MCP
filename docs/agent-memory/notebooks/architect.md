@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-02 18:17 UTC | **Sprint:** MERGE-MONEY-RADAR-INTO-MOMENTUM
+**Last updated:** 2026-07-03 07:10 UTC | **Sprint:** SPIKE-BCTC-CTG-BS-REALDATA-ROOT
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-03T07:10Z — SPIKE-BCTC-CTG-BS-REALDATA-ROOT (RECON DONE, no code patch — 2nd DoD-cycle recurring-bug escalation)
+
+**Task:** SPIKE-BCTC-CTG-BS-REALDATA-ROOT | escalated from dev-mcp-server after FIX-BCTC-BANK-BS-SECTION-CLASSIFIER's 2nd real-data behavioral-DoD FAIL | zone: multi (apps/mcp-server, live-verified)
+**BUILD-STANDARD:** not-applicable (SPIKE recon)
+**Live-verified via direct HTTP JSON-RPC** (gateway unregistered, INV-GATEWAY-1) — `get_bctc_refined(96e36139…)` read the PRE-parse `bctc_refined_units.markdown` directly (56 units) and cross-checked against the served 451-row `bctc_table_rows`. **3 independent stacking bugs found, not the classifier alone:**
+**(1) DOMINANT — `refinedMarkdownParser.ts`'s 4-cell branch hardcodes column order `[code,label,…]`** (corporate-VAS convention). CTG's real bank-form (Mẫu B02a/TCTDHN) header is label-first (`Mục (Item) | Mã (Code)`) — reversed. Blank-Mã rows (BOTH grand totals + equity subtotal) get `label=""` → unconditionally dropped by the empty-label guard; populated-Mã rows get code/label silently swapped. **Proven the grand totals ARE present pre-parse with correct values** (2,924,176,928 / 2,735,484,770 / 188,692,158 — exactly matching the dev's own fixture numbers) — transcription (layer a) EXONERATED; corrects a stale "absent from source" claim in `2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING.md` §2 (that probe never queried `bctc_refined_units.markdown` directly).
+**(2) `bctcFormType.ts`'s `isBankFormFromRows`** exact-anchor regex has zero tolerance for markdown emphasis — CTG's own income-statement rows (pages 8-9) store codes as `**I**`…`**XV**` (bold), which never match `^I$`. Empirically 0/451 real codes match either regex → classifier returns non-bank → corporate scalar path → ALL scalars null (reproduces qa's exact log line).
+**(3) `detectSection`** has zero vocabulary for the bank canonical BS title ("BÁO CÁO TÌNH HÌNH TÀI CHÍNH") + a false-positive ToC keyword match ("lưu chuyển tiền tệ" substring inside a table-of-contents bullet) that the already-shipped RC-3 carry-forward mechanism (commit 2c7fb5b0) now propagates forward into every downstream unit — both empirically replayed against the real markdown.
+**Fix design split by layer** (FIX-A parser column-order [dominant, HIGH-value] + FIX-B classifier bold-strip [LOW-risk, independent] + FIX-C mandatory verbatim real-markdown regression fixture [must ship same PR — 2 of 2 prior DoD cycles failed exactly because synthetic fixtures diverged from the real doc] + FIX-D section vocabulary + FIX-E doc correction). W2's existing row-repair (`bctcRowRepair.ts`, commit 2cd9e105) is real/correct for its own signature but structurally cannot recover these rows (they're dropped before it ever runs).
+**Output:** `docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md`
+**Next:** pm — recommend SUPERSEDE `FIX-BCTC-BANK-BS-SECTION-CLASSIFIER` with `FIX-BCTC-BANK-BS-COLUMN-ORDER` (FIX-A+C+D as one interdependent unit, dev-mcp-server) + independent `FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP` (FIX-B, size S). Do NOT re-open the classifier row for a 4th narrow patch.
 
 ## 2026-07-02T18:17Z — FIX-MCP-MEMORY-CODE-LEAK (PHASE-0 RECON DONE, no fix shipped)
 
@@ -25,19 +37,8 @@
 **Output:** `docs/handoffs/TOKEN-ECONOMY-TICK-PREFLIGHT.md`
 **Next:** pm decomposes 3 WU tasks; WU-2 depends on WU-1's shared `mcp-call.sh`; WU-3 fully independent/parallelizable.
 
-## 2026-07-02T06:50Z — ARCH-DASH-CRON-RECHECK-TABLE (SPLIT DONE)
-
-**Task:** ARCH-DASH-CRON-RECHECK-TABLE | SPRINT-M user-prioritized | zone: multi (apps/mcp-server + apps/frontend, explicit BA SPLIT confirmed correct)
-**BUILD-STANDARD:** lean (both zones exist)
-**5 ARCH-RATIFY items resolved live** (not guessed): CN-1 job_name resolution = hybrid — static 16-pair reverse-map for WATCHDOG_MANIFEST jobs (verified only 1/16 pairs is a literal string match; a pure normalize-and-strip-"Job" heuristic provably fails on `summaryJob:daily`→CRONS-key `summaryDaily` since "Job" sits mid-string not as a suffix) + normalized-DISTINCT-scan fallback for the other ~68 non-manifest crons. CN-2 restricted-window/comma-list cadence = ONE generic algorithm (MIN successive delta across 6 `cron-parser`-sampled upcoming fires) — hand-verified it derives 10min for `vpsProxyWatchdog` (`*/10 2-8 * * 1-5`) and 30min for `restartCadenceAlert` (`15,45 * * * *`) with zero per-expression special-casing. CN-5 Layer-B SSOT = filesystem-read `.claude/commands/crons/*.md` ONLY.
-**Real brownfield correction to BA spec (FR-2.1 double-count):** BA named 3 Layer-B sources as disjoint (14 command files + cron-detect-loop's 4 crons + cron-cowork-team's 1 cron) — live read shows `cron-detect-loop/SKILL.md` and `cron-cowork-team/SKILL.md` are re-arm automation docs that VERBATIM-COPY cron values already declared in `cron-dev-team.md`/`cron-system-auditor.md`/`cron-cowork-team.md` (SKILL.md's own text: "SSOT cron values... re-sync if cadence changes there... values below are verbatim copies"). Parsing both would double-count 5 crons. Also found `cron-fb-market-poster.md` is DEPRECATED (2026-06-28 FB-COWORK-FOLD, folded into cowork-team `*/15` dispatcher) with ZERO standalone crons, and `cron-refine-bctc.md` uses a different comment-format header than the other 12 files — a naive single-regex Layer-B parser would silently miscount on both. AC-12's "14 files minimum" corrected to "13 live cron-bearing command files" — flagged to PM/QA, not silently patched.
-**New dependency decision:** `cron-parser` added (verified absent from repo entirely, not even transitively via `node-cron` which only depends on `uuid`) — `node-cron`'s public API has no next/prev-fire computation and its internal `convert-expression`/`time-matcher` modules are unexported (unsafe deep-import).
-**Perf flag (load-bearing, not optional):** dev-frontend's CN-4 choice (combine into existing loader, reuse the page's existing 5s auto-poll for the RECHECK mechanism) makes Zone-1 static-metadata memoization (cadenceMs/job_name_db resolution computed once per process, not per-request) a HARD requirement — flagged explicitly so dev doesn't skip it under time pressure.
-**Output:** `docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md` + `[Architect] Brownfield Findings` → `docs/handoffs/BA-DASH-CRON-RECHECK-TABLE.md`
-**Next:** pm decomposes 2 dev-* work units (dev-mcp-server ships first; dev-frontend can build against stub).
-
 ---
 
-## Archive (pre-2026-07-02T06:50Z)
+## Archive (pre-2026-07-02T12:10Z)
 
-[Older cycles archived to git history: ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING (2026-07-01T18:20Z, AC-1 spike + bank-form-generic gap + W1-W5 split), BA-PREDICTION-EVIDENCE-REVIVAL (2026-07-01T07:05Z, evidence_type corrections + FR-2.2 VPS proxy 502 root cause + 2-hop split), OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (2026-06-30T20:45Z, per-ticker anchor repair migration + writer guard + sanity pass 4), FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]
+[Older cycles archived to git history: ARCH-DASH-CRON-RECHECK-TABLE (2026-07-02T06:50Z, cron-recheck-table SPLIT: job_name hybrid resolution + generic cadence algorithm + Layer-B double-count correction), ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING (2026-07-01T18:20Z, AC-1 spike + bank-form-generic gap + W1-W5 split), BA-PREDICTION-EVIDENCE-REVIVAL (2026-07-01T07:05Z, evidence_type corrections + FR-2.2 VPS proxy 502 root cause + 2-hop split), OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (2026-06-30T20:45Z, per-ticker anchor repair migration + writer guard + sanity pass 4), FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]
