@@ -10,9 +10,18 @@
     "evidence": {
       "occurrence_1": "2026-07-02T22:44Z T1 notebook commit, no commit-mutex claim in transcript",
       "occurrence_2": "2026-07-03T00:14Z commit 11be6d74d (transcript a5c76babeb72ea425): gateway calls = cron:auditor-t1 claim x2 + get_system_status + get_cron_health + release — zero commit-mutex activity",
-      "paired_counterexamples": ["2026-07-02T23:00Z", "2026-07-02T23:30Z commit 0b4f49e88 WITH paired commit-mutex"]
+      "paired_counterexamples": [
+        "2026-07-02T23:00Z",
+        "2026-07-02T23:30Z commit 0b4f49e88 WITH paired commit-mutex"
+      ]
     },
     "risk": "unserialized agent commits race the shared git index (known concurrent-commit-race class); mutex exists to serialize notebook commits against router/dev-team commits",
     "proposed_fix": "harden docs/agents/system-auditor/flow/main.md commit step: route the notebook commit through a single blessed script that claims/releases the commit-mutex internally, so the mutex cannot be skipped by flow-step drift; add explicit RAW-verifiable marker line"
+  },
+  "_processed": {
+    "fingerprint": "10377e93dcdbd32f6f09d792a53839f73f8cb393b4c3c650d327197cdfc022fa",
+    "processedAt": "2026-07-03T00:22:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

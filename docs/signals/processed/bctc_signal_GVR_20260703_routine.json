@@ -63,5 +63,11 @@
   },
   "confidence_pct": 60,
   "cycle": "c074",
-  "generated_at": "2026-07-03T00:15:00Z"
+  "generated_at": "2026-07-03T00:15:00Z",
+  "_processed": {
+    "fingerprint": "89f5057d86a384fbe7977f82ca2fa2c1bd9c97339f3cc6ef065c8fa9e89a9358",
+    "processedAt": "2026-07-03T00:22:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

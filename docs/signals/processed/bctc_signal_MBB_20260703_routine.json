@@ -16,7 +16,7 @@
     "total_liabilities_bn_vnd": 567.49,
     "cash_bn_vnd": 680.641,
     "roe_pct": null,
-    "roa_pct": 0.0,
+    "roa_pct": 0,
     "pe": null,
     "pb": null,
     "published_at": "2026-06-07T11:25:24.812Z",
@@ -49,5 +49,11 @@
   "data_quality_flag": "CORRUPT — plausibility check failed (feedback_nonzero_values_need_plausibility_check). Suspected recurrence of bank total_assets-mapping bug class (same signature as CTG, flagged corrupt c072 2026-07-02). Published 2026-06-07T11:25:24Z, PREDATES FIX-BCTC-BANK-SUMMARY-MAPPING merge (commit a46131cf, 2026-07-01) — recommend reflow/re-extraction rather than treating as fresh fundamentals.",
   "confidence_pct": 20,
   "cycle": "c074",
-  "generated_at": "2026-07-03T00:15:00Z"
+  "generated_at": "2026-07-03T00:15:00Z",
+  "_processed": {
+    "fingerprint": "a47920d3a29d481d8511ee732fe454445fcde51a0ca9380d01d562298b784fdf",
+    "processedAt": "2026-07-03T00:22:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
