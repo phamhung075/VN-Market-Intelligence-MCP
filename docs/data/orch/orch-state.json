@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T01:21:55Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-03T01:33:39Z",
+    "_updated_by": "po",
     "archive": [],
     "rows": [
       {
@@ -294,11 +294,13 @@
         "type": "system_issue",
         "summary": "held lock esc-deepdive:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_triage": "router 2026-06-24T03:04:02Z: KNOWN-RECURRING daily D4 (03:00 fire; prior 06-19/20 RESOLVED, 06-21 TRIAGED) — LOW, self-resolving (esc locks TTL-expire). Two rows share id sau-d4-202606240300 = KNOWN auditor quirk tracked by FU-AUDITOR-D4-SIGNAL-ID (one run-scoped id per multiple divergence rows). Underlying divergence (held esc-deepdive:FPT:Q1-2026:ESC-3 lock w/ no board row, from bctc-analyst FPT ESC-3 DATA-COVERAGE-LIMITED run) tracked by FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE. Not a new incident; no re-escalate; lock left to TTL/FIX-D4 reconciler per prior RESOLVED pattern.",
         "router_dup_of": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
-        "router_triaged_at": "2026-06-24T03:04:02Z"
+        "router_triaged_at": "2026-06-24T03:04:02Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-d4-202606240300",
@@ -308,11 +310,13 @@
         "type": "system_issue",
         "summary": "orch-state/lock mismatch: active=FIX-SIGNAL-CONFIDENCE-DEFAULT-50-VERIFIED-DECISION held=esc-deepdive:FPT:Q1-2026:ESC-3",
         "severity": "LOW",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_triage": "router 2026-06-24T03:04:02Z: KNOWN-RECURRING daily D4 (03:00 fire; prior 06-19/20 RESOLVED, 06-21 TRIAGED) — LOW, self-resolving (esc locks TTL-expire). Two rows share id sau-d4-202606240300 = KNOWN auditor quirk tracked by FU-AUDITOR-D4-SIGNAL-ID (one run-scoped id per multiple divergence rows). Underlying divergence (held esc-deepdive:FPT:Q1-2026:ESC-3 lock w/ no board row, from bctc-analyst FPT ESC-3 DATA-COVERAGE-LIMITED run) tracked by FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE. Not a new incident; no re-escalate; lock left to TTL/FIX-D4 reconciler per prior RESOLVED pattern.",
         "router_dup_of": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
-        "router_triaged_at": "2026-06-24T03:04:02Z"
+        "router_triaged_at": "2026-06-24T03:04:02Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-d4-202606210300",
@@ -322,11 +326,13 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_dup_of": "FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE",
         "triaged_at": "2026-06-21T03:39:16Z",
-        "triaged_by": "dev-team-cron-router"
+        "triaged_by": "dev-team-cron-router",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-b13-202606171834",
@@ -336,13 +342,15 @@
         "type": "db_integrity_breach",
         "summary": "bctc_vps_queue check B-13 failed (8 stale pending >72h)",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "triaged_by": "po-s96",
         "triaged_at": "2026-06-17T19:36:00Z",
         "disposition": "DUPLICATE",
         "linked_task": "FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH",
-        "triage_note": "DUP/SYMPTOM of in-flight FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (in_progress, CHANGES_REQUESTED->dev-mcp-server, test-fix re-dispatch underway). The 8 stale-pending>72h rows ARE the genuinely-absent tickers stuck at attempts=0 that that fix terminalizes: post-rebuild they accumulate real-discovery attempts -> reach MAX_ENRICH_ATTEMPTS(5) -> marked url_not_found terminal -> drop out of pending -> B-13 self-clears. No new task minted. dev-mcp-server + QA own that row's status/next_agent — PO does not touch it."
+        "triage_note": "DUP/SYMPTOM of in-flight FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (in_progress, CHANGES_REQUESTED->dev-mcp-server, test-fix re-dispatch underway). The 8 stale-pending>72h rows ARE the genuinely-absent tickers stuck at attempts=0 that that fix terminalizes: post-rebuild they accumulate real-discovery attempts -> reach MAX_ENRICH_ATTEMPTS(5) -> marked url_not_found terminal -> drop out of pending -> B-13 self-clears. No new task minted. dev-mcp-server + QA own that row's status/next_agent — PO does not touch it.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "qa-cycle277-ohlcv-aggregator-followon-stranded-rows-1781589850",
@@ -350,13 +358,15 @@
         "to": "po",
         "type": "follow-on-task-request",
         "severity": "P1",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "summary": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0 APPROVED. Write-path fix is generic — new poison blocked. Follow-on required: REPAIR stranded pre-fix rows (DCR close=5900 flat vol0, H11 close=25700 flat vol0, DAG close=0) still serving corrupt LIVE. Fix class: recompute-on-read OR delete-synthetic-bar rows + corpus re-flow via writeOhlcvBatch. Stranded rows were written by PRE-FIX image (before 05:41Z rebuild). This is a DATA REPAIR task, not a code defect in the approved fix.",
         "ts": "2026-06-16T05:56:30Z",
         "triaged_by": "po-s82",
         "triaged_at": "2026-06-16T07:31:03Z",
         "minted_task": "FIX-OHLCV-STRANDED-ROWS-REPAIR-P1",
-        "minted_lane": "ready"
+        "minted_lane": "ready",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "qa-cycle277-ohlcv-aggregator-followon-class3-colstart-1781589851",
@@ -364,13 +374,15 @@
         "to": "po",
         "type": "follow-on-task-request",
         "severity": "P1",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "summary": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0 APPROVED. Class-3 cold-start gap remains: PDN (105.2 vs prior 99800) and NHD (118.6 vs prior 92500) still serve ÷1000 values. Root: detectAndNormalizeScaleFromPrevClose is a no-op when prevClose=0 (no prior real vol>0 row in daily_ohlcv). Generic code is correct — the gap is missing exchange reference-price seed data. Mint task: FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED. Requires sourcing a reference price for tickers with no historical candles.",
         "ts": "2026-06-16T05:56:30Z",
         "triaged_by": "po-s82",
         "triaged_at": "2026-06-16T07:31:03Z",
         "minted_task": "FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2",
-        "minted_lane": "backlog"
+        "minted_lane": "backlog",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "devteam-20260619T170200Z-macro-fetch-cluster",
@@ -380,14 +392,16 @@
         "type": "repair_task_request",
         "summary": "Deferred-for-scoping cluster from 2026-06-19 health-rechecks: (1) DJIA=23750 + WTI=95.5 stale in US-markets/commodity store corrupting macro synthesis (NOTE: get_macro_snapshot itself serves correct live oil $80.63 — corruption is in a separate store, scope which); (2) Reuters RSS + TradingEconomics x2 circuit-open ~130 consecutive failures, never succeeded this lifecycle (macro/news source degradation, owner dev-mainserver-crawls/ops-mainserver-fetch); (3) FRED_API_KEY unset -> get_ism_subcomponents + macro calendar empty; (4) SBV storeSbvSnapshot zero-mask REJECTED noise off-market + vn-sbv-fetch restart loop; (5) foreign-flow primary path dead (self-heals via VPS, log-noise only). Needs PO scoping into FIX tasks; not blind-dispatched.",
         "severity": "WARN",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "check_id": "MACRO-FETCH-CLUSTER-20260619",
         "service": "macro/news-fetch",
         "zone_owner": "dev-macro-indicators",
         "triaged_at": "2026-06-19T17:34:48Z",
         "triaged_by": "po-s110",
-        "disposition": "RE-CONFIRMED 3273/3274. SCOPED 2026-06-21: finding#1 (phantom DJIA=23750/WTI=95.5 served-as-current) MINTED as DSI-MACRO-PHANTOM-STALE-GUARD (data-integrity guard, DATA-SERVE-INTEGRITY). finding#2 Reuters-RSS + TradingEconomics circuit-open = upstream-source-revive, owner dev-mainserver-crawls/ops (Chromium scraper likely missing post-rebuild) — left in this cluster row, NOT minted (source-fetch revive, not blind-dispatch; WIP-capped at 2). finding#3 FRED_API_KEY unset = CONFIG/user-side, NOT a dev FIX. finding#4 SBV zero-mask + finding#5 foreign-flow primary = log-noise/self-heal, no mint. po dev-team triage 2026-06-21."
+        "disposition": "RE-CONFIRMED 3273/3274. SCOPED 2026-06-21: finding#1 (phantom DJIA=23750/WTI=95.5 served-as-current) MINTED as DSI-MACRO-PHANTOM-STALE-GUARD (data-integrity guard, DATA-SERVE-INTEGRITY). finding#2 Reuters-RSS + TradingEconomics circuit-open = upstream-source-revive, owner dev-mainserver-crawls/ops (Chromium scraper likely missing post-rebuild) — left in this cluster row, NOT minted (source-fetch revive, not blind-dispatch; WIP-capped at 2). finding#3 FRED_API_KEY unset = CONFIG/user-side, NOT a dev FIX. finding#4 SBV zero-mask + finding#5 foreign-flow primary = log-noise/self-heal, no mint. po dev-team triage 2026-06-21.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "devteam-20260619T170637Z-health-idle-vs-crash",
@@ -397,14 +411,16 @@
         "type": "repair_task_request",
         "summary": "FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH (P1): health-recheck cloud trigger (trig_019Q8D5 per project_health_recheck_trigger) misclassifies vn-bctc-fetch as CRASHED P0 whenever last-push-age>360min, but RAW-VERIFIED 2026-06-19T16:20Z via SSH: service active(running) 8+ days, queue legitimately empty (9 tickers BDI/DAG/DLC/JSH/SIS/VDC/VNH/VEA have not filed Q1-2026 on HNX/UPCOM/SSC). Fired 12x today as false P0. DURABLE FIX: health check must read queue endpoint as secondary signal -> queue=0 + service active = IDLE (not CRASH); only flag CRASH when systemd state inactive/failed. Owner: health-recheck trigger prompt edit (router-updatable RemoteTrigger). Follow-ons: (a) stale-queue re-enqueue watchdog for late-filers, (b) SSC Playwright fallback during ~12:00 UTC maintenance window.",
         "severity": "WARN",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "check_id": "FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH",
         "service": "health-recheck",
         "zone_owner": "router/health-trigger",
         "triaged_at": "2026-06-19T17:34:48Z",
         "triaged_by": "po-s110",
-        "disposition": "RE-CONFIRMED by health-recheck stream 3273/3274 (2026-06-20/21). STILL owner=health-recheck RemoteTrigger prompt (router-updatable, NOT a dev coding lane); RAW-verified vn-bctc-fetch active(running) 8d, queue legitimately empty (late Q1-2026 filers). NO new dev task — known-false-CRASH; durable fix = trigger-prompt queue-aware secondary check, tracked here. po dev-team triage 2026-06-21."
+        "disposition": "RE-CONFIRMED by health-recheck stream 3273/3274 (2026-06-20/21). STILL owner=health-recheck RemoteTrigger prompt (router-updatable, NOT a dev coding lane); RAW-verified vn-bctc-fetch active(running) 8d, queue legitimately empty (late Q1-2026 filers). NO new dev task — known-false-CRASH; durable fix = trigger-prompt queue-aware secondary check, tracked here. po dev-team triage 2026-06-21.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "devteam-20260619T170637Z-d4-id-collision",
@@ -414,14 +430,16 @@
         "type": "repair_task_request",
         "summary": "FIX-D4-SIGNAL-ID-COLLISION (P2): system-auditor D4 emits multiple distinct findings under ONE shared date-based id sau-d4-{YYYYMMDDHHMM}; signal_queue append is blind (no upsert-by-id) so 2 different D4 findings (lock-no-task-row + orch/lock-mismatch) landed as a duplicate-id pair 2026-06-19T03:00. Deduped manually this tick. DURABLE FIX: make D4 signal id unique per-finding (append seq or summary-hash) AND/OR make signal-dashboard WRITE upsert-by-id idempotent. Owner: system-auditor flow + signal-dashboard skill.",
         "severity": "LOW",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "check_id": "FIX-D4-SIGNAL-ID-COLLISION",
         "service": "system-auditor",
         "zone_owner": "system-auditor",
         "triaged_at": "2026-06-19T17:34:48Z",
         "triaged_by": "po-s110",
-        "disposition": "RANKED backlog: P2 D4 signal-id collision already tracked as FU-AUDITOR-D4-SIGNAL-ID; durable fix overlaps M2 signal-dashboard write-path work. Fold/sequence after M2."
+        "disposition": "RANKED backlog: P2 D4 signal-id collision already tracked as FU-AUDITOR-D4-SIGNAL-ID; durable fix overlaps M2 signal-dashboard write-path work. Fold/sequence after M2.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-c08-202606180038",
@@ -430,7 +448,7 @@
         "to": "po",
         "type": "db_integrity_breach",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "summary": "C-08 orphaned alerts (alerts w/ no agent_signals link, 24h window). Router RAW-verified LIVE 2026-06-19T17:15:00Z: 33 orphaned / 119 alerts-24h, 1492 total (was 63 on 06-18, 103 on 06-13 RESOLVED) = RECURRING + currently real. Re-homed from orphan key signal_queue[3] (auditor wrote wrong path -> invisible to PO ~1.5d). Route dev-alert-engine/dev-mcp-server.",
         "payload_ref": null,
         "router_note": "rehomed+liveverified",
@@ -438,7 +456,9 @@
         "triaged_by": "po-s110",
         "disposition": "DISPATCHED via M1 FU-ALERT-COWRITE-SCHEDULER-JOBS (orphan root) -> ready/dev-mcp-server.",
         "deploy_status": "DEPLOYED b3ea96fa / img 05ad3412 (2026-06-19T19:03Z). Orphan source RAW-confirmed = 3 scan jobs (RSI/BB UUID-id + foreign-flow-id), last orphan 2026-06-19T06:45Z. Other orphan paths (news/legacy-price/macro) already quiesced (max 06-12/13). RESOLVES on next-session live-verify: orphan_max frozen + new scan alerts co-write. 1319 historical orphans = forward-fix, not backfilled.",
-        "deploy_status_at": "2026-06-19T19:10:36Z"
+        "deploy_status_at": "2026-06-19T19:10:36Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260619T170803Z",
@@ -447,13 +467,15 @@
         "to": "po",
         "type": "microservice_degraded",
         "severity": "MEDIUM",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "summary": "rag-service chronic OOM-cycle: 766MiB/768MiB cap (99.7%) + RestartCount=77 over 9d (~8.5/day), OOMKilled=false now, UP 7h healthy. Router RAW-verified 2026-06-19T17:15:00Z. Recovers each restart then regrows to ceiling = cap-undersize or memory growth (LanceDB/embeddings). Re-homed from orphan key signal_queue[5]. Fix: bump cgroup cap toward peers (~1.5GB) AND/OR dev-rag-service investigate growth.",
         "payload_ref": null,
         "router_note": "rehomed+rawverified",
         "triaged_at": "2026-06-19T17:34:48Z",
         "triaged_by": "po-s110",
-        "disposition": "RANKED backlog: rag-service OOM-cycle (MEDIUM) overlaps FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX; WIP<=2 this tick consumed by 2 HIGH roots. Cap-bump (~1.5GB) is an ops/infra change; growth-investigation is dev-rag-service. Pick up next free slot."
+        "disposition": "RANKED backlog: rag-service OOM-cycle (MEDIUM) overlaps FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX; WIP<=2 this tick consumed by 2 HIGH roots. Cap-bump (~1.5GB) is an ops/infra change; growth-investigation is dev-rag-service. Pick up next free slot.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "router-auditor-orphankey-writebug-20260619T1715Z",
@@ -462,12 +484,14 @@
         "to": "po",
         "type": "repair_task_request",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "summary": "ROOT CAUSE: system-auditor signal-write targets .signal_queue[N] (numeric key) instead of .signal_queue.rows[] -> findings land at orphan keys invisible to PO triage. Confirmed swallowed: C-08 db-breach (06-18, ~1.5d) + rag-service degraded (this tick) + legacy junk keys 0/1/2. Definitif fix: correct emit/append step (signal-dashboard skill / system-auditor flow) to .signal_queue.rows += [row] + post-write self-check asserting row in .rows[]. agent-father via agent-md-factory. Router reconciled board this tick.",
         "payload_ref": null,
         "triaged_at": "2026-06-19T17:34:48Z",
         "triaged_by": "po-s110",
-        "disposition": "DISPATCHED via M2 FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY -> ready/agent-father (agent-md-factory)."
+        "disposition": "DISPATCHED via M2 FIX-AUDITOR-SIGNAL-WRITE-WRONG-KEY -> ready/agent-father (agent-md-factory).",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-b01-202606192230",
@@ -477,7 +501,7 @@
         "type": "data_stale",
         "summary": "B-01 CRITICAL: SSC iBoard price stale 47 min (threshold 30 min)",
         "severity": "INFO",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "check_id": "B-01",
         "source_id": "ssc-iboard",
@@ -488,7 +512,9 @@
         "drained_by": "dev-team",
         "triaged_by": "po",
         "triaged_at": "2026-06-19T23:35:15Z",
-        "disposition": "TRIAGED-no-task: router already downgraded CRITICAL->INFO (Sat VN weekend, market-closed, no live ticks expected). Re-verify at Mon open 02:00Z per router_note. Not dev work."
+        "disposition": "TRIAGED-no-task: router already downgraded CRITICAL->INFO (Sat VN weekend, market-closed, no live ticks expected). Re-verify at Mon open 02:00Z per router_note. Not dev work.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-vps-sbv-202606192230",
@@ -498,7 +524,7 @@
         "type": "data_stale",
         "summary": "VPS SBV service unhealthy (data stale 2699s > 2100s threshold)",
         "severity": "INFO",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "check_id": "B-06",
         "source_id": "sbv-vps",
@@ -509,7 +535,9 @@
         "triaged_at": "2026-06-19T23:35:15Z",
         "disposition": "TRIAGED-ops-dispatch-needed: asserts FETCH SERVICE health (vn-sbv-fetch unhealthy, age 2699s>2100s). PO is gateway-blind (empty .mcp.json) so cannot live-probe weekend-idle-vs-down. Existing tracked task FIX-SBV-FX-VPS-FETCHER-UNHEALTHY (backlog/TODO, zone apps/macro-indicators/, B-12 recurring) already covers the fix; NO duplicate minted. Needs an ops live-probe (get_vps_service_health) to disambiguate before promote.",
         "router_note": "Live get_vps_service_health probe: vn-sbv-fetch=healthy polled 1m ago. Auditor age-2699s HIGH was weekend-idle false-positive (market closed, SBV no weekend publish). Re-verify Mon open 02:00Z. NOT down — no task.",
-        "router_triaged_at": "2026-06-19T23:36:02Z"
+        "router_triaged_at": "2026-06-19T23:36:02Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-vps-bctc-202606192230",
@@ -519,7 +547,7 @@
         "type": "data_stale",
         "summary": "VPS BCTC service unhealthy (data stale 275258s > 86400s threshold)",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "check_id": "B-08",
         "source_id": "bctc-push",
@@ -528,7 +556,9 @@
         "drained_by": "dev-team",
         "triaged_by": "po",
         "triaged_at": "2026-06-19T23:35:15Z",
-        "disposition": "TRIAGED-no-task: KNOWN-STANDING architectural item (BCTC-VPS pipeline ~3.2d stale; TABLE_RECONSTRUCT). Already tracked across many open rows incl FIX-BCTC-VPS-PIPELINE-STALE-5D(done), ARCH-BCTC-PIPELINE-DURABILITY(done), plus active BCTC sprints + backfill backlog. NO new duplicate task."
+        "disposition": "TRIAGED-no-task: KNOWN-STANDING architectural item (BCTC-VPS pipeline ~3.2d stale; TABLE_RECONSTRUCT). Already tracked across many open rows incl FIX-BCTC-VPS-PIPELINE-STALE-5D(done), ARCH-BCTC-PIPELINE-DURABILITY(done), plus active BCTC sprints + backfill backlog. NO new duplicate task.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-2026-06-19T22:44:00Z",
@@ -538,13 +568,15 @@
         "type": "system_health_report",
         "summary": "Tier-1 complete: all 12 runtime services healthy (0 anomalies)",
         "severity": "INFO",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "drained_at": "2026-06-19T23:32:28Z",
         "drained_by": "dev-team",
         "triaged_by": "po",
         "triaged_at": "2026-06-19T23:35:15Z",
-        "disposition": "TRIAGED-no-task: clean Tier-1 health report (12/12 services healthy, 0 anomalies). Tracking row only."
+        "disposition": "TRIAGED-no-task: clean Tier-1 health report (12/12 services healthy, 0 anomalies). Tracking row only.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T043756Z",
@@ -554,10 +586,12 @@
         "type": "microservice_degraded",
         "summary": "api-gateway /health endpoint latency 1.6–3.0s (curl timeout 3s) — A-12 check",
         "severity": "INFO",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_triaged_at": "2026-06-20T04:40:10Z",
-        "router_note": "Live re-probe by router (load idle, 1.85): api-gateway :4000/health=200 in 1.0s cold then 4-5ms steady; docker healthcheck healthy 5/5 exit=0; Up 8d. Auditor 1.6-3.0s was a transient under-load snapshot (PO+auditor+cowork bg agents concurrent during its sweep). Transient false-degraded — NO dev/ops action. Re-verify only if A-12 recurs on a quiet host."
+        "router_note": "Live re-probe by router (load idle, 1.85): api-gateway :4000/health=200 in 1.0s cold then 4-5ms steady; docker healthcheck healthy 5/5 exit=0; Up 8d. Auditor 1.6-3.0s was a transient under-load snapshot (PO+auditor+cowork bg agents concurrent during its sweep). Transient false-degraded — NO dev/ops action. Re-verify only if A-12 recurs on a quiet host.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T103000-db1",
@@ -567,7 +601,7 @@
         "type": "db_integrity_breach",
         "summary": "daily_ohlcv: 835 OHLC constraint violations (high<open,low>high, etc) across 129 tickers, date range 2026-04-24..2026-06-12",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/data/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
@@ -577,7 +611,9 @@
         "acked_at": "2026-06-20T08:16:14Z",
         "po_disposition": "folded into FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 + CLEAN residue",
         "router_status_reconcile": "READ→TRIAGED: row carries explicit disposition routed to an existing board fix task (verified present). Status lagged; reconciled to stop idle-tick re-park.",
-        "router_reconciled_at": "2026-06-21T02:41:28Z"
+        "router_reconciled_at": "2026-06-21T02:41:28Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T103001-db2",
@@ -587,7 +623,7 @@
         "type": "db_integrity_breach",
         "summary": "daily_ohlcv: 1000x price-scale anomaly DFF 2026-06-12 (open=0.5, close=500.0), unit conversion bug hypothesis",
         "severity": "CRITICAL",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/data/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
@@ -597,7 +633,9 @@
         "acked_at": "2026-06-20T08:16:14Z",
         "po_disposition": "folded into FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 (same writer class) + CLEAN residue",
         "router_status_reconcile": "READ→TRIAGED: row carries explicit disposition routed to an existing board fix task (verified present). Status lagged; reconciled to stop idle-tick re-park.",
-        "router_reconciled_at": "2026-06-21T02:41:28Z"
+        "router_reconciled_at": "2026-06-21T02:41:28Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T103002-db3",
@@ -607,7 +645,7 @@
         "type": "db_integrity_breach",
         "summary": "vn_index_cache: table empty (0 rows), expected VNINDEX snapshot cache. vnIndexRefresh cron */5 2-8h may not be running.",
         "severity": "MEDIUM",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/data/db-integrity-history.json",
         "router_verified": true,
         "router_verified_at": "2026-06-20T08:12:48Z",
@@ -620,7 +658,9 @@
         "router_reconciled_at": "2026-06-21T02:41:28Z",
         "reopened_at": "2026-06-25T19:13:29Z",
         "reopened_by": "po-s111",
-        "reopen_reason": "RECURS at 2026-06-25T19:06Z scan (0 rows). Prior resolution minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE) but did NOT address the true root (startup purge + market-hours-only refresh). Re-filed as router-dbsweep-20260625T1906Z-r1-vnindex-cache-startup-purge with correct root-cause. Recurring-bug-escalation."
+        "reopen_reason": "RECURS at 2026-06-25T19:06Z scan (0 rows). Prior resolution minted FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE) but did NOT address the true root (startup purge + market-hours-only refresh). Re-filed as router-dbsweep-20260625T1906Z-r1-vnindex-cache-startup-purge with correct root-cause. Recurring-bug-escalation.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "router-20260620T113917Z-rag-restart-watch",
@@ -630,14 +670,16 @@
         "type": "service_restart_watch",
         "summary": "rag-service chronic restart cycle: RestartCount=86 (24h trend 77->86, +9). Currently Up 2h healthy, StartedAt 2026-06-20T09:47:12Z, 91.84%/768MiB cgroup. Tight 768MiB cap = recurring OOM-restart pattern.",
         "severity": "MEDIUM",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/agent-memory/notebooks/system-auditor.md",
         "router_verified": true,
         "router_verified_at": "2026-06-20T11:42:56Z",
         "router_evidence": "LIVE docker inspect 2026-06-20T11:39Z: vn-market-intelligence-mcp-rag-service-1 State=running Health=healthy RestartCount=86 StartedAt=2026-06-20T09:47:12Z (2h stable). Confirmed across 2 dev-team ticks + Tier-1 auditor 24h trend. NOT in crisis (healthy, host 67% free).",
         "router_note": "RAW-verified 2026-06-20T22:11:17Z via docker inspect vn-market-intelligence-mcp-rag-service-1: RestartCount=86 (= watch-mint value, 77->86 unchanged since 11:39Z), Up 12.4h, Health=healthy, StartedAt 2026-06-20T09:47:12Z. Chronic restart cycle CALMED (0 new restarts in 12h). MEDIUM held (86 lifetime high) but NOT an active incident. PO Mon 06-22: mint root-cause task (suspect OOM/embedding-model crash) OR close-as-stable.",
         "router_triaged_at": "2026-06-20T22:11:17Z",
-        "router_verdict": "PLATEAU-STABLE — not escalating; continue-watch, PO Mon root-cause-or-close"
+        "router_verdict": "PLATEAU-STABLE — not escalating; continue-watch, PO Mon root-cause-or-close",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T170827ZZ",
@@ -647,11 +689,13 @@
         "type": "data_stale",
         "summary": "C-06 FAIL: market_messages stale >3h (check C-06) — last message 2026-06-19 19:47:24",
         "severity": "INFO",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_note": "Router weekend-framing downgrade: now_VN Sun 2026-06-21 00:09, VN market closed since Fri 08:00Z. market_messages last row 2026-06-19 19:47:24Z = Friday post-close; 21h gap is weekend idle, NOT an ingestion halt. C-06 3h threshold is market-hours-blind (see memory auditor_freshness_threshold_market_hours_blind). Severity HIGH->INFO. RE-VERIFY at Mon 06-22 market open (02:00Z/09:00 VN) — if market_messages still stale after open => real incident, escalate then. No emergency dispatch on weekend.",
         "router_triaged_at": "2026-06-20T17:11:18Z",
-        "router_triaged_by": "dev-team-cron-router"
+        "router_triaged_by": "dev-team-cron-router",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T184351Z",
@@ -661,7 +705,7 @@
         "type": "microservice_degraded",
         "summary": "A-30 CRITICAL: mcp-server memory at 99.99% (2.0 GiB / 2 GiB cap) — trend 99.12%→99.90%→99.99%",
         "severity": "MEDIUM",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "check_id": "A-30",
         "service_id": "mcp-server",
@@ -672,7 +716,9 @@
         "router_verdict": "DOWNGRADE CRITICAL->MEDIUM: live-probed mcp-server NOW RestartCount=0 OOMKilled=false Status=running (up ~23h at 99.99%/2GiB). Escalation trigger (RestartCount>0 OR OOMKilled) UNMET -> stable-but-maxed ceiling, NOT incident (denominator-blind discipline). Holding at cap for hours WITHOUT OOM proves it is not crashing.",
         "router_note": "Real working-set growth (~8pp over 23h uptime, monotonic+accelerating) -> durable investigation Mon 06-22 dev-mcp-server: working-set/heap, candidate Bun-JIT v1.29.0 + Zod v3.25.76. Restart MASKS not fixes. IF OOM occurs over weekend: Docker self-heals via restart (RestartCount->1 auto-fires escalation trigger for next auditor tick); ops should capture a heap snapshot BEFORE any manual restart, do NOT just restart-and-forget. | UPDATE 19:37Z auditor c605 re-read 99.99%; RAW re-probe still RestartCount=0 OOMKilled=false up~24.5h, trigger still UNMET. Malformed-id dup row (sau-) deleted as junk; finding fully tracked here.",
         "router_triaged_by": "dev-team-cron-router",
-        "supersedes": "router-20260620T154041Z-mcp-server-mem-creep"
+        "supersedes": "router-20260620T154041Z-mcp-server-mem-creep",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T190656Z-a12",
@@ -682,11 +728,13 @@
         "type": "signal_feedback",
         "summary": "A-12 FAIL: api-gateway:4000/health endpoint unreachable (HTTP CURL_ERR)",
         "severity": "INFO",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_verdict": "FALSE-POSITIVE — live curl http://localhost:4000/health @19:40Z {status:ok} all 9 services ok, mcp latency 0ms; api-gateway up 9d healthy RestartCount=0 OOMKilled=false. 19:06 CURL_ERR = transient probe-side blip during concurrent audit/host-load (corroboration-gate class).",
         "router_triaged_at": "2026-06-20T19:40:57Z",
-        "router_triaged_by": "dev-team-cron-router"
+        "router_triaged_by": "dev-team-cron-router",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T190656Z-a30",
@@ -696,12 +744,14 @@
         "type": "signal_feedback",
         "summary": "A-30 CRITICAL: mcp-server memory at 99.85% (1.997 GiB / 2 GiB cap) — trend escalation (c603=99.99% → c604=99.85%)",
         "severity": "MEDIUM",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_dup_of": "sau-20260620T184351Z",
         "router_verdict": "DUP of canonical mem watch row. RAW @19:37Z RestartCount=0 OOMKilled=false healthy up~24.5h at 99.99%/2GiB; escalation trigger (RestartCount>0 OR OOMKilled) UNMET -> stable ceiling, not incident.",
         "router_triaged_at": "2026-06-20T19:40:57Z",
-        "router_triaged_by": "dev-team-cron-router"
+        "router_triaged_by": "dev-team-cron-router",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T195454Z-cron",
@@ -711,13 +761,15 @@
         "type": "db_integrity_breach",
         "summary": "cron_job_runs: 9 jobs crashed/errored (pollNews/intelligenceCycle/bctc pipeline, most recent 2026-06-18, NULL error_msg)",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/data/db-integrity-history.json",
         "router_disposition": "DEFER",
         "router_note": "DEFER: folded into FIX-NEWS-CB-FALSE-CLOSED (backlog) + macro-fetch-cluster devteam-20260619T170200Z (TRIAGED). 9 crashed cron_job_runs rows are a STALE historical count, most-recent crash 2026-06-18, not active. Observability sub-gap minted as FIX-CRON-RUNS-NULL-ERRORMSG (NULL error_msg). No new crash-fix task. Weekend, all 12 services healthy.",
         "router_triaged_at": "2026-06-20T20:15:42Z",
         "router_status_reconcile": "READ→TRIAGED: row carries explicit disposition routed to an existing board fix task (verified present). Status lagged; reconciled to stop idle-tick re-park.",
-        "router_reconciled_at": "2026-06-21T02:41:28Z"
+        "router_reconciled_at": "2026-06-21T02:41:28Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T195454Z-finrpt",
@@ -727,13 +779,15 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports: 17 rows with zero/negative net_revenue (extraction failures, OCR incomplete)",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/data/db-integrity-history.json",
         "router_disposition": "DEFER",
         "router_note": "DEFER: 17 zero/neg net_revenue rows = standing BCTC extraction-quality class. True root FIX-BCTC-ENRICH-SILENT-0ROWS already code-complete in review[] awaiting QA — do not re-mint. On QA sign-off, dev-pdf-extractor RAW-verifies which tickers via financial_reports WHERE net_revenue<=0.",
         "router_triaged_at": "2026-06-20T20:15:42Z",
         "router_status_reconcile": "READ→TRIAGED: row carries explicit disposition routed to an existing board fix task (verified present). Status lagged; reconciled to stop idle-tick re-park.",
-        "router_reconciled_at": "2026-06-21T02:41:28Z"
+        "router_reconciled_at": "2026-06-21T02:41:28Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260620T212532Z-signal-outcomes",
@@ -741,11 +795,13 @@
         "to": "dev-team",
         "summary": "signal_outcomes: 65 of 72 stuck pending >5d (checked_at never populated), signal outcome verification stalled",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/data/db-integrity-history.json",
         "router_minted": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
         "router_verdict": "REAL-NEW confirmed via get_calibration_report (frozen 2026-06-14, 4 resolved/90d); resolution job stalled; backlog P2 dev-mcp-server, Mon batch; related FIX-ALERT-CASCADE-OUTCOME-DEAD (record-side)",
-        "router_triaged_at": "2026-06-20T21:41:56Z"
+        "router_triaged_at": "2026-06-20T21:41:56Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-c04-202606210003",
@@ -755,12 +811,14 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports check C-04 failed (actual=7, expected=5 or less)",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "triaged_at": "2026-06-21T00:12:46Z",
         "triaged_by": "po",
         "triage_note": "NO new task. (1) Trend IMPROVING not flat: rolling-7d low-conf count 13 (sau-20260620T000322Z-c04 on 06-20) dropped to 7 on 06-21, nearly halved; the 7d window still carries yesterday bad rows so a sharp drop means reparse/quality work is landing. (2) Root already tracked and CODE-COMPLETE in review[]: FIX-BCTC-ENRICH-SILENT-0ROWS (bank B02-TCTD silent-0-rows enrich) awaiting QA; plus DONE FIX-BCTC-LOWCONF-REPARSE-BATCH (PPC 0.25 to 0.625 proof) and backlog REVIEW-PPC-Q4-LOW-CONFIDENCE. Minting a C-04 FIX would duplicate the in-review root. (3) Per low-conf policy (<0.2 = flag and skip = system WORKING, not fake data). Anchor: FIX-BCTC-ENRICH-SILENT-0ROWS. Re-escalate ONLY if C-04 actual RISES above 7 next tick OR stays >5 AFTER that fix reaches done_verified.",
-        "router_dup_of": "FIX-BCTC-ENRICH-SILENT-0ROWS"
+        "router_dup_of": "FIX-BCTC-ENRICH-SILENT-0ROWS",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-c369-A21-rag-restart-100",
@@ -770,11 +828,13 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: rag-service RestartCount=100 — elevated restart pattern indicates instability",
         "severity": "MEDIUM",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_triage": "router 2026-06-23T11:48:39Z RAW-verified: rag-service RestartCount=100 is CUMULATIVE not active crashloop — Status=running Health=healthy StartedAt=2026-06-23T01:32:46Z (stable ~10h) LastExit=0 OOMKilled=false. Trend NOT escalating: 86@2026-06-20 -> 100 now = +14/3d (~+4.7/day) vs prior +9/day => rate SLOWING. DEDUP/ALREADY-OPEN: same chronic 768MiB-cap OOM-restart root already tracked by board FU-RAG-DEPLOY-MEMORY + RAG-SERVICE-AVAIL-01-FIX AND prior signal router-20260620T113917Z-rag-restart-watch (TRIAGED). HIGH overstated (counter misread as active crash, cf bctc-lastpush class) -> downgrade HIGH->MEDIUM. NOT a new incident; no mint (durable fix already on backlog, PO to prioritize). Auditor Tier-1 A-21 should apply DEDUP-ENFORCEMENT (board-tracked root) like the DATA sweep guard.",
         "router_dup_of": "router-20260620T113917Z-rag-restart-watch",
-        "router_triaged_at": "2026-06-23T11:48:39Z"
+        "router_triaged_at": "2026-06-23T11:48:39Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260623T153559Z",
@@ -784,11 +844,13 @@
         "type": "data_stale",
         "summary": "vn-bctc-fetch stale 168h (check B-13, VPS service unhealthy since 2026-06-16)",
         "severity": "INFO",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_triage": "router 2026-06-23T15:41:40Z RAW-triage: FALSE-CRITICAL, downgrade CRITICAL->INFO. vn-bctc-fetch 168h idle is EXPECTED out-of-earnings-season (newest PDF 2026-06-16; VN Q2 reporting Jul-Aug => no new filings to fetch) + queue CLEAN (auditor B-13 = 0 stale pending >72h). Auditor used 24h/86400s threshold but correct out-of-season BCTC threshold is 360min/168h per BACKLOG FIX-BCTC-SLA-THRESHOLD-360 (unshipped => this exact false-positive). DEDUP/ALREADY-OPEN: idle-vs-crash misread tracked by FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH + prior signal devteam-20260619T170637Z-health-idle-vs-crash (TRIAGED); threshold misconfig tracked by FIX-BCTC-SLA-THRESHOLD-360; freshness-exclude-terminal by FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL. NOT a new incident, no mint. Earlier Tier-2 today (06:30,10:31) correctly held vps-bctc as INFO known-standing — this 15:35 run regressed via wrong threshold. NOTE: shipping FIX-BCTC-SLA-THRESHOLD-360 stops the recurring false-CRITICAL. macro_indicators RESOLVED (3.4h fresh, refresh fired 12:13Z).",
         "router_dup_of": "devteam-20260619T170637Z-health-idle-vs-crash",
-        "router_triaged_at": "2026-06-23T15:41:40Z"
+        "router_triaged_at": "2026-06-23T15:41:40Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-2026-06-24T00:28:53Z-orphan-signals",
@@ -798,13 +860,15 @@
         "type": "db_integrity_breach",
         "summary": "agent_signals: 124 orphaned alert_id references created 2026-06-22 (check C-08)",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/data/db-integrity-history.json",
         "triaged_at": "2026-06-24T01:05:00Z",
         "triaged_by": "po-s113",
         "router_dup_of": null,
         "po_decision": "GENUINE new/regression integrity breach, confirmed HIGH. Router RAW-verify (named-vol market.db) = 124 dangling agent_signals.alert_id -> missing alerts.id, ONGOING ~50-70/day (06-23=70, 06-22=54), NOT the one-time 06-22 batch the summary implied. INVERSE direction of closed C-08 (FIX-ALERT-ORPHAN-CORRELATION + FU-ALERT-COWRITE-SCHEDULER-JOBS were alerts->no-signals; this is agent_signals->missing-alert) so NOT a dup. Minted fix task FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID (P1, S2-DATA-HONESTY, dev-mcp-server, apps/mcp-server/). Root vicinity to confirm: alert<->agent_signals co-write path / scheduler direct-insert bypass; rule in/out TASK-CONF-1 e3386bdf as worsener.",
-        "minted_task": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID"
+        "minted_task": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-b06-202606240513",
@@ -814,11 +878,13 @@
         "type": "data_stale",
         "summary": "bctc-discover stale 7d 10h (check B-06, vn-bctc-fetch unhealthy)",
         "severity": "INFO",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "router_triage": "router 2026-06-24T05:16:26Z RAW-confirmed FALSE-CRITICAL, downgrade CRITICAL->INFO. vn-bctc-fetch 178h (7d10h) idle is EXPECTED out-of-earnings-season (month=06; Q2 reporting Jul-Aug; newest filing 2026-06-16) + queue CLEAN (stale_pending>72h=0 live). Correct out-of-season BCTC threshold=168h NOT 24h. SAME root as sau-20260623T153559Z (triaged INFO 15:35 today) — this is the 2ND bctc-stale false-CRITICAL today via a different check id (B-06). Tracked by FIX-BCTC-SLA-THRESHOLD-360 + FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH. No new incident, no re-escalate. RECURRENCE NOTE: auditor freshness checks keep emitting bctc CRITICAL on 24h threshold -> recommend PO bump FIX-BCTC-SLA-THRESHOLD-360 priority to stop queue-churn/alert-fatigue.",
         "router_dup_of": "sau-20260623T153559Z",
-        "router_triaged_at": "2026-06-24T05:16:26Z"
+        "router_triaged_at": "2026-06-24T05:16:26Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260625T1426-orphan-signals-regress",
@@ -826,7 +892,7 @@
         "to": "dev-team",
         "summary": "agent_signals: 220 orphaned alert_id FK violations (was 124 on 2026-06-24, +96 regression). Fresh: 29 created TODAY (2026-06-25T08:45:01Z newest). Orphans date-range 2026-06-22..2026-06-25. Material +96 growth indicates ongoing corruption in alert↔signal creation atomicity or cascading delete.",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "created_at": "2026-06-25T14:26:59Z",
         "zone_owner": "dev-alert-engine",
         "payload_ref": null,
@@ -839,7 +905,9 @@
         "router_task": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH",
         "linked_task": "FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH",
         "triaged_at": "2026-06-25T14:46:25Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "cow-20260629T120800",
@@ -849,11 +917,13 @@
         "type": "agent_offflow",
         "summary": "market-watcher 12:00Z spawn ran router protocol not its flow — false-green, 0 work; news-scout clean. ID-overflow (1967-04)",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/signals/cowork-agent-offflow-2026-06-29.md",
         "linked_task": "FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW",
         "triaged_at": "2026-06-29T12:21:49Z",
-        "triaged_by": "po"
+        "triaged_by": "po",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "cow-20260630T0515-chef-doublepublish",
@@ -864,11 +934,13 @@
         "type": "system_issue",
         "summary": "Confirmed double-publish: chef-morning (MARKET msg 920 @05:24:47) + chef-intraday (msg 921 @05:25:44) — 2 near-duplicate CHEF dishes 57s apart. Root: pressure-state.stale_warning=true (transient) forced PRESSURE_MODE=legacy at Step 4.2, bypassing cadence gate that would have suppressed chef-intraday (off-market 240min default, 62min elapsed); plus no same-tick CHEF mutex. Blocks cowork-cron AC-6 (zero double-publish). RAW-verified vs MARKET channel. Detail+fixes in payload_ref.",
         "severity": "MEDIUM",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": "docs/signals/cowork-chef-doublepublish-2026-06-30.md",
         "triaged_at": "2026-06-30T06:50:25Z",
         "triaged_by": "po",
-        "triage_note": "FIX-COWORK-CHEF-SAMETICK-MUTEX minted -> backlog[] (zone cross-service, dispatcher=main, owner cowork-refactory-expert). Robust fix A (same-tick CHEF mutex) per payload §06:21Z update; fix C (stale_warning) rejected as wrong lever (flag is correct). Consolidates DEFERRED FU-CHEF-MARKER-INFLOW (partial per-slot fix B). RAW-verified recurrence (chef-evening po-s90, chef-intraday c53a7df5)."
+        "triage_note": "FIX-COWORK-CHEF-SAMETICK-MUTEX minted -> backlog[] (zone cross-service, dispatcher=main, owner cowork-refactory-expert). Robust fix A (same-tick CHEF mutex) per payload §06:21Z update; fix C (stale_warning) rejected as wrong lever (flag is correct). Consolidates DEFERRED FU-CHEF-MARKER-INFLOW (partial per-slot fix B). RAW-verified recurrence (chef-evening po-s90, chef-intraday c53a7df5).",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "cow-20260630T2015-tnb-chef-l2-autocure",
@@ -878,12 +950,14 @@
         "to": "po",
         "type": "system_issue",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "summary": "tnb-audit c103 (20:15Z) audited 2026-06-30 CHEF evening dish (Que 36 Minh Di, RAW-verified legit at 19:45Z) and returned QUALITY:degraded vs chef self-reported QUALITY:full. Findings: L2=FAIL (chronic 17th-cycle US-macro gap — carry 1.37pp tier-3 proxy only, no PMI/EFFR-IORB, no [gap:US_macro_unavailable] token = confirmed quality-verdict overclaim root cause); L3=PARTIAL; business-context ABSENT (F9, 27th cycle). tran-ngoc-bau APPLIED AUTO-CURE to docs/agents/unified-agent/flow/chef.md Step 7.5 sub-check (a) [FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR, 3rd+ recurrence] — replaced vague L2_OK=\"substantively walked\" with concrete floor: numeric US PMI OR EFFR-IORB spread OR explicit gap token; carry-spread-alone excluded. Dispatcher RAW-verified the diff: scoped 12-line edit, sensible, honesty-improving, uncommitted (LIVE for next chef-morning cycle). ASKS: (1) agent-father review+promote the chef.md Step 7.5 fix to a tracked sprint; (2) dev-team Step 0a commit the uncommitted chef.md + tran-ngoc-bau.md notebook + tnb-audit-latest.md handoff; (3) root-cause the chronic US-macro DATA gap (deeper than gate wording — CHEF lacks PMI/EFFR-IORB source) and the F9 business-context 27-cycle absence. SECONDARY: tran-ngoc-bau agent-type has no gateway tools but its flow expects MCP (published-marker/WORK-BUG/commit-mutex/log_agent_work) — every cycle degrades to MCP-failure-mode-A (7 consecutive), so tnb findings always strand as uncommitted files needing dispatcher pickup; flag toolset/flow mismatch for agent-father. Dispatcher did NOT revert (sanctioned completed write) and did NOT commit (defers to dev-team Step 0a).",
         "payload_ref": "docs/handoffs/tnb-audit-latest.md",
         "triaged_at": "2026-06-30T23:29:07Z",
         "triaged_by": "dev-team",
-        "routed_task": "FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR"
+        "routed_task": "FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "bca-ddres-20260630T2258",
@@ -893,12 +967,14 @@
         "to": "po",
         "type": "deep_dive_result",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "summary": "Deep dive HVN Q1-2026 ESC-2 -> flag_for_human_review (conf 0.93). Extraction failure: income statement + cash flow serve all-zero (impossible for operating airline >10000bn VND assets); B/S imbalance 2.7% is SECONDARY to incomplete asset-side capture (Cash=0). Root cause CORRECTED: NOT OCR (text_status=COMPLETE) but the REFINE stage (refine_status=PARTIAL) -- income B02-DN + cash-flow B03-DN units never materialized. Whole Q1-2026 cohort (MBB/VCI/TCH/VIX) sits at text_status=COMPLETE/refine_status=PENDING = fleet-wide refine backlog. ACTION for PO: route refine-pipeline fix (refine_bctc_md -> bctc_refined_units -> finalize_bctc_refine) to dev-pdf-extractor (disambiguation query in payload_ref); mark HVN Q1-2026 data unusable until refine re-run + identity re-validates; likely clears the fleet backlog not just HVN. SECONDARY low-pri: get_bctc_ocf SQL bug (no such column ocf_operating) breaks OCF forensic gate fleet-wide -- optional separate ticket.",
         "payload_ref": "docs/handoffs/bctc-hvn-q1-2026-deepdive.md",
         "triaged_at": "2026-06-30T23:29:07Z",
         "triaged_by": "dev-team",
-        "routed_task": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN"
+        "routed_task": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-2026-07-01T22%3A33%3A43Z",
@@ -908,8 +984,10 @@
         "type": "data_stale",
         "summary": "bctc-discover stale 21711min (check B-05)",
         "severity": "CRITICAL",
-        "status": "TRIAGED",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "rtr-20260702-rag-churn",
@@ -919,8 +997,10 @@
         "type": "anomaly",
         "summary": "rag-service chronic restart churn (245 restarts/22d, 2 in 5min burst 07:44-07:49Z) — re-caused from refuted A-12; PLAN-ONLY",
         "severity": "MEDIUM",
-        "status": "TRIAGED",
-        "payload_ref": "docs/signals/processed/rag-restart-churn-20260702.json"
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/processed/rag-restart-churn-20260702.json",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-2026-07-02T14:14:52Z-a21-mcp",
@@ -930,13 +1010,15 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: mcp-server restart count=3 (threshold ≤2)",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "triaged_by": "po",
         "triaged_at": "2026-07-02T17:27:56Z",
         "disposition": "DUPLICATE",
         "linked_task": "OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN",
-        "triage_note": "Factual: docker inspect RestartCount=3 (threshold <=2). Container stable Up 7h healthy, ExitCode=0, OOMKilled=false -> no active crash-loop; last restart 10:15Z. RestartCount only resets on user-gated container recreate (HARD-GATED) so the over-threshold reading persists regardless of any code fix -- not independently actionable this tick. Restart-churn root already tracked by backlog OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (49% unclean shutdowns). No new task."
+        "triage_note": "Factual: docker inspect RestartCount=3 (threshold <=2). Container stable Up 7h healthy, ExitCode=0, OOMKilled=false -> no active crash-loop; last restart 10:15Z. RestartCount only resets on user-gated container recreate (HARD-GATED) so the over-threshold reading persists regardless of any code fix -- not independently actionable this tick. Restart-churn root already tracked by backlog OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN (49% unclean shutdowns). No new task.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-1783012565",
@@ -946,7 +1028,7 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: mcp-server memory 99.67% (1.993GiB/2GiB) — responsive but requires investigation",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "triaged_by": "po",
         "triaged_at": "2026-07-02T17:27:56Z",
@@ -957,7 +1039,9 @@
           "at": "2026-07-02T17:57:06Z",
           "disposition": "sawtooth at tight 2GB cap (NOT pinned/no-GC): 60->99.67%@17:16Z, GC reclaimed ~800MiB to 59%@17:20Z (prior-tick RAW), back to 99.62%@17:46Z; ragged-edge OOM-kill risk -> restart churn",
           "escalated_to": "FIX-MCP-MEMORY-CODE-LEAK (promoted backlog->ready, next_agent=architect)"
-        }
+        },
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-2026-07-02T18:17:47Z",
@@ -967,11 +1051,13 @@
         "type": "microservice_degraded",
         "summary": "api-gateway A-13 health endpoint failed (CURL error)",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "triaged_by": "po",
         "triaged_at": "2026-07-02T22:51:14Z",
-        "disposition": "RESOLVED"
+        "disposition": "RESOLVED",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-2026-07-02T18:34:09Z",
@@ -981,10 +1067,12 @@
         "type": "data_stale",
         "summary": "bctc-discover stale 381.85h (check B-05)",
         "severity": "CRITICAL",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "po_triage_note": "TRIAGED (subsumed): re-fire of already-tracked bctc-discover staleness. 38 pending items = ENRICHER backlog; deploy PARKED under FIX-BCTC-ENRICHER-STUCK-BACKLOG (operator-gated mcp-server rebuild; code done d9280133). Discover-leg fixes B-05-FIX + FIX-BCTC-VPS-FETCH-LEG-DEAD already DONE (items landed in queue). last-push age reflects enricher outage, not a discover crash (age!=crash; BCTC event-driven, mid-year lull for NEW discovery). No new task; do NOT unpark. Post-enricher-drain: re-verify discover-leg done_verified if B-05 still fires.",
-        "po_triaged_at": "2026-07-02T19:00:27Z"
+        "po_triaged_at": "2026-07-02T19:00:27Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-a21-202607022116",
@@ -994,11 +1082,13 @@
         "type": "signal_feedback",
         "summary": "A-21 mcp-server RestartCount=4 (baseline 3) — gradual restart pattern",
         "severity": "HIGH",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "payload_ref": null,
         "triage_note": "PO triage 2026-07-02: CONFIRMING evidence for the mcp-server OOM/memory story, NOT new scope. In-place restart (RestartCount 3->4, mem 95.28%->15.89% @c500) = the 2GB-cap OOM-kill that FIX-MCP-MEM-CAP-BUMP-REBUILD (review, swap-pending) mitigates. Annotated mem-cap review_note + OPS-MCP-RESTART-CHURN status_note; recommended ops re-emit the user-gate swap nudge. No rebuild dispatched (user gate honored). No new task minted.",
         "triaged_by": "po",
-        "triaged_at": "2026-07-02T21:28:10Z"
+        "triaged_at": "2026-07-02T21:28:10Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "rtr-auditor-orchwrite-20260702T2121",
@@ -1008,14 +1098,16 @@
         "priority": "P2",
         "severity": "warn",
         "summary": "auditor c500 bypassed orch-apply.sh writing signal_queue (raw jq>/tmp+mv) — flow-doc fix via agent-father",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "ts": "2026-07-02T21:24:03Z",
         "payload": "{\"detail\":\"system-auditor c500 wrote .signal_queue row via raw jq>/tmp && mv — bypasses scripts/orch-apply.sh (Zod+CAS+atomic, CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER) and stages in /tmp (must be project-local scratch). Row content valid, no corruption this cycle. Prior sibling incident: auditor full-doc overwrite collapsed SSOT. Durable fix = auditor flow §2.3 atomic-write spec must route via orch-apply.sh. Routing: agents-architect→agent-father (flow-doc owner), NOT dev-team. Evidence: transcript a3a1dc6b938fbcac1 bash (jq $JQ_FILTER > /tmp/orch-state-new.json; mv → orch-state.json)\",\"zone\":\"agent-father\",\"recurrence\":\"2nd write-contract incident class for system-auditor\"}",
         "read_at": "2026-07-02T21:49:49Z",
         "read_by": "dev-team",
         "triaged_by": "po",
         "triaged_at": "2026-07-02T21:54:06Z",
-        "triage_note": "Annotated existing covering task FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT (P1, recurring-bug-esc). c500 raw jq>/tmp+mv bypass = 2nd incident of the same system-auditor orch-state write-contract class (root incident=full-doc-overwrite de595a44). No new task minted (dedup). Durable fix (architect root-cause -> agent-father flow-doc): mandate ALL auditor orch-state writes route via scripts/orch-apply.sh (SSOT-W1-ORCH-APPLY-WRAPPER). No corruption this cycle; contract untested since c501 had 0 signals."
+        "triage_note": "Annotated existing covering task FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT (P1, recurring-bug-esc). c500 raw jq>/tmp+mv bypass = 2nd incident of the same system-auditor orch-state write-contract class (root incident=full-doc-overwrite de595a44). No new task minted (dedup). Durable fix (architect root-cause -> agent-father flow-doc): mandate ALL auditor orch-state writes route via scripts/orch-apply.sh (SSOT-W1-ORCH-APPLY-WRAPPER). No corruption this cycle; contract untested since c501 had 0 signals.",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "rtr-esc4-heuristic-fix-20260702T2203",
@@ -1025,13 +1117,15 @@
         "priority": "P2",
         "severity": "warn",
         "summary": "GVR ESC-4 deep-dive done: NOT-REAL (55%) — ESC-4 tax-basis formula bug + SOE exception class + report_id tooling gap",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "ts": "2026-07-02T22:03:35Z",
         "payload": "{\"detail\":\"market-analyst GVR ESC-4 deep-dive COMPLETE (transcript a43f5fe38f5146659). Verdict: NOT-REAL as earnings trick, confidence 55% LOW-MEDIUM (SOE 96.77% Bo Tai Chinh, net-cash, rubber+KCN structural other-income; BUT zero line-item access + first-ever ingested period, no QoQ history). 3 durable recommendations: (1) ESC-4 FORMULA BUG all-tickers: currently (NetProfit-OperatingProfit)/NetProfit mixes after-tax vs pre-tax — fix to consistent pre-tax basis (PretaxProfit-OperatingProfit)/PretaxProfit; true GVR non-op share is 41.3% not 23.5%. Owner: agent-father (bctc-analyst flow-doc heuristic). (2) SOE-conglomerate exception class: state-own >90% + land-bank/plantation + net-cash (GVR/PHR/DPR/TRC/HRC) → auto structural-context tag, ESC-4 severity HIGH→INFO until line items available — stops active redispatch loop c070→c072. Owner: agent-father. (3) TOOLING GAP: no tool maps ticker+period→report_id UUID once refine_status=DONE, making get_bctc_page_text/get_bctc_refined/list_flagged_bctc_cells permanently unreachable for completed reports — expose report_id on get_bctc_full return or add get_bctc_report_lookup(ticker,quarter); optionally extend get_bctc_series fields enum with other_income/financial_income/other_expense. Owner: dev-mcp-server. Context: esc-deepdive:GVR:Q1-2026:ESC-4 lock held by bctc-analyst expires 2026-07-03T21:12Z.\",\"zone\":\"agent-father+dev-mcp-server\",\"recurrence\":\"ESC-4 redispatch loop c070-c072 active until severity downgrade\"}",
         "read_by": "dev-team",
         "read_at": "2026-07-02T22:19:49Z",
         "triaged_by": "po",
-        "triaged_at": "2026-07-02T22:24:53Z"
+        "triaged_at": "2026-07-02T22:24:53Z",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_triage": "po-triage-sweep 2026-07-03T01:07Z: already-routed TRIAGED row flipped RESOLVED so cold-evict can archive; board tasks are the durable trackers"
       },
       {
         "id": "sau-20260703003425-c08",
@@ -1041,10 +1135,13 @@
         "type": "db_integrity_breach",
         "summary": "alerts check C-08 failed (actual=1 orphaned, expected=0)",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null,
         "read_at": "2026-07-03T01:21:55Z",
-        "read_by": "dev-team"
+        "read_by": "dev-team",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_dup_of": "FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
+        "po_triage": "po-triage 2026-07-03T01:07Z: covered by existing board task; RESOLVED (cold-evictable). dup_of=FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID"
       },
       {
         "id": "sau-20260703003425-doc1",
@@ -1054,10 +1151,13 @@
         "type": "size_cap_breach",
         "summary": "task_board count=85 exceeds limit 80 (DOC-04-TASKBOARD)",
         "severity": "MED",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null,
         "read_at": "2026-07-03T01:21:55Z",
-        "read_by": "dev-team"
+        "read_by": "dev-team",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_dup_of": "FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY",
+        "po_triage": "po-triage 2026-07-03T01:07Z: covered by existing board task; RESOLVED (cold-evictable). dup_of=FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY"
       },
       {
         "id": "sau-20260703003425-doc2",
@@ -1067,10 +1167,13 @@
         "type": "size_cap_breach",
         "summary": "sprint_goal entries=16 exceeds limit 15 (DOC-04-SPRINTGOAL)",
         "severity": "MED",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null,
         "read_at": "2026-07-03T01:21:55Z",
-        "read_by": "dev-team"
+        "read_by": "dev-team",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_dup_of": "SHG-4 + FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT (self-groom on sign-off)",
+        "po_triage": "po-triage 2026-07-03T01:07Z: covered by existing board task; RESOLVED (cold-evictable). dup_of=SHG-4 + FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT (self-groom on sign-off)"
       },
       {
         "id": "sau-2026-07-03T01:15:47Z",
@@ -1080,13 +1183,16 @@
         "type": "signal_feedback",
         "summary": "A-21 WARN: mcp-server RestartCount=4 (threshold=2)",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null,
         "read_at": "2026-07-03T01:21:55Z",
-        "read_by": "dev-team"
+        "read_by": "dev-team",
+        "resolved_at": "2026-07-03T01:33:39Z",
+        "po_dup_of": "OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN",
+        "po_triage": "po-triage 2026-07-03T01:07Z: covered by existing board task; RESOLVED (cold-evictable). dup_of=OPS-MCP-RESTART-CHURN-UNCLEAN-SHUTDOWN"
       }
     ],
-    "last_triaged_at": "2026-07-02T22:51:14Z",
+    "last_triaged_at": "2026-07-03T01:33:39Z",
     "last_triaged_by": "po"
   },
   "sprint_goal": {
@@ -5997,7 +6103,9 @@
         "status": "BACKLOG",
         "priority": "P1",
         "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENT-SIGNALS-ORPHAN-ALERT-ID",
+        "desc": " || C-08 RE-FIRE CORROBORATED 2026-07-03T01:34:10Z (po triage, signal sau-20260703003425-c08): auditor T3 deep-DB RAW-probe found alerts check C-08 actual=1 orphaned (alerts->signals direction, a previously-CLOSED check re-fired). Same alert<->signal FK-integrity family this task owns. Folded here, no separate mint (fix-root-not-symptom). RE-OPEN a dedicated C-08 scope only if the alerts->signals orphan count grows beyond this single row.",
+        "c08_refire_corroborated_at": "2026-07-03T01:34:10Z"
       },
       {
         "id": "BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL",
@@ -7877,18 +7985,6 @@
         "title": "chef.md cleanup releases published:<slot>:<date> marker post-publish — defeats FR-P2-7 dup-post gate (2x 2026-07-02: chef-morning + chef-evening)",
         "status_note": "REPAIR (router repair_task_request createdAt 2026-07-02T20:01:29Z, transcript-proven, 2x same-day = recurring-bug threshold). Root cause: chef.md claims published:chef-<slot>:<VN-date> (task_kind=cowork-slot, ttl 100800s) before send_telegram per FR-P2-7, then task_release on the SAME marker in its cleanup/finally after publishing — re-opens the dup gate immediately (marker meant to hold ~28h). FIX: cleanup releases ONLY dispatcher slot tokens / heartbeat locks, NEVER published:<slot>:<date> markers (TTL-expiry only); add explicit DO-NOT-RELEASE note at the FR-P2-7 claim step. SWEEP other publisher flows for the same release-in-cleanup pattern: fb-market-poster, digest-predict, news-scout, market-watcher, bctc-analyst (their 2026-07-02 markers were still held at report time -> only chef drifts today, but verify contract). ROUTE (out-of-dev-scope, per FU-CHEF-MARKER-INFLOW precedent): agent-flow .md contract edit -> agents-architect contract review (irreversible MARKET double-publish safety) -> agent-father flow edit via agent-md-factory; NOT dev-team apps/ code. Files: docs/agents/unified-agent/flow/chef.md (+ sweep the 5 flows). Workaround ACTIVE: dispatcher re-arms marker after RAW-verify (done both occurrences). KIN FU-CHEF-MARKER-INFLOW (claim-side / key-granularity, DEFERRED) — this is the RELEASE-side facet of the same marker contract. AC: a chef re-fire of an already-published slot on the same VN-date exits WITHOUT a 2nd send_telegram; task_list_held shows the published:<slot>:<date> marker still held immediately post-publish; no dispatcher re-arm needed for 7d.",
         "created_at": "2026-07-02T20:33:16Z"
-      },
-      {
-        "id": "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING",
-        "title": "search_similar_context RECURRING timeout (BUG#3144, bctc-analyst c071/c072/c073 = 3 consecutive cycles). mcp-server tool (analysis.ts:511) delegates to rag-service over HTTP :5002 via ragHttpClient (analysis.ts:563); the timeout is a CLIENT-VISIBLE symptom of the rag-service clean-exit restart-loop. Fix: (a) client-side fail-soft in the mcp-server tool — on rag timeout/down, degrade to an empty result + WARN instead of surfacing a hard timeout that blocks bctc-analyst (mirror the existing analysis.ts:84 'service-down: omit block entirely' pattern); (b) resolve the rag-service restart-loop root.",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "medium",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "pm",
-        "status_note": "RECURRING-BUG durable entry (2+ occ -> board per feedback_recurring_bug_escalation). Source: telegram BUG msg#3144 (from bctc-analyst). LINKED ROOT: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (rag-service RestartCount 226->245, clean-exit restart loop; passive health masks churn). AC: no BUG-channel search_similar_context timeout for 3 consecutive bctc-analyst cycles AND (rag-service RestartCount stabilizes OR the tool degrades gracefully with zero analyst-blocking). Priority: medium.",
-        "created_at": "2026-07-02T21:28:10Z"
       },
       {
         "id": "FU-TCH-BCTC-COVERAGE",
@@ -9928,7 +10024,23 @@
         "dispatched_at": "2026-07-01T23:32:10Z"
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING",
+        "title": "search_similar_context RECURRING timeout (BUG#3144, bctc-analyst c071/c072/c073 = 3 consecutive cycles). mcp-server tool (analysis.ts:511) delegates to rag-service over HTTP :5002 via ragHttpClient (analysis.ts:563); the timeout is a CLIENT-VISIBLE symptom of the rag-service clean-exit restart-loop. Fix: (a) client-side fail-soft in the mcp-server tool — on rag timeout/down, degrade to an empty result + WARN instead of surfacing a hard timeout that blocks bctc-analyst (mirror the existing analysis.ts:84 'service-down: omit block entirely' pattern); (b) resolve the rag-service restart-loop root.",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "status_note": "RECURRING-BUG durable entry (2+ occ -> board per feedback_recurring_bug_escalation). Source: telegram BUG msg#3144 (from bctc-analyst). LINKED ROOT: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (rag-service RestartCount 226->245, clean-exit restart loop; passive health masks churn). AC: no BUG-channel search_similar_context timeout for 3 consecutive bctc-analyst cycles AND (rag-service RestartCount stabilizes OR the tool degrades gracefully with zero analyst-blocking). Priority: medium.",
+        "created_at": "2026-07-02T21:28:10Z",
+        "promoted_at": "2026-07-03T01:34:10Z",
+        "promoted_by": "po",
+        "promotion_note": "4th consecutive occurrence (BUG#3144 c071/c072/c073 + telegram 3397 2026-07-02T21:15Z). Blocks bctc-analyst Step 2b historical-BCTC context for ALL tickers every window. SCOPED to part-(a): client-side fail-soft in the mcp-server tool (analysis.ts:511/563 ragHttpClient) — on rag timeout/down, degrade to empty result + WARN (mirror analysis.ts:84 service-down omit-block pattern); do NOT hard-timeout-block the analyst. Part-(b) rag-service restart-loop root stays tracked in FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (backlog). AC per original task."
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
