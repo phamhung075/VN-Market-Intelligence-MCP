@@ -243,12 +243,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-07-03T09:24:08Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-FB-DAILY-FIRER-CLI-FLAG",
+    "next_agent": "qa",
+    "next_action": "qa scoped-verify bash fix (flag removal correct + remaining invocation parses + no other refs; NOT full TS suite — launchd bash has 0 coverage) + Task Report + DJ-GATE. Router promotes review->done_verified on qa PASS.",
+    "updated_at": "2026-07-03T10:31:43Z",
     "updated_by": "dev-team",
-    "note": "09:07Z dev-team tick: 0 NEW queue rows; drained 2 cowork-fire breadcrumbs (routed-to-po, informational) + 1 stale price_anomaly_v1 left in inbox (non-signal shape). Orphan-signal task:FIX-BCTC-BANK-BS-COLUMN-ORDER adoption SKIPPED — done_verified (manual board-state guard); immune reaper orphan (session=null) TTL~2026-07-03T10:05Z, not cleared per policy. Prior po triage landed (FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD backlog/next_agent=ba; A-13 non-actionable; W5 pair code-cleared). No actionable dev work. DEPLOY-GATED: user rebuilds mcp-server container, then W5 finalize (bctc-analyst refine -> dev-mcp-server reingest on live CTG 96e36139 -> promote W5 review->done_verified). head->idle @ 2026-07-03T09:24:08Z"
+    "note": "10:07Z tick: FIX-FB-DAILY-FIRER-CLI-FLAG dev complete + RAW-verified (dev a4c4cc22, commit b19ac43c5), flipped in_progress->review. qa spawned. WIP 1->0. Tick closing (SF-1 + fire-election released); router promotes on qa PASS."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7412,19 +7413,6 @@
         "note": "Permanent-fix backlog item, NOT an active incident (router mitigated this instance manually). Normal po->ba->pm->dev chain; architect SPLITs the multi-zone (dev-mcp-server reaper/lock/orphan-signal code + flow-doc guards)."
       },
       {
-        "id": "FIX-FB-DAILY-FIRER-CLI-FLAG",
-        "title": "FIX-FB-DAILY-FIRER-CLI-FLAG (cross-service/) — delete cowork-fb-daily-firer.sh:138 --no-update-notification (crashes launchd fb-daily backstop every fire)",
-        "owner": "po",
-        "next_agent": "dev",
-        "status": "TODO",
-        "type": "FIX",
-        "priority": "high",
-        "zone": "cross-service/",
-        "created_at": "2026-07-03T10:01:28Z",
-        "created_by": "po-triage-20260703T0937Z",
-        "status_note": "AC: launchd fb-daily-firer fires with no unknown-option --no-update-notification error; fb-daily-firer-error.log clean on next scheduled fire. 1-line fix (fixer): delete scripts/cowork-fb-daily-firer.sh line 138. Secondary(optional): dedup plist double-fire (09:08Z+09:23Z), gitignore tracked runtime logs. Priority HIGH — guaranteed fb-daily slot silently non-functional on any no-live-session day. Source: docs/signals/router-fbfirer-dead-cli-flag-20260703.md"
-      },
-      {
         "id": "FIX-SIGNALQUEUE-DUP-ID-GUARD",
         "title": "FIX-SIGNALQUEUE-DUP-ID-GUARD (cross-service/) — orch-apply.sh id-uniqueness guard for signal_queue.rows[]/archive[] + normalize auditor ts to full ISO8601",
         "owner": "po",
@@ -9801,6 +9789,29 @@
         "updated_at": "2026-07-02T13:38:51Z",
         "updated_by": "router",
         "review_note": "Repo scope COMPLETE 2026-07-02T13:38:51Z: commits 073fa27f (vps-scripts/hnx-ca-bundle.pem GlobalSign intermediate+root, fetch-bctc.sh curl -k -> --cacert /root/hnx-ca-bundle.pem, deploy-vinahost.sh ships bundle) + 638fba89 (DJ-GATE-1 journal). RAW-verified by router: openssl verify -CAfile bundle <recon leaf> = OK rc=0 reproduced; grep confirms no -k/--insecure; live probe evidence: TLS verify ok on owa.hnx.vn (HTTP 403 = WAF, app-layer). DEPLOY PENDING (user-gated): user must run ./scripts/deploy-vinahost.sh (ships bundle + fetch-bctc.sh to VPS /root/). Post-deploy AC: HNX fetch OK with verification ON."
+      },
+      {
+        "id": "FIX-FB-DAILY-FIRER-CLI-FLAG",
+        "title": "FIX-FB-DAILY-FIRER-CLI-FLAG (cross-service/) — delete cowork-fb-daily-firer.sh:138 --no-update-notification (crashes launchd fb-daily backstop every fire)",
+        "owner": "po",
+        "next_agent": "dev",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "high",
+        "zone": "cross-service/",
+        "created_at": "2026-07-03T10:01:28Z",
+        "created_by": "po-triage-20260703T0937Z",
+        "status_note": "AC: launchd fb-daily-firer fires with no unknown-option --no-update-notification error; fb-daily-firer-error.log clean on next scheduled fire. 1-line fix (fixer): delete scripts/cowork-fb-daily-firer.sh line 138. Secondary(optional): dedup plist double-fire (09:08Z+09:23Z), gitignore tracked runtime logs. Priority HIGH — guaranteed fb-daily slot silently non-functional on any no-live-session day. Source: docs/signals/router-fbfirer-dead-cli-flag-20260703.md",
+        "assigned_to": "developer",
+        "dispatched_at": "2026-07-03T10:25:28Z",
+        "dispatched_by": "dev-team",
+        "dispatch_tick": "2026-07-03T10:07Z",
+        "dev_agent": "a4c4cc22375ba96e4",
+        "dev_commit": "b19ac43c5",
+        "dev_journal_commit": "66ed3df09",
+        "review_at": "2026-07-03T10:31:43Z",
+        "review_by": "dev-team",
+        "router_raw_verified": "[dev-team 10:07Z tick] developer a4c4cc22 RAW-verified: commit b19ac43c5 scoped to EXACTLY scripts/cowork-fb-daily-firer.sh (1 deletion of --no-update-notification), 66ed3df09 = journal only (DJ-GATE-1 ref task-id), index-only, orch-state untouched, not pushed. Router ground-truth: claude 2.1.198 --help has no --no-update-notification (flag genuinely unsupported = fix correct); grep scripts/+launchd/ = 0 other references (blast radius = this file). Awaiting qa scoped-verify -> router promote review->done_verified."
       }
     ],
     "qa": [],
