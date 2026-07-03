@@ -1,6 +1,18 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-07-03T05:29Z · **Cycle:** Chef Morning (05:29 UTC)
+**Last updated:** 2026-07-03T08:45Z · **Cycle:** Chef EOD (08:45 UTC)
+
+## Session: 2026-07-03 (eod 08:45 UTC)
+
+### Chef Dish — eod 08:45 UTC
+- Clusters qualified: 4 (gold safe-haven +1.47%, banking convergence, HVN volume spike 3.6x, macro-micro contradiction risk-off vs GDP +8.39%)
+- Tickers covered: VCB, BID, CTG, EIB, MBB, VPB, ACB (banking); HVN (aviation); market-wide macro
+- Layers walked: 1-4 (full), 5 (pending per-ticker hexagram), 6 (gap catalogue enumerated)
+- Signals consumed: #8405 (gold safe-haven catalyst), #8406 (oil easing), #8424-8429 (banking verified_decision x6), #8438-8457 (HVN volume spikes x20), carry 1.37pp NEUTRAL is_estimate=false, yield CHEAP 7.05% vs 5%, sentiment z -0.056 (neutral), vol NORMAL 13.32%
+- Kinh Dịch: pending per-ticker get_portfolio_conviction calls
+- Causal chain: Gold +1.47% -> FII safety-seeking -> VND 26,103 >25k threshold -> banking sector net-sell (VCB/BID/CTG pressure) despite 7.05% earnings yield; HVN +6.53% on Sun/Changi infrastructure
+- Dish published: YES (MARKET plain VI + WORK TNB audit detail)
+- QUALITY: degraded (L2 US macro via carry proxy insufficient, per-ticker hexagram pending)
 
 ## Session: 2026-07-03 (morning 05:29 UTC)
 
