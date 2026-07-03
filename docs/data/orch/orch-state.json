@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-03T04:41:32Z",
+    "status": "in_progress",
+    "updated_at": "2026-07-03T05:47:12Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "FIX-CRON-REGISTRY-BASERATE-CADENCE-DRIFT promoted to review (commit 5120100, RAW-verified). Head idle — free slot."
+    "active_task_id": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT",
+    "next_agent": "architect",
+    "note": "PO triage tick 2026-07-03T05:07Z BATCH(2): SPIKE-BCTC-CTG-BS-REALDATA-ROOT dispatched to architect (real-data root-cause recon, bank-bs escalated on recurring-bug bar); FIX-BCTC-ENRICHER-STUCK-BACKLOG dispatched to qa for final DoD sign-off (review->done_verified, LIVE-verified). W5 chain held on SPIKE. BCTC-HNX-SSL-HARDEN flagged for manual user deploy."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9443,7 +9443,31 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT",
+        "title": "Real-data root-cause recon: why CTG 96e36139 total_assets stays 0 after the 3-defect classifier fix + full refine",
+        "type": "SPIKE",
+        "status": "IN_PROGRESS",
+        "owner": "dev-team",
+        "next_agent": "architect",
+        "zone": "multi",
+        "priority": "high",
+        "mode": "spike",
+        "timebox_min": 120,
+        "created_at": "2026-07-03T05:47:12Z",
+        "created_by": "po-triage-2026-07-03T05:07Z",
+        "claimed_at": "2026-07-03T05:47:12Z",
+        "claimed_by": "router",
+        "parent_task": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER",
+        "related": [
+          "W5-FU-CTG-REFINE-96e36139",
+          "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST"
+        ],
+        "question": "For the REAL fully-refined CTG 2026-Q1 consolidated bank report (report_id 96e36139-5dac-414d-8e4d-20a4725890d1, 56/56 DONE, 451 materialized rows), locate WHERE total_assets is lost across three layers: (a) TRANSCRIPTION/refine — are the grand-total rows (Tong tai san Co / Tong no phai tra / Von chu so huu) genuinely ABSENT from the materialized markdown or present-but-mislabeled/mis-normalized (qa RAW-inspection found ZERO grand-total labels in the primary BS, only an unrelated pair on page-56 notes table); (b) CLASSIFICATION — why does isBankFormFromRows classify the real Roman-numeral bank row set as NON-bank, routing to the corporate path (server log 'scalar backfill: no non-null scalars found' = ALL scalars null); (c) PARSER vs SOURCE — is the page-45 equity-movement + note/schedule column (code/label/value) misalignment a refinedMarkdownParser defect or upstream OCR. Output: findings doc + scoped fix design SPLIT BY LAYER so the follow-on dev task(s) target the true root — NOT a 4th synthetic-passing classifier patch.",
+        "dispatch_note": "Dispatched architect 2026-07-03T05:47:12Z. PO triage 2026-07-03T05:07Z: bank-bs DoD FAILED on real data (2nd DoD-cycle failure same doc => recurring-bug bar => escalate to architect design recon, not a 4th blind dev-mcp-server patch). Timebox 120min. Deliverable: findings doc + layer-split fix design. Blocks W5 chain (W5-FU-CTG-REFINE, TASK-W5-VALIDATION-REINGEST) + FIX-BCTC-BANK-BS-SECTION-CLASSIFIER."
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -9507,7 +9531,8 @@
         "qa_ac13_note": "AC-6 (validation_status truthful hard-block) unit-verified GREEN (55/55 pass incl TASK-W5 test file) but its live-path and AC-10 (CTG total_assets unfreeze) both require finalize_bctc_refine to run against real CTG data. reingest-bctc-report.ts --report-id 96e36139-5dac-414d-8e4d-20a4725890d1 REFUSED (exit 3): 56/56 bctc_refined_units are FAILED/empty-markdown (0 DONE-with-markdown windows) — data-loss guard correctly refuses to wipe existing bctc_table_rows for nothing. total_assets remains frozen at 0 (RAW-probed on named volume market.db post-rebuild). Remedy (per script's own printed step, out of qa scope): fresh agentic-refine transcription pass for this report_id (get_bctc_pending_refine + push_bctc_refined_unit x56 windows) is dev-mcp-server/bctc-analyst domain work, not fabricated here (no-fake-data policy).",
         "blocked_on": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER — the agentic-refine pass (prior blocker) is DONE; remaining blocker is the finalize BS section classifier dropping balance_sheet rows so CTG total_assets stays 0 (AC-10 unmet).",
         "blocker_reconciled": true,
-        "po_reconciled_at": "2026-07-02T03:59:20Z"
+        "po_reconciled_at": "2026-07-02T03:59:20Z",
+        "po_triage_20260703T0507_note": "Held pending SPIKE-BCTC-CTG-BS-REALDATA-ROOT — the classifier root (FIX-BCTC-BANK-BS-SECTION-CLASSIFIER) was re-scoped to an architect real-data recon after its behavioral DoD FAILED. This row stays BLOCKED transitively (row -> classifier -> SPIKE)."
       },
       {
         "id": "W5-FU-CTG-REFINE-96e36139",
@@ -9532,14 +9557,15 @@
           "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER"
         ],
         "blocked_on": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER — refine+reingest EXECUTED (56/56 DONE, 440 rows) but CTG total_assets still 0; root is the finalize BS section classifier, NOT a refine failure. Do NOT qa-gate until the classifier fix reflows balance_sheet rows.",
-        "po_reconciled_at": "2026-07-02T03:59:20Z"
+        "po_reconciled_at": "2026-07-02T03:59:20Z",
+        "po_triage_20260703T0507_note": "Held pending SPIKE-BCTC-CTG-BS-REALDATA-ROOT — the classifier root (FIX-BCTC-BANK-BS-SECTION-CLASSIFIER) was re-scoped to an architect real-data recon after its behavioral DoD FAILED. This row stays BLOCKED transitively (row -> classifier -> SPIKE)."
       },
       {
         "id": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER",
         "status": "REVIEW",
         "title": "CTG B02a/TCTDHN: finalize_bctc_refine balance-sheet section classifier drops/mistags rows — total_assets frozen 0 despite correct refined markdown",
         "owner": "dev-team",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "architect",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -9564,13 +9590,15 @@
         "started_at": "2026-07-02T04:22:48Z",
         "review_note": "[dev-mcp-server 2026-07-02T04:34:20Z] commit 2c7fb5b0 — root cause: 3 defects in refinedMarkdownParser.ts (blank-Ma 3-cell row mis-routing dropped rows; missing-|---|-separator recovery so a lost separator no longer silently swallows every subsequent row as 'header'; statement_section carry-forward across ordered DONE units via new initialSection param + finalSection return, wired into finalizeBctcRefineTool.ts AND sibling bctcRefineJob.ts). bun test evidence: FIX-BCTC-BANK-BS-SECTION-CLASSIFIER.test.ts 13/13 pass (RC-1/RC-2/RC-3 isolation + full B02a/TCTDHN 2-unit fixture through aggregateScalars: total_assets=2924176928 total_liabilities=2735484770 equity_total=188692158 identity exact, balanceViolation=null + end-to-end finalize_bctc_refine integration test: balance_sheet row count >0, general leakage=0, stale scalars unfrozen to DoD values). Non-regression: 26-file bctc-materialization-adjacent suite 356/356 pass; full 1161-file mcp-server suite 14136 pass / 63 fail (all 63 pre-existing network/timeout/shared-state failures in unrelated suites -- 0 bctc/refine-related, confirmed via grep) / crashed post-summary on an unrelated Bun-engine C++ panic. tsc --noEmit clean. deploy verification (live CTG report_id 96e36139 re-ingest, total_assets unfreeze on named-volume market.db) remains gated on user-approved mcp-server container rebuild -- not attempted.",
         "reviewed_at": "2026-07-02T04:34:20Z",
-        "route_to": "qa",
+        "route_to": "architect",
         "po_disposition": "[po-triage 2026-07-02T04:54:49Z] Route REVIEW->qa for CODE sign-off. Code complete (commits 2c7fb5b0+ff1bac44; router independently re-ran 13/13 suite GREEN). done_verified WITHHELD: LIVE behavioral DoD (B02a/TCTDHN bank-form BS section-classifier on rebuilt image) gated on the SAME user-approval mcp-server rebuild blocking A-30 + enricher deploy + W5 chain. QA may APPROVE-CODE now; live gate clears when operator ships the rebuild.",
         "qa_verdict": "APPROVE-CODE",
         "qa_at": "2026-07-02T05:06:41Z",
         "qa_behavioral_dod_verdict": "FAIL",
         "qa_behavioral_dod_at": "2026-07-03T05:24:29Z",
-        "qa_behavioral_dod_note": "[qa 2026-07-03T05:24:29Z] BEHAVIORAL DoD FAIL on real data -- do NOT promote to done_verified. Deploy confirmed LIVE (image a169f5e2b7e2 running/healthy, built 2026-07-03T06:38 CEST=04:38Z; git merge-base --is-ancestor 2c7fb5b08 HEAD = true). Gateway MCP tool unavailable in this QA sub-session (INV-GATEWAY-1, empirically confirmed -- no mcp__gateway__* tool registered) -- substituted direct HTTP JSON-RPC to the live running mcp-server (POST localhost:3000/mcp, same container, per INV-GATEWAY-1 fallback precedent). Baseline get_financial_summary(CTG,2026,Q1) = CORRUPT/total_assets=0. Called finalize_bctc_refine(report_id=96e36139-5dac-414d-8e4d-20a4725890d1, report_status=PARTIAL) against the real, fully-refined (56/56 DONE units) CTG markdown -- ok:true, rows_parsed 440->451 (11 more real rows recovered, consistent with RC-1/RC-2 fixes). Post-call get_financial_summary UNCHANGED: still CORRUPT/total_assets=0. Server log (docker logs, read-only): 'scalar backfill: no non-null scalars found' -- ALL scalars null (not just total_assets), implying isBankFormFromRows likely classified this real row set as non-bank, falling to a corporate code path CTG's real Roman-numeral bank form never satisfies. Direct inspection of the 451 materialized rows (GET /api/bctc-inspect/table/{doc_id}) shows ZERO rows containing the grand-total labels (Tong tai san / Tong no phai tra / Von chu so huu) anywhere in the report; a DIFFERENT unrelated pair exists on page 56 (notes/schedule table, not the primary balance sheet). Multiple rows also show code/label/value column misalignment (e.g. page 45 equity-movement table) -- additional real-data defects outside RC-1/RC-2/RC-3 scope. CODE gate (qa_verdict=APPROVE-CODE, 13/13 synthetic-fixture unit tests) remains valid and UNCHANGED -- this is a NEW, separate behavioral-DoD failure on real data, not a code regression. Side-effect disclosed: this finalize_bctc_refine call changed bctc_table_rows (440->451) but did NOT touch financial_reports scalars (all frozen values unchanged pre/post, confirmed via before/after get_financial_summary) -- live-served CTG behavior is unchanged (still the honest CORRUPT-DATA guard, not silently wrong). Routed to dev-mcp-server (zone owner) to diagnose the real-data gap beyond the 3 already-fixed root causes. DJ: docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-BS-SECTION-CLASSIFIER-qa.md."
+        "qa_behavioral_dod_note": "[qa 2026-07-03T05:24:29Z] BEHAVIORAL DoD FAIL on real data -- do NOT promote to done_verified. Deploy confirmed LIVE (image a169f5e2b7e2 running/healthy, built 2026-07-03T06:38 CEST=04:38Z; git merge-base --is-ancestor 2c7fb5b08 HEAD = true). Gateway MCP tool unavailable in this QA sub-session (INV-GATEWAY-1, empirically confirmed -- no mcp__gateway__* tool registered) -- substituted direct HTTP JSON-RPC to the live running mcp-server (POST localhost:3000/mcp, same container, per INV-GATEWAY-1 fallback precedent). Baseline get_financial_summary(CTG,2026,Q1) = CORRUPT/total_assets=0. Called finalize_bctc_refine(report_id=96e36139-5dac-414d-8e4d-20a4725890d1, report_status=PARTIAL) against the real, fully-refined (56/56 DONE units) CTG markdown -- ok:true, rows_parsed 440->451 (11 more real rows recovered, consistent with RC-1/RC-2 fixes). Post-call get_financial_summary UNCHANGED: still CORRUPT/total_assets=0. Server log (docker logs, read-only): 'scalar backfill: no non-null scalars found' -- ALL scalars null (not just total_assets), implying isBankFormFromRows likely classified this real row set as non-bank, falling to a corporate code path CTG's real Roman-numeral bank form never satisfies. Direct inspection of the 451 materialized rows (GET /api/bctc-inspect/table/{doc_id}) shows ZERO rows containing the grand-total labels (Tong tai san / Tong no phai tra / Von chu so huu) anywhere in the report; a DIFFERENT unrelated pair exists on page 56 (notes/schedule table, not the primary balance sheet). Multiple rows also show code/label/value column misalignment (e.g. page 45 equity-movement table) -- additional real-data defects outside RC-1/RC-2/RC-3 scope. CODE gate (qa_verdict=APPROVE-CODE, 13/13 synthetic-fixture unit tests) remains valid and UNCHANGED -- this is a NEW, separate behavioral-DoD failure on real data, not a code regression. Side-effect disclosed: this finalize_bctc_refine call changed bctc_table_rows (440->451) but did NOT touch financial_reports scalars (all frozen values unchanged pre/post, confirmed via before/after get_financial_summary) -- live-served CTG behavior is unchanged (still the honest CORRUPT-DATA guard, not silently wrong). Routed to dev-mcp-server (zone owner) to diagnose the real-data gap beyond the 3 already-fixed root causes. DJ: docs/agent-memory/decisions/sprint-FIX-BCTC-BANK-BS-SECTION-CLASSIFIER-qa.md.",
+        "blocked_on": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT",
+        "po_disposition_20260703T0507": "[po-triage 2026-07-03T05:07Z] Behavioral DoD FAILED on real data (qa 05:24Z) is a NEW cross-layer root set (bank-form mis-classification + missing/mislabeled grand-total rows + page-45 column misalignment) the 3-defect fix never targeted; synthetic 13/13 pass because fixtures diverged from the real doc. 2nd DoD-cycle failure on same doc => recurring-bug bar. Repoint next_agent dev-mcp-server->architect; HOLD in review, blocked_on SPIKE-BCTC-CTG-BS-REALDATA-ROOT. qa CODE gate (APPROVE-CODE, 13/13) stays valid + unchanged. Live-served CTG is the HONEST corrupt-data guard (not silently wrong) => no user-facing wrong-data urgency, but this is the single root blocking the whole W5 chain."
       },
       {
         "id": "BCTC-HNX-SSL-HARDEN",
