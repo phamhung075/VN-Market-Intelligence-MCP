@@ -33,7 +33,7 @@
     { "schedule": "08:13 UTC M-F (15:13 VN)", "name": "foreignFlowAlertJob", "desc": "Daily foreign flow smart-money scan — HIGH alerts + evidence fragments (moved 09:30→08:13 UTC Sprint 1949-T6; EOD chef reads at 08:37)" },
     { "schedule": "01:00 UTC daily (08:00 VN)", "name": "insiderCheckJob", "desc": "Daily SSC insider transaction check + streak detection + evidence fragments" },
     { "schedule": "16:00 UTC daily (23:00 VN)", "name": "evidenceAccumulator", "desc": "Nightly evidence fragment purge + accumulation (evidenceAccumulatorJob.ts)" },
-    { "schedule": "19:00 UTC Sunday (02:00 VN Mon)", "name": "baseRateComputation", "desc": "Weekly Bayesian base-rate recompute from evidence_fragments (baseRateComputationJob.ts)" },
+    { "schedule": "19:00 UTC daily (02:00 VN)", "name": "baseRateComputation", "desc": "Daily Bayesian base-rate recompute from evidence_fragments (baseRateComputationJob.ts)" },
     { "schedule": "16:30 UTC daily (23:30 VN)", "name": "predictionResolution", "desc": "Daily prediction claim auto-resolution after market close (predictionResolutionJob.ts)" },
     { "schedule": "*/30 min", "name": "pipelineWatchdog", "desc": "Stale news pipeline detection — alerts work channel when staleMins > 90, 3h cooldown" },
     { "schedule": "*/30 6-8 UTC M-F (07:00-09:00 CET)", "name": "franceSummaryJob", "desc": "France morning VN digest to MARKET channel: top 3 price movers, top 3 alerts, TA signal count — Vietnamese format, silent skip when empty. alreadySentToday dedup prevents multi-fire within same UTC day." },

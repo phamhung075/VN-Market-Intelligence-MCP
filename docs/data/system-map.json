@@ -324,8 +324,8 @@
           },
           {
             "name": "baseRateComputation",
-            "schedule": "19:00 UTC Sunday",
-            "desc": "Weekly Bayesian base-rate recompute"
+            "schedule": "19:00 UTC daily (02:00 VN)",
+            "desc": "Daily Bayesian base-rate recompute"
           },
           {
             "name": "predictionResolution",
