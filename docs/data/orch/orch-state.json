@@ -7431,6 +7431,22 @@
         "created_at": "2026-07-03T06:21:56Z",
         "note": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT root-cause FIX-B: strip markdown emphasis (**,__) from code before testing ROMAN_SECTION/CORP_BALANCE anchors in bctcFormType.ts isBankFormFromRows. Independent, low-risk, can ship in parallel. See architecture brief docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md §4.",
         "depends": []
+      },
+      {
+        "id": "FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD",
+        "title": "bctcPdfPullJob missing overlap guard -- concurrent invocations duplicate-process same rows, stall net done-throughput (SPIKE-BCTC-DISCOVER-PIPELINE-DEAD root cause)",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "next_agent": "dev-mcp-server",
+        "status": "TODO",
+        "priority": "high",
+        "size": "S",
+        "created_at": "2026-07-03T07:13:08Z",
+        "created_by": "architect",
+        "origin_signal": "sau-2026-07-03T06:42:33Z",
+        "parent_task": "SPIKE-BCTC-DISCOVER-PIPELINE-DEAD",
+        "note": "RAW-confirmed (docker-exec live probe, no build/up/restart): bctcPdfPullJob.ts has no isRunning/mutex guard between cron invocations (*/30). Per-item processing (fetch 45s + up to 3-tier extraction @120s/tier) can legitimately take up to ~65-70min for a full batch (DEFAULT_BATCH_SIZE=10) -- observed 05:30 run took 69.9min. Because status stays 'pending' until a row finishes, overlapping invocations re-select and redundantly re-process the SAME rows (HCM PDF re-saved 4x, NKG 3x in <1min, observed in live logs), saturating pdf-extractor (204% CPU/75.3% mem at probe time) and starving net done-throughput. 4 concurrent invocations observed stuck running at probe time (oldest 65+min in-flight). Dormant for weeks because the sibling enricher bug (FIX-BCTC-ENRICHER-STUCK-BACKLOG, now DONE_VERIFIED) meant the queue never had real pending work to trigger overlap -- fixing Stage 2 unmasked this Stage 3 defect. FIX: add module-level isRunning boolean guard (log+early-return if already running, clear in finally) -- mirror the EXISTING in-repo pattern verbatim: apps/mcp-server/src/scheduler/weatherCheckJob.ts (isRunning, lines 67/85/89/243) and startScheduler.ts:963-973 (runVnstockFundamentalsJobCron/runVnstockTradingStatsJobCron, same 7-10min-sweep-on-fixed-cron shape). No schema change, no new table. Full evidence + test strategy: docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md",
+        "depends": []
       }
     ],
     "closed_sprints": [
@@ -9425,6 +9441,29 @@
         "architect_disposition": "[architect 2026-07-03T07:10:00Z] SPIKE-BCTC-CTG-BS-REALDATA-ROOT complete -> docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md. Recommend PM SUPERSEDE this row with a new FIX-BCTC-BANK-BS-COLUMN-ORDER task (zone apps/mcp-server/, dev-mcp-server) scoping FIX-A+FIX-C+FIX-D as ONE interdependent unit (parser column-order + section-vocabulary + mandatory real-markdown regression fixture), PLUS an independent FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP (size S, FIX-B only). Do NOT re-open this row for a 4th narrow classifier-only patch -- root cause is dominantly the parser column-order bug (rows never reach the DB), not the classifier alone. The 3 already-shipped RC-1/RC-2/RC-3 fixes (commit 2c7fb5b0) are real non-regressions and should be kept.",
         "superseded_by": "FIX-BCTC-BANK-BS-COLUMN-ORDER",
         "closed_at": "2026-07-03T06:21:56Z"
+      },
+      {
+        "id": "SPIKE-BCTC-DISCOVER-PIPELINE-DEAD",
+        "status": "DONE",
+        "type": "SPIKE",
+        "mode": "spike",
+        "zone": "multi",
+        "next_agent": "architect",
+        "owner": "po",
+        "created_by": "po-triage-20260703T0637Z",
+        "priority": "critical",
+        "timebox": 120,
+        "title": "bctc-discover pipeline produced 0 pushes for ~17d (396.6h) despite 36 actionable pending rows during Q2 earnings — pin the dead stage",
+        "question": "Why has the bctc discover->enqueue->fetch->push pipeline produced 0 pushes in ~17 days (last push 396.6h ago) while 36 actionable rows sit pending during the Q2-2026 earnings window? Identify the EXACT dead stage and emit a precisely-zoned FIX: (1) is the discover cron firing at all (scheduler alive)? (2) are URLs discovered on the VPS (discover-bctc-urls-browser.py) but not enqueued? (3) is fetch/OCR failing silently? (4) is the enricher returning 0 URLs for CURRENT quarters (KIN BCTC-ENRICHER-OLD-QUARTERS, which covers OLD quarters)? This is NOT a false-P0 (ruled out: reading 390h->396.6h = real elapsed time; 'passive health masks dead data' — cron fires but no data produced).",
+        "status_note": "From signals sau-2026-07-03T06:42:33Z (B-05 CRITICAL) + sau-2026-07-03T06:42:56Z (B-13 WARN, FOLDED — same root: 9 rows >72h). Zone candidates: apps/mcp-server (discover/enqueue/enricher/scheduler) + vps-scripts (discover-bctc-urls-browser.py) + apps/pdf-extractor (fetch). multi -> architect must split, then emit precisely-zoned FIX(es). DEDUP-checked distinct from: BCTC-HNX-SSL-HARDEN [REVIEW] (fetch works insecurely via curl -k; hardening debt, NOT the blocker per its PREMISE-CORRECTED note), FU-CTG-DISCOVERY-FILENAME-FILTER [CTG-specific discovery quality], FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH [detector-side false-P0, but signal author ruled false-P0 out], BCTC-ENRICHER-OLD-QUARTERS [KIN — OLD quarters; this is CURRENT-quarter starvation], FIX-BCTC-BANK-BS-COLUMN-ORDER [parse/finalize layer, downstream of discover]. Recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE not point-patch (feedback_recurring_bug_escalation).",
+        "assigned_to": "architect",
+        "dispatched_at": "2026-07-03T06:58:49Z",
+        "dispatched_by": "dev-team",
+        "completed_at": "2026-07-03T07:13:08Z",
+        "verdict_note": "architect RAW-verified via docker-exec live probe (named-volume market.db, no build/up/restart): dead stage PINNED to Stage 3 (bctcPdfPullJob), NOT Stage 1/2. Stage 1 (scheduler) alive. Stage 2 (enricher) already fixed by sibling FIX-BCTC-ENRICHER-STUCK-BACKLOG (DONE_VERIFIED) -- confirmed live-working (8+ real hsx.vn URLs discovered since 05:15Z). Stage 3 (bctcPdfPullJob) has NO overlap/mutex guard: once Stage-2 fed it real work today, invocations began taking up to ~70min (05:30 run) and are now piling up concurrently (4 simultaneous running invocations at probe time, oldest 65+min in-flight), redundantly re-downloading/re-extracting the same PDFs (HCM 4x, NKG 3x observed in logs) and saturating pdf-extractor (204% CPU / 75.3% mem). Stage 4 (parse) 9/10 recent items enrich_failed -- corroborates and is already owned by concurrent FIX-BCTC-BANK-BS-COLUMN-ORDER, NOT re-derived. Acute alarm already self-resolving (MAX(last_attempt WHERE done)=2026-07-03 05:14:18, <2h stale) but structural defect will recur under earnings-season load. Emitted FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD (dev-mcp-server, apps/mcp-server, single-zone -- reuses existing isRunning-guard pattern from weatherCheckJob.ts/vnstockFundamentalsRefresh, no new architecture). Brief: docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md",
+        "reviewed_at": "2026-07-03T07:13:08Z",
+        "updated_at": "2026-07-03T07:13:08Z",
+        "updated_by": "architect"
       }
     ],
     "done_verified": [
@@ -9627,24 +9666,6 @@
           "W5-FU-CTG-REFINE-96e36139"
         ],
         "assigned_to": "dev-mcp-server",
-        "dispatched_at": "2026-07-03T06:58:49Z",
-        "dispatched_by": "dev-team"
-      },
-      {
-        "id": "SPIKE-BCTC-DISCOVER-PIPELINE-DEAD",
-        "status": "IN_PROGRESS",
-        "type": "SPIKE",
-        "mode": "spike",
-        "zone": "multi",
-        "next_agent": "architect",
-        "owner": "po",
-        "created_by": "po-triage-20260703T0637Z",
-        "priority": "critical",
-        "timebox": 120,
-        "title": "bctc-discover pipeline produced 0 pushes for ~17d (396.6h) despite 36 actionable pending rows during Q2 earnings — pin the dead stage",
-        "question": "Why has the bctc discover->enqueue->fetch->push pipeline produced 0 pushes in ~17 days (last push 396.6h ago) while 36 actionable rows sit pending during the Q2-2026 earnings window? Identify the EXACT dead stage and emit a precisely-zoned FIX: (1) is the discover cron firing at all (scheduler alive)? (2) are URLs discovered on the VPS (discover-bctc-urls-browser.py) but not enqueued? (3) is fetch/OCR failing silently? (4) is the enricher returning 0 URLs for CURRENT quarters (KIN BCTC-ENRICHER-OLD-QUARTERS, which covers OLD quarters)? This is NOT a false-P0 (ruled out: reading 390h->396.6h = real elapsed time; 'passive health masks dead data' — cron fires but no data produced).",
-        "status_note": "From signals sau-2026-07-03T06:42:33Z (B-05 CRITICAL) + sau-2026-07-03T06:42:56Z (B-13 WARN, FOLDED — same root: 9 rows >72h). Zone candidates: apps/mcp-server (discover/enqueue/enricher/scheduler) + vps-scripts (discover-bctc-urls-browser.py) + apps/pdf-extractor (fetch). multi -> architect must split, then emit precisely-zoned FIX(es). DEDUP-checked distinct from: BCTC-HNX-SSL-HARDEN [REVIEW] (fetch works insecurely via curl -k; hardening debt, NOT the blocker per its PREMISE-CORRECTED note), FU-CTG-DISCOVERY-FILENAME-FILTER [CTG-specific discovery quality], FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH [detector-side false-P0, but signal author ruled false-P0 out], BCTC-ENRICHER-OLD-QUARTERS [KIN — OLD quarters; this is CURRENT-quarter starvation], FIX-BCTC-BANK-BS-COLUMN-ORDER [parse/finalize layer, downstream of discover]. Recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE not point-patch (feedback_recurring_bug_escalation).",
-        "assigned_to": "architect",
         "dispatched_at": "2026-07-03T06:58:49Z",
         "dispatched_by": "dev-team"
       }
