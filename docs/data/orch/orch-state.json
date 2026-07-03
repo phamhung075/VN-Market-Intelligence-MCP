@@ -537,8 +537,12 @@
         "type": "data_stale",
         "summary": "bctc-push stale 432h in earnings window (check B-05)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "triaged_by": "router",
+        "triaged_at": "2026-07-03T22:46:12Z",
+        "backlog_task_id": "BCTC-HNX-SSL-HARDEN",
+        "triage_note": "[router 2026-07-03T22:42Z] Re-emission (4th today) of KNOWN bctc raw-fetch staleness. PO already triaged sau-20260703T024117Z at 03:03Z -> linked BCTC-HNX-SSL-HARDEN (HNX SSL outage root; code-complete/in-review, DEPLOY-PENDING user-gated). Live 4-source RAW corroboration 22:41Z: analysis-layer RECOVERED since PO triage -- get_sla_status(bctc) age 33min/SLA 850min OK; vn-bctc-fetch HEALTHY polled 4m ago; refine/enrich queue drained (38->0 via trigger_bctc_vps_fetch dry_run). ONLY get_vps_proxy_health raw last-push still 06-16/0-in-24h -- BENIGN: event-driven quarterly source, Q2-2026 filings not due until ~late July, 0 pending. B-05 check FPs applying 24h continuous SLA to raw-push layer vs authoritative analysis-layer SLA gate (two-layer-freshness class). Auditor asserted root (headroom-proxy 8787 / VPS down) FALSIFIED by healthy service. NO new investigation -- owned by BCTC-HNX-SSL-HARDEN. ROUTED TO PO: (a) note recovered analysis-layer on that task; (b) mint PLAN-ONLY B-05 check-refinement (read analysis-layer SLA gate, not raw-push, for event-driven bctc); (c) decide if ops post-deploy freshness verification is warranted per spawn-ops-for-user-gate directive. RESOLVE only after BCTC-HNX-SSL-HARDEN deploy + raw-push freshness confirmed green (per PO's own resolution condition)."
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
