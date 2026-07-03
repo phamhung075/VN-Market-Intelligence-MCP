@@ -243,13 +243,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL",
-    "next_agent": "ops",
-    "next_action": "ops executing RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL (CRITICAL bctc pipeline stall, infra-vps recon). On ops complete: router RAW-verify recon findings + route remediation (po/dev-mcp-server/dev-pdf-extractor per root cause) or promote if PLAN-only recon done. Parallel: PO triaging 65 NEW telegram reports (dedup to B-05 / FIX-BCTC-FULL-BATCH-CONTAMINATION / FIX-MCP-MEMORY-CODE-LEAK / FU-RAG-DEPLOY-MEMORY) + memory signal sau-2026-07-03T19:16:47Z. FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD done_verified audit-backfill applied.",
-    "updated_at": "2026-07-03T19:35:28Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL done_verified (ops recon COMPLETE + router-corrected: tickers ARE HOSE; primary = HSX Strategy-0 0-URLs + SSC-503 fallback hang; NOT off-exchange). PO RETURN NOTHING -- root causes tracked by existing backlog. dev WIP=0 -- idle. CRITICAL for next dev-team planning: bctc discovery pipeline DEAD 17 days (since 06-16) -> elevate discovery-fix items to HIGH: B-05-FU-SSC-503-RETRY + FIX-VPS-SSC-INSIDER-502 (SSC-503 fail-fast) + investigate HSX Strategy-0 0-URLs for HOSE tickers (candidate focused SPIKE). Other backlog PLAN-ONLY: FIX-BCTC-FULL-BATCH-CONTAMINATION (architect-first), FEAT-SEVERITY-OVERRIDE-SURFACING, FIX-AGENT-NOTEBOOK-UUID-PROVENANCE, FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT, FIX-MCP-MEMORY-CODE-LEAK. DEPLOY-GATED (pending mcp-server rebuild): FIX-LEGAL-RISK ROBUST tier + pdfpull-guard + COLUMN-ORDER finalize_bctc_refine CTG.",
+    "updated_at": "2026-07-03T20:03:17Z",
     "updated_by": "router",
-    "note": "19:24Z (fire-tick 19:07Z): dispatch ops for RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL (CRITICAL, backlog->in_progress, WIP=1). Spawn PO for 65-report triage. pdfpull audit-backfill."
+    "note": "19:50Z (fire-tick 19:07Z): RECON-BCTC-ENRICH-0ROWS in_progress->done_verified (ops recon done, router-corrected HOSE-listing hypothesis, PO NOTHING, no new mint). dev WIP=0 -- idle. dev-team tick closeout -> release SF-1 + fire-election."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9939,6 +9939,30 @@
           "83db0a8de"
         ],
         "signoff_note": "[router 2026-07-03T19:15Z] qa (CLEAN task — executes AND self-gates) COMPLETE + router RAW-verified PASS. Commits d786f1d1b (gitignore .claude/tmp/ + git rm --cached 111 orch-hook-proposal-*.json) + 83db0a8de (DJ + task report). RAW-verify ground-truth: 0 raw-UUID on ADDED lines; 259 UUID occurrences purged on REMOVED lines (the leak this task fixes); 0 tracked .claude/tmp files remain; .gitignore:16=.claude/tmp/; scripts/orch-apply.sh has 0 refs to .claude/tmp (no dependency — untracking structurally safe; actual snapshot writer is scripts/agents-flow/orch-state-hook-prewrite.mjs, unrelated to orch-apply); orch-state.json untouched since dispatch; DJ docs/agent-memory/decisions/sprint-2026-07-03-qa.md has task-id CHORE-GITIGNORE-CLAUDE-TMP (DJ-GATE-1 PASS); report reports/TASK_REPORT_CHORE-GITIGNORE-CLAUDE-TMP.md (3717B). Notable (documented by qa): first path-limited commit `git commit -m .. -- .gitignore .claude/tmp/` silently dropped the git rm --cached (re-tracked the still-on-disk files) — known class feedback_pathspec_commit_drops_rename_deletion; recovered via `git reset --soft HEAD~2` (both commits local/unpushed) + plain unscoped commit; final state RAW-verified clean. Both commits local/unpushed — fleet-push owns push. Resolves signal router-session-uuid-hygiene-20260703 sub-fix (B) .claude/tmp tracking; sub-fix (A) agent-notebook UUID provenance remains as backlog FIX-AGENT-NOTEBOOK-UUID-PROVENANCE."
+      },
+      {
+        "id": "RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL",
+        "title": "bctc enrich returns 0 tables (bctc_table_rows=0 AND bctc_md_tables=0) for ~18 Q4-2025 tickers across ALL sectors — extraction/OCR pipeline stall behind B-05 SLA breach (36-item queue)",
+        "owner": "ops",
+        "next_agent": "ops",
+        "type": "SPIKE",
+        "status": "DONE_VERIFIED",
+        "zone": "infra-vps",
+        "priority": "high",
+        "created_at": "2026-07-03T19:00:57Z",
+        "status_note": "PLAN-ONLY recon. RAW-verified 2026-07-03 via WORK channel: NOT terminal url_not_found — queue actively churning, every enrich_failed with bctc_table_rows=0 AND bctc_md_tables=0 (ACB/BID/DHG/EIB/D2D/GAS/GVR/HCM/HSG/MBB/NKG/POW/SSI/VCI/VHM/VIC/VPB/VRE — all sectors). DISTINCT from pending bank-mapping rebuild (2cd9e105/a46131cf fix wrong VALUES, not 0-tables) and from BCTC-ENRICHER-OLD-QUARTERS (0-URLs pre-Q4-2025). Diagnose extraction path first: VPS PDF-extractor/OCR liveness + PDF-Extract-Kit + bctcPdfPull extraction step. Corroborated by bctc-analyst MBB Q1-2026 coverage-gap. DEPLOY-GATE: any mcp-server code fix batches with the pending ROBUST rebuild (pdfpull-guard + COLUMN-ORDER CTG). Source: sau-1783103887 (B-05 WARN) + telegram 3438 (CRITICAL) / 3440 (B-13).",
+        "provenance": "(router-dispatched)",
+        "dev_agent": "ops",
+        "handler": "infra-vps",
+        "dispatched_by": "router",
+        "dispatched_at": "2026-07-03T19:35:28Z",
+        "dispatch_note": "[router 2026-07-03T19:24Z / fire-tick 19:07Z] dev-team tick — dispatch ops run_in_background. CRITICAL bctc-discover/enrich pipeline stall: auditor report 3438 (stale 396.6h >24h SLA, 36 pending, last push 2026-06-16) corroborated by ~50 NEW ENRICH 0-rows FAIL-LOUD reports (~18 Q4-2025 tickers, bctc_table_rows=0 AND bctc_md_tables=0, root=B02-TCTD parse failure or extraction/OCR pipeline stall) + Tier-2 B-05 WARN 3483. Ops brief: SSH VPS, probe PDF-extractor/PDF-Extract-Kit/OCR service liveness + bctc-discover crawler + queue drain; determine whether stall is extraction-service-down vs parse-code-defect vs data-coverage; report root cause + remediation (recon/PLAN — no unbudgeted code change). Escalate code defect -> po/dev-mcp-server or dev-pdf-extractor via signal.",
+        "done_verified": true,
+        "verified_by": "router",
+        "verified_at": "2026-07-03T20:03:17Z",
+        "recon_verdict": "COMPLETE_WITH_ROUTER_CORRECTION",
+        "ops_agent": "ops",
+        "signoff_note": "[router 2026-07-03T19:50Z] ops recon COMPLETE (PLAN-only, 0 code change) + PO triage RETURN NOTHING + router RAW-verified. VERIFIED EVIDENCE: VPS discovery returns 0 URLs all tickers; 328 items deferred_infra since 2026-06-16; VPS proxy last push 396.6h stale; VPS fallback script hangs on SSC API HTTP 503 + 60s retry > mcp 5s timeout -> silent [] -> queue frozen; secondary ~50 ENRICH 0-rows (B02-TCTD parser/blank-PDF). ROUTER CORRECTION (RAW-verified via system-map exchange field): ops Path-A 'FPT/GVR/MBB not HOSE-listed' is FALSE -- FPT/BID/VHM/VIC/SSI=HOSE and the ~18 reported tickers are all HOSE/VN30 blue chips routed to HSX Strategy-0 BECAUSE they are classified HOSE; real primary cause = discoverHosePdfUrls() returns 0 URLs for legitimately-HOSE tickers (HSX endpoint change ~06-16 or scraper defect, NOT off-exchange) + SSC-503 fallback hang. BUG telegram 3234 + ops notebook carried the falsified 'not-listed' theory -- SUPERSEDED by this closeout. PO DEDUP: root causes map to existing backlog (discovery: B-05-FU-SSC-503-RETRY, FIX-VPS-SSC-INSIDER-502, FIX-BCTC-QUEUE-MAXAGE-GATE, BCTC-ENRICHER-OLD-QUARTERS, FACTORY-INFRA-split-ssc-fetchers; extraction: FIX-BCTC-BANK-SCALAR-MAPPING, FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP, FIX-BCTC-BANK-SUMMARY-MAPPING DONE) -- NO new task minted. DIRECTIVE for fix executor: tickers ARE HOSE, do NOT chase 'not-listed'; (a) SSC-503 fail-fast <5s, (b) investigate HSX Strategy-0 0-URLs for HOSE tickers (may need focused SPIKE), (c) CRITICAL pipeline dead 17 days -> elevate discovery items to HIGH next planning. ops notebook 1ee40bab3 (session-UUID scrubbed from 82eb874eb during router leak-hygiene)."
       }
     ],
     "head": {
@@ -9950,26 +9974,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL",
-        "title": "bctc enrich returns 0 tables (bctc_table_rows=0 AND bctc_md_tables=0) for ~18 Q4-2025 tickers across ALL sectors — extraction/OCR pipeline stall behind B-05 SLA breach (36-item queue)",
-        "owner": "ops",
-        "next_agent": "ops",
-        "type": "SPIKE",
-        "status": "IN_PROGRESS",
-        "zone": "infra-vps",
-        "priority": "high",
-        "created_at": "2026-07-03T19:00:57Z",
-        "status_note": "PLAN-ONLY recon. RAW-verified 2026-07-03 via WORK channel: NOT terminal url_not_found — queue actively churning, every enrich_failed with bctc_table_rows=0 AND bctc_md_tables=0 (ACB/BID/DHG/EIB/D2D/GAS/GVR/HCM/HSG/MBB/NKG/POW/SSI/VCI/VHM/VIC/VPB/VRE — all sectors). DISTINCT from pending bank-mapping rebuild (2cd9e105/a46131cf fix wrong VALUES, not 0-tables) and from BCTC-ENRICHER-OLD-QUARTERS (0-URLs pre-Q4-2025). Diagnose extraction path first: VPS PDF-extractor/OCR liveness + PDF-Extract-Kit + bctcPdfPull extraction step. Corroborated by bctc-analyst MBB Q1-2026 coverage-gap. DEPLOY-GATE: any mcp-server code fix batches with the pending ROBUST rebuild (pdfpull-guard + COLUMN-ORDER CTG). Source: sau-1783103887 (B-05 WARN) + telegram 3438 (CRITICAL) / 3440 (B-13).",
-        "provenance": "(router-dispatched)",
-        "dev_agent": "ops",
-        "handler": "infra-vps",
-        "dispatched_by": "router",
-        "dispatched_at": "2026-07-03T19:35:28Z",
-        "dispatch_note": "[router 2026-07-03T19:24Z / fire-tick 19:07Z] dev-team tick — dispatch ops run_in_background. CRITICAL bctc-discover/enrich pipeline stall: auditor report 3438 (stale 396.6h >24h SLA, 36 pending, last push 2026-06-16) corroborated by ~50 NEW ENRICH 0-rows FAIL-LOUD reports (~18 Q4-2025 tickers, bctc_table_rows=0 AND bctc_md_tables=0, root=B02-TCTD parse failure or extraction/OCR pipeline stall) + Tier-2 B-05 WARN 3483. Ops brief: SSH VPS, probe PDF-extractor/PDF-Extract-Kit/OCR service liveness + bctc-discover crawler + queue drain; determine whether stall is extraction-service-down vs parse-code-defect vs data-coverage; report root cause + remediation (recon/PLAN — no unbudgeted code change). Escalate code defect -> po/dev-mcp-server or dev-pdf-extractor via signal."
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
