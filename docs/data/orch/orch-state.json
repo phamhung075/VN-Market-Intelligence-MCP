@@ -243,13 +243,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT done_verified (qa PASS). alert-commander LIVE via cowork-schedule (fires next matching tick — critical 0 */4, market */15 2-8 wkdays). 2 HIGH backlog follow-ups await dispatch: FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK (qa-found flood gap — prioritize the QUICK no-deploy flow-lookback bound before re-fires accumulate) + FEAT-SEVERITY-OVERRIDE-SURFACING (robustness). Next dev-team tick dispatches.",
-    "updated_at": "2026-07-03T17:13:28Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server: (QUICK, no-deploy) bound get_legal_risk_signals lookback in alert-commander/flow/stage-bootstrap.md; (ROBUST, deploy) legalRiskTools.ts default-lookback + already-alerted dedup + write_alert_verdict dedup; repeat-fire test. Index-only commit, explicit paths, no board touch, no push. On completion: router RAW-verify -> review -> qa.",
+    "updated_at": "2026-07-03T17:19:55Z",
     "updated_by": "router",
-    "note": "17:0xZ: FIX-ALERT-COMMANDER-DEAD-NO-SLOT promoted done_verified (qa a522cb30f PASS). Filed qa follow-up FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK (HIGH). WIP=0."
+    "note": "17:07Z dev-team tick: dispatched FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK (HIGH, qa-found flood gap) to dev-mcp-server. WIP=1. FEAT-SEVERITY-OVERRIDE-SURFACING remains backlog."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7482,25 +7482,6 @@
         "next_agent": "architect",
         "desc": "Per arch brief: new shared skill .claude/skills/severity-override-gate/SKILL.md computes SEVERITY_OVERRIDE(signal) = legal_risk riskType in {prosecution,asset_freeze} (0.95 tier) OR price_anomaly move_sigma>=4.0 & impact_score>=6 (chain_catalyst/crisis_velocity already market-wide, no change). Every surfacing consumer's gate becomes: if ticker in watchlist OR SEVERITY_OVERRIDE -> surface. Primary surface: unified-agent CHEF daily-dish market-wide paragraph (guaranteed 3x/day cron, independent of alert-commander liveness). Secondary echo: fb-market-poster legal-risk bullet (main.md:232). Plus: news-scout 360m legal_risk dedup escalation-exception (tier-upgrade bypasses suppression); system-map.json sender_rules doc-sync. Cross-cycle dedup via record_signal_outcome(...,'surfaced_marketwide',...). 6 acceptance criteria incl AC5 PNJ #8371 replay.",
         "zone_note": "multi -- architect must split across .claude/skills/severity-override-gate/, docs/agents/unified-agent/, docs/agents/fb-market-poster/, docs/agents/news-scout/, docs/data/system-map.json. Sequencing per brief S5: shared skill first -> CHEF (primary) -> fb-market-poster; news-scout exception + system-map doc-sync parallel."
-      },
-      {
-        "id": "FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "priority": "HIGH",
-        "status": "BACKLOG",
-        "created_at": "2026-07-03T17:13:28Z",
-        "created_by": "router",
-        "provenance": "qa a522cb30f63265723 during FIX-ALERT-COMMANDER-DEAD-NO-SLOT gate (2026-07-03)",
-        "related": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT (done_verified) — resurrecting alert-commander EXPOSED this pre-existing gap; needed to prevent legal_risk alert flood",
-        "desc": "legal_risk alerts re-fire CRITICAL every cycle (15min market / 4h off-hours) for up to 30 days. Root: (1) alert-commander flow docs/agents/alert-commander/flow/stage-bootstrap.md:42 calls get_legal_risk_signals() BARE (no days/hours_back); tool apps/mcp-server/src/interface/mcp/tools/sector/legalRiskTools.ts:236 defaults to 30-day lookback with NO expiry filter, NO read-state, NO already-alerted tracking; (2) stage-signals.md:21 = unconditional 'legal_risk | any | CRITICAL now'; (3) write_alert_verdict (alertVerdictTools.ts:63-93) is a blind append, no dedup. Two-tier fix: (QUICK, no deploy) bound the lookback in stage-bootstrap.md via get_legal_risk_signals(hours_back=N) so a stale 30-day event stops re-firing; (ROBUST, deploy) add already-alerted dedup / read-state to legalRiskTools + write_alert_verdict so each legal_risk fires CRITICAL once (or on material change). Preserve alert-policy.md no-suppression intent for NEW legal_risk. Add a test for repeat-fire suppression.",
-        "files": [
-          "docs/agents/alert-commander/flow/stage-bootstrap.md",
-          "apps/mcp-server/src/interface/mcp/tools/sector/legalRiskTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/sector/alertVerdictTools.ts",
-          "docs/agents/alert-commander/flow/stage-signals.md"
-        ]
       }
     ],
     "closed_sprints": [
@@ -9837,7 +9818,32 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "size": "M",
+        "priority": "HIGH",
+        "status": "IN_PROGRESS",
+        "created_at": "2026-07-03T17:13:28Z",
+        "created_by": "router",
+        "provenance": "qa a522cb30f63265723 during FIX-ALERT-COMMANDER-DEAD-NO-SLOT gate (2026-07-03)",
+        "related": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT (done_verified) — resurrecting alert-commander EXPOSED this pre-existing gap; needed to prevent legal_risk alert flood",
+        "desc": "legal_risk alerts re-fire CRITICAL every cycle (15min market / 4h off-hours) for up to 30 days. Root: (1) alert-commander flow docs/agents/alert-commander/flow/stage-bootstrap.md:42 calls get_legal_risk_signals() BARE (no days/hours_back); tool apps/mcp-server/src/interface/mcp/tools/sector/legalRiskTools.ts:236 defaults to 30-day lookback with NO expiry filter, NO read-state, NO already-alerted tracking; (2) stage-signals.md:21 = unconditional 'legal_risk | any | CRITICAL now'; (3) write_alert_verdict (alertVerdictTools.ts:63-93) is a blind append, no dedup. Two-tier fix: (QUICK, no deploy) bound the lookback in stage-bootstrap.md via get_legal_risk_signals(hours_back=N) so a stale 30-day event stops re-firing; (ROBUST, deploy) add already-alerted dedup / read-state to legalRiskTools + write_alert_verdict so each legal_risk fires CRITICAL once (or on material change). Preserve alert-policy.md no-suppression intent for NEW legal_risk. Add a test for repeat-fire suppression.",
+        "files": [
+          "docs/agents/alert-commander/flow/stage-bootstrap.md",
+          "apps/mcp-server/src/interface/mcp/tools/sector/legalRiskTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/sector/alertVerdictTools.ts",
+          "docs/agents/alert-commander/flow/stage-signals.md"
+        ],
+        "owner": "dev-mcp-server",
+        "dispatched_at": "2026-07-03T17:19:55Z",
+        "dispatched_by": "router",
+        "tick": "2026-07-03T17:07Z",
+        "router_dispatch_note": "[router 2026-07-03T17:07Z] FIX dispatched to dev-mcp-server. TWO-TIER: (QUICK/no-deploy) add hours_back bound to get_legal_risk_signals() call in docs/agents/alert-commander/flow/stage-bootstrap.md so a stale 30-day legal_risk stops re-firing — effective immediately (flow read live); (ROBUST/deploy) bound default lookback + add already-alerted dedup/read-state in legalRiskTools.ts (getLegalRiskSignals) + dedup in write_alert_verdict (alertVerdictTools.ts) so each legal_risk fires CRITICAL once. Preserve alert-policy.md no-suppression intent for NEW legal_risk. Add a repeat-fire-suppression test. On completion: router RAW-verify -> in_progress->review -> qa."
+      }
+    ],
     "ready": [],
     "review": [
       {
