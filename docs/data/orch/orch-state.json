@@ -244,11 +244,11 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-03T03:42:38Z",
+    "updated_at": "2026-07-03T04:41:32Z",
     "updated_by": "dev-team",
     "active_task_id": null,
     "next_agent": null,
-    "note": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION promoted to review (commit 27f9a6ade, RAW-verified). Head idle — free slot for next tick."
+    "note": "FIX-CRON-REGISTRY-BASERATE-CADENCE-DRIFT promoted to review (commit 5120100, RAW-verified). Head idle — free slot."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7020,21 +7020,6 @@
         "decoupling_reason": "FR-2.2 watchdog observability fix in apps/mcp-server; VPS upstream root-cause diagnosis deferred (requires live SSH, external portal may be down)"
       },
       {
-        "id": "FIX-CRON-REGISTRY-BASERATE-CADENCE-DRIFT",
-        "title": "docs/data/cron-registry.json:36 + system-map.json .project.microservices[mcp-server].crons[baseRateComputation] still say weekly Sunday 19:00 UTC -- stale vs daily cadence shipped in 24d1a4b5 (TASK-EVIDENCE-HOP1-MCP FR-1.2). docs/standards/cron-jobs.md already updated correctly in that commit; these 2 registry files were not.",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "specialist": "developer",
-        "status": "TODO",
-        "priority": "low",
-        "created_at": "2026-07-01T07:56:10Z",
-        "created_by": "qa",
-        "depends": [],
-        "size": "S",
-        "parent_sprint": "BA-PREDICTION-EVIDENCE-REVIVAL",
-        "decoupling_reason": "pure doc-registry text drift, not a code defect -- flagged by dev-mcp-server as outside its file boundary, routed to backlog per QA judgment call (task instructions left the acceptable-vs-blocker decision to qa)."
-      },
-      {
         "id": "CCATO-T2-CLAIM-TRUTH-SKILL",
         "title": "Shared SSOT skill .claude/skills/claim-truth-gate/SKILL.md wrapping narrative-truth-gate.sh: invocation contract (post_body/agent_id/cache) + self-correct in-cycle protocol (brief S4.6) + time-sensitivity override for real-time agents + PASS-on-null honest-NULL note",
         "owner": "developer",
@@ -9601,6 +9586,28 @@
         "promoted_at": "2026-07-03T03:42:38Z",
         "promoted_by": "router",
         "review_note": "Developer done: commit 27f9a6ade (cowork-match-slots.js L203/L228 console.log->console.error; cowork-tick-preflight.sh Step 6 splits stdout/stderr via mktemp, exit!=0 path surfaces stderr in detail) + journal 643f000ab. Router RAW-verified: histogram+forbidden CLEAN, 16/16 matcher tests, 20/20 preflight tests, stub harnesses prove stdout-pure JSON on cadence-skip/suppress + ERROR detail carries matcher stderr. Live preflight NOT run by developer (claims real election locks) — first real cadence-skip tick is the field verification."
+      },
+      {
+        "id": "FIX-CRON-REGISTRY-BASERATE-CADENCE-DRIFT",
+        "title": "docs/data/cron-registry.json:36 + system-map.json .project.microservices[mcp-server].crons[baseRateComputation] still say weekly Sunday 19:00 UTC -- stale vs daily cadence shipped in 24d1a4b5 (TASK-EVIDENCE-HOP1-MCP FR-1.2). docs/standards/cron-jobs.md already updated correctly in that commit; these 2 registry files were not.",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "specialist": "developer",
+        "status": "REVIEW",
+        "priority": "low",
+        "created_at": "2026-07-01T07:56:10Z",
+        "created_by": "qa",
+        "depends": [],
+        "size": "S",
+        "parent_sprint": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "decoupling_reason": "pure doc-registry text drift, not a code defect -- flagged by dev-mcp-server as outside its file boundary, routed to backlog per QA judgment call (task instructions left the acceptable-vs-blocker decision to qa).",
+        "claimed_at": "2026-07-03T04:38:30Z",
+        "claimed_by": "router",
+        "next_agent": "qa",
+        "dispatch_note": "Dispatched developer 2026-07-03T04:38:30Z. Sync baseRateComputation cadence weekly->daily in 2 registry mirrors (cron-registry.json:36 + system-map.json baseRateComputation) to match SSOT cron-jobs.md:38 (daily, shipped 24d1a4b5). Pure doc/data-sync; both mirrors NOT read by runtime scheduler; NO rebuild/deploy. Verify: jq empty both; grep confirms daily; bun test 1190-pipeline-watchdog green.",
+        "promoted_at": "2026-07-03T04:41:32Z",
+        "promoted_by": "router",
+        "review_note": "Developer done: commit 5120100 (cron-registry.json:36 + system-map.json:326-328 baseRateComputation schedule/desc weekly->daily). Router RAW-verified: histogram 10 Bash/2 Edit/2 Read, forbidden-grep CLEAN, Write/Edit confined to the 2 sanctioned files, commit staged exactly 2 files (3 ins/3 del), live files confirm daily, not pushed. Regression: 1190-pipeline-watchdog 16/16 green. Pure doc/data-sync mirrors (not read by runtime scheduler) — no rebuild/deploy. QA: confirm both mirrors match SSOT cron-jobs.md:38."
       }
     ],
     "qa": [],
