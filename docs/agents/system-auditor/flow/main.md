@@ -717,9 +717,9 @@ AC-5 gate after write: `wc -l < notebook.md` → if >200: fix Step 1 and re-writ
 
 <!-- NB-AUDITOR-SETTLED-WRITE: replaced two-write pattern (append then trim) with AC-3 single settled write. BCTC-EVAL-SNAPSHOT folded into this write (was a separate early write in D-BCTC-EVAL — now held in memory until here). PostToolUse hook sees ≤200L exactly once. -->
 Then:
-**Commit (mutex-paired blessed script — FIX-AUDITOR-COMMIT-MUTEX-SKIP, 2026-07-03):** the narrated
-claim/add/verify/commit/release sequence below was non-deterministically SKIPPING the mutex claim
-(flow-step drift on prose is unreliable for a hard invariant) and, separately, was folding a
+**Commit (mutex-paired blessed script — FIX-AUDITOR-COMMIT-MUTEX-SKIP, 2026-07-03):** the previous
+narrated claim/add/verify/commit/release sequence was non-deterministically SKIPPING the mutex
+claim (flow-step drift on prose is unreliable for a hard invariant) and, separately, was folding a
 concurrent peer's working-tree edits into the notebook commit (non-explicit pathspec, f05795c3).
 Both are now executed bash, not narrated steps — the model calls ONE script and branches on its
 marker output:
