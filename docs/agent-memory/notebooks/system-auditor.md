@@ -2,6 +2,16 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c510 · 2026-07-03T01:15:47Z
+### Audit Run Tier-1 (01:14–01:16 UTC 2026-07-03)
+- Tier: 1 | Fire-election: WON (tick=2026-07-03T01:00Z) | Services: 12/12 UP
+- Health endpoints: 5/5 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
+- A-20 pdf-extractor multi-probe: 3/3 PASS (event-loop healthy)
+- A-21: RestartCount=4 (baseline, unchanged) | A-30: 59.06% memory (PASS)
+- A-32: 45% disk (PASS) | Crons: 96 jobs all healthy (100% success rate)
+- Anomalies: 1 WARN (A-21 RestartCount=4) | Status: DEGRADED
+- Note: RAW-PROBE fenced block with container/health/system details in full cycle log
+
 ## c509 · 2026-07-03T00:44:49Z
 ### Audit Run Tier-1 (00:44–00:45 UTC 2026-07-03)
 - Tier: 1 | Fire-election: WON (tick=2026-07-03T00:30Z) | Services: 12/12 UP
@@ -31,22 +41,4 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - A-20 pdf-extractor multi-probe: 3/3 PASS (event-loop healthy)
 - A-21: RestartCount=4 (baseline, no change) | A-30: 50.09% memory (PASS)
 - A-32: 45% disk (PASS) | Crons: All healthy (100+ jobs, success_rate 98-100%)
-- Anomalies: 0 new | Status: HEALTHY
-
-## c506 · 2026-07-02T23:45:00Z
-### Audit Run Tier-1 (23:44–23:45 UTC 2026-07-02)
-- Tier: 1 | Fire-election: ROUTER-HELD (tick=2026-07-02T23:30Z) | Services: 12/12 UP
-- Health endpoints: 5/5 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
-- A-20 pdf-extractor multi-probe: 3/3 PASS (event-loop healthy)
-- A-21: RestartCount=4 (baseline, no change) | A-30: 46.21% memory (PASS)
-- A-32: 45% disk (PASS) | Crons: All healthy (100+ jobs, success_rate 80-100%)
-- Anomalies: 0 new | Status: HEALTHY
-
-## c505 · 2026-07-02T23:15:20Z
-### Audit Run Tier-1 (23:14–23:15 UTC 2026-07-02)
-- Tier: 1 | Fire-election: ROUTER-HELD (tick=2026-07-02T23:00Z) | Services: 12/12 UP
-- Health endpoints: 5/5 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
-- A-20 pdf-extractor multi-probe: 3/3 PASS (event-loop healthy)
-- A-21: RestartCount=4 (baseline, no change) | A-30: 43.45% memory (PASS)
-- A-32: 45% disk (PASS) | Crons: All healthy (100+ jobs, success_rate 80-100%)
 - Anomalies: 0 new | Status: HEALTHY
