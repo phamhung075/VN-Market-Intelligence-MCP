@@ -755,8 +755,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-03T10:01:28Z",
-    "_updated_by": "po-triage-20260703T0937Z",
+    "_updated_at": "2026-07-03T22:32:05Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7532,6 +7532,47 @@
         "created_at": "2026-07-03T21:49:04Z",
         "title": "Confirm HSX Strategy-0 false '0 URLs' = ops-recon test-harness type bug (quarter:4 numeric vs required 'Q4' string) + add durable guard",
         "note": "Loop-closer for the falsified ops recon 'RECON-BCTC-ENRICH-0ROWS' 0-URLs claim (SPIKE-HSX-STRATEGY0-0URLS = PREMISE_FALSIFIED). Deliverable: (1) re-run discoverHosePdfUrls/fetchHsxBctcUrls with quarter:'Q4' (string) AND quarter:4 (number) side-by-side to confirm numeric -> quarterToMonthPrefix .toUpperCase() TypeError -> silent [] degradation (hsxBctcFetcher.ts:264, try/catch L335-379) is the root, ruling out a transient hsx.vn WAF blip; (2) add a small regression test asserting the quarter-must-be-string contract (numeric input surfaces, does NOT silently degrade to []); (3) append a one-line SUPERSEDED stamp to docs/agent-memory/notebooks/ops.md RECON-BCTC-ENRICH-0ROWS section pointing to the SPIKE verdict so the falsified '0 URLs'/'not HOSE-listed' claims are not re-escalated. NO production behaviour change beyond the guard. Files: apps/mcp-server/src/infrastructure/fetchers/hsxBctcFetcher.ts, apps/mcp-server/src/domain/services/bctcDiscovery.ts. Minted by PO (router-dispatched) from SPIKE-HSX-STRATEGY0-0URLS decision."
+      },
+      {
+        "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
+        "title": "OPS — agentic-refine repass + reingest 5 non-bank Q1-2026 reports (VHM/VIC/VRE/HSG/MWG) to recover total_assets=0; ZERO new code, proven CTG runbook",
+        "owner": "bctc-analyst",
+        "status": "BACKLOG",
+        "zone": "multi",
+        "priority": "high",
+        "type": "FIX",
+        "next_agent": "bctc-analyst",
+        "created_at": "2026-07-03T22:31:03Z",
+        "generic_mandate": "Do NOT add any per-ticker regex branch to balanceSheetExtractor.ts — rejected anti-pattern (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT). The agentic-refine + LABEL-CANONICAL aggregator machinery already handles 270-vs-280; it just needs to be RUN against these 5 reports, not re-invented at parse-time.",
+        "verification_gate": "RAW-verify LIVE post-reingest: get_bctc_full for all 5 tickers returns plausible NONZERO total_assets (>= equity_total) with confidence>0 and no '[CORRUPT DATA — SKIP]'.",
+        "status_note": "OPERATIONAL data-recovery, NO code change — SPIKE item 1 ACCEPTED. Per SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO (done_verified, findings doc 43453950b): these 5 serve total_assets=0 because the agentic refine pipeline was NEVER run (0 bctc_refined_units + 0 bctc_table_rows). Source data confirmed RECOVERABLE (not corrupt): VRE/MWG show the grand-total legible under code 280 vs a distinct 270 sub-section; VHM has a dual consolidated+parent-only PDF needing 1 architect follow-up on page-anchoring. Runbook = docs/agents/dev-mcp-server/flow/main.md CANONICAL BCTC finalize re-ingest: get_bctc_pending_refine -> refine_bctc_md leaf-worker windows -> push_bctc_refined_unit -> finalize_bctc_refine -> bun scripts/migrations/reingest-bctc-report.ts --report-id <id> --apply. Owner split: bctc-analyst (transcription) -> dev-mcp-server (reingest run), mirroring W5-FU-CTG-REFINE-96e36139. report_ids: VHM a3a41225 / VIC 1f53ef33 / VRE 0ce3b2ed / HSG ae1f30bf / MWG d713095f. WATCH-FOR: if the POW-class grand-total-row-drop (SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP) recurs on >=2 of these 5 during the repass, escalate that SPIKE from investigate-first to must-fix-before-repass. REE+VNM EXCLUDED (own tickets)."
+      },
+      {
+        "id": "SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP",
+        "title": "SPIKE (architect-first) — grand-total balance-sheet rows (270/440) silently dropped during agentic-refine transcription even when the page window is correctly bounded (POW class)",
+        "owner": "architect",
+        "status": "BACKLOG",
+        "zone": "multi",
+        "priority": "medium",
+        "type": "SPIKE",
+        "mode": "spike",
+        "timebox": 120,
+        "next_agent": "architect",
+        "created_at": "2026-07-03T22:31:03Z",
+        "generic_mandate": "Determine the DROP LOCUS, do NOT patch a per-ticker branch. Two candidate loci: (a) refine_bctc_md leaf-worker prompt/instructions (likely NOT apps/mcp-server zone — agent-flow/prompt concern) or (b) a markdown-ingest step inside apps/mcp-server (refinedMarkdownParser.ts) silently swallowing a row that WAS transcribed.",
+        "status_note": "SPIKE item 3 ACCEPTED (architect-first, timeboxed, BEFORE any FIX). Per SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO Bucket B: POW is genuinely NEW — refine ran to completion (28/28 units DONE, 166 table_rows) but codes 270 (TONG CONG TAI SAN) + 440 (TONG CONG NGUON VON) are absent from BOTH bctc_table_rows AND the underlying refined markdown itself. Reproduced live via get_bctc_refined unit-0004 (pages [5,6], window_status=DONE, confidence=0.7): the bolded grand-total boundary line is skipped while the rest of the page transcribes correctly and the window range is objectively correct. This is a transcription/ingest COMPLETENESS gap, not a code/label-matching bug (bctcScalarAggregator's LABEL-CANONICAL resolver has nothing to find). POW unit-0004 output is directly reusable as the reproduction fixture — no new data collection needed. DISTINCT-FROM SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION (that is window-boundary truncation cutting off rows; this is a row dropped WITHIN a correctly-bounded window). Architect determines locus (a) vs (b) then splits into the right zone (agent-flow OR apps/mcp-server)."
+      },
+      {
+        "id": "FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT",
+        "title": "FIX — dev-team-tick-preflight.sh _step_sf1_claim() not re-entrant on session's OWN held SF-1: reads only .claimed -> phantom 'peer holds it' SKIP for the full 90min TTL when current_holder.owner_client_session==self",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "zone": "cross-service",
+        "priority": "low",
+        "type": "FIX",
+        "next_agent": "developer",
+        "created_at": "2026-07-03T22:31:03Z",
+        "status_note": "Router-detected latent candidate ACCEPTED (non-urgent). scripts/agents-flow/dev-team-tick-preflight.sh _step_sf1_claim() (~L120-142) is NOT re-entrant: on a session's OWN held SF-1 it inspects only .claimed and returns 'peer holds it' -> SKIP with detail 'SF-1 held by peer session', even when current_holder.owner_client_session == self. FIX: mirror _step_fire_election() (~L161-189) which DOES compare current_holder.owner_client_session and heartbeats on self-hold. LATENT: SKIP is the CORRECT outcome while a tick is genuinely in-flight; real harm case = SF-1 self-held while session is free -> phantom-peer-SKIP for the full 90min TTL = a dead-drive window. Zone cross-service (scripts/agents-flow/, NOT apps/). Owner developer/general."
       }
     ],
     "closed_sprints": [
