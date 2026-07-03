@@ -24,7 +24,20 @@ _Last: 2026-07-04T00:00Z_
 
 **Writes:** `scripts/po-s140-b05-bctc-freshness-layer-split-mint-hnx-ssl-ops-verify.jq` → orch-apply exit 0 (backlog 403→404 +1 mint; review length byte-stable, M2 in-place; ~105 pre-existing SHG coherence warns non-blocking). Decision journal STEP po-S7. Signal UNTOUCHED (router owns it, READ). No promotion past BACKLOG (PLAN-ONLY); .head untouched. No push (fleet-push timer owns). Provenance "po (router-dispatched)" — 0 session UUID in any tracked file.
 
+## Tick 2026-07-03T23:57Z (router-dispatched) — dev-team Step 1 triage, FREE CAPACITY (WIP=0)
+
+**Inputs:** pendingSignals empty; telegram new x6 (4 BCTC low-conf VCI/DHG/HSG/VHM = expected conviction-skips on corrupted-OCR; HSG financial=1.00 but composite=0.19 = composite-masks-good-financial, no dedicated row — BCTC data-quality domain, not a new sprint; B-05 id3490 CRITICAL already declared FALSE-POSITIVE by router id3492 + tracked by FIX-AUDITOR-B05 row). Backlog 404, review 3 (all stuck).
+
+**PROMOTE (1):** `ESC4-HEURISTIC-FIX-TAXBASIS-SOE` backlog→ready, next_agent=agent-father. Recurring ESC-4 at escalation ceiling (fired 4x on byte-identical GVR 06-30..07-03); Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9) confirmed spec (other-income pre-tax 1037.6 = 35.0% PBT vs 23.5% mixed AC-1 flags). Highest priority class (recurring bug). Agent-heuristic-doc change → agent-father, NOT prod code.
+
+**UNBLOCK (1 batch clears 2 review):** TASK-W5-…-VALIDATION-REINGEST + W5-FU-CTG-REFINE-96e36139 both blocked on ONE ops deploy-gate (FIX-BCTC-BANK-BS-COLUMN-ORDER done_verified → deploy + CTG 96e36139 re-ingest → RAW-probe total_assets!=0). Set next_agent=ops on both (kept BLOCKED in review). Delegate gated deploy to ops per OVERRIDE 07-03.
+
+**NOT promoted — STALE-DONE finding:** router's flagged "top P0" `FACTORY-INTERFACE-confidence-score-50-mask` + `FACTORY-INFRA-agentsignal-confidence-50-default` are ALREADY FIXED by FIX-SIGNAL-CONFIDENCE-DEFAULT-50 (stockSignalsHandler.ts:224 `?? null`; agentSignalStore.ts:343 destructuring default = null). Board rows never closed → recommend qa/router reconcile to done_verified. Do NOT redo. ARCH-SHIP-WAVE-REAUDIT left DEFERRED (park condition unmet).
+
+**Writes:** po-triage-20260704.jq → orch-apply rc=0 (backlog 404→403, ready 0→1; ~105 pre-existing SHG warns non-blocking). Commit 0f139914 (orch-state only, explicit path, under commit-mutex; UUID-scan clean). No push (fleet-push owns). Provenance "(po router-dispatched)".
+
 ## Carry-over
+- **STALE-DONE reconcile** — FACTORY-INTERFACE-confidence-score-50-mask + FACTORY-INFRA-agentsignal-confidence-50-default already fixed by FIX-SIGNAL-CONFIDENCE-DEFAULT-50; close on board (qa/router). Likely more FACTORY-confidence rows same-state — spot-check the epic before promoting any.
 - **FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT** — co-fix with B-11 (same file docs/agents/system-auditor/flow/main.md, same predicate-drift class). DoD: replay 22:41Z state → NO CRITICAL/BUG; a real stuck queue (pending>0 + stale SLA) MUST still fire.
 - **BCTC-HNX-SSL-HARDEN** — ops must deploy + live HNX fetch-with-verification-ON probe; then flip review→done_verified. Its recovery is NOT tied to the analysis-layer drain.
 - **DEPLOY-GATE (standing):** any BCTC code/VPS fix → route gated deploy/verify to ops (don't wait on user).
