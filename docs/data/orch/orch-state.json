@@ -251,13 +251,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "SPIKE-HSX-STRATEGY0-0URLS done_verified (PREMISE FALSIFIED -- Strategy-0 NOT broken for current quarters; router RAW-verified + independent architect brief corroborated). dev WIP=0 -- idle. CRITICAL FRAMING UPDATE for next dev-team planning: the 'HSX Strategy-0 0-URLs = PRIMARY dead-pipeline root' framing is SUPERSEDED/RETIRED -- current-quarter discovery WORKS; the 06-16 actionable backlog is already fixed (FIX-BCTC-ENRICHER-STUCK-BACKLOG + FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD done_verified). Do NOT re-mint a Strategy-0 discovery fix. Routed to PO (background) for sprint decision: (a) close/downgrade the 'Strategy-0 broken' framing for the 06-16 incident, (b) cheaply re-verify the ops recon probe with a string 'Q4' param to confirm the test-harness bug, (c) OPTIONAL if PO judges the 293-row static historical backfill worth reviving: scope additive fix in fetchMediafileUrls() (pagination beyond pageIndex=1 + accept 'application/pdf' fileType alongside .pdf) + a separate deliberate enricher SELECT-arm queue-policy decision. Other backlog PLAN-ONLY unchanged: FIX-VPS-SSC-INSIDER-502, FIX-VPS-SSC-STEP2-TIMEOUT-BOUND, FIX-BCTC-FULL-BATCH-CONTAMINATION (architect-first), FEAT-SEVERITY-OVERRIDE-SURFACING, FIX-AGENT-NOTEBOOK-UUID-PROVENANCE, FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT, FIX-MCP-MEMORY-CODE-LEAK. Next successful dev-team tick must drain the 2 queued bctc-analyst signals (ESC-4 GVR redispatch + corrupt-cluster). Router: release SF-1 + dev-team fire-election at jump:end.",
-    "updated_at": "2026-07-03T21:39:13Z",
+    "status": "in_progress",
+    "active_task_id": "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server executing read-only SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO (root-cause of Q1-2026 total_assets=0 across 8 non-bank tickers; zone apps/mcp-server/; NO branch/NO code; consolidated findings doc). On complete: router RAW-verify findings -> route to PO for consolidated remediation decision (NO per-ticker dup FIX). SPIKE has NO qa gate -> promote directly on RAW-verify. Also pending next-tick drain: docs/signals/bctc-analyst-20260703T215200Z.json (GVR ESC-4 deep_dive_result -> po: verdict LEGITIMATE non-op income, action=hold, recommend ESC-4 whitelist GVR by content-hash). GVR guard esc-deepdive:GVR:Q1-2026:ESC-4 held ~24h (suppresses re-fire until PO whitelists).",
+    "updated_at": "2026-07-03T22:06:36Z",
     "updated_by": "router",
-    "note": "21:33Z (fire-tick 21:07Z): SPIKE-HSX-STRATEGY0-0URLS in_progress->done_verified (premise falsified, Strategy-0 not broken; router RAW-verified + architect-corroborated). dev WIP=0 -- idle. Routed to PO. dev-team tick closeout -> release SF-1 + fire-election."
+    "note": "22:00Z (fire-tick 21:37Z): SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO backlog->in_progress (WIP=1, owner dev-mcp-server) from PO BATCH. SF-1 + fire-election held through execution."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7201,27 +7201,6 @@
         "title": "momentumIndicatorsHandler.ts:270 computeForeignAccumRank({}) passes empty codes -> foreign_accum leg null on live (unset WATCHLIST_TICKERS env). Fix: pass {codes: watchlistCodes} like commit 73b82471, OR set WATCHLIST_TICKERS on stock-price container (root-fix for ALL {} callers)."
       },
       {
-        "id": "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
-        "status": "TODO",
-        "title": "Consolidate root-cause of Q1-2026 total_assets=0 across 8 non-bank tickers (VHM/REE/VIC/VNM/VRE/POW/HSG/MWG)",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "type": "SPIKE",
-        "mode": "spike",
-        "zone": "apps/mcp-server/",
-        "timebox": 120,
-        "priority": "high",
-        "created_at": "2026-07-01T22:59:30Z",
-        "created_by": "po",
-        "origin_report": "telegram#3368 bctc-analyst 2026-07-01T21:21Z",
-        "question": "Do the now-8 non-bank tickers VHM/REE/VIC/VNM/VRE/POW + newly-confirmed HSG/MWG (Q1-2026 total_assets EXACTLY 0) share ONE root cause? Signature = total_assets=0 / confidence forced 0% / CORRUPT-SKIP served by get_bctc_full. Test the COMMON-ROOT-CAUSE hypothesis FIRST (same reparse batch/date — bctc-analyst c076 flag): are these reports all from one failed reparse cohort? Then classify each residual (column-separated OCR layout / missing BS section-total codes 100-400 / failed refine windows / OCR quality) and map to existing owners (FIX-REE-BS-SECTION-REGEX for REE, SPIKE-BCTC-COLUMN-SEPARATED-LAYOUT for VNM, W5-FU/CTG agentic-refine-repass pattern) OR flag NEW. DISTINCT from FIX-BCTC-BANK-SUMMARY-MAPPING (a46131cf/2cd9e105 — that produced implausible NONZERO bank totals; THIS is exactly ZERO, a different extraction-failure mode). Output a CONSOLIDATED remediation batch — do NOT mint duplicate per-ticker FIX tasks.",
-        "status_note": "Self-initiated from telegram#3368 (bctc-analyst WARNING, 2026-07-01T21:21Z): 6 non-bank tickers all total_assets=0 for Q1-2026, same signature as CTG (c069), DISTINCT from the bank-only FIX-BCTC-BANK-SUMMARY-MAPPING sprint. No task owns this holistically today; coverage is piecemeal (REE-regex, VNM-column-spike). Time-box 120m diagnosis -> consolidated remediation plan; reconcile against existing partial tasks before any per-ticker FIX. Report_ids: VHM/REE/VIC/VNM/VRE/POW-Q1-2026. | 2026-07-03T21:37Z ENRICH+PROMOTE (router-dispatched): bctc-analyst data-quality-scope-update (rotation probe c076, 11 tickers, 0/11 usable except known-good GVR) newly CONFIRMED corrupt zero total_assets on HSG + MWG -> scope widened 6->8 non-bank tickers. Combined corrupt+empty now ~13+/29 DA NOP tickers (~45%) unusable for BCTC analysis. Telegram corroboration: reports 3487 (VCI 2025-Q4 composite=0.10) + 3488 (DHG 2025-Q4 composite=0.00) same OCR-corruption class (perpetual-resurface per FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE; NO new task). Promoted BACKLOG->TODO: recurring-bug-escalation (>2 fix cycles in BCTC zero-assets class) + high coverage impact justify dispatching the architect-first root-cause SPIKE now.",
-        "scope_widened": "6->8 non-bank tickers: added HSG, MWG (bctc-analyst rotation probe c076, 2026-07-03)",
-        "promoted_at": "2026-07-03T21:37:00Z",
-        "promoted_by": "po",
-        "promotion_reason": "recurring-bug-escalation (BCTC zero-total-assets class >2 cycles) + ~45% BCTC-coverage loss on DA NOP tickers; architect-first SPIKE is low-cost single time-boxed agent; in_progress lane empty (no contention)"
-      },
-      {
         "id": "FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE",
         "title": "FIX — add routing rows for signal types data-coverage-gap (→ops) + deep_dive_result (→po) in drain-signals.md §0a-3 + po/triage-signals.md (both currently hit the generic catch-all)",
         "owner": "po",
@@ -10045,7 +10024,33 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
+        "status": "IN_PROGRESS",
+        "title": "Consolidate root-cause of Q1-2026 total_assets=0 across 8 non-bank tickers (VHM/REE/VIC/VNM/VRE/POW/HSG/MWG)",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "type": "SPIKE",
+        "mode": "spike",
+        "zone": "apps/mcp-server/",
+        "timebox": 120,
+        "priority": "high",
+        "created_at": "2026-07-01T22:59:30Z",
+        "created_by": "po",
+        "origin_report": "telegram#3368 bctc-analyst 2026-07-01T21:21Z",
+        "question": "Do the now-8 non-bank tickers VHM/REE/VIC/VNM/VRE/POW + newly-confirmed HSG/MWG (Q1-2026 total_assets EXACTLY 0) share ONE root cause? Signature = total_assets=0 / confidence forced 0% / CORRUPT-SKIP served by get_bctc_full. Test the COMMON-ROOT-CAUSE hypothesis FIRST (same reparse batch/date — bctc-analyst c076 flag): are these reports all from one failed reparse cohort? Then classify each residual (column-separated OCR layout / missing BS section-total codes 100-400 / failed refine windows / OCR quality) and map to existing owners (FIX-REE-BS-SECTION-REGEX for REE, SPIKE-BCTC-COLUMN-SEPARATED-LAYOUT for VNM, W5-FU/CTG agentic-refine-repass pattern) OR flag NEW. DISTINCT from FIX-BCTC-BANK-SUMMARY-MAPPING (a46131cf/2cd9e105 — that produced implausible NONZERO bank totals; THIS is exactly ZERO, a different extraction-failure mode). Output a CONSOLIDATED remediation batch — do NOT mint duplicate per-ticker FIX tasks.",
+        "status_note": "Self-initiated from telegram#3368 (bctc-analyst WARNING, 2026-07-01T21:21Z): 6 non-bank tickers all total_assets=0 for Q1-2026, same signature as CTG (c069), DISTINCT from the bank-only FIX-BCTC-BANK-SUMMARY-MAPPING sprint. No task owns this holistically today; coverage is piecemeal (REE-regex, VNM-column-spike). Time-box 120m diagnosis -> consolidated remediation plan; reconcile against existing partial tasks before any per-ticker FIX. Report_ids: VHM/REE/VIC/VNM/VRE/POW-Q1-2026. | 2026-07-03T21:37Z ENRICH+PROMOTE (router-dispatched): bctc-analyst data-quality-scope-update (rotation probe c076, 11 tickers, 0/11 usable except known-good GVR) newly CONFIRMED corrupt zero total_assets on HSG + MWG -> scope widened 6->8 non-bank tickers. Combined corrupt+empty now ~13+/29 DA NOP tickers (~45%) unusable for BCTC analysis. Telegram corroboration: reports 3487 (VCI 2025-Q4 composite=0.10) + 3488 (DHG 2025-Q4 composite=0.00) same OCR-corruption class (perpetual-resurface per FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE; NO new task). Promoted BACKLOG->TODO: recurring-bug-escalation (>2 fix cycles in BCTC zero-assets class) + high coverage impact justify dispatching the architect-first root-cause SPIKE now.",
+        "scope_widened": "6->8 non-bank tickers: added HSG, MWG (bctc-analyst rotation probe c076, 2026-07-03)",
+        "promoted_at": "2026-07-03T21:37:00Z",
+        "promoted_by": "po",
+        "promotion_reason": "recurring-bug-escalation (BCTC zero-total-assets class >2 cycles) + ~45% BCTC-coverage loss on DA NOP tickers; architect-first SPIKE is low-cost single time-boxed agent; in_progress lane empty (no contention)",
+        "dev_agent": "dev-mcp-server",
+        "dispatched_by": "router",
+        "dispatched_at": "2026-07-03T22:06:36Z",
+        "dispatch_note": "[router 2026-07-03T22:00Z / fire-tick 21:37Z] dev-team Step 3 SPIKE (mode=spike, feature-spike.md). Spawn dev-mcp-server run_in_background (zone apps/mcp-server/ specialist). READ-ONLY architect-first diagnostic: do 8 non-bank tickers (VHM/REE/VIC/VNM/VRE/POW/HSG/MWG) with Q1-2026 total_assets=0 share ONE root cause? Test common-root-cause (same reparse batch/date, c076 flag) FIRST, classify residuals, map to existing owners OR flag NEW. DISTINCT from FIX-BCTC-BANK-SUMMARY-MAPPING (NONZERO). NO branch, NO code change. Deliverable: consolidated findings doc + remediation batch (NO per-ticker dup FIX). Timebox 120m -> write findings even if incomplete. On complete: router RAW-verify findings doc -> route to PO for consolidated remediation sprint decision (SPIKE produces proposal, not merge)."
+      }
+    ],
     "ready": [],
     "review": [
       {
