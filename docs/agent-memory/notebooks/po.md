@@ -1,6 +1,21 @@
 # PO Notebook
 
-_Last: 2026-07-03T01:34Z_
+_Last: 2026-07-03T05:03Z_
+
+## Tick 2026-07-03T04:37Z — dev-team triage: rebuild landed → UNPARK cluster, dispatch QA on 3 review items
+
+**Inputs:** pendingSignals=EMPTY (drain clean); telegram(new)=0; unresolved_reports=0. Board: head IDLE (free slot), in_progress=1 (enricher), review=7 (3 next=qa), ready=0, backlog=297 BACKLOG+42 TODO (NOT "mostly deferred" — only 11 DEFERRED+3 BLOCKED).
+
+**KEY EVENT — the user-gated rebuild cluster (prior carry-over) UNBLOCKED itself.** The parked mcp-server rebuild landed externally 04:38:34Z (per feedback_user_gates_delegate_to_ops — user/peer ran it). RAW-verified: `docker inspect` img=a169f5e2, health=healthy, RestartCount=0, mem 477.6MiB/3GiB=15.55% (A-21/A-30 leak fixed, cap 2->3GiB). Both enricher fix d92801332 AND BS-classifier code 2c7fb5b08 are ancestors of the built HEAD => shipped in a169f5e2.
+
+**Dispositions:**
+- (c) FIX-BCTC-ENRICHER-STUCK-BACKLOG — NOT stale/orphaned. Code done + deploy gate now SATISFIED. UNPARKED (status_note updated, supersedes "do NOT unpark"). Stays in_progress WIP=1, next=dev-mcp-server for post-deploy verify (reset migration dry-run ~21 rows -> apply -> verify enricher */15 stamps attempts+last_attempt). NO reset.
+- (a) 3 REVIEW/next=qa ALL ready → dispatch QA batch: FIX-BCTC-BANK-BS-SECTION-CLASSIFIER (deploy-gate CLEARED, behavioral DoD now runnable, annotated); FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION (pure JS, route_to=qa set); FIX-CRON-REGISTRY-BASERATE-CADENCE-DRIFT (docs/data sync, route_to=qa set).
+- (b) NO new backlog pull. Enricher becomes active (fills dev WIP toward 2/2); HPG-REPARSE-POST-REBUILD (P2 TODO) is newly rebuild-unblocked but touches the SAME bctc/enricher pipeline as the enricher verify — sequence next tick after enricher stamping proven healthy (avoid table contention / over-parallel host starvation).
+
+**Writes:** 1 orch-apply pass (--arg bound, exit 0): bump last_triaged; unpark enricher note; BS-classifier deploy-cleared note; route_to=qa on 2 review rows. 101 coherence warnings pre-existing (SHG lane/status drift, non-blocking). Did NOT push (dev-team tick owns push).
+
+_(prev tick 01:07Z below)_
 
 ## Tick 2026-07-03T01:07Z — dev-team triage: 4 signals + 3 telegrams → BATCH(1 FIX promote), 0 new mints
 

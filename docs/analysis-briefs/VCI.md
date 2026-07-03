@@ -4,6 +4,7 @@
 ## [Report Analyzer] Fundamentals & Valuation
 
 ## [News Scout] Headlines & Sentiment
+2026-07-03 | Securities issuance macro support — national policy tailwind for securities sector (4/10 cascade from macro) | YoY: Positive policy environment
 
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-12 16:00 | Close: 25,500 VND | RSI: N/A | Vol: 6.73M (145% avg) | YoY: N/A

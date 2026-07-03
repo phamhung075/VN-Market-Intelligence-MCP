@@ -11,6 +11,7 @@
 2026-04-28 | Bullish fund disclosure + sector rally | Pyn Elite Fund Q1 strong returns — VIC core holding. Vingroup 4th largest SE Asia company. Real estate momentum sustained.
 2026-05-09 | **BULLISH** Chứng khoán lập đỉnh mới, CTCK gọi tên 5 nhóm cổ phiếu có cơ hội — analyst call targets VIC as money-accumulation play in May | YoY: Recovery from May 1 sell-off
 2026-07-02 | Q2 earnings consensus bullish (9/10) — real estate sector catalyst via macro earnings + consumption expansion | YoY: N/A
+2026-07-03 | Vingroup AI proposal — 6 national breakthrough initiatives, 420T-param model (8/10 bullish EPS) | YoY: Positive macro policy catalyst
 
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-12 16:00 | Close: 222,000 VND | RSI: N/A | Vol: 4.02M (170% avg) | YoY: N/A

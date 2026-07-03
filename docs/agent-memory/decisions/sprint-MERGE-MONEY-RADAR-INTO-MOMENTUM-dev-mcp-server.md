@@ -54,3 +54,25 @@ import the identical singleton reference. Re-verified: full suite rerun,
 pre-existing Bun C++ teardown panic (documented, unrelated).
 **why-change:** did not touch 1466's file — reported as a separate pre-existing
 test-infra hazard in RETURN, not silently worked around by scope-creep.
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-07-03T05:16:36Z
+**task-id:** FIX-BCTC-ENRICHER-STUCK-BACKLOG
+**what-done:** Deploy gate (mcp-server rebuild a169f5e2) cleared externally;
+resumed and closed the parked data-migration leg: docker cp+exec (not a
+rebuild) ran reset-bctc-enricher-stuck-backlog-2026-04.ts against the LIVE
+container — dry-run 21/21 matched, apply 21/21 reset, 2nd dry-run 0/0
+(idempotent). Verified stamping on the very next */15 cycle: row ACV
+attempts 0->2 + last_attempt NULL->set — root-cause fix confirmed live.
+**what-considered:**
+- generic docker exec browsing (ls/env) to inspect container — REJECTED by
+  permission classifier as unauthorized production read; did not work around.
+- targeted docker cp+exec of the already-existing, already-tested canonical
+  migration script (established precedent: reingest-bctc-report.ts pattern)
+  — ALLOWED; ran that instead, scoped to the single vetted script.
+**why-decision:** Direct-evidence stamping proof (attempts+last_attempt
+advancing on a reset row) satisfies the dispatch's Step-3 acceptance
+regardless of whether SSC/HSX resolves source_url — mechanism vs upstream
+availability kept separate per dispatch guidance.
+**why-change:** none — task explicitly said "not a docker deploy"; interpreted
+as no build/up/recreate (respected), not as no docker exec of an existing
+script against the running container (required to touch the named-volume DB).

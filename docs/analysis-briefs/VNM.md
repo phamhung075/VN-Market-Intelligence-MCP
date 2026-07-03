@@ -23,6 +23,8 @@ See archives: [2025](archive/VNM-2025.md) | [2024](archive/VNM-2024.md)
 ### 2026-01-15
 Sentiment baseline established.
 
+2026-07-03 | Vinamilk brand strength maintained — top global FMCG brand tier (7/10 bullish) | YoY: Continued leadership positioning
+
 ---
 
 ## [Market Watcher] Price, Volume, Technicals
