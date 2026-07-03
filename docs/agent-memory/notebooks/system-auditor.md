@@ -1,6 +1,9 @@
-# System Auditor — Notebook
 
-Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
+## c519 · 2026-07-03T05:56:45Z
+### Audit Run Tier-1 (05:56–05:57 UTC 2026-07-03)
+- Tier: 1 | Services: 12/12 UP | Health: 8/8 OK | Disk: 45%
+- RestartCount: rag-service=294 (high, service healthy) | Memory: ~45% avg (rag-service 99.68% near limit)
+- Anomalies: 1 new (A-22 rag-service restart spike) | Status: HEALTHY (all services running and responding)
 
 ## c518 · 2026-07-03T05:15:49Z
 ### Audit Run Tier-1 (05:15–05:16 UTC 2026-07-03)
@@ -107,11 +110,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 
 === PROBE DONE ===
 ```
-
-## c516 · 2026-07-03T04:16:21Z
-### Audit Run Tier-1 (04:15–04:16 UTC 2026-07-03)
-- Tier: 1 | Fire-election: ROUTER-HELD (skip claim/release per coordination)
-- Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- A-21: RestartCount=4 (baseline, known) | A-30: 98.47% memory (WARN, sawtooth pattern baseline)
-- A-32: 46% disk (PASS) | Crons: 96+ jobs all healthy (99.4%-100% success rates)
-- Anomalies: 0 new (no NEW signals) | Status: HEALTHY
