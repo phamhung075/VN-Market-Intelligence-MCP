@@ -243,13 +243,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD",
-    "next_agent": "qa",
-    "next_action": "qa independently verifies FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD (dev commit 8bc0b5b5): re-run new test + adjacent bctcPdfPull suites, tsc --noEmit, DDD/security/mock-guard on the 1 changed production file (bctcPdfPullJob.ts), confirm changed-domain regression=0 vs testBaselineFail ceiling, write Task Report. On qa PASS: router promotes review->done_verified. qa MUST NOT touch .task_board.",
-    "updated_at": "2026-07-03T16:00:00Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD done_verified (qa PASS, dev commit 8bc0b5b5, qa commit 5a8bab990). DEPLOY-GATED: re-entrancy guard takes effect on next mcp-server container rebuild (not run). Dev loop idle -> next tick drains backlog (incl. PO-triaged PNJ repairs FIX-ALERT-COMMANDER-DEAD-NO-SLOT + FEAT-SEVERITY-OVERRIDE-SURFACING).",
+    "updated_at": "2026-07-03T16:37:22Z",
     "updated_by": "router",
-    "note": "16:00Z: dev-mcp-server completed FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD (commit 8bc0b5b5, RAW-verified clean) -> flipped in_progress->review, dispatching qa gate."
+    "note": "16:30Z: dev-mcp-server FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD promoted review->done_verified (qa a2b934f0e PASS, RAW-verified). WIP now 0."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -443,7 +443,7 @@
         "to": "po",
         "type": "repair_task_request",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "summary": "Severity-override surfacing gap: legal_risk signals on non-watchlist tickers (e.g. PNJ #8371 diamond-fraud prosecution, confidence=0.95) are detected by news-scout but reach zero persistent user-facing surfaces (CHEF daily dish, fb-market-poster, analysis-briefs) because those 3 consumers are independently watchlist-scoped. Suggested backlog task FEAT-SEVERITY-OVERRIDE-SURFACING implements brief.",
         "title": "Severity-override surfacing path (watchlist OR severity-override) — PNJ #8371 gap",
         "payload_ref": "docs/architecture-briefs/2026-07-03-severity-override-surfacing.md",
@@ -461,7 +461,10 @@
             ".claude/skills/severity-override-gate/SKILL.md"
           ],
           "worked_example": "PNJ #8371 diamond-certificate fraud prosecution 2026-07-03 — news-scout detected (confidence=0.95), routed to alert-commander, reached zero persistent surfaces"
-        }
+        },
+        "read_at": "2026-07-03T16:14:00Z",
+        "read_by": "po",
+        "backlog_task_id": "FEAT-SEVERITY-OVERRIDE-SURFACING"
       },
       {
         "id": "router-alert-commander-dead-20260703",
@@ -470,7 +473,7 @@
         "to": "po",
         "type": "repair_task_request",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "summary": "alert-commander DEAD ~5.5 weeks: declared a scheduled cowork agent (cowork-team/flow/main.md:9) but has ZERO slots in cowork-schedule.json (the alert-commander-market slot the /cron-cowork-team skill references no longer exists). Notebook last-modified 27 May. Its legal_risk->CRITICAL-always override (alert-policy.md:46) is exactly what should have surfaced PNJ #8482 prosecution conf0.95 (news-scout routed to it 3x today) but it never ran. Proximate cause of PNJ miss; broader impact: NO position-danger/opportunity/legal/crisis alert has fired for ~5.5 weeks.",
         "title": "alert-commander dead (missing cowork slot) — proximate cause of PNJ coverage miss",
         "payload_ref": "docs/signals/router-alert-commander-dead-20260703.md",
@@ -485,10 +488,13 @@
           ],
           "related": "FEAT-SEVERITY-OVERRIDE-SURFACING (arch-severity-override-surfacing-20260703) is the robustness layer; this is the resurrect-the-agent operational fix",
           "po_decision": "confirm intended state: resurrect (expected) vs formally retire (only if position-danger/opportunity duties rehomed first)"
-        }
+        },
+        "read_at": "2026-07-03T16:14:00Z",
+        "read_by": "po",
+        "backlog_task_id": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT"
       }
     ],
-    "last_triaged_at": "2026-07-03T01:33:39Z",
+    "last_triaged_at": "2026-07-03T16:14:00Z",
     "last_triaged_by": "po"
   },
   "sprint_goal": {
@@ -7459,6 +7465,41 @@
         "created_at": "2026-07-03T10:01:28Z",
         "created_by": "po-triage-20260703T0937Z",
         "status_note": "AC: orch-apply.sh validation rejects/collapses-keep-first .signal_queue.rows[] (and .archive[]) with duplicate .id, fail-loud; auditor signal ts written full ISO8601 YYYY-MM-DDTHH:MM:SSZ so prune age-math parses; optional tolerant fromdateiso8601 in prune query. Recurring class feedback_ssot_duplicate_key (06-05 75-rows, 07-03 11-rows sau-d4). PARTIAL-OVERLAP: producer-side D4 emitter unique-id tracked separately by FU-AUDITOR-D4-SIGNAL-ID — THIS task owns ONLY the validate-side belt+suspenders guard + ts-format; do NOT double-fix D4 emitter. Priority MED (no active harm — dup rows were READ). Source: docs/signals/router-signalqueue-dup-id-guard-20260703.md"
+      },
+      {
+        "id": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT",
+        "type": "FIX",
+        "priority": "HIGH",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "size": "S",
+        "title": "alert-commander DEAD ~5.5wk -- restore missing cowork slot(s) in cowork-schedule.json (proximate cause of PNJ coverage miss). PO DECISION: RESURRECT.",
+        "created_at": "2026-07-03T16:14:00Z",
+        "created_by": "po",
+        "source_signal": "router-alert-commander-dead-20260703",
+        "payload_ref": "docs/signals/router-alert-commander-dead-20260703.md",
+        "related": "FEAT-SEVERITY-OVERRIDE-SURFACING",
+        "next_agent": "ba",
+        "po_decision": "RESURRECT. Rationale: alert-commander owns position-danger + watchlist-opportunity + verified_chain + legal_risk->CRITICAL-always + crisis_velocity duties that are NOT rehomed anywhere. FEAT-SEVERITY-OVERRIDE-SURFACING only covers market-wide surfacing of high-severity legal_risk/price_anomaly via CHEF/fb -- it does NOT cover position-danger or watchlist-opportunity real-time alerting. Formal retirement is therefore not viable without rehoming those duties first; the fix is cheap (restore a slot). Resurrect restores ALL alert classes; severity-override removes the single-point-of-failure. Both needed.",
+        "desc": "(a) Restore alert-commander slot(s) in docs/data/cowork-schedule.json -- the alert-commander-market sub-hourly slot referenced by .claude/skills/cron-cowork-team/SKILL.md and declared in docs/agents/cowork-team/flow/main.md:9 fell out of the SSOT ~2026-05-25 (scheduling regression); dispatcher had nothing to fire -> agent silently dead. Confirm cadence: market-hours sub-hourly PLUS off-hours coverage (legal/crisis events fire off-hours -- the PNJ prosecution did). Write atomically (tmp+mv). (b) Reconcile docs/data/system-map.json:1312 alert-commander sender_rules doc-drift to include the legal_risk/verified_chain/crisis_velocity CRITICAL-always override (currently mis-reads as watchlist-only). (c) Add auditor liveness-guard: a scheduled agent producing zero cycles for > N days raises a system-auditor anomaly (this regression sat unnoticed 5.5wk; ref feedback_passive_health_masks_dead_data).",
+        "impact_note": "For ~5.5wk NO real-time alert of ANY class (position-danger, watchlist-opportunity, verified_chain, legal_risk, crisis_velocity) has fired. PNJ is simply the first miss a human noticed."
+      },
+      {
+        "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
+        "type": "FEATURE",
+        "priority": "HIGH",
+        "status": "BACKLOG",
+        "zone": "multi",
+        "size": "M",
+        "title": "Severity-override surfacing path (surface if watchlist OR SEVERITY_OVERRIDE) so market-moving non-watchlist events (PNJ #8371 legal_risk conf0.95) reach the user via CHEF/fb. Robustness layer paired with FIX-ALERT-COMMANDER-DEAD-NO-SLOT.",
+        "created_at": "2026-07-03T16:14:00Z",
+        "created_by": "po",
+        "source_signal": "arch-severity-override-surfacing-20260703",
+        "payload_ref": "docs/architecture-briefs/2026-07-03-severity-override-surfacing.md",
+        "related": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT",
+        "next_agent": "architect",
+        "desc": "Per arch brief: new shared skill .claude/skills/severity-override-gate/SKILL.md computes SEVERITY_OVERRIDE(signal) = legal_risk riskType in {prosecution,asset_freeze} (0.95 tier) OR price_anomaly move_sigma>=4.0 & impact_score>=6 (chain_catalyst/crisis_velocity already market-wide, no change). Every surfacing consumer's gate becomes: if ticker in watchlist OR SEVERITY_OVERRIDE -> surface. Primary surface: unified-agent CHEF daily-dish market-wide paragraph (guaranteed 3x/day cron, independent of alert-commander liveness). Secondary echo: fb-market-poster legal-risk bullet (main.md:232). Plus: news-scout 360m legal_risk dedup escalation-exception (tier-upgrade bypasses suppression); system-map.json sender_rules doc-sync. Cross-cycle dedup via record_signal_outcome(...,'surfaced_marketwide',...). 6 acceptance criteria incl AC5 PNJ #8371 replay.",
+        "zone_note": "multi -- architect must split across .claude/skills/severity-override-gate/, docs/agents/unified-agent/, docs/agents/fb-market-poster/, docs/agents/news-scout/, docs/data/system-map.json. Sequencing per brief S5: shared skill first -> CHEF (primary) -> fb-market-poster; news-scout exception + system-map doc-sync parallel."
       }
     ],
     "closed_sprints": [
@@ -9715,6 +9756,39 @@
         "qa_commit": "6310a0d31",
         "qa_report": "reports/TASK_REPORT_FIX-FB-DAILY-FIRER-CLI-FLAG.md",
         "qa_dod_note": "[router 2026-07-03] qa a25783800 PASS, RAW-verified: commit 6310a0d31 scoped to exactly 3 qa docs (report 80L + journal + notebook cycle-373; no code, no orch-state), FIX left in review (router owns promotion), 0 session-UUID leak, unpushed. Evidence real: bash -n exit 0; claude 2.1.198 --help has 0 --no-update-notification + 2 dangerously-skip-permissions; live smoke `claude --dangerously-skip-permissions --no-update-notification -p ...` reproduced verbatim `error: unknown option` (matches fb-daily-firer-error.log) confirming the removed flag was the crash; grep scripts/+launchd/ = 0 other refs. Dev commit b19ac43c5 (1 file/1 deletion). DJ-GATE-1 satisfied dev+qa. Follow-up (non-blocking, noted in repair doc): plist double-fire cadence + log tee-noise + gitignore tracked runtime logs."
+      },
+      {
+        "id": "FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD",
+        "title": "bctcPdfPullJob missing overlap guard -- concurrent invocations duplicate-process same rows, stall net done-throughput (SPIKE-BCTC-DISCOVER-PIPELINE-DEAD root cause)",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "next_agent": "dev-mcp-server",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "size": "S",
+        "created_at": "2026-07-03T07:13:08Z",
+        "created_by": "architect",
+        "origin_signal": "sau-2026-07-03T06:42:33Z",
+        "parent_task": "SPIKE-BCTC-DISCOVER-PIPELINE-DEAD",
+        "note": "RAW-confirmed (docker-exec live probe, no build/up/restart): bctcPdfPullJob.ts has no isRunning/mutex guard between cron invocations (*/30). Per-item processing (fetch 45s + up to 3-tier extraction @120s/tier) can legitimately take up to ~65-70min for a full batch (DEFAULT_BATCH_SIZE=10) -- observed 05:30 run took 69.9min. Because status stays 'pending' until a row finishes, overlapping invocations re-select and redundantly re-process the SAME rows (HCM PDF re-saved 4x, NKG 3x in <1min, observed in live logs), saturating pdf-extractor (204% CPU/75.3% mem at probe time) and starving net done-throughput. 4 concurrent invocations observed stuck running at probe time (oldest 65+min in-flight). Dormant for weeks because the sibling enricher bug (FIX-BCTC-ENRICHER-STUCK-BACKLOG, now DONE_VERIFIED) meant the queue never had real pending work to trigger overlap -- fixing Stage 2 unmasked this Stage 3 defect. FIX: add module-level isRunning boolean guard (log+early-return if already running, clear in finally) -- mirror the EXISTING in-repo pattern verbatim: apps/mcp-server/src/scheduler/weatherCheckJob.ts (isRunning, lines 67/85/89/243) and startScheduler.ts:963-973 (runVnstockFundamentalsJobCron/runVnstockTradingStatsJobCron, same 7-10min-sweep-on-fixed-cron shape). No schema change, no new table. Full evidence + test strategy: docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md",
+        "depends": [],
+        "owner": "dev-mcp-server",
+        "dispatched_at": "2026-07-03T15:55:41Z",
+        "dispatched_by": "router",
+        "tick": "2026-07-03T15:37Z",
+        "router_dispatch_note": "PO BATCH element[0] this tick (WIP 0). RAW-verified: bctcPdfPullJob.ts (585L) has 0 _isRunning/already_running guards; reference breadthHistoryPersisterJob.ts L49/70/72/74/135 present to mirror. FIX/S single-zone apps/mcp-server, no deploy-gate.",
+        "moved_at": "2026-07-03T16:00:00Z",
+        "moved_by": "router",
+        "dev_agent": "aaed942e0ebc738ab",
+        "dev_commit": "8bc0b5b5",
+        "raw_verify_note": "[router 2026-07-03T16:00Z] dev-mcp-server aaed942e0ebc738ab RAW-verified: commit 8bc0b5b5 scoped to exactly 3 files (bctcPdfPullJob.ts + FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.test.ts + decision journal), no orch-state/board, 0 UUID leak. Module-level _isRunning guard present & correct (L99/298/309/632, early-return skippedReason=already_running, cleared in finally) — verbatim breadthHistoryPersisterJob pattern. Additive skippedReason field, caller unaffected. Tests run: new 3/0, +9 adjacent 104/0, tsc 0 err. Not pushed. -> review[] for qa gate.",
+        "promoted_at": "2026-07-03T16:37:22Z",
+        "promoted_by": "router",
+        "qa_verdict": "PASS",
+        "qa_agent": "a2b934f0e811f8d3f",
+        "qa_commit": "5a8bab990",
+        "qa_report": "reports/TASK_REPORT_FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.md",
+        "qa_dod_note": "[router 2026-07-03T16:30Z] qa a2b934f0e PASS, transcript RAW-verified: commit 5a8bab990 scoped to exactly 3 qa docs (report/qa-journal/qa-notebook; no code, no orch-state, board untouched), 0 UUID leak. Real tool output: tsc 0 err; new test 3/0/25 (throw-path executed); 6 bctcPdfPullJob importers 66/0/239; full suite 14236 pass/62 fail/5 err vs testBaselineFail=348 (62<<348). Changed-domain regression=0 (all 62 fails + unhandled-errors mapped, grep bctc|pdfpull|financial-report -> 0; 1405b-bctc-vps-fixes FP = pre-existing vps_push_log race). DDD/security/mock-guard PASS; DJ-GATE-1 satisfied. Diff = mechanical try/finally reindent + _isRunning guard + additive skippedReason; caller startScheduler.ts unaffected. DEPLOY-GATED: guard takes effect on next mcp-server rebuild (NOT run)."
       }
     ],
     "head": {
@@ -9854,32 +9928,6 @@
         "updated_at": "2026-07-02T13:38:51Z",
         "updated_by": "router",
         "review_note": "Repo scope COMPLETE 2026-07-02T13:38:51Z: commits 073fa27f (vps-scripts/hnx-ca-bundle.pem GlobalSign intermediate+root, fetch-bctc.sh curl -k -> --cacert /root/hnx-ca-bundle.pem, deploy-vinahost.sh ships bundle) + 638fba89 (DJ-GATE-1 journal). RAW-verified by router: openssl verify -CAfile bundle <recon leaf> = OK rc=0 reproduced; grep confirms no -k/--insecure; live probe evidence: TLS verify ok on owa.hnx.vn (HTTP 403 = WAF, app-layer). DEPLOY PENDING (user-gated): user must run ./scripts/deploy-vinahost.sh (ships bundle + fetch-bctc.sh to VPS /root/). Post-deploy AC: HNX fetch OK with verification ON."
-      },
-      {
-        "id": "FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD",
-        "title": "bctcPdfPullJob missing overlap guard -- concurrent invocations duplicate-process same rows, stall net done-throughput (SPIKE-BCTC-DISCOVER-PIPELINE-DEAD root cause)",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "next_agent": "dev-mcp-server",
-        "status": "REVIEW",
-        "priority": "high",
-        "size": "S",
-        "created_at": "2026-07-03T07:13:08Z",
-        "created_by": "architect",
-        "origin_signal": "sau-2026-07-03T06:42:33Z",
-        "parent_task": "SPIKE-BCTC-DISCOVER-PIPELINE-DEAD",
-        "note": "RAW-confirmed (docker-exec live probe, no build/up/restart): bctcPdfPullJob.ts has no isRunning/mutex guard between cron invocations (*/30). Per-item processing (fetch 45s + up to 3-tier extraction @120s/tier) can legitimately take up to ~65-70min for a full batch (DEFAULT_BATCH_SIZE=10) -- observed 05:30 run took 69.9min. Because status stays 'pending' until a row finishes, overlapping invocations re-select and redundantly re-process the SAME rows (HCM PDF re-saved 4x, NKG 3x in <1min, observed in live logs), saturating pdf-extractor (204% CPU/75.3% mem at probe time) and starving net done-throughput. 4 concurrent invocations observed stuck running at probe time (oldest 65+min in-flight). Dormant for weeks because the sibling enricher bug (FIX-BCTC-ENRICHER-STUCK-BACKLOG, now DONE_VERIFIED) meant the queue never had real pending work to trigger overlap -- fixing Stage 2 unmasked this Stage 3 defect. FIX: add module-level isRunning boolean guard (log+early-return if already running, clear in finally) -- mirror the EXISTING in-repo pattern verbatim: apps/mcp-server/src/scheduler/weatherCheckJob.ts (isRunning, lines 67/85/89/243) and startScheduler.ts:963-973 (runVnstockFundamentalsJobCron/runVnstockTradingStatsJobCron, same 7-10min-sweep-on-fixed-cron shape). No schema change, no new table. Full evidence + test strategy: docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md",
-        "depends": [],
-        "owner": "dev-mcp-server",
-        "dispatched_at": "2026-07-03T15:55:41Z",
-        "dispatched_by": "router",
-        "tick": "2026-07-03T15:37Z",
-        "router_dispatch_note": "PO BATCH element[0] this tick (WIP 0). RAW-verified: bctcPdfPullJob.ts (585L) has 0 _isRunning/already_running guards; reference breadthHistoryPersisterJob.ts L49/70/72/74/135 present to mirror. FIX/S single-zone apps/mcp-server, no deploy-gate.",
-        "moved_at": "2026-07-03T16:00:00Z",
-        "moved_by": "router",
-        "dev_agent": "aaed942e0ebc738ab",
-        "dev_commit": "8bc0b5b5",
-        "raw_verify_note": "[router 2026-07-03T16:00Z] dev-mcp-server aaed942e0ebc738ab RAW-verified: commit 8bc0b5b5 scoped to exactly 3 files (bctcPdfPullJob.ts + FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.test.ts + decision journal), no orch-state/board, 0 UUID leak. Module-level _isRunning guard present & correct (L99/298/309/632, early-return skippedReason=already_running, cleared in finally) — verbatim breadthHistoryPersisterJob pattern. Additive skippedReason field, caller unaffected. Tests run: new 3/0, +9 adjacent 104/0, tsc 0 err. Not pushed. -> review[] for qa gate."
       }
     ],
     "qa": [],
@@ -9899,7 +9947,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-03T09:01:05Z",
+    "last_triaged_at": "2026-07-03T16:14:00Z",
     "last_triaged_by": "po"
   },
   "_meta": {
@@ -9909,6 +9957,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-03T10:01:28Z",
-  "_updated_by": "po-triage-20260703T0937Z"
+  "_updated_at": "2026-07-03T16:14:00Z",
+  "_updated_by": "po"
 }
