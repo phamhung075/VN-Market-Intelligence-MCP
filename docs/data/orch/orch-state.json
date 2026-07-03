@@ -1417,7 +1417,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-03T02:18:02Z",
+    "_updated_at": "2026-07-03T02:31:07Z",
     "_updated_by": "router",
     "active_sprints": [
       {
@@ -10027,12 +10027,12 @@
         "id": "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING",
         "title": "search_similar_context RECURRING timeout (BUG#3144, bctc-analyst c071/c072/c073 = 3 consecutive cycles). mcp-server tool (analysis.ts:511) delegates to rag-service over HTTP :5002 via ragHttpClient (analysis.ts:563); the timeout is a CLIENT-VISIBLE symptom of the rag-service clean-exit restart-loop. Fix: (a) client-side fail-soft in the mcp-server tool — on rag timeout/down, degrade to an empty result + WARN instead of surfacing a hard timeout that blocks bctc-analyst (mirror the existing analysis.ts:84 'service-down: omit block entirely' pattern); (b) resolve the rag-service restart-loop root.",
         "type": "FIX",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "high",
         "zone": "apps/mcp-server/",
         "owner": "po",
         "next_agent": "dev-mcp-server",
-        "status_note": "RECURRING-BUG durable entry (2+ occ -> board per feedback_recurring_bug_escalation). Source: telegram BUG msg#3144 (from bctc-analyst). LINKED ROOT: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (rag-service RestartCount 226->245, clean-exit restart loop; passive health masks churn). AC: no BUG-channel search_similar_context timeout for 3 consecutive bctc-analyst cycles AND (rag-service RestartCount stabilizes OR the tool degrades gracefully with zero analyst-blocking). Priority: medium.",
+        "status_note": "RECURRING-BUG durable entry (2+ occ -> board per feedback_recurring_bug_escalation). Source: telegram BUG msg#3144 (from bctc-analyst). LINKED ROOT: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (rag-service RestartCount 226->245, clean-exit restart loop; passive health masks churn). AC: no BUG-channel search_similar_context timeout for 3 consecutive bctc-analyst cycles AND (rag-service RestartCount stabilizes OR the tool degrades gracefully with zero analyst-blocking). Priority: medium. || 2026-07-03T02:30Z router: worker a78cc5eb DONE — RAW-verified (explicit-path stack 31caeefcd+1a9cda30b == claimed file set; pnpm check green on HEAD post-merge; index-check PASS; tree-verify HEAD PASS, lower-commit rc=1 = cherry-pick-verifier artifact, combined diff clean; c2 WARN benign journal-in-decisions; DJ-GATE-1 journal committed; no docker/push; mutex claim errored at transport -> zone RUN-SOLO fallback). IN_PROGRESS->REVIEW. QA spawned background. Reviewer note: 1466-sync-db-corruption-bail.test.ts afterAll mock.module pollution flagged by worker as follow-up candidate.",
         "created_at": "2026-07-02T21:28:10Z",
         "promoted_at": "2026-07-03T01:34:10Z",
         "promoted_by": "po",

@@ -1,6 +1,18 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-07-02T08:57Z · **Cycle:** Chef EOD (08:57 UTC)
+**Last updated:** 2026-07-03T02:26Z · **Cycle:** Chef Intraday (02:26 UTC)
+
+## Session: 2026-07-03 (intraday 02:26 UTC)
+
+### Chef Dish — intraday 02:26 UTC
+- Clusters qualified: 1 (macro: gold extreme +2.56σ + hexagram Minh Di NEGATIVE)
+- Tickers covered: market-wide macro signal (no ticker-specific convergence)
+- Layers walked: 1-6 (full)
+- Signals consumed: #gold_4192.3_2.56sigma (macro_deviation HIGH tier-1), #hexagram_minh_di_36_unfavorable (tier-3), #usdvnd_26103_threshold (tier-1), #carry_1.37pp_neutral (tier-2 is_estimate=false), #yield_cheap_7.05_vs_5 (tier-2), sentiment_z +0.23 neutral, volatility NORMAL 13.18% gk_vol_20d
+- Kinh Dịch: Market hexagram Minh Di (36) — "Light Darkens" (confidence 64%), points: VN-Index +0.18, USD/VND 0.00, Oil +1.00, Gold -1.00, Macro -1.00
+- Causal chain: [gold extreme +2.56σ] → [VND depreciation at 26,103 above 25k threshold + carry NEUTRAL not attracting FII] → [market sentiment negative (hexagram)] → [VN equities: cheap yield 7.05% but bearish timing; cap MEDIUM conviction; wait for hexagram reversal]
+- Dish published: YES (MARKET plain VI + WORK TNB audit detail)
+- QUALITY: full
 
 ## Session: 2026-07-02 (morning 05:27 UTC)
 
@@ -34,3 +46,14 @@
 - Causal chain: Fed 3.63% + SBV 5% + carry 1.37pp NEUTRAL → USD strength 26105 > threshold → banking sector perceives carry unwind pressure → VCB/BID/CTG/EIB cluster -1.15% avg; but gold bullish $4086.3 signals risk-off, earnings yield 7.05% remains attractive (CHEAP)
 - Dish published: YES (MARKET plain VI + WORK TNB audit detail)
 - QUALITY: degraded (L2 via carry proxy insufficient; all 4 L4 pillars covered but mixed conviction)
+
+## Session: 2026-07-02 (evening 19:56 UTC)
+
+### Chef Dish — evening 19:56 UTC
+- Clusters qualified: 5 (banking convergence, real estate divergence, HCM securities spike, gold macro extreme, aviation regulatory)
+- Tickers covered: VCB, ACB, BID, MBB, EIB, VPB, VIC, VHM, HCM, ACV, HVN
+- Layers walked: partial — [gap:US_macro_level_absent] [gap:foreign_room_unavailable] [gold_threshold_drift]
+- Signals consumed: 20 alerts (banking price_drop 3x, real_estate news 4x, macro_deviation 1x, HCM volume_spike 1x, aviation news 2x, other mixed 8x); macro (carry 1.37pp NEUTRAL, yield CHEAP 7.05% vs 5%, USD/VND 26105); sentiment z +0.36 moderate bullish, volatility NORMAL 13.36% 20d
+- Kinh Dịch: VIC Kiển (39) MUA tiêu cực 56%, VHM Tỉnh (48) MUA tích cực 56%, HCM Kiển (39) GIU tiêu cực 48%, VCB Khôn (2) THAN TRONG tích cực 48%
+- Dish published: YES (MARKET plain VI + WORK TNB audit)
+- QUALITY: degraded (L2 US macro gap — no PMI/EFFR-IORB numeric cited, retroactive MEDIUM conviction cap)
