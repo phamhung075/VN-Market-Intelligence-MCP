@@ -1,4 +1,12 @@
 
+## c521 · 2026-07-03T06:43:27Z
+### Audit Run Tier-2 (06:40–06:42 UTC 2026-07-03)
+- Tier: 2 | Cron fire: PASS | Per-source freshness: 28 checked
+- DB spot-checks: C-06 PASS, C-07 PASS | VPS: 5 healthy | Rate limits: OK
+- Anomalies: 2 new (1 CRITICAL bctc-discover B-05, 1 WARN queue-aging B-13)
+- Status: DEGRADED
+
+
 ## c520 · 2026-07-03T06:41:03Z
 ### Audit Run Tier-1 (06:41–06:41 UTC 2026-07-03)
 - Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS

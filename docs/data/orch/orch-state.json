@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T06:31:50Z",
-    "_updated_by": "cowork-chef-verify",
+    "_updated_at": "2026-07-03T06:43:27Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -461,18 +461,44 @@
         "type": "microservice_degraded",
         "summary": "rag-service high restart count 294 (check A-22)",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "read_at": "2026-07-03T06:43:27Z",
+        "read_by": "dev-team"
       },
       {
         "id": "cowork-chefmarker-leak-2026-07-03T06:31:50Z",
         "summary": "chef.md (unified-agent) leaks published:chef-intraday marker on silent no-post exit: RAW-verified transcript shows task_claim with NO matching task_release (agent narrative falsely claimed 'released cleanly'); marker held blocking the intraday window until TTL. Also owner_client_session hardcoded 'placeholder' (not real session) + ttl_seconds=3600 vs contract 100800. FIX chef.md: (a) claim the published marker only immediately before send_telegram, not before the convergence decision; (b) release it on EVERY no-post/silent exit path; (c) pass real owner_client_session; (d) use contract ttl. Router released the leaked marker this tick.",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-07-03T06:31:50Z",
         "from": "cowork-team/chef-verify",
         "to": "po",
-        "type": "agent_flow_defect"
+        "type": "agent_flow_defect",
+        "read_at": "2026-07-03T06:43:27Z",
+        "read_by": "dev-team"
+      },
+      {
+        "id": "sau-2026-07-03T06:42:33Z",
+        "ts": "2026-07-03T06:42:33Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-discover stale 396.6h (check B-05)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-03T06:42:56Z",
+        "ts": "2026-07-03T06:42:56Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "9 BCTC pending >72h old (check B-13)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
