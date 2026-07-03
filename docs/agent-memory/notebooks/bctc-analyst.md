@@ -1,6 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-07-03 21:38 UTC (c076-slot3) | **Sprint:** BCTC-EXTRACT-QUALITY
+**Last updated:** 2026-07-03 21:52 UTC (ESC-4 deep-dive, router-dispatched) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c073 · 2026-07-02T21:15:00Z
 ### Analysis Cycle (21:05–21:15 UTC) — mode: routine
@@ -54,3 +54,12 @@
 - Signals: #8501 GVR (0.6, critic 0.8).
 - Files: bctc_signal_GVR_20260703_routine.json + bctc-analyst-20260703T212000Z.json (ESC-4 GVR redispatch) + bctc-analyst-20260703T213000Z.json (corrupt-cluster data-quality finding).
 - Carry-over to c077: GVR ESC-4 guard now active until ~21:20 UTC 07-04 (redispatch again if unresolved). MBB ESC-2 guard active until ~00:08 UTC 07-04 (from c074, untouched this cycle). CTG ESC-2 still corrupt/untested. Q2 deadline 2026-07-31 (28d). QUÁ HẠN unchanged: BDI/BID/DAG/DLC/GAS/JSH/PLX/PPC/SIS/VDC/VEA/VNH. get_bctc_full parallel-batch contamination bug (c075) — no fix confirmation yet, keep calling sequentially. Next: fresh-ticker supply near-exhausted; rotate re-probe MBB/CTG (check for FIX-BCTC-BANK-SUMMARY-MAPPING reflow) + remaining untested (VRE/TCH/HCM/NVL/VPB/DPM/ACV/DHG/EIB).
+
+## ESC-4 DEEP-DIVE (Opus) · 2026-07-03T21:52:00Z (router-dispatched)
+### GVR Q1-2026 — DEFINITIVE verdict (4th emission, 1st to complete)
+- Trigger: ESC-4 non_operating_income_gap 590.1 tỷ (LNST 2,513.4 > LN thuần HĐKD 1,923.3 = 23.5% NI). Data byte-identical since published 2026-06-07 (c070/c073/c074/c075/c076). GVR = known-good re-verify ticker.
+- Method: get_bctc_full(GVR,Q1) line-item cascade (not heuristics) + get_cash_flow cross-check.
+- VERDICT: **LEGITIMATE non-operating income, NOT a data-extraction/mapping artifact.** Cascade fully consistent: gross 2,336.7 → op 1,923.3 → **PBT 2,960.9** (other-income step +1,037.6 = thu nhập khác) → tax ~447.5 (15.1% eff, ~rubber agri incentive) → net 2,513.4. Flagged gap = other income net of tax (1,037.6 − 447.5 = **590.1 exactly**). B/S balances to the đồng (87,178.9 = 64,984.7 + 22,194.2). Extractor conf 100%. GVR structurally books lumpy other income (land-conversion đền bù → KCN + thanh lý vườn cây cao su). ESC-4 heuristic fired a TRUE flag but NON-ISSUE for data quality.
+- Caveat: prose_sections empty — footnote composition of thu nhập khác unverified; verdict rests on PBT/tax cascade + B/S integrity (decisive). Confidence 0.9. Action: hold.
+- Governance rec to PO (escalation ceiling for 4th recurrence): WHITELIST/ACK GVR Q1-2026 by content-hash so ESC-4 stops re-firing on byte-identical data; durable rule — for GVR-class large-other-income tickers, when PBT bridges op→net AND B/S balances, downgrade "net>gross" from ESC-4 trigger to informational note.
+- Signal: docs/signals/bctc-analyst-20260703T215200Z.json (deep_dive_result → PO). task_release best-effort skipped (no session-UUID literal available; rely on 24h TTL + dev-team dispatcher release).
