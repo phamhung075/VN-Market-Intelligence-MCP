@@ -243,13 +243,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "CHORE-GITIGNORE-CLAUDE-TMP done_verified (qa PASS, router RAW-verified). dev WIP=0 — idle. Backlog (PLAN-ONLY, PO-triaged not-single-shot-ready): FIX-BCTC-FULL-BATCH-CONTAMINATION (HIGH, architect-first handler-vs-gateway); FEAT-SEVERITY-OVERRIDE-SURFACING; FIX-AGENT-NOTEBOOK-UUID-PROVENANCE (MEDIUM — sub-fix A of session-UUID-hygiene, agent notebooks); FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT (LOW); RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL (ops/infra-vps, PLAN-ONLY). DEPLOY-GATED (pending mcp-server rebuild): FIX-LEGAL-RISK ROBUST tier + pdfpull-guard + COLUMN-ORDER finalize_bctc_refine CTG.",
-    "updated_at": "2026-07-03T19:18:15Z",
+    "status": "in_progress",
+    "active_task_id": "RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL",
+    "next_agent": "ops",
+    "next_action": "ops executing RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL (CRITICAL bctc pipeline stall, infra-vps recon). On ops complete: router RAW-verify recon findings + route remediation (po/dev-mcp-server/dev-pdf-extractor per root cause) or promote if PLAN-only recon done. Parallel: PO triaging 65 NEW telegram reports (dedup to B-05 / FIX-BCTC-FULL-BATCH-CONTAMINATION / FIX-MCP-MEMORY-CODE-LEAK / FU-RAG-DEPLOY-MEMORY) + memory signal sau-2026-07-03T19:16:47Z. FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD done_verified audit-backfill applied.",
+    "updated_at": "2026-07-03T19:35:28Z",
     "updated_by": "router",
-    "note": "19:15Z: CHORE-GITIGNORE-CLAUDE-TMP in_progress->done_verified (qa PASS a5cccbafa, router RAW-verified: 0 added-line UUID, 111 untracked, orch-apply independent). dev WIP=0 — idle."
+    "note": "19:24Z (fire-tick 19:07Z): dispatch ops for RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL (CRITICAL, backlog->in_progress, WIP=1). Spawn PO for 65-report triage. pdfpull audit-backfill."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7540,19 +7540,6 @@
         "priority": "low",
         "created_at": "2026-07-03T18:32:21Z",
         "status_note": "PLAN-ONLY. Non-blocking self-heal (regime degrades to NEUTRAL, no crash/wrong-data). PREFER reconciling .claude/skills/regime-extraction/SKILL.md to read the nested structured signals field (text-line scraping is the fragile pattern that caused this) over restoring the 'Global Liquidity:' text line in get_macro_snapshot. Add a fixture asserting regime resolves non-NEUTRAL when liquidity data present. Audit other skills for the same text-scrape assumption. Source: docs/signals/router-macro-snapshot-regime-parse-drift-20260703.md."
-      },
-      {
-        "id": "RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL",
-        "title": "bctc enrich returns 0 tables (bctc_table_rows=0 AND bctc_md_tables=0) for ~18 Q4-2025 tickers across ALL sectors — extraction/OCR pipeline stall behind B-05 SLA breach (36-item queue)",
-        "owner": "ops",
-        "next_agent": "ops",
-        "type": "SPIKE",
-        "status": "BACKLOG",
-        "zone": "infra-vps",
-        "priority": "high",
-        "created_at": "2026-07-03T19:00:57Z",
-        "status_note": "PLAN-ONLY recon. RAW-verified 2026-07-03 via WORK channel: NOT terminal url_not_found — queue actively churning, every enrich_failed with bctc_table_rows=0 AND bctc_md_tables=0 (ACB/BID/DHG/EIB/D2D/GAS/GVR/HCM/HSG/MBB/NKG/POW/SSI/VCI/VHM/VIC/VPB/VRE — all sectors). DISTINCT from pending bank-mapping rebuild (2cd9e105/a46131cf fix wrong VALUES, not 0-tables) and from BCTC-ENRICHER-OLD-QUARTERS (0-URLs pre-Q4-2025). Diagnose extraction path first: VPS PDF-extractor/OCR liveness + PDF-Extract-Kit + bctcPdfPull extraction step. Corroborated by bctc-analyst MBB Q1-2026 coverage-gap. DEPLOY-GATE: any mcp-server code fix batches with the pending ROBUST rebuild (pdfpull-guard + COLUMN-ORDER CTG). Source: sau-1783103887 (B-05 WARN) + telegram 3438 (CRITICAL) / 3440 (B-13).",
-        "provenance": "(router-dispatched)"
       }
     ],
     "closed_sprints": [
@@ -9841,7 +9828,10 @@
         "qa_agent": "a2b934f0e811f8d3f",
         "qa_commit": "5a8bab990",
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.md",
-        "qa_dod_note": "[router 2026-07-03T16:30Z] qa a2b934f0e PASS, transcript RAW-verified: commit 5a8bab990 scoped to exactly 3 qa docs (report/qa-journal/qa-notebook; no code, no orch-state, board untouched), 0 UUID leak. Real tool output: tsc 0 err; new test 3/0/25 (throw-path executed); 6 bctcPdfPullJob importers 66/0/239; full suite 14236 pass/62 fail/5 err vs testBaselineFail=348 (62<<348). Changed-domain regression=0 (all 62 fails + unhandled-errors mapped, grep bctc|pdfpull|financial-report -> 0; 1405b-bctc-vps-fixes FP = pre-existing vps_push_log race). DDD/security/mock-guard PASS; DJ-GATE-1 satisfied. Diff = mechanical try/finally reindent + _isRunning guard + additive skippedReason; caller startScheduler.ts unaffected. DEPLOY-GATED: guard takes effect on next mcp-server rebuild (NOT run)."
+        "qa_dod_note": "[router 2026-07-03T16:30Z] qa a2b934f0e PASS, transcript RAW-verified: commit 5a8bab990 scoped to exactly 3 qa docs (report/qa-journal/qa-notebook; no code, no orch-state, board untouched), 0 UUID leak. Real tool output: tsc 0 err; new test 3/0/25 (throw-path executed); 6 bctcPdfPullJob importers 66/0/239; full suite 14236 pass/62 fail/5 err vs testBaselineFail=348 (62<<348). Changed-domain regression=0 (all 62 fails + unhandled-errors mapped, grep bctc|pdfpull|financial-report -> 0; 1405b-bctc-vps-fixes FP = pre-existing vps_push_log race). DDD/security/mock-guard PASS; DJ-GATE-1 satisfied. Diff = mechanical try/finally reindent + _isRunning guard + additive skippedReason; caller startScheduler.ts unaffected. DEPLOY-GATED: guard takes effect on next mcp-server rebuild (NOT run).",
+        "verified_by": "router",
+        "verified_at": "2026-07-03T19:35:28Z",
+        "signoff_note": "[router 2026-07-03T19:24Z backfill] Promotion 101d78a48 flipped review->done_verified (qa_verdict PASS, qa_agent a2b934f0e811f8d3f, qa_commit 5a8bab990) but left router-closeout fields empty — NOT a regression (committed empty at 101d78a48, identical at HEAD, working tree clean). Router RAW-verified this tick: qa gate 5a8bab990 = 3 qa docs ONLY (decision-journal sprint-FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD-qa.md + qa.md notebook + reports/TASK_REPORT_FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD.md 5968B); orch-state/code untouched; 0 raw-UUID on added lines. Code fix 8bc0b5b5 = module-scope _isRunning overlap guard on bctcPdfPullJob.ts (try/finally re-indent of pre-existing body + early-return guard + additive skippedReason; byte-identical shape to breadthHistoryPersisterJob.ts). qa DoD: bun tsc --noEmit 0 errors; new test 3 pass/0 fail; 6 suites importing bctcPdfPullJob.js 66 pass/0 fail; full suite 62 fail/14236 pass < ceiling 348 (0 changed-domain regressions, all 62 mapped to pre-existing pollNews/VPS/vps_push_log flake, none import bctcPdfPullJob); DDD (scheduler/ outermost layer) + security (0 env, mock-guard exit 0) PASS. Sole caller startScheduler.ts:361 reads only .downloaded, unaffected by additive field. Parent SPIKE-BCTC-DISCOVER-PIPELINE-DEAD. Audit-trail backfill only — task remains DONE_VERIFIED."
       },
       {
         "id": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT",
@@ -9956,7 +9946,26 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL",
+        "title": "bctc enrich returns 0 tables (bctc_table_rows=0 AND bctc_md_tables=0) for ~18 Q4-2025 tickers across ALL sectors — extraction/OCR pipeline stall behind B-05 SLA breach (36-item queue)",
+        "owner": "ops",
+        "next_agent": "ops",
+        "type": "SPIKE",
+        "status": "IN_PROGRESS",
+        "zone": "infra-vps",
+        "priority": "high",
+        "created_at": "2026-07-03T19:00:57Z",
+        "status_note": "PLAN-ONLY recon. RAW-verified 2026-07-03 via WORK channel: NOT terminal url_not_found — queue actively churning, every enrich_failed with bctc_table_rows=0 AND bctc_md_tables=0 (ACB/BID/DHG/EIB/D2D/GAS/GVR/HCM/HSG/MBB/NKG/POW/SSI/VCI/VHM/VIC/VPB/VRE — all sectors). DISTINCT from pending bank-mapping rebuild (2cd9e105/a46131cf fix wrong VALUES, not 0-tables) and from BCTC-ENRICHER-OLD-QUARTERS (0-URLs pre-Q4-2025). Diagnose extraction path first: VPS PDF-extractor/OCR liveness + PDF-Extract-Kit + bctcPdfPull extraction step. Corroborated by bctc-analyst MBB Q1-2026 coverage-gap. DEPLOY-GATE: any mcp-server code fix batches with the pending ROBUST rebuild (pdfpull-guard + COLUMN-ORDER CTG). Source: sau-1783103887 (B-05 WARN) + telegram 3438 (CRITICAL) / 3440 (B-13).",
+        "provenance": "(router-dispatched)",
+        "dev_agent": "ops",
+        "handler": "infra-vps",
+        "dispatched_by": "router",
+        "dispatched_at": "2026-07-03T19:35:28Z",
+        "dispatch_note": "[router 2026-07-03T19:24Z / fire-tick 19:07Z] dev-team tick — dispatch ops run_in_background. CRITICAL bctc-discover/enrich pipeline stall: auditor report 3438 (stale 396.6h >24h SLA, 36 pending, last push 2026-06-16) corroborated by ~50 NEW ENRICH 0-rows FAIL-LOUD reports (~18 Q4-2025 tickers, bctc_table_rows=0 AND bctc_md_tables=0, root=B02-TCTD parse failure or extraction/OCR pipeline stall) + Tier-2 B-05 WARN 3483. Ops brief: SSH VPS, probe PDF-extractor/PDF-Extract-Kit/OCR service liveness + bctc-discover crawler + queue drain; determine whether stall is extraction-service-down vs parse-code-defect vs data-coverage; report root cause + remediation (recon/PLAN — no unbudgeted code change). Escalate code defect -> po/dev-mcp-server or dev-pdf-extractor via signal."
+      }
+    ],
     "ready": [],
     "review": [
       {
