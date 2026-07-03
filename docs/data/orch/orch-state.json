@@ -1065,6 +1065,17 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sau-2026-07-03T01:15:47Z",
+        "ts": "2026-07-03T01:15:47Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-21 WARN: mcp-server RestartCount=4 (threshold=2)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-02T22:51:14Z",
