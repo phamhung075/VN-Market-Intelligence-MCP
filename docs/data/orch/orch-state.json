@@ -9346,6 +9346,36 @@
         "followups": [
           "FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC"
         ]
+      },
+      {
+        "id": "FIX-MCP-MEM-CAP-BUMP-REBUILD",
+        "title": "mcp-server mem: cap 2g->3g compose edit (repo) + rebuild-to-HEAD & single-svc swap (user-gated)",
+        "type": "FIX",
+        "size": "S",
+        "priority": "high",
+        "status": "DONE_VERIFIED",
+        "zone": "cross-service",
+        "owner": "po",
+        "next_agent": "ops",
+        "created_at": "2026-07-02T18:35:20Z",
+        "promoted_by": "po",
+        "promoted_at": "2026-07-02T18:35:20Z",
+        "parent": "FIX-MCP-MEMORY-CODE-LEAK",
+        "brief_ref": "docs/architecture-briefs/2026-07-02-mcp-mem-sawtooth-recon.md",
+        "desc": "TRACK-1 immediate mitigation from architect recon (brief above). (a) REPO EDIT (normal change, ALLOWED, commit now): docker-compose.yml:71 memory: 2g -> 3g AND docker-compose.dev.yml:34 memory: 2g -> 3g (dev-override parity). (b) USER-GATED (emit commands to user, DO NOT execute — container swap is user-gated per hard constraint): docker compose build mcp-server (rebuild-to-HEAD, 6 commits of BCTC/cron-status fixes owed as hygiene), then docker compose up -d --no-deps mcp-server (single-service recreate ONLY — never down/up-all, never --no-deps down). (c) RAW post-verify per brief §User-Gate Commands: docker inspect image ID changed + docker stats mem dropped to low baseline; then re-sample stats over 24-48h — if the sawtooth recurs at 3GiB (expected per source evidence) that satisfies the FIX-MCP-MEMORY-CODE-LEAK Track-2 unpark gate.",
+        "acceptance": "compose carries 3g in BOTH docker-compose.yml + docker-compose.dev.yml; user-gate rebuild+swap commands emitted to user (WORK/telegram); ops does NOT run the swap itself. Post-swap: new image ID live + mem baseline reset (RAW-verified).",
+        "files": [
+          "docker-compose.yml",
+          "docker-compose.dev.yml"
+        ],
+        "baseline_pass": true,
+        "updated_at": "2026-07-02T21:28:10Z",
+        "updated_by": "po",
+        "assignee": "ops",
+        "review_note": "Repo scope COMPLETE 2026-07-02T18:43:27Z: commit 4dbf7ef0 — docker-compose.yml:71 + docker-compose.dev.yml:34 memory 2g->3g (mcp-server only; docker compose config renders 3GiB, no other service changed; RAW-verified by router). SWAP PENDING (user-gated): user must run docker compose build mcp-server then docker compose up -d --no-deps mcp-server. Post-swap AC: new image ID, mem baseline low, re-sample sawtooth 24-48h @3GiB — outcome feeds unpark gate of FIX-MCP-MEMORY-CODE-LEAK (parked, pm). || CORROBORATION 2026-07-02T21:28:10Z (po triage, signal sau-a21-202607022116, system-auditor A-21 HIGH): mcp-server RestartCount 3->4 with in-place memory collapse 95.28%->15.89% @c500 — a crash/OOM in-place restart RESET the sawtooth (the exact OOM-at-2GB-cap failure this Track-1 cap-bump mitigates). Container STILL runs the OLD 2g image (user-gated build+up NOT yet executed) -> restarts CONTINUE until the swap lands. URGENCY RAISED: ops should re-emit the user-gate swap commands (docker compose build mcp-server ; docker compose up -d --no-deps mcp-server). No gate work-around performed.",
+        "verified_by": "router",
+        "verified_at": "2026-07-03T04:51:05Z",
+        "verify_note": "Swap LANDED 2026-07-03T04:38Z (executed outside this session after user lifted the gate). Router RAW ground-truth: new image a169f5e2 built 04:38:14Z (was 33fea3bafe16), container recreated 04:38:34Z RestartCount=0 Health=healthy; runtime Memory=3221225472 (3GiB) == committed docker-compose.yml:71 + docker-compose.dev.yml:34 (4dbf7ef0); mem baseline reset 98.47%->19.9% (612MiB/3GiB). ALL acceptance met. FOLLOW-UP: 24-48h sawtooth re-sample @3GiB feeds FIX-MCP-MEMORY-CODE-LEAK (Track-2, stays backlog/pm) unpark gate — auditor ticks observing from 04:38Z."
       }
     ],
     "head": {
@@ -9535,33 +9565,6 @@
         "updated_at": "2026-07-02T13:38:51Z",
         "updated_by": "router",
         "review_note": "Repo scope COMPLETE 2026-07-02T13:38:51Z: commits 073fa27f (vps-scripts/hnx-ca-bundle.pem GlobalSign intermediate+root, fetch-bctc.sh curl -k -> --cacert /root/hnx-ca-bundle.pem, deploy-vinahost.sh ships bundle) + 638fba89 (DJ-GATE-1 journal). RAW-verified by router: openssl verify -CAfile bundle <recon leaf> = OK rc=0 reproduced; grep confirms no -k/--insecure; live probe evidence: TLS verify ok on owa.hnx.vn (HTTP 403 = WAF, app-layer). DEPLOY PENDING (user-gated): user must run ./scripts/deploy-vinahost.sh (ships bundle + fetch-bctc.sh to VPS /root/). Post-deploy AC: HNX fetch OK with verification ON."
-      },
-      {
-        "id": "FIX-MCP-MEM-CAP-BUMP-REBUILD",
-        "title": "mcp-server mem: cap 2g->3g compose edit (repo) + rebuild-to-HEAD & single-svc swap (user-gated)",
-        "type": "FIX",
-        "size": "S",
-        "priority": "high",
-        "status": "REVIEW",
-        "zone": "cross-service",
-        "owner": "po",
-        "next_agent": "ops",
-        "created_at": "2026-07-02T18:35:20Z",
-        "promoted_by": "po",
-        "promoted_at": "2026-07-02T18:35:20Z",
-        "parent": "FIX-MCP-MEMORY-CODE-LEAK",
-        "brief_ref": "docs/architecture-briefs/2026-07-02-mcp-mem-sawtooth-recon.md",
-        "desc": "TRACK-1 immediate mitigation from architect recon (brief above). (a) REPO EDIT (normal change, ALLOWED, commit now): docker-compose.yml:71 memory: 2g -> 3g AND docker-compose.dev.yml:34 memory: 2g -> 3g (dev-override parity). (b) USER-GATED (emit commands to user, DO NOT execute — container swap is user-gated per hard constraint): docker compose build mcp-server (rebuild-to-HEAD, 6 commits of BCTC/cron-status fixes owed as hygiene), then docker compose up -d --no-deps mcp-server (single-service recreate ONLY — never down/up-all, never --no-deps down). (c) RAW post-verify per brief §User-Gate Commands: docker inspect image ID changed + docker stats mem dropped to low baseline; then re-sample stats over 24-48h — if the sawtooth recurs at 3GiB (expected per source evidence) that satisfies the FIX-MCP-MEMORY-CODE-LEAK Track-2 unpark gate.",
-        "acceptance": "compose carries 3g in BOTH docker-compose.yml + docker-compose.dev.yml; user-gate rebuild+swap commands emitted to user (WORK/telegram); ops does NOT run the swap itself. Post-swap: new image ID live + mem baseline reset (RAW-verified).",
-        "files": [
-          "docker-compose.yml",
-          "docker-compose.dev.yml"
-        ],
-        "baseline_pass": true,
-        "updated_at": "2026-07-02T21:28:10Z",
-        "updated_by": "po",
-        "assignee": "ops",
-        "review_note": "Repo scope COMPLETE 2026-07-02T18:43:27Z: commit 4dbf7ef0 — docker-compose.yml:71 + docker-compose.dev.yml:34 memory 2g->3g (mcp-server only; docker compose config renders 3GiB, no other service changed; RAW-verified by router). SWAP PENDING (user-gated): user must run docker compose build mcp-server then docker compose up -d --no-deps mcp-server. Post-swap AC: new image ID, mem baseline low, re-sample sawtooth 24-48h @3GiB — outcome feeds unpark gate of FIX-MCP-MEMORY-CODE-LEAK (parked, pm). || CORROBORATION 2026-07-02T21:28:10Z (po triage, signal sau-a21-202607022116, system-auditor A-21 HIGH): mcp-server RestartCount 3->4 with in-place memory collapse 95.28%->15.89% @c500 — a crash/OOM in-place restart RESET the sawtooth (the exact OOM-at-2GB-cap failure this Track-1 cap-bump mitigates). Container STILL runs the OLD 2g image (user-gated build+up NOT yet executed) -> restarts CONTINUE until the swap lands. URGENCY RAISED: ops should re-emit the user-gate swap commands (docker compose build mcp-server ; docker compose up -d --no-deps mcp-server). No gate work-around performed."
       },
       {
         "id": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION",
