@@ -27,9 +27,25 @@
  * already carries a code or a parsed value is left byte-identical — repair
  * never overwrites real data.
  *
- * Does NOT fix the separately-diagnosed missing "Tổng tài sản" grand-total
- * row (absent from the source markdown entirely for both CTG and VCB — there
- * is no row to repair for that field; see architecture brief §2).
+ * CORRECTION (FIX-BCTC-BANK-BS-COLUMN-ORDER, architecture brief
+ * docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md §2): the
+ * claim below — that the "Tổng tài sản" grand-total row is absent from the
+ * source markdown entirely — is DISPROVEN. That 2026-07-01 SPIKE queried
+ * only `bctc_table_rows` (post-parse) and `bctc_md_tables`, never
+ * `bctc_refined_units.markdown` (pre-parse) directly. Read verbatim, the
+ * row exists, correctly labeled and valued ("**TỔNG TÀI SẢN CÓ** | |
+ * **2,924,176,928** | **2,767,699,300** |", confirmed live for CTG
+ * 2026-Q1). The real defect was a DIFFERENT bug: the parser's 4+-column
+ * branch assumed a fixed code-first cell order that does not hold for bank
+ * Mẫu B02a/TCTDHN forms (label-first), which dropped this exact row via
+ * the "empty label" guard before it ever reached the array W2's
+ * `repairCorruptedRows` operates on. Fixed by `resolveColumnLayout()` in
+ * refinedMarkdownParser.ts (see FIX-BCTC-BANK-BS-COLUMN-ORDER comments
+ * there) — this pass (W2) remains a real, separate, and still-necessary
+ * fix for its own distinct corruption signature (merged-cell rows); it was
+ * never capable of recovering the grand-total row, but that is because the
+ * row never survived long enough to reach it, not because it was absent
+ * from the source.
  *
  * @module application/utils/bctcRowRepair
  */

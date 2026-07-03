@@ -54,6 +54,17 @@ export interface ParseResult {
 const SECTION_HEADERS: Array<{ pattern: RegExp; section: string }> = [
   // Vietnamese patterns (original)
   { pattern: /BẢNG CÂN ĐỐI KẾ TOÁN/i, section: "balance_sheet" },
+  // FIX-BCTC-BANK-BS-COLUMN-ORDER: bank-form (Mẫu B02a/TCTDHN) canonical
+  // balance-sheet title. Corporate VAS forms title their balance sheet
+  // "BẢNG CÂN ĐỐI KẾ TOÁN"; banks title theirs "BÁO CÁO TÌNH HÌNH TÀI
+  // CHÍNH" ("Statement of Financial Position") — confirmed live for CTG
+  // 2026-Q1 (Mẫu B02a/TCTDHN, both the "TÀI SẢN" and "NỢ PHẢI TRẢ VÀ VỐN
+  // CHỦ SỞ HỮU" units repeat this exact title). Previously absent from the
+  // vocabulary — the bank BS title line fell through to "general", and
+  // since detectSection's non-general branch is the ONLY mechanism that
+  // ever overrides `currentSection`, the unit's own real title could never
+  // correct a bogus carried-in section from a prior unit.
+  { pattern: /BÁO CÁO TÌNH HÌNH TÀI CHÍNH/i, section: "balance_sheet" },
   { pattern: /BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH/i, section: "income_statement" },
   { pattern: /BÁO CÁO LƯU CHUYỂN TIỀN TỆ/i, section: "cash_flow" },
   { pattern: /THUYẾT MINH BÁO CÁO TÀI CHÍNH/i, section: "notes" },
@@ -93,6 +104,9 @@ const SECTION_HEADERS: Array<{ pattern: RegExp; section: string }> = [
 // tickers — no per-ticker allowlist, no date literal.
 const FOLDED_SECTION_KEYWORDS: Array<{ keyword: string; section: string }> = [
   { keyword: "BANG CAN DOI KE TOAN", section: "balance_sheet" },
+  // FIX-BCTC-BANK-BS-COLUMN-ORDER: diacritic-insensitive sibling of the bank
+  // BS title added to SECTION_HEADERS above (same rationale).
+  { keyword: "BAO CAO TINH HINH TAI CHINH", section: "balance_sheet" },
   { keyword: "KET QUA HOAT DONG KINH DOANH", section: "income_statement" },
   { keyword: "KET QUA HOAT DONG SAN XUAT KINH DOANH", section: "income_statement" },
   { keyword: "BAO CAO THU NHAP", section: "income_statement" },
@@ -114,6 +128,18 @@ function foldDiacritics(text: string): string {
 }
 
 function detectSection(text: string): string {
+  // FIX-BCTC-BANK-BS-COLUMN-ORDER: table-of-contents lines are markdown
+  // bullets ("- Báo cáo lưu chuyển tiền tệ hợp nhất") that legitimately
+  // MENTION a statement's name without being that statement's own title
+  // line — both the exact-phrase list above and the diacritic-folded
+  // fallback below can false-positive-match a ToC bullet (confirmed live:
+  // CTG 2026-Q1 unit-0001, the "MỤC LỤC" table-of-contents page). Cheapest
+  // generic fix: skip section detection entirely for bullet-prefixed
+  // lines — a real statement title is never itself a markdown list item.
+  // No per-ticker/date literal; applies to any ToC shaped this way.
+  const trimmed = text.trim();
+  if (/^[-*]\s/.test(trimmed)) return "general";
+
   for (const { pattern, section } of SECTION_HEADERS) {
     if (pattern.test(text)) return section;
   }
@@ -138,6 +164,14 @@ function detectSection(text: string): string {
  *     (standard VN BCTC notation for COGS, deductions, losses)
  *   - Thousand-separator dots: "1.234.567" → 1234567
  *   - Decimal comma: "1.234,56" → 1234.56
+ *   - English-style comma-thousands: "2,924,176,928" → 2924176928
+ *     (FIX-BCTC-BANK-BS-COLUMN-ORDER: some agentic-refine transcriptions —
+ *     confirmed live for CTG 2026-Q1 bank-form B02a/TCTDHN — use English
+ *     comma-thousands notation rather than the VN dot-thousands convention;
+ *     format is auto-detected, never assumed. See DV-BS-1/2 test coverage.)
+ *   - Markdown emphasis markers (`**bold**`, `__bold__`) stripped before
+ *     parsing (FIX-BCTC-BANK-BS-COLUMN-ORDER: real agentic-refine markdown
+ *     bolds grand-total/summary values, e.g. "**2,924,176,928**")
  *   - Em-dash / en-dash / hyphen-only / blank / "..." → null (absent, not 0)
  *   - Footnote superscripts / trailing markers stripped before parse
  *
@@ -149,7 +183,13 @@ function detectSection(text: string): string {
  * @returns Parsed number or null if cell is genuinely absent/unparseable
  */
 export function parseVnNumber(raw: string): number | null {
-  const stripped = raw.trim();
+  // FIX-BCTC-BANK-BS-COLUMN-ORDER: strip markdown emphasis markers (bold
+  // `**`/`__` or stray single `*`/`_`) before any other processing. These
+  // characters are never legitimate content of a numeric BCTC cell, so
+  // blanket-stripping is safe, generic, and carries no per-ticker/date
+  // literal — without it, a bolded grand total like "**2,924,176,928**"
+  // fails parseFloat entirely (leading "*" is not a valid numeric start).
+  const stripped = raw.trim().replace(/[*_]/g, "").trim();
 
   // Null signals: empty, dashes, ellipsis, N/A
   if (
@@ -188,10 +228,44 @@ export function parseVnNumber(raw: string): number | null {
     isNegative = true;
   }
 
-  // Remove thousand separators (dots) then replace decimal comma with dot.
-  // VN format: dots are ALWAYS thousand separators when followed by 3 digits;
-  // comma is the decimal separator (appears at most once, before ≤2 digits).
-  const cleaned = work.replace(/\./g, "").replace(/,/g, ".");
+  // Determine format: Vietnamese (dot=thousands, comma=decimal) vs English
+  // (comma=thousands, dot=decimal) — auto-detected, never assumed.
+  // FIX-BCTC-BANK-BS-COLUMN-ORDER: the old hardcoded rule ("dots are ALWAYS
+  // thousand separators, comma is ALWAYS decimal") truncated every
+  // English-style comma-thousands value at the first decimal point
+  // (parseFloat stops at the 2nd "."), e.g. "2,924,176,928" →
+  // work.replace(/,/g,".") → "2.924.176.928" → parseFloat → 2.924 (wrong by
+  // 9 orders of magnitude). Mirrors the auto-detect heuristic already
+  // proven in the sibling legacy-pipeline parser
+  // (domain/services/vnNumberParser.ts) — duplicated here rather than
+  // imported because this file's footnote/superscript/bold stripping above
+  // is specific to the agentic-refine markdown shape and has no
+  // domain-layer equivalent.
+  const hasComma = work.includes(",");
+  const hasDot = work.includes(".");
+  let cleaned: string;
+  if (hasComma && hasDot) {
+    // Both present — the one appearing LAST is the decimal separator.
+    const lastComma = work.lastIndexOf(",");
+    const lastDot = work.lastIndexOf(".");
+    cleaned = lastComma > lastDot
+      ? work.replace(/\./g, "").replace(",", ".")  // VN: 1.234,56
+      : work.replace(/,/g, "");                     // English: 1,234.56
+  } else if (hasComma && !hasDot) {
+    // Only commas — VN decimal ("0,5") or English thousands ("1,234,567").
+    const commaCount = (work.match(/,/g) ?? []).length;
+    cleaned = commaCount > 1 || /,\d{3}$/.test(work)
+      ? work.replace(/,/g, "")   // English thousands separator
+      : work.replace(",", ".");  // VN decimal separator
+  } else if (hasDot && !hasComma) {
+    // Only dots — VN thousands ("1.234.567") or plain decimal ("1.5").
+    const dotCount = (work.match(/\./g) ?? []).length;
+    cleaned = dotCount > 1
+      ? work.replace(/\./g, "")
+      : (/\.\d{3}$/.test(work) ? work.replace(".", "") : work);
+  } else {
+    cleaned = work;
+  }
   const n = parseFloat(cleaned);
   if (isNaN(n)) return null;
   return isNegative ? -n : n;
@@ -267,6 +341,46 @@ function isHeaderRow(cells: string[], isAfterSeparator: boolean): boolean {
   return nonNumericCount === cells.length;
 }
 
+/**
+ * FIX-BCTC-BANK-BS-COLUMN-ORDER: resolve a captured header row's cell order.
+ *
+ *   "code-first"  — corporate VAS convention: "Mã số | Chỉ tiêu | …"
+ *   "label-first" — bank Mẫu B02a/TCTDHN convention: "Mục (Item) | Mã
+ *                   (Code) | …", confirmed live for CTG 2026-Q1.
+ *   "label-only"  — no code/Mã column exists at all — e.g. a bank equity
+ *                   roll-forward note ("Mục | Số dư đầu năm | Phát sinh
+ *                   trong năm | | Số dư cuối kỳ", confirmed live for CTG
+ *                   2026-Q1 report_id 96e36139 unit-0038/page 45): a
+ *                   positive label-keyword match with NO code-keyword
+ *                   match anywhere in the header is decisive evidence of
+ *                   this shape, not mere ambiguity.
+ *
+ * Reads the header row's OWN cell text — already segmented by the pipe-table
+ * splitter above but previously discarded — instead of assuming a fixed
+ * position. Falls back to "code-first" (the pre-existing, 0-diff default
+ * for every VCB/FPT/corporate fixture, and for any table whose header this
+ * function never captured) only when the header is missing or truly
+ * ambiguous (neither keyword found).
+ *
+ * The code-keyword pattern also matches "STT" (Vietnamese "Số Thứ Tự" —
+ * ordinal/sequence number), the income-statement convention seen live for
+ * CTG ("STT | CHỈ TIÊU (Thuyết minh) | …") — without it, a genuinely
+ * code-first STT table with a "Chỉ tiêu" label column would false-positive
+ * into "label-only" (no code column at all) purely because "STT" isn't the
+ * literal word "Mã"/"Code".
+ *
+ * @param headerCells  The captured header row's trimmed cell text, or null
+ *   when no header row was recognized for the current table.
+ */
+function resolveColumnLayout(headerCells: string[] | null): "code-first" | "label-first" | "label-only" {
+  if (!headerCells || headerCells.length < 2) return "code-first";
+  const codeIdx = headerCells.findIndex((c) => /mã|code|stt/i.test(c));
+  const labelIdx = headerCells.findIndex((c) => /mục|chỉ\s*tiêu|item/i.test(c));
+  if (codeIdx === -1 && labelIdx !== -1) return "label-only";
+  if (codeIdx === -1 || labelIdx === -1) return "code-first";
+  return labelIdx < codeIdx ? "label-first" : "code-first";
+}
+
 // ── Main parser ────────────────────────────────────────────────────────────────
 
 /**
@@ -307,6 +421,11 @@ export function parseRefinedMarkdown(
   let rowOrder = 0;
   let headerConsumed = false;
   let prevLineWasSeparator = false;
+  // FIX-BCTC-BANK-BS-COLUMN-ORDER: captured header row cell text (trimmed),
+  // used by resolveColumnLayout() to detect code-first vs label-first
+  // column order for the 4+-column data-row branch below. null until the
+  // first header row is recognized for the current table.
+  let headerCells: string[] | null = null;
 
   const lines = markdown.split("\n");
 
@@ -357,6 +476,16 @@ export function parseRefinedMarkdown(
       } else if (isHeaderRow(rawCells, false)) {
         // Still waiting for the header to resolve, and this row IS the
         // (all-non-numeric) header/label-only row itself — skip it.
+        // FIX-BCTC-BANK-BS-COLUMN-ORDER: capture its cell text (see
+        // resolveColumnLayout doc) before skipping — but only the FIRST
+        // such row per table. Some real bank tables have a merged-cell
+        // header spanning TWO physical header lines (confirmed live: CTG
+        // 2026-Q1 unit-0038 "Mục | Số dư đầu năm | Phát sinh trong năm | |
+        // Số dư cuối kỳ" followed by a blank/"Tăng"/"Giảm" sub-header
+        // continuation line) — the FIRST line carries the meaningful
+        // Mục/Mã column labels; overwriting with the second would discard
+        // that signal.
+        if (headerCells === null) headerCells = rawCells;
         prevLineWasSeparator = false;
         continue;
       } else {
@@ -417,12 +546,50 @@ export function parseRefinedMarkdown(
         [labelRaw, valueCurrentRaw, valuePriorRaw] = rawCells as [string, string, string];
       }
     } else {
-      // 4+ columns: code, label, value_current, value_prior
-      const firstCell = rawCells[0]!.trim();
-      code = firstCell || null;
-      labelRaw = rawCells[1]!;
-      valueCurrentRaw = rawCells[2]!;
-      valuePriorRaw = rawCells[3] ?? null;
+      // 4+ columns: layout depends on the header's own cell order.
+      // FIX-BCTC-BANK-BS-COLUMN-ORDER: this branch used to hardcode
+      // [code, label, value_current, value_prior] (the corporate VAS
+      // convention: "Mã số | Chỉ tiêu | …"). Bank Mẫu B02a/TCTDHN forms are
+      // LABEL-FIRST ("Mục (Item) | Mã (Code) | …", confirmed live for CTG
+      // 2026-Q1) — the hardcoded assumption silently dropped every
+      // blank-Mã row (every section header + BOTH grand totals: "TỔNG TÀI
+      // SẢN CÓ", "TỔNG NỢ PHẢI TRẢ", "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU")
+      // via the "empty label" guard below (the blank Mã cell became an
+      // empty labelRaw), and silently SWAPPED code/label for populated
+      // rows (e.g. "I. Các khoản nợ Chính phủ và NHNN | 7 | …" → code
+      // became the label text, label became "7"). resolveColumnLayout()
+      // reads the captured header text instead of assuming position;
+      // falls back to code-first (0-diff) when no header was captured or
+      // it is ambiguous.
+      const layout = resolveColumnLayout(headerCells);
+      if (layout === "label-only") {
+        // No Mã/code column exists in this table at all — e.g. a bank
+        // equity roll-forward note ("Mục | Số dư đầu năm | Phát sinh
+        // trong năm: Tăng | Giảm | Số dư cuối kỳ", confirmed live for CTG
+        // 2026-Q1 unit-0038/page 45). code stays null. The row schema has
+        // only 2 value slots (value_current/value_prior) — no field for
+        // intermediate "Tăng"/"Giảm" delta columns — so this carries the
+        // FIRST value column (period start) as value_prior and the LAST
+        // (period end) as value_current, discarding only the delta
+        // columns in between. The row itself is never dropped, and the
+        // two carried values are exactly the period-start/period-end
+        // figures the schema already models everywhere else.
+        labelRaw = rawCells[0]!;
+        valueCurrentRaw = rawCells[rawCells.length - 1]!;
+        valuePriorRaw = rawCells[1] ?? null;
+      } else if (layout === "label-first") {
+        labelRaw = rawCells[0]!;
+        const codeCell = rawCells[1]!.trim();
+        code = codeCell || null;
+        valueCurrentRaw = rawCells[2]!;
+        valuePriorRaw = rawCells[3] ?? null;
+      } else {
+        const firstCell = rawCells[0]!.trim();
+        code = firstCell || null;
+        labelRaw = rawCells[1]!;
+        valueCurrentRaw = rawCells[2]!;
+        valuePriorRaw = rawCells[3] ?? null;
+      }
     }
 
     // Parse trust flags from ALL cells

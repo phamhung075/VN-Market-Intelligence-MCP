@@ -67,6 +67,17 @@ export interface BctcCodeRow {
  *   BANK-DEV-2: !rows.some(/^[0-9]{3}/) — broken on income-only corporates
  *   BANK-DEV-3: rows.some(/[A-Za-z]/) — broken on VAS letter-suffix codes (411a, 420a)
  *   BANK-DEV-4: hybrid (this) — correct for all known cases
+ *   FIX-BCTC-BANK-BS-COLUMN-ORDER: BANK-DEV-4's anchor regex required the
+ *     ENTIRE code string to equal a bare Roman numeral/letter. Real
+ *     agentic-refine markdown bolds section/summary codes as its own
+ *     convention (confirmed live: CTG 2026-Q1 income statement stores
+ *     "**I**", "**II**" … "**XV**" — never bare "I"). 0/451 of CTG's real
+ *     codes matched ROMAN_SECTION pre-fix — the entire report was
+ *     misclassified CORPORATE, so every scalar lookup (findByCode targeting
+ *     VAS 270/280/440 etc.) resolved null against a bank-form row set that
+ *     has none of those codes. Fix: strip markdown emphasis markers before
+ *     testing either pattern — VAS 3-digit corporate codes never carry bold
+ *     markup either, so this cannot introduce a new false positive.
  *
  * @param rows  All bctc_table_rows for the report (full set or code-only projection).
  * @returns true if the report follows Mẫu B02-TCTD (bank form); false for corporate.
@@ -75,8 +86,11 @@ export function isBankFormFromRows(rows: BctcCodeRow[]): boolean {
   if (rows.length === 0) return false; // fail-safe: no rows → assume corporate
   const ROMAN_SECTION = /^(XIII|XII|XI|IX|VIII|VII|VI|IV|III|II|I|X|V)(\.\d+)?$|^[AB]$/;
   const CORP_BALANCE  = /^[0-9]{3}/;
-  const hasRomanOrSection = rows.some(r => ROMAN_SECTION.test(r.code ?? ""));
-  const hasCorpBalance    = rows.some(r => CORP_BALANCE.test(r.code ?? ""));
+  // FIX-BCTC-BANK-BS-COLUMN-ORDER: strip markdown emphasis (**bold**,
+  // __bold__, stray */_) before anchor matching — see history note above.
+  const stripEmphasis = (code: string): string => code.replace(/[*_]/g, "").trim();
+  const hasRomanOrSection = rows.some(r => ROMAN_SECTION.test(stripEmphasis(r.code ?? "")));
+  const hasCorpBalance    = rows.some(r => CORP_BALANCE.test(stripEmphasis(r.code ?? "")));
   return hasRomanOrSection && !hasCorpBalance;
 }
 
