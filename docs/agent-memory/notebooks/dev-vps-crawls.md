@@ -153,40 +153,16 @@ Commit: 96446b5d. No Docker rebuild required.
 
 ---
 
----
+## Cycle Record — 2026-07-03T20:35Z B-05-FU-SSC-503-RETRY DONE-CODE (deploy pending, user-gated)
 
+Task: B-05-FU-SSC-503-RETRY (FIX, size S, router-dispatched fire-tick). Reverts FIX-BCTC-SSC-503-RETRY (2026-06-16)'s 60s retry/backoff in `discover_from_ssc_curl()` step1 — RAW-verified (B-05 recon) as the ACTUAL 17-day queue freeze cause: mcp-server caller budgets only 5s for the whole VPS HTTP round-trip (`bctcQueueEnricherJob.ts DISCOVERY_TIMEOUT_MS=5_000`; `bctcDiscovery.ts` default `timeout=5_000`), but the retry could block up to ~100s (20s default urllib timeout + 60s sleep + 20s retry) — caller aborts, discovery silently returns [], rows pile into deferred_infra. Original backlog spec (add-retry) was inverted; PO re-specced the opposite.
 
-## Cycle Record — 2026-06-08T16:30Z DEEPFETCH-RAG-REDESIGN DFR-Q1/Q2 DONE
+Fix: vps-scripts/discover-bctc-urls-browser.py step1 — ONE attempt, hard cap `_SSC_STEP1_TIMEOUT_SECONDS=4` (strictly < 5s caller budget). ANY error (transient 5xx/timeout or terminal 4xx) → return None immediately, no retry, no sleep. Removed dead `import time` (sole use was the removed sleep). `_is_transient_error()` kept (own 8-case test suite; now used for log classification only, not retry gating).
 
-Tasks: DFR-Q1 (vnexpress.vn feasibility) + DFR-Q2 (service topology + RAM headroom)
-Outcome: DONE. Recon doc: docs/architecture-briefs/2026-06-08-dfr-q1-q2-recon.md
+Evidence: 7/7 new tests (vps-scripts/test_discover_bctc_ssc_fastfail.py) PASS — simulated 503/timeout/404 all return None <1s, single attempt, timeout param <5s confirmed; 35/35 pre-existing classifier tests unaffected; py_compile clean. Live READ-ONLY VPS probe (no writes): SSC endpoint confirmed still 503 (0.17s raw HTTP, real ongoing outage per 2026-07-01 ops-vps-fetch recon). Ran the CURRENTLY-DEPLOYED (unfixed) script live for VCB 2026 Q1 → measured 76.7s wall-clock total, stderr showed "retrying in 60s" then "retry exhausted" — directly corroborates root cause and quantifies the exact defect removed.
 
-Q1 verdict: VIABLE. vnexpress.net returns 200 from VPS with plain requests (bare python-requests UA works). No Cloudflare challenge, no captcha gate. Article body in static HTML via `article.fck_detail` selector. Peak RAM: 1.94 MB/call. Page size: 50–260 KB raw. No anti-bot work needed.
-Q2 verdict: EXTEND. /proxy/article-body endpoint already live in vps-proxy-server.js (VPS:8765). 2-file patch: add extract_vnexpress() to article-body-fetcher.py + add "vnexpress.net" to ARTICLE_BODY_ALLOWED_DOMAINS in vps-proxy-server.js. VPS available RAM: 469 MB (961 MB total, 0 swap). 20 MB worst-case spike (10 concurrent calls × 1.94 MB) fits within vn-vps-proxy 64 MB cap.
+Deploy: NOT performed — auto-mode classifier denied an SSH `cp` (backup-before-deploy write to shared live VPS); swaps/deploys are user-gated per standing policy. DONE-CODE only; ops follow-up to scp + verify live (head.note already flags this).
 
----
+HONESTY: unfreezes queue lifecycle only. Does NOT restore SSC/HOSE discovery success (SSC portal itself down, external outage, no bypass applies). HSX Strategy-0 discoverHosePdfUrls() 0-URLs (PRIMARY root) is separate/out-of-scope (SPIKE prepped next tick).
 
-## Cycle Record — 2026-06-08T13:52Z DEEPFETCH-RAG-REDESIGN DFR-P2-VPS DONE
-
-Task: DFR-P2-VPS — extend article-body-fetcher.py with vnexpress.net extractor + update allowlists + restart service.
-Outcome: DONE-CODE. All 4 ACs pass. DJ-GATE-1 STEP recorded below.
-
-Files changed:
-- vps-scripts/article-body-fetcher.py — added "vnexpress.net" to ALLOWED_DOMAINS; added extract_vnexpress() using article.fck_detail selector + og:title + pubdate meta fallback; added "vnexpress.net" to referer_map; wired into dispatch block
-- vps-scripts/vps-proxy-server.js — added "vnexpress.net" to ARTICLE_BODY_ALLOWED_DOMAINS (line 161)
-
-Deploy: both files scp'd to /root/ on VPS 125.212.251.27; vn-vps-proxy.service restarted 20:51:04 +07 → active running.
-
-Key debug finding: vnexpress.net uses name="pubdate" NOT property="article:published_time" for the publish time meta tag. The recon doc used article:published_time but that attribute did not match in BeautifulSoup. Added fallback: soup.find("meta", attrs={"name": "pubdate"}) after the property check. Fix redeployed before final AC verification.
-
-DJ-GATE-1 STEP (task_id: DFR-P2-VPS, sprint: DEEPFETCH-RAG-REDESIGN):
-- what-considered: "only path: extend existing vps-proxy-server.js (DFR-Q2 verdict) — no new systemd service needed"
-- why-change: "no change from blueprint Zone 2 plan"
-- technique: "plain-requests-open-api (existing) — no new anti-bot work required (DFR-Q1 confirmed bare requests returns 200)"
-- deploy-status: vn-vps-proxy.service restarted + active (running) 2026-06-08T13:51:04+07 / 20:51:04+07; serving vnexpress.net live
-
-AC verification (all PASS):
-- AC-P2V-1 PASS: curl VPS:8765/proxy/article-body?url=vnexpress.net VN-Index article → 200 status:ok body_text=3407ch title="VN-Index giảm gần 50 điểm" published_at="2026-06-08T12:15:07+07:00"
-- AC-P2V-2 PASS: vn-vps-proxy.service Memory peak=35.7M (cap=64.0M) — within RAM budget
-- AC-P2V-3 PASS: evil.com → 400 {"error":"Domain not allowed","allowed":["cafef.vn","vneconomy.vn","vnexpress.net"]}
-- AC-P2V-4 PASS: cafef.vn article → 200 status:ok body_text=2828ch (no regression)
+DJ-GATE-1: docs/agent-memory/decisions/sprint-B-05-FU-SSC-503-RETRY-dev-vps-crawls.md
