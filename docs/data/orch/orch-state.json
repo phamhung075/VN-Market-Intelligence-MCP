@@ -526,6 +526,17 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": "docs/signals/router-flowdefect-orphan-adoption-guard-20260703.md"
+      },
+      {
+        "id": "sau-2026-07-03T08:41:40Z",
+        "ts": "2026-07-03T08:41:40Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_health_corroboration",
+        "summary": "A-13 RESOLVED: api-gateway health endpoint recovered (was unreachable 54min ago, now HTTP 200)",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
