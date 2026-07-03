@@ -1309,7 +1309,7 @@
         ],
         "sender_rules": {
           "unified-agent": "Chef — 3 guaranteed daily dishes (Morning 05:23/EOD 08:37/Evening 19:37 UTC) + conditional intraday. Narrative 2-4 paragraphs. TNB 6-layer walk.",
-          "alert-commander": "Event-only — position-danger (3-condition) or watchlist-opportunity (4-condition) ONLY. ≤140 chars. Silent exit otherwise.",
+          "alert-commander": "Event-only — position-danger (3-condition), watchlist-opportunity (4-condition), or verified_chain/legal_risk/crisis_velocity (CRITICAL always, no conditions). ≤140 chars. Silent exit if none fire.",
           "digest-predict": "Weekly Sunday 13:47 UTC calibration + portfolio thesis only. No daily digest.",
           "qa-responder": "/ask FIFO queue replies only."
         },
