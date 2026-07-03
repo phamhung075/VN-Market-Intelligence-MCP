@@ -243,12 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-07-03T03:34:45Z",
+    "status": "idle",
+    "updated_at": "2026-07-03T03:42:38Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION",
-    "next_agent": "developer",
-    "note": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION claimed — developer fixes matcher stdout pollution + preflight 2>&1 capture. Promote -> review on green verify + commit."
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION promoted to review (commit 27f9a6ade, RAW-verified). Head idle — free slot for next tick."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9371,27 +9371,6 @@
         "status_note": "[dispatcher 2026-07-02T00:22:36Z] Code phase DONE: commit d9280133 (last_attempt stamping + enrich_failed retry arm + standalone reset migration, 8/8 targeted tests, RAW-verified). Deploy phase PARKED: single-svc mcp-server rebuild denied by permission classifier (production deploy needs operator approval in this window). Remaining on approval: rebuild -> verify new image sha -> reset migration dry-run (expect 21 rows) -> apply -> verify next */15 enricher cycle stamps attempts/last_attempt (SSC portal domain-wide 503 since ~23:07Z — verify mechanism, source_url may stay empty until SSC recovers). [po-triage 2026-07-02T00:36Z A-30 FOLD] The SAME parked mcp-server rebuild also relieves system-auditor A-30 (msg 3117, signal_id 8196): mcp-server memory 96.81% (1.936GiB/2GiB), RestartCount=0, all containers healthy = classic stale-image mem-leak scar (rebuild fixes it). No separate ops task minted — fold into this rebuild. Still PARKED awaiting operator approval; do NOT unpark (operator decision).",
         "assigned_to": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
         "dispatched_at": "2026-07-01T23:32:10Z"
-      },
-      {
-        "id": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION",
-        "status": "IN_PROGRESS",
-        "title": "cowork slot-matcher diagnostics pollute preflight JSON parse -> cadence-skip ticks fall back to full flow (defeats token-economy preflight)",
-        "owner": "po",
-        "next_agent": "developer",
-        "zone": "cross-service",
-        "type": "FIX",
-        "priority": "normal",
-        "size": "S",
-        "created_at": "2026-07-03T03:31:15Z",
-        "files": [
-          "scripts/agents-flow/cowork-match-slots.js",
-          "scripts/agents-flow/cowork-tick-preflight.sh"
-        ],
-        "status_note": "AC: a cadence-skip/suppress tick yields a clean verdict JSON (no false ERROR \"non-JSON output\"); diagnostics still visible on stderr; exit!=0 error path still surfaces matcher stderr in verdict. ROOT (2 files): (1) cowork-match-slots.js writes diagnostics to stdout via console.log at L203 (cadence suppress) + L228 (cadence skip) while its ONLY intended stdout is the JSON contract (process.stdout.write @L267). (2) cowork-tick-preflight.sh:204 slot_result=$(eval \"$SLOT_MATCHER_CMD\" 2>&1) folds stderr INTO the buffer that L209 jq -c .slots parses — so console.log->console.error ALONE (report suggestion) is INSUFFICIENT; the 2>&1 still merges them. Fix BOTH diagnostics->console.error AND change preflight L204 to capture stdout(JSON) separately from stderr, preserving the exit!=0 error-message path (L206). Impact: every in-tick cadence-skip -> jq parse fails -> ERROR verdict -> expensive full flow instead of cheap SILENT path, partially defeating parent sprint TOKEN-ECONOMY-TICK-PREFLIGHT (DONE). Low severity (fallback runs) but recurring token-cost regression + noisy false-ERROR verdicts. Source: telegram report 3417 (2026-07-03T03:23:48Z), first occurrence.",
-        "source_report": 3417,
-        "claimed_at": "2026-07-03T03:34:45Z",
-        "claimed_by": "router",
-        "dispatch_note": "Dispatched developer 2026-07-03T03:34:45Z. Two-file fix per PO triage (report 3417): (1) scripts/agents-flow/cowork-match-slots.js L203+L228 console.log->console.error (stdout stays JSON-only, sole emit at L267); (2) scripts/agents-flow/cowork-tick-preflight.sh:204 capture stdout(JSON) separately from stderr while preserving the exit!=0 error-message path (L206) that surfaces matcher stderr in the verdict. AC: cadence-skip/suppress tick yields clean verdict JSON (no false ERROR non-JSON output); diagnostics still visible on stderr; exit!=0 path still surfaces matcher stderr."
       }
     ],
     "ready": [],
@@ -9579,6 +9558,30 @@
         "updated_by": "po",
         "assignee": "ops",
         "review_note": "Repo scope COMPLETE 2026-07-02T18:43:27Z: commit 4dbf7ef0 — docker-compose.yml:71 + docker-compose.dev.yml:34 memory 2g->3g (mcp-server only; docker compose config renders 3GiB, no other service changed; RAW-verified by router). SWAP PENDING (user-gated): user must run docker compose build mcp-server then docker compose up -d --no-deps mcp-server. Post-swap AC: new image ID, mem baseline low, re-sample sawtooth 24-48h @3GiB — outcome feeds unpark gate of FIX-MCP-MEMORY-CODE-LEAK (parked, pm). || CORROBORATION 2026-07-02T21:28:10Z (po triage, signal sau-a21-202607022116, system-auditor A-21 HIGH): mcp-server RestartCount 3->4 with in-place memory collapse 95.28%->15.89% @c500 — a crash/OOM in-place restart RESET the sawtooth (the exact OOM-at-2GB-cap failure this Track-1 cap-bump mitigates). Container STILL runs the OLD 2g image (user-gated build+up NOT yet executed) -> restarts CONTINUE until the swap lands. URGENCY RAISED: ops should re-emit the user-gate swap commands (docker compose build mcp-server ; docker compose up -d --no-deps mcp-server). No gate work-around performed."
+      },
+      {
+        "id": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION",
+        "status": "REVIEW",
+        "title": "cowork slot-matcher diagnostics pollute preflight JSON parse -> cadence-skip ticks fall back to full flow (defeats token-economy preflight)",
+        "owner": "po",
+        "next_agent": "qa",
+        "zone": "cross-service",
+        "type": "FIX",
+        "priority": "normal",
+        "size": "S",
+        "created_at": "2026-07-03T03:31:15Z",
+        "files": [
+          "scripts/agents-flow/cowork-match-slots.js",
+          "scripts/agents-flow/cowork-tick-preflight.sh"
+        ],
+        "status_note": "AC: a cadence-skip/suppress tick yields a clean verdict JSON (no false ERROR \"non-JSON output\"); diagnostics still visible on stderr; exit!=0 error path still surfaces matcher stderr in verdict. ROOT (2 files): (1) cowork-match-slots.js writes diagnostics to stdout via console.log at L203 (cadence suppress) + L228 (cadence skip) while its ONLY intended stdout is the JSON contract (process.stdout.write @L267). (2) cowork-tick-preflight.sh:204 slot_result=$(eval \"$SLOT_MATCHER_CMD\" 2>&1) folds stderr INTO the buffer that L209 jq -c .slots parses — so console.log->console.error ALONE (report suggestion) is INSUFFICIENT; the 2>&1 still merges them. Fix BOTH diagnostics->console.error AND change preflight L204 to capture stdout(JSON) separately from stderr, preserving the exit!=0 error-message path (L206). Impact: every in-tick cadence-skip -> jq parse fails -> ERROR verdict -> expensive full flow instead of cheap SILENT path, partially defeating parent sprint TOKEN-ECONOMY-TICK-PREFLIGHT (DONE). Low severity (fallback runs) but recurring token-cost regression + noisy false-ERROR verdicts. Source: telegram report 3417 (2026-07-03T03:23:48Z), first occurrence.",
+        "source_report": 3417,
+        "claimed_at": "2026-07-03T03:34:45Z",
+        "claimed_by": "router",
+        "dispatch_note": "Dispatched developer 2026-07-03T03:34:45Z. Two-file fix per PO triage (report 3417): (1) scripts/agents-flow/cowork-match-slots.js L203+L228 console.log->console.error (stdout stays JSON-only, sole emit at L267); (2) scripts/agents-flow/cowork-tick-preflight.sh:204 capture stdout(JSON) separately from stderr while preserving the exit!=0 error-message path (L206) that surfaces matcher stderr in the verdict. AC: cadence-skip/suppress tick yields clean verdict JSON (no false ERROR non-JSON output); diagnostics still visible on stderr; exit!=0 path still surfaces matcher stderr.",
+        "promoted_at": "2026-07-03T03:42:38Z",
+        "promoted_by": "router",
+        "review_note": "Developer done: commit 27f9a6ade (cowork-match-slots.js L203/L228 console.log->console.error; cowork-tick-preflight.sh Step 6 splits stdout/stderr via mktemp, exit!=0 path surfaces stderr in detail) + journal 643f000ab. Router RAW-verified: histogram+forbidden CLEAN, 16/16 matcher tests, 20/20 preflight tests, stub harnesses prove stdout-pure JSON on cadence-skip/suppress + ERROR detail carries matcher stderr. Live preflight NOT run by developer (claims real election locks) — first real cadence-skip tick is the field verification."
       }
     ],
     "qa": [],
