@@ -19,3 +19,5 @@
 
 ## [Market Watcher] EOD Updates
 2026-07-02 16:00 | Close: 77,300 VND | RSI: 35 | Vol: 453.5K (-45.2% avg) | YoY: -6.0% | Anomaly: YES — Low volume trading; downtrend from 85.2 peak; RSI oversold below 40 | Brief action: Watch | Regime: NEUTRAL
+
+2026-07-03 16:00 | Close: 75,300 VND | RSI: 35.6 | Vol: 1.65M (130% avg) | YoY: -10.89% | Anomaly: YES — Continued weakness -2.59%; oversold RSI 35.6; all 4 technicals bearish (MACD hist -564 declining, MA bear arrangement); BB low 3.2% above lower band. Stabilization attempt at 74,966 BB lower. USD strength headwind (DXY 100.77). | Brief action: Watch for MACD flip + RSI >50 before reentry | Regime: NEUTRAL

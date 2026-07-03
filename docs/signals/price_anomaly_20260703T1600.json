@@ -1,0 +1,52 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-07-03T16:06:30Z",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "HVN",
+      "price": 25300,
+      "daily_change_pct": 6.53,
+      "yoy_change_pct": 18.22,
+      "volume": 3216800,
+      "vs_avg_pct": 363,
+      "rsi": 70.9,
+      "sentiment": "positive (air-travel outlook, airport capacity expansion Sun Group partnership)",
+      "insider_activity": "no reported activity",
+      "brief_action": "Hold — RSI overbought, await pullback to MA20",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Price surge +6.53%, overbought RSI 70.9, volume spike 3.6× avg, BB breakout 105% above mid-band, 3/4 technicals bullish — continuation risk from profit-taking"
+    },
+    {
+      "code": "GAS",
+      "price": 75300,
+      "daily_change_pct": -2.59,
+      "yoy_change_pct": -10.89,
+      "volume": 1649400,
+      "vs_avg_pct": 130,
+      "rsi": 35.6,
+      "sentiment": "negative (USD strength headwind for oil exporters, CPI moderation reduces rate support)",
+      "insider_activity": "no reported activity",
+      "brief_action": "Watch — oversold, accumulate on MACD flip + RSI >50",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Price weakness -2.59%, oversold RSI 35.6, all 4 technicals bearish (MACD hist -564 declining, MA bear arrangement), 30d YTD -10.89% — stabilization attempt at 74,966 BB lower band"
+    },
+    {
+      "code": "EIB",
+      "price": 20.650,
+      "daily_change_pct": -1.20,
+      "yoy_change_pct": 0,
+      "volume": 0,
+      "vs_avg_pct": 0,
+      "rsi": 0,
+      "sentiment": "mixed (direct mention in 2 articles on FII shark-tracking + rumored insider accumulation — signal noise or early accumulation?)",
+      "insider_activity": "rumored accumulation per news source",
+      "brief_action": "Watch — monitor next 3 sessions for volume confirmation",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "News mention (MEDIUM alert) but price move -1.20% is within normal banking sector range (-0.21% avg); technical setup neutral; elevated news mention ≠ price anomaly"
+    }
+  ]
+}
