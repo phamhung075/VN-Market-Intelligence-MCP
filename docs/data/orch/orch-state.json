@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T01:33:39Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-03T02:53:40Z",
+    "_updated_by": "dev-team-drain",
     "archive": [],
     "rows": [
       {
@@ -294,11 +294,13 @@
         "type": "data_stale",
         "summary": "bctc-discover stale 390h (check B-05)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "router_note": "router triage 2026-07-03T02:45Z: suspected KNOWN cause — bctc-discover last fetch 2026-06-16 + vn-bctc-fetch VPS route unhealthy aligns with HNX SSL outage; fix BCTC-HNX-SSL-HARDEN is deploy-pending behind user gate (scripts/deploy-vinahost.sh). PO: verify freshness recovers post-deploy before spawning any new deep-dive; do NOT self-resolve until fetch confirmed green."
-        }
+        },
+        "_read_at": "2026-07-03T02:53:40Z",
+        "_read_by": "dev-team-drain"
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
