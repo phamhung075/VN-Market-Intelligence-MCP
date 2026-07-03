@@ -7360,6 +7360,24 @@
         ],
         "status_note": "AC (doc-only): (1) scripts/auditor-notebook-commit.sh appends the required Claude-Session commit trailer per docs/policies/commit-convention.md; (2) system-auditor flow gets one doc line clarifying election-release ownership — a router-held fire-election lock is NEVER released by the auditor subagent (left to TTL). Non-urgent.",
         "blocking": false
+      },
+      {
+        "id": "FIX-COWORK-PREFLIGHT-DIAGNOSTIC-STDOUT-POLLUTION",
+        "status": "BACKLOG",
+        "title": "cowork slot-matcher diagnostics pollute preflight JSON parse -> cadence-skip ticks fall back to full flow (defeats token-economy preflight)",
+        "owner": "po",
+        "next_agent": "developer",
+        "zone": "cross-service",
+        "type": "FIX",
+        "priority": "normal",
+        "size": "S",
+        "created_at": "2026-07-03T03:31:15Z",
+        "files": [
+          "scripts/agents-flow/cowork-match-slots.js",
+          "scripts/agents-flow/cowork-tick-preflight.sh"
+        ],
+        "status_note": "AC: a cadence-skip/suppress tick yields a clean verdict JSON (no false ERROR \"non-JSON output\"); diagnostics still visible on stderr; exit!=0 error path still surfaces matcher stderr in verdict. ROOT (2 files): (1) cowork-match-slots.js writes diagnostics to stdout via console.log at L203 (cadence suppress) + L228 (cadence skip) while its ONLY intended stdout is the JSON contract (process.stdout.write @L267). (2) cowork-tick-preflight.sh:204 slot_result=$(eval \"$SLOT_MATCHER_CMD\" 2>&1) folds stderr INTO the buffer that L209 jq -c .slots parses — so console.log->console.error ALONE (report suggestion) is INSUFFICIENT; the 2>&1 still merges them. Fix BOTH diagnostics->console.error AND change preflight L204 to capture stdout(JSON) separately from stderr, preserving the exit!=0 error-message path (L206). Impact: every in-tick cadence-skip -> jq parse fails -> ERROR verdict -> expensive full flow instead of cheap SILENT path, partially defeating parent sprint TOKEN-ECONOMY-TICK-PREFLIGHT (DONE). Low severity (fallback runs) but recurring token-cost regression + noisy false-ERROR verdicts. Source: telegram report 3417 (2026-07-03T03:23:48Z), first occurrence.",
+        "source_report": 3417
       }
     ],
     "closed_sprints": [
