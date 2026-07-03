@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T03:00:04.879Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-07-03T03:04:40Z",
+    "_updated_by": "cowork-drain",
     "archive": [],
     "rows": [
       {
@@ -294,8 +294,10 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:VCB:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -305,8 +307,10 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:ACB:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -316,8 +320,10 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:HPG:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -327,8 +333,10 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:GVR:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -338,8 +346,10 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:HVN:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -349,8 +359,10 @@
         "type": "system_issue",
         "summary": "held lock esc-deepdive:GVR:Q1-2026:ESC-4 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -360,8 +372,10 @@
         "type": "system_issue",
         "summary": "held lock esc-deepdive:MBB:Q1-2026:ESC-2 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -371,8 +385,10 @@
         "type": "system_issue",
         "summary": "held lock cron:dev-team:2026-07-03T02:37Z has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -382,8 +398,10 @@
         "type": "system_issue",
         "summary": "held lock dev-team-cron-singleton has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -393,8 +411,10 @@
         "type": "system_issue",
         "summary": "held lock cron:auditor-t1:2026-07-03T02:30Z has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-d4-202607030300",
@@ -404,8 +424,10 @@
         "type": "system_issue",
         "summary": "held lock po-triage-20260703 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "_read_at": "2026-07-03T03:04:40Z",
+        "_read_by": "cowork-drain"
       },
       {
         "id": "sau-20260703T024117Z",
@@ -2851,7 +2873,8 @@
         "title": "system-auditor D4 emits one signal_queue row PER divergence but all share a single run-scoped id (sau-d4-<YYYYMMDDHHMM>) — this defeats id-based dedup at drain (collapsing distinct findings) and inflates the queue (75 rows under one id on 2026-06-05). Harden: either emit ONE rollup signal with a findings[] array (matches anomaly-task-bridge 'one deduped entry' philosophy), or give each finding a unique id (append a stable hash of the summary). Flow doc: docs/agents/system-auditor/handlers.md Emit format. Now low-urgency since expired:false fix removes the false-positive volume, but the id-collision is still a latent correctness gap if multiple REAL divergences ever co-occur.",
         "type": "FIX",
         "zone": "docs/agents/system-auditor",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-AUDITOR-D4-SIGNAL-ID"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-AUDITOR-D4-SIGNAL-ID",
+        "recur_20260703T0300": "Recurrence (cowork tick 03:00Z D-4 sweep): 11 signal_queue rows emitted ALL under one dup id sau-d4-202607030300 (dup-key last-wins → 10 clobbered). Confirms candidate FIX scope (a): D-4 emitter must suffix per-lock ids. Sibling FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE covers scope (b) detector whitelist. All 11 rows already READ (cowork-drain, do-not-reflip). recorded=2026-07-03T03:06:43Z"
       },
       {
         "id": "FDA-5",
@@ -5178,7 +5201,8 @@
         "scope_widened": "False-positive set is NOT only esc-datacov: it ALSO includes reservation/dispatch sprint-task locks held by a LIVE peer session (d3292ca4 MARKET-INDICATOR-DEPTH-P0 P1 wave: IND-P1-ROC-MOMENTUM/RELATIVE-STRENGTH/52W-HIGH/FOREIGN-ACCUM-RANK/MCP-PROXY + BA-IND-P1-MOMENTUM-RS). Correct fix = WHITELIST from held-lock-no-board-row: (a) long-TTL data-coverage guards (esc-datacov:*, 8d TTL); (b) sprint-task reservation/dispatch locks whose owner_client_session is LIVE and lock unexpired (a live-held unexpired lock is NOT orphaned).",
         "class_b_folded": "2nd sub-fix, same root (D4 blind to cross-session multi-sprint concurrency): D4 ALSO false-flags 'orch-state/lock mismatch active=<head> held=<lock>' — it assumes head.active_task_id must equal EVERY held sprint-task lock. WRONG under N-sprint concurrency: head tracks ONE sprint (e.g. BA-DEFERRED-SCHEDULER) while a live peer legitimately holds OTHER sprints' locks. Fix: do NOT emit active≠held when the held lock belongs to a live concurrent session.",
         "next_agent": "agent-father",
-        "debounce_and_exclusion_spec": "FREEZE refinement (folded 2026-07-01T03:21:59Z, dev-team-requested @tick 2026-07-01T03:07Z): the D4 predicate MUST (1) EXCLUDE from BOTH the held-lock-no-board-row AND the active!=held-mismatch checks: persistent SF-1 `dev-team-cron-singleton`, fire-election `cron:dev-team:*`, and long-lived `esc-*` escalation locks — all are expected to be held CONCURRENTLY with any active task by design (SF-1=persistent leader, fire-election=per-tick, esc-*=1-8d escalation markers with no board row). (2) DEBOUNCE transient dispatch snapshots: require the head/lock mismatch to PERSIST across >1 consecutive audit cycle before emitting. The 03:00Z batch snapshotted MID-DISPATCH (dev-team commit 3af22c24 + qa flipping TASK_1996/TASK-FFT-L4 review->done_verified 02:58-03:15Z); every finding self-resolved within the same audit interval. 8 reports from ONE transient snapshot = auditor-predicate NOISE, not a live defect. Complements class_b_folded (live-concurrent-session guard) + scope_widened (whitelist) already on this row."
+        "debounce_and_exclusion_spec": "FREEZE refinement (folded 2026-07-01T03:21:59Z, dev-team-requested @tick 2026-07-01T03:07Z): the D4 predicate MUST (1) EXCLUDE from BOTH the held-lock-no-board-row AND the active!=held-mismatch checks: persistent SF-1 `dev-team-cron-singleton`, fire-election `cron:dev-team:*`, and long-lived `esc-*` escalation locks — all are expected to be held CONCURRENTLY with any active task by design (SF-1=persistent leader, fire-election=per-tick, esc-*=1-8d escalation markers with no board row). (2) DEBOUNCE transient dispatch snapshots: require the head/lock mismatch to PERSIST across >1 consecutive audit cycle before emitting. The 03:00Z batch snapshotted MID-DISPATCH (dev-team commit 3af22c24 + qa flipping TASK_1996/TASK-FFT-L4 review->done_verified 02:58-03:15Z); every finding self-resolved within the same audit interval. 8 reports from ONE transient snapshot = auditor-predicate NOISE, not a live defect. Complements class_b_folded (live-concurrent-session guard) + scope_widened (whitelist) already on this row.",
+        "recur_20260703T0300": "Recurrence (cowork tick 03:00Z D-4 sweep): filed 10/11 KNOWN-LEGIT held-lock-no-board-row findings (5x esc-datacov:{VCB,ACB,HPG,GVR,HVN}:ESC-3, 2x esc-deepdive guards GVR:ESC-4/MBB:ESC-2, 4x live operational locks: dev-team-cron-singleton SF-1 + cron:dev-team + cron:auditor-t1 + po-triage). Confirms candidate FIX scope (b): D-4 detector must whitelist operational/guard patterns (cron:*, *-singleton, task:po-triage-*, esc-datacov:*, esc-deepdive:*, session-presence, commit-mutex, intent:*). Sibling FU-AUDITOR-D4-SIGNAL-ID covers scope (a). recorded=2026-07-03T03:06:43Z"
       },
       {
         "id": "FIX-FBPOSTER-SENTIMENT-TREND-BARE-CALL",
