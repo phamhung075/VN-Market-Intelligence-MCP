@@ -243,13 +243,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CHORE-GITIGNORE-CLAUDE-TMP",
-    "next_agent": "qa",
-    "next_action": "qa executing CHORE-GITIGNORE-CLAUDE-TMP (S4 CLEAN): .gitignore .claude/tmp/ + git rm --cached 111 orch-hook-proposal-*.json + verify orch-apply.sh scratch-independence. On qa complete: router RAW-verify (0 UUID leak on added lines, orch-apply still applies, DJ entry present) then promote in_progress->done_verified. Backlog remaining (PLAN-ONLY): FIX-BCTC-FULL-BATCH-CONTAMINATION (architect-first), FEAT-SEVERITY-OVERRIDE-SURFACING, FIX-AGENT-NOTEBOOK-UUID-PROVENANCE, FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT, RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL (ops/infra-vps). ROBUST-tier legal-risk batch still DEPLOY-GATED.",
-    "updated_at": "2026-07-03T19:00:00Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "CHORE-GITIGNORE-CLAUDE-TMP done_verified (qa PASS, router RAW-verified). dev WIP=0 — idle. Backlog (PLAN-ONLY, PO-triaged not-single-shot-ready): FIX-BCTC-FULL-BATCH-CONTAMINATION (HIGH, architect-first handler-vs-gateway); FEAT-SEVERITY-OVERRIDE-SURFACING; FIX-AGENT-NOTEBOOK-UUID-PROVENANCE (MEDIUM — sub-fix A of session-UUID-hygiene, agent notebooks); FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT (LOW); RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL (ops/infra-vps, PLAN-ONLY). DEPLOY-GATED (pending mcp-server rebuild): FIX-LEGAL-RISK ROBUST tier + pdfpull-guard + COLUMN-ORDER finalize_bctc_refine CTG.",
+    "updated_at": "2026-07-03T19:18:15Z",
     "updated_by": "router",
-    "note": "19:00Z: CHORE-GITIGNORE-CLAUDE-TMP backlog->in_progress (S4 CLEAN, dev-team tick 18:37Z). Dispatched qa run_in_background. dev WIP=1."
+    "note": "19:15Z: CHORE-GITIGNORE-CLAUDE-TMP in_progress->done_verified (qa PASS a5cccbafa, router RAW-verified: 0 added-line UUID, 111 untracked, orch-apply independent). dev WIP=0 — idle."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -505,6 +505,17 @@
         "payload_ref": null,
         "resolution": "routed-to RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL (PLAN-ONLY backlog, ops); corroborated-real extraction stall; ops/deploy-gated, not a dev coding lane",
         "resolved_at": "2026-07-03T19:00:57Z"
+      },
+      {
+        "id": "sau-2026-07-03T19:16:47Z",
+        "ts": "2026-07-03T19:16:47Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "mcp-server A-30 WARN memory 87.54%",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-03T16:14:00Z",
@@ -9909,6 +9920,31 @@
         "qa_commit": "36fa3932b",
         "signoff_note": "[router 2026-07-03T18:37Z] qa accbf4483 verdict APPROVED (commit 36fa3932b — 3 qa docs ONLY: report+decision-journal+notebook; orch-state/code/config untouched; 0 raw-UUID value leak). Router RAW-verified PASS. qa independently re-ran (not trusting dev numbers): FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK.test.ts 7 pass/0 fail; 14-file adjacent net 124 pass/0 fail; tsc --noEmit 0 errors; full suite run twice 66-69 fail/1170 (under ceiling 348, all pre-existing pollNews/VPS-push/network flake, none import legalRiskTools/alertVerdictTools/alertVerdictStore); shared days=30 default PRESERVED (7 call sites/6 flows); TC4 repeat-fire-suppression scoped to post-fire write_alert_verdict bookkeeping (preserves alert-policy.md no-suppression for NEW legal_risk); DDD+security+mock-guard PASS. QUICK tier LIVE now (stage-bootstrap.md days=1,hours_back=6). ROBUST tier (legalRiskTools.ts computeCutoffIso+hours_back opt-in; alertVerdictTools.ts (ticker,alertSource) pending-verdict dedup) merged but DEPLOY-GATED — inert until next mcp-server rebuild. Fix commits 3badf5fe5+ce4051a7b. Report reports/TASK_REPORT_FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK.md. Non-blocking QA finding: 3 already-merged dev-mcp-server.md notebook entries (85267b624,1a9cda30b,e73a53688) carry unscrubbed raw session UUID predating this task — same leak class now tracked by backlog FIX-AGENT-NOTEBOOK-UUID-PROVENANCE.",
         "deploy_gate": "ROBUST tier deploy-gated: batch with pending mcp-server rebuild items (pdfpull-guard, COLUMN-ORDER finalize_bctc_refine CTG)."
+      },
+      {
+        "id": "CHORE-GITIGNORE-CLAUDE-TMP",
+        "title": "gitignore .claude/tmp/ and git rm --cached the 111 tracked orch-hook-proposal-*.json snapshots (transient hot-file hook artifacts; each leaks session UUID + pure repo bloat)",
+        "owner": "qa",
+        "type": "CLEAN",
+        "status": "DONE_VERIFIED",
+        "zone": "cross-service/",
+        "priority": "medium",
+        "created_at": "2026-07-03T18:32:21Z",
+        "status_note": "PLAN-ONLY. Split from CHORE-SESSION-UUID-HYGIENE (sub-fix B). Add .claude/tmp/ to .gitignore; git rm --cached the 111 tracked orch-hook-proposal-*.json. VERIFY scripts/orch-apply.sh writes these as scratch and does NOT depend on them being tracked (reads/writes transiently), then confirm orch-apply pipeline still validates+applies after untracking. Forward-fix only; NO git filter-repo of pushed history (leaked value is the ephemeral owner_client_session coordination token, dies at session end). Source: docs/signals/router-session-uuid-hygiene-20260703.md.",
+        "dev_agent": "qa",
+        "dispatched_by": "router",
+        "dispatched_at": "2026-07-03T19:00:00Z",
+        "dispatch_note": "[router 2026-07-03T19:00Z] dev-team tick 18:37Z S4 CLEAN dispatch. PO acb64c64d6253e8ae RETURN BATCH=[CHORE-GITIGNORE-CLAUDE-TMP] (type CLEAN, cross-service/, deploy-independent single-shot). Spawned qa run_in_background: add .claude/tmp/ to .gitignore + git rm --cached the 111 tracked orch-hook-proposal-*.json (UUID-leak + repo bloat); MUST verify scripts/orch-apply.sh treats .claude/tmp/ as scratch (does NOT depend on tracking) + confirm orch-apply still validates+applies after untracking; forward-fix only, NO history rewrite. qa commits code (.gitignore + rm --cached) index-only + writes decision-journal (task-id CHORE-GITIGNORE-CLAUDE-TMP) + task report. Router promotes -> done_verified next tick after RAW-verify.",
+        "done_verified": true,
+        "verified_by": "router",
+        "verified_at": "2026-07-03T19:18:15Z",
+        "qa_agent": "qa",
+        "qa_verdict": "PASS",
+        "qa_commits": [
+          "d786f1d1b",
+          "83db0a8de"
+        ],
+        "signoff_note": "[router 2026-07-03T19:15Z] qa (CLEAN task — executes AND self-gates) COMPLETE + router RAW-verified PASS. Commits d786f1d1b (gitignore .claude/tmp/ + git rm --cached 111 orch-hook-proposal-*.json) + 83db0a8de (DJ + task report). RAW-verify ground-truth: 0 raw-UUID on ADDED lines; 259 UUID occurrences purged on REMOVED lines (the leak this task fixes); 0 tracked .claude/tmp files remain; .gitignore:16=.claude/tmp/; scripts/orch-apply.sh has 0 refs to .claude/tmp (no dependency — untracking structurally safe; actual snapshot writer is scripts/agents-flow/orch-state-hook-prewrite.mjs, unrelated to orch-apply); orch-state.json untouched since dispatch; DJ docs/agent-memory/decisions/sprint-2026-07-03-qa.md has task-id CHORE-GITIGNORE-CLAUDE-TMP (DJ-GATE-1 PASS); report reports/TASK_REPORT_CHORE-GITIGNORE-CLAUDE-TMP.md (3717B). Notable (documented by qa): first path-limited commit `git commit -m .. -- .gitignore .claude/tmp/` silently dropped the git rm --cached (re-tracked the still-on-disk files) — known class feedback_pathspec_commit_drops_rename_deletion; recovered via `git reset --soft HEAD~2` (both commits local/unpushed) + plain unscoped commit; final state RAW-verified clean. Both commits local/unpushed — fleet-push owns push. Resolves signal router-session-uuid-hygiene-20260703 sub-fix (B) .claude/tmp tracking; sub-fix (A) agent-notebook UUID provenance remains as backlog FIX-AGENT-NOTEBOOK-UUID-PROVENANCE."
       }
     ],
     "head": {
@@ -9920,23 +9956,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "CHORE-GITIGNORE-CLAUDE-TMP",
-        "title": "gitignore .claude/tmp/ and git rm --cached the 111 tracked orch-hook-proposal-*.json snapshots (transient hot-file hook artifacts; each leaks session UUID + pure repo bloat)",
-        "owner": "qa",
-        "type": "CLEAN",
-        "status": "IN_PROGRESS",
-        "zone": "cross-service/",
-        "priority": "medium",
-        "created_at": "2026-07-03T18:32:21Z",
-        "status_note": "PLAN-ONLY. Split from CHORE-SESSION-UUID-HYGIENE (sub-fix B). Add .claude/tmp/ to .gitignore; git rm --cached the 111 tracked orch-hook-proposal-*.json. VERIFY scripts/orch-apply.sh writes these as scratch and does NOT depend on them being tracked (reads/writes transiently), then confirm orch-apply pipeline still validates+applies after untracking. Forward-fix only; NO git filter-repo of pushed history (leaked value is the ephemeral owner_client_session coordination token, dies at session end). Source: docs/signals/router-session-uuid-hygiene-20260703.md.",
-        "dev_agent": "qa",
-        "dispatched_by": "router",
-        "dispatched_at": "2026-07-03T19:00:00Z",
-        "dispatch_note": "[router 2026-07-03T19:00Z] dev-team tick 18:37Z S4 CLEAN dispatch. PO acb64c64d6253e8ae RETURN BATCH=[CHORE-GITIGNORE-CLAUDE-TMP] (type CLEAN, cross-service/, deploy-independent single-shot). Spawned qa run_in_background: add .claude/tmp/ to .gitignore + git rm --cached the 111 tracked orch-hook-proposal-*.json (UUID-leak + repo bloat); MUST verify scripts/orch-apply.sh treats .claude/tmp/ as scratch (does NOT depend on tracking) + confirm orch-apply still validates+applies after untracking; forward-fix only, NO history rewrite. qa commits code (.gitignore + rm --cached) index-only + writes decision-journal (task-id CHORE-GITIGNORE-CLAUDE-TMP) + task report. Router promotes -> done_verified next tick after RAW-verify."
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
