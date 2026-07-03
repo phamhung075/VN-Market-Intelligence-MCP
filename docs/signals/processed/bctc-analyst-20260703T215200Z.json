@@ -31,5 +31,11 @@
     "verdict_caveat": "Raw footnote text (thu nhap khac composition: land-comp vs tree-liquidation vs disposal) not available in get_bctc_full prose_sections (empty); classification rests on the structured PBT/tax cascade + BS integrity + GVR's documented earnings profile, which are decisive. Confidence 0.9 reflects this single un-verified footnote-detail item.",
     "governance_recommendation": "This is the 4th byte-identical ESC-4 emission for GVR Q1-2026 (fired 2026-06-30/07-01/07-02/07-03) with no prior deep-dive completing (idempotency guard expired each time). Data is verified clean; NO FIX to the data is needed. RECOMMEND: (1) bctc-analyst ESC-4 heuristic WHITELIST/ACKNOWLEDGE GVR Q1-2026 by content-hash so it stops re-firing on byte-identical data; (2) durable rule — for known large-other-income tickers (GVR-class), when profit_before_tax consistently bridges operating->net AND the balance sheet balances, downgrade the 'net profit > gross/operating profit' condition from an ESC-4 escalation trigger to an informational validation note. This deep_dive_result is the escalation ceiling for the 4th-emission recurrence; PO decides accept-vs-fix-heuristic.",
     "esc4_disposition": "accept_true_flag_no_fix"
+  },
+  "_processed": {
+    "fingerprint": "83b6069a04fec4719b98378c8efb4d0bedf857efe613daa5a78cc1d640cdcc9b",
+    "processedAt": "2026-07-03T23:21:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
