@@ -1,0 +1,20 @@
+{
+  "id": "bca-datagap-20260703T213000Z",
+  "ts": "2026-07-03T21:30:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "data-quality-scope-update",
+  "summary": "CORRUPT-SKIP cluster expanded: 6 new tickers confirmed with total_assets=0 signature (distinct from bank-mismatch bug class)",
+  "severity": "MEDIUM",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "sprint_ref": "BCTC-EXTRACT-QUALITY",
+    "newly_confirmed_corrupt_zero_assets": ["VIC", "REE", "POW", "VNM", "HSG", "MWG"],
+    "signature": "total_assets=0 (zero or negative - OCR extraction failure), confidence forced 0%, CORRUPT-SKIP served by get_bctc_full",
+    "distinct_from": "bank total_assets-mapping bug (FIX-BCTC-BANK-SUMMARY-MAPPING, a46131cf/2cd9e105) which produced implausible NONZERO totals (e.g. MBB 666.7 ty, CTG mismatch) - this new signature is exactly ZERO, a different extraction failure mode.",
+    "reconfirmed_empty_no_change": ["KBC", "SSI", "D2D", "VCI", "NKG"],
+    "note": "Rotation probe this cycle (c076, 11 tickers tested) found 0/11 usable except GVR (already known-good re-verify). Combined corrupt (9: CTG/MBB/MWG/VRE + VIC/REE/POW/VNM/HSG) + trong (unchanged list) now covers an estimated 13+/29 ĐÃ NỘP tickers (~45%) unusable for BCTC analysis. Reporting for sprint prioritization - not diagnosing root cause (ops/developer scope).",
+    "action_requested": "Consider whether zero-total-assets signature has a common root cause (e.g. same reparse batch/date) worth a targeted fix alongside the bank-mismatch fix already merged."
+  }
+}

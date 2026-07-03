@@ -1,0 +1,32 @@
+{
+  "id": "bca-20260703T212000Z",
+  "ts": "2026-07-03T21:20:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: GVR Q1-2026 ESC-4",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-4",
+    "ticker": "GVR",
+    "quarter": "Q1-2026",
+    "report_id": "GVR_2026_Q1",
+    "guard_key": "esc-deepdive:GVR:Q1-2026:ESC-4",
+    "context": {
+      "item_type": "non_operating_income_gap",
+      "item_amount_bn_vnd": 590.1,
+      "item_pct_of_net_profit": 0.2348,
+      "net_profit_bn_vnd": 2513.4,
+      "operating_profit_bn_vnd": 1923.3,
+      "note": "Net profit exceeds operating/gross profit by 590.1 ty VND (23.5%) - validation flag from get_bctc_full: 'possible non-operating income'. Unchanged vs c070/c073/c074/c075 (data byte-identical, published 2026-06-07). Prior guard (c073 redispatch) expired unresolved 2026-07-03T21:12:23Z - this is a REDISPATCH."
+    },
+    "all_esc_fired": ["ESC-4"],
+    "redispatch_reason": "prior_guard_expired_unresolved",
+    "prior_dispatch_files": [
+      "docs/signals/bctc-analyst-20260701T181600Z.json",
+      "docs/signals/bctc-analyst-20260702T211200Z.json"
+    ]
+  }
+}
