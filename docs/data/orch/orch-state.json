@@ -526,7 +526,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-03T02:31:07Z",
+    "_updated_at": "2026-07-03T02:47:02Z",
     "_updated_by": "router",
     "active_sprints": [
       {
@@ -9141,7 +9141,7 @@
         "zone": "apps/mcp-server/",
         "owner": "po",
         "next_agent": "dev-mcp-server",
-        "status_note": "RECURRING-BUG durable entry (2+ occ -> board per feedback_recurring_bug_escalation). Source: telegram BUG msg#3144 (from bctc-analyst). LINKED ROOT: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (rag-service RestartCount 226->245, clean-exit restart loop; passive health masks churn). AC: no BUG-channel search_similar_context timeout for 3 consecutive bctc-analyst cycles AND (rag-service RestartCount stabilizes OR the tool degrades gracefully with zero analyst-blocking). Priority: medium. || 2026-07-03T02:30Z router: worker a78cc5eb DONE — RAW-verified (explicit-path stack 31caeefcd+1a9cda30b == claimed file set; pnpm check green on HEAD post-merge; index-check PASS; tree-verify HEAD PASS, lower-commit rc=1 = cherry-pick-verifier artifact, combined diff clean; c2 WARN benign journal-in-decisions; DJ-GATE-1 journal committed; no docker/push; mutex claim errored at transport -> zone RUN-SOLO fallback). IN_PROGRESS->REVIEW. QA spawned background. Reviewer note: 1466-sync-db-corruption-bail.test.ts afterAll mock.module pollution flagged by worker as follow-up candidate.",
+        "status_note": "RECURRING-BUG durable entry (2+ occ -> board per feedback_recurring_bug_escalation). Source: telegram BUG msg#3144 (from bctc-analyst). LINKED ROOT: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (rag-service RestartCount 226->245, clean-exit restart loop; passive health masks churn). AC: no BUG-channel search_similar_context timeout for 3 consecutive bctc-analyst cycles AND (rag-service RestartCount stabilizes OR the tool degrades gracefully with zero analyst-blocking). Priority: medium. || 2026-07-03T02:30Z router: worker a78cc5eb DONE — RAW-verified (explicit-path stack 31caeefcd+1a9cda30b == claimed file set; pnpm check green on HEAD post-merge; index-check PASS; tree-verify HEAD PASS, lower-commit rc=1 = cherry-pick-verifier artifact, combined diff clean; c2 WARN benign journal-in-decisions; DJ-GATE-1 journal committed; no docker/push; mutex claim errored at transport -> zone RUN-SOLO fallback). IN_PROGRESS->REVIEW. QA spawned background. Reviewer note: 1466-sync-db-corruption-bail.test.ts afterAll mock.module pollution flagged by worker as follow-up candidate. || 2026-07-03T02:48Z router: QA APPROVED (RAW-verified: 7/7 targeted tests, pnpm check green, full suite under baseline, mock-guard PASS, no forbidden actions). Report reports/TASK_REPORT_FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING.md committed. Stays REVIEW — eligible DONE at PO triage. Reviewer follow-up candidate: 1466-sync-db-corruption-bail.test.ts mock.module pollution.",
         "created_at": "2026-07-02T21:28:10Z",
         "promoted_at": "2026-07-03T01:34:10Z",
         "promoted_by": "po",
