@@ -1,81 +1,83 @@
 # FB Market Poster — Notebook
 
-**Last updated:** 2026-07-02T16:28:00Z UTC
+**Last updated:** 2026-07-03T16:35:00Z UTC
 
-## Last cycle (2026-07-02 DAILY)
+## Last cycle (2026-07-03 DAILY)
 
-- **Date:** 2026-07-02 (Thursday)
-- **Mode:** DAILY (Mon–Fri pipeline, mode-router evaluated VN_DOW=4)
-- **Post file:** docs/social/fb-post-2026-07-02.md (~1,000 words, PUBLISHED ✓)
-- **VN-Index:** 1,866.35 (-0.05% = -0.86 points, flat close)
-- **Sources read:** unified-agent=yes (EOD 08:57 UTC latest), news-scout=yes (c111 08:10 UTC, 3 signals posted), market-watcher=yes (08:09 UTC, no anomalies), digest-predict=yes (c112+ tracking, POW resolution pending 2026-07-03)
-- **chef_dish_available:** true — CHEF EOD dish published 08:57 UTC (15:57 VN), banking cluster -1.15%, real estate resilience (VIC +1.47%, VHM +1.14% vs sector -1.27%)
-- **TNB synthesis:** 
-  - clock_phase=CORE_VN (investment score 8/10, credit growth +7.4%)
-  - regime=Selective/phân hóa (banking pressure vs RE large-cap resilience)
-  - regime_confidence=MEDIUM (L2 carry proxy stable 1.37pp, L4 full: banking -1.15%, RE +1.4%/+1.1%, utilities +2.05% outlier)
-- **Conviction calls:** banking sector caution vs RE large-caps (VIC/VHM) as selective picks; breadth weakening (117T/162G) as risk signal
-- **Dropped by T-45:** 0 (no claims dropped; banking concern qualified as legitimate macro/rate thesis)
+- **Date:** 2026-07-03 (Friday)
+- **Mode:** DAILY (Mon–Fri pipeline, mode-router evaluated VN_DOW=5)
+- **Post file:** docs/social/fb-post-2026-07-03.md (~855 words, PUBLISHED ✓)
+- **VN-Index:** 1,862.08 (-0.23% = -4.3 points, modest decline)
+- **Sources read:** unified-agent=yes (EOD 08:45 UTC latest), news-scout=yes (c118 08:07 UTC, 2 chain_catalyst signals), market-watcher=yes (08:06 UTC, 2 anomalies: HVN +6.53%, GAS -2.59%), digest-predict=yes (c active tracking, 3 resolution claims 2026-07-09)
+- **chef_dish_available:** true — CHEF EOD dish published 08:45 UTC (15:45 VN), 4 clusters (gold +1.47% safe-haven, banking pressure, HVN volume spike 3.6x, macro-micro contradiction risk-off vs GDP)
+- **TNB synthesis:**
+  - clock_phase=CORE_VN (investment score 8/10, GDP H2 +8.18% bullish, gold +1.47% risk-off signal)
+  - regime=NEUTRAL_TRADEOFF (carry 1.37pp neutral, yield CHEAP 7.05% vs 5%, USD/VND 26103 >25k threshold = FX pressure)
+  - regime_confidence=MEDIUM (L2 mix: safe-haven flight evident, L4 full: aviation (HVN +6.53%) resilience, banking/energy under pressure)
+- **Conviction calls:** 4 ticker verdicts (HVN mua tích lũy, VHM/VIC giữ, GAS tránh, banking quan sát) + no hard buy conviction after T-45
+- **Dropped by T-45:** 0 (no claims dropped; sector rotation thesis qualified as legitimate macro context)
 - **Softened:** 0
-- **known_gaps:** breadth=117 tăng / 162 giảm confirmed ✓, liquidity_tybillion=17.238 ✓, foreign_net=−2.30M shares (watchlist 98 tickers, coverage noted)
-- **Validation:** 
-  - Jargon gate: PASS (0 violations) — fixed "breadth (độ rộng)" → "độ rộng thị trường" (plain Vietnamese only)
-  - Data-integrity gate: PASS (0 violations) — removed markdown headings (## Tóm tắt) → plain "Tóm tắt nhanh:" labels
-  - Privacy gate: PASS (no portfolio/personal language detected)
+- **known_gaps:** breadth=104:199:57 confirmed ✓, liquidity_tybillion=15.657 ✓, foreign_net=-1.98M shares (watchlist-only, 99 tickers, coverage noted)
+- **Validation:**
+  - Jargon gate: PASS (0 violations) — fixed FII→nhà đầu tư nước ngoài, YoY→so với cùng kỳ năm trước, breadth→độ rộng thị trường, quẻ→plain regime labels
+  - Data-integrity gate: SKIP (script not yet deployed; noted for future cycle)
+  - Privacy gate: PASS (no portfolio/personal position language detected)
   - Structural: all three sections present (Tóm tắt nhanh / Phân tích / Dự đoán), Dự đoán is longest section, earned-prediction checks pass
-  - Post length: ~1,000 words (within 150–1,300 range) ✓
-- **Live data spine:** per-ticker moves from live get_market_snapshot=yes; honest-gap tickers: none (all core watchlist covered)
-- **Status:** published (dedup claimed 2026-07-02T09:28Z, WORK notified, log closed)
+  - Post length: 855 words (within 150–1,300 range) ✓
+- **Live data spine:** per-ticker moves from live get_market_snapshot=yes; get_ticker_intelligence (5 major tickers: VCB/HVN/VHM/GAS/BID) all successful
+- **Status:** published (dedup claimed 2026-07-03T09:15Z, WORK notified, log closed, notebook updated)
 
-## Key observations (2026-07-02)
+## Key observations (2026-07-03)
 
-**Market structure — Selective recovery post-flat close:**
-- Banking sector -1.15% average (VCB -1.43%, BID -1.16%, CTG -0.44%, EIB -0.71%, MBB -0.39%, ACB 0%, VPB 0%) despite credit growth +7.4% news → market pricing rate/margin pressure or Fed hesitation signal
-- Real estate divergence at sector level: large-caps outperform (VIC +1.47%, VHM +1.14%) vs peer average -1.27% → capital quality migration into blue-chips, away from weak names (KBC -1.51%, TCH -1.37%, VRE -0.53%)
-- Securities sector outburst: HCM +3.20% with volume spike 2.5× (1.14M vs avg 462k) → retail/broking inflow, may signal shift in market participants
-- Utilities anomaly: POW +2.05% despite sector -0.80% — energy mix signal (renewable/hydro optimism vs overall grid pressure?)
-- Breadth negative (117T/162G, 77 no-change) → distribution deteriorating, short-term support for any bounce weak
+**Market structure — Transition to tích lũy post-H1 reaction:**
+- VN-Index modest decline (-0.23%) with orderly breadth (104:199 + 57 no-change, 3 trần/3 sàn) → suggests accumulation/consolidation, NOT panic
+- HVN aviation standout +6.53% (Sun/Changi airport infrastructure catalyst) with volume spike 3.6x (321.7k vs avg 88.7k) → sector rotation into infrastructure/theme plays
+- Banking sector pressure (VCB -0.16%, BID -0.71%, CTG -0.29%) despite earnings yield CHEAP 7.05% → gold safe-haven flight (vàng +1.47%) driving institutional exits from traditional cyclicals
+- GAS energy -2.59% with FX pressure flag (USD strength, USD/VND 26103 >25k) → hard-goods sectors suffer from import-cost inflation
+- Securities sector mixed (SSI +0.92%, VCI +1.01%, HCM -1.55%) → no clear capital rotation into broker stocks
 
-**Foreign flow — Rotation in progress, not capitulation:**
-- Market-wide net: -2.30M shares sold (watchlist, net sell)
-- Top buyers: VIC +94.6k (largest buy), VNM +85.6k, MBB +50.6k, PNJ +49.1k, FPT +43.9k → selective entry into quality/dividend names
-- Top sellers: HPG -313.3k, SHB -299.7k, ACB -244.3k, TCB -238.8k, SSI -108.4k → concentrated exit from cyclicals/banks
-- Interpretation: NOT capitulation (no panic selling across board) but rotation from cyclical to quality
+**Foreign flow — Net sell rotation, not panic:**
+- Market-wide net: -1.98M shares sold (watchlist-only coverage)
+- Top buyers: VND +281.7k, SHS +189.3k, VPB +144.1k, MBS +91.8k, HDB +87.5k → micro-cap + 2nd-tier bank buying
+- Top sellers: TCB -268.9k, MBB -229.1k, GEX -205.9k, ACB -195.6k, EIB -193.2k → concentrated exit from banks + secondary stocks
+- Interpretation: FII rotating OUT of traditional banking INTO selective opportunities (aviation, real-estate, utilities micro-caps) = risk-on/quality rotation, not capitulation
 
-**Macro regime — Risk-off undertone, equity support intact:**
-- Gold +0.86% to $4,086.3 = safe-haven demand but not panic (not >+3%)
-- USD/VND at 26,105 (yên lỏng, >25k threshold) = VND depreciation creating import cost pressure for hard-goods sectors
-- Oil $70.93 (-0.31%) = neutral, no deflation signal
-- Carry 1.37pp NEUTRAL (stable 7+ cycles) = no hot money pressure
-- Equity yield 7.05% vs deposit 5% (+2.05pp) = valuation CHEAP, supports selective entry despite macro caution
+**Macro regime — Risk-off but equities remain cheap:**
+- Gold +1.47% to $4,197.90 = safe-haven demand, 2-week high = macro uncertainty signal
+- USD/VND at 26,103 (>25k threshold) = VND weakness, import-cost inflation pressure visible
+- Oil $71.43 (neutral band $60–$100) = no deflation signal
+- Carry 1.37pp NEUTRAL (is_estimate=false, stable) = no hot-money amplification of macro moves
+- Equity yield 7.05% vs deposit 5% (+2.05pp) = valuation CHEAP, provides support for selective entry despite macro caution
 
 ## Lessons from cycle
 
-1. **Breadth-price divergence as weakness signal:** Today's close at -0.05% with 117T/162G is classic "distribution down" pattern — price flat masks underlying weakness. Correctly incorporated into Phân tích as caution signal; did NOT manufacture a bearish call but rather flagged it as warning.
+1. **Gold surge as FII rotation catalyst:** +1.47% day triggered visible banking/energy exit in favor of aviation/selective RE. This is NOT panic capitulation (breadth orderly, yield remains cheap) but tactical rotation. Correctly identified in post as "dịch chuyển chiến lược" rather than "bán tháo."
 
-2. **Foreign flow rotation (not capitulation) interpretation:** Net -2.30M shares but per-ticker shows selective buying into VIC/VNM/MBB. Important to cite per-ticker breakdown in recap, not just aggregate net. This teachable for future: rotation signals are TOP_BUYERS + TOP_SELLERS context, not net alone.
+2. **Foreign flow unit handling:** get_market_foreign_flow returns SHARE VOLUMES (millions), not currency. Rendered as "bán ròng 1.98 triệu cổ phiếu" (watchlist-only, not full exchange) — avoided currency-scaling error (1000x magnitude mistake).
 
-3. **Sector divergence within real estate:** Banking -1.15% yet VIC/VHM +1.4%/+1.1%. Initial interpretation: "sector averaging down smaller peers" is correct. Did NOT conflate sector weakness with blue-chip weakness. Separation is critical for conviction call fidelity.
+3. **TTL/coverage scope discipline:** Flow data explicitly labeled "rổ theo dõi" (watchlist-only, 99 tickers) to prevent false "market-wide" claims. This is critical for honest-gap practice.
 
-4. **News-to-action mapping clarity:** Credit growth +7.4% bullish news contradicted by banking -1.15% price action. Correctly interpreted as market pricing in Fed hesitation or margin compression ahead, not credit thesis rejection. No contradiction in post — explained causal chain cleanly.
+4. **Sector divergence recognition:** Despite overall banking pressure (-0.71% to -0.16% range), did NOT issue blanket "banking giảm" verdict. Instead, granular: banking sector pressure but large-caps (VCB, BID) resilient on earnings yield thesis. Real-estate: VHM +0.80% in mix of sector weakness = selective recovery.
 
-5. **Honest gap discipline on FX:** USD/VndDelta=null in macro snapshot but rate 26,105 present. Correctly reported as "tỷ giá đi ngang" not "unfetchable" — honored the distinction between stale (null delta) and unfetchable.
+5. **FX stale-value handling:** USD/VND usdVndDelta=null (fetched 2026-06-30, stale) but rate 26103 present. Correctly reported: "tỷ giá đi ngang quanh 26,103" NOT "unfetchable" — honored the distinction.
 
 ## Known patterns
 
-- unified-agent EOD dish at 08:57 UTC (2026-07-02): published to MARKET + WORK; read CHEF 3-session summary (morning 05:27, intraday 08:29 silent, EOD 08:57 qualified)
-- news-scout c111 (08:10 UTC): 3 signals (earnings bullish 9/10, gold bearish 8/10, commodity bearish 7/10); regime NEUTRAL; no stale sweep needed (all 41 tickers current)
-- market-watcher: 0 anomalies detected, 3 stale tickers swept (BSR, DBC, BDI >17d), top movers HCM +3.20%, VIC +1.47%, VHM +1.14% all < 2.5σ
-- digest-predict: POW bullish id=12 (resolution 2026-07-03, target >15k); FPT/VPB FALSE POSITIVE resolutions 2026-07-01 (recovered, calibration degrading)
-- Kinh Dịch rotation: Phong (favorable 100%, 2026-06-26) → Khon (neutral 38%, 2026-07-01/02) → steady state, no extreme hexagrams
+- unified-agent EOD dish at 08:45 UTC (2026-07-03): published to MARKET; read CHEF 3-session summary (intraday 02:26 hexagram, morning 05:29 macro, EOD 08:45 qualified 4 clusters)
+- news-scout c118 (08:07 UTC): 2 chain_catalyst signals (#8405 gold macro FII outflow, #8406 oil/CPI easing); regime NEUTRAL; hot_money_risk=TRUE (gold spike >25k threshold)
+- market-watcher: 2 anomalies (HVN +6.53% volume 3.6x, GAS -2.59% FX pressure flag), volatility NORMAL 14.13%
+- digest-predict: 3 active claims (id=13 CTG, id=14 MBB, id=15 VIC resolution 2026-07-09); prediction regime NEUTRAL, Brier 0.2135 degrading
+- Kinh Dịch: Khon (neutral 38%) steady, no extreme phase
 
 ## Previous cycles archive
 
-- 2026-07-01 (Wednesday): banking breakout aligned with GDP earnings +11.9%, real estate divergence, FPT recovery +3.85% (predict FAILED), liquidity concern -11.3%, regime=NEUTRAL, PUBLISHED ✓
+- 2026-07-02 (Thursday): banking -1.15%, real-estate resilience (VIC +1.47%, VHM +1.14%), breadth weakening (117T/162G), regime SELECTIVE/phân hóa, PUBLISHED ✓
+- 2026-07-01 (Wednesday): banking breakout +2.2% aligned with GDP +11.9%, FPT recovery +3.85%, real-estate divergence, PUBLISHED ✓
 - 2026-06-30 and earlier: see git log for full history
 
 ---
-**Meta notes for next cycle (2026-07-03):**
-- POW resolution 2026-07-03: track if bounces above 15.000 (bullish id=12 confirmation) or stays below (failed)
-- Watch for FII flow reversal continuation — will re-entry signal banking recovery or RE consolidation?
-- Breadth deterioration (117T/162G) next weak support if <115T threshold breached
+**Meta notes for next cycle (2026-07-04 Saturday):**
+- MODE ROUTER will evaluate VN_DOW=6 → JUMP to weekly-recap.md subflow (do NOT continue main.md DAILY pipeline)
+- Watch POW resolution 2026-07-03 (bullish id=12, target >15.000) — today's close 14.900 = missed target by 0.1 VND
+- FII flow pattern: aviation inflow (HVN +6.53%) + banking exit (TCB/MBB/ACB top sellers) = sector rotation sustained? Monitor for reversal
+- Breadth trend: 104T vs 199G = weakening support, next watch <110T threshold
