@@ -200,7 +200,7 @@ function matchSlots(schedule, ctx, options) {
 
     // interval_minutes=null → suppress (calendar or policy says no)
     if (evalResult.interval_minutes === null) {
-      console.log('[cowork-match-slots] cadence suppress:', sl.slot_id, 'policy=' + sl.policy_id, 'calendar=' + calendar_status);
+      console.error('[cowork-match-slots] cadence suppress:', sl.slot_id, 'policy=' + sl.policy_id, 'calendar=' + calendar_status);
       continue;
     }
 
@@ -225,7 +225,7 @@ function matchSlots(schedule, ctx, options) {
     if (elapsedSeconds >= cadenceSeconds) {
       results.push(Object.assign({}, base, { due_reason: 'cadence', cadence_minutes: evalResult.interval_minutes }));
     } else {
-      console.log('[cowork-match-slots] cadence skip:', sl.slot_id,
+      console.error('[cowork-match-slots] cadence skip:', sl.slot_id,
         'elapsed=' + Math.floor(elapsedSeconds) + 's cadence=' + cadenceSeconds + 's',
         '(snapped_last_fired=' + new Date(snappedLastFired * 1000).toISOString() + ')');
     }

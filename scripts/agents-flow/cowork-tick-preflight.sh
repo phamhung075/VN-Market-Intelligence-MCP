@@ -200,12 +200,20 @@ run_preflight() {
   fi
 
   # ---- Step 6: slot matcher (cowork-match-slots.js — unchanged, invoked as-is) ----
-  local slot_result slot_rc slots matcher_drift
-  slot_result=$(eval "$SLOT_MATCHER_CMD" 2>&1); slot_rc=$?
+  # stdout (JSON contract) and stderr (diagnostics: cadence suppress/skip logs) are
+  # captured separately — folding stderr into the parsed buffer (old: `2>&1`) let an
+  # in-tick cadence-skip diagnostic corrupt the jq parse below and produce a false
+  # ERROR verdict on every cadence-skip tick (see FIX-COWORK-PREFLIGHT-DIAGNOSTIC-
+  # STDOUT-POLLUTION). The exit!=0 error path still surfaces matcher stderr in detail.
+  local slot_result slot_rc slots matcher_drift slot_err
+  slot_err=$(mktemp)
+  slot_result=$(eval "$SLOT_MATCHER_CMD" 2>"$slot_err"); slot_rc=$?
   if [ $slot_rc -ne 0 ]; then
-    _emit_verdict "ERROR" "$tick" "$drift_min" "[]" "[]" "0" "slot matcher failed (exit=$slot_rc): $(_trunc "$slot_result")"
+    _emit_verdict "ERROR" "$tick" "$drift_min" "[]" "[]" "0" "slot matcher failed (exit=$slot_rc): $(_trunc "$(cat "$slot_err")")"
+    rm -f "$slot_err"
     return 1
   fi
+  rm -f "$slot_err"
   slots=$(printf '%s' "$slot_result" | jq -c '.slots // empty' 2>/dev/null)
   if [ -z "$slots" ]; then
     _emit_verdict "ERROR" "$tick" "$drift_min" "[]" "[]" "0" "slot matcher returned non-JSON output: $(_trunc "$slot_result")"
