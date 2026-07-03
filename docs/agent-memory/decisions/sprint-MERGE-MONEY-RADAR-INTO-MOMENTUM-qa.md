@@ -25,3 +25,11 @@
 **why-change:** no change from plan — verdict APPROVED as expected from dev's implementation record, confirmed independently rather than relayed.
 
 **follow-up (non-blocking, for ops/dev-team's next pass):** `docker compose up -d --no-deps frontend` to swap the shared `frontend-1` container onto the already-built `:latest` image (built this session) so the production-facing deployment reflects ced952ca.
+
+### STEP qa-S3 · qa · 2026-07-03T00:00:00Z
+**task-id:** FIX-FB-DAILY-FIRER-CLI-FLAG
+**what-done:** Ambient HIGH repair task (unrelated to sprint goal above, filed via active-sprint resolution same as developer's S1 entry for this task). Verified `b19ac43c5` (1-file, 1-deletion diff of `--no-update-notification` at scripts/cowork-fb-daily-firer.sh:138) + `66ed3df09` (journal-only, confirmed via `git show --stat`). `bash -n` 0 syntax errors. `claude --version` 2.1.198; `--help` shows `--dangerously-skip-permissions` (grep -ic count 2) but zero hits for `--no-update-notification` (confirms genuinely unsupported by installed CLI). Live-reproduced the exact incident error (`error: unknown option '--no-update-notification'`) by re-adding the old flag, matching `fb-daily-firer-error.log` verbatim. `grep -rn "no-update-notification" scripts/ launchd/` → 0 hits (no other broken caller). Root-cause doc `docs/signals/router-fbfirer-dead-cli-flag-20260703.md` matches fix exactly; secondary items (double-fire cadence, log-noise, untracked-log gitignore) correctly left out of scope, not touched by the diff.
+**what-considered:**
+- Ran only the 5 spec'd checks (no full TS suite — task scope explicitly excludes it since bash script has zero test coverage) vs also live-invoking the corrected flag set against the real `$FLOW_PATH` — chose NOT to run the corrected invocation live (would trigger a genuine fb-market-poster agent/publish side-effect, out of scope for a flag-syntax verification); instead reproduced the OLD broken flag's exact error text as corroboration.
+**why-decision:** all 5 spec'd checks pass with real command output; diff is minimal and exact (matches root-cause doc 1:1); no dead callers remain; no scope drift into the doc's flagged non-blocking secondary items.
+**why-change:** no change from plan — task spec's verification steps followed exactly, plus one extra live-reproduction check for corroboration.
