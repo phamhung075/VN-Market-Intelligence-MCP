@@ -245,11 +245,11 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-BCTC-BANK-BS-COLUMN-ORDER",
-    "next_agent": "dev-mcp-server",
-    "next_action": "execute composite parser fix (FIX-A+D+C) + real-markdown regression gate",
-    "updated_at": "2026-07-03T06:58:49Z",
-    "updated_by": "dev-team",
-    "note": "06:37Z tick dispatched 2/2: FIX-BCTC-BANK-BS-COLUMN-ORDER->dev-mcp-server (head tracks this; unblocks W5 chain) + SPIKE-BCTC-DISCOVER-PIPELINE-DEAD->architect (B-05 CRITICAL root-cause; architect self-manages its own row; router holds task:SPIKE coord lock + reconciles head on return)."
+    "next_agent": "qa",
+    "next_action": "qa deep-verify FIX-BCTC-BANK-BS-COLUMN-ORDER (tsc + targeted BCTC + FULL suite vs testBaselineFail=348); router promotes review->done_verified on PASS. Post-deploy finalize_bctc_refine on live CTG report is a separate deploy-gated follow-up.",
+    "updated_at": "2026-07-03T08:15:12Z",
+    "updated_by": "router",
+    "note": "06:37Z tick: both dispatches complete. dev-mcp-server done->review (COLUMN-ORDER, commits d69b13f41+e73a53688, RAW-verified, W5 chain code-cleared). SPIKE-BCTC-DISCOVER-PIPELINE-DEAD done (architect 07:13Z). qa dispatched for COLUMN-ORDER; SF-1 held across the qa gate."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -504,6 +504,28 @@
         "payload_ref": null,
         "read_at": "2026-07-03T06:46:14Z",
         "read_by": "dev-team"
+      },
+      {
+        "id": "sau-20260703T074552Z",
+        "ts": "2026-07-03T07:45:52Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-13 FAIL: api-gateway health endpoint unreachable (HTTP CURL_ERR)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "dt-flowdefect-orphan-guard-20260703T0817Z",
+        "ts": "2026-07-03T08:28:02Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "repair_task_request",
+        "summary": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD: orphan-adoption (dev-team Step 0a + router probe) re-dispatches already-completed tasks (no board-state guard) + reaper false-orphans long agents whose lock TTL(3600s)<runtime(~90min). Data-loss vector via tree-hygiene git-checkout revert of unrelated uncommitted files. Incident: FIX-BCTC-BANK-BS-COLUMN-ORDER (orphaned mid-run 08:04Z, completed 08:08Z).",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/router-flowdefect-orphan-adoption-guard-20260703.md"
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
@@ -9648,28 +9670,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-BCTC-BANK-BS-COLUMN-ORDER",
-        "title": "CTG/bank-form parser: column-order header mapping + section-vocabulary + real-markdown regression (FIX-A+FIX-D+FIX-C composite)",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "next_agent": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "priority": "high",
-        "size": "L",
-        "created_at": "2026-07-03T06:21:56Z",
-        "note": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT root-cause FIX-A (header-aware column mapping in refinedMarkdownParser.ts 4/5-cell branch, ~L419-426) + FIX-D (detectSection bank BS title vocabulary + ToC false-positive fix) + FIX-C (mandatory real-markdown regression fixture from live unit-0002/0003/0038). Supersedes FIX-BCTC-BANK-BS-SECTION-CLASSIFIER; fold its 3 shipped RC fixes (commit 2c7fb5b0) as real non-regressions. See architecture brief docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md §7.",
-        "depends": [],
-        "unblocks": [
-          "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
-          "W5-FU-CTG-REFINE-96e36139"
-        ],
-        "assigned_to": "dev-mcp-server",
-        "dispatched_at": "2026-07-03T06:58:49Z",
-        "dispatched_by": "dev-team"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -9795,6 +9796,35 @@
         "updated_at": "2026-07-02T13:38:51Z",
         "updated_by": "router",
         "review_note": "Repo scope COMPLETE 2026-07-02T13:38:51Z: commits 073fa27f (vps-scripts/hnx-ca-bundle.pem GlobalSign intermediate+root, fetch-bctc.sh curl -k -> --cacert /root/hnx-ca-bundle.pem, deploy-vinahost.sh ships bundle) + 638fba89 (DJ-GATE-1 journal). RAW-verified by router: openssl verify -CAfile bundle <recon leaf> = OK rc=0 reproduced; grep confirms no -k/--insecure; live probe evidence: TLS verify ok on owa.hnx.vn (HTTP 403 = WAF, app-layer). DEPLOY PENDING (user-gated): user must run ./scripts/deploy-vinahost.sh (ships bundle + fetch-bctc.sh to VPS /root/). Post-deploy AC: HNX fetch OK with verification ON."
+      },
+      {
+        "id": "FIX-BCTC-BANK-BS-COLUMN-ORDER",
+        "title": "CTG/bank-form parser: column-order header mapping + section-vocabulary + real-markdown regression (FIX-A+FIX-D+FIX-C composite)",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "next_agent": "dev-mcp-server",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "L",
+        "created_at": "2026-07-03T06:21:56Z",
+        "note": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT root-cause FIX-A (header-aware column mapping in refinedMarkdownParser.ts 4/5-cell branch, ~L419-426) + FIX-D (detectSection bank BS title vocabulary + ToC false-positive fix) + FIX-C (mandatory real-markdown regression fixture from live unit-0002/0003/0038). Supersedes FIX-BCTC-BANK-BS-SECTION-CLASSIFIER; fold its 3 shipped RC fixes (commit 2c7fb5b0) as real non-regressions. See architecture brief docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md §7.",
+        "depends": [],
+        "unblocks": [
+          "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
+          "W5-FU-CTG-REFINE-96e36139"
+        ],
+        "assigned_to": "dev-mcp-server",
+        "dispatched_at": "2026-07-03T06:58:49Z",
+        "dispatched_by": "dev-team",
+        "dev_agent": "dev-mcp-server",
+        "dev_commits": [
+          "d69b13f41",
+          "e73a53688"
+        ],
+        "moved_to_review_at": "2026-07-03T08:15:12Z",
+        "moved_by": "router",
+        "router_raw_verify": "[router 2026-07-03T08:10Z] dev-mcp-server RAW-verified: 2 commits scoped exactly to claimed files (code d69b13f41 + docs e73a53688), no push/deploy/dirty-add, only self-test-harness pkill; DJ-GATE-1 journal committed; new real-data CTG fixture 16/0 GREEN on router re-run. qa owns deep verify (tsc + targeted 261 + FULL suite; baseline_pass=9408 is STALE, use testBaselineFail=348). DEPLOY-GATED: post-deploy finalize_bctc_refine on live CTG report still required to unfreeze total_assets (NOT run).",
+        "qa_gate": "pending"
       }
     ],
     "qa": [],
