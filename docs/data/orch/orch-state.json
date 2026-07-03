@@ -243,13 +243,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-FB-DAILY-FIRER-CLI-FLAG",
-    "next_agent": "qa",
-    "next_action": "qa scoped-verify bash fix (flag removal correct + remaining invocation parses + no other refs; NOT full TS suite — launchd bash has 0 coverage) + Task Report + DJ-GATE. Router promotes review->done_verified on qa PASS.",
-    "updated_at": "2026-07-03T10:31:43Z",
-    "updated_by": "dev-team",
-    "note": "10:07Z tick: FIX-FB-DAILY-FIRER-CLI-FLAG dev complete + RAW-verified (dev a4c4cc22, commit b19ac43c5), flipped in_progress->review. qa spawned. WIP 1->0. Tick closing (SF-1 + fire-election released); router promotes on qa PASS."
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "FIX-FB-DAILY-FIRER-CLI-FLAG DONE_VERIFIED. Next backlog candidate: FIX-SIGNALQUEUE-DUP-ID-GUARD (MED). Deploy-gated review tasks (W5 chain + BCTC-HNX-SSL-HARDEN + ARCH-SHIP-WAVE-REAUDIT) await their own gates.",
+    "updated_at": "2026-07-03T15:42:19Z",
+    "updated_by": "router",
+    "note": "FIX-FB-DAILY-FIRER-CLI-FLAG promoted review->done_verified (qa PASS a25783800, commit 6310a0d31, RAW-verified). launchd fb-daily backstop restored: --no-update-notification removed. WIP 0."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9650,6 +9650,36 @@
         "qa_commit": "66dfe89a5",
         "qa_report": "reports/TASK_REPORT_FIX-BCTC-BANK-BS-COLUMN-ORDER.md",
         "qa_dod_note": "[router 2026-07-03T08:38Z] qa aa2e4ef5c2fe942c9 PASS, transcript RAW-verified: commit 66dfe89a5 scoped to exactly 4 qa docs (report/journal/notebook/handoff; no code, no orch-state), forbidden-clean, board-untouched. Evidence backed by real tool output: tsc --noEmit 0 errors; targeted BCTC 389 pass/0 fail (23-file superset) + COLUMN-ORDER standalone 16/0/54 (ctg-96e36139-real-e2e, matches router re-run); full suite 14230 pass / 65 fail / 6 err vs testBaselineFail=348 (65<<348). Changed-domain regression=0 verified 2 ways (grep 65 fail lines for bctc/bank/refinedMarkdown/parseVnNumber/column-order/detectSection -> 0 hits; per-file mapping -> all pre-existing network/timing-flaky incl. 1405b-bctc-vps-fixes logVpsPush DB-race inspected clean). DDD/security/mock-guard clean on 3 changed files; DJ-GATE-1 satisfied. DEPLOY-GATED FOLLOW-UP (out of scope for this fix): post-deploy finalize_bctc_refine on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 in named-volume market.db still required to unfreeze live total_assets."
+      },
+      {
+        "id": "FIX-FB-DAILY-FIRER-CLI-FLAG",
+        "title": "FIX-FB-DAILY-FIRER-CLI-FLAG (cross-service/) — delete cowork-fb-daily-firer.sh:138 --no-update-notification (crashes launchd fb-daily backstop every fire)",
+        "owner": "po",
+        "next_agent": "dev",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "priority": "high",
+        "zone": "cross-service/",
+        "created_at": "2026-07-03T10:01:28Z",
+        "created_by": "po-triage-20260703T0937Z",
+        "status_note": "AC: launchd fb-daily-firer fires with no unknown-option --no-update-notification error; fb-daily-firer-error.log clean on next scheduled fire. 1-line fix (fixer): delete scripts/cowork-fb-daily-firer.sh line 138. Secondary(optional): dedup plist double-fire (09:08Z+09:23Z), gitignore tracked runtime logs. Priority HIGH — guaranteed fb-daily slot silently non-functional on any no-live-session day. Source: docs/signals/router-fbfirer-dead-cli-flag-20260703.md",
+        "assigned_to": "developer",
+        "dispatched_at": "2026-07-03T10:25:28Z",
+        "dispatched_by": "dev-team",
+        "dispatch_tick": "2026-07-03T10:07Z",
+        "dev_agent": "a4c4cc22375ba96e4",
+        "dev_commit": "b19ac43c5",
+        "dev_journal_commit": "66ed3df09",
+        "review_at": "2026-07-03T10:31:43Z",
+        "review_by": "dev-team",
+        "router_raw_verified": "[dev-team 10:07Z tick] developer a4c4cc22 RAW-verified: commit b19ac43c5 scoped to EXACTLY scripts/cowork-fb-daily-firer.sh (1 deletion of --no-update-notification), 66ed3df09 = journal only (DJ-GATE-1 ref task-id), index-only, orch-state untouched, not pushed. Router ground-truth: claude 2.1.198 --help has no --no-update-notification (flag genuinely unsupported = fix correct); grep scripts/+launchd/ = 0 other references (blast radius = this file). Awaiting qa scoped-verify -> router promote review->done_verified.",
+        "promoted_at": "2026-07-03T15:42:19Z",
+        "promoted_by": "router",
+        "qa_verdict": "PASS",
+        "qa_agent": "a25783800de314413",
+        "qa_commit": "6310a0d31",
+        "qa_report": "reports/TASK_REPORT_FIX-FB-DAILY-FIRER-CLI-FLAG.md",
+        "qa_dod_note": "[router 2026-07-03] qa a25783800 PASS, RAW-verified: commit 6310a0d31 scoped to exactly 3 qa docs (report 80L + journal + notebook cycle-373; no code, no orch-state), FIX left in review (router owns promotion), 0 session-UUID leak, unpushed. Evidence real: bash -n exit 0; claude 2.1.198 --help has 0 --no-update-notification + 2 dangerously-skip-permissions; live smoke `claude --dangerously-skip-permissions --no-update-notification -p ...` reproduced verbatim `error: unknown option` (matches fb-daily-firer-error.log) confirming the removed flag was the crash; grep scripts/+launchd/ = 0 other refs. Dev commit b19ac43c5 (1 file/1 deletion). DJ-GATE-1 satisfied dev+qa. Follow-up (non-blocking, noted in repair doc): plist double-fire cadence + log tee-noise + gitignore tracked runtime logs."
       }
     ],
     "head": {
@@ -9789,29 +9819,6 @@
         "updated_at": "2026-07-02T13:38:51Z",
         "updated_by": "router",
         "review_note": "Repo scope COMPLETE 2026-07-02T13:38:51Z: commits 073fa27f (vps-scripts/hnx-ca-bundle.pem GlobalSign intermediate+root, fetch-bctc.sh curl -k -> --cacert /root/hnx-ca-bundle.pem, deploy-vinahost.sh ships bundle) + 638fba89 (DJ-GATE-1 journal). RAW-verified by router: openssl verify -CAfile bundle <recon leaf> = OK rc=0 reproduced; grep confirms no -k/--insecure; live probe evidence: TLS verify ok on owa.hnx.vn (HTTP 403 = WAF, app-layer). DEPLOY PENDING (user-gated): user must run ./scripts/deploy-vinahost.sh (ships bundle + fetch-bctc.sh to VPS /root/). Post-deploy AC: HNX fetch OK with verification ON."
-      },
-      {
-        "id": "FIX-FB-DAILY-FIRER-CLI-FLAG",
-        "title": "FIX-FB-DAILY-FIRER-CLI-FLAG (cross-service/) — delete cowork-fb-daily-firer.sh:138 --no-update-notification (crashes launchd fb-daily backstop every fire)",
-        "owner": "po",
-        "next_agent": "dev",
-        "status": "REVIEW",
-        "type": "FIX",
-        "priority": "high",
-        "zone": "cross-service/",
-        "created_at": "2026-07-03T10:01:28Z",
-        "created_by": "po-triage-20260703T0937Z",
-        "status_note": "AC: launchd fb-daily-firer fires with no unknown-option --no-update-notification error; fb-daily-firer-error.log clean on next scheduled fire. 1-line fix (fixer): delete scripts/cowork-fb-daily-firer.sh line 138. Secondary(optional): dedup plist double-fire (09:08Z+09:23Z), gitignore tracked runtime logs. Priority HIGH — guaranteed fb-daily slot silently non-functional on any no-live-session day. Source: docs/signals/router-fbfirer-dead-cli-flag-20260703.md",
-        "assigned_to": "developer",
-        "dispatched_at": "2026-07-03T10:25:28Z",
-        "dispatched_by": "dev-team",
-        "dispatch_tick": "2026-07-03T10:07Z",
-        "dev_agent": "a4c4cc22375ba96e4",
-        "dev_commit": "b19ac43c5",
-        "dev_journal_commit": "66ed3df09",
-        "review_at": "2026-07-03T10:31:43Z",
-        "review_by": "dev-team",
-        "router_raw_verified": "[dev-team 10:07Z tick] developer a4c4cc22 RAW-verified: commit b19ac43c5 scoped to EXACTLY scripts/cowork-fb-daily-firer.sh (1 deletion of --no-update-notification), 66ed3df09 = journal only (DJ-GATE-1 ref task-id), index-only, orch-state untouched, not pushed. Router ground-truth: claude 2.1.198 --help has no --no-update-notification (flag genuinely unsupported = fix correct); grep scripts/+launchd/ = 0 other references (blast radius = this file). Awaiting qa scoped-verify -> router promote review->done_verified."
       }
     ],
     "qa": [],
