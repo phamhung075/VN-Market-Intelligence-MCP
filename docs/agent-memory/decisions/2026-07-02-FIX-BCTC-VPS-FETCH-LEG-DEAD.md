@@ -110,6 +110,6 @@ scp vps-scripts/discover-bctc-urls-browser.py root@125.212.251.27:/root/discover
 
 ## Session Info
 
-**Coordination**: d3292ca4-a9ab-471a-8d8c-d0c723546258  
+**Coordination**: (session-scrubbed)  
 **Dispatcher**: dev-team router (board task FIX-BCTC-VPS-FETCH-LEG-DEAD)  
 **Duration**: ~30 min (recon + deploy + verification)

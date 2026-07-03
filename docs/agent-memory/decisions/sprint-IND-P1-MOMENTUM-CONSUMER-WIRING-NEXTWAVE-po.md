@@ -2,7 +2,7 @@
 
 **Program:** MARKET-INDICATOR-DEPTH (roadmap `docs/roadmaps/vn-market-indicator-roadmap.md`)
 **Governing intent (verbatim spirit):** "add more indicators so the helper agents analyze the market BETTER" — payoff is helper AGENTS CONSUMING the indicators, not the tools merely existing.
-**Agent:** po · **Coord session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
+**Agent:** po · **Coord session:** (session-scrubbed)
 **Date:** 2026-06-30T04:23Z
 **Triage script:** `scripts/po-s133-ind-p1-momentum-consumer-wiring-mint-nextwave-rank.jq` (idempotent, via `orch-apply.sh` rc=0)
 

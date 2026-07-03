@@ -2,7 +2,7 @@
 
 **Sprint goal:** P0 indicator depth suite — OHLCV backfill, volatility primitives, foreign-room utilization, SBV OMO curve, news-sentiment z-score, insider sentiment, breadth time-series.
 **Agent:** qa
-**Sprint gate session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
+**Sprint gate session:** (session-scrubbed)
 **Date:** 2026-06-30T00:11:00Z
 
 ---

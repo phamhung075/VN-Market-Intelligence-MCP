@@ -15,7 +15,7 @@ def w5id: "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST";
   | select(.id == w5id)
   | .status = "REVIEW"
   | .adopted_at = $now
-  | .assigned_to = "d3292ca4-a9ab-471a-8d8c-d0c723546258"
+  | .assigned_to = "(session-scrubbed)"
   | .tree_hygiene_note = "tree-hygiene: 0 files reverted (zone apps/mcp-server fully committed by dead worker before crash)"
   | .review_note = "dispatcher RAW-verified GREEN (adopted): dev b630277c, bun test 4/4 pass, fence clean (6 files all in-zone), DJ journal present"
 ]

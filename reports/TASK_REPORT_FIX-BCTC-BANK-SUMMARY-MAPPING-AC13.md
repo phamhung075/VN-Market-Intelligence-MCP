@@ -184,7 +184,7 @@ I could **not** call `task_heartbeat`, `task_release`, `task_claim` (commit-mute
 `send_telegram` from this session. Everything achievable via direct `Bash`/git/docker/jq was
 completed (rebuild, re-ingest attempt, raw-probe, live-verify, board close, this report, the
 commit below). **Outstanding, for the dispatcher session (owner_client_session
-`d3292ca4-a9ab-471a-8d8c-d0c723546258`) to perform:**
+`(session-scrubbed)`) to perform:**
 - `task_release` for all 5: `task:TASK-W1-FIX-BCTC-BANK-SUMMARY-MAPPING-GUARD`,
   `task:TASK-W2-FIX-BCTC-BANK-SUMMARY-MAPPING-ROW-REPAIR`,
   `task:TASK-W3-FIX-BCTC-BANK-SUMMARY-MAPPING-SECTION-GUARD`,

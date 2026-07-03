@@ -575,7 +575,7 @@ APPROVED — PO sign-off granted 2026-06-29 (review-ba-spec flow). All 5 blocker
 
 **Sprint:** MARKET-INDICATOR-DEPTH-P0
 **Architect:** architect · 2026-06-29T21:10Z
-**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
+**Session:** (session-scrubbed)
 
 ---
 

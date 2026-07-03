@@ -155,7 +155,7 @@ On ERROR or full-path failure: script exits non-zero → LLM falls back to origi
 2. developer: WU-2 (dev-team-tick-preflight.sh, modify main.md + cron-detect-loop/SKILL.md prompt)
 3. developer: WU-3 (auditor-tier1-probe.sh, extend probe.sh, modify cron-detect-loop/SKILL.md Job 2, annotate tier1-probe.md)
 
-**Coordination:** CLAUDE_CODE_SESSION_ID=d3292ca4-a9ab-471a-8d8c-d0c723546258 (router session, no cross-session lock required for pm→dev handoff; same session thread).
+**Coordination:** CLAUDE_CODE_SESSION_ID=(session-scrubbed) (router session, no cross-session lock required for pm→dev handoff; same session thread).
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## 2026-07-02 — TASK-DASH-CRON-1 (Zone 1, sprint DASH-CRON-RECHECK-TABLE) → REVIEW
 
-**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258 (router-dispatched)
+**Session:** (session-scrubbed) (router-dispatched)
 
 Built the backend status-compute for the Cron Recheck Table: `domain/cron/cronLivenessClassifier.ts` (pure, FR-1.6 4-branch ladder, zero imports), `domain/cron/humanScheduleFormatter.ts` (pure, ~10 cron shapes + honest passthrough), `infrastructure/cron/layerBCronRegistry.ts` (parses `.claude/commands/crons/*.md`, 13 live files, CN-5 memoized singleton), `application/cron/cronStatusCompute.ts` (CN-1 hybrid 3-tier job-name resolution, CN-2 MIN-of-6-samples cadence via new `cron-parser` dep, R1 memoization contract), `interface/mcp/routes/cronStatusHandler.ts` (`GET /api/cron-status`, mirrors `orchestrationHandler.ts`) + 4-line route registration in `server.ts` + 2 additive exports on `cronJobRunStore.ts`.
 
@@ -14,7 +14,7 @@ Zone health: tsc clean, eslint clean (own files), tools=183 (unchanged, no new M
 
 ## 2026-07-03 — FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING → REVIEW
 
-**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258 (router-dispatched)
+**Session:** (session-scrubbed) (router-dispatched)
 
 Part (a) client-side graceful degrade for `search_similar_context` (`analysis.ts:576-605`): wrapped the `ragSearch()` call in its own try/catch — on rag-service timeout (bounded `AbortSignal.timeout(8_000)` already in `ragHttpClient.ts`), ECONNREFUSED, or non-200, logs `logger.warn` and degrades to an empty result (→ `"No similar context found."`) instead of surfacing the hard `"Error searching context: …"` block that blocked bctc-analyst Step 2b 4 consecutive cycles (BUG#3397). Mirrors `appendStockHexagramHttp`'s L84 service-down omit-block pattern per PO triage. Did not touch rag-service itself (root cause tracked separately in FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP) or `ragHttpClient.ts`'s existing bound.
 
@@ -24,7 +24,7 @@ Zone health: tsc clean, eslint clean (own files; pre-existing unrelated `getMone
 
 ## 2026-07-03 — FIX-BCTC-BANK-BS-COLUMN-ORDER (composite FIX-A+FIX-D+FIX-C) → REVIEW
 
-**Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258 (router-dispatched, supersedes FIX-BCTC-BANK-BS-SECTION-CLASSIFIER per architect SPIKE docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md)
+**Session:** (session-scrubbed) (router-dispatched, supersedes FIX-BCTC-BANK-BS-SECTION-CLASSIFIER per architect SPIKE docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md)
 
 Fixed 3 stacking bugs that dropped/corrupted bank-form (Mẫu B02a/TCTDHN) balance-sheet rows before `bctc_table_rows`, freezing CTG (report_id 96e36139) total_assets at 0: (1) `refinedMarkdownParser.ts` 4+-column branch hardcoded `[code,label,value_current,value_prior]` (corporate convention) — added `resolveColumnLayout()` reading the header's own captured cell text to detect bank label-first order (`Mục|Mã`), plus a 3rd "label-only" outcome (no code column at all — e.g. the equity roll-forward note, unit-0038: maps value_current=LAST cell/value_prior=FIRST value cell, discarding delta columns; had to add "stt" to the code-keyword pattern after it first false-triggered on STT-headed income-statement tables, caught via full BCTC-subset re-run). (2) `bctcFormType.ts` `isBankFormFromRows` required an EXACT bare Roman numeral — CTG's real codes are bold (`**I**`…`**XV**`) — now strips `*`/`_` before testing. (3) `detectSection` vocabulary lacked the bank BS title "BÁO CÁO TÌNH HÌNH TÀI CHÍNH" — added (+ folded sibling) — plus closed the task-board note's explicit ToC-false-positive item: bullet-prefixed (`-`/`*` ) lines now skip section detection entirely (a real statement title is never itself a markdown list item; the pre-existing exact-phrase pattern was already false-matching a ToC bullet directly, not merely via the folded-keyword fallback). Also fixed, discovered via hands-on real-data verification (not in the original 3-item scope but required for the DoD numbers to resolve at all): `parseVnNumber` assumed VN dot-thousands/comma-decimal unconditionally and didn't strip bold markers — CTG's real values are English comma-thousands AND bold-wrapped grand totals (`"**2,924,176,928**"`) — now strips emphasis markers first, then auto-detects comma-vs-dot format (mirrors `domain/services/vnNumberParser.ts`'s proven heuristic, duplicated not imported — this file's footnote/superscript stripping has no domain equivalent). Corrected `bctcRowRepair.ts`'s header comment (now-disproven "row absent from source" claim).
 

@@ -3,7 +3,7 @@
 **Sprint:** MARKET-INDICATOR-DEPTH-P0
 **Task:** MCP REST Gauges Endpoint — GET /api/indicator-gauges
 **Verdict:** APPROVED
-**QA Session:** d3292ca4-a9ab-471a-8d8c-d0c723546258
+**QA Session:** (session-scrubbed)
 **Date:** 2026-06-30
 
 ---
@@ -110,7 +110,7 @@ Summary updated: LIVE 30→35, GAP stays at 1 (CHEF-SYNTHESIS only).
 
 ### [QA] Review Record
 
-Reviewer: qa (session d3292ca4-a9ab-471a-8d8c-d0c723546258)
+Reviewer: qa (session (session-scrubbed))
 Date: 2026-06-30
 Sprint: MARKET-INDICATOR-DEPTH-P0
 Task: IND-P1-MCP-REST-GAUGES-ENDPOINT

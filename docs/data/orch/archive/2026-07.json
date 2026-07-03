@@ -102,7 +102,7 @@
       "size": "M",
       "priority": "high",
       "depends": [],
-      "claimed_by": "d3292ca4-a9ab-471a-8d8c-d0c723546258",
+      "claimed_by": "(session-scrubbed)",
       "claimed_at": "2026-06-29T22:00:00Z",
       "note": "FR-S0-1: drain ohlcv_backfill_queue (~450 rows, 2yr bars) via writeOhlcvBatch (NOT direct INSERT). FR-S0-2: backfill completion marker. NFR: idempotent, no fabrication, unit guard respected. Unlocks P0-1 rv_60d + 252d-drawdown and P1 momentum family. NEW FILE: ohlcvHistoryBackfillJob.ts",
       "updated_at": "2026-06-29T21:50:00Z",
