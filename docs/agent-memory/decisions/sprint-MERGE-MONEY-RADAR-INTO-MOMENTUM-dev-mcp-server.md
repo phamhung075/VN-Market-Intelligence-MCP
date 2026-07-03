@@ -76,3 +76,19 @@ availability kept separate per dispatch guidance.
 **why-change:** none — task explicitly said "not a docker deploy"; interpreted
 as no build/up/recreate (respected), not as no docker exec of an existing
 script against the running container (required to touch the named-volume DB).
+
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-07-03T21:34:39Z
+**task-id:** SPIKE-HSX-STRATEGY0-0URLS
+**what-done:** curl+`bun run` of unmodified `fetchHsxBctcUrls` for all 8
+named tickers: ALL returned valid PDF URLs — falsifies "0 URLs" premise;
+328 `deferred_infra` rows traced to static 06-08 triage, excluded from all
+3 enricher SELECT arms regardless of Strategy-0 health.
+**what-considered:**
+- hunt parse bug in hsxBctcFetcher.ts — dropped, live probe returned URLs.
+- docker-exec queue inspect — sandbox-blocked; used curl+bun-run+git/orch
+  cross-check instead.
+**why-decision:** Corroborated by independent same-day architect SPIKE
+(2026-07-03-bctc-discover-pipeline-dead.md) — 2 methods agree over 1
+contradicting ops recon (quarter-as-number test-harness bug suspected).
+**why-change:** Redirects sprint: "fix Strategy-0" → "close 06-16 framing +
+optional pagination/fileType fix for the 293-row historical set."
