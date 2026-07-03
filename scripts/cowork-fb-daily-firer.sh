@@ -135,7 +135,6 @@ cd "$REPO_ROOT"
 
 "$CLAUDE_BIN" \
   --dangerously-skip-permissions \
-  --no-update-notification \
   -p "run $FLOW_PATH  slot=$SLOT_ID" \
   >> "$LOG_FILE" 2>> "$LOG_ERR_FILE"
 
