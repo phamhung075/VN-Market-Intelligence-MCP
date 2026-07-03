@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T03:04:40Z",
-    "_updated_by": "cowork-drain",
+    "_updated_at": "2026-07-03T06:31:50Z",
+    "_updated_by": "cowork-chef-verify",
     "archive": [],
     "rows": [
       {
@@ -463,6 +463,16 @@
         "severity": "WARN",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "cowork-chefmarker-leak-2026-07-03T06:31:50Z",
+        "summary": "chef.md (unified-agent) leaks published:chef-intraday marker on silent no-post exit: RAW-verified transcript shows task_claim with NO matching task_release (agent narrative falsely claimed 'released cleanly'); marker held blocking the intraday window until TTL. Also owner_client_session hardcoded 'placeholder' (not real session) + ttl_seconds=3600 vs contract 100800. FIX chef.md: (a) claim the published marker only immediately before send_telegram, not before the convergence decision; (b) release it on EVERY no-post/silent exit path; (c) pass real owner_client_session; (d) use contract ttl. Router released the leaked marker this tick.",
+        "severity": "WARN",
+        "status": "NEW",
+        "ts": "2026-07-03T06:31:50Z",
+        "from": "cowork-team/chef-verify",
+        "to": "po",
+        "type": "agent_flow_defect"
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
