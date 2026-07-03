@@ -243,13 +243,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "idle",
     "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "Drain signal_queue NEW to=po rows + triage: repair_task_request dt-flowdefect-orphan-guard-20260703T0817Z -> backlog as FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (HIGH). A-13 HIGH sau-20260703T074552Z is self-resolved (INFO corroboration sau-2026-07-03T08:41:40Z) -> mark non-actionable. W5 chain (TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST + W5-FU-CTG-REFINE-96e36139) now code-cleared by COLUMN-ORDER done_verified -> awaits own qa/deploy.",
-    "updated_at": "2026-07-03T08:52:04Z",
-    "updated_by": "router",
-    "note": "06:37Z dev-team tick closed: FIX-BCTC-BANK-BS-COLUMN-ORDER done_verified (qa PASS, commit 66dfe89a5, RAW-verified). DEPLOY-GATED: post-deploy finalize_bctc_refine on live CTG report 96e36139 still required to unfreeze total_assets (NOT run). SF-1 held; router continuing tick to drain+triage 3 NEW signals via po."
+    "next_agent": null,
+    "updated_at": "2026-07-03T09:24:08Z",
+    "updated_by": "dev-team",
+    "note": "09:07Z dev-team tick: 0 NEW queue rows; drained 2 cowork-fire breadcrumbs (routed-to-po, informational) + 1 stale price_anomaly_v1 left in inbox (non-signal shape). Orphan-signal task:FIX-BCTC-BANK-BS-COLUMN-ORDER adoption SKIPPED — done_verified (manual board-state guard); immune reaper orphan (session=null) TTL~2026-07-03T10:05Z, not cleared per policy. Prior po triage landed (FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD backlog/next_agent=ba; A-13 non-actionable; W5 pair code-cleared). No actionable dev work. DEPLOY-GATED: user rebuilds mcp-server container, then W5 finalize (bctc-analyst refine -> dev-mcp-server reingest on live CTG 96e36139 -> promote W5 review->done_verified). head->idle @ 2026-07-03T09:24:08Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",

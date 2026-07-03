@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-07-03T09:04:17Z",
-    "matched_slots": ["refine-bctc-slot-1"],
-    "won_slots": ["refine-bctc-slot-1"],
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/refine_bctc_md/flow/main.md"],
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 2,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "refine-bctc-slot-1": "cron" },
-    "cadence_minutes": { "refine-bctc-slot-1": null },
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": null
+    },
     "last_fired_timestamp": "2026-07-03T09:04:17Z",
-    "last_fired_slots": ["refine-bctc-slot-1"],
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "refine-bctc-slot-1 (bctc-offmarket, non-guaranteed) fired in legacy pressure mode (stale_warning=true); off-market calendar allows. refine_bctc_md spawned background (oldest pending row, cover-letter skip guard active)."
   },
   "priority": "low",
-  "createdAt": "2026-07-03T09:04:17Z"
+  "createdAt": "2026-07-03T09:04:17Z",
+  "_processed": {
+    "fingerprint": "1078e8b5c66770e5b927c425812f1f0af6f60810fd7faaa4d06e6cffa091c659",
+    "processedAt": "2026-07-03T09:22:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
