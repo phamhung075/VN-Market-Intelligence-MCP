@@ -243,13 +243,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD done_verified (qa PASS, dev commit 8bc0b5b5, qa commit 5a8bab990). DEPLOY-GATED: re-entrancy guard takes effect on next mcp-server container rebuild (not run). Dev loop idle -> next tick drains backlog (incl. PO-triaged PNJ repairs FIX-ALERT-COMMANDER-DEAD-NO-SLOT + FEAT-SEVERITY-OVERRIDE-SURFACING).",
-    "updated_at": "2026-07-03T16:37:22Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT",
+    "next_agent": "cowork-refactory-expert",
+    "next_action": "cowork-refactory-expert restores alert-commander cowork slot(s) in docs/data/cowork-schedule.json (confirm cadence: market-hours + off-hours since legal/crisis events break off-market — PNJ example) + reconciles system-map.json:1312 sender_rules doc-drift. Index-only commit, explicit paths, no push, no board touch. On completion: router RAW-verify -> in_progress->review -> qa.",
+    "updated_at": "2026-07-03T16:51:45Z",
     "updated_by": "router",
-    "note": "16:30Z: dev-mcp-server FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD promoted review->done_verified (qa a2b934f0e PASS, RAW-verified). WIP now 0."
+    "note": "16:37Z dev-team tick: dispatched FIX-ALERT-COMMANDER-DEAD-NO-SLOT (HIGH, PNJ proximate cause) to cowork-refactory-expert. WIP=1. FEAT-SEVERITY-OVERRIDE-SURFACING remains backlog for next-tick planning."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7467,24 +7467,6 @@
         "status_note": "AC: orch-apply.sh validation rejects/collapses-keep-first .signal_queue.rows[] (and .archive[]) with duplicate .id, fail-loud; auditor signal ts written full ISO8601 YYYY-MM-DDTHH:MM:SSZ so prune age-math parses; optional tolerant fromdateiso8601 in prune query. Recurring class feedback_ssot_duplicate_key (06-05 75-rows, 07-03 11-rows sau-d4). PARTIAL-OVERLAP: producer-side D4 emitter unique-id tracked separately by FU-AUDITOR-D4-SIGNAL-ID — THIS task owns ONLY the validate-side belt+suspenders guard + ts-format; do NOT double-fix D4 emitter. Priority MED (no active harm — dup rows were READ). Source: docs/signals/router-signalqueue-dup-id-guard-20260703.md"
       },
       {
-        "id": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT",
-        "type": "FIX",
-        "priority": "HIGH",
-        "status": "BACKLOG",
-        "zone": "cross-service/",
-        "size": "S",
-        "title": "alert-commander DEAD ~5.5wk -- restore missing cowork slot(s) in cowork-schedule.json (proximate cause of PNJ coverage miss). PO DECISION: RESURRECT.",
-        "created_at": "2026-07-03T16:14:00Z",
-        "created_by": "po",
-        "source_signal": "router-alert-commander-dead-20260703",
-        "payload_ref": "docs/signals/router-alert-commander-dead-20260703.md",
-        "related": "FEAT-SEVERITY-OVERRIDE-SURFACING",
-        "next_agent": "ba",
-        "po_decision": "RESURRECT. Rationale: alert-commander owns position-danger + watchlist-opportunity + verified_chain + legal_risk->CRITICAL-always + crisis_velocity duties that are NOT rehomed anywhere. FEAT-SEVERITY-OVERRIDE-SURFACING only covers market-wide surfacing of high-severity legal_risk/price_anomaly via CHEF/fb -- it does NOT cover position-danger or watchlist-opportunity real-time alerting. Formal retirement is therefore not viable without rehoming those duties first; the fix is cheap (restore a slot). Resurrect restores ALL alert classes; severity-override removes the single-point-of-failure. Both needed.",
-        "desc": "(a) Restore alert-commander slot(s) in docs/data/cowork-schedule.json -- the alert-commander-market sub-hourly slot referenced by .claude/skills/cron-cowork-team/SKILL.md and declared in docs/agents/cowork-team/flow/main.md:9 fell out of the SSOT ~2026-05-25 (scheduling regression); dispatcher had nothing to fire -> agent silently dead. Confirm cadence: market-hours sub-hourly PLUS off-hours coverage (legal/crisis events fire off-hours -- the PNJ prosecution did). Write atomically (tmp+mv). (b) Reconcile docs/data/system-map.json:1312 alert-commander sender_rules doc-drift to include the legal_risk/verified_chain/crisis_velocity CRITICAL-always override (currently mis-reads as watchlist-only). (c) Add auditor liveness-guard: a scheduled agent producing zero cycles for > N days raises a system-auditor anomaly (this regression sat unnoticed 5.5wk; ref feedback_passive_health_masks_dead_data).",
-        "impact_note": "For ~5.5wk NO real-time alert of ANY class (position-danger, watchlist-opportunity, verified_chain, legal_risk, crisis_velocity) has fired. PNJ is simply the first miss a human noticed."
-      },
-      {
         "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
         "type": "FEATURE",
         "priority": "HIGH",
@@ -9800,7 +9782,31 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT",
+        "type": "FIX",
+        "priority": "HIGH",
+        "status": "IN_PROGRESS",
+        "zone": "cross-service/",
+        "size": "S",
+        "title": "alert-commander DEAD ~5.5wk -- restore missing cowork slot(s) in cowork-schedule.json (proximate cause of PNJ coverage miss). PO DECISION: RESURRECT.",
+        "created_at": "2026-07-03T16:14:00Z",
+        "created_by": "po",
+        "source_signal": "router-alert-commander-dead-20260703",
+        "payload_ref": "docs/signals/router-alert-commander-dead-20260703.md",
+        "related": "FEAT-SEVERITY-OVERRIDE-SURFACING",
+        "next_agent": "ba",
+        "po_decision": "RESURRECT. Rationale: alert-commander owns position-danger + watchlist-opportunity + verified_chain + legal_risk->CRITICAL-always + crisis_velocity duties that are NOT rehomed anywhere. FEAT-SEVERITY-OVERRIDE-SURFACING only covers market-wide surfacing of high-severity legal_risk/price_anomaly via CHEF/fb -- it does NOT cover position-danger or watchlist-opportunity real-time alerting. Formal retirement is therefore not viable without rehoming those duties first; the fix is cheap (restore a slot). Resurrect restores ALL alert classes; severity-override removes the single-point-of-failure. Both needed.",
+        "desc": "(a) Restore alert-commander slot(s) in docs/data/cowork-schedule.json -- the alert-commander-market sub-hourly slot referenced by .claude/skills/cron-cowork-team/SKILL.md and declared in docs/agents/cowork-team/flow/main.md:9 fell out of the SSOT ~2026-05-25 (scheduling regression); dispatcher had nothing to fire -> agent silently dead. Confirm cadence: market-hours sub-hourly PLUS off-hours coverage (legal/crisis events fire off-hours -- the PNJ prosecution did). Write atomically (tmp+mv). (b) Reconcile docs/data/system-map.json:1312 alert-commander sender_rules doc-drift to include the legal_risk/verified_chain/crisis_velocity CRITICAL-always override (currently mis-reads as watchlist-only). (c) Add auditor liveness-guard: a scheduled agent producing zero cycles for > N days raises a system-auditor anomaly (this regression sat unnoticed 5.5wk; ref feedback_passive_health_masks_dead_data).",
+        "impact_note": "For ~5.5wk NO real-time alert of ANY class (position-danger, watchlist-opportunity, verified_chain, legal_risk, crisis_velocity) has fired. PNJ is simply the first miss a human noticed.",
+        "owner": "cowork-refactory-expert",
+        "dispatched_at": "2026-07-03T16:51:45Z",
+        "dispatched_by": "router",
+        "tick": "2026-07-03T16:37Z",
+        "router_dispatch_note": "[router 2026-07-03T16:37Z] FIX dispatched to cowork-refactory-expert. Scope: (a) restore alert-commander slot(s) in docs/data/cowork-schedule.json; (b) reconcile system-map.json:1312 sender_rules doc-drift (CRITICAL-always override). Part (c) auditor liveness-guard = separate follow-up (system-auditor domain, not this task). On completion: router RAW-verify -> flip in_progress->review -> dispatch qa."
+      }
+    ],
     "ready": [],
     "review": [
       {
