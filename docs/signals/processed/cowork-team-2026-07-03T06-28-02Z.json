@@ -31,5 +31,11 @@
     "note": "chef-intraday dispatched (conditional publish: agent-side convergence + published-marker gate). Drain: no cowork-addressed rows (all to=po → left NEW for dev-team). DEFECT: cowork Step 0a target set lists po but dev-team drain-signals is NEW-only → cowork marking po-rows READ strands them (12 prior po-rows already stranded incl 1 CRITICAL bctc-discover 390h)."
   },
   "priority": "low",
-  "createdAt": "2026-07-03T06:28:02Z"
+  "createdAt": "2026-07-03T06:28:02Z",
+  "_processed": {
+    "fingerprint": "c8788ede093b3af654c5560391f2c55ac864a86941d0cf839e7db02a8b55a65b",
+    "processedAt": "2026-07-03T06:42:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

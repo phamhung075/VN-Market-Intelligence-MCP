@@ -43,5 +43,11 @@
     "note": "tick-snapshot skipped (single-agent zero-blocker fallback); emit_pressure_state stale_warning=true"
   },
   "priority": "low",
-  "createdAt": "2026-07-03T05:05:46Z"
+  "createdAt": "2026-07-03T05:05:46Z",
+  "_processed": {
+    "fingerprint": "7fe5a8c50cf7fd128cdce8fd9bb8c35077e46d7a1fd5693a7f3d9bc145091a0d",
+    "processedAt": "2026-07-03T06:42:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

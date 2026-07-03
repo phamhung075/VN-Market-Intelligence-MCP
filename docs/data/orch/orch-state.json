@@ -243,12 +243,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-03T07:15:00Z",
-    "updated_by": "architect",
-    "active_task_id": null,
-    "next_agent": "pm",
-    "note": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT DONE (architect, corrective head-fix — prior head note was stale from a concurrent commit race, task_board.done row already correctly reflects DONE) -> docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md. Root cause: refinedMarkdownParser.ts column-order swap (dominant) + bctcFormType.ts classifier bold-intolerance + detectSection vocabulary gap, all apps/mcp-server. FIX-BCTC-BANK-BS-SECTION-CLASSIFIER left in REVIEW with architect_disposition recommending supersede/split into FIX-BCTC-BANK-BS-COLUMN-ORDER + FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP, next_agent=pm."
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-BANK-BS-COLUMN-ORDER",
+    "next_agent": "dev-mcp-server",
+    "next_action": "execute composite parser fix (FIX-A+D+C) + real-markdown regression gate",
+    "updated_at": "2026-07-03T06:58:49Z",
+    "updated_by": "dev-team",
+    "note": "06:37Z tick dispatched 2/2: FIX-BCTC-BANK-BS-COLUMN-ORDER->dev-mcp-server (head tracks this; unblocks W5 chain) + SPIKE-BCTC-DISCOVER-PIPELINE-DEAD->architect (B-05 CRITICAL root-cause; architect self-manages its own row; router holds task:SPIKE coord lock + reconciles head on return)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -282,7 +283,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T06:43:27Z",
+    "_updated_at": "2026-07-03T06:46:14Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -486,8 +487,10 @@
         "type": "data_stale",
         "summary": "bctc-discover stale 396.6h (check B-05)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "read_at": "2026-07-03T06:46:14Z",
+        "read_by": "dev-team"
       },
       {
         "id": "sau-2026-07-03T06:42:56Z",
@@ -497,8 +500,10 @@
         "type": "data_stale",
         "summary": "9 BCTC pending >72h old (check B-13)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "read_at": "2026-07-03T06:46:14Z",
+        "read_by": "dev-team"
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
@@ -7281,7 +7286,7 @@
         "sprint": "COWORK-RELIABILITY",
         "zone": "cross-service/",
         "title": "chef.md cleanup releases published:<slot>:<date> marker post-publish — defeats FR-P2-7 dup-post gate (2x 2026-07-02: chef-morning + chef-evening)",
-        "status_note": "REPAIR (router repair_task_request createdAt 2026-07-02T20:01:29Z, transcript-proven, 2x same-day = recurring-bug threshold). Root cause: chef.md claims published:chef-<slot>:<VN-date> (task_kind=cowork-slot, ttl 100800s) before send_telegram per FR-P2-7, then task_release on the SAME marker in its cleanup/finally after publishing — re-opens the dup gate immediately (marker meant to hold ~28h). FIX: cleanup releases ONLY dispatcher slot tokens / heartbeat locks, NEVER published:<slot>:<date> markers (TTL-expiry only); add explicit DO-NOT-RELEASE note at the FR-P2-7 claim step. SWEEP other publisher flows for the same release-in-cleanup pattern: fb-market-poster, digest-predict, news-scout, market-watcher, bctc-analyst (their 2026-07-02 markers were still held at report time -> only chef drifts today, but verify contract). ROUTE (out-of-dev-scope, per FU-CHEF-MARKER-INFLOW precedent): agent-flow .md contract edit -> agents-architect contract review (irreversible MARKET double-publish safety) -> agent-father flow edit via agent-md-factory; NOT dev-team apps/ code. Files: docs/agents/unified-agent/flow/chef.md (+ sweep the 5 flows). Workaround ACTIVE: dispatcher re-arms marker after RAW-verify (done both occurrences). KIN FU-CHEF-MARKER-INFLOW (claim-side / key-granularity, DEFERRED) — this is the RELEASE-side facet of the same marker contract. AC: a chef re-fire of an already-published slot on the same VN-date exits WITHOUT a 2nd send_telegram; task_list_held shows the published:<slot>:<date> marker still held immediately post-publish; no dispatcher re-arm needed for 7d.",
+        "status_note": "REPAIR (router repair_task_request createdAt 2026-07-02T20:01:29Z, transcript-proven, 2x same-day = recurring-bug threshold). Root cause: chef.md claims published:chef-<slot>:<VN-date> (task_kind=cowork-slot, ttl 100800s) before send_telegram per FR-P2-7, then task_release on the SAME marker in its cleanup/finally after publishing — re-opens the dup gate immediately (marker meant to hold ~28h). FIX: cleanup releases ONLY dispatcher slot tokens / heartbeat locks, NEVER published:<slot>:<date> markers (TTL-expiry only); add explicit DO-NOT-RELEASE note at the FR-P2-7 claim step. SWEEP other publisher flows for the same release-in-cleanup pattern: fb-market-poster, digest-predict, news-scout, market-watcher, bctc-analyst (their 2026-07-02 markers were still held at report time -> only chef drifts today, but verify contract). ROUTE (out-of-dev-scope, per FU-CHEF-MARKER-INFLOW precedent): agent-flow .md contract edit -> agents-architect contract review (irreversible MARKET double-publish safety) -> agent-father flow edit via agent-md-factory; NOT dev-team apps/ code. Files: docs/agents/unified-agent/flow/chef.md (+ sweep the 5 flows). Workaround ACTIVE: dispatcher re-arms marker after RAW-verify (done both occurrences). KIN FU-CHEF-MARKER-INFLOW (claim-side / key-granularity, DEFERRED) — this is the RELEASE-side facet of the same marker contract. AC: a chef re-fire of an already-published slot on the same VN-date exits WITHOUT a 2nd send_telegram; task_list_held shows the published:<slot>:<date> marker still held immediately post-publish; no dispatcher re-arm needed for 7d. | [TRIAGE 2026-07-03T06:52:55Z / signal cowork-chefmarker-leak-2026-07-03T06:31:50Z — DEDUP, no new row] FOLDED additional facets of the SAME chef.md published-intraday marker contract: (a) marker CLAIMED as an EARLY gate BEFORE deciding to post (should claim only at the decide-to-post point — KIN FU-CHEF-MARKER-INFLOW claim-side); (b) LEAKS the marker on SILENT NO-POST exits (no/incorrect release path exercised); (c) owner_client_session=\"placeholder\" (must be the real session id); (d) ttl=3600s but contract requires 100800s (~28h) — under-TTL re-opens the FR-P2-7 dup gate early. Same route: agent-md-factory -> agents-architect contract review -> agent-father; NOT dev-team apps/ code.",
         "created_at": "2026-07-02T20:33:16Z"
       },
       {
@@ -7413,23 +7418,6 @@
           "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY"
         ],
         "note": "Source: telegram report id=3419 (analysis-agent, normal, 2026-07-03T03:45:51Z), router-authored. The 03:00Z partial-run failure mode (spawn dispatched, notebook/delivery never landed, election lock TTL-expired mid-run) is the SAME 'spawn-dispatch != delivery-proof' class as FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY but for the T1 AUDITOR firer, not cowork slots. Self-healing (fire-election) WORKS — router restored coverage this tick. This row tracks ONLY the peer-firer health question (is the launchd/peer session dead vs transient). Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG (single self-healed incident; escalate to a live ops dispatch only if it recurs). The 03:00Z sau-d4 signal duplication is a SEPARATE known class (FU-AUDITOR-D4-SIGNAL-ID + FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE)."
-      },
-      {
-        "id": "FIX-BCTC-BANK-BS-COLUMN-ORDER",
-        "title": "CTG/bank-form parser: column-order header mapping + section-vocabulary + real-markdown regression (FIX-A+FIX-D+FIX-C composite)",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "next_agent": "dev-mcp-server",
-        "status": "TODO",
-        "priority": "high",
-        "size": "L",
-        "created_at": "2026-07-03T06:21:56Z",
-        "note": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT root-cause FIX-A (header-aware column mapping in refinedMarkdownParser.ts 4/5-cell branch, ~L419-426) + FIX-D (detectSection bank BS title vocabulary + ToC false-positive fix) + FIX-C (mandatory real-markdown regression fixture from live unit-0002/0003/0038). Supersedes FIX-BCTC-BANK-BS-SECTION-CLASSIFIER; fold its 3 shipped RC fixes (commit 2c7fb5b0) as real non-regressions. See architecture brief docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md §7.",
-        "depends": [],
-        "unblocks": [
-          "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
-          "W5-FU-CTG-REFINE-96e36139"
-        ]
       },
       {
         "id": "FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP",
@@ -9621,7 +9609,46 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-BANK-BS-COLUMN-ORDER",
+        "title": "CTG/bank-form parser: column-order header mapping + section-vocabulary + real-markdown regression (FIX-A+FIX-D+FIX-C composite)",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "next_agent": "dev-mcp-server",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "size": "L",
+        "created_at": "2026-07-03T06:21:56Z",
+        "note": "SPIKE-BCTC-CTG-BS-REALDATA-ROOT root-cause FIX-A (header-aware column mapping in refinedMarkdownParser.ts 4/5-cell branch, ~L419-426) + FIX-D (detectSection bank BS title vocabulary + ToC false-positive fix) + FIX-C (mandatory real-markdown regression fixture from live unit-0002/0003/0038). Supersedes FIX-BCTC-BANK-BS-SECTION-CLASSIFIER; fold its 3 shipped RC fixes (commit 2c7fb5b0) as real non-regressions. See architecture brief docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md §7.",
+        "depends": [],
+        "unblocks": [
+          "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
+          "W5-FU-CTG-REFINE-96e36139"
+        ],
+        "assigned_to": "dev-mcp-server",
+        "dispatched_at": "2026-07-03T06:58:49Z",
+        "dispatched_by": "dev-team"
+      },
+      {
+        "id": "SPIKE-BCTC-DISCOVER-PIPELINE-DEAD",
+        "status": "IN_PROGRESS",
+        "type": "SPIKE",
+        "mode": "spike",
+        "zone": "multi",
+        "next_agent": "architect",
+        "owner": "po",
+        "created_by": "po-triage-20260703T0637Z",
+        "priority": "critical",
+        "timebox": 120,
+        "title": "bctc-discover pipeline produced 0 pushes for ~17d (396.6h) despite 36 actionable pending rows during Q2 earnings — pin the dead stage",
+        "question": "Why has the bctc discover->enqueue->fetch->push pipeline produced 0 pushes in ~17 days (last push 396.6h ago) while 36 actionable rows sit pending during the Q2-2026 earnings window? Identify the EXACT dead stage and emit a precisely-zoned FIX: (1) is the discover cron firing at all (scheduler alive)? (2) are URLs discovered on the VPS (discover-bctc-urls-browser.py) but not enqueued? (3) is fetch/OCR failing silently? (4) is the enricher returning 0 URLs for CURRENT quarters (KIN BCTC-ENRICHER-OLD-QUARTERS, which covers OLD quarters)? This is NOT a false-P0 (ruled out: reading 390h->396.6h = real elapsed time; 'passive health masks dead data' — cron fires but no data produced).",
+        "status_note": "From signals sau-2026-07-03T06:42:33Z (B-05 CRITICAL) + sau-2026-07-03T06:42:56Z (B-13 WARN, FOLDED — same root: 9 rows >72h). Zone candidates: apps/mcp-server (discover/enqueue/enricher/scheduler) + vps-scripts (discover-bctc-urls-browser.py) + apps/pdf-extractor (fetch). multi -> architect must split, then emit precisely-zoned FIX(es). DEDUP-checked distinct from: BCTC-HNX-SSL-HARDEN [REVIEW] (fetch works insecurely via curl -k; hardening debt, NOT the blocker per its PREMISE-CORRECTED note), FU-CTG-DISCOVERY-FILENAME-FILTER [CTG-specific discovery quality], FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH [detector-side false-P0, but signal author ruled false-P0 out], BCTC-ENRICHER-OLD-QUARTERS [KIN — OLD quarters; this is CURRENT-quarter starvation], FIX-BCTC-BANK-BS-COLUMN-ORDER [parse/finalize layer, downstream of discover]. Recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE not point-patch (feedback_recurring_bug_escalation).",
+        "assigned_to": "architect",
+        "dispatched_at": "2026-07-03T06:58:49Z",
+        "dispatched_by": "dev-team"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -9766,8 +9793,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-03T05:03:08Z",
-    "last_triaged_by": "po-triage-20260703T0437Z"
+    "last_triaged_at": "2026-07-03T06:52:55Z",
+    "last_triaged_by": "po-triage-20260703T0637Z"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

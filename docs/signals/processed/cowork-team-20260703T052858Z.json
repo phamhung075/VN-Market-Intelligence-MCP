@@ -46,5 +46,11 @@
     "note": "CHEF same-tick mutex dropped chef-intraday (non-guaranteed); one morning dish spawned. drift ~11min (caution band, <15 safe)."
   },
   "priority": "low",
-  "createdAt": "2026-07-03T05:28:58Z"
+  "createdAt": "2026-07-03T05:28:58Z",
+  "_processed": {
+    "fingerprint": "37e4fbdbc7d19fd2a57f49cedcdfb8caa1b8beee3af29245a68be422b0cb4022",
+    "processedAt": "2026-07-03T06:42:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

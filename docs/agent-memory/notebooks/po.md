@@ -1,6 +1,27 @@
 # PO Notebook
 
-_Last: 2026-07-03T05:03Z_
+_Last: 2026-07-03T06:37Z_
+
+## Tick 2026-07-03T06:37Z — dev-team triage: dispatch COLUMN-ORDER (unblocks W5) + create B-05 discover SPIKE
+
+**Inputs:** pendingSignals=4 (all READ by drain); board IDLE (ready=0, in_progress=0, WIP=0/2); .head idle. Backlog=396.
+
+**BATCH returned (WIP 2):**
+- FIX-BCTC-BANK-BS-COLUMN-ORDER (FIX, apps/mcp-server, dev-mcp-server) — HIGHEST. Existing backlog TODO; `unblocks` field already lists both BLOCKED W5 review tasks (VALIDATION-REINGEST + W5-FU-CTG-REFINE-96e36139). Composite FIX-A+D+C = refinedMarkdownParser.ts column-order + bctcFormType.ts bold-tolerance + detectSection bank-BS vocab.
+- SPIKE-BCTC-DISCOVER-PIPELINE-DEAD (SPIKE, zone=multi, next=architect, critical, 120m) — NEW backlog row. Different agent (architect) => no dev-mcp-server concurrency conflict with COLUMN-ORDER; different subsystem (discover/enqueue vs parse) => no file conflict.
+
+**Signal dispositions:**
+1. rag A-22 RestartCount 294→297 HEALTHY (LOW) — SKIP watch-note (FU-RAG-DEPLOY-MEMORY already tracks). No task.
+2. chef-marker-leak (agent_flow_defect) — DEDUP, no new row. Folded 4 facets (early-gate-before-decide / no-post-exit leak / owner_client_session="placeholder" / ttl 3600 vs 100800) into FIX-CHEF-PUBLISHED-MARKER-RELEASE.status_note. KIN FU-CHEF-MARKER-INFLOW (claim-side) + FIX-CHEF-SENDTELEGRAM-ARGSHAPE. Route stays agent-md-factory→architect→agent-father (NOT dev apps/).
+3. B-05 CRITICAL bctc-discover dead 396.6h / 36 pending rows during Q2 earnings — REAL breakage (false-P0 ruled out). NEW SPIKE (above). DEDUP-checked distinct from HNX-SSL-HARDEN (fetch works via curl -k, not blocker), FU-CTG-DISCOVERY-FILENAME-FILTER (CTG-only), FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH (detector-side), BCTC-ENRICHER-OLD-QUARTERS (KIN, old-quarters).
+4. B-13 WARN queue aging 9 rows>72h — FOLDED into B-05 SPIKE (same root).
+
+**HELD:** FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP — serialize behind COLUMN-ORDER (SAME files refinedMarkdownParser.ts/bctcFormType.ts) + architect flagged partly superseded. Re-eval after COLUMN-ORDER lands (likely close-as-superseded or residual-only).
+
+**Data-quality note:** 11 dup signal_queue rows id=sau-d4-202607030300 — root cause already tracked by FU-AUDITOR-D4-SIGNAL-ID (one row per divergence, shared id). No new task; prune not worth it (all READ).
+
+**Board writes (orch-apply.sh, exit 0):** +SPIKE row; CHEF status_note enrich; last_triaged_at/by. .head untouched. 105 coherence warnings pre-existing (SHG migration, non-blocking).
+
 
 ## Tick 2026-07-03T04:37Z — dev-team triage: rebuild landed → UNPARK cluster, dispatch QA on 3 review items
 
