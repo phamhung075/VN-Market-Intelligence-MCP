@@ -4,55 +4,42 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Ngân hàng bán lẻ và doanh nghiệp, thẻ tín dụng, ngân hàng số (App MBBank).",
-  "customer": "Khách hàng cá nhân gửi tiết kiệm/vay tiêu dùng và doanh nghiệp/SME; nền khách hàng số hoá cao.",
-  "ops": "KHÔNG THỂ ĐÁNH GIÁ chu kỳ này — dữ liệu BCTC hỏng: total_assets 666.7 tỷ VND (phi thực tế cho ngân hàng top-5 VN, quy mô thực ước hàng trăm nghìn tỷ), equity=0, validation FAILED (lệch 14.9%).",
-  "mgmt": "Không đánh giá được — lỗi trích xuất dữ liệu chặn mọi tín hiệu quản trị thực chu kỳ này (không phải nhận định quản trị thật).",
-  "financials": {
-    "net_revenue_bn_vnd": 0,
-    "net_profit_bn_vnd": 0,
-    "total_assets_bn_vnd": 666.711,
-    "equity_bn_vnd": 0,
-    "total_liabilities_bn_vnd": 567.49,
-    "cash_bn_vnd": 680.641,
-    "roe_pct": null,
-    "roa_pct": 0,
-    "pe": null,
-    "pb": null,
-    "published_at": "2026-06-07T11:25:24.812Z",
-    "confidence_pct_tool": 60,
-    "refine_status": "PARTIAL",
-    "validation": "failed — Assets (666.711) != Liabilities (567.490) + Equity (0), mismatch 14.9%"
+  "product": "Ngan hang thuong mai co phan ban le va SME, cho vay tieu dung, bao hiem lien ket ngan hang (bancassurance).",
+  "customer": "Khach hang ca nhan do thi, SME, doanh nghiep vua va nho vay von luu dong.",
+  "ops": "DU LIEU BCTC CORRUPT — khong the danh gia bien loi nhuan/ROA that (get_bctc_full tra ve Net Revenue/Net Profit = 0). PE/ROE tham khao tu get_sector_comparison (nguon khac): PE 8.0x, ROE 20.7% (tren median nganh 16.7%).",
+  "mgmt": "Khong danh gia duoc do du lieu BCTC bi loi anh xa tong tai san ngan hang (nghi tai phat bug giong CTG c072); bao cao xuat ban 06-07, truoc khi fix FIX-BCTC-BANK-SUMMARY-MAPPING (a46131cf 07-01, 2cd9e105 07-02) duoc merge — can reflow.",
+  "esc_flags": {
+    "esc1_accounting_trick": false,
+    "esc2_balance_sheet": "TRUE — Assets 666.7ty != Liab 567.5ty + Equity 0ty, mismatch 14.9% (repeat finding from c074, guard held own-session, key=esc-deepdive:MBB:Q1-2026:ESC-2, expires ~2026-07-04T00:08Z)",
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 2,
+    "esc3_signal_emitted": "docs/signals/bctc-analyst-20260703T182000Z.json (NEW guard claimed this cycle, first time for MBB)",
+    "esc4_related_party": "not evaluable (P&L corrupted to 0)",
+    "esc5_refine_confidence": "not evaluated (get_bctc_refined not called this cycle)"
   },
-  "valuation": {
-    "verdict": "N/A — data corrupt, no legitimate ratio computable"
-  },
-  "escalation": {
-    "esc2_result": "TRUE",
-    "esc2_imbalance_pct": 14.88,
-    "esc2_guard_key": "esc-deepdive:MBB:Q1-2026:ESC-2",
-    "esc2_status": "PENDING",
-    "esc2_dispatch_file": "docs/signals/bctc-analyst-20260703T001500Z.json",
-    "esc3_result": "SKIPPED — net_profit_total=0 (undefined ratio per guard rule)",
-    "esc4_result": "SKIPPED — related_party_pct/one_off_pct not computable (data corrupt)",
-    "esc5_result": "SKIPPED — report_id not exposed via bctc-analyst tool package (data gap)"
+  "sector_comparison": {
+    "pe": 8,
+    "pb": 1.6,
+    "roe_pct": 20.7,
+    "sector_median_pe": 9.1,
+    "sector_median_roe_pct": 16.7,
+    "foreign_flow_5d": "MBB -229K cp net, weaker than sector -86K cp net",
+    "source_note": "peer-table derived, NOT from the corrupt get_bctc_full record for MBB"
   },
   "kinhdich": {
-    "que": "39 Kien",
-    "xu_huong": "BAT LOI",
+    "que": "40 Giai",
+    "xu_huong": "THUAN LOI",
     "tin_hieu": "GIU",
-    "confidence_pct": 25
+    "confidence_pct": 100
   },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "data_quality_flag": "CORRUPT — plausibility check failed (feedback_nonzero_values_need_plausibility_check). Suspected recurrence of bank total_assets-mapping bug class (same signature as CTG, flagged corrupt c072 2026-07-02). Published 2026-06-07T11:25:24Z, PREDATES FIX-BCTC-BANK-SUMMARY-MAPPING merge (commit a46131cf, 2026-07-01) — recommend reflow/re-extraction rather than treating as fresh fundamentals.",
-  "confidence_pct": 20,
-  "cycle": "c074",
-  "generated_at": "2026-07-03T00:15:00Z",
+  "balance_sheet_first_read": "SKIPPED — underlying data corrupt (total_assets 666.7ty implausible for top-5 bank, equity=0), no meaningful ratios computable",
+  "insider_signals": "no significant insider activity (30d window)",
+  "data_note": "data byte-identical to c074 (published 2026-06-07T11:25:24.812Z) - fix commits a46131cf/2cd9e105 have NOT been reflowed onto this already-served report; suspected recurrence of bank total_assets-mapping bug, treated as data-integrity issue not fresh fundamentals",
+  "cycle_provenance": "router-dispatched (bctc-analyst-slot-2)",
+  "generated_at": "2026-07-03T18:25:00Z",
   "_processed": {
-    "fingerprint": "a47920d3a29d481d8511ee732fe454445fcde51a0ca9380d01d562298b784fdf",
-    "processedAt": "2026-07-03T00:22:59Z",
+    "fingerprint": "b2d4826904ce60ac21dfaff9f1c79a8ab406c96ca88ed69fdb561fd254c0b832",
+    "processedAt": "2026-07-03T18:28:27Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

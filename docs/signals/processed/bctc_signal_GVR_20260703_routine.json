@@ -4,69 +4,46 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Khai thác và chế biến mủ cao su thiên nhiên; cho thuê hạ tầng khu công nghiệp (KCN) trên quỹ đất cao su chuyển đổi.",
-  "customer": "Nhà sản xuất lốp xe/chế biến cao su trong nước và xuất khẩu; doanh nghiệp FDI thuê đất KCN.",
-  "ops": "Biên gộp 26.4% lành mạnh, nhưng LN ròng (28.4% biên) vượt LN gộp do khoản thu ngoài hoạt động 590.1 tỷ (23.5% LN ròng) — chưa rõ nguồn gốc cụ thể (nghi bồi thường đất/chuyển đổi KCN).",
-  "mgmt": "Thu ngoài HĐ vượt ngưỡng 15% LN lặp lại không đổi qua 3 chu kỳ liên tiếp (c070/c073/c074) — ESC-4 vẫn PENDING với dev-team, minh bạch phân bổ khoản thu chưa được xác nhận.",
-  "financials": {
-    "net_revenue_bn_vnd": 8845.16,
-    "gross_profit_bn_vnd": 2336.69,
-    "gross_margin_pct": 26.4,
-    "operating_profit_bn_vnd": 1923.3,
-    "net_profit_bn_vnd": 2513.38,
-    "net_margin_pct": 28.4,
-    "total_assets_bn_vnd": 87178.9,
-    "equity_bn_vnd": 64984.72,
-    "total_liabilities_bn_vnd": 22194.18,
-    "cash_bn_vnd": 8927.73,
-    "roe_qtr_pct": 3.87,
-    "roa_pct": 2.9,
+  "product": "Khai thac va che bien mu cao su thien nhien, go cao su, kinh doanh bat dong san khu cong nghiep (VRG/GVR group).",
+  "customer": "Nha may che bien lop xe/cong nghiep cao su trong nuoc va xuat khau; khach thue KCN thuoc VRG.",
+  "ops": "Bien loi nhuan rong 28,4% tren doanh thu 8.845,2 ty; OCF van bang 0 (chua doi chieu duoc voi loi nhuan, forensic gap 2/4 quy)",
+  "mgmt": "Von dieu le/von chu so huu 61,6% - tich luy loi nhuan giu lai dai han; thu ngoai hoat dong chinh chiem 23,5% loi nhuan rong (ESC-4, lap lai tu c070)",
+  "esc_flags": {
+    "esc1_accounting_trick": false,
+    "esc2_balance_sheet": "PASS",
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 2,
+    "esc4_related_party": "TRUE — 23.5% of net profit (repeat finding, guard held own-session, key=esc-deepdive:GVR:Q1-2026:ESC-4, expires ~2026-07-03T21:19Z)",
+    "esc5_refine_confidence": "not evaluated (get_bctc_refined not called this cycle — E1 6-pass genuinely unavailable per c073 data-gap note)"
+  },
+  "sector_comparison": {
     "pe": null,
     "pb": null,
-    "published_at": "2026-06-07T11:06:21.515Z",
-    "data_unchanged_since": "2026-07-01 (c070) — byte-identical values across c070/c073/c074"
-  },
-  "valuation": {
-    "ey_spread": null,
-    "verdict": "N/A — P/E unavailable for GVR"
-  },
-  "escalation": {
-    "esc2_result": "PASS",
-    "esc2_note": "assets_total 87178.899 = liabilities_total 22194.179 + equity_total 64984.721 (imbalance ~0%)",
-    "esc3_result": "DATA-COVERAGE-LIMITED",
-    "esc3_quarters_returned": 1,
-    "esc3_coverage_guard_key": "esc-datacov:GVR:Q1-2026:ESC-3",
-    "esc3_coverage_guard_held_by": "peer (client_session b6bd58f2-...)",
-    "esc4_result": "TRUE (one_off_pct=23.5% > 15% threshold)",
-    "esc4_status": "GUARD-HELD",
-    "esc4_guard_key": "esc-deepdive:GVR:Q1-2026:ESC-4",
-    "esc4_guard_expires_at_unix": 1783113143,
-    "esc4_dispatch_note": "Redispatched c073 (2026-07-02T21:15Z); guard still active this cycle, no re-emit needed",
-    "esc5_result": "SKIPPED — report_id not exposed via bctc-analyst tool package (data gap, unchanged since c073)"
+    "roe_pct": 3.9,
+    "sector_median_roe_pct": 15.5,
+    "foreign_flow_5d": "GVR +3K cp net, stronger than sector -1K cp net"
   },
   "kinhdich": {
-    "que": "31 Ham",
+    "que": "32 Hang",
     "xu_huong": "THUAN LOI",
     "tin_hieu": "GIU",
-    "confidence_pct": 62
+    "confidence_pct": 100
   },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "data_quality_note": "E1 6-pass trick detection genuinely unavailable — bctc_table_rows/bctc_balance_checks/report_id not exposed via bctc-analyst tool package (only aggregate get_bctc_full). Honest none-confidence, no fabricated findings.",
-  "evidence_fragment_recorded": {
-    "evidence_type": "bctc_roe_ratio",
-    "direction": "bullish",
-    "magnitude": 0.3,
-    "confidence": 0.6,
-    "record_id": 316
+  "balance_sheet_first_read": {
+    "asset_coverage_approx": 0.67,
+    "pb_ratio_approx": 2,
+    "charter_capital_ratio": 0.616,
+    "balance_flags": [],
+    "balance_verdict": "ACCEPTABLE",
+    "note": "market_cap approximated via par-value 10,000 VND/share assumption (no direct shares-outstanding field) — approximate, not authoritative"
   },
-  "confidence_pct": 60,
-  "cycle": "c074",
-  "generated_at": "2026-07-03T00:15:00Z",
+  "insider_signals": "no significant insider activity (30d window)",
+  "data_note": "data byte-identical to c070/c073/c074 cycles (published 2026-06-07T11:06:21.515Z) - no new filing this cycle",
+  "cycle_provenance": "router-dispatched (bctc-analyst-slot-2)",
+  "generated_at": "2026-07-03T18:25:00Z",
   "_processed": {
-    "fingerprint": "89f5057d86a384fbe7977f82ca2fa2c1bd9c97339f3cc6ef065c8fa9e89a9358",
-    "processedAt": "2026-07-03T00:22:59Z",
+    "fingerprint": "816e6d77290d3f4ebb6b5ef7d17a3715baa0920309181c35afe8fe77d1ae5636",
+    "processedAt": "2026-07-03T18:28:27Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

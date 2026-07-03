@@ -1,16 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-07-03 00:15 UTC (c074-slot4) | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c071 · 2026-07-02T00:15:00Z
-### Analysis Cycle (00:08–00:15 UTC) — mode: routine
-- E2 guard: PASS (00:08 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-4. Log ID: 1539.
-- Mode: routine. 2 analyzed: FPT (data byte-identical to c070) + HVN FIRST ANALYSIS (aviation, conf 100%). CORRUPT DATA total_assets=0 (7): VHM/VIC/HSG/VRE/POW/REE/VNM. DB trống: MBB/VPB/KBC/NVL/DPM/NKG/D2D/ACV/HCM. DHG PUB-5 44%.
-- Regime: NEUTRAL (carry +1.37pp). EY 7.05% CHEAP. VN-Index 1,867.21 stale pre-open. Clock Overheat CPI 5.46%. Gold $4,051.5 BULLISH. USD/VND 26,106 BEARISH.
-- FPT Q1-2026: PE 13.8x (-20%). ROE 28.3% vs 10.6%. EY +2.25pp FAIR. OCF/NI=-1.15 unchanged. ESC skipped (data unchanged). KD Quẻ 23 Bác.
-- HVN Q1-2026 FIRST: DT 29,030.2 tỷ, LN ròng 3,948.3 tỷ (13.6%). PE 7.6x (-50%). EY +8.16pp CHEAP. B/S PASS. OCF/NI=1.27. ESC-3 DATA-COV-LIM (guard claimed). ESC-4 FIRE 23.5% — dispatch BLOCKED (no Bash), guard released cleanly, BUG sent (msg 3116). KD Quẻ 64 TRUNG TINH GIU 38%.
-- Signals: #8194 FPT (0.78) + #8195 HVN (0.6, critic 1.0). Frags: id=272,273.
-- Files: bctc_signal_FPT_20260702_routine.json + bctc_signal_HVN_20260702_routine.json.
+**Last updated:** 2026-07-03 18:30 UTC (c075-slot2) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c072 · 2026-07-02T18:20:00Z
 ### Analysis Cycle (18:05–18:20 UTC) — mode: routine
@@ -51,3 +41,17 @@
 - Files: bctc_signal_GVR_20260703_routine.json + bctc_signal_MBB_20260703_routine.json + bctc-analyst-20260703T001500Z.json (ESC-2 MBB dispatch).
 - BUG: search_similar_context timed out 4th consecutive cycle (c071–c074) — no matching fix in get_recent_fixes(20); re-flagged to BUG channel.
 - Carry-over to c075: GVR ESC-4 guard active until ~2026-07-03T21:15Z. MBB ESC-2 dispatch NEW (guard expires ~2026-07-04T00:15Z) — watch for dev-team response. CTG ESC-2 still corrupt (untested this cycle). Q2 deadline 2026-07-31 (28d). QUÁ HẠN unchanged: BDI/BID/DAG/DLC/GAS/JSH/PLX/PPC/SIS/VDC/VEA/VNH. Next: rotate re-verify/re-probe remaining trống/corrupt tickers (MWG/SSI/VCI/NVL/VHM/ACV/POW/VIC/REE/HCM/DPM/EIB/TCH + VHM/VIC/HSG/VRE/POW/REE/VNM corrupt cluster).
+
+## c075 · 2026-07-03T18:30:00Z
+### Analysis Cycle (18:12–18:30 UTC) — mode: routine
+- E2 guard: PASS (18:12 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-2 (router-dispatched). Log ID: 1561. Calendar: 29 ĐÃ NỘP unchanged vs c074 → MODE_RELEASE=false.
+- Mode: routine. 2 analyzed: GVR re-verify (byte-identical to c070/c073/c074) + MBB re-verify (ESC-2 persists, byte-identical to c074, guard held own-session). Extensive re-probe for data recovery (isolated calls, 8 tickers): CTG/VHM still CORRUPT-SKIP; HCM/NVL/VPB/DPM/ACV still DB trống; EIB/DHG still PUB-5 31%/44% unchanged. FIX-BCTC-BANK-SUMMARY-MAPPING (a46131cf/2cd9e105, merged 07-01/07-02) NOT yet reflowed onto any already-served corrupt report (CTG/VHM/MBB all unchanged).
+- Regime: NEUTRAL (carry +1.37pp). EY 7.05% CHEAP. VN-Index 1,862.08 (-4.27). Gold $4,187.3 BULLISH (+1.21%). Brent $72.13 NEUTRAL. USD/VND 26,103 BEARISH. Clock Overheat, CPI 5.46%.
+- GVR Q1-2026: unchanged (published 06-07). OCF=0 vs NI 2,513.4 tỷ (forensic gap, 2/4 quarters). ESC-4 repeat (23.5% NI related-party), guard held (own session, expires ~21:19 UTC). ESC-3 DATA-COV-LIM (guard-held by peer b6bd58f2…). KD Quẻ 32 Hằng THUẬN LỢI GIU 100%. ROE 3.9%.
+- MBB Q1-2026: ESC-2 persists (14.9% mismatch, unchanged from c074), guard held (own session, expires ~00:08 UTC 07-04) — NO redispatch. ESC-3 NEW guard claimed (first time for MBB), DATA-COV-LIM signal emitted (severity LOW → ops). Sector-comparison (separate source) shows PE 8.0x ROE 20.7% plausible — confirms fault is in BCTC-serve layer, not market pricing. KD Quẻ 40 Giải THUẬN LỢI GIU 100%.
+- BUG FOUND (new, reproduced 2/2): get_bctc_full cross-ticker contamination when 2 calls batched in parallel — 2nd result silently returns 1st ticker's structured_data. Isolated sequential re-calls both times gave correct data. Reported msg 3231 + signal file. Agents should call get_bctc_full sequentially, not batched, until fixed.
+- search_similar_context RECOVERED this cycle (5th attempt) — no timeout, empty result. Ends 4-cycle failure streak (c071-c074).
+- Evidence frags: id=342 GVR (bctc_roe_ratio, bullish 0.3).
+- Signals: #8490 GVR (0.6, critic 0.8) + #8491 MBB (0.6, critic 0.8, data-integrity framing).
+- Files: bctc_signal_GVR_20260703_routine.json + bctc_signal_MBB_20260703_routine.json + bctc-analyst-20260703T182000Z.json (ESC-3 MBB coverage) + bctc-analyst-20260703T183000Z.json (BUG: get_bctc_full contamination).
+- Carry-over to c076: GVR ESC-4 guard expires ~21:19 UTC 07-03 — redispatch if still unresolved next cycle. MBB ESC-2 guard expires ~00:08 UTC 07-04. MBB ESC-3 coverage guard now claimed (8d TTL, ~07-11). CTG ESC-2 still corrupt (guard from prior cycles, untested ratios). Q2 deadline 2026-07-31 (28d). QUÁ HẠN unchanged: BDI/BID/DAG/DLC/GAS/JSH/PLX/PPC/SIS/VDC/VEA/VNH. get_bctc_full parallel-batch bug: watch for dev-team fix confirmation. Next: continue rotation on remaining trống/corrupt (MWG/SSI/VCI/TCH/POW/VIC/REE/HSG/VRE/VNM + KBC/NKG/D2D not retested this cycle).

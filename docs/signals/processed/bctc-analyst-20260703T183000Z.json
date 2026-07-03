@@ -1,0 +1,14 @@
+{
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-07-03T18:30:00Z",
+  "payload": "get_bctc_full cross-ticker contamination under parallel/batched tool calls (reproduced 2/2 this cycle): when 2 get_bctc_full calls for different tickers are issued in the same batched message, the 2nd result returns the 1ST ticker's structured_data JSON instead of its own ticker's data. Case 1: batch [MBB, HCM] -> HCM slot returned MBB's total_assets=666711/cash=680641/fetchedAt=2026-06-07T11:25:24.812Z (identical to MBB's own values). Case 2: batch [GVR, EIB] -> 2nd slot returned GVR's structured_data (roe=3.8676513803559005, total_assets=87178899.384779, matching GVR's own text-summary numbers) instead of EIB's PUB-5-low-confidence status. Isolated sequential re-calls (1 call per message) for HCM and EIB both returned CORRECT distinct results ('Chưa có dữ liệu BCTC' for HCM; 'PUB-5: Extraction confidence too low (31%)' for EIB) — confirms the bug is concurrency-triggered, not a static wrong-data-in-DB issue. Data-integrity risk: any agent (financial-analyst, report-analyzer, digest-predict, unified-agent, market-watcher via cowork tools) batching >=2 get_bctc_full calls in one turn could silently misattribute one ticker's balance sheet to another. Recommend: (1) audit get_bctc_full server handler for shared/non-request-scoped state under concurrent invocations, and/or the MCP gateway's result-to-call attribution when downstream calls run concurrently; (2) add a response-echo of the requested `code` param so callers can self-verify; (3) until fixed, cowork agents should call get_bctc_full sequentially (1 per turn) when fetching multiple tickers. This session worked around it by re-verifying suspicious results with isolated sequential calls before using them in signals/ledger.",
+  "_processed": {
+    "fingerprint": "e6f9e059b93da1ef038e1e1024ba50f87dfa1d72016526153ca24417de78b563",
+    "processedAt": "2026-07-03T18:28:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
