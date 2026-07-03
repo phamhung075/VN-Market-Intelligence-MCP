@@ -7588,6 +7588,40 @@
         "next_agent": "developer",
         "created_at": "2026-07-03T22:31:03Z",
         "status_note": "Router-detected latent candidate ACCEPTED (non-urgent). scripts/agents-flow/dev-team-tick-preflight.sh _step_sf1_claim() (~L120-142) is NOT re-entrant: on a session's OWN held SF-1 it inspects only .claimed and returns 'peer holds it' -> SKIP with detail 'SF-1 held by peer session', even when current_holder.owner_client_session == self. FIX: mirror _step_fire_election() (~L161-189) which DOES compare current_holder.owner_client_session and heartbeats on self-hold. LATENT: SKIP is the CORRECT outcome while a tick is genuinely in-flight; real harm case = SF-1 self-held while session is free -> phantom-peer-SKIP for the full 90min TTL = a dead-drive window. Zone cross-service (scripts/agents-flow/, NOT apps/). Owner developer/general."
+      },
+      {
+        "id": "FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "docs/agents/system-auditor/",
+        "size": "S",
+        "owner": "system-auditor",
+        "next_agent": "ba",
+        "title": "system-auditor B-05 (bctc-vps freshness) applies a 24h-continuous SLA to the RAW quarterly-PDF push layer instead of the authoritative analysis-layer SLA gate -> phantom CRITICAL + Telegram BUG ~6x/day for an event-driven quarterly source",
+        "root_cause": "B-05 reads get_vps_proxy_health(bctc) raw last-push age (still 06-16 / 0-in-24h) and applies a 24h-continuous stale threshold, but bctc filings are an EVENT-DRIVEN quarterly source (Q2-2026 not due until ~late July; 0 items pending). The authoritative freshness gate is get_sla_status(bctc) (analysis layer: age 33min / SLA 850min -> OK). Same two-layer-freshness / predicate-drift class as FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT (news sibling) and the C-06/C-11/C-12 family: threshold compared against the WRONG layer.",
+        "fix_spec": "B-05 must gate on the analysis-layer authority, not the raw last-push: (1) PRIMARY: read get_sla_status(bctc) — within SLA -> OK, do not fire. (2) EXEMPT the raw-push staleness path when trigger_bctc_vps_fetch(dry_run) pending==0 AND get_vps_service_health(vn-bctc-fetch)==HEALTHY (event-driven quarterly source: 0 pending + healthy service = nothing stuck = benign). (3) Only escalate raw-push age when pending>0 OR the VPS service is unhealthy. Emit at most ONE finding; never CRITICAL+Telegram-BUG off raw last-push age alone. Co-fix with B-11 in the same docs/agents/system-auditor/flow/main.md pass (same class, same file).",
+        "dod": [
+          "B-05 reads get_sla_status(bctc) as the primary freshness authority; within-SLA -> no fire.",
+          "B-05 exempts raw-push staleness when pending==0 AND vn-bctc-fetch HEALTHY (event-driven quarterly source).",
+          "RAW: replay the 2026-07-03T22:41Z state (SLA age 33min OK, VPS HEALTHY, pending 0, raw last-push 06-16) -> assert NO CRITICAL + NO Telegram BUG; AND assert a real stuck queue (pending>0 + stale SLA) DOES still fire.",
+          "No CRITICAL+Telegram-BUG duplicate from the raw-push root in one Tier-2 cycle."
+        ],
+        "sibling_of": "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
+        "related": [
+          "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
+          "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
+          "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE"
+        ],
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "co_fix_note": "Groom together with B-11 as ONE docs/agents/system-auditor/flow/main.md two-layer-freshness pass (same file, same predicate-drift class) — the efficient path to stop both raw-vs-analysis phantom CRITICALs + Telegram BUG spam.",
+        "spam_cost": "4th B-05 CRITICAL emission on 2026-07-03 (~6x/day); each fire also spams a Telegram BUG alert. Recurring per feedback_recurring_bug_escalation.",
+        "baseline_pass": "RAW-corroborated benign by router 2026-07-03T22:41Z: get_sla_status(bctc) age 33min/SLA 850min OK; get_vps_service_health(vn-bctc-fetch) HEALTHY (polled 4m ago); trigger_bctc_vps_fetch(dry_run) pending 0; get_vps_proxy_health(bctc) raw last-push 06-16/0-in-24h (only stale metric, benign for event-driven quarterly). Auditor-tooling-only, no data incident.",
+        "source": "PO dedup triage (router-dispatched) of B-05 sau-20260703T223423Z (4th emission today) 2026-07-03",
+        "created_at": "2026-07-03T23:01:26Z",
+        "created_by": "po"
       }
     ],
     "closed_sprints": [
@@ -10231,16 +10265,17 @@
         "desc": "PREMISE CORRECTED (recon docs/vps-sources/hnx-tls-chain-2026-07-02.txt, 2026-07-02): HNX renewed the leaf cert Jun 18 2026, NotAfter Jan 3 2027 — there is NO 2026-07-07 expiry cliff; deadline pressure removed, priority downgraded high->medium (security-hardening debt, not an outage race). REAL driver: the HNX server omits the GlobalSign RSA OV SSL CA 2018 intermediate from the served chain (openssl verify code 21 unable-to-verify-first-cert), so the June-1 hotfix (commit e22427aa) still runs insecure curl -k (cert verification OFF = MITM exposure) in /root/fetch-bctc.sh on the VPS. Harden: bundle the GlobalSign RSA OV SSL CA 2018 intermediate + root into a CA bundle and replace curl -k with curl --cacert <bundle> pinning in vps-scripts/fetch-bctc.sh; ensure scripts/deploy-vinahost.sh ships the bundle. AC: bctc fetch succeeds with cert verification ON (no -k), openssl verify returns 0 against the pinned bundle, and fetch keeps working past 2026-07-07 (leaf valid to 2027-01-03).",
         "deps_satisfied_at": "2026-07-02T11:20:56Z",
         "recon_note": "[router 2026-07-02] Dependency FIX-BCTC-VPS-FETCH-LEG-DEAD DONE -> dispatchable (route ops). PREMISE CORRECTED by recon evidence (docs/vps-sources/hnx-tls-chain-2026-07-02.txt): HNX renewed leaf cert Jun 18 2026, NotAfter Jan 3 2027 -> NO 2026-07-07 expiry cliff. Remaining driver: server omits GlobalSign RSA OV SSL CA 2018 intermediate (openssl verify code 21) -> curl -k workaround still live in /root/fetch-bctc.sh. Deadline pressure removed; PO may re-rank priority.",
-        "next_agent": "dev-vps-crawls",
+        "next_agent": "ops",
         "promoted_at": "2026-07-02T13:23:04Z",
         "promoted_by": "po",
         "rerank_note": "[po 2026-07-02 dev-team tick T13:07Z] Re-ranked high->medium: router-corrected recon falsified the 2026-07-07 expiry-cliff premise (leaf valid to 2027-01-03). Remaining value = eliminate live insecure curl -k on the VPS fetch leg (reduce security debt per standing mandate). Deps satisfied (FIX-BCTC-VPS-FETCH-LEG-DEAD DONE), recon complete, size S, ops-route, disjoint zone from in_progress FIX-BCTC-ENRICHER-STUCK-BACKLOG — cleanest groomed candidate for the one free WIP slot; promoted backlog->ready.",
         "claimed_at": "2026-07-02T13:26:46Z",
         "claimed_by": "router",
         "dispatch_note": "Dispatched ops 2026-07-02T13:26:46Z. FIX (size S) — replace curl -k in vps-scripts/fetch-bctc.sh with --cacert pinned bundle (GlobalSign RSA OV SSL CA 2018 intermediate + root); scripts/deploy-vinahost.sh ships the bundle; redeploy to VPS /root/fetch-bctc.sh. Recon: docs/vps-sources/hnx-tls-chain-2026-07-02.txt. Accepts: fetch OK with verification ON (no -k); openssl verify rc=0 against pinned bundle; leaf valid to 2027-01-03 so no 07-07 race. SCOPE SPLIT 2026-07-02T13:29:52Z: live-VPS deploy denied by permission classifier (remote prod write, user-gated) — worker re-routed ops->dev-vps-crawls, repo-only (bundle + script edits + offline openssl verify, commit, NO ssh/deploy). Deploy = user runs scripts/deploy-vinahost.sh. Row stays IN_PROGRESS -> flip to review/deploy-pending on worker return.",
-        "updated_at": "2026-07-02T13:38:51Z",
-        "updated_by": "router",
-        "review_note": "Repo scope COMPLETE 2026-07-02T13:38:51Z: commits 073fa27f (vps-scripts/hnx-ca-bundle.pem GlobalSign intermediate+root, fetch-bctc.sh curl -k -> --cacert /root/hnx-ca-bundle.pem, deploy-vinahost.sh ships bundle) + 638fba89 (DJ-GATE-1 journal). RAW-verified by router: openssl verify -CAfile bundle <recon leaf> = OK rc=0 reproduced; grep confirms no -k/--insecure; live probe evidence: TLS verify ok on owa.hnx.vn (HTTP 403 = WAF, app-layer). DEPLOY PENDING (user-gated): user must run ./scripts/deploy-vinahost.sh (ships bundle + fetch-bctc.sh to VPS /root/). Post-deploy AC: HNX fetch OK with verification ON."
+        "updated_at": "2026-07-03T23:01:26Z",
+        "updated_by": "po",
+        "review_note": "Repo scope COMPLETE 2026-07-02T13:38:51Z: commits 073fa27f (vps-scripts/hnx-ca-bundle.pem GlobalSign intermediate+root, fetch-bctc.sh curl -k -> --cacert /root/hnx-ca-bundle.pem, deploy-vinahost.sh ships bundle) + 638fba89 (DJ-GATE-1 journal). RAW-verified by router: openssl verify -CAfile bundle <recon leaf> = OK rc=0 reproduced; grep confirms no -k/--insecure; live probe evidence: TLS verify ok on owa.hnx.vn (HTTP 403 = WAF, app-layer). DEPLOY PENDING (user-gated): user must run ./scripts/deploy-vinahost.sh (ships bundle + fetch-bctc.sh to VPS /root/). Post-deploy AC: HNX fetch OK with verification ON.",
+        "po_recovery_disposition": "[po router-dispatched 2026-07-03T23:01:26Z] Analysis layer RECOVERED since 03:03Z (queue 38->0, get_sla_status(bctc) age 33min/SLA 850min OK, vn-bctc-fetch HEALTHY, pending 0) — but via the B-05-FU-SSC-503-RETRY enricher fail-fast chain (DONE_VERIFIED) draining deferred_infra, NOT via this HNX SSL hardening. This task is DECOUPLED security-debt (replace insecure curl -k with --cacert pinning; MITM exposure); recon already falsified any 07-07 SSL expiry cliff (leaf valid to 2027-01-03) and curl -k kept fetching, so there was never a true SSL OUTAGE blocking fetches. Neither 'fix deployed' nor 'self-resolved' is confirmed FOR THIS TASK — its own acceptance (bctc fetch succeeds with verification ON, post-deploy) is UNVERIFIED: repo scope complete (073fa27f+638fba89, router RAW-verified openssl rc=0/no-k) but the VPS deploy (scripts/deploy-vinahost.sh) is unconfirmed and get_vps_proxy_health(bctc) shows 0 fetch in 24h so no hardened-path fetch has actually run. NOT resolvable on the analysis-layer recovery (different fix chain). Per OVERRIDE 07-03 delegate-gated-deploys-to-ops: OPS verification WARRANTED — confirm scripts/deploy-vinahost.sh shipped the CA bundle + hardened fetch-bctc.sh to VPS /root/, then a live HNX fetch with --cacert (verification ON, no -k) returns rc=0 and the fetch succeeds. Task STAYS in review[] until ops confirms. Note: the recurring B-05 FP's durable fix is FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT (auditor-check layer split), distinct from this deploy task."
       }
     ],
     "qa": [],

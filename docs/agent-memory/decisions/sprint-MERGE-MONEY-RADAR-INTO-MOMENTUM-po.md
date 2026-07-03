@@ -64,3 +64,13 @@
 - W5 rows: flip BLOCKED→READY vs annotate+keep BLOCKED — chose keep BLOCKED, rewrite blocked_on to the deploy-gate (sequencing: ops-deploy MUST precede the operational re-ingest; a premature READY would dispatch a dev coding lane with nothing to code).
 **why-decision:** COLUMN-ORDER (W5 code blocker) is done_verified (qa 66dfe89a5, RAW-verified) → W5 chain is code-clear; the ONLY remaining gate is deploy + finalize_bctc_refine on live CTG 96e36139, which is ops+operational not code/qa.
 **why-change:** no change from router hand-off; added the W5 deploy-gate reconcile as board hygiene (stale blocked_on pointed at a now-done_verified task).
+
+### STEP po-S7 · po · 2026-07-03T23:00:13Z
+**task-id:** BCTC-HNX-SSL-HARDEN
+**what-done:** Recorded a recovery disposition on the review-lane row + routed next_agent→ops for a live deploy+fetch-with-verification-ON probe (did NOT resolve); minted FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT (backlog, PLAN-ONLY) as the durable B-05 FP fix (po-s140). Router-dispatched B-05 sau-20260703T223423Z decision+dedup.
+**what-considered:**
+- Ask1 fix-deployed vs self-resolved vs neither: chose NEITHER-CONFIRMED — the analysis-layer recovery (queue 38→0, get_sla_status 33min OK, VPS HEALTHY) came from the B-05-FU-SSC-503-RETRY enricher chain (done_verified), DECOUPLED from this HNX SSL security-debt task; recon already falsified any SSL outage (curl -k kept fetching, leaf valid to 2027-01-03).
+- Resolve now vs hold for ops: chose HOLD — this task's OWN AC (fetch OK with verification ON, post-deploy) is unverified; repo scope complete (073fa27f+638fba89) but VPS deploy unconfirmed + 0 fetch/24h ⇒ no hardened-path fetch has run. Per OVERRIDE 07-03 delegate gated deploy/verify to ops (don't wait on user gate).
+- Ask2 link-existing vs mint-new: EXCLUDE-TERMINAL is a metric-semantics bug (apps/mcp-server), B-11 is the NEWS sibling, L2-DATAASOF is frontend fields — none covers the bctc auditor-check raw-vs-analysis split ⇒ MINT ONE, modeled on B-11, sibling_of B-11, co-fix in same auditor main.md.
+**why-decision:** RESOLVE condition set 03:03Z ("post-deploy freshness verification confirms recovery") is NOT met — recovery is from a different fix chain; the task's own post-deploy AC can only close on a live ops HNX fetch-with-verification-ON probe.
+**why-change:** router's B-05→BCTC-HNX-SSL-HARDEN link was the framed root at triage time; corrected the durable FP root to the new auditor-layer-split row (kept the deploy task decoupled). Did not touch the signal (router owns it, already READ).
