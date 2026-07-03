@@ -7317,7 +7317,7 @@
         "type": "FIX",
         "priority": "HIGH",
         "created_at": "2026-07-02T22:24:53Z",
-        "status_note": "Src signal rtr-esc4-heuristic-fix-20260702T2203 (market-analyst GVR ESC-4 deep-dive NOT-REAL 55%). AC-1 (all-tickers formula fix): ESC-4 non-op share must use consistent pre-tax basis (PretaxProfit-OperatingProfit)/PretaxProfit, NOT (NetProfit-OperatingProfit)/NetProfit which mixes an after-tax numerator against pre-tax operating profit; verify GVR true non-op share is ~41.3% not 23.5%. AC-2 (SOE exception class): state-own >90% + land-bank/plantation + net-cash tickers (GVR/PHR/DPR/TRC/HRC) get an auto structural-context tag that downgrades ESC-4 severity HIGH->INFO until line items are available. DONE: bctc-analyst heuristic doc updated AND no new ESC-4 HIGH signal fires for the GVR-class (active redispatch loop c070->c072 stops) for 24h. next_agent=agent-father."
+        "status_note": "Src signal rtr-esc4-heuristic-fix-20260702T2203 (market-analyst GVR ESC-4 deep-dive NOT-REAL 55%). AC-1 (all-tickers formula fix): ESC-4 non-op share must use consistent pre-tax basis (PretaxProfit-OperatingProfit)/PretaxProfit, NOT (NetProfit-OperatingProfit)/NetProfit which mixes an after-tax numerator against pre-tax operating profit; verify GVR true non-op share is ~41.3% not 23.5%. AC-2 (SOE exception class): state-own >90% + land-bank/plantation + net-cash tickers (GVR/PHR/DPR/TRC/HRC) get an auto structural-context tag that downgrades ESC-4 severity HIGH->INFO until line items are available. DONE: bctc-analyst heuristic doc updated AND no new ESC-4 HIGH signal fires for the GVR-class (active redispatch loop c070->c072 stops) for 24h. next_agent=agent-father. || [po router-dispatched 2026-07-04] GVR Q1-2026 ESC-4 4th-emission Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9) CONFIRMS this fix: legitimate non-operating income, NOT an extraction artifact. Cascade verified to the dong (PBT 2960.9 bridges op 1923.3 -> net 2513.4; other-income pre-tax 1037.6 = 35.0% of PBT vs the 23.5% net/after-tax mixed value AC-1 flags; eff-tax 15.1%; B/S 87178.9 = 64984.7 + 22194.2). Fired 4x on byte-identical data 06-30..07-03 = escalation ceiling reached. This SUPERSEDES the deep-dive's narrower content-hash-whitelist rec (AC-2 SOE-class HIGH->INFO downgrade is durable across ALL future GVR quarters, not just Q1). Caveat: thu-nhap-khac footnote composition unavailable (prose empty) = the 0.1 confidence gap. PO verdict: whitelist-accepted, linked to this row (no new row minted)."
       },
       {
         "id": "BCTC-REPORT-ID-LOOKUP-TOOL",
@@ -10315,6 +10315,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-03T16:14:00Z",
+  "_updated_at": "2026-07-03T23:28:53Z",
   "_updated_by": "po"
 }

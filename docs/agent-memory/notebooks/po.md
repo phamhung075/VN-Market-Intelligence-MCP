@@ -1,6 +1,18 @@
 # PO Notebook
 
-_Last: 2026-07-03T23:00Z_
+_Last: 2026-07-04T00:00Z_
+
+## Tick 2026-07-04 (router-dispatched) — GVR ESC-4 deep_dive_result triage: whitelist-ACCEPTED, DEDUP linked (no mint)
+
+**Signal:** `docs/signals/processed/bctc-analyst-20260703T215200Z.json` (bca-ddres-20260703T215200Z, bctc-analyst→po, deep_dive_result, GVR Q1-2026 ESC-4). Opus deep-dive verdict: legitimate non-operating income, NOT an extraction artifact (conf 0.9). Recommends whitelist GVR Q1-2026 ESC-4 by content-hash + durable GVR-class heuristic downgrade. 4th byte-identical emission (06-30..07-03); 24h idempotency guard expires each cycle → re-fires.
+
+**Verdict = ACCEPT.** Math RAW-verified to the dong: PBT 2960.9 bridges op 1923.3→net 2513.4; other-income pre-tax 1037.6 (=35.0% of PBT; the ESC-4 0.2348 value = net/after-tax mixed basis, exactly what the existing row's AC-1 flags); eff-tax 15.1% (rubber agri incentive); B/S 87178.9=64984.7+22194.2. Caveat: thu-nhap-khac footnote composition unavailable (prose empty) = the 0.1 conf gap; structured cascade + B/S integrity are decisive.
+
+**Mechanism finding:** NO content-hash whitelist mechanism exists in this system — searched apps/, docs/data/, scripts/: no ESC whitelist config file; ESC-4 is NOT computed in mcp-server code, it's applied by the bctc-analyst FLOW (main.md §ESC-4 L60-62 + §Escalation Decision). The only dedup today = TTL task-locks (esc-deepdive 24h idempotency guard + esc-datacov 8d coverage guard) which EXPIRE → cause the re-fire. Canonical mechanism = bctc-analyst ESC-4 heuristic downgrade via a PLAN-ONLY backlog FIX → agent-father edits the flow/heuristic doc.
+
+**DEDUP = HIT → linked, NOT minted.** Existing HIGH-priority BACKLOG row `ESC4-HEURISTIC-FIX-TAXBASIS-SOE` (owner agent-father, created 07-02 from prior 55%-conf GVR ESC-4 deep-dive) already covers it: AC-2 = SOE-conglomerate exception (GVR/PHR/DPR/TRC/HRC) auto-tag downgrading ESC-4 HIGH→INFO — a durable SUPERSET of the requested one-quarter content-hash whitelist (fixes ALL future GVR quarters, not just Q1). AC-1 = pre-tax basis formula fix (this deep-dive's figures corroborate). Minting a new row would duplicate. ACTION: appended the 4th-emission Opus corroboration (conf 55%→90%, decisive evidence, escalation-ceiling note) to that row's status_note.
+
+**Writes:** `scripts/orch-link-deepdive-to-backlog-row.jq` (new reusable helper) → orch-apply rc=0 (backlog 404→404, NO mint; status stays BACKLOG PLAN-ONLY; ~105 pre-existing SHG coherence warns non-blocking). No promotion, .head untouched. Signal already drained to processed/ by dev-team (READ-only for me). No push (fleet-push timer owns). Provenance "(po router-dispatched)" — 0 session UUID in any tracked file.
 
 ## Tick 2026-07-03T23:00Z (router-dispatched) — B-05 sau-20260703T223423Z DECISION + DEDUP (2 linked items)
 
