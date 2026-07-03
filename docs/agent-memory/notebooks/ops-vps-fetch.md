@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-07-01 23:20 UTC | **Sprint:** B-05-FIX (bctc-discover stale 15d, SSC outage corroborated)
+**Last updated:** 2026-07-04 06:20 UTC | **Sprint:** BCTC-HNX-SSL-HARDEN verify (VPS deploy CONFIRMED, AC MET)
 
 ---
 
@@ -16,6 +16,7 @@
 | hsx-bctc (api.hsx.vn) | 2026-05-15 04:45 | BLOCKER — /n/ JSON REST endpoints unreachable from VPS. Envoy route-level block, not geo-IP. | Envoy route table |
 | ssc-bctc-newsearch | 2026-07-01 23:16 | **BROKEN (external)** — whole domain 503 "no server available", non-transient 9+min, NOT the documented ~12:00Z daily window this time. Blocks discovery for 30/33 HOSE watchlist tickers (only viable path). Retry/backoff still unshipped. | none (genuine outage, not anti-bot) |
 | hnx-bctc-post-api | 2026-06-16 12:40 | FIXED — session warmup GET deployed; both NY+UPCOM warmup OK in live probes | ASP.NET session |
+| hnx-bctc TLS (owa.hnx.vn) | 2026-07-04 06:20 | HARDENED live — `--cacert` pin verified, `-k` fully removed on VPS (see c021) | none |
 
 ---
 
@@ -28,89 +29,36 @@ Key historical context (full recon docs in `docs/vps-sources/*/recon.md`):
 
 ---
 
-## c018 · 2026-06-19T16:20Z · P0 INCIDENT FIX-VPS-BCTC-FETCH-RESTART — False Unhealthy: Queue Empty, Service Healthy
-
-Trigger: Dev-team router dispatched P0 incident — 12 consecutive health-recheck reports claiming vn-bctc-fetch UNHEALTHY, zero pushes since 2026-06-16T18:02Z.
-
-**VERDICT: SERVICE IS NOT CRASHED. Misdiagnosis by health monitors.**
-
-**Evidence:**
-- `systemctl status vn-bctc-fetch` → active (running) since Jun 11 00:22:03 +07 (8+ days continuous).
-- `journalctl` shows only systemd-level start/stop events — script logs go to `/var/log/vn-bctc-fetch.log`.
-- Script loops every 6h, currently in `sleep 21600` (PID 2994744).
-- Log confirms the service ran every 6h and completed normally on Jun 18 and Jun 19.
-
-**Root cause of zero pushes since 2026-06-16T18:02Z:**
-
-The `bctc-fetch-queue?skip_enrichment=true` endpoint returned `{"queue":[],"total":0}` starting 2026-06-18T00:11Z. The queue was legitimately exhausted:
-- Jun 16 18:02Z: last push — ACV Q1/2026 SUCCESS (HTTP 200).
-- Jun 17: 9 items in queue (BDI, DAG, DLC, JSH, SIS, VDC, VNH, VEA Q1/2026, VEA Q4/2025) — ALL SKIPPED every cycle: genuine non-filers on HNX/UPCOM/SSC. All three sources return no matching rows for these tickers.
-- Jun 18 00:11Z onward: queue dropped to 0. The MCP server side marked those 9 items as exhausted/expired (likely max-retry or TTL exceeded server-side).
-- Jun 18–Jun 19: 7 consecutive fetch cycles → queue=0 each time → "Nothing to fetch -- exit". Not a crash — correct behavior.
-
-**Why health monitors reported UNHEALTHY:**
-The health-recheck reporter keys on "last successful push timestamp". Last push was ACV at Jun 16 18:02Z. With no new pushes (because queue=0), the freshness check flagged SLA breach after 360min. The monitor cannot distinguish "queue empty = nothing to do" from "crashed = can't push". This is a health-monitor false-alarm class.
-
-**No restart performed:** Restarting would accomplish nothing — the service is already running. There is no crash to fix at the VPS level.
-
-**No new push will occur until the MCP server's bctc-fetch-queue is repopulated** — i.e., when new BCTC filings for BDI/DAG/DLC/JSH/SIS/VDC/VNH/VEA become available on HNX or when new tickers are added to the watch queue.
-
-**Follow-on issues (pre-existing, no new code bugs):**
-1. Health monitor: cannot distinguish empty-queue vs crash — needs "queue_size=0 AND service_running = IDLE (not UNHEALTHY)" differentiation. Follow-on: FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.
-2. SSC 503 ~12:00Z UTC daily maintenance window: service skips all items for that cycle (no retry). Pre-existing risk noted in c016.
-3. Queue server-side TTL/expiry for genuinely-not-filed tickers: those 9 tickers dropped off at Jun 18 — if they file Q1 later, they need to be re-enqueued manually or via upstream re-scan.
-
-Disk: 6.0G/25G (26%) — healthy. No OOM. No disk full.
-
----
-
 ## c019 · 2026-06-25T13:30Z · B-14/B-05 BCTC UNHEALTHY ALARM — Queue-Empty Off-Season Idle Verdict
 
 Trigger: Router escalation B-14 WARN re-escalated B-05 CRITICAL — vn-bctc-fetch unhealthy 6h+, 0 pushes since 2026-06-16 18:02Z.
 
-**VERDICT: BENIGN-IDLE. Service fully operational. Zero evidence of crash, geo-block, TLS failure, or broken fetch path.**
-
-**Evidence collected (SSH root@125.212.251.27, read-only):**
-
-- `systemctl status vn-bctc-fetch`: `active (running)` since Jun 11 00:22:03 +07 — 14 days continuous, no restarts, no OOM.
-- Current process tree: PID 1417640 `/bin/bash /root/fetch-bctc-loop.sh` → child `sleep 21600` (6h idle between runs). Normal between-cycle state.
-- Memory: 1.5M current / 256M cap. No memory pressure.
-- `/var/log/vn-bctc-fetch.log` last lines (Jun 25 06:11Z): "Queue: 0 items pending → Nothing to fetch -- exit". Same pattern every 6h from Jun 18 through Jun 25 = 28 consecutive clean exits.
-- No ERROR / FAIL / HTTP 4xx / TLS / geo-block entries in log since Jun 17.
-- Last actual push: ACV Q1/2026, Jun 16 18:02Z, HTTP 200 SUCCESS (15,511,143B PDF).
-- Queue exhaustion sequence: Jun 17 — 9 remaining items (BDI/DAG/DLC/JSH/SIS/VDC/VNH/VEA) all SKIP (genuine non-filers on HNX/UPCOM/SSC). Jun 18 00:11Z — MCP server-side TTL/expiry dropped them to total=0. Queue has been 0 ever since.
-- `vn-bctc-enrich.timer`: active (waiting), fires every 6h. Today's runs: Jun 25 00:24Z, 06:24Z, 12:24Z — all exit status=0/SUCCESS in 102ms. The enricher also finds 0 items to enrich (correct off-season state).
-- No crash history in journalctl: only clean systemd start/stop events (last restart was Jun 11 — a code-deploy, not a crash).
-
-**Why health probe reads UNHEALTHY:**
-Health check keys on last-successful-push-age vs a fixed threshold (360min from c016/c018 prior findings). Last push was Jun 16 18:02Z — now 9 days stale. No push = SLA breach in monitor's logic. Monitor cannot distinguish "queue empty = nothing to do (IDLE)" from "crashed/blocked = can't push (BROKEN)". This is the same false-alarm class documented in c018.
-
-**Off-season context confirmed:**
-BCTC is quarterly; Q2 filings (earnings months 4/7/10) arrive mid-to-late July. It is June 25. Zero pushes in the Jun 18–Jun 25 window is structurally expected — no new filings have been published on any monitored source (HOSE/HNX/UPCOM/SSC) for the 30-ticker watchlist.
-
-**38 backlog rows:** These are the url_not_found/enrich_failed items (BDI, DAG, DLC, JSH, SIS, VDC, VNH, VEA sub-variants). They are genuine non-filers or SSC-invisible tickers. Not time-sensitive off-season. Will re-enter fetch cycle automatically when Q2 filings appear in July.
-
-**B-14/B-05 classification: FALSE-CRITICAL.** Both alerts are health-monitor artifacts, not VPS failures.
+**VERDICT: BENIGN-IDLE.** `vn-bctc-fetch` active 14d, 28 consecutive clean "queue=0" cycles since Jun 18, no ERROR/FAIL/TLS/geo-block entries. Last real push: ACV Q1/2026 Jun 16 18:02Z HTTP 200. Health probe false-alarms because it keys on last-push-age vs fixed 360min threshold and can't distinguish empty-queue-idle from crashed. Off-season context: Q2 filings arrive mid-to-late July, so zero pushes Jun18–25 is structurally expected. 38 backlog rows = genuine non-filers/SSC-invisible tickers, not time-sensitive. **B-14/B-05: FALSE-CRITICAL** (health-monitor artifact, not VPS failure).
 
 ---
 
 ## c020 · 2026-07-01T23:20Z · B-05-FIX — bctc-discover stale 15d: CORROBORATED-BROKEN (external SSC outage), VPS itself healthy
 
-Trigger: po dispatch B-05-FIX (CRITICAL, UNBLOCK) — auditor: bctc-discover stale 21711min (~15d), 38-item discover backlog not draining. Auditor "unhealthy" health badge on vn-bctc-fetch is a KNOWN false positive (no HTTP port) — ignored per task instructions; corroborated on hard evidence only.
+Trigger: po dispatch B-05-FIX (CRITICAL) — auditor: bctc-discover stale ~15d, 38-item backlog not draining.
 
-**VERDICT: CORROBORATED-BROKEN. Root cause = external source outage, NOT a VPS fault.**
+**VERDICT: CORROBORATED-BROKEN. Root cause = external source outage, not a VPS fault.** VPS-side all healthy (`vn-bctc-fetch` active 5d/34 clean cycles, `vn-bctc-enrich.timer` active 3wk, `vn-vps-proxy` active 2wk3d). Live probe: `congbothongtin.ssc.gov.vn` returns HTTP 503 on every path, 6+ attempts over 9+min, no CF/anti-bot signature — isolated to SSC domain only (HNX/UPCOM discovery steps succeed 200). 30/33 watchlist tickers are HOSE-listed and depend solely on SSC-CURL discovery; outage lands at Q2/2026 earnings SLA window open (Jul1–15, 24h threshold). 38-backlog reconciled: auditor's raw DB count differs from public queue API (0) — draining depends on mcp-server's `bctcQueueEnricherJob`, out of VPS scope. **Signal:** `docs/signals/dev-vps-crawls-20260701T231736Z.json` → dev-vps-crawls (SSC-503 retry/backoff).
 
-**VPS-side (all healthy):** `vn-bctc-fetch.service` active 5d, 0 crashes, 34 consecutive clean 6h cycles, log shows "Queue: 0 items pending" every cycle since Jun 19. `vn-bctc-enrich.timer/.service` active 3wk, 6h cadence, same "0 items (skip_enrichment=true)" pattern. `vn-vps-proxy.service` active 2wk3d, 51.8M mem, 0 restarts. Live public queue API `/api/bctc-fetch-queue` → `{"queue":[],"total":0}` right now.
+---
 
-**Live probe (SSH, 2026-07-01T23:07–23:16Z):** `congbothongtin.ssc.gov.vn` returns HTTP 503 "No server is available to handle this request" on EVERY path (root, `/faces/NewsSearch`, even deprecated `/faces/SanGiaoDiv.xhtml`) — 6+ attempts over 9+ min, all 503, ~0.1-0.18s response (real HTTP reply, not a hang). No CF/anti-bot signature. Ran `discover-bctc-urls-browser.py` directly for VEA (UPCOM) and GAS (HOSE): HNX/UPCOM steps succeed (200, correct "no results" parse) — ONLY the SSC-CURL fallback step fails (503 at step1), confirming the fault is isolated to the SSC domain, not VPS network/geo-block.
+## c021 · 2026-07-04T06:20Z · BCTC-HNX-SSL-HARDEN — VPS deploy CONFIRMED live, AC MET
 
-**Why it matters now:** 30/33 active watchlist tickers are HOSE-listed (system-map.json); HSX direct scraping is permanently out-of-scope (2026-05-13 recon, SPA needs browser session) — SSC-CURL is their ONLY discovery path. This outage sits right at Q2/2026 earnings SLA window open (system-map `bctc-discover.sla.earnings_window`: trigger_months=[7], window_days=14 → Jul 1–15 tightened to 24h threshold). Push-age 361.8h >> 24h.
+Trigger: Router-dispatched verification (review-board task BCTC-HNX-SSL-HARDEN) — PO flagged VPS deploy UNCONFIRMED (`get_vps_proxy_health(bctc)` read 0 fetch/24h); repo hardening (073fa27f+638fba89) already replaced `-k` with `--cacert` pinning.
 
-**38-backlog reconciliation:** auditor's own documented gate (`docs/agents/system-auditor/flow/main.md` § BCTC Healthy-Idle Gate) counts `bctc_vps_queue WHERE status IN (pending,url_not_found,enrich_failed)` — a raw DB count DIFFERENT from the public `/api/bctc-fetch-queue` HTTP endpoint (0, above). VPS's own 6h loop does NOT drain that table — draining depends on mcp-server's own `bctcQueueEnricherJob` calling the VPS `/proxy/bctc-discover/:ticker` route on demand (main-server-side, outside SSH-to-VPS scope). Auditor's CRITICAL classification is well-calibrated (BCTC_ACTIVE=38>0 → normal SLA compare applies), NOT a false positive this time.
+**VERDICT: deploy_shipped=yes, ac_met=true.**
 
-**No restart performed** — nothing on VPS was down to restart; fault is 100% external (SSC gov't portal backend).
+**Evidence (SSH, read-only):**
+- `/root/fetch-bctc.sh` + `/root/hnx-ca-bundle.pem` both mtime Jul 3 11:41 — post-hardening-commit deploy.
+- Live script grep: zero `-k`/`--insecure` anywhere; PDF-download line = `curl -s --cacert /root/hnx-ca-bundle.pem -L -o ...` — byte-identical (redacted diff) to repo's hardened `vps-scripts/fetch-bctc.sh`.
+- CA bundle MD5 `17bf45efde60f44e244fda6bdf7d0e89` — identical to repo copy.
+- Pulled a real HNX BCTC PDF URL from `/var/log/vn-bctc-fetch.log` (Q1/2026 filing, owa.hnx.vn) and ran the fetcher's exact download command live with verification ON, no `-k`: `RC=200 SIZE=536103 EXIT=0`; output confirmed valid PDF via `file`.
+- "0 fetch/24h" explained: `vn-bctc-fetch.service` active; queue has been empty nearly every 6h cycle Jun28–Jul3 (structurally normal) — the health metric's recent window simply missed the one real-queue window that produced the URL used above. Metric-visibility gap, not a broken/unexercised path.
 
-**Recon:** `docs/vps-sources/bctc-discover-stale-15d/recon.md`. **Signal:** `docs/signals/dev-vps-crawls-20260701T231736Z.json` → dev-vps-crawls (implement unshipped SSC-503 retry/backoff from c016 residual risk #1). **Handoff note:** backlog composition + bctcQueueEnricherJob liveness → dev-mcp-server (DB/main-server side, not mine).
+**No deploy/restart run** — verification only, per task scope. **Findings doc:** `docs/handoffs/ops-BCTC-HNX-SSL-HARDEN-verify.md`. **Recommendation:** resolve BCTC-HNX-SSL-HARDEN (done_verified) — repo+VPS both confirmed, AC independently verified live.
 
 ---
 
