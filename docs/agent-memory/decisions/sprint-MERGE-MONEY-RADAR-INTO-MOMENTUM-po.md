@@ -54,3 +54,13 @@
 - Guard task: skip vs mint → mint PLAN-ONLY; 2nd head re-inflation (po-s66 fixed 1st) = recurring-bug-escalation; `.passthrough()` let routing keys bypass Zod at the write gate — doc-only G-7 is insufficient.
 **why-decision:** Single canonical head SSOT = top-level `.head`; a non-routing stub eliminates the dup-key/last-wins misread hazard while the guard task durably stops re-inflation at write time (not just doc).
 **why-change:** no change from plan — dev-team triage inputs #2/#3 handled exactly as scoped; RETURN=NOTHING (nothing dispatch-ready; WIP parked user-gated).
+
+### STEP po-S6 · po · 2026-07-03T09:02:14Z
+**task-id:** FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD
+**what-done:** Drained dev-team 06:37Z tick's 3 to=po signals (NEW→READ) + minted the orphan-adoption guard FIX to backlog + reconciled both W5 review rows to DEPLOY-gated.
+**what-considered:**
+- A-13 api-gateway FAIL (HIGH): mint a FIX vs mark false-positive — chose false-positive (INFO corroboration sau-…08:41:40Z proves self-recovery: HTTP 200, RestartCount=0, uptime 4d). No task.
+- orphan-guard: mint READY (dispatch now) vs BACKLOG plan-only — chose BACKLOG (router mitigated the live instance manually; permanent-fix, not an active incident → normal po→ba→pm→dev chain).
+- W5 rows: flip BLOCKED→READY vs annotate+keep BLOCKED — chose keep BLOCKED, rewrite blocked_on to the deploy-gate (sequencing: ops-deploy MUST precede the operational re-ingest; a premature READY would dispatch a dev coding lane with nothing to code).
+**why-decision:** COLUMN-ORDER (W5 code blocker) is done_verified (qa 66dfe89a5, RAW-verified) → W5 chain is code-clear; the ONLY remaining gate is deploy + finalize_bctc_refine on live CTG 96e36139, which is ops+operational not code/qa.
+**why-change:** no change from router hand-off; added the W5 deploy-gate reconcile as board hygiene (stale blocked_on pointed at a now-done_verified task).
