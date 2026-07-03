@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T09:53:34Z",
-    "_updated_by": "dev-team/drain",
+    "_updated_at": "2026-07-03T10:05:15Z",
+    "_updated_by": "dev-team/closeout-0937Z",
     "archive": [],
     "rows": [
       {
@@ -432,7 +432,7 @@
         "type": "repair_task_request",
         "summary": "orch-apply lacks .signal_queue.rows[].id uniqueness guard — sau-d4 row found in 11 dup copies; collapsed to 1. File validate-side id-uniqueness + producer ts-format fix.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/router-signalqueue-dup-id-guard-20260703.md"
       }
     ],
@@ -661,8 +661,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-03T09:01:05Z",
-    "_updated_by": "po-s138",
+    "_updated_at": "2026-07-03T10:01:28Z",
+    "_updated_by": "po-triage-20260703T0937Z",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7410,6 +7410,32 @@
         ],
         "recurrence_class": "feedback_dead_worker_uncommitted_live_file_revert + feedback_orphan_signal_immune_and_adoption_no_board_guard",
         "note": "Permanent-fix backlog item, NOT an active incident (router mitigated this instance manually). Normal po->ba->pm->dev chain; architect SPLITs the multi-zone (dev-mcp-server reaper/lock/orphan-signal code + flow-doc guards)."
+      },
+      {
+        "id": "FIX-FB-DAILY-FIRER-CLI-FLAG",
+        "title": "FIX-FB-DAILY-FIRER-CLI-FLAG (cross-service/) — delete cowork-fb-daily-firer.sh:138 --no-update-notification (crashes launchd fb-daily backstop every fire)",
+        "owner": "po",
+        "next_agent": "dev",
+        "status": "TODO",
+        "type": "FIX",
+        "priority": "high",
+        "zone": "cross-service/",
+        "created_at": "2026-07-03T10:01:28Z",
+        "created_by": "po-triage-20260703T0937Z",
+        "status_note": "AC: launchd fb-daily-firer fires with no unknown-option --no-update-notification error; fb-daily-firer-error.log clean on next scheduled fire. 1-line fix (fixer): delete scripts/cowork-fb-daily-firer.sh line 138. Secondary(optional): dedup plist double-fire (09:08Z+09:23Z), gitignore tracked runtime logs. Priority HIGH — guaranteed fb-daily slot silently non-functional on any no-live-session day. Source: docs/signals/router-fbfirer-dead-cli-flag-20260703.md"
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-DUP-ID-GUARD",
+        "title": "FIX-SIGNALQUEUE-DUP-ID-GUARD (cross-service/) — orch-apply.sh id-uniqueness guard for signal_queue.rows[]/archive[] + normalize auditor ts to full ISO8601",
+        "owner": "po",
+        "next_agent": "dev",
+        "status": "TODO",
+        "type": "FIX",
+        "priority": "med",
+        "zone": "cross-service/",
+        "created_at": "2026-07-03T10:01:28Z",
+        "created_by": "po-triage-20260703T0937Z",
+        "status_note": "AC: orch-apply.sh validation rejects/collapses-keep-first .signal_queue.rows[] (and .archive[]) with duplicate .id, fail-loud; auditor signal ts written full ISO8601 YYYY-MM-DDTHH:MM:SSZ so prune age-math parses; optional tolerant fromdateiso8601 in prune query. Recurring class feedback_ssot_duplicate_key (06-05 75-rows, 07-03 11-rows sau-d4). PARTIAL-OVERLAP: producer-side D4 emitter unique-id tracked separately by FU-AUDITOR-D4-SIGNAL-ID — THIS task owns ONLY the validate-side belt+suspenders guard + ts-format; do NOT double-fix D4 emitter. Priority MED (no active harm — dup rows were READ). Source: docs/signals/router-signalqueue-dup-id-guard-20260703.md"
       }
     ],
     "closed_sprints": [
@@ -9804,6 +9830,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-03T05:24:29Z",
-  "_updated_by": "qa"
+  "_updated_at": "2026-07-03T10:01:28Z",
+  "_updated_by": "po-triage-20260703T0937Z"
 }

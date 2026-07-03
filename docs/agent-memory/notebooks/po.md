@@ -1,6 +1,25 @@
 # PO Notebook
 
-_Last: 2026-07-03T08:57Z_
+_Last: 2026-07-03T10:00Z_
+
+## Tick 2026-07-03T10:00Z — dev-team 09:37Z tick: triage 2 repair_task_requests → backlog, BATCH 2 FIX
+
+**Context:** dev-team drain handed 2 repair_task_requests + 1 informational cowork telemetry. Board WIP=0 (in_progress=[], active=[]). Backlog 397→399.
+
+**Signal triage (both → `.task_board.backlog[]`, po-triage-20260703T0937Z orch-apply exit 0):**
+1. `router-fbfirer-dead-cli-flag` (repair_task_request, HIGH) → **MINTED** `FIX-FB-DAILY-FIRER-CLI-FLAG` (zone cross-service/, prio high, next_agent=dev). RAW-verified: `scripts/cowork-fb-daily-firer.sh:138` literally holds `--no-update-notification` (unknown option) → launchd fb-daily backstop crashes every fire (09:08Z+09:23Z error.log). 1-line delete = fixer. NOT dup of `FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED` (that = T1 auditor peer firer, different script/root).
+2. `router-signalqueue-dup-id-guard` (repair_task_request, MED) → **MINTED** `FIX-SIGNALQUEUE-DUP-ID-GUARD` (zone cross-service/, prio med). Scope = orch-apply.sh validate-side `.id`-uniqueness guard (belt+suspenders) + auditor ts→full ISO8601. PARTIAL-OVERLAP w/ `FU-AUDITOR-D4-SIGNAL-ID` (producer-side D4 emitter) — scoped THIS task to validate+ts only to avoid double-fix. Recurring class feedback_ssot_duplicate_key.
+3. cowork tick-1 telemetry (cowork-team-…09-32-12Z.json) → informational fire-record, **recognized + dropped**, no task.
+
+**BATCH → router:** 2 FIX (both cross-service/, fixer-candidates, WIP=2 ≤ limit). Both also durably in backlog.
+
+**Standing decisions:**
+- `CI-RED-c5b5f885-FIX` → **do NOT prioritize / not in BATCH.** Evidence: c5b5f885 IS ancestor of HEAD b2ab3aae1 (tree advanced far past it); COLUMN-ORDER qa measured full suite 65 fail << 348 baseline (project-stats testBaselineFail=348) → the "bun test" RED is BELOW baseline = pre-existing flakes, not a c5b5f885 regression (feedback_ci_red_can_be_flaky_confirm_before_blame). Leave backlog TODO pending a fresh CI-run confirm on current HEAD before any FIX priority.
+- `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD` → no change (plan-only, next_agent=ba).
+
+**Telegram/reports:** ~50 new msgs dominated by `[bctcPdfPull] ENRICH 0-rows FAIL-LOUD` (many tickers 2025-Q4, B02-TCTD parse/pipeline stall) + `bctc-discover stale 396.6h CRITICAL (B-05, 36 pending)` → KNOWN BCTC cluster, already tracked (FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD TODO, SPIKE-BCTC-DISCOVER-PIPELINE-DEAD, deploy-gated W5 chain). Definitive fix is DEPLOY-gated (user-gated COLUMN-ORDER container deploy) — no new task. A-13/A-22/pollNews reports = known self-healing/WARN/transient, no task.
+
+**Writes:** po-triage-20260703T0937Z orch-apply exit 0 (backlog +2, 106 coherence warns pre-existing SHG, non-blocking). .head UNTOUCHED. Did NOT push (fleet-push owns).
 
 ## Tick 2026-07-03T08:57Z — dev-team 06:37Z tick continuation: drain 3 to=po signals + mint orphan-guard + reconcile W5 to deploy-gate
 
