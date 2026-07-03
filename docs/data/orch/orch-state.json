@@ -251,13 +251,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server executing read-only SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO (root-cause of Q1-2026 total_assets=0 across 8 non-bank tickers; zone apps/mcp-server/; NO branch/NO code; consolidated findings doc). On complete: router RAW-verify findings -> route to PO for consolidated remediation decision (NO per-ticker dup FIX). SPIKE has NO qa gate -> promote directly on RAW-verify. Also pending next-tick drain: docs/signals/bctc-analyst-20260703T215200Z.json (GVR ESC-4 deep_dive_result -> po: verdict LEGITIMATE non-op income, action=hold, recommend ESC-4 whitelist GVR by content-hash). GVR guard esc-deepdive:GVR:Q1-2026:ESC-4 held ~24h (suppresses re-fire until PO whitelists).",
-    "updated_at": "2026-07-03T22:06:36Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO done_verified (MIXED verdict: 7/8 never-refined + POW transcription-drop residual; router RAW-verified findings 43453950b). dev WIP=0 -- idle. ROUTED TO PO (background) for consolidated remediation decision: (1) operational agentic-refine-repass + reingest-bctc-report.ts for VHM/VIC/VRE/HSG/MWG (zero new code); (2) no action REE/VNM (existing tickets); (3) mint NEW architect-first SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP for POW class; (4) NO per-ticker regex patch. PENDING next dev-team RUN tick drain: docs/signals/bctc-analyst-20260703T215200Z.json (GVR ESC-4 deep_dive_result -> PO: verdict LEGITIMATE non-op income, recommend ESC-4 whitelist GVR by content-hash; guard esc-deepdive:GVR:Q1-2026:ESC-4 held ~24h). PLAN-ONLY (fold into PO): scripts/agents-flow/dev-team-tick-preflight.sh _step_sf1_claim() NOT re-entrant -- on self-held SF-1 it returns 'peer holds it' (mislabel); fix to mirror _step_fire_election() self-hold check (compare current_holder.owner_client_session==session -> heartbeat+re-entrant, not SKIP). Latent (SKIP correct while tick in-flight). Other backlog PLAN-ONLY unchanged: FIX-VPS-SSC-INSIDER-502, FIX-VPS-SSC-STEP2-TIMEOUT-BOUND, FIX-BCTC-FULL-BATCH-CONTAMINATION (architect-first), FEAT-SEVERITY-OVERRIDE-SURFACING, FIX-AGENT-NOTEBOOK-UUID-PROVENANCE, FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT, FIX-MCP-MEMORY-CODE-LEAK, VERIFY-BCTC-STRATEGY0-QUARTER-PARAM-CONTRACT, BCTC-ENRICHER-OLD-QUARTERS. Router releases SF-1 + fire-election at closeout; next dev-team cron tick RUNs fresh (SF-1 free).",
+    "updated_at": "2026-07-03T22:25:25Z",
     "updated_by": "router",
-    "note": "22:00Z (fire-tick 21:37Z): SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO backlog->in_progress (WIP=1, owner dev-mcp-server) from PO BATCH. SF-1 + fire-election held through execution."
+    "note": "22:22Z: SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO in_progress->done_verified (MIXED verdict; router RAW-verified findings 43453950b). dev WIP=0 -- idle. Routed to PO for consolidated remediation. Closeout -> release SF-1 + fire-election + task:SPIKE lock."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10013,21 +10013,10 @@
           "decision-journal@46a7c6c0c"
         ],
         "signoff_note": "[router 2026-07-03T21:33Z / fire-tick 21:07Z] dev-mcp-server read-only SPIKE COMPLETE (findings 4a20063ba + journal 46a7c6c0c) + router RAW-verified. VERDICT: PREMISE FALSIFIED -- HSX Strategy-0 is NOT broken for current/recent quarters. EVIDENCE: (1) live re-test of UNMODIFIED prod fetchHsxBctcUrls/discoverHosePdfUrls returned valid PDF URLs for all 8 named tickers at Q4-2025/Q1-2026; (2) corroborated by independent same-day architect brief docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md (RAW-verified present); (3) the '0 URLs' claim traces to an ops recon test-harness bug (quarter:4 numeric vs required 'Q4' string), not a network/parse failure; (4) 328 deferred_infra rows = STATIC by-design-excluded population from a 2026-06-08 triage decision predating the 06-16 incident (real red herring); (5) board-verified: the 06-16 actionable backlog is ALREADY done_verified (FIX-BCTC-ENRICHER-STUCK-BACKLOG + FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD). SUPERSEDES the router's prior 'Strategy-0 0-URLs is PRIMARY' correction (that framing came from the same falsified ops recon). Only real remaining gap = OLDER-quarter backfill (fetchMediafileUrls pagination + fileType 'application/pdf' MIME drift; additive/optional). 0 UUID on both commits; findings doc 195L. No code change -> no qa gate. ROUTED TO PO for 3-part decision."
-      }
-    ],
-    "head": {
-      "status": "deprecated",
-      "canonical_moved_to": ".head",
-      "deprecated_at": "2026-07-02T09:57:07Z",
-      "deprecated_by": "po-s138",
-      "active_task_id": null,
-      "next_agent": null,
-      "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
-    },
-    "in_progress": [
+      },
       {
         "id": "SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO",
-        "status": "IN_PROGRESS",
+        "status": "DONE_VERIFIED",
         "title": "Consolidate root-cause of Q1-2026 total_assets=0 across 8 non-bank tickers (VHM/REE/VIC/VNM/VRE/POW/HSG/MWG)",
         "owner": "dev-mcp-server",
         "next_agent": "dev-mcp-server",
@@ -10048,9 +10037,27 @@
         "dev_agent": "dev-mcp-server",
         "dispatched_by": "router",
         "dispatched_at": "2026-07-03T22:06:36Z",
-        "dispatch_note": "[router 2026-07-03T22:00Z / fire-tick 21:37Z] dev-team Step 3 SPIKE (mode=spike, feature-spike.md). Spawn dev-mcp-server run_in_background (zone apps/mcp-server/ specialist). READ-ONLY architect-first diagnostic: do 8 non-bank tickers (VHM/REE/VIC/VNM/VRE/POW/HSG/MWG) with Q1-2026 total_assets=0 share ONE root cause? Test common-root-cause (same reparse batch/date, c076 flag) FIRST, classify residuals, map to existing owners OR flag NEW. DISTINCT from FIX-BCTC-BANK-SUMMARY-MAPPING (NONZERO). NO branch, NO code change. Deliverable: consolidated findings doc + remediation batch (NO per-ticker dup FIX). Timebox 120m -> write findings even if incomplete. On complete: router RAW-verify findings doc -> route to PO for consolidated remediation sprint decision (SPIKE produces proposal, not merge)."
+        "dispatch_note": "[router 2026-07-03T22:00Z / fire-tick 21:37Z] dev-team Step 3 SPIKE (mode=spike, feature-spike.md). Spawn dev-mcp-server run_in_background (zone apps/mcp-server/ specialist). READ-ONLY architect-first diagnostic: do 8 non-bank tickers (VHM/REE/VIC/VNM/VRE/POW/HSG/MWG) with Q1-2026 total_assets=0 share ONE root cause? Test common-root-cause (same reparse batch/date, c076 flag) FIRST, classify residuals, map to existing owners OR flag NEW. DISTINCT from FIX-BCTC-BANK-SUMMARY-MAPPING (NONZERO). NO branch, NO code change. Deliverable: consolidated findings doc + remediation batch (NO per-ticker dup FIX). Timebox 120m -> write findings even if incomplete. On complete: router RAW-verify findings doc -> route to PO for consolidated remediation sprint decision (SPIKE produces proposal, not merge).",
+        "done_verified": true,
+        "verified_by": "router",
+        "verified_at": "2026-07-03T22:25:25Z",
+        "spike_verdict": "MIXED_7of8_NEVER_REFINED_PLUS_1_POW_TRANSCRIPTION_DROP",
+        "deliverables": [
+          "docs/spikes/SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO.md@43453950b"
+        ],
+        "signoff_note": "[router 2026-07-03T22:22Z] dev-mcp-server read-only SPIKE COMPLETE (findings 43453950b, 252L) + router RAW-verified (doc substantive, 0 UUID, commit scoped to 1 file, tree clean). VERDICT: MIXED. Bucket A 'never refined' 7/8 (VHM,REE,VIC,VNM,VRE,HSG,MWG) -- live get_bctc_refined = zero refined_units+table_rows vs GVR/HPG controls (hundreds); total_assets=0 is stale parse-time value, agentic-refine never run on these 7. REE+VNM already owned; VRE/MWG new recoverable code-270-vs-280 grand-total anchor ambiguity; VHM dual consolidated+parent complication; VIC/HSG unclassified in timebox. Bucket B POW (NEW residual) -- refine completed 28/28 units/166 rows but grand-total rows 270/440 dropped mid-transcription (verified unit-0004). CONSOLIDATED remediation (NO per-ticker dup FIX): (1) operational agentic-refine-repass + reingest-bctc-report.ts (proven runbook, zero new code) for VHM/VIC/VRE/HSG/MWG; (2) no action REE/VNM; (3) NEW architect-first SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP for POW class; (4) rejected per-ticker regex patch (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT anti-pattern). No code change -> no qa gate. ROUTED TO PO for consolidated remediation sprint decision (SPIKE = proposal, not merge)."
       }
     ],
+    "head": {
+      "status": "deprecated",
+      "canonical_moved_to": ".head",
+      "deprecated_at": "2026-07-02T09:57:07Z",
+      "deprecated_by": "po-s138",
+      "active_task_id": null,
+      "next_agent": null,
+      "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
+    },
+    "in_progress": [],
     "ready": [],
     "review": [
       {
