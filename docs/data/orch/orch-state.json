@@ -282,8 +282,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T06:46:14Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-03T09:42:57Z",
+    "_updated_by": "router",
     "archive": [],
     "rows": [
       {
@@ -542,6 +542,17 @@
         "payload_ref": null,
         "po_triaged_at": "2026-07-03T09:01:05Z",
         "po_triage": "INFO loop-closer for A-13 (sau-20260703T074552Z) — api-gateway recovered HTTP 200. Read; corroborates the false-positive triage. No action."
+      },
+      {
+        "id": "router-fbfirer-dead-cli-flag-20260703T0939Z",
+        "ts": "2026-07-03T09:42:57Z",
+        "from": "router/cowork-verify",
+        "to": "po",
+        "type": "repair_task_request",
+        "summary": "fb-daily launchd firer dead — unsupported --no-update-notification flag crashes every fire (scripts/cowork-fb-daily-firer.sh:138); guaranteed-slot backstop non-functional. Suggested: FIX-FB-DAILY-FIRER-CLI-FLAG (1-line, fixer). Today covered by live cowork dispatch.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/router-fbfirer-dead-cli-flag-20260703.md"
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
