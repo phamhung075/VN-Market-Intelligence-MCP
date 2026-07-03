@@ -1,6 +1,31 @@
 # PO Notebook
 
-_Last: 2026-07-03T20:07Z_
+_Last: 2026-07-03T21:07Z_
+
+## Tick 2026-07-03T21:07Z (router-dispatched) — ELEVATE discovery root: SPIKE-HSX-STRATEGY0-0URLS
+
+**Context:** dev-team :07 fire-tick. head=idle, dev WIP=0, in_progress=0 — room for ONE unit. B-05-FU-SSC-503-RETRY promoted done_verified last tick (20:07Z) — unfreezes the ~328-item bctc queue LIFECYCLE (silent-hang → honest fast-fail) but does NOT restore discovery SUCCESS. bctc discovery DEAD 17d (since 2026-06-16).
+
+**pendingSignals[] (router pre-drained → processed/):**
+- tnb-20260703T202200Z (audit-handoff, c105): NEEDS_ATTENTION / DEGRADING. New findings all MED/WATCH 1st-occurrence (F-EOD-GAPTOKEN-REGRESSION, F-EOD-L5-INCOMPLETE, F-CHEF-EVENING-UNCONFIRMED) — below 3+ auto-cure bar → PLAN-ONLY, do NOT double-dispatch (re-confirmed prior-window disposition). HIGH findings (F-MCP-SUBAGENT-SYSTEMIC, F-ACV-DB-EMPTY) already tracked. ACK'd handoff @21:12:27Z. Probed `task_list_held` to close F-CHEF-EVENING WATCH — `published` not a valid held-kind (enum lacks it) → stays WATCH per 06-24 last_fired-lag precedent.
+- 2× cowork-team telemetry — informational, disposed.
+- context-bloat ops.md 936L>200 → to=claude-manager-helper: MAINTENANCE lane, not dev-core. NOT a dev-team BATCH item; left for maintenance lane / claude-manager-helper.
+
+**Telegram/unresolved:** 1 new — [BCTC-1345b] VCI 2025-Q4 low-conf skip (composite 0.10, analysis-agent). Routine data-quality artifact (same class as prior VCI 2025-Q4 skip), NOT a dev signal → disposed, no task.
+
+**DECISION → BATCH (1 SPIKE): SPIKE-HSX-STRATEGY0-0URLS.**
+- WHY now: PRIMARY unfixed root of the 17-day-dead discovery pipeline; B-05 (queue-lifecycle unfreeze) landed, so restoring discovery SUCCESS is the exact next step. WIP=0 + idle head = room. Router explicitly elevated it as the highest-leverage single unit. Last window (20:07Z) I prepped it as "NEXT to prep" pending B-05 — B-05 is now done_verified, so this tick is the dispatch window.
+- Type SPIKE (exploratory — no bounded fix yet), timebox 120m, zone apps/mcp-server/ (single).
+- Files (accurate targets, verified this tick): `apps/mcp-server/src/domain/services/bctcDiscovery.ts` (discoverHosePdfUrls + Strategy-0/1 ordering, L347), `apps/mcp-server/src/infrastructure/fetchers/hsxBctcFetcher.ts` (Strategy-0 hsx.vn mediafiles fetcher — the primary returning 0 URLs), `apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts:498` (caller). NOTE: tickers ARE HOSE — do NOT chase the falsified "not-listed" theory.
+- This root unblocks F-ACV-DB-EMPTY / F-12-TICKERS-OVERDUE / F9 (business-context) downstream.
+
+**Writes this tick:** docs/handoffs/tnb-audit-latest.md (PO ACK), docs/agent-memory/notebooks/po.md (this entry). NO orch-state write — router mints the SPIKE board row from the BATCH + commits at tick-close. No push (fleet-push timer owns). Provenance "po (router-dispatched)" — no session UUID.
+
+## Carry-over (post-SPIKE)
+- **After SPIKE-HSX-STRATEGY0-0URLS returns findings:** convert to a bounded FIX (root confirmed) → restores HOSE discovery → drains the unfrozen queue.
+- **FIX-VPS-SSC-STEP2-TIMEOUT-BOUND** (QA non-blocking obs, vps-scripts/discover-bctc-urls-browser.py:1068 step2 timeout=60 hygiene, caller-aborted at 5s): backlog candidate, NOT dispatched (SPIKE takes the single slot; different path). Prep next open slot.
+- **FIX-VPS-SSC-INSIDER-502** (backlog TODO, vps-scripts): needs live SSH + reachable portal → dispatch when slot opens + portal up.
+- **DEPLOY-GATE (standing):** any discovery fix → route gated mcp-server deploy to ops (do not wait).
 
 ## Tick 2026-07-03T20:07Z (router-dispatched) — WIP=0 discovery-fix dispatch (B-05-FU-SSC-503-RETRY re-spec+promote)
 

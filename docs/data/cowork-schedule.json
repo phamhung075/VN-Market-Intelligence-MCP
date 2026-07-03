@@ -216,7 +216,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "bctc-offmarket",
-      "last_fired": "2026-07-02T21:06:31.000Z",
+      "last_fired": "2026-07-03T21:12:48.000Z",
       "trigger_id": null,
       "_note": "Slot 3 of 4. Off-market confirmed (21:00 UTC = 04:00 ICT — before 09:00 ICT open)."
     },

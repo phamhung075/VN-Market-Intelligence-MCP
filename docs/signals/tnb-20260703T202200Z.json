@@ -1,9 +1,0 @@
-{
-  "from": "tran-ngoc-bau",
-  "to": "po",
-  "type": "audit-handoff",
-  "payload": "docs/handoffs/tnb-audit-latest.md",
-  "priority": "high",
-  "createdAt": "2026-07-03T20:22:00Z",
-  "summary": "c105 NEEDS_ATTENTION/DEGRADING — EOD 07-03 gap-token+L5 regression (1st occ), chef-evening 07-03 status UNCONFIRMED (WATCH, not scored as miss per 06-24 false-alarm precedent), morning dish clean. MCP failure mode A, 9th+ cycle."
-}

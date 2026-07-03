@@ -243,13 +243,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "B-05-FU-SSC-503-RETRY done_verified (dev+qa PASS, router RAW-verified). dev WIP=0 -- idle. CRITICAL for next dev-team planning: bctc discovery pipeline DEAD 17 days (since 2026-06-16); B-05 unfreezes queue LIFECYCLE only, does NOT restore discovery SUCCESS. Elevate to HIGH: SPIKE HSX Strategy-0 discoverHosePdfUrls() 0-URLs for legitimately-HOSE tickers (PRIMARY root, timebox 120m, zone apps/mcp-server/) + FIX-VPS-SSC-INSIDER-502. New backlog candidate (QA non-blocking): FIX-VPS-SSC-STEP2-TIMEOUT-BOUND (line 1068 timeout=60 on step2 download, hygiene). Other backlog PLAN-ONLY: FIX-BCTC-FULL-BATCH-CONTAMINATION (architect-first), FEAT-SEVERITY-OVERRIDE-SURFACING, FIX-AGENT-NOTEBOOK-UUID-PROVENANCE, FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT, FIX-MCP-MEMORY-CODE-LEAK. Ops follow-up: deploy B-05 fix to Vinahost VPS. Router: release SF-1 + dev-team fire-election at jump:end.",
-    "updated_at": "2026-07-03T20:56:00Z",
+    "status": "in_progress",
+    "active_task_id": "SPIKE-HSX-STRATEGY0-0URLS",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server executing read-only SPIKE-HSX-STRATEGY0-0URLS (why discoverHosePdfUrls() returns 0 URLs for legit-HOSE tickers; zone apps/mcp-server/; NO branch/NO code; findings doc docs/spikes/SPIKE-HSX-STRATEGY0-0URLS.md). On complete: router RAW-verify findings -> route to PO for sprint decision. This is the PRIMARY discovery-SUCCESS root (B-05 already unfroze queue lifecycle). Pipeline dead 17 days since 2026-06-16.",
+    "updated_at": "2026-07-03T21:13:00Z",
     "updated_by": "router",
-    "note": "20:56Z (fire-tick 20:07Z): B-05-FU-SSC-503-RETRY in_progress->done_verified (dev-vps-crawls + qa PASS, router RAW-verified). dev WIP=0 -- idle. dev-team tick closeout -> release SF-1 + fire-election."
+    "note": "21:13Z (fire-tick 21:07Z): SPIKE-HSX-STRATEGY0-0URLS minted ready->in_progress (WIP=1, owner dev-mcp-server) from PO BATCH. SF-1 + fire-election held through execution."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9991,7 +9991,28 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "SPIKE-HSX-STRATEGY0-0URLS",
+        "type": "SPIKE",
+        "status": "IN_PROGRESS",
+        "title": "hsx-strategy0-discoverhosepdfurls-returns-0-urls",
+        "question": "Why does HSX Strategy-0 discoverHosePdfUrls() return 0 URLs for legit-HOSE tickers, and what is the minimal fix?",
+        "owner": "dev-mcp-server",
+        "dev_agent": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "mode": "spike",
+        "timebox_min": 120,
+        "files": [
+          "apps/mcp-server/src/domain/services/bctcDiscovery.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/hsxBctcFetcher.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts"
+        ],
+        "dispatched_by": "router",
+        "dispatched_at": "2026-07-03T21:13:00Z",
+        "dispatch_note": "[router 2026-07-03T21:13Z / fire-tick 21:07Z] dev-team Step 3 SPIKE (mode=spike, feature-spike.md). Spawn dev-mcp-server run_in_background (zone apps/mcp-server/ specialist). READ-ONLY: diagnose why discoverHosePdfUrls() returns 0 URLs for legitimately-HOSE tickers (PRIMARY root of 17-day-dead discovery; B-05 unfroze queue lifecycle only). NO branch, NO code change. Deliverable: docs/spikes/SPIKE-HSX-STRATEGY0-0URLS.md (Question/Approach/Findings/Recommended-next-step) + bounded FIX proposal. Timebox 120m -> write findings even if incomplete. On complete: router RAW-verify findings doc -> route to PO for sprint decision (SPIKE produces proposal, not merge)."
+      }
+    ],
     "ready": [],
     "review": [
       {

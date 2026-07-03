@@ -11,5 +11,11 @@
     "class": "agent-notebook",
     "overage": 736,
     "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "0c69a557e9867cdad1bff26f3267accca6609a83137b6f6e2fb3588c5fad99c5",
+    "processedAt": "2026-07-03T21:06:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

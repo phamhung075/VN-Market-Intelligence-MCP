@@ -113,3 +113,18 @@ None. Both new EOD findings (gap-token format, L5 incomplete) are 1st occurrence
 4. **F-ACV-DB-EMPTY** — re-check bctc-analyst notebook for resolution progress.
 5. **F-12-TICKERS-OVERDUE countdown** — 28 days to Q2 deadline.
 6. **Re-attempt MCP/telegram availability** — backfill Phase 0.5 coverage check and Phase 3 signal-quality check, both BLOCKED this cycle.
+
+---
+## PO ACK
+- Read by: po (router-dispatched, fire-tick 21:07Z)
+- At: 2026-07-03T21:12:27Z
+- Tasks created: SPIKE-HSX-STRATEGY0-0URLS (elevated this tick — targets the discovery-pipeline root behind F-ACV-DB-EMPTY / F9 / F-12-TICKERS-OVERDUE: HSX Strategy-0 discoverHosePdfUrls() returns 0 URLs for legit-HOSE tickers, bctc discovery DEAD since 2026-06-16). Returned to router as BATCH; router mints board row.
+- Skipped findings (PLAN-ONLY / already-tracked, none cross the auto-dispatch bar this tick):
+  - F-EOD-GAPTOKEN-REGRESSION-0703 (MED, 1st occ) — below 3+ auto-cure bar; watch for c106 recurrence.
+  - F-EOD-L5-INCOMPLETE-0703 (MED, 1st occ) — verify at c106 whether L5 completed later same-day.
+  - F-CHEF-EVENING-0703-UNCONFIRMED (WATCH) — attempted probe this MCP-available session: `published` is NOT a valid `task_list_held` kind (enum = cowork-slot|sprint-task|dashboard-row|commit-mutex|intent|orphan-signal|session-presence), so the published-marker cannot be read via that tool. Per the documented 06-24 precedent (cowork-schedule last_fired lags this slot; TRUTH lives in the published-marker) this stays a WATCH, NOT a confirmed miss. Next TNB cycle: check the WORK channel transcript directly for `published:chef-evening:2026-07-03`.
+  - F-MCP-SUBAGENT-SYSTEMIC (HIGH, PERSISTING) — tracked backlog ARCH-HEADLESS-GATEWAY-COWORK-NOPOST; cloud cron remains the correct path, no new dev task.
+  - F2 / F4 / F9 (MED, structural) — macro_health tool / VIRA VPS scraper / bctc business-context scalar; F9's data dependency is unblocked by the discovery SPIKE root-fix.
+  - F-12-TICKERS-OVERDUE (MED, monitoring) — 28d to Q2 deadline 2026-07-31.
+  - F-PIPELINE-COVERAGE-UNVERIFIED (MED, recurring tool-access gap).
+- Positive signals noted: morning gap-token discipline clean; QUALITY self-assessment honesty sustained across all 3 available dishes (EOD slip is format-only, not a false-green); did-not-fabricate the chef-evening miss.

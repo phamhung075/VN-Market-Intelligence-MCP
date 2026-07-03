@@ -45,5 +45,11 @@
     "note": "cowork 20:15Z tick — guaranteed daily tnb-audit (Strategy Supervisor, cron 13 20, last fired 07-02) fired; tran-ngoc-bau spawned. adaptive mode (pressure-state fresh 20:17Z). Router-dispatched."
   },
   "priority": "low",
-  "createdAt": "2026-07-03T20:22:34Z"
+  "createdAt": "2026-07-03T20:22:34Z",
+  "_processed": {
+    "fingerprint": "66f9e6901c376a633edb81b6e7e69764090a3cb951ed03f743e6ef17d8cfb7a5",
+    "processedAt": "2026-07-03T21:06:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

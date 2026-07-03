@@ -57,5 +57,11 @@
     "note": "cowork 20:00Z tick — legacy mode (pressure-state 28min stale > 20min thresh); 3 off-hours slots fired: news-scout+market-watcher due at 4h cadence (last 16:00Z), alert-commander-critical dormant since 2026-05-25 (event-only, evaluates live state). Router-dispatched, session sighted (subagents reach gateway)."
   },
   "priority": "low",
-  "createdAt": "2026-07-03T20:18:15Z"
+  "createdAt": "2026-07-03T20:18:15Z",
+  "_processed": {
+    "fingerprint": "de3852eeea5bd3884ef1f098d29f71f05e31323cb108bcf969f9d323db498784",
+    "processedAt": "2026-07-03T21:06:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
