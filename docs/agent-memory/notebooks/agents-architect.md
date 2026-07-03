@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-29T20:18:45Z
-
-**Brief:** `docs/architecture-briefs/2026-06-29-deferred-task-scheduler.md`
-
-DEFERRED-TASK-SCHEDULER: Fleet has cron(8) but no at(1) — no primitive for "once, at epoch T, wake agent X, then forget." MVP: new `scheduled_tasks` SQLite table in coordination.db (Migration 4); `fire_at`/`deadline_at`/`created_at`/`fired_at` = INTEGER epoch-seconds (never ISO8601 — strcompare bypass scar); `dedup_key TEXT UNIQUE` in CREATE TABLE DDL (never ADD COLUMN — silent no-op scar). 3 MCP tools: `schedule_task` / `cancel_scheduled_task` / `list_scheduled_tasks`. Internal `claim_due_scheduled_tasks` atomic UPDATE→RETURNING. Sweeper folded into cowork-team */15 as Step 0b.3 (after fire-time election win, before blind-guard). COWORK delivery via PRE-CLAIM intent gate (task_kind="intent", already deployed) → spawn agent. DEV delivery via orch-apply.sh + SignalRowSchema → signal_queue; zero new dev-side code. No new task_kind. 12 AC: epoch-int storage, UNIQUE DDL, deadline expiry gate, PRE-CLAIM gate, orch-apply delivery, roster-sourced team map, no orch-state write at insert time. 3 verify use-cases worked E2E: rebuild health check (ops/DEV), FOMC anchor (market-watcher/COWORK), bug re-probe (system-auditor/DEV). Phase-2 deferred: 24/7 launchd sweeper. ST-1..ST-8 all routed to dev-mcp-server.
-
-**Signal dropped:** `docs/signals/deferred-task-scheduler-20260629T201845Z.json` → po
-
----
-
 ## 2026-06-30T17:50:58Z
 
 **Brief:** `docs/architecture-briefs/2026-06-30-narrative-quality-ccato-gate.md`
@@ -27,3 +17,13 @@ CCATO-GATE: "narrative claim-vs-truth re-probe" × "blocks before publish" = emp
 MONEY-RADAR: Capital-flow / smart-money-rotation subsystem with DIVERGENCE as headline signal. Grounded in workflow w97chja81 (4 mapper agents, 303k tokens). Non-negotiable constraints baked: `get_price_history` returns close+volume ONLY (no H/L verified live VCB 76 bars) → Phase 0 ships only the 4 depth-AND-field-independent oscillators (OBV, rel-vol z(20), up/down ratio, degraded VWAP labeled proxy). Reuse-first: 8 LIVE tools (foreign-flow suite, carry, credit, volatility, macro) wired into composite; tự-doanh is the ONE new Phase-1 crawl (CafeF/Vietstock via VPS, reuses cafef.ts). Centerpiece: divergence detectors D1 (index-vs-breadth), D2 (price-vs-OBV distribution), D3 (crowd-vs-foreign) all Phase 0; D3 gains full prop-desk form Phase 1. Honest-NULL: coverage_pct<0.5→null+null_reason; divergence null-axis→UNKNOWN never GREEN; credit-flow Tier-4 defaults excluded. CCATO tie-in: source_tier/is_estimate/null_reason feed the narrative-truth gate — divergence=UNKNOWN degrades to "không đủ dữ liệu", never fabricated rotation narrative. Phase-0 DoD: composite returns real non-null score live; D2 fires on real example; dashboard.money-radar.tsx renders honest-NULL pattern. Zone routing: oscillators→dev-technical-analysis Go:5003; composite+detectors→dev-mcp-server; tự-doanh crawl→dev-vps-crawls+dev-mcp-server; frontend→dev-frontend reusing GaugeCard+FreshnessBadge.
 
 **Signal dropped:** `docs/signals/money-radar-20260701T075240Z.json` → po
+
+---
+
+## 2026-07-03T16:08:21Z
+
+**Brief:** `docs/architecture-briefs/2026-07-03-severity-override-surfacing.md`
+
+SEVERITY-OVERRIDE-SURFACING: PNJ (non-watchlist VN30) diamond-fraud prosecution detected by news-scout (#8371, confidence=0.95) reached zero persistent surfaces. Root cause = 3 independent scope leaks, not one gate: (A) CHEF's chef.md Step 0 GATHER never ingests bus-only `legal_risk`/`chain_catalyst`/`urgent_news` as a named input category at all (absence-of-ingestion, not just watchlist filter); (B) fb-market-poster main.md:232 explicit "relevant watchlist tickers" text; (C) system-map.json's alert-commander sender_rules text omits the CRITICAL override that already exists code-side (legal_risk always fires, no watchlist gate) — doc drift, likely source of the "alert-commander is watchlist-scoped" read; alert-commander's own notebook is 5+ weeks stale (cron-liveness flagged separately, out of scope). Predicate: legal_risk riskType∈{prosecution,asset_freeze} (0.95 tier only) OR price_anomaly move_sigma≥4.0 & impact≥6 (reused existing bar); chain_catalyst/crisis_velocity already market-wide, no change. Primary surface: unified-agent CHEF daily dish (guaranteed 3x/day, durable narrative) — NOT alert-commander (already correct on paper but ephemeral+liveness-suspect). Secondary echo: fb-market-poster's existing Legal-risk bullet, widened. New shared skill `.claude/skills/severity-override-gate/SKILL.md` (mirrors claim-truth-gate pattern) wired into CHEF+fb-market-poster. Dedup via `record_signal_outcome(...,"surfaced_marketwide",...)` + recommend extending news-scout's existing 180-min "materially different direction" exception pattern to the 360-min legal_risk gate for tier-escalation.
+
+**Signal filed:** `docs/data/orch/orch-state.json` `.signal_queue.rows[]` id=`arch-severity-override-surfacing-20260703` (type=repair_task_request) → po. Backlog task id: `FEAT-SEVERITY-OVERRIDE-SURFACING`.

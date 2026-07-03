@@ -435,6 +435,33 @@
         "severity": "MEDIUM",
         "status": "READ",
         "payload_ref": "docs/signals/router-signalqueue-dup-id-guard-20260703.md"
+      },
+      {
+        "id": "arch-severity-override-surfacing-20260703",
+        "ts": "2026-07-03T16:08:21Z",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "repair_task_request",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "Severity-override surfacing gap: legal_risk signals on non-watchlist tickers (e.g. PNJ #8371 diamond-fraud prosecution, confidence=0.95) are detected by news-scout but reach zero persistent user-facing surfaces (CHEF daily dish, fb-market-poster, analysis-briefs) because those 3 consumers are independently watchlist-scoped. Suggested backlog task FEAT-SEVERITY-OVERRIDE-SURFACING implements brief.",
+        "title": "Severity-override surfacing path (watchlist OR severity-override) — PNJ #8371 gap",
+        "payload_ref": "docs/architecture-briefs/2026-07-03-severity-override-surfacing.md",
+        "payload": {
+          "suggested_backlog_task_id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
+          "brief": "docs/architecture-briefs/2026-07-03-severity-override-surfacing.md",
+          "trigger_predicate": "legal_risk riskType in {prosecution,asset_freeze} (0.95 tier) OR price_anomaly move_sigma>=4.0 & impact_score>=6, any ticker; chain_catalyst/crisis_velocity already market-wide (no change)",
+          "primary_surface": "unified-agent CHEF daily-dish narrative on MARKET Telegram channel (guaranteed 3x/day)",
+          "secondary_surface": "fb-market-poster daily FB post — widen existing Legal-risk bullet (main.md:232)",
+          "target_files": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/fb-market-poster/flow/main.md",
+            "docs/agents/news-scout/flow/stage-signals.md",
+            "docs/data/system-map.json",
+            ".claude/skills/severity-override-gate/SKILL.md"
+          ],
+          "worked_example": "PNJ #8371 diamond-certificate fraud prosecution 2026-07-03 — news-scout detected (confidence=0.95), routed to alert-commander, reached zero persistent surfaces"
+        }
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
