@@ -562,25 +562,47 @@ export function registerAnalysisTools(server: McpServer): void {
         const rawK = Math.min(k * 3, 20);
         // G5b: call rag-service via HTTP; map response to SearchResult shape
         // DFR-P3-MCP: bctc-analyst issues ticker-exact filing queries → hybrid BM25+vector improves recall
-        const ragResponse = await ragSearch({
-          query,
-          limit: rawK,
-          ...(level !== undefined ? { level } : {}),
-          ...(actionCode !== undefined ? { action_code: actionCode } : {}),
-          hybrid: true,
-        });
-        const rawResults: SearchResult[] = ragResponse.results.map(
-          (r: RagSearchResultDTO): SearchResult => ({
-            id: r.id,
-            level: r.level,
-            title: r.title,
-            summary: r.summary,
-            tags: r.tags,
-            actionCode: r.action_code,
-            createdAt: r.created_at,
-            distance: r.distance,
-          }),
-        );
+        //
+        // FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING (part a): rag-service was stuck
+        // in a clean-exit restart loop (root cause tracked separately in
+        // FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP), and the resulting timeout/
+        // connection-refused surfaced as a hard "Error searching context: …" text
+        // block that repeatedly stalled bctc-analyst Step 2b (4 consecutive cycles,
+        // BUG#3397). ragSearch's fetch is already BOUNDED by AbortSignal.timeout(8_000)
+        // inside ragHttpClient.ts — well under the caller's tool-call budget — so a
+        // rag-down condition fails fast. Mirror appendStockHexagramHttp's L84
+        // "service-down: omit block entirely" pattern here: WARN (not ERROR) and
+        // degrade to an empty raw result set instead of surfacing a hard error.
+        let rawResults: SearchResult[];
+        try {
+          const ragResponse = await ragSearch({
+            query,
+            limit: rawK,
+            ...(level !== undefined ? { level } : {}),
+            ...(actionCode !== undefined ? { action_code: actionCode } : {}),
+            hybrid: true,
+          });
+          rawResults = ragResponse.results.map(
+            (r: RagSearchResultDTO): SearchResult => ({
+              id: r.id,
+              level: r.level,
+              title: r.title,
+              summary: r.summary,
+              tags: r.tags,
+              actionCode: r.action_code,
+              createdAt: r.created_at,
+              distance: r.distance,
+            }),
+          );
+        } catch (ragError) {
+          // Service-down (ECONNREFUSED, AbortError/timeout, non-200): degrade
+          // gracefully instead of blocking the caller with a hard timeout/error.
+          logger.warn("[search_similar_context] rag-service unreachable — returning empty result", {
+            fn: "search_similar_context",
+            error: ragError instanceof Error ? ragError.message : String(ragError),
+          });
+          rawResults = [];
+        }
 
         if (rawResults.length === 0) {
           return {
