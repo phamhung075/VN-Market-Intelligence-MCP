@@ -462,6 +462,30 @@
           ],
           "worked_example": "PNJ #8371 diamond-certificate fraud prosecution 2026-07-03 — news-scout detected (confidence=0.95), routed to alert-commander, reached zero persistent surfaces"
         }
+      },
+      {
+        "id": "router-alert-commander-dead-20260703",
+        "ts": "2026-07-03T16:10:00Z",
+        "from": "router",
+        "to": "po",
+        "type": "repair_task_request",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "alert-commander DEAD ~5.5 weeks: declared a scheduled cowork agent (cowork-team/flow/main.md:9) but has ZERO slots in cowork-schedule.json (the alert-commander-market slot the /cron-cowork-team skill references no longer exists). Notebook last-modified 27 May. Its legal_risk->CRITICAL-always override (alert-policy.md:46) is exactly what should have surfaced PNJ #8482 prosecution conf0.95 (news-scout routed to it 3x today) but it never ran. Proximate cause of PNJ miss; broader impact: NO position-danger/opportunity/legal/crisis alert has fired for ~5.5 weeks.",
+        "title": "alert-commander dead (missing cowork slot) — proximate cause of PNJ coverage miss",
+        "payload_ref": "docs/signals/router-alert-commander-dead-20260703.md",
+        "payload": {
+          "suggested_backlog_task_id": "FIX-ALERT-COMMANDER-DEAD-NO-SLOT",
+          "incident_doc": "docs/signals/router-alert-commander-dead-20260703.md",
+          "root_cause": "missing alert-commander slot(s) in docs/data/cowork-schedule.json (scheduling regression ~2026-05-25)",
+          "impact": "all real-time alert classes (position-danger, watchlist-opportunity, verified_chain, legal_risk, crisis_velocity) silent ~5.5 weeks",
+          "fix_targets": [
+            "docs/data/cowork-schedule.json",
+            "docs/data/system-map.json sender_rules doc-drift line 1312"
+          ],
+          "related": "FEAT-SEVERITY-OVERRIDE-SURFACING (arch-severity-override-surfacing-20260703) is the robustness layer; this is the resurrect-the-agent operational fix",
+          "po_decision": "confirm intended state: resurrect (expected) vs formally retire (only if position-danger/opportunity duties rehomed first)"
+        }
       }
     ],
     "last_triaged_at": "2026-07-03T01:33:39Z",
