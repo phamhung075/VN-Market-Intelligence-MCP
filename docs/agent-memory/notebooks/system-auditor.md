@@ -1,4 +1,57 @@
 
+## c524 · 2026-07-03T08:40:44Z
+### Audit Run Tier-1 (08:40–08:41 UTC 2026-07-03)
+- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
+- A-13 CORROBORATION: api-gateway:4000/health was FAIL at 07:45:52Z (prior HIGH alert), now HTTP 200 — SELF-RESOLVED (transient/false-positive)
+- A-21: RestartCount=0 (mcp-server normal) | A-30: 36.35% memory (healthy) | A-32: 43% disk (safe, 19Gi avail)
+- Anomalies: 1 new INFO (A-13 corroboration/resolution, prior HIGH signal no longer actionable) | Status: HEALTHY
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-07-03T08:40:44Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                   IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 4 hours (healthy)     vn-market-intelligence-mcp-mcp-server           4 hours ago
+vn-market-intelligence-mcp-frontend-1             Up 41 hours (healthy)    74bfe1c5b392                                    41 hours ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 2 days (healthy)      vn-market-intelligence-mcp-technical-analysis   2 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 3 days (healthy)      vn-market-intelligence-mcp-stock-price          3 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 3 days (healthy)      vn-market-intelligence-mcp-macro-indicators     3 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 4 days (healthy)      vn-market-intelligence-mcp-api-gateway          4 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 4 days (healthy)      vn-market-intelligence-mcp-pdf-extractor        4 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 7 days (healthy)      vn-market-intelligence-mcp-kinh-dich-service    2 weeks ago
+vn-market-intelligence-mcp-rag-service-1          Up 5 minutes (healthy)   vn-market-intelligence-mcp-rag-service          3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 7 days (healthy)      vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 7 days (healthy)      vn-market-intelligence-mcp-alert-engine         3 weeks ago
+headroom-proxy                                    Up 7 days                headroom-proxy:local                            3 weeks ago
+mcp-gateway                                       Up 7 days (healthy)      mcpservergatway-gateway                         6 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=36.35% MemUsage=1.091GiB / 3GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    19Gi    43%    393k  194M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
 ## c523 · 2026-07-03T07:46:56Z
 ### Audit Run Tier-1 (07:44–07:46 UTC 2026-07-03)
 - Tier: 1 | Services: 12/12 UP | Health: 4/5 OK | A-20 multi-probe: 3/3 PASS
@@ -144,34 +197,3 @@ mcp-gateway                                       Up 7 days (healthy)      mcpse
 [health] macro-indicators:5004/health OK (HTTP 200)
 [health] pdf-extractor:5001/health OK (HTTP 200)
 [health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=24.10% MemUsage=740.4MiB / 3GiB
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    16Gi    45%    393k  173M    0%   /
-
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3
-
-=== PROBE DONE ===
-```
-
-## c519 · 2026-07-03T05:56:45Z
-### Audit Run Tier-1 (05:56–05:57 UTC 2026-07-03)
-- Tier: 1 | Services: 12/12 UP | Health: 8/8 OK | Disk: 45%
-- RestartCount: rag-service=294 (high, service healthy) | Memory: ~45% avg (rag-service 99.68% near limit)
-- Anomalies: 1 new (A-22 rag-service restart spike) | Status: HEALTHY (all services running and responding)
-
-## c518 · 2026-07-03T05:15:49Z
-### Audit Run Tier-1 (05:15–05:16 UTC 2026-07-03)
-- Tier: 1 | Services: 12/12 UP | Health: 5/5 OK | A-20 multi-probe: 3/3 PASS
-- A-21: RestartCount=0 (normal) | A-30: 17.60% memory (excellent) | A-32: 45% disk (PASS)
-- Anomalies: 0 new | Status: HEALTHY
