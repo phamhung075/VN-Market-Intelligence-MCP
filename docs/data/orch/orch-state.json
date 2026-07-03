@@ -9674,7 +9674,7 @@
         "depends": [
           "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER"
         ],
-        "blocked_on": "FIX-BCTC-BANK-BS-SECTION-CLASSIFIER — refine+reingest EXECUTED (56/56 DONE, 440 rows) but CTG total_assets still 0; root is the finalize BS section classifier, NOT a refine failure. Do NOT qa-gate until the classifier fix reflows balance_sheet rows.",
+        "blocked_on": "FIX-BCTC-BANK-BS-COLUMN-ORDER — root cause now pinned: parser + classifier + section-detection bugs drop balance_sheet rows pre-DB. Execution was correct (56/56 units), but finalize classifier had zero bank-form BS rows to emit.",
         "po_reconciled_at": "2026-07-02T03:59:20Z",
         "po_triage_20260703T0507_note": "Held pending SPIKE-BCTC-CTG-BS-REALDATA-ROOT — the classifier root (FIX-BCTC-BANK-BS-SECTION-CLASSIFIER) was re-scoped to an architect real-data recon after its behavioral DoD FAILED. This row stays BLOCKED transitively (row -> classifier -> SPIKE)."
       },
