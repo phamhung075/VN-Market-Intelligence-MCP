@@ -167,3 +167,81 @@ explicit task instruction, prepped as a SPIKE for the next tick.
 See RETURN block / final message for SHA(s) — commits created after this
 report was drafted (code commit + memory/docs commit, explicit paths only,
 no `-a`/`-am`, no push).
+
+---
+
+## QA Gate — Independent Verification (qa, 2026-07-03)
+
+Verdict: **PASS**. Scope gated: `a817b5139` (code fix + new test) +
+`33353a814` (notebook/journal/report). PO scope-corrected mandate confirmed
+matched (fast-fail bounded < 5s, retry removed) — not the original inverted
+spec.
+
+Re-ran everything myself, did not trust dev's reported numbers:
+- `python3 vps-scripts/test_discover_bctc_ssc_fastfail.py` → **7/7 PASS**
+  (own terminal run, matches dev's claim).
+- `python3 vps-scripts/test_discover_bctc_title_classifier.py` → **35/35
+  PASS**, 0 regression.
+- `python3 -m py_compile vps-scripts/discover-bctc-urls-browser.py` →
+  clean, exit 0.
+- `bash scripts/audits/mock-guard.sh --files "vps-scripts/discover-bctc-urls-browser.py"`
+  → PASS, exit 0.
+
+Read the full diff line-by-line (`git diff a817b5139~1 a817b5139`), not the
+stat: confirmed `_SSC_STEP1_TIMEOUT_SECONDS = 4` (line 914) is the sole
+timeout passed to `_ssc_get(..., timeout=_SSC_STEP1_TIMEOUT_SECONDS)` (line
+917) in step1; `import time` fully removed (`grep -n "time\."` across the
+whole file → 0 hits, confirms no orphaned sleep/usage anywhere, not just in
+the diffed hunk); the 2-attempt `for _attempt in range(2)` loop and
+`_SSC_STEP1_RETRY_WAIT` constant are both fully gone
+(`grep -n "for _attempt\|range(2)\|_SSC_STEP1_RETRY_WAIT"` → 0 hits). Cross
+-checked the claimed 5s caller budget directly against the two named
+mcp-server source files rather than trusting the comment: `grep -n
+"DISCOVERY_TIMEOUT_MS" bctcQueueEnricherJob.ts` → `const
+DISCOVERY_TIMEOUT_MS = 5_000;` (line 57); `bctcDiscovery.ts:351` → `const
+timeout = options.timeout ?? 5_000;` — both confirmed 5000ms, so the 4s cap
+is genuinely strictly under budget (1s margin), not just asserted.
+
+Security/robustness (DDD graceful-degradation discipline): fetch is bounded
+strictly under the caller timeout (4s < 5s); on any error (transient 5xx/
+timeout or terminal 4xx) it returns `None` fast via a labelled stderr print
+(`kind = "transient" if _is_transient_error(exc) else "terminal"`) — honest
+fail-fast, not a silent swallow that fabricates a result. No shell
+invocation anywhere in the touched function (`grep -n
+"subprocess\|os\.system\|shell=True"` on the whole file → 0 hits in code,
+only 1 hit which is the word "subprocess" inside a code comment) — the
+fetch uses `urllib.request` against a fixed constant URL
+(`SSC_SEARCH_URL`), no external value is ever shelled out, so no
+shell-injection surface exists in this change. Read the new test file
+(`test_discover_bctc_ssc_fastfail.py`) in full: 7 tests are meaningful (not
+trivial `assert True`) — they monkeypatch `_ssc_get` to raise simulated
+503/timeout/404 with no real network I/O, assert `elapsed < 1.0s` (not just
+`< 5s`, a tighter bound than the AC demands), assert single-call count via
+`call_log`, assert the passed `timeout` kwarg is itself `< 5.0`, and assert
+structural absence of the removed retry constant/`time` import as a
+regression guard against reintroducing the exact freeze pattern by name.
+
+UUID/secret scan on both gated commits: `git show a817b5139 33353a814 |
+grep -iE '[0-9a-f]{8}-[0-9a-f]{4}-...'` → 0 hits. `process.env`/password/
+secret/token scan on the 2 touched Python files → 0 hits.
+
+**Observation (non-blocking, out of this task's scope):**
+`discover-bctc-urls-browser.py:1068` — step2/3b download POST uses
+`timeout=60`, above the 5s caller budget. Confirmed this is a genuinely
+different code path (only reached after step1 already succeeded within
+budget; the mcp-server caller still hard-aborts the whole call at 5s
+regardless of what this subprocess is doing, so it cannot itself cause a
+NEW freeze the way the step1 retry did — worst case is an orphaned
+subprocess, same as any post-abort continuation). Recommend a follow-up
+BACKLOG item to right-size or bound this value too, for hygiene/consistency
+with the step1 fix's discipline, but it does not block this gate.
+
+Deploy-to-VPS not performed — confirmed correctly out of scope per task
+framing (code-only DoD, ops follow-up, user/auto-mode-gated live-host
+write). Does not restore SSC/HOSE discovery success — confirmed correctly
+scoped as a separate, un-fixed external outage + separate HSX Strategy-0
+root cause.
+
+DJ-GATE-1: `docs/agent-memory/decisions/sprint-B-05-FU-SSC-503-RETRY-dev-vps-crawls.md`
+carries `task-id: B-05-FU-SSC-503-RETRY` — gate satisfied (dev's journal).
+QA's own journal: `docs/agent-memory/decisions/sprint-B-05-FU-SSC-503-RETRY-qa.md`.
