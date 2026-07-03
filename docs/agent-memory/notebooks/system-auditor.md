@@ -2,6 +2,15 @@
 
 Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 
+## c509 · 2026-07-03T00:44:49Z
+### Audit Run Tier-1 (00:44–00:45 UTC 2026-07-03)
+- Tier: 1 | Fire-election: WON (tick=2026-07-03T00:30Z) | Services: 12/12 UP
+- Health endpoints: 5/5 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
+- A-20 pdf-extractor multi-probe: 3/3 PASS (event-loop healthy)
+- A-21: RestartCount=4 (baseline, no change) | A-30: 52.82% memory (PASS)
+- A-32: 44% disk (PASS) | Crons: All healthy (100+ jobs, success_rate 99-100%)
+- Anomalies: 0 new | Status: HEALTHY
+
 ## c508 · 2026-07-03T00:35:24Z
 ### Audit Run Tier-3 (00:30–00:35 UTC 2026-07-03)
 - Tier: 3 | Fire-election: ROUTER-HELD (tick=2026-07-03T02:00Z) | Services: 12/12 UP
@@ -39,14 +48,5 @@ Tier-1/2/3 audit runs; newest-first; max 200L total, max 60L per section.
 - Health endpoints: 5/5 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
 - A-20 pdf-extractor multi-probe: 3/3 PASS (event-loop healthy)
 - A-21: RestartCount=4 (baseline, no change) | A-30: 43.45% memory (PASS)
-- A-32: 45% disk (PASS) | Crons: All healthy (100+ jobs, success_rate 80-100%)
-- Anomalies: 0 new | Status: HEALTHY
-
-## c504 · 2026-07-02T22:45:10Z
-### Audit Run Tier-1 (22:44–22:45 UTC 2026-07-02)
-- Tier: 1 | Fire-election: ROUTER-HELD (tick=2026-07-02T22:30Z) | Services: 12/12 UP
-- Health endpoints: 5/5 OK (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
-- A-20 pdf-extractor multi-probe: 3/3 PASS (event-loop healthy)
-- A-21: RestartCount=4 (baseline, no change) | A-30: 41.62% memory (PASS)
 - A-32: 45% disk (PASS) | Crons: All healthy (100+ jobs, success_rate 80-100%)
 - Anomalies: 0 new | Status: HEALTHY
