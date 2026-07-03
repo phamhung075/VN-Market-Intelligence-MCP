@@ -7001,7 +7001,7 @@
         "created_at": "2026-07-01T05:54:51Z",
         "created_by": "po-s135",
         "source_report_id": 3366,
-        "note": "Telegram report id=3366 (analysis-agent, normal, 2026-07-01T04:30Z): 'VPS backfill stalled after 5 retries; manual VPS investigation required'. ALL five codes are NON-watchlist (direct grep of system-map.json watchlist = none). The whole watchlist OHLCV-depth program is DONE_VERIFIED (SUBTASK-A..E, REBUILD, PROD-BACKFILL-GATE, PERSIST-DAILY-OHLCV-2YR). Manual VPS investigation = ops/infra, NOT a coding lane. Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG. Low priority — peripheral codes, no serving-layer impact. Related infra: BCTC-HIST-VPS-BACKFILL (DEFERRED, infra-vps)."
+        "note": "Telegram report id=3366 (analysis-agent, normal, 2026-07-01T04:30Z): 'VPS backfill stalled after 5 retries; manual VPS investigation required'. ALL five codes are NON-watchlist (direct grep of system-map.json watchlist = none). The whole watchlist OHLCV-depth program is DONE_VERIFIED (SUBTASK-A..E, REBUILD, PROD-BACKFILL-GATE, PERSIST-DAILY-OHLCV-2YR). Manual VPS investigation = ops/infra, NOT a coding lane. Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG. Low priority — peripheral codes, no serving-layer impact. Related infra: BCTC-HIST-VPS-BACKFILL (DEFERRED, infra-vps). [RE-EMIT 2026-07-03: telegram report id=3418 (2026-07-03T03:30:05Z) re-confirmed same 5 shallow codes BDI:1 DLC:41 JSH:0 SIS:0 VDC:0 — deduped to this row, still PLAN-ONLY BACKLOG, VPS-ops gated.]"
       },
       {
         "id": "FIX-VPS-SSC-INSIDER-502",
@@ -7360,6 +7360,25 @@
         ],
         "status_note": "AC (doc-only): (1) scripts/auditor-notebook-commit.sh appends the required Claude-Session commit trailer per docs/policies/commit-convention.md; (2) system-auditor flow gets one doc line clarifying election-release ownership — a router-held fire-election lock is NEVER released by the auditor subagent (left to TTL). Non-urgent.",
         "blocking": false
+      },
+      {
+        "id": "FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED",
+        "title": "T1 auditor peer FIRER degraded 2026-07-03 — 2 back-to-back ticks: 03:00Z partial (sau-d4 emitted but notebook cycle NEVER landed, election lock TTL-expired mid-run), 03:30Z absent entirely. Router won fire-election cron:auditor-t1:03:30Z at 03:44Z + dispatched T1 locally (coverage RESTORED). Last completed T1 cycle=c514@02:53Z. Investigate peer auditor firer (launchd/peer CLI session) health; if firer dead, T1 coverage is a SPOF on THIS session's cron only.",
+        "owner": "po",
+        "next_agent": "ops",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "med",
+        "plan_only": true,
+        "zone": "cross-service/",
+        "sprint": null,
+        "created_at": "2026-07-03T03:59:59Z",
+        "created_by": "po-triage-20260703T0337Z",
+        "source_report_id": 3419,
+        "related": [
+          "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY"
+        ],
+        "note": "Source: telegram report id=3419 (analysis-agent, normal, 2026-07-03T03:45:51Z), router-authored. The 03:00Z partial-run failure mode (spawn dispatched, notebook/delivery never landed, election lock TTL-expired mid-run) is the SAME 'spawn-dispatch != delivery-proof' class as FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY but for the T1 AUDITOR firer, not cowork slots. Self-healing (fire-election) WORKS — router restored coverage this tick. This row tracks ONLY the peer-firer health question (is the launchd/peer session dead vs transient). Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG (single self-healed incident; escalate to a live ops dispatch only if it recurs). The 03:00Z sau-d4 signal duplication is a SEPARATE known class (FU-AUDITOR-D4-SIGNAL-ID + FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE)."
       }
     ],
     "closed_sprints": [
@@ -9601,8 +9620,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-03T03:03:24Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-07-03T03:59:59Z",
+    "last_triaged_by": "po-triage-20260703T0337Z"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
