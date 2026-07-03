@@ -36,6 +36,15 @@ _Last: 2026-07-03T10:00Z_
 
 **Writes:** po-s138 orch-apply exit 0 (backlog +1, review markers ×2 in-place, 3 signals READ, NEW-left=0; 104 coherence warnings pre-existing SHG, non-blocking). .head UNTOUCHED (router owns tick/head). Did NOT push (fleet-push owns push).
 
+## 2026-07-03 triage-signals tick 2026-07-03T18:07Z (router-dispatched)
+Drain triaged PLAN-ONLY into `.task_board.backlog[]` — no implementation dispatched (WIP FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK in review, qa gating).
+- **S1 (PRIORITY bug-escalation, bctc-analyst):** get_bctc_full cross-ticker contamination (batch >=2 same turn -> 2nd slot serves 1st ticker; repro 2/2 [MBB,HCM],[GVR,EIB]; sequential=correct => concurrency). Opened **FIX-BCTC-FULL-BATCH-CONTAMINATION** (high, zone:multi). BOTH hypotheses recorded (a handler shared-state / b gateway result-attribution — b = far broader blast radius); architect confirms handler-vs-gateway before scoping. alt-id noted for gateway root cause. Interim: sequential calls.
+- **S2 (LOW coverage-gap, MBB Q1-2026):** self-guarded, root_task=BCTC-HIST-VPS-BACKFILL already in backlog (DEFERRED). No new task — routed to existing epic. Log only.
+- **S3 (NOISE):** 3x cowork-fire telemetry + 2x bctc_signal routine — no-op.
+- **S4 (router .md, MEDIUM) SPLIT into two:** **CHORE-GITIGNORE-CLAUDE-TMP** (medium, cross-service/ — gitignore .claude/tmp + rm --cached 111 UUID-leaking hook snapshots) + **FIX-AGENT-NOTEBOOK-UUID-PROVENANCE** (medium, zone:multi — audit agent memory for raw session UUID, fix agent instr via agent-father, add pre-commit/CI guard). Forward-fix only, no history rewrite.
+- **S5 (router .md, LOW):** **FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT** (low, cross-service/ — regime-extraction skill greps a dead 'Global Liquidity:' text line -> NEUTRAL fallback; prefer reading nested structured signals field).
+Dedup: none collide. Did NOT duplicate FEAT-SEVERITY-OVERRIDE-SURFACING (already backlog). **Writes:** orch-apply exit 0 x2 (backlog 398->402, then status TODO->BACKLOG for lane coherence; 104 pre-existing SHG warnings non-blocking). .head UNTOUCHED (router owns tick). No push (fleet-push owns). Return to router: BATCH of 4 backlog entries.
+
 ## Carry-over
 - **RECOMMENDED NEXT DISPATCH (router):** ops → rebuild+deploy mcp-server carrying COLUMN-ORDER (d69b13f41+e73a53688, done_verified) per feedback_user_gates_delegate_to_ops (07-03 OVERRIDE: delegate gated deploys to ops). AFTER deploy: bctc-analyst (refine_bctc_md) STEP1 + dev-mcp-server STEP2 reingest on live CTG 96e36139 → RAW-verify total_assets → both W5 rows done_verified. Same deploy unblocks the standing finalize_bctc_refine follow-up.
 - `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD` sits in backlog (plan-only) — needs po→ba→pm→dev when a slot opens; architect SPLITs multi-zone. Permanent fix; the live instance was router-mitigated.

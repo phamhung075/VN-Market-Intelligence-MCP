@@ -7482,6 +7482,51 @@
         "next_agent": "architect",
         "desc": "Per arch brief: new shared skill .claude/skills/severity-override-gate/SKILL.md computes SEVERITY_OVERRIDE(signal) = legal_risk riskType in {prosecution,asset_freeze} (0.95 tier) OR price_anomaly move_sigma>=4.0 & impact_score>=6 (chain_catalyst/crisis_velocity already market-wide, no change). Every surfacing consumer's gate becomes: if ticker in watchlist OR SEVERITY_OVERRIDE -> surface. Primary surface: unified-agent CHEF daily-dish market-wide paragraph (guaranteed 3x/day cron, independent of alert-commander liveness). Secondary echo: fb-market-poster legal-risk bullet (main.md:232). Plus: news-scout 360m legal_risk dedup escalation-exception (tier-upgrade bypasses suppression); system-map.json sender_rules doc-sync. Cross-cycle dedup via record_signal_outcome(...,'surfaced_marketwide',...). 6 acceptance criteria incl AC5 PNJ #8371 replay.",
         "zone_note": "multi -- architect must split across .claude/skills/severity-override-gate/, docs/agents/unified-agent/, docs/agents/fb-market-poster/, docs/agents/news-scout/, docs/data/system-map.json. Sequencing per brief S5: shared skill first -> CHEF (primary) -> fb-market-poster; news-scout exception + system-map doc-sync parallel."
+      },
+      {
+        "id": "FIX-BCTC-FULL-BATCH-CONTAMINATION",
+        "title": "get_bctc_full cross-ticker contamination: batching >=2 get_bctc_full calls in the SAME turn -> 2nd result silently returns the 1st ticker's structured_data (repro 2/2: [MBB,HCM], [GVR,EIB])",
+        "owner": "po",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "zone": "multi",
+        "priority": "high",
+        "created_at": "2026-07-03T18:32:21Z",
+        "status_note": "PLAN-ONLY triage tick 2026-07-03T18:07Z. Serve-layer data-integrity risk: any agent (bctc-analyst, digest-predict, unified-agent, market-watcher, market-analyst) batching >=2 get_bctc_full calls can misattribute one ticker's balance sheet to another. Repro 2/2: [MBB,HCM]->HCM slot returned MBB total_assets=666711/cash=680641; [GVR,EIB]->EIB slot returned GVR structured_data instead of EIB PUB-5-low-confidence. Isolated sequential calls returned CORRECT distinct results => concurrency-triggered, NOT static wrong-data-in-DB. TWO hypotheses BOTH to investigate (do NOT pre-decide): (a) get_bctc_full handler holds shared/non-request-scoped state under concurrent invocation (zone apps/mcp-server); (b) MCP gateway cross-wires result-to-call attribution for concurrent downstream calls (zone api-gateway; blast radius = ALL batched tool calls, far broader). ARCHITECT/dev MUST confirm handler-vs-gateway BEFORE scoping+re-zoning. Interim mitigation in use: call get_bctc_full sequentially (1 per turn). Fix should add a response-echo of the requested code param for caller self-verification. Source: docs/signals/processed/bctc-analyst-20260703T183000Z.json.",
+        "note": "Alternate id if root cause confirmed as gateway attribution: FIX-GATEWAY-CONCURRENT-RESULT-ATTRIBUTION. zone:multi -> architect splits after handler-vs-gateway confirmation."
+      },
+      {
+        "id": "CHORE-GITIGNORE-CLAUDE-TMP",
+        "title": "gitignore .claude/tmp/ and git rm --cached the 111 tracked orch-hook-proposal-*.json snapshots (transient hot-file hook artifacts; each leaks session UUID + pure repo bloat)",
+        "owner": "po",
+        "type": "CLEAN",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "priority": "medium",
+        "created_at": "2026-07-03T18:32:21Z",
+        "status_note": "PLAN-ONLY. Split from CHORE-SESSION-UUID-HYGIENE (sub-fix B). Add .claude/tmp/ to .gitignore; git rm --cached the 111 tracked orch-hook-proposal-*.json. VERIFY scripts/orch-apply.sh writes these as scratch and does NOT depend on them being tracked (reads/writes transiently), then confirm orch-apply pipeline still validates+applies after untracking. Forward-fix only; NO git filter-repo of pushed history (leaked value is the ephemeral owner_client_session coordination token, dies at session end). Source: docs/signals/router-session-uuid-hygiene-20260703.md."
+      },
+      {
+        "id": "FIX-AGENT-NOTEBOOK-UUID-PROVENANCE",
+        "title": "Agents write raw owner_client_session/CLAUDE_CODE_SESSION_ID UUID into committed notebooks (RECURRING). Fix agent instructions via agent-father to log (router-dispatched); add pre-commit/CI guard failing on session-token-shaped UUID in committed diffs",
+        "owner": "po",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "zone": "multi",
+        "priority": "medium",
+        "created_at": "2026-07-03T18:32:21Z",
+        "status_note": "PLAN-ONLY. Split from CHORE-SESSION-UUID-HYGIENE (sub-fix A). Standing directive: session UUID is a coordination param (owner_client_session in task-lock args) ONLY, NEVER committed. Recurring pattern (dev-mcp-server notebook had it in multiple entries; likely other agents' notebooks/journals/decisions too). Scope: (1) audit ALL agent memory outputs (docs/agent-memory/notebooks|sessions|decisions|reports) for raw UUID; (2) fix agent instructions via AGENT-FATHER (PO/dev MUST NOT edit agent def files) so agents record (router-dispatched) not raw UUID; (3) add pre-commit guard or CI grep failing when a committed diff contains a session-token-shaped UUID. Forward-fix only; NO history rewrite. zone:multi -> architect splits agent-father instruction edit from the CI-guard. Source: docs/signals/router-session-uuid-hygiene-20260703.md. Related: feedback_agent_commits_session_uuid_into_notebook."
+      },
+      {
+        "id": "FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT",
+        "title": "get_macro_snapshot output shape drifted to nested signals object; regime-extraction skill expects a 'Global Liquidity:' text line -> falls back to NEUTRAL (silent macro-regime accuracy loss for all consumers)",
+        "owner": "po",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "priority": "low",
+        "created_at": "2026-07-03T18:32:21Z",
+        "status_note": "PLAN-ONLY. Non-blocking self-heal (regime degrades to NEUTRAL, no crash/wrong-data). PREFER reconciling .claude/skills/regime-extraction/SKILL.md to read the nested structured signals field (text-line scraping is the fragile pattern that caused this) over restoring the 'Global Liquidity:' text line in get_macro_snapshot. Add a fixture asserting regime resolves non-NEUTRAL when liquidity data present. Audit other skills for the same text-scrape assumption. Source: docs/signals/router-macro-snapshot-regime-parse-drift-20260703.md."
       }
     ],
     "closed_sprints": [
