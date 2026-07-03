@@ -1045,6 +1045,39 @@
         "read_at": "2026-07-02T22:19:49Z",
         "triaged_by": "po",
         "triaged_at": "2026-07-02T22:24:53Z"
+      },
+      {
+        "id": "sau-20260703003425-c08",
+        "ts": "2026-07-03T00:34:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "alerts check C-08 failed (actual=1 orphaned, expected=0)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-20260703003425-doc1",
+        "ts": "2026-07-03T00:34:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "size_cap_breach",
+        "summary": "task_board count=85 exceeds limit 80 (DOC-04-TASKBOARD)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-20260703003425-doc2",
+        "ts": "2026-07-03T00:34:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "size_cap_breach",
+        "summary": "sprint_goal entries=16 exceeds limit 15 (DOC-04-SPRINTGOAL)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-02T22:51:14Z",
