@@ -76,3 +76,15 @@ Three stacking bugs in the BCTC pipeline collapse all bank-form balance-sheet ro
 - **Docs updated:** NONE (no `docs/architecture/microservice/mcp-server/*.md` referenced the stale column-order/number-format assumptions — grepped, zero hits).
 - **Deviations from this handoff's AC (documented):** ToC false-positive suppressed via bullet-line exclusion (any line starting with `-`/`*` skips section detection) rather than the AC's suggested "require match inside a `#`/`##` title line" — the stricter title-only approach would have broken multiple EXISTING passing fixtures (e.g. `FIX-BCTC-BANK-BS-SECTION-CLASSIFIER.test.ts`, `TASK-W3-...-SECTION-GUARD.test.ts`) whose real/synthetic section-header lines are bare text with no `#` prefix. Bullet-exclusion achieves the same behavioral outcome (verified: unit-0001's ToC no longer mutates `currentSection`) without that regression risk.
 - **NOT executed (deploy-gated):** a post-deploy `finalize_bctc_refine` re-run against the live CTG report_id 96e36139 in the named-volume `market.db` — this fix only ships the code; the router/ops must trigger the container rebuild + re-run before the live report's `total_assets` actually unfreezes.
+
+## [QA] Review Record
+
+- **Verdict:** APPROVED
+- **tsc --noEmit:** clean, 0 errors
+- **Targeted BCTC suite** (independent 23-file superset of dev's claimed 22, built via grep on changed symbols): 389 pass / 0 fail / 1172 expect. `FIX-BCTC-BANK-BS-COLUMN-ORDER.test.ts` standalone: 16 pass / 0 fail / 54 expect (report_id `ctg-96e36139-real-e2e`) — matches router's re-run exactly.
+- **Full suite:** 14230 pass / 42 skip / 65 fail / 6 errors / 44638 expect, 1168 files, 620.76s, followed by the known Bun-1.3.13 C++ teardown panic. `testBaselineFail` ceiling = 348 (docs/data/project-stats.json) — 65 << 348.
+- **Changed-domain regression check:** all 65 `(fail)` lines grepped for bctc/bank/refinedMarkdown/parseVnNumber/column-order/detectSection keywords → 0 hits; each fail line mapped to its source test file → all land in pre-existing network/timing-flaky suites (pollNews, VPS-proxy/logVpsPush, insider-transactions, telegram, foreign-flow, market-cap, climate-signal, MCP-SSE). One filename false-positive (`1405b-bctc-vps-fixes.test.ts`) inspected directly — its failures are `vps_push_log` DB races, no import of any changed file. Zero changed-domain regressions.
+- **DDD / security / mock-guard:** all clean (mock-guard exit 0, no domain→infra/application imports, no process.env, no real secrets — one "token" grep hit is a doc comment about numeric tokens).
+- **DJ-GATE-1:** dev-mcp-server journal present with `task-id:** FIX-BCTC-BANK-BS-COLUMN-ORDER` — gate satisfied.
+- **Board boundary:** per dispatcher instruction, QA did not touch `orch-state.json` `.task_board`/`.head` — router owns `review` → `done_verified` promotion.
+- **Full Task Report:** `reports/TASK_REPORT_FIX-BCTC-BANK-BS-COLUMN-ORDER.md`
