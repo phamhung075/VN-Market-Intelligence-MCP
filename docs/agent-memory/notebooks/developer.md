@@ -1,21 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-02 | **Cycle:** TOKEN-ECONOMY-TICK-PREFLIGHT-WU-1
-
-## Session 2026-06-21 — FIX-FB-GATE-SECTOR-NAME-VALIDATOR (AUDIT-FB-GATE-PROSE-HARDENING)
-
-**Task:** Add Check-E (sector/company-name validator) to `scripts/fb-data-integrity-gate.sh` + fix line-344 `[[: 0\n0: syntax error`.
-**Zone:** scripts/ (cross-service gate) → developer handles directly.
-
-**Bug found (line-344):** `grep -c` exits 1 on 0 matches → `|| echo "0"` fires alongside grep's stdout "0" → `floor_zero="0\n0"` → `[[ "$floor_zero" -gt 0 ]]` syntax error. Fix: `|| true` + `grep -m1 '^[0-9]' || echo "0"` to normalise to scalar. Both occurrences (lines 343+353) fixed.
-
-**Check-E design:** SSOT-driven (reads docs/data/system-map.json .project.watchlist). Two sub-checks:
-- E1 parenthesised-label contradiction: regex `TICKER (label)` / `(label) TICKER` within 60-char parens; maps SSOT English sector strings to canonical families; derives Vietnamese sector keywords per family; guards against own-sector-keyword false-positives (VRE "Retail REIT" correctly NOT flagged for "retail" kw).
-- E2 company-alias mismatch: curated known-fabrication aliases (VNM→Nestlé, SAB→Heineken).
-
-**Learning:** Proximity-window sector matching (120 chars) is too aggressive for Vietnamese financial prose where multiple sectors are discussed in the same paragraph. Tight parenthesised-label matching (pattern `TICKER (...)`) targets the fabrication signal without false-positives.
-
-**Commit:** eceee94a
+**Last updated:** 2026-07-03 | **Cycle:** FIX-AUDITOR-COMMIT-MUTEX-SKIP
 
 ## Session 2026-07-02 — FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT
 
@@ -46,3 +31,16 @@
 **Testing pattern for MCP-calling bash scripts:** source the script under test (guarded by `[[ BASH_SOURCE == 0 ]]` so sourcing doesn't auto-exec), then override `mcp_call()` as a stub dispatching on tool name — avoids all real side-effecting calls (`claim_due_scheduled_tasks`/`emit_pressure_state`). CAUTION: assertions on stub call-count/order must go through a FILE (not a plain var) if the function-under-test is invoked via `$(...)` command substitution — that's a subshell, plain-var writes inside it are lost. 20/20 tests pass.
 
 **Deleted:** `scripts/agents-flow/cowork-tick-autosilent.sh` (R5 — dead code, zero doc references, bypassed commit-mutex via raw `git -c user.name=...`).
+
+## Session 2026-07-03 — FIX-AUDITOR-COMMIT-MUTEX-SKIP
+
+**Task:** system-auditor's notebook commit step was non-deterministically SKIPPING the commit-mutex claim (flow-step drift on narrated prose) — 2 observed skips vs paired counterexamples. Consolidates DEFERRED sibling FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC (non-explicit `git add` had swept a peer's in-flight edits into f05795c3).
+**Zone:** cross-service/ (scripts/ + docs/agents/) → developer handles directly, no zone match.
+
+**Root-cause fix:** new `scripts/auditor-notebook-commit.sh` — ONE blessed script that internally claims/releases `commit-mutex:main` via a bash `trap ... EXIT` (claim can never be skipped by construction — no code path reaches `git commit` without passing the claim call first) and stages/commits ONLY the explicit paths passed as arguments (never `-A`/`-u`/`.`). Wired `docs/agents/system-auditor/flow/main.md`'s notebook commit step to call it instead of narrating raw git commands.
+
+**Portability gotcha:** first draft used `mapfile -t arr < <(cmd)` — fails on macOS system `/bin/bash` (3.2, no `mapfile` builtin, this host has no bash4+ in PATH). Replaced with a portable `while IFS= read -r ...` loop.
+
+**Live test evidence (no mocks, real gateway):** 4 scenarios verified against a scratch file (`docs/agent-memory/sessions/2026-07-03-auditor-commit-script-scratch-test.md`), each cross-checked via `task_list_held` before/after: (1) success → `[auditor-commit] mutex-paired commit <sha> paths=1`, lock paired claim+release; (2) no-op → `SKIP no-staged-changes`, lock still paired; (3) contended (simulated peer holding the lock) → `SKIP mutex-claim-failed contended ... — retry next tick`, exit 1, edit preserved uncommitted, then succeeded on retry once the peer released; (4) foreign-path guard — a peer file pre-staged in the shared index was detected and `git restore --staged`'d, never touching its content, while only the named own path was committed.
+
+**Commit-mutex API gotcha:** `task_claim` rejects `ttl_seconds < 60` (Zod `too_small`) — script default is 90 (matches `.claude/skills/commit-mutex/SKILL.md`), safely above the floor.
