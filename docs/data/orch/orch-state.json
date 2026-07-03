@@ -243,13 +243,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "FIX-FB-DAILY-FIRER-CLI-FLAG DONE_VERIFIED. Next backlog candidate: FIX-SIGNALQUEUE-DUP-ID-GUARD (MED). Deploy-gated review tasks (W5 chain + BCTC-HNX-SSL-HARDEN + ARCH-SHIP-WAVE-REAUDIT) await their own gates.",
-    "updated_at": "2026-07-03T15:42:19Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server adds module-level re-entrancy guard to bctcPdfPullJob.ts (mirror breadthHistoryPersisterJob.ts _isRunning/early-return already_running/finally reset) + scoped test. On completion: router RAW-verify -> flip in_progress->review -> dispatch qa.",
+    "updated_at": "2026-07-03T15:55:41Z",
     "updated_by": "router",
-    "note": "FIX-FB-DAILY-FIRER-CLI-FLAG promoted review->done_verified (qa PASS a25783800, commit 6310a0d31, RAW-verified). launchd fb-daily backstop restored: --no-update-notification removed. WIP 0."
+    "note": "15:37Z dev-team tick: PO selected FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD (SPIKE-BCTC-DISCOVER-PIPELINE-DEAD root cause). Dispatched dev-mcp-server background."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7364,22 +7364,6 @@
         "depends": []
       },
       {
-        "id": "FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD",
-        "title": "bctcPdfPullJob missing overlap guard -- concurrent invocations duplicate-process same rows, stall net done-throughput (SPIKE-BCTC-DISCOVER-PIPELINE-DEAD root cause)",
-        "type": "FIX",
-        "zone": "apps/mcp-server",
-        "next_agent": "dev-mcp-server",
-        "status": "TODO",
-        "priority": "high",
-        "size": "S",
-        "created_at": "2026-07-03T07:13:08Z",
-        "created_by": "architect",
-        "origin_signal": "sau-2026-07-03T06:42:33Z",
-        "parent_task": "SPIKE-BCTC-DISCOVER-PIPELINE-DEAD",
-        "note": "RAW-confirmed (docker-exec live probe, no build/up/restart): bctcPdfPullJob.ts has no isRunning/mutex guard between cron invocations (*/30). Per-item processing (fetch 45s + up to 3-tier extraction @120s/tier) can legitimately take up to ~65-70min for a full batch (DEFAULT_BATCH_SIZE=10) -- observed 05:30 run took 69.9min. Because status stays 'pending' until a row finishes, overlapping invocations re-select and redundantly re-process the SAME rows (HCM PDF re-saved 4x, NKG 3x in <1min, observed in live logs), saturating pdf-extractor (204% CPU/75.3% mem at probe time) and starving net done-throughput. 4 concurrent invocations observed stuck running at probe time (oldest 65+min in-flight). Dormant for weeks because the sibling enricher bug (FIX-BCTC-ENRICHER-STUCK-BACKLOG, now DONE_VERIFIED) meant the queue never had real pending work to trigger overlap -- fixing Stage 2 unmasked this Stage 3 defect. FIX: add module-level isRunning boolean guard (log+early-return if already running, clear in finally) -- mirror the EXISTING in-repo pattern verbatim: apps/mcp-server/src/scheduler/weatherCheckJob.ts (isRunning, lines 67/85/89/243) and startScheduler.ts:963-973 (runVnstockFundamentalsJobCron/runVnstockTradingStatsJobCron, same 7-10min-sweep-on-fixed-cron shape). No schema change, no new table. Full evidence + test strategy: docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md",
-        "depends": []
-      },
-      {
         "id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
         "type": "FIX",
         "title": "Orphan-adoption board-state guard (both paths) + stop false-orphaning long agents + clearable reaper orphans",
@@ -9691,7 +9675,29 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD",
+        "title": "bctcPdfPullJob missing overlap guard -- concurrent invocations duplicate-process same rows, stall net done-throughput (SPIKE-BCTC-DISCOVER-PIPELINE-DEAD root cause)",
+        "type": "FIX",
+        "zone": "apps/mcp-server",
+        "next_agent": "dev-mcp-server",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "size": "S",
+        "created_at": "2026-07-03T07:13:08Z",
+        "created_by": "architect",
+        "origin_signal": "sau-2026-07-03T06:42:33Z",
+        "parent_task": "SPIKE-BCTC-DISCOVER-PIPELINE-DEAD",
+        "note": "RAW-confirmed (docker-exec live probe, no build/up/restart): bctcPdfPullJob.ts has no isRunning/mutex guard between cron invocations (*/30). Per-item processing (fetch 45s + up to 3-tier extraction @120s/tier) can legitimately take up to ~65-70min for a full batch (DEFAULT_BATCH_SIZE=10) -- observed 05:30 run took 69.9min. Because status stays 'pending' until a row finishes, overlapping invocations re-select and redundantly re-process the SAME rows (HCM PDF re-saved 4x, NKG 3x in <1min, observed in live logs), saturating pdf-extractor (204% CPU/75.3% mem at probe time) and starving net done-throughput. 4 concurrent invocations observed stuck running at probe time (oldest 65+min in-flight). Dormant for weeks because the sibling enricher bug (FIX-BCTC-ENRICHER-STUCK-BACKLOG, now DONE_VERIFIED) meant the queue never had real pending work to trigger overlap -- fixing Stage 2 unmasked this Stage 3 defect. FIX: add module-level isRunning boolean guard (log+early-return if already running, clear in finally) -- mirror the EXISTING in-repo pattern verbatim: apps/mcp-server/src/scheduler/weatherCheckJob.ts (isRunning, lines 67/85/89/243) and startScheduler.ts:963-973 (runVnstockFundamentalsJobCron/runVnstockTradingStatsJobCron, same 7-10min-sweep-on-fixed-cron shape). No schema change, no new table. Full evidence + test strategy: docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md",
+        "depends": [],
+        "owner": "dev-mcp-server",
+        "dispatched_at": "2026-07-03T15:55:41Z",
+        "dispatched_by": "router",
+        "tick": "2026-07-03T15:37Z",
+        "router_dispatch_note": "PO BATCH element[0] this tick (WIP 0). RAW-verified: bctcPdfPullJob.ts (585L) has 0 _isRunning/already_running guards; reference breadthHistoryPersisterJob.ts L49/70/72/74/135 present to mirror. FIX/S single-zone apps/mcp-server, no deploy-gate."
+      }
+    ],
     "ready": [],
     "review": [
       {
