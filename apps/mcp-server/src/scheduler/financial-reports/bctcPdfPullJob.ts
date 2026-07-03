@@ -80,6 +80,25 @@ const DEFAULT_BATCH_SIZE = 10;
 export const MAX_404_ATTEMPTS = 10;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Concurrency guard (FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A full batch (DEFAULT_BATCH_SIZE=10) can legitimately take ~65-70 min
+ * (fetch up to 45s + up to 3-tier extraction @120s/tier per item, observed
+ * 05:30 run = 69.9 min). The 30-min cron has no built-in overlap protection,
+ * and a queue row stays `status='pending'` until its own processing chain
+ * finishes — so an overlapping invocation re-SELECTs and redundantly
+ * re-downloads/re-extracts the SAME rows, saturating pdf-extractor and
+ * starving net done-throughput (confirmed live: HCM PDF re-saved 4x, NKG 3x
+ * in <1 min — docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md).
+ * Mirrors the module-level `_isRunning` guard used by
+ * runBreadthHistoryPersisterJob (breadthHistoryPersisterJob.ts) and
+ * weatherCheckJob.ts.
+ */
+let _isRunning = false;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -135,6 +154,13 @@ export interface BctcPdfPullResult {
    * failure (B02-TCTD / bank form) is surfaced rather than hidden.
    */
   enrichFailed: number;
+  /**
+   * FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD: set to 'already_running' when this
+   * invocation early-returned because a previous invocation was still
+   * in-flight (module-level `_isRunning` guard). All counts above are 0 in
+   * that case — no query was even issued. Absent (undefined) on a normal run.
+   */
+  skippedReason?: "already_running";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -263,323 +289,346 @@ export async function runBctcPdfPullJob(opts: {
    */
   sendBugFn?: (msg: string) => Promise<void>;
 } = {}): Promise<BctcPdfPullResult> {
-  const db = opts.db ?? getDb();
-  const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
-  const deps = opts.deps ?? (await makeProductionDeps());
-  const apiKey = Bun.env.VPS_PUSH_API_KEY ?? "";
+  // ── Overlap guard (FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD) ────────────────────
+  // See the `_isRunning` doc comment above for the full rationale. Early
+  // return here means the DB query below is never even issued while a prior
+  // invocation is still mid-flight. The `finally` below always clears the
+  // flag — even if the body throws — so a thrown error can never wedge the
+  // guard permanently (mirrors runBreadthHistoryPersisterJob / weatherCheckJob).
+  if (_isRunning) {
+    logger.warn("[bctcPdfPull] already running — skipping concurrent fire");
+    return {
+      itemsProcessed: 0,
+      downloaded: 0,
+      failed: 0,
+      deferred: 0,
+      enrichFailed: 0,
+      skippedReason: "already_running",
+    };
+  }
+  _isRunning = true;
 
-  const result: BctcPdfPullResult = {
-    itemsProcessed: 0,
-    downloaded: 0,
-    failed: 0,
-    deferred: 0,
-    enrichFailed: 0,
-  };
-
-  // ── 1. Query pending pull-eligible rows ──────────────────────────────────
-  // B3-SPACE-URLS-FIX (2026-06-07): widened from VPS-only filter to include
-  // staticfile.hsx.vn URLs. hsx.vn is NOT geo-blocked from the mcp-server
-  // container (HTTP 200 confirmed). hsx.vn rows use percent-encoded URLs
-  // (spaces → %20, parens → %28/%29) after the encodeHsxUrl fix in
-  // hsxBctcFetcher.ts. No X-API-Key is sent for hsx.vn requests.
-  let rows: QueueRow[];
   try {
-    rows = db
-      .query<QueueRow, [string, string, number]>(
-        `SELECT id, action_code, period_year, period_quarter, source_url, attempts
-         FROM bctc_vps_queue
-         WHERE status = 'pending'
-           AND (source_url LIKE ? OR source_url LIKE ?)
-         ORDER BY created_at ASC
-         LIMIT ?`,
-      )
-      .all(`${VPS_BCTC_BASE_URL}%`, `${HSX_STATICFILE_BASE_URL}%`, batchSize);
-  } catch (err) {
-    logger.warn("[bctcPdfPull] DB query failed", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return result;
-  }
+    const db = opts.db ?? getDb();
+    const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
+    const deps = opts.deps ?? (await makeProductionDeps());
+    const apiKey = Bun.env.VPS_PUSH_API_KEY ?? "";
 
-  if (rows.length === 0) {
-    return result;
-  }
+    const result: BctcPdfPullResult = {
+      itemsProcessed: 0,
+      downloaded: 0,
+      failed: 0,
+      deferred: 0,
+      enrichFailed: 0,
+    };
 
-  // ── Prepare update statement ──────────────────────────────────────────────
-  const updateDone = db.prepare<void, [number]>(
-    `UPDATE bctc_vps_queue SET status = 'done', last_attempt = datetime('now') WHERE id = ?`,
-  );
-  const updateAttempt = db.prepare<void, [number]>(
-    `UPDATE bctc_vps_queue SET attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`,
-  );
-  /**
-   * FIX-BCTC-VPS-QUEUE-SYNC G1: transition to deferred_infra when attempts
-   * exceed MAX_404_ATTEMPTS. This stops the infinite-404 VPS hammer loop.
-   * The bctcQueueEnricherJob orphan-re-sync arm will pick these up and either
-   * push a fresh discovery or mark url_not_found when genuinely unavailable.
-   */
-  const updateDeferredInfra = db.prepare<void, [number]>(
-    `UPDATE bctc_vps_queue SET status = 'deferred_infra', attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`,
-  );
-  /**
-   * FIX-BCTC-ENRICH-SILENT-0ROWS: mark a queue row 'enrich_failed' when the
-   * extraction pipeline completed but yielded 0 bctc_table_rows AND 0 bctc_md_tables.
-   * This is the FAIL-LOUD counterpart to the silent-advance bug: the row is NOT
-   * marked 'done' — it stays visible so the parse fix (dev-pdf-extractor B02-TCTD)
-   * can re-trigger extraction. The status is distinct from 'pending' (awaiting URL)
-   * and 'url_not_found' (discovery exhausted) to enable targeted triage queries.
-   */
-  const updateEnrichFailed = db.prepare<void, [number]>(
-    `UPDATE bctc_vps_queue SET status = 'enrich_failed', last_attempt = datetime('now') WHERE id = ?`,
-  );
-
-  // ── FIX-BCTC-ENRICH-SILENT-0ROWS: 0-row gate queries ────────────────────────
-  // Read the ACTUAL row counts from the DB after triggerExtraction completes.
-  // This is the anti-default-mask contract: no `rows = result || [PLACEHOLDER]`.
-  // Both queries use the report's sort_key derived from the queue row's period fields.
-  //
-  // Guard: bctc_table_rows and bctc_md_tables are created by migrateFinancialReports()
-  // which runs at startup in production. In test DBs (or a fresh DB before migration)
-  // the tables may not exist yet — db.prepare() would throw "no such table". We catch
-  // that here so the 0-row gate is silently bypassed (null = skip gate) rather than
-  // crashing the entire job. This is generic: any missing table = gate inactive.
-  let countTableRows: ReturnType<typeof db.prepare<{ cnt: number }, [string, string]>> | null;
-  let countMdTables: ReturnType<typeof db.prepare<{ cnt: number }, [string, string]>> | null;
-  try {
-    countTableRows = db.prepare<{ cnt: number }, [string, string]>(`
-      SELECT COUNT(*) AS cnt
-      FROM bctc_table_rows tr
-      JOIN financial_reports fr ON fr.id = tr.report_id
-      WHERE fr.action_code = ? AND fr.sort_key = ?
-    `);
-    countMdTables = db.prepare<{ cnt: number }, [string, string]>(`
-      SELECT COUNT(*) AS cnt
-      FROM bctc_md_tables bmt
-      JOIN financial_reports fr ON fr.id = bmt.report_id
-      WHERE fr.action_code = ? AND fr.sort_key = ?
-    `);
-  } catch {
-    // Schema tables not yet created (pre-migration or test DB) — skip 0-row gate.
-    countTableRows = null;
-    countMdTables = null;
-  }
-
-  /**
-   * FIX-BCTC-VPS-QUEUE-SYNC G1 helper: record a failed fetch attempt.
-   *
-   * When the row's current attempts (pre-increment) already equals or exceeds
-   * MAX_404_ATTEMPTS - 1, the NEXT attempt pushes it over the cap → park at
-   * `deferred_infra`. Otherwise increment attempts and leave `pending`.
-   *
-   * Applies to ALL rows by attempt count — never by ticker name.
-   */
-  function recordFailedAttempt(row: QueueRow): void {
-    if (row.attempts + 1 >= MAX_404_ATTEMPTS) {
-      updateDeferredInfra.run(row.id);
-      result.deferred++;
-      logger.warn("[bctcPdfPull] attempt cap reached — transitioning to deferred_infra", {
-        ticker: row.action_code,
-        year: row.period_year,
-        quarter: row.period_quarter,
-        attempts: row.attempts + 1,
-        cap: MAX_404_ATTEMPTS,
-      });
-    } else {
-      updateAttempt.run(row.id);
-    }
-  }
-
-  // ── 2. Download each PDF ──────────────────────────────────────────────────
-  for (const row of rows) {
-    result.itemsProcessed++;
-
-    let response: Response;
-
-    // hsx.vn URLs do not require authentication; VPS URLs require X-API-Key.
-    const isHsxUrl = row.source_url.startsWith(HSX_STATICFILE_BASE_URL);
-    const effectiveApiKey = isHsxUrl ? "" : apiKey;
-
-    // Fetch
+    // ── 1. Query pending pull-eligible rows ──────────────────────────────────
+    // B3-SPACE-URLS-FIX (2026-06-07): widened from VPS-only filter to include
+    // staticfile.hsx.vn URLs. hsx.vn is NOT geo-blocked from the mcp-server
+    // container (HTTP 200 confirmed). hsx.vn rows use percent-encoded URLs
+    // (spaces → %20, parens → %28/%29) after the encodeHsxUrl fix in
+    // hsxBctcFetcher.ts. No X-API-Key is sent for hsx.vn requests.
+    let rows: QueueRow[];
     try {
-      response = await deps.fetchPdf(row.source_url, effectiveApiKey);
+      rows = db
+        .query<QueueRow, [string, string, number]>(
+          `SELECT id, action_code, period_year, period_quarter, source_url, attempts
+           FROM bctc_vps_queue
+           WHERE status = 'pending'
+             AND (source_url LIKE ? OR source_url LIKE ?)
+           ORDER BY created_at ASC
+           LIMIT ?`,
+        )
+        .all(`${VPS_BCTC_BASE_URL}%`, `${HSX_STATICFILE_BASE_URL}%`, batchSize);
     } catch (err) {
-      logger.warn("[bctcPdfPull] fetch failed", {
-        ticker: row.action_code,
-        url: row.source_url,
+      logger.warn("[bctcPdfPull] DB query failed", {
         error: err instanceof Error ? err.message : String(err),
       });
-      result.failed++;
-      recordFailedAttempt(row);
-      continue;
+      return result;
     }
 
-    // HTTP error
-    if (!response.ok) {
-      logger.warn("[bctcPdfPull] HTTP error", {
-        ticker: row.action_code,
-        url: row.source_url,
-        status: response.status,
-      });
-      result.failed++;
-      recordFailedAttempt(row);
-      continue;
+    if (rows.length === 0) {
+      return result;
     }
 
-    // Read bytes
-    let buf: Uint8Array;
-    try {
-      buf = new Uint8Array(await response.arrayBuffer());
-    } catch (err) {
-      logger.warn("[bctcPdfPull] failed to read response body", {
-        ticker: row.action_code,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      result.failed++;
-      recordFailedAttempt(row);
-      continue;
-    }
-
-    // ── 3. Size guard ──────────────────────────────────────────────────────
-    if (buf.length < MIN_PDF_BYTES) {
-      logger.warn("[bctcPdfPull] PDF too small — skipping", {
-        ticker: row.action_code,
-        bytes: buf.length,
-        minBytes: MIN_PDF_BYTES,
-      });
-      result.failed++;
-      recordFailedAttempt(row);
-      continue;
-    }
-
-    // ── 4. Save ────────────────────────────────────────────────────────────
-    const filePath = buildPdfSavePath(
-      row.action_code,
-      row.period_year,
-      row.period_quarter,
-      opts.pdfDir,
+    // ── Prepare update statement ──────────────────────────────────────────────
+    const updateDone = db.prepare<void, [number]>(
+      `UPDATE bctc_vps_queue SET status = 'done', last_attempt = datetime('now') WHERE id = ?`,
+    );
+    const updateAttempt = db.prepare<void, [number]>(
+      `UPDATE bctc_vps_queue SET attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`,
+    );
+    /**
+     * FIX-BCTC-VPS-QUEUE-SYNC G1: transition to deferred_infra when attempts
+     * exceed MAX_404_ATTEMPTS. This stops the infinite-404 VPS hammer loop.
+     * The bctcQueueEnricherJob orphan-re-sync arm will pick these up and either
+     * push a fresh discovery or mark url_not_found when genuinely unavailable.
+     */
+    const updateDeferredInfra = db.prepare<void, [number]>(
+      `UPDATE bctc_vps_queue SET status = 'deferred_infra', attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`,
+    );
+    /**
+     * FIX-BCTC-ENRICH-SILENT-0ROWS: mark a queue row 'enrich_failed' when the
+     * extraction pipeline completed but yielded 0 bctc_table_rows AND 0 bctc_md_tables.
+     * This is the FAIL-LOUD counterpart to the silent-advance bug: the row is NOT
+     * marked 'done' — it stays visible so the parse fix (dev-pdf-extractor B02-TCTD)
+     * can re-trigger extraction. The status is distinct from 'pending' (awaiting URL)
+     * and 'url_not_found' (discovery exhausted) to enable targeted triage queries.
+     */
+    const updateEnrichFailed = db.prepare<void, [number]>(
+      `UPDATE bctc_vps_queue SET status = 'enrich_failed', last_attempt = datetime('now') WHERE id = ?`,
     );
 
-    try {
-      await deps.savePdf(filePath, buf);
-    } catch (err) {
-      logger.warn("[bctcPdfPull] save failed", {
-        ticker: row.action_code,
-        filePath,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      result.failed++;
-      recordFailedAttempt(row);
-      continue;
-    }
-
-    logger.info("[bctcPdfPull] PDF saved", {
-      ticker: row.action_code,
-      year: row.period_year,
-      quarter: row.period_quarter,
-      bytes: buf.length,
-      filePath,
-    });
-
-    // ── 5. Trigger extraction (await — ensures text is stored before done) ────
-    // Bug 1352a: was fire-and-forget; MCP tools called immediately after
-    // runBctcPdfPullJob saw empty text because OCR had not completed yet.
-    // FIX-BCTC-EXTRACT-LOCALPATH: production triggerExtraction now delegates to
-    // triggerPushBctcExtraction (3-tier fallback via filePath, not raw pdfUrl).
-    try {
-      await deps.triggerExtraction({
-        actionCode: row.action_code,
-        year: row.period_year,
-        quarter: row.period_quarter,
-        filePath,
-        pdfUrl: row.source_url, // FIX-BCTC-EXTRACT-LOCALPATH: Tier 1 attempt; filePath is primary
-      });
-    } catch (err) {
-      // Extraction failure is logged. The 0-row gate below still runs to detect
-      // whether the failure resulted in 0 rows (enrich_failed) vs partial success.
-      logger.warn("[bctcPdfPull] extraction trigger failed (non-fatal)", {
-        ticker: row.action_code,
-        filePath,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-
-    // ── 6. FIX-BCTC-ENRICH-SILENT-0ROWS: 0-row gate ─────────────────────────
-    // Read ACTUAL row counts from DB — never rely on extraction return value or
-    // default/placeholder. Both bctc_table_rows AND bctc_md_tables must be 0
-    // to trigger fail-loud (either table populated = data landed, mark done).
+    // ── FIX-BCTC-ENRICH-SILENT-0ROWS: 0-row gate queries ────────────────────────
+    // Read the ACTUAL row counts from the DB after triggerExtraction completes.
+    // This is the anti-default-mask contract: no `rows = result || [PLACEHOLDER]`.
+    // Both queries use the report's sort_key derived from the queue row's period fields.
     //
-    // sort_key derivation: period_quarter is stored as "Q1".."Q4" in the queue;
-    // financial_reports.sort_key = "<year>-<quarter>" e.g. "2026-Q1".
-    //
-    // If countTableRows/countMdTables are null (tables absent — pre-migration or
-    // test DB), skip the gate entirely: fall through to updateDone so the job
-    // completes normally. The gate is a production-only enrichment contract.
-    if (countTableRows === null || countMdTables === null) {
-      updateDone.run(row.id);
-      result.downloaded++;
-      continue;
+    // Guard: bctc_table_rows and bctc_md_tables are created by migrateFinancialReports()
+    // which runs at startup in production. In test DBs (or a fresh DB before migration)
+    // the tables may not exist yet — db.prepare() would throw "no such table". We catch
+    // that here so the 0-row gate is silently bypassed (null = skip gate) rather than
+    // crashing the entire job. This is generic: any missing table = gate inactive.
+    let countTableRows: ReturnType<typeof db.prepare<{ cnt: number }, [string, string]>> | null;
+    let countMdTables: ReturnType<typeof db.prepare<{ cnt: number }, [string, string]>> | null;
+    try {
+      countTableRows = db.prepare<{ cnt: number }, [string, string]>(`
+        SELECT COUNT(*) AS cnt
+        FROM bctc_table_rows tr
+        JOIN financial_reports fr ON fr.id = tr.report_id
+        WHERE fr.action_code = ? AND fr.sort_key = ?
+      `);
+      countMdTables = db.prepare<{ cnt: number }, [string, string]>(`
+        SELECT COUNT(*) AS cnt
+        FROM bctc_md_tables bmt
+        JOIN financial_reports fr ON fr.id = bmt.report_id
+        WHERE fr.action_code = ? AND fr.sort_key = ?
+      `);
+    } catch {
+      // Schema tables not yet created (pre-migration or test DB) — skip 0-row gate.
+      countTableRows = null;
+      countMdTables = null;
     }
 
-    const sortKey = `${row.period_year}-${row.period_quarter}`;
-    const tableRowCnt = countTableRows.get(row.action_code, sortKey)?.cnt ?? 0;
-    const mdTableCnt  = countMdTables.get(row.action_code, sortKey)?.cnt ?? 0;
+    /**
+     * FIX-BCTC-VPS-QUEUE-SYNC G1 helper: record a failed fetch attempt.
+     *
+     * When the row's current attempts (pre-increment) already equals or exceeds
+     * MAX_404_ATTEMPTS - 1, the NEXT attempt pushes it over the cap → park at
+     * `deferred_infra`. Otherwise increment attempts and leave `pending`.
+     *
+     * Applies to ALL rows by attempt count — never by ticker name.
+     */
+    function recordFailedAttempt(row: QueueRow): void {
+      if (row.attempts + 1 >= MAX_404_ATTEMPTS) {
+        updateDeferredInfra.run(row.id);
+        result.deferred++;
+        logger.warn("[bctcPdfPull] attempt cap reached — transitioning to deferred_infra", {
+          ticker: row.action_code,
+          year: row.period_year,
+          quarter: row.period_quarter,
+          attempts: row.attempts + 1,
+          cap: MAX_404_ATTEMPTS,
+        });
+      } else {
+        updateAttempt.run(row.id);
+      }
+    }
 
-    if (tableRowCnt === 0 && mdTableCnt === 0) {
-      // FAIL LOUD — 0 rows extracted. Do NOT advance to 'done'.
-      // Mark 'enrich_failed' so the status is visible for triage and the
-      // parse fix (dev-pdf-extractor B02-TCTD) can re-trigger extraction.
-      updateEnrichFailed.run(row.id);
-      result.enrichFailed++;
+    // ── 2. Download each PDF ──────────────────────────────────────────────────
+    for (const row of rows) {
+      result.itemsProcessed++;
 
-      const bugMsg =
-        `[bctcPdfPull] ENRICH 0-rows FAIL-LOUD: ${row.action_code} ` +
-        `${row.period_year}-${row.period_quarter} — ` +
-        `bctc_table_rows=0 AND bctc_md_tables=0 after extraction. ` +
-        `Queue row marked enrich_failed (NOT done). ` +
-        `Root: B02-TCTD parse failure or extraction pipeline stall. ` +
-        `Action: run dev-pdf-extractor fix or trigger bctcReparseJob.`;
+      let response: Response;
 
-      logger.error("[bctcPdfPull] ENRICH 0-rows — FAIL LOUD", {
-        ticker: row.action_code,
-        year: row.period_year,
-        quarter: row.period_quarter,
-        sortKey,
-        tableRowCnt,
-        mdTableCnt,
-      });
+      // hsx.vn URLs do not require authentication; VPS URLs require X-API-Key.
+      const isHsxUrl = row.source_url.startsWith(HSX_STATICFILE_BASE_URL);
+      const effectiveApiKey = isHsxUrl ? "" : apiKey;
 
-      const effectiveSendBug = opts.sendBugFn ?? (async (msg: string) => {
-        const { sendTelegramBug } = await import(
-          "../../infrastructure/notifiers/telegram.js"
-        );
-        await sendTelegramBug(msg);
-      });
+      // Fetch
+      try {
+        response = await deps.fetchPdf(row.source_url, effectiveApiKey);
+      } catch (err) {
+        logger.warn("[bctcPdfPull] fetch failed", {
+          ticker: row.action_code,
+          url: row.source_url,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        result.failed++;
+        recordFailedAttempt(row);
+        continue;
+      }
+
+      // HTTP error
+      if (!response.ok) {
+        logger.warn("[bctcPdfPull] HTTP error", {
+          ticker: row.action_code,
+          url: row.source_url,
+          status: response.status,
+        });
+        result.failed++;
+        recordFailedAttempt(row);
+        continue;
+      }
+
+      // Read bytes
+      let buf: Uint8Array;
+      try {
+        buf = new Uint8Array(await response.arrayBuffer());
+      } catch (err) {
+        logger.warn("[bctcPdfPull] failed to read response body", {
+          ticker: row.action_code,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        result.failed++;
+        recordFailedAttempt(row);
+        continue;
+      }
+
+      // ── 3. Size guard ──────────────────────────────────────────────────────
+      if (buf.length < MIN_PDF_BYTES) {
+        logger.warn("[bctcPdfPull] PDF too small — skipping", {
+          ticker: row.action_code,
+          bytes: buf.length,
+          minBytes: MIN_PDF_BYTES,
+        });
+        result.failed++;
+        recordFailedAttempt(row);
+        continue;
+      }
+
+      // ── 4. Save ────────────────────────────────────────────────────────────
+      const filePath = buildPdfSavePath(
+        row.action_code,
+        row.period_year,
+        row.period_quarter,
+        opts.pdfDir,
+      );
 
       try {
-        await effectiveSendBug(bugMsg);
-      } catch (notifyErr) {
-        // Bug notification errors must NEVER block the fail-loud path.
-        logger.warn("[bctcPdfPull] sendBugFn threw (non-fatal to fail-loud)", {
+        await deps.savePdf(filePath, buf);
+      } catch (err) {
+        logger.warn("[bctcPdfPull] save failed", {
           ticker: row.action_code,
-          error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+          filePath,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        result.failed++;
+        recordFailedAttempt(row);
+        continue;
+      }
+
+      logger.info("[bctcPdfPull] PDF saved", {
+        ticker: row.action_code,
+        year: row.period_year,
+        quarter: row.period_quarter,
+        bytes: buf.length,
+        filePath,
+      });
+
+      // ── 5. Trigger extraction (await — ensures text is stored before done) ────
+      // Bug 1352a: was fire-and-forget; MCP tools called immediately after
+      // runBctcPdfPullJob saw empty text because OCR had not completed yet.
+      // FIX-BCTC-EXTRACT-LOCALPATH: production triggerExtraction now delegates to
+      // triggerPushBctcExtraction (3-tier fallback via filePath, not raw pdfUrl).
+      try {
+        await deps.triggerExtraction({
+          actionCode: row.action_code,
+          year: row.period_year,
+          quarter: row.period_quarter,
+          filePath,
+          pdfUrl: row.source_url, // FIX-BCTC-EXTRACT-LOCALPATH: Tier 1 attempt; filePath is primary
+        });
+      } catch (err) {
+        // Extraction failure is logged. The 0-row gate below still runs to detect
+        // whether the failure resulted in 0 rows (enrich_failed) vs partial success.
+        logger.warn("[bctcPdfPull] extraction trigger failed (non-fatal)", {
+          ticker: row.action_code,
+          filePath,
+          error: err instanceof Error ? err.message : String(err),
         });
       }
 
-      continue; // Do NOT fall through to updateDone
+      // ── 6. FIX-BCTC-ENRICH-SILENT-0ROWS: 0-row gate ─────────────────────────
+      // Read ACTUAL row counts from DB — never rely on extraction return value or
+      // default/placeholder. Both bctc_table_rows AND bctc_md_tables must be 0
+      // to trigger fail-loud (either table populated = data landed, mark done).
+      //
+      // sort_key derivation: period_quarter is stored as "Q1".."Q4" in the queue;
+      // financial_reports.sort_key = "<year>-<quarter>" e.g. "2026-Q1".
+      //
+      // If countTableRows/countMdTables are null (tables absent — pre-migration or
+      // test DB), skip the gate entirely: fall through to updateDone so the job
+      // completes normally. The gate is a production-only enrichment contract.
+      if (countTableRows === null || countMdTables === null) {
+        updateDone.run(row.id);
+        result.downloaded++;
+        continue;
+      }
+
+      const sortKey = `${row.period_year}-${row.period_quarter}`;
+      const tableRowCnt = countTableRows.get(row.action_code, sortKey)?.cnt ?? 0;
+      const mdTableCnt  = countMdTables.get(row.action_code, sortKey)?.cnt ?? 0;
+
+      if (tableRowCnt === 0 && mdTableCnt === 0) {
+        // FAIL LOUD — 0 rows extracted. Do NOT advance to 'done'.
+        // Mark 'enrich_failed' so the status is visible for triage and the
+        // parse fix (dev-pdf-extractor B02-TCTD) can re-trigger extraction.
+        updateEnrichFailed.run(row.id);
+        result.enrichFailed++;
+
+        const bugMsg =
+          `[bctcPdfPull] ENRICH 0-rows FAIL-LOUD: ${row.action_code} ` +
+          `${row.period_year}-${row.period_quarter} — ` +
+          `bctc_table_rows=0 AND bctc_md_tables=0 after extraction. ` +
+          `Queue row marked enrich_failed (NOT done). ` +
+          `Root: B02-TCTD parse failure or extraction pipeline stall. ` +
+          `Action: run dev-pdf-extractor fix or trigger bctcReparseJob.`;
+
+        logger.error("[bctcPdfPull] ENRICH 0-rows — FAIL LOUD", {
+          ticker: row.action_code,
+          year: row.period_year,
+          quarter: row.period_quarter,
+          sortKey,
+          tableRowCnt,
+          mdTableCnt,
+        });
+
+        const effectiveSendBug = opts.sendBugFn ?? (async (msg: string) => {
+          const { sendTelegramBug } = await import(
+            "../../infrastructure/notifiers/telegram.js"
+          );
+          await sendTelegramBug(msg);
+        });
+
+        try {
+          await effectiveSendBug(bugMsg);
+        } catch (notifyErr) {
+          // Bug notification errors must NEVER block the fail-loud path.
+          logger.warn("[bctcPdfPull] sendBugFn threw (non-fatal to fail-loud)", {
+            ticker: row.action_code,
+            error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+          });
+        }
+
+        continue; // Do NOT fall through to updateDone
+      }
+
+      // ── 7. Mark done — extraction has completed and rows were landed ──────────
+      updateDone.run(row.id);
+      result.downloaded++;
     }
 
-    // ── 7. Mark done — extraction has completed and rows were landed ──────────
-    updateDone.run(row.id);
-    result.downloaded++;
+    logger.info("[bctcPdfPull] cycle complete", {
+      itemsProcessed: result.itemsProcessed,
+      downloaded: result.downloaded,
+      failed: result.failed,
+      deferred: result.deferred,
+      enrichFailed: result.enrichFailed,
+    });
+
+    return result;
+  } finally {
+    _isRunning = false;
   }
-
-  logger.info("[bctcPdfPull] cycle complete", {
-    itemsProcessed: result.itemsProcessed,
-    downloaded: result.downloaded,
-    failed: result.failed,
-    deferred: result.deferred,
-    enrichFailed: result.enrichFailed,
-  });
-
-  return result;
 }
