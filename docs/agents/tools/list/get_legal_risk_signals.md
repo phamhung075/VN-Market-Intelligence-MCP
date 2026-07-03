@@ -15,7 +15,8 @@ Get recent legal risk signals (khởi tố, phong tỏa tài sản, truy thu thu
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `stock` | string | No | — | Stock ticker code to filter by (e.g. 'VCB'). Omit for all stocks. |
-| `days` | number | No | 30 | Look-back window in days (default: 30, max: 90) |
+| `days` | number | No | 30 | Look-back window in days (default: 30, max: 90). Unchanged for all callers that omit `hours_back`. |
+| `hours_back` | number | No | — | FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK: additive, opt-in, hour-granularity override of `days` (max 720h). Overrides `days` when provided. alert-commander uses `hours_back=6` (matches the codebase's 360-min legal_risk dedup convention) to avoid re-surfacing a stale event across many cycles. Other consumers (bctc-analyst, digest-predict, unified-agent, fb-market-poster) omit it and keep the 30-day default breadth. |
 
 ## Returns
 

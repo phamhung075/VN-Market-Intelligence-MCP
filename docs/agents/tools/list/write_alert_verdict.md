@@ -30,6 +30,8 @@ agents: [alert-commander]
 }
 ```
 
+**Dedup guard (FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK):** if a PENDING verdict already exists for the same `(ticker, alertSource)` pair, no new row is appended — the response instead echoes the existing row with `"duplicate": true` and `"id"`/`"verdict"` from that existing row. A genuinely new event (different `alertSource`, or the same pair after its prior verdict resolved to `confirmed`/`false_positive`) is never suppressed.
+
 ## Usage
 
 ```json
@@ -52,3 +54,4 @@ agents: [alert-commander]
 - verdict is always "pending" at write time; resolved by verdictResolutionJob (Task 1863b/c)
 - Task 1863d — tool #126
 - Task 1967-01 — added legal_risk + crisis_velocity to alertSource enum
+- FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK — added pending-duplicate dedup guard (ticker+alertSource)

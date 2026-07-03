@@ -39,5 +39,17 @@ call_tool(server="vn-market", tool="get_foreign_room", arguments={})
 If market indicators available: extract volatility regime (gk_vol_20d_pct, vol_regime), liquidity state (omo.net_outstanding_bn_vnd with blocked_reason for honest-NULL, interbank_1w.rate_1w_pct), and foreign-room exhaustion (derive from tickers[].utilization.room_utilization_pct — high pct = exhausted). Use to contextualize alert thresholds (e.g., elevated volatility → lower threshold for price alerts; OMO constrained → higher conviction for liquidity-driven alerts). If any tool returns NULL or error: log `[SKIP] <tool_name> unavailable` and proceed with standard alert thresholds.
 
 **2. Legal + Crisis**
-`get_legal_risk_signals()` hit → mark CRITICAL
+
+<!-- FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK (2026-07-03): bare get_legal_risk_signals() had NO
+     lookback bound at the call site — combined with the tool's unbounded-from-this-caller's
+     perspective 30-day default and stage-signals.md's unconditional "legal_risk | any → CRITICAL"
+     routing, a single event (e.g. PNJ prosecution) re-fired CRITICAL every cycle (15min market /
+     4h off-hours) for up to 30 days. `days=1` bounds the QUICK-tier window now (live immediately,
+     no deploy needed — `days` already existed on the tool). `hours_back=6` is a forward-compat,
+     additive param shipped in the same edit — the CURRENT deployed tool safely ignores unknown
+     keys (ONLY `days` takes effect until the ROBUST-tier mcp-server rebuild ships); once deployed,
+     `hours_back` takes precedence and tightens the window to the codebase's established 360-min/6h
+     legal_risk dedup convention. Neither param silences a genuinely NEW legal_risk event — only
+     bounds how long a stale one keeps re-surfacing. -->
+`get_legal_risk_signals(days=1, hours_back=6)` hit → mark CRITICAL
 `get_crisis_early_warning()` threshold exceeded → mark CRITICAL

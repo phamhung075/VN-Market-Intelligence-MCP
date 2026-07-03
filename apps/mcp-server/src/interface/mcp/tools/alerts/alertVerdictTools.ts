@@ -1,9 +1,21 @@
 /**
  * Task 1863d — Alert Verdict MCP Tool
+ * FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK — added pending-duplicate dedup guard
  *
  * Provides the `write_alert_verdict` MCP tool.
  * alert-commander calls this after firing a MARKET alert to record a pending
  * verdict row for later accuracy resolution (1863b/c jobs).
+ *
+ * Dedup guard (FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK): if a PENDING verdict
+ * already exists for the same (ticker, alertSource) pair, a new row is NOT
+ * appended — the existing pending row is returned with `duplicate: true`.
+ * This stops the same still-unresolved event (e.g. a legal_risk CRITICAL
+ * that re-fires across consecutive alert-commander cycles) from blindly
+ * accumulating duplicate pending verdict rows. A genuinely NEW event (a
+ * different alertSource, or the same pair AFTER its prior verdict has
+ * resolved to confirmed/false_positive via verdictResolutionJob) is never
+ * suppressed — this preserves alert-policy.md's no-suppression intent for
+ * legal_risk / CRITICAL signals.
  *
  * DDD layer: interface — imports from infrastructure/fileStore (1863a).
  * Must NOT import from domain/.
@@ -16,6 +28,7 @@ import { z } from "zod";
 
 import {
   appendVerdict,
+  readVerdicts,
   type AlertVerdict,
 } from "../../../../infrastructure/fileStore/alertVerdictStore.js";
 
@@ -49,6 +62,14 @@ export type WriteAlertVerdictInput = z.infer<typeof WRITE_ALERT_VERDICT_SCHEMA>;
 export interface AlertVerdictStoreDeps {
   store?: {
     appendOne(v: AlertVerdict): Promise<void>;
+    /**
+     * Optional — enables the pending-duplicate dedup guard lookup (see
+     * module header). Omitted in legacy test fakes: dedup is skipped for
+     * that caller (falls straight through to appendOne), matching prior
+     * behaviour exactly. The production path (no injected store) always
+     * uses the real `readVerdicts()` and always dedups.
+     */
+    readAll?(): Promise<AlertVerdict[]>;
   };
 }
 
@@ -63,10 +84,32 @@ export interface AlertVerdictStoreDeps {
 export async function writeAlertVerdict(
   input: WriteAlertVerdictInput,
   deps?: AlertVerdictStoreDeps,
-): Promise<{ success: boolean; id: string; ticker: string; verdict: string }> {
+): Promise<{ success: boolean; id: string; ticker: string; verdict: string; duplicate?: boolean }> {
+  const ticker = input.ticker.toUpperCase();
+
+  // Dedup guard (FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK) — see module header.
+  const existing = deps?.store?.readAll
+    ? await deps.store.readAll()
+    : deps?.store
+      ? [] // legacy fake store with no readAll — dedup skipped, unchanged behaviour
+      : await readVerdicts();
+
+  const duplicate = existing.find(
+    (r) => r.ticker === ticker && r.alertSource === input.alertSource && r.verdict === "pending",
+  );
+  if (duplicate) {
+    return {
+      success: true,
+      id: duplicate.id,
+      ticker: duplicate.ticker,
+      verdict: duplicate.verdict,
+      duplicate: true,
+    };
+  }
+
   const row: AlertVerdict = {
     id: crypto.randomUUID(),
-    ticker: input.ticker.toUpperCase(),
+    ticker,
     firedAt: input.firedAt,
     alertSource: input.alertSource,
     direction: input.direction,
@@ -114,7 +157,10 @@ export function registerAlertVerdictTools(server: McpServer): void {
       "Generates a UUID, writes one AlertVerdict row with verdict='pending' to the " +
       "alert-verdicts store. " +
       "alertSource must be one of: urgent_news, verified_chain, chain_catalyst, " +
-      "price_anomaly, position_danger, watchlist_opportunity, legal_risk, crisis_velocity.",
+      "price_anomaly, position_danger, watchlist_opportunity, legal_risk, crisis_velocity. " +
+      "Dedup guard (FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK): if a PENDING verdict already exists " +
+      "for the same ticker+alertSource, no new row is appended — response has duplicate:true " +
+      "and echoes the existing id instead.",
     WRITE_ALERT_VERDICT_SHAPE,
     async (rawInput) => {
       try {

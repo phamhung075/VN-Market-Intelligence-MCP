@@ -29,5 +29,6 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 1. Sector classifications and peer groups: `docs/data/stock-classification.json`.
 2. Supply chain exposure maps: `tradeRelationships.ts` domain service — VN export/import dependency analysis.
-3. `get_legal_risk_signals` sources: news prosecution/tax items + broker_sanctions table.
+3. `get_legal_risk_signals` sources: `alerts` table + `agent_signals` table (signal_type='legal_risk', news-scout bus).
 4. No scheduler jobs — all sector tools are on-demand (agent-triggered).
+5. FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK (2026-07-03): `get_legal_risk_signals` gained an additive, opt-in `hours_back` param (`legalRiskTools.ts`) — overrides the shared `days` (default 30, unchanged) with hour-granularity for callers that need a tighter bound. alert-commander passes `hours_back=6` to avoid re-surfacing a stale legal_risk event across many cycles; other consumers (bctc-analyst, digest-predict, unified-agent, fb-market-poster) omit it and keep the 30-day default.

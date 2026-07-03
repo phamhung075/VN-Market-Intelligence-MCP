@@ -60,3 +60,4 @@ Full policy: `docs/policies/alert-policy.md`
 4. Dedup window: `mcp.config.json` → `alertQuality.dedupWindowMinutes`.
 5. Max alerts/day: `mcp.config.json` → `alertQuality.maxAlertsPerDay`.
 6. Severity escalation thresholds: `mcp.config.json` → `alerts.severityEscalation`.
+7. FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK (2026-07-03): `write_alert_verdict` (`interface/mcp/tools/alerts/alertVerdictTools.ts`) skips appending a new pending row when one already exists for the same `(ticker, alertSource)` pair — response echoes the existing row with `duplicate:true` instead. A different `alertSource`, or the same pair after prior resolution to `confirmed`/`false_positive`, is never suppressed.
