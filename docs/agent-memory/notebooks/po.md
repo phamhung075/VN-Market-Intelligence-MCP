@@ -1,6 +1,22 @@
 # PO Notebook
 
-_Last: 2026-07-03T21:49Z_
+_Last: 2026-07-03T21:37Z_
+
+## Tick 2026-07-03T21:37Z (router-dispatched) — TRIAGE dev-team fire-tick: BCTC corrupt-cluster + 2 informational signals
+
+**3 pendingSignals[] (all source=file, pre-archived — did NOT re-drain):**
+- **[1] data-quality-scope-update (bctc-analyst, ACTIONABLE):** rotation probe c076 (11 tickers, 0/11 usable except known-good GVR) newly CONFIRMED corrupt zero total_assets on **HSG + MWG** (signature = total_assets EXACTLY 0 / conf forced 0% / CORRUPT-SKIP by get_bctc_full). Combined corrupt+empty now ~13+/29 DA NOP tickers (~45%) unusable. DISTINCT from FIX-BCTC-BANK-SUMMARY-MAPPING (a46131cf/2cd9e105 — that = implausible NONZERO bank totals; this = ZERO, different failure mode). action_requested: does the zero signature share a COMMON root cause (same reparse batch/date)?
+- **[2] bctc_signal routine GVR (bctc-analyst, INFORMATIONAL):** Q1-2026 routine analysis output. ACK, no task. (GVR ESC-4 non-op-income deep-dive already dispatched this tick — routes to me separately on completion; did NOT mint a GVR task.)
+- **[3] cowork-fire heartbeat (cowork-team, INFORMATIONAL):** logged/dropped, no task.
+
+**DECISION → BATCH (1 SPIKE): ENRICH+PROMOTE existing SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO. NO dup minted.**
+- No-duplication guard: the existing backlog SPIKE row (created 2026-07-01, telegram#3368) already OWNS the zero-total-assets root cause across 6 non-bank tickers (VHM/REE/VIC/VNM/VRE/POW) — 4 of the 6 signal tickers already covered. Enriched it rather than mint a competing row.
+- Scope widened 6→8: added HSG, MWG. question now leads with the COMMON-ROOT-CAUSE / same-reparse-cohort hypothesis (c076 flag), keeps residual-classifier + existing-owner map (FIX-REE-BS-SECTION-REGEX / SPIKE-BCTC-COLUMN-SEPARATED-LAYOUT / W5-FU repass), demands CONSOLIDATED batch (no per-ticker dup FIX).
+- **PROMOTE BACKLOG→TODO** — recurring-bug-escalation (BCTC zero-assets class >2 cycles) + ~45% coverage loss + in_progress lane EMPTY (no contention) + it is architect-first SPIKE (single time-boxed 120m agent, low host cost, NOT a fan-out) → dispatch now. next_agent=dev-mcp-server, zone apps/mcp-server/.
+- **NOT a blind FIX:** kept type=SPIKE/mode=spike per directive — root-cause consolidation first, remediation batch second.
+- Telegram new/unresolved: reports 3487 (VCI 2025-Q4 composite=0.10) + 3488 (DHG 2025-Q4 composite=0.00) = SAME OCR-corruption class, perpetual-resurface per existing FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE backlog row → noted as corroboration, NO new task (VCI is DB-trong/empty not corrupt; both are 2025-Q4 not Q1-2026).
+
+**Writes:** `scripts/po-s141-bctc-nonbank-zero-assets-enrich-promote.jq` → orch-apply exit 0 (single row enriched, dup-count=1; last_triaged bumped; 106 pre-existing SHG coherence warns non-blocking, unrelated — TODO-in-backlog matches TASK17-FOREIGN-FLOW precedent). `.head` UNTOUCHED (router owns tick/head/SF-1/fire-election). No push (fleet-push timer owns). Provenance "po (router-dispatched)" — no session UUID.
 
 ## Tick 2026-07-03T21:49Z (router-dispatched) — SPRINT DECISION on SPIKE-HSX-STRATEGY0-0URLS (PREMISE FALSIFIED)
 
