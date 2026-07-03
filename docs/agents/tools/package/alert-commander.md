@@ -35,7 +35,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 ### Alert Management
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `get_alerts` | Fetch price/volume/sector/risk alerts | `type?: "price" \| "volume" \| "sector" \| "risk"` |
+| `get_alerts` | Fetch alerts | `type?: "system" \| "price" \| "all"` (verified live 2026-07-03 — enum previously documented as `price\|volume\|sector\|risk` does not match the deployed Zod schema) |
 | `send_alert_digest` | Batch send alerts via Telegram | `alerts: Alert[], channel: "market" \| "work"` |
 | `mark_alert_read` | Mark alert as reviewed | `alert_id: string` |
 | `mark_alert_outcome` | Mark alert outcome after firing/suppression | `alert_id: string, outcome: "fired" \| "suppressed"` |

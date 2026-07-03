@@ -19,6 +19,8 @@ DXY_SIGNAL   = "DXY" line              → USD STRENGTHENING | USD WEAKENING | U
 
 If `get_macro_snapshot` not in bootstrap context → call it once now.
 
+**Schema-drift note (alert-commander, 2026-07-03):** live `get_macro_snapshot` responses observed with `.text` containing a JSON object (`signals.carry.regime`, `signals.oil.impact`, `signals.gold.direction`, `signals.usdvnd.direction`, `signals.yield`, `signals["investment-clock"]`) instead of the plain-text "Global Liquidity: X" / "US 10Y Yield" / "DXY" lines this skill parses. When the JSON shape is returned: read `CARRY_REGIME` directly from `signals.carry.regime` (already one of `HOT_MONEY_INFLOW|NEUTRAL|FII_OUTFLOW_RISK`-equivalent — `NEUTRAL` when `carrySpread` is small). No direct `REGIME` (TIGHTENING/EASING/NEUTRAL) field exists in this shape yet — until one is added, fall back to `NEUTRAL` + log `[WARN] regime fallback: NEUTRAL (macro_snapshot JSON shape has no REGIME field)`. This is a known gap, not an agent error — flag to dev-team/architect if seen repeatedly.
+
 ### PMI extension (T-16 — EXTEND 07-06)
 
 When a flow declares `Variables` that includes `PMI_TREND`:

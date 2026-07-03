@@ -4,6 +4,40 @@
 
 ---
 
+## c105 · 2026-07-03T20:22Z
+
+**Status:** NEEDS_ATTENTION | Direction: DEGRADING (EOD dish shows a partial regression on the c103 auto-cure discipline; morning dish clean; evening dish status unconfirmed)
+**Session mode:** MCP failure mode A — no `mcp__gateway__call_tool` in session (Read/Edit/Write/Glob/Grep only), 9th+ consecutive (c97–c105). Cannot read Telegram, cannot call get_agent_signals/get_signal_effectiveness/get_alert_accuracy, cannot send_telegram. Audit from unified-agent.md 2026-07-03 same-day entries (intraday 02:26Z, morning 05:29Z, eod 08:45Z — eod is ~11.5h old, not same-cycle-fresh like prior audits, because the expected Evening dish is not yet reflected in the notebook at audit time; see Persisting Blocker #1 below).
+**Dispatcher confirmation:** `docs/signals/cowork-team-2026-07-03T20-22-34Z.json` — `tnb-audit` fired at 20:22:34Z, `note: "last fired 07-02"`, matches c104. No missed-slot flag for tnb-audit itself this cycle.
+**Previous handoff ACK:** c103+c104 both ACK'd by PO 2026-07-02T20:33:48Z (single-pass ACK, chain-of-custody note in that entry). No unACK'd blocker carried in.
+
+**Chef-evening (2026-07-03) status — UNCONFIRMED, flagged WATCH not a hard miss:** `unified-agent.md` has no 2026-07-03 evening entry as of this audit tick (20:22Z), ~37–45min after the nominal 19:45 UTC cron. `docs/data/cowork-schedule.json` shows `chef-evening.last_fired = 2026-07-02T19:55:32Z` (stale by one day) while every other guaranteed slot checked (chef-morning, chef-eod, tnb-audit, news-scout/market-watcher-offhours) shows a same-day timestamp. **However**, this exact indicator has a documented false-alarm precedent: `docs/signals/processed/cowork-team-2026-06-24T20:36Z-chef-evening-resolved.json` — on 06-24 the identical symptom (stale `chef-evening.last_fired`) was investigated and found to be a **false alarm**; the dish HAD published (verified via the `published:chef-evening:<date>` marker + WORK "Message sent" transcript), and the root cause was noted explicitly: *"cowork-schedule.json last_fired lags for this slot; TRUTH lives in the published-marker, which cowork-schedule does NOT mirror."* Without MCP access I cannot check the published-marker or WORK channel directly this cycle, so I am **not** confirming a miss — logging as **F-CHEF-EVENING-0703-UNCONFIRMED** (WATCH) for PO/next-cycle verification once MCP access is available, per the anti-false-positive precedent.
+
+**Layer-walk audit — 2026-07-03 dishes available (intraday, morning, EOD; evening unconfirmed per above):**
+
+| Dish | L1 | L2 | L3 | L4 | L5 | L6 | Biz ctx | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| Intraday 02:26 | PASS — gold +2.56σ state-cross, USD/VND 26103>25k cited | GAP, no gap-token (carry-proxy only, no `[gap:]` tag) — F2 | PARTIAL — carry/USD-VND cited; no VIRA/CPI, no token | n/a — macro-only cluster, no ticker thesis issued | PASS — Minh Di (36) 64% + point table | GAP — no explicit `[gap:...]` tokens in this entry (unlike morning/eod) | ABSENT | QUALITY:full self-reported but L2/L6 gap-token discipline absent — same pre-auto-cure pattern the c103 fix targeted; auto-cure fix appears scoped to guaranteed dishes only, not intraday convergence-scans |
+| Morning 05:29 | PASS — gold +2.56σ risk-off, banking pressure, RE divergence | GAP `[gap:L2_US_macro_PMI_EFFR_absent]` — correct format | PARTIAL — carry cited; `[gap:FX_reserves_unavailable]` — VIRA still absent (F4) but explicitly tokened | NOT FULLY VERIFIABLE from notebook compression — 4 ticker Kinh Dịch verdicts shown (VCB/BID/VHM/MWG) but no explicit M2/COC/EPS/POL breakdown visible (WORK detail unreachable) | PASS — Quẻ 15 Khiêm + 4 per-ticker hexagrams w/ conviction % | PASS — 4 explicit `[gap:...]` tokens, correct format | ABSENT | DEGRADED (self-reported, clean gap-token discipline — auto-cure holding here) |
+| EOD 08:45 | PASS — full causal chain (gold+1.47%→FII safety-seeking→VND26103>threshold→banking net-sell despite 7.05% yield; HVN+6.53% infra) | **GAP but no bracket token** — QUALITY line says "L2 US macro via carry proxy insufficient" yet "Layers walked" line claims "1-4 (full)" — **internal inconsistency + reverts to pre-auto-cure loose prose** (see new finding below) | PARTIAL — carry/yield/USD-VND cited; VIRA/CPI absent, no gap token this cycle | Claimed "full" in Layers-walked line but tickers (VCB/BID/CTG/EIB/MBB/VPB/ACB/HVN) shown without visible M2/COC/EPS/POL breakdown — NOT VERIFIABLE from notebook alone | **INCOMPLETE — self-reported "pending per-ticker get_portfolio_conviction calls"**, "Layers walked" line literally says "5 (pending per-ticker hexagram)" — regression from c103→c104's improving per-ticker granularity trend | Claimed "enumerated" but no bracket-wrapped tokens present (same format regression as L2) | ABSENT | DEGRADED (self-reported) but internal-consistency + gap-token-format + L5-completeness all regressed vs. c104-verified pattern |
+
+**Business context:** ABSENT across all 3 available 2026-07-03 dishes — continuing the F9 streak (≥28th at c104/07-02; exact count not independently re-verified this cycle, carried forward as "continuing, ≥30 in the ballpark").
+
+**New findings (c105):**
+- **F-EOD-GAPTOKEN-REGRESSION-0703** (MED, NEW, 1st occurrence): EOD 07-03's "Layers walked" summary line reverted to loose prose ("L2 US macro via carry proxy insufficient") instead of the bracket-wrapped `[gap:...]` token format that c103's auto-cure (chef.md Step 7.5 sub-check (a)) required and that held clean across all 3 guaranteed 07-02 dishes (c104-verified) and today's own morning dish. QUALITY self-assessment is still honest ("degraded", not overclaimed "full"), so the auto-cure's core intent (no false "full" claims) still holds — only the token-format discipline slipped for this one dish. Below the 3+ recurrence bar — watch for c106.
+- **F-EOD-L5-INCOMPLETE-0703** (MED, NEW): EOD 07-03 explicitly self-reports Layer 5 (Kinh Dịch per-ticker) as "pending" at notebook-write time — a regression from the per-ticker-hexagram-at-EOD pattern established and verified good at c104. Recommend next cycle confirm whether this was completed later same-day (WORK detail) or is a genuine capability gap for the EOD slot specifically.
+- **F-CHEF-EVENING-0703-UNCONFIRMED** (WATCH, not scored as a finding pending verification): see above — do not treat as a confirmed miss; explicit anti-false-positive precedent cited.
+
+**Carry-forward:** F-MCP-SUBAGENT-SYSTEMIC (HIGH, 9th+ c97–c105) | F2 L2 macro_health structural (MED) | F4 VIRA scraper (MED) | F9 biz-ctx absent (MED, streak continuing) | F-ACV-DB-EMPTY (HIGH — still "DB trống" per bctc-analyst c075, 2026-07-03T18:30Z, ~17d) | F-12-TICKERS-OVERDUE (MED — unchanged 12-ticker list, Q2 deadline 2026-07-31, 28d) | F-GAP-TOKEN-FORMAT (c104, LOW — recurrence unverifiable this cycle, evening dish unavailable to check the specific `gold_threshold_drift` token again).
+
+**Positive:** Morning dish clean gap-token discipline (4/4 correctly bracketed) ✓ | QUALITY self-assessment honesty sustained on all 3 available dishes (none overclaim "full" without caveat, EOD's internal inconsistency is a format slip not a false-green) ✓ | c103/c104 AUTO-CURE core intent (no false "full") still holding ✓ | bctc-analyst: HPG stays resolved, GVR/MBB forensic ESC-2/ESC-4 gates actively firing (c072–c075) ✓ | PO ACK chain clean (c103+c104 both ACK'd, no backlog) ✓.
+
+**Auto-cures applied this cycle:** 0 — both new EOD findings are 1st occurrences (below 3+ bar); no flow-file edit warranted yet.
+**Phase 3 signal quality:** BLOCKED — no MCP tool this session.
+**WORK/BUG/commit/dashboard:** SKIPPED — no MCP/telegram tool in session (same as c97–c104); notebook + handoff + signal-file (docs/signals/) written via Write/Edit tools only. Dashboard write to orch-state.json also skipped this cycle — no safe atomic-write tool (jq/bash) available in this session's toolset; raw overwrite is forbidden per signal-dashboard/orch-apply contract.
+
+---
+
 ## c104 · 2026-07-02T20:21Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE (auto-cure verified effective; offset by new evidence-loss finding)
@@ -131,10 +165,10 @@ Dispatch context: VN-Index 1860.01 +0.27%, banking -1.15% vs GDP +11.9%, USD/VND
 
 ---
 
-**Agent methodology scores (c104 updated):**
+**Agent methodology scores (c105 updated):**
 - news-scout: 7+/9 GOOD (clean cycles)
 - market-watcher: GOOD (limited scope)
-- bctc-analyst: 8/9 GOOD (FPT/VCB/HVN forensic gates; HPG DB-empty resolved 07-01)
-- unified-agent: ~4.5/8 NEEDS_ATTENTION (D+E structural F2+F4 persist; Step 7.5 auto-cure verified effective c104)
+- bctc-analyst: 8/9 GOOD (GVR/MBB forensic ESC-2/ESC-4 gates active c072-c075; HPG stays resolved; ACV still empty)
+- unified-agent: ~3.5/8 NEEDS_ATTENTION on EOD 07-03 (D+E structural F2+F4 persist, no gap-token this cycle; morning 07-03 dish scores better with clean token discipline — Step 7.5 auto-cure core intent holds but token-format discipline regressed on EOD)
 
-**Persistent structural gaps:** F-MORNING-NB-MISSING (200L cap + 5 slots, monitor) | F2 (macro_health tool) | F4 (VIRA scraper) | F9 (BCTC business-context ≥28th cycle) | F-MCP-SUBAGENT-SYSTEMIC (8th+ blocked cycle) | F-ACV-DB-EMPTY (15+d) | F-TNB-MISSED-CYCLE-EVIDENCE-LOSS (NEW c104) | F-PO-ACK-MISSING-c103 (NEW c104)
+**Persistent structural gaps:** F-MORNING-NB-MISSING (200L cap + 5 slots, monitor — improved/present 07-02 and 07-03) | F2 (macro_health tool) | F4 (VIRA scraper) | F9 (BCTC business-context, streak continuing) | F-MCP-SUBAGENT-SYSTEMIC (9th+ blocked cycle c97-c105) | F-ACV-DB-EMPTY (~17d, still trống at bctc-analyst c075) | F-12-TICKERS-OVERDUE (28d to Q2 deadline) | F-EOD-GAPTOKEN-REGRESSION-0703 (NEW c105) | F-EOD-L5-INCOMPLETE-0703 (NEW c105) | F-CHEF-EVENING-0703-UNCONFIRMED (NEW c105, WATCH only — see anti-false-positive note above)

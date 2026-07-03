@@ -246,10 +246,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL done_verified (ops recon COMPLETE + router-corrected: tickers ARE HOSE; primary = HSX Strategy-0 0-URLs + SSC-503 fallback hang; NOT off-exchange). PO RETURN NOTHING -- root causes tracked by existing backlog. dev WIP=0 -- idle. CRITICAL for next dev-team planning: bctc discovery pipeline DEAD 17 days (since 06-16) -> elevate discovery-fix items to HIGH: B-05-FU-SSC-503-RETRY + FIX-VPS-SSC-INSIDER-502 (SSC-503 fail-fast) + investigate HSX Strategy-0 0-URLs for HOSE tickers (candidate focused SPIKE). Other backlog PLAN-ONLY: FIX-BCTC-FULL-BATCH-CONTAMINATION (architect-first), FEAT-SEVERITY-OVERRIDE-SURFACING, FIX-AGENT-NOTEBOOK-UUID-PROVENANCE, FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT, FIX-MCP-MEMORY-CODE-LEAK. DEPLOY-GATED (pending mcp-server rebuild): FIX-LEGAL-RISK ROBUST tier + pdfpull-guard + COLUMN-ORDER finalize_bctc_refine CTG.",
-    "updated_at": "2026-07-03T20:03:17Z",
+    "next_action": "B-05-FU-SSC-503-RETRY done_verified (dev+qa PASS, router RAW-verified). dev WIP=0 -- idle. CRITICAL for next dev-team planning: bctc discovery pipeline DEAD 17 days (since 2026-06-16); B-05 unfreezes queue LIFECYCLE only, does NOT restore discovery SUCCESS. Elevate to HIGH: SPIKE HSX Strategy-0 discoverHosePdfUrls() 0-URLs for legitimately-HOSE tickers (PRIMARY root, timebox 120m, zone apps/mcp-server/) + FIX-VPS-SSC-INSIDER-502. New backlog candidate (QA non-blocking): FIX-VPS-SSC-STEP2-TIMEOUT-BOUND (line 1068 timeout=60 on step2 download, hygiene). Other backlog PLAN-ONLY: FIX-BCTC-FULL-BATCH-CONTAMINATION (architect-first), FEAT-SEVERITY-OVERRIDE-SURFACING, FIX-AGENT-NOTEBOOK-UUID-PROVENANCE, FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT, FIX-MCP-MEMORY-CODE-LEAK. Ops follow-up: deploy B-05 fix to Vinahost VPS. Router: release SF-1 + dev-team fire-election at jump:end.",
+    "updated_at": "2026-07-03T20:56:00Z",
     "updated_by": "router",
-    "note": "19:50Z (fire-tick 19:07Z): RECON-BCTC-ENRICH-0ROWS in_progress->done_verified (ops recon done, router-corrected HOSE-listing hypothesis, PO NOTHING, no new mint). dev WIP=0 -- idle. dev-team tick closeout -> release SF-1 + fire-election."
+    "note": "20:56Z (fire-tick 20:07Z): B-05-FU-SSC-503-RETRY in_progress->done_verified (dev-vps-crawls + qa PASS, router RAW-verified). dev WIP=0 -- idle. dev-team tick closeout -> release SF-1 + fire-election."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7208,22 +7208,6 @@
         "status_note": "Self-initiated from telegram#3368 (bctc-analyst WARNING, 2026-07-01T21:21Z): 6 non-bank tickers all total_assets=0 for Q1-2026, same signature as CTG (c069), DISTINCT from the bank-only FIX-BCTC-BANK-SUMMARY-MAPPING sprint. No task owns this holistically today; coverage is piecemeal (REE-regex, VNM-column-spike). Time-box 120m diagnosis -> consolidated remediation plan; reconcile against existing partial tasks before any per-ticker FIX. Report_ids: VHM/REE/VIC/VNM/VRE/POW-Q1-2026."
       },
       {
-        "id": "B-05-FU-SSC-503-RETRY",
-        "status": "BACKLOG",
-        "title": "B-05-FU — ship SSC-503 retry/backoff in _ssc_curl_search() (c016 residual risk, never shipped)",
-        "owner": "dev-team",
-        "next_agent": "dev-vps-crawls",
-        "route_to": "dev-vps-crawls",
-        "type": "FIX",
-        "zone": "vps-crawls/",
-        "priority": "medium",
-        "created_at": "2026-07-01T23:22:35Z",
-        "created_by": "dev-team-dispatcher",
-        "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
-        "parent_task": "B-05-FIX",
-        "status_note": "2026-06-16 recon flagged unfixed residual: discover script has NO retry on SSC 503 (returns None -> SKIP). Implement 1 retry + 60s backoff in _ssc_curl_search() step1 on VPS discover script. Signal file: docs/signals/processed/dev-vps-crawls-20260701T231736Z.json. NOTE: SSC portal currently in domain-wide outage (B-05-FIX verdict) - retry/backoff hardens recovery-window flakiness, it does NOT fix the outage. Not urgent while portal is down; dispatch when WIP allows."
-      },
-      {
         "id": "FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE",
         "title": "FIX — add routing rows for signal types data-coverage-gap (→ops) + deep_dive_result (→po) in drain-signals.md §0a-3 + po/triage-signals.md (both currently hit the generic catch-all)",
         "owner": "po",
@@ -9963,6 +9947,39 @@
         "recon_verdict": "COMPLETE_WITH_ROUTER_CORRECTION",
         "ops_agent": "ops",
         "signoff_note": "[router 2026-07-03T19:50Z] ops recon COMPLETE (PLAN-only, 0 code change) + PO triage RETURN NOTHING + router RAW-verified. VERIFIED EVIDENCE: VPS discovery returns 0 URLs all tickers; 328 items deferred_infra since 2026-06-16; VPS proxy last push 396.6h stale; VPS fallback script hangs on SSC API HTTP 503 + 60s retry > mcp 5s timeout -> silent [] -> queue frozen; secondary ~50 ENRICH 0-rows (B02-TCTD parser/blank-PDF). ROUTER CORRECTION (RAW-verified via system-map exchange field): ops Path-A 'FPT/GVR/MBB not HOSE-listed' is FALSE -- FPT/BID/VHM/VIC/SSI=HOSE and the ~18 reported tickers are all HOSE/VN30 blue chips routed to HSX Strategy-0 BECAUSE they are classified HOSE; real primary cause = discoverHosePdfUrls() returns 0 URLs for legitimately-HOSE tickers (HSX endpoint change ~06-16 or scraper defect, NOT off-exchange) + SSC-503 fallback hang. BUG telegram 3234 + ops notebook carried the falsified 'not-listed' theory -- SUPERSEDED by this closeout. PO DEDUP: root causes map to existing backlog (discovery: B-05-FU-SSC-503-RETRY, FIX-VPS-SSC-INSIDER-502, FIX-BCTC-QUEUE-MAXAGE-GATE, BCTC-ENRICHER-OLD-QUARTERS, FACTORY-INFRA-split-ssc-fetchers; extraction: FIX-BCTC-BANK-SCALAR-MAPPING, FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP, FIX-BCTC-BANK-SUMMARY-MAPPING DONE) -- NO new task minted. DIRECTIVE for fix executor: tickers ARE HOSE, do NOT chase 'not-listed'; (a) SSC-503 fail-fast <5s, (b) investigate HSX Strategy-0 0-URLs for HOSE tickers (may need focused SPIKE), (c) CRITICAL pipeline dead 17 days -> elevate discovery items to HIGH next planning. ops notebook 1ee40bab3 (session-UUID scrubbed from 82eb874eb during router leak-hygiene)."
+      },
+      {
+        "id": "B-05-FU-SSC-503-RETRY",
+        "status": "DONE_VERIFIED",
+        "title": "B-05-FU — ship SSC-503 retry/backoff in _ssc_curl_search() (c016 residual risk, never shipped)",
+        "owner": "dev-vps-crawls",
+        "next_agent": "dev-vps-crawls",
+        "route_to": "dev-vps-crawls",
+        "type": "FIX",
+        "zone": "vps-crawls/",
+        "priority": "medium",
+        "created_at": "2026-07-01T23:22:35Z",
+        "created_by": "dev-team-dispatcher",
+        "origin_signal": "sau-2026-07-01T22%3A33%3A43Z",
+        "parent_task": "B-05-FIX",
+        "status_note": "RE-SCOPED per B-05 RECON RAW-verified root cause: the SSC-503 fallback blocking retry (~60s) EXCEEDS mcp-server ~5s discovery timeout -> discoverHosePdfUrls silently returns [] -> ~328 queue items frozen in deferred_infra. FIX: in _ssc_curl_search() step1 of the VPS discover script, bound the SSC curl with a hard wall-clock cap STRICTLY UNDER the mcp discovery timeout (e.g. curl --max-time 4; confirm the exact caller value from apps/mcp-server first) and REMOVE the 60s retry/backoff loop; on 503/timeout return None FAST so discovery returns [] within the caller budget (honest fast-fail, NOT silent hang). This UNFREEZES the queue lifecycle (items get a proper 'no URLs' terminal/retry instead of frozen-deferred_infra). It does NOT restore discovery SUCCESS for HOSE tickers — that is the separate PRIMARY root (HSX Strategy-0 returns 0 URLs), which needs a focused SPIKE (see NEXT). Lesson: bounded fetch < caller timeout (feedback_graceful_degrade_needs_bounded_fetch).",
+        "size": "S",
+        "promoted_at": "2026-07-03T20:20:50Z",
+        "promoted_by": "po (router-dispatched)",
+        "scope_corrected": true,
+        "prior_spec": "INVERTED — original status_note asked to ADD 1 retry + 60s backoff in _ssc_curl_search(); that ~60s blocking loop is the FREEZE CAUSE (exceeds mcp ~5s discovery timeout), not a hardening.",
+        "files_hint": "VPS discover script _ssc_curl_search() (vps-crawls: discover-bctc-urls-browser.py / the ssc curl-search fetcher). Read the mcp-server discovery-timeout value from the caller path in apps/mcp-server to set --max-time strictly under it.",
+        "acceptance": "_ssc_curl_search() returns within <5s on a simulated 503/timeout; discoverHosePdfUrls returns [] fast (no silent hang past the caller timeout); an affected queue item transitions OUT of deferred_infra to a proper no-URLs terminal/retry state.",
+        "dev_agent": "dev-vps-crawls",
+        "dispatched_by": "router",
+        "dispatched_at": "2026-07-03T20:24:34Z",
+        "dispatch_note": "[router 2026-07-03T20:22Z / fire-tick 20:07Z] dev-team Step 3 execution. PO scope-corrected FIX (was inverted 60s-retry -> now fail-fast <5s bound under mcp discovery timeout). Spawn dev-vps-crawls run_in_background. Target vps-scripts/discover-bctc-urls-browser.py _ssc_curl_search(): read mcp-server caller discovery-timeout, set curl --max-time strictly under it, remove 60s retry/backoff, return None fast on 503/timeout. Accept: _ssc_curl_search() returns <5s on simulated 503; discovery returns [] fast; an affected queue item leaves deferred_infra. On dev complete: router RAW-verify + route to qa gate. Honesty: unfreezes queue lifecycle only -- does NOT restore HOSE discovery (PRIMARY = HSX Strategy-0 0-URLs, SPIKE prepped next).",
+        "done_verified": true,
+        "verified_by": "router",
+        "verified_at": "2026-07-03T20:56:00Z",
+        "qa_agent": "qa",
+        "qa_verdict": "PASS",
+        "signoff_note": "[router 2026-07-03T20:56Z / fire-tick 20:07Z] dev-vps-crawls COMPLETE (a817b5139 code+test, 33353a814 report/journal) + qa gate PASS (dfe2e8304) + router RAW-verified. FIX: vps-scripts/discover-bctc-urls-browser.py step1 SSC fetch now bounded _SSC_STEP1_TIMEOUT_SECONDS=4 (strictly < caller 5000ms discovery timeout), 60s retry loop + import time + _SSC_STEP1_RETRY_WAIT fully removed -> 503/timeout returns None FAST, discovery returns [] within budget (honest fast-fail, no silent hang). EVIDENCE (independent re-run): fastfail 7/7 + title-classifier 35/35 PASS, py_compile clean, mock-guard PASS, 0 UUID/secret on all 3 commits. HONEST SCOPE: unfreezes ~328-item queue LIFECYCLE only -- does NOT restore SSC/HOSE discovery SUCCESS (external SSC outage + PRIMARY = HSX Strategy-0 0-URLs for HOSE tickers, SPIKE prepped). Pipeline DEAD 17 days since 2026-06-16. DEPLOY to Vinahost VPS = ops follow-up (repo file edited here, code-only DoD). QA non-blocking: line 1068 step2 timeout=60 (different path, caller-aborted at 5s) -> FIX-VPS-SSC-STEP2-TIMEOUT-BOUND backlog candidate."
       }
     ],
     "head": {
