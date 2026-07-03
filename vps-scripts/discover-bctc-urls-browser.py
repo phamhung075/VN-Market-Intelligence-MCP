@@ -69,7 +69,6 @@ import urllib.parse
 import urllib.error
 import ssl
 import http.cookiejar
-import time
 from typing import Optional, Dict, Any, List
 
 # ---------------------------------------------------------------------------
@@ -886,46 +885,45 @@ def discover_from_ssc_curl(
     # ------------------------------------------------------------------
     # Step 1 — GET loopback → JSESSIONID + _afrLoop + Adf-Window-Id
     #
-    # FIX-BCTC-SSC-503-RETRY: SSC has a ~12:00Z UTC scheduled maintenance
-    # window (identified by ops-vps-fetch recon 2026-06-16).  A single 503
-    # during this window previously caused the ENTIRE 6h cycle to skip ALL
-    # tickers.  Fix: retry once with a 60s backoff on any transient error
-    # (5xx, connection-reset, timeout — see _is_transient_error).
+    # B-05-FU-SSC-503-RETRY (2026-07-03): INVERTS FIX-BCTC-SSC-503-RETRY
+    # (2026-06-16). That fix added a 60s retry/backoff on transient errors
+    # (5xx, connection-reset, timeout) — but the mcp-server caller
+    # (bctcQueueEnricherJob.ts DISCOVERY_TIMEOUT_MS, and bctcDiscovery.ts's
+    # matching default) budgets only 5s for this ENTIRE VPS HTTP round-trip.
+    # A single retry could block this call for 20s (first-attempt urllib
+    # default timeout) + 60s (sleep) + 20s (second attempt) — up to ~100s,
+    # 20x the caller's budget. The caller aborts at 5s regardless (this
+    # subprocess keeps running orphaned), so the retry bought nothing but a
+    # silent [] result upstream — which is precisely how ~328 queue rows
+    # piled up in 'deferred_infra' over a 17-day freeze (RAW-verified, B-05
+    # recon). The original backlog spec that added the retry was inverted;
+    # this fix reverts it.
     #
-    # Terminal errors (4xx, unknown) bypass the retry and return None
-    # immediately — same behaviour as before.  A clean 200 is not an error,
-    # so it never enters this retry path; the "0-results / non-filing" branch
-    # is downstream in _ssc_parse_rows and is unchanged.
-    #
-    # Constraints: 1 retry × 60s backoff only (bounded; does NOT itself blow
-    # the 6h cycle budget). Generic: applies to every ticker and every
-    # exchange — no per-ticker/per-exchange special casing.
+    # Fix: honest fast-fail. ONE attempt only, hard wall-clock cap strictly
+    # under the 5s caller budget (see DISCOVERY_TIMEOUT_MS in
+    # apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts
+    # and the default `timeout` in
+    # apps/mcp-server/src/domain/services/bctcDiscovery.ts). On ANY error —
+    # transient (5xx, connection-reset, timeout) or terminal (4xx, unknown)
+    # — return None immediately. No retry, no sleep. This does NOT restore
+    # SSC discovery success; it only unfreezes the queue lifecycle so a row
+    # fails fast within budget and can be re-attempted on the next cron tick
+    # instead of silently hanging past it. Generic: applies to every ticker
+    # and every exchange — no per-ticker/per-exchange special casing.
     # ------------------------------------------------------------------
-    _SSC_STEP1_RETRY_WAIT = 60  # seconds; 1 retry only
+    _SSC_STEP1_TIMEOUT_SECONDS = 4  # strictly < mcp-server's 5s discovery budget
     body1_bytes: bytes = b""
-    for _attempt in range(2):  # attempt 0 = first try, attempt 1 = single retry
-        try:
-            body1_bytes = _ssc_get(opener, SSC_SEARCH_URL)
-            break  # success — exit retry loop
-        except Exception as exc:
-            if _attempt == 0 and _is_transient_error(exc):
-                print(
-                    f"  [SSC-CURL] step1 GET transient error (attempt {_attempt}): {exc} "
-                    f"— retrying in {_SSC_STEP1_RETRY_WAIT}s",
-                    file=sys.stderr,
-                )
-                time.sleep(_SSC_STEP1_RETRY_WAIT)
-                # Rebuild opener so cookies from the failed attempt don't poison retry
-                opener = _ssc_make_opener()
-                continue
-            # Terminal error (4xx, unknown) OR second attempt failed → fail loud
-            print(
-                f"  [SSC-CURL] step1 GET error (attempt {_attempt}, terminal or retry exhausted): {exc}",
-                file=sys.stderr,
-            )
-            return None
+    try:
+        body1_bytes = _ssc_get(opener, SSC_SEARCH_URL, timeout=_SSC_STEP1_TIMEOUT_SECONDS)
+    except Exception as exc:
+        kind = "transient" if _is_transient_error(exc) else "terminal"
+        print(
+            f"  [SSC-CURL] step1 GET error ({kind}, fast-fail, no retry): {exc}",
+            file=sys.stderr,
+        )
+        return None
     if not body1_bytes:
-        print("  [SSC-CURL] step1: empty response after retry", file=sys.stderr)
+        print("  [SSC-CURL] step1: empty response", file=sys.stderr)
         return None
     body1 = body1_bytes.decode("utf-8", errors="replace")
 
