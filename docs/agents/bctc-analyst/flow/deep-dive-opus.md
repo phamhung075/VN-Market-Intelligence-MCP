@@ -68,13 +68,21 @@ Emit to session state key `deep_dive_result`; caller appends to bctc_signal outp
 
 ## ESC-4 — Unusual Related-Party or One-Off Item
 
-**Context:** `item_type` (`related_party|one_off`), `item_amount`, `item_pct`.
+**Context:** `item_type` (`related_party|one_off`), `item_amount`, `item_pct` (`one_off` type: this
+is `non_operating_share`, pre-tax basis — formula + SOE-conglomerate exception →
+[`flow/esc-4-nonop-heuristic.md`](./esc-4-nonop-heuristic.md)).
 
 1. Re-read note disclosures via `get_bctc_full(code)`.
 2. Classify: recurring vs one-off; arms-length vs related-party risk.
 3. Compute adjusted earnings = net_profit minus one-off impact.
 4. `trigger_value = item_pct`, `threshold = 0.10 (related_party) | 0.15 (one_off)`.
-5. Action: related-party unresolved → `flag_for_human_review`; one-off stripped, core healthy → `hold`.
+5. **SOE-conglomerate check (`one_off` type only):** if `ticker` in `{GVR, PHR, DPR, TRC, HRC}` and
+   granular non-operating line items are still unavailable (footnote/segment passes not yet
+   returned) → `recommended_action = "hold"`, cite `structural_context_note` in the verdict,
+   `confidence <= 0.5` (data gap, not a confirmed finding). Do NOT recommend
+   `flag_for_human_review` for this class on the aggregate ratio alone.
+6. Action (non-SOE-class, or granular data available): related-party unresolved →
+   `flag_for_human_review`; one-off stripped, core healthy → `hold`.
 
 ## ESC-5 — Refine Confidence Below Bar
 

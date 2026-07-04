@@ -58,8 +58,10 @@ Each ESC check is independent. Any single TRUE fires Opus deep-dive. Gate does N
   Context: `{ ocf_total, net_profit_total, divergence_ratio, quarters_returned }`.
 
 ### ESC-4: Unusual Related-Party or One-Off Item
-- Check: does ANY pass output contain `related_party_pct > 0.10` (of revenue) OR `one_off_pct > 0.15` (of net profit)?
-- If TRUE → escalate. Context: `{ item_type, item_amount, item_pct }`.
+- Check: does ANY pass output contain `related_party_pct > 0.10` (of revenue) OR `non_operating_share > 0.15` (pre-tax basis)?
+  **Formula + SOE-conglomerate downgrade → [`flow/esc-4-nonop-heuristic.md`](./esc-4-nonop-heuristic.md).** Execute verbatim before evaluating:
+  `non_operating_share = (PretaxProfit − OperatingProfit) / PretaxProfit` (AC-1 — replaces the retired mixed-basis `one_off_pct / net_profit` calc; both terms pre-tax, never NPAT). If `ticker` is in the SOE-conglomerate class (AC-2: `GVR, PHR, DPR, TRC, HRC`) and only the `non_operating_share` arm fired (not `related_party_pct`) → downgrade `severity: HIGH → INFO` and attach `structural_context_note`.
+- If TRUE → escalate at the severity resolved above. Context: `{ item_type, item_amount, item_pct: non_operating_share, severity: "HIGH" | "INFO" (per AC-2 downgrade), structural_context_note? }`.
 
 ### ESC-5: Refine Confidence Below Bar (Option B — MCP tool call)
 - Call: `get_bctc_refined(report_id)` (tool #141, live per AR-MCP commit 76a3b8d2).
@@ -100,12 +102,14 @@ IF any(esc_flags) == TRUE:
     # instead (docs/protocols/agent-chaining-protocol.md § Cross-Team Signal Directory) — the SAME
     # Write-tool mechanism the analyst already uses for routine bctc_signal_*.json files.
     # SAFE-JSON — structured object, no shell interpolation.
+    # severity defaults HIGH; ESC-4 AC-2 SOE-conglomerate downgrade (flow/esc-4-nonop-heuristic.md)
+    # sets context.severity = "INFO" when it applies — honor that override here, never hardcode HIGH.
     signal_row = {
       "id": "bca-{ts_compact}", "ts": "<ISO-8601 UTC>",
       "from": "bctc-analyst", "to": "dev-team",
       "type": "esc-deep-dive-request",
       "summary": "ESC deep-dive: " + ticker + " " + quarter + " " + trigger_id,
-      "severity": "HIGH", "status": "NEW", "payload_ref": null,
+      "severity": context.severity OR "HIGH", "status": "NEW", "payload_ref": null,
       "payload": { trigger_id, ticker, quarter, report_id, guard_key, context, all_esc_fired }
     }
     Write(path="docs/signals/bctc-analyst-{ts_compact}.json", content=signal_row)   # Write tool only — no Bash

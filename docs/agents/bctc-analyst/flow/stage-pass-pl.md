@@ -30,8 +30,10 @@ anchor by label+position or escalate to vision per skill protocol before using t
 **T1 — Revenue-Recognition Timing:** Revenue (code 01/10/11) QoQ jump > 40% with no corresponding gross-profit improvement
 → finding: trick_type="revenue-recognition-timing", evidence: row_index + code
 
-**T2 — One-Off Gain Dressing:** Financial income (code 22/23) or other income (code 31) > 20% of net profit
-→ finding: trick_type="one-off-gain-dressing", evidence: row_index + code + note "item {pct}% of net profit"
+**T2 — One-Off Gain Dressing:** Financial income (code 22/23) or other income (code 31) drives
+`non_operating_share = (PretaxProfit − OperatingProfit) / PretaxProfit` (pre-tax basis — formula +
+SOE-conglomerate exception → [`flow/esc-4-nonop-heuristic.md`](./esc-4-nonop-heuristic.md)) `> 0.20`
+→ finding: trick_type="one-off-gain-dressing", evidence: row_index + code + note "non-operating share {pct}% of PBT (pre-tax)"
 
 **T3 — Cost Reclass:** COGS (code 11/21) decreased YoY while selling expenses (code 24/25) or G&A (code 26/27) increased by similar magnitude
 → finding: trick_type="cost-reclass", evidence: row_index for both rows + codes + note delta amounts

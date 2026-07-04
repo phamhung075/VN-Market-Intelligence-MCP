@@ -34,3 +34,11 @@
 - FR-3: stripped false "Sharpe>1.0 hard gate" language from digest-predict/init.md — rewrote `workflows.validate_prediction_claims.steps` to advisory-only framing + softened capabilities line 13 (B1=design B, PO-approved)
 - Pre-existing size debt noted, not silently breached: bctc-analyst/stage-analyze.md 131L→154L (header was stale at 120L), market-watcher/cycle.md 233L→253L (header was stale at 191L, already over 200L pre-edit) — both headers updated with drift note + FR-2.1 delta, flagged as out-of-scope structural refactor
 - orch-state: task_board.ready[TASK-EVIDENCE-HOP2-AGENTS] status READY→REVIEW, next_agent→qa (via orch-apply.sh, RAW-verified); hop1 (dev-mcp-server, apps/mcp-server/) parallel, zero file overlap
+
+## 2026-07-04T00:11Z — ESC4-HEURISTIC-FIX-TAXBASIS-SOE (router-dispatched)
+
+- Task: recurring ESC-4 false HIGH on GVR (fired 4x byte-identical data 06-30..07-03, escalation ceiling). Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9) confirmed root cause: non-op-income share heuristic mixed tax bases (pre-tax item / after-tax net profit).
+- AC-1: new `non_operating_share = (PretaxProfit − OperatingProfit) / PretaxProfit` formula, both terms pre-tax — replaces the retired mixed-basis calc. AC-2: SOE-conglomerate exception class (GVR, PHR, DPR, TRC, HRC) — auto structural-context tag downgrades ESC-4 severity HIGH→INFO on the `non_operating_share` arm only (`related_party_pct` arm unaffected).
+- Files: created `docs/agents/bctc-analyst/flow/esc-4-nonop-heuristic.md` (formula + exception class, mirrors the ESC-3 `esc-coverage-guard.md` referenced-sub-doc pattern); edited `flow/main.md` (ESC-4 gate + signal_row severity no longer hardcoded HIGH), `flow/stage-pass-pl.md` (T2 One-Off Gain Dressing uses same formula), `flow/deep-dive-opus.md` (ESC-4 Opus verdict checks SOE-class before recommending flag_for_human_review).
+- Cascade: none (no frontmatter/identity/permissions/routing change — heuristic/flow content only). Out of zone (not touched): dev-team's drain-esc-dispatch.md still dispatches Opus regardless of severity — flagged as a separate dev-team-owned follow-up, not this task's scope.
+- Validation: all 4 touched files re-read post-edit; line counts 62/81/128/132 (all ≤200L cap); grep confirms zero UUID leakage.
