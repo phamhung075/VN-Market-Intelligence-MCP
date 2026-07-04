@@ -1,6 +1,10 @@
 # PO Notebook
 
-_Last: 2026-07-04T00:42Z_
+_Last: 2026-07-04T04:07Z_
+
+## Tick 2026-07-04T04:07Z (router-dispatched) — dev-team tick, WIP=0: 2 new telegram reports → 1 MINT + 1 DEDUP, verdict NOTHING
+
+Board RAW-verified: head idle, WIP=0, ready=0, review=3 (W5 deploy-gate, user-owned), backlog 405. **#3502 (alert-commander MEDIUM, get_foreign_room output > tool-result token budget, RECURRING 3rd cycle) = MINT.** NO real dedup — ALT-PERF-01-FIX is alertDigest FIRE-TIMING, not OUTPUT SIZE. Minted `FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET` → backlog (FIX/S/normal, zone apps/mcp-server/, status_note w/ AC + recurrence). PLAN-ONLY (not promoted): next dev-team cron takes it via po→ba→pm→dev. **#3503 (system-auditor A-13, api-gateway /health unreachable CURL_ERR) = DEDUP, FALSE POSITIVE.** RAW-corroborated: docker api-gateway Up 5 days (healthy), curl :4000/health = HTTP 200 on 3/3 probes → NO outage, NO ops dispatch. Folded into `FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES` via status_note — its generic_mandate (corroboration gate before UNHEALTHY) already covers A-13; broadened scope to HTTP-service TRANSIENT CURL_ERR (retry+corroborate, not just transport-classify). `resolve_report` tool does NOT exist → #3503 will re-surface (tracked gap FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE); signal_queue row left NEW (auditor re-materializes by id). **Left untouched (pre-covered):** 8× sau-d4 rows → FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (confirmed exists); price_anomaly_0702/0703 malformed envelope → FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE (confirmed exists); 2 cowork telemetry = non-signal. **Writes:** one atomic jq→orch-apply rc=0 (backlog 405→406 +1 mint, 1 row status_note annotate, last_triaged stamped). `.head` untouched. Provenance "(po router-dispatched)" — 0 session UUID in any tracked file. Verdict to router: **NOTHING** (both findings PLAN-ONLY backlog; no genuinely-ready pre-specced item warrants sprint promotion this tick).
 
 ## Tick 2026-07-04T00:42Z (router-dispatched) — dev-team :07 tick, WIP=0: 2 esc-dispatch signals
 

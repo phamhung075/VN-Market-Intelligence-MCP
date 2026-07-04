@@ -659,6 +659,17 @@
         "source_task": "esc-deepdive:MBB:Q1-2026:ESC-2",
         "resolved_at": "2026-07-04T00:43:06Z",
         "resolution": "DEDUP — REFLOW-MBB-Q1-2026 already tracks this (backlog, BLOCKED on user-gated mcp-server rebuild, related to W5-FU-CTG-REFINE). Per-cycle recurrence is a symptom cured by FIX-DRAINESC-SEVERITY-RECURRENCE-GATE. No new mint; deploy-gated reflow grooms with W5."
+      },
+      {
+        "id": "sau-2026-07-04T04:19:14Z",
+        "ts": "2026-07-04T04:19:14Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-13 FAIL: api-gateway health endpoint — container UP but probe unreachable",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
@@ -5831,7 +5842,8 @@
         "status": "BACKLOG",
         "title": "system-auditor health-check probes an HTTP endpoint on non-HTTP services (vn-bctc-fetch = pure-bash systemd timer, no HTTP port) -> permanent false UNHEALTHY badge + wasted ops dispatch every audit",
         "zone": "docs/agents/system-auditor/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES",
+        "status_note": "[po-triage 2026-07-04T04:07Z tick, router-dispatched] DEDUP: telegram report #3503 + signal_id 8520 (system-auditor A-13: api-gateway /health unreachable, CURL_ERR; signal_queue sau-2026-07-04T04:19:14Z) folded HERE. RAW-CORROBORATED FALSE POSITIVE: docker api-gateway Up 5 days (healthy); curl :4000/health returned HTTP 200 on 3/3 probes at ~2026-07-04T04:29Z. No real outage -> NO ops dispatch. This item's generic_mandate ('corroboration gate before emitting UNHEALTHY') already prescribes the fix; A-13 BROADENS scope beyond non-HTTP services to HTTP services that return a TRANSIENT CURL_ERR -> the auditor healthcheck must retry+corroborate before WARN on HTTP services too, not only classify transport. PLAN-ONLY. NOTE: report #3503 will re-surface (no ack/resolve tool -> tracked gap FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE) and the signal_queue row stays NEW (auditor re-materializes by id)."
       },
       {
         "id": "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
@@ -7773,6 +7785,16 @@
         "created_at": "2026-07-04T03:37:00Z",
         "created_by": "po (router-dispatched)",
         "note": "Loose price_anomaly_v1 EOD dish files under docs/signals/ (price_anomaly_20260702T1607.json, price_anomaly_20260703T1600.json) carry NO from/type signal envelope so the canonical drain skips them as non-signal-shape. They contain real anomaly:true detections (07-03: HVN +6.53% RSI70.9 vol 3.6x BB-breakout; GAS -2.59% RSI35.6) that reach NO consumer — grep finds no code/flow reader of the price_anomaly_v1 schema or the docs/signals/price_anomaly_*.json filename. PLAN-ONLY: (1) locate the writer (likely a market-watcher/cowork EOD dish agent-flow, NOT code — no TS ref), (2) decide root fix: wrap real anomaly:true rows into the from/type signal envelope so they reach triage + the frontend price_anomaly signal_type, OR if these are pure fb-poster dish artifacts, relocate them OUT of docs/signals/ so the drain stops flagging them each tick. Distinct from FU-AUDITOR-D4-SIGNAL-ID. Surfaced by router at dev-team tick 2026-07-04T03:37Z."
+      },
+      {
+        "id": "FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET",
+        "type": "FIX",
+        "priority": "normal",
+        "size": "S",
+        "status": "BACKLOG",
+        "title": "get_foreign_room tool output exceeds tool-result token budget -> alert-commander cannot consume (recurring 3x)",
+        "zone": "apps/mcp-server/",
+        "status_note": "[po-triage 2026-07-04T04:07Z tick, router-dispatched] Source: telegram report #3502 (from alert-commander, MEDIUM performance_issue). RECURRING 3rd consecutive cycle (2026-07-03 20:15, 2026-07-04 00:18, 2026-07-04 04:00). NOT a dup of ALT-PERF-01-FIX (that=alertDigest FIRE-TIMING <10min; this=get_foreign_room OUTPUT SIZE). Root cause: get_foreign_room returns the full foreign-room table inline so the MCP tool-result payload exceeds the token cap and alert-commander's cycle cannot ingest it. Fix (dev-mcp-server): trim/paginate/summarize the get_foreign_room tool result (top-N by |net| + rollup + fetch-more handle) -- never dump the full universe inline; derive limits, no hardcode. PLAN-ONLY: filed BACKLOG, next dev-team cron promotes via po->ba->pm->dev (recurring-bug top priority). AC: alert-commander get_foreign_room cycle completes with no token-budget error for 3 consecutive cycles AND result stays under the tool-result token cap."
       }
     ],
     "closed_sprints": [
@@ -10605,7 +10627,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-04T03:37:00Z",
+    "last_triaged_at": "2026-07-04T04:29:04Z",
     "last_triaged_by": "po (router-dispatched)"
   },
   "_meta": {
