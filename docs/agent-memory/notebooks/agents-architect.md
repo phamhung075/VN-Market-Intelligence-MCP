@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-30T17:50:58Z
-
-**Brief:** `docs/architecture-briefs/2026-06-30-narrative-quality-ccato-gate.md`
-
-CCATO-GATE: "narrative claim-vs-truth re-probe" × "blocks before publish" = empty across all 6 existing gates; verified on fb-post-2026-06-30.md (VNM line 28 + foreign-flow line 10 cleared all gates). Root cause: NO_TA self-reported at main.md:176-177, fb-data-integrity-gate.sh checks only present numbers. Tier-1 fix: shared `claim-truth-gate` skill + `narrative-truth-gate.sh` re-probe engine (reads `docs/data/claim-tool-map.json` SSOT; exits non-zero on contradiction; PASS-on-null avoids honest-NULL false positive). Wiring: fb-market-poster STEP 4d; CHEF Rule AF-3 in Step 6.7; market-watcher Step 4f; alert-commander Step 4a-pre; digest-predict P-5.5. TNB extends Step 2 to call same library (backstop). Self-heal: FAIL → self-correct in-cycle → emit narrative_contradiction signal → recurring≥2 → anomaly-task-bridge → po sprint. Tier-1 = scripts/+flow .md only; Tier-4 agent_id fix (evidenceTools.ts:413) = dev-mcp-server.
-
-**Signal dropped:** `docs/signals/narrative-quality-ccato-gate-20260630T175058Z.json` → po
-
----
-
 ## 2026-07-01T07:52:40Z
 
 **Brief:** `docs/architecture-briefs/2026-07-01-money-radar.md`
@@ -24,6 +14,16 @@ MONEY-RADAR: Capital-flow / smart-money-rotation subsystem with DIVERGENCE as he
 
 **Brief:** `docs/architecture-briefs/2026-07-03-severity-override-surfacing.md`
 
-SEVERITY-OVERRIDE-SURFACING: PNJ (non-watchlist VN30) diamond-fraud prosecution detected by news-scout (#8371, confidence=0.95) reached zero persistent surfaces. Root cause = 3 independent scope leaks, not one gate: (A) CHEF's chef.md Step 0 GATHER never ingests bus-only `legal_risk`/`chain_catalyst`/`urgent_news` as a named input category at all (absence-of-ingestion, not just watchlist filter); (B) fb-market-poster main.md:232 explicit "relevant watchlist tickers" text; (C) system-map.json's alert-commander sender_rules text omits the CRITICAL override that already exists code-side (legal_risk always fires, no watchlist gate) — doc drift, likely source of the "alert-commander is watchlist-scoped" read; alert-commander's own notebook is 5+ weeks stale (cron-liveness flagged separately, out of scope). Predicate: legal_risk riskType∈{prosecution,asset_freeze} (0.95 tier only) OR price_anomaly move_sigma≥4.0 & impact≥6 (reused existing bar); chain_catalyst/crisis_velocity already market-wide, no change. Primary surface: unified-agent CHEF daily dish (guaranteed 3x/day, durable narrative) — NOT alert-commander (already correct on paper but ephemeral+liveness-suspect). Secondary echo: fb-market-poster's existing Legal-risk bullet, widened. New shared skill `.claude/skills/severity-override-gate/SKILL.md` (mirrors claim-truth-gate pattern) wired into CHEF+fb-market-poster. Dedup via `record_signal_outcome(...,"surfaced_marketwide",...)` + recommend extending news-scout's existing 180-min "materially different direction" exception pattern to the 360-min legal_risk gate for tier-escalation.
+SEVERITY-OVERRIDE-SURFACING: PNJ (non-watchlist VN30) diamond-fraud prosecution detected by news-scout (#8371, confidence=0.95) reached zero persistent surfaces. Root cause = 3 independent scope leaks, not one gate: (A) CHEF's chef.md Step 0 GATHER never ingests bus-only `legal_risk`/`chain_catalyst`/`urgent_news` as a named input category at all; (B) fb-market-poster main.md:232 explicit "relevant watchlist tickers" text; (C) system-map.json's alert-commander sender_rules text omits the CRITICAL override that already exists code-side. Predicate: legal_risk riskType∈{prosecution,asset_freeze} (0.95 tier only) OR price_anomaly move_sigma≥4.0 & impact≥6; chain_catalyst/crisis_velocity already market-wide, no change. Primary surface: unified-agent CHEF daily dish. New shared skill `.claude/skills/severity-override-gate/SKILL.md` mirrors claim-truth-gate pattern.
 
-**Signal filed:** `docs/data/orch/orch-state.json` `.signal_queue.rows[]` id=`arch-severity-override-surfacing-20260703` (type=repair_task_request) → po. Backlog task id: `FEAT-SEVERITY-OVERRIDE-SURFACING`.
+**Signal filed:** `docs/data/orch/orch-state.json` `.signal_queue.rows[]` id=`arch-severity-override-surfacing-20260703` → po. Backlog task id: `FEAT-SEVERITY-OVERRIDE-SURFACING`.
+
+---
+
+## 2026-07-04T06:17:25Z
+
+**Brief:** `docs/architecture-briefs/2026-07-04-systemic-remake.md`
+
+SYSTEMIC-REMAKE: consumed the 64-agent forensic diagnosis (`docs/incidents/2026-07-04-systemic-review-churn-without-convergence.md`, 40 CONFIRMED findings) — did not re-derive it, designed the remedy sequence. Two phases. PHASE 1 (containment-now, ship now): RC-IDLE-LOOPS — port cowork `LOOP-07`'s only genuine pre-LLM no-work SILENT bail into dev-team + auditor Tier-2/3 (both currently persist+commit before/regardless of any idle check). RC-DETECTOR — promote 4 already-specced backlog fixes out of PLAN-ONLY/BACKLOG (context-bloat debounce, D4 per-finding id, signalqueue dup-id guard, B-05 freshness split) + wire the already-SPECCED-but-never-called READ→RESOLVED signal closure. RC-DRIFT — quarantine the confirmed-zero-reader `recurringBugEscalationFlag`, extend the existing tool-count generator chain into narrative docs. PHASE 2 (structural-remake): RC-VERIF+RC-CONVERGE — biggest call: reuse the EXISTING `orch-apply.sh`/`orch-validate.mjs` Zod choke point (every orch-state write already passes through it) rather than inventing a new verification service; add a `verification.raw_probe` requirement before `DONE_VERIFIED` + a sanctioned `DEGRADED` status reusing the already-proven money-radar/CCATO honest-NULL pattern; re-encode the recurring-bug-escalation protocol (confirmed fully absent from live `pm.md`/`architect.md` today, not just one-shot) as a bug-CLASS-keyed, auto-lift/re-arm mechanism. RC-ORCHMONO — finish the regressed 2026-06-26 hot/cold split (backlog-lane eviction was never added; no hot-ceiling gate). RC-GITSTATE — get pure-derived counters (tool-usage-stats.json, coverage-state.json) out of the git tree; the per-ticker stamping bug is a cowork-agent flow fix (market-watcher/news-scout), not developer's. RC-CEREMONY (P2, lowest, last) — two point-fixes only, its headline finding landed PLAUSIBLE not CONFIRMED.
+
+**Signal dropped:** `docs/signals/2026-07-04-systemic-remake.json` → agent-father (full owner routing table in brief §5 — most of Phase 2 is po/pm/architect/developer work).

@@ -1,0 +1,60 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture-brief",
+  "payload": "docs/architecture-briefs/2026-07-04-systemic-remake.md",
+  "priority": "high",
+  "createdAt": "2026-07-04T06:17:25Z",
+  "summary": "Systemic remake of the churn-without-convergence diagnosis (docs/incidents/2026-07-04-systemic-review-churn-without-convergence.md). Two phases. PHASE 1 containment-now (agent-father-actionable now): RC-IDLE-LOOPS port cowork LOOP-07 no-work SILENT preflight to dev-team + auditor Tier-2/3 (thin flow-doc/skill-prompt wiring — pairs with developer script work); RC-DETECTOR wire triage-signals.md/task-archive.md closure back-reference + PO promotes 4 named backlog ids out of PLAN-ONLY; RC-DRIFT quarantine-comment the dead recurringBugEscalationFlag field (full fix rides with RC-CONVERGE). PHASE 2 structural-remake (route to po/pm for decomposition, architect for TECH docs, developer for schema/script code — agent-father wires only the persona/flow pieces once developer lands the schema): RC-VERIF+RC-CONVERGE extend the EXISTING orch-apply.sh/orch-validate.mjs Zod gate to require verification.raw_probe before DONE_VERIFIED + add sanctioned DEGRADED status (reusing the already-proven money-radar/CCATO honest-NULL pattern) + re-encode the currently-DEAD (confirmed: zero grep hits in pm.md/architect.md) recurring-bug-escalation protocol as a live bug-CLASS-keyed mechanism; RC-ORCHMONO finish the regressed 2026-06-26 hot/cold split (backlog-lane eviction + hot-ceiling gate); RC-GITSTATE get pure-derived counters (tool-usage-stats.json, coverage-state.json) out of the git tree; RC-CEREMONY (P2, lowest, last) two point-fixes only. Full owner routing table in brief §5 — do not treat this as an agent-father-solo brief, most of Phase 2 is po/pm/architect/developer work; agent-father's job is the specific rows tagged 'agent-father' or 'agent-father (comment-only edit)' etc. in the per-remedy tables.",
+  "tasks": [
+    {
+      "id": "P1-A",
+      "action": "EDIT",
+      "file": "docs/agents/dev-team/flow/main.md",
+      "change": "Add RUN-IDLE branch to Step 0-PREFLIGHT verdict table -> JUMP to end, bypassing Step 0a drain-signals (brief §1.1)",
+      "depends": ["developer: dev-team-tick-preflight.sh idle-check step"]
+    },
+    {
+      "id": "P1-B",
+      "action": "EDIT",
+      "file": ".claude/skills/cron-detect-loop/SKILL.md",
+      "change": "Wire auditor-tier1-probe.sh --tier=2/3 pre-gate into Job 3/Job 4 CronCreate prompts, mirroring Job 2's Tier-1 wiring (brief §1.1)",
+      "depends": ["developer: auditor-tier1-probe.sh --tier flag"]
+    },
+    {
+      "id": "P1-C",
+      "action": "EDIT",
+      "file": "docs/agents/system-auditor/flow/main.md",
+      "change": "Gate notebook append (L74-76/L685-716 AC-3 settled-write) on cycle producing >=1 new finding -- ALL_GREEN cycles must emit zero notebook diff (brief §1.1)",
+      "depends": []
+    },
+    {
+      "id": "P1-D",
+      "action": "EDIT",
+      "file": "docs/agents/po/flow/triage-signals.md",
+      "change": "repair_task_request handler: record originating signal id as origin_signal_id on new backlog task (brief §1.2)",
+      "depends": []
+    },
+    {
+      "id": "P1-E",
+      "action": "EDIT",
+      "file": "docs/agents/pm/flow/task-archive.md",
+      "change": "On task DONE_VERIFIED with origin_signal_id, flip that signal_queue row READ->RESOLVED via existing signal-dashboard SKILL.md CLOSE protocol (brief §1.2)",
+      "depends": ["P1-D"]
+    },
+    {
+      "id": "P1-F",
+      "action": "EDIT",
+      "file": "docs/data/project-stats.json",
+      "change": "Add _maintained_by deprecation comment on recurringBugEscalationFlag/escalationReason pointing at RC-CONVERGE (brief §1.3) -- quarantine only, no redesign here",
+      "depends": []
+    },
+    {
+      "id": "P2-ROUTE",
+      "action": "ROUTE",
+      "file": "n/a",
+      "change": "Relay brief to po (promote 4 backlog ids out of PLAN-ONLY, brief §1.2 table) and to pm (decompose RC-VERIF+RC-CONVERGE TECH-doc request to architect, brief §2.1/§5). Do not implement Phase 2 schema/script pieces directly -- those are developer-owned per §5.",
+      "depends": []
+    }
+  ]
+}
