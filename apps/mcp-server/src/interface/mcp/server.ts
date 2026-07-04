@@ -153,6 +153,14 @@ import { handleGetReputationHttp } from "./routes/reputationHandler.js";
 import { handleGetNewsBuzzHttp } from "./routes/newsBuzzHandler.js";
 // FIX-SIGNALS-STOCK-FULL-DETAIL: full finding_data + ISO created_at for GET /api/signals/stock/:code
 import { querySignalsForStock } from "./routes/stockSignalsHandler.js";
+// FACTORY-INTERFACE-split-server-ts Stage 1: ops debug-trigger routes (trigger-bctc/price/news/sbv/foreign-flow-debug)
+import {
+  handleTriggerBctcDebugRoute,
+  handleTriggerPriceDebugRoute,
+  handleTriggerNewsDebugRoute,
+  handleTriggerSbvDebugRoute,
+  handleTriggerForeignFlowDebugRoute,
+} from "./routes/debugTriggerRoutes.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX-MCP-500-SYMBOL-TO-STRING: Bun-native Node.js ↔ Web Standard conversion
@@ -1762,300 +1770,31 @@ export async function createBunServer(
 
     // ── POST /api/trigger-bctc-debug — manual BCTC fetch debug trigger ───────
     if (method === "POST" && pathname === "/api/trigger-bctc-debug") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      let body = "";
-      for await (const chunk of req) body += chunk;
-
-      let payload: { tickers?: string[]; verbose?: boolean; dry_run?: boolean } = {};
-      if (body.trim()) {
-        try {
-          payload = JSON.parse(body) as typeof payload;
-        } catch {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid JSON body" }));
-          return;
-        }
-      }
-
-      try {
-        const { handleTriggerBctcDebug } = await import("./bctcDebugTriggerHandler.js");
-        const result = await handleTriggerBctcDebug(
-          {
-            tickers: Array.isArray(payload.tickers) ? payload.tickers : undefined,
-            verbose: payload.verbose !== false,
-            dry_run: payload.dry_run === true,
-          },
-          db,
-        );
-
-        // If live mode, queue SSH trigger (fire-and-forget, non-blocking)
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const tickerArgs =
-              Array.isArray(payload.tickers) && payload.tickers.length > 0
-                ? payload.tickers.map((t) => `--ticker ${t}`).join(" ")
-                : "";
-            const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-bctc-debug.sh ${tickerArgs} ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Command: ${cmd}`;
-            log.info("[trigger-bctc-debug] SSH trigger queued", { cmd });
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-            log.warn("[trigger-bctc-debug] VINAHOST_IP not set, skipping SSH");
-          }
-        }
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(result));
-      } catch (err) {
-        log.error("[trigger-bctc-debug] handler error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Internal server error" }));
-      }
+      await handleTriggerBctcDebugRoute(req, res, db, log);
       return;
     }
 
     // ── POST /api/trigger-price-debug — manual price fetch debug trigger ────
     if (method === "POST" && pathname === "/api/trigger-price-debug") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      let body = "";
-      for await (const chunk of req) body += chunk;
-
-      let payload: { tickers?: string[]; verbose?: boolean; dry_run?: boolean } = {};
-      if (body.trim()) {
-        try {
-          payload = JSON.parse(body) as typeof payload;
-        } catch {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid JSON body" }));
-          return;
-        }
-      }
-
-      try {
-        const { handleTriggerPriceDebug } = await import("./priceDebugTriggerHandler.js");
-        const result = await handleTriggerPriceDebug({
-          tickers: Array.isArray(payload.tickers) ? payload.tickers : undefined,
-          verbose: payload.verbose !== false,
-          dry_run: payload.dry_run === true,
-        });
-
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const tickerArgs =
-              Array.isArray(payload.tickers) && payload.tickers.length > 0
-                ? payload.tickers.map((t) => `--ticker ${t}`).join(" ")
-                : "";
-            const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-price-debug.sh ${tickerArgs} ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Command: ${cmd}`;
-            log.info("[trigger-price-debug] SSH trigger queued", { cmd });
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-            log.warn("[trigger-price-debug] VINAHOST_IP not set, skipping SSH");
-          }
-        }
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(result));
-      } catch (err) {
-        log.error("[trigger-price-debug] handler error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Internal server error" }));
-      }
+      await handleTriggerPriceDebugRoute(req, res, db, log);
       return;
     }
 
     // ── POST /api/trigger-news-debug — manual news fetch debug trigger ───────
     if (method === "POST" && pathname === "/api/trigger-news-debug") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      let body = "";
-      for await (const chunk of req) body += chunk;
-
-      let payload: { verbose?: boolean; dry_run?: boolean } = {};
-      if (body.trim()) {
-        try {
-          payload = JSON.parse(body) as typeof payload;
-        } catch {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid JSON body" }));
-          return;
-        }
-      }
-
-      try {
-        const { handleTriggerNewsDebug } = await import("./newsDebugTriggerHandler.js");
-        const result = await handleTriggerNewsDebug({
-          verbose: payload.verbose !== false,
-          dry_run: payload.dry_run === true,
-        });
-
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-news-debug.sh ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Command: ${cmd}`;
-            log.info("[trigger-news-debug] SSH trigger queued", { cmd });
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-            log.warn("[trigger-news-debug] VINAHOST_IP not set, skipping SSH");
-          }
-        }
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(result));
-      } catch (err) {
-        log.error("[trigger-news-debug] handler error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Internal server error" }));
-      }
+      await handleTriggerNewsDebugRoute(req, res, db, log);
       return;
     }
 
     // ── POST /api/trigger-sbv-debug — manual SBV/FX rate debug trigger ───────
     if (method === "POST" && pathname === "/api/trigger-sbv-debug") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      let body = "";
-      for await (const chunk of req) body += chunk;
-
-      let payload: { verbose?: boolean; dry_run?: boolean } = {};
-      if (body.trim()) {
-        try {
-          payload = JSON.parse(body) as typeof payload;
-        } catch {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid JSON body" }));
-          return;
-        }
-      }
-
-      try {
-        const { handleTriggerSbvDebug } = await import("./sbvDebugTriggerHandler.js");
-        const result = await handleTriggerSbvDebug({
-          verbose: payload.verbose !== false,
-          dry_run: payload.dry_run === true,
-        });
-
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-sbv-debug.sh ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Command: ${cmd}`;
-            log.info("[trigger-sbv-debug] SSH trigger queued", { cmd });
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-            log.warn("[trigger-sbv-debug] VINAHOST_IP not set, skipping SSH");
-          }
-        }
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(result));
-      } catch (err) {
-        log.error("[trigger-sbv-debug] handler error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Internal server error" }));
-      }
+      await handleTriggerSbvDebugRoute(req, res, db, log);
       return;
     }
 
     // ── POST /api/trigger-foreign-flow-debug — manual foreign flow debug trigger
     if (method === "POST" && pathname === "/api/trigger-foreign-flow-debug") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      let body = "";
-      for await (const chunk of req) body += chunk;
-
-      let payload: { tickers?: string[]; verbose?: boolean; dry_run?: boolean } = {};
-      if (body.trim()) {
-        try {
-          payload = JSON.parse(body) as typeof payload;
-        } catch {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid JSON body" }));
-          return;
-        }
-      }
-
-      try {
-        const { handleTriggerForeignFlowDebug } = await import("./foreignFlowDebugTriggerHandler.js");
-        const result = await handleTriggerForeignFlowDebug({
-          tickers: Array.isArray(payload.tickers) ? payload.tickers : undefined,
-          verbose: payload.verbose !== false,
-          dry_run: payload.dry_run === true,
-        });
-
-        if (!result.dry_run) {
-          const vinahostIp = Bun.env["VINAHOST_IP"];
-          if (vinahostIp) {
-            const tickerArgs =
-              Array.isArray(payload.tickers) && payload.tickers.length > 0
-                ? payload.tickers.map((t) => `--ticker ${t}`).join(" ")
-                : "";
-            const verboseFlag = payload.verbose !== false ? "--verbose" : "";
-            const cmd = `ssh root@${vinahostIp} /root/run-foreign-flow-debug.sh ${tickerArgs} ${verboseFlag}`.trim();
-            result.log_tail += `\n[SSH] Command: ${cmd}`;
-            log.info("[trigger-foreign-flow-debug] SSH trigger queued", { cmd });
-          } else {
-            result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
-            log.warn("[trigger-foreign-flow-debug] VINAHOST_IP not set, skipping SSH");
-          }
-        }
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(result));
-      } catch (err) {
-        log.error("[trigger-foreign-flow-debug] handler error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Internal server error" }));
-      }
+      await handleTriggerForeignFlowDebugRoute(req, res, db, log);
       return;
     }
 
