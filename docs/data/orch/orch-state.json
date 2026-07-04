@@ -251,13 +251,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "dev-team tick 23:37Z CLOSED: ESC4-HEURISTIC-FIX-TAXBASIS-SOE done_verified (agent-father 5f0979bd9; AC-1 pretax formula + AC-2 SOE-conglomerate HIGH->INFO both RAW-verified; UUID-clean). WIP=0. review[]=3 parked: ARCH-SHIP-WAVE-REAUDIT (deferred) + 2 W5 rows (BLOCKED, deploy_gate -- need explicit USER authorization to deploy live mcp-server + reingest CTG 96e36139; auto-mode classifier denied ops spawn). Follow-up drain-esc-dispatch severity-gate emitted to signal_queue for PO. Cowork tick 00:00Z fanned out 4 off-hours agents (bg).",
-    "updated_at": "2026-07-04T00:19:52Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-DRAINESC-SEVERITY-RECURRENCE-GATE",
+    "next_agent": "architect",
+    "next_action": "SPRINT-S FIX-DRAINESC-SEVERITY-RECURRENCE-GATE dispatched to architect (bg) at :07 tick. Awaiting architect blueprint -> pm decompose -> dev implement -> qa. Cures recurring per-cycle Opus esc-deep-dive waste (MBB 4x byte-identical). SF-1 held by router across the chain; concurrent dev-team cron ticks SKIP (single-flight).",
+    "updated_at": "2026-07-04T00:50:37Z",
     "updated_by": "router",
-    "note": "00:16Z: ESC4 in_progress->done_verified (agent-father RAW-verified, AC met). WIP=0 idle. W5 deploy still user-gated."
+    "note": "00:45Z: FIX-DRAINESC ready->in_progress, architect dispatched. WIP=1. Chain driven by router via completion notifications."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10238,15 +10238,14 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "FIX-DRAINESC-SEVERITY-RECURRENCE-GATE",
         "type": "SPRINT-S",
         "size": "S",
         "priority": "high",
-        "status": "READY",
-        "owner": "po",
+        "status": "IN_PROGRESS",
+        "owner": "architect",
         "next_agent": "architect",
         "zone": "cross-service",
         "title": "FIX — gate drain-esc-dispatch Opus spawn on severity floor (>=HIGH) + recurrence/known-root DEDUP guard",
@@ -10267,9 +10266,13 @@
         "generic_mandate": "Gate on a COMPUTED severity floor + a SEMANTIC content signature — NEVER hardcode MBB/CTG/any ticker (feedback: no FPT-overfit). Applies to all tickers/quarters/triggers. Preserve the spawn-mutex + guard_key release contract; NEVER suppress a genuine FRESH high-severity finding.",
         "verification_gate": "Inject synthetic esc-deep-dive-request cases: (a) severity<HIGH -> assert NO Opus spawn + row terminal; (b) HIGH severity, byte-identical content on 2nd+ dispatch WITH an open REFLOW board row -> assert NO Opus spawn + routed-to-reflow log; (c) HIGH severity, NOVEL content, no board row -> assert Opus DOES spawn (no false suppression). Test co-located with the drain-signals contract tests.",
         "acceptance": "MBB Q1-2026 ESC-2 (and any pre-fix byte-identical bank redispatch) no longer triggers an Opus deep-dive while REFLOW-<ticker> is open; sub-HIGH fires never spawn Opus; a genuine novel HIGH finding still spawns. No esc-dispatch signal_queue churn for 7d.",
-        "status_note": "MINTED po 2026-07-04T00:42Z from router-dispatched repair_task_request (router-esc4-fu-drainesc-severity-gate-20260704T0016Z). NOT deploy-gated (flow-doc + drain script only) — leading actionable candidate this tick. Behavioral GATE change to a live dispatcher -> routed via architect (light design: pick GATE-B state location) before dev, hence SPRINT-S not bare FIX."
+        "status_note": "MINTED po 2026-07-04T00:42Z from router-dispatched repair_task_request (router-esc4-fu-drainesc-severity-gate-20260704T0016Z). NOT deploy-gated (flow-doc + drain script only) — leading actionable candidate this tick. Behavioral GATE change to a live dispatcher -> routed via architect (light design: pick GATE-B state location) before dev, hence SPRINT-S not bare FIX.",
+        "dispatched_at": "2026-07-04T00:50:37Z",
+        "dispatched_by": "router",
+        "dispatch_note": "[router :07 tick 2026-07-04] SPRINT-S dispatched to architect (bg). Design 2 gates in drain-esc-dispatch.md BETWEEN Step 2 (mutex) and Step 3 (spawn): GATE-A severity floor (effective_severity = row.severity or max tier across all_esc_fired; < HIGH -> no Opus, mark row terminal, release guard_key); GATE-B known-root DEDUP (OPEN board task for {ticker,quarter} e.g. REFLOW-<ticker>-<quarter> OR semantic content-fp sha256(ticker+quarter+trigger_id+context) seen N>=2 -> route to reflow, skip Opus). Architect decides GATE-B state location (board-row-exists check [cheapest] vs content-fp counter in drain-signals.js). MANDATE: no ticker hardcode; never suppress a genuine FRESH high-severity finding. Files: docs/agents/dev-team/flow/drain-esc-dispatch.md + scripts/agents-flow/drain-signals.js. Chain: architect -> pm -> dev -> qa."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",

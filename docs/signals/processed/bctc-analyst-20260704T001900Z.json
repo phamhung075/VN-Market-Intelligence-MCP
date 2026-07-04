@@ -1,0 +1,34 @@
+{
+  "id": "bca-20260704T001900Z",
+  "ts": "2026-07-04T00:19:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: MBB Q1-2026 ESC-2",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-2",
+    "ticker": "MBB",
+    "quarter": "Q1-2026",
+    "report_id": "MBB-Q1-2026",
+    "guard_key": "esc-deepdive:MBB:Q1-2026:ESC-2",
+    "context": {
+      "assets_total": 666711,
+      "liabilities_total": 567490,
+      "equity_total": 0,
+      "imbalance": 0.1488
+    },
+    "all_esc_fired": [
+      "ESC-2"
+    ],
+    "recurrence_note": "4th consecutive redispatch (c074/c075/c076/this cycle) — prior guard expired unresolved each time. Data byte-identical since published 2026-06-07T11:25:24.812Z (confidence 60%, refine_status PARTIAL). Same total_assets-mapping signature as CTG. Report predates FIX-BCTC-BANK-SUMMARY-MAPPING merge (a46131cf, 2026-07-01) and 2cd9e105 (2026-07-02) — as of this cycle still NOT reflowed onto the already-served report. Root cause already diagnosed (stale extraction, not a fresh fundamentals event); recommend a batch reflow/re-refine pass for reports published before 2026-07-01 rather than repeated per-cycle Opus deep-dives."
+  },
+  "_processed": {
+    "fingerprint": "4b62511d8fb73bcf1360973d6f0298a9ff74bde3bf889167d67e227ed51af69e",
+    "processedAt": "2026-07-04T00:35:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
