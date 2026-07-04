@@ -16,7 +16,8 @@ are exactly what gets registered on every re-arm. `.claude/commands/crons/cron-d
 `cron-system-auditor.md` are manual/ad-hoc reference docs for one-off cron setup outside this
 auto-re-arm flow; their Job 1 / Tier-1 prompt text has diverged from this file's (see Step 2 note)
 since 2026-07-02 (TOKEN-ECONOMY-TICK-PREFLIGHT WU-2/WU-3) — cadence (`cron` expression) values stay
-identical across both, only prompt-body text may differ.
+identical across both, only prompt-body text may differ. Job 3/4 diverged too, 2026-07-04
+(P1-IDLE-AUDITOR-CRON-WIRING) — see inline notes.
 
 ---
 
@@ -60,9 +61,11 @@ actually registers. `.claude/commands/crons/cron-dev-team.md` + `cron-system-aud
 plain conceptual-shape prompts for manual/ad-hoc cron setup; Job 1 (dev-team) and Job 2
 (system-auditor Tier-1) below have diverged from those files' simpler form (self-arm+script-branching
 and shell-pre-gate+stale-heartbeat-guard logic respectively — see each Job's inline note) because
-that logic only makes sense inside this auto-re-arm loop. Job 3/4 remain byte-identical to
-`cron-system-auditor.md`'s Tier-2/Tier-3 sections. Cron cadence (`cron` expression) values stay in
-sync across all files regardless — re-sync those here if cadence changes in the command files.
+that logic only makes sense inside this auto-re-arm loop. Job 3/4 below now ALSO diverge from
+`cron-system-auditor.md`'s plain form as of 2026-07-04 (P1-IDLE-AUDITOR-CRON-WIRING) — each runs
+`auditor-tier1-probe.sh --tier=2`/`--tier=3` as a pre-gate, mirroring Job 2 (see inline notes).
+Cron cadence (`cron` expression) values stay in sync across all files regardless — re-sync those
+here if cadence changes in the command files.
 
 Only execute CronCreate for entries NOT found in Step 1.
 
@@ -109,24 +112,36 @@ CronCreate(
 ```
 
 **Job 3 — system-auditor Tier-2 (freshness sweep)**
+
+> P1-IDLE-AUDITOR-CRON-WIRING (2026-07-04): mirrors Job 2's shell pre-gate, but the tiered script
+> (`run_tiered_probe --tier=2`) does the ALL_GREEN+fresh-heartbeat gating INSIDE the script, exit
+> code `0`=SKIP-SPAWN, `1`=SPAWN, `2`=ERROR (bad --tier, shouldn't occur here). FAIL-OPEN mandatory:
+> SKIP ONLY on exit 0. Exit 1/2/any-other-nonzero/unreadable → spawn as before — a probe fault must
+> never suppress a legitimate auditor run.
+
 ```
 CronCreate(
   description : "system-auditor Tier-2 freshness sweep",
   cron        : "0 */4 * * *",
   recurring   : true,
   durable     : true,
-  prompt      : "Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md\nAUDIT_TIER=2\nMCP: https://zenmidi.com/vn-market/mcp"
+  prompt      : "Run: bash scripts/agents-flow/auditor-tier1-probe.sh --tier=2 and read its exit code + one-line JSON verdict (fields: tier, checks_verdict, verdict, detail, last_healthy_at, fresh_threshold_minutes, heartbeat_age_minutes). If exit code = 0 (verdict=SKIP-SPAWN, meaning checks_verdict=ALL_GREEN AND heartbeat fresh): done, log '[cron-detect-loop] T2 SKIP-SPAWN (ALL_GREEN + fresh heartbeat)', do NOT spawn a subagent. FAIL-OPEN on everything else — exit code 1 (verdict=SPAWN), OR exit code 2 (verdict=ERROR), OR any other non-zero exit / unreadable output (never suppress a legitimate run on a probe fault): Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md\nAUDIT_TIER=2\nMCP: https://zenmidi.com/vn-market/mcp"
 )
 ```
 
 **Job 4 — system-auditor Tier-3 (deep DB integrity)**
+
+> P1-IDLE-AUDITOR-CRON-WIRING (2026-07-04): same pre-gate shape as Job 3, `--tier=3` (own heartbeat
+> file + 2880min/2x24h threshold, computed inside the script). Same FAIL-OPEN contract: SKIP ONLY
+> on exit 0 (SKIP-SPAWN); spawn on exit 1 (SPAWN), exit 2 (ERROR), or any other nonzero/unreadable.
+
 ```
 CronCreate(
   description : "system-auditor Tier-3 deep DB integrity",
   cron        : "0 2 * * *",
   recurring   : true,
   durable     : true,
-  prompt      : "Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md\nAUDIT_TIER=3\nMCP: https://zenmidi.com/vn-market/mcp"
+  prompt      : "Run: bash scripts/agents-flow/auditor-tier1-probe.sh --tier=3 and read its exit code + one-line JSON verdict (fields: tier, checks_verdict, verdict, detail, last_healthy_at, fresh_threshold_minutes, heartbeat_age_minutes). If exit code = 0 (verdict=SKIP-SPAWN, meaning checks_verdict=ALL_GREEN AND heartbeat fresh): done, log '[cron-detect-loop] T3 SKIP-SPAWN (ALL_GREEN + fresh heartbeat)', do NOT spawn a subagent. FAIL-OPEN on everything else — exit code 1 (verdict=SPAWN), OR exit code 2 (verdict=ERROR), OR any other non-zero exit / unreadable output (never suppress a legitimate run on a probe fault): Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md\nAUDIT_TIER=3\nMCP: https://zenmidi.com/vn-market/mcp"
 )
 ```
 
