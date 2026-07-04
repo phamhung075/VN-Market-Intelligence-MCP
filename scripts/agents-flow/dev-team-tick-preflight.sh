@@ -29,13 +29,24 @@
 #      full 90min TTL once the fallback pseudocode re-runs the SF-1 claim
 #      and finds it "not claimed" (held by self) and exits — releasing first
 #      avoids that self-inflicted deadlock) then ERROR.
+#   5. Idle check (RUN path only, evaluated AFTER the fire-election win and
+#      BEFORE main.md's Step 0a drain-signals.md ever runs) — P1-IDLE-DEVTEAM-
+#      PREFLIGHT-SCRIPT. Mirrors cowork-tick-preflight.sh's SILENT-gate
+#      pattern (§_step8_silent_release / Step 7). Reuses the exact fields
+#      drain-signals.md's own MANDATORY PERSIST GUARD reads: signal file
+#      count (docs/signals/*.json), signals.db mtime freshness, signal_queue
+#      NEW-row count, and task_board.active_sprints emptiness. All four empty/
+#      fresh => verdict RUN-IDLE — the LLM continuation skips Step 0a drain
+#      entirely (drain-signals.md branch lives in main.md, out of this
+#      script's scope — P1-IDLE-DEVTEAM-FLOW-BRANCH wires the read side).
 #
 # Verdict JSON (one line, stdout): {verdict, tick, detail}.
-#   verdict ∈ RUN|SKIP|ERROR.
+#   verdict ∈ RUN|RUN-IDLE|SKIP|ERROR.
 # Exit code: 0 = SKIP (no LLM read needed — script already sent the telegram
-#   and settled lock state). 1 = RUN|ERROR (LLM continues: RUN reads main.md
-#   at `gcc-preflight` onward; ERROR falls back to the full original inline
-#   pseudocode at `preflight-fallback`).
+#   and settled lock state). 1 = RUN|RUN-IDLE|ERROR (LLM continues: RUN reads
+#   main.md at `gcc-preflight` onward; RUN-IDLE does the same but skips Step
+#   0a drain-signals.md entirely; ERROR falls back to the full original
+#   inline pseudocode at `preflight-fallback`).
 #
 # NOT part of this script (R6 — CronCreate/CronList/CronDelete are Claude
 # Code CLI-native tools, unreachable from a curl-based script): self-arm of
@@ -54,6 +65,11 @@
 #   CLAUDE_CODE_SESSION_ID — REQUIRED. Coordination parameter, never
 #     echoed/logged by this script beyond its use as a bound task_claim/
 #     task_heartbeat/task_release arg.
+#   PREFLIGHT_ROOT   — project root (default: git-relative from this file).
+#   SIGNALS_DIR      — docs/signals/ dir (default: $PREFLIGHT_ROOT/docs/signals).
+#   SIGNALS_DB_PATH  — signals.db path (default: $SIGNALS_DIR/signals.db).
+#   ORCH_STATE_PATH  — orch-state.json path (default: $PREFLIGHT_ROOT/docs/data/orch/orch-state.json).
+#     All four are Step 5 idle-check test seams — see dev-team-tick-preflight.test.sh.
 #
 # HARD CONSTRAINT: NEVER live-claim dev-team-cron-singleton or
 # cron:dev-team:* outside a real cron tick — these are PRODUCTION mutexes.
@@ -63,9 +79,17 @@
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+ROOT="${PREFLIGHT_ROOT:-$DEFAULT_ROOT}"
 
 # shellcheck source=./mcp-call.sh
 source "$SCRIPT_DIR/mcp-call.sh"
+
+# ── Step 5 idle-check paths (env-overridable test seams) ─────────────────────
+SIGNALS_DIR="${SIGNALS_DIR:-$ROOT/docs/signals}"
+SIGNALS_DB_PATH="${SIGNALS_DB_PATH:-$SIGNALS_DIR/signals.db}"
+ORCH_STATE_PATH="${ORCH_STATE_PATH:-$ROOT/docs/data/orch/orch-state.json}"
+IDLE_STALE_HOURS=24
 
 _trunc() { printf '%s' "$1" | tr '\n' ' ' | cut -c1-200; }
 
@@ -195,6 +219,46 @@ _step_fire_election() {
   return 1
 }
 
+# ── Step 5: idle check (RUN path only) — mirrors drain-signals.md's own
+# MANDATORY PERSIST GUARD fields + signal_queue/active_sprints emptiness.
+# Prints "true" (idle — safe to skip Step 0a drain-signals.md entirely) or
+# "false" (at least one field non-empty/stale — normal RUN, drain runs).
+# Pure filesystem/jq read — makes NO mcp_call (no tool-call cost either way).
+_step5_idle_check() {
+  local signal_file_count db_mtime_epoch now_epoch age_h db_stale signal_new_count active_sprints_count
+
+  # (a) docs/signals/*.json count — nullglob-safe via 2>/dev/null + wc -l.
+  signal_file_count=$(ls "$SIGNALS_DIR"/*.json 2>/dev/null | wc -l | tr -d ' ')
+  [[ "$signal_file_count" =~ ^[0-9]+$ ]] || signal_file_count=0
+
+  # (b) signals.db freshness — mirrors drain-signals.md guard #2 (mtime > 24h
+  # => DB write REQUIRED this tick, i.e. NOT idle). Missing file = safe
+  # default (nothing has ever been written, R3-style — never blocks idle).
+  db_stale="false"
+  if [ -f "$SIGNALS_DB_PATH" ]; then
+    db_mtime_epoch=$(stat -f "%m" "$SIGNALS_DB_PATH" 2>/dev/null || stat -c "%Y" "$SIGNALS_DB_PATH" 2>/dev/null)
+    if [[ "$db_mtime_epoch" =~ ^[0-9]+$ ]]; then
+      now_epoch=$(date -u +%s)
+      age_h=$(( (now_epoch - db_mtime_epoch) / 3600 ))
+      [ "$age_h" -gt "$IDLE_STALE_HOURS" ] && db_stale="true"
+    fi
+  fi
+
+  # (c) signal_queue NEW rows (any recipient — idle means the whole inbox is empty).
+  signal_new_count=$(jq '[.signal_queue.rows[]? | select(.status=="NEW")] | length' "$ORCH_STATE_PATH" 2>/dev/null)
+  [[ "$signal_new_count" =~ ^[0-9]+$ ]] || signal_new_count=0
+
+  # (d) task_board.active_sprints emptiness.
+  active_sprints_count=$(jq '.task_board.active_sprints // [] | length' "$ORCH_STATE_PATH" 2>/dev/null)
+  [[ "$active_sprints_count" =~ ^[0-9]+$ ]] || active_sprints_count=0
+
+  if [ "$signal_file_count" -eq 0 ] && [ "$db_stale" = "false" ] && [ "$signal_new_count" -eq 0 ] && [ "$active_sprints_count" -eq 0 ]; then
+    echo true
+  else
+    echo false
+  fi
+}
+
 run_preflight() {
   local session_id="${CLAUDE_CODE_SESSION_ID:-}"
   if [ -z "$session_id" ]; then
@@ -256,6 +320,13 @@ run_preflight() {
       ;;
   esac
   # election_rc == 0: claimed (or re-entrant-renewed) — both locks HELD.
+
+  # ---- Step 5: idle check (RUN path only, evaluated BEFORE Step 0a drain) ----
+  if [ "$(_step5_idle_check)" = "true" ]; then
+    _emit_verdict "RUN-IDLE" "$tick" \
+      "no docs/signals/*.json files, signals.db not stale (<=${IDLE_STALE_HOURS}h or absent), zero NEW signal_queue rows, task_board.active_sprints empty — both locks held, continue main.md at gcc-preflight but SKIP Step 0a drain-signals.md entirely"
+    return 1
+  fi
 
   _emit_verdict "RUN" "$tick" \
     "SF-1 (dev-team-cron-singleton, TTL=5400) + fire-election (cron:dev-team:$tick, TTL=600) locks held — continue main.md at gcc-preflight (GCC-PREFLIGHT read + HEAD.lock/worktree-GC); both locks stay held for the rest of the dispatch body, release-at-end unchanged"

@@ -53,6 +53,21 @@ cleanup() { rm -rf "$TMPDIR_TEST"; }
 trap cleanup EXIT
 CALL_LOG_FILE="$TMPDIR_TEST/call-log.txt"
 
+# ── Step 5 idle-check fixtures (P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT) ────────────
+# NEVER let the idle-check read the LIVE repo's docs/signals/ or orch-state.json
+# — that would make T1/T2/T9/T10/T11 (all expect verdict=RUN) flaky/coupled to
+# live repo state. run_case() below pins SIGNALS_DIR/SIGNALS_DB_PATH/
+# ORCH_STATE_PATH to the "non-idle" fixtures for every scenario by default;
+# only the dedicated idle tests (T13+) override them.
+mkdir -p "$TMPDIR_TEST/signals-nonempty" "$TMPDIR_TEST/signals-empty"
+echo '{}' > "$TMPDIR_TEST/signals-nonempty/placeholder-signal.json"
+echo '{"task_board":{"active_sprints":[{"id":"placeholder-sprint"}]},"signal_queue":{"rows":[]}}' > "$TMPDIR_TEST/orch-not-idle.json"
+echo '{"task_board":{"active_sprints":[]},"signal_queue":{"rows":[]}}' > "$TMPDIR_TEST/orch-idle.json"
+echo '{"task_board":{"active_sprints":[]},"signal_queue":{"rows":[{"id":"s1","status":"NEW","to":"po"}]}}' > "$TMPDIR_TEST/orch-new-signal-only.json"
+# Stale signals.db fixture — mtime forced 48h in the past (comfortably > 24h threshold).
+touch "$TMPDIR_TEST/signals-stale.db"
+touch -t "$(date -v-2d +%Y%m%d%H%M 2>/dev/null || date -d '2 days ago' +%Y%m%d%H%M)" "$TMPDIR_TEST/signals-stale.db" 2>/dev/null
+
 # ── Stub mcp_call — overrides the real function pulled in by the source above ──
 # Dispatch controlled by $STUB_PRESENCE / $STUB_SF1 / $STUB_ELECTION (set per
 # scenario below). Every call is appended to CALL_LOG_FILE (NOT a plain var —
@@ -99,6 +114,11 @@ mcp_call() {
 run_case() {
   # Resets scenario knobs to defaults before each test.
   STUB_PRESENCE="ok"; STUB_SF1="won"; STUB_ELECTION="won"
+  # Step 5 idle-check fixtures — default = deliberately NOT idle (isolates
+  # T1-T12's RUN assertions from the live repo's docs/signals/ + orch-state.json).
+  export SIGNALS_DIR="$TMPDIR_TEST/signals-nonempty"
+  export SIGNALS_DB_PATH="$TMPDIR_TEST/does-not-exist-signals.db"
+  export ORCH_STATE_PATH="$TMPDIR_TEST/orch-not-idle.json"
   : > "$CALL_LOG_FILE"
 }
 
@@ -223,6 +243,63 @@ VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T12 ERROR verdict (missing session id)" "$([ "$VERDICT" = "ERROR" ] && echo true || echo false)"
 check "T12 ERROR exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
 check "T12 ERROR makes NO mcp_call at all" "$([ ! -s "$CALL_LOG_FILE" ] && echo true || echo false)"
+
+# ── T13: RUN-IDLE path — all four idle fields empty/fresh (P1-IDLE-DEVTEAM-
+# PREFLIGHT-SCRIPT AC1: zero drain-signals-related calls + verdict RUN-IDLE) ──
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export SIGNALS_DB_PATH="$TMPDIR_TEST/does-not-exist-signals.db"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T13 RUN-IDLE verdict (all idle fields empty)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+check "T13 RUN-IDLE exit=1 (LLM continues, same family as RUN)" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T13 RUN-IDLE does NOT release any lock" "$([ "$(log_has task_release)" = "false" ] && echo true || echo false)"
+check "T13 RUN-IDLE does NOT send telegram" "$([ "$(log_has send_telegram)" = "false" ] && echo true || echo false)"
+check "T13 RUN-IDLE task_claim called exactly 3x (presence, SF-1, fire-election — no drain-signals calls)" "$([ "$(log_count task_claim)" -eq 3 ] && echo true || echo false)"
+check "T13 RUN-IDLE total call trace == exactly 3 (ZERO drain-signals-related calls)" "$([ "$(wc -l < "$CALL_LOG_FILE" | tr -d ' ')" -eq 3 ] && echo true || echo false)"
+
+# ── T14: RUN (not idle) — docs/signals/*.json non-empty alone blocks idle ────
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-nonempty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T14 RUN verdict (signal files present blocks idle)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+
+# ── T15: RUN (not idle) — task_board.active_sprints non-empty alone blocks idle ─
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-not-idle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T15 RUN verdict (active_sprints non-empty blocks idle)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+
+# ── T16: RUN (not idle) — signal_queue NEW row alone blocks idle ─────────────
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-new-signal-only.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T16 RUN verdict (signal_queue NEW row blocks idle)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+
+# ── T17: RUN (not idle) — stale signals.db (mtime > 24h) alone blocks idle ───
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export SIGNALS_DB_PATH="$TMPDIR_TEST/signals-stale.db"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T17 RUN verdict (stale signals.db mtime blocks idle)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+
+# ── T18: RUN-IDLE — missing signals.db is a safe default (not stale) ─────────
+run_case
+export SIGNALS_DIR="$TMPDIR_TEST/signals-empty"
+export SIGNALS_DB_PATH="$TMPDIR_TEST/does-not-exist-signals.db"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T18 RUN-IDLE verdict (missing signals.db = safe default, not stale)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
