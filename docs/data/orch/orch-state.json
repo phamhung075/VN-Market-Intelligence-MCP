@@ -251,13 +251,13 @@
     }
   ],
   "head": {
-    "status": "coordinating",
-    "active_task_id": "ESC4-HEURISTIC-FIX-TAXBASIS-SOE",
-    "next_agent": "agent-father",
-    "next_action": "dev-team tick 23:37Z: PO batch promoted 2. (1) ESC4-HEURISTIC-FIX-TAXBASIS-SOE dispatched to agent-father (bg, in_progress) -- awaiting completion for RAW-verify. (2) W5 deploy-gate to ops DENIED by auto-mode classifier [Production Deploy] -- needs explicit user authorization; W5 rows parked in review with deploy_gate_note. WIP=1.",
-    "updated_at": "2026-07-04T00:05:33Z",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "dev-team tick 23:37Z CLOSED: ESC4-HEURISTIC-FIX-TAXBASIS-SOE done_verified (agent-father 5f0979bd9; AC-1 pretax formula + AC-2 SOE-conglomerate HIGH->INFO both RAW-verified; UUID-clean). WIP=0. review[]=3 parked: ARCH-SHIP-WAVE-REAUDIT (deferred) + 2 W5 rows (BLOCKED, deploy_gate -- need explicit USER authorization to deploy live mcp-server + reingest CTG 96e36139; auto-mode classifier denied ops spawn). Follow-up drain-esc-dispatch severity-gate emitted to signal_queue for PO. Cowork tick 00:00Z fanned out 4 off-hours agents (bg).",
+    "updated_at": "2026-07-04T00:19:52Z",
     "updated_by": "router",
-    "note": "23:37Z tick execute: ESC4->in_progress (agent-father bg); W5 deploy user-gated (classifier denial)."
+    "note": "00:16Z: ESC4 in_progress->done_verified (agent-father RAW-verified, AC met). WIP=0 idle. W5 deploy still user-gated."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -543,6 +543,18 @@
         "triaged_at": "2026-07-03T22:46:12Z",
         "backlog_task_id": "BCTC-HNX-SSL-HARDEN",
         "triage_note": "[router 2026-07-03T22:42Z] Re-emission (4th today) of KNOWN bctc raw-fetch staleness. PO already triaged sau-20260703T024117Z at 03:03Z -> linked BCTC-HNX-SSL-HARDEN (HNX SSL outage root; code-complete/in-review, DEPLOY-PENDING user-gated). Live 4-source RAW corroboration 22:41Z: analysis-layer RECOVERED since PO triage -- get_sla_status(bctc) age 33min/SLA 850min OK; vn-bctc-fetch HEALTHY polled 4m ago; refine/enrich queue drained (38->0 via trigger_bctc_vps_fetch dry_run). ONLY get_vps_proxy_health raw last-push still 06-16/0-in-24h -- BENIGN: event-driven quarterly source, Q2-2026 filings not due until ~late July, 0 pending. B-05 check FPs applying 24h continuous SLA to raw-push layer vs authoritative analysis-layer SLA gate (two-layer-freshness class). Auditor asserted root (headroom-proxy 8787 / VPS down) FALSIFIED by healthy service. NO new investigation -- owned by BCTC-HNX-SSL-HARDEN. ROUTED TO PO: (a) note recovered analysis-layer on that task; (b) mint PLAN-ONLY B-05 check-refinement (read analysis-layer SLA gate, not raw-push, for event-driven bctc); (c) decide if ops post-deploy freshness verification is warranted per spawn-ops-for-user-gate directive. RESOLVE only after BCTC-HNX-SSL-HARDEN deploy + raw-push freshness confirmed green (per PO's own resolution condition)."
+      },
+      {
+        "id": "router-esc4-fu-drainesc-severity-gate-20260704T0016Z",
+        "ts": "2026-07-04T00:19:52Z",
+        "from": "router",
+        "to": "po",
+        "type": "repair_task_request",
+        "summary": "drain-esc-dispatch.md spawns Opus deep-dive regardless of ESC severity; post-ESC4-fix INFO-severity ESC-4 fires still trigger expensive Opus spawn. Gate Opus spawn on severity floor (>=HIGH). Flagged by agent-father (out of bctc-analyst zone). DEDUP-first before minting backlog.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": null,
+        "source_task": "ESC4-HEURISTIC-FIX-TAXBASIS-SOE"
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
@@ -10170,6 +10182,35 @@
           "vps-scripts/hnx-ca-bundle.pem@073fa27f"
         ],
         "ops_verify_note": "[router 2026-07-03T23:17Z] ops-vps-fetch LIVE VPS verification COMPLETE + router RAW-verified. deploy_shipped=YES (/root/fetch-bctc.sh + /root/hnx-ca-bundle.pem present, no -k/--insecure, byte-identical to repo, CA MD5 17bf45efde60f44e244fda6bdf7d0e89==repo). Live fetch verify-ON (curl --cacert, no -k) on real HNX Q1/2026 filing: RC=200 SIZE=536103 EXIT=0, valid PDF -> AC MET. PO 'deploy unconfirmed / 0-fetch-24h' concern RESOLVED (deploy confirmed live; 0-fetch = benign metric-visibility gap on empty 6h queues). Security debt eliminated: insecure curl -k no longer on the VPS fetch leg. Findings fb366a1ec (router-verified: 2 files, 0 UUID, 0 leaked VPS creds). NOTE: ops-vps-fetch committed WITHOUT commit-mutex (no gateway binding; INV-GATEWAY-1 specialist exception) AND pushed to origin/main directly (full local backlog now synced, origin==HEAD) -- a fleet-push-boundary deviation, harmless (clean commit) but flagged."
+      },
+      {
+        "id": "ESC4-HEURISTIC-FIX-TAXBASIS-SOE",
+        "title": "ESC-4 heuristic fix: (1) tax-basis formula -> consistent pre-tax basis all-tickers; (2) SOE-conglomerate exception class HIGH->INFO — breaks active redispatch loop c070->c072",
+        "owner": "agent-father",
+        "status": "DONE_VERIFIED",
+        "zone": "docs/agents/ (bctc-analyst flow + agent doc)",
+        "type": "FIX",
+        "priority": "HIGH",
+        "created_at": "2026-07-02T22:24:53Z",
+        "status_note": "Src signal rtr-esc4-heuristic-fix-20260702T2203 (market-analyst GVR ESC-4 deep-dive NOT-REAL 55%). AC-1 (all-tickers formula fix): ESC-4 non-op share must use consistent pre-tax basis (PretaxProfit-OperatingProfit)/PretaxProfit, NOT (NetProfit-OperatingProfit)/NetProfit which mixes an after-tax numerator against pre-tax operating profit; verify GVR true non-op share is ~41.3% not 23.5%. AC-2 (SOE exception class): state-own >90% + land-bank/plantation + net-cash tickers (GVR/PHR/DPR/TRC/HRC) get an auto structural-context tag that downgrades ESC-4 severity HIGH->INFO until line items are available. DONE: bctc-analyst heuristic doc updated AND no new ESC-4 HIGH signal fires for the GVR-class (active redispatch loop c070->c072 stops) for 24h. next_agent=agent-father. || [po router-dispatched 2026-07-04] GVR Q1-2026 ESC-4 4th-emission Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9) CONFIRMS this fix: legitimate non-operating income, NOT an extraction artifact. Cascade verified to the dong (PBT 2960.9 bridges op 1923.3 -> net 2513.4; other-income pre-tax 1037.6 = 35.0% of PBT vs the 23.5% net/after-tax mixed value AC-1 flags; eff-tax 15.1%; B/S 87178.9 = 64984.7 + 22194.2). Fired 4x on byte-identical data 06-30..07-03 = escalation ceiling reached. This SUPERSEDES the deep-dive's narrower content-hash-whitelist rec (AC-2 SOE-class HIGH->INFO downgrade is durable across ALL future GVR quarters, not just Q1). Caveat: thu-nhap-khac footnote composition unavailable (prose empty) = the 0.1 confidence gap. PO verdict: whitelist-accepted, linked to this row (no new row minted).",
+        "next_agent": "agent-father",
+        "po_promoted_at": "2026-07-03T23:57:27Z",
+        "po_promote_note": "[po router-dispatched 2026-07-04] PROMOTED backlog->ready. Recurring ESC-4 bug at escalation ceiling: fired 4x on byte-identical GVR data 06-30..07-03, active redispatch loop c070->c072. Spec confirmed by Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9): other-income pre-tax 1037.6 = 35.0% of PBT vs 23.5% net/after-tax mixed value AC-1 flags. Route agent-father (agent-heuristic-doc change, NOT prod code). AC-1 tax-basis formula (PretaxProfit-OperatingProfit)/PretaxProfit all-tickers. AC-2 SOE-conglomerate (GVR/PHR/DPR/TRC/HRC) structural-context tag HIGH->INFO. DoD: bctc-analyst heuristic doc updated + no new ESC-4 HIGH for GVR-class 24h.",
+        "dispatched_at": "2026-07-04T00:05:33Z",
+        "dispatched_by": "router",
+        "dispatch_note": "[router 23:37Z tick] dispatched to agent-father (bg a42e8913) -- AC-1 pretax-basis non-op-income formula ((PBT-OpProfit)/PBT) + AC-2 SOE-conglomerate class (GVR/PHR/DPR/TRC/HRC) HIGH->INFO exception in bctc-analyst heuristic doc.",
+        "done_verified": true,
+        "verified_by": "router",
+        "verified_at": "2026-07-04T00:19:52Z",
+        "verifying_agent": "agent-father",
+        "commit_sha": "5f0979bd9",
+        "deliverables": [
+          "docs/agents/bctc-analyst/flow/esc-4-nonop-heuristic.md@5f0979bd9",
+          "docs/agents/bctc-analyst/flow/main.md@5f0979bd9",
+          "docs/agents/bctc-analyst/flow/stage-pass-pl.md@5f0979bd9",
+          "docs/agents/bctc-analyst/flow/deep-dive-opus.md@5f0979bd9"
+        ],
+        "verify_note": "[router 2026-07-04T00:16Z] agent-father (a42e8913) done + router RAW-verified. AC-1 MET: non_operating_share=(PretaxProfit-OperatingProfit)/PretaxProfit (both pre-tax, never NPAT; retires mixed-basis calc that false-HIGH'd GVR 23.5% vs true 35.0% PBT). AC-2 MET: SOE-conglomerate class {GVR,PHR,DPR,TRC,HRC} HIGH->INFO on non-op arm only (related_party_pct unaffected), still escalates at INFO. End-to-end at 3 call sites (main.md gate severity=context.severity OR HIGH no-hardcode + stage-pass-pl T2 + deep-dive-opus handler). Line caps 81/128/62/132<200. Commit 5f0979bd9 UUID-clean (0 on added lines). INV-GATEWAY-1: agent-father gateway-less -> direct explicit-path commit, no mutex, NO push (8 ahead, fleet-push owns). Follow-up (dev-team zone) emitted to signal_queue: drain-esc-dispatch.md un-gated Opus spawn on INFO severity."
       }
     ],
     "head": {
@@ -10181,25 +10222,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "ESC4-HEURISTIC-FIX-TAXBASIS-SOE",
-        "title": "ESC-4 heuristic fix: (1) tax-basis formula -> consistent pre-tax basis all-tickers; (2) SOE-conglomerate exception class HIGH->INFO — breaks active redispatch loop c070->c072",
-        "owner": "agent-father",
-        "status": "IN_PROGRESS",
-        "zone": "docs/agents/ (bctc-analyst flow + agent doc)",
-        "type": "FIX",
-        "priority": "HIGH",
-        "created_at": "2026-07-02T22:24:53Z",
-        "status_note": "Src signal rtr-esc4-heuristic-fix-20260702T2203 (market-analyst GVR ESC-4 deep-dive NOT-REAL 55%). AC-1 (all-tickers formula fix): ESC-4 non-op share must use consistent pre-tax basis (PretaxProfit-OperatingProfit)/PretaxProfit, NOT (NetProfit-OperatingProfit)/NetProfit which mixes an after-tax numerator against pre-tax operating profit; verify GVR true non-op share is ~41.3% not 23.5%. AC-2 (SOE exception class): state-own >90% + land-bank/plantation + net-cash tickers (GVR/PHR/DPR/TRC/HRC) get an auto structural-context tag that downgrades ESC-4 severity HIGH->INFO until line items are available. DONE: bctc-analyst heuristic doc updated AND no new ESC-4 HIGH signal fires for the GVR-class (active redispatch loop c070->c072 stops) for 24h. next_agent=agent-father. || [po router-dispatched 2026-07-04] GVR Q1-2026 ESC-4 4th-emission Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9) CONFIRMS this fix: legitimate non-operating income, NOT an extraction artifact. Cascade verified to the dong (PBT 2960.9 bridges op 1923.3 -> net 2513.4; other-income pre-tax 1037.6 = 35.0% of PBT vs the 23.5% net/after-tax mixed value AC-1 flags; eff-tax 15.1%; B/S 87178.9 = 64984.7 + 22194.2). Fired 4x on byte-identical data 06-30..07-03 = escalation ceiling reached. This SUPERSEDES the deep-dive's narrower content-hash-whitelist rec (AC-2 SOE-class HIGH->INFO downgrade is durable across ALL future GVR quarters, not just Q1). Caveat: thu-nhap-khac footnote composition unavailable (prose empty) = the 0.1 confidence gap. PO verdict: whitelist-accepted, linked to this row (no new row minted).",
-        "next_agent": "agent-father",
-        "po_promoted_at": "2026-07-03T23:57:27Z",
-        "po_promote_note": "[po router-dispatched 2026-07-04] PROMOTED backlog->ready. Recurring ESC-4 bug at escalation ceiling: fired 4x on byte-identical GVR data 06-30..07-03, active redispatch loop c070->c072. Spec confirmed by Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9): other-income pre-tax 1037.6 = 35.0% of PBT vs 23.5% net/after-tax mixed value AC-1 flags. Route agent-father (agent-heuristic-doc change, NOT prod code). AC-1 tax-basis formula (PretaxProfit-OperatingProfit)/PretaxProfit all-tickers. AC-2 SOE-conglomerate (GVR/PHR/DPR/TRC/HRC) structural-context tag HIGH->INFO. DoD: bctc-analyst heuristic doc updated + no new ESC-4 HIGH for GVR-class 24h.",
-        "dispatched_at": "2026-07-04T00:05:33Z",
-        "dispatched_by": "router",
-        "dispatch_note": "[router 23:37Z tick] dispatched to agent-father (bg a42e8913) -- AC-1 pretax-basis non-op-income formula ((PBT-OpProfit)/PBT) + AC-2 SOE-conglomerate class (GVR/PHR/DPR/TRC/HRC) HIGH->INFO exception in bctc-analyst heuristic doc."
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
