@@ -1,0 +1,53 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "tick": "2026-07-04T12:00Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      {
+        "slot_id": "news-scout-offhours",
+        "agent": "news-scout",
+        "flow_path": "docs/agents/news-scout/flow/main.md"
+      },
+      {
+        "slot_id": "market-watcher-offhours",
+        "agent": "market-watcher",
+        "flow_path": "docs/agents/market-watcher/flow/main.md"
+      },
+      {
+        "slot_id": "alert-commander-critical",
+        "agent": "alert-commander",
+        "flow_path": "docs/agents/alert-commander/flow/main.md"
+      }
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "last_fired_timestamp": "2026-07-04T12:05:23Z",
+    "devq": 5,
+    "signal_backlog": 2,
+    "note": "0 */4 offhours gatherer trio, cadence-due (snapToCronBoundary 08:00->12:00); adaptive mode; freshness-downgrade N/A (signal_backlog=2, calendar unknown); gateway REACHED (3x slot-claim claimed:true); emit set stale_warning:true for next tick (benign, cycle_snapshot_promoted:false)"
+  },
+  "priority": "low",
+  "createdAt": "2026-07-04T12:05:38Z",
+  "_processed": {
+    "fingerprint": "39283ef20d25d4bcd46053360cd910feb1cb02bbd2283239823be0be29801d1e",
+    "processedAt": "2026-07-04T12:11:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
