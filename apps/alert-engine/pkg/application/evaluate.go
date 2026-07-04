@@ -1,170 +1,77 @@
-// Package application — EvaluateAlertUseCase orchestration.
+// Package application — EvaluateAlertUseCase adapter.
 package application
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/vn-market-intelligence/alert-engine/pkg/domain"
-	cg "github.com/vn-market-intelligence/alert-engine/pkg/primitive/cooldown-gate"
-	dkb "github.com/vn-market-intelligence/alert-engine/pkg/primitive/dedup-key-builder"
+	alertpipeline "github.com/vn-market-intelligence/alert-engine/pkg/module/alert_pipeline"
 )
 
-// EvaluateAlertUseCase orchestrates the alert pipeline primitives + repository ports.
-// Dedup (fingerprint), cooldown, and daily-cap checks are now delegated to the
-// extracted primitives (dedup-key-builder, cooldown-gate) from the alert_pipeline
-// module (G5a rewire — superseded domain service functions removed).
-// No direct I/O — only ports (dependency injection).
+// EvaluateAlertUseCase is a thin adapter over the tested alert_pipeline module
+// (FACTORY-ALERT-consolidate-dual-engines). It owns no evaluation logic of its
+// own — mute/dedup/cooldown/classify/store/telegram all live in
+// alertpipeline.Pipeline (pkg/module/alert_pipeline), which is the single
+// tested source of truth. This type exists only to:
+//
+//  1. translate the HTTP-facing EvaluateAlertRequest/Response DTOs to/from the
+//     domain-level AlertRequest/pipeline.Result shapes callers already depend
+//     on (router.go, clients.ts-compatible JSON field names), and
+//  2. inject the wall clock (`time.Now()`) at the one composition boundary
+//     that is allowed to read it — the pipeline itself stays deterministic.
+//
+// Previously this type contained a full second inline orchestration
+// (mute→dedup→cooldown→store→telegram) that duplicated alertpipeline.Pipeline
+// with several behavioral divergences (ordering, store timing, no severity
+// validation, inline channel routing). That duplication is retired; see
+// docs/architecture/microservice/alert-engine/usecases.md for the
+// reconciliation record.
 type EvaluateAlertUseCase struct {
-	alertRepo domain.AlertRepositoryPort
-	mutePort  domain.MutePort
-	telegram  domain.TelegramPort
+	pipeline *alertpipeline.Pipeline
 }
 
-// NewEvaluateAlertUseCase creates a new use case with injected ports.
-func NewEvaluateAlertUseCase(
-	alertRepo domain.AlertRepositoryPort,
-	mutePort domain.MutePort,
-	telegram domain.TelegramPort,
-) *EvaluateAlertUseCase {
-	return &EvaluateAlertUseCase{
-		alertRepo: alertRepo,
-		mutePort:  mutePort,
-		telegram:  telegram,
-	}
+// NewEvaluateAlertUseCase creates a new use case adapter over an already-wired
+// Pipeline (constructed by the composition root, cmd/server/main.go).
+func NewEvaluateAlertUseCase(pipeline *alertpipeline.Pipeline) *EvaluateAlertUseCase {
+	return &EvaluateAlertUseCase{pipeline: pipeline}
 }
 
-// Execute evaluates an alert request, applying mute/dedup/cooldown rules.
-// Uses alert_pipeline primitives (dedup-key-builder, cooldown-gate) instead of
-// the deprecated domain service functions (G5a rewire).
+// Execute evaluates an alert request by delegating to Pipeline.Run and mapping
+// the result onto EvaluateAlertResponse (the shape callers — router.go,
+// clients.ts field names — depend on).
 func (uc *EvaluateAlertUseCase) Execute(ctx context.Context, req EvaluateAlertRequest) (EvaluateAlertResponse, error) {
-	stock := req.Stock
-	severity := domain.AlertSeverity(req.Severity)
-	message := req.Message
 	signalTypes := req.SignalTypes
 	if signalTypes == nil {
 		signalTypes = []string{}
 	}
-	actionCode := req.ActionCode
-	sendTelegram := req.SendTelegram
 
-	cfg := domain.DefaultCooldownConfig
+	domainReq := domain.AlertRequest{
+		Stock:        req.Stock,
+		Severity:     domain.AlertSeverity(req.Severity),
+		Message:      req.Message,
+		SignalTypes:  signalTypes,
+		ActionCode:   req.ActionCode,
+		SendTelegram: req.SendTelegram,
+	}
 
-	// Fingerprint via dedup-key-builder primitive (G5a).
-	fingerprint := dkb.BuildKey(stock, signalTypes, message)
-
-	// 1. Mute check
-	muted, err := uc.mutePort.IsStockMuted(stock)
+	res, err := uc.pipeline.Run(ctx, domainReq, time.Now())
 	if err != nil {
-		return EvaluateAlertResponse{}, fmt.Errorf("mute check: %w", err)
-	}
-	if muted {
-		return EvaluateAlertResponse{
-			Fired:       false,
-			CooldownSec: 0,
-			Reason:      stock + " is muted",
-			Fingerprint: fingerprint,
-			Code:        stock,
-		}, nil
+		return EvaluateAlertResponse{}, err
 	}
 
-	// 2. Dedup check (last 60 min) via HasDuplicateFingerprint repo port (G5a).
-	isDup, err := uc.alertRepo.HasDuplicateFingerprint(fingerprint, 60)
-	if err != nil {
-		return EvaluateAlertResponse{}, fmt.Errorf("dedup check: %w", err)
+	resp := EvaluateAlertResponse{
+		Fired:        res.Fired,
+		CooldownSec:  res.CooldownSec,
+		Reason:       res.Reason,
+		Fingerprint:  res.Fingerprint,
+		Code:         req.Stock,
+		TelegramSent: res.TelegramSent,
 	}
-	if isDup {
-		return EvaluateAlertResponse{
-			Fired:       false,
-			CooldownSec: cfg.CooldownMinutes * 60,
-			Reason:      "duplicate fingerprint within 60min",
-			Fingerprint: fingerprint,
-			Code:        stock,
-		}, nil
+	// alert_id: "Persisted alert row ID (empty string when not fired)" (openapi.yaml).
+	if res.Fired {
+		resp.AlertID = strconv.FormatInt(res.AlertID, 10)
 	}
-
-	// 3. Cooldown / daily cap check via cooldown-gate primitive (G5a).
-	recentAlerts, err := uc.alertRepo.GetRecentAlerts(stock, cfg.CooldownMinutes)
-	if err != nil {
-		return EvaluateAlertResponse{}, fmt.Errorf("get recent alerts (cooldown): %w", err)
-	}
-	recentInputs := make([]cg.RecentAlert, len(recentAlerts))
-	for i, r := range recentAlerts {
-		recentInputs[i] = cg.RecentAlert{
-			Stocks:      r.Stocks,
-			SignalTypes: r.SignalTypes,
-			TriggeredAt: r.TriggeredAt,
-		}
-	}
-	suppressResult := cg.Check(
-		cg.AlertInput{
-			Stock:       stock,
-			Severity:    string(severity),
-			SignalTypes: signalTypes,
-			ActionCode:  actionCode,
-		},
-		recentInputs,
-		cg.CooldownConfig{
-			CooldownMinutes:         cfg.CooldownMinutes,
-			MaxAlertsPerStockPerDay: cfg.MaxAlertsPerStockPerDay,
-		},
-		time.Now(),
-	)
-	if suppressResult.Suppress {
-		return EvaluateAlertResponse{
-			Fired:       false,
-			CooldownSec: cfg.CooldownMinutes * 60,
-			Reason:      suppressResult.Reason,
-			Fingerprint: fingerprint,
-			Code:        stock,
-		}, nil
-	}
-
-	// 4. Store the alert
-	now := time.Now().UTC().Format(time.RFC3339Nano)
-	alertID, err := uc.alertRepo.StoreAlert(domain.StoredAlert{
-		Stocks:      stock,
-		SignalTypes: joinSignalTypes(signalTypes),
-		Message:     message,
-		Fingerprint: fingerprint,
-		Severity:    severity,
-		TriggeredAt: now,
-	})
-	if err != nil {
-		return EvaluateAlertResponse{}, fmt.Errorf("store alert: %w", err)
-	}
-
-	// 5. Send to Telegram if requested
-	telegramSent := false
-	if sendTelegram {
-		channel := domain.ChannelWork
-		if severity == domain.SeverityCritical || severity == domain.SeverityHigh {
-			channel = domain.ChannelMarket
-		}
-		text := fmt.Sprintf("[%s] %s: %s", string(severity), stock, message)
-		sent, _ := uc.telegram.Send(ctx, channel, text)
-		telegramSent = sent
-	}
-
-	return EvaluateAlertResponse{
-		Fired:        true,
-		CooldownSec:  cfg.CooldownMinutes * 60,
-		Reason:       "alert fired",
-		Fingerprint:  fingerprint,
-		AlertID:      fmt.Sprintf("%d", alertID),
-		Code:         stock,
-		TelegramSent: telegramSent,
-	}, nil
-}
-
-func joinSignalTypes(signalTypes []string) string {
-	if len(signalTypes) == 0 {
-		return ""
-	}
-	result := signalTypes[0]
-	for _, s := range signalTypes[1:] {
-		result += "," + s
-	}
-	return result
+	return resp, nil
 }

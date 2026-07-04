@@ -35,6 +35,20 @@ type Result struct {
 	Fingerprint string
 	Channel     domain.TelegramChannel
 	Reason      string
+	// CooldownSec is the configured cooldown window in seconds, always populated
+	// (constant per Pipeline instance — mirrors api/openapi.yaml
+	// EvaluateAlertResponse.cooldown_sec: "Cooldown window in seconds applied to
+	// this stock", not a per-branch value).
+	CooldownSec int
+	// AlertID is the persisted row ID from AlertRepositoryPort.StoreAlert.
+	// Zero when Fired is false (nothing was stored).
+	AlertID int64
+	// TelegramSent reports whether TelegramPort.Send actually dispatched the
+	// message. False whenever req.SendTelegram is false (routing was never
+	// attempted) or the port reported a skip/failure. Decoupled from Fired —
+	// per api/openapi.yaml: "fired: True if the alert passed all gates and was
+	// recorded" vs "telegram_sent: True if the alert was dispatched to Telegram".
+	TelegramSent bool
 }
 
 // Run executes the full pipeline story for one alert request:
@@ -44,17 +58,29 @@ type Result struct {
 //  3. check duplicate       → AlertRepositoryPort.HasDuplicateFingerprint
 //  4. check cooldown        → cooldown-gate primitive over AlertRepositoryPort.GetRecentAlerts
 //  5. check mute            → MutePort.IsStockMuted
-//  6. format message        → inline
-//  7. route to channel      → TelegramPort.Send
+//  6. store the fired alert → AlertRepositoryPort.StoreAlert (fired = gates
+//     passed AND recorded; does NOT depend on telegram delivery)
+//  7. format message        → inline
+//  8. route to channel      → TelegramPort.Send, only when req.SendTelegram
 //
 // now is injected for determinism — the cooldown primitive never reads the wall
 // clock. Any short-circuit (invalid severity, dedup hit, cooldown suppression,
 // mute) returns Fired=false with a reason and routes nothing.
+//
+// Store-before-route (reconciled from the retired EvaluateAlertUseCase inline
+// orchestration, FACTORY-ALERT-consolidate-dual-engines): a fired alert is
+// recorded regardless of whether Telegram delivery succeeds, so a Telegram
+// outage or missing credentials (silent skip, AC-13) can never re-open the
+// dedup/cooldown window for a signal that already fired. TelegramPort errors
+// are treated the same as a false return (best-effort — never fails the whole
+// evaluation over delivery mechanics).
 func (p *Pipeline) Run(ctx context.Context, req domain.AlertRequest, now time.Time) (Result, error) {
+	cooldownSec := p.cfg.CooldownMinutes * 60
+
 	// 1. classify severity.
 	cls := sc.Classify(string(req.Severity))
 	if !cls.Valid {
-		return Result{Fired: false, Reason: fmt.Sprintf("invalid severity: %q", req.Severity)}, nil
+		return Result{Fired: false, Reason: fmt.Sprintf("invalid severity: %q", req.Severity), CooldownSec: cooldownSec}, nil
 	}
 	channel := domain.TelegramChannel(cls.Channel)
 
@@ -67,7 +93,7 @@ func (p *Pipeline) Run(ctx context.Context, req domain.AlertRequest, now time.Ti
 		return Result{}, fmt.Errorf("dedup check: %w", err)
 	}
 	if dup {
-		return Result{Fired: false, Fingerprint: fingerprint, Reason: "duplicate: fingerprint seen recently"}, nil
+		return Result{Fired: false, Fingerprint: fingerprint, Reason: "duplicate: fingerprint seen recently", CooldownSec: cooldownSec}, nil
 	}
 
 	// 4. check cooldown over recent alerts.
@@ -98,7 +124,7 @@ func (p *Pipeline) Run(ctx context.Context, req domain.AlertRequest, now time.Ti
 		now,
 	)
 	if gate.Suppress {
-		return Result{Fired: false, Fingerprint: fingerprint, Reason: gate.Reason}, nil
+		return Result{Fired: false, Fingerprint: fingerprint, Reason: gate.Reason, CooldownSec: cooldownSec}, nil
 	}
 
 	// 5. check mute.
@@ -107,40 +133,48 @@ func (p *Pipeline) Run(ctx context.Context, req domain.AlertRequest, now time.Ti
 		return Result{}, fmt.Errorf("mute check: %w", err)
 	}
 	if muted {
-		return Result{Fired: false, Fingerprint: fingerprint, Reason: "muted: stock is muted"}, nil
+		return Result{Fired: false, Fingerprint: fingerprint, Reason: "muted: stock is muted", CooldownSec: cooldownSec}, nil
 	}
 
-	// 6. format message.
-	text := formatMessage(req, cls.Severity)
-
-	// 7. route to channel.
-	sent, err := p.telegram.Send(ctx, channel, text)
-	if err != nil {
-		return Result{}, fmt.Errorf("route to telegram: %w", err)
-	}
-	if !sent {
-		return Result{Fired: false, Fingerprint: fingerprint, Channel: channel, Reason: "route skipped by telegram port"}, nil
-	}
-
-	// Persist the fired alert (best-effort record of state).
-	_, err = p.repo.StoreAlert(domain.StoredAlert{
-		Stocks:         req.Stock,
-		SignalTypes:    joinSignals(req.SignalTypes),
-		Message:        req.Message,
-		Fingerprint:    fingerprint,
-		Severity:       req.Severity,
-		TriggeredAt:    now.Format(time.RFC3339),
-		SentToTelegram: 1,
+	// 6. persist the fired alert BEFORE attempting delivery — fired+recorded is
+	// the gate outcome, not a function of Telegram delivery (see doc comment).
+	alertID, err := p.repo.StoreAlert(domain.StoredAlert{
+		Stocks:      req.Stock,
+		SignalTypes: joinSignals(req.SignalTypes),
+		Message:     req.Message,
+		Fingerprint: fingerprint,
+		Severity:    req.Severity,
+		TriggeredAt: now.Format(time.RFC3339),
+		// SentToTelegram reflects the pre-send state (0) here; the fingerprint
+		// and cooldown window are what matter for suppression — no second write
+		// exists to flip this bit after a successful send (would re-introduce a
+		// second I/O path the tested module doesn't own).
+		SentToTelegram: 0,
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("store alert: %w", err)
 	}
 
+	// 7. format message.
+	text := formatMessage(req, cls.Severity)
+
+	// 8. route to channel — opt-in via req.SendTelegram (mirrors
+	// EvaluateAlertRequest.sendTelegram, default false). Best-effort: any error
+	// from the port is treated as "not sent", never fails the evaluation.
+	telegramSent := false
+	if req.SendTelegram {
+		sent, sendErr := p.telegram.Send(ctx, channel, text)
+		telegramSent = sendErr == nil && sent
+	}
+
 	return Result{
-		Fired:       true,
-		Fingerprint: fingerprint,
-		Channel:     channel,
-		Reason:      "alert fired",
+		Fired:        true,
+		Fingerprint:  fingerprint,
+		Channel:      channel,
+		Reason:       "alert fired",
+		CooldownSec:  cooldownSec,
+		AlertID:      alertID,
+		TelegramSent: telegramSent,
 	}, nil
 }
 

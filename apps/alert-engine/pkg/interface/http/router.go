@@ -18,7 +18,12 @@ import (
 // UseCaseExecutor is the interface the handler depends on.
 // Allows test injection of a mock use case.
 type UseCaseExecutor interface {
-	Execute(ctx interface{ Deadline() (interface{}, bool); Done() <-chan struct{}; Err() error; Value(interface{}) interface{} }, req application.EvaluateAlertRequest) (application.EvaluateAlertResponse, error)
+	Execute(ctx interface {
+		Deadline() (interface{}, bool)
+		Done() <-chan struct{}
+		Err() error
+		Value(interface{}) interface{}
+	}, req application.EvaluateAlertRequest) (application.EvaluateAlertResponse, error)
 }
 
 // Handler holds the router and dependencies.

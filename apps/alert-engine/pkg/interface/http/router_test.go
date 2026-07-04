@@ -13,6 +13,7 @@ import (
 
 	"github.com/vn-market-intelligence/alert-engine/pkg/application"
 	"github.com/vn-market-intelligence/alert-engine/pkg/domain"
+	alertpipeline "github.com/vn-market-intelligence/alert-engine/pkg/module/alert_pipeline"
 )
 
 // ── fake use case ─────────────────────────────────────────────────────────────
@@ -33,8 +34,8 @@ type fakeAlertRepo struct{}
 func (r *fakeAlertRepo) GetRecentAlerts(_ string, _ int) ([]domain.StoredAlert, error) {
 	return nil, nil
 }
-func (r *fakeAlertRepo) CountTodayAlerts(_ string) (int, error)          { return 0, nil }
-func (r *fakeAlertRepo) StoreAlert(_ domain.StoredAlert) (int64, error)  { return 1, nil }
+func (r *fakeAlertRepo) CountTodayAlerts(_ string) (int, error)                { return 0, nil }
+func (r *fakeAlertRepo) StoreAlert(_ domain.StoredAlert) (int64, error)        { return 1, nil }
 func (r *fakeAlertRepo) HasDuplicateFingerprint(_ string, _ int) (bool, error) { return false, nil }
 
 type fakeMutePort struct{}
@@ -47,8 +48,15 @@ func (tg *fakeTelegramPort) Send(_ context.Context, _ domain.TelegramChannel, _ 
 	return true, nil
 }
 
+// newUseCase wires a Pipeline over the given ports and returns the thin
+// EvaluateAlertUseCase adapter — mirrors cmd/server/main.go's composition.
+func newUseCase(repo alertpipeline.AlertRepositoryPort, mute alertpipeline.MutePort, tg alertpipeline.TelegramPort) *application.EvaluateAlertUseCase {
+	pipeline := alertpipeline.New(repo, mute, tg, domain.DefaultCooldownConfig)
+	return application.NewEvaluateAlertUseCase(pipeline)
+}
+
 func makeRouter() http.Handler {
-	uc := application.NewEvaluateAlertUseCase(&fakeAlertRepo{}, &fakeMutePort{}, &fakeTelegramPort{})
+	uc := newUseCase(&fakeAlertRepo{}, &fakeMutePort{}, &fakeTelegramPort{})
 	return NewRouter(uc)
 }
 
@@ -152,7 +160,7 @@ func TestEvaluate_NormalisesStockToUppercase(t *testing.T) {
 	var capturedStock string
 	// Build custom use case that captures stock
 	repo := &captureAlertRepo{captureStock: &capturedStock}
-	uc := application.NewEvaluateAlertUseCase(repo, &fakeMutePort{}, &fakeTelegramPort{})
+	uc := newUseCase(repo, &fakeMutePort{}, &fakeTelegramPort{})
 	router := NewRouter(uc)
 
 	body := `{"stock":"vcb","severity":"high","message":"test"}`

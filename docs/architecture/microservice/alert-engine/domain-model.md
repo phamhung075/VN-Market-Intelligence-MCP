@@ -13,11 +13,14 @@ type TelegramChannel string // "market" | "work" | "bug"
 ### AlertRequest
 ```go
 type AlertRequest struct {
-    Stock       string
-    Severity    AlertSeverity
-    Message     string
-    SignalTypes []string
-    ActionCode  string
+    Stock        string
+    Severity     AlertSeverity
+    Message      string
+    SignalTypes  []string
+    ActionCode   string
+    SendTelegram bool // added FACTORY-ALERT-consolidate-dual-engines — opt-in
+                       // Telegram routing, default false; mirrors
+                       // EvaluateAlertRequest.sendTelegram (openapi.yaml)
 }
 ```
 
@@ -40,16 +43,6 @@ type StoredAlert struct {
     Severity       AlertSeverity
     TriggeredAt    string        // ISO 8601
     SentToTelegram int           // 0 | 1
-}
-```
-
-### EvaluateAlertResult
-```go
-type EvaluateAlertResult struct {
-    Fired       bool
-    CooldownSec int
-    Reason      string
-    Fingerprint string
 }
 ```
 
@@ -79,26 +72,22 @@ type TelegramPort interface {
 }
 ```
 
-## Domain Service Functions
-- **File:** `apps/alert-engine/pkg/domain/services.go`
+## Domain Service Functions — superseded by primitives
 
-### computeFingerprint(alert)
-- Uses DJB2 hash: `djb2(stock|sorted(signalTypes)|message[0:50])`
-- Returns 8-char hex string (deterministic)
+The original inline domain functions (`computeFingerprint`, `shouldSuppressAlert`,
+`IsDuplicate`) were extracted into deterministic, wall-clock-free primitives and
+are no longer on the live path:
 
-### shouldSuppressAlert(alert, recentAlerts, config)
-**Suppression rules (checked in order):**
+| Old function | Live replacement |
+|---|---|
+| `computeFingerprint` | `pkg/primitive/dedup-key-builder.BuildKey` |
+| `shouldSuppressAlert` | `pkg/primitive/cooldown-gate.Check` (+ `pkg/primitive/signal-classifier.Classify` for severity) |
+| `IsDuplicate` | `AlertRepositoryPort.HasDuplicateFingerprint` (dedup check moved to the repository) |
 
-1. **Critical bypass:** severity='critical' AND actionCode!='MACRO' → **no suppression**
-2. **Cooldown window:** For each recent alert in window (default 30 min):
-   - If stocks match AND signal overlap → **suppress**
-   - Signal overlap = empty signalTypes OR any signal in common
-3. **Daily cap:** count >= maxAlertsPerStockPerDay (default 3) → **suppress**
-
-Returns `SuppressResult{Suppress bool, Reason string}`
-
-### IsDuplicate(fingerprint string, recentFingerprints []string) bool
-Simple slice membership check within 60-minute window.
+The originals are frozen, unimported dead code at
+`apps/alert-engine/pkg/domain/_deprecated/services_v1.go` (verified
+FACTORY-ALERT-consolidate-dual-engines: zero non-test imports across the repo)
+— kept only as a historical reference, never resurrected.
 
 ## Error Types
 - `AlertEngineError` (base, `pkg/domain/errors.go`)

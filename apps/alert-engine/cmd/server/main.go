@@ -57,10 +57,13 @@ func main() {
 	telegram := infrastructure.NewTelegramClient(cfg)
 
 	// Wire alert_pipeline module — G3: primary orchestrator, injected ports.
-	_ = alertpipeline.New(alertRepo, muteRepo, telegram, domain.DefaultCooldownConfig)
+	// FACTORY-ALERT-consolidate-dual-engines: this is now actually used (no
+	// more `_ =` discard) — the use case below is a thin adapter over it.
+	pipeline := alertpipeline.New(alertRepo, muteRepo, telegram, domain.DefaultCooldownConfig)
 
-	// Wire use case (HTTP handler delegates here; shares infra adapters).
-	uc := application.NewEvaluateAlertUseCase(alertRepo, muteRepo, telegram)
+	// Wire use case adapter (HTTP handler delegates here; preserves the
+	// EvaluateAlertResponse shape existing callers depend on).
+	uc := application.NewEvaluateAlertUseCase(pipeline)
 
 	// Build HTTP router
 	router := httphandler.NewRouter(uc)

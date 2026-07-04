@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-ALERT-consolidate-dual-engines",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-ALERT-consolidate-dual-engines — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-04T10:21:45Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FACTORY-ALERT-consolidate-dual-engines closed done_verified; idle, awaiting next tick / BOUNDED-1 pickup.",
+    "updated_at": "2026-07-04T10:49:18Z",
+    "updated_by": "dev-team (QA closeout)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10834,6 +10834,18 @@
         "resolved_at": "2026-07-04T09:53:24Z",
         "resolved_by": "dev-team (router bounded-1 pre-verify)",
         "resolution": "STALE DUPLICATE — no change needed. Router raw-verified: agentSignalStore.ts:343 postSignal destructuring already reads `confidence_score = null` (FIX-SIGNAL-CONFIDENCE-DEFAULT-50 comment). Shipped by commit 4f5192c50 (wire real confidence into ALL postSignal producers); S2-DATA-HONESTY QA-closed d1e3d146b. No =50 default remains repo-wide. Closed WITHOUT worker spend — router pre-verify pruned the churn. 2nd consecutive stale pick from this cluster; see backlog-hygiene sweep recommendation."
+      },
+      {
+        "id": "FACTORY-ALERT-consolidate-dual-engines",
+        "title": "Consolidate alert evaluation onto the tested module; thin the use case to an adapter",
+        "priority": "P0",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-consolidate-dual-engines",
+        "status": "DONE_VERIFIED",
+        "resolution": "Consolidated dual alert engines onto tested alert_pipeline.Pipeline; EvaluateAlertUseCase thinned to adapter. QA PASS: build/vet/test green, sandbox 11/11, golangci-lint 0 issues. Store-timing decouple from Telegram delivery confirmed sound vs openapi.yaml with no live regression.",
+        "resolved_at": "2026-07-04T10:49:18Z",
+        "resolved_by": "dev-team QA closeout (qa gate PASS)"
       }
     ],
     "head": {
@@ -10845,22 +10857,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "title": "Consolidate alert evaluation onto the tested module; thin the use case to an adapter",
-        "priority": "P0",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-ALERT-consolidate-dual-engines",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-consolidate-dual-engines",
-        "promoted_at": "2026-07-04T10:21:39Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-04T10:21:45Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {

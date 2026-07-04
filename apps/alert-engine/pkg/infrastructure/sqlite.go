@@ -273,17 +273,17 @@ func (r *SQLiteMuteRepository) IsStockMuted(stock string) (bool, error) {
 
 // PendingOutcomeAlert is a raw alert row with NULL outcome.
 type PendingOutcomeAlert struct {
-	ID            int64
-	Stocks        string
-	SignalTypes   string
-	Message       string
-	Fingerprint   string
-	Severity      string
-	TriggeredAt   string
+	ID             int64
+	Stocks         string
+	SignalTypes    string
+	Message        string
+	Fingerprint    string
+	Severity       string
+	TriggeredAt    string
 	SentToTelegram int
-	Outcome       *string
-	OutcomeAt     *string
-	OutcomeDetail *string
+	Outcome        *string
+	OutcomeAt      *string
+	OutcomeDetail  *string
 }
 
 // ReadPendingOutcomeAlerts returns alerts with NULL outcome created within last 90 days.

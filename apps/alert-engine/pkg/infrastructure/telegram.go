@@ -15,10 +15,10 @@ import (
 
 // TelegramClient implements domain.TelegramPort.
 type TelegramClient struct {
-	botToken string
-	marketID string
-	workID   string
-	bugID    string
+	botToken   string
+	marketID   string
+	workID     string
+	bugID      string
 	httpClient *http.Client
 }
 

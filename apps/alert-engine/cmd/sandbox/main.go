@@ -465,6 +465,12 @@ func executeAlertPipeline(data []byte) (bool, error) {
 		Message:     s.Input.Alert.Message,
 		SignalTypes: s.Input.Alert.SignalTypes,
 		ActionCode:  s.Input.Alert.ActionCode,
+		// SendTelegram: true to exercise the full pipeline story (fingerprint →
+		// dedup → cooldown → mute → route), matching the harness's intent
+		// ("route to market, fired=true" in alert-pipeline-golden.json).
+		// FACTORY-ALERT-consolidate-dual-engines: firing itself no longer
+		// depends on this flag or on delivery outcome.
+		SendTelegram: true,
 	}, now)
 	if err != nil {
 		return false, fmt.Errorf("alert-pipeline: run: %w", err)

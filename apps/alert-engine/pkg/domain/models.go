@@ -37,6 +37,11 @@ type AlertRequest struct {
 	Message     string
 	SignalTypes []string
 	ActionCode  string
+	// SendTelegram opts into Telegram routing when the alert fires. Mirrors
+	// EvaluateAlertRequest.SendTelegram (default false — matches api/openapi.yaml
+	// EvaluateAlertRequest.sendTelegram default). When false, the pipeline still
+	// evaluates + stores a fired alert; it just never calls TelegramPort.Send.
+	SendTelegram bool
 }
 
 // CooldownConfig holds cooldown and daily-cap parameters.
@@ -55,20 +60,12 @@ var DefaultCooldownConfig = CooldownConfig{
 
 // StoredAlert is a persisted alert record.
 type StoredAlert struct {
-	ID            int64
-	Stocks        string
-	SignalTypes   string // comma-separated
-	Message       string
-	Fingerprint   string
-	Severity      AlertSeverity
-	TriggeredAt   string // ISO 8601
-	SentToTelegram int   // 0 | 1
-}
-
-// EvaluateAlertResult is the output of the domain evaluation.
-type EvaluateAlertResult struct {
-	Fired       bool
-	CooldownSec int
-	Reason      string
-	Fingerprint string
+	ID             int64
+	Stocks         string
+	SignalTypes    string // comma-separated
+	Message        string
+	Fingerprint    string
+	Severity       AlertSeverity
+	TriggeredAt    string // ISO 8601
+	SentToTelegram int    // 0 | 1
 }

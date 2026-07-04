@@ -3,12 +3,12 @@ package application
 
 // EvaluateAlertRequest is the inbound request body for POST /evaluate.
 type EvaluateAlertRequest struct {
-	Stock         string   `json:"stock"`
-	Severity      string   `json:"severity"`
-	Message       string   `json:"message"`
-	SignalTypes   []string `json:"signalTypes,omitempty"`
-	ActionCode    string   `json:"actionCode,omitempty"`
-	SendTelegram  bool     `json:"sendTelegram,omitempty"`
+	Stock        string   `json:"stock"`
+	Severity     string   `json:"severity"`
+	Message      string   `json:"message"`
+	SignalTypes  []string `json:"signalTypes,omitempty"`
+	ActionCode   string   `json:"actionCode,omitempty"`
+	SendTelegram bool     `json:"sendTelegram,omitempty"`
 }
 
 // EvaluateAlertResponse is the JSON response for POST /evaluate.
