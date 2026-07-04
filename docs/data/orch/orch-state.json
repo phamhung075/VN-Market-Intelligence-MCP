@@ -253,11 +253,11 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DRAINESC-SEVERITY-RECURRENCE-GATE",
-    "next_agent": "architect",
-    "next_action": "SPRINT-S FIX-DRAINESC-SEVERITY-RECURRENCE-GATE dispatched to architect (bg) at :07 tick. Awaiting architect blueprint -> pm decompose -> dev implement -> qa. Cures recurring per-cycle Opus esc-deep-dive waste (MBB 4x byte-identical). SF-1 held by router across the chain; concurrent dev-team cron ticks SKIP (single-flight).",
-    "updated_at": "2026-07-04T00:50:37Z",
+    "next_agent": "pm",
+    "next_action": "architect blueprint DONE (commit d29da2653, router RAW-verified UUID-clean, dev impl files untouched). pm decomposes docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md (9 ACs; GATE-A severity floor >=HIGH via row.severity + static per-ESC-id fallback; GATE-B two-tier board-row-exists + signals_processed count>=2 bootstrap; zone cross-service) into ONE atomic dev task. Files for dev: docs/agents/dev-team/flow/drain-esc-dispatch.md + scripts/agents-flow/drain-signals.js. Chain: pm -> dev -> qa. SF-1 held by router.",
+    "updated_at": "2026-07-04T01:14:59Z",
     "updated_by": "router",
-    "note": "00:45Z: FIX-DRAINESC ready->in_progress, architect dispatched. WIP=1. Chain driven by router via completion notifications."
+    "note": "2026-07-04T01:14:59Z: architect->pm handoff. Row owner=pm (architect-set); head advanced to pm by router."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
