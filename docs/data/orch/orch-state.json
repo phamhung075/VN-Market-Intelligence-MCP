@@ -291,8 +291,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-03T19:49:38Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-04T00:37:21Z",
+    "_updated_by": "dev-team/drain-0036z",
     "archive": [],
     "rows": [
       {
@@ -552,9 +552,25 @@
         "type": "repair_task_request",
         "summary": "drain-esc-dispatch.md spawns Opus deep-dive regardless of ESC severity; post-ESC4-fix INFO-severity ESC-4 fires still trigger expensive Opus spawn. Gate Opus spawn on severity floor (>=HIGH). Flagged by agent-father (out of bctc-analyst zone). DEDUP-first before minting backlog.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "RESOLVED",
         "payload_ref": null,
-        "source_task": "ESC4-HEURISTIC-FIX-TAXBASIS-SOE"
+        "source_task": "ESC4-HEURISTIC-FIX-TAXBASIS-SOE",
+        "resolved_at": "2026-07-04T00:43:06Z",
+        "resolution": "Triaged into FIX-DRAINESC-SEVERITY-RECURRENCE-GATE (ready[], SPRINT-S->architect) and returned in this tick's BATCH."
+      },
+      {
+        "id": "dt-escdispatch-mbb-batch-reflow-20260704T0036Z",
+        "ts": "2026-07-04T00:37:21Z",
+        "from": "dev-team/esc-dispatch",
+        "to": "po",
+        "type": "repair_task_request",
+        "summary": "MBB Q1-2026 ESC-2 balance-sheet imbalance (14.9%, assets 666711 vs liab 567490) is the 4th consecutive esc-deep-dive redispatch (c074/c075/c076/this) with BYTE-IDENTICAL data since published 2026-06-07 — root-caused as STALE EXTRACTION (report predates FIX-BCTC-BANK-SUMMARY-MAPPING merge a46131cf/2cd9e105), NOT a fresh fundamentals event. Router SKIPPED the 5th Opus deep-dive (same diagnosis, zero new info). ACTION: batch reflow/re-refine bank reports published before 2026-07-01 onto the served DB. DEDUP-first: same class + same user-gated W5 live-deploy+reingest as W5-FU-CTG-REFINE-96e36139 (CTG total_assets=0). Consider generalizing W5 into a batch-reflow task (MBB+CTG+any pre-fix bank report), and gate bctc-analyst re-emission once a reflow task is queued (stops per-cycle ESC noise).",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/processed/bctc-analyst-20260704T001900Z.json",
+        "source_task": "esc-deepdive:MBB:Q1-2026:ESC-2",
+        "resolved_at": "2026-07-04T00:43:06Z",
+        "resolution": "DEDUP — REFLOW-MBB-Q1-2026 already tracks this (backlog, BLOCKED on user-gated mcp-server rebuild, related to W5-FU-CTG-REFINE). Per-cycle recurrence is a symptom cured by FIX-DRAINESC-SEVERITY-RECURRENCE-GATE. No new mint; deploy-gated reflow grooms with W5."
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
@@ -10223,7 +10239,37 @@
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
     "in_progress": [],
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-DRAINESC-SEVERITY-RECURRENCE-GATE",
+        "type": "SPRINT-S",
+        "size": "S",
+        "priority": "high",
+        "status": "READY",
+        "owner": "po",
+        "next_agent": "architect",
+        "zone": "cross-service",
+        "title": "FIX — gate drain-esc-dispatch Opus spawn on severity floor (>=HIGH) + recurrence/known-root DEDUP guard",
+        "created_at": "2026-07-04T00:43:06Z",
+        "created_by": "po",
+        "origin_signal": "router-esc4-fu-drainesc-severity-gate-20260704T0016Z",
+        "related": [
+          "REFLOW-MBB-Q1-2026",
+          "W5-FU-CTG-REFINE-96e36139",
+          "FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH"
+        ],
+        "files_hint": [
+          "docs/agents/dev-team/flow/drain-esc-dispatch.md",
+          "scripts/agents-flow/drain-signals.js"
+        ],
+        "root_cause": "drain-esc-dispatch.md Step 3 spawns model=opus bctc-analyst for EVERY esc-deep-dive-request. Two defects: (1) NO severity floor — post-ESC4-fix INFO/LOW fires still spawn Opus; (2) NO recurrence/DEDUP guard — a byte-identical redispatch with a KNOWN root cause (MBB Q1-2026 ESC-2 = 4th consecutive cycle since 2026-06-07, stale-extraction pre-FIX-BCTC-BANK-SUMMARY-MAPPING a46131cf, already tracked by REFLOW-MBB-Q1-2026) re-spawns a wasteful Opus run every cycle. Router has been SKIPPING these by hand.",
+        "fix_spec": "Insert two gates in drain-esc-dispatch.md BETWEEN Step 2 (mutex claim) and Step 3 (spawn). GATE-A severity floor: effective_severity = row.severity (or max tier across all_esc_fired); if < HIGH -> do NOT spawn Opus, mark row terminal (RESOLVED for source=dashboard, no-op for source=file), release guard_key, log '[ESC-DISPATCH] SKIP <sev> below HIGH floor'. GATE-B recurrence/known-root DEDUP: if an OPEN board task already exists for {ticker,quarter} (REFLOW-<ticker>-<quarter> or any open row referencing guard_key/ticker+quarter) OR the semantic content-fingerprint (sha256 of ticker+quarter+trigger_id+context, NOT the timestamped envelope drain-signals.js line 58 hashes) has been seen N>=2 times -> route to reflow: skip Opus, mark row terminal, release guard_key, log '[ESC-DISPATCH] recurrence known-root — routed to REFLOW-<ticker>, Opus skipped'. ARCHITECT DECIDES state location: board-row-exists check (no new state, cheapest) vs a content-fingerprint redispatch_count in signals.db (drain-signals.js already fingerprints the envelope; add a semantic-content variant).",
+        "generic_mandate": "Gate on a COMPUTED severity floor + a SEMANTIC content signature — NEVER hardcode MBB/CTG/any ticker (feedback: no FPT-overfit). Applies to all tickers/quarters/triggers. Preserve the spawn-mutex + guard_key release contract; NEVER suppress a genuine FRESH high-severity finding.",
+        "verification_gate": "Inject synthetic esc-deep-dive-request cases: (a) severity<HIGH -> assert NO Opus spawn + row terminal; (b) HIGH severity, byte-identical content on 2nd+ dispatch WITH an open REFLOW board row -> assert NO Opus spawn + routed-to-reflow log; (c) HIGH severity, NOVEL content, no board row -> assert Opus DOES spawn (no false suppression). Test co-located with the drain-signals contract tests.",
+        "acceptance": "MBB Q1-2026 ESC-2 (and any pre-fix byte-identical bank redispatch) no longer triggers an Opus deep-dive while REFLOW-<ticker> is open; sub-HIGH fires never spawn Opus; a genuine novel HIGH finding still spawns. No esc-dispatch signal_queue churn for 7d.",
+        "status_note": "MINTED po 2026-07-04T00:42Z from router-dispatched repair_task_request (router-esc4-fu-drainesc-severity-gate-20260704T0016Z). NOT deploy-gated (flow-doc + drain script only) — leading actionable candidate this tick. Behavioral GATE change to a live dispatcher -> routed via architect (light design: pick GATE-B state location) before dev, hence SPRINT-S not bare FIX."
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
