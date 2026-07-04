@@ -7720,6 +7720,40 @@
         "title": "get_foreign_room tool output exceeds tool-result token budget -> alert-commander cannot consume (recurring 3x)",
         "zone": "apps/mcp-server/",
         "status_note": "[po-triage 2026-07-04T04:07Z tick, router-dispatched] Source: telegram report #3502 (from alert-commander, MEDIUM performance_issue). RECURRING 3rd consecutive cycle (2026-07-03 20:15, 2026-07-04 00:18, 2026-07-04 04:00). NOT a dup of ALT-PERF-01-FIX (that=alertDigest FIRE-TIMING <10min; this=get_foreign_room OUTPUT SIZE). Root cause: get_foreign_room returns the full foreign-room table inline so the MCP tool-result payload exceeds the token cap and alert-commander's cycle cannot ingest it. Fix (dev-mcp-server): trim/paginate/summarize the get_foreign_room tool result (top-N by |net| + rollup + fetch-more handle) -- never dump the full universe inline; derive limits, no hardcode. PLAN-ONLY: filed BACKLOG, next dev-team cron promotes via po->ba->pm->dev (recurring-bug top priority). AC: alert-commander get_foreign_room cycle completes with no token-budget error for 3 consecutive cycles AND result stays under the tool-result token cap."
+      },
+      {
+        "id": "FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND",
+        "title": "Terminal-status rows strand in task_board.backlog[] — invisible to every cold-eviction path (permanent hot-file bloat)",
+        "owner": "po",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "priority": "P2",
+        "type": "FIX",
+        "plan_only": true,
+        "created_at": "2026-07-04T06:21:48Z",
+        "depends": [],
+        "evidence": {
+          "stranded_done_in_backlog": 31,
+          "backlog_total": 406,
+          "sample_ids": [
+            "DTS-ST1-MIGRATION4-DDL",
+            "TASK_1983",
+            "TASK_1998",
+            "BA-FRONTEND-FRESHNESS-TRANSPARENCY",
+            "FIX-COWORK-CHEF-SAMETICK-MUTEX"
+          ],
+          "oldest_age_days_approx": 7
+        },
+        "root_cause": "Writers flip a backlog[] row status to a TERMINAL_SET value (DONE etc.) IN-PLACE instead of relocating it to task_board.done[]. Both eviction paths — scripts/orch-cold-evict.sh AND dev-team post-cycle Step 4.2 (HSC-6) — scan ONLY done[]/done_verified[]/active_sprints[]/sprint_goal.entries[], NEVER backlog[]. So terminal rows parked in backlog[] are never archived and accumulate permanently in the hot file (backlog is the largest array).",
+        "fix_options": [
+          "DURABLE (root): make the terminal-transition writer relocate the row backlog[]->done[] on flip, so HSC-6 archives it normally",
+          "ONE-TIME: conservation-guarded jq relocate the current stranded DONE rows backlog[]->done[] via orch-apply.sh (careful: rows lack created_at/updated_at, so stamp completed_at at relocation for the 7-day age gate)",
+          "BACKSTOP: extend the HSC-6 predicate (post-cycle Step 4.2 + orch-cold-evict.sh Pass-1) to also scan backlog[] for TERMINAL_SET statuses"
+        ],
+        "acceptance": "0 rows with status in {DONE,DONE_VERIFIED} remain in .task_board.backlog[]; a write-time guard or eviction-hook backstop prevents re-accumulation (CANCELLED tombstones are a groomer judgment call, out of default scope)",
+        "verification_gate": "After fix: count of backlog[] rows whose status is DONE or DONE_VERIFIED equals 0, AND a re-run of dev-team post-cycle Step 4.2 archives them to the monthly cold file.",
+        "generic_mandate": "Fix the relocation/eviction path GENERICALLY (any terminal transition on a backlog row is relocated; or the hook scans backlog[] too) — NOT a one-off script that clears only todays stranded set.",
+        "note": "PLAN-ONLY (detected structural gap, not a dispatch-ready sprint). Minted by po dev-team cron tick 2026-07-04T06:07Z. Corrects the tick-inputs framing that these 31 DONE rows were directly cold-evictable: they are eviction-blind because they sit in backlog[], which no eviction hook scans. Provenance: docs/agents/dev-team/flow/post-cycle.md Step 4.2 + scripts/orch-cold-evict.sh (both done[]/done_verified[]-scoped)."
       }
     ],
     "closed_sprints": [
