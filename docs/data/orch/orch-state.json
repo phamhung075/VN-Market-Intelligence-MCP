@@ -253,11 +253,11 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DRAINESC-SEVERITY-RECURRENCE-GATE",
-    "next_agent": "pm",
-    "next_action": "architect blueprint DONE (commit d29da2653, router RAW-verified UUID-clean, dev impl files untouched). pm decomposes docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md (9 ACs; GATE-A severity floor >=HIGH via row.severity + static per-ESC-id fallback; GATE-B two-tier board-row-exists + signals_processed count>=2 bootstrap; zone cross-service) into ONE atomic dev task. Files for dev: docs/agents/dev-team/flow/drain-esc-dispatch.md + scripts/agents-flow/drain-signals.js. Chain: pm -> dev -> qa. SF-1 held by router.",
-    "updated_at": "2026-07-04T01:14:59Z",
+    "next_agent": "developer",
+    "next_action": "pm decomposition DONE (commit f0010b46a, router RAW-verified UUID-clean: only orch-state.json, acceptance=array of 9 distinct ACs AC1..AC9, mandates carry no-hardcode/never-suppress/count==1/injection-arg). Atomic dev task IMPL-DRAIN-GATE-SEVERITY-RECURRENCE in ready[] (next_agent=developer, owner=developer). developer implements GATE-A (severity floor >=HIGH) + GATE-B (two-tier board-row-exists + signals_processed count>=2 bootstrap) in docs/agents/dev-team/flow/drain-esc-dispatch.md (BETWEEN Step 2 mutex and Step 3 Opus spawn) + scripts/agents-flow/drain-signals.js (Tier-2 read-only count helper, NEVER the section-0a write path). Design ref: docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md. Chain: developer -> qa. SF-1 held by router.",
+    "updated_at": "2026-07-04T01:21:09Z",
     "updated_by": "router",
-    "note": "2026-07-04T01:14:59Z: architect->pm handoff. Row owner=pm (architect-set); head advanced to pm by router."
+    "note": "2026-07-04T01:21:09Z: pm->developer handoff. IMPL-DRAIN-GATE ready (next_agent=developer); head advanced to developer by router."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
