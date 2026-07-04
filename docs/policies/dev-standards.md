@@ -1,6 +1,6 @@
 # Developer Standards
 
-<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). -->
+<!-- size-justification: 140L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section incl. maintenance clause (+15L, user directive). SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1 2026-07-04: CANONICAL pointer for the dev-team idle-capacity backlog pickup scripts (+11L). -->
 
 ## Script Persistence — scripts/, never /tmp
 
@@ -196,6 +196,18 @@ CLAUDE_BIN=/path/to/claude bash scripts/cowork-fb-daily-firer.sh
 # Slots: fb-daily (09:15Z Mon-Fri) + fb-weekend (13:13Z Sat-Sun)
 # OPS install: launchctl load ~/Library/LaunchAgents/com.vn-market.fb-daily-firer.plist
 ```
+
+**CANONICAL: Dev-team idle-capacity backlog pickup (SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1)**
+```bash
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+# 1. Promote (backlog[] -> ready[], top-priority unsupervised BACKLOG/TODO row, no-op if WIP>=1):
+jq --arg now "$NOW" -f scripts/devteam-backlog-promote-bounded1.jq \
+  docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
+# 2. Claim (ready[] -> in_progress[] + .head, no-op if nothing bounded-1-stamped waiting):
+jq --arg now "$NOW" -f scripts/devteam-backlog-claim-bounded1.jq \
+  docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
+```
+Owning flow doc: `docs/agents/dev-team/flow/main.md` § Idle-capacity backlog pickup (BOUNDED-1), Step 0b head-idle fall-through, before Step 1 PO triage. BOUNDED-1 gate: WIP (`ready[].length + in_progress[].length`) must be `< 1` — this lane is capped at ONE task in flight (user-gated 2026-07-04, distinct from the WIP≤2 human/router-supervised budget). Both scripts are idempotent no-ops outside their gate condition; neither has a hardcoded task ID; both write ONLY through `orch-apply.sh`. `supervised: true` backlog rows are NEVER auto-promoted.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 
