@@ -251,13 +251,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "BCTC-HNX-SSL-HARDEN done_verified (ops-vps-fetch live VPS verify: deploy shipped, curl --cacert no -k, RC=200/536KB valid PDF, AC MET; router RAW-verified fb366a1ec). WIP=0 idle. Durable FP fix FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT remains BACKLOG (next_agent=ba, co-fix with B-11). Draining 4 pending signals (GVR ESC-4 deep_dive_result -> PO whitelist + 2 stale price-anomaly + 1 cowork record) -> PO triage this tick.",
-    "updated_at": "2026-07-03T23:20:40Z",
+    "status": "coordinating",
+    "active_task_id": "ESC4-HEURISTIC-FIX-TAXBASIS-SOE",
+    "next_agent": "agent-father",
+    "next_action": "dev-team tick 23:37Z: PO batch promoted 2. (1) ESC4-HEURISTIC-FIX-TAXBASIS-SOE dispatched to agent-father (bg, in_progress) -- awaiting completion for RAW-verify. (2) W5 deploy-gate to ops DENIED by auto-mode classifier [Production Deploy] -- needs explicit user authorization; W5 rows parked in review with deploy_gate_note. WIP=1.",
+    "updated_at": "2026-07-04T00:05:33Z",
     "updated_by": "router",
-    "note": "23:17Z: BCTC-HNX-SSL-HARDEN review->done_verified (ops live VPS verification, AC MET; router RAW-verified). Proceeding to signal drain + PO triage."
+    "note": "23:37Z tick execute: ESC4->in_progress (agent-father bg); W5 deploy user-gated (classifier denial)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10181,13 +10181,12 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "id": "ESC4-HEURISTIC-FIX-TAXBASIS-SOE",
         "title": "ESC-4 heuristic fix: (1) tax-basis formula -> consistent pre-tax basis all-tickers; (2) SOE-conglomerate exception class HIGH->INFO — breaks active redispatch loop c070->c072",
         "owner": "agent-father",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "docs/agents/ (bctc-analyst flow + agent doc)",
         "type": "FIX",
         "priority": "HIGH",
@@ -10195,9 +10194,13 @@
         "status_note": "Src signal rtr-esc4-heuristic-fix-20260702T2203 (market-analyst GVR ESC-4 deep-dive NOT-REAL 55%). AC-1 (all-tickers formula fix): ESC-4 non-op share must use consistent pre-tax basis (PretaxProfit-OperatingProfit)/PretaxProfit, NOT (NetProfit-OperatingProfit)/NetProfit which mixes an after-tax numerator against pre-tax operating profit; verify GVR true non-op share is ~41.3% not 23.5%. AC-2 (SOE exception class): state-own >90% + land-bank/plantation + net-cash tickers (GVR/PHR/DPR/TRC/HRC) get an auto structural-context tag that downgrades ESC-4 severity HIGH->INFO until line items are available. DONE: bctc-analyst heuristic doc updated AND no new ESC-4 HIGH signal fires for the GVR-class (active redispatch loop c070->c072 stops) for 24h. next_agent=agent-father. || [po router-dispatched 2026-07-04] GVR Q1-2026 ESC-4 4th-emission Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9) CONFIRMS this fix: legitimate non-operating income, NOT an extraction artifact. Cascade verified to the dong (PBT 2960.9 bridges op 1923.3 -> net 2513.4; other-income pre-tax 1037.6 = 35.0% of PBT vs the 23.5% net/after-tax mixed value AC-1 flags; eff-tax 15.1%; B/S 87178.9 = 64984.7 + 22194.2). Fired 4x on byte-identical data 06-30..07-03 = escalation ceiling reached. This SUPERSEDES the deep-dive's narrower content-hash-whitelist rec (AC-2 SOE-class HIGH->INFO downgrade is durable across ALL future GVR quarters, not just Q1). Caveat: thu-nhap-khac footnote composition unavailable (prose empty) = the 0.1 confidence gap. PO verdict: whitelist-accepted, linked to this row (no new row minted).",
         "next_agent": "agent-father",
         "po_promoted_at": "2026-07-03T23:57:27Z",
-        "po_promote_note": "[po router-dispatched 2026-07-04] PROMOTED backlog->ready. Recurring ESC-4 bug at escalation ceiling: fired 4x on byte-identical GVR data 06-30..07-03, active redispatch loop c070->c072. Spec confirmed by Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9): other-income pre-tax 1037.6 = 35.0% of PBT vs 23.5% net/after-tax mixed value AC-1 flags. Route agent-father (agent-heuristic-doc change, NOT prod code). AC-1 tax-basis formula (PretaxProfit-OperatingProfit)/PretaxProfit all-tickers. AC-2 SOE-conglomerate (GVR/PHR/DPR/TRC/HRC) structural-context tag HIGH->INFO. DoD: bctc-analyst heuristic doc updated + no new ESC-4 HIGH for GVR-class 24h."
+        "po_promote_note": "[po router-dispatched 2026-07-04] PROMOTED backlog->ready. Recurring ESC-4 bug at escalation ceiling: fired 4x on byte-identical GVR data 06-30..07-03, active redispatch loop c070->c072. Spec confirmed by Opus deep-dive bca-ddres-20260703T215200Z (conf 0.9): other-income pre-tax 1037.6 = 35.0% of PBT vs 23.5% net/after-tax mixed value AC-1 flags. Route agent-father (agent-heuristic-doc change, NOT prod code). AC-1 tax-basis formula (PretaxProfit-OperatingProfit)/PretaxProfit all-tickers. AC-2 SOE-conglomerate (GVR/PHR/DPR/TRC/HRC) structural-context tag HIGH->INFO. DoD: bctc-analyst heuristic doc updated + no new ESC-4 HIGH for GVR-class 24h.",
+        "dispatched_at": "2026-07-04T00:05:33Z",
+        "dispatched_by": "router",
+        "dispatch_note": "[router 23:37Z tick] dispatched to agent-father (bg a42e8913) -- AC-1 pretax-basis non-op-income formula ((PBT-OpProfit)/PBT) + AC-2 SOE-conglomerate class (GVR/PHR/DPR/TRC/HRC) HIGH->INFO exception in bctc-analyst heuristic doc."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -10264,7 +10267,8 @@
         "po_triage_20260703T0507_note": "Held pending SPIKE-BCTC-CTG-BS-REALDATA-ROOT — the classifier root (FIX-BCTC-BANK-BS-SECTION-CLASSIFIER) was re-scoped to an architect real-data recon after its behavioral DoD FAILED. This row stays BLOCKED transitively (row -> classifier -> SPIKE).",
         "po_triage_deploy_gate_note": "[po 2026-07-03T08:57Z] CODE BLOCKER CLEARED: FIX-BCTC-BANK-BS-COLUMN-ORDER is DONE_VERIFIED (qa PASS 66dfe89a5, router RAW-verified; supersedes FIX-BCTC-BANK-BS-SECTION-CLASSIFIER, folds its 3 RC fixes 2c7fb5b0 as non-regressions). depends[] (SECTION-CLASSIFIER done+superseded; W2 ROW-REPAIR 2cd9e105 + W4 AGGREGATOR-FIXTURES a46131cf were W1-W4 done_verified at PARTIAL sprint close) are all satisfied. This row is NO LONGER a code/qa task — the ONLY remaining gate is DEPLOY-then-operate: (1) ops rebuild+deploy the COLUMN-ORDER fix to live mcp-server, then (2) run finalize_bctc_refine / reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db) to unfreeze total_assets from 0, then (3) RAW-probe total_assets != 0 -> done_verified. Status kept BLOCKED so no dev coding lane dispatches before the deploy.",
         "po_unblock_dispatch_at": "2026-07-03T23:57:27Z",
-        "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate)."
+        "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate).",
+        "deploy_gate_note": "[router 2026-07-04T00:00Z] next_agent=ops but ops spawn DENIED by auto-mode permission classifier [Production Deploy]: rebuild+deploy live mcp-server + reingest CTG 96e36139-5dac-414d-8e4d-20a4725890d1 against live named-volume market.db need EXPLICIT user authorization (generic CLAUDE.md OVERRIDE 07-03 is insufficient intent). BLOCKED pending user clearing the deploy gate (run ops outside auto mode / approve the permission prompt). Code is done_verified; only deploy+operate remains."
       },
       {
         "id": "W5-FU-CTG-REFINE-96e36139",
@@ -10293,7 +10297,8 @@
         "po_triage_20260703T0507_note": "Held pending SPIKE-BCTC-CTG-BS-REALDATA-ROOT — the classifier root (FIX-BCTC-BANK-BS-SECTION-CLASSIFIER) was re-scoped to an architect real-data recon after its behavioral DoD FAILED. This row stays BLOCKED transitively (row -> classifier -> SPIKE).",
         "po_triage_deploy_gate_note": "[po 2026-07-03T08:57Z] CODE BLOCKER CLEARED: FIX-BCTC-BANK-BS-COLUMN-ORDER is DONE_VERIFIED (qa PASS 66dfe89a5, router RAW-verified; supersedes FIX-BCTC-BANK-BS-SECTION-CLASSIFIER, folds its 3 RC fixes 2c7fb5b0 as non-regressions). depends[] (SECTION-CLASSIFIER done+superseded; W2 ROW-REPAIR 2cd9e105 + W4 AGGREGATOR-FIXTURES a46131cf were W1-W4 done_verified at PARTIAL sprint close) are all satisfied. This row is NO LONGER a code/qa task — the ONLY remaining gate is DEPLOY-then-operate: (1) ops rebuild+deploy the COLUMN-ORDER fix to live mcp-server, then (2) run finalize_bctc_refine / reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db) to unfreeze total_assets from 0, then (3) RAW-probe total_assets != 0 -> done_verified. Status kept BLOCKED so no dev coding lane dispatches before the deploy.",
         "po_unblock_dispatch_at": "2026-07-03T23:57:27Z",
-        "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate)."
+        "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate).",
+        "deploy_gate_note": "[router 2026-07-04T00:00Z] next_agent=ops but ops spawn DENIED by auto-mode permission classifier [Production Deploy]: rebuild+deploy live mcp-server + reingest CTG 96e36139-5dac-414d-8e4d-20a4725890d1 against live named-volume market.db need EXPLICIT user authorization (generic CLAUDE.md OVERRIDE 07-03 is insufficient intent). BLOCKED pending user clearing the deploy gate (run ops outside auto mode / approve the permission prompt). Code is done_verified; only deploy+operate remains."
       }
     ],
     "qa": [],
