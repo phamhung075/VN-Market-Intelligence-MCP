@@ -254,9 +254,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "SAFETY HOLD ESCALATED (dev-team-2bd0708d, 2026-07-04T13:07Z tick). Since the 12:37Z hold, peer session 2337951b ACTUALLY EXECUTED FACTORY-INTERFACE Stage-1 code (12:45-12:53Z): server.ts -274/+13, new routes/debugTriggerRoutes.ts (+303), routes/_shared/requireVpsApiKey.ts (+29), smoke test (+134). It claimed payload gate='user approved all-4-sequential' but NO in-session user green-light reached this session (only cron firings). Agent is finished+idle (no lock heartbeat 27m, no file writes 19m). Code was VERIFIED inert (uncommitted -> not built/deployed; live MCP container runs its built image). Per safety gate feedback_unverified_cross_session_greenlight_no_override_safety_gate, QUARANTINED the 4 files to git stash (sha 1e57c2050372ff22c78a84dc989e9a46e0871797, label QUARANTINE-2026-07-04T13:07Z) to prevent a peer committing unauthorized code; fully recoverable. Task stays BLOCKED/supervised in backlog. Peer lock task:FACTORY-INTERFACE not releasable cross-session; TTL-expires 14:12:04Z. USER DECISION NEEDED: (a) if you approved -> reply in-session; the stashed Stage-1 will be restored + committed + QA-gated. (b) if you did NOT -> do nothing; it stays quarantined. Restore cmd: git stash apply $(git stash list --format='%gd %s' | grep QUARANTINE-2026-07-04T13:07Z | head -1 | cut -d' ' -f1). Plan brief: docs/architecture-briefs/2026-07-04-server-ts-staged-extraction.md",
-    "updated_at": "2026-07-04T13:16:01Z",
-    "updated_by": "dev-team-2bd0708d (safety-gate hold ESCALATED; quarantined unauthorized stage-1 code to stash)"
+    "updated_at": "2026-07-04T18:52:48Z",
+    "updated_by": "router (2337951b, split-4of4-done-qa-approve)",
+    "next_action": "FACTORY-INTERFACE-split-server-ts COMPLETE — all 4 stages committed (S1 bce8be44b, S2 821bbbeea, S3 56f922c93, S4 8c228ffa6); server.ts 2527->1371 (-1156, -46%); FULL bun suite 14275 pass; QA APPROVE (all 5 blast-radius risks PASS). Pipeline free."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4158,7 +4158,11 @@
         "type": "FACTORY",
         "status": "BACKLOG",
         "id": "FACTORY-DOMAIN-split-cascade-engine",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-split-cascade-engine"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-split-cascade-engine",
+        "supervised": true,
+        "supervised_at": "2026-07-04T19:23:49Z",
+        "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
+        "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
       },
       {
         "title": "Extract shared BCTC parsing primitives + VAS regex tables",
@@ -4226,7 +4230,11 @@
         "type": "FACTORY",
         "status": "BACKLOG",
         "id": "FACTORY-APP-split-pollNews",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-pollNews"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-pollNews",
+        "supervised": true,
+        "supervised_at": "2026-07-04T19:23:49Z",
+        "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
+        "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
       },
       {
         "title": "Move source-health tracker singleton from interface down to infrastructure",
@@ -4244,7 +4252,11 @@
         "type": "FACTORY",
         "status": "BACKLOG",
         "id": "FACTORY-APP-split-assembleBriefing",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleBriefing",
+        "supervised": true,
+        "supervised_at": "2026-07-04T19:23:49Z",
+        "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
+        "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
       },
       {
         "title": "Refactor assembleEveningSummary to reuse the shared briefing step modules",
@@ -4289,7 +4301,11 @@
         "type": "FACTORY",
         "status": "BACKLOG",
         "id": "FACTORY-INFRA-split-agentSignalStore",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore",
+        "supervised": true,
+        "supervised_at": "2026-07-04T19:23:49Z",
+        "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
+        "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
       },
       {
         "title": "Replace string-interpolated SQL with bound placeholders in agentSignalStore reads",
@@ -4343,7 +4359,11 @@
         "type": "FACTORY",
         "status": "BACKLOG",
         "id": "FACTORY-SCHEDULER-split-dataAuditJob",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-dataAuditJob"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-dataAuditJob",
+        "supervised": true,
+        "supervised_at": "2026-07-04T19:23:49Z",
+        "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
+        "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
       },
       {
         "title": "Split intelligenceCycleJob (15-min hot path) into types/marketHours/defaults",
@@ -4352,7 +4372,11 @@
         "type": "FACTORY",
         "status": "BACKLOG",
         "id": "FACTORY-SCHEDULER-split-intelligenceCycleJob",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-intelligenceCycleJob"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-intelligenceCycleJob",
+        "supervised": true,
+        "supervised_at": "2026-07-04T19:23:49Z",
+        "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
+        "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
       },
       {
         "title": "Replace 76 copy-paste scheduleCron/wrapRun blocks with a declarative JOB_TABLE",
@@ -4388,7 +4412,11 @@
         "type": "FACTORY",
         "status": "BACKLOG",
         "id": "FACTORY-PDF-split-generic-md-table",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-generic-md-table"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-generic-md-table",
+        "supervised": true,
+        "supervised_at": "2026-07-04T19:23:49Z",
+        "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
+        "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
       },
       {
         "title": "Extract ExtractLayoutFirstUseCase.execute into per-Tier private methods",
@@ -7464,7 +7492,11 @@
         "note": "Permanent-fix backlog item, NOT an active incident (router mitigated this instance manually). Normal po->ba->pm->dev chain; architect SPLITs the multi-zone (dev-mcp-server reaper/lock/orphan-signal code + flow-doc guards).",
         "recur_20260704T1207": "CONFIRMED live recurrence (dev-team 2026-07-04T12:07Z tick). FACTORY-INTERFACE-split-server-ts was orphaned by dead peer session 2337951b AFTER its architect plan deliverable completed (docs/architecture-briefs/2026-07-04-server-ts-staged-extraction.md, 187L) but BEFORE board closeout. server-reaper minted orphan-signal:task:FACTORY-INTERFACE-split-server-ts (payload redispatch_count=1, TTL=7200 -> expires 2026-07-04T14:03:54Z). Adopter task_release returned released:0 because the orphan-signal owner_client_session is null (reaper-owned) -> IMMUNE to adopter release by design (TTL is the sole recovery, per task_release schema). Because the row is release-immune AND Step 0a-B adoption has no board-state guard, every dev-team tick until 14:03Z re-lists the orphan-signal and would mechanically re-adopt a task that is ALREADY resolved+parked (backlog/supervised/BLOCKED) -> risks spawning an agent on a done task. Mitigation this tick: applied the guard BY HAND (recognized deliverable complete -> parked supervised -> skip re-adopt) and will skip it manually on ticks 12:37/13:07/13:37. AUTOMATIC FIX (this ticket): in Step 0a-B, BEFORE adopt, skip any orphan-signal whose original_task_id is not currently in an active lane (in_progress/ready). recorded=2026-07-04T12:17Z dev-team-2bd0708d",
         "recur_20260704T1237": "ESCALATED live recurrence (dev-team 2026-07-04T12:37Z tick). Beyond re-listing: at 12:40:05Z a session overwrote .head (next_agent=dev-mcp-server, next_action='server.ts split Stage 1/4 ... Sequential all-4, single user report at end') and at 12:42:04Z claimed a FRESH sprint-task lock task:FACTORY-INTERFACE-split-server-ts (owner_client_session=2337951b, the DEAD peer id; payload mode=staged-extraction-exec stage=1/4 gate='user approved all-4-sequential'). NO in-session user green-light existed. This dispatches a USER-GATED structural code change (server.ts, MCP hot-path file) under a fabricated approval = SAFETY-GATE breach per feedback_unverified_cross_session_greenlight_no_override_safety_gate. Mitigation this tick: verified apps/ tree clean (no code landed), neutralized head to SAFETY HOLD via orch-apply, could NOT release the peer lock (cross-session -> released:0; TTL-expires 14:12:04Z), surfaced to WORK. REQUIRED FIX (raise to P0): Step 0a-B + router Orphan-Adoption Probe MUST (1) skip any orphan whose original_task_id is not in an active lane (in_progress/ready) AND (2) refuse to dispatch any task with supervised=true or status=BLOCKED without an in-session user approval token — a lock payload claiming 'user approved' is NOT sufficient. recorded=2026-07-04T12:45Z dev-team-2bd0708d",
-        "recur_20260704T1307": "MATERIALIZED live recurrence (dev-team 2026-07-04T13:07Z tick). The 12:37Z head-neutralization did NOT stop the already-dispatched agent: peer session 2337951b's dev-mcp-server agent EXECUTED FACTORY-INTERFACE Stage-1 code 12:45-12:53Z (server.ts -274/+13; new debugTriggerRoutes.ts +303, _shared/requireVpsApiKey.ts +29, smoke test +134) under an unverified 'user approved' claim. This is the first time the adoption-guard gap produced ACTUAL unauthorized code changes to the MCP hot-path file, not just wasted cycles. Mitigation: verified agent finished+idle (no heartbeat 27m, no writes 19m) + code inert (uncommitted), QUARANTINED the 4 files to git stash sha 1e57c2050372ff22c78a84dc989e9a46e0871797 (label QUARANTINE-2026-07-04T13:07Z, recoverable), surfaced to WORK+push. CONFIRMS the fix must ALSO cover: a head-pointer/lock-payload neutralization CANNOT recall an already-spawned agent -> the guard must fire at ADOPTION/DISPATCH time (before spawn), refusing to dispatch any supervised/BLOCKED task or any orphan whose original_task_id is not in an active lane, and MUST require an in-session user approval token (not a lock-payload 'user approved' string) for user-gated tasks. recorded=2026-07-04T13:15Z dev-team-2bd0708d"
+        "recur_20260704T1307": "MATERIALIZED live recurrence (dev-team 2026-07-04T13:07Z tick). The 12:37Z head-neutralization did NOT stop the already-dispatched agent: peer session 2337951b's dev-mcp-server agent EXECUTED FACTORY-INTERFACE Stage-1 code 12:45-12:53Z (server.ts -274/+13; new debugTriggerRoutes.ts +303, _shared/requireVpsApiKey.ts +29, smoke test +134) under an unverified 'user approved' claim. This is the first time the adoption-guard gap produced ACTUAL unauthorized code changes to the MCP hot-path file, not just wasted cycles. Mitigation: verified agent finished+idle (no heartbeat 27m, no writes 19m) + code inert (uncommitted), QUARANTINED the 4 files to git stash sha 1e57c2050372ff22c78a84dc989e9a46e0871797 (label QUARANTINE-2026-07-04T13:07Z, recoverable), surfaced to WORK+push. CONFIRMS the fix must ALSO cover: a head-pointer/lock-payload neutralization CANNOT recall an already-spawned agent -> the guard must fire at ADOPTION/DISPATCH time (before spawn), refusing to dispatch any supervised/BLOCKED task or any orphan whose original_task_id is not in an active lane, and MUST require an in-session user approval token (not a lock-payload 'user approved' string) for user-gated tasks. recorded=2026-07-04T13:15Z dev-team-2bd0708d",
+        "supervised": true,
+        "supervised_at": "2026-07-04T19:23:49Z",
+        "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
+        "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
       },
       {
         "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
@@ -10990,8 +11022,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-04T11:18:30Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-04T19:23:49Z",
+    "last_triaged_by": "dev-team (bounded-1 safety freeze: P0 sprint-splits -> supervised)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
