@@ -798,8 +798,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-03T23:57:27Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-04T01:18:17Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10246,7 +10246,7 @@
         "priority": "high",
         "status": "IN_PROGRESS",
         "owner": "pm",
-        "next_agent": "pm",
+        "next_agent": "developer",
         "zone": "cross-service",
         "title": "FIX — gate drain-esc-dispatch Opus spawn on severity floor (>=HIGH) + recurrence/known-root DEDUP guard",
         "created_at": "2026-07-04T00:43:06Z",
@@ -10266,15 +10266,69 @@
         "generic_mandate": "Gate on a COMPUTED severity floor + a SEMANTIC content signature — NEVER hardcode MBB/CTG/any ticker (feedback: no FPT-overfit). Applies to all tickers/quarters/triggers. Preserve the spawn-mutex + guard_key release contract; NEVER suppress a genuine FRESH high-severity finding.",
         "verification_gate": "Inject synthetic esc-deep-dive-request cases: (a) severity<HIGH -> assert NO Opus spawn + row terminal; (b) HIGH severity, byte-identical content on 2nd+ dispatch WITH an open REFLOW board row -> assert NO Opus spawn + routed-to-reflow log; (c) HIGH severity, NOVEL content, no board row -> assert Opus DOES spawn (no false suppression). Test co-located with the drain-signals contract tests.",
         "acceptance": "MBB Q1-2026 ESC-2 (and any pre-fix byte-identical bank redispatch) no longer triggers an Opus deep-dive while REFLOW-<ticker> is open; sub-HIGH fires never spawn Opus; a genuine novel HIGH finding still spawns. No esc-dispatch signal_queue churn for 7d.",
-        "status_note": "MINTED po 2026-07-04T00:42Z from router-dispatched repair_task_request (router-esc4-fu-drainesc-severity-gate-20260704T0016Z). NOT deploy-gated (flow-doc + drain script only) — leading actionable candidate this tick. Behavioral GATE change to a live dispatcher -> routed via architect (light design: pick GATE-B state location) before dev, hence SPRINT-S not bare FIX.",
+        "status_note": "PM decomposition: atomic dev task IMPL-DRAIN-GATE-SEVERITY-RECURRENCE created in ready lane with 9 ACs. Updated next_agent to developer.",
         "dispatched_at": "2026-07-04T01:11:30Z",
         "dispatched_by": "architect",
         "dispatch_note": "[architect 2026-07-04] Design DONE. GATE-A severity floor (effective_severity = row.severity authoritative — NOT max-of-both, that would re-escalate the shipped ESC-4 AC-2 INFO downgrade; static ESC-id tier table is a fallback ONLY when row.severity missing; floor=HIGH per SignalSeverityEnum orchStateSchema.ts:172). GATE-B two-tier DEDUP: Tier-1 board-row-exists (REFLOW-<ticker>-<quarter>, self-healing on TERMINAL_SET status flip, zero new state) PRIMARY; Tier-2 signals_processed exact-context COUNT>=2 (read-only json_extract, zero schema change) SECONDARY bootstrap net. Live-verified against real signals.db: MBB Q1-2026 ESC-2 (2 byte-identical rows, REFLOW-MBB-Q1-2026 already open/BLOCKED) confirms Tier-1; GVR Q1-2026 ESC-4 (4 rows, context KEYS DRIFT every cycle) DISPROVES a naive content-hash-only design — load-bearing finding, see brief. Precise change points + jq filter + drain-signals.js CLI subcommand snippet in the brief. pm: decompose into ONE atomic dev task (both files land together, brief section 5) — files: docs/agents/dev-team/flow/drain-esc-dispatch.md + scripts/agents-flow/drain-signals.js. Zone: cross-service. Dev-agent routing flagged for pm's call (developer per zone-detect Tier-2, or dev-mcp-server per established scripts/agents-flow/ ownership precedent, po-decisions.md).",
         "architecture_brief": "docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md",
-        "handoff_ref": "docs/handoffs/TASK_FIX-DRAINESC-SEVERITY-RECURRENCE-GATE.md"
+        "handoff_ref": "docs/handoffs/TASK_FIX-DRAINESC-SEVERITY-RECURRENCE-GATE.md",
+        "decomposed_to": "IMPL-DRAIN-GATE-SEVERITY-RECURRENCE"
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "id": "IMPL-DRAIN-GATE-SEVERITY-RECURRENCE",
+        "type": "implementation",
+        "size": "S",
+        "priority": "high",
+        "status": "READY",
+        "owner": "developer",
+        "next_agent": "developer",
+        "zone": "cross-service",
+        "title": "Implement GATE-A severity floor + GATE-B recurrence DEDUP in drain-esc-dispatch",
+        "created_at": "2026-07-04T01:18:17Z",
+        "created_by": "pm",
+        "decomposed_from": "FIX-DRAINESC-SEVERITY-RECURRENCE-GATE",
+        "related": [
+          "FIX-DRAINESC-SEVERITY-RECURRENCE-GATE",
+          "REFLOW-MBB-Q1-2026",
+          "W5-FU-CTG-REFINE-96e36139"
+        ],
+        "files_hint": [
+          "docs/agents/dev-team/flow/drain-esc-dispatch.md",
+          "scripts/agents-flow/drain-signals.js"
+        ],
+        "description": "Two-gate fix for drain-esc-dispatch.md dispatcher: GATE-A blocks sub-HIGH severity (honors ESC-4 INFO downgrade); GATE-B implements two-tier recurrence DEDUP (board-row-exists check + signals_processed count-based bootstrap net) to prevent re-spawning known-root findings like MBB Q1-2026 ESC-2. Router-dispatched SPRINT-S decomposition from FIX-DRAINESC-SEVERITY-RECURRENCE-GATE.",
+        "acceptance": [
+          "AC1 (GATE-A blocks sub-HIGH): fresh esc-deep-dive-request with effective_severity < HIGH → NO Opus spawn; spawn_key AND guard_key both released; row terminal; one log line.",
+          "AC2 (GATE-A/B pass — novel HIGH, no recurrence): fresh row, effective_severity >= HIGH, no open board row, recurrence_count < 2 → Opus DOES spawn (regression guard).",
+          "AC3 (GATE-B Tier 1 blocks — concrete MBB regression fixture): same (ticker,quarter,trigger_id) recurs while REFLOW-<ticker>-<quarter> (or any non-terminal row referencing guard_key) is open → NO Opus spawn; both locks released; row terminal. Use live REFLOW-MBB-Q1-2026 + real MBB|Q1-2026|ESC-2 rows.",
+          "AC4 (GATE-B Tier 2 blocks — bootstrap net): no board row yet, but signals_processed holds >=2 rows with identical (type,ticker,quarter,trigger_id,context) → NO Opus spawn; reflow-needed-hint emitted to po; row terminal.",
+          "AC5 (GATE-B Tier 2 passes on count==1): no board row, first-ever occurrence → Opus spawns (never suppress genuine first finding).",
+          "AC6 (self-healing): board row transitions to TERMINAL_SET status → Tier 1 stops blocking even though recurrence_count remains >=2 (regression test for stuck-forever risk).",
+          "AC7 (drain-mode regression guard): node scripts/agents-flow/drain-signals.js (no args) on fixture inbox produces byte-identical stdout/DB effects pre- and post-change.",
+          "AC8 (injection safety): ticker/quarter/trigger_id/context fixtures containing single-quote do not error or inject; count query runs correctly or degrades to count=0.",
+          "AC9 (no ticker hardcode): test fixtures cover >=2 distinct tickers/quarters proving no per-ticker branching (not just MBB)."
+        ],
+        "files_to_edit": [
+          "docs/agents/dev-team/flow/drain-esc-dispatch.md",
+          "scripts/agents-flow/drain-signals.js"
+        ],
+        "mandates": [
+          "GATE-A: effective_severity = row.severity (top-level field, authoritative) with static ESC-id tier fallback (ONLY when row.severity missing); floor=HIGH from SignalSeverityEnum (orchStateSchema.ts:172); NOT max-of-both (would re-escalate shipped ESC-4 AC-2 INFO downgrade).",
+          "GATE-B Tier 1: read-only jq board-row-exists check on REFLOW-<ticker>-<quarter> (PO's live convention) with NON-terminal status per TERMINAL_SET (orchStateSchema.ts:58-64); self-healing on status flip to terminal.",
+          "GATE-B Tier 2: read-only json_extract COUNT on signals_processed table for exact (type,ticker,quarter,trigger_id,context) recurrence >=2; graceful degrade to count=0 on any degradation (db missing/locked).",
+          "Terminal Exit: both gates converge here on FAIL; release spawn_key (claimed in Step 2, must be freed immediately if gates decide not to spawn); release guard_key; mark row terminal per Step 6 pattern.",
+          "Injection safety: jq --arg/--argjson only, NEVER interpolate signal payload into /bin/sh; drain-signals.js CLI subcommand uses bound-param escaping (escB helper), matching existing sqlEsc() convention.",
+          "No ticker hardcode: zero per-ticker branching; design applies to all tickers/quarters/triggers.",
+          "NEVER suppress genuine FRESH high-severity finding: Tier-2 must pass on count==1 (first occurrence)."
+        ],
+        "design_reference": "docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md",
+        "scope": "Two files, both land together (drain-esc-dispatch.md GATE-B calls new drain-signals.js subcommand). Zone: cross-service (scripts/ + docs/agents/ flow doc). No apps/ path. No rebuild.",
+        "verification_strategy": "Inject synthetic esc-deep-dive-request cases: (a) severity<HIGH → assert no Opus spawn; (b) HIGH, identical content with open REFLOW board row → no Opus spawn; (c) HIGH, novel content, no board row → Opus spawns. Test colocated with drain-signals contract tests.",
+        "notes": "(router-dispatched) SPRINT-S decomposition. Atomic unit — both files change together. No deploy gate. Independent of currently-BLOCKED REFLOW-MBB-Q1-2026 / W5-FU-CTG-REFINE (this fix makes that row *actually* suppress redispatch once shipped, but does not depend on it landing first). Load-bearing finding: GVR|Q1-2026|ESC-4 (context keys drift every cycle) proves exact-content-hash GATE alone is insufficient — two-tier approach (board-row-exists PRIMARY, signals_processed count SECONDARY) is live-verified against real production data."
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
