@@ -254,9 +254,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "FACTORY-ALERT-consolidate-dual-engines closed done_verified; idle, awaiting next tick / BOUNDED-1 pickup.",
-    "updated_at": "2026-07-04T10:49:18Z",
-    "updated_by": "dev-team (QA closeout)"
+    "next_action": "AWAITING USER REVIEW: server.ts staged-extraction plan READY at docs/architecture-briefs/2026-07-04-server-ts-staged-extraction.md (task FACTORY-INTERFACE-split-server-ts, P0). 4 PR-sized stages, smallest-safest-first, each pnpm-check-gated; MCP tool hot path untouched throughout. NO code lands until the user approves. Task parked supervised in backlog pending that decision.",
+    "updated_at": "2026-07-04T12:17:39Z",
+    "updated_by": "dev-team-2bd0708d (orphan-adoption closeout; user-gated park)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4125,15 +4125,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-prediction-default-dedup"
       },
       {
-        "title": "Extract inline server.ts routes into routes/<name>Handler.ts (staged)",
-        "priority": "P0",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INTERFACE-split-server-ts",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-split-server-ts"
-      },
-      {
         "title": "Extract one requireVpsApiKey guard; replace 15+ copy-paste auth blocks",
         "priority": "P2",
         "zone": "mcp-server-interface",
@@ -7470,7 +7461,8 @@
           "AC3: a reaper-created null-session orphan-signal is clearable via owner_agent + payload.original_owner_client_session (no longer TTL-only)."
         ],
         "recurrence_class": "feedback_dead_worker_uncommitted_live_file_revert + feedback_orphan_signal_immune_and_adoption_no_board_guard",
-        "note": "Permanent-fix backlog item, NOT an active incident (router mitigated this instance manually). Normal po->ba->pm->dev chain; architect SPLITs the multi-zone (dev-mcp-server reaper/lock/orphan-signal code + flow-doc guards)."
+        "note": "Permanent-fix backlog item, NOT an active incident (router mitigated this instance manually). Normal po->ba->pm->dev chain; architect SPLITs the multi-zone (dev-mcp-server reaper/lock/orphan-signal code + flow-doc guards).",
+        "recur_20260704T1207": "CONFIRMED live recurrence (dev-team 2026-07-04T12:07Z tick). FACTORY-INTERFACE-split-server-ts was orphaned by dead peer session 2337951b AFTER its architect plan deliverable completed (docs/architecture-briefs/2026-07-04-server-ts-staged-extraction.md, 187L) but BEFORE board closeout. server-reaper minted orphan-signal:task:FACTORY-INTERFACE-split-server-ts (payload redispatch_count=1, TTL=7200 -> expires 2026-07-04T14:03:54Z). Adopter task_release returned released:0 because the orphan-signal owner_client_session is null (reaper-owned) -> IMMUNE to adopter release by design (TTL is the sole recovery, per task_release schema). Because the row is release-immune AND Step 0a-B adoption has no board-state guard, every dev-team tick until 14:03Z re-lists the orphan-signal and would mechanically re-adopt a task that is ALREADY resolved+parked (backlog/supervised/BLOCKED) -> risks spawning an agent on a done task. Mitigation this tick: applied the guard BY HAND (recognized deliverable complete -> parked supervised -> skip re-adopt) and will skip it manually on ticks 12:37/13:07/13:37. AUTOMATIC FIX (this ticket): in Step 0a-B, BEFORE adopt, skip any orphan-signal whose original_task_id is not currently in an active lane (in_progress/ready). recorded=2026-07-04T12:17Z dev-team-2bd0708d"
       },
       {
         "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
@@ -8103,6 +8095,26 @@
           "docs/agents/po/flow/triage-signals.md"
         ],
         "note": "Prerequisite for P1-DETECTOR-CLOSURE-TASK-ARCHIVE: when PO creates a .task_board.backlog[] FIX task FROM a signal, record the originating signal id on new task (origin_signal_id field). Closes brief §1.2 RC-DETECTOR mechanism (a)."
+      },
+      {
+        "title": "Extract inline server.ts routes into routes/<name>Handler.ts (staged)",
+        "priority": "P0",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "BLOCKED",
+        "id": "FACTORY-INTERFACE-split-server-ts",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-split-server-ts",
+        "promoted_at": "2026-07-04T11:18:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-04T11:18:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "size": "L",
+        "supervised": true,
+        "plan_ref": "docs/architecture-briefs/2026-07-04-server-ts-staged-extraction.md",
+        "adopted_at": "2026-07-04T12:17:39Z",
+        "adopted_by": "dev-team-2bd0708d-orphan-closeout",
+        "note": "PLAN COMPLETE (architect staged-extraction brief, 187L, PLANNING-ONLY). Orphaned by dead peer session 2337951b after the deliverable was produced but before board closeout; adopted + closed on the 2026-07-04T12:07Z dev-team tick. USER-GATED structural change: Stage-1 code extraction requires a genuine in-session user green-light and is NOT dispatchable unattended. Re-promote only on real user approval of the staged plan."
       }
     ],
     "closed_sprints": [
@@ -10976,7 +10988,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-04T10:21:39Z",
+    "last_triaged_at": "2026-07-04T11:18:30Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
