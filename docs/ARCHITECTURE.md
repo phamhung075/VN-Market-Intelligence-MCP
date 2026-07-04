@@ -178,7 +178,7 @@ src/
 │   ├── mcp/
 │   │   ├── server.ts                ← McpServer factory, registers tools via registry.ts
 │   │   ├── transport.ts             ← SSEServerTransport setup
-│   │   └── tools/                   ← 132 registered MCP tools (via registry.ts)
+│   │   └── tools/                   ← [generated count — see docs/data/tool-registry.json] registered MCP tools (via registry.ts)
 │   │       ├── registry.ts          ← Central tool registration, imports all module barrels
 │   │       ├── index.ts             ← Top-level barrel
 │   │       ├── market-data/         ← prices, OHLCV, foreign flow, insider, TA, price alerts

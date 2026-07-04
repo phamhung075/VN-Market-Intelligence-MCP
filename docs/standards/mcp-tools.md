@@ -4,7 +4,7 @@
 
 **Load when:** tool selection, agent rewriting, or system capability review.
 
-**Last refreshed:** 2026-06-07 (cowork-refactory-expert: discovered 161 live tools via registry scan — live count: `docs/data/project-stats.json` → `toolCount`)
+**Last refreshed:** 2026-06-07 (cowork-refactory-expert: discovered [generated count — see docs/data/tool-registry.json] live tools via registry scan — live count: `docs/data/project-stats.json` → `toolCount`)
 
 ---
 
