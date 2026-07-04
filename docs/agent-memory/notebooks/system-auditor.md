@@ -1,5 +1,4 @@
 
-
 ## c389 · 2026-07-04T01:26:29Z
 ### Audit Run Tier-1 (01:25–01:26 UTC 2026-07-04)
 - Tier: 1 | Services: 12 checked | Health: 5 probed | All UP
@@ -142,15 +141,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 
 === PROBE DONE ===
 ```
-
-## c216 · 2026-07-03T23:46:13Z
-### Audit Run Tier-1 (23:46–23:46 UTC 2026-07-03)
-- Tier: 1 | Services: 12 checked | Health: 5 probed | All UP
-- A-01 to A-11 (container status): 12/12 UP/healthy (all host_runtime_set)
-- A-12 to A-19 (health endpoints): 5/5 OK — mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend
-- A-20 (pdf-extractor multi-probe): 3/3 PASS
-- A-21 (restart count): PASS (mcp-server=1)
-- A-30 (memory): 52.18% < 85% PASS
-- A-32 (disk): 42% < 85% PASS
-- Cron health: 100+ jobs all ≥80% success
-- Anomalies: 0 | Status: HEALTHY
