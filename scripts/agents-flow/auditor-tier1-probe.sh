@@ -58,6 +58,39 @@
 # df, jq). This script NEVER runs docker restart/stop/rm/exec-with-mutation
 # anywhere, including its own test suite (auditor-tier1-probe.test.sh mocks
 # docker/curl/df — zero real container calls in tests).
+#
+# P1-IDLE-AUDITOR-TIER23-SCRIPT (2026-07-04) — `--tier=1|2|3` generalization.
+# Default (no flag) or `--tier=1`: 100% unchanged — calls run_probe() directly,
+# same {verdict,detail,last_healthy_at} JSON, same exit codes, same default
+# heartbeat file. This is the exact pre-existing Tier-1 behavior, untouched.
+#
+# `--tier=2`/`--tier=3`: routes through run_tiered_probe() instead, which
+# reuses run_probe()'s SAME 5 checks + heartbeat write (against a
+# tier-specific heartbeat file, docs/data/auditor-tier<N>-last-healthy.json,
+# same HEARTBEAT_FILE_PATH test-seam override — see _heartbeat_file_for_tier)
+# and additionally applies, INSIDE the script, the SAME ALL_GREEN +
+# fresh-heartbeat pre-spawn gate that today only exists as LLM narration in
+# cron-detect-loop/SKILL.md Job 2 (the "passive-health-masking guard"). This
+# makes the skip-spawn decision for Tier-2/3 deterministic and testable —
+# evaluated BEFORE the cron would ever launch the system-auditor subagent
+# (not merely before commit) — so a no-delta re-invocation short-circuits to
+# SKIP-SPAWN and launches nothing. Output contract for tier 2/3:
+#   {tier, checks_verdict: ALL_GREEN|FAILURE (raw 5-check result),
+#    verdict: SKIP-SPAWN|SPAWN (the cron-facing decision),
+#    detail, last_healthy_at, fresh_threshold_minutes, heartbeat_age_minutes}
+# Exit 0 = SKIP-SPAWN (checks_verdict=ALL_GREEN AND heartbeat fresh — no
+#   subagent needed this tick). Exit 1 = SPAWN (checks_verdict=FAILURE, OR
+#   ALL_GREEN but heartbeat stale/unparseable — cron should launch
+#   system-auditor AUDIT_TIER=<N>).
+# Freshness threshold = 2x each tier's own cron cadence (mirrors the "~2 tick
+# periods" heuristic already in cron-detect-loop/SKILL.md Job 2):
+#   tier1=60min (2x30min) — reference only, tier1 path never uses this since
+#     it calls run_probe() directly and leaves the freshness gate to the LLM,
+#     unchanged.
+#   tier2=480min (2x4h), tier3=2880min (2x24h).
+# Zero orch-state.json / commit interaction anywhere in this script — it only
+# ever prints a verdict line; the caller (cron LLM prompt) decides whether to
+# spawn a subagent or commit anything.
 
 set -u
 
@@ -217,8 +250,131 @@ run_probe() {
   return 1
 }
 
+# ── Tier 2/3 generalization (P1-IDLE-AUDITOR-TIER23-SCRIPT) ───────────────────
+
+# Per-tier heartbeat file path. Respects the SAME HEARTBEAT_FILE_PATH
+# test-seam override run_probe() already honors (so a caller/test pointing
+# HEARTBEAT_FILE_PATH at a fixture affects tier 2/3 exactly like tier 1
+# already does); absent an override, each tier gets its own file so Tier-1's
+# */30min heartbeat is never confused with Tier-2's 4h or Tier-3's daily one.
+_heartbeat_file_for_tier() {
+  local tier="$1"
+  if [ -n "${HEARTBEAT_FILE_PATH:-}" ]; then
+    printf '%s' "$HEARTBEAT_FILE_PATH"
+  else
+    printf '%s' "$REPO_ROOT/docs/data/auditor-tier${tier}-last-healthy.json"
+  fi
+}
+
+# 2x each tier's own cron cadence (mirrors the "~2 tick periods" heuristic
+# already used for Tier-1 in cron-detect-loop/SKILL.md Job 2).
+_fresh_threshold_minutes_for_tier() {
+  case "$1" in
+    1) echo 60 ;;
+    2) echo 480 ;;
+    3) echo 2880 ;;
+    *) return 1 ;;
+  esac
+}
+
+# ISO8601 UTC (YYYY-MM-DDTHH:MM:SSZ) -> epoch seconds. Tries GNU `date -d`
+# first (Linux/containers), falls back to BSD `date -j -f` (macOS) — same
+# GNU/BSD dual-path pattern already used in dev-team-tick-preflight.test.sh.
+_iso_to_epoch() {
+  local iso="$1" epoch
+  [ -z "$iso" ] && return 1
+  epoch=$(date -u -d "$iso" +%s 2>/dev/null) && { printf '%s' "$epoch"; return 0; }
+  epoch=$(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$iso" +%s 2>/dev/null) && { printf '%s' "$epoch"; return 0; }
+  return 1
+}
+
+# Age of an ISO8601 timestamp in whole minutes vs now. Prints nothing (and
+# returns 1) for "never"/empty/unparseable input — caller treats that as
+# stale (never claim fresh without a parseable prior heartbeat).
+_heartbeat_age_minutes() {
+  local iso="$1" epoch now
+  if [ -z "$iso" ] || [ "$iso" = "never" ]; then
+    return 1
+  fi
+  epoch=$(_iso_to_epoch "$iso") || return 1
+  now=$(date -u +%s)
+  echo $(( (now - epoch) / 60 ))
+}
+
+# Tier 2/3 entry point: reuses run_probe()'s SAME 5 checks + heartbeat write
+# (against a tier-specific file — see _heartbeat_file_for_tier), then applies
+# the ALL_GREEN + fresh-heartbeat pre-spawn gate INSIDE the script (Tier-1
+# leaves this to the cron LLM narration in cron-detect-loop/SKILL.md Job 2;
+# here it is deterministic and testable). `local HEARTBEAT_FILE=` below
+# shadows the global for the duration of this call ONLY — bash dynamic
+# scoping means run_probe() (called from inside this function) sees the
+# tier-specific path, while every other caller of run_probe() (the tier-1
+# path) is completely unaffected.
+run_tiered_probe() {
+  local tier="$1"
+  local threshold_min heartbeat_path inner_out inner_rc
+  local checks_verdict detail lh age_min="" spawn_verdict exit_code age_json
+
+  threshold_min=$(_fresh_threshold_minutes_for_tier "$tier") || {
+    jq -n --arg d "invalid --tier value (must be 1, 2, or 3): $tier" \
+      '{verdict:"ERROR", detail:$d, last_healthy_at:"never"}'
+    return 2
+  }
+
+  heartbeat_path="$(_heartbeat_file_for_tier "$tier")"
+  local HEARTBEAT_FILE="$heartbeat_path"
+
+  inner_out=$(run_probe); inner_rc=$?
+  checks_verdict=$(printf '%s' "$inner_out" | jq -r '.verdict // empty' 2>/dev/null)
+  detail=$(printf '%s' "$inner_out" | jq -r '.detail // empty' 2>/dev/null)
+  lh=$(printf '%s' "$inner_out" | jq -r '.last_healthy_at // empty' 2>/dev/null)
+
+  if [ "$checks_verdict" = "ALL_GREEN" ]; then
+    age_min=$(_heartbeat_age_minutes "$lh") || age_min=""
+    if [[ "$age_min" =~ ^[0-9]+$ ]] && [ "$age_min" -le "$threshold_min" ]; then
+      spawn_verdict="SKIP-SPAWN"; exit_code=0
+    else
+      spawn_verdict="SPAWN"; exit_code=1
+    fi
+  else
+    spawn_verdict="SPAWN"; exit_code=1
+  fi
+
+  if [[ "$age_min" =~ ^[0-9]+$ ]]; then
+    age_json="$age_min"
+  else
+    age_json="null"
+  fi
+
+  jq -n --argjson tier "$tier" --arg checks_verdict "${checks_verdict:-FAILURE}" --arg verdict "$spawn_verdict" \
+    --arg detail "$detail" --arg lh "${lh:-never}" --argjson threshold "$threshold_min" --argjson age "$age_json" \
+    '{tier:$tier, checks_verdict:$checks_verdict, verdict:$verdict, detail:$detail, last_healthy_at:$lh, fresh_threshold_minutes:$threshold, heartbeat_age_minutes:$age}'
+  return $exit_code
+}
+
 # ── Standalone execution (only when run directly, not sourced by a test harness) ──
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  run_probe
-  exit $?
+  TIER=1
+  for arg in "$@"; do
+    case "$arg" in
+      --tier=*) TIER="${arg#--tier=}" ;;
+      *) : ;; # forward-compatible: ignore unrecognized args
+    esac
+  done
+
+  case "$TIER" in
+    1)
+      run_probe
+      exit $?
+      ;;
+    2|3)
+      run_tiered_probe "$TIER"
+      exit $?
+      ;;
+    *)
+      jq -n --arg d "invalid --tier value (must be 1, 2, or 3): $TIER" \
+        '{verdict:"ERROR", detail:$d, last_healthy_at:"never"}'
+      exit 2
+      ;;
+  esac
 fi

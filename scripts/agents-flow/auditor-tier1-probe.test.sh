@@ -281,6 +281,135 @@ OUT=$(run_probe)
 check "T15 heartbeat checks object has 5 keys" "$([ "$(jq -r '.checks | keys | length' "$HEARTBEAT_FILE_PATH")" -eq 5 ] && echo true || echo false)"
 check "T15 heartbeat health_3001 == PASS after recovery" "$([ "$(jq -r '.checks.health_3001' "$HEARTBEAT_FILE_PATH")" = "PASS" ] && echo true || echo false)"
 
+# ══════════════════════════════════════════════════════════════════════════════
+# P1-IDLE-AUDITOR-TIER23-SCRIPT — Tier 2/3 generalization coverage
+# ══════════════════════════════════════════════════════════════════════════════
+# Own isolated heartbeat fixtures per tier (never the tier-1 file above) so
+# these cases can't cross-contaminate T1-T15's ALREADY-PROVEN tier-1
+# assertions (that's the regression evidence for AC3 — untouched, still
+# green above, using the exact same run_probe() these new cases don't touch).
+TIER2_HEARTBEAT="$TMPDIR_TEST/auditor-tier2-fixture.json"
+TIER3_HEARTBEAT="$TMPDIR_TEST/auditor-tier3-fixture.json"
+
+# ── T16: Tier-2 idle steady-state — invoked twice with NO underlying
+# DB/heartbeat delta between calls → BOTH calls return SKIP-SPAWN, exit 0
+# (no subagent spawn, no commit — this function makes no such calls ever).
+run_case
+rm -f "$TIER2_HEARTBEAT"
+OUT_T16A=$(HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" run_tiered_probe 2); RC_T16A=$?
+OUT_T16B=$(HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" run_tiered_probe 2); RC_T16B=$?
+V16A=$(printf '%s' "$OUT_T16A" | jq -r '.verdict')
+V16B=$(printf '%s' "$OUT_T16B" | jq -r '.verdict')
+check "T16 tier2 call A verdict == SKIP-SPAWN" "$([ "$V16A" = "SKIP-SPAWN" ] && echo true || echo false)"
+check "T16 tier2 call A exit=0" "$([ "$RC_T16A" -eq 0 ] && echo true || echo false)"
+check "T16 tier2 call B (no delta) verdict == SKIP-SPAWN" "$([ "$V16B" = "SKIP-SPAWN" ] && echo true || echo false)"
+check "T16 tier2 call B exit=0" "$([ "$RC_T16B" -eq 0 ] && echo true || echo false)"
+check "T16 tier2 output carries tier:2" "$([ "$(printf '%s' "$OUT_T16B" | jq -r '.tier')" = "2" ] && echo true || echo false)"
+check "T16 tier2 checks_verdict == ALL_GREEN under the hood" "$([ "$(printf '%s' "$OUT_T16B" | jq -r '.checks_verdict')" = "ALL_GREEN" ] && echo true || echo false)"
+check "T16 tier2 fresh_threshold_minutes == 480 (2x4h cadence)" "$([ "$(printf '%s' "$OUT_T16B" | jq -r '.fresh_threshold_minutes')" = "480" ] && echo true || echo false)"
+
+# ── T17: Tier-3 idle steady-state — same shape, 2880min (2x24h) threshold ────
+run_case
+rm -f "$TIER3_HEARTBEAT"
+OUT_T17A=$(HEARTBEAT_FILE_PATH="$TIER3_HEARTBEAT" run_tiered_probe 3); RC_T17A=$?
+OUT_T17B=$(HEARTBEAT_FILE_PATH="$TIER3_HEARTBEAT" run_tiered_probe 3); RC_T17B=$?
+check "T17 tier3 call A verdict == SKIP-SPAWN" "$([ "$(printf '%s' "$OUT_T17A" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
+check "T17 tier3 call B (no delta) verdict == SKIP-SPAWN" "$([ "$(printf '%s' "$OUT_T17B" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
+check "T17 tier3 call B exit=0" "$([ "$RC_T17B" -eq 0 ] && echo true || echo false)"
+check "T17 tier3 fresh_threshold_minutes == 2880 (2x24h cadence)" "$([ "$(printf '%s' "$OUT_T17B" | jq -r '.fresh_threshold_minutes')" = "2880" ] && echo true || echo false)"
+
+# ── T18: Tier-2 FAILURE (a real fault) → verdict SPAWN, exit 1 (cron must
+# still launch the subagent when checks actually fail — the gate must not
+# mask a real problem) ────────────────────────────────────────────────────
+run_case
+STUB_DOCKER_PS="one_down"
+rm -f "$TIER2_HEARTBEAT"
+OUT_T18=$(HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" run_tiered_probe 2); RC_T18=$?
+check "T18 tier2 FAILURE (docker down) verdict == SPAWN" "$([ "$(printf '%s' "$OUT_T18" | jq -r '.verdict')" = "SPAWN" ] && echo true || echo false)"
+check "T18 tier2 FAILURE exit=1" "$([ "$RC_T18" -eq 1 ] && echo true || echo false)"
+check "T18 tier2 FAILURE checks_verdict == FAILURE" "$([ "$(printf '%s' "$OUT_T18" | jq -r '.checks_verdict')" = "FAILURE" ] && echo true || echo false)"
+check "T18 tier2 FAILURE detail mentions docker_ps" "$([[ "$(printf '%s' "$OUT_T18" | jq -r '.detail')" == *"docker_ps"* ]] && echo true || echo false)"
+
+# ── T19: invalid --tier value rejected with ERROR verdict, exit 2 ───────────
+run_case
+OUT_T19=$(run_tiered_probe 9); RC_T19=$?
+check "T19 invalid tier verdict == ERROR" "$([ "$(printf '%s' "$OUT_T19" | jq -r '.verdict')" = "ERROR" ] && echo true || echo false)"
+check "T19 invalid tier exit=2" "$([ "$RC_T19" -eq 2 ] && echo true || echo false)"
+
+# ── T20: tier isolation — tier2 and tier3 heartbeat fixtures never collide ──
+run_case
+rm -f "$TIER2_HEARTBEAT" "$TIER3_HEARTBEAT"
+HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" run_tiered_probe 2 >/dev/null
+check "T20 tier2 writes ONLY its own heartbeat file" "$([ -f "$TIER2_HEARTBEAT" ] && [ ! -f "$TIER3_HEARTBEAT" ] && echo true || echo false)"
+
+# ── T21: AC3 regression proof — tier defaults to 1, --tier=1 explicit path
+# calls run_probe() directly (same function T1-T15 already exercise above),
+# with NO wrapping/new fields — byte-for-byte the pre-existing 3-field
+# contract. This is a structural assertion (function identity), not a
+# duplicate of T1-T15's behavioral assertions (already re-confirmed green
+# above with zero code changes to run_probe()).
+run_case
+OUT_T21=$(run_probe)
+check "T21 run_probe unchanged: still exactly {verdict,detail,last_healthy_at}" \
+  "$([ "$(printf '%s' "$OUT_T21" | jq -r 'keys | sort | join(",")')" = "detail,last_healthy_at,verdict" ] && echo true || echo false)"
+
+# ── T22: CLI-level integration — the EXACT invocation form from the
+# acceptance criteria: `bash scripts/agents-flow/auditor-tier1-probe.sh
+# --tier=2`, run as a REAL subprocess (not sourced) with docker/curl/df
+# stubbed via PATH-shadowing binaries (function-override tricks only work
+# when sourced — a real subprocess needs real executables on PATH). Invoked
+# TWICE with NO delta (same fixture, same stub binaries, same heartbeat
+# file) to directly demonstrate AC1's exact command + verdict both times.
+CLI_TMPDIR=$(mktemp -d "$TMPDIR_TEST/cli-XXXXXX")
+mkdir -p "$CLI_TMPDIR/bin"
+cat > "$CLI_TMPDIR/bin/docker" <<'STUBEOF'
+#!/usr/bin/env bash
+case "$1" in
+  ps)
+    if [ "$2" = "-a" ]; then
+      printf 'mcp-server\tUp 2 hours (healthy)\nfrontend\tUp 2 hours (healthy)\napi-gateway\tUp 2 hours (healthy)\n'
+    else
+      echo "mcp-server-container"
+    fi
+    ;;
+  stats) echo "12.34%" ;;
+esac
+STUBEOF
+cat > "$CLI_TMPDIR/bin/curl" <<'STUBEOF'
+#!/usr/bin/env bash
+printf '200'
+STUBEOF
+cat > "$CLI_TMPDIR/bin/df" <<'STUBEOF'
+#!/usr/bin/env bash
+echo 'Filesystem      Size  Used Avail Capacity iused ifree %iused  Mounted on'
+echo '/dev/disk1s4s1  233Gi  13Gi  16Gi     47%   393k  165M    0%   /'
+STUBEOF
+chmod +x "$CLI_TMPDIR/bin/docker" "$CLI_TMPDIR/bin/curl" "$CLI_TMPDIR/bin/df"
+CLI_HEARTBEAT="$CLI_TMPDIR/auditor-tier2-cli-fixture.json"
+rm -f "$CLI_HEARTBEAT"
+
+CLI_OUT1=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" HEARTBEAT_FILE_PATH="$CLI_HEARTBEAT" bash "$PROBE_SH" --tier=2); CLI_RC1=$?
+CLI_OUT2=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" HEARTBEAT_FILE_PATH="$CLI_HEARTBEAT" bash "$PROBE_SH" --tier=2); CLI_RC2=$?
+echo ""
+echo "--- T22 CLI call 1 raw output ---"
+printf '%s\n' "$CLI_OUT1"
+echo "--- T22 CLI call 2 raw output (NO delta) ---"
+printf '%s\n' "$CLI_OUT2"
+check "T22 CLI call 1 verdict == SKIP-SPAWN" "$([ "$(printf '%s' "$CLI_OUT1" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
+check "T22 CLI call 1 exit=0" "$([ "$CLI_RC1" -eq 0 ] && echo true || echo false)"
+check "T22 CLI call 2 (no delta) verdict == SKIP-SPAWN" "$([ "$(printf '%s' "$CLI_OUT2" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
+check "T22 CLI call 2 exit=0" "$([ "$CLI_RC2" -eq 0 ] && echo true || echo false)"
+
+# ── T23: CLI-level AC3 regression — no flag and --tier=1 both produce the
+# original 3-field verdict via a REAL subprocess invocation ─────────────────
+CLI_OUT_NOFLAG=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" HEARTBEAT_FILE_PATH="$TMPDIR_TEST/cli-tier1-noflag.json" bash "$PROBE_SH"); CLI_RC_NOFLAG=$?
+CLI_OUT_TIER1=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" HEARTBEAT_FILE_PATH="$TMPDIR_TEST/cli-tier1-explicit.json" bash "$PROBE_SH" --tier=1); CLI_RC_TIER1=$?
+check "T23 CLI no-flag verdict == ALL_GREEN (unchanged contract)" "$([ "$(printf '%s' "$CLI_OUT_NOFLAG" | jq -r '.verdict')" = "ALL_GREEN" ] && echo true || echo false)"
+check "T23 CLI no-flag exit=0" "$([ "$CLI_RC_NOFLAG" -eq 0 ] && echo true || echo false)"
+check "T23 CLI no-flag keys == {verdict,detail,last_healthy_at} only" "$([ "$(printf '%s' "$CLI_OUT_NOFLAG" | jq -r 'keys | sort | join(",")')" = "detail,last_healthy_at,verdict" ] && echo true || echo false)"
+check "T23 CLI --tier=1 verdict == ALL_GREEN (identical to no-flag)" "$([ "$(printf '%s' "$CLI_OUT_TIER1" | jq -r '.verdict')" = "ALL_GREEN" ] && echo true || echo false)"
+check "T23 CLI --tier=1 keys == {verdict,detail,last_healthy_at} only" "$([ "$(printf '%s' "$CLI_OUT_TIER1" | jq -r 'keys | sort | join(",")')" = "detail,last_healthy_at,verdict" ] && echo true || echo false)"
+
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
