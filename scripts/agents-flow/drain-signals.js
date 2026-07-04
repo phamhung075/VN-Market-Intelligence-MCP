@@ -17,6 +17,36 @@ const DB = path.join(SIG, 'signals.db');
 const NOW = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 const PROCESSED_BY = process.env.DRAIN_PROCESSED_BY || 'dev-team';
 
+// GATE-B recurrence-count subcommand (FIX-DRAINESC-SEVERITY-RECURRENCE-GATE, 2026-07-04).
+// Read-only bootstrap safety-net query for drain-esc-dispatch.md GATE-B Tier 2 (used ONLY when
+// GATE-B Tier 1 — board-row-exists — finds nothing). Reuses the SAME signals_processed table this
+// script already populates in §0a-1 — no schema change, no write. Self-contained escape helper
+// (independent of sqlEsc() below) to avoid touching the existing hardened drain-mode code path.
+// Usage: printf '%s' '{"type":"esc-deep-dive-request","ticker":"MBB","quarter":"Q1-2026",
+//   "trigger_id":"ESC-2","context":{...}}' | node scripts/agents-flow/drain-signals.js --recurrence-count
+// Prints "count=<n>" (n=0 on any degradation) and exits 0. SELECT-only. SAFE-JSON: args read from
+// stdin JSON, never shell-interpolated raw (feedback_signal_payload_shell_injection: bound-param only).
+// Placed BEFORE the drain-mode DB-availability gate below so the no-arg default invocation
+// (process.argv[2] undefined) is entirely unaffected — this branch is skipped in that case (AC7).
+if (process.argv[2] === '--recurrence-count') {
+  const escB = (s) => String(s ?? '').replace(/'/g, "''");
+  try {
+    const args = JSON.parse(fs.readFileSync('/dev/stdin', 'utf8'));   // matches orch-state-hook-prewrite.mjs convention
+    if (!fs.existsSync(DB)) { console.log('count=0'); process.exit(0); }
+    const contextText = JSON.stringify(args.context ?? null);
+    const sql = `SELECT COUNT(*) FROM signals_processed WHERE type='${escB(args.type)}' ` +
+      `AND json_extract(payload,'$.ticker')='${escB(args.ticker)}' ` +
+      `AND json_extract(payload,'$.quarter')='${escB(args.quarter)}' ` +
+      `AND json_extract(payload,'$.trigger_id')='${escB(args.trigger_id)}' ` +
+      `AND json_extract(payload,'$.context')='${escB(contextText)}';`;
+    const n = parseInt(execFileSync('sqlite3', [DB, sql], { encoding: 'utf8' }).trim(), 10);
+    console.log(`count=${Number.isFinite(n) ? n : 0}`);
+  } catch (e) {
+    console.log('count=0');   // graceful degrade — never blocks the GATE-B caller
+  }
+  process.exit(0);
+}
+
 if (!fs.existsSync(DB)) {
   // §0a-0 degradation: db unavailable → skip drain, inbox retained for retry
   console.log('[drain-signals] WARN: signals.db unavailable — skipping drain, inbox retained for retry');
