@@ -291,10 +291,98 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-04T00:37:21Z",
-    "_updated_by": "dev-team/drain-0036z",
+    "_updated_at": "2026-07-04T03:00:00.678Z",
+    "_updated_by": "system-auditor",
     "archive": [],
     "rows": [
+      {
+        "id": "sau-d4-202607040300",
+        "ts": "2026-07-04T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:VCB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607040300",
+        "ts": "2026-07-04T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:ACB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607040300",
+        "ts": "2026-07-04T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:HPG:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607040300",
+        "ts": "2026-07-04T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:GVR:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607040300",
+        "ts": "2026-07-04T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:HVN:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607040300",
+        "ts": "2026-07-04T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:MBB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607040300",
+        "ts": "2026-07-04T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-deepdive:GVR:Q1-2026:ESC-4 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202607040300",
+        "ts": "2026-07-04T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-deepdive:MBB:Q1-2026:ESC-2 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
+      },
       {
         "id": "sau-d4-202607030300",
         "ts": "2026-07-03T03:00Z",
@@ -798,8 +886,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-04T01:18:17Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-07-04T03:10:00Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7638,6 +7726,37 @@
         "baseline_pass": "RAW-corroborated benign by router 2026-07-03T22:41Z: get_sla_status(bctc) age 33min/SLA 850min OK; get_vps_service_health(vn-bctc-fetch) HEALTHY (polled 4m ago); trigger_bctc_vps_fetch(dry_run) pending 0; get_vps_proxy_health(bctc) raw last-push 06-16/0-in-24h (only stale metric, benign for event-driven quarterly). Auditor-tooling-only, no data incident.",
         "source": "PO dedup triage (router-dispatched) of B-05 sau-20260703T223423Z (4th emission today) 2026-07-03",
         "created_at": "2026-07-03T23:01:26Z",
+        "created_by": "po"
+      },
+      {
+        "id": "SPIKE-BCTC-CONVICTION-COMPOSITE-DRAG-PERFECT-FINANCIAL",
+        "type": "SPIKE",
+        "status": "BACKLOG",
+        "priority": "low",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "owner": "developer",
+        "next_agent": "architect",
+        "mode": "spike",
+        "timebox": 120,
+        "title": "BCTC conviction composite scores HSG Q4-2025 at composite=0.19 despite financial=1.00 (PERFECT financial extraction) -> conviction signal SKIPPED. Decide: does the composite weighting systematically suppress conviction on well-extracted financials (false-negative), or is the low composite a legitimate multi-component gate? Plus: the [BCTC-1345b] skip signal mislabels a low-COMPOSITE skip as 'Low financial confidence' even when financial=1.00.",
+        "question": "Why does the BCTC conviction composite = 0.19 for HSG Q4-2025 when financial-extraction confidence = 1.00 (report 3489, 2026-07-03T22:06Z)? Decompose the composite: which components drag it down and with what weights? Is a perfectly-extracted financial statement being conviction-skipped as a SYSTEMATIC false-negative (composite under-weights financial), or is the low composite a correct multi-component gate (e.g. missing prior-quarter/cross-check/narrative for HSG)? If systematic, propose a weighting/threshold change so financial=1.00 can carry meaningful conviction. SEPARATELY: fix the operator-facing skip text — '[BCTC-1345b] Low financial confidence (composite=..,financial=..)' mislabels a low-COMPOSITE skip as low-FINANCIAL even when financial=1.00.",
+        "root_cause": "Unknown (exploratory). HSG is the OUTLIER of the 2026-07-03 BCTC-1345b low-confidence cohort. The near-zero-financial cases (VCI/DHG/VHM, financial<=0.10) are downstream of the DONE_VERIFIED extraction stall (RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL) with remediation already tracked. HSG's financial extraction is PERFECT (1.00), so its low composite (0.19) is a scoring/weighting concern, NOT an extraction failure — not covered by any existing backlog task.",
+        "dod": [
+          "Composite decomposition for HSG Q4-2025 documented: per-component scores + weights producing composite=0.19 from financial=1.00.",
+          "Verdict: false-negative (composite under-weights good financials -> propose weighting/threshold FIX, PLAN-ONLY) OR by-design multi-component gate (document why the low composite is correct-safe).",
+          "Signal-text fix scoped: [BCTC-1345b] skip MUST NOT label a low-COMPOSITE skip as 'Low financial confidence' when financial is high; report composite vs financial honestly.",
+          "Findings doc produced; if false-negative confirmed, a follow-up FIX task is PROPOSED (do not self-remediate)."
+        ],
+        "related": [
+          "FIX-BCTC-1345B-REPORT-BATCH",
+          "RECON-BCTC-ENRICH-0ROWS-EXTRACTION-STALL",
+          "FACTORY-PDF-paddleocr-score-07-mask",
+          "REVIEW-PPC-Q4-LOW-CONFIDENCE"
+        ],
+        "baseline_pass": "HSG report 3489 (from analysis-agent, 2026-07-03T22:06:35Z): '[BCTC-1345b] Low financial confidence (composite=0.19, financial=1.00) — conviction signal skipped for HSG 2025-Q4.' Conviction-skip itself is correct-safe behavior (reference_low_confidence_handling) — no bad data reaches conviction; this SPIKE investigates whether GOOD data is being wrongly withheld.",
+        "source": "PO triage (router-dispatched) of BCTC-1345b low-confidence cohort, tick 2026-07-04T03:07Z. HSG (financial=1.00/composite=0.19) is the outlier not covered by extraction-stall remediation.",
+        "created_at": "2026-07-04T03:10:00Z",
         "created_by": "po"
       }
     ],
