@@ -832,8 +832,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-04T06:59:39Z",
-    "_updated_by": "po-s141-systemic-remake-phase1",
+    "_updated_at": "2026-07-04T07:05:21Z",
+    "_updated_by": "po-s142-sysremake-dup-supersede",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7698,7 +7698,7 @@
         "title": "RC-IDLE-LOOPS §1.1: add Step-5 RUN-IDLE idle-check to dev-team-tick-preflight.sh (all-empty: active_sprints=[], docs/signals empty, signal_queue NEW=0 -> verdict RUN-IDLE) evaluated BEFORE Step 0a drain-signals; + dev-team/flow/main.md Step 0-PREFLIGHT RUN-IDLE JUMP-TO-end branch. Ports cowork _step8_silent_release template verbatim.",
         "owner": "developer",
         "next_agent": "developer",
-        "status": "BACKLOG",
+        "status": "CANCELLED",
         "zone": "cross-service/",
         "type": "FIX",
         "priority": "high",
@@ -7709,14 +7709,21 @@
           "scripts/agents-flow/dev-team-tick-preflight.sh",
           "docs/agents/dev-team/flow/main.md"
         ],
-        "note": "[SYSREMAKE P1-A / RC-IDLE-LOOPS] Brief docs/architecture-briefs/2026-07-04-systemic-remake.md §1.1. DEV-DEPENDENT — not dispatch-ready until script lands. developer: script Step-5 (reuse fields drain-signals PERSIST GUARD reads: ls docs/signals/*.json|wc -l, signals.db mtime, jq NEW-count, active_sprints emptiness) + dev-team-tick-preflight.test.sh RUN-IDLE case (AC-1: mocked all-empty -> verdict RUN-IDLE, ZERO drain-signals touch). agent-father: main.md thin JUMP-TO-end branch ONLY AFTER script lands (sequenced dep). AC-3 empirical: chore(signals):drain commit-count/day trends down on empty-board ticks."
+        "note": "[SYSREMAKE P1-A / RC-IDLE-LOOPS] Brief docs/architecture-briefs/2026-07-04-systemic-remake.md §1.1. DEV-DEPENDENT — not dispatch-ready until script lands. developer: script Step-5 (reuse fields drain-signals PERSIST GUARD reads: ls docs/signals/*.json|wc -l, signals.db mtime, jq NEW-count, active_sprints emptiness) + dev-team-tick-preflight.test.sh RUN-IDLE case (AC-1: mocked all-empty -> verdict RUN-IDLE, ZERO drain-signals touch). agent-father: main.md thin JUMP-TO-end branch ONLY AFTER script lands (sequenced dep). AC-3 empirical: chore(signals):drain commit-count/day trends down on empty-board ticks.",
+        "superseded_by": [
+          "P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT",
+          "P1-IDLE-DEVTEAM-FLOW-BRANCH"
+        ],
+        "superseded_at": "2026-07-04T07:05:21Z",
+        "superseded_by_agent": "po-s141-systemic-remake-phase1",
+        "superseded_note": "Superseded by po-s141 granular Phase-1 atomic tasks (router-directed FULL Phase-1 execution 2026-07-04, brief §1). This coarse umbrella row minted prior tick 2026-07-04T06:37Z is replaced by the listed atomic task(s); the 4 named detector fixes were promoted DIRECTLY to ready[] (P1DET-PROMOTE routing task thereby satisfied). Convergence per the systemic-remake anti-churn mandate — do NOT re-action."
       },
       {
         "id": "SYSREMAKE-P1B-AUDITOR-TIER-PROBE-GENERALIZE",
         "title": "RC-IDLE-LOOPS §1.1: generalize scripts/agents-flow/auditor-tier1-probe.sh to accept --tier=2|3 (same ALL_GREEN+fresh-heartbeat pre-spawn SKIP as Tier-1, run BEFORE cron spawns subagent, not just before commit); + wire it as pre-gate in cron-detect-loop SKILL Job-3 (Tier-2 0 */4) + Job-4 (Tier-3 0 2), mirroring how Job-2 already wires Tier-1.",
         "owner": "developer",
         "next_agent": "developer",
-        "status": "BACKLOG",
+        "status": "CANCELLED",
         "zone": "cross-service/",
         "type": "FIX",
         "priority": "high",
@@ -7727,14 +7734,21 @@
           "scripts/agents-flow/auditor-tier1-probe.sh",
           ".claude/skills/cron-detect-loop/SKILL.md"
         ],
-        "note": "[SYSREMAKE P1-B / RC-IDLE-LOOPS] Brief §1.1. DEV-DEPENDENT. developer: --tier flag + pre-spawn probe. agent-father: cron-detect-loop prompt-text pre-gate wiring ONLY AFTER script lands. AC-2: 2nd call with no DB/heartbeat delta returns SKIP-SPAWN, zero subagent launch, zero commit."
+        "note": "[SYSREMAKE P1-B / RC-IDLE-LOOPS] Brief §1.1. DEV-DEPENDENT. developer: --tier flag + pre-spawn probe. agent-father: cron-detect-loop prompt-text pre-gate wiring ONLY AFTER script lands. AC-2: 2nd call with no DB/heartbeat delta returns SKIP-SPAWN, zero subagent launch, zero commit.",
+        "superseded_by": [
+          "P1-IDLE-AUDITOR-TIER23-SCRIPT",
+          "P1-IDLE-AUDITOR-CRON-WIRING"
+        ],
+        "superseded_at": "2026-07-04T07:05:21Z",
+        "superseded_by_agent": "po-s141-systemic-remake-phase1",
+        "superseded_note": "Superseded by po-s141 granular Phase-1 atomic tasks (router-directed FULL Phase-1 execution 2026-07-04, brief §1). This coarse umbrella row minted prior tick 2026-07-04T06:37Z is replaced by the listed atomic task(s); the 4 named detector fixes were promoted DIRECTLY to ready[] (P1DET-PROMOTE routing task thereby satisfied). Convergence per the systemic-remake anti-churn mandate — do NOT re-action."
       },
       {
         "id": "SYSREMAKE-P1C-AUDITOR-NOTEBOOK-APPEND-GATE",
         "title": "RC-IDLE-LOOPS §1.1: gate system-auditor notebook append (flow/main.md L74-76 + L685-716 AC-3 settled-write) on 'this cycle produced >=1 new finding/signal/state-change' so a genuinely ALL_GREEN cycle emits ZERO notebook diff and auditor-notebook-commit.sh SKIP-no-staged-changes (L196-197) actually has something to trigger on.",
         "owner": "agent-father",
         "next_agent": "agent-father",
-        "status": "BACKLOG",
+        "status": "CANCELLED",
         "zone": "docs/agents/system-auditor/",
         "type": "FIX",
         "priority": "high",
@@ -7744,14 +7758,20 @@
         "files": [
           "docs/agents/system-auditor/flow/main.md"
         ],
-        "note": "[SYSREMAKE P1-C / RC-IDLE-LOOPS] Brief §1.1. agent-father flow-doc edit, NO developer dependency. CAUTION: changes a LIVE cron-driven agent's write-gate = false-silence risk (brief §2.1 F8 trust=silence; memory feedback_passive_health_masks_dead_data) -> route via architect/pm review, prefer SUPERVISED dispatch not unattended off-hours. High Phase-1 value: directly reduces chore(memory/system-auditor) commit churn = the Phase-2 measurement instrument."
+        "note": "[SYSREMAKE P1-C / RC-IDLE-LOOPS] Brief §1.1. agent-father flow-doc edit, NO developer dependency. CAUTION: changes a LIVE cron-driven agent's write-gate = false-silence risk (brief §2.1 F8 trust=silence; memory feedback_passive_health_masks_dead_data) -> route via architect/pm review, prefer SUPERVISED dispatch not unattended off-hours. High Phase-1 value: directly reduces chore(memory/system-auditor) commit churn = the Phase-2 measurement instrument.",
+        "superseded_by": [
+          "P1-IDLE-AUDITOR-NOTEBOOK-GATE"
+        ],
+        "superseded_at": "2026-07-04T07:05:21Z",
+        "superseded_by_agent": "po-s141-systemic-remake-phase1",
+        "superseded_note": "Superseded by po-s141 granular Phase-1 atomic tasks (router-directed FULL Phase-1 execution 2026-07-04, brief §1). This coarse umbrella row minted prior tick 2026-07-04T06:37Z is replaced by the listed atomic task(s); the 4 named detector fixes were promoted DIRECTLY to ready[] (P1DET-PROMOTE routing task thereby satisfied). Convergence per the systemic-remake anti-churn mandate — do NOT re-action."
       },
       {
         "id": "SYSREMAKE-P1F-TOOLCOUNT-CRON-DRIFT-REGEN",
         "title": "RC-DRIFT §1.3: wire gen-project-stats.ts + gen-tool-registry.ts onto a cadence (CI-on-push-to-main OR frequent cron w/ git-diff-quiet short-circuit = no-delta-no-commit); extend tool-registry-parity.test.ts to ALSO grep CLAUDE.md/mcp-tools.md/ARCHITECTURE.md hardcoded tool+cron counts vs generated SSOT (tool-registry.json) and fail on divergence; replace hardcoded numbers with SSOT pointer; quarantine-comment recurringBugEscalationFlag/escalationReason (_maintained_by DEPRECATED) + verify+delete dead lastSuccessfulCycle/currentSprint.",
         "owner": "developer",
         "next_agent": "developer",
-        "status": "BACKLOG",
+        "status": "CANCELLED",
         "zone": "multi",
         "type": "FIX",
         "priority": "medium",
@@ -7767,21 +7787,38 @@
           "docs/ARCHITECTURE.md",
           "docs/data/project-stats.json"
         ],
-        "note": "[SYSREMAKE P1-F / RC-DRIFT] Brief §1.3. MULTI-OWNER — pm split: developer (generator cadence + parity-test extend + verify/delete dead fields), claude-manager-helper (narrative-doc number->pointer edits CLAUDE.md/mcp-tools.md/ARCHITECTURE.md — its stated remit), agent-father (recurringBugEscalationFlag quarantine comment only). AC: grep -c '146 tools|161 live tools' CLAUDE.md docs/standards/mcp-tools.md == 0; inject wrong count into throwaway doc -> parity test exits non-zero; cronJobCount matches cron.schedule() call-site count within one regen."
+        "note": "[SYSREMAKE P1-F / RC-DRIFT] Brief §1.3. MULTI-OWNER — pm split: developer (generator cadence + parity-test extend + verify/delete dead fields), claude-manager-helper (narrative-doc number->pointer edits CLAUDE.md/mcp-tools.md/ARCHITECTURE.md — its stated remit), agent-father (recurringBugEscalationFlag quarantine comment only). AC: grep -c '146 tools|161 live tools' CLAUDE.md docs/standards/mcp-tools.md == 0; inject wrong count into throwaway doc -> parity test exits non-zero; cronJobCount matches cron.schedule() call-site count within one regen.",
+        "superseded_by": [
+          "P1-DRIFT-NARRATIVE-NUMBER-POINTER",
+          "P1-DRIFT-PARITY-TEST-EXTEND",
+          "P1-DRIFT-QUARANTINE-FREEZE-FLAG"
+        ],
+        "superseded_at": "2026-07-04T07:05:21Z",
+        "superseded_by_agent": "po-s141-systemic-remake-phase1",
+        "superseded_note": "Superseded by po-s141 granular Phase-1 atomic tasks (router-directed FULL Phase-1 execution 2026-07-04, brief §1). This coarse umbrella row minted prior tick 2026-07-04T06:37Z is replaced by the listed atomic task(s); the 4 named detector fixes were promoted DIRECTLY to ready[] (P1DET-PROMOTE routing task thereby satisfied). Convergence per the systemic-remake anti-churn mandate — do NOT re-action."
       },
       {
         "id": "SYSREMAKE-P1DET-PROMOTE-4-DETECTOR-FIXES",
         "title": "RC-DETECTOR §1.2 + §5 (PO promote 4 named items): pm to surface+dispatch 4 already-specced parked detector fixes next planning cycle — (1) FIX-SIGNALQUEUE-DUP-ID-GUARD [already TODO, ready] (2) FU-AUDITOR-D4-SIGNAL-ID [BACKLOG, owner->developer, per-finding discriminator sau-d4-{ticker}-{check_id}-{YYYYMMDD}] (3) FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT [BACKLOG] (4) FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE [plan_only, SUPERVISED-only un-park].",
         "owner": "pm",
         "next_agent": "pm",
-        "status": "BACKLOG",
+        "status": "CANCELLED",
         "zone": "cross-service/",
         "type": "FIX",
         "priority": "high",
         "plan_only": false,
         "created_at": "2026-07-04T06:54:01Z",
         "depends": [],
-        "note": "[SYSREMAKE P1-D/E dispatched separately via BATCH this tick; THIS row = the 4 CODE detector fixes] Brief §1.2. PO (unattended off-hours tick) intentionally did NOT hand-move these into ready[] nor flip FIX-CONTEXT-BLOAT plan_only: 3 touch LIVE detector/gate infra (orch-apply.sh validate gate, auditor D4 emit path, auditor B-05 freshness) = blast radius too high for unattended off-hours dispatch; FIX-CONTEXT-BLOAT's own note mandates SUPERVISED promotion (Lane-C gate-logic, 4 prior FPs). pm/supervised-tick: promote+dispatch. Do NOT double-fix D4 vs dup-id-guard — complementary (emit-side vs validate-side belt+suspenders per FIX-SIGNALQUEUE status_note)."
+        "note": "[SYSREMAKE P1-D/E dispatched separately via BATCH this tick; THIS row = the 4 CODE detector fixes] Brief §1.2. PO (unattended off-hours tick) intentionally did NOT hand-move these into ready[] nor flip FIX-CONTEXT-BLOAT plan_only: 3 touch LIVE detector/gate infra (orch-apply.sh validate gate, auditor D4 emit path, auditor B-05 freshness) = blast radius too high for unattended off-hours dispatch; FIX-CONTEXT-BLOAT's own note mandates SUPERVISED promotion (Lane-C gate-logic, 4 prior FPs). pm/supervised-tick: promote+dispatch. Do NOT double-fix D4 vs dup-id-guard — complementary (emit-side vs validate-side belt+suspenders per FIX-SIGNALQUEUE status_note).",
+        "superseded_by": [
+          "FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE",
+          "FU-AUDITOR-D4-SIGNAL-ID",
+          "FIX-SIGNALQUEUE-DUP-ID-GUARD",
+          "FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT"
+        ],
+        "superseded_at": "2026-07-04T07:05:21Z",
+        "superseded_by_agent": "po-s141-systemic-remake-phase1",
+        "superseded_note": "Superseded by po-s141 granular Phase-1 atomic tasks (router-directed FULL Phase-1 execution 2026-07-04, brief §1). This coarse umbrella row minted prior tick 2026-07-04T06:37Z is replaced by the listed atomic task(s); the 4 named detector fixes were promoted DIRECTLY to ready[] (P1DET-PROMOTE routing task thereby satisfied). Convergence per the systemic-remake anti-churn mandate — do NOT re-action."
       },
       {
         "id": "SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE",
@@ -10898,6 +10935,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-04T06:59:39Z",
-  "_updated_by": "po-s141-systemic-remake-phase1"
+  "_updated_at": "2026-07-04T07:05:21Z",
+  "_updated_by": "po-s142-sysremake-dup-supersede"
 }

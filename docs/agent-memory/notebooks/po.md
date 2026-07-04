@@ -1,25 +1,25 @@
 # PO Notebook
 
-_Last: 2026-07-04T06:07Z_
+_Last: 2026-07-04T07:00Z_
 
-## Tick 2026-07-04T06:07Z (router-dispatched) — quiet grooming tick, WIP=0: 1 MINT (plan-only), verdict NOTHING
+## Tick 2026-07-04T07:00Z (router-dispatched) — USER-GREEN-LIT systemic-remake Phase-1, EXECUTED FULLY + converged dup set
 
-First quiet tick since head directive "drain deferred backlog (MBB batch-reflow + drain-esc follow-ups)". Both named targets un-drainable: **REFLOW-MBB-Q1-2026 = BLOCKED** (user-gated rebuild, not promotable); **drain-esc follow-ups = 0 rows** in backlog (grep drainesc/severity-recurrence → empty; the FIX-DRAINESC sprint already closed done_verified). pendingSignals empty; telegram #3502/#3503 pre-tracked (don't re-mint).
+Router relayed owner green-light for the whole remake with Phase-2 router-gated. Drove Phase-1 (containment-now) ONLY, stopped at the boundary. Brief `docs/architecture-briefs/2026-07-04-systemic-remake.md §1`.
 
-**Item 1 (cold-evict 31 DONE rows) — CORRECTED the inputs framing.** The 31 status=DONE rows are inside `.task_board.backlog[]`, NOT `done[]`. RAW-verified BOTH eviction paths — `scripts/orch-cold-evict.sh` (Pass-1) AND dev-team post-cycle Step 4.2 (HSC-6) — scan only done[]/done_verified[]/active_sprints[]/sprint_goal.entries[], **never backlog[]**. So these rows are eviction-BLIND → permanent hot-file bloat (~8% of 407-row backlog; aged 06-27..06-30). Cold-evict is NOT PO's flow (it's the dev-team/pm post-cycle hook) → did NOT perform the write. Instead MINTED plan-only tracker `FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND` (backlog, P2, cross-service, id-guarded via orch-apply.sh). Root = writers flip status in-place instead of relocating backlog[]→done[]. Fix options: durable (relocate-on-terminal) / one-time relocate / extend HSC-6 predicate to scan backlog[]. generic_mandate baked (no one-off script).
+**PROMOTE 4 detector fixes (po-s141, RC-DETECTOR §1.2) backlog→ready/READY** — all confirmed before=backlog/BACKLOG → after=ready/READY: `FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE` (plan_only true→**false**, owner→developer), `FU-AUDITOR-D4-SIGNAL-ID` (→developer), `FIX-SIGNALQUEUE-DUP-ID-GUARD` (TODO→READY, →developer), `FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT` (→agent-father: it's a system-auditor/flow/main.md two-layer-freshness edit w/ dod[] ACs).
 
-**Item 2 (promote a READY item) — declined, none genuinely ready.** WIP=0 (slot free) but every P1/high TODO is a thin STUB (only detail_ref+title; no next_agent/root_cause/fix_spec/files/vgate; FIX-TA-INDICATORS-TIER3-ROUTING even carries folded_under+superseded_note). DEFERRED rows intentionally parked (corpus/infra/low-pri). Promoting an ungroomed weeks-old stub cold = force-dispatch of stale/inverted spec (po-s138 class). Mandate explicitly authorizes NOTHING; did not force-promote.
+**MINT 10 atomic Phase-1 tasks (po-s141)** — verbatim Target+Mechanism+machine-checkable-AC+owner from brief §1.1/§1.2/§1.3. 6→ready[]: P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT(dev), P1-IDLE-AUDITOR-TIER23-SCRIPT(dev), P1-IDLE-AUDITOR-NOTEBOOK-GATE(af), P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS(af), P1-DRIFT-QUARANTINE-FREEZE-FLAG(af), P1-DRIFT-NARRATIVE-NUMBER-POINTER(cmh). 4→backlog[] HELD on depends[]: P1-IDLE-DEVTEAM-FLOW-BRANCH, P1-IDLE-AUDITOR-CRON-WIRING, P1-DETECTOR-CLOSURE-TASK-ARCHIVE, P1-DRIFT-PARITY-TEST-EXTEND (each depends on its script/producer sibling per router blockedBy directive). sprint_goal SYSTEMIC-REMAKE-P1 added; head→pm to sequence (WIP=2, honor depends, handoff docs).
 
-**Writes:** one atomic jq→orch-apply rc=0 (backlog 406→407, +1 plan-only mint; 105 pre-existing SHG lane-coherence warns non-blocking — they independently corroborate the drift). ready/in_progress stay 0; user-owned review[] (3 W5 rows) byte-untouched; `.head` untouched. No push (fleet-push timer owns; ahead=25). Provenance "(po router-dispatched)" — 0 session UUID in any tracked file. Verdict to router: **NOTHING**.
+**CONVERGE dup set (po-s142) — MANDATORY anti-churn.** Notebook showed a prior 06:37Z tick already minted COARSE umbrella rows for the SAME work (SYSREMAKE-P1A/B/C/F + P1DET-PROMOTE routing). Leaving both = the exact churn this sprint kills → superseded all 5 (status→CANCELLED + superseded_by → my atomic set). `SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE` left BACKLOG (legit Phase-2 tracker, USER-GATED).
 
-## Tick 2026-07-04T04:07Z — 2 telegram reports → 1 MINT + 1 DEDUP, verdict NOTHING
+**STOPPED at Phase-1→2 boundary.** Phase-2 (RC-VERIF+RC-CONVERGE completion-gate/DEGRADED/re-arm, RC-ORCHMONO hot-cold, RC-GITSTATE gitignore, RC-CEREMONY) NOT started — USER-GATED; router gates with owner before any write-path/verification change lands.
 
-#3502 get_foreign_room token-budget (RECURRING 3rd) = MINT `FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET`. #3503 A-13 api-gw /health CURL_ERR = DEDUP FALSE-POSITIVE (curl :4000/health HTTP 200 x3) → folded into FIX-AUDITOR-HEALTHCHECK-FALSE-UNHEALTHY-NONHTTP-SERVICES. Both PLAN-ONLY → NOTHING.
+**Writes:** 2 atomic jq→orch-apply rc0 (po-s141 promote+mint; po-s142 converge). ready 0→10, backlog 413 (net 0). No dup ids; validator exit 0 (109 pre-existing SHG lane warns non-blocking). Committed 3a6271de0 (po-s141) explicit-paths; po-s142 commit next. No direct push (fleet-push launchd timer owns; unbounded pre-push tsc-hang risk). 0 session UUID in tracked files.
 
 ## Carry-over
-- **FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND** (backlog, plan-only, P2) — durable root: relocate backlog[] rows to done[] on terminal transition so HSC-6 archives them; 31 stranded DONE rows need a one-time conservation-guarded relocate (they lack created_at → stamp completed_at at move for the 7-day age gate). Dedup against the SHG lane-coherence migration when groomed.
-- **REFLOW-MBB-Q1-2026** — BLOCKED on user-gated mcp-server rebuild+reingest (ops). At gate-clear, batch MBB+CTG reflow in ONE reingest pass. Do NOT redispatch Opus while parked.
-- **FIX-DRAINESC-SEVERITY-RECURRENCE-GATE** — DONE_VERIFIED (qa PASS, router re-ran 11/11). Sprint closed.
-- **W5 deploy-gate rows in review[] (3)** — USER-OWNED. Never promote/touch over them.
+- **SYSTEMIC-REMAKE-P1** (active) — 4 promoted + 10 atomic on board; head→pm. Dispatch order: 6 ready[] first; promote the 4 held dependents ready when their script/producer sibling hits DONE_VERIFIED. Phase-2 stays USER-GATED (SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE + brief §2).
+- **FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND** (backlog, plan-only, P2) — terminal rows (incl the 5 new CANCELLED SYSREMAKE) strand in backlog[], eviction-blind. Durable fix = relocate-on-terminal so HSC-6 archives; stamp completed_at on move.
+- **REFLOW-MBB-Q1-2026** — BLOCKED on user-gated mcp-server rebuild+reingest (ops). Batch MBB+CTG in ONE reingest at gate-clear.
+- **W5 deploy-gate rows in review[] (3)** — USER-OWNED. Never promote/touch.
 - **DEPLOY-GATE (standing):** any BCTC code/VPS fix → route gated deploy/verify to ops (don't wait on user).
-- **P1 TODO stubs** (FIX-NEWS-CB-FALSE-CLOSED, FIX-BCTC-FPT-BT5-BALANCE-GATE, FIX-TA-INDICATORS-TIER3-ROUTING) — need a grooming pass (pull detail_ref, re-verify root still live, add next_agent/spec) BEFORE any promote. TA one may be a dup (folded_under).
+- **P1 TODO stubs** (FIX-NEWS-CB-FALSE-CLOSED, FIX-BCTC-FPT-BT5-BALANCE-GATE, FIX-TA-INDICATORS-TIER3-ROUTING) — groom (pull detail_ref, re-verify root live, add next_agent/spec) BEFORE promote; TA one may be a dup.
