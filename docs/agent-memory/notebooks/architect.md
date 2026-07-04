@@ -1,8 +1,18 @@
 # Architect — Notebook
 
-**Last updated:** 2026-07-03 07:13 UTC | **Sprint:** SPIKE-BCTC-DISCOVER-PIPELINE-DEAD
+**Last updated:** 2026-07-04 01:07 UTC | **Sprint:** FIX-DRAINESC-SEVERITY-RECURRENCE-GATE
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-07-04T01:07Z — FIX-DRAINESC-SEVERITY-RECURRENCE-GATE (DESIGN DONE — GATE-A + 2-tier GATE-B)
+
+**Task:** FIX-DRAINESC-SEVERITY-RECURRENCE-GATE | router-dispatched SPRINT-S (dev-team :07 tick) | zone: cross-service (scripts/ + docs/agents/*.md, no apps/ path)
+**BUILD-STANDARD:** not-applicable (bug-fix/hardening gate, no new primitive)
+**Problem confirmed live:** `drain-esc-dispatch.md` Step 3 spawns `model=opus` for EVERY `esc-deep-dive-request` — no severity floor (ESC-4's already-shipped INFO downgrade, `esc-4-nonop-heuristic.md` AC-2, is computed but never READ — Step 1 doesn't extract `row.severity` at all), no recurrence guard (MBB Q1-2026 ESC-2: 2 `signals_processed` rows, byte-identical context, root cause already tracked by `REFLOW-MBB-Q1-2026` backlog/BLOCKED — but dispatcher can't see it).
+**Load-bearing finding (live-queried signals.db, JSON1 confirmed):** GVR Q1-2026 ESC-4's `context` field JSON keys DRIFT every cycle (`item_pct_NP` → `item_pct_of_net_profit` → ...) despite being the same finding 4x — a literal `sha256(ticker+quarter+trigger_id+context)` fingerprint (the task's suggested design) would NEVER match across GVR's cycles. Disproves the naive content-hash-only approach with real data, not assumption.
+**Design:** GATE-A = effective_severity (row.severity authoritative; ESC-id static-tier table fallback ONLY when missing — MAX-of-both was considered+rejected, it would re-escalate the shipped ESC-4 INFO downgrade). Floor = HIGH per `SignalSeverityEnum` (`orchStateSchema.ts:172`). GATE-B = 2-tier: Tier-1 board-row-exists (`REFLOW-<ticker>-<quarter>` convention PO ALREADY uses in prod, zero new state, self-healing on `TERMINAL_SET` status flip) PRIMARY; Tier-2 `signals_processed` exact-context COUNT>=2 (zero schema change, read-only `json_extract`) SECONDARY bootstrap net for the pre-tracking gap. Cheaper than both ticket-framed options; avoids "stuck forever after reflow" risk a pure-count design would have.
+**Output:** `docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md` + `docs/handoffs/TASK_FIX-DRAINESC-SEVERITY-RECURRENCE-GATE.md`
+**Next:** pm — decompose into ONE atomic dev task (both files land together, brief §5); PM decides dev-agent (cross-service→developer per zone-detect Tier-2, OR dev-mcp-server per established `scripts/agents-flow/` ownership precedent — flagged, not decided here).
 
 ## 2026-07-03T07:13Z — SPIKE-BCTC-DISCOVER-PIPELINE-DEAD (DEAD STAGE PINNED — Stage 3, not Stage 1/2)
 
@@ -26,19 +36,8 @@
 **Output:** `docs/architecture-briefs/2026-07-03-ctg-bs-realdata-root.md`
 **Next:** pm — recommend SUPERSEDE `FIX-BCTC-BANK-BS-SECTION-CLASSIFIER` with `FIX-BCTC-BANK-BS-COLUMN-ORDER` (FIX-A+C+D as one interdependent unit, dev-mcp-server) + independent `FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP` (FIX-B, size S). Do NOT re-open the classifier row for a 4th narrow patch.
 
-## 2026-07-02T18:17Z — FIX-MCP-MEMORY-CODE-LEAK (PHASE-0 RECON DONE, no fix shipped)
-
-**Task:** FIX-MCP-MEMORY-CODE-LEAK | SPRINT-M (BACKLOG→ready, PO-promoted 17:57Z) | zone: apps/mcp-server/
-**BUILD-STANDARD:** not-applicable (bug-fix/perf recon, in-zone, no new primitives)
-**PO's sawtooth-at-tight-cap diagnosis corroborated live mid-session**: caught mcp-server AT 99.98%/2GiB (docker stats, 2 samples 30s apart, RAW not stale) with CPU 108%.
-**(a) Stale image ruled OUT as sufficient explanation:** running image 6 commits behind HEAD (built 2026-07-01T22:27:13Z), but diffed each of the 6 pending commits against schema.ts/server.ts/DB-init files — zero overlap; none are memory fixes. Rebuild is owed hygiene only.
-**(b) Cap is tight, host has room:** `docker info` MemTotal=7.75GiB budget; live fleet sum only ~3.38GiB (43.6%) → 4.37GiB free; mcp-server already the largest single consumer. Recommend cap 2GiB→3GiB (`docker-compose.yml:71` + `docker-compose.dev.yml:34`).
-**(c) Found the concrete allocation hotspot via source read (not guessed):** `initDatabase()` (`schema.ts:148`) has NO already-initialized guard (unlike its own sibling `getDb()` 4 lines above) and is called via `await initDatabase()` at 68 confirmed call-sites inside MCP tool-handler bodies (e.g. literally line 1 of `get_alerts`) — every call re-runs the full 3300-line 10-domain-slice DDL+backfill sweep. Stacks with `createMcpServerInstance()` (`server.ts:335`) rebuilding the full ~146-tool registry fresh on EVERY `/mcp` POST (intentional Bun-JIT-Symbol-corruption workaround, but costly). Live `docker logs` during recon showed both firing every few seconds under concurrent agent load — matches the sawtooth shape. Designed (not implemented) a 2-step profiling approach (log-correlation first, JSC heap-snapshot diff second) + ranked fix candidates (`initDatabase` guard first, `McpServer`-reuse second) for the follow-up dev task.
-**Output:** `docs/architecture-briefs/2026-07-02-mcp-mem-sawtooth-recon.md`
-**Next:** pm — two tracks: (1) user-gated config-only swap (cap bump + rebuild) ships now, no dev task; (2) dev-mcp-server task for the `initDatabase()` init-guard once (1) ships and sawtooth confirmed to persist.
-
 ---
 
-## Archive (pre-2026-07-02T18:17Z)
+## Archive (pre-2026-07-03T07:10Z)
 
-[Older cycles archived to git history: TOKEN-ECONOMY-TICK-PREFLIGHT (2026-07-02T12:10Z, 3-WU split for cowork/dev-team/auditor tick preflight scripts + stateless-mode MCP verification), ARCH-DASH-CRON-RECHECK-TABLE (2026-07-02T06:50Z, cron-recheck-table SPLIT: job_name hybrid resolution + generic cadence algorithm + Layer-B double-count correction), ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING (2026-07-01T18:20Z, AC-1 spike + bank-form-generic gap + W1-W5 split), BA-PREDICTION-EVIDENCE-REVIVAL (2026-07-01T07:05Z, evidence_type corrections + FR-2.2 VPS proxy 502 root cause + 2-hop split), OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (2026-06-30T20:45Z, per-ticker anchor repair migration + writer guard + sanity pass 4), FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]
+[Older cycles archived to git history: FIX-MCP-MEMORY-CODE-LEAK (2026-07-02T18:17Z, sawtooth-at-tight-cap corroborated live + initDatabase() no-guard hotspot found via source read + McpServer-per-POST rebuild stacking), TOKEN-ECONOMY-TICK-PREFLIGHT (2026-07-02T12:10Z, 3-WU split for cowork/dev-team/auditor tick preflight scripts + stateless-mode MCP verification), ARCH-DASH-CRON-RECHECK-TABLE (2026-07-02T06:50Z, cron-recheck-table SPLIT: job_name hybrid resolution + generic cadence algorithm + Layer-B double-count correction), ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING (2026-07-01T18:20Z, AC-1 spike + bank-form-generic gap + W1-W5 split), BA-PREDICTION-EVIDENCE-REVIVAL (2026-07-01T07:05Z, evidence_type corrections + FR-2.2 VPS proxy 502 root cause + 2-hop split), OHLCV-UNIT-CONTAM-WHOLEROW-LT1000 (2026-06-30T20:45Z, per-ticker anchor repair migration + writer guard + sanity pass 4), FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS (2026-06-30T19:11Z, VPS VNINDEX skip-guard root cause + TASK-VNINDEX-RS-A/B split), BA-IND-P1-MOMENTUM-FRONTEND, BA-IND-P1-MOMENTUM-RS, MARKET-INDICATOR-DEPTH-P0, HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING, FEAT-NEWS-DECISION-RESUME, FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT + 27 earlier cycles pre-2026-06-28.]

@@ -10245,8 +10245,8 @@
         "size": "S",
         "priority": "high",
         "status": "IN_PROGRESS",
-        "owner": "architect",
-        "next_agent": "architect",
+        "owner": "pm",
+        "next_agent": "pm",
         "zone": "cross-service",
         "title": "FIX — gate drain-esc-dispatch Opus spawn on severity floor (>=HIGH) + recurrence/known-root DEDUP guard",
         "created_at": "2026-07-04T00:43:06Z",
@@ -10267,9 +10267,11 @@
         "verification_gate": "Inject synthetic esc-deep-dive-request cases: (a) severity<HIGH -> assert NO Opus spawn + row terminal; (b) HIGH severity, byte-identical content on 2nd+ dispatch WITH an open REFLOW board row -> assert NO Opus spawn + routed-to-reflow log; (c) HIGH severity, NOVEL content, no board row -> assert Opus DOES spawn (no false suppression). Test co-located with the drain-signals contract tests.",
         "acceptance": "MBB Q1-2026 ESC-2 (and any pre-fix byte-identical bank redispatch) no longer triggers an Opus deep-dive while REFLOW-<ticker> is open; sub-HIGH fires never spawn Opus; a genuine novel HIGH finding still spawns. No esc-dispatch signal_queue churn for 7d.",
         "status_note": "MINTED po 2026-07-04T00:42Z from router-dispatched repair_task_request (router-esc4-fu-drainesc-severity-gate-20260704T0016Z). NOT deploy-gated (flow-doc + drain script only) — leading actionable candidate this tick. Behavioral GATE change to a live dispatcher -> routed via architect (light design: pick GATE-B state location) before dev, hence SPRINT-S not bare FIX.",
-        "dispatched_at": "2026-07-04T00:50:37Z",
-        "dispatched_by": "router",
-        "dispatch_note": "[router :07 tick 2026-07-04] SPRINT-S dispatched to architect (bg). Design 2 gates in drain-esc-dispatch.md BETWEEN Step 2 (mutex) and Step 3 (spawn): GATE-A severity floor (effective_severity = row.severity or max tier across all_esc_fired; < HIGH -> no Opus, mark row terminal, release guard_key); GATE-B known-root DEDUP (OPEN board task for {ticker,quarter} e.g. REFLOW-<ticker>-<quarter> OR semantic content-fp sha256(ticker+quarter+trigger_id+context) seen N>=2 -> route to reflow, skip Opus). Architect decides GATE-B state location (board-row-exists check [cheapest] vs content-fp counter in drain-signals.js). MANDATE: no ticker hardcode; never suppress a genuine FRESH high-severity finding. Files: docs/agents/dev-team/flow/drain-esc-dispatch.md + scripts/agents-flow/drain-signals.js. Chain: architect -> pm -> dev -> qa."
+        "dispatched_at": "2026-07-04T01:11:30Z",
+        "dispatched_by": "architect",
+        "dispatch_note": "[architect 2026-07-04] Design DONE. GATE-A severity floor (effective_severity = row.severity authoritative — NOT max-of-both, that would re-escalate the shipped ESC-4 AC-2 INFO downgrade; static ESC-id tier table is a fallback ONLY when row.severity missing; floor=HIGH per SignalSeverityEnum orchStateSchema.ts:172). GATE-B two-tier DEDUP: Tier-1 board-row-exists (REFLOW-<ticker>-<quarter>, self-healing on TERMINAL_SET status flip, zero new state) PRIMARY; Tier-2 signals_processed exact-context COUNT>=2 (read-only json_extract, zero schema change) SECONDARY bootstrap net. Live-verified against real signals.db: MBB Q1-2026 ESC-2 (2 byte-identical rows, REFLOW-MBB-Q1-2026 already open/BLOCKED) confirms Tier-1; GVR Q1-2026 ESC-4 (4 rows, context KEYS DRIFT every cycle) DISPROVES a naive content-hash-only design — load-bearing finding, see brief. Precise change points + jq filter + drain-signals.js CLI subcommand snippet in the brief. pm: decompose into ONE atomic dev task (both files land together, brief section 5) — files: docs/agents/dev-team/flow/drain-esc-dispatch.md + scripts/agents-flow/drain-signals.js. Zone: cross-service. Dev-agent routing flagged for pm's call (developer per zone-detect Tier-2, or dev-mcp-server per established scripts/agents-flow/ ownership precedent, po-decisions.md).",
+        "architecture_brief": "docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md",
+        "handoff_ref": "docs/handoffs/TASK_FIX-DRAINESC-SEVERITY-RECURRENCE-GATE.md"
       }
     ],
     "ready": [],
@@ -10400,6 +10402,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-03T23:57:27Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-07-04T01:11:30Z",
+  "_updated_by": "architect"
 }
