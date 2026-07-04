@@ -41,7 +41,6 @@ import { getToolsForSkills } from "./bootstrap/agentBootstrap.js";
 import { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
 export { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
 import { incrementTool } from "../../infrastructure/telemetry/perCallCounterStore.js";
-import { safeLogVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { ensurePoisonedQueueCleanup } from "./server-startup.js";
 import { startPeriodicReaper } from "../../infrastructure/db/coordinationStore.js";
@@ -75,7 +74,6 @@ import { backfillBctcPdfPaths } from "../../application/usecases/backfillBctcPdf
 import { getAccuracyStats, getSystemAccuracyDigestStats } from "../../infrastructure/db/signalOutcomeStore.js";
 import { handleBctcEvalList } from "./routes/bctcEvalListHandler.js";
 import { handleBctcEvalDetail } from "./routes/bctcEvalDetailHandler.js";
-import { withDeadline } from "../../infrastructure/fetchers/fetchDeadline.js";
 import { handleBctcEvalRecompute } from "./routes/bctcEvalRecomputeHandler.js";
 import { handleBctcEvalThresholds } from "./routes/bctcEvalThresholdsHandler.js";
 import { handleBctcEvalPushStage } from "./routes/bctcEvalPushStageHandler.js";
@@ -164,6 +162,9 @@ import {
 import { handlePushTradingEconomics, handlePushGso, handlePushReuters } from "./routes/macroPushHandler.js";
 // FACTORY-INTERFACE-split-server-ts Stage 3: OHLCV backfill VPS lifecycle routes
 import { handlePushOhlcvHistory, handleOhlcvBackfillQueue, handleOhlcvBackfillDone } from "./routes/ohlcvBackfillHandler.js";
+// FACTORY-INTERFACE-split-server-ts Stage 4: BCTC VPS proxy ingestion + queue-management routes
+import { handleBctcFetchQueue, handleEnrichQueueItem } from "./routes/bctcVpsQueueHandler.js";
+import { handlePushBctcPdf, handleTriggerPekExtract } from "./routes/bctcVpsIngestHandler.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX-MCP-500-SYMBOL-TO-STRING: Bun-native Node.js ↔ Web Standard conversion
@@ -254,54 +255,6 @@ function stripCloudflarePathPrefix(pathname: string): string {
   return pathname;
 }
 
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Parse multipart/form-data body into a Map of field name → value.
- * Text fields return string values; file fields return Buffer values.
- */
-function parseMultipartFields(body: Buffer, boundary: string): Map<string, string | Buffer> {
-  const fields = new Map<string, string | Buffer>();
-  const sep = Buffer.from(`--${boundary}`);
-
-  // Split body by boundary
-  let start = 0;
-  const parts: Buffer[] = [];
-  while (true) {
-    const idx = body.indexOf(sep, start);
-    if (idx === -1) break;
-    if (start > 0) {
-      // Remove trailing \r\n before boundary
-      const end = idx - 2 >= start ? idx - 2 : idx;
-      parts.push(body.subarray(start, end));
-    }
-    start = idx + sep.length;
-    // Skip \r\n after boundary
-    if (body[start] === 0x0d && body[start + 1] === 0x0a) start += 2;
-    // Check for closing --
-    if (body[start] === 0x2d && body[start + 1] === 0x2d) break;
-  }
-
-  for (const part of parts) {
-    // Find double CRLF separating headers from body
-    const headerEnd = part.indexOf("\r\n\r\n");
-    if (headerEnd === -1) continue;
-    const headerStr = part.subarray(0, headerEnd).toString("utf-8");
-    const bodyContent = part.subarray(headerEnd + 4);
-
-    const nameMatch = headerStr.match(/name="([^"]+)"/);
-    if (!nameMatch?.[1]) continue;
-    const name = nameMatch[1];
-
-    const isFile = headerStr.includes("filename=");
-    fields.set(name, isFile ? Buffer.from(bodyContent) : bodyContent.toString("utf-8"));
-  }
-
-  return fields;
-}
 
 /** Options for starting the Bun HTTP server. */
 export interface BunServerOptions {
@@ -626,85 +579,7 @@ export async function createBunServer(
     // Returns 202 on success, 404 when pdf_path IS NULL, 503 from pdf-extractor (market hours).
     // No change to PekExtractRequestSchema — pdf_path stays mandatory on pdf-extractor side.
     if (method === "POST" && pathname === "/api/trigger-pek-extract") {
-      let body = "";
-      for await (const chunk of req) body += chunk;
-
-      let payload: { report_id?: unknown } = {};
-      try {
-        if (body.trim()) payload = JSON.parse(body) as { report_id?: unknown };
-      } catch {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Invalid JSON body" }));
-        return;
-      }
-
-      const reportId = typeof payload.report_id === "string" ? payload.report_id.trim() : null;
-      if (!reportId) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Missing required field: report_id (string)" }));
-        return;
-      }
-
-      // Look up pdf_path from financial_reports (mcp-server owns the DB)
-      const pdfPathRow = db
-        .prepare<{ pdf_path: string | null }, [string]>(
-          `SELECT pdf_path FROM financial_reports WHERE id = ?`,
-        )
-        .get(reportId) as { pdf_path: string | null } | null;
-
-      if (!pdfPathRow) {
-        res.writeHead(404, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "report_not_found", report_id: reportId }));
-        return;
-      }
-
-      const pdfPath = pdfPathRow.pdf_path;
-      if (!pdfPath) {
-        // Two known cases: VCB Q1/Q4 geo-restricted — never trigger PEK for these
-        res.writeHead(404, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "pdf_path_null", report_id: reportId, detail: "PDF not downloaded (geo-restricted or not available)" }));
-        return;
-      }
-
-      // Call pdf-extractor with both report_id and pdf_path (PekExtractRequestSchema requires both)
-      try {
-        const pekUrl = "http://pdf-extractor:5001/pek-extract";
-        const pekResp = await withDeadline(
-          (signal) =>
-            fetch(pekUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ report_id: reportId, pdf_path: pdfPath }),
-              signal,
-            }),
-          30_000,
-          "triggerPekExtract",
-        );
-
-        // Propagate 503 (market hours guard) verbatim
-        if (pekResp.status === 503) {
-          res.writeHead(503, { "Content-Type": "application/json" });
-          const pekBody = await pekResp.text();
-          res.end(pekBody || JSON.stringify({ error: "market_open", detail: "pdf-extractor returned 503 (VN market hours guard)" }));
-          return;
-        }
-
-        if (!pekResp.ok) {
-          const pekBody = await pekResp.text();
-          log.error("[trigger-pek-extract] pdf-extractor error", { status: pekResp.status, reportId, body: pekBody });
-          res.writeHead(502, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "pdf_extractor_error", status: pekResp.status, detail: pekBody }));
-          return;
-        }
-
-        log.info("[trigger-pek-extract] extraction triggered", { reportId, pdfPath });
-        res.writeHead(202, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, report_id: reportId, pdf_path: pdfPath, status: "extraction_queued" }));
-      } catch (fetchErr) {
-        log.error("[trigger-pek-extract] fetch error", { error: fetchErr instanceof Error ? fetchErr.message : String(fetchErr), reportId });
-        res.writeHead(502, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "pdf_extractor_unreachable", detail: fetchErr instanceof Error ? fetchErr.message : String(fetchErr) }));
-      }
+      await handleTriggerPekExtract(req, res, db, log);
       return;
     }
 
@@ -864,295 +739,13 @@ export async function createBunServer(
 
     // ── Task 1112: BCTC VPS proxy — fetch queue ────────────────────────────
     if (method === "GET" && pathname === "/api/bctc-fetch-queue") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-      try {
-        // Get current reporting period (most recent quarter)
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth() + 1; // 1-indexed
-
-        // 1201: Correct SSC filing deadline boundaries.
-        // Vietnamese SSC filing deadlines:
-        //   Q4 (Oct–Dec) filings due ~30 Mar  → collect Q4 during Jan–Apr
-        //   Q1 (Jan–Mar) filings due ~30 Apr  → collect Q1 during May–Jul
-        //   Q2 (Apr–Jun) filings due ~30 Jul  → collect Q2 during Aug–Oct
-        //   Q3 (Jul–Sep) filings due ~30 Oct  → collect Q3 during Nov–Dec
-        //
-        // Bug was: else if (currentMonth <= 6) → Q1, which fired in April (month 4)
-        // giving Q1-2026 instead of the correct Q4-2025.
-        let targetYear = currentYear;
-        let targetQuarter: string;
-        if (currentMonth <= 4) {
-          // Jan–Apr: collect Q4 of previous year (filed by ~30 March, stragglers through April)
-          targetYear = currentYear - 1;
-          targetQuarter = "Q4";
-        } else if (currentMonth <= 7) {
-          // May–Jul: collect Q1 of current year
-          targetQuarter = "Q1";
-        } else if (currentMonth <= 10) {
-          // Aug–Oct: collect Q2 of current year
-          targetQuarter = "Q2";
-        } else {
-          // Nov–Dec: collect Q3 of current year
-          targetQuarter = "Q3";
-        }
-
-        // Get watchlist tickers
-        const watchlistRows = db.prepare("SELECT code FROM watchlist ORDER BY code").all() as { code: string }[];
-        const watchlistCodes = watchlistRows.map((r) => r.code);
-
-        // Find tickers missing from financial_reports for the target period
-        const existingRows = db.prepare(
-          `SELECT action_code FROM financial_reports WHERE period_year = ? AND period_type = ?`,
-        ).all(targetYear, targetQuarter) as { action_code: string }[];
-        const existing = new Set(existingRows.map((r) => r.action_code));
-
-        const missing = watchlistCodes.filter((c) => !existing.has(c));
-
-        // Revive stale skipped rows so VPS can reattempt discovery.
-        // INSERT OR IGNORE would silently ignore existing 'skipped' rows, leaving
-        // them permanently blocked. The UPDATE runs first to reset them to 'pending'.
-        db.prepare(
-          `UPDATE bctc_vps_queue SET status='pending'
-           WHERE status='skipped' AND source_url IS NULL`,
-        ).run();
-
-        // Upsert queue rows for missing tickers
-        const insertStmt = db.prepare(
-          `INSERT OR IGNORE INTO bctc_vps_queue (action_code, period_year, period_quarter) VALUES (?, ?, ?)`,
-        );
-        for (const code of missing) {
-          insertStmt.run(code, targetYear, targetQuarter);
-        }
-
-        // Return pending queue items (max 10) — include cached source_url
-        const pendingRows = db.prepare(
-          `SELECT action_code, period_year, period_quarter, source_url FROM bctc_vps_queue
-           WHERE status = 'pending' AND attempts < 5
-           ORDER BY created_at ASC LIMIT 10`,
-        ).all() as { action_code: string; period_year: number; period_quarter: string; source_url: string | null }[];
-
-        // Task 1218: enrich pending items with PDF URLs from SSC portal
-        // so VPS can fetch directly without re-discovery.
-        // Task 1280: Add skip_enrichment param for emergency VPS timeouts.
-        const { buildQueueSourceHints } = await import(
-          "../../application/usecases/bctcQueueEnricher.js"
-        );
-
-        // Parse query parameter: skip enrichment if VPS is timing out
-        const url = new URL(req.url!, "http://localhost");
-        const skipEnrichment = url.searchParams.get("skip_enrichment") === "true";
-
-        let enriched = pendingRows.map((r) => ({
-          action_code: r.action_code,
-          period_year: r.period_year,
-          period_quarter: r.period_quarter,
-          source_url: r.source_url,
-        }));
-
-        // Only enrich if requested (default behavior for normal VPS operation)
-        if (!skipEnrichment) {
-          const { enrichQueueWithPdfUrls } = await import(
-            "../../application/usecases/bctcQueueEnricher.js"
-          );
-
-          // Injectable listDocs for production (uses listSscDocuments)
-          const listDocsForEnrich = async (code: string, quarter: string, year: number) => {
-            try {
-              const { listSscDocuments } = await import("../../infrastructure/fetchers/ssc.js");
-              return listSscDocuments(code, "quarterly", year);
-            } catch {
-              return [];
-            }
-          };
-
-          enriched = await enrichQueueWithPdfUrls(
-            enriched,
-            listDocsForEnrich,
-          );
-
-          // Persist discovered PDF URLs back to the queue table
-          const updateSourceUrl = db.prepare(
-            `UPDATE bctc_vps_queue SET source_url = ? WHERE action_code = ? AND period_year = ? AND period_quarter = ? AND source_url IS NULL`,
-          );
-          for (const item of enriched) {
-            if (item.source_url) {
-              updateSourceUrl.run(item.source_url, item.action_code, item.period_year, item.period_quarter);
-            }
-          }
-        }
-
-        const queue = enriched.map((r) => ({
-          action_code: r.action_code,
-          period_year: r.period_year,
-          period_quarter: r.period_quarter,
-          source_hints: buildQueueSourceHints(r),
-        }));
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ queue, total: queue.length }));
-      } catch (err) {
-        // HOTFIX 1288c: Suppress query errors (main server no longer enriches)
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Server error" }));
-      }
+      await handleBctcFetchQueue(req, res, db, log);
       return;
     }
 
     // ── Task 1112: BCTC VPS proxy — push PDF ─────────────────────────────────
     if (method === "POST" && pathname === "/api/push-bctc-pdf") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      // Size limit: 52 MB
-      const contentLength = parseInt(req.headers["content-length"] ?? "0", 10);
-      if (contentLength > 52_428_800) {
-        res.writeHead(413, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "PDF too large (max 50 MB)" }));
-        return;
-      }
-
-      try {
-        // Read raw body
-        const chunks: Buffer[] = [];
-        let totalBytes = 0;
-        for await (const chunk of req) {
-          totalBytes += chunk.length;
-          if (totalBytes > 52_428_800) {
-            res.writeHead(413, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ error: "PDF too large (max 50 MB)" }));
-            return;
-          }
-          chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-        }
-        const body = Buffer.concat(chunks);
-
-        // Parse multipart/form-data
-        const contentType = req.headers["content-type"] ?? "";
-        const boundaryMatch = contentType.match(/boundary=(.+?)(?:;|$)/);
-        if (!boundaryMatch) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Missing multipart boundary" }));
-          return;
-        }
-
-        const boundary = boundaryMatch[1]!;
-        const fields = parseMultipartFields(body, boundary);
-
-        const actionCode = fields.get("action_code")?.toString().toUpperCase().trim();
-        const periodYear = parseInt(fields.get("period_year")?.toString() ?? "", 10);
-        const periodQuarter = fields.get("period_quarter")?.toString().toUpperCase().trim();
-        const sourceUrl = fields.get("source_url")?.toString() ?? "";
-        const pdfBuffer = fields.get("pdf");
-
-        // Validate required fields
-        if (!actionCode || !/^[A-Z0-9]{2,10}$/.test(actionCode)) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid action_code" }));
-          return;
-        }
-        if (isNaN(periodYear) || periodYear < 2000 || periodYear > 2099) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid period_year" }));
-          return;
-        }
-        if (!periodQuarter || !["Q1", "Q2", "Q3", "Q4"].includes(periodQuarter)) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid period_quarter" }));
-          return;
-        }
-        if (!pdfBuffer || !(pdfBuffer instanceof Buffer) || pdfBuffer.length < 10_240) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({
-            error: `PDF too small: ${pdfBuffer instanceof Buffer ? pdfBuffer.length : 0} bytes (minimum 10240 bytes / 10 KB). Real BCTC PDFs are never under 10 KB.`,
-          }));
-          return;
-        }
-
-        // Check if already done
-        const existingRow = db.prepare(
-          `SELECT status FROM bctc_vps_queue WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
-        ).get(actionCode, periodYear, periodQuarter) as { status: string } | null;
-        if (existingRow?.status === "done") {
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ ok: true, skipped: true }));
-          return;
-        }
-
-        // Write PDF to disk
-        const { normaliseFilename } = await import("../../application/usecases/fetchParseAndStoreBctc.js");
-        const filename = normaliseFilename(sourceUrl || `${actionCode}.pdf`, actionCode, periodYear, periodQuarter as any);
-        const { resolve } = await import("node:path");
-        const { mkdirSync, writeFileSync } = await import("node:fs");
-        const pdfDir = resolve(process.cwd(), "data", "pdfs");
-        mkdirSync(pdfDir, { recursive: true });
-        const pdfPath = resolve(pdfDir, filename);
-        writeFileSync(pdfPath, pdfBuffer);
-
-        log.info("[push-bctc-pdf] PDF saved", { actionCode, periodYear, periodQuarter, filename, bytes: pdfBuffer.length });
-        safeLogVpsPush({ service: "bctc", itemsCount: 1, status: "ok" }, db);
-
-        // Update queue status
-        db.prepare(
-          `INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, source_url, attempts, last_attempt)
-           VALUES (?, ?, ?, 'fetching', ?, 1, datetime('now'))
-           ON CONFLICT(action_code, period_year, period_quarter)
-           DO UPDATE SET status = 'fetching', source_url = ?, attempts = attempts + 1, last_attempt = datetime('now')`,
-        ).run(actionCode, periodYear, periodQuarter, sourceUrl, sourceUrl);
-
-        // Fire-and-forget: trigger BCTC text extraction + parse pipeline.
-        // Task 1945d GAP-B fix: the previous implementation called
-        // fetchParseAndStoreBctc with only pdfUrl (no pdfTextOverride), which
-        // caused it to try downloading from the SSC/VPS URL without auth headers.
-        // The geo-blocked download failed silently → financial_reports never written.
-        // Fix: extract text locally first via triggerPushBctcExtraction (same
-        // pattern as bctcPdfPullJob.triggerExtraction), then call pipeline with
-        // pdfTextOverride so the network download step is fully bypassed.
-        setImmediate(async () => {
-          try {
-            const { triggerPushBctcExtraction } = await import("../../scheduler/financial-reports/pushBctcExtraction.js");
-            await triggerPushBctcExtraction({
-              actionCode,
-              year: periodYear,
-              quarter: periodQuarter as "Q1" | "Q2" | "Q3" | "Q4",
-              filePath: pdfPath,
-              filename,
-              pdfUrl: sourceUrl || `file://${pdfPath}`,
-            });
-            db.prepare(
-              `UPDATE bctc_vps_queue SET status = 'done' WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
-            ).run(actionCode, periodYear, periodQuarter);
-            log.info("[push-bctc-pdf] pipeline complete", { actionCode, periodYear, periodQuarter });
-          } catch (err) {
-            db.prepare(
-              `UPDATE bctc_vps_queue SET status = 'failed' WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
-            ).run(actionCode, periodYear, periodQuarter);
-            log.error("[push-bctc-pdf] pipeline failed", {
-              actionCode,
-              error: err instanceof Error ? err.message : String(err),
-            });
-          }
-        });
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, queued: `${actionCode}-${periodYear}-${periodQuarter}` }));
-      } catch (err) {
-        // HOTFIX 1288c: Suppress request validation errors (main server just receives)
-        // VPS push failures are logged by VPS at line 1415
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Server error" }));
-      }
+      await handlePushBctcPdf(req, res, db, log);
       return;
     }
 
@@ -1162,69 +755,7 @@ export async function createBunServer(
     // Receives: { action_code, period_year, period_quarter, source_url }
     // Updates bctc_vps_queue.source_url for matching item
     if (method === "POST" && pathname === "/api/enrich-queue-item") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      let body = "";
-      for await (const chunk of req) body += chunk;
-      try {
-        const payload = JSON.parse(body) as Record<string, unknown>;
-
-        const actionCode = payload.action_code;
-        const periodYear = payload.period_year;
-        const periodQuarter = payload.period_quarter;
-        const sourceUrl = payload.source_url;
-
-        if (typeof actionCode !== "string" || !actionCode) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Missing required field: action_code (string)" }));
-          return;
-        }
-        if (typeof periodYear !== "number" || periodYear < 2000) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Missing required field: period_year (number)" }));
-          return;
-        }
-        if (typeof periodQuarter !== "string" || !periodQuarter) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Missing required field: period_quarter (string)" }));
-          return;
-        }
-        if (typeof sourceUrl !== "string" || !sourceUrl) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Missing required field: source_url (string)" }));
-          return;
-        }
-
-        const stmt = db.prepare(
-          `UPDATE bctc_vps_queue
-           SET source_url = ?
-           WHERE action_code = ? AND period_year = ? AND period_quarter = ? AND source_url IS NULL`
-        );
-        const result = stmt.run(sourceUrl, actionCode, periodYear, periodQuarter);
-
-        log.info("[enrich-queue-item] URL enriched", {
-          actionCode,
-          periodYear,
-          periodQuarter,
-          sourceUrl,
-          updated: (result.changes ?? 0) > 0,
-        });
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, updated: (result.changes ?? 0) > 0 }));
-      } catch (err) {
-        log.error("[enrich-queue-item] error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Server error" }));
-      }
+      await handleEnrichQueueItem(req, res, db, log);
       return;
     }
 
