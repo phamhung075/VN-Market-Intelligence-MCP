@@ -3,18 +3,18 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-06-27T07:50:19Z",
+  "createdAt": "2026-07-04T08:13:20Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/qa.md",
+    "file": ".claude/skills/cron-detect-loop/SKILL.md",
     "line_count": 203,
     "cap": 200,
-    "class": "agent-notebook",
+    "class": "skill-file",
     "overage": 3,
     "action_required": "prune_or_split"
   },
   "_processed": {
-    "fingerprint": "77eb462b18042a7ae27d9b7f4c9a3413e0b8e04a47c114c5b3a97d777d5bcdd3",
-    "processedAt": "2026-06-27T08:40:12Z",
+    "fingerprint": "4865e0fbe0376f5752006ac418e3d7e11df56f441e20631d98c332874429b688",
+    "processedAt": "2026-07-04T08:40:47Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
