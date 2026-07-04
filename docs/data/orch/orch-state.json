@@ -3954,15 +3954,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-OPEN-ZERO-PRICE-RACE"
       },
       {
-        "title": "Remove confidence_score=50 destructuring default in agentSignalStore.postSignal",
-        "priority": "P0",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INFRA-agentsignal-confidence-50-default",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-agentsignal-confidence-50-default"
-      },
-      {
         "title": "Stop fabricating 0.5 conviction in sequential-market-analysis",
         "priority": "P1",
         "zone": "mcp-server-interface",
@@ -10840,6 +10831,18 @@
         "resolution": "NO-CHANGE-NEEDED — mask already remediated by commit e3386bdfa (TASK-CONF-1 / FIX-SIGNAL-CONFIDENCE-DEFAULT-50): apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts:224 already reads 'row.confidence_score ?? null', mask absent repo-wide, type widened to number|null. Router-verified RAW (grep absent + line 224 read + git show e3386bdfa diff + apps/mcp-server tree clean). Stale duplicate backlog row — do NOT re-open. Provenance: first live BOUNDED-1 idle-capacity auto-pickup (dev-team tick 2026-07-04T09:07Z) — mechanism proven end-to-end; but exposed backlog-hygiene debt (stale already-done rows present in backlog[]).",
         "verified_at": "2026-07-04T09:28:57Z",
         "verified_by": "router (bounded-1 re-verify)"
+      },
+      {
+        "title": "Remove confidence_score=50 destructuring default in agentSignalStore.postSignal",
+        "priority": "P0",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-INFRA-agentsignal-confidence-50-default",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-agentsignal-confidence-50-default",
+        "resolved_at": "2026-07-04T09:53:24Z",
+        "resolved_by": "dev-team (router bounded-1 pre-verify)",
+        "resolution": "STALE DUPLICATE — no change needed. Router raw-verified: agentSignalStore.ts:343 postSignal destructuring already reads `confidence_score = null` (FIX-SIGNAL-CONFIDENCE-DEFAULT-50 comment). Shipped by commit 4f5192c50 (wire real confidence into ALL postSignal producers); S2-DATA-HONESTY QA-closed d1e3d146b. No =50 default remains repo-wide. Closed WITHOUT worker spend — router pre-verify pruned the churn. 2nd consecutive stale pick from this cluster; see backlog-hygiene sweep recommendation."
       }
     ],
     "head": {
@@ -10970,8 +10973,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-04T09:22:16Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-04T09:53:24Z",
+    "last_triaged_by": "dev-team (router bounded-1 pre-verify prune)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
