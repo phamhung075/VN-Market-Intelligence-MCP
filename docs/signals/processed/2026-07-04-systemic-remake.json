@@ -12,14 +12,18 @@
       "action": "EDIT",
       "file": "docs/agents/dev-team/flow/main.md",
       "change": "Add RUN-IDLE branch to Step 0-PREFLIGHT verdict table -> JUMP to end, bypassing Step 0a drain-signals (brief §1.1)",
-      "depends": ["developer: dev-team-tick-preflight.sh idle-check step"]
+      "depends": [
+        "developer: dev-team-tick-preflight.sh idle-check step"
+      ]
     },
     {
       "id": "P1-B",
       "action": "EDIT",
       "file": ".claude/skills/cron-detect-loop/SKILL.md",
       "change": "Wire auditor-tier1-probe.sh --tier=2/3 pre-gate into Job 3/Job 4 CronCreate prompts, mirroring Job 2's Tier-1 wiring (brief §1.1)",
-      "depends": ["developer: auditor-tier1-probe.sh --tier flag"]
+      "depends": [
+        "developer: auditor-tier1-probe.sh --tier flag"
+      ]
     },
     {
       "id": "P1-C",
@@ -40,7 +44,9 @@
       "action": "EDIT",
       "file": "docs/agents/pm/flow/task-archive.md",
       "change": "On task DONE_VERIFIED with origin_signal_id, flip that signal_queue row READ->RESOLVED via existing signal-dashboard SKILL.md CLOSE protocol (brief §1.2)",
-      "depends": ["P1-D"]
+      "depends": [
+        "P1-D"
+      ]
     },
     {
       "id": "P1-F",
@@ -56,5 +62,11 @@
       "change": "Relay brief to po (promote 4 backlog ids out of PLAN-ONLY, brief §1.2 table) and to pm (decompose RC-VERIF+RC-CONVERGE TECH-doc request to architect, brief §2.1/§5). Do not implement Phase 2 schema/script pieces directly -- those are developer-owned per §5.",
       "depends": []
     }
-  ]
+  ],
+  "_processed": {
+    "fingerprint": "97d9fd64bbbc90d3ae661abbcf7ef56fdec0f2441f2967c6bbc167dffcd5b28e",
+    "processedAt": "2026-07-04T06:42:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

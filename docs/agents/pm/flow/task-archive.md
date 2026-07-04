@@ -9,6 +9,7 @@
 ## Output
 - Terminal tasks, sprints, and signal rows cold-evicted to `docs/data/orch/archive/YYYY-MM.json`
 - Hot file `.task_board.done[]` trimmed to last 10 items; `.task_board.done_verified[]` emptied
+- `signal_queue` rows referenced by a `done_verified[]` task's `origin_signal_id` flipped `READ→RESOLVED` in the same commit (no-op if `origin_signal_id` absent — additive, existing behaviour unchanged)
 - Single commit per `docs/policies/commit-convention.md`
 
 ---
@@ -93,7 +94,26 @@
      owner_agent="pm", ttl_seconds=180)
    ```
 
-3. **Run eviction script** (called while commit-mutex is held):
+3. **Signal closure back-reference** (additive — runs BEFORE the eviction script moves `done_verified[]` off the hot file, while commit-mutex is still held; no-op if no task carries `origin_signal_id`):
+   ```bash
+   SIGNAL_IDS=$(jq -r '[.task_board.done_verified[]? | select(.origin_signal_id != null) | .origin_signal_id] | unique | .[]' \
+     "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+   if [ -z "$SIGNAL_IDS" ]; then
+     echo "[pm/task-archive] No origin_signal_id on done_verified[] — signal closure no-op"
+   else
+     for SID in $SIGNAL_IDS; do
+       jq --arg sid "$SID" \
+         '.signal_queue.rows |= map(if .id == $sid and .status == "READ" then .status = "RESOLVED" else . end)' \
+         "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
+         | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+         || echo "[pm/task-archive] WARN: signal closure flip failed for ${SID} — continuing eviction"
+       echo "[pm/task-archive] Signal closure: ${SID} READ→RESOLVED (origin task DONE_VERIFIED)"
+     done
+   fi
+   ```
+   CLOSE semantics (`READ→RESOLVED`) per `.claude/skills/signal-dashboard/SKILL.md` § CLOSE — reference only, do not duplicate its body here. This write lands on disk now (uncommitted); Step 6 below stages `docs/data/orch/orch-state.json` regardless, so the flip rides in the SAME commit as the archive/eviction write — no separate commit, no manual step.
+
+4. **Run eviction script** (called while commit-mutex is held):
    ```bash
    bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"
    # Script atomically: evicts done_verified[] (ALL items — terminal by definition),
@@ -104,7 +124,7 @@
    # script aborts before any rename on any validation failure.
    ```
 
-4. **Verify post-eviction state** (includes validate.sh gate — SHG-3):
+5. **Verify post-eviction state** (includes validate.sh gate — SHG-3):
    ```bash
    # Full schema validation gate (SHG-3 — runs on the live file post-rename)
    bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
@@ -120,7 +140,7 @@
    echo "[pm/task-archive] Post-eviction OK — done=$DONE_POST, done_verified=$DV_POST"
    ```
 
-5. **Commit (mutex still held)**:
+6. **Commit (mutex still held)**:
    ```bash
    YYYYMM=$(date -u +%Y-%m)
    # own_paths: docs/data/orch/orch-state.json + docs/data/orch/archive/YYYY-MM.json
@@ -128,7 +148,7 @@
    git commit -m "chore(tasks): cold-evict ${DV_N} done_verified + excess done tasks → archive/${YYYYMM}.json"
    ```
 
-6. **Release mutex**:
+7. **Release mutex**:
    ```
    task_release(task_id: "pm-archive-<ISO8601slug>")
    ```

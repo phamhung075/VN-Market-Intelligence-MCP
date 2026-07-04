@@ -1,6 +1,11 @@
 # PO Notebook
 
-_Last: 2026-07-04T07:00Z_
+_Last: 2026-07-04T07:15Z_
+
+## Tick 2026-07-04T07:15Z (po-2bd0708d) — RAW-VERIFY GATE reconcile of a 3-session concurrent-writer race
+
+Router raw-verify gate blocked closeout: disk (peer po-s141/s142 board) != my RETURN. THREE PO sessions raced the SAME systemic-remake brief this tick: mine (2bd0708d, coarse SYSREMAKE-*), po-s141 (atomic P1-* mint + promote 4 detector fixes to ready[]), po-s142 (CANCELLED my coarse SYSREMAKE-P1A/B/C/F/P1DET as dup-churn, superseded_by the atomic set; committed 3a6271de0 + 873982f5e). Coordinator directed: make ready[]/head SAFE. Reconciled via orch-apply (rc0 x2): relocated all 10 ready rows OUT of ready[] -> backlog supervised=true (4 RC-DETECTOR + notebook-gate + 2 loop-scripts; FIX-CONTEXT-BLOAT plan_only=true), dropped closure dup (live via SYSREMAKE-P1DE agent-father), ready[]=[], head=idle. Corrected head note (my first note wrongly pointed pm at the CANCELLED SYSREMAKE rows). 
+UNRESOLVED CONFLICT flagged to router: peer sessions acted under a RELAYED USER GREEN-LIGHT to promote Phase-1 now; raw-verify gate judged unattended dispatch of detector/gate/loop-script fixes UNSAFE -> held supervised. Router to adjudicate re-promotion on a supervised tick. ACTIVE RACE: a peer flipped the 4 detector rows BACKLOG->TODO and re-added the closure row AFTER my writes (still out-of-ready + supervised, so SAFE). Stopped writing to avoid escalating the write-war (= the churn this remake kills). Final disk: ready[]=EMPTY, head idle/active_task_id=null. review[] 3 W5 user-owned untouched.
 
 ## Tick 2026-07-04T07:00Z (router-dispatched) — USER-GREEN-LIT systemic-remake Phase-1, EXECUTED FULLY + converged dup set
 
