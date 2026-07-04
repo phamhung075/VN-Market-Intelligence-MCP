@@ -7212,7 +7212,7 @@
         "created_at": "2026-07-01T05:54:51Z",
         "created_by": "po-s135",
         "source_report_id": 3366,
-        "note": "Telegram report id=3366 (analysis-agent, normal, 2026-07-01T04:30Z): 'VPS backfill stalled after 5 retries; manual VPS investigation required'. ALL five codes are NON-watchlist (direct grep of system-map.json watchlist = none). The whole watchlist OHLCV-depth program is DONE_VERIFIED (SUBTASK-A..E, REBUILD, PROD-BACKFILL-GATE, PERSIST-DAILY-OHLCV-2YR). Manual VPS investigation = ops/infra, NOT a coding lane. Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG. Low priority — peripheral codes, no serving-layer impact. Related infra: BCTC-HIST-VPS-BACKFILL (DEFERRED, infra-vps). [RE-EMIT 2026-07-03: telegram report id=3418 (2026-07-03T03:30:05Z) re-confirmed same 5 shallow codes BDI:1 DLC:41 JSH:0 SIS:0 VDC:0 — deduped to this row, still PLAN-ONLY BACKLOG, VPS-ops gated.]"
+        "note": "Telegram report id=3366 (analysis-agent, normal, 2026-07-01T04:30Z): 'VPS backfill stalled after 5 retries; manual VPS investigation required'. ALL five codes are NON-watchlist (direct grep of system-map.json watchlist = none). The whole watchlist OHLCV-depth program is DONE_VERIFIED (SUBTASK-A..E, REBUILD, PROD-BACKFILL-GATE, PERSIST-DAILY-OHLCV-2YR). Manual VPS investigation = ops/infra, NOT a coding lane. Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG. Low priority — peripheral codes, no serving-layer impact. Related infra: BCTC-HIST-VPS-BACKFILL (DEFERRED, infra-vps). [RE-EMIT 2026-07-03: telegram report id=3418 (2026-07-03T03:30:05Z) re-confirmed same 5 shallow codes BDI:1 DLC:41 JSH:0 SIS:0 VDC:0 — deduped to this row, still PLAN-ONLY BACKLOG, VPS-ops gated.] [RE-EMIT 2026-07-04: telegram report id=3501 (2026-07-04T03:30:04Z, analysis-agent) re-confirmed same 5 shallow codes BDI:1 DLC:41 JSH:0 SIS:0 VDC:0 — deduped to this row, resolved durably via process_telegram_report (msg 3250 deleted), still PLAN-ONLY BACKLOG, VPS-ops gated.]"
       },
       {
         "id": "FIX-VPS-SSC-INSIDER-502",
@@ -7758,6 +7758,21 @@
         "source": "PO triage (router-dispatched) of BCTC-1345b low-confidence cohort, tick 2026-07-04T03:07Z. HSG (financial=1.00/composite=0.19) is the outlier not covered by extraction-stall remediation.",
         "created_at": "2026-07-04T03:10:00Z",
         "created_by": "po"
+      },
+      {
+        "id": "FIX-PRICE-ANOMALY-DISH-SIGNAL-ENVELOPE",
+        "title": "price_anomaly_v1 EOD dish files (docs/signals/price_anomaly_*.json) lack from/type envelope -> skipped by drain; real anomaly:true detections reach no consumer",
+        "owner": "po",
+        "next_agent": "architect",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "low",
+        "plan_only": true,
+        "zone": "multi",
+        "sprint": null,
+        "created_at": "2026-07-04T03:37:00Z",
+        "created_by": "po (router-dispatched)",
+        "note": "Loose price_anomaly_v1 EOD dish files under docs/signals/ (price_anomaly_20260702T1607.json, price_anomaly_20260703T1600.json) carry NO from/type signal envelope so the canonical drain skips them as non-signal-shape. They contain real anomaly:true detections (07-03: HVN +6.53% RSI70.9 vol 3.6x BB-breakout; GAS -2.59% RSI35.6) that reach NO consumer — grep finds no code/flow reader of the price_anomaly_v1 schema or the docs/signals/price_anomaly_*.json filename. PLAN-ONLY: (1) locate the writer (likely a market-watcher/cowork EOD dish agent-flow, NOT code — no TS ref), (2) decide root fix: wrap real anomaly:true rows into the from/type signal envelope so they reach triage + the frontend price_anomaly signal_type, OR if these are pure fb-poster dish artifacts, relocate them OUT of docs/signals/ so the drain stops flagging them each tick. Distinct from FU-AUDITOR-D4-SIGNAL-ID. Surfaced by router at dev-team tick 2026-07-04T03:37Z."
       }
     ],
     "closed_sprints": [
@@ -10590,8 +10605,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-03T23:57:27Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-07-04T03:37:00Z",
+    "last_triaged_by": "po (router-dispatched)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
