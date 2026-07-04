@@ -11,6 +11,19 @@
 # DEDUP: if an unprocessed context-bloat-*.json signal already exists for the
 # target file, skips emission (one open signal per file max).
 #
+# SETTLE-READ / DEBOUNCE (FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE): an over-cap
+# FIRST read can be a mid-write transient (file still being grown by a live/in-flight
+# edit). Before declaring a breach we sleep a short, configurable window and RE-READ
+# the line count; only the settled (post-window) count is used to decide/report.
+# See docs/memory/feedback_ctxbloat_breach_on_live_sprint_file_defer.md +
+# docs/memory/feedback_auditor_false_positive_destructive.md.
+#
+# FINGERPRINT SUPPRESSION: before emitting the breach signal (this hook's file-bus
+# write is the equivalent of a post_agent_signal call — no MCP tool is invoked here,
+# see Performance contract below), the script consults the SAME fingerprint-suppression
+# pattern used by docs/data/system-auditor-known-issues.json — a still-open (non-
+# "resolved") fingerprint already tracked there suppresses re-emission.
+#
 # Input contract: PostToolUse hook JSON received on STDIN.
 #   { "tool_name": "Write", "tool_input": { "file_path": "..." }, ... }
 #
@@ -100,6 +113,26 @@ LINE_COUNT=$(wc -l < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
 # Within cap → exit clean
 [ "$LINE_COUNT" -le "$MATCHED_CAP" ] && exit 0
 
+# --- SETTLE-READ / DEBOUNCE: re-read after a short settle window before declaring breach ---
+# Kills the mid-write false-positive class: a file caught mid-growth (still being written/
+# edited by a live in-flight sprint) can transiently read over-cap on this FIRST wc -l.
+# Wait a short, configurable window, then RE-READ. Only the SETTLED (post-window) line
+# count is authoritative from here on — if it drops back within cap, the first read was
+# mid-write noise, not a real breach. Override window via CONTEXT_BLOAT_SETTLE_SECONDS
+# (default 2s; set to 0 to disable, e.g. for fast test harnesses).
+SETTLE_SECONDS="${CONTEXT_BLOAT_SETTLE_SECONDS:-2}"
+if [ "$SETTLE_SECONDS" -gt 0 ] 2>/dev/null; then
+  sleep "$SETTLE_SECONDS" 2>/dev/null || true
+fi
+
+[ -f "$FILE_PATH" ] || exit 0   # file vanished during settle window → nothing to report
+LINE_COUNT_SETTLED=$(wc -l < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
+[ -z "$LINE_COUNT_SETTLED" ] && exit 0
+LINE_COUNT="$LINE_COUNT_SETTLED"   # settled reading supersedes the initial (possibly mid-write) reading
+
+# Settled within cap → the initial over-cap read was a mid-write transient, not a real breach
+[ "$LINE_COUNT" -le "$MATCHED_CAP" ] && exit 0
+
 # --- BREACH DETECTED (overage exists) → check for justification ---
 # Honor <!-- size-justification: ... --> (HTML comment, for .md files)
 # or # size-justification: ... (for other formats).
@@ -149,7 +182,27 @@ if [ -n "$EXISTING_SIGNAL" ]; then
   exit 0
 fi
 
-# --- BREACH DETECTED → emit maintenance signal to file bus ---
+# --- FINGERPRINT SUPPRESSION: known-issues.json gate BEFORE the emit call below ---
+# Reuses the docs/data/system-auditor-known-issues.json fingerprint-suppression pattern:
+# a fingerprint already tracked there and still open (status != "resolved") is a KNOWN
+# issue — do not re-emit a duplicate breach signal for it. This read MUST happen (and
+# does happen, textually and at runtime) BEFORE the signal-emit block below, which is
+# this hook's post_agent_signal-equivalent (file-bus write; no MCP tool invoked here —
+# see Performance contract at top of file).
+KNOWN_ISSUES_FILE="$PROJECT_ROOT/docs/data/system-auditor-known-issues.json"
+FINGERPRINT="context_bloat:${REL_PATH}"
+
+if [ -f "$KNOWN_ISSUES_FILE" ]; then
+  SUPPRESSED=$(jq -r --arg fp "$FINGERPRINT" \
+    '[.issues[]? | select(.fingerprint == $fp and ((.status // "open") != "resolved"))] | length' \
+    "$KNOWN_ISSUES_FILE" 2>/dev/null || echo 0)
+  if [ "${SUPPRESSED:-0}" -gt 0 ] 2>/dev/null; then
+    # Known, still-open fingerprint already tracked — suppress duplicate emission
+    exit 0
+  fi
+fi
+
+# --- BREACH DETECTED → emit maintenance signal to file bus (post_agent_signal-equivalent) ---
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
 [ -z "$TIMESTAMP" ] && exit 0
 
