@@ -253,11 +253,11 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DRAINESC-SEVERITY-RECURRENCE-GATE",
-    "next_agent": "developer",
-    "next_action": "pm decomposition DONE (commit f0010b46a, router RAW-verified UUID-clean: only orch-state.json, acceptance=array of 9 distinct ACs AC1..AC9, mandates carry no-hardcode/never-suppress/count==1/injection-arg). Atomic dev task IMPL-DRAIN-GATE-SEVERITY-RECURRENCE in ready[] (next_agent=developer, owner=developer). developer implements GATE-A (severity floor >=HIGH) + GATE-B (two-tier board-row-exists + signals_processed count>=2 bootstrap) in docs/agents/dev-team/flow/drain-esc-dispatch.md (BETWEEN Step 2 mutex and Step 3 Opus spawn) + scripts/agents-flow/drain-signals.js (Tier-2 read-only count helper, NEVER the section-0a write path). Design ref: docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md. Chain: developer -> qa. SF-1 held by router.",
-    "updated_at": "2026-07-04T01:21:09Z",
+    "next_agent": "qa",
+    "next_action": "developer DONE (commits bf0b2cc9a code + 9419e644d notebook, router RAW-verified: drain-signals.test.js re-run 11/11 pass exit 0, in-zone, UUID-clean, 153L<=cap; dev caught+fixed brief jq string-.related crash). IMPL-DRAIN-GATE-SEVERITY-RECURRENCE moved ready->in_progress, next_agent=qa. qa gates all 9 ACs: GATE-A severity floor (>=HIGH) + GATE-B two-tier recurrence dedup in docs/agents/dev-team/flow/drain-esc-dispatch.md + scripts/agents-flow/drain-signals.js (--recurrence-count read-only helper) + drain-signals.test.js. qa MUST confirm: no live orch-state/signals.db mutation, byte-identical no-arg drain-mode, count==1 never suppressed, no ticker hardcode, injection-safe. On PASS: close BOTH IMPL + parent FIX-DRAINESC to done_verified + release SF-1. Chain: qa (final). SF-1 held by router.",
+    "updated_at": "2026-07-04T01:39:30Z",
     "updated_by": "router",
-    "note": "2026-07-04T01:21:09Z: pm->developer handoff. IMPL-DRAIN-GATE ready (next_agent=developer); head advanced to developer by router."
+    "note": "2026-07-04T01:39:30Z: developer->qa handoff. IMPL moved ready->in_progress (next_agent=qa); parent next_agent=qa; head advanced to qa by router."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10246,7 +10246,7 @@
         "priority": "high",
         "status": "IN_PROGRESS",
         "owner": "pm",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "zone": "cross-service",
         "title": "FIX — gate drain-esc-dispatch Opus spawn on severity floor (>=HIGH) + recurrence/known-root DEDUP guard",
         "created_at": "2026-07-04T00:43:06Z",
@@ -10273,17 +10273,15 @@
         "architecture_brief": "docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md",
         "handoff_ref": "docs/handoffs/TASK_FIX-DRAINESC-SEVERITY-RECURRENCE-GATE.md",
         "decomposed_to": "IMPL-DRAIN-GATE-SEVERITY-RECURRENCE"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "IMPL-DRAIN-GATE-SEVERITY-RECURRENCE",
         "type": "implementation",
         "size": "S",
         "priority": "high",
-        "status": "READY",
-        "owner": "developer",
-        "next_agent": "developer",
+        "status": "IN_PROGRESS",
+        "owner": "qa",
+        "next_agent": "qa",
         "zone": "cross-service",
         "title": "Implement GATE-A severity floor + GATE-B recurrence DEDUP in drain-esc-dispatch",
         "created_at": "2026-07-04T01:18:17Z",
@@ -10326,9 +10324,22 @@
         "design_reference": "docs/architecture-briefs/2026-07-04-drainesc-severity-recurrence-gate.md",
         "scope": "Two files, both land together (drain-esc-dispatch.md GATE-B calls new drain-signals.js subcommand). Zone: cross-service (scripts/ + docs/agents/ flow doc). No apps/ path. No rebuild.",
         "verification_strategy": "Inject synthetic esc-deep-dive-request cases: (a) severity<HIGH → assert no Opus spawn; (b) HIGH, identical content with open REFLOW board row → no Opus spawn; (c) HIGH, novel content, no board row → Opus spawns. Test colocated with drain-signals contract tests.",
-        "notes": "(router-dispatched) SPRINT-S decomposition. Atomic unit — both files change together. No deploy gate. Independent of currently-BLOCKED REFLOW-MBB-Q1-2026 / W5-FU-CTG-REFINE (this fix makes that row *actually* suppress redispatch once shipped, but does not depend on it landing first). Load-bearing finding: GVR|Q1-2026|ESC-4 (context keys drift every cycle) proves exact-content-hash GATE alone is insufficient — two-tier approach (board-row-exists PRIMARY, signals_processed count SECONDARY) is live-verified against real production data."
+        "notes": "(router-dispatched) SPRINT-S decomposition. Atomic unit — both files change together. No deploy gate. Independent of currently-BLOCKED REFLOW-MBB-Q1-2026 / W5-FU-CTG-REFINE (this fix makes that row *actually* suppress redispatch once shipped, but does not depend on it landing first). Load-bearing finding: GVR|Q1-2026|ESC-4 (context keys drift every cycle) proves exact-content-hash GATE alone is insufficient — two-tier approach (board-row-exists PRIMARY, signals_processed count SECONDARY) is live-verified against real production data.",
+        "dev_commits": [
+          "bf0b2cc9a",
+          "9419e644d"
+        ],
+        "dev_files": [
+          "docs/agents/dev-team/flow/drain-esc-dispatch.md",
+          "scripts/agents-flow/drain-signals.js",
+          "scripts/agents-flow/drain-signals.test.js"
+        ],
+        "dev_verify_note": "developer (a18a13d4) DONE + router RAW-verified: bf0b2cc9a (3 in-scope files, 305+/3-, UUID-clean, no orch-state/signals.db touch); router re-ran drain-signals.test.js -> 11/11 PASS exit 0 (AC4/AC5/AC7/AC8/AC9 incl AC7 golden-stdout byte-identical no-arg drain-mode); drain-esc-dispatch.md 153L<=200; GATE-A/GATE-B/TERMINAL anchors + type-guard hardening (2x) present. Dev caught+fixed REAL brief defect: literal Tier-1 jq (.related//[])|any crashes on string-typed .related in 3 live rows (FEAT-SEVERITY-OVERRIDE-SURFACING, FIX-ALERT-COMMANDER-DEAD-NO-SLOT, FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK) -> hardened `if type==array then any else false`. AC1/AC2/AC3/AC6 dev-verified via scratch mirror + live read-only jq (AC3 MBB->true vs REFLOW-MBB-Q1-2026 BLOCKED; FPT->false).",
+        "dispatched_to_qa_at": "2026-07-04T01:39:30Z",
+        "dispatched_to_qa_by": "router"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
