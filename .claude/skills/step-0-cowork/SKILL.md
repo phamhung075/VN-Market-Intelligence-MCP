@@ -50,10 +50,40 @@ SNAPSHOT_PATH = docs/data/cycle-snapshot-<HH:MM>.json
 get_cycle_bootstrap(agent_name="<agent-id>")
 ```
 
-| Error | First occurrence | Second occurrence (after 5s wait) |
-|---|---|---|
-| tool-not-found / MCP unavailable | Wait 5s → retry once | `send_telegram(channel="bug")` + signal drop → STOP |
-| `market_context` error | `send_telegram(channel="bug")` + signal drop → STOP | — |
+**GATEWAY-BLIND guard (FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP, 2026-07-07) — full detail in
+`.claude/skills/cycle-bootstrap/SKILL.md` § Error handling; condensed here:**
+A locally Agent-spawned subagent can land with `mcp__gateway__call_tool` categorically absent from
+its own tool binding even though `.claude/agents/<agent-id>.md` grants it and `.mcp.json` correctly
+registers `gateway` — a session-transport gap, not a config defect (confirmed 2026-07-07: every
+cowork agent's frontmatter already carries the grant). Not fixable from inside the flow — see
+`feedback_local_cowork_subagents_gateway_blind.md`.
+
+| Error class | Detection | First occurrence | Confirmed |
+|---|---|---|---|
+| TRANSIENT | any error text other than "no such tool"/"tool not found"/"unknown tool" | Wait 5s → retry once | still fails → GATEWAY-BLIND fallback below |
+| CONFIRMED-BLIND | error text = "no such tool"/"tool not found"/"unknown tool" (tool categorically absent) | Skip the 5s wait — go straight to fallback | — |
+| `market_context` error (bootstrap reached, response malformed) | — | `send_telegram(channel="bug")` + signal drop → STOP | — |
+
+**GATEWAY-BLIND fallback (Write-fallback signal + graceful DEFER — mirrors the already-DONE
+FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH file-signal pattern). Do NOT call `send_telegram`** —
+it is itself an `mcp__gateway__call_tool` call and fails identically when the gateway is blind
+(this is exactly what forced bctc-analyst-slot-2 ×3 and unified-agent chef-evening ×1 into ad-hoc
+raw-Write escalations on 2026-07-07):
+
+```
+Write(docs/signals/<agent-id>-<ISO-timestamp>-gateway-blind.json, {
+  "from": "<agent-id>", "to": "po", "type": "bug-escalation",
+  "payload": "[<agent-id>] Step 0b bootstrap failed: gateway-blind — get_cycle_bootstrap unavailable (mcp__gateway__call_tool absent from this subagent's binding; session-transport gap — see feedback_local_cowork_subagents_gateway_blind.md). No data fetched, no signals emitted, no fabrication this cycle. slot=<slot_id> tick=<TICK>.",
+  "priority": "high", "createdAt": "<ISO timestamp>"
+})
+```
+Use this canonical schema exactly — a prior ad-hoc unified-agent signal missing `from`/`to`/`type`/
+`payload` silently broke `drain-signals.js`'s `{from} → {to}` routing log line.
+
+Then append to `$AGENT_NOTEBOOK`: `"Cycle <TICK> — DEFERRED at Step 0b: gateway-blind (no MCP tool
+access this session)."` and **EXIT cleanly — graceful DEFER, not a crash.** No lock was held
+(blocked before any `task_claim`), so no STOP-RELEASE/orphan-lock risk. The next scheduled fire
+spawns a fresh subagent that may land sighted — do not retry further within this cycle.
 
 Never proceed with degraded bootstrap — stale context produces worse signals than silence.
 

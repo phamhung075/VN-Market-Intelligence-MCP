@@ -94,11 +94,55 @@ Every flow using this skill MUST:
 
 <!-- SSE-handshake race: fresh cron sessions may not complete MCP gateway registration before Step 0 executes; 1 retry + 5s gap converts the race into a tolerable startup delay. -->
 
+**GATEWAY-BLIND guard (FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP, 2026-07-07) — check FIRST, before the retry table:**
+A locally Agent-spawned cowork subagent can land with `mcp__gateway__call_tool` categorically
+absent from its own tool binding even though `.claude/agents/<agent-id>.md` correctly grants it and
+`.mcp.json` correctly registers the `gateway` server — a **session-level MCP transport gap, not a
+config defect** (config layer root-caused + fixed 2026-06-23 commit b3612720; verified still correct
+fleet-wide 2026-07-07 — every cowork agent's frontmatter already carries the grant). Recurs after
+host/Docker outages or long-lived sessions until the user runs `/mcp` reconnect or restarts CLI —
+see `feedback_local_cowork_subagents_gateway_blind.md`. **Not fixable from inside the flow** — the
+guard's job is to fail loud safely without wasting a turn on a call that cannot succeed, not to
+reconnect anything.
+
+Classify the Step 0 error:
+- **CONFIRMED-BLIND** — error text contains "no such tool" / "tool not found" / "unknown tool" (the
+  tool is categorically absent from this subagent's binding, not merely erroring) → skip the 5s
+  wait/retry entirely (a categorically-absent tool never reconnects mid-turn) → go straight to
+  **GATEWAY-BLIND fallback** below.
+- **TRANSIENT** — any other error/timeout (SSE-handshake race, 5xx, malformed response) → use the
+  retry table below; if the retry ALSO fails → **GATEWAY-BLIND fallback** below (never loop a 3rd time).
+
 | Error | First occurrence | Second occurrence (after 5s wait) |
 |---|---|---|
-| tool-not-found / MCP unavailable | Wait 5s → retry `get_cycle_bootstrap` once | `send_telegram(channel="bug")` + drop signal → STOP |
+| tool-not-found / MCP unavailable (TRANSIENT class) | Wait 5s → retry `get_cycle_bootstrap` once | GATEWAY-BLIND fallback below — NOT `send_telegram` (see why) |
 | `market_context` error | `send_telegram(channel="bug")` + drop signal → STOP immediately | — |
 | Any other error | `send_telegram(channel="bug")` + drop signal → STOP | — |
+
+**GATEWAY-BLIND fallback (Write-fallback signal + graceful DEFER — mirrors the already-DONE
+FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH pattern of file-based signals over a Bash-dependent
+path). Do NOT call `send_telegram` here:** `send_telegram` is itself an `mcp__gateway__call_tool`
+call and fails identically when the gateway is blind — attempting it wastes a turn and is exactly
+what forced prior cycles into ad-hoc raw-Write escalations (bctc-analyst-slot-2 ×3, unified-agent
+chef-evening ×1, all 2026-07-07).
+
+1. `Write` a bug-escalation signal directly — canonical schema (matches `fail-loud-protocol.md` §
+   Output Boundary item 5; routes through `drain-signals.js` unchanged. Do NOT invent a bespoke
+   schema — a prior ad-hoc signal missing `from`/`to`/`type`/`payload` silently broke the drain
+   router's `{from} → {to}` routing log line):
+   ```
+   Write(docs/signals/<agent-id>-<ISO-timestamp>-gateway-blind.json, {
+     "from": "<agent-id>", "to": "po", "type": "bug-escalation",
+     "payload": "[<agent-id>] Step 0 bootstrap failed: gateway-blind — get_cycle_bootstrap unavailable (mcp__gateway__call_tool absent from this subagent's binding; session-transport gap, not config — see feedback_local_cowork_subagents_gateway_blind.md). No data fetched, no signals emitted, no fabrication this cycle. slot=<slot_id> tick=<TICK>.",
+     "priority": "high", "createdAt": "<ISO timestamp>"
+   })
+   ```
+2. Append to your own notebook (direct `Write`/`Edit` — no MCP needed):
+   `"Cycle <TICK> — DEFERRED at Step 0: gateway-blind (no MCP tool access this session)."`
+3. **EXIT cleanly this cycle — a graceful DEFER, not a crash.** No lock was held (blocked before any
+   `task_claim`), so no STOP-RELEASE/orphan-lock risk. The next scheduled fire spawns a fresh
+   subagent that may land sighted (transport reconnect is independent of this flow's state) — do
+   not retry further within this cycle beyond the single TRANSIENT retry above.
 
 Never proceed with a degraded bootstrap — stale context produces worse signals than silence.
 
