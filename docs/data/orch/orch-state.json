@@ -290,10 +290,22 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-07T16:51:38Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-07T20:32:23Z",
+    "_updated_by": "po-triage-F-CHEF-MULTIDAY-OUTAGE-0706-0707",
     "archive": [],
-    "rows": [],
+    "rows": [
+      {
+        "id": "atb-cowork-guaranteed-slot-durability-20260707T203223Z",
+        "ts": "2026-07-07T20:32:23Z",
+        "from": "po",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "Cowork */15 dispatcher is session-scoped with no OS-level backstop — ~73h outage (07-04T16:05Z->07-07T17:30Z) silenced ALL guaranteed slots (chef morning/eod/evening, digest-sunday, fb-daily)",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/repair-cowork-guaranteed-slot-durability-20260707T203223Z.json"
+      }
+    ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
     "last_triaged_by": "po"
   },
@@ -9087,7 +9099,30 @@
         "closed_at": "2026-07-03T06:21:56Z"
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "KD-OBS-01-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "Fix KD-OBS-01: When kinh-dich tools encounter a data error, is it logged to WORK/BUG (not silently dropped)",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#KD-OBS-01-FIX",
+        "promoted_at": "2026-07-07T19:50:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-07T19:50:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-07T20:30:00Z",
+        "reviewed_by": "dev-mcp-server",
+        "review_note": "Implementation complete — 8 catch blocks wired to non-fatal sendTelegramBug via new kinhDichErrorNotify.ts, injectable notifyError param. 11 new tests (43 expect), tsc clean, tools=183 unchanged, server boot verified. Commits 6c1cd6aa9 (impl) + a66880029 (memory).",
+        "qa_verdict": "APPROVED",
+        "qa_verified_at": "2026-07-07T20:54:21Z",
+        "qa_verified_by": "qa",
+        "qa_verify_note": "RAW-verified: 8/8 catch blocks wired (5 MCP tools + 3 HTTP routes), fire-and-forget non-fatal confirmed by code read, response bodies unchanged. New test 11/11 pass 43 expect (re-run myself). tsc clean. kinh-dich+hexagram cluster 261/261 pass, registry 40/40 pass. Full suite 3x independent per-file-isolation runs (14100-14148 pass, 38-71 fail depending on host contention) — 0 kinh-dich failures in any run; failures confined to known pre-existing RSS/pollNews/SSC/PDF-extractor network-flake cluster (083/102/1227/1288/1324/1793/1821a/1898b 8/8 overlap vs cycle-379 documented baseline). appendMarketHexagram/appendStockHexagram exclusion confirmed correctly scoped (service-unreachable degrade path, different failure class). DDD/security/mock-guard PASS. Commit hygiene clean, orch-state diff (cbc1c2751) a clean array-move only."
+      }
+    ],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
@@ -9197,24 +9232,6 @@
         "po_unblock_dispatch_at": "2026-07-03T23:57:27Z",
         "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate).",
         "deploy_gate_note": "[router 2026-07-04T00:00Z] next_agent=ops but ops spawn DENIED by auto-mode permission classifier [Production Deploy]: rebuild+deploy live mcp-server + reingest CTG 96e36139-5dac-414d-8e4d-20a4725890d1 against live named-volume market.db need EXPLICIT user authorization (generic CLAUDE.md OVERRIDE 07-03 is insufficient intent). BLOCKED pending user clearing the deploy gate (run ops outside auto mode / approve the permission prompt). Code is done_verified; only deploy+operate remains."
-      },
-      {
-        "id": "KD-OBS-01-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "REVIEW",
-        "title": "Fix KD-OBS-01: When kinh-dich tools encounter a data error, is it logged to WORK/BUG (not silently dropped)",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#KD-OBS-01-FIX",
-        "promoted_at": "2026-07-07T19:50:24Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-07T19:50:28Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "reviewed_at": "2026-07-07T20:30:00Z",
-        "reviewed_by": "dev-mcp-server",
-        "review_note": "Implementation complete — 8 catch blocks wired to non-fatal sendTelegramBug via new kinhDichErrorNotify.ts, injectable notifyError param. 11 new tests (43 expect), tsc clean, tools=183 unchanged, server boot verified. Commits 6c1cd6aa9 (impl) + a66880029 (memory)."
       }
     ],
     "qa": [],
