@@ -254,9 +254,9 @@
     "status": "in_progress",
     "active_task_id": "CI-RED-c5b5f885-FIX",
     "next_agent": "dev-mcp-server",
-    "next_action": "PO-triaged FIX dispatch of CI-RED-c5b5f885-FIX (dev-mcp-server in flight); DATA-BACKFILL-PRICES-20260706-MONDAY-GAP also in_progress concurrently (dev-mcp-server, disjoint files) — see task_board.in_progress[] for full WIP, .head is single-slot legacy schema and reflects only the first-claimed task.",
-    "updated_at": "2026-07-07T17:44:13Z",
-    "updated_by": "dev-team (head-overwrite bug correction)"
+    "next_action": "CI-RED-c5b5f885-FIX moved to review (dev-mcp-server fix verified CI green, run 28886901289). Remaining live in_progress: DATA-BACKFILL-PRICES-20260706-MONDAY-GAP (see task_board.in_progress[]).",
+    "updated_at": "2026-07-07T17:52:48Z",
+    "updated_by": "dev-mcp-server (CI-RED-c5b5f885-FIX resolved)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10941,36 +10941,6 @@
     },
     "in_progress": [
       {
-        "id": "CI-RED-c5b5f885-FIX",
-        "title": "CI-RED bun test — PERSISTENT origin red c5b5f885 -> fb366a1e -> f71643fb (advanced to current origin HEAD; run 28689707086)",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "owner": "po",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "plan_only": false,
-        "created_at": "2026-07-03T03:03:24Z",
-        "created_by": "po",
-        "origin_signal": "ci_red:c5b5f885b48889aa19c0779eb4efdfa254e46654:bun test",
-        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28689707086",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "[po-triage 2026-07-07T16:37Z] RESOLVED-BY-CHAIN HYPOTHESIS DISPROVEN. Prior note bet this closes GREEN once 31caeefcd (search_similar_context fail-soft, done_verified) reached origin. It did NOT: the CI workflow (bun test job) = FAILURE on BOTH subsequent pushed HEADs fb366a1e (run 28687445571) AND f71643fb (run 28689707086) — red is STABLE across 3 consecutive origin HEADs (not flaky, ci_red_can_be_flaky ruled out). This is now a GENUINE coding FIX: the search-timeout dep did not fix it; a remaining/different bun-test root persists. FOLDED the ci_red re-emission CI-RED-f71643fb here (dedup: ci-health-probe re-fingerprints the SAME persistent red per head_sha) rather than mint a duplicate row — anti-churn. A persistent red bun test on origin/main blocks the pre-push hook and strands the whole fleet push (red_prepush_strands_fleet) -> escalated blocking:true, plan_only:false. AC (verification_gate=ci_green_on_subsequent_push): gh run list --branch main shows CI conclusion=success for a push AFTER f71643fb. NEXT: dev pulls the failing bun-test file(s) from run 28689707086 logs and fixes the root; do NOT re-run to flake-away. Zone apps/mcp-server/ is the prior hint — confirm from the actual failing test paths.",
-        "depends": [
-          "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING"
-        ],
-        "blocking": true,
-        "advanced_head_sha": "f71643fbaff1c5c687095775e79f2617ad2678f1",
-        "advanced_run_id": 28689707086,
-        "folded_ci_red": [
-          "ci_red:f71643fbaff1c5c687095775e79f2617ad2678f1:bun test",
-          "ci_red:fb366a1ecfb9e96fc1f830acb64a9bf2b3958e00:bun test"
-        ],
-        "updated_at": "2026-07-07T17:06:41Z",
-        "updated_by": "po-triage 2026-07-07T16:37Z",
-        "claimed_at": "2026-07-07T17:13:37Z",
-        "claimed_by": "dev-team (po-triage FIX dispatch)"
-      },
-      {
         "id": "DATA-BACKFILL-PRICES-20260706-MONDAY-GAP",
         "priority": "P2",
         "size": "XS",
@@ -11084,6 +11054,38 @@
         "po_unblock_dispatch_at": "2026-07-03T23:57:27Z",
         "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate).",
         "deploy_gate_note": "[router 2026-07-04T00:00Z] next_agent=ops but ops spawn DENIED by auto-mode permission classifier [Production Deploy]: rebuild+deploy live mcp-server + reingest CTG 96e36139-5dac-414d-8e4d-20a4725890d1 against live named-volume market.db need EXPLICIT user authorization (generic CLAUDE.md OVERRIDE 07-03 is insufficient intent). BLOCKED pending user clearing the deploy gate (run ops outside auto mode / approve the permission prompt). Code is done_verified; only deploy+operate remains."
+      },
+      {
+        "id": "CI-RED-c5b5f885-FIX",
+        "title": "CI-RED bun test — PERSISTENT origin red c5b5f885 -> fb366a1e -> f71643fb (advanced to current origin HEAD; run 28689707086)",
+        "type": "FIX",
+        "status": "REVIEW",
+        "owner": "po",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "plan_only": false,
+        "created_at": "2026-07-03T03:03:24Z",
+        "created_by": "po",
+        "origin_signal": "ci_red:c5b5f885b48889aa19c0779eb4efdfa254e46654:bun test",
+        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28689707086",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "[dev-mcp-server 2026-07-07T17:52Z] FIXED. Root cause: 1410-tool-diacritics-sweep.test.ts (fail 3/3 CI runs) + 262-mcp-tools-042.test.ts (fail 2/3) call getClimateRiskSignals/getEnergyGridStatus with no DI hook, hitting real network (weatherVn.js→nchmf.gov.vn/NOAA, hydrologicalData.js→vneconomy.vn RSS, 15s axios timeout) under CI 16-way parallel isolation — exceeds bun-test 5s default per-test timeout. 183-alert-accuracy.test.ts (fail 1/3) is UNRELATED (no network dep) — left untouched, separate flake if it recurs. Fix: mock.module() both fetcher modules (freeze-before-mock + afterAll-restore, matches 1355b precedent) in both files; un-skipped 262 energy tests that were previously .skip for this exact reason. Verified: both files pass isolated + together with 257/258/259 siblings (both orders, no mock leak) + full ci-per-file-isolation.sh run (no regression vs before-fix baseline). Committed 1efb6f918, pushed. AC MET: CI run 28886901289 (head 1efb6f918) = conclusion success, bun test job = success.",
+        "depends": [
+          "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING"
+        ],
+        "blocking": true,
+        "advanced_head_sha": "f71643fbaff1c5c687095775e79f2617ad2678f1",
+        "advanced_run_id": 28689707086,
+        "folded_ci_red": [
+          "ci_red:f71643fbaff1c5c687095775e79f2617ad2678f1:bun test",
+          "ci_red:fb366a1ecfb9e96fc1f830acb64a9bf2b3958e00:bun test"
+        ],
+        "updated_at": "2026-07-07T17:52:48Z",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-07-07T17:13:37Z",
+        "claimed_by": "dev-team (po-triage FIX dispatch)",
+        "resolved_by_commit": "1efb6f918e8310a3edd02ea1a6824624f019e37b",
+        "resolved_ci_run": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28886901289"
       }
     ],
     "qa": [],
