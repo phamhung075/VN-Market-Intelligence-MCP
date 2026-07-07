@@ -9097,23 +9097,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "KD-OBS-01-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "Fix KD-OBS-01: When kinh-dich tools encounter a data error, is it logged to WORK/BUG (not silently dropped)",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#KD-OBS-01-FIX",
-        "promoted_at": "2026-07-07T19:50:24Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-07T19:50:28Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -9213,6 +9197,24 @@
         "po_unblock_dispatch_at": "2026-07-03T23:57:27Z",
         "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate).",
         "deploy_gate_note": "[router 2026-07-04T00:00Z] next_agent=ops but ops spawn DENIED by auto-mode permission classifier [Production Deploy]: rebuild+deploy live mcp-server + reingest CTG 96e36139-5dac-414d-8e4d-20a4725890d1 against live named-volume market.db need EXPLICIT user authorization (generic CLAUDE.md OVERRIDE 07-03 is insufficient intent). BLOCKED pending user clearing the deploy gate (run ops outside auto mode / approve the permission prompt). Code is done_verified; only deploy+operate remains."
+      },
+      {
+        "id": "KD-OBS-01-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "REVIEW",
+        "title": "Fix KD-OBS-01: When kinh-dich tools encounter a data error, is it logged to WORK/BUG (not silently dropped)",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#KD-OBS-01-FIX",
+        "promoted_at": "2026-07-07T19:50:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-07T19:50:28Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-07T20:30:00Z",
+        "reviewed_by": "dev-mcp-server",
+        "review_note": "Implementation complete — 8 catch blocks wired to non-fatal sendTelegramBug via new kinhDichErrorNotify.ts, injectable notifyError param. 11 new tests (43 expect), tsc clean, tools=183 unchanged, server boot verified. Commits 6c1cd6aa9 (impl) + a66880029 (memory)."
       }
     ],
     "qa": [],
