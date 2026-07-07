@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP",
-    "next_agent": "agent-father",
-    "next_action": "PO-triaged FIX dispatch of FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP — dispatcher-wrap then JUMP TO execute.",
-    "updated_at": "2026-07-07T21:11:53Z",
-    "updated_by": "dev-team (PO-triaged, out-of-band signal-drain FIX)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP done_verified (bootstrap-stage GATEWAY-BLIND guard, QA approved) — awaiting next dispatch",
+    "updated_at": "2026-07-07T21:37:29Z",
+    "updated_by": "qa (head idle-reset after qa close)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9166,6 +9166,29 @@
         "qa_verified_at": "2026-07-07T20:54:21Z",
         "qa_verified_by": "qa",
         "qa_verify_note": "RAW-verified: 8/8 catch blocks wired (5 MCP tools + 3 HTTP routes), fire-and-forget non-fatal confirmed by code read, response bodies unchanged. New test 11/11 pass 43 expect (re-run myself). tsc clean. kinh-dich+hexagram cluster 261/261 pass, registry 40/40 pass. Full suite 3x independent per-file-isolation runs (14100-14148 pass, 38-71 fail depending on host contention) — 0 kinh-dich failures in any run; failures confined to known pre-existing RSS/pollNews/SSC/PDF-extractor network-flake cluster (083/102/1227/1288/1324/1793/1821a/1898b 8/8 overlap vs cycle-379 documented baseline). appendMarketHexagram/appendStockHexagram exclusion confirmed correctly scoped (service-unreachable degrade path, different failure class). DDD/security/mock-guard PASS. Commit hygiene clean, orch-state diff (cbc1c2751) a clean array-move only."
+      },
+      {
+        "id": "FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP",
+        "title": "FIX — local cowork-spawned bctc-analyst subagent bound Read/Write/Edit ONLY (no call_tool gateway, no Bash) -> total bootstrap failure; 3x consecutive session 6120a9e8 slot bctc-analyst-slot-2 tick 18:00Z",
+        "owner": "po",
+        "status": "DONE_VERIFIED",
+        "zone": "agents",
+        "type": "FIX",
+        "priority": "high",
+        "size": "M",
+        "next_agent": "agent-father",
+        "created_at": "2026-07-07T21:07:14Z",
+        "status_note": "AC: cowork-team dispatcher spawn of bctc-analyst-slot-2 (and any cowork subagent) grants the gateway call_tool tool-package so Step 0b get_cycle_bootstrap runs; OR .claude/skills/step-0-cowork/SKILL.md gains a bootstrap-stage gateway-blind guard (Write-fallback signal + graceful DEFER, mirroring DONE FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH). Verify: next bctc-offmarket fire produces a real get_cycle_bootstrap call, not a Write-fallback bug-escalation signal. Recurring 3x in one session (fail-loud filed, no lock held, no corruption, no fabricated output). LIVE-CORROBORATED 2026-07-07T21:07Z: the out-of-band PO triage subagent in a DIFFERENT session (5a45feda) was ALSO gateway-blind (mcp__gateway__call_tool unavailable) -> structural, not transient. DISTINCT from ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (cloud RemoteTrigger path, deprecated per all-local STANDING) + F1-AGENT-FATHER-BLIND-GUARD-REMOVE (workaround-removal) + FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH + DONE FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH (narrow no-Bash single-stage, assume call_tool present). Source signal: bctc-analyst-20260707T180000Z. Memory: feedback_local_cowork_subagents_gateway_blind. Priority: high.",
+        "origin_signal_id": "bctc-analyst-20260707T180000Z",
+        "claimed_at": "2026-07-07T21:11:53Z",
+        "claimed_by": "dev-team (PO-triaged, out-of-band signal-drain FIX)",
+        "reviewed_at": "2026-07-07T20:15:00Z",
+        "reviewed_by": "agent-father",
+        "review_note": "Commit caba878b7: GATEWAY-BLIND guard (CONFIRMED-BLIND vs TRANSIENT classification, Write-fallback canonical signal, no send_telegram, graceful DEFER) added to .claude/skills/cycle-bootstrap/SKILL.md (primary — verified live-execution SSOT for bctc-analyst + unified-agent, the 2 agents actually observed blind) and mirrored in .claude/skills/step-0-cowork/SKILL.md (as literally named in AC). Fleet grep confirmed all cowork-agent .claude/agents/*.md already grant mcp__gateway__call_tool; Option A had nothing to fix. DJ: sprint-SYSTEMIC-REMAKE-P1-agent-father.md agent-father-S2.",
+        "qa_verdict": "APPROVED",
+        "qa_verified_at": "2026-07-07T21:37:17Z",
+        "qa_verified_by": "qa",
+        "qa_verify_note": "RAW-verified both root-cause claims from source (not trusted): fleet grep confirms Option A already-satisfied for every cowork agent; live flow-file trace (bctc-analyst/stage-bootstrap.md, unified-agent/chef.md+market-bootstrap.md) confirms cycle-bootstrap/SKILL.md is the true Step-0 execution path, step-0-cowork/SKILL.md is init.md-only. Read full diff of both changed files: equivalent guard logic, no send_telegram in CONFIRMED-BLIND fallback, canonical fail-loud-protocol.md Output Boundary item-5 schema Write, DEFERRED notebook line, clean exit citing no-lock-held. CONFIRMED-BLIND text pattern cross-checked against real historical error strings in this repo (news-scout 2026-05-06 incident, same-session po.md notebook, SPIKE_C86_MCP_REG.md) — matches actual harness error shape. Pure markdown files, no build/test surface (file(1) confirms UTF-8 text; 0 references in apps/mcp-server/src or *.test.ts). DJ-GATE-1 satisfied (agent-father-S2 substantive). Report: reports/TASK_REPORT_FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP.md."
       }
     ],
     "head": {
@@ -9177,24 +9200,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP",
-        "title": "FIX — local cowork-spawned bctc-analyst subagent bound Read/Write/Edit ONLY (no call_tool gateway, no Bash) -> total bootstrap failure; 3x consecutive session 6120a9e8 slot bctc-analyst-slot-2 tick 18:00Z",
-        "owner": "po",
-        "status": "IN_PROGRESS",
-        "zone": "agents",
-        "type": "FIX",
-        "priority": "high",
-        "size": "M",
-        "next_agent": "agent-father",
-        "created_at": "2026-07-07T21:07:14Z",
-        "status_note": "AC: cowork-team dispatcher spawn of bctc-analyst-slot-2 (and any cowork subagent) grants the gateway call_tool tool-package so Step 0b get_cycle_bootstrap runs; OR .claude/skills/step-0-cowork/SKILL.md gains a bootstrap-stage gateway-blind guard (Write-fallback signal + graceful DEFER, mirroring DONE FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH). Verify: next bctc-offmarket fire produces a real get_cycle_bootstrap call, not a Write-fallback bug-escalation signal. Recurring 3x in one session (fail-loud filed, no lock held, no corruption, no fabricated output). LIVE-CORROBORATED 2026-07-07T21:07Z: the out-of-band PO triage subagent in a DIFFERENT session (5a45feda) was ALSO gateway-blind (mcp__gateway__call_tool unavailable) -> structural, not transient. DISTINCT from ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (cloud RemoteTrigger path, deprecated per all-local STANDING) + F1-AGENT-FATHER-BLIND-GUARD-REMOVE (workaround-removal) + FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH + DONE FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH (narrow no-Bash single-stage, assume call_tool present). Source signal: bctc-analyst-20260707T180000Z. Memory: feedback_local_cowork_subagents_gateway_blind. Priority: high.",
-        "origin_signal_id": "bctc-analyst-20260707T180000Z",
-        "claimed_at": "2026-07-07T21:11:53Z",
-        "claimed_by": "dev-team (PO-triaged, out-of-band signal-drain FIX)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
