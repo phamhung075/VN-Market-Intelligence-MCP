@@ -3318,16 +3318,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYS-TEST-01-FIX"
       },
       {
-        "id": "SYS-FUNC-05-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix SYS-FUNC-05: Does post_agent_signal succeed and return a signal_id",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYS-FUNC-05-FIX"
-      },
-      {
         "id": "FR-FUNC-02-FIX",
         "priority": "normal",
         "size": "S",
@@ -10927,6 +10917,20 @@
         "verified_by": "dev-team (ops-vps-fetch recon)",
         "verified_at": "2026-07-07T17:07:54Z",
         "signoff_note": "ops-vps-fetch live SSH recon (journalctl -u vn-news-fetch.service, VPS log analysis) DISPROVED the crash-loop hypothesis: service continuously active(running) since 2026-06-11T00:22:20 (26+ days), NRestarts=0, Tasks 2/32 (plain bash loop, not Chromium — no NPROC pressure). Last real crash was 2026-04-21 (historical, already resolved), zero restart events 2026-06-02..2026-06-11 — the board's cited 06-07/06-09 restart signals are not corroborated by systemd and were already diagnosed same-day as a health-monitor timestamp/cursor-jump false-positive (fix live in commit b3d3022c6, 0 triggers since). The blank-uptime/single-fresh-push symptom that made this pick ambiguous was actually a SEPARATE shared Cloudflare Tunnel outage (http=530/502) hitting vn-news-fetch + vn-sbv-fetch + vn-foreign-flow identically 2026-07-04T19:47Z..2026-07-07T16:46Z (Jul5/Jul6 = 0/90 push success both days), appears self-recovered as of this recon (last 2 cycles succeeded, live probe HTTP 401 reachable) — root cause is receiving-side (mcp-server/tunnel), out of ops-vps-fetch scope, not a VPS script bug, so no dev-vps-crawls follow-up task opened. AC (no active crash-loop) satisfied — NO-CHANGE-NEEDED, closing without code fix. Evidence: docs/vps-sources/vn-news-rss/recon.md Incident section, commit df118f8be."
+      },
+      {
+        "id": "SYS-FUNC-05-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "Fix SYS-FUNC-05: Does post_agent_signal succeed and return a signal_id",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SYS-FUNC-05-FIX",
+        "done_verified": true,
+        "verified_by": "dev-team (bounded-1 pre-verify)",
+        "verified_at": "2026-07-07T17:09:36Z",
+        "signoff_note": "BOUNDED-1 pre-verify (cheap raw-verify before worker spawn, per memory project_bounded1_first_pickup_stale_backlog_hygiene_debt interim mitigation): live post_agent_signal probe on tick 2026-07-07T16:37Z. AC = 'does post_agent_signal succeed and return a signal_id'. First probe with signal_type='info' correctly 400'd (invalid enum, one of urgent_news|price_anomaly|cross_validate|suppress|chain_catalyst|fundamental_validation|price_confirmation|verified_chain|signal_feedback|legal_risk|verified_decision — matches the task's own status_note discovery). Second probe with valid enum signal_type=signal_feedback + thin payload correctly rejected by TNB critic gate (score 0.4, expected guardrail behavior, not a bug). Third probe with valid enum + well-formed payload (detail+impact_score+confidence_score) returned success:true, signal_id=8568, critic_score=0.8. End-to-end happy path confirmed working exactly as designed — AC satisfied by current live state. NO-CHANGE-NEEDED, closing without worker spawn."
       }
     ],
     "head": {
@@ -11057,8 +11061,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T17:07:54Z",
-    "last_triaged_by": "dev-team (ops-vps-fetch recon)"
+    "last_triaged_at": "2026-07-07T17:09:36Z",
+    "last_triaged_by": "dev-team (bounded-1 pre-verify)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
