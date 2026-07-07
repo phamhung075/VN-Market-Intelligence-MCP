@@ -3205,16 +3205,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-AVAIL-02-FIX"
       },
       {
-        "id": "PDF-CONTRACT-02-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix PDF-CONTRACT-02: Is pdf-extractor removed from NOT_DEPLOYED_SERVICES env in api-gateway docker-compose (or override)",
-        "type": "fix",
-        "zone": "dev-api-gateway",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-CONTRACT-02-FIX"
-      },
-      {
         "id": "RAG-SERVICE-AVAIL-01-FIX",
         "priority": "normal",
         "size": "S",
@@ -8953,7 +8943,22 @@
         "note": "Rewrote docs/protocols/cowork-master-cron-runbook.md §1/§2/§5/§8/§9: RemoteTrigger Layer A documented as retired (not active/deletion-locked) per STANDING feedback_no_remote_trigger_all_local; current architecture = single session-scoped */15 CronCreate dispatcher per .claude/skills/cron-cowork-team/SKILL.md; documented the session-scoped-dispatcher SPOF explicitly with a pointer to in-flight F1-LAUNCHD-COWORK-BACKSTOP (owner developer, same brief) as the coming session-independent layer, plus an explicit re-freshen instruction for whoever lands it. docs/data/cowork-schedule.json._notes.layer_a_deletion_locked: true->false, layer_a_deletion_gate rewritten to point at this fix. Independent of F1-LAUNCHD-COWORK-BACKSTOP / FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED (not blocked on either)."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "PDF-CONTRACT-02-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "Fix PDF-CONTRACT-02: Is pdf-extractor removed from NOT_DEPLOYED_SERVICES env in api-gateway docker-compose (or override)",
+        "type": "fix",
+        "zone": "dev-api-gateway",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-CONTRACT-02-FIX",
+        "done_verified": true,
+        "verified_by": "dev-team (bounded-1 pre-verify stale-close)",
+        "verified_at": "2026-07-07T22:48:26Z",
+        "signoff_note": "BOUNDED-1 pre-verify stale-close: docker-compose.yml:286 NOT_DEPLOYED_SERVICES= empty, apps/api-gateway/cmd/server/main.go:44 getenv default also empty — pdf-extractor already absent from the not-deployed list. Same cluster/commit as GW-CONTRACT-03-FIX (closed prior tick 2026-07-07T21:37Z): commit 2e88b0b50 'CLUSTER-B — remove pdf from NOT_DEPLOYED_SERVICES (was contract lie)' already fixed this exact discrepancy on main. AC satisfied, zero diff needed."
+      }
+    ],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
@@ -9158,8 +9163,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T21:52:50Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-07T22:48:26Z",
+    "last_triaged_by": "dev-team (bounded-1 pre-verify stale-close)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
