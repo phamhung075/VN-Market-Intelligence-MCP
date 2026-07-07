@@ -1,7 +1,37 @@
 Bun.env["DB_PATH"] = ":memory:"; // must be first line
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, mock, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Network-fetcher mocks (CI-RED-c5b5f885-FIX) — climateTools/energyTools call
+// real external network with no DI hook at the tool layer (weatherVn.js →
+// nchmf.gov.vn/NOAA, hydrologicalData.js → vneconomy.vn RSS). Under CI's
+// 16-way parallel per-file bun-test isolation this consistently exceeds the
+// bun-test default per-test timeout (5000ms vs the fetchers' own 15000ms axios
+// timeout), causing 1410 to fail on every recent CI run (100% reproduction —
+// see docs/agents/dev-mcp-server bug report). Mock both fetchers to resolve
+// empty deterministically (matches their own documented fail-soft behaviour on
+// real network failure) so the diacritics-format assertions below — which only
+// check hardcoded Vietnamese string labels, not fetched content — run
+// hermetically. Must run BEFORE the climateTools.js/energyTools.js imports
+// below so Bun's module registry serves the mock to their transitive imports.
+// Freeze-before-mock + afterAll-restore: mock.module() is worker-scoped and
+// permanent in Bun 1.x — must not leak into sibling files that exercise the
+// real fetchers directly (257-weather-vn / 258-hydro-data / 259-climate-impact).
+// ─────────────────────────────────────────────────────────────────────────────
+import * as _realWeatherVn1410 from "../infrastructure/fetchers/weatherVn.js";
+import * as _realHydro1410 from "../infrastructure/fetchers/hydrologicalData.js";
+const _frozenWeatherVn1410 = { ..._realWeatherVn1410 };
+const _frozenHydro1410 = { ..._realHydro1410 };
+mock.module("../infrastructure/fetchers/weatherVn.js", () => ({
+  ..._frozenWeatherVn1410,
+  fetchWeatherWarnings: async () => [],
+}));
+mock.module("../infrastructure/fetchers/hydrologicalData.js", () => ({
+  ..._frozenHydro1410,
+  fetchReservoirLevels: async () => [],
+}));
 
 // ── Always-exported (no @ts-expect-error) ────────────────────────────────────
 import { handleGetLabelAccuracyReport } from "../interface/mcp/tools/macro/calibrationTools.js";
@@ -382,4 +412,16 @@ describe("Sprint 144 — regression (must be GREEN)", () => {
     expect(result).toContain("TỔNG KẾT");
     expect(result).not.toContain("TONG KET");
   });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Teardown — restore real weatherVn/hydrologicalData modules (CI-RED-c5b5f885-FIX)
+//
+// mock.module() in Bun 1.x is worker-scoped and permanent. Re-register the
+// real implementations captured at file top-level so worker-siblings
+// (257-weather-vn / 258-hydro-data / 259-climate-impact) see genuine modules.
+// ─────────────────────────────────────────────────────────────────────────────
+afterAll(() => {
+  mock.module("../infrastructure/fetchers/weatherVn.js", () => _frozenWeatherVn1410);
+  mock.module("../infrastructure/fetchers/hydrologicalData.js", () => _frozenHydro1410);
 });

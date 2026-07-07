@@ -4,7 +4,38 @@
  * 6 tests covering tool registration, response format, and content.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, mock, afterAll } from "bun:test";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Network-fetcher mocks (CI-RED-c5b5f885-FIX) — climateTools/energyTools call
+// real external network with no DI hook at the tool layer (weatherVn.js →
+// nchmf.gov.vn/NOAA, hydrologicalData.js → vneconomy.vn RSS). Under CI's
+// 16-way parallel per-file bun-test isolation this consistently exceeds the
+// bun-test default per-test timeout (5000ms vs the fetchers' own 15000ms axios
+// timeout) — same recurring cause the getEnergyGridSignals/getEnergyGridStatus
+// tests below were previously .skip'd for. Mock both fetchers to resolve empty
+// deterministically (matches their own documented fail-soft behaviour on real
+// network failure) so these tool-format assertions run hermetically, and
+// restore full coverage by un-skipping the two energy tests.
+// Must run BEFORE the climateTools.js/energyTools.js imports below so Bun's
+// module registry serves the mock to their transitive imports.
+// Freeze-before-mock + afterAll-restore: mock.module() is worker-scoped and
+// permanent in Bun 1.x — must not leak into sibling files that exercise the
+// real fetchers directly (257-weather-vn / 258-hydro-data / 259-climate-impact).
+// ─────────────────────────────────────────────────────────────────────────────
+import * as _realWeatherVn262 from "../infrastructure/fetchers/weatherVn.js";
+import * as _realHydro262 from "../infrastructure/fetchers/hydrologicalData.js";
+const _frozenWeatherVn262 = { ..._realWeatherVn262 };
+const _frozenHydro262 = { ..._realHydro262 };
+mock.module("../infrastructure/fetchers/weatherVn.js", () => ({
+  ..._frozenWeatherVn262,
+  fetchWeatherWarnings: async () => [],
+}));
+mock.module("../infrastructure/fetchers/hydrologicalData.js", () => ({
+  ..._frozenHydro262,
+  fetchReservoirLevels: async () => [],
+}));
+
 import {
   getClimateRiskSignals,
 } from "../interface/mcp/tools/sector/climateTools.js";
@@ -44,10 +75,9 @@ describe("Task 262 — MCP Tools: Climate + Energy", () => {
   });
 
   // 4. getEnergyGridSignals returns content array
-  it.skip("getEnergyGridSignals returns MCP content format", async () => {
-    // SKIPPED: Flaky in full suite — fetchReservoirLevels() calls hydro.evn.com.vn network
-    // which times out (>5000ms) when circuit breaker or rate limiter state is primed by
-    // concurrent tests. Passes reliably in isolation. Fix: inject mock httpClient.
+  // Un-skipped (CI-RED-c5b5f885-FIX): fetchReservoirLevels is now mocked
+  // module-wide above, so this no longer depends on real network.
+  it("getEnergyGridSignals returns MCP content format", async () => {
     const result = await getEnergyGridSignals({});
     expect(result).toHaveProperty("content");
     expect(Array.isArray(result.content)).toBe(true);
@@ -56,10 +86,9 @@ describe("Task 262 — MCP Tools: Climate + Energy", () => {
   });
 
   // 5. getEnergyGridStatus function exported from energyTools
-  it.skip("getEnergyGridStatus function is exported", async () => {
-    // SKIPPED: Flaky in full suite — getEnergyGridStatus() calls fetchReservoirLevels()
-    // (hydro.evn.com.vn real network) which times out when the circuit breaker or rate
-    // limiter state is primed by concurrent tests. Passes in isolation. Fix: inject mock.
+  // Un-skipped (CI-RED-c5b5f885-FIX): fetchReservoirLevels is now mocked
+  // module-wide above, so this no longer depends on real network.
+  it("getEnergyGridStatus function is exported", async () => {
     expect(typeof getEnergyGridStatus).toBe("function");
     const result = await getEnergyGridStatus({});
     expect(result).toHaveProperty("content");
@@ -72,4 +101,16 @@ describe("Task 262 — MCP Tools: Climate + Energy", () => {
     expect(typeof climateModule.registerClimateTools).toBe("function");
     expect(typeof energyModule.registerEnergyTools).toBe("function");
   });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Teardown — restore real weatherVn/hydrologicalData modules (CI-RED-c5b5f885-FIX)
+//
+// mock.module() in Bun 1.x is worker-scoped and permanent. Re-register the
+// real implementations captured at file top-level so worker-siblings
+// (257-weather-vn / 258-hydro-data / 259-climate-impact) see genuine modules.
+// ─────────────────────────────────────────────────────────────────────────────
+afterAll(() => {
+  mock.module("../infrastructure/fetchers/weatherVn.js", () => _frozenWeatherVn262);
+  mock.module("../infrastructure/fetchers/hydrologicalData.js", () => _frozenHydro262);
 });
