@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CI-TEST-04-FIX",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of CI-TEST-04-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-07T23:22:58Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "CI-TEST-04-FIX moved to review pending CI confirmation — awaiting next dispatch",
+    "updated_at": "2026-07-07T23:48:14Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8927,25 +8927,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "CI-TEST-04-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "Fix CI-TEST-04: Is the bun test fail count at or below baseline (<=348 native fails per project-stats.json)",
-        "type": "fix",
-        "zone": "qa",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CI-TEST-04-FIX",
-        "status_note": "[po-triage 2026-07-02T00:36Z] FOLDED ci_red CI-RED-e2d693ed (run 28531497267, failing job \"bun test\", origin main HEAD e2d693ed) into this baseline task — same failing job, no duplicate CI row minted. NOTE: e2d693ed is a pure PO doc/orch commit (po DASH-CRON-RECHECK-TABLE self-initiate) and CANNOT itself regress bun test → this is a pre-existing baseline breach, NOT a regression introduced by that commit. MANDATE (flaky scar): confirm the failure with a local bun test run (or a CI re-run) BEFORE blaming any commit. Context: 2 CI-red fixes already sit in REVIEW (FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP, FIX-FOREIGN-FLOW-BULLETIN-UNAVAIL-STRING) and 37 local commits are unpushed → re-check CI after the next fleet-push. verification_gate=ci_green_on_subsequent_push (gh run list --branch main shows conclusion=success for a push AFTER e2d693ed). Cross-ref CI-TEST-02-FIX (overall CI passing on main).",
-        "origin_signal": "ci-red-e2d693ed-20260702002853",
-        "promoted_at": "2026-07-07T23:22:58Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-07T23:22:58Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -9121,6 +9103,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "id": "CI-TEST-04-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "REVIEW",
+        "title": "Fix CI-TEST-04: Is the bun test fail count at or below baseline (<=348 native fails per project-stats.json)",
+        "type": "fix",
+        "zone": "qa",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CI-TEST-04-FIX",
+        "status_note": "Root cause found + fixed: apps/mcp-server/src/interface/mcp/tools/alerts/alertAccuracy.ts compared ISO-8601 fetched_at against SQLite datetime('now') (space-separated) as TEXT — 'T'(0x54)>' '(0x20) byte-compare wrongly excluded same-UTC-day rows as future. Fixed by binding now as new Date().toISOString() for ISO-to-ISO compare (commit e170624d3). 183-alert-accuracy.test.ts AC-2b: 20/20 pass locally (was 19/20). Full local suite showed 49 unrelated fails (news-poll/OCR/SSC files, 2 native crashes) traced to parallel-run environment noise, not this fix -- spot-check of one file in isolation passed 8/8 clean. dev-mcp-server produced this diff but stalled before commit (returned referencing an unrelated phantom task id); dev-team landed it after independent verification per dead-worker-probe-tree-first convention. verification_gate=ci_green_on_subsequent_push PENDING -- awaiting the CI run on e170624d3 to close done_verified.",
+        "origin_signal": "ci-red-e2d693ed-20260702002853",
+        "promoted_at": "2026-07-07T23:22:58Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-07T23:22:58Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "moved_to_review_at": "2026-07-07T23:48:14Z",
+        "moved_to_review_by": "dev-team"
       }
     ],
     "qa": [],
@@ -9140,8 +9141,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T23:22:58Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-07T23:48:14Z",
+    "last_triaged_by": "dev-team"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
