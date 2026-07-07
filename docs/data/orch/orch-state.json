@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP done_verified (bootstrap-stage GATEWAY-BLIND guard, QA approved) — awaiting next dispatch",
-    "updated_at": "2026-07-07T21:37:29Z",
-    "updated_by": "qa (head idle-reset after qa close)"
+    "status": "in_progress",
+    "active_task_id": "PDF-TEST-01-FIX",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of PDF-TEST-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-07T21:52:54Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3194,16 +3194,6 @@
         "type": "fix",
         "zone": "qa",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#MCP-TEST-01-FIX"
-      },
-      {
-        "id": "PDF-TEST-01-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix PDF-TEST-01: Are pdf-extractor extraction paths covered by tests (PEK-INTEGRATE, layout-first, OCR)",
-        "type": "fix",
-        "zone": "qa",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-TEST-01-FIX"
       },
       {
         "id": "PDF-AVAIL-02-FIX",
@@ -9011,7 +9001,23 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "PDF-TEST-01-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "title": "Fix PDF-TEST-01: Are pdf-extractor extraction paths covered by tests (PEK-INTEGRATE, layout-first, OCR)",
+        "type": "fix",
+        "zone": "qa",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-TEST-01-FIX",
+        "promoted_at": "2026-07-07T21:52:50Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-07T21:52:54Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -9187,8 +9193,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T21:51:33Z",
-    "last_triaged_by": "dev-team (bounded-1 pre-verify)"
+    "last_triaged_at": "2026-07-07T21:52:50Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
