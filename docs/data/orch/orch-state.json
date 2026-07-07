@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "done_verified",
-    "active_task_id": "OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST",
-    "next_agent": "ops",
-    "next_action": "Complete. Fresh end-to-end logs confirm fix: 109 tickers, 77434 bars successfully pushed. Pipeline restored.",
-    "updated_at": "2026-07-08T02:12:00Z",
-    "updated_by": "ops"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST done_verified (fresh end-to-end logs: 109 tickers, 77434 bars pushed) — awaiting next dispatch",
+    "updated_at": "2026-07-07T19:12:59Z",
+    "updated_by": "dev-team (head idle-reset after ops close)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
