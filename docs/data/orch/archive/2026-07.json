@@ -3738,6 +3738,48 @@
       "verified_by": "dev-team (bounded-1 pre-verify)",
       "verified_at": "2026-07-07T21:51:33Z",
       "signoff_note": "BOUNDED-1 pre-verify (cheap raw-verify before worker spawn, per memory project_bounded1_first_pickup_stale_backlog_hygiene_debt interim mitigation): docker-compose.yml:286 NOT_DEPLOYED_SERVICES= (empty, pdf NOT excluded); apps/api-gateway/cmd/server/main.go getenv default also empty string; commit 2e88b0b50 (2026-06-10, 'CLUSTER-B — remove pdf from NOT_DEPLOYED_SERVICES (was contract lie)') already fixed this exact discrepancy, confirmed on main. AC satisfied by current live state — NO-CHANGE-NEEDED, closing without worker spawn."
+    },
+    {
+      "id": "PDF-CONTRACT-02-FIX",
+      "priority": "high",
+      "size": "S",
+      "status": "DONE_VERIFIED",
+      "title": "Fix PDF-CONTRACT-02: Is pdf-extractor removed from NOT_DEPLOYED_SERVICES env in api-gateway docker-compose (or override)",
+      "type": "fix",
+      "zone": "dev-api-gateway",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-CONTRACT-02-FIX",
+      "done_verified": true,
+      "verified_by": "dev-team (bounded-1 pre-verify stale-close)",
+      "verified_at": "2026-07-07T22:48:26Z",
+      "signoff_note": "BOUNDED-1 pre-verify stale-close: docker-compose.yml:286 NOT_DEPLOYED_SERVICES= empty, apps/api-gateway/cmd/server/main.go:44 getenv default also empty — pdf-extractor already absent from the not-deployed list. Same cluster/commit as GW-CONTRACT-03-FIX (closed prior tick 2026-07-07T21:37Z): commit 2e88b0b50 'CLUSTER-B — remove pdf from NOT_DEPLOYED_SERVICES (was contract lie)' already fixed this exact discrepancy on main. AC satisfied, zero diff needed."
+    },
+    {
+      "id": "AC-FUNC-02-FIX",
+      "priority": "high",
+      "size": "S",
+      "status": "DONE_VERIFIED",
+      "title": "Fix AC-FUNC-02: Does task_list_held return currently claimed tasks with owner and expiry",
+      "type": "fix",
+      "zone": "dev-mcp-server",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#AC-FUNC-02-FIX",
+      "done_verified": true,
+      "verified_by": "dev-team (bounded-1 pre-verify live-probe close)",
+      "verified_at": "2026-07-07T22:49:57Z",
+      "signoff_note": "BOUNDED-1 pre-verify: called task_list_held(owner_agent='dev-team') live — response for each held lock includes owner, owner_agent, owner_client_session, expires_at, ttl_seconds, claimed_at, heartbeat_at (e.g. dev-team-cron-singleton: owner='dev-team', expires_at='2026-07-08T00:16:35.000Z'). AC ('does task_list_held return currently claimed tasks with owner and expiry') is satisfied — live functional probe, not a code-symbol check. No production diff needed."
+    },
+    {
+      "id": "CI-TEST-02-FIX",
+      "priority": "high",
+      "size": "S",
+      "status": "DONE_VERIFIED",
+      "title": "Fix CI-TEST-02: Is the overall GitHub Actions CI workflow passing on main branch",
+      "type": "fix",
+      "zone": "qa",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#CI-TEST-02-FIX",
+      "done_verified": true,
+      "verified_by": "dev-team (bounded-1 pre-verify live-probe close)",
+      "verified_at": "2026-07-07T22:51:13Z",
+      "signoff_note": "BOUNDED-1 pre-verify live probe: gh run list --branch main --json ... workflowName==CI shows most recent terminal runs GREEN (67489328f success run 28903525921, 9ceb87da4 success run 28903417550). Two newer runs (db9ee7bd0, 78c2ad2e2 — this tick's own stale-close commits) are still in_progress but both already passed the local pre-push tsc gate before push. AC ('is overall CI workflow passing on main') is satisfied by consistent recent terminal-run history — no fix needed, standing health-check AC not a code defect."
     }
   ],
   "closed_sprints": [],
