@@ -1,0 +1,33 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-dispatch-telemetry",
+  "createdAt": "2026-07-04T15:04:56.3NZ",
+  "payload": {
+    "tick": "2026-07-04T15:00Z",
+    "pressure_mode": "adaptive",
+    "classification": "FIRE",
+    "drift_min": 3,
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "spawned": [
+      {
+        "agent": "bctc-analyst",
+        "slot": "bctc-analyst-slot-1",
+        "flow": "docs/agents/bctc-analyst/flow/main.md",
+        "background": true
+      }
+    ],
+    "note": "Off-market daily BCTC analyst cron 0 15 * * * (22:00 VN); last_fired 2026-07-01, 3-day gap ok for daily cadence. E2 market-window guard [02:00,08:00)UTC N/A off-market. adaptive mode (stale_warning:false at read, emitted 14:48Z <20min). calendar unknown non-suppressing. mode selected per agent get_earnings_calendar gate. host headroom 2673MB adequate. emit post-dispatch returned stale_warning:true+cycle_snapshot_promoted:false -> NEXT tick legacy (benign, cron-matched conservative)."
+  },
+  "_processed": {
+    "fingerprint": "ba4e79963d74a43fe7deb66bcab518c03e350f916916326f858a2e027ded69bb",
+    "processedAt": "2026-07-04T15:10:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

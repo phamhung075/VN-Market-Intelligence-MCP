@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-dispatch-telemetry",
+  "createdAt": "2026-07-04T14:04:54Z",
+  "payload": {
+    "tick": "2026-07-04T14:00Z",
+    "pressure_mode": "adaptive",
+    "classification": "FIRE",
+    "drift_min": 3,
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "spawned": [
+      {
+        "slot_id": "refine-bctc-slot-2",
+        "agent": "refine_bctc_md",
+        "flow_path": "docs/agents/refine_bctc_md/flow/main.md"
+      }
+    ],
+    "note": "Daily off-market BCTC refine slot (cron 0 14 * * *), last_fired 2026-07-02T14:04Z, cron-due (2-day gap ok for daily cadence). Adaptive mode (pressure fresh 13:48Z, stale_warning=false). Calendar suppression N/A (calendar_status=unknown). Freshness-downgrade N/A (refine_bctc_md not a gatherer slot). No collision (1 slot). Host headroom 2793MB adequate for single Haiku worker. Agent picks OLDEST get_bctc_pending_refine row, processes 1 chunk (<=7 windows), resumable via skip-set; DPM_2025_Q4 may still be partial (8 windows remaining pre-cycle)."
+  },
+  "_processed": {
+    "fingerprint": "80381f3e5085cd070fd36e215832b5f2aa0579f7d684e88b529913e4782401ce",
+    "processedAt": "2026-07-04T14:10:48Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
