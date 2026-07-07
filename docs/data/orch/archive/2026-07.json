@@ -3692,6 +3692,52 @@
       "qa_verified_at": "2026-07-07T21:37:17Z",
       "qa_verified_by": "qa",
       "qa_verify_note": "RAW-verified both root-cause claims from source (not trusted): fleet grep confirms Option A already-satisfied for every cowork agent; live flow-file trace (bctc-analyst/stage-bootstrap.md, unified-agent/chef.md+market-bootstrap.md) confirms cycle-bootstrap/SKILL.md is the true Step-0 execution path, step-0-cowork/SKILL.md is init.md-only. Read full diff of both changed files: equivalent guard logic, no send_telegram in CONFIRMED-BLIND fallback, canonical fail-loud-protocol.md Output Boundary item-5 schema Write, DEFERRED notebook line, clean exit citing no-lock-held. CONFIRMED-BLIND text pattern cross-checked against real historical error strings in this repo (news-scout 2026-05-06 incident, same-session po.md notebook, SPIKE_C86_MCP_REG.md) — matches actual harness error shape. Pure markdown files, no build/test surface (file(1) confirms UTF-8 text; 0 references in apps/mcp-server/src or *.test.ts). DJ-GATE-1 satisfied (agent-father-S2 substantive). Report: reports/TASK_REPORT_FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP.md."
+    },
+    {
+      "id": "CONTAM-11",
+      "type": "SPIKE",
+      "size": "M",
+      "status": "DONE",
+      "priority": "medium",
+      "zone": "apps/mcp-server/",
+      "owner": "dev-mcp-server",
+      "next_agent": "",
+      "dispatcher": "dev-team",
+      "depends": [
+        "CONTAM-10-EXEC"
+      ],
+      "created_by": "dev-team",
+      "created_at": "2026-06-30T22:03:33Z",
+      "sprint": "OHLCV-UNIT-CONTAM-WHOLEROW-LT1000",
+      "title": "PLAN-ONLY: bucket residual ~9869 unanchored sub-1000 daily_ohlcv rows (no recent clean anchor)",
+      "note": "DISPATCHED dev-mcp-server (zone apps/mcp-server/ specialist -- owns daily_ohlcv table + CONTAM repair scripts). PO BATCH triage 22:37Z scheduled this SPIKE (dep CONTAM-10-EXEC=done, WIP=0, head idle). PLAN-ONLY: classify the ~9869 unanchored sub-1000 daily_ohlcv rows (no close>=1000 within 180d) into (a) legit-cheap-stock vs (b) contaminated-but-anchorless buckets WITH EVIDENCE via read-only DB probe; propose a safe remediation strategy for bucket (b) WITHOUT widening the CONTAM-10 anchor predicate (longer-window / cross-source / sector-peer reference / manual-review). NO auto-repair, NO live mutation -- produce a findings doc only. INDEX tickers excluded. timebox 180min. dev -> qa gate on findings-doc completeness. PO suggested next_agent=developer; dispatcher routes zone-specialist-first to dev-mcp-server.",
+      "acceptance": [
+        "Classify each of the ~9869 rows into legit-cheap vs contaminated-anchorless buckets with evidence.",
+        "Propose a safe remediation strategy for the contaminated-anchorless bucket WITHOUT loosening the CONTAM-10 anchor predicate.",
+        "No auto-repair in this task (PLAN-ONLY)."
+      ],
+      "owner_agent": "dev-mcp-server",
+      "mode": "spike",
+      "timebox": 180,
+      "updated_at": "2026-06-30T23:10:31Z",
+      "updated_by": "dev-team",
+      "dispatched_at": "2026-06-30T22:52:58Z",
+      "dispatched_by": "dev-team",
+      "closure": "SPIKE COMPLETE + dev-team RAW-verified (own readonly live-DB probe + git, NOT agent badge): commit 323b512b doc-only (findings 294L + dev-mcp-server notebook), ZERO orch-state/code/scripts, leak-clean, in-HEAD. ZERO live mutation PROVEN: daily_ohlcv residual (close<1000 vol>0 non-index) STILL 9869 = CONTAM-10-EXEC baseline unchanged. Bucket math reconciled: agent total 9368 = true unanchored population 9367 (off-by-1 vol=0 edge row); correctly scoped to the genuinely-unanchored subset (the ~502 gap vs full 9869 residual = anchored-legit rows CONTAM-10 left by design, ratio<100). BUCKETS: (a) legit-cheap 6345 rows/26 tickers [4519 true-penny incl SLS/NTC/WCS/VCF + 1826 genuine-decline ratio<100x, VNZ largest 1.29x] -> LEAVE; (b) contaminated-anchorless 3023 rows/9 tickers [BMP 591/MCH 589/HGM 408/PMC 385/KSV 359/TOS 351/AGX 257/TBD 79/STS 4] -> remediate. Spot-checked 5/5 bucket-b (BMP/MCH/KSV/TBD/STS): all contamination signature alltime_max 72.5k-99.9k, serving ~100, ratio 714-999x, no 180d anchor (KSV borderline 181d). Remediation proposed WITHOUT predicate-widen: A=VPS-anchor fetch (primary, all 9), B=540d window ratio>=200x floor (KSV/STS/TBD/TOS/AGX), C=SSC/HOSE archive (BMP/MCH/PMC/HGM), D=manual-review queue. Follow-on CONTAM-11-REMEDIATE minted backlog (destructive x1000 UPDATE -> PO go/no-go). findings: docs/agent-memory/decisions/sprint-CONTAM-11-bucket-classification-dev-mcp-server.md"
+    },
+    {
+      "id": "GW-CONTRACT-03-FIX",
+      "priority": "high",
+      "size": "S",
+      "status": "DONE_VERIFIED",
+      "title": "Fix GW-CONTRACT-03: DISCREPANCY: Does api-gateway default NOT_DEPLOYED_SERVICES include 'pdf' while system-map intends pdf-extractor DEPLOYED",
+      "type": "fix",
+      "zone": "dev-api-gateway",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#GW-CONTRACT-03-FIX",
+      "done_verified": true,
+      "verified_by": "dev-team (bounded-1 pre-verify)",
+      "verified_at": "2026-07-07T21:51:33Z",
+      "signoff_note": "BOUNDED-1 pre-verify (cheap raw-verify before worker spawn, per memory project_bounded1_first_pickup_stale_backlog_hygiene_debt interim mitigation): docker-compose.yml:286 NOT_DEPLOYED_SERVICES= (empty, pdf NOT excluded); apps/api-gateway/cmd/server/main.go getenv default also empty string; commit 2e88b0b50 (2026-06-10, 'CLUSTER-B — remove pdf from NOT_DEPLOYED_SERVICES (was contract lie)') already fixed this exact discrepancy, confirmed on main. AC satisfied by current live state — NO-CHANGE-NEEDED, closing without worker spawn."
     }
   ],
   "closed_sprints": [],
