@@ -71,6 +71,8 @@ import {
   getPreviousReadingsPerSymbol,
   type KinhDichRow,
 } from "../../../infrastructure/db/kinhDichStore.js";
+import { logger } from "../../../infrastructure/logger.js";
+import { notifyKinhDichError } from "../tools/kinhdich/kinhDichErrorNotify.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -455,6 +457,8 @@ export function handleGetKinhDichSignals(
   req: IncomingMessage,
   res: ServerResponse,
   db: Database,
+  // KD-OBS-01-FIX: injectable for testing — defaults to the real BUG-channel notifier.
+  notifyError: typeof notifyKinhDichError = notifyKinhDichError,
 ): void {
   try {
     const url = new URL(req.url ?? "/", "http://localhost");
@@ -510,11 +514,15 @@ export function handleGetKinhDichSignals(
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(body));
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("[handleGetKinhDichSignals] db_error", { error: message });
+    // KD-OBS-01-FIX: genuine data error — surface to BUG channel, not just the logger.
+    void notifyError("handleGetKinhDichSignals", "kinhdich-signals-route-error", message);
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(
       JSON.stringify({
         error: "db_error",
-        detail: err instanceof Error ? err.message : String(err),
+        detail: message,
       }),
     );
   }

@@ -22,6 +22,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
 import { QUE_META } from "../tools/kinhdich/hexagramNames.js";
+import { logger } from "../../../infrastructure/logger.js";
+import { notifyKinhDichError } from "../tools/kinhdich/kinhDichErrorNotify.js";
 
 interface WatchlistReadingRow {
   stock_code: string;
@@ -46,6 +48,8 @@ export function handleKinhDichMarket(
   req: IncomingMessage,
   res: ServerResponse,
   db: Database,
+  // KD-OBS-01-FIX: injectable for testing — defaults to the real BUG-channel notifier.
+  notifyError: typeof notifyKinhDichError = notifyKinhDichError,
 ): void {
   try {
     // Fetch the latest reading per watchlist stock using a correlated subquery
@@ -122,11 +126,15 @@ export function handleKinhDichMarket(
       }),
     );
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("[handleKinhDichMarket] db_error", { error: message });
+    // KD-OBS-01-FIX: genuine data error — surface to BUG channel, not just the logger.
+    void notifyError("handleKinhDichMarket", "kinhdich-market-route-error", message);
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(
       JSON.stringify({
         error: "db_error",
-        detail: err instanceof Error ? err.message : String(err),
+        detail: message,
       }),
     );
   }

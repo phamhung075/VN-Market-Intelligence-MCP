@@ -41,6 +41,7 @@ import {
 import { QUE_DATA, QUE_META } from "../../../../domain/services/kinhDich/hexagramLibrary.js";
 import { encodeHaos, haosToSignals } from "../../../../domain/services/kinhDich/haoEncoder.js";
 import { resolveHexagram } from "../../../../domain/services/kinhDich/hexagramResolver.js";
+import { notifyKinhDichError } from "./kinhDichErrorNotify.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Score computation helpers (best-effort, all wrapped in try/catch)
@@ -437,7 +438,11 @@ export function formatKinhDichTradingContext(trend: string): string {
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function registerKinhDichTools(server: McpServer): void {
+export function registerKinhDichTools(
+  server: McpServer,
+  // KD-OBS-01-FIX: injectable for testing — defaults to the real BUG-channel notifier.
+  notifyError: typeof notifyKinhDichError = notifyKinhDichError,
+): void {
   // ── 1. get_kinhdich_reading ──────────────────────────────────────────────
 
   server.tool(
@@ -496,10 +501,10 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [{ type: "text" as const, text: lines.join("\n") }],
         };
       } catch (err) {
-        logger.error("[get_kinhdich_reading] Error", {
-          code,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error("[get_kinhdich_reading] Error", { code, error: message });
+        // KD-OBS-01-FIX: genuine data error — surface to BUG channel, not just the logger.
+        void notifyError("get_kinhdich_reading", "kinhdich-reading-error", `${code}: ${message}`);
         return {
           content: [
             {
@@ -638,9 +643,10 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [{ type: "text" as const, text: lines.join("\n") }],
         };
       } catch (err) {
-        logger.error("[get_market_hexagram] Error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error("[get_market_hexagram] Error", { error: message });
+        // KD-OBS-01-FIX: genuine data error — surface to BUG channel, not just the logger.
+        void notifyError("get_market_hexagram", "kinhdich-market-hexagram-error", message);
         return {
           content: [
             {
@@ -713,10 +719,10 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [{ type: "text" as const, text: lines.join("\n") }],
         };
       } catch (err) {
-        logger.error("[get_hexagram_history] Error", {
-          code,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error("[get_hexagram_history] Error", { code, error: message });
+        // KD-OBS-01-FIX: genuine data error — surface to BUG channel, not just the logger.
+        void notifyError("get_hexagram_history", "kinhdich-history-error", `${code}: ${message}`);
         return {
           content: [
             {
@@ -786,10 +792,14 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [{ type: "text" as const, text: lines.join("\n") }],
         };
       } catch (err) {
-        logger.error("[get_transition_probabilities] Error", {
-          hexagram_number,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error("[get_transition_probabilities] Error", { hexagram_number, error: message });
+        // KD-OBS-01-FIX: genuine data error — surface to BUG channel, not just the logger.
+        void notifyError(
+          "get_transition_probabilities",
+          "kinhdich-transitions-error",
+          `hexagram ${hexagram_number}: ${message}`,
+        );
         return {
           content: [
             {
@@ -874,10 +884,10 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [{ type: "text" as const, text: lines.join("\n") }],
         };
       } catch (err) {
-        logger.error("[run_hexagram_backtest] Error", {
-          code,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        const message = err instanceof Error ? err.message : String(err);
+        logger.error("[run_hexagram_backtest] Error", { code, error: message });
+        // KD-OBS-01-FIX: genuine data error — surface to BUG channel, not just the logger.
+        void notifyError("run_hexagram_backtest", "kinhdich-backtest-error", `${code}: ${message}`);
         return {
           content: [
             {

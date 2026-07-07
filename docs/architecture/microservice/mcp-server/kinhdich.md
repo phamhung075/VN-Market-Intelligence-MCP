@@ -28,3 +28,27 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 5. Transformed hexagram: computed from changing lines (moving yao).
 6. Backtesting accuracy tracked in `market.db` (kinhdich_readings table with outcome fields).
 7. Hexagram Markov transitions: historical `hexagram_transitions` table populated by `run_hexagram_backtest` and live readings.
+
+## Error handling — genuine data errors → BUG channel (KD-OBS-01-FIX)
+
+All 5 catch blocks that carry HTTP/DB risk (`get_kinhdich_reading`, `get_market_hexagram`,
+`get_hexagram_history`, `get_transition_probabilities`, `run_hexagram_backtest`) plus the 3
+kinh-dich HTTP route handlers (`handleKinhDichReading`, `handleGetKinhDichSignals`,
+`handleKinhDichMarket` — `src/interface/mcp/routes/`) call
+`notifyKinhDichError(source, category, detail)` (`src/interface/mcp/tools/kinhdich/kinhDichErrorNotify.ts`)
+in addition to `logger.error(...)` before returning their graceful error response:
+
+- Fire-and-forget (`void notifyError(...)`) — never awaited on the response-critical path, never
+  throws (Telegram/DB failures inside are swallowed), matching the non-fatal Telegram-send
+  pattern used by `accuracyDigestJob.ts`.
+- Routes to `sendTelegramBug()` (BUG channel). The message embeds a `📋 <category>` marker
+  (e.g. `kinhdich-reading-error`, `kinhdich-market-route-error`) that `sendTelegramBug()`'s
+  built-in 4h dedup (`telegramReportStore.isDuplicateReport`) uses to collapse repeated failures
+  of the same kind into one BUG report — no extra dedup machinery needed here.
+- Both `registerKinhDichTools(server, notifyError?)` and each of the 3 route handlers accept an
+  optional injectable `notifyError` param (defaults to the real notifier) for testability.
+- **Explicitly out of scope** (benign, not errors): `appendMarketHexagram`/`appendStockHexagram`
+  in `src/interface/mcp/tools/market-data/marketTools.ts` catch kinh-dich-service
+  unreachable/non-200 and silently omit the hexagram block by design (`logger.warn` only) — this
+  is the documented degrade-gracefully path, not a silently-dropped error.
+- Tests: `src/__tests__/KD-OBS-01-FIX-kinhdich-bug-notify.test.ts`.
