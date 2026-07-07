@@ -1,36 +1,28 @@
 # Cowork Master Cron — Runbook
 
 **Owner:** agent-father
-**Last updated:** 2026-06-13 (FIX-COWORK-GUARANTEED-BACKSTOP — Layer-A restored for 5 guaranteed slots)
+**Last updated:** 2026-07-07 (DOC-COWORK-CRON-RUNBOOK-FRESHEN — RemoteTrigger "Layer A" retirement reflected; runbook was stale since 2026-06-13 and still described it as active/deletion-locked)
 **Related skill:** `.claude/skills/cron-cowork-team/SKILL.md`
 **Schedule SSOT:** `docs/data/cowork-schedule.json`
 **Dispatcher flow:** `docs/agents/cowork-team/flow/main.md`
 **System-auditor Tier-1 link:** see `docs/protocols/system-audit-runbook.md` — if Tier-1 detects cowork silence, follow this runbook.
+**Architecture brief (SPOF diagnosis + backstop in flight):** `docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md`
 
 ---
 
 ## 1. Architecture in one paragraph
 
-The cowork pipeline uses two overlapping layers of persistence — **both layers are permanently active and MUST COEXIST** until the §9 stability gate clears (see §9):
+**RemoteTrigger ("Layer A") is RETIRED — it is not part of the live system.** Standing directive `feedback_no_remote_trigger_all_local` (2026-06-22, user, verbatim "no remote trigger all working on this server") retired the cloud RemoteTrigger backstop entirely: the project runs ENTIRELY on this local server, no cloud RemoteTrigger jobs/backstops/triggers. Every slot row in `docs/data/cowork-schedule.json` now carries `"_superseded_by": "cowork-dispatcher"`. Any RemoteTrigger objects that still exist server-side on claude.ai are inert residue — the RemoteTrigger MCP tool exposes no delete action, so cleanup is a workspace-side chore, not a functional dependency (brief §8). **Do not follow RemoteTrigger recovery steps for a silent guaranteed slot — that mechanism does nothing today.** (This section previously said the opposite — "permanently active and MUST COEXIST" — for three weeks after retirement; that is the defect this freshen fixes.)
 
-**Layer A — RemoteTriggers (5 guaranteed slots, session-independent, RESTORED 2026-06-13):**
-Registered in claude.ai workspace `env_011CV1yonRDFUhYhGEdkVwqj`. Fire their own independent CLI sessions. Survive CLI session end and deliberate session restarts. Cover the 5 `guaranteed: true` slots:
+**The one active mechanism is the master CronCreate dispatcher (`*/15 * * * *`, session-scoped):** registered via Claude Code CLI `CronCreate` per `.claude/skills/cron-cowork-team/SKILL.md`. It fires every 15 minutes, reads `docs/data/cowork-schedule.json`, and fans out to every slot whose `next_fire_at ≤ now` (± drift window via `scripts/agents-flow/cowork-match-slots.js`) — both the guaranteed daily/weekly slots and the sub-hourly market-hours slots (news-scout-market, market-watcher-market, alert-commander-market).
 
-| slot_id | cron | trigger_id | status |
-|---|---|---|---|
-| chef-morning | `15 5 * * 1-5` | pending router creation | awaiting router |
-| chef-eod | `45 8 * * 1-5` | pending router creation | awaiting router |
-| chef-evening | `45 19 * * *` | pending router creation | awaiting router |
-| digest-sunday | `47 13 * * 0` | pending router creation | awaiting router |
-| tnb-audit | `13 20 * * *` | pending router creation | awaiting router |
+**This dispatcher is a known single point of failure (SPOF): it evaporates the instant the Claude Code CLI session ends.** `durable:true` on the CronCreate entry survives process restarts *within* a session; it never survives session-end. This is the confirmed root cause of a ~73h guaranteed-slot outage 2026-07-04T16:05Z → 2026-07-07T17:30Z (no live CLI session for the whole window — chef-evening silent ×3, chef-morning/chef-eod ×2 each, digest-sunday ×1, fb-daily ×2), and a recurring failure class (prior instance: fb-daily, 2026-06-30). Full diagnosis: `docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md` §1-2.
 
-Note: trigger_ids will be written to `docs/data/cowork-schedule.json` by the router after RemoteTrigger creation. Previous trigger_ids (trig_019n…, trig_011H…, trig_01CL…, trig_014G…, trig_01Lp…) were deleted in error before the §9 stability gate was met — this sprint restores them.
+**Mandatory mitigation today:** re-arm at every session start (§3). There is currently no general session-independent backstop for guaranteed slots — the sole exception is `scripts/cowork-fb-daily-firer.sh` (fb-daily/fb-weekend only, launchd-based; field-proven 2026-07-01→07-04, then silently unloaded with nothing detecting the unload — a second gap the brief also found, see §3.8 of the brief).
 
-**Layer B — Master CronCreate (*/15, session-scoped):** Registered via Claude Code CLI `CronCreate`. Fires every 15 minutes, reads `docs/data/cowork-schedule.json`, fans out to matching slots (including sub-hourly market-hours slots not coverable by RemoteTriggers). **This layer evaporates on CLI session end.**
+**In flight — do not block on this, but keep this doc current once it ships:** `F1-LAUNCHD-COWORK-BACKSTOP` (owner: `developer`, task row in `docs/data/orch/orch-state.json`, spawned from the same 2026-07-07 brief) generalizes the fb-only firer into `scripts/agents-flow/cowork-guaranteed-slot-firer.sh` + `launchd/com.vn-market.cowork-guaranteed-slot-firer.plist` — an OS-level, session-independent launchd job that reuses the *same* matcher (`cowork-match-slots.js`) the live dispatcher uses, filtered to `guaranteed === true` slots. A companion task, `FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED`, extends the Tier-1 self-check to assert the launchd label stays loaded, so a silent unload is itself detected next time. **Whoever lands `F1-LAUNCHD-COWORK-BACKSTOP` must update this runbook (§1, §5, §8 T5) in the same change** — do not let this doc go stale again the moment the backstop ships; check `docs/data/orch/orch-state.json` task id `F1-LAUNCHD-COWORK-BACKSTOP` for current status before citing it as live.
 
-When both layers are active, coverage is complete. When Layer B evaporates (session-end), Layer A keeps guaranteed dishes running. The `*/15` sub-hourly slots (news-scout-market, market-watcher-market, alert-commander-market) go dark until Layer B is re-armed.
-
-**Dedup:** Both layers may fire the same guaranteed slot within the same window. The published-marker gate (`published:<slot_id>:<work_date>` task_claim, first-writer-wins) inside each agent's own flow (`chef.md`, `tran-ngoc-bau/flow/main.md`, `digest-predict/flow/main.md`) prevents double-publish. Gate added AC-5 / FIX-COWORK-GUARANTEED-BACKSTOP 2026-06-13.
+**Dedup (unchanged, still correct):** any two layers firing the same guaranteed slot in the same window is safe by design. The published-marker gate (`published:<slot_id>:<work_date>` task_claim, first-writer-wins) inside each agent's own flow (`chef.md`, `tran-ngoc-bau/flow/main.md`, `digest-predict/flow/main.md`, `fb-market-poster/flow/main.md`) prevents double-publish. This is what let the fb-daily-firer launchd job coexist safely with the live dispatcher 2026-07-01→07-04, and it is the same mechanism the incoming generalized firer relies on — no new dedup mechanism is needed.
 
 ---
 
@@ -46,15 +38,13 @@ When both layers are active, coverage is complete. When Layer B evaporates (sess
 
 VN market hours in UTC: **02:00–08:30 UTC Monday–Friday** (09:00–15:30 VN GMT+7).
 
-### Signature B — Individual RemoteTrigger dead (slot-level failure)
+### Signature B — Guaranteed-slot backstop silent
 
-A guaranteed slot that fired yesterday is silent today. Layer B telemetry signals (`cowork-team-*.json`) ARE present (Layer B alive), but a specific agent's output is missing.
+A guaranteed slot that fired yesterday is silent today, AND signature A also confirms Layer B (the master dispatcher) was dead for the same window — this is exactly the SPOF scenario in §1. **Until `F1-LAUNCHD-COWORK-BACKSTOP` ships and is installed, there is no independent recovery path beyond re-arming Layer B** (§3/§4) — the fix IS the re-arm.
 
-- chef-morning (guaranteed): expected daily by 06:00 UTC Mon-Fri. Silent = RemoteTrigger `trig_019nwLpkYELqFdE1DZaRhPUk` likely paused.
-- chef-eod (guaranteed): expected daily by 09:00 UTC Mon-Fri. Silent = RemoteTrigger `trig_011HNsRMNiQwa3vNwN1b9Anh` likely paused.
-- tnb-audit (guaranteed): expected daily by 21:00 UTC. Silent = RemoteTrigger `trig_01LpUxJ98v2aK22FqLSBtL1G` likely paused.
+`fb-daily`/`fb-weekend` are the one exception today: check `launchctl list | grep com.vn-market.fb-daily-firer` for that specific firer's health.
 
-For Signature B, skip to Section 5 (RemoteTrigger recovery).
+RemoteTrigger-specific recovery (`RemoteTrigger(action="get"/"update"/"create", ...)`) is **retired — do not use it.** Those objects are inert (§1).
 
 ---
 
@@ -71,7 +61,7 @@ Every time Claude Code CLI is restarted or a new session begins:
 
 **Step 3 (optional sanity check):** Verify with `CronList`. Confirm entry shows `cron: */15 * * * *` and `description` containing `cowork-team`.
 
-This takes under 30 seconds. Do it every session start.
+This takes under 30 seconds. Do it every session start. This is the single most important mitigation for the §1 SPOF until `F1-LAUNCHD-COWORK-BACKSTOP` ships.
 
 ---
 
@@ -105,30 +95,18 @@ Step 4: If no signal after 2 ticks (30 min):
 
 ---
 
-## 5. Recovery flow — Layer A (RemoteTrigger paused or deleted)
+## 5. Recovery flow — session-independent backstop
 
-Use when: Layer B telemetry signals are present but a guaranteed slot is silent.
+**RemoteTrigger recovery is retired — do not use it.** The steps that used to live here (identify `trigger_id`, `RemoteTrigger(action="get"/"update"/"create", ...)`) targeted a mechanism that no longer exists in this system (standing directive `feedback_no_remote_trigger_all_local`, 2026-06-22).
+
+**Today (pre-`F1-LAUNCHD-COWORK-BACKSTOP`):** there is no general independent recovery lever for guaranteed slots — the only fix is re-arming Layer B (§4). The one exception is `fb-daily`/`fb-weekend`:
 
 ```
-Step 1: Identify the affected trigger_id from docs/data/cowork-schedule.json
-  jq '.slots[] | select(.slot_id=="<slot_id>") | {trigger_id, cron, trigger_status}' \
-    docs/data/cowork-schedule.json
-
-Step 2: Check trigger status (via Claude Code CLI or claude.ai dashboard):
-  RemoteTrigger(action="get", trigger_id="<trigger_id>")
-
-Step 3a: If trigger is paused → re-enable:
-  RemoteTrigger(action="update", trigger_id="<trigger_id>", enabled=true)
-
-Step 3b: If trigger is deleted → recreate from SSOT:
-  - Read slot row from docs/data/cowork-schedule.json (trigger_prompt, cron fields)
-  - RemoteTrigger(action="create", cron_expression="<cron>", prompt="<trigger_prompt>", ...)
-  - Update docs/data/cowork-schedule.json: set new trigger_id, trigger_status="active"
-
-Step 4: Verify next fire time ≤ expected schedule
+launchctl list | grep com.vn-market.fb-daily-firer
 ```
+Absent → the fb-only launchd firer itself unloaded; reload per `scripts/cowork-fb-daily-firer.sh` + `launchd/com.vn-market.fb-daily-firer.plist` (ops-owned local machine state, not a repo file change).
 
-RemoteTrigger environment_id for this workspace: `env_011CV1yonRDFUhYhGEdkVwqj` (from spike_1951a_oq3 in cowork-schedule.json).
+**Once `F1-LAUNCHD-COWORK-BACKSTOP` lands** (check status in `docs/data/orch/orch-state.json`), this section must be rewritten with the real recovery procedure against the shipped script + plist — e.g. `launchctl list | grep com.vn-market.cowork-guaranteed-slot-firer`, inspect the firer's own log, `launchctl unload`/`launchctl load` to force a restart. Do not backfill this speculatively; write it from the actual shipped artifacts.
 
 ---
 
@@ -181,6 +159,8 @@ jq '.slots[] | select(.enabled == true) | {slot_id, cron, agent, trigger_status}
   docs/data/cowork-schedule.json
 ```
 
+Note: `trigger_id`/`trigger_status` fields are legacy RemoteTrigger annotations, kept for historical audit trail only — they no longer drive any live behavior. `_superseded_by: "cowork-dispatcher"` on a slot row is the operative signal.
+
 ### Check guaranteed slots for last_fired staleness
 
 ```bash
@@ -215,29 +195,26 @@ After recovery, confirm:
 | T2: Signal telemetry appears | `ls docs/signals/cowork-team-*.json` | New file within 15 min of dispatcher registration |
 | T3: Market-hours slot fires | Wait for next `:00` or `:15` or `:30` or `:45` UTC during 02:00–08:30Z | `cowork-team-<ISO>.json` has non-empty `matched_slots` array |
 | T4: MARKET channel message | Check Telegram MARKET channel | Any cowork agent message within 30 min of first slot fire |
-| T5: RemoteTriggers active | `jq '[.slots[] | .trigger_status] | unique' docs/data/cowork-schedule.json` | Only `"active"` values (no `"pending_delete"`) |
+| T5: (NOT YET APPLICABLE) launchd backstop loaded | `launchctl list \| grep com.vn-market.cowork-guaranteed-slot-firer` | Entry present — only test this once `F1-LAUNCHD-COWORK-BACKSTOP` ships and is installed; until then, T1–T4 = full recovery confirmed |
 
-All 5 pass = full recovery confirmed.
+T1–T4 pass = full recovery confirmed today. T5 was formerly "RemoteTriggers active" — retired along with Layer A (§1); repurposed for the incoming launchd backstop, not yet live.
 
 ---
 
 ## 9. Preventing recurrence
 
-- **Always invoke `/cron-cowork-team` at session start.** Add it to personal workflow before any other CLI work during VN market hours.
-- **Layer-A deletion lock (ACTIVE):** `docs/data/cowork-schedule.json._notes.layer_a_deletion_locked = true`. The 5 guaranteed-slot RemoteTriggers MUST NOT be deleted until the stability_log below shows ≥2 session-restart survivals AND PO explicitly clears the lock via a dedicated sprint task. The previous deletion (before 2026-06-13) happened before the gate was met and caused the 32h gap. Do not repeat.
-- **Layer A + Layer B COEXIST PERMANENTLY** until the lock is cleared. Both firing the same slot is expected and safe — the published-marker gate inside each agent flow prevents double-publish.
-- **System-auditor Tier-1 check:** The system-auditor agent (30-min cron) monitors cowork silence. If it detects no chef output in >6h during market hours, it drops a signal row to `docs/data/orch/orch-state.json .signal_queue.rows[]` with `to: "ops"`. Ops reads this and invokes the recovery flow (Section 4 above).
+- **Always invoke `/cron-cowork-team` at session start.** Add it to personal workflow before any other CLI work during VN market hours. This is the primary mitigation for the SPOF below until the backstop ships.
+- **Known SPOF (this is the epic this runbook lives under):** the master CronCreate dispatcher (§1) is session-scoped — the only thing standing between "guaranteed slot fires" and "silent multi-day outage" is a live CLI session. `F1-LAUNCHD-COWORK-BACKSTOP` (in flight, owner `developer`) is the durable fix; track via `docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md` and `docs/data/orch/orch-state.json` task id `F1-LAUNCHD-COWORK-BACKSTOP`. A companion self-check, `FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED`, closes the "silent unload of the backstop itself" gap once it ships.
+- **RemoteTrigger Layer A is retired, not merely paused.** `docs/data/cowork-schedule.json._notes.layer_a_deletion_locked` has been cleared/rewritten to reflect this (was previously gating a deletion that is now moot — there is nothing left to delete-guard once the mechanism itself is retired). Do not re-introduce RemoteTrigger-based guaranteed-slot coverage — standing directive `feedback_no_remote_trigger_all_local` (2026-06-22) is still in force: everything runs locally on this server.
+- **System-auditor Tier-1 check:** the system-auditor agent (30-min cron) monitors cowork silence. If it detects no chef output in >6h during market hours, it drops a signal row to `docs/data/orch/orch-state.json .signal_queue.rows[]` with `to: "ops"`. Ops reads this and invokes the recovery flow (Section 4 above). `FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED` (in flight) extends this check to also assert the launchd backstop label stays loaded, once `F1-LAUNCHD-COWORK-BACKSTOP` ships.
 
-### §9.stability_log — Layer-A Restart Survival Log
+### §9.stability_log — Layer-A Restart Survival Log (ARCHIVED — RemoteTrigger Layer A retired 2026-06-22)
 
-Two documented session-restart survivals required before any Layer-A deletion is proposed.
-Seed: empty — awaiting first verified survival (target: Mon 2026-06-16 chef-morning at 05:15 UTC).
+This table tracked deletion-lock clearance for the now-retired RemoteTrigger Layer A. It is no longer applicable — do not add new rows here. Kept for historical audit trail only. The equivalent survival test for the incoming launchd backstop is specified in `docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md` §6 (QA session-down survival test) and should be run against `F1-LAUNCHD-COWORK-BACKSTOP` once it ships.
 
 | # | Date (UTC) | Restart type | Slot survived | Layer-A trigger_id | Verified by |
 |---|---|---|---|---|---|
 | — | awaiting Mon 2026-06-16 | deliberate CLI kill | chef-morning (05:15Z) | pending router creation | — |
 | — | (2nd restart — TBD) | TBD | TBD | TBD | — |
 
-**Fill condition:** After a deliberate CLI session kill (no `/cron-cowork-team` re-arm), observe `cowork-schedule.json chef-morning.last_fired` update AND a Telegram MARKET message — this confirms Layer-A fired independently. Log date + trigger_id + verifying agent.
-
-**Deletion lock clearance:** PO creates an explicit sprint task after 2 rows are filled. Agent-father then sets `layer_a_deletion_locked: false` and updates this table.
+This log was never filled in before Layer A was retired — the deletion-lock clearance process it fed never completed and is now moot.
