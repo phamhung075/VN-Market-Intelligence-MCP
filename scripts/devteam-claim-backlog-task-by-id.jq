@@ -23,6 +23,15 @@
 #   tid    — task_board.backlog[] row id to claim
 #   agent  — resolved specialist agent name (zone-detect skill output)
 #   by     — claimed_by / updated_by attribution string
+#
+# .head IS SINGLE-SLOT (schema v4: active_task_id is a scalar, not an array) —
+# it is only a convenience pointer for pipeline-resume, NOT the WIP source of
+# truth (task_board.in_progress[] is). If .head is already in_progress
+# pointing at a DIFFERENT task (a real concurrent dispatch is already live),
+# this script leaves .head untouched rather than silently dropping that
+# pointer — bug found+fixed live 2026-07-07T17:43Z when a second concurrent
+# claim (DATA-BACKFILL-PRICES-20260706-MONDAY-GAP) overwrote the still-active
+# CI-RED-c5b5f885-FIX head pointer. Only claims .head when it is idle/missing.
 
 ([ .task_board.backlog[] | select(.id == $tid) ] | first) as $picked
 | if ($picked == null) then
@@ -36,12 +45,16 @@
             claimed_by: $by
           })
       ])
-    | .head = {
-        status: "in_progress",
-        active_task_id: $tid,
-        next_agent: $agent,
-        next_action: ("PO-triaged FIX dispatch of " + $tid + " — dispatcher-wrap then JUMP TO execute."),
-        updated_at: $now,
-        updated_by: $by
-      }
+    | if ((.head.status // "idle") == "idle") then
+        .head = {
+          status: "in_progress",
+          active_task_id: $tid,
+          next_agent: $agent,
+          next_action: ("PO-triaged FIX dispatch of " + $tid + " — dispatcher-wrap then JUMP TO execute."),
+          updated_at: $now,
+          updated_by: $by
+        }
+      else
+        .   # head already points at a different live in_progress task — do NOT clobber; task_board.in_progress[] is the real WIP source of truth
+      end
   end
