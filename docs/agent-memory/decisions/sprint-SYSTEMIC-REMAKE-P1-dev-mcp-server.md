@@ -35,3 +35,13 @@
 - Direct VNDirect fetch + SSOT write reusing ohlcvWriteService.writeOhlcvBatch (chosen) — real data, zero duplicated write/normalization logic, idempotent backfill conflictStrategy
 **why-decision:** Live curl probe from the container proved VNDirect reachable + per-ticker + accurate before writing any code; verified against VCB/FPT/HPG/VNM/VIC (distinct, plausible, non-duplicate values) before declaring done.
 **why-change:** Plan assumed VPS-queue mechanism would work (matches all prior precedent) — pivoted after log evidence showed it silently non-functional; this is a genuinely new, separate finding from INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE.
+
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-07-07T20:00:00Z
+**task-id:** KD-OBS-01-FIX
+**what-done:** Confirmed 5 kinhDichTools.ts catches + 3 kinh-dich route handlers (reading/signals/market) caught genuine DB/HTTP errors with logger-only, no Telegram. New `kinhDichErrorNotify.ts` (`notifyKinhDichError`, dynamic-import `sendTelegramBug`, non-fatal, 📋-category dedup reuses sendTelegramBug's built-in 4h window) wired via injectable `notifyError` param (defaults real) into all 8 catch blocks. Left `appendMarketHexagram`/`appendStockHexagram` (marketTools.ts) untouched — genuinely benign "service unreachable, omit block" by design, not silent-drop.
+**what-considered:**
+- mock.module() the telegram/HTTP-client modules for full integration coverage of all 5 tool catches — rejected: worker-scoped mock.module leak risk (flagged precedent in this repo); found a zero-mock deterministic trigger instead (DB_PATH→directory forces getDb() throw on the initDatabase() call every tool hits first)
+- Thread deps through registerKinhDichTools/handlers via a broader deps object — rejected: single optional trailing param (matches accuracyDigestJob.ts/handleForeignFlow precedent) is minimal and non-breaking (2 real call sites, both grepped)
+- Route to sendTelegramWork vs sendTelegramBug — chose BUG: every existing genuine-error precedent in this codebase (ohlcvBackfillHandler, tasksMdJanitorJob, bctcPdfPullJob, etc.) uses BUG; WORK is reserved for routine business content
+**why-decision:** New KD-OBS-01-FIX-kinhdich-bug-notify.test.ts (11 tests, 43 expect) proves the wiring end-to-end per catch block via injected spy + deterministic DB-path-is-a-directory trigger — no reliance on live kinh-dich-service state.
+**why-change:** No plan deviation. Targeted suite (kinh-dich + registry, 197/197) + full `bun test` (14290/14393, 63 pre-existing fails matching 2026-07-03 documented baseline, none kinh-dich-related) + tsc clean + server boot (toolCount=183 unchanged, health 200, dashboard route 200) all green.

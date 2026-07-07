@@ -1,17 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-03 — FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK → REVIEW
-
-**Provenance:** router-dispatched (qa a522cb30f finding from FIX-ALERT-COMMANDER-DEAD-NO-SLOT gate)
-
-Two-tier fix for legal_risk CRITICAL re-firing every alert-commander cycle for up to 30 days. **QUICK (live now, no deploy):** `stage-bootstrap.md` call site bounds `get_legal_risk_signals(days=1, hours_back=6)` (was bare) — `days` already existed so this is effective immediately; `hours_back` is forward-compat (current server silently ignores unknown keys per MCP SDK zod-compat, verified) until ROBUST deploys. **ROBUST (deploy-gated):** (1) `legalRiskTools.ts` — additive opt-in `hours_back` param (shared `computeCutoffIso()`, both `alerts`+`agent_signals` sources) overriding `days` only when passed — did NOT lower the shared `days=30` default: grepped all 6 callers, bctc-analyst/digest-predict/unified-agent(x2)/fb-market-poster(x2) all call bare relying on 30-day breadth for evidence/summary (fb-market-poster cites "T-45 governance checks") — a global cut would starve their visibility. (2) `alertVerdictTools.ts` `writeAlertVerdict()` — dedup guard: skips appending when a PENDING row already exists for the same `(ticker, alertSource)`, returns `duplicate:true` instead. Different alertSource, or same pair post-resolution, never suppressed (alert-policy.md intent preserved).
-
-New test `FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK.test.ts` (7 tests, 15 expect): hours_back bound both sources; omitting it preserves prior days-only behaviour; repeat-fire-suppression at write_alert_verdict (same ticker+alertSource across 2 simulated cycles → 2nd deduped, fires once); genuinely-new event never suppressed; post-resolution re-fire allowed; legacy fake store w/o `readAll()` unchanged. Ran all 11 files importing these 3 modules — 118/118 pass.
-
-**Documented limitation:** true row-level "exactly once" inside `get_legal_risk_signals` needs row-id exposed in its text response + `record_signal_outcome` wired into stage-bootstrap Step 2 (currently unwired) — flow restructuring beyond this FIX's surgical scope, flagged as follow-up. What ships: re-fire window bounded from "≤30d unbounded" to "≤6h", duplicate verdict bookkeeping suppressed (TC4 = full guarantee at that layer).
-
-Zone health: tsc clean, tools=183 unchanged, server boot verified (PORT=3099, health 200, both dashboard routes valid HTML). Full suite: 14243 pass / 42 skip / 62 fail / 5 errors, 1170 files, 623s — under ceiling (348); visible failures are pre-existing `_deprecated/1302-*` + same Bun-1.3.13 C++ teardown panic. Scheduler G12 probe returned 3 vs 76 baseline — KNOWN-STALE (project-stats.json `_cronJobCountNote`: moved to `scheduleCron()` wrapper 2026-06-15, real=81), unrelated (0 scheduler/ files touched) | HEALTHY.
-
 ## 2026-07-07 — CI-RED-c5b5f885-FIX → REVIEW
 
 **Session:** (session-scrubbed) (dev-team cron dispatcher, PO-triaged)
@@ -35,3 +23,15 @@ daily_ohlcv was missing all-ticker 2026-07-06 rows (Cloudflare Tunnel outage). S
 `--apply`: 585 rows written (0 fabricated — every row a live VNDirect response), 6 transient `SQLITE_BUSY` retried clean with `PRAGMA busy_timeout`. Verified: 0 remaining strict gaps; spot-checked VCB/FPT/HPG/VNM/VIC — all distinct, plausible, correctly ×1000-normalized values, non-duplicate of adjacent days. 34 rows legitimately flat/no-volume (illiquid names, real VNDirect reference-price carryforward, not fabricated). 119 additional codes still lack 07-06 but their own last real trade predates 07-04 (pre-existing illiquidity, not outage-caused — correctly left untouched, matches system's own FR-S1/R-3 seed-bar filtering convention).
 
 Zone health: tsc clean, targeted OHLCV-backfill suite (5 files) 53/53 pass, tools=183 unchanged (no src/ production code touched — all new files are `scripts/migrations/`) | HEALTHY.
+
+## 2026-07-07 — KD-OBS-01-FIX → REVIEW
+
+**Provenance:** BOUNDED-1 idle-capacity auto-pickup (dev-team dispatcher)
+
+KD-OBS-01: kinh-dich MCP tool/route catch blocks caught genuine DB/HTTP errors and only `logger.error`'d them — never surfaced to a human. New `kinhDichErrorNotify.ts` (`notifyKinhDichError`, dynamic-import `sendTelegramBug`, fire-and-forget, non-fatal — never rejects even if `sendBugFn` throws) wired into all 5 `kinhDichTools.ts` catches (`get_kinhdich_reading`, `get_market_hexagram`, `get_hexagram_history`, `get_transition_probabilities`, `run_hexagram_backtest`) + all 3 HTTP route handlers (`kinhDichReadingHandler.ts`, `kinhDichSignalsHandler.ts`, `kinhDichMarketHandler.ts`). Message embeds a `📋 <category>` marker per call site (e.g. `kinhdich-reading-error`) that reuses `sendTelegramBug`'s existing 4h dedup — no new dedup machinery. Both `registerKinhDichTools(server, notifyError?)` and each route handler accept an optional injectable `notifyError` (defaults real) for testability.
+
+**Explicitly out of scope (benign, not silent-drop):** `appendMarketHexagram`/`appendStockHexagram` in `marketTools.ts` catch kinh-dich-service unreachable/non-200 and omit the hexagram block by design (`logger.warn` only) — degrade-gracefully path, confirmed working as intended, left untouched.
+
+New `KD-OBS-01-FIX-kinhdich-bug-notify.test.ts` (11 tests, 43 expect): unit contract for `notifyKinhDichError` (message shape incl. 📋 marker, never-rejects on `sendBugFn` throw, safe default path) + one integration test per catch block (injected spy, deterministic zero-mock error trigger — MCP tools via `DB_PATH` pointed at a directory so `initDatabase()`'s first `getDb()` throws; routes via the pre-existing AC-29 stale-closed-db-handle trick) proving source/category/detail + response still returns gracefully.
+
+Zone health: tsc clean, tools=183 unchanged, server boot verified (PORT=3099, health 200, `/api/bctc-inspect` 200). Targeted kinh-dich + registry suite (11 files) 197/197 pass. Full `bun test`: 14290 pass / 40 skip / 63 fail / 9 errors (1173 files) — failures match the documented pre-existing set (RSS/pollNews network-flaky in local sandbox, `_deprecated/1302-*`, Bun-1.3.13 C++ teardown panic; confirmed via isolated re-run of the RSS file alone, fails identically with zero kinh-dich files involved). Scheduler probe = 3 (known-stale baseline, 0 scheduler/ files touched) | HEALTHY.
