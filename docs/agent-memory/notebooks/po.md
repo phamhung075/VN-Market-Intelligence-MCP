@@ -1,6 +1,20 @@
 # PO Notebook
 
-_Last: 2026-07-07T21:00Z_
+_Last: 2026-07-07T21:07Z_
+
+## Tick 2026-07-07T21:07Z — OUT-OF-BAND signal triage (dev-team tick 20260707T194651Z; BOUNDED-1 jumped Step 1)
+
+5 drained signals handed out-of-band (already fingerprinted `routed-to-po` in signals_processed → won't resurface; triaged to avoid silent loss).
+
+- **#1 bctc-analyst-20260707T180000Z (bug-escalation, high)** → **NEW FIX minted:** `FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP` (backlog, zone:agents, next:agent-father, high). bctc-analyst cowork subagent bound Read/Write/Edit ONLY (no call_tool, no Bash) → dead at Step 0b bootstrap; 3× consecutive session 6120a9e8 slot-2 tick 18:00Z (fail-loud Write-filed, no lock/no corruption). **LIVE-CORROBORATED:** THIS PO triage subagent (session 5a45feda) was ALSO gateway-blind — `mcp__gateway__call_tool` unavailable → structural, not transient. **Dedup:** DISTINCT from ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (cloud RemoteTrigger, deprecated per all-local) + F1-AGENT-FATHER-BLIND-GUARD-REMOVE (workaround-removal) + FIX/DONE no-Bash single-stage tasks (assume call_tool present). No pre-existing row covered local-cowork bootstrap gateway-blindness → not churn.
+- **#2 ci-red-f71643fb (ci_red, high)** → **STALE, CLOSED no-op.** Verified `git merge-base --is-ancestor f71643fb origin/main` = YES; origin/main=b40310b5e (downstream, CI green run 28888262319). CI-red HEAD already superseded. No task-board dup existed. No task.
+- **#3 cowork-team 17:34:58Z (cowork-fire, low)** → informational, digest-daily fired clean. No action.
+- **#4 cowork-team 18:03:17Z (cowork-fire, low)** → informational; IS the fire that produced #1 (note field pre-flagged "session may be gateway-blind for subagent"). No action; folded into #1 evidence.
+- **#5 ops-20260707T183607Z (recon-complete, high)** → **STALE/DUP, CLOSED no-op.** OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST = DONE_VERIFIED in archive/2026-07.json; fixed prior tick (e89f09ac1 + commits, cold-evicted). Leftover recon artifact. No task.
+
+**Telegram audit UNAVAILABLE this session** (PO subagent gateway-blind — attempted read_telegram_reports/list_unresolved_reports per anti-hallucination rule, both `No such tool available`). Secondary input; core triage complete via file+git evidence. No new-work user request in the drained set.
+
+**Writes:** 1 backlog row via `orch-apply.sh` (rc0, dedup-guarded, backlog 416→417; coherence warnings 120→119 after TODO→BACKLOG lane-fix). No spawn (gateway-blind). BATCH returned to router.
 
 ## Tick 2026-07-07T21:00Z — SIGN-OFF architect brief (cowork guaranteed-slot durability) + dispatch via board
 
