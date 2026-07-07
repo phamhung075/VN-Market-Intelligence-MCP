@@ -19,5 +19,11 @@
     "trigger": "fetch_broken"
   },
   "priority": "high",
-  "createdAt": "2026-07-07T18:36:07Z"
+  "createdAt": "2026-07-07T18:36:07Z",
+  "_processed": {
+    "fingerprint": "a190ea44dada74525dcce4798cf4c5bef25d585b1cae35ba3941539a3864c749",
+    "processedAt": "2026-07-07T19:47:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

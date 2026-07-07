@@ -3,17 +3,17 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-06-29T11:04:36Z",
+    "fire_time": "2026-07-07T17:34:58Z",
     "matched_slots": [
-      "refine-bctc-slot-3"
+      "digest-daily"
     ],
     "won_slots": [
-      "refine-bctc-slot-3"
+      "digest-daily"
     ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
-      "docs/agents/refine_bctc_md/flow/main.md"
+      "docs/agents/digest-predict/flow/daily-predict.md"
     ],
     "silent": false,
     "drift_min": 3,
@@ -23,31 +23,32 @@
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
+    "chef_mutex_applied": false,
     "due_reasons": {
-      "refine-bctc-slot-3": "cron"
+      "digest-daily": "cron"
     },
     "cadence_minutes": {
-      "refine-bctc-slot-3": null
+      "digest-daily": null
     },
-    "last_fired_timestamp": "2026-06-29T11:04:26.555Z",
+    "last_fired_timestamp": "2026-07-07T17:34:03.000Z",
     "last_fired_slots": [
-      "refine-bctc-slot-3"
+      "digest-daily"
     ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
-    "nominal_tick": "11:00",
+    "nominal_tick": "17:30",
     "leader_lock": "acquired",
     "dev_head": "unknown",
-    "devq": 6,
-    "signal_backlog": 0,
-    "note": "refine-bctc-slot-3 adaptive due_reason=cron (_cron_fallback, cadence null); last_fired yesterday 11:04Z, genuine new daily window. Likely resumes GVR_2026_Q1 final 3 windows (0067-0069) + finalize."
+    "devq": 5,
+    "signal_backlog": 4,
+    "note": ""
   },
   "priority": "low",
-  "createdAt": "2026-06-29T11:04:36Z",
+  "createdAt": "2026-07-07T17:34:58Z",
   "_processed": {
-    "fingerprint": "4866e8cf07a84299e1128d3ce1f8d019756e0c5bba0175dd6919772cf47a5f33",
-    "processedAt": "2026-06-29T11:17:33Z",
+    "fingerprint": "d183ad8804b8a12468a8d8a64912fa80faeb5545194b31027babb586a2bbd75b",
+    "processedAt": "2026-07-07T19:47:23Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

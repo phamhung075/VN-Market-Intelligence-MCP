@@ -3,12 +3,12 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-06-30T15:05:51Z",
+    "fire_time": "2026-07-07T18:03:17Z",
     "matched_slots": [
-      "bctc-analyst-slot-1"
+      "bctc-analyst-slot-2"
     ],
     "won_slots": [
-      "bctc-analyst-slot-1"
+      "bctc-analyst-slot-2"
     ],
     "held_by_other": [],
     "all_held": false,
@@ -16,39 +16,39 @@
       "docs/agents/bctc-analyst/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 4,
+    "drift_min": 1,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "closed",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "bctc-analyst-slot-1": "cadence"
+      "bctc-analyst-slot-2": "cron"
     },
     "cadence_minutes": {
-      "bctc-analyst-slot-1": "240"
+      "bctc-analyst-slot-2": null
     },
-    "last_fired_timestamp": "2026-06-30T15:05:29.000Z",
+    "last_fired_timestamp": "2026-07-07T18:03:06.000Z",
     "last_fired_slots": [
-      "bctc-analyst-slot-1"
+      "bctc-analyst-slot-2"
     ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
-    "nominal_tick": "15:00",
+    "nominal_tick": "18:00",
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 2,
-    "note": "bctc-analyst daily off-market routine analysis; bg agent aa032ded; notebook+analysis-brief writer, no MARKET publish, no CHEF verify"
+    "signal_backlog": 4,
+    "note": "single non-guaranteed bctc-offmarket cron slot; session may be gateway-blind for subagent (bctc-analyst has no Bash fallback)"
   },
   "priority": "low",
-  "createdAt": "2026-06-30T15:05:51Z",
+  "createdAt": "2026-07-07T18:03:17Z",
   "_processed": {
-    "fingerprint": "eacf5d7f54dc75ef70469330e76b88b023446c7d13ed2f5640593b757131bf1c",
-    "processedAt": "2026-06-30T15:14:57Z",
+    "fingerprint": "554a38142245c4e8aad7cfdd81cb790a2a0471a60ac0d96d42332af7a9dabd6a",
+    "processedAt": "2026-07-07T19:47:23Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
