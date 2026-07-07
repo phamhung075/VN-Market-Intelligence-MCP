@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-07-04 06:20 UTC | **Sprint:** BCTC-HNX-SSL-HARDEN verify (VPS deploy CONFIRMED, AC MET)
+**Last updated:** 2026-07-07 17:03 UTC | **Sprint:** FIX-NEWS-VPS-CRASH-LOOP recon #2 (crash-loop DISPROVEN; Cloudflare Tunnel outage found instead, see c022)
 
 ---
 
@@ -10,7 +10,7 @@
 |--------|-----------|--------|---------|
 | vps-prices | 2026-05-13 | healthy (upstream) / MCP push broken | none |
 | cafef-index | 2026-05-13 | healthy | none |
-| vn-news-rss | 2026-06-09 | healthy (upstream+push). Two bugs: Bug A=false-UNHEALTHY (dev-zone fix needed in vpsHealthPoller.ts); Bug B=cursor jump (VPS fix applied 2026-06-09) | none |
+| vn-news-rss (vn-news-fetch.service) | 2026-07-07 | Process healthy (active 26d+, 0 restarts, no crash-loop). Bug A/B (2026-06-09) both confirmed still-fixed. NEW: found+recovering Cloudflare Tunnel push-outage 07-04→07-07 (error 1033/502), multi-service, see c022 | none |
 | sbv-rates | 2026-05-13 | healthy | none (Akamai present, not blocking) |
 | hsx-bctc | 2026-05-13 09:17 | FIXED (HNX params corrected) / HSX SPA unchanged | none |
 | hsx-bctc (api.hsx.vn) | 2026-05-15 04:45 | BLOCKER — /n/ JSON REST endpoints unreachable from VPS. Envoy route-level block, not geo-IP. | Envoy route table |
@@ -26,14 +26,6 @@ Key historical context (full recon docs in `docs/vps-sources/*/recon.md`):
 - afrLoop rollover fix (c014): regex `r"(\d{15,18})"`, HNX session warmup GET deployed
 - SSC 503 ~12:00Z UTC daily maintenance window (c016): no retry = cycle burn; needs 1-retry + 60s backoff
 - Foreign flow integrity issue (c017): dual-writer conflict on vnstock_trading_stats; dev-mcp-server owns fix
-
----
-
-## c019 · 2026-06-25T13:30Z · B-14/B-05 BCTC UNHEALTHY ALARM — Queue-Empty Off-Season Idle Verdict
-
-Trigger: Router escalation B-14 WARN re-escalated B-05 CRITICAL — vn-bctc-fetch unhealthy 6h+, 0 pushes since 2026-06-16 18:02Z.
-
-**VERDICT: BENIGN-IDLE.** `vn-bctc-fetch` active 14d, 28 consecutive clean "queue=0" cycles since Jun 18, no ERROR/FAIL/TLS/geo-block entries. Last real push: ACV Q1/2026 Jun 16 18:02Z HTTP 200. Health probe false-alarms because it keys on last-push-age vs fixed 360min threshold and can't distinguish empty-queue-idle from crashed. Off-season context: Q2 filings arrive mid-to-late July, so zero pushes Jun18–25 is structurally expected. 38 backlog rows = genuine non-filers/SSC-invisible tickers, not time-sensitive. **B-14/B-05: FALSE-CRITICAL** (health-monitor artifact, not VPS failure).
 
 ---
 
@@ -59,6 +51,18 @@ Trigger: Router-dispatched verification (review-board task BCTC-HNX-SSL-HARDEN) 
 - "0 fetch/24h" explained: `vn-bctc-fetch.service` active; queue has been empty nearly every 6h cycle Jun28–Jul3 (structurally normal) — the health metric's recent window simply missed the one real-queue window that produced the URL used above. Metric-visibility gap, not a broken/unexercised path.
 
 **No deploy/restart run** — verification only, per task scope. **Findings doc:** `docs/handoffs/ops-BCTC-HNX-SSL-HARDEN-verify.md`. **Recommendation:** resolve BCTC-HNX-SSL-HARDEN (done_verified) — repo+VPS both confirmed, AC independently verified live.
+
+---
+
+## c022 · 2026-07-07T17:03Z · FIX-NEWS-VPS-CRASH-LOOP recon #2 — crash-loop DISPROVEN, real Cloudflare Tunnel outage found instead
+
+Trigger: dev-team dispatch, task nearly a month old, dispatcher pre-check AMBIGUOUS (blank uptime col, 1 fresh push after multi-day gap).
+
+**VERDICT: NOT a systemd crash-loop.** `vn-news-fetch.service`: active 26d+ (since Jun 11), `NRestarts=0`, `Tasks: 2/32`. Last real oom-kill was Apr 21 (one-time, restart-counter 7625 in 15min) + one residual Apr 29 — zero crash events since, incl. zero restarts at all in the board-cited Jun 7/9 window. The 2026-06-09 alarm was already recon'd same-day: false-UNHEALTHY (Bug A, `vpsHealthPoller.ts` lexicographic-MAX bug) + cursor-jump (Bug B) — both fixes confirmed still live (commit `b3d3022c6`; VPS script mtime Jun11, 0 cap-triggers since).
+
+**Real finding:** `/var/log/vn-news-fetch.log` push step (`POST zenmidi.com/api/push-news`) failed **95–100%** of cycles 2026-07-04T19:47Z→07-07T16:46Z (`error 1033`/502, Cloudflare Tunnel unreachable) — Jul5/Jul6 = 0/90 success both full days. **Not news-specific**: `vn-sbv-fetch.log` and `vn-foreign-flow.log` show the identical signature same window — shared Cloudflare Tunnel / mcp-server-side receiving-path issue, out of VPS-script scope. Recovering as of recon (last 2 cycles = http=200; live probe from VPS → 401 reachable). Full detail: `docs/vps-sources/vn-news-rss/recon.md` § Incident 07-07.
+
+**Recommendation:** close FIX-NEWS-VPS-CRASH-LOOP done_verified/NO-CHANGE-NEEDED (crash-loop hyp. disproven); open separate `ops`-owned (local-infra) task for the Tunnel outage if dispatcher wants root-cause on the receiving side — no VPS script bug to fix.
 
 ---
 

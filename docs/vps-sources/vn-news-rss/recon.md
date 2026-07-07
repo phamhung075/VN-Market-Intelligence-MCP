@@ -136,6 +136,35 @@ Backup: `/root/fetch-vn-news.sh.bak-20260609`
 
 ---
 
+## Incident — FIX-NEWS-VPS-CRASH-LOOP recon #2 (2026-07-07)
+
+### Trigger
+Board task FIX-NEWS-VPS-CRASH-LOOP (opened 2026-06-09, recurring framing: "2nd occ in 48h") re-dispatched for recon. Dispatcher pre-check found AMBIGUOUS live signals (blank VPS-uptime column, single fresh push after a multi-day gap) — not clearly stale, not clearly broken. SSH recon requested.
+
+### Finding 1 — NOT a systemd crash-loop (hypothesis REJECTED)
+
+`systemctl status vn-news-fetch.service`: **active (running) since 2026-06-11T00:22:20+07 — 26+ days uptime, `NRestarts=0`**, `Tasks: 2 (limit: 32)`. `journalctl -u vn-news-fetch.service` full history: last `oom-kill` was **2026-04-21** (a severe one-time crash-loop, restart counter reached 7625 in ~15min — a distinct, already-resolved historical incident) with one residual isolated oom-kill on **2026-04-29**; **zero** `Failed`/`oom-kill` entries since. All later "Stopped→Started" journal pairs (May–Jun) are clean `Deactivated successfully` manual restarts/redeploys, not crashes. **Zero restart events at all** between 2026-06-02T01:23:38 and 2026-06-11T00:22:20 — meaning the board's cited "2026-06-07T06:33 self-restart ~1h44m" and "2026-06-09 uptime 1h21m" are **not corroborated by real systemd events**. The task's pthread/NPROC-exhaustion hypothesis (same class as vn-bctc-fetch/Chromium) does not apply here — this service is a plain bash RSS-fetch loop, no browser/subprocess fan-out.
+
+Cross-check: the 2026-06-09 alarm was already recon'd same-day (see Incident block below) and diagnosed as a health-monitor false-positive (Bug A) + a since-fixed cursor-jump bug (Bug B) — **not** a VPS process crash. Both fixes verified still live: dev-zone SQL fix present in current `vpsHealthPoller.ts` (commit `b3d3022c6`, merged 2026-06-09), VPS-side cursor cap still present in `/root/fetch-vn-news.sh` (mtime Jun 11, 0 `cursor capped` triggers since — the guard hasn't even needed to fire).
+
+### Finding 2 — REAL active issue found, but it's not on the VPS side: Cloudflare Tunnel push-delivery outage (2026-07-04T19:47Z–2026-07-07T16:46Z)
+
+`/var/log/vn-news-fetch.log`: the VPS fetch loop itself never stopped running (15-min cycles, RSS merge succeeds every time, ~243 items/cycle). But the final `POST https://zenmidi.com/api/push-news` step failed at a **~95–100% rate** for ~3 days:
+- 2026-07-04: 3 success / 17 fail
+- 2026-07-05: **0 success / 90 fail** (100% failure, all day)
+- 2026-07-06: **0 success / 90 fail** (100% failure, all day)
+- 2026-07-07 (to 16:46Z): 1 success / 62 fail
+- Error signature: `http=530 resp=error code: 1033` (Cloudflare Tunnel error — origin/tunnel unreachable) and some `http=502`. Onset ~2026-07-04T19:47:07Z (prior baseline Jun1–Jul4: 1606 success / 93 fail, i.e. healthy ~94.5%).
+- **Not news-specific** — same-window cross-check on other VPS services' push logs shows identical `error code: 1033`/`502` signature: `/var/log/vn-sbv-fetch.log` (repeated `PUSH: SBV rates → error code: 1033` through 2026-07-07T13:18-16:18Z) and `/var/log/vn-foreign-flow.log` (`PUSH_FAILED: HTTP 502`, seen 06-30/07-02/07-03). This is a **shared Cloudflare Tunnel / mcp-server-side receiving-path issue**, not a per-service VPS bug.
+- **Recovered as of this recon**: live probe `curl -X POST https://zenmidi.com/api/push-news` now returns HTTP 401 (reachable, auth-gated — normal for no-key probe), and the two most recent VPS cycles both succeeded (`16:46:59Z http=200`, `17:03:01Z heartbeat http=200`). Whether the Cloudflare Tunnel outage is durably fixed or will recur is unknown — no root cause identified on the tunnel/receiving side (out of VPS-recon scope; that's `ops`/local-infra, not `dev-vps-crawls` — no VPS script bug exists to fix).
+
+**This finding fully explains the dispatcher's ambiguous pre-check reads**: blank uptime column (health poller likely also affected/starved by the same tunnel flakiness), "only 1 push in trailing 24h, gap since Jul 4" (matches the log exactly — legitimate multi-day near-total outage, not a crash).
+
+### Verdict
+**NOT a VPS crash-loop.** `vn-news-fetch.service` process health = clean, 26+ days stable. AC's ">6h uptime across 3 consecutive Tier-2 cycles" is trivially met on the process-uptime axis. The June 9 alarm was already root-caused and fixed same-day (prior recon, both fixes confirmed still live). **Recommend: close FIX-NEWS-VPS-CRASH-LOOP as done_verified/NO-CHANGE-NEEDED (crash-loop hypothesis disproven)**, and optionally open a **new, separate `ops`-owned task** for the 2026-07-04→07 Cloudflare Tunnel push-delivery outage (multi-service: news+sbv+foreign-flow) — recon only, no fix attempted (local infra, out of ops-vps-fetch scope), currently self-recovered but root cause on the tunnel/receiving side unconfirmed.
+
+---
+
 ## Notes
 
 - **MCP push endpoint was returning 404** as of 2026-05-13: `PUSH 245 items → /api/push-news http=404`.
