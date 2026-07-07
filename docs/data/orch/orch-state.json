@@ -8916,6 +8916,29 @@
         "verified_by": "dev-team",
         "verified_at": "2026-07-07T23:18:52Z",
         "signoff_note": "Raw-verify 2026-07-07T23:17Z: live get_technical_indicators(code=FPT) and (code=VCB) both return full non-N/A MA5/MA20/MA50/RSI(14)/MACD/BB — bug's stated symptom (ALL indicators N/A) does not reproduce. Code-verify: apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts:614/648/669 hardcodes source_tier:3 unconditionally (both Go-primary and local-DB-fallback paths return 3 as const) — doc comment line 524 states 'Source tier: 3 (derived — all indicators computed from price history; no live external source)' by design. repo-wide grep for 'ta_ohlcv' = 0 matches — no such pre-computed table exists in this codebase for the bug to have bypassed. Premise misdiagnosed a hardcoded-by-design tier as a routing bug; underlying N/A symptom (whatever caused it) has since resolved (candles present, real values computing). NO-CHANGE-NEEDED."
+      },
+      {
+        "id": "CI-TEST-04-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "Fix CI-TEST-04: Is the bun test fail count at or below baseline (<=348 native fails per project-stats.json)",
+        "type": "fix",
+        "zone": "qa",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CI-TEST-04-FIX",
+        "status_note": "Root cause found + fixed: apps/mcp-server/src/interface/mcp/tools/alerts/alertAccuracy.ts compared ISO-8601 fetched_at against SQLite datetime('now') (space-separated) as TEXT — 'T'(0x54)>' '(0x20) byte-compare wrongly excluded same-UTC-day rows as future. Fixed by binding now as new Date().toISOString() for ISO-to-ISO compare (commit e170624d3). 183-alert-accuracy.test.ts AC-2b: 20/20 pass locally (was 19/20). Full local suite showed 49 unrelated fails (news-poll/OCR/SSC files, 2 native crashes) traced to parallel-run environment noise, not this fix -- spot-check of one file in isolation passed 8/8 clean. dev-mcp-server produced this diff but stalled before commit (returned referencing an unrelated phantom task id); dev-team landed it after independent verification per dead-worker-probe-tree-first convention. verification_gate=ci_green_on_subsequent_push PENDING -- awaiting the CI run on e170624d3 to close done_verified.",
+        "origin_signal": "ci-red-e2d693ed-20260702002853",
+        "promoted_at": "2026-07-07T23:22:58Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-07T23:22:58Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "moved_to_review_at": "2026-07-07T23:48:14Z",
+        "moved_to_review_by": "dev-team",
+        "done_verified": true,
+        "verified_by": "dev-team",
+        "verified_at": "2026-07-07T23:50:31Z",
+        "signoff_note": "verification_gate=ci_green_on_subsequent_push CONFIRMED: gh run list shows conclusion=success on e170624d3 (run created 2026-07-07T23:47:23Z), the exact commit carrying the fix. bun test job green on main. Root cause + fix detailed in prior review status_note and docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-team.md STEP dev-team-S1."
       }
     ],
     "head": {
@@ -9103,25 +9126,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "id": "CI-TEST-04-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "REVIEW",
-        "title": "Fix CI-TEST-04: Is the bun test fail count at or below baseline (<=348 native fails per project-stats.json)",
-        "type": "fix",
-        "zone": "qa",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CI-TEST-04-FIX",
-        "status_note": "Root cause found + fixed: apps/mcp-server/src/interface/mcp/tools/alerts/alertAccuracy.ts compared ISO-8601 fetched_at against SQLite datetime('now') (space-separated) as TEXT — 'T'(0x54)>' '(0x20) byte-compare wrongly excluded same-UTC-day rows as future. Fixed by binding now as new Date().toISOString() for ISO-to-ISO compare (commit e170624d3). 183-alert-accuracy.test.ts AC-2b: 20/20 pass locally (was 19/20). Full local suite showed 49 unrelated fails (news-poll/OCR/SSC files, 2 native crashes) traced to parallel-run environment noise, not this fix -- spot-check of one file in isolation passed 8/8 clean. dev-mcp-server produced this diff but stalled before commit (returned referencing an unrelated phantom task id); dev-team landed it after independent verification per dead-worker-probe-tree-first convention. verification_gate=ci_green_on_subsequent_push PENDING -- awaiting the CI run on e170624d3 to close done_verified.",
-        "origin_signal": "ci-red-e2d693ed-20260702002853",
-        "promoted_at": "2026-07-07T23:22:58Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-07T23:22:58Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "moved_to_review_at": "2026-07-07T23:48:14Z",
-        "moved_to_review_by": "dev-team"
       }
     ],
     "qa": [],
@@ -9141,7 +9145,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T23:48:14Z",
+    "last_triaged_at": "2026-07-07T23:50:31Z",
     "last_triaged_by": "dev-team"
   },
   "_meta": {
