@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-NEWS-VPS-CRASH-LOOP",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-NEWS-VPS-CRASH-LOOP — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-07T16:56:29Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "task closed done_verified by raw pre-verify — awaiting next dispatch",
+    "updated_at": "2026-07-07T17:07:54Z",
+    "updated_by": "dev-team (ops-vps-fetch recon)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7354,22 +7354,31 @@
       },
       {
         "id": "CI-RED-c5b5f885-FIX",
-        "title": "CI-RED-c5b5f885-FIX — CI RED on main HEAD c5b5f885: bun test (run 28632717350)",
+        "title": "CI-RED bun test — PERSISTENT origin red c5b5f885 -> fb366a1e -> f71643fb (advanced to current origin HEAD; run 28689707086)",
         "type": "FIX",
         "status": "TODO",
         "owner": "po",
         "priority": "high",
         "zone": "apps/mcp-server/",
-        "plan_only": true,
+        "plan_only": false,
         "created_at": "2026-07-03T03:03:24Z",
         "created_by": "po",
         "origin_signal": "ci_red:c5b5f885b48889aa19c0779eb4efdfa254e46654:bun test",
-        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28632717350",
+        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28689707086",
         "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC (verification_gate=ci_green_on_subsequent_push): gh run list --branch main --limit 5 shows conclusion=success for a push AFTER c5b5f885b48889aa19c0779eb4efdfa254e46654. VERIFY-FIRST (memory ci_red_can_be_flaky): the failing SHA c5b5f885b PREDATES local HEAD by 13 unpushed commits, one of which (31caeefcd, FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING rag client-side fail-soft, now done_verified) fixes the recurring search_similar_context test TIMEOUT that most plausibly caused this 'bun test' red. Do NOT re-run the workflow and do NOT dispatch coding until the NEXT fleet-push CI result is inspected — this row most likely closes as resolved-by-chain (GREEN). It only becomes a real coding FIX if the subsequent push is still RED on 'bun test' for a DIFFERENT root. Priority: high. Failing jobs: bun test.",
+        "status_note": "[po-triage 2026-07-07T16:37Z] RESOLVED-BY-CHAIN HYPOTHESIS DISPROVEN. Prior note bet this closes GREEN once 31caeefcd (search_similar_context fail-soft, done_verified) reached origin. It did NOT: the CI workflow (bun test job) = FAILURE on BOTH subsequent pushed HEADs fb366a1e (run 28687445571) AND f71643fb (run 28689707086) — red is STABLE across 3 consecutive origin HEADs (not flaky, ci_red_can_be_flaky ruled out). This is now a GENUINE coding FIX: the search-timeout dep did not fix it; a remaining/different bun-test root persists. FOLDED the ci_red re-emission CI-RED-f71643fb here (dedup: ci-health-probe re-fingerprints the SAME persistent red per head_sha) rather than mint a duplicate row — anti-churn. A persistent red bun test on origin/main blocks the pre-push hook and strands the whole fleet push (red_prepush_strands_fleet) -> escalated blocking:true, plan_only:false. AC (verification_gate=ci_green_on_subsequent_push): gh run list --branch main shows CI conclusion=success for a push AFTER f71643fb. NEXT: dev pulls the failing bun-test file(s) from run 28689707086 logs and fixes the root; do NOT re-run to flake-away. Zone apps/mcp-server/ is the prior hint — confirm from the actual failing test paths.",
         "depends": [
           "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING"
-        ]
+        ],
+        "blocking": true,
+        "advanced_head_sha": "f71643fbaff1c5c687095775e79f2617ad2678f1",
+        "advanced_run_id": 28689707086,
+        "folded_ci_red": [
+          "ci_red:f71643fbaff1c5c687095775e79f2617ad2678f1:bun test",
+          "ci_red:fb366a1ecfb9e96fc1f830acb64a9bf2b3958e00:bun test"
+        ],
+        "updated_at": "2026-07-07T17:06:41Z",
+        "updated_by": "po-triage 2026-07-07T16:37Z"
       },
       {
         "id": "FIX-SEARCH-1466-MOCK-MODULE-POLLUTION",
@@ -7541,7 +7550,7 @@
       },
       {
         "id": "OPS-BCTC-REFINE-REPASS-NONBANK-5T",
-        "title": "OPS — agentic-refine repass + reingest 5 non-bank Q1-2026 reports (VHM/VIC/VRE/HSG/MWG) to recover total_assets=0; ZERO new code, proven CTG runbook",
+        "title": "OPS — agentic-refine repass + reingest 5 non-bank Q1-2026 reports (VHM/VIC/VRE/HSG/MWG) to recover total_assets=0; ZERO new code, proven CTG runbook + D2D 2026-Q1 (folded from analysis #3507, composite=0.10)",
         "owner": "bctc-analyst",
         "status": "BACKLOG",
         "zone": "multi",
@@ -7551,7 +7560,20 @@
         "created_at": "2026-07-03T22:31:03Z",
         "generic_mandate": "Do NOT add any per-ticker regex branch to balanceSheetExtractor.ts — rejected anti-pattern (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT). The agentic-refine + LABEL-CANONICAL aggregator machinery already handles 270-vs-280; it just needs to be RUN against these 5 reports, not re-invented at parse-time.",
         "verification_gate": "RAW-verify LIVE post-reingest: get_bctc_full for all 5 tickers returns plausible NONZERO total_assets (>= equity_total) with confidence>0 and no '[CORRUPT DATA — SKIP]'.",
-        "status_note": "OPERATIONAL data-recovery, NO code change — SPIKE item 1 ACCEPTED. Per SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO (done_verified, findings doc 43453950b): these 5 serve total_assets=0 because the agentic refine pipeline was NEVER run (0 bctc_refined_units + 0 bctc_table_rows). Source data confirmed RECOVERABLE (not corrupt): VRE/MWG show the grand-total legible under code 280 vs a distinct 270 sub-section; VHM has a dual consolidated+parent-only PDF needing 1 architect follow-up on page-anchoring. Runbook = docs/agents/dev-mcp-server/flow/main.md CANONICAL BCTC finalize re-ingest: get_bctc_pending_refine -> refine_bctc_md leaf-worker windows -> push_bctc_refined_unit -> finalize_bctc_refine -> bun scripts/migrations/reingest-bctc-report.ts --report-id <id> --apply. Owner split: bctc-analyst (transcription) -> dev-mcp-server (reingest run), mirroring W5-FU-CTG-REFINE-96e36139. report_ids: VHM a3a41225 / VIC 1f53ef33 / VRE 0ce3b2ed / HSG ae1f30bf / MWG d713095f. WATCH-FOR: if the POW-class grand-total-row-drop (SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP) recurs on >=2 of these 5 during the repass, escalate that SPIKE from investigate-first to must-fix-before-repass. REE+VNM EXCLUDED (own tickets)."
+        "status_note": "OPERATIONAL data-recovery, NO code change — SPIKE item 1 ACCEPTED. Per SPIKE-BCTC-NONBANK-TOTAL-ASSETS-ZERO (done_verified, findings doc 43453950b): these 5 serve total_assets=0 because the agentic refine pipeline was NEVER run (0 bctc_refined_units + 0 bctc_table_rows). Source data confirmed RECOVERABLE (not corrupt): VRE/MWG show the grand-total legible under code 280 vs a distinct 270 sub-section; VHM has a dual consolidated+parent-only PDF needing 1 architect follow-up on page-anchoring. Runbook = docs/agents/dev-mcp-server/flow/main.md CANONICAL BCTC finalize re-ingest: get_bctc_pending_refine -> refine_bctc_md leaf-worker windows -> push_bctc_refined_unit -> finalize_bctc_refine -> bun scripts/migrations/reingest-bctc-report.ts --report-id <id> --apply. Owner split: bctc-analyst (transcription) -> dev-mcp-server (reingest run), mirroring W5-FU-CTG-REFINE-96e36139. report_ids: VHM a3a41225 / VIC 1f53ef33 / VRE 0ce3b2ed / HSG ae1f30bf / MWG d713095f. WATCH-FOR: if the POW-class grand-total-row-drop (SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP) recurs on >=2 of these 5 during the repass, escalate that SPIKE from investigate-first to must-fix-before-repass. REE+VNM EXCLUDED (own tickets).",
+        "folded_reports": [
+          {
+            "ticker": "D2D",
+            "period": "2026-Q1",
+            "composite": 0.10,
+            "source": "analysis-agent Telegram #3507",
+            "report_id": "TBD via get_bctc_pending_refine",
+            "added_at": "2026-07-07T17:06:41Z",
+            "note": "non-bank low-confidence extraction; diagnose never-refined-vs-OCR-garble at repass via get_bctc_pending_refine; same runbook + generic_mandate (NO per-ticker regex)"
+          }
+        ],
+        "updated_at": "2026-07-07T17:06:41Z",
+        "folded_note": "[po-triage 2026-07-07T16:37Z] Folded D2D 2026-Q1 (composite=0.10, analysis-agent #3507) into this operational non-bank refine-repass batch instead of minting a standalone per-ticker row (anti-churn). Same DEPLOY-GATE as W5-FU-CTG — run D2D in the same post-deploy repass batch."
       },
       {
         "id": "SPIKE-BCTC-REFINE-TOTAL-ROW-TRANSCRIPTION-DROP",
@@ -10885,6 +10907,26 @@
         "verified_by": "dev-team",
         "verified_at": "2026-07-07T16:55:07Z",
         "signoff_note": "BOUNDED-1 pre-verify (cheap raw-verify before worker spawn, per memory project_bounded1_first_pickup_stale_backlog_hygiene_debt interim mitigation): get_vps_proxy_health() sbv Last Push 2026-07-07 16:48:04 status=ok Stale?=no; get_macro_snapshot() usdVnd source_tier=1 is_estimate=false fetchedAt=2026-07-07T16:53:27Z; signal_queue.rows NEW count=0 (no recurring B-12). AC satisfied by current live state — NO-CHANGE-NEEDED, closing without worker spawn. If B-12 recurs, system-auditor will re-emit a fresh signal and PO triage will re-open a new task."
+      },
+      {
+        "id": "FIX-NEWS-VPS-CRASH-LOOP",
+        "priority": "high",
+        "size": "M",
+        "sprint": "CI-RED-RECONCILE",
+        "status": "DONE_VERIFIED",
+        "title": "vn-news-fetch unhealthy crash-restart loop (~1h uptime) RECURRING — root-cause def fix (B-11; 2nd occ 48h after FIX-NEWS-VPS-PROBE)",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NEWS-VPS-CRASH-LOOP",
+        "promoted_at": "2026-07-07T16:56:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-07T16:56:29Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "done_verified": true,
+        "verified_by": "dev-team (ops-vps-fetch recon)",
+        "verified_at": "2026-07-07T17:07:54Z",
+        "signoff_note": "ops-vps-fetch live SSH recon (journalctl -u vn-news-fetch.service, VPS log analysis) DISPROVED the crash-loop hypothesis: service continuously active(running) since 2026-06-11T00:22:20 (26+ days), NRestarts=0, Tasks 2/32 (plain bash loop, not Chromium — no NPROC pressure). Last real crash was 2026-04-21 (historical, already resolved), zero restart events 2026-06-02..2026-06-11 — the board's cited 06-07/06-09 restart signals are not corroborated by systemd and were already diagnosed same-day as a health-monitor timestamp/cursor-jump false-positive (fix live in commit b3d3022c6, 0 triggers since). The blank-uptime/single-fresh-push symptom that made this pick ambiguous was actually a SEPARATE shared Cloudflare Tunnel outage (http=530/502) hitting vn-news-fetch + vn-sbv-fetch + vn-foreign-flow identically 2026-07-04T19:47Z..2026-07-07T16:46Z (Jul5/Jul6 = 0/90 push success both days), appears self-recovered as of this recon (last 2 cycles succeeded, live probe HTTP 401 reachable) — root cause is receiving-side (mcp-server/tunnel), out of ops-vps-fetch scope, not a VPS script bug, so no dev-vps-crawls follow-up task opened. AC (no active crash-loop) satisfied — NO-CHANGE-NEEDED, closing without code fix. Evidence: docs/vps-sources/vn-news-rss/recon.md Incident section, commit df118f8be."
       }
     ],
     "head": {
@@ -10896,24 +10938,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-NEWS-VPS-CRASH-LOOP",
-        "priority": "high",
-        "size": "M",
-        "sprint": "CI-RED-RECONCILE",
-        "status": "IN_PROGRESS",
-        "title": "vn-news-fetch unhealthy crash-restart loop (~1h uptime) RECURRING — root-cause def fix (B-11; 2nd occ 48h after FIX-NEWS-VPS-PROBE)",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NEWS-VPS-CRASH-LOOP",
-        "promoted_at": "2026-07-07T16:56:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-07T16:56:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -11032,8 +11057,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T16:56:19Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-07T17:07:54Z",
+    "last_triaged_by": "dev-team (ops-vps-fetch recon)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
