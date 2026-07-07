@@ -1,30 +1,23 @@
 # PO Notebook
 
-_Last: 2026-07-04T07:15Z_
+_Last: 2026-07-07T17:06Z_
 
-## Tick 2026-07-04T07:15Z (po-2bd0708d) — RAW-VERIFY GATE reconcile of a 3-session concurrent-writer race
+## Tick 2026-07-07T16:37Z (dev-team fire-election triage) — 5 inputs, ZERO new rows (anti-churn convergence)
 
-Router raw-verify gate blocked closeout: disk (peer po-s141/s142 board) != my RETURN. THREE PO sessions raced the SAME systemic-remake brief this tick: mine (2bd0708d, coarse SYSREMAKE-*), po-s141 (atomic P1-* mint + promote 4 detector fixes to ready[]), po-s142 (CANCELLED my coarse SYSREMAKE-P1A/B/C/F/P1DET as dup-churn, superseded_by the atomic set; committed 3a6271de0 + 873982f5e). Coordinator directed: make ready[]/head SAFE. Reconciled via orch-apply (rc0 x2): relocated all 10 ready rows OUT of ready[] -> backlog supervised=true (4 RC-DETECTOR + notebook-gate + 2 loop-scripts; FIX-CONTEXT-BLOAT plan_only=true), dropped closure dup (live via SYSREMAKE-P1DE agent-father), ready[]=[], head=idle. Corrected head note (my first note wrongly pointed pm at the CANCELLED SYSREMAKE rows). 
-UNRESOLVED CONFLICT flagged to router: peer sessions acted under a RELAYED USER GREEN-LIGHT to promote Phase-1 now; raw-verify gate judged unattended dispatch of detector/gate/loop-script fixes UNSAFE -> held supervised. Router to adjudicate re-promotion on a supervised tick. ACTIVE RACE: a peer flipped the 4 detector rows BACKLOG->TODO and re-added the closure row AFTER my writes (still out-of-ready + supervised, so SAFE). Stopped writing to avoid escalating the write-war (= the churn this remake kills). Final disk: ready[]=EMPTY, head idle/active_task_id=null. review[] 3 W5 user-owned untouched.
+Handed 2 pendingSignals + 4 NEW Telegram reports. Disposition = dedup/advance/fold/ack — no dup mints (systemic-review 07-04 churn mandate honored; backlog stayed 418).
 
-## Tick 2026-07-04T07:00Z (router-dispatched) — USER-GREEN-LIT systemic-remake Phase-1, EXECUTED FULLY + converged dup set
+1. **ci_red f71643fb (bun test)** — NOT a new problem. gh confirms the CI workflow is RED continuously across c5b5f885 -> fb366a1e -> f71643fb (all `bun test` failure; c5b5f885 is git-ancestor of f71643fb). Already tracked by `CI-RED-c5b5f885-FIX` (TODO, backlog). Its resolved-by-chain hypothesis (31caeefcd search-timeout dep would close it GREEN) is DISPROVEN — both subsequent pushed HEADs still CI=failure. ADVANCED that row in place (orch-apply rc0): plan_only false, blocking true (red bun test strands fleet pre-push hook — red_prepush_strands_fleet), advanced_head_sha=f71643fb, folded the f71643fb+fb366a1e re-emissions, rewrote status_note = now a GENUINE coding FIX. RETURNED in BATCH for dispatch. Stable red x3 HEADs = not flaky.
+2. **gateway 502 @16:30Z (dispatcher-error, cowork-team)** — RESOLVED. Same incident as ops #3505 (Docker daemon shutdown, restarted, localhost:3000 + zenmidi both healthy ~16:35Z) AND operationally proven UP (this tick's gateway ops all succeeded). ACK/close, no task.
+3. **pollNews 0-items @~16:45Z (#3506, analysis-agent)** — corroborates in-progress `FIX-NEWS-VPS-CRASH-LOOP` (ops-vps-fetch already reconning the news-VPS crash signature). DEDUP — no new task; symptom of active work (or transient during the 16:35 Docker restart). Did NOT touch the in_progress/head lane (active work).
+4. **CTG 2026-Q1 composite=0.00 (#3508)** — DEDUP: already `W5-FU-CTG-REFINE-96e36139` (review[], BLOCKED on DEPLOY-GATE: ops rebuild+deploy of FIX-BCTC-BANK-BS-COLUMN-ORDER then live finalize_bctc_refine). Re-flags because the gated reingest hasn't run. No task; review row is USER/deploy-gated -> NOT touched.
+5. **D2D 2026-Q1 composite=0.10 (#3507)** — non-bank, untracked. FOLDED into `OPS-BCTC-REFINE-REPASS-NONBANK-5T` (folded_reports[], report_id TBD via get_bctc_pending_refine) instead of a standalone per-ticker row. Same DEPLOY-GATE + generic_mandate (no per-ticker regex).
 
-Router relayed owner green-light for the whole remake with Phase-2 router-gated. Drove Phase-1 (containment-now) ONLY, stopped at the boundary. Brief `docs/architecture-briefs/2026-07-04-systemic-remake.md §1`.
-
-**PROMOTE 4 detector fixes (po-s141, RC-DETECTOR §1.2) backlog→ready/READY** — all confirmed before=backlog/BACKLOG → after=ready/READY: `FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE` (plan_only true→**false**, owner→developer), `FU-AUDITOR-D4-SIGNAL-ID` (→developer), `FIX-SIGNALQUEUE-DUP-ID-GUARD` (TODO→READY, →developer), `FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT` (→agent-father: it's a system-auditor/flow/main.md two-layer-freshness edit w/ dod[] ACs).
-
-**MINT 10 atomic Phase-1 tasks (po-s141)** — verbatim Target+Mechanism+machine-checkable-AC+owner from brief §1.1/§1.2/§1.3. 6→ready[]: P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT(dev), P1-IDLE-AUDITOR-TIER23-SCRIPT(dev), P1-IDLE-AUDITOR-NOTEBOOK-GATE(af), P1-DETECTOR-CLOSURE-TRIAGE-SIGNALS(af), P1-DRIFT-QUARANTINE-FREEZE-FLAG(af), P1-DRIFT-NARRATIVE-NUMBER-POINTER(cmh). 4→backlog[] HELD on depends[]: P1-IDLE-DEVTEAM-FLOW-BRANCH, P1-IDLE-AUDITOR-CRON-WIRING, P1-DETECTOR-CLOSURE-TASK-ARCHIVE, P1-DRIFT-PARITY-TEST-EXTEND (each depends on its script/producer sibling per router blockedBy directive). sprint_goal SYSTEMIC-REMAKE-P1 added; head→pm to sequence (WIP=2, honor depends, handoff docs).
-
-**CONVERGE dup set (po-s142) — MANDATORY anti-churn.** Notebook showed a prior 06:37Z tick already minted COARSE umbrella rows for the SAME work (SYSREMAKE-P1A/B/C/F + P1DET-PROMOTE routing). Leaving both = the exact churn this sprint kills → superseded all 5 (status→CANCELLED + superseded_by → my atomic set). `SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE` left BACKLOG (legit Phase-2 tracker, USER-GATED).
-
-**STOPPED at Phase-1→2 boundary.** Phase-2 (RC-VERIF+RC-CONVERGE completion-gate/DEGRADED/re-arm, RC-ORCHMONO hot-cold, RC-GITSTATE gitignore, RC-CEREMONY) NOT started — USER-GATED; router gates with owner before any write-path/verification change lands.
-
-**Writes:** 2 atomic jq→orch-apply rc0 (po-s141 promote+mint; po-s142 converge). ready 0→10, backlog 413 (net 0). No dup ids; validator exit 0 (109 pre-existing SHG lane warns non-blocking). Committed 3a6271de0 (po-s141) explicit-paths; po-s142 commit next. No direct push (fleet-push launchd timer owns; unbounded pre-push tsc-hang risk). 0 session UUID in tracked files.
+**Writes:** 1 atomic orch-apply (rc0) — 2 backlog in-place edits, 0 rows added (418->418). No head/in_progress touch. Commit explicit-paths. No Telegram (nothing blocked/new). Fleet-push launchd timer owns push.
 
 ## Carry-over
-- **SYSTEMIC-REMAKE-P1** (active) — 4 promoted + 10 atomic on board; head→pm. Dispatch order: 6 ready[] first; promote the 4 held dependents ready when their script/producer sibling hits DONE_VERIFIED. Phase-2 stays USER-GATED (SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE + brief §2).
-- **FIX-BACKLOG-TERMINAL-ROW-DRIFT-EVICT-BLIND** (backlog, plan-only, P2) — terminal rows (incl the 5 new CANCELLED SYSREMAKE) strand in backlog[], eviction-blind. Durable fix = relocate-on-terminal so HSC-6 archives; stamp completed_at on move.
-- **REFLOW-MBB-Q1-2026** — BLOCKED on user-gated mcp-server rebuild+reingest (ops). Batch MBB+CTG in ONE reingest at gate-clear.
-- **W5 deploy-gate rows in review[] (3)** — USER-OWNED. Never promote/touch.
-- **DEPLOY-GATE (standing):** any BCTC code/VPS fix → route gated deploy/verify to ops (don't wait on user).
-- **P1 TODO stubs** (FIX-NEWS-CB-FALSE-CLOSED, FIX-BCTC-FPT-BT5-BALANCE-GATE, FIX-TA-INDICATORS-TIER3-ROUTING) — groom (pull detail_ref, re-verify root live, add next_agent/spec) BEFORE promote; TA one may be a dup.
+- **CI-RED-c5b5f885-FIX** (backlog, blocking, TODO) — real coding FIX now; dev reads run 28689707086 logs to find failing bun-test file(s). Closes only on ci_green after f71643fb. RETURNED for dispatch.
+- **OPS-BCTC-REFINE-REPASS-NONBANK-5T** (+D2D folded=6 tickers) & **W5-FU-CTG** & **REFLOW-MBB** — ALL await the SAME user-gated ops rebuild+deploy, then batch reingest (CTG+MBB+D2D+5 nonbank) in one post-deploy repass.
+- **W5 deploy-gate rows in review[] (W5-FU-CTG, TASK-W5-...-REINGEST)** — deploy/USER-gated. Never promote/touch.
+- **DEPLOY-GATE (standing):** any BCTC code/VPS fix -> route gated deploy/verify to ops (OVERRIDE 07-03: delegate, don't wait on user).
+- **SYSTEMIC-REMAKE-P1** — 4 promoted + 10 atomic held supervised; Phase-2 USER-GATED. Router adjudicates re-promotion on a supervised tick.
+- **P1 TODO stubs** (FIX-NEWS-CB-FALSE-CLOSED, FIX-BCTC-FPT-BT5-BALANCE-GATE, FIX-TA-INDICATORS-TIER3-ROUTING) — groom (detail_ref + live re-verify + next_agent) BEFORE promote; TA one may be a dup.
