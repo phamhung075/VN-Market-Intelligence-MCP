@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CI-RED-c5b5f885-FIX",
-    "next_agent": "dev-mcp-server",
-    "next_action": "CI-RED-c5b5f885-FIX moved to review (dev-mcp-server fix verified CI green, run 28886901289). Remaining live in_progress: DATA-BACKFILL-PRICES-20260706-MONDAY-GAP (see task_board.in_progress[]).",
-    "updated_at": "2026-07-07T17:52:48Z",
-    "updated_by": "dev-mcp-server (CI-RED-c5b5f885-FIX resolved)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "CI-RED-c5b5f885-FIX (QA done_verified) and DATA-BACKFILL-PRICES-20260706-MONDAY-GAP (dev-mcp-server done_verified) both closed this tick — awaiting next dispatch.",
+    "updated_at": "2026-07-07T18:27:18Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7084,17 +7084,17 @@
         "id": "OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST",
         "title": "OPS: VPS OHLCV backfill stalled after 5 retries for NON-watchlist shallow codes (BDI:1 DLC:41 JSH:0 SIS:0 VDC:0)",
         "owner": "po",
-        "next_agent": "ops",
+        "next_agent": "ops-vps-fetch",
         "status": "BACKLOG",
         "type": "FIX",
-        "priority": "low",
+        "priority": "P1",
         "plan_only": true,
         "zone": "infra-vps",
         "sprint": null,
         "created_at": "2026-07-01T05:54:51Z",
         "created_by": "po-s135",
         "source_report_id": 3366,
-        "note": "Telegram report id=3366 (analysis-agent, normal, 2026-07-01T04:30Z): 'VPS backfill stalled after 5 retries; manual VPS investigation required'. ALL five codes are NON-watchlist (direct grep of system-map.json watchlist = none). The whole watchlist OHLCV-depth program is DONE_VERIFIED (SUBTASK-A..E, REBUILD, PROD-BACKFILL-GATE, PERSIST-DAILY-OHLCV-2YR). Manual VPS investigation = ops/infra, NOT a coding lane. Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG. Low priority — peripheral codes, no serving-layer impact. Related infra: BCTC-HIST-VPS-BACKFILL (DEFERRED, infra-vps). [RE-EMIT 2026-07-03: telegram report id=3418 (2026-07-03T03:30:05Z) re-confirmed same 5 shallow codes BDI:1 DLC:41 JSH:0 SIS:0 VDC:0 — deduped to this row, still PLAN-ONLY BACKLOG, VPS-ops gated.] [RE-EMIT 2026-07-04: telegram report id=3501 (2026-07-04T03:30:04Z, analysis-agent) re-confirmed same 5 shallow codes BDI:1 DLC:41 JSH:0 SIS:0 VDC:0 — deduped to this row, resolved durably via process_telegram_report (msg 3250 deleted), still PLAN-ONLY BACKLOG, VPS-ops gated.]"
+        "note": "Telegram report id=3366 (analysis-agent, normal, 2026-07-01T04:30Z): 'VPS backfill stalled after 5 retries; manual VPS investigation required'. ALL five codes are NON-watchlist (direct grep of system-map.json watchlist = none). The whole watchlist OHLCV-depth program is DONE_VERIFIED (SUBTASK-A..E, REBUILD, PROD-BACKFILL-GATE, PERSIST-DAILY-OHLCV-2YR). Manual VPS investigation = ops/infra, NOT a coding lane. Anomaly->dev-task bridge: infra -> PLAN-ONLY BACKLOG. Low priority — peripheral codes, no serving-layer impact. Related infra: BCTC-HIST-VPS-BACKFILL (DEFERRED, infra-vps). [RE-EMIT 2026-07-03: telegram report id=3418 (2026-07-03T03:30:05Z) re-confirmed same 5 shallow codes BDI:1 DLC:41 JSH:0 SIS:0 VDC:0 — deduped to this row, still PLAN-ONLY BACKLOG, VPS-ops gated.] [RE-EMIT 2026-07-04: telegram report id=3501 (2026-07-04T03:30:04Z, analysis-agent) re-confirmed same 5 shallow codes BDI:1 DLC:41 JSH:0 SIS:0 VDC:0 — deduped to this row, resolved durably via process_telegram_report (msg 3250 deleted), still PLAN-ONLY BACKLOG, VPS-ops gated.] [ROOT-CAUSE FOUND 2026-07-07T18:27:18Z by dev-mcp-server, during DATA-BACKFILL-PRICES-20260706-MONDAY-GAP: this is NOT limited to 5 peripheral non-watchlist codes — the VPS ohlcv_backfill_queue delivery pipeline is broken pipeline-wide. Live evidence: queue trigger row id=559 (watchlist Monday-gap backfill) sat unresolved; VPS poller called POST /api/ohlcv-backfill-done repeatedly with ZERO POST /api/push-ohlcv-history calls across the whole container uptime — i.e. /root/fetch-ohlcv-backfill.sh on the VPS (invoked by vn-ohlcv-backfill.timer/ohlcv-backfill-poll.sh) is not actually executing/pushing data, it just marks queue rows done. Queue row id=561 left pending, will self-escalate via existing R-5 retry-storm cap but will misdiagnose as \"depth shortfall\" not \"poller not running\". Upgraded low->P1 and re-scoped from non-watchlist-only to pipeline-wide: this blocks ALL future auto-recovery of OHLCV gaps (e.g. would recur on next Cloudflare-Tunnel-class outage). Needs ops-vps-fetch SSH recon on the VPS: check vn-ohlcv-backfill.timer/service status, /root/fetch-ohlcv-backfill.sh execution + logs/permissions/cron, and whether ohlcv-backfill-poll.sh is silently short-circuiting to the done-call.]"
       },
       {
         "id": "FIX-VPS-SSC-INSIDER-502",
@@ -11111,8 +11111,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T17:41:23Z",
-    "last_triaged_by": "dev-team (ops incident cross-validation)"
+    "last_triaged_at": "2026-07-07T18:27:18Z",
+    "last_triaged_by": "dev-team (VPS backfill-queue root-cause upgrade + head reset)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
