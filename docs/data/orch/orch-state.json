@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "KD-OBS-01-FIX",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of KD-OBS-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-07T19:50:28Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "KD-OBS-01-FIX done_verified (kinh-dich error notify wired to BUG channel, QA approved) — awaiting next dispatch",
+    "updated_at": "2026-07-07T20:59:40Z",
+    "updated_by": "dev-team (head idle-reset after qa close)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
