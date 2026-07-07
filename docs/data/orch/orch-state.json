@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "KD-OBS-01-FIX done_verified (kinh-dich error notify wired to BUG channel, QA approved) — awaiting next dispatch",
-    "updated_at": "2026-07-07T20:59:40Z",
-    "updated_by": "dev-team (head idle-reset after qa close)"
+    "status": "in_progress",
+    "active_task_id": "FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP",
+    "next_agent": "agent-father",
+    "next_action": "PO-triaged FIX dispatch of FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP — dispatcher-wrap then JUMP TO execute.",
+    "updated_at": "2026-07-07T21:11:53Z",
+    "updated_by": "dev-team (PO-triaged, out-of-band signal-drain FIX)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -554,8 +554,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-07T21:07:14Z",
-    "_updated_by": "po (out-of-band signal triage - dev-team tick 20260707T194651Z)",
+    "_updated_at": "2026-07-07T21:22:55Z",
+    "_updated_by": "developer (F1-LAUNCHD-COWORK-BACKSTOP + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED -> REVIEW)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7845,20 +7845,6 @@
         "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
         "created_at": "2026-07-07T21:00:37Z",
         "created_by": "po (po-s141 brief-signoff)"
-      },
-      {
-        "id": "FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP",
-        "title": "FIX — local cowork-spawned bctc-analyst subagent bound Read/Write/Edit ONLY (no call_tool gateway, no Bash) -> total bootstrap failure; 3x consecutive session 6120a9e8 slot bctc-analyst-slot-2 tick 18:00Z",
-        "owner": "po",
-        "status": "BACKLOG",
-        "zone": "agents",
-        "type": "FIX",
-        "priority": "high",
-        "size": "M",
-        "next_agent": "agent-father",
-        "created_at": "2026-07-07T21:07:14Z",
-        "status_note": "AC: cowork-team dispatcher spawn of bctc-analyst-slot-2 (and any cowork subagent) grants the gateway call_tool tool-package so Step 0b get_cycle_bootstrap runs; OR .claude/skills/step-0-cowork/SKILL.md gains a bootstrap-stage gateway-blind guard (Write-fallback signal + graceful DEFER, mirroring DONE FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH). Verify: next bctc-offmarket fire produces a real get_cycle_bootstrap call, not a Write-fallback bug-escalation signal. Recurring 3x in one session (fail-loud filed, no lock held, no corruption, no fabricated output). LIVE-CORROBORATED 2026-07-07T21:07Z: the out-of-band PO triage subagent in a DIFFERENT session (5a45feda) was ALSO gateway-blind (mcp__gateway__call_tool unavailable) -> structural, not transient. DISTINCT from ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (cloud RemoteTrigger path, deprecated per all-local STANDING) + F1-AGENT-FATHER-BLIND-GUARD-REMOVE (workaround-removal) + FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH + DONE FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH (narrow no-Bash single-stage, assume call_tool present). Source signal: bctc-analyst-20260707T180000Z. Memory: feedback_local_cowork_subagents_gateway_blind. Priority: high.",
-        "origin_signal_id": "bctc-analyst-20260707T180000Z"
       }
     ],
     "closed_sprints": [
@@ -9191,56 +9177,25 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
-        "id": "F1-LAUNCHD-COWORK-BACKSTOP",
-        "status": "READY",
-        "priority": "high",
-        "type": "SPRINT-S",
-        "owner": "developer",
-        "next_agent": "developer",
-        "zone": "cross-service",
-        "title": "Generalized launchd guaranteed-slot firer (supersedes F1.4 per-slot design)",
-        "desc": "Per architecture brief docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 3 + 5.1-2. Build NEW scripts/agents-flow/cowork-guaranteed-slot-firer.sh: calls 'node scripts/agents-flow/cowork-match-slots.js', filters returned slots[] to guaranteed===true, and for each match invokes 'timeout 1800 claude --dangerously-skip-permissions -p <slot.trigger_prompt>' (trigger_prompt read VERBATIM off the matched slot object — NEVER hardcoded per-agent). Reuses the SAME matcher the live */15 dispatcher uses → one SSOT (docs/data/cowork-schedule.json), zero drift on what counts as due. Test-first: sibling cowork-guaranteed-slot-firer.test.sh mirroring auditor-tier1-probe.test.sh (mock claude/node, ZERO real invocations). Generalize the plist too: ONE launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (StartInterval=900, RunAtLoad=false, KeepAlive=false). RETIRE scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into it (fb-daily/fb-weekend are already guaranteed:true rows → subsumed, no overlapping 900s poller). Scope: guaranteed===true ONLY — deliberately EXCLUDES sub-hourly market/offhours slots (stay Layer-B-only by design; bounds F-GATHERER-OFFHOURS-STALL-0704). Dedup: NO new mechanism — every guaranteed flow already carries the published-marker task_claim gate. Verify EMPIRICALLY whether launchd serializes same-Label runs; do not assume.",
-        "files": [
-          "scripts/agents-flow/cowork-guaranteed-slot-firer.sh (new)",
-          "scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh (new)",
-          "launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (new)",
-          "scripts/cowork-fb-daily-firer.sh (retire)",
-          "launchd/com.vn-market.fb-daily-firer.plist (retire)",
-          "scripts/agents-flow/cowork-match-slots.js (reuse, no edit)"
-        ],
-        "acceptance": "matcher-driven; guaranteed===true filter; trigger_prompt read off slot object not hardcoded; timeout 1800 bound; test-first with zero real claude/node invocations; fb-only script+plist retired; a new guaranteed:true slot in cowork-schedule.json needs ZERO script edits.",
-        "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
-        "epic": "F1 (RemoteTrigger→local launchd migration)",
-        "prior_title": "F1.4 Write scripts/cowork-launchers/*.sh (session-alive→no-op else spawn, task_claim dedup) + launchd plists for the 5 active slots",
-        "scope_corrected": "2026-07-07T21:00:37Z",
-        "updated_at": "2026-07-07T21:00:37Z",
-        "updated_by": "po (po-s141 brief-signoff)"
-      },
-      {
-        "id": "FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED",
-        "status": "READY",
-        "priority": "high",
+        "id": "FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP",
+        "title": "FIX — local cowork-spawned bctc-analyst subagent bound Read/Write/Edit ONLY (no call_tool gateway, no Bash) -> total bootstrap failure; 3x consecutive session 6120a9e8 slot bctc-analyst-slot-2 tick 18:00Z",
+        "owner": "po",
+        "status": "IN_PROGRESS",
+        "zone": "agents",
         "type": "FIX",
-        "owner": "developer",
-        "next_agent": "developer",
-        "zone": "cross-service",
-        "title": "Tier-1 auditor self-check: assert vn-market LaunchAgents are loaded (catches silent unload)",
-        "desc": "Per architecture brief section 2 + 3.8. Root gap the brief FOUND: fb-daily-firer.plist WAS loaded+firing 07-01→07-04 then silently unloaded with NOTHING detecting it (fb-daily-firer.log = 4 good fires then dark after 07-04T17:44:35Z, no unload event) → the 73h outage class recurs even after the firer ships. FIX: extend scripts/agents-flow/auditor-tier1-probe.sh (shipped, READ-ONLY, TOKEN-ECONOMY-TICK-PREFLIGHT WU-3) with ONE more check in the same style as its existing 5: 'launchctl list | grep -q com.vn-market.cowork-guaranteed-slot-firer' (+ the other required vn-market LaunchAgents) → FAILURE verdict + bug-channel alert if a required label silently disappears. Extend auditor-tier1-probe.test.sh with the injected-fault case (unload/hide the plist → expect FAILURE+bug alert; restore → ALL_GREEN, feedback_fence_false_green discipline). Motivating incident (prior_spec): T1 peer-firer degraded 2026-07-03 (03:00Z partial, 03:30Z absent) — this self-check is the durable fix for that SPOF class.",
-        "files": [
-          "scripts/agents-flow/auditor-tier1-probe.sh",
-          "scripts/agents-flow/auditor-tier1-probe.test.sh"
-        ],
-        "acceptance": "auditor-tier1-probe.sh returns FAILURE + bug alert when a required vn-market LaunchAgent (incl com.vn-market.cowork-guaranteed-slot-firer) is absent from 'launchctl list'; injected-fault test proves FAILURE-on-missing then ALL_GREEN-on-restore.",
-        "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
-        "prior_spec": "T1 auditor peer FIRER degraded 2026-07-03 (owner po, next_agent ops, priority med) — investigate peer firer health. Re-specced to the concrete durable probe-extension per brief 3.8; priority med→high (recurrence-preventer).",
-        "scope_corrected": "2026-07-07T21:00:37Z",
-        "updated_at": "2026-07-07T21:00:37Z",
-        "updated_by": "po (po-s141 brief-signoff)"
+        "priority": "high",
+        "size": "M",
+        "next_agent": "agent-father",
+        "created_at": "2026-07-07T21:07:14Z",
+        "status_note": "AC: cowork-team dispatcher spawn of bctc-analyst-slot-2 (and any cowork subagent) grants the gateway call_tool tool-package so Step 0b get_cycle_bootstrap runs; OR .claude/skills/step-0-cowork/SKILL.md gains a bootstrap-stage gateway-blind guard (Write-fallback signal + graceful DEFER, mirroring DONE FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH). Verify: next bctc-offmarket fire produces a real get_cycle_bootstrap call, not a Write-fallback bug-escalation signal. Recurring 3x in one session (fail-loud filed, no lock held, no corruption, no fabricated output). LIVE-CORROBORATED 2026-07-07T21:07Z: the out-of-band PO triage subagent in a DIFFERENT session (5a45feda) was ALSO gateway-blind (mcp__gateway__call_tool unavailable) -> structural, not transient. DISTINCT from ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (cloud RemoteTrigger path, deprecated per all-local STANDING) + F1-AGENT-FATHER-BLIND-GUARD-REMOVE (workaround-removal) + FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH + DONE FIX-BCTC-ANALYST-ESCALATION-DISPATCH-NO-BASH (narrow no-Bash single-stage, assume call_tool present). Source signal: bctc-analyst-20260707T180000Z. Memory: feedback_local_cowork_subagents_gateway_blind. Priority: high.",
+        "origin_signal_id": "bctc-analyst-20260707T180000Z",
+        "claimed_at": "2026-07-07T21:11:53Z",
+        "claimed_by": "dev-team (PO-triaged, out-of-band signal-drain FIX)"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -9339,6 +9294,63 @@
         "po_unblock_dispatch_at": "2026-07-03T23:57:27Z",
         "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate).",
         "deploy_gate_note": "[router 2026-07-04T00:00Z] next_agent=ops but ops spawn DENIED by auto-mode permission classifier [Production Deploy]: rebuild+deploy live mcp-server + reingest CTG 96e36139-5dac-414d-8e4d-20a4725890d1 against live named-volume market.db need EXPLICIT user authorization (generic CLAUDE.md OVERRIDE 07-03 is insufficient intent). BLOCKED pending user clearing the deploy gate (run ops outside auto mode / approve the permission prompt). Code is done_verified; only deploy+operate remains."
+      },
+      {
+        "id": "F1-LAUNCHD-COWORK-BACKSTOP",
+        "status": "REVIEW",
+        "priority": "high",
+        "type": "SPRINT-S",
+        "owner": "developer",
+        "next_agent": "developer",
+        "zone": "cross-service",
+        "title": "Generalized launchd guaranteed-slot firer (supersedes F1.4 per-slot design)",
+        "desc": "Per architecture brief docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 3 + 5.1-2. Build NEW scripts/agents-flow/cowork-guaranteed-slot-firer.sh: calls 'node scripts/agents-flow/cowork-match-slots.js', filters returned slots[] to guaranteed===true, and for each match invokes 'timeout 1800 claude --dangerously-skip-permissions -p <slot.trigger_prompt>' (trigger_prompt read VERBATIM off the matched slot object — NEVER hardcoded per-agent). Reuses the SAME matcher the live */15 dispatcher uses → one SSOT (docs/data/cowork-schedule.json), zero drift on what counts as due. Test-first: sibling cowork-guaranteed-slot-firer.test.sh mirroring auditor-tier1-probe.test.sh (mock claude/node, ZERO real invocations). Generalize the plist too: ONE launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (StartInterval=900, RunAtLoad=false, KeepAlive=false). RETIRE scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into it (fb-daily/fb-weekend are already guaranteed:true rows → subsumed, no overlapping 900s poller). Scope: guaranteed===true ONLY — deliberately EXCLUDES sub-hourly market/offhours slots (stay Layer-B-only by design; bounds F-GATHERER-OFFHOURS-STALL-0704). Dedup: NO new mechanism — every guaranteed flow already carries the published-marker task_claim gate. Verify EMPIRICALLY whether launchd serializes same-Label runs; do not assume.",
+        "files": [
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.sh (new)",
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh (new)",
+          "launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (new)",
+          "scripts/cowork-fb-daily-firer.sh (retire)",
+          "launchd/com.vn-market.fb-daily-firer.plist (retire)",
+          "scripts/agents-flow/cowork-match-slots.js (reuse, no edit)"
+        ],
+        "acceptance": "matcher-driven; guaranteed===true filter; trigger_prompt read off slot object not hardcoded; timeout 1800 bound; test-first with zero real claude/node invocations; fb-only script+plist retired; a new guaranteed:true slot in cowork-schedule.json needs ZERO script edits.",
+        "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
+        "epic": "F1 (RemoteTrigger→local launchd migration)",
+        "prior_title": "F1.4 Write scripts/cowork-launchers/*.sh (session-alive→no-op else spawn, task_claim dedup) + launchd plists for the 5 active slots",
+        "scope_corrected": "2026-07-07T21:00:37Z",
+        "updated_at": "2026-07-07T21:00:37Z",
+        "updated_by": "po (po-s141 brief-signoff)",
+        "claimed_at": "2026-07-07T21:20:13Z",
+        "claimed_by": "developer",
+        "reviewed_at": "2026-07-07T21:22:55Z",
+        "reviewed_by": "developer",
+        "review_note": "Generalized scripts/agents-flow/cowork-guaranteed-slot-firer.sh (matcher-driven, guaranteed===true filter, trigger_prompt read verbatim off slot object, _bounded_exec 1800s timeout w/ verified-empirically bash fallback since this host has neither timeout nor gtimeout). 25/25 tests GREEN (cowork-guaranteed-slot-firer.test.sh, zero real claude/node invocations, mocked SLOT_MATCHER_CMD + fake CLAUDE_BIN). Retired scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into launchd/com.vn-market.cowork-guaranteed-slot-firer.plist. Docs updated: docs/standards/cron-jobs.md, docs/policies/dev-standards.md. Simplicity gate PASS (Q1-Q4 self-cert). graphify skipped — no LLM API key in this session env (pre-existing env gap, not this task's scope)."
+      },
+      {
+        "id": "FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED",
+        "status": "REVIEW",
+        "priority": "high",
+        "type": "FIX",
+        "owner": "developer",
+        "next_agent": "developer",
+        "zone": "cross-service",
+        "title": "Tier-1 auditor self-check: assert vn-market LaunchAgents are loaded (catches silent unload)",
+        "desc": "Per architecture brief section 2 + 3.8. Root gap the brief FOUND: fb-daily-firer.plist WAS loaded+firing 07-01→07-04 then silently unloaded with NOTHING detecting it (fb-daily-firer.log = 4 good fires then dark after 07-04T17:44:35Z, no unload event) → the 73h outage class recurs even after the firer ships. FIX: extend scripts/agents-flow/auditor-tier1-probe.sh (shipped, READ-ONLY, TOKEN-ECONOMY-TICK-PREFLIGHT WU-3) with ONE more check in the same style as its existing 5: 'launchctl list | grep -q com.vn-market.cowork-guaranteed-slot-firer' (+ the other required vn-market LaunchAgents) → FAILURE verdict + bug-channel alert if a required label silently disappears. Extend auditor-tier1-probe.test.sh with the injected-fault case (unload/hide the plist → expect FAILURE+bug alert; restore → ALL_GREEN, feedback_fence_false_green discipline). Motivating incident (prior_spec): T1 peer-firer degraded 2026-07-03 (03:00Z partial, 03:30Z absent) — this self-check is the durable fix for that SPOF class.",
+        "files": [
+          "scripts/agents-flow/auditor-tier1-probe.sh",
+          "scripts/agents-flow/auditor-tier1-probe.test.sh"
+        ],
+        "acceptance": "auditor-tier1-probe.sh returns FAILURE + bug alert when a required vn-market LaunchAgent (incl com.vn-market.cowork-guaranteed-slot-firer) is absent from 'launchctl list'; injected-fault test proves FAILURE-on-missing then ALL_GREEN-on-restore.",
+        "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
+        "prior_spec": "T1 auditor peer FIRER degraded 2026-07-03 (owner po, next_agent ops, priority med) — investigate peer firer health. Re-specced to the concrete durable probe-extension per brief 3.8; priority med→high (recurrence-preventer).",
+        "scope_corrected": "2026-07-07T21:00:37Z",
+        "updated_at": "2026-07-07T21:00:37Z",
+        "updated_by": "po (po-s141 brief-signoff)",
+        "claimed_at": "2026-07-07T21:20:13Z",
+        "claimed_by": "developer",
+        "reviewed_at": "2026-07-07T21:22:55Z",
+        "reviewed_by": "developer",
+        "review_note": "Extended scripts/agents-flow/auditor-tier1-probe.sh with check 6 (_check_launchd_agents) — SSOT = repo launchd/*.plist Label fields (never hardcoded), FAILURE verdict + missing-label detail when any required label absent from launchctl list. 79/79 tests GREEN in auditor-tier1-probe.test.sh (60 pre-existing regression untouched behaviorally + 19 new, incl. mandatory injected-fault pair T25 FAILURE-on-missing / T26 ALL_GREEN-on-restore per brief §6.7). Bug-alerting is inherited via the existing FAILURE→spawn-system-auditor pipeline (cron-detect-loop/SKILL.md Job 2), unchanged — no new alert code inside this READ-ONLY pre-gate script. Simplicity gate PASS."
       }
     ],
     "qa": [],
