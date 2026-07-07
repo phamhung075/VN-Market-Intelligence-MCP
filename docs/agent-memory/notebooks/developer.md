@@ -1,36 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-03 | **Cycle:** FIX-AUDITOR-COMMIT-MUTEX-SKIP
-
-## Session 2026-07-02 — FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT
-
-**Task:** sprint_goal.entries over cap (26/15) — 8 terminal sprints stranded by non-canonical status drift.
-**Zone:** multi (scripts/ + apps/mcp-server/ + orch SSOT) → developer handles directly (generic lead).
-
-**Root cause (deeper than dispatched):** `.sprint_goal.entries[]` and `.task_board.active_sprints[]` are TWO SEPARATE arrays. `scripts/orch-cold-evict.sh`'s TERMINAL_SPRINT_STATUSES predicate had NEVER touched `.sprint_goal.entries[]` at all (zero grep hits pre-fix) — only canonicalizing the 8 tokens would not have made the eviction script actually drop them.
-
-**AC-1 (mechanical):** `scripts/fix-sprint-goal-status-drift-evict-normalize.jq` — generic alias-map normalizer (CLOSED/COMPLETE/COMPLETED→DONE, done→DONE, done_verified→DONE_VERIFIED, CANCELED→CANCELLED), applied via `jq -f ... | orch-apply.sh`. Then extended `scripts/orch-cold-evict.sh` (new `rm_sprint_goal`/`new_cold_sprint_goal_set` maps, cold target `.closed_sprint_goals[]`) and ran it live: `.sprint_goal.entries` 26→18, 8 items moved to `docs/data/orch/archive/2026-07.json` with canonical status preserved.
-
-**AC-2 (durable):** `checkSprintGoalStatusCanonical()` added to `orchStateSchema.ts` (same alias map, exported) + wired as Stage 1d hard-fail in `scripts/orch-validate.mjs` (which `orch-apply.sh` already calls) — any future write with a drifted terminal-status token is rejected (exit 2) before it touches the live file. Also extended `docs/agents/dev-team/flow/post-cycle.md` Step 4.2 bloat-trigger to count `.sprint_goal.entries[]` terminal entries (previously only checked active_sprints/done/done_verified — the gap that let this reach 26 unnoticed). Server-side (orchStateStore.ts) parity rides the next user-approved mcp-server rebuild — not done here per hard constraint (no docker build/exec).
-
-**Proof (fixtures only, never live SSOT):** `bun scripts/orch-validate.mjs <fixture-with-CLOSED>` → exit 2, Stage 1d message. `cat <fixture> | ORCH_APPLY_LIVE_FILE_OVERRIDE=<fixture> bash scripts/orch-apply.sh` → exit 1, fixture file byte-unchanged. Full cold-evict end-to-end dry-run against a scratch copy (env-var override) before touching live data.
-
-**Tests:** `apps/mcp-server/src/__tests__/TASK-FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT.test.ts` (5 tests, RED→GREEN), `bun tsc --noEmit` clean, full suite 14132 pass (pre-existing unrelated 54 fail/4 errors — CI-RED-RECONCILE backlog, confirmed unrelated by running the orchStateSchema-scoped subset alone: 108/108 pass).
-
-## Session 2026-07-02 — TOKEN-ECONOMY-TICK-PREFLIGHT-WU-1 (cowork silent-path preflight)
-
-**Task:** New `scripts/agents-flow/mcp-call.sh` (shared JSON-RPC-over-curl MCP helper) + `scripts/agents-flow/cowork-tick-preflight.sh` (deterministic Steps 1-8, verdicts SILENT/WORK/LOST_ELECTION/DEFER/ERROR) — first script-level MCP tool callers in this repo.
-**Zone:** root (docs/agents/cowork-team/flow + .claude/skills + scripts/agents-flow) — no apps/ touch.
-
-**Live-verified MCP-from-shell contract:** POST http://localhost:3000/mcp is STATELESS (no `initialize` handshake needed). Response is SSE-framed (`event: message`/`data: {...}`), tool errors surface as `.result.isError==true` + plain-text message, NOT a JSON-RPC `.error` field. HTTP 200 in both success and tool-error cases.
-
-**Bash gotcha found+fixed:** `"${var:-{}}"` (parameter-expansion default of a literal `{}`) silently corrupts to `{}}` due to bash's brace-parsing ambiguity — confirmed with a minimal repro. Fix: two-step default (`"${var:-}"` then `[ -z ] && var='{}'`), never collapse to one expansion when the default itself contains `{}`.
-
-**Brief-vs-live-schema deviations (documented, not blocking):** brief pseudocode referenced `route_to` (real field is `to`), `.pressure_mode` in pressure-state.json (field doesn't exist — 9-key schema confirmed from `emitPressureStateTool.ts`), and a `zone` field on scheduled-task rows (doesn't exist on `ScheduledTaskRow`). Implemented against the real, source-verified schema each time; full rationale in `docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-TICK-PREFLIGHT-developer.md`.
-
-**Testing pattern for MCP-calling bash scripts:** source the script under test (guarded by `[[ BASH_SOURCE == 0 ]]` so sourcing doesn't auto-exec), then override `mcp_call()` as a stub dispatching on tool name — avoids all real side-effecting calls (`claim_due_scheduled_tasks`/`emit_pressure_state`). CAUTION: assertions on stub call-count/order must go through a FILE (not a plain var) if the function-under-test is invoked via `$(...)` command substitution — that's a subshell, plain-var writes inside it are lost. 20/20 tests pass.
-
-**Deleted:** `scripts/agents-flow/cowork-tick-autosilent.sh` (R5 — dead code, zero doc references, bypassed commit-mutex via raw `git -c user.name=...`).
+**Last updated:** 2026-07-07 | **Cycle:** F1-LAUNCHD-COWORK-BACKSTOP + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED
 
 ## Session 2026-07-03 — FIX-AUDITOR-COMMIT-MUTEX-SKIP
 
@@ -56,3 +26,19 @@
 **Test harness convention followed:** `<script>.test.js` colocated (matches `cowork-match-slots.test.js`), each scenario builds its own `os.tmpdir()` mkdtemp harness (own `docs/signals/signals.db` + copied script) so the live signals.db/inbox is never touched. AC7 (byte-identical no-arg drain-mode) proven two ways: (1) ad hoc before/after diff of stdout+DB rows+processed/ files across a real pre-change vs post-change script copy; (2) a permanent golden-stdout regression assertion in the committed test.
 
 **Verified:** all 9 ACs (AC1/AC2 via a GATE-A pseudocode mirror script; AC3/AC6/AC9 via jq against live + isolated fixtures; AC4/AC5/AC7/AC8/AC9 via `drain-signals.test.js`, 11/11 pass). Line cap: drain-esc-dispatch.md 87L→150L (<200 cap). Commit `bf0b2cc9a`.
+
+## Session 2026-07-07 — F1-LAUNCHD-COWORK-BACKSTOP + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED
+
+**Task:** Two READY board tasks worked together (PO brief-signoff `2026-07-07-cowork-guaranteed-slot-durability.md`, closes ~73h multi-day guaranteed-slot outage). **Zone:** cross-service, no zone match → developer handles directly.
+
+**F1:** generalized `scripts/cowork-fb-daily-firer.sh` (fb-only, hardcoded UTC-window if-chain) into `scripts/agents-flow/cowork-guaranteed-slot-firer.sh` — calls the SAME matcher the live `*/15` dispatcher uses (`cowork-match-slots.js`), filters `slots[]` to `guaranteed===true`, fires each match's `trigger_prompt` read VERBATIM off the slot object. A new `guaranteed:true` row needs zero script edits. Retired old script + `launchd/com.vn-market.fb-daily-firer.plist` into the generalized `launchd/com.vn-market.cowork-guaranteed-slot-firer.plist`.
+
+**Empirical verification, not assumed (brief §3.7 explicitly required this):** this macOS host has NEITHER `timeout` NOR `gtimeout` on PATH (stock macOS ships no GNU coreutils). `_bounded_exec()` prefers either if present, but the real production code path is a pure-bash background-process + watchdog fallback — proven by a regression test (T10) that a hung claude invocation is actually killed near the configured bound (2s test), not the full 300s sleep.
+
+**FIX:** extended `scripts/agents-flow/auditor-tier1-probe.sh` with check 6 (`_check_launchd_agents`) — SSOT = this repo's own `launchd/*.plist` Label fields (read off each file, never hardcoded, same "no-hardcode" pattern as F1's matcher-driven design) must all appear in `launchctl list`. Closes the exact gap the brief found: old fb-daily-firer.plist WAS loaded+firing 07-01→07-04, then silently unloaded with nothing detecting it. Bug-alerting is inherited via the existing FAILURE→spawn-system-auditor pipeline (cron-detect-loop Job 2) — no new alert code inside this READ-ONLY pre-gate script (its own invariant: no MCP calls).
+
+**Test-seam gotcha:** `HEARTBEAT_FILE`/`LAUNCHD_DIR` are plain vars bound once at source-time from `HEARTBEAT_FILE_PATH`/`LAUNCHD_DIR_PATH` env — a sourced-function test overriding per-scenario behavior must reassign the SCRIPT'S OWN internal var name directly (dynamic-scope re-read at call time), not re-export the `_PATH` env var (only read once at source). Real subprocess (CLI-level) tests use the `_PATH` env var correctly since each invocation is a fresh process.
+
+**Tests:** 25/25 (`cowork-guaranteed-slot-firer.test.sh`, new) + 79/79 (`auditor-tier1-probe.test.sh` — 60 pre-existing regression byte-behavior-unchanged + 19 new incl. mandatory injected-fault pair T25/T26 per brief §6.7). Zero real `claude`/`node`/`launchctl load-unload` calls in any test. `graphify --update --no-viz` skipped — no LLM API key in this session's environment (pre-existing env gap, not this task's scope).
+
+**Board:** both READY→IN_PROGRESS→REVIEW via `scripts/orch-apply.sh` (jq transforms in `scripts/dev-cowork-guaranteed-slot-durability-{claim,to-review}.jq`). Signaled qa — unblocks `QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL` (backlog, 7-point test per brief §6) once both land DONE_VERIFIED.
