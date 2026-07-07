@@ -3448,18 +3448,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#NB-AUDITOR-MAIN-SPLIT"
       },
       {
-        "id": "FIX-TA-INDICATORS-TIER3-ROUTING",
-        "priority": "P1",
-        "status": "TODO",
-        "title": "FIX-TA-INDICATORS-TIER3-ROUTING — get_technical_indicators returns source_tier:3 with ALL MA/RSI/MACD/BB = N/A for FPT (38 rows, RSI14=51.2 present in pipeline_health) AND VCB. Tool bypasses pre-computed ta_ohlcv table; raw-calc path lacks candles.",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-TA-INDICATORS-TIER3-ROUTING",
-        "zone": "apps/technical-analysis/",
-        "folded_under": "TA-CONSUMER-STALE-INDICATORS",
-        "superseded_note": "Symptom EVOLVED post-OHLCV-depth-fix (86daf9f1/5e4f75ea): get_technical_indicators no longer returns ALL MA/RSI/MACD/BB = N/A (candles now exist) — it returns STALE/split-mismatched VALUES (VCB 88k vs daily_ohlcv 62.2k same day). Same TA-consumer-serving root, evolved. Folded under the diagnostic-gated chain (OPS-TA-INDICATOR-STALE-DIAGNOSTIC -> FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE). Do NOT work in isolation — the diagnostic decides whether a separate fix is needed.",
-        "folded_at": "2026-06-30T18:12:28Z"
-      },
-      {
         "id": "FIX-OHLCV-DAILY-AGGREGATOR-STALE",
         "priority": "P1",
         "status": "CANCELLED",
@@ -8923,7 +8911,24 @@
         "note": "Rewrote docs/protocols/cowork-master-cron-runbook.md §1/§2/§5/§8/§9: RemoteTrigger Layer A documented as retired (not active/deletion-locked) per STANDING feedback_no_remote_trigger_all_local; current architecture = single session-scoped */15 CronCreate dispatcher per .claude/skills/cron-cowork-team/SKILL.md; documented the session-scoped-dispatcher SPOF explicitly with a pointer to in-flight F1-LAUNCHD-COWORK-BACKSTOP (owner developer, same brief) as the coming session-independent layer, plus an explicit re-freshen instruction for whoever lands it. docs/data/cowork-schedule.json._notes.layer_a_deletion_locked: true->false, layer_a_deletion_gate rewritten to point at this fix. Independent of F1-LAUNCHD-COWORK-BACKSTOP / FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED (not blocked on either)."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "FIX-TA-INDICATORS-TIER3-ROUTING",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "title": "FIX-TA-INDICATORS-TIER3-ROUTING — get_technical_indicators returns source_tier:3 with ALL MA/RSI/MACD/BB = N/A for FPT (38 rows, RSI14=51.2 present in pipeline_health) AND VCB. Tool bypasses pre-computed ta_ohlcv table; raw-calc path lacks candles.",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-TA-INDICATORS-TIER3-ROUTING",
+        "zone": "apps/technical-analysis/",
+        "folded_under": "TA-CONSUMER-STALE-INDICATORS",
+        "superseded_note": "Symptom EVOLVED post-OHLCV-depth-fix (86daf9f1/5e4f75ea): get_technical_indicators no longer returns ALL MA/RSI/MACD/BB = N/A (candles now exist) — it returns STALE/split-mismatched VALUES (VCB 88k vs daily_ohlcv 62.2k same day). Same TA-consumer-serving root, evolved. Folded under the diagnostic-gated chain (OPS-TA-INDICATOR-STALE-DIAGNOSTIC -> FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE). Do NOT work in isolation — the diagnostic decides whether a separate fix is needed.",
+        "folded_at": "2026-06-30T18:12:28Z",
+        "done_verified": true,
+        "verified_by": "dev-team",
+        "verified_at": "2026-07-07T23:18:52Z",
+        "signoff_note": "Raw-verify 2026-07-07T23:17Z: live get_technical_indicators(code=FPT) and (code=VCB) both return full non-N/A MA5/MA20/MA50/RSI(14)/MACD/BB — bug's stated symptom (ALL indicators N/A) does not reproduce. Code-verify: apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts:614/648/669 hardcodes source_tier:3 unconditionally (both Go-primary and local-DB-fallback paths return 3 as const) — doc comment line 524 states 'Source tier: 3 (derived — all indicators computed from price history; no live external source)' by design. repo-wide grep for 'ta_ohlcv' = 0 matches — no such pre-computed table exists in this codebase for the bug to have bypassed. Premise misdiagnosed a hardcoded-by-design tier as a routing bug; underlying N/A symptom (whatever caused it) has since resolved (candles present, real values computing). NO-CHANGE-NEEDED."
+      }
+    ],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
@@ -9128,8 +9133,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T22:51:13Z",
-    "last_triaged_by": "dev-team (bounded-1 pre-verify live-probe close)"
+    "last_triaged_at": "2026-07-07T23:18:52Z",
+    "last_triaged_by": "dev-team"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
