@@ -227,9 +227,23 @@ $SCP vps-scripts/vn-ohlcv-backfill.service ${VH_USER}@${VH_IP}:/etc/systemd/syst
 $SCP vps-scripts/vn-ohlcv-backfill.timer   ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-ohlcv-backfill.timer
 rm "$TMP"
 
+# Deploy fetch-ohlcv-backfill.sh with placeholder substitution
+TMP2=$(mktemp)
+sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
+    -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
+    vps-scripts/fetch-ohlcv-backfill.sh > "$TMP2"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP2"; then
+  echo "GUARD-1 FAIL: placeholder leak in fetch-ohlcv-backfill.sh — deploy aborted" >&2
+  rm -f "$TMP2"
+  exit 1
+fi
+$SCP "$TMP2" ${VH_USER}@${VH_IP}:/root/fetch-ohlcv-backfill.sh
+rm "$TMP2"
+
+
 $SSH << 'BACKFILLEOF'
 set -e
-chmod +x /root/ohlcv-backfill-poll.sh
+chmod +x /root/ohlcv-backfill-poll.sh /root/fetch-ohlcv-backfill.sh
 systemctl daemon-reload
 systemctl enable vn-ohlcv-backfill.timer
 systemctl restart vn-ohlcv-backfill.timer
