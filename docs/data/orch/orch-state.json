@@ -831,8 +831,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-04T07:05:21Z",
-    "_updated_by": "po-s142-sysremake-dup-supersede",
+    "_updated_at": "2026-07-07T18:09:21Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10928,6 +10928,43 @@
         "verified_by": "dev-team (bounded-1 pre-verify)",
         "verified_at": "2026-07-07T17:09:36Z",
         "signoff_note": "BOUNDED-1 pre-verify (cheap raw-verify before worker spawn, per memory project_bounded1_first_pickup_stale_backlog_hygiene_debt interim mitigation): live post_agent_signal probe on tick 2026-07-07T16:37Z. AC = 'does post_agent_signal succeed and return a signal_id'. First probe with signal_type='info' correctly 400'd (invalid enum, one of urgent_news|price_anomaly|cross_validate|suppress|chain_catalyst|fundamental_validation|price_confirmation|verified_chain|signal_feedback|legal_risk|verified_decision — matches the task's own status_note discovery). Second probe with valid enum signal_type=signal_feedback + thin payload correctly rejected by TNB critic gate (score 0.4, expected guardrail behavior, not a bug). Third probe with valid enum + well-formed payload (detail+impact_score+confidence_score) returned success:true, signal_id=8568, critic_score=0.8. End-to-end happy path confirmed working exactly as designed — AC satisfied by current live state. NO-CHANGE-NEEDED, closing without worker spawn."
+      },
+      {
+        "id": "CI-RED-c5b5f885-FIX",
+        "title": "CI-RED bun test — PERSISTENT origin red c5b5f885 -> fb366a1e -> f71643fb (advanced to current origin HEAD; run 28689707086)",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "owner": "po",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "plan_only": false,
+        "created_at": "2026-07-03T03:03:24Z",
+        "created_by": "po",
+        "origin_signal": "ci_red:c5b5f885b48889aa19c0779eb4efdfa254e46654:bun test",
+        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28689707086",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "[dev-mcp-server 2026-07-07T17:52Z] FIXED. Root cause: 1410-tool-diacritics-sweep.test.ts (fail 3/3 CI runs) + 262-mcp-tools-042.test.ts (fail 2/3) call getClimateRiskSignals/getEnergyGridStatus with no DI hook, hitting real network (weatherVn.js→nchmf.gov.vn/NOAA, hydrologicalData.js→vneconomy.vn RSS, 15s axios timeout) under CI 16-way parallel isolation — exceeds bun-test 5s default per-test timeout. 183-alert-accuracy.test.ts (fail 1/3) is UNRELATED (no network dep) — left untouched, separate flake if it recurs. Fix: mock.module() both fetcher modules (freeze-before-mock + afterAll-restore, matches 1355b precedent) in both files; un-skipped 262 energy tests that were previously .skip for this exact reason. Verified: both files pass isolated + together with 257/258/259 siblings (both orders, no mock leak) + full ci-per-file-isolation.sh run (no regression vs before-fix baseline). Committed 1efb6f918, pushed. AC MET: CI run 28886901289 (head 1efb6f918) = conclusion success, bun test job = success.",
+        "depends": [
+          "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING"
+        ],
+        "blocking": true,
+        "advanced_head_sha": "f71643fbaff1c5c687095775e79f2617ad2678f1",
+        "advanced_run_id": 28689707086,
+        "folded_ci_red": [
+          "ci_red:f71643fbaff1c5c687095775e79f2617ad2678f1:bun test",
+          "ci_red:fb366a1ecfb9e96fc1f830acb64a9bf2b3958e00:bun test"
+        ],
+        "updated_at": "2026-07-07T18:09:21Z",
+        "updated_by": "qa",
+        "claimed_at": "2026-07-07T17:13:37Z",
+        "claimed_by": "dev-team (po-triage FIX dispatch)",
+        "resolved_by_commit": "1efb6f918e8310a3edd02ea1a6824624f019e37b",
+        "resolved_ci_run": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28886901289",
+        "done_verified": true,
+        "verified_by": "qa",
+        "verified_at": "2026-07-07T18:09:21Z",
+        "qa_report": "reports/TASK_REPORT_CI-RED-c5b5f885-FIX.md",
+        "signoff_note": "qa RAW-verified CI-RED-c5b5f885-FIX independently (not badge-relayed): gh run view --json jobs confirmed bun-test job=success on both post-push runs (28886901289 head 1efb6f918, 28887280793 head 833318545), pre-fix job logs FAILEDFILE lists match claim exactly (1410 3/3, 262 2/3, 183-alert-accuracy 1/3 unrelated). git show 1efb6f918 = 2 test files only, mock-guard.sh confirms 0 production files. Independently reproduced no-mock-leak myself (bun test 1410+257-weather-vn together 37/0, bun test 262+258-hydro-data together 14/0, both sibling real-fetch assertions still pass); read ci-per-file-isolation.sh confirming leak structurally impossible under real CI (1 process/file). Local full-suite via project CI-equivalent script: 14151 pass/40 skip/24 fail, 1410+262 ABSENT from failed list, residual 12 = same pre-existing local-only RSS/pollNews/SSC-breaker network flake class as prior TASK_REPORT_CI-RED-323b512b-FIX.md baseline. tsc clean. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md STEP S2). verification_gate=ci_green_on_subsequent_push satisfied. QA report: reports/TASK_REPORT_CI-RED-c5b5f885-FIX.md. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md §qa-S2."
       }
     ],
     "head": {
@@ -11054,38 +11091,6 @@
         "po_unblock_dispatch_at": "2026-07-03T23:57:27Z",
         "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate).",
         "deploy_gate_note": "[router 2026-07-04T00:00Z] next_agent=ops but ops spawn DENIED by auto-mode permission classifier [Production Deploy]: rebuild+deploy live mcp-server + reingest CTG 96e36139-5dac-414d-8e4d-20a4725890d1 against live named-volume market.db need EXPLICIT user authorization (generic CLAUDE.md OVERRIDE 07-03 is insufficient intent). BLOCKED pending user clearing the deploy gate (run ops outside auto mode / approve the permission prompt). Code is done_verified; only deploy+operate remains."
-      },
-      {
-        "id": "CI-RED-c5b5f885-FIX",
-        "title": "CI-RED bun test — PERSISTENT origin red c5b5f885 -> fb366a1e -> f71643fb (advanced to current origin HEAD; run 28689707086)",
-        "type": "FIX",
-        "status": "REVIEW",
-        "owner": "po",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "plan_only": false,
-        "created_at": "2026-07-03T03:03:24Z",
-        "created_by": "po",
-        "origin_signal": "ci_red:c5b5f885b48889aa19c0779eb4efdfa254e46654:bun test",
-        "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28689707086",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "[dev-mcp-server 2026-07-07T17:52Z] FIXED. Root cause: 1410-tool-diacritics-sweep.test.ts (fail 3/3 CI runs) + 262-mcp-tools-042.test.ts (fail 2/3) call getClimateRiskSignals/getEnergyGridStatus with no DI hook, hitting real network (weatherVn.js→nchmf.gov.vn/NOAA, hydrologicalData.js→vneconomy.vn RSS, 15s axios timeout) under CI 16-way parallel isolation — exceeds bun-test 5s default per-test timeout. 183-alert-accuracy.test.ts (fail 1/3) is UNRELATED (no network dep) — left untouched, separate flake if it recurs. Fix: mock.module() both fetcher modules (freeze-before-mock + afterAll-restore, matches 1355b precedent) in both files; un-skipped 262 energy tests that were previously .skip for this exact reason. Verified: both files pass isolated + together with 257/258/259 siblings (both orders, no mock leak) + full ci-per-file-isolation.sh run (no regression vs before-fix baseline). Committed 1efb6f918, pushed. AC MET: CI run 28886901289 (head 1efb6f918) = conclusion success, bun test job = success.",
-        "depends": [
-          "FIX-SEARCH-SIMILAR-CONTEXT-TIMEOUT-RECURRING"
-        ],
-        "blocking": true,
-        "advanced_head_sha": "f71643fbaff1c5c687095775e79f2617ad2678f1",
-        "advanced_run_id": 28689707086,
-        "folded_ci_red": [
-          "ci_red:f71643fbaff1c5c687095775e79f2617ad2678f1:bun test",
-          "ci_red:fb366a1ecfb9e96fc1f830acb64a9bf2b3958e00:bun test"
-        ],
-        "updated_at": "2026-07-07T17:52:48Z",
-        "updated_by": "dev-mcp-server",
-        "claimed_at": "2026-07-07T17:13:37Z",
-        "claimed_by": "dev-team (po-triage FIX dispatch)",
-        "resolved_by_commit": "1efb6f918e8310a3edd02ea1a6824624f019e37b",
-        "resolved_ci_run": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/28886901289"
       }
     ],
     "qa": [],
