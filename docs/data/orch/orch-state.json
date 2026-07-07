@@ -10965,6 +10965,22 @@
         "verified_at": "2026-07-07T18:09:21Z",
         "qa_report": "reports/TASK_REPORT_CI-RED-c5b5f885-FIX.md",
         "signoff_note": "qa RAW-verified CI-RED-c5b5f885-FIX independently (not badge-relayed): gh run view --json jobs confirmed bun-test job=success on both post-push runs (28886901289 head 1efb6f918, 28887280793 head 833318545), pre-fix job logs FAILEDFILE lists match claim exactly (1410 3/3, 262 2/3, 183-alert-accuracy 1/3 unrelated). git show 1efb6f918 = 2 test files only, mock-guard.sh confirms 0 production files. Independently reproduced no-mock-leak myself (bun test 1410+257-weather-vn together 37/0, bun test 262+258-hydro-data together 14/0, both sibling real-fetch assertions still pass); read ci-per-file-isolation.sh confirming leak structurally impossible under real CI (1 process/file). Local full-suite via project CI-equivalent script: 14151 pass/40 skip/24 fail, 1410+262 ABSENT from failed list, residual 12 = same pre-existing local-only RSS/pollNews/SSC-breaker network flake class as prior TASK_REPORT_CI-RED-323b512b-FIX.md baseline. tsc clean. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md STEP S2). verification_gate=ci_green_on_subsequent_push satisfied. QA report: reports/TASK_REPORT_CI-RED-c5b5f885-FIX.md. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md §qa-S2."
+      },
+      {
+        "id": "DATA-BACKFILL-PRICES-20260706-MONDAY-GAP",
+        "priority": "P2",
+        "size": "XS",
+        "status": "DONE_VERIFIED",
+        "title": "Backfill missing 2026-07-06 (Monday) daily_ohlcv rows for all watchlist tickers — lost to Cloudflare Tunnel outage",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-07-07T17:41:23Z",
+        "created_by": "dev-team (ops incident cross-validation)",
+        "status_note": "[dev-mcp-server 2026-07-07T18:24:33Z] BACKFILLED. daily_ohlcv 2026-07-06 gap resolved: 585 rows written (VNINDEX + 583 tickers with real rows on 07-03+07-07). Standard recovery (ohlcv_backfill_queue trigger, id=559) confirmed BROKEN separately: VPS poller calls /api/ohlcv-backfill-done repeatedly with ZERO /api/push-ohlcv-history calls across container uptime — VPS-side backfill script not executing (new distinct infra defect from INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE; needs ops-vps-fetch investigation of /root/fetch-ohlcv-backfill.sh on the VPS; queue row id=561 left pending/self-escalating per existing R-5 retry-storm cap, not manually cleared). Live probe found direct VNDirect fetch from inside mcp-server container now succeeds (stale geo-block assumption in ohlcvHistoryBackfillJob.ts) — wrote scripts/migrations/backfill-ohlcv-gap-2026-07-06.ts (+ generic trigger-ohlcv-backfill-queue.ts), reused writeOhlcvBatch SSOT, zero duplicated logic, NO FAKE DATA (every row a live VNDirect response, honest gaps skipped not zero-filled). Verified: 0 remaining strict gaps (codes present 07-03+07-07); spot-checked VCB/FPT/HPG/VNM/VIC — distinct plausible non-duplicate values. 119 codes still lack 07-06 but their own last real trade predates 07-04 (pre-existing illiquidity unrelated to the outage, correctly left untouched). tsc clean, targeted OHLCV suite 53/53 pass, tools=183 unchanged.",
+        "claimed_at": "2026-07-07T17:43:51Z",
+        "claimed_by": "dev-team (user-confirmed backfill source exists)",
+        "resolved_at": "2026-07-07T18:24:33Z",
+        "resolved_by": "dev-mcp-server"
       }
     ],
     "head": {
@@ -10976,22 +10992,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "DATA-BACKFILL-PRICES-20260706-MONDAY-GAP",
-        "priority": "P2",
-        "size": "XS",
-        "status": "IN_PROGRESS",
-        "title": "Backfill missing 2026-07-06 (Monday) daily_ohlcv rows for all watchlist tickers — lost to Cloudflare Tunnel outage",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "created_at": "2026-07-07T17:41:23Z",
-        "created_by": "dev-team (ops incident cross-validation)",
-        "status_note": "daily_ohlcv confirmed missing the entire 2026-07-06 trading day for all 703+ watchlist tickers (gap: last row 2026-07-03, next row 2026-07-07) — VPS-side push never delivered during the Cloudflare Tunnel outage (see INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE) and the VPS fetch script does not appear to retain/replay a local buffer past its own log window. AC: check whether the upstream VnDirect API (3-tier price fallback, dev-stock-price zone) can serve historical daily OHLCV for a past date on request; if yes, one-off backfill script for 2026-07-06 only; if the upstream cannot serve historical daily bars for a specific past date, close as WONT-FIX (permanent gap) with a status_note explaining why, do not leave silently open.",
-        "claimed_at": "2026-07-07T17:43:51Z",
-        "claimed_by": "dev-team (user-confirmed backfill source exists)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {

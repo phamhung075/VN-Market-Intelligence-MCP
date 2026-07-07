@@ -221,6 +221,35 @@ queue-eligibility filters by design, RF-3) is the required manual step first.
 Default target/documented example: CTG 2026-Q1, report_id=96e36139-5dac-414d-8e4d-20a4725890d1
 (frozen total_assets=0 — architect brief 2026-07-01-FIX-BCTC-BANK-SUMMARY-MAPPING §2).
 
+**CANONICAL: OHLCV backfill-queue manual trigger (DATA-BACKFILL-PRICES-20260706-MONDAY-GAP)**
+```bash
+# Dry-run (default — reports pending-queue state, no writes):
+bun scripts/migrations/trigger-ohlcv-backfill-queue.ts
+
+# Apply (dedup-guarded INSERT into ohlcv_backfill_queue — same pattern as
+# ohlcvHistoryBackfillJob.ts / ohlcvStartupProbe.ts; VPS poller picks it up
+# on its next ≤30min systemd timer cycle):
+docker cp scripts/migrations/trigger-ohlcv-backfill-queue.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/trigger-ohlcv-backfill-queue.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/trigger-ohlcv-backfill-queue.ts --apply
+```
+If the VPS poller does not deliver (verify: `docker logs <container> | grep '\[push-ohlcv-history\]'`
+stays empty across a full timer cycle — VPS-side script execution failure, ops zone), fall back to
+direct-fetch (only if a live probe from inside the container confirms VNDirect is currently reachable
+— it is geo-block-dependent and may change):
+```bash
+docker cp scripts/migrations/backfill-ohlcv-gap-2026-07-06.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/backfill-ohlcv-gap-2026-07-06.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/backfill-ohlcv-gap-2026-07-06.ts --dry-run   # lists target codes, no fetch/writes
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/backfill-ohlcv-gap-2026-07-06.ts --apply     # fetches VNDirect + writes via writeOhlcvBatch SSOT
+```
+Date-specific (2026-07-06) but the `findGapCodes`/`runBackfill` exports are reusable — copy + change
+the 3 date constants for a future one-off gap. NO FAKE DATA: only real VNDirect responses are written;
+empty responses are honest gaps (skipped, logged), never zero-filled.
+
 ---
 
 ## Low-Confidence Reparse Runbook
