@@ -8365,78 +8365,6 @@
         "zone": "qa"
       },
       {
-        "id": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
-        "type": "FIX",
-        "size": "M",
-        "status": "DONE",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "",
-        "route_to": "dev-mcp-server",
-        "dispatcher": "dev-team",
-        "baseline_pass": true,
-        "created_by": "dev-team",
-        "created_at": "2026-06-30T23:29:07Z",
-        "dispatched_at": "2026-06-30T23:29:07Z",
-        "dispatched_by": "dev-team",
-        "updated_at": "2026-07-01T00:23:09Z",
-        "updated_by": "dev-team",
-        "sprint": "BCTC-REFINE-FLEET-DRAIN",
-        "source_signal": "bca-ddres-20260630T2258",
-        "files": [
-          "apps/mcp-server/src/scheduler/financial-reports/bctcRefineJob.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts",
-          "apps/pdf-extractor/infrastructure/text_table_extractor.py"
-        ],
-        "title": "HVN Q1-2026 refine units (income B02-DN + cash-flow B03-DN) never materialized; whole Q1-2026 cohort stuck text_status=COMPLETE/refine_status=PENDING -- drain fleet refine backlog",
-        "desc": "From bctc-analyst HVN Q1-2026 ESC-2 deep-dive (conf 0.93, RAW-probed serving layer; payload docs/handoffs/bctc-hvn-q1-2026-deepdive.md). HVN serves income statement + cash flow ALL-ZERO (impossible for an operating airline >10000bn VND assets); refine_status=PARTIAL produced balance-sheet units only, never B02-DN/B03-DN. Cohort MBB/VCI/TCH/VIX sits text_status=COMPLETE/refine_status=PENDING = fleet refine backlog not draining. STEP 1 (disambiguation, dev has direct DB + UUID access): per-page OCR char-count for HVN income + cash-flow pages. If OCR text present but no units -> refine-stage bug in mcp-server (repair refine + finalize_bctc_refine, then drain fleet PENDING). If ~0 OCR chars on those pages -> alternate OCR page-window cap (_MAX_BS_PAGES=8 in apps/pdf-extractor/infrastructure/text_table_extractor.py) -> escalate that branch to dev-pdf-extractor. After fix: re-run refine for HVN, re-validate accounting identity A ~= L+E; flag HVN Q1-2026 unusable until it validates. NOTE: related backlog FIX-REFINE-QUEUE-TERMINAL-FAILED-UNIT-HEADPOISON is already DONE (fixed VCB Q1-2025 head-poison) -- verify whether fleet PENDING is still blocked by a different poisoned doc or is genuinely the units-never-produced bug. BUNDLED: do FIX-GET-BCTC-OCF-SQL-COLUMN in the same apps/mcp-server session after this. dev -> qa gate.",
-        "acceptance": [
-          "Run the per-page OCR char-count disambiguation query FIRST and record which branch (refine-stage vs OCR-page-window) applies in the findings doc.",
-          "HVN Q1-2026 income (B02-DN) + cash-flow (B03-DN) units materialize: get_bctc_full serves non-zero income + cash flow with refine_status=COMPLETE and accounting identity A ~= L+E re-validates.",
-          "Fleet Q1-2026 refine backlog (MBB/VCI/TCH/VIX) drains to refine_status=COMPLETE (or the genuinely-blocked docs are identified with a reason); zero regression to CONTAM-10 / daily_ohlcv data."
-        ],
-        "reviewed_at": "2026-07-01T00:08Z",
-        "closure": "qa APPROVED (a50f498d) + dev-team RAW-verified (own serving-layer probe + git, NOT badge): commit 927d4e8f scoped apps/mcp-server/src + scripts/migrations + 2 tests, leak-clean, tree clean. SERVING VERIFIED: get_bctc_full(HVN,2026,Q1) income/CF non-zero (net_revenue 29,030,239M / operating_cf 5,018,783M), refine_status=DONE, balance identity 54,308,378 + 12,743,553 = 67,051,931 exact; get_bctc_ocf(HVN,2026,Q1) returns ocf_operating 5,018,783 with no no-such-column error. qa gate: task tests 12+8 pass, scalar regression 56 pass (banks VAS-code path intact, English IS fallbacks !isBankPath-guarded), BCTC smoke 105 pass, DDD+security PASS, tsc clean. Fleet drain: 7 stuck-PARTIAL re-finalized (GVR->DONE); ACB/HPG/VCB/VEA remain PARTIAL = pre-existing missing-section (bank B02-TCTD / OCR gap), not a regression."
-      },
-      {
-        "id": "FIX-GET-BCTC-OCF-SQL-COLUMN",
-        "type": "FIX",
-        "size": "S",
-        "status": "DONE",
-        "priority": "medium",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "owner_agent": "dev-mcp-server",
-        "next_agent": "",
-        "route_to": "dev-mcp-server",
-        "dispatcher": "dev-team",
-        "baseline_pass": true,
-        "created_by": "dev-team",
-        "created_at": "2026-06-30T23:29:07Z",
-        "dispatched_at": "2026-06-30T23:29:07Z",
-        "dispatched_by": "dev-team",
-        "updated_at": "2026-07-01T00:23:09Z",
-        "updated_by": "dev-team",
-        "sprint": "BCTC-REFINE-FLEET-DRAIN",
-        "source_signal": "bca-ddres-20260630T2258",
-        "bundle_with": "FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcOcfTool.ts",
-          "apps/mcp-server/src/__tests__/1909b-get-bctc-ocf.test.ts"
-        ],
-        "title": "get_bctc_ocf SELECT references ocf_operating but live cash-flow schema lacks the column -> no such column: ocf_operating breaks OCF forensic gate fleet-wide",
-        "desc": "get_bctc_ocf (getBctcOcfTool.ts:132 SELECT) references ocf_operating; live cash-flow schema lacks the column -> runtime error 'no such column: ocf_operating', breaking the OCF forensic gate for ALL tickers (deep-dive RAW-reproduced). Reconcile the SELECT column names with the actual cash-flow table schema; update test 1909b-get-bctc-ocf.test.ts. Read-path only, NO DB mutation. BUNDLED secondary -- same dev-mcp-server session as FIX-BCTC-REFINE-HVN-Q1-UNITS-FLEET-DRAIN, done after the primary.",
-        "acceptance": [
-          "get_bctc_ocf returns OCF without the no-such-column error for a ticker with cash-flow data; SELECT column names match the live schema.",
-          "Test 1909b-get-bctc-ocf updated + green; no DB mutation; no regression to other financial-reports tools."
-        ],
-        "reviewed_at": "2026-07-01T00:08Z",
-        "closure": "qa APPROVED (a50f498d) + dev-team RAW-verified (own serving-layer probe + git, NOT badge): commit 927d4e8f scoped apps/mcp-server/src + scripts/migrations + 2 tests, leak-clean, tree clean. SERVING VERIFIED: get_bctc_full(HVN,2026,Q1) income/CF non-zero (net_revenue 29,030,239M / operating_cf 5,018,783M), refine_status=DONE, balance identity 54,308,378 + 12,743,553 = 67,051,931 exact; get_bctc_ocf(HVN,2026,Q1) returns ocf_operating 5,018,783 with no no-such-column error. qa gate: task tests 12+8 pass, scalar regression 56 pass (banks VAS-code path intact, English IS fallbacks !isBankPath-guarded), BCTC smoke 105 pass, DDD+security PASS, tsc clean. Fleet drain: 7 stuck-PARTIAL re-finalized (GVR->DONE); ACB/HPG/VCB/VEA remain PARTIAL = pre-existing missing-section (bank B02-TCTD / OCR gap), not a regression."
-      },
-      {
         "id": "ARCH-FIX-BCTC-BANK-SUMMARY-MAPPING",
         "title": "Architect root-cause SPIKE (MANDATORY FIRST, live gateway) for FIX-BCTC-BANK-SUMMARY-MAPPING: pin why VCB(bank) parses clean but CTG(bank) corrupts, decide owning zone(s) (dev-mcp-server bctcScalarAggregator/serve-guard vs dev-pdf-extractor row-parse), THEN SPLIT. Read BA spec docs/handoffs/BA-FIX-BCTC-BANK-SUMMARY-MAPPING.md",
         "owner": "architect",
@@ -8900,47 +8828,7 @@
         "note": "Rewrote docs/protocols/cowork-master-cron-runbook.md §1/§2/§5/§8/§9: RemoteTrigger Layer A documented as retired (not active/deletion-locked) per STANDING feedback_no_remote_trigger_all_local; current architecture = single session-scoped */15 CronCreate dispatcher per .claude/skills/cron-cowork-team/SKILL.md; documented the session-scoped-dispatcher SPOF explicitly with a pointer to in-flight F1-LAUNCHD-COWORK-BACKSTOP (owner developer, same brief) as the coming session-independent layer, plus an explicit re-freshen instruction for whoever lands it. docs/data/cowork-schedule.json._notes.layer_a_deletion_locked: true->false, layer_a_deletion_gate rewritten to point at this fix. Independent of F1-LAUNCHD-COWORK-BACKSTOP / FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED (not blocked on either)."
       }
     ],
-    "done_verified": [
-      {
-        "id": "FIX-TA-INDICATORS-TIER3-ROUTING",
-        "priority": "P1",
-        "status": "DONE_VERIFIED",
-        "title": "FIX-TA-INDICATORS-TIER3-ROUTING — get_technical_indicators returns source_tier:3 with ALL MA/RSI/MACD/BB = N/A for FPT (38 rows, RSI14=51.2 present in pipeline_health) AND VCB. Tool bypasses pre-computed ta_ohlcv table; raw-calc path lacks candles.",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-TA-INDICATORS-TIER3-ROUTING",
-        "zone": "apps/technical-analysis/",
-        "folded_under": "TA-CONSUMER-STALE-INDICATORS",
-        "superseded_note": "Symptom EVOLVED post-OHLCV-depth-fix (86daf9f1/5e4f75ea): get_technical_indicators no longer returns ALL MA/RSI/MACD/BB = N/A (candles now exist) — it returns STALE/split-mismatched VALUES (VCB 88k vs daily_ohlcv 62.2k same day). Same TA-consumer-serving root, evolved. Folded under the diagnostic-gated chain (OPS-TA-INDICATOR-STALE-DIAGNOSTIC -> FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE). Do NOT work in isolation — the diagnostic decides whether a separate fix is needed.",
-        "folded_at": "2026-06-30T18:12:28Z",
-        "done_verified": true,
-        "verified_by": "dev-team",
-        "verified_at": "2026-07-07T23:18:52Z",
-        "signoff_note": "Raw-verify 2026-07-07T23:17Z: live get_technical_indicators(code=FPT) and (code=VCB) both return full non-N/A MA5/MA20/MA50/RSI(14)/MACD/BB — bug's stated symptom (ALL indicators N/A) does not reproduce. Code-verify: apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts:614/648/669 hardcodes source_tier:3 unconditionally (both Go-primary and local-DB-fallback paths return 3 as const) — doc comment line 524 states 'Source tier: 3 (derived — all indicators computed from price history; no live external source)' by design. repo-wide grep for 'ta_ohlcv' = 0 matches — no such pre-computed table exists in this codebase for the bug to have bypassed. Premise misdiagnosed a hardcoded-by-design tier as a routing bug; underlying N/A symptom (whatever caused it) has since resolved (candles present, real values computing). NO-CHANGE-NEEDED."
-      },
-      {
-        "id": "CI-TEST-04-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "DONE_VERIFIED",
-        "title": "Fix CI-TEST-04: Is the bun test fail count at or below baseline (<=348 native fails per project-stats.json)",
-        "type": "fix",
-        "zone": "qa",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#CI-TEST-04-FIX",
-        "status_note": "Root cause found + fixed: apps/mcp-server/src/interface/mcp/tools/alerts/alertAccuracy.ts compared ISO-8601 fetched_at against SQLite datetime('now') (space-separated) as TEXT — 'T'(0x54)>' '(0x20) byte-compare wrongly excluded same-UTC-day rows as future. Fixed by binding now as new Date().toISOString() for ISO-to-ISO compare (commit e170624d3). 183-alert-accuracy.test.ts AC-2b: 20/20 pass locally (was 19/20). Full local suite showed 49 unrelated fails (news-poll/OCR/SSC files, 2 native crashes) traced to parallel-run environment noise, not this fix -- spot-check of one file in isolation passed 8/8 clean. dev-mcp-server produced this diff but stalled before commit (returned referencing an unrelated phantom task id); dev-team landed it after independent verification per dead-worker-probe-tree-first convention. verification_gate=ci_green_on_subsequent_push PENDING -- awaiting the CI run on e170624d3 to close done_verified.",
-        "origin_signal": "ci-red-e2d693ed-20260702002853",
-        "promoted_at": "2026-07-07T23:22:58Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-07T23:22:58Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "moved_to_review_at": "2026-07-07T23:48:14Z",
-        "moved_to_review_by": "dev-team",
-        "done_verified": true,
-        "verified_by": "dev-team",
-        "verified_at": "2026-07-07T23:50:31Z",
-        "signoff_note": "verification_gate=ci_green_on_subsequent_push CONFIRMED: gh run list shows conclusion=success on e170624d3 (run created 2026-07-07T23:47:23Z), the exact commit carrying the fix. bun test job green on main. Root cause + fix detailed in prior review status_note and docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-team.md STEP dev-team-S1."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
