@@ -27,6 +27,15 @@
 #      < 85% (WARN boundary reused from A-30, same reasoning as #4 — a
 #      single-point threshold, since this pure-shell gate has no baseline-
 #      diff state store; a true trend/creep detector stays a Tier-2/3 job)
+#   6. FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED — vn-market LaunchAgents
+#      loaded: every repo-tracked `launchd/*.plist` Label (read off the
+#      plist's own <key>Label</key>, never hardcoded — this repo's
+#      launchd/ dir IS the SSOT of "what must be loaded") must appear in
+#      `launchctl list` output. Closes the gap found in the 2026-07-07
+#      cowork-guaranteed-slot-durability brief §2: the OLD fb-daily-firer
+#      plist WAS loaded and firing correctly 2026-07-01→07-04, then
+#      silently unloaded with nothing detecting it — the ~73h multi-day
+#      outage this self-check exists to prevent from recurring.
 #
 # Verdict JSON (one line, stdout): {verdict, detail, last_healthy_at}.
 #   verdict ∈ ALL_GREEN|FAILURE.
@@ -49,15 +58,17 @@
 # "green" is not green).
 #
 # Env overrides (test seams — auditor-tier1-probe.test.sh mocks docker/
-# curl/df as functions after sourcing; these path vars point the script at
-# fixtures instead of the real repo files):
+# curl/df/launchctl as functions after sourcing; these path vars point the
+# script at fixtures instead of the real repo files):
 #   SYSTEM_MAP_PATH     — system-map.json path (default: repo docs/data/system-map.json)
 #   HEARTBEAT_FILE_PATH — heartbeat output path (default: repo docs/data/auditor-tier1-last-healthy.json)
+#   LAUNCHD_DIR_PATH    — directory of *.plist files to require-loaded (default: repo launchd/)
 #
 # HARD CONSTRAINT: every probe below is READ-ONLY (docker ps/stats, curl GET,
-# df, jq). This script NEVER runs docker restart/stop/rm/exec-with-mutation
-# anywhere, including its own test suite (auditor-tier1-probe.test.sh mocks
-# docker/curl/df — zero real container calls in tests).
+# df, launchctl list, jq). This script NEVER runs docker restart/stop/rm/
+# exec-with-mutation or launchctl load/unload anywhere, including its own
+# test suite (auditor-tier1-probe.test.sh mocks docker/curl/df/launchctl —
+# zero real container/launchd calls in tests).
 #
 # P1-IDLE-AUDITOR-TIER23-SCRIPT (2026-07-04) — `--tier=1|2|3` generalization.
 # Default (no flag) or `--tier=1`: 100% unchanged — calls run_probe() directly,
@@ -65,7 +76,7 @@
 # heartbeat file. This is the exact pre-existing Tier-1 behavior, untouched.
 #
 # `--tier=2`/`--tier=3`: routes through run_tiered_probe() instead, which
-# reuses run_probe()'s SAME 5 checks + heartbeat write (against a
+# reuses run_probe()'s SAME 6 checks + heartbeat write (against a
 # tier-specific heartbeat file, docs/data/auditor-tier<N>-last-healthy.json,
 # same HEARTBEAT_FILE_PATH test-seam override — see _heartbeat_file_for_tier)
 # and additionally applies, INSIDE the script, the SAME ALL_GREEN +
@@ -98,6 +109,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 SYSTEM_MAP="${SYSTEM_MAP_PATH:-$REPO_ROOT/docs/data/system-map.json}"
 HEARTBEAT_FILE="${HEARTBEAT_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-last-healthy.json}"
+LAUNCHD_DIR="${LAUNCHD_DIR_PATH:-$REPO_ROOT/launchd}"
 WARN_PCT=85
 
 _now_iso() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
@@ -192,6 +204,38 @@ _check_mem_creep() {
   return 0
 }
 
+# ── Check 6: vn-market LaunchAgents loaded (FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED) ──
+# SSOT = this repo's own launchd/ directory: every *.plist file's own
+# <key>Label</key> string is the required label, read directly off the
+# file (never a hardcoded label list) — a new plist dropped into launchd/
+# is covered automatically, zero script edits, same "no hardcode" pattern
+# as the guaranteed-slot firer's matcher-driven design.
+_check_launchd_agents() {
+  local dir="$LAUNCHD_DIR" plist label lc_out bad=""
+  if [ ! -d "$dir" ]; then
+    echo "launchd source dir not found: $dir"
+    return 1
+  fi
+  lc_out=$(launchctl list 2>/dev/null)
+  if [ -z "$lc_out" ]; then
+    echo "launchctl list returned no output"
+    return 1
+  fi
+  for plist in "$dir"/*.plist; do
+    [ -e "$plist" ] || continue
+    label=$(awk '/<key>Label<\/key>/{getline; gsub(/.*<string>|<\/string>.*/,""); print; exit}' "$plist" 2>/dev/null)
+    [ -z "$label" ] && continue
+    if ! printf '%s\n' "$lc_out" | grep -q "$label"; then
+      bad="${bad}${label}(not-loaded) "
+    fi
+  done
+  if [ -n "$bad" ]; then
+    echo "launchd not loaded: $bad"
+    return 1
+  fi
+  return 0
+}
+
 # ── Heartbeat write — atomic tmp-file + mv rename (R10) ───────────────────────
 _write_heartbeat() {
   local ts="$1" checks_json="$2" tmp
@@ -207,7 +251,7 @@ _write_heartbeat() {
 
 run_probe() {
   local prev_healthy="" out rc failures="" checks_json ts
-  local st_docker="PASS" st_h3000="PASS" st_h3001="PASS" st_disk="PASS" st_mem="PASS"
+  local st_docker="PASS" st_h3000="PASS" st_h3001="PASS" st_disk="PASS" st_mem="PASS" st_launchd="PASS"
 
   [ -f "$HEARTBEAT_FILE" ] && prev_healthy=$(jq -r '.last_healthy_at // empty' "$HEARTBEAT_FILE" 2>/dev/null)
 
@@ -226,20 +270,23 @@ run_probe() {
   out=$(_check_mem_creep 2>&1); rc=$?
   [ $rc -ne 0 ] && { st_mem="FAIL"; failures="${failures}mem_creep: ${out}; "; }
 
-  checks_json=$(jq -n --arg d "$st_docker" --arg h1 "$st_h3000" --arg h2 "$st_h3001" --arg dk "$st_disk" --arg mc "$st_mem" \
-    '{docker_ps:$d, health_3000:$h1, health_3001:$h2, disk:$dk, mem_creep:$mc}')
+  out=$(_check_launchd_agents 2>&1); rc=$?
+  [ $rc -ne 0 ] && { st_launchd="FAIL"; failures="${failures}launchd_agents: ${out}; "; }
+
+  checks_json=$(jq -n --arg d "$st_docker" --arg h1 "$st_h3000" --arg h2 "$st_h3001" --arg dk "$st_disk" --arg mc "$st_mem" --arg ld "$st_launchd" \
+    '{docker_ps:$d, health_3000:$h1, health_3001:$h2, disk:$dk, mem_creep:$mc, launchd_agents:$ld}')
 
   if [ -z "$failures" ]; then
     ts=$(_now_iso)
     if ! _write_heartbeat "$ts" "$checks_json"; then
       jq -n --arg v "FAILURE" \
-        --arg d "all 5 checks passed but heartbeat write FAILED ($HEARTBEAT_FILE) — never claim green without a verified write" \
+        --arg d "all 6 checks passed but heartbeat write FAILED ($HEARTBEAT_FILE) — never claim green without a verified write" \
         --arg lh "${prev_healthy:-never}" \
         '{verdict:$v, detail:$d, last_healthy_at:$lh}'
       return 1
     fi
     jq -n --arg v "ALL_GREEN" \
-      --arg d "all 5 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep)" \
+      --arg d "all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents)" \
       --arg lh "$ts" \
       '{verdict:$v, detail:$d, last_healthy_at:$lh}'
     return 0

@@ -61,6 +61,16 @@ EOF
 export SYSTEM_MAP_PATH="$FIXTURE_MAP"
 export HEARTBEAT_FILE_PATH="$TMPDIR_TEST/auditor-tier1-last-healthy.json"
 
+# Default LAUNCHD_DIR_PATH → an EXISTING but EMPTY directory. _check_launchd_
+# agents() finds zero *.plist files in it and trivially PASSes — this keeps
+# every pre-existing T1-T23 assertion below byte-identical (they were all
+# written before check 6 existed and stub docker/curl/df only, never
+# launchctl). The new launchd-specific tests (T24+) override this per-case
+# to a fixture dir containing real plist fixtures.
+LAUNCHD_EMPTY_DIR="$TMPDIR_TEST/launchd-empty"
+mkdir -p "$LAUNCHD_EMPTY_DIR"
+export LAUNCHD_DIR_PATH="$LAUNCHD_EMPTY_DIR"
+
 # ── Source the script under test (guard prevents auto-exec: $0 != BASH_SOURCE) ──
 # shellcheck source=./auditor-tier1-probe.sh
 source "$PROBE_SH"
@@ -278,7 +288,7 @@ STUB_H3001="TIMEOUT"
 run_probe >/dev/null
 STUB_H3001="200"
 OUT=$(run_probe)
-check "T15 heartbeat checks object has 5 keys" "$([ "$(jq -r '.checks | keys | length' "$HEARTBEAT_FILE_PATH")" -eq 5 ] && echo true || echo false)"
+check "T15 heartbeat checks object has 6 keys" "$([ "$(jq -r '.checks | keys | length' "$HEARTBEAT_FILE_PATH")" -eq 6 ] && echo true || echo false)"
 check "T15 heartbeat health_3001 == PASS after recovery" "$([ "$(jq -r '.checks.health_3001' "$HEARTBEAT_FILE_PATH")" = "PASS" ] && echo true || echo false)"
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -388,8 +398,8 @@ chmod +x "$CLI_TMPDIR/bin/docker" "$CLI_TMPDIR/bin/curl" "$CLI_TMPDIR/bin/df"
 CLI_HEARTBEAT="$CLI_TMPDIR/auditor-tier2-cli-fixture.json"
 rm -f "$CLI_HEARTBEAT"
 
-CLI_OUT1=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" HEARTBEAT_FILE_PATH="$CLI_HEARTBEAT" bash "$PROBE_SH" --tier=2); CLI_RC1=$?
-CLI_OUT2=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" HEARTBEAT_FILE_PATH="$CLI_HEARTBEAT" bash "$PROBE_SH" --tier=2); CLI_RC2=$?
+CLI_OUT1=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" LAUNCHD_DIR_PATH="$LAUNCHD_EMPTY_DIR" HEARTBEAT_FILE_PATH="$CLI_HEARTBEAT" bash "$PROBE_SH" --tier=2); CLI_RC1=$?
+CLI_OUT2=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" LAUNCHD_DIR_PATH="$LAUNCHD_EMPTY_DIR" HEARTBEAT_FILE_PATH="$CLI_HEARTBEAT" bash "$PROBE_SH" --tier=2); CLI_RC2=$?
 echo ""
 echo "--- T22 CLI call 1 raw output ---"
 printf '%s\n' "$CLI_OUT1"
@@ -402,13 +412,155 @@ check "T22 CLI call 2 exit=0" "$([ "$CLI_RC2" -eq 0 ] && echo true || echo false
 
 # ── T23: CLI-level AC3 regression — no flag and --tier=1 both produce the
 # original 3-field verdict via a REAL subprocess invocation ─────────────────
-CLI_OUT_NOFLAG=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" HEARTBEAT_FILE_PATH="$TMPDIR_TEST/cli-tier1-noflag.json" bash "$PROBE_SH"); CLI_RC_NOFLAG=$?
-CLI_OUT_TIER1=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" HEARTBEAT_FILE_PATH="$TMPDIR_TEST/cli-tier1-explicit.json" bash "$PROBE_SH" --tier=1); CLI_RC_TIER1=$?
+CLI_OUT_NOFLAG=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" LAUNCHD_DIR_PATH="$LAUNCHD_EMPTY_DIR" HEARTBEAT_FILE_PATH="$TMPDIR_TEST/cli-tier1-noflag.json" bash "$PROBE_SH"); CLI_RC_NOFLAG=$?
+CLI_OUT_TIER1=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" LAUNCHD_DIR_PATH="$LAUNCHD_EMPTY_DIR" HEARTBEAT_FILE_PATH="$TMPDIR_TEST/cli-tier1-explicit.json" bash "$PROBE_SH" --tier=1); CLI_RC_TIER1=$?
 check "T23 CLI no-flag verdict == ALL_GREEN (unchanged contract)" "$([ "$(printf '%s' "$CLI_OUT_NOFLAG" | jq -r '.verdict')" = "ALL_GREEN" ] && echo true || echo false)"
 check "T23 CLI no-flag exit=0" "$([ "$CLI_RC_NOFLAG" -eq 0 ] && echo true || echo false)"
 check "T23 CLI no-flag keys == {verdict,detail,last_healthy_at} only" "$([ "$(printf '%s' "$CLI_OUT_NOFLAG" | jq -r 'keys | sort | join(",")')" = "detail,last_healthy_at,verdict" ] && echo true || echo false)"
 check "T23 CLI --tier=1 verdict == ALL_GREEN (identical to no-flag)" "$([ "$(printf '%s' "$CLI_OUT_TIER1" | jq -r '.verdict')" = "ALL_GREEN" ] && echo true || echo false)"
 check "T23 CLI --tier=1 keys == {verdict,detail,last_healthy_at} only" "$([ "$(printf '%s' "$CLI_OUT_TIER1" | jq -r 'keys | sort | join(",")')" = "detail,last_healthy_at,verdict" ] && echo true || echo false)"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED — launchd_agents check 6 coverage
+# ══════════════════════════════════════════════════════════════════════════════
+# Root gap being closed: the OLD fb-daily-firer.plist WAS loaded and firing
+# correctly 2026-07-01→07-04, then silently unloaded with nothing detecting
+# it — the ~73h multi-day outage this self-check exists to catch before it
+# recurs. Stubs `launchctl` (function-override, same pattern as docker/curl/
+# df above) — zero real launchctl load/unload calls, read-only `list` only.
+
+launchctl() {
+  case "${1:-}" in
+    list)
+      case "${STUB_LAUNCHCTL:-ok}" in
+        ok) printf '8750\t1\tcom.vn-market.docker-events\n-\t78\tcom.vn-market.fleet-push\n-\t0\tcom.vn-market.cowork-guaranteed-slot-firer\n' ;;
+        missing_firer) printf '8750\t1\tcom.vn-market.docker-events\n-\t78\tcom.vn-market.fleet-push\n' ;;
+        empty) printf '' ;;
+      esac
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+# Fixture launchd/ dir with ONE tracked plist — mirrors the repo's real
+# launchd/com.vn-market.cowork-guaranteed-slot-firer.plist shape (Label key
+# is the only field the check reads).
+FIXTURE_LAUNCHD_DIR="$TMPDIR_TEST/launchd-fixture"
+mkdir -p "$FIXTURE_LAUNCHD_DIR"
+cat > "$FIXTURE_LAUNCHD_DIR/com.vn-market.cowork-guaranteed-slot-firer.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.cowork-guaranteed-slot-firer</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string></array>
+</dict>
+</plist>
+EOF
+
+# Second fixture dir with TWO tracked plists — for the "only the missing one
+# is named in detail" multi-label assertion (T27).
+FIXTURE_LAUNCHD_DIR_2="$TMPDIR_TEST/launchd-fixture-2"
+mkdir -p "$FIXTURE_LAUNCHD_DIR_2"
+cp "$FIXTURE_LAUNCHD_DIR/com.vn-market.cowork-guaranteed-slot-firer.plist" "$FIXTURE_LAUNCHD_DIR_2/"
+cat > "$FIXTURE_LAUNCHD_DIR_2/com.vn-market.fleet-push.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.fleet-push</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/bash</string></array>
+</dict>
+</plist>
+EOF
+
+# ── T24: ALL_GREEN — tracked plist's label IS present in launchctl list ──────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR"
+STUB_LAUNCHCTL="ok"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T24 ALL_GREEN — required LaunchAgent present in launchctl list" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T24 ALL_GREEN exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+check "T24 heartbeat launchd_agents == PASS" "$([ "$(jq -r '.checks.launchd_agents' "$HEARTBEAT_FILE_PATH")" = "PASS" ] && echo true || echo false)"
+check "T24 heartbeat checks object now has 6 keys (incl. launchd_agents)" "$([ "$(jq -r '.checks | keys | length' "$HEARTBEAT_FILE_PATH")" -eq 6 ] && echo true || echo false)"
+
+# ── T25: INJECTED-FAULT — plist unloaded/hidden (label absent from
+# launchctl list) → FAILURE verdict, detail names the missing label (per
+# architecture brief §6.7 injected-fault requirement + feedback_fence_false_
+# green discipline: prove the FAILURE path, not just the happy path) ────────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR"
+STUB_LAUNCHCTL="missing_firer"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T25 INJECTED-FAULT FAILURE verdict (label silently unloaded)" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T25 INJECTED-FAULT exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T25 INJECTED-FAULT detail mentions launchd_agents" "$([[ "$DETAIL" == *"launchd_agents"* ]] && echo true || echo false)"
+check "T25 INJECTED-FAULT detail names the missing label" "$([[ "$DETAIL" == *"com.vn-market.cowork-guaranteed-slot-firer"* ]] && echo true || echo false)"
+check "T25 INJECTED-FAULT does NOT write heartbeat file" "$([ ! -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+
+# ── T26: RESTORE — same fixture, launchctl list now shows the label again →
+# verdict returns to ALL_GREEN (brief §6.7 "restore and confirm ALL_GREEN") ──
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR"
+STUB_LAUNCHCTL="ok"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T26 RESTORE — verdict back to ALL_GREEN after label reappears" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+check "T26 RESTORE exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+
+# ── T27: multi-label dir — only the ACTUALLY-missing label is named in
+# detail; the still-loaded one is not falsely flagged ───────────────────────
+run_case
+LAUNCHD_DIR="$FIXTURE_LAUNCHD_DIR_2"
+STUB_LAUNCHCTL="missing_firer"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T27 multi-label FAILURE verdict" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T27 multi-label detail names ONLY the missing label" "$([[ "$DETAIL" == *"com.vn-market.cowork-guaranteed-slot-firer"* ]] && [[ "$DETAIL" != *"com.vn-market.fleet-push(not-loaded)"* ]] && echo true || echo false)"
+
+# ── T28: launchd source dir itself missing (e.g. repo checkout without
+# launchd/) — FAILURE, not a silent PASS ─────────────────────────────────────
+run_case
+LAUNCHD_DIR="$TMPDIR_TEST/does-not-exist-launchd-dir"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+DETAIL=$(printf '%s' "$OUT" | jq -r '.detail')
+check "T28 missing launchd source dir — FAILURE verdict" "$([ "$VERDICT" = "FAILURE" ] && echo true || echo false)"
+check "T28 missing launchd source dir — detail mentions launchd_agents" "$([[ "$DETAIL" == *"launchd_agents"* ]] && echo true || echo false)"
+
+# ── T29: empty launchd dir (zero tracked plists) — trivially PASSes, same
+# semantics the T1-T23 default fixture already relies on, asserted directly
+# here as its own regression case ────────────────────────────────────────────
+run_case
+LAUNCHD_DIR="$LAUNCHD_EMPTY_DIR"
+OUT=$(run_probe); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T29 empty launchd dir — ALL_GREEN (zero required labels)" "$([ "$VERDICT" = "ALL_GREEN" ] && echo true || echo false)"
+
+# ── T30: CLI-level injected-fault — real subprocess invocation proves the
+# EXACT `bash auditor-tier1-probe.sh` entrypoint contract for check 6, not
+# just the sourced-function path ─────────────────────────────────────────────
+cat > "$CLI_TMPDIR/bin/launchctl" <<'STUBEOF'
+#!/usr/bin/env bash
+case "$1" in
+  list) printf '8750\t1\tcom.vn-market.docker-events\n-\t78\tcom.vn-market.fleet-push\n' ;;
+esac
+STUBEOF
+chmod +x "$CLI_TMPDIR/bin/launchctl"
+CLI_LAUNCHD_HEARTBEAT="$TMPDIR_TEST/cli-launchd-fault-heartbeat.json"
+CLI_OUT_LAUNCHD_FAULT=$(PATH="$CLI_TMPDIR/bin:$PATH" SYSTEM_MAP_PATH="$FIXTURE_MAP" LAUNCHD_DIR_PATH="$FIXTURE_LAUNCHD_DIR" HEARTBEAT_FILE_PATH="$CLI_LAUNCHD_HEARTBEAT" bash "$PROBE_SH"); CLI_RC_LAUNCHD_FAULT=$?
+check "T30 CLI injected-fault (real subprocess) — FAILURE verdict" "$([ "$(printf '%s' "$CLI_OUT_LAUNCHD_FAULT" | jq -r '.verdict')" = "FAILURE" ] && echo true || echo false)"
+check "T30 CLI injected-fault (real subprocess) — exit=1" "$([ "$CLI_RC_LAUNCHD_FAULT" -eq 1 ] && echo true || echo false)"
+check "T30 CLI injected-fault (real subprocess) — detail names missing label" "$([[ "$(printf '%s' "$CLI_OUT_LAUNCHD_FAULT" | jq -r '.detail')" == *"com.vn-market.cowork-guaranteed-slot-firer"* ]] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
