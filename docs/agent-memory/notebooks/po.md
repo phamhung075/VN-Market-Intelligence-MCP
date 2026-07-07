@@ -1,6 +1,18 @@
 # PO Notebook
 
-_Last: 2026-07-07T21:07Z_
+_Last: 2026-07-07T21:37Z_
+
+## Tick 2026-07-07T21:37Z — dev-team Step-1 re-triage of 8 re-drained signals (ALL already-actioned; 0 new rows)
+
+Dev-team drain (processedAt 21:48:30Z) re-handed 8 signals ALL created ≤21:01Z — earlier-or-equal artifacts of decisions I already made THIS evening (20:32Z repair-mint, 21:00Z brief-signoff+5-row decomp, 21:07Z gateway-blind FIX-mint). A re-drain of already-triaged work → mint ZERO new rows (a new row here = pure duplicate churn per systemic-review). All 8 CLOSED. **No orch-state write:** durability signal gate `atb-…203223Z` stays READ (gated on QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL, still BACKLOG/dep-blocked; NOT resolvable). **No signal-file mutation** (canonical: PO ACKs in notebook — signals already in processed/).
+
+- **#1 arch-brief 20:44Z (cowork-guaranteed-slot-durability)** → already SIGNED-OFF (21:00Z tick) + fully decomposed: F1-LAUNCHD-COWORK-BACKSTOP + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED (both REVIEW, built + tests-green by developer 21:22Z), OPS-COWORK-GUARANTEED-SLOT-INSTALL + QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL (BACKLOG, dep-held), DOC-COWORK-CRON-RUNBOOK-FRESHEN (DONE). Every brief §5 next-step has a row. CLOSE, no new.
+- **#6 repair_task_request 20:32Z** → the signal I minted; brief ruled + decomposed above; QA row carries `resolves_signal`. CLOSE (dedup).
+- **#7 tnb audit-handoff 20:17Z** → F-CHEF-MULTIDAY→decomposed; F-GATHERER-OFFHOURS-STALL-0704 = same root, brief §7 no-work-item; F-CHEF-EVENING-0707-FAILED = gateway-blind (covered #8). CLOSE.
+- **#2/#3/#4/#5 cowork tick-reports (19:48–21:01Z)** → informational telemetry. Symptoms split: gateway-blind (covered by shipped FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP `caba878b7`+`83bca6c04`) + session-scoped outage (covered by durability decomp). CLOSE, no action.
+- **#8 unified-agent gateway-blind CRITICAL 19:45Z (PRE-FIX)** → VERIFIED covered, not a still-open gap. Guard lives in `cycle-bootstrap/SKILL.md` Step-0 get_cycle_bootstrap error-table; chef.md runs "0. Bootstrap" (L22) BEFORE Step 0.5 published-marker task_claim; available_tools=[Read,Write,Edit] → get_cycle_bootstrap is EQUALLY blind → CONFIRMED-BLIND ("no such tool") → Write-fallback signal + graceful DEFER, EXIT before Step 0.5. This exact "unified-agent chef-evening ×1" is NAMED in both fix commits + the guard fallback text. CLOSE as covered-by-shipped-fix. **Watch-item (no row, not a live gap):** guard error-TABLE is scoped to the get_cycle_bootstrap call-site; chef Step 0.5 task_claim textually precedes Step-0 GATHER's get_cycle_bootstrap, so a strict-literal agent that skips the L22 bootstrap could hit task_claim first (though "no such tool → Write-fallback DEFER, no send_telegram" is now canonical fleet-wide). NOT a failed-fix (fix shipped AFTER this occurrence; no post-fix recurrence yet). Re-verify next TNB/QA cycle; failed-fix-escalate ONLY if gateway-blind recurs on a chef slot after `caba878b7`.
+
+**Writes:** notebook-only. No DJ-GATE-1 (no new task_board row). BATCH to router = NOTHING (all 8 closed, no dispatch).
 
 ## Tick 2026-07-07T21:07Z — OUT-OF-BAND signal triage (dev-team tick 20260707T194651Z; BOUNDED-1 jumped Step 1)
 
