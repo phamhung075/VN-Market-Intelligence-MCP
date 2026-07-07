@@ -251,12 +251,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "PDF-TEST-01-FIX",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of PDF-TEST-01-FIX — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-07T21:52:54Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-07-07T22:17:37Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7810,6 +7809,16 @@
         "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
         "created_at": "2026-07-07T21:00:37Z",
         "created_by": "po (po-s141 brief-signoff)"
+      },
+      {
+        "id": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
+        "priority": "medium",
+        "size": "S",
+        "status": "BACKLOG",
+        "title": "test_low_text_density_ocr_rasterize.py unconditionally stomps sys.modules[PIL/PIL.Image/fitz/pdfplumber/paddleocr] at import time, no restore — breaks OCR+rasterizer tests in full-suite runs (order-dependent, 7 confirmed failures)",
+        "type": "FIX",
+        "zone": "pdf-extractor",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
       }
     ],
     "closed_sprints": [
@@ -9001,23 +9010,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "PDF-TEST-01-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "title": "Fix PDF-TEST-01: Are pdf-extractor extraction paths covered by tests (PEK-INTEGRATE, layout-first, OCR)",
-        "type": "fix",
-        "zone": "qa",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-TEST-01-FIX",
-        "promoted_at": "2026-07-07T21:52:50Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-07T21:52:54Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -9174,6 +9167,25 @@
         "reviewed_at": "2026-07-07T21:22:55Z",
         "reviewed_by": "developer",
         "review_note": "Extended scripts/agents-flow/auditor-tier1-probe.sh with check 6 (_check_launchd_agents) — SSOT = repo launchd/*.plist Label fields (never hardcoded), FAILURE verdict + missing-label detail when any required label absent from launchctl list. 79/79 tests GREEN in auditor-tier1-probe.test.sh (60 pre-existing regression untouched behaviorally + 19 new, incl. mandatory injected-fault pair T25 FAILURE-on-missing / T26 ALL_GREEN-on-restore per brief §6.7). Bug-alerting is inherited via the existing FAILURE→spawn-system-auditor pipeline (cron-detect-loop/SKILL.md Job 2), unchanged — no new alert code inside this READ-ONLY pre-gate script. Simplicity gate PASS."
+      },
+      {
+        "id": "PDF-TEST-01-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "BLOCKED",
+        "title": "Fix PDF-TEST-01: Are pdf-extractor extraction paths covered by tests (PEK-INTEGRATE, layout-first, OCR)",
+        "type": "fix",
+        "zone": "qa",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#PDF-TEST-01-FIX",
+        "promoted_at": "2026-07-07T21:52:50Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-07T21:52:54Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "status_note": "PDF-TEST-01-FIX QA audit 2026-07-07T22:17:37Z: coverage of PEK-INTEGRATE / layout-first / OCR is GENUINELY ADEQUATE (real substantive tests exercising real infra/domain code, not mocks-only — test_pek_engine_adapter.py 39 tests incl semaphore/timeout/fail-loud/quarantine paths; test_layout_invariants.py 33 tests on real domain/primitives/layout_invariants/primitive.py balance/monotonic/orphan checkers; test_ocr_backends.py+test_ocr_unit_tesseract_retry.py+test_ocr_text_source.py 66 tests on real infrastructure/ocr_backends.py backend-selection+fallback policy and real infrastructure/generic_md_table_extractor.py retry logic). BUT NOT closing DONE_VERIFIED: full non-slow suite run inside the live pdf-extractor container (1086 collected, 7 deselected slow) = 1079 passed / 7 FAILED. All 7 failures root-caused + reproduced to ONE test-hygiene bug: __tests__/unit/test_low_text_density_ocr_rasterize.py:91,102,110,123-124 unconditionally overwrites sys.modules for pdfplumber/fitz/paddleocr/PIL/PIL.Image at import time with no restore (no conftest.py in this suite, single pytest process) — poisons every test file collected afterward. Confirmed via isolated 2-file repro: [this file + test_ocr_backends.py] -> 1 failed (_to_pil PIL.Image.new AttributeError); [this file + test_page_rasterizer.py] -> 4 failed (fake fitz stub page_count=4 hardcoded leaks in, real 2-page PDF asserts fail 4!=2). Same root cause also explains the 2 test_ocr_unit_tesseract_retry.py AC1/AC2 failures seen in the full run. Each of the 5 PDF-TEST-01 target files PASSES 100% (138/138) when run in isolation — this is a pure test-suite isolation defect, NOT a production regression (stub code never executes outside pytest). Filed follow-up gap task FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK for dev-pdf-extractor. Full evidence in decisions/sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S5 and reports/TASK_REPORT_PDF-TEST-01-FIX.md.",
+        "reviewed_at": "2026-07-07T22:17:37Z",
+        "reviewed_by": "qa",
+        "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
       }
     ],
     "qa": [],

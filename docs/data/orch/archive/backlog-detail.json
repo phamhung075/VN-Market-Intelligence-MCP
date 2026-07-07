@@ -1,7 +1,7 @@
 {
   "_sentinel": "backlog-detail-v1",
   "created_at": "2026-06-26T19:51:45Z",
-  "updated_at": "2026-07-01T16:22:00Z",
+  "updated_at": "2026-07-07T22:17:56Z",
   "count": 319,
   "items": {
     "TASK17-FOREIGN-FLOW": {
@@ -6733,6 +6733,18 @@
         "ORCH-STATE-HOT-COLD-SPLIT (signed-off 2026-06-26)"
       ],
       "source": "po sign-off 2026-06-26"
+    },
+    "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK": {
+      "created_at": "2026-07-07T22:17:56Z",
+      "id": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
+      "owner": "dev-pdf-extractor",
+      "priority": "medium",
+      "size": "S",
+      "status": "backlog",
+      "status_note": "AC: rewrite apps/pdf-extractor/__tests__/unit/test_low_text_density_ocr_rasterize.py lines 91,102,110,123-124 so sys.modules['pdfplumber'|'fitz'|'paddleocr'|'PIL'|'PIL.Image'] stubs are either (a) applied via monkeypatch.setattr (pytest auto-restores after each test) or (b) wrapped in a fixture with explicit teardown restoring the original sys.modules entries, or (c) use this file's own already-correct _ensure_stub() conditional-check pattern (only stub if real package absent) uniformly instead of raw unconditional assignment. Evidence: PDF-TEST-01-FIX QA audit 2026-07-07 — full non-slow suite (container) 1079 passed/7 failed; all 7 traced + reproduced to this file polluting global sys.modules and leaking into test_ocr_backends.py::TestToPilAndFailLoud::test_d_tesseract_backend_pil_image_passthrough (AttributeError: PIL.Image has no attribute new), test_ocr_unit_tesseract_retry.py AC1/AC2 (same PIL.Image.new error), and test_page_rasterizer.py x4 (fake fitz stub hardcoded page_count=4 leaks into real-fitz rasterizer tests, asserts 4!=2). Repro commands: docker exec vn-market-intelligence-mcp-pdf-extractor-1 python3 -m pytest __tests__/unit/test_low_text_density_ocr_rasterize.py __tests__/test_ocr_backends.py -q (1 failed/46 passed); same file + __tests__/unit/test_page_rasterizer.py -q (4 failed/28 passed). Each file passes 100% alone. DoD: full apps/pdf-extractor/__tests__ suite (excl @pytest.mark.slow) green in one docker-exec pytest run, order-independent (verify by running the offending file both before and after the previously-broken files).",
+      "title": "test_low_text_density_ocr_rasterize.py unconditionally stomps sys.modules[PIL/PIL.Image/fitz/pdfplumber/paddleocr] at import time, no restore — breaks OCR+rasterizer tests in full-suite runs (order-dependent, 7 confirmed failures)",
+      "type": "FIX",
+      "zone": "pdf-extractor"
     }
   }
 }
