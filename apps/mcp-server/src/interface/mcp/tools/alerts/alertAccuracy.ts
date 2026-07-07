@@ -242,18 +242,27 @@ export function formatAccuracyReport(
 
       const classification = classifyAlertType(row.signals_json, null);
 
+      // "now" bound as an ISO-8601 string (matches how fetched_at is always written,
+      // e.g. new Date().toISOString() in pushPricesHandler.ts) — deliberately NOT
+      // SQLite's datetime('now'), which formats as "YYYY-MM-DD HH:MM:SS" (space
+      // separator, no ms). Comparing that space-separated form as TEXT against an
+      // ISO 'T'-separated fetched_at with an equal date prefix is wrong: 'T' (0x54)
+      // sorts after ' ' (0x20), so any same-UTC-calendar-day timestamp compares as
+      // "greater than now" and is incorrectly excluded as a future price.
+      const nowIso = new Date().toISOString();
+
       // Fetch first price at/after alert time (must be in the past — no future timestamps)
       const priceAtAlertRow = Number.isNaN(alertTs)
         ? undefined
         : (db
-            .prepare<PriceRow, [string, string]>(`
+            .prepare<PriceRow, [string, string, string]>(`
               SELECT price, fetched_at
               FROM market_prices_history
-              WHERE code = ? AND fetched_at >= ? AND fetched_at <= datetime('now')
+              WHERE code = ? AND fetched_at >= ? AND fetched_at <= ?
               ORDER BY fetched_at ASC
               LIMIT 1
             `)
-            .get(code, row.triggered_at) as PriceRow | undefined);
+            .get(code, row.triggered_at, nowIso) as PriceRow | undefined);
       const alertPrice = priceAtAlertRow?.price ?? null;
 
       // Fetch window prices AFTER the alert baseline price (exclusive start) and
@@ -262,16 +271,17 @@ export function formatAccuracyReport(
       const windowEnd = Number.isNaN(alertTs)
         ? row.triggered_at
         : new Date(alertTs + classification.evalWindowDays * 86_400_000).toISOString();
+      const effectiveWindowEnd = windowEnd < nowIso ? windowEnd : nowIso;
       const windowRows = Number.isNaN(alertTs) || !priceAtAlertRow
         ? []
         : (db
             .prepare<PriceRow, [string, string, string]>(`
               SELECT price, fetched_at
               FROM market_prices_history
-              WHERE code = ? AND fetched_at > ? AND fetched_at <= min(?, datetime('now'))
+              WHERE code = ? AND fetched_at > ? AND fetched_at <= ?
               ORDER BY fetched_at ASC
             `)
-            .all(code, windowStart, windowEnd) as PriceRow[]);
+            .all(code, windowStart, effectiveWindowEnd) as PriceRow[]);
       const windowPrices: PricePoint[] = windowRows.map((r) => ({
         price: r.price,
         fetchedAt: r.fetched_at,
