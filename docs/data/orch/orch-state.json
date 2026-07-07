@@ -3295,16 +3295,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#VPS-FRESH-02-FIX"
       },
       {
-        "id": "AC-FUNC-02-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix AC-FUNC-02: Does task_list_held return currently claimed tasks with owner and expiry",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#AC-FUNC-02-FIX"
-      },
-      {
         "id": "PA-CONSIST-01-FIX",
         "priority": "normal",
         "size": "S",
@@ -8957,6 +8947,20 @@
         "verified_by": "dev-team (bounded-1 pre-verify stale-close)",
         "verified_at": "2026-07-07T22:48:26Z",
         "signoff_note": "BOUNDED-1 pre-verify stale-close: docker-compose.yml:286 NOT_DEPLOYED_SERVICES= empty, apps/api-gateway/cmd/server/main.go:44 getenv default also empty — pdf-extractor already absent from the not-deployed list. Same cluster/commit as GW-CONTRACT-03-FIX (closed prior tick 2026-07-07T21:37Z): commit 2e88b0b50 'CLUSTER-B — remove pdf from NOT_DEPLOYED_SERVICES (was contract lie)' already fixed this exact discrepancy on main. AC satisfied, zero diff needed."
+      },
+      {
+        "id": "AC-FUNC-02-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "Fix AC-FUNC-02: Does task_list_held return currently claimed tasks with owner and expiry",
+        "type": "fix",
+        "zone": "dev-mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#AC-FUNC-02-FIX",
+        "done_verified": true,
+        "verified_by": "dev-team (bounded-1 pre-verify live-probe close)",
+        "verified_at": "2026-07-07T22:49:57Z",
+        "signoff_note": "BOUNDED-1 pre-verify: called task_list_held(owner_agent='dev-team') live — response for each held lock includes owner, owner_agent, owner_client_session, expires_at, ttl_seconds, claimed_at, heartbeat_at (e.g. dev-team-cron-singleton: owner='dev-team', expires_at='2026-07-08T00:16:35.000Z'). AC ('does task_list_held return currently claimed tasks with owner and expiry') is satisfied — live functional probe, not a code-symbol check. No production diff needed."
       }
     ],
     "head": {
@@ -9163,8 +9167,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T22:48:26Z",
-    "last_triaged_by": "dev-team (bounded-1 pre-verify stale-close)"
+    "last_triaged_at": "2026-07-07T22:49:57Z",
+    "last_triaged_by": "dev-team (bounded-1 pre-verify live-probe close)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
