@@ -3196,16 +3196,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#MCP-TEST-01-FIX"
       },
       {
-        "id": "GW-CONTRACT-03-FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "BACKLOG",
-        "title": "Fix GW-CONTRACT-03: DISCREPANCY: Does api-gateway default NOT_DEPLOYED_SERVICES include 'pdf' while system-map intends pdf-extractor DEPLOYED",
-        "type": "fix",
-        "zone": "dev-api-gateway",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#GW-CONTRACT-03-FIX"
-      },
-      {
         "id": "PDF-TEST-01-FIX",
         "priority": "high",
         "size": "S",
@@ -8996,7 +8986,22 @@
         "note": "Rewrote docs/protocols/cowork-master-cron-runbook.md §1/§2/§5/§8/§9: RemoteTrigger Layer A documented as retired (not active/deletion-locked) per STANDING feedback_no_remote_trigger_all_local; current architecture = single session-scoped */15 CronCreate dispatcher per .claude/skills/cron-cowork-team/SKILL.md; documented the session-scoped-dispatcher SPOF explicitly with a pointer to in-flight F1-LAUNCHD-COWORK-BACKSTOP (owner developer, same brief) as the coming session-independent layer, plus an explicit re-freshen instruction for whoever lands it. docs/data/cowork-schedule.json._notes.layer_a_deletion_locked: true->false, layer_a_deletion_gate rewritten to point at this fix. Independent of F1-LAUNCHD-COWORK-BACKSTOP / FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED (not blocked on either)."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "GW-CONTRACT-03-FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "title": "Fix GW-CONTRACT-03: DISCREPANCY: Does api-gateway default NOT_DEPLOYED_SERVICES include 'pdf' while system-map intends pdf-extractor DEPLOYED",
+        "type": "fix",
+        "zone": "dev-api-gateway",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#GW-CONTRACT-03-FIX",
+        "done_verified": true,
+        "verified_by": "dev-team (bounded-1 pre-verify)",
+        "verified_at": "2026-07-07T21:51:33Z",
+        "signoff_note": "BOUNDED-1 pre-verify (cheap raw-verify before worker spawn, per memory project_bounded1_first_pickup_stale_backlog_hygiene_debt interim mitigation): docker-compose.yml:286 NOT_DEPLOYED_SERVICES= (empty, pdf NOT excluded); apps/api-gateway/cmd/server/main.go getenv default also empty string; commit 2e88b0b50 (2026-06-10, 'CLUSTER-B — remove pdf from NOT_DEPLOYED_SERVICES (was contract lie)') already fixed this exact discrepancy, confirmed on main. AC satisfied by current live state — NO-CHANGE-NEEDED, closing without worker spawn."
+      }
+    ],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
@@ -9182,8 +9187,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T21:07:14Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-07-07T21:51:33Z",
+    "last_triaged_by": "dev-team (bounded-1 pre-verify)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
