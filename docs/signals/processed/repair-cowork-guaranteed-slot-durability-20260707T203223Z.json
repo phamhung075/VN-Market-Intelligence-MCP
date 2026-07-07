@@ -1,0 +1,63 @@
+{
+  "from": "po",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "HIGH",
+  "severity": "HIGH",
+  "createdAt": "2026-07-07T20:32:23Z",
+  "triage_of": {
+    "finding_id": "F-CHEF-MULTIDAY-OUTAGE-0706-0707",
+    "reported_by": "tran-ngoc-bau",
+    "handoff": "docs/handoffs/tnb-audit-latest.md",
+    "source_signal": "docs/signals/tnb-20260707T201700Z.json",
+    "cycle": "c106"
+  },
+  "payload": {
+    "dedup_key": "atb_task:system_issue:cowork-guaranteed-slot-durability",
+    "anomaly_type": "system_issue",
+    "severity_class": "INFRA",
+    "suggested_sprint_class": "FIX",
+    "zone_owner": "cowork-team / infra (ops+architect)",
+    "summary": "Cowork */15 dispatcher is session-scoped with NO OS-level backstop — ~73h outage (2026-07-04T16:05Z -> 2026-07-07T17:30Z) silenced ALL guaranteed slots, not just chef.",
+    "root_cause": {
+      "verdict": "SESSION-SCOPED-DISPATCHER-SPOF (single point of failure, no OS-level firer). NOT a cron-expression bug, NOT a matcher bug, NOT the gateway-blind defect.",
+      "mechanism": "The cowork-team master dispatcher (`*/15 * * * *` CronCreate) lives ONLY inside a live Claude Code CLI session (`.claude/skills/cron-cowork-team/SKILL.md`: durable:true does NOT survive session-end). No CLI session was live from ~2026-07-04T16:05:03Z until ~2026-07-07T17:30Z (~73h). During that window NO slot fired regardless of type. chef-morning (05:15Z Mon-Fri) and chef-eod (08:45Z Mon-Fri) on 07-06 and 07-07 fell inside the dead window; the session only revived ~17:30Z today, after both slot times had passed. This is the documented gap `project_cowork_guaranteed_slot_needs_live_cli_session`.",
+      "why_no_backstop": "The two designed session-independent firing paths are both unavailable: (1) the claude.ai RemoteTrigger backstop is RETIRED by STANDING directive `feedback_no_remote_trigger_all_local` (all slots now show trigger_status:deleted / _superseded_by:cowork-dispatcher); (2) the launchd OS-level firer `com.vn-market.fb-daily-firer.plist` is DORMANT (verified NOT loaded via `launchctl list`) AND covers only fb-daily/fb-weekend, never chef/digest. Net: no OS-level firing path exists for chef/digest guaranteed slots.",
+      "recurrence": "Documented recurring failure mode (memory: project_cowork_guaranteed_slot_needs_live_cli_session; prior instance fb-daily 2026-06-30). Per `feedback_recurring_bug_escalation` (2+ occurrences -> block/escalate), this warrants a durable fix, not another symptom patch."
+    },
+    "evidence_verified_from_files": {
+      "cowork_schedule": "docs/data/cowork-schedule.json",
+      "dead_window_start": "2026-07-04T16:05:03Z (news-scout-offhours / market-watcher-offhours / alert-commander-critical last_fired) + fb-daily-firer.log last line 2026-07-04T17:44:35Z",
+      "session_revival": "~2026-07-07T17:30Z — digest-daily last_fired 17:34:03Z, bctc-analyst-slot-2 18:03:06Z, chef-evening 19:47:50Z (FAILED-gateway-blind), tnb-audit 20:17:30Z all fired after revival, proving this was NOT a total-fleet outage but a no-live-session gap",
+      "calendar": "07-03 Fri (last chef fires), 07-04 Sat, 07-05 Sun, 07-06 Mon, 07-07 Tue",
+      "launchd_state": "com.vn-market.fb-daily-firer.plist symlinked in ~/Library/LaunchAgents but NOT loaded (launchctl list shows only claudefordesktop jobs)"
+    },
+    "missed_guaranteed_deliverables": [
+      "chef-evening (daily 19:45Z): 07-04, 07-05, 07-06 MISSED (07-07 attempted but FAILED gateway-blind)",
+      "chef-morning (Mon-Fri 05:15Z): 07-06, 07-07 MISSED",
+      "chef-eod (Mon-Fri 08:45Z): 07-06, 07-07 MISSED",
+      "digest-sunday (Sun 13:47Z): 07-05 MISSED (last_fired 2026-06-28)",
+      "fb-daily (Mon-Fri 09:15Z): 07-06, 07-07 MISSED (last_fired 2026-07-03T09:31Z)",
+      "non-guaranteed collateral: news-scout/market-watcher off-hours + several bctc/refine slots frozen since 07-03/04"
+    ],
+    "remediation_options": {
+      "note": "Architect must rule the approach — there is a real token-cost tradeoff (memory project_session_start_token_bloat_80k: fb-daily-firer.plist enabled ~= 160k/day if a full CLI session is spawned per tick). PLAN-ONLY: no auto-install here.",
+      "option_A": "Load + extend the existing launchd firer model (scripts/cowork-fb-daily-firer.sh + com.vn-market.fb-daily-firer.plist) to cover chef-morning/chef-eod/chef-evening + digest-sunday guaranteed slots, with a LEAN headless invocation bounded to avoid the 160k/day session-start bloat. OPS installs (launchctl load), QA verifies with a session-down survival test (kill CLI session, confirm a guaranteed slot still fires at wall-clock).",
+      "option_B": "Move guaranteed-slot generation to the always-on VPS (memory reference_vps_setup) — eliminates the local live-CLI dependency and the laptop token bloat entirely; larger scope.",
+      "decision_gate": "architect brief weighing token cost vs reliability -> PO sign-off -> ops install -> QA session-down survival test."
+    },
+    "explicitly_not_root_cause": {
+      "gateway_blind": "F-MCP-SUBAGENT-SYSTEMIC (session-wide gateway-blind, 4/4 confirmed this session) is a SEPARATE, already-ESCALATED issue (docs/signals/unified-agent-20260707T194500Z-gateway-blind.json) needing a /mcp reconnect or session restart. It explains today's chef-evening 19:45Z FAILURE and the router's 20:00Z spawn-withholding, but it CANNOT explain the 3-day outage that started 07-04, well before today's confirmations."
+    },
+    "related_finding_resolved_together": {
+      "F-GATHERER-OFFHOURS-STALL-0704": "news-scout-offhours / market-watcher-offhours / alert-commander-critical all frozen at the identical 2026-07-04T16:05:03Z. This is NOT a separate defect — it is the same last tick of the prior live session (the dead-window start). Resolves together with Option A/B; today's router also additionally withheld re-spawning them citing gateway-blind."
+    }
+  },
+  "status": "NEW",
+  "_processed": {
+    "fingerprint": "7a520519ad3c793aba9d971a06e9885ac1ac073b2e3b02005bd69c84f0c191cd",
+    "processedAt": "2026-07-07T21:48:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

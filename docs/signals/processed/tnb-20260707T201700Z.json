@@ -1,0 +1,32 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-07-07T20:17:00Z",
+  "summary": "c106 CRITICAL FINDING — chef dish production outage. Most recent chef-evening cycle (07-07T19:45Z) FAILED (session-wide gateway-blind, already ESCALATED signal). BEYOND that: chef-morning + chef-eod (guaranteed weekday slots) show zero activity since Fri 07-03, missing BOTH Mon 07-06 and Tue 07-07 (today) weekday dish-pairs (F-CHEF-MULTIDAY-OUTAGE-0706-0707, HIGH, NEW, no dedicated bug signal existed for this specific gap before this one). No new dish content exists to layer-walk audit this cycle (0/6, QUALITY:N/A) — did not fabricate/backfill against the 07-03 dish (already audited+ACK'd at c105). Also flagging F-GATHERER-OFFHOURS-STALL-0704 (MED) — news-scout/market-watcher offhours + alert-commander-critical frozen at identical 2026-07-04T16:05:03Z, predating today's gateway-blind confirmations by ~3 days.",
+  "findings": [
+    {
+      "id": "F-CHEF-MULTIDAY-OUTAGE-0706-0707",
+      "severity": "HIGH",
+      "status": "NEW"
+    },
+    {
+      "id": "F-CHEF-EVENING-0707-FAILED",
+      "severity": "HIGH",
+      "status": "NEW-CONFIRMED"
+    },
+    {
+      "id": "F-GATHERER-OFFHOURS-STALL-0704",
+      "severity": "MED",
+      "status": "NEW"
+    }
+  ],
+  "_processed": {
+    "fingerprint": "4f99c9f1c627b47c5da9204a1ec45f39c6d699b4ffd79db43c78baadf8543618",
+    "processedAt": "2026-07-07T21:48:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

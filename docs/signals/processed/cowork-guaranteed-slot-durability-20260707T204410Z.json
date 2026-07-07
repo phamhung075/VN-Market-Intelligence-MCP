@@ -20,5 +20,11 @@
   },
   "requires_po_signoff_before": "orch-state signal_queue row atb-cowork-guaranteed-slot-durability-20260707T203223Z marked resolved",
   "qa_gate": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md § 6 — session-down survival test, 7 assertions, mandatory before resolve",
-  "plan_only": true
+  "plan_only": true,
+  "_processed": {
+    "fingerprint": "daf0454bde26aefb8e332d2a8a9590dbedaa4cca81e15b96852530d04dce4c29",
+    "processedAt": "2026-07-07T21:48:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

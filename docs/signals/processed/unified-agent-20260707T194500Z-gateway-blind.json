@@ -1,0 +1,33 @@
+{
+  "signal_type": "bug-escalation",
+  "severity": "CRITICAL",
+  "agent_id": "unified-agent",
+  "cycle_id": "chef-evening-20260707T194500Z",
+  "cycle_type": "evening_preview",
+  "timestamp": "2026-07-07T19:45:00Z",
+  "issue": "gateway-blind-runtime-defect",
+  "description": "Spawned unified-agent (chef.md evening slot) has ZERO mcp__gateway__call_tool access. Tool inventory: [Read, Write, Edit] only. Cannot proceed with MCP-dependent steps (task_claim, get_cycle_bootstrap, get_market_snapshot, send_telegram). No MCP functionality available despite .mcp.json configuration.",
+  "failure_point": "Step 0.5 (published-marker-gate) — attempted task_claim, tool unavailable",
+  "context": {
+    "slot_id": "chef-evening",
+    "session_id": "worker-agent-spawned",
+    "available_tools": [
+      "Read",
+      "Write",
+      "Edit"
+    ],
+    "missing_tools": [
+      "mcp__gateway__call_tool"
+    ],
+    "prior_session_gateway_issues": "3 confirmed cases (fb-market-poster, digest-predict, bctc-analyst) this session"
+  },
+  "required_action": "Session restart + full gateway re-bind; investigate MCP server connectivity",
+  "exit_code": 1,
+  "status": "ESCALATED",
+  "_processed": {
+    "fingerprint": "4f446b2bdeaba20ce8cda9bb918d7a4a5ffd836e81cf2dd7f3a91db838a3147c",
+    "processedAt": "2026-07-07T21:48:30Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
