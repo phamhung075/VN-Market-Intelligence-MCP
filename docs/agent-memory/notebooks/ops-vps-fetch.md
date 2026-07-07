@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-07-07 17:03 UTC | **Sprint:** FIX-NEWS-VPS-CRASH-LOOP recon #2 (crash-loop DISPROVEN; Cloudflare Tunnel outage found instead, see c022)
+**Last updated:** 2026-07-07 18:36 UTC | **Sprint:** OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST — pipeline-wide push failure ROOT-CAUSED, handed to ops (see c023)
 
 ---
 
@@ -63,6 +63,16 @@ Trigger: dev-team dispatch, task nearly a month old, dispatcher pre-check AMBIGU
 **Real finding:** `/var/log/vn-news-fetch.log` push step (`POST zenmidi.com/api/push-news`) failed **95–100%** of cycles 2026-07-04T19:47Z→07-07T16:46Z (`error 1033`/502, Cloudflare Tunnel unreachable) — Jul5/Jul6 = 0/90 success both full days. **Not news-specific**: `vn-sbv-fetch.log` and `vn-foreign-flow.log` show the identical signature same window — shared Cloudflare Tunnel / mcp-server-side receiving-path issue, out of VPS-script scope. Recovering as of recon (last 2 cycles = http=200; live probe from VPS → 401 reachable). Full detail: `docs/vps-sources/vn-news-rss/recon.md` § Incident 07-07.
 
 **Recommendation:** close FIX-NEWS-VPS-CRASH-LOOP done_verified/NO-CHANGE-NEEDED (crash-loop hyp. disproven); open separate `ops`-owned (local-infra) task for the Tunnel outage if dispatcher wants root-cause on the receiving side — no VPS script bug to fix.
+
+---
+
+## c023 · 2026-07-07T18:36Z · OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST — pipeline-wide push failure ROOT-CAUSED
+
+Trigger: dev-mcp-server found queue-done-without-push pipeline-wide during Monday-gap backfill (queue rows 559/561); escalated to ops-vps-fetch for SSH recon (out of dev-mcp-server's zone).
+
+**VERDICT: root cause confirmed, NOT related to the Cloudflare Tunnel outage — predates it by 2.5 months.** `scripts/deploy-vinahost.sh` § 6 has never deployed `/root/fetch-ohlcv-backfill.sh` (only ships `ohlcv-backfill-poll.sh` + systemd units, since commit `68263eb6b`, 2026-04-17). Two phases, both confirmed live on VPS: **Phase A** (Apr17→Jun30, 466/541 poll cycles) — script absent, poller's `not found` skip-path unconditionally POSTs `ohlcv-backfill-done` anyway (by design, to unblock the server). **Phase B** (Jun30→present, 75/541 cycles) — script manually `scp`'d outside the sed-substitution+GUARD-1 pipeline as a side effect of the OHLCV-DEPTH-SUBTASK-A hardening commits, leaving literal `__MCP_BASE__`/`__API_KEY__` unsubstituted live on the VPS → every curl call fails DNS resolution. `grep -c "inserted\|OK \[" /var/log/ohlcv-backfill-poll.log` → **0** across the poller's entire 2026-04-17→present history. Full evidence: `docs/vps-sources/ohlcv-backfill-pipeline-stall/recon.md`.
+
+**Boundary:** read-only SSH recon only (systemctl status, log tail/grep, `ls -la`/`stat`, live `grep` of file content, `git log`/`git show` on repo history) — no VPS file edited, no service restarted, no repo code changed. Fix (VPS re-deploy + `scripts/deploy-vinahost.sh` patch, exact diff proposed in recon.md) requires "local infra" changes = `ops`'s job per `not_my_job`, not mine. **Signal:** `docs/signals/ops-20260707T183607Z.json` → `ops`.
 
 ---
 
