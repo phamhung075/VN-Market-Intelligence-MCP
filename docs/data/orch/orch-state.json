@@ -8125,6 +8125,30 @@
         "created_at": "2026-07-07T17:10:50Z",
         "created_by": "dev-team (bounded-1 pattern escalation)",
         "status_note": "4 consecutive BOUNDED-1 auto-picks across 3 ticks have raw-verified as already-done/no-change-needed (2 FACTORY-INTERFACE confidence-score-50-mask dupes, SBV VPS fetcher healthy, post_agent_signal already returns signal_id correctly). Interim per-tick pre-verify mitigation is working (near-zero-cost prune) but does not scale — real fix (see project memory project_bounded1_first_pickup_stale_backlog_hygiene_debt) is a bulk verify-prune pass: for each of the ~417 backlog rows, grep target symbol + git log --grep + one Read against current code/live state, bulk-close provably-satisfied rows to done_verified in one batch (NOT blind title-match — false-prune risk, each candidate needs its own raw verify). supervised=true — excluded from BOUNDED-1 auto-pickup by design (this IS the meta-task about that lane); needs router/PO/architect-adjudicated dispatch, likely to a po or architect agent given the audit-not-code-fix nature."
+      },
+      {
+        "id": "INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
+        "priority": "P1",
+        "size": "S",
+        "status": "BACKLOG",
+        "title": "Root-cause + harden Cloudflare Tunnel push-delivery outage 2026-07-04T19:47Z to 2026-07-07T16:46Z (self-recovered, cause unknown)",
+        "type": "FIX",
+        "zone": "infra",
+        "created_at": "2026-07-07T17:41:23Z",
+        "created_by": "dev-team (ops incident cross-validation)",
+        "status_note": "Confirmed by TWO independent ops recons same tick (ops-vps-fetch on FIX-NEWS-VPS-CRASH-LOOP, ops on user-reported stale prices): shared Cloudflare Tunnel between VPS and mcp-server was unreachable (HTTP 530/502, CF error 1033) for ~69h, killing push delivery for news, SBV FX, foreign-flow, AND stock prices simultaneously (all 4 pipelines, VPS-side fetch was healthy throughout — pure delivery-path outage). 2026-07-05 and 2026-07-06 were 0/90 success both full days across affected feeds. Self-recovered ~16:46Z 2026-07-07 coinciding with an mcp-server container restart at 16:42:17Z — restart-vs-recovery causality NOT established (could be coincidence or the actual fix). AC: identify why the tunnel dropped for 69h (Cloudflare dashboard/tunnel config, mcp-server ingress health, local network) and add monitoring/alerting on push-delivery error rate so a recurrence pages ops instead of silently degrading 4 data pipelines for days. Evidence: docs/vps-sources/vn-news-rss/recon.md Incident section (commit df118f8be); tool-push-prices.log volume vn-market-intelligence-mcp_market_data:/data/logs/."
+      },
+      {
+        "id": "DATA-BACKFILL-PRICES-20260706-MONDAY-GAP",
+        "priority": "P2",
+        "size": "XS",
+        "status": "BACKLOG",
+        "title": "Backfill missing 2026-07-06 (Monday) daily_ohlcv rows for all watchlist tickers — lost to Cloudflare Tunnel outage",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-07-07T17:41:23Z",
+        "created_by": "dev-team (ops incident cross-validation)",
+        "status_note": "daily_ohlcv confirmed missing the entire 2026-07-06 trading day for all 703+ watchlist tickers (gap: last row 2026-07-03, next row 2026-07-07) — VPS-side push never delivered during the Cloudflare Tunnel outage (see INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE) and the VPS fetch script does not appear to retain/replay a local buffer past its own log window. AC: check whether the upstream VnDirect API (3-tier price fallback, dev-stock-price zone) can serve historical daily OHLCV for a past date on request; if yes, one-off backfill script for 2026-07-06 only; if the upstream cannot serve historical daily bars for a specific past date, close as WONT-FIX (permanent gap) with a status_note explaining why, do not leave silently open."
       }
     ],
     "closed_sprints": [
@@ -11077,8 +11101,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T17:10:50Z",
-    "last_triaged_by": "dev-team (bounded-1 pattern escalation)"
+    "last_triaged_at": "2026-07-07T17:41:23Z",
+    "last_triaged_by": "dev-team (ops incident cross-validation)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
