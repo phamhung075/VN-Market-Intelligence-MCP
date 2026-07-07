@@ -1,0 +1,24 @@
+{
+  "from": "agents-architect",
+  "to": "po",
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
+  "priority": "high",
+  "createdAt": "2026-07-07T20:44:10Z",
+  "triage_of": {
+    "finding_id": "F-CHEF-MULTIDAY-OUTAGE-0706-0707",
+    "repair_signal": "docs/signals/repair-cowork-guaranteed-slot-durability-20260707T203223Z.json",
+    "orch_signal_queue_id": "atb-cowork-guaranteed-slot-durability-20260707T203223Z"
+  },
+  "summary": "RULING: Option A (extend existing launchd firer), generalized — NOT Option B (VPS has no LLM runtime/credentials, larger security surface, no benefit over the already-working local mechanism). Concrete design: generalize scripts/cowork-fb-daily-firer.sh into scripts/agents-flow/cowork-guaranteed-slot-firer.sh, driven by the existing cowork-match-slots.js matcher (same SSOT as the live */15 dispatcher, filtered guaranteed===true) instead of hardcoded per-slot if-blocks -- durable fix per feedback_recurring_bug_escalation, automatically covers future guaranteed slots. New finding beyond PO's payload: the existing fb-daily-firer.plist WAS loaded and fired correctly 07-01->07-04, then silently unloaded with nothing detecting it -- added a Tier-1 auditor self-check (scripts/agents-flow/auditor-tier1-probe.sh) as a required hardening, or this exact outage recurs even after the fix ships. Also found docs/protocols/cowork-master-cron-runbook.md is stale (still describes retired RemoteTrigger Layer A as active/deletion-locked) -- flagged as companion doc-fix for agent-father. Token-cost: ~0 for no-op ticks (bash/node gate, no LLM call), ~5-15k/day incremental in the common case (backstop fires redundantly, published-marker gate short-circuits), no incremental cost when backstop is the sole firer (that IS the deliverable being produced). F-GATHERER-OFFHOURS-STALL-0704 explicitly closed as same root cause, no separate work item (brief section 7).",
+  "owners": {
+    "build_generalized_firer_script_and_plist": "developer",
+    "extend_auditor_tier1_selfcheck": "developer",
+    "install_launchctl_load_and_unload_old": "ops",
+    "fix_stale_runbook_and_deletion_lock_note": "agent-father",
+    "session_down_survival_test_7_point": "qa"
+  },
+  "requires_po_signoff_before": "orch-state signal_queue row atb-cowork-guaranteed-slot-durability-20260707T203223Z marked resolved",
+  "qa_gate": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md § 6 — session-down survival test, 7 assertions, mandatory before resolve",
+  "plan_only": true
+}
