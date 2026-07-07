@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.cowork-guaranteed-slot-firer</string>
+
+  <!--
+    OS-level firer for ALL cowork guaranteed:true slots (F1-LAUNCHD-COWORK-
+    BACKSTOP). Generalizes and REPLACES com.vn-market.fb-daily-firer (retired
+    — fb-daily/fb-weekend are already guaranteed:true rows in
+    docs/data/cowork-schedule.json and are now subsumed by this one job).
+
+    ROOT CAUSE CLOSED: The cowork-team master dispatcher (*/15 CronCreate) is
+    session-scoped. When the CLI session ends the dispatcher evaporates. The
+    cloud RemoteTrigger backstop is RETIRED (STANDING: no cloud RemoteTrigger
+    — all local; memory: no_remote_trigger_all_local). Session end -> every
+    guaranteed slot due in that window is silently missed with no recovery
+    path. Re-verified live 2026-07-07 (~73h outage, 2026-07-04T16:05Z ->
+    2026-07-07T17:30Z): chef-morning/eod/evening, digest-sunday, fb-daily all
+    silent. Root cause of THIS outage: the OLD fb-daily-firer.plist WAS
+    loaded and firing correctly 2026-07-01 -> 2026-07-04, then silently
+    unloaded with nothing detecting it (closed by the companion Tier-1
+    self-check, FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED).
+
+    WHY GENERALIZED (not a 5th hardcoded if-block): this LaunchAgent fires
+    scripts/agents-flow/cowork-guaranteed-slot-firer.sh every 15 minutes
+    (matching the cowork dispatcher cadence). The script calls the SAME
+    matcher the live */15 dispatcher uses
+    (scripts/agents-flow/cowork-match-slots.js), filters the returned
+    slots[] to guaranteed===true, and invokes claude with each matched
+    slot's trigger_prompt read VERBATIM off the slot object — never
+    hardcoded per-agent. A brand-new guaranteed:true row added to
+    cowork-schedule.json is covered automatically, zero plist/script edits.
+
+    SLOTS COVERED (from docs/data/cowork-schedule.json, guaranteed:true —
+    read live by the script every tick, this list is documentation only):
+      chef-morning   : "15 5 * * 1-5"  (05:15 UTC Mon-Fri)
+      chef-eod       : "45 8 * * 1-5"  (08:45 UTC Mon-Fri)
+      chef-evening   : "45 19 * * *"   (19:45 UTC daily)
+      digest-sunday  : "47 13 * * 0"   (13:47 UTC Sunday)
+      digest-daily   : "30 17 * * *"   (17:30 UTC daily)
+      tnb-audit      : "13 20 * * *"   (20:13 UTC daily)
+      fb-daily       : "15 9 * * 1-5"  (09:15 UTC Mon-Fri)
+      fb-weekend     : "13 13 * * 6,0" (13:13 UTC Sat-Sun)
+
+    WHY StartInterval (not StartCalendarInterval): the machine is located in
+    France (CEST = UTC+2 summer, CET = UTC+1 winter). StartCalendarInterval
+    uses LOCAL system time, making the schedule DST-sensitive.
+    StartInterval=900s with the matcher's own UTC-based cron matching is
+    DST-invariant. Most 15-min ticks are sub-second no-ops (no guaranteed
+    slot due -> the script exits 0 with no claude invocation, ~0 token cost
+    per architecture brief §4).
+
+    DEDUP: unchanged — every guaranteed-slot flow (chef.md Step 0.5,
+    digest-predict pre-D gate, fb-market-poster's own gate) already claims a
+    published-marker (task_claim, FR-P2-7 pattern) before every
+    send_telegram call. Even if this firer fires alongside a live cowork
+    dispatcher (Layer B), only the first invocation that wins the marker
+    publishes. No plist-level dedup required.
+
+    HARDENING: each claude -p invocation is bounded (default 1800s,
+    FIRE_TIMEOUT_SECONDS) by the script's own _bounded_exec() — closes the
+    2026-07-04 fb-weekend ~4.5h unbounded pile-up risk under this 900s
+    re-fire cadence.
+
+    OWNING FLOW:   docs/agents/cowork-team/flow/main.md (Step 5 spawn-fanout.md)
+    SCRIPT:        scripts/agents-flow/cowork-guaranteed-slot-firer.sh
+    MATCHER:       scripts/agents-flow/cowork-match-slots.js (unchanged, reused)
+    SCHEDULE SSOT: docs/data/cowork-schedule.json (.slots[] | select(.guaranteed))
+    LOGS:          docs/agent-memory/sessions/cowork-guaranteed-slot-firer{,-error}.log
+    INSTALL (OPS): launchctl load ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist
+    VERIFY (OPS):  launchctl list | grep cowork-guaranteed-slot-firer
+    SELF-CHECK:    scripts/agents-flow/auditor-tier1-probe.sh asserts this label stays loaded
+                   (FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED) — catches a silent unload
+                   before it causes another multi-day outage.
+  -->
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/scripts/agents-flow/cowork-guaranteed-slot-firer.sh</string>
+  </array>
+
+  <!-- Fire every 15 min (900s) to match the cowork */15 CronCreate cadence.
+       The script gates internally via the matcher's cron matching. Most
+       runs exit immediately (< 1s, no guaranteed slot due). -->
+  <key>StartInterval</key>
+  <integer>900</integer>
+
+  <!-- Do NOT fire on plist load — only fire on the 15-min cadence.
+       RunAtLoad=true would fire at machine boot at an arbitrary time, likely
+       outside any guaranteed slot's due window (harmless, but noisy in logs). -->
+  <key>RunAtLoad</key>
+  <false/>
+
+  <!-- One-shot per interval. Each claude -p invocation is bounded by the
+       script's own FIRE_TIMEOUT_SECONDS (_bounded_exec). KeepAlive=false
+       ensures launchd does not restart a failed run (the next 15-min tick
+       provides retry). -->
+  <key>KeepAlive</key>
+  <false/>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP</string>
+
+  <!-- Log destination — tail for firing history + error traces. -->
+  <key>StandardOutPath</key>
+  <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/sessions/cowork-guaranteed-slot-firer.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/sessions/cowork-guaranteed-slot-firer-error.log</string>
+
+  <!--
+    Environment for headless claude CLI invocation.
+    PATH: includes /Users/admin/.local/bin for the `claude` binary and
+    /opt/homebrew/bin + /usr/local/bin for `node`/`jq` (script dependencies).
+    HOME: required so claude can read ~/.config (API key + settings) and
+    ~/.mcp.json.
+    CLAUDE_BIN: overridable path to the claude binary (consumed by the
+    wrapper script).
+
+    NOTE: ANTHROPIC_API_KEY is read by the claude binary from its own config
+    store (~/.config/anthropic/ or equivalent), not from this plist. If the
+    machine is logged in via `claude login`, the key is cached there. The
+    .env in the repo root is sourced by the wrapper script for Telegram
+    tokens (not the API key).
+  -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/Users/admin/.local/bin:/Users/admin/.bun/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+    <key>HOME</key>
+    <string>/Users/admin</string>
+    <key>CLAUDE_BIN</key>
+    <string>/Users/admin/.local/bin/claude</string>
+  </dict>
+</dict>
+</plist>

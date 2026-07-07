@@ -195,29 +195,29 @@ Step 4.8 are retained as a SECONDARY opportunistic best-effort (harmless when th
 tick) but are NO LONGER the primary trigger — the launchd timer is authoritative.
 **References:** `docs/architecture-briefs/2026-06-18-auto-push-threshold-backstop.md` (§2 Options Evaluation — Option-A now selected)
 
-### FB Poster Firer (dedicated launchd timer — FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL)
+### Cowork Guaranteed-Slot Firer (dedicated launchd timer — F1-LAUNCHD-COWORK-BACKSTOP)
 
-**Root cause closed:** The cowork-team master CronCreate dispatcher is session-scoped — CLI session end evaporates it. The cloud RemoteTrigger backstop is RETIRED (STANDING: no cloud RemoteTrigger — all local). Session end = fb-daily missed at 09:15Z with no recovery path (memory: `project_cowork_guaranteed_slot_needs_live_cli_session`).
+**Root cause closed:** The cowork-team master CronCreate dispatcher is session-scoped — CLI session end evaporates it. The cloud RemoteTrigger backstop is RETIRED (STANDING: no cloud RemoteTrigger — all local). Session end = every `guaranteed:true` slot due in that window is silently missed with no recovery path (memory: `project_cowork_guaranteed_slot_needs_live_cli_session`). Re-verified live 2026-07-07 (~73h outage 2026-07-04→07-07 silenced chef-morning/eod/evening, digest-sunday, fb-daily). This generalizes and RETIRES the fb-only `com.vn-market.fb-daily-firer` (FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL) — hardcoding one if-block per new guaranteed slot was itself flagged as a recurring-debt pattern (architecture brief `docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md` §3).
 
-**Mechanism (now): dedicated launchd timer** — `com.vn-market.fb-daily-firer`.
+**Mechanism (now): dedicated launchd timer** — `com.vn-market.cowork-guaranteed-slot-firer`.
 | Field | Value |
 |-------|-------|
-| Plist | `launchd/com.vn-market.fb-daily-firer.plist` (install to `~/Library/LaunchAgents/`) |
+| Plist | `launchd/com.vn-market.cowork-guaranteed-slot-firer.plist` (install to `~/Library/LaunchAgents/`) |
 | Cadence | `StartInterval` 900s (15 min, matching cowork dispatcher cadence) + `RunAtLoad false` |
-| Program | `bash scripts/cowork-fb-daily-firer.sh` |
-| Time gate | Script: Mon-Fri UTC 09:00–09:29 → slot=fb-daily; Sat-Sun UTC 13:00–13:29 → slot=fb-weekend |
-| Invocation | `claude --dangerously-skip-permissions -p "run docs/agents/fb-market-poster/flow/main.md  slot=<slot>"` |
-| Logs | `docs/agent-memory/sessions/fb-daily-firer{,-error}.log` |
+| Program | `bash scripts/agents-flow/cowork-guaranteed-slot-firer.sh` |
+| Match logic | Calls `node scripts/agents-flow/cowork-match-slots.js` (SAME matcher the live `*/15` dispatcher uses), filters returned `slots[]` to `guaranteed===true` — no hardcoded per-slot time gate |
+| Invocation | Per matched slot: `claude --dangerously-skip-permissions -p "<slot.trigger_prompt>"`, `trigger_prompt` read VERBATIM off the matched slot object, bounded by `FIRE_TIMEOUT_SECONDS` (default 1800s) |
+| Logs | `docs/agent-memory/sessions/cowork-guaranteed-slot-firer{,-error}.log` |
 | KeepAlive | `false` — one-shot per interval; script exits 0/1 by design |
 
-**Slots covered** (from `docs/data/cowork-schedule.json`):
-- `fb-daily` — `cron: "15 9 * * 1-5"` (09:15 UTC Mon-Fri = 16:15 VN, `guaranteed: true`)
-- `fb-weekend` — `cron: "13 13 * * 6,0"` (13:13 UTC Sat-Sun = 20:13 VN, `guaranteed: true`)
+**Slots covered** (from `docs/data/cowork-schedule.json`, every `guaranteed: true` row — read live every tick, zero script edits needed to add a new one): `chef-morning`, `chef-eod`, `chef-evening`, `digest-sunday`, `digest-daily`, `tnb-audit`, `fb-daily`, `fb-weekend`. Deliberately EXCLUDES sub-hourly market/offhours slots (`news-scout-market`, `market-watcher-*`, `alert-commander-market`, `bctc-analyst-slot-*`, `refine-bctc-slot-*`) — those stay Layer-B-only by design.
 
-**Dedup:** The fb-market-poster flow claims `published:fb-daily:<VN-DATE>` (TTL=100800s/28h) before every `send_telegram` call (spawn-fanout.md § FR-P2-7). Even if this firer AND the live cowork dispatcher both fire, only the first winning claim publishes — same dual-layer coexistence model as chef-morning Layer A + Layer B.
+**Dedup:** unchanged — every guaranteed-slot flow (`chef.md` Step 0.5, `digest-predict/flow/main.md` pre-D gate, `fb-market-poster/flow/main.md`'s own gate) claims a published-marker (`task_claim`, FR-P2-7 pattern) before every `send_telegram` call. Even if this firer AND the live cowork dispatcher both fire, only the first winning claim publishes — same dual-layer coexistence model as chef-morning Layer A + Layer B.
 
-**Why StartInterval (not StartCalendarInterval):** The machine is in France (CEST = UTC+2 / CET = UTC+1). StartCalendarInterval uses local time → DST-sensitive. StartInterval with an internal UTC `date -u` gate in the script is DST-invariant. Most 15-min runs are sub-second no-ops (gate rejects non-window ticks immediately).
+**Why StartInterval (not StartCalendarInterval):** The machine is in France (CEST = UTC+2 / CET = UTC+1). StartCalendarInterval uses local time → DST-sensitive. The matcher's own UTC-based cron matching is DST-invariant. Most 15-min ticks are sub-second no-ops (no guaranteed slot due → ~0 token cost).
 
-**Install / re-arm** (OPS task FB-LAUNCHD-OPS-INSTALL-VERIFY): `launchctl load ~/Library/LaunchAgents/com.vn-market.fb-daily-firer.plist`.
-**Verify:** `launchctl list | grep fb-daily-firer` → PID column non-zero at 09:15Z Mon-Fri.
-**Flow pointer:** `docs/agents/cowork-team/flow/main.md` Step 5 (`spawn-fanout.md`) — launchd is the OS-level backstop that reproduces the same `Agent(fb-market-poster, ...)` spawn when no CLI session is live.
+**Self-check:** `scripts/agents-flow/auditor-tier1-probe.sh` asserts every repo-tracked `launchd/*.plist` label (including this one) is present in `launchctl list` output — catches a silent unload before it causes another multi-day outage (FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED; root cause of THIS outage was the old fb-daily-firer plist silently unloading 2026-07-04 with nothing detecting it).
+
+**Install / re-arm** (OPS task OPS-COWORK-GUARANTEED-SLOT-INSTALL): `launchctl unload ~/Library/LaunchAgents/com.vn-market.fb-daily-firer.plist` (old, retired) then `launchctl load ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist`.
+**Verify:** `launchctl list | grep cowork-guaranteed-slot-firer` → entry present; PID column non-zero at each guaranteed slot's UTC due time.
+**Flow pointer:** `docs/agents/cowork-team/flow/main.md` Step 5 (`spawn-fanout.md`) — launchd is the OS-level backstop that reproduces the same `Agent(<agent>, ...)` spawn when no CLI session is live.

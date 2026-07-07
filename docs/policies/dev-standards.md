@@ -183,18 +183,23 @@ PUSH_THRESHOLD=30 bash scripts/fleet-worktree-push.sh
 # Fallback flow: docs/agents/dev-team/flow/post-cycle.md § Step PUSH-BACKSTOP
 ```
 
-**CANONICAL: FB poster OS-level firer (FB-LAUNCHD-DEV-WRAPPER-PLIST-INSTALL)**
+**CANONICAL: Cowork guaranteed-slot OS-level firer (F1-LAUNCHD-COWORK-BACKSTOP)**
 ```bash
-# Dry-run (print what would fire, no claude invocation):
-bash scripts/cowork-fb-daily-firer.sh --dry-run
-# Live run (invoked by launchd every 15 min — script gates on UTC time window):
-bash scripts/cowork-fb-daily-firer.sh
+# Dry-run (print what would fire for every guaranteed===true match, no claude invocation):
+bash scripts/agents-flow/cowork-guaranteed-slot-firer.sh --dry-run
+# Live run (invoked by launchd every 15 min — calls cowork-match-slots.js,
+# filters to guaranteed===true, fires each match's trigger_prompt verbatim):
+bash scripts/agents-flow/cowork-guaranteed-slot-firer.sh
 # Override claude binary path (env, no rebuild):
-CLAUDE_BIN=/path/to/claude bash scripts/cowork-fb-daily-firer.sh
-# Owning flow doc: docs/standards/cron-jobs.md § FB Poster Firer
-# Plist: launchd/com.vn-market.fb-daily-firer.plist
-# Slots: fb-daily (09:15Z Mon-Fri) + fb-weekend (13:13Z Sat-Sun)
-# OPS install: launchctl load ~/Library/LaunchAgents/com.vn-market.fb-daily-firer.plist
+CLAUDE_BIN=/path/to/claude bash scripts/agents-flow/cowork-guaranteed-slot-firer.sh
+# Owning flow doc: docs/standards/cron-jobs.md § Cowork Guaranteed-Slot Firer
+# Plist: launchd/com.vn-market.cowork-guaranteed-slot-firer.plist
+# Slots: every docs/data/cowork-schedule.json row with guaranteed:true — currently
+#   chef-morning/eod/evening, digest-sunday/daily, tnb-audit, fb-daily, fb-weekend.
+#   A new guaranteed:true row is covered automatically — ZERO script edits.
+# OPS install: launchctl load ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist
+# Self-check: scripts/agents-flow/auditor-tier1-probe.sh asserts this label (and every
+#   other repo-tracked launchd/*.plist Label) stays loaded (FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED)
 ```
 
 **CANONICAL: Dev-team idle-capacity backlog pickup (SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1)**
