@@ -1,20 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-08 | **Cycle:** FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT
-
-## Session 2026-07-08 — FIX-NEWS-CB-FALSE-CLOSED (BOUNDED-1 idle pickup)
-
-**Task:** 2026-06-13 filing said Reuters RSS + TradingEconomics x2 hit CB threshold but stayed falsely reported [OK]. dev-team's live pre-check (this tick) showed the CB half already fixed — status now correctly shows "Ngưng"(down), but two NEW live bugs: (1) both sources coded permanently-disabled since 2026-05-13 yet still accumulating failures (79 and climbing, zero successes ever), (2) a duplicate-looking "Trading Economics" row. **Zone:** `apps/news-fetch/` per task filing — but that's a routing hint, not the real owner; traced call graph first.
-
-**Architecture check (per task's explicit ask):** confirmed `apps/news-fetch/` (Go microservice, port 5008) is a separate, unwired pipeline — only reachable via `api-gateway`'s generic `NEWS_URL` proxy map (`cmd/server/main.go`). It never touches `apps/mcp-server`'s `pollNews`/`SourceHealthTracker`/`get_system_status`. Fix correctly belongs in `apps/mcp-server` (confirmed live via direct `get_system_status` query showing real, growing counters — the legacy tracker is genuinely live, not a stale/dead path).
-
-**Root cause A:** `intelligenceCycleJob.ts`'s `defaultPollNews()` (scheduled every 15-min tick) re-injected `reuters: async()=>[]` / `tradingeconomics: async()=>[]` no-op stubs. `pollNews.ts`'s health loop treats a fulfilled-but-empty result from a source NOT in `STUB_CAPABLE_KEYS` (only `newsapi` is) as a real failure → `recordFailure()` fired every tick, silently overwriting the one-time `recordDisabled()` seed from Sprint 1833g/1898b. Fix: remove both keys entirely — `pollNews.ts`'s own `resolvedFetchers` already excludes them from scheduled runs unless a caller explicitly injects a fetcher (that contract was already documented in-code, just not honored by this one caller).
-
-**Root cause B (live-confirmed via `get_system_status`, byte-diff'd):** `formatSourceHealthTable`'s 18-char Nguồn column truncates "Trading Economics" (17c) and "Trading Economics News" (22c) to the identical string `"Trading Economics "` — not a registry duplicate, a display collision. Widened to 26c; header/separator now derived from the same constant to prevent recurrence.
-
-**Test:** new `FIX-NEWS-CB-FALSE-CLOSED.test.ts` — source-scan asserts `defaultPollNews()` body no longer contains `reuters:`/`tradingeconomics:` keys (kept `teChromiumNews:` — that one has a real non-deprecated fetcher, Task 1843's stub is CPU-protection only, separate concern); behavioral test proves `recordDisabled()` state survives a full `pollNews()` cycle untouched; display test proves two distinct sources with long names no longer render as byte-identical rows. RED confirmed on all 3 before the fix, GREEN after. Targeted 18-file sweep of every source-health/pollNews/intelligence-cycle test: 295 pass / 0 fail. tsc clean.
-
-**Scope discipline:** did NOT widen the CB failure threshold (original 2026-06-13 proposal) — the CB already correctly reports down; the bug was a disabled source being re-touched, not a threshold miscalibration. Did NOT add `teChromiumNews` to `STUB_CAPABLE_KEYS` — same failure-accumulation shape but a different, real, non-deprecated fetcher; out of this task's DoD (Reuters+TE-legacy only), left as a follow-up if PO wants to file it.
+**Last updated:** 2026-07-08 | **Cycle:** FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE
 
 ## Session 2026-07-08 — FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE (dev-team router-filed)
 
@@ -45,3 +31,15 @@
 **Test:** added T19 (self-hold -> RUN, heartbeats, no release/no telegram) + T20 (regression guard — real peer-hold still SKIPs, still releases nothing) to `dev-team-tick-preflight.test.sh` — 55/55 pass (53 pre-existing unchanged + 2 new).
 
 **Scope discipline:** touched only the one script + its existing test file + board/journal/notebook writes, per dispatch boundary. No `apps/*` change, no Docker Close Gate needed. Board flipped BACKLOG→REVIEW, `next_agent`→qa via `orch-apply.sh`; `.head.next_agent` synced to match in the same write (known recurring gap called out explicitly in this dispatch — verified with `jq '.head'` before finishing).
+
+## Session 2026-07-08 — FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE (PO-escalated follow-up from SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE)
+
+**Task:** SPIKE (architect, 2026-07-08) proved gateway-blindness is 100% client-side (CLI MCP connection lifecycle, no repo fix possible) and spun off this repo-actionable follow-up: bridge the 3 gateway meta-tools for bash-equipped agents + codify a de-escalation rule to stop the CRITICAL re-raise churn (7 agent types, 4 guaranteed-slot misses, 22h+ open). **Zone:** cross-service/ (scripts/ + docs/standards/) → developer handles directly, no dispatch.
+
+**Implementation:** added `mcp_call_gateway_meta(tool_name, json_args)` to `scripts/agents-flow/mcp-call.sh`. The gateway endpoint is genuinely stateful (unlike the existing stateless `mcp_call()`), so the new function runs the full `initialize -> notifications/initialized -> tools/call` handshake, reusing the `mcp-session-id` header minted by step 1. Reused the existing `_mcp_call_parse()` for the final response — proved live that it's the identical SSE-framed JSON-RPC shape. Added §6 Degraded Mode to `docs/standards/gateway-call-contract.md`: self-diagnosis rule, workaround coverage matrix, discovery-first cross-ref, and §6d — the de-escalation rule (≥2x corroborated this session → stop re-raising CRITICAL) that is the actual fix for the churn that triggered this dispatch.
+
+**Live-verified beyond stubs:** ran the new function directly against the real production gateway for all 3 meta-tools (list_servers, list_server_tools, search_tools) — all succeeded end-to-end. Caught a real gotcha doing this: `search_tools`'s raw JSON-RPC schema requires `{"query":...}`, not `{"keyword":...}` as shown in §2's native-tool-call pseudocode (different call surface, same repo) — documented explicitly in §6b to avoid shipping a footgun.
+
+**Test:** new `mcp-call-gateway-meta.test.sh` (RED: function-not-found -> GREEN: 20/20, stubbed `_mcp_call_gateway_curl` covering happy path + session-id propagation, invalid/missing tool_name, transport failure and non-2xx at each of the 3 steps, isError passthrough). Re-ran `cowork-tick-preflight.test.sh` (20/20) + `dev-team-tick-preflight.test.sh` (55/55) — zero regression (both stub `mcp_call` after sourcing, untouched by this change). shellcheck clean.
+
+**Scope discipline:** did not touch existing `mcp_call()` or the standalone CLI dispatch block (kept the diff conservative, exactly the SPIKE's stated scope — "add, don't merge"). Root cause (CLI-side MCP client lifecycle) is out-of-repo and NOT fixed by this task — only the repo-actionable mitigation + de-escalation doc rule are in scope. No `apps/*` change, no Docker Close Gate needed (script + docs only). Board flipped IN_PROGRESS→REVIEW, `next_agent`→qa via `orch-apply.sh`; top-level `.head` deliberately left untouched (owned this tick by a separate parallel FACTORY dispatch).
