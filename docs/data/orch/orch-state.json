@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-KINHDICH-delete-deprecated-ts-tree",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-KINHDICH-delete-deprecated-ts-tree — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-08T09:35:03Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-KINHDICH-delete-deprecated-ts-tree done_verified (dev-kinh-dich, commits 4352bc25b/691196296; qa independent re-verify: zero live refs, go build/vet/lint/test all green, docker compose build kinh-dich-service succeeded) — awaiting next dispatch",
+    "updated_at": "2026-07-08T09:46:10Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9283,6 +9283,26 @@
           "residual_advisory": "NON-BLOCKING documentation-trail gap flagged by qa (preserved so it is not silently lost): DJ STEP dev-technical-analysis-S2 states the golden request/response bodies were 'pasted into the task report/handoff', but no such report/handoff file exists anywhere in the repo (qa grepped docs/handoffs/ reports/ and the journal; router independently re-confirmed absent via find/grep). Judged non-blocking because the zero-functional-change claim was independently re-verified at the git-diff line level by both qa and router, and live post-rebuild behavior matches openapi.yaml exactly. Recommendation for future golden-diff tasks: paste actual bodies into a durable location (task report or a journal code block), not just assert 'byte-identical' in prose.",
           "unblocks": "Clears the 2nd of 2 depends_on prerequisites for FACTORY-TECHANALYSIS-delete-orphaned-ts-service (other prereq FACTORY-TECHANALYSIS-go-livepath-tests already DONE_VERIFIED). BOTH now satisfied. Left for automated BOUNDED-1 auto-pickup on a future tick — po does NOT act on it here."
         }
+      },
+      {
+        "title": "Delete the 4909L _deprecated TypeScript predecessor tree",
+        "priority": "P1",
+        "zone": "kinh-dich-service",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-KINHDICH-delete-deprecated-ts-tree",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-delete-deprecated-ts-tree",
+        "promoted_at": "2026-07-08T09:34:51Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T09:35:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-08T09:39:27Z",
+        "reviewed_by": "dev-kinh-dich",
+        "next_agent": "qa",
+        "qa_review_note": "qa independent re-verify (2026-07-08): (1) repo-wide grep for '_deprecated' across *.go/*.mod/Dockerfile*/*.yaml/*.yml -- zero live references inside apps/kinh-dich-service/ (only 3 hits repo-wide, all in apps/macro-indicators/pkg/primitive/*.go comments referencing a DIFFERENT, already-deleted macro-indicators _deprecated tree from a sibling FACTORY-MACRO task -- unrelated to this task). Broader all-file-type grep for the literal path string 'kinh-dich-service' + '_deprecated' across the whole repo -- only doc/prose hits (architecture-briefs, handoffs, notebooks, decision journals, orch-state.json board history) -- zero code/build/config references. `ls apps/kinh-dich-service/src/_deprecated` confirms directory genuinely gone. (2) Fresh `go build ./...` exit 0, `go vet ./...` exit 0, `golangci-lint run ./...` 0 issues, `go test -count=1 ./...` ALL GREEN from apps/kinh-dich-service/ -- 9 packages ok (pkg/application, pkg/infrastructure, pkg/interface/http, pkg/module/reading_composer, pkg/primitive/hao_encoder, pkg/primitive/hexagram_resolver, pkg/primitive/ngu_hanh_classifier, pkg/primitive/nuclear_hexagram, pkg/primitive/reading_scorer) + 4 [no test files] (cmd/sandbox, cmd/server, pkg/domain, pkg/primitive) = 13 packages total. This matches router's own independent count exactly and CORRECTS the decision journal/notebook prose (\"5 test packages + 7 no-test-files\" = 12, both undercounted and internally inconsistent with the actual 13) -- the overall verdict (all green, zero failures) genuinely holds; only the prose tally was wrong. Recommend a one-line journal/notebook correction on next touch (non-blocking). (3) Dockerfile read in full: `COPY . .` is a blanket copy with no explicit reference to src/ or _deprecated anywhere; ran `docker compose build kinh-dich-service` myself -- succeeded cleanly end-to-end (go build -o /app/server ./cmd/server inside builder stage, image exported/tagged OK), confirming the Dockerfile never depended on the deleted tree and still builds post-deletion. (4) `git show --stat` on both commits: 4352bc25b deletes exactly 34 files under apps/kinh-dich-service/src/_deprecated/ (file count matches claim exactly) -- total lines removed 5270 (cross-checked against `wc -l` sum of all 34 files read from the parent commit, exact match); the \"~4302 LOC\" figure in the commit message/journal is a soft undercount of the true total (5270 all-file, or 4267 if restricted to .ts files only excluding openapi.yaml/bun.lock/toolchain-config) -- same class of minor prose-estimate drift as the test-tally issue above, not a discrepancy in *what* was deleted (file list/count verified exact). The task title's \"4909L\" is a third, independent estimate -- none of the three LOC numbers agree exactly, but file identity/count (34, verified both ways) is what matters and is unanimous. 691196296 is the board-flip-only commit (orch-state.json, 44 lines changed), as claimed. (5) DJ-GATE-1 confirmed: sprint-SYSTEMIC-REMAKE-P1-dev-kinh-dich.md STEP dev-kinh-dich-S1 is substantive (task-id stamped, what-done/what-considered/why-decision/why-change all populated). VERDICT: zero live references confirmed independently, all Go gates genuinely green (fresh re-run, not trusted from claim), Dockerfile/docker build unaffected by the deletion, file/commit identity verified exact. Two non-blocking prose-only discrepancies found (test-package tally, LOC estimate) -- recommend a one-line journal correction on a future touch, neither reflects an actual functional gap. No blocking issues. Per runbook: rebuild_required=false, standard dev->qa handoff (not the Docker Microservice Code-Change Close Gate), so qa closes directly to DONE_VERIFIED without a po Step 6 hop.",
+        "updated_at": "2026-07-08T09:46:10Z",
+        "updated_by": "qa"
       }
     ],
     "head": {
@@ -9413,23 +9433,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Delete the 4909L _deprecated TypeScript predecessor tree",
-        "priority": "P1",
-        "zone": "kinh-dich-service",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-KINHDICH-delete-deprecated-ts-tree",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-delete-deprecated-ts-tree",
-        "promoted_at": "2026-07-08T09:34:51Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T09:35:03Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "reviewed_at": "2026-07-08T09:39:27Z",
-        "reviewed_by": "dev-kinh-dich",
-        "next_agent": "qa"
       }
     ],
     "qa": [],
