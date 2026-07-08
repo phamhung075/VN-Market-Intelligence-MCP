@@ -14,6 +14,28 @@
 | `pkg/primitive/moving_average` | `moving_average_test.go` | SMA, EMA, dispatcher, case-insensitive routing |
 | `pkg/primitive/detect_cross` | `detect_cross_test.go` | Bullish/bearish cross, equal-then-cross, parallel lines |
 
+### Unit Tests — Application + Interface/HTTP (FACTORY-TECHANALYSIS-go-livepath-tests, 2026-07-08)
+
+Backstops the live/deployed Go request path — `pkg/application` and `pkg/interface/http`
+had zero `*_test.go` files before this task, while the only green test suite covered the
+dead `src/` TypeScript shadow service (deletion tracked separately by
+`FACTORY-TECHANALYSIS-delete-orphaned-ts-service`, blocked on this task).
+
+| Package | File | Coverage |
+|---------|------|----------|
+| `pkg/application` | `usecases_test.go` | `ComputeTAUseCase.Execute` — pure-compute path (closes supplied, DB never consulted), DB-backed path (fake `PriceRepo` returns candles, `GetCandles(symbol, 60)` args asserted, closes extracted in order), `period<=0` defaults to 14 (table: zero + negative), empty-closes+empty-symbol → `"closes or symbol required"` error (no I/O), `PriceRepo` error wrapped+propagated (`GetCandles(%s): %w`), calculator error propagated as-is |
+| `pkg/interface/http` | `router_test.go` | `httptest.NewServer(NewRouter(...))` — `GET /health` (200, `status=ok`/`service=technical-analysis`), `POST /ta/indicators` happy path (200, response DTO decoded), invalid-JSON body (400), missing closes+symbol (400, exact error message), useCase error via calculator failure (500), useCase error via DB-backed `PriceRepo` failure (500) |
+
+Both files use local fakes (`fakeCalculator`, `fakePriceRepo`) satisfying the
+`application.TACalculator` / `application.PriceRepo` ports — no `infrastructure`
+package import, no SQLite, no DB credentials. Pattern mirrors the established
+`httptest.NewServer(NewRouter(...))` harness already proven in
+`cmd/sandbox/main.go` (`newTestServer`) and `apps/stock-price/pkg/interface/http/router_test.go`.
+
+Purely additive — no production code changed. `go test ./...` (12 packages) and
+sandbox 35/35 scenarios green after this change (same as before; the task adds
+coverage, not new behavior).
+
 ### Unit Tests — Module (P1-C1g)
 
 | Package | File | Coverage |
