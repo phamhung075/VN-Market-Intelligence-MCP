@@ -261,10 +261,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FACTORY-INTERFACE-source-confidence-10-mask",
-    "next_agent": "ops",
+    "next_agent": "qa",
     "next_action": "ops-gated docker compose up -d mcp-server swap (image 35c8117c1f85 already built + QA-approved) + peer-container health verify; then QA post-swap sanity check: re-run SELECT source_confidence, COUNT(*) FROM bctc_table_rows GROUP BY source_confidence + NULL count against /app/data/market.db in-container (expect same {0.1:380,0.4:2,1.0:3257}, 0 NULLs, no NOT NULL violations on any new BCTC finalize runs) + server /health 200 + tool count unchanged; then flip FACTORY-INTERFACE-source-confidence-10-mask -> done_verified via orch-apply.sh.",
-    "updated_at": "2026-07-08T04:40:00Z",
-    "updated_by": "qa"
+    "updated_at": "2026-07-08T06:45:00Z",
+    "updated_by": "ops"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
