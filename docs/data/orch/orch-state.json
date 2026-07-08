@@ -267,12 +267,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FACTORY-INFRA-split-vnstockBridge",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INFRA-split-vnstockBridge — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-08T20:03:36Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "ops",
+    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (docs/protocols/docker-deployment-runbook.md) for FACTORY-INFRA-split-vnstockBridge -- vnstock Python-bridge fetcher split (vnstockBridge.ts + fetchers/vnstock/{runtime,index,scripts/*}.ts), rebuild_required=true.",
+    "updated_at": "2026-07-08T20:50:00Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9540,22 +9540,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "title": "Extract 11 inline Python templates + shared stdout-capture wrapper from vnstockBridge",
-        "priority": "P1",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-INFRA-split-vnstockBridge",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-vnstockBridge",
-        "promoted_at": "2026-07-08T20:03:36Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T20:03:36Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -9674,6 +9659,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Extract 11 inline Python templates + shared stdout-capture wrapper from vnstockBridge",
+        "priority": "P1",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INFRA-split-vnstockBridge",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-vnstockBridge",
+        "promoted_at": "2026-07-08T20:03:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T20:03:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "review_note": "FACTORY-INFRA-split-vnstockBridge: vnstockBridge.ts (1206L) held 11 inline Python *_SCRIPT templates, 9 of which re-embedded the identical FIX-FUNDAMENTALS-REFRESH-CRON-DEAD stdout-suppression preamble verbatim (proof the fix was hand-applied 9 times) plus 17 /1e9 conversions. Extracted each template to fetchers/vnstock/scripts/*.ts (one buildXxxScript() per data type); added wrapVnstockScript(opts) in new fetchers/vnstock/runtime.ts that owns the preamble once via a {symbol, fetch, resultVar?, extraInit?, errorLabel, emptyValue, body} options object — 8 scripts (tradingStats/officers/shareholders/intraday/orderBook/balanceSheet/cashFlow/news) plus financials.ts (2-dataframe variant) now call it; prices.ts (multi-symbol loop) and events.ts (bypasses Vnstock().stock() via a viz-mock, pre-existing v4-compat workaround) stay bespoke, genuinely different control flow. VnstockRateLimiter/runPython/runPythonWithBackoff/backoff/junk-detection moved into runtime.ts (374L, size-justified per the backlog approach naming this exact file). vnstock/index.ts barrel re-exports runtime.ts (vnstockBridge.ts imports through it, giving the barrel a real call-site per simplicity-gate Q2). vnstockBridge.ts (330L, size-justified — keeps the 11 public fetch* wrappers as the one canonical import path 15+ tests/consumers already depend on) imports the barrel + 11 script builders, re-exporting tested helpers unchanged.\n\nVerified via a scratch equivalence script comparing generated Python text pre/post-split (pre-split consts exported via git show HEAD:...) across 3 symbols x 11 templates = 35 checks: 32 byte-identical, 3 (financials.ts) differ only in a shortened shared comment (4 lines -> 1 line) -- confirmed line-by-line every subsequent statement (fetch calls, math, dict keys) is unchanged, zero code/logic drift. tsc clean, eslint clean. Targeted vnstock suite (24 files covering every exported symbol + every fetch* consumer, incl. mock.module-based syncVnstockData/hose tests) 252/252 pass. Server boot verified PORT=3996: health 200 toolCount=183 (matches baseline), /api/bctc-inspect 200, /dashboards/news-fetch/ 200. Gate 2d scheduler cron.schedule grep=3 unchanged (no scheduler files touched). Full bun test run 1: 14349 pass/40 skip/68 fail/7 errors/44989 expect() calls/1180 files (732.30s) then the known Bun 1.3.13 crash-at-teardown (non-authoritative) -- visible tail shows the fails are the documented pre-existing pollNews/RSS-timeout flaky class (1898b-rss-degradation-regression.test.ts x3) plus 2 unrelated fails in src/_deprecated/1302-technical-indicators.test.ts (deprecated dir), zero vnstock mentions. Ran the full suite a 2nd time for exhaustive-grep log capture; its partial log (~22k lines, 43+/68 fails already observed) additionally corroborates: hundreds of normal [vnstock:...] runtime log-line mentions (unchanged format), zero (fail)-line matches. Commit: e27121d93 (code+docs), c0cab3ca7 (memory). Doc updates: infrastructure.md (vnstock Python Bridge section rewritten for the new file layout).\n\nrebuild_required=true -- vnstock fetchers run against the live named-volume market.db (fundamentals/prices scheduler jobs + on-demand MCP tools). This tasks own DoD explicitly requires RAW-verify against the named-volume DB after rebuild that vnstock fundamentals/prices fetch identical values (not just unit-test green) -- per the Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md), ops performs Steps 1-4 (rebuild+SHA-gate) next, then qa Step 5 RAW-verify (confirm vnstock fetch output values unchanged pre/post on live data), then po Step 6 closes DONE_VERIFIED -- matching the FACTORY-APP-split-fetchParseAndStoreBctc / FACTORY-APP-dedup-date-freshness-helpers precedent for rebuild_required=true FACTORY tasks in this same zone.",
+        "reviewed_at": "2026-07-08T20:50:00Z",
+        "reviewed_by": "dev-mcp-server"
       }
     ],
     "qa": [],
@@ -9693,8 +9697,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T20:03:36Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-08T20:50:00Z",
+    "last_triaged_by": "dev-mcp-server"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
