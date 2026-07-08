@@ -261,10 +261,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-PDF-paddleocr-score-07-mask",
-    "next_agent": "ops",
-    "next_action": "FACTORY-PDF-paddleocr-score-07-mask at REVIEW -- ops: rebuild+swap pdf-extractor container, then qa: live-endpoint RAW-verify of row_bands row_density for missing-score cells.",
-    "updated_at": "2026-07-08T06:36:28Z",
-    "updated_by": "dev-pdf-extractor"
+    "next_agent": "qa",
+    "next_action": "FACTORY-PDF-paddleocr-score-07-mask at REVIEW -- pdf-extractor container rebuilt+swapped (image 0c83b2c5f8ad, healthy, rebuild_required=false). qa: live-endpoint RAW-verify of row_bands row_density for missing-score cells.",
+    "updated_at": "2026-07-08T06:50:12Z",
+    "updated_by": "router (head was stale after ops rebuild+swap — board row already advanced to next_agent=qa, .head was not synced)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
