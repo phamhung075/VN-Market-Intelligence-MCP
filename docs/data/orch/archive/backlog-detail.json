@@ -1,7 +1,7 @@
 {
   "_sentinel": "backlog-detail-v1",
   "created_at": "2026-06-26T19:51:45Z",
-  "updated_at": "2026-07-07T22:17:56Z",
+  "updated_at": "2026-07-08T03:34:45Z",
   "count": 319,
   "items": {
     "TASK17-FOREIGN-FLOW": {
@@ -6745,6 +6745,18 @@
       "title": "test_low_text_density_ocr_rasterize.py unconditionally stomps sys.modules[PIL/PIL.Image/fitz/pdfplumber/paddleocr] at import time, no restore — breaks OCR+rasterizer tests in full-suite runs (order-dependent, 7 confirmed failures)",
       "type": "FIX",
       "zone": "pdf-extractor"
+    },
+    "FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER": {
+      "created_at": "2026-07-08T03:34:45Z",
+      "id": "FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER",
+      "owner": "dev-mcp-server",
+      "priority": "high",
+      "size": "S",
+      "status": "backlog",
+      "status_note": "AC: apps/mcp-server/src/interface/mcp/tools/analysis/sequential-market-analysis.ts registerSequentialMarketAnalysisTools() calls server.registerTool(\"sequential_market_analysis\", {title,description,inputSchema,handler:tool.handle}) — WRONG shape. The real SDK signature (@modelcontextprotocol/sdk@1.29.0, node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@3.25.76/node_modules/@modelcontextprotocol/sdk/dist/esm/server/mcp.js:699 registerTool(name,config,cb) + .d.ts:150-157) destructures config for {title,description,inputSchema,outputSchema,annotations,_meta} ONLY — config.handler is silently dropped, and no 3rd cb arg is ever passed, so the SDK's internal registeredTool.handler is permanently undefined. server.ts's per-call telemetry wrapper (createBunServer -> createMcpServerInstance, ~line 326: const originalHandler = toolDef.handler; toolDef.handler = async (args) => { incrementTool(toolName); return originalHandler(args); }) then throws \"originalHandler is not a function\" on EVERY real invocation, over EVERY transport (registration bug lives in tool registration, shared by /mcp and /sse+/messages — transport-agnostic).\n\nFix: change the registerTool call to server.registerTool(\"sequential_market_analysis\", {title,description,inputSchema:tool.schema}, tool.handle) (schema+handler as SEPARATE positional args, matching the SDK contract every other tool file in this repo already uses via the server.tool(name,description,schema,handler) 4-arg legacy API — see apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts:147 for the working pattern).\n\nCONFIRMED PRE-EXISTING: git show 1b1397025^:apps/mcp-server/src/interface/mcp/tools/analysis/sequential-market-analysis.ts shows a byte-identical broken registerTool call BEFORE the FACTORY-INTERFACE-sequential-confidence-05-mask confidence-fabrication fix landed — that fix never touches registerSequentialMarketAnalysisTools, zero relationship to this defect.\n\nRepro (against the live swapped mcp-server, image 180382145ee7): curl -X POST http://localhost:3000/mcp -H \"Content-Type: application/json\" -H \"Accept: application/json, text/event-stream\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"sequential_market_analysis\",\"arguments\":{\"analysisType\":\"hypothesis_test\",\"thought\":\"t\",\"thoughtNumber\":1,\"totalThoughts\":1,\"nextThoughtNeeded\":false,\"hypothesis\":\"h\"}}}' -> {\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"originalHandler is not a function. (In 'originalHandler(args)', 'originalHandler' is undefined)\"}],\"isError\":true},...}.\n\nSanity-checked the bug is scoped to this one tool, not the /mcp route itself: get_market_snapshot (registered via the correct server.tool(...) 4-arg API) called over the same route on the same container returns real correct data.\n\nDoD: real tools/call over /mcp against sequential_market_analysis returns a valid {status,thought,progress,nextSteps} payload (no isError); FACTORY-INTERFACE-sequential-confidence-05-mask.test.ts + tool-registry-parity.test.ts stay green (5/5 + 22/22); a new regression test added asserting an end-to-end registerTool()+tools/call round-trip (not just tool.handle() called directly) so this class of registration-shape bug cannot silently recur.\n\nSource: FACTORY-INTERFACE-sequential-confidence-05-mask post-swap QA sanity check, 2026-07-08T03:34:45Z.",
+      "title": "sequential_market_analysis MCP tool unreachable over the wire — registerTool() passes handler nested in config instead of the SDK's required 3rd positional callback arg, \"originalHandler is not a function\" on every real call (pre-existing, discovered during FACTORY-INTERFACE-sequential-confidence-05-mask post-swap QA sanity check, unrelated root cause)",
+      "type": "FIX",
+      "zone": "mcp-server-interface"
     }
   }
 }

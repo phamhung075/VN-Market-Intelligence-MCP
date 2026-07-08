@@ -1,7 +1,7 @@
 # Task Report: FACTORY-INTERFACE-sequential-confidence-05-mask — stop fabricating 0.5 confidence
 
 date: 2026-07-08
-outcome: APPROVED (code+tests) — held REVIEW (ops-gated mcp-server image swap pending; no live HTTP surface for this field, so post-swap gate is a lighter sanity check, not a RAW HTTP probe)
+outcome: DONE_VERIFIED — post-swap sanity check PASS (docker inspect image match, `/health` 200/`toolCount` 183 unchanged); optional live-wire probe surfaced an unrelated, pre-existing `sequential_market_analysis` dead-tool bug, filed separately as `FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER` (does not block this task)
 
 ## Summary
 
@@ -84,3 +84,61 @@ No branch merge required — dev-mcp-server committed directly to `main` (`1b139
 on `main`). Task held at **REVIEW** (`status_note: "code/tests QA-approved, pending ops
 swap; post-swap gate is a lighter sanity check — no live HTTP surface for confidence"`).
 `.head.next_agent` set to `"ops"` to request the container swap.
+
+## Post-Swap Sanity Check (2026-07-08T03:34:45Z) — DONE_VERIFIED
+
+ops swapped the live `mcp-server` container (`675451c2c`, image `4c8ea4cfd41f` →
+`180382145ee7`). Independently re-verified, not trusted:
+
+- **Image match**: `docker inspect vn-market-intelligence-mcp-mcp-server-1 --format
+  '{{.Image}}'` → `sha256:180382145ee7157c3206a98ada7c1c8a8d354e192da63d402ff6afbb3030c9cb`
+  — exact match to the rebuilt + QA-approved image. Container `Up (healthy)`.
+- **Health/tool count**: `curl http://localhost:3000/health` → **200**,
+  `{"status":"ok","name":"vn-market","version":"1.0.0","toolCount":183,...}` — tool count
+  unchanged.
+- **Optional live-wire probe** (left to QA's judgment per task instructions): attempted a
+  real `tools/call` POST to `/mcp` for `sequential_market_analysis` with a stated hypothesis
+  and confidence deliberately omitted, to visually confirm no confidence leak in a real call.
+
+### New finding — unrelated, pre-existing dead-tool bug
+
+The live call never reached `handle()`: `MCP error -32602` on a malformed first probe, then
+`originalHandler is not a function` on a correctly-shaped one. Root cause:
+`registerSequentialMarketAnalysisTools` calls
+`server.registerTool("sequential_market_analysis", {title,description,inputSchema,handler:tool.handle})`
+— the real `@modelcontextprotocol/sdk@1.29.0` signature is `registerTool(name, config, cb)`
+(`.../dist/esm/server/mcp.js:699` + `.d.ts:150-157`); `config.handler` is not a recognized
+field (only `title/description/inputSchema/outputSchema/annotations/_meta` are destructured)
+and no 3rd `cb` argument is ever passed, so the SDK's internal `registeredTool.handler` is
+permanently `undefined`. `server.ts`'s per-call telemetry wrapper
+(`const originalHandler = toolDef.handler; ...; return originalHandler(args);`) then throws on
+every real invocation, over every transport (registration bug, not a routing bug).
+
+**Confirmed pre-existing, unrelated to this diff**: `git show
+1b1397025^:apps/mcp-server/src/interface/mcp/tools/analysis/sequential-market-analysis.ts`
+shows a byte-identical broken `registerTool` call before this fix landed — `1b1397025` never
+touches `registerSequentialMarketAnalysisTools`. Also confirmed not a systemic `/mcp`-route
+issue: `get_market_snapshot` (registered via the correct `server.tool(name,description,
+schema,handler)` 4-arg legacy API) called over the same route on the same container returned
+real, correct live data.
+
+This *reinforces* the REVIEW-stage verdict rather than contradicting it: `sequential_market_analysis`
+never had ANY live wire surface at all (broader than "no surface for `confidence`
+specifically") — a full RAW HTTP probe genuinely could not have added signal for this task's
+own DoD. The confidence-fabrication fix itself remains correctly verified at the unit level
+(`tool.handle()` called directly — the exact code path production traffic hits once the
+unrelated wiring bug is fixed) — zero regression introduced by `1b1397025`.
+
+Filed as a new backlog task rather than blocking this one: **`FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER`**
+(`task_board.backlog[]` + `backlog-detail.json`, owner `dev-mcp-server`, priority `high`, zone
+`mcp-server-interface`) — exact repro, root cause, and suggested fix (pass `tool.schema` +
+`tool.handle` as separate positional args, matching the working pattern in
+`marketTools.ts:147`) included in the detail entry.
+
+**Board write**: `FACTORY-INTERFACE-sequential-confidence-05-mask` flipped `REVIEW` →
+`DONE_VERIFIED` via `scripts/qa-factory-interface-sequential-confidence-05-mask-done-verified.jq`
++ `scripts/orch-apply.sh` (array-move `task_board.review[]` → `task_board.done_verified[]`).
+`.head` idle-reset (`status:"done"`, `active_task_id:null`, `next_agent:"router"`) pointing at
+the new follow-up task — not dispatched here, router's job.
+
+DJ: `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-qa.md` §qa-S7 (DJ-GATE-1).
