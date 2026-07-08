@@ -1,8 +1,9 @@
 // Package macro_usdvnd_direction_classifier classifies a USDVND exchange rate
 // into a deterministic direction signal for the Vietnamese economy.
 //
-// Go rewrite of MacroScoreService.usdVndDirection() from
-// apps/macro-indicators/src/_deprecated/domain/services.ts.
+// Go rewrite of MacroScoreService.usdVndDirection(), originally from the
+// legacy TS src/_deprecated/domain/services.ts (deleted 2026-07-08 —
+// FACTORY-MACRO-delete-dead-ts-tree; see git tag macro-pre-delete for history).
 //
 // Business logic:
 //   - USDVND > 25000 → BEARISH (VND depreciation = import cost pressure)

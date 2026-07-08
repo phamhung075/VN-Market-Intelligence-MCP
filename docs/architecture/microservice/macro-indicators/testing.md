@@ -1,85 +1,95 @@
 # macro-indicators — Testing
 
-## Unit Tests
-**File:** `apps/macro-indicators/src/__tests__/unit/macro-score-service.test.ts`
+**Runtime:** Go `testing` package + `net/http/httptest`. No external mocking framework.
+**Total:** 33 `_test.go` files across 8 packages — 288 top-level tests, 543 total test cases
+(incl. table-driven subtests) — all pass, 0 fail (2026-07-08 baseline, `go test ./...`).
 
-**Mock helpers:**
-- `makeMockCommodity(overrides)`: defaults oil=85, gold=2100, usdVnd=24500
-- `makeMockSBV(overrides)`: defaults vnIndex=1200.5, sbvRates={'USD/VND': 24500}
+> History note: this service originally shipped a parallel TypeScript/Bun test suite
+> (`src/__tests__/`, `__tests__/`) covering scraper adapters and a `_deprecated` domain
+> layer. Neither was ever wired into CI (the `bun test` CI job is scoped to
+> `apps/mcp-server` only — see `.github/workflows/ci.yml`; macro-indicators CI runs
+> `golangci-lint` only) nor into the shipped Docker image (`Dockerfile` builds
+> `cmd/server` from `cmd/`, `pkg/`, `api/` only — no `src/`). The TS tree was deleted
+> 2026-07-08 (`FACTORY-MACRO-delete-dead-ts-tree`); Go `pkg/**/*_test.go` was always the
+> real coverage for the deployed service. History preserved at git tag `macro-pre-delete`.
 
-| Test | Assertion |
-|------|-----------|
-| buildSnapshot values | oil=85, gold=2100, usdVnd=24500, vnIndex=1200.5 |
-| signal generation | Produces oil_usd, gold_usd, usd_vnd signals |
-| oil > 100 → BEARISH | oil=120 |
-| oil < 60 → BULLISH | oil=50 |
-| USD/VND > 25000 → BEARISH | usdVnd=26000 |
-| all null handling | Empty signals array, null values |
-| exception handling | fetchOilUsd throws → null result |
-| scoreIndicator VN_DIRECT | 'Vietnam GDP' → score 8-10 |
-| scoreIndicator REGIONAL | 'Crude Oil' → score 5-7 |
-| scoreIndicator US_DOMESTIC | 'US housing' → score 2-4 |
+## Primitive Tests (Fence-A: stdlib-only)
 
-## Integration Tests
-**File:** `apps/macro-indicators/src/__tests__/integration/compute-macro-usecase.test.ts`
+| Package | File | What it verifies |
+|---|---|---|
+| `pkg/primitive/macro_oil_impact_classifier` | `macro_oil_impact_classifier_test.go` | Brent/WTI price → BEARISH/BULLISH/NEUTRAL tier thresholds ($100, $60) |
+| `pkg/primitive/macro_gold_direction_classifier` | `macro_gold_direction_classifier_test.go` | XAU/USD price → BULLISH/BEARISH/NEUTRAL thresholds ($2200) |
+| `pkg/primitive/macro_usdvnd_direction_classifier` | `macro_usdvnd_direction_classifier_test.go` | USDVND rate → BEARISH/BULLISH/NEUTRAL threshold (25000) |
+| `pkg/primitive/macro_investment_clock` | `macro_investment_clock_test.go` | Indicator name → deterministic investment-clock tier/phase (fixed-score lookup, no `Math.random()` — R-1 risk resolved) |
+| `pkg/primitive/macro_carry_trade_signal` | `macro_carry_trade_signal_test.go` | Carry-trade signal from rate-differential inputs |
+| `pkg/primitive/macro_yield_spread_signal` | `macro_yield_spread_signal_test.go` | Yield-spread signal (deposit vs. earnings rate → EXPENSIVE/CHEAP/UNKNOWN) |
 
-- Full DTO mapping through use case
-- All sources fail → empty signals, null values
-- Signal structure validation (required fields + valid enums)
-- Direction calculation: USD/VND 25500 → BEARISH
+## Domain Tests (VMT — Vietnam Macro Tracker)
 
-## Scraper Unit Tests
+**Files:** `pkg/domain/services_vmt_{bop,cpi,liquidity,macro,omo,trade}_test.go` — 6 files
 
-### FredMacroAdapter
-**File:** `apps/macro-indicators/__tests__/unit/scrapers/fred-macro.test.ts`
+Covers domain-layer scoring/classification logic for balance-of-payments, CPI,
+liquidity, general macro, open-market-operations, and trade indicators.
 
-| Test group | Cases |
-|------------|-------|
-| `isAvailable` | key absent → false / key short → false / key 32-char → true |
-| `fetchSeries` (key absent) | returns null + console.warn |
-| `fetchSeries` (mocked) | parses observations / API error body / HTTP 500 / network throw |
-| `fetchAllMacro` (key absent) | all 8 keys present, all values null |
-| `fetchAllMacro` (parallel) | all-ok: 8 results / one-fail: null for VIXCLS, others non-null / timing: all 8 dispatched within 30ms window |
-| `FRED_SERIES` catalog | 8 entries, known IDs present |
+## Application Tests
 
-### WorldBankMacroAdapter
-**File:** `apps/macro-indicators/__tests__/unit/scrapers/world-bank-macro.test.ts`
+**Files:** `pkg/application/{usecases,usecases_vmt_bop,usecases_vmt_failclose,usecases_vmt_liquidity,usecases_vmt_trade,fetch_deadline}_test.go` — 6 files
 
-| Test group | Cases |
-|------------|-------|
-| `fetchVnIndicator` | parses WB API v2 format / HTTP 404 → [] / network throw → [] / empty data array → [] / null value field → [{value: null}] |
-| `fetchVnMacroBatch` (parallel) | all-ok: 7 results non-empty / one-fail: fdi_inflows=[], others non-empty / timing: all 7 dispatched within 30ms window |
-| `VN_INDICATORS` catalog | 7 entries, known codes present |
+| Test area | What it verifies |
+|---|---|
+| Use-case DTO mapping | Snapshot/response shape correctness |
+| Fail-close behavior | Source failure → safe default, no crash |
+| Per-source deadline | Timeout budget respected, slow source doesn't block others |
 
-### FetchExternalMacroUseCase
-**File:** `apps/macro-indicators/__tests__/unit/fetch-external-macro.test.ts`
+## Infrastructure Tests (VMT parsers, cache, VPS fetch)
 
-| Test group | Cases |
-|------------|-------|
-| `all-ok` | all sources return ok / fetchedAt ISO / ok sources carry data |
-| `one-fail` | worldBank throws → failed + error msg / others still ok |
-| `one-timeout` | worldBank slow 5s, 100ms budget → timeout / latencyMs ≥ budget / slow calendar 5s, 100ms budget → timeout |
-| `all-fail` | summary.ok=0, summary.failed=6, all status=failed |
-| `FRED not available` | isAvailable=false → no crash |
-| `handler response contract` | execute() never throws |
-| **calendar wontfix null adapter** | `DEFAULT_TIMEOUTS.calendar === 0` / NullCalendarAdapter returns ok+[] immediately / slow-calendar stub still does not block other sources |
+**Files (11):** `parsers_vmt_{bop,cpi,gso_indicators,sbv_interbank_omo,sbv_interbank_omo_p03,trade}_test.go`,
+`cache_vmt_nso_{deadline,selector}_test.go`, `repositories_test.go`, `repository_vmt_omo_daily_test.go`, `vpsFetch_test.go`
 
-### NullCalendarAdapter (wontfix 2026-05-18)
-**File:** `apps/macro-indicators/__tests__/unit/scrapers/investing-economic-calendar.test.ts`
+| Test area | What it verifies |
+|---|---|
+| GSO/SBV/NSO HTML/table parsers | Real-source parsing → structured indicator values |
+| NSO cache (deadline + selector) | Cache freshness/selection logic under time pressure |
+| `vpsFetch` | VPS-proxied fetch for VN-geo-blocked sources (project_bctc_vps_proxy pattern) |
+| SQLite readonly repositories | `market.db` readonly access, no owned tables |
 
-| Test | Assertion |
-|------|-----------|
-| implements port, returns [] | `fetchCalendar()` → `[]` |
-| countryId arg ignored | `fetchCalendar('35')` → `[]` |
-| resolves in under 50ms | no network, no subprocess |
-| DEFAULT_TIMEOUTS.calendar === 0 | no budget needed for null adapter |
+## Interface / HTTP Tests
+
+**Files:** `pkg/interface/http/{router,handlers_snapshot_contract,handlers_vmt_failclose}_test.go` — 3 files
+
+| Test area | What it verifies |
+|---|---|
+| `router_test.go` | Route wiring, health check |
+| `handlers_snapshot_contract_test.go` | Snapshot response contract shape |
+| `handlers_vmt_failclose_test.go` | HTTP-layer fail-close on source failure |
+
+## Module Tests
+
+**File:** `pkg/module/macro_signals/macro_signals_test.go` — signal aggregation across primitives.
+
+## Fence Compliance (checked every commit — see flow/main.md § Fence Rules)
+
+- Fence-A: `grep -rn "application\|interface\|module" pkg/primitive/` → 0
+- Fence-B: `grep -rn "infrastructure" pkg/module/` → 0
+- Fence-C: `grep -rn "infrastructure" pkg/domain/ pkg/application/ pkg/primitive/ pkg/module/ pkg/interface/` → 0
 
 ## Run Commands
+
 ```bash
-cd apps/macro-indicators && bun test
-cd apps/macro-indicators && bun tsc --noEmit
+cd apps/macro-indicators && go test ./... -count=1        # all 33 files, 288 tests
+cd apps/macro-indicators && go vet ./...                  # static analysis
+cd apps/macro-indicators && go build ./cmd/...            # compile check
+cd apps/macro-indicators && golangci-lint run             # depguard Fence-A/B/C (CI-enforced, .github/workflows/ci.yml)
 ```
 
-## Current counts (2026-05-18)
-- Total tests: 116 (103 pass, 12 skip, 1 fail pre-existing world-bank mock issue)
-- `bun test` runtime: ~1.1s (calendar timeout tests replaced with null-adapter tests — runtime no longer dominated by 5s stubs)
+## G12 DoD Gate — Sandbox (separate from unit tests, both mandatory)
+
+```bash
+cd apps/macro-indicators
+go run ./cmd/sandbox -tier=primitive -module=macro-indicators -scenario=all
+go run ./cmd/sandbox -tier=module -module=macro-indicators -scenario=all
+```
+
+Scenario fixtures: `docs/scenarios/macro-indicators/{primitives,module}/`. Both commands
+must exit 0 with all scenarios GREEN before any task is declared DONE — see
+`docs/architecture-briefs/2026-05-23-macro-indicators-factory/pilot-charter.md` §G12.

@@ -12,7 +12,10 @@ RAM cost:  ~400MB during run (Playwright + Chromium SPA rendering).
 
 After discovery:
   - Review docs/mainserver-sources/adb-kidb/xhr-contract.md
-  - Update VN_API_ENDPOINT in apps/macro-indicators/src/infrastructure/scrapers/adb-kidb.ts
+  - Wire discovered endpoint into a Go pkg/infrastructure adapter (the TS
+    scraper this script originally targeted, src/infrastructure/scrapers/
+    adb-kidb.ts, was deleted 2026-07-08 — FACTORY-MACRO-delete-dead-ts-tree;
+    ADB KIDB has no Go adapter yet, so this is a fresh Go implementation)
   - Phase 2 production adapter needs NO headless browser (~15MB ongoing)
 
 Usage:
@@ -284,12 +287,16 @@ def write_contract_doc(result: dict, output_path: Path) -> None:
         "",
         "## Phase 2 — Direct API Adapter",
         "",
-        "Once working endpoints are confirmed above, update the Phase 2 adapter:",
+        "Once working endpoints are confirmed above, implement the Phase 2 adapter:",
         "",
-        "- File: `apps/macro-indicators/src/infrastructure/scrapers/adb-kidb.ts`",
-        "- Replace `VN_API_ENDPOINT` constant with the discovered URL",
-        "- Update `buildRequestHeaders()` to match the captured headers",
-        "- Remove `isAvailable(): false` guard once endpoint is confirmed",
+        "- Target: a new Go adapter under `apps/macro-indicators/pkg/infrastructure/`",
+        "  (the original TS target, src/infrastructure/scrapers/adb-kidb.ts, was",
+        "  deleted 2026-07-08 — FACTORY-MACRO-delete-dead-ts-tree; no Go ADB KIDB",
+        "  adapter exists yet, so this is greenfield in Go, not a port)",
+        "- Use the discovered URL as the endpoint constant",
+        "- Match request headers to the captured headers above",
+        "- Gate on API-key/availability the same way other adapters do (see",
+        "  pkg/infrastructure/adapters_vmt_sjc_fx.go for the pattern)",
         "",
         "RAM cost in Phase 2: ~15MB (direct fetch, no headless browser).",
         "",

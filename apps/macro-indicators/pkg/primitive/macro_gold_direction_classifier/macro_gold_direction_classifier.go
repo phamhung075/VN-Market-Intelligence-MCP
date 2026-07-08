@@ -1,8 +1,9 @@
 // Package macro_gold_direction_classifier classifies an XAU/USD (gold) price
 // into a deterministic direction signal for macroeconomic trend analysis.
 //
-// Go rewrite of MacroScoreService.goldDirection() from
-// apps/macro-indicators/src/_deprecated/domain/services.ts.
+// Go rewrite of MacroScoreService.goldDirection(), originally from the
+// legacy TS src/_deprecated/domain/services.ts (deleted 2026-07-08 —
+// FACTORY-MACRO-delete-dead-ts-tree; see git tag macro-pre-delete for history).
 //
 // Business logic:
 //   - Gold price > $2200/oz → BULLISH (safe-haven demand, risk-off sentiment)

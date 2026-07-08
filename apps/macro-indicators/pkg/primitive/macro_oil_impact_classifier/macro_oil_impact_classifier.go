@@ -1,8 +1,9 @@
 // Package macro_oil_impact_classifier classifies a Brent/WTI oil price
 // into a deterministic impact tier for the Vietnamese economy.
 //
-// Go rewrite of MacroScoreService.oilDirection() from
-// apps/macro-indicators/src/_deprecated/domain/services.ts.
+// Go rewrite of MacroScoreService.oilDirection(), originally from the
+// legacy TS src/_deprecated/domain/services.ts (deleted 2026-07-08 —
+// FACTORY-MACRO-delete-dead-ts-tree; see git tag macro-pre-delete for history).
 //
 // Business logic (Thien Thoi methodology):
 //   - Oil price above $100/barrel → BEARISH for VN (high import cost pressure)
