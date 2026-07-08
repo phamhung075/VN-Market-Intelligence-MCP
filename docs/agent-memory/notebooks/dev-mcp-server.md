@@ -1,31 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — FACTORY-APP-dedup-date-freshness-helpers → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-`midnightVietnamAsUtc`/`todayVietnam`/`parseAffectedCodes`/`isPriceFresh` were duplicated verbatim in `assembleBriefing.ts` and `assembleEveningSummary.ts` (`todayVietnam` duplicated a 3rd time in `assembleAlertDigest.ts`, using a bare `7*3_600_000` literal instead of `VN_OFFSET_MS`). One home each: `domain/services/timeHelpers.ts` (date fns — `timeConstants.ts`'s own header forbids functions, so this is a new sibling module), `domain/utils/affectedCodesParser.ts` (pure JSON parse, no I/O — same layer as sibling `sqlHelpers.ts`/`safeQuery.ts`), `application/utils/priceFreshnessGate.ts` (`isPriceFresh(db, logLabel)` — takes the per-caller log label as an arg since application/utils may import `infrastructure/logger.js`, same precedent as sibling `windowPartitioner.ts`; domain/utils cannot). Added named `PRICE_FRESHNESS_MS = 24*MS_PER_HOUR` to `timeConstants.ts` (mirrors existing `VN_INDEX_FRESHNESS_MS`), replacing the bare `<=24` literal — preserved via `ageHours <= PRICE_FRESHNESS_MS/MS_PER_HOUR` (same rounded-hour comparison as before, not a raw-ms rewrite, to keep the 24h29min edge-case identical).
-
-New test `FACTORY-APP-dedup-date-freshness-helpers.test.ts` (15 assertions). tsc clean. Targeted suite (14 files incl. all 3 call-sites) 206/206 pass. Full `bun test`: 14346 pass/40 skip/71 fail/10 errors/1180 files (612s) then the same Bun 1.3.13 crash-at-teardown as prior siblings — grepped the full log for every touched/created filename: zero mentions in fail/error output; all 71 fails are the documented pre-existing pollNews/VPS-push/RSS-timeout + shared-DB-race flaky class (Task 125's one briefing-adjacent fail is a pollNews network timeout, not an assembleBriefing assertion — passed 0-fail in the isolated targeted run). Server boot verified PORT=3998: health 200, toolCount=183 unchanged. scheduler cron.schedule grep=3 unchanged (no scheduler files touched).
-
-Commit: dbb87db26. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (application-layer usecase change runs against live briefing/evening/alert-digest cron paths).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 verified | HEALTHY.
-
-## 2026-07-08 — FACTORY-APP-split-fetchParseAndStoreBctc → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-`fetchParseAndStoreBctc.ts` (895L) split into `bctc/resolvePdfText.ts` (Step 2 PDF download + OCR-cache fallback + news-chain-fallback terminal decision, discriminated-union return), `bctc/newsChainFallback.ts` (`tryNewsChainFallback`/`buildFiscalPeriod`/`buildAnalysisSummary`, 4 tuning literals hoisted to named exports `NEWS_FALLBACK_BASELINE`/`TEMPORAL_DISCOUNT`/`FALLBACK_CONF_MIN`/`FALLBACK_CONF_MAX` — resolved values unchanged), plus 2 extras beyond the backlog's named 2-file split (`bctc/types.ts`, `bctc/insertBctcAnalysis.ts` for Step 4) needed because the DoD's "orchestrator <=120L" is a hard constraint — the 2-file split alone left ~191L. Orchestrator is now 117L. The pre-existing per-date special-case (`signalText.includes('2023') && year===2024`) is left byte-identical, flagged as JANITOR-035 in `docs/data/code-janitor-known-findings.json`.
-
-tsc clean. Targeted suite (17/18 relevant files, excluding FIX-1267): 156 pass/2 skip/0 fail. FIX-1267 AC-7/AC-8 reproduce identically on the unmodified pre-split file (confirmed via `git show HEAD:...`) — pre-existing subprocess/network-timing flakiness, not caused by this split. Also fixed `p2-f-rag-http-rewire.test.ts`'s AC that grepped the orchestrator for the string `ragHttpClient` — that import legitimately moved to `bctc/insertBctcAnalysis.ts` with Step 4, updated to check both files. Full `bun test`: 14353 pass/40 skip/64 fail/6 errors/1180 files (605s) then the known Bun 1.3.13 crash-at-teardown — only the 2 pre-existing-flaky FIX-1267 fails reference any touched file. Server boot verified PORT=3997: health 200 toolCount=183 unchanged, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200. scheduler cron.schedule grep=3 unchanged (no scheduler files touched).
-
-Doc updates: `usecases.md` (split description), `pdfOcrWorker.ts` pointer comment relocated to `bctc/resolvePdfText.ts`.
-
-Commit: 5027fda09. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (BCTC pipeline runs against live named-volume market.db; RAW-verify of unchanged confidence values is this task's own DoD, routed via the Docker Microservice Code-Change Close Gate).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
-
 ## 2026-07-08 — FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dev-team dispatch; code-level half of agent-father's doc-spec commit 5436ead58)
@@ -51,5 +25,21 @@ Verified via a scratch equivalence script comparing generated Python text pre/po
 Doc updates: `infrastructure.md` (vnstock Python Bridge section rewritten for the new file layout).
 
 Commit: e27121d93. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (vnstock fetchers run against live named-volume market.db; RAW-verify of unchanged fetch values is this task's own DoD, routed via the Docker Microservice Code-Change Close Gate).
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
+
+## 2026-07-08 — FACTORY-INFRA-split-telegramCommands → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+`telegramCommands.ts` (1071L) mixed router + 9 raw-SQL handlers + presentation + infra reaching UP into `application/usecases/` (imported `assembleEveningSummary`/`generatePeriodicSummary` directly to both fetch AND render `/recap*`). Split: presentation → `telegram/format.ts`; 8 SQL handlers → `telegram/commandHandlers.ts` (SQL moved into new `infrastructure/db/{watchlistReadStore,systemHealthStore,agentFeedbackStore}.ts`); `/news` → `telegram/newsHandler.ts`; `/recap*` **rendering** (pure, zero application imports — narrow hand-written `EveningRecapData`/`PeriodicRecapData` structural views instead of importing the producer's types) → `telegram/recapRenderer.ts`; `/recap*` **orchestration** (the fetch step) → new `application/usecases/orchestrateRecapCommand.ts`, invoked by the INTERFACE layer (`webhookHandler.ts`) via a new `RecapResolvers` DI param on `handleTelegramCommand`. Router 1071L → 267L; `grep application/usecases` across the whole infra chain = 0.
+
+`handleRecap(db, assembleFn?)`'s public signature kept byte-identical (only the "no fn" default behavior changed: was a live production call, now the friendly Vietnamese error text) — every existing recap test in `214-telegram-commands.test.ts` passes an explicit fn already, so zero test changes needed there. New `FACTORY-INFRA-split-telegramCommands.test.ts` (20 assertions: 3 new stores, pure recapRenderer with hand-built non-application-typed objects, RecapResolvers DI with/without injected resolver, orchestrateRecapCommand's 3 functions against real assembleEveningSummary/generatePeriodicSummary) + 1 new case in `1406c-webhook-handler.test.ts` (full webhook→router→resolver→render path).
+
+tsc clean, eslint clean. Targeted suite (32 files: all telegram*/evening-summary/periodic-summary/webhook) 431/431 pass — `214-telegram-commands.test.ts` alone unchanged 60/60. Server boot verified PORT=3997: health 200 toolCount=183 unchanged, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200. scheduler cron.schedule grep=3 unchanged. Full `bun test`: 14406 pass/40 skip/58 fail/6 errors/1182 files (583.84s) then the known Bun 1.3.13 crash-at-teardown — 57 fails are the documented pre-existing pollNews/RSS-timeout/VPS-push/insider/foreign-flow/1302-deprecated flaky class; the 1 telegram-adjacent fail (`235-telegram-send-merge.test.ts`, a file I never touched) passes 10/10 in isolation — full-suite cross-test mock pollution, not a regression.
+
+Doc updates: `infrastructure.md` (new Telegram Command Router section + layering-fix note), `usecases.md` (`orchestrateRecapCommand.ts` entry).
+
+Commit: e9b3a2b75. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (telegramCommands.ts + webhookHandler.ts are on the live `/webhook` HTTP path).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
