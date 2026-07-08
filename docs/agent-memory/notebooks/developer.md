@@ -1,22 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-08 | **Cycle:** FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE
-
-## Session 2026-07-07 — F1-LAUNCHD-COWORK-BACKSTOP + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED
-
-**Task:** Two READY board tasks worked together (PO brief-signoff `2026-07-07-cowork-guaranteed-slot-durability.md`, closes ~73h multi-day guaranteed-slot outage). **Zone:** cross-service, no zone match → developer handles directly.
-
-**F1:** generalized `scripts/cowork-fb-daily-firer.sh` (fb-only, hardcoded UTC-window if-chain) into `scripts/agents-flow/cowork-guaranteed-slot-firer.sh` — calls the SAME matcher the live `*/15` dispatcher uses (`cowork-match-slots.js`), filters `slots[]` to `guaranteed===true`, fires each match's `trigger_prompt` read VERBATIM off the slot object. A new `guaranteed:true` row needs zero script edits. Retired old script + `launchd/com.vn-market.fb-daily-firer.plist` into the generalized `launchd/com.vn-market.cowork-guaranteed-slot-firer.plist`.
-
-**Empirical verification, not assumed (brief §3.7 explicitly required this):** this macOS host has NEITHER `timeout` NOR `gtimeout` on PATH (stock macOS ships no GNU coreutils). `_bounded_exec()` prefers either if present, but the real production code path is a pure-bash background-process + watchdog fallback — proven by a regression test (T10) that a hung claude invocation is actually killed near the configured bound (2s test), not the full 300s sleep.
-
-**FIX:** extended `scripts/agents-flow/auditor-tier1-probe.sh` with check 6 (`_check_launchd_agents`) — SSOT = this repo's own `launchd/*.plist` Label fields (read off each file, never hardcoded, same "no-hardcode" pattern as F1's matcher-driven design) must all appear in `launchctl list`. Closes the exact gap the brief found: old fb-daily-firer.plist WAS loaded+firing 07-01→07-04, then silently unloaded with nothing detecting it. Bug-alerting is inherited via the existing FAILURE→spawn-system-auditor pipeline (cron-detect-loop Job 2) — no new alert code inside this READ-ONLY pre-gate script (its own invariant: no MCP calls).
-
-**Test-seam gotcha:** `HEARTBEAT_FILE`/`LAUNCHD_DIR` are plain vars bound once at source-time from `HEARTBEAT_FILE_PATH`/`LAUNCHD_DIR_PATH` env — a sourced-function test overriding per-scenario behavior must reassign the SCRIPT'S OWN internal var name directly (dynamic-scope re-read at call time), not re-export the `_PATH` env var (only read once at source). Real subprocess (CLI-level) tests use the `_PATH` env var correctly since each invocation is a fresh process.
-
-**Tests:** 25/25 (`cowork-guaranteed-slot-firer.test.sh`, new) + 79/79 (`auditor-tier1-probe.test.sh` — 60 pre-existing regression byte-behavior-unchanged + 19 new incl. mandatory injected-fault pair T25/T26 per brief §6.7). Zero real `claude`/`node`/`launchctl load-unload` calls in any test. `graphify --update --no-viz` skipped — no LLM API key in this session's environment (pre-existing env gap, not this task's scope).
-
-**Board:** both READY→IN_PROGRESS→REVIEW via `scripts/orch-apply.sh` (jq transforms in `scripts/dev-cowork-guaranteed-slot-durability-{claim,to-review}.jq`). Signaled qa — unblocks `QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL` (backlog, 7-point test per brief §6) once both land DONE_VERIFIED.
+**Last updated:** 2026-07-08 | **Cycle:** FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT
 
 ## Session 2026-07-08 — FIX-NEWS-CB-FALSE-CLOSED (BOUNDED-1 idle pickup)
 
@@ -47,3 +31,17 @@
 **Sanity-checked against real live data (scratch copy, dry-run, never through orch-apply.sh):** fixed script now correctly SKIPS `FACTORY-TECHANALYSIS-delete-orphaned-ts-service` (still unmet deps) and would promote `FACTORY-TECHANALYSIS-go-livepath-tests` (`depends_on: []`, the actual next-eligible P1 row) instead — matches the exact remediation PO/router expected.
 
 **Scope discipline:** did not touch `devteam-backlog-claim-bounded1.jq` (verified no change needed). Did NOT promote/resolve `FACTORY-TECHANALYSIS-go-livepath-tests` myself — PO explicitly declined manual promotion this cycle; fixed automation picks it up organically on a future idle tick. No task branch (project convention: work stays on `main`). `graphify --update --no-viz` skipped — no Skill-invocation tool available in this sub-agent's tool surface for a 4-file mechanical doc/script change.
+
+## Session 2026-07-08 — FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT (router-escalated, live-observed dead-drive window)
+
+**Task:** router observed 4 consecutive dev-team cron ticks all falsely `SKIP` with detail "SF-1 held by peer session" despite `task_list_held` independently confirming `dev-team-cron-singleton.owner_client_session` == the calling session every time — a full-TTL phantom self-collision, exactly as the backlog row's status_note pre-diagnosed. **Zone:** `scripts/` → owned by `developer` directly, no dispatch.
+
+**Confirmed diagnosis (read both functions before touching anything):** `_step_sf1_claim()` in `scripts/agents-flow/dev-team-tick-preflight.sh` inspected only `.claimed` on a failed claim — any non-`true` result was treated as "peer holds it" -> SKIP, with zero check of `current_holder.owner_client_session`. Sibling `_step_fire_election()` already had the correct self-hold branch (compare holder session vs self, heartbeat-renew + proceed on match).
+
+**Fix:** mirrored `_step_fire_election()`'s exact pattern into `_step_sf1_claim()` — on `claimed:false`, compare `current_holder.owner_client_session` to self; self-hold now heartbeat-renews SF-1 and returns 0 (proceed to fire-election) instead of false-SKIP. Genuine peer (different session) unchanged: SKIP path (a), releases nothing (never held it).
+
+**Live-verified, not just unit-tested:** ran the script directly against the actual production lock (`dev-team-cron-singleton` self-held by this session) — verdict flipped from the previously-observed `SKIP` to `RUN`, both SF-1 and fire-election locks confirmed still healthy/self-held via `task_list_held` post-run (TTLs renewed, no corruption).
+
+**Test:** added T19 (self-hold -> RUN, heartbeats, no release/no telegram) + T20 (regression guard — real peer-hold still SKIPs, still releases nothing) to `dev-team-tick-preflight.test.sh` — 55/55 pass (53 pre-existing unchanged + 2 new).
+
+**Scope discipline:** touched only the one script + its existing test file + board/journal/notebook writes, per dispatch boundary. No `apps/*` change, no Docker Close Gate needed. Board flipped BACKLOG→REVIEW, `next_agent`→qa via `orch-apply.sh`; `.head.next_agent` synced to match in the same write (known recurring gap called out explicitly in this dispatch — verified with `jq '.head'` before finishing).
