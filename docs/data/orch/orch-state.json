@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-NEWS-CB-FALSE-CLOSED",
-    "next_agent": "ops",
-    "next_action": "Both call sites now fixed (aa87cfe05 scheduled-cron + 8810a34d5 VPS-push handlePushNews), commit 8810a34d5 on main, independently re-verified by dev-team (diff genuinely omits reuters/tradingeconomics keys, tsc clean, FIX-NEWS-CB-FALSE-CLOSED.test.ts re-run live: 5 pass/0 fail). REQUIRED: rebuild apps/mcp-server image, gated live swap (docker compose up -d mcp-server), verify /health 200 + toolCount unchanged + peer containers untouched (docker inspect, not just compose exit code) — same pattern as the first swap (image f47c89142f7d). THEN live get_system_status SOURCE HEALTH re-query — confirm Reuters RSS AND Trading Economics both show DISABLED (not an ever-climbing Suy giảm/degraded count) within a few minutes of the fresh restart. Only after that live confirmation should this row flip to DONE_VERIFIED — do NOT flip based on the deploy succeeding alone (this exact task already had one premature DONE_VERIFIED flip reverted for skipping this live check).",
-    "updated_at": "2026-07-08T06:12:00Z",
-    "updated_by": "router (dispatch ops — 2nd call site fixed, needs live re-verify)"
+    "status": "idle",
+    "updated_at": "2026-07-08T06:23:16Z",
+    "updated_by": "router (FIX-NEWS-CB-FALSE-CLOSED genuinely DONE_VERIFIED — head was stale, pointing to a closed task)",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "idle"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
