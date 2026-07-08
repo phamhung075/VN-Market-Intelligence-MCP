@@ -251,11 +251,11 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-NEWS-CB-FALSE-CLOSED -> REVIEW (developer, commit aa87cfe05) — ops-gated rebuild needed before done_verified; awaiting next dispatch",
-    "updated_at": "2026-07-08T00:53:37Z",
+    "status": "in_progress",
+    "active_task_id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
+    "next_agent": "architect",
+    "next_action": "PO-triaged dispatch of FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM (OHLCV whole-row contamination design) — dispatcher-wrap then JUMP TO execute.",
+    "updated_at": "2026-07-08T01:10:52Z",
     "updated_by": "dev-team"
   },
   "narrative": {
@@ -2558,8 +2558,10 @@
             "zone": "apps/mcp-server/",
             "owner": "architect",
             "size": "M",
-            "status": "READY",
-            "note": "Umbrella FIX promoted to ready[] -> architect designs the safe per-ticker discontinuity predicate; pm decomposes into dev tasks (apps/mcp-server)."
+            "status": "IN_PROGRESS",
+            "note": "Umbrella FIX promoted to ready[] -> architect designs the safe per-ticker discontinuity predicate; pm decomposes into dev tasks (apps/mcp-server).",
+            "claimed_at": "2026-07-08T01:10:52Z",
+            "claimed_by": "dev-team"
           }
         ]
       }
