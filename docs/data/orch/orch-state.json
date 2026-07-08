@@ -267,12 +267,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FACTORY-INFRA-split-telegramCommands",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INFRA-split-telegramCommands — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-08T21:48:15Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "ops",
+    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (docs/protocols/docker-deployment-runbook.md) for FACTORY-INFRA-split-telegramCommands -- telegramCommands.ts split by seam + infra->application layering fix (telegramCommands.ts + telegram/{format,commandHandlers,newsHandler,recapRenderer}.ts + infrastructure/db/{watchlistReadStore,systemHealthStore,agentFeedbackStore}.ts + application/usecases/orchestrateRecapCommand.ts + webhookHandler.ts RecapResolvers DI wiring), rebuild_required=true.",
+    "updated_at": "2026-07-08T22:27:31Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8605,22 +8605,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "title": "Split telegramCommands by seam; move /recap orchestration to an application usecase",
-        "priority": "P1",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-INFRA-split-telegramCommands",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-telegramCommands",
-        "promoted_at": "2026-07-08T21:48:10Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T21:48:15Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -8739,6 +8724,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Split telegramCommands by seam; move /recap orchestration to an application usecase",
+        "priority": "P1",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INFRA-split-telegramCommands",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-telegramCommands",
+        "promoted_at": "2026-07-08T21:48:10Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T21:48:15Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "review_note": "FACTORY-INFRA-split-telegramCommands: telegramCommands.ts (1071L) mixed router, 9 raw-SQL handlers, presentation, and infra reaching UP into application/usecases/ (imported assembleEveningSummary/generatePeriodicSummary directly to both fetch AND render /recap*). Split by seam: presentation (fmtNum/stripHtml/HELP_TEXT/chunking) -> telegram/format.ts; 8 SQL-backed handlers (/help /watchlist /price /health /report /fix /ask /set_position /check_position) -> telegram/commandHandlers.ts, with raw SQL moved further into new infrastructure/db/{watchlistReadStore,systemHealthStore,agentFeedbackStore}.ts; /news -> telegram/newsHandler.ts (dedup+chunking unchanged); /recap* RENDERING (pure, zero application-layer imports) -> telegram/recapRenderer.ts.\n\nLayering fix (the core of this task): recapRenderer.ts's EveningRecapData/PeriodicRecapData types are narrow, LOCAL, hand-written structural views -- NOT imports of the producer's EveningSummary/PeriodicSummary types -- so real application-layer objects satisfy them via TypeScript structural typing with zero coupling. The /recap* ORCHESTRATION step (the actual fetch) moved to a new application/usecases/orchestrateRecapCommand.ts (orchestrateEveningRecap/orchestrateWeeklyRecap/orchestrateMonthlyRecap, thin wrappers around assembleEveningSummary/generatePeriodicSummary), invoked by the INTERFACE layer (interface/mcp/routes/webhookHandler.ts) which passes the 3 resolvers into handleTelegramCommand's new RecapResolvers DI parameter. telegramCommands.ts and every module it imports now has zero application/usecases/ imports (verified via grep). Router 1071L -> 267L (75% reduction); aspirational <=120L target from the backlog approach text not hit -- the 3 tiny DI-wrapper handlers (handleRecap/Week/Month, 6L each) stayed in the router specifically to keep the existing public test-import surface byte-identical (documented tradeoff in the decision journal).\n\nhandleRecap(db, assembleFn?)'s public signature kept byte-identical -- every existing recap test in 214-telegram-commands.test.ts already passes an explicit fn, so ZERO changes were needed there (60/60 still green, unmodified). Omitting the resolver at the router level now degrades gracefully to a friendly Vietnamese error message (new, explicit, tested default-safety behavior) instead of the router itself calling a live production default -- this is the mechanism that eliminates the layering violation while preserving the never-throws contract.\n\nVerification: new FACTORY-INFRA-split-telegramCommands.test.ts (20 assertions covering the 3 new stores, pure recapRenderer rendering with hand-built non-application-typed objects proving the decoupling, RecapResolvers DI both with and without an injected resolver, and orchestrateRecapCommand's 3 functions against real assembleEveningSummary/generatePeriodicSummary) plus 1 new case in 1406c-webhook-handler.test.ts proving the full webhook->router->resolver->render path never throws. tsc clean, eslint clean (0 errors on all touched/created source files). Targeted suite (32 files: all telegram*/evening-summary/periodic-summary/webhook-handler files) 431/431 pass. Server boot verified PORT=3997: health 200, toolCount=183 (matches docs/data/project-stats.json baseline), /api/bctc-inspect 200, /dashboards/news-fetch/ 200. Gate 2d scheduler cron.schedule grep=3 unchanged (no scheduler files touched). Full bun test: 14406 pass/40 skip/58 fail/6 errors/1182 files (583.84s) then the known Bun 1.3.13 crash-at-teardown (non-authoritative) -- grepped every (fail) line: 57 are the documented pre-existing pollNews/RSS-timeout/VPS-push/logVpsPush/insider-transactions/foreign-flow/1302-deprecated flaky class (same class cited by every recent sibling FACTORY task in this zone); the 1 telegram-adjacent fail (235-telegram-send-merge.test.ts \"channel='bug' sends to BUG channel\") is in telegram.ts (the BUG-channel sender), a file this task never touched, and passes 10/10 cleanly in isolation -- confirmed full-suite cross-test mock.module pollution, not a regression. Commit: e9b3a2b75 (code+docs), ed30ce6f5 (memory).\n\nDoc updates: infrastructure.md (new \"Telegram Command Router\" section documenting the split + layering-fix rationale), usecases.md (orchestrateRecapCommand.ts entry).\n\nrebuild_required=true -- telegramCommands.ts (via webhookHandler.ts) is on the live POST /webhook HTTP path serving the production Telegram bot; the layering change (RecapResolvers DI wiring) must be exercised against the live named-volume market.db, matching the FACTORY-INFRA-split-vnstockBridge / FACTORY-APP-split-fetchParseAndStoreBctc precedent for rebuild_required=true FACTORY tasks in this same zone -- ops performs Docker Microservice Code-Change Close Gate Steps 1-4 (docs/protocols/docker-deployment-runbook.md) next, then qa Step 5 (RAW-verify /recap /recapw /recapm produce identical Vietnamese output against live data, plus non-recap commands unaffected), then po Step 6 closes DONE_VERIFIED.",
+        "reviewed_at": "2026-07-08T22:27:31Z",
+        "reviewed_by": "dev-mcp-server"
       }
     ],
     "qa": [],
