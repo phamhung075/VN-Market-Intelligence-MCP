@@ -261,10 +261,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-APP-dedup-date-freshness-helpers",
-    "next_agent": "qa",
-    "next_action": "Step 5 RAW-verify (docs/protocols/docker-deployment-runbook.md) for FACTORY-APP-dedup-date-freshness-helpers — ops close-gate Steps 1-4 PASS (container healthy, deployed SHA e72111120 matches HEAD); qa verifies health endpoint + tool count + no regression vs pre-existing flaky baseline, holds REVIEW, routes to po for Step 6 sign-off.",
-    "updated_at": "2026-07-08T16:29:15Z",
-    "updated_by": "ops (step 4 handoff, router head-sync)"
+    "next_agent": "po",
+    "next_action": "Step 6 sign-off (docker-deployment-runbook.md close-gate) for FACTORY-APP-dedup-date-freshness-helpers — qa Step 5 RAW-verify PASS (health 200, toolCount=183, no local duplicate helpers remain, targeted+full suite re-run independently with zero touched-file regressions, tsc/DDD/security clean, PRICE_FRESHNESS_MS behavior-preservation confirmed). po: mark DONE in task_board.",
+    "updated_at": "2026-07-08T16:45:05Z",
+    "updated_by": "qa (step 5 RAW-verify pass)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9554,12 +9554,15 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-08T15:49:03Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
+        "next_agent": "po",
         "rebuild_required": true,
         "review_note": "FACTORY-APP-dedup-date-freshness-helpers: midnightVietnamAsUtc/todayVietnam/parseAffectedCodes/isPriceFresh centralized to one home each (domain/services/timeHelpers.ts, domain/utils/affectedCodesParser.ts, application/utils/priceFreshnessGate.ts); PRICE_FRESHNESS_MS=24*MS_PER_HOUR added to timeConstants.ts replacing the bare <=24 literal (behavior preserved: ageHours<=PRICE_FRESHNESS_MS/MS_PER_HOUR is the exact same rounded-hour comparison). isPriceFresh now takes db+per-caller logLabel arg. All 3 usecase files (assembleBriefing/assembleEveningSummary/assembleAlertDigest) local copies deleted, imports wired. New test FACTORY-APP-dedup-date-freshness-helpers.test.ts (15 assertions). tsc clean. Targeted suite (14 files) 206/206 pass. Full bun test 14346 pass/40 skip/71 fail/10 errors/1180 files - 0 failures reference any touched/created file (grepped full log); all 71 fails are the documented pre-existing pollNews/VPS-push/RSS-timeout + shared-DB-race flaky class. Server boot verified PORT=3998: health 200, toolCount=183 unchanged. scheduler cron.schedule grep=3 unchanged (no scheduler files touched). Commit: dbb87db26 (code+test), 256e82f61 (memory). rebuild_required=true (application-layer usecase change runs against live briefing/evening/alert-digest cron paths).",
         "reviewed_at": "2026-07-08T16:24:35Z",
         "reviewed_by": "dev-mcp-server",
-        "ops_step_4_complete_at": "2026-07-08T16:28:10Z"
+        "ops_step_4_complete_at": "2026-07-08T16:28:10Z",
+        "qa_verified_at": "2026-07-08T16:45:05Z",
+        "qa_verified_by": "qa",
+        "qa_note": "QA Step-5 RAW-verify PASS (docker-deployment-runbook.md close-gate). Live container (vn-market-intelligence-mcp-mcp-server-1, healthy): curl /health=200; boot log toolCount=183 (unchanged). Grepped 3 usecase files: assembleBriefing.ts/assembleEveningSummary.ts/assembleAlertDigest.ts all import midnightVietnamAsUtc/todayVietnam/parseAffectedCodes/isPriceFresh from the 3 new centralized modules, zero local duplicate defs remain. Re-ran targeted suite myself (31 files incl. all 3 call-sites + new FACTORY-APP-dedup-date-freshness-helpers.test.ts, broader than the claimed 14): 294/295 pass; the 1 fail (Task125 pollNews VPS-push timeout) reproduced 0-fail/39-pass in isolated rerun — confirms pre-existing network-flake, not a regression. bun tsc --noEmit clean. DDD scan clean (domain/services+domain/utils new files import 0 infrastructure; application/utils/priceFreshnessGate.ts import of infrastructure/logger.js is same-layer-allowed, matches windowPartitioner.ts precedent). Security scan clean (no process.env, parameterized ohlcv query, no string-concat SQL). Independently re-ran full bun test myself (not just reviewed the claim): 14352 pass/40 skip/65 fail/4 errors/1180 files (615s) vs dev-mcp-server-claimed 14346/40/71/10 — small delta is expected test-suite non-determinism (network/timing flakes), same order of magnitude; grepped entire raw log for timeHelpers/affectedCodesParser/priceFreshnessGate/timeConstants/assembleBriefing/assembleEveningSummary/assembleAlertDigest — zero hits in any fail or error line; all 65 fails classed as pollNews/VPS-push/shared-DB-race (matches claimed flaky taxonomy) + 2 unrelated pre-existing failures in src/_deprecated/1302-technical-indicators.test.ts (Vietnamese-text assertion drift, file untouched by this PR). Confirmed behavior-preservation: git diff of dbb87db26 shows old code was bare `ageHours <= 24`; new priceFreshnessGate.ts uses `ageHours <= PRICE_FRESHNESS_MS/MS_PER_HOUR` where PRICE_FRESHNESS_MS=24*MS_PER_HOUR — algebraically identical (=24), confirmed by timeConstants.ts source read. Note (non-blocking): scripts/verify-deploy-sha.sh now reports drift (deployed=e7211112 expected=f4afa0e0) because HEAD advanced past ops Step-4 rebuild via f4afa0e03 (router head-sync commit) — verified via git show --stat that f4afa0e03 touches ONLY docs/data/orch/orch-state.json (no app code) and via git merge-base --is-ancestor that the deployed SHA e72111120 already contains code commit dbb87db26 — no rebuild required for this drift, flagging for awareness only. VERDICT: PASS, no regressions, no DDD/security violations. Routing next_agent=po for Step 6 sign-off."
       }
     ],
     "qa": [],
