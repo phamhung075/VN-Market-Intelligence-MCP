@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-INTERFACE-sequential-confidence-05-mask DONE_VERIFIED (qa post-swap sanity check PASS 2026-07-08T03:34:45Z — docker inspect image match + /health 200/toolCount 183 unchanged). NEW unrelated pre-existing bug discovered + filed during the optional live-wire probe: FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER (sequential_market_analysis registerTool() handler-wiring defect, confirmed pre-existing via git show 1b1397025^, zero relation to the confidence fix) — route to dev-mcp-server on a future dispatch cycle, not dispatched here.",
-    "updated_at": "2026-07-08T03:34:45Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-INTERFACE-source-confidence-10-mask",
+    "next_agent": "qa",
+    "next_action": "QA verify FACTORY-INTERFACE-source-confidence-10-mask (finalizeBctcRefineTool.ts source_confidence resolver hardening) — confirm live named-volume DB shows non-1.0 source_confidence rows + 0 NULLs (already true pre-fix, per dev's ground-truth finding: the original `?? 1.0` was unreachable dead code, not an active mask), verify resolveSourceConfidence unit tests (6/6), then ops-gated mcp-server image swap (id 35c8117c1f85) before done_verified.",
+    "updated_at": "2026-07-08T04:31:34Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -702,8 +702,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-08T01:22:39Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-08T03:37:00Z",
+    "_updated_by": "po (triage tick 2026-07-08T03:37Z — gateway-blind CRITICAL re-scope)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -3714,15 +3714,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-OPEN-ZERO-PRICE-RACE"
       },
       {
-        "title": "Propagate real per-row source_confidence in finalizeBctcRefine (not 1.0)",
-        "priority": "P1",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INTERFACE-source-confidence-10-mask",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-source-confidence-10-mask"
-      },
-      {
         "title": "Stop defaulting PaddleOCR cell score to 0.7; surface real ink-density or sentinel",
         "priority": "P1",
         "zone": "pdf-extractor",
@@ -5168,8 +5159,9 @@
         "priority": "high",
         "zone": "agents",
         "size": "S",
-        "status": "BACKLOG",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-GATEWAY-TRANSPORT-PROBE"
+        "status": "CANCELLED",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-GATEWAY-TRANSPORT-PROBE",
+        "status_note": "CANCELLED 2026-07-08T03:37Z (po triage tick) — premise FALSIFIED by dev-team CRITICAL bug-escalation docs/signals/processed/dev-team-20260708T033700Z-gateway-blind-main-session.json: .mcp.json is ALREADY correct (gateway http transport + correct URL — F1.2 is a no-op) and a raw curl of the gateway endpoint returns HTTP 200 with a valid MCP protocol response (server healthy/reachable). Root cause = Claude Code CLI MCP-client session-initialize handshake failure affecting main AND subagent sessions (now router-level), NOT a repo config or server-down condition. Superseded by SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE."
       },
       {
         "id": "F1-WRITE-MCP-JSON-GATEWAY",
@@ -5178,8 +5170,9 @@
         "priority": "high",
         "zone": "agents",
         "size": "S",
-        "status": "BACKLOG",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-WRITE-MCP-JSON-GATEWAY"
+        "status": "CANCELLED",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-WRITE-MCP-JSON-GATEWAY",
+        "status_note": "CANCELLED 2026-07-08T03:37Z (po triage tick) — premise FALSIFIED by dev-team CRITICAL bug-escalation docs/signals/processed/dev-team-20260708T033700Z-gateway-blind-main-session.json: .mcp.json is ALREADY correct (gateway http transport + correct URL — F1.2 is a no-op) and a raw curl of the gateway endpoint returns HTTP 200 with a valid MCP protocol response (server healthy/reachable). Root cause = Claude Code CLI MCP-client session-initialize handshake failure affecting main AND subagent sessions (now router-level), NOT a repo config or server-down condition. Superseded by SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE."
       },
       {
         "id": "F1-AGENT-FATHER-BLIND-GUARD-REMOVE",
@@ -5188,8 +5181,9 @@
         "priority": "high",
         "zone": "agents",
         "size": "S",
-        "status": "BACKLOG",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-AGENT-FATHER-BLIND-GUARD-REMOVE"
+        "status": "CANCELLED",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#F1-AGENT-FATHER-BLIND-GUARD-REMOVE",
+        "status_note": "CANCELLED 2026-07-08T03:37Z (po triage tick) — premise FALSIFIED by dev-team CRITICAL bug-escalation docs/signals/processed/dev-team-20260708T033700Z-gateway-blind-main-session.json: .mcp.json is ALREADY correct (gateway http transport + correct URL — F1.2 is a no-op) and a raw curl of the gateway endpoint returns HTTP 200 with a valid MCP protocol response (server healthy/reachable). Root cause = Claude Code CLI MCP-client session-initialize handshake failure affecting main AND subagent sessions (now router-level), NOT a repo config or server-down condition. Superseded by SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE."
       },
       {
         "id": "F1-CLOUD-TRIGGER-DECOMMISSION",
@@ -7934,6 +7928,20 @@
         "type": "FIX",
         "zone": "mcp-server-interface",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SEQUENTIAL-ANALYSIS-TOOL-DEAD-HANDLER"
+      },
+      {
+        "id": "SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE",
+        "type": "SPIKE",
+        "title": "Gateway-blind root cause = Claude Code CLI MCP-client session-init handshake failure (server proven healthy via raw-curl HTTP 200; .mcp.json confirmed correct). Scope repo-actionable mitigation vs harness/user-side; supersedes the F1-GATEWAY chain.",
+        "priority": "high",
+        "size": "S",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "mode": "spike",
+        "timebox": 120,
+        "created_at": "2026-07-08T03:37:00Z",
+        "origin_signal_id": "dev-team-20260708T033700Z-gateway-blind-main-session",
+        "status_note": "SPIKE question: given .mcp.json is confirmed correct and the gateway endpoint returns HTTP 200 with a valid MCP protocol response (server healthy), why does the Claude Code CLI MCP client fail the session-initialize handshake for some sessions (main + subagent, open ~8h, now first observed at dev-team dispatcher/router level)? (a) REPO-ACTIONABLE: extend scripts/agents-flow/mcp-call.sh and/or document a sanctioned degraded-mode operating procedure — including static tool discovery via docs/data/tool-registry.json to cover the 3 blind gateway meta-tools (list_servers/list_server_tools/search_tools) which have no bash-bridge equivalent — so agents stop per-tick re-escalation churn (8 consecutive cowork withholds this window). (b) OUT-OF-REPO: confirm the handshake failure is a Claude Code CLI/harness-level issue needing user /mcp reconnect or session restart (the only known per-session remediation, corroborated 4th+ time), flag for user/Anthropic-side visibility. Supersedes F1-GATEWAY-TRANSPORT-PROBE + F1-WRITE-MCP-JSON-GATEWAY (premise falsified) + F1-AGENT-FATHER-BLIND-GUARD-REMOVE (gated on now-moot .mcp.json). Origin: docs/signals/processed/dev-team-20260708T033700Z-gateway-blind-main-session.json"
       }
     ],
     "closed_sprints": [
@@ -9240,6 +9248,24 @@
         "moved_to_review_at": "2026-07-08T01:55:43Z",
         "moved_by": "dev-mcp-server",
         "review_note": "Fix committed a80d405d1 (DSI-S3-sector-fin.test.ts hydrologicalData.js mock.module, freeze-before-mock+afterAll pattern copied from 1efb6f918), pushed to origin/main. Verified 17/17 local pass x3. 257-weather-vn.test.ts/258-hydro-data.test.ts audited: both always pass an injected HTTP client to the fetcher, never reach the live-network default-client branch — confirmed out of scope, left untouched (not a 4th recurrence risk). CI verification_gate=ci_green_on_subsequent_push: RAW-checked via gh run view/rerun on the a80d405d1 push, DSI-S3-sector-fin.test.ts absent from FAILED FILES across 3 consecutive reruns; run 3 conclusion=success. Runs 1-2 failed on unrelated single-file flakes (240-price-pipeline-recovery.test.ts, then 167-prediction-market-job.test.ts) — both pass locally, different file each run, looks like pre-existing CI-runner-level P=16 flakiness unrelated to this commit; flagging for PO/dispatcher triage, not fixed here (scope boundary)."
+      },
+      {
+        "title": "Propagate real per-row source_confidence in finalizeBctcRefine (not 1.0)",
+        "priority": "P1",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INTERFACE-source-confidence-10-mask",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-source-confidence-10-mask",
+        "promoted_at": "2026-07-08T03:50:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T03:50:52Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "moved_to_review_at": "2026-07-08T04:31:34Z",
+        "moved_by": "dev-mcp-server",
+        "review_note": "Code fix + tests DONE: finalizeBctcRefineTool.ts's `row.source_confidence ?? 1.0` INSERT fallback extracted into exported resolveSourceConfidence() — propagates real parser confidence unchanged (incl. edge cases 0/1.0), falls to schema default 1.0 only when genuinely undefined, NOT NULL preserved (column NOT made nullable). IMPORTANT FOR QA: ground-truth investigation found the original `?? 1.0` was provably UNREACHABLE dead code, not a live masking bug — parseRefinedMarkdown always supplies a real confidence, existing DV-HC-SC suite (HC-human-confirm.test.ts) already proved real values persist, and the live named-volume DB independently confirms it (bctc_table_rows: 380 rows @0.1, 2 @0.4, 3257 @1.0, 0 NULLs) even under the pre-fix image. QA RAW-verify should confirm the SAME live-DB facts (non-1.0 rows exist, 0 NULLs) rather than expect a before/after behavior delta — this is a behavior-preserving structural hardening + honest documentation fix, not a live-bug repair. New FACTORY-INTERFACE-source-confidence-10-mask.test.ts (6/6 pass) covers both resolver branches directly. tsc clean, tools=183 unchanged, targeted+adjacent 167/167 pass, full bun test 14312/58fail/3err/1177 files (pre-existing flaky class, zero overlap). mcp-server image rebuilt (35c8117c1f85) but NOT swapped into the running container (still 180382145ee7, serving FACTORY-INTERFACE-sequential-confidence-05-mask) — docker compose up -d is ops-gated, stops at REVIEW not done_verified."
       }
     ],
     "qa": [],
@@ -9259,8 +9285,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T02:48:35Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-08T03:37:00Z",
+    "last_triaged_by": "po"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
