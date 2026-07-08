@@ -50,6 +50,13 @@ Morning intelligence synthesis: market context + alerts + sector insights + news
 ### assembleEveningSummary.ts
 Daily close summary generation
 
+### orchestrateRecapCommand.ts
+Telegram `/recap`/`/recapw`/`/recapm` orchestration (FACTORY-INFRA-split-telegramCommands):
+thin wrappers around `assembleEveningSummary`/`generatePeriodicSummary`,
+invoked by `interface/mcp/routes/webhookHandler.ts` and injected into
+`infrastructure/notifiers/telegramCommands.ts`'s `RecapResolvers` DI contract
+so the infrastructure layer never imports `application/usecases/` directly.
+
 ### assembleAlertDigest.ts
 Alert aggregation & notification formatting
 

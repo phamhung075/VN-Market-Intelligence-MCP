@@ -130,4 +130,21 @@ describe("1406c — handleWebhook", () => {
     expect(mockRes.statusCode).toBe(200);
     expect(mockRes.body).toBe("ok");
   });
+
+  // FACTORY-INFRA-split-telegramCommands: webhookHandler.ts is the INTERFACE
+  // layer that wires orchestrateRecapCommand's 3 functions into
+  // handleTelegramCommand's RecapResolvers DI contract. This proves the
+  // wiring reaches all the way through (no real bot token in test env — the
+  // handler still never throws and returns 200).
+  it("(d) /recap dispatches through the RecapResolvers DI wiring and returns 200 without crashing", async () => {
+    const req = makeReq(
+      JSON.stringify({ message: { text: "/recap", chat: { id: 43 } } }),
+      { "x-telegram-bot-api-secret-token": "valid-secret-1406c" },
+    );
+    const res = makeRes() as unknown as ServerResponse;
+    const mockRes = res as unknown as MockRes;
+    await handleWebhook(req, res, getDb(), silentLog);
+    expect(mockRes.statusCode).toBe(200);
+    expect(mockRes.body).toBe("ok");
+  });
 });

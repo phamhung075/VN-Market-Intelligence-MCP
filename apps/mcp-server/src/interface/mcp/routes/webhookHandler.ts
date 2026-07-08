@@ -8,6 +8,12 @@
  *
  * DI contract: db and log are injected by the caller (handleRequest in server.ts)
  * so unit tests can pass in-memory DB directly.
+ *
+ * FACTORY-INFRA-split-telegramCommands: this is the INTERFACE layer that
+ * invokes the /recap* ORCHESTRATION usecase (orchestrateRecapCommand.ts) and
+ * passes the 3 resolvers into handleTelegramCommand's RecapResolvers DI
+ * contract — telegramCommands.ts (infrastructure) itself never imports
+ * application/usecases/.
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -17,6 +23,18 @@ import { validateWebhookRequest } from "../../../infrastructure/notifiers/telegr
 import { insertReport } from "../../../infrastructure/db/telegramReportStore.js";
 import { handleTelegramCommand } from "../../../infrastructure/notifiers/telegramCommands.js";
 import { sendTelegramMarket } from "../../../infrastructure/notifiers/telegram.js";
+import {
+  orchestrateEveningRecap,
+  orchestrateWeeklyRecap,
+  orchestrateMonthlyRecap,
+} from "../../../application/usecases/orchestrateRecapCommand.js";
+
+/** Production /recap* resolvers — the only call site that wires infra → application for recap. */
+const RECAP_RESOLVERS = {
+  evening: orchestrateEveningRecap,
+  weekly: orchestrateWeeklyRecap,
+  monthly: orchestrateMonthlyRecap,
+};
 
 export async function handleWebhook(
   req: IncomingMessage,
@@ -80,6 +98,7 @@ export async function handleWebhook(
     const result = await handleTelegramCommand(
       body as Parameters<typeof handleTelegramCommand>[0],
       db,
+      RECAP_RESOLVERS,
     );
     if (result) {
       // Multi-message commands (e.g. /news) return texts[]; single-message commands use text.

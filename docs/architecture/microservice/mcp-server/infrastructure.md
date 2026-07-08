@@ -172,7 +172,42 @@ flow and stay bespoke, not built through `wrapVnstockScript`.
 - **Rate limiter:** `rateLimiter.ts`
 - **Resilient fetcher:** `resilientFetcher.ts` (retry + timeout + fallback)
 - **Telegram notifier:** `notifiers/telegram.ts`
+- **Telegram command router:** `notifiers/telegramCommands.ts` (+ `notifiers/telegram/`) — see below
 - **RAG vector store:** `rag/vectorstore.ts` (LanceDB)
+
+### Telegram Command Router (`notifiers/telegramCommands.ts` + `notifiers/telegram/`)
+
+Processes incoming Telegram webhook updates (`/help`, `/watchlist`, `/price`,
+`/health`, `/news`, `/recap`, `/recapw`, `/recapm`, `/set_position`,
+`/check_position`, `/ask`, `/report`, `/fix`). Never throws; plain-text only.
+
+**FACTORY-INFRA-split-telegramCommands (2026-07-08):** split by seam out of a
+1071L monolith:
+- `telegram/format.ts` — presentation helpers (`fmtNum`, `stripHtml`,
+  `HELP_TEXT`, `chunkStories`, `splitBlockAtNewlines`).
+- `telegram/commandHandlers.ts` — the 8 non-`/news`/`/recap*` handlers; raw SQL
+  moved into `infrastructure/db/{watchlistReadStore,systemHealthStore,
+  agentFeedbackStore}.ts`.
+- `telegram/newsHandler.ts` — `/news` (dedup + chunking, unchanged logic).
+- `telegram/recapRenderer.ts` — **pure** `/recap*` rendering. Deliberately has
+  ZERO imports from `application/usecases/` — its `EveningRecapData`/
+  `PeriodicRecapData` types are narrow, LOCAL, structural views (not the
+  producer's `EveningSummary`/`PeriodicSummary` types), so real application
+  objects satisfy them via TypeScript structural typing with no coupling.
+- `telegramCommands.ts` — thin router; exports a `RecapResolvers` DI contract
+  (`evening`/`weekly`/`monthly` async resolvers). When a resolver is omitted
+  the router degrades to a friendly Vietnamese error message — never throws.
+
+**Layering fix:** telegramCommands.ts previously imported
+`assembleEveningSummary`/`generatePeriodicSummary` directly from
+`application/usecases/` to BOTH fetch and render `/recap*` (infra reaching
+UP into application). The fetch step now lives in
+`application/usecases/orchestrateRecapCommand.ts`
+(`orchestrateEveningRecap`/`orchestrateWeeklyRecap`/`orchestrateMonthlyRecap`),
+invoked by the INTERFACE layer (`interface/mcp/routes/webhookHandler.ts`),
+which passes the 3 resolvers into `handleTelegramCommand`'s `RecapResolvers`
+parameter. `telegramCommands.ts` and everything it imports now has zero
+`application/usecases/` imports.
 
 ## Telemetry
 
