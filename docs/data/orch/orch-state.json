@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE DONE_VERIFIED (qa independent re-verify PASS 2026-07-08T08:25:44Z — filter confirmed applied during candidate selection not post-hoc; both depends_on shapes (inline + detail_ref/backlog-detail.json) confirmed resolved; DONE_VERIFIED-only + conservative-skip-on-missing confirmed; test-devteam-bounded1-depends-on.sh re-run 17/17 PASS; own read-only dry-run against live data confirmed correct skip of FACTORY-TECHANALYSIS-delete-orphaned-ts-service + correct pick of FACTORY-TECHANALYSIS-go-livepath-tests; --slurpfile detail confirmed threaded through both invocation call sites; claim script confirmed genuinely unchanged; DJ-GATE-1 journal confirmed substantive; scope confirmed clean, nothing auto-promoted live).",
-    "updated_at": "2026-07-08T08:25:44Z",
-    "updated_by": "qa"
+    "status": "review",
+    "active_task_id": "FACTORY-TECHANALYSIS-go-livepath-tests",
+    "next_agent": "qa",
+    "next_action": "FACTORY-TECHANALYSIS-go-livepath-tests at REVIEW -- qa: verify new router_test.go + usecases_test.go (go test ./... GREEN, purely additive, no production code changed), then this unblocks FACTORY-TECHANALYSIS-delete-orphaned-ts-service (currently BACKLOG, blocked on this + one sibling).",
+    "updated_at": "2026-07-08T08:40:46Z",
+    "updated_by": "dev-technical-analysis"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -702,8 +702,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-08T08:18:49Z",
-    "_updated_by": "developer (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE -> REVIEW)",
+    "_updated_at": "2026-07-08T08:40:46Z",
+    "_updated_by": "dev-technical-analysis",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -3721,15 +3721,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-RAG-confidence-impact-or-00-mask",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-confidence-impact-or-00-mask"
-      },
-      {
-        "title": "Add Go tests for the deployed request path (application + interface/http + domain)",
-        "priority": "P1",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-TECHANALYSIS-go-livepath-tests",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-go-livepath-tests"
       },
       {
         "title": "Make api/openapi.yaml the single /ta/indicators contract; conform the Go service",
@@ -9390,6 +9381,24 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Add Go tests for the deployed request path (application + interface/http + domain)",
+        "priority": "P1",
+        "zone": "technical-analysis",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-TECHANALYSIS-go-livepath-tests",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-go-livepath-tests",
+        "promoted_at": "2026-07-08T08:29:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T08:29:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "moved_to_review_at": "2026-07-08T08:40:46Z",
+        "moved_by": "dev-technical-analysis",
+        "review_note": "Added pkg/interface/http/router_test.go + pkg/application/usecases_test.go — both packages had 0 test files before. router_test.go: httptest.NewServer(NewRouter(...)) covers GET /health, POST /ta/indicators happy path, invalid-JSON 400, missing closes+symbol 400, useCase-error 500 (calculator- and PriceRepo-triggered). usecases_test.go: table tests for ComputeTAUseCase.Execute — pure-compute path (DB never consulted), DB-backed path (fake PriceRepo, asserts GetCandles(symbol,60) + closes forwarded in order), period<=0 defaults to 14, empty-closes+empty-symbol error (no I/O), calculator/repo error propagation. Purely additive — zero production code changed, no bugs found while writing tests. Gates: go test ./... 12 packages GREEN, go vet clean, golangci-lint 0 issues, sandbox 35/35 scenarios GREEN (dashboard/build.sh + headless render-check PASS). Doc-review: docs/architecture/microservice/technical-analysis/testing.md updated. Decision journal: sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md. Commit ed739aa59. rebuild_required: false (test-only, no deploy needed) — next_agent=qa to verify the new tests and unblock FACTORY-TECHANALYSIS-delete-orphaned-ts-service."
       }
     ],
     "qa": [],
@@ -9409,7 +9418,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T07:53:49Z",
+    "last_triaged_at": "2026-07-08T08:29:26Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
