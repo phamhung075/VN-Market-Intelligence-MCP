@@ -262,6 +262,21 @@
       "backlog_task": "JANITOR-034",
       "ship_directly": false,
       "reason_not_shipped": "Two-file change across 2 layers. Requires domain design decision (extract to canonical source vs keep local). Not mechanical."
+    },
+    {
+      "fingerprint": "check-1:application/usecases/bctc/newsChainFallback.ts:temporal-discount-per-date-hardcode",
+      "severity": "LOW",
+      "category": "Hardcoded per-date special-case — temporal discount year comparison (PROPOSED)",
+      "file": "apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts (relocated from fetchParseAndStoreBctc.ts by FACTORY-APP-split-fetchParseAndStoreBctc)",
+      "lines": "tryNewsChainFallback() temporal-discount block",
+      "detail": "Flagged during FACTORY-APP-split-fetchParseAndStoreBctc (explicitly out of scope for that task, left untouched per its own instruction): `signalText.includes('2023') && year === 2024` is a hardcoded per-date special-case that will silently stop applying the temporal discount once the calendar moves past the 2023-signals-into-2024-report window (and never generalizes to any other prior-year combination, e.g. '2024'&&year===2025). Referenced generically in docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md (CI-no-hardcode-allowlist-scan idea) but not previously tracked as its own discrete fix task. Fix idea: generalize to a prior-year check (e.g. `signalText.includes(String(year - 1))`) — requires a developer/architect decision on exact intended semantics (was this literally 2023-specific, or meant as 'prior fiscal year' generally?) before generalizing; not a mechanical single-line swap.",
+      "canonical_source": "none yet — needs architect/developer decision on generalization semantics",
+      "risk": "LOW — becomes a silent no-op once the 2023/2024 window is stale (news-chain fallback is already a rare code path); no live behavior change today, correctness risk is FUTURE staleness rather than a current bug.",
+      "discovered_at": "2026-07-08T00:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-035",
+      "ship_directly": false,
+      "reason_not_shipped": "Out of scope for FACTORY-APP-split-fetchParseAndStoreBctc (pure-refactor DoD explicitly excludes extending/generalizing this special-case). Requires explicit architect/developer decision on intended semantics before generalizing."
     }
   ],
   "fixed_findings": [

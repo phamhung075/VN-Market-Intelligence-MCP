@@ -60,9 +60,15 @@ describe("P2-F G5b — callers rewired to ragHttpClient", () => {
   });
 
   it("fetchParseAndStoreBctc.ts imports AnalysisInput from ragHttpClient (not retriever)", () => {
-    const src = readSrc("application/usecases/fetchParseAndStoreBctc.ts");
-    expect(src).not.toMatch(/from.*["'].*infrastructure\/rag\/retriever["']/);
-    expect(src).toMatch(/ragHttpClient/);
+    // FACTORY-APP-split-fetchParseAndStoreBctc (2026-07-08): the Step 4 LanceDB
+    // insert (and its AnalysisInput/ragHttpClient import) moved to
+    // bctc/insertBctcAnalysis.ts; check both files so this AC still holds after
+    // the split — the orchestrator itself no longer imports ragHttpClient directly.
+    const orchestratorSrc = readSrc("application/usecases/fetchParseAndStoreBctc.ts");
+    const insertAnalysisSrc = readSrc("application/usecases/bctc/insertBctcAnalysis.ts");
+    expect(orchestratorSrc).not.toMatch(/from.*["'].*infrastructure\/rag\/retriever["']/);
+    expect(insertAnalysisSrc).not.toMatch(/from.*["'].*infrastructure\/rag\/retriever["']/);
+    expect(insertAnalysisSrc).toMatch(/ragHttpClient/);
   });
 });
 

@@ -24,7 +24,14 @@ Sector classification sync from static mappings
 BCTC PDF text extraction & field validation
 
 ### fetchParseAndStoreBctc.ts
-VPS PDF pull → OCR → parser → DB storage
+VPS PDF pull → OCR → parser → DB storage. FACTORY-APP-split-fetchParseAndStoreBctc
+(2026-07-08): this file is now a thin Step 1/3/4 sequencer (<=120L); split into
+`bctc/types.ts` (shared param/insert-fn types), `bctc/resolvePdfText.ts` (Step 2
+PDF download + OCR-cache fallback, Task 293), `bctc/newsChainFallback.ts`
+(Task 1294b news-chain fallback + `buildFiscalPeriod`/`buildAnalysisSummary`,
+carries the named `NEWS_FALLBACK_BASELINE`/`TEMPORAL_DISCOUNT`/`FALLBACK_CONF_MIN`/
+`FALLBACK_CONF_MAX` confidence-tuning constants), and `bctc/insertBctcAnalysis.ts`
+(Step 4 LanceDB embed). Arithmetic/behavior unchanged — pure relocation + naming.
 
 ### discoverBctcPdfUrlBrowser.ts / discoverBctcPdfUrlDirectApi.ts
 PDF discovery strategies (browser scraping vs direct API)
