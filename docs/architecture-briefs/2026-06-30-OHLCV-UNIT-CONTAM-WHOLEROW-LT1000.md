@@ -309,3 +309,23 @@ PM should create these atomic tasks under sprint OHLCV-UNIT-CONTAM-WHOLEROW-LT10
 **Writer guard (CONTAM-10-WRITER) does NOT block the live exec**: the writer fix prevents future contamination; the repair migration cleans existing residue. They can land in any order.
 
 **SSOT note**: `ohlcvWriteService.ts` and `ohlcvSanityCheckJob.ts` are in different folders → CONTAM-10-WRITER and CONTAM-10-SANITY are parallel-safe. If worktree isolation is used, they must each commit their own zone only.
+
+---
+
+## 10. Addendum — Round 2 (2026-07-08): Writer H was never migrated, still actively leaking
+
+CONTAM-10-MIGRATION/WRITER/SANITY (§9) shipped 2026-06-30 and are live in the deployed image
+(built 2026-07-04). CONTAM-10-EXEC (the live repair) was never run — a fresh dry-run on
+2026-07-08 shows contamination GREW to 6,533 rows / 27 tickers (from the original 10-row/7-day
+alert), because **`handlePushOhlcvHistory`** (`apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts`,
+route `POST /api/push-ohlcv-history`, fired every ~15–30 min by `vps-scripts/fetch-ohlcv-backfill.sh`
+via the `ohlcv_backfill_queue` poll loop — confirmed live, not one-time) was **never migrated to
+`writeOhlcvBatch`**. It does a raw `INSERT … ON CONFLICT DO UPDATE` guarded by `validateOhlcvUnit`
+only (intra-row) — the exact structural blind spot §1 already diagnosed for `normalizeOhlcvToVnd`,
+now reproduced because this writer never gained the CONTAM-10-WRITER cross-day `cleanRef` check.
+Live evidence (VHM/VIC + 22 other tickers, ~750 rows each, one `updated_at=2026-07-07T19:10:48Z`
+batch) confirms this route is the active leak, still writing contaminated whole-row bars up to the
+day before this brief was written. Full root-cause chain, PO-hazard investigation (flat
+cold-start seed bars ARE picked up as anchors but are numerically safe, confirmed live), and
+updated PM task table (`CONTAM-10-WRITER-H`, gated `CONTAM-10-EXEC-2`) → `[Architect] Brownfield
+Findings — Round 2` in `docs/handoffs/FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM.md`.

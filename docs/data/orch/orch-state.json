@@ -253,10 +253,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
-    "next_agent": "architect",
-    "next_action": "PO-triaged dispatch of FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM (OHLCV whole-row contamination design) — dispatcher-wrap then JUMP TO execute.",
-    "updated_at": "2026-07-08T01:10:52Z",
-    "updated_by": "dev-team"
+    "next_agent": "pm",
+    "next_action": "Decompose FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM Round-2 design (handoff appended) into CONTAM-10-WRITER-H / optional CONTAM-10-MIGRATION-ANCHOR-DIAG / CONTAM-10-EXEC-2 (sequential, gated on WRITER-H).",
+    "updated_at": "2026-07-08T01:23:05Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -539,8 +539,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-08T00:51:41Z",
-    "_updated_by": "developer (FIX-NEWS-CB-FALSE-CLOSED -> REVIEW)",
+    "_updated_at": "2026-07-08T01:22:39Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -2559,7 +2559,7 @@
             "owner": "architect",
             "size": "M",
             "status": "IN_PROGRESS",
-            "note": "Umbrella FIX promoted to ready[] -> architect designs the safe per-ticker discontinuity predicate; pm decomposes into dev tasks (apps/mcp-server).",
+            "note": "Round 2 (architect, 2026-07-08): design complete, appended to handoff. Live evidence found the ACTIVE leak — handlePushOhlcvHistory (Writer H, /api/push-ohlcv-history) never migrated to writeOhlcvBatch, bypasses CONTAM-10-WRITER cross-day guard, still contaminating as of 2026-07-07T19:10Z. PO anchor-hazard investigated+resolved (predicate safe, no redesign). pm to decompose: CONTAM-10-WRITER-H (writer fix) + optional CONTAM-10-MIGRATION-ANCHOR-DIAG (cosmetic) + CONTAM-10-EXEC-2 (live repair re-run, SEQUENTIAL gated on WRITER-H landing first).",
             "claimed_at": "2026-07-08T01:10:52Z",
             "claimed_by": "dev-team"
           }
@@ -7729,6 +7729,19 @@
         "type": "FIX",
         "zone": "pdf-extractor",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "id": "CI-RED-0d28104a-FIX",
+        "type": "FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "created_at": "2026-07-08T01:22:39Z",
+        "origin_signal_id": "CI-RED-0d28104a",
+        "title": "CI-RED-0d28104a-FIX — CI RED (bun test) flaky: DSI-S3-sector-fin.test.ts AC-SEC-2a/2b — unmocked fetchReservoirLevels races 5s timeout (3rd file, same root-cause class as 1410/262 fixed 1efb6f918)",
+        "status_note": "AC (verification_gate=ci_green_on_subsequent_push): `gh run list --branch main --limit 3` shows conclusion=success for a bun-test run on a push AFTER 0d28104ac. Priority: high. Failing job: bun test. ROOT CAUSE (PO-verified — re-ran local: 16 pass/1 fail, AC-SEC-2a timed out 5001ms; parent saw 16/1 then 15/2 = flaky): src/__tests__/DSI-S3-sector-fin.test.ts AC-SEC-2a/2b call getEnergyGridStatus() -> fetchReservoirLevels() (infrastructure/fetchers/hydrologicalData.js) doing a REAL live network fetch, NO mock, racing bun-test's 5000ms default per-test timeout under CI 16-way parallel isolation. Offending commit 0d28104ac is DOCS-ONLY (notebook checkpoint main.md, 1 file) — it did NOT cause this; pre-existing test-hygiene flake, CI-red is a false-alarm-on-that-commit. RECURRING (feedback_recurring_bug_escalation): 3rd test file with this exact root-cause class. 1410-tool-diacritics-sweep.test.ts + 262-mcp-tools-042.test.ts were ALREADY fixed via mock.module (commit 1efb6f918, CI-green run 28886901289) but DSI-S3-sector-fin was explicitly dismissed as 'CI-flaky' at docs/data/orch/archive/backlog-detail.json:5724 without applying the mock. FIX: apply the proven, already-in-repo mock.module() pattern (freeze-before-mock via {...realNs} value-copy placed textually BEFORE the energyTools import + afterAll-restore; matches 1355b/1410/262 precedent) to the hydrologicalData.js import in DSI-S3-sector-fin.test.ts. SWEEP to close the class permanently: audit src/__tests__/257-weather-vn.test.ts + 258-hydro-data.test.ts (both mock.module=0, both import the network fetchers) — mock them or move to an integration lane excluded from default `bun test` so there is no 4th recurrence. Origin signal: docs/signals/processed/ci-red-0d28104a-20260708011711.json"
       }
     ],
     "closed_sprints": [

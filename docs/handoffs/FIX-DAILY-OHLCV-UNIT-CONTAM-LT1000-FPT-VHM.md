@@ -91,3 +91,148 @@ PIPELINE: continue
 - **Docs updated:** NONE (no architecture/microservice doc touched)
 - **Graphify:** skipped (no docs impacted)
 - **Simplicity gate:** PASS — fetchCleanReferenceCloseMap mirrors fetchPrevCloseMap pattern, effectivePrevClose is a one-liner ternary; no over-engineering
+
+---
+
+## [Architect] Brownfield Findings — Round 2 (2026-07-08, PO re-triage of telegram 3518/3519)
+
+CONTAM-10-MIGRATION and CONTAM-10-WRITER (above) shipped 2026-06-30 and are in the deployed
+image (built 2026-07-04T07:58Z, confirmed via `docker exec ... grep CLEAN_CLOSE_FLOOR` on the
+live container — code present). CONTAM-10-EXEC (the live repair run) was **never executed** —
+dry-run against the live named volume TODAY still shows **6,533 candidate rows / 27 tickers**
+(grew from the original alert's "10 rows/7 days"). Root cause of the growth, found via RAW
+verification against the live container (not the local decoy `data/market.db`):
+
+### RAW evidence
+
+```
+docker exec vn-market-intelligence-mcp-mcp-server-1 bun run /app/repair-ohlcv-wholerow-check.ts --dry-run
+→ 6533 rows / 27 tickers; VHM 155 rows (2025-08-27..2026-07-07) anchor_close=146000
+                          VIC 246 rows (2025-07-11..2026-07-07) anchor_close=214000
+```
+VHM/VIC contaminated ranges extend to **2026-07-07 (yesterday)** — contamination is still
+ACTIVE, not just historical residue. Querying `daily_ohlcv` directly: 24+ tickers (VHM, VIC,
+SSI, TCB, VCB, …) share one identical `updated_at=2026-07-07T19:10:48.142Z` timestamp across
+~750 rows each (2023-07-04..2026-07-07 full history) — a single bulk backfill write, not the
+daily aggregator (which writes one row/day). `docs/…/daily_ohlcv` also has 9 `ohlcv_backfill_queue`
+rows queued between 16:35–19:04 on 2026-07-07 alone → this path fires roughly every 15–30 min.
+
+### Root cause chain — Writer H bypasses the CONTAM-10-WRITER guard entirely
+
+`apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts::handlePushOhlcvHistory`
+(route `POST /api/push-ohlcv-history`, called by `vps-scripts/fetch-ohlcv-backfill.sh` on the
+`ohlcv_backfill_queue` poll cycle — confirmed live/active, NOT a one-time script) does a raw
+`INSERT … ON CONFLICT DO UPDATE` and calls **only** `validateOhlcvUnit` (intra-row). It never
+calls `writeOhlcvBatch` — so it never benefited from CONTAM-10-WRITER's `fetchCleanReferenceCloseMap`
+/ `effectivePrevClose` cross-day scale detector. `validateOhlcvUnit` alone is structurally blind
+to whole-row-uniform values in `[100, 10_000_000]` (Rule 2/3 only fire on a *mixed* intra-row
+scale, not a uniformly-scaled row) — same blind spot the 2026-06-30 brief already diagnosed for
+`normalizeOhlcvToVnd`. This is the SAME class as CONTAM-6's blind spot, now reproduced in a writer
+that was never migrated.
+
+The source-side script has the identical gap: `vps-scripts/fetch-ohlcv-backfill.sh:245`
+`normalizeThousandVnd` jq filter — `if (.close > 0 and .close < 100) then …*1000…` — uses the
+same `STOCK_MIN_VND=100` threshold, so VNDirect thousand-scale values of 100–999 (e.g. VHM≈150,
+VIC≈214, FPT≈130, BMP≈150, KSV≈155 — every ticker in the 27-ticker candidate list) pass through
+unnormalized on the client side too. Server-side is the authoritative SSOT gate per existing
+architecture (never trust the client) — the durable fix belongs in Writer H, not the shell script.
+
+### PO hazard investigated — flat seed bars ARE picked up as anchors, confirmed live
+
+```
+VHM 2026-04-30 & 2026-05-01: open=high=low=close=146000, volume=6988500 (IDENTICAL both days)
+VIC 2026-04-30 & 2026-05-01: open=high=low=close=214000, volume=5786200 (IDENTICAL both days)
+```
+These are the cancelled-FIX-OHLCV-CLASS3 cold-start seed rows. They have **volume > 0** (not the
+`volume=0` FR-G3 signature), so both the repair migration's anchor CTE (`close>=1000 AND
+volume>0`) and the writer's `fetchCleanReferenceCloseMap` (same predicate) pick VHM's anchor as
+this exact seed row (`anchor_close=146000`, confirmed in the dry-run output above). Per PO: the
+VALUE is correct-scale, so the ×1000 candidate-detection math stays numerically safe — **no
+predicate change needed for correctness**.
+
+**Design decision (no algorithm change):** a plain `O=H=L=C` filter is NOT a safe way to exclude
+these rows from anchor selection — the live DB has 148,803 legitimately-flat bars with
+`volume>0` (illiquid VN stocks genuinely trade a single price all day; verified via direct query,
+e.g. ticker A32 has dozens). Filtering all flat bars out of the anchor pool would silently break
+anchor selection for hundreds of thin tickers. The existing predicate (per-row ratio vs the most
+recent `close>=1000 AND volume>0` bar — **not** a boundary/discontinuity scan that has to locate
+"where clean data starts") is inherently robust to this hazard because it never has to decide
+whether any single row is "the start of clean, organic data" — it only needs the row's *value* to
+be correct-scale, which the seed bars are. **Do not redesign toward a boundary-scan algorithm** —
+that is the design PO's hazard note is warning against, and it is not what's implemented.
+Residual, cosmetic-only gap: the repair script's per-ticker dry-run report prints
+`anchor_close=146000` with no indication it's a synthetic flat seed row, which could mislead a
+human reviewer eyeballing the report into treating it as an organic trading day. Recommend a
+non-blocking diagnostic annotation only (see PM decomposition below) — not a correctness fix.
+
+### Durable writer guard — the actual scope of this task
+
+**Fix:** migrate `handlePushOhlcvHistory` to call `writeOhlcvBatch(rows, db, {conflictStrategy:
+"backfill"})` instead of hand-rolled INSERT + `validateOhlcvUnit`-only. `writeOhlcvBatch`'s
+`UPSERT_BACKFILL_SQL` conflict clause is already semantically identical to Writer H's current SQL
+(unconditional overwrite of open/high/low/close/volume/updated_at, foreign-flow columns
+untouched) — this is a drop-in swap, not a rewrite. Keep the existing per-bar
+number-or-numeric-string parse-and-reject pre-pass (`TASK-OHLCV-WIC-2`, already in the file) as a
+thin adapter that builds `OhlcvWriteRow[]` — `writeOhlcvBatch` expects numeric fields, it does not
+coerce strings itself. Response shape (`ok, inserted, skipped, code`) derives from
+`writeResult.written` / `writeResult.skipped + writeResult.rejected.length`.
+
+**Overlap check vs `FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0` (REVIEW, stalled 16d) — NOT a
+conflict, confirmed non-overlapping:** that P0's Decision D-3 also touches `handlePushOhlcvHistory`,
+but for the high/low **type-coercion** gap (never default high/low to `open`) — pure Rule-5
+intra-row plausibility, already present in the current file (`TASK-OHLCV-WIC-2-writer-h-coerce.test.ts`,
+GREEN) and explicitly scoped by that task's own Decision D-1 as "the remaining gaps are Writer F
+and Writer H (type coercion)" — cross-day whole-row scale detection was explicitly NOT in that
+task's scope (same distinction PO's dispatch note draws). Migrating Writer H to `writeOhlcvBatch`
+in THIS task **preserves** the existing coercion pre-pass (does not touch/revert it) and
+additionally runs the coerced values through `writeOhlcvBatch`'s own `validateOhlcvUnit` call, so
+Rule 5 stays enforced either way — no regression risk to the P0's existing coverage. PM should
+still leave the P0 task's own status/verification gate untouched; this is an additive, disjoint
+change.
+
+**Residual accepted gap (flag only, out of scope):** a brand-new ticker backfilled for the first
+time with **zero** prior `daily_ohlcv` history and a real price ≥100,000 VND has no `prevClose`/
+`cleanRef` reference at all — even post-fix, `writeOhlcvBatch` cannot detect the scale error on
+that very first write (symmetric to the already-accepted "legitimately cheap stock" case). Not
+exploitable for VHM/VIC/FPT (deep history exists) — only matters for a freshly-added watchlist
+ticker's first backfill. Note for PM/QA visibility; not actionable in this task.
+
+**Lower-priority sibling gap (flag only, recommend separate backlog item):** Writer E
+(`apps/mcp-server/src/infrastructure/fetchers/ohlcvBackfill.ts`, called once from
+`ohlcvStartupProbe.ts` at container boot) calls `normalizeOhlcvToVnd` only — same structural gap,
+but fires once per boot vs Writer H's ~15–30 min cadence. Not the active/reproducing vector for
+this incident; do not fold into this task's WIP to keep it tight.
+
+### Files (Round 2 delta)
+
+| File | Action | DDD Layer |
+|------|--------|-----------|
+| `apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts` | MODIFY — `handlePushOhlcvHistory`: swap raw INSERT + validateOhlcvUnit-only for `writeOhlcvBatch(rows, db, {conflictStrategy:"backfill"})` call; keep existing parse-and-reject pre-pass | interface |
+| `apps/mcp-server/src/__tests__/CONTAM-10-WRITER-H-*.test.ts` | CREATE — regression: contaminated-batch + existing cleanRef → ×1000 corrected; brand-new ticker no history → written as-is (documents accepted gap); legit-cheap stock → unchanged | test |
+| `apps/mcp-server/src/__tests__/{1350-ohlcv-backfill-endpoint,TASK-OHLCV-WIC-2-writer-h-coerce}.test.ts` | REGRESSION GUARD — must stay GREEN unmodified | test |
+| `scripts/migrations/repair-ohlcv-unit-contamination-wholerow-lt1000.ts` | OPTIONAL MODIFY — per-ticker report: annotate when `anchor_close` row is itself `O=H=L=C` (diagnostic only, no predicate/math change) | migration script |
+
+### Updated PM Task Decomposition (supersedes Round-1 table above for EXEC ordering)
+
+| Task (proposed) | Zone | Parallel? | Depends |
+|---|---|---|---|
+| CONTAM-10-WRITER-H | `apps/mcp-server/src/interface/mcp/routes/` + `__tests__/` | parallel-safe (disjoint file from WRITER round 1) | none |
+| CONTAM-10-MIGRATION-ANCHOR-DIAG (optional, small) | `scripts/migrations/` | parallel | none |
+| CONTAM-10-EXEC-2 (re-run live repair + B serving-layer probe) | live-DB / gateway | **SEQUENTIAL — blocks on CONTAM-10-WRITER-H landing + redeploy first** (new gate; running the repair before the writer fix just gets re-contaminated by the next ~15-30min VPS poll cycle) | CONTAM-10-WRITER-H |
+| BACKLOG (not this sprint): Writer E hardening, brand-new-ticker cold-start gap, VPS-script `normalizeThousandVnd` defense-in-depth threshold fix | `apps/mcp-server/src/infrastructure/fetchers/` / `vps-scripts/` | — | — |
+
+**Critical ordering change vs Round 1:** Round 1 gated EXEC only on MIGRATION QA-pass. Round 2
+adds a hard gate on WRITER-H, because WRITER-H (not WRITER round-1) is the actively-reproducing
+leak — confirmed by live evidence above, not present at Round-1 design time.
+
+### RETURN (Round 2)
+```
+DONE: Round-2 design complete — durable writer guard gap identified (Writer H bypasses
+  CONTAM-10-WRITER), hazard investigated (flat-seed anchors confirmed live, predicate already
+  safe by design), findings appended to this handoff.
+ZONE: apps/mcp-server/ (primary) + scripts/migrations/ (optional diagnostic)
+NEXT: pm | decompose CONTAM-10-WRITER-H / CONTAM-10-MIGRATION-ANCHOR-DIAG (optional) /
+  CONTAM-10-EXEC-2 (sequential, gated on WRITER-H)
+HANDOFF: docs/handoffs/FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM.md
+PIPELINE: continue
+```
