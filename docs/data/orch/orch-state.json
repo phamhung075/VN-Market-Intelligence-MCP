@@ -261,10 +261,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-SCHEDULER-prediction-default-dedup",
-    "next_agent": "ops",
-    "next_action": "FACTORY-SCHEDULER-prediction-default-dedup moved to review — DEFAULT_PREDICTION_SIGNAL_CONFIG + resolvePredictionSignalConfig() dedup both try/catch branches of predictionMarketJob.ts Step 6 (pure refactor, resolved values unchanged); new test 7/7 pass, full bun test 14344 pass/58 fail (pre-existing flaky class, zero overlap with changed files); rebuild_required:true, ops runs Docker Microservice Code-Change Close Gate Steps 1-4 next. NOTE: after qa Step 5 RAW-verify, qa must set next_agent=po (NOT self-close to done_verified) — po performs Step 6.",
-    "updated_at": "2026-07-08T11:10:02Z",
-    "updated_by": "dev-mcp-server"
+    "next_agent": "qa",
+    "next_action": "ops: Docker Microservice Code-Change Close Gate Steps 1-4 COMPLETE — rebuild_required:true PASSED (mcp-server image rebuilt with GIT_SHA=9dd02600195b4c3abee868d956fc8920d4dd966f, container healthy, SHA gate exit 0). next_agent=qa for Step 5 RAW-verify (liveness + confirm predictionMarketJob stores prediction_signals with unchanged thresholds 50000/5/10).",
+    "updated_at": "2026-07-08T13:14:30Z",
+    "updated_by": "ops"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9466,7 +9466,7 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-08T10:51:11Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "rebuild_required": true,
         "moved_to_review_at": "2026-07-08T11:10:02Z",
         "moved_by": "dev-mcp-server",
