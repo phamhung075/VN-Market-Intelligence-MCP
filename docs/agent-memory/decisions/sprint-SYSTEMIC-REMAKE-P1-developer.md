@@ -42,3 +42,12 @@
 - Wait for the full pipeline-complete log signal in the new behavioral test (mirroring production fire-and-forget shape exactly) — rejected after it caused a real flaky timeout under concurrent test load (ragInsert's `AbortSignal.timeout(8_000)` against an unreachable RAG_SERVICE_URL, sequential per-item, up to ~24s worst case for 3 items): switched to polling CafeF RSS's `lastSuccessAt` flip, which fires immediately after the health-recording loop and well before the slow per-item embed loop — same assertion coverage, hermetic and fast (~2.6s).
 **why-decision:** Identical fix pattern to S3 for consistency and lowest-risk (2 deletions, no new logic); the CafeF-RSS-health-flip polling signal isolates exactly the code path this task cares about (source-health recording) from an unrelated, pre-existing sandbox limitation (no reachable RAG service), avoiding a flaky regression test that would itself need future debugging.
 **why-change:** No change from task brief — this is the second-pass continuation the router's revert commit (820d5c095) explicitly dispatched: "only the pushNewsHandler.ts:84 stub needs the same fix pattern applied... then a fresh rebuild+swap+live-verify."
+
+### STEP developer-S5 · developer · 2026-07-08T08:20:00Z
+**task-id:** FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE
+**what-done:** Added a depends_on eligibility filter (inline OR backlog-detail.json detail_ref lookup, DONE_VERIFIED-only, conservative-skip-if-nowhere) to devteam-backlog-promote-bounded1.jq's candidate-selection stage; threaded --slurpfile detail through both call sites; new test-devteam-bounded1-depends-on.sh 17/17 pass.
+**what-considered:**
+- Filter only the already-picked top row post-hoc — rejected: task spec required filtering DURING selection so a blocked top row can't starve an eligible lower-ranked one; verified this with a real 2-candidate fixture (Case 2).
+- Assume depends_on is always an array in backlog-detail.json — rejected after live grep found 7/321 rows store it as a bare string; added as_dep_array normalizer before shipping.
+**why-decision:** Matches the router's own diagnosed root cause + precedent (revert_note on the live board row) exactly — DONE_VERIFIED-only mirrors existing repo convention, conservative-skip is strictly safer than blind-dispatch.
+**why-change:** No change from task spec. Did not promote FACTORY-TECHANALYSIS-go-livepath-tests myself (PO declined manual promotion this cycle) — sanity-checked via scratch-copy dry-run only that the fixed script now picks it correctly.
