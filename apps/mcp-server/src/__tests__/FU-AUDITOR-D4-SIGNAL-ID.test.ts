@@ -20,6 +20,13 @@
  *      divergences → 8 distinct signal_queue rows, each id traceable back
  *      to its (taskId, kind) pair.
  *   3. sanitizeSignalIdSegment() unit coverage (id-safe encoding).
+ *
+ * FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (2026-07-08): R-2/R-3 candidates are
+ * now gated by the Step R-4b 2-consecutive-cycle debounce — a candidate only
+ * emits once it persisted across >=2 daily passes. The integration test below
+ * runs the janitor TWICE (pass 1 seeds the ledger, no emissions; pass 2 sees
+ * the SAME candidates persisted from pass 1 → emits) to keep asserting the
+ * original per-finding signal-id-uniqueness bug fix unaffected by the new gate.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
@@ -47,6 +54,8 @@ function makeTmpProjectRoot(label: string): string {
     `${label}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   mkdirSync(join(root, "docs", "data", "orch"), { recursive: true });
+  // R-4b debounce ledger lives at docs/agent-memory/notebooks/system-auditor.md
+  mkdirSync(join(root, "docs", "agent-memory", "notebooks"), { recursive: true });
   return root;
 }
 
@@ -197,10 +206,19 @@ describe("FU-AUDITOR-D4-SIGNAL-ID — per-finding signal id discriminator", () =
       projectRoot,
     };
 
+    // Pass 1 (FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE R-4b): cold-start ledger —
+    // all 8 owner/status candidates are first-occurrence, so none emit yet; the
+    // ledger is seeded with all 8 keys for the next cycle to read back.
+    const seedResult = await runTasksMdJanitor(deps);
+    expect(seedResult.errors).toEqual([]);
+    expect(seedResult.divergences.length).toBe(0);
+
+    // Pass 2: same lock/task_board state → same 8 candidates → now PERSISTED
+    // across 2 consecutive cycles per the ledger written by pass 1 → emitted.
     const result = await runTasksMdJanitor(deps);
 
     expect(result.errors).toEqual([]);
-    // 4 locks x (owner + status) = 8 distinct findings in ONE tick
+    // 4 locks x (owner + status) = 8 distinct findings, persisted across 2 cycles
     expect(result.divergences.length).toBe(8);
 
     const finalDoc = JSON.parse(readFileSync(orchStatePath, "utf8"));

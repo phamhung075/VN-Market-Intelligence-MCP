@@ -1,17 +1,31 @@
 /**
  * Orch-State Janitor Job — Task 1965b (OSC-2 migration)
+ * + FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (2026-07-08): Steps R-1b/R-4b.
  *
  * Daily 03:00 UTC — off-peak after bctcReparseJob at 02:30 UTC.
  *
  * Implements D4 audit dimension (docs/agents/system-auditor/audit-dimensions.md)
- * via steps R-1..R-5 from docs/agents/system-auditor/handlers.md.
+ * via steps R-1..R-7 from docs/agents/system-auditor/handlers.md.
  *
  * What it does:
- *   R-1: calls task_list_held(kind="sprint-task") via coordinationStore (same DB layer
- *        used by the MCP tool — no new schema, Option A zero-table constraint).
- *   R-2: reads orch-state.json .head, cross-checks active_task_id vs held locks (AC-4).
- *   R-3: reads orch-state.json .task_board.tasks[], compares Owner + Status vs lock (AC-2, AC-3).
- *   R-4: git log concurrent-commit detection on docs/data/orch/orch-state.json within 30s (AC-5).
+ *   R-1: calls task_list_held(kind="sprint-task", expired=false) via coordinationStore
+ *        (same DB layer used by the MCP tool — no new schema, Option A zero-table
+ *        constraint). expired:false is REQUIRED — without it, TTL-expired tombstone
+ *        locks are read as held and flood R-2/R-3 with dead-lock false positives.
+ *   R-1b: exclusion whitelist (cron:*, *-singleton, po-triage-*, esc-datacov:*,
+ *        esc-deepdive:*, session-presence*, commit-mutex*, intent:*) + live-concurrent-
+ *        session guard (owner_client_session present in the live session-presence
+ *        roster AND lock unexpired) — filters BEFORE R-2/R-3 evaluate any lock.
+ *   R-2: reads orch-state.json .head, cross-checks active_task_id vs locks surviving
+ *        R-1b (AC-4).
+ *   R-3: reads orch-state.json .task_board.tasks[], compares Owner + Status vs locks
+ *        surviving R-1b (AC-2, AC-3).
+ *   R-4: git log concurrent-commit detection on docs/data/orch/orch-state.json within
+ *        30s (AC-5) — emitted directly, NOT subject to R-4b debounce.
+ *   R-4b: 2-consecutive-daily-cycle debounce gate on R-2/R-3 candidates. Ledger rides
+ *        on the system-auditor notebook's `D4 candidates:` line (no new state file —
+ *        see docs/agents/system-auditor/handlers.md §Step R-4b). Cold start (no prior
+ *        line found) => zero emissions this cycle, ledger only seeded (fail-safe).
  *   R-5: appends signal_queue row to orch-state.json for each divergence (atomic write).
  *   R-6: BUG telegram for new divergences (7d dedup key d4_tasksmd_lock_diverge:<task_id>).
  *   R-7: logs clean signal when zero divergences detected.
@@ -52,6 +66,17 @@ export interface DivergenceRow {
   summary: string;
 }
 
+/**
+ * A candidate produced by Steps R-2/R-3, gated by the R-4b debounce before it may
+ * become a DivergenceRow (FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE). `key` matches
+ * the ledger key shape in handlers.md §Step R-4b: R2-mismatch:<id> / R3-no-board-row:<id>
+ * / R3-owner-diverge:<id> / R3-status-diverge:<id>.
+ */
+export interface D4Candidate {
+  key: string;
+  div: DivergenceRow;
+}
+
 export interface JanitorResult {
   heldLocks: number;
   divergences: DivergenceRow[];
@@ -73,6 +98,13 @@ interface OrchHead {
 export interface JanitorDeps {
   /** Return held sprint-task locks — defaults to real coordinationStore.listHeldTasks */
   listHeld: () => LockRow[];
+  /**
+   * Step R-1b live-concurrent-session guard: return live session-presence lock rows
+   * (kind="session-presence", expired=false). Optional — defaults to zero live
+   * sessions when omitted (the known-legit-pattern whitelist still applies; fail-safe
+   * per handlers.md Failure modes: never suppress LESS on this path's absence).
+   */
+  listSessionPresence?: () => LockRow[];
   /** Read a file to string — defaults to fs.readFileSync */
   readFile: (path: string) => string;
   /** Write a file — defaults to fs.writeFileSync */
@@ -141,6 +173,200 @@ export function parseTasksFromOrchStateJson(orchState: {
     }
   }
   return rows;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Step R-1b: exclusion whitelist + live-concurrent-session guard
+// (FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE — docs/agents/system-auditor/handlers.md
+// §Step R-1b). Filters BEFORE Steps R-2/R-3 evaluate any held lock.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Strip the "task:" prefix from a lock's task_id, matching the bare id used in
+ * orch-state.json .task_board entries and .head.active_task_id.
+ */
+export function bareTaskId(taskId: string): string {
+  return taskId.startsWith("task:") ? taskId.slice(5) : taskId;
+}
+
+/**
+ * Known-legit kind/pattern list per handlers.md §Step R-1b item 1: persistent /
+ * guard / escalation locks that are board-row-less OR held concurrently with any
+ * active task BY DESIGN. Prefix-matched (glob) except the "-singleton" suffix.
+ */
+const KNOWN_LEGIT_PREFIXES: readonly string[] = [
+  "cron:",
+  "po-triage-",
+  "esc-datacov:",
+  "esc-deepdive:",
+  "session-presence",
+  "commit-mutex",
+  "intent:",
+];
+
+export function isKnownLegitPattern(bareId: string): boolean {
+  if (bareId.endsWith("-singleton")) return true;
+  return KNOWN_LEGIT_PREFIXES.some(prefix => bareId.startsWith(prefix));
+}
+
+/**
+ * Live concurrent-session guard per handlers.md §Step R-1b item 2: a lock owned by
+ * a session that is CURRENTLY in the live session-presence roster AND itself
+ * unexpired is NOT orphaned — it belongs to a concurrently-running sprint that
+ * `.head` (single-slot) does not track by design (N-sprint concurrency).
+ */
+export function isLiveConcurrentSession(
+  lock: LockRow,
+  liveSessionIds: ReadonlySet<string>,
+  nowEpochSeconds: number,
+): boolean {
+  if (!lock.owner_client_session) return false;
+  if (!liveSessionIds.has(lock.owner_client_session)) return false;
+  return lock.expires_at > nowEpochSeconds;
+}
+
+export interface R1bFilterResult {
+  surviving: LockRow[];
+  skipped: Array<{ bareId: string; reason: string }>;
+}
+
+/**
+ * Apply Step R-1b to a batch of held locks. Locks matching either the known-legit
+ * pattern whitelist or the live-concurrent-session guard are filtered OUT — they
+ * proceed to neither R-2 nor R-3.
+ */
+export function applyR1bFilter(
+  heldLocks: LockRow[],
+  liveSessionIds: ReadonlySet<string>,
+  nowEpochSeconds: number,
+): R1bFilterResult {
+  const surviving: LockRow[] = [];
+  const skipped: Array<{ bareId: string; reason: string }> = [];
+
+  for (const lock of heldLocks) {
+    const bareId = bareTaskId(lock.task_id);
+    if (isKnownLegitPattern(bareId)) {
+      skipped.push({ bareId, reason: "known-legit-pattern" });
+      continue;
+    }
+    if (isLiveConcurrentSession(lock, liveSessionIds, nowEpochSeconds)) {
+      skipped.push({ bareId, reason: `live-concurrent-session:${lock.owner_client_session}` });
+      continue;
+    }
+    surviving.push(lock);
+  }
+
+  return { surviving, skipped };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Step R-4b: 2-consecutive-cycle debounce gate on R-2/R-3 candidates
+// (FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE — docs/agents/system-auditor/handlers.md
+// §Step R-4b). Ledger rides on the system-auditor notebook's "D4 candidates:" line —
+// no new state file (D4's own header comment: "No writes to coordination.db").
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Parse the most recent prior "D4 candidates:" line out of the system-auditor
+ * notebook content. This repo's notebook convention prepends the newest `## `
+ * section at the top (see docs/agent-memory/notebooks/system-auditor.md — newest
+ * section is first), so sections are scanned top-to-bottom and the FIRST one
+ * containing a "D4 candidates:" line wins (intervening Tier-1/Tier-2 sections have
+ * no such line at all).
+ *
+ * Returns null when no "D4 candidates:" line is found anywhere (cold start) — the
+ * caller MUST treat null as "zero prior candidates, do not emit this cycle".
+ * Returns an empty Set when a prior line reads "none" (checked previously, found
+ * nothing) — behaviorally identical to null for matching purposes, kept distinct
+ * only for notebook-read transparency.
+ */
+export function parsePriorD4Candidates(notebookContent: string): Set<string> | null {
+  const sectionRe = /^## .*$/gm;
+  const matches = [...notebookContent.matchAll(sectionRe)];
+  if (matches.length === 0) return null;
+
+  for (let i = 0; i < matches.length; i++) {
+    const start = matches[i]!.index!;
+    const end = i + 1 < matches.length ? matches[i + 1]!.index! : notebookContent.length;
+    const sectionBody = notebookContent.slice(start, end);
+    const lineMatch = sectionBody.match(/^D4 candidates:\s*(.*)$/m);
+    if (lineMatch) {
+      const raw = lineMatch[1]!.trim();
+      if (raw === "" || raw.toLowerCase() === "none") return new Set();
+      return new Set(
+        raw
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean),
+      );
+    }
+  }
+  return null;
+}
+
+/** Format this cycle's ledger-seed section (machine-appended, ≤3 lines). */
+export function formatD4LedgerSection(nowIsoStr: string, candidateKeys: string[]): string {
+  const keysStr = candidateKeys.length > 0 ? candidateKeys.join(",") : "none";
+  return `## d4-auto · ${nowIsoStr}\nD4 candidates: ${keysStr}\n`;
+}
+
+/**
+ * Insert the ledger section at the position of the topmost `## ` section (i.e.
+ * BEFORE it — this repo prepends newest sections first) or append to end if the
+ * notebook has no sections yet (blank-state fallback).
+ */
+export function insertD4LedgerSection(notebookContent: string, section: string): string {
+  const firstSectionMatch = notebookContent.match(/^## /m);
+  if (!firstSectionMatch) {
+    const sep = notebookContent.trim().length > 0 ? "\n\n" : "";
+    return notebookContent + sep + section;
+  }
+  const idx = firstSectionMatch.index!;
+  return notebookContent.slice(0, idx) + section + "\n" + notebookContent.slice(idx);
+}
+
+/**
+ * Apply Step R-4b to this cycle's R-2/R-3 candidates: candidates that PERSISTED
+ * from the prior cycle's ledger emit as divergences this cycle; first-occurrence
+ * candidates are suppressed and re-armed via the freshly-seeded ledger. The ledger
+ * write is best-effort (a write failure does not fail the job — the debounce
+ * fail-safe default is "do not emit", which a missing ledger already achieves).
+ */
+export function applyR4bDebounce(
+  candidates: D4Candidate[],
+  notebookPath: string,
+  readFile: (p: string) => string,
+  writeFile: (p: string, s: string) => void,
+  fileExists: (p: string) => boolean,
+  nowIsoStr: string,
+): DivergenceRow[] {
+  let priorContent = "";
+  let priorCandidates: Set<string> | null = null;
+
+  try {
+    if (fileExists(notebookPath)) {
+      priorContent = readFile(notebookPath);
+      priorCandidates = parsePriorD4Candidates(priorContent);
+    }
+  } catch {
+    priorCandidates = null; // fail-safe: treat unreadable notebook as cold start
+  }
+
+  const emitted: DivergenceRow[] = [];
+  for (const c of candidates) {
+    if (priorCandidates !== null && priorCandidates.has(c.key)) {
+      emitted.push(c.div);
+    }
+  }
+
+  try {
+    const section = formatD4LedgerSection(nowIsoStr, candidates.map(c => c.key));
+    writeFile(notebookPath, insertD4LedgerSection(priorContent, section));
+  } catch {
+    // best-effort — a ledger write failure must not fail the D4 job
+  }
+
+  return emitted;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -315,6 +541,7 @@ export function _resetDedupStore(): void {
 export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResult> {
   const {
     listHeld,
+    listSessionPresence,
     readFile,
     writeFile,
     fileExists,
@@ -326,20 +553,57 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
 
   // OSC-2: all paths re-pointed to orch-state.json
   const orchStatePath = resolve(projectRoot, "docs", "data", "orch", "orch-state.json");
+  // FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE: R-4b ledger rides on the
+  // system-auditor notebook's "D4 candidates:" line (no new state file).
+  const notebookPath = resolve(projectRoot, "docs", "agent-memory", "notebooks", "system-auditor.md");
 
   const divergences: DivergenceRow[] = [];
+  const candidates: D4Candidate[] = []; // R-2/R-3 findings — gated by R-4b before becoming divergences
   const errors: string[] = [];
   let heldLocks: LockRow[] = [];
+  let survivingLocks: LockRow[] = []; // heldLocks minus R-1b exclusions
   let pipelineState: { activeTaskId: string | null } | null = null;
   let concurrentCommits: Array<{ hash1: string; hash2: string; delta: number }> = [];
+  const nowIsoAtStart = nowIso();
 
-  // ── Step R-1: call task_list_held (kind="sprint-task") ─────────────────────
+  // ── Step R-1: call task_list_held (kind="sprint-task", expired=false) ──────
+  let r1Failed = false;
   try {
     heldLocks = listHeld();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     errors.push(`R-1 listHeld failed: ${msg}`);
+    r1Failed = true;
     // Log WARN but continue to R-4 git-log check independently (per failure modes)
+  }
+
+  // ── Step R-1b: exclusion whitelist + live-concurrent-session guard ─────────
+  // Filters BEFORE R-2/R-3 evaluate any held lock. Skipped entirely if R-1 failed
+  // (no locks were fetched, so there is nothing to filter or evaluate) — per
+  // handlers.md Failure modes: "task_list_held fails → skip Steps R-1b/R-2/R-3".
+  if (!r1Failed) {
+    let sessionPresenceRows: LockRow[] = [];
+    try {
+      sessionPresenceRows = listSessionPresence ? listSessionPresence() : [];
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(`R-1b listSessionPresence failed: ${msg}`);
+      // Fail-safe: treat as zero live sessions this cycle — the known-legit-pattern
+      // filter still applies (do NOT suppress on this path's absence).
+      sessionPresenceRows = [];
+    }
+    const liveSessionIds = new Set(
+      sessionPresenceRows
+        .map(r => r.owner_client_session)
+        .filter((s): s is string => typeof s === "string" && s.length > 0),
+    );
+    const nowEpochSeconds = Math.floor(Date.parse(nowIsoAtStart) / 1000);
+
+    const { surviving, skipped } = applyR1bFilter(heldLocks, liveSessionIds, nowEpochSeconds);
+    survivingLocks = surviving;
+    for (const s of skipped) {
+      console.debug(`[tasks-md-janitor] D4 SKIP: ${s.bareId} — ${s.reason}`);
+    }
   }
 
   // ── Step R-2: orch-state.json .head cross-check (AC-4) ─────────────────────
@@ -361,14 +625,19 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
           });
         }
       } else if (heldLocks.length > 0 && activeTaskId !== null) {
-        // Both non-null: verify held lock matches activeTaskId
-        for (const lock of heldLocks) {
-          const bareId = lock.task_id.startsWith("task:") ? lock.task_id.slice(5) : lock.task_id;
+        // Both non-null: verify held lock matches activeTaskId.
+        // R-1b: only locks that survived the exclusion whitelist/live-session guard
+        // are evaluated — the rest are known-legit-concurrent or excluded by design.
+        for (const lock of survivingLocks) {
+          const bareId = bareTaskId(lock.task_id);
           if (bareId !== activeTaskId) {
-            divergences.push({
-              kind: "pipeline_mismatch",
-              taskId: bareId,
-              summary: `orch-state/lock mismatch: active=${activeTaskId} held=${bareId}`,
+            candidates.push({
+              key: `R2-mismatch:${bareId}`,
+              div: {
+                kind: "pipeline_mismatch",
+                taskId: bareId,
+                summary: `orch-state/lock mismatch: active=${activeTaskId} held=${bareId}`,
+              },
             });
           }
         }
@@ -383,7 +652,9 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
 
   // ── Step R-3: orch-state.json .task_board owner/status cross-check (AC-1, AC-2, AC-3)
   // OSC-2: reads task_board.active_sprints[].tasks[] instead of TASKS.md markdown
-  if (heldLocks.length > 0) {
+  // R-1b: gated on survivingLocks (post-exclusion-whitelist/live-session-guard set),
+  // not the raw heldLocks — a lock excluded at R-1b never reaches R-3 either.
+  if (survivingLocks.length > 0) {
     try {
       if (!fileExists(orchStatePath)) {
         throw new Error("orch-state.json not found");
@@ -394,25 +665,31 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
       };
       const taskRows = parseTasksFromOrchStateJson(orchState);
 
-      for (const lock of heldLocks) {
-        const bareId = lock.task_id.startsWith("task:") ? lock.task_id.slice(5) : lock.task_id;
+      for (const lock of survivingLocks) {
+        const bareId = bareTaskId(lock.task_id);
         const row = taskRows.find(r => r.taskId === bareId);
 
         if (!row) {
-          divergences.push({
-            kind: "not_found",
-            taskId: bareId,
-            summary: `held lock ${bareId} has no orch-state task_board row`,
+          candidates.push({
+            key: `R3-no-board-row:${bareId}`,
+            div: {
+              kind: "not_found",
+              taskId: bareId,
+              summary: `held lock ${bareId} has no orch-state task_board row`,
+            },
           });
           continue;
         }
 
         // Owner divergence check
         if (row.owner && lock.owner_agent && row.owner !== lock.owner_agent) {
-          divergences.push({
-            kind: "owner",
-            taskId: bareId,
-            summary: `Owner diverge: lock=${lock.owner_agent} task_board=${row.owner} task=${bareId}`,
+          candidates.push({
+            key: `R3-owner-diverge:${bareId}`,
+            div: {
+              kind: "owner",
+              taskId: bareId,
+              summary: `Owner diverge: lock=${lock.owner_agent} task_board=${row.owner} task=${bareId}`,
+            },
           });
         }
 
@@ -420,10 +697,13 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
         const status = row.status.toLowerCase();
         const isInProgress = status === "in progress" || status === "in_progress" || status === "inprogress";
         if (!isInProgress) {
-          divergences.push({
-            kind: "status",
-            taskId: bareId,
-            summary: `Status diverge: lock held but task_board shows ${row.status} for ${bareId}`,
+          candidates.push({
+            key: `R3-status-diverge:${bareId}`,
+            div: {
+              kind: "status",
+              taskId: bareId,
+              summary: `Status diverge: lock held but task_board shows ${row.status} for ${bareId}`,
+            },
           });
         }
       }
@@ -436,6 +716,16 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
         "d4_tasksmd_abort_unreadable",
       );
     }
+  }
+
+  // ── Step R-4b: 2-consecutive-cycle debounce gate on R-2/R-3 candidates ─────
+  // Skipped when R-1 failed — no candidates were ever produced this cycle (R-1b/
+  // R-2/R-3 all skipped per Failure modes), so there is nothing to debounce and
+  // seeding the ledger with "none" would falsely record "checked, found nothing"
+  // for a cycle that never actually checked.
+  if (!r1Failed) {
+    const emitted = applyR4bDebounce(candidates, notebookPath, readFile, writeFile, fileExists, nowIsoAtStart);
+    divergences.push(...emitted);
   }
 
   // ── Step R-4: Seam 3 concurrent-commit detection (AC-5) ─────────────────────
@@ -537,8 +827,17 @@ export async function runTasksMdJanitorJob(nowMsFn?: () => number): Promise<void
     // DB unavailable — proceed without dedup (fail-open)
   }
   const deps: JanitorDeps = {
+    // FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE: expired:false is REQUIRED — without
+    // it, task_list_held also returns TTL-expired tombstone locks (handlers.md
+    // §Step R-1: "without this filter D4 reads ~100+ dead locks as held").
     listHeld: () => {
-      const result = listHeldTasks({ kind: "sprint-task" });
+      const result = listHeldTasks({ kind: "sprint-task", expired: false });
+      return result.locks;
+    },
+
+    // Step R-1b live-concurrent-session guard: live session-presence roster.
+    listSessionPresence: () => {
+      const result = listHeldTasks({ kind: "session-presence", expired: false });
       return result.locks;
     },
 
