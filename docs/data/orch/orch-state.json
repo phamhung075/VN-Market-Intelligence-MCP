@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-CHEF-SENDTELEGRAM-ARGSHAPE done_verified (cowork-refactory-expert, commit 52538c2ac) — awaiting next dispatch",
-    "updated_at": "2026-07-08T00:11:31Z",
-    "updated_by": "dev-team"
+    "status": "in_progress",
+    "active_task_id": "FIX-NEWS-CB-FALSE-CLOSED",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-NEWS-CB-FALSE-CLOSED — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-08T00:25:07Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3437,15 +3437,6 @@
         "title": "FIX-ALERT-CASCADE-OUTCOME-DEAD — record_signal_outcome never called: 1965+ rule hits, Eval=0 for ALL 49 cascade rules; 653/683 alerts (95.6%) 'unknown' verdict. Outcome feedback loop disconnected — system can't learn signal quality.",
         "type": "FIX",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-CASCADE-OUTCOME-DEAD"
-      },
-      {
-        "id": "FIX-NEWS-CB-FALSE-CLOSED",
-        "priority": "P1",
-        "status": "TODO",
-        "title": "FIX-NEWS-CB-FALSE-CLOSED — Reuters RSS + TradingEconomics x2 at 14 CONSECUTIVE errors since the 2026-06-13T23:18Z restart, yet their circuit-breakers still report [OK] (failure threshold not hit). CB false-closed masks a never-succeeded-since-restart news-source freshness gap from agent monitoring. FIX: (a) lower the CB failure threshold so 14 consecutive errors trips OPEN, and/or (b) add a never-succeeded-since-restart detector (a source with zero successes since process start AND error_count>=N must surface as DEGRADED regardless of the rolling-window CB). Surface the degradation to the BUG/WORK channel + freshness gate so news-source staleness is no longer invisible. PLAN-ONLY at PO layer — dev-team chain implements.",
-        "type": "FIX",
-        "zone": "apps/news-fetch/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NEWS-CB-FALSE-CLOSED"
       },
       {
         "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
@@ -8816,7 +8807,22 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-NEWS-CB-FALSE-CLOSED",
+        "priority": "P1",
+        "status": "IN_PROGRESS",
+        "title": "FIX-NEWS-CB-FALSE-CLOSED — Reuters RSS + TradingEconomics x2 at 14 CONSECUTIVE errors since the 2026-06-13T23:18Z restart, yet their circuit-breakers still report [OK] (failure threshold not hit). CB false-closed masks a never-succeeded-since-restart news-source freshness gap from agent monitoring. FIX: (a) lower the CB failure threshold so 14 consecutive errors trips OPEN, and/or (b) add a never-succeeded-since-restart detector (a source with zero successes since process start AND error_count>=N must surface as DEGRADED regardless of the rolling-window CB). Surface the degradation to the BUG/WORK channel + freshness gate so news-source staleness is no longer invisible. PLAN-ONLY at PO layer — dev-team chain implements.",
+        "type": "FIX",
+        "zone": "apps/news-fetch/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NEWS-CB-FALSE-CLOSED",
+        "promoted_at": "2026-07-08T00:25:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T00:25:07Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -9011,7 +9017,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T00:03:17Z",
+    "last_triaged_at": "2026-07-08T00:25:00Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
