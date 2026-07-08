@@ -1,0 +1,35 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T16:00Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "spawned": [],
+    "skipped": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved. All 4 matched slots map to confirmed affected no-Bash/mcp__gateway__call_tool-only profiles: news-scout, market-watcher (x2 slots), alert-commander. All non-guaranteed, 4h cadence slots (market-watcher-eod also cadence-driven despite its EOD cron). last_fired intentionally NOT updated for any.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "No newer resolution signal than the 03:37Z dev-team main-session corroboration (checked docs/signals/ + docs/signals/processed/, same 3 known files). Defect open ~20h15min since first sighting (19:45Z), already escalated CRITICAL by dev-team at 03:50Z. Affected-profile tally unchanged at 6 distinct agent types this session (alert-commander, unified-agent, news-scout, market-watcher, refine_bctc_md, bctc-analyst) plus fb-market-poster as refined-criterion special case. Remediation-path finding (retrofit affected flows with scripts/agents-flow/mcp-call.sh curl bypass, flagged in cowork-team-20260708T091500Z.json) still not confirmed picked up by PO/architect/dev-mcp-server."
+  },
+  "createdAt": "2026-07-08T16:02:05Z",
+  "_processed": {
+    "fingerprint": "d8c4c388121945fb62ae34d250629fb97266c042b478d2cafaf593d5550d8ee4",
+    "processedAt": "2026-07-08T18:47:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
