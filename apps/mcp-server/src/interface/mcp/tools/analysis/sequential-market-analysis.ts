@@ -84,7 +84,12 @@ export interface AnalysisResult {
   analysisType: string;
   thoughts: AnalysisThought[];
   finalHypothesis: string;
-  confidence: number;
+  /**
+   * FACTORY-INTERFACE-sequential-confidence-05-mask: only ever set from a real
+   * `input.confidence` value the caller supplied. Stays `undefined` when no
+   * confidence was ever stated — never fabricated to a mid-point 0.5.
+   */
+  confidence: number | undefined;
   affectedStocks: string[];
   affectedSectors: string[];
   recommendations: string[];
@@ -146,7 +151,7 @@ export function createSequentialMarketAnalysisTool() {
           analysisType: input.analysisType,
           thoughts: [],
           finalHypothesis: "",
-          confidence: 0,
+          confidence: undefined,
           affectedStocks: input.context?.stocks ?? [],
           affectedSectors: input.context?.sectors ?? [],
           recommendations: [],
@@ -164,10 +169,15 @@ export function createSequentialMarketAnalysisTool() {
       // Add current thought
       result.thoughts.push(thought);
 
-      // Update hypothesis and confidence if provided
+      // Update hypothesis and confidence if provided.
+      // FACTORY-INTERFACE-sequential-confidence-05-mask: only assign confidence
+      // when the caller actually stated one — never fabricate a 0.5 mid-point
+      // default. "No stated confidence" must stay distinct from a real 0.5.
       if (input.hypothesis) {
         result.finalHypothesis = input.hypothesis;
-        result.confidence = input.confidence ?? 0.5;
+        if (input.confidence !== undefined) {
+          result.confidence = input.confidence;
+        }
       }
 
       // Determine if analysis is complete
@@ -198,6 +208,14 @@ export function createSequentialMarketAnalysisTool() {
             ],
       };
     },
+
+    /**
+     * Test/introspection only — exposes the per-session `AnalysisResult` map
+     * so unit tests can assert on internal fields (e.g. `confidence`) that
+     * are not part of the `handle()` MCP response contract. Not consumed by
+     * `registerSequentialMarketAnalysisTools` / the MCP SDK.
+     */
+    _analysisState: analysisState,
   };
 }
 
@@ -207,7 +225,13 @@ export function createSequentialMarketAnalysisTool() {
 function generateRecommendations(result: AnalysisResult): string[] {
   const recommendations: string[] = [];
 
-  if (result.confidence >= 0.8) {
+  if (result.confidence === undefined) {
+    // No confidence was ever stated — do not mislabel this as "low confidence"
+    // (that would itself fabricate an implied assessment that was never given).
+    recommendations.push(
+      `No confidence stated: ${result.finalHypothesis} — requires an explicit confidence assessment`
+    );
+  } else if (result.confidence >= 0.8) {
     recommendations.push(
       `High confidence hypothesis: ${result.finalHypothesis}`
     );
