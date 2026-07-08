@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-DOMAIN-extract-bctc-parsing-lib closed DONE_VERIFIED by po (Step 6 Docker Microservice Code-Change Close Gate). Board idle — router picks next.",
-    "updated_at": "2026-07-08T14:25:45Z",
-    "updated_by": "po"
+    "status": "review",
+    "active_task_id": "FACTORY-DOMAIN-relocate-stock-catalog",
+    "next_agent": "ops",
+    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (docs/protocols/docker-deployment-runbook.md) for FACTORY-DOMAIN-relocate-stock-catalog — domain-layer relocation (stockAliases.ts split), rebuild_required=true.",
+    "updated_at": "2026-07-08T14:57:49Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3824,15 +3824,6 @@
         "supervised_at": "2026-07-04T19:23:49Z",
         "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
         "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
-      },
-      {
-        "title": "Move STOCK_CATALOG reference table out of stockAliases logic file",
-        "priority": "P1",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-DOMAIN-relocate-stock-catalog",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-relocate-stock-catalog"
       },
       {
         "title": "Extract sentiment lexicon + negation tables from sentimentClassifier",
@@ -9527,6 +9518,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Move STOCK_CATALOG reference table out of stockAliases logic file",
+        "priority": "P1",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-DOMAIN-relocate-stock-catalog",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-relocate-stock-catalog",
+        "promoted_at": "2026-07-08T14:30:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T14:30:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "review_note": "FACTORY-DOMAIN-relocate-stock-catalog: STOCK_CATALOG+StockCatalogEntry relocated (828L->265L stockAliases.ts, +618L new stockAliases/catalog.ts, size-justification headers both sides). Byte-identical verified (scratch equivalence script, git-HEAD-vs-current, 66 tickers x 5 exported fns = 0 mismatches). tsc clean, eslint clean, targeted 211/211 + consumer 195/195 pass. Full bun test 14339/40/63/5 (1179 files) — fail set 100% pre-existing VPS/RSS/chromium-timeout flaky class (baseline-probed: unchanged stockAliases.ts ALSO fails the same pollNews-adjacent files in isolation). Server boot health/dashboards 200, toolCount=183, scheduler grep=3 unchanged. Commits: cec87c726 (code+doc). rebuild_required=true (domain-layer relocation runs against live traffic).",
+        "reviewed_at": "2026-07-08T14:57:49Z",
+        "reviewed_by": "dev-mcp-server"
       }
     ],
     "qa": [],
@@ -9546,7 +9556,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T13:19:10Z",
+    "last_triaged_at": "2026-07-08T14:30:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
