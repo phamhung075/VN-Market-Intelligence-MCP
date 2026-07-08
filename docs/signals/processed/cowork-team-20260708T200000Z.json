@@ -1,0 +1,42 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "CRITICAL",
+  "tick": "2026-07-08T20:00Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours",
+    "alert-commander-critical"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "news-scout-offhours",
+      "agent": "news-scout",
+      "guaranteed": false,
+      "reason": "gateway-blind withhold — flow uses native mcp__gateway__call_tool, no curl bypass"
+    },
+    {
+      "slot_id": "market-watcher-offhours",
+      "agent": "market-watcher",
+      "guaranteed": false,
+      "reason": "gateway-blind withhold — flow uses native mcp__gateway__call_tool, no curl bypass"
+    },
+    {
+      "slot_id": "alert-commander-critical",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "gateway-blind withhold — flow uses native mcp__gateway__call_tool, no curl bypass"
+    }
+  ],
+  "detail": "All 3 matched slots are repeat occurrences of already-confirmed affected profiles (no new agent type this tick). No resolution signal found (same 3 files as all prior ticks). Defect now >24h old (first sighted 2026-07-07T19:45Z). emit_pressure_state returned stale_warning:true for the 2nd consecutive WORK tick (19:45Z and 20:00Z) — no longer a one-off, flagging as a confirmed secondary symptom pattern of sustained cycle_snapshot_promoted:false from repeated spawn-withholding. Recommend auditor/dev-mcp-server investigate whether prolonged withholding is itself degrading pressure-state freshness independent of the root gateway-blind defect.",
+  "remediation_path_reiterated": "retrofit gateway-blind-affected agent flows with scripts/agents-flow/mcp-call.sh curl bypass (see docs/signals/cowork-team-20260708T091500Z.json) — not yet confirmed picked up by PO/architect/dev-mcp-server",
+  "emitted_at": "2026-07-08T20:01:48.413Z",
+  "_processed": {
+    "fingerprint": "dbe2a81ec166acd062e7c2afbc8225d87bb9d5a4894666e0c298a2c68c321eaf",
+    "processedAt": "2026-07-08T20:17:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

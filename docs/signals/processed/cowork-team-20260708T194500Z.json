@@ -1,0 +1,28 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "CRITICAL",
+  "tick": "2026-07-08T19:45Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "chef-evening"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "chef-evening",
+      "agent": "unified-agent",
+      "guaranteed": true,
+      "reason": "gateway-blind withhold — unified-agent flow (docs/agents/unified-agent/flow/chef.md) uses native mcp__gateway__call_tool, not the scripts/agents-flow/mcp-call.sh curl bypass; defect unresolved"
+    }
+  ],
+  "detail": "24h+ anniversary tick: this slot's agent (unified-agent) is the SAME agent type that first surfaced the gateway-blind defect at 2026-07-07T19:45Z (unified-agent-20260707T194500Z-gateway-blind.json) — this is a like-for-like recurrence exactly one day later, not a new agent type. Confirmed-affected profile tally unchanged at 7 distinct agent types + fb-market-poster special case. Guaranteed-slot-miss tally now 5: chef-morning (05:15Z), chef-eod (08:45Z), fb-daily (09:15Z), digest-daily (17:30Z), chef-evening (19:45Z, this tick). No resolution signal found (checked docs/signals/ + docs/signals/processed/, same 3 files as all prior ticks). Escalation already routed to PO via dev-team-20260708T033700Z-gateway-blind-main-session.json (CRITICAL, 03:50Z). emit_pressure_state returned stale_warning:true on this call (first occurrence of this flag this session) — noting as a possible secondary symptom of repeated cycle_snapshot_promoted:false from sustained spawn-withholding; not independently verified, flagging for auditor/dev-mcp-server attention.",
+  "remediation_path_reiterated": "retrofit gateway-blind-affected agent flows with scripts/agents-flow/mcp-call.sh curl bypass (see docs/signals/cowork-team-20260708T091500Z.json) — not yet confirmed picked up by PO/architect/dev-mcp-server",
+  "emitted_at": "2026-07-08T19:46:53.629Z",
+  "_processed": {
+    "fingerprint": "7ad16dc8be54d4da724dc5f4bd6079c5cf5acd942b96a6d92e6a498b6a0ca6bf",
+    "processedAt": "2026-07-08T19:47:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

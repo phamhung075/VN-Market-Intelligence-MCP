@@ -1,0 +1,30 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-08T21:00Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "bctc-analyst-slot-3"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "bctc-analyst-slot-3",
+      "agent": "bctc-analyst",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, trigger_status=null (unambiguous no-backstop per Step 5.0; corrected methodology per 20260708T203500Z-correction.json applied — no live RemoteTrigger check needed since trigger_id is null, not a stale-field ambiguity case)"
+    }
+  ],
+  "methodology_note": "Applying corrected classification rule from docs/signals/cowork-team-20260708T203500Z-correction.json: no matched slot is assumed backstop-covered without either (a) trigger_id present AND a live RemoteTrigger(list) check confirming enabled=true, or (b) this case, where trigger_id=null makes the schedule file itself unambiguous — no live check required.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick (belt-and-suspenders per blind-guard.md Step 0c); mcp_call bypass (curl-based) confirmed reachable via task_list_held probe. No resolution signal in docs/signals/ or docs/signals/processed/.",
+  "work_channel_message_sent": true,
+  "stale_warning_streak": "4th consecutive WORK tick with emit_pressure_state.stale_warning=true (19:45Z, 20:00Z, 20:15Z, 21:00Z) — still unexplained, recommend auditor/dev-mcp-server investigation.",
+  "emitted_at": "2026-07-08T21:02:24.890Z",
+  "_processed": {
+    "fingerprint": "61f605005577587a6d3a607faae218b3e99f1a8460924031a80aa8593585f7f0",
+    "processedAt": "2026-07-08T21:17:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
