@@ -1,6 +1,18 @@
 # technical-analysis — API Reference
 
-**File:** `apps/technical-analysis/src/interface/handlers.ts`
+**File:** `apps/technical-analysis/pkg/interface/http/router.go` (deployed — Go)
+
+> **Single authoritative contract:** `apps/technical-analysis/api/openapi.yaml`
+> (FACTORY-TECHANALYSIS-reconcile-ta-contract, 2026-07-08). A previous version
+> of this doc described the dead TypeScript shadow service's contract
+> (`apps/technical-analysis/src/interface/handlers.ts` — `{code,days}` ->
+> scalar values + `trend`). That service is never started by
+> Dockerfile/docker-compose.yml and is scheduled for deletion
+> (`FACTORY-TECHANALYSIS-delete-orphaned-ts-service`); it was NEVER what's
+> below this line. See
+> `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md`
+> STEP dev-technical-analysis-S2 for the investigation that confirmed no live
+> caller depends on the TS shape's `trend` semantics.
 
 ## GET /health
 ```json
@@ -8,41 +20,62 @@
 ```
 
 ## POST /ta/indicators
-Compute all technical indicators for a stock.
+Compute technical indicators for a stock. Request/response arrays are
+time-series (oldest → newest); the last element is the most-recent value.
+No `trend` field — see the note above.
 
-**Request:**
+**Request — two paths, `closes` wins if both are sent:**
 ```json
-{ "code": "VCB", "days": 60 }
+{ "symbol": "VNM", "period": 60 }
+```
+```json
+{ "closes": [44.34, 44.09, 44.15, 43.61, 44.33] }
 ```
 
-**Validation:**
-- `code`: non-empty string (trimmed + uppercased)
-- `days`: `Number.isFinite() && days >= 1`
-- 400 on invalid JSON or validation failure
+| Field | Required | Notes |
+|---|---|---|
+| `symbol` | one of `symbol`/`closes` | DB-backed path — reads the most recent **60** candles from `market.db` (fixed, independent of `period`) |
+| `closes` | one of `symbol`/`closes` | pure-compute path — `market.db` never consulted; takes precedence when both are sent |
+| `period` | optional | drives ONLY the `rsi` window and the `sma`/`ema` window; `<=0` or omitted defaults to **14**. Does NOT change the DB candle limit (always 60) and does NOT affect MACD (fixed 12/26/9), Bollinger Bands (fixed 20, 2σ), or `ma5`/`ma20`/`ma50` (always fixed at 5/20/50) |
 
-**Response (200):**
+**400** on invalid JSON or when neither `symbol` nor `closes` is provided (`{"error":"closes or symbol required"}`).
+
+**Response (200) — live probe, 2026-07-08 (60 closes, `period=60`), arrays truncated with `…` for readability:**
 ```json
 {
-  "code": "VCB",
-  "rsi": 65.5,
-  "macd": { "line": 0.123, "signal": 0.100, "histogram": 0.023 },
-  "movingAverages": { "ma5": 150.2, "ma20": 149.8, "ma50": 148.5 },
-  "bollingerBands": { "upper": 155.0, "mid": 150.0, "lower": 145.0 },
-  "trend": "BULLISH",
-  "computedAt": "2026-05-06T10:30:45.123Z"
+  "symbol": "VCB",
+  "rsi": [62.50, 59.09, 62.74, "…", 60.68],
+  "macdLine": [1.031, 1.058, "…", 1.036],
+  "signalLine": [1.041, 1.045, "…", 1.047],
+  "histogram": [-0.010, 0.014, "…", -0.012],
+  "bollingerUpper": [47.21, 47.45, "…", 53.21],
+  "bollingerMiddle": [45.43, 45.58, "…", 51.43],
+  "bollingerLower": [43.64, 43.70, "…", 49.64],
+  "sma": [44.98, 45.13, "…", 51.88],
+  "ema": [44.98, 45.17, "…", 51.85],
+  "ma5": [44.36, 44.39, "…", 52.49],
+  "ma20": [45.43, 45.58, "…", 51.43],
+  "ma50": [47.68, 47.83, "…", 49.18]
 }
 ```
+Each array is omitted (not `null`) when there is insufficient history for that
+indicator's window (e.g. `ma50` needs ≥ 50 candles, `signalLine`/`histogram`
+need ≥ 26+9 = 35 candles).
 
-**Note:** Fields return `null` when insufficient price history (e.g. RSI needs 15+ candles, MACD needs 34+).
-
-**500:** `{ "error": "error message" }`
+**500:** `{ "error": "internal error" }` — e.g. `market.db` read failure on
+the DB-backed path.
 
 ## Data Flow
 ```
-POST /ta/indicators → ComputeTAUseCase → CalculateTAService
-  → SQLitePriceRepository.getHistory (market.db readonly)
-  → TACalculatorImpl (RSI, MACD, MA, BB)
-  → determineTrend → ComputeTAResponse
+POST /ta/indicators → pkg/interface/http.handleIndicators
+  → pkg/application.ComputeTAUseCase.Execute
+      closes non-empty?  -> pure-compute (skip DB)
+      symbol set only?   -> pkg/infrastructure PriceRepo.GetCandles(symbol, 60) (market.db readonly)
+  → pkg/infrastructure.TACalculator.Calculate(closes, period)
+      -> pkg/module.Compute — composes 5 pure primitives:
+         rsi (Wilder, window=period) · macd (fixed 12/26/9) · bollinger_bands (fixed 20, 2σ)
+         · moving_average (SMA+EMA, window=period) · fixed MA5/MA20/MA50 (always 5/20/50)
+  → application.ComputeTAResponse (JSON)
 ```
 
 ## POST /ta/money-flow-oscillators

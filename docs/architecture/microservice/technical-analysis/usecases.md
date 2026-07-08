@@ -1,26 +1,33 @@
 # technical-analysis — Use Cases
 
-## ComputeTAUseCase
-- **File:** `apps/technical-analysis/src/application/usecases.ts`
-- **Input:** `ComputeTARequest { code: string, days: number }`
-- **Output:** `ComputeTAResponse`
+## ComputeTAUseCase (Go — deployed, single authoritative contract)
+> FACTORY-TECHANALYSIS-reconcile-ta-contract (2026-07-08): this section used
+> to describe the dead TypeScript shadow service
+> (`apps/technical-analysis/src/application/usecases.ts` — never started by
+> Dockerfile/docker-compose.yml, scheduled for deletion by
+> `FACTORY-TECHANALYSIS-delete-orphaned-ts-service`). Replaced with the real
+> Go use case. No `trend` field — see `api-reference.md` note.
 
-```typescript
-interface ComputeTAResponse {
-  code: string
-  rsi: number | null
-  macd: { line: number, signal: number, histogram: number } | null
-  movingAverages: { ma5: number | null, ma20: number | null, ma50: number | null }
-  bollingerBands: { upper: number, mid: number, lower: number } | null
-  trend: 'BULLISH' | 'BEARISH' | 'NEUTRAL'
-  computedAt: string  // ISO 8601 timestamp added by use case
-}
-```
+- **File:** `apps/technical-analysis/pkg/application/usecases.go`
+- **Input:** `ComputeTARequest { Symbol string, Period int, Closes []float64 }`
+- **Output:** `ComputeTAResponse` (all indicator fields are `[]float64` time-series, `omitempty`)
+- **Ports:** `TACalculator` (`Calculate(closes []float64, period int)`), `PriceRepo` (`GetCandles(symbol string, limit int)`)
 
-**Flow:**
-1. Calls `CalculateTAService.compute(code, days)`
-2. Maps domain `TechnicalIndicators` to response DTO
-3. Adds `computedAt: new Date().toISOString()`
+**Flow (`Execute`):**
+1. `period <= 0` → default to 14.
+2. `len(closes) == 0`? → DB-backed path: `symbol == ""` is a hard error
+   (`"closes or symbol required"`); otherwise `priceRepo.GetCandles(symbol, 60)`
+   (limit fixed at 60, independent of `period`) and extract `.Close` in order.
+   `len(closes) > 0` → pure-compute path, DB is never touched (closes as given).
+3. `calculator.Calculate(closes, period)` → `pkg/module.Compute` (RSI window =
+   `period`, MACD fixed 12/26/9, BB fixed 20/2σ, SMA/EMA window = `period`,
+   MA5/MA20/MA50 always fixed at 5/20/50).
+4. Map `domain.TechnicalIndicators` to `ComputeTAResponse`, `Symbol` echoed
+   from the request (empty string on the pure-compute-without-symbol path).
+
+Covered by `pkg/application/usecases_test.go` (pure-compute path, DB-backed
+path, period-default, empty-both error, repo/calculator error propagation —
+see `testing.md`).
 
 ## ComputeMoneyFlowUseCase (Go)
 - **File:** `apps/technical-analysis/pkg/application/money_flow_usecase.go`
