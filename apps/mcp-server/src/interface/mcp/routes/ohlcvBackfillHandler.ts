@@ -9,11 +9,15 @@
  *   GET  /api/ohlcv-backfill-queue  — VPS polls for pending backfill (Task 1361)
  *   POST /api/ohlcv-backfill-done   — VPS signals backfill complete (Task 1361 / SUBTASK-B)
  *
- * `validateOhlcvUnit` (CONTAM-3 unit guard) is a pre-existing shared domain module
- * (`domain/services/market-data/ohlcvUnitGuard.ts`) already imported by several other
- * call sites (ohlcvWriteService, ohlcvSanityCheckJob, priceBackfillService, ohlcvBackfill,
- * pushPricesHandler) — it is NOT defined in server.ts, so this file just re-imports it
- * from the same domain module rather than duplicating or relocating it.
+ * CONTAM-10-WRITER-H (2026-07-08): handlePushOhlcvHistory now routes through
+ * writeOhlcvBatch (application/usecases/ohlcvWriteService.ts, conflictStrategy:
+ * "backfill") instead of a raw INSERT...ON CONFLICT DO UPDATE. The raw INSERT used
+ * to call validateOhlcvUnit directly on un-normalized values — a naive per-row range
+ * check that whole-row thousand-scale bars (e.g. open=131/close=130 for a stock that
+ * trades near 130,000 VND) pass undetected. writeOhlcvBatch additionally runs
+ * normalizeOhlcvToVnd + detectAndNormalizeScaleFromPrevClose (cross-day + cleanRef
+ * scale guard) ahead of validateOhlcvUnit, closing that leak. See
+ * docs/handoffs/CONTAM-10-WRITER-H.md.
  *
  * R-5 retry-storm cap semantics (dedup/cooldown/threshold) inside handleOhlcvBackfillDone
  * are preserved verbatim: retry_count read from the last done row, escalate to
@@ -28,8 +32,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
 import type { createLogger } from "../../../infrastructure/logger.js";
 import { requireVpsApiKey } from "./_shared/requireVpsApiKey.js";
-import { validateOhlcvUnit } from "../../../domain/services/market-data/ohlcvUnitGuard.js";
 import { sendTelegramBug } from "../../../infrastructure/notifiers/telegram.js";
+import {
+  writeOhlcvBatch,
+  type OhlcvWriteRow,
+} from "../../../application/usecases/ohlcvWriteService.js";
 
 type Logger = ReturnType<typeof createLogger>;
 
@@ -75,65 +82,52 @@ export async function handlePushOhlcvHistory(
       return;
     }
 
-    const now = new Date().toISOString();
-    // DPI-4 R-1 race fix: replaced INSERT OR REPLACE (row-destructive DELETE+INSERT)
-    // with ON CONFLICT DO UPDATE SET to preserve foreign flow columns written by
-    // ohlcvForeignFlowStore (stub rows from DPI-4 UPSERT must survive real OHLCV push).
-    const stmt = db.prepare(`
-      INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(code, date) DO UPDATE SET
-        open       = excluded.open,
-        high       = excluded.high,
-        low        = excluded.low,
-        close      = excluded.close,
-        volume     = excluded.volume,
-        updated_at = excluded.updated_at
-    `);
-
-    let inserted = 0;
+    // TASK-OHLCV-WIC-2: parse-and-reject pre-pass for all OHLCV fields (preserved
+    // verbatim by CONTAM-10-WRITER-H). Accept number or numeric string; reject row
+    // if NaN or ≤ 0. Never default high/low to open — that silently bypasses
+    // validateOhlcvUnit Rule 5. Builds the OhlcvWriteRow[] input for writeOhlcvBatch.
+    const rows: OhlcvWriteRow[] = [];
     let skipped = 0;
-    const upsertAll = db.transaction(() => {
-      for (const bar of bars) {
-        // TASK-OHLCV-WIC-2: parse-and-reject for all OHLCV fields.
-        // Accept number or numeric string; reject row if NaN or ≤ 0.
-        // Never default high/low to open — that silently bypasses validateOhlcvUnit Rule 5.
-        const open  = typeof bar.open  === "number" ? bar.open  : (typeof bar.open  === "string" ? parseFloat(bar.open)  : NaN);
-        const close = typeof bar.close === "number" ? bar.close : (typeof bar.close === "string" ? parseFloat(bar.close) : NaN);
-        if (Number.isNaN(open) || open <= 0 || Number.isNaN(close) || close <= 0) { skipped++; continue; }
+    for (const bar of bars) {
+      const open  = typeof bar.open  === "number" ? bar.open  : (typeof bar.open  === "string" ? parseFloat(bar.open)  : NaN);
+      const close = typeof bar.close === "number" ? bar.close : (typeof bar.close === "string" ? parseFloat(bar.close) : NaN);
+      if (Number.isNaN(open) || open <= 0 || Number.isNaN(close) || close <= 0) { skipped++; continue; }
 
-        const date = typeof bar.date === "string" ? bar.date : "";
+      const date = typeof bar.date === "string" ? bar.date : "";
 
-        // Parse high, low with validation — REJECT ROW if NaN or ≤ 0 (do NOT default to open).
-        const high_parsed = typeof bar.high === "number" ? bar.high : (typeof bar.high === "string" ? parseFloat(bar.high) : NaN);
-        const low_parsed  = typeof bar.low  === "number" ? bar.low  : (typeof bar.low  === "string" ? parseFloat(bar.low)  : NaN);
-        if (Number.isNaN(high_parsed) || high_parsed <= 0 || Number.isNaN(low_parsed) || low_parsed <= 0) { skipped++; continue; }
+      // Parse high, low with validation — REJECT ROW if NaN or ≤ 0 (do NOT default to open).
+      const high_parsed = typeof bar.high === "number" ? bar.high : (typeof bar.high === "string" ? parseFloat(bar.high) : NaN);
+      const low_parsed  = typeof bar.low  === "number" ? bar.low  : (typeof bar.low  === "string" ? parseFloat(bar.low)  : NaN);
+      if (Number.isNaN(high_parsed) || high_parsed <= 0 || Number.isNaN(low_parsed) || low_parsed <= 0) { skipped++; continue; }
 
-        const high   = high_parsed;
-        const low    = low_parsed;
-        const volume = typeof bar.volume === "number" ? bar.volume : 0;
+      const high   = high_parsed;
+      const low    = low_parsed;
+      const volume = typeof bar.volume === "number" ? bar.volume : 0;
 
-        // CONTAM-3: unit guard — reject bars that are not full-VND scale.
-        // FR-B1: type from payload ("stock" default, "index" for VNINDEX); index exempt from
-        // stock range guard. Guard fails loud (log.error + skip) but never throws (HTTP 200).
-        try {
-          const guardResult = validateOhlcvUnit(code, type, open, high, low, close);
-          if (!guardResult.valid) {
-            log.error("[push-ohlcv-history] unit guard rejected", { code, date, reason: guardResult.reason });
-            skipped++;
-            continue;
-          }
-        } catch (guardErr) {
-          log.error("[push-ohlcv-history] unit guard threw", { code, date, error: guardErr instanceof Error ? guardErr.message : String(guardErr) });
-          skipped++;
-          continue;
-        }
+      rows.push({ code, date, open, high, low, close, volume, type });
+    }
 
-        stmt.run(code, date, open, high, low, close, volume, now);
-        inserted++;
-      }
-    });
-    upsertAll();
+    // CONTAM-10-WRITER-H: route through the SSOT writer choke-point (writeOhlcvBatch)
+    // instead of a raw INSERT...ON CONFLICT DO UPDATE. The old raw INSERT bypassed
+    // the CONTAM-10-WRITER cross-day scale guard: whole-row thousand-scale bars
+    // (e.g. open=131/close=130 for a stock that trades near 130,000 VND) pass a
+    // naive per-row range check (>=100) yet are wrong-scale versus history. This
+    // route (the VPS backfill queue poller, ~15–30 min cadence) was the actively
+    // reproducing leak (6,533 rows / 27 tickers as of 2026-07-07 — see
+    // docs/handoffs/CONTAM-10-WRITER-H.md). conflictStrategy:"backfill" preserves
+    // the prior overwrite semantics exactly: unconditional overwrite of
+    // open/high/low/close/volume/updated_at; foreign-flow columns untouched.
+    const writeResult = await writeOhlcvBatch(rows, db, { conflictStrategy: "backfill" });
+    const inserted = writeResult.written;
+    skipped += writeResult.skipped + writeResult.rejected.length;
+
+    if (writeResult.rejected.length > 0) {
+      log.error("[push-ohlcv-history] rows rejected by writer guard", {
+        code,
+        count: writeResult.rejected.length,
+        samples: writeResult.rejected.slice(0, 3),
+      });
+    }
 
     log.info("[push-ohlcv-history] inserted bars", { code, count: inserted, skipped });
     res.writeHead(200, { "Content-Type": "application/json" });

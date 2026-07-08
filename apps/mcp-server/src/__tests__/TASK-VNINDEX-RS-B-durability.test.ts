@@ -157,18 +157,36 @@ describe("FR-B1-TC2: no type field → defaults to \"stock\" (backward compat)",
     expect((json as { inserted: number }).inserted).toBe(1);
   });
 
-  it("stock bar without type field, open < STOCK_MIN_VND=100 → inserted=0 (stock guard fires)", async () => {
-    // Verify backward compat: without type → defaults to "stock" → guard rejects low-value bars
+  it("stock bar without type field, open < STOCK_MIN_VND=100 → inserted=1, whole-row x1000 corrected (CONTAM-10-WRITER-H)", async () => {
+    // Verify backward compat: without type → defaults to "stock".
+    //
+    // CONTAM-10-WRITER-H (2026-07-08): this route now writes via writeOhlcvBatch,
+    // which runs normalizeOhlcvToVnd BEFORE validateOhlcvUnit. A bar whose max(OHLC)
+    // is < STOCK_MIN_VND(100) is treated as thousand-VND-scale data and corrected by
+    // whole-row x1000 — not outright rejected. This is the SAME behavior Writers
+    // A/C/D already have via writeOhlcvBatch; Writer H (this route) previously
+    // diverged (raw INSERT + validateOhlcvUnit only, no normalization step), which
+    // was the CONTAM-10 bug this task closes. Updated 2026-07-08 to match the new,
+    // intended, cross-writer-consistent semantics (was: inserted=0 "guard rejects").
     const { status, json } = await pushOhlcvHistory({
       code: "VNM",
-      // no type field → "stock" → open=50 < 100 → REJECTED
+      // no type field → "stock" → mag(50,55,48,52)=55 < 100 → normalizeOhlcvToVnd x1000
       bars: [{ date: "2025-01-15", open: 50, high: 55, low: 48, close: 52, volume: 0 }],
     });
     expect(status).toBe(200);
     expect((json as { ok: boolean }).ok).toBe(true);
-    // Guard rejects bar with open=50 as stock unit contamination
-    expect((json as { inserted: number }).inserted).toBe(0);
-    expect(countOhlcvRows("VNM")).toBe(0);
+    expect((json as { inserted: number }).inserted).toBe(1);
+    expect(countOhlcvRows("VNM")).toBe(1);
+
+    const db = getDb();
+    const row = db.prepare(
+      "SELECT open, high, low, close FROM daily_ohlcv WHERE code = ? AND date = ?",
+    ).get("VNM", "2025-01-15") as { open: number; high: number; low: number; close: number } | null;
+    expect(row).not.toBeNull();
+    expect(row!.open).toBe(50_000);
+    expect(row!.high).toBe(55_000);
+    expect(row!.low).toBe(48_000);
+    expect(row!.close).toBe(52_000);
   });
 });
 

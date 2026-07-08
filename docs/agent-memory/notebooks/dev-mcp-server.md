@@ -1,15 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-07 — DATA-BACKFILL-PRICES-20260706-MONDAY-GAP → DONE_VERIFIED
-
-**Session:** (session-scrubbed) (router-dispatched)
-
-daily_ohlcv was missing all-ticker 2026-07-06 rows (Cloudflare Tunnel outage). Standard recovery (INSERT `ohlcv_backfill_queue` trigger row, precedent c94b58da4) confirmed non-functional live: VPS poller calls `/api/ohlcv-backfill-done` repeatedly with **zero** `/api/push-ohlcv-history` calls across the container's entire uptime — VPS-side backfill script is not executing (new, separate infra defect from the tunnel outage itself; flagged to bug channel, out of `apps/mcp-server` zone to fix). Live curl probe from inside the mcp-server container found direct VNDirect (`api-finfo.vndirect.com.vn`) fetch now succeeds — the "geo-blocked from France/Docker" note in `ohlcvHistoryBackfillJob.ts` is stale for this endpoint. Wrote `scripts/migrations/backfill-ohlcv-gap-2026-07-06.ts` (+ `trigger-ohlcv-backfill-queue.ts`, generic reusable queue-trigger CLI), reusing `writeOhlcvBatch` SSOT (zero duplicated normalization/validation logic). Targeted the 583 codes with real rows both 07-03 and 07-07 but missing 07-06, plus VNINDEX via `vnmarket_prices`.
-
-`--apply`: 585 rows written (0 fabricated — every row a live VNDirect response), 6 transient `SQLITE_BUSY` retried clean with `PRAGMA busy_timeout`. Verified: 0 remaining strict gaps; spot-checked VCB/FPT/HPG/VNM/VIC — all distinct, plausible, correctly ×1000-normalized values, non-duplicate of adjacent days. 34 rows legitimately flat/no-volume (illiquid names, real VNDirect reference-price carryforward, not fabricated). 119 additional codes still lack 07-06 but their own last real trade predates 07-04 (pre-existing illiquidity, not outage-caused — correctly left untouched, matches system's own FR-S1/R-3 seed-bar filtering convention).
-
-Zone health: tsc clean, targeted OHLCV-backfill suite (5 files) 53/53 pass, tools=183 unchanged (no src/ production code touched — all new files are `scripts/migrations/`) | HEALTHY.
-
 ## 2026-07-07 — KD-OBS-01-FIX → REVIEW
 
 **Provenance:** BOUNDED-1 idle-capacity auto-pickup (dev-team dispatcher)
@@ -35,3 +25,15 @@ Swept the 2 flagged siblings: `257-weather-vn.test.ts`/`258-hydro-data.test.ts` 
 Verified: `DSI-S3-sector-fin.test.ts` alone 17/17 pass × 3 consecutive runs (150–250ms each, was previously racing a 15s network call). tsc clean. `scripts/ci-per-file-isolation.sh 16` (CI's actual mechanism) full-repo run: DSI-S3 absent from the 12 FAILED FILES (all pre-existing pollNews/RSS network-flaky-in-sandbox files, same class the pruned 07-07 entry documented — not a regression). Bare `bun test` (whole tree) crashed the Bun 1.3.13 engine exit 144 as previously documented — disregarded as non-authoritative per this repo's own script comment.
 
 Zone health: tsc clean, tools=183 unchanged (test-only change, no src/ production file touched), scheduler cron.schedule grep=3 (known-stale baseline, unaffected) | HEALTHY.
+
+## 2026-07-08 — CONTAM-10-WRITER-H → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (pm-decomposed, dev-team dispatch)
+
+VPS backfill queue poller (`POST /api/push-ohlcv-history`, ~15–30min cadence) was actively re-contaminating `daily_ohlcv` with whole-row thousand-scale bars (6,533 rows/27 tickers as of 2026-07-07) because `handlePushOhlcvHistory` did a raw INSERT + manual `validateOhlcvUnit` on **raw un-normalized** values — a naive per-row `>=100` floor that contaminated bars (e.g. open=131/close=130 for a stock worth ~130,000) pass undetected. Swapped for `writeOhlcvBatch(rows, db, {conflictStrategy:"backfill"})` — runs `normalizeOhlcvToVnd` + `detectAndNormalizeScaleFromPrevClose` (cross-day + `fetchCleanReferenceCloseMap` cleanRef guard) ahead of `validateOhlcvUnit`, matching Writers A/C/D. WIC-2 parse-and-reject pre-pass preserved verbatim; response `{ok,inserted,skipped,code}` now derives from `writeResult.written` / `writeResult.skipped + rejected.length`.
+
+New `CONTAM-10-WRITER-H-backfill-scale-guard.test.ts` (3/3, live-HTTP-route, not unit-only): TC-WH-1 contaminated batch + cleanRef history → ×1000 corrected; TC-WH-2 brand-new ticker (no prior history) → written as-is (documents accepted cold-start gap); TC-WH-3 legit cheap stock → unchanged. Found + fixed 1 real regression while running the full suite: `TASK-VNINDEX-RS-B-durability.test.ts` FR-B1-TC2 asserted the OLD reject-on-open<100 semantics — updated (with inline rationale) to expect the new, correct, cross-writer-consistent ×1000 auto-correction instead of outright rejection.
+
+Rebuilt `mcp-server` image (id `4c8ea4cfd41f`) but did NOT swap it into the running container — `docker compose up -d` is a gated live-container swap (standing policy, ops-owned). Full `bun test`: 14302 pass/57 fail/6 errors + Bun 1.3.13 crash-at-teardown (panic after summary line — known engine bug). Confirmed via git-stash-to-baseline isolation testing that the 57 failures are pre-existing full-suite-only flakiness unrelated to this change (2 representative files reproduce identically on baseline). Flipped task to REVIEW (not done_verified) — pending QA RAW-probe + ops-gated container swap before `CONTAM-10-EXEC-2` can proceed.
+
+Zone health: tsc clean, tools=183 unchanged, targeted CONTAM-10 suite (5 files) 38/38 pass | HEALTHY.

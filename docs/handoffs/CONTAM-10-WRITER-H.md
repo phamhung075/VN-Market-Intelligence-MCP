@@ -69,3 +69,24 @@ Migrate `handlePushOhlcvHistory` (route `POST /api/push-ohlcv-history`) from raw
 - [ ] No regression in existing OHLCV endpoint tests
 - [ ] Acceptance criteria above all checked
 - [ ] QA approve with live gateway probe (POST /api/push-ohlcv-history with contaminated batch + clean history) showing corrected scale
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/src/interface/mcp/routes/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts::handlePushOhlcvHistory` — replaced raw `INSERT...ON CONFLICT DO UPDATE` + manual `validateOhlcvUnit` (on raw un-normalized values) with `writeOhlcvBatch(rows, db, {conflictStrategy:"backfill"})`. WIC-2 parse-and-reject pre-pass (NaN/≤0 reject for open/close/high/low) preserved verbatim — builds `OhlcvWriteRow[]` for `writeOhlcvBatch`. Response `{ok,inserted,skipped,code}` now derives from `writeResult.written` / `parseSkipped + writeResult.skipped + writeResult.rejected.length`. Module docstring updated to reflect the new routing.
+  - `apps/mcp-server/src/application/usecases/ohlcvWriteService.ts` — Writer inventory table: Writer H row updated from "ON CONFLICT DO UPDATE / In-scope bypass" to "writeOhlcvBatch / Migrated".
+  - `apps/mcp-server/src/__tests__/TASK-VNINDEX-RS-B-durability.test.ts` — updated 1 stale assertion (FR-B1-TC2, "stock bar without type field, open < STOCK_MIN_VND=100"): old raw-INSERT path rejected these bars outright (inserted=0); `writeOhlcvBatch`'s `normalizeOhlcvToVnd` correctly auto-corrects them ×1000 instead (inserted=1, whole-row scaled) — same behavior Writers A/C/D already have. Inline comment documents why. Genuine regression found while running the full suite, not anticipated in the original handoff — fixed rather than reverting the swap.
+- **Files created:**
+  - `apps/mcp-server/src/__tests__/CONTAM-10-WRITER-H-backfill-scale-guard.test.ts` — 3 scenarios (TC-WH-1/2/3) via the live HTTP route (not writeOhlcvBatch directly — that unit is already covered by `OHLCV-WHOLEROW-LT1000-writer-guard.test.ts`), proving the handler is actually wired to the guarded writer.
+- **Tests written:** CONTAM-10-WRITER-H-backfill-scale-guard.test.ts — 3 tests / 28 expect(), GREEN.
+- **Regression suites:** `1350-ohlcv-backfill-endpoint.test.ts` 8/8, `TASK-OHLCV-WIC-2-writer-h-coerce.test.ts` 12/12, `OHLCV-WHOLEROW-LT1000-writer-guard.test.ts` 3/3, `TASK-VNINDEX-RS-B-durability.test.ts` 9/9 (after the 1 fix above) — all GREEN. Targeted CONTAM-10 suite (5 files) 38/38 pass, 167 expect().
+- **Type check:** clean (`bun tsc --noEmit`, 0 errors).
+- **Full `bun test`:** 14302 pass / 40 skip / 57 fail / 6 errors, then a Bun 1.3.13 engine crash-at-teardown (`panic(main thread): A C++ exception occurred` — fires AFTER the test summary line, known Bun bug unrelated to test content). The 57 failures span unrelated domains (news polling/RSS, insider transactions, VPS proxy health, telegram routing, IMF poller, verdict-resolution job, deprecated indicators file, orch-state coherence). Verified via `git stash` to the pre-change baseline + isolated re-run: `TASK-VNINDEX-RS-B-durability.test.ts` (pre-fix) and `1518-get-foreign-flow-ohlcv-source.test.ts` both reproduce identically on baseline — pre-existing full-suite-only flakiness, not caused by this task.
+- **Docker:** `mcp-server` image rebuilt (`docker compose build mcp-server`, image id `4c8ea4cfd41f`, 2026-07-08T03:54 local). **NOT swapped into the running container** — `docker compose up -d mcp-server` is a gated live-container swap per standing policy (ops-owned); the currently-running container is still on the pre-fix image.
+- **Tool count:** 183 (unchanged — no MCP tool touched).
+- **Docs updated:** this handoff (Implementation Record); `apps/mcp-server/src/application/usecases/ohlcvWriteService.ts` Writer H inventory row; decision journal `docs/agent-memory/decisions/sprint-OHLCV-UNIT-CONTAM-WHOLEROW-LT1000-dev-mcp-server.md`; notebook `docs/agent-memory/notebooks/dev-mcp-server.md`.
+- **Status:** flipped to **REVIEW** (not done_verified) — `.head` set to `next_agent: "qa"` via `orch-apply.sh`. Pending: (1) QA RAW-probe per Success Criteria above against the rebuilt image once deployed; (2) ops-gated `docker compose up -d mcp-server` swap + peer-container health verify; (3) `CONTAM-10-EXEC-2` stays blocked until the swap deploys (sequential gate — do not run early, re-contamination risk).

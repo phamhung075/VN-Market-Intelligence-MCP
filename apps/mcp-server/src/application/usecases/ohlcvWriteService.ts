@@ -48,7 +48,7 @@
 // E      | infrastructure/fetchers/ohlcvBackfill.ts           | INSERT OR IGNORE      | In-scope bypass | Historical backfill; guarded FR-S1+validateOhlcvUnit; sentinel present
 // F      | domain/services/priceBackfillService.ts            | INSERT OR IGNORE      | In-scope bypass | Historical seed/mock only (not live-market); sentinel present
 // G      | infrastructure/db/ohlcvForeignFlowStore.ts         | UPDATE-only (merge)   | Fixed           | No INSERT stub; defers on absent row (/goal#1); changes=0 = deferred, not error
-// H      | interface/mcp/server.ts (push-ohlcv-history route) | ON CONFLICT DO UPDATE | In-scope bypass | Secondary push path; C=0/vol=0 guard at L1264; sentinel present
+// H      | interface/mcp/routes/ohlcvBackfillHandler.ts        | writeOhlcvBatch       | Migrated        | CONTAM-10-WRITER-H (2026-07-08): VPS backfill queue push (~15-30min cadence)
 //
 // Note: There is no Writer B (label skipped for historical continuity).
 //
