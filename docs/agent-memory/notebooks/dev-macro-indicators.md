@@ -86,3 +86,19 @@ Zone health: 6 active endpoints healthy (IIP/trade/BOP/CPI/liquidity/snapshot); 
 **Test results:** 11 suites GREEN. G12 sandbox: primitive 18/18, module 2/2 PASS. Fences A/B/C PASS. go vet clean.
 **Commits:** cd8cfcc2 (impl) + c17e9f70 (orch REVIEW)
 Zone health: HEALTHY | P0-3-OMO-CURVE → REVIEW
+
+---
+
+## Session 2026-07-08 (FACTORY-MACRO-delete-dead-ts-tree — BLOCKED, no deletion)
+
+**Task:** Router-verified precheck said `src/_deprecated/` and `src/infrastructure/scrapers/` are "only referenced by each other" — delete both plus package.json/tsconfig.json/bun.lock/node_modules wholesale (pure-Go service).
+
+**Independent re-verify (mandatory before delete) found a live importer the precheck missed:**
+- `src/_deprecated/` — clean, zero external importers (3 Go files reference it only in doc comments, not imports).
+- `src/infrastructure/scrapers/` — 9 files OUTSIDE both subtrees import it with resolvable paths: `__tests__/unit/scrapers/*.test.ts` (8) + `__tests__/integration/scrapers/external-macro-live.test.ts` (1), e.g. `import { AdbKidbAdapter } from '../../../src/infrastructure/scrapers/adb-kidb.js'`.
+- Confirmed these test files never execute anywhere (CI `.github/workflows/ci.yml` runs Go-lint only for macro-indicators; Dockerfile has zero bun step) — dead in practice, but a live static import nonetheless, and outside the task's own file-deletion list.
+
+**Action per task's explicit STOP clause:** zero files deleted. Board row `FACTORY-MACRO-delete-dead-ts-tree` moved to `task_board.review[]` status=BLOCKED, next_agent=po (scope decision: fold `__tests__/**/scrapers` cleanup into this task or split to a follow-up). `.head` updated in the same orch-apply transform. Decision journal: `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-macro-indicators.md` STEP dev-macro-indicators-S1.
+
+**No code changed, no commit of app code** (only board/journal/notebook docs committed).
+Zone health: HEALTHY (Go service unaffected) | FACTORY-MACRO-delete-dead-ts-tree → BLOCKED (awaiting po scope call)
