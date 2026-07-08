@@ -1,33 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — FACTORY-SCHEDULER-alert-confidence-literals → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-4 scheduler jobs persisted a frozen confidence literal (foreignFlowAlertJob 0.75, insiderCheckJob 0.85, bbAlertScanJob 0.65, taAlertScanJob 0.7) even though a real strength signal already existed (or was easy to add) right beside it. New `deriveConfidenceFromStrength()` (domain/services/alertConfidenceScorer.ts, pure linear interpolation base→ceiling, clamped) now drives all 4, fed by: foreignFlow's own `min(1,|totalNetVolume3d|/500k)`, insider's own `min(1,buyDays/10)`, and two NEW pure extractors — `computeBbBreakoutStrength` (band-penetration ratio) and `computeRsiExtremityStrength` (distance past 70/30 toward saturation, deliberately not `macd` which this job never otherwise reads). Base/ceiling pairs live in alertThresholds.ts (0.55–0.95 for the two HIGH-severity jobs, 0.55–0.85 for the two warning-severity TA scan jobs).
-
-4 code commits (one job each) + 1 shared-test/doc commit + journal + board-flip, per instructions. Each job's test file got a new "two different magnitudes → two different confidences" test; 1 pre-existing literal assertion (1307 AC-1) recomputed 0.7→0.592; 1 (1309 AC-1) happened to still equal 0.65 exactly (floating-point-exact coincidence) so left untouched.
-
-tsc clean. Targeted (5 files) 83/83 pass. Full `bun test` run twice: 14334/61/5 then 14342/53/4 (pass/fail/errors, 1178 files) — the count DIFFERING between two runs of identical code is itself evidence of pre-existing flakiness, not a regression; all failing files (19 total, VPS/RSS/network-timeout class) confirmed zero-import-overlap with the 8 changed/new source files, and `_deprecated/1302-technical-indicators.test.ts` confirmed via git-stash-to-baseline to fail identically pre-change.
-
-Commits: c94c50e24/0bb264fa2/8d041fbb7/3978756bf (4 jobs) + b4e6fd54e (scorer tests+doc) + 7011746eb (journal) + 006cb3819 (board+head flip). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (Docker Microservice Code-Change Close Gate — persisted signal/evidence confidence values change at runtime). `.head` synced in the same write (was stuck at claim-time `next_agent=developer`).
-
-Zone health: tsc clean, tools unchanged, scheduler jobs unchanged (4 files edited in-place, no new/removed cron.schedule entries) | HEALTHY.
-
-## 2026-07-08 — FACTORY-SCHEDULER-prediction-default-dedup → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-`predictionMarketJob.ts` Step 6 hardcoded volumeSpikeThresholdUsd=50000/probabilityShiftPct=5/minUniqueWallets=10 twice (config-load-succeeded try branch as per-field `?? literal`, config-load-failed catch branch as a plain object) — the catch branch could silently drift from the try branch's defaults over time. Extracted `DEFAULT_PREDICTION_SIGNAL_CONFIG` (named, provenance-commented) + `resolvePredictionSignalConfig(pm?)`; both branches now resolve through the one function (catch calls it with no arg). Chose a per-field `pm?.field ?? DEFAULT.field` merge over the backlog's example spread `{...DEFAULT, ...(pm??{})}` — the spread is unsafe if `pm` ever carried an explicit-`undefined` key (would clobber the default), the per-field form is provably identical to the old duplicated code in every case. `config.ts:604 PredictionMarketsConfig` already declares these 3 fields required/non-optional with matching defaults — nothing to change there.
-
-New `FACTORY-SCHEDULER-prediction-default-dedup.test.ts` (7/7 pass): pins the literal default values, and proves the try-branch (`pm=undefined`) and catch-branch (no-arg) resolve identically, plus partial/full pm override cases.
-
-tsc clean. Targeted+adjacent (8 prediction-related test files) 116/117 pass — 1 unrelated pre-existing flaky timeout (1345e Test 5, VN-Index cascade broadcast, passes 8/8 in isolation). Full `bun test`: 14344 pass/40 skip/58 fail/4 errors/1179 files (568.93s) then Bun 1.3.13 crash-at-teardown (known engine bug) — zero overlap between the 58 fail files and predictionMarketJob.ts/config.ts/predictionSignalDetector.ts, matches the same pre-existing VPS-push/RSS/insider/foreign-flow network-flaky class documented in the prior 2 entries. Server boot verified on PORT=3999 (3000 held by the live container): health/bctc-inspect/news-fetch-dashboard all 200, toolCount=183 unchanged.
-
-Per explicit dispatch instruction: board flip stops at REVIEW/`next_agent=ops` (Close Gate Steps 1-4); qa does Step 5 RAW-verify and must set `next_agent=po` (NOT self-close to done_verified — that was a caught process deviation on the immediately-preceding sibling task); po performs the actual Step 6 DONE_VERIFIED flip.
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
-
 ## 2026-07-08 — FACTORY-INTERFACE-extract-finalizeBctc-usecase → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -55,5 +27,21 @@ Migrated one extractor at a time (5 commits): lib creation + balanceSheetExtract
 tsc clean throughout. eslint clean on all 7 touched/created files. Per-file targeted suites matched pre-change baselines exactly: 186/186, 93/93, 121/121, 147/147, 17/17. Combined 42-file BCTC suite: 411 pass/4 skip/0 fail both before and after — byte-identical. Full `bun test` run twice (14334/40/68/7 then 14332/40/70/11, 1179 files, ~600s, Bun 1.3.13 crash-at-teardown both times — known engine bug): both failing-file sets are 100% the documented pre-existing VPS-proxy/RSS/news-poll/insider/foreign-flow/telegram-timeout flaky class, zero overlap with the 5 changed files; `1405b-bctc-vps-fixes.test.ts` re-ran isolated 12/12 pass (same verdict as the S10 sibling entry). Server boot verified PORT=3999: health/bctc-inspect/news-fetch-dashboard all 200, toolCount=183 unchanged, scheduler cron.schedule grep=3 unchanged.
 
 Commits: 7f65dfccd (lib+balanceSheet) / b66575d40 (cashFlow) / 0ebca40ae (incomeStatement) / c34955bb1 (bctcScalarAggregator) / 4f15363da (bctcMagnitudeValidator doc) / b065b1151 (board REVIEW flip, next_agent=ops, rebuild_required=true).
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
+
+## 2026-07-08 — FACTORY-DOMAIN-relocate-stock-catalog → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+`stockAliases.ts` (828L) embedded the 66-ticker `STOCK_CATALOG` reference table (lines 80-629, ~560L) intermixed with detection logic. Moved `STOCK_CATALOG`+`StockCatalogEntry` verbatim (cut via `sed`, diffed byte-identical against the source lines before deletion) into a new pure-data module `domain/services/stockAliases/catalog.ts` (618L incl. size-justification header, zero imports). `stockAliases.ts` (828L → 265L) now imports the table and re-exports it unchanged for existing consumers (`stockSearch.ts`, `newsNormalizer.ts`, `domain/services/index.ts` barrel) — zero import-path changes needed at any call site. `normalizeText`, both `NORMALISED_ALIASES`/`NORMALISED_CONTEXT_GUARDS` IIFEs, and all 5 detection functions stay in `stockAliases.ts`, which now carries its own size-justification header (267L, cohesive detection-logic file — the two derived maps + normaliser must stay beside the functions that close over them as private module state).
+
+Same class as the immediately-preceding `FACTORY-DOMAIN-extract-bctc-parsing-lib` sibling task — applied the same "verify byte-identical, not just tests-pass" rigor: wrote a scratch script importing BOTH the pre-move (`git show HEAD:...`) and post-move modules side by side, diffing `STOCK_CATALOG` itself + `getAliasesForCode`/`getCompanyName`/`detectStocksInText`/`tickerWholeWordMatch`/`stripSourceAttributionSuffix` output across all 66 tickers + a battery of realistic/context-guard sentences (incl. the DPM "phu my" guarded-vs-unguarded case) → 0 mismatches. Directory `stockAliases/` coexisting with file `stockAliases.ts` has no resolution ambiguity here — every import in the repo uses an explicit `.js` specifier (bundler moduleResolution), never a bare `./stockAliases` that could resolve to either.
+
+tsc clean. Targeted alias-related suite (14 files) 211/211 pass; consumer suites (news-normalizer/cascade-engine/stock-search/domain-services/legal-risk/deep-fetch-gate) 167+28 pass. eslint clean on both touched/created files. Full `bun test`: 14339 pass/40 skip/63 fail/5 errors/1179 files (566.88s) then Bun 1.3.13 crash-at-teardown (known engine bug, non-authoritative) — failing-file set is 100% the documented pre-existing VPS-push/RSS/news-poll/insider/foreign-flow/chromium-timeout flaky class (grepped, zero "alias"/"catalog"/"STOCK_CATALOG" mentions in any failure). Went one step further than prior siblings: temporarily restored the pre-change `stockAliases.ts` (git HEAD copy) and re-ran the 5 pollNews-adjacent files that appeared in the fail set in isolation — baseline ALSO fails (11/34 vs 7/34 post-change; the run-to-run count delta is itself the flakiness signature, chromium-not-found + 5s timeout budget under load, unrelated to alias logic) — confirms pre-existing, not a regression. Restored the real files after the probe, re-ran targeted suite (220/220) + tsc + equivalence script + server boot: all green again. Server boot verified PORT=3999: health/bctc-inspect/news-fetch-dashboard all 200, toolCount=183 unchanged, scheduler cron.schedule grep=3 unchanged.
+
+Also updated `docs/protocols/janitor-procedures.md`'s canonical-source pointer for `STOCK_CATALOG` to the new file path.
+
+Commit: cec87c726 (2-file relocation + doc pointer). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (relocated detection-logic module runs against live traffic at runtime — same class as prior domain-layer FACTORY-DOMAIN siblings).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
