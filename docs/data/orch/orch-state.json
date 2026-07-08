@@ -3326,19 +3326,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#DS-DEGRADE-01-FIX"
       },
       {
-        "id": "FIX-EVIDENCE-PIPELINE-STARVED",
-        "priority": "high",
-        "status": "BACKLOG",
-        "title": "evidence pipeline STARVED (silent chain): evidence_fragments=0 rows (empty) -> evidenceAccumulatorJob reports success EVERY run but rows_written=0 since 2026-05-27 -> evidence_scores frozen 2026-05-27 (369 rows), evidence_likelihood_ratios frozen 2026-05-24 (45 rows). Root cause UPSTREAM: fragment producer stopped + fragments TTL-expired; accumulator starves -> writes 0 -> falsely reports success.",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-EVIDENCE-PIPELINE-STARVED",
-        "specced_under": "BA-PREDICTION-EVIDENCE-REVIVAL",
-        "status_note": "Root reframed 2026-07-01 (PO): input-starvation/monoculture, NOT a missing job or empty-fragments table. Content absorbed by BA-PREDICTION-EVIDENCE-REVIVAL FR-2.1+FR-1.2. Stays BACKLOG — pm decomposition under the BA spec mints the real dev tasks; do NOT dispatch directly.",
-        "root_reframed": "BA+PO live-verified: evidence_fragments=48 rows (NOT 0 as title states — accumulator recovered via EVIDENCE-ACCUM-SILENT-CRON 53d00955 + foreignFlowAlertJob). LR compute job baseRateComputationJob EXISTS+healthy — INPUT-STARVED not missing. Real root = MONOCULTURE (only foreign_flow_institutional producer wired). Absorbed by sprint FR-2.1 (diversify record_evidence_fragment producers) + FR-1.2 (cadence). Original 'build the missing LR job' premise SUPERSEDED.",
-        "absorbed_by": "PREDICTION-EVIDENCE-REVIVAL"
-      },
-      {
         "id": "FIX-PREDICTION-SIGNALS-EMPTY",
         "priority": "medium",
         "status": "TODO",
@@ -8828,7 +8815,28 @@
         "note": "Rewrote docs/protocols/cowork-master-cron-runbook.md §1/§2/§5/§8/§9: RemoteTrigger Layer A documented as retired (not active/deletion-locked) per STANDING feedback_no_remote_trigger_all_local; current architecture = single session-scoped */15 CronCreate dispatcher per .claude/skills/cron-cowork-team/SKILL.md; documented the session-scoped-dispatcher SPOF explicitly with a pointer to in-flight F1-LAUNCHD-COWORK-BACKSTOP (owner developer, same brief) as the coming session-independent layer, plus an explicit re-freshen instruction for whoever lands it. docs/data/cowork-schedule.json._notes.layer_a_deletion_locked: true->false, layer_a_deletion_gate rewritten to point at this fix. Independent of F1-LAUNCHD-COWORK-BACKSTOP / FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED (not blocked on either)."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "FIX-EVIDENCE-PIPELINE-STARVED",
+        "priority": "high",
+        "status": "DONE_VERIFIED",
+        "title": "evidence pipeline STARVED (silent chain): evidence_fragments=0 rows (empty) -> evidenceAccumulatorJob reports success EVERY run but rows_written=0 since 2026-05-27 -> evidence_scores frozen 2026-05-27 (369 rows), evidence_likelihood_ratios frozen 2026-05-24 (45 rows). Root cause UPSTREAM: fragment producer stopped + fragments TTL-expired; accumulator starves -> writes 0 -> falsely reports success.",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-EVIDENCE-PIPELINE-STARVED",
+        "specced_under": "BA-PREDICTION-EVIDENCE-REVIVAL",
+        "status_note": "Root reframed 2026-07-01 (PO): input-starvation/monoculture, NOT a missing job or empty-fragments table. Content absorbed by BA-PREDICTION-EVIDENCE-REVIVAL FR-2.1+FR-1.2. Stays BACKLOG — pm decomposition under the BA spec mints the real dev tasks; do NOT dispatch directly.",
+        "root_reframed": "BA+PO live-verified: evidence_fragments=48 rows (NOT 0 as title states — accumulator recovered via EVIDENCE-ACCUM-SILENT-CRON 53d00955 + foreignFlowAlertJob). LR compute job baseRateComputationJob EXISTS+healthy — INPUT-STARVED not missing. Real root = MONOCULTURE (only foreign_flow_institutional producer wired). Absorbed by sprint FR-2.1 (diversify record_evidence_fragment producers) + FR-1.2 (cadence). Original 'build the missing LR job' premise SUPERSEDED.",
+        "absorbed_by": "PREDICTION-EVIDENCE-REVIVAL",
+        "promoted_at": "2026-07-08T00:00:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "done_verified": true,
+        "verified_by": "dev-team",
+        "verified_at": "2026-07-08T00:02:16Z",
+        "signoff_note": "BOUNDED-1 pre-verify (stale): task's own status_note already says 'Root reframed 2026-07-01 (PO): input-starvation/monoculture, NOT a missing job or empty-fragments table... do NOT dispatch directly.' Live-verified via get_evidence_summary(FPT): fragment_count=11 with 3+ distinct producer types (news_sentiment_stock, foreign_flow_institutional, bctc_roe_strong), TRUSTED rows present (n=16, n=18) with correct bearish-direction LR resolution — confirms sprint PREDICTION-EVIDENCE-REVIVAL (QA-approved 2026-07-01T07:45-07:52Z, commits 24d1a4b5/20264221, TASK-EVIDENCE-HOP1-MCP + TASK-EVIDENCE-HOP2-AGENTS) already fixed the real root causes (direction/horizon hardcode bug + producer monoculture + silent insider-fetch failure). Original title's premise (evidence_fragments=0, accumulator silently writes 0 rows) was already found factually wrong by BA's own 2026-07-01 live probe (48 rows, not 0). No further work needed — closing stale, not dispatching a worker."
+      }
+    ],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
@@ -9033,7 +9041,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-07T23:50:31Z",
+    "last_triaged_at": "2026-07-08T00:02:16Z",
     "last_triaged_by": "dev-team"
   },
   "_meta": {
