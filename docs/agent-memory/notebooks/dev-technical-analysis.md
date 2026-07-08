@@ -6,6 +6,28 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-07-08 — FACTORY-TECHANALYSIS-reconcile-ta-contract — single /ta/indicators contract
+
+**Task:** Make `api/openapi.yaml` the single authoritative `/ta/indicators` contract; conform the Go service. depends_on go-livepath-tests (DONE_VERIFIED); gates the sibling deletion task `FACTORY-TECHANALYSIS-delete-orphaned-ts-service`.
+
+**Trend-port-or-drop decision (full reasoning: decision journal STEP dev-technical-analysis-S2):** investigated every candidate live caller of the dead TS `{code,days}->scalar+trend` shape / `determineTrend()`. Found NONE: (a) TS `src/` is never started (Dockerfile builds only `cmd/server`), (b) `packages/shared-types`'s TS-shaped twin type has zero importers, (c) mcp-server's own local `ComputeTAResponse.trend` is hardcoded `'NEUTRAL'` unconditionally (cosmetic report line only, no alert/decision logic reads it), (d) frontend's `fetchTASnapshot` already 404s today against the live Go service — traced the actual gateway routing (`PreservePath=true` forwards `/ta/ta/indicators` verbatim; Go only registers `/ta/indicators`) — a pre-existing, unrelated double-`/ta` frontend bug, out of zone, not fixed here. The audit brief itself independently calls this "latent in dead code." **Verdict: DROP, do not port.** `api/openapi.yaml` intentionally has no `trend` field, with an explicit note recording why.
+
+**Spec fixes (openapi.yaml was already Go-shaped but incomplete/wrong):** `required:[symbol,period]` wrongly forbade the closes-only path → removed; `closes` request field was undocumented → added; `ma5/ma20/ma50` response fields were missing → added; RSI description hardcoded "14-period" → fixed to "window = request `period`, default 14"; `ema` field mislabeled "Wilder's smoothing factor" → fixed to "standard EMA α=2/(period+1), NOT Wilder's" (source: `pkg/primitive/moving_average/moving_average.go` explicitly says "NOT Wilder"); stale `501 not yet implemented` response removed (P1-B landed long ago).
+
+**Go code:** zero functional changes — `dtos.go`/`router.go` doc-comments only (removed stale "Stubs: P1-B" comment, documented the authoritative contract + period's true semantics + why no trend field).
+
+**Golden diff (live probe, running container, before vs after commit):** 3 representative `/ta/indicators` calls (symbol+period DB-backed; closes-only pure-compute; missing-both 400) — **byte-identical** before/after (expected: openapi.yaml isn't read at runtime by the binary, confirmed via grep; Go comment-only diff).
+
+**Docs:** rewrote 3 zone docs that still described the dead TS `/ta/indicators` shape as canonical — `api-reference.md` (full `/ta/indicators` section replacement with live Go example), `usecases.md` (`ComputeTAUseCase` section: TS → real Go `Execute` flow), `domain-model.md` (`TechnicalIndicators` struct fields, "Trend field — dropped" section replacing "Trend Determination Logic", Indicator Formulas table period-accuracy fixes).
+
+**Discovered signal (out of scope, not fixed):** a SECOND, Go-native dead-code path — `pkg/domain/services.go` `CalculateTAService.Compute()` is a stub hardcoded to return a zero-value struct; `cmd/server/main.go:71` constructs-then-discards it (`_ = domain.NewCalculateTAService(...) // unused HTTP path`). Flagged in `domain-model.md`; recommend a small dedicated follow-up cleanup task (touches composition root, outside this task's 3-file scope).
+
+**Gates:** `go build/vet/test ./...` 12 packages GREEN, unchanged. `golangci-lint run` 0 issues. Sandbox 35/35 scenarios GREEN, headless render-check PASS.
+
+Zone health: no drift detected — TA docs now the single accurate source (previously 3 zone docs described a never-deployed contract).
+
+---
+
 ### 2026-07-08 — FACTORY-TECHANALYSIS-go-livepath-tests — Go tests for the live request path
 
 **Task:** FACTORY-TECHANALYSIS-go-livepath-tests (epic FACTORY-MAINTAINABILITY-2026-06). Backstops deletion of the dead `src/` TS shadow service (FACTORY-TECHANALYSIS-delete-orphaned-ts-service, blocked on this task).
@@ -41,36 +63,6 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 ---
 
-### 2026-06-30 — FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE — stale data + global-limit + Tết gap
-
-**Task:** FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE (commit b6055728). REBUILD_REQUIRED: YES.
-
-**Root causes (3 compounding bugs in infrastructure + domain):**
-
-(a) **GetCandles / GetOHLCV — ORDER BY date ASC LIMIT N returned OLDEST bars.**
-`ORDER BY date ASC LIMIT 60` fetched the 60 oldest rows (2023 stale data, VCB at 88k-92k range) instead of the most recent 60. Fix: inner subquery `ORDER BY date DESC LIMIT ?` + outer `ORDER BY date ASC` to always return latest N bars.
-
-(b) **GetMultiTickerCandles — global LIMIT starvation cut off later-alphabet codes.**
-Single IN-clause `LIMIT len(codes)*limit` applied after `ORDER BY code, date ASC`: FPT+HPG+MBB consumed the first 2200+ rows of a 2400 budget, leaving VCB/VHM/MSN/MWG with 0 bars → `insufficient_history` for 5/8 watchlist tickers. Fix: per-code subqueries (one `SELECT ... ORDER BY date DESC LIMIT ?` per ticker), eliminating the global budget entirely.
-
-(c) **maxCalendarGap=5 rejected Vietnamese Tết holiday (10-day closure).**
-VN market closes ~10 calendar days for Tết (e.g. 2026-02-13→2026-02-23). Gap check flagged this as `data_gap_too_large` for ALL tickers. Fix: raise constant from 5 to 14 (covers Tết + weekend margin, still catches multi-week true outages).
-
-**Files changed:** `pkg/infrastructure/repositories.go`, `pkg/infrastructure/ohlcv_repository.go`, `pkg/infrastructure/multi_ticker_ohlcv_repository.go`, `pkg/domain/momentum_service.go` + 3 test files (4 new tests RED→GREEN).
-
-**Results (before → after, probed post-rebuild):**
-- VCB MA5: 88,120 → 61,480 (reflects actual ~62,200 VCB close) ✓
-- VCB ROC: null → 0.088 (8.77% annual) ✓
-- VCB 52w: null → high=76k / low=56.7k ✓
-- 8/8 tickers: all return ROC + 52w data (was 0/8) ✓
-
-**Pre-existing DB contamination (not fixed here):**
-FPT/VHM daily_ohlcv stores prices in thousands format for Aug 2025 – Feb 2026 (e.g. close=100.3 instead of 100,300 VND). Requires a separate DB migration script (distinct from CONTAM-6/CONTAM-9 which target different contamination class). FPT ROC = 606x (artifact of thousands-vs-VND mismatch across 252-bar window). Out of scope for this task.
-
-**Zone health:** 12 packages GREEN. go vet clean. go build OK. Service healthy post-rebuild.
-
----
-
 ## Archive
 
 [Archived to git history; retained: 3 most recent cycles. Full history in git log.]
@@ -82,6 +74,10 @@ Moved out of Working Memory (full detail in git log, `git log -- docs/agent-memo
 - 2026-06-15 FIX-TA-GOSVC-NA-DESPITE-DEPTH (commit 33e7a094) — Go DB-backed `GetCandles` implemented (was a stub).
 - 2026-06-29 P0-1-VOLATILITY-INDICATORS (commit 1cd4a7722) — `POST /ta/volatility-indicators`: RV/GK/ATR%/regime/drawdown, REVIEW status.
 - 2026-06-30 IND-P1-TECHNICAL-ANALYSIS-SUITE (commit a61496548 / 4842fd6f) — ROC momentum + relative-strength + 52w-proximity tools, REVIEW status.
+
+### 2026-07-08 — pruned to AC-2b (3-cycle cap), round 2
+
+- 2026-06-30 FIX-TA-SVC-STALE-SPLIT-DATA-SOURCE (commit b6055728) — 3 compounding bugs: `GetCandles`/`GetOHLCV` `ORDER BY date ASC LIMIT N` returned OLDEST bars not newest (fixed via `DESC LIMIT` subquery); `GetMultiTickerCandles` global LIMIT starved later-alphabet tickers (fixed via per-code subqueries); `maxCalendarGap=5` rejected the ~10-day Tết closure (raised to 14). VCB MA5 88,120→61,480, ROC null→0.088, 8/8 tickers restored. Pre-existing FPT/VHM thousands-vs-VND DB contamination noted, not fixed (separate migration).
 
 ### 2026-05-24 — Multiple TA dashboard improvements
 
