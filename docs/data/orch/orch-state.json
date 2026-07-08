@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-TECHANALYSIS-reconcile-ta-contract closed DONE_VERIFIED (po Step 6 of the Docker Microservice Code-Change Close Gate). Both depends_on prereqs for FACTORY-TECHANALYSIS-delete-orphaned-ts-service now satisfied — leave for BOUNDED-1 auto-pickup; po does not act on it.",
-    "updated_at": "2026-07-08T09:30:49Z",
-    "updated_by": "po"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-KINHDICH-delete-deprecated-ts-tree",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-KINHDICH-delete-deprecated-ts-tree — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-08T09:35:03Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3721,15 +3721,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-RAG-confidence-impact-or-00-mask",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-confidence-impact-or-00-mask"
-      },
-      {
-        "title": "Delete the 4909L _deprecated TypeScript predecessor tree",
-        "priority": "P1",
-        "zone": "kinh-dich-service",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-KINHDICH-delete-deprecated-ts-tree",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-delete-deprecated-ts-tree"
       },
       {
         "title": "Remove 2 committed .bak dead-code files from the interface zone (+ repo-root .bak)",
@@ -9422,6 +9413,23 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Delete the 4909L _deprecated TypeScript predecessor tree",
+        "priority": "P1",
+        "zone": "kinh-dich-service",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-KINHDICH-delete-deprecated-ts-tree",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-delete-deprecated-ts-tree",
+        "promoted_at": "2026-07-08T09:34:51Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T09:35:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-08T09:39:27Z",
+        "reviewed_by": "dev-kinh-dich",
+        "next_agent": "qa"
       }
     ],
     "qa": [],
@@ -9441,7 +9449,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T08:51:20Z",
+    "last_triaged_at": "2026-07-08T09:34:51Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
@@ -9451,6 +9459,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-08T07:18:20Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-07-08T09:39:27Z",
+  "_updated_by": "dev-kinh-dich"
 }
