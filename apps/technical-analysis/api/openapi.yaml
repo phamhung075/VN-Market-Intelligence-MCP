@@ -5,7 +5,26 @@ info:
     Computes RSI, MACD, Bollinger Bands, and Moving Averages from read-only
     market.db price history. Returns computed indicators via HTTP.
     Language: Go (pilot rewrite — Option B verdict 2026-05-22).
-  version: "1.0.0"
+
+    This file is the SINGLE authoritative /ta/indicators contract
+    (FACTORY-TECHANALYSIS-reconcile-ta-contract, 2026-07-08). A second,
+    divergent contract used to live in a dead TypeScript shadow service
+    (apps/technical-analysis/src/ — never started by Dockerfile or
+    docker-compose.yml; scheduled for deletion by
+    FACTORY-TECHANALYSIS-delete-orphaned-ts-service): `{code, days} ->`
+    scalar indicator values plus a `trend` field computed by a
+    `determineTrend()` heuristic (RSI/MACD-sign thresholds, close-vs-close
+    fallback). That shape — including `trend` — is intentionally NOT part of
+    this contract. A repo-wide investigation (mcp-server, frontend,
+    alert-engine, packages/shared-types) found no live caller depending on
+    determineTrend's semantics: the TS route never receives traffic (Go is
+    the only binary the Docker image builds/runs), the one TypeScript-shaped
+    twin type (packages/shared-types) has zero importers, and the frontend's
+    only caller of a scalar+trend response already 404s today for an
+    unrelated gateway path-construction bug. Full reasoning:
+    docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md
+    (STEP dev-technical-analysis-S2).
+  version: "1.1.0"
 
 servers:
   - url: http://localhost:5003
@@ -39,20 +58,35 @@ paths:
       operationId: computeIndicators
       summary: Compute technical indicators for a stock
       description: >
-        Accepts a Vietnamese stock ticker and lookback period (trading days).
+        Two mutually-exclusive-in-practice request paths (closes wins when
+        both are sent): pure-compute (`closes` supplied directly, market.db
+        is never touched) or DB-backed (`symbol` only — the most recent 60
+        candles are read from market.db, independent of `period`). At least
+        one of `symbol` or `closes` is required.
+
         Returns RSI, MACD (line + signal + histogram), Bollinger Bands
-        (upper/middle/lower), and Moving Averages (SMA + EMA) as float64 arrays.
-        Arrays are empty (omitted) when there is insufficient price history for
-        the requested period.
+        (upper/middle/lower), parameterised Moving Averages (SMA + EMA,
+        window = `period`), and the fixed-period MA5/MA20/MA50, all as
+        float64 time-series arrays (oldest → newest; last element = most
+        recent). Arrays are omitted when there is insufficient price history
+        for that indicator's window. Does NOT return a `trend` field — see
+        the top-level `info.description` for why.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ComputeTARequest"
-            example:
-              symbol: VNM
-              period: 60
+            examples:
+              dbBackedBySymbol:
+                summary: DB-backed path — symbol + period
+                value:
+                  symbol: VNM
+                  period: 60
+              pureComputeByCloses:
+                summary: Pure-compute path — explicit closes, no DB lookup
+                value:
+                  closes: [44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10, 45.42, 45.84, 46.08, 45.89, 46.03, 45.61, 46.28, 46.28, 46.00, 46.03, 46.41, 46.22, 45.64]
       responses:
         "200":
           description: Indicators computed successfully.
@@ -61,19 +95,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/ComputeTAResponse"
         "400":
-          description: Invalid request body (missing symbol, invalid period, bad JSON).
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "501":
-          description: Not yet implemented (P1-B primitives not yet landed).
+          description: >
+            Invalid request body — bad JSON, or neither `symbol` nor `closes`
+            provided (`{"error":"closes or symbol required"}`).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: Internal computation error.
+          description: >
+            Internal computation error (e.g. market.db read failure on the
+            DB-backed path, or a structurally invalid computation parameter).
           content:
             application/json:
               schema:
@@ -103,24 +135,47 @@ components:
 
     ComputeTARequest:
       type: object
-      required: [symbol, period]
+      description: >
+        No field is individually `required` in the strict OpenAPI sense —
+        Go accepts either path. At least one of `symbol` or `closes` MUST be
+        present, or the service returns 400 `"closes or symbol required"`.
+        When both are sent, `closes` takes precedence (DB is never consulted).
       properties:
         symbol:
           type: string
           description: >
             Vietnamese stock ticker code (e.g. "VNM", "VCB", "HPG").
-            Case-insensitive; service normalises to uppercase internally.
+            Required when `closes` is omitted — triggers the DB-backed path
+            (reads the most recent 60 candles from market.db, independent of
+            `period`). Case-insensitive; service normalises to uppercase
+            internally. When `closes` is also provided, `symbol` is only
+            echoed back in the response (not used for a DB lookup).
           example: VNM
         period:
           type: integer
-          minimum: 1
           description: >
-            Number of trading days of price history to use as the lookback
-            window. Must be at least 1. Indicator computation requires a
-            minimum number of candles per indicator (e.g. RSI needs ≥14,
-            MACD needs ≥26); if period < minimum the corresponding output
-            array will be empty (field omitted in response).
+            Optional. Drives ONLY the RSI window and the parameterised
+            sma/ema window — it does NOT change how many candles are read
+            from the DB (always 60) and does NOT affect MACD (fixed
+            12/26/9), Bollinger Bands (fixed 20, 2σ), or ma5/ma20/ma50
+            (always fixed at their namesake periods). If omitted, zero, or
+            negative, defaults to 14 (sensible default — not an error).
+            Indicator computation still requires a minimum number of candles
+            per indicator (e.g. RSI needs ≥ period+1, MACD needs ≥ 26+9); if
+            history is shorter than the minimum, the corresponding output
+            array is empty (field omitted in the response).
           example: 60
+        closes:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Explicit close-price series, oldest → newest. When non-empty,
+            selects the pure-compute path: computation runs directly on
+            these values and market.db is never consulted, regardless of
+            whether `symbol` is also set.
+          example: [44.34, 44.09, 44.15, 43.61, 44.33]
 
     # --- Response ---
     # Field names MUST match pkg/application/dtos.go ComputeTAResponse exactly.
@@ -140,9 +195,9 @@ components:
             type: number
             format: double
           description: >
-            14-period Wilder RSI values, range [0, 100]. Array length =
-            (period - 14 + 1) for a default 14-period window. Omitted when
-            there are fewer than 14 candles.
+            Wilder-smoothed RSI values, range [0, 100], window = request
+            `period` (default 14 when omitted/≤0 — NOT hardcoded to 14).
+            Omitted when there are fewer than `period` + 1 candles.
           example: [58.3, 61.2, 55.7]
         macdLine:
           type: array
@@ -201,8 +256,8 @@ components:
             type: number
             format: double
           description: >
-            Simple Moving Average values for the requested period.
-            Omitted when fewer than period candles.
+            Simple Moving Average values, window = request `period` (default
+            14). Omitted when fewer than `period` candles.
           example: [44800.0, 44600.0, 44500.0]
         ema:
           type: array
@@ -210,10 +265,40 @@ components:
             type: number
             format: double
           description: >
-            Exponential Moving Average values for the requested period,
-            using Wilder's smoothing factor α = 2 / (period + 1).
-            Omitted when fewer than period candles.
+            Exponential Moving Average values, window = request `period`
+            (default 14), using the standard EMA smoothing factor
+            α = 2 / (period + 1) — this is NOT Wilder's 1/period smoothing
+            (Wilder smoothing is used only internally by `rsi`, above; see
+            pkg/primitive/moving_average/moving_average.go). Omitted when
+            fewer than `period` candles.
           example: [45200.0, 45100.0, 44900.0]
+        ma5:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Fixed 5-period SMA — always computed at exactly 5, independent
+            of the request `period`. Omitted when fewer than 5 candles.
+          example: [45800.0, 45650.0, 45510.0]
+        ma20:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Fixed 20-period SMA — always computed at exactly 20, independent
+            of the request `period`. Omitted when fewer than 20 candles.
+          example: [45100.0, 45050.0, 44980.0]
+        ma50:
+          type: array
+          items:
+            type: number
+            format: double
+          description: >
+            Fixed 50-period SMA — always computed at exactly 50, independent
+            of the request `period`. Omitted when fewer than 50 candles.
+          example: [44300.0, 44280.0, 44250.0]
 
     # --- Errors ---
 

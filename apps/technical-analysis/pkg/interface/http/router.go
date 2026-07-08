@@ -74,6 +74,12 @@ func handleHealth() http.HandlerFunc {
 	}
 }
 
+// handleIndicators serves POST /ta/indicators — the single authoritative
+// contract is application.ComputeTARequest/ComputeTAResponse, documented in
+// full in api/openapi.yaml (FACTORY-TECHANALYSIS-reconcile-ta-contract). The
+// request-shape validation here ("closes or symbol required") intentionally
+// duplicates application.ComputeTAUseCase.Execute's own check — defence in
+// depth, not a second source of truth for the contract itself.
 func handleIndicators(useCase *application.ComputeTAUseCase, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req application.ComputeTARequest
