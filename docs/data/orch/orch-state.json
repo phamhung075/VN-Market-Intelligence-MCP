@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-08T06:23:16Z",
-    "updated_by": "router (FIX-NEWS-CB-FALSE-CLOSED genuinely DONE_VERIFIED — head was stale, pointing to a closed task)",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "idle"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-PDF-paddleocr-score-07-mask",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-PDF-paddleocr-score-07-mask — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-08T06:24:03Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3712,15 +3712,6 @@
         "status": "BLOCKED",
         "title": "FIX-ALERT-OPEN-ZERO-PRICE-RACE — bbAlertScanJob/taAlertScanJob fire giá=0 BB-breakout + single-digit RSI (3.7-11.9) at 02:00-02:15Z market open, self-normalizing to RSI 35-48 by 06:08Z.",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-OPEN-ZERO-PRICE-RACE"
-      },
-      {
-        "title": "Stop defaulting PaddleOCR cell score to 0.7; surface real ink-density or sentinel",
-        "priority": "P1",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-PDF-paddleocr-score-07-mask",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-paddleocr-score-07-mask"
       },
       {
         "title": "Fix `or 0.0` truthiness mask on confidence/impact_score in rag _dedup_and_trim",
@@ -9211,7 +9202,22 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "title": "Stop defaulting PaddleOCR cell score to 0.7; surface real ink-density or sentinel",
+        "priority": "P1",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-PDF-paddleocr-score-07-mask",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-paddleocr-score-07-mask",
+        "promoted_at": "2026-07-08T06:23:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T06:24:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -9349,8 +9355,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T03:37:00Z",
-    "last_triaged_by": "po"
+    "last_triaged_at": "2026-07-08T06:23:32Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
