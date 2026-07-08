@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-SCHEDULER-alert-confidence-literals DONE_VERIFIED (qa Step 5 RAW-verify PASS 2026-07-08T10:36:07Z — deployed byte-identical to HEAD inside live container; bb/ta jobs confirmed still wired via alertScanParallelJob (not dead code); manually triggered runBbAlertScan/runTaAlertScan/runForeignFlowAlertJob live against real DB (WORK-digest stubbed for foreignFlow, bb/ta have no Telegram import at all) — 3 new real alert rows landed with distinct in-range confidence (0.591161548032028 / 0.5610703819512394 / 0.5596169461647121), replacing the old flat 0.65/0.7 pattern confirmed as pre-deploy baseline; foreignFlow 0 HIGH signals today (quiet, matches pre-deploy); insiderCheckJob formula correct-in-isolation but unreachable with real data — insider_transactions table has 0 rows historically, pre-existing environmental gap not caused by this task, flagged non-blocking.",
-    "updated_at": "2026-07-08T10:36:07Z",
-    "updated_by": "qa"
+    "status": "review",
+    "active_task_id": "FACTORY-SCHEDULER-prediction-default-dedup",
+    "next_agent": "ops",
+    "next_action": "FACTORY-SCHEDULER-prediction-default-dedup moved to review — DEFAULT_PREDICTION_SIGNAL_CONFIG + resolvePredictionSignalConfig() dedup both try/catch branches of predictionMarketJob.ts Step 6 (pure refactor, resolved values unchanged); new test 7/7 pass, full bun test 14344 pass/58 fail (pre-existing flaky class, zero overlap with changed files); rebuild_required:true, ops runs Docker Microservice Code-Change Close Gate Steps 1-4 next. NOTE: after qa Step 5 RAW-verify, qa must set next_agent=po (NOT self-close to done_verified) — po performs Step 6.",
+    "updated_at": "2026-07-08T11:10:02Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3793,15 +3793,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-ALERT-dedup-window-config",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-dedup-window-config"
-      },
-      {
-        "title": "Dedup predictionMarket signalConfig defaults into one DEFAULT constant",
-        "priority": "P1",
-        "zone": "mcp-server-scheduler",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-SCHEDULER-prediction-default-dedup",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-prediction-default-dedup"
       },
       {
         "title": "Extract one requireVpsApiKey guard; replace 15+ copy-paste auth blocks",
@@ -9461,6 +9452,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Dedup predictionMarket signalConfig defaults into one DEFAULT constant",
+        "priority": "P1",
+        "zone": "mcp-server-scheduler",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-SCHEDULER-prediction-default-dedup",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-prediction-default-dedup",
+        "promoted_at": "2026-07-08T10:51:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T10:51:11Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "moved_to_review_at": "2026-07-08T11:10:02Z",
+        "moved_by": "dev-mcp-server",
+        "review_note": "predictionMarketJob.ts Step 6 hardcoded volumeSpikeThresholdUsd=50000/probabilityShiftPct=5/minUniqueWallets=10 twice — once in the config-load-succeeded try branch (per-field `?? literal` fallback), once again in the config-load-failed catch branch (plain object). The two paths could silently drift apart over time (catch-branch config-bypass risk flagged by the audit).\n\nExtracted DEFAULT_PREDICTION_SIGNAL_CONFIG (named constant, provenance-commented — as-shipped Task 167 values, unchanged since) + resolvePredictionSignalConfig(pm?: Partial<PredictionSignalConfig>|null): PredictionSignalConfig. Both branches now resolve through the SAME function: try passes the loaded `predictionMarkets` config slice, catch calls it with no argument (falls through to all-defaults). Judgment call: chose a per-field `pm?.field ?? DEFAULT.field` merge over the backlog's illustrative spread example `{ ...DEFAULT_PREDICTION_SIGNAL_CONFIG, ...(pm ?? {}) }` — the naive spread is unsafe if `pm` ever carried an explicit-`undefined` key (JS spread would clobber the default with undefined, unlike the old `??` semantics); the per-field merge is mechanically provable identical to the two prior duplicated blocks in every case, which the pure-refactor DoD (resolved values UNCHANGED) requires. config.ts:604 PredictionMarketsConfig already declares these 3 fields required/non-optional with matching defaults (50000/5/10) — nothing to change there per the backlog's own \"if it fits cleanly\" hedge.\n\nNew FACTORY-SCHEDULER-prediction-default-dedup.test.ts (7 tests): pins DEFAULT_PREDICTION_SIGNAL_CONFIG's literal values; proves resolvePredictionSignalConfig(undefined) === resolvePredictionSignalConfig() === DEFAULT_PREDICTION_SIGNAL_CONFIG (the try-branch pm-absent case and the catch-branch no-arg case can never silently diverge again); covers null pm, empty-object pm, partial override (1 of 3 fields), and full override (all 3 fields).\n\nGates: tsc --noEmit clean. Targeted+adjacent (8 prediction-related test files: 1209/1318/1345c/1345e/1412/166/167/new) 116/117 pass — the 1 failure is an unrelated pre-existing flaky timeout (1345e Test 5, VN-Index cascade MARKET broadcast — 5000ms timeout under parallel load; re-run in isolation: 8/8 pass, confirms not caused by this change). Full `bun test`: 14344 pass / 40 skip / 58 fail / 4 errors / 1179 files (568.93s), then the known Bun 1.3.13 crash-at-teardown panic (non-authoritative, fires after the summary line). All 58 fail files grepped against predictionMarketJob.ts/config.ts/predictionSignalDetector.ts: zero import overlap — same pre-existing VPS-push/RSS/insider-transactions/foreign-flow/telegram/technical-indicators network-flaky-in-sandbox class documented on the 2 immediately-preceding sibling tasks (14296-14342 pass range across recent runs of unrelated code).\n\nServer-boot Gate 2b verified on PORT=3999 (port 3000 is held by the live running container, not this dev process): /health returns toolCount=183 (baseline-matching, fresh-process uptime confirmed not the stale container response), /api/bctc-inspect and /dashboards/news-fetch/ both 200 with real content. Gate 2c tool count: 183 (bun scripts/gen-project-stats.ts --dry-run). Gate 2d scheduler cron.schedule grep: 3 (unchanged, matches the 2 immediately-preceding sibling entries' documented baseline — predictionMarketJob.ts itself defines no cron.schedule call, it is wired from jobs.ts CRONS.predictionMarketPoll).\n\nCommits: 5310ce0fb (code + new test), a8d20ba18 (DJ-GATE-1 journal STEP dev-mcp-server-S9), 43be8bf19 (notebook).\n\nrebuild_required: true — signalConfig resolution runs inside the live scheduler job against real Polymarket data at runtime, so it needs the full Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate). next_agent=ops for Steps 1-4 (rebuild+SHA-gate mcp-server). IMPORTANT PROCESS NOTE (explicit dispatch instruction, do not repeat the immediately-preceding sibling task's deviation): after ops completes Steps 1-4 and qa runs Step 5 RAW-verify, qa MUST set next_agent=po and hold at REVIEW — qa must NOT self-close this row to done_verified (that happened on FACTORY-SCHEDULER-alert-confidence-literals and was a caught process deviation, ratified post-hoc; po's own recorded forward-fix treats the next occurrence as recurring and escalates it). po performs the actual Step 6 DONE_VERIFIED flip per docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate Step 6. RAW-verify guide for qa: this is a pure internal refactor with no persisted-value change — Step 5 liveness check is /health + confirm predictionMarketJob's next scheduled run (every 30min) still stores prediction_signals rows using the same thresholds as before (50000/5/10 unless predictionMarkets config overrides them), i.e. behavior-unchanged, not a new-behavior verification."
       }
     ],
     "qa": [],
@@ -9480,7 +9490,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T09:47:10Z",
+    "last_triaged_at": "2026-07-08T10:51:06Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
