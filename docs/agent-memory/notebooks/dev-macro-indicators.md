@@ -102,3 +102,23 @@ Zone health: HEALTHY | P0-3-OMO-CURVE → REVIEW
 
 **No code changed, no commit of app code** (only board/journal/notebook docs committed).
 Zone health: HEALTHY (Go service unaffected) | FACTORY-MACRO-delete-dead-ts-tree → BLOCKED (awaiting po scope call)
+
+---
+
+## Session 2026-07-08 round 2 (FACTORY-MACRO-delete-dead-ts-tree — po FOLD-IN, deletion executed)
+
+**Task:** po expanded scope (STEP po-S2, whole-repo grep zero-external-importer) to fold the entire `__tests__/` tree into the same deletion, plus `docs/architecture/microservice/macro-indicators/testing.md` Go-only reconciliation.
+
+**Independent re-verify (mandatory, whole-repo scope this time) before touching anything:** re-ran grep myself, did not trust po's report alone — confirmed zero live code importer of `_deprecated/`, `infrastructure/scrapers/`, `__tests__/`, or the toolchain files outside the deletion set. 2 residual hits are stale doc-comments (not imports) pre-dating this task: `apps/mcp-server/src/infrastructure/microservices/clients.ts` (JSDoc pointing at an already-nonexistent `src/application/dtos.ts`) and `macro_investment_clock.go` (comment pointing at `src/domain/services.ts`, a path that never had `_deprecated/` in it — pre-existing typo, not one of po's counted 3).
+
+**Deleted:** `src/_deprecated/`, `src/infrastructure/scrapers/`, whole `__tests__/`, `package.json`, `tsconfig.json`, `bun.lock` (git rm), `node_modules/` (untracked/gitignored, `rm -rf`, 32M).
+
+**Also did (po's flagged optional trivial residue):** updated 3 `pkg/primitive/*.go` provenance doc-comments + `scripts/discover-adb-xhr.py` off the deleted `_deprecated/domain/services.ts` / `scrapers/adb-kidb.ts` paths (comment-only, zero behavior change).
+
+**Verification before flip (all green):** `go build ./...`, `go vet ./...`, `golangci-lint run` (0 issues), `go test ./...` (33 files / 8 pkgs / 288 top-level tests / 543 incl. subtests, 0 fail — real counts from `go test -v`, written into rewritten `testing.md`). Fence-A/B/C checked via real `go list -f '{{.Imports}}'` import graph (the raw-grep heuristic in flow/main.md false-positives on English prose like "no cross-layer imports" — noted, not a regression). G12 sandbox: primitive 18/18 PASS, module 2/2 PASS. Env credential audit clean. `docker build` of the Go image clean (verify-only, image removed after, no `up -d` — `rebuild_required: false`, no deploy). `pnpm -r list` clean after `package.json` removal drops macro-indicators out of the workspace.
+
+**Left out of scope (flagged, not touched):** `docs/architecture/microservice/macro-indicators/infrastructure.md` still describes the deleted TS scraper adapters — but it was already 100% describing dead pre-Go-migration code before this task (one cited path, `src/infrastructure/repositories.ts`, never existed on disk even before deletion); po's DoD named `testing.md` only. Recommend a follow-up backlog item for po/architect to rewrite `infrastructure.md`/`domain-model.md`/`usecases.md`/`api-reference.md` against the real Go `pkg/` implementation. Also left untouched per explicit router instruction: stale `bun test` refs in `docs/agents/dev-macro-indicators/init.md:35` and `flow/main.md:43` (agent-father's job, not mine).
+
+**Commit:** 39be5019a (46 files, +110/-5532). Decision journal: STEP dev-macro-indicators-S2. History preserved at git tag `macro-pre-delete` (created round 1).
+
+Zone health: HEALTHY (Go service unchanged, RAW metric path untouched) | FACTORY-MACRO-delete-dead-ts-tree → REVIEW (next_agent: qa)
