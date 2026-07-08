@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FACTORY-DOMAIN-relocate-stock-catalog",
-    "next_agent": "po",
-    "next_action": "FACTORY-DOMAIN-relocate-stock-catalog: qa Step 5 RAW-verify PASS — SHA-gate drift confirmed benign (deployed 64a1a135b is the board-flip commit itself, HEAD's 1 extra commit is ops's own docs-only close-gate journal, zero apps/mcp-server changes since); both touched files byte-identical live-container-vs-host-HEAD via docker cp diff; independent A/B harness (git worktree at pre-move commit cec87c726^) confirms 0 mismatches across full 66-ticker STOCK_CATALOG + all 5 exported detection fns; independently re-ran targeted 211/211 + broader 51-file consumer suite 748/0 pass; tsc+eslint clean; live in-container script execution + live raw MCP tools/call (get_watchlist) both confirm the deployed code path executes correctly end-to-end. po Step 6: mark DONE_VERIFIED per docker-deployment-runbook.md Microservice Code-Change Close Gate.",
-    "updated_at": "2026-07-08T15:13:00Z",
-    "updated_by": "qa"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-DOMAIN-relocate-stock-catalog closed DONE_VERIFIED by po (Step 6 Docker Microservice Code-Change Close Gate). No active task — po continuing into normal triage cycle; router idle until next dispatch.",
+    "updated_at": "2026-07-08T15:20:26Z",
+    "updated_by": "po"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -702,7 +702,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-08T09:30:49Z",
+    "_updated_at": "2026-07-08T15:20:26Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -9388,6 +9388,37 @@
           "process_note": "qa CORRECTLY held the row at REVIEW with next_agent=po and did NOT self-close to DONE_VERIFIED (commit ad732656e left .head next_agent=po) — the THIRD consecutive rebuild_required close-gate task (after FACTORY-SCHEDULER-prediction-default-dedup ee9152d7e and FACTORY-INTERFACE-extract-finalizeBctc-usecase 5fc040c01) where qa followed the runbook Step 6 delegation rule under explicit dispatch instruction. Occurrence count of qa self-closing a rebuild_required task stays at 1 (the earlier FACTORY-SCHEDULER-alert-confidence-literals deviation), below the recurring-2+ escalation threshold (memory feedback_recurring_bug_escalation); the guardrail-mint ESCALATION TRIGGER (a 2nd self-close) remains armed but un-fired. The parked recommendation to encode the qa-must-hold-REVIEW rule into docs/agents/qa/flow/main.md via agent-father stays parked, not minted on this pass — three consecutive correct adherences confirm the behavior is holding without a flow-doc guardrail, and minting now would be intervention-churn (memory project_systemic_review_0704).",
           "residual_advisory": "No blocking residual. The 'deliberately not merged' set is documented and verified, not missed: (1) bctcMagnitudeValidator's inline total-assets/liabilities/equity regexes operate on already-cleaned bctc_table_rows labels (different data shape from raw-OCR fuzzy scanning) — unifying would silently widen fraud-detection matching, so it correctly got a pointer comment with zero logic change (validator DT-2/DT-3 BLOCK behavior verified unchanged); (2) bctcScalarAggregator's findByCode/findByLabel/findTotalAssetsCorporate operate on structured DB rows not raw OCR text — same-name concepts, different data model, correctly untouched; (3) the 3 extractors' own raw-OCR magnitude-inference blocks (1e12/1e9/sentinel-1e14, statement-specific probe fields) were deliberately NOT unified with the DB-row detectDivisor, consistent with the keep-statement-specific-patterns-local principle. If a future dedicated pass wants to unify the validator's fraud-detection regexes with the canonical VAS patterns, that needs its own verification pass (it is a real fraud-detection behavior change), not a mechanical dedup — a separate backlog candidate outside this FACTORY task's scope."
         }
+      },
+      {
+        "title": "Move STOCK_CATALOG reference table out of stockAliases logic file",
+        "priority": "P1",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-DOMAIN-relocate-stock-catalog",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-relocate-stock-catalog",
+        "promoted_at": "2026-07-08T14:30:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T14:30:59Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "router",
+        "rebuild_required": true,
+        "review_note": "FACTORY-DOMAIN-relocate-stock-catalog: STOCK_CATALOG+StockCatalogEntry relocated (828L->265L stockAliases.ts, +618L new stockAliases/catalog.ts, size-justification headers both sides). Byte-identical verified (scratch equivalence script, git-HEAD-vs-current, 66 tickers x 5 exported fns = 0 mismatches). tsc clean, eslint clean, targeted 211/211 + consumer 195/195 pass. Full bun test 14339/40/63/5 (1179 files) — fail set 100% pre-existing VPS/RSS/chromium-timeout flaky class (baseline-probed: unchanged stockAliases.ts ALSO fails the same pollNews-adjacent files in isolation). Server boot health/dashboards 200, toolCount=183, scheduler grep=3 unchanged. Commits: cec87c726 (code+doc). rebuild_required=true (domain-layer relocation runs against live traffic). QA Step 5 RAW-verify (2026-07-08): SHA-gate independently re-run — reports drift (deployed=64a1a135b vs HEAD=3489d4e64) confirmed BENIGN: git diff --stat 64a1a135b..HEAD is docs-only (ops's own outcome-journal + orch-state.json, 0 apps/mcp-server changes), git merge-base --is-ancestor 64a1a135b HEAD holds. Container Up 3min (healthy); /health toolCount=183 confirmed live, matches docs/data/project-stats.json SSOT (183) and infrastructureStatus.toolCount; cronJobCount grep(cron.schedule) live=2 matches SSOT cronJobCount=2 (task did not touch scheduler, no regression). Did NOT trust dev-mcp-server's own scratch-equivalence claim: wrote an independent A/B harness (git worktree at cec87c726^, the genuine pre-move commit) importing OLD stockAliases.ts vs NEW split stockAliases.ts+catalog.ts side-by-side — deep-equality diff on full STOCK_CATALOG (66/66 tickers), getAliasesForCode+getCompanyName for all 66 tickers + 1 unknown code, detectStocksInText across 15 realistic Vietnamese headlines (multi-ticker, context-guard, no-match cases), tickerWholeWordMatch, stripSourceAttributionSuffix — 0 mismatches. tsc --noEmit clean (mine), eslint on both touched files clean (mine), catalog.ts confirmed 0 imports (genuinely pure-data). Re-ran targeted 14-file suite myself: 211/211 pass (matches claim exactly); independently re-ran a broader consumer suite (51 files touching stockSearch.ts+newsNormalizer.ts, direct STOCK_CATALOG/detectStocksInText consumers): 748 pass/0 fail. Live-container artifact check (not just health): docker cp'd both live files out of the running container, byte-identical to host HEAD; ran a live script inside the container via its own bun runtime importing the actual on-disk split modules — correctly resolved VCB/FPT/HPG/VNM/HVN (getCompanyName+getAliasesForCode+STOCK_CATALOG membership all correct; GVR absent from STOCK_CATALOG confirmed pre-existing in both old and new files, not a relocation regression); also completed a live raw MCP JSON-RPC tools/call (POST /mcp, no gateway needed — subagents are gateway-blind) against get_watchlist, confirming the deployed tool-call path executes end-to-end post-relocation. Cleaned up: docker exec rm of container scratch files, git worktree remove, git status --short clean under apps/mcp-server/. VERDICT: pure-relocation claim holds on every axis (SHA-gate ancestry, live byte-identical deployed source×2 files, independent A/B behavioral equivalence covering all 5 exported fns + full catalog, independent test re-run incl. broader consumer superset, tsc/eslint clean, live in-container execution of the new code path, live MCP tool-call proof). po Step 6: mark DONE_VERIFIED per docker-deployment-runbook.md Microservice Code-Change Close Gate.",
+        "reviewed_at": "2026-07-08T14:57:49Z",
+        "reviewed_by": "dev-mcp-server",
+        "updated_at": "2026-07-08T15:20:26Z",
+        "updated_by": "po",
+        "done_at": "2026-07-08T15:20:26Z",
+        "done_by": "po",
+        "po_closeout": {
+          "by": "po",
+          "at": "2026-07-08T15:20:26Z",
+          "verdict": "DONE_VERIFIED — po Step 6 close of the Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate, line 125). All 5 upstream steps passed with independent RAW verification at every hop (dev-mcp-server code+doc, ops Steps 1-4, qa Step 5, plus router re-verification); as the terminal gate po spot-re-verified the load-bearing facts before flipping — not blind trust of the chain.",
+          "evidence": "Pure-relocation of the STOCK_CATALOG reference table + StockCatalogEntry type out of apps/mcp-server/src/domain/services/stockAliases.ts (828L -> 265L logic file) into a new sibling apps/mcp-server/src/domain/services/stockAliases/catalog.ts (618L pure-data), with size-justification headers on both files and full import/re-export wiring across all 21 consumers. Chain (all commits exist at HEAD ec4915557 with matching subjects, po own git-log check): cec87c726 (code+doc), 98484f2b3 (dev notebook), e5e53a3af (dev decision journal S12), 64a1a135b (board flip in_progress->REVIEW next_agent=ops), 3489d4e64 (ops Docker close-gate Steps 1-4 PASS), ec4915557 (qa Step 5 RAW-verify — held REVIEW, routed po). ops Steps 1-4: rebuilt+redeployed mcp-server, SHA-gate (benign drift), container healthy, live /health 200. qa Step 5 RAW-verify: independent A/B harness at a git worktree pinned to the genuine pre-move commit cec87c726^ diffed OLD vs NEW STOCK_CATALOG + all 5 exported detection fns across the full 66-ticker catalog + 15 realistic Vietnamese headlines = 0 mismatches; docker-cp'd both touched files byte-identical live-container-vs-host-HEAD; ran a live in-container script against the deployed bun modules; completed a live raw MCP JSON-RPC tools/call (get_watchlist) end-to-end; tsc/eslint clean; re-ran targeted 211/211 + broader 51-file consumer suite 748/0; toolCount=183/cronJobCount=2 match SSOT. PO OWN SPOT-CHECK (RAW, not trusted from prose): (1) all 6 chain commits present with matching subjects; (2) both files present at HEAD under the REAL path apps/mcp-server/src/domain/services/ — stockAliases.ts ~265L (wc-l 264, no trailing newline) + stockAliases/catalog.ts 618L exactly; (3) SHA-gate drift benign — live `docker inspect` vn.market.git_sha label on the running mcp-server = 64a1a135bd28... (= qa-noted deployed 64a1a135b); `git diff --stat 64a1a135b..HEAD` is docs-only (decision journals + ops/qa notebooks + orch-state.json + a .jq filter), `git diff 64a1a135b..HEAD -- apps/mcp-server/` is EMPTY, and `git merge-base --is-ancestor 64a1a135b HEAD` = TRUE → deployed service code is byte-identical to HEAD, drift is docs-only ancestry; (4) live container Up 17min (healthy), live GET /health toolCount=183 == SSOT docs/data/project-stats.json (toolCount=183, cronJobCount=2); (5) GVR absent from STOCK_CATALOG confirmed PRE-EXISTING — `git show cec87c726^:...stockAliases.ts | grep -c '\"GVR\"'` = 0 in the OLD file too, so it is not a relocation regression; (6) `git status --porcelain apps/mcp-server/` clean (disk == HEAD); `git worktree list` shows only the main worktree (qa's A/B scratch worktree removed); (7) task absent from task_board.done / in_progress / done_verified before the flip (no dup).",
+          "process_note": "qa CORRECTLY held the row at REVIEW with next_agent=po and did NOT self-close to DONE_VERIFIED (commit ec4915557 left .head next_agent=po) — the FOURTH consecutive rebuild_required close-gate task this session where qa followed the runbook Step 6 delegation rule (after FACTORY-SCHEDULER-prediction-default-dedup, FACTORY-INTERFACE-extract-finalizeBctc-usecase, and FACTORY-DOMAIN-extract-bctc-parsing-lib). Occurrence count of qa self-closing a rebuild_required task stays at 1 (the earlier FACTORY-SCHEDULER-alert-confidence-literals deviation, po-S3), below the recurring-2+ escalation threshold (memory feedback_recurring_bug_escalation); the guardrail-mint ESCALATION TRIGGER (a 2nd self-close) remains armed but un-fired. The parked recommendation to encode the qa-must-hold-REVIEW rule into docs/agents/qa/flow/main.md via agent-father stays parked — four consecutive correct adherences confirm the behavior is holding without a flow-doc guardrail, and minting now would be intervention-churn (memory project_systemic_review_0704).",
+          "residual_advisory": "No blocking residual — this is a pure data/logic-file split with byte-identical STOCK_CATALOG and behaviorally-identical detection fns (independently A/B-proven). One NON-BLOCKING data-completeness observation surfaced during verification: GVR is absent from STOCK_CATALOG in BOTH the old and new files (grep -c = 0 pre-move), so any GVR headline goes undetected. This is a PRE-EXISTING gap, NOT introduced by this relocation, and is explicitly outside this pure-move FACTORY task's scope. If GVR (a watchlist-relevant ticker) coverage is desired, that is a separate backlog candidate (add the GVR entry to catalog.ts), not a defect of this task."
+        }
       }
     ],
     "head": {
@@ -9518,27 +9549,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Move STOCK_CATALOG reference table out of stockAliases logic file",
-        "priority": "P1",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-DOMAIN-relocate-stock-catalog",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-relocate-stock-catalog",
-        "promoted_at": "2026-07-08T14:30:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T14:30:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "po",
-        "rebuild_required": true,
-        "review_note": "FACTORY-DOMAIN-relocate-stock-catalog: STOCK_CATALOG+StockCatalogEntry relocated (828L->265L stockAliases.ts, +618L new stockAliases/catalog.ts, size-justification headers both sides). Byte-identical verified (scratch equivalence script, git-HEAD-vs-current, 66 tickers x 5 exported fns = 0 mismatches). tsc clean, eslint clean, targeted 211/211 + consumer 195/195 pass. Full bun test 14339/40/63/5 (1179 files) — fail set 100% pre-existing VPS/RSS/chromium-timeout flaky class (baseline-probed: unchanged stockAliases.ts ALSO fails the same pollNews-adjacent files in isolation). Server boot health/dashboards 200, toolCount=183, scheduler grep=3 unchanged. Commits: cec87c726 (code+doc). rebuild_required=true (domain-layer relocation runs against live traffic). QA Step 5 RAW-verify (2026-07-08): SHA-gate independently re-run — reports drift (deployed=64a1a135b vs HEAD=3489d4e64) confirmed BENIGN: git diff --stat 64a1a135b..HEAD is docs-only (ops's own outcome-journal + orch-state.json, 0 apps/mcp-server changes), git merge-base --is-ancestor 64a1a135b HEAD holds. Container Up 3min (healthy); /health toolCount=183 confirmed live, matches docs/data/project-stats.json SSOT (183) and infrastructureStatus.toolCount; cronJobCount grep(cron.schedule) live=2 matches SSOT cronJobCount=2 (task did not touch scheduler, no regression). Did NOT trust dev-mcp-server's own scratch-equivalence claim: wrote an independent A/B harness (git worktree at cec87c726^, the genuine pre-move commit) importing OLD stockAliases.ts vs NEW split stockAliases.ts+catalog.ts side-by-side — deep-equality diff on full STOCK_CATALOG (66/66 tickers), getAliasesForCode+getCompanyName for all 66 tickers + 1 unknown code, detectStocksInText across 15 realistic Vietnamese headlines (multi-ticker, context-guard, no-match cases), tickerWholeWordMatch, stripSourceAttributionSuffix — 0 mismatches. tsc --noEmit clean (mine), eslint on both touched files clean (mine), catalog.ts confirmed 0 imports (genuinely pure-data). Re-ran targeted 14-file suite myself: 211/211 pass (matches claim exactly); independently re-ran a broader consumer suite (51 files touching stockSearch.ts+newsNormalizer.ts, direct STOCK_CATALOG/detectStocksInText consumers): 748 pass/0 fail. Live-container artifact check (not just health): docker cp'd both live files out of the running container, byte-identical to host HEAD; ran a live script inside the container via its own bun runtime importing the actual on-disk split modules — correctly resolved VCB/FPT/HPG/VNM/HVN (getCompanyName+getAliasesForCode+STOCK_CATALOG membership all correct; GVR absent from STOCK_CATALOG confirmed pre-existing in both old and new files, not a relocation regression); also completed a live raw MCP JSON-RPC tools/call (POST /mcp, no gateway needed — subagents are gateway-blind) against get_watchlist, confirming the deployed tool-call path executes end-to-end post-relocation. Cleaned up: docker exec rm of container scratch files, git worktree remove, git status --short clean under apps/mcp-server/. VERDICT: pure-relocation claim holds on every axis (SHA-gate ancestry, live byte-identical deployed source×2 files, independent A/B behavioral equivalence covering all 5 exported fns + full catalog, independent test re-run incl. broader consumer superset, tsc/eslint clean, live in-container execution of the new code path, live MCP tool-call proof). po Step 6: mark DONE_VERIFIED per docker-deployment-runbook.md Microservice Code-Change Close Gate.",
-        "reviewed_at": "2026-07-08T14:57:49Z",
-        "reviewed_by": "dev-mcp-server",
-        "updated_at": "2026-07-08T15:13:00Z",
-        "updated_by": "qa"
       }
     ],
     "qa": [],
