@@ -263,3 +263,28 @@ QA will execute LIGHTER post-swap sanity check (no full RAW HTTP probe needed):
 **Post-Gate Delegation:** next_agent moved to "qa" (status remains REVIEW), orch-state updated via orch-apply.sh confirmed 2026-07-08T11:16:15Z. qa Step 5: formal RAW-verify against golden baseline. po Step 6: mark DONE_VERIFIED.
 
 **Decision Journal:** Extended docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md with STEP dev-technical-analysis-S3 (gate execution details).
+
+## Gated Rebuild + SHA-gate: FACTORY-SCHEDULER-alert-confidence-literals (2026-07-08T12:24–12:24Z)
+
+**Task:** FACTORY-SCHEDULER-alert-confidence-literals  
+**Agent Context:** ops (Step 1-4 close-gate, then qa Step 5 RAW-verify, then po Step 6 mark DONE)  
+**Status:** ✓ GATE 1-4 PASS → moved next_agent to "qa"
+
+**Close-Gate Summary:**
+- **Step 1 (Memory/Capacity Check):** docker stats shows mcp-server at 9.50% (291.7MiB / 3GiB), preflight-disk shows 16GB free (≥15GB threshold) → PASS ✓
+- **Step 2 (Rebuild):** `docker compose build --build-arg GIT_SHA="0d496c314927229835c7e3fa4f7638ed8fac0fbb" mcp-server` → succeeded, image exported with vn.market.git_sha label → PASS ✓
+- **Step 3 (Container Start):** `docker compose up -d mcp-server` → container status `Up 5 seconds (healthy)` at 12:24:36Z → PASS ✓
+- **Step 4 (SHA-gate):** `bash scripts/verify-deploy-sha.sh mcp-server 0d496c314927229835c7e3fa4f7638ed8fac0fbb` → deployed SHA matches HEAD → PASS ✓
+
+**Technical Context:**
+- Fix scope: 4 scheduler jobs (foreignFlowAlertJob.ts, insiderCheckJob.ts, bbAlertScanJob.ts, taAlertScanJob.ts) now derive alert confidence from real in-scope strength signals instead of frozen literals
+- New domain services: alertConfidenceScorer.ts (shared pure scorer), bbBreakoutStrength.ts, rsiExtremityStrength.ts
+- Database impact: confidence values in evidence_fragments and alerts.signals_json now vary per-signal (no longer flat constants)
+- Commits: c94c50e24 (foreignFlow), 0bb264fa2 (insider), 8d041fbb7 (bb), 3978756bf (ta), b4e6fd54e (tests), 7011746eb (journal)
+- Tests: targeted run (5 files) 83 pass / 0 fail; full bun test suite shows known flakiness unrelated to these changes
+
+**Post-Gate Delegation:** next_agent moved to "qa" (status remains REVIEW), .head synced via orch-apply.sh confirmed 2026-07-08T12:24:45Z. qa Step 5: RAW-verify confidence values vary (not flat 0.75/0.85 as before) and fall within documented [base,ceiling] ranges per alertThresholds.ts. po Step 6: mark DONE_VERIFIED.
+
+**Commit Evidence:**
+- Commit 97832fb5a: chore(orch) — board flip + .head sync, ops_note with full Step 1-4 evidence
+- Files changed: 1 (docs/data/orch/orch-state.json)
