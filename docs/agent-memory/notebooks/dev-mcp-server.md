@@ -1,21 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — FACTORY-DOMAIN-relocate-stock-catalog → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-`stockAliases.ts` (828L) embedded the 66-ticker `STOCK_CATALOG` reference table (lines 80-629, ~560L) intermixed with detection logic. Moved `STOCK_CATALOG`+`StockCatalogEntry` verbatim (cut via `sed`, diffed byte-identical against the source lines before deletion) into a new pure-data module `domain/services/stockAliases/catalog.ts` (618L incl. size-justification header, zero imports). `stockAliases.ts` (828L → 265L) now imports the table and re-exports it unchanged for existing consumers (`stockSearch.ts`, `newsNormalizer.ts`, `domain/services/index.ts` barrel) — zero import-path changes needed at any call site. `normalizeText`, both `NORMALISED_ALIASES`/`NORMALISED_CONTEXT_GUARDS` IIFEs, and all 5 detection functions stay in `stockAliases.ts`, which now carries its own size-justification header (267L, cohesive detection-logic file — the two derived maps + normaliser must stay beside the functions that close over them as private module state).
-
-Same class as the immediately-preceding `FACTORY-DOMAIN-extract-bctc-parsing-lib` sibling task — applied the same "verify byte-identical, not just tests-pass" rigor: wrote a scratch script importing BOTH the pre-move (`git show HEAD:...`) and post-move modules side by side, diffing `STOCK_CATALOG` itself + `getAliasesForCode`/`getCompanyName`/`detectStocksInText`/`tickerWholeWordMatch`/`stripSourceAttributionSuffix` output across all 66 tickers + a battery of realistic/context-guard sentences (incl. the DPM "phu my" guarded-vs-unguarded case) → 0 mismatches. Directory `stockAliases/` coexisting with file `stockAliases.ts` has no resolution ambiguity here — every import in the repo uses an explicit `.js` specifier (bundler moduleResolution), never a bare `./stockAliases` that could resolve to either.
-
-tsc clean. Targeted alias-related suite (14 files) 211/211 pass; consumer suites (news-normalizer/cascade-engine/stock-search/domain-services/legal-risk/deep-fetch-gate) 167+28 pass. eslint clean on both touched/created files. Full `bun test`: 14339 pass/40 skip/63 fail/5 errors/1179 files (566.88s) then Bun 1.3.13 crash-at-teardown (known engine bug, non-authoritative) — failing-file set is 100% the documented pre-existing VPS-push/RSS/news-poll/insider/foreign-flow/chromium-timeout flaky class (grepped, zero "alias"/"catalog"/"STOCK_CATALOG" mentions in any failure). Went one step further than prior siblings: temporarily restored the pre-change `stockAliases.ts` (git HEAD copy) and re-ran the 5 pollNews-adjacent files that appeared in the fail set in isolation — baseline ALSO fails (11/34 vs 7/34 post-change; the run-to-run count delta is itself the flakiness signature, chromium-not-found + 5s timeout budget under load, unrelated to alias logic) — confirms pre-existing, not a regression. Restored the real files after the probe, re-ran targeted suite (220/220) + tsc + equivalence script + server boot: all green again. Server boot verified PORT=3999: health/bctc-inspect/news-fetch-dashboard all 200, toolCount=183 unchanged, scheduler cron.schedule grep=3 unchanged.
-
-Also updated `docs/protocols/janitor-procedures.md`'s canonical-source pointer for `STOCK_CATALOG` to the new file path.
-
-Commit: cec87c726 (2-file relocation + doc pointer). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (relocated detection-logic module runs against live traffic at runtime — same class as prior domain-layer FACTORY-DOMAIN siblings).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
-
 ## 2026-07-08 — FACTORY-APP-dedup-date-freshness-helpers → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -39,5 +23,19 @@ tsc clean. Targeted suite (17/18 relevant files, excluding FIX-1267): 156 pass/2
 Doc updates: `usecases.md` (split description), `pdfOcrWorker.ts` pointer comment relocated to `bctc/resolvePdfText.ts`.
 
 Commit: 5027fda09. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (BCTC pipeline runs against live named-volume market.db; RAW-verify of unchanged confidence values is this task's own DoD, routed via the Docker Microservice Code-Change Close Gate).
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
+
+## 2026-07-08 — FACTORY-INFRA-split-vnstockBridge → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (isolated worktree — concurrent dev-mcp-server session working FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE in the main tree)
+
+`vnstockBridge.ts` (1206L) held 11 inline Python `*_SCRIPT` templates, 9 of which re-embedded the identical FIX-FUNDAMENTALS-REFRESH-CRON-DEAD stdout-suppression preamble verbatim (proof the fix was hand-applied 9 times). Extracted each template to `fetchers/vnstock/scripts/*.ts` (one `buildXxxScript()` per data type); added `wrapVnstockScript(opts)` in new `fetchers/vnstock/runtime.ts` that owns the preamble once — 8 scripts plus `financials.ts` (2-dataframe variant via `resultVar`/`extraInit` options) now call it; `prices.ts` (multi-symbol loop) and `events.ts` (bypasses `Vnstock().stock()` via a viz-mock, pre-existing v4-compat workaround) stay bespoke, genuinely different control flow. `VnstockRateLimiter`/`runPython`/`runPythonWithBackoff`/backoff/junk-detection moved into `runtime.ts` (374L, size-justified — the backlog approach names this exact file). `vnstock/index.ts` barrel re-exports `runtime.ts`; `vnstockBridge.ts` (330L, size-justified — the approach explicitly keeps the 11 public fetch* wrappers as the one canonical import path 15+ tests/consumers depend on) imports the barrel + 11 script builders.
+
+Verified via a scratch equivalence script comparing generated Python text pre/post-split (pre-split consts exported via `git show HEAD:...`) across 3 symbols × 11 templates = 35 checks: 32 byte-identical, 3 (financials.ts) differ only in a shortened shared comment (4 lines → 1 line) — confirmed line-by-line every subsequent statement (fetch calls, math, dict keys) is unchanged. tsc clean, eslint clean. Targeted vnstock suite (24 files) 252/252 pass. Server boot verified PORT=3996: health 200 toolCount=183 unchanged, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200. Gate 2d scheduler cron.schedule grep=3 unchanged. Full `bun test` run 1: 14349 pass/40 skip/68 fail/7 errors/1180 files (732.30s) then the known Bun 1.3.13 crash-at-teardown — visible tail shows the pre-existing pollNews/RSS-timeout flaky class + 2 unrelated fails in `src/_deprecated/1302-technical-indicators.test.ts`, zero vnstock mentions. 2nd full run's partial log (~21.5k lines, 43/68 fails already observed) additionally corroborates: 391 normal `[vnstock:...]` log-line mentions, zero `(fail)`-line matches.
+
+Doc updates: `infrastructure.md` (vnstock Python Bridge section rewritten for the new file layout).
+
+Commit: e27121d93. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (vnstock fetchers run against live named-volume market.db; RAW-verify of unchanged fetch values is this task's own DoD, routed via the Docker Microservice Code-Change Close Gate).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
