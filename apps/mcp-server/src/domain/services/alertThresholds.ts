@@ -77,3 +77,21 @@ export const FOREIGN_FLOW_CONFIDENCE_CEILING = 0.95;
  */
 export const INSIDER_STREAK_CONFIDENCE_BASE = 0.6;
 export const INSIDER_STREAK_CONFIDENCE_CEILING = 0.95;
+
+/**
+ * Confidence range for bbAlertScanJob Bollinger-Band breakout signals
+ * (FACTORY-SCHEDULER-alert-confidence-literals).
+ *
+ * Replaces the frozen `confidence = 0.65` literal. Confidence is now derived
+ * from how far the close price penetrated past the BB20 band, relative to the
+ * band's own width — see computeBbBreakoutStrength() in
+ * domain/services/bbBreakoutStrength.ts — via deriveConfidenceFromStrength():
+ *
+ *   strength=0 (close just barely outside the band)         → base    = 0.55
+ *   strength=1 (close penetrated >= 1 full band-width past)  → ceiling = 0.85
+ *
+ * Capped lower than the HIGH-severity jobs above (0.95) because a BB breakout
+ * is a "warning"-severity, noisier intraday signal (Alert.severity="warning").
+ */
+export const BB_BREAKOUT_CONFIDENCE_BASE = 0.55;
+export const BB_BREAKOUT_CONFIDENCE_CEILING = 0.85;

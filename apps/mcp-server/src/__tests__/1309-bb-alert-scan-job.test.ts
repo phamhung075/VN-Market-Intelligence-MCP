@@ -545,6 +545,42 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
     expect(actions[0]!.code).toBe("HPG");
   });
 
+  // ── FACTORY-SCHEDULER-alert-confidence-literals ─────────────────────────────
+  // Confidence must be derived from real band-penetration strength, not a
+  // frozen literal — a shallow breakout and a deep breakout on the same band
+  // must produce different confidence values.
+  it("confidence varies with breakout penetration depth (shallow vs deep, same band)", async () => {
+    // Shallow: close=86,600 just 100 above upper=86,500 on a 4,500-wide band
+    // strength = 100/4500 = 0.0222 → confidence = 0.55 + 0.0222*0.30 = 0.5567
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    insertTodayCandle(db, "VCB", 86_600);
+    const shallow = await runBbAlertScan({
+      db,
+      computeFn: makeComputeFn({ upper: 86_500, mid: 84_000, lower: 82_000 }),
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
+    });
+    expect(shallow).toEqual({ scanned: 1, fired: 1 });
+
+    // Deep: close=90,000, 3,500 above the same upper=86,500 → strength=3500/4500=0.7778
+    // confidence = 0.55 + 0.7778*0.30 = 0.7833
+    const deepDb = buildTestDb();
+    deepDb.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    insertTodayCandle(deepDb, "VCB", 90_000);
+    const deep = await runBbAlertScan({
+      db: deepDb,
+      computeFn: makeComputeFn({ upper: 86_500, mid: 84_000, lower: 82_000 }),
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
+    });
+    expect(deep).toEqual({ scanned: 1, fired: 1 });
+
+    const shallowSignals = JSON.parse(getAlerts(db)[0]!.signals_json) as Array<{ confidence: number }>;
+    const deepSignals = JSON.parse(getAlerts(deepDb)[0]!.signals_json) as Array<{ confidence: number }>;
+
+    expect(shallowSignals[0]!.confidence).toBeCloseTo(0.5567, 3);
+    expect(deepSignals[0]!.confidence).toBeCloseTo(0.7833, 3);
+    expect(deepSignals[0]!.confidence).toBeGreaterThan(shallowSignals[0]!.confidence);
+  });
+
   // ── FU-ALERT-COWRITE-SCHEDULER-JOBS: co-write tests ─────────────────────────
   // DoD requires: every fired alert must have a matching agent_signals row
   // (no orphan alert — JOIN alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.alert_id IS NULL = 0).

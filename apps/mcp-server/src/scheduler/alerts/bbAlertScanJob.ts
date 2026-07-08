@@ -39,7 +39,13 @@ import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.
 import { computeScanAlertFingerprint } from "../../domain/services/alertDedup.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import type { Alert } from "../../domain/services/alertGenerator.js";
-import { MIN_DAILY_VOLUME_FOR_ALERTS } from "../../domain/services/alertThresholds.js";
+import {
+  MIN_DAILY_VOLUME_FOR_ALERTS,
+  BB_BREAKOUT_CONFIDENCE_BASE,
+  BB_BREAKOUT_CONFIDENCE_CEILING,
+} from "../../domain/services/alertThresholds.js";
+import { computeBbBreakoutStrength } from "../../domain/services/bbBreakoutStrength.js";
+import { deriveConfidenceFromStrength } from "../../domain/services/alertConfidenceScorer.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -236,6 +242,21 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
         continue;
       }
 
+      // h2. FACTORY-SCHEDULER-alert-confidence-literals: derive confidence from
+      // how far close penetrated past the band edge, relative to the band's own
+      // width (bb20.upper/bb20.lower — already computed above), instead of a
+      // frozen literal.
+      const breakoutStrength = computeBbBreakoutStrength({
+        close,
+        upper: bb20.upper,
+        lower: bb20.lower,
+      });
+      const breakoutConfidence = deriveConfidenceFromStrength({
+        strength: breakoutStrength,
+        base: BB_BREAKOUT_CONFIDENCE_BASE,
+        ceiling: BB_BREAKOUT_CONFIDENCE_CEILING,
+      });
+
       // i. Build alert payload
       const triggeredAt = nowFn().toISOString();
       // FIX-ALERT-ENGINE-VERIFIED-DECISION-ALERTID-UUID-MISMATCH: use semantic
@@ -262,7 +283,7 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
             severity: "warning",
             actionCode: code,
             message,
-            confidence: 0.65,
+            confidence: breakoutConfidence,
             detectedAt: triggeredAt,
           },
         ],
