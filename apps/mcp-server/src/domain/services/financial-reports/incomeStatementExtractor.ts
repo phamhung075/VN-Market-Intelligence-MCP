@@ -24,58 +24,19 @@
 import { parseVnNumber } from "../vnNumberParser.js";
 import type { IncomeStatement } from "../../../../bctc-schema";
 import { guardFinancialField } from "./extractorGuards.js";
-import { LOOKAHEAD_LINES, extractNumber, stripDiacritics, detectUnitMultiplier } from "./extractorHelpers.js";
+import { stripDiacritics, detectUnitMultiplier } from "./extractorHelpers.js";
+import { findValue } from "./lib/lineScan.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Find the first line matching a primary pattern; if no match, try the ASCII
- * fallback pattern on diacritic-stripped lines.
- *
- * Task 1114: When a pattern matches a line but no number is found on it,
- * look ahead up to LOOKAHEAD_LINES following lines for a number. OCR text
- * from scanned PDFs often puts labels and values on separate lines.
- *
- * @param primaryLines  - NFC-normalized lines (original)
- * @param fallbackLines - NFC-normalized + diacritic-stripped lines
- * @param primary       - Regex pattern for Vietnamese text (with diacritics)
- * @param fallback      - Regex pattern for ASCII text (diacritics removed)
- * @returns Extracted number, or 0 if not found.
- */
-
-function findValue(
-  primaryLines: string[],
-  fallbackLines: string[],
-  primary: RegExp,
-  fallback: RegExp,
-): number {
-  // 1. Try primary pattern on NFC-normalized lines
-  for (let i = 0; i < primaryLines.length; i++) {
-    if (primary.test(primaryLines[i]!)) {
-      const val = extractNumber(primaryLines[i]!);
-      if (val !== null) return val;
-      // Look-ahead: OCR may have numbers on next lines
-      for (let j = 1; j <= LOOKAHEAD_LINES && i + j < primaryLines.length; j++) {
-        const ahead = extractNumber(primaryLines[i + j]!);
-        if (ahead !== null) return ahead;
-      }
-    }
-  }
-  // 2. Try ASCII fallback pattern on diacritic-stripped lines
-  for (let i = 0; i < fallbackLines.length; i++) {
-    if (fallback.test(fallbackLines[i]!)) {
-      const val = extractNumber(fallbackLines[i]!);
-      if (val !== null) return val;
-      for (let j = 1; j <= LOOKAHEAD_LINES && i + j < fallbackLines.length; j++) {
-        const ahead = extractNumber(fallbackLines[i + j]!);
-        if (ahead !== null) return ahead;
-      }
-    }
-  }
-  return 0;
-}
+//
+// FACTORY-DOMAIN-extract-bctc-parsing-lib (2026-07-08): findValue relocated
+// to ./lib/lineScan.ts (canonical, shared with balanceSheetExtractor /
+// cashFlowExtractor). The call site below passes the ASCII fallback as
+// `{ fallback: { lines: fallbackLines, pattern: fallback } }` — no
+// rowCodeGuard (this extractor never had one), reproducing the original
+// 4-arg behavior exactly.
 
 // ---------------------------------------------------------------------------
 // Keyword patterns — primary (Vietnamese with diacritics) + ASCII fallback
@@ -372,7 +333,7 @@ export function extractIncomeStatement(rawText: string): IncomeStatement {
   // Convenience wrapper that passes both line arrays, with split-block override
   const fv = (primary: RegExp, fallback: RegExp, sbKey?: string): number => {
     if (sbKey && sbOverride[sbKey] !== undefined) return sbOverride[sbKey]!;
-    return findValue(primaryLines, fallbackLines, primary, fallback);
+    return findValue(primaryLines, primary, { fallback: { lines: fallbackLines, pattern: fallback } });
   };
 
   // --- Revenue ---
