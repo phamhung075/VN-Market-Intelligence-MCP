@@ -1,17 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-07 — KD-OBS-01-FIX → REVIEW
-
-**Provenance:** BOUNDED-1 idle-capacity auto-pickup (dev-team dispatcher)
-
-KD-OBS-01: kinh-dich MCP tool/route catch blocks caught genuine DB/HTTP errors and only `logger.error`'d them — never surfaced to a human. New `kinhDichErrorNotify.ts` (`notifyKinhDichError`, dynamic-import `sendTelegramBug`, fire-and-forget, non-fatal — never rejects even if `sendBugFn` throws) wired into all 5 `kinhDichTools.ts` catches (`get_kinhdich_reading`, `get_market_hexagram`, `get_hexagram_history`, `get_transition_probabilities`, `run_hexagram_backtest`) + all 3 HTTP route handlers (`kinhDichReadingHandler.ts`, `kinhDichSignalsHandler.ts`, `kinhDichMarketHandler.ts`). Message embeds a `📋 <category>` marker per call site (e.g. `kinhdich-reading-error`) that reuses `sendTelegramBug`'s existing 4h dedup — no new dedup machinery. Both `registerKinhDichTools(server, notifyError?)` and each route handler accept an optional injectable `notifyError` (defaults real) for testability.
-
-**Explicitly out of scope (benign, not silent-drop):** `appendMarketHexagram`/`appendStockHexagram` in `marketTools.ts` catch kinh-dich-service unreachable/non-200 and omit the hexagram block by design (`logger.warn` only) — degrade-gracefully path, confirmed working as intended, left untouched.
-
-New `KD-OBS-01-FIX-kinhdich-bug-notify.test.ts` (11 tests, 43 expect): unit contract for `notifyKinhDichError` (message shape incl. 📋 marker, never-rejects on `sendBugFn` throw, safe default path) + one integration test per catch block (injected spy, deterministic zero-mock error trigger — MCP tools via `DB_PATH` pointed at a directory so `initDatabase()`'s first `getDb()` throws; routes via the pre-existing AC-29 stale-closed-db-handle trick) proving source/category/detail + response still returns gracefully.
-
-Zone health: tsc clean, tools=183 unchanged, server boot verified (PORT=3099, health 200, `/api/bctc-inspect` 200). Targeted kinh-dich + registry suite (11 files) 197/197 pass. Full `bun test`: 14290 pass / 40 skip / 63 fail / 9 errors (1173 files) — failures match the documented pre-existing set (RSS/pollNews network-flaky in local sandbox, `_deprecated/1302-*`, Bun-1.3.13 C++ teardown panic; confirmed via isolated re-run of the RSS file alone, fails identically with zero kinh-dich files involved). Scheduler probe = 3 (known-stale baseline, 0 scheduler/ files touched) | HEALTHY.
-
 ## 2026-07-08 — CI-RED-0d28104a-FIX → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (router-dispatched)
@@ -37,3 +25,19 @@ New `CONTAM-10-WRITER-H-backfill-scale-guard.test.ts` (3/3, live-HTTP-route, not
 Rebuilt `mcp-server` image (id `4c8ea4cfd41f`) but did NOT swap it into the running container — `docker compose up -d` is a gated live-container swap (standing policy, ops-owned). Full `bun test`: 14302 pass/57 fail/6 errors + Bun 1.3.13 crash-at-teardown (panic after summary line — known engine bug). Confirmed via git-stash-to-baseline isolation testing that the 57 failures are pre-existing full-suite-only flakiness unrelated to this change (2 representative files reproduce identically on baseline). Flipped task to REVIEW (not done_verified) — pending QA RAW-probe + ops-gated container swap before `CONTAM-10-EXEC-2` can proceed.
 
 Zone health: tsc clean, tools=183 unchanged, targeted CONTAM-10 suite (5 files) 38/38 pass | HEALTHY.
+
+## 2026-07-08 — FACTORY-INTERFACE-sequential-confidence-05-mask → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+`sequential-market-analysis.ts:170` `result.confidence = input.confidence ?? 0.5` fabricated a mid-point confidence whenever a hypothesis was stated without one. Now only assigns when `input.confidence !== undefined`; init default `confidence: 0` → `undefined`; type `number` → `number | undefined`. `generateRecommendations` also fixed to label an unstated confidence honestly ("No confidence stated: ...") instead of folding it into "Low confidence" — same fabrication one call deeper, and required for `exactOptionalPropertyTypes` to type-check the new union cleanly.
+
+`AnalysisResult` (incl. `confidence`) is genuinely internal — `handle()` only ever returns `{status,thought,progress,nextSteps}`, never the result object. Added `_analysisState` (test/introspection-only, additive, not consumed by `registerSequentialMarketAnalysisTools`/the MCP SDK) so the fix is actually testable given that contract. Flagging for QA: the DoD's "served payload shows null/absent" RAW-verify language does not map to a live HTTP/MCP route today — verify at the unit level via `_analysisState`, not an HTTP probe.
+
+New `FACTORY-INTERFACE-sequential-confidence-05-mask.test.ts` (5/5 pass): omitted confidence stays `undefined`; supplied confidence (0.9) unchanged; explicit `0` (falsy but stated) preserved; recommendation text no longer says "Low confidence" for an unstated one; `handle()` response shape unchanged.
+
+Rebuilt `mcp-server` image (id `180382145ee7`) but did NOT swap into the running container (still `4c8ea4cfd41f`, serving CONTAM-10-WRITER-H) — ops-gated live swap per standing policy.
+
+Full `bun test`: 14296 pass/40 skip/68 fail/10 errors (1176 files, 620s) then Bun 1.3.13 crash-at-teardown (known engine bug, non-authoritative). All 68 fails are pre-existing VPS-push/RSS/insider-transactions/foreign-flow network-flaky-in-sandbox class (1146/1324/1898b/1113/1518/083/etc.) — zero overlap with our changed file (grepped: no failing file imports `sequential-market-analysis`); isolation re-run of the top-2 offenders confirms unrelated (1146 alone: 17/17 pass; 1324 alone: fails identically, pure SQLite/rag-service network contention, no shared module with our change).
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.

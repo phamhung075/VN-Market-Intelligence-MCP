@@ -55,3 +55,13 @@
 - Fix 257/258 too (task's sweep instruction) — investigated first: both always pass an injected client to the fetcher, never reach the live-network branch, so mocking them would be a no-op; journaled as verified-out-of-scope, not silently skipped
 **why-decision:** `gh run view --log-failed` on the actual failing CI run (not a guess) named DSI-S3-sector-fin.test.ts as the sole failed file; `scripts/ci-per-file-isolation.sh 16` (CI's real mechanism) re-run post-fix shows it absent from the 12 remaining (pre-existing, unrelated pollNews/RSS) FAILED FILES.
 **why-change:** No plan deviation — task instructions matched the codebase's own established precedent exactly; only genuinely new finding was confirming 257/258 don't need the fix (DI already present), which the task asked to explicitly decide either way.
+
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-07-08T02:53:00Z
+**task-id:** FACTORY-INTERFACE-sequential-confidence-05-mask
+**what-done:** `sequential-market-analysis.ts:170` `result.confidence = input.confidence ?? 0.5` → only assigns when `input.confidence !== undefined`; init default changed `confidence: 0` → `undefined`; type `number` → `number | undefined`. Also fixed `generateRecommendations` mislabeling undefined confidence as "Low confidence" (same fabrication class one call deeper).
+**what-considered:**
+- Verified `AnalysisResult`/`confidence` is genuinely internal — `handle()` only returns `{status,thought,progress,nextSteps}`, never the result object; DoD's "served payload" language doesn't map to a live HTTP surface for this field today
+- To make the fix testable added `_analysisState` (Map) as a test/introspection-only property on the returned tool object — additive, not consumed by `registerSequentialMarketAnalysisTools`/MCP SDK, zero risk to the real contract
+- Leave prior real confidence intact if a later revision's hypothesis omits confidence (vs resetting to undefined) — matches "never fabricate," a real stated value shouldn't be nulled just because a later message didn't restate it
+**why-decision:** DoD requires proof that omitted confidence stays undefined/null and unchanged-when-supplied; `_analysisState` introspection is the only way to observe this given the current return contract, so it's the minimal safe path to a real (non-vacuous) test.
+**why-change:** Widened 1L beyond the literal "line ~170" pointer to also fix `generateRecommendations`'s undefined-confidence branch — same fabrication bug, same file/function, required for `number | undefined` to type-check cleanly anyway (exactOptionalPropertyTypes).
