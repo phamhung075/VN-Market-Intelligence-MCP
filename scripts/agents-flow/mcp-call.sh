@@ -144,6 +144,163 @@ mcp_call() {
   return 1
 }
 
+# ── mcp_call_gateway_meta — stateful bridge to the 3 gateway META-tools ───────
+# (FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE, follow-up from
+# docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md §2/§5b)
+#
+# mcp_call() above deliberately targets the STATELESS downstream vn-market
+# endpoint — no prior handshake needed. The gateway endpoint
+# (https://zenmidi.com/gateway/mcp) is, by contrast, genuinely STATEFUL: a
+# compliant client MUST complete initialize -> notifications/initialized ->
+# tools/call, reusing the `mcp-session-id` response header minted by step 1,
+# or the server rejects the call ("invalid during session initialization").
+# This is a SEPARATE function on purpose — different endpoint, different
+# protocol contract. Do NOT merge into mcp_call(); do NOT route vn-market
+# downstream tool calls through this function.
+#
+# Covers exactly the 3 gateway meta-tools that have no bash-callable
+# equivalent today: list_servers / list_server_tools / search_tools. All
+# other tool names belong to vn-market and MUST go through mcp_call().
+#
+# Live-verified mechanics (this task's implementation probe, 2026-07-08):
+#   - Response bodies are SSE-framed exactly like the vn-market endpoint
+#     ("event: message\ndata: {...}\n") — _mcp_call_parse() below is reused
+#     as-is for the final tools/call response.
+#   - `initialize` mints a NEW mcp-session-id on every call (returned as a
+#     plain response header, not in the JSON body) — must be captured and
+#     replayed on the next two POSTs.
+#   - `notifications/initialized` is a one-way notification: HTTP 202,
+#     empty body, no JSON-RPC id/result to parse.
+#
+# Contract (mirrors mcp_call()):
+#   mcp_call_gateway_meta <tool_name> <json_args>
+#     tool_name — one of "list_servers" | "list_server_tools" | "search_tools"
+#     json_args — a JSON object string (default "{}")
+#   stdout: .result.content[0].text on success (same shape as mcp_call())
+#   exit code: 0 on success, non-zero on error — detail on stderr
+
+# ── Internal: one HTTP attempt against the gateway endpoint. Uses `curl -i`
+# (headers + body on stdout) because, unlike the stateless helper above, this
+# caller needs the `mcp-session-id` response header, not just the body.
+# Returns "<headers>\n<body>\n<http_code>" on stdout. ────────────────────────
+_mcp_call_gateway_curl() {
+  local url="$1" body="$2" timeout_s="$3" session_id="$4"
+  local session_args=()
+  if [ -n "$session_id" ]; then
+    session_args=(-H "mcp-session-id: $session_id")
+  fi
+  curl -sS -i --max-time "$timeout_s" -w '\n%{http_code}' \
+    -X POST "$url" \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/event-stream' \
+    "${session_args[@]}" \
+    -d "$body" 2>&1
+}
+
+# ── Internal: extract the `mcp-session-id` response header (case-insensitive,
+# CRLF-stripped) from a raw curl -i blob. Prints empty string if absent. ─────
+_mcp_gateway_session_id() {
+  printf '%s\n' "$1" | grep -i '^mcp-session-id:' | head -n1 | cut -d: -f2- | tr -d ' \r\n'
+}
+
+# ── Internal: strip HTTP response headers from a raw curl -i blob, printing
+# only the body (everything after the first blank CRLF-terminated line). ────
+_mcp_gateway_strip_headers() {
+  printf '%s\n' "$1" | awk 'BEGIN{h=1} { gsub(/\r$/,""); if (h==1) { if ($0=="") { h=0 }; next } print }'
+}
+
+# ── Public: mcp_call_gateway_meta <tool_name> <json_args> ────────────────────
+mcp_call_gateway_meta() {
+  local tool_name="${1:-}"
+  local args_json="${2:-}"
+  [ -z "$args_json" ] && args_json='{}'
+
+  if [ -z "$tool_name" ]; then
+    echo "[mcp-call-gateway-meta] ERROR: tool_name is required" >&2
+    return 2
+  fi
+  case "$tool_name" in
+    list_servers|list_server_tools|search_tools) ;;
+    *)
+      echo "[mcp-call-gateway-meta] ERROR: '$tool_name' is not a gateway meta-tool (list_servers|list_server_tools|search_tools) — vn-market downstream tools use mcp_call(), not this function" >&2
+      return 2
+      ;;
+  esac
+  if ! command -v jq >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1; then
+    echo "[mcp-call-gateway-meta] ERROR: jq and curl are required" >&2
+    return 2
+  fi
+
+  local url="${MCP_GATEWAY_URL:-https://zenmidi.com/gateway/mcp}"
+  local timeout_s="${MCP_CALL_TIMEOUT_S:-10}"
+  local raw http_code session_id gw_rc
+
+  # Step 1 — initialize (mints the session; nothing to send as session-id yet)
+  raw=$(_mcp_call_gateway_curl "$url" \
+    '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"vn-market-repo-bash-bridge","version":"1.0"}}}' \
+    "$timeout_s" "")
+  gw_rc=$?
+  if [ $gw_rc -ne 0 ]; then
+    echo "[mcp-call-gateway-meta] ERROR: transport failure on initialize (tool=$tool_name): $(printf '%s' "$raw" | tail -c 200)" >&2
+    return 1
+  fi
+  http_code=$(printf '%s' "$raw" | tail -n1)
+  case "$http_code" in
+    2??) ;;
+    *)
+      echo "[mcp-call-gateway-meta] ERROR: HTTP $http_code on initialize (tool=$tool_name): $(printf '%s' "$raw" | tr '\n' ' ' | cut -c1-200)" >&2
+      return 1
+      ;;
+  esac
+  session_id=$(_mcp_gateway_session_id "$raw")
+  if [ -z "$session_id" ]; then
+    echo "[mcp-call-gateway-meta] ERROR: no mcp-session-id header on initialize response (tool=$tool_name)" >&2
+    return 1
+  fi
+
+  # Step 2 — notifications/initialized (one-way; expects 202, empty body)
+  raw=$(_mcp_call_gateway_curl "$url" '{"jsonrpc":"2.0","method":"notifications/initialized"}' "$timeout_s" "$session_id")
+  gw_rc=$?
+  if [ $gw_rc -ne 0 ]; then
+    echo "[mcp-call-gateway-meta] ERROR: transport failure on notifications/initialized (tool=$tool_name): $(printf '%s' "$raw" | tail -c 200)" >&2
+    return 1
+  fi
+  http_code=$(printf '%s' "$raw" | tail -n1)
+  case "$http_code" in
+    2??) ;;
+    *)
+      echo "[mcp-call-gateway-meta] ERROR: HTTP $http_code on notifications/initialized (tool=$tool_name): $(printf '%s' "$raw" | tr '\n' ' ' | cut -c1-200)" >&2
+      return 1
+      ;;
+  esac
+
+  # Step 3 — tools/call (the actual meta-tool invocation, same session-id reused)
+  local call_body
+  call_body=$(jq -n --arg name "$tool_name" --argjson args "$args_json" \
+    '{jsonrpc:"2.0", id:2, method:"tools/call", params:{name:$name, arguments:$args}}' 2>/dev/null)
+  if [ -z "$call_body" ]; then
+    echo "[mcp-call-gateway-meta] ERROR: failed to build request body (malformed args_json for tool=$tool_name)" >&2
+    return 2
+  fi
+  raw=$(_mcp_call_gateway_curl "$url" "$call_body" "$timeout_s" "$session_id")
+  gw_rc=$?
+  if [ $gw_rc -ne 0 ]; then
+    echo "[mcp-call-gateway-meta] ERROR: transport failure on tools/call (tool=$tool_name): $(printf '%s' "$raw" | tail -c 200)" >&2
+    return 1
+  fi
+  http_code=$(printf '%s' "$raw" | tail -n1)
+  case "$http_code" in
+    2??)
+      _mcp_call_parse "$(_mcp_gateway_strip_headers "$(printf '%s' "$raw" | sed '$d')")" "$tool_name"
+      return $?
+      ;;
+    *)
+      echo "[mcp-call-gateway-meta] ERROR: HTTP $http_code on tools/call (tool=$tool_name): $(printf '%s' "$raw" | tr '\n' ' ' | cut -c1-200)" >&2
+      return 1
+      ;;
+  esac
+}
+
 # ── Standalone CLI mode (only when executed directly, not sourced) ───────────
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if [ $# -lt 1 ]; then
