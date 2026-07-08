@@ -9454,21 +9454,6 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-08T18:48:50Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      },
-      {
-        "id": "FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE",
-        "type": "FIX",
-        "title": "Extend mcp-call.sh with stateful gateway-meta bridge (list_servers/list_server_tools/search_tools) + document sanctioned degraded-mode procedure in gateway-call-contract.md",
-        "priority": "high",
-        "zone": "cross-service/",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "next_agent": "developer",
-        "created_at": "2026-07-08T04:46:30Z",
-        "created_by": "architect",
-        "status_note": "Follow-up from SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE (docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md SS5-6). Scope (land together, same PR): (1) add mcp_call_gateway_meta(tool_name, json_args) to scripts/agents-flow/mcp-call.sh implementing the proven 3-step stateful handshake (initialize -> notifications/initialized -> tools/call, reusing the returned mcp-session-id header) against https://zenmidi.com/gateway/mcp -- covers the 3 gateway meta-tools that have zero bash-callable equivalent today; keep the existing stateless mcp_call() untouched (different endpoint/contract, add-dont-merge). (2) add a new section 6 Degraded Mode -- Gateway-Blind Session to docs/standards/gateway-call-contract.md: self-diagnosis method (inspect own tool schema directly, never trust memory/notebooks per fail-loud anti-hallucination rule), workaround coverage matrix (vn-market downstream tools -> mcp_call() full coverage; gateway meta-tools -> mcp_call_gateway_meta() once shipped; no-Bash agents -> already-shipped cycle-bootstrap/SKILL.md CONFIRMED-BLIND fallback, no other option), discovery-first fallback via docs/data/tool-registry.json (cross-ref existing SS2), and a de-escalation/dedup rule -- once gateway-blindness is corroborated >=2x in the current session, do not raise a fresh CRITICAL signal, treat further recurrences as routine/expected until user /mcp reconnect. Not urgent/blocking -- workaround already in daily use; closes documentation + narrow tool-discovery gap, reduces alert churn. Does NOT duplicate FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP (caba878b7/83bca6c04, shipped 2026-07-07) which covers the no-Bash cowork cycle-bootstrap Step-0 call site only. [PO-TRIAGE 2026-07-08T18:57:43Z] Priority medium->high. Escalating gateway-blind churn (7 agent types, 4 GUARANTEED-slot misses, 22h+ open, confirmed still-blind live this tick). This is the SOLE repo-actionable forward item: it ships the de-escalation rule (§6d) that STOPS the recurring CRITICAL re-raise. Root cause out-of-repo (CLI client, SPIKE-DONE) — no repo work restores the missed deliverables; user /mcp reconnect surfaced to BUG msg 3285. next_agent=developer, ready for dispatch.",
-        "dispatched_at": "2026-07-08T19:00:35Z",
-        "dispatched_by": "dev-team (router, parallel FIX dispatch alongside BOUNDED-1 FACTORY task — .head intentionally left pointing at the FACTORY task to avoid clobbering its resume pointer; this row tracked via task_board.in_progress[] only)"
       }
     ],
     "ready": [],
@@ -9589,6 +9574,26 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "id": "FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE",
+        "type": "FIX",
+        "title": "Extend mcp-call.sh with stateful gateway-meta bridge (list_servers/list_server_tools/search_tools) + document sanctioned degraded-mode procedure in gateway-call-contract.md",
+        "priority": "high",
+        "zone": "cross-service/",
+        "size": "S",
+        "status": "REVIEW",
+        "next_agent": "qa",
+        "created_at": "2026-07-08T04:46:30Z",
+        "created_by": "architect",
+        "status_note": "Follow-up from SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE (docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md SS5-6). Scope (land together, same PR): (1) add mcp_call_gateway_meta(tool_name, json_args) to scripts/agents-flow/mcp-call.sh implementing the proven 3-step stateful handshake (initialize -> notifications/initialized -> tools/call, reusing the returned mcp-session-id header) against https://zenmidi.com/gateway/mcp -- covers the 3 gateway meta-tools that have zero bash-callable equivalent today; keep the existing stateless mcp_call() untouched (different endpoint/contract, add-dont-merge). (2) add a new section 6 Degraded Mode -- Gateway-Blind Session to docs/standards/gateway-call-contract.md: self-diagnosis method (inspect own tool schema directly, never trust memory/notebooks per fail-loud anti-hallucination rule), workaround coverage matrix (vn-market downstream tools -> mcp_call() full coverage; gateway meta-tools -> mcp_call_gateway_meta() once shipped; no-Bash agents -> already-shipped cycle-bootstrap/SKILL.md CONFIRMED-BLIND fallback, no other option), discovery-first fallback via docs/data/tool-registry.json (cross-ref existing SS2), and a de-escalation/dedup rule -- once gateway-blindness is corroborated >=2x in the current session, do not raise a fresh CRITICAL signal, treat further recurrences as routine/expected until user /mcp reconnect. Not urgent/blocking -- workaround already in daily use; closes documentation + narrow tool-discovery gap, reduces alert churn. Does NOT duplicate FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP (caba878b7/83bca6c04, shipped 2026-07-07) which covers the no-Bash cowork cycle-bootstrap Step-0 call site only. [PO-TRIAGE 2026-07-08T18:57:43Z] Priority medium->high. Escalating gateway-blind churn (7 agent types, 4 GUARANTEED-slot misses, 22h+ open, confirmed still-blind live this tick). This is the SOLE repo-actionable forward item: it ships the de-escalation rule (§6d) that STOPS the recurring CRITICAL re-raise. Root cause out-of-repo (CLI client, SPIKE-DONE) — no repo work restores the missed deliverables; user /mcp reconnect surfaced to BUG msg 3285. next_agent=developer, ready for dispatch.",
+        "dispatched_at": "2026-07-08T19:00:35Z",
+        "dispatched_by": "dev-team (router, parallel FIX dispatch alongside BOUNDED-1 FACTORY task — .head intentionally left pointing at the FACTORY task to avoid clobbering its resume pointer; this row tracked via task_board.in_progress[] only)",
+        "reviewed_at": "2026-07-08T19:15:03Z",
+        "reviewed_by": "developer",
+        "review_note": "Implemented mcp_call_gateway_meta(tool_name, json_args) in scripts/agents-flow/mcp-call.sh — 3-step stateful handshake (initialize -> notifications/initialized -> tools/call, mcp-session-id header reuse) against https://zenmidi.com/gateway/mcp, proven live in the SPIKE; reused existing _mcp_call_parse() for the tools/call response (confirmed live: identical SSE-framed JSON-RPC shape as vn-market). Existing stateless mcp_call() left untouched (different endpoint/contract, add-dont-merge, per instruction). Added SS6 Degraded Mode to docs/standards/gateway-call-contract.md: SS6a self-diagnosis, SS6b workaround coverage matrix, SS6c discovery-first cross-ref, SS6d de-escalation/dedup rule (>=2x corroborated this session -> stop re-raising CRITICAL) -- the core deliverable that stops the churn that triggered this dispatch. TDD: new mcp-call-gateway-meta.test.sh, RED (function not found) -> GREEN 20/20 (stubbed _mcp_call_gateway_curl: happy path + session-id propagation, invalid/missing tool_name, transport failure + non-2xx at each of the 3 steps, isError passthrough). Went beyond stub tests: live-verified mcp_call_gateway_meta against the REAL production gateway for all 3 meta-tools (list_servers, list_server_tools, search_tools) -- all succeeded end-to-end. Live probe caught a real gotcha: search_tools raw JSON-RPC schema requires {\"query\":...} not {\"keyword\":...} shown in SS2 native-tool-call pseudocode (different call surface) -- documented explicitly in SS6b to avoid a footgun. Re-ran cowork-tick-preflight.test.sh (20/20) + dev-team-tick-preflight.test.sh (55/55) -- zero regression, both stub mcp_call() after sourcing, unaffected. shellcheck clean, bash -n clean. Scope discipline: did not touch mcp_call() or the standalone CLI dispatch block (conservative diff, exactly SPIKE scope). No apps/* change, no Docker Close Gate needed (script+docs only). Commits: a6031047e (code+test+doc), ab981ae1f (journal+notebook). Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S7. Root cause (CLI-side MCP client lifecycle) remains out-of-repo per SPIKE SS4 -- not fixed by this task, only the repo-actionable mitigation + de-escalation doc rule.",
+        "updated_at": "2026-07-08T19:15:03Z",
+        "updated_by": "developer"
       }
     ],
     "qa": [],
