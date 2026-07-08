@@ -90,16 +90,33 @@ Injectable `fetchFn` option for testability: `runOhlcvBackfill(db, { fetchFn: mo
 | `davPharmacy.ts` | Pharma supply data |
 | `hydrologicalData.ts` | Water level forecasts |
 
-### vnstock Python Bridge (`fetchers/vnstockBridge.ts`)
+### vnstock Python Bridge (`fetchers/vnstockBridge.ts` + `fetchers/vnstock/`)
 
 Spawns Python subprocesses to call the `vnstock` library (v4, community edition) for financial fundamentals, price history, and corporate data.
+
+**FACTORY-INFRA-split-vnstockBridge (2026-07-08):** the 11 inline `*_SCRIPT`
+Python templates and the rate-limiter/backoff/junk-detection runtime moved out
+of `vnstockBridge.ts` into a `vnstock/` subdirectory:
+- `vnstock/runtime.ts` — `VnstockRateLimiter`, `isRateLimitResponse`, `calcBackoffMs`,
+  `stripAnsiAndDetectJunk`, `runPython`/`runPythonWithBackoff`, and
+  `wrapVnstockScript` (the shared stdout-capture + error-handling template).
+- `vnstock/scripts/*.ts` — one `buildXxxScript(symbol, ...)` function per
+  data type (financials, tradingStats, officers, shareholders, intraday,
+  orderBook, balanceSheet, cashFlow, news, prices, events).
+- `vnstock/index.ts` — barrel re-exporting `runtime.ts`.
+- `vnstockBridge.ts` stays the single public import path: owns the domain
+  types + the 11 thin `fetchVnstockXxx()` wrapper functions (each calls a
+  script builder, then `runPython`/`runPythonWithBackoff`), and re-exports the
+  tested runtime helpers for backward compat with existing test imports.
 
 **Banner suppression (FIX-FUNDAMENTALS-REFRESH-CRON-DEAD, 2026-06-14):**
 vnstock v4 emits two stdout banners that corrupt JSON output detection:
 1. Deprecation notice (box-drawing chars ╭──╮) on `Vnstock().stock()` init → mis-detected as rate-limit by `isRateLimitResponse()` via `BOX_DRAWING_RE`
 2. Community-edition notice (ℹ️ prefix) on each data API call (`income_statement()`, `balance_sheet()`, `cash_flow()`, etc.) → detected as junk by `stripAnsiAndDetectJunk()`
 
-**Fix:** Each of the 10 Python script templates wraps ALL vnstock API calls in stdout redirect:
+**Fix:** `wrapVnstockScript()` in `vnstock/runtime.ts` now owns this preamble
+once (previously hand-copied into 9 of the 11 script templates — the same
+fix-comment repeated per script was evidence of N hand-applications):
 ```python
 _real_stdout = sys.stdout
 try:
@@ -107,22 +124,21 @@ try:
     stock = Vnstock().stock(...)
     sys.stdout = _io.StringIO()   # suppress data call banner
     df = stock.finance.income_statement(...)
-    sys.stdout = _io.StringIO()   # suppress per-call banner
-    ratio = stock.finance.ratio(...)
 except Exception as e:
     _fetch_err = e
 finally:
     sys.stdout = _real_stdout     # always restore before JSON output
 ```
+`prices.ts` (multi-symbol loop) and `events.ts` (bypasses `Vnstock().stock()`
+entirely via a `vnstock.common.viz` mock) have genuinely different control
+flow and stay bespoke, not built through `wrapVnstockScript`.
 
-**Scripts patched (all 10):** `PRICE_SCRIPT`, `FINANCE_SCRIPT`, `TRADING_STATS_SCRIPT`, `OFFICERS_SCRIPT`, `SHAREHOLDERS_SCRIPT`, `INTRADAY_SCRIPT`, `ORDER_BOOK_SCRIPT`, `BALANCE_SHEET_SCRIPT`, `CASH_FLOW_SCRIPT`, `NEWS_SCRIPT`
-
-**Exported constants** (for tests):
+**Exported constants** (for tests, re-exported from `vnstockBridge.ts`):
 - `SUPPRESS_BANNER` — Python snippet that redirects stdout to StringIO
 - `RESTORE_STDOUT` — Python snippet that restores `_real_stdout`
 
-**Key detection functions:**
-- `isRateLimitResponse(output)` — matches `BOX_DRAWING_RE` or `RATE_LIMIT_KEYWORDS` against stderr/stdout
+**Key detection functions** (in `vnstock/runtime.ts`, re-exported from `vnstockBridge.ts`):
+- `isRateLimitResponse(output)` — matches `BOX_DRAWING_RE` against stderr/stdout
 - `stripAnsiAndDetectJunk(output)` — returns `{junk: true}` when first non-whitespace char is not `{` or `[` (catches non-JSON like ℹ️)
 - `runPythonWithBackoff(script, ticker)` — 3 retries with exponential backoff on RATE_LIMITED; returns null on junk
 
