@@ -1,33 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — CONTAM-10-WRITER-H → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (pm-decomposed, dev-team dispatch)
-
-VPS backfill queue poller (`POST /api/push-ohlcv-history`, ~15–30min cadence) was actively re-contaminating `daily_ohlcv` with whole-row thousand-scale bars (6,533 rows/27 tickers as of 2026-07-07) because `handlePushOhlcvHistory` did a raw INSERT + manual `validateOhlcvUnit` on **raw un-normalized** values — a naive per-row `>=100` floor that contaminated bars (e.g. open=131/close=130 for a stock worth ~130,000) pass undetected. Swapped for `writeOhlcvBatch(rows, db, {conflictStrategy:"backfill"})` — runs `normalizeOhlcvToVnd` + `detectAndNormalizeScaleFromPrevClose` (cross-day + `fetchCleanReferenceCloseMap` cleanRef guard) ahead of `validateOhlcvUnit`, matching Writers A/C/D. WIC-2 parse-and-reject pre-pass preserved verbatim; response `{ok,inserted,skipped,code}` now derives from `writeResult.written` / `writeResult.skipped + rejected.length`.
-
-New `CONTAM-10-WRITER-H-backfill-scale-guard.test.ts` (3/3, live-HTTP-route, not unit-only): TC-WH-1 contaminated batch + cleanRef history → ×1000 corrected; TC-WH-2 brand-new ticker (no prior history) → written as-is (documents accepted cold-start gap); TC-WH-3 legit cheap stock → unchanged. Found + fixed 1 real regression while running the full suite: `TASK-VNINDEX-RS-B-durability.test.ts` FR-B1-TC2 asserted the OLD reject-on-open<100 semantics — updated (with inline rationale) to expect the new, correct, cross-writer-consistent ×1000 auto-correction instead of outright rejection.
-
-Rebuilt `mcp-server` image (id `4c8ea4cfd41f`) but did NOT swap it into the running container — `docker compose up -d` is a gated live-container swap (standing policy, ops-owned). Full `bun test`: 14302 pass/57 fail/6 errors + Bun 1.3.13 crash-at-teardown (panic after summary line — known engine bug). Confirmed via git-stash-to-baseline isolation testing that the 57 failures are pre-existing full-suite-only flakiness unrelated to this change (2 representative files reproduce identically on baseline). Flipped task to REVIEW (not done_verified) — pending QA RAW-probe + ops-gated container swap before `CONTAM-10-EXEC-2` can proceed.
-
-Zone health: tsc clean, tools=183 unchanged, targeted CONTAM-10 suite (5 files) 38/38 pass | HEALTHY.
-
-## 2026-07-08 — FACTORY-INTERFACE-sequential-confidence-05-mask → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-`sequential-market-analysis.ts:170` `result.confidence = input.confidence ?? 0.5` fabricated a mid-point confidence whenever a hypothesis was stated without one. Now only assigns when `input.confidence !== undefined`; init default `confidence: 0` → `undefined`; type `number` → `number | undefined`. `generateRecommendations` also fixed to label an unstated confidence honestly ("No confidence stated: ...") instead of folding it into "Low confidence" — same fabrication one call deeper, and required for `exactOptionalPropertyTypes` to type-check the new union cleanly.
-
-`AnalysisResult` (incl. `confidence`) is genuinely internal — `handle()` only ever returns `{status,thought,progress,nextSteps}`, never the result object. Added `_analysisState` (test/introspection-only, additive, not consumed by `registerSequentialMarketAnalysisTools`/the MCP SDK) so the fix is actually testable given that contract. Flagging for QA: the DoD's "served payload shows null/absent" RAW-verify language does not map to a live HTTP/MCP route today — verify at the unit level via `_analysisState`, not an HTTP probe.
-
-New `FACTORY-INTERFACE-sequential-confidence-05-mask.test.ts` (5/5 pass): omitted confidence stays `undefined`; supplied confidence (0.9) unchanged; explicit `0` (falsy but stated) preserved; recommendation text no longer says "Low confidence" for an unstated one; `handle()` response shape unchanged.
-
-Rebuilt `mcp-server` image (id `180382145ee7`) but did NOT swap into the running container (still `4c8ea4cfd41f`, serving CONTAM-10-WRITER-H) — ops-gated live swap per standing policy.
-
-Full `bun test`: 14296 pass/40 skip/68 fail/10 errors (1176 files, 620s) then Bun 1.3.13 crash-at-teardown (known engine bug, non-authoritative). All 68 fails are pre-existing VPS-push/RSS/insider-transactions/foreign-flow network-flaky-in-sandbox class (1146/1324/1898b/1113/1518/083/etc.) — zero overlap with our changed file (grepped: no failing file imports `sequential-market-analysis`); isolation re-run of the top-2 offenders confirms unrelated (1146 alone: 17/17 pass; 1324 alone: fails identically, pure SQLite/rag-service network contention, no shared module with our change).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
-
 ## 2026-07-08 — FACTORY-INTERFACE-source-confidence-10-mask → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -55,3 +27,17 @@ tsc clean. Targeted (5 files) 83/83 pass. Full `bun test` run twice: 14334/61/5 
 Commits: c94c50e24/0bb264fa2/8d041fbb7/3978756bf (4 jobs) + b4e6fd54e (scorer tests+doc) + 7011746eb (journal) + 006cb3819 (board+head flip). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (Docker Microservice Code-Change Close Gate — persisted signal/evidence confidence values change at runtime). `.head` synced in the same write (was stuck at claim-time `next_agent=developer`).
 
 Zone health: tsc clean, tools unchanged, scheduler jobs unchanged (4 files edited in-place, no new/removed cron.schedule entries) | HEALTHY.
+
+## 2026-07-08 — FACTORY-SCHEDULER-prediction-default-dedup → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+`predictionMarketJob.ts` Step 6 hardcoded volumeSpikeThresholdUsd=50000/probabilityShiftPct=5/minUniqueWallets=10 twice (config-load-succeeded try branch as per-field `?? literal`, config-load-failed catch branch as a plain object) — the catch branch could silently drift from the try branch's defaults over time. Extracted `DEFAULT_PREDICTION_SIGNAL_CONFIG` (named, provenance-commented) + `resolvePredictionSignalConfig(pm?)`; both branches now resolve through the one function (catch calls it with no arg). Chose a per-field `pm?.field ?? DEFAULT.field` merge over the backlog's example spread `{...DEFAULT, ...(pm??{})}` — the spread is unsafe if `pm` ever carried an explicit-`undefined` key (would clobber the default), the per-field form is provably identical to the old duplicated code in every case. `config.ts:604 PredictionMarketsConfig` already declares these 3 fields required/non-optional with matching defaults — nothing to change there.
+
+New `FACTORY-SCHEDULER-prediction-default-dedup.test.ts` (7/7 pass): pins the literal default values, and proves the try-branch (`pm=undefined`) and catch-branch (no-arg) resolve identically, plus partial/full pm override cases.
+
+tsc clean. Targeted+adjacent (8 prediction-related test files) 116/117 pass — 1 unrelated pre-existing flaky timeout (1345e Test 5, VN-Index cascade broadcast, passes 8/8 in isolation). Full `bun test`: 14344 pass/40 skip/58 fail/4 errors/1179 files (568.93s) then Bun 1.3.13 crash-at-teardown (known engine bug) — zero overlap between the 58 fail files and predictionMarketJob.ts/config.ts/predictionSignalDetector.ts, matches the same pre-existing VPS-push/RSS/insider/foreign-flow network-flaky class documented in the prior 2 entries. Server boot verified on PORT=3999 (3000 held by the live container): health/bctc-inspect/news-fetch-dashboard all 200, toolCount=183 unchanged.
+
+Per explicit dispatch instruction: board flip stops at REVIEW/`next_agent=ops` (Close Gate Steps 1-4); qa does Step 5 RAW-verify and must set `next_agent=po` (NOT self-close to done_verified — that was a caught process deviation on the immediately-preceding sibling task); po performs the actual Step 6 DONE_VERIFIED flip.
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
