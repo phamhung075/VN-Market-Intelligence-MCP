@@ -501,7 +501,9 @@ Runs ONLY on the head-idle fall-through above (`head.status == "idle"` or `head`
 WIP=$(jq '(.task_board.ready|length)+(.task_board.in_progress|length)' docs/data/orch/orch-state.json)
 if [ "$WIP" -lt 1 ]; then
   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-  jq --arg now "$NOW" -f "$PROJECT_ROOT/scripts/devteam-backlog-promote-bounded1.jq" \
+  jq --arg now "$NOW" \
+    --slurpfile detail "$PROJECT_ROOT/docs/data/orch/archive/backlog-detail.json" \
+    -f "$PROJECT_ROOT/scripts/devteam-backlog-promote-bounded1.jq" \
     docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
   jq --arg now "$NOW" -f "$PROJECT_ROOT/scripts/devteam-backlog-claim-bounded1.jq" \
     docs/data/orch/orch-state.json | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
@@ -513,7 +515,7 @@ fi
 # WIP>=1, or nothing eligible was promoted/claimed -> fall through unchanged, continue to Session Gate / Step 1 PO triage
 ```
 
-- **Promote** (`scripts/devteam-backlog-promote-bounded1.jq`): selects the SINGLE top-priority row from `.task_board.backlog[]` where `status ∈ {BACKLOG, TODO}` AND `supervised != true` — the 7-row Phase-1 supervised set (see `.head.note` history) stays held for router-adjudicated dispatch and is NEVER auto-promoted here. Moves it backlog→ready, stamps `promoted_at`/`promoted_by`/`promotion_note` + `.task_board.last_triaged_at`/`last_triaged_by`. No-op (identity) if `WIP >= 1` or nothing eligible.
+- **Promote** (`scripts/devteam-backlog-promote-bounded1.jq`): selects the SINGLE top-priority row from `.task_board.backlog[]` where `status ∈ {BACKLOG, TODO}` AND `supervised != true` AND `depends_on` is eligible — the 7-row Phase-1 supervised set (see `.head.note` history) stays held for router-adjudicated dispatch and is NEVER auto-promoted here. **DEPENDS-ON GATE (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08):** effective `depends_on` = inline `.depends_on` on the board row if non-empty, else — for `detail_ref`'d rows — the lookup in `docs/data/orch/archive/backlog-detail.json` `.items[<id>].depends_on`, else `[]`; a dep is satisfied ONLY if it resolves to `status == "DONE_VERIFIED"` in ANY task_board lane (plain `DONE` is NOT sufficient), and a dep id found in NO lane is treated as UNSATISFIED (conservative-skip). Filter applies during candidate selection so a blocked top-ranked row cannot starve an eligible lower-ranked one. Requires `--slurpfile detail docs/data/orch/archive/backlog-detail.json` on the invocation (see block above). Moves the picked row backlog→ready, stamps `promoted_at`/`promoted_by`/`promotion_note` + `.task_board.last_triaged_at`/`last_triaged_by`. No-op (identity) if `WIP >= 1` or nothing eligible.
 - **Claim** (`scripts/devteam-backlog-claim-bounded1.jq`): moves the bounded-1-stamped ready row → in_progress, sets `.head.status="in_progress"`, `.head.active_task_id=<id>`, `.head.next_agent` (the row's own `next_agent` if set, else `"developer"` placeholder — Step 3's zone-detect skill re-resolves the real specialist from the task's `zone`/files). No-op if nothing bounded-1-stamped is waiting in `ready[]`.
 - Both writes go through `scripts/orch-apply.sh` ONLY (Zod + dup-key gated, CAS-guarded, atomic rename) — NEVER raw `mv`/`cp`/`>`/full-doc overwrite.
 
@@ -646,7 +648,7 @@ Covers: post-execution checks (4.0–4.1), Compact Checkpoint (4.5), doc self-he
 
 - `scripts/devteam-session-trace.py` — extract compact workflow trace from a dev-team session `.jsonl` transcript; audits agent spawns, lock contention, Telegram narration, and workflow-smell hits. Usage: `devteam-session-trace.py <session.jsonl>`.
 - `scripts/router-d1-claim.jq` — router board claim: moves a task from `ready[]` to `in_progress[]` with gate-guard; sets `.head` for unambiguous dispatch on resume. Usage: `jq --arg now "$NOW" -f scripts/router-d1-claim.jq docs/data/orch/orch-state.json`.
-- `scripts/devteam-backlog-promote-bounded1.jq` + `scripts/devteam-backlog-claim-bounded1.jq` — generalized (no hardcoded task IDs), idempotent BOUNDED-1 backlog→ready→in_progress pickup for the Idle-capacity backlog pickup step above (SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1). Usage: `jq --arg now "$NOW" -f scripts/devteam-backlog-promote-bounded1.jq docs/data/orch/orch-state.json | bash scripts/orch-apply.sh` then the claim script the same way.
+- `scripts/devteam-backlog-promote-bounded1.jq` + `scripts/devteam-backlog-claim-bounded1.jq` — generalized (no hardcoded task IDs), idempotent BOUNDED-1 backlog→ready→in_progress pickup for the Idle-capacity backlog pickup step above (SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1); promote applies a depends_on eligibility gate (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08) — see step description above. Usage: `jq --arg now "$NOW" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-promote-bounded1.jq docs/data/orch/orch-state.json | bash scripts/orch-apply.sh` then the claim script the same way (claim script unchanged, no `--slurpfile` needed).
 
 ## Invariants
 

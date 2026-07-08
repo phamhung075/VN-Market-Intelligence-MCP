@@ -30,6 +30,10 @@
 #   - supervised != true — the Phase-1 supervised set (7 rows, held for
 #     router-adjudicated dispatch, see .head.note in the live doc) is NEVER
 #     auto-promoted by this script
+#   - depends_on eligibility (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08)
+#     — see "DEPENDS-ON GATE" section below. Applied DURING candidate
+#     selection so a blocked top-ranked row can never starve a lower-ranked
+#     but eligible row out of the same tick's pick.
 #   - ordered by priority_rank ascending (0=highest: P0/critical,
 #     1: P1/high, 2: P2/medium/normal, 3: P3/low, 9: missing/unrecognized —
 #     priority values in the wild are a messy mix of "P0".."P3" and
@@ -38,6 +42,33 @@
 #     only ~18% of backlog rows carry a created_at timestamp, too sparse to
 #     use as the primary sort key)
 #   - exactly ONE row promoted per invocation (BOUNDED-1)
+#
+# DEPENDS-ON GATE (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08):
+# root cause — on 2026-07-08 this script auto-promoted+claimed
+# FACTORY-TECHANALYSIS-delete-orphaned-ts-service (a legitimate P1 row) while
+# its own declared depends_on ([FACTORY-TECHANALYSIS-go-livepath-tests,
+# FACTORY-TECHANALYSIS-reconcile-ta-contract]) were both still plain BACKLOG —
+# there was NO depends_on eligibility check at all. dev-team caught it
+# pre-dispatch and reverted by hand (see the row's revert_note in the live
+# doc). This gate prevents that class structurally:
+#   - depends_on lives in TWO possible places per candidate row:
+#     1. inline `.depends_on` directly on the board row (used when non-null
+#        and non-empty), OR
+#     2. for detail_ref'd rows (`.detail_ref` non-null, inline depends_on
+#        null/empty) — the REAL array lives in
+#        docs/data/orch/archive/backlog-detail.json `.items[<id>].depends_on`.
+#        This file MUST be threaded in via `--slurpfile detail` (see Usage).
+#     3. `[]` if neither location yields a usable array.
+#   - A dependency counts SATISFIED only when it resolves to
+#     status == "DONE_VERIFIED" in ANY task_board lane — scanned across ALL
+#     lanes (done_verified, done, review, qa, in_progress, ready, backlog),
+#     not just backlog[]. Plain DONE is NOT sufficient (matches existing repo
+#     convention — see the revert_note precedent above).
+#   - A dep id that resolves in NO lane at all is treated as UNSATISFIED
+#     (conservative-skip: leave the candidate in backlog for human grooming
+#     rather than risk auto-dispatching against an unknown/mistyped dep).
+#   - The filter runs at candidate-selection time (before ranking/picking the
+#     top row), not as a post-hoc check on the already-chosen pick.
 #
 # Mutation (single row only):
 #   backlog[] -> ready[] ; status BACKLOG/TODO -> READY ; stamp promoted_at /
@@ -48,7 +79,9 @@
 #
 # Usage (ALWAYS through the orch-apply.sh gate — never raw mv/cp/>):
 #   NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-#   jq --arg now "$NOW" -f scripts/devteam-backlog-promote-bounded1.jq \
+#   jq --arg now "$NOW" \
+#     --slurpfile detail docs/data/orch/archive/backlog-detail.json \
+#     -f scripts/devteam-backlog-promote-bounded1.jq \
 #     docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
 #
 # Pointer: docs/agents/dev-team/flow/main.md § Idle-capacity backlog pickup
@@ -65,13 +98,62 @@ def priority_rank:
 
 def wip: ((.task_board.ready // []) | length) + ((.task_board.in_progress // []) | length);
 
+# Normalize a raw depends_on value to an array: null -> [], a bare string
+# (7/321 rows in backlog-detail.json carry a single id as a STRING, not a
+# 1-element array — real-data drift, grep-verified) -> [string], array -> as-is.
+def as_dep_array:
+  if . == null then []
+  elif (type == "string") then [.]
+  elif (type == "array") then .
+  else [] end;
+
+# Effective depends_on for a candidate row (`.` = the backlog row object).
+# See "DEPENDS-ON GATE" header comment for the precedence rule.
+def effective_depends_on($detail_items):
+  (.depends_on | as_dep_array) as $inline
+  | if ($inline | length) > 0 then
+      $inline
+    elif (.detail_ref != null) then
+      ($detail_items[.id].depends_on | as_dep_array)
+    else
+      []
+    end;
+
+# Global dep-id -> status map, scanned across EVERY task_board lane (not just
+# backlog[]) so a dependency satisfied by a done_verified/done/review/qa/
+# in_progress/ready row still resolves correctly. Lane order is oldest-stage
+# first, done_verified LAST — so if the same id ever appears in two lanes
+# (migration drift), the more-advanced status wins the merge (conservative
+# toward "satisfied", never toward silently losing a legit DONE_VERIFIED).
+def dep_status_map:
+  . as $doc
+  | ["backlog", "ready", "in_progress", "qa", "review", "done", "done_verified"] as $lanes
+  | reduce $lanes[] as $lane
+      ( {}
+      ; . + ( [ ($doc.task_board[$lane] // [])[]
+                | select(.id != null)
+                | { key: .id, value: .status }
+              ] | from_entries )
+      );
+
+# `.` = candidate row object; true if every effective depends_on entry
+# resolves to DONE_VERIFIED in $status_map. Missing entirely = UNSATISFIED
+# (conservative-skip).
+def deps_satisfied($detail_items; $status_map):
+  effective_depends_on($detail_items) as $deps
+  | ($deps | length) == 0
+    or ( [ $deps[] | ($status_map[.] // "MISSING") ] | all(. == "DONE_VERIFIED") );
+
 if (wip >= 1) then
   .   # BOUNDED-1 GATE: WIP>=1 — refuse to promote (no-op, idempotent re-run-safe)
 else
-  ( [ .task_board.backlog
+  ($detail[0].items // {}) as $detail_items
+  | dep_status_map as $status_map
+  | ( [ .task_board.backlog
       | to_entries[]
       | select(.value.status == "BACKLOG" or .value.status == "TODO")
       | select((.value.supervised // false) != true)
+      | select(.value | deps_satisfied($detail_items; $status_map))
       | { idx: .key, row: .value, rank: (.value | priority_rank) }
     ] | sort_by([.rank, .idx])
   ) as $candidates
@@ -85,7 +167,7 @@ else
             promoted_at: $now,
             promoted_by: "dev-team (bounded-1 auto-pickup)",
             promotion_note: ("BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority "
-              + "unsupervised BACKLOG/TODO row (priority_rank=" + ($picked.rank | tostring) + ")")
+              + "unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=" + ($picked.rank | tostring) + ")")
           }) as $ready_entry
       | .task_board.ready = ((.task_board.ready // []) + [$ready_entry])
       | .task_board.backlog = [ .task_board.backlog | to_entries[]

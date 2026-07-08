@@ -205,14 +205,17 @@ CLAUDE_BIN=/path/to/claude bash scripts/agents-flow/cowork-guaranteed-slot-firer
 **CANONICAL: Dev-team idle-capacity backlog pickup (SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1)**
 ```bash
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-# 1. Promote (backlog[] -> ready[], top-priority unsupervised BACKLOG/TODO row, no-op if WIP>=1):
-jq --arg now "$NOW" -f scripts/devteam-backlog-promote-bounded1.jq \
+# 1. Promote (backlog[] -> ready[], top-priority unsupervised depends_on-eligible
+#    BACKLOG/TODO row, no-op if WIP>=1):
+jq --arg now "$NOW" \
+  --slurpfile detail docs/data/orch/archive/backlog-detail.json \
+  -f scripts/devteam-backlog-promote-bounded1.jq \
   docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
 # 2. Claim (ready[] -> in_progress[] + .head, no-op if nothing bounded-1-stamped waiting):
 jq --arg now "$NOW" -f scripts/devteam-backlog-claim-bounded1.jq \
   docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
 ```
-Owning flow doc: `docs/agents/dev-team/flow/main.md` § Idle-capacity backlog pickup (BOUNDED-1), Step 0b head-idle fall-through, before Step 1 PO triage. BOUNDED-1 gate: WIP (`ready[].length + in_progress[].length`) must be `< 1` — this lane is capped at ONE task in flight (user-gated 2026-07-04, distinct from the WIP≤2 human/router-supervised budget). Both scripts are idempotent no-ops outside their gate condition; neither has a hardcoded task ID; both write ONLY through `orch-apply.sh`. `supervised: true` backlog rows are NEVER auto-promoted.
+Owning flow doc: `docs/agents/dev-team/flow/main.md` § Idle-capacity backlog pickup (BOUNDED-1), Step 0b head-idle fall-through, before Step 1 PO triage. BOUNDED-1 gate: WIP (`ready[].length + in_progress[].length`) must be `< 1` — this lane is capped at ONE task in flight (user-gated 2026-07-04, distinct from the WIP≤2 human/router-supervised budget). Both scripts are idempotent no-ops outside their gate condition; neither has a hardcoded task ID; both write ONLY through `orch-apply.sh`. `supervised: true` backlog rows are NEVER auto-promoted. **depends_on gate (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08):** promote only picks rows whose effective `depends_on` (inline, or looked up in `backlog-detail.json` for `detail_ref`'d rows) are ALL `DONE_VERIFIED` in some `task_board` lane; a dep resolving nowhere is conservative-skipped. Filter runs during candidate ranking, not just on the final pick — a blocked top-ranked row never starves an eligible lower-ranked one. Test: `scripts/test-devteam-bounded1-depends-on.sh`.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 
