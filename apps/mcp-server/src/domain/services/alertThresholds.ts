@@ -95,3 +95,22 @@ export const INSIDER_STREAK_CONFIDENCE_CEILING = 0.95;
  */
 export const BB_BREAKOUT_CONFIDENCE_BASE = 0.55;
 export const BB_BREAKOUT_CONFIDENCE_CEILING = 0.85;
+
+/**
+ * Confidence range for taAlertScanJob RSI overbought/oversold signals
+ * (FACTORY-SCHEDULER-alert-confidence-literals).
+ *
+ * Replaces the frozen `confidence = 0.7` literal. Confidence is now derived
+ * from how far RSI(14) sits past its own 70/30 threshold, normalised against
+ * the remaining distance to the RSI scale boundary (100 or 0) — see
+ * computeRsiExtremityStrength() in domain/services/rsiExtremityStrength.ts —
+ * via deriveConfidenceFromStrength():
+ *
+ *   strength=0 (RSI just crossed 70 or 30)  → base    = 0.55
+ *   strength=1 (RSI saturated at 100 or 0)  → ceiling = 0.85
+ *
+ * Same warning-tier range as BB_BREAKOUT_CONFIDENCE_* for consistency between
+ * the two intraday TA scan jobs (both emit Alert.severity="warning").
+ */
+export const RSI_EXTREME_CONFIDENCE_BASE = 0.55;
+export const RSI_EXTREME_CONFIDENCE_CEILING = 0.85;

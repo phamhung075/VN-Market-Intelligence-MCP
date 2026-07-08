@@ -180,7 +180,10 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
 
     expect(signals[0]!.type).toBe("ta_overbought");
     expect(signals[0]!.actionCode).toBe("VCB");
-    expect(signals[0]!.confidence).toBe(0.7);
+    // FACTORY-SCHEDULER-alert-confidence-literals: confidence is now derived from
+    // RSI extremity (rsi=74.2 → strength=(74.2-70)/30=0.14 → 0.55 + 0.14*0.30 = 0.592),
+    // not the previous frozen 0.7 literal.
+    expect(signals[0]!.confidence).toBeCloseTo(0.592, 5);
     expect(actions[0]!.code).toBe("VCB");
     expect(alert.message).toContain("VCB");
     expect(alert.message).toContain("quá mua");
@@ -526,6 +529,40 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
     const alerts = getAlerts(db);
     const actions = JSON.parse(alerts[0]!.affected_actions_json) as Array<{ code: string }>;
     expect(actions[0]!.code).toBe("VCB");
+  });
+
+  // ── FACTORY-SCHEDULER-alert-confidence-literals ─────────────────────────────
+  // Confidence must be derived from real RSI extremity, not a frozen literal —
+  // a barely-overbought RSI and a deeply-overbought RSI must produce different
+  // confidence values.
+  it("confidence varies with RSI extremity (barely overbought vs deeply overbought)", async () => {
+    // Barely overbought: RSI=71 → strength=(71-70)/30=0.0333 → confidence=0.55+0.0333*0.30=0.56
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedMinCandles(db, "VCB");
+    const barely = await runTaAlertScan({
+      db,
+      computeFn: makeComputeFn(71),
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
+    });
+    expect(barely).toEqual({ scanned: 1, fired: 1 });
+
+    // Deeply overbought: RSI=95 → strength=(95-70)/30=0.833 → confidence=0.55+0.833*0.30=0.80
+    const deepDb = buildTestDb();
+    deepDb.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedMinCandles(deepDb, "VCB");
+    const deep = await runTaAlertScan({
+      db: deepDb,
+      computeFn: makeComputeFn(95),
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
+    });
+    expect(deep).toEqual({ scanned: 1, fired: 1 });
+
+    const barelySignals = JSON.parse(getAlerts(db)[0]!.signals_json) as Array<{ confidence: number }>;
+    const deepSignals = JSON.parse(getAlerts(deepDb)[0]!.signals_json) as Array<{ confidence: number }>;
+
+    expect(barelySignals[0]!.confidence).toBeCloseTo(0.56, 5);
+    expect(deepSignals[0]!.confidence).toBeCloseTo(0.8, 5);
+    expect(deepSignals[0]!.confidence).toBeGreaterThan(barelySignals[0]!.confidence);
   });
 
   // ── FU-ALERT-COWRITE-SCHEDULER-JOBS: co-write tests ─────────────────────────

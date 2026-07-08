@@ -38,7 +38,13 @@ import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.
 import { computeScanAlertFingerprint } from "../../domain/services/alertDedup.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import type { Alert } from "../../domain/services/alertGenerator.js";
-import { MIN_DAILY_VOLUME_FOR_ALERTS } from "../../domain/services/alertThresholds.js";
+import {
+  MIN_DAILY_VOLUME_FOR_ALERTS,
+  RSI_EXTREME_CONFIDENCE_BASE,
+  RSI_EXTREME_CONFIDENCE_CEILING,
+} from "../../domain/services/alertThresholds.js";
+import { computeRsiExtremityStrength } from "../../domain/services/rsiExtremityStrength.js";
+import { deriveConfidenceFromStrength } from "../../domain/services/alertConfidenceScorer.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -248,6 +254,19 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
         continue;
       }
 
+      // g2. FACTORY-SCHEDULER-alert-confidence-literals: derive confidence from
+      // how far RSI sits past its own 70/30 threshold (already computed above),
+      // instead of a frozen literal.
+      const rsiStrength = computeRsiExtremityStrength({
+        rsi,
+        direction: alertType === "ta_overbought" ? "overbought" : "oversold",
+      });
+      const rsiConfidence = deriveConfidenceFromStrength({
+        strength: rsiStrength,
+        base: RSI_EXTREME_CONFIDENCE_BASE,
+        ceiling: RSI_EXTREME_CONFIDENCE_CEILING,
+      });
+
       // h. Build alert payload
       const triggeredAt = nowFn().toISOString();
       const message = `${code}: RSI(14) = ${rsi.toFixed(1)} — ${suffix}`;
@@ -275,7 +294,7 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
             severity: "warning",
             actionCode: code,
             message,
-            confidence: 0.7,
+            confidence: rsiConfidence,
             detectedAt: triggeredAt,
           },
         ],
