@@ -317,7 +317,7 @@
         "type": "WAL_ESCALATION",
         "summary": "WAL file exceeded 10MB (29.8 MB); investigate checkpoint stall",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
