@@ -1,8 +1,10 @@
 # macro-indicators — Testing
 
 **Runtime:** Go `testing` package + `net/http/httptest`. No external mocking framework.
-**Total:** 33 `_test.go` files across 8 packages — 288 top-level tests, 543 total test cases
-(incl. table-driven subtests) — all pass, 0 fail (2026-07-08 baseline, `go test ./...`).
+**Total:** 33 `_test.go` files across 11 packages (6 primitive + domain + application +
+infrastructure + interface/http + module) — 288 top-level tests, 543 total test cases
+(incl. table-driven subtests) — all pass, 0 fail (2026-07-08 baseline, `go test ./...`;
+QA re-verified 2026-07-08, corrected package count from an initial miscount of 8).
 
 > History note: this service originally shipped a parallel TypeScript/Bun test suite
 > (`src/__tests__/`, `__tests__/`) covering scraper adapters and a `_deprecated` domain
