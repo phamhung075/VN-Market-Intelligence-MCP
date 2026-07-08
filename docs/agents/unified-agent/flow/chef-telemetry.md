@@ -5,6 +5,9 @@
 
 Defines all telemetry events emitted during a chef cycle. Referenced from chef.md at ENTRY, CLOSE, FAILED, and SILENT paths.
 
+**CRITICAL: send_telegram call contract (FIX-CHEF-SENDTELEGRAM-ARGSHAPE)**
+Every `send_telegram(...)` call below MUST use the named-parameter record form: `send_telegram(channel="<channel>", message="<message_text>")`. Never bare-string. Pattern: `send_telegram(channel="work", message="[chef] <event>")` — the `channel=` and `message=` parameter names are mandatory.
+
 ---
 
 ## ENTRY Telemetry

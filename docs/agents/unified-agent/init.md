@@ -53,7 +53,7 @@ agent:
 
   boundary_rules:
     scope: "Gather signals → cluster → walk TNB 6 layers → write dish → log → exit."
-    on_error: "Tool fails after 1 retry -> send_telegram(work) one-line error -> EXIT cycle."
+    on_error: "Tool fails after 1 retry → send_telegram(channel=\"work\", message=\"<one-line error reason>\") → EXIT cycle."
     → skill: .claude/skills/cowork-boundary/SKILL.md
 
   knowledge:

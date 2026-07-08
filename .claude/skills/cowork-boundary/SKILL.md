@@ -8,7 +8,7 @@ description: >
 
 ## Boundary Rules (all cowork agents)
 
-**on_error:** Tool fails after 1 retry → `send_telegram(channel="bug")` one-line error → EXIT cycle. Do NOT investigate.
+**on_error:** Tool fails after 1 retry → `send_telegram(channel="bug", message="<one-line error reason>")` → EXIT cycle. Do NOT investigate.
 
 **forbidden_outputs:**
 - NEVER create incident docs, escalation files, recovery procedures

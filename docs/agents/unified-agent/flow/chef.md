@@ -351,6 +351,19 @@ This self-check is NOT optional. Bypassing it is a flow violation equivalent to 
 
 Produce **two outputs** from the synthesized analysis: Block A for the user (MARKET channel — plain Vietnamese), Block B for TNB audit (WORK channel — analyst detail).
 
+**CRITICAL: send_telegram call contract (anti-fabrication guardrail FIX-CHEF-SENDTELEGRAM-ARGSHAPE)**
+EVERY send_telegram call in this step MUST use the named-parameter record form: `send_telegram(channel="<channel>", message="<message_text>")`. Never pass the message as a bare string or channel as a positional argument. Bare-string calls trigger "expected record received string" parser failure. Correct pattern:
+```
+send_telegram(channel="market", message=<Block_A_text>)
+send_telegram(channel="work", message="[CHEF-DETAIL] ..." + <Block_B_text>)
+```
+Incorrect (FORBIDDEN):
+```
+send_telegram("market", <Block_A_text>)          # bare string message
+send_telegram(market, message=...)               # channel as unquoted var
+send_telegram("expected record received string") # any bare string
+```
+
 ---
 
 ### Block A — MARKET message (plain Vietnamese, user-facing)
