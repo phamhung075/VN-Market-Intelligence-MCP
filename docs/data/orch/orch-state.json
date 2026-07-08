@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT DONE_VERIFIED (qa independent re-verify PASS 2026-07-08T18:34:27Z — self-hold vs genuine-peer-hold branches both re-confirmed correct by direct diff read; dev-team-tick-preflight.test.sh re-run 55/55 PASS incl. T19/T20; no other caller depends on the old broken behavior; one pre-existing SAME-CLASS residual flagged non-blocking (main.md ERROR-fallback pseudocode SF-1 claim step still lacks a self-hold branch — out of this task's scope, follow-up candidate); DJ-GATE-1 journal confirmed substantive; scope confirmed clean, script+test only, no apps/* change, no Docker Close Gate needed).",
-    "updated_at": "2026-07-08T18:34:27Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-APP-split-fetchParseAndStoreBctc",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-APP-split-fetchParseAndStoreBctc — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-08T18:48:50Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3904,15 +3904,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-APP-split-assembleEveningSummary",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary"
-      },
-      {
-        "title": "Split fetchParseAndStoreBctc + name the news-fallback confidence constants",
-        "priority": "P1",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-APP-split-fetchParseAndStoreBctc",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-fetchParseAndStoreBctc"
       },
       {
         "title": "Replace console.* with the project logger in 5 application files",
@@ -7820,19 +7811,6 @@
         "handoff_ref": "docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md"
       },
       {
-        "id": "FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE",
-        "type": "FIX",
-        "title": "Extend mcp-call.sh with stateful gateway-meta bridge (list_servers/list_server_tools/search_tools) + document sanctioned degraded-mode procedure in gateway-call-contract.md",
-        "priority": "medium",
-        "zone": "cross-service/",
-        "size": "S",
-        "status": "BACKLOG",
-        "next_agent": "developer",
-        "created_at": "2026-07-08T04:46:30Z",
-        "created_by": "architect",
-        "status_note": "Follow-up from SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE (docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md SS5-6). Scope (land together, same PR): (1) add mcp_call_gateway_meta(tool_name, json_args) to scripts/agents-flow/mcp-call.sh implementing the proven 3-step stateful handshake (initialize -> notifications/initialized -> tools/call, reusing the returned mcp-session-id header) against https://zenmidi.com/gateway/mcp -- covers the 3 gateway meta-tools that have zero bash-callable equivalent today; keep the existing stateless mcp_call() untouched (different endpoint/contract, add-dont-merge). (2) add a new section 6 Degraded Mode -- Gateway-Blind Session to docs/standards/gateway-call-contract.md: self-diagnosis method (inspect own tool schema directly, never trust memory/notebooks per fail-loud anti-hallucination rule), workaround coverage matrix (vn-market downstream tools -> mcp_call() full coverage; gateway meta-tools -> mcp_call_gateway_meta() once shipped; no-Bash agents -> already-shipped cycle-bootstrap/SKILL.md CONFIRMED-BLIND fallback, no other option), discovery-first fallback via docs/data/tool-registry.json (cross-ref existing SS2), and a de-escalation/dedup rule -- once gateway-blindness is corroborated >=2x in the current session, do not raise a fresh CRITICAL signal, treat further recurrences as routine/expected until user /mcp reconnect. Not urgent/blocking -- workaround already in daily use; closes documentation + narrow tool-discovery gap, reduces alert churn. Does NOT duplicate FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP (caba878b7/83bca6c04, shipped 2026-07-07) which covers the no-Bash cowork cycle-bootstrap Step-0 call site only."
-      },
-      {
         "title": "Delete or attic the orphaned TS shadow service under src/",
         "priority": "P1",
         "zone": "technical-analysis",
@@ -9462,7 +9440,37 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "title": "Split fetchParseAndStoreBctc + name the news-fallback confidence constants",
+        "priority": "P1",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-APP-split-fetchParseAndStoreBctc",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-fetchParseAndStoreBctc",
+        "promoted_at": "2026-07-08T18:48:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T18:48:50Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      },
+      {
+        "id": "FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE",
+        "type": "FIX",
+        "title": "Extend mcp-call.sh with stateful gateway-meta bridge (list_servers/list_server_tools/search_tools) + document sanctioned degraded-mode procedure in gateway-call-contract.md",
+        "priority": "high",
+        "zone": "cross-service/",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "next_agent": "developer",
+        "created_at": "2026-07-08T04:46:30Z",
+        "created_by": "architect",
+        "status_note": "Follow-up from SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE (docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md SS5-6). Scope (land together, same PR): (1) add mcp_call_gateway_meta(tool_name, json_args) to scripts/agents-flow/mcp-call.sh implementing the proven 3-step stateful handshake (initialize -> notifications/initialized -> tools/call, reusing the returned mcp-session-id header) against https://zenmidi.com/gateway/mcp -- covers the 3 gateway meta-tools that have zero bash-callable equivalent today; keep the existing stateless mcp_call() untouched (different endpoint/contract, add-dont-merge). (2) add a new section 6 Degraded Mode -- Gateway-Blind Session to docs/standards/gateway-call-contract.md: self-diagnosis method (inspect own tool schema directly, never trust memory/notebooks per fail-loud anti-hallucination rule), workaround coverage matrix (vn-market downstream tools -> mcp_call() full coverage; gateway meta-tools -> mcp_call_gateway_meta() once shipped; no-Bash agents -> already-shipped cycle-bootstrap/SKILL.md CONFIRMED-BLIND fallback, no other option), discovery-first fallback via docs/data/tool-registry.json (cross-ref existing SS2), and a de-escalation/dedup rule -- once gateway-blindness is corroborated >=2x in the current session, do not raise a fresh CRITICAL signal, treat further recurrences as routine/expected until user /mcp reconnect. Not urgent/blocking -- workaround already in daily use; closes documentation + narrow tool-discovery gap, reduces alert churn. Does NOT duplicate FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP (caba878b7/83bca6c04, shipped 2026-07-07) which covers the no-Bash cowork cycle-bootstrap Step-0 call site only. [PO-TRIAGE 2026-07-08T18:57:43Z] Priority medium->high. Escalating gateway-blind churn (7 agent types, 4 GUARANTEED-slot misses, 22h+ open, confirmed still-blind live this tick). This is the SOLE repo-actionable forward item: it ships the de-escalation rule (§6d) that STOPS the recurring CRITICAL re-raise. Root cause out-of-repo (CLI client, SPIKE-DONE) — no repo work restores the missed deliverables; user /mcp reconnect surfaced to BUG msg 3285. next_agent=developer, ready for dispatch.",
+        "dispatched_at": "2026-07-08T19:00:35Z",
+        "dispatched_by": "dev-team (router, parallel FIX dispatch alongside BOUNDED-1 FACTORY task — .head intentionally left pointing at the FACTORY task to avoid clobbering its resume pointer; this row tracked via task_board.in_progress[] only)"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -9600,8 +9608,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T16:24:35Z",
-    "last_triaged_by": "dev-mcp-server"
+    "last_triaged_at": "2026-07-08T18:48:38Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -9610,6 +9618,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-08T13:59:38Z",
-  "_updated_by": "dev-mcp-server"
+  "_updated_at": "2026-07-08T18:57:43Z",
+  "_updated_by": "po"
 }
