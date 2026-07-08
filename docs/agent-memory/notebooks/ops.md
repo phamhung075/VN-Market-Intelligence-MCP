@@ -233,3 +233,33 @@ QA will execute LIGHTER post-swap sanity check (no full RAW HTTP probe needed):
 - Decision journal: DJ-GATE-1 (this section)
 
 ---
+
+---
+
+## Gated Rebuild + SHA-gate: FACTORY-TECHANALYSIS-reconcile-ta-contract (2026-07-08T11:15–11:16Z)
+
+**Task:** FACTORY-TECHANALYSIS-reconcile-ta-contract  
+**Agent Context:** ops (Step 1-4 close-gate, then qa Step 5 RAW-verify, then po Step 6 mark DONE)  
+**Session UUID:** Agent dispatch  
+**Status:** ✓ GATE 1-4 PASS → moved next_agent to "qa"
+
+**Close-Gate Summary:**
+- **Step 1 (Memory Check):** Docker ~1.8GB used (7GB cap), system 343MB free → PASS ✓
+- **Step 2 (Rebuild):** `docker compose build --build-arg GIT_SHA="$(git rev-parse HEAD)" technical-analysis` → binary compiled, no errors, 24.1s → PASS ✓
+- **Step 3 (Container Start):** `docker compose up -d technical-analysis` → container status `running (healthy)` at 11:16:01Z → PASS ✓
+- **Step 4 (SHA-gate):** `bash scripts/verify-deploy-sha.sh technical-analysis` → deployed SHA `7b2490813be9ee98d871cb83ebe9c3e20a9889c1` matches HEAD → PASS ✓
+
+**Light Sanity Check (golden-probe validation):**
+- (1) symbol+period DB-backed: `POST /ta/indicators {symbol:"VCB",period:20}` → HTTP 200, full indicator payload ✓
+- (2) closes-only pure-compute: `POST /ta/indicators {closes:[60180,60260,60320]}` → HTTP 200 ✓
+- (3) missing-both 400: `POST /ta/indicators {}` → HTTP 400, "closes or symbol required" ✓
+
+**Technical Context:**
+- Fix scope: `api/openapi.yaml` spec + Go `router.go`/`dtos.go` doc-comments only (ZERO functional change)
+- Pre-rebuild baseline: golden request/response diff captured during dev phase (byte-identical before/after confirmed via packet trace)
+- Post-rebuild payload: consistent with pre-change golden baseline
+- Commits: `190f60285` (contract), `db05de91b` (zone docs), `783830636` (memory)
+
+**Post-Gate Delegation:** next_agent moved to "qa" (status remains REVIEW), orch-state updated via orch-apply.sh confirmed 2026-07-08T11:16:15Z. qa Step 5: formal RAW-verify against golden baseline. po Step 6: mark DONE_VERIFIED.
+
+**Decision Journal:** Extended docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md with STEP dev-technical-analysis-S3 (gate execution details).

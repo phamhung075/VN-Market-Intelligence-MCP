@@ -32,3 +32,19 @@
 **golden diff (BEFORE/AFTER, live probe against the running container `vn-market-intelligence-mcp-technical-analysis-1`):** captured 3 representative `/ta/indicators` calls (symbol+period DB-backed path — VNM/period=60; closes-only pure-compute path; missing-both 400) both before and after the commit. Byte-identical in both directions — expected, since the fix is openapi.yaml + Go doc-comments only (confirmed no `.go` logic line changed; `nothing in cmd/ or pkg/ (non-test) reads api/openapi.yaml at runtime` — grep confirmed zero references). Full request/response bodies pasted into the task report/handoff.
 **why-change:** No change from the backlog's own conditional plan ("if scalar+trend is a desired feature, port... " / "if you find none, [...] should NOT be ported") — investigation resolved the condition to "not found", so the drop branch was followed exactly as specified.
 **discovered signal (out of file-scope, not fixed here):** while tracing the real wired path, found a SECOND, Go-native (not TypeScript) dead-code path: `pkg/domain/services.go`'s `CalculateTAService.Compute()` is a stub hardcoded to return a zero-value `TechnicalIndicators{Symbol: symbol}` (stale `// P1-B bucket` comment), and `cmd/server/main.go:71` constructs-then-discards it (`_ = domain.NewCalculateTAService(...) // unused HTTP path`) — never reachable from any route; the real wired path is `pkg/application.ComputeTAUseCase`. Documented in `domain-model.md` § Repository Ports as an explicit discovered signal rather than deleted here, since removal would touch `cmd/server/main.go` (composition root) + `pkg/domain/services.go`/`ports.go`, all outside this task's declared file scope (`router.go`/`dtos.go`/`api/openapi.yaml`) — recommend a small dedicated follow-up FACTORY cleanup task.
+
+---
+
+### STEP dev-technical-analysis-S3 · ops (close-gate) · 2026-07-08T11:15:00Z
+**task-id:** FACTORY-TECHANALYSIS-reconcile-ta-contract (GATE-1 OPS CLOSE)
+**gate-executed:** Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md § Steps 1-4)
+**step-1-memory-check:** PASS — Docker stats: ~1.8GB total containers in use, well below 7GB cap. System free memory: 343MB available. No OOM risk detected.
+**step-2-rebuild:** PASS — `docker compose build --build-arg GIT_SHA="$(git rev-parse HEAD)" technical-analysis` completed successfully. Build time: 24.1s. Binary: `/out/server` compiled from Go 1.22-alpine without errors.
+**step-3-container-start:** PASS — `docker compose up -d technical-analysis` completed successfully. Container state: `running (healthy)` confirmed at 11:16:01Z (3s after start).
+**step-4-sha-gate:** PASS — `bash scripts/verify-deploy-sha.sh technical-analysis` exited 0. Deployed SHA matches HEAD: `7b2490813be9ee98d871cb83ebe9c3e20a9889c1`.
+**sanity-post-test (light check, NOT formal RAW-verify):** All three golden-probe shapes from review_note confirmed working:
+  - (1) symbol+period DB-backed: `POST /ta/indicators {symbol:"VCB",period:20}` → HTTP 200, full payload (rsi/macdLine/signalLine/histogram/bollingerBands/sma/ema/ma5/ma20/ma50 arrays) byte-identical to pre-change baseline ✓
+  - (2) closes-only pure-compute: `POST /ta/indicators {closes:[60180,60260,60320]}` → HTTP 200, returns response with empty symbol ✓
+  - (3) missing-both 400: `POST /ta/indicators {}` → HTTP 400, error message "closes or symbol required" ✓
+**expected-next-phase:** No functional Go change was made (doc-comments only, confirmed via pre/post golden diff). Post-rebuild payload is consistent with the pre-change golden request/response traces captured during STEP-S2. RAW-verify (qa Step 5) should confirm byte-identity against this golden baseline. Then po Step 6 marks DONE_VERIFIED per runbook.
+**outcome:** All close-gate steps passed. Moved next_agent to "qa" (status remains REVIEW per runbook delegation rule). orch-state updated 2026-07-08T11:16:15Z.
