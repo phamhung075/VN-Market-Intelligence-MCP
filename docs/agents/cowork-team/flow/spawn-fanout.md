@@ -1,4 +1,4 @@
-<!-- size-justification: 108L — Step 5: parallel fan-out with published-marker gate contract. Child of main.md. BGFAN-1 2026-06-07: run_in_background=true added to spawn template (+3L). -->
+<!-- size-justification: 108L — Step 5: parallel fan-out with published-marker gate contract. Child of main.md. BGFAN-1 2026-06-07: run_in_background=true added to spawn template (+3L). FIX-COWORK-STEP5-BACKSTOP-TRUSTS-STALE-TRIGGER-STATUS 2026-07-08: Step 5.0 discriminator re-keyed trigger_status->_superseded_by, comment block expanded (+4L). Pre-existing drift note: header count was already stale vs live line count before this edit (untouched, out of this task's scope). -->
 <!-- BGFAN-1: ALL Agent spawns in this file MUST use run_in_background=true. Cowork agents are independent → genuine parallel background fan-out. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
 ## Step 5 — Parallel fan-out
@@ -9,10 +9,15 @@
 if SESSION_BLIND == true:
 
   # Classify each matched slot by backstop coverage
-  # Source of truth: docs/data/cowork-schedule.json .slots[].trigger_id + .trigger_status
+  # Source of truth: docs/data/cowork-schedule.json .slots[].trigger_id + ._superseded_by
+  # trigger_status is DEPRECATED as a discriminator (FIX-COWORK-STEP5-BACKSTOP-TRUSTS-STALE-TRIGGER-STATUS,
+  # 2026-07-08): never resynced after the 2026-06-22/23 cloud RemoteTrigger decommission
+  # (STANDING feedback_no_remote_trigger_all_local) — reads "active" on slots with zero live
+  # cloud backstop. _superseded_by is live-maintained: null == still cloud-trigger-backed
+  # (safe to defer); non-null == cloud role already retired for this slot — NOT backstop-covered.
   # DO NOT hardcode slot names — derive from schedule at runtime via jq
-  BACKSTOP_SLOTS    = [s for s in WON_SLOTS if s.trigger_id != null AND s.trigger_status == "active"]
-  NO_BACKSTOP_SLOTS = [s for s in WON_SLOTS if s.trigger_id == null OR s.trigger_status != "active"]
+  BACKSTOP_SLOTS    = [s for s in WON_SLOTS if s.trigger_id != null AND s._superseded_by == null]
+  NO_BACKSTOP_SLOTS = [s for s in WON_SLOTS if s.trigger_id == null OR s._superseded_by != null]
 
   for each slot in BACKSTOP_SLOTS:
     log: "[cowork-team] BLIND — deferred to cloud backstop: <slot.slot_id>"

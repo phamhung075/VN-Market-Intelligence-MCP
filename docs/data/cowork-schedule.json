@@ -36,7 +36,7 @@
       "last_fired": "2026-07-03T05:28:58Z",
       "trigger_id": "trig_01FdUF4YWg8TqpXVnBLC7GYj",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
+      "trigger_status": "superseded",
       "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
@@ -78,7 +78,7 @@
       "last_fired": "2026-07-03T09:00:18Z",
       "trigger_id": "trig_01NS8j25rYt4meXVqHyRsVNn",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
+      "trigger_status": "superseded",
       "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
@@ -99,7 +99,7 @@
       "last_fired": "2026-07-07T19:47:50.000Z",
       "trigger_id": "trig_013zatVHSRiChMJwm5XtSBEx",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
+      "trigger_status": "superseded",
       "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
@@ -120,7 +120,7 @@
       "last_fired": "2026-06-28T13:49:13.000Z",
       "trigger_id": "trig_01FjB1WhF1bpgH1oYZF4BYru",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
+      "trigger_status": "superseded",
       "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
@@ -160,7 +160,7 @@
       "last_fired": "2026-07-07T20:17:30.000Z",
       "trigger_id": "trig_01QgnBwnEyzLj5as55i53tea",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
+      "trigger_status": "superseded",
       "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
@@ -417,7 +417,6 @@
       "last_fired": "2026-07-03T09:31:51.000Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
       "last_reactivated_at": null
     },
     {
@@ -438,7 +437,6 @@
       "last_fired": "2026-07-04T13:19:41Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
       "last_reactivated_at": null
     },
     {
@@ -460,7 +458,6 @@
       "trigger_id": null,
       "_note": "Event-driven: position-danger (3-condition) or watchlist-opportunity (4-condition). Evaluates every 15min during market hours, exits silently if neither condition fires.",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
       "last_reactivated_at": null
     },
     {
@@ -482,7 +479,6 @@
       "trigger_id": null,
       "_note": "Event-driven CRITICAL-always: verified_chain or legal_risk or crisis_velocity (no conditions, always fires). 24/7 off-hours coverage for regulatory/legal/crisis events.",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "active",
       "last_reactivated_at": null
     }
   ],

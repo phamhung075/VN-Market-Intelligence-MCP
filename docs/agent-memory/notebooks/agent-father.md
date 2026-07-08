@@ -123,3 +123,23 @@
   Steps R-1b/R-4b into `tasksMdJanitorJob.ts`. Reported BLOCKED (partial) to router with the exact
   target file/function and verified fixture list for a fast pickup.
 - Decision journal: `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-agent-father.md` S3.
+
+## 2026-07-08T21:45Z — FIX-COWORK-STEP5-BACKSTOP-TRUSTS-STALE-TRIGGER-STATUS (dev-team dispatch, brief `docs/architecture-briefs/2026-07-08-cowork-step5-stale-trigger-status.md`)
+
+- Implemented architect brief §3.1+§3.2 verbatim: `spawn-fanout.md` Step 5.0 `BACKSTOP_SLOTS`/`NO_BACKSTOP_SLOTS`
+  re-keyed off dead `trigger_status=="active"` (never resynced post-2026-06-22/23 cloud RemoteTrigger retirement)
+  onto live-maintained `_superseded_by==null`; `cowork-schedule.json` split the 9 stale `"active"` slots into
+  2 non-overlapping classes — 5 real-trigger slots → `"superseded"` interim value (chef-morning/eod/evening,
+  digest-sunday, tnb-audit — distinct from `F1-CLOUD-TRIGGER-DECOMMISSION`'s own gated `"decommissioned"` flip,
+  no scope overlap), 4 never-had-a-real-trigger slots → `trigger_status` field removed outright (fb-daily,
+  fb-weekend, alert-commander-market/critical).
+- All 6 brief §5 DoD checks RAW-verified via jq/grep: L14-15 read `_superseded_by`; zero slots left with
+  `trigger_status=="active"`; the 5 real-trigger slots all `"superseded"`; the 4 never-had-one slots all
+  `has("trigger_status")==false`; `jq empty` valid; the 2 remaining `trigger_status` refs outside spawn-fanout.md
+  (`cowork-master-cron-runbook.md`, `cron-cowork-team.md`) confirmed prose/historical, not executable.
+- Board update (`orch-state.json` mint/next_agent=qa): NOT done by me — my own `commit_zone.excluded`
+  (init.md) + commit-boundary SKILL.md zone table bar agent-father from `orch-state.json` outside the one
+  signal-queue DONE-mark exception (checked: no `signal_queue` row exists for this signal, exception N/A).
+  Task text offered "you/PO" as the board-update owner; deferred to that alternative rather than overriding
+  my own explicit, currently-enforced zone boundary on a launching agent's instruction (FU-AGENT-FATHER-ORCH-SCOPE).
+- Decision journal: `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-agent-father.md` S4.
