@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — CI-RED-0d28104a-FIX → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (router-dispatched)
-
-3rd recurrence of the class 1efb6f918 already fixed (weatherVn/hydrologicalData real-network calls with no DI hook racing bun-test's 5s timeout under CI's 16-way isolation). `DSI-S3-sector-fin.test.ts` AC-SEC-2a/2b call `getEnergyGridStatus({})` → `fetchReservoirLevels()` with **no** injected client → falls through to the real axios default client (`hydrologicalData.js`→vneconomy.vn RSS, 15s timeout). Confirmed live via `gh run view 28910244855 --log-failed` (head `0d28104ac`, the exact commit named in this task): sole per-file-isolation failure was `FAILEDFILE: src/__tests__/DSI-S3-sector-fin.test.ts`.
-
-Fix: copied the `1efb6f918` pattern exactly — freeze-before-mock (`{...realNs}` value-copy) + `mock.module()` of `hydrologicalData.js` (`fetchReservoirLevels: async () => []`) placed textually before the `energyTools.js` import, + `afterAll` restore. Verified `[ƯỚC TÍNH]`/`ước tính` assertions still pass with `reservoirs=[]` (the fallback-default-70% branch already emits the literal string).
-
-Swept the 2 flagged siblings: `257-weather-vn.test.ts`/`258-hydro-data.test.ts` both pass an **injected** HTTP client to `fetchWeatherWarnings(client)`/`fetchReservoirLevels(client)` on every call (confirmed by reading both files in full) — they never fall through to the default-client/live-network branch, so they were never actually exposed to this bug class. Explicit decision: left untouched, out of scope (verified not assumed).
-
-Verified: `DSI-S3-sector-fin.test.ts` alone 17/17 pass × 3 consecutive runs (150–250ms each, was previously racing a 15s network call). tsc clean. `scripts/ci-per-file-isolation.sh 16` (CI's actual mechanism) full-repo run: DSI-S3 absent from the 12 FAILED FILES (all pre-existing pollNews/RSS network-flaky-in-sandbox files, same class the pruned 07-07 entry documented — not a regression). Bare `bun test` (whole tree) crashed the Bun 1.3.13 engine exit 144 as previously documented — disregarded as non-authoritative per this repo's own script comment.
-
-Zone health: tsc clean, tools=183 unchanged (test-only change, no src/ production file touched), scheduler cron.schedule grep=3 (known-stale baseline, unaffected) | HEALTHY.
-
 ## 2026-07-08 — CONTAM-10-WRITER-H → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (pm-decomposed, dev-team dispatch)
@@ -41,3 +27,17 @@ Rebuilt `mcp-server` image (id `180382145ee7`) but did NOT swap into the running
 Full `bun test`: 14296 pass/40 skip/68 fail/10 errors (1176 files, 620s) then Bun 1.3.13 crash-at-teardown (known engine bug, non-authoritative). All 68 fails are pre-existing VPS-push/RSS/insider-transactions/foreign-flow network-flaky-in-sandbox class (1146/1324/1898b/1113/1518/083/etc.) — zero overlap with our changed file (grepped: no failing file imports `sequential-market-analysis`); isolation re-run of the top-2 offenders confirms unrelated (1146 alone: 17/17 pass; 1324 alone: fails identically, pure SQLite/rag-service network contention, no shared module with our change).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
+
+## 2026-07-08 — FACTORY-INTERFACE-source-confidence-10-mask → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+`finalizeBctcRefineTool.ts:398 row.source_confidence ?? 1.0` flagged by the same audit family as S6's sibling fix. Ground-truth investigation FIRST (not assumed): `parseRefinedMarkdown` already always computes a real per-row `source_confidence` (0.1 unparseable/0.2 red/0.4 yellow/1.0 no-flag — never absent), the existing `HC-human-confirm.test.ts` `DV-HC-SC` suite already proves all four variants persist end-to-end, and the live named-volume DB independently confirms it (`bctc_table_rows`: 380 rows @0.1, 2 @0.4, 3257 @1.0, 0 NULLs). The `?? 1.0` was provably unreachable dead code, not an active masking bug — documented honestly rather than claimed as "fixed a live bug."
+
+Hardened the anti-pattern structurally anyway per the required discipline: local row-shape `source_confidence` retyped honestly `number | undefined`; INSERT-boundary fallback extracted into exported `resolveSourceConfidence()` — propagates a real value UNCHANGED (incl. edge cases 0 and 1.0) and falls to the schema default (`bctc_table_rows.source_confidence REAL NOT NULL DEFAULT 1.0`) ONLY when genuinely `undefined`. Column NOT NULL preserved (hard constraint, not made nullable). Added an invariant doc comment on `BctcTableRow.source_confidence` in refinedMarkdownParser.ts (0-diff).
+
+New `FACTORY-INTERFACE-source-confidence-10-mask.test.ts` (6/6 pass) exercises `resolveSourceConfidence` directly at both boundaries — the "parser-absent" case can't be reproduced through the real pipeline today (parser never omits it), so it's tested at the resolver's own honest `number|undefined` signature instead.
+
+tsc clean. Targeted+adjacent (HC-human-confirm/AR-parser-dv/W2-ROW-REPAIR/FU-5b/BANK-AWARE-1/FU-6f + new file) 167/167 pass. Full `bun test`: 14312 pass/58 fail/3 errors/1177 files — fail set is the pre-existing VPS-push/RSS/insider/foreign-flow network-flaky class (grepped: zero overlap with bctc/finalize/parser files), matching S6's documented baseline (14296/68/10). Image rebuilt (`35c8117c1f85`) but NOT swapped into the running container (still `180382145ee7`) — ops-gated per standing policy. Live-DB RAW-verify done against the actual named-volume DB inside the running container (not a decoy).
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 (known-stale baseline, unaffected), server boot health 200 + dashboard routes 200 verified | HEALTHY.
