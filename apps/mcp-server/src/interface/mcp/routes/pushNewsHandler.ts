@@ -79,10 +79,24 @@ export async function handlePushNews(
               ...Object.fromEntries(
                 Object.keys(bySource).map((src) => [src, async () => bySource[src] ?? []])
               ),
-              // Non-VN sources: always no-op in push-news context.
-              // Placed after spread so they override any hypothetical key collision.
-              reuters:          async () => [],
-              tradingeconomics: async () => [],
+              // FIX-NEWS-CB-FALSE-CLOSED (2nd call site, 2026-07-08): reuters
+              // and tradingeconomics are intentionally NOT stubbed here. Both
+              // sources are permanently disabled via a one-time
+              // recordDisabled() seed (sourceHealthTools.ts). pollNews.ts's
+              // health loop treats a fulfilled-but-empty result from a source
+              // outside STUB_CAPABLE_KEYS as a real failure, so a stub of
+              // `async () => []` for these two keys — fired on every VPS push
+              // event, far more often than the 15-min scheduled cycle —
+              // silently overwrote the "disabled" status with an
+              // ever-climbing recordFailure() count. pollNews.ts's own
+              // resolvedFetchers contract (Sprint 1833g) only adds these keys
+              // when a caller explicitly provides a fetcher for them, so
+              // simply omitting them here (as intelligenceCycleJob.ts's
+              // defaultPollNews() now also does) leaves the recordDisabled()
+              // seed untouched forever. If a future non-VN source key needs
+              // suppressing in this push-news context, add it ABOVE this
+              // comment as an explicit no-op override — never reuters/
+              // tradingeconomics.
             },
           });
           log.info("[push-news] pipeline complete", {
