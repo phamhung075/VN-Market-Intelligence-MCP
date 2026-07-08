@@ -262,9 +262,9 @@
     "status": "in_progress",
     "active_task_id": "CONTAM-10-WRITER-H",
     "next_agent": "dev-mcp-server",
-    "next_action": "Implement CONTAM-10-WRITER-H (writer guard swap); parallel with optional MIGRATION-ANCHOR-DIAG; blocks EXEC-2.",
-    "updated_at": "2026-07-08T01:23:05Z",
-    "updated_by": "architect"
+    "next_action": "pm-decomposed primary fix dispatch of CONTAM-10-WRITER-H — dispatcher-wrap then JUMP TO execute.",
+    "updated_at": "2026-07-08T01:33:05Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2566,14 +2566,16 @@
             "zone": "apps/mcp-server/src/interface/mcp/routes/",
             "owner": "dev-mcp-server",
             "size": "M",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "priority": "high",
             "created_at": "2026-07-08T01:22:39Z",
             "depends": [],
             "blocks": [
               "CONTAM-10-EXEC-2"
             ],
-            "note": "Primary fix: swap raw INSERT for writeOhlcvBatch(rows, {conflictStrategy:\"backfill\"}) to activate cross-day scale guard. Blocks EXEC-2. Live evidence: 6,533 contaminated rows as of 2026-07-07, backfill queue poller still active."
+            "note": "Primary fix: swap raw INSERT for writeOhlcvBatch(rows, {conflictStrategy:\"backfill\"}) to activate cross-day scale guard. Blocks EXEC-2. Live evidence: 6,533 contaminated rows as of 2026-07-07, backfill queue poller still active.",
+            "claimed_at": "2026-07-08T01:33:05Z",
+            "claimed_by": "dev-team"
           },
           {
             "id": "CONTAM-10-MIGRATION-ANCHOR-DIAG",
