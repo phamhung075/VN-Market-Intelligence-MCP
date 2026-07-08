@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "blocked",
+    "status": "in_progress",
     "active_task_id": "FACTORY-MACRO-delete-dead-ts-tree",
-    "next_agent": "po",
-    "next_action": "po scope decision on FACTORY-MACRO-delete-dead-ts-tree: __tests__/unit/scrapers/** + __tests__/integration/scrapers/external-macro-live.test.ts import from src/infrastructure/scrapers/ (outside the two named deletion subtrees) — decide fold-in vs follow-up task, then re-dispatch dev-macro-indicators.",
-    "updated_at": "2026-07-08T07:06:00Z",
-    "updated_by": "dev-macro-indicators"
+    "next_agent": "dev-macro-indicators",
+    "next_action": "dev-macro-indicators executes wholesale deletion — FOLD-IN scope now clean: delete src/_deprecated/, src/infrastructure/scrapers/, the ENTIRE __tests__/ tree, package.json/tsconfig.json/bun.lock/node_modules; reconcile docs/architecture/microservice/macro-indicators/testing.md -> Go-only. Spec: backlog-detail#FACTORY-MACRO-delete-dead-ts-tree files[]+approach+dod.",
+    "updated_at": "2026-07-08T07:18:20Z",
+    "updated_by": "po"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -702,8 +702,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-08T06:36:28Z",
-    "_updated_by": "dev-pdf-extractor",
+    "_updated_at": "2026-07-08T07:18:20Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -9215,7 +9215,27 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "title": "Delete orphaned TypeScript src/ tree and broken bun toolchain (pure-Go service)",
+        "priority": "P1",
+        "zone": "macro-indicators",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-MACRO-delete-dead-ts-tree",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-delete-dead-ts-tree",
+        "promoted_at": "2026-07-08T07:00:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T07:01:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-macro-indicators",
+        "status_note": "[po 2026-07-08T07:18:20Z] UNBLOCKED via FOLD-IN scope decision — file-list expanded, re-dispatched to dev-macro-indicators. Rationale: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-po.md STEP po-S2.",
+        "dispatched_at": "2026-07-08T07:18:20Z",
+        "dispatched_by": "po",
+        "scope_decision": "FOLD-IN (option a, expanded) 2026-07-08 by po: the 9 __tests__ scraper importers that blocked deletion are co-residue of the deleted scrapers (not live consumers); whole __tests__/ tree is dead TS->Go migration residue with 0 live coverage (33 Go _test.go remain). Expanded file-list to include __tests__/ + node_modules rather than splitting a follow-up task (convergence over churn)."
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -9334,25 +9354,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Delete orphaned TypeScript src/ tree and broken bun toolchain (pure-Go service)",
-        "priority": "P1",
-        "zone": "macro-indicators",
-        "type": "FACTORY",
-        "status": "BLOCKED",
-        "id": "FACTORY-MACRO-delete-dead-ts-tree",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-delete-dead-ts-tree",
-        "promoted_at": "2026-07-08T07:00:43Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T07:01:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "po",
-        "blocked_at": "2026-07-08T07:06:00Z",
-        "blocked_by": "dev-macro-indicators",
-        "blocked_on": "SCOPE DECISION: mandatory pre-delete grep (per task spec) found src/infrastructure/scrapers/ has 9 LIVE importers OUTSIDE the two named-for-deletion subtrees — __tests__/unit/scrapers/*.test.ts (8) + __tests__/integration/scrapers/external-macro-live.test.ts (1), all resolving real relative imports e.g. ../../../src/infrastructure/scrapers/adb-kidb.js. src/_deprecated/ itself is clean (0 external importers, only doc-comment mentions in 3 Go files). Per task explicit instruction (\"If you find one, STOP and report it rather than deleting\"), ZERO files deleted. These __tests__ files never execute anywhere (CI runs Go-lint only for macro-indicators, Dockerfile has zero bun step) so they are also dead, but folding their deletion into this task is a scope call this agent will not make unilaterally. po to decide: (a) expand this task file-list to also delete __tests__/unit/scrapers/** + __tests__/integration/scrapers/external-macro-live.test.ts, or (b) split a follow-up task, then re-dispatch dev-macro-indicators to execute.",
-        "status_note": "[dev-macro-indicators 2026-07-08T07:06:00Z] BLOCKED — independent re-verify found live importer the router precheck missed. Full grep evidence in docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-macro-indicators.md STEP dev-macro-indicators-S1 and docs/agent-memory/notebooks/dev-macro-indicators.md Session 2026-07-08."
       }
     ],
     "qa": [],
@@ -9382,6 +9383,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-04T07:05:21Z",
-  "_updated_by": "po-s142-sysremake-dup-supersede"
+  "_updated_at": "2026-07-08T07:18:20Z",
+  "_updated_by": "po"
 }

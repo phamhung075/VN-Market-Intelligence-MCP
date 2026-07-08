@@ -1781,15 +1781,17 @@
       "files": [
         "apps/macro-indicators/src/_deprecated/",
         "apps/macro-indicators/src/infrastructure/scrapers/",
+        "apps/macro-indicators/__tests__/",
         "apps/macro-indicators/package.json",
         "apps/macro-indicators/tsconfig.json",
-        "apps/macro-indicators/bun.lock"
+        "apps/macro-indicators/bun.lock",
+        "apps/macro-indicators/node_modules/"
       ],
-      "approach": "The Dockerfile builds only Go (COPY cmd/ pkg/ api/; go build ./cmd/server); src/index.ts does not exist (broken start script); scrapers are imported only by the dead _deprecated/index.ts. Delete src/_deprecated/ and src/infrastructure/scrapers/ wholesale, plus package.json/tsconfig.json/bun.lock/node_modules since the service is pure-Go. Verify no live importer outside the app first (already confirmed zero). History + macro-pre-delete tag preserve it.",
+      "approach": "[po fold-in 2026-07-08] Dockerfile builds only Go (COPY cmd/ pkg/ api/; go build ./cmd/server); src/index.ts does not exist (broken start script). The scrapers are imported ONLY by (a) the dead _deprecated/index.ts and (b) 9 TS tests under __tests__/ that test the very scrapers being deleted — co-residue, NOT live consumers. The CI `bun test` job globs ONLY apps/mcp-server/src/__tests__ (scripts/ci-per-file-isolation.sh L11 TESTDIR=src/__tests__); macro-indicators CI is Go-lint only; Dockerfile has zero bun step; and 5 further __tests__ files already import nonexistent src/application|src/domain (deleted in the TS->Go migration) — so the ENTIRE __tests__/ tree is dead migration residue with 0 live coverage (real coverage = 33 pkg/**/*_test.go). Delete src/_deprecated/, src/infrastructure/scrapers/, the WHOLE __tests__/ tree, package.json/tsconfig.json/bun.lock/node_modules (pure-Go service; deleting package.json also drops macro-indicators out of the pnpm workspace so `pnpm -r test` no longer runs its broken TS tests). Then reconcile docs/architecture/microservice/macro-indicators/testing.md (currently 100% about the deleted TS suite, cites stale src/__tests__ paths + a pre-existing failing test) -> rewrite Go-only (`cd apps/macro-indicators && go test ./...`). Whole-repo grep 2026-07-08 confirms ZERO code importer of any deleted macro path outside the deletion set (the news-fetch scrapers dir is a separate service). FLAG for agent-father (do NOT edit here — agent-def files): stale bun-test refs in docs/agents/dev-macro-indicators/init.md:35 (test_command_ts) + flow/main.md:43 (bun-test column). Optional secondary residue the dev may also purge: apps/macro-indicators/scripts/discover-adb-xhr.py (TS-scraper discovery tooling, doc-comment refs only) + 3 pkg/primitive/*.go provenance doc-comments now pointing at the removed _deprecated/domain/services.ts (trivial). History + macro-pre-delete tag preserve everything.",
       "effort": "S",
       "risk": "low",
       "rebuild_required": false,
-      "dod": "`grep -r` confirms no live importer of the deleted paths; go build ./... and the docker-compose Go image build unaffected; tests green; generic; behavior of the running Go image unchanged (RAW metric path untouched).",
+      "dod": "`grep -r` confirms ZERO live code importer of any deleted path outside the deletion set; go build ./... and the docker-compose Go image build unaffected; `cd apps/macro-indicators && go test ./...` green (33 _test.go); no dangling TS importer remains anywhere in the repo; docs/architecture/microservice/macro-indicators/testing.md rewritten Go-only; behavior of the running Go image unchanged (RAW metric path untouched).",
       "depends_on": [],
       "type": "FACTORY",
       "epic": "FACTORY-MAINTAINABILITY-2026-06",
