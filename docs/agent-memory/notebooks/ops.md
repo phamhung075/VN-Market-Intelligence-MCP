@@ -340,3 +340,52 @@ QA will execute LIGHTER post-swap sanity check (no full RAW HTTP probe needed):
 **Timestamp:** 2026-07-08T14:27Z (5m from build start to health confirmation)
 
 ---
+
+## Docker Close Gate: FACTORY-DOMAIN-relocate-stock-catalog (2026-07-08T17:01Z)
+
+**Task:** FACTORY-DOMAIN-relocate-stock-catalog  
+**Type:** FACTORY DOMAIN (code relocation — STOCK_CATALOG pure-data table split from 828L stockAliases.ts → 618L new stockAliases/catalog.ts)  
+**Session UUID:** 5a45feda-431e-46c8-941d-a6539a0eca77  
+**Status:** ✓ STEPS 1-4 COMPLETE
+
+**Code Context:**
+- Relocation commit: cec87c726 (stockAliases.ts 828L → 265L; new catalog.ts 618L)
+- Pure-data move: STOCK_CATALOG (66 tickers) + 5 detection functions (byte-identical verified by dev-mcp-server)
+- All 21 consumers re-exported correctly; 211/211 tests pass, 195/195 consumer tests pass
+- No functional change; no behavior change; relocation only
+- Dev pre-verification: tsc clean, eslint clean, equivalence script 0 mismatches
+
+**Step 1 — Memory Check: PASS**
+- Docker stats: mcp-server 143MiB / 3GiB (4.65%), full stack ~791MiB used of 8GB cap
+- System memory: 65300 pages free (~261MB), healthy
+- Docker disk: 32GB free (≥15GB threshold) via preflight-disk.sh
+
+**Step 2 — Build + Deploy: PASS**
+- `docker compose build --build-arg GIT_SHA=64a1a135bd28f61fa1aef21f91025d3acd261ed1 mcp-server` OK
+- Image exported: vn-market-intelligence-mcp-mcp-server (latest)
+- `docker compose up -d mcp-server` — container recreated, 13 seconds to healthy
+
+**Step 3 — Container Health Verification: PASS**
+- `docker compose ps mcp-server` → STATUS: Up 13 seconds (healthy) ✓
+- Port bindings: 0.0.0.0:3000→3000/tcp + 0.0.0.0:4004→3000/tcp active
+- Peer container audit: All 11 peer services remain healthy (alert-engine, api-gateway, frontend, kinh-dich, macro, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis)
+- No collateral restarts; rag-service up 3 minutes (independent restart unrelated to this deploy)
+
+**Step 4 — SHA Gate Verification: PASS**
+- `bash scripts/verify-deploy-sha.sh mcp-server` → EXIT 0
+- Deployed SHA verified: 64a1a135bd28f61fa1aef21f91025d3acd261ed1 ✓
+- Container label `vn.market.git_sha` matched HEAD
+
+**Endpoint Verification: PASS**
+- `/health` (mcp-server internal): 200 OK — status=ok, toolCount=183, uptime=18.2s
+- Tool count unchanged; no MCP tool regression from relocation
+
+**Post-Gates Delegation:**
+- Ops Steps 1-4 complete, no blockers
+- Next gate: QA Step 5 RAW-verify (per runbook § "qa verifies liveness + tool behavior")
+- QA task: Hit /health endpoint, verify stockAliases/catalog.ts imports work transparently (no behavior change expected)
+- orch-state next_agent flipped → qa (NOT self-closed to done_verified; po will perform Step 6)
+
+**Artifact Commit:** ops rebuild log to notebook + orch-state update (this entry)  
+**Timestamp:** 2026-07-08T17:02Z (60 seconds from build start to health confirmation)
+

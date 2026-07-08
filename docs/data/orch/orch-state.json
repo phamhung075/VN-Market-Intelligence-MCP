@@ -261,10 +261,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-DOMAIN-relocate-stock-catalog",
-    "next_agent": "ops",
-    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (docs/protocols/docker-deployment-runbook.md) for FACTORY-DOMAIN-relocate-stock-catalog — domain-layer relocation (stockAliases.ts split), rebuild_required=true.",
-    "updated_at": "2026-07-08T14:57:49Z",
-    "updated_by": "dev-mcp-server"
+    "next_agent": "qa",
+    "next_action": "Step 5 RAW-verify: Hit /health endpoint, verify STOCK_CATALOG behavior unchanged, verify tool count/key behaviors match new code. Commits: cec87c726 (code+doc), 98484f2b3 (notebook), e5e53a3af (decision journal), 64a1a135b (board flip). Rebuild verified: SHA gate PASS, container healthy.",
+    "updated_at": "2026-07-08T17:02:00Z",
+    "updated_by": "ops"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
