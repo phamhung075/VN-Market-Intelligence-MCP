@@ -1,7 +1,39 @@
 # Task Report: FACTORY-INTERFACE-source-confidence-10-mask — propagate real per-row source_confidence
 
 date: 2026-07-08
-outcome: APPROVED (code+tests) — held REVIEW (ops-gated mcp-server image swap pending; behavior-preserving fix, no observable delta expected, so post-swap gate is a RAW smoke-test re-query, not a before/after delta hunt)
+outcome: DONE_VERIFIED — post-swap sanity check PASS (ops-gated mcp-server image swap `180382145ee7` → `35c8117c1f85` complete via `f617d0c67`; RAW re-query of the live post-swap DB exactly matches the pre-swap distribution, confirming the behavior-preserving fix introduced no regression)
+
+## Post-swap sanity check (final gate, 2026-07-08T04:51:14Z)
+
+Independently re-confirmed the container swap, not trusting ops's report:
+- `docker inspect c0dc4c1c7168 --format '{{.Image}}'` → `sha256:35c8117c1f85...`
+  — exact match to the rebuilt+QA-approved image; `Config.Image` and
+  `StartedAt=2026-07-08T04:44:33Z` confirm this is the swapped container.
+- RAW-queried the LIVE post-swap container's DB myself (in-container `bun -e`
+  against `bun:sqlite` on `/app/data/market.db`, not a host copy):
+  ```
+  SELECT source_confidence, COUNT(*) FROM bctc_table_rows GROUP BY source_confidence
+  → {0.1: 380, 0.4: 2, 1.0: 3257}
+  SELECT COUNT(*) FROM bctc_table_rows WHERE source_confidence IS NULL → 0
+  SELECT COUNT(*) FROM bctc_table_rows → 3639
+  ```
+  **Exact match** to the pre-swap distribution captured independently at
+  REVIEW stage (§qa-S8) — confirms the swap did not regress the INSERT write
+  path, exactly as expected for a behavior-preserving structural-hardening fix.
+- `curl http://localhost:3000/health` → `200`,
+  `{"status":"ok","name":"vn-market","version":"1.0.0","toolCount":183,...}`
+  — tool count unchanged, independently curled myself.
+- Scanned the full post-swap log window (`docker logs c0dc4c1c7168 --since
+  2026-07-08T04:44:33Z`, 80k+ lines) for `finalizeBctcRefine`/`SqliteError`/
+  `constraint failed`: zero matches — no live BCTC finalize run occurred in
+  the post-swap window (only routine startup housekeeping: bctc-poison-cleanup,
+  backfillBctcPdfPaths, bctcReparseJob cadence-skip), so there was nothing new
+  to regress-check on this point, and no error signal either.
+
+**VERDICT: POST-SWAP SANITY CHECK PASS → FACTORY-INTERFACE-source-confidence-10-mask
+flipped REVIEW → DONE_VERIFIED** via
+`scripts/qa-factory-interface-source-confidence-10-mask-done-verified.jq` +
+`scripts/orch-apply.sh`. No new follow-up bug discovered this cycle.
 
 ## Summary
 
@@ -125,8 +157,8 @@ None.
 
 ## Merge Status
 No branch merge required — dev-mcp-server committed directly to `main`
-(`0f76b3872`, already on `main`). Task held at **REVIEW**
-(`status_note: "code/tests QA-approved, pending ops swap; post-swap gate is a
-RAW re-query of the same source_confidence distribution + NULL count —
-resolver's undefined branch confirmed unreachable"`). `.head.next_agent` set
-to `"ops"` to request the container swap.
+(`0f76b3872`, already on `main`); ops swap committed as `f617d0c67`
+(`180382145ee7` → `35c8117c1f85`). Task flipped **REVIEW → DONE_VERIFIED**
+after independent post-swap sanity check PASS (see section above).
+`.head` idle-reset (`status:"done"`, `active_task_id:null`,
+`next_agent:"router"`).
