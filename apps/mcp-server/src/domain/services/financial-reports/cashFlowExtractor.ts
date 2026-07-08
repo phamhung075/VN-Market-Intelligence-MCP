@@ -23,11 +23,10 @@
 import { parseVnNumber } from "../vnNumberParser.js";
 import type { CashFlowStatement } from "../../../../bctc-schema";
 import {
-  LOOKAHEAD_LINES,
-  extractNumber,
   detectUnitMultiplier,
   stripDiacritics,
 } from "./extractorHelpers.js";
+import { findValue, scaleNumericFields } from "./lib/lineScan.js";
 
 // ---------------------------------------------------------------------------
 // Public result type
@@ -49,50 +48,12 @@ export interface CashFlowConfidence {
 }
 
 // ---------------------------------------------------------------------------
-// Internal findValue helper
+// findValue — FACTORY-DOMAIN-extract-bctc-parsing-lib (2026-07-08): relocated
+// to ./lib/lineScan.ts (canonical, shared with balanceSheetExtractor /
+// incomeStatementExtractor). Call sites below pass the ASCII fallback as
+// `{ fallback: { lines: fallbackLines, pattern } }` — no rowCodeGuard (this
+// extractor never had one), reproducing the original 4-arg behavior exactly.
 // ---------------------------------------------------------------------------
-
-/**
- * Find the first line matching a primary pattern (with Vietnamese diacritics)
- * or a fallback pattern (ASCII-stripped) and extract its number.
- *
- * Returns 0 if not found (missing fields default to 0).
- * Look-ahead: scans up to LOOKAHEAD_LINES following lines when the label line
- * itself contains no number (OCR split-line artifact).
- */
-function findValue(
-  primaryLines: string[],
-  fallbackLines: string[],
-  primary: RegExp,
-  fallback?: RegExp,
-): number {
-  // 1. Try primary pattern on NFC-normalized lines
-  for (let i = 0; i < primaryLines.length; i++) {
-    if (primary.test(primaryLines[i]!)) {
-      const val = extractNumber(primaryLines[i]!);
-      if (val !== null) return val;
-      // Look-ahead for OCR text where numbers appear on separate lines
-      for (let j = 1; j <= LOOKAHEAD_LINES && i + j < primaryLines.length; j++) {
-        const ahead = extractNumber(primaryLines[i + j]!);
-        if (ahead !== null) return ahead;
-      }
-    }
-  }
-  // 2. Try ASCII fallback pattern on diacritic-stripped lines
-  if (fallback) {
-    for (let i = 0; i < fallbackLines.length; i++) {
-      if (fallback.test(fallbackLines[i]!)) {
-        const val = extractNumber(fallbackLines[i]!);
-        if (val !== null) return val;
-        for (let j = 1; j <= LOOKAHEAD_LINES && i + j < fallbackLines.length; j++) {
-          const ahead = extractNumber(fallbackLines[i + j]!);
-          if (ahead !== null) return ahead;
-        }
-      }
-    }
-  }
-  return 0;
-}
 
 // ---------------------------------------------------------------------------
 // Keyword patterns — primary (Vietnamese) + ASCII fallback
@@ -456,35 +417,11 @@ function applyDriftGuard(
 
 // ---------------------------------------------------------------------------
 // Task 1909a — Unit multiplier application
-// ---------------------------------------------------------------------------
-
-function applyMultiplier(cf: CashFlowStatement, m: number): CashFlowStatement {
-  if (m === 1) return cf;
-  return {
-    profitBeforeTax:          cf.profitBeforeTax          * m,
-    depreciationAmortization: cf.depreciationAmortization * m,
-    workingCapitalChanges:    cf.workingCapitalChanges    * m,
-    interestPaid:             cf.interestPaid             * m,
-    incomeTaxPaid:            cf.incomeTaxPaid            * m,
-    operatingCF:              cf.operatingCF              * m,
-    capex:                    cf.capex                    * m,
-    proceedsFromAssetSales:   cf.proceedsFromAssetSales   * m,
-    investmentPurchases:      cf.investmentPurchases      * m,
-    investmentProceeds:       cf.investmentProceeds       * m,
-    dividendsReceived:        cf.dividendsReceived        * m,
-    investingCF:              cf.investingCF              * m,
-    proceedsFromDebt:         cf.proceedsFromDebt         * m,
-    debtRepayments:           cf.debtRepayments           * m,
-    proceedsFromShareIssuance:cf.proceedsFromShareIssuance* m,
-    dividendsPaid:            cf.dividendsPaid            * m,
-    financingCF:              cf.financingCF              * m,
-    netCashFlow:              cf.netCashFlow              * m,
-    beginningCash:            cf.beginningCash            * m,
-    endingCash:               cf.endingCash               * m,
-    freeCashFlow:             cf.freeCashFlow             * m,
-  };
-}
-
+// FACTORY-DOMAIN-extract-bctc-parsing-lib (2026-07-08): applyMultiplier
+// relocated to ./lib/lineScan.ts as scaleNumericFields (generic recursive
+// leaf-scaler — CashFlowStatement is 100% flat numeric fields, verified
+// against bctc-schema.ts, so the recursive walk is provably identical to
+// the field-by-field version above).
 // ---------------------------------------------------------------------------
 // Task 1909a — Confidence scoring (per BCTC-1345b)
 // ---------------------------------------------------------------------------
@@ -561,12 +498,12 @@ export function extractCashFlow(rawText: string): CashFlowStatement {
     if (sbKey && sbMap && sbMap[sbKey] !== undefined) return sbMap[sbKey]!;
 
     // 2. Primary label match (with look-ahead + fallback)
-    const v = findValue(primaryLines, fallbackLines, primary, fallback);
+    const v = findValue(primaryLines, primary, { fallback: { lines: fallbackLines, pattern: fallback } });
     if (v !== 0) return v;
 
     // 3. Alternative patterns (E-2 bank variants)
     for (const [altP, altF] of altPatterns) {
-      const alt = findValue(primaryLines, fallbackLines, altP, altF);
+      const alt = findValue(primaryLines, altP, { fallback: { lines: fallbackLines, pattern: altF } });
       if (alt !== 0) return alt;
     }
 
@@ -690,5 +627,5 @@ export function extractCashFlow(rawText: string): CashFlowStatement {
     }
   }
 
-  return applyMultiplier(raw, effectiveMultiplier);
+  return scaleNumericFields(raw, effectiveMultiplier);
 }
