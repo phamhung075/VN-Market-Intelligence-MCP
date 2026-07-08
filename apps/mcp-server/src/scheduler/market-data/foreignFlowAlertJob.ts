@@ -28,6 +28,11 @@ import {
 } from "../../infrastructure/db/evidenceFragmentStore.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import type { Alert } from "../../domain/services/alertGenerator.js";
+import { deriveConfidenceFromStrength } from "../../domain/services/alertConfidenceScorer.js";
+import {
+  FOREIGN_FLOW_CONFIDENCE_BASE,
+  FOREIGN_FLOW_CONFIDENCE_CEILING,
+} from "../../domain/services/alertThresholds.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -197,6 +202,18 @@ export async function runForeignFlowAlertJob(
 
     highSignals++;
 
+    // FACTORY-SCHEDULER-alert-confidence-literals: derive confidence from the
+    // signal's own 3-day net-flow magnitude (same value already computed for
+    // the evidence fragment below) instead of a frozen literal. A borderline
+    // HIGH signal (~100k shares/3d) lands near FOREIGN_FLOW_CONFIDENCE_BASE; a
+    // maxed-out signal (>=500k shares/3d) lands at FOREIGN_FLOW_CONFIDENCE_CEILING.
+    const flowMagnitude = Math.min(1.0, Math.abs(signal.totalNetVolume3d) / 500_000);
+    const flowConfidence = deriveConfidenceFromStrength({
+      strength: flowMagnitude,
+      base: FOREIGN_FLOW_CONFIDENCE_BASE,
+      ceiling: FOREIGN_FLOW_CONFIDENCE_CEILING,
+    });
+
     // ── 4a: Build alert and write via storeAlerts (atomic alerts↔agent_signals co-write)
     //        FU-ALERT-COWRITE-SCHEDULER-JOBS: replaces direct INSERT OR IGNORE.
     const alertId = `foreign-flow-${code}-${utcDay}`;
@@ -217,7 +234,7 @@ export async function runForeignFlowAlertJob(
             severity: "high",
             actionCode: code,
             message: signal.reasoning,
-            confidence: 0.75,
+            confidence: flowConfidence,
             detectedAt: triggeredAt,
           },
         ],
@@ -239,8 +256,8 @@ export async function runForeignFlowAlertJob(
         stock: code,
         evidence_type: "foreign_flow_institutional",
         direction,
-        magnitude: Math.min(1.0, Math.abs(signal.totalNetVolume3d) / 500_000),
-        confidence: 0.75,
+        magnitude: flowMagnitude,
+        confidence: flowConfidence,
         source_agent: "scheduler/foreignFlowAlertJob",
         ttl_days: 14,
       });

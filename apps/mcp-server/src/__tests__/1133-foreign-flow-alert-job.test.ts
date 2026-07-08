@@ -404,6 +404,60 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     });
   });
 
+  // ── FACTORY-SCHEDULER-alert-confidence-literals ─────────────────────────────
+  // Confidence must be derived from the real 3-day net-flow magnitude, not a
+  // frozen literal — two HIGH signals of different magnitude must produce
+  // different confidence values on both the alert signal and the evidence
+  // fragment (same formula, deriveConfidenceFromStrength, base=0.55 ceiling=0.95).
+
+  describe("FACTORY-SCHEDULER-alert-confidence-literals: confidence varies with flow magnitude", () => {
+    it("a borderline HIGH signal (~120k shares/3d) yields lower confidence than a maxed-out one (600k shares/3d)", async () => {
+      // Weak: 3 consecutive net-buy days of 40k each → totalNetVolume3d=120k
+      // (magnitude = 120_000/500_000 = 0.24 → confidence = 0.55 + 0.24*0.40 = 0.646)
+      const weakDb = makeDb();
+      seedWatchlist(weakDb, ["VNM"]);
+      seedForeignFlow(weakDb, "VNM", [40_000, 40_000, 40_000, 0, 0]);
+      await runForeignFlowAlertJob(weakDb, makeNoopTelegram().overrides);
+
+      // Strong: 3 consecutive net-buy days of 200k each → totalNetVolume3d=600k,
+      // clamped magnitude=1.0 → confidence = 0.55 + 1.0*0.40 = 0.95
+      const strongDb = makeDb();
+      seedWatchlist(strongDb, ["VNM"]);
+      seedForeignFlow(strongDb, "VNM", [200_000, 200_000, 200_000, 0, 0]);
+      await runForeignFlowAlertJob(strongDb, makeNoopTelegram().overrides);
+
+      const weakAlert = weakDb
+        .query<{ signals_json: string }, []>(
+          "SELECT signals_json FROM alerts WHERE id LIKE 'foreign-flow-VNM-%'"
+        )
+        .get();
+      const strongAlert = strongDb
+        .query<{ signals_json: string }, []>(
+          "SELECT signals_json FROM alerts WHERE id LIKE 'foreign-flow-VNM-%'"
+        )
+        .get();
+      expect(weakAlert).not.toBeNull();
+      expect(strongAlert).not.toBeNull();
+
+      const weakConfidence = (JSON.parse(weakAlert!.signals_json) as Array<{ confidence: number }>)[0]!.confidence;
+      const strongConfidence = (JSON.parse(strongAlert!.signals_json) as Array<{ confidence: number }>)[0]!.confidence;
+
+      expect(weakConfidence).toBeCloseTo(0.646, 5);
+      expect(strongConfidence).toBeCloseTo(0.95, 5);
+      expect(strongConfidence).toBeGreaterThan(weakConfidence);
+
+      // Evidence fragment confidence must match the same derived value (not a literal)
+      const weakFrag = weakDb
+        .query<{ confidence: number }, []>("SELECT confidence FROM evidence_fragments WHERE stock = 'VNM'")
+        .get();
+      const strongFrag = strongDb
+        .query<{ confidence: number }, []>("SELECT confidence FROM evidence_fragments WHERE stock = 'VNM'")
+        .get();
+      expect(weakFrag!.confidence).toBeCloseTo(0.646, 5);
+      expect(strongFrag!.confidence).toBeCloseTo(0.95, 5);
+    });
+  });
+
   // ── FU-ALERT-COWRITE-SCHEDULER-JOBS: co-write tests ─────────────────────────
   // DoD requires: every fired alert must have a matching agent_signals row
   // (no orphan alert — JOIN alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id WHERE s.alert_id IS NULL = 0).

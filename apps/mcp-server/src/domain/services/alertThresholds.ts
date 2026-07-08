@@ -39,3 +39,21 @@ export const MIN_DAILY_VOLUME_FOR_ALERTS = 100_000;
  * lower bound matching typical VN market intraday noise.
  */
 export const NEUTRAL_BAND_PCT = 2.0;
+
+/**
+ * Confidence range for foreignFlowAlertJob HIGH-severity signals
+ * (FACTORY-SCHEDULER-alert-confidence-literals).
+ *
+ * Replaces the frozen `confidence = 0.75` literal previously persisted on both
+ * the alert signal and the evidence fragment. Confidence is now derived from the
+ * job's own already-computed magnitude — `min(1, |totalNetVolume3d| / 500_000)`
+ * (see foreignFlowAlertJob.ts) — via deriveConfidenceFromStrength():
+ *
+ *   strength=0 (barely qualifies for HIGH, ~100k shares/3d) → base    = 0.55
+ *   strength=1 (>=500k shares/3d net flow, capped)          → ceiling = 0.95
+ *
+ * Tuning: raise CEILING to make a maxed-out 3-day net flow more decisive;
+ * raise BASE to make even a borderline HIGH signal more trusted.
+ */
+export const FOREIGN_FLOW_CONFIDENCE_BASE = 0.55;
+export const FOREIGN_FLOW_CONFIDENCE_CEILING = 0.95;
