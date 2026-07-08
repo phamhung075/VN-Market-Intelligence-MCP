@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FACTORY-PDF-paddleocr-score-07-mask",
-    "next_agent": "qa",
-    "next_action": "FACTORY-PDF-paddleocr-score-07-mask at REVIEW -- pdf-extractor container rebuilt+swapped (image 0c83b2c5f8ad, healthy, rebuild_required=false). qa: live-endpoint RAW-verify of row_bands row_density for missing-score cells.",
-    "updated_at": "2026-07-08T06:50:12Z",
-    "updated_by": "router (head was stale after ops rebuild+swap — board row already advanced to next_agent=qa, .head was not synced)"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-PDF-paddleocr-score-07-mask DONE_VERIFIED (qa live-endpoint RAW-verify PASS 2026-07-08T06:55:31Z — docker exec into the actual running/healthy rebuilt pdf-extractor container (image sha256:0c83b2c5f8ad), direct invocation of the real deployed _cells_to_row_bands()/_map_bboxes_to_zones() confirmed row_density=[0.88,null,0.0] for present/missing/explicit-0.0 score cells — missing-score never fabricates 0.7, explicit 0.0 preserved). No new follow-up bug discovered this cycle.",
+    "updated_at": "2026-07-08T06:55:31Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9191,6 +9191,28 @@
           "updated_by": "ops (task complete)"
         },
         "router_independent_reverify_note": "Router independently re-tested the non-climbing claim with genuine time separation (ops's own two 'readings' were self-reported 06:12:01Z/06:12:02Z — 1 second apart, contradicting its '~2 min later' prose; not itself proof of non-climbing behavior). Query A at 2026-07-08T06:15:01Z (container uptime 3m42s): Reuters RSS + Trading Economics both disabled, 0 consecutive errors — matched ops's snapshot, ruling out fabrication. Query B at 2026-07-08T06:19:16Z (container uptime 7m56s, ~4min real gap from Query A): Reuters RSS + Trading Economics still both disabled, 0 consecutive errors — non-climbing genuinely confirmed. Also corrected done_verified_at, which was a local CEST wall-clock string (08:12:30, matching git author-date UTC+2) mislabeled with a trailing Z; corrected to true UTC 06:13:30Z. Substantive fix confirmed sound; ops's self-reported verification-timing claim was itself inaccurate (1s not ~2min) — reporting-hygiene gap, not a functional regression."
+      },
+      {
+        "title": "Stop defaulting PaddleOCR cell score to 0.7; surface real ink-density or sentinel",
+        "priority": "P1",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-PDF-paddleocr-score-07-mask",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-paddleocr-score-07-mask",
+        "promoted_at": "2026-07-08T06:23:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T06:24:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "moved_to_review_at": "2026-07-08T06:36:28Z",
+        "moved_by": "dev-pdf-extractor",
+        "review_note": "Code fix + tests DONE: _cells_to_row_bands() (pek_engine_adapter.py:569) no longer fabricates row_density=0.7 when a PaddleOCR cell omits \"score\" -- present score (incl. real 0.0) passes through unchanged; absent score emits named _MISSING_CELL_SCORE_SENTINEL (None -> JSON null). 3 new tests in TestCellsToRowBandsScoreHandling (test_pek_engine_adapter.py): present-score unchanged, missing-score -> sentinel not 0.7, mixed cells independent -- all pass; confirmed RED against prior code first (assert 0.7 is None failure via git-stash revert). Full pdf-extractor suite: 1089 pass / 11 pre-existing env failures (PIL.Image.new missing attr, pytesseract retry, page_rasterizer, real-OCR integration -- all pre-date this diff, confirmed identical via git-stash baseline run, zero new failures introduced). RAW-verify: direct invocation of _map_bboxes_to_zones() with a real missing-score cell -> emitted row_density: null (not 0.7); a present-score cell (0.88) in the same call passed through unchanged. mypy blocked by a pre-existing pyproject.toml [tool.importlinter] section-name bug (\"pdf-extractor is not a valid Python package name\") confirmed present at baseline too (git stash) -- not introduced by this diff. DDD: infrastructure-layer only, no cross-layer import added. Commit fdb424178. rebuild_required: true -- pdf-extractor container must be rebuilt to deploy this fix before a live-endpoint RAW-verify is meaningful; holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy -- next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification.\n[QA] Live-endpoint RAW-verify (2026-07-08T06:55:31Z, not trusting prior reports): Confirmed container image match — `docker inspect vn-market-intelligence-mcp-pdf-extractor-1 --format '{{.Image}}'` -> `sha256:0c83b2c5f8add1340624b906ea5018213e74129ccf1d37ca0f3ea5733957e198`, exact match to the ops-reported rebuild+swap; container `Up (healthy)`. Confirmed the deployed file content is genuinely the fix (not stale/bind-mounted worktree): `sha256sum` of `/app/infrastructure/pek_engine_adapter.py` inside the running container == `sha256sum` of the local fixed source file (`41bbee1f5c510b3bb1e3a1e2ae4a66a7e7a8aac9ea09fa2aa8b2fee5ab38799f`), byte-identical. No real HTTP route can deterministically force PaddleOCR PP-StructureV2 to omit its own `score` key from a cell (this null-guard is defensive against malformed/partial OCR output, not a shape PaddleOCR's normal API produces) -- an end-to-end PDF-triggered call would never actually exercise the missing-score branch. Per task instructions' explicit fallback clause, used `docker exec -i` into the running container's own `python3` process and imported the REAL deployed module (`/app/infrastructure/pek_engine_adapter.py`, confirmed via `mod.__file__`) -- not the local git worktree. Directly invoked both `_cells_to_row_bands()` and the full `_map_bboxes_to_zones()` wiring path with a 3-cell fixture: {bbox, score:0.88} (present score), {bbox} (score key ABSENT entirely), {bbox, score:0.0} (explicit real zero). Result (both call sites, identical): `row_bands` = `[{\"row_density\":0.88}, {\"row_density\":null}, {\"row_density\":0.0}]` -- missing-score cell emits JSON `null` (never the old fabricated `0.7`), explicit `0.0` is preserved as a real measurement (not coerced to missing), present score passes through unchanged. Bonus liveness confirmation: `curl http://localhost:5001/health` (host-side, port-mapped) -> `{\"status\":\"ok\",\"service\":\"pdf-extractor\",\"ocr_source_ok\":true}`, confirming the container is genuinely serving live traffic, not just running. VERDICT: fix is deployed and working correctly in the live container with no regressions observed. FACTORY-PDF-paddleocr-score-07-mask -> DONE_VERIFIED.\n\nSPRINT-ID MISMATCH FLAGGED: ops's decision-journal entry for this SAME task_id was written to `docs/agent-memory/decisions/sprint-DOCLANG-SERIALIZE-ops.md` (\"Sprint goal: no goal set\" header -- ops did not even resolve an active sprint_id via the documented `tail -1`-of-active-entries mechanism, since that mechanism currently and unambiguously resolves to `SYSTEMIC-REMAKE-P1`, matching dev-pdf-extractor's own journal file `sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md` for this identical task). This qa entry is filed correctly under the pre-existing `sprint-SYSTEMIC-REMAKE-P1-qa.md` (same file already used for sibling FACTORY confidence-mask tasks this cycle) -- ops's `DOCLANG-SERIALIZE` filing is a resolution bug, not a legitimate alternate sprint scope (this task's own promotion_note is a bounded-1 ambient backlog pickup, not scoped to either sprint's scope_in).\n",
+        "rebuild_required": false,
+        "updated_at": "2026-07-08T06:55:31Z",
+        "updated_by": "qa",
+        "status_note": "live-endpoint RAW-verify PASS (qa, 2026-07-08T06:55:31Z): docker inspect confirms container vn-market-intelligence-mcp-pdf-extractor-1 running image sha256:0c83b2c5f8ad (healthy); deployed /app/infrastructure/pek_engine_adapter.py sha256 byte-identical to fix source; docker exec into the container's own python3 process directly invoked the REAL deployed _cells_to_row_bands()/_map_bboxes_to_zones() with present/missing/explicit-0.0 score cells -> row_density [0.88, null, 0.0] exactly, no fabricated 0.7. done_verified."
       }
     ],
     "head": {
@@ -9321,25 +9343,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Stop defaulting PaddleOCR cell score to 0.7; surface real ink-density or sentinel",
-        "priority": "P1",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-PDF-paddleocr-score-07-mask",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-paddleocr-score-07-mask",
-        "promoted_at": "2026-07-08T06:23:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T06:24:03Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "moved_to_review_at": "2026-07-08T06:36:28Z",
-        "moved_by": "dev-pdf-extractor",
-        "review_note": "Code fix + tests DONE: _cells_to_row_bands() (pek_engine_adapter.py:569) no longer fabricates row_density=0.7 when a PaddleOCR cell omits \"score\" -- present score (incl. real 0.0) passes through unchanged; absent score emits named _MISSING_CELL_SCORE_SENTINEL (None -> JSON null). 3 new tests in TestCellsToRowBandsScoreHandling (test_pek_engine_adapter.py): present-score unchanged, missing-score -> sentinel not 0.7, mixed cells independent -- all pass; confirmed RED against prior code first (assert 0.7 is None failure via git-stash revert). Full pdf-extractor suite: 1089 pass / 11 pre-existing env failures (PIL.Image.new missing attr, pytesseract retry, page_rasterizer, real-OCR integration -- all pre-date this diff, confirmed identical via git-stash baseline run, zero new failures introduced). RAW-verify: direct invocation of _map_bboxes_to_zones() with a real missing-score cell -> emitted row_density: null (not 0.7); a present-score cell (0.88) in the same call passed through unchanged. mypy blocked by a pre-existing pyproject.toml [tool.importlinter] section-name bug (\"pdf-extractor is not a valid Python package name\") confirmed present at baseline too (git stash) -- not introduced by this diff. DDD: infrastructure-layer only, no cross-layer import added. Commit fdb424178. rebuild_required: true -- pdf-extractor container must be rebuilt to deploy this fix before a live-endpoint RAW-verify is meaningful; holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy -- next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification.",
-        "rebuild_required": false
       }
     ],
     "qa": [],
