@@ -262,8 +262,8 @@
     "status": "done",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "F1-LAUNCHD-COWORK-BACKSTOP DONE_VERIFIED (qa independent re-verification 2026-07-08T05:13:00Z — 25/25 test re-run, source-read confirms all acceptance criteria, fb-daily-firer retirement confirmed repo-wide + launchctl. Remaining follow-on work is separate/out-of-scope: ops install (launchctl load new plist — gated local swap, per feedback_user_gates_delegate_to_ops), FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED (separate REVIEW row, same brief), agent-father doc-fix on cowork-master-cron-runbook.md layer_a_deletion_locked (separate owner).",
-    "updated_at": "2026-07-08T05:13:00Z",
+    "next_action": "FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED DONE_VERIFIED (qa independent re-verification 2026-07-08T05:22:59Z — 79/79 test re-run incl injected-fault pair, mutation test proves suite is a real regression detector, SSOT-driven label parsing confirmed, live unmocked probe run confirms real-world detection of 2 currently-unloaded local launchd labels — cowork-guaranteed-slot-firer install remains a separate ops-gated task per F1-LAUNCHD-COWORK-BACKSTOP scope; socat-bridge gap is pre-existing and out of this fix's scope). Sibling brief rows (ops plist install, agent-father runbook doc-fix) remain separately owned.",
+    "updated_at": "2026-07-08T05:22:59Z",
     "updated_by": "qa"
   },
   "narrative": {
@@ -9127,6 +9127,40 @@
           "next_action": "qa: re-run cowork-guaranteed-slot-firer.test.sh (expect 25/25 GREEN, zero real claude/node invocations), confirm the guaranteed===true filter + trigger_prompt-read-off-slot + fb-daily retirement leaves no orphaned launchd label, then flip DONE_VERIFIED. No dev coding remains."
         },
         "status_note": "qa independent re-verification PASS (2026-07-08T05:13:00Z): re-ran cowork-guaranteed-slot-firer.test.sh myself = 25/25; source-read confirms matcher-driven + guaranteed===true filter + trigger_prompt read verbatim off slot object + 1800s _bounded_exec + zero-script-edit for new slots (T3b); plist plutil-lint OK, StartInterval=900/RunAtLoad=false/KeepAlive=false confirmed; fb-daily-firer script+plist confirmed absent repo-wide and from launchctl list (no orphaned label). done_verified."
+      },
+      {
+        "id": "FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "type": "FIX",
+        "owner": "developer",
+        "next_agent": "qa",
+        "zone": "cross-service",
+        "title": "Tier-1 auditor self-check: assert vn-market LaunchAgents are loaded (catches silent unload)",
+        "desc": "Per architecture brief section 2 + 3.8. Root gap the brief FOUND: fb-daily-firer.plist WAS loaded+firing 07-01→07-04 then silently unloaded with NOTHING detecting it (fb-daily-firer.log = 4 good fires then dark after 07-04T17:44:35Z, no unload event) → the 73h outage class recurs even after the firer ships. FIX: extend scripts/agents-flow/auditor-tier1-probe.sh (shipped, READ-ONLY, TOKEN-ECONOMY-TICK-PREFLIGHT WU-3) with ONE more check in the same style as its existing 5: 'launchctl list | grep -q com.vn-market.cowork-guaranteed-slot-firer' (+ the other required vn-market LaunchAgents) → FAILURE verdict + bug-channel alert if a required label silently disappears. Extend auditor-tier1-probe.test.sh with the injected-fault case (unload/hide the plist → expect FAILURE+bug alert; restore → ALL_GREEN, feedback_fence_false_green discipline). Motivating incident (prior_spec): T1 peer-firer degraded 2026-07-03 (03:00Z partial, 03:30Z absent) — this self-check is the durable fix for that SPOF class.",
+        "files": [
+          "scripts/agents-flow/auditor-tier1-probe.sh",
+          "scripts/agents-flow/auditor-tier1-probe.test.sh"
+        ],
+        "acceptance": "auditor-tier1-probe.sh returns FAILURE + bug alert when a required vn-market LaunchAgent (incl com.vn-market.cowork-guaranteed-slot-firer) is absent from 'launchctl list'; injected-fault test proves FAILURE-on-missing then ALL_GREEN-on-restore.",
+        "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
+        "prior_spec": "T1 auditor peer FIRER degraded 2026-07-03 (owner po, next_agent ops, priority med) — investigate peer firer health. Re-specced to the concrete durable probe-extension per brief 3.8; priority med→high (recurrence-preventer).",
+        "scope_corrected": "2026-07-07T21:00:37Z",
+        "updated_at": "2026-07-08T05:22:59Z",
+        "updated_by": "qa",
+        "claimed_at": "2026-07-07T21:20:13Z",
+        "claimed_by": "developer",
+        "reviewed_at": "2026-07-07T21:22:55Z",
+        "reviewed_by": "developer",
+        "review_note": "Extended scripts/agents-flow/auditor-tier1-probe.sh with check 6 (_check_launchd_agents) — SSOT = repo launchd/*.plist Label fields (never hardcoded), FAILURE verdict + missing-label detail when any required label absent from launchctl list. 79/79 tests GREEN in auditor-tier1-probe.test.sh (60 pre-existing regression untouched behaviorally + 19 new, incl. mandatory injected-fault pair T25 FAILURE-on-missing / T26 ALL_GREEN-on-restore per brief §6.7). Bug-alerting is inherited via the existing FAILURE→spawn-system-auditor pipeline (cron-detect-loop/SKILL.md Job 2), unchanged — no new alert code inside this READ-ONLY pre-gate script. Simplicity gate PASS. [qa 2026-07-08T05:35:00Z] INDEPENDENT RE-VERIFICATION (not trusting PO's relayed numbers): re-ran bash scripts/agents-flow/auditor-tier1-probe.test.sh myself -> 79 passed / 0 failed, exact match, incl. mandatory injected-fault pair T25 (FAILURE-on-missing)/T26 (ALL_GREEN-on-restore) per feedback_fence_false_green, plus T27 (multi-label precision) / T28-T29 (missing/empty launchd dir) / T30 (CLI-subprocess-level injected fault). Read _check_launchd_agents() source directly: label parsed via awk off each tracked launchd/*.plist's own <key>Label</key>/<string> pair; grep -n \"com.vn-market\" scripts/agents-flow/auditor-tier1-probe.sh returns ZERO hits -> confirmed genuinely SSOT-driven off the repo's launchd/ dir, not a hardcoded label list. Ran a mutation test to prove the suite is a real detector, not a tautology: injected an early `return 0` into _check_launchd_agents (simulating a silent-no-op regression) -> re-ran the suite -> 10 assertions flipped FAIL (69 passed/10 failed), incl. both T25 and T30 -> reverted the mutation (git diff clean after revert) -> re-ran -> back to 79/79. Also ran the live (unmocked) probe directly against this host's real `launchctl list`: correctly returned FAILURE naming 2 currently-unloaded labels (com.vn-market.cowork-guaranteed-slot-firer -- expected, ops install is a separate gated task per F1-LAUNCHD-COWORK-BACKSTOP's own scope note; com.vn-market.socat-bridge -- a real pre-existing local gap, outside this task's fix-the-detector scope) -- positive confirmatory evidence the check works correctly against real production state, not only fixtures. No handoff doc exists for this task (developer committed eca602b5c direct-to-main with self-review, per its own board row); acceptance criteria verified against orch-state.json task_board row + docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md rows 3/6. Verdict: DONE_VERIFIED.",
+        "po_review_sweep": {
+          "by": "po",
+          "at": "2026-07-08T05:00:50Z",
+          "from_next_agent": "developer",
+          "finding": "Stale self-pointer (next_agent=developer = the reviewer). Developer completed check 6 (_check_launchd_agents, SSOT=repo launchd/*.plist Label fields, never hardcoded). Probe script + test only, NO container/deploy. RAW-reverified by PO: bash scripts/agents-flow/auditor-tier1-probe.test.sh = 79 passed / 0 failed incl the injected-fault pair. Only remaining gate = independent qa sign-off.",
+          "next_action": "qa: re-run auditor-tier1-probe.test.sh (expect 79/79 GREEN incl FAILURE-on-missing / ALL_GREEN-on-restore fault pair per feedback_fence_false_green), confirm required-label SSOT is read live off launchd/*.plist (not hardcoded), then flip DONE_VERIFIED."
+        },
+        "status_note": "qa independent re-verification PASS (2026-07-08T05:22:59Z): re-ran auditor-tier1-probe.test.sh myself = 79/79 incl injected-fault pair (T25/T26) + T27-T30; source-read confirms SSOT-driven label parsing (zero hardcoded labels); mutation test (forced early-return in _check_launchd_agents) flipped 10 assertions to FAIL then reverted clean, proving the suite is a real regression detector; live unmocked probe run against real launchctl confirms the check correctly detects 2 currently-unloaded labels on this host. done_verified."
       }
     ],
     "head": {
@@ -9238,39 +9272,6 @@
         "po_unblock_dispatch_at": "2026-07-03T23:57:27Z",
         "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate).",
         "deploy_gate_note": "[router 2026-07-04T00:00Z] next_agent=ops but ops spawn DENIED by auto-mode permission classifier [Production Deploy]: rebuild+deploy live mcp-server + reingest CTG 96e36139-5dac-414d-8e4d-20a4725890d1 against live named-volume market.db need EXPLICIT user authorization (generic CLAUDE.md OVERRIDE 07-03 is insufficient intent). BLOCKED pending user clearing the deploy gate (run ops outside auto mode / approve the permission prompt). Code is done_verified; only deploy+operate remains."
-      },
-      {
-        "id": "FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED",
-        "status": "REVIEW",
-        "priority": "high",
-        "type": "FIX",
-        "owner": "developer",
-        "next_agent": "qa",
-        "zone": "cross-service",
-        "title": "Tier-1 auditor self-check: assert vn-market LaunchAgents are loaded (catches silent unload)",
-        "desc": "Per architecture brief section 2 + 3.8. Root gap the brief FOUND: fb-daily-firer.plist WAS loaded+firing 07-01→07-04 then silently unloaded with NOTHING detecting it (fb-daily-firer.log = 4 good fires then dark after 07-04T17:44:35Z, no unload event) → the 73h outage class recurs even after the firer ships. FIX: extend scripts/agents-flow/auditor-tier1-probe.sh (shipped, READ-ONLY, TOKEN-ECONOMY-TICK-PREFLIGHT WU-3) with ONE more check in the same style as its existing 5: 'launchctl list | grep -q com.vn-market.cowork-guaranteed-slot-firer' (+ the other required vn-market LaunchAgents) → FAILURE verdict + bug-channel alert if a required label silently disappears. Extend auditor-tier1-probe.test.sh with the injected-fault case (unload/hide the plist → expect FAILURE+bug alert; restore → ALL_GREEN, feedback_fence_false_green discipline). Motivating incident (prior_spec): T1 peer-firer degraded 2026-07-03 (03:00Z partial, 03:30Z absent) — this self-check is the durable fix for that SPOF class.",
-        "files": [
-          "scripts/agents-flow/auditor-tier1-probe.sh",
-          "scripts/agents-flow/auditor-tier1-probe.test.sh"
-        ],
-        "acceptance": "auditor-tier1-probe.sh returns FAILURE + bug alert when a required vn-market LaunchAgent (incl com.vn-market.cowork-guaranteed-slot-firer) is absent from 'launchctl list'; injected-fault test proves FAILURE-on-missing then ALL_GREEN-on-restore.",
-        "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
-        "prior_spec": "T1 auditor peer FIRER degraded 2026-07-03 (owner po, next_agent ops, priority med) — investigate peer firer health. Re-specced to the concrete durable probe-extension per brief 3.8; priority med→high (recurrence-preventer).",
-        "scope_corrected": "2026-07-07T21:00:37Z",
-        "updated_at": "2026-07-08T05:00:50Z",
-        "updated_by": "po (review-lane sweep)",
-        "claimed_at": "2026-07-07T21:20:13Z",
-        "claimed_by": "developer",
-        "reviewed_at": "2026-07-07T21:22:55Z",
-        "reviewed_by": "developer",
-        "review_note": "Extended scripts/agents-flow/auditor-tier1-probe.sh with check 6 (_check_launchd_agents) — SSOT = repo launchd/*.plist Label fields (never hardcoded), FAILURE verdict + missing-label detail when any required label absent from launchctl list. 79/79 tests GREEN in auditor-tier1-probe.test.sh (60 pre-existing regression untouched behaviorally + 19 new, incl. mandatory injected-fault pair T25 FAILURE-on-missing / T26 ALL_GREEN-on-restore per brief §6.7). Bug-alerting is inherited via the existing FAILURE→spawn-system-auditor pipeline (cron-detect-loop/SKILL.md Job 2), unchanged — no new alert code inside this READ-ONLY pre-gate script. Simplicity gate PASS.",
-        "po_review_sweep": {
-          "by": "po",
-          "at": "2026-07-08T05:00:50Z",
-          "from_next_agent": "developer",
-          "finding": "Stale self-pointer (next_agent=developer = the reviewer). Developer completed check 6 (_check_launchd_agents, SSOT=repo launchd/*.plist Label fields, never hardcoded). Probe script + test only, NO container/deploy. RAW-reverified by PO: bash scripts/agents-flow/auditor-tier1-probe.test.sh = 79 passed / 0 failed incl the injected-fault pair. Only remaining gate = independent qa sign-off.",
-          "next_action": "qa: re-run auditor-tier1-probe.test.sh (expect 79/79 GREEN incl FAILURE-on-missing / ALL_GREEN-on-restore fault pair per feedback_fence_false_green), confirm required-label SSOT is read live off launchd/*.plist (not hardcoded), then flip DONE_VERIFIED."
-        }
       },
       {
         "id": "PDF-TEST-01-FIX",
