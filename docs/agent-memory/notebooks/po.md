@@ -1,6 +1,23 @@
 # PO Notebook
 
-_Last: 2026-07-08T01:22Z_
+_Last: 2026-07-08T05:00Z_
+
+## Tick 2026-07-08T05:00Z — dev-team DIRECTED review-lane sweep (recurring carry-forward, stale 5+ ticks)
+**Why:** dev-team notebook cycle-20260708T0237Z flagged 4 REVIEW-lane items rotting with `next_agent` pointers nobody dispatches. **Root gap RAW-confirmed:** dev-team flow (`docs/agents/dev-team/flow/main.md` L442-485) only spawns `head.next_agent` (single active-task pointer); it has NO step iterating `review[].next_agent`, and BOUNDED-1 pulls only from ready/backlog — so REVIEW items with a valid pointer are never auto-swept. That's the whole defect class.
+**Actions (1 atomic orch-apply pass, rc0, 0 new coherence warnings, review 8→7 / done_verified 2→3):**
+- **F1-LAUNCHD-COWORK-BACKSTOP** — next_agent developer→**qa** (stale self-pointer; dev already reviewed). RAW-reran `cowork-guaranteed-slot-firer.test.sh` = 25/25; firer.sh+test.sh+plist present, fb-daily-firer retired (absent). Scripts+launchd only, no deploy → qa signs off DONE_VERIFIED.
+- **FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED** — next_agent developer→**qa** (stale self-pointer). RAW-reran `auditor-tier1-probe.test.sh` = 79/79 incl injected-fault pair; check 6 `_check_launchd_agents` present. Probe+test only → qa DONE_VERIFIED.
+- **FIX-NEWS-CB-FALSE-CLOSED** — next_agent null→**ops** (null pointer WAS the stall). Code on main (aa87cfe05+b1425a0c6, 295/0 regression); real owner apps/mcp-server. Needs ops rebuild+swap THEN qa live get_system_status re-query (Reuters/TE disabled + dup row gone). May trip Production-Deploy gate → DEFER-with-note if denied.
+- **CI-RED-0d28104a-FIX** — **CLOSED → done_verified** (option-c). AC=ci_green_on_subsequent_push RAW-met: fix a80d405d1 (ancestor of HEAD) push CI run 28911478829=SUCCESS + subsequent board-reconcile push 28911889866=SUCCESS. Residual advisory noted: pre-existing CI-runner P=16 flakiness (unrelated files) — NOT this AC, candidate for separate task.
+**Untouched (per instruction — no new closeable evidence):** ARCH-SHIP-WAVE-REAUDIT (DEFERRED 28d — unpark cond (b) BA-MACRO WAVE-1 still UNMET: VN-MACRO-TOOLING ACTIVE w/ many macro backlog rows → serialization still valid, but surface for a deliberate staleness call); W5 + W5-FU (BLOCKED, deploy-gated); PDF-TEST-01-FIX (BLOCKED on real follow-up FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK; missing created_at = cosmetic backlog-detail gap only).
+**Recommendation:** stand up a recurring **review-lane sweep** (see report) — NOT a duplicate of BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP (that targets stale *backlog picks*, a different gap); ideally fold both into one dev-team Step-0 hygiene sweep.
+**Lock:** `intent:po:review-lane-sweep` held by dev-team session — PO is gateway-blind (no task_release), parent releases as offered fallback.
+
+## Tick 2026-07-08T03:37Z — dev-team spawn triage (I ran gateway-BLIND too; used mcp-call.sh bash bridge)
+**Signals (5):** 4× cowork tick-reports = routine gateway-blind withholds (market/chef slots, 8 consecutive; resolution = user /mcp reconnect, NOT a PO decision — no action). 1× CRITICAL dev-team bug-escalation = gateway-blind now at the **dispatcher/ROUTER** level (was subagent-only), with new evidence.
+**Decision (the reason dev-team routed to me):** new_evidence FALSIFIES the F1 chain — `.mcp.json` is already correct (gateway http+URL ⇒ F1.2 rewrite is a **no-op**) and gateway raw-curl = HTTP 200 valid MCP (server healthy). Root cause = **Claude Code CLI MCP-client session-init handshake failure** (main+subagent), NOT repo config / server-down. So I **CANCELLED** F1-GATEWAY-TRANSPORT-PROBE + F1-WRITE-MCP-JSON-GATEWAY + F1-AGENT-FATHER-BLIND-GUARD-REMOVE (premise dead) and minted **SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE** (zone cross-service/, origin_signal_id stamped): scope repo-actionable mitigation (extend mcp-call.sh + static tool-registry.json discovery for the 3 blind meta-tools; document sanctioned degraded-mode to stop per-tick re-escalation churn) vs harness/user-side WHY. 1 atomic orch-apply pass (rc0; backlog 405→406; **head untouched** — FACTORY-INTERFACE-source-confidence-10-mask parallel dev task). Sent 1 consolidated CRITICAL flag → BUG (msg 3280) for user /mcp-reconnect visibility.
+**Telegram reports:** 3520-3526 = auditor D4 held-lock divergence FPs (ESC-3 no-board-row + cron-singleton, known-legit) — already covered by BACKLOG **FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE** + **FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE**; did NOT manually resolve (that's the treadmill those tasks kill) and did NOT mint a dup. 3527 = OHLCV-DEPTH VPS backfill stalled on 5 obscure **non-watchlist** codes (BDI/DLC/JSH/SIS/VDC) = ops-lane "manual VPS investigation", flagged for router→ops, no code sprint.
+**Return:** BATCH([SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE]) to dev-team router.
 
 ## Tick 2026-07-08T01:22Z — ci_red triage (dev-team spawn): DSI-S3-sector-fin flaky → FIX minted (RECURRING class)
 

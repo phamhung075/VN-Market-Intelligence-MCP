@@ -702,8 +702,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-08T03:37:00Z",
-    "_updated_by": "po (triage tick 2026-07-08T03:37Z — gateway-blind CRITICAL re-scope)",
+    "_updated_at": "2026-07-08T05:00:50Z",
+    "_updated_by": "po (review-lane sweep)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -9060,6 +9060,34 @@
         "updated_at": "2026-07-08T04:51:14Z",
         "updated_by": "qa",
         "status_note": "post-swap sanity check PASS (qa, 2026-07-08T04:51:14Z): docker inspect independently confirms image 35c8117c1f85 running+healthy on container c0dc4c1c7168; RAW in-container source_confidence distribution re-query {0.1:380,0.4:2,1.0:3257} 0 NULLs exact match to pre-swap; /health 200 toolCount=183 unchanged; zero NOT NULL/constraint errors in post-swap logs (no finalize runs occurred yet to exercise the write path). done_verified."
+      },
+      {
+        "id": "CI-RED-0d28104a-FIX",
+        "type": "FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "created_at": "2026-07-08T01:22:39Z",
+        "origin_signal_id": "CI-RED-0d28104a",
+        "title": "CI-RED-0d28104a-FIX — CI RED (bun test) flaky: DSI-S3-sector-fin.test.ts AC-SEC-2a/2b — unmocked fetchReservoirLevels races 5s timeout (3rd file, same root-cause class as 1410/262 fixed 1efb6f918)",
+        "status_note": "AC (verification_gate=ci_green_on_subsequent_push): `gh run list --branch main --limit 3` shows conclusion=success for a bun-test run on a push AFTER 0d28104ac. Priority: high. Failing job: bun test. ROOT CAUSE (PO-verified — re-ran local: 16 pass/1 fail, AC-SEC-2a timed out 5001ms; parent saw 16/1 then 15/2 = flaky): src/__tests__/DSI-S3-sector-fin.test.ts AC-SEC-2a/2b call getEnergyGridStatus() -> fetchReservoirLevels() (infrastructure/fetchers/hydrologicalData.js) doing a REAL live network fetch, NO mock, racing bun-test's 5000ms default per-test timeout under CI 16-way parallel isolation. Offending commit 0d28104ac is DOCS-ONLY (notebook checkpoint main.md, 1 file) — it did NOT cause this; pre-existing test-hygiene flake, CI-red is a false-alarm-on-that-commit. RECURRING (feedback_recurring_bug_escalation): 3rd test file with this exact root-cause class. 1410-tool-diacritics-sweep.test.ts + 262-mcp-tools-042.test.ts were ALREADY fixed via mock.module (commit 1efb6f918, CI-green run 28886901289) but DSI-S3-sector-fin was explicitly dismissed as 'CI-flaky' at docs/data/orch/archive/backlog-detail.json:5724 without applying the mock. FIX: apply the proven, already-in-repo mock.module() pattern (freeze-before-mock via {...realNs} value-copy placed textually BEFORE the energyTools import + afterAll-restore; matches 1355b/1410/262 precedent) to the hydrologicalData.js import in DSI-S3-sector-fin.test.ts. SWEEP to close the class permanently: audit src/__tests__/257-weather-vn.test.ts + 258-hydro-data.test.ts (both mock.module=0, both import the network fetchers) — mock them or move to an integration lane excluded from default `bun test` so there is no 4th recurrence. Origin signal: docs/signals/processed/ci-red-0d28104a-20260708011711.json",
+        "claimed_at": "2026-07-08T01:27:48Z",
+        "claimed_by": "dev-team",
+        "next_agent": "qa",
+        "moved_to_review_at": "2026-07-08T01:55:43Z",
+        "moved_by": "dev-mcp-server",
+        "review_note": "Fix committed a80d405d1 (DSI-S3-sector-fin.test.ts hydrologicalData.js mock.module, freeze-before-mock+afterAll pattern copied from 1efb6f918), pushed to origin/main. Verified 17/17 local pass x3. 257-weather-vn.test.ts/258-hydro-data.test.ts audited: both always pass an injected HTTP client to the fetcher, never reach the live-network default-client branch — confirmed out of scope, left untouched (not a 4th recurrence risk). CI verification_gate=ci_green_on_subsequent_push: RAW-checked via gh run view/rerun on the a80d405d1 push, DSI-S3-sector-fin.test.ts absent from FAILED FILES across 3 consecutive reruns; run 3 conclusion=success. Runs 1-2 failed on unrelated single-file flakes (240-price-pipeline-recovery.test.ts, then 167-prediction-market-job.test.ts) — both pass locally, different file each run, looks like pre-existing CI-runner-level P=16 flakiness unrelated to this commit; flagging for PO/dispatcher triage, not fixed here (scope boundary).",
+        "updated_at": "2026-07-08T05:00:50Z",
+        "updated_by": "po (review-lane sweep closeout)",
+        "po_closeout": {
+          "by": "po",
+          "at": "2026-07-08T05:00:50Z",
+          "verdict": "DONE_VERIFIED — option-c effectively-done closeout by PO review-lane sweep.",
+          "evidence": "AC = verification_gate=ci_green_on_subsequent_push. RAW-verified by PO via gh run list --branch main: fix commit a80d405d1 push -> CI (bun test) run 28911478829 conclusion=SUCCESS (2m32s); the subsequent board-reconcile push -> CI run 28911889866 conclusion=SUCCESS (2m29s). Two consecutive GREEN bun-test CI runs on main on/after the fix. a80d405d1 confirmed ancestor of HEAD (git merge-base --is-ancestor). Root fix = mock.module freeze-before-mock on hydrologicalData.js in DSI-S3-sector-fin.test.ts, matching the proven 1efb6f918 precedent; 257-weather-vn / 258-hydro-data audited out-of-scope (both inject an HTTP client, never reach the live-network default branch). Recurring class (3rd file) now closed.",
+          "residual_advisory": "review_note flagged pre-existing CI-runner-level P=16 flakiness (reviewer reruns 1-2 failed on UNRELATED single files 240-price-pipeline-recovery / 167-prediction-market-job — different file each run, both pass locally). NOT part of this AC and NOT currently manifesting (both PO-checked recent CI runs GREEN). Candidate for a SEPARATE CI-runner-flakiness investigation (feedback_ci_red_can_be_flaky) — NOT a blocker on this closeout."
+        }
       }
     ],
     "head": {
@@ -9178,7 +9206,7 @@
         "priority": "high",
         "type": "SPRINT-S",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "zone": "cross-service",
         "title": "Generalized launchd guaranteed-slot firer (supersedes F1.4 per-slot design)",
         "desc": "Per architecture brief docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 3 + 5.1-2. Build NEW scripts/agents-flow/cowork-guaranteed-slot-firer.sh: calls 'node scripts/agents-flow/cowork-match-slots.js', filters returned slots[] to guaranteed===true, and for each match invokes 'timeout 1800 claude --dangerously-skip-permissions -p <slot.trigger_prompt>' (trigger_prompt read VERBATIM off the matched slot object — NEVER hardcoded per-agent). Reuses the SAME matcher the live */15 dispatcher uses → one SSOT (docs/data/cowork-schedule.json), zero drift on what counts as due. Test-first: sibling cowork-guaranteed-slot-firer.test.sh mirroring auditor-tier1-probe.test.sh (mock claude/node, ZERO real invocations). Generalize the plist too: ONE launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (StartInterval=900, RunAtLoad=false, KeepAlive=false). RETIRE scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into it (fb-daily/fb-weekend are already guaranteed:true rows → subsumed, no overlapping 900s poller). Scope: guaranteed===true ONLY — deliberately EXCLUDES sub-hourly market/offhours slots (stay Layer-B-only by design; bounds F-GATHERER-OFFHOURS-STALL-0704). Dedup: NO new mechanism — every guaranteed flow already carries the published-marker task_claim gate. Verify EMPIRICALLY whether launchd serializes same-Label runs; do not assume.",
@@ -9195,13 +9223,20 @@
         "epic": "F1 (RemoteTrigger→local launchd migration)",
         "prior_title": "F1.4 Write scripts/cowork-launchers/*.sh (session-alive→no-op else spawn, task_claim dedup) + launchd plists for the 5 active slots",
         "scope_corrected": "2026-07-07T21:00:37Z",
-        "updated_at": "2026-07-07T21:00:37Z",
-        "updated_by": "po (po-s141 brief-signoff)",
+        "updated_at": "2026-07-08T05:00:50Z",
+        "updated_by": "po (review-lane sweep)",
         "claimed_at": "2026-07-07T21:20:13Z",
         "claimed_by": "developer",
         "reviewed_at": "2026-07-07T21:22:55Z",
         "reviewed_by": "developer",
-        "review_note": "Generalized scripts/agents-flow/cowork-guaranteed-slot-firer.sh (matcher-driven, guaranteed===true filter, trigger_prompt read verbatim off slot object, _bounded_exec 1800s timeout w/ verified-empirically bash fallback since this host has neither timeout nor gtimeout). 25/25 tests GREEN (cowork-guaranteed-slot-firer.test.sh, zero real claude/node invocations, mocked SLOT_MATCHER_CMD + fake CLAUDE_BIN). Retired scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into launchd/com.vn-market.cowork-guaranteed-slot-firer.plist. Docs updated: docs/standards/cron-jobs.md, docs/policies/dev-standards.md. Simplicity gate PASS (Q1-Q4 self-cert). graphify skipped — no LLM API key in this session env (pre-existing env gap, not this task's scope)."
+        "review_note": "Generalized scripts/agents-flow/cowork-guaranteed-slot-firer.sh (matcher-driven, guaranteed===true filter, trigger_prompt read verbatim off slot object, _bounded_exec 1800s timeout w/ verified-empirically bash fallback since this host has neither timeout nor gtimeout). 25/25 tests GREEN (cowork-guaranteed-slot-firer.test.sh, zero real claude/node invocations, mocked SLOT_MATCHER_CMD + fake CLAUDE_BIN). Retired scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into launchd/com.vn-market.cowork-guaranteed-slot-firer.plist. Docs updated: docs/standards/cron-jobs.md, docs/policies/dev-standards.md. Simplicity gate PASS (Q1-Q4 self-cert). graphify skipped — no LLM API key in this session env (pre-existing env gap, not this task's scope).",
+        "po_review_sweep": {
+          "by": "po",
+          "at": "2026-07-08T05:00:50Z",
+          "from_next_agent": "developer",
+          "finding": "Stale self-pointer (next_agent=developer pointed back at the agent that already reviewed). Developer completed + self-reviewed; scripts+launchd only, NO container/deploy. RAW-reverified by PO: bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh = 25 passed / 0 failed; firer.sh + test.sh + plist present; scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist RETIRED (absent, confirmed). Only remaining gate = independent qa sign-off.",
+          "next_action": "qa: re-run cowork-guaranteed-slot-firer.test.sh (expect 25/25 GREEN, zero real claude/node invocations), confirm the guaranteed===true filter + trigger_prompt-read-off-slot + fb-daily retirement leaves no orphaned launchd label, then flip DONE_VERIFIED. No dev coding remains."
+        }
       },
       {
         "id": "FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED",
@@ -9209,7 +9244,7 @@
         "priority": "high",
         "type": "FIX",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "zone": "cross-service",
         "title": "Tier-1 auditor self-check: assert vn-market LaunchAgents are loaded (catches silent unload)",
         "desc": "Per architecture brief section 2 + 3.8. Root gap the brief FOUND: fb-daily-firer.plist WAS loaded+firing 07-01→07-04 then silently unloaded with NOTHING detecting it (fb-daily-firer.log = 4 good fires then dark after 07-04T17:44:35Z, no unload event) → the 73h outage class recurs even after the firer ships. FIX: extend scripts/agents-flow/auditor-tier1-probe.sh (shipped, READ-ONLY, TOKEN-ECONOMY-TICK-PREFLIGHT WU-3) with ONE more check in the same style as its existing 5: 'launchctl list | grep -q com.vn-market.cowork-guaranteed-slot-firer' (+ the other required vn-market LaunchAgents) → FAILURE verdict + bug-channel alert if a required label silently disappears. Extend auditor-tier1-probe.test.sh with the injected-fault case (unload/hide the plist → expect FAILURE+bug alert; restore → ALL_GREEN, feedback_fence_false_green discipline). Motivating incident (prior_spec): T1 peer-firer degraded 2026-07-03 (03:00Z partial, 03:30Z absent) — this self-check is the durable fix for that SPOF class.",
@@ -9221,13 +9256,20 @@
         "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
         "prior_spec": "T1 auditor peer FIRER degraded 2026-07-03 (owner po, next_agent ops, priority med) — investigate peer firer health. Re-specced to the concrete durable probe-extension per brief 3.8; priority med→high (recurrence-preventer).",
         "scope_corrected": "2026-07-07T21:00:37Z",
-        "updated_at": "2026-07-07T21:00:37Z",
-        "updated_by": "po (po-s141 brief-signoff)",
+        "updated_at": "2026-07-08T05:00:50Z",
+        "updated_by": "po (review-lane sweep)",
         "claimed_at": "2026-07-07T21:20:13Z",
         "claimed_by": "developer",
         "reviewed_at": "2026-07-07T21:22:55Z",
         "reviewed_by": "developer",
-        "review_note": "Extended scripts/agents-flow/auditor-tier1-probe.sh with check 6 (_check_launchd_agents) — SSOT = repo launchd/*.plist Label fields (never hardcoded), FAILURE verdict + missing-label detail when any required label absent from launchctl list. 79/79 tests GREEN in auditor-tier1-probe.test.sh (60 pre-existing regression untouched behaviorally + 19 new, incl. mandatory injected-fault pair T25 FAILURE-on-missing / T26 ALL_GREEN-on-restore per brief §6.7). Bug-alerting is inherited via the existing FAILURE→spawn-system-auditor pipeline (cron-detect-loop/SKILL.md Job 2), unchanged — no new alert code inside this READ-ONLY pre-gate script. Simplicity gate PASS."
+        "review_note": "Extended scripts/agents-flow/auditor-tier1-probe.sh with check 6 (_check_launchd_agents) — SSOT = repo launchd/*.plist Label fields (never hardcoded), FAILURE verdict + missing-label detail when any required label absent from launchctl list. 79/79 tests GREEN in auditor-tier1-probe.test.sh (60 pre-existing regression untouched behaviorally + 19 new, incl. mandatory injected-fault pair T25 FAILURE-on-missing / T26 ALL_GREEN-on-restore per brief §6.7). Bug-alerting is inherited via the existing FAILURE→spawn-system-auditor pipeline (cron-detect-loop/SKILL.md Job 2), unchanged — no new alert code inside this READ-ONLY pre-gate script. Simplicity gate PASS.",
+        "po_review_sweep": {
+          "by": "po",
+          "at": "2026-07-08T05:00:50Z",
+          "from_next_agent": "developer",
+          "finding": "Stale self-pointer (next_agent=developer = the reviewer). Developer completed check 6 (_check_launchd_agents, SSOT=repo launchd/*.plist Label fields, never hardcoded). Probe script + test only, NO container/deploy. RAW-reverified by PO: bash scripts/agents-flow/auditor-tier1-probe.test.sh = 79 passed / 0 failed incl the injected-fault pair. Only remaining gate = independent qa sign-off.",
+          "next_action": "qa: re-run auditor-tier1-probe.test.sh (expect 79/79 GREEN incl FAILURE-on-missing / ALL_GREEN-on-restore fault pair per feedback_fence_false_green), confirm required-label SSOT is read live off launchd/*.plist (not hardcoded), then flip DONE_VERIFIED."
+        }
       },
       {
         "id": "PDF-TEST-01-FIX",
@@ -9263,26 +9305,17 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "reviewed_at": "2026-07-08T00:51:41Z",
         "reviewed_by": "developer",
-        "review_note": "Root-caused 2 live SOURCE HEALTH bugs in apps/mcp-server (verified apps/news-fetch/ is an unwired parallel pipeline via api-gateway NEWS_URL proxy — not the owner). (A) intelligenceCycleJob.ts defaultPollNews() re-injected no-op reuters/tradingeconomics stub fetchers every 15-min scheduled tick; pollNews.ts health loop treats fulfilled-but-empty as a real failure for sources outside STUB_CAPABLE_KEYS, silently overwriting the Sprint-1833g/1898b recordDisabled() seed with an ever-climbing down count (79+, live-confirmed via get_system_status pre-fix). Fixed by removing both keys — restores pollNews.ts own documented resolvedFetchers contract. (B) formatSourceHealthTable 18-char Nguồn column truncated Trading Economics (17c) and Trading Economics News (22c) to the identical string (live byte-diff confirmed) — not a registry duplicate, a display collision. Widened 18->26, header/separator now derived from the same constant. New test apps/mcp-server/src/__tests__/FIX-NEWS-CB-FALSE-CLOSED.test.ts (RED confirmed pre-fix, GREEN post-fix, 3 tests). Targeted 18-file regression sweep covering every source-health/pollNews/intelligence-cycle test: 295 pass / 0 fail. tsc clean. Commits aa87cfe05 (fix) + b1425a0c6 (memory), pushed to main. Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S3. REVIEW not DONE_VERIFIED: fix requires apps/mcp-server image rebuild (ops-gated) to take live-serving effect — qa/ops should rebuild + re-query get_system_status SOURCE HEALTH table to confirm Reuters RSS / Trading Economics show disabled (not climbing failures) and the duplicate row is gone, then flip DONE_VERIFIED."
-      },
-      {
-        "id": "CI-RED-0d28104a-FIX",
-        "type": "FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "created_at": "2026-07-08T01:22:39Z",
-        "origin_signal_id": "CI-RED-0d28104a",
-        "title": "CI-RED-0d28104a-FIX — CI RED (bun test) flaky: DSI-S3-sector-fin.test.ts AC-SEC-2a/2b — unmocked fetchReservoirLevels races 5s timeout (3rd file, same root-cause class as 1410/262 fixed 1efb6f918)",
-        "status_note": "AC (verification_gate=ci_green_on_subsequent_push): `gh run list --branch main --limit 3` shows conclusion=success for a bun-test run on a push AFTER 0d28104ac. Priority: high. Failing job: bun test. ROOT CAUSE (PO-verified — re-ran local: 16 pass/1 fail, AC-SEC-2a timed out 5001ms; parent saw 16/1 then 15/2 = flaky): src/__tests__/DSI-S3-sector-fin.test.ts AC-SEC-2a/2b call getEnergyGridStatus() -> fetchReservoirLevels() (infrastructure/fetchers/hydrologicalData.js) doing a REAL live network fetch, NO mock, racing bun-test's 5000ms default per-test timeout under CI 16-way parallel isolation. Offending commit 0d28104ac is DOCS-ONLY (notebook checkpoint main.md, 1 file) — it did NOT cause this; pre-existing test-hygiene flake, CI-red is a false-alarm-on-that-commit. RECURRING (feedback_recurring_bug_escalation): 3rd test file with this exact root-cause class. 1410-tool-diacritics-sweep.test.ts + 262-mcp-tools-042.test.ts were ALREADY fixed via mock.module (commit 1efb6f918, CI-green run 28886901289) but DSI-S3-sector-fin was explicitly dismissed as 'CI-flaky' at docs/data/orch/archive/backlog-detail.json:5724 without applying the mock. FIX: apply the proven, already-in-repo mock.module() pattern (freeze-before-mock via {...realNs} value-copy placed textually BEFORE the energyTools import + afterAll-restore; matches 1355b/1410/262 precedent) to the hydrologicalData.js import in DSI-S3-sector-fin.test.ts. SWEEP to close the class permanently: audit src/__tests__/257-weather-vn.test.ts + 258-hydro-data.test.ts (both mock.module=0, both import the network fetchers) — mock them or move to an integration lane excluded from default `bun test` so there is no 4th recurrence. Origin signal: docs/signals/processed/ci-red-0d28104a-20260708011711.json",
-        "claimed_at": "2026-07-08T01:27:48Z",
-        "claimed_by": "dev-team",
-        "next_agent": "qa",
-        "moved_to_review_at": "2026-07-08T01:55:43Z",
-        "moved_by": "dev-mcp-server",
-        "review_note": "Fix committed a80d405d1 (DSI-S3-sector-fin.test.ts hydrologicalData.js mock.module, freeze-before-mock+afterAll pattern copied from 1efb6f918), pushed to origin/main. Verified 17/17 local pass x3. 257-weather-vn.test.ts/258-hydro-data.test.ts audited: both always pass an injected HTTP client to the fetcher, never reach the live-network default-client branch — confirmed out of scope, left untouched (not a 4th recurrence risk). CI verification_gate=ci_green_on_subsequent_push: RAW-checked via gh run view/rerun on the a80d405d1 push, DSI-S3-sector-fin.test.ts absent from FAILED FILES across 3 consecutive reruns; run 3 conclusion=success. Runs 1-2 failed on unrelated single-file flakes (240-price-pipeline-recovery.test.ts, then 167-prediction-market-job.test.ts) — both pass locally, different file each run, looks like pre-existing CI-runner-level P=16 flakiness unrelated to this commit; flagging for PO/dispatcher triage, not fixed here (scope boundary)."
+        "review_note": "Root-caused 2 live SOURCE HEALTH bugs in apps/mcp-server (verified apps/news-fetch/ is an unwired parallel pipeline via api-gateway NEWS_URL proxy — not the owner). (A) intelligenceCycleJob.ts defaultPollNews() re-injected no-op reuters/tradingeconomics stub fetchers every 15-min scheduled tick; pollNews.ts health loop treats fulfilled-but-empty as a real failure for sources outside STUB_CAPABLE_KEYS, silently overwriting the Sprint-1833g/1898b recordDisabled() seed with an ever-climbing down count (79+, live-confirmed via get_system_status pre-fix). Fixed by removing both keys — restores pollNews.ts own documented resolvedFetchers contract. (B) formatSourceHealthTable 18-char Nguồn column truncated Trading Economics (17c) and Trading Economics News (22c) to the identical string (live byte-diff confirmed) — not a registry duplicate, a display collision. Widened 18->26, header/separator now derived from the same constant. New test apps/mcp-server/src/__tests__/FIX-NEWS-CB-FALSE-CLOSED.test.ts (RED confirmed pre-fix, GREEN post-fix, 3 tests). Targeted 18-file regression sweep covering every source-health/pollNews/intelligence-cycle test: 295 pass / 0 fail. tsc clean. Commits aa87cfe05 (fix) + b1425a0c6 (memory), pushed to main. Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S3. REVIEW not DONE_VERIFIED: fix requires apps/mcp-server image rebuild (ops-gated) to take live-serving effect — qa/ops should rebuild + re-query get_system_status SOURCE HEALTH table to confirm Reuters RSS / Trading Economics show disabled (not climbing failures) and the duplicate row is gone, then flip DONE_VERIFIED.",
+        "next_agent": "ops",
+        "updated_at": "2026-07-08T05:00:50Z",
+        "updated_by": "po (review-lane sweep)",
+        "po_review_sweep": {
+          "by": "po",
+          "at": "2026-07-08T05:00:50Z",
+          "from_next_agent": null,
+          "finding": "next_agent was NULL — the direct root of this row's stall. Developer completed code (commits aa87cfe05 fix + b1425a0c6 memory, BOTH on main/pushed — RAW-confirmed; new FIX-NEWS-CB-FALSE-CLOSED.test.ts 3 tests + 18-file regression 295/0, tsc clean). Real owner is apps/mcp-server (apps/news-fetch confirmed an unwired parallel pipeline). Correctly held at REVIEW: the fix only takes serving effect after a LIVE mcp-server image rebuild+swap, then a live get_system_status re-query — ops-gated deploy work, which is exactly why it cannot self-verify.",
+          "next_action": "ops: rebuild + swap apps/mcp-server (aa87cfe05 on main) into the running container (docker inspect image-id match, /health 200, toolCount unchanged). THEN qa: re-query get_system_status SOURCE HEALTH — confirm Reuters RSS + Trading Economics show DISABLED (not an ever-climbing down-count) and the Trading Economics / Trading Economics News duplicate-display row is gone (name column widened 18->26). Then flip DONE_VERIFIED. NOTE: live mcp-server swap may trip the auto-mode Production-Deploy permission gate (cf W5 deploy_gate_note) — if denied, DEFER with a deploy_gate note; do NOT silently drop."
+        }
       }
     ],
     "qa": [],
