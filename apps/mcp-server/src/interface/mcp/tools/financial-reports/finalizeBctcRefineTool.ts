@@ -88,7 +88,12 @@ function applyCorrections(
     value_prior: number | null;
     unit: string;
     is_summary_row: number;
-    source_confidence: number;
+    // FACTORY-INTERFACE-source-confidence-10-mask: honestly optional — this
+    // row shape is not guaranteed to originate from parseRefinedMarkdown
+    // (which always supplies a real value; see refinedMarkdownParser.ts).
+    // resolveSourceConfidence() below is the single, documented place that
+    // resolves an absent value to the schema default.
+    source_confidence: number | undefined;
   }>,
   correctionsMap: Map<string, HumanCorrectionRecord>,
 ): typeof rows {
@@ -96,8 +101,35 @@ function applyCorrections(
     const key = `${row.label}||${row.page_number}||${row.statement_section}||${row.code ?? ""}`;
     const correction = correctionsMap.get(key);
     if (!correction) return row;
+    // Human-confirmed correction: 1.0 is a REAL value here (full trust from
+    // a human), not a fabricated fallback — distinct from resolveSourceConfidence's
+    // NOT-NULL guard below, which only fires on a genuinely absent value.
     return { ...row, value_current: correction.new_value, source_confidence: 1.0 };
   });
+}
+
+/**
+ * resolveSourceConfidence — FACTORY-INTERFACE-source-confidence-10-mask
+ *
+ * Sole INSERT-boundary resolver for `bctc_table_rows.source_confidence`
+ * (`REAL NOT NULL DEFAULT 1.0` — schema-financial-reports.ts:512-523). The
+ * column cannot be made nullable (hard constraint), so a real value must
+ * always be written.
+ *
+ * Propagates a real, parser-supplied confidence UNCHANGED — it is never
+ * overridden or coerced. `parseRefinedMarkdown` always computes a genuine
+ * per-row confidence (0.1 unparseable / 0.2 red flag / 0.4 yellow flag / 1.0
+ * no flag found — see refinedMarkdownParser.ts `BctcTableRow.source_confidence`
+ * doc), so in the current pipeline this function's `undefined` branch is
+ * never actually reached. It exists as an explicit, documented, NOT-NULL-safe
+ * fallback ONLY for a row that genuinely carries no confidence value at all
+ * (e.g. a future row producer that does not route through the parser) —
+ * do NOT read the 1.0 below as a silent mask of unknown confidence; it is
+ * the schema's own documented default, applied only when nothing is known.
+ */
+export function resolveSourceConfidence(sourceConfidence: number | undefined): number {
+  if (sourceConfidence !== undefined) return sourceConfidence;
+  return 1.0; // schema default — bctc_table_rows.source_confidence NOT NULL DEFAULT 1.0
 }
 
 // ── Zod input schema ──────────────────────────────────────────────────────────
@@ -180,7 +212,10 @@ export function buildFinalizeBctcRefineHandler(
         value_prior: number | null;
         unit: string;
         is_summary_row: number;
-        source_confidence: number;
+        // FACTORY-INTERFACE-source-confidence-10-mask: honestly optional — see
+        // resolveSourceConfidence() doc for why (parser always supplies a real
+        // value in practice; the type does not overclaim that as a guarantee).
+        source_confidence: number | undefined;
       }> = [];
 
       // FIX-BCTC-BANK-BS-SECTION-CLASSIFIER: thread `statement_section` state
@@ -410,7 +445,7 @@ export function buildFinalizeBctcRefineHandler(
             row.value_prior,
             row.unit,
             row.is_summary_row,
-            row.source_confidence ?? 1.0,
+            resolveSourceConfidence(row.source_confidence),
           );
           totalRows++;
         }

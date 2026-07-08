@@ -31,6 +31,17 @@ export interface BctcTableRow {
   value_prior: number | null;  // LIVE schema: value_prior (NOT value_previous)
   unit: string;               // default "billion_vnd"
   page_number: number;
+  /**
+   * FACTORY-INTERFACE-source-confidence-10-mask: ALWAYS a real, evidence-based
+   * value in [0.1, 1.0] — never absent/undefined for a row this parser emits.
+   * Computed by parseTrustFlag per cell then Math.min()'d across the row:
+   * red flag → 0.2, yellow flag → 0.4, unparseable numeric cell → 0.1 (see
+   * the FAIL-LOUD block below), NO flag found → 1.0 ("no distrust signal
+   * detected" is itself a real, computed result — not a fabricated default).
+   * Downstream consumers (finalizeBctcRefineTool.ts) rely on this invariant:
+   * their own `1.0` fallback is a defensive NOT-NULL guard for a row that
+   * did NOT come from this parser, never a substitute for a real value here.
+   */
   source_confidence: number;  // 0.0–1.0
   is_summary_row: number;     // 0 or 1
 }
