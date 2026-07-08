@@ -54,15 +54,20 @@ Run the column matching your Language Mode before every commit. Both columns are
 
 **Do not mark task DONE until sandbox dashboard shows all TA scenarios green.**
 
-Run both tiers before declaring complete:
+Run all scenario tiers before declaring complete. `cmd/sandbox` takes only
+`-tier` (primitive|module|service) and `-scenario` (one filename per run —
+there is no `-module` flag and no `-scenario=all` batch mode). Use the
+established runner that loops over every scenario file and bakes the
+dashboard verdicts:
 
 ```bash
 cd apps/technical-analysis
-go run ./cmd/sandbox -tier=primitive -module=technical-analysis -scenario=all
-go run ./cmd/sandbox -tier=module -module=technical-analysis -scenario=all
+bash dashboard/build.sh
 ```
 
-Both commands must exit 0 with all scenarios GREEN.
+This must report `N passed / 0 failed` (currently 35/35: 25 primitive + 5
+module + 5 service) and the headless render-check must print `PASS`. To
+check a single scenario by hand: `go run ./cmd/sandbox -tier=primitive -scenario=rsi-golden.json`.
 
 If ANY scenario is RED:
 - The task is NOT done.
