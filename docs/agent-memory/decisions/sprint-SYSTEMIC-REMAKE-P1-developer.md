@@ -51,3 +51,11 @@
 - Assume depends_on is always an array in backlog-detail.json — rejected after live grep found 7/321 rows store it as a bare string; added as_dep_array normalizer before shipping.
 **why-decision:** Matches the router's own diagnosed root cause + precedent (revert_note on the live board row) exactly — DONE_VERIFIED-only mirrors existing repo convention, conservative-skip is strictly safer than blind-dispatch.
 **why-change:** No change from task spec. Did not promote FACTORY-TECHANALYSIS-go-livepath-tests myself (PO declined manual promotion this cycle) — sanity-checked via scratch-copy dry-run only that the fixed script now picks it correctly.
+
+### STEP developer-S6 · developer · 2026-07-08T18:15:00Z
+**task-id:** FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT
+**what-done:** Confirmed status_note's diagnosis exactly: `_step_sf1_claim()` in dev-team-tick-preflight.sh inspected only `.claimed` on a failed claim, unconditionally returning "peer holds it" -> SKIP even on self-hold. Mirrored `_step_fire_election()`'s existing self-hold branch: compare `current_holder.owner_client_session` vs self — self-hold now heartbeat-renews SF-1 and returns 0 (proceed) instead of false-SKIP; real peer (different session) still SKIPs, releases nothing (unchanged).
+**what-considered:**
+- Only path: mirror `_step_fire_election()`'s proven self-hold pattern already in the same file — no alternative design considered, the fix template was explicitly pre-diagnosed and verified correct by reading both functions side-by-side before editing.
+**why-decision:** Exact symmetry with the sibling function eliminates the asymmetry that caused the bug; live-verified against the actual self-held dev-team-cron-singleton lock (owner_client_session == 5a45feda-431e-46c8-941d-a6539a0eca77): verdict flipped SKIP -> RUN, heartbeat renewed both locks, no lock corruption.
+**why-change:** No change from status_note's diagnosis or the dispatch prompt's prescribed fix. Added T19 (self-hold -> RUN+heartbeat) + T20 (peer-hold regression guard) to the existing test harness — 55/55 pass.
