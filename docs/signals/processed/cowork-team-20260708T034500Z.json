@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T03:45Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [],
+    "skipped": [
+      "alert-commander-market"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved — 8th consecutive tick withholding this slot. No newer resolution signal than unified-agent-20260707T194500Z-gateway-blind.json. last_fired intentionally NOT updated.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "Defect now open ~8h (since 19:45Z). 8 consecutive withholds. Flagging duration threshold for PO visibility — not re-escalating to user this tick, consistent with established precedent, since resolution requires a user-initiated /mcp reconnect, not a PO decision."
+  },
+  "createdAt": "2026-07-08T03:47:00Z",
+  "_processed": {
+    "fingerprint": "6b366939a4feed4cbe8274a24a11796803f8deacce978d9bd236ec9347b3c0f9",
+    "processedAt": "2026-07-08T03:47:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

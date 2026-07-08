@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T02:15Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "spawned": [],
+    "skipped": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved — most recent gateway-blind signal on file remains unified-agent-20260707T194500Z-gateway-blind.json (checked again this tick, no newer resolution signal). Both unified-agent (CHEF) and alert-commander share the no-Bash / mcp__gateway__call_tool-only tool-grant profile proven broken this session. Router judgment call: withhold both spawns; last_fired intentionally NOT updated so both remain due and retry cleanly once /mcp reconnect happens.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "both non-guaranteed slots. chef-intraday is a bonus intraday CHEF dish (not the 3x/day guaranteed publish), so no missed daily deliverable. Transient note: emit_pressure_state hit one HTTP 502 from the gateway on first attempt this tick, succeeded on immediate retry — unrelated to the gateway-blind agent-profile defect (this was a direct HTTP call from the router's own Bash shell, not a subagent's mcp__gateway__call_tool invocation)."
+  },
+  "createdAt": "2026-07-08T02:17:00Z",
+  "_processed": {
+    "fingerprint": "e17cd9fc70c2cffeadc622993b3a9e2a855d45ab7aaa71f9b860f590aece7eef",
+    "processedAt": "2026-07-08T02:47:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

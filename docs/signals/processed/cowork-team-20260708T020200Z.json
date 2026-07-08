@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T02:00Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [],
+    "skipped": [
+      "alert-commander-market"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved — most recent gateway-blind signal on file remains unified-agent-20260707T194500Z-gateway-blind.json (checked again this tick, no newer resolution signal in docs/signals/ or docs/signals/processed/). alert-commander shares the no-Bash / mcp__gateway__call_tool-only tool-grant profile proven broken this session. Router judgment call: withhold spawn; last_fired intentionally NOT updated so the slot remains due and retries cleanly once /mcp reconnect happens.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "non-guaranteed slot (alert-commander-market, cadence 240min), no missed daily deliverable. Same standing defect already escalated to user; not re-escalating this tick."
+  },
+  "createdAt": "2026-07-08T02:02:00Z",
+  "_processed": {
+    "fingerprint": "9dca145b3d44af0424794b753ae03fb5d7905b4dd6de8956aa512f247bacc9e5",
+    "processedAt": "2026-07-08T02:47:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

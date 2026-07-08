@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T02:45Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [],
+    "skipped": [
+      "alert-commander-market"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved — 4th consecutive tick (02:00Z, 02:15Z, 02:30Z, 02:45Z) withholding alert-commander-market for the same reason. Most recent gateway-blind signal on file remains unified-agent-20260707T194500Z-gateway-blind.json. last_fired intentionally NOT updated so the slot remains due and retries cleanly once /mcp reconnect happens.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "non-guaranteed slot, no missed daily deliverable. Defect has now been open 7h+ (since 19:45Z) and will keep matching every 15min through the 02-08 UTC market window unless resolved. Flagging duration for PO visibility but not re-escalating to user this tick per standing precedent."
+  },
+  "createdAt": "2026-07-08T02:47:00Z",
+  "_processed": {
+    "fingerprint": "638d4c4c2cde521dbf54ff518e8bbb200be65569f8061c7def7225e26ff444a3",
+    "processedAt": "2026-07-08T02:47:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
