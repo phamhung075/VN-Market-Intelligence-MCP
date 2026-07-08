@@ -60,6 +60,10 @@
 | `signalDetector.ts` | Core signal detection engine |
 | `priceAlertChecker.ts` | Price threshold monitoring |
 | `customAlertEvaluator.ts` | User-defined rule evaluation |
+| `alertConfidenceScorer.ts` | `deriveConfidenceFromStrength({strength, base, ceiling})` — linear interpolation between `base` (strength=0) and `ceiling` (strength=1), clamped. Pure, no I/O. Used by all 4 alert scan jobs below instead of a frozen confidence literal (FACTORY-SCHEDULER-alert-confidence-literals). |
+| `bbBreakoutStrength.ts` | `computeBbBreakoutStrength({close, upper, lower})` — band-penetration ratio in [0,1]: how far `close` moved past the BB20 edge relative to the band's own width. Feeds `bbAlertScanJob`'s confidence via `BB_BREAKOUT_CONFIDENCE_{BASE,CEILING}` (alertThresholds.ts: 0.55–0.85). |
+| `rsiExtremityStrength.ts` | `computeRsiExtremityStrength({rsi, direction})` — distance past the 70/30 RSI threshold, normalised to [0,1] against the remaining span to saturation (100 or 0). Feeds `taAlertScanJob`'s confidence via `RSI_EXTREME_CONFIDENCE_{BASE,CEILING}` (alertThresholds.ts: 0.55–0.85). |
+| `alertThresholds.ts` | Tunable constants for alert scan jobs: `MIN_DAILY_VOLUME_FOR_ALERTS=100_000`, `NEUTRAL_BAND_PCT=2.0`, plus 4 confidence base/ceiling pairs (`FOREIGN_FLOW_*`=0.55–0.95, `INSIDER_STREAK_*`=0.60–0.95, `BB_BREAKOUT_*`=0.55–0.85, `RSI_EXTREME_*`=0.55–0.85) consumed by `alertConfidenceScorer.ts`. |
 
 ### Financial Analysis
 | Service | Key Logic |
