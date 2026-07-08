@@ -60,6 +60,9 @@
 // Domain→domain import is allowed; both are in domain/services/financial-reports/.
 // This replaces the local `findByCode(rows,"10")===null` false-positive proxy.
 import { isBankFormFromRows } from "./bctcFormType.js";
+// FACTORY-DOMAIN-extract-bctc-parsing-lib (2026-07-08): detectDivisor is now
+// the canonical shared version (used to be a local function here).
+import { detectDivisor } from "./lib/lineScan.js";
 
 // ── Lightweight row type (DDD-isolated, no application-layer dependency) ──────
 
@@ -224,24 +227,13 @@ export interface ScalarAggregateResult {
  * Rationale: Vietnam's smallest listed companies have total assets > 100 billion VND
  * = 100,000 million VND in the million-VND scale, which is < 1e11 as a raw-VND number.
  * A raw-VND total-assets of 100 billion = 1e11. Thus 1e11 cleanly splits the two scales.
+ *
+ * FACTORY-DOMAIN-extract-bctc-parsing-lib (2026-07-08): detectDivisor itself
+ * relocated to ./lib/lineScan.ts (canonical) — imported below, called with
+ * this same threshold so behavior is byte-for-byte identical to the original
+ * local function.
  */
 const RAW_VND_THRESHOLD = 1e11;
-
-/**
- * Detect the unit divisor from the row set's maximum absolute value.
- *
- * Returns 1_000_000 when values are in raw VND, 1 when in million VND.
- */
-function detectDivisor(rows: AggregatorRow[]): number {
-  let maxAbs = 0;
-  for (const row of rows) {
-    if (row.value_current !== null) {
-      const abs = Math.abs(row.value_current);
-      if (abs > maxAbs) maxAbs = abs;
-    }
-  }
-  return maxAbs > RAW_VND_THRESHOLD ? 1_000_000 : 1;
-}
 
 // ── Code-based lookup helpers ─────────────────────────────────────────────────
 
@@ -703,7 +695,7 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     return { scalars: emptyScalars, balanceViolation: null, notApplicable: [] };
   }
 
-  const divisor = detectDivisor(rows);
+  const divisor = detectDivisor(rows, RAW_VND_THRESHOLD);
 
   // ── Bank-path detection (BEQ-8: use proven BANK-AWARE-BCTC discriminator) ────
   // REPLACED: `findByCode(rows, "10") === null` was a false-positive trap for
