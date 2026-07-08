@@ -7935,13 +7935,27 @@
         "title": "Gateway-blind root cause = Claude Code CLI MCP-client session-init handshake failure (server proven healthy via raw-curl HTTP 200; .mcp.json confirmed correct). Scope repo-actionable mitigation vs harness/user-side; supersedes the F1-GATEWAY chain.",
         "priority": "high",
         "size": "S",
-        "status": "BACKLOG",
+        "status": "DONE",
         "zone": "cross-service/",
         "mode": "spike",
         "timebox": 120,
         "created_at": "2026-07-08T03:37:00Z",
         "origin_signal_id": "dev-team-20260708T033700Z-gateway-blind-main-session",
-        "status_note": "SPIKE question: given .mcp.json is confirmed correct and the gateway endpoint returns HTTP 200 with a valid MCP protocol response (server healthy), why does the Claude Code CLI MCP client fail the session-initialize handshake for some sessions (main + subagent, open ~8h, now first observed at dev-team dispatcher/router level)? (a) REPO-ACTIONABLE: extend scripts/agents-flow/mcp-call.sh and/or document a sanctioned degraded-mode operating procedure — including static tool discovery via docs/data/tool-registry.json to cover the 3 blind gateway meta-tools (list_servers/list_server_tools/search_tools) which have no bash-bridge equivalent — so agents stop per-tick re-escalation churn (8 consecutive cowork withholds this window). (b) OUT-OF-REPO: confirm the handshake failure is a Claude Code CLI/harness-level issue needing user /mcp reconnect or session restart (the only known per-session remediation, corroborated 4th+ time), flag for user/Anthropic-side visibility. Supersedes F1-GATEWAY-TRANSPORT-PROBE + F1-WRITE-MCP-JSON-GATEWAY (premise falsified) + F1-AGENT-FATHER-BLIND-GUARD-REMOVE (gated on now-moot .mcp.json). Origin: docs/signals/processed/dev-team-20260708T033700Z-gateway-blind-main-session.json"
+        "status_note": "DONE 2026-07-08T04:55Z (architect) — CONCLUSIVE within timebox. Own-session confirmed gateway-blind on spawn (corroborating evidence). Live curl replay of full MCP session lifecycle (initialize->notifications/initialized->tools/call) against https://zenmidi.com/gateway/mcp succeeded end-to-end -- server 100% MCP-protocol-healthy, rules out server/config/protocol. Cross-checked mcp-gateway container logs: zero successful call_tool invocations since 2026-07-04T19:10:48Z (~3.5d), unaffected by a 2026-07-07T16:35Z manual container restart -- root cause is CLIENT-SIDE (Claude Code CLI MCP-client connection lifecycle), not server-side, and is a sustained multi-day outage not an intermittent per-session flake. Hypothesis (out-of-repo, flagged for user/Anthropic): CLI's MCP client negotiates its connection once per top-level process and does not self-heal on staleness/idle-timeout/downstream-restart; Task-tool/background subagents appear to inherit the parent's (possibly dead) connection rather than negotiating fresh. No repo fix possible for the CLI-side defect. Repo-actionable gap found + spun off as FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE (does not duplicate the already-shipped FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP, which covers a different call site/agent class). Full evidence: docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md",
+        "handoff_ref": "docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md"
+      },
+      {
+        "id": "FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE",
+        "type": "FIX",
+        "title": "Extend mcp-call.sh with stateful gateway-meta bridge (list_servers/list_server_tools/search_tools) + document sanctioned degraded-mode procedure in gateway-call-contract.md",
+        "priority": "medium",
+        "zone": "cross-service/",
+        "size": "S",
+        "status": "BACKLOG",
+        "next_agent": "developer",
+        "created_at": "2026-07-08T04:46:30Z",
+        "created_by": "architect",
+        "status_note": "Follow-up from SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE (docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md SS5-6). Scope (land together, same PR): (1) add mcp_call_gateway_meta(tool_name, json_args) to scripts/agents-flow/mcp-call.sh implementing the proven 3-step stateful handshake (initialize -> notifications/initialized -> tools/call, reusing the returned mcp-session-id header) against https://zenmidi.com/gateway/mcp -- covers the 3 gateway meta-tools that have zero bash-callable equivalent today; keep the existing stateless mcp_call() untouched (different endpoint/contract, add-dont-merge). (2) add a new section 6 Degraded Mode -- Gateway-Blind Session to docs/standards/gateway-call-contract.md: self-diagnosis method (inspect own tool schema directly, never trust memory/notebooks per fail-loud anti-hallucination rule), workaround coverage matrix (vn-market downstream tools -> mcp_call() full coverage; gateway meta-tools -> mcp_call_gateway_meta() once shipped; no-Bash agents -> already-shipped cycle-bootstrap/SKILL.md CONFIRMED-BLIND fallback, no other option), discovery-first fallback via docs/data/tool-registry.json (cross-ref existing SS2), and a de-escalation/dedup rule -- once gateway-blindness is corroborated >=2x in the current session, do not raise a fresh CRITICAL signal, treat further recurrences as routine/expected until user /mcp reconnect. Not urgent/blocking -- workaround already in daily use; closes documentation + narrow tool-discovery gap, reduces alert churn. Does NOT duplicate FIX-COWORK-SUBAGENT-GATEWAY-BLIND-BOOTSTRAP (caba878b7/83bca6c04, shipped 2026-07-07) which covers the no-Bash cowork cycle-bootstrap Step-0 call site only."
       }
     ],
     "closed_sprints": [
