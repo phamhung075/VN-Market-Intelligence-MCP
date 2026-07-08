@@ -267,12 +267,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-INFRA-split-vnstockBridge CLOSED DONE_VERIFIED by po Step 6 (Docker Microservice Code-Change Close Gate) — vnstockBridge.ts (1206L) 11 inline Python templates extracted to infrastructure/fetchers/vnstock/{scripts/*.ts,runtime.ts,index.ts} with a single shared wrapVnstockScript() preamble; shipped & live-verified (deployed 91c9d19b0 ancestor of HEAD, zero app drift, container healthy toolCount=183, generated Python byte-identical across ops(VNM)+qa(FPT) live-data fetches). Idle — router picks next BOUNDED-1 backlog row.",
-    "updated_at": "2026-07-08T21:32:56Z",
-    "updated_by": "po"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-INFRA-split-telegramCommands",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INFRA-split-telegramCommands — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-08T21:48:15Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3943,15 +3943,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-INFRA-agentSignal-sql-binding",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-agentSignal-sql-binding"
-      },
-      {
-        "title": "Split telegramCommands by seam; move /recap orchestration to an application usecase",
-        "priority": "P1",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INFRA-split-telegramCommands",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-telegramCommands"
       },
       {
         "title": "Split ssc.ts into per-portal disclosure fetchers (no dedup-delete yet)",
@@ -9587,7 +9578,22 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "title": "Split telegramCommands by seam; move /recap orchestration to an application usecase",
+        "priority": "P1",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-INFRA-split-telegramCommands",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-telegramCommands",
+        "promoted_at": "2026-07-08T21:48:10Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T21:48:15Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -9706,6 +9712,21 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "id": "FIX-COWORK-STEP5-BACKSTOP-TRUSTS-STALE-TRIGGER-STATUS",
+        "title": "cowork spawn-fanout Step 5.0 keys backstop-deferred=safe on stale trigger_status -> masks real guaranteed-slot misses (cloud RemoteTrigger retired)",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "agents",
+        "status": "REVIEW",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "promoted_at": "2026-07-08T21:49:22Z",
+        "promoted_by": "po (triage tick 2026-07-08T21:07Z)",
+        "claimed_at": "2026-07-08T21:49:22Z",
+        "claimed_by": "agents-architect + agent-father",
+        "review_note": "PO triage (tick 21:07Z) minted this FIX from 3 corroborating cowork-team signals showing the defect manually re-derived 3x in one session. Router routed maintenance-lane (not standard dev-* zone) per PO's own note: cowork-schedule.json + cowork-team flow are agent-father-maintained via architect brief only. agents-architect wrote brief docs/architecture-briefs/2026-07-08-cowork-step5-stale-trigger-status.md (commit 8a627771f, pushed) after independently re-verifying PO's payload + a 147-revision git-history scan splitting the 9 stale slots into 2 non-overlapping classes (5 real-trigger-until-retirement vs 4 never-had-one). agent-father implemented per brief (commit 287b181ee, pushed): spawn-fanout.md Step 5.0 discriminator re-keyed trigger_status==\"active\" -> _superseded_by==null; cowork-schedule.json 5 slots -> trigger_status:\"superseded\", 4 slots -> field removed. Router RAW-verified both commits independently (grep BACKSTOP_SLOTS line, jq trigger_status=='active' count==0, jq has(trigger_status) false on the 4 target slots, JSON valid, both commits confirmed on origin/main). No overlap with F1-CLOUD-TRIGGER-DECOMMISSION (still gated on its own 2-fires-per-slot criterion, untouched) or the 2026-07-07 durability brief's already-landed _notes.layer_a_deletion_locked fix (05a8bffa6). baseline_pass=true, size S, doc+JSON only -- no rebuild_required, no Docker Close Gate needed. qa: standard review (not Close Gate) -- confirm spawn-fanout.md Step 5.0 pseudocode logic is internally consistent (BACKSTOP_SLOTS/NO_BACKSTOP_SLOTS still partition WON_SLOTS exhaustively), cowork-schedule.json remains valid JSON consumed correctly by any other reader, no orphaned trigger_status references elsewhere in the flow docs."
       }
     ],
     "qa": [],
@@ -9725,8 +9746,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T20:50:00Z",
-    "last_triaged_by": "dev-mcp-server"
+    "last_triaged_at": "2026-07-08T21:48:10Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
