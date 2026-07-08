@@ -109,6 +109,19 @@ export function detectMagnitudeViolations(rows: MagnitudeRow[], isBankForm = fal
     (r) => balanceSections.includes(r.statement_section) && r.is_summary_row === 1,
   );
 
+  // FACTORY-DOMAIN-extract-bctc-parsing-lib (2026-07-08 audit finding):
+  // these 3 inline patterns overlap in CONCEPT with balanceSheetExtractor's
+  // P_TOTAL_ASSETS/P_TOTAL_LIABILITIES/P_EQUITY_TOTAL (now canonical in
+  // ./lib/vasPatterns.ts) but are DELIBERATELY NOT wired to import them:
+  // this validator matches against already-cleaned bctc_table_rows labels
+  // (not raw OCR text) and requires an English alternation branch the OCR
+  // patterns don't have; swapping in the OCR-fuzzy diacritic-tolerant
+  // pattern would silently WIDEN this BLOCK-severity fraud-detection match
+  // (e.g. it would newly match "TỔNG CỘNG TÀI SẢN", which the literal
+  // "tổng tài sản" here does not) — a real behavior change that needs its
+  // own dedicated verification pass, not a side effect of a mechanical
+  // dedup task. See lib/vasPatterns.ts header + decision journal
+  // FACTORY-DOMAIN-extract-bctc-parsing-lib for the full rationale.
   const totalAssetsRow = balanceRows.find((r) =>
     /tổng tài sản|total assets/i.test(r.label),
   );
