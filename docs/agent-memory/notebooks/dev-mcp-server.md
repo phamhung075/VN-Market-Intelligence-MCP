@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — FACTORY-INTERFACE-source-confidence-10-mask → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-`finalizeBctcRefineTool.ts:398 row.source_confidence ?? 1.0` flagged by the same audit family as S6's sibling fix. Ground-truth investigation FIRST (not assumed): `parseRefinedMarkdown` already always computes a real per-row `source_confidence` (0.1 unparseable/0.2 red/0.4 yellow/1.0 no-flag — never absent), the existing `HC-human-confirm.test.ts` `DV-HC-SC` suite already proves all four variants persist end-to-end, and the live named-volume DB independently confirms it (`bctc_table_rows`: 380 rows @0.1, 2 @0.4, 3257 @1.0, 0 NULLs). The `?? 1.0` was provably unreachable dead code, not an active masking bug — documented honestly rather than claimed as "fixed a live bug."
-
-Hardened the anti-pattern structurally anyway per the required discipline: local row-shape `source_confidence` retyped honestly `number | undefined`; INSERT-boundary fallback extracted into exported `resolveSourceConfidence()` — propagates a real value UNCHANGED (incl. edge cases 0 and 1.0) and falls to the schema default (`bctc_table_rows.source_confidence REAL NOT NULL DEFAULT 1.0`) ONLY when genuinely `undefined`. Column NOT NULL preserved (hard constraint, not made nullable). Added an invariant doc comment on `BctcTableRow.source_confidence` in refinedMarkdownParser.ts (0-diff).
-
-New `FACTORY-INTERFACE-source-confidence-10-mask.test.ts` (6/6 pass) exercises `resolveSourceConfidence` directly at both boundaries — the "parser-absent" case can't be reproduced through the real pipeline today (parser never omits it), so it's tested at the resolver's own honest `number|undefined` signature instead.
-
-tsc clean. Targeted+adjacent (HC-human-confirm/AR-parser-dv/W2-ROW-REPAIR/FU-5b/BANK-AWARE-1/FU-6f + new file) 167/167 pass. Full `bun test`: 14312 pass/58 fail/3 errors/1177 files — fail set is the pre-existing VPS-push/RSS/insider/foreign-flow network-flaky class (grepped: zero overlap with bctc/finalize/parser files), matching S6's documented baseline (14296/68/10). Image rebuilt (`35c8117c1f85`) but NOT swapped into the running container (still `180382145ee7`) — ops-gated per standing policy. Live-DB RAW-verify done against the actual named-volume DB inside the running container (not a decoy).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 (known-stale baseline, unaffected), server boot health 200 + dashboard routes 200 verified | HEALTHY.
-
 ## 2026-07-08 — FACTORY-SCHEDULER-alert-confidence-literals → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -39,5 +25,19 @@ New `FACTORY-SCHEDULER-prediction-default-dedup.test.ts` (7/7 pass): pins the li
 tsc clean. Targeted+adjacent (8 prediction-related test files) 116/117 pass — 1 unrelated pre-existing flaky timeout (1345e Test 5, VN-Index cascade broadcast, passes 8/8 in isolation). Full `bun test`: 14344 pass/40 skip/58 fail/4 errors/1179 files (568.93s) then Bun 1.3.13 crash-at-teardown (known engine bug) — zero overlap between the 58 fail files and predictionMarketJob.ts/config.ts/predictionSignalDetector.ts, matches the same pre-existing VPS-push/RSS/insider/foreign-flow network-flaky class documented in the prior 2 entries. Server boot verified on PORT=3999 (3000 held by the live container): health/bctc-inspect/news-fetch-dashboard all 200, toolCount=183 unchanged.
 
 Per explicit dispatch instruction: board flip stops at REVIEW/`next_agent=ops` (Close Gate Steps 1-4); qa does Step 5 RAW-verify and must set `next_agent=po` (NOT self-close to done_verified — that was a caught process deviation on the immediately-preceding sibling task); po performs the actual Step 6 DONE_VERIFIED flip.
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
+
+## 2026-07-08 — FACTORY-INTERFACE-extract-finalizeBctc-usecase → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+`buildFinalizeBctcRefineHandler` (~1100L, own header already said "DDD layer: application") lived in `finalizeBctcRefineTool.ts` (interface). Extracted the 5 named BLOCK-1..5 seams to `application/usecases/finalizeBctcRefine/{backfillScalarColumns,deriveRatioColumns,revalidateBalanceIdentity,recomputeExtractionConfidence,recomputeBctcEval}.ts` (each ≤120L per function; BLOCK-1's ~300L raw body decomposed into 4 sub-helpers to fit) plus the remaining orchestration (CONFIRMED guard, parse loop, DT-2/3/4, BEQ-7, the single atomic `db.transaction`, BAL-1c/1d) into `finalizeBctcRefine.ts`. Interface file now keeps only Zod schema + validation + response-wrap + `server.tool` registration (1349L → 102L).
+
+Key judgment call: every original return point used the byte-identical `{content:[{type:"text",text:JSON.stringify(X)}]}` wrapper, so the application layer now returns the plain result object `X` and the interface wraps it exactly once — provably a no-op formatting factor, not a behavior change. Call order and the single transaction boundary preserved exactly; `safeDivideLocal` absorbed verbatim into `deriveRatioColumns.ts` (deliberately not unified with `ratioComputer.ts`'s own private copy — pure relocation, not a dedup pass).
+
+tsc clean. Targeted finalizeBctcRefine-related suite (22 files, incl. `FACTORY-INTERFACE-source-confidence-10-mask.test.ts` re-exported `resolveSourceConfidence`) 293/293 pass. Full `bun test`: ~14337-14348 pass/40 skip/54-65 fail/1179 files across 2 runs (run-to-run variance itself is the known flaky-network-test signature) then Bun 1.3.13 crash-at-teardown (known engine bug, non-authoritative). Failing-file set grepped both runs: zero bctc/finalize overlap except `1405b-bctc-vps-fixes.test.ts` (bctcQueueEnricherJob/logVpsPush/vn-news-fetch — unrelated to finalize; re-ran in isolation 12/12 pass, confirms pre-existing parallel-load flake not caused by this change). eslint clean on all 8 touched files. Server boot verified on PORT=3999: health 200 toolCount=183, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200. Gate 2d scheduler cron.schedule grep=3 (matches the immediately-preceding 2 sibling entries' documented current baseline — the flow doc's "76" note is stale text, not a live regression).
+
+Commit: 56ee74725 (8-file extraction). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (BLOCK-1..5 recompute logic runs against the live named-volume DB at runtime).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
