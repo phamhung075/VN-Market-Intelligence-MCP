@@ -261,10 +261,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FACTORY-INTERFACE-sequential-confidence-05-mask",
-    "next_agent": "ops",
-    "next_action": "ops-gated docker compose up -d mcp-server swap (image 180382145ee7 already built + QA-approved) + peer-container health verify; then QA post-swap LIGHTER sanity check only (server /health 200, tool count unchanged at 183) — NOT a full RAW HTTP probe, confidence field confirmed internal-only with no live HTTP surface (handle() returns {status,thought,progress,nextSteps} only); then flip FACTORY-INTERFACE-sequential-confidence-05-mask -> done_verified via orch-apply.sh.",
-    "updated_at": "2026-07-08T03:15:47Z",
-    "updated_by": "qa"
+    "next_agent": "qa",
+    "next_action": "Swap complete: mcp-server image 4c8ea4cfd41f → 180382145ee7 verified via docker inspect. Health check: 200 OK, toolCount=183 unchanged. Peer containers healthy (rag-service was independently restarting before swap, not caused by this op). Awaiting QA post-swap sanity check.",
+    "updated_at": "2026-07-08T05:21:50Z",
+    "updated_by": "ops"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
