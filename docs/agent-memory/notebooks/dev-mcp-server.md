@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-07 — CI-RED-c5b5f885-FIX → REVIEW
-
-**Session:** (session-scrubbed) (dev-team cron dispatcher, PO-triaged)
-
-CI `bun test` job was stable-red on 3 consecutive main HEADs (c5b5f885→fb366a1e→f71643fb) — the prior `search_similar_context` fail-soft hypothesis (31caeefcd) was already disproven by PO's raw verify. Pulled real logs from run 28689707086 + 2 prior runs: `1410-tool-diacritics-sweep.test.ts` failed 3/3, `262-mcp-tools-042.test.ts` 2/3, `183-alert-accuracy.test.ts` 1/3 (unrelated — no network dep, left untouched). Root cause: `getClimateRiskSignals`/`getEnergyGridStatus` call `fetchWeatherWarnings`/`fetchReservoirLevels` with no DI hook — real network (`weatherVn.js`→nchmf.gov.vn/NOAA, `hydrologicalData.js`→vneconomy.vn RSS, 15s axios timeout) under CI's 16-way parallel per-file isolation consistently exceeds bun-test's 5s default per-test timeout. `262`'s energy tests were already `.skip`'d for this exact reason (comment said "Fix: inject mock httpClient") but `1410`'s Case 6+9 and `262`'s Case 1-3 (climate) were still live/unskipped and hitting real network.
-
-Fix: `mock.module()` both fetcher modules in both test files (freeze-before-mock via namespace-spread copy + `afterAll`-restore, matches established `1355b-dav-pharmacy-job-gaps.test.ts` precedent) so the diacritics/format assertions run hermetically; un-skipped `262`'s 2 energy tests now that the network dep is mocked. Empirically probed (scratch repro in scratchpad, not committed) two subtleties before touching the real files: (1) `mock.module()` must textually precede the static `climateTools.js`/`energyTools.js` import in the same file to actually intercept — confirmed Bun does honor this ordering; (2) the "freeze" capture must be an explicit value-copy (`{...realNs}`), not a live import-binding alias, or the "real" reference gets silently swapped too once `mock.module()` fires.
-
-Verified: both files pass in isolation (27/27, 6/6) and together with `257-weather-vn`/`258-hydro-data`/`259-climate-impact` siblings in both file orders (66/66, no mock leak — siblings still see genuine fetched counts). Full suite via `scripts/ci-per-file-isolation.sh` (CI's actual mechanism, P=16) run before AND after the fix: same ~13-14 unrelated pre-existing failed files both times (RSS/pollNews/SSC-breaker tests — network-flaky in this local sandbox only, confirmed absent from all 3 real CI runs' failed-file lists, present identically before/after so not a regression). Plain bare `bun test` (whole tree, no isolation) was disregarded as non-authoritative — the isolation script's own comment explicitly forbids it ("NEVER runs bare bun test"), and it pulled in out-of-scope `src/_deprecated/` + crashed the Bun 1.3.13 engine (known unrelated bug).
-
-Committed `1efb6f918` (2 files, explicit-path staged), pushed to origin/main. **AC verified**: CI run 28886901289 (head 1efb6f918) = conclusion `success`, `bun test` job = `success` — confirmed via `gh run view --json` polling to completion, not just claimed.
-
-Zone health: tsc clean, tools=183 unchanged (server health probe `PORT=3000` confirmed live), scheduler probe not re-run (0 scheduler/ files touched, same known-stale baseline as prior cycles) | HEALTHY.
-
 ## 2026-07-07 — DATA-BACKFILL-PRICES-20260706-MONDAY-GAP → DONE_VERIFIED
 
 **Session:** (session-scrubbed) (router-dispatched)
@@ -35,3 +21,17 @@ KD-OBS-01: kinh-dich MCP tool/route catch blocks caught genuine DB/HTTP errors a
 New `KD-OBS-01-FIX-kinhdich-bug-notify.test.ts` (11 tests, 43 expect): unit contract for `notifyKinhDichError` (message shape incl. 📋 marker, never-rejects on `sendBugFn` throw, safe default path) + one integration test per catch block (injected spy, deterministic zero-mock error trigger — MCP tools via `DB_PATH` pointed at a directory so `initDatabase()`'s first `getDb()` throws; routes via the pre-existing AC-29 stale-closed-db-handle trick) proving source/category/detail + response still returns gracefully.
 
 Zone health: tsc clean, tools=183 unchanged, server boot verified (PORT=3099, health 200, `/api/bctc-inspect` 200). Targeted kinh-dich + registry suite (11 files) 197/197 pass. Full `bun test`: 14290 pass / 40 skip / 63 fail / 9 errors (1173 files) — failures match the documented pre-existing set (RSS/pollNews network-flaky in local sandbox, `_deprecated/1302-*`, Bun-1.3.13 C++ teardown panic; confirmed via isolated re-run of the RSS file alone, fails identically with zero kinh-dich files involved). Scheduler probe = 3 (known-stale baseline, 0 scheduler/ files touched) | HEALTHY.
+
+## 2026-07-08 — CI-RED-0d28104a-FIX → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (router-dispatched)
+
+3rd recurrence of the class 1efb6f918 already fixed (weatherVn/hydrologicalData real-network calls with no DI hook racing bun-test's 5s timeout under CI's 16-way isolation). `DSI-S3-sector-fin.test.ts` AC-SEC-2a/2b call `getEnergyGridStatus({})` → `fetchReservoirLevels()` with **no** injected client → falls through to the real axios default client (`hydrologicalData.js`→vneconomy.vn RSS, 15s timeout). Confirmed live via `gh run view 28910244855 --log-failed` (head `0d28104ac`, the exact commit named in this task): sole per-file-isolation failure was `FAILEDFILE: src/__tests__/DSI-S3-sector-fin.test.ts`.
+
+Fix: copied the `1efb6f918` pattern exactly — freeze-before-mock (`{...realNs}` value-copy) + `mock.module()` of `hydrologicalData.js` (`fetchReservoirLevels: async () => []`) placed textually before the `energyTools.js` import, + `afterAll` restore. Verified `[ƯỚC TÍNH]`/`ước tính` assertions still pass with `reservoirs=[]` (the fallback-default-70% branch already emits the literal string).
+
+Swept the 2 flagged siblings: `257-weather-vn.test.ts`/`258-hydro-data.test.ts` both pass an **injected** HTTP client to `fetchWeatherWarnings(client)`/`fetchReservoirLevels(client)` on every call (confirmed by reading both files in full) — they never fall through to the default-client/live-network branch, so they were never actually exposed to this bug class. Explicit decision: left untouched, out of scope (verified not assumed).
+
+Verified: `DSI-S3-sector-fin.test.ts` alone 17/17 pass × 3 consecutive runs (150–250ms each, was previously racing a 15s network call). tsc clean. `scripts/ci-per-file-isolation.sh 16` (CI's actual mechanism) full-repo run: DSI-S3 absent from the 12 FAILED FILES (all pre-existing pollNews/RSS network-flaky-in-sandbox files, same class the pruned 07-07 entry documented — not a regression). Bare `bun test` (whole tree) crashed the Bun 1.3.13 engine exit 144 as previously documented — disregarded as non-authoritative per this repo's own script comment.
+
+Zone health: tsc clean, tools=183 unchanged (test-only change, no src/ production file touched), scheduler cron.schedule grep=3 (known-stale baseline, unaffected) | HEALTHY.

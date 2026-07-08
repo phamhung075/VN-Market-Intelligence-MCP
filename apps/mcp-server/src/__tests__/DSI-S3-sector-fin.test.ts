@@ -20,7 +20,7 @@
  * @module __tests__/DSI-S3-sector-fin
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, mock, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
 
 // ── C5: extractionConfidence ?? 0 (was ?? 1) ─────────────────────────────────
@@ -34,6 +34,37 @@ import {
   getUpcomingMaturities,
   checkMaturityAlerts,
 } from "../domain/services/bondMaturityTracker.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Network-fetcher mock (CI-RED-0d28104a-FIX) — energyTools.getEnergyGridStatus
+// calls fetchReservoirLevels() with NO injected client, so it falls through to
+// the real axios-backed default client (hydrologicalData.js → vneconomy.vn
+// RSS). Under CI's 16-way parallel per-file bun-test isolation this races
+// bun-test's 5000ms default per-test timeout (the fetcher's own axios timeout
+// is 15000ms) — this is the 3rd recurrence of the class first fixed in
+// 1410-tool-diacritics-sweep.test.ts / 262-mcp-tools-042.test.ts (commit
+// 1efb6f918). Mock fetchReservoirLevels to resolve empty deterministically
+// (matches its own documented fail-soft behaviour on real network failure) so
+// the is_estimate/[ƯỚC TÍNH] assertions below — which only check the
+// hardcoded-grid labelling logic, not fetched reservoir content — run
+// hermetically. Must run BEFORE the energyTools.js import below so Bun's
+// module registry serves the mock to its transitive import of
+// hydrologicalData.js.
+// Freeze-before-mock + afterAll-restore: mock.module() is worker-scoped and
+// permanent in Bun 1.x — must not leak into sibling files that exercise the
+// real fetcher directly. NOTE: 258-hydro-data.test.ts always passes an
+// injected HTTP client to fetchReservoirLevels(client), so it never falls
+// through to the default-client/live-network branch and is unaffected by
+// either this mock or the underlying bug — confirmed out of scope, not fixed
+// here (see also 257-weather-vn.test.ts, same DI pattern for
+// fetchWeatherWarnings(client)).
+// ─────────────────────────────────────────────────────────────────────────────
+import * as _realHydroDSI3 from "../infrastructure/fetchers/hydrologicalData.js";
+const _frozenHydroDSI3 = { ..._realHydroDSI3 };
+mock.module("../infrastructure/fetchers/hydrologicalData.js", () => ({
+  ..._frozenHydroDSI3,
+  fetchReservoirLevels: async () => [],
+}));
 
 // ── C2: energyTools is_estimate ──────────────────────────────────────────────
 import { getEnergyGridStatus } from "../interface/mcp/tools/sector/energyTools.js";
@@ -440,4 +471,15 @@ describe("DSI-S3 C1 — creditFlowTools flags hardcoded fallbacks as estimate", 
     // But reCreditRatioPct static_seed line is always present
     expect(text).toContain("static_seed");
   });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Teardown — restore real hydrologicalData module (CI-RED-0d28104a-FIX)
+//
+// mock.module() in Bun 1.x is worker-scoped and permanent. Re-register the
+// real implementation captured at file top-level so worker-siblings
+// (258-hydro-data.test.ts) see the genuine module.
+// ─────────────────────────────────────────────────────────────────────────────
+afterAll(() => {
+  mock.module("../infrastructure/fetchers/hydrologicalData.js", () => _frozenHydroDSI3);
 });

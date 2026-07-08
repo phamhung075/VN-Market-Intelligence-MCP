@@ -45,3 +45,13 @@
 - Route to sendTelegramWork vs sendTelegramBug — chose BUG: every existing genuine-error precedent in this codebase (ohlcvBackfillHandler, tasksMdJanitorJob, bctcPdfPullJob, etc.) uses BUG; WORK is reserved for routine business content
 **why-decision:** New KD-OBS-01-FIX-kinhdich-bug-notify.test.ts (11 tests, 43 expect) proves the wiring end-to-end per catch block via injected spy + deterministic DB-path-is-a-directory trigger — no reliance on live kinh-dich-service state.
 **why-change:** No plan deviation. Targeted suite (kinh-dich + registry, 197/197) + full `bun test` (14290/14393, 63 pre-existing fails matching 2026-07-03 documented baseline, none kinh-dich-related) + tsc clean + server boot (toolCount=183 unchanged, health 200, dashboard route 200) all green.
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-07-08T01:35:00Z
+**task-id:** CI-RED-0d28104a-FIX
+**what-done:** Mocked hydrologicalData.js/fetchReservoirLevels in DSI-S3-sector-fin.test.ts (freeze-before-mock + afterAll-restore, copied verbatim from proven 1efb6f918 pattern) — 3rd recurrence of the same live-network-races-5s-timeout class, root cause confirmed via `gh run view 28910244855 --log-failed` on the exact commit 0d28104ac named in the task.
+**what-considered:**
+- Inject an HttpClient param through getEnergyGridStatus for full DI — rejected: larger surface change than task scope; precedent 1efb6f918 already established mock.module as the accepted fix shape for this exact class
+- Mock at energyTools.js boundary instead of hydrologicalData.js — rejected: precedent mocks one level down (the fetcher), keeps getEnergyGridStatus's own reservoir-aggregation/estimate-labelling logic genuinely under test
+- Fix 257/258 too (task's sweep instruction) — investigated first: both always pass an injected client to the fetcher, never reach the live-network branch, so mocking them would be a no-op; journaled as verified-out-of-scope, not silently skipped
+**why-decision:** `gh run view --log-failed` on the actual failing CI run (not a guess) named DSI-S3-sector-fin.test.ts as the sole failed file; `scripts/ci-per-file-isolation.sh 16` (CI's real mechanism) re-run post-fix shows it absent from the 12 remaining (pre-existing, unrelated pollNews/RSS) FAILED FILES.
+**why-change:** No plan deviation — task instructions matched the codebase's own established precedent exactly; only genuinely new finding was confirming 257/258 don't need the fix (DI already present), which the task asked to explicitly decide either way.
