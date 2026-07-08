@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-INTERFACE-extract-finalizeBctc-usecase CLOSED DONE_VERIFIED by po Step 6 (Docker Microservice Code-Change Close Gate). ~1100L application-layer handler relocated interface->application/usecases (finalizeBctcRefineTool.ts 1349L->102L, 7 new usecase files); deployed SHA f9ed7f850 byte-identical to HEAD (qa docker-cp diff x8 files + isolated OLD-vs-NEW git-worktree A/B test byte-identical bctc output); po spot-check confirmed 56ee74725 ancestry, zero intervening service-code commits, clean tree, container healthy toolCount=183. qa correctly held REVIEW->po (2nd consecutive, no self-close deviation). Idle.",
-    "updated_at": "2026-07-08T12:51:41Z",
-    "updated_by": "po"
+    "status": "review",
+    "active_task_id": "FACTORY-DOMAIN-extract-bctc-parsing-lib",
+    "next_agent": "ops",
+    "next_action": "FACTORY-DOMAIN-extract-bctc-parsing-lib moved to REVIEW by dev-mcp-server — rebuild_required=true, next=ops Docker Close Gate Steps 1-4, then qa Step 5 RAW-verify, then po Step 6 DONE_VERIFIED.",
+    "updated_at": "2026-07-08T13:58:40Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3824,20 +3824,6 @@
         "supervised_at": "2026-07-04T19:23:49Z",
         "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
         "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
-      },
-      {
-        "title": "Extract shared BCTC parsing primitives + VAS regex tables",
-        "priority": "P1",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-DOMAIN-extract-bctc-parsing-lib",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-bctc-parsing-lib",
-        "sequenced_after": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
-        "concurrency": "MUST-NOT-run-concurrent-with FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (same parsing surface)",
-        "seq_note": "extract the GENERALIZED logic post-de-overfit, not the overfit version",
-        "annotated_by": "po",
-        "annotated_at": "2026-06-28T07:17:28Z"
       },
       {
         "title": "Move STOCK_CATALOG reference table out of stockAliases logic file",
@@ -9505,6 +9491,30 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Extract shared BCTC parsing primitives + VAS regex tables",
+        "priority": "P1",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-DOMAIN-extract-bctc-parsing-lib",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-bctc-parsing-lib",
+        "sequenced_after": "FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT",
+        "concurrency": "MUST-NOT-run-concurrent-with FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT (same parsing surface)",
+        "seq_note": "extract the GENERALIZED logic post-de-overfit, not the overfit version",
+        "annotated_by": "po",
+        "annotated_at": "2026-06-28T07:17:28Z",
+        "promoted_at": "2026-07-08T13:19:10Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T13:19:15Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "moved_to_review_at": "2026-07-08T13:58:40Z",
+        "moved_by": "dev-mcp-server",
+        "review_note": "Created financial-reports/lib/lineScan.ts (canonical findValue/findValueByCode/scaleNumericFields/detectDivisor) and lib/vasPatterns.ts (shared P_TOTAL_ASSETS/P_TOTAL_LIABILITIES/P_EQUITY_TOTAL). Migrated balanceSheetExtractor, cashFlowExtractor, incomeStatementExtractor, bctcScalarAggregator ONE AT A TIME (5 commits total, one per file + the lib creation), running that file's own targeted test suite green before moving to the next. bctcMagnitudeValidator got a documentation-only pointer comment (no logic change — see below).\n\nRECONCILIATION (not a straight merge, per DoD): balanceSheetExtractor's original findValue(lines, pattern) [2-arg, row-code guard: skips whole-multiples-of-10 in [10,990], no ASCII fallback] and income/cashFlow's original findValue(primaryLines, fallbackLines, primary, fallback) [4-arg, ASCII diacritic-stripped fallback pass, no guard] were genuinely different functions, not 3 copies of the same one. Canonical findValue(lines, pattern, {rowCodeGuard?, fallback?}) in lib/lineScan.ts takes both behaviors as opt-in options so every call site reproduces its exact pre-migration behavior:\n  - balanceSheetExtractor: findValue(lines, pattern, { rowCodeGuard: true }) — no fallback (never had one)\n  - cashFlowExtractor / incomeStatementExtractor: findValue(primaryLines, primary, { fallback: { lines: fallbackLines, pattern: fallback } }) — no rowCodeGuard (never had one)\nfindValueByCode (only balanceSheetExtractor had this) relocated verbatim (one dead unused local var `inlinePattern` dropped in the move — was never referenced in the original either).\n\napplyMultiplier: balanceSheetExtractor's and cashFlowExtractor's hand-written versions both multiply EVERY leaf field unconditionally (verified against bctc-schema.ts: BalanceSheet and CashFlowStatement are 100% numeric fields, no exceptions, no optional fields) — generalized into scaleNumericFields<T>(obj, m): generic recursive leaf-scaler, provably equivalent. incomeStatementExtractor never had an applyMultiplier (it deliberately excludes eps/dilutedEps from scaling via explicit per-field code) — left untouched, NOT migrated (a generic scaler would have incorrectly scaled those two fields).\n\ndetectDivisor: bctcScalarAggregator already had a function of this exact name (row-based: max(|value_current|) > 1e11 ? 1_000_000 : 1). Relocated verbatim to lib/lineScan.ts, called with the same RAW_VND_THRESHOLD=1e11 constant (kept local in bctcScalarAggregator.ts for its rationale comment). This is DISTINCT from the 3 extractors' own raw-OCR-text magnitude-inference blocks (each uses different probe fields and thresholds — 1e12/1e9/sentinel-based-1e14 respectively, against extracted statement values not DB rows) — those 3 blocks were deliberately NOT unified; genuinely statement-specific, same \"keep statement-specific patterns local\" principle applied to the VAS-patterns decision below.\n\nDELIBERATELY NOT MERGED (documented, not missed):\n1. bctcMagnitudeValidator.ts's 3 inline total-assets/liabilities/equity label regexes overlap in CONCEPT with balanceSheetExtractor's canonical VAS patterns but operate on a DIFFERENT data shape (already-cleaned bctc_table_rows labels + an English-alternation branch) vs raw-OCR fuzzy diacritic-tolerant full-text scanning. Swapping in the canonical OCR-fuzzy pattern would silently WIDEN this file's BLOCK-severity fraud-detection matching (e.g. it would newly match \"TỔNG CỘNG TÀI SẢN\", which the current literal \"tổng tài sản\" does not) — a real behavior change to fraud detection that needs its own dedicated verification pass, not a side effect of a mechanical dedup task. Added a pointer comment explaining this; zero logic change (tsc clean, 17/17 pass, comment-only diff).\n2. bctcScalarAggregator's own findByCode/findByLabel/findByLabelExcluding/findTotalAssetsCorporate operate on already-extracted DB rows (code/label/value_current fields) — same names as concepts in the extractors but a different data model (raw OCR text lines vs. structured rows); NOT touched.\n\nQA / ops RAW-verify checklist (this is the verifiable claim you need to A/B against the live named-volume DB after rebuild):\n- Pick 2-3 already-parsed reports spanning all 3 statement types (e.g. FPT/VCB/a bank) and confirm balance_sheet_json / income_statement_json / cash_flow_json scalar values are BYTE-IDENTICAL pre- vs post-rebuild for the SAME source PDF (re-run via scripts/migrations/reingest-bctc-report.ts --report-id <id> in verify-only mode, or re-parse the same raw text through extractBalanceSheet/extractIncomeStatement/extractCashFlow and diff the JSON).\n- Confirm total_assets/total_liabilities/equity_total scalars in financial_reports (bctcScalarAggregator output) are unchanged for a spot-check report (detectDivisor relocation is the only touched code path there).\n- bctcMagnitudeValidator DT-2/DT-3 BLOCK detection behavior is UNCHANGED (comment-only diff) — no A/B needed there, but flagging for completeness since the file appears in this task's file list.\n\nEvidence:\n- tsc clean (bun tsc --noEmit) after every migration step.\n- eslint clean (bunx eslint) on all 7 touched/created files.\n- Per-file targeted suites, run before/after each migration, all matched pre-change baselines exactly: balanceSheetExtractor 186/186 (19 files), cashFlowExtractor 93/93 (6 files), incomeStatementExtractor 121/121 (12 files), bctcScalarAggregator 147/147 (16 files), bctcMagnitudeValidator 17/17 (1 file).\n- Combined 42-file BCTC-domain suite: 411 pass/4 skip/0 fail both BEFORE (baseline) and AFTER all 5 migrations — byte-identical counts.\n- Full `bun test`: run twice — 14334 pass/40 skip/68 fail/7 errors then 14332 pass/40 skip/70 fail/11 errors (1179 files, ~600s each, then Bun 1.3.13 crash-at-teardown both times — known engine bug, non-authoritative per prior sibling entries this session). Run-to-run count variance itself is the known pre-existing flakiness signature. Grepped BOTH runs' full failing-file sets: 100% VPS-proxy/RSS/news-poll/insider-transactions/foreign-flow/telegram/HNX-HOSE-UPCOM-timeout class (083-tool-analysis, 102-job-news-poll, 1113-vps-proxy-health, 1146-get-insider-transactions, 1227/1288/1324/1345a/1359a/1405b/1518/1858c/1892a/1898b/1875c/235/248/249/251/VPT-1/RAPID-B2/TSU-DEV-U5/1289f/_deprecated-1302) — ZERO overlap with the 5 changed files or the 2 new lib files. `1405b-bctc-vps-fixes.test.ts` (appears in both runs) re-ran in isolation: 12/12 pass — confirms pre-existing parallel-load flake, not caused by this change (same file + same verdict as the immediately-preceding FACTORY-INTERFACE-extract-finalizeBctc-usecase entry).\n- Server boot verified on PORT=3999 (3000 held by the live container): /health 200 toolCount=183 (unchanged), /api/bctc-inspect 200, /dashboards/news-fetch/ 200. Gate 2d scheduler cron.schedule grep=3 (matches the 3 immediately-preceding sibling tasks' documented current baseline this session)."
       }
     ],
     "qa": [],
@@ -9524,7 +9534,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T11:45:07Z",
+    "last_triaged_at": "2026-07-08T13:19:10Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
@@ -9534,6 +9544,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-08T12:51:41Z",
-  "_updated_by": "po"
+  "_updated_at": "2026-07-08T13:59:38Z",
+  "_updated_by": "dev-mcp-server"
 }
