@@ -24,6 +24,11 @@ import {
 } from "../../domain/services/leadershipSignal.js";
 import { insertEvidenceFragment } from "../../infrastructure/db/evidenceFragmentStore.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { deriveConfidenceFromStrength } from "../../domain/services/alertConfidenceScorer.js";
+import {
+  INSIDER_STREAK_CONFIDENCE_BASE,
+  INSIDER_STREAK_CONFIDENCE_CEILING,
+} from "../../domain/services/alertThresholds.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -104,6 +109,23 @@ function detectAccumulationStreaks(
     buyDays:             r.buy_days,
     totalExecutedVolume: r.total_vol,
   }));
+}
+
+/**
+ * FACTORY-SCHEDULER-alert-confidence-literals: derive streak confidence from
+ * the streak's own buyDays magnitude — `min(1, buyDays / 10)` — instead of a
+ * frozen literal. A borderline streak (3 distinct buy days, the HAVING floor
+ * in detectAccumulationStreaks) lands near INSIDER_STREAK_CONFIDENCE_BASE; a
+ * 10+ day streak lands at INSIDER_STREAK_CONFIDENCE_CEILING. Shared by both
+ * the evidence-fragment write and the streak-alert write below so the two
+ * persisted values always agree for the same streak.
+ */
+function deriveStreakConfidence(buyDays: number): number {
+  return deriveConfidenceFromStrength({
+    strength: Math.min(1.0, buyDays / 10),
+    base: INSIDER_STREAK_CONFIDENCE_BASE,
+    ceiling: INSIDER_STREAK_CONFIDENCE_CEILING,
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -210,7 +232,7 @@ export async function runInsiderCheck(
         evidence_type: "insider_accumulation",
         direction:     "bullish",
         magnitude:     Math.min(1.0, streak.buyDays / 10),
-        confidence:    0.85,
+        confidence:    deriveStreakConfidence(streak.buyDays),
         source_agent:  "insiderCheckJob",
         ttl_days:      30,
       });
@@ -243,7 +265,7 @@ export async function runInsiderCheck(
         id,
         triggeredAt,
         JSON.stringify(["insider_accumulation"]),
-        JSON.stringify([{ code: streak.code, expectedImpact: "up", confidence: 0.85 }]),
+        JSON.stringify([{ code: streak.code, expectedImpact: "up", confidence: deriveStreakConfidence(streak.buyDays) }]),
         msg,
       );
       if (result.changes > 0) alertsInserted++;

@@ -225,6 +225,52 @@ describe("Task 1143 — insiderCheckJob refactor", () => {
     expect(runRow!.status).toBe("success");
   });
 
+  // ── FACTORY-SCHEDULER-alert-confidence-literals ─────────────────────────────
+  // Confidence must be derived from the real streak-length magnitude (buyDays),
+  // not a frozen literal — a 3-day streak and an 8-day streak must produce
+  // different confidence on both the evidence fragment and the streak alert.
+  it("streak confidence varies with buyDays magnitude (3 vs 8 distinct buy days)", async () => {
+    const db = makeDb();
+    // Weak: minimum qualifying streak (3 distinct buy days, HAVING buyDays >= 3)
+    // magnitude = min(1, 3/10) = 0.3 → confidence = 0.6 + 0.3*0.35 = 0.705
+    seedBuyRows(db, "VCB", "chu tich hoi dong quan tri", [1, 5, 9]);
+    // Strong: 8 distinct buy days
+    // magnitude = min(1, 8/10) = 0.8 → confidence = 0.6 + 0.8*0.35 = 0.88
+    seedBuyRows(db, "VNM", "giam doc dieu hanh", [2, 4, 6, 8, 10, 12, 14, 16]);
+
+    const { runInsiderCheck } = await import("../scheduler/market-data/insiderCheckJob.js");
+    await runInsiderCheck(db, async () => []);
+
+    type FragRow = { confidence: number };
+    const vcbFrag = db.prepare(
+      "SELECT confidence FROM evidence_fragments WHERE stock = 'VCB'",
+    ).get() as FragRow | undefined;
+    const vnmFrag = db.prepare(
+      "SELECT confidence FROM evidence_fragments WHERE stock = 'VNM'",
+    ).get() as FragRow | undefined;
+
+    expect(vcbFrag).not.toBeUndefined();
+    expect(vnmFrag).not.toBeUndefined();
+    expect(vcbFrag!.confidence).toBeCloseTo(0.705, 5);
+    expect(vnmFrag!.confidence).toBeCloseTo(0.88, 5);
+    expect(vnmFrag!.confidence).toBeGreaterThan(vcbFrag!.confidence);
+
+    // Streak alert row must persist the same derived confidence (not a literal)
+    type AlertRow = { affected_actions_json: string };
+    const vcbAlert = db.prepare(
+      "SELECT affected_actions_json FROM alerts WHERE id LIKE 'insider-streak-VCB-%'",
+    ).get() as AlertRow | undefined;
+    const vnmAlert = db.prepare(
+      "SELECT affected_actions_json FROM alerts WHERE id LIKE 'insider-streak-VNM-%'",
+    ).get() as AlertRow | undefined;
+    expect(vcbAlert).not.toBeUndefined();
+    expect(vnmAlert).not.toBeUndefined();
+    const vcbAlertConfidence = (JSON.parse(vcbAlert!.affected_actions_json) as Array<{ confidence: number }>)[0]!.confidence;
+    const vnmAlertConfidence = (JSON.parse(vnmAlert!.affected_actions_json) as Array<{ confidence: number }>)[0]!.confidence;
+    expect(vcbAlertConfidence).toBeCloseTo(0.705, 5);
+    expect(vnmAlertConfidence).toBeCloseTo(0.88, 5);
+  });
+
   it("runInsiderCheck stores new raw transactions passed via fetcher override", async () => {
     const db = makeDb();
 

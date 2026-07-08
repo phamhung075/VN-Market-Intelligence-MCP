@@ -57,3 +57,23 @@ export const NEUTRAL_BAND_PCT = 2.0;
  */
 export const FOREIGN_FLOW_CONFIDENCE_BASE = 0.55;
 export const FOREIGN_FLOW_CONFIDENCE_CEILING = 0.95;
+
+/**
+ * Confidence range for insiderCheckJob accumulation-streak signals
+ * (FACTORY-SCHEDULER-alert-confidence-literals).
+ *
+ * Replaces the frozen `confidence = 0.85` literal previously persisted on both
+ * the streak evidence fragment and the streak alert row. Confidence is now
+ * derived from the job's own already-computed streak-length magnitude —
+ * `min(1, streak.buyDays / 10)` (see insiderCheckJob.ts) — via
+ * deriveConfidenceFromStrength():
+ *
+ *   strength=0 (minimum qualifying streak, 3 distinct buy days) → base    = 0.60
+ *   strength=1 (10+ distinct buy days within the 30d window)    → ceiling = 0.95
+ *
+ * Concrete examples: buyDays=3 → confidence≈0.705; buyDays=8 → confidence≈0.88.
+ * Note: the single-transaction buy alert path (classifyInsiderTransaction) was
+ * already dynamic before this task and is untouched here.
+ */
+export const INSIDER_STREAK_CONFIDENCE_BASE = 0.6;
+export const INSIDER_STREAK_CONFIDENCE_CEILING = 0.95;
