@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture-brief",
+  "priority": "high",
+  "payload": "docs/architecture-briefs/2026-07-08-cowork-step5-stale-trigger-status.md",
+  "summary": "FIX-COWORK-STEP5-BACKSTOP-TRUSTS-STALE-TRIGGER-STATUS: spawn-fanout.md Step 5.0 (L14) keys BACKSTOP_SLOTS on stale cowork-schedule.json trigger_status=='active', masking real guaranteed-slot misses since cloud RemoteTrigger is fully retired. Fix: re-key discriminator to s._superseded_by==null (§3.1); correct per-slot trigger_status — 5 real-trigger slots (chef-morning/eod/evening, digest-sunday, tnb-audit) -> 'superseded' (interim, distinct from F1-CLOUD-TRIGGER-DECOMMISSION's gated 'decommissioned' flip); 4 never-had-a-real-trigger slots (fb-daily, fb-weekend, alert-commander-market/critical) -> remove trigger_status field entirely (§3.2). No overlap with F1-CLOUD-TRIGGER-DECOMMISSION or the 2026-07-07 durability brief's _notes.layer_a_deletion_locked fix (§2 reconciliation table). DoD checklist in brief §5.",
+  "createdAt": "2026-07-08T21:29:52Z"
+}
