@@ -3495,7 +3495,9 @@
         "size": "M",
         "status": "BACKLOG",
         "title": "Root-cause: scheduled cowork slots fired from claude.ai-cloud (RemoteTrigger backstop) have NO call_tool gateway in subagent surface (only Read/Write/Edit) -> send_telegram silently no-posts; digest-sunday W24 BLOCKED 2026-06-14T13:47Z",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-HEADLESS-GATEWAY-COWORK-NOPOST"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-HEADLESS-GATEWAY-COWORK-NOPOST",
+        "supervised": true,
+        "supervised_note": "Frozen from BOUNDED-1 auto-pickup 2026-07-08T00:56:33Z (dev-team) — backlog-detail.json carries dispatch_gate=\"monday\" (today is Wednesday) but scripts/devteam-backlog-promote-bounded1.jq only reads the THIN task_board.backlog[] row, which does not carry dispatch_gate at all (hot/cold split — gate lives only in the cold archive). Promote script has no cross-file read, so it cannot see or honor this gate; blind auto-pickup today would have wrongly dispatched a safety-critical publish-flow design task outside its Monday-only safe window. Route: architect/PO to design either (a) mirror dispatch_gate onto the hot row, or (b) teach promote-bounded1.jq to read backlog-detail.json for gate fields, before unfreezing. Do not auto-unfreeze."
       },
       {
         "id": "KD-BACKTEST-501-4X",
