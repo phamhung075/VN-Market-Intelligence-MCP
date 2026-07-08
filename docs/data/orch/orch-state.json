@@ -539,8 +539,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-07T21:22:55Z",
-    "_updated_by": "developer (F1-LAUNCHD-COWORK-BACKSTOP + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED -> REVIEW)",
+    "_updated_at": "2026-07-08T00:51:41Z",
+    "_updated_by": "developer (FIX-NEWS-CB-FALSE-CLOSED -> REVIEW)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8807,22 +8807,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-NEWS-CB-FALSE-CLOSED",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "title": "FIX-NEWS-CB-FALSE-CLOSED — Reuters RSS + TradingEconomics x2 at 14 CONSECUTIVE errors since the 2026-06-13T23:18Z restart, yet their circuit-breakers still report [OK] (failure threshold not hit). CB false-closed masks a never-succeeded-since-restart news-source freshness gap from agent monitoring. FIX: (a) lower the CB failure threshold so 14 consecutive errors trips OPEN, and/or (b) add a never-succeeded-since-restart detector (a source with zero successes since process start AND error_count>=N must surface as DEGRADED regardless of the rolling-window CB). Surface the degradation to the BUG/WORK channel + freshness gate so news-source staleness is no longer invisible. PLAN-ONLY at PO layer — dev-team chain implements.",
-        "type": "FIX",
-        "zone": "apps/news-fetch/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NEWS-CB-FALSE-CLOSED",
-        "promoted_at": "2026-07-08T00:25:00Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T00:25:07Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -8998,6 +8983,23 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "id": "FIX-NEWS-CB-FALSE-CLOSED",
+        "priority": "P1",
+        "status": "REVIEW",
+        "title": "FIX-NEWS-CB-FALSE-CLOSED — Reuters RSS + TradingEconomics x2 at 14 CONSECUTIVE errors since the 2026-06-13T23:18Z restart, yet their circuit-breakers still report [OK] (failure threshold not hit). CB false-closed masks a never-succeeded-since-restart news-source freshness gap from agent monitoring. FIX: (a) lower the CB failure threshold so 14 consecutive errors trips OPEN, and/or (b) add a never-succeeded-since-restart detector (a source with zero successes since process start AND error_count>=N must surface as DEGRADED regardless of the rolling-window CB). Surface the degradation to the BUG/WORK channel + freshness gate so news-source staleness is no longer invisible. PLAN-ONLY at PO layer — dev-team chain implements.",
+        "type": "FIX",
+        "zone": "apps/news-fetch/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NEWS-CB-FALSE-CLOSED",
+        "promoted_at": "2026-07-08T00:25:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T00:25:07Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-08T00:51:41Z",
+        "reviewed_by": "developer",
+        "review_note": "Root-caused 2 live SOURCE HEALTH bugs in apps/mcp-server (verified apps/news-fetch/ is an unwired parallel pipeline via api-gateway NEWS_URL proxy — not the owner). (A) intelligenceCycleJob.ts defaultPollNews() re-injected no-op reuters/tradingeconomics stub fetchers every 15-min scheduled tick; pollNews.ts health loop treats fulfilled-but-empty as a real failure for sources outside STUB_CAPABLE_KEYS, silently overwriting the Sprint-1833g/1898b recordDisabled() seed with an ever-climbing down count (79+, live-confirmed via get_system_status pre-fix). Fixed by removing both keys — restores pollNews.ts own documented resolvedFetchers contract. (B) formatSourceHealthTable 18-char Nguồn column truncated Trading Economics (17c) and Trading Economics News (22c) to the identical string (live byte-diff confirmed) — not a registry duplicate, a display collision. Widened 18->26, header/separator now derived from the same constant. New test apps/mcp-server/src/__tests__/FIX-NEWS-CB-FALSE-CLOSED.test.ts (RED confirmed pre-fix, GREEN post-fix, 3 tests). Targeted 18-file regression sweep covering every source-health/pollNews/intelligence-cycle test: 295 pass / 0 fail. tsc clean. Commits aa87cfe05 (fix) + b1425a0c6 (memory), pushed to main. Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S3. REVIEW not DONE_VERIFIED: fix requires apps/mcp-server image rebuild (ops-gated) to take live-serving effect — qa/ops should rebuild + re-query get_system_status SOURCE HEALTH table to confirm Reuters RSS / Trading Economics show disabled (not climbing failures) and the duplicate row is gone, then flip DONE_VERIFIED."
       }
     ],
     "qa": [],
