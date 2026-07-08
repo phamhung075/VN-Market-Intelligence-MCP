@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "CONTAM-10-WRITER-H DONE_VERIFIED (qa post-swap live-gateway RAW-probe PASS 2026-07-08T02:25:01Z). CONTAM-10-EXEC-2 (depends=[CONTAM-10-WRITER-H]) is now unblocked — route to dev-team/dev-mcp-server on a future dispatch cycle (dry-run -> human/PO gate -> live repair -> post-verify + gateway probe). CONTAM-10-MIGRATION-ANCHOR-DIAG (low/optional) remains TODO, parallel-safe.",
-    "updated_at": "2026-07-08T02:25:01Z",
-    "updated_by": "qa"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-INTERFACE-sequential-confidence-05-mask",
+    "next_agent": "qa",
+    "next_action": "QA verify FACTORY-INTERFACE-sequential-confidence-05-mask (sequential-market-analysis.ts confidence-fabrication fix) — unit-level RAW-verify via _analysisState introspection (confidence field is internal, never served over the MCP response contract), then ops-gated mcp-server image swap (id 180382145ee7) before done_verified.",
+    "updated_at": "2026-07-08T03:06:30Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -298,10 +298,165 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-07T20:32:23Z",
-    "_updated_by": "po-triage-F-CHEF-MULTIDAY-OUTAGE-0706-0707",
+    "_updated_at": "2026-07-08T03:01:00Z",
+    "_updated_by": "cowork-team",
     "archive": [],
-    "rows": [],
+    "rows": [
+      {
+        "id": "sau-d4-esc-datacov-acb-q1-2026-esc-3-not_found-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:ACB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-esc-datacov-hpg-q1-2026-esc-3-not_found-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:HPG:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-esc-datacov-gvr-q1-2026-esc-3-not_found-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:GVR:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-esc-datacov-hvn-q1-2026-esc-3-not_found-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:HVN:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-esc-datacov-mbb-q1-2026-esc-3-not_found-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:MBB:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-cron-dev-team-2026-07-08t02-37z-not_found-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock cron:dev-team:2026-07-08T02:37Z has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-dev-team-cron-singleton-not_found-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock dev-team-cron-singleton has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-esc-datacov-acb-q1-2026-esc-3-pipeline_mismatch-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FACTORY-INTERFACE-sequential-confidence-05-mask held=esc-datacov:ACB:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-esc-datacov-hpg-q1-2026-esc-3-pipeline_mismatch-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FACTORY-INTERFACE-sequential-confidence-05-mask held=esc-datacov:HPG:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-esc-datacov-gvr-q1-2026-esc-3-pipeline_mismatch-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FACTORY-INTERFACE-sequential-confidence-05-mask held=esc-datacov:GVR:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-esc-datacov-hvn-q1-2026-esc-3-pipeline_mismatch-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FACTORY-INTERFACE-sequential-confidence-05-mask held=esc-datacov:HVN:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-esc-datacov-mbb-q1-2026-esc-3-pipeline_mismatch-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FACTORY-INTERFACE-sequential-confidence-05-mask held=esc-datacov:MBB:Q1-2026:ESC-3",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-cron-dev-team-2026-07-08t02-37z-pipeline_mismatch-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FACTORY-INTERFACE-sequential-confidence-05-mask held=cron:dev-team:2026-07-08T02:37Z",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-dev-team-cron-singleton-pipeline_mismatch-20260708",
+        "ts": "2026-07-08T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FACTORY-INTERFACE-sequential-confidence-05-mask held=dev-team-cron-singleton",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      }
+    ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
     "last_triaged_by": "po"
   },
@@ -3557,15 +3712,6 @@
         "status": "BLOCKED",
         "title": "FIX-ALERT-OPEN-ZERO-PRICE-RACE — bbAlertScanJob/taAlertScanJob fire giá=0 BB-breakout + single-digit RSI (3.7-11.9) at 02:00-02:15Z market open, self-normalizing to RSI 35-48 by 06:08Z.",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ALERT-OPEN-ZERO-PRICE-RACE"
-      },
-      {
-        "title": "Stop fabricating 0.5 conviction in sequential-market-analysis",
-        "priority": "P1",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INTERFACE-sequential-confidence-05-mask",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-sequential-confidence-05-mask"
       },
       {
         "title": "Propagate real per-row source_confidence in finalizeBctcRefine (not 1.0)",
@@ -7118,7 +7264,7 @@
           {
             "ticker": "D2D",
             "period": "2026-Q1",
-            "composite": 0.10,
+            "composite": 0.1,
             "source": "analysis-agent Telegram #3507",
             "report_id": "TBD via get_bctc_pending_refine",
             "added_at": "2026-07-07T17:06:41Z",
@@ -9062,6 +9208,24 @@
         "moved_to_review_at": "2026-07-08T01:55:43Z",
         "moved_by": "dev-mcp-server",
         "review_note": "Fix committed a80d405d1 (DSI-S3-sector-fin.test.ts hydrologicalData.js mock.module, freeze-before-mock+afterAll pattern copied from 1efb6f918), pushed to origin/main. Verified 17/17 local pass x3. 257-weather-vn.test.ts/258-hydro-data.test.ts audited: both always pass an injected HTTP client to the fetcher, never reach the live-network default-client branch — confirmed out of scope, left untouched (not a 4th recurrence risk). CI verification_gate=ci_green_on_subsequent_push: RAW-checked via gh run view/rerun on the a80d405d1 push, DSI-S3-sector-fin.test.ts absent from FAILED FILES across 3 consecutive reruns; run 3 conclusion=success. Runs 1-2 failed on unrelated single-file flakes (240-price-pipeline-recovery.test.ts, then 167-prediction-market-job.test.ts) — both pass locally, different file each run, looks like pre-existing CI-runner-level P=16 flakiness unrelated to this commit; flagging for PO/dispatcher triage, not fixed here (scope boundary)."
+      },
+      {
+        "title": "Stop fabricating 0.5 conviction in sequential-market-analysis",
+        "priority": "P1",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INTERFACE-sequential-confidence-05-mask",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-sequential-confidence-05-mask",
+        "promoted_at": "2026-07-08T02:48:35Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T02:48:44Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "moved_to_review_at": "2026-07-08T03:06:30Z",
+        "moved_by": "dev-mcp-server",
+        "review_note": "Code fix + test DONE: sequential-market-analysis.ts no longer fabricates a 0.5 confidence when input.confidence is omitted (only assigns when actually supplied; init default confidence:0 -> undefined; generateRecommendations honestly labels an unstated confidence instead of folding it into \"Low confidence\"). New FACTORY-INTERFACE-sequential-confidence-05-mask.test.ts (5/5 pass) exercises AnalysisResult via a new test-only _analysisState introspection hook, since confidence is genuinely internal state never returned by handle()'s MCP response contract ({status,thought,progress,nextSteps} only) — flagging this for QA: the DoD's \"served payload shows null/absent\" RAW-verify language does not map to a live HTTP route today, verify at the unit level instead. tsc --noEmit clean. Tool count 183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 verified. mcp-server image rebuilt (id 180382145ee7) but NOT swapped into the running container (still 4c8ea4cfd41f, serving CONTAM-10-WRITER-H) — docker compose up -d is an ops-gated live-container swap per standing policy, stops at REVIEW not done_verified."
       }
     ],
     "qa": [],
@@ -9081,8 +9245,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T00:57:36Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup pre-verify)"
+    "last_triaged_at": "2026-07-08T02:48:35Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
