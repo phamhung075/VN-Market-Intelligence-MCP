@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — FACTORY-INTERFACE-extract-finalizeBctc-usecase → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-`buildFinalizeBctcRefineHandler` (~1100L, own header already said "DDD layer: application") lived in `finalizeBctcRefineTool.ts` (interface). Extracted the 5 named BLOCK-1..5 seams to `application/usecases/finalizeBctcRefine/{backfillScalarColumns,deriveRatioColumns,revalidateBalanceIdentity,recomputeExtractionConfidence,recomputeBctcEval}.ts` (each ≤120L per function; BLOCK-1's ~300L raw body decomposed into 4 sub-helpers to fit) plus the remaining orchestration (CONFIRMED guard, parse loop, DT-2/3/4, BEQ-7, the single atomic `db.transaction`, BAL-1c/1d) into `finalizeBctcRefine.ts`. Interface file now keeps only Zod schema + validation + response-wrap + `server.tool` registration (1349L → 102L).
-
-Key judgment call: every original return point used the byte-identical `{content:[{type:"text",text:JSON.stringify(X)}]}` wrapper, so the application layer now returns the plain result object `X` and the interface wraps it exactly once — provably a no-op formatting factor, not a behavior change. Call order and the single transaction boundary preserved exactly; `safeDivideLocal` absorbed verbatim into `deriveRatioColumns.ts` (deliberately not unified with `ratioComputer.ts`'s own private copy — pure relocation, not a dedup pass).
-
-tsc clean. Targeted finalizeBctcRefine-related suite (22 files, incl. `FACTORY-INTERFACE-source-confidence-10-mask.test.ts` re-exported `resolveSourceConfidence`) 293/293 pass. Full `bun test`: ~14337-14348 pass/40 skip/54-65 fail/1179 files across 2 runs (run-to-run variance itself is the known flaky-network-test signature) then Bun 1.3.13 crash-at-teardown (known engine bug, non-authoritative). Failing-file set grepped both runs: zero bctc/finalize overlap except `1405b-bctc-vps-fixes.test.ts` (bctcQueueEnricherJob/logVpsPush/vn-news-fetch — unrelated to finalize; re-ran in isolation 12/12 pass, confirms pre-existing parallel-load flake not caused by this change). eslint clean on all 8 touched files. Server boot verified on PORT=3999: health 200 toolCount=183, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200. Gate 2d scheduler cron.schedule grep=3 (matches the immediately-preceding 2 sibling entries' documented current baseline — the flow doc's "76" note is stale text, not a live regression).
-
-Commit: 56ee74725 (8-file extraction). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (BLOCK-1..5 recompute logic runs against the live named-volume DB at runtime).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
-
 ## 2026-07-08 — FACTORY-DOMAIN-extract-bctc-parsing-lib → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -45,3 +31,15 @@ Also updated `docs/protocols/janitor-procedures.md`'s canonical-source pointer f
 Commit: cec87c726 (2-file relocation + doc pointer). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (relocated detection-logic module runs against live traffic at runtime — same class as prior domain-layer FACTORY-DOMAIN siblings).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
+
+## 2026-07-08 — FACTORY-APP-dedup-date-freshness-helpers → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+`midnightVietnamAsUtc`/`todayVietnam`/`parseAffectedCodes`/`isPriceFresh` were duplicated verbatim in `assembleBriefing.ts` and `assembleEveningSummary.ts` (`todayVietnam` duplicated a 3rd time in `assembleAlertDigest.ts`, using a bare `7*3_600_000` literal instead of `VN_OFFSET_MS`). One home each: `domain/services/timeHelpers.ts` (date fns — `timeConstants.ts`'s own header forbids functions, so this is a new sibling module), `domain/utils/affectedCodesParser.ts` (pure JSON parse, no I/O — same layer as sibling `sqlHelpers.ts`/`safeQuery.ts`), `application/utils/priceFreshnessGate.ts` (`isPriceFresh(db, logLabel)` — takes the per-caller log label as an arg since application/utils may import `infrastructure/logger.js`, same precedent as sibling `windowPartitioner.ts`; domain/utils cannot). Added named `PRICE_FRESHNESS_MS = 24*MS_PER_HOUR` to `timeConstants.ts` (mirrors existing `VN_INDEX_FRESHNESS_MS`), replacing the bare `<=24` literal — preserved via `ageHours <= PRICE_FRESHNESS_MS/MS_PER_HOUR` (same rounded-hour comparison as before, not a raw-ms rewrite, to keep the 24h29min edge-case identical).
+
+New test `FACTORY-APP-dedup-date-freshness-helpers.test.ts` (15 assertions). tsc clean. Targeted suite (14 files incl. all 3 call-sites) 206/206 pass. Full `bun test`: 14346 pass/40 skip/71 fail/10 errors/1180 files (612s) then the same Bun 1.3.13 crash-at-teardown as prior siblings — grepped the full log for every touched/created filename: zero mentions in fail/error output; all 71 fails are the documented pre-existing pollNews/VPS-push/RSS-timeout + shared-DB-race flaky class (Task 125's one briefing-adjacent fail is a pollNews network timeout, not an assembleBriefing assertion — passed 0-fail in the isolated targeted run). Server boot verified PORT=3998: health 200, toolCount=183 unchanged. scheduler cron.schedule grep=3 unchanged (no scheduler files touched).
+
+Commit: dbb87db26. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (application-layer usecase change runs against live briefing/evening/alert-digest cron paths).
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 verified | HEALTHY.
