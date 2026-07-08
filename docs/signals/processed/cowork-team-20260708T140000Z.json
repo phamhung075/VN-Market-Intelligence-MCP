@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T14:00Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "spawned": [],
+    "skipped": [
+      "refine-bctc-slot-2"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved. refine_bctc_md (Tools: Read, Write, mcp__gateway__call_tool — zero Bash) confirmed affected profile, 3rd occurrence this window (09:00Z, 11:00Z, 14:00Z). Non-guaranteed slot. last_fired intentionally NOT updated.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "No newer resolution signal than the 03:37Z dev-team main-session corroboration (checked docs/signals/ + docs/signals/processed/, same 3 known files). Defect open ~18h15min since first sighting (19:45Z), already escalated CRITICAL by dev-team at 03:50Z. Remediation-path finding (retrofit affected flows with scripts/agents-flow/mcp-call.sh curl bypass, flagged in cowork-team-20260708T091500Z.json) still not confirmed picked up."
+  },
+  "createdAt": "2026-07-08T14:02:10Z",
+  "_processed": {
+    "fingerprint": "a37b390355607e3d4fe64b8d26f4d45a397f2e5a2c9e7f77c0abc2d58292fadb",
+    "processedAt": "2026-07-08T15:47:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
