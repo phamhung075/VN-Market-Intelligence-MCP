@@ -262,8 +262,8 @@
     "status": "done",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "FACTORY-INTERFACE-source-confidence-10-mask DONE_VERIFIED (qa post-swap sanity check PASS 2026-07-08T04:51:14Z — docker inspect image match (35c8117c1f85) + RAW source_confidence distribution re-query exact match to pre-swap ({0.1:380,0.4:2,1.0:3257}, 0 NULLs) + /health 200/toolCount 183 unchanged + zero NOT NULL/constraint errors in post-swap logs). No new follow-up bug discovered this cycle.",
-    "updated_at": "2026-07-08T04:51:14Z",
+    "next_action": "F1-LAUNCHD-COWORK-BACKSTOP DONE_VERIFIED (qa independent re-verification 2026-07-08T05:13:00Z — 25/25 test re-run, source-read confirms all acceptance criteria, fb-daily-firer retirement confirmed repo-wide + launchctl. Remaining follow-on work is separate/out-of-scope: ops install (launchctl load new plist — gated local swap, per feedback_user_gates_delegate_to_ops), FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED (separate REVIEW row, same brief), agent-father doc-fix on cowork-master-cron-runbook.md layer_a_deletion_locked (separate owner).",
+    "updated_at": "2026-07-08T05:13:00Z",
     "updated_by": "qa"
   },
   "narrative": {
@@ -9088,6 +9088,45 @@
           "evidence": "AC = verification_gate=ci_green_on_subsequent_push. RAW-verified by PO via gh run list --branch main: fix commit a80d405d1 push -> CI (bun test) run 28911478829 conclusion=SUCCESS (2m32s); the subsequent board-reconcile push -> CI run 28911889866 conclusion=SUCCESS (2m29s). Two consecutive GREEN bun-test CI runs on main on/after the fix. a80d405d1 confirmed ancestor of HEAD (git merge-base --is-ancestor). Root fix = mock.module freeze-before-mock on hydrologicalData.js in DSI-S3-sector-fin.test.ts, matching the proven 1efb6f918 precedent; 257-weather-vn / 258-hydro-data audited out-of-scope (both inject an HTTP client, never reach the live-network default branch). Recurring class (3rd file) now closed.",
           "residual_advisory": "review_note flagged pre-existing CI-runner-level P=16 flakiness (reviewer reruns 1-2 failed on UNRELATED single files 240-price-pipeline-recovery / 167-prediction-market-job — different file each run, both pass locally). NOT part of this AC and NOT currently manifesting (both PO-checked recent CI runs GREEN). Candidate for a SEPARATE CI-runner-flakiness investigation (feedback_ci_red_can_be_flaky) — NOT a blocker on this closeout."
         }
+      },
+      {
+        "id": "F1-LAUNCHD-COWORK-BACKSTOP",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "type": "SPRINT-S",
+        "owner": "developer",
+        "next_agent": "qa",
+        "zone": "cross-service",
+        "title": "Generalized launchd guaranteed-slot firer (supersedes F1.4 per-slot design)",
+        "desc": "Per architecture brief docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 3 + 5.1-2. Build NEW scripts/agents-flow/cowork-guaranteed-slot-firer.sh: calls 'node scripts/agents-flow/cowork-match-slots.js', filters returned slots[] to guaranteed===true, and for each match invokes 'timeout 1800 claude --dangerously-skip-permissions -p <slot.trigger_prompt>' (trigger_prompt read VERBATIM off the matched slot object — NEVER hardcoded per-agent). Reuses the SAME matcher the live */15 dispatcher uses → one SSOT (docs/data/cowork-schedule.json), zero drift on what counts as due. Test-first: sibling cowork-guaranteed-slot-firer.test.sh mirroring auditor-tier1-probe.test.sh (mock claude/node, ZERO real invocations). Generalize the plist too: ONE launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (StartInterval=900, RunAtLoad=false, KeepAlive=false). RETIRE scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into it (fb-daily/fb-weekend are already guaranteed:true rows → subsumed, no overlapping 900s poller). Scope: guaranteed===true ONLY — deliberately EXCLUDES sub-hourly market/offhours slots (stay Layer-B-only by design; bounds F-GATHERER-OFFHOURS-STALL-0704). Dedup: NO new mechanism — every guaranteed flow already carries the published-marker task_claim gate. Verify EMPIRICALLY whether launchd serializes same-Label runs; do not assume.",
+        "files": [
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.sh (new)",
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh (new)",
+          "launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (new)",
+          "scripts/cowork-fb-daily-firer.sh (retire)",
+          "launchd/com.vn-market.fb-daily-firer.plist (retire)",
+          "scripts/agents-flow/cowork-match-slots.js (reuse, no edit)"
+        ],
+        "acceptance": "matcher-driven; guaranteed===true filter; trigger_prompt read off slot object not hardcoded; timeout 1800 bound; test-first with zero real claude/node invocations; fb-only script+plist retired; a new guaranteed:true slot in cowork-schedule.json needs ZERO script edits.",
+        "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
+        "epic": "F1 (RemoteTrigger→local launchd migration)",
+        "prior_title": "F1.4 Write scripts/cowork-launchers/*.sh (session-alive→no-op else spawn, task_claim dedup) + launchd plists for the 5 active slots",
+        "scope_corrected": "2026-07-07T21:00:37Z",
+        "updated_at": "2026-07-08T05:13:00Z",
+        "updated_by": "qa",
+        "claimed_at": "2026-07-07T21:20:13Z",
+        "claimed_by": "developer",
+        "reviewed_at": "2026-07-07T21:22:55Z",
+        "reviewed_by": "developer",
+        "review_note": "Generalized scripts/agents-flow/cowork-guaranteed-slot-firer.sh (matcher-driven, guaranteed===true filter, trigger_prompt read verbatim off slot object, _bounded_exec 1800s timeout w/ verified-empirically bash fallback since this host has neither timeout nor gtimeout). 25/25 tests GREEN (cowork-guaranteed-slot-firer.test.sh, zero real claude/node invocations, mocked SLOT_MATCHER_CMD + fake CLAUDE_BIN). Retired scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into launchd/com.vn-market.cowork-guaranteed-slot-firer.plist. Docs updated: docs/standards/cron-jobs.md, docs/policies/dev-standards.md. Simplicity gate PASS (Q1-Q4 self-cert). graphify skipped — no LLM API key in this session env (pre-existing env gap, not this task's scope). | [qa 2026-07-08] Independent re-verification (did not trust PO's relayed numbers): re-ran `bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh` myself = 25/25 pass (T1-T12, matches PO's figure exactly). Read `cowork-guaranteed-slot-firer.sh` source in full: calls `node scripts/agents-flow/cowork-match-slots.js` (unmodified, confirmed via `git show --stat` on 4df3d1545 — 0 diff on that file), filters `slots[]` via `jq 'select(.guaranteed == true)'`, reads `trigger_prompt`/`slot_id` off the matched slot object via jq (never a hardcoded literal) — confirmed both in source AND behaviorally via test T3's RECORD_FILE assertion that the REAL fake-claude invocation received the exact `trigger_prompt` string verbatim, and T3b proves a brand-new `guaranteed:true` slot fires with ZERO script edits. `FIRE_TIMEOUT_SECONDS` defaults to 1800 via `_bounded_exec()`; verified this host genuinely lacks `timeout`/`gtimeout` (empirical, not assumed) so the pure-bash background+watchdog fallback is the real production path — T10 regression proves a hung process is killed near the configured bound. `plutil -lint launchd/com.vn-market.cowork-guaranteed-slot-firer.plist` = OK; read the plist directly — `StartInterval=900`, `RunAtLoad=false`, `KeepAlive=false` confirmed. Confirmed `scripts/cowork-fb-daily-firer.sh` + `launchd/com.vn-market.fb-daily-firer.plist` are retired: absent from the entire repo tree (`find` excl. logs/reports/old TASK_REPORT) and absent from `launchctl list` (only `docker-events`/`fleet-push`/`docker-cleanup` vn-market labels currently loaded — no orphaned old label; the new label is also not yet loaded, which is correct — install is a separate ops-owned gated task, out of this task's declared scope: \"Scope is scripts + launchd config only — no container/service touched\"). `mock-guard.sh --files` on the two new files: no production TS source to scan (bash/plist) — PASS by design, not a false green. Secret-grep clean (only prose \"token\" = cost-estimate/Telegram-token references, no literal values). Commit `4df3d1545` already carries correct `Task:`/`AC:` trailers per `docs/policies/commit-convention.md`. VERDICT: all 7 task-board acceptance-criteria clauses independently RAW-confirmed. Flipped REVIEW -> DONE_VERIFIED.\n",
+        "po_review_sweep": {
+          "by": "po",
+          "at": "2026-07-08T05:00:50Z",
+          "from_next_agent": "developer",
+          "finding": "Stale self-pointer (next_agent=developer pointed back at the agent that already reviewed). Developer completed + self-reviewed; scripts+launchd only, NO container/deploy. RAW-reverified by PO: bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh = 25 passed / 0 failed; firer.sh + test.sh + plist present; scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist RETIRED (absent, confirmed). Only remaining gate = independent qa sign-off.",
+          "next_action": "qa: re-run cowork-guaranteed-slot-firer.test.sh (expect 25/25 GREEN, zero real claude/node invocations), confirm the guaranteed===true filter + trigger_prompt-read-off-slot + fb-daily retirement leaves no orphaned launchd label, then flip DONE_VERIFIED. No dev coding remains."
+        },
+        "status_note": "qa independent re-verification PASS (2026-07-08T05:13:00Z): re-ran cowork-guaranteed-slot-firer.test.sh myself = 25/25; source-read confirms matcher-driven + guaranteed===true filter + trigger_prompt read verbatim off slot object + 1800s _bounded_exec + zero-script-edit for new slots (T3b); plist plutil-lint OK, StartInterval=900/RunAtLoad=false/KeepAlive=false confirmed; fb-daily-firer script+plist confirmed absent repo-wide and from launchctl list (no orphaned label). done_verified."
       }
     ],
     "head": {
@@ -9199,44 +9238,6 @@
         "po_unblock_dispatch_at": "2026-07-03T23:57:27Z",
         "po_unblock_dispatch_note": "[po router-dispatched 2026-07-04] UNBLOCK dispatch->ops. Code done_verified; the ONLY remaining gate is ops DEPLOY+OPERATE (per po_triage_deploy_gate_note 2026-07-03T08:57Z). Dispatch ops: (1) rebuild+deploy FIX-BCTC-BANK-BS-COLUMN-ORDER (done_verified) to live mcp-server; (2) run finalize_bctc_refine/reingest-bctc-report.ts on live CTG report 96e36139-5dac-414d-8e4d-20a4725890d1 (named-volume market.db); (3) RAW-probe total_assets!=0 -> done_verified. Delegate gated deploy to ops per OVERRIDE 2026-07-03 (do not wait/user-gate).",
         "deploy_gate_note": "[router 2026-07-04T00:00Z] next_agent=ops but ops spawn DENIED by auto-mode permission classifier [Production Deploy]: rebuild+deploy live mcp-server + reingest CTG 96e36139-5dac-414d-8e4d-20a4725890d1 against live named-volume market.db need EXPLICIT user authorization (generic CLAUDE.md OVERRIDE 07-03 is insufficient intent). BLOCKED pending user clearing the deploy gate (run ops outside auto mode / approve the permission prompt). Code is done_verified; only deploy+operate remains."
-      },
-      {
-        "id": "F1-LAUNCHD-COWORK-BACKSTOP",
-        "status": "REVIEW",
-        "priority": "high",
-        "type": "SPRINT-S",
-        "owner": "developer",
-        "next_agent": "qa",
-        "zone": "cross-service",
-        "title": "Generalized launchd guaranteed-slot firer (supersedes F1.4 per-slot design)",
-        "desc": "Per architecture brief docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 3 + 5.1-2. Build NEW scripts/agents-flow/cowork-guaranteed-slot-firer.sh: calls 'node scripts/agents-flow/cowork-match-slots.js', filters returned slots[] to guaranteed===true, and for each match invokes 'timeout 1800 claude --dangerously-skip-permissions -p <slot.trigger_prompt>' (trigger_prompt read VERBATIM off the matched slot object — NEVER hardcoded per-agent). Reuses the SAME matcher the live */15 dispatcher uses → one SSOT (docs/data/cowork-schedule.json), zero drift on what counts as due. Test-first: sibling cowork-guaranteed-slot-firer.test.sh mirroring auditor-tier1-probe.test.sh (mock claude/node, ZERO real invocations). Generalize the plist too: ONE launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (StartInterval=900, RunAtLoad=false, KeepAlive=false). RETIRE scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into it (fb-daily/fb-weekend are already guaranteed:true rows → subsumed, no overlapping 900s poller). Scope: guaranteed===true ONLY — deliberately EXCLUDES sub-hourly market/offhours slots (stay Layer-B-only by design; bounds F-GATHERER-OFFHOURS-STALL-0704). Dedup: NO new mechanism — every guaranteed flow already carries the published-marker task_claim gate. Verify EMPIRICALLY whether launchd serializes same-Label runs; do not assume.",
-        "files": [
-          "scripts/agents-flow/cowork-guaranteed-slot-firer.sh (new)",
-          "scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh (new)",
-          "launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (new)",
-          "scripts/cowork-fb-daily-firer.sh (retire)",
-          "launchd/com.vn-market.fb-daily-firer.plist (retire)",
-          "scripts/agents-flow/cowork-match-slots.js (reuse, no edit)"
-        ],
-        "acceptance": "matcher-driven; guaranteed===true filter; trigger_prompt read off slot object not hardcoded; timeout 1800 bound; test-first with zero real claude/node invocations; fb-only script+plist retired; a new guaranteed:true slot in cowork-schedule.json needs ZERO script edits.",
-        "architect_brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
-        "epic": "F1 (RemoteTrigger→local launchd migration)",
-        "prior_title": "F1.4 Write scripts/cowork-launchers/*.sh (session-alive→no-op else spawn, task_claim dedup) + launchd plists for the 5 active slots",
-        "scope_corrected": "2026-07-07T21:00:37Z",
-        "updated_at": "2026-07-08T05:00:50Z",
-        "updated_by": "po (review-lane sweep)",
-        "claimed_at": "2026-07-07T21:20:13Z",
-        "claimed_by": "developer",
-        "reviewed_at": "2026-07-07T21:22:55Z",
-        "reviewed_by": "developer",
-        "review_note": "Generalized scripts/agents-flow/cowork-guaranteed-slot-firer.sh (matcher-driven, guaranteed===true filter, trigger_prompt read verbatim off slot object, _bounded_exec 1800s timeout w/ verified-empirically bash fallback since this host has neither timeout nor gtimeout). 25/25 tests GREEN (cowork-guaranteed-slot-firer.test.sh, zero real claude/node invocations, mocked SLOT_MATCHER_CMD + fake CLAUDE_BIN). Retired scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist into launchd/com.vn-market.cowork-guaranteed-slot-firer.plist. Docs updated: docs/standards/cron-jobs.md, docs/policies/dev-standards.md. Simplicity gate PASS (Q1-Q4 self-cert). graphify skipped — no LLM API key in this session env (pre-existing env gap, not this task's scope).",
-        "po_review_sweep": {
-          "by": "po",
-          "at": "2026-07-08T05:00:50Z",
-          "from_next_agent": "developer",
-          "finding": "Stale self-pointer (next_agent=developer pointed back at the agent that already reviewed). Developer completed + self-reviewed; scripts+launchd only, NO container/deploy. RAW-reverified by PO: bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh = 25 passed / 0 failed; firer.sh + test.sh + plist present; scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist RETIRED (absent, confirmed). Only remaining gate = independent qa sign-off.",
-          "next_action": "qa: re-run cowork-guaranteed-slot-firer.test.sh (expect 25/25 GREEN, zero real claude/node invocations), confirm the guaranteed===true filter + trigger_prompt-read-off-slot + fb-daily retirement leaves no orphaned launchd label, then flip DONE_VERIFIED. No dev coding remains."
-        }
       },
       {
         "id": "FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED",
