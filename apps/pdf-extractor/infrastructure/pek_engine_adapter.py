@@ -551,11 +551,27 @@ def _safe_bbox(bbox: Dict) -> Tuple[float, float, float, float]:
     return 0.0, 0.0, 0.0, 0.0
 
 
+# FACTORY-PDF-paddleocr-score-07-mask: explicit sentinel for "cell carried no
+# measured OCR confidence". MUST NOT be confused with a real 0.7 measurement.
+# `None` (→ JSON `null`) is greppable and self-documenting; a fabricated float
+# (e.g. 0.7) is indistinguishable from a genuine PaddleOCR score and silently
+# corrupts the LF-OVERLAY row_bands contract (2026-06-15-maintainability-
+# factory-audit.md).
+_MISSING_CELL_SCORE_SENTINEL: Optional[float] = None
+
+
 def _cells_to_row_bands(cells: List[Dict], table_y_min: int, table_y_max: int) -> List[Dict]:
     """
     Convert PaddleOCR cell dicts to row_bands format for the LF-OVERLAY contract.
 
     PaddleOCR PP-StructureV2 cells typically include 'bbox' keys.
+
+    row_density mirrors the cell's own OCR 'score' when present (unchanged
+    behavior). When a cell omits 'score' entirely, row_density is set to
+    _MISSING_CELL_SCORE_SENTINEL (None) rather than a fabricated value — an
+    absent measurement must never be indistinguishable from a real one.
+    Note: an explicit score of 0.0 is a real (if low) measurement and is
+    preserved as 0.0, not treated as missing.
     """
     row_bands = []
     for cell in cells:
@@ -566,7 +582,12 @@ def _cells_to_row_bands(cells: List[Dict], table_y_min: int, table_y_max: int) -
             y0 = max(y0, table_y_min)
             y1 = min(y1, table_y_max)
             if y1 > y0:
-                row_density = float(cell.get("score", 0.7))
+                raw_score = cell.get("score")
+                row_density = (
+                    float(raw_score)
+                    if raw_score is not None
+                    else _MISSING_CELL_SCORE_SENTINEL
+                )
                 row_bands.append({
                     "y_min": y0,
                     "y_max": y1,

@@ -283,6 +283,68 @@ class TestMapBboxesToZones:
 
 
 # ---------------------------------------------------------------------------
+# Cell score → row_density handling (FACTORY-PDF-paddleocr-score-07-mask)
+# ---------------------------------------------------------------------------
+
+class TestCellsToRowBandsScoreHandling:
+    """
+    _cells_to_row_bands() must never fabricate a 0.7 confidence for a cell
+    that omits 'score'. Absence must surface as _MISSING_CELL_SCORE_SENTINEL
+    (None), never as a value indistinguishable from a real measurement.
+    """
+
+    def test_present_score_passes_through_unchanged(self):
+        """Behavior unchanged when 'score' IS present (any value, incl. 0.0)."""
+        from infrastructure.pek_engine_adapter import _cells_to_row_bands
+
+        cells = [
+            {"bbox": [10, 100, 200, 140], "score": 0.83},
+            {"bbox": [10, 141, 200, 180], "score": 0.0},
+        ]
+
+        bands = _cells_to_row_bands(cells, table_y_min=0, table_y_max=1000)
+
+        assert len(bands) == 2
+        assert bands[0]["row_density"] == 0.83
+        # An explicit 0.0 is a real (low-confidence) measurement — must be
+        # preserved as 0.0, not treated as missing.
+        assert bands[1]["row_density"] == 0.0
+
+    def test_missing_score_surfaces_sentinel_not_fabricated_07(self):
+        """A cell dict with NO 'score' key must not silently emit 0.7."""
+        from infrastructure.pek_engine_adapter import (
+            _cells_to_row_bands,
+            _MISSING_CELL_SCORE_SENTINEL,
+        )
+
+        cells = [
+            {"bbox": [10, 100, 200, 140]},  # no 'score' key at all
+        ]
+
+        bands = _cells_to_row_bands(cells, table_y_min=0, table_y_max=1000)
+
+        assert len(bands) == 1
+        assert bands[0]["row_density"] == _MISSING_CELL_SCORE_SENTINEL
+        assert bands[0]["row_density"] is None
+        assert bands[0]["row_density"] != 0.7
+
+    def test_missing_score_mixed_with_present_score_cells(self):
+        """A missing-score cell alongside a real-score cell — each independent."""
+        from infrastructure.pek_engine_adapter import _cells_to_row_bands
+
+        cells = [
+            {"bbox": [10, 100, 200, 140], "score": 0.91},
+            {"bbox": [10, 141, 200, 180]},  # missing score
+        ]
+
+        bands = _cells_to_row_bands(cells, table_y_min=0, table_y_max=1000)
+
+        assert len(bands) == 2
+        assert bands[0]["row_density"] == 0.91
+        assert bands[1]["row_density"] is None
+
+
+# ---------------------------------------------------------------------------
 # Semaphore contention test
 # ---------------------------------------------------------------------------
 
