@@ -1,31 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-08 | **Cycle:** FIX-NEWS-CB-FALSE-CLOSED
-
-## Session 2026-07-03 — FIX-AUDITOR-COMMIT-MUTEX-SKIP
-
-**Task:** system-auditor's notebook commit step was non-deterministically SKIPPING the commit-mutex claim (flow-step drift on narrated prose) — 2 observed skips vs paired counterexamples. Consolidates DEFERRED sibling FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC (non-explicit `git add` had swept a peer's in-flight edits into f05795c3).
-**Zone:** cross-service/ (scripts/ + docs/agents/) → developer handles directly, no zone match.
-
-**Root-cause fix:** new `scripts/auditor-notebook-commit.sh` — ONE blessed script that internally claims/releases `commit-mutex:main` via a bash `trap ... EXIT` (claim can never be skipped by construction — no code path reaches `git commit` without passing the claim call first) and stages/commits ONLY the explicit paths passed as arguments (never `-A`/`-u`/`.`). Wired `docs/agents/system-auditor/flow/main.md`'s notebook commit step to call it instead of narrating raw git commands.
-
-**Portability gotcha:** first draft used `mapfile -t arr < <(cmd)` — fails on macOS system `/bin/bash` (3.2, no `mapfile` builtin, this host has no bash4+ in PATH). Replaced with a portable `while IFS= read -r ...` loop.
-
-**Live test evidence (no mocks, real gateway):** 4 scenarios verified against a scratch file (`docs/agent-memory/sessions/2026-07-03-auditor-commit-script-scratch-test.md`), each cross-checked via `task_list_held` before/after: (1) success → `[auditor-commit] mutex-paired commit <sha> paths=1`, lock paired claim+release; (2) no-op → `SKIP no-staged-changes`, lock still paired; (3) contended (simulated peer holding the lock) → `SKIP mutex-claim-failed contended ... — retry next tick`, exit 1, edit preserved uncommitted, then succeeded on retry once the peer released; (4) foreign-path guard — a peer file pre-staged in the shared index was detected and `git restore --staged`'d, never touching its content, while only the named own path was committed.
-
-**Commit-mutex API gotcha:** `task_claim` rejects `ttl_seconds < 60` (Zod `too_small`) — script default is 90 (matches `.claude/skills/commit-mutex/SKILL.md`), safely above the floor.
-
-## Session 2026-07-04 — IMPL-DRAIN-GATE-SEVERITY-RECURRENCE
-
-**Task:** GATE-A (severity floor >=HIGH) + GATE-B (two-tier known-root DEDUP) inserted between drain-esc-dispatch.md Step 2 and Step 3, per architect brief `2026-07-04-drainesc-severity-recurrence-gate.md`. GATE-B Tier 2 needed one new read-only `--recurrence-count` CLI subcommand on `drain-signals.js` (inserted before the existing drain-mode gate, no touch to the hardened write path).
-
-**Real bug found via live-data verification, not assumed:** the brief's literal Tier-1 jq filter (`(.related // []) | any(. == $rid)`) crashes (`Cannot iterate over string`) against LIVE `orch-state.json` — 3 real task_board rows store `.related` as a bare string, not an array (`FEAT-SEVERITY-OVERRIDE-SURFACING`, `FIX-ALERT-COMMANDER-DEAD-NO-SLOT`, `FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK`). Hardened to `if type=="array" then any(...) else false end` — same lesson class as the GVR context-key-drift finding already in the brief (assume nothing about freeform prod field shapes; verify against the live SSOT before shipping a filter).
-
-**AC6 self-healing test gotcha:** testing against a raw COPY of the live orch-state.json produced a false positive — MY OWN in-flight task row (`IMPL-DRAIN-GATE-SEVERITY-RECURRENCE`, `related: [..., "REFLOW-MBB-Q1-2026", ...]`) is itself non-terminal and matches the Tier-1 filter, masking the real signal. Fixed by testing self-healing against a minimal isolated fixture (only the rows under test), not the noisy live doc — same "isolation-probe first" lesson as auditor false-positive triage, applied to jq fixture design.
-
-**Test harness convention followed:** `<script>.test.js` colocated (matches `cowork-match-slots.test.js`), each scenario builds its own `os.tmpdir()` mkdtemp harness (own `docs/signals/signals.db` + copied script) so the live signals.db/inbox is never touched. AC7 (byte-identical no-arg drain-mode) proven two ways: (1) ad hoc before/after diff of stdout+DB rows+processed/ files across a real pre-change vs post-change script copy; (2) a permanent golden-stdout regression assertion in the committed test.
-
-**Verified:** all 9 ACs (AC1/AC2 via a GATE-A pseudocode mirror script; AC3/AC6/AC9 via jq against live + isolated fixtures; AC4/AC5/AC7/AC8/AC9 via `drain-signals.test.js`, 11/11 pass). Line cap: drain-esc-dispatch.md 87L→150L (<200 cap). Commit `bf0b2cc9a`.
+**Last updated:** 2026-07-08 | **Cycle:** FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE
 
 ## Session 2026-07-07 — F1-LAUNCHD-COWORK-BACKSTOP + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED
 
@@ -56,3 +31,19 @@
 **Test:** new `FIX-NEWS-CB-FALSE-CLOSED.test.ts` — source-scan asserts `defaultPollNews()` body no longer contains `reuters:`/`tradingeconomics:` keys (kept `teChromiumNews:` — that one has a real non-deprecated fetcher, Task 1843's stub is CPU-protection only, separate concern); behavioral test proves `recordDisabled()` state survives a full `pollNews()` cycle untouched; display test proves two distinct sources with long names no longer render as byte-identical rows. RED confirmed on all 3 before the fix, GREEN after. Targeted 18-file sweep of every source-health/pollNews/intelligence-cycle test: 295 pass / 0 fail. tsc clean.
 
 **Scope discipline:** did NOT widen the CB failure threshold (original 2026-06-13 proposal) — the CB already correctly reports down; the bug was a disabled source being re-touched, not a threshold miscalibration. Did NOT add `teChromiumNews` to `STUB_CAPABLE_KEYS` — same failure-accumulation shape but a different, real, non-deprecated fetcher; out of this task's DoD (Reuters+TE-legacy only), left as a follow-up if PO wants to file it.
+
+## Session 2026-07-08 — FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE (dev-team router-filed)
+
+**Task:** `scripts/devteam-backlog-promote-bounded1.jq` had NO depends_on eligibility check — on 2026-07-08 it auto-promoted+claimed `FACTORY-TECHANALYSIS-delete-orphaned-ts-service` (P1) while both declared prerequisites were still plain BACKLOG. dev-team caught it pre-dispatch, reverted by hand, filed this FIX. **Zone:** cross-service/ → developer handles directly, no zone match.
+
+**Root cause detail:** depends_on lives in TWO places — inline `.depends_on` on some board rows, OR (for `detail_ref`'d rows, 293/405 backlog rows) ONLY inside `docs/data/orch/archive/backlog-detail.json .items[<id>].depends_on` — the board row itself carries `depends_on:null` plus a pointer. The promote script only ever read the thin board row, never the cold-archive detail file, so it structurally could not see the real prerequisites for the majority of rows.
+
+**Fix:** added a depends_on eligibility filter at the candidate-selection stage (before ranking, not a post-hoc check on the final pick) — resolves effective depends_on (inline, else detail_ref lookup via new `--slurpfile detail`, else `[]`), builds a dep-status map scanning ALL 7 task_board lanes, requires `DONE_VERIFIED` (plain `DONE` insufficient — matches repo convention), conservative-skips a dep id that resolves nowhere. Threaded `--slurpfile detail docs/data/orch/archive/backlog-detail.json` through both invocation call sites (dev-team flow BOUNDED-1 block + dev-standards.md canonical pointer). `devteam-backlog-claim-bounded1.jq` verified unchanged (only claims whatever promote already stamped).
+
+**Real-data gotcha found live:** 7/321 rows in `backlog-detail.json` carry `depends_on` as a bare STRING, not a 1-element array (e.g. `FU-RUNTIME-SET-TRUTH-RECONCILE: "FU-RAG-DEPLOY-MEMORY"`) — first jq run crashed `Cannot iterate over string`. Added an `as_dep_array` normalizer (null→[], string→[string], array→as-is) — same "assume nothing about freeform prod field shapes" lesson as IMPL-DRAIN-GATE-SEVERITY-RECURRENCE's `.related` string drift.
+
+**Test:** new `scripts/test-devteam-bounded1-depends-on.sh`, 17/17 pass — satisfied/unsatisfied depends_on in both inline and detail_ref shapes, no-depends_on baseline (no regression), dep-resolves-nowhere conservative-skip, DONE-vs-DONE_VERIFIED distinction, string-depends_on drift shape.
+
+**Sanity-checked against real live data (scratch copy, dry-run, never through orch-apply.sh):** fixed script now correctly SKIPS `FACTORY-TECHANALYSIS-delete-orphaned-ts-service` (still unmet deps) and would promote `FACTORY-TECHANALYSIS-go-livepath-tests` (`depends_on: []`, the actual next-eligible P1 row) instead — matches the exact remediation PO/router expected.
+
+**Scope discipline:** did not touch `devteam-backlog-claim-bounded1.jq` (verified no change needed). Did NOT promote/resolve `FACTORY-TECHANALYSIS-go-livepath-tests` myself — PO explicitly declined manual promotion this cycle; fixed automation picks it up organically on a future idle tick. No task branch (project convention: work stays on `main`). `graphify --update --no-viz` skipped — no Skill-invocation tool available in this sub-agent's tool surface for a 4-file mechanical doc/script change.
