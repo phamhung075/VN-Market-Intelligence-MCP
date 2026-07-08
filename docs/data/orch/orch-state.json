@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CHEF-SENDTELEGRAM-ARGSHAPE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-CHEF-SENDTELEGRAM-ARGSHAPE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-08T00:04:24Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FIX-CHEF-SENDTELEGRAM-ARGSHAPE done_verified (cowork-refactory-expert, commit 52538c2ac) — awaiting next dispatch",
+    "updated_at": "2026-07-08T00:11:31Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
