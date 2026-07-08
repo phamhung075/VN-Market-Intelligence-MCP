@@ -251,12 +251,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-NEWS-CB-FALSE-CLOSED",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-NEWS-CB-FALSE-CLOSED — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-08T00:25:07Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "FIX-NEWS-CB-FALSE-CLOSED -> REVIEW (developer, commit aa87cfe05) — ops-gated rebuild needed before done_verified; awaiting next dispatch",
+    "updated_at": "2026-07-08T00:53:37Z",
+    "updated_by": "dev-team"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
