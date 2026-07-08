@@ -100,6 +100,57 @@ export function _resetStalenessAlertCooldown(): void {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Signal-detection default thresholds (FACTORY-SCHEDULER-prediction-default-dedup)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Default prediction-market signal-detection thresholds.
+ *
+ * Provenance: these are the as-shipped Task 167 values — no later incident or
+ * tuning session has changed them. Before this dedup they were hardcoded
+ * twice in Step 6 below (once in the config-load-succeeded branch as a
+ * per-field `?? literal` fallback, once again in the config-load-failed catch
+ * branch), which meant the two paths could silently drift apart over time.
+ * They also mirror (by design, kept in manual sync) the same three defaults
+ * independently declared in the wider MCP config loader
+ * (`infrastructure/config.ts` `PredictionMarketsConfig.volumeSpikeThresholdUsd`
+ * / `.probabilityShiftPct` / `.minUniqueWallets`, already required —
+ * non-optional — fields there); this module keeps its own copy because it
+ * only needs the narrow 3-field `PredictionSignalConfig` subset the domain
+ * detector consumes, resolved defensively via dynamic `import()` rather than
+ * a static import of the config module's type.
+ */
+export const DEFAULT_PREDICTION_SIGNAL_CONFIG: PredictionSignalConfig = {
+  volumeSpikeThresholdUsd: 50000,
+  probabilityShiftPct: 5,
+  minUniqueWallets: 10,
+};
+
+/**
+ * Resolve the effective `PredictionSignalConfig` from a (possibly partial,
+ * `null`, or absent) `predictionMarkets` config slice, falling back to
+ * `DEFAULT_PREDICTION_SIGNAL_CONFIG` field-by-field for anything missing.
+ *
+ * Shared by BOTH the config-load-succeeded and config-load-failed branches in
+ * `runPredictionMarketPoll` Step 6, so the two paths resolve through the same
+ * single source of truth and can never silently diverge again.
+ */
+export function resolvePredictionSignalConfig(
+  pm?: Partial<PredictionSignalConfig> | null,
+): PredictionSignalConfig {
+  return {
+    volumeSpikeThresholdUsd:
+      pm?.volumeSpikeThresholdUsd ??
+      DEFAULT_PREDICTION_SIGNAL_CONFIG.volumeSpikeThresholdUsd,
+    probabilityShiftPct:
+      pm?.probabilityShiftPct ??
+      DEFAULT_PREDICTION_SIGNAL_CONFIG.probabilityShiftPct,
+    minUniqueWallets:
+      pm?.minUniqueWallets ?? DEFAULT_PREDICTION_SIGNAL_CONFIG.minUniqueWallets,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -532,17 +583,9 @@ export async function runPredictionMarketPoll(
         const cfgMod = await import("../../infrastructure/config.js" as any);
         const cfg = (cfgMod as { loadMcpConfig?: () => { predictionMarkets: { volumeSpikeThresholdUsd: number; probabilityShiftPct: number; minUniqueWallets: number } } }).loadMcpConfig?.() ?? { predictionMarkets: null };
         const pm = (cfg as { predictionMarkets?: { volumeSpikeThresholdUsd?: number; probabilityShiftPct?: number; minUniqueWallets?: number } | null }).predictionMarkets;
-        signalConfig = {
-          volumeSpikeThresholdUsd: pm?.volumeSpikeThresholdUsd ?? 50000,
-          probabilityShiftPct: pm?.probabilityShiftPct ?? 5,
-          minUniqueWallets: pm?.minUniqueWallets ?? 10,
-        };
+        signalConfig = resolvePredictionSignalConfig(pm);
       } catch {
-        signalConfig = {
-          volumeSpikeThresholdUsd: 50000,
-          probabilityShiftPct: 5,
-          minUniqueWallets: 10,
-        };
+        signalConfig = resolvePredictionSignalConfig();
       }
     }
 
