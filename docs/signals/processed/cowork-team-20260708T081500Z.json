@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T08:15Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "spawned": [],
+    "skipped": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved. Both slots (unified-agent, alert-commander) share the affected no-Bash/mcp__gateway__call_tool-only profile. alert-commander-market: 26th consecutive tick withholding. chef-intraday: 7th occurrence this window. last_fired intentionally NOT updated.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "No newer resolution signal than the 03:37Z dev-team main-session corroboration. Defect open ~12h30min since first sighting (19:45Z), already escalated CRITICAL by dev-team at 03:50Z. No new action needed."
+  },
+  "createdAt": "2026-07-08T08:17:30Z",
+  "_processed": {
+    "fingerprint": "36d2b617949aa1be1a48a99c098814ae5d504de0772b6caa2c33f38ddaa60027",
+    "processedAt": "2026-07-08T13:18:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

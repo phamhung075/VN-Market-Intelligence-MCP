@@ -1,0 +1,33 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T05:15Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "chef-morning",
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "spawned": [],
+    "skipped": [
+      "chef-morning",
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved. All 3 matched slots (unified-agent x2, alert-commander) share the affected no-Bash/mcp__gateway__call_tool-only profile. NOTE: chef-morning is a GUARANTEED slot (first guaranteed-slot match affected this window) — still withheld, same root cause applies regardless of guaranteed status since the agent has zero Bash fallback. alert-commander-market: 14th consecutive tick withholding. chef-intraday: 4th occurrence this window. last_fired intentionally NOT updated for any slot.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "No newer resolution signal than the 03:37Z dev-team main-session corroboration. Defect open ~9h30min since first sighting (19:45Z), already escalated CRITICAL by dev-team at 03:50Z. Flagging guaranteed-slot impact for PO visibility since guaranteed slots are meant to have higher delivery assurance — worth noting in any PO re-scope of the gateway-transport backlog chain. No new action needed from cowork-team."
+  },
+  "createdAt": "2026-07-08T05:17:00Z",
+  "_processed": {
+    "fingerprint": "88478df3473b74a22a928129716df10327cbd6883d304c90df7a54cf787d9bc7",
+    "processedAt": "2026-07-08T06:22:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T09:00Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "spawned": [],
+    "skipped": [
+      "refine-bctc-slot-1"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved. New agent occurrence this session: refine_bctc_md (Tools: Read, Write, mcp__gateway__call_tool — zero Bash) shares the same affected no-Bash/mcp__gateway__call_tool-only profile as alert-commander, unified-agent, news-scout, market-watcher. First occurrence for this agent this window. last_fired intentionally NOT updated. Note: alert-commander-market dropped out of match this tick (cron window 2-8 UTC now past 08:xx), no longer relevant to withhold-count tracking.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "Defect open ~13h15min since first sighting (19:45Z), already escalated CRITICAL by dev-team at 03:50Z. No new action needed — awaiting session restart/reconnect, only known remediation. Confirms defect breadth extends to refine_bctc_md leaf worker, not just the 4 previously-observed agent types."
+  },
+  "createdAt": "2026-07-08T09:02:30Z",
+  "_processed": {
+    "fingerprint": "d9df098f7d3ef95a2f34d9cc8f6cd17f3345297913f7a927cfa4da2126841c82",
+    "processedAt": "2026-07-08T13:18:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

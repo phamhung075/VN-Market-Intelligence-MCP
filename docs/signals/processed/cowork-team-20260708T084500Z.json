@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T08:45Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "chef-eod",
+      "alert-commander-market"
+    ],
+    "spawned": [],
+    "skipped": [
+      "chef-eod",
+      "alert-commander-market"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved. chef-eod is a guaranteed:true slot (agent=unified-agent) — withheld identically to non-guaranteed slots since root cause (zero Bash fallback for affected profile) applies regardless of guaranteed status, per established precedent (chef-morning 05:15Z). alert-commander-market: 28th consecutive tick withholding. last_fired intentionally NOT updated for either slot.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "Defect open ~13h since first sighting (19:45Z), already escalated CRITICAL by dev-team at 03:50Z. Second guaranteed-slot miss this window (chef-eod, an EOD synthesis slot) — flagging for PO visibility on cumulative guaranteed-delivery impact, no re-escalation of the already-CRITICAL defect itself."
+  },
+  "createdAt": "2026-07-08T08:47:30Z",
+  "_processed": {
+    "fingerprint": "2591118214650f00d4574cd83190c89a53fd6fb87cefdb1b50c4a6509d28b8d3",
+    "processedAt": "2026-07-08T13:18:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

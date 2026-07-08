@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-report",
+  "payload": {
+    "tick": "2026-07-08T04:45Z",
+    "verdict": "WORK",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [],
+    "skipped": [
+      "alert-commander-market"
+    ],
+    "skip_reason": "session-wide gateway-blind defect, still unresolved — 12th consecutive tick withholding this slot. No newer resolution signal. last_fired intentionally NOT updated.",
+    "signal_backlog_drained": 0,
+    "one_shots_routed": 0,
+    "last_fired_write_errors": null,
+    "classification": "SKIPPED-GATEWAY-BLIND",
+    "note": "Defect open ~9h since first sighting (19:45Z), already escalated CRITICAL by dev-team at 03:50Z. No new action needed."
+  },
+  "createdAt": "2026-07-08T04:47:00Z",
+  "_processed": {
+    "fingerprint": "92ff1cb3225c66efa81b84f733c18e8006755edc64fbf98f354e5c4184f06b60",
+    "processedAt": "2026-07-08T06:22:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
