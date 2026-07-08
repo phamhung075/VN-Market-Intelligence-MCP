@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FACTORY-TECHANALYSIS-go-livepath-tests",
-    "next_agent": "qa",
-    "next_action": "FACTORY-TECHANALYSIS-go-livepath-tests at REVIEW -- qa: verify new router_test.go + usecases_test.go (go test ./... GREEN, purely additive, no production code changed), then this unblocks FACTORY-TECHANALYSIS-delete-orphaned-ts-service (currently BACKLOG, blocked on this + one sibling).",
-    "updated_at": "2026-07-08T08:40:46Z",
-    "updated_by": "dev-technical-analysis"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-TECHANALYSIS-go-livepath-tests DONE_VERIFIED (qa independent re-verify PASS 2026-07-08T08:48:21Z — fresh go test -count=1 12/12 packages GREEN, go vet clean, golangci-lint 0 issues, sandbox 35/35 GREEN via dashboard/build.sh + headless render-check PASS, test-content read confirms assertions match production semantics exactly, doc self-heal (go run ./cmd/sandbox -h) reproduced firsthand, zero production code touched across full commit range, DJ-GATE-1 journal confirmed substantive. FACTORY-TECHANALYSIS-delete-orphaned-ts-service remains correctly BACKLOG, still blocked on sibling FACTORY-TECHANALYSIS-reconcile-ta-contract).",
+    "updated_at": "2026-07-08T08:48:21Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9251,6 +9251,27 @@
         "qa_review_note": "qa independent re-verify (2026-07-08T10:45Z): diff-read confirmed the depends_on eligibility filter runs during candidate SELECTION (select() inside the list-comprehension, before sort_by) not post-hoc on the final pick. Confirmed both depends_on shapes resolve (inline .depends_on, and detail_ref lookup into docs/data/orch/archive/backlog-detail.json .items[<id>].depends_on, with a bare-string normalizer for the 7/321 real-data-drift rows). Confirmed a dep is satisfied ONLY at status==DONE_VERIFIED (plain DONE insufficient) and a dep resolving in NO task_board lane maps to a MISSING sentinel -> conservative-skip, never silently ignored. Re-ran scripts/test-devteam-bounded1-depends-on.sh myself directly: 17/17 PASS. Ran my own independent read-only dry-run against LIVE orch-state.json + LIVE backlog-detail.json (jq --slurpfile detail ... piped to a scratch file, never through orch-apply.sh): confirmed the fixed script now SKIPS FACTORY-TECHANALYSIS-delete-orphaned-ts-service (both prerequisites still plain BACKLOG) and promotes FACTORY-TECHANALYSIS-go-livepath-tests instead (depends_on: []) -- reproduces the fix's stated claim exactly on live data. Grep-confirmed --slurpfile detail threaded through both docs/agents/dev-team/flow/main.md and docs/policies/dev-standards.md. Confirmed scripts/devteam-backlog-claim-bounded1.jq is genuinely unchanged across the task's commits (empty diff) and needs no depends_on logic (only claims whatever promote already stamped). Confirmed DJ-GATE-1 developer journal entry present and substantive (sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S5). Scope check clean: the FACTORY-TECHANALYSIS-delete-orphaned-ts-service revert_note visible in commit 3a006db69 predates this task (timestamped 07:55:12Z vs task created_at 08:06:09Z) -- pre-existing manual revert swept into a later commit, not new scope creep. FACTORY-TECHANALYSIS-go-livepath-tests confirmed still plain BACKLOG in the live board -- nothing was actually auto-promoted; fix only corrects future auto-pickup ticks. done_verified.",
         "updated_at": "2026-07-08T08:25:44Z",
         "updated_by": "qa"
+      },
+      {
+        "title": "Add Go tests for the deployed request path (application + interface/http + domain)",
+        "priority": "P1",
+        "zone": "technical-analysis",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-TECHANALYSIS-go-livepath-tests",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-go-livepath-tests",
+        "promoted_at": "2026-07-08T08:29:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T08:29:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "moved_to_review_at": "2026-07-08T08:40:46Z",
+        "moved_by": "dev-technical-analysis",
+        "review_note": "Added pkg/interface/http/router_test.go + pkg/application/usecases_test.go — both packages had 0 test files before. router_test.go: httptest.NewServer(NewRouter(...)) covers GET /health, POST /ta/indicators happy path, invalid-JSON 400, missing closes+symbol 400, useCase-error 500 (calculator- and PriceRepo-triggered). usecases_test.go: table tests for ComputeTAUseCase.Execute — pure-compute path (DB never consulted), DB-backed path (fake PriceRepo, asserts GetCandles(symbol,60) + closes forwarded in order), period<=0 defaults to 14, empty-closes+empty-symbol error (no I/O), calculator/repo error propagation. Purely additive — zero production code changed, no bugs found while writing tests. Gates: go test ./... 12 packages GREEN, go vet clean, golangci-lint 0 issues, sandbox 35/35 scenarios GREEN (dashboard/build.sh + headless render-check PASS). Doc-review: docs/architecture/microservice/technical-analysis/testing.md updated. Decision journal: sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md. Commit ed739aa59. rebuild_required: false (test-only, no deploy needed) — next_agent=qa to verify the new tests and unblock FACTORY-TECHANALYSIS-delete-orphaned-ts-service.",
+        "qa_review_note": "qa independent re-verify (2026-07-08): fresh go test -count=1 uncached — 12/12 packages GREEN (matches claim). go vet clean. golangci-lint run (repo .golangci.yml) 0 issues. Ran bash dashboard/build.sh myself fresh: 35/35 sandbox scenarios green (25 primitive + 5 module + 5 service, counted actual files on disk) + headless verify-render.mjs PASS (0 red, 0 pending, 0 JS errors). Read both new test files (usecases_test.go, router_test.go) in full against the production usecases.go/router.go they exercise: every assertion matches production semantics exactly (period<=0->14 default, identical \"closes or symbol required\" error text in both usecase-level and router-level duplicate validation, GetCandles(symbol,60) call contract, 500-on-calculator-error and 500-on-repo-error confirmed as two genuinely distinct code paths both covered). Verified the doc self-heal in docs/agents/dev-technical-analysis/flow/main.md (commit b3ff85582, claiming -module/-scenario=all do not exist) by running go run ./cmd/sandbox -h myself: flag set is exactly -audit/-scenario/-tier, no -module, no \"all\" special-case in main.go source — accurate. git diff --stat ed739aa59~1 6224a7277 (full pre-task-state -> final commit) confirms zero non-test apps/technical-analysis files touched — purely additive claim holds. DJ-GATE-1 confirmed: sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md STEP dev-technical-analysis-S1 substantive with task-id stamped. FACTORY-TECHANALYSIS-delete-orphaned-ts-service confirmed still correctly BACKLOG, remains blocked on sibling FACTORY-TECHANALYSIS-reconcile-ta-contract. Commits verified: ed739aa59 (tests), c12bdcba9 (docs), 23d3c244d (memory), b3ff85582 (doc self-heal), 6224a7277 (board flip).",
+        "updated_at": "2026-07-08T08:48:21Z",
+        "updated_by": "qa"
       }
     ],
     "head": {
@@ -9381,24 +9402,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Add Go tests for the deployed request path (application + interface/http + domain)",
-        "priority": "P1",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-TECHANALYSIS-go-livepath-tests",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-go-livepath-tests",
-        "promoted_at": "2026-07-08T08:29:26Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T08:29:26Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "moved_to_review_at": "2026-07-08T08:40:46Z",
-        "moved_by": "dev-technical-analysis",
-        "review_note": "Added pkg/interface/http/router_test.go + pkg/application/usecases_test.go — both packages had 0 test files before. router_test.go: httptest.NewServer(NewRouter(...)) covers GET /health, POST /ta/indicators happy path, invalid-JSON 400, missing closes+symbol 400, useCase-error 500 (calculator- and PriceRepo-triggered). usecases_test.go: table tests for ComputeTAUseCase.Execute — pure-compute path (DB never consulted), DB-backed path (fake PriceRepo, asserts GetCandles(symbol,60) + closes forwarded in order), period<=0 defaults to 14, empty-closes+empty-symbol error (no I/O), calculator/repo error propagation. Purely additive — zero production code changed, no bugs found while writing tests. Gates: go test ./... 12 packages GREEN, go vet clean, golangci-lint 0 issues, sandbox 35/35 scenarios GREEN (dashboard/build.sh + headless render-check PASS). Doc-review: docs/architecture/microservice/technical-analysis/testing.md updated. Decision journal: sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md. Commit ed739aa59. rebuild_required: false (test-only, no deploy needed) — next_agent=qa to verify the new tests and unblock FACTORY-TECHANALYSIS-delete-orphaned-ts-service."
       }
     ],
     "qa": [],
