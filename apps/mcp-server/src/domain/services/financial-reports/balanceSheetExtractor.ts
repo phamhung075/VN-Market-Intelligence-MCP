@@ -22,7 +22,9 @@
 
 import { parseVnNumber } from "../vnNumberParser.js";
 import { guardBalanceSheet } from "./extractorGuards.js";
-import { LOOKAHEAD_LINES, extractNumber, detectUnitMultiplier } from "./extractorHelpers.js";
+import { detectUnitMultiplier } from "./extractorHelpers.js";
+import { findValue, findValueByCode, scaleNumericFields } from "./lib/lineScan.js";
+import { P_TOTAL_ASSETS, P_TOTAL_LIABILITIES, P_EQUITY_TOTAL } from "./lib/vasPatterns.js";
 import type {
   BalanceSheet,
   CurrentAssets,
@@ -35,178 +37,18 @@ import type {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Case-insensitive check if a line contains a keyword pattern.
- * Uses Vietnamese diacritics-aware matching.
- */
-function lineMatches(line: string, pattern: RegExp): boolean {
-  return pattern.test(line);
-}
-
-/**
- * Find the first line matching a pattern and extract its number.
- * Returns 0 if not found (missing fields default to 0).
- *
- * Task 287 — FR-2: Row-code guard.
- * If the extracted value is a whole integer multiple of 10 in [10, 990],
- * it is treated as a BCTC row-code artifact (e.g. 100, 110, 270) and the
- * scan continues to the next matching line.
- *
- * Task 1114: Look-ahead for OCR text where numbers appear on separate lines.
- */
-
-/**
- * Find a value by BCTC item code.
- *
- * Task 1416b: FPT Q4-2025 OCR produces two forms of code-bearing lines:
- *
- *   Form A (code-prefix): the line STARTS with the code, followed by the
- *   value — e.g. "270 88.089.621.779.862". The label is on a separate line.
- *
- *   Form B (code-inline): the code appears mid-line after the label and
- *   Thuyết minh reference, followed by the current-period value and
- *   (optionally) the prior-period value — e.g.
- *   "TONG CỘNG NGUON VỐN (440=300+400) 440 88.089.621.779.862 71.999..."
- *   or "D. VỐN CHỦ SỞ HỮU 400 43.751.466.292.590 35.727..."
- *   These lines are matched even when findValue fails due to uppercase
- *   Vietnamese diacritics not being covered by the /i flag.
- *
- * Strategy:
- *   1. Try Form A: line starts with "<code><non-digit>".
- *   2. Try Form B: line contains " <code> " (space-delimited) followed
- *      by a large number; the code must be preceded by a non-digit.
- *
- * The row-code guard applies in both cases.
- * Returns 0 if no matching line is found.
- */
-function findValueByCode(lines: string[], code: number): number {
-  const codeStr = String(code);
-  // Form A: line starts with the code followed by a non-digit separator
-  const prefixPattern = new RegExp(`^${codeStr}(?:\\s+|[^\\d])`, "");
-  // Form B: code appears mid-line, preceded and followed by non-digits
-  const inlinePattern = new RegExp(`(?:^|\\D)${codeStr}(?:\\s+|[^\\d])`, "");
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-
-    // Form A
-    if (prefixPattern.test(trimmed)) {
-      const rest = trimmed.slice(codeStr.length).trim();
-      const val = extractNumber(rest);
-      if (val === null) continue;
-      if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
-      return val;
-    }
-
-    // Form B: only for 3-digit grand total codes to avoid false positives
-    // (codes like 270, 300, 440 are unique enough; sub-item codes like 110
-    // could match year fragments or other numbers).
-    // Match " <code> <value>" where the code is surrounded by whitespace.
-    // e.g. "TONG CỘNG NGUON VỐN (440=300+400) 440 88.089.621.779.862 ..."
-    //       → code token " 440 " → value is first large number after it
-    if (code >= 270) {
-      // Find the last occurrence of " <code> " (space-bounded) in the line
-      const spaceCodePattern = new RegExp(`\\s${codeStr}\\s`);
-      const match = spaceCodePattern.exec(trimmed);
-      if (match) {
-        const afterCode = trimmed.slice(match.index + match[0].length);
-        const val = extractNumber(afterCode);
-        if (val === null) continue;
-        if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
-        return val;
-      }
-    }
-  }
-  return 0;
-}
-
-function findValue(lines: string[], pattern: RegExp): number {
-  for (let i = 0; i < lines.length; i++) {
-    if (lineMatches(lines[i]!, pattern)) {
-      const val = extractNumber(lines[i]!);
-      if (val !== null) {
-        // Guard: skip row-code artifacts (multiples of 10 in [10, 990])
-        if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
-        return val;
-      }
-      // Look-ahead: OCR may have numbers on next lines
-      for (let j = 1; j <= LOOKAHEAD_LINES && i + j < lines.length; j++) {
-        const ahead = extractNumber(lines[i + j]!);
-        if (ahead === null) continue;
-        if (Number.isInteger(ahead) && ahead >= 10 && ahead <= 990 && ahead % 10 === 0) continue;
-        return ahead;
-      }
-    }
-  }
-  return 0;
-}
-
-// ---------------------------------------------------------------------------
-// Task 287 — FR-1: Apply multiplier to all monetary fields
-// ---------------------------------------------------------------------------
-
-/**
- * Multiply every monetary leaf field in a BalanceSheet by the given multiplier.
- * When multiplier === 1, returns the same object unchanged (no allocation).
- *
- * NOTE: BalanceSheet has no EPS field, so no field needs to be skipped.
- *
- * @param bs - The extracted BalanceSheet (values in the declared unit).
- * @param m  - Multiplier from detectUnitMultiplier (1 or 1000).
- * @returns BalanceSheet with all values in triệu đồng.
- */
-function applyMultiplier(bs: BalanceSheet, m: number): BalanceSheet {
-  if (m === 1) return bs;
-
-  return {
-    currentAssets: {
-      cash: bs.currentAssets.cash * m,
-      shortTermInvestments: bs.currentAssets.shortTermInvestments * m,
-      accountsReceivable: bs.currentAssets.accountsReceivable * m,
-      inventory: bs.currentAssets.inventory * m,
-      otherCurrentAssets: bs.currentAssets.otherCurrentAssets * m,
-      total: bs.currentAssets.total * m,
-    },
-    nonCurrentAssets: {
-      longTermReceivables: bs.nonCurrentAssets.longTermReceivables * m,
-      fixedAssets: bs.nonCurrentAssets.fixedAssets * m,
-      investmentProperty: bs.nonCurrentAssets.investmentProperty * m,
-      longTermInvestments: bs.nonCurrentAssets.longTermInvestments * m,
-      goodwill: bs.nonCurrentAssets.goodwill * m,
-      otherLongTermAssets: bs.nonCurrentAssets.otherLongTermAssets * m,
-      total: bs.nonCurrentAssets.total * m,
-    },
-    totalAssets: bs.totalAssets * m,
-    currentLiabilities: {
-      shortTermDebt: bs.currentLiabilities.shortTermDebt * m,
-      accountsPayable: bs.currentLiabilities.accountsPayable * m,
-      advancesFromCustomers: bs.currentLiabilities.advancesFromCustomers * m,
-      taxPayable: bs.currentLiabilities.taxPayable * m,
-      payablesToEmployees: bs.currentLiabilities.payablesToEmployees * m,
-      otherCurrentLiabilities: bs.currentLiabilities.otherCurrentLiabilities * m,
-      total: bs.currentLiabilities.total * m,
-    },
-    longTermLiabilities: {
-      longTermDebt: bs.longTermLiabilities.longTermDebt * m,
-      deferredTaxLiabilities: bs.longTermLiabilities.deferredTaxLiabilities * m,
-      otherLongTermLiabilities: bs.longTermLiabilities.otherLongTermLiabilities * m,
-      total: bs.longTermLiabilities.total * m,
-    },
-    totalLiabilities: bs.totalLiabilities * m,
-    equity: {
-      shareCapital: bs.equity.shareCapital * m,
-      sharePremium: bs.equity.sharePremium * m,
-      treasuryShares: bs.equity.treasuryShares * m,
-      retainedEarnings: bs.equity.retainedEarnings * m,
-      otherEquityFunds: bs.equity.otherEquityFunds * m,
-      minorityInterest: bs.equity.minorityInterest * m,
-      total: bs.equity.total * m,
-    },
-    totalLiabilitiesAndEquity: bs.totalLiabilitiesAndEquity * m,
-  };
-}
+//
+// FACTORY-DOMAIN-extract-bctc-parsing-lib (2026-07-08): findValue,
+// findValueByCode, and applyMultiplier were relocated to
+// ./lib/lineScan.ts (canonical, shared with cashFlowExtractor /
+// incomeStatementExtractor / bctcScalarAggregator). This extractor's
+// row-code guard (skip whole-multiples-of-10 in [10,990]) is preserved via
+// the `{ rowCodeGuard: true }` option on every findValue() call below —
+// see lib/lineScan.ts header comment for the byte-for-byte equivalence
+// argument. applyMultiplier is now scaleNumericFields() (generic recursive
+// leaf-scaler — BalanceSheet is 100% numeric fields, verified against
+// bctc-schema.ts, so the recursive walk is provably identical to the
+// original field-by-field version).
 
 // ---------------------------------------------------------------------------
 // Keyword patterns (case-insensitive, Vietnamese)
@@ -230,10 +72,10 @@ const P_GOODWILL = /l[ợo]i\s+th[ếe]\s+th[ưu][ơo]ng\s+m[ạa]i/i;
 const P_OTHER_LONG_TERM_ASSETS = /t[àa]i\s+s[ảa]n\s+d[àa]i\s+h[ạa]n\s+kh[áa]c/i;
 
 // Total assets
-const P_TOTAL_ASSETS = /t[ổo]ng\s+(?:c[ộo]ng\s+)?t[àa]i\s+s[ảa]n/i;
+// P_TOTAL_ASSETS — canonical shared pattern, imported from ./lib/vasPatterns.js
 
 // Liabilities
-const P_TOTAL_LIABILITIES = /n[ợo]\s+ph[ảa]i\s+tr[ảa]/i;
+// P_TOTAL_LIABILITIES — canonical shared pattern, imported from ./lib/vasPatterns.js
 const P_CURRENT_LIABILITIES = /n[ợo]\s+ng[ắa]n\s+h[ạa]n/i;
 // P_SHORT_TERM_DEBT: matches code 321 "Vay và nợ thuê tài chính ngắn hạn" (current VAS standard)
 const P_SHORT_TERM_DEBT = /vay\s+v[àa]\s+n[ợo]\s+thu[êe]\s+t[àa]i\s+ch[ía]nh\s+ng[ắa]n\s+h[ạa]n/i;
@@ -253,7 +95,7 @@ const P_DEFERRED_TAX_LIABILITIES = /thu[ếe]\s+.*ho[ãa]n\s+l[ạa]i\s+ph[ảa]
 const P_OTHER_LONG_TERM_LIABILITIES = /n[ợo]\s+d[àa]i\s+h[ạa]n\s+kh[áa]c/i;
 
 // Equity
-const P_EQUITY_TOTAL = /v[ốo]n\s+ch[ủu]\s+s[ởo]\s+h[ữu]u/i;
+// P_EQUITY_TOTAL — canonical shared pattern, imported from ./lib/vasPatterns.js
 const P_SHARE_CAPITAL = /v[ốo]n\s+g[óo]p\s+c[ủu]a\s+ch[ủu]\s+s[ởo]\s+h[ữu]u/i;
 const P_SHARE_PREMIUM = /th[ặa]ng\s+d[ưu]\s+v[ốo]n\s+c[ổo]\s+ph[ầa]n/i;
 const P_TREASURY_SHARES = /c[ổo]\s+phi[ếe]u\s+qu[ỹy]/i;
@@ -753,7 +595,7 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   // where extractSplitBlockAll parses deep thuyết minh pages and returns
   // wrong values for codes like 440 that appear inline in those pages.
   const fv = (pattern: RegExp, sbKey?: string, codeNum?: number): number => {
-    const fromLabel = findValue(lines, pattern);
+    const fromLabel = findValue(lines, pattern, { rowCodeGuard: true });
     const fromCode = codeNum !== undefined ? findValueByCode(lines, codeNum) : 0;
 
     if (sbKey && sbMap && sbMap[sbKey] !== undefined) {
@@ -1042,5 +884,5 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
     }
   }
 
-  return guardBalanceSheet(applyMultiplier(raw, effectiveMultiplier));
+  return guardBalanceSheet(scaleNumericFields(raw, effectiveMultiplier));
 }
