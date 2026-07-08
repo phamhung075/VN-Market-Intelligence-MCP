@@ -1,6 +1,30 @@
 # PO Notebook
 
-_Last: 2026-07-07T21:37Z_
+_Last: 2026-07-08T01:22Z_
+
+## Tick 2026-07-08T01:22Z — ci_red triage (dev-team spawn): DSI-S3-sector-fin flaky → FIX minted (RECURRING class)
+
+Dev-team Step 0a.5 handed 1 `ci_red` pendingSignal (`docs/signals/ci-red-0d28104a-20260708011711.json`, fingerprint 99c3ee0f…, dedup_key `ci_red:0d28104a…:bun test`). CI RED on main HEAD `0d28104ac` (run 28910244855).
+
+**Verified parent's diagnosis (RAW, re-ran local):** `apps/mcp-server/src/__tests__/DSI-S3-sector-fin.test.ts` → 16 pass / 1 fail, `AC-SEC-2a` timed out at **5001ms** (parent saw 16/1 then 15/2 = flaky). Log `[hydrologicalData] extracted reservoir levels count:0` confirms `getEnergyGridStatus()`→`fetchReservoirLevels()` (infrastructure/fetchers/hydrologicalData.js) does a REAL network fetch, NO mock (grep: `mock.module` count=0 in this file), racing bun-test's 5000ms default timeout. **Offending commit `0d28104ac` is DOCS-ONLY** (notebook checkpoint main.md, 1 file) — did NOT cause it; false-alarm-on-commit + genuine pre-existing test-hygiene bug.
+
+**RECURRING (feedback_recurring_bug_escalation) — 3rd file, same root-cause class:** `1410-tool-diacritics-sweep.test.ts` + `262-mcp-tools-042.test.ts` already fixed via `mock.module` (commit **1efb6f918**, CI-green run 28886901289) but `DSI-S3-sector-fin` was explicitly dismissed as "CI-flaky" at `backlog-detail.json:5724` WITHOUT applying the mock. Fix pattern is proven & in-repo (freeze-before-mock `{...realNs}` + afterAll-restore, 1355b/1410/262 precedent). **Sweep candidates for 4th recurrence:** `257-weather-vn.test.ts` + `258-hydro-data.test.ts` (both mock.module=0, both import the network fetchers).
+
+**Disposition:** Dedup clean (no `CI-RED-0d28104a` in board; no live DSI-S3/energyGrid/reservoir task). Minted BACKLOG FIX **CI-RED-0d28104a-FIX** (type FIX, size S, priority high, zone `apps/mcp-server/`, owner po, origin_signal_id CI-RED-0d28104a) via orch-apply.sh (Stage-0/1 PASS; 117 SHG coherence warnings pre-existing non-blocking). AC = ci_green on a bun-test run pushed AFTER 0d28104a. Signal marked `_processed` (result routed-to-po), moved to `docs/signals/processed/`, DB INSERT ok. Decision journal STEP po-S1 written. RETURNED as BATCH FIX to router.
+
+## Tick 2026-07-08T01:08Z — telegram-reports triage: ohlcv-sanity UNIT CONTAMINATION (VHM/VIC) ids 3518/3519
+
+Dev-team Step-4.1 handed 2 new `status=new` reports (analysis-agent, 2026-07-08T00:45:01Z). Confirmed live via container DB (`market.db` telegram_reports): both `new`, unclaimed. **Duplicate emission of ONE event** — 3518 & 3519 identical text, same timestamp, message_id 3270/3271. Resolved BOTH `resolution=duplicate`, `status=processed` (write verified persisted; status=new count 0→0). Skipped Telegram-msg delete (no gateway/bot in this toolset — cosmetic only).
+
+**Disposition: REAL contamination, NOT a new task — DUP of tracked backlog.** RAW-verified live daily_ohlcv (read-only docker exec):
+- Whole-row thousands-notation bars (~150 VHM / ~220 VIC) coexist with raw-VND bars (~146000/214000) in same series. System canon = raw VND (blue-chips FPT=73200, VNM=55100, HPG=23100) → the sub-1000 bars ARE the contaminated ones (need ×1000), matches CONTAM-10 `whole_row_lt1000_scale`.
+- **Report UNDERCOUNTS**: not "10 rows/7d" — VHM **155 rows** (since 2025-08-27), VIC **246 rows** (since 2025-07-11); **62 tickers table-wide are mixed-scale**. 7-day alert window only surfaces the tip.
+- Already tracked: `OHLCV-UNIT-CONTAM-WHOLEROW-LT1000` (ACTIVE, high) + child `FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM` (READY, SPRINT-M, zone apps/mcp-server/, owner architect). Recurring-bug escalation ALREADY on record (umbrella note: "2nd contamination class same table -> recurring-bug-escalation; durable writer guard required"). No dup task minted.
+
+**Escalation surfaced to router (NOT an orch-state write — task already ACTIVE; avoid clobber risk):**
+- READY umbrella `FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM` has **stalled 7+ days** (opened 06-30) while writer keeps emitting fresh contamination (07-01..07-07 confirmed live) → needs architect design + pick-up NOW.
+- The P0 writer fix `FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0` (REVIEW, done_verified=false, gate MONDAY-06-22 never closed = 16d stalled) is **BLIND to this class** — it guards *intra-row* scale + OHLC-constraint; whole-row uniform ÷1000 has NO intra-row inconsistency (same blindspot CONTAM-6 had). The durable whole-row writer guard lives in the READY task's scope, not the P0 fix.
+- **Design flag for architect:** CONTAM-10 repair anchor = "most recent close>=1000" resolves to the flat synthetic seed bars (2026-04-30/05-01 O=H=L=C=146000/214000 — separate cold-start reference-price-seed defect, CANCELLED FIX-OHLCV-CLASS3). Anchor VALUE is correct-scale so the ×1000 repair is still safe for scale; but the per-ticker discontinuity predicate must not depend on a flat seed bar, and the flat O=H=L=C bars remain a residual quality defect after scale repair.
 
 ## Tick 2026-07-07T21:37Z — dev-team Step-1 re-triage of 8 re-drained signals (ALL already-actioned; 0 new rows)
 
