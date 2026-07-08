@@ -1,6 +1,44 @@
 # Task Report: CONTAM-10-WRITER-H — Migrate handlePushOhlcvHistory to writeOhlcvBatch
 date: 2026-07-08
-outcome: APPROVED (code+tests) — held REVIEW (live-container RAW-probe pending ops swap)
+outcome: DONE_VERIFIED — post-swap live-gateway RAW-probe PASS
+
+## Post-Swap Live-Gateway RAW-Probe (final gate, 2026-07-08T02:25:01Z)
+
+Ops completed the gated swap (`e2bac5b0a`, image `4c8ea4cfd41f`) — independently
+re-confirmed via my own `docker inspect` on `vn-market-intelligence-mcp-mcp-server-1`
+(not trusting the ops badge alone). Ran the TRUE live-gateway probe deferred last
+cycle: a real `POST http://localhost:3000/api/push-ohlcv-history` against the actual
+running container (not an isolated local instance).
+
+Used synthetic ticker `QAPROBE1` (pre-checked absent from `daily_ohlcv`/`watchlist`;
+`daily_ohlcv.code` has no FK, so a never-used code carries zero production-collision
+risk regardless of date):
+1. Seeded a clean full-VND anchor row (`2020-01-02`, O/H/L/C = 131000/133000/129000/130000,
+   volume=1000000) → `{ok:true,inserted:1,skipped:0}`.
+2. Pushed a contaminated batch shaped exactly like the real leak evidence
+   (`2020-01-03`, O/H/L/C = 131/133/129/130, 100-999 VND range, volume=500000) →
+   `{ok:true,inserted:1,skipped:0}`.
+
+Verified the **persisted** row (not just the HTTP response) via an in-container
+`bun:sqlite` read (same uid as the writer process — correctly sees committed WAL
+pages, unlike the external read-only sidecar `keinos/sqlite3 file:...?immutable=1`
+which is WAL-blind by design and returned 0 rows for the identical query right after
+the write — a known gotcha, not a probe failure): row landed at
+131000/133000/129000/130000, whole-row ×1000 corrected exactly matching the clean
+anchor, volume left unscaled (correct). Container log confirmed the exact guard
+firing: `[ohlcvWriteService] scale_correction QAPROBE1 2020-01-03:
+prevClose=130000 current=130 ratio=1000.0 → ×1000`.
+
+**Cleanup:** both synthetic `QAPROBE1` rows deleted from the live `daily_ohlcv`
+table immediately after verification (in-container `DELETE`, 2 rows removed,
+confirmed 0 remaining via both an in-container read and
+`GET /api/prices/history?code=QAPROBE1` → `404 no_data`). `daily_ohlcv` total row
+count (737,441) unaffected net of the transient synthetic rows. No production
+ticker or date was ever touched.
+
+**Verdict: PASS.** `CONTAM-10-WRITER-H` flipped to `DONE_VERIFIED` via
+`scripts/orch-apply.sh`. `CONTAM-10-EXEC-2` (`depends: [CONTAM-10-WRITER-H]`) is now
+**unblocked** for a future dev-team/router dispatch — not dispatched by qa.
 
 ## Summary
 
@@ -74,8 +112,9 @@ None.
 
 ## Merge Status
 No branch merge required — dev-mcp-server committed directly to `main` (`7fa78ac42`,
-already the HEAD of this repo). Task held at **REVIEW**
-(`status_note: "code/tests QA-approved, pending ops swap + post-swap RAW-probe"`).
-`.head.next_agent` set to `"ops"` to request the container swap. `CONTAM-10-EXEC-2`
-remains **BLOCKED** — do not start early (active re-contamination risk while the
-backfill poller still runs the pre-fix image).
+already the HEAD of this repo). Ops deployed the gated swap (`e2bac5b0a`, image
+`4c8ea4cfd41f`). Task flipped to **DONE_VERIFIED** this cycle after the post-swap
+live-gateway RAW-probe PASS (see above), via `scripts/orch-apply.sh`.
+`.head.next_agent` set to `"router"`. `CONTAM-10-EXEC-2` (`depends: [CONTAM-10-WRITER-H]`)
+is now **unblocked** — ready for a future dev-team dispatch (dry-run → human/PO gate
+→ live repair → post-verify + gateway probe); not dispatched by qa.
