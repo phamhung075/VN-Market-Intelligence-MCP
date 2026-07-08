@@ -85,3 +85,41 @@
 - Verify criterion (per dispatch spec): next bctc off-market fire produces a real
   `get_cycle_bootstrap` call OR — if still blind — a clean canonical-schema Write-fallback signal
   instead of a divergent ad-hoc one, with a graceful DEFER (not a hard STOP/crash). Handing to qa.
+
+## 2026-07-08T20:05Z — FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (router-dispatched, 6th+ recurrence)
+
+- Task assumed the D4 predicate lives in system-auditor's agent-interpreted flow — router asked me
+  to confirm rather than assume. It does NOT: `flow/main.md` Tier-3 pass never reads `handlers.md`
+  (zero grep hits for "D4"). D4's REAL live execution is the compiled cron job
+  `apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts` (`runTasksMdJanitorJob`, wired in
+  `startScheduler.ts`, fires daily 03:00Z) — `handlers.md`/`audit-dimensions.md` are that code's
+  cited spec-of-record, not its execution path. Zone owner for `apps/**` = `dev-mcp-server`;
+  agent-father is forbidden from writing production `.ts`.
+- What I DID (in-zone): rewrote `docs/agents/system-auditor/handlers.md` (Steps R-1b exclusion
+  whitelist + live-concurrent-session guard, R-4b 2-cycle debounce via the notebook's own
+  `D4 candidates:` ledger line — no new state file, since system-auditor may write only its
+  notebook + signal_queue) and `docs/agents/system-auditor/audit-dimensions.md` (D4-R1b/R4b rows +
+  corrected AC-2/AC-3) per the row's own fully-specified `debounce_and_exclusion_spec` +
+  `scope_widened`/`class_b_folded`/`recur_20260703T0300` notes. Both files now carry an
+  IMPLEMENTATION NOTE flagging the doc/code gap explicitly.
+- Verified against REAL production data (not a unit test): live `coordination.db` dump
+  (docker exec bun:sqlite) showed 7 currently-held sprint-task locks generating the exact
+  2026-07-08T03:00Z noise batch — 5× `esc-datacov:{ACB,HPG,GVR,HVN,MBB}:Q1-2026:ESC-3`,
+  `dev-team-cron-singleton`, `cron:dev-team:2026-07-08T02:37Z` — cross-checked against the 14 live
+  `sau-d4-*` rows in `orch-state.json .signal_queue.rows[]`. Applied the documented exclusion
+  patterns (`esc-datacov:*`, `*-singleton`, `cron:*`) against all 7 real IDs: 100% excluded.
+  Negative control (`FACTORY-INTERFACE-sequential-confidence-05-mask`, `TASK_1996`,
+  `IND-P1-ROC-MOMENTUM`) confirmed NOT over-broadly excluded — genuine task IDs still evaluated.
+- Also found a pre-existing, unrelated doc/code drift while tracing: `handlers.md`'s own
+  size-justification comment already claimed an "expired:false filter" D4 false-positive fix was
+  applied to Step R-1, but the live code's `listHeld()` calls
+  `listHeldTasks({ kind: "sprint-task" })` with NO `expired` argument at all — the doc-claimed fix
+  was never carried into code. Flagged inline in both docs for whoever picks up the code task.
+- NOT done (out of zone, honest BLOCKED not false-green): did not touch
+  `apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts` (production code, forbidden) and did
+  not flip the `orch-state.json .task_board` row to DONE_VERIFIED (`docs/data/orch/orch-state.json`
+  is excluded from agent-father's commit zone per FU-AGENT-FATHER-ORCH-SCOPE — task_board writes
+  are router/pm's job). The recurring noise will NOT stop until a `dev-mcp-server` code task ports
+  Steps R-1b/R-4b into `tasksMdJanitorJob.ts`. Reported BLOCKED (partial) to router with the exact
+  target file/function and verified fixture list for a fast pickup.
+- Decision journal: `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-agent-father.md` S3.

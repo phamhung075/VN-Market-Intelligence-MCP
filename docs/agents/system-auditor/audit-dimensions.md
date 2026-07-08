@@ -2,7 +2,7 @@
 
 # System Auditor — Audit Dimensions
 
-<!-- size-justification: 166L — canonical dimension registry; each dimension is a one-table entry + acceptance reference. Tightly coupled check-ID traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set gating note to D1. -->
+<!-- size-justification: 173L — canonical dimension registry; each dimension is a one-table entry + acceptance reference. Tightly coupled check-ID traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set gating note to D1. +7L: FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE (2026-07-08) D4-R1b exclusion whitelist + D4-R4b debounce rows + doc/code gap note. -->
 
 This file is the canonical registry of what system-auditor checks and why. Each dimension maps to check IDs in `docs/agents/system-auditor/flow/main.md` and acceptance criteria in architecture briefs.
 
@@ -45,24 +45,27 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 **Check IDs:** D4-R1 through D4-R4 (see handler steps R-1 to R-4 in `docs/agents/system-auditor/handlers.md`)
 **Brief:** `docs/architecture-briefs/2026-05-21-tasks-md-hardening.md` §3 Option A + §6 AC-1..AC-5
 **Sprint:** 1965 Phase 1
+**Live execution:** compiled cron job `apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts` (`dev-mcp-server` zone) — NOT the system-auditor LLM agent. See `docs/agents/system-auditor/handlers.md` §IMPLEMENTATION NOTE.
 
 ### Checks
 
 | Check | Description | Pass condition |
 |-------|-------------|---------------|
 | D4-R1 | `task_list_held(kind="sprint-task", expired=false)` MCP call | Tool responds (empty or populated); empty AND `orch-state.json .head.active_task_id` non-null → alert |
-| D4-R2 | orch-state.json `.head` cross-check | `.head.active_task_id` matches the held lock task_id (or both null) |
-| D4-R3 | `.task_board` owner/status cross-check | For each held lock: task_board entry exists, owner matches `task_locks.owner_agent`, status = `IN_PROGRESS` |
-| D4-R4 | git log concurrent-commit detection | No two commits to `docs/data/orch/orch-state.json` land within a 30-second window |
+| D4-R1b | Exclusion whitelist (`cron:*`, `*-singleton`, `po-triage-*`, `esc-datacov:*`, `esc-deepdive:*`, `session-presence*`, `commit-mutex*`, `intent:*`) + live-concurrent-session guard | Held locks matching either filter are excluded from D4-R2/D4-R3 entirely (FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE) |
+| D4-R2 | orch-state.json `.head` cross-check (locks surviving D4-R1b only) | `.head.active_task_id` matches the held lock task_id (or both null) |
+| D4-R3 | `.task_board` owner/status cross-check (locks surviving D4-R1b only) | For each held lock: task_board entry exists, owner matches `task_locks.owner_agent`, status = `IN_PROGRESS` |
+| D4-R4 | git log concurrent-commit detection | No two commits to `docs/data/orch/orch-state.json` land within a 30-second window (unaffected by R1b/R4b — not lock-based) |
+| D4-R4b | 2-consecutive-cycle debounce gate on D4-R2/D4-R3 candidates | A candidate only emits once it has persisted across ≥2 consecutive daily D4 passes — ledger rides on the system-auditor notebook's `D4 candidates:` line (no new state file; system-auditor may write only its notebook + signal_queue) |
 
 ### Acceptance criteria
 
 | AC | Check | Pass condition |
 |----|-------|---------------|
 | AC-1 | `task_list_held` fires at 03:00Z | Tool call appears in session log at 03:00Z ± 5min |
-| AC-2 | Divergence → `orch-state.json .signal_queue` row `to: "po"` | Row emitted within 24h of divergence event |
-| AC-3 | No divergence → no false-positive row | Clean day: zero signal_queue rows from D4 with `to: "po"` |
-| AC-4 | orch-state/lock mismatch detected | `task_list_held` empty + `.head.active_task_id` non-null → signal_queue alert emitted |
+| AC-2 | Divergence PERSISTING ≥2 cycles → `orch-state.json .signal_queue` row `to: "po"` | Row emitted within 24h of the 2nd consecutive occurrence |
+| AC-3 | No divergence, whitelisted lock, live-concurrent-session lock, or single-cycle transient → no false-positive row | Clean day: zero signal_queue rows from D4 with `to: "po"` |
+| AC-4 | orch-state/lock mismatch detected | `task_list_held` empty + `.head.active_task_id` non-null → signal_queue alert emitted (unaffected — fires on first cycle, not subject to R4b) |
 | AC-5 | Concurrent orch-state.json commits detected | Two commits within 30s on `docs/data/orch/orch-state.json` → signal_queue alert emitted |
 
 ### Failure modes
@@ -81,6 +84,10 @@ See `docs/agents/system-auditor/handlers.md` §TASKS.md Reconciliation Pass → 
 - Writing to `coordination.db` — read-only via `task_list_held`
 - Enforcing task-lock TTL — MCP server manages TTL independently
 - Sprint 1966 Option C echo cron — deferred post 1965c soak (gated on 2026-05-22T21:00Z)
+
+### Known doc/code gap (2026-07-08, FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE)
+
+This spec (D4-R1b exclusion whitelist + D4-R4b debounce) is CORRECTED as of 2026-07-08, but the live code (`apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts`) has NOT been updated to implement it yet — that is a `dev-mcp-server` code task, outside agent-father's zone (`apps/**` is forbidden for agent-father). Until the code lands, the 6+ recurring false-positive batches (esc-datacov:*, cron:dev-team:*, dev-team-cron-singleton) will keep firing daily unchanged.
 
 ---
 
