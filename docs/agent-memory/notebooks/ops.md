@@ -1,4 +1,28 @@
-# ops — Notebook
+## Docker Close Gate Steps 1-4: FACTORY-INFRA-split-telegramCommands (2026-07-09T00:38-00:39Z)
+
+**Task:** FACTORY-INFRA-split-telegramCommands  
+**Session UUID:** 5a45feda-431e-46c8-941d-a6539a0eca77  
+**Status:** ✓ COMPLETE
+
+**Workflow:**
+- Step 1 (Memory Check): Docker 840 MiB across all containers, system healthy
+- Step 2 (Rebuild): `docker compose build --build-arg GIT_SHA=e92b08310 mcp-server` — image rebuilt (multi-layer cache hit on dependencies)
+- Step 3 (Start): `docker compose up -d mcp-server` — container recreated & brought up
+- Step 4 (SHA Gate): `verify-deploy-sha.sh mcp-server` — ✓ PASS (SHA e92b08310 verified byte-for-byte)
+
+**Verification Gates:**
+- Gateway /health: 200 OK, all 9 services healthy
+- mcp-server /health: 200 OK, toolCount=183 (baseline confirmed)
+- /api/bctc-inspect: 200 OK
+- /dashboards/news-fetch/: 200 OK  
+- POST /webhook: 200 OK (generic probe)
+- POST /webhook /recap: 200 OK (Telegram command /recap-shaped payload, RecapResolvers DI wiring functional)
+
+**Board State:** next_agent ops→qa, ops_close_gate_note recorded via orch-apply.sh
+
+**Handoff:** QA Step 5 — RAW-verify /recap /recapw /recapm against live data
+
+---
 
 Zone: `apps/mcp-server/` + `services/` | Stack: Multi-service Docker | DB: market.db (write)
 
