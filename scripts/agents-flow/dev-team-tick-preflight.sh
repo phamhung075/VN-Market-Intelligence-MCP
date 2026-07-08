@@ -15,9 +15,11 @@
 #      SF-1", so this step is best-effort: any failure (transport OR
 #      malformed JSON) is logged to stderr and swallowed, never blocks.
 #   3. SF-1 claim (dev-team-cron-singleton, task_kind=sprint-task, TTL=5400)
-#      — THIS gates. Not-claimed (peer holds it) => SKIP path (a): nothing
-#      released (never held it). Transport/malformed-JSON => ERROR (R8),
-#      lock state undefined, fallback repairs via re-claim.
+#      — THIS gates. Re-entrant self-hold (current_holder.owner_client_session
+#      == self) renews + proceeds (FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT, mirrors
+#      Step 4's self-hold branch below). Not-claimed by a REAL peer => SKIP
+#      path (a): nothing released (never held it). Transport/malformed-JSON
+#      => ERROR (R8), lock state undefined, fallback repairs via re-claim.
 #   4. Fire-election claim (cron:dev-team:<TICK>, task_kind=sprint-task,
 #      TTL=600) — re-entrant self-hold renews + proceeds (matches main.md's
 #      RE-ENTRANT branch). Lost-to-peer => SKIP path (b): SF-1 (just claimed
@@ -140,10 +142,14 @@ _step_presence() {
 
 # ── Step 3: SF-1 claim (dev-team-cron-singleton) ─────────────────────────────
 # Prints the raw tool-result JSON (or error text) on stdout.
-# Return: 0 = claimed, 1 = not claimed (peer holds it), 2 = transport/malformed error.
+# Return: 0 = claimed OR re-entrant self-hold renewed, 1 = lost to a REAL peer
+#         (current_holder.owner_client_session != self), 2 = transport/malformed error.
+# FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT: mirrors _step_fire_election()'s
+# self-hold branch below — a session's OWN held SF-1 must heartbeat-renew and
+# proceed, never phantom-SKIP as "peer holds it" for the remaining TTL.
 _step_sf1_claim() {
   local session_id="$1" ts="$2"
-  local payload_str args result rc claimed
+  local payload_str args result rc claimed holder_session
 
   payload_str=$(jq -cn --arg site "SF-1" --arg tick "$ts" '{site:$site, tick:$tick}')
   args=$(jq -n --arg tid "dev-team-cron-singleton" --arg sess "$session_id" --arg payload "$payload_str" \
@@ -160,8 +166,24 @@ _step_sf1_claim() {
   fi
 
   claimed=$(printf '%s' "$result" | jq -r '.claimed // false' 2>/dev/null)
+  if [ "$claimed" = "true" ]; then
+    printf '%s' "$result"
+    return 0
+  fi
+
+  holder_session=$(printf '%s' "$result" | jq -r '.current_holder.owner_client_session // empty' 2>/dev/null)
+  if [ "$holder_session" = "$session_id" ]; then
+    # Re-entrant: this session already holds SF-1 — renew + proceed. Do NOT
+    # treat this as a peer collision (that was the bug: reading only
+    # .claimed produced a false "peer holds it" SKIP on a self-held lock).
+    mcp_call "task_heartbeat" "$(jq -n --arg tid "dev-team-cron-singleton" --arg sess "$session_id" '{task_id:$tid, owner_client_session:$sess}')" >/dev/null 2>&1
+    printf '%s' "$result"
+    return 0
+  fi
+
+  # Genuine peer collision (current_holder.owner_client_session != self) —
+  # unchanged SKIP path (a) below.
   printf '%s' "$result"
-  [ "$claimed" = "true" ] && return 0
   return 1
 }
 

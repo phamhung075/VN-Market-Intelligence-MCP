@@ -88,6 +88,7 @@ mcp_call() {
       elif [[ "$args" == *"dev-team-cron-singleton"* ]]; then
         case "${STUB_SF1:-won}" in
           won) echo '{"claimed":true}'; return 0 ;;
+          self_held) echo '{"claimed":false,"current_holder":{"owner_client_session":"'"$FAKE_SESSION"'","owner_agent":"dev-team","expires_at":9999999999}}'; return 0 ;;
           lost_peer) echo '{"claimed":false,"current_holder":{"owner_client_session":"peer-session-xyz","owner_agent":"dev-team","expires_at":9999999999}}'; return 0 ;;
           timeout) echo "simulated SF-1 transport timeout" >&2; return 1 ;;
           malformed) echo 'not-json{{{'; return 0 ;;
@@ -300,6 +301,28 @@ export ORCH_STATE_PATH="$TMPDIR_TEST/orch-idle.json"
 OUT=$(run_preflight); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T18 RUN-IDLE verdict (missing signals.db = safe default, not stale)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
+
+# ── T19: RUN path — SF-1 re-entrant self-hold (FIX-DEVTEAM-PREFLIGHT-SF1-
+# REENTRANT regression: current_holder.owner_client_session==self MUST renew
+# + proceed, never phantom-SKIP as "peer holds it") ──────────────────────────
+run_case
+STUB_SF1="self_held"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T19 RUN verdict (SF-1 self-hold — not a phantom peer SKIP)" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T19 RUN exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
+check "T19 RUN heartbeats the self-held SF-1 lock" "$([ "$(log_has task_heartbeat)" = "true" ] && echo true || echo false)"
+check "T19 RUN does NOT release any lock" "$([ "$(log_has task_release)" = "false" ] && echo true || echo false)"
+check "T19 RUN does NOT send telegram (no false SKIP)" "$([ "$(log_has send_telegram)" = "false" ] && echo true || echo false)"
+
+# ── T20: SKIP path (a) still fires correctly for a REAL peer (regression
+# guard: T19's fix must not weaken the genuine peer-collision SKIP path) ─────
+run_case
+STUB_SF1="lost_peer"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T20 SKIP(a) verdict unchanged for REAL peer hold" "$([ "$VERDICT" = "SKIP" ] && echo true || echo false)"
+check "T20 SKIP(a) does NOT call task_release (never held SF-1)" "$([ "$(log_has task_release)" = "false" ] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
