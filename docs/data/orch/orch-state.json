@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FACTORY-MACRO-delete-dead-ts-tree",
-    "next_agent": "dev-macro-indicators",
-    "next_action": "dev-macro-indicators executes wholesale deletion — FOLD-IN scope now clean: delete src/_deprecated/, src/infrastructure/scrapers/, the ENTIRE __tests__/ tree, package.json/tsconfig.json/bun.lock/node_modules; reconcile docs/architecture/microservice/macro-indicators/testing.md -> Go-only. Spec: backlog-detail#FACTORY-MACRO-delete-dead-ts-tree files[]+approach+dod.",
-    "updated_at": "2026-07-08T07:18:20Z",
-    "updated_by": "po"
+    "next_agent": "qa",
+    "next_action": "FACTORY-MACRO-delete-dead-ts-tree at REVIEW -- qa: verify the TS-tree deletion (go build/vet/test/golangci-lint/G12 sandbox all re-confirmed green by dev, Docker Go image builds clean, testing.md rewritten Go-only) then flip DONE_VERIFIED. rebuild_required=false, no ops step needed.",
+    "updated_at": "2026-07-08T07:36:05Z",
+    "updated_by": "dev-macro-indicators"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -702,8 +702,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-08T07:18:20Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-08T07:36:05Z",
+    "_updated_by": "dev-macro-indicators",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -9215,27 +9215,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "title": "Delete orphaned TypeScript src/ tree and broken bun toolchain (pure-Go service)",
-        "priority": "P1",
-        "zone": "macro-indicators",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-MACRO-delete-dead-ts-tree",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-delete-dead-ts-tree",
-        "promoted_at": "2026-07-08T07:00:43Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T07:01:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-macro-indicators",
-        "status_note": "[po 2026-07-08T07:18:20Z] UNBLOCKED via FOLD-IN scope decision — file-list expanded, re-dispatched to dev-macro-indicators. Rationale: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-po.md STEP po-S2.",
-        "dispatched_at": "2026-07-08T07:18:20Z",
-        "dispatched_by": "po",
-        "scope_decision": "FOLD-IN (option a, expanded) 2026-07-08 by po: the 9 __tests__ scraper importers that blocked deletion are co-residue of the deleted scrapers (not live consumers); whole __tests__/ tree is dead TS->Go migration residue with 0 live coverage (33 Go _test.go remain). Expanded file-list to include __tests__/ + node_modules rather than splitting a follow-up task (convergence over churn)."
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -9354,6 +9334,28 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Delete orphaned TypeScript src/ tree and broken bun toolchain (pure-Go service)",
+        "priority": "P1",
+        "zone": "macro-indicators",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-MACRO-delete-dead-ts-tree",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-delete-dead-ts-tree",
+        "promoted_at": "2026-07-08T07:00:43Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T07:01:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "status_note": "[po 2026-07-08T07:18:20Z] UNBLOCKED via FOLD-IN scope decision — file-list expanded, re-dispatched to dev-macro-indicators. Rationale: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-po.md STEP po-S2.",
+        "dispatched_at": "2026-07-08T07:18:20Z",
+        "dispatched_by": "po",
+        "scope_decision": "FOLD-IN (option a, expanded) 2026-07-08 by po: the 9 __tests__ scraper importers that blocked deletion are co-residue of the deleted scrapers (not live consumers); whole __tests__/ tree is dead TS->Go migration residue with 0 live coverage (33 Go _test.go remain). Expanded file-list to include __tests__/ + node_modules rather than splitting a follow-up task (convergence over churn).",
+        "moved_to_review_at": "2026-07-08T07:36:05Z",
+        "moved_by": "dev-macro-indicators",
+        "review_note": "Deletion executed per po FOLD-IN scope decision (STEP po-S2): deleted src/_deprecated/, src/infrastructure/scrapers/, whole __tests__/ tree, package.json, tsconfig.json, bun.lock (git rm), node_modules/ (untracked/gitignored, rm -rf, 32M). Independently re-ran whole-repo grep BEFORE touching anything -- zero live code importer of any deleted path outside the deletion set (2 residual hits are pre-existing stale doc-comments, not imports: apps/mcp-server/clients.ts JSDoc + macro_investment_clock.go comment, both pre-dating this task). Also updated 3 pkg/primitive/*.go provenance doc-comments + scripts/discover-adb-xhr.py (po flagged optional trivial residue) off the deleted _deprecated/domain/services.ts + scrapers/adb-kidb.ts paths -- comment-only, zero behavior change. Rewrote docs/architecture/microservice/macro-indicators/testing.md Go-only from real `go test -v` output (33 _test.go files / 8 packages / 288 top-level tests / 543 incl. subtests, 0 fail). Verified before flip: go build ./... clean, go vet ./... clean, golangci-lint run 0 issues, go test ./... 33/33 green, Fence-A/B/C hold via real `go list -f {{.Imports}}` import graph (not just the grep heuristic, which false-positives on English prose), G12 sandbox primitive-tier 18/18 PASS + module-tier 2/2 PASS, env credential audit clean (no DB_/API_KEY/SECRET/TOKEN/PASSWORD/FRED_API_KEY), Docker Go image build clean (verify-only, image removed after -- rebuild_required=false, no deploy/up -d triggered), pnpm -r workspace list clean after package.json removal drops macro-indicators out of the pnpm workspace. Commit 39be5019a (46 files, +110/-5532) + memory commit 02114f582 (journal STEP dev-macro-indicators-S2 + notebook). History preserved at git tag macro-pre-delete (created round 1). Out of scope (flagged, not touched): docs/architecture/microservice/macro-indicators/infrastructure.md still describes the deleted TS scraper adapters but was already 100% describing dead pre-Go-migration code before this task (one cited path never existed on disk even pre-deletion); po's DoD named testing.md only -- recommend follow-up backlog item for po/architect to rewrite infrastructure.md/domain-model.md/usecases.md/api-reference.md against the real Go pkg/ implementation. Also left untouched per explicit router instruction: stale bun-test refs in docs/agents/dev-macro-indicators/init.md:35 + flow/main.md:43 (agent-father's job, not mine)."
       }
     ],
     "qa": [],
