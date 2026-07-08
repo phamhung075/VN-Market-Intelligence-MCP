@@ -248,6 +248,20 @@ async function defaultPollNews(): Promise<PollNewsResult> {
   //   - CPU/memory waste from orphaned Playwright processes
   // VPS vn-news-fetch.service handles all news sources including Trading
   // Economics; no local fetcher should run from the scheduled cycle.
+  //
+  // FIX-NEWS-CB-FALSE-CLOSED (2026-07-08): reuters/tradingeconomics stubs
+  // REMOVED from this fetcher map. Sprint 1833g permanently disabled both
+  // sources — sourceHealthTools.ts seeds them with recordDisabled() once at
+  // module load. But this function kept re-injecting `async () => []` stubs
+  // for those two keys on every 15-min tick; pollNews.ts's health loop treats
+  // a fulfilled-but-empty result from a source NOT in STUB_CAPABLE_KEYS as a
+  // real failure, so every tick silently called recordFailure(), overwriting
+  // the "disabled" status with an ever-incrementing "down" count (79+ and
+  // climbing, zero successes ever). pollNews.ts's own resolvedFetchers
+  // contract (Sprint 1833g) already excludes reuters/tradingeconomics from
+  // the default set unless the caller explicitly injects a fetcher for them —
+  // simply not passing these two keys here restores that contract and leaves
+  // the one-time recordDisabled() seed untouched forever, as intended.
 
   // Task 1855a: read VPS news push health to suppress false all-sources-dark
   // alerts. Since all local fetchers are stubbed, a 0-item scheduled cycle is
@@ -270,8 +284,11 @@ async function defaultPollNews(): Promise<PollNewsResult> {
       cafef:            async () => [],
       vnexpress:        async () => [],
       vneconomy:        async () => [],
-      reuters:          async () => [],  // Task 1228: VPS handles Reuters too
-      tradingeconomics: async () => [],  // Task 1228: VPS handles TE too
+      // reuters and tradingeconomics are intentionally NOT stubbed here (nor
+      // otherwise injected) — see FIX-NEWS-CB-FALSE-CLOSED note above.
+      // Omitting them entirely keeps pollNews.ts's resolvedFetchers from
+      // ever adding these keys, so the scheduled cycle never touches their
+      // health record again after the startup recordDisabled() seed.
       teChromiumNews:   async () => [],  // Task 1843: VPS handles TE Chromium news too
     },
     vpsNewsLastPushTs,  // Task 1855a: suppress false alert when VPS push is healthy

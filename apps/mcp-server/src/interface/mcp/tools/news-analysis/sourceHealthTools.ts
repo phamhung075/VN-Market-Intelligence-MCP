@@ -119,17 +119,33 @@ const STATUS_LABEL: Record<string, string> = {
  * @param sources - Array of SourceHealth records (from getAllHealth()).
  * @returns        Formatted plain-text table string.
  */
+// FIX-NEWS-CB-FALSE-CLOSED (2026-07-08): column width was 18 chars — too
+// narrow to fit "Trading Economics News" (22 chars). Both "Trading Economics"
+// (17 chars) and "Trading Economics News" (22 chars) truncated to the
+// identical 18-char string "Trading Economics ", so two genuinely distinct
+// tracked sources rendered as a byte-identical duplicate-looking row. Widened
+// to fit the longest known display name with headroom for future names, and
+// the header/separator are now derived from the same constant so this class
+// of drift cannot recur.
+const NAME_COL_WIDTH = 26;
+const STATUS_COL_WIDTH = 10;
+const LAST_OK_COL_WIDTH = 21;
+
 export function formatSourceHealthTable(sources: SourceHealth[]): string {
   if (sources.length === 0) {
     return "Tình trạng nguồn dữ liệu\n========================\n\nChưa có dữ liệu. Chưa có nguồn nào được theo dõi.";
   }
 
+  const nameHeader = "Nguồn".padEnd(NAME_COL_WIDTH);
+  const statusHeader = "Trạng thái".padEnd(STATUS_COL_WIDTH);
+  const lastOkHeader = "Lần cuối thành công".padEnd(LAST_OK_COL_WIDTH);
+
   const lines: string[] = [
     "Tình trạng nguồn dữ liệu",
     "========================",
     "",
-    "Nguồn              | Trạng thái | Lần cuối thành công | Lỗi liên tiếp",
-    "-------------------|------------|---------------------|---------------",
+    `${nameHeader} | ${statusHeader} | ${lastOkHeader} | Lỗi liên tiếp`,
+    `${"-".repeat(NAME_COL_WIDTH)}|${"-".repeat(STATUS_COL_WIDTH + 2)}|${"-".repeat(LAST_OK_COL_WIDTH + 2)}|---------------`,
   ];
 
   for (const s of sources) {
@@ -138,10 +154,12 @@ export function formatSourceHealthTable(sources: SourceHealth[]): string {
     const failures = s.consecutiveFailures;
     const warn = s.status === "down" ? " ⚠" : "";
 
-    // Pad columns for alignment
-    const name = s.source.padEnd(18).slice(0, 18);
-    const status = statusLabel.padEnd(10).slice(0, 10);
-    const lastOk = lastSuccess.padEnd(21).slice(0, 21);
+    // Pad columns for alignment. NAME_COL_WIDTH must stay >= the longest
+    // known source display name (currently "Trading Economics News", 22
+    // chars) so distinct sources never truncate into an identical string.
+    const name = s.source.padEnd(NAME_COL_WIDTH).slice(0, NAME_COL_WIDTH);
+    const status = statusLabel.padEnd(STATUS_COL_WIDTH).slice(0, STATUS_COL_WIDTH);
+    const lastOk = lastSuccess.padEnd(LAST_OK_COL_WIDTH).slice(0, LAST_OK_COL_WIDTH);
     const failStr = `${failures}${warn}`;
 
     lines.push(`${name} | ${status} | ${lastOk} | ${failStr}`);
