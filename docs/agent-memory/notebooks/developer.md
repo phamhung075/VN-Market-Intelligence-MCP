@@ -1,6 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-07 | **Cycle:** F1-LAUNCHD-COWORK-BACKSTOP + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED
+**Last updated:** 2026-07-08 | **Cycle:** FIX-NEWS-CB-FALSE-CLOSED
 
 ## Session 2026-07-03 — FIX-AUDITOR-COMMIT-MUTEX-SKIP
 
@@ -42,3 +42,17 @@
 **Tests:** 25/25 (`cowork-guaranteed-slot-firer.test.sh`, new) + 79/79 (`auditor-tier1-probe.test.sh` — 60 pre-existing regression byte-behavior-unchanged + 19 new incl. mandatory injected-fault pair T25/T26 per brief §6.7). Zero real `claude`/`node`/`launchctl load-unload` calls in any test. `graphify --update --no-viz` skipped — no LLM API key in this session's environment (pre-existing env gap, not this task's scope).
 
 **Board:** both READY→IN_PROGRESS→REVIEW via `scripts/orch-apply.sh` (jq transforms in `scripts/dev-cowork-guaranteed-slot-durability-{claim,to-review}.jq`). Signaled qa — unblocks `QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL` (backlog, 7-point test per brief §6) once both land DONE_VERIFIED.
+
+## Session 2026-07-08 — FIX-NEWS-CB-FALSE-CLOSED (BOUNDED-1 idle pickup)
+
+**Task:** 2026-06-13 filing said Reuters RSS + TradingEconomics x2 hit CB threshold but stayed falsely reported [OK]. dev-team's live pre-check (this tick) showed the CB half already fixed — status now correctly shows "Ngưng"(down), but two NEW live bugs: (1) both sources coded permanently-disabled since 2026-05-13 yet still accumulating failures (79 and climbing, zero successes ever), (2) a duplicate-looking "Trading Economics" row. **Zone:** `apps/news-fetch/` per task filing — but that's a routing hint, not the real owner; traced call graph first.
+
+**Architecture check (per task's explicit ask):** confirmed `apps/news-fetch/` (Go microservice, port 5008) is a separate, unwired pipeline — only reachable via `api-gateway`'s generic `NEWS_URL` proxy map (`cmd/server/main.go`). It never touches `apps/mcp-server`'s `pollNews`/`SourceHealthTracker`/`get_system_status`. Fix correctly belongs in `apps/mcp-server` (confirmed live via direct `get_system_status` query showing real, growing counters — the legacy tracker is genuinely live, not a stale/dead path).
+
+**Root cause A:** `intelligenceCycleJob.ts`'s `defaultPollNews()` (scheduled every 15-min tick) re-injected `reuters: async()=>[]` / `tradingeconomics: async()=>[]` no-op stubs. `pollNews.ts`'s health loop treats a fulfilled-but-empty result from a source NOT in `STUB_CAPABLE_KEYS` (only `newsapi` is) as a real failure → `recordFailure()` fired every tick, silently overwriting the one-time `recordDisabled()` seed from Sprint 1833g/1898b. Fix: remove both keys entirely — `pollNews.ts`'s own `resolvedFetchers` already excludes them from scheduled runs unless a caller explicitly injects a fetcher (that contract was already documented in-code, just not honored by this one caller).
+
+**Root cause B (live-confirmed via `get_system_status`, byte-diff'd):** `formatSourceHealthTable`'s 18-char Nguồn column truncates "Trading Economics" (17c) and "Trading Economics News" (22c) to the identical string `"Trading Economics "` — not a registry duplicate, a display collision. Widened to 26c; header/separator now derived from the same constant to prevent recurrence.
+
+**Test:** new `FIX-NEWS-CB-FALSE-CLOSED.test.ts` — source-scan asserts `defaultPollNews()` body no longer contains `reuters:`/`tradingeconomics:` keys (kept `teChromiumNews:` — that one has a real non-deprecated fetcher, Task 1843's stub is CPU-protection only, separate concern); behavioral test proves `recordDisabled()` state survives a full `pollNews()` cycle untouched; display test proves two distinct sources with long names no longer render as byte-identical rows. RED confirmed on all 3 before the fix, GREEN after. Targeted 18-file sweep of every source-health/pollNews/intelligence-cycle test: 295 pass / 0 fail. tsc clean.
+
+**Scope discipline:** did NOT widen the CB failure threshold (original 2026-06-13 proposal) — the CB already correctly reports down; the bug was a disabled source being re-touched, not a threshold miscalibration. Did NOT add `teChromiumNews` to `STUB_CAPABLE_KEYS` — same failure-accumulation shape but a different, real, non-deprecated fetcher; out of this task's DoD (Reuters+TE-legacy only), left as a follow-up if PO wants to file it.
