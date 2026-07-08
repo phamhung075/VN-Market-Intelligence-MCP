@@ -9510,7 +9510,7 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-08T13:19:15Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "rebuild_required": true,
         "moved_to_review_at": "2026-07-08T13:58:40Z",
         "moved_by": "dev-mcp-server",
