@@ -1,21 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — FACTORY-DOMAIN-extract-bctc-parsing-lib → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-findValue was re-implemented 3x with genuinely DIFFERENT signatures — balanceSheetExtractor's 2-arg version had a row-code guard (skip whole-multiples-of-10 in [10,990]) and no ASCII fallback; income/cashFlow's 4-arg version had an ASCII diacritic-stripped fallback pass and no guard. New `financial-reports/lib/lineScan.ts` reconciles both into one canonical `findValue(lines, pattern, {rowCodeGuard?, fallback?})` — each of the 3 call sites passes only the option it originally had, reproducing pre-migration behavior exactly (not a silent widening). Also relocated `findValueByCode` (balanceSheet-only), generalized `applyMultiplier`→`scaleNumericFields` (generic recursive leaf-scaler — verified BalanceSheet/CashFlowStatement are 100% numeric fields against bctc-schema.ts, so recursion is provably equivalent to the old field-by-field code; incomeStatementExtractor never had applyMultiplier — deliberately excludes eps/dilutedEps from scaling, left untouched), and relocated bctcScalarAggregator's own `detectDivisor` (row-based, distinct from the 3 extractors' own per-statement magnitude-inference blocks which use different thresholds/probe-fields and were deliberately NOT unified).
-
-New `financial-reports/lib/vasPatterns.ts` holds the 3 canonical VAS total-assets/liabilities/equity patterns (balanceSheetExtractor's, pure relocation). Deliberately did NOT wire bctcMagnitudeValidator's own inline total-assets/liabilities/equity label regexes to import these — that file matches already-cleaned bctc_table_rows labels (+ English fallback), not raw OCR text; sharing the fuzzy OCR pattern would silently widen its BLOCK-severity fraud-detection matching. Documented with a pointer comment only, zero logic change.
-
-Migrated one extractor at a time (5 commits): lib creation + balanceSheetExtractor, then cashFlowExtractor, then incomeStatementExtractor, then bctcScalarAggregator, then the bctcMagnitudeValidator doc-only comment — each file's own targeted test suite run green before moving to the next.
-
-tsc clean throughout. eslint clean on all 7 touched/created files. Per-file targeted suites matched pre-change baselines exactly: 186/186, 93/93, 121/121, 147/147, 17/17. Combined 42-file BCTC suite: 411 pass/4 skip/0 fail both before and after — byte-identical. Full `bun test` run twice (14334/40/68/7 then 14332/40/70/11, 1179 files, ~600s, Bun 1.3.13 crash-at-teardown both times — known engine bug): both failing-file sets are 100% the documented pre-existing VPS-proxy/RSS/news-poll/insider/foreign-flow/telegram-timeout flaky class, zero overlap with the 5 changed files; `1405b-bctc-vps-fixes.test.ts` re-ran isolated 12/12 pass (same verdict as the S10 sibling entry). Server boot verified PORT=3999: health/bctc-inspect/news-fetch-dashboard all 200, toolCount=183 unchanged, scheduler cron.schedule grep=3 unchanged.
-
-Commits: 7f65dfccd (lib+balanceSheet) / b66575d40 (cashFlow) / 0ebca40ae (incomeStatement) / c34955bb1 (bctcScalarAggregator) / 4f15363da (bctcMagnitudeValidator doc) / b065b1151 (board REVIEW flip, next_agent=ops, rebuild_required=true).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
-
 ## 2026-07-08 — FACTORY-DOMAIN-relocate-stock-catalog → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -43,3 +27,17 @@ New test `FACTORY-APP-dedup-date-freshness-helpers.test.ts` (15 assertions). tsc
 Commit: dbb87db26. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (application-layer usecase change runs against live briefing/evening/alert-digest cron paths).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 verified | HEALTHY.
+
+## 2026-07-08 — FACTORY-APP-split-fetchParseAndStoreBctc → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+`fetchParseAndStoreBctc.ts` (895L) split into `bctc/resolvePdfText.ts` (Step 2 PDF download + OCR-cache fallback + news-chain-fallback terminal decision, discriminated-union return), `bctc/newsChainFallback.ts` (`tryNewsChainFallback`/`buildFiscalPeriod`/`buildAnalysisSummary`, 4 tuning literals hoisted to named exports `NEWS_FALLBACK_BASELINE`/`TEMPORAL_DISCOUNT`/`FALLBACK_CONF_MIN`/`FALLBACK_CONF_MAX` — resolved values unchanged), plus 2 extras beyond the backlog's named 2-file split (`bctc/types.ts`, `bctc/insertBctcAnalysis.ts` for Step 4) needed because the DoD's "orchestrator <=120L" is a hard constraint — the 2-file split alone left ~191L. Orchestrator is now 117L. The pre-existing per-date special-case (`signalText.includes('2023') && year===2024`) is left byte-identical, flagged as JANITOR-035 in `docs/data/code-janitor-known-findings.json`.
+
+tsc clean. Targeted suite (17/18 relevant files, excluding FIX-1267): 156 pass/2 skip/0 fail. FIX-1267 AC-7/AC-8 reproduce identically on the unmodified pre-split file (confirmed via `git show HEAD:...`) — pre-existing subprocess/network-timing flakiness, not caused by this split. Also fixed `p2-f-rag-http-rewire.test.ts`'s AC that grepped the orchestrator for the string `ragHttpClient` — that import legitimately moved to `bctc/insertBctcAnalysis.ts` with Step 4, updated to check both files. Full `bun test`: 14353 pass/40 skip/64 fail/6 errors/1180 files (605s) then the known Bun 1.3.13 crash-at-teardown — only the 2 pre-existing-flaky FIX-1267 fails reference any touched file. Server boot verified PORT=3997: health 200 toolCount=183 unchanged, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200. scheduler cron.schedule grep=3 unchanged (no scheduler files touched).
+
+Doc updates: `usecases.md` (split description), `pdfOcrWorker.ts` pointer comment relocated to `bctc/resolvePdfText.ts`.
+
+Commit: 5027fda09. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (BCTC pipeline runs against live named-volume market.db; RAW-verify of unchanged confidence values is this task's own DoD, routed via the Docker Microservice Code-Change Close Gate).
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
