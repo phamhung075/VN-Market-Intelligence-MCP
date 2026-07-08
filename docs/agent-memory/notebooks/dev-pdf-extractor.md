@@ -6,161 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Session: 2026-06-10 (BPE-DEV-5 + BPE-DEV-1 — BCTC prose extraction sprint) [ARCHIVED]
-
-- BPE-DEV-5: Tesseract SIGTERM retry + bctc-eval-thresholds.json (commits c2069deb, 6e518935)
-- BPE-DEV-1: prose_lines never appended fix; 736/736 pass
-- A20: asyncio.to_thread wrap for extract_tables/extract_text_ocr
-- FIX-PDFX-PUSH-CLIENTS: asyncio.to_thread for 3 push clients
-
----
-
-## Archive: Earlier Sessions (2026-05-31 through 2026-05-28)
-
-**2026-05-31:** FU-TRUST-REFRESH/FU-1 — `/page-text` endpoint returning empty string fixed; `ocr_text_source` now passed to register_routes; `MARKET_DB_PATH` env added; 23/23 unit tests PASS; container rebuild required before FU-3 re-refine.
-
-**2026-05-30:** BTB-DRIFT-DEV — canonical grouping via `bctc_page_grouper.py` SSOT; PATH A (build_document_map) + PATH B (_run_extraction) unified; prose-unit emission + D-5 title-band signal fixed; 718/718 unit tests PASS; AD-2 PROVEN-GREEN.
-
-**2026-05-29:** BTB-DEV — 4 root causes (state machine) fixed in generic_md_table_extractor.py; 42 pure-function tests added; 659/659 PASS; DV-1 + DV-2 PROVEN-GREEN.
-
-**2026-06-08:** FIX-PDF-EXTRACTOR-UNHEALTHY (A-20, 3rd recurrence) — `cpus: '1.0'` CFS cgroup budget exhaustion. asyncio.to_thread + ProcessPoolExecutor insufficient (shared cgroup). Escalated to architect (options: cpus 2.0 / Tesseract sidecar / healthcheck gate during active OCR). Operational recovery: docker restart. BCTC batch unblocked.
-
-**2026-06-08:** BCTC staleness probe — FIX-PDF-EXTRACTOR-UNHEALTHY re-scoped; zone_missing_tier3 signal emitted to PO (dev-mcp-server); root cause: bctcQueueEnricherJob placeholder-URL matching gap (18 rows stuck in 404 retry loop).
-
----
-
-**Current state (2026-06-10):** All async-blocking fixes deployed; prose extraction pipeline restored; A-20 architecture escalated (awaiting cpus increase); zone healthy.
-
-## 2026-06-14 — FIX-BCTC-VPS-PIPELINE-STALE-5D
-
-**Incident:** BCTC VPS pipeline stale 5+ days (Jun 8 01:17 → Jun 13 20:45 UTC).
-
-**Finding:** mcp-server was running continuously. bctcPdfPullJob ran 118 times, bctcQueueEnricherJob ran 341 times — 339 runs returned 0 URLs found. Root cause = HSX iboard URL discovery failed for 16 Q1-2026 tickers for 5 days. Not a VPS death, not a pull-job crash, not a pdf-extractor rejection.
-
-**Zone verdict:** OUT_OF_ZONE. Fixes needed in apps/mcp-server/:
-1. `vpsHealthPoller.ts` line 169 — vn-bctc-fetch passive=true → add active freshness query on bctc_vps_queue.
-2. `bctcQueueEnricherJob` — alert when urlsPopulated=0 for N consecutive runs during earnings window.
-3. HNX/UPCOM tickers (ACV, BDI, DAG, DLC, JSH, SIS, VDC, VNH, VEA) need non-HSX discovery path.
-
-**Handoff:** Task updated → HANDOFF status, owner dev-mcp-server.
-
-**Pipeline state at close:** 7 new PDFs downloaded Jun 13 21:35-22:17; FRT/SAB/VIX/VND/DGC/VJC/GEX/BSR/DBC/HUT still pending with HSX URLs; 9 tickers with no URL.
-
----
-
-## Session: 2026-06-14 (DOCLANG-SERIALIZE Phase 1 — T1-T6)
-
-**Tasks:** DOCLANG-T1-DOMAIN through DOCLANG-T6-TESTS (sprint DOCLANG-SERIALIZE)
-
-### Decision log
-
-- XSD `thread_id` requires `xs:positiveInteger` (>= 1). `table_index=0` maps to `thread_id=1` (table_index+1) to satisfy XSD. This is a serialization detail; DTO `table_index` unchanged.
-- `<custom>` XSD has no `mixed="true"` — raw text inside `<custom>` fails validation. Used `<head><meta>report_id=...</meta></head>` instead (meta is mixed=true+xs:any).
-- EC-3 surplus rows intentionally skip `doclang.validate()` — schematron rectangular-rule fires on non-equal row cell counts. Test validates WARNING logged + surplus cells emitted.
-- Schematron requires XSLT3/Saxon-HE via `saxonche`. Installed system-wide for host dev; container risk documented in arch brief RISK-1.
-
-### Implemented
-
-- T1: `DocLangWritePort` Protocol (17th port) + `Config.doclang_output_dir` (`DOCLANG_OUTPUT_DIR`, default `/app/data/doclang`)
-- T2+T3: `infrastructure/doclang_serializer.py` — `DocLangSerializer` + `FilesystemDocLangWriteAdapter` + `NullDocLangWriteAdapter`
-- T4: `application/doclang_serialize_usecase.py` — `DocLangSerializeUseCase` (never gates, validation observability only)
-- T5: `main.py` wired (3 imports + 4 lines + `register_routes` kwarg), `requirements.txt` += `doclang==0.6.0`
-- T6: `__tests__/unit/test_doclang_serializer.py` — 13 tests: Fixtures A/B/C + EC-2/3/4 + XML escape + use case
-
-### Results
-
-- pytest: **13 new tests PASS**; full suite 967-968 passed; 2-3 pre-existing failures (real-OCR tests need missing PDF + flaky timeout test)
-- doclang.validate(): VALID on Fixtures A, B, C, EC-2, EC-4
-- mypy: 0 new errors in new files; pre-existing 18 errors in dtos.py/ports.py/module.py (not touched)
-- Commits: scaffold `5d121989` + T1 harden `2d79baed` + type-ignore fix `01ce9431`
-
-**Status:** DOCLANG-T1..T6 → REVIEW, next_agent=qa
-
----
-
-## Cycle 2026-06-15 — FIX-BCTC-ENRICH-SILENT-0ROWS
-
-### Problem
-Bank tickers VCB 2026Q1 and VCB 2025Q1: `financial_reports` header row inserted but `bctc_table_rows=0`, `bctc_md_tables=0`. VCB uses B02-TCTD (Mẫu B02/TCTD-HN) with Roman numeral section codes (I–XIII) and single-digit sub-codes (1-9), NOT 3-digit corporate codes (100, 270...).
-
-### Root cause
-`_try_parse_code_row()` — Layouts 1-5 all match `\d{2,3}` only. B02-TCTD codes never match any layout → every line returns None → 0 rows assembled. Header silently inserted.
-
-### Fix
-Added Layout 6 (`_try_parse_roman_code_row`) and Layout 7 (`_try_parse_single_digit_code_row`) to `_try_parse_code_row()`. Guards: period after code = section header (reject), no VN number in rest = label-only row (reject). Layouts 1-5 take priority — non-regression confirmed.
-
-### Tests
-22 new tests in `__tests__/unit/test_b02_tctd_parser.py`. Full unit suite: 856/856 pass.
-
-### Status
-REVIEW (done_verified pending ops container rebuild + RAW probe of named-volume market.db)
-REBUILD REQUIRED: pdf-extractor container must be rebuilt to deploy Layout 6+7.
-
----
-
-## Cycle 2026-06-15 — FIX-BCTC-BANK-PDF-OCR-RASTERIZE (P0)
-
-### Problem
-Scanned / image-only bank PDFs (VCB, CTG) yield ~0 text-chars from pdfplumber. BS-marker scan finds no markers → fallback to pages [4,5,6,7] → Tesseract on wrong pages → chars:0 → 0 rows. Layout 6+7 parser (FIX-BCTC-ENRICH-SILENT-0ROWS) never fires because OCR yields empty text.
-
-### Root cause
-Image-only PDFs have no extractable text layer. pdfplumber.extract_text() returns "" → `locate_balance_sheet_pages()` defaults to wrong pages → Tesseract on image-only pages → 0 chars → 0 rows in `bctc_table_rows`.
-
-### Fix
-Two-layer generic rasterize path in `apps/pdf-extractor/infrastructure/ocr_adapter.py`:
-1. `detect_low_text_density(pdf_path)` — generic avg chars/page detector (threshold=50.0, env-configurable, no ticker allowlist)
-2. `locate_balance_sheet_pages()` — wide-scans all pages up to `_MAX_BS_PAGES=8` when low-text-density
-3. `ocr_pages()` — PaddleOCR rasterize fallback when Tesseract < 30 chars/page
-4. `_rasterize_and_ocr_page()` — fitz rasterize at 200 DPI + PaddleOCR (CPU, lazy-init)
-
-### Constants (all env-configurable)
-- `BCTC_LOW_TEXT_DENSITY_THRESHOLD=50.0`
-- `BCTC_LOW_TESSERACT_PAGE_CHARS=30`
-- `BCTC_RASTERIZE_DPI=200`
-
-### Tests
-14 new tests in `__tests__/unit/test_low_text_density_ocr_rasterize.py` (ACs RASTERIZE-1 through RASTERIZE-5). Full suite: 993 passed, 11 pre-existing failures (pre-date this fix, confirmed via git stash).
-
-### Commit
-`fffef229` — feat(pdf-extractor): add low-text-density OCR rasterize path for scanned bank PDFs
-
-### Status
-REVIEW — container rebuilt, rows verified.
-
----
-
-## Cycle: 2026-06-16 — FIX-BCTC-BANK-PDF-OCR-RASTERIZE (complete)
-
-### Bug discovered post-rebuild
-`ocr_worker.py` is the picklable subprocess used by `ProcessPoolExecutor` in production. It was a STALE MIRROR of `PdfOcrAdapter` — `locate_balance_sheet_pages_worker` did NOT have the `detect_low_text_density` wide-scan logic. So production always hit fallback `[4,5,6,7]` regardless of the `ocr_adapter.py` fix.
-
-### Fix
-`apps/pdf-extractor/infrastructure/ocr_worker.py` updated with mirrored logic:
-- `detect_low_text_density_worker(pdf_path)` — picklable density check
-- `_rasterize_and_ocr_page_worker(pdf_path, page_num)` — picklable PyMuPDF+PaddleOCR
-- `locate_balance_sheet_pages_worker()` — wide-scan when low-density
-- `ocr_pages_worker()` — PaddleOCR fallback when Tesseract < 30 chars
-
-### Tests
-7 new: `TestOcrWorkerLocateWideScan` + `TestOcrWorkerRasterizeFallback`. 21 total in `test_low_text_density_ocr_rasterize.py`, all pass.
-
-### SYNC RULE added
-Both `ocr_adapter.py` and `ocr_worker.py` must be updated together when constants change — the subprocess does NOT import ocr_adapter.
-
-### Verified (named-volume market.db)
-- VCB 2026Q1: 55 rows, refine_status=PARTIAL, confidence=0.75 — PUB-1..5 PASS
-- CTG 2026Q1: 55 rows (35 with value_current), refine_status=PARTIAL, confidence=0.5625 — PUB-1..5 PASS
-- FPT 2026Q1: 145 rows DONE (non-regressed)
-- VCB 2025Q4: 112 rows PARTIAL (non-regressed)
-
-### Commits
-`cf287f76` (worktree) → cherry-picked as `734ab5d5` (main) — fix(pdf-extractor/FIX-BCTC-BANK-PDF-OCR-RASTERIZE): ocr_worker wide-scan + PaddleOCR fallback
-
-### Status
-REVIEW → next_agent=qa
-
----
-
 ## Session: 2026-06-28 (TASK_330 — FR-5 same-section dedup)
 
 **Sprint:** FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT · FR-5 · P1 · S
@@ -201,3 +46,29 @@ REVIEW → next_agent=qa
 
 ### Status
 REVIEW → next_agent=qa
+
+---
+
+## Cycle 2026-07-08 — FACTORY-PDF-paddleocr-score-07-mask
+
+**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** S | P1
+
+### Fix
+`_cells_to_row_bands()` (pek_engine_adapter.py:569) defaulted `row_density = float(cell.get("score", 0.7))` — fabricated a 0.7 confidence whenever a PaddleOCR cell omitted 'score', indistinguishable from a real 0.7 measurement in the LF-OVERLAY row_bands contract. Fixed: present score (incl. real 0.0) passes through unchanged; absent score now emits named `_MISSING_CELL_SCORE_SENTINEL` (None → JSON null).
+
+### Why sentinel, not ink-density proxy
+Sibling `_detect_row_bands` (generic_md_table_extractor.py) computes density from a per-row pixel-darkness array sourced from the rasterized page image — that data isn't plumbed into `_cells_to_row_bands` at this call depth (only clamped y0..y1 ints + cell dicts). Threading image data through 3 call layers was out of scope for Effort:S/Risk:low, for a value confirmed unconsumed downstream beyond visual overlay. Sentinel matches the audit's either/or option.
+
+### Tests
+3 new in `TestCellsToRowBandsScoreHandling`: present score unchanged (incl. explicit 0.0 preserved), missing score → sentinel not 0.7, mixed cells independent. Confirmed RED against prior code first (`assert 0.7 is None` failure). Full suite: 1089 pass / 11 pre-existing env fail (PIL/Tesseract/poppler — confirmed via git stash, unrelated to this change).
+
+### RAW-verify
+Direct invocation of `_map_bboxes_to_zones()` with a real missing-score cell: emitted `row_density: null` (not 0.7); present-score cell unchanged at 0.88.
+
+### Commit
+`fdb424178` — fix(pdf-extractor): stop fabricating 0.7 confidence for missing PaddleOCR cell score
+
+Zone health: no drift detected.
+
+### Status
+REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
