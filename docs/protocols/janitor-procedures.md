@@ -5,7 +5,7 @@
 | Data | Canonical source | Location |
 |------|-----------------|----------|
 | Ticker classification (sector, exchange) | `SECTOR_PEERS` | `src/domain/services/sectorPeers.ts` |
-| Ticker display name + aliases | `STOCK_CATALOG` | `src/domain/services/stockAliases.ts` |
+| Ticker display name + aliases | `STOCK_CATALOG` | `src/domain/services/stockAliases/catalog.ts` (re-exported unchanged from `stockAliases.ts`) |
 | Default watchlist membership | `market.watchlist` | `mcp.config.json` |
 | Cron expressions | `CRONS` map | `src/scheduler/jobs.ts` |
 | Per-host timeout / retry / threshold values | `mcp.config.json` sections | `mcp.config.json` |
