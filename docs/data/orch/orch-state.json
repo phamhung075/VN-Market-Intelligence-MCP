@@ -248,13 +248,21 @@
       "decision": "3-part sprint decision on the router-verified SPIKE (PREMISE_FALSIFIED — HSX Strategy-0 is NOT broken for current/recent quarters; live re-test of unmodified prod fetchHsxBctcUrls/discoverHosePdfUrls returned valid PDF URLs for all 8 named tickers at Q4-2025/Q1-2026, corroborated by the same-day architect brief). (a) RETIRE the superseded 'Strategy-0 0-URLs = PRIMARY dead-pipeline root' framing for the 06-16 incident: NO live actionable task exists to close — the framing lived only in the router head (already SUPERSEDED) and the done_verified SPIKE item (spike_verdict=PREMISE_FALSIFIED). The 06-16 actionable backlog is ALREADY done_verified (FIX-BCTC-ENRICHER-STUCK-BACKLOG + FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD). GUARD: downstream dev-team planning MUST NOT re-mint a Strategy-0 current-quarter discovery fix. (b) MINTED cheap loop-closer VERIFY-BCTC-STRATEGY0-QUARTER-PARAM-CONTRACT (FIX/S/low, backlog TODO) — confirm the numeric-quarter type-mismatch, add a durable guard test, and supersede the ops.md RECON false claim. (c) Historical ~293-row deferred_infra backfill = KEEP DEFERRED (discretionary feature, not an incident; current quarters work; active Q2-2026 earnings window). Folded the SPIKE's confirmed root cause + turnkey revival scope + the separate SELECT-arm queue-policy dependency into the existing DEFERRED BCTC-ENRICHER-OLD-QUARTERS (no new row — no-duplication).",
       "what_considered": "(a) mint a new 'retire framing' task — rejected: no live task to retire; the decision_journal guard is the durable record future planning reads. (b) mint vs skip — chose mint as a cheap S loop-closer to permanently kill the false signal (ops.md still asserts '0 URLs'/'not HOSE-listed') and leave a regression guard; skipping risks re-escalation by a future auditor cycle (feedback_auditor false-positive recurrence class). (c) mint an M fetcher+policy fix now — rejected as discretionary non-incident during an active earnings window; upgraded the existing DEFERRED item's precision instead so revival is turnkey.",
       "why_change": "Router-dispatched sprint decision on done_verified SPIKE-HSX-STRATEGY0-0URLS (commit eac9a3c16); supersedes the prior 'Strategy-0 0-URLs is PRIMARY dead-pipeline root' framing, which traced to the same falsified ops recon (quarter:4 numeric probe bug)."
+    },
+    {
+      "agent": "pm",
+      "task_id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
+      "timestamp": "2026-07-08T01:23:00Z",
+      "decision": "DECOMPOSED Round-2 architect design (completed 2026-07-08) into 3 atomic subtasks: (1) CONTAM-10-WRITER-H [M, primary fix, blocks EXEC-2] — migrate handlePushOhlcvHistory route from raw INSERT to writeOhlcvBatch(rows, {conflictStrategy:\"backfill\"}) to close active backfill-queue leak (6,533 rows/27 tickers as of 2026-07-07, ~15–30 min contamination cadence). (2) CONTAM-10-MIGRATION-ANCHOR-DIAG [S, optional low-priority] — cosmetic diagnostic annotation: flag flat seed bars in repair dry-run report (parallel-safe). (3) CONTAM-10-EXEC-2 [S, sequential, depends CONTAM-10-WRITER-H] — re-execute live repair post-WRITER-H deployment (dry-run → human gate → live execution → post-verify + gateway probe). Head updated to CONTAM-10-WRITER-H (dev-mcp-server). WIP after dispatch = 1 (within limit).",
+      "what_considered": "(A) Combine all 3 into one M-size task — REJECTED: violates atomic 2h rule; EXEC-2 is live DB mutation + ops coordination (should be separate from writer code change). (B) Skip optional MIGRATION-ANCHOR-DIAG due to size pressure — DEFERRED: not blocking, can ship in parallel or drop if scope exceeds; explicitly marked low-priority + optional. (C) Run EXEC-2 in parallel with WRITER-H — REJECTED: hard sequential gate; the backfill poller (~15–30 min cycle) is the active leak; repair before fix = wasted work. (D) Update handoff Round-1 instead of creating Round-2 subtasks — REJECTED: Round-2 added live evidence + discovered WRITER-H (distinct from WRITER round-1) + new sequential gate; need fresh decomposition.",
+      "why_change": "Architect Round-2 design (2026-07-08) found actively-reproducing leak in handlePushOhlcvHistory (WRITER-H, never migrated post-CONTAM-10-WRITER) + confirmed predicate safety via live PO probe. Decomposition enforces atomic 2h tasks + respects sequential gate on live repair risk (re-contamination if writer still leaking)."
     }
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
-    "next_agent": "pm",
-    "next_action": "Decompose FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM Round-2 design (handoff appended) into CONTAM-10-WRITER-H / optional CONTAM-10-MIGRATION-ANCHOR-DIAG / CONTAM-10-EXEC-2 (sequential, gated on WRITER-H).",
+    "active_task_id": "CONTAM-10-WRITER-H",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Implement CONTAM-10-WRITER-H (writer guard swap); parallel with optional MIGRATION-ANCHOR-DIAG; blocks EXEC-2.",
     "updated_at": "2026-07-08T01:23:05Z",
     "updated_by": "architect"
   },
@@ -2552,16 +2560,51 @@
         "evidence": "RAW gateway probe 2026-06-30T20:13Z (get_relative_strength + get_roc_momentum, watchlist): FPT h252 rs=594.07 LEADING-artifact / roc=606.29x decile10; DHG h63 rs=922.59 + h126 rs=918.06 LEADING-artifact; VHM h126 rs=-1.066 + h252 rs=-1.350 percentile0 / roc=-0.998; VIC h252 rs=-1.349 percentile2.78 (vs healthy h63 +0.475 / h126 +0.325) / roc=-0.998. Root: daily_ohlcv rows stored in thousands-format (whole-row O/H/L/C ~1000x small) over ~Aug2025-Feb2026. 2nd contamination class same table -> recurring-bug-escalation; durable writer guard required.",
         "tasks": [
           {
-            "id": "FIX-DAILY-OHLCV-UNIT-CONTAM-LT1000-FPT-VHM",
-            "title": "daily_ohlcv whole-row thousands-format contamination (close<1000): migration + reflow + durable writer guard",
-            "type": "SPRINT-M",
-            "zone": "apps/mcp-server/",
-            "owner": "architect",
+            "id": "CONTAM-10-WRITER-H",
+            "title": "Migrate handlePushOhlcvHistory to writeOhlcvBatch — close active backfill queue leak",
+            "type": "FIX",
+            "zone": "apps/mcp-server/src/interface/mcp/routes/",
+            "owner": "dev-mcp-server",
             "size": "M",
-            "status": "IN_PROGRESS",
-            "note": "Round 2 (architect, 2026-07-08): design complete, appended to handoff. Live evidence found the ACTIVE leak — handlePushOhlcvHistory (Writer H, /api/push-ohlcv-history) never migrated to writeOhlcvBatch, bypasses CONTAM-10-WRITER cross-day guard, still contaminating as of 2026-07-07T19:10Z. PO anchor-hazard investigated+resolved (predicate safe, no redesign). pm to decompose: CONTAM-10-WRITER-H (writer fix) + optional CONTAM-10-MIGRATION-ANCHOR-DIAG (cosmetic) + CONTAM-10-EXEC-2 (live repair re-run, SEQUENTIAL gated on WRITER-H landing first).",
-            "claimed_at": "2026-07-08T01:10:52Z",
-            "claimed_by": "dev-team"
+            "status": "TODO",
+            "priority": "high",
+            "created_at": "2026-07-08T01:22:39Z",
+            "depends": [],
+            "blocks": [
+              "CONTAM-10-EXEC-2"
+            ],
+            "note": "Primary fix: swap raw INSERT for writeOhlcvBatch(rows, {conflictStrategy:\"backfill\"}) to activate cross-day scale guard. Blocks EXEC-2. Live evidence: 6,533 contaminated rows as of 2026-07-07, backfill queue poller still active."
+          },
+          {
+            "id": "CONTAM-10-MIGRATION-ANCHOR-DIAG",
+            "title": "Add diagnostic annotation: flag flat seed bars in repair dry-run report",
+            "type": "FIX",
+            "zone": "scripts/migrations/",
+            "owner": "dev-mcp-server",
+            "size": "S",
+            "status": "TODO",
+            "priority": "low",
+            "created_at": "2026-07-08T01:22:39Z",
+            "depends": [],
+            "blocks": [],
+            "optional": true,
+            "note": "Cosmetic/diagnostic only. Parallel-safe with WRITER-H. When anchor_close is a flat seed bar (O=H=L=C), append ' (flat seed bar)' to dry-run report. Prevents manual reviewer confusion."
+          },
+          {
+            "id": "CONTAM-10-EXEC-2",
+            "title": "Re-execute live repair: apply migration to 6,533 contaminated rows post-WRITER-H deployment",
+            "type": "FIX",
+            "zone": "scripts/migrations/ + ops rebuild",
+            "owner": "dev-mcp-server",
+            "size": "S",
+            "status": "TODO",
+            "priority": "high",
+            "created_at": "2026-07-08T01:22:39Z",
+            "depends": [
+              "CONTAM-10-WRITER-H"
+            ],
+            "blocks": [],
+            "note": "SEQUENTIAL: hard gate on CONTAM-10-WRITER-H deployed. Dry-run → human review → live repair → post-verify + gateway probe. Must NOT run before writer leak fixed (re-contamination risk from backfill poller)."
           }
         ]
       }
@@ -7729,19 +7772,6 @@
         "type": "FIX",
         "zone": "pdf-extractor",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "id": "CI-RED-0d28104a-FIX",
-        "type": "FIX",
-        "priority": "high",
-        "size": "S",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "created_at": "2026-07-08T01:22:39Z",
-        "origin_signal_id": "CI-RED-0d28104a",
-        "title": "CI-RED-0d28104a-FIX — CI RED (bun test) flaky: DSI-S3-sector-fin.test.ts AC-SEC-2a/2b — unmocked fetchReservoirLevels races 5s timeout (3rd file, same root-cause class as 1410/262 fixed 1efb6f918)",
-        "status_note": "AC (verification_gate=ci_green_on_subsequent_push): `gh run list --branch main --limit 3` shows conclusion=success for a bun-test run on a push AFTER 0d28104ac. Priority: high. Failing job: bun test. ROOT CAUSE (PO-verified — re-ran local: 16 pass/1 fail, AC-SEC-2a timed out 5001ms; parent saw 16/1 then 15/2 = flaky): src/__tests__/DSI-S3-sector-fin.test.ts AC-SEC-2a/2b call getEnergyGridStatus() -> fetchReservoirLevels() (infrastructure/fetchers/hydrologicalData.js) doing a REAL live network fetch, NO mock, racing bun-test's 5000ms default per-test timeout under CI 16-way parallel isolation. Offending commit 0d28104ac is DOCS-ONLY (notebook checkpoint main.md, 1 file) — it did NOT cause this; pre-existing test-hygiene flake, CI-red is a false-alarm-on-that-commit. RECURRING (feedback_recurring_bug_escalation): 3rd test file with this exact root-cause class. 1410-tool-diacritics-sweep.test.ts + 262-mcp-tools-042.test.ts were ALREADY fixed via mock.module (commit 1efb6f918, CI-green run 28886901289) but DSI-S3-sector-fin was explicitly dismissed as 'CI-flaky' at docs/data/orch/archive/backlog-detail.json:5724 without applying the mock. FIX: apply the proven, already-in-repo mock.module() pattern (freeze-before-mock via {...realNs} value-copy placed textually BEFORE the energyTools import + afterAll-restore; matches 1355b/1410/262 precedent) to the hydrologicalData.js import in DSI-S3-sector-fin.test.ts. SWEEP to close the class permanently: audit src/__tests__/257-weather-vn.test.ts + 258-hydro-data.test.ts (both mock.module=0, both import the network fetchers) — mock them or move to an integration lane excluded from default `bun test` so there is no 4th recurrence. Origin signal: docs/signals/processed/ci-red-0d28104a-20260708011711.json"
       }
     ],
     "closed_sprints": [
@@ -8814,7 +8844,23 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "CI-RED-0d28104a-FIX",
+        "type": "FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "created_at": "2026-07-08T01:22:39Z",
+        "origin_signal_id": "CI-RED-0d28104a",
+        "title": "CI-RED-0d28104a-FIX — CI RED (bun test) flaky: DSI-S3-sector-fin.test.ts AC-SEC-2a/2b — unmocked fetchReservoirLevels races 5s timeout (3rd file, same root-cause class as 1410/262 fixed 1efb6f918)",
+        "status_note": "AC (verification_gate=ci_green_on_subsequent_push): `gh run list --branch main --limit 3` shows conclusion=success for a bun-test run on a push AFTER 0d28104ac. Priority: high. Failing job: bun test. ROOT CAUSE (PO-verified — re-ran local: 16 pass/1 fail, AC-SEC-2a timed out 5001ms; parent saw 16/1 then 15/2 = flaky): src/__tests__/DSI-S3-sector-fin.test.ts AC-SEC-2a/2b call getEnergyGridStatus() -> fetchReservoirLevels() (infrastructure/fetchers/hydrologicalData.js) doing a REAL live network fetch, NO mock, racing bun-test's 5000ms default per-test timeout under CI 16-way parallel isolation. Offending commit 0d28104ac is DOCS-ONLY (notebook checkpoint main.md, 1 file) — it did NOT cause this; pre-existing test-hygiene flake, CI-red is a false-alarm-on-that-commit. RECURRING (feedback_recurring_bug_escalation): 3rd test file with this exact root-cause class. 1410-tool-diacritics-sweep.test.ts + 262-mcp-tools-042.test.ts were ALREADY fixed via mock.module (commit 1efb6f918, CI-green run 28886901289) but DSI-S3-sector-fin was explicitly dismissed as 'CI-flaky' at docs/data/orch/archive/backlog-detail.json:5724 without applying the mock. FIX: apply the proven, already-in-repo mock.module() pattern (freeze-before-mock via {...realNs} value-copy placed textually BEFORE the energyTools import + afterAll-restore; matches 1355b/1410/262 precedent) to the hydrologicalData.js import in DSI-S3-sector-fin.test.ts. SWEEP to close the class permanently: audit src/__tests__/257-weather-vn.test.ts + 258-hydro-data.test.ts (both mock.module=0, both import the network fetchers) — mock them or move to an integration lane excluded from default `bun test` so there is no 4th recurrence. Origin signal: docs/signals/processed/ci-red-0d28104a-20260708011711.json",
+        "claimed_at": "2026-07-08T01:27:48Z",
+        "claimed_by": "dev-team"
+      }
+    ],
     "ready": [],
     "review": [
       {
