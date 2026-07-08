@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-DOMAIN-relocate-stock-catalog closed DONE_VERIFIED by po (Step 6 Docker Microservice Code-Change Close Gate). No active task — po continuing into normal triage cycle; router idle until next dispatch.",
-    "updated_at": "2026-07-08T15:20:26Z",
-    "updated_by": "po"
+    "status": "review",
+    "active_task_id": "FACTORY-APP-dedup-date-freshness-helpers",
+    "next_agent": "ops",
+    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (docs/protocols/docker-deployment-runbook.md) for FACTORY-APP-dedup-date-freshness-helpers — application-layer usecase change (assembleBriefing/assembleEveningSummary/assembleAlertDigest), rebuild_required=true.",
+    "updated_at": "2026-07-08T16:24:35Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3904,15 +3904,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-APP-split-assembleEveningSummary",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary"
-      },
-      {
-        "title": "Centralize VN-date/affected-codes/freshness helpers (one home each)",
-        "priority": "P1",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-APP-dedup-date-freshness-helpers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-dedup-date-freshness-helpers"
       },
       {
         "title": "Split fetchParseAndStoreBctc + name the news-fallback confidence constants",
@@ -9549,6 +9540,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Centralize VN-date/affected-codes/freshness helpers (one home each)",
+        "priority": "P1",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-APP-dedup-date-freshness-helpers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-dedup-date-freshness-helpers",
+        "promoted_at": "2026-07-08T15:48:57Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T15:49:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "review_note": "FACTORY-APP-dedup-date-freshness-helpers: midnightVietnamAsUtc/todayVietnam/parseAffectedCodes/isPriceFresh centralized to one home each (domain/services/timeHelpers.ts, domain/utils/affectedCodesParser.ts, application/utils/priceFreshnessGate.ts); PRICE_FRESHNESS_MS=24*MS_PER_HOUR added to timeConstants.ts replacing the bare <=24 literal (behavior preserved: ageHours<=PRICE_FRESHNESS_MS/MS_PER_HOUR is the exact same rounded-hour comparison). isPriceFresh now takes db+per-caller logLabel arg. All 3 usecase files (assembleBriefing/assembleEveningSummary/assembleAlertDigest) local copies deleted, imports wired. New test FACTORY-APP-dedup-date-freshness-helpers.test.ts (15 assertions). tsc clean. Targeted suite (14 files) 206/206 pass. Full bun test 14346 pass/40 skip/71 fail/10 errors/1180 files - 0 failures reference any touched/created file (grepped full log); all 71 fails are the documented pre-existing pollNews/VPS-push/RSS-timeout + shared-DB-race flaky class. Server boot verified PORT=3998: health 200, toolCount=183 unchanged. scheduler cron.schedule grep=3 unchanged (no scheduler files touched). Commit: dbb87db26 (code+test), 256e82f61 (memory). rebuild_required=true (application-layer usecase change runs against live briefing/evening/alert-digest cron paths).",
+        "reviewed_at": "2026-07-08T16:24:35Z",
+        "reviewed_by": "dev-mcp-server"
       }
     ],
     "qa": [],
@@ -9568,8 +9578,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T14:30:59Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-08T16:24:35Z",
+    "last_triaged_by": "dev-mcp-server"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
