@@ -288,3 +288,55 @@ QA will execute LIGHTER post-swap sanity check (no full RAW HTTP probe needed):
 **Commit Evidence:**
 - Commit 97832fb5a: chore(orch) — board flip + .head sync, ops_note with full Step 1-4 evidence
 - Files changed: 1 (docs/data/orch/orch-state.json)
+
+## Docker Close Gate: FACTORY-INTERFACE-extract-finalizeBctc-usecase (2026-07-08T14:26Z)
+
+**Task:** FACTORY-INTERFACE-extract-finalizeBctc-usecase  
+**Type:** FACTORY INTERFACE (code refactor — relocation of 1100L handler from interface to application layer)  
+**Session UUID:** 5a45feda-431e-46c8-941d-a6539a0eca77  
+**Status:** ✓ STEPS 1-4 COMPLETE
+
+**Code Context:**
+- Extract commit: 56ee74725 (1349L → 102L in finalizeBctcRefineTool.ts)
+- 7 new application-layer files under `apps/mcp-server/src/application/usecases/finalizeBctcRefine/`
+- Extracted blocks: BLOCK-1 (scalar backfill), BLOCK-2 (eval recompute), BLOCK-3 (ratio columns), BLOCK-4 (balance validation), BLOCK-5 (confidence recompute)
+- All extracted functions <= 120L per DoD constraint
+- Call order + single atomic transaction boundary preserved exactly
+- Dev-verified: 293/293 finalizeBctcRefine-related tests green; tsc clean; eslint clean
+
+**Step 1 — Memory Check: PASS**
+- Docker stats: mcp-server 154.4MiB / 3GiB (5.02%), full stack ~1.4GB used of 8GB cap
+- Host memory: 18,578 pages free (healthy)
+- Docker compose up -d -–no-deps permitted
+
+**Step 2 — Build + Deploy: PASS**
+- `docker compose build --build-arg GIT_SHA=f9ed7f85034111d34c9a6cf88e97f18db31b57e3 mcp-server` OK
+- Image cache hit on stable base layers, source/ copy + Bun build completed
+- `docker compose up -d --no-deps mcp-server` — container recreated, 7 seconds to healthy
+
+**Step 3 — Container Health Verification: PASS**
+- `docker compose ps mcp-server` → STATUS: Up 7 seconds (healthy) ✓
+- Port bindings: 0.0.0.0:3000->3000/tcp + 0.0.0.0:4004->3000/tcp active
+- Peer container audit: Full `docker compose ps` run (all 12 services still running healthy)
+
+**Step 4 — SHA Gate Verification: PASS**
+- `bash scripts/verify-deploy-sha.sh mcp-server` → EXIT 0
+- Deployed SHA verified: f9ed7f85034111d34c9a6cf88e97f18db31b57e3 ✓
+- Container label `vn.market.git_sha` matched HEAD
+
+**Endpoint Verification: PASS**
+- `/health` (mcp-server internal): 200 OK — status=ok, toolCount=183, uptime=14.15s
+- `/health` (gateway 4000): 200 OK — all 9 services green, mcp latency 20ms
+- No tool count regression; no new/removed MCP tools from this extract
+- Peers unchanged (stock: 1ms, news: 2ms, pdf: 4ms, rag: 2ms, ta: 2ms, macro: 2ms, alert: 2ms, kinh-dich: 2ms)
+
+**Post-Gates Delegation:**
+- Ops Steps 1-4 complete, no blockers
+- Next gate: QA Step 5 RAW-verify (per runbook § "qa verifies liveness + tool behavior")
+- QA task: finalize_bctc_refine liveness check + actual invocation against real report, verify bctc_table_rows / extraction_confidence / bctc_eval are IDENTICAL to pre-deploy code for same input
+- orch-state next_agent flipped → qa (NOT self-closed to done_verified; po will perform Step 6)
+
+**Artifact Commit:** ops rebuild log to notebook (this entry)  
+**Timestamp:** 2026-07-08T14:27Z (5m from build start to health confirmation)
+
+---
