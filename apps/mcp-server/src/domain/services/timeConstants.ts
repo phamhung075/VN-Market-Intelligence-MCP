@@ -26,3 +26,12 @@ export const VN_OFFSET_MS = 7 * 3600_000;
  * Used by eveningReportIsValid() and isVnIndexFresh().
  */
 export const VN_INDEX_FRESHNESS_MS = 25 * MS_PER_HOUR;
+
+/**
+ * Price-data freshness window — 24 hours in milliseconds.
+ * A briefing/evening-summary send is suppressed when daily_ohlcv.updated_at
+ * exceeds this age (FACTORY-APP-dedup-date-freshness-helpers — replaces the
+ * bare `<=24` literal previously duplicated in assembleBriefing.ts/assembleEveningSummary.ts).
+ * Used by isPriceFresh() in application/utils/priceFreshnessGate.ts.
+ */
+export const PRICE_FRESHNESS_MS = 24 * MS_PER_HOUR;

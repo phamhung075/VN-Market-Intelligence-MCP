@@ -17,7 +17,6 @@ import type { Database } from "bun:sqlite";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
-import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 
 // Re-use shared types from assembleBriefing to avoid duplication
 import type { BriefingAlert, TopStory, TaSignal, GlobalSnapshot } from "./assembleBriefing.js";
@@ -25,6 +24,13 @@ import { defaultComputeTa } from "./assembleBriefing.js";
 import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
 import { getRecentPredictionSignals as _getRecentPredictionSignals } from "../../infrastructure/db/predictionStore.js";
 import type { PortfolioPnlResult } from "../../domain/services/portfolioPnlCalculator.js";
+// ── Centralized helpers (FACTORY-APP-dedup-date-freshness-helpers) ─────────
+// midnightVietnamAsUtc/todayVietnam/parseAffectedCodes/isPriceFresh were
+// duplicated verbatim from assembleBriefing.ts — now one home each; local
+// copies removed below.
+import { midnightVietnamAsUtc, todayVietnam } from "../../domain/services/timeHelpers.js";
+import { parseAffectedCodes } from "../../domain/utils/affectedCodesParser.js";
+import { isPriceFresh } from "../utils/priceFreshnessGate.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -232,62 +238,6 @@ interface WatchlistCodeRow {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Returns midnight today in Vietnam timezone (UTC+7) as an ISO 8601 string.
- * E.g. "2026-03-27T17:00:00.000Z" for Vietnam date 2026-03-28.
- */
-function midnightVietnamAsUtc(): string {
-  const now = new Date();
-  const vnNow = new Date(now.getTime() + VN_OFFSET_MS);
-  const midnight = new Date(
-    Date.UTC(
-      vnNow.getUTCFullYear(),
-      vnNow.getUTCMonth(),
-      vnNow.getUTCDate(),
-      0,
-      0,
-      0,
-      0,
-    ) -
-      VN_OFFSET_MS,
-  );
-  return midnight.toISOString();
-}
-
-/**
- * Returns today's date in Vietnam timezone as a YYYY-MM-DD string.
- */
-function todayVietnam(): string {
-  const vnNow = new Date(new Date().getTime() + VN_OFFSET_MS);
-  const y = vnNow.getUTCFullYear();
-  const m = String(vnNow.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(vnNow.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-/**
- * Parse affected_actions_json to extract stock code strings.
- * Handles both `[{ code: "VCB" }]` and `["VCB"]` formats.
- */
-function parseAffectedCodes(json: string | null): string[] {
-  if (!json) return [];
-  try {
-    const parsed: unknown = JSON.parse(json);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((item: unknown) => {
-        if (typeof item === "string") return item;
-        if (item && typeof item === "object" && "code" in item) {
-          return String((item as { code: unknown }).code);
-        }
-        return null;
-      })
-      .filter((v): v is string => v !== null);
-  } catch {
-    return [];
-  }
-}
-
-/**
  * Default production implementation: COUNT(*) of daily_ohlcv rows for a ticker.
  * Returns 0 if the table does not exist yet (graceful degradation during DB migrations).
  */
@@ -302,44 +252,6 @@ function defaultGetOhlcvRowCount(code: string, db: Database): number {
   } catch {
     // Table may not exist in older DB schemas — treat as 0 rows
     return 0;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper functions
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Check if market_prices data is fresh enough (≤24h old).
- * Returns true if MAX(daily_ohlcv.updated_at) is within 24 hours, false otherwise.
- */
-async function isPriceFresh(db: Database): Promise<boolean> {
-  try {
-    const row = db
-      .prepare<{ latest: string | null }, []>("SELECT MAX(updated_at) as latest FROM daily_ohlcv")
-      .get();
-
-    if (!row?.latest) {
-      // No data at all — consider stale
-      return false;
-    }
-
-    const ageMs = Date.now() - new Date(row.latest).getTime();
-    const ageHours = Math.round(ageMs / (1000 * 60 * 60));
-
-    const isFresh = ageHours <= 24;
-
-    if (!isFresh) {
-      logger.warn(`[freshness-gate] prices stale ${ageHours}h, suppressing evening summary send`);
-    }
-
-    return isFresh;
-  } catch (err) {
-    logger.error("[freshness-gate] check failed", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    // On error, conservatively assume not fresh
-    return false;
   }
 }
 
@@ -840,7 +752,7 @@ async function _assembleEveningSummaryImpl(
   }
 
   // ── Step 8: Freshness gate — check if market prices are stale ─────────────
-  const isFresh = await isPriceFresh(db);
+  const isFresh = await isPriceFresh(db, "evening summary");
   const sendTelegramFn = options.sendTelegramFn;
 
   if (!isFresh && sendTelegramFn) {

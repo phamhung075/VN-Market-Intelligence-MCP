@@ -19,7 +19,6 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
 import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
-import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
 import { generateSparkline } from "../../domain/services/sparkline.js";
 import {
@@ -29,6 +28,13 @@ import {
 import { runSectionAsync } from "../utils/runSection.js";
 import { failLoud } from "../../domain/utils/safeQuery.js";
 import { computeTAIndicators } from "../../infrastructure/microservices/clients.js";
+// ── Centralized helpers (FACTORY-APP-dedup-date-freshness-helpers) ─────────
+// midnightVietnamAsUtc/todayVietnam/parseAffectedCodes/isPriceFresh were
+// duplicated verbatim in assembleEveningSummary.ts (and todayVietnam also in
+// assembleAlertDigest.ts) — now one home each; local copies removed below.
+import { midnightVietnamAsUtc, todayVietnam } from "../../domain/services/timeHelpers.js";
+import { parseAffectedCodes } from "../../domain/utils/affectedCodesParser.js";
+import { isPriceFresh } from "../utils/priceFreshnessGate.js";
 // ── Local pure-math helpers (P2-B1 AC-7/AC-8 — SEV-2 fix) ───────────────────
 // computeRSI and computeMA formerly imported from domain/services/technicalIndicators.js.
 // Replaced with self-contained inline implementations so that P2-B2 can safely
@@ -405,41 +411,6 @@ interface FiledAtRow {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Returns midnight today in Vietnam timezone (UTC+7) as an ISO 8601 string
- * (in UTC, so e.g. "2026-03-27T17:00:00.000Z" for Vietnam date 2026-03-28).
- */
-function midnightVietnamAsUtc(): string {
-  const now = new Date();
-  // Shift to Vietnam clock
-  const vnNow = new Date(now.getTime() + VN_OFFSET_MS);
-  // Construct midnight in Vietnam as UTC
-  const midnight = new Date(
-    Date.UTC(
-      vnNow.getUTCFullYear(),
-      vnNow.getUTCMonth(),
-      vnNow.getUTCDate(),
-      0,
-      0,
-      0,
-      0,
-    ) -
-      VN_OFFSET_MS,
-  );
-  return midnight.toISOString();
-}
-
-/**
- * Returns today's date in Vietnam timezone as a YYYY-MM-DD string.
- */
-function todayVietnam(): string {
-  const vnNow = new Date(new Date().getTime() + VN_OFFSET_MS);
-  const y = vnNow.getUTCFullYear();
-  const m = String(vnNow.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(vnNow.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-/**
  * Query insider_transactions for watchlist stocks active in the last 24h.
  * Returns at most 3 rows ordered by executed_volume DESC.
  * Returns [] when watchlist is empty or no rows match.
@@ -586,63 +557,6 @@ function queryEvidenceTopScores(
     .slice(0, 3);
 
   return [...bullishLeaders, ...bearishWarnings];
-}
-
-/**
- * Parse affected_actions_json to extract stock code strings.
- * Handles both `[{ code: "VCB" }]` and `["VCB"]` formats.
- */
-function parseAffectedCodes(json: string | null): string[] {
-  if (!json) return [];
-  try {
-    const parsed: unknown = JSON.parse(json);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((item: unknown) => {
-        if (typeof item === "string") return item;
-        if (item && typeof item === "object" && "code" in item) {
-          return String((item as { code: unknown }).code);
-        }
-        return null;
-      })
-      .filter((v): v is string => v !== null);
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Check if market_prices data is fresh enough (≤24h old).
- * Returns true if MAX(daily_ohlcv.updated_at) is within 24 hours, false otherwise.
- */
-async function isPriceFresh(db: Database): Promise<boolean> {
-  try {
-    const row = db
-      .prepare<{ latest: string | null }, []>("SELECT MAX(updated_at) as latest FROM daily_ohlcv")
-      .get();
-
-    if (!row?.latest) {
-      // No data at all — consider stale
-      return false;
-    }
-
-    const ageMs = Date.now() - new Date(row.latest).getTime();
-    const ageHours = Math.round(ageMs / (1000 * 60 * 60));
-
-    const isFresh = ageHours <= 24;
-
-    if (!isFresh) {
-      logger.warn(`[freshness-gate] prices stale ${ageHours}h, suppressing briefing send`);
-    }
-
-    return isFresh;
-  } catch (err) {
-    logger.error("[freshness-gate] check failed", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    // On error, conservatively assume not fresh
-    return false;
-  }
 }
 
 /**
@@ -1387,7 +1301,7 @@ async function _assembleBriefingImpl(
   }
 
   // ── Step 14: Freshness gate — check if market prices are stale ─────────────
-  const isFresh = await isPriceFresh(db);
+  const isFresh = await isPriceFresh(db, "briefing");
   const sendTelegramFn = options.sendTelegramFn;
 
   if (!isFresh && sendTelegramFn) {

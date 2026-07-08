@@ -22,6 +22,10 @@
 import type { Database } from "bun:sqlite";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
+// Centralized helper (FACTORY-APP-dedup-date-freshness-helpers) — todayVietnam
+// was duplicated locally here (using a bare 7*3_600_000 offset literal instead
+// of VN_OFFSET_MS) as well as in assembleBriefing.ts/assembleEveningSummary.ts.
+import { todayVietnam } from "../../domain/services/timeHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -86,17 +90,6 @@ export interface AssembleAlertDigestOptions {
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Vietnam timezone date string (YYYY-MM-DD) from a UTC Date.
- */
-function todayVietnam(): string {
-  const vnNow = new Date(new Date().getTime() + 7 * 3_600_000);
-  const y = vnNow.getUTCFullYear();
-  const m = String(vnNow.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(vnNow.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
 
 /**
  * Parse the first stock code from an affected_actions_json cell.
