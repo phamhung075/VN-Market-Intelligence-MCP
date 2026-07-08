@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-TECHANALYSIS-go-livepath-tests DONE_VERIFIED (qa independent re-verify PASS 2026-07-08T08:48:21Z — fresh go test -count=1 12/12 packages GREEN, go vet clean, golangci-lint 0 issues, sandbox 35/35 GREEN via dashboard/build.sh + headless render-check PASS, test-content read confirms assertions match production semantics exactly, doc self-heal (go run ./cmd/sandbox -h) reproduced firsthand, zero production code touched across full commit range, DJ-GATE-1 journal confirmed substantive. FACTORY-TECHANALYSIS-delete-orphaned-ts-service remains correctly BACKLOG, still blocked on sibling FACTORY-TECHANALYSIS-reconcile-ta-contract).",
-    "updated_at": "2026-07-08T08:48:21Z",
-    "updated_by": "qa"
+    "status": "review",
+    "active_task_id": "FACTORY-TECHANALYSIS-reconcile-ta-contract",
+    "next_agent": "ops",
+    "next_action": "FACTORY-TECHANALYSIS-reconcile-ta-contract at REVIEW -- ops: rebuild+SHA-gate technical-analysis (docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) technical-analysis && docker compose up -d technical-analysis && bash scripts/verify-deploy-sha.sh technical-analysis), then qa: RAW-verify POST /ta/indicators payload matches api/openapi.yaml (expect byte-identical to pre-change golden probe -- no functional Go change was made, spec+doc-comments only), then this unblocks FACTORY-TECHANALYSIS-delete-orphaned-ts-service (BACKLOG, blocked on this + go-livepath-tests DONE_VERIFIED).",
+    "updated_at": "2026-07-08T09:11:07Z",
+    "updated_by": "dev-technical-analysis"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -702,7 +702,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-08T08:40:46Z",
+    "_updated_at": "2026-07-08T09:11:07Z",
     "_updated_by": "dev-technical-analysis",
     "active_sprints": [
       {
@@ -3721,15 +3721,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-RAG-confidence-impact-or-00-mask",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-confidence-impact-or-00-mask"
-      },
-      {
-        "title": "Make api/openapi.yaml the single /ta/indicators contract; conform the Go service",
-        "priority": "P1",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-TECHANALYSIS-reconcile-ta-contract",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-reconcile-ta-contract"
       },
       {
         "title": "Delete the 4909L _deprecated TypeScript predecessor tree",
@@ -9402,6 +9393,24 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Make api/openapi.yaml the single /ta/indicators contract; conform the Go service",
+        "priority": "P1",
+        "zone": "technical-analysis",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-TECHANALYSIS-reconcile-ta-contract",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-reconcile-ta-contract",
+        "promoted_at": "2026-07-08T08:51:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T08:51:20Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "moved_to_review_at": "2026-07-08T09:11:07Z",
+        "moved_by": "dev-technical-analysis",
+        "review_note": "api/openapi.yaml is now the single authoritative /ta/indicators contract (was already Go-shaped but incomplete/wrong: required:[symbol,period] wrongly forbade the closes-only path, closes request field undocumented, ma5/ma20/ma50 response fields missing, rsi description hardcoded 14-period instead of request-period-driven, ema field mislabeled Wilder smoothing when source explicitly says standard EMA NOT Wilder, stale 501 response removed). Trend-port-or-drop investigation (repo-wide: mcp-server, frontend, alert-engine, packages/shared-types) found NO live caller depending on the dead TS determineTrend() 70/30-threshold semantics -- TS src/ never started by Dockerfile/docker-compose, packages/shared-types twin type has zero importers, mcp-server own trend field hardcoded NEUTRAL unconditionally (cosmetic only), frontend fetchTASnapshot already 404s today against live Go service for an unrelated gateway double-/ta/ path bug (out of zone, not fixed). Per DoD: trend DROPPED not ported. Full reasoning: decision journal STEP dev-technical-analysis-S2. dtos.go/router.go: doc-comments only, ZERO functional Go change -- confirmed via golden request/response diff (3 representative /ta/indicators calls: symbol+period DB-backed, closes-only pure-compute, missing-both 400) against the live running container, byte-identical before/after (compiled binary never reads api/openapi.yaml at runtime -- confirmed via grep). Also rewrote 3 stale zone docs that still described the dead TS shape as canonical (api-reference.md, domain-model.md, usecases.md) and flagged a second Go-native dead-code path (pkg/domain/services.go CalculateTAService, constructed-then-discarded in cmd/server/main.go) as an out-of-scope discovered signal for a follow-up cleanup task. Gates: go build/vet/test ./... 12 packages GREEN (unchanged), golangci-lint 0 issues, sandbox 35/35 scenarios GREEN + headless render-check PASS. Commits: 190f60285 (contract), db05de91b (zone docs), 783830636 (memory). rebuild_required: true per backlog -- next_agent=ops per docs/protocols/docker-deployment-runbook.md Microservice Code-Change Close Gate (ops Steps 1-4 rebuild+SHA-gate, then qa Step 5 RAW-verify the served /ta/indicators payload matches this spec, then po Step 6 mark DONE). Expect the post-rebuild RAW-verify to be byte-identical to the pre-change golden probe captured in this cycle (no functional Go change was made)."
       }
     ],
     "qa": [],
@@ -9421,7 +9430,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T08:29:26Z",
+    "last_triaged_at": "2026-07-08T08:51:20Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
