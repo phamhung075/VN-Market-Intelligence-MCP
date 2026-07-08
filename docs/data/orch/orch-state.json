@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-SCHEDULER-prediction-default-dedup CLOSED DONE_VERIFIED by po Step 6 (Docker Microservice Code-Change Close Gate). Pure-refactor prediction signalConfig dedup verified deployed byte-identical + live cron-path confirmed on real fire; qa correctly held REVIEW->po this time (no self-close deviation). Idle.",
-    "updated_at": "2026-07-08T11:40:03Z",
-    "updated_by": "po"
+    "status": "review",
+    "active_task_id": "FACTORY-INTERFACE-extract-finalizeBctc-usecase",
+    "next_agent": "ops",
+    "next_action": "FACTORY-INTERFACE-extract-finalizeBctc-usecase moved to review — buildFinalizeBctcRefineHandler (~1100L application logic) relocated out of interface layer into application/usecases/finalizeBctcRefine/ (5 named BLOCK-1..5 files + orchestrator + shared types); interface file 1349L->102L (Zod schema + registration + thin call only); tsc clean, targeted 293/293 pass, eslint clean, server boot/tool-count/scheduler-count gates all pass; rebuild_required:true, ops runs Docker Microservice Code-Change Close Gate Steps 1-4 next. qa Step 5 RAW-verify must confirm finalize output identical against the live named-volume DB, then set next_agent=po (NOT self-close to done_verified) — po performs Step 6.",
+    "updated_at": "2026-07-08T12:23:24Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3802,15 +3802,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-vps-auth-guard-dedup"
-      },
-      {
-        "title": "Move 1100L finalizeBctcRefine handler logic down into application/usecases",
-        "priority": "P1",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INTERFACE-extract-finalizeBctc-usecase",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-extract-finalizeBctc-usecase"
       },
       {
         "title": "Move Kinh Dich + TA scoring math out of interface tools into domain",
@@ -9482,6 +9473,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Move 1100L finalizeBctcRefine handler logic down into application/usecases",
+        "priority": "P1",
+        "zone": "mcp-server-interface",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INTERFACE-extract-finalizeBctc-usecase",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-extract-finalizeBctc-usecase",
+        "promoted_at": "2026-07-08T11:45:07Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-08T11:45:36Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "moved_to_review_at": "2026-07-08T12:23:24Z",
+        "moved_by": "dev-mcp-server",
+        "review_note": "buildFinalizeBctcRefineHandler in finalizeBctcRefineTool.ts (interface layer) was a ~1100-line application-layer function (its own header comment already declared \"DDD layer: application\" — application logic wearing an interface-layer costume). The author left BLOCK-1..5 / DT / BAL seam markers in the code, per the 2026-06-15 maintainability factory audit.\n\nExtracted to apps/mcp-server/src/application/usecases/finalizeBctcRefine/ (directory did not exist — created):\n- finalizeBctcRefineTypes.ts — shared FinalizeBctcTableRow row type (avoids a circular import between the orchestrator and the BLOCK-4/BLOCK-5 files that both need read access to the same in-memory row set).\n- finalizeBctcRefine.ts — the main use case: CONFIRMED guard, the parse-loop (parseDoneUnitsToRows, carrying statement_section across DONE units in page order per FIX-BCTC-BANK-BS-SECTION-CLASSIFIER), applyCorrections post-pass, DT-2/DT-3 sanity BLOCK/WARN violations, DT-4 identical-timestamp WARN, BEQ-7 section-completeness guard, the single atomic db.transaction (selective DELETE + INSERT + reAnchorCorrections + refine_status UPDATE), plus 2 small private helpers (applyPeriodBasis = BAL-1c, applyReportScope = BAL-1d) — these 2 are not in the task's named-5 list but had to leave the interface file too per the \"interface keeps ONLY schema+registration+thin call\" requirement, so they live as private helpers here rather than getting their own files. Exports resolveSourceConfidence (re-exported at the OLD interface path so FACTORY-INTERFACE-source-confidence-10-mask.test.ts and others keep working unmodified) and runFinalizeBctcRefine (the new call surface — returns a plain result object; the interface layer now wraps it into the MCP `{content:[...]}` shape exactly once).\n- backfillScalarColumns.ts (BLOCK-1) — the raw block was ~300L, over the DoD's <=120L-per-function cap, so decomposed into: buildScalarUpdates (Case-3 resolved-scalar list, pure), syncNullClearBlobs (FU-6f null-clear JSON blob sync), syncDebtBlob (FIX-DE-2 debt blob sync), and the backfillScalarColumns main entry that ties them together — each function <=120L.\n- deriveRatioColumns.ts (BLOCK-3) — absorbs safeDivideLocal verbatim as a private helper (deliberately NOT unified with ratioComputer.ts's own separate private safeDivide — this is a pure relocation per the task's own framing, not a dedup refactor); computeDerivedRatios (pure) + deriveRatioColumns (DB read/write) main entry.\n- revalidateBalanceIdentity.ts (BLOCK-4), recomputeExtractionConfidence.ts (BLOCK-5), recomputeBctcEval.ts (BLOCK-2) — each a single function, all comfortably <=120L without further decomposition.\n\nfinalizeBctcRefineTool.ts (interface layer) now keeps only: the Zod InputSchema, Zod validation + response-wrap (thin orchestration — validate rawInput, call runFinalizeBctcRefine, JSON.stringify the plain result into the MCP content shape), and the server.tool registration. 1349L -> 102L.\n\nKey judgment call (documented in decision journal STEP dev-mcp-server-S10): every ORIGINAL return point in the 1100L function used the byte-identical `{content:[{type:\"text\",text:JSON.stringify(X)}]}` wrapper (4 distinct exit points: CONFIRMED-skip, REJECTED_SANITY block-violation, success, catch-all error). Factoring that wrapper to a single spot in the interface layer while the application layer returns the plain result object X is therefore provably a no-op formatting change, not a behavior change — verified by inspection of all 4 exit points, not assumed. Call order and the single db.transaction boundary preserved EXACTLY (verified line-by-line against the original file during extraction).\n\nDoD checklist:\n- Logic relocated to application layer: YES — interface file is 102L, contains only schema/registration/thin-call.\n- Each extracted step <=120L: YES for all 5 named BLOCK-1..5 (BLOCK-1's raw ~300L body decomposed into 4 sub-functions to satisfy this; the other 4 BLOCK files fit as single functions).\n- Call order and single transaction boundary preserved exactly: YES.\n- recomputeExtractionConfidence output IDENTICAL before/after: this is a pure code-move (types/logic copied verbatim, only call-signature changed from closure-capture to explicit params) — no formula, guard, or ordering changed. RAW-verify against the live named-volume DB (not just \"doesn't crash\") is qa's Step 5 job per the task's own DoD note; this dev-side check confirmed via the 22-file targeted BCTC test suite (which exercises BLOCK-5's exact confidence-recompute assertions) 293/293 pass.\n- Tests green: bun tsc --noEmit clean. Targeted finalizeBctcRefine-related suite (22 files, 1136 expect() calls) 293/293 pass — zero regressions. Full `bun test` run twice: run 1 (tail-captured summary only) 14348 pass/40 skip/54 fail/3 errors/1179 files; run 2 (full log) 14337 pass/40 skip/65 fail/1179 files — run-to-run count variance on identical code is itself the documented pre-existing-flakiness signature (same class noted on the 2 immediately-preceding sibling tasks), then the known Bun 1.3.13 crash-at-teardown panic (non-authoritative, fires after the summary line) on both runs. Failing-file set from run 2 grepped: 21 files, ZERO overlap with any of the 8 changed/new files except 1405b-bctc-vps-fixes.test.ts (tests bctcQueueEnricherJob/logVpsPush/vn-news-fetch freshness — unrelated to finalize_bctc_refine); re-ran that file in isolation: 12/12 pass, confirming a pre-existing parallel-load flake, not a regression caused by this change.\n- eslint (src/ --max-warnings 0) clean on all 8 touched files (targeted run, not full-tree — Phase 1 does not mandate the ESLint fence per mcp-server main.md, this was an extra diagnostic pass).\n\nGate 2 (tool-suite integrity): Gate 2a tsc clean. Gate 2b server boot verified on PORT=3999 (port 3000 held by the live running container): /health returns toolCount=183, /api/bctc-inspect and /dashboards/news-fetch/ both 200. Gate 2c tool count: 183 (bun scripts/gen-project-stats.ts --dry-run, unchanged — this task adds zero new/removed MCP tools, it only moves code between layers). Gate 2d scheduler cron.schedule grep: 3 — matches the immediately-preceding 2 sibling tasks' documented current-baseline (the mcp-server main.md flow doc's \"baseline 76\" text is stale/outdated, not a live regression; this task touches zero scheduler files so could not have changed this count regardless).\n\nSimplicity gate: PASS. Q1 — no feature/flag/branch beyond the task's own extraction scope. Q2 — the per-file private sub-helpers (buildScalarUpdates/syncNullClearBlobs/syncDebtBlob/computeDerivedRatios/applyPeriodBasis/applyReportScope/parseDoneUnitsToRows) each have exactly one call-site within their own file — flagged honestly as a Q2 trigger, but justified: the DoD's own explicit \"<=120L per extracted function\" numeric constraint is the interface contract driving this decomposition (BLOCK-1's raw body is ~300L and cannot fit in one function under that cap), not speculative abstraction. Q3 — no manager/handler/processor wrapping trivial logic; every extracted function does real, previously-existing work. Q4 — ratio clean: content is verbatim relocated original logic plus the same density of doc comments the original file already carried (itself heavily commented); zero new speculative code.\n\nCommit: 56ee74725 (8-file extraction: 1 modified interface file + 7 new application-layer files). Journal + notebook: 557651772.\n\nrebuild_required: true — BLOCK-1..5 recompute logic (scalar backfill, ratio derive, validation refresh, confidence recompute, eval recompute) runs inside the live finalize_bctc_refine MCP tool against the real named-volume DB at runtime, so it needs the full Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate). next_agent=ops for Steps 1-4 (rebuild + SHA-gate mcp-server). After ops completes Steps 1-4, qa runs Step 5 RAW-verify and must set next_agent=po (NOT self-close to done_verified) — po performs the actual Step 6 DONE_VERIFIED flip per the runbook. RAW-verify guide for qa (per this task's own DoD note): this is a pure internal relocation with no persisted-value or formula change — Step 5 liveness check should be /health PLUS an actual finalize_bctc_refine invocation (or observing the next fleet-cron-triggered one) against a real report_id, confirming the resulting bctc_table_rows / financial_reports.extraction_confidence / bctc_eval values are IDENTICAL to what the pre-deploy code would have produced for the same input (not merely \"the endpoint returns 200 and doesn't crash\").\n"
       }
     ],
     "qa": [],
@@ -9501,7 +9511,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T10:51:06Z",
+    "last_triaged_at": "2026-07-08T11:45:07Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
