@@ -8826,6 +8826,22 @@
         "verified_by": "dev-team",
         "verified_at": "2026-07-08T00:02:16Z",
         "signoff_note": "BOUNDED-1 pre-verify (stale): task's own status_note already says 'Root reframed 2026-07-01 (PO): input-starvation/monoculture, NOT a missing job or empty-fragments table... do NOT dispatch directly.' Live-verified via get_evidence_summary(FPT): fragment_count=11 with 3+ distinct producer types (news_sentiment_stock, foreign_flow_institutional, bctc_roe_strong), TRUSTED rows present (n=16, n=18) with correct bearish-direction LR resolution — confirms sprint PREDICTION-EVIDENCE-REVIVAL (QA-approved 2026-07-01T07:45-07:52Z, commits 24d1a4b5/20264221, TASK-EVIDENCE-HOP1-MCP + TASK-EVIDENCE-HOP2-AGENTS) already fixed the real root causes (direction/horizon hardcode bug + producer monoculture + silent insider-fetch failure). Original title's premise (evidence_fragments=0, accumulator silently writes 0 rows) was already found factually wrong by BA's own 2026-07-01 live probe (48 rows, not 0). No further work needed — closing stale, not dispatching a worker."
+      },
+      {
+        "id": "FIX-CHEF-SENDTELEGRAM-ARGSHAPE",
+        "priority": "high",
+        "sprint": null,
+        "status": "DONE_VERIFIED",
+        "title": "Chef (unified-agent) recurring 3x publish-reliability bug — send_telegram arg-shape mis-call fixed via defensive guardrails",
+        "zone": "cross-service/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CHEF-SENDTELEGRAM-ARGSHAPE",
+        "promoted_at": "2026-07-08T00:03:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "claimed_at": "2026-07-08T00:04:24Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "fixed_at": "1783469348",
+        "fixed_by": "cowork-refactory-expert",
+        "verification_note": "Root cause: ambiguous natural-language on_error instructions in init.md and cowork-boundary/SKILL.md allowed LLMs to misinterpret as bare-string calls. Fix: (1) init.md line 56: explicit send_telegram(channel=\"work\", message=\"...\") form; (2) cowork-boundary/SKILL.md line 11: explicit send_telegram(channel=\"bug\", message=\"...\") form; (3) chef.md Step 7: added CRITICAL defensive guardrail block before send_telegram call sites; (4) chef-telemetry.md: added critical contract clarification. Result: every send_telegram call site now has explicit nearby guardrail preventing bare-string calls. Commit: 52538c2ac"
       }
     ],
     "head": {
@@ -8837,22 +8853,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-CHEF-SENDTELEGRAM-ARGSHAPE",
-        "priority": "high",
-        "sprint": null,
-        "status": "IN_PROGRESS",
-        "title": "Chef (unified-agent) recurring 3x publish-reliability bug — send_telegram arg-shape mis-call: passes message as bare string instead of {channel,message} record, then falsely logs send_telegram \"expected record received string\" parser-failure + PUBLICATION BLOCKED, dropping the dish (gateway is healthy — dispatcher RAW-verified send works each time, msg 710/711/714). 3rd occurrence (chef-eod-marker 1st, id=710 2nd 2026-06-10, id=3129 3rd 2026-06-11). Recurring-bug-escalation: fix the cowork agent .md publish step to ALWAYS call send_telegram with the {channel,message} record shape; remove the false-parser-failure self-report path. Owner routes through agent-md-factory (SSOT/DRY) — NOT a router workaround, NOT apps/* code.",
-        "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CHEF-SENDTELEGRAM-ARGSHAPE",
-        "promoted_at": "2026-07-08T00:03:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-08T00:04:24Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
