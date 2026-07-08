@@ -26,3 +26,15 @@
 - Detection-only grep output had 2 hits — both in commit message section (word "updated"), not in code diff; confirmed zero code-level UPDATE/INSERT/DELETE statements targeting daily_ohlcv.
 **why-decision:** All 6 AC checks green: (1) 11/11 pass4 + 14111/0 full suite + tsc 0; (2) detection-only confirmed; (3) INDEX_TICKERS reused, no dup; (4) firing predicate correct via ROW_NUMBER() anchor map; (5) DDD+security clean, mock-guard PASS; (6) deployed image carries Pass-4 code.
 **why-change:** No change from plan — APPROVED.
+
+---
+
+### STEP qa-S3 · qa · 2026-07-08T02:12:00Z
+**task-id:** CONTAM-10-WRITER-H
+**what-done:** Re-reviewed diff 7fa78ac42 vs AC (drop-in swap correct, WIC-2 preserved, response shape correct); re-ran targeted 5-file suite myself (38/38, 167 expect — matches dev) + 1 extra caller dev didn't list (CONTAM-7, 45/45); tsc clean; DDD/security/mock-guard PASS; wrote+ran my OWN RAW-probe (isolated local instance, not dev's test) — contaminated batch corrected x1000, PASS. Confirmed via docker inspect the live container still runs the pre-fix image (not 4c8ea4cfd41f). Held REVIEW, `.head.next_agent=ops`.
+**what-considered:**
+- Probe the shared live container directly — REJECTED: would exercise OLD code (image confirmed unswapped) AND pollute the live production DB with synthetic rows; neither acceptable.
+- Self-authorize `docker compose up -d mcp-server` to unblock a true live probe — REJECTED: explicitly ops-gated per task instructions, not QA's authority.
+- Wait for full 14K-test suite to reach 100% before verdict — REJECTED: severe host contention (2 concurrent bun-test procs) made this open-ended; targeted+adjacent-caller suites (the only files actually exercising this diff) are complete and green, which is the load-bearing evidence; partial full-run (~300/1171 files, zero new OHLCV failures) is corroborating only.
+**why-decision:** Code/tests independently verified correct and complete; true live-gateway RAW-probe requires the ops swap I cannot self-authorize — REVIEW (not done_verified) is the honest state per the handoff's own gate.
+**why-change:** No change from plan — this was the anticipated outcome given the ops-gated swap dependency.
