@@ -3927,6 +3927,20 @@
       "fixed_at": "1783469348",
       "fixed_by": "cowork-refactory-expert",
       "verification_note": "Root cause: ambiguous natural-language on_error instructions in init.md and cowork-boundary/SKILL.md allowed LLMs to misinterpret as bare-string calls. Fix: (1) init.md line 56: explicit send_telegram(channel=\"work\", message=\"...\") form; (2) cowork-boundary/SKILL.md line 11: explicit send_telegram(channel=\"bug\", message=\"...\") form; (3) chef.md Step 7: added CRITICAL defensive guardrail block before send_telegram call sites; (4) chef-telemetry.md: added critical contract clarification. Result: every send_telegram call site now has explicit nearby guardrail preventing bare-string calls. Commit: 52538c2ac"
+    },
+    {
+      "id": "KD-BACKTEST-501-4X",
+      "type": "fix",
+      "zone": "dev-mcp-server",
+      "priority": "high",
+      "size": "S",
+      "status": "DONE_VERIFIED",
+      "title": "kinh-dich backtest returns 501 for 4 CONSECUTIVE digest cycles (run_hexagram_backtest, digest-predict/flow/weekly.md line 43)",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#KD-BACKTEST-501-4X",
+      "done_verified": true,
+      "verified_by": "dev-team (bounded-1 auto-pickup pre-verify)",
+      "verified_at": "2026-07-08T00:57:36Z",
+      "signoff_note": "Stale-closed by dev-team BOUNDED-1 pre-verify: live-called run_hexagram_backtest({days:7}) directly — returned normal graceful 'insufficient data' Vietnamese message (Chưa có dữ liệu backtest cho VNINDEX trong 7 ngày), NOT a 501. Matches this task's own AC alternative branch ('if endpoint intentionally unimplemented, weekly.md must degrade gracefully — skip backtest evidence, not 501-block'). Original filing (2026-06-14, 4 consecutive 501s) no longer reproducible; endpoint now returns 200 with graceful no-data payload. No worker spawn needed."
     }
   ],
   "closed_sprints": [],

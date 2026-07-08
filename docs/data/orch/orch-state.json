@@ -8791,22 +8791,7 @@
         "note": "Rewrote docs/protocols/cowork-master-cron-runbook.md §1/§2/§5/§8/§9: RemoteTrigger Layer A documented as retired (not active/deletion-locked) per STANDING feedback_no_remote_trigger_all_local; current architecture = single session-scoped */15 CronCreate dispatcher per .claude/skills/cron-cowork-team/SKILL.md; documented the session-scoped-dispatcher SPOF explicitly with a pointer to in-flight F1-LAUNCHD-COWORK-BACKSTOP (owner developer, same brief) as the coming session-independent layer, plus an explicit re-freshen instruction for whoever lands it. docs/data/cowork-schedule.json._notes.layer_a_deletion_locked: true->false, layer_a_deletion_gate rewritten to point at this fix. Independent of F1-LAUNCHD-COWORK-BACKSTOP / FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED (not blocked on either)."
       }
     ],
-    "done_verified": [
-      {
-        "id": "KD-BACKTEST-501-4X",
-        "type": "fix",
-        "zone": "dev-mcp-server",
-        "priority": "high",
-        "size": "S",
-        "status": "DONE_VERIFIED",
-        "title": "kinh-dich backtest returns 501 for 4 CONSECUTIVE digest cycles (run_hexagram_backtest, digest-predict/flow/weekly.md line 43)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#KD-BACKTEST-501-4X",
-        "done_verified": true,
-        "verified_by": "dev-team (bounded-1 auto-pickup pre-verify)",
-        "verified_at": "2026-07-08T00:57:36Z",
-        "signoff_note": "Stale-closed by dev-team BOUNDED-1 pre-verify: live-called run_hexagram_backtest({days:7}) directly — returned normal graceful 'insufficient data' Vietnamese message (Chưa có dữ liệu backtest cho VNINDEX trong 7 ngày), NOT a 501. Matches this task's own AC alternative branch ('if endpoint intentionally unimplemented, weekly.md must degrade gracefully — skip backtest evidence, not 501-block'). Original filing (2026-06-14, 4 consecutive 501s) no longer reproducible; endpoint now returns 200 with graceful no-data payload. No worker spawn needed."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
