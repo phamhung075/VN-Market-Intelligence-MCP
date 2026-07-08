@@ -256,12 +256,20 @@
       "decision": "DECOMPOSED Round-2 architect design (completed 2026-07-08) into 3 atomic subtasks: (1) CONTAM-10-WRITER-H [M, primary fix, blocks EXEC-2] — migrate handlePushOhlcvHistory route from raw INSERT to writeOhlcvBatch(rows, {conflictStrategy:\"backfill\"}) to close active backfill-queue leak (6,533 rows/27 tickers as of 2026-07-07, ~15–30 min contamination cadence). (2) CONTAM-10-MIGRATION-ANCHOR-DIAG [S, optional low-priority] — cosmetic diagnostic annotation: flag flat seed bars in repair dry-run report (parallel-safe). (3) CONTAM-10-EXEC-2 [S, sequential, depends CONTAM-10-WRITER-H] — re-execute live repair post-WRITER-H deployment (dry-run → human gate → live execution → post-verify + gateway probe). Head updated to CONTAM-10-WRITER-H (dev-mcp-server). WIP after dispatch = 1 (within limit).",
       "what_considered": "(A) Combine all 3 into one M-size task — REJECTED: violates atomic 2h rule; EXEC-2 is live DB mutation + ops coordination (should be separate from writer code change). (B) Skip optional MIGRATION-ANCHOR-DIAG due to size pressure — DEFERRED: not blocking, can ship in parallel or drop if scope exceeds; explicitly marked low-priority + optional. (C) Run EXEC-2 in parallel with WRITER-H — REJECTED: hard sequential gate; the backfill poller (~15–30 min cycle) is the active leak; repair before fix = wasted work. (D) Update handoff Round-1 instead of creating Round-2 subtasks — REJECTED: Round-2 added live evidence + discovered WRITER-H (distinct from WRITER round-1) + new sequential gate; need fresh decomposition.",
       "why_change": "Architect Round-2 design (2026-07-08) found actively-reproducing leak in handlePushOhlcvHistory (WRITER-H, never migrated post-CONTAM-10-WRITER) + confirmed predicate safety via live PO probe. Decomposition enforces atomic 2h tasks + respects sequential gate on live repair risk (re-contamination if writer still leaking)."
+    },
+    {
+      "agent": "ops",
+      "task_id": "FACTORY-APP-split-fetchParseAndStoreBctc",
+      "timestamp": "2026-07-08T21:40:00Z",
+      "decision": "FACTORY-APP-split-fetchParseAndStoreBctc Close Gate Steps 1-4 COMPLETE. Step 1: Docker memory check PASS (mcp-server 150MiB/3GiB, total fleet healthy). Step 2-3: Rebuilt mcp-server with GIT_SHA=c1d6c2c7f (--build-arg flag), deployed to running container, status=running (healthy). Step 4: SHA gate PASS (deployed SHA matches HEAD c1d6c2c7f). RAW-verify: live DB (named volume) contains 80 financial_reports, recent entries (D2D/VHM/GVR 2025Q4) parsed successfully 2026-07-07T17:37Z, extraction_method=pdf-parse, confirming BCTC fetch/parse/store pipeline end-to-end working through refactored code (resolvePdfText.ts + newsChainFallback.ts + insertBctcAnalysis.ts modules all present and active in container). NEXT: qa Step 5 (health endpoint + tool count verification).",
+      "what_considered": "Docker memory check (pass) → single-service rebuild only (no peer disruption per runbook) → deployed successfully → verified refactored modules present in container (head -50 /app/src/application/usecases/bctc/resolvePdfText.ts matched FACTORY-APP-split description) → live DB verification confirmed pipeline active with recent data.",
+      "why_change": "No change from ops Close Gate protocol; all steps passed validation."
     }
   ],
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-APP-split-fetchParseAndStoreBctc",
-    "next_agent": "ops",
+    "next_agent": "qa",
     "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (docs/protocols/docker-deployment-runbook.md) for FACTORY-APP-split-fetchParseAndStoreBctc — application-layer BCTC usecase split (fetchParseAndStoreBctc.ts + bctc/resolvePdfText.ts + bctc/newsChainFallback.ts + bctc/insertBctcAnalysis.ts + bctc/types.ts), rebuild_required=true.",
     "updated_at": "2026-07-08T19:30:12Z",
     "updated_by": "dev-mcp-server"
@@ -7819,6 +7827,31 @@
         "id": "FACTORY-TECHANALYSIS-delete-orphaned-ts-service",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-delete-orphaned-ts-service",
         "revert_note": "BOUNDED-1 auto-claim reverted by dev-team (2026-07-08T07:55:12Z): depends_on=[FACTORY-TECHANALYSIS-go-livepath-tests, FACTORY-TECHANALYSIS-reconcile-ta-contract] both still BACKLOG/unstarted — promote script does not check depends_on, would have dispatched deletion before its own declared prerequisites. Flagging for PO: devteam-backlog-promote-bounded1.jq needs a depends_on-all-done_verified filter."
+      },
+      {
+        "id": "FIX-OHLCV-DEPTH-ALERT-HONEST-GAP-SUPPRESS",
+        "title": "OHLCV depth-shortfall R-5 alert re-fires forever on permanently-shallow non-watchlist honest-gap codes (BDI/DLC/JSH/SIS/VDC) — make the emitter honest-gap-aware",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "low",
+        "plan_only": true,
+        "owner": "po",
+        "next_agent": "architect",
+        "zone": "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
+        "depends": [],
+        "sprint": null,
+        "created_at": "2026-07-08T19:35:16Z",
+        "created_by": "po-telegram-triage-20260708T1907Z",
+        "source_report_ids": [
+          3527,
+          3529,
+          3530,
+          3531,
+          3532
+        ],
+        "recurrence_anchor": "OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST",
+        "note": "PIPELINE ROOT ALREADY FIXED: OPS-OHLCV-VPS-BACKFILL-STALL-NONWATCHLIST DONE_VERIFIED 2026-07-08T02:12Z (deploy-vinahost.sh gap deploying /root/fetch-ohlcv-backfill.sh; 109 ok/3 skipped/0 err/77434 bars), archived. RESIDUAL = alert noise only: /api/ohlcv-backfill-done (ohlcvBackfillHandler.ts ~L230-252) re-queues depth-shortfall codes, and at retry_count>=5 (R-5 cap) fires the [OHLCV-DEPTH] BUG alert with NO exemption for codes that can never hit DEPTH_FLOOR=252. JSH/SIS/VDC=0 bars have no fetchable source data => loop forever => re-emit ~every 3h. 5 reports 3527/3529-3532 (07-08 03:36Z-18:34Z, all POST-fix, unchanged signature since 07-01) consolidated here; NOT a regression. Definitive fix: exempt permanently-unavailable/honest-gap codes (no source history) from the depth-shortfall retry+R-5 BUG-alert loop, or scope the alert to watchlist codes. LOW: zero serving impact, peripheral non-watchlist codes, only cost is recurring alert-channel noise. Filed by po telegram-triage 2026-07-08T19:07Z per feedback_recurring_bug_escalation (8+ occurrences across 4 waves: 3366/3418/3501 + these 5)."
       }
     ],
     "closed_sprints": [
@@ -9594,7 +9627,7 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-08T18:48:50Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "rebuild_required": true,
         "review_note": "FACTORY-APP-split-fetchParseAndStoreBctc: fetchParseAndStoreBctc.ts (895L) split into bctc/resolvePdfText.ts (Step 2 PDF download + OCR-cache fallback, Task 293 + the news-chain-fallback terminal decision, Task 1294b, returns a {status:\"text\"|\"final\"} discriminated union), bctc/newsChainFallback.ts (tryNewsChainFallback + buildFiscalPeriod + buildAnalysisSummary; hoisted the 4 tuning literals to named exports NEWS_FALLBACK_BASELINE=0.55/TEMPORAL_DISCOUNT=0.8/FALLBACK_CONF_MIN=0.45/FALLBACK_CONF_MAX=0.65, resolved values unchanged, comment links the OCR-confidence ladder in resolvePdfText.ts), plus bctc/types.ts and bctc/insertBctcAnalysis.ts (Step 4) — 2 extra files beyond the backlog's named 2-file split, needed because the DoD's \"orchestrator <=120L\" is a hard constraint (2-file split alone left ~191L via wc -l). Orchestrator is now 117L, a thin Step 1/3/4 sequencer. normaliseFilename relocated into resolvePdfText.ts (re-exported from the orchestrator, zero call-site churn for bctcVpsIngestHandler.ts/checkSscReports.ts/reports.ts/tests) to avoid a circular import. The pre-existing per-date special-case (signalText.includes('2023') && year===2024) is left byte-identical (untouched) per the task's own instruction; flagged as JANITOR-035 in docs/data/code-janitor-known-findings.json (was previously only mentioned generically inside a different CI-scan idea, not tracked as its own entry).\n\ntsc clean. Targeted suite (17 of 18 relevant files, excluding FIX-1267): 156 pass/2 skip/0 fail. FIX-1267-ssc-circuit-breaker.test.ts AC-7/AC-8 (PDF-timeout/CircuitOpenError integration) reproduce identically on the UNMODIFIED pre-split file (confirmed by temporarily restoring it via git show HEAD and re-running 3x: 7-8 pass / 1-2 fail, same timeout pattern) — pre-existing subprocess/network-timing flakiness (isOcrAvailable()/axios calls), not caused by this split. Also updated p2-f-rag-http-rewire.test.ts: its \"imports AnalysisInput from ragHttpClient\" AC grepped the orchestrator's source text for the string \"ragHttpClient\" — that import legitimately moved to bctc/insertBctcAnalysis.ts with Step 4, updated the check to cover both files (same acceptance intent, correct location). Full bun test: 14353 pass/40 skip/64 fail/6 errors/1180 files (605s) then the known Bun 1.3.13 crash-at-teardown (non-authoritative) — grepped the full log for fetchParseAndStoreBctc/resolvePdfText/newsChainFallback/insertBctcAnalysis/bctc-types: only the 2 already-explained pre-existing-flaky FIX-1267 fails reference any touched file, zero other overlap; all other fails match the documented pre-existing pollNews/VPS-push/RSS-timeout + shared-DB-race flaky class. Server boot verified PORT=3997: /health 200 toolCount=183 (matches docs/data/project-stats.json baseline), /api/bctc-inspect 200, /dashboards/news-fetch/ 200. Gate 2d scheduler cron.schedule grep=3 unchanged (no scheduler files touched). Simplicity gate: PASS (Q1 clean pure relocation; Q2 insertBctcAnalysis.ts single call-site today, justified as DoD-driven not speculative; Q3 clean 4 single-responsibility DDD-step files; Q4 clean ~100% required). Doc updates: usecases.md (split description), pdfOcrWorker.ts pointer comment relocated to bctc/resolvePdfText.ts. Commit: 5027fda09 (code+tests+docs), acf4381ef (memory).\n\nrebuild_required=true — BCTC pipeline runs against the live named-volume market.db via scheduler + push-bctc-pdf route. This task's own DoD explicitly requires RAW-verify against the named-volume DB after rebuild that BCTC confidence values are unchanged (not just unit-test green) — per the Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md), ops performs Steps 1-4 (rebuild+SHA-gate) next, then qa Step 5 RAW-verify (confirm BCTC confidence values unchanged pre/post on live data), then po Step 6 closes DONE_VERIFIED — matching the immediately-preceding sibling FACTORY-APP-dedup-date-freshness-helpers precedent for rebuild_required=true FACTORY tasks in this same zone.",
         "reviewed_at": "2026-07-08T19:30:12Z",

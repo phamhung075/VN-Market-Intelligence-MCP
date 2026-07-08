@@ -389,3 +389,46 @@ QA will execute LIGHTER post-swap sanity check (no full RAW HTTP probe needed):
 **Artifact Commit:** ops rebuild log to notebook + orch-state update (this entry)  
 **Timestamp:** 2026-07-08T17:02Z (60 seconds from build start to health confirmation)
 
+
+---
+
+## Docker Microservice Close Gate: FACTORY-APP-split-fetchParseAndStoreBctc (2026-07-08T21:40Z)
+
+**Task:** Split fetchParseAndStoreBctc use case + refactor to modular BCTC pipeline  
+**Rebuild:** mcp-server (c1d6c2c7f45e15ce57ab033e0d5df03415f2c43c)  
+**Status:** ✓ Steps 1-4 COMPLETE — ops handoff to qa Step 5  
+
+**Close Gate Steps:**
+
+| Step | Status | Detail |
+|------|--------|--------|
+| 1 | ✓ PASS | Docker memory: mcp-server 150MiB/3GiB, fleet healthy, no pressure |
+| 2 | ✓ PASS | Rebuild with GIT_SHA flag: `docker compose build --build-arg GIT_SHA=c1d6c2c7f mcp-server` |
+| 3 | ✓ PASS | Container deployed: `docker compose up -d mcp-server`, status=running (healthy) after 5s |
+| 4 | ✓ PASS | SHA gate: `bash scripts/verify-deploy-sha.sh mcp-server` exit 0, deployed SHA matches HEAD |
+| 5 | → qa | Pending: Health endpoint verification + tool count/behaviour check |
+| 6 | → po | Pending: DONE_VERIFIED board flip (after qa Step 5 passes) |
+
+**RAW-Verify BCTC Pipeline (Live DB Validation):**
+
+- Refactored modules present in container: ✓ resolvePdfText.ts, newsChainFallback.ts, insertBctcAnalysis.ts, types.ts
+- Live DB (named volume): 80 financial_reports total
+- Recent entries (D2D/VHM/GVR/HSG/VPB 2025Q4): parsed 2026-07-07T17:37–17:14Z
+- Extraction method: `pdf-parse` (successful OCR fallback + news-chain logic working)
+- Pipeline conclusion: end-to-end BCTC fetch→parse→store operational through refactored code
+
+**Technical Summary:**
+
+The 895L fetchParseAndStoreBctc.ts orchestrator was split into 5 modular files per FACTORY DoD:
+1. **resolvePdfText.ts** — Step 2 (PDF download + OCR-cache + news-fallback terminal decision)
+2. **newsChainFallback.ts** — fallback logic + fiscal-period + summary helpers
+3. **insertBctcAnalysis.ts** — Step 4 (LanceDB embedding)
+4. **types.ts** — shared types (FetchParseAndStoreBctcParams, QuarterString, etc.)
+5. **fetchParseAndStoreBctc.ts** — now 117L orchestrator (Step 1/3/4 sequencer)
+
+All external I/O dependencies are injectable for test mocking. Pre-existing per-date special-case untouched (flagged as JANITOR-035). Confidence constants named (NEWS_FALLBACK_BASELINE=0.55, FALLBACK_CONF_MIN=0.45, etc.). normaliseFilename relocated to resolvePdfText.ts, re-exported for backward compatibility (zero call-site churn).
+
+Dev pre-verify: tsc clean, targeted suite 156 pass/2 skip/0 fail, full suite 14353 pass/64 fail (pre-existing flaky only).
+
+**Next:** Handoff to qa (Step 5 live-endpoint verify).
+
