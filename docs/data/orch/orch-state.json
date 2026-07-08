@@ -259,12 +259,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT",
-    "next_agent": "qa",
-    "next_action": "FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT at REVIEW -- qa: verify the SF-1 re-entrant self-hold fix (dev-team-tick-preflight.test.sh 55/55, incl. new T19 self-hold->RUN + T20 peer-hold regression guard) then flip DONE_VERIFIED. No rebuild/deploy needed (bash script + test file only, consumed live by the next dev-team cron tick).",
-    "updated_at": "2026-07-08T18:25:56Z",
-    "updated_by": "developer"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT DONE_VERIFIED (qa independent re-verify PASS 2026-07-08T18:34:27Z — self-hold vs genuine-peer-hold branches both re-confirmed correct by direct diff read; dev-team-tick-preflight.test.sh re-run 55/55 PASS incl. T19/T20; no other caller depends on the old broken behavior; one pre-existing SAME-CLASS residual flagged non-blocking (main.md ERROR-fallback pseudocode SF-1 claim step still lacks a self-hold branch — out of this task's scope, follow-up candidate); DJ-GATE-1 journal confirmed substantive; scope confirmed clean, script+test only, no apps/* change, no Docker Close Gate needed).",
+    "updated_at": "2026-07-08T18:34:27Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9433,6 +9433,24 @@
           "process_note": "qa CORRECTLY held the row at REVIEW with next_agent=po (commit 8efc5e870) and did NOT self-close to DONE_VERIFIED — the FOURTH consecutive rebuild_required close-gate task (after FACTORY-DOMAIN-extract-bctc-parsing-lib, FACTORY-DOMAIN-relocate-stock-catalog, FACTORY-INTERFACE-extract-finalizeBctc-usecase) where qa followed the runbook Step 6 delegation rule; the qa-self-close occurrence count stays at 1 (below the recurring-2+ escalation threshold, memory feedback_recurring_bug_escalation), guardrail-mint trigger remains armed but un-fired — not minting on this pass (three-plus consecutive correct adherences = behavior holding without a flow-doc guardrail; minting now = intervention-churn, memory project_systemic_review_0704). .HEAD-SYNC GAP CLOSED: this po write updates the done_verified row AND the top-level canonical .head in the SAME scripts/orch-apply.sh write — the exact gap that bit ops's e72111120 write (router had to add f4afa0e03 to sync .head) and was flagged as the 3rd recurrence in this chain's dispatch. .task_board.head left untouched (it is the deprecated stub, canonical is top-level .head). Idle-handback set to status=done / active_task_id=null / next_agent=router, matching the 3 sibling FACTORY closeouts (03369e72d, c267412cd, d6814bd03) — router picks the next BOUNDED-1 backlog row (chose 'router' over a bare null next_agent to avoid orphaning the auto-pickup loop).",
           "residual_advisory": "No blocking residual. Disambiguated during po spot-check: a SECOND isPriceFresh exists at application/services/market-data/marketDataValidator.ts:34 — this is a GENUINELY DISTINCT pre-existing function, NOT a missed 4th duplicate: different signature (isPriceFresh(opts:{maxAgeMs?, now?}) sync boolean vs the new isPriceFresh(db, logLabel) async Promise<boolean>), different threshold (2h/7,200,000ms default vs 24h PRICE_FRESHNESS_MS), different table (market_prices WHERE exchange='HOSE' vs daily_ohlcv). It predates this task (introduced 8fc725347, 2026-04-24 DDD scaffold) and was UNTOUCHED by dbb87db26. Correctly left out of scope — same-name/different-purpose, consistent with the sibling FACTORY tasks' keep-distinct-functions-separate principle. The 3 usecase-file copies that DID share the 24h/daily_ohlcv/db+logLabel semantics were the true duplicates and are now centralized."
         }
+      },
+      {
+        "id": "FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT",
+        "title": "FIX — dev-team-tick-preflight.sh _step_sf1_claim() not re-entrant on session's OWN held SF-1: reads only .claimed -> phantom 'peer holds it' SKIP for the full 90min TTL when current_holder.owner_client_session==self",
+        "owner": "developer",
+        "status": "DONE_VERIFIED",
+        "zone": "cross-service",
+        "priority": "low",
+        "type": "FIX",
+        "next_agent": "qa",
+        "created_at": "2026-07-03T22:31:03Z",
+        "status_note": "Router-detected latent candidate ACCEPTED (non-urgent). scripts/agents-flow/dev-team-tick-preflight.sh _step_sf1_claim() (~L120-142) is NOT re-entrant: on a session's OWN held SF-1 it inspects only .claimed and returns 'peer holds it' -> SKIP with detail 'SF-1 held by peer session', even when current_holder.owner_client_session == self. FIX: mirror _step_fire_election() (~L161-189) which DOES compare current_holder.owner_client_session and heartbeats on self-hold. LATENT: SKIP is the CORRECT outcome while a tick is genuinely in-flight; real harm case = SF-1 self-held while session is free -> phantom-peer-SKIP for the full 90min TTL = a dead-drive window. Zone cross-service (scripts/agents-flow/, NOT apps/). Owner developer/general.",
+        "reviewed_at": "2026-07-08T18:25:56Z",
+        "reviewed_by": "developer",
+        "review_note": "Confirmed status_note diagnosis exactly: scripts/agents-flow/dev-team-tick-preflight.sh _step_sf1_claim() inspected only .claimed on a failed claim, unconditionally returning \"peer holds it\" -> SKIP even on self-hold (live-reproduced: 4 consecutive dev-team cron ticks false-SKIP'd while dev-team-cron-singleton was self-held by the calling session, confirmed via task_list_held). Mirrored _step_fire_election()'s existing self-hold branch: compare current_holder.owner_client_session vs self -- self-hold now heartbeat-renews SF-1 and returns 0 (proceed) instead of false-SKIP; genuine peer (different session) unchanged, still SKIPs, still releases nothing. Added T19 (self-hold -> RUN+heartbeat, no release/telegram) + T20 (regression guard: real peer-hold still SKIPs) to dev-team-tick-preflight.test.sh -- 55/55 pass (53 pre-existing + 2 new). Live-verified against the actual production lock: ran the script directly, verdict flipped from the previously-observed SKIP to RUN; task_list_held confirmed both locks still healthy/self-held post-run (TTLs renewed, no corruption). Commit 216205e0c (script + test), ca733ab4a (decision journal). Scope: scripts/agents-flow/ only (cross-service dispatcher fix), no apps/* change, no Docker Close Gate needed.",
+        "qa_review_note": "qa independent re-verify (2026-07-08): read the actual diff at commit 216205e0c myself — _step_sf1_claim() now compares current_holder.owner_client_session against self on claimed:false; self-hold heartbeat-renews SF-1 and returns 0 (proceed), exactly mirroring the sibling _step_fire_election() self-hold branch already in the same file; genuine peer-hold (different session) falls through unchanged to the original SKIP path (a) — releases nothing, still returns 1. The two branches are gated by distinct comparisons, not conflated — confirmed the safety-critical peer-collision SKIP was NOT weakened. Re-ran scripts/agents-flow/dev-team-tick-preflight.test.sh myself directly: 55/55 PASS (53 pre-existing unchanged + T19 self-hold->RUN+heartbeat/no-release/no-telegram + T20 regression guard: real peer-hold still SKIPs, still releases nothing). Checked for other callers/assumptions: _step_sf1_claim() has exactly one call site (run_preflight()); grepped the whole repo — only decision-journal/notebook/architecture-brief prose references the bug, nothing else silently depended on the old always-SKIP-on-claimed-false behavior. Found ONE pre-existing residual of the SAME bug class, correctly out of this task scope: docs/agents/dev-team/flow/main.md Step 0-PREFLIGHT-FALLBACK inline SF-1 claim pseudocode (~L158-161, ERROR-fallback/manual-run path only) still has no self-hold branch, unlike its own sibling fire-election block immediately below it (~L194-203) which does — pre-existing (not introduced/worsened by this commit), already flagged in the scripts own header comment (L29-33), reached only on transport/malformed-JSON error or a fully-manual run. Non-blocking for this fix (scope = scripts/agents-flow/dev-team-tick-preflight.sh only); flagged as a follow-up candidate for router/pm, not filed as a new backlog row (task-breakdown is not QAs job). DDD scan not applicable (bash script, no domain/infra layering); security scan clean (no process.env, no hardcoded secrets/passwords/tokens in the diff — grepped both touched files). shellcheck flags only 2 pre-existing info-level nits on lines untouched by this diff (SC1091 relative source, SC2012 ls-vs-find) — not new, not introduced by this fix. Confirmed DJ-GATE-1: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S6 carries task-id: FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT with a substantive body. Scope check: git show 216205e0c --stat touches only dev-team-tick-preflight.sh + its test file — zero apps/* change, no Docker Close Gate needed (bash script, consumed live by the next dev-team cron tick, no rebuild/deploy). VERDICT: PASS.",
+        "updated_at": "2026-07-08T18:34:27Z",
+        "updated_by": "qa"
       }
     ],
     "head": {
@@ -9563,21 +9581,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "id": "FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT",
-        "title": "FIX — dev-team-tick-preflight.sh _step_sf1_claim() not re-entrant on session's OWN held SF-1: reads only .claimed -> phantom 'peer holds it' SKIP for the full 90min TTL when current_holder.owner_client_session==self",
-        "owner": "developer",
-        "status": "REVIEW",
-        "zone": "cross-service",
-        "priority": "low",
-        "type": "FIX",
-        "next_agent": "qa",
-        "created_at": "2026-07-03T22:31:03Z",
-        "status_note": "Router-detected latent candidate ACCEPTED (non-urgent). scripts/agents-flow/dev-team-tick-preflight.sh _step_sf1_claim() (~L120-142) is NOT re-entrant: on a session's OWN held SF-1 it inspects only .claimed and returns 'peer holds it' -> SKIP with detail 'SF-1 held by peer session', even when current_holder.owner_client_session == self. FIX: mirror _step_fire_election() (~L161-189) which DOES compare current_holder.owner_client_session and heartbeats on self-hold. LATENT: SKIP is the CORRECT outcome while a tick is genuinely in-flight; real harm case = SF-1 self-held while session is free -> phantom-peer-SKIP for the full 90min TTL = a dead-drive window. Zone cross-service (scripts/agents-flow/, NOT apps/). Owner developer/general.",
-        "reviewed_at": "2026-07-08T18:25:56Z",
-        "reviewed_by": "developer",
-        "review_note": "Confirmed status_note diagnosis exactly: scripts/agents-flow/dev-team-tick-preflight.sh _step_sf1_claim() inspected only .claimed on a failed claim, unconditionally returning \"peer holds it\" -> SKIP even on self-hold (live-reproduced: 4 consecutive dev-team cron ticks false-SKIP'd while dev-team-cron-singleton was self-held by the calling session, confirmed via task_list_held). Mirrored _step_fire_election()'s existing self-hold branch: compare current_holder.owner_client_session vs self -- self-hold now heartbeat-renews SF-1 and returns 0 (proceed) instead of false-SKIP; genuine peer (different session) unchanged, still SKIPs, still releases nothing. Added T19 (self-hold -> RUN+heartbeat, no release/telegram) + T20 (regression guard: real peer-hold still SKIPs) to dev-team-tick-preflight.test.sh -- 55/55 pass (53 pre-existing + 2 new). Live-verified against the actual production lock: ran the script directly, verdict flipped from the previously-observed SKIP to RUN; task_list_held confirmed both locks still healthy/self-held post-run (TTLs renewed, no corruption). Commit 216205e0c (script + test), ca733ab4a (decision journal). Scope: scripts/agents-flow/ only (cross-service dispatcher fix), no apps/* change, no Docker Close Gate needed."
       }
     ],
     "qa": [],
