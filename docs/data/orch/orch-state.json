@@ -283,12 +283,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FACTORY-FRONTEND-split-dashboard-analysis",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-FRONTEND-split-dashboard-analysis — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-09T04:47:08Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "ops",
+    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild+verify frontend) — dashboard.analysis.tsx (1836L->457L) now imports formatters from app/domain/formatters/* and ~22 components from app/components/analysis/*; pure move, no behavior change. Confirm /dashboard/analysis and ?stock=VNM render identically post-rebuild, then qa Step 5 live-verify, then po Step 6 sign-off.",
+    "updated_at": "2026-07-09T05:38:36Z",
+    "updated_by": "dev-frontend"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -583,8 +583,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T04:15:54Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-07-09T05:38:36Z",
+    "_updated_by": "dev-frontend",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8780,22 +8780,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "title": "Split the 1845L dashboard.analysis route (helpers + ~30 components)",
-        "priority": "P1",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-FRONTEND-split-dashboard-analysis",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-dashboard-analysis",
-        "promoted_at": "2026-07-09T04:47:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T04:47:08Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -8914,6 +8899,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Split the 1845L dashboard.analysis route (helpers + ~30 components)",
+        "priority": "P1",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-FRONTEND-split-dashboard-analysis",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-dashboard-analysis",
+        "promoted_at": "2026-07-09T04:47:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T04:47:08Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "moved_to_review_at": "2026-07-09T05:38:36Z",
+        "moved_by": "dev-frontend",
+        "review_note": "Split 1836L dashboard.analysis.tsx per 2026-06-15 maintainability factory audit — direct sequel to FACTORY-FRONTEND-extract-computeDecision (DONE_VERIFIED). 5 pure helpers (signalColor/confidencePct/confidenceLabel/indicatorLabel/directionLabel) moved to app/domain/formatters/*; confidenceBar (JSX) moved to components/analysis/ConfidenceBar.tsx; ~22 presentational components extracted to app/components/analysis/*.tsx (one cluster per file, all <=120L — 2 initial over-cap files split further: StockDetailPanel+StockDetailBottomGrid, plus WatchlistTile comment-trimmed). Route dropped 1836L->457L; only loader + default export + AnalysisBriefDto/AnalysisBriefResult/StockDetail types remain (now exported so moved components can import-type them, same pattern as FinancialsZone/NewsBuzzZone). Route carries an honest size-justification header (457L, smallest of 19 sibling /dashboard/*.tsx routes, all currently unheaded pending the not-yet-built CI-size-lint-justification gate). Pure move, no behavior change. RAW-verify: fresh isolated dev server (bypassing stale live :3001 container) — curl /dashboard/analysis (9/9 content checks) and ?stock=VNM (8/8 checks, all StockDetailPanel sub-panels present); one anomaly (2 deterministic null bytes mid-\"định\") confirmed PRE-EXISTING via git-stash A/B against the original 1836L file, not a regression. Commits: a5e629411..41279090e (18 extraction + 2 doc/fixup), ecbbb9de6 (domain-model.md doc), d337cf5dd (notebook), 590731782 (decision journal). vitest 2047 pass / 2 pre-existing fail (QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (5 pre-existing react-hooks/exhaustive-deps errors in unrelated CorporateEventsZone/FinancialsZone/TechnicalZone, confirmed present pre-change); Playwright G12 4/4 GREEN (isolated port). rebuild_required=true — route file touched; holding at REVIEW (not self-flipping) per Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+verify, then qa live-verify, then po Step 6 sign-off."
       }
     ],
     "qa": [],
