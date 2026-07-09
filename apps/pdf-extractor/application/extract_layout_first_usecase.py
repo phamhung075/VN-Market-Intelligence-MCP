@@ -218,6 +218,10 @@ class ExtractLayoutFirstUseCase:
 
         AC-LFE-9 (sequential): one document per call. No batch. No concurrency.
 
+        Linear pipeline — each tier is a private method (see "Private helpers"
+        below); this method threads their results through in order and keeps
+        the eval-push calls at the same logical points as before extraction.
+
         Args:
             report_id: UUID string matching financial_reports.id on mcp-server.
             pdf_path:  Absolute path to the PDF file on disk.
@@ -235,179 +239,28 @@ class ExtractLayoutFirstUseCase:
             pdf_path,
         )
 
-        # ------------------------------------------------------------------
-        # Step 0: Fetch stored per-page OCR text (Tier 0 input — CHEAP)
-        # No new Tesseract calls. Uses already-stored pdf_extracted_text.
-        # ------------------------------------------------------------------
-        ocr_pages: List[Dict] = []
-        try:
-            ocr_pages = await self._ocr_pages_client.fetch_ocr_pages(report_id)
-            logger.info(
-                "ExtractLayoutFirstUseCase: fetched %d stored OCR pages for report_id=%s",
-                len(ocr_pages),
-                report_id,
-            )
-        except Exception as exc:
-            logger.warning(
-                "ExtractLayoutFirstUseCase: OCR pages fetch failed: %s — "
-                "proceeding with empty page records (geometry-only path)",
-                exc,
-            )
+        abort_result = {
+            "units_total": 0,
+            "units_passing": 0,
+            "units_quarantined": 0,
+            "pushed": False,
+        }
 
-        # ------------------------------------------------------------------
-        # Step 1 (Tier 0): Build document map — geometric fingerprint grouping
-        # Inputs: stored OCR text pages + low-DPI PIL rasters (50 DPI).
-        # No Tesseract calls in this tier (AC-LFE-6).
-        # ------------------------------------------------------------------
-        try:
-            document_map: Dict = self._build_document_map(
-                pages=ocr_pages,
-                pdf_path=pdf_path,
-            )
-        except Exception as exc:
-            logger.error(
-                "ExtractLayoutFirstUseCase: Tier 0 document map failed: %s — aborting",
-                exc,
-            )
-            return {"units_total": 0, "units_passing": 0, "units_quarantined": 0, "pushed": False}
-
+        # Tier 0 — fetch stored OCR pages + build document map (geometric
+        # fingerprint grouping). No new Tesseract calls (AC-LFE-6).
+        ocr_pages, document_map = await self._tier0_document_map(report_id, pdf_path)
+        if document_map is None:
+            return abort_result
         units_in_map: List[Dict] = document_map.get("units", [])
-        logger.info(
-            "ExtractLayoutFirstUseCase: Tier 0 complete — %d logical units found",
-            len(units_in_map),
-        )
 
-        # ------------------------------------------------------------------
-        # Step 2 (Tier 1): Zone each page in each unit.
-        # Schema-page: detect column gutters from 200-DPI raster.
-        # Continuation pages: INHERIT schema-page's column schema (the named fix).
-        # ------------------------------------------------------------------
-        zones_by_page: Dict[int, Dict] = {}
-        page_zones_output: List[Dict] = []
+        # Tier 1 — per-page layout zoning (header/footer bands + column
+        # gutters); continuation pages inherit the schema-page's column schema.
+        zones_by_page, page_zones_output = self._tier1_zone_pages(pdf_path, units_in_map)
+        if zones_by_page is None:
+            return abort_result
 
-        try:
-            from pdf2image import convert_from_path  # type: ignore
-        except ImportError:
-            logger.error(
-                "ExtractLayoutFirstUseCase: pdf2image not installed — cannot rasterize pages"
-            )
-            return {"units_total": 0, "units_passing": 0, "units_quarantined": 0, "pushed": False}
-
-        import tempfile
-        import os
-
-        with tempfile.TemporaryDirectory(prefix="pdf_lf_tier1_") as tmp_dir:
-            for unit in units_in_map:
-                unit_id = unit.get("unit_id", str(uuid.uuid4()))
-                schema_page_num = unit.get("schema_page")
-                pages_in_unit: List[int] = unit.get("pages", [])
-                unit_page_type = unit.get("page_type", "table")
-
-                # Compute unit boundary (is the last page of this unit a boundary?)
-                # The last page of a unit has unit_boundary_after_page=True
-                unit_pages_set = set(pages_in_unit)
-
-                # For table units: derive column schema from schema-page first
-                schema_column_gutters: Optional[List[Dict]] = None
-                schema_row_pitch: Optional[float] = None
-
-                for page_num in sorted(pages_in_unit):
-                    is_schema = (page_num == schema_page_num)
-                    is_last_page = (page_num == max(pages_in_unit)) if pages_in_unit else False
-
-                    # Rasterize at 200 DPI for Tier 1 zone detection
-                    page_img = self._rasterize_page_200dpi(
-                        pdf_path=pdf_path,
-                        page_num=page_num,
-                        tmp_dir=tmp_dir,
-                        convert_from_path=convert_from_path,
-                    )
-
-                    if page_img is None:
-                        logger.warning(
-                            "ExtractLayoutFirstUseCase: could not rasterize page %d — "
-                            "marking as blank",
-                            page_num,
-                        )
-                        page_zones = self._make_blank_page_zones(
-                            page_num=page_num,
-                            unit_id=unit_id,
-                            is_schema_page=is_schema,
-                            schema_inherited_from_page=None if is_schema else schema_page_num,
-                        )
-                    else:
-                        # Run Tier 1 zone detection (or schema inheritance)
-                        inherited_schema = None
-                        if not is_schema and schema_column_gutters is not None:
-                            inherited_schema = {
-                                "column_gutters": schema_column_gutters,
-                                "row_pitch": schema_row_pitch,
-                            }
-
-                        try:
-                            page_zones = self._zone_page(
-                                page_img=page_img,
-                                unit_schema=inherited_schema,
-                                page_num=page_num,
-                                unit_id=unit_id,
-                                unit_page_type=unit_page_type,
-                                is_schema_page=is_schema,
-                                schema_inherited_from_page=(
-                                    None if is_schema else schema_page_num
-                                ),
-                            )
-                        except Exception as exc:
-                            logger.warning(
-                                "ExtractLayoutFirstUseCase: zone_page failed for page %d: %s",
-                                page_num,
-                                exc,
-                            )
-                            page_zones = self._make_blank_page_zones(
-                                page_num=page_num,
-                                unit_id=unit_id,
-                                is_schema_page=is_schema,
-                                schema_inherited_from_page=None if is_schema else schema_page_num,
-                            )
-
-                        # Capture schema-page column gutters for inheritance
-                        if is_schema and page_zones.get("zones"):
-                            schema_column_gutters = (
-                                page_zones["zones"].get("column_gutters") or []
-                            )
-                            row_bands = page_zones["zones"].get("row_bands") or []
-                            if len(row_bands) >= 2:
-                                pitches = [
-                                    row_bands[i + 1]["y_min"] - row_bands[i]["y_min"]
-                                    for i in range(len(row_bands) - 1)
-                                ]
-                                schema_row_pitch = sum(pitches) / len(pitches) if pitches else None
-
-                        # Release PIL image
-                        try:
-                            page_img.close()
-                        except Exception:
-                            pass
-
-                    # Set unit_boundary_after_page on the last page of each unit
-                    if page_zones.get("zones"):
-                        page_zones["zones"]["unit_boundary_after_page"] = is_last_page
-
-                    zones_by_page[page_num] = page_zones
-                    page_zones_output.append(page_zones)
-
-        logger.info(
-            "ExtractLayoutFirstUseCase: Tier 1 complete — %d page zones produced",
-            len(page_zones_output),
-        )
-
-        # ------------------------------------------------------------------
-        # Eval Stage 1 — RASTERIZE (observability, not a pipeline gate)
-        # Runs after Tier 1 completes (page PNGs were produced in tmp_dir;
-        # however tmp_dir is already closed here — we pass pdf_path + rasterized
-        # count metrics from page_zones_output as a proxy).
-        # Note: tmp_dir was cleaned up above. We evaluate from the zone output
-        # count as the rasterized_count proxy. SHA is skipped (tmp files gone).
-        # ------------------------------------------------------------------
+        # Eval Stage 1 (RASTERIZE) + Stage 2 (LAYOUT_DETECT) — observability
+        # only, never a pipeline gate. Run once Tier 1 output is known.
         thresholds = _load_thresholds()
         await self._eval_push_stage1(
             report_id=report_id,
@@ -415,11 +268,6 @@ class ExtractLayoutFirstUseCase:
             page_zones_output=page_zones_output,
             thresholds=thresholds,
         )
-
-        # ------------------------------------------------------------------
-        # Eval Stage 2 — LAYOUT_DETECT (observability, not a pipeline gate)
-        # Runs after Tier 1 — layout units and page zones are now known.
-        # ------------------------------------------------------------------
         await self._eval_push_stage2(
             report_id=report_id,
             units_in_map=units_in_map,
@@ -427,53 +275,16 @@ class ExtractLayoutFirstUseCase:
             thresholds=thresholds,
         )
 
-        # ------------------------------------------------------------------
-        # Step 3 (Tier 2): OCR into known grid + cross-page stitch
-        # ONE image_to_data call per page (AC-LFE-6).
-        # ------------------------------------------------------------------
-        unit_ocr_results: List[Dict] = []
-
-        with tempfile.TemporaryDirectory(prefix="pdf_lf_tier2_") as tmp_dir:
-            for unit in units_in_map:
-                unit_id = unit.get("unit_id", str(uuid.uuid4()))
-                unit_page_type = unit.get("page_type", "table")
-
-                try:
-                    ocr_result: Dict = self._ocr_unit(
-                        unit=unit,
-                        zones_by_page=zones_by_page,
-                        pdf_path=pdf_path,
-                        tmp_dir=tmp_dir,
-                        ocr_pages=ocr_pages,
-                    )
-                    unit_ocr_results.append(ocr_result)
-                except Exception as exc:
-                    logger.warning(
-                        "ExtractLayoutFirstUseCase: ocr_unit failed for unit_id=%s: %s — "
-                        "storing as quarantined",
-                        unit_id,
-                        exc,
-                    )
-                    unit_ocr_results.append({
-                        "unit_id": unit_id,
-                        "page_numbers": unit.get("pages", []),
-                        "stitched_markdown": "",
-                        "row_count": 0,
-                        "page_row_spans": [],
-                        "rows_for_gate": [],
-                        "_ocr_error": str(exc),
-                    })
-
-        logger.info(
-            "ExtractLayoutFirstUseCase: Tier 2 complete — %d unit OCR results",
-            len(unit_ocr_results),
+        # Tier 2 — OCR into known grid + cross-page stitch. ONE image_to_data
+        # call per page (AC-LFE-6).
+        unit_ocr_results = await self._tier2_ocr_and_stitch(
+            pdf_path=pdf_path,
+            units_in_map=units_in_map,
+            zones_by_page=zones_by_page,
+            ocr_pages=ocr_pages,
         )
 
-        # ------------------------------------------------------------------
-        # Eval Stage 3 — OCR (observability, not a pipeline gate)
-        # Runs after Tier 2 OCR. Build ocr_text_per_page from stored pages
-        # fetched in Step 0 (ocr_pages) combined with unit_ocr_results text.
-        # ------------------------------------------------------------------
+        # Eval Stage 3 (OCR) — observability only. Runs after Tier 2 OCR.
         await self._eval_push_stage3(
             report_id=report_id,
             ocr_pages=ocr_pages,
@@ -482,157 +293,15 @@ class ExtractLayoutFirstUseCase:
             thresholds=thresholds,
         )
 
-        # ------------------------------------------------------------------
-        # Step 4 (Tier 3): Per-unit invariant gate
-        # Five gates total (run in order, 0 token cost, pure domain functions):
-        #
-        #   Gate A — B01-DN accounting identities (check_bs_accounting_identities)
-        #            Verifies: 280==440, 300+400==440, 100==Σ1xx, 200==Σ2xx
-        #   Gate B — Code whitelist (check_code_whitelist)
-        #            Every Mã số must be in the B01-DN/HN fixed code set.
-        #   Gate 1 — Balance identity (check_balance_identity — AC-0, geometric)
-        #   Gate 2 — Codes monotonic (check_codes_monotonic)
-        #   Gate 3 — No orphan rows (check_no_orphan_rows)
-        #
-        # Gates A+B: failures → emit needs_vision_verify marker (escalation-only).
-        #   The extractor does NOT call vision itself. The flow reads the marker
-        #   and renders only the flagged page(s) with pdftoppm → LLM-reads-PNG.
-        # Gates 1-3: failures → quarantined=1 (stored, not dropped).
-        # ------------------------------------------------------------------
-        units_output: List[Dict] = []
-        vision_verify_markers: List[Dict] = []
-        quarantine_breakdown = {
-            "balance_identity_fail": 0,
-            "codes_not_monotonic": 0,
-            "orphan_rows": 0,
-            "bs_identity_fail": 0,
-            "code_whitelist_fail": 0,
-        }
-
-        for ocr_result in unit_ocr_results:
-            unit_id = ocr_result.get("unit_id", str(uuid.uuid4()))
-            rows_for_gate: List[Dict] = ocr_result.get("rows_for_gate", [])
-            page_row_spans: List[Dict] = ocr_result.get("page_row_spans", [])
-            unit_page_numbers: List[int] = ocr_result.get("page_numbers", [])
-
-            # Check if OCR itself errored
-            if ocr_result.get("_ocr_error"):
-                units_output.append({
-                    "unit_id": unit_id,
-                    "stitched_markdown": ocr_result.get("stitched_markdown", ""),
-                    "row_count": ocr_result.get("row_count", 0),
-                    "quarantined": True,
-                    "quarantine_reason": f"ocr_error: {ocr_result['_ocr_error'][:100]}",
-                    "page_row_spans": page_row_spans,
-                })
-                continue
-
-            # ----------------------------------------------------------
-            # Gate A: B01-DN accounting-identity checksum (0 tokens, pure)
-            # ----------------------------------------------------------
-            bs_id_pass, bs_id_reason, bs_id_violations = check_bs_accounting_identities(
-                rows_for_gate
-            )
-            gate_a_failed = not bs_id_pass and "skipped" not in bs_id_reason
-
-            # ----------------------------------------------------------
-            # Gate B: Code-whitelist check (0 tokens, pure)
-            # ----------------------------------------------------------
-            wl_pass, wl_reason, wl_flagged_codes = check_code_whitelist(
-                rows_for_gate, template="B01_DN"
-            )
-            gate_b_failed = not wl_pass and "skipped" not in wl_reason
-
-            # Emit vision-verify marker when either gate fails
-            if gate_a_failed or gate_b_failed:
-                if gate_a_failed:
-                    quarantine_breakdown["bs_identity_fail"] += 1
-                if gate_b_failed:
-                    quarantine_breakdown["code_whitelist_fail"] += 1
-
-                if gate_a_failed and gate_b_failed:
-                    gate_label = "both"
-                    failing_reason = f"{bs_id_reason}; {wl_reason}"
-                elif gate_a_failed:
-                    gate_label = "checksum"
-                    failing_reason = bs_id_reason
-                else:
-                    gate_label = "code_whitelist"
-                    failing_reason = wl_reason
-
-                vision_verify_markers.append({
-                    "unit_id": unit_id,
-                    "page_numbers": unit_page_numbers,
-                    "failing_reason": failing_reason,
-                    "flagged_codes": wl_flagged_codes,
-                    "gate": gate_label,
-                })
-                logger.warning(
-                    "ExtractLayoutFirstUseCase: unit_id=%s needs_vision_verify=True "
-                    "gate=%s page_numbers=%s flagged_codes=%s",
-                    unit_id,
-                    gate_label,
-                    unit_page_numbers,
-                    wl_flagged_codes[:5] if wl_flagged_codes else [],
-                )
-
-            # ----------------------------------------------------------
-            # Gates 1-3: AC-0 invariants → quarantine decision
-            # ----------------------------------------------------------
-            quarantine_reasons: List[str] = []
-
-            bal_pass, bal_reason = check_balance_identity(rows_for_gate)
-            if not bal_pass:
-                quarantine_reasons.append(bal_reason)
-                quarantine_breakdown["balance_identity_fail"] += 1
-
-            mono_pass, mono_reason = check_codes_monotonic(rows_for_gate)
-            if not mono_pass:
-                quarantine_reasons.append(mono_reason)
-                quarantine_breakdown["codes_not_monotonic"] += 1
-
-            orphan_pass, orphan_reason = check_no_orphan_rows(rows_for_gate)
-            if not orphan_pass:
-                quarantine_reasons.append(orphan_reason)
-                quarantine_breakdown["orphan_rows"] += 1
-
-            is_quarantined = len(quarantine_reasons) > 0
-            quarantine_reason_str = "; ".join(quarantine_reasons) if quarantine_reasons else None
-
-            units_output.append({
-                "unit_id": unit_id,
-                "stitched_markdown": ocr_result.get("stitched_markdown", ""),
-                "row_count": ocr_result.get("row_count", 0),
-                "quarantined": is_quarantined,
-                "quarantine_reason": quarantine_reason_str,
-                "page_row_spans": page_row_spans,
-                # Carry the gate results for downstream inspection
-                "needs_vision_verify": gate_a_failed or gate_b_failed,
-            })
-
-        units_total = len(units_output)
-        units_quarantined = sum(1 for u in units_output if u["quarantined"])
-        units_passing = units_total - units_quarantined
-
-        needs_vision_verify_total = sum(
-            1 for u in units_output if u.get("needs_vision_verify")
+        # Tier 3 — per-unit invariant gate (5 gates; quarantine + vision-verify
+        # decisions). See _tier3_invariant_gate docstring for the gate list.
+        units_output, vision_verify_markers, pass_rate_report = (
+            self._tier3_invariant_gate(unit_ocr_results)
         )
-
-        pass_rate_report = {
-            "units_total": units_total,
-            "units_passing": units_passing,
-            "units_quarantined": units_quarantined,
-            "quarantine_breakdown": quarantine_breakdown,
-            "needs_vision_verify_count": needs_vision_verify_total,
-        }
-
-        logger.info(
-            "ExtractLayoutFirstUseCase: Tier 3 complete — "
-            "total=%d passing=%d quarantined=%d",
-            units_total,
-            units_passing,
-            units_quarantined,
-        )
+        units_total = pass_rate_report["units_total"]
+        units_passing = pass_rate_report["units_passing"]
+        units_quarantined = pass_rate_report["units_quarantined"]
+        needs_vision_verify_total = pass_rate_report["needs_vision_verify_count"]
 
         # ------------------------------------------------------------------
         # Step 5: Push to mcp-server → POST /api/push-bctc-layout
@@ -758,6 +427,466 @@ class ExtractLayoutFirstUseCase:
                 "unit_boundary_after_page": False,
             },
         }
+
+    # ------------------------------------------------------------------
+    # Tier 0 — Document map
+    # ------------------------------------------------------------------
+
+    async def _tier0_document_map(
+        self,
+        report_id: str,
+        pdf_path: str,
+    ) -> Tuple[List[Dict], Optional[Dict]]:
+        """
+        Tier 0 — fetch stored per-page OCR text (CHEAP, no new Tesseract
+        calls) then build the document map: group pages into logical units
+        by geometric fingerprint (AC-LFE-6).
+
+        Returns:
+            (ocr_pages, document_map). document_map is None when Tier 0
+            failed unrecoverably — the caller (execute()) must abort.
+        """
+        ocr_pages: List[Dict] = []
+        try:
+            ocr_pages = await self._ocr_pages_client.fetch_ocr_pages(report_id)
+            logger.info(
+                "ExtractLayoutFirstUseCase: fetched %d stored OCR pages for report_id=%s",
+                len(ocr_pages),
+                report_id,
+            )
+        except Exception as exc:
+            logger.warning(
+                "ExtractLayoutFirstUseCase: OCR pages fetch failed: %s — "
+                "proceeding with empty page records (geometry-only path)",
+                exc,
+            )
+
+        try:
+            document_map: Dict = self._build_document_map(
+                pages=ocr_pages,
+                pdf_path=pdf_path,
+            )
+        except Exception as exc:
+            logger.error(
+                "ExtractLayoutFirstUseCase: Tier 0 document map failed: %s — aborting",
+                exc,
+            )
+            return ocr_pages, None
+
+        logger.info(
+            "ExtractLayoutFirstUseCase: Tier 0 complete — %d logical units found",
+            len(document_map.get("units", [])),
+        )
+        return ocr_pages, document_map
+
+    # ------------------------------------------------------------------
+    # Tier 1 — Per-page layout zoning
+    # ------------------------------------------------------------------
+
+    def _zone_unit_pages(
+        self,
+        unit: Dict,
+        pdf_path: str,
+        tmp_dir: str,
+        convert_from_path: Any,
+    ) -> List[Dict]:
+        """
+        Tier 1 per-unit helper: zone every page belonging to one logical unit.
+
+        Schema-page: derives column gutters + row pitch from its 200-DPI
+        raster. Continuation pages INHERIT the schema-page's column schema
+        (the named fix for the FPT Q1 page-5 missing-header scramble).
+
+        Returns the PageZones dicts for this unit's pages, in page order,
+        with unit_boundary_after_page already set on the last page.
+        """
+        unit_id = unit.get("unit_id", str(uuid.uuid4()))
+        schema_page_num = unit.get("schema_page")
+        pages_in_unit: List[int] = unit.get("pages", [])
+        unit_page_type = unit.get("page_type", "table")
+
+        schema_column_gutters: Optional[List[Dict]] = None
+        schema_row_pitch: Optional[float] = None
+        unit_page_zones: List[Dict] = []
+
+        for page_num in sorted(pages_in_unit):
+            is_schema = (page_num == schema_page_num)
+            is_last_page = (page_num == max(pages_in_unit)) if pages_in_unit else False
+
+            # Rasterize at 200 DPI for Tier 1 zone detection
+            page_img = self._rasterize_page_200dpi(
+                pdf_path=pdf_path,
+                page_num=page_num,
+                tmp_dir=tmp_dir,
+                convert_from_path=convert_from_path,
+            )
+
+            if page_img is None:
+                logger.warning(
+                    "ExtractLayoutFirstUseCase: could not rasterize page %d — "
+                    "marking as blank",
+                    page_num,
+                )
+                page_zones = self._make_blank_page_zones(
+                    page_num=page_num,
+                    unit_id=unit_id,
+                    is_schema_page=is_schema,
+                    schema_inherited_from_page=None if is_schema else schema_page_num,
+                )
+            else:
+                # Run Tier 1 zone detection (or schema inheritance)
+                inherited_schema = None
+                if not is_schema and schema_column_gutters is not None:
+                    inherited_schema = {
+                        "column_gutters": schema_column_gutters,
+                        "row_pitch": schema_row_pitch,
+                    }
+
+                try:
+                    page_zones = self._zone_page(
+                        page_img=page_img,
+                        unit_schema=inherited_schema,
+                        page_num=page_num,
+                        unit_id=unit_id,
+                        unit_page_type=unit_page_type,
+                        is_schema_page=is_schema,
+                        schema_inherited_from_page=(
+                            None if is_schema else schema_page_num
+                        ),
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "ExtractLayoutFirstUseCase: zone_page failed for page %d: %s",
+                        page_num,
+                        exc,
+                    )
+                    page_zones = self._make_blank_page_zones(
+                        page_num=page_num,
+                        unit_id=unit_id,
+                        is_schema_page=is_schema,
+                        schema_inherited_from_page=None if is_schema else schema_page_num,
+                    )
+
+                # Capture schema-page column gutters for inheritance
+                if is_schema and page_zones.get("zones"):
+                    schema_column_gutters = (
+                        page_zones["zones"].get("column_gutters") or []
+                    )
+                    row_bands = page_zones["zones"].get("row_bands") or []
+                    if len(row_bands) >= 2:
+                        pitches = [
+                            row_bands[i + 1]["y_min"] - row_bands[i]["y_min"]
+                            for i in range(len(row_bands) - 1)
+                        ]
+                        schema_row_pitch = sum(pitches) / len(pitches) if pitches else None
+
+                # Release PIL image
+                try:
+                    page_img.close()
+                except Exception:
+                    pass
+
+            # Set unit_boundary_after_page on the last page of each unit
+            if page_zones.get("zones"):
+                page_zones["zones"]["unit_boundary_after_page"] = is_last_page
+
+            unit_page_zones.append(page_zones)
+
+        return unit_page_zones
+
+    def _tier1_zone_pages(
+        self,
+        pdf_path: str,
+        units_in_map: List[Dict],
+    ) -> Tuple[Optional[Dict[int, Dict]], List[Dict]]:
+        """
+        Tier 1 — per-page layout zoning: header/footer bands + column gutter
+        detection, one unit at a time (see _zone_unit_pages for the per-unit
+        algorithm).
+
+        Returns:
+            (zones_by_page, page_zones_output). zones_by_page is None when
+            pdf2image is unavailable — the caller (execute()) must abort.
+        """
+        try:
+            from pdf2image import convert_from_path  # type: ignore
+        except ImportError:
+            logger.error(
+                "ExtractLayoutFirstUseCase: pdf2image not installed — cannot rasterize pages"
+            )
+            return None, []
+
+        import tempfile
+
+        zones_by_page: Dict[int, Dict] = {}
+        page_zones_output: List[Dict] = []
+
+        with tempfile.TemporaryDirectory(prefix="pdf_lf_tier1_") as tmp_dir:
+            for unit in units_in_map:
+                unit_page_zones = self._zone_unit_pages(
+                    unit=unit,
+                    pdf_path=pdf_path,
+                    tmp_dir=tmp_dir,
+                    convert_from_path=convert_from_path,
+                )
+                for page_zones in unit_page_zones:
+                    page_num = page_zones.get("page_number")
+                    zones_by_page[page_num] = page_zones
+                    page_zones_output.append(page_zones)
+
+        logger.info(
+            "ExtractLayoutFirstUseCase: Tier 1 complete — %d page zones produced",
+            len(page_zones_output),
+        )
+        return zones_by_page, page_zones_output
+
+    # ------------------------------------------------------------------
+    # Tier 2 — OCR into known grid + cross-page stitch
+    # ------------------------------------------------------------------
+
+    async def _tier2_ocr_and_stitch(
+        self,
+        pdf_path: str,
+        units_in_map: List[Dict],
+        zones_by_page: Dict[int, Dict],
+        ocr_pages: List[Dict],
+    ) -> List[Dict]:
+        """
+        Tier 2 — OCR into known grid + cross-page stitch. ONE image_to_data
+        call per page (AC-LFE-6). ocr_unit failures are captured as
+        quarantine-tagged results (_ocr_error), never raised — Tier 3 makes
+        the actual quarantine decision from rows_for_gate.
+        """
+        import tempfile
+
+        unit_ocr_results: List[Dict] = []
+
+        with tempfile.TemporaryDirectory(prefix="pdf_lf_tier2_") as tmp_dir:
+            for unit in units_in_map:
+                unit_id = unit.get("unit_id", str(uuid.uuid4()))
+
+                try:
+                    ocr_result: Dict = self._ocr_unit(
+                        unit=unit,
+                        zones_by_page=zones_by_page,
+                        pdf_path=pdf_path,
+                        tmp_dir=tmp_dir,
+                        ocr_pages=ocr_pages,
+                    )
+                    unit_ocr_results.append(ocr_result)
+                except Exception as exc:
+                    logger.warning(
+                        "ExtractLayoutFirstUseCase: ocr_unit failed for unit_id=%s: %s — "
+                        "storing as quarantined",
+                        unit_id,
+                        exc,
+                    )
+                    unit_ocr_results.append({
+                        "unit_id": unit_id,
+                        "page_numbers": unit.get("pages", []),
+                        "stitched_markdown": "",
+                        "row_count": 0,
+                        "page_row_spans": [],
+                        "rows_for_gate": [],
+                        "_ocr_error": str(exc),
+                    })
+
+        logger.info(
+            "ExtractLayoutFirstUseCase: Tier 2 complete — %d unit OCR results",
+            len(unit_ocr_results),
+        )
+        return unit_ocr_results
+
+    # ------------------------------------------------------------------
+    # Tier 3 — Per-unit invariant gate
+    # ------------------------------------------------------------------
+
+    def _gate_check_unit(
+        self,
+        ocr_result: Dict,
+        quarantine_breakdown: Dict[str, int],
+    ) -> Tuple[Dict, Optional[Dict]]:
+        """
+        Tier 3 per-unit helper — run gate A/B (accounting identity + code
+        whitelist, escalation-only) and gates 1-3 (AC-0 invariants,
+        quarantine decision) for one OCR'd unit.
+
+        Mutates quarantine_breakdown in place — the counters are shared
+        across all units in the caller (_tier3_invariant_gate).
+
+        Returns:
+            (unit_output, vision_verify_marker). vision_verify_marker is
+            None when neither gate A nor gate B failed.
+        """
+        unit_id = ocr_result.get("unit_id", str(uuid.uuid4()))
+        rows_for_gate: List[Dict] = ocr_result.get("rows_for_gate", [])
+        page_row_spans: List[Dict] = ocr_result.get("page_row_spans", [])
+        unit_page_numbers: List[int] = ocr_result.get("page_numbers", [])
+
+        # Check if OCR itself errored
+        if ocr_result.get("_ocr_error"):
+            return {
+                "unit_id": unit_id,
+                "stitched_markdown": ocr_result.get("stitched_markdown", ""),
+                "row_count": ocr_result.get("row_count", 0),
+                "quarantined": True,
+                "quarantine_reason": f"ocr_error: {ocr_result['_ocr_error'][:100]}",
+                "page_row_spans": page_row_spans,
+            }, None
+
+        # ----------------------------------------------------------
+        # Gate A: B01-DN accounting-identity checksum (0 tokens, pure)
+        # ----------------------------------------------------------
+        bs_id_pass, bs_id_reason, bs_id_violations = check_bs_accounting_identities(
+            rows_for_gate
+        )
+        gate_a_failed = not bs_id_pass and "skipped" not in bs_id_reason
+
+        # ----------------------------------------------------------
+        # Gate B: Code-whitelist check (0 tokens, pure)
+        # ----------------------------------------------------------
+        wl_pass, wl_reason, wl_flagged_codes = check_code_whitelist(
+            rows_for_gate, template="B01_DN"
+        )
+        gate_b_failed = not wl_pass and "skipped" not in wl_reason
+
+        # Emit vision-verify marker when either gate fails
+        vision_verify_marker: Optional[Dict] = None
+        if gate_a_failed or gate_b_failed:
+            if gate_a_failed:
+                quarantine_breakdown["bs_identity_fail"] += 1
+            if gate_b_failed:
+                quarantine_breakdown["code_whitelist_fail"] += 1
+
+            if gate_a_failed and gate_b_failed:
+                gate_label = "both"
+                failing_reason = f"{bs_id_reason}; {wl_reason}"
+            elif gate_a_failed:
+                gate_label = "checksum"
+                failing_reason = bs_id_reason
+            else:
+                gate_label = "code_whitelist"
+                failing_reason = wl_reason
+
+            vision_verify_marker = {
+                "unit_id": unit_id,
+                "page_numbers": unit_page_numbers,
+                "failing_reason": failing_reason,
+                "flagged_codes": wl_flagged_codes,
+                "gate": gate_label,
+            }
+            logger.warning(
+                "ExtractLayoutFirstUseCase: unit_id=%s needs_vision_verify=True "
+                "gate=%s page_numbers=%s flagged_codes=%s",
+                unit_id,
+                gate_label,
+                unit_page_numbers,
+                wl_flagged_codes[:5] if wl_flagged_codes else [],
+            )
+
+        # ----------------------------------------------------------
+        # Gates 1-3: AC-0 invariants → quarantine decision
+        # ----------------------------------------------------------
+        quarantine_reasons: List[str] = []
+
+        bal_pass, bal_reason = check_balance_identity(rows_for_gate)
+        if not bal_pass:
+            quarantine_reasons.append(bal_reason)
+            quarantine_breakdown["balance_identity_fail"] += 1
+
+        mono_pass, mono_reason = check_codes_monotonic(rows_for_gate)
+        if not mono_pass:
+            quarantine_reasons.append(mono_reason)
+            quarantine_breakdown["codes_not_monotonic"] += 1
+
+        orphan_pass, orphan_reason = check_no_orphan_rows(rows_for_gate)
+        if not orphan_pass:
+            quarantine_reasons.append(orphan_reason)
+            quarantine_breakdown["orphan_rows"] += 1
+
+        is_quarantined = len(quarantine_reasons) > 0
+        quarantine_reason_str = "; ".join(quarantine_reasons) if quarantine_reasons else None
+
+        unit_output = {
+            "unit_id": unit_id,
+            "stitched_markdown": ocr_result.get("stitched_markdown", ""),
+            "row_count": ocr_result.get("row_count", 0),
+            "quarantined": is_quarantined,
+            "quarantine_reason": quarantine_reason_str,
+            "page_row_spans": page_row_spans,
+            # Carry the gate results for downstream inspection
+            "needs_vision_verify": gate_a_failed or gate_b_failed,
+        }
+        return unit_output, vision_verify_marker
+
+    def _tier3_invariant_gate(
+        self,
+        unit_ocr_results: List[Dict],
+    ) -> Tuple[List[Dict], List[Dict], Dict]:
+        """
+        Tier 3 — per-unit invariant gate. Five gates total (run in order via
+        _gate_check_unit, 0 token cost, pure domain functions):
+
+            Gate A — B01-DN accounting identities (check_bs_accounting_identities)
+                     Verifies: 280==440, 300+400==440, 100==Σ1xx, 200==Σ2xx
+            Gate B — Code whitelist (check_code_whitelist)
+                     Every Mã số must be in the B01-DN/HN fixed code set.
+            Gate 1 — Balance identity (check_balance_identity — AC-0, geometric)
+            Gate 2 — Codes monotonic (check_codes_monotonic)
+            Gate 3 — No orphan rows (check_no_orphan_rows)
+
+        Gates A+B: failures → emit needs_vision_verify marker (escalation-only).
+            The extractor does NOT call vision itself. The flow reads the marker
+            and renders only the flagged page(s) with pdftoppm → LLM-reads-PNG.
+        Gates 1-3: failures → quarantined=1 (stored, not dropped).
+
+        Returns:
+            (units_output, vision_verify_markers, pass_rate_report)
+        """
+        units_output: List[Dict] = []
+        vision_verify_markers: List[Dict] = []
+        quarantine_breakdown = {
+            "balance_identity_fail": 0,
+            "codes_not_monotonic": 0,
+            "orphan_rows": 0,
+            "bs_identity_fail": 0,
+            "code_whitelist_fail": 0,
+        }
+
+        for ocr_result in unit_ocr_results:
+            unit_output, vision_verify_marker = self._gate_check_unit(
+                ocr_result=ocr_result,
+                quarantine_breakdown=quarantine_breakdown,
+            )
+            units_output.append(unit_output)
+            if vision_verify_marker is not None:
+                vision_verify_markers.append(vision_verify_marker)
+
+        units_total = len(units_output)
+        units_quarantined = sum(1 for u in units_output if u["quarantined"])
+        units_passing = units_total - units_quarantined
+
+        needs_vision_verify_total = sum(
+            1 for u in units_output if u.get("needs_vision_verify")
+        )
+
+        pass_rate_report = {
+            "units_total": units_total,
+            "units_passing": units_passing,
+            "units_quarantined": units_quarantined,
+            "quarantine_breakdown": quarantine_breakdown,
+            "needs_vision_verify_count": needs_vision_verify_total,
+        }
+
+        logger.info(
+            "ExtractLayoutFirstUseCase: Tier 3 complete — "
+            "total=%d passing=%d quarantined=%d",
+            units_total,
+            units_passing,
+            units_quarantined,
+        )
+
+        return units_output, vision_verify_markers, pass_rate_report
 
     # ------------------------------------------------------------------
     # Eval push helpers — observability only, never abort extraction
