@@ -6,25 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Session: 2026-06-28 (TASK_330 — FR-5 same-section dedup)
-
-**Sprint:** FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT · FR-5 · P1 · S
-
-- Added `_dedup_rows_within_section(rows)` module-level function in `text_table_extractor.py` (after `_apply_positional_cutoff`, ~55L). Key = (code, value_current); exact match → drop + WARNING; different value → emit both + WARNING; code=None → always pass.
-- Wired into `TextTableExtractor.assemble()` BEFORE `_apply_positional_cutoff()` per architect blueprint.
-- 7 new tests in `TestFR5DedupRowsWithinSection`: exact dup collapse, OCR variant passthrough, code=None passthrough, FM-HPG-2 dual-code pattern, cross-section scope isolation, None==None edge case.
-- Unit suite: 927 pass / 6 pre-existing env fail (PIL ABI + page_rasterizer). +7 new green. Zero regressions.
-- Sandbox G12: primitive tier all pass (known_bad correctly false); module 1/1 GREEN.
-- NFR-4: zero per-issuer branches — (code, value_current) equality only.
-- **Commit:** `0ae36a0e`
-
-Zone health: no drift detected — test count growing (920→927), all new tests target-specific, no orphan fixtures.
-
-### Status
-REVIEW → next_agent=qa
-
----
-
 ## TASK_331 — FR-4 Section-boundary content-signal detection (2026-06-28)
 
 **Sprint:** FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT | **Zone:** apps/pdf-extractor/ | **Size:** M
@@ -69,6 +50,53 @@ Direct invocation of `_map_bboxes_to_zones()` with a real missing-score cell: em
 `fdb424178` — fix(pdf-extractor): stop fabricating 0.7 confidence for missing PaddleOCR cell score
 
 Zone health: no drift detected.
+
+### Status
+REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
+
+---
+
+## Cycle 2026-07-09 — FACTORY-PDF-split-extractLayoutFirst-execute
+
+**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** L | P1 | epic: FACTORY-MAINTAINABILITY-2026-06
+
+### Refactor
+`ExtractLayoutFirstUseCase.execute()` (~480L, Tier0→3 inline) split into 4 private
+Tier methods per backlog approach: `_tier0_document_map` (46L), `_tier1_zone_pages`
+(45L), `_tier2_ocr_and_stitch` (52L), `_tier3_invariant_gate` (68L). execute() is now
+a 147L linear pipeline threading results, eval-push calls (stage1/2/3) kept at the
+same logical points. Signature unchanged (report_id, pdf_path) → callers/handlers
+untouched. Two per-unit sub-helpers added (`_zone_unit_pages` 110L, `_gate_check_unit`
+117L) — required to keep the 4 Tier methods under the DoD's 120L cap without
+touching gate/zoning logic (simplicity-gate Q2 exception: DoD-mandated, not
+speculative). Dropped 2 pre-existing dead locals while relocating code (unused
+`import os`, unused `unit_page_type`) — zero behavior change.
+
+### RAW-verify (extraction output unchanged)
+Built a fully-injected-fake harness (build_document_map_fn/zone_page_fn/ocr_unit_fn
++ mocked `pdf2image.convert_from_path`) exercising 3 branches: Tier0-abort,
+Tier1-abort, happy-path (3 units → 1 pass, 1 quarantined via invariant-gate fail
+[monotonic+orphan], 1 quarantined via ocr_error, 2 vision-verify markers via
+whitelist gate). Captured JSON fingerprint of execute() return + push_layout call
+args + all 3 eval_push_stage calls BEFORE the refactor, re-ran AFTER — `diff` empty
+(byte-identical). Determinism of the harness itself confirmed via 2x repeat-run diff
+pre-refactor.
+
+### Tests
+`pytest -q`: 1088 passed / 12 failed / 1 skipped — identical before and after
+(confirmed via `git stash` that all 12 failures are pre-existing env issues
+[PIL/Tesseract/poppler ABI] in files that do not import extract_layout_first_usecase).
+mypy: pre-existing "pdf-extractor is not a valid Python package name" env error,
+confirmed present on `git stash` (unrelated to this change).
+
+### Commit
+`<pending>` — refactor(pdf-extractor): split ExtractLayoutFirstUseCase.execute() into per-Tier methods
+
+Zone health: G12 sandbox gate in `docs/agents/dev-pdf-extractor/flow/main.md` §Pilot
+Hard Rule references a stale path (`sandbox_runner.py` at service root, `--scenario=all`)
+— actual runner is `sandbox/runner.py` with a single-scenario `--scenario PATH` CLI.
+Pilot status is DONE (closed 2026-05-24), so G12 is likely non-operative post-closure;
+doc drift not fixed here (out of scope for this task) — flagging for PO/architect.
 
 ### Status
 REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
