@@ -283,12 +283,12 @@
     }
   ],
   "head": {
-    "status": "REVIEW",
-    "active_task_id": "FACTORY-FRONTEND-extract-computeDecision",
-    "next_agent": "po",
-    "next_action": "PO Step 6 sign-off: FACTORY-FRONTEND-extract-computeDecision qa Step 5 PASS (independent verify complete) — mark DONE_VERIFIED in task_board.",
-    "updated_at": "2026-07-09T04:10:14Z",
-    "updated_by": "qa"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-FRONTEND-extract-computeDecision DONE_VERIFIED (po Step 6). Board idle — next BOUNDED-1 auto-pickup eligible.",
+    "updated_at": "2026-07-09T04:15:54Z",
+    "updated_by": "po"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -583,8 +583,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T03:56:01Z",
-    "_updated_by": "dev-frontend",
+    "_updated_at": "2026-07-09T04:15:54Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8745,6 +8745,39 @@
           "residual_advisory": "No blocking residual. Non-blocking notes: (1) pdf-extractor SHA gate remains DEFERRED to Phase B (Dockerfile LABEL key is plain git_sha and this rebuild was built without --build-arg GIT_SHA so the label reads 'unknown'; verify-deploy-sha.sh checks the namespaced vn.market.git_sha) - predates this task, trips exit-1 on every pdf-extractor deploy; the real invariant (deployed source == committed source) is proven satisfied here by no-apps-drift + in-container source carrying the fix. Phase-B label-namespace alignment would eliminate the recurring benign exit-1. (2) ops_verified_at on the row is stamped '2026-07-09T05:10:00Z' (local +0200 clock labelled Z); the actual UTC is ~03:10Z (ops commit 57ecda1f4 = 05:10 +0200). Cosmetic stamp-tz drift only, not load-bearing - qa_verify_at 03:16:03Z is correct UTC."
         },
         "po_ratification": null
+      },
+      {
+        "title": "Move computeDecision scoring out of the analysis route into domain",
+        "priority": "P1",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-FRONTEND-extract-computeDecision",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-extract-computeDecision",
+        "promoted_at": "2026-07-09T03:47:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T03:47:44Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "po",
+        "rebuild_required": false,
+        "moved_to_review_at": "2026-07-09T03:56:01Z",
+        "moved_by": "dev-frontend",
+        "review_note": "Moved computeDecision/DecisionResult (TA/RSI/KD/price scoring) out of dashboard.analysis.tsx (interface layer) into new app/domain/analysis/decision.ts (domain layer) per 2026-06-15 maintainability factory audit — pure move, no behavior change. 13 inline magic numbers hoisted to named consts (TA_TREND_SCORE, RSI_SCORE, KD_STRONG_SCORE, KD_CAUTION_SCORE, PRICE_TREND_SCORE, PRICE_TREND_LOOKBACK, RSI_OVERSOLD, RSI_RECOVERY_CEILING, RSI_OVERBOUGHT, STRONG_BUY_SCORE, BUY_SCORE, HOLD_SCORE, SELL_SCORE); if/else structure kept verbatim. 1937-decision-logic.test.ts re-pointed to ~/domain/analysis/decision. route imports both from domain, decision const explicitly typed DecisionResult. domain-model.md Business Rules section updated. RAW-verify: 7 representative inputs run through moved function — output byte-identical across all 5 score-band labels + null-TA path (matches existing 10-assertion suite). vitest 2047 pass / 2 pre-existing fail (QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (5 pre-existing react-hooks/exhaustive-deps config errors in unrelated components/analysis/* confirmed present pre-change via git-stash A/B). Commits: 2819d710c (code+docs), a27e93762 (memory/journal). rebuild_required=true — route file touched; holding at REVIEW (not self-flipping) per standing dev-team policy / Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+swap, then qa live-verify, then po Step 6 sign-off.",
+        "ops_close_gate_at": "2026-07-09T05:59:00Z",
+        "ops_close_gate_by": "ops",
+        "ops_note": "Steps 1-4 complete; SHA gate verified (5d9ec1859); container healthy; frontend route /dashboard/analysis HTTP 200; decision panel renders correctly post-rebuild",
+        "qa_verify_at": "2026-07-09T04:10:14Z",
+        "qa_verify_by": "qa",
+        "qa_note": "Step 5 PASS. Container independently confirmed healthy (image sha256:871d76885836, git_sha label=5d9ec1859); SHA-gate script currently reads drift vs current HEAD 6a0f93948 but that is a benign doc-only post-build commit (orch-state.json+notebook only, zero apps/frontend/ diff — confirmed 2819d710c ancestor of deployed 5d9ec1859 with no further frontend changes). Line-by-line diff of moved computeDecision confirms all 13 named consts (TA_TREND_SCORE, RSI_SCORE, KD_STRONG_SCORE, KD_CAUTION_SCORE, PRICE_TREND_SCORE, PRICE_TREND_LOOKBACK, RSI_OVERSOLD, RSI_RECOVERY_CEILING, RSI_OVERBOUGHT, STRONG_BUY_SCORE, BUY_SCORE, HOLD_SCORE, SELL_SCORE) map 1:1 to the original literals, if/else structure and label/color mapping verbatim, byte-identical behavior. Live /dashboard/analysis?stock=VCB=200 with decision panel rendering real GIU output whose score I hand-recomputed from the visible reasons and matched exactly. Retargeted 1937-decision-logic.test.ts 10/10 pass (re-run live, not trusted); full suite 2047 pass/2 fail (QUE-TOOLTIP/QUE-REFERENCE, confirmed pre-existing/unrelated); FE-HEADER-SSOT-top-nav.test.tsx 26/26; tsc --noEmit 0 errors. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md qa-S32.",
+        "po_closeout": {
+          "by": "po",
+          "at": "2026-07-09T04:15:54Z",
+          "verdict": "DONE_VERIFIED — po Step 6 close of the Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate). All 5 upstream steps PASS with independent RAW re-verification at every hop (dev-frontend 2819d710c code+docs / a27e93762 memory -> ops Steps 1-4 rebuild+SHA-gate, image sha256:871d76885836, git_sha label 5d9ec1859 -> qa Step 5 cf6f77bf6 live-verify). po independently re-verified the load-bearing facts before flipping — not blind chain-trust.",
+          "evidence": "PO OWN SPOT-CHECK (raw git/docker/curl/grep, not trusted-from-prose): (1) git show cf6f77bf6 --stat = qa Step 5 commit, real, HEAD; touches only docs/agent-memory + orch-state.json (docs-only). 2819d710c (the actual move) real: NEW apps/frontend/app/domain/analysis/decision.ts (+131) + 1937-decision-logic.test.ts import re-point (2 lines). (2) PURE-MOVE corroborated at source: 13 named consts present in decision.ts (TA_TREND_SCORE=2, RSI_SCORE=1, KD_STRONG_SCORE=2, KD_CAUTION_SCORE=1, PRICE_TREND_SCORE=1, PRICE_TREND_LOOKBACK=5, RSI_OVERSOLD=30, RSI_RECOVERY_CEILING=50, RSI_OVERBOUGHT=70, STRONG_BUY_SCORE=4, BUY_SCORE=2, HOLD_SCORE=-1, SELL_SCORE=-3); dashboard.analysis.tsx L38 imports {computeDecision, type DecisionResult} from ~/domain/analysis/decision and L1025 types the decision const DecisionResult; ZERO local computeDecision def left in the route (grep count=0). (3) BENIGN DRIFT confirmed: git diff 5d9ec1859(deployed)..cf6f77bf6(HEAD) --stat -- apps/frontend/ = EMPTY; the only 5d9ec1859..HEAD changes are docs/agent-memory (ops/qa journals+notebooks) + orch-state.json => deployed frontend source == committed source, the SHA-gate 'drift' qa flagged is doc-only, not a code discrepancy. (4) LIVE ROUTE: frontend container vn-market-intelligence-mcp-frontend-1 Up (healthy) on compose port 3001:3001 (mcp-server owns 3000; qa's :port note maps to 3001); curl :3001/dashboard/analysis?stock=VCB = HTTP 200, title 'Market Analysis', and the decision panel renders REAL output — GIU (HOLD) + Ban (SELL) labels + RSI + Kinh Dich reasons visible in HTML, i.e. computeDecision executes end-to-end post-rebuild, not just an HTTP-200 shell. (5) Board ground truth: row sat in review[] status=REVIEW next_agent=po with ops_close_gate_* + qa_verify_* populated and .head.active_task_id=this task/next_agent=po — matches the dispatch. VERDICT: every axis of the chain holds — real source diff, pure move at source, no post-build frontend drift, live route renders genuine decision behaviour.",
+          "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head reset idle (status=done / active_task_id=null / next_agent=router) alongside the row flip. Write-time jq guard re-verified .head.active_task_id == FACTORY-FRONTEND-extract-computeDecision before writing (it tracked this task from the 03:47Z BOUNDED-1 pickup through qa Step 5 — no concurrent takeover; orch-apply CAS-mtime guard covers any interleaving between read and rename). Row's own next_agent KEPT 'po' (task-row schema orchStateSchema.ts:100 next_agent=z.string().optional() rejects raw null — a null tripped the validator earlier this session on the CI-RED close; kept-'po' is the dominant done_verified sibling convention; top-level .head is authoritative for routing once DONE_VERIFIED per feedback_orchstate_dual_head_keys_toplevel_authoritative). .task_board.head (deprecated stub) left UNTOUCHED. No sprint_goal.entries match this task-id -> not touched. This po session is gateway-blind (only Read/Edit/Write/Bash bound — no mcp__gateway__call_tool) so release of lock task:FACTORY-FRONTEND-extract-computeDecision is DEFERRED to the router on report-back per dispatch. qa correctly HELD REVIEW+next_agent=po (did not self-close a rebuild_required=true FACTORY) -> qa-self-close count stays at 1, below the recurring-2+ bar; parked qa-guardrail-mint stays parked.",
+          "residual_advisory": "No blocking residual. Non-blocking: (1) The frontend SHA-gate reads drift because HEAD advanced past the deployed commit 5d9ec1859 with docs/orch-state-only commits (ops+qa journals, this po close adds one more) — this is the benign doc-only post-build drift class (project_verify_deploy_sha_benign_doc_drift); the real invariant (deployed frontend source == committed source) is proven by the EMPTY apps/frontend/ diff 5d9ec1859..HEAD, so no rebuild is warranted for a doc-only advance. (2) 2 pre-existing full-suite fails (QUE-TOOLTIP / QUE-REFERENCE) confirmed unrelated to this task by dev+qa — not this DoD."
+        }
       }
     ],
     "head": {
@@ -8875,31 +8908,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Move computeDecision scoring out of the analysis route into domain",
-        "priority": "P1",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-FRONTEND-extract-computeDecision",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-extract-computeDecision",
-        "promoted_at": "2026-07-09T03:47:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T03:47:44Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "po",
-        "rebuild_required": false,
-        "moved_to_review_at": "2026-07-09T03:56:01Z",
-        "moved_by": "dev-frontend",
-        "review_note": "Moved computeDecision/DecisionResult (TA/RSI/KD/price scoring) out of dashboard.analysis.tsx (interface layer) into new app/domain/analysis/decision.ts (domain layer) per 2026-06-15 maintainability factory audit — pure move, no behavior change. 13 inline magic numbers hoisted to named consts (TA_TREND_SCORE, RSI_SCORE, KD_STRONG_SCORE, KD_CAUTION_SCORE, PRICE_TREND_SCORE, PRICE_TREND_LOOKBACK, RSI_OVERSOLD, RSI_RECOVERY_CEILING, RSI_OVERBOUGHT, STRONG_BUY_SCORE, BUY_SCORE, HOLD_SCORE, SELL_SCORE); if/else structure kept verbatim. 1937-decision-logic.test.ts re-pointed to ~/domain/analysis/decision. route imports both from domain, decision const explicitly typed DecisionResult. domain-model.md Business Rules section updated. RAW-verify: 7 representative inputs run through moved function — output byte-identical across all 5 score-band labels + null-TA path (matches existing 10-assertion suite). vitest 2047 pass / 2 pre-existing fail (QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (5 pre-existing react-hooks/exhaustive-deps config errors in unrelated components/analysis/* confirmed present pre-change via git-stash A/B). Commits: 2819d710c (code+docs), a27e93762 (memory/journal). rebuild_required=true — route file touched; holding at REVIEW (not self-flipping) per standing dev-team policy / Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+swap, then qa live-verify, then po Step 6 sign-off.",
-        "ops_close_gate_at": "2026-07-09T05:59:00Z",
-        "ops_close_gate_by": "ops",
-        "ops_note": "Steps 1-4 complete; SHA gate verified (5d9ec1859); container healthy; frontend route /dashboard/analysis HTTP 200; decision panel renders correctly post-rebuild",
-        "qa_verify_at": "2026-07-09T04:10:14Z",
-        "qa_verify_by": "qa",
-        "qa_note": "Step 5 PASS. Container independently confirmed healthy (image sha256:871d76885836, git_sha label=5d9ec1859); SHA-gate script currently reads drift vs current HEAD 6a0f93948 but that is a benign doc-only post-build commit (orch-state.json+notebook only, zero apps/frontend/ diff — confirmed 2819d710c ancestor of deployed 5d9ec1859 with no further frontend changes). Line-by-line diff of moved computeDecision confirms all 13 named consts (TA_TREND_SCORE, RSI_SCORE, KD_STRONG_SCORE, KD_CAUTION_SCORE, PRICE_TREND_SCORE, PRICE_TREND_LOOKBACK, RSI_OVERSOLD, RSI_RECOVERY_CEILING, RSI_OVERBOUGHT, STRONG_BUY_SCORE, BUY_SCORE, HOLD_SCORE, SELL_SCORE) map 1:1 to the original literals, if/else structure and label/color mapping verbatim, byte-identical behavior. Live /dashboard/analysis?stock=VCB=200 with decision panel rendering real GIU output whose score I hand-recomputed from the visible reasons and matched exactly. Retargeted 1937-decision-logic.test.ts 10/10 pass (re-run live, not trusted); full suite 2047 pass/2 fail (QUE-TOOLTIP/QUE-REFERENCE, confirmed pre-existing/unrelated); FE-HEADER-SSOT-top-nav.test.tsx 26/26; tsc --noEmit 0 errors. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md qa-S32."
       }
     ],
     "qa": [],
