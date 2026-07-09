@@ -195,7 +195,6 @@ def _build_test_app(
 
     # Minimal mock for required positional args
     mock_extract_usecase = MagicMock()
-    mock_inspection_store = MagicMock()
 
     app = FastAPI()
     router = APIRouter()
@@ -203,7 +202,6 @@ def _build_test_app(
     register_routes(
         router=router,
         extract_usecase=mock_extract_usecase,
-        inspection_store=mock_inspection_store,
         extract_tables_usecase=None,
         extract_md_tables_usecase=None,
         extract_layout_first_usecase=None,
@@ -404,7 +402,6 @@ class TestPekSingleDocExtractionScenario:
         register_routes(
             router=router,
             extract_usecase=MagicMock(),
-            inspection_store=MagicMock(),
             pek_engine_adapter=None,
             pek_push_client=None,
         )
@@ -578,7 +575,6 @@ class TestPekOcrBackendInjectionScenario:
         register_routes(
             router=router,
             extract_usecase=MagicMock(),
-            inspection_store=MagicMock(),
             extract_tables_usecase=None,
             extract_md_tables_usecase=None,
             extract_layout_first_usecase=None,

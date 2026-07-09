@@ -24,7 +24,6 @@ from infrastructure.repositories import (
     LocalPDFStorageRepository,
 )
 from infrastructure.extraction_engine import PdfplumberExtractionEngine
-from infrastructure.inspection_store import InspectionStore
 from infrastructure.text_table_extractor import TextTableExtractor
 from infrastructure.table_push_client import TablePushClient
 from infrastructure.alert_adapter import TelegramAlertAdapter  # BT-5
@@ -141,13 +140,6 @@ def create_app() -> FastAPI:
     )
     local_extract_usecase = ExtractPDFUseCase(extract_service=local_extract_service)
 
-    # --- Inspection store (SI-2: PDF viewer surface) ---
-    inspection_store = InspectionStore(
-        db_path=cfg.db_path,
-        pdf_dir=os.getenv("PDF_DIR", "/app/data/pdfs"),
-        extraction_dir=cfg.storage_dir,
-    )
-
     # --- BT-3-B + BT-5 + BT-3-D: TEXT-path table extraction use case + cross-check gate ---
     table_extractor = TextTableExtractor()
     table_push_client = TablePushClient(mcp_server_url=cfg.mcp_server_url)
@@ -249,7 +241,6 @@ def create_app() -> FastAPI:
     register_routes(
         router,
         extract_usecase,
-        inspection_store,
         extract_tables_usecase,
         extract_md_tables_usecase,
         extract_layout_first_usecase=extract_layout_first_usecase,  # LF-EXTRACT

@@ -107,15 +107,12 @@ def _build_handler_client(
 
     # Minimal stubs for required positional args
     extract_usecase = MagicMock()
-    inspection_store = MagicMock()
-    inspection_store.list_docs.return_value = []
 
     app = FastAPI()
     router = APIRouter()
     register_routes(
         router,
         extract_usecase=extract_usecase,
-        inspection_store=inspection_store,
         ocr_text_source=ocr_text_source,
         ocr_source_ok=ocr_source_ok,
     )

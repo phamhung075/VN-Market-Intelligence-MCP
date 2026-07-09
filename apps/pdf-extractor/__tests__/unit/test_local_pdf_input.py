@@ -19,7 +19,7 @@ import sys
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -254,8 +254,6 @@ class TestExtractHandlerRouting:
 
         http_usecase = AsyncMock()
         local_usecase = AsyncMock()
-        inspection_store = MagicMock()
-        inspection_store.list_docs.return_value = []
 
         # local_usecase.execute returns a valid response DTO
         from application.dtos import ExtractPDFResponse
@@ -273,7 +271,6 @@ class TestExtractHandlerRouting:
         register_routes(
             router,
             extract_usecase=http_usecase,
-            inspection_store=inspection_store,
             local_extract_usecase=local_usecase,
         )
         app.include_router(router)
@@ -298,8 +295,6 @@ class TestExtractHandlerRouting:
 
         http_usecase = AsyncMock()
         local_usecase = AsyncMock()
-        inspection_store = MagicMock()
-        inspection_store.list_docs.return_value = []
 
         from application.dtos import ExtractPDFResponse
         http_usecase.execute.return_value = ExtractPDFResponse(
@@ -316,7 +311,6 @@ class TestExtractHandlerRouting:
         register_routes(
             router,
             extract_usecase=http_usecase,
-            inspection_store=inspection_store,
             local_extract_usecase=local_usecase,
         )
         app.include_router(router)
@@ -340,8 +334,6 @@ class TestExtractHandlerRouting:
 
         local_usecase = AsyncMock()
         http_usecase = AsyncMock()
-        inspection_store = MagicMock()
-        inspection_store.list_docs.return_value = []
 
         from application.dtos import ExtractPDFResponse
         local_usecase.execute.return_value = ExtractPDFResponse(
@@ -358,7 +350,6 @@ class TestExtractHandlerRouting:
         register_routes(
             router,
             extract_usecase=http_usecase,
-            inspection_store=inspection_store,
             local_extract_usecase=local_usecase,
         )
         app.include_router(router)
