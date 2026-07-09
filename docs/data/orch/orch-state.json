@@ -291,12 +291,11 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
-    "next_agent": "qa",
-    "next_action": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE moved to review lane; awaiting qa agent dispatch from Merge Gate Step 1 (PO Triage)",
-    "updated_at": "2026-07-09T17:28:07Z",
-    "updated_by": "developer"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-07-09T17:58:13Z",
+    "updated_by": "agents-architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -602,8 +601,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T15:57:12Z",
-    "_updated_by": "po (triage 2026-07-09T15:37Z)",
+    "_updated_at": "2026-07-09T17:50:13Z",
+    "_updated_by": "dev-team (routing correction)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -2691,6 +2690,26 @@
         "completed_by": "architect",
         "closed_by": "dev-team-tick-20260619T103058Z",
         "closed_at": "2026-06-19T11:30:00Z"
+      },
+      {
+        "id": "ARCH-HEADLESS-GATEWAY-COWORK-NOPOST",
+        "type": "design",
+        "zone": "agents",
+        "priority": "high",
+        "size": "M",
+        "status": "DONE",
+        "title": "Root-cause: scheduled cowork slots fired from claude.ai-cloud (RemoteTrigger backstop) have NO call_tool gateway in subagent surface (only Read/Write/Edit) -> send_telegram silently no-posts; digest-sunday W24 BLOCKED 2026-06-14T13:47Z",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-HEADLESS-GATEWAY-COWORK-NOPOST",
+        "promoted_at": "2026-07-09T17:48:39Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T17:48:39Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "agents-architect",
+        "routing_correction_note": "next_agent placeholder (bounded1-claim script default) corrected to detail-authoritative owner=agents-architect; task is doc/design root-cause investigation, not code",
+        "closed_at": "2026-07-09T17:58:13Z",
+        "closed_by": "agents-architect",
+        "note": "Superseded/closed — RemoteTrigger Layer A retired (all-local cutover 2026-06-23T17:22Z, reconfirmed enabled:false live 2026-07-08T20:35Z); detect-missing-gateway/don't-silently-drop principle already shipped against the current local-subagent gateway-blind mechanism (blind-guard.md Step 0c, spawn-fanout.md Step 5.0, cycle-bootstrap CONFIRMED-BLIND fallback, gateway-call-contract.md §6 Degraded Mode). See docs/architecture-briefs/2026-07-09-arch-headless-gateway-cowork-nopost-closure.md"
       }
     ],
     "backlog": [
@@ -3585,16 +3604,6 @@
         "zone": "cross-service/",
         "title": "FPT Q1-2026 routine BCTC signal -> bctc-analyst/cowork (ALL_PASS, routine, no escalation)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#ROUTE-BCTC-FPT-Q1-2026-ROUTINE"
-      },
-      {
-        "id": "ARCH-HEADLESS-GATEWAY-COWORK-NOPOST",
-        "type": "design",
-        "zone": "agents",
-        "priority": "high",
-        "size": "M",
-        "status": "BACKLOG",
-        "title": "Root-cause: scheduled cowork slots fired from claude.ai-cloud (RemoteTrigger backstop) have NO call_tool gateway in subagent surface (only Read/Write/Edit) -> send_telegram silently no-posts; digest-sunday W24 BLOCKED 2026-06-14T13:47Z",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-HEADLESS-GATEWAY-COWORK-NOPOST"
       },
       {
         "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
@@ -7380,8 +7389,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T16:46:54Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-09T17:48:39Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
