@@ -329,8 +329,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-09T17:34Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-07-09T18:05:08Z",
+    "_updated_by": "dev-team (post-cycle 4.0.5)",
     "archive": [],
     "rows": [
       {
@@ -354,6 +354,17 @@
         "severity": "INFO",
         "status": "READ",
         "payload_ref": "docs/improvement-proposals/IMP-20260710-dev-team-T2-gateway-absent.md"
+      },
+      {
+        "id": "dev-20260709T180508Z-po",
+        "ts": "2026-07-09T18:05:08Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "mock-guard HARD-FAIL: fabricated data in production source (likely Go _test.go false-positive, unchanged since 17:31Z)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
