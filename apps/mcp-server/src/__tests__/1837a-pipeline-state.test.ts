@@ -93,7 +93,10 @@ describe("1837a — orch-state.json schema (v4 reconcile)", () => {
     //   qa          — task at final QA live-verify gate before done_verified (added 2026-06-13;
     //                 used by router-d1-refine-lock-ops-to-qa.jq and siblings)
     //   ready       — task ready to be picked up (added 2026-06-27; ADD-1 READY-bootstrap)
-    const validStatuses = ["in_progress", "idle", "blocked", "stale", "review", "active", "qa", "ready"];
+    //   done        — head idle-synced to a closed task's terminal state by po's Step 6
+    //                 Docker Close Gate sign-off convention (added 2026-07-09; CI-RED-06043b3c-FIX;
+    //                 standard value written on every po closeout, not a one-off)
+    const validStatuses = ["in_progress", "idle", "blocked", "stale", "review", "active", "qa", "ready", "done"];
     expect(validStatuses).toContain(state.head.status);
   });
 

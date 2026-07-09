@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — FACTORY-INFRA-split-vnstockBridge → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (isolated worktree — concurrent dev-mcp-server session working FIX-D4-HELD-LOCK-NO-BOARD-ROW-RECONCILE in the main tree)
-
-`vnstockBridge.ts` (1206L) held 11 inline Python `*_SCRIPT` templates, 9 of which re-embedded the identical FIX-FUNDAMENTALS-REFRESH-CRON-DEAD stdout-suppression preamble verbatim (proof the fix was hand-applied 9 times). Extracted each template to `fetchers/vnstock/scripts/*.ts` (one `buildXxxScript()` per data type); added `wrapVnstockScript(opts)` in new `fetchers/vnstock/runtime.ts` that owns the preamble once — 8 scripts plus `financials.ts` (2-dataframe variant via `resultVar`/`extraInit` options) now call it; `prices.ts` (multi-symbol loop) and `events.ts` (bypasses `Vnstock().stock()` via a viz-mock, pre-existing v4-compat workaround) stay bespoke, genuinely different control flow. `VnstockRateLimiter`/`runPython`/`runPythonWithBackoff`/backoff/junk-detection moved into `runtime.ts` (374L, size-justified — the backlog approach names this exact file). `vnstock/index.ts` barrel re-exports `runtime.ts`; `vnstockBridge.ts` (330L, size-justified — the approach explicitly keeps the 11 public fetch* wrappers as the one canonical import path 15+ tests/consumers depend on) imports the barrel + 11 script builders.
-
-Verified via a scratch equivalence script comparing generated Python text pre/post-split (pre-split consts exported via `git show HEAD:...`) across 3 symbols × 11 templates = 35 checks: 32 byte-identical, 3 (financials.ts) differ only in a shortened shared comment (4 lines → 1 line) — confirmed line-by-line every subsequent statement (fetch calls, math, dict keys) is unchanged. tsc clean, eslint clean. Targeted vnstock suite (24 files) 252/252 pass. Server boot verified PORT=3996: health 200 toolCount=183 unchanged, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200. Gate 2d scheduler cron.schedule grep=3 unchanged. Full `bun test` run 1: 14349 pass/40 skip/68 fail/7 errors/1180 files (732.30s); run 2 (full log captured to a file, not `tail`-truncated, for exhaustive grep): 14350 pass/40 skip/67 fail/4 errors/1180 files (702.33s) — both then hit the known Bun 1.3.13 crash-at-teardown (non-authoritative). Exhaustive grep of run 2's complete 22.5k-line log: zero of the 67 `(fail)` lines mention "vnstock"; zero mentions anywhere in the whole log of `vnstockBridge.ts`/`vnstock/runtime`/`vnstock/scripts`/`wrapVnstockScript`/any of the 11 `buildXxxScript` names — confirms regression-free against the full suite, not just the targeted one.
-
-Doc updates: `infrastructure.md` (vnstock Python Bridge section rewritten for the new file layout).
-
-Commit: e27121d93. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (vnstock fetchers run against live named-volume market.db; RAW-verify of unchanged fetch values is this task's own DoD, routed via the Docker Microservice Code-Change Close Gate).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
-
 ## 2026-07-08 — FACTORY-INFRA-split-telegramCommands → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -47,3 +33,15 @@ Doc updates: `infrastructure.md` (new "Scheduler Job Table" section).
 Commit: a25bdc617. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (scheduler wiring — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified, startScheduler.ts 1257L→305L | HEALTHY.
+
+## 2026-07-09 — CI-RED-06043b3c-FIX → REVIEW
+
+Fast-tracked one-line fix (PO pre-diagnosed, precedent 728ef563c): `1837a-pipeline-state.test.ts` L96 AC-2 hardcoded `validStatuses` omitted `"done"`, which is the literal value po's Step 6 Docker Close Gate sign-off convention writes to live `.head.status` on every closeout (confirmed standard, not a typo — currently live: `"done"` from the FACTORY-PDF-delete-deprecated-inspect closeout). Added `"done"` with an inline comment matching the existing per-value documentation style.
+
+Independently re-verified the "only one hardcoded spot" claim rather than trusting it: grepped `validStatuses` + the `"in_progress"` array-literal pattern repo-wide — every other hit is either a test *fixture* (sets a status, doesn't validate against a hardcoded enum) or the unrelated uppercase `task_board`-lane `StatusEnum`/lanes array. 1837a is the only test validating live `.head.status` against a hardcoded array.
+
+tsc clean. Targeted: `1837a-pipeline-state.test.ts` 5/5 pass. Broader orch-state regression sweep (orchStateSchema.test.ts, 1980-f2-canon-schema, 1979-orchestration-decisions, WF2-signal-queue-cas, orchStateStore-atomic-write, 1977-orchestration-endpoint — 6 files) 200/200 pass, 0 fail.
+
+Test-file-only change, no runtime code touched → `rebuild_required=false`, no Docker Close Gate needed. Commit: (see decision journal / git log). Board: `BACKLOG`→`review`, `next_agent=qa` — held at REVIEW rather than self-closing DONE_VERIFIED because the signal's own AC (`ci_green_on_subsequent_push`) requires a green CI run on a push *after* this commit, which cannot be confirmed synchronously; qa/po to confirm `gh run list --branch main` shows conclusion=success post-push before flipping DONE_VERIFIED.
+
+Zone health: tsc clean, targeted+regression suite 205/205 pass, no runtime files touched | HEALTHY.
