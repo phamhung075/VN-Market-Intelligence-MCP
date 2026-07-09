@@ -294,9 +294,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "FACTORY-NEWS-dedup-normalizeDate closed to REVIEW — normalizeDate deduped into published-at-parser primitive, tests/sandbox green, rebuild+RAW-verify deferred to ops.",
-    "updated_at": "2026-07-09T21:52:14Z",
-    "updated_by": "dev-news-fetch (task complete)"
+    "next_action": "FACTORY-NEWS-split-sandbox landed in task_board.review[] by dev-news-fetch — router/QA to RAW-verify then dispatch ops for the deferred rebuild-verify signal per feedback_user_gates_delegate_to_ops.md.",
+    "updated_at": "2026-07-09T22:27:00Z",
+    "updated_by": "dev-news-fetch"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3975,15 +3975,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-router-cleanups"
       },
       {
-        "title": "Split news-fetch sandbox runner.ts; replace by-name signature switch",
-        "priority": "P1",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-NEWS-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-split-sandbox"
-      },
-      {
         "title": "Fix composeNewsIngest logging both sources per call",
         "priority": "P2",
         "zone": "news-fetch",
@@ -7343,6 +7334,24 @@
         "completed_at": "2026-07-09T21:52:14Z",
         "completed_by": "dev-news-fetch",
         "status_note": "Deduped normalizeDate: added null-tolerant wrapper to src/primitive/published-at-parser/index.ts (parsePublishedAt as core), removed local definitions from bloomberg-stealth.ts (151->142L) and reuters-stealth.ts (134->125L), replaced with import+re-export (tests in __tests__/1899a-bloomberg-normalize-date.test.ts and __tests__/1899a-reuters-fallback-lifecycle.test.ts import normalizeDate by name from the stealth files directly — router premise of no test dependency was FALSE, so a re-export was required and added). bun test 233 pass/6 skip/0 fail, bun tsc --noEmit clean, G12 sandbox 16/16 PASS, scenario JSON valid. Direct before/after comparison script run against old inlined impl vs new primitive-backed impl across 12 date-format inputs (null/undefined/empty/whitespace/invalid/ISO Z/ISO+offset/RFC2822 GMT/RFC2822+offset/date-only/malformed): 0 mismatches, byte-identical output. rebuild_required=true (news-fetch is a docker-composed service; live container still runs pre-change image) — deferred verification tracked in signal docs/signals/ops-rebuild-verify-news-fetch-20260709T2152Z.json per feedback_user_gates_delegate_to_ops.md. Kept REVIEW (not self-asserted DONE_VERIFIED) pending rebuild+RAW-verify. DJ: docs/agent-memory/decisions/dev-news-fetch-20260709T2152Z-FACTORY-NEWS-dedup-normalizeDate.md"
+      },
+      {
+        "title": "Split news-fetch sandbox runner.ts; replace by-name signature switch",
+        "priority": "P1",
+        "zone": "news-fetch",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-NEWS-split-sandbox",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-split-sandbox",
+        "promoted_at": "2026-07-09T22:17:08Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T22:17:12Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "completed_at": "2026-07-09T22:27:00Z",
+        "completed_by": "dev-news-fetch",
+        "status_note": "Split sandbox/runner.ts (486L) into src/sandbox/{cli,registry,discover,equal,execute,report}.ts + runner.ts as thin orchestrator, all <=120L (execute.ts=120L exactly). registry.ts: added a per-entry argAdapter fn (maps scenario input -> positional args) replacing the by-name if/else signature switch previously inline (was ~line 223-235). import.meta.dir resolution preserved unchanged (all new files stay in the same src/sandbox/ dir). Pre-check: grepped for test imports of runner.ts internals -- none found (runner.ts is invoked only as a CLI script via bun run src/sandbox/runner.ts / package.json \"sandbox\" script, never imported by name from any test). Verification: bun test 233 pass/6 skip/0 fail/372 expect() (unchanged from pre-split baseline); bun tsc --noEmit clean; eslint lint:ci clean; scenario JSON validity clean; G12 sandbox gate bun run sandbox --tier=all --module=news-fetch -> 16 PASS/0 FAIL/0 ERROR (exit 0), same as pre-split. Direct before/after comparison: ran the pre-edit runner.ts (git show HEAD) and the post-split runner.ts against the same --output trace file and diffed JSON with runAt stripped -> byte-identical. rebuild_required=true (news-fetch is a docker-composed service; live container still runs pre-change image) -- deferred verification tracked in signal docs/signals/ops-rebuild-verify-news-fetch-20260709T2227Z.json per feedback_user_gates_delegate_to_ops.md (same pattern as the immediately-preceding FACTORY-NEWS-dedup-normalizeDate task). Kept REVIEW (not self-asserted DONE_VERIFIED) pending rebuild+RAW-verify. DJ: docs/agent-memory/decisions/dev-news-fetch-20260709T2227Z-FACTORY-NEWS-split-sandbox.md"
       }
     ],
     "qa": [],
@@ -7362,7 +7371,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T21:47:24Z",
+    "last_triaged_at": "2026-07-09T22:17:08Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
