@@ -275,12 +275,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-PDF-delete-deprecated-inspect CLOSED DONE_VERIFIED by po (Step 6 Docker Close Gate) -- moved review[]->done_verified[]. Board idle: next BOUNDED-1 idle-capacity backlog pickup eligible for router. Lock task:FACTORY-PDF-delete-deprecated-inspect pending router release (po session gateway-blind).",
-    "updated_at": "2026-07-09T04:31:00Z",
-    "updated_by": "po (step 6 sign-off)"
+    "status": "review",
+    "active_task_id": "FACTORY-PDF-fix-application-infra-leak",
+    "next_agent": "ops",
+    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild pdf-extractor; SHA-gate remains DEFERRED to Phase B per runbook per FACTORY-PDF-split-extractLayoutFirst-execute/delete-deprecated-inspect precedent), then qa Step 5 live-verify (doclang serialize path still produces identical XML output on the live container; /health + real extraction routes unaffected), then po Step 6 sign-off.",
+    "updated_at": "2026-07-09T03:03:23Z",
+    "updated_by": "dev-pdf-extractor"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -575,8 +575,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T04:31:00Z",
-    "_updated_by": "po (step 6 sign-off FACTORY-PDF-delete-deprecated-inspect)",
+    "_updated_at": "2026-07-09T02:54:00Z",
+    "_updated_by": "po (step 6 sign-off CI-RED-06043b3c-FIX)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -3883,15 +3883,6 @@
         "supervised_at": "2026-07-04T19:23:49Z",
         "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
         "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
-      },
-      {
-        "title": "Introduce DocLangSerializerPort to remove application->infrastructure import",
-        "priority": "P1",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-PDF-fix-application-infra-leak",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-fix-application-infra-leak"
       },
       {
         "title": "Extract shared Tesseract config + DPI constants (5 files)",
@@ -8683,6 +8674,41 @@
           "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head set status=done / active_task_id=null / next_agent=router (idle handback for the BOUNDED-1 auto-pickup loop) alongside the row flip. Write-time re-verified .head.active_task_id == FACTORY-PDF-delete-deprecated-inspect first (no concurrent takeover -- head was still pinned on this exact task, next_agent=po, at read time). Row's own next_agent field left untouched (stays 'po'), matching the FACTORY-PDF-split-extractLayoutFirst-execute sibling convention (S11) -- only the top-level .head next_agent is authoritative for routing once a row is DONE_VERIFIED. No sprint_goal.entries match for this task-id -> not touched. .task_board.head (deprecated stub) left UNTOUCHED -- canonical is top-level .head per feedback_orchstate_dual_head_keys_toplevel_authoritative. Did NOT touch the task:FACTORY-PDF-delete-deprecated-inspect lock -- per dispatch instruction, lock release is the router's job on report-back. qa correctly held REVIEW+next_agent=po (did not self-close) -> qa-self-close count stays at the existing tracked level, below the recurring-2+ bar, parked qa-guardrail-mint stays parked. A separate, unrelated po instance was dispatched concurrently to triage a ci_red signal (test enum-drift) plus 2 cowork-team signals -- explicitly NOT duplicated here; this write touches ONLY the FACTORY-PDF-delete-deprecated-inspect row + top-level .head.",
           "residual_advisory": "No blocking residual. Standing hygiene note (non-blocking, same class already logged against the sibling FACTORY-PDF-split-extractLayoutFirst-execute close): the pdf-extractor SHA gate remains DEFERRED to Phase B (Dockerfile LABEL key is plain git_sha, verify-deploy-sha.sh checks namespaced vn.market.git_sha) -- this predates the task and trips exit-1 on every pdf-extractor deploy; the real invariant (deployed source == committed source) is proven satisfied here by no-apps-drift + exact-label-match + live route behavior. Phase-B label-namespace alignment would eliminate the recurring benign exit-1 for pdf-extractor. Separately: the concurrent ci_red enum-drift (.head.status='done' not in a test's validStatuses list) is being triaged by a different po instance -- if that fix lands, note that THIS write also sets .head.status='done', so worth the other instance cross-checking the validStatuses fix covers 'done' (it should, per the ci_red description)."
         }
+      },
+      {
+        "id": "CI-RED-06043b3c-FIX",
+        "title": "CI-RED-06043b3c-FIX — CI RED: bun test",
+        "type": "FIX",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "owner": "po",
+        "next_agent": "po",
+        "zone": "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts",
+        "created_at": "2026-07-09T02:27:00Z",
+        "created_by": "po-signal-triage-20260709T0226Z",
+        "source_signal": "docs/signals/ci-red-06043b3c-20260709021739.json",
+        "head_sha": "06043b3cf70ff9daa57cf3c05cb710857713f949",
+        "note": "FAST-TRACK (skip ba/pm design): pre-diagnosed one-line test-enum addition with exact direct precedent commit 728ef563c. Router may dispatch dev-mcp-server directly — no spec/architect pass needed.",
+        "status_note": "ROOT CAUSE (pre-diagnosed, router-confirmed by reading files): at pushed commit 06043b3cf, orch-state.json .head.status was committed as the literal string \"done\" (written by po Step 6 sign-off of FACTORY-PDF-split-extractLayoutFirst-execute). apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts L96 (AC-2) hardcodes validStatuses = [\"in_progress\",\"idle\",\"blocked\",\"stale\",\"review\",\"active\",\"qa\",\"ready\"], which omits \"done\" -> deterministic (NOT flaky) failure every time .head.status commits as \"done\". FIX = ONE line: add \"done\" to the validStatuses array; nothing else changes. Zod side already confirmed NOT drifting — HeadSchema.status is z.string() with .passthrough() (orchStateSchema.ts L220-233), unconstrained, so no schema change; StatusEnum (L40-53) is the uppercase .task_board-row enum, unrelated to .head.status. Direct precedent: commit 728ef563c 'fix(test/1837a): add \"active\" and \"qa\" to valid head.status enum' — identical one-line enum addition. AC / verification_gate=ci_green_on_subsequent_push: `gh run list --branch main --limit 3` shows conclusion=success for a push AFTER 06043b3cf70ff9daa57cf3c05cb710857713f949. Priority: high. Failing jobs: bun test. DONE only when CI GREEN on a subsequent push.",
+        "claimed_at": "2026-07-09T02:42:56Z",
+        "claimed_by": "dev-mcp-server",
+        "moved_to_review_at": "2026-07-09T02:42:56Z",
+        "moved_by": "po",
+        "rebuild_required": false,
+        "review_note": "One-line test-enum fix: added \"done\" to validStatuses in apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts L96 (AC-2) — po Step 6 Docker Close Gate sign-off convention writes .head.status=\"done\" on every closeout (confirmed standard via live file, currently \"done\"); array omitted it, causing deterministic CI failure on every such closeout. Independently re-verified (not trusted blindly) that this is the only hardcoded spot: grepped validStatuses + the in_progress array-literal pattern repo-wide, all other hits are test fixtures (set status, do not validate) or the unrelated uppercase task_board StatusEnum/lanes array. tsc clean. Targeted 1837a-pipeline-state.test.ts 5/5 pass against live .head.status=\"done\". Regression sweep (orchStateSchema.test.ts, 1980-f2-canon-schema, 1979-orchestration-decisions, WF2-signal-queue-cas, orchStateStore-atomic-write, 1977-orchestration-endpoint) 200/200 pass, 0 fail. Test-file-only change, no runtime code touched -> rebuild_required=false, no Docker Close Gate needed. Held at REVIEW (not self-closed DONE_VERIFIED): signal AC verification_gate=ci_green_on_subsequent_push requires gh run list --branch main showing conclusion=success for a push AFTER this commit -- unconfirmable synchronously. next_agent=qa to confirm CI green on the next main push, then po Step 6 sign-off to flip DONE_VERIFIED.",
+        "qa_verify_at": "2026-07-09T02:49:25Z",
+        "qa_verify_by": "qa",
+        "qa_note": "GH Actions run 28990352248 (headSha 68c2de81c6bdc99be848fcbccf7a017ac19e6844, push to main) status=completed conclusion=success. \"bun test\" job (databaseId 86028554823, the previously-failing job) independently confirmed conclusion=success; all 8 jobs green. verification_gate=ci_green_on_subsequent_push satisfied. DJ: sprint-CI-RED-06043b3c-FIX-qa.md §qa-S1.",
+        "moved_to_done_verified_at": "2026-07-09T02:54:00Z",
+        "po_closeout": {
+          "by": "po",
+          "at": "2026-07-09T02:54:00Z",
+          "verdict": "DONE_VERIFIED — po Step 6 standard final sign-off (NOT a Docker Close Gate: change is test-file-only apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts, no runtime code, no container, rebuild_required=false). po minted this FIX from the ci_red signal (fast-track one-line enum-addition, exact precedent commit 728ef563c); dev-mcp-server applied fix commit 68c2de81c6bdc99be848fcbccf7a017ac19e6844 (pushed origin/main); qa independently confirmed the acceptance criterion (verification_gate=ci_green_on_subsequent_push). Router RAW-verified both the fix commit and qa's CI-check commit before dispatch. po independently re-verified the load-bearing facts before flipping — not blind chain-trust.",
+          "evidence": "PO OWN SPOT-CHECK (raw git + file read, not trusted-from-prose): (1) Fix is real and LIVE in the test file — validStatuses at L99 now contains \"done\" (full array [in_progress,idle,blocked,stale,review,active,qa,ready,done]); this is the exact array AC-2 (L100 expect(validStatuses).toContain(state.head.status)) validates against the live .head.status=\"done\" written by every po Step 6 closeout convention — root cause (missing \"done\") directly remediated. (2) Fix commit 68c2de81c6bdc99be848fcbccf7a017ac19e6844 (fix(test/1837a): add \"done\" to valid head.status enum) is a genuine ancestor of origin/main (git merge-base --is-ancestor = YES) — pushed, not just local. (3) qa's CI-check commit c04494cfa is a genuine ancestor of origin/main (pushed). (4) AC met per qa DJ sprint-CI-RED-06043b3c-FIX-qa.md qa-S1 + board qa_note: GH Actions run 28990352248 at headSha 68c2de81...c19e6844 reached status=completed / conclusion=success; the previously-FAILING bun test job (databaseId 86028554823) independently confirmed conclusion=success, all 8 jobs green; run headSha exactly matches the fix commit and displayTitle matches the fix subject verbatim -> no stale/superseded-run risk. (5) Router independently RAW-verified both commits before dispatch — no discrepancies, not re-litigated. VERDICT: verification_gate=ci_green_on_subsequent_push is genuinely met — fix live in test file, both commits pushed to origin/main, and the specific originally-failing bun-test job is green at the exact fix commit.",
+          "process_note": ".head LEFT UNTOUCHED — write-time re-check: .head.active_task_id == \"FACTORY-PDF-fix-application-infra-leak\" (status=in_progress, next_agent=developer, updated_by=dev-team bounded-1 auto-pickup at 2026-07-09T02:53:05Z). It does NOT point at CI-RED-06043b3c-FIX, so per dispatch instruction .head is left untouched — and touching it now would clobber an ACTIVE in-flight dev-team task, so leaving it alone is doubly correct. (When this sign-off was first prepared minutes earlier, .head was idle from the FACTORY-PDF-delete-deprecated-inspect closeout; a concurrent BOUNDED-1 pickup has since re-populated it — either way the flip is scoped ONLY to the CI-RED row and never writes .head.) Row flip review[]->done_verified[] with status DONE_VERIFIED; the row's own next_agent is KEPT as \"po\" (the task-row schema orchStateSchema.ts:100 is z.string().optional() — string-or-omitted, null is rejected; kept-as-\"po\" matches the two most-recent sibling FACTORY-PDF closed rows, and the top-level .head is authoritative for actual routing once a row is DONE_VERIFIED) in ONE atomic scripts/orch-apply.sh write. No .sprint_goal.entries match this task-id -> not touched. Deprecated .task_board.head stub left UNTOUCHED (canonical head is top-level per feedback_orchstate_dual_head_keys_toplevel_authoritative). This is a NON-Docker sign-off (rebuild_required=false, test-file-only) — no ops rebuild / build-timestamp / /health / tool-count checks applicable. dev-mcp-server did not file a separate sprint DJ .md for this fast-track one-liner; its decision is fully captured in the board review_note + the comprehensive fix commit message (root cause, only-hardcoded-spot re-verification, tsc clean, targeted 5/5 + regression 200/200, held-at-REVIEW rationale) — no missing-DJ gap. Did NOT touch the task:CI-RED-06043b3c-FIX lock — po session is gateway-blind (only Read/Edit/Write/Bash bound); lock release is the router's job on report-back per dispatch.",
+          "residual_advisory": "No blocking residual. Non-blocking note: the underlying cause — .head.status is committed as the literal \"done\" by po Step 6 closeouts, and AC-2's validStatuses is a hardcoded mirror of the Zod-unconstrained HeadSchema.status (z.string().passthrough()) — means any FUTURE new literal head.status value would again trip AC-2 until manually mirrored (this is the 2nd such enum-addition after 728ef563c added active/qa). A durable fix would derive the test's validStatuses from a single shared source or relax AC-2 to assert head.status is a non-empty string (matching the Zod contract) rather than membership in a hand-maintained list — worth a low-priority backlog row if a 3rd enum-drift recurs."
+        }
       }
     ],
     "head": {
@@ -8815,30 +8841,23 @@
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
       },
       {
-        "id": "CI-RED-06043b3c-FIX",
-        "title": "CI-RED-06043b3c-FIX — CI RED: bun test",
-        "type": "FIX",
-        "size": "S",
-        "status": "READY",
-        "priority": "high",
-        "owner": "po",
-        "next_agent": "po",
-        "zone": "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts",
-        "created_at": "2026-07-09T02:27:00Z",
-        "created_by": "po-signal-triage-20260709T0226Z",
-        "source_signal": "docs/signals/ci-red-06043b3c-20260709021739.json",
-        "head_sha": "06043b3cf70ff9daa57cf3c05cb710857713f949",
-        "note": "FAST-TRACK (skip ba/pm design): pre-diagnosed one-line test-enum addition with exact direct precedent commit 728ef563c. Router may dispatch dev-mcp-server directly — no spec/architect pass needed.",
-        "status_note": "ROOT CAUSE (pre-diagnosed, router-confirmed by reading files): at pushed commit 06043b3cf, orch-state.json .head.status was committed as the literal string \"done\" (written by po Step 6 sign-off of FACTORY-PDF-split-extractLayoutFirst-execute). apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts L96 (AC-2) hardcodes validStatuses = [\"in_progress\",\"idle\",\"blocked\",\"stale\",\"review\",\"active\",\"qa\",\"ready\"], which omits \"done\" -> deterministic (NOT flaky) failure every time .head.status commits as \"done\". FIX = ONE line: add \"done\" to the validStatuses array; nothing else changes. Zod side already confirmed NOT drifting — HeadSchema.status is z.string() with .passthrough() (orchStateSchema.ts L220-233), unconstrained, so no schema change; StatusEnum (L40-53) is the uppercase .task_board-row enum, unrelated to .head.status. Direct precedent: commit 728ef563c 'fix(test/1837a): add \"active\" and \"qa\" to valid head.status enum' — identical one-line enum addition. AC / verification_gate=ci_green_on_subsequent_push: `gh run list --branch main --limit 3` shows conclusion=success for a push AFTER 06043b3cf70ff9daa57cf3c05cb710857713f949. Priority: high. Failing jobs: bun test. DONE only when CI GREEN on a subsequent push.",
-        "claimed_at": "2026-07-09T02:42:56Z",
-        "claimed_by": "dev-mcp-server",
-        "moved_to_review_at": "2026-07-09T02:42:56Z",
-        "moved_by": "dev-mcp-server",
-        "rebuild_required": false,
-        "review_note": "One-line test-enum fix: added \"done\" to validStatuses in apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts L96 (AC-2) — po Step 6 Docker Close Gate sign-off convention writes .head.status=\"done\" on every closeout (confirmed standard via live file, currently \"done\"); array omitted it, causing deterministic CI failure on every such closeout. Independently re-verified (not trusted blindly) that this is the only hardcoded spot: grepped validStatuses + the in_progress array-literal pattern repo-wide, all other hits are test fixtures (set status, do not validate) or the unrelated uppercase task_board StatusEnum/lanes array. tsc clean. Targeted 1837a-pipeline-state.test.ts 5/5 pass against live .head.status=\"done\". Regression sweep (orchStateSchema.test.ts, 1980-f2-canon-schema, 1979-orchestration-decisions, WF2-signal-queue-cas, orchStateStore-atomic-write, 1977-orchestration-endpoint) 200/200 pass, 0 fail. Test-file-only change, no runtime code touched -> rebuild_required=false, no Docker Close Gate needed. Held at REVIEW (not self-closed DONE_VERIFIED): signal AC verification_gate=ci_green_on_subsequent_push requires gh run list --branch main showing conclusion=success for a push AFTER this commit -- unconfirmable synchronously. next_agent=qa to confirm CI green on the next main push, then po Step 6 sign-off to flip DONE_VERIFIED.",
-        "qa_verify_at": "2026-07-09T02:49:25Z",
-        "qa_verify_by": "qa",
-        "qa_note": "GH Actions run 28990352248 (headSha 68c2de81c6bdc99be848fcbccf7a017ac19e6844, push to main) status=completed conclusion=success. \"bun test\" job (databaseId 86028554823, the previously-failing job) independently confirmed conclusion=success; all 8 jobs green. verification_gate=ci_green_on_subsequent_push satisfied. DJ: sprint-CI-RED-06043b3c-FIX-qa.md §qa-S1."
+        "title": "Introduce DocLangSerializerPort to remove application->infrastructure import",
+        "priority": "P1",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-PDF-fix-application-infra-leak",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-fix-application-infra-leak",
+        "promoted_at": "2026-07-09T02:52:56Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T02:53:05Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "moved_to_review_at": "2026-07-09T03:03:23Z",
+        "moved_by": "dev-pdf-extractor",
+        "review_note": "Added DocLangSerializerPort Protocol (domain/modules/financial_reports/ports.py, sibling to DocLangWritePort) typing the .serialize(tables, report_id) -> str surface actually used by DocLangSerializeUseCase; retyped the usecase's serializer constructor param to the Port and dropped 'from infrastructure.doclang_serializer import DocLangSerializer' — was the only 'from infrastructure' import in application/. main.py composition root already wired the concrete DocLangSerializer instance positionally into the usecase constructor — no change needed there (Protocols are structural, no explicit 'implements'). Port's tables param typed List[Any] (not List[application.dtos.ExtractedTableDTO]) to keep domain decoupled from the application-layer DTO module, matching every sibling port's Dict/str generic-passthrough convention; ports.py's own header states 'Zero imports from infrastructure/, application/, interface/'. Added import-linter Fence-C: source=application forbidden=infrastructure,interface (pyproject.toml [[tool.importlinter.contracts]]) so this class of leak is caught by CI going forward. RAW-verify: lint-imports (venv, real pyproject config) -> 3 contracts kept / 0 broken (was 2/0 before -- Fence-C is new and passes, confirming the leak is fixed AND the fence catches it); grep -rn '^from infrastructure|^import infrastructure' under application/ -> zero real import hits (3 comment-only mentions of infrastructure.ocr_worker in an unrelated untouched file). pytest __tests__/unit/test_doclang_serializer.py -q: 13/13 passed -- serializer/usecase behavior unchanged (NullDocLangWriteAdapter still returns empty string, XML output untouched -- only the type annotation + import changed, zero logic edited). Full suite pytest -q -m 'not slow': 1013 passed/9 failed -- A/B via git stash: identical 8 pre-existing env-only failures (PIL.Image.new AttributeError / poppler-missing rasterizer / pandas ModuleNotFoundError) both with and without this change; the 9th (test_extract_layout_and_tables_raises_on_timeout) reproduced GREEN in isolation both before and after -- confirmed timing-flake in an unrelated file, not a regression. mypy: baseline env-blocking 'pdf-extractor is not a valid Python package name' error identical before/after (confirmed via git stash A/B); scoped --explicit-package-bases mypy run on the 2 changed files: 18 pre-existing [type-arg]/[arg-type] errors, byte-identical (only line-number shift from the added Protocol) before/after -- zero new mypy errors introduced. Commits: bfe92c225 (code), 5c9ccc827 (memory/journal). rebuild_required: true -- holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy / Docker Microservice Code-Change Close Gate -- next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification (confirm doclang serialize path unaffected on the live container), then po Step 6 sign-off.",
+        "rebuild_required": true
       }
     ],
     "qa": [],
@@ -8858,7 +8877,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T01:44:19Z",
+    "last_triaged_at": "2026-07-09T02:52:56Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
