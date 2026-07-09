@@ -82,6 +82,12 @@ describe("Task 1294 — macro_deviation spam fix", () => {
       getWatchlistCodesFn: async () => [],
       syncSectorPeersFn: async () => ({ synced: 0, skipped: 0, apiCalls: 0 }),
       computeHexagramsFn: async () => 0,
+      // CI-RED-554bb302-FIX: step A2/A3 default to real Yahoo Finance/SBV/vnstock
+      // HTTP calls when not injected — non-deterministic + flaky in CI (network
+      // throttled/blocked). Stub to no-ops so the cycle is fully hermetic
+      // (mirrors the 1285-macro-alert-cooldown precedent, CI-RED-8081e584-FIX).
+      macroFetchFn: async () => {},
+      vnstockSyncFn: async () => {},
       // "high" drift alert (new ID) is unnotified
       readUnnotifiedAlertsFn: async () => [makeAlert("macro-2026-04-15-usdVndRate-high", "high")],
       markAlertNotifiedFn: async (id: string) => { markLog.push(id); },
@@ -136,6 +142,10 @@ describe("Task 1294 — macro_deviation spam fix", () => {
       getWatchlistCodesFn: async () => [],
       syncSectorPeersFn: async () => ({ synced: 0, skipped: 0, apiCalls: 0 }),
       computeHexagramsFn: async () => 0,
+      // CI-RED-554bb302-FIX: see AC-1 comment above — stub macro/vnstock fetch
+      // to keep the cycle hermetic (no real network calls in CI).
+      macroFetchFn: async () => {},
+      vnstockSyncFn: async () => {},
       readUnnotifiedAlertsFn: async () => [alert1, alert2],
       markAlertNotifiedFn: async (id: string) => { markLog.push(id); },
       sendAlertsFn: async (alerts: Alert[]) => {
