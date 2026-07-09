@@ -1,23 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — FACTORY-SCHEDULER-job-table-registry → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-`startScheduler.ts` (1257L) held 79 `scheduleCron(CRONS.x, async()=>{ jobRunRepo.wrapRun('xJob', ...) }, opts)` call sites, 57 sharing an identical outer envelope. New `schedulerJobTable.ts`: `buildJobTable(ctx)` — declarative `{name,cron,options,runner}` array for the 57 — plus a single loop `registerJobTable(table, jobRunRepo)`. 22 bespoke entries (skip wrapRun, use `run*WithDb` startupHelpers dedup, or build extra local state first — WAL-escalation closure, scheduler-watchdog self-heal manifest) keep verbatim `scheduleCron(...)` calls in `registerBespokeJobs(ctx)`. `walEscalateFn` moved to new `walEscalation.ts`'s `createWalEscalateFn()`. `startScheduler.ts` → 305L (composition root only: DB/repo init, non-cron startup repairs/probes, 2 registration calls).
-
-8 pre-existing tests reading `startScheduler.ts` SOURCE TEXT via regex (1137/1138/1139/1140/1298b/ARCH-CRON-watchdog) retargeted to `schedulerJobTable.ts` with a brace-depth-aware `extractJobTableEntry()` helper (nested runner-body braces break naive regex); WD-11 (ARCH-CRON-watchdog) got a 2nd scanned file + a `name:'x'`-field regex mirroring its existing `JOB_NAME_FUNDAMENTALS`-const indirection pattern. 239c needed no change (composition-root comments preserve its substring checks).
-
-RAW-verified via a scratch bracket-aware equivalence script (comment-stripped, quote-normalized) comparing every scheduleCron call's cron-key + options + wrapRun job-name between the git-HEAD pre-refactor blob and the new split: 79/79 match exactly (0 missing/extra/drift; 1 non-literal `JOB_NAME_BREADTH_PERSISTER` identifier flagged, manually confirmed identical both sides). New `FACTORY-SCHEDULER-job-table-registry.test.ts` (15 assertions: buildJobTable shape/uniqueness/options, registerJobTable generic wrapRun routing, registerBespokeJobs 22-call coverage, combined 79-call scheduler-boot smoke, walEscalation.ts real-tmpfile integration test).
-
-tsc clean, eslint clean (2 pre-existing unrelated Fence-B errors in `getMoneyRadarComposite.ts`, confirmed untouched). Targeted suite (35 scheduler-referencing files, 431 tests) 430/431 — 1 fail (`188-alert-digest.test.ts` concurrency-guard) is a pre-existing timing-flake, confirmed via isolated 26/26 pass. Server boot verified `APP_ENV=development PORT=3998`: health 200 toolCount=183 unchanged, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200, `[scheduler] jobs registered` final log fired (all 79 registrations completed, zero throw). Gate 2d `cron.schedule` grep=3 unchanged. Full `bun test`: 14414 pass/40 skip/59 fail/4 errors/1183 files (623s) then known Bun 1.3.13 crash-at-teardown — every fail/error grepped: pollNews/vps_push_log/telegram-simulation/1302-deprecated pre-existing flaky class, zero scheduler mentions.
-
-Doc updates: `infrastructure.md` (new "Scheduler Job Table" section).
-
-Commit: a25bdc617. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (scheduler wiring — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified, startScheduler.ts 1257L→305L | HEALTHY.
-
 ## 2026-07-09 — CI-RED-06043b3c-FIX → REVIEW
 
 Fast-tracked one-line fix (PO pre-diagnosed, precedent 728ef563c): `1837a-pipeline-state.test.ts` L96 AC-2 hardcoded `validStatuses` omitted `"done"`, which is the literal value po's Step 6 Docker Close Gate sign-off convention writes to live `.head.status` on every closeout (confirmed standard, not a typo — currently live: `"done"` from the FACTORY-PDF-delete-deprecated-inspect closeout). Added `"done"` with an inline comment matching the existing per-value documentation style.
@@ -43,3 +25,19 @@ Doc updates: NONE (architecture docs reference cascadeEngine by public API only,
 Commit: 00a23ec28. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (domain hot path — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
 
 Zone health: tsc clean, tools=183 unchanged, full cascade test suite 100% pass, before/after behavior probe byte-identical, cascadeEngine.ts 3739L→779L | HEALTHY.
+
+## 2026-07-09 — FACTORY-SCHEDULER-split-dataAuditJob → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+dataAuditJob.ts (1300L) held runDailyChecks (D-1..D-11) + runWeeklyChecks (W-1..W-7) as two giant inline functions, 30+ inline findings.push sites. Split into `scheduler/news-analysis/audit-checks/` — 19 files, one per check group, each ≤120L, pure `(db)=>AuditFinding[]` (checkLancedbDrift/W-7 is the one async exception, injected GetCountFn). AuditFinding/TelegramFn/GetCountFn + checkToCategory/severityToPriority/getPreviousRowCounts/insertFeedbackIfNew/buildFindingTitle/buildTelegramMessage/INDICATOR_RANGES/SNAPSHOT_TABLES moved to new `dataAuditShared.ts`. `dataAuditJob.ts` is now a 353L thin orchestrator: runDailyChecks/runWeeklyChecks are `[...checkA(db),...checkB(db),...]` spreads in the exact original D-n/W-n order (finding order + insertFeedbackIfNew side-effect ordering preserved), plus writeSystemLog/upsertAuditState/maybeSendTelegram + the public runDailyAudit/runWeeklyAudit/runDailyAuditIfStale entry points; re-exports AuditFinding/TelegramFn/GetCountFn/buildFindingTitle for zero call-site churn (existing tests + bctcReparseJob.ts unchanged).
+
+RAW-verified: scratch pre/post comparison script (temp, deleted after use) ran runDailyAudit/runWeeklyAudit against identical seeded fixture DBs using a git-HEAD copy of the pre-split monolith vs the post-split module — findings[] output (20 daily + 27 weekly findings) and agent_feedback insert ordering byte-identical (JSON deep-equal). New `FACTORY-SCHEDULER-split-dataAuditJob.test.ts` (7 tests) exercises 6 extracted check functions directly, plus dataAuditShared's pure mapping helpers, without the orchestrator — demonstrates the DoD's "individually testable" property.
+
+tsc clean. Targeted suite (11 files: 157/314/1055/1420/1862j/1041/1086/1101/1221/p2-f-rag-http-rewire + new split test) 92/92 pass. toolCount=183 unchanged, scheduler cron.schedule grep=3 unchanged (no scheduler wiring touched). Full `bun test`: 14415 pass/40 skip/65 fail/4 errors/1184 files (601s) then known Bun 1.3.13 crash-at-teardown — visible tail sample shows only the pre-existing `1302-deprecated` flaky class (same as both prior FACTORY splits this session).
+
+Doc updates: `infrastructure.md` (new "Data Audit Job" section).
+
+Commit: 7b62f73e7. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (scheduler/cron hot path — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, RAW-verify byte-identical pre/post-split, dataAuditJob.ts 1300L→353L | HEALTHY.
