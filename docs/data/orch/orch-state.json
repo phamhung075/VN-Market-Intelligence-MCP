@@ -291,11 +291,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-09T13:14:31Z",
-    "updated_by": "po"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-PDF-split-generic-md-table",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-PDF-split-generic-md-table — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-09T14:49:30Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3815,15 +3816,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-bctcReparseJob"
       },
       {
-        "title": "Split the 4111L generic_md_table_extractor god-file behind a thin shim (staged)",
-        "priority": "P0",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-PDF-split-generic-md-table",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-generic-md-table"
-      },
-      {
         "title": "Extract shared Tesseract config + DPI constants (5 files)",
         "priority": "P2",
         "zone": "pdf-extractor",
@@ -7112,7 +7104,22 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "title": "Split the 4111L generic_md_table_extractor god-file behind a thin shim (staged)",
+        "priority": "P0",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-PDF-split-generic-md-table",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-generic-md-table",
+        "promoted_at": "2026-07-09T14:49:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-09T14:49:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -7299,8 +7306,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T14:02:56Z",
-    "last_triaged_by": "po-via-dev-team"
+    "last_triaged_at": "2026-07-09T14:49:18Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
