@@ -285,6 +285,40 @@ Source: `apps/frontend/app/domain/analysis/decision.ts`
 
 ---
 
+### `dashboard.analysis.tsx` formatters — split to `app/domain/formatters/*`
+
+Moved 2026-07-09 (FACTORY-FRONTEND-split-dashboard-analysis) — 5 small pure helpers that
+were inline, unexported functions in the `dashboard.analysis.tsx` route (interface layer):
+signal/confidence/indicator label + colour formatters with zero React/API imports. Pure
+move, one function per file, no behavior change.
+
+| Function | File | Purpose |
+|---|---|---|
+| `signalColor(signal)` | `signal-color.ts` | Tailwind text-color class for a KD/market signal string |
+| `confidencePct(confidence)` | `confidence-pct.ts` | 0-1 float → rounded `"NN%"` string |
+| `confidenceLabel(confidence)` | `confidence-label.ts` | colour-coded confidence display for `AgentSignal.confidence` (null-safe — never fabricates 0%/50%) |
+| `indicatorLabel(indicator)` | `indicator-label.ts` | Vietnamese label for a macro indicator key (legacy underscore + canonical keyed-object keys) |
+| `directionLabel(direction)` | `signal-direction-label.ts` | English label + colour class for `AgentSignal.direction` (BULLISH/BEARISH/other) — distinct from the unrelated same-named VN-label helpers local to `dashboard.sector-cascade.tsx` / `dashboard.prediction-claims.tsx` |
+
+`confidenceBar()` (returns JSX) moved to `app/components/analysis/ConfidenceBar.tsx` —
+interface layer, not domain (it renders markup).
+
+Same task also extracted ~24 presentational components out of the route into
+`app/components/analysis/*.tsx` (one cluster per file, each <=120L): `StockSelector`,
+`WatchlistTile`/`WatchlistOverviewGrid`, `SectorPeersBar`, `MacroImpactPanel`,
+`KinhDichMarketPanel`, `MacroSignalPanel`, `StockTable`/`StockSearchForm`,
+`AnalysisDecision`, `InfoSourcePanel` (+ `buildInfoSourceRows`/`buildInfoSourcePriceTaRows`
+row builders), `StockSignalsPanel`, `MiniPriceTable`, `StockDetailPanel` (+
+`StockDetailBottomGrid`), `AiDeepDivePanel` (+ `BriefSection`), `AccuracyDigestCard`,
+`SectionShell` (`SectionCard`/`Row`). The route (`dashboard.analysis.tsx`) dropped from
+1836L to 457L; only the loader, default export, and `AnalysisBriefDto`/
+`AnalysisBriefResult`/`StockDetail` type contracts remain — those types are now exported
+so the moved components can import them via a type-only import (same pattern already
+used by `FinancialsZone`/`NewsBuzzZone`). Behavior-preserving; verified via a fresh
+isolated dev-server curl + Playwright G12 render-gate (4/4 pass) against the split code.
+
+---
+
 ## Service Health types
 
 ```ts
