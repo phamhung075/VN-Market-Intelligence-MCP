@@ -294,9 +294,9 @@
     "status": "in_progress",
     "active_task_id": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
     "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-09T16:47:32Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_action": "developer agent spawned (background, agentId internal) for FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE — dispatcher-wrap claimed+released; awaiting completion notification, then Merge Gate (execute-tier.md) + DJ-GATE-1 check.",
+    "updated_at": "2026-07-09T17:19:29Z",
+    "updated_by": "dev-team (tick 2026-07-09T17:07Z, Step 3 dispatch)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
