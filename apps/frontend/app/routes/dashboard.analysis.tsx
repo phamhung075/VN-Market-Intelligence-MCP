@@ -35,7 +35,6 @@ import type {
   TASnapshot,
   WatchlistStock,
 } from "~/domain/market";
-import { computeDecision, type DecisionResult } from "~/domain/analysis/decision";
 import {
   WATCHLIST_STOCKS,
   groupBySector,
@@ -75,6 +74,7 @@ import { MacroImpactPanel } from "~/components/analysis/MacroImpactPanel";
 import { KinhDichMarketPanel } from "~/components/analysis/KinhDichMarketPanel";
 import { MacroSignalPanel } from "~/components/analysis/MacroSignalPanel";
 import { StockTable, StockSearchForm } from "~/components/analysis/StockTable";
+import { AnalysisDecision } from "~/components/analysis/AnalysisDecision";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -398,47 +398,6 @@ function AccuracyDigestCard({
             · {data!.newStocksCount} stocks still seeding
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-// --------------------------------------------------------------------------
-// Decision panel component
-// --------------------------------------------------------------------------
-
-function AnalysisDecision({
-  ta,
-  reading,
-  prices,
-}: {
-  ta: TASnapshot | null;
-  reading: KinhDichReading;
-  prices: PricePoint[];
-}) {
-  const decision: DecisionResult = computeDecision(ta, reading, prices);
-
-  return (
-    <div className={`border-b border-slate-700 px-4 py-4 ${decision.bgColor}`}>
-      <div className="flex flex-wrap items-center gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-            Quyết định
-          </p>
-          <span className={`text-2xl font-bold ${decision.textColor}`}>
-            {decision.label}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {decision.reasons.map((r, i) => (
-            <span
-              key={i}
-              className="rounded bg-slate-800/60 px-2 py-0.5 text-xs text-slate-300"
-            >
-              {r}
-            </span>
-          ))}
-        </div>
       </div>
     </div>
   );
