@@ -1,21 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-08 — FACTORY-INFRA-split-telegramCommands → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-`telegramCommands.ts` (1071L) mixed router + 9 raw-SQL handlers + presentation + infra reaching UP into `application/usecases/` (imported `assembleEveningSummary`/`generatePeriodicSummary` directly to both fetch AND render `/recap*`). Split: presentation → `telegram/format.ts`; 8 SQL handlers → `telegram/commandHandlers.ts` (SQL moved into new `infrastructure/db/{watchlistReadStore,systemHealthStore,agentFeedbackStore}.ts`); `/news` → `telegram/newsHandler.ts`; `/recap*` **rendering** (pure, zero application imports — narrow hand-written `EveningRecapData`/`PeriodicRecapData` structural views instead of importing the producer's types) → `telegram/recapRenderer.ts`; `/recap*` **orchestration** (the fetch step) → new `application/usecases/orchestrateRecapCommand.ts`, invoked by the INTERFACE layer (`webhookHandler.ts`) via a new `RecapResolvers` DI param on `handleTelegramCommand`. Router 1071L → 267L; `grep application/usecases` across the whole infra chain = 0.
-
-`handleRecap(db, assembleFn?)`'s public signature kept byte-identical (only the "no fn" default behavior changed: was a live production call, now the friendly Vietnamese error text) — every existing recap test in `214-telegram-commands.test.ts` passes an explicit fn already, so zero test changes needed there. New `FACTORY-INFRA-split-telegramCommands.test.ts` (20 assertions: 3 new stores, pure recapRenderer with hand-built non-application-typed objects, RecapResolvers DI with/without injected resolver, orchestrateRecapCommand's 3 functions against real assembleEveningSummary/generatePeriodicSummary) + 1 new case in `1406c-webhook-handler.test.ts` (full webhook→router→resolver→render path).
-
-tsc clean, eslint clean. Targeted suite (32 files: all telegram*/evening-summary/periodic-summary/webhook) 431/431 pass — `214-telegram-commands.test.ts` alone unchanged 60/60. Server boot verified PORT=3997: health 200 toolCount=183 unchanged, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200. scheduler cron.schedule grep=3 unchanged. Full `bun test`: 14406 pass/40 skip/58 fail/6 errors/1182 files (583.84s) then the known Bun 1.3.13 crash-at-teardown — 57 fails are the documented pre-existing pollNews/RSS-timeout/VPS-push/insider/foreign-flow/1302-deprecated flaky class; the 1 telegram-adjacent fail (`235-telegram-send-merge.test.ts`, a file I never touched) passes 10/10 in isolation — full-suite cross-test mock pollution, not a regression.
-
-Doc updates: `infrastructure.md` (new Telegram Command Router section + layering-fix note), `usecases.md` (`orchestrateRecapCommand.ts` entry).
-
-Commit: e9b3a2b75. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (telegramCommands.ts + webhookHandler.ts are on the live `/webhook` HTTP path).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, server boot health 200 + dashboard routes 200 verified | HEALTHY.
-
 ## 2026-07-08 — FACTORY-SCHEDULER-job-table-registry → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -45,3 +29,17 @@ tsc clean. Targeted: `1837a-pipeline-state.test.ts` 5/5 pass. Broader orch-state
 Test-file-only change, no runtime code touched → `rebuild_required=false`, no Docker Close Gate needed. Commit: (see decision journal / git log). Board: `BACKLOG`→`review`, `next_agent=qa` — held at REVIEW rather than self-closing DONE_VERIFIED because the signal's own AC (`ci_green_on_subsequent_push`) requires a green CI run on a push *after* this commit, which cannot be confirmed synchronously; qa/po to confirm `gh run list --branch main` shows conclusion=success post-push before flipping DONE_VERIFIED.
 
 Zone health: tsc clean, targeted+regression suite 205/205 pass, no runtime files touched | HEALTHY.
+
+## 2026-07-09 — FACTORY-DOMAIN-split-cascade-engine → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+cascadeEngine.ts (3739L) held 9 exported rule-data constants (SECTOR_RULES ~2016L, LEGAL_RISK/POLICY/INSIDER_DUMP/MSCI x3/AGRICULTURE/IMF rules) + macro-adjustment/combo-detection orchestration ahead of buildCausalChain. Steps 1-3 only (Step 4 explicitly skipped per dispatch — `SECTOR_RULES.map(r=>r.key)` is invalid, SectorRule has no `.key`): moved the 9 constants + interfaces into `domain/services/cascade/rules/*.ts` (one file per table; shared `CascadeKeywordRule` got its own type file, not duplicated 6x); barreled via `cascade/rules/index.ts`; split orchestration into `cascade/macroAdjustments.ts` (428L) and `cascade/comboDetectors.ts` (241L). buildCausalChain + all exported types stay in cascadeEngine.ts (3739L → 779L). Only the 4 previously-exported symbols (applyMacroAdjustments/applyDynamicMacroAdjustments/detectPolicyInterventionCombo/isPrecededByPlacePrefix) re-exported from cascadeEngine.ts — module surface parity exact.
+
+RAW-verified: `bun tsc --noEmit` exit 0. Before/after behavior probe (temp script, deleted after use) ran buildCausalChain against 10 representative scenarios covering every moved code path — output MD5-identical between pre-split (swapped-in backup) and post-split tree, non-deterministic id/createdAt stripped. 062-cascade-engine.test.ts 23/23 pass; all 17 cascade-related test files zero failures. Full `bun test`: 14400 pass/40 skip/73 fail/13 errors/1183 files (617s) then known Bun 1.3.13 crash-at-teardown — grepped every fail: zero cascade/macro/sector/msci/agriculture/imf/policy/insider-dump/place-prefix/market-wide mentions; all 73 are the pre-existing pollNews/VPS-push/Chromium-missing/DB-drift flaky class (confirmed via isolated re-run of 102-job-news-poll.test.ts, which doesn't even import cascadeEngine). Server boot verified via local process: tool registration reached toolCount=183 (baseline match) before expected EADDRINUSE against the live Docker container.
+
+Doc updates: NONE (architecture docs reference cascadeEngine by public API only, unchanged). Simplicity gate: PASS (Q1-Q4 all NO).
+
+Commit: 00a23ec28. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (domain hot path — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
+
+Zone health: tsc clean, tools=183 unchanged, full cascade test suite 100% pass, before/after behavior probe byte-identical, cascadeEngine.ts 3739L→779L | HEALTHY.
