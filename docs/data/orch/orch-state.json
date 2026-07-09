@@ -280,15 +280,23 @@
       "decision": "FACTORY-FRONTEND-extract-computeDecision Close Gate Steps 1-4 COMPLETE. Step 1: Docker memory check PASS (frontend 57.51MiB/512MiB, total fleet healthy). Step 2: Rebuilt frontend with GIT_SHA=5d9ec1859 via docker compose build --build-arg flag. Step 3: Deployed container via docker compose up -d frontend, status=running (healthy) after 10 seconds. Step 4: SHA gate PASS (deployed SHA 5d9ec1859 matches HEAD). RAW-verify: GET /dashboard/analysis HTTP 200, page renders with analysis components intact (Kinh Dịch references present, navigation structure correct). computeDecision/DecisionResult now imported from apps/frontend/app/domain/analysis/decision.ts (pure move, no behavior change). Decision panel rendering identically post-rebuild. NEXT: qa Step 5 (endpoint health verification + decision output sanity check).",
       "what_considered": "Steps 1-4 protocol mandatory sequence: memory check (pass) → single-service rebuild only (no peer disruption) → deployed successfully → SHA gate verified (no drift) → live route verification (HTTP 200, page renders, decision components intact).",
       "why_change": "No change from ops Close Gate protocol; all steps passed validation. Code move (interface→domain layer) is transparent to running container output."
+    },
+    {
+      "agent": "developer",
+      "task_id": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT",
+      "timestamp": "2026-07-09T08:22:19Z",
+      "decision": "Fixed qa CHANGES_REQUESTED finding: docker-deployment-runbook.md:124 Step-4b table cell embedded the invocation with the shell pipe escaped as backslash-pipe to satisfy GFM table syntax -- as raw text (Read tool / any text-consuming agent, the row audience) that literal backslash-pipe is not a valid shell pipe (jq would receive the pipe char and bash as extra positional file args, exit 2). Fix: moved the invocation out of the table cell into a fenced bash code block placed directly below the table (real unescaped pipe), cell text now just points to the block. Verified: table still parses (all 9 raw table lines have exactly 4 pipe-delimited columns matching header/separator), exact invocation string present raw via grep -F, zero remaining backslash-pipe left in file. Board: qa_verdict CHANGES_REQUESTED->null, next_agent developer->qa, status stays REVIEW (unchanged per dispatch instruction). scripts/ops-closegate-handoff.jq untouched.",
+      "what_considered": "Option 1 (de-escape the pipe in place, relying on GFM code-span rendering to tolerate a raw pipe inside a table cell) -- rejected after checking the GFM table spec: a pipe character inside a cell, even inside a code span/backticks, still terminates the column early unless backslash-escaped (column-split happens before code-span parsing). No other row in this table embeds a fenced/multi-line block below it, so no direct precedent existed; chose Option 2 (qa's own flagged safer option) as the spec-compliant fix.",
+      "why_change": "No change from qa_note's own recommended-safer Option 2. One self-correction mid-fix: first draft referenced the pipe character in the cell's prose as an inline code span, which itself reintroduced an unescaped pipe inside the table cell (5th pipe on that row, column-count mismatch vs. every other row) -- caught via a raw pipe-count sanity check across all 9 table lines and reworded to avoid a literal pipe character in the prose."
     }
   ],
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT",
-    "next_agent": "developer",
-    "next_action": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT — CHANGES_REQUESTED by qa (runbook table-cell pipe-escaping bug), bounced back to developer for a one-line doc fix.",
-    "updated_at": "2026-07-09T08:17:29Z",
-    "updated_by": "router"
+    "next_agent": "qa",
+    "next_action": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT — CHANGES_REQUESTED fix applied (runbook Step-4b table-cell pipe de-escape), resubmitted to qa for re-review.",
+    "updated_at": "2026-07-09T08:22:19Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7783,17 +7791,17 @@
         "created_by": "agents-architect",
         "architecture_brief": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
         "note": "Brief §2.1: generalized, parameterized scripts/ops-closegate-handoff.jq mirroring scripts/devteam-backlog-claim-bounded1.jq / scripts/router-d1-claim.jq precedent — inputs --arg task_id/from_lane/next_agent/now; forwards the board row's next_agent in the SAME jq expression as a CONDITIONAL .head sync (if .head.active_task_id == $task_id then .head.next_agent/.updated_at/.updated_by sync else . end — never an unconditional .head overwrite, .head can legitimately point at a different in-flight task while ops closes this one). No hardcoded task-id/lane literals (grep-verifiable). Runbook § Close Gate table gets the currently-missing 'Step 4b: forward to qa via the script' row — replaces every future ad hoc terminal jq one-liner. Suggested owner split: scripts/ authoring (developer or ops) vs. docs/protocols/docker-deployment-runbook.md edit (agent-father zone per .claude/skills/commit-boundary/SKILL.md) — PO's call whether to keep as one task or split. DoD in brief §5 items 1-2.",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "detail_ref": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
         "status_note": "Architect brief docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md §2.1. Mint scripts/ops-closegate-handoff.jq: parameterized (--arg task_id/from_lane/next_agent/now); ONE jq expr sets row.next_agent AND CONDITIONALLY .head.next_agent/updated_at/updated_by ONLY if .head.active_task_id==task_id (never blind-stomp an unrelated .head); error() if row absent (no silent no-op); NO hardcoded task-id/lane literals (grep-verifiable, per devteam-backlog-claim-bounded1.jq invariant). Add runbook § Close Gate Step-4b table row citing the script + invocation. FAST-TRACK (architect brief = spec, skip ba/pm). AC: brief §5.1+§5.2. Doc/script-only, no rebuild. Triaged po-S16 tick.",
         "triaged_at": "2026-07-09T07:47:30Z",
         "triaged_by": "po",
         "claimed_at": "2026-07-09T07:59:30Z",
         "claimed_by": "router (dispatch developer)",
-        "implementation_note": "scripts/ops-closegate-handoff.jq minted + docs/protocols/docker-deployment-runbook.md § Close-gate Step 4b row added. 3 manual scratch-copy scenarios (row+head match / row-only-head-untouched / absent-row error) + real orch-validate.mjs PASS on candidate output. Journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S8. Scope split: commit-gate footnote (§2.2) + STEP ops-Sn enforcement (§2.3) deferred to follow-on FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE (agent-father).",
+        "implementation_note": "scripts/ops-closegate-handoff.jq minted + docs/protocols/docker-deployment-runbook.md § Close-gate Step 4b row added. 3 manual scratch-copy scenarios (row+head match / row-only-head-untouched / absent-row error) + real orch-validate.mjs PASS on candidate output. Journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S8. Scope split: commit-gate footnote (§2.2) + STEP ops-Sn enforcement (§2.3) deferred to follow-on FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE (agent-father). RESUBMIT 2026-07-09T08:22:19Z (developer-S9): docs/protocols/docker-deployment-runbook.md Step-4b table-cell fix applied for qa's CHANGES_REQUESTED finding — invocation moved out of the GFM table cell into a fenced bash code block directly below the table (real unescaped shell pipe); cell text now just points to the block. Verified: exact invocation string present raw via grep -F with a real |, zero remaining backslash-escaped pipes in the file, all 9 raw table lines have exactly 4 pipe-delimited columns (table still parses). scripts/ops-closegate-handoff.jq untouched (qa already confirmed 0 changes needed there). Journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S9.",
         "reviewed_at": "2026-07-09T08:04:40Z",
         "moved_by": "developer",
-        "qa_verdict": "CHANGES_REQUESTED",
+        "qa_verdict": null,
         "qa_note": "docs/protocols/docker-deployment-runbook.md:124 table-cell invocation escapes the shell pipe as \\| for GFM table syntax — as raw text (Read tool / any text-consuming agent) the literal backslash-pipe breaks the jq->orch-apply.sh pipeline (jq treats | and bash as extra file args, exit 2). Fix: de-escape if GFM code-span renders correctly, or move invocation to a fenced bash block below the table row. Script itself (scripts/ops-closegate-handoff.jq) fully PASSED all 4 brief DoD checks + 3 scratch-test scenarios + orch-validate — no changes needed there.",
         "qa_reviewed_at": "2026-07-09T08:17:29Z"
       }
@@ -7825,6 +7833,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-09T07:29:23Z",
-  "_updated_by": "agents-architect"
+  "_updated_at": "2026-07-09T08:22:19Z",
+  "_updated_by": "developer"
 }
