@@ -267,12 +267,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-PDF-split-extractLayoutFirst-execute CLOSED DONE_VERIFIED by po (Step 6 Docker Close Gate) — moved review[]->done_verified[]. Board idle: next BOUNDED-1 idle-capacity backlog pickup eligible for router. Lock task:FACTORY-PDF-split-extractLayoutFirst-execute pending router release (po session gateway-blind).",
-    "updated_at": "2026-07-09T01:39:16Z",
-    "updated_by": "po (step 6 sign-off)"
+    "status": "review",
+    "active_task_id": "FACTORY-PDF-delete-deprecated-inspect",
+    "next_agent": "ops",
+    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild pdf-extractor; SHA-gate remains DEFERRED to Phase B per runbook), then qa Step 5 live-verify /inspect gone (404) + real extraction routes unaffected on the live container, then po Step 6 sign-off.",
+    "updated_at": "2026-07-09T01:56:55Z",
+    "updated_by": "dev-pdf-extractor"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3875,15 +3875,6 @@
         "supervised_at": "2026-07-04T19:23:49Z",
         "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
         "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
-      },
-      {
-        "title": "Delete the deprecated /inspect viewer surface still wired into main.py",
-        "priority": "P1",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-PDF-delete-deprecated-inspect",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-delete-deprecated-inspect"
       },
       {
         "title": "Introduce DocLangSerializerPort to remove application->infrastructure import",
@@ -8776,6 +8767,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Delete the deprecated /inspect viewer surface still wired into main.py",
+        "priority": "P1",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-PDF-delete-deprecated-inspect",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-delete-deprecated-inspect",
+        "promoted_at": "2026-07-09T01:44:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T01:44:27Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "moved_to_review_at": "2026-07-09T01:56:55Z",
+        "moved_by": "dev-pdf-extractor",
+        "review_note": "Deleted deprecated /inspect viewer surface: removed InspectionStore import+construction+register_routes param (main.py, handlers.py), deleted 4 route closures (GET /inspect, /inspect/pdfs, /inspect/pdf/{doc_id}, /inspect/extraction/{doc_id}) + dead HTMLResponse/Response/Path/_VIEWER_HTML_PATH imports, deleted infrastructure/inspection_store.py + interface/viewer.html, deleted 3 tests-only-for-this-surface files (test_inspection_store.py, test_inspection_routes.py, test_pi3_served_url_acceptance.py — 72 tests), dropped now-unneeded inspection_store= stub kwarg from 3 unrelated call sites (test_local_pdf_input.py x3, test_fu1_fail_loud.py x1, scenarios/pek_single_doc_extraction.py x3). QA-sign-off-pending check: mcp-server GET /api/bctc-inspect replacement confirmed DONE-on-real-data (PO REOPEN-2 sign-off ca955baf1) and actively developed since (LF-OVERLAY, HC-DEV-6/7, BEQ fixes, FIX-INSPECT-NAV-RELOAD) — outright delete, not env-gate, is correct per backlog default. RAW-verify: grep zero hits for InspectionStore/inspection_store/viewer.html repo-wide; live create_app() (real composition root, no mocks) + TestClient — GET /health 200, GET /inspect 404, GET /inspect/pdfs 404 (both were live routes before); route table confirmed zero /inspect* paths, all real routes intact (/extract, /extract-layout-first, /extract-tables, /extract-md-tables, /pek-extract, /rasterize, /page-text, /health). pytest -q: 12 failed / 1016 passed / 1 skipped — identical 12 pre-existing env-only failures to baseline (A/B confirmed via git stash/git stash pop, same test IDs both runs); the 72-test drop (1088->1016) is exactly the 3 deleted files (29+18+25=72 via git show HEAD:<path> | grep -c def test_), zero other regressions. mypy: same pre-existing \"pdf-extractor is not a valid Python package name\" env error as baseline (git stash confirmed). handlers.py 808->673L (-135L), main.py 280->271L (-9L). Commits: 47453d546 (code), 8ddb4c0f3 (memory). rebuild_required: true — holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy / Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification (confirm /inspect gone + real extraction endpoints unaffected on the live container), then po Step 6 sign-off.",
+        "rebuild_required": true
       }
     ],
     "qa": [],
@@ -8795,7 +8805,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T00:47:59Z",
+    "last_triaged_at": "2026-07-09T01:44:19Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
