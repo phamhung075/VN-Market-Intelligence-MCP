@@ -14,8 +14,8 @@ Domain layer rules:
 These protocols satisfy G2 re-verify (P2-C) and enforce the DDD layering rule:
 domain modules compose domain primitives via ports, not direct function calls.
 
-Ports defined here (17 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; MD-EXTRACT-2 adds 1;
-    LF-EXTRACT adds 2; DOCLANG-SERIALIZE adds 1):
+Ports defined here (18 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; MD-EXTRACT-2 adds 1;
+    LF-EXTRACT adds 2; DOCLANG-SERIALIZE adds 2 (FACTORY-PDF-fix-application-infra-leak)):
     - DecimalNormalizerPort         (decimal_normalizer — P1-B2)
     - FinancialValidatorPort        (validate_financial_figures — P1-B1)
     - ConfidenceScorerPort          (confidence_scorer — P2-B1)
@@ -33,11 +33,12 @@ Ports defined here (17 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; 
     - LayoutFirstPushClientPort     (layout_first_push_client — LF-EXTRACT)
     - OcrPagesFetchClientPort       (ocr_text_fetch_client pages-variant — LF-EXTRACT)
     - DocLangWritePort              (doclang_write — DOCLANG-SERIALIZE)
+    - DocLangSerializerPort         (doclang_serializer — DOCLANG-SERIALIZE, FACTORY-PDF-fix-application-infra-leak)
 """
 
 from __future__ import annotations
 
-from typing import Dict, List, Literal, Optional, Protocol, Tuple
+from typing import Any, Dict, List, Literal, Optional, Protocol, Tuple
 
 
 class DecimalNormalizerPort(Protocol):
@@ -576,6 +577,43 @@ class LayoutFirstPushClientPort(Protocol):
 
         Raises:
             Exception: on HTTP error or network failure (caller handles).
+        """
+        ...
+
+
+class DocLangSerializerPort(Protocol):
+    """
+    Port for the DocLang XML serializer primitive (FACTORY-PDF-fix-application-infra-leak).
+
+    Describes the `.serialize` surface actually used by DocLangSerializeUseCase — the
+    application layer previously imported the concrete infrastructure.DocLangSerializer
+    class directly (the only `from infrastructure` import in the application layer); this
+    Protocol removes that leak.
+
+    DDD: domain port — zero infrastructure/application imports. Pure Protocol. `tables` is
+    typed `List[Any]` (rather than `List[application.dtos.ExtractedTableDTO]`) to keep the
+    domain layer decoupled from the application-layer DTO module — each element carries
+    table_index, headers, rows, page_number attributes; see
+    application/dtos.ExtractedTableDTO for the concrete shape.
+
+    Implemented by:
+        - infrastructure/doclang_serializer.DocLangSerializer (production, stdlib-only pure
+          transform)
+    """
+
+    def serialize(self, tables: List[Any], report_id: str = "unknown") -> str:
+        """
+        Serialize a list of extracted-table DTOs to a DocLang XML string.
+
+        Args:
+            tables:    List of table DTOs, each with table_index, headers, rows,
+                       page_number.
+            report_id: Document identifier for metadata (default: "unknown").
+
+        Returns:
+            Well-formed DocLang XML string (UTF-8), ready to write to disk.
+            Returns a valid empty-body doclang document when tables is empty.
+            Contract: never raises.
         """
         ...
 

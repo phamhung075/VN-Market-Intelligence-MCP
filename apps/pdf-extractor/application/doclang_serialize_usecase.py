@@ -14,8 +14,10 @@ import tempfile
 from typing import Optional
 
 from application.dtos import ExtractPDFResponse
-from domain.modules.financial_reports.ports import DocLangWritePort
-from infrastructure.doclang_serializer import DocLangSerializer
+from domain.modules.financial_reports.ports import (
+    DocLangSerializerPort,
+    DocLangWritePort,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +38,17 @@ class DocLangSerializeUseCase:
 
     def __init__(
         self,
-        serializer: DocLangSerializer,
+        serializer: DocLangSerializerPort,
         write_port: DocLangWritePort,
     ) -> None:
         """
         Initialize the use case.
 
         Args:
-            serializer:  DocLangSerializer instance (pure transform, no state
-                         beyond bbox_provider).
+            serializer:  DocLangSerializerPort implementation (production:
+                         infrastructure.doclang_serializer.DocLangSerializer, wired at the
+                         composition root — main.py; pure transform, no state beyond
+                         bbox_provider).
             write_port:  DocLangWritePort implementation (production:
                          FilesystemDocLangWriteAdapter; test: NullDocLangWriteAdapter).
         """

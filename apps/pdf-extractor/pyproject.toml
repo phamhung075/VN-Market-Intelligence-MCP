@@ -65,3 +65,14 @@ forbidden_modules = [
     "infrastructure",
     "interface",
 ]
+
+[[tool.importlinter.contracts]]
+name = "Fence-C: application must not import infrastructure or interface (FACTORY-PDF-fix-application-infra-leak)"
+type = "forbidden"
+source_modules = [
+    "application",
+]
+forbidden_modules = [
+    "infrastructure",
+    "interface",
+]
