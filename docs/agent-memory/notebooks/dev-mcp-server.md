@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-09 — FACTORY-DOMAIN-split-cascade-engine → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-cascadeEngine.ts (3739L) held 9 exported rule-data constants (SECTOR_RULES ~2016L, LEGAL_RISK/POLICY/INSIDER_DUMP/MSCI x3/AGRICULTURE/IMF rules) + macro-adjustment/combo-detection orchestration ahead of buildCausalChain. Steps 1-3 only (Step 4 explicitly skipped per dispatch — `SECTOR_RULES.map(r=>r.key)` is invalid, SectorRule has no `.key`): moved the 9 constants + interfaces into `domain/services/cascade/rules/*.ts` (one file per table; shared `CascadeKeywordRule` got its own type file, not duplicated 6x); barreled via `cascade/rules/index.ts`; split orchestration into `cascade/macroAdjustments.ts` (428L) and `cascade/comboDetectors.ts` (241L). buildCausalChain + all exported types stay in cascadeEngine.ts (3739L → 779L). Only the 4 previously-exported symbols (applyMacroAdjustments/applyDynamicMacroAdjustments/detectPolicyInterventionCombo/isPrecededByPlacePrefix) re-exported from cascadeEngine.ts — module surface parity exact.
-
-RAW-verified: `bun tsc --noEmit` exit 0. Before/after behavior probe (temp script, deleted after use) ran buildCausalChain against 10 representative scenarios covering every moved code path — output MD5-identical between pre-split (swapped-in backup) and post-split tree, non-deterministic id/createdAt stripped. 062-cascade-engine.test.ts 23/23 pass; all 17 cascade-related test files zero failures. Full `bun test`: 14400 pass/40 skip/73 fail/13 errors/1183 files (617s) then known Bun 1.3.13 crash-at-teardown — grepped every fail: zero cascade/macro/sector/msci/agriculture/imf/policy/insider-dump/place-prefix/market-wide mentions; all 73 are the pre-existing pollNews/VPS-push/Chromium-missing/DB-drift flaky class (confirmed via isolated re-run of 102-job-news-poll.test.ts, which doesn't even import cascadeEngine). Server boot verified via local process: tool registration reached toolCount=183 (baseline match) before expected EADDRINUSE against the live Docker container.
-
-Doc updates: NONE (architecture docs reference cascadeEngine by public API only, unchanged). Simplicity gate: PASS (Q1-Q4 all NO).
-
-Commit: 00a23ec28. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (domain hot path — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
-
-Zone health: tsc clean, tools=183 unchanged, full cascade test suite 100% pass, before/after behavior probe byte-identical, cascadeEngine.ts 3739L→779L | HEALTHY.
-
 ## 2026-07-09 — FACTORY-SCHEDULER-split-dataAuditJob → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -45,3 +31,19 @@ Doc updates: `infrastructure.md` (new "Intelligence Cycle Job" section).
 Commit: 0e1e48dad. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (scheduler/cron hot path — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, RAW-verify MD5-identical pre/post-split (2 layers), intelligenceCycleJob.ts 1381L→975L | HEALTHY.
+
+## 2026-07-09 — FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dispatched from ci-red-554bb302 signal, dev-team)
+
+1294-macro-spam-fix.test.ts's AC-1/AC-2 `CycleDeps` objects omitted `macroFetchFn`/`vnstockSyncFn` (both already exist on `CycleDeps`, added by CI-RED-8081e584-FIX round 2 / commit 8a2ef7255 for the sibling 1285-macro-alert-cooldown test) — step A2 defaulted to REAL Yahoo Finance/SBV HTTP calls on every run, confirmed live via `[yahooFinance] fetched commodity prices`/`[sbv] macro snapshot fetched` log lines that vanished after the fix. Fix: injected `async () => {}` no-op stubs for both fields, mirroring the 1285 precedent (no new DI convention).
+
+RAW-verified: target test green x4 local runs, no live-fetch log lines, duration ~1050ms→~150ms proves no network I/O. tsc clean. `git stash` A/B on a monolithic `bun test` run's 12-file failure list confirmed those 65 fails pre-exist independent of this diff. CI-equivalent `ci-per-file-isolation.sh`: 1294 not among the (unrelated) failed files. Pushed 76acfb4e4 → CI initially red on FU-LOCKSTORE-EXPIRED-GC.test.ts (unrelated, zero code overlap, confirmed 3/3 local isolated pass — a NEW unrelated flake, not this fix) → re-ran same commit's CI job (GH run 29025427212) → green.
+
+Scope note: 8 other test files (106-intelligence-cycle/1228/1255/137/1383/1501/278/311) call `runIntelligenceCycle` without stubbing `macroFetchFn`/`vnstockSyncFn` — same exposure class, currently passing (network reachable), flagged for a follow-up sweep rather than folded into this S-size targeted fix.
+
+Doc updates: NONE (test-only fix, no architecture/behavior change).
+
+Commit: 76acfb4e4. Board: `in_progress`→`review` (orch-apply.sh, commit 531af9a11), `next_agent=qa`.
+
+Zone health: tsc clean, tools=183 unchanged, target test green x4 no live-fetch, CI green on re-run | HEALTHY.
