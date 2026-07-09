@@ -103,6 +103,34 @@ out1b=$(run_promote "$TMP/orch-1b.json" "$TMP/detail-1b.json")
 check "Case1b: satisfied detail_ref-resolved depends_on -> row promoted" \
   "$(echo "$out1b" | jq -r '.task_board.ready[0].id // "NONE"')" "CAND-DETAILREF-SAT"
 
+echo "[test] -------- Case 1c: detail_ref-resolved depends_on, \$detail_items ARRAY shape (live-data shape, FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) -> resolves, no crash --------"
+# Live docs/data/orch/archive/backlog-detail.json .items is a plain ARRAY of
+# id-bearing objects, NOT an object keyed by task id (Case 1b's shape above).
+# Root cause repro: effective_depends_on's $detail_items[.id] object-indexing
+# crashes ("Cannot index array with string") the moment ANY detail_ref'd row
+# with this shape is scanned during eligibility filtering.
+cat > "$TMP/orch-1c.json" <<'JSON'
+{
+  "task_board": {
+    "backlog": [
+      {"id":"CAND-DETAILREF-ARRAYSHAPE","status":"BACKLOG","priority":"P1","depends_on":null,"detail_ref":"docs/data/orch/archive/backlog-detail.json#CAND-DETAILREF-ARRAYSHAPE","supervised":false}
+    ],
+    "done_verified": [
+      {"id":"DEP-C","status":"DONE_VERIFIED"}
+    ]
+  }
+}
+JSON
+cat > "$TMP/detail-1c.json" <<'JSON'
+{"items": [
+  {"id":"UNRELATED-ROW","depends_on":[]},
+  {"id":"CAND-DETAILREF-ARRAYSHAPE","depends_on":["DEP-C"]}
+]}
+JSON
+out1c=$(run_promote "$TMP/orch-1c.json" "$TMP/detail-1c.json")
+check "Case1c: ARRAY-shaped detail .items resolves satisfied depends_on -> row promoted (no crash)" \
+  "$(echo "$out1c" | jq -r '.task_board.ready[0].id // "NONE"')" "CAND-DETAILREF-ARRAYSHAPE"
+
 echo "[test] -------- Case 2: unsatisfied inline depends_on -> skipped, next-eligible promoted --------"
 cat > "$TMP/orch-2.json" <<'JSON'
 {

@@ -147,7 +147,17 @@ def deps_satisfied($detail_items; $status_map):
 if (wip >= 1) then
   .   # BOUNDED-1 GATE: WIP>=1 — refuse to promote (no-op, idempotent re-run-safe)
 else
-  ($detail[0].items // {}) as $detail_items
+  # Shape-defensive ingest (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX,
+  # 2026-07-09): live docs/data/orch/archive/backlog-detail.json `.items` is
+  # a plain ARRAY of 437 id-bearing objects, not an object keyed by task id.
+  # effective_depends_on does object-indexing ($detail_items[.id]) below, so
+  # id-key the array here at ingest time — object input passes through
+  # unchanged (defensive against a future/fixture object shape too).
+  (($detail[0].items // []) as $raw_items
+    | if ($raw_items | type) == "object" then $raw_items
+      else ($raw_items | map(select(.id != null) | {key: .id, value: .}) | from_entries)
+      end
+  ) as $detail_items
   | dep_status_map as $status_map
   | ( [ .task_board.backlog
       | to_entries[]
