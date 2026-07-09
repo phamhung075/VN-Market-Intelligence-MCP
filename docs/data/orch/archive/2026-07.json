@@ -7958,6 +7958,17 @@
       "severity": "MED",
       "status": "READ",
       "payload_ref": null
+    },
+    {
+      "id": "dev-20260709T173417Z",
+      "ts": "2026-07-09T17:34Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "improvement_proposal",
+      "summary": "gateway MCP tool absent 2 consecutive ticks — self-critique T2 proposal drafted",
+      "severity": "INFO",
+      "status": "READ",
+      "payload_ref": "docs/improvement-proposals/IMP-20260710-dev-team-T2-gateway-absent.md"
     }
   ],
   "backlog_detail": [],
