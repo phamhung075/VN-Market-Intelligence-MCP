@@ -583,8 +583,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T05:38:36Z",
-    "_updated_by": "dev-frontend",
+    "_updated_at": "2026-07-09T05:53:10Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7659,6 +7659,23 @@
           "docs/signals/processed/dev-team-20260708T033700Z-gateway-blind-main-session.json"
         ],
         "desc": "RECURRING DEFECT (5th guaranteed-slot miss, multi-day) — per standing recurring-bug-escalation policy (memory feedback_recurring_bug_escalation: 2+ recurrences -> block/escalate). Guaranteed cowork slots keep MISSING (chef-morning 05:15Z, chef-eod 08:45Z, fb-daily 09:15Z, digest-daily 17:30Z, chef-evening 19:45Z) because the affected agent flows call native mcp__gateway__call_tool, which is blind under the per-session Claude Code MCP-client handshake failure (root cause = out-of-repo harness lifecycle, established by SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE DONE; the gateway server itself is proven healthy via raw-curl HTTP 200). The repo-actionable bridge ALREADY EXISTS and is proven live: scripts/agents-flow/mcp-call.sh (mcp_call + mcp_call_gateway_meta, delivered by FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE DONE_VERIFIED, commit a6031047e) POSTs JSON-RPC-over-curl directly and bypasses the blind native MCP client — which is exactly why cowork-team's OWN dispatcher ticks never miss. GAP: that bridge + the SS6 degraded-mode procedure in docs/standards/gateway-call-contract.md were built but NEVER APPLIED to the guaranteed-slot agent flows (verified: grep -rl mcp-call.sh over docs/agents/unified-agent/ + docs/agents/fb-market-poster/ = zero hits), and NO in-flight retrofit task exists in any lane. SCOPE: retrofit the gateway-blind-affected flows to fall back to the mcp-call.sh curl bypass when native mcp__gateway__call_tool is unavailable/blind. Confirmed-affected (per the cowork-team 7-agent-type tally): docs/agents/unified-agent/flow/chef.md (chef-morning/eod/evening), docs/agents/fb-market-poster/flow/main.md (fb-daily; note it HAS Bash but no bridge reference), plus alert-commander, news-scout, market-watcher, digest, refine_bctc_md. DESIGN NOTE (needs_design): architect design pass for the native-first / curl-bypass-fallback pattern (per-tool coverage matrix already in gateway-call-contract.md SS6b; search_tools raw schema uses {query:} not {keyword:}). MUST respect the standing rule that agent flow-doc edits route through the proper owner (agent-father / owning agent), not edited ad-hoc. DoD: each affected guaranteed slot delivers on a subsequent tick even when the spawning session is gateway-blind (verify against a live blind session or via QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL 7-point test)."
+      },
+      {
+        "id": "UNBLOCK-CLOSEGATE-STEP4-HEAD-SYNC",
+        "type": "UNBLOCK",
+        "title": "RECURRING-BUG: Docker Close Gate Step-4 (ops) board-write omits top-level .head sync AND leaves artifacts uncommitted — architect permanent fix (atomic .head+board jq transform + step-ends-only-on-commit)",
+        "owner": "po",
+        "route_to": "agents-architect",
+        "next_agent": "agents-architect",
+        "status": "TODO",
+        "zone": "cross-service/",
+        "priority": "high",
+        "size": "M",
+        "created_at": "2026-07-09T05:53:10Z",
+        "created_by": "po",
+        "blocker": "Recurring fix — 2 router-level fixes of the same failure mode in 30 days (recurring-bug-escalation: STOP ad-hoc router patching, architect must root-cause).",
+        "status_note": "2 occurrences in 30d: (1) FACTORY-APP-dedup-date-freshness-helpers — router fix commit f4afa0e03 (2026-07-08); (2) FACTORY-FRONTEND-split-dashboard-analysis — router fix commit b907a8ea6 (2026-07-09). Blocks further ad-hoc router-level patching of this gap; if it recurs post-fix, router BLOCKS/escalates rather than silently patching a 3rd time.",
+        "note": "FAILURE MODE: ops's Docker Microservice Code-Change Close Gate Step-4 board-write flips task_board.<lane>[].next_agent (ops->qa, row->REVIEW) but repeatedly leaves the top-level .head.next_agent/.head.updated_by stale (pointing at 'ops'/dev-* with old Step-1-4 text). Per feedback_orchstate_dual_head_keys_toplevel_authoritative, top-level .head is the AUTHORITATIVE dispatcher pointer, so a stale .head after Step-4 misdirects the next pick even though the board row is correct. Root: the board-row write and the .head write are two separate jq paths in the same orch-apply.sh candidate and nothing enforces they mutate atomically together — silent, repeatable omission specifically at the ops->qa handoff (Step-4 is the only step that both mutates a board row AND hands .head to a different agent than 'router'). 2nd occurrence ALSO exposed two adjacent process defects: ops left its notebook/decision-journal/orch-state.json writes fully UNCOMMITTED on disk (router had to git add explicit paths + commit them in b907a8ea6), and its decision-journal used a one-off dated filename instead of the established 'STEP ops-Sn' append pattern in docs/agent-memory/decisions/sprint-*-ops.md. PERMANENT FIX (architect design, NOT another router patch): (1) the Step-4 write updates .head AND the board row ATOMICALLY in the same jq transform / single orch-apply.sh candidate — never two separate writes; (2) the step is NOT complete until its own git commit lands (ops commits notebook/journal/orch-state artifacts itself; not left for router to discover via git status); (3) enforce the STEP ops-Sn append pattern for the ops decision-journal (no one-off dated filenames). TARGET SURFACES (architect to confirm): docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate (Steps 1-6 table, ln 116-129), the ops flow doc backing the Step-4 ops->qa board-write handoff, and any shared jq/orch-apply helper. OUTPUT: architecture brief in docs/architecture-briefs/ + per-owner FIX fanout for PO triage. REFS: memory feedback_close_gate_step4_head_sync_gap (2nd-occurrence note), feedback_recurring_bug_escalation, feedback_orchstate_dual_head_keys_toplevel_authoritative, feedback_close_gate_step4_head_sync_gap commit b907a8ea6/f4afa0e03."
       }
     ],
     "closed_sprints": [
@@ -8947,6 +8964,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-09T02:27:00Z",
-  "_updated_by": "po-signal-triage-20260709"
+  "_updated_at": "2026-07-09T05:53:10Z",
+  "_updated_by": "po"
 }
