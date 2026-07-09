@@ -283,12 +283,12 @@
     }
   ],
   "head": {
-    "status": "review",
+    "status": "qa_verification",
     "active_task_id": "FACTORY-MACRO-split-repositories",
-    "next_agent": "ops",
-    "next_action": "ops Docker Microservice Code-Change Close Gate for FACTORY-MACRO-split-repositories (commit c3962350d): rebuild cmd/server with pkg/infrastructure repositories.go split (5 per-adapter files + shared openReadOnly), health check, SHA-gate, then curl-verify VN-Index/commodity/FX/carry-yield live values unchanged post-rebuild.",
-    "updated_at": "2026-07-09T07:01:55Z",
-    "updated_by": "dev-macro-indicators"
+    "next_agent": "qa",
+    "next_action": "QA Step 5 (liveness verification): hit /health endpoint and verify tool count / key behaviour matches new code post-rebuild",
+    "updated_at": "2026-07-09T09:22:00Z",
+    "updated_by": "ops"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8959,7 +8959,7 @@
         "priority": "P1",
         "zone": "macro-indicators",
         "type": "FACTORY",
-        "status": "REVIEW",
+        "status": "QA",
         "id": "FACTORY-MACRO-split-repositories",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-repositories",
         "promoted_at": "2026-07-09T06:48:56Z",
@@ -8971,7 +8971,51 @@
         "completed_at": "2026-07-09T07:01:55Z",
         "completed_by": "dev-macro-indicators",
         "commit_sha": "c3962350d",
-        "verification_note": "repositories.go (905L, 6 adapters) split -> repositories_fixture.go(110L)+repositories_market_index.go(159L)+repositories_commodity.go(283L)+repositories_sbv_rate.go(141L)+repositories_carry_yield.go(335L, incl. new shared openReadOnly(dbPath) helper reused by all 5 live SQLite adapters). go build/vet/test/golangci-lint (0 issues) all GREEN across the zone. repositories_test.go full suite (30+ cases) unchanged and PASS. Extra local RAW-verify: throwaway fixture-DB harness (not committed) called the real constructors + all 9 port methods through DB_PATH env wiring pre-split (git stash) vs post-split -- VN-Index/prev-session/commodity current+prev/SBV rate/deposit rate/Fed funds+source-date/earning yield all byte-identical. cmd/server/main.go imports pkg/infrastructure and constructs all 6 adapter types from this file; Dockerfile builds ./cmd/server/ -- this IS the live-deployed service (unlike sibling FACTORY-MACRO-split-sandbox), so next_agent=ops for the standard Docker Microservice Code-Change Close Gate (rebuild/health/SHA-gate/curl); local verification above does not substitute for ops's post-rebuild live curl checks."
+        "verification_note": "repositories.go (905L, 6 adapters) split -> repositories_fixture.go(110L)+repositories_market_index.go(159L)+repositories_commodity.go(283L)+repositories_sbv_rate.go(141L)+repositories_carry_yield.go(335L, incl. new shared openReadOnly(dbPath) helper reused by all 5 live SQLite adapters). go build/vet/test/golangci-lint (0 issues) all GREEN across the zone. repositories_test.go full suite (30+ cases) unchanged and PASS. Extra local RAW-verify: throwaway fixture-DB harness (not committed) called the real constructors + all 9 port methods through DB_PATH env wiring pre-split (git stash) vs post-split -- VN-Index/prev-session/commodity current+prev/SBV rate/deposit rate/Fed funds+source-date/earning yield all byte-identical. cmd/server/main.go imports pkg/infrastructure and constructs all 6 adapter types from this file; Dockerfile builds ./cmd/server/ -- this IS the live-deployed service (unlike sibling FACTORY-MACRO-split-sandbox), so next_agent=ops for the standard Docker Microservice Code-Change Close Gate (rebuild/health/SHA-gate/curl); local verification above does not substitute for ops's post-rebuild live curl checks.",
+        "qa_verification_started_at": "2026-07-09T09:21:49Z",
+        "qa_verification_started_by": "ops",
+        "verify_note": "ops Steps 1-4 PASS: memory check (700/7000 MB), rebuild with git SHA, container healthy, SHA gate verified. Step 5 raw-verify: POST /snapshot endpoint returning non-null plausible values for VN-Index/commodities/rates/carry/yield. Refactored openReadOnly() path verified live. Next: QA liveness + tool-count verification.",
+        "ops_close_gate_steps": {
+          "step_1_memory_check": {
+            "status": "PASS",
+            "docker_total_mb": 700,
+            "threshold_mb": 7000,
+            "note": "docker stats shows ~700MB total across all containers, well under 7GB limit"
+          },
+          "step_2_rebuild": {
+            "status": "PASS",
+            "git_sha": "9d712bdad752c6ca27b8a4d52a19ab36f92f69a7",
+            "timestamp": "2026-07-09T09:20:28Z",
+            "note": "docker compose build --build-arg GIT_SHA succeeded, image built"
+          },
+          "step_3_verify_container": {
+            "status": "PASS",
+            "container_state": "running (healthy)",
+            "port": 5004,
+            "timestamp": "2026-07-09T09:21:21Z"
+          },
+          "step_4_sha_gate": {
+            "status": "PASS",
+            "deployed_sha": "9d712bdad752c6ca27b8a4d52a19ab36f92f69a7",
+            "verification_result": "OK: deployed SHA matches HEAD",
+            "timestamp": "2026-07-09T09:21:24Z"
+          },
+          "step_5_raw_verify_endpoints": {
+            "status": "PASS",
+            "endpoint": "POST /snapshot",
+            "verified_fields": {
+              "vnIndex": 1841.29,
+              "oilUsd": 77.74,
+              "goldUsd": 4115.8,
+              "usdVnd": 26111,
+              "vndDepositRate": 5,
+              "fedFundsRate": 3.63,
+              "earningYield": 7.052186177715091,
+              "carrySpread": 1.37
+            },
+            "data_quality": "all values non-null and plausible; refactored openReadOnly() path verified live"
+          }
+        }
       }
     ],
     "qa": [],
