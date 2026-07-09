@@ -583,7 +583,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T07:45:30Z",
+    "_updated_at": "2026-07-09T07:47:30Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -6389,7 +6389,12 @@
         "created_at": "2026-07-09T07:29:23Z",
         "created_by": "agents-architect",
         "architecture_brief": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "note": "Brief §2.1: generalized, parameterized scripts/ops-closegate-handoff.jq mirroring scripts/devteam-backlog-claim-bounded1.jq / scripts/router-d1-claim.jq precedent — inputs --arg task_id/from_lane/next_agent/now; forwards the board row's next_agent in the SAME jq expression as a CONDITIONAL .head sync (if .head.active_task_id == $task_id then .head.next_agent/.updated_at/.updated_by sync else . end — never an unconditional .head overwrite, .head can legitimately point at a different in-flight task while ops closes this one). No hardcoded task-id/lane literals (grep-verifiable). Runbook § Close Gate table gets the currently-missing 'Step 4b: forward to qa via the script' row — replaces every future ad hoc terminal jq one-liner. Suggested owner split: scripts/ authoring (developer or ops) vs. docs/protocols/docker-deployment-runbook.md edit (agent-father zone per .claude/skills/commit-boundary/SKILL.md) — PO's call whether to keep as one task or split. DoD in brief §5 items 1-2."
+        "note": "Brief §2.1: generalized, parameterized scripts/ops-closegate-handoff.jq mirroring scripts/devteam-backlog-claim-bounded1.jq / scripts/router-d1-claim.jq precedent — inputs --arg task_id/from_lane/next_agent/now; forwards the board row's next_agent in the SAME jq expression as a CONDITIONAL .head sync (if .head.active_task_id == $task_id then .head.next_agent/.updated_at/.updated_by sync else . end — never an unconditional .head overwrite, .head can legitimately point at a different in-flight task while ops closes this one). No hardcoded task-id/lane literals (grep-verifiable). Runbook § Close Gate table gets the currently-missing 'Step 4b: forward to qa via the script' row — replaces every future ad hoc terminal jq one-liner. Suggested owner split: scripts/ authoring (developer or ops) vs. docs/protocols/docker-deployment-runbook.md edit (agent-father zone per .claude/skills/commit-boundary/SKILL.md) — PO's call whether to keep as one task or split. DoD in brief §5 items 1-2.",
+        "next_agent": "developer",
+        "detail_ref": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
+        "status_note": "Architect brief docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md §2.1. Mint scripts/ops-closegate-handoff.jq: parameterized (--arg task_id/from_lane/next_agent/now); ONE jq expr sets row.next_agent AND CONDITIONALLY .head.next_agent/updated_at/updated_by ONLY if .head.active_task_id==task_id (never blind-stomp an unrelated .head); error() if row absent (no silent no-op); NO hardcoded task-id/lane literals (grep-verifiable, per devteam-backlog-claim-bounded1.jq invariant). Add runbook § Close Gate Step-4b table row citing the script + invocation. FAST-TRACK (architect brief = spec, skip ba/pm). AC: brief §5.1+§5.2. Doc/script-only, no rebuild. Triaged po-S16 tick.",
+        "triaged_at": "2026-07-09T07:47:30Z",
+        "triaged_by": "po"
       },
       {
         "id": "FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE",
@@ -6404,7 +6409,15 @@
         "created_at": "2026-07-09T07:29:23Z",
         "created_by": "agents-architect",
         "architecture_brief": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "note": "Brief §2.2+§2.3: (a) ops's Step 4/4b is not complete until ITS OWN commit lands (notebook + sprint-<sprint_id>-ops.md journal + orch-state.json diff, explicit-path git add/commit/show-verify — modeled on agents-architect's own Brief-Commit Invariant); Step-4 RETURN block must carry the resulting commit SHA, a report without one is INCOMPLETE (router/PO committing ops's artifacts is a defect to report, not a recovery path — happened twice already, commits f4afa0e03/b907a8ea6). Add an ops row to .claude/skills/commit-boundary/SKILL.md's per-agent zone table scoped to exactly those 3 paths. (b) enforce the decision-journal skill's own SPRINT_ID resolution / STEP ops-Sn append pattern for the Close Gate journal entry — a one-off dated filename is never correct. Fold these 3 existing offenders into sprint-SYSTEMIC-REMAKE-P1-ops.md's STEP ops-Sn sequence (content is legitimate, just filed under the wrong name — migrate, do not delete): docs/agent-memory/decisions/2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md. Owner: agent-father (docs/protocols/ + docs/agents/ops/flow/ + .claude/skills/commit-boundary/SKILL.md all fall in its declared zone). DoD in brief §5 items 3-4."
+        "note": "Brief §2.2+§2.3: (a) ops's Step 4/4b is not complete until ITS OWN commit lands (notebook + sprint-<sprint_id>-ops.md journal + orch-state.json diff, explicit-path git add/commit/show-verify — modeled on agents-architect's own Brief-Commit Invariant); Step-4 RETURN block must carry the resulting commit SHA, a report without one is INCOMPLETE (router/PO committing ops's artifacts is a defect to report, not a recovery path — happened twice already, commits f4afa0e03/b907a8ea6). Add an ops row to .claude/skills/commit-boundary/SKILL.md's per-agent zone table scoped to exactly those 3 paths. (b) enforce the decision-journal skill's own SPRINT_ID resolution / STEP ops-Sn append pattern for the Close Gate journal entry — a one-off dated filename is never correct. Fold these 3 existing offenders into sprint-SYSTEMIC-REMAKE-P1-ops.md's STEP ops-Sn sequence (content is legitimate, just filed under the wrong name — migrate, do not delete): docs/agent-memory/decisions/2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md. Owner: agent-father (docs/protocols/ + docs/agents/ops/flow/ + .claude/skills/commit-boundary/SKILL.md all fall in its declared zone). DoD in brief §5 items 3-4.",
+        "next_agent": "agent-father",
+        "detail_ref": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
+        "status_note": "Architect brief §2.2+§2.3. (2.2) Runbook commit-gate footnote — Step 4/4b NOT complete until ops own commit lands; a router/PO cleanup-commit of ops uncommitted Close-Gate artifacts = defect to report, not a recovery path (3rd recurrence→escalate) — plus add an ops row to .claude/skills/commit-boundary/SKILL.md zone table scoped to exactly docs/agent-memory/notebooks/ops.md + docs/agent-memory/decisions/sprint-<id>-ops.md + docs/data/orch/orch-state.json. (2.3) Runbook (or docs/agents/ops/flow/docker.md) STEP ops-Sn journal-filename enforcement line; FOLD (migrate, do NOT delete) the 3 one-off offenders (2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, 2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, 2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md) into sprint-SYSTEMIC-REMAKE-P1-ops.md STEP ops-Sn. agent-father zone (docs/agents/, .claude/skills/, docs/agent-memory/, docs/protocols/). AC brief §5.3+§5.4. Doc-only, no rebuild. Triaged po-S16 tick.",
+        "depends_on": [
+          "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT"
+        ],
+        "triaged_at": "2026-07-09T07:47:30Z",
+        "triaged_by": "po"
       }
     ],
     "closed_sprints": [
