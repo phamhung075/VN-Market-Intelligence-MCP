@@ -79,9 +79,12 @@ describe("Task 1843 — defaultPollNews stubs teChromiumNews", () => {
     const { readFileSync } = await import("node:fs");
     const { resolve } = await import("node:path");
 
+    // FACTORY-SCHEDULER-split-intelligenceCycleJob: defaultPollNews now lives
+    // in its own module (extracted from intelligenceCycleJob.ts, verbatim body
+    // — same source-text assertions still apply at the new location).
     const srcPath = resolve(
       import.meta.dir,
-      "../scheduler/news-analysis/intelligenceCycleJob.ts",
+      "../scheduler/news-analysis/intelligenceCycle/defaults/defaultPollNews.ts",
     );
     const src = readFileSync(srcPath, "utf-8");
 

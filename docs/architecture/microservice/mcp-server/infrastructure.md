@@ -202,6 +202,42 @@ RAW-verify: a scratch pre/post comparison script ran `runDailyAudit`/
 of the pre-split monolith vs the post-split module — findings[] output and
 `agent_feedback` insert ordering were byte-identical (JSON deep-equal).
 
+### Intelligence Cycle Job (`scheduler/news-analysis/intelligenceCycleJob.ts` + `intelligenceCycle/`)
+FACTORY-SCHEDULER-split-intelligenceCycleJob extracted the `CycleResult`/
+`CycleDeps` contracts into `intelligenceCycle/types.ts`, `isMarketHours`
+into `intelligenceCycle/marketHours.ts` (imports `VN_OFFSET_MS` from the
+shared `timeConstants.ts` rather than redefining it), and all 9
+`defaultXxx` production implementations (Steps A/B/C/D/E/A4's DI-seam
+defaults: `defaultPollNews`, `defaultListSscDocs`, `defaultFetchPrices`,
+`defaultRunImpactChain`, `defaultSendAlerts`, `defaultGetWatchlistCodes`,
+`defaultReadUnnotifiedAlerts`, `defaultMarkAlertNotified`,
+`defaultComputeHexagrams`) into one file per default under
+`intelligenceCycle/defaults/`. `defaultComputeHexagrams` and
+`resetHexagramCooldown` — plus the module-level `_lastHexagramComputedAt`
+cooldown map both functions read/write — were kept together in the same
+file (`defaults/defaultComputeHexagrams.ts`) by design: splitting them
+apart would silently break the 15-minute per-stock cooldown closure.
+`intelligenceCycleJob.ts` is now a 975L thin orchestrator: the concurrency
+guard (`cycleRunning`/`cycleStartedAt`/`resetCycleGuard`), the per-step
+timeout helper (`withTimeout` + `STEP_TIMEOUT_MS`/`POLL_NEWS_TIMEOUT_MS`/
+`SYNC_PEERS_TIMEOUT_MS`/`STEP_B_SSC_TIMEOUT_MS`), the `ALERT_WINDOW_MS`/
+`CYCLE_WARN_THRESHOLD_MS` named constants, the 7-step `_runCycle` body,
+`runIntelligenceCycle`, and the Step G chain-synthesis helpers
+(`mapChainAction`, `isoDatePlusDays`, `runChainSynthesis`).
+`CycleResult`/`CycleDeps`/`isMarketHours`/`resetHexagramCooldown` are
+re-exported from `intelligenceCycleJob.ts` for backward-compatible import
+paths (existing tests import them from there directly, unchanged).
+
+RAW-verify: a scratch pre/post comparison script imported both a git-HEAD
+snapshot of the pre-split monolith and the post-split module (same
+directory, so relative import depths resolve identically) and ran
+`runIntelligenceCycle` with an identical fully-injected `CycleDeps` object
+across market-hours=true/false scenarios — the returned `CycleResult` was
+MD5-identical in both scenarios, and `isMarketHours` matched across a
+spread of fixed timestamps. Every extracted function body was additionally
+diffed against the git-HEAD original (import-path depth normalized) and
+confirmed byte-identical.
+
 ## Repositories (6 SQLite implementations)
 - `SqliteWatchlistRepository`, `SqliteMarketPriceRepository`
 - `SqliteKinhDichScoreRepository`, `SqliteHexagramRepository`

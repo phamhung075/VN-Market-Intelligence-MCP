@@ -18,139 +18,45 @@
  * A module-level concurrency guard prevents overlapping runs.
  * A duration warning is logged when the cycle exceeds 12 minutes.
  *
+ * FACTORY-SCHEDULER-split-intelligenceCycleJob: the CycleResult/CycleDeps
+ * contracts, isMarketHours, and every defaultXxx production impl were
+ * extracted into `./intelligenceCycle/{types,marketHours,defaults/*}.ts`
+ * (see file-level docs there for the CRITICAL hexagram-cooldown invariant).
+ * This file is now the thin orchestrator: the concurrency guard, the
+ * per-step timeout helper, the 7-step `_runCycle` body, `runIntelligenceCycle`,
+ * and the Step G chain-synthesis helpers. CycleResult/CycleDeps/isMarketHours/
+ * resetHexagramCooldown are re-exported below for backward-compatible import
+ * paths (existing tests import them from here directly — zero call-site churn).
+ *
  * Layer: interface/scheduler — imports from application/usecases and
  * infrastructure only. Must not import directly from domain/.
  */
 
 import { logger } from "../../infrastructure/logger.js";
 import { mcpConfig } from "../../infrastructure/config.js";
-import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
-import type { PollNewsResult } from "../../application/usecases/pollNews.js";
-import type { SscDocument } from "../../infrastructure/fetchers/ssc.js";
 import type { Alert } from "../../domain/services/alertGenerator.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Public types
-// ─────────────────────────────────────────────────────────────────────────────
+import type { CycleResult, CycleDeps } from "./intelligenceCycle/types.js";
+import { isMarketHours } from "./intelligenceCycle/marketHours.js";
+import { defaultPollNews } from "./intelligenceCycle/defaults/defaultPollNews.js";
+import { defaultListSscDocs } from "./intelligenceCycle/defaults/defaultListSscDocs.js";
+import { defaultFetchPrices } from "./intelligenceCycle/defaults/defaultFetchPrices.js";
+import { defaultRunImpactChain } from "./intelligenceCycle/defaults/defaultRunImpactChain.js";
+import { defaultSendAlerts } from "./intelligenceCycle/defaults/defaultSendAlerts.js";
+import { defaultGetWatchlistCodes } from "./intelligenceCycle/defaults/defaultGetWatchlistCodes.js";
+import { defaultReadUnnotifiedAlerts } from "./intelligenceCycle/defaults/defaultReadUnnotifiedAlerts.js";
+import { defaultMarkAlertNotified } from "./intelligenceCycle/defaults/defaultMarkAlertNotified.js";
+import {
+  defaultComputeHexagrams,
+  resetHexagramCooldown,
+} from "./intelligenceCycle/defaults/defaultComputeHexagrams.js";
 
-/**
- * Summary of one complete intelligence cycle run.
- *
- * @property durationMs          - Wall-clock duration of the full cycle in milliseconds
- * @property isMarketHours       - Whether the cycle ran in market-hours mode
- * @property newsFetched         - Total RSS items fetched (from pollNews.fetched)
- * @property sscDocsFound        - Total SSC documents found across all watchlist codes
- * @property pricesFetched       - Number of price records fetched from HOSE
- * @property impactEventsRan     - Number of impact chain events processed
- * @property telegramAlertsSent  - Number of HIGH/CRITICAL alerts sent to Telegram
- * @property hexagramsComputed   - Number of Kinh Dich readings stored in Step A4 (Task 303)
- * @property errors              - Number of sub-step failures (non-fatal)
- */
-export interface CycleResult {
-  durationMs: number;
-  isMarketHours: boolean;
-  newsFetched: number;
-  sscDocsFound: number;
-  pricesFetched: number;
-  impactEventsRan: number;
-  telegramAlertsSent: number;
-  /** Count of hexagram readings auto-computed and stored in this cycle (Step A4). */
-  hexagramsComputed: number;
-  errors: number;
-}
-
-/**
- * Injectable sub-job functions for testing.
- * All default to real production implementations via dynamic import.
- *
- * @property pollNewsFn               - Override for the news poll step
- * @property listSscDocsFn            - Override for SSC document listing (one stock code)
- * @property fetchPricesFn            - Override for HOSE price fetcher (returns count)
- * @property runImpactChainFn         - Override for impact chain runner (returns count)
- * @property sendAlertsFn             - Override for Telegram alert sender (returns sent count)
- * @property getWatchlistCodesFn      - Override for watchlist code lookup
- * @property isMarketHoursFn          - Override for market-hours check (for test determinism)
- * @property readUnnotifiedAlertsFn   - Override for reading unnotified HIGH/CRITICAL alerts from DB
- * @property markAlertNotifiedFn      - Override for marking a single alert as Telegram-notified
- * @property fakeDurationMs           - Inject a fake elapsed duration (for warning test)
- */
-export interface CycleDeps {
-  pollNewsFn?: () => Promise<PollNewsResult>;
-  listSscDocsFn?: (code: string) => Promise<SscDocument[]>;
-  fetchPricesFn?: () => Promise<number>;
-  runImpactChainFn?: () => Promise<number>;
-  sendAlertsFn?: (alerts: Alert[]) => Promise<number>;
-  getWatchlistCodesFn?: () => Promise<string[]>;
-  isMarketHoursFn?: () => boolean;
-  /**
-   * Read unnotified HIGH/CRITICAL alerts from DB within the given window.
-   * @param windowMs - Look-back window in milliseconds (e.g. 16 * 60 * 1000)
-   */
-  readUnnotifiedAlertsFn?: (windowMs: number) => Promise<Alert[]>;
-  /**
-   * Mark a single alert as successfully sent to Telegram.
-   * @param alertId - The id of the alert to mark notified
-   */
-  markAlertNotifiedFn?: (alertId: string) => Promise<void>;
-  /** For testing only: override the measured durationMs (triggers warning if > 12 min) */
-  fakeDurationMs?: number;
-  /**
-   * Optional sector peer sync hook (Task 278).
-   * Called with watchlist entries after price fetch to refresh peer data.
-   * Defaults to the real syncSectorPeers use case when not injected.
-   */
-  syncSectorPeersFn?: (
-    entries: { actionCode: string; domain: string }[],
-  ) => Promise<{ synced: number; skipped: number; apiCalls: number }>;
-  /**
-   * Task 303 — Step A4: injectable hexagram batch function.
-   * Receives the list of watchlist codes to process; returns the count of
-   * readings successfully stored. When not injected, runs the production
-   * implementation (computeHaoScores → computeReading → storeReading).
-   * Inject in tests to avoid real SQLite + domain side effects.
-   */
-  computeHexagramsFn?: (codes: string[]) => Promise<number>;
-  /**
-   * Task 1281 — Cooldown config for step E alert suppression.
-   * When not injected, reads from `mcpConfig.alertQuality` (mcp.config.json).
-   * Replaces the former hardcoded `{ cooldownMinutes: 60, maxAlertsPerStockPerDay: 3 }`.
-   */
-  cooldownConfig?: import("../../domain/services/alertCooldown.js").CooldownConfig;
-  /**
-   * Task 1281 — Override recent alert history fetch for step E (test isolation).
-   * When not injected, step E queries the DB directly.
-   * Signature matches the in-memory history format used by shouldSuppressAlert.
-   */
-  getRecentAlertHistoryFn?: () => Promise<Array<{ stocks: string; signalTypes: string; triggeredAt: string }>>;
-  /**
-   * Task 1345d — Injectable market summary sender for test isolation.
-   * When provided, used instead of the real `sendTelegramMarket` for the
-   * market-wide cascade pre-pass summary in step E.
-   * In production, defaults to the real `sendTelegramMarket` import.
-   */
-  sendMarketFn?: (text: string, opts?: Record<string, unknown>) => Promise<boolean>;
-  /**
-   * Task 1920g — Injectable prediction claim insert function for test isolation.
-   * When not injected, defaults to `insertPredictionClaim(db, params)` using
-   * the cycle's DB connection.
-   * Signature: (params: PredictionClaimInput) => number
-   */
-  insertClaimFn?: (params: import("../../infrastructure/db/predictionClaimStore.js").PredictionClaimInput) => number;
-  /**
-   * CI-RED-8081e584-FIX (round 2) — Injectable macro fetch hook for test isolation.
-   * When not injected, step A2 runs the real Yahoo Finance + SBV HTTP calls.
-   * Inject `async () => {}` in tests to skip real network calls and prevent
-   * 30 s bun test timeout in CI where outbound HTTP may be throttled/blocked.
-   */
-  macroFetchFn?: () => Promise<void>;
-  /**
-   * CI-RED-8081e584-FIX (round 2) — Injectable vnstock sync hook for test isolation.
-   * When not injected, step A3 runs the real syncVnstockData call.
-   * Inject `async () => {}` in tests to skip real network calls and prevent
-   * 30 s bun test timeout in CI where outbound HTTP may be throttled/blocked.
-   */
-  vnstockSyncFn?: (codes: string[]) => Promise<void>;
-}
+// Re-exported for backward-compatible import paths (existing tests import
+// CycleResult/CycleDeps/isMarketHours/resetHexagramCooldown from
+// "./intelligenceCycleJob.js" directly — the split must not force call-site
+// churn on consumers outside this module).
+export type { CycleResult, CycleDeps };
+export { isMarketHours, resetHexagramCooldown };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Duration warning threshold
@@ -195,185 +101,12 @@ export function resetCycleGuard(): void {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Market hours check
+// Step E alert look-back window (consumed below in _runCycle; the
+// defaultReadUnnotifiedAlerts production impl itself lives in
+// ./intelligenceCycle/defaults/defaultReadUnnotifiedAlerts.ts and takes
+// windowMs as a plain parameter — this named constant stays here because
+// this is where it is consumed).
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Returns true when the given time (defaulting to now) falls within Vietnamese
- * stock market trading hours: Monday–Friday, 09:00–15:30 GMT+7.
- *
- * Implementation uses UTC offset arithmetic to avoid timezone library dependency.
- *
- * @param now - Optional Date to check (defaults to current time)
- */
-export function isMarketHours(now?: Date): boolean {
-  const date = now ?? new Date();
-  // Shift to GMT+7 using UTC arithmetic
-  const gmt7 = new Date(date.getTime() + VN_OFFSET_MS);
-  const dayOfWeek = gmt7.getUTCDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
-  const hour = gmt7.getUTCHours();
-  const minute = gmt7.getUTCMinutes();
-  const totalMinutes = hour * 60 + minute;
-
-  // Monday=1 through Friday=5
-  if (dayOfWeek < 1 || dayOfWeek > 5) return false;
-  // 09:00 = 540 min, 15:30 = 930 min
-  return totalMinutes >= 540 && totalMinutes <= 930;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Default production implementations (lazy dynamic imports)
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function defaultPollNews(): Promise<PollNewsResult> {
-  const { pollNews } = await import("../../application/usecases/pollNews.js");
-  // Task 1228: ALL news sources are now delivered exclusively via POST /api/push-news
-  // from the Vinahost VPS (vn-news-fetch.service, 10 sources, 226 items/15min).
-  //
-  // Previous behavior: CafeF/VnExpress/VnEconomy were stubbed (task 1187), but
-  // Reuters and Trading Economics were still fetched directly. In practice Reuters
-  // is also unreliable from France (geo-block or rate-limit), producing repeated
-  // "step A failed — pollNews error" entries in system_logs and rows_written=0
-  // on every scheduled tick (task 1228).
-  //
-  // Fix: stub ALL news sources. The scheduled intelligenceCycleJob pollNews
-  // call is now a no-op fetcher; all real ingestion happens via the VPS push path
-  // in server.ts. This eliminates startup errors and noise in cron_job_runs.
-  //
-  // Task 1843: teChromiumNews (added in Task 1799) was missing from this stub
-  // list. Every 15-minute intelligence cycle tick was launching a real
-  // Playwright/Chromium browser process, causing:
-  //   - Repeated ~2-second retries (cold-start retry in pollNews)
-  //   - Runaway alert entries (1,227 across 255 minute-windows in 2 days)
-  //   - CPU/memory waste from orphaned Playwright processes
-  // VPS vn-news-fetch.service handles all news sources including Trading
-  // Economics; no local fetcher should run from the scheduled cycle.
-  //
-  // FIX-NEWS-CB-FALSE-CLOSED (2026-07-08): reuters/tradingeconomics stubs
-  // REMOVED from this fetcher map. Sprint 1833g permanently disabled both
-  // sources — sourceHealthTools.ts seeds them with recordDisabled() once at
-  // module load. But this function kept re-injecting `async () => []` stubs
-  // for those two keys on every 15-min tick; pollNews.ts's health loop treats
-  // a fulfilled-but-empty result from a source NOT in STUB_CAPABLE_KEYS as a
-  // real failure, so every tick silently called recordFailure(), overwriting
-  // the "disabled" status with an ever-incrementing "down" count (79+ and
-  // climbing, zero successes ever). pollNews.ts's own resolvedFetchers
-  // contract (Sprint 1833g) already excludes reuters/tradingeconomics from
-  // the default set unless the caller explicitly injects a fetcher for them —
-  // simply not passing these two keys here restores that contract and leaves
-  // the one-time recordDisabled() seed untouched forever, as intended.
-
-  // Task 1855a: read VPS news push health to suppress false all-sources-dark
-  // alerts. Since all local fetchers are stubbed, a 0-item scheduled cycle is
-  // expected when the VPS push pipeline is healthy (last push within 2h).
-  // If the DB query fails for any reason, pass null → alert fires (safe default).
-  let vpsNewsLastPushTs: Date | null = null;
-  try {
-    const { getDb } = await import("../../infrastructure/db/schema.js");
-    const db = getDb();
-    const row = db.prepare(
-      `SELECT MAX(pushed_at) AS ts FROM vps_push_log WHERE service = 'news' AND status = 'ok'`,
-    ).get() as { ts: string | null } | undefined;
-    if (row?.ts) vpsNewsLastPushTs = new Date(row.ts);
-  } catch {
-    // DB unavailable or table missing — fall through with null (conservative: alert fires)
-  }
-
-  return pollNews({
-    fetchers: {
-      cafef:            async () => [],
-      vnexpress:        async () => [],
-      vneconomy:        async () => [],
-      // reuters and tradingeconomics are intentionally NOT stubbed here (nor
-      // otherwise injected) — see FIX-NEWS-CB-FALSE-CLOSED note above.
-      // Omitting them entirely keeps pollNews.ts's resolvedFetchers from
-      // ever adding these keys, so the scheduled cycle never touches their
-      // health record again after the startup recordDisabled() seed.
-      teChromiumNews:   async () => [],  // Task 1843: VPS handles TE Chromium news too
-    },
-    vpsNewsLastPushTs,  // Task 1855a: suppress false alert when VPS push is healthy
-  });
-}
-
-async function defaultListSscDocs(code: string): Promise<SscDocument[]> {
-  const { listSscDocuments } = await import("../../infrastructure/fetchers/ssc.js");
-  const year = new Date().getFullYear();
-  return listSscDocuments(code, "quarterly", year);
-}
-
-async function defaultFetchPrices(codes: string[]): Promise<number> {
-  if (codes.length === 0) return 0;
-
-  // Classify stocks by exchange from watchlist domain
-  const { getDb } = await import("../../infrastructure/db/schema.js");
-  const db = getDb();
-  let upcomCodes: string[] = [];
-  let hoseCodes: string[] = [];
-  try {
-    const rows = db.prepare("SELECT code, exchange FROM watchlist").all() as Array<{ code: string; exchange: string }>;
-    for (const r of rows) {
-      if (r.exchange === "UPCOM") upcomCodes.push(r.code);
-      else hoseCodes.push(r.code);
-    }
-  } catch {
-    hoseCodes = codes; // fallback: treat all as HOSE
-  }
-
-  let total = 0;
-
-  // Fetch HOSE stocks (VnDirect → CafeF fallback)
-  if (hoseCodes.length > 0) {
-    const { fetchHosePrices } = await import("../../infrastructure/fetchers/hose.js");
-    const prices = await fetchHosePrices(hoseCodes);
-    if (prices.length > 0) {
-      const { storeMarketPrices } = await import("../../infrastructure/fetchers/hose.js");
-      await storeMarketPrices(prices);
-    }
-    total += prices.length;
-  }
-
-  // Fetch UPCOM stocks (VnDirect stock_prices fallback)
-  if (upcomCodes.length > 0) {
-    const { fetchUpcomPrices } = await import("../../infrastructure/fetchers/hnx.js");
-    const { storeMarketPrices } = await import("../../infrastructure/fetchers/hose.js");
-    const prices = await fetchUpcomPrices(upcomCodes);
-    if (prices.length > 0) await storeMarketPrices(prices);
-    total += prices.length;
-  }
-
-  return total;
-}
-
-async function defaultRunImpactChain(): Promise<number> {
-  // Impact chain now runs inside pollNews per-entry (via runImpactChain with macro context).
-  // Step D returns 0 because the work is embedded in Step A — this is by design, not a stub.
-  return 0;
-}
-
-async function defaultSendAlerts(alerts: Alert[]): Promise<number> {
-  if (alerts.length === 0) return 0;
-  try {
-    const { notifyTelegramAlert } = await import("../../infrastructure/notifiers/telegram.js");
-    let sent = 0;
-    for (const alert of alerts) {
-      if (alert.severity === "high" || alert.severity === "critical") {
-        const ok = await notifyTelegramAlert(alert);
-        if (ok) sent++;
-      }
-    }
-    return sent;
-  } catch {
-    // Telegram not configured or module not available — silent skip
-    return 0;
-  }
-}
-
-async function defaultGetWatchlistCodes(): Promise<string[]> {
-  const { getDb } = await import("../../infrastructure/db/schema.js");
-  const db = getDb();
-  const rows = db.prepare("SELECT code FROM watchlist").all() as Array<{ code: string }>;
-  return rows.map((r) => r.code);
-}
 
 /**
  * Step E look-back window for unnotified HIGH/CRITICAL alerts.
@@ -391,145 +124,6 @@ async function defaultGetWatchlistCodes(): Promise<string[]> {
  * double-notify if a prior attempt actually succeeded.
  */
 const ALERT_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-async function defaultReadUnnotifiedAlerts(windowMs: number): Promise<Alert[]> {
-  const { readUnnotifiedAlerts } = await import("../../infrastructure/db/alertStore.js");
-  const windowMinutes = windowMs / 60_000;
-  return readUnnotifiedAlerts(windowMinutes);
-}
-
-async function defaultMarkAlertNotified(alertId: string): Promise<void> {
-  const { markAlertNotified } = await import("../../infrastructure/db/alertStore.js");
-  markAlertNotified(alertId);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Task 1501 — Per-stock 15-minute hexagram cooldown
-// Prevents re-computing a reading for the same stock more than once per 15 min.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const _lastHexagramComputedAt: Record<string, number> = {};
-const HEXAGRAM_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
-
-/** Reset the per-stock cooldown map (for test isolation). */
-export function resetHexagramCooldown(): void {
-  for (const key of Object.keys(_lastHexagramComputedAt)) {
-    delete _lastHexagramComputedAt[key];
-  }
-}
-
-/**
- * Task 303 — Step A4 production implementation.
- *
- * For each watchlist code:
- *   1. Load the previous reading (for Markov transition recording)
- *   2. Compute 6 hao scores from local SQLite (no HTTP)
- *   3. Compute a preliminary reading to get the current hexagram number
- *   4. Fetch Markov transition data for the current hexagram
- *   5. Compute the final reading with Markov context
- *   6. Store the reading with source='cycle'
- *   7. Record the hexagram transition (if a previous reading exists)
- *
- * Per-stock errors are caught and logged at WARN level; the loop continues
- * for remaining codes. The returned count reflects only successful stores.
- *
- * Mirrors the pattern used in the `get_kinhdich_reading` MCP tool.
- */
-async function defaultComputeHexagrams(codes: string[]): Promise<number> {
-  const { computeHaoScores } = await import(
-    "../../interface/mcp/tools/kinhdich/kinhDichTools.js"
-  );
-  const { computeReading } = await import(
-    "../../domain/services/kinhDich/kinhDichReading.js"
-  );
-  const { getTopTransitions } = await import(
-    "../../infrastructure/db/hexagramStore.js"
-  );
-  const { QUE_META } = await import(
-    "../../domain/services/kinhDich/hexagramLibrary.js"
-  );
-  const {
-    getLatestReading,
-    storeReading,
-    recordTransition,
-  } = await import("../../infrastructure/db/hexagramStore.js");
-
-  let computed = 0;
-
-  for (const code of codes) {
-    // Task 1501: per-stock 15-min cooldown — skip if computed recently
-    const lastAt = _lastHexagramComputedAt[code] ?? 0;
-    if (lastAt > 0 && Date.now() - lastAt < HEXAGRAM_COOLDOWN_MS) {
-      logger.debug("[intelligence-cycle] step A4 — cooldown active, skipping stock", { code });
-      continue;
-    }
-
-    try {
-      // 1. Previous reading (for Markov)
-      const previousReading = getLatestReading(code);
-
-      // 2. Compute 6 hao scores from local SQLite
-      const scores = computeHaoScores(code);
-
-      // 3. Preliminary reading to get current hexagram number
-      const prelimReading = computeReading(code, scores, null);
-      const currentHexagram = prelimReading.queChiNh.number;
-
-      // 4. Markov transition data
-      let markovData = null;
-      try {
-        const tops = getTopTransitions(currentHexagram, code, 1);
-        if (tops.length > 0 && tops[0]!.probability > 0) {
-          const meta = QUE_META.find((q) => q.id === tops[0]!.toHexagram);
-          markovData = {
-            nextMostLikely: tops[0]!.toHexagram,
-            nextName: meta?.name ?? `Que ${tops[0]!.toHexagram}`,
-            probability: tops[0]!.probability,
-          };
-        }
-      } catch { /* best-effort — no Markov data on first run */ }
-
-      // 5. Final reading with Markov context
-      const reading = computeReading(code, scores, markovData);
-
-      // 6. Store with source='cycle'
-      storeReading({
-        stockCode: code,
-        hexagramNumber: reading.queChiNh.number,
-        hoQueNumber: reading.hoQue.number,
-        bienQueNumber: reading.bienQue.number,
-        haoStates: JSON.stringify(reading.haos.map((h) => h.state)),
-        rawScores: JSON.stringify(scores),
-        nguHanhDynamic: reading.nguHanh.dynamic,
-        tradingSignal: reading.queChiNh.tradingSignal,
-        confidence: reading.queChiNh.confidence,
-        actionNote: reading.actionNote,
-        source: 'cycle',
-      });
-
-      // 7. Record transition if previous reading exists
-      if (previousReading) {
-        recordTransition(
-          previousReading.hexagramNumber,
-          reading.queChiNh.number,
-          code,
-        );
-      }
-
-      _lastHexagramComputedAt[code] = Date.now();
-      computed++;
-    } catch (err) {
-      logger.warn("[intelligence-cycle] step A4 — failed for stock", {
-        code,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      // Per-stock errors are non-fatal; the outer batch-level try/catch
-      // handles timeouts and increments the cycle's `errors` counter.
-    }
-  }
-
-  return computed;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Per-step timeout helper

@@ -46,9 +46,12 @@ import { SourceHealthTracker } from "../domain/services/sourceHealthTracker.js";
 
 describe("FIX-NEWS-CB-FALSE-CLOSED — defaultPollNews stub set excludes disabled sources", () => {
   it("defaultPollNews() function body no longer stubs reuters/tradingeconomics", () => {
+    // FACTORY-SCHEDULER-split-intelligenceCycleJob: defaultPollNews now lives
+    // in its own module (extracted from intelligenceCycleJob.ts, verbatim
+    // body — same source-text assertions still apply at the new location).
     const srcPath = resolve(
       import.meta.dir,
-      "../scheduler/news-analysis/intelligenceCycleJob.ts",
+      "../scheduler/news-analysis/intelligenceCycle/defaults/defaultPollNews.ts",
     );
     const src = readFileSync(srcPath, "utf-8");
 
