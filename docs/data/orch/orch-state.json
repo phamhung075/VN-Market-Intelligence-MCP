@@ -344,17 +344,6 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": null
-      },
-      {
-        "id": "dev-20260709T180508Z-po",
-        "ts": "2026-07-09T18:05:08Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "mock-guard HARD-FAIL: fabricated data in production source (likely Go _test.go false-positive, unchanged since 17:31Z)",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
@@ -7096,25 +7085,7 @@
         "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
       }
     ],
-    "done_verified": [
-      {
-        "title": "Split the 1805L technical-analysis sandbox; drop dead parseCloses shim",
-        "priority": "P1",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-TECHANALYSIS-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-split-sandbox",
-        "promoted_at": "2026-07-09T18:18:20Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T18:18:24Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "completed_at": "2026-07-09T18:41:01Z",
-        "completed_by": "dev-technical-analysis",
-        "verify_note": "go build/vet/test ./... 12 packages GREEN; golangci-lint 0 issues; baseline-captured all 35 sandbox scenario oracle outputs before the split and diffed after — byte-identical except runMs timing jitter; dashboard/build.sh 35/35 GREEN + headless render-check PASS; all 29 non-test cmd/sandbox files <=118L; sandbox_test.go untouched (same package/dir, zero changes needed) and green; dead parseCloses (zero real callers, grep-confirmed) + its var _ = shim deleted. Dockerfile builds only ./cmd/server (cmd/sandbox never COPYd into the image) so the ops-rebuild + qa-live-RAW-verify hops of the Microservice Code-Change Close Gate are inapplicable to this dev-tooling-only refactor; self-verification above is the evidence. Full reasoning: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md STEP dev-technical-analysis-S5."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
