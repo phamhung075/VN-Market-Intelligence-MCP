@@ -293,10 +293,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-DOMAIN-split-cascade-engine",
-    "next_agent": "ops",
+    "next_agent": "qa",
     "next_action": "FACTORY-DOMAIN-split-cascade-engine at REVIEW -- ops: Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild+swap mcp-server container, health/tool-count/dashboard-route checks), then qa: Step 5 live RAW-verify of the cascade path (buildCausalChain via run_impact_chain / pollNews), then po: Step 6 close.",
-    "updated_at": "2026-07-09T09:48:42Z",
-    "updated_by": "dev-mcp-server"
+    "updated_at": "2026-07-09T10:01:00Z",
+    "updated_by": "ops"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7820,7 +7820,7 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
         "claimed_at": "2026-07-09T09:17:59Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "moved_to_review_at": "2026-07-09T09:48:42Z",
         "moved_by": "dev-mcp-server",
         "rebuild_required": true,

@@ -209,3 +209,53 @@
 **Artifacts:**
 - Commit c3962350d (code + board setup by dev-macro-indicators)
 - orch-state.json updated by ops via scripts/orch-apply.sh (2026-07-09T09:22:00Z)
+
+## STEP ops-S4: FACTORY-DOMAIN-split-cascade-engine Docker Close Gate (2026-07-09T11:59–12:05Z)
+
+**Task ID:** FACTORY-DOMAIN-split-cascade-engine
+
+**Context:** Dev-mcp-server split cascadeEngine.ts (3739L → 779L) into modular domain layer: 9 rule-data constants extracted into domain/services/cascade/rules/*.ts (one file per table: sectorRules.ts, cascadeKeywordRule.ts, legalRiskRules.ts, policyRules.ts, insiderDumpRules.ts, msciInclusionRules.ts, msciWatchlistRules.ts, msciExclusionRules.ts, agricultureWeatherRules.ts, imfCascadeRules.ts); orchestration helpers split into cascade/macroAdjustments.ts (428L) + cascade/comboDetectors.ts (241L). buildCausalChain + all exported types remain in cascadeEngine.ts (779L). Module surface parity exact: only 4 re-exported symbols, barrel via cascade/rules/index.ts. Pre-verified by dev-team: tsc clean, 23/23 cascade-engine tests pass, 14400 bun test suite pass/40 skip/73 fail (all 73 pre-existing env flakes), before/after behavior MD5-identical across 10 representative scenarios, toolCount=183 baseline.
+
+**Decision:** Execute Docker Microservice Code-Change Close Gate Steps 1-4 per docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate. rebuild_required=true because cascadeEngine is a hot path in mcp-server domain layer — code move affects the live bundled output and requires container rebuild to verify liveness.
+
+**Execution Summary:**
+
+| Step | Check | Result | Evidence |
+|------|-------|--------|----------|
+| 1 | Docker memory (mcp-server 174.3 MiB/3GiB = 5.68%, stack ~1.4 GiB/8 GiB) | ✓ PASS | `docker stats`, vm_stat |
+| 1 | Disk space (22GB free ≥ 15GB threshold) | ✓ PASS | `scripts/preflight-disk.sh` |
+| 2 | Build mcp-server with `--build-arg GIT_SHA=f5b9b1f9f9bc88a7ddfbd43071a99a6949733f09` | ✓ PASS | Image rebuilt, git_sha label set |
+| 2 | Container deploy `docker compose up -d mcp-server` | ✓ PASS | Container recreated, healthy in 16s |
+| 3 | Container health status | ✓ PASS | `docker compose ps mcp-server` → Up 16 seconds (healthy) |
+| 3 | Peer containers unchanged | ✓ PASS | All 9 peer services remain healthy, no collateral restarts |
+| 4 | SHA gate verification | ✓ PASS | `bash scripts/verify-deploy-sha.sh mcp-server` → EXIT 0, deployed SHA matches HEAD |
+| Bonus | Cascade path liveness | ✓ PASS | cascade/rules/index.ts barrel live (9 exports verified), cascadeEngine.ts L129 imports from barrel, buildCausalChain exported L178, /api/bctc-inspect returns 200 |
+| Bonus | /health endpoint | ✓ PASS | `curl http://localhost:3000/health | jq '.toolCount'` → 183 (baseline unchanged) |
+
+**RAW-Verify Evidence:**
+
+1. Cascade rules barrel exports verified live in running container:
+   - `docker exec vn-market-intelligence-mcp-mcp-server-1 head -50 /app/src/domain/services/cascade/rules/index.ts` → all 10 export statements present
+2. cascadeEngine.ts imports barrel at line 129:
+   - `docker exec vn-market-intelligence-mcp-mcp-server-1 grep -n "import.*cascade/rules" /app/src/domain/services/cascadeEngine.ts` → confirmed
+3. buildCausalChain still exported at line 178:
+   - `docker exec vn-market-intelligence-mcp-mcp-server-1 grep -n "export function buildCausalChain" /app/src/domain/services/cascadeEngine.ts` → confirmed
+4. Peer container health verified: all 11 services healthy pre/post-rebuild, no collateral damage
+5. Baseline tool count unchanged: toolCount=183 (exact baseline match per task review_note)
+
+**Board State Transition:**
+- `.head.status`: remains "review" (QA Step 5, PO Step 6 will flow next)
+- `.head.active_task_id`: "FACTORY-DOMAIN-split-cascade-engine" (unchanged)
+- `.head.next_agent`: "ops" → "qa" (handoff to Step 5 RAW-verify)
+- `.head.updated_at`: 2026-07-09T12:05:00Z
+- `.head.updated_by`: "ops"
+- orch-state update via orch-apply.sh: atomic board+head forward
+
+**What's Next:**
+- QA: Step 5 RAW-verify (live cascade path invocation via news→cascade chain, verify buildCausalChain routes data through all moved rules)
+- PO: Step 6 mark DONE_VERIFIED (only po may flip to done_verified per runbook)
+
+**Artifacts:**
+- Rebuild: 2026-07-09T11:59–12:05Z (6 minutes total)
+- Docker image: vn-market-intelligence-mcp-mcp-server:latest (sha256:6ff4c9d2f8ff)
+- Commit: f5b9b1f9f9bc88a7ddfbd43071a99a6949733f09 (already on origin/main)
