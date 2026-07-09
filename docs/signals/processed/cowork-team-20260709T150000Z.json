@@ -1,0 +1,31 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-09T15:00Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "bctc-analyst-slot-1"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "bctc-analyst-slot-1",
+      "agent": "bctc-analyst",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null (no backstop trigger ever configured for this slot), _superseded_by=null"
+    }
+  ],
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). New slot type this session — bctc-analyst-slot-1, never-configured pattern (same as the three refine-bctc-slot-N slots seen earlier today).",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (send_telegram + emit_pressure_state succeeded).",
+  "work_channel_message_sent": true,
+  "stale_warning_note": "stale_warning TRUE this tick. Cumulative (02:00-15:00, 34 WORK ticks; SILENT ticks not counted): 11 true, 23 absent — confirmed intermittent with no stable pattern.",
+  "recurring_symptom_note": "bctc-analyst-slot-1 (cron 0 15 * * *, off-market BCTC routine analysis) is a new slot type surfaced this tick, not previously seen this session.",
+  "emitted_at": "2026-07-09T15:01:52.372Z",
+  "_processed": {
+    "fingerprint": "5cb0acfc11bab72bf87799525201e82523bb0cd570df268898d51b5ac73b5af1",
+    "processedAt": "2026-07-09T15:17:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
