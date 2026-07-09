@@ -292,11 +292,11 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-09T15:40:27Z",
-    "updated_by": "dev-pdf-extractor",
+    "updated_at": "2026-07-09T15:50:26Z",
+    "updated_by": "dev-team",
     "active_task_id": null,
     "next_agent": null,
-    "note": "FACTORY-PDF-split-generic-md-table repo scope shipped (8 commits 21686062b..f261bd4b6) -> review[] lane, next_agent=qa. rebuild_required=true — ops rebuild+swap then qa live-verify per docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate."
+    "note": "FACTORY-PDF-split-generic-md-table repo scope shipped -> review[] lane, next_agent=qa, rebuild_required=true. REVERTED erroneous BOUNDED-1 auto-pickup of FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (2026-07-09T15:48Z): task is supervised true in backlog-detail.json since 2026-07-04T19:23:49Z (held for router/PO/user-adjudicated dispatch per its supervised_note) but the board-level backlog row never carried a supervised flag, so devteam-backlog-promote-bounded1.jq only checks the thin board rows .supervised field which silently defaults false. Stamped supervised:true on the board row as an immediate data-hygiene fix; real fix is extending the script eligibility filter to also check $detail items supervised (it already slurps backlog-detail.json for the depends_on gate) — routed to PO for a proper FIX task."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5890,15 +5890,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP"
       },
       {
-        "id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "type": "FIX",
-        "title": "Orphan-adoption board-state guard (both paths) + stop false-orphaning long agents + clearable reaper orphans",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD"
-      },
-      {
         "id": "FEAT-SEVERITY-OVERRIDE-SURFACING",
         "type": "FEATURE",
         "priority": "HIGH",
@@ -6119,7 +6110,8 @@
         "zone": "cross-service/",
         "size": "S",
         "title": "context-bloat-backstop hook fires transient FPs on mid-write line counts -> add settle-read/debounce (re-read after short settle, or emit only on committed state)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CONTEXT-BLOAT-HOOK-SETTLE-READ-DEBOUNCE",
+        "supervised": true
       },
       {
         "id": "FIX-SIGNALQUEUE-DUP-ID-GUARD",
@@ -6128,7 +6120,8 @@
         "type": "FIX",
         "priority": "med",
         "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNALQUEUE-DUP-ID-GUARD"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNALQUEUE-DUP-ID-GUARD",
+        "supervised": true
       },
       {
         "id": "FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT",
@@ -6138,7 +6131,8 @@
         "zone": "docs/agents/system-auditor/",
         "size": "S",
         "title": "system-auditor B-05 (bctc-vps freshness) applies a 24h-continuous SLA to the RAW quarterly-PDF push layer instead of the authoritative analysis-layer SLA gate -> phantom CRITICAL + Telegram BUG ~6x/day for an event-driven quarterly source",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT",
+        "supervised": true
       },
       {
         "id": "P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT",
@@ -6149,7 +6143,8 @@
         "size": "M",
         "zone": "cross-service/",
         "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT",
+        "supervised": true
       },
       {
         "id": "P1-IDLE-AUDITOR-TIER23-SCRIPT",
@@ -6160,7 +6155,8 @@
         "size": "M",
         "zone": "cross-service/",
         "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-AUDITOR-TIER23-SCRIPT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-AUDITOR-TIER23-SCRIPT",
+        "supervised": true
       },
       {
         "id": "P1-IDLE-AUDITOR-NOTEBOOK-GATE",
@@ -6171,7 +6167,8 @@
         "size": "S",
         "zone": "docs/agents/system-auditor/",
         "sprint": "SYSTEMIC-REMAKE-P1",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-AUDITOR-NOTEBOOK-GATE"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#P1-IDLE-AUDITOR-NOTEBOOK-GATE",
+        "supervised": true
       },
       {
         "id": "P1-DRIFT-QUARANTINE-FREEZE-FLAG",
@@ -6223,7 +6220,8 @@
         "title": "Batch verify-prune sweep of task_board.backlog[] — 4 confirmed stale-already-done BOUNDED-1 picks in one tick (FACTORY-INTERFACE 07-04T09:07Z, FACTORY-INFRA 07-04T09:37Z, FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + SYS-FUNC-05-FIX both 07-07T16:37Z)",
         "type": "FIX",
         "zone": "docs/data/orch/orch-state.json (task_board.backlog)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "supervised": true
       },
       {
         "id": "INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
@@ -6383,6 +6381,16 @@
           "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX"
         ],
         "status_note": "Recurring per-tick noise, no functional impact: docs/signals/cowork-team-2026-07-03T16-00-00Z.json + 3x price_anomaly_202607{02,03,04}*.json are correctly skipped as non-routable (no from/type) but re-scanned every tick. FIX: (a) drain-signals.js quarantines unrecognized no-from/type files to docs/signals/malformed/ after logging so they stop being re-scanned; (b) redirect upstream writers (cowork tick-report + price_anomaly detector) so their output artifacts stop landing in the routable-signal inbox. Do NOT blindly delete the price_anomaly_*.json files — confirm no live consumer (money-radar/dish surfacing) reads them before choosing quarantine-vs-relocate. Held in backlog (not in_progress) to respect WIP<=2 this tick — eligible for BOUNDED-1 auto-pickup once id1 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) ships. baseline_pass: a fresh dev-team tick's drain step logs the 4 files as quarantined/handled ONCE, a second tick does not re-scan them; no routable signal is ever quarantined."
+      },
+      {
+        "id": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "type": "FIX",
+        "title": "Orphan-adoption board-state guard (both paths) + stop false-orphaning long agents + clearable reaper orphans",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "zone": "multi",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "supervised": true
       }
     ],
     "closed_sprints": [
@@ -7313,7 +7321,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T14:49:18Z",
+    "last_triaged_at": "2026-07-09T15:48:27Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
