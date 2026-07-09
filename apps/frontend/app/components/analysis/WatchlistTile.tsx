@@ -51,11 +51,9 @@ function KdTilePill({ reading }: { reading: KinhDichReading | null | undefined }
 
 /**
  * Single tile card: ticker + company + last price + direction + signal count + KD reading.
- * Clicking navigates to ?stock=XXX to load full detail.
- * KD pill is non-fatal — renders nothing when reading is absent (TASK-17).
- *
- * Extracted from dashboard.analysis.tsx (FACTORY-FRONTEND-split-dashboard-analysis) —
- * pure move, no behavior change.
+ * Clicking navigates to ?stock=XXX to load full detail. KD pill is non-fatal —
+ * renders nothing when reading is absent (TASK-17). Extracted from
+ * dashboard.analysis.tsx (FACTORY-FRONTEND-split-dashboard-analysis), pure move.
  */
 export function WatchlistTile({
   stock,

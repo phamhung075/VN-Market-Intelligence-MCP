@@ -3,15 +3,12 @@ import type { MacroSnapshot, WatchlistStock } from "~/domain/market";
 import type { WatchlistTileData } from "~/lib/api/client";
 import type { StockDetail } from "~/routes/dashboard.analysis";
 import { signalColor } from "~/domain/formatters/signal-color";
-import { QueName } from "~/components/QueName";
-import { ConfidenceBar } from "~/components/analysis/ConfidenceBar";
-import { Row } from "~/components/analysis/SectionShell";
 import { SectorPeersBar } from "~/components/analysis/SectorPeersBar";
 import { AnalysisDecision } from "~/components/analysis/AnalysisDecision";
 import { InfoSourcePanel } from "~/components/analysis/InfoSourcePanel";
 import { MacroImpactPanel } from "~/components/analysis/MacroImpactPanel";
 import { StockSignalsPanel } from "~/components/analysis/StockSignalsPanel";
-import { MiniPriceTable } from "~/components/analysis/MiniPriceTable";
+import { StockDetailBottomGrid } from "~/components/analysis/StockDetailBottomGrid";
 
 /**
  * Full analysis panel for the selected stock — header, sector peers,
@@ -75,59 +72,7 @@ export function StockDetailPanel({
       <StockSignalsPanel signals={signals} />
 
       {/* Bottom: Kinh Dịch + Price table side-by-side */}
-      <div className="grid gap-0 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-700">
-        {/* Kinh Dịch details */}
-        <div className="p-4 space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Kinh Dịch
-          </h3>
-          <div className="space-y-2 text-sm">
-            <Row
-              label="Quẻ"
-              value={
-                <QueName
-                  hexagram={reading.hexagram}
-                  name={reading.name}
-                  className="text-slate-200"
-                />
-              }
-            />
-            <Row
-              label="Xu hướng"
-              value={<span className="text-slate-200">{reading.trend}</span>}
-            />
-            <Row
-              label="Tín hiệu"
-              value={
-                <span className={`font-semibold ${signalColor(reading.signal)}`}>
-                  {reading.signal}
-                </span>
-              }
-            />
-            <Row label="Độ tin cậy" value={<ConfidenceBar confidence={reading.confidence} />} />
-          </div>
-
-          {reading.actionNote && (
-            <div className="mt-3 rounded bg-slate-800 px-3 py-2 text-xs text-slate-300 leading-relaxed">
-              {reading.actionNote}
-            </div>
-          )}
-
-          {reading.overallReading && (
-            <div className="mt-2 rounded bg-slate-800 px-3 py-2 text-xs text-slate-400 leading-relaxed">
-              {reading.overallReading}
-            </div>
-          )}
-        </div>
-
-        {/* Recent price table */}
-        <div className="p-4 space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Lịch sử giá — 7 phiên gần nhất
-          </h3>
-          <MiniPriceTable prices={prices} />
-        </div>
-      </div>
+      <StockDetailBottomGrid reading={reading} prices={prices} />
     </div>
   );
 }
