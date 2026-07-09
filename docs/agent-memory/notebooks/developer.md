@@ -1,22 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-08 | **Cycle:** FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE
-
-## Session 2026-07-08 — FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE (dev-team router-filed)
-
-**Task:** `scripts/devteam-backlog-promote-bounded1.jq` had NO depends_on eligibility check — on 2026-07-08 it auto-promoted+claimed `FACTORY-TECHANALYSIS-delete-orphaned-ts-service` (P1) while both declared prerequisites were still plain BACKLOG. dev-team caught it pre-dispatch, reverted by hand, filed this FIX. **Zone:** cross-service/ → developer handles directly, no zone match.
-
-**Root cause detail:** depends_on lives in TWO places — inline `.depends_on` on some board rows, OR (for `detail_ref`'d rows, 293/405 backlog rows) ONLY inside `docs/data/orch/archive/backlog-detail.json .items[<id>].depends_on` — the board row itself carries `depends_on:null` plus a pointer. The promote script only ever read the thin board row, never the cold-archive detail file, so it structurally could not see the real prerequisites for the majority of rows.
-
-**Fix:** added a depends_on eligibility filter at the candidate-selection stage (before ranking, not a post-hoc check on the final pick) — resolves effective depends_on (inline, else detail_ref lookup via new `--slurpfile detail`, else `[]`), builds a dep-status map scanning ALL 7 task_board lanes, requires `DONE_VERIFIED` (plain `DONE` insufficient — matches repo convention), conservative-skips a dep id that resolves nowhere. Threaded `--slurpfile detail docs/data/orch/archive/backlog-detail.json` through both invocation call sites (dev-team flow BOUNDED-1 block + dev-standards.md canonical pointer). `devteam-backlog-claim-bounded1.jq` verified unchanged (only claims whatever promote already stamped).
-
-**Real-data gotcha found live:** 7/321 rows in `backlog-detail.json` carry `depends_on` as a bare STRING, not a 1-element array (e.g. `FU-RUNTIME-SET-TRUTH-RECONCILE: "FU-RAG-DEPLOY-MEMORY"`) — first jq run crashed `Cannot iterate over string`. Added an `as_dep_array` normalizer (null→[], string→[string], array→as-is) — same "assume nothing about freeform prod field shapes" lesson as IMPL-DRAIN-GATE-SEVERITY-RECURRENCE's `.related` string drift.
-
-**Test:** new `scripts/test-devteam-bounded1-depends-on.sh`, 17/17 pass — satisfied/unsatisfied depends_on in both inline and detail_ref shapes, no-depends_on baseline (no regression), dep-resolves-nowhere conservative-skip, DONE-vs-DONE_VERIFIED distinction, string-depends_on drift shape.
-
-**Sanity-checked against real live data (scratch copy, dry-run, never through orch-apply.sh):** fixed script now correctly SKIPS `FACTORY-TECHANALYSIS-delete-orphaned-ts-service` (still unmet deps) and would promote `FACTORY-TECHANALYSIS-go-livepath-tests` (`depends_on: []`, the actual next-eligible P1 row) instead — matches the exact remediation PO/router expected.
-
-**Scope discipline:** did not touch `devteam-backlog-claim-bounded1.jq` (verified no change needed). Did NOT promote/resolve `FACTORY-TECHANALYSIS-go-livepath-tests` myself — PO explicitly declined manual promotion this cycle; fixed automation picks it up organically on a future idle tick. No task branch (project convention: work stays on `main`). `graphify --update --no-viz` skipped — no Skill-invocation tool available in this sub-agent's tool surface for a 4-file mechanical doc/script change.
+**Last updated:** 2026-07-09 | **Cycle:** FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT
 
 ## Session 2026-07-08 — FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT (router-escalated, live-observed dead-drive window)
 
@@ -43,3 +27,13 @@
 **Test:** new `mcp-call-gateway-meta.test.sh` (RED: function-not-found -> GREEN: 20/20, stubbed `_mcp_call_gateway_curl` covering happy path + session-id propagation, invalid/missing tool_name, transport failure and non-2xx at each of the 3 steps, isError passthrough). Re-ran `cowork-tick-preflight.test.sh` (20/20) + `dev-team-tick-preflight.test.sh` (55/55) — zero regression (both stub `mcp_call` after sourcing, untouched by this change). shellcheck clean.
 
 **Scope discipline:** did not touch existing `mcp_call()` or the standalone CLI dispatch block (kept the diff conservative, exactly the SPIKE's stated scope — "add, don't merge"). Root cause (CLI-side MCP client lifecycle) is out-of-repo and NOT fixed by this task — only the repo-actionable mitigation + de-escalation doc rule are in scope. No `apps/*` change, no Docker Close Gate needed (script + docs only). Board flipped IN_PROGRESS→REVIEW, `next_agent`→qa via `orch-apply.sh`; top-level `.head` deliberately left untouched (owned this tick by a separate parallel FACTORY dispatch).
+
+## Session 2026-07-09 — FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT (FAST-TRACK, architect brief = spec)
+
+**Task:** ops Docker Close Gate Step-4→qa handoff had NO checked-in atomic jq helper — 2 confirmed occurrences (`f4afa0e03`, `b907a8ea6`) of a hand-rolled inline jq one-liner updating the board row's `next_agent` but forgetting `.head` (or vice versa). Architect brief `docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md` §2.1 fully specified the fix; PO fast-tracked (skip ba/pm). **Zone:** `scripts/` (confirmed in system-map.json) + `docs/protocols/` (no zone match → developer fallback) — both mine per the router's explicit split note.
+
+**Fix:** minted `scripts/ops-closegate-handoff.jq` — one jq expr, `--arg task_id/from_lane/next_agent/now`; `error()`s if `.task_board[$from_lane][] | select(.id==$task_id)` is absent (no silent no-op); sets that row's `.next_agent` only (status/lane untouched); conditionally syncs `.head.next_agent/.updated_at/.updated_by` ONLY IF `.head.active_task_id==$task_id` (verified live — at pickup `.head.active_task_id` WAS this very task, so scenario A path exercised for real before I even wrote the test harness). No hardcoded task-id/lane literal in the filter body (grep-verified; the only literal is `"ops"` for `updated_by`, per brief spec). Added runbook `docs/protocols/docker-deployment-runbook.md` § Close-gate table Step 4b row + updated the Delegation-rule sentence to include it.
+
+**Verification (no `.jq` unit-test convention exists in this repo — `router-d1-claim.jq`/`devteam-backlog-claim-bounded1.jq` ship without one):** 3 manual scratch-copy scenarios against a copy of the real live `orch-state.json` — (A) row present + `.head` matches → both writes land; (B) row present + `.head` points at a DIFFERENT task → row updates, `.head` untouched byte-for-byte; (C) row absent from the stated lane → `error()`, non-zero exit, empty stdout (no partial write). Also ran the real `bun scripts/orch-validate.mjs` against scenario A's candidate output — Stage 0+1 PASS (123 pre-existing coherence warnings unrelated to this change, same count before/after).
+
+**Scope discipline (per dispatch split note):** did NOT touch the commit-gate footnote (brief §2.2), the STEP ops-Sn journal-filename enforcement line (§2.3), or `.claude/skills/commit-boundary/SKILL.md`'s zone table — those are the follow-on `FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE` task (agent-father, `depends_on: [this task]`). No `apps/*` change, no Docker Close Gate needed (script + doc only, no rebuild) — flipped board row REVIEW, `next_agent`→qa via `orch-apply.sh`.
