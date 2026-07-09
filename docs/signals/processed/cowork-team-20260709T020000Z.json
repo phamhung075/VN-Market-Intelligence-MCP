@@ -1,0 +1,30 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-09T02:00Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "alert-commander-market"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, trigger_status=null"
+    }
+  ],
+  "methodology_note": "Corrected classification rule applied (per docs/signals/cowork-team-20260708T203500Z-correction.json): trigger_id=null — unambiguous no-backstop, no live RemoteTrigger check needed.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (send_telegram succeeded).",
+  "work_channel_message_sent": true,
+  "stale_warning_note": "emit_pressure_state response this tick did NOT include a stale_warning field at all (previous 5 consecutive WORK ticks all had stale_warning:true). This breaks the streak but is not yet treated as a confirmed resolution — flagging for auditor/dev-mcp-server to confirm whether this reflects an actual fix or is itself noise. Will continue monitoring on subsequent WORK ticks before declaring resolved.",
+  "emitted_at": "2026-07-09T02:01:50.090Z",
+  "_processed": {
+    "fingerprint": "c843a35e727c845e30fe17135aa4768ce40c20cfc30225313675f6a7d7e2f6cb",
+    "processedAt": "2026-07-09T02:17:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
