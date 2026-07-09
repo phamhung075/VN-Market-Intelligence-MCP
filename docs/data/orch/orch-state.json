@@ -6371,6 +6371,26 @@
         "created_by": "po",
         "note": "PLAN-ONLY tracking/dedup anchor (held supervised=true so BOUNDED-1 idle-capacity promote skips it; the fix is already MANDATED by docs/protocols/docker-deployment-runbook.md Step 2/4 — this row exists so the residual state is not lost and a recurrence has a dedup anchor). Surfaced + triaged at FACTORY-SCHEDULER-split-dataAuditJob po Step-6 close (STEP po-S19). NON-BLOCKING on that close: qa proved deployed==committed via container-vs-HEAD MD5 byte-identical on all 20 touched + 3 wiring files, and po re-verified zero post-build drift via git diff 7b62f73e7..HEAD -- apps/mcp-server/src/scheduler/ (EMPTY) + HEAD==origin/main — STRONGER evidence than the SHA label. ROOT CAUSE: ops's ops-S8 rebuild (2026-07-09T13:24:30Z) ran a bare 'docker compose build mcp-server' WITHOUT --build-arg GIT_SHA=$(git rev-parse HEAD), unlike ops-S4/S5/S6/S7 which all carried the flag + an explicit '| 4 | SHA gate | PASS |' journal row (ops-S8 has neither). SYMPTOM (po-reproduced first-hand): bash scripts/verify-deploy-sha.sh mcp-server -> 'ERROR: SHA drift detected. deployed=unknown expected=ac8d51bc4...' EXIT 1; live vn-market-intelligence-mcp-mcp-server-1 has no vn.market.git_sha label. LATENT: every future SHA-gate check on mcp-server returns deployed=unknown until the next rebuild-with-flag reacquires the label. FIX: on the next mcp-server rebuild (any task), run the full mandated sequence 'docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) mcp-server && docker compose up -d --no-deps mcp-server && bash scripts/verify-deploy-sha.sh mcp-server' (MUST exit 0) — this both restores traceability and reacquires the label; no dedicated rebuild needed if a normal mcp-server deploy is imminent. NOT a dup of FIX-VERIFY-DEPLOY-SHA-BENIGN-DRIFT (that is the script being too strict on ancestor-with-doc-drift; this is an absent label from a skipped flag). Ref: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-po.md STEP po-S19; sprint-SYSTEMIC-REMAKE-P1-ops.md STEP ops-S8.",
         "created_at": "2026-07-09T11:53:21Z"
+      },
+      {
+        "id": "FIX-DRAIN-QUARANTINE-NONROUTABLE-SIGNALS",
+        "status": "TODO",
+        "title": "drain-signals re-skips 4 non-routable stray files every tick — quarantine + confirm writer output dir",
+        "owner": "dev-team",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "size": "S",
+        "priority": "low",
+        "supervised": false,
+        "created_at": "2026-07-09T14:02:56Z",
+        "created_by": "po-triage-20260709T1337Z",
+        "files": [
+          "scripts/agents-flow/drain-signals.js"
+        ],
+        "related": [
+          "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX"
+        ],
+        "status_note": "Recurring per-tick noise, no functional impact: docs/signals/cowork-team-2026-07-03T16-00-00Z.json + 3x price_anomaly_202607{02,03,04}*.json are correctly skipped as non-routable (no from/type) but re-scanned every tick. FIX: (a) drain-signals.js quarantines unrecognized no-from/type files to docs/signals/malformed/ after logging so they stop being re-scanned; (b) redirect upstream writers (cowork tick-report + price_anomaly detector) so their output artifacts stop landing in the routable-signal inbox. Do NOT blindly delete the price_anomaly_*.json files — confirm no live consumer (money-radar/dish surfacing) reads them before choosing quarantine-vs-relocate. Held in backlog (not in_progress) to respect WIP<=2 this tick — eligible for BOUNDED-1 auto-pickup once id1 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) ships. baseline_pass: a fresh dev-team tick's drain step logs the 4 files as quarantined/handled ONCE, a second tick does not re-scan them; no routable signal is ever quarantined."
       }
     ],
     "closed_sprints": [
@@ -7139,7 +7159,51 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
+        "status": "IN_PROGRESS",
+        "title": "bounded-1 promote jq crashes object-indexing .items ARRAY with task-id string",
+        "owner": "dev-team",
+        "next_agent": "developer",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "size": "S",
+        "priority": "high",
+        "created_at": "2026-07-09T14:02:56Z",
+        "created_by": "po-triage-20260709T1337Z",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq"
+        ],
+        "related": [
+          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE"
+        ],
+        "status_note": "REPRODUCED live (exit 5, no corruption). effective_depends_on (L112-120) does $detail_items[.id] at L117 (object-indexing) but $detail_items = ($detail[0].items // {}) (L150) and live docs/data/orch/archive/backlog-detail.json .items is a plain ARRAY of 437 objects each carrying its own .id. First detail_ref'd row scanned during eligibility filtering (TASK17-FOREIGN-FLOW) crashes the WHOLE transform: jq error Cannot index array with string. orch-apply.sh correctly aborted (empty candidate, zero corruption) but BOUNDED-1 idle-capacity backlog pickup has promoted NOTHING on any tick since 2026-07-08. FIX: id-key the array at ingest, e.g. replace L150 ($detail[0].items // {}) with a shape-defensive map: (($detail[0].items // []) | if type==\"object\" then . else (map(select(.id!=null)|{key:.id,value:.})|from_entries) end). Do NOT change depends_on semantics, only the array-vs-object lookup. Read the actual script first. baseline_pass: jq --arg now \"$NOW\" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-promote-bounded1.jq docs/data/orch/orch-state.json > /dev/null must exit 0 with live WIP==0, emitting a doc that moves exactly ONE eligible row backlog->ready; re-run through orch-apply.sh must not abort on empty candidate."
+      },
+      {
+        "id": "FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH",
+        "status": "IN_PROGRESS",
+        "title": "1294-macro-spam-fix test flakes CI RED — intelligenceCycleJob fires unmocked live yahooFinance/SBV fetch",
+        "owner": "dev-team",
+        "next_agent": "dev-mcp-server",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "priority": "high",
+        "created_at": "2026-07-09T14:02:56Z",
+        "created_by": "po-triage-20260709T1337Z",
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts",
+          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycle/types.ts",
+          "apps/mcp-server/src/__tests__/1294-macro-spam-fix.test.ts"
+        ],
+        "related": [
+          "docs/signals/ci-red-554bb302-20260709134751.json",
+          "FACTORY-SCHEDULER-split-intelligenceCycleJob"
+        ],
+        "status_note": "Signal ci-red-554bb302 (bun test job RED on main HEAD 554bb302, GH run 29020855429). CONFIRMED FLAKE not regression by both router (local isolated run 2/2 pass) and po (4/4 pass, intermittent CI history). ROOT CAUSE: intelligenceCycleJob.ts _runCycle(deps) L255-262 makes UNMOCKED live network fetches (fetchYahooFinancePrices/storeCommoditySnapshot, fetchSbvRates/storeSbvSnapshot via direct await import) not injected through CycleDeps, so 1294-macro-spam-fix.test.ts mock deps cannot stub them -> nondeterministic live traffic in test run. Almost certainly exposed by FACTORY-SCHEDULER-split-intelligenceCycleJob (merged same tick, 554bb302). FIX: add fetchCommoditiesFn/storeCommodityFn + fetchSbvFn/storeSbvFn to CycleDeps (mirror existing pollNewsFn/fetchPricesFn/insertClaimFn injection pattern), default to real fetchers, inject no-op/deterministic stubs in 1294-macro-spam-fix.test.ts. Verify no other test relies on the live path. baseline_pass: cd apps/mcp-server && bun test src/__tests__/1294-macro-spam-fix.test.ts must be GREEN with NO [yahooFinance] fetched / [sbv] macro snapshot fetched live-fetch log lines; full bun test suite still green; CI bun test job green on the subsequent push."
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -7277,8 +7341,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T12:17:48Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
+    "last_triaged_at": "2026-07-09T14:02:56Z",
+    "last_triaged_by": "po-via-dev-team"
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
