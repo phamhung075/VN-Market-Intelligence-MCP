@@ -293,10 +293,10 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-NEWS-split-sandbox landed in task_board.review[] by dev-news-fetch — router/QA to RAW-verify then dispatch ops for the deferred rebuild-verify signal per feedback_user_gates_delegate_to_ops.md.",
-    "updated_at": "2026-07-09T22:27:00Z",
-    "updated_by": "dev-news-fetch"
+    "next_agent": null,
+    "next_action": "FIX-BCTC-FPT-BT5-BALANCE-GATE moved to review lane; balance-gate root cause fixed+verified (delta=0.0 exact) but named test still fails on an unrelated pre-existing rows_stored>=80 assertion (page-8 EPS-line bleed, separate bug) — awaiting po/qa adjudication.",
+    "updated_at": "2026-07-09T23:00:10Z",
+    "updated_by": "dev-pdf-extractor"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4101,16 +4101,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-REGRESSION-SPIKE"
       },
       {
-        "id": "FIX-BCTC-FPT-BT5-BALANCE-GATE",
-        "type": "FIX",
-        "priority": "P1",
-        "status": "TODO",
-        "zone": "apps/pdf-extractor/",
-        "size": "M",
-        "title": "FPT corporate-form (B01-DN, 3-digit codes) real-OCR extraction fails the BT-5 balance gate with delta = 43 TRILLION VND",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-FPT-BT5-BALANCE-GATE"
-      },
-      {
         "id": "BA-FE-PAGE-REORG",
         "type": "SPRINT-M",
         "title": "Requirement spec for FE-PAGE-REORG: frontend page-resemblance consolidation (6-category taxonomy + shared generic components), Wave-1 (P0+P1) then Wave-2 (P2+P3)",
@@ -7352,6 +7342,24 @@
         "completed_at": "2026-07-09T22:27:00Z",
         "completed_by": "dev-news-fetch",
         "status_note": "Split sandbox/runner.ts (486L) into src/sandbox/{cli,registry,discover,equal,execute,report}.ts + runner.ts as thin orchestrator, all <=120L (execute.ts=120L exactly). registry.ts: added a per-entry argAdapter fn (maps scenario input -> positional args) replacing the by-name if/else signature switch previously inline (was ~line 223-235). import.meta.dir resolution preserved unchanged (all new files stay in the same src/sandbox/ dir). Pre-check: grepped for test imports of runner.ts internals -- none found (runner.ts is invoked only as a CLI script via bun run src/sandbox/runner.ts / package.json \"sandbox\" script, never imported by name from any test). Verification: bun test 233 pass/6 skip/0 fail/372 expect() (unchanged from pre-split baseline); bun tsc --noEmit clean; eslint lint:ci clean; scenario JSON validity clean; G12 sandbox gate bun run sandbox --tier=all --module=news-fetch -> 16 PASS/0 FAIL/0 ERROR (exit 0), same as pre-split. Direct before/after comparison: ran the pre-edit runner.ts (git show HEAD) and the post-split runner.ts against the same --output trace file and diffed JSON with runAt stripped -> byte-identical. rebuild_required=true (news-fetch is a docker-composed service; live container still runs pre-change image) -- deferred verification tracked in signal docs/signals/ops-rebuild-verify-news-fetch-20260709T2227Z.json per feedback_user_gates_delegate_to_ops.md (same pattern as the immediately-preceding FACTORY-NEWS-dedup-normalizeDate task). Kept REVIEW (not self-asserted DONE_VERIFIED) pending rebuild+RAW-verify. DJ: docs/agent-memory/decisions/dev-news-fetch-20260709T2227Z-FACTORY-NEWS-split-sandbox.md"
+      },
+      {
+        "id": "FIX-BCTC-FPT-BT5-BALANCE-GATE",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "apps/pdf-extractor/",
+        "size": "M",
+        "title": "FPT corporate-form (B01-DN, 3-digit codes) real-OCR extraction fails the BT-5 balance gate with delta = 43 TRILLION VND",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-FPT-BT5-BALANCE-GATE",
+        "promoted_at": "2026-07-09T22:47:08Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_at": "2026-07-09T23:00:10Z",
+        "updated_by": "dev-pdf-extractor",
+        "review_note": "Root cause FOUND+FIXED: OCR-misread trailing-separator bug in domain/primitives/vn_number_normalize/primitive.py — Tesseract renders the LAST thousands-dot of a large VN-formatted integer as a comma (e.g. \"43.751.466.292,590\"), which the old Pattern-B VN-decimal regex misclassified as a 3-digit decimal fraction, shrinking FPT code 400 (Total Equity) from 43,751,466,292,590 VND to 43,751,466,292.59 VND (1000x loss). Fix: new _VN_OCR_MISREAD_LAST_SEP_RE (requires >=1 existing thousands-dot group + EXACTLY 3 digits after comma) checked before Pattern B, reinterprets the comma as a mis-scanned dot. VERIFIED: balance_sheet_equation delta 43,707,714,826,297.41 -> 0.0 EXACT (codes 270/300/400 match golden anchors to the dong). Non-regression: full apps/pdf-extractor suite -m not slow = 1019 passed/7 failed(pre-existing PIL.Image test-pollution, confirmed identical via git-stash A/B, unrelated)/7 deselected; targeted corporate-form+balance+decimal suites (vn_number_normalize/text_table_extractor/extract_tables_cross_check/bs_accounting_identities/extract_tables_usecase/reconcile_figures/b02_tctd_parser[bank-form non-regression]/decimal_normalizer/extract_tables_fpt/bt3_fix2/bt3_fix3) = 213 passed/0 failed/1 deselected(slow). REMAINING GAP (landing in review, not closing DONE): the named test test_extract_tables_bt3d_real_ocr.py::test_extract_tables_usecase_real_ocr_path still fails, but at a DIFFERENT unrelated assertion (rows_stored=79 < required >=80) NOT the balance_pass assertion (balance identity is now exact). Traced: page 8 of the auto-located BS OCR range actually contains income-statement EPS lines (codes 70/71, 4-value-column layout) whose code-extraction spuriously yields a fake code \"868\" from a value token on 2 lines; FR-5 dedup (0ae36a0eb, landed 2026-06-28, AFTER this test threshold was set 2026-05-28 in d1be50504) correctly drops 1 exact duplicate, taking raw 80 -> 79. This is a separate bug class (page-boundary/section-detection + EPS multi-column false-positive code match), out of BT5-BALANCE-GATE scope — did NOT touch dedup, thresholds, or drop any line items to force a match (fail_loud_requirement compliance). Decision journal: docs/agent-memory/decisions/dev-pdf-extractor-2026-07-09T23:00:10Z-FIX-BCTC-FPT-BT5-BALANCE-GATE.md. Recommend follow-up ticket for the page-8 EPS-bleed row-count gap."
       }
     ],
     "qa": [],
@@ -7371,7 +7379,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T22:17:08Z",
+    "last_triaged_at": "2026-07-09T22:47:08Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
