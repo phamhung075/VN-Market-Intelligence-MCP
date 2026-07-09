@@ -5580,6 +5580,24 @@
       "completed_at": "2026-07-09T18:41:01Z",
       "completed_by": "dev-technical-analysis",
       "verify_note": "go build/vet/test ./... 12 packages GREEN; golangci-lint 0 issues; baseline-captured all 35 sandbox scenario oracle outputs before the split and diffed after — byte-identical except runMs timing jitter; dashboard/build.sh 35/35 GREEN + headless render-check PASS; all 29 non-test cmd/sandbox files <=118L; sandbox_test.go untouched (same package/dir, zero changes needed) and green; dead parseCloses (zero real callers, grep-confirmed) + its var _ = shim deleted. Dockerfile builds only ./cmd/server (cmd/sandbox never COPYd into the image) so the ops-rebuild + qa-live-RAW-verify hops of the Microservice Code-Change Close Gate are inapplicable to this dev-tooling-only refactor; self-verification above is the evidence. Full reasoning: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md STEP dev-technical-analysis-S5."
+    },
+    {
+      "title": "Name the confidence-pipeline magic constants in reading_composer",
+      "priority": "P1",
+      "zone": "kinh-dich-service",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-KINHDICH-name-confidence-constants",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-name-confidence-constants",
+      "promoted_at": "2026-07-09T18:52:05Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+      "claimed_at": "2026-07-09T18:52:22Z",
+      "claimed_by": "dev-team (bounded-1 auto-pickup)",
+      "next_agent": "dev-kinh-dich",
+      "completed_at": "2026-07-09T18:54:52Z",
+      "completed_by": "dev-kinh-dich",
+      "completion_note": "All confidence-pipeline literals named+documented; blend-normalization compile-time assertion added; tests green; sandbox GREEN; RAW-verify deferred to rebuild"
     }
   ],
   "closed_sprints": [],
