@@ -629,6 +629,16 @@ call_tool(server="vn-market", tool="task_heartbeat", arguments={
 # ok=false → presence row expired between PREFLIGHT and Step 3 (long tick) → non-fatal; reclaim on next tick
 ```
 
+**Fallback — `mcp__gateway__call_tool` Claude-tool absent from session (not a transport error, the tool
+itself isn't loaded):** every `call_tool(server="vn-market", ...)` in this file and `execute-tier.md`
+(heartbeats, dispatcher-wrap `task_claim`/`task_release`, `send_telegram`, `read_telegram_reports`, etc.)
+has an equivalent bash/curl path via `scripts/agents-flow/mcp-call.sh`'s `mcp_call()` function — the same
+stateless vn-market HTTP bridge `dev-team-tick-preflight.sh` already uses for its own lock claims. `source
+scripts/agents-flow/mcp-call.sh` then call `mcp_call "<tool_name>" "<json_args>"` (note: `task_claim` via
+this path requires `owner_client_session` explicitly in the args — it is not implicit). If a tick hits this
+absence, do a single clean check (not a retry loop) before falling back to this bridge; live-confirmed
+2026-07-09T17:07Z after the 16:37Z tick parked at this exact step for a full cycle.
+
 → Run sub-flow: `docs/agents/dev-team/flow/execute-tier.md`
 
 Covers: tier grouping, zone routing (3-tier resolution: explicit → infer → report), parallel spawn rules, conflict check, merge gate.
