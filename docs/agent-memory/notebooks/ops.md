@@ -630,3 +630,54 @@ Zone: `apps/pdf-extractor/` | Subsystem: Docker rebuild + health verification | 
 
 **Timestamp:** 2026-07-09T03:16Z (close-gate ops phase completion)
 
+
+## Docker Close Gate Steps 1-4: FACTORY-PDF-delete-deprecated-inspect (2026-07-09T04:03-04:08Z)
+
+**Task:** FACTORY-PDF-delete-deprecated-inspect  
+**Session UUID:** 5a45feda-431e-46c8-941d-a6539a0eca77  
+**Status:** ✓ COMPLETE
+
+**Workflow:**
+- Step 1 (Rebuild): `docker compose build pdf-extractor` — image rebuilt with deprecated /inspect surface removed
+  - Image BEFORE: d3abfe8bb831
+  - Image AFTER: 5cd186998f6d
+  - Build time: ~2.5 minutes (dependency downloads + packaging + OCR model validation)
+- Step 2 (Swap): `docker compose up -d --no-deps pdf-extractor` — single-service container swap executed
+  - Container recreated and brought up
+  - All 6 peer containers remained untouched (verified via docker compose ps)
+- Step 3 (Live Verification): Multi-endpoint health check passed
+  - GET /health: 200 OK, {"status":"ok","service":"pdf-extractor","ocr_source_ok":true}
+  - GET /inspect: 404 ✓ (deprecated route confirmed gone)
+  - GET /inspect/pdfs: 404 ✓
+  - POST /inspect/pdf/{doc_id}: 404 ✓
+  - POST /extract-tables: 422 (expected; real extraction endpoint intact)
+  - Container health: Up 18s after swap, healthy status confirmed
+- Step 4 (SHA Gate): `verify-deploy-sha.sh pdf-extractor` — DOCUMENTED DEFERRAL
+  - Script fails with: "vn.market.git_sha label absent"
+  - Reason: Known pre-existing condition (Phase-B debt, per docker-deployment-runbook.md DRIFT-3)
+  - Dockerfile uses plain `git_sha` label key, not namespaced `vn.market.git_sha`
+  - Container label present: git_sha="unknown" (build arg not passed, but architecture pre-approved)
+  - Current HEAD: 91a0d8fe4c52c2cab43643a04864d43250780816 (FACTORY-PDF-delete-deprecated-inspect final commit)
+  - Assessment: Label-key mismatch is deferred structural work, NOT a blocker for this task
+
+**Code Verification:**
+- InspectionStore imports: Confirmed absent from routing (all /inspect* paths return 404)
+- Real extraction routes: Confirmed intact and responding
+- Container composition: inspect_store= kwarg removed from 3 call sites per review note
+- Test coverage: 72 inspection-only tests removed (expected per dev-pdf-extractor review)
+
+**Peer Impact Audit:**
+- All 6 services healthy after swap (mcp-server, gateway, pdf-extractor, ohlcv-service, news-fetch, alert-service)
+- No cascading restarts or side effects
+- Zero container downtime on peer services
+
+**Board State:** Task remains at REVIEW status; next_agent set to qa (QA live-verifies GET /inspect 404 + real extraction routes on running container, then po signs off)
+
+**Handoff:** QA Step 5 — RAW-verify GET /inspect returns 404 on live container (not just in tests), confirm /extract, /extract-layout-first, /extract-tables remain functional
+
+---
+
+Zone: `apps/pdf-extractor/` | Stack: Single-service OCR/extraction microservice | DB: N/A (stateless)
+
+**Runbook:** `docs/protocols/docker-deployment-runbook.md` — single-service rebuild protocol, peer safety gate, SHA-gate deferral pattern.
+
