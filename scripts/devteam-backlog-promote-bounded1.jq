@@ -27,9 +27,11 @@
 #     the backlog[] lane today — pre-existing SHG lane-coherence migration
 #     drift; the coherence check treats this as a non-blocking WARNING, see
 #     scripts/orch-apply.sh header)
-#   - supervised != true — the Phase-1 supervised set (7 rows, held for
-#     router-adjudicated dispatch, see .head.note in the live doc) is NEVER
-#     auto-promoted by this script
+#   - effective_supervised != true (FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE,
+#     2026-07-09) — see "SUPERVISED GATE" section below. The Phase-1
+#     supervised set (held for router-adjudicated dispatch, see .head.note
+#     in the live doc) is NEVER auto-promoted by this script, regardless of
+#     which of the two possible locations carries the flag.
 #   - depends_on eligibility (FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE, 2026-07-08)
 #     — see "DEPENDS-ON GATE" section below. Applied DURING candidate
 #     selection so a blocked top-ranked row can never starve a lower-ranked
@@ -69,6 +71,33 @@
 #     rather than risk auto-dispatching against an unknown/mistyped dep).
 #   - The filter runs at candidate-selection time (before ranking/picking the
 #     top row), not as a post-hoc check on the already-chosen pick.
+#
+# SUPERVISED GATE (FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE, 2026-07-09):
+# root cause — on 2026-07-09T15:48Z this script auto-promoted+claimed
+# FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (a P0 row explicitly marked
+# "NOT a BOUNDED-1 auto-pickup target" and supervised since 2026-07-04) into
+# in_progress. The old filter (`select((.value.supervised // false) != true)`)
+# read `supervised` ONLY off the thin task_board.backlog[] row, but
+# `supervised:true` is authoritatively written to
+# docs/data/orch/archive/backlog-detail.json `.items[<id>].supervised` for
+# detail_ref'd rows — so the check silently evaluated false for every
+# detail_ref'd supervised row (all 8 in the Phase-1 set). dev-team caught it
+# pre-dispatch and reverted by hand (router mitigation: reverted the claim +
+# hand-stamped supervised:true onto every Phase-1 board row — a data-hygiene
+# patch, not the fix). This gate prevents that class structurally:
+#   - supervised lives in TWO possible places per candidate row:
+#     1. inline `.supervised` directly on the board row, OR
+#     2. docs/data/orch/archive/backlog-detail.json `.items[<id>].supervised`
+#        (detail-authoritative; requires no `.detail_ref` precondition — the
+#        lookup is keyed purely by `.id`, mirroring `$detail_items` ingest
+#        above). This same file is already threaded in as `$detail` for the
+#        depends_on gate (see Usage) — no new call-site flag needed.
+#   - A row counts supervised if EITHER location says `true` — never require
+#     both (fail toward safety: a single true stamp anywhere blocks
+#     auto-promotion).
+#   - Conservative default: absent/null supervised in BOTH places = NOT
+#     supervised (promotable) — preserves baseline behavior for the common
+#     unsupervised case.
 #
 # Mutation (single row only):
 #   backlog[] -> ready[] ; status BACKLOG/TODO -> READY ; stamp promoted_at /
@@ -144,6 +173,19 @@ def deps_satisfied($detail_items; $status_map):
   | ($deps | length) == 0
     or ( [ $deps[] | ($status_map[.] // "MISSING") ] | all(. == "DONE_VERIFIED") );
 
+# Effective supervised flag for a candidate row (`.` = the backlog row
+# object). FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE, 2026-07-09 — mirrors
+# the effective_depends_on precedence pattern above. `supervised:true` is
+# authoritatively written to docs/data/orch/archive/backlog-detail.json
+# `.items[<id>].supervised` for detail_ref'd rows (e.g. the router's
+# hand-stamp mitigation), but the thin task_board.backlog[] row itself may
+# never carry the flag inline. A row counts supervised if EITHER location
+# says true — never require both. Conservative default: absent/null in BOTH
+# places = NOT supervised (promotable), preserving baseline behavior.
+def effective_supervised($detail_items):
+  (.supervised == true)
+    or ( (.id != null) and ($detail_items[.id].supervised // false) == true );
+
 if (wip >= 1) then
   .   # BOUNDED-1 GATE: WIP>=1 — refuse to promote (no-op, idempotent re-run-safe)
 else
@@ -162,7 +204,7 @@ else
   | ( [ .task_board.backlog
       | to_entries[]
       | select(.value.status == "BACKLOG" or .value.status == "TODO")
-      | select((.value.supervised // false) != true)
+      | select((.value | effective_supervised($detail_items)) != true)
       | select(.value | deps_satisfied($detail_items; $status_map))
       | { idx: .key, row: .value, rank: (.value | priority_rank) }
     ] | sort_by([.rank, .idx])
