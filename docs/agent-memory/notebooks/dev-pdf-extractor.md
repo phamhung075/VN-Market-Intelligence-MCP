@@ -6,32 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Cycle 2026-07-08 — FACTORY-PDF-paddleocr-score-07-mask
-
-**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** S | P1
-
-### Fix
-`_cells_to_row_bands()` (pek_engine_adapter.py:569) defaulted `row_density = float(cell.get("score", 0.7))` — fabricated a 0.7 confidence whenever a PaddleOCR cell omitted 'score', indistinguishable from a real 0.7 measurement in the LF-OVERLAY row_bands contract. Fixed: present score (incl. real 0.0) passes through unchanged; absent score now emits named `_MISSING_CELL_SCORE_SENTINEL` (None → JSON null).
-
-### Why sentinel, not ink-density proxy
-Sibling `_detect_row_bands` (generic_md_table_extractor.py) computes density from a per-row pixel-darkness array sourced from the rasterized page image — that data isn't plumbed into `_cells_to_row_bands` at this call depth (only clamped y0..y1 ints + cell dicts). Threading image data through 3 call layers was out of scope for Effort:S/Risk:low, for a value confirmed unconsumed downstream beyond visual overlay. Sentinel matches the audit's either/or option.
-
-### Tests
-3 new in `TestCellsToRowBandsScoreHandling`: present score unchanged (incl. explicit 0.0 preserved), missing score → sentinel not 0.7, mixed cells independent. Confirmed RED against prior code first (`assert 0.7 is None` failure). Full suite: 1089 pass / 11 pre-existing env fail (PIL/Tesseract/poppler — confirmed via git stash, unrelated to this change).
-
-### RAW-verify
-Direct invocation of `_map_bboxes_to_zones()` with a real missing-score cell: emitted `row_density: null` (not 0.7); present-score cell unchanged at 0.88.
-
-### Commit
-`fdb424178` — fix(pdf-extractor): stop fabricating 0.7 confidence for missing PaddleOCR cell score
-
-Zone health: no drift detected.
-
-### Status
-REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
-
----
-
 ## Cycle 2026-07-09 — FACTORY-PDF-split-extractLayoutFirst-execute
 
 **Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** L | P1 | epic: FACTORY-MAINTAINABILITY-2026-06
@@ -104,6 +78,49 @@ env error as baseline. `handlers.py` 808→673L, `main.py` 280→271L.
 
 ### Commit
 `47453d546` — chore(pdf-extractor): delete deprecated /inspect viewer surface
+
+Zone health: no drift detected.
+
+### Status
+REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
+
+---
+
+## Cycle 2026-07-09 — FACTORY-PDF-fix-application-infra-leak
+
+**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** M | P1 | epic: FACTORY-MAINTAINABILITY-2026-06 | BOUNDED-1 auto-pickup
+
+### Fix
+`doclang_serialize_usecase.py:18` imported concrete `infrastructure.DocLangSerializer`
+directly — the only `from infrastructure` import in `application/`; import-linter only
+fenced `domain.primitives`/`domain.modules`, so it passed CI silently. Added
+`DocLangSerializerPort` Protocol (`domain/modules/financial_reports/ports.py`, sibling
+to `DocLangWritePort`) typing the `.serialize(tables, report_id) -> str` surface;
+retyped the usecase's `serializer` param to the Port, dropped the infrastructure
+import. `main.py` composition root already wired the concrete `DocLangSerializer`
+positionally — unchanged (Protocols are structural, no explicit `implements`).
+
+### Port typing choice
+`tables: List[Any]` not `List[application.dtos.ExtractedTableDTO]` — importing the
+concrete DTO into `ports.py` would itself be a domain→application leak (file's own
+header: "Zero imports from infrastructure/, application/, interface/"); matches every
+sibling port's Dict/str generic-passthrough convention. mypy structurally accepts
+`List[ExtractedTableDTO]` call-site args against `List[Any]` (Any is bidirectional).
+
+### Import-linter contract
+Added `Fence-C: source=application forbidden=infrastructure,interface` to
+`pyproject.toml`. `lint-imports`: 3 kept / 0 broken (was 2/0) — this class of leak is
+now caught by CI going forward.
+
+### Tests
+`test_doclang_serializer.py`: 13/13 pass (serializer/usecase logic untouched — type+
+import change only). Full suite: 1013 pass/9 fail — A/B via `git stash`: identical 8
+pre-existing env failures; 9th (timeout test) reproduced GREEN in isolation both times
+(flake, unrelated file). mypy: same pre-existing package-name env error as baseline;
+scoped mypy on the 2 changed files: 18 pre-existing errors, byte-identical before/after.
+
+### Commit
+`bfe92c225` — refactor(pdf-extractor/application): FACTORY-PDF-fix-application-infra-leak DocLangSerializerPort
 
 Zone health: no drift detected.
 
