@@ -1,17 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-09 — CI-RED-06043b3c-FIX → REVIEW
-
-Fast-tracked one-line fix (PO pre-diagnosed, precedent 728ef563c): `1837a-pipeline-state.test.ts` L96 AC-2 hardcoded `validStatuses` omitted `"done"`, which is the literal value po's Step 6 Docker Close Gate sign-off convention writes to live `.head.status` on every closeout (confirmed standard, not a typo — currently live: `"done"` from the FACTORY-PDF-delete-deprecated-inspect closeout). Added `"done"` with an inline comment matching the existing per-value documentation style.
-
-Independently re-verified the "only one hardcoded spot" claim rather than trusting it: grepped `validStatuses` + the `"in_progress"` array-literal pattern repo-wide — every other hit is either a test *fixture* (sets a status, doesn't validate against a hardcoded enum) or the unrelated uppercase `task_board`-lane `StatusEnum`/lanes array. 1837a is the only test validating live `.head.status` against a hardcoded array.
-
-tsc clean. Targeted: `1837a-pipeline-state.test.ts` 5/5 pass. Broader orch-state regression sweep (orchStateSchema.test.ts, 1980-f2-canon-schema, 1979-orchestration-decisions, WF2-signal-queue-cas, orchStateStore-atomic-write, 1977-orchestration-endpoint — 6 files) 200/200 pass, 0 fail.
-
-Test-file-only change, no runtime code touched → `rebuild_required=false`, no Docker Close Gate needed. Commit: (see decision journal / git log). Board: `BACKLOG`→`review`, `next_agent=qa` — held at REVIEW rather than self-closing DONE_VERIFIED because the signal's own AC (`ci_green_on_subsequent_push`) requires a green CI run on a push *after* this commit, which cannot be confirmed synchronously; qa/po to confirm `gh run list --branch main` shows conclusion=success post-push before flipping DONE_VERIFIED.
-
-Zone health: tsc clean, targeted+regression suite 205/205 pass, no runtime files touched | HEALTHY.
-
 ## 2026-07-09 — FACTORY-DOMAIN-split-cascade-engine → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
@@ -41,3 +29,19 @@ Doc updates: `infrastructure.md` (new "Data Audit Job" section).
 Commit: 7b62f73e7. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (scheduler/cron hot path — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
 
 Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, RAW-verify byte-identical pre/post-split, dataAuditJob.ts 1300L→353L | HEALTHY.
+
+## 2026-07-09 — FACTORY-SCHEDULER-split-intelligenceCycleJob → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+intelligenceCycleJob.ts (1381L, 15-min hot path) mixed CycleResult/CycleDeps, isMarketHours, 9 defaultXxx DI-seam production impls, and the 7-step orchestrator. Split into `intelligenceCycle/types.ts` (138L), `intelligenceCycle/marketHours.ts` (36L, imports VN_OFFSET_MS from timeConstants.ts), `intelligenceCycle/defaults/*.ts` (8 files ≤79L + `defaultComputeHexagrams.ts` 146L — kept together with `resetHexagramCooldown` + the module-level `_lastHexagramComputedAt` map per the CRITICAL cooldown-closure invariant). `intelligenceCycleJob.ts` is now a 975L thin orchestrator (concurrency guard, timeout helper, `_runCycle`, `runIntelligenceCycle`, Step G); re-exports CycleResult/CycleDeps/isMarketHours/resetHexagramCooldown for zero call-site churn. Two source-text-introspection tests (1843-poll-news-te-chromium-stub, FIX-NEWS-CB-FALSE-CLOSED) updated their srcPath to defaultPollNews.ts's new location.
+
+RAW-verified two ways: (1) every extracted function body byte-diffed against a git-HEAD copy (import-depth normalized) — all 11 identical. (2) scratch executable probe (temp, deleted after use) ran `runIntelligenceCycle` with identical injected `CycleDeps` against both the git-HEAD snapshot and the post-split module across market-hours=true/false — CycleResult MD5-identical both scenarios; isMarketHours matched across 5 fixed timestamps.
+
+tsc clean. Targeted suite (25 files) 227/227 pass, 746 expect() calls. toolCount=183 unchanged, scheduler cron.schedule grep=3 unchanged. Full `bun test`: 14415 pass/40 skip/65 fail/10 errors/1184 files (584s) then known Bun 1.3.13 crash-at-teardown — grepped every fail/error: zero intelligence-cycle/scheduler/news-analysis mentions, all pre-existing pollNews/VPS-push/insider/foreign-flow/telegram flaky class.
+
+Doc updates: `infrastructure.md` (new "Intelligence Cycle Job" section).
+
+Commit: 0e1e48dad. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (scheduler/cron hot path — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
+
+Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, RAW-verify MD5-identical pre/post-split (2 layers), intelligenceCycleJob.ts 1381L→975L | HEALTHY.
