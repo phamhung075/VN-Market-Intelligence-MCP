@@ -293,10 +293,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-SCHEDULER-split-intelligenceCycleJob",
-    "next_agent": "qa",
+    "next_agent": "po",
     "next_action": "FACTORY-SCHEDULER-split-intelligenceCycleJob at REVIEW -- ops: Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild+swap mcp-server container, health/tool-count/dashboard-route checks), then qa: Step 5 live RAW-verify (runIntelligenceCycle behavior via cron_job_runs / scheduler logs — 15-min hot path, behavior-preservation proof matters more than usual), then po: Step 6 close.",
-    "updated_at": "2026-07-09T12:51:34Z",
-    "updated_by": "ops"
+    "updated_at": "2026-07-09T13:05:13Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7241,7 +7241,7 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
         "claimed_at": "2026-07-09T12:17:48Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
+        "next_agent": "po",
         "rebuild_required": true,
         "moved_to_review_at": "2026-07-09T12:43:45Z",
         "moved_by": "dev-mcp-server",
