@@ -291,12 +291,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-BCTC-FPT-BT5-BALANCE-GATE moved to review lane; balance-gate root cause fixed+verified (delta=0.0 exact) but named test still fails on an unrelated pre-existing rows_stored>=80 assertion (page-8 EPS-line bleed, separate bug) — awaiting po/qa adjudication.",
-    "updated_at": "2026-07-09T23:00:10Z",
-    "updated_by": "dev-pdf-extractor"
+    "status": "review",
+    "active_task_id": "FIX-FOREIGN-FLOW-COVERAGE",
+    "next_agent": "ops",
+    "next_action": "mcp-server rebuild+swap is user-gated (docker compose up -d --build mcp-server) then VPS re-deploy of vps-scripts/fetch-foreign-flow.sh, then market-hours RAW-verify per docs/signals/ops-rebuild-verify-mcp-server-20260709T2332Z.json",
+    "updated_at": "2026-07-09T23:36:14Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4152,15 +4152,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SUMMARY-MAPPING"
       },
       {
-        "id": "AUDIT-FETCH-COMPLETE",
-        "title": "Source-fetch-completeness audit: every IMPORTANT source pulls COMPLETE detail (no partial/stub/truncated persisted-as-complete)",
-        "type": "SPIKE",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#AUDIT-FETCH-COMPLETE"
-      },
-      {
         "id": "AUDIT-FC-FRED-MACRO",
         "title": "FRED/macro fetch-completeness recon: every configured series pulled to its latest observation (no partial/short series)",
         "type": "SPIKE",
@@ -4186,15 +4177,6 @@
         "priority": "P3",
         "zone": "apps/mcp-server/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#AUDIT-FC-NEWS-SENTIMENT"
-      },
-      {
-        "id": "FIX-FOREIGN-FLOW-COVERAGE",
-        "title": "Expand foreign-flow fetch from the 111-code watchlist+ref subset to the full daily_ohlcv traded universe",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-COVERAGE"
       },
       {
         "id": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
@@ -6313,6 +6295,17 @@
         "id": "FACTORY-NEWS-extract-rss-parse",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-extract-rss-parse",
         "reroute_note": "BOUNDED-1 auto-pickup 2026-07-09T21:16:58Z dispatched dev-mcp-server (from backlog-detail.json dev_agent field), but zone=news-fetch -> zone-detect Tier-1 correct specialist is dev-news-fetch (apps/mcp-server/ zone_restricted forbids dev-mcp-server from touching apps/news-fetch/). No code changed. Root-cause: backlog-detail.json dev_agent field was stale for ALL 6 FACTORY-NEWS-* rows (2026-06-15 audit-sprint data-entry bug) -- corrected to dev-news-fetch in same commit. Reverted to backlog for correct re-pickup."
+      },
+      {
+        "id": "AUDIT-FETCH-COMPLETE",
+        "title": "Source-fetch-completeness audit: every IMPORTANT source pulls COMPLETE detail (no partial/stub/truncated persisted-as-complete)",
+        "type": "SPIKE",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "zone": "multi",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#AUDIT-FETCH-COMPLETE",
+        "supervised": true,
+        "supervised_note": "epic-wrapper (mode=audit-epic, has children[]) — not a directly-dispatchable atomic task; BOUNDED-1 auto-picked+claimed it in error 23:17Z tick, reverted by dev-team. Route via PO/architect decomposition instead."
       }
     ],
     "closed_sprints": [
@@ -7360,6 +7353,32 @@
         "updated_at": "2026-07-09T23:00:10Z",
         "updated_by": "dev-pdf-extractor",
         "review_note": "Root cause FOUND+FIXED: OCR-misread trailing-separator bug in domain/primitives/vn_number_normalize/primitive.py — Tesseract renders the LAST thousands-dot of a large VN-formatted integer as a comma (e.g. \"43.751.466.292,590\"), which the old Pattern-B VN-decimal regex misclassified as a 3-digit decimal fraction, shrinking FPT code 400 (Total Equity) from 43,751,466,292,590 VND to 43,751,466,292.59 VND (1000x loss). Fix: new _VN_OCR_MISREAD_LAST_SEP_RE (requires >=1 existing thousands-dot group + EXACTLY 3 digits after comma) checked before Pattern B, reinterprets the comma as a mis-scanned dot. VERIFIED: balance_sheet_equation delta 43,707,714,826,297.41 -> 0.0 EXACT (codes 270/300/400 match golden anchors to the dong). Non-regression: full apps/pdf-extractor suite -m not slow = 1019 passed/7 failed(pre-existing PIL.Image test-pollution, confirmed identical via git-stash A/B, unrelated)/7 deselected; targeted corporate-form+balance+decimal suites (vn_number_normalize/text_table_extractor/extract_tables_cross_check/bs_accounting_identities/extract_tables_usecase/reconcile_figures/b02_tctd_parser[bank-form non-regression]/decimal_normalizer/extract_tables_fpt/bt3_fix2/bt3_fix3) = 213 passed/0 failed/1 deselected(slow). REMAINING GAP (landing in review, not closing DONE): the named test test_extract_tables_bt3d_real_ocr.py::test_extract_tables_usecase_real_ocr_path still fails, but at a DIFFERENT unrelated assertion (rows_stored=79 < required >=80) NOT the balance_pass assertion (balance identity is now exact). Traced: page 8 of the auto-located BS OCR range actually contains income-statement EPS lines (codes 70/71, 4-value-column layout) whose code-extraction spuriously yields a fake code \"868\" from a value token on 2 lines; FR-5 dedup (0ae36a0eb, landed 2026-06-28, AFTER this test threshold was set 2026-05-28 in d1be50504) correctly drops 1 exact duplicate, taking raw 80 -> 79. This is a separate bug class (page-boundary/section-detection + EPS multi-column false-positive code match), out of BT5-BALANCE-GATE scope — did NOT touch dedup, thresholds, or drop any line items to force a match (fail_loud_requirement compliance). Decision journal: docs/agent-memory/decisions/dev-pdf-extractor-2026-07-09T23:00:10Z-FIX-BCTC-FPT-BT5-BALANCE-GATE.md. Recommend follow-up ticket for the page-8 EPS-bleed row-count gap."
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-COVERAGE",
+        "title": "Expand foreign-flow fetch from the 111-code watchlist+ref subset to the full daily_ohlcv traded universe",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-COVERAGE",
+        "promoted_at": "2026-07-09T23:20:22Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T23:20:22Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "updated_at": "2026-07-09T23:36:14Z",
+        "updated_by": "dev-mcp-server",
+        "status_note": "Root cause (AUDIT-FC-FOREIGN-FLOW-recon.md): CODES sent to bgapidatafeed were built only from watchlist+referenceStocks (~111 codes), leaving ~1457/1569 daily_ohlcv codes permanently foreign_net_vol=NULL. Fix: new GET /api/ohlcv-codes (ohlcvBackfillHandler.ts handleOhlcvCodes -- SELECT DISTINCT code FROM daily_ohlcv, no hardcoded list); vps-scripts/fetch-foreign-flow.sh now sources CODES from it (fallback: /api/watchlist), mirroring fetch-ohlcv-backfill.sh's pre-existing R-2 pattern -- that script already expected this endpoint but it was never implemented (dormant 404, confirmed in ohlcv-backfill-pipeline-stall/recon.md), so this closes both gaps. money_terms_elevated half (fBValue/fSValue VND columns + get_foreign_flow tỷ đồng serving) was already shipped 2026-06-16 (ddc36452e) -- verified live via docker-exec query, no new work needed. Live-tested single-call design against the real API off-market-hours: 1459 codes -> HTTP 200, 1400 items, ~1.2MB, ~7s, no truncation -- confirms no pagination at full scale. Bumped PAYLOAD_SIZE_THRESHOLD 50000->3000000 and fetch timeout 60s->90s for the ~13x larger payload. New FIX-FOREIGN-FLOW-COVERAGE.test.ts (5/5, TDD RED->GREEN). Targeted suite (foreign-flow+ohlcv-backfill, 9 files) 78/78 pass, tsc clean, toolCount=183 unchanged, server-boot+dashboard circular-dep probes clean, shellcheck clean. Container still on pre-change image -- mcp-server rebuild+swap is USER-GATED, not run by dev-mcp-server (feedback_container_swaps_user_gated.md). Filed docs/signals/ops-rebuild-verify-mcp-server-20260709T2332Z.json for deferred market-hours RAW-verify (live foreign_net_vol coverage growth + VPS script redeploy confirmation). Decision journal: sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md STEP dev-mcp-server-S25.",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
+          "apps/mcp-server/src/interface/mcp/server.ts",
+          "apps/mcp-server/src/__tests__/FIX-FOREIGN-FLOW-COVERAGE.test.ts",
+          "vps-scripts/fetch-foreign-flow.sh",
+          "docs/architecture/microservice/mcp-server/market-data.md"
+        ],
+        "rebuild_required": true
       }
     ],
     "qa": [],
@@ -7379,7 +7398,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T22:47:08Z",
+    "last_triaged_at": "2026-07-09T23:20:22Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },

@@ -161,7 +161,8 @@ import {
 // FACTORY-INTERFACE-split-server-ts Stage 2: macro/news VPS-push routes (push-reuters/tradingeconomics/gso)
 import { handlePushTradingEconomics, handlePushGso, handlePushReuters } from "./routes/macroPushHandler.js";
 // FACTORY-INTERFACE-split-server-ts Stage 3: OHLCV backfill VPS lifecycle routes
-import { handlePushOhlcvHistory, handleOhlcvBackfillQueue, handleOhlcvBackfillDone } from "./routes/ohlcvBackfillHandler.js";
+// FIX-FOREIGN-FLOW-COVERAGE: + handleOhlcvCodes (GET /api/ohlcv-codes — full daily_ohlcv traded universe)
+import { handlePushOhlcvHistory, handleOhlcvBackfillQueue, handleOhlcvBackfillDone, handleOhlcvCodes } from "./routes/ohlcvBackfillHandler.js";
 // FACTORY-INTERFACE-split-server-ts Stage 4: BCTC VPS proxy ingestion + queue-management routes
 import { handleBctcFetchQueue, handleEnrichQueueItem } from "./routes/bctcVpsQueueHandler.js";
 import { handlePushBctcPdf, handleTriggerPekExtract } from "./routes/bctcVpsIngestHandler.js";
@@ -769,6 +770,15 @@ export async function createBunServer(
     // ── Task 1361: GET /api/ohlcv-backfill-queue — VPS polls for pending backfill ──
     if (method === "GET" && pathname === "/api/ohlcv-backfill-queue") {
       await handleOhlcvBackfillQueue(req, res, db, log);
+      return;
+    }
+
+    // ── FIX-FOREIGN-FLOW-COVERAGE: GET /api/ohlcv-codes — full daily_ohlcv traded universe ──
+    // Consumed by fetch-foreign-flow.sh (CODES source, replacing 111-code watchlist+ref subset)
+    // and fetch-ohlcv-backfill.sh (R-2 fallback chain — this was the endpoint that already
+    // existed in the script but had never been implemented server-side).
+    if (method === "GET" && pathname === "/api/ohlcv-codes") {
+      await handleOhlcvCodes(req, res, db, log);
       return;
     }
 

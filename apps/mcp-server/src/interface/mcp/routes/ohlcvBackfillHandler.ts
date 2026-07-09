@@ -8,6 +8,18 @@
  *   POST /api/push-ohlcv-history    — VPS one-time OHLCV history backfill push
  *   GET  /api/ohlcv-backfill-queue  — VPS polls for pending backfill (Task 1361)
  *   POST /api/ohlcv-backfill-done   — VPS signals backfill complete (Task 1361 / SUBTASK-B)
+ *   GET  /api/ohlcv-codes           — full daily_ohlcv traded-code universe (FIX-FOREIGN-FLOW-COVERAGE)
+ *
+ * FIX-FOREIGN-FLOW-COVERAGE (2026-07-10): handleOhlcvCodes implements the endpoint that
+ * vps-scripts/fetch-ohlcv-backfill.sh's R-2 fallback chain already expected ("Try
+ * /api/ohlcv-codes first ... fall back to /api/watchlist") but which had never actually been
+ * wired server-side — confirmed dormant 404 in docs/vps-sources/ohlcv-backfill-pipeline-stall/
+ * recon.md ("/api/ohlcv-codes not available (HTTP 000000), falling back to /api/watchlist").
+ * Now also consumed by vps-scripts/fetch-foreign-flow.sh so foreign-flow coverage tracks the
+ * full daily_ohlcv traded universe (~1459 codes live) instead of the fixed 111-code
+ * watchlist+referenceStocks subset served by /api/watchlist (docs/handoffs/
+ * AUDIT-FC-FOREIGN-FLOW-recon.md). Generic — SELECT DISTINCT code FROM daily_ohlcv, no
+ * per-ticker allowlisting, no hardcoded code list.
  *
  * CONTAM-10-WRITER-H (2026-07-08): handlePushOhlcvHistory now routes through
  * writeOhlcvBatch (application/usecases/ohlcvWriteService.ts, conflictStrategy:
@@ -274,6 +286,37 @@ export async function handleOhlcvBackfillDone(
     res.end(JSON.stringify({ ok: true }));
   } catch (err) {
     log.error("[ohlcv-backfill-done] error", { error: err instanceof Error ? err.message : String(err) });
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Server error" }));
+  }
+  return;
+}
+
+// ── GET /api/ohlcv-codes ────────────────────────────────────────────────────
+// FIX-FOREIGN-FLOW-COVERAGE: returns the full daily_ohlcv traded-code universe
+// (SELECT DISTINCT code, sorted). Generic — tracks whatever daily_ohlcv actually
+// contains, no per-ticker allowlisting, no hardcoded code list. Consumed by
+// vps-scripts/fetch-foreign-flow.sh (CODES source, replacing the 111-code
+// watchlist+referenceStocks subset) and vps-scripts/fetch-ohlcv-backfill.sh
+// (R-2 fallback chain — this was the endpoint that chain already expected).
+
+export async function handleOhlcvCodes(
+  req: IncomingMessage,
+  res: ServerResponse,
+  db: Database,
+  log: Logger,
+): Promise<void> {
+  if (!requireVpsApiKey(req, res)) return;
+
+  try {
+    const rows = db
+      .prepare<{ code: string }, []>("SELECT DISTINCT code FROM daily_ohlcv ORDER BY code")
+      .all();
+    const codes = rows.map((r) => r.code);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ codes, count: codes.length }));
+  } catch (err) {
+    log.error("[ohlcv-codes] query error", { error: err instanceof Error ? err.message : String(err) });
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Server error" }));
   }

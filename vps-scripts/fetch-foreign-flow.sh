@@ -13,8 +13,11 @@
 #  Required (injected by deploy-vinahost.sh):
 #    FOREIGN_FLOW_API_URL   Full URL for push endpoint
 #                           e.g. https://zenmidi.com/api/push-foreign-flow
-#    WATCHLIST_URL          Full URL to retrieve watchlist codes
+#    WATCHLIST_URL          Full URL to retrieve watchlist codes (fallback source)
 #                           e.g. https://zenmidi.com/api/watchlist
+#    CODES_URL              Full URL to retrieve the full daily_ohlcv traded-code
+#                           universe (primary source — FIX-FOREIGN-FLOW-COVERAGE)
+#                           e.g. https://zenmidi.com/api/ohlcv-codes
 #    API_KEY                X-API-Key bearer token (VPS_PUSH_API_KEY)
 #
 #  Configurable field names (override if VPS API renames fields):
@@ -31,12 +34,22 @@ set -e
 
 FOREIGN_FLOW_API_URL="${FOREIGN_FLOW_API_URL:-__MCP_BASE__/api/push-foreign-flow}"
 WATCHLIST_URL="${WATCHLIST_URL:-__MCP_BASE__/api/watchlist}"
+# FIX-FOREIGN-FLOW-COVERAGE: primary CODES source is the full daily_ohlcv traded
+# universe (~1459 codes live), not the 111-code watchlist+referenceStocks subset.
+# Falls back to WATCHLIST_URL if /api/ohlcv-codes is unreachable (e.g. mcp-server
+# not yet rebuilt with this endpoint) — same fallback pattern already used by
+# fetch-ohlcv-backfill.sh's R-2 step.
+CODES_URL="${CODES_URL:-__MCP_BASE__/api/ohlcv-codes}"
 API_KEY="${API_KEY:-__API_KEY__}"
 LOG="/var/log/vn-foreign-flow.log"
 
 # Diagnostic flags (control verbosity of diagnostic output)
 DEBUG_MODE="${DEBUG_MODE:-0}"
-PAYLOAD_SIZE_THRESHOLD="${PAYLOAD_SIZE_THRESHOLD:-50000}"  # bytes — warn if larger
+# FIX-FOREIGN-FLOW-COVERAGE: raised from 50000 — the full-universe payload from
+# bgapidatafeed is now ~1.2MB by construction (live-tested: 1459 codes -> 1400
+# items, HTTP 200, ~7s). Threshold now flags genuinely anomalous payloads
+# (~2x expected) instead of firing every cycle on the new normal size.
+PAYLOAD_SIZE_THRESHOLD="${PAYLOAD_SIZE_THRESHOLD:-3000000}"  # bytes — warn if larger
 
 # Configurable foreign flow field names
 # API field audit 2026-05-30: bgapidatafeed.vps.com.vn returns fBVol/fSVolume/fRoom
@@ -79,35 +92,60 @@ fi
 
 log_diagnostic "INFO" "=== FOREIGN_FLOW FETCH START ==="
 
-# Step 1: Get watchlist codes from MCP server
+# Step 1: Get code list from MCP server.
+# FIX-FOREIGN-FLOW-COVERAGE: try /api/ohlcv-codes (full daily_ohlcv traded
+# universe) first; fall back to /api/watchlist (111-code watchlist+referenceStocks
+# subset) if the endpoint is unavailable — mirrors the R-2 fallback pattern
+# already used by fetch-ohlcv-backfill.sh. Both endpoints return the same JSON
+# shape ({"codes": [...]}), so the rest of the pipeline is unchanged either way.
 CONFIG_START=$(date +%s%N)
-CONFIG=$(curl -s --connect-timeout 10 --max-time 15 \
-  "$WATCHLIST_URL" \
+CODES_HTTP=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 \
+  "$CODES_URL" \
   -H "X-API-Key: $API_KEY" \
-  -H "User-Agent: VN-Market-VPS-Proxy/1.0" 2>&1)
+  -H "User-Agent: VN-Market-VPS-Proxy/1.0" 2>/dev/null || echo "000")
+
+if [ "$CODES_HTTP" = "200" ]; then
+  CONFIG=$(curl -s --connect-timeout 10 --max-time 15 \
+    "$CODES_URL" \
+    -H "X-API-Key: $API_KEY" \
+    -H "User-Agent: VN-Market-VPS-Proxy/1.0" 2>&1)
+  CODES_SOURCE="ohlcv-codes"
+else
+  log_diagnostic "WARN" "CODES_SOURCE_FALLBACK: /api/ohlcv-codes unavailable (HTTP $CODES_HTTP), falling back to /api/watchlist"
+  CONFIG=$(curl -s --connect-timeout 10 --max-time 15 \
+    "$WATCHLIST_URL" \
+    -H "X-API-Key: $API_KEY" \
+    -H "User-Agent: VN-Market-VPS-Proxy/1.0" 2>&1)
+  CODES_SOURCE="watchlist"
+fi
 CONFIG_END=$(date +%s%N)
 CONFIG_TIME_MS=$(( (CONFIG_END - CONFIG_START) / 1000000 ))
 
 if [ -z "$CONFIG" ]; then
-  log_diagnostic "ERROR" "WATCHLIST_FETCH failed: cannot reach MCP server ($WATCHLIST_URL)"
+  log_diagnostic "ERROR" "CODES_FETCH failed: cannot reach MCP server ($CODES_URL / $WATCHLIST_URL)"
   exit 1
 fi
 
-log_diagnostic "DEBUG" "WATCHLIST_FETCH took ${CONFIG_TIME_MS}ms, response size: ${#CONFIG} bytes"
+log_diagnostic "DEBUG" "CODES_FETCH ($CODES_SOURCE) took ${CONFIG_TIME_MS}ms, response size: ${#CONFIG} bytes"
 
 CODES=$(echo "$CONFIG" | jq -r '.codes | join(",")' 2>/dev/null)
 if [ -z "$CODES" ] || [ "$CODES" = "null" ]; then
-  log_diagnostic "ERROR" "WATCHLIST_PARSE failed: empty codes from watchlist"
+  log_diagnostic "ERROR" "CODES_PARSE failed: empty codes from $CODES_SOURCE"
   exit 1
 fi
 
 COUNT=$(echo "$CONFIG" | jq '.codes | length' 2>/dev/null || echo 0)
-log_diagnostic "INFO" "Watchlist loaded: $COUNT codes. Fields: $FBUY_FIELD/$FSELL_FIELD/$FROOM_FIELD/$FBUY_VALUE_FIELD/$FSELL_VALUE_FIELD"
+log_diagnostic "INFO" "Code list loaded ($CODES_SOURCE): $COUNT codes. Fields: $FBUY_FIELD/$FSELL_FIELD/$FROOM_FIELD/$FBUY_VALUE_FIELD/$FSELL_VALUE_FIELD"
 
 # Step 2: Fetch VN stock data from VPS batch API
 # HARDENED: increased timeout from 20s to 60s to allow large payloads to complete (Task 1566_c)
+# FIX-FOREIGN-FLOW-COVERAGE: raised again to 90s — CODES list is now the full
+# daily_ohlcv universe (~13x more codes than the old 111-code subset). Live-tested
+# (2026-07-10, off-market-hours): 1459 codes -> 1400 items, ~1.2MB, ~7s from a
+# France test host; 90s leaves ample margin for VPS network variance during
+# market-hours peak load. No pagination at the source (recon-confirmed).
 VN_FETCH_START=$(date +%s%N)
-VN_DATA=$(curl -s --connect-timeout 10 --max-time 60 \
+VN_DATA=$(curl -s --connect-timeout 10 --max-time 90 \
   "https://bgapidatafeed.vps.com.vn/getliststockdata/$CODES" \
   -H "User-Agent: Mozilla/5.0" 2>&1)
 VN_FETCH_END=$(date +%s%N)
