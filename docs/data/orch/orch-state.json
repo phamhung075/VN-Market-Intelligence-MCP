@@ -283,12 +283,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FACTORY-MACRO-split-sandbox",
-    "next_agent": "qa",
-    "next_action": "QA verify FACTORY-MACRO-split-sandbox (commit 60c9a880a): cmd/sandbox god-file split 4 ways + 6-comparator collapse into compareFields helper + dispatch_test.go added. go build/vet/test/golangci-lint green; before/after sandbox parity confirmed byte-identical (20-scenario suite + 2 forced-FAIL probes). Standalone CLI tool, NOT Docker-deployed (Dockerfile builds ./cmd/server/ only) -- no Close Gate needed.",
-    "updated_at": "2026-07-09T06:32:00Z",
-    "updated_by": "dev-macro-indicators"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-MACRO-split-sandbox DONE_VERIFIED (qa RAW-verify PASS 2026-07-09T06:43:50Z -- independently re-derived comparator-collapse parity from source diff + own before/after binary reproduction (not just trusting dev's git-stash report) + own 2 forced-mismatch probes, read dispatch_test.go in full (real, not tautological; one non-blocking light-coverage gap noted), repo-wide grep confirms zero external references to moved identifiers, full zone test suite green beyond cmd/sandbox-only). No genuine defect found; task complete.",
+    "updated_at": "2026-07-09T06:43:50Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8808,6 +8808,30 @@
           "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head reset idle (status=done / active_task_id=null / next_agent=router) alongside the review[]->done_verified[] row flip — the exact atomic .head+board-row discipline whose ABSENCE I escalated earlier this session as UNBLOCK-CLOSEGATE-STEP4-HEAD-SYNC (feedback_close_gate_step4_head_sync_gap; ops Step-4 omitted it twice in 30d). Write-time jq guard re-verified .head.active_task_id == FACTORY-FRONTEND-split-dashboard-analysis before writing (else .head left untouched to avoid clobbering a concurrent takeover); orch-apply CAS-mtime guard covers read->rename interleaving. Row's own next_agent KEPT 'po' (task-row schema next_agent=z.string().optional() rejects raw null; kept-'po' is the dominant done_verified sibling convention; top-level .head is authoritative for routing per feedback_orchstate_dual_head_keys_toplevel_authoritative). Deprecated .task_board.head left UNTOUCHED. No sprint_goal.entries match this task-id -> not touched. This po session is gateway-blind (Read/Edit/Write/Bash only — no mcp__gateway__call_tool) -> release of lock task:FACTORY-FRONTEND-split-dashboard-analysis DEFERRED to router on report-back per dispatch. qa correctly HELD REVIEW+next_agent=po (did not self-close a rebuild_required=true FACTORY) -> qa-self-close count stays 1, below the recurring-2+ bar; parked qa-guardrail-mint stays parked.",
           "residual_advisory": "Non-blocking, ACCEPTED (not fixed here): the route size-justification header (and review_note/ops_note/qa_note/notebook/journal) say 457L but the file is genuinely 476L — my own wc -l is the 4th independent confirmation. NOT corrected in this close because editing the route comment would (a) force a needless container rebuild for a comment-only change, (b) reintroduce SHA-gate drift, (c) touch dev-frontend's zone (PO does not edit production code). Correct forward record = 476L (stamped here + in po notebook + journal po-S15); opportunistic fix folds into the next dev-frontend touch of that file or the not-yet-built CI size-lint-justification gate. Also non-blocking (confirmed unrelated by dev+qa, zero diff in extraction range): 2 pre-existing full-suite vitest fails (QUE-TOOLTIP/QUE-REFERENCE) + 5 pre-existing eslint react-hooks/exhaustive-deps errors in CorporateEventsZone/FinancialsZone/TechnicalZone."
         }
+      },
+      {
+        "title": "Split macro sandbox 831L god-file + collapse 6 copy-paste comparators",
+        "priority": "P1",
+        "zone": "macro-indicators",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-MACRO-split-sandbox",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-sandbox",
+        "promoted_at": "2026-07-09T06:18:21Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T06:18:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "completed_at": "2026-07-09T06:32:00Z",
+        "completed_by": "dev-macro-indicators",
+        "commit_sha": "60c9a880a",
+        "verification_note": "cmd/sandbox split 831L main.go -> main.go(103L)+discovery.go(86L)+primitives.go(366L)+module.go(250L); 6 executeMacroXxx comparators + module batch/build diff-builders collapsed into compareFields(label,[]fieldDiff); dispatch_test.go added (8 tests, zero pre-existing coverage). go build/vet/test/golangci-lint all GREEN. Before/after sandbox binary run (git-stash isolated) byte-identical on 20-scenario suite + 2 forced-FAIL probes (primitive+module tier), incl. exit codes. rebuild_required=true flagged in spec but Dockerfile only builds ./cmd/server/ -- cmd/sandbox never compiled into deployed image, so next_agent=qa not ops (no Close Gate needed).",
+        "qa_verify_at": "2026-07-09T06:43:50Z",
+        "qa_verify_by": "qa",
+        "updated_at": "2026-07-09T06:43:50Z",
+        "updated_by": "qa",
+        "status_note": "qa RAW-verify PASS (2026-07-09T06:43:50Z): read full diff (60c9a880a) against reconstructed pre-split main.go line-by-line -- compareFields/formatVal genuinely preserve original %q/%v formatting + error text for all 6 primitive comparators + both module-tier diff sites, no silent logic change. Independently reproduced before/after parity from scratch (git worktree at parent commit, built both binaries, ran identical 20-scenario fixture suite -- byte-identical output+exit 0 both; 2 own forced-mismatch probes, primitive+module tier -- byte-identical FAIL text+exit 1 both). Read dispatch_test.go in full: 8 real dispatch-routing tests, not tautological (one non-blocking limitation noted: 6-way primitive subtest cannot distinguish a within-group case swap via go test alone -- DoD asked for light coverage only, real fixture suite would catch it). Repo-wide grep confirms zero external references to any moved identifier (package main). Full zone test suite (go build/vet/test -count=1 all 11 packages + golangci-lint) green beyond router's cmd/sandbox-only checks. .gitignore anchor fix verified live via git check-ignore. done_verified."
       }
     ],
     "head": {
@@ -8938,25 +8962,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Split macro sandbox 831L god-file + collapse 6 copy-paste comparators",
-        "priority": "P1",
-        "zone": "macro-indicators",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-MACRO-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-sandbox",
-        "promoted_at": "2026-07-09T06:18:21Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T06:18:43Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "completed_at": "2026-07-09T06:32:00Z",
-        "completed_by": "dev-macro-indicators",
-        "commit_sha": "60c9a880a",
-        "verification_note": "cmd/sandbox split 831L main.go -> main.go(103L)+discovery.go(86L)+primitives.go(366L)+module.go(250L); 6 executeMacroXxx comparators + module batch/build diff-builders collapsed into compareFields(label,[]fieldDiff); dispatch_test.go added (8 tests, zero pre-existing coverage). go build/vet/test/golangci-lint all GREEN. Before/after sandbox binary run (git-stash isolated) byte-identical on 20-scenario suite + 2 forced-FAIL probes (primitive+module tier), incl. exit codes. rebuild_required=true flagged in spec but Dockerfile only builds ./cmd/server/ -- cmd/sandbox never compiled into deployed image, so next_agent=qa not ops (no Close Gate needed)."
       }
     ],
     "qa": [],
