@@ -8819,10 +8819,10 @@
         "title": "CI-RED-06043b3c-FIX — CI RED: bun test",
         "type": "FIX",
         "size": "S",
-        "status": "REVIEW",
+        "status": "READY",
         "priority": "high",
         "owner": "po",
-        "next_agent": "qa",
+        "next_agent": "po",
         "zone": "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts",
         "created_at": "2026-07-09T02:27:00Z",
         "created_by": "po-signal-triage-20260709T0226Z",
@@ -8835,7 +8835,10 @@
         "moved_to_review_at": "2026-07-09T02:42:56Z",
         "moved_by": "dev-mcp-server",
         "rebuild_required": false,
-        "review_note": "One-line test-enum fix: added \"done\" to validStatuses in apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts L96 (AC-2) — po Step 6 Docker Close Gate sign-off convention writes .head.status=\"done\" on every closeout (confirmed standard via live file, currently \"done\"); array omitted it, causing deterministic CI failure on every such closeout. Independently re-verified (not trusted blindly) that this is the only hardcoded spot: grepped validStatuses + the in_progress array-literal pattern repo-wide, all other hits are test fixtures (set status, do not validate) or the unrelated uppercase task_board StatusEnum/lanes array. tsc clean. Targeted 1837a-pipeline-state.test.ts 5/5 pass against live .head.status=\"done\". Regression sweep (orchStateSchema.test.ts, 1980-f2-canon-schema, 1979-orchestration-decisions, WF2-signal-queue-cas, orchStateStore-atomic-write, 1977-orchestration-endpoint) 200/200 pass, 0 fail. Test-file-only change, no runtime code touched -> rebuild_required=false, no Docker Close Gate needed. Held at REVIEW (not self-closed DONE_VERIFIED): signal AC verification_gate=ci_green_on_subsequent_push requires gh run list --branch main showing conclusion=success for a push AFTER this commit -- unconfirmable synchronously. next_agent=qa to confirm CI green on the next main push, then po Step 6 sign-off to flip DONE_VERIFIED."
+        "review_note": "One-line test-enum fix: added \"done\" to validStatuses in apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts L96 (AC-2) — po Step 6 Docker Close Gate sign-off convention writes .head.status=\"done\" on every closeout (confirmed standard via live file, currently \"done\"); array omitted it, causing deterministic CI failure on every such closeout. Independently re-verified (not trusted blindly) that this is the only hardcoded spot: grepped validStatuses + the in_progress array-literal pattern repo-wide, all other hits are test fixtures (set status, do not validate) or the unrelated uppercase task_board StatusEnum/lanes array. tsc clean. Targeted 1837a-pipeline-state.test.ts 5/5 pass against live .head.status=\"done\". Regression sweep (orchStateSchema.test.ts, 1980-f2-canon-schema, 1979-orchestration-decisions, WF2-signal-queue-cas, orchStateStore-atomic-write, 1977-orchestration-endpoint) 200/200 pass, 0 fail. Test-file-only change, no runtime code touched -> rebuild_required=false, no Docker Close Gate needed. Held at REVIEW (not self-closed DONE_VERIFIED): signal AC verification_gate=ci_green_on_subsequent_push requires gh run list --branch main showing conclusion=success for a push AFTER this commit -- unconfirmable synchronously. next_agent=qa to confirm CI green on the next main push, then po Step 6 sign-off to flip DONE_VERIFIED.",
+        "qa_verify_at": "2026-07-09T02:49:25Z",
+        "qa_verify_by": "qa",
+        "qa_note": "GH Actions run 28990352248 (headSha 68c2de81c6bdc99be848fcbccf7a017ac19e6844, push to main) status=completed conclusion=success. \"bun test\" job (databaseId 86028554823, the previously-failing job) independently confirmed conclusion=success; all 8 jobs green. verification_gate=ci_green_on_subsequent_push satisfied. DJ: sprint-CI-RED-06043b3c-FIX-qa.md §qa-S1."
       }
     ],
     "qa": [],
