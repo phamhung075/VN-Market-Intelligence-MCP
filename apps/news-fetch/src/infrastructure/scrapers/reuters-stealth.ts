@@ -20,6 +20,10 @@
 import type { ReutersNewsPort } from '../../domain/repositories.js';
 import { NewsSource, type Article, type FetchResult } from '../../domain/models.js';
 import { PlaywrightBrowserFactory } from './playwright-browser-factory.js';
+import { normalizeDate } from '../../primitive/published-at-parser/index.js';
+
+// Re-exported for callers/tests importing normalizeDate directly from this module.
+export { normalizeDate };
 
 const REUTERS_BUSINESS_URL = 'https://www.reuters.com/business';
 const PAGE_TIMEOUT_MS = 25_000;
@@ -117,17 +121,5 @@ export class ReutersStealthFallback implements ReutersNewsPort {
     } finally {
       await browser.close();
     }
-  }
-}
-
-/** Normalise any parseable date string to ISO 8601 UTC, or null. */
-export function normalizeDate(dateStr: string | null | undefined): string | null {
-  if (!dateStr) return null;
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return null;
-    return d.toISOString();
-  } catch {
-    return null;
   }
 }

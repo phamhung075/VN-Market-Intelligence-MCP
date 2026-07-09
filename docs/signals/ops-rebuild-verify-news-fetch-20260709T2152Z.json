@@ -1,0 +1,17 @@
+{
+  "signal_type": "ops-rebuild-verify",
+  "task_id": "FACTORY-NEWS-dedup-normalizeDate",
+  "target_service": "news-fetch",
+  "created_at": "2026-07-09T21:52:00Z",
+  "created_by": "dev-news-fetch",
+  "priority": "P2",
+  "deferred_verification": {
+    "description": "RAW-verify stealth-scraper publishedAt output unchanged after rebuild",
+    "check": "After rebuilding news-fetch container, trigger a Bloomberg-stealth and Reuters-stealth fetch (or replay via the sandbox fixtures) and compare each article's publishedAt field against a pre-rebuild baseline. In-repo before/after comparison already confirmed byte-identical output across 12 date-format cases (null, undefined, empty, whitespace, invalid, ISO Z, ISO+offset, RFC 2822 GMT, RFC 2822+offset, date-only, malformed); this signal tracks the live-container confirmation only.",
+    "acceptance": "publishedAt values from a live/replayed BloombergStealth and ReutersStealthFallback fetch match the pre-rebuild baseline exactly (or both null under identical unparseable input).",
+    "blocking": false
+  },
+  "status": "pending",
+  "notes": "Per DoD: normalizeDate deduped into src/primitive/published-at-parser/index.ts (parsePublishedAt core + null-tolerant normalizeDate wrapper), both stealth-scraper local definitions removed and replaced with import+re-export. bun test 233 pass/0 fail, bun tsc --noEmit clean, G12 sandbox 16/16 PASS, direct before/after script comparison 0 mismatches across 12 inputs. Container still running pre-change image — this signal tracks the deferred live-rebuild confirmation (feedback_user_gates_delegate_to_ops.md). Do not close task as DONE_VERIFIED until ops confirms rebuild + output verification.",
+  "status_note_of": "FACTORY-NEWS-dedup-normalizeDate"
+}

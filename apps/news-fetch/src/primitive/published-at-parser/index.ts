@@ -30,3 +30,24 @@ export function parsePublishedAt(rfcDate: string): string | null {
     return null;
   }
 }
+
+/**
+ * Null-tolerant wrapper around {@link parsePublishedAt} for stealth-scraper callers
+ * that pass DOM/JSON-extracted values which may be `null` or `undefined`.
+ *
+ * Extracted from: bloomberg-stealth.ts + reuters-stealth.ts (normalizeDate) — both
+ * files contained byte-identical implementations, functionally equivalent to
+ * `parsePublishedAt` with a null/undefined guard.
+ *
+ * @param dateStr - any parseable date string, or null/undefined
+ * @returns ISO 8601 UTC string, or null on missing/unparseable input
+ *
+ * @example
+ *   normalizeDate('2026-05-13T14:30:00Z')  // "2026-05-13T14:30:00.000Z"
+ *   normalizeDate(null)                     // null
+ *   normalizeDate(undefined)                // null
+ */
+export function normalizeDate(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null;
+  return parsePublishedAt(dateStr);
+}

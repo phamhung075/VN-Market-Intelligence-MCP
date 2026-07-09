@@ -294,9 +294,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "FACTORY-NEWS-extract-rss-parse reverted BACKLOG (misrouted to dev-mcp-server; zone=news-fetch needs dev-news-fetch) -- backlog-detail.json dev_agent field corrected for all 6 FACTORY-NEWS-* rows; idle-capacity freed for next BOUNDED-1 pickup",
-    "updated_at": "2026-07-09T21:22:38Z",
-    "updated_by": "dev-mcp-server"
+    "next_action": "FACTORY-NEWS-dedup-normalizeDate closed to REVIEW — normalizeDate deduped into published-at-parser primitive, tests/sandbox green, rebuild+RAW-verify deferred to ops.",
+    "updated_at": "2026-07-09T21:52:14Z",
+    "updated_by": "dev-news-fetch (task complete)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3975,15 +3975,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-router-cleanups"
       },
       {
-        "title": "Fold the two stealth-scraper normalizeDate copies into the published-at primitive",
-        "priority": "P1",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-NEWS-dedup-normalizeDate",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-dedup-normalizeDate"
-      },
-      {
         "title": "Split news-fetch sandbox runner.ts; replace by-name signature switch",
         "priority": "P1",
         "zone": "news-fetch",
@@ -7334,6 +7325,24 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "reviewed_at": "2026-07-09T20:55:11Z",
         "reviewed_by": "dev-stock-price"
+      },
+      {
+        "title": "Fold the two stealth-scraper normalizeDate copies into the published-at primitive",
+        "priority": "P1",
+        "zone": "news-fetch",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-NEWS-dedup-normalizeDate",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-dedup-normalizeDate",
+        "promoted_at": "2026-07-09T21:47:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T21:47:49Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "completed_at": "2026-07-09T21:52:14Z",
+        "completed_by": "dev-news-fetch",
+        "status_note": "Deduped normalizeDate: added null-tolerant wrapper to src/primitive/published-at-parser/index.ts (parsePublishedAt as core), removed local definitions from bloomberg-stealth.ts (151->142L) and reuters-stealth.ts (134->125L), replaced with import+re-export (tests in __tests__/1899a-bloomberg-normalize-date.test.ts and __tests__/1899a-reuters-fallback-lifecycle.test.ts import normalizeDate by name from the stealth files directly — router premise of no test dependency was FALSE, so a re-export was required and added). bun test 233 pass/6 skip/0 fail, bun tsc --noEmit clean, G12 sandbox 16/16 PASS, scenario JSON valid. Direct before/after comparison script run against old inlined impl vs new primitive-backed impl across 12 date-format inputs (null/undefined/empty/whitespace/invalid/ISO Z/ISO+offset/RFC2822 GMT/RFC2822+offset/date-only/malformed): 0 mismatches, byte-identical output. rebuild_required=true (news-fetch is a docker-composed service; live container still runs pre-change image) — deferred verification tracked in signal docs/signals/ops-rebuild-verify-news-fetch-20260709T2152Z.json per feedback_user_gates_delegate_to_ops.md. Kept REVIEW (not self-asserted DONE_VERIFIED) pending rebuild+RAW-verify. DJ: docs/agent-memory/decisions/dev-news-fetch-20260709T2152Z-FACTORY-NEWS-dedup-normalizeDate.md"
       }
     ],
     "qa": [],
@@ -7353,7 +7362,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T21:16:58Z",
+    "last_triaged_at": "2026-07-09T21:47:24Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
