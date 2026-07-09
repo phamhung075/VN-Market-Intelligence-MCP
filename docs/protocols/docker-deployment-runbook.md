@@ -131,6 +131,34 @@ A microservice code change is NOT shipped until its container is rebuilt with th
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ); jq --arg task_id "$TASK_ID" --arg from_lane "review" --arg next_agent "qa" --arg now "$NOW" -f scripts/ops-closegate-handoff.jq docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
 ```
 
+### Step 4/4b Commit-Gate Invariant (mandatory, non-negotiable)
+
+**Modeled directly on agents-architect's own Brief-Commit Invariant** (`docs/agents/agents-architect/handlers.md` § Brief-Commit Invariant) — same 3-step pattern, applied to ops's Close Gate handoff. Recurring-bug fix (memory: `feedback_close_gate_step4_head_sync_gap`, 2 confirmed occurrences `f4afa0e03` 2026-07-08, `b907a8ea6` 2026-07-09 — router/PO had to discover ops's uncommitted board+journal artifacts via `git status` and commit them itself).
+
+**Step 4/4b is NOT complete until ops's own commit lands.** The `scripts/orch-apply.sh` write above only settles the *working tree*; ops must still stage and commit its own Close-Gate artifacts before returning:
+
+1. **Explicit-stage (commit-boundary RULE 1 — never `git add -A`/`git add .`):**
+   ```bash
+   git add docs/agent-memory/notebooks/ops.md \
+           docs/agent-memory/decisions/sprint-<sprint_id>-ops.md \
+           docs/data/orch/orch-state.json
+   ```
+2. **Commit:**
+   ```bash
+   git commit -m "chore(ops): close-gate <task_id> — board+head forward to qa"
+   ```
+3. **Raw self-verify (commit-boundary RULE 3):**
+   ```bash
+   git show --name-only HEAD
+   ```
+   Verify ONLY the 3 paths above appear. If unexpected files appear: `git reset --soft HEAD~1`, unstage intruders, re-commit.
+
+**Step 4's RETURN block/report MUST carry the resulting commit SHA.** A completion report that says "board forwarded to qa" without a commit SHA is **INCOMPLETE** — bounce it back to ops, do not proceed to Step 5. **A router/PO/other-agent commit of ops's uncommitted Close-Gate artifacts is a defect to report, not a recovery path** — that silent-fallback is exactly what produced `f4afa0e03`/`b907a8ea6`. If this recurs a 3rd time post-fix, escalate per the standing recurring-bug-escalation policy (memory: `feedback_recurring_bug_escalation`) rather than patching again.
+
+**Journal filename discipline (closes the one-off-filename anti-pattern):** the Close-Gate decision-journal entry MUST use the decision-journal skill's own `SPRINT_ID` resolution (`.claude/skills/decision-journal/SKILL.md` § Resolve Sprint ID) and append a `STEP ops-S<N>` block to `docs/agent-memory/decisions/sprint-<resolved-id>-ops.md`. A one-off dated filename (e.g. `docs/agent-memory/decisions/YYYY-MM-DD-<slug>-OPS-CLOSE-GATE.md`) is **never correct** for this step — 3 prior occurrences of this anti-pattern were folded into `sprint-SYSTEMIC-REMAKE-P1-ops.md`'s `STEP ops-Sn` sequence (2026-07-09).
+
+Full design: `docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md` §2.2+§2.3.
+
 ### Delegation rule
 
 ops performs the rebuild, SHA gate, and atomic board+head forward to qa (Steps 1–4b). qa verifies liveness (Step 5). The user NEVER runs docker commands. If ops is unavailable, PO signals to BUG and holds the DONE gate open.

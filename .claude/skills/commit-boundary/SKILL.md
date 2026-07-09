@@ -1,7 +1,7 @@
 ---
 name: commit-boundary
-description: "Three-rule explicit-stage discipline for maintenance-lane agents (pm, agents-architect, agent-father). SSOT for commit boundary enforcement. Absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE."
-version: "2026-06-02"
+description: "Three-rule explicit-stage discipline for maintenance-lane agents (pm, agents-architect, agent-father) plus ops's Close Gate Step 4/4b commit-gate. SSOT for commit boundary enforcement. Absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE."
+version: "2026-07-09"
 ---
 
 # Commit Boundary Discipline
@@ -41,6 +41,7 @@ git restore --staged <intruder-file>
 | agents-architect | `docs/architecture-briefs/` · `docs/signals/` · `docs/agent-memory/notebooks/agents-architect.md` | `docs/data/orch/orch-state.json` · `apps/` · other agents' notebooks |
 | agent-father | `docs/agents/` · `docs/agent-memory/` (any notebook) · `.claude/skills/` · `.claude/agents/` | `docs/data/orch/orch-state.json` · `apps/` · `docs/data/system-map.json` |
 | pm | `docs/data/orch/orch-state.json` (task board + sprint sections) · `docs/agent-memory/notebooks/pm.md` | `docs/architecture-briefs/` · `apps/` · other agents' notebooks |
+| ops | `docs/agent-memory/notebooks/ops.md` · `docs/agent-memory/decisions/sprint-<id>-ops.md` · `docs/data/orch/orch-state.json` (Close Gate Step 4/4b board+head write only) | `docs/architecture-briefs/` · `apps/` · other agents' notebooks — scope is exactly these 3 paths per `docs/protocols/docker-deployment-runbook.md` § Step 4/4b Commit-Gate Invariant |
 
 ## RULE 3 — RAW SELF-VERIFY (after git commit)
 

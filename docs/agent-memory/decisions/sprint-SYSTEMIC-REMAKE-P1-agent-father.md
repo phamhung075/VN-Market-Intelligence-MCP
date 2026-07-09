@@ -44,3 +44,12 @@
 - Write `orch-state.json` task_board row myself (task text asked "you/PO") — rejected: my own `commit_zone.excluded` (init.md) + commit-boundary SKILL.md zone table both explicitly bar agent-father from `docs/data/orch/orch-state.json` outside the one signal-queue DONE-mark exception (checked: this signal has no `signal_queue` row, exception N/A); `pm`'s zone owns task-board writes per the same table. Implemented the file fix + journal + notebook (in-zone) and handed the board mint/update back to the dispatcher rather than silently overriding my own agent boundary because a launching agent's message asked for it.
 **why-decision:** Brief already reconciled against both adjacent in-flight items (F1 decommission, 07-07 durability brief's landed `_notes` fix) with a disjoint key-path table — no independent re-derivation needed, just faithful implementation + RAW-verification of its own DoD.
 **why-change:** no change from brief spec on the file edits; scope-narrowed the task's own board-update instruction to stay inside agent-father's explicit, currently-enforced commit-zone exclusion (FU-AGENT-FATHER-ORCH-SCOPE).
+
+### STEP agent-father-S5 · agent-father · 2026-07-09T08:46:28Z
+**task-id:** FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE
+**what-done:** Landed brief §2.2 (runbook Step 4/4b Commit-Gate Invariant modeled on agents-architect's Brief-Commit Invariant + commit-boundary `ops` zone row) + §2.3 (STEP ops-Sn journal-filename enforcement line + folded 3 one-off-filename offenders into `sprint-SYSTEMIC-REMAKE-P1-ops.md`, fixing a pre-existing duplicate-S2 numbering bug along the way).
+**what-considered:**
+- Move `orch-state.json` task_board row in_progress→review + sync `.head` myself, as the dispatch text explicitly asked — attempted via `scripts/orch-apply.sh` (clean diff, orch-validate PASS), then reverted.
+- Leave the board move for po/router — chosen: my own `commit_zone.excluded` (init.md) is an absolute "NEVER... except ONE [signal-queue DONE-mark]" rule; task_board is not that exception, and S4 already established this precedent one day prior on the same sprint.
+**why-decision:** A launching agent's task text cannot authorize overriding my own configured commit-zone boundary — same principle as S4; consistency across the sprint journal matters more than one task's convenience.
+**why-change:** dispatch spec asked agent-father to also move+commit the board row; declined that one sub-step, completed and committed everything else in-zone, handed router/po the exact validated jq transform.
