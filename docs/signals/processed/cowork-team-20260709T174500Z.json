@@ -1,0 +1,36 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "LOW",
+  "tick": "2026-07-09T17:45Z",
+  "verdict": "WORK",
+  "matched_slots": [],
+  "spawned": [],
+  "skipped": [],
+  "signal_queue_drained": [
+    {
+      "id": "dev-20260709T173417Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "improvement_proposal",
+      "summary": "gateway MCP tool absent 2 consecutive ticks — self-critique T2 proposal drafted (docs/improvement-proposals/IMP-20260710-dev-team-T2-gateway-absent.md)",
+      "severity": "INFO",
+      "action": "marked NEW->READ; not a cowork slot (addressed to po, dev-team scope) — no dispatcher action, left for dev-team's own cycle to pick up"
+    }
+  ],
+  "escalation_note": null,
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "no slots matched this tick — Step 5.0/4.5c not applicable.",
+  "methodology_note": "No cowork-schedule.json slot matched this tick (slots: [] in preflight output). Only action was the Step 0a signal_queue drain.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (emit_pressure_state succeeded). Notable: dev-team independently drafted its own T2 self-critique on this exact defect this tick (see signal_queue_drained above) — corroborates cowork-team's own tracking, no new info.",
+  "work_channel_message_sent": false,
+  "stale_warning_note": "stale_warning absent this tick. Cumulative (02:00-17:45, 38 WORK ticks; SILENT ticks not counted): 12 true, 26 absent.",
+  "recurring_symptom_note": "Empty-slot WORK tick (signal-drain-only) — first occurrence this session. No guaranteed-slot miss this tick since no slots matched at all.",
+  "emitted_at": "2026-07-09T17:46:57.977Z",
+  "_processed": {
+    "fingerprint": "8ee74058f5c4b346e0af408d15221424b85b72d27160b8de58d1a65e08c9e62f",
+    "processedAt": "2026-07-09T17:47:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
