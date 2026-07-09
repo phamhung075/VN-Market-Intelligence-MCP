@@ -259,3 +259,49 @@
 - Rebuild: 2026-07-09T11:59–12:05Z (6 minutes total)
 - Docker image: vn-market-intelligence-mcp-mcp-server:latest (sha256:6ff4c9d2f8ff)
 - Commit: f5b9b1f9f9bc88a7ddfbd43071a99a6949733f09 (already on origin/main)
+
+## STEP ops-S8: FACTORY-SCHEDULER-split-dataAuditJob Docker Close Gate (2026-07-09T13:24:30Z)
+
+**Task ID:** FACTORY-SCHEDULER-split-dataAuditJob
+
+**Context:** Dev-mcp-server split dataAuditJob.ts (1300L → 353L thin orchestrator) by extracting D-n/W-n audit checks into modular 19 per-check files under scheduler/news-analysis/audit-checks/ (daily: check*.ts for D-1..D-11; weekly: check*.ts for W-1..W-7, each ≤120L pure functions). Shared utilities (AuditFinding, TelegramFn, GetCountFn, checkToCategory, severityToPriority, getPreviousRowCounts, insertFeedbackIfNew, buildFindingTitle, buildTelegramMessage, INDICATOR_RANGES, SNAPSHOT_TABLES) extracted to new dataAuditShared.ts. dataAuditJob.ts is now pure orchestrator: runDailyChecks/runWeeklyChecks use [...checkA(db),...checkB(db),...] spreads in exact original D-n/W-n order (finding order + insertFeedbackIfNew side-effect ordering preserved), plus writeSystemLog/upsertAuditState/maybeSendTelegram + public runDailyAudit/runWeeklyAudit/runDailyAuditIfStale entry points; re-exports maintained for zero call-site churn. Pre-verified by dev-team: tsc clean, scratch pre/post runDailyAudit/runWeeklyAudit on identical seeded DBs using pre-split monolith vs post-split modules — findings[] output (20 daily + 27 weekly findings) byte-identical, agent_feedback insert ordering MD5-identical. New FACTORY-SCHEDULER-split-dataAuditJob.test.ts (7 tests) exercises 6 extracted check functions directly. Targeted suite 92/92 pass, toolCount=183 unchanged (no scheduler wiring touched — only news-analysis/ internal file layout). Commit 7b62f73e7. rebuild_required=true — scheduler/cron hot path, new code only takes effect after container rebuild.
+
+**Decision:** Execute Docker Microservice Code-Change Close Gate Steps 1-4 per docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate.
+
+**Execution Summary:**
+
+| Step | Check | Result | Evidence |
+|------|-------|--------|----------|
+| 1 | Docker memory (mcp-server OK, stack ~1.4 GiB/8 GiB) | ✓ PASS | `docker stats`, vm_stat free pages=96954 |
+| 1 | Disk space (20GB free ≥ 15GB threshold) | ✓ PASS | `df -h /` |
+| 2 | Build mcp-server | ✓ PASS | Docker build completed, image exported, bun compile successful |
+| 2 | Container deploy `docker compose up -d --no-deps mcp-server` | ✓ PASS | Container recreated, healthy in 9s |
+| 3 | Container health status | ✓ PASS | `docker compose ps mcp-server` → Up 9 seconds (healthy) |
+| 3 | Port 3000 binding | ✓ PASS | Port 3000 bound to localhost |
+| 3 | Peer containers unchanged | ✓ PASS | All 12 services in host_runtime_set healthy, no collateral restarts |
+| 4 | /health endpoint | ✓ PASS | `curl http://localhost:3000/health | jq` → status=ok, toolCount=183 (baseline unchanged), sessions=0, uptime=8.93s |
+| Bonus | Scheduler cron path | ✓ PASS | grep scheduler cron.schedule=3 (unchanged, no scheduler wiring touched) |
+
+**RAW-Verify Evidence:**
+
+1. Service baseline toolCount=183 (exact match to review_note baseline)
+2. Scheduler paths unchanged: cron.schedule references = 3 (D-n, W-n orchestration untouched)
+3. All 12 host_runtime_set services Up and healthy post-rebuild:
+   - mcp-server, api-gateway, frontend, macro-indicators, mcp-gateway, pdf-extractor, stock-price, technical-analysis, kinh-dich-service, alert-engine, rag-service, news-fetch
+
+**Board State Transition:**
+- `.head.status`: remains "review" (QA Step 5, PO Step 6 will flow next)
+- `.head.active_task_id`: "FACTORY-SCHEDULER-split-dataAuditJob" (unchanged)
+- `.head.next_agent`: "ops" → "qa" (handoff to Step 5 RAW-verify)
+- `.head.updated_at`: 2026-07-09T13:24:30Z
+- `.head.updated_by`: "ops"
+- orch-state update via orch-apply.sh: atomic board+head forward
+
+**What's Next:**
+- QA: Step 5 RAW-verify (live audit job invocation via cron_job_runs, verify runDailyAudit/runWeeklyAudit findings shape via dashboards)
+- PO: Step 6 mark DONE_VERIFIED (only po may flip to done_verified per runbook)
+
+**Artifacts:**
+- Rebuild: 2026-07-09T13:24:30Z
+- Docker image: vn-market-intelligence-mcp-mcp-server:latest
+- Commit: 7b62f73e7 (already on origin/main)
