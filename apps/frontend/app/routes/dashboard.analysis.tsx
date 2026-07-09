@@ -67,6 +67,7 @@ import { ReputationZone } from "~/components/analysis/ReputationZone";
 import { NewsBuzzZone } from "~/components/analysis/NewsBuzzZone";
 import { ConvictionHistoryZone } from "~/components/analysis/ConvictionHistoryZone";
 import { ConfidenceBar } from "~/components/analysis/ConfidenceBar";
+import { SectionCard, Row } from "~/components/analysis/SectionShell";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -391,36 +392,6 @@ function AccuracyDigestCard({
           </p>
         )}
       </div>
-    </div>
-  );
-}
-
-// --------------------------------------------------------------------------
-// Section shell
-// --------------------------------------------------------------------------
-
-function SectionCard({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-lg border border-slate-700 bg-slate-900">
-      <div className="border-b border-slate-700 px-4 py-3">
-        <h2 className="font-semibold text-slate-300">
-          {title}
-          {subtitle && (
-            <span className="ml-2 text-xs font-normal text-slate-500">
-              {subtitle}
-            </span>
-          )}
-        </h2>
-      </div>
-      <div className="p-4">{children}</div>
     </div>
   );
 }
@@ -790,15 +761,6 @@ function KinhDichMarketPanel({ market }: { market: KinhDichMarket }) {
         <Row label="Độ tin cậy" value={<ConfidenceBar confidence={market.confidence} />} />
         <Row label="Thời gian" value={<ClientTimestamp iso={market.timestamp} />} />
       </div>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="w-24 shrink-0 text-slate-500">{label}</span>
-      {value}
     </div>
   );
 }
