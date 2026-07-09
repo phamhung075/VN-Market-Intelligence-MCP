@@ -293,10 +293,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
-    "next_agent": "developer",
+    "next_agent": "qa",
     "next_action": "developer agent spawned (background, agentId internal) for FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE — dispatcher-wrap claimed+released; awaiting completion notification, then Merge Gate (execute-tier.md) + DJ-GATE-1 check.",
-    "updated_at": "2026-07-09T17:19:29Z",
-    "updated_by": "dev-team (tick 2026-07-09T17:07Z, Step 3 dispatch)"
+    "updated_at": "2026-07-09T17:28:07Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7163,10 +7163,10 @@
     "in_progress": [
       {
         "id": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "title": "BOUNDED-1 promote script: cross-check supervised from backlog-detail.json .items[] (not just the thin board row) so the Phase-1 supervised set can't be auto-promoted",
         "owner": "po",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "type": "FIX",
         "zone": "cross-service/",
         "size": "S",
@@ -7192,7 +7192,9 @@
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
         "claimed_at": "2026-07-09T16:47:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_at": "2026-07-09T17:28:07Z",
+        "updated_by": "developer"
       }
     ],
     "ready": [],
