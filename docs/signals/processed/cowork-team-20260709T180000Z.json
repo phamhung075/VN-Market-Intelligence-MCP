@@ -1,0 +1,35 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-09T18:00Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "bctc-analyst-slot-2"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "bctc-analyst-slot-2",
+      "agent": "bctc-analyst",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=null (never-configured pattern)"
+    }
+  ],
+  "signal_queue_drained": [],
+  "escalation_note": null,
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "bctc-analyst-slot-2 is parallel_group=bctc-analyst, not chef — Step 4.5c mutex not applicable.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). bctc-analyst-slot-2: never-configured pattern, same class as bctc-analyst-slot-1 (09:00Z) and the 4 refine-bctc-slot-N slots. Non-guaranteed — no escalation.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (emit_pressure_state + send_telegram succeeded, one field-name error self-corrected — see note below).",
+  "work_channel_message_sent": true,
+  "stale_warning_note": "stale_warning TRUE this tick. Cumulative (02:00-18:00, 39 WORK ticks; SILENT ticks not counted): 13 true, 26 absent.",
+  "recurring_symptom_note": "bctc-analyst now has 2 daily slots (slot-1 09:00Z, slot-2 18:00Z), both never-configured pattern, both non-guaranteed. Tooling note: send_telegram via mcp_call bypass requires field name 'message' not 'text' — first misfire this session, self-corrected on retry, no data loss.",
+  "emitted_at": "2026-07-09T18:01:52.334Z",
+  "_processed": {
+    "fingerprint": "85d18c8ce84ca5711fe39346282a655a4b6fd35e58c97b3fd45e546641295d59",
+    "processedAt": "2026-07-09T18:17:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
