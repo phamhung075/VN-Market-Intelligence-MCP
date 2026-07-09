@@ -571,3 +571,62 @@ QA's prior PASS (18/18 job executions, tsc/eslint/tests clean, WAL healthy) rema
 Zone: `apps/mcp-server/` | Subsystem: Docker build label + SHA verification | Build: 0fb29a141e5fc72c865a9398d0ccec4ee23fbd6d
 
 **Timestamp:** 2026-07-09T02:30Z (corrective close-gate completion)
+
+## Docker Close Gate Steps 1-4: FACTORY-PDF-split-extractLayoutFirst-execute (2026-07-09T03:11–03:16Z)
+
+**Task:** FACTORY-PDF-split-extractLayoutFirst-execute  
+**Session UUID:** 5a45feda-431e-46c8-941d-a6539a0eca77  
+**Status:** ✓ COMPLETE (Steps 1-4 ops-gated actions)
+
+**Workflow:**
+- Step 1 (Memory/Disk Check): Docker 610 MiB total across all containers, system healthy; 31GB free disk (exceeds 15GB threshold)
+- Step 2 (Rebuild): `docker compose build --build-arg GIT_SHA=0cb48b4cf pdf-extractor` — image rebuilt successfully with PEK import chain smoke gate passing
+  - Base layers cached (torch/torchvision/Ubuntu deps)
+  - PEK dependencies installed: doclayout-yolo, paddleocr, paddlepaddle, pdf2image, cv2, fitz all functional
+  - Final image SHA: `d3abfe8bb8318a4a81502edac8412494586142b424cb19e2ccd1c762acc16c4f` (multi-layer rebuild, new)
+- Step 3 (Deploy): `docker compose up -d pdf-extractor` — container recreated & started
+  - Container ID: `eb25dd55c66a01960d8261bd8db44457909dec2b8f6c1dab8d6d98eb5f0a2c47`
+  - Health status: Transitioned from "starting" to "healthy" within 10s
+- Step 4 (SHA Gate): `verify-deploy-sha.sh pdf-extractor` — exit code 1 (expected per runbook)
+  - Error: "vn.market.git_sha label absent — image built without GIT_SHA arg"
+  - **Status:** DEFERRED (per `docs/protocols/docker-deployment-runbook.md` § Microservice Code-Change Close Gate)
+  - **Reason:** pdf-extractor Dockerfile does not yet carry the `vn.market.git_sha` label; deferred to Phase B (BCTC-LAYOUT-FIRST session closure)
+  - **Evidence:** Runbook explicitly documents this deferral: "**`pdf-extractor` SHA gate is DEFERRED to Phase B** (its Dockerfile does not yet carry the `vn.market.git_sha` label; the label will be added once the active BCTC-LAYOUT-FIRST session closes)."
+
+**Verification Gates (All Pass):**
+- Container health: 200 OK from `curl http://localhost:5001/health`
+  - Response: `{"status":"ok","service":"pdf-extractor","ocr_source_ok":true}`
+- Image change confirmed: Old image is no longer running, new SHA active
+- All 12 peer containers remain healthy, untouched (no cascade effects)
+- No disk/memory pressure detected after rebuild
+
+**Code Verification (Pre-rebuild, by dev-team):**
+- Refactor commit: c3f30df24 (7 commits back)
+- All tests pass: 1088 passed / 12 pre-existing env failures (PIL/Tesseract/poppler) / 1 skipped
+- Zero regressions: execute() return dict + push_layout call args byte-identical before/after
+- Method line spans: all <=120L per Definition of Done
+
+**Board State Transition:**
+- `.task_board.review[]` row `id:"FACTORY-PDF-split-extractLayoutFirst-execute"`:
+  - `next_agent`: "ops" → "qa" (forward dispatch for Step 5 live-endpoint verification)
+  - `rebuild_required`: true → false
+  - `ops_close_gate_at`: "2026-07-09T03:16:00Z"
+  - `ops_close_gate_by`: "ops"
+  - `ops_note`: "Steps 1-4 complete; SHA-gate deferred per runbook Phase B; container healthy; handoff to QA for Step 5 endpoint verification"
+- `.head.next_agent`: synced to "qa"
+
+**Decision Rationale:**
+1. Steps 1-4 ops gating is COMPLETE and VERIFIED
+2. SHA-gate deferral is documented and expected (not a blocker)
+3. Container is healthy, image has changed, OCR source functional
+4. Code regression testing already complete (dev-team pre-verified)
+5. QA to verify live endpoint behavior matches new code (Step 5)
+6. PO to sign off once QA completes (Step 6)
+7. Journal entry written BEFORE board flip (journal-before-DONE gate compliance)
+
+---
+
+Zone: `apps/pdf-extractor/` | Subsystem: Docker rebuild + health verification | Code commit: c3f30df24 (refactor), 0cb48b4cf (HEAD at ops-phase)
+
+**Timestamp:** 2026-07-09T03:16Z (close-gate ops phase completion)
+
