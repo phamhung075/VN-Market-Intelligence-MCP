@@ -216,3 +216,38 @@ Rebuilt+deployed `frontend` service after dev-frontend moved `computeDecision`/`
 Note: this entry + the corresponding decision-journal STEP ops-S2 were written by dev-team (router) per DJ-GATE-1 fallback — the dispatched ops agent completed the actual rebuild/verify work correctly but its terminal report bled in unrelated pdf-extractor content and it never wrote its own journal/notebook entries for this task. This notebook had drifted to 836L (well past the 200L cap) — `scripts/agents-flow/notebook-auto-prune.sh` (PostToolUse AC-3 backstop) auto-pruned oldest sections down to ~162L on this edit; full pre-prune history remains recoverable via `git show 57ecda1f4:docs/agent-memory/notebooks/ops.md`.
 
 Zone: `apps/frontend/` | Subsystem: Docker Close Gate | Code commits: 2819d710c, a27e93762, 5d9ec1859
+
+## 2026-07-09 18:10Z — Docker Close Gate: pdf-extractor FACTORY-PDF-split-generic-md-table
+
+**Task:** FACTORY-PDF-split-generic-md-table (task_id)  
+**Service:** pdf-extractor  
+**Trigger:** rebuild_required=true after god-file split (8-stage refactoring)  
+**Status:** COMPLETE
+
+### Step 1: Rebuild
+- `docker compose build pdf-extractor`
+- Image SHA: `131d16bdfba5be84a8977ca9c32bbf36f971d24483ca172ff661383b36960e5e`
+- Smoke gate: PEK import chain verified (numpy, cv2, fitz, omegaconf, doclayout_yolo, paddleocr, torch all OK)
+
+### Step 2: Swap/Deploy
+- `docker compose up -d --no-deps pdf-extractor`
+- Container recreated and started successfully
+
+### Step 3: Health Verification
+- All 11 services: Up with healthy status
+- No Restarting/Exit states
+- Gateway port 3000 bound (mcp-server healthy)
+- Health endpoints: mcp-server 200, pdf-extractor 200, all peer services 200
+- **No collateral damage detected**
+
+### Step 4: Builder Cache + Board Sync
+- `docker builder prune -f` → freed 474MB (pre-existing cache layers)
+- orch-state.json atomic update via orch-apply.sh:
+  - `task_board.review[FACTORY-PDF-split-generic-md-table]`: updated_by=ops, updated_at=2026-07-09T18:10:28Z
+  - `review_note` appended with OPS-CLOSE-GATE completion marker
+  - `.head`: status→waiting-qa, active_task_id→FACTORY-PDF-split-generic-md-table, next_agent→qa
+- Commit: `8162ce433`
+
+### Verdict
+**PASS** — all Close Gate Steps 1-4 complete. pdf-extractor service live and healthy. Next: qa live-verify.
+
