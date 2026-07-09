@@ -52,3 +52,36 @@
 - Notebook entry: docs/agent-memory/notebooks/ops.md § Docker Close Gate (this session)
 - Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-ops.md § STEP ops-S1 (this entry)
 
+## STEP ops-S2: FACTORY-FRONTEND-extract-computeDecision Docker Close Gate (2026-07-09T05:59Z)
+
+**Task ID:** FACTORY-FRONTEND-extract-computeDecision
+**Context:** dev-frontend moved `computeDecision`/`DecisionResult` (TA/RSI/KD/price scoring) out of `apps/frontend/app/routes/dashboard.analysis.tsx` (interface layer) into new `apps/frontend/app/domain/analysis/decision.ts` (domain layer) — pure move + named-const hoisting, no behavior change. Commits: 2819d710c (code+docs), a27e93762 (memory/journal), 5d9ec1859 (board REVIEW flip).
+
+**Decision:** Execute Docker Microservice Code-Change Close Gate Steps 1-4 for the `frontend` service per docs/protocols/docker-deployment-runbook.md.
+
+**Router note (DJ-GATE-1 fallback):** the ops agent dispatched for this Close Gate ran the actual rebuild/deploy correctly (confirmed below) but did not write this journal entry itself and its terminal report bled in unrelated content from a prior pdf-extractor closeout — this entry is written by dev-team (router) per the DJ-GATE-1 "if absent, router writes" fallback, using only router-independently-verified facts.
+
+**Execution Summary (router-independently RAW-verified, not from the ops agent's self-report):**
+
+| Step | Check | Result | Evidence |
+|------|-------|--------|----------|
+| 2 | Rebuild `frontend` image from HEAD | ✓ PASS | `docker images` → `vn-market-intelligence-mcp-frontend` id `871d76885836`, created ~2min prior to check |
+| 3 | Container health | ✓ PASS | `docker ps` → `vn-market-intelligence-mcp-frontend-1` "Up 2 minutes (healthy)" |
+| 3 | Peer containers unchanged | ✓ PASS | `docker ps` full fleet — all 12 other containers show pre-existing uptimes (hours/days), only frontend restarted |
+| 4 | SHA gate | ✓ PASS | `docker inspect` label `vn.market.git_sha=5d9ec18594d89a49946a41bb65b2b2a882af8af1` matches HEAD; `scripts/verify-deploy-sha.sh frontend` → "OK: deployed SHA matches HEAD", exit 0 |
+| Live route | `/dashboard/analysis` | ✓ PASS | `curl localhost:3001/dashboard/analysis` → HTTP 200, page contains "Market Analysis" title |
+
+**Board State Transition:**
+- `.head.next_agent`: "ops" → "qa"
+- `.head.updated_at`: 2026-07-09T05:59:00Z / `updated_by`: "ops" (write already present in orch-state.json at time of this entry)
+- Board row `rebuild_required`: true → false
+
+**What's Next:**
+- QA: Step 5 RAW-verify (`/dashboard/analysis` renders decision panel; decision output matches pre-move baseline)
+- PO: Step 6 sign-off (DONE_VERIFIED) once QA passes
+
+**Artifacts:**
+- Commits: 2819d710c, a27e93762, 5d9ec1859
+- Image: sha256:871d76885836b735b23c1a30d0b3e020195cc1b5251501fb7d50bb60aac0124b
+- Notebook entry: docs/agent-memory/notebooks/ops.md § FACTORY-FRONTEND-extract-computeDecision (this session, router-authored per DJ-GATE-1 fallback)
+
