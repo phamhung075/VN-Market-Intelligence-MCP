@@ -1,8 +1,8 @@
 # Claude Manager Helper — Notebook
 
-**Last cycle:** 2026-07-02T000000Z (Thursday 10-pass clean audit; all 9 passes PASS; sprint_goal overage noted; Pass 9b full-heal verified; 0 escalations)
+**Last cycle:** 2026-07-09T003000Z (Thursday 10-pass audit; Pass 5 sprint_goal overage; Pass 9b partial—skill missing; 1 alert issued; 0 escalations)
 
-**Cycles:** [2026-07-02-thu](#cycle-2026-07-02-thu) | [2026-06-29-mon](#cycle-2026-06-29-mon) | [2026-06-23-sun](#cycle-2026-06-23-sun) | [2026-06-15-mon](#cycle-2026-06-15-mon) | [Older](#archive)
+**Cycles:** [2026-07-09-thu](#cycle-2026-07-09-thu) | [2026-07-02-thu](#cycle-2026-07-02-thu) | [2026-06-29-mon](#cycle-2026-06-29-mon) | [2026-06-23-sun](#cycle-2026-06-23-sun) | [2026-06-15-mon](#cycle-2026-06-15-mon) | [Older](#archive)
 
 ## Cycle 2026-06-29 (Mon 17:45Z): Context-Janitor — 10-Pass Audit + Monday Full-Subtree Heal
 
