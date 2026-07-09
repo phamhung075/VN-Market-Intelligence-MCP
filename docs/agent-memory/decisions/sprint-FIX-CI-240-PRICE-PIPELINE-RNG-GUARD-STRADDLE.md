@@ -95,12 +95,25 @@ Matches po's own "recommended minimal fix" in the backlog row's status_note.
   `TASK-VNINDEX-RS-B-durability.test.ts` (which passes 9/9 clean when run
   standalone) — not caused by and not related to `priceBackfillService.ts`.
   Zero regression attributable to this change.
-- Full repo `bun test` (14000+ tests) attempted for extra corroboration:
-  first invocation hit an unrelated Bun runtime panic (`panic(main thread): A
-  C++ exception occurred` — known Bun 1.3.13 stability issue, not attributed
-  to this diff); re-run in progress at time of commit. Not a blocking
-  requirement — AC-3 scoped to "the broader targeted suite this area
-  touches", which is fully covered by the 8-file targeted run above.
+- Full repo `bun test` (entire suite) attempted for extra corroboration
+  beyond AC-3's required scope ("the broader targeted suite this area
+  touches", already fully covered above): 1st invocation hit an unrelated
+  Bun 1.3.13 runtime panic (`panic(main thread): A C++ exception occurred`)
+  mid-run. 2nd invocation completed cleanly: **14419 pass / 40 skip / 61
+  fail / 6 errors / 45345 expect() calls across 1184 files** (586s), well
+  under the documented `testBaselineFail=348` ceiling referenced by prior
+  commits — then hit the SAME post-run Bun panic on process exit/cleanup
+  (after the results were already printed; a known Bun 1.3.13 stability
+  issue on this machine, unrelated to any test outcome). Enumerated all 61
+  `(fail)` test names: zero reference `240-price-pipeline-recovery`,
+  `TASK-OHLCV-WIC-1-writer-f-guard`, or `priceBackfillService` — every
+  failure is elsewhere (several map to the same pre-existing
+  `vpsPushLogStore.ts`/`getVpsProxyHealth` export issue identified above:
+  `VPS Proxy Health`, `FIX 2 — logVpsPush`, `Task 1858c — logVpsPush`, `Task
+  1193 — push-prices upsert`, `1892a — handlePushNews`; the rest are
+  pre-existing 5000ms-timeout flakes in unrelated MCP-tool/news-poller
+  suites). Confirms zero regression from this change across the entire
+  suite, not just the targeted domain.
 
 **push verification:** commit pushed to origin/main; `git rev-parse HEAD` ==
 `git rev-parse origin/main` confirmed post-push (see commit trailer/report

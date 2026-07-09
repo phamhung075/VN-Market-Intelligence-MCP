@@ -291,11 +291,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-09T11:53:21Z",
-    "updated_by": "po"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-SCHEDULER-split-intelligenceCycleJob",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-SCHEDULER-split-intelligenceCycleJob — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-09T12:17:48Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3807,15 +3808,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-INFRA-split-stores-and-migrations",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-stores-and-migrations"
-      },
-      {
-        "title": "Split intelligenceCycleJob (15-min hot path) into types/marketHours/defaults",
-        "priority": "P0",
-        "zone": "mcp-server-scheduler",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-SCHEDULER-split-intelligenceCycleJob",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-intelligenceCycleJob"
       },
       {
         "title": "Extract shared briefing formatters; break the sibling-job cross-dependency",
@@ -7757,6 +7749,30 @@
           "process_note": ".head synced in the SAME scripts/orch-apply.sh write as the review[]->done_verified[] row flip — atomic .head+board discipline (feedback_close_gate_step4_head_sync_gap). Transform ran from a NEW checked-in, role-named, fully-generalized helper scripts/po-closegate-signoff.jq (--arg/--slurpfile parameterized, gate-guard error() if the row is absent, NO hardcoded task-id/lane/prose) — deliberately NOT a hand-rolled inline one-liner (the exact anti-pattern docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md §1 named as the Step-4 desync root cause). This new script is the permanent PO counterpart of ops-closegate-handoff.jq / qa-closegate-handoff.jq and RETIRES the task-named one-off naming of the prior po-s18-factory-domain-split-cascade-engine-signoff.jq (generic body, task-hardcoded filename); it adds an optional-mint generalization (empty $backlog[] mints nothing). Write-time jq guard reset .head ONLY because .head.active_task_id == FACTORY-SCHEDULER-split-dataAuditJob (it tracked this task from the 10:51Z BOUNDED-1 pickup through qa Step 5 — no concurrent takeover; orch-apply CAS-mtime guard covers read->rename interleaving); top-level canonical .head reset terminal (status=done / active_task_id=null / next_agent=router / updated_by=po; the stale Step-6 next_action prose key is dropped in the object-replace) so the next BOUNDED-1 idle-capacity pickup is unblocked. Row's own next_agent KEPT 'po' (task-row schema next_agent=z.string().optional() rejects raw null; top-level .head is authoritative for routing per feedback_orchstate_dual_head_keys_toplevel_authoritative). Deprecated .task_board.head stub UNTOUCHED. No .sprint_goal.entries match this task-id -> not touched. PRE-CLAIM/task lock task:FACTORY-SCHEDULER-split-dataAuditJob (owner_agent=dev-team, held by router on po's behalf) released by po via scripts/agents-flow/mcp-call.sh direct-HTTP bridge.",
           "residual_advisory": "ONE non-blocking finding flagged to ops (qa-surfaced, po-reproduced first-hand, does NOT block this close): ops's ops-S8 rebuild of mcp-server OMITTED the mandatory --build-arg GIT_SHA=$(git rev-parse HEAD) flag (runbook Step 2/4), so the live vn-market-intelligence-mcp-mcp-server-1 container carries NO vn.market.git_sha label — bash scripts/verify-deploy-sha.sh mcp-server returns 'deployed=unknown expected=ac8d51bc4' EXIT 1 (I re-ran it myself). This is the FIRST such omission: ops-S4/S5/S6/S7 each carried an explicit '| 4 | SHA gate | PASS |' journal row + a Step-2 build line showing --build-arg GIT_SHA=<sha>; ops-S8's execution table has NEITHER (its Step-4 row is only the /health check, and the build line shows a bare 'Build mcp-server'). It is a TRACEABILITY-LABEL gap ONLY, NOT a deployed-wrong-code risk: qa's container-vs-HEAD MD5 byte-identical proof on all 20 touched + 3 wiring files + my own zero-drift git diff 7b62f73e7..HEAD establish deployed==committed by evidence STRONGER than the SHA label the gate normally checks. LATENT STATE: every future SHA-gate check on mcp-server will keep returning deployed=unknown until the next mcp-server rebuild that restores the flag. DECISION (mine per dispatch): minted ONE lightweight tracking backlog row OPS-MCP-SERVER-REACQUIRE-GIT-SHA-LABEL (BACKLOG, P2, supervised=true so BOUNDED-1 skips it, owner=ops) so the 'reacquire the label on the next mcp-server rebuild + do not re-omit the mandated flag' action is not lost and there is a dedup anchor if it recurs. No existing dup (FIX-VERIFY-DEPLOY-SHA-BENIGN-DRIFT is a different issue — script too strict on ancestor-with-doc-drift, not an absent label). Not escalated: first occurrence, the runbook already mandates the flag, and the deploy is proven correct-code by the stronger MD5 path."
         }
+      },
+      {
+        "id": "FIX-CI-240-PRICE-PIPELINE-RNG-GUARD-STRADDLE",
+        "type": "FIX",
+        "title": "Fix 240-price-pipeline AC-1 flake — synthetic fixture basePrice straddles STOCK_MIN_VND=100 guard",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "created_by": "po",
+        "created_at": "2026-07-09T11:57:42Z",
+        "files": [
+          "apps/mcp-server/src/domain/services/priceBackfillService.ts"
+        ],
+        "root_cause": "fetchOhlcvData stub (priceBackfillService.ts:217) generates basePrice=100+Math.random()*20, low=basePrice-1; ~5% of runs land low in [99,100) < STOCK_MIN_VND=100, so validateOhlcvUnit Rule 2 guard-rejects the row via continue at line 118 BEFORE INSERT OR IGNORE at line 128. When the rejected row is the pre-seeded 2026-03-27 duplicate, rowsSkipped drops below 1 and AC-1 expect(rowsSkipped).toBeGreaterThanOrEqual(1) flakes.",
+        "status_note": "AC: targeted file green >=20 consecutive local runs (probabilistic — single-run green insufficient), then CI green on push. Fix opts: (a) basePrice=200+rand*20 [minimal, low>=199 clears guard] (b) seed RNG [robust] (c) inject fetcher [scope-creep, skip]. NOT test-file-only — fetchOhlcvData is a non-exported stub in the PRODUCTION file, test cannot inject a fetcher. No Docker rebuild needed (stub not on any live data path; CI bun test reads .ts source directly). Supersedes false-closed SPIKE PROBE-CI-240-PRICE-PIPELINE-ENV-RED (done_verified 2026-06-22 — that RAW-verify happened to hit the 95% green path and missed the 5% probabilistic flake; NOT a valid dedup, no fix ever landed). 2nd confirmed CI-red occurrence 2026-07-09 (f61f78475, 6dc8a9421) per feedback_recurring_bug_escalation.",
+        "source_report_ids": [
+          "20260709T112152Z-price-pipeline-test-flake-recurrence",
+          "ci-red-6dc8a942-20260709111912"
+        ],
+        "done_at": "2026-07-09T12:17:56Z",
+        "verified_by": "dev-mcp-server",
+        "dev_commit": "9cf12ad42",
+        "verification_note": "basePrice 100+rand*20 -> 200+rand*20 in fetchOhlcvData stub (priceBackfillService.ts:217); low now always >=199, permanently clear of STOCK_MIN_VND=100. tsc 0 err. Target file 20/20 local runs green (was ~5% flaky). Target+sibling importer 20/20 green. Targeted-domain 8-file suite 144 pass/1 fail/1 error, byte-identical to pre-fix baseline via git-stash A-B (pre-existing unrelated vpsPushLogStore export error in TASK-VNINDEX-RS-B-durability.test.ts, 0 attributable regression). Full-suite bun test attempted for extra corroboration, hit unrelated Bun runtime panic on 1st try (known Bun 1.3.13 stability issue) -- not blocking, AC-3 scoped to targeted suite which is fully green. Pushed origin/main, HEAD==origin/main confirmed. Self-verified, no qa gate (small single-file test-fixture fix per task dispatch note)."
       }
     ],
     "head": {
@@ -7768,7 +7784,22 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "title": "Split intelligenceCycleJob (15-min hot path) into types/marketHours/defaults",
+        "priority": "P0",
+        "zone": "mcp-server-scheduler",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-SCHEDULER-split-intelligenceCycleJob",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-intelligenceCycleJob",
+        "promoted_at": "2026-07-09T12:17:48Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-09T12:17:48Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -7906,7 +7937,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T10:50:49Z",
+    "last_triaged_at": "2026-07-09T12:17:48Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
@@ -7916,6 +7947,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-09T08:22:19Z",
-  "_updated_by": "developer"
+  "_updated_at": "2026-07-09T12:17:56Z",
+  "_updated_by": "dev-mcp-server"
 }
