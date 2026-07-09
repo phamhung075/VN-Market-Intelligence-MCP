@@ -1,0 +1,31 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-09T04:30Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "alert-commander-market"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher"
+    }
+  ],
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by). trigger_id=null — unambiguous no-backstop, no live RemoteTrigger check needed.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (send_telegram + emit_pressure_state succeeded).",
+  "work_channel_message_sent": true,
+  "stale_warning_note": "stale_warning absent this tick. Last 11 WORK ticks (02:00-04:30): absent/true/absent/absent/absent/true/absent/absent/true/absent/absent — 3 true, 8 absent, confirmed intermittent with no stable pattern.",
+  "recurring_symptom_note": "alert-commander-market now matched 11 consecutive WORK ticks (02:00-04:30), last_fired stuck at 2026-05-25T00:00:00Z — expected gateway-blind symptom, already tracked via docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md, no new escalation needed.",
+  "emitted_at": "2026-07-09T04:31:52.838Z",
+  "_processed": {
+    "fingerprint": "529e814304c7f52d88061c6239c613186146ceafc9de3ac46abec93d6d5f20de",
+    "processedAt": "2026-07-09T06:17:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
