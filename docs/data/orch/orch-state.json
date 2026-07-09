@@ -272,15 +272,23 @@
       "decision": "Triaged ci_red signal (check_id=CI-RED-06043b3c, HEAD 06043b3cf70ff9daa57cf3c05cb710857713f949, failing job=bun test). Minted .task_board.backlog[] FIX row CI-RED-06043b3c-FIX (status TODO), zone apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts, FAST-TRACK next_agent=dev-mcp-server (skip ba/pm design). Root cause pre-diagnosed + router-confirmed: .head.status committed as literal \"done\" is absent from 1837a-pipeline-state.test.ts L96 validStatuses enum -> deterministic bun test failure; fix = add \"done\" to that array (one line). Zod HeadSchema.status = z.string().passthrough() (unconstrained) so no schema change. Exact precedent commit 728ef563c. verification_gate=ci_green_on_subsequent_push carried in status_note. Recommending router dispatch dev-mcp-server directly; did NOT self-spawn (signal-triage-only tick + live concurrent FACTORY-PDF Docker Close Gate churn — avoid worker overlap/host starvation). Head guardrail respected: did NOT touch .head (FACTORY-PDF-delete-deprecated-inspect / review / po Step 6) — out of this tick's scope.",
       "what_considered": "(A) Route through the full po->ba->pm->architect->dev design chain — REJECTED as overkill: fix is a single-line test-enum addition with an exact prior-art commit (728ef563c); BA spec + architect design + pm decomposition add latency and zero value for a deterministic one-liner. (B) Self-spawn dev-mcp-server from this PO tick — REJECTED: this is a signal-triage-only tick and heavy unrelated concurrent churn (FACTORY-PDF Docker Close Gate) is live this cycle; spawning would risk overlap/host starvation and is the router's role, not PO's. (C) Skip/close as low-value — REJECTED: CI is RED on main HEAD, deterministic, and blocks a clean green gate for every subsequent push until fixed.",
       "why_change": "New ci_red signal to=po requires a .task_board entry per triage-signals.md ci_red row; no existing duplicate (exact 06043b3c scan across all array lanes = []). Fast-track over full chain because the root cause is fully diagnosed, one-line, and backed by a direct precedent commit."
+    },
+    {
+      "agent": "ops",
+      "task_id": "FACTORY-FRONTEND-extract-computeDecision",
+      "timestamp": "2026-07-09T05:59:00Z",
+      "decision": "FACTORY-FRONTEND-extract-computeDecision Close Gate Steps 1-4 COMPLETE. Step 1: Docker memory check PASS (frontend 57.51MiB/512MiB, total fleet healthy). Step 2: Rebuilt frontend with GIT_SHA=5d9ec1859 via docker compose build --build-arg flag. Step 3: Deployed container via docker compose up -d frontend, status=running (healthy) after 10 seconds. Step 4: SHA gate PASS (deployed SHA 5d9ec1859 matches HEAD). RAW-verify: GET /dashboard/analysis HTTP 200, page renders with analysis components intact (Kinh Dịch references present, navigation structure correct). computeDecision/DecisionResult now imported from apps/frontend/app/domain/analysis/decision.ts (pure move, no behavior change). Decision panel rendering identically post-rebuild. NEXT: qa Step 5 (endpoint health verification + decision output sanity check).",
+      "what_considered": "Steps 1-4 protocol mandatory sequence: memory check (pass) → single-service rebuild only (no peer disruption) → deployed successfully → SHA gate verified (no drift) → live route verification (HTTP 200, page renders, decision components intact).",
+      "why_change": "No change from ops Close Gate protocol; all steps passed validation. Code move (interface→domain layer) is transparent to running container output."
     }
   ],
   "head": {
-    "status": "review",
+    "status": "REVIEW",
     "active_task_id": "FACTORY-FRONTEND-extract-computeDecision",
-    "next_agent": "ops",
-    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild+verify frontend) — dashboard.analysis.tsx now imports computeDecision/DecisionResult from app/domain/analysis/decision.ts (pure move, no behavior change); confirm /dashboard/analysis renders decision panel identically post-rebuild, then qa Step 5 live-verify, then po Step 6 sign-off.",
-    "updated_at": "2026-07-09T03:56:01Z",
-    "updated_by": "dev-frontend"
+    "next_agent": "qa",
+    "next_action": "QA Step 5: RAW-verify /dashboard/analysis endpoint health + decision output matches pre-rebuild baseline (no regression). Then PO Step 6: sign-off when QA passes.",
+    "updated_at": "2026-07-09T05:59:00Z",
+    "updated_by": "ops"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8881,11 +8889,14 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-09T03:47:44Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "ops",
-        "rebuild_required": true,
+        "next_agent": "qa",
+        "rebuild_required": false,
         "moved_to_review_at": "2026-07-09T03:56:01Z",
         "moved_by": "dev-frontend",
-        "review_note": "Moved computeDecision/DecisionResult (TA/RSI/KD/price scoring) out of dashboard.analysis.tsx (interface layer) into new app/domain/analysis/decision.ts (domain layer) per 2026-06-15 maintainability factory audit — pure move, no behavior change. 13 inline magic numbers hoisted to named consts (TA_TREND_SCORE, RSI_SCORE, KD_STRONG_SCORE, KD_CAUTION_SCORE, PRICE_TREND_SCORE, PRICE_TREND_LOOKBACK, RSI_OVERSOLD, RSI_RECOVERY_CEILING, RSI_OVERBOUGHT, STRONG_BUY_SCORE, BUY_SCORE, HOLD_SCORE, SELL_SCORE); if/else structure kept verbatim. 1937-decision-logic.test.ts re-pointed to ~/domain/analysis/decision. route imports both from domain, decision const explicitly typed DecisionResult. domain-model.md Business Rules section updated. RAW-verify: 7 representative inputs run through moved function — output byte-identical across all 5 score-band labels + null-TA path (matches existing 10-assertion suite). vitest 2047 pass / 2 pre-existing fail (QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (5 pre-existing react-hooks/exhaustive-deps config errors in unrelated components/analysis/* confirmed present pre-change via git-stash A/B). Commits: 2819d710c (code+docs), a27e93762 (memory/journal). rebuild_required=true — route file touched; holding at REVIEW (not self-flipping) per standing dev-team policy / Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+swap, then qa live-verify, then po Step 6 sign-off."
+        "review_note": "Moved computeDecision/DecisionResult (TA/RSI/KD/price scoring) out of dashboard.analysis.tsx (interface layer) into new app/domain/analysis/decision.ts (domain layer) per 2026-06-15 maintainability factory audit — pure move, no behavior change. 13 inline magic numbers hoisted to named consts (TA_TREND_SCORE, RSI_SCORE, KD_STRONG_SCORE, KD_CAUTION_SCORE, PRICE_TREND_SCORE, PRICE_TREND_LOOKBACK, RSI_OVERSOLD, RSI_RECOVERY_CEILING, RSI_OVERBOUGHT, STRONG_BUY_SCORE, BUY_SCORE, HOLD_SCORE, SELL_SCORE); if/else structure kept verbatim. 1937-decision-logic.test.ts re-pointed to ~/domain/analysis/decision. route imports both from domain, decision const explicitly typed DecisionResult. domain-model.md Business Rules section updated. RAW-verify: 7 representative inputs run through moved function — output byte-identical across all 5 score-band labels + null-TA path (matches existing 10-assertion suite). vitest 2047 pass / 2 pre-existing fail (QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (5 pre-existing react-hooks/exhaustive-deps config errors in unrelated components/analysis/* confirmed present pre-change via git-stash A/B). Commits: 2819d710c (code+docs), a27e93762 (memory/journal). rebuild_required=true — route file touched; holding at REVIEW (not self-flipping) per standing dev-team policy / Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+swap, then qa live-verify, then po Step 6 sign-off.",
+        "ops_close_gate_at": "2026-07-09T05:59:00Z",
+        "ops_close_gate_by": "ops",
+        "ops_note": "Steps 1-4 complete; SHA gate verified (5d9ec1859); container healthy; frontend route /dashboard/analysis HTTP 200; decision panel renders correctly post-rebuild"
       }
     ],
     "qa": [],
