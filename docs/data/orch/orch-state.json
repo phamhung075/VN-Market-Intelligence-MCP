@@ -283,12 +283,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FACTORY-FRONTEND-split-dashboard-analysis",
-    "next_agent": "po",
-    "next_action": "PO Step 6 sign-off: FACTORY-FRONTEND-split-dashboard-analysis QA Step 5 PASS (image sha256:2135c729b9a9, live content-verified on both routes, tests green, SHA-gate drift confirmed benign doc-only). Cosmetic: route header/review_note/ops_note say 457L, actual wc -l = 476L -- correct opportunistically, non-blocking.",
-    "updated_at": "2026-07-09T05:57:55Z",
-    "updated_by": "qa"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-FRONTEND-split-dashboard-analysis DONE_VERIFIED (po Step 6, atomic .head+row close). Board idle — next BOUNDED-1 idle-capacity backlog pickup eligible.",
+    "updated_at": "2026-07-09T06:05:00Z",
+    "updated_by": "po"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -583,7 +583,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T05:53:10Z",
+    "_updated_at": "2026-07-09T06:05:00Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -8786,6 +8786,37 @@
           "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head reset idle (status=done / active_task_id=null / next_agent=router) alongside the row flip. Write-time jq guard re-verified .head.active_task_id == FACTORY-FRONTEND-extract-computeDecision before writing (it tracked this task from the 03:47Z BOUNDED-1 pickup through qa Step 5 — no concurrent takeover; orch-apply CAS-mtime guard covers any interleaving between read and rename). Row's own next_agent KEPT 'po' (task-row schema orchStateSchema.ts:100 next_agent=z.string().optional() rejects raw null — a null tripped the validator earlier this session on the CI-RED close; kept-'po' is the dominant done_verified sibling convention; top-level .head is authoritative for routing once DONE_VERIFIED per feedback_orchstate_dual_head_keys_toplevel_authoritative). .task_board.head (deprecated stub) left UNTOUCHED. No sprint_goal.entries match this task-id -> not touched. This po session is gateway-blind (only Read/Edit/Write/Bash bound — no mcp__gateway__call_tool) so release of lock task:FACTORY-FRONTEND-extract-computeDecision is DEFERRED to the router on report-back per dispatch. qa correctly HELD REVIEW+next_agent=po (did not self-close a rebuild_required=true FACTORY) -> qa-self-close count stays at 1, below the recurring-2+ bar; parked qa-guardrail-mint stays parked.",
           "residual_advisory": "No blocking residual. Non-blocking: (1) The frontend SHA-gate reads drift because HEAD advanced past the deployed commit 5d9ec1859 with docs/orch-state-only commits (ops+qa journals, this po close adds one more) — this is the benign doc-only post-build drift class (project_verify_deploy_sha_benign_doc_drift); the real invariant (deployed frontend source == committed source) is proven by the EMPTY apps/frontend/ diff 5d9ec1859..HEAD, so no rebuild is warranted for a doc-only advance. (2) 2 pre-existing full-suite fails (QUE-TOOLTIP / QUE-REFERENCE) confirmed unrelated to this task by dev+qa — not this DoD."
         }
+      },
+      {
+        "title": "Split the 1845L dashboard.analysis route (helpers + ~30 components)",
+        "priority": "P1",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-FRONTEND-split-dashboard-analysis",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-dashboard-analysis",
+        "promoted_at": "2026-07-09T04:47:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T04:47:08Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "po",
+        "rebuild_required": true,
+        "moved_to_review_at": "2026-07-09T05:38:36Z",
+        "moved_by": "dev-frontend",
+        "review_note": "Split 1836L dashboard.analysis.tsx per 2026-06-15 maintainability factory audit — direct sequel to FACTORY-FRONTEND-extract-computeDecision (DONE_VERIFIED). 5 pure helpers (signalColor/confidencePct/confidenceLabel/indicatorLabel/directionLabel) moved to app/domain/formatters/*; confidenceBar (JSX) moved to components/analysis/ConfidenceBar.tsx; ~22 presentational components extracted to app/components/analysis/*.tsx (one cluster per file, all <=120L — 2 initial over-cap files split further: StockDetailPanel+StockDetailBottomGrid, plus WatchlistTile comment-trimmed). Route dropped 1836L->457L; only loader + default export + AnalysisBriefDto/AnalysisBriefResult/StockDetail types remain (now exported so moved components can import-type them, same pattern as FinancialsZone/NewsBuzzZone). Route carries an honest size-justification header (457L, smallest of 19 sibling /dashboard/*.tsx routes, all currently unheaded pending the not-yet-built CI-size-lint-justification gate). Pure move, no behavior change. RAW-verify: fresh isolated dev server (bypassing stale live :3001 container) — curl /dashboard/analysis (9/9 content checks) and ?stock=VNM (8/8 checks, all StockDetailPanel sub-panels present); one anomaly (2 deterministic null bytes mid-\"định\") confirmed PRE-EXISTING via git-stash A/B against the original 1836L file, not a regression. Commits: a5e629411..41279090e (18 extraction + 2 doc/fixup), ecbbb9de6 (domain-model.md doc), d337cf5dd (notebook), 590731782 (decision journal). vitest 2047 pass / 2 pre-existing fail (QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (5 pre-existing react-hooks/exhaustive-deps errors in unrelated CorporateEventsZone/FinancialsZone/TechnicalZone, confirmed present pre-change); Playwright G12 4/4 GREEN (isolated port). rebuild_required=true — route file touched; holding at REVIEW (not self-flipping) per Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+verify, then qa live-verify, then po Step 6 sign-off.",
+        "qa_verify_at": "2026-07-09T05:57:55Z",
+        "qa_verify_by": "qa",
+        "qa_note": "Step 5 PASS. Image sha256:2135c729b9a9 exact match; SHA-gate re-read as drift (deployed 4c4c59f3f vs current HEAD b907a8ea6) confirmed benign doc-only (zero apps/frontend diff, ancestor confirmed). Live curl content-checked both routes (not bare 200s): base page WatchlistOverviewGrid/KinhDichMarketPanel/MacroSignalPanel real data, zero fallback; ?stock=VNM decision panel GIU hand-recomputed exact match against decision.ts, InfoSourcePanel/MacroImpactPanel/StockDetailBottomGrid(KinhDich+MiniPriceTable)/AiDeepDivePanel all real content, zero error markers. Full vitest re-run 2047 pass/2 fail (pre-existing QUE-TOOLTIP/QUE-REFERENCE, zero commits in extraction range touch either file). tsc 0 errors. eslint 5 pre-existing react-hooks/exhaustive-deps errors (unrelated files, zero diff in range). Playwright render-check.spec.ts 3/3 PASS run directly against the live deployed container (not isolated port). File is 476L not 457L as claimed in header/review_note/ops_note -- cosmetic, non-blocking, flagged for po. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S33.",
+        "closed_at": "2026-07-09T06:05:00Z",
+        "po_closeout": {
+          "by": "po",
+          "at": "2026-07-09T06:05:00Z",
+          "verdict": "DONE_VERIFIED — po Step 6 close of the Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate). All 5 upstream steps PASS with independent RAW re-verification at every hop: dev-frontend split (a5e629411..41279090e, ~20 extraction+fixup commits; +ecbbb9de6 doc, d337cf5dd notebook, 590731782 journal) -> ops Steps 1-4 rebuild+SHA-gate (image sha256:2135c729b9a9, git_sha label 4c4c59f3f) -> qa Step 5 a6c10eab5 live-verify PASS. po independently re-verified the load-bearing facts before flipping — not blind chain-trust.",
+          "evidence": "PO OWN SPOT-CHECK (raw git/docker/curl/grep, not trusted-from-prose): (1) HEAD=a6c10eab5 IS the qa Step 5 PASS commit (real, tip); extraction endpoints a5e629411 (first) + 41279090e (last) are genuine ancestors of HEAD (~20 commits in range). (2) REAL SPLIT, not truncation: apps/frontend/app/routes/dashboard.analysis.tsx = 476L (down from 1836L), genuinely imports 15 extracted ~/components/analysis/* modules (TechnicalZone/CorporateEventsZone/FinancialsZone/ReputationZone/NewsBuzzZone/StockDetailPanel/AiDeepDivePanel/KinhDichMarketPanel/MacroSignalPanel/WatchlistOverviewGrid/StockTable/StockSelector/AccuracyDigestCard/SectionShell); 27 analysis component files + domain/analysis/decision.ts formatter present on disk. (3) BENIGN DRIFT confirmed: git diff 4c4c59f3f(deployed)..a6c10eab5(HEAD) --stat -- apps/frontend/ = EMPTY -> deployed frontend source == committed source; the only deployed..HEAD diff is docs/agent-memory (ops/qa journals+notebooks) + orch-state.json + a qa .jq = doc-only (project_verify_deploy_sha_benign_doc_drift). (4) LIVE CONTAINER: vn-market-intelligence-mcp-frontend-1 Up (healthy, ~17m) image sha256:2135c729b9a9 (EXACT ops/qa match), git_sha label 4c4c59f3f (merge-base --is-ancestor of HEAD = YES). (5) LIVE ROUTE: curl :3001/dashboard/analysis?stock=VNM = HTTP 200, 84KB real content (VNM x21, RSI x15, Kinh Dich, Khuyen nghi x17); serialized loader carries errors:[] (empty — no error boundary rendered), 'detailError' is a data-field key not an error message -> genuine end-to-end render, not a 200 shell. (:3000 = mcp-server, 404 as expected.) VERDICT: real source diff, real split at source, zero post-build frontend drift, live route renders genuine analysis behaviour.",
+          "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head reset idle (status=done / active_task_id=null / next_agent=router) alongside the review[]->done_verified[] row flip — the exact atomic .head+board-row discipline whose ABSENCE I escalated earlier this session as UNBLOCK-CLOSEGATE-STEP4-HEAD-SYNC (feedback_close_gate_step4_head_sync_gap; ops Step-4 omitted it twice in 30d). Write-time jq guard re-verified .head.active_task_id == FACTORY-FRONTEND-split-dashboard-analysis before writing (else .head left untouched to avoid clobbering a concurrent takeover); orch-apply CAS-mtime guard covers read->rename interleaving. Row's own next_agent KEPT 'po' (task-row schema next_agent=z.string().optional() rejects raw null; kept-'po' is the dominant done_verified sibling convention; top-level .head is authoritative for routing per feedback_orchstate_dual_head_keys_toplevel_authoritative). Deprecated .task_board.head left UNTOUCHED. No sprint_goal.entries match this task-id -> not touched. This po session is gateway-blind (Read/Edit/Write/Bash only — no mcp__gateway__call_tool) -> release of lock task:FACTORY-FRONTEND-split-dashboard-analysis DEFERRED to router on report-back per dispatch. qa correctly HELD REVIEW+next_agent=po (did not self-close a rebuild_required=true FACTORY) -> qa-self-close count stays 1, below the recurring-2+ bar; parked qa-guardrail-mint stays parked.",
+          "residual_advisory": "Non-blocking, ACCEPTED (not fixed here): the route size-justification header (and review_note/ops_note/qa_note/notebook/journal) say 457L but the file is genuinely 476L — my own wc -l is the 4th independent confirmation. NOT corrected in this close because editing the route comment would (a) force a needless container rebuild for a comment-only change, (b) reintroduce SHA-gate drift, (c) touch dev-frontend's zone (PO does not edit production code). Correct forward record = 476L (stamped here + in po notebook + journal po-S15); opportunistic fix folds into the next dev-frontend touch of that file or the not-yet-built CI size-lint-justification gate. Also non-blocking (confirmed unrelated by dev+qa, zero diff in extraction range): 2 pre-existing full-suite vitest fails (QUE-TOOLTIP/QUE-REFERENCE) + 5 pre-existing eslint react-hooks/exhaustive-deps errors in CorporateEventsZone/FinancialsZone/TechnicalZone."
+        }
       }
     ],
     "head": {
@@ -8916,28 +8947,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Split the 1845L dashboard.analysis route (helpers + ~30 components)",
-        "priority": "P1",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-FRONTEND-split-dashboard-analysis",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-dashboard-analysis",
-        "promoted_at": "2026-07-09T04:47:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T04:47:08Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "po",
-        "rebuild_required": true,
-        "moved_to_review_at": "2026-07-09T05:38:36Z",
-        "moved_by": "dev-frontend",
-        "review_note": "Split 1836L dashboard.analysis.tsx per 2026-06-15 maintainability factory audit — direct sequel to FACTORY-FRONTEND-extract-computeDecision (DONE_VERIFIED). 5 pure helpers (signalColor/confidencePct/confidenceLabel/indicatorLabel/directionLabel) moved to app/domain/formatters/*; confidenceBar (JSX) moved to components/analysis/ConfidenceBar.tsx; ~22 presentational components extracted to app/components/analysis/*.tsx (one cluster per file, all <=120L — 2 initial over-cap files split further: StockDetailPanel+StockDetailBottomGrid, plus WatchlistTile comment-trimmed). Route dropped 1836L->457L; only loader + default export + AnalysisBriefDto/AnalysisBriefResult/StockDetail types remain (now exported so moved components can import-type them, same pattern as FinancialsZone/NewsBuzzZone). Route carries an honest size-justification header (457L, smallest of 19 sibling /dashboard/*.tsx routes, all currently unheaded pending the not-yet-built CI-size-lint-justification gate). Pure move, no behavior change. RAW-verify: fresh isolated dev server (bypassing stale live :3001 container) — curl /dashboard/analysis (9/9 content checks) and ?stock=VNM (8/8 checks, all StockDetailPanel sub-panels present); one anomaly (2 deterministic null bytes mid-\"định\") confirmed PRE-EXISTING via git-stash A/B against the original 1836L file, not a regression. Commits: a5e629411..41279090e (18 extraction + 2 doc/fixup), ecbbb9de6 (domain-model.md doc), d337cf5dd (notebook), 590731782 (decision journal). vitest 2047 pass / 2 pre-existing fail (QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (5 pre-existing react-hooks/exhaustive-deps errors in unrelated CorporateEventsZone/FinancialsZone/TechnicalZone, confirmed present pre-change); Playwright G12 4/4 GREEN (isolated port). rebuild_required=true — route file touched; holding at REVIEW (not self-flipping) per Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+verify, then qa live-verify, then po Step 6 sign-off.",
-        "qa_verify_at": "2026-07-09T05:57:55Z",
-        "qa_verify_by": "qa",
-        "qa_note": "Step 5 PASS. Image sha256:2135c729b9a9 exact match; SHA-gate re-read as drift (deployed 4c4c59f3f vs current HEAD b907a8ea6) confirmed benign doc-only (zero apps/frontend diff, ancestor confirmed). Live curl content-checked both routes (not bare 200s): base page WatchlistOverviewGrid/KinhDichMarketPanel/MacroSignalPanel real data, zero fallback; ?stock=VNM decision panel GIU hand-recomputed exact match against decision.ts, InfoSourcePanel/MacroImpactPanel/StockDetailBottomGrid(KinhDich+MiniPriceTable)/AiDeepDivePanel all real content, zero error markers. Full vitest re-run 2047 pass/2 fail (pre-existing QUE-TOOLTIP/QUE-REFERENCE, zero commits in extraction range touch either file). tsc 0 errors. eslint 5 pre-existing react-hooks/exhaustive-deps errors (unrelated files, zero diff in range). Playwright render-check.spec.ts 3/3 PASS run directly against the live deployed container (not isolated port). File is 476L not 457L as claimed in header/review_note/ops_note -- cosmetic, non-blocking, flagged for po. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S33."
       }
     ],
     "qa": [],
@@ -8967,6 +8976,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-09T05:53:10Z",
+  "_updated_at": "2026-07-09T06:05:00Z",
   "_updated_by": "po"
 }
