@@ -291,11 +291,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-07-09T10:37:20Z",
-    "updated_by": "po"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-SCHEDULER-split-dataAuditJob",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-SCHEDULER-split-dataAuditJob — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-09T10:51:02Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3807,15 +3808,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-INFRA-split-stores-and-migrations",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-stores-and-migrations"
-      },
-      {
-        "title": "Extract dataAuditJob D-n/W-n checks into per-check modules",
-        "priority": "P0",
-        "zone": "mcp-server-scheduler",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-SCHEDULER-split-dataAuditJob",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-dataAuditJob"
       },
       {
         "title": "Split intelligenceCycleJob (15-min hot path) into types/marketHours/defaults",
@@ -7733,7 +7725,22 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "title": "Extract dataAuditJob D-n/W-n checks into per-check modules",
+        "priority": "P0",
+        "zone": "mcp-server-scheduler",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-SCHEDULER-split-dataAuditJob",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-dataAuditJob",
+        "promoted_at": "2026-07-09T10:50:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-09T10:51:02Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -7871,7 +7878,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T09:17:50Z",
+    "last_triaged_at": "2026-07-09T10:50:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {

@@ -489,7 +489,7 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
     JUMP TO execute
   ```
 - `head.status == "in_progress"` AND `head.updated_at ≥ 24h` → stale crash, reset `head.status` to `"idle"`. Fall through to Step 1.
-- `head.status == "idle"` or `head` missing or v1 schema → fall through to **Idle-capacity backlog pickup (BOUNDED-1)** below, then Step 1.
+- `head.status == "idle"` or `head.status == "done"` (Close Gate Step-6/PM-closeout terminal reset — `active_task_id:null, next_agent:"router"`; established convention across multiple prior closes, e.g. FACTORY-MACRO-split-repositories, FACTORY-DOMAIN-split-cascade-engine) or `head` missing or v1 schema → fall through to **Idle-capacity backlog pickup (BOUNDED-1)** below, then Step 1.
 
 ---
 
