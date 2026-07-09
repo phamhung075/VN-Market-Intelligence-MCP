@@ -6,6 +6,23 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-07-09 round 2 (FACTORY-MACRO-split-repositories — 905L god-file split, live-deployed → ops)
+
+**Task:** BOUNDED-1 idle-capacity pickup. Split `pkg/infrastructure/repositories.go` (905L, 6 adapters) into per-adapter files; factor the repeated "open ro → defer Close → fetch" shape into a shared `openReadOnly` helper.
+
+**Split:** repositories_fixture.go (110L, HTTPCommodityFetcher+SBVRateRepository) / repositories_market_index.go (159L, SQLiteMarketIndexRepository) / repositories_commodity.go (283L, SQLiteCommodityRepository+SQLiteCommodityHistoryRepository) / repositories_sbv_rate.go (141L, SBVRateSQLiteAdapter) / repositories_carry_yield.go (335L, CarryYieldInputsSQLiteAdapter + shared `openReadOnly`). Matches spec's own 5-file naming exactly (6 adapters → 5 files because the 2 fixture stubs share one file and the 2 commodity adapters share one file). 4/5 files >120L — size-justification headers added.
+
+**DRY refactor:** `openReadOnly` promoted from a private `CarryYieldInputsSQLiteAdapter` method to a package-level `openReadOnly(dbPath string) (*sql.DB, error)` function, reused by all 5 live SQLite adapters — eliminates 5x duplicated `sql.Open("sqlite", fmt.Sprintf("file:%s?mode=ro", ...))` inline blocks. Used `sed` line-range extraction from the original file (not retyped) to guarantee every `//nolint:nilerr`, staleness bound, and query string transferred byte-for-byte; only the sql.Open boilerplate was hand-edited to call the shared helper.
+
+**Parity verification (beyond `go test`):** Built a throwaway harness (`cmd/verify_repos_tmp`, never committed) seeding a real fixture SQLite DB and calling the actual constructors + all 9 port methods through the real `DB_PATH` env wiring — this specifically exercises the refactored `openReadOnly` path that unit tests (which inject `*sql.DB` directly) don't touch. Ran post-split, `git stash`'d to pre-split tree, ran again: VN-Index/prev-session, commodity current/prev, SBV rate, deposit rate, Fed funds rate+source-date, earning yield all byte-identical (only diff was the harness's own wall-clock seed timestamp between runs). `go build`/`go vet`/`go test`/`golangci-lint` all GREEN, 0 issues.
+
+**Docker routing:** Confirmed via grep — `cmd/server/main.go` imports `pkg/infrastructure` and constructs all 6 adapter types from this file; `Dockerfile` builds `./cmd/server/`. This IS the live-deployed macro-indicators service (unlike the sibling `cmd/sandbox` split above). Routed `next_agent: ops` for the standard Docker Microservice Code-Change Close Gate (rebuild/health/SHA-gate/curl) — did NOT rebuild/deploy myself.
+
+**Commit:** c3962350d (6 files, +1026/-905). Decision journal: STEP dev-macro-indicators-S4.
+Zone health: HEALTHY (build/vet/test/lint all green, served values verified byte-identical pre/post-split) | FACTORY-MACRO-split-repositories → REVIEW (next_agent: ops)
+
+---
+
 ## Session 2026-07-09 (FACTORY-MACRO-split-sandbox — 831L god-file split + 6-comparator collapse)
 
 **Task:** BOUNDED-1 idle-capacity pickup. Split `cmd/sandbox/main.go` (831L, no header) into 4 files; collapse the 6 structurally-identical `executeMacroXxx` comparators into one helper; add dispatch-logic test coverage (zero pre-existing).
