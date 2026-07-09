@@ -275,12 +275,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FACTORY-FRONTEND-extract-computeDecision",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-FRONTEND-extract-computeDecision — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-09T03:47:44Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "ops",
+    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild+verify frontend) — dashboard.analysis.tsx now imports computeDecision/DecisionResult from app/domain/analysis/decision.ts (pure move, no behavior change); confirm /dashboard/analysis renders decision panel identically post-rebuild, then qa Step 5 live-verify, then po Step 6 sign-off.",
+    "updated_at": "2026-07-09T03:56:01Z",
+    "updated_by": "dev-frontend"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -575,8 +575,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T02:54:00Z",
-    "_updated_by": "po (step 6 sign-off CI-RED-06043b3c-FIX)",
+    "_updated_at": "2026-07-09T03:56:01Z",
+    "_updated_by": "dev-frontend",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8748,22 +8748,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "title": "Move computeDecision scoring out of the analysis route into domain",
-        "priority": "P1",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-FRONTEND-extract-computeDecision",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-extract-computeDecision",
-        "promoted_at": "2026-07-09T03:47:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T03:47:44Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -8882,6 +8867,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Move computeDecision scoring out of the analysis route into domain",
+        "priority": "P1",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-FRONTEND-extract-computeDecision",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-extract-computeDecision",
+        "promoted_at": "2026-07-09T03:47:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T03:47:44Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "moved_to_review_at": "2026-07-09T03:56:01Z",
+        "moved_by": "dev-frontend",
+        "review_note": "Moved computeDecision/DecisionResult (TA/RSI/KD/price scoring) out of dashboard.analysis.tsx (interface layer) into new app/domain/analysis/decision.ts (domain layer) per 2026-06-15 maintainability factory audit — pure move, no behavior change. 13 inline magic numbers hoisted to named consts (TA_TREND_SCORE, RSI_SCORE, KD_STRONG_SCORE, KD_CAUTION_SCORE, PRICE_TREND_SCORE, PRICE_TREND_LOOKBACK, RSI_OVERSOLD, RSI_RECOVERY_CEILING, RSI_OVERBOUGHT, STRONG_BUY_SCORE, BUY_SCORE, HOLD_SCORE, SELL_SCORE); if/else structure kept verbatim. 1937-decision-logic.test.ts re-pointed to ~/domain/analysis/decision. route imports both from domain, decision const explicitly typed DecisionResult. domain-model.md Business Rules section updated. RAW-verify: 7 representative inputs run through moved function — output byte-identical across all 5 score-band labels + null-TA path (matches existing 10-assertion suite). vitest 2047 pass / 2 pre-existing fail (QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (5 pre-existing react-hooks/exhaustive-deps config errors in unrelated components/analysis/* confirmed present pre-change via git-stash A/B). Commits: 2819d710c (code+docs), a27e93762 (memory/journal). rebuild_required=true — route file touched; holding at REVIEW (not self-flipping) per standing dev-team policy / Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+swap, then qa live-verify, then po Step 6 sign-off."
       }
     ],
     "qa": [],
