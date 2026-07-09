@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { computeDecision } from "~/routes/dashboard.analysis";
+import { computeDecision } from "~/domain/analysis/decision";
 import type { TASnapshot, KinhDichReading, PricePoint } from "~/domain/market";
 
 // Minimal fixtures

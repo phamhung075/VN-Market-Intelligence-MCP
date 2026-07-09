@@ -252,7 +252,13 @@ Source: `apps/frontend/app/domain/market.ts:157–166`
 
 ### `computeDecision(ta, reading, prices)` — Scoring
 
-Pure function exported from `dashboard.analysis.tsx` for testability.
+Pure function, moved 2026-07-09 (FACTORY-FRONTEND-extract-computeDecision) from the
+`dashboard.analysis.tsx` route (interface layer) into `app/domain/analysis/decision.ts`
+(domain layer) — layering fix, no behavior change. Thresholds are named consts
+(`TA_TREND_SCORE`, `RSI_SCORE`, `KD_STRONG_SCORE`, `KD_CAUTION_SCORE`, `PRICE_TREND_SCORE`,
+`PRICE_TREND_LOOKBACK`, `RSI_OVERSOLD`, `RSI_RECOVERY_CEILING`, `RSI_OVERBOUGHT`,
+`STRONG_BUY_SCORE`, `BUY_SCORE`, `HOLD_SCORE`, `SELL_SCORE`) — see source for exact values.
+The route imports `computeDecision`/`DecisionResult` from the domain module.
 
 | Condition | Score |
 |---|---|
@@ -275,7 +281,7 @@ Pure function exported from `dashboard.analysis.tsx` for testability.
 | −2–−3 | BÁN | text-red-300 bg-red-900/30 |
 | ≤ −4 | BÁN MẠNH | text-red-400 bg-red-950 |
 
-Source: `apps/frontend/app/routes/dashboard.analysis.tsx` (computeDecision function)
+Source: `apps/frontend/app/domain/analysis/decision.ts`
 
 ---
 

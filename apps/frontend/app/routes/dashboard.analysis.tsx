@@ -35,6 +35,7 @@ import type {
   TASnapshot,
   WatchlistStock,
 } from "~/domain/market";
+import { computeDecision, type DecisionResult } from "~/domain/analysis/decision";
 import {
   WATCHLIST_STOCKS,
   groupBySector,
@@ -1009,97 +1010,6 @@ function StockSearchForm({ defaultValue }: { defaultValue?: string }) {
 }
 
 // --------------------------------------------------------------------------
-// Decision logic
-// --------------------------------------------------------------------------
-
-interface DecisionResult {
-  label: string;
-  textColor: string;
-  bgColor: string;
-  reasons: string[];
-}
-
-export function computeDecision(
-  ta: TASnapshot | null,
-  reading: KinhDichReading,
-  prices: PricePoint[],
-): DecisionResult {
-  let score = 0;
-  const reasons: string[] = [];
-
-  // TA trend
-  if (ta) {
-    if (ta.trend === "BULLISH") {
-      score += 2;
-      reasons.push("TA: BULLISH");
-    } else if (ta.trend === "BEARISH") {
-      score -= 2;
-      reasons.push("TA: BEARISH");
-    } else {
-      reasons.push("TA: NEUTRAL");
-    }
-
-    // RSI
-    if (ta.rsi !== null) {
-      const rsi = ta.rsi;
-      reasons.push(`RSI: ${rsi.toFixed(1)}`);
-      if (rsi < 30) {
-        score += 1; // oversold — recovery potential
-      } else if (rsi >= 30 && rsi < 50) {
-        score += 1; // oversold recovery zone
-      } else if (rsi > 70) {
-        score -= 1; // overbought
-      }
-      // 50–70: neutral, no adjustment
-    }
-  }
-
-  // Kinh Dịch signal
-  const sig = reading.signal.toUpperCase();
-  if (sig.includes("MUA")) {
-    score += 2;
-    reasons.push(`KD: ${reading.signal}`);
-  } else if (sig.includes("BÁN") || sig.includes("BAN")) {
-    score -= 2;
-    reasons.push(`KD: ${reading.signal}`);
-  } else if (sig.includes("THẬN TRỌNG") || sig.includes("THAN TRONG")) {
-    score -= 1;
-    reasons.push(`KD: ${reading.signal}`);
-  } else {
-    reasons.push(`KD: ${reading.signal}`);
-  }
-
-  // Price trend — last close vs 5 sessions ago
-  if (prices.length >= 5) {
-    const last = prices[prices.length - 1].close;
-    const prev5 = prices[prices.length - 5].close;
-    const deltaPct = ((last - prev5) / prev5) * 100;
-    if (deltaPct > 0) {
-      score += 1;
-      reasons.push(`Giá +${deltaPct.toFixed(1)}% (5 phiên)`);
-    } else if (deltaPct < 0) {
-      score -= 1;
-      reasons.push(`Giá ${deltaPct.toFixed(1)}% (5 phiên)`);
-    }
-  }
-
-  // Map score to label + colors
-  if (score >= 4) {
-    return { label: "MUA MẠNH", textColor: "text-green-400", bgColor: "bg-green-950", reasons };
-  }
-  if (score >= 2) {
-    return { label: "MUA", textColor: "text-green-300", bgColor: "bg-green-900/30", reasons };
-  }
-  if (score >= -1) {
-    return { label: "GIỮ", textColor: "text-yellow-400", bgColor: "bg-yellow-900/20", reasons };
-  }
-  if (score >= -3) {
-    return { label: "BÁN", textColor: "text-red-300", bgColor: "bg-red-900/30", reasons };
-  }
-  return { label: "BÁN MẠNH", textColor: "text-red-400", bgColor: "bg-red-950", reasons };
-}
-
-// --------------------------------------------------------------------------
 // Decision panel component
 // --------------------------------------------------------------------------
 
@@ -1112,7 +1022,7 @@ function AnalysisDecision({
   reading: KinhDichReading;
   prices: PricePoint[];
 }) {
-  const decision = computeDecision(ta, reading, prices);
+  const decision: DecisionResult = computeDecision(ta, reading, prices);
 
   return (
     <div className={`border-b border-slate-700 px-4 py-4 ${decision.bgColor}`}>
