@@ -30,7 +30,6 @@ import type {
   KinhDichMarket,
   KinhDichReading,
   MacroSnapshot,
-  MacroSignalEntry,
   PricePoint,
   TASnapshot,
   WatchlistStock,
@@ -54,11 +53,9 @@ import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
 import { formatChangePct } from "~/domain/formatters/change-pct.js";
 import { formatSignalTypeLabel } from "~/domain/formatters/signal-type-label.js";
 import { signalColor } from "~/domain/formatters/signal-color";
-import { confidencePct } from "~/domain/formatters/confidence-pct";
 import { confidenceLabel } from "~/domain/formatters/confidence-label";
-import { indicatorLabel } from "~/domain/formatters/indicator-label";
 import { directionLabel } from "~/domain/formatters/signal-direction-label";
-import { formatDateOnlyVi, formatSignalTimestamp } from "~/lib/formatDate";
+import { formatSignalTimestamp } from "~/lib/formatDate";
 import { TechnicalZone } from "~/components/analysis/TechnicalZone";
 import { CorporateEventsZone } from "~/components/analysis/CorporateEventsZone";
 import { FinancialsZone } from "~/components/analysis/FinancialsZone";
@@ -75,6 +72,7 @@ import { KinhDichMarketPanel } from "~/components/analysis/KinhDichMarketPanel";
 import { MacroSignalPanel } from "~/components/analysis/MacroSignalPanel";
 import { StockTable, StockSearchForm } from "~/components/analysis/StockTable";
 import { AnalysisDecision } from "~/components/analysis/AnalysisDecision";
+import { InfoSourcePanel } from "~/components/analysis/InfoSourcePanel";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -398,157 +396,6 @@ function AccuracyDigestCard({
             · {data!.newStocksCount} stocks still seeding
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-// --------------------------------------------------------------------------
-// Info source panel component
-// --------------------------------------------------------------------------
-
-function InfoSourcePanel({
-  ta,
-  reading,
-  prices,
-  snapshot,
-}: {
-  ta: TASnapshot | null;
-  reading: KinhDichReading;
-  prices: PricePoint[];
-  snapshot: MacroSnapshot | null;
-}) {
-  // Build rows from available data
-  const rows: { source: string; indicator: React.ReactNode; value: React.ReactNode }[] = [];
-
-  // Price row
-  if (prices.length > 0) {
-    const last = prices[prices.length - 1];
-    const sessions = prices.length;
-    let priceDelta: React.ReactNode = null;
-    if (prices.length >= 2) {
-      const prev = prices[prices.length - 2].close;
-      const pct = ((last.close - prev) / prev) * 100;
-      priceDelta = (
-        <span className={pct > 0 ? "text-green-400" : pct < 0 ? "text-red-400" : "text-slate-400"}>
-          {pct > 0 ? "↑" : pct < 0 ? "↓" : "—"}{Math.abs(pct).toFixed(1)}%
-        </span>
-      );
-    }
-    rows.push({
-      source: "Stock Price",
-      indicator: `${sessions} phiên`,
-      value: (
-        <span className="text-slate-200">
-          {last.close.toLocaleString("vi-VN")} {priceDelta}
-        </span>
-      ),
-    });
-  }
-
-  // TA rows
-  if (ta) {
-    rows.push({
-      source: "TA service",
-      indicator: "RSI(14)",
-      value: (
-        <span className="text-slate-200">
-          {ta.rsi !== null ? ta.rsi.toFixed(1) : "—"}
-          {" · "}
-          <span className={ta.trend === "BULLISH" ? "text-green-400" : ta.trend === "BEARISH" ? "text-red-400" : "text-slate-400"}>
-            {ta.trend}
-          </span>
-        </span>
-      ),
-    });
-    if (ta.macd !== null) {
-      const hist = ta.macd.histogram;
-      rows.push({
-        source: "TA service",
-        indicator: "MACD",
-        value: (
-          <span className={hist > 0 ? "text-green-400" : hist < 0 ? "text-red-400" : "text-slate-400"}>
-            {hist > 0 ? "+" : ""}{hist.toFixed(3)} ({hist > 0 ? "tăng" : hist < 0 ? "giảm" : "ngang"})
-          </span>
-        ),
-      });
-    } else {
-      rows.push({ source: "TA service", indicator: "MACD", value: <span className="text-slate-500">—</span> });
-    }
-  } else {
-    rows.push({ source: "TA service", indicator: "RSI(14)", value: <span className="text-slate-500">—</span> });
-    rows.push({ source: "TA service", indicator: "MACD", value: <span className="text-slate-500">—</span> });
-  }
-
-  // Kinh Dịch row
-  rows.push({
-    source: "Kinh Dịch",
-    indicator: (
-      <QueName
-        hexagram={reading.hexagram}
-        name={reading.name}
-        className="text-xs text-slate-400"
-      />
-    ),
-    value: (
-      <span className="text-slate-200">
-        <span className={`font-semibold ${signalColor(reading.signal)}`}>{reading.signal}</span>
-        {" · "}
-        {confidencePct(reading.confidence)}
-      </span>
-    ),
-  });
-
-  // Macro row — highest impact signal (keyed-object contract)
-  if (snapshot && Object.values(snapshot.signals).length > 0) {
-    const impactRank = (entry: MacroSignalEntry) => {
-      const imp = entry.impact ?? entry.tier ?? "LOW";
-      return imp === "HIGH" ? 3 : imp === "MEDIUM" ? 2 : 1;
-    };
-    const [[topKey, topEntry]] = Object.entries(snapshot.signals).sort(
-      ([, a], [, b]) => impactRank(b) - impactRank(a)
-    );
-    const topDirection = topEntry.direction ?? topEntry.regime ?? topEntry.label ?? "—";
-    const topImpact = topEntry.impact ?? topEntry.tier ?? "LOW";
-    rows.push({
-      source: "Macro",
-      indicator: indicatorLabel(topKey),
-      value: (
-        <span className="text-slate-200">
-          <span className={topDirection === "BULLISH" ? "text-green-400" : topDirection === "BEARISH" ? "text-red-400" : "text-slate-400"}>
-            {topDirection}
-          </span>
-          {" · "}
-          <span className="text-slate-400">{topImpact}</span>
-        </span>
-      ),
-    });
-  }
-
-  return (
-    <div className="border-b border-slate-700 px-4 py-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
-        Nguồn dữ liệu
-      </h3>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 text-xs text-slate-400">
-              <th className="py-1.5 text-left pr-4 font-medium">Nguồn</th>
-              <th className="py-1.5 text-left pr-4 font-medium">Chỉ số</th>
-              <th className="py-1.5 text-left font-medium">Giá trị</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr key={i} className="border-b border-slate-800 last:border-0">
-                <td className="py-1.5 pr-4 text-xs text-slate-500">{row.source}</td>
-                <td className="py-1.5 pr-4 text-xs text-slate-400">{row.indicator}</td>
-                <td className="py-1.5 text-xs">{row.value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
     </div>
   );
