@@ -277,10 +277,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-PDF-fix-application-infra-leak",
-    "next_agent": "ops",
-    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild pdf-extractor; SHA-gate remains DEFERRED to Phase B per runbook per FACTORY-PDF-split-extractLayoutFirst-execute/delete-deprecated-inspect precedent), then qa Step 5 live-verify (doclang serialize path still produces identical XML output on the live container; /health + real extraction routes unaffected), then po Step 6 sign-off.",
-    "updated_at": "2026-07-09T03:03:23Z",
-    "updated_by": "dev-pdf-extractor"
+    "next_agent": "qa",
+    "next_action": "QA Step 5 — doclang serialize path live-verify (confirm XML output unaffected on live container), then PO Step 6 sign-off",
+    "updated_at": "2026-07-09T05:10:00Z",
+    "updated_by": "ops"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8853,11 +8853,14 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-09T02:53:05Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "moved_to_review_at": "2026-07-09T03:03:23Z",
         "moved_by": "dev-pdf-extractor",
         "review_note": "Added DocLangSerializerPort Protocol (domain/modules/financial_reports/ports.py, sibling to DocLangWritePort) typing the .serialize(tables, report_id) -> str surface actually used by DocLangSerializeUseCase; retyped the usecase's serializer constructor param to the Port and dropped 'from infrastructure.doclang_serializer import DocLangSerializer' — was the only 'from infrastructure' import in application/. main.py composition root already wired the concrete DocLangSerializer instance positionally into the usecase constructor — no change needed there (Protocols are structural, no explicit 'implements'). Port's tables param typed List[Any] (not List[application.dtos.ExtractedTableDTO]) to keep domain decoupled from the application-layer DTO module, matching every sibling port's Dict/str generic-passthrough convention; ports.py's own header states 'Zero imports from infrastructure/, application/, interface/'. Added import-linter Fence-C: source=application forbidden=infrastructure,interface (pyproject.toml [[tool.importlinter.contracts]]) so this class of leak is caught by CI going forward. RAW-verify: lint-imports (venv, real pyproject config) -> 3 contracts kept / 0 broken (was 2/0 before -- Fence-C is new and passes, confirming the leak is fixed AND the fence catches it); grep -rn '^from infrastructure|^import infrastructure' under application/ -> zero real import hits (3 comment-only mentions of infrastructure.ocr_worker in an unrelated untouched file). pytest __tests__/unit/test_doclang_serializer.py -q: 13/13 passed -- serializer/usecase behavior unchanged (NullDocLangWriteAdapter still returns empty string, XML output untouched -- only the type annotation + import changed, zero logic edited). Full suite pytest -q -m 'not slow': 1013 passed/9 failed -- A/B via git stash: identical 8 pre-existing env-only failures (PIL.Image.new AttributeError / poppler-missing rasterizer / pandas ModuleNotFoundError) both with and without this change; the 9th (test_extract_layout_and_tables_raises_on_timeout) reproduced GREEN in isolation both before and after -- confirmed timing-flake in an unrelated file, not a regression. mypy: baseline env-blocking 'pdf-extractor is not a valid Python package name' error identical before/after (confirmed via git stash A/B); scoped --explicit-package-bases mypy run on the 2 changed files: 18 pre-existing [type-arg]/[arg-type] errors, byte-identical (only line-number shift from the added Protocol) before/after -- zero new mypy errors introduced. Commits: bfe92c225 (code), 5c9ccc827 (memory/journal). rebuild_required: true -- holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy / Docker Microservice Code-Change Close Gate -- next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification (confirm doclang serialize path unaffected on the live container), then po Step 6 sign-off.",
-        "rebuild_required": true
+        "rebuild_required": true,
+        "ops_verified_at": "2026-07-09T05:10:00Z",
+        "ops_verified_by": "ops",
+        "ops_note": "Steps 1-4 Docker Close Gate COMPLETE: (1) Single-service rebuild+swap successful, image updated. (2) RAW-verify PASS: health 200, extraction routes available, DocLangSerializerPort Protocol correctly imported and typed on running container, zero import errors, fleet healthy. (3) SHA-gate deferred per known DRIFT-3 Phase B condition (label-key mismatch, rebuild from current HEAD, no real drift). (4) Service boots clean, ready for QA Step 5 live-verify."
       }
     ],
     "qa": [],
