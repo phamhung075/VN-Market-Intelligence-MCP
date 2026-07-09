@@ -7161,26 +7161,6 @@
     },
     "in_progress": [
       {
-        "id": "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
-        "status": "IN_PROGRESS",
-        "title": "bounded-1 promote jq crashes object-indexing .items ARRAY with task-id string",
-        "owner": "dev-team",
-        "next_agent": "developer",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "size": "S",
-        "priority": "high",
-        "created_at": "2026-07-09T14:02:56Z",
-        "created_by": "po-triage-20260709T1337Z",
-        "files": [
-          "scripts/devteam-backlog-promote-bounded1.jq"
-        ],
-        "related": [
-          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE"
-        ],
-        "status_note": "REPRODUCED live (exit 5, no corruption). effective_depends_on (L112-120) does $detail_items[.id] at L117 (object-indexing) but $detail_items = ($detail[0].items // {}) (L150) and live docs/data/orch/archive/backlog-detail.json .items is a plain ARRAY of 437 objects each carrying its own .id. First detail_ref'd row scanned during eligibility filtering (TASK17-FOREIGN-FLOW) crashes the WHOLE transform: jq error Cannot index array with string. orch-apply.sh correctly aborted (empty candidate, zero corruption) but BOUNDED-1 idle-capacity backlog pickup has promoted NOTHING on any tick since 2026-07-08. FIX: id-key the array at ingest, e.g. replace L150 ($detail[0].items // {}) with a shape-defensive map: (($detail[0].items // []) | if type==\"object\" then . else (map(select(.id!=null)|{key:.id,value:.})|from_entries) end). Do NOT change depends_on semantics, only the array-vs-object lookup. Read the actual script first. baseline_pass: jq --arg now \"$NOW\" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-promote-bounded1.jq docs/data/orch/orch-state.json > /dev/null must exit 0 with live WIP==0, emitting a doc that moves exactly ONE eligible row backlog->ready; re-run through orch-apply.sh must not abort on empty candidate."
-      },
-      {
         "id": "FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH",
         "status": "IN_PROGRESS",
         "title": "1294-macro-spam-fix test flakes CI RED — intelligenceCycleJob fires unmocked live yahooFinance/SBV fetch",
@@ -7322,6 +7302,29 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
+        "status": "REVIEW",
+        "title": "bounded-1 promote jq crashes object-indexing .items ARRAY with task-id string",
+        "owner": "dev-team",
+        "next_agent": "qa",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "size": "S",
+        "priority": "high",
+        "created_at": "2026-07-09T14:02:56Z",
+        "created_by": "po-triage-20260709T1337Z",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq"
+        ],
+        "related": [
+          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE"
+        ],
+        "status_note": "REPRODUCED live (exit 5, no corruption). effective_depends_on (L112-120) does $detail_items[.id] at L117 (object-indexing) but $detail_items = ($detail[0].items // {}) (L150) and live docs/data/orch/archive/backlog-detail.json .items is a plain ARRAY of 437 objects each carrying its own .id. First detail_ref'd row scanned during eligibility filtering (TASK17-FOREIGN-FLOW) crashes the WHOLE transform: jq error Cannot index array with string. orch-apply.sh correctly aborted (empty candidate, zero corruption) but BOUNDED-1 idle-capacity backlog pickup has promoted NOTHING on any tick since 2026-07-08. FIX: id-key the array at ingest, e.g. replace L150 ($detail[0].items // {}) with a shape-defensive map: (($detail[0].items // []) | if type==\"object\" then . else (map(select(.id!=null)|{key:.id,value:.})|from_entries) end). Do NOT change depends_on semantics, only the array-vs-object lookup. Read the actual script first. baseline_pass: jq --arg now \"$NOW\" --slurpfile detail docs/data/orch/archive/backlog-detail.json -f scripts/devteam-backlog-promote-bounded1.jq docs/data/orch/orch-state.json > /dev/null must exit 0 with live WIP==0, emitting a doc that moves exactly ONE eligible row backlog->ready; re-run through orch-apply.sh must not abort on empty candidate.",
+        "review_note": "fix committed 1d0549e52 (scripts/devteam-backlog-promote-bounded1.jq + scripts/test-devteam-bounded1-depends-on.sh, pushed to main). Shape-defensive $detail_items ingest: id-key backlog-detail.json .items ARRAY at ingest so existing $detail_items[.id] lookup works unmodified; object input passes through unchanged; zero depends_on semantic change; zero hardcoded task-id literals. New RED/GREEN test Case 1c reproduces the live ARRAY shape (17->18/18 pass). Live-data reproducer (TASK17-FOREIGN-FLOW vs real backlog-detail.json): exit 5 pre-fix -> exit 0 post-fix. End-to-end scratch-copy run through orch-apply.sh (ORCH_APPLY_LIVE_FILE_OVERRIDE, WIP forced to 0 on a scratch copy, live file untouched since live WIP=2): exactly one row promoted, no empty-candidate abort. Companion devteam-backlog-claim-bounded1.jq inspected -- never touches backlog-detail.json, no equivalent bug, left unchanged. Decision journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S10.",
+        "reviewed_at": "2026-07-09T14:11:04Z",
+        "reviewed_by": "developer"
       }
     ],
     "qa": [],
