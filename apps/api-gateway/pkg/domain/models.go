@@ -52,16 +52,34 @@ type AggregatedHealth struct {
 	CheckedAt    string                        `json:"checkedAt"`
 }
 
+// DefaultProxyTimeoutMultiplier is the factor applied to a service's health-probe
+// TimeoutMs to derive its proxied-request timeout budget when ProxyTimeoutMs is not
+// explicitly set. Proxy calls do real request/response work (potentially large
+// payloads, slow upstream scrapers) rather than a cheap /health ping, so they get a
+// larger budget than the health-probe timeout alone would allow. See
+// ServiceConfig.EffectiveProxyTimeoutMs.
+const DefaultProxyTimeoutMultiplier = 5
+
 // ServiceConfig holds the configuration for a single downstream service.
 type ServiceConfig struct {
 	Name           string
 	BaseURL        string
 	HealthPath     string
 	TimeoutMs      int64
-	ProxyTimeoutMs int64 // overrides TimeoutMs*5 for slow scrapers; 0 = use default
+	ProxyTimeoutMs int64 // overrides TimeoutMs*DefaultProxyTimeoutMultiplier for slow scrapers; 0 = use default
 	NoProbe        bool  // virtual alias services: excluded from health probes
 	PreservePath   bool  // when true the gateway forwards the full request path verbatim
 	// (does NOT strip the leading /:service segment).  Used when the upstream
 	// service registers its own routes under its own prefix (e.g. /ta/indicators).
 	// Orthogonal to NoProbe: a PreservePath service is still health-probed.
+}
+
+// EffectiveProxyTimeoutMs returns the timeout budget, in milliseconds, that a
+// proxied request to this service should use: ProxyTimeoutMs when explicitly set
+// (non-zero), otherwise TimeoutMs*DefaultProxyTimeoutMultiplier.
+func (s *ServiceConfig) EffectiveProxyTimeoutMs() int64 {
+	if s.ProxyTimeoutMs != 0 {
+		return s.ProxyTimeoutMs
+	}
+	return s.TimeoutMs * DefaultProxyTimeoutMultiplier
 }

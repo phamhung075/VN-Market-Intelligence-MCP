@@ -38,14 +38,26 @@ type AggregatedHealth struct {
 
 ### ServiceConfig
 ```go
+// DefaultProxyTimeoutMultiplier is the factor applied to TimeoutMs to derive the
+// proxied-request timeout budget when ProxyTimeoutMs is not explicitly set.
+const DefaultProxyTimeoutMultiplier = 5
+
 // ServiceConfig holds the configuration for a single downstream service.
 type ServiceConfig struct {
-    Name       string
-    BaseURL    string
-    HealthPath string
-    TimeoutMs  int64
-    NoProbe    bool // virtual alias services: excluded from health probes
+    Name           string
+    BaseURL        string
+    HealthPath     string
+    TimeoutMs      int64
+    ProxyTimeoutMs int64 // overrides TimeoutMs*DefaultProxyTimeoutMultiplier; 0 = use default
+    NoProbe        bool  // virtual alias services: excluded from health probes
+    PreservePath   bool  // forward the full request path verbatim (don't strip /:service)
 }
+
+// EffectiveProxyTimeoutMs resolves the per-request proxy timeout budget (ms):
+// ProxyTimeoutMs when set (non-zero), otherwise TimeoutMs*DefaultProxyTimeoutMultiplier.
+// Lives in the domain layer (not infrastructure) so pkg/interface/http/proxy.go can
+// call it without violating the Fence-C infrastructure-import boundary.
+func (s *ServiceConfig) EffectiveProxyTimeoutMs() int64
 ```
 
 ## Repository Ports

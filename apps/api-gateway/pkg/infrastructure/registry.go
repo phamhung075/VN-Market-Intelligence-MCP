@@ -5,6 +5,13 @@ import "github.com/vn-market-intelligence/api-gateway/pkg/domain"
 
 const defaultTimeoutMs = int64(2000)
 
+// ProxyTimeoutMs below (macro, news) overrides the domain-layer default of
+// TimeoutMs*domain.DefaultProxyTimeoutMultiplier because their upstream scrapers
+// are slow. Resolution happens per-request via ServiceConfig.EffectiveProxyTimeoutMs
+// (pkg/domain/models.go) — kept in the domain layer, not here, so pkg/interface/http
+// can call it without violating the Fence-C infrastructure-import boundary
+// (golangci depguard: only cmd/server/main.go may import pkg/infrastructure).
+
 // StaticServiceRegistry is an in-memory registry of services loaded from env config.
 type StaticServiceRegistry struct {
 	services       map[string]*domain.ServiceConfig

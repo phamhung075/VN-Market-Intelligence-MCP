@@ -26,11 +26,10 @@ func newReverseProxy(target *url.URL, errorWriter func(w http.ResponseWriter, er
 }
 
 // serveProxied also collapses the two near-identical timeout+serve blocks into one.
-func serveProxied(proxy *httputil.ReverseProxy, w http.ResponseWriter, r2 *http.Request, overrideMs, timeoutMs int64) {
-	effectiveMs := overrideMs
-	if effectiveMs == 0 {
-		effectiveMs = timeoutMs * 5
-	}
+// effectiveMs is the already-resolved timeout budget (see
+// domain.ServiceConfig.EffectiveProxyTimeoutMs) — this function does no fallback
+// arithmetic of its own.
+func serveProxied(proxy *httputil.ReverseProxy, w http.ResponseWriter, r2 *http.Request, effectiveMs int64) {
 	ctx := r2.Context()
 	cancel := func() {}
 	if effectiveMs > 0 {
@@ -89,7 +88,7 @@ func (h *GatewayHandlers) HandleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 		r2.Host = mcpBase.Host
 
-		serveProxied(proxy, w, r2, mcpSvc.ProxyTimeoutMs, mcpSvc.TimeoutMs)
+		serveProxied(proxy, w, r2, mcpSvc.EffectiveProxyTimeoutMs())
 		return
 	}
 
@@ -113,5 +112,5 @@ func (h *GatewayHandlers) HandleProxy(w http.ResponseWriter, r *http.Request) {
 	r2.URL.Path = downstreamPath
 	r2.Host = targetBase.Host
 
-	serveProxied(proxy, w, r2, svc.ProxyTimeoutMs, svc.TimeoutMs)
+	serveProxied(proxy, w, r2, svc.EffectiveProxyTimeoutMs())
 }

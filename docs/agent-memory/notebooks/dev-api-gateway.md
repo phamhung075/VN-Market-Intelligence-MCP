@@ -124,3 +124,21 @@ Zone: `apps/api-gateway/` | Stack: TS/Bun (active) + Go 1.22 (Phase 1 new siblin
 **Signal:** docs/signals/ops-rebuild-verify-api-gateway-20260709T1958Z.json (post-rebuild proxy+dashboard behavior verification, P1, blocking:false).
 
 **Decision journal:** docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-api-gateway.md
+
+## c2 · 2026-07-09T2022Z
+
+**Task:** FACTORY-APIGW-proxy-timeout-constant (P1, BOUNDED-1 idle-capacity pickup) — name the 5x proxy-timeout fallback multiplier + decide accessor shape.
+
+**Status:** REVIEW (hottest-path prod handler, rebuild_required:true; deferred post-rebuild verify tracked via signal).
+
+**Stale-premise correction:** original finding assumed 2 duplicate call sites in handlers.go AND assumed the constant belongs in `pkg/infrastructure/registry.go`. Both false by this point: c1 (FACTORY-APIGW-split-handlers) already collapsed both call sites into `serveProxied` in proxy.go; and putting the constant in registry.go would break Fence-C (proxy.go's `registry` field is `domain.ServiceRegistryPort`, an interface — proxy.go is barred from importing `pkg/infrastructure`, only cmd/server/main.go may).
+
+**Result:** `domain.DefaultProxyTimeoutMultiplier = 5` const + `(s *ServiceConfig) EffectiveProxyTimeoutMs() int64` accessor added to `pkg/domain/models.go` (domain is importable everywhere, unlike infra). `serveProxied(proxy,w,r2, overrideMs,timeoutMs int64)` → `serveProxied(proxy,w,r2, effectiveMs int64)` in proxy.go; both `HandleProxy` call sites (mcp reroute path, generic service path) now call `.EffectiveProxyTimeoutMs()` instead of inlining the `==0 {*5}` branch. registry.go got a doc-comment cross-reference only (no logic) explaining why the constant isn't there.
+
+**New test:** `pkg/domain/models_test.go` — `TestServiceConfig_EffectiveProxyTimeoutMs` pins 3 cases (2000ms+no override→10000ms; 120000ms override wins; 0+no override→0), `TestDefaultProxyTimeoutMultiplier_PinnedValue` pins const==5.
+
+**Verify:** go build/vet clean, gofmt -l clean (registry.go pre-existing map-alignment debt unchanged, confirmed via git-stash baseline diff, out of scope), golangci-lint 0 issues (proves Fence-C respected), go test ./... 10/10 packages PASS, G12 sandbox primitive 14/14 + module 1/1 PASS.
+
+**Signal:** docs/signals/ops-rebuild-verify-api-gateway-20260709T2022Z.json
+
+**Decision journal:** docs/agent-memory/decisions/dev-api-gateway-20260709T2022Z-FACTORY-APIGW-proxy-timeout-constant.md
