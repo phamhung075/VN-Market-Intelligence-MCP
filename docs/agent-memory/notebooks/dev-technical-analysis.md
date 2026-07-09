@@ -6,6 +6,24 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-07-09 — FACTORY-TECHANALYSIS-split-sandbox — god-file split (1859L → 29 files ≤120L)
+
+**Task:** FACTORY-MAINTAINABILITY-2026-06 factory task (BOUNDED-1 idle-capacity pickup). Split `cmd/sandbox/main.go` (1859L, the pilot's verification oracle) into single-responsibility files, replace `runPrimitive` switch with a `Runner` map, drop the dead `parseCloses` shim.
+
+**Split approach:** kept `package main`, same directory (no `internal/` sub-package) — mirrors the sibling `FACTORY-MACRO-split-sandbox` pattern already landed for macro-indicators' `cmd/sandbox` (same audit brief). Avoids the brief's own CAVEAT (export/test-relocation churn): `sandbox_test.go` (package main) needed ZERO changes — all package-local identifiers (floatEq, generateFromPattern, runRSI, etc.) stay visible across files in the same package/directory. 28 new files: `doc.go`/`types.go`/`audit.go`/`diff.go`/`closes_gen.go`/`pattern_gen.go`/`scenario_path.go`, `runner_map.go` (`Runner` type + map replacing the switch), per-primitive `runner_rsi.go`, `macd_types/runner_macd/runner_macd_diffs.go`, `ma_types/runner_ma/runner_ma_multicase/runner_ma_cases.go`, `runner_bb.go`, `cross_types/runner_cross/runner_cross_multicase.go`, `module_types/runner_module/runner_module_diffs.go`, `service_types/service_adapters/service_request/service_diffs.go` + `runner_service.go`, `utils.go`; `main.go` trimmed to 118L (flags + tier dispatch only). Oversize runner functions (runMACD 150L, runModuleScenario 165L, runMAMultiCase 121L, runServiceScenario 163L) split by extracting their assertion/case-handling blocks into sibling helper functions — pure code-move, no logic changed.
+
+**Dead code:** `parseCloses` (40L) had ZERO real callers anywhere in the repo (grep-confirmed) — only the `var _ = parseCloses` compile-shim referenced it. Deleted both; its logic was already fully duplicated by `generateFromPattern`/`generateRamp`, which `runMACD`/`runModuleScenario` actually use.
+
+**Verification:** baseline-captured all 35 scenario oracle outputs before touching code, re-ran after the split — diff shows ONLY `runMs` timing jitter, zero verdict/actual/diffs changes. `go build/vet/test ./...` 12 packages GREEN. `golangci-lint run` 0 issues. `dashboard/build.sh` 35/35 GREEN + headless render-check PASS. All 29 non-test files ≤118L. `sandbox_test.go` left untouched (347L, pre-existing, out of this task's scope).
+
+**Close-gate note:** `Dockerfile` builds only `./cmd/server` — `cmd/sandbox` is never `COPY`'d into the image, so this change cannot affect the deployed container; the ops rebuild + qa live-RAW-verify hops of the Microservice Code-Change Close Gate don't apply. Moved straight to DONE_VERIFIED on router's explicit instruction, full self-verification evidence in decision journal STEP dev-technical-analysis-S5.
+
+**Gates:** `go build/vet/test ./...` 12 packages GREEN. `golangci-lint run` 0 issues. Sandbox 35/35 scenarios GREEN, headless render-check PASS.
+
+Zone health: no drift detected — cmd/sandbox now reviewable in single-sitting files; no behavior change to the deployed `cmd/server` path.
+
+---
+
 ### 2026-07-08 — FACTORY-TECHANALYSIS-reconcile-ta-contract — single /ta/indicators contract
 
 **Task:** Make `api/openapi.yaml` the single authoritative `/ta/indicators` contract; conform the Go service. depends_on go-livepath-tests (DONE_VERIFIED); gates the sibling deletion task `FACTORY-TECHANALYSIS-delete-orphaned-ts-service`.
@@ -42,30 +60,13 @@ Zone health: no drift detected — TA docs now the single accurate source (previ
 
 ---
 
-### 2026-06-30 — TASK-VNINDEX-RS-C (FR-C1) — watchlist DB fallback at startup
-
-**Task:** TASK-VNINDEX-RS-C / FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS § Zone C. Commits: 5c1ab331, 341d2879.
-
-**Root cause:** `WATCHLIST_TICKERS` env absent from docker-compose.yml technical-analysis block; `cmd/server/main.go:46` defaulted to `""` → `parseWatchlist` → empty slice → all use cases wired with `watchlist=[]` → no-arg `/ta/roc-momentum` returned empty.
-
-**Fix (FR-C1):**
-- `cmd/server/main.go`: added `readWatchlistFromDB(dbPath)` helper (`database/sql` + `_ "modernc.org/sqlite"` explicit import). After `parseWatchlist` returns empty, reads `SELECT code FROM watchlist ORDER BY code` from the SQLite DB at `DB_PATH`. No hardcoded tickers.
-- `cmd/server/main_test.go` (new): 3 unit tests — WithRows (3-ticker seed, order verified), EmptyTable (no rows → no error), NoWatchlistTable (missing table → error, no panic).
-
-**RAW probes:**
-- Live `watchlist` table: 41 rows (ACB…VRE, no VNINDEX — correct).
-- Startup log post-rebuild: `"WATCHLIST_TICKERS not set — resolved from DB watchlist table" count=41`
-- `POST /ta/roc-momentum {}` → 41 tickers, 35 non-null ROC (was 0 before).
-
-**Gates:** `go build ./...` OK · `go vet ./...` OK · `go test ./...` all 10 packages GREEN · golangci-lint 0 issues · sandbox primitive+module scenarios GREEN.
-
-**No docker-compose.yml change** — no hardcode. Watchlist SSOT = SQLite `watchlist` table.
-
----
-
 ## Archive
 
 [Archived to git history; retained: 3 most recent cycles. Full history in git log.]
+
+### 2026-07-09 — pruned to AC-2b (3-cycle cap), round 3
+
+- 2026-06-30 TASK-VNINDEX-RS-C / FIX-TA-VNINDEX-BENCHMARK-ABSENT-RS § Zone C (commits 5c1ab331, 341d2879) — `WATCHLIST_TICKERS` env absent from docker-compose → `readWatchlistFromDB(dbPath)` fallback added to `cmd/server/main.go`; 41-ticker DB watchlist restored `/ta/roc-momentum` output (0→35 non-null ROC). No hardcoded tickers.
 
 ### 2026-07-08 — pruned to AC-2b (3-cycle cap)
 

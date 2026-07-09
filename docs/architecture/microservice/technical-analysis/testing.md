@@ -30,7 +30,7 @@ Both files use local fakes (`fakeCalculator`, `fakePriceRepo`) satisfying the
 `application.TACalculator` / `application.PriceRepo` ports — no `infrastructure`
 package import, no SQLite, no DB credentials. Pattern mirrors the established
 `httptest.NewServer(NewRouter(...))` harness already proven in
-`cmd/sandbox/main.go` (`newTestServer`) and `apps/stock-price/pkg/interface/http/router_test.go`.
+`cmd/sandbox/service_adapters.go` (`newTestServer`) and `apps/stock-price/pkg/interface/http/router_test.go`.
 
 Purely additive — no production code changed. `go test ./...` (12 packages) and
 sandbox 35/35 scenarios green after this change (same as before; the task adds
@@ -47,6 +47,17 @@ coverage, not new behavior).
 | Package | File | Coverage |
 |---------|------|----------|
 | `cmd/sandbox` | `sandbox_test.go` | floatEq, diffFloat, diffLen, generateFromPattern (3 patterns), generateDeclineRally, safeIdx, RSI runner golden, RSI runner honest RED, RSI failure (error expected = GREEN), BB golden first window, DetectCross golden, forbiddenEnvPrefixes list |
+
+**File layout (FACTORY-TECHANALYSIS-split-sandbox, 2026-07-09):** `cmd/sandbox/main.go` was a
+1859L god-file; split into ~29 single-responsibility files (all `package main`, same directory —
+`doc.go`, `types.go`, `audit.go`, `diff.go`, `closes_gen.go`, `pattern_gen.go`, `scenario_path.go`,
+`runner_map.go` + per-primitive `runner_*.go`/`*_types.go`/`*_diffs.go`, `service_*.go`,
+`runner_service.go`, `utils.go`, `main.go`), each ≤120L. `runPrimitive`'s switch was replaced by a
+`map[string]Runner` (`runner_map.go`). The dead `parseCloses` shim (zero real callers, fully
+superseded by `generateFromPattern`/`generateRamp`) was deleted. `sandbox_test.go` needed no
+changes — same package, same directory, all package-local identifiers stay visible. Oracle
+verdicts confirmed byte-identical before/after (35/35 scenarios green, `dashboard/build.sh`
+render-check PASS).
 
 ## Scenario Suite (P1-D1 + P1-D2)
 

@@ -291,11 +291,12 @@
     }
   ],
   "head": {
-    "status": "done",
+    "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-07-09T17:58:13Z",
-    "updated_by": "agents-architect"
+    "next_action": "FACTORY-TECHANALYSIS-split-sandbox DONE_VERIFIED (dev-technical-analysis self-close, BOUNDED-1 pickup, no-rebuild dev-tooling change) — head idle, ready for next router tick.",
+    "updated_at": "2026-07-09T18:41:01Z",
+    "updated_by": "dev-technical-analysis"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -547,8 +548,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T17:50:13Z",
-    "_updated_by": "dev-team (routing correction)",
+    "_updated_at": "2026-07-09T18:41:01Z",
+    "_updated_by": "dev-technical-analysis",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -3848,15 +3849,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-or-justify-over-cap"
       },
       {
-        "title": "Split the 1805L technical-analysis sandbox; drop dead parseCloses shim",
-        "priority": "P1",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-TECHANALYSIS-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-split-sandbox"
-      },
-      {
         "title": "Dedup sandboxCalculator vs TACalculator via a pkg/module mapper (behavior decision)",
         "priority": "P2",
         "zone": "technical-analysis",
@@ -7104,7 +7096,25 @@
         "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "title": "Split the 1805L technical-analysis sandbox; drop dead parseCloses shim",
+        "priority": "P1",
+        "zone": "technical-analysis",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-TECHANALYSIS-split-sandbox",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-split-sandbox",
+        "promoted_at": "2026-07-09T18:18:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T18:18:24Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "completed_at": "2026-07-09T18:41:01Z",
+        "completed_by": "dev-technical-analysis",
+        "verify_note": "go build/vet/test ./... 12 packages GREEN; golangci-lint 0 issues; baseline-captured all 35 sandbox scenario oracle outputs before the split and diffed after — byte-identical except runMs timing jitter; dashboard/build.sh 35/35 GREEN + headless render-check PASS; all 29 non-test cmd/sandbox files <=118L; sandbox_test.go untouched (same package/dir, zero changes needed) and green; dead parseCloses (zero real callers, grep-confirmed) + its var _ = shim deleted. Dockerfile builds only ./cmd/server (cmd/sandbox never COPYd into the image) so the ops-rebuild + qa-live-RAW-verify hops of the Microservice Code-Change Close Gate are inapplicable to this dev-tooling-only refactor; self-verification above is the evidence. Full reasoning: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-technical-analysis.md STEP dev-technical-analysis-S5."
+      }
+    ],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
@@ -7335,7 +7345,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T17:48:39Z",
+    "last_triaged_at": "2026-07-09T18:18:20Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
