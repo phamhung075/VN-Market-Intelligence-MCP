@@ -6,53 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## Cycle 2026-07-09 — FACTORY-PDF-split-extractLayoutFirst-execute
-
-**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** L | P1 | epic: FACTORY-MAINTAINABILITY-2026-06
-
-### Refactor
-`ExtractLayoutFirstUseCase.execute()` (~480L, Tier0→3 inline) split into 4 private
-Tier methods per backlog approach: `_tier0_document_map` (46L), `_tier1_zone_pages`
-(45L), `_tier2_ocr_and_stitch` (52L), `_tier3_invariant_gate` (68L). execute() is now
-a 147L linear pipeline threading results, eval-push calls (stage1/2/3) kept at the
-same logical points. Signature unchanged (report_id, pdf_path) → callers/handlers
-untouched. Two per-unit sub-helpers added (`_zone_unit_pages` 110L, `_gate_check_unit`
-117L) — required to keep the 4 Tier methods under the DoD's 120L cap without
-touching gate/zoning logic (simplicity-gate Q2 exception: DoD-mandated, not
-speculative). Dropped 2 pre-existing dead locals while relocating code (unused
-`import os`, unused `unit_page_type`) — zero behavior change.
-
-### RAW-verify (extraction output unchanged)
-Built a fully-injected-fake harness (build_document_map_fn/zone_page_fn/ocr_unit_fn
-+ mocked `pdf2image.convert_from_path`) exercising 3 branches: Tier0-abort,
-Tier1-abort, happy-path (3 units → 1 pass, 1 quarantined via invariant-gate fail
-[monotonic+orphan], 1 quarantined via ocr_error, 2 vision-verify markers via
-whitelist gate). Captured JSON fingerprint of execute() return + push_layout call
-args + all 3 eval_push_stage calls BEFORE the refactor, re-ran AFTER — `diff` empty
-(byte-identical). Determinism of the harness itself confirmed via 2x repeat-run diff
-pre-refactor.
-
-### Tests
-`pytest -q`: 1088 passed / 12 failed / 1 skipped — identical before and after
-(confirmed via `git stash` that all 12 failures are pre-existing env issues
-[PIL/Tesseract/poppler ABI] in files that do not import extract_layout_first_usecase).
-mypy: pre-existing "pdf-extractor is not a valid Python package name" env error,
-confirmed present on `git stash` (unrelated to this change).
-
-### Commit
-`c3f30df24` — refactor(pdf-extractor): split ExtractLayoutFirstUseCase.execute() into per-Tier methods
-
-Zone health: G12 sandbox gate in `docs/agents/dev-pdf-extractor/flow/main.md` §Pilot
-Hard Rule references a stale path (`sandbox_runner.py` at service root, `--scenario=all`)
-— actual runner is `sandbox/runner.py` with a single-scenario `--scenario PATH` CLI.
-Pilot status is DONE (closed 2026-05-24), so G12 is likely non-operative post-closure;
-doc drift not fixed here (out of scope for this task) — flagging for PO/architect.
-
-### Status
-REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
-
----
-
 ## Cycle 2026-07-09 — FACTORY-PDF-delete-deprecated-inspect
 
 **Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** M | P1
@@ -126,3 +79,45 @@ Zone health: no drift detected.
 
 ### Status
 REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
+
+---
+
+## Cycle 2026-07-09 — FACTORY-PDF-split-generic-md-table
+
+**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** XL | P0 | epic: FACTORY-MAINTAINABILITY-2026-06 | BOUNDED-1 auto-pickup
+
+### Refactor
+Split the 4111L `generic_md_table_extractor.py` god-file into `infrastructure/
+generic_md_table/` (constants, markdown_emit, grid_cleanup, ordinal_grid,
+document_map, page_zoning, unit_ocr, extractor) behind a 164L thin re-export shim —
+8 sequential commits, one sub-module per PR, verbatim moves (ast span extraction +
+byte-diff verified against pre-move bodies at every stage). `_process_page` (the
+largest method) split into 3 named stage helpers (Step A tokenize, Step A2
+classify+measure, Steps C5-G per-region reconstruct+emit) while staying a bound
+method (test seam: tests call/monkeypatch `extractor._process_page` directly).
+`scripts/pdf-extractor-god-file-extract.py` (new, reusable) does the line-accurate
+ast-based extraction/removal.
+
+### RAW-verify
+Baseline: `pytest -q` = 11 failed/1017 passed/1 skipped (pre-existing env-only —
+no PDF fixtures/Tesseract/poppler in sandbox). Identical after every one of the 8
+stages. Symbol-parity: AST-diffed the original module's 112 top-level names
+(`c2069debd`, pre-split) vs the final shim's `dir()` — 0 missing (except 5 unused
+stdlib typing re-exports), 0 extras. `test_generic_md_table_extractor.py`
+(incl. AC-1 Fence-A check): 149/149 pass post-split. mypy: pre-existing
+"not a valid Python package name" env error, confirmed identical via `git stash`.
+
+### G12 sandbox gate — N/A
+`pilot-status-pdf-extractor.json` status=DONE (closed 2026-05-24); the flow doc's
+`sandbox_runner.py --tier=primitive/module` script does not exist in this repo
+state (only `sandbox/` dashboard-trace tooling remains) — same stale-gate drift
+flagged in the prior split cycle's Zone health note. pytest is the live DoD gate.
+
+### Commits
+`21686062b`..`f261bd4b6` (8 commits) — refactor(pdf-extractor): FACTORY-PDF-split-generic-md-table Stage 1/8..8/8
+
+Zone health: G12 pilot-gate doc drift (flagged twice now, prior cycle + this one) —
+still not fixed, needs PO/architect to update or retire the stale flow-doc section.
+
+### Status
+REVIEW → next_agent=qa (rebuild_required: true; ops rebuild+swap, then qa live-verify)
