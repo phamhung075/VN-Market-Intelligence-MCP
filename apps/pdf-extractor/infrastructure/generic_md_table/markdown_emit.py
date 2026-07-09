@@ -1,3 +1,7 @@
+# size-justification: 132L — two pure functions (ocr_text_to_markdown 55L,
+# _emit_markdown_table 48L incl. nested _cell helper) forming one cohesive
+# "markdown emission" seam per FACTORY-PDF-split-generic-md-table's approved
+# module list (docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md).
 """
 infrastructure/generic_md_table/markdown_emit.py — MD-EXTRACT-9 (Stage 2/8)
 
