@@ -291,12 +291,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FACTORY-SCHEDULER-split-dataAuditJob",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-SCHEDULER-split-dataAuditJob — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-09T10:51:02Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "ops",
+    "next_action": "FACTORY-SCHEDULER-split-dataAuditJob at REVIEW -- ops: Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild+swap mcp-server container, health/tool-count/dashboard-route checks), then qa: Step 5 live RAW-verify (runDailyAudit/runWeeklyAudit findings shape via cron_job_runs / dashboards), then po: Step 6 close.",
+    "updated_at": "2026-07-09T11:18:39Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7725,22 +7725,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "title": "Extract dataAuditJob D-n/W-n checks into per-check modules",
-        "priority": "P0",
-        "zone": "mcp-server-scheduler",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-SCHEDULER-split-dataAuditJob",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-dataAuditJob",
-        "promoted_at": "2026-07-09T10:50:49Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-09T10:51:02Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -7859,6 +7844,26 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Extract dataAuditJob D-n/W-n checks into per-check modules",
+        "priority": "P0",
+        "zone": "mcp-server-scheduler",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-SCHEDULER-split-dataAuditJob",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-dataAuditJob",
+        "promoted_at": "2026-07-09T10:50:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-09T10:51:02Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "rebuild_required": true,
+        "moved_to_review_at": "2026-07-09T11:18:39Z",
+        "moved_by": "dev-mcp-server",
+        "commit": "7b62f73e7",
+        "review_note": "dataAuditJob.ts (1300L) runDailyChecks(D-1..D-11)/runWeeklyChecks(W-1..W-7) held 30+ inline findings.push sites. Split into scheduler/news-analysis/audit-checks/ — 19 files, one per check group, each <=120L, pure (db)=>AuditFinding[] except async checkLancedbDrift (W-7, injected GetCountFn). AuditFinding/TelegramFn/GetCountFn/checkToCategory/severityToPriority/getPreviousRowCounts/insertFeedbackIfNew/buildFindingTitle/buildTelegramMessage/INDICATOR_RANGES/SNAPSHOT_TABLES moved to new dataAuditShared.ts. dataAuditJob.ts is now a 353L thin orchestrator: runDailyChecks/runWeeklyChecks are [...checkA(db),...checkB(db),...] spreads in the exact original D-n/W-n order (finding order + insertFeedbackIfNew side-effect ordering preserved), plus writeSystemLog/upsertAuditState/maybeSendTelegram + the public runDailyAudit/runWeeklyAudit/runDailyAuditIfStale entry points; re-exports AuditFinding/TelegramFn/GetCountFn/buildFindingTitle for zero call-site churn (existing tests + bctcReparseJob.ts unchanged). RAW-verify: scratch pre/post comparison script ran runDailyAudit/runWeeklyAudit against identical seeded fixture DBs using a git-HEAD copy of the pre-split monolith vs the post-split module — findings[] output (20 daily + 27 weekly findings) and agent_feedback insert ordering byte-identical (JSON deep-equal). New FACTORY-SCHEDULER-split-dataAuditJob.test.ts (7 tests) exercises 6 extracted check functions directly, demonstrating individual testability. tsc clean. Targeted suite (11 files: 157/314/1055/1420/1862j/1041/1086/1101/1221/p2-f-rag-http-rewire + new split test) 92/92 pass. toolCount=183 unchanged, scheduler cron.schedule grep=3 unchanged (no scheduler wiring touched — only news-analysis/ internal file layout). Commit 7b62f73e7. rebuild_required=true — scheduler/cron hot path, new code only takes effect after container rebuild. Routes through Docker Microservice Code-Change Close Gate: ops Steps 1-4 -> qa Step 5 -> po Step 6."
       }
     ],
     "qa": [],
