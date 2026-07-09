@@ -269,10 +269,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-PDF-split-extractLayoutFirst-execute",
-    "next_agent": "qa",
-    "next_action": "FACTORY-PDF-split-extractLayoutFirst-execute at REVIEW -- ops: rebuild+swap pdf-extractor container, then qa: live-endpoint RAW-verify of ExtractLayoutFirstUseCase.execute() Tier0-3 pipeline.",
-    "updated_at": "2026-07-09T01:04:39Z",
-    "updated_by": "dev-pdf-extractor"
+    "next_agent": "po",
+    "next_action": "FACTORY-PDF-split-extractLayoutFirst-execute at REVIEW -- qa Step 5 live E2E RAW-verify PASS -- po: Step 6 sign-off.",
+    "updated_at": "2026-07-09T01:33:30Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8753,14 +8753,17 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-09T00:48:03Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
+        "next_agent": "po",
         "moved_to_review_at": "2026-07-09T01:04:39Z",
         "moved_by": "dev-pdf-extractor",
         "review_note": "Code split DONE + tests DONE: ExtractLayoutFirstUseCase.execute() (~480L, Tier0-3 inline) refactored into 4 private Tier methods (_tier0_document_map 46L, _tier1_zone_pages 45L, _tier2_ocr_and_stitch 52L, _tier3_invariant_gate 68L, all <=120L per DoD) plus 2 per-unit sub-helpers (_zone_unit_pages 110L, _gate_check_unit 117L) needed to keep the Tier methods under the cap. execute() is now a 147L linear pipeline; signature (report_id, pdf_path) and return shape unchanged; quarantine/needs_vision_verify semantics preserved exactly. RAW-verify: fully-injected-fake harness (build_document_map_fn/zone_page_fn/ocr_unit_fn + mocked pdf2image.convert_from_path) exercising Tier0-abort, Tier1-abort, and a happy-path with pass/quarantine(invariant-gate+ocr_error)/vision-verify branches -- execute() return dict + push_layout call args + all 3 eval_push_stage calls byte-identical before/after (JSON diff empty). pytest -q: 1088 pass / 12 pre-existing env failures (PIL/Tesseract/poppler, confirmed via git-stash baseline, unrelated files) / 1 skipped -- identical before and after, zero regressions. mypy blocked by pre-existing pyproject.toml importlinter package-name bug, confirmed present at baseline too (git stash) -- not introduced by this diff. Commit c3f30df24. rebuild_required: true -- pdf-extractor container must be rebuilt to deploy this refactor before a live-endpoint RAW-verify is meaningful; holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy -- next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification.",
         "rebuild_required": false,
         "ops_close_gate_at": "2026-07-09T03:16:00Z",
         "ops_close_gate_by": "ops",
-        "ops_note": "Steps 1-4 complete; SHA-gate deferred per runbook Phase B; container healthy; handoff to QA for Step 5 endpoint verification"
+        "ops_note": "Steps 1-4 complete; SHA-gate deferred per runbook Phase B; container healthy; handoff to QA for Step 5 endpoint verification",
+        "qa_verify_at": "2026-07-09T01:33:30Z",
+        "qa_verify_by": "qa",
+        "qa_note": "Step 5 live E2E RAW-verify PASS: 2 real POST /extract-layout-first requests (REE_2025_Q4.pdf 24pg, ACB Q1-2026 33pg) exercised full Tier0-3 pipeline on live image d3abfe8bb831 (git_sha label 0cb48b4c confirmed ancestor-contains c3f30df24). Both returned 202, completed DONE with well-formed result dicts, pushed=True, independently confirmed persisted in bctc_layout_units (not log-echo). Zero exceptions/tracebacks/warnings, zero 5xx in full container log history, container healthy throughout. ACB quarantine delta vs its stale 2026-05-30 baseline (0->12) explained by 2 intervening independent gate-logic commits (GATE-VISION 1588a5910, eval-hook 5ce052f3a), not this refactor -- Tier0 unit-count (22) matched exactly. SHA-gate label deferral treated as settled per dispatch instruction, not re-litigated. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md #qa-S29. VERDICT PASS -- routing to po for Step 6 sign-off."
       }
     ],
     "qa": [],
