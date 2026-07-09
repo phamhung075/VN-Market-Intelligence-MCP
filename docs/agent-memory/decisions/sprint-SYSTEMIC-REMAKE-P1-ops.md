@@ -210,7 +210,7 @@
 - Commit c3962350d (code + board setup by dev-macro-indicators)
 - orch-state.json updated by ops via scripts/orch-apply.sh (2026-07-09T09:22:00Z)
 
-## STEP ops-S4: FACTORY-DOMAIN-split-cascade-engine Docker Close Gate (2026-07-09T11:59–12:05Z)
+## STEP ops-S7: FACTORY-DOMAIN-split-cascade-engine Docker Close Gate (2026-07-09T11:59–12:05Z)
 
 **Task ID:** FACTORY-DOMAIN-split-cascade-engine
 
