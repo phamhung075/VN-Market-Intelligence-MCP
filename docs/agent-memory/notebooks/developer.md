@@ -1,6 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-09 | **Cycle:** FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT
+**Last updated:** 2026-07-09 | **Cycle:** FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT (qa re-review bounce fixed)
 
 ## Session 2026-07-08 — FIX-DEVTEAM-PREFLIGHT-SF1-REENTRANT (router-escalated, live-observed dead-drive window)
 
@@ -37,3 +37,13 @@
 **Verification (no `.jq` unit-test convention exists in this repo — `router-d1-claim.jq`/`devteam-backlog-claim-bounded1.jq` ship without one):** 3 manual scratch-copy scenarios against a copy of the real live `orch-state.json` — (A) row present + `.head` matches → both writes land; (B) row present + `.head` points at a DIFFERENT task → row updates, `.head` untouched byte-for-byte; (C) row absent from the stated lane → `error()`, non-zero exit, empty stdout (no partial write). Also ran the real `bun scripts/orch-validate.mjs` against scenario A's candidate output — Stage 0+1 PASS (123 pre-existing coherence warnings unrelated to this change, same count before/after).
 
 **Scope discipline (per dispatch split note):** did NOT touch the commit-gate footnote (brief §2.2), the STEP ops-Sn journal-filename enforcement line (§2.3), or `.claude/skills/commit-boundary/SKILL.md`'s zone table — those are the follow-on `FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE` task (agent-father, `depends_on: [this task]`). No `apps/*` change, no Docker Close Gate needed (script + doc only, no rebuild) — flipped board row REVIEW, `next_agent`→qa via `orch-apply.sh`.
+
+## Session 2026-07-09 — FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT (qa CHANGES_REQUESTED bounce, one-line-class doc fix)
+
+**Task:** qa PASSED the script (`scripts/ops-closegate-handoff.jq`, 4/4 DoD + 3 scratch scenarios + `orch-validate` clean) but CHANGES_REQUESTED the doc: runbook `docs/protocols/docker-deployment-runbook.md:124` embedded the Step-4b invocation in a GFM table cell with the shell pipe escaped `\|` — valid table markup, but as RAW TEXT (what `Read`/any text-consuming agent sees) that backslash-pipe is not a real shell pipe; copy-pasted, `jq` gets `|` and `bash` as extra file args, exit 2.
+
+**Fix:** moved the invocation out of the table cell into a fenced ```bash block directly below the table (real unescaped `|`); cell prose now just points at the block. Verified GFM table-cell pipe-escaping is a real spec requirement (not renderer-tolerant) before picking this over de-escaping in place — confirmed via all 9 raw table lines needing exactly 4 pipe-delimited columns each.
+
+**Self-caught bug:** first draft referenced the pipe character in the cell's own prose as an inline code span, which reintroduced an unescaped pipe in that same cell (5 pipes instead of 4) — caught by a raw pipe-count check across all table lines before calling it done.
+
+**Board:** status stays REVIEW, `next_agent` developer→qa, `qa_verdict` CHANGES_REQUESTED→null (repo precedent: commit `975465911`), `.head.next_agent` synced to qa in the same atomic `orch-apply.sh` write.
