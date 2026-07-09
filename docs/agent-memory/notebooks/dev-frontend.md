@@ -1,6 +1,30 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-07-02 | **Sprint:** DASH-CRON-RECHECK-TABLE
+**Last updated:** 2026-07-09 | **Sprint:** SYSTEMIC-REMAKE-P1
+
+---
+
+## Session: 2026-07-09 (FACTORY-FRONTEND-extract-computeDecision — BOUNDED-1 idle-pickup)
+
+**FACTORY-FRONTEND-extract-computeDecision DONE — computeDecision moved route→domain**
+
+Zone health: 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP schema, unrelated); tsc 0 errors; eslint clean (pre-existing 5 `react-hooks/exhaustive-deps` config errors in unrelated components/analysis/* files, confirmed present before this change via git-stash diff) | HEALTHY
+
+Task: `docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md` flagged `computeDecision` (TA/RSI/KD/price scoring, MUA MẠNH/MUA/GIỮ/BÁN/BÁN MẠNH) as business logic leaking into the interface layer (`dashboard.analysis.tsx`).
+
+Files created:
+- `app/domain/analysis/decision.ts` — `computeDecision` + `DecisionResult` moved verbatim; 13 inline magic numbers hoisted to named consts (`TA_TREND_SCORE`, `RSI_SCORE`, `KD_STRONG_SCORE`, `KD_CAUTION_SCORE`, `PRICE_TREND_SCORE`, `PRICE_TREND_LOOKBACK`, `RSI_OVERSOLD`, `RSI_RECOVERY_CEILING`, `RSI_OVERBOUGHT`, `STRONG_BUY_SCORE`, `BUY_SCORE`, `HOLD_SCORE`, `SELL_SCORE`) — if/else structure kept verbatim (no behavior change)
+
+Files updated:
+- `routes/dashboard.analysis.tsx` — local `computeDecision`/`DecisionResult` def removed; imports both from `~/domain/analysis/decision`; `decision` const explicitly typed `DecisionResult` (keeps the type import non-dead)
+- `__tests__/1937-decision-logic.test.ts` — import re-pointed `~/routes/dashboard.analysis` → `~/domain/analysis/decision`
+- `docs/architecture/microservice/frontend/domain-model.md` — `computeDecision` Business Rules section: source path + threshold-const note updated
+
+RAW-verify: ran 7 representative (ta, reading, prices) tuples through the moved function directly (tsx script, not committed) — output byte-identical to the pre-move version for all 5 label branches (MUA MẠNH/MUA/GIỮ/BÁN/BÁN MẠNH) + null-TA path; matches existing 10-assertion test suite which stayed GREEN untouched.
+
+Commit: `2819d710c` | tsc: 0 errors | vitest: 2047 pass / 2 pre-existing fail | eslint: clean (no new errors vs pre-change baseline)
+
+rebuild_required=true — route file touched; board flipped `in_progress`→`review`, `next_agent=ops` for Docker Close Gate.
 
 ---
 
