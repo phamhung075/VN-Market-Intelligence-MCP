@@ -291,12 +291,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE",
-    "next_agent": "agent-father",
-    "next_action": "FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE dispatched to agent-father — dependency FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT closed DONE.",
-    "updated_at": "2026-07-09T08:35:26Z",
-    "updated_by": "router"
+    "next_agent": "qa",
+    "next_action": "FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE forwarded review->qa",
+    "updated_at": "2026-07-09T08:51:19Z",
+    "updated_by": "agent-father"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7664,33 +7664,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE",
-        "type": "FIX",
-        "title": "Codify ops Close Gate step-ends-only-on-commit invariant + STEP ops-Sn decision-journal filename enforcement; fold 3 existing one-off-filename offenders",
-        "owner": "po",
-        "status": "IN_PROGRESS",
-        "priority": "high",
-        "size": "S",
-        "zone": "cross-service/",
-        "recurring": true,
-        "created_at": "2026-07-09T07:29:23Z",
-        "created_by": "agents-architect",
-        "architecture_brief": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "note": "Brief §2.2+§2.3: (a) ops's Step 4/4b is not complete until ITS OWN commit lands (notebook + sprint-<sprint_id>-ops.md journal + orch-state.json diff, explicit-path git add/commit/show-verify — modeled on agents-architect's own Brief-Commit Invariant); Step-4 RETURN block must carry the resulting commit SHA, a report without one is INCOMPLETE (router/PO committing ops's artifacts is a defect to report, not a recovery path — happened twice already, commits f4afa0e03/b907a8ea6). Add an ops row to .claude/skills/commit-boundary/SKILL.md's per-agent zone table scoped to exactly those 3 paths. (b) enforce the decision-journal skill's own SPRINT_ID resolution / STEP ops-Sn append pattern for the Close Gate journal entry — a one-off dated filename is never correct. Fold these 3 existing offenders into sprint-SYSTEMIC-REMAKE-P1-ops.md's STEP ops-Sn sequence (content is legitimate, just filed under the wrong name — migrate, do not delete): docs/agent-memory/decisions/2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md. Owner: agent-father (docs/protocols/ + docs/agents/ops/flow/ + .claude/skills/commit-boundary/SKILL.md all fall in its declared zone). DoD in brief §5 items 3-4.",
-        "next_agent": "agent-father",
-        "detail_ref": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "status_note": "Architect brief §2.2+§2.3. (2.2) Runbook commit-gate footnote — Step 4/4b NOT complete until ops own commit lands; a router/PO cleanup-commit of ops uncommitted Close-Gate artifacts = defect to report, not a recovery path (3rd recurrence→escalate) — plus add an ops row to .claude/skills/commit-boundary/SKILL.md zone table scoped to exactly docs/agent-memory/notebooks/ops.md + docs/agent-memory/decisions/sprint-<id>-ops.md + docs/data/orch/orch-state.json. (2.3) Runbook (or docs/agents/ops/flow/docker.md) STEP ops-Sn journal-filename enforcement line; FOLD (migrate, do NOT delete) the 3 one-off offenders (2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, 2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, 2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md) into sprint-SYSTEMIC-REMAKE-P1-ops.md STEP ops-Sn. agent-father zone (docs/agents/, .claude/skills/, docs/agent-memory/, docs/protocols/). AC brief §5.3+§5.4. Doc-only, no rebuild. Triaged po-S16 tick.",
-        "depends_on": [
-          "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT"
-        ],
-        "triaged_at": "2026-07-09T07:47:30Z",
-        "triaged_by": "po",
-        "claimed_at": "2026-07-09T08:35:26Z",
-        "claimed_by": "router (dispatch agent-father)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -7809,6 +7783,34 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "id": "FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE",
+        "type": "FIX",
+        "title": "Codify ops Close Gate step-ends-only-on-commit invariant + STEP ops-Sn decision-journal filename enforcement; fold 3 existing one-off-filename offenders",
+        "owner": "po",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/",
+        "recurring": true,
+        "created_at": "2026-07-09T07:29:23Z",
+        "created_by": "agents-architect",
+        "architecture_brief": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
+        "note": "Brief §2.2+§2.3: (a) ops's Step 4/4b is not complete until ITS OWN commit lands (notebook + sprint-<sprint_id>-ops.md journal + orch-state.json diff, explicit-path git add/commit/show-verify — modeled on agents-architect's own Brief-Commit Invariant); Step-4 RETURN block must carry the resulting commit SHA, a report without one is INCOMPLETE (router/PO committing ops's artifacts is a defect to report, not a recovery path — happened twice already, commits f4afa0e03/b907a8ea6). Add an ops row to .claude/skills/commit-boundary/SKILL.md's per-agent zone table scoped to exactly those 3 paths. (b) enforce the decision-journal skill's own SPRINT_ID resolution / STEP ops-Sn append pattern for the Close Gate journal entry — a one-off dated filename is never correct. Fold these 3 existing offenders into sprint-SYSTEMIC-REMAKE-P1-ops.md's STEP ops-Sn sequence (content is legitimate, just filed under the wrong name — migrate, do not delete): docs/agent-memory/decisions/2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, docs/agent-memory/decisions/2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md. Owner: agent-father (docs/protocols/ + docs/agents/ops/flow/ + .claude/skills/commit-boundary/SKILL.md all fall in its declared zone). DoD in brief §5 items 3-4.",
+        "next_agent": "qa",
+        "detail_ref": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
+        "status_note": "Architect brief §2.2+§2.3. (2.2) Runbook commit-gate footnote — Step 4/4b NOT complete until ops own commit lands; a router/PO cleanup-commit of ops uncommitted Close-Gate artifacts = defect to report, not a recovery path (3rd recurrence→escalate) — plus add an ops row to .claude/skills/commit-boundary/SKILL.md zone table scoped to exactly docs/agent-memory/notebooks/ops.md + docs/agent-memory/decisions/sprint-<id>-ops.md + docs/data/orch/orch-state.json. (2.3) Runbook (or docs/agents/ops/flow/docker.md) STEP ops-Sn journal-filename enforcement line; FOLD (migrate, do NOT delete) the 3 one-off offenders (2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, 2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, 2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md) into sprint-SYSTEMIC-REMAKE-P1-ops.md STEP ops-Sn. agent-father zone (docs/agents/, .claude/skills/, docs/agent-memory/, docs/protocols/). AC brief §5.3+§5.4. Doc-only, no rebuild. Triaged po-S16 tick.",
+        "depends_on": [
+          "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT"
+        ],
+        "triaged_at": "2026-07-09T07:47:30Z",
+        "triaged_by": "po",
+        "claimed_at": "2026-07-09T08:35:26Z",
+        "claimed_by": "router (dispatch agent-father)",
+        "moved_by": "agent-father",
+        "moved_at": "2026-07-09T08:51:19Z",
+        "implementation_note": "Doc/skill/memory landed by agent-father, commit 6f054ea3a: runbook Step 4/4b Commit-Gate Invariant + STEP ops-Sn enforcement + commit-boundary ops zone row + 3 offenders folded into sprint-SYSTEMIC-REMAKE-P1-ops.md. AC brief §5.3+§5.4 satisfied."
       }
     ],
     "qa": [],
