@@ -2,6 +2,28 @@
 // Pure types. No I/O, no infrastructure imports.
 package domain
 
+// -----------------------------------------------------------------------------
+// Price scoring constants
+// -----------------------------------------------------------------------------
+// Extracted from inline literals for clarity, auditability, and naming.
+// Provenance: FACTORY-KINHDICH-name-price-score-constants (2026-07-09).
+const (
+	// DailyReturnNormalizationBand is the divisor used to normalise daily returns
+	// into [-1, +1]. A 5% return (0.05) maps to score=1.0, -5% to -1.0.
+	// Basis: Vietnamese stock exchanges enforce a daily price-limit band of +/-7%
+	// for HOSE, +/-10% for HNX/UPCOM. The 5% band is a conservative normalisation
+	// anchor that keeps typical daily moves well within [-1, +1] while allowing
+	// extreme (+7%) moves to saturate at the boundary.
+	// Provenance: original literal `/0.05` in percentage-return normalisation.
+	DailyReturnNormalizationBand = 0.05
+
+	// MinPricePointsForScoring is the minimum number of price points required to
+	// compute a valid reading. 7 price points yield 6 daily returns (one per hao),
+	// which the hao_encoder primitive expects.
+	// Provenance: original literal `7` in len(prices)<7 guard.
+	MinPricePointsForScoring = 7
+)
+
 // HaoState represents the state of a single hao (line) in a hexagram.
 type HaoState string
 

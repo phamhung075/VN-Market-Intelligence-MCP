@@ -294,8 +294,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "FACTORY-KINHDICH-name-confidence-constants completed by dev-kinh-dich — all 6 confidence constants extracted, compile-time blend-weight invariant added, tests green, sandbox GREEN",
-    "updated_at": "2026-07-09T18:54:52Z",
+    "next_action": "FACTORY-KINHDICH-name-price-score-constants completed by dev-kinh-dich; awaiting QA review + ops rebuild verification",
+    "updated_at": "2026-07-09T19:23:35Z",
     "updated_by": "dev-kinh-dich"
   },
   "narrative": {
@@ -3885,15 +3885,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-add-data-invariant-test"
       },
       {
-        "title": "Name price_score normalization divisor 0.05 and 7-point threshold",
-        "priority": "P1",
-        "zone": "kinh-dich-service",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-KINHDICH-name-price-score-constants",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-name-price-score-constants"
-      },
-      {
         "title": "Split the 752L kinh-dich sandbox CLI by seam",
         "priority": "P2",
         "zone": "kinh-dich-service",
@@ -7318,9 +7309,28 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T18:52:05Z",
+    "last_triaged_at": "2026-07-09T19:17:33Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "title": "Name price_score normalization divisor 0.05 and 7-point threshold",
+        "priority": "P1",
+        "zone": "kinh-dich-service",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-KINHDICH-name-price-score-constants",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-name-price-score-constants",
+        "promoted_at": "2026-07-09T19:17:33Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T19:17:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-kinh-dich",
+        "completed_at": "2026-07-09T19:23:35Z",
+        "completed_by": "dev-kinh-dich",
+        "status_note": "Code complete, tests green, sandbox green. Rebuild verification deferred to ops (signal: ops-rebuild-verify-kinh-dich-20260709T1923Z.json)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

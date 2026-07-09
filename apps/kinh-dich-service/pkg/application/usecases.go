@@ -3,6 +3,7 @@ package application
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/vn-market-intelligence/kinh-dich-service/pkg/domain"
@@ -13,7 +14,8 @@ import (
 var ErrNotImplemented = errors.New("kinh-dich ReadingUseCase not implemented — wire reading_composer.ComposeReading before use")
 
 // ErrInsufficientData is returned when there is not enough price data to compute a reading.
-var ErrInsufficientData = errors.New("insufficient price data for market reading — requires at least 7 price points")
+// References domain.MinPricePointsForScoring to prevent message drift.
+var ErrInsufficientData = fmt.Errorf("insufficient price data for market reading — requires at least %d price points", domain.MinPricePointsForScoring)
 
 // ReadingUseCase orchestrates the reading flow.
 type ReadingUseCase struct {

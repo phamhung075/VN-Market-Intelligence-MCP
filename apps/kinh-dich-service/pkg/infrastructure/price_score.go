@@ -35,15 +35,15 @@ func (a *PriceScoreAdapter) ComputeScores(stockCode string, days int) []float64 
 		// Log error but return nil (insufficient data) - fail-loud at HTTP layer
 		return nil
 	}
-	if len(prices) < 7 {
-		// Insufficient data to compute 6 period returns
+	if len(prices) < domain.MinPricePointsForScoring {
+		// Insufficient data to compute 6 period returns (need 7 points for 6 returns)
 		return nil
 	}
 
-	// Use the most recent 7 prices to compute 6 returns
+	// Use the most recent domain.MinPricePointsForScoring prices to compute 6 returns
 	// Each return is normalized to [-1, +1] range
 	scores := make([]float64, 6)
-	recentPrices := prices[len(prices)-7:]
+	recentPrices := prices[len(prices)-domain.MinPricePointsForScoring:]
 
 	for i := 0; i < 6; i++ {
 		prevPrice := recentPrices[i].Price
@@ -57,9 +57,9 @@ func (a *PriceScoreAdapter) ComputeScores(stockCode string, days int) []float64 
 		// Compute percentage return
 		ret := (currPrice - prevPrice) / prevPrice
 
-		// Normalize to [-1, +1] range
-		// Assume typical daily return range is [-5%, +5%]
-		normalized := ret / 0.05
+		// Normalize to [-1, +1] range using domain.DailyReturnNormalizationBand
+		// (5% band — see constant definition for VN price-limit rationale)
+		normalized := ret / domain.DailyReturnNormalizationBand
 		if normalized > 1 {
 			normalized = 1
 		} else if normalized < -1 {

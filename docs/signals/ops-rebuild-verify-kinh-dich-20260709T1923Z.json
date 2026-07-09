@@ -1,0 +1,16 @@
+{
+  "signal_type": "ops-rebuild-verify",
+  "task_id": "FACTORY-KINHDICH-name-price-score-constants",
+  "target_service": "kinh-dich-service",
+  "created_at": "2026-07-09T19:23:00Z",
+  "created_by": "dev-kinh-dich",
+  "priority": "P2",
+  "deferred_verification": {
+    "description": "RAW-verify input scores unchanged after rebuild",
+    "check": "After rebuilding kinh-dich-service container, verify that readings for test stock (e.g., VCB) produce identical input scores to hao_encoder. The 2 new constants (DailyReturnNormalizationBand=0.05, MinPricePointsForScoring=7) are at default values so behavior must be identical.",
+    "acceptance": "Call /api/v1/reading/VCB, compare hao scores array with pre-rebuild baseline. All 6 scores must match.",
+    "blocking": false
+  },
+  "status": "pending",
+  "notes": "Per DoD: rebuild_required=true. This signal tracks the deferred verification that was user-gated (feedback_user_gates_delegate_to_ops.md). Do not close task as DONE_VERIFIED until ops confirms rebuild + score verification."
+}

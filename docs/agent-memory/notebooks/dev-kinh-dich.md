@@ -6,43 +6,17 @@ Zone: `apps/kinh-dich-service/` | Stack: Go 1.22 | DB: market.db (read)
 
 [4 most recent cycles retained below. Archive in git history.]
 
-### 2026-05-24 — P1-E: G7 Edit-Rerun Handler + Zero-Creds Env Audit
-
-**Task:** P1-KD-E — interactive edit-rerun handler + zero-creds proof (G7 gate, G8 honest-red, G12 DoD).
-
-**Files modified:**
-- `apps/kinh-dich-service/dashboard/index.html` — P1-E edit-rerun handler implemented (~1752 lines final)
-- `docs/handoffs/TASK_P1-KD-E.md` — return block + deliberate-edit transcript added
-
-**AC results:** All 8 PASS.
-
-**Key implementations:**
-- `edit-rerun-panel` div: inline modal expansion with instructions, tier-aware command, paste textarea, Apply + Clear buttons
-- `parseNdjsonOutput(text)`: parses `[PASS]/[FAIL] scenario-file.json` lines from sandbox output
-- `applyResultsToState(results)`: updates STATE + DOM (dots, group headers, summary chips, modal status text) — honest G8 (never fakes green)
-- `tierForScenario(type)` + `rerunCmdForTier(tier)`: primitive → `--tier=primitive`, module → `--tier=module` (AC-2)
-- `openModal()` updated: sets tier-aware command, edit file path, resets edit-rerun panel state on each open
-- Footer rerun block updated: both --tier=primitive and --tier=module commands visible and copy-able
-
-**AC-3 env audit:** `env | grep -E "DB_PATH|KINH_DICH_DB|API_KEY|SECRET|PASSWORD"` → exit 1 (no matches). `CTX_ADVISOR_*TOKEN` vars are Claude Code tooling injections, not service credentials.
-
-**Commit:** 6fc9b721
-
-Zone health: P1-E DONE — G7 edit-rerun handler + zero-creds proof shipped, G12 streak 4/4, P1-F ready | HEALTHY
-
----
-
 ### 2026-05-24 — P2-KD-N: G10 blind-fix + G11 trial-2 coupling proof
 
-**Task:** P2-KD-N — G10 AI-fixability ≤2 cycles + G11 2-trial coupling proof.
+**Task:** P2-KD-N — G10 AI-fixability <=2 cycles + G11 2-trial coupling proof.
 
 **Bug found:** `LAO_DUONG_THRESHOLD = 0.85` (was 0.75). Comment `// G10-INJECTED: was 0.75` was visible in source. Fix: single edit restoring to 0.75. Both hao-encoder-golden + hao-encoder-edge went GREEN simultaneously.
 
 **G10:** Cycle 1. Sandbox 17/17. eslint exit 0. tsc exit 0. Byte-identical restore confirmed (diff empty after commit).
 
-**G11 Trial-1:** 2 hao-encoder scenarios RED from injection → single literal fix → both GREEN. reading-composer-golden stayed PASS (module sandbox fallback path).
+**G11 Trial-1:** 2 hao-encoder scenarios RED from injection -> single literal fix -> both GREEN. reading-composer-golden stayed PASS (module sandbox fallback path).
 
-**G11 Trial-2:** Injected `GENERATION[Thuy] = 'Hoa'` (was 'Moc') into ngu-hanh-classifier locally. ngu-hanh-classifier-golden FAIL (NEUTRAL instead of TUONG_SINH). Single edit revert → 17/17 GREEN. Local-only (no commit, git clean at task end).
+**G11 Trial-2:** Injected `GENERATION[Thuy] = 'Hoa'` (was 'Moc') into ngu-hanh-classifier locally. ngu-hanh-classifier-golden FAIL (NEUTRAL instead of TUONG_SINH). Single edit revert -> 17/17 GREEN. Local-only (no commit, git clean at task end).
 
 **Files changed:** `apps/kinh-dich-service/src/primitive/hao-encoder/index.ts` + `docs/handoffs/TASK_P2-KD-N.md`
 
@@ -100,23 +74,30 @@ Zone health: FACTORY-KINHDICH-name-confidence-constants DONE_VERIFIED — all li
 
 ---
 
-### 2026-07-08 — FACTORY-KINHDICH-delete-deprecated-ts-tree
+### 2026-07-09 — FACTORY-KINHDICH-name-price-score-constants
 
-**Task:** Delete the ~4302 LOC `apps/kinh-dich-service/src/_deprecated/` TypeScript predecessor tree.
+**Task:** Name price_score normalization divisor 0.05 and 7-point threshold.
 
-**Pre-check (zero live references verified myself):**
-- `grep -r '_deprecated' --include="*.go" --include="*.mod" --include="Dockerfile*" --include="*.yaml"` across repo: zero hits in kinh-dich-service zone
-- `grep -r 'apps/kinh-dich-service/src/_deprecated'` in code files: only self-references within the deprecated tree
-- Dockerfile builds `go build ./cmd/server` only — no TypeScript compiled
+**Constants extracted (domain/models.go const block with provenance comments):**
+- `DailyReturnNormalizationBand = 0.05` — daily return normalization divisor (VN price-limit basis: HOSE +/-7%, HNX/UPCOM +/-10%; 5% is conservative anchor)
+- `MinPricePointsForScoring = 7` — minimum price points for valid reading (7 points yield 6 daily returns for 6 haos)
 
-**Deletion scope:**
-- 34 git-tracked files in `apps/kinh-dich-service/src/_deprecated/`
-- ~4302 LOC (TypeScript/JSON) — pre-Go-reboot implementation, fully superseded by Go `pkg/` tree
+**Architecture decision:** Constants placed in domain layer (not infrastructure) because:
+1. depguard Fence-C blocks application importing infrastructure
+2. `ErrInsufficientData` in application layer needs to reference the constant
+3. These are business rules (VN market structure, hao-encoder input contract)
 
-**Post-deletion verification (all GREEN):**
-- `go build ./...` — exit 0
-- `go test ./...` — all packages ok (5 test packages + 7 no-test-files)
+**Files modified:**
+- `apps/kinh-dich-service/pkg/domain/models.go` — added DailyReturnNormalizationBand and MinPricePointsForScoring constants
+- `apps/kinh-dich-service/pkg/infrastructure/price_score.go` — replaced inline literals with domain.* constants
+- `apps/kinh-dich-service/pkg/application/usecases.go` — ErrInsufficientData now references domain.MinPricePointsForScoring
+
+**Post-change verification (all GREEN):**
+- `go test ./...` — all packages ok
 - `go vet ./...` — exit 0
+- `go build ./cmd/...` — exit 0
 - `golangci-lint run ./...` — 0 issues
+- Sandbox primitive: 15/15 GREEN
+- Sandbox module: 2/2 GREEN
 
-Zone health: FACTORY-KINHDICH-delete-deprecated-ts-tree REVIEW — 34 files deleted, all Go gates green, awaiting QA | HEALTHY
+Zone health: FACTORY-KINHDICH-name-price-score-constants REVIEW — constants named, tests green, sandbox green, pending rebuild verification | HEALTHY
