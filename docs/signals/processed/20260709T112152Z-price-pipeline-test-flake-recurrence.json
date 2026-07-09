@@ -1,0 +1,32 @@
+{
+  "from": "dev-team",
+  "to": "architect",
+  "type": "recurring-bug",
+  "priority": "medium",
+  "payload": {
+    "module": "apps/mcp-server/src/__tests__/240-price-pipeline-recovery.test.ts",
+    "count": 2,
+    "occurrences": [
+      {
+        "head_sha": "f61f78475e6cc88a656b9ea6934af797e2c6d84c",
+        "run_id": 29012471904,
+        "at": "2026-07-09T10:47:22Z"
+      },
+      {
+        "head_sha": "6dc8a9421fdad7831fffaeb6775f8c89c8982e9b",
+        "run_id": 29012992815,
+        "at": "2026-07-09T11:19:12Z"
+      }
+    ],
+    "diagnosis": "Root-caused, not blamed on either commit (neither touches price-pipeline code). Test AC-1 (and by the same mechanism AC-13) generates synthetic OHLCV fixture data via unseeded Math.random(): basePrice = 100 + Math.random()*20, low = basePrice - 1 (apps/mcp-server/src/domain/services/priceBackfillService.ts fetchOhlcvData(), line ~217). When basePrice lands in [100,101) (~5% chance per generated row), low falls below the production STOCK_MIN_VND=100 floor (apps/mcp-server/src/domain/services/market-data/ohlcvUnitGuard.ts:24), causing validateOhlcvUnit to guard-reject that row before it reaches the INSERT OR IGNORE statement. AC-1's assertion expect(result.rowsSkipped).toBeGreaterThanOrEqual(1) depends on the ONE row matching the pre-seeded duplicate date (2026-03-27, one of only 3 weekday draws in the test's 5-day range) successfully reaching that INSERT — a ~5% per-run chance of guard-rejection instead flakes this specific assertion. Confirmed via local repro (3/3 clean, consistent with ~95% pass rate) plus direct code read of both the fixture generator and the production guard's exact floor logic (mag = Math.max(...) in normalizeOhlcvToVnd does NOT trip on this — it is the separate per-field validateOhlcvUnit range check that does).",
+    "suggested_fix": "Either seed the RNG deterministically for this test file, or shift the synthetic price floor comfortably away from STOCK_MIN_VND (e.g. basePrice = 200 + Math.random()*20 instead of 100 + ...), or mock/bypass normalizeOhlcvToVnd+validateOhlcvUnit for this dedup/backfill-logic test since it is not testing guard behavior. Test-file-only fix, no production code change, no rebuild required.",
+    "verification_gate": "targeted test file green across >=20 consecutive local runs after fix (probabilistic flake — single-run green is not sufficient proof)"
+  },
+  "createdAt": "2026-07-09T11:21:52Z",
+  "_processed": {
+    "fingerprint": "afeb978ca5147d011a048330307c243d31b52e1a30e8051704ca0f736b21dd23",
+    "processedAt": "2026-07-09T11:46:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

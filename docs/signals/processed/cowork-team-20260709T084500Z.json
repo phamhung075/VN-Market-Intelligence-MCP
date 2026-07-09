@@ -1,0 +1,41 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "HIGH",
+  "tick": "2026-07-09T08:45Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "chef-eod",
+    "alert-commander-market"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "chef-eod",
+      "agent": "unified-agent",
+      "guaranteed": true,
+      "reason": "undeliverable-gateway-blind — trigger_id=trig_01NS8j25rYt4meXVqHyRsVNn present but _superseded_by=cowork-dispatcher (backstop deprecated); dispatcher itself gateway-blind = no path to deliver"
+    },
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher"
+    }
+  ],
+  "escalation_note": "GUARANTEED SLOT MISSED: chef-eod (End-of-Day CHEF synthesized dish, daily deliverable) could not be spawned this tick. This is the 2nd guaranteed-slot miss this session (1st: chef-morning at 05:15Z). Root cause unchanged: native mcp__gateway__call_tool absent from tool set, and the RemoteTrigger backstop for this slot is deprecated (_superseded_by=cowork-dispatcher), so no fallback path exists. Durable fix requires user action: register gateway in .mcp.json + reconnect session (see docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md). No further action taken by dispatcher — escalation already tracked via the existing handoff doc, not re-filing a duplicate.",
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "chef-eod matched without a coinciding chef-intraday this tick — Step 4.5c mutex not applicable (mutex only fires when a guaranteed CHEF slot and chef-intraday match the same tick).",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). chef-eod: trigger_id present but _superseded_by!=null still yields undeliverable per the OR condition. alert-commander-market: trigger_id=null — unambiguous no-backstop.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (send_telegram + emit_pressure_state succeeded).",
+  "work_channel_message_sent": true,
+  "stale_warning_note": "stale_warning TRUE this tick. Last 28 WORK ticks (02:00-08:45): absent/true/absent/absent/absent/true/absent/absent/true/absent/absent/absent/true/absent/absent/absent/absent/true/true/absent/absent/true/absent/absent/true/absent/absent/true — 9 true, 19 absent, confirmed intermittent with no stable pattern.",
+  "recurring_symptom_note": "alert-commander-market now matched 28 consecutive WORK ticks (02:00-08:45), last_fired stuck at 2026-05-25T00:00:00Z — expected gateway-blind symptom, already tracked via docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md.",
+  "emitted_at": "2026-07-09T08:47:13.513Z",
+  "_processed": {
+    "fingerprint": "ef04f6468164459a3d4e0fad3d68a3765741f9f9a7f47b562267bdcdd0e794a7",
+    "processedAt": "2026-07-09T09:16:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

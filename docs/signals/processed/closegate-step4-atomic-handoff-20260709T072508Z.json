@@ -1,0 +1,15 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture-brief",
+  "priority": "high",
+  "payload": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
+  "summary": "UNBLOCK-CLOSEGATE-STEP4-HEAD-SYNC (recurring-bug escalation, 2x router-level fixes f4afa0e03/b907a8ea6): root cause is the ops Docker Close Gate Step-4->qa handoff being the ONLY task-board transition point with no checked-in atomic .head+board jq helper -- ops hand-rolls a fresh inline jq one-liner every time that only touches task_board.<lane>[], never .head. Same missing-procedure gap explains the 2 adjacent process defects (uncommitted artifacts, one-off decision-journal filenames -- 3 offenders found: 2026-07-08-FACTORY-INTERFACE-FINALIZEBCTC-OPS-CLOSE-GATE.md, 2026-07-08-FACTORY-DOMAIN-EXTRACT-BCTC-PARSING-LIB-OPS-CLOSE-GATE.md, 2026-07-09-FACTORY-FRONTEND-SPLIT-DASHBOARD-OPS-CLOSE-GATE.md). Fix design (brief SS2): (2.1) generalized scripts/ops-closegate-handoff.jq mirroring devteam-backlog-claim-bounded1.jq/router-d1-claim.jq precedent -- atomically forwards board row + conditionally syncs .head only when .head.active_task_id==task_id; (2.2) step-ends-only-on-commit invariant modeled on agents-architect's own Brief-Commit Invariant -- Step 4 RETURN must carry a commit SHA, router/PO committing ops's artifacts is a defect not a recovery path; (2.3) enforce decision-journal skill's own SPRINT_ID resolution / STEP ops-Sn append pattern, fold the 3 existing offenders. Fanout backlog rows FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT + FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE minted in orch-state.json task_board.backlog[] for PO triage this tick. DoD checklist in brief SS5.",
+  "createdAt": "2026-07-09T07:25:08Z",
+  "_processed": {
+    "fingerprint": "0b5ed9b9d113cb7d6cdf002f61321ddb01bbda56c35b26ea71d3320b4d70dab9",
+    "processedAt": "2026-07-09T07:46:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

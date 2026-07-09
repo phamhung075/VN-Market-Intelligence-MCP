@@ -1,0 +1,34 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "HIGH",
+  "tick": "2026-07-09T09:15Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "fb-daily"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "fb-daily",
+      "agent": "fb-market-poster",
+      "guaranteed": true,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher (backstop deprecated)"
+    }
+  ],
+  "escalation_note": "GUARANTEED SLOT MISSED: fb-daily (daily Facebook market post, fb-market-poster, cron 15 9 * * 1-5) could not be spawned this tick. This is the 3rd guaranteed-slot miss this session — but the 1st distinct occurrence of THIS slot (1st miss overall: chef-morning 05:15Z; 2nd: chef-eod 08:45Z; 3rd: fb-daily 09:15Z). Root cause unchanged: native mcp__gateway__call_tool absent from tool set, RemoteTrigger backstop deprecated (_superseded_by=cowork-dispatcher). Checked feedback_recurring_bug_escalation.md applicability again given rising guaranteed-miss count — still does not apply (governs git-log-detected repeated code-fix commits, not a live session-level MCP connectivity gap already tracked via handoff doc). No architect escalation filed. Durable fix requires user action: register gateway in .mcp.json + reconnect (see docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md).",
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "fb-daily is parallel_group=fb-poster, not chef — Step 4.5c mutex not applicable to this slot type.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). fb-daily: trigger_id=null alone sufficient — deprecated-backstop pattern (same as alert-commander-market, news-scout-offhours, etc. this session).",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (send_telegram + emit_pressure_state succeeded).",
+  "work_channel_message_sent": true,
+  "stale_warning_note": "stale_warning absent this tick. Cumulative (02:00-09:15, 30 WORK ticks): 9 true, 21 absent — confirmed intermittent with no stable pattern.",
+  "recurring_symptom_note": "New slot type surfaced this tick: fb-daily (fb-market-poster daily FB post) — first appearance this session. alert-commander-market's cron window remains ended for today (last matched 08:30Z).",
+  "emitted_at": "2026-07-09T09:17:03.013Z",
+  "_processed": {
+    "fingerprint": "247c67667c95d6b9588213e84561d9337c4cedc358fcdbed008c6c47b14b98ac",
+    "processedAt": "2026-07-09T10:18:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

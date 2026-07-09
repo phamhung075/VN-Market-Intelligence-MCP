@@ -1,0 +1,40 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-09T08:15Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "chef-intraday",
+    "alert-commander-market"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "chef-intraday",
+      "agent": "unified-agent",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher"
+    },
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher"
+    }
+  ],
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "chef-intraday matched without a coinciding guaranteed CHEF slot (chef-morning/chef-eod/chef-evening) this tick — Step 4.5c mutex not applicable, both slots evaluated independently under Step 5.0.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by). Both slots trigger_id=null — unambiguous no-backstop, no live RemoteTrigger check needed.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (send_telegram + emit_pressure_state succeeded).",
+  "work_channel_message_sent": true,
+  "stale_warning_note": "stale_warning absent this tick. Last 26 WORK ticks (02:00-08:15): absent/true/absent/absent/absent/true/absent/absent/true/absent/absent/absent/true/absent/absent/absent/absent/true/true/absent/absent/true/absent/absent/true/absent — 8 true, 18 absent, confirmed intermittent with no stable pattern.",
+  "recurring_symptom_note": "alert-commander-market now matched 26 consecutive WORK ticks (02:00-08:15), last_fired stuck at 2026-05-25T00:00:00Z — expected gateway-blind symptom, already tracked via docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md, no new escalation needed.",
+  "emitted_at": "2026-07-09T08:16:54.764Z",
+  "_processed": {
+    "fingerprint": "94d3b6050337dc312411b3c2f2b1a6ba65caab69213cc31f746511d9b90bb7f4",
+    "processedAt": "2026-07-09T08:47:12Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
