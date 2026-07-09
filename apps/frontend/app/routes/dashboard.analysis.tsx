@@ -1,4 +1,23 @@
 /**
+ * size-justification: 457L — FACTORY-FRONTEND-split-dashboard-analysis dropped this
+ * route from 1836L to 457L across 18 extraction waves (small pure helpers moved to
+ * app/domain/formatters/*, ~24 presentational components moved to
+ * app/components/analysis/*, each <=120L). What remains is exactly what the backlog
+ * approach mandated stay in the route: the LoaderFunctionArgs loader (single
+ * Promise.allSettled data-fetch orchestration, ~135L), the AnalysisBriefDto/
+ * AnalysisBriefResult/StockDetail/LoaderData type contracts (~55L, several now
+ * exported so the extracted components can import them via `import type` — the
+ * same route-exports-type pattern already used by FinancialsZone/NewsBuzzZone),
+ * and the default-export page composition (~190L) that legitimately owns the
+ * top of this route's render tree per Remix route-module convention. Further
+ * splitting the loader or the composition would move the review surface, not
+ * shrink it. 457L is already the smallest of all 19 /dashboard/* route files in
+ * this zone (siblings run 510-1325L); the monorepo-wide size-justification-header
+ * sweep is a separate, not-yet-due backlog item gated behind a CI size-lint guard
+ * that does not exist yet (see docs/architecture-briefs/2026-06-15-maintainability-
+ * factory-audit.md "CI-size-lint-justification" + "FACTORY-XZONE-size-justification-
+ * sweep").
+ *
  * /dashboard/analysis — Agent market analysis.
  * Sections: Stock selector (all 30 watchlist tickers grouped by sector),
  *           Watchlist overview grid (when no ?stock=),
