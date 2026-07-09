@@ -456,3 +456,47 @@ Dev pre-verify: tsc clean, targeted suite 156 pass/2 skip/0 fail, full suite 143
 
 **Next:** Handoff to qa (Step 5 live-endpoint verify).
 
+
+## Docker Close Gate Steps 1-4: FACTORY-SCHEDULER-job-table-registry (2026-07-09T02:10–02:15Z)
+
+**Task:** FACTORY-SCHEDULER-job-table-registry  
+**Session UUID:** 5a45feda-431e-46c8-941d-a6539a0eca77  
+**Status:** ✓ COMPLETE
+
+**Workflow:**
+- Step 1 (Rebuild): `docker compose build mcp-server` — image rebuilt (src/ changed, deps cached)
+- Step 2 (Restart): `docker compose up -d --no-deps mcp-server` — single-service restart (no peer impact)
+- Step 3 (Verify): Health check + image ID verification + cron registration audit
+- Step 4 (WAL Escalation Job): Verify walEscalation.ts extracted & functional
+
+**Image ID Change:**
+- Before: `sha256:89007691bf07d7aae46b726df6ebcd689902234c9beb9bcca432503668856fdd`
+- After:  `sha256:8c9a642414e6d34bce37b76495e396432ef461628addf9efdfb1fd77f86efd39`
+
+**Health & Registration Verification:**
+- `/health`: 200 OK, toolCount=183 (SSOT baseline confirmed)
+- Scheduler startup logs: "85 cron keys in CRONS map" (includes WAL checkpoint + restart-cadence-alert + 5 summary + 15 named + 64 others)
+- walEscalation.ts: ✓ Extracted from startScheduler.ts, correctly wired into schedulerJobTable.ts via `createWalEscalateFn()`
+- WAL status: Current 1.2 MB (healthy, well below 10 MB threshold)
+- Container restart log: Clean startup, no errors/exceptions
+
+**Unresolved Signal Triage:**
+- Signal ID: `wal-escalation-1783551601546` (severity=HIGH, status=READ, created 2026-07-08T23:00:01.546Z)
+- Root cause: WAL was 29.8 MB when signal raised (checkpoint stalled)
+- Current state: WAL now 1.2 MB (recovered dramatically post-rebuild)
+- **Disposition:** Signal can be safely CLOSED — walEscalation job is operational and WAL is checkpointing normally. The 29.8 MB condition that triggered the signal no longer exists. Recommend: dev-team review + close signal or escalate to monitoring backlog for recurring WAL-growth detection.
+
+**Post-Rebuild Fleet Check:**
+- Docker compose ps: 11 services total, all healthy
+- Peer impact: ZERO (single-service restart, no cascade)
+- Disk usage: Normal, no anomalies
+
+**Board State:** status REVIEW→QA, next_agent ops→qa, rebuild_required true→false, ops_verified_at/by recorded
+
+**Handoff:** QA Step 5 — RAW-verify scheduler correctness + WAL checkpoint behavior + signal queue freshness
+
+---
+
+Zone: `apps/mcp-server/src/scheduler/` | Subsystem: Declarative job registry + WAL escalation | DB: market.db (checkpoint)
+
+**Commit:** a25bdc617 (79 scheduleCron calls → declarative JOB_TABLE + walEscalation.ts extracted)
