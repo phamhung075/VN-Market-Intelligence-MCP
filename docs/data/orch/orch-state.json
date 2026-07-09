@@ -283,12 +283,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FACTORY-MACRO-split-sandbox",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-MACRO-split-sandbox — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-07-09T06:18:43Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "next_agent": "qa",
+    "next_action": "QA verify FACTORY-MACRO-split-sandbox (commit 60c9a880a): cmd/sandbox god-file split 4 ways + 6-comparator collapse into compareFields helper + dispatch_test.go added. go build/vet/test/golangci-lint green; before/after sandbox parity confirmed byte-identical (20-scenario suite + 2 forced-FAIL probes). Standalone CLI tool, NOT Docker-deployed (Dockerfile builds ./cmd/server/ only) -- no Close Gate needed.",
+    "updated_at": "2026-07-09T06:32:00Z",
+    "updated_by": "dev-macro-indicators"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8819,22 +8819,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "title": "Split macro sandbox 831L god-file + collapse 6 copy-paste comparators",
-        "priority": "P1",
-        "zone": "macro-indicators",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-MACRO-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-sandbox",
-        "promoted_at": "2026-07-09T06:18:21Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T06:18:43Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -8953,6 +8938,25 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Split macro sandbox 831L god-file + collapse 6 copy-paste comparators",
+        "priority": "P1",
+        "zone": "macro-indicators",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-MACRO-split-sandbox",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-sandbox",
+        "promoted_at": "2026-07-09T06:18:21Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T06:18:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "completed_at": "2026-07-09T06:32:00Z",
+        "completed_by": "dev-macro-indicators",
+        "commit_sha": "60c9a880a",
+        "verification_note": "cmd/sandbox split 831L main.go -> main.go(103L)+discovery.go(86L)+primitives.go(366L)+module.go(250L); 6 executeMacroXxx comparators + module batch/build diff-builders collapsed into compareFields(label,[]fieldDiff); dispatch_test.go added (8 tests, zero pre-existing coverage). go build/vet/test/golangci-lint all GREEN. Before/after sandbox binary run (git-stash isolated) byte-identical on 20-scenario suite + 2 forced-FAIL probes (primitive+module tier), incl. exit codes. rebuild_required=true flagged in spec but Dockerfile only builds ./cmd/server/ -- cmd/sandbox never compiled into deployed image, so next_agent=qa not ops (no Close Gate needed)."
       }
     ],
     "qa": [],

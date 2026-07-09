@@ -6,6 +6,23 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-07-09 (FACTORY-MACRO-split-sandbox — 831L god-file split + 6-comparator collapse)
+
+**Task:** BOUNDED-1 idle-capacity pickup. Split `cmd/sandbox/main.go` (831L, no header) into 4 files; collapse the 6 structurally-identical `executeMacroXxx` comparators into one helper; add dispatch-logic test coverage (zero pre-existing).
+
+**Split:** main.go (103L, flags+loop) / discovery.go (86L, Scenario+findRepoRoot+discoverScenarios) / primitives.go (366L, 6 primitive shapes+executors+dispatcher+`compareFields` helper) / module.go (250L, macro_signals shapes+concreteClock+2 executors+2 dispatchers). primitives.go/module.go >120L — size-justification headers added (6-primitive / 2-scenario-shape cohesion, shared same-package helper). Collapsed all 8 diff-builders (6 primitive + module's batch-loop + build) into `compareFields(label, []fieldDiff)`; `formatVal` preserves original `%q`/`%v` formatting so FAIL "reason" text is byte-identical pre/post-split.
+
+**Root-cause fix mid-task:** `apps/macro-indicators/.gitignore`'s unanchored `sandbox` pattern (meant for the compiled binary) also matched the `cmd/sandbox/` directory — silently excluded all 4 new files from git. Anchored to `/sandbox`.
+
+**Parity verification (not just `go test`):** Used `git stash` to get a clean pre-split tree, ran the sandbox binary directly before AND after against the full 20-scenario fixture suite + 2 deliberately-forced-mismatch probes (primitive-tier + module-tier). All 3 runs byte-identical (msg/scenario/reason, timestamps excluded) incl. exit codes (0 for PASS, 1 for both forced-FAIL). `go build`/`go vet`/`go test`/`golangci-lint` all GREEN. Net production LOC delta only -26L (831→805, comparator bodies shrank ~360L→~150L, offset by 4x file-header + duplicated-import split overhead) — short of the router's "~-400L expected" a-priori estimate; flagged explicitly, not silently under-delivered (all actual DoD bullets met).
+
+**Docker routing:** `rebuild_required: true` was flagged but `Dockerfile` only builds `./cmd/server/` — `cmd/sandbox` is a standalone CLI tool never compiled into the deployed image. Routed `next_agent: qa` directly, no ops/Close Gate.
+
+**Commit:** 60c9a880a (6 files, +865/-735). Decision journal: STEP dev-macro-indicators-S3.
+Zone health: HEALTHY (Go service unaffected, sandbox parity confirmed) | FACTORY-MACRO-split-sandbox → REVIEW (next_agent: qa)
+
+---
+
 ## Session 2026-06-15 (FIX-NSO-TRADE-VALUE-SCALE — column/unit/total-row misparse fix)
 
 **Task:** Fix implausible `get_vn_trade_balance` values: import 212000mn, export 74000mn, balance -138000mn.
