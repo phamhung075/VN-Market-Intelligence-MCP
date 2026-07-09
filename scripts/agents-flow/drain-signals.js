@@ -62,6 +62,7 @@ const known = new Set(
 const sqlEsc = (s) => String(s ?? '').replace(/'/g, "''");
 const files = fs.readdirSync(SIG).filter(f => f.endsWith('.json')).sort();
 const stmts = [];
+const newFingerprints = [];
 const report = [];
 
 for (const base of files) {
@@ -96,6 +97,7 @@ for (const base of files) {
     result = 'routed-to-po';
     dest = path.join(PROC, base);
     known.add(fingerprint); // dedup within this batch too
+    newFingerprints.push(fingerprint);
     stmts.push(
       `INSERT OR IGNORE INTO signals_processed (fingerprint, from_agent, to_agent, type, priority, payload, created_at, processed_at, processed_by, result, source_filename) VALUES ('${fingerprint}','${sqlEsc(from)}','${sqlEsc(to)}','${sqlEsc(type)}','${sqlEsc(priority)}','${sqlEsc(payload)}','${sqlEsc(createdAt)}','${NOW}','${sqlEsc(PROCESSED_BY)}','${result}','${sqlEsc(base)}');`
     );
@@ -107,8 +109,6 @@ for (const base of files) {
   fs.unlinkSync(fp_path);
   report.push(`${base} → ${result}`);
 }
-
-const countBefore = parseInt(execFileSync('sqlite3', [DB, 'SELECT COUNT(*) FROM signals_processed;'], { encoding: 'utf8' }).trim(), 10);
 
 if (stmts.length) {
   try {
@@ -131,11 +131,19 @@ try {
   console.log(`[drain-signals] WARN: DB prune failed (non-fatal): ${e.message}`);
 }
 
-// FAIL-LOUD fence: new inserts must survive the 7-day prune (spec §0a-2)
-if (stmts.length > 0) {
-  const countAfter = parseInt(execFileSync('sqlite3', [DB, 'SELECT COUNT(*) FROM signals_processed;'], { encoding: 'utf8' }).trim(), 10);
-  if (countAfter <= countBefore) {
-    console.error(`[drain-signals] FAIL-LOUD: inserted=${stmts.length} new signals but db_count did not increase (before=${countBefore} after=${countAfter}) — INSERT or prune regression; investigate immediately`);
+// FAIL-LOUD fence: new inserts must survive the 7-day prune (spec §0a-2).
+// FIX-DRAIN-SIGNALS-FAILLOUD-AGGREGATE-COUNT-FALSEPOSITIVE: an aggregate before/after
+// row-count comparison false-positives whenever the SAME run's 7-day prune (above)
+// legitimately removes >= as many aged-out rows as were just inserted (e.g. insert=1,
+// 3 unrelated rows age past the cutoff in this run → net count DROPS despite a
+// perfectly healthy insert). Check the specific new fingerprints survived instead —
+// that's what spec §0a-2 actually means by "must survive the prune", and it's immune
+// to unrelated rows legitimately aging out in the same pass.
+if (newFingerprints.length > 0) {
+  const inClause = newFingerprints.map(f => `'${f}'`).join(',');
+  const survived = parseInt(execFileSync('sqlite3', [DB, `SELECT COUNT(*) FROM signals_processed WHERE fingerprint IN (${inClause});`], { encoding: 'utf8' }).trim(), 10);
+  if (survived < newFingerprints.length) {
+    console.error(`[drain-signals] FAIL-LOUD: ${newFingerprints.length} new signal(s) inserted this run but only ${survived} survived the prune — INSERT or prune regression; investigate immediately`);
     process.exit(1);
   }
 }
