@@ -177,6 +177,31 @@ Equivalence (cron key + options + wrapRun job-name, all 79 registrations) verifi
 scratch pre/post comparison script — see `docs/agent-memory/notebooks/dev-mcp-server.md`
 2026-07-08/09 entry.
 
+### Data Audit Job (`scheduler/news-analysis/dataAuditJob.ts` + `audit-checks/` + `dataAuditShared.ts`)
+FACTORY-SCHEDULER-split-dataAuditJob extracted the D-1..D-11 (daily) and
+W-1..W-7 (weekly) inline check bodies (previously ~800L combined inside
+`runDailyChecks`/`runWeeklyChecks`) into one file per check group under
+`scheduler/news-analysis/audit-checks/` (19 files, each ≤120L, each a pure
+`(db: Database) => AuditFinding[]` — W-7's `checkLancedbDrift` is the one
+async exception, taking an injected `GetCountFn`). `AuditFinding`/
+`TelegramFn`/`GetCountFn`, the category/priority mapping, the
+`insertFeedbackIfNew` dedup-guarded feedback insert, `getPreviousRowCounts`,
+`INDICATOR_RANGES`/`SNAPSHOT_TABLES`, and the Telegram message formatter now
+live in `dataAuditShared.ts`. `dataAuditJob.ts` is a thin composition root:
+`runDailyChecks`/`runWeeklyChecks` are `[...checkA(db), ...checkB(db), ...]`
+spreads in the original D-n/W-n order (finding order + `insertFeedbackIfNew`
+side-effect ordering preserved exactly), plus the `writeSystemLog`/
+`upsertAuditState`/`maybeSendTelegram` finalize steps and the public
+`runDailyAudit`/`runWeeklyAudit`/`runDailyAuditIfStale` entry points.
+`AuditFinding`/`TelegramFn`/`GetCountFn`/`buildFindingTitle` are re-exported
+from `dataAuditJob.ts` for backward-compatible import paths (existing
+tests + `bctcReparseJob.ts` import them from there, unchanged).
+
+RAW-verify: a scratch pre/post comparison script ran `runDailyAudit`/
+`runWeeklyAudit` against identical seeded fixture DBs using a git-HEAD copy
+of the pre-split monolith vs the post-split module — findings[] output and
+`agent_feedback` insert ordering were byte-identical (JSON deep-equal).
+
 ## Repositories (6 SQLite implementations)
 - `SqliteWatchlistRepository`, `SqliteMarketPriceRepository`
 - `SqliteKinhDichScoreRepository`, `SqliteHexagramRepository`
