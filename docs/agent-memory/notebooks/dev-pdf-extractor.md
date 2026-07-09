@@ -6,30 +6,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-## TASK_331 — FR-4 Section-boundary content-signal detection (2026-06-28)
-
-**Sprint:** FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT | **Zone:** apps/pdf-extractor/ | **Size:** M
-
-### Implementation
-- Added `_INCOME_STMT_START_KEYWORDS` (7 keywords) and `_CASH_FLOW_START_KEYWORDS` (4 keywords) as module-level constants in `extract_tables_usecase.py`.
-- `_detect_section_start(page_text)` — pure fn, returns "income_statement" / "cash_flow" / None.
-- `_filter_pages_to_section(pages, section)` — pure fn; BS: calls `select_balance_sheet_section()` then excludes IS/CF pages; IS/CF: contiguous run from first detected page.
-- Path A in `execute()` calls `_filter_pages_to_section()` (replaces if/else around `select_balance_sheet_section()`).
-- DDD: TextTableExtractor (infrastructure) untouched. Application imports domain primitive (allowed).
-
-### Test results
-- 14 new tests in `test_extract_tables_usecase.py` covering AC-2/AC-3/AC-7. All GREEN.
-- Unit suite: 6 pre-existing env fail / 941 pass (+14 new). Zero regressions.
-- Full suite: 11 pre-existing fail / 1080 pass. Zero regressions.
-- Sandbox G12: primitive 29 PASS + 6 intentional-fail; module 1 PASS.
-- NFR-4: zero per-issuer branches.
-- **Commit:** `892c9efb`
-
-### Status
-REVIEW → next_agent=qa
-
----
-
 ## Cycle 2026-07-08 — FACTORY-PDF-paddleocr-score-07-mask
 
 **Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** S | P1
@@ -97,6 +73,39 @@ Hard Rule references a stale path (`sandbox_runner.py` at service root, `--scena
 — actual runner is `sandbox/runner.py` with a single-scenario `--scenario PATH` CLI.
 Pilot status is DONE (closed 2026-05-24), so G12 is likely non-operative post-closure;
 doc drift not fixed here (out of scope for this task) — flagging for PO/architect.
+
+### Status
+REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
+
+---
+
+## Cycle 2026-07-09 — FACTORY-PDF-delete-deprecated-inspect
+
+**Sprint:** SYSTEMIC-REMAKE-P1 | **Zone:** apps/pdf-extractor/ | **Size:** M | P1
+
+### Deletion
+Removed the deprecated `/inspect` viewer surface (SI-2/PI-2, superseded by mcp-server
+`GET /api/bctc-inspect`, confirmed DONE-on-real-data since `ca955baf1` PO REOPEN-2
+sign-off, actively developed since). Dropped `InspectionStore` import+construction+param
+from `main.py`/`register_routes`; deleted 4 route closures in `handlers.py` (`GET /inspect`,
+`/inspect/pdfs`, `/inspect/pdf/{doc_id}`, `/inspect/extraction/{doc_id}`, -135L incl. dead
+`HTMLResponse`/`Response`/`Path`/`_VIEWER_HTML_PATH` imports); deleted
+`infrastructure/inspection_store.py` + `interface/viewer.html`; deleted 3 tests-only-for-
+this-surface files (72 tests); dropped now-unneeded `inspection_store=` stub kwarg from 3
+unrelated call sites. Real extraction routes (`/extract`, `/extract-layout-first`,
+`/extract-tables`, `/pek-extract`, etc.) untouched.
+
+### RAW-verify
+`grep` zero hits for InspectionStore/inspection_store/viewer.html. Live `create_app()` +
+`TestClient`: `/health`→200, `/inspect`→404, `/inspect/pdfs`→404 (both were live before).
+`pytest -q`: 12 failed/1016 passed/1 skipped — identical 12 pre-existing env failures
+(A/B via git stash); 72-test drop = exactly the 3 deleted files. mypy: same pre-existing
+env error as baseline. `handlers.py` 808→673L, `main.py` 280→271L.
+
+### Commit
+`47453d546` — chore(pdf-extractor): delete deprecated /inspect viewer surface
+
+Zone health: no drift detected.
 
 ### Status
 REVIEW → next_agent=ops (rebuild_required: true; ops rebuild+swap, then qa live-verify)
