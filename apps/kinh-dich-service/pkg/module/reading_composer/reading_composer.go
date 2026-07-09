@@ -32,6 +32,48 @@ import (
 	"github.com/vn-market-intelligence/kinh-dich-service/pkg/primitive/reading_scorer"
 )
 
+// -----------------------------------------------------------------------------
+// Confidence pipeline constants
+// -----------------------------------------------------------------------------
+// Extracted from inline literals for clarity, auditability, and naming.
+// Provenance: FACTORY-KINHDICH-name-confidence-constants (2026-07-09).
+const (
+	// confidenceScoreCeiling is the divisor used to normalise the combined
+	// trend+outcome score into [0,1]. A combined score of 0.8 maps to confidence=1.0.
+	// Provenance: original literal `/0.8` in base confidence calculation.
+	confidenceScoreCeiling = 0.8
+
+	// markovBaseWeight is the weight applied to the base confidence score
+	// when blending with Markov transition data. Must sum to 1.0 with markovBlendWeight.
+	// Provenance: original literal `0.7` in Markov blend formula.
+	markovBaseWeight = 0.7
+
+	// markovBlendWeight is the weight applied to the averaged Markov data
+	// (transitionProb + historicalConfidence)/2. Must sum to 1.0 with markovBaseWeight.
+	// Provenance: original literal `0.3` in Markov blend formula.
+	markovBlendWeight = 0.3
+
+	// confidenceRoundFactor is the multiplier/divisor used to round the final
+	// confidence to 3 decimal places: math.Round(c*1000)/1000.
+	// Provenance: original literal `*1000` in rounding step.
+	confidenceRoundFactor = 1000
+
+	// hoQueGlossTruncateRunes is the maximum rune length for the ho que
+	// (nuclear hexagram) core-meaning gloss in the overall reading string.
+	// Provenance: original literal `80` in truncate() call.
+	hoQueGlossTruncateRunes = 80
+
+	// defaultActiveLinePosition is the 1-indexed line position used when
+	// no changing lines are present. Line 5 ("ngu hao") is traditionally
+	// the "ruler" position and is semantically most significant.
+	// Provenance: original literal `5` in default activeIndices slice.
+	defaultActiveLinePosition = 5
+)
+
+// Compile-time assertion: Markov blend weights must sum to 1.0.
+// This const-arithmetic expression will fail to compile if the invariant breaks.
+var _ = [1]struct{}{{}}[int(10*(markovBaseWeight+markovBlendWeight))-10]
+
 // ReadingComposerDependencies contains the dependencies injected into ComposeReading().
 // The concrete Markov adapter is wired at the composition root (cmd/server/main.go)
 // and must NOT be imported here.
@@ -141,7 +183,7 @@ func ComposeReading(stockCode string, scores []float64, deps *ReadingComposerDep
 	// Determine active lines (changing lines or default to line 5)
 	activeIndices := changingLines
 	if len(activeIndices) == 0 {
-		activeIndices = []int{5} // Default to line 5 (index 4 in 0-based, but our position is 1-indexed)
+		activeIndices = []int{defaultActiveLinePosition} // Default to line 5 (ngu hao, the "ruler" position)
 	}
 
 	// Collect outcome scores and actions from active lines
@@ -171,23 +213,23 @@ func ComposeReading(stockCode string, scores []float64, deps *ReadingComposerDep
 	tradingSignal := reading_scorer.MajorityVote(actions)
 
 	// Step 9: Calculate base confidence
-	confidence := math.Min(math.Abs(combinedScore)/0.8, 1.0)
+	confidence := math.Min(math.Abs(combinedScore)/confidenceScoreCeiling, 1.0)
 
 	// Step 10 & 11: Fetch Markov data and blend confidence
 	var markovResult *domain.MarkovData
 	if deps != nil && deps.Markov != nil {
 		markovBlend, err := deps.Markov.GetMarkovData(queChinhNumber)
 		if err == nil && markovBlend != nil {
-			// Blend confidence: blended = base * 0.7 + avg(transitionProb, historicalConfidence) * 0.3
+			// Blend confidence: blended = base * markovBaseWeight + avg(transitionProb, historicalConfidence) * markovBlendWeight
 			markovWeight := (markovBlend.TransitionProb + markovBlend.HistoricalConfidence) / 2
-			confidence = confidence*0.7 + markovWeight*0.3
+			confidence = confidence*markovBaseWeight + markovWeight*markovBlendWeight
 		}
 		// Note: markovResult (for domain.MarkovData) is a different shape;
 		// we leave it nil for now since we don't have nextMostLikely/probability data
 	}
 
 	// Round confidence to 3 decimal places
-	confidence = math.Round(confidence*1000) / 1000
+	confidence = math.Round(confidence*confidenceRoundFactor) / confidenceRoundFactor
 
 	// Build trading signal display
 	signSuffix := "(tich cuc)"
@@ -224,7 +266,7 @@ func ComposeReading(stockCode string, scores []float64, deps *ReadingComposerDep
 	overallReading := fmt.Sprintf("[%s] Que %s (%d) %s. %s Xu huong: %s. Ho que (an sau): %s — %s. %s Ngu Hanh: %s. %s",
 		stockCode, queMeta.name, queChinhNumber, queMeta.chinese,
 		queData.coreMeaning, trendRaw,
-		hoQue.Name, truncate(hoQue.CoreMeaning, 80),
+		hoQue.Name, truncate(hoQue.CoreMeaning, hoQueGlossTruncateRunes),
 		changingDesc,
 		nguHanh.Interpretation,
 		actionNote)

@@ -2465,14 +2465,17 @@
       "depends_on": [],
       "type": "FACTORY",
       "epic": "FACTORY-MAINTAINABILITY-2026-06",
-      "status": "BACKLOG",
+      "status": "DONE_VERIFIED",
       "source": "2026-06-15-maintainability-factory-audit (Workflow wl2ia1tk8 / wf_56fbf1b2-b68; 33 agents, 16/16 zones, 117 verified findings)",
       "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
       "created_at": "2026-06-15T18:03:20Z",
       "created_by": "po",
       "fast_track": false,
       "sequence_note": "Sequence from depends_on + priority; audit sprint_sequence only captured wave 13 (synthesis truncation).",
-      "id": "FACTORY-KINHDICH-name-confidence-constants"
+      "id": "FACTORY-KINHDICH-name-confidence-constants",
+      "completed_at": "2026-07-09T18:55:11Z",
+      "completed_by": "dev-kinh-dich",
+      "close_note": "All 6 confidence-pipeline constants extracted to named const block with provenance comments; compile-time blend-weight invariant assertion added (array-index trick); all literals substituted at use sites; tests green; sandbox GREEN (primitive 15/15, module 2/2); RAW-verify deferred to post-rebuild"
     },
     {
       "title": "Name price_score normalization divisor 0.05 and 7-point threshold",
