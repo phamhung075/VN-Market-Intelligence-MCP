@@ -269,10 +269,10 @@
   "head": {
     "status": "review",
     "active_task_id": "FACTORY-PDF-delete-deprecated-inspect",
-    "next_agent": "ops",
-    "next_action": "Docker Microservice Code-Change Close Gate Steps 1-4 (rebuild pdf-extractor; SHA-gate remains DEFERRED to Phase B per runbook), then qa Step 5 live-verify /inspect gone (404) + real extraction routes unaffected on the live container, then po Step 6 sign-off.",
-    "updated_at": "2026-07-09T01:56:55Z",
-    "updated_by": "dev-pdf-extractor"
+    "next_agent": "po",
+    "next_action": "po Step 6 sign-off -- qa Step 5 live-endpoint verification PASS (see task_board.review[] qa_note / decision journal qa-S30).",
+    "updated_at": "2026-07-09T02:22:00Z",
+    "updated_by": "qa (step 5 live-verify)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8781,7 +8781,7 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-09T01:44:27Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
+        "next_agent": "po",
         "moved_to_review_at": "2026-07-09T01:56:55Z",
         "moved_by": "dev-pdf-extractor",
         "review_note": "Deleted deprecated /inspect viewer surface: removed InspectionStore import+construction+register_routes param (main.py, handlers.py), deleted 4 route closures (GET /inspect, /inspect/pdfs, /inspect/pdf/{doc_id}, /inspect/extraction/{doc_id}) + dead HTMLResponse/Response/Path/_VIEWER_HTML_PATH imports, deleted infrastructure/inspection_store.py + interface/viewer.html, deleted 3 tests-only-for-this-surface files (test_inspection_store.py, test_inspection_routes.py, test_pi3_served_url_acceptance.py — 72 tests), dropped now-unneeded inspection_store= stub kwarg from 3 unrelated call sites (test_local_pdf_input.py x3, test_fu1_fail_loud.py x1, scenarios/pek_single_doc_extraction.py x3). QA-sign-off-pending check: mcp-server GET /api/bctc-inspect replacement confirmed DONE-on-real-data (PO REOPEN-2 sign-off ca955baf1) and actively developed since (LF-OVERLAY, HC-DEV-6/7, BEQ fixes, FIX-INSPECT-NAV-RELOAD) — outright delete, not env-gate, is correct per backlog default. RAW-verify: grep zero hits for InspectionStore/inspection_store/viewer.html repo-wide; live create_app() (real composition root, no mocks) + TestClient — GET /health 200, GET /inspect 404, GET /inspect/pdfs 404 (both were live routes before); route table confirmed zero /inspect* paths, all real routes intact (/extract, /extract-layout-first, /extract-tables, /extract-md-tables, /pek-extract, /rasterize, /page-text, /health). pytest -q: 12 failed / 1016 passed / 1 skipped — identical 12 pre-existing env-only failures to baseline (A/B confirmed via git stash/git stash pop, same test IDs both runs); the 72-test drop (1088->1016) is exactly the 3 deleted files (29+18+25=72 via git show HEAD:<path> | grep -c def test_), zero other regressions. mypy: same pre-existing \"pdf-extractor is not a valid Python package name\" env error as baseline (git stash confirmed). handlers.py 808->673L (-135L), main.py 280->271L (-9L). Commits: 47453d546 (code), 8ddb4c0f3 (memory). rebuild_required: true — holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy / Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification (confirm /inspect gone + real extraction endpoints unaffected on the live container), then po Step 6 sign-off.",
@@ -8789,7 +8789,10 @@
         "ops_close_gate_note": "Rebuild successful (image d3abfe8bb831→5cd186998f6d); all deprecated /inspect routes return 404; real extraction routes intact; SHA-gate deferred (known Phase-B DRIFT-3 label-key mismatch); next_agent=qa for live container verification",
         "ops_sha_gate_fixed_at": "2026-07-09T04:19:00Z",
         "ops_sha_gate_fixed_by": "ops",
-        "ops_note": "Corrective SHA-value-only pass after QA functional verification; Phase-B key-namespace deferral (DRIFT-3) confirmed separately valid"
+        "ops_note": "Corrective SHA-value-only pass after QA functional verification; Phase-B key-namespace deferral (DRIFT-3) confirmed separately valid",
+        "qa_verify_at": "2026-07-09T02:22:00Z",
+        "qa_verify_by": "qa",
+        "qa_note": "Step 5 (Docker Microservice Code-Change Close Gate) live-endpoint QA verification -- independent RAW-verify complete, PASS. Re-confirmed image identity direct via docker inspect: .Image=sha256:747291222d1625d4a93ab7a48f06ae4c8aa35a7c96f37ebf62956e811af222bd, git_sha label=9deff6da8b3da77fc2e999eeac0e6f3a6cadd163, exact match to ops-reported values; vn.market.git_sha empty (accepted Phase-B/DRIFT-3 deferral, not re-litigated). GET /health=200. All 4 deleted /inspect* routes 404 live (GET /inspect, /inspect/pdfs, /inspect/pdf/{doc_id}, /inspect/extraction/{doc_id}). Real extraction routes unaffected: POST /extract-tables /extract /extract-layout-first /extract-md-tables /pek-extract /rasterize all 422 (route exists, validates input, no payload given); /page-text confirmed GET-only (OPTIONS allow:GET) after an initial wrong-verb probe, GET /page-text=422 not 404 -- route genuinely present. /docs=200. docker ps: 11/11 services healthy, pdf-extractor Up ~3min matching the recent swap, zero unexpected restarts on any peer. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md #qa-S30. VERDICT PASS -- routing to po for Step 6 sign-off."
       }
     ],
     "qa": [],
