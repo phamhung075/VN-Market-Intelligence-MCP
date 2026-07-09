@@ -7159,31 +7159,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH",
-        "status": "IN_PROGRESS",
-        "title": "1294-macro-spam-fix test flakes CI RED — intelligenceCycleJob fires unmocked live yahooFinance/SBV fetch",
-        "owner": "dev-team",
-        "next_agent": "dev-mcp-server",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "priority": "high",
-        "created_at": "2026-07-09T14:02:56Z",
-        "created_by": "po-triage-20260709T1337Z",
-        "files": [
-          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts",
-          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycle/types.ts",
-          "apps/mcp-server/src/__tests__/1294-macro-spam-fix.test.ts"
-        ],
-        "related": [
-          "docs/signals/ci-red-554bb302-20260709134751.json",
-          "FACTORY-SCHEDULER-split-intelligenceCycleJob"
-        ],
-        "status_note": "Signal ci-red-554bb302 (bun test job RED on main HEAD 554bb302, GH run 29020855429). CONFIRMED FLAKE not regression by both router (local isolated run 2/2 pass) and po (4/4 pass, intermittent CI history). ROOT CAUSE: intelligenceCycleJob.ts _runCycle(deps) L255-262 makes UNMOCKED live network fetches (fetchYahooFinancePrices/storeCommoditySnapshot, fetchSbvRates/storeSbvSnapshot via direct await import) not injected through CycleDeps, so 1294-macro-spam-fix.test.ts mock deps cannot stub them -> nondeterministic live traffic in test run. Almost certainly exposed by FACTORY-SCHEDULER-split-intelligenceCycleJob (merged same tick, 554bb302). FIX: add fetchCommoditiesFn/storeCommodityFn + fetchSbvFn/storeSbvFn to CycleDeps (mirror existing pollNewsFn/fetchPricesFn/insertClaimFn injection pattern), default to real fetchers, inject no-op/deterministic stubs in 1294-macro-spam-fix.test.ts. Verify no other test relies on the live path. baseline_pass: cd apps/mcp-server && bun test src/__tests__/1294-macro-spam-fix.test.ts must be GREEN with NO [yahooFinance] fetched / [sbv] macro snapshot fetched live-fetch log lines; full bun test suite still green; CI bun test job green on the subsequent push."
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -7325,6 +7301,32 @@
         "review_note": "fix committed 1d0549e52 (scripts/devteam-backlog-promote-bounded1.jq + scripts/test-devteam-bounded1-depends-on.sh, pushed to main). Shape-defensive $detail_items ingest: id-key backlog-detail.json .items ARRAY at ingest so existing $detail_items[.id] lookup works unmodified; object input passes through unchanged; zero depends_on semantic change; zero hardcoded task-id literals. New RED/GREEN test Case 1c reproduces the live ARRAY shape (17->18/18 pass). Live-data reproducer (TASK17-FOREIGN-FLOW vs real backlog-detail.json): exit 5 pre-fix -> exit 0 post-fix. End-to-end scratch-copy run through orch-apply.sh (ORCH_APPLY_LIVE_FILE_OVERRIDE, WIP forced to 0 on a scratch copy, live file untouched since live WIP=2): exactly one row promoted, no empty-candidate abort. Companion devteam-backlog-claim-bounded1.jq inspected -- never touches backlog-detail.json, no equivalent bug, left unchanged. Decision journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S10.",
         "reviewed_at": "2026-07-09T14:11:04Z",
         "reviewed_by": "developer"
+      },
+      {
+        "id": "FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH",
+        "status": "REVIEW",
+        "title": "1294-macro-spam-fix test flakes CI RED — intelligenceCycleJob fires unmocked live yahooFinance/SBV fetch",
+        "owner": "dev-team",
+        "next_agent": "qa",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "priority": "high",
+        "created_at": "2026-07-09T14:02:56Z",
+        "created_by": "po-triage-20260709T1337Z",
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts",
+          "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycle/types.ts",
+          "apps/mcp-server/src/__tests__/1294-macro-spam-fix.test.ts"
+        ],
+        "related": [
+          "docs/signals/ci-red-554bb302-20260709134751.json",
+          "FACTORY-SCHEDULER-split-intelligenceCycleJob"
+        ],
+        "status_note": "Signal ci-red-554bb302 (bun test job RED on main HEAD 554bb302, GH run 29020855429). CONFIRMED FLAKE not regression by both router (local isolated run 2/2 pass) and po (4/4 pass, intermittent CI history). ROOT CAUSE: intelligenceCycleJob.ts _runCycle(deps) L255-262 makes UNMOCKED live network fetches (fetchYahooFinancePrices/storeCommoditySnapshot, fetchSbvRates/storeSbvSnapshot via direct await import) not injected through CycleDeps, so 1294-macro-spam-fix.test.ts mock deps cannot stub them -> nondeterministic live traffic in test run. Almost certainly exposed by FACTORY-SCHEDULER-split-intelligenceCycleJob (merged same tick, 554bb302). FIX: add fetchCommoditiesFn/storeCommodityFn + fetchSbvFn/storeSbvFn to CycleDeps (mirror existing pollNewsFn/fetchPricesFn/insertClaimFn injection pattern), default to real fetchers, inject no-op/deterministic stubs in 1294-macro-spam-fix.test.ts. Verify no other test relies on the live path. baseline_pass: cd apps/mcp-server && bun test src/__tests__/1294-macro-spam-fix.test.ts must be GREEN with NO [yahooFinance] fetched / [sbv] macro snapshot fetched live-fetch log lines; full bun test suite still green; CI bun test job green on the subsequent push.",
+        "updated_at": "2026-07-09T14:35:56Z",
+        "updated_by": "dev-mcp-server",
+        "verification_note": "Root cause: 1294-macro-spam-fix.test.ts AC-1/AC-2 CycleDeps objects omitted macroFetchFn/vnstockSyncFn (already-existing injectable added by CI-RED-8081e584-FIX round 2, commit 8a2ef7255, for sibling 1285-macro-alert-cooldown test) — step A2 defaulted to REAL Yahoo Finance/SBV HTTP calls every run, nondeterministic + occasionally exceeded 30s bun test timeout in CI. Fix: injected async no-op stubs in both test cases (commit 76acfb4e4). Verified: target test green x4 local runs, no [yahooFinance]/[sbv] live-fetch log lines (duration ~1050ms->~150ms proves no network I/O). tsc clean. Pushed 76acfb4e4 -> CI bun test job initially RED but on an UNRELATED pre-existing flake (FU-LOCKSTORE-EXPIRED-GC.test.ts, 1 fail/14301 pass/51 skip, not in scope, confirmed 3/3 local isolated pass, zero relation to macro/network fetch domain) -- 1294-macro-spam-fix.test.ts was NOT in the CI failure list. Re-ran the same failed CI job on the same commit (no new push) per confirmed-flake precedent -> GREEN (GH run 29025427212, conclusion success). Follow-up flagged (not fixed here, scope=minimal targeted fix per task): 106-intelligence-cycle, 1228, 1255, 137, 1383, 1501, 278, 311 test files share the same unmocked-live-fetch exposure pattern (call runIntelligenceCycle without stubbing macroFetchFn/vnstockSyncFn) -- currently passing but same flake class, candidate for a follow-up sweep. Also flag FU-LOCKSTORE-EXPIRED-GC.test.ts CI flake for a separate signal/investigation (unrelated root cause, not addressed by this task)."
       }
     ],
     "qa": [],
