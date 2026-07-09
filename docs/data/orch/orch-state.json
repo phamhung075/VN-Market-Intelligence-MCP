@@ -335,17 +335,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "dev-20260709T173139Z-a",
-        "ts": "2026-07-09T17:31Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "mock-guard HARD-FAIL: fabricated data in production source (likely Go _test.go false-positive)",
-        "severity": "MED",
-        "status": "NEW",
-        "payload_ref": null
-      },
-      {
         "id": "dev-20260709T173139Z-b",
         "ts": "2026-07-09T17:31Z",
         "from": "dev-team",
@@ -7149,31 +7138,7 @@
         "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
       }
     ],
-    "done_verified": [
-      {
-        "title": "Split the 4111L generic_md_table_extractor god-file behind a thin shim (staged)",
-        "priority": "P0",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-PDF-split-generic-md-table",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-generic-md-table",
-        "promoted_at": "2026-07-09T14:49:18Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-07-09T14:49:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "owner": "dev-pdf-extractor",
-        "size": "XL",
-        "next_agent": "qa",
-        "updated_at": "2026-07-09T16:28:13Z",
-        "updated_by": "qa",
-        "reviewed_at": "2026-07-09T15:40:27Z",
-        "reviewed_by": "dev-pdf-extractor",
-        "review_note": "Split the 4111L generic_md_table_extractor.py god-file into infrastructure/generic_md_table/ (constants.py, markdown_emit.py, grid_cleanup.py, ordinal_grid.py, document_map.py, page_zoning.py, unit_ocr.py, extractor.py) behind a 164L thin re-export shim — 8 sequential commits (21686062b..f261bd4b6), one sub-module per commit, tests run between every stage. Every function body moved verbatim (ast span extraction + byte-diff verified against the pre-move source at every stage, via new reusable scripts/pdf-extractor-god-file-extract.py). GenericMdTableExtractor._process_page (largest method) split into 3 named stage helpers (Step A tokenize / Step A2 classify+measure / Steps C5-G per-region reconstruct+emit) while staying a bound method (test seam preserved: tests call/monkeypatch extractor._process_page directly). Symbol-parity verified: AST-diffed the original module's 112 top-level names (git c2069debd, pre-split) against the final shim's resolved dir() namespace -- 0 missing (except 5 unused stdlib typing re-exports, confirmed zero callers via repo-wide grep), 0 unexpected extras. Callers unchanged: main.py composition-root imports (build_document_map/zone_page/ocr_unit/GenericMdTableExtractor) smoke-tested against the new shim. Every new file <=120L or carries an honest # size-justification: header. Tests: baseline established first (pytest -q = 11 failed/1017 passed/1 skipped, pre-existing env-only failures -- no PDF fixtures/Tesseract/poppler binary in sandbox) and re-confirmed identical after every one of the 8 stages, including test_generic_md_table_extractor.py (149/149, incl. the AC-1 Fence-A AST import-boundary check) post-split. mypy: pre-existing env-blocking \"pdf-extractor is not a valid Python package name\" error confirmed identical on the ORIGINAL unmodified file via git stash/git stash pop A/B -- not caused by this change. G12 pilot sandbox-runner gate: N/A -- pilot-status-pdf-extractor.json status=DONE (closed 2026-05-24) and the flow doc's sandbox_runner.py script no longer exists in this repo state; pytest is the live DoD gate. rebuild_required=true (infra code moved/restructured) -- ops rebuild+swap needed before qa live-verify. Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md STEP dev-pdf-extractor-S5. OPS-CLOSE-GATE: rebuild + swap + health-verify completed 2026-07-09T18:10:28Z; new image SHA: 131d16bdfba5be84a8977ca9c32bbf36f971d24483ca172ff661383b36960e5e; all services healthy; no collateral damage; builder cache pruned 474MB. QA-CLOSE-GATE (2026-07-09): docker inspect confirms running container vn-market-intelligence-mcp-pdf-extractor-1 on image sha256:131d16bdfba5be84a8977ca9c32bbf36f971d24483ca172ff661383b36960e5e (exact match to ops's claimed SHA), started 16:10:20Z, /health 200 {\"status\":\"ok\",\"service\":\"pdf-extractor\",\"ocr_source_ok\":true}. All 8 split submodules (constants/markdown_emit/grid_cleanup/ordinal_grid/document_map/page_zoning/unit_ocr/extractor) confirmed present + compiled (.pyc for both cpython-312 and cpython-313) inside the container; shim confirmed 164L. docker exec python3: `from infrastructure.generic_md_table_extractor import GenericMdTableExtractor, build_document_map` resolves live, GenericMdTableExtractor genuinely IS infrastructure.generic_md_table.extractor.GenericMdTableExtractor — zero import errors. Full container log scan since boot: zero error/traceback/exception lines. Behavioral parity (not just import): copied 2 real BCTC PDFs out of the running container (FPT Q1-2026, HPG Q4-2025), rasterized 10+6 real pages each at 200 DPI (PyMuPDF, matching production DPI), ran GenericMdTableExtractor.extract_md_tables() from the CURRENT repo (identical to deployed image) vs a git-worktree checkout of the pre-split 4111L god-file (commit c2069debd) on the SAME images — output JSON byte-for-byte IDENTICAL both PDFs (FPT: 12 tables, HPG: 7 tables, real VND balance-sheet/income-statement/cash-flow figures, md5-verified match). Also ran the extractor live INSIDE the running container itself via docker exec (production rasterize_report() on an actual container-resident PDF) — 12 tables, same structure/content as the host reproduction, zero exceptions; cleaned up the resulting /data/bctc-page-images test artifact afterward (no HTTP push side-effects — used no-op report_id, in-process call only, avoided polluting production DB via /extract-md-tables). pytest suite re-confirmed via a CLEAN A/B isolating exactly the 8-stage split (pre-split parent commit ca5a8a545, the true immediate parent of Stage-1 21686062b, vs current HEAD 530ab8fa0): pre-split = 11 failed/1017 passed/1 skipped; post-split re-run = 11 failed/1017 passed/1 skipped, IDENTICAL test-ID set both times (page_rasterizer x4, ocr_backends PIL-passthrough, ocr_unit_tesseract_retry x2, extract_md_tables_fpt x2, extract_tables_bt3d_real_ocr, bt3_fix3_row_fidelity — all pre-existing env-only). One earlier post-split run showed a 12th failure (test_extract_layout_and_tables_raises_on_timeout) — reproduced GREEN on re-run, confirming the dev's own documented timing-flake, not a regression.\n",
-        "status_note": "live-endpoint RAW-verify PASS (qa, 2026-07-09T16:28:13Z): docker inspect confirms container on rebuilt image sha256:131d16bdfba5 (healthy); all 8 split submodules present+compiled in-container, 164L shim resolves live via docker exec, zero import errors, zero error/traceback lines in boot logs. Behavioral parity independently reproduced on 2 real BCTC PDFs (FPT+HPG) -- output byte-for-byte identical pre-split (c2069debd) vs post-split, both via host reproduction and live in-container invocation. pytest clean A/B on the true pre-split parent (ca5a8a545) vs HEAD: 11 failed/1017 passed/1 skipped both sides, identical failing test-ID set; one flaky extra failure reproduced GREEN on re-run (known timing flake, not a regression). done_verified."
-      }
-    ],
+    "done_verified": [],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
