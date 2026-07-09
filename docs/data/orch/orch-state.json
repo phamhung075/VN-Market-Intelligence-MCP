@@ -285,10 +285,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT",
-    "next_agent": "developer",
-    "next_action": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT — router-dispatched developer for atomic Close-Gate Step-4 handoff script (PO-triaged, architect brief = spec, fast-track).",
-    "updated_at": "2026-07-09T07:59:30Z",
-    "updated_by": "router"
+    "next_agent": "qa",
+    "next_action": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT — implementation complete (script + runbook row), REVIEW, forwarded to qa.",
+    "updated_at": "2026-07-09T08:04:40Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7649,30 +7649,7 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [
-      {
-        "id": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT",
-        "type": "FIX",
-        "title": "Mint scripts/ops-closegate-handoff.jq (atomic .head+board write) + wire it into docs/protocols/docker-deployment-runbook.md § Close Gate as the new Step 4b",
-        "owner": "po",
-        "status": "IN_PROGRESS",
-        "priority": "high",
-        "size": "S",
-        "zone": "cross-service/",
-        "recurring": true,
-        "created_at": "2026-07-09T07:29:23Z",
-        "created_by": "agents-architect",
-        "architecture_brief": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "note": "Brief §2.1: generalized, parameterized scripts/ops-closegate-handoff.jq mirroring scripts/devteam-backlog-claim-bounded1.jq / scripts/router-d1-claim.jq precedent — inputs --arg task_id/from_lane/next_agent/now; forwards the board row's next_agent in the SAME jq expression as a CONDITIONAL .head sync (if .head.active_task_id == $task_id then .head.next_agent/.updated_at/.updated_by sync else . end — never an unconditional .head overwrite, .head can legitimately point at a different in-flight task while ops closes this one). No hardcoded task-id/lane literals (grep-verifiable). Runbook § Close Gate table gets the currently-missing 'Step 4b: forward to qa via the script' row — replaces every future ad hoc terminal jq one-liner. Suggested owner split: scripts/ authoring (developer or ops) vs. docs/protocols/docker-deployment-runbook.md edit (agent-father zone per .claude/skills/commit-boundary/SKILL.md) — PO's call whether to keep as one task or split. DoD in brief §5 items 1-2.",
-        "next_agent": "developer",
-        "detail_ref": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
-        "status_note": "Architect brief docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md §2.1. Mint scripts/ops-closegate-handoff.jq: parameterized (--arg task_id/from_lane/next_agent/now); ONE jq expr sets row.next_agent AND CONDITIONALLY .head.next_agent/updated_at/updated_by ONLY if .head.active_task_id==task_id (never blind-stomp an unrelated .head); error() if row absent (no silent no-op); NO hardcoded task-id/lane literals (grep-verifiable, per devteam-backlog-claim-bounded1.jq invariant). Add runbook § Close Gate Step-4b table row citing the script + invocation. FAST-TRACK (architect brief = spec, skip ba/pm). AC: brief §5.1+§5.2. Doc/script-only, no rebuild. Triaged po-S16 tick.",
-        "triaged_at": "2026-07-09T07:47:30Z",
-        "triaged_by": "po",
-        "claimed_at": "2026-07-09T07:59:30Z",
-        "claimed_by": "router (dispatch developer)"
-      }
-    ],
+    "in_progress": [],
     "ready": [],
     "review": [
       {
@@ -7791,6 +7768,31 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "id": "FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT",
+        "type": "FIX",
+        "title": "Mint scripts/ops-closegate-handoff.jq (atomic .head+board write) + wire it into docs/protocols/docker-deployment-runbook.md § Close Gate as the new Step 4b",
+        "owner": "po",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/",
+        "recurring": true,
+        "created_at": "2026-07-09T07:29:23Z",
+        "created_by": "agents-architect",
+        "architecture_brief": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
+        "note": "Brief §2.1: generalized, parameterized scripts/ops-closegate-handoff.jq mirroring scripts/devteam-backlog-claim-bounded1.jq / scripts/router-d1-claim.jq precedent — inputs --arg task_id/from_lane/next_agent/now; forwards the board row's next_agent in the SAME jq expression as a CONDITIONAL .head sync (if .head.active_task_id == $task_id then .head.next_agent/.updated_at/.updated_by sync else . end — never an unconditional .head overwrite, .head can legitimately point at a different in-flight task while ops closes this one). No hardcoded task-id/lane literals (grep-verifiable). Runbook § Close Gate table gets the currently-missing 'Step 4b: forward to qa via the script' row — replaces every future ad hoc terminal jq one-liner. Suggested owner split: scripts/ authoring (developer or ops) vs. docs/protocols/docker-deployment-runbook.md edit (agent-father zone per .claude/skills/commit-boundary/SKILL.md) — PO's call whether to keep as one task or split. DoD in brief §5 items 1-2.",
+        "next_agent": "qa",
+        "detail_ref": "docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md",
+        "status_note": "Architect brief docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md §2.1. Mint scripts/ops-closegate-handoff.jq: parameterized (--arg task_id/from_lane/next_agent/now); ONE jq expr sets row.next_agent AND CONDITIONALLY .head.next_agent/updated_at/updated_by ONLY if .head.active_task_id==task_id (never blind-stomp an unrelated .head); error() if row absent (no silent no-op); NO hardcoded task-id/lane literals (grep-verifiable, per devteam-backlog-claim-bounded1.jq invariant). Add runbook § Close Gate Step-4b table row citing the script + invocation. FAST-TRACK (architect brief = spec, skip ba/pm). AC: brief §5.1+§5.2. Doc/script-only, no rebuild. Triaged po-S16 tick.",
+        "triaged_at": "2026-07-09T07:47:30Z",
+        "triaged_by": "po",
+        "claimed_at": "2026-07-09T07:59:30Z",
+        "claimed_by": "router (dispatch developer)",
+        "implementation_note": "scripts/ops-closegate-handoff.jq minted + docs/protocols/docker-deployment-runbook.md § Close-gate Step 4b row added. 3 manual scratch-copy scenarios (row+head match / row-only-head-untouched / absent-row error) + real orch-validate.mjs PASS on candidate output. Journal: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S8. Scope split: commit-gate footnote (§2.2) + STEP ops-Sn enforcement (§2.3) deferred to follow-on FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE (agent-father).",
+        "reviewed_at": "2026-07-09T08:04:40Z",
+        "moved_by": "developer"
       }
     ],
     "qa": [],
