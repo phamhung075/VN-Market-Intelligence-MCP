@@ -15,7 +15,11 @@
 *.out
 
 # Sandbox binary (if compiled — prefer go run in pilot)
-sandbox
+# Anchored to repo-relative root of this .gitignore (apps/macro-indicators/sandbox)
+# so it matches ONLY the compiled binary, not the cmd/sandbox/ source directory
+# (FACTORY-MACRO-split-sandbox, 2026-07-09 — unanchored pattern was silently
+# excluding new files added under cmd/sandbox/ from git status/add).
+/sandbox
 
 # macOS
 .DS_Store
