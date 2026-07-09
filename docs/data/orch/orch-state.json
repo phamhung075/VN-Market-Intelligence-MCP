@@ -330,7 +330,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-09T17:31Z",
+    "_updated_at": "2026-07-09T17:34Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -344,6 +344,17 @@
         "severity": "MED",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "dev-20260709T173417Z",
+        "ts": "2026-07-09T17:34Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "improvement_proposal",
+        "summary": "gateway MCP tool absent 2 consecutive ticks — self-critique T2 proposal drafted",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": "docs/improvement-proposals/IMP-20260710-dev-team-T2-gateway-absent.md"
       }
     ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
