@@ -267,12 +267,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FACTORY-PDF-split-extractLayoutFirst-execute",
-    "next_agent": "po",
-    "next_action": "FACTORY-PDF-split-extractLayoutFirst-execute at REVIEW -- qa Step 5 live E2E RAW-verify PASS -- po: Step 6 sign-off.",
-    "updated_at": "2026-07-09T01:33:30Z",
-    "updated_by": "qa"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-PDF-split-extractLayoutFirst-execute CLOSED DONE_VERIFIED by po (Step 6 Docker Close Gate) — moved review[]->done_verified[]. Board idle: next BOUNDED-1 idle-capacity backlog pickup eligible for router. Lock task:FACTORY-PDF-split-extractLayoutFirst-execute pending router release (po session gateway-blind).",
+    "updated_at": "2026-07-09T01:39:16Z",
+    "updated_by": "po (step 6 sign-off)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -567,8 +567,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T01:04:39Z",
-    "_updated_by": "dev-pdf-extractor",
+    "_updated_at": "2026-07-09T01:39:16Z",
+    "_updated_by": "po (step 6 sign-off FACTORY-PDF-split-extractLayoutFirst-execute)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8609,6 +8609,43 @@
           "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head set status=done / active_task_id=null / next_agent=router (idle handback for the BOUNDED-1 auto-pickup loop) alongside the row flip — proactively closing the recurring Close-Gate .head-sync gap (memory feedback_close_gate_step4_head_sync_gap; here it was qa's Step-5 write that left .head stale with the SHA-gate-FAILED next_action text, now corrected). .task_board.head left UNTOUCHED (deprecated stub, canonical is top-level .head per feedback_orchstate_dual_head_keys_toplevel_authoritative). Not the only in-flight board item (4 other review[] rows all DEFERRED or BLOCKED-on-ops = not router-actionable now; 8 active_sprints, ACTIVE/background with no next_agent) — so chose status=done + next_agent=router (re-triage) over a bare idle, matching sibling FACTORY closeouts (096a0588d etc). Did NOT touch the task:FACTORY-SCHEDULER-job-table-registry lock — per dispatch instruction, lock release is the router's job on report-back.",
           "residual_advisory": "No blocking residual. Standing hygiene note (non-blocking, backlog candidate): verify-deploy-sha.sh will keep reporting benign drift for any service whose deploy is followed by doc-only commits (the exact sawtooth seen here AND on the prior close FACTORY-APP-dedup, qa/096a0588d) until the next real code build re-stamps the label. Router reasons this manually each Close Gate. A durable fix would teach verify-deploy-sha.sh to PASS when 'deployed SHA is an ancestor of HEAD AND git diff deployed..HEAD -- apps/<svc> is empty' — eliminating the recurring false-drift bounce across every future microservice Close Gate. Recommend filing as a low-priority ops-tooling backlog row if it recurs a 3rd time."
         }
+      },
+      {
+        "title": "Extract ExtractLayoutFirstUseCase.execute into per-Tier private methods",
+        "priority": "P1",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-PDF-split-extractLayoutFirst-execute",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-extractLayoutFirst-execute",
+        "promoted_at": "2026-07-09T00:47:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T00:48:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "po",
+        "moved_to_review_at": "2026-07-09T01:04:39Z",
+        "moved_by": "dev-pdf-extractor",
+        "review_note": "Code split DONE + tests DONE: ExtractLayoutFirstUseCase.execute() (~480L, Tier0-3 inline) refactored into 4 private Tier methods (_tier0_document_map 46L, _tier1_zone_pages 45L, _tier2_ocr_and_stitch 52L, _tier3_invariant_gate 68L, all <=120L per DoD) plus 2 per-unit sub-helpers (_zone_unit_pages 110L, _gate_check_unit 117L) needed to keep the Tier methods under the cap. execute() is now a 147L linear pipeline; signature (report_id, pdf_path) and return shape unchanged; quarantine/needs_vision_verify semantics preserved exactly. RAW-verify: fully-injected-fake harness (build_document_map_fn/zone_page_fn/ocr_unit_fn + mocked pdf2image.convert_from_path) exercising Tier0-abort, Tier1-abort, and a happy-path with pass/quarantine(invariant-gate+ocr_error)/vision-verify branches -- execute() return dict + push_layout call args + all 3 eval_push_stage calls byte-identical before/after (JSON diff empty). pytest -q: 1088 pass / 12 pre-existing env failures (PIL/Tesseract/poppler, confirmed via git-stash baseline, unrelated files) / 1 skipped -- identical before and after, zero regressions. mypy blocked by pre-existing pyproject.toml importlinter package-name bug, confirmed present at baseline too (git stash) -- not introduced by this diff. Commit c3f30df24. rebuild_required: true -- pdf-extractor container must be rebuilt to deploy this refactor before a live-endpoint RAW-verify is meaningful; holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy -- next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification.",
+        "rebuild_required": false,
+        "ops_close_gate_at": "2026-07-09T03:16:00Z",
+        "ops_close_gate_by": "ops",
+        "ops_note": "Steps 1-4 complete; SHA-gate deferred per runbook Phase B; container healthy; handoff to QA for Step 5 endpoint verification",
+        "qa_verify_at": "2026-07-09T01:33:30Z",
+        "qa_verify_by": "qa",
+        "qa_note": "Step 5 live E2E RAW-verify PASS: 2 real POST /extract-layout-first requests (REE_2025_Q4.pdf 24pg, ACB Q1-2026 33pg) exercised full Tier0-3 pipeline on live image d3abfe8bb831 (git_sha label 0cb48b4c confirmed ancestor-contains c3f30df24). Both returned 202, completed DONE with well-formed result dicts, pushed=True, independently confirmed persisted in bctc_layout_units (not log-echo). Zero exceptions/tracebacks/warnings, zero 5xx in full container log history, container healthy throughout. ACB quarantine delta vs its stale 2026-05-30 baseline (0->12) explained by 2 intervening independent gate-logic commits (GATE-VISION 1588a5910, eval-hook 5ce052f3a), not this refactor -- Tier0 unit-count (22) matched exactly. SHA-gate label deferral treated as settled per dispatch instruction, not re-litigated. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md #qa-S29. VERDICT PASS -- routing to po for Step 6 sign-off.",
+        "done_at": "2026-07-09T01:39:16Z",
+        "done_by": "po",
+        "updated_at": "2026-07-09T01:39:16Z",
+        "updated_by": "po (step 6 sign-off)",
+        "po_closeout": {
+          "by": "po",
+          "at": "2026-07-09T01:39:16Z",
+          "verdict": "DONE_VERIFIED — po Step 6 close of the Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate). All 5 upstream steps passed with independent RAW verification at every hop (dev-pdf-extractor c3f30df24 -> ops Steps 1-4 c6d05b50f, live image d3abfe8bb831 -> qa Step 5 live E2E 985875985), router-verified at each handoff; po independently re-verified the load-bearing facts before flipping — not blind chain-trust.",
+          "evidence": "PO OWN SPOT-CHECK (raw git/docker/curl/sqlite, not trusted-from-prose): (1) Refactor is real — c3f30df24 is a single-file change to apps/pdf-extractor/application/extract_layout_first_usecase.py (498 ins / 369 del); all 3 chain commits are ancestors of HEAD 98587598. (2) NO post-commit code drift — git diff --stat c3f30df24..HEAD -- apps double-star .py is EMPTY, so the deployed image source of the refactored file is byte-identical to HEAD; the SHA-gate exit-1 is the settled pre-existing Phase-B deferral (plain git_sha label vs namespaced vn.market.git_sha), NOT a defect, and my no-drift + ancestor-contains checks satisfy the gate's REAL invariant (deployed source == committed source). (3) DoD line-cap holds — independently recomputed every method span in the live file: 6 extracted Tier helpers all <=120L (_tier0=51/_tier1=50/_tier2=57/_tier3=73; sub-helpers _zone_unit_pages=111 / _gate_check_unit=118, both under cap), matching dev's claims; execute()=152L span is the orchestrator pipeline (dev's stated 147L), correctly NOT subject to the helper cap. (4) Live liveness — container vn-market-intelligence-mcp-pdf-extractor-1 Up ~20min (healthy), image sha256:d3abfe8bb831 matching ops/qa exactly; git_sha label 0cb48b4c and git merge-base --is-ancestor c3f30df24 0cb48b4c = YES (deployed image genuinely contains the refactor); curl localhost:5001/health = {status:ok,service:pdf-extractor,ocr_source_ok:true}. (5) DECISIVE persistence check — queried live market.db bctc_layout_units directly inside the container: the two freshest report_ids are 102672d1 = 12 units @ 2026-07-09 01:25:13 (REE_2025_Q4) and fea19bae = 22 units @ 2026-07-09 01:29:44 (ACB Q1-2026), EXACTLY matching qa's claim AND the router's independent recount (12/22), fresh in the E2E window -> genuinely persisted, not log-echo. VERDICT: the execute()-into-per-Tier-methods split claim holds on every axis — real source diff, no post-commit drift, ancestor-contained deployed image, live /health ok, both live E2E extraction outputs persisted with exact unit counts.",
+          "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head set status=done / active_task_id=null / next_agent=router (idle handback for the BOUNDED-1 auto-pickup loop) alongside the row flip — proactively closing the recurring Close-Gate .head-sync gap (feedback_close_gate_step4_head_sync_gap; here qa's Step-5 write had left .head on the now-done task with next_agent=po). Write-time re-verified .head.active_task_id == the task-id first (no concurrent takeover). No .sprint_goal.entries match (0) -> not touched, mirroring sibling FACTORY-SCHEDULER-job-table-registry. .task_board.head (deprecated stub) left UNTOUCHED — canonical is top-level .head per feedback_orchstate_dual_head_keys_toplevel_authoritative. Did NOT touch the task:FACTORY-PDF-split-extractLayoutFirst-execute lock — per dispatch instruction lock release is the router's job on report-back (po session is gateway-blind: only Read/Edit/Write/Bash bound). qa correctly held REVIEW+next_agent=po (did not self-close) -> qa-self-close count stays 1, below the recurring-2+ bar, parked qa-guardrail-mint stays parked.",
+          "residual_advisory": "No blocking residual. Standing hygiene note (non-blocking): the pdf-extractor SHA gate remains DEFERRED to Phase B (Dockerfile LABEL key is plain git_sha, verify-deploy-sha.sh checks namespaced vn.market.git_sha) — this predates the task and trips exit-1 on every pdf-extractor deploy; the real invariant (deployed source == committed source) is proven satisfied here by no-apps-drift + ancestor-contains. Phase-B label-namespace alignment would eliminate the recurring benign exit-1 for pdf-extractor."
+        }
       }
     ],
     "head": {
@@ -8739,31 +8776,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Extract ExtractLayoutFirstUseCase.execute into per-Tier private methods",
-        "priority": "P1",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-PDF-split-extractLayoutFirst-execute",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-extractLayoutFirst-execute",
-        "promoted_at": "2026-07-09T00:47:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T00:48:03Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "po",
-        "moved_to_review_at": "2026-07-09T01:04:39Z",
-        "moved_by": "dev-pdf-extractor",
-        "review_note": "Code split DONE + tests DONE: ExtractLayoutFirstUseCase.execute() (~480L, Tier0-3 inline) refactored into 4 private Tier methods (_tier0_document_map 46L, _tier1_zone_pages 45L, _tier2_ocr_and_stitch 52L, _tier3_invariant_gate 68L, all <=120L per DoD) plus 2 per-unit sub-helpers (_zone_unit_pages 110L, _gate_check_unit 117L) needed to keep the Tier methods under the cap. execute() is now a 147L linear pipeline; signature (report_id, pdf_path) and return shape unchanged; quarantine/needs_vision_verify semantics preserved exactly. RAW-verify: fully-injected-fake harness (build_document_map_fn/zone_page_fn/ocr_unit_fn + mocked pdf2image.convert_from_path) exercising Tier0-abort, Tier1-abort, and a happy-path with pass/quarantine(invariant-gate+ocr_error)/vision-verify branches -- execute() return dict + push_layout call args + all 3 eval_push_stage calls byte-identical before/after (JSON diff empty). pytest -q: 1088 pass / 12 pre-existing env failures (PIL/Tesseract/poppler, confirmed via git-stash baseline, unrelated files) / 1 skipped -- identical before and after, zero regressions. mypy blocked by pre-existing pyproject.toml importlinter package-name bug, confirmed present at baseline too (git stash) -- not introduced by this diff. Commit c3f30df24. rebuild_required: true -- pdf-extractor container must be rebuilt to deploy this refactor before a live-endpoint RAW-verify is meaningful; holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy -- next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification.",
-        "rebuild_required": false,
-        "ops_close_gate_at": "2026-07-09T03:16:00Z",
-        "ops_close_gate_by": "ops",
-        "ops_note": "Steps 1-4 complete; SHA-gate deferred per runbook Phase B; container healthy; handoff to QA for Step 5 endpoint verification",
-        "qa_verify_at": "2026-07-09T01:33:30Z",
-        "qa_verify_by": "qa",
-        "qa_note": "Step 5 live E2E RAW-verify PASS: 2 real POST /extract-layout-first requests (REE_2025_Q4.pdf 24pg, ACB Q1-2026 33pg) exercised full Tier0-3 pipeline on live image d3abfe8bb831 (git_sha label 0cb48b4c confirmed ancestor-contains c3f30df24). Both returned 202, completed DONE with well-formed result dicts, pushed=True, independently confirmed persisted in bctc_layout_units (not log-echo). Zero exceptions/tracebacks/warnings, zero 5xx in full container log history, container healthy throughout. ACB quarantine delta vs its stale 2026-05-30 baseline (0->12) explained by 2 intervening independent gate-logic commits (GATE-VISION 1588a5910, eval-hook 5ce052f3a), not this refactor -- Tier0 unit-count (22) matched exactly. SHA-gate label deferral treated as settled per dispatch instruction, not re-litigated. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md #qa-S29. VERDICT PASS -- routing to po for Step 6 sign-off."
       }
     ],
     "qa": [],
