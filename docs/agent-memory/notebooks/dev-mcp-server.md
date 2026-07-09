@@ -1,37 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-07-09 — FACTORY-SCHEDULER-split-dataAuditJob → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-dataAuditJob.ts (1300L) held runDailyChecks (D-1..D-11) + runWeeklyChecks (W-1..W-7) as two giant inline functions, 30+ inline findings.push sites. Split into `scheduler/news-analysis/audit-checks/` — 19 files, one per check group, each ≤120L, pure `(db)=>AuditFinding[]` (checkLancedbDrift/W-7 is the one async exception, injected GetCountFn). AuditFinding/TelegramFn/GetCountFn + checkToCategory/severityToPriority/getPreviousRowCounts/insertFeedbackIfNew/buildFindingTitle/buildTelegramMessage/INDICATOR_RANGES/SNAPSHOT_TABLES moved to new `dataAuditShared.ts`. `dataAuditJob.ts` is now a 353L thin orchestrator: runDailyChecks/runWeeklyChecks are `[...checkA(db),...checkB(db),...]` spreads in the exact original D-n/W-n order (finding order + insertFeedbackIfNew side-effect ordering preserved), plus writeSystemLog/upsertAuditState/maybeSendTelegram + the public runDailyAudit/runWeeklyAudit/runDailyAuditIfStale entry points; re-exports AuditFinding/TelegramFn/GetCountFn/buildFindingTitle for zero call-site churn (existing tests + bctcReparseJob.ts unchanged).
-
-RAW-verified: scratch pre/post comparison script (temp, deleted after use) ran runDailyAudit/runWeeklyAudit against identical seeded fixture DBs using a git-HEAD copy of the pre-split monolith vs the post-split module — findings[] output (20 daily + 27 weekly findings) and agent_feedback insert ordering byte-identical (JSON deep-equal). New `FACTORY-SCHEDULER-split-dataAuditJob.test.ts` (7 tests) exercises 6 extracted check functions directly, plus dataAuditShared's pure mapping helpers, without the orchestrator — demonstrates the DoD's "individually testable" property.
-
-tsc clean. Targeted suite (11 files: 157/314/1055/1420/1862j/1041/1086/1101/1221/p2-f-rag-http-rewire + new split test) 92/92 pass. toolCount=183 unchanged, scheduler cron.schedule grep=3 unchanged (no scheduler wiring touched). Full `bun test`: 14415 pass/40 skip/65 fail/4 errors/1184 files (601s) then known Bun 1.3.13 crash-at-teardown — visible tail sample shows only the pre-existing `1302-deprecated` flaky class (same as both prior FACTORY splits this session).
-
-Doc updates: `infrastructure.md` (new "Data Audit Job" section).
-
-Commit: 7b62f73e7. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (scheduler/cron hot path — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, RAW-verify byte-identical pre/post-split, dataAuditJob.ts 1300L→353L | HEALTHY.
-
-## 2026-07-09 — FACTORY-SCHEDULER-split-intelligenceCycleJob → REVIEW
-
-**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
-
-intelligenceCycleJob.ts (1381L, 15-min hot path) mixed CycleResult/CycleDeps, isMarketHours, 9 defaultXxx DI-seam production impls, and the 7-step orchestrator. Split into `intelligenceCycle/types.ts` (138L), `intelligenceCycle/marketHours.ts` (36L, imports VN_OFFSET_MS from timeConstants.ts), `intelligenceCycle/defaults/*.ts` (8 files ≤79L + `defaultComputeHexagrams.ts` 146L — kept together with `resetHexagramCooldown` + the module-level `_lastHexagramComputedAt` map per the CRITICAL cooldown-closure invariant). `intelligenceCycleJob.ts` is now a 975L thin orchestrator (concurrency guard, timeout helper, `_runCycle`, `runIntelligenceCycle`, Step G); re-exports CycleResult/CycleDeps/isMarketHours/resetHexagramCooldown for zero call-site churn. Two source-text-introspection tests (1843-poll-news-te-chromium-stub, FIX-NEWS-CB-FALSE-CLOSED) updated their srcPath to defaultPollNews.ts's new location.
-
-RAW-verified two ways: (1) every extracted function body byte-diffed against a git-HEAD copy (import-depth normalized) — all 11 identical. (2) scratch executable probe (temp, deleted after use) ran `runIntelligenceCycle` with identical injected `CycleDeps` against both the git-HEAD snapshot and the post-split module across market-hours=true/false — CycleResult MD5-identical both scenarios; isMarketHours matched across 5 fixed timestamps.
-
-tsc clean. Targeted suite (25 files) 227/227 pass, 746 expect() calls. toolCount=183 unchanged, scheduler cron.schedule grep=3 unchanged. Full `bun test`: 14415 pass/40 skip/65 fail/10 errors/1184 files (584s) then known Bun 1.3.13 crash-at-teardown — grepped every fail/error: zero intelligence-cycle/scheduler/news-analysis mentions, all pre-existing pollNews/VPS-push/insider/foreign-flow/telegram flaky class.
-
-Doc updates: `infrastructure.md` (new "Intelligence Cycle Job" section).
-
-Commit: 0e1e48dad. Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (scheduler/cron hot path — new code only takes effect after container rebuild, Docker Microservice Code-Change Close Gate).
-
-Zone health: tsc clean, tools=183 unchanged, scheduler cron.schedule grep=3 unchanged, RAW-verify MD5-identical pre/post-split (2 layers), intelligenceCycleJob.ts 1381L→975L | HEALTHY.
-
 ## 2026-07-09 — FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH → REVIEW
 
 **Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dispatched from ci-red-554bb302 signal, dev-team)
@@ -59,3 +27,23 @@ Fixed: `backlog-detail.json` `dev_agent` → `dev-news-fetch` for all 6 news-fet
 Zero apps/news-fetch/ files touched. Commit covers: `docs/data/orch/archive/backlog-detail.json`, `docs/data/orch/orch-state.json`, decision journal, this notebook.
 
 Zone health: apps/mcp-server/ untouched (out-of-zone task correctly declined), board self-corrected, WIP freed | HEALTHY.
+
+## 2026-07-09 — FIX-FOREIGN-FLOW-COVERAGE → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (dev-team dispatch)
+
+Root cause (AUDIT-FC-FOREIGN-FLOW-recon.md): CODES sent to `bgapidatafeed.vps.com.vn/getliststockdata/<CODES>` were built only from watchlist DB + `mcp.config.json` referenceStocks (~111 codes) → ~1457 of ~1569 daily_ohlcv traded tickers permanently carried `foreign_net_vol=NULL`. Added `GET /api/ohlcv-codes` (`ohlcvBackfillHandler.ts` new `handleOhlcvCodes` — `SELECT DISTINCT code FROM daily_ohlcv`, no hardcoded list, generic_mandate-compliant) and wired it into `server.ts`. Updated `vps-scripts/fetch-foreign-flow.sh` to source CODES from `/api/ohlcv-codes` first, falling back to `/api/watchlist` — mirrors `fetch-ohlcv-backfill.sh`'s pre-existing R-2 fallback pattern, which had ALREADY been calling `/api/ohlcv-codes` and silently falling back every cycle because the endpoint was never implemented server-side (confirmed dormant 404 in `docs/vps-sources/ohlcv-backfill-pipeline-stall/recon.md`) — this fix closes that gap too, for free.
+
+money_terms_elevated half of the task (fBValue/fSValue → foreign_buy_value/foreign_sell_value columns, VND tỷ đồng served via `get_foreign_flow`) was already shipped 2026-06-16 (commit ddc36452e) — verified live via `docker exec` query against the running mcp-server container (columns present, populated). No new work needed there; `foreign_net_value` is derived on read (buy−sell), not a stored column — matches the "no derived-column duplication" pattern used elsewhere.
+
+Deliberately did NOT widen `/api/watchlist` itself — that endpoint is also consumed by `fetch-prices.sh`'s per-minute price fetch (unrelated pipeline); widening it would have ballooned that CODES list as an unintended side effect. Separate endpoint keeps the fix scoped to the actual bug.
+
+RAW-verified the single-call design against the real API (off-market-hours, non-VPS host): 1459 live distinct daily_ohlcv codes → HTTP 200, 1400 items returned, ~1.2MB, ~7s, ends with `]` (no truncation) — confirms recon's "no pagination" claim at full scale, not just the 111-code sample it was originally checked against. Bumped `PAYLOAD_SIZE_THRESHOLD` 50000→3,000,000 and the bgapidatafeed fetch timeout 60s→90s to match the ~13x larger payload (avoids WARN-log spam on the new normal size).
+
+New `FIX-FOREIGN-FLOW-COVERAGE.test.ts` (5 tests, TDD RED→GREEN): auth guard, empty-DB, full-universe coverage sorted, DISTINCT dedup across dates, and the exact non-watchlist-code scenario this task fixes. Targeted suite (foreign-flow + ohlcv-backfill, 9 files) 78/78 pass. tsc clean. toolCount=183 unchanged (HTTP route, not an MCP tool). Server-boot probe clean (health 200, new route 401-no-auth as expected), `bctc-inspect`/`news-fetch` dashboard circular-dep probes clean. shellcheck clean on all new script lines.
+
+Doc updates: `market-data.md` (Invariant 6 clarified + new Invariant 8 documenting `/api/ohlcv-codes` and the UPDATE-only-write self-healing coverage model).
+
+Commit: pending (this cycle). Board: `in_progress`→`review`, `next_agent=ops`, `rebuild_required=true` (mcp-server container swap is user-gated — NOT run by this agent, per feedback_container_swaps_user_gated.md). Filed `docs/signals/ops-rebuild-verify-mcp-server-20260709T2332Z.json` — deferred market-hours RAW-verify of live foreign_net_vol coverage growth + VPS script redeploy confirmation.
+
+Zone health: tsc clean, tools=183 unchanged, 78/78 targeted tests pass, live-tested full-universe API call (1459 codes, HTTP 200) | HEALTHY.
