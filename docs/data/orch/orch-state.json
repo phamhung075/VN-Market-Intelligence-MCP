@@ -285,10 +285,10 @@
   "head": {
     "status": "qa_verification",
     "active_task_id": "FACTORY-MACRO-split-repositories",
-    "next_agent": "qa",
-    "next_action": "QA Step 5 (liveness verification): hit /health endpoint and verify tool count / key behaviour matches new code post-rebuild",
-    "updated_at": "2026-07-09T09:22:00Z",
-    "updated_by": "ops"
+    "next_agent": "po",
+    "next_action": "PO Step 6 sign-off: FACTORY-MACRO-split-repositories QA Step 5 PASS. Live /health=200, POST /snapshot independently re-verified twice (values live-ticking: vnIndex 1841.29->1842.46->1843.08; all 8 fields non-null/plausible). SHA-gate drift (deployed 9d712bdad vs HEAD 5b326844c) confirmed benign doc-only (zero apps/macro-indicators diff, refactor commit c3962350d is ancestor of deployed SHA). router.go zero-diff across refactor -- tool/route surface unaffected. Full detail: sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S35.",
+    "updated_at": "2026-07-09T07:36:58Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7714,7 +7714,7 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-09T06:49:03Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
+        "next_agent": "po",
         "completed_at": "2026-07-09T07:01:55Z",
         "completed_by": "dev-macro-indicators",
         "commit_sha": "c3962350d",
@@ -7762,7 +7762,10 @@
             },
             "data_quality": "all values non-null and plausible; refactored openReadOnly() path verified live"
           }
-        }
+        },
+        "qa_verify_at": "2026-07-09T07:36:58Z",
+        "qa_verify_by": "qa",
+        "qa_note": "Step 5 PASS. docker inspect: container healthy since 2026-07-09T07:21:18Z, git_sha label 9d712bdad752c6ca27b8a4d52a19ab36f92f69a7 exact match ops claim. GET /health=200. verify-deploy-sha.sh macro-indicators now reads drift (deployed=9d712bdad vs current HEAD=5b326844c) -- investigated: git diff --stat touches zero apps/macro-indicators/, git merge-base --is-ancestor c3962350d 9d712bdad=true (refactor commit baked into the deployed build) -- benign doc-only drift (memory project_verify_deploy_sha_benign_doc_drift), same class as qa-S32/S33. Re-ran POST /snapshot myself TWICE 3s apart (not ops's numbers): vnIndex ticked 1841.29(ops)->1842.46->1843.08, dataSource:live; oilUsd/goldUsd also moved between my 2 calls -- proves genuinely live-computed not frozen/cached. usdVnd=26111, vndDepositRate=5%, fedFundsRate=3.63%, earningYield=7.052186177715091%, carrySpread=1.37pp byte-identical to ops report both my calls (expected: daily-fixing fields, sticky vs intraday VN-Index), internally consistent with response's own reasoning strings. All 8 fields non-null/non-zero/plausible. Tool/route surface unaffected: git diff c3962350d^..c3962350d -- pkg/interface/http/router.go = EMPTY -- live router still exposes exactly /health+/snapshot+6 optional VMT routes, no change. Source-level: repositories.go gone, 5 new files at exact claimed sizes (110/159/283/141/335L), openReadOnly is a single package-level func called from all 5 adapter files; cmd/server/main.go wired to all 6 constructors from the split files. Fresh go build/vet/test ./... -count=1 myself: all 11 packages green. docker logs since start: zero error/panic lines. Left status:QA untouched per established qa-S33 precedent (git show a6c10eab5 -- qa never touches status, only next_agent; Step 6 DONE_VERIFIED flip is po-exclusive authority per po-S3..S15). DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S35."
       }
     ],
     "qa": [],
