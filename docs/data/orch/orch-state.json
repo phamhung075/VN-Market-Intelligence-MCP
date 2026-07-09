@@ -269,10 +269,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FACTORY-SCHEDULER-job-table-registry",
-    "next_agent": "qa",
-    "next_action": "Close Gate Step 5 (qa) in flight — task lock self-held by dev-team session 5a45feda; ops Steps 1-4 completed (commit f91e02296, rebuild+restart verified live). Awaiting qa completion notification, then po Step 6.",
-    "updated_at": "2026-07-09T00:18:52Z",
-    "updated_by": "dev-team"
+    "next_agent": "ops",
+    "next_action": "FACTORY-SCHEDULER-job-table-registry: qa Step 5 PASS (functional) but ops Step 4 SHA-gate FAILED (label=unknown, missing --build-arg GIT_SHA) -- ops must rebuild with correct build-arg + pass verify-deploy-sha.sh, then straight to po (no re-qa needed).",
+    "updated_at": "2026-07-09T00:23:36Z",
+    "updated_by": "qa"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8714,7 +8714,7 @@
         "priority": "P1",
         "zone": "mcp-server-scheduler",
         "type": "FACTORY",
-        "status": "QA",
+        "status": "REVIEW",
         "id": "FACTORY-SCHEDULER-job-table-registry",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-job-table-registry",
         "promoted_at": "2026-07-08T23:18:51Z",
@@ -8722,14 +8722,17 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
         "claimed_at": "2026-07-08T23:19:02Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "rebuild_required": false,
+        "next_agent": "ops",
+        "rebuild_required": true,
         "reviewed_at": "2026-07-09T00:07:46Z",
         "reviewed_by": "dev-mcp-server",
         "commit": "a25bdc617",
         "review_note": "FACTORY-SCHEDULER-job-table-registry: 79 scheduleCron blocks consolidated into declarative JOB_TABLE (schedulerJobTable.ts) + generic loop; startScheduler.ts 1257L->305L. Equivalence verified (79/79 cron-key+options+job-name match old vs new via scratch script). tsc/eslint clean, targeted suite 430/431 (1 pre-existing flake), server boot verified toolCount=183, full suite 14414 pass/59 fail (all pre-existing). Routes through Docker Microservice Code-Change Close Gate: ops Steps 1-4 -> qa Step 5 -> po Step 6.",
         "ops_verified_at": "2026-07-09T02:12:30Z",
-        "ops_verified_by": "ops"
+        "ops_verified_by": "ops",
+        "qa_verified_at": "2026-07-09T00:23:36Z",
+        "qa_verified_by": "qa",
+        "qa_review_note": "QA Step 5 (Docker Microservice Code-Change Close Gate) — independent RAW-verify complete. FUNCTIONAL: PASS. (1) Bespoke-job execution confirmed live: askQueueCheckJob (registerBespokeJobs, non-generic-loop) fired+succeeded 2x post-restart (cron_job_runs: 00:12:00/00:12:01 status=success); generic-loop jobs (vpsServiceHealthJob polled=5/stored=5, intelligenceCycleJob, restartCadenceAlertJob, bctcQueueEnricherJob, deepFetchVpsJob, deepFetchMainJob) also fired+succeeded at 00:15:00-01. 18/18 job runs since restart = status success, 0 errors/crashed. (2) Re-ran verification independently on current main HEAD (did not just trust dev numbers): tsc --noEmit 0 errors, eslint clean on 3 changed files, targeted FACTORY-SCHEDULER-job-table-registry.test.ts 15/15 pass, all 6 directly-touched test files re-run 53/53 pass, re-ran dev equivalence script myself -> 79/79 confirmed (78 auto-literal match + 1 flagged JOB_NAME_BREADTH_PERSISTER non-literal case independently traced to source: same imported constant used in old+new, confirmed identical). (3) No regression: /health toolCount=183 unchanged, /api/cron-status 200 (85 keys, correctly cross-refs cron_job_runs), /dashboards/news-fetch/ 200, /api/bctc-inspect 200, container file-content diff (docker exec cat vs git show a25bdc617) byte-identical for schedulerJobTable.ts/startScheduler.ts/walEscalation.ts, zero peer-service impact (11/11 healthy, only mcp-server restarted). (4) WAL currently 4.0MB (grew naturally since ops 1.2MB reading, normal sawtooth between :00/:30 checkpoints), well under 10MB HIGH threshold -> wal-escalation-1783551601546 (29.8MB origin) confirmed resolved, safe to close. BLOCKING GAP FOUND (routes to ops, not developer -- no code defect): canonical Step 4 SHA-gate was skipped for this task. `bash scripts/verify-deploy-sha.sh mcp-server` exits 1 live right now: deployed label vn.market.git_sha=\\\"unknown\\\" (re-confirmed against both current HEAD and explicit code-commit a25bdc617 -- same failure both ways, this is NOT HEAD-drift noise, the label was genuinely never set). Root cause: ops notebook entry for this task (docs/agent-memory/notebooks/ops.md, 2026-07-09T02:10-02:15Z block) ran `docker compose build mcp-server` WITHOUT `--build-arg GIT_SHA=...`, unlike every other task in the same notebook file (which correctly pass the flag). Per docs/protocols/docker-deployment-runbook.md canonical rule: non-zero SHA-gate exit = deploy BLOCKED, do not declare complete. Remediation is mechanical/low-risk (code already verified byte-identical to a25bdc617 via direct diff -- this is a labeling/audit-trail gap, not a functional bug): ops re-run `docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) mcp-server && docker compose up -d --no-deps mcp-server && bash scripts/verify-deploy-sha.sh mcp-server`, confirm exit 0, then this row can go straight to po (no need to re-run qa Step 5 -- functional correctness already independently confirmed here). Gateway-blind this session (no mcp__gateway__* tools bound) -- used scripts/agents-flow/mcp-call.sh bash bridge where MCP calls were needed; all verification above was direct docker/git/sqlite/curl, not MCP-mediated."
       }
     ],
     "qa": [],
