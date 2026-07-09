@@ -214,7 +214,11 @@ async function fetchOhlcvData(
     }
 
     const dateStr = d.toISOString().split("T")[0] ?? "";
-    const basePrice = 100 + Math.random() * 20;
+    // FIX-CI-240-PRICE-PIPELINE-RNG-GUARD-STRADDLE: base must clear STOCK_MIN_VND=100
+    // with margin. At 100+rand*20, low=basePrice-1 lands in [99,100) ~5% of runs,
+    // guard-rejecting the row and flaking AC-1's rowsSkipped assertion. 200+rand*20
+    // keeps low>=199, always well clear of the floor.
+    const basePrice = 200 + Math.random() * 20;
 
     // For tests: ticker="BAD" generates invalid OHLCV to test validation
     if (ticker === "BAD") {

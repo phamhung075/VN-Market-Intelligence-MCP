@@ -68,7 +68,8 @@ describe("TASK-OHLCV-WIC-1 TC-1: Rule 5 rejection (close > high)", () => {
 
   it("backfillPrices BAD ticker produces guard-rejected errors, zero rows inserted", async () => {
     // "BAD" ticker internal mock generates rows with high < close (high = basePrice-5, close = basePrice+0.5)
-    // basePrice ~ 100-120 → all values in full-VND range → normalize is no-op → guard rejects
+    // basePrice ~ 200-220 (FIX-CI-240-PRICE-PIPELINE-RNG-GUARD-STRADDLE) → all values in
+    // full-VND range → normalize is no-op → guard rejects on Rule 5 (high < close) regardless of magnitude
     const result = await backfillPrices(
       db,
       { start: "2026-06-09", end: "2026-06-09" }, // single Monday
@@ -139,10 +140,11 @@ describe("TASK-OHLCV-WIC-1 TC-4: thousand-scale normalization → accepted", () 
     expect(guardResult.valid).toBe(true);
   });
 
-  it("backfillPrices inserts rows for a valid ticker (VNM, basePrice ~110)", async () => {
-    // VNM ticker uses basePrice=100+random*20 → ~100-120 open, high=+2, low=-1, close=+0.5
-    // All values in [99,122] range → normalizeOhlcvToVnd: mag < 100? No (100+), so no scaling.
-    // BUT basePrice can be 100.0 exactly and low = basePrice-1 = 99.0 < STOCK_MIN_VND=100.
+  it("backfillPrices inserts rows for a valid ticker (VNM, basePrice ~210)", async () => {
+    // VNM ticker uses basePrice=200+random*20 (FIX-CI-240-PRICE-PIPELINE-RNG-GUARD-STRADDLE)
+    // → ~200-220 open, high=+2, low=-1, close=+0.5. All values in [199,222] range →
+    // normalizeOhlcvToVnd: mag < 100? No (199+), so no scaling. low=basePrice-1 >= 199,
+    // always well clear of STOCK_MIN_VND=100 — no straddle possible.
     // So this test just checks that at least some rows are inserted without errors for valid data.
     const result = await backfillPrices(
       db,
