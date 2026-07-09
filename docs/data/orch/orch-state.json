@@ -294,9 +294,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "await next tick",
-    "updated_at": "2026-07-09T20:55:11Z",
-    "updated_by": "dev-stock-price (task complete)"
+    "next_action": "FACTORY-NEWS-extract-rss-parse reverted BACKLOG (misrouted to dev-mcp-server; zone=news-fetch needs dev-news-fetch) -- backlog-detail.json dev_agent field corrected for all 6 FACTORY-NEWS-* rows; idle-capacity freed for next BOUNDED-1 pickup",
+    "updated_at": "2026-07-09T21:22:38Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3975,15 +3975,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-router-cleanups"
       },
       {
-        "title": "Extract the shared RSS parse layer; collapse the two 95%-identical scrapers",
-        "priority": "P1",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-NEWS-extract-rss-parse",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-extract-rss-parse"
-      },
-      {
         "title": "Fold the two stealth-scraper normalizeDate copies into the published-at primitive",
         "priority": "P1",
         "zone": "news-fetch",
@@ -6340,6 +6331,16 @@
           "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP"
         ],
         "status_note": "Recurrence-escalation SPIKE per feedback_recurring_bug_escalation (2+ recurrence -> architect). Plan-only findings doc; no code change in this row. Deliberately NOT a blocker on the immediate FIX."
+      },
+      {
+        "title": "Extract the shared RSS parse layer; collapse the two 95%-identical scrapers",
+        "priority": "P1",
+        "zone": "news-fetch",
+        "type": "FACTORY",
+        "status": "BACKLOG",
+        "id": "FACTORY-NEWS-extract-rss-parse",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-extract-rss-parse",
+        "reroute_note": "BOUNDED-1 auto-pickup 2026-07-09T21:16:58Z dispatched dev-mcp-server (from backlog-detail.json dev_agent field), but zone=news-fetch -> zone-detect Tier-1 correct specialist is dev-news-fetch (apps/mcp-server/ zone_restricted forbids dev-mcp-server from touching apps/news-fetch/). No code changed. Root-cause: backlog-detail.json dev_agent field was stale for ALL 6 FACTORY-NEWS-* rows (2026-06-15 audit-sprint data-entry bug) -- corrected to dev-news-fetch in same commit. Reverted to backlog for correct re-pickup."
       }
     ],
     "closed_sprints": [
@@ -7352,7 +7353,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T20:47:26Z",
+    "last_triaged_at": "2026-07-09T21:16:58Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },

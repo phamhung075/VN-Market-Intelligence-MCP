@@ -47,3 +47,15 @@ Doc updates: NONE (test-only fix, no architecture/behavior change).
 Commit: 76acfb4e4. Board: `in_progress`→`review` (orch-apply.sh, commit 531af9a11), `next_agent=qa`.
 
 Zone health: tsc clean, tools=183 unchanged, target test green x4 no live-fetch, CI green on re-run | HEALTHY.
+
+## 2026-07-09 — FACTORY-NEWS-extract-rss-parse → misroute, NOT implemented (zone violation)
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (BOUNDED-1 idle-capacity auto-pickup, dev-team)
+
+BOUNDED-1 dispatched this task (files: `apps/news-fetch/src/infrastructure/scrapers/{reuters,bloomberg}-rss.ts` + new `rss-parse.ts`) to dev-mcp-server. Zone=news-fetch, entirely outside dev-mcp-server's hard `zone_restricted: apps/mcp-server/` boundary — refused to implement. Root cause: `backlog-detail.json` `dev_agent` field was wrong (`dev-mcp-server`) for ALL 6 `FACTORY-NEWS-*` rows since the 2026-06-15 audit-sprint data-entry pass; `.claude/skills/zone-detect/SKILL.md` Tier-1 (`zone:` field) correctly resolves `news-fetch` → `dev-news-fetch` per `system-map.json`, but the dispatch used the stale `dev_agent` field instead.
+
+Fixed: `backlog-detail.json` `dev_agent` → `dev-news-fetch` for all 6 news-fetch FACTORY rows. Board row `FACTORY-NEWS-extract-rss-parse` reverted `in_progress`→`backlog` (status `BACKLOG`, `reroute_note` added) via `orch-apply.sh`. Top-level `.head` (NOT `.task_board.head`, which is a deprecated do-not-write stub) reset to idle/`next_agent=router`. Released intent lock. `send_telegram(bug)` flagged the router-side gap for the dispatcher to prefer zone-detect Tier-1 over `dev_agent` field on future BOUNDED-1 picks.
+
+Zero apps/news-fetch/ files touched. Commit covers: `docs/data/orch/archive/backlog-detail.json`, `docs/data/orch/orch-state.json`, decision journal, this notebook.
+
+Zone health: apps/mcp-server/ untouched (out-of-zone task correctly declined), board self-corrected, WIP freed | HEALTHY.

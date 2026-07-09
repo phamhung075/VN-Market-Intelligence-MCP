@@ -1,7 +1,7 @@
 {
   "_sentinel": "backlog-detail-v1",
   "created_at": "2026-06-26T19:51:45Z",
-  "updated_at": "2026-07-09T12:07Z",
+  "updated_at": "2026-07-09T21:21:52Z",
   "count": 437,
   "items": [
     {
@@ -2840,7 +2840,7 @@
     {
       "title": "Extract the shared RSS parse layer; collapse the two 95%-identical scrapers",
       "priority": "P1",
-      "dev_agent": "dev-mcp-server",
+      "dev_agent": "dev-news-fetch",
       "zone": "news-fetch",
       "files": [
         "apps/news-fetch/src/infrastructure/scrapers/reuters-rss.ts",
@@ -2867,7 +2867,7 @@
     {
       "title": "Fold the two stealth-scraper normalizeDate copies into the published-at primitive",
       "priority": "P1",
-      "dev_agent": "dev-mcp-server",
+      "dev_agent": "dev-news-fetch",
       "zone": "news-fetch",
       "files": [
         "apps/news-fetch/src/infrastructure/scrapers/bloomberg-stealth.ts",
@@ -2894,7 +2894,7 @@
     {
       "title": "Split news-fetch sandbox runner.ts; replace by-name signature switch",
       "priority": "P1",
-      "dev_agent": "dev-mcp-server",
+      "dev_agent": "dev-news-fetch",
       "zone": "news-fetch",
       "files": [
         "apps/news-fetch/src/sandbox/runner.ts"
@@ -2919,7 +2919,7 @@
     {
       "title": "Fix composeNewsIngest logging both sources per call",
       "priority": "P2",
-      "dev_agent": "dev-mcp-server",
+      "dev_agent": "dev-news-fetch",
       "zone": "news-fetch",
       "files": [
         "apps/news-fetch/src/module/news_ingest/index.ts"
@@ -2944,7 +2944,7 @@
     {
       "title": "Dedup the 4 headline route handlers + name the 15/10 maxItems defaults",
       "priority": "P2",
-      "dev_agent": "dev-mcp-server",
+      "dev_agent": "dev-news-fetch",
       "zone": "news-fetch",
       "files": [
         "apps/news-fetch/src/interface/handlers.ts",
@@ -2970,7 +2970,7 @@
     {
       "title": "Move Go news-fetch HTTP handlers out of the fat composition root",
       "priority": "P2",
-      "dev_agent": "dev-mcp-server",
+      "dev_agent": "dev-news-fetch",
       "zone": "news-fetch",
       "files": [
         "apps/news-fetch/cmd/server/main.go"
