@@ -66,6 +66,7 @@ import { FinancialsZone } from "~/components/analysis/FinancialsZone";
 import { ReputationZone } from "~/components/analysis/ReputationZone";
 import { NewsBuzzZone } from "~/components/analysis/NewsBuzzZone";
 import { ConvictionHistoryZone } from "~/components/analysis/ConvictionHistoryZone";
+import { ConfidenceBar } from "~/components/analysis/ConfidenceBar";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -269,27 +270,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     kdGeneratedAt: market?.timestamp ?? null,
     watchlistDataAsof: null,
   });
-}
-
-// --------------------------------------------------------------------------
-// Helpers
-// --------------------------------------------------------------------------
-
-function confidenceBar(confidence: number) {
-  const pct = Math.round(confidence * 100);
-  const color =
-    pct >= 80 ? "bg-green-500" : pct >= 50 ? "bg-yellow-500" : "bg-red-500";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-16 rounded-full bg-slate-700">
-        <div
-          className={`h-1.5 rounded-full ${color}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="text-xs text-slate-400">{pct}%</span>
-    </div>
-  );
 }
 
 // --------------------------------------------------------------------------
@@ -807,7 +787,7 @@ function KinhDichMarketPanel({ market }: { market: KinhDichMarket }) {
       <div className="flex-1 space-y-2 text-sm">
         <Row label="Xu hướng" value={<span className="font-medium text-slate-200">{market.trend}</span>} />
         <Row label="Tín hiệu" value={<span className={`font-semibold ${signalColor(market.signal)}`}>{market.signal}</span>} />
-        <Row label="Độ tin cậy" value={confidenceBar(market.confidence)} />
+        <Row label="Độ tin cậy" value={<ConfidenceBar confidence={market.confidence} />} />
         <Row label="Thời gian" value={<ClientTimestamp iso={market.timestamp} />} />
       </div>
     </div>
@@ -935,7 +915,7 @@ function StockTable({
                   {r.signal}
                 </td>
                 <td className="px-3 py-2 text-right">
-                  {confidenceBar(r.confidence)}
+                  <ConfidenceBar confidence={r.confidence} />
                 </td>
                 <td className="px-3 py-2 text-right">
                   {isSelected ? (
@@ -1428,7 +1408,7 @@ function StockDetailPanel({
                 </span>
               }
             />
-            <Row label="Độ tin cậy" value={confidenceBar(reading.confidence)} />
+            <Row label="Độ tin cậy" value={<ConfidenceBar confidence={reading.confidence} />} />
           </div>
 
           {reading.actionNote && (
