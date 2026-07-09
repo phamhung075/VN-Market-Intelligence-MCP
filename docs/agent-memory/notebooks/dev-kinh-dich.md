@@ -69,6 +69,37 @@ Zone health: KD-QREF-2 DONE — 64-que reference dashboard implemented, all ACs 
 
 ---
 
+### 2026-07-09 — FACTORY-KINHDICH-name-confidence-constants
+
+**Task:** Extract 6 inline magic literals to named constants in reading_composer.go.
+
+**Constants extracted (const block with provenance comments):**
+- `confidenceScoreCeiling = 0.8` — score-to-confidence normalization ceiling
+- `markovBaseWeight = 0.7` — base confidence weight in Markov blend
+- `markovBlendWeight = 0.3` — Markov data weight in blend
+- `confidenceRoundFactor = 1000` — rounds to 3 decimal places
+- `hoQueGlossTruncateRunes = 80` — ho que gloss max rune length
+- `defaultActiveLinePosition = 5` — ngu hao ruler position default
+
+**Blend-weight invariant assertion (compile-time, zero runtime overhead):**
+```go
+var _ = [1]struct{}{{}}[int(10*(markovBaseWeight+markovBlendWeight))-10]
+```
+This fails to compile if `markovBaseWeight + markovBlendWeight != 1.0`.
+
+**Post-change verification (all GREEN):**
+- `go test ./...` — all packages ok
+- `go vet ./...` — exit 0
+- `golangci-lint run ./...` — 0 issues
+- Sandbox primitive: 15/15 GREEN
+- Sandbox module: 2/2 GREEN
+
+**Commit:** 282dd0589
+
+Zone health: FACTORY-KINHDICH-name-confidence-constants DONE_VERIFIED — all literals named, tests green, sandbox green | HEALTHY
+
+---
+
 ### 2026-07-08 — FACTORY-KINHDICH-delete-deprecated-ts-tree
 
 **Task:** Delete the ~4302 LOC `apps/kinh-dich-service/src/_deprecated/` TypeScript predecessor tree.
