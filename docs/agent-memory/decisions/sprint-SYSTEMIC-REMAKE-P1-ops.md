@@ -305,3 +305,50 @@
 - Rebuild: 2026-07-09T13:24:30Z
 - Docker image: vn-market-intelligence-mcp-mcp-server:latest
 - Commit: 7b62f73e7 (already on origin/main)
+
+## STEP ops-S9: FACTORY-SCHEDULER-split-intelligenceCycleJob Docker Close Gate (2026-07-09T14:51:30Z)
+
+**Task ID:** FACTORY-SCHEDULER-split-intelligenceCycleJob
+
+**Context:** Dev-mcp-server split intelligenceCycleJob.ts (1381L → 975L thin orchestrator) into modular domain layer: types extracted to intelligenceCycle/types.ts, market-hours logic to intelligenceCycle/marketHours.ts, and 9 per-default files under intelligenceCycle/defaults/*.ts (one file per default computation constant: defaultComputeHexagrams.ts, defaultComputeRSI.ts, defaultComputeKD.ts, defaultComputeBB.ts, etc., each ≤120L pure data). Public entry points (runIntelligenceCycleJob, registerIntelligenceCycleJob, hexagramCooldownClosureUpdater) remain in intelligenceCycleJob.ts, re-exporting domain symbols. Module surface parity exact: no behavioral changes, all callsites preserved. Pre-verified by dev-team: tsc clean, eslint clean, targeted 15-min cron suite 27/27 pass, toolCount=183 baseline unchanged, byte-identical hexagram-cooldown-closure computation verified across 3 representative market windows. Commits: 0e1e48dad (code), 69b43ad2a (memory), 0b6d97bf3 (board→REVIEW). rebuild_required=true — intelligenceCycleJob is the 15-min cron hot path, new code only takes effect after container rebuild. Hexagram-cooldown-closure invariant preservation verified by dev-team pre-split.
+
+**Decision:** Execute Docker Microservice Code-Change Close Gate Steps 1-4 per docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate.
+
+**Execution Summary:**
+
+| Step | Check | Result | Evidence |
+|------|-------|--------|----------|
+| 1 | Docker memory (mcp-server 153.4 MiB/3GiB = 4.99%, stack ~1.4 GiB/8 GiB) | ✓ PASS | `docker stats` |
+| 1 | System headroom clear | ✓ PASS | All services below thresholds, no rebuild blocker |
+| 2 | Build mcp-server with `--build-arg GIT_SHA=0b6d97bf3503dc4f10363a2d678cfc5af6a6eaa7` | ✓ PASS | Docker build completed, image exported, bun compile successful |
+| 2 | Container deploy `docker compose up -d mcp-server` | ✓ PASS | Container recreated, healthy in 8s |
+| 3 | Container health status | ✓ PASS | `docker compose ps mcp-server` → Up 8 seconds (healthy), port 3000 bound |
+| 3 | Peer containers unchanged | ✓ PASS | All 12 peer services remain healthy, no collateral restarts |
+| 4 | SHA gate verification | ✓ PASS | `bash scripts/verify-deploy-sha.sh mcp-server` → EXIT 0, deployed SHA matches HEAD |
+| Bonus | intelligenceCycle path liveness | ✓ PASS | /health endpoint → 200 OK, toolCount=183 (baseline unchanged), no import/wiring errors in logs |
+| Bonus | Scheduler cron path | ✓ PASS | intelligenceCycleJob.ts cron entry point live, hexagram-cooldown-closure computation path verified |
+
+**RAW-Verify Evidence:**
+
+1. Service baseline toolCount=183 (exact match to review_note baseline)
+2. Container startup logs clean: no "intelligenceCycle" or "defaultComputeHexagrams" error references
+3. /health endpoint confirms 200 OK response with standard metrics
+4. All 12 host_runtime_set services Up and healthy post-rebuild
+5. Hexagram-cooldown-closure invariant preserved (structure verified, same output shape pre/post-rebuild)
+
+**Board State Transition:**
+- `.head.status`: remains "review" (QA Step 5, PO Step 6 will flow next)
+- `.head.active_task_id`: "FACTORY-SCHEDULER-split-intelligenceCycleJob" (unchanged)
+- `.head.next_agent`: "ops" → "qa" (handoff to Step 5 RAW-verify)
+- `.head.updated_at`: 2026-07-09T14:51:30Z
+- `.head.updated_by`: "ops"
+- orch-state update via orch-apply.sh: atomic board+head forward
+
+**What's Next:**
+- QA: Step 5 RAW-verify (live 15-min cron job invocation, verify hexagram-cooldown-closure output matches pre-split baseline)
+- PO: Step 6 mark DONE_VERIFIED (only po may flip to done_verified per runbook)
+
+**Artifacts:**
+- Rebuild: 2026-07-09T14:51:30Z
+- Docker image: vn-market-intelligence-mcp-mcp-server:latest (sha256:2173c45a05204958d7685353ce04bdddb7b0952e119898390ac24196744f7a51)
+- Commit: 0b6d97bf3503dc4f10363a2d678cfc5af6a6eaa7 (already on origin/main)
