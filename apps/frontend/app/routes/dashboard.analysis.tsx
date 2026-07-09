@@ -41,11 +41,6 @@ import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 import { FreshnessBadge } from "~/components/FreshnessBadge";
 import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
 import { TechnicalZone } from "~/components/analysis/TechnicalZone";
 import { CorporateEventsZone } from "~/components/analysis/CorporateEventsZone";
 import { FinancialsZone } from "~/components/analysis/FinancialsZone";
@@ -59,6 +54,7 @@ import { KinhDichMarketPanel } from "~/components/analysis/KinhDichMarketPanel";
 import { MacroSignalPanel } from "~/components/analysis/MacroSignalPanel";
 import { StockTable, StockSearchForm } from "~/components/analysis/StockTable";
 import { StockDetailPanel } from "~/components/analysis/StockDetailPanel";
+import { AiDeepDivePanel } from "~/components/analysis/AiDeepDivePanel";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -79,7 +75,7 @@ const KD_SAMPLE_TICKERS = ["FPT", "VNM", "HPG", "VCB", "MSN", "VIC", "SSI", "VJC
 // --------------------------------------------------------------------------
 
 /** Shape returned by GET /api/analysis-brief/:ticker (200 OK). */
-interface AnalysisBriefDto {
+export interface AnalysisBriefDto {
   ticker: string;
   fundamentals: string | null;
   news: string | null;
@@ -95,7 +91,7 @@ interface AnalysisBriefError {
   ticker?: string;
 }
 
-type AnalysisBriefResult =
+export type AnalysisBriefResult =
   | { ok: true; brief: AnalysisBriefDto }
   | { ok: false; status: number; errorCode: string };
 
@@ -383,133 +379,6 @@ function AccuracyDigestCard({
           </p>
         )}
       </div>
-    </div>
-  );
-}
-
-// --------------------------------------------------------------------------
-// AI Deep-Dive panel (P0-4)
-// --------------------------------------------------------------------------
-
-/**
- * StalenessTag — shows how old the analysis brief is.
- * Age > 24h → amber "CŨ"; else shows timestamp.
- */
-function StalenessTag({ updatedAt }: { updatedAt: string | null }) {
-  if (!updatedAt) return null;
-  const ageMs = Date.now() - new Date(updatedAt).getTime();
-  const isStale = ageMs > 24 * 60 * 60 * 1000;
-  return (
-    <span
-      className={
-        isStale
-          ? "rounded border border-amber-600 bg-amber-900 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300"
-          : "rounded border border-slate-600 bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400"
-      }
-    >
-      {isStale ? "CŨ" : ""}
-      <ClientTimestamp iso={updatedAt} className="ml-1 font-normal normal-case tracking-normal" />
-    </span>
-  );
-}
-
-/**
- * BriefSection — a labelled collapsible section for one brief field.
- * label: Vietnamese label (Cơ bản / Tin tức / Giá / Tổng hợp)
- * content: prose string or null
- */
-function BriefSection({
-  label,
-  content,
-  defaultOpen = false,
-}: {
-  label: string;
-  content: string | null;
-  defaultOpen?: boolean;
-}) {
-  if (!content) {
-    return (
-      <div className="rounded border border-slate-700 bg-slate-800/50 px-4 py-3">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          {label}
-        </span>
-        <p className="mt-1 text-xs text-slate-600 italic">Chưa có dữ liệu.</p>
-      </div>
-    );
-  }
-
-  return (
-    <Collapsible defaultOpen={defaultOpen}>
-      <div className="rounded border border-slate-700 bg-slate-800/50">
-        <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {label}
-          </span>
-          <span aria-hidden="true" className="text-slate-500 text-xs select-none">
-            ▾
-          </span>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="border-t border-slate-700 px-4 py-3">
-            <p className="text-sm leading-relaxed text-slate-200 whitespace-pre-wrap">
-              {content}
-            </p>
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
-  );
-}
-
-/**
- * AiDeepDivePanel — renders the AI analysis brief for a selected ticker.
- * Shows fundamentals / news / price / synthesis as labelled collapsible sections.
- * On 404 → "chưa có phân tích cho mã này" (no fabrication).
- * On network failure (null) → silent — panel not rendered.
- */
-function AiDeepDivePanel({
-  result,
-  ticker,
-}: {
-  result: AnalysisBriefResult | null;
-  ticker: string;
-}) {
-  if (result === null) {
-    // Network failure — degrade silently (fetch failed entirely).
-    return null;
-  }
-
-  if (!result.ok) {
-    if (result.errorCode === "not_found" || result.status === 404) {
-      return (
-        <div className="rounded border border-slate-700 bg-slate-800/50 px-4 py-4 text-sm text-slate-500 italic">
-          Chưa có phân tích chuyên sâu cho mã {ticker}.
-        </div>
-      );
-    }
-    // Other upstream errors (400, 500, 502…) — show terse message.
-    return (
-      <div className="rounded border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-300">
-        Không thể tải phân tích AI cho {ticker} ({result.errorCode}).
-      </div>
-    );
-  }
-
-  const { brief } = result;
-
-  return (
-    <div className="space-y-3">
-      {/* Header: ticker + staleness badge */}
-      <div className="flex items-center gap-3">
-        <span className="font-mono text-sm font-bold text-blue-400">{brief.ticker}</span>
-        <StalenessTag updatedAt={brief.updatedAt} />
-      </div>
-
-      {/* Collapsible sections — Vietnamese labels */}
-      <BriefSection label="Tổng hợp" content={brief.synthesis} defaultOpen />
-      <BriefSection label="Cơ bản" content={brief.fundamentals} />
-      <BriefSection label="Tin tức" content={brief.news} />
-      <BriefSection label="Giá" content={brief.price} />
     </div>
   );
 }
