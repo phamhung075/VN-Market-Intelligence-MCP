@@ -90,7 +90,7 @@ mypy: pre-existing "pdf-extractor is not a valid Python package name" env error,
 confirmed present on `git stash` (unrelated to this change).
 
 ### Commit
-`<pending>` — refactor(pdf-extractor): split ExtractLayoutFirstUseCase.execute() into per-Tier methods
+`c3f30df24` — refactor(pdf-extractor): split ExtractLayoutFirstUseCase.execute() into per-Tier methods
 
 Zone health: G12 sandbox gate in `docs/agents/dev-pdf-extractor/flow/main.md` §Pilot
 Hard Rule references a stale path (`sandbox_runner.py` at service root, `--scenario=all`)
