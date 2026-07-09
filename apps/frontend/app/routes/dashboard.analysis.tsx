@@ -41,34 +41,24 @@ import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 import { FreshnessBadge } from "~/components/FreshnessBadge";
 import { useFreshnessRevalidator } from "~/lib/hooks/useFreshnessRevalidator";
-import { QueName } from "~/components/QueName";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
-import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
-import { formatChangePct } from "~/domain/formatters/change-pct.js";
-import { signalColor } from "~/domain/formatters/signal-color";
 import { TechnicalZone } from "~/components/analysis/TechnicalZone";
 import { CorporateEventsZone } from "~/components/analysis/CorporateEventsZone";
 import { FinancialsZone } from "~/components/analysis/FinancialsZone";
 import { ReputationZone } from "~/components/analysis/ReputationZone";
 import { NewsBuzzZone } from "~/components/analysis/NewsBuzzZone";
 import { ConvictionHistoryZone } from "~/components/analysis/ConvictionHistoryZone";
-import { ConfidenceBar } from "~/components/analysis/ConfidenceBar";
-import { SectionCard, Row } from "~/components/analysis/SectionShell";
+import { SectionCard } from "~/components/analysis/SectionShell";
 import { StockSelector } from "~/components/analysis/StockSelector";
 import { WatchlistOverviewGrid } from "~/components/analysis/WatchlistOverviewGrid";
-import { SectorPeersBar } from "~/components/analysis/SectorPeersBar";
-import { MacroImpactPanel } from "~/components/analysis/MacroImpactPanel";
 import { KinhDichMarketPanel } from "~/components/analysis/KinhDichMarketPanel";
 import { MacroSignalPanel } from "~/components/analysis/MacroSignalPanel";
 import { StockTable, StockSearchForm } from "~/components/analysis/StockTable";
-import { AnalysisDecision } from "~/components/analysis/AnalysisDecision";
-import { InfoSourcePanel } from "~/components/analysis/InfoSourcePanel";
-import { StockSignalsPanel } from "~/components/analysis/StockSignalsPanel";
-import { MiniPriceTable } from "~/components/analysis/MiniPriceTable";
+import { StockDetailPanel } from "~/components/analysis/StockDetailPanel";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -109,7 +99,7 @@ type AnalysisBriefResult =
   | { ok: true; brief: AnalysisBriefDto }
   | { ok: false; status: number; errorCode: string };
 
-interface StockDetail {
+export interface StockDetail {
   reading: KinhDichReading;
   prices: PricePoint[];
   ta: TASnapshot | null;
@@ -392,121 +382,6 @@ function AccuracyDigestCard({
             · {data!.newStocksCount} stocks still seeding
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-// --------------------------------------------------------------------------
-// Detail panel
-// --------------------------------------------------------------------------
-
-function StockDetailPanel({
-  detail,
-  stock,
-  stockInfo,
-  snapshot,
-  watchlistTiles,
-}: {
-  detail: StockDetail;
-  stock: string;
-  stockInfo: WatchlistStock | null;
-  snapshot: MacroSnapshot | null;
-  watchlistTiles: Record<string, WatchlistTileData>;
-}) {
-  const { reading, prices, ta, signals, cascadeSignals } = detail;
-
-  return (
-    <div className="mt-6 rounded-lg border border-blue-800 bg-slate-900 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-blue-800 bg-blue-950 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-xl font-bold text-blue-300">{stock}</span>
-          {stockInfo && (
-            <span className="text-xs text-slate-400">{stockInfo.company}</span>
-          )}
-          <span className={`text-sm font-semibold ${signalColor(reading.signal)}`}>
-            {reading.signal}
-          </span>
-          <span className="text-xs text-slate-500">{prices.length} phiên</span>
-        </div>
-        <Link to="." className="text-xs text-slate-400 hover:text-slate-200">
-          ✕ đóng
-        </Link>
-      </div>
-
-      {/* Sector peers bar — quick comparison with siblings */}
-      <SectorPeersBar
-        currentTicker={stock}
-        sector={stockInfo?.sector ?? null}
-        tiles={watchlistTiles}
-      />
-
-      {/* Decision panel — synthesized buy/sell/hold */}
-      <AnalysisDecision ta={ta} reading={reading} prices={prices} />
-
-      {/* Info source panel — contributing data sources */}
-      <InfoSourcePanel ta={ta} reading={reading} prices={prices} snapshot={snapshot} />
-
-      {/* Macro impact panel — cascade macro → sector → stock linkage */}
-      <MacroImpactPanel cascadeSignals={cascadeSignals} stock={stock} />
-
-      {/* Agent signals — why this stock has been flagged */}
-      <StockSignalsPanel signals={signals} />
-
-      {/* Bottom: Kinh Dịch + Price table side-by-side */}
-      <div className="grid gap-0 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-700">
-        {/* Kinh Dịch details */}
-        <div className="p-4 space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Kinh Dịch
-          </h3>
-          <div className="space-y-2 text-sm">
-            <Row
-              label="Quẻ"
-              value={
-                <QueName
-                  hexagram={reading.hexagram}
-                  name={reading.name}
-                  className="text-slate-200"
-                />
-              }
-            />
-            <Row
-              label="Xu hướng"
-              value={<span className="text-slate-200">{reading.trend}</span>}
-            />
-            <Row
-              label="Tín hiệu"
-              value={
-                <span className={`font-semibold ${signalColor(reading.signal)}`}>
-                  {reading.signal}
-                </span>
-              }
-            />
-            <Row label="Độ tin cậy" value={<ConfidenceBar confidence={reading.confidence} />} />
-          </div>
-
-          {reading.actionNote && (
-            <div className="mt-3 rounded bg-slate-800 px-3 py-2 text-xs text-slate-300 leading-relaxed">
-              {reading.actionNote}
-            </div>
-          )}
-
-          {reading.overallReading && (
-            <div className="mt-2 rounded bg-slate-800 px-3 py-2 text-xs text-slate-400 leading-relaxed">
-              {reading.overallReading}
-            </div>
-          )}
-        </div>
-
-        {/* Recent price table */}
-        <div className="p-4 space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Lịch sử giá — 7 phiên gần nhất
-          </h3>
-          <MiniPriceTable prices={prices} />
-        </div>
       </div>
     </div>
   );
