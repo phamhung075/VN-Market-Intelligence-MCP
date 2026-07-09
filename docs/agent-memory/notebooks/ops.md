@@ -500,3 +500,74 @@ Dev pre-verify: tsc clean, targeted suite 156 pass/2 skip/0 fail, full suite 143
 Zone: `apps/mcp-server/src/scheduler/` | Subsystem: Declarative job registry + WAL escalation | DB: market.db (checkpoint)
 
 **Commit:** a25bdc617 (79 scheduleCron calls → declarative JOB_TABLE + walEscalation.ts extracted)
+
+## Docker Close Gate: FACTORY-SCHEDULER-job-table-registry SHA-Gate Corrective Pass (2026-07-09T02:28–02:30Z)
+
+**Task:** FACTORY-SCHEDULER-job-table-registry  
+**Session UUID:** 5a45feda-431e-46c8-941d-a6539a0eca77  
+**Status:** ✓ COMPLETE — Corrective SHA-gate-only pass, no code re-run
+
+**Context:** Initial Steps 1-4 close-gate (commit a25bdc617) completed 2026-07-09T02:10-02:15Z. QA Step 5 independently verified functional correctness as PASS (18/18 live job executions, tsc/eslint/tests clean, byte-identical deployed code, WAL healthy). ONLY blocker was deploy SHA label — built WITHOUT `--build-arg GIT_SHA=...` flag, so container label remained "unknown". Dispatcher reproduced failure live: `verify-deploy-sha.sh mcp-server` returned EXIT=1.
+
+**Corrective Action (Mechanical, No Code Changes):**
+
+This pass is a re-build ONLY — it does NOT re-run Steps 1-4 verification from scratch. QA's functional correctness confirmation stands as-is.
+
+| Step | Action | Result | Duration |
+|------|--------|--------|----------|
+| 1 | Build with GIT_SHA arg | `docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) mcp-server` | ~15s |
+| 2 | Restart single service | `docker compose up -d --no-deps mcp-server` (no peer impact) | ~1s |
+| 3 | Verify SHA gate | `bash scripts/verify-deploy-sha.sh mcp-server` → EXIT 0 ✓ | <1s |
+| 4 | RAW health re-verify | `/health` 200 OK, toolCount=183, image changed from "unknown" label | <1s |
+
+**SHA Verification Evidence:**
+
+```
+$ git rev-parse HEAD
+0fb29a141e5fc72c865a9398d0ccec4ee23fbd6d
+
+$ bash scripts/verify-deploy-sha.sh mcp-server
+OK: deployed SHA matches HEAD (0fb29a141e5fc72c865a9398d0ccec4ee23fbd6d).
+EXIT=0
+```
+
+**Health Verification Evidence:**
+
+```
+$ curl -s http://localhost:3000/health
+{"status":"ok","name":"vn-market","version":"1.0.0","toolCount":183,"sessions":0,"uptime":5.049229942}
+
+$ docker inspect vn-market-intelligence-mcp-mcp-server-1 --format='{{.Image}}'
+sha256:eca9d369cb551085f43ddd4aac6087614159d937734f3e12a45c5710067cfbeb
+(changed from prior unknown-labeled image)
+
+$ docker compose ps --format "table {{.Service}}\t{{.Status}}\t{{.RunningFor}}"
+(all 11 services healthy, no peer restarts detected)
+```
+
+**Functional Correctness Status:**
+
+QA's prior PASS (18/18 job executions, tsc/eslint/tests clean, WAL healthy) remains valid — this corrective pass only addresses the labeling gap. NO re-qa cycle required per dispatcher task spec.
+
+**Board State Transition:**
+
+- `.task_board.review[]` row `id:"FACTORY-SCHEDULER-job-table-registry"`:
+  - `next_agent`: "ops" → "po"
+  - `rebuild_required`: true → false
+  - `ops_sha_gate_fixed_at`: "2026-07-09T02:30:00Z"
+  - `ops_sha_gate_fixed_by`: "ops"
+  - `ops_note`: "Corrective SHA-gate-only pass after QA functional verification"
+- `.head.next_agent`: synced to "po" (forward dispatch for Step 6 sign-off)
+
+**Decision Rationale:**
+
+1. QA has independently confirmed functional correctness → no re-qa needed
+2. SHA gate now passes cleanly → infrastructure requirement satisfied
+3. Route straight to po for DONE_VERIFIED step-off (bypassing QA re-entry per dispatcher instruction)
+4. Notebook entry written BEFORE board flip (journal-before-DONE gate compliance)
+
+---
+
+Zone: `apps/mcp-server/` | Subsystem: Docker build label + SHA verification | Build: 0fb29a141e5fc72c865a9398d0ccec4ee23fbd6d
+
+**Timestamp:** 2026-07-09T02:30Z (corrective close-gate completion)
