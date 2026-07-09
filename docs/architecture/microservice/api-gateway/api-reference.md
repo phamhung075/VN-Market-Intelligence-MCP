@@ -1,6 +1,6 @@
 # api-gateway — API Reference
 
-**File:** `apps/api-gateway/pkg/interface/http/handlers.go`
+**Files:** `apps/api-gateway/pkg/interface/http/{handlers,dashboard,middleware,proxy}.go` (split 2026-07-09, same package — see `docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-api-gateway.md`). `handlers.go` = struct + `HandleHealth`/`HandleServiceHealth`/`HandleDashboard`; `dashboard.go` = `BuildDashboardHTML`; `middleware.go` = `writeJSON`/logging; `proxy.go` = `HandleProxy`.
 
 ## GET /health
 Aggregate health of all 8 downstream services (virtual alias `api` excluded from probes).

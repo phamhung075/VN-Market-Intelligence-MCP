@@ -294,9 +294,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "FACTORY-KINHDICH-name-price-score-constants completed by dev-kinh-dich; awaiting QA review + ops rebuild verification",
-    "updated_at": "2026-07-09T19:23:35Z",
-    "updated_by": "dev-kinh-dich"
+    "next_action": "FACTORY-APIGW-split-handlers moved to REVIEW by dev-api-gateway — idle-capacity freed for next BOUNDED-1 pickup",
+    "updated_at": "2026-07-09T20:00:00Z",
+    "updated_by": "dev-api-gateway"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3894,15 +3894,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-split-sandbox"
       },
       {
-        "title": "Split api-gateway handlers.go into dashboard/middleware/proxy files",
-        "priority": "P1",
-        "zone": "api-gateway",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-APIGW-split-handlers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-handlers"
-      },
-      {
         "title": "Promote the 5x proxy-timeout multiplier to a named config accessor",
         "priority": "P1",
         "zone": "api-gateway",
@@ -7290,6 +7281,42 @@
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "updated_at": "2026-07-09T17:28:07Z",
         "updated_by": "developer"
+      },
+      {
+        "title": "Name price_score normalization divisor 0.05 and 7-point threshold",
+        "priority": "P1",
+        "zone": "kinh-dich-service",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-KINHDICH-name-price-score-constants",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-name-price-score-constants",
+        "promoted_at": "2026-07-09T19:17:33Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T19:17:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-kinh-dich",
+        "completed_at": "2026-07-09T19:23:35Z",
+        "completed_by": "dev-kinh-dich",
+        "status_note": "Code complete, tests green, sandbox green. Rebuild verification deferred to ops (signal: ops-rebuild-verify-kinh-dich-20260709T1923Z.json)"
+      },
+      {
+        "title": "Split api-gateway handlers.go into dashboard/middleware/proxy files",
+        "priority": "P1",
+        "zone": "api-gateway",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-APIGW-split-handlers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-handlers",
+        "promoted_at": "2026-07-09T19:48:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T19:48:42Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "completed_at": "2026-07-09T20:00:00Z",
+        "completed_by": "dev-api-gateway",
+        "status_note": "Split handlers.go (421L) into dashboard.go(119L)/middleware.go(44L)/proxy.go(117L, new private newReverseProxy+serveProxied helpers collapse the 2 duplicate reverse-proxy setup+timeout blocks)/handlers.go(85L), same package http, all exported symbols unchanged. go build/vet clean, gofmt clean, golangci-lint 0 issues, go test ./... 10/10 packages PASS (handlers_test.go 34 tests untouched, all green), G12 sandbox primitive 14/14 + module 1/1 PASS. rebuild_required=true (hottest-path prod HTTP handler) — deferred post-rebuild behavior verification tracked in signal docs/signals/ops-rebuild-verify-api-gateway-20260709T1958Z.json per feedback_user_gates_delegate_to_ops.md. Kept REVIEW (not self-asserted DONE_VERIFIED) pending router/qa sign-off given hottest-path risk. DJ: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-api-gateway.md"
       }
     ],
     "qa": [],
@@ -7309,28 +7336,9 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T19:17:33Z",
+    "last_triaged_at": "2026-07-09T19:48:38Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Name price_score normalization divisor 0.05 and 7-point threshold",
-        "priority": "P1",
-        "zone": "kinh-dich-service",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-KINHDICH-name-price-score-constants",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-name-price-score-constants",
-        "promoted_at": "2026-07-09T19:17:33Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T19:17:43Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-kinh-dich",
-        "completed_at": "2026-07-09T19:23:35Z",
-        "completed_by": "dev-kinh-dich",
-        "status_note": "Code complete, tests green, sandbox green. Rebuild verification deferred to ops (signal: ops-rebuild-verify-kinh-dich-20260709T1923Z.json)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

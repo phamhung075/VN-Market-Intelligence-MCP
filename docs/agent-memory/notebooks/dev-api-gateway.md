@@ -106,3 +106,21 @@ Zone: `apps/api-gateway/` | Stack: TS/Bun (active) + Go 1.22 (Phase 1 new siblin
 **Next tasks (Phase 1):**
 - B5: cmd/sandbox runner + scenario execution (CGO_ENABLED=0 go run ./cmd/sandbox)
 - B6: Trust dashboard HTML
+
+## c1 · 2026-07-09T20:00Z
+
+**Task:** FACTORY-APIGW-split-handlers (P1, BOUNDED-1 idle-capacity pickup) — split `pkg/interface/http/handlers.go` (421L, hottest path) into dashboard/middleware/proxy files, same `http` package.
+
+**Status:** REVIEW (not self-asserted DONE_VERIFIED — hottest-path prod HTTP handler, rebuild_required:true; deferred post-rebuild behavior verify tracked via signal).
+
+**Result:** handlers.go 421L → handlers.go 85L (struct+ctor+HandleHealth/HandleServiceHealth/HandleDashboard) + dashboard.go 119L (BuildDashboardHTML+statusClass/statusLabel+CSS/HTML template) + middleware.go 44L (writeJSON/statusRecorder/loggingMiddleware) + proxy.go 117L (HandleProxy + new private `newReverseProxy(target, errorWriter)` + `serveProxied(proxy,w,r2,overrideMs,timeoutMs int64)` — collapses BOTH the reverse-proxy-construction dup AND the timeout-context+ServeHTTP dup that existed in the not-deployed-reroute vs normal-proxy branches). All 4 files ≤120L, gofmt-clean.
+
+**Line-cap technique (reusable):** dashboard.go/proxy.go initially landed at 141L/144L verbatim-ported. Cut to 119L/117L via (a) compacting the embedded `<style>` block onto fewer source lines — CSS whitespace-insensitive, all `handlers_test.go` assertions are `strings.Contains` not exact-match, so zero rendered/test-observable change; (b) adding the `serveProxied` helper to collapse the 2nd duplicate block beyond the ticket's literal single-function ask.
+
+**Gotcha:** `ProxyTimeoutMs`/`TimeoutMs` on `ServiceConfig` are `int64` not `int` — `serveProxied` signature must match or go vet fails with implicit-conversion errors.
+
+**Verify:** go build/vet clean, gofmt -l clean, golangci-lint 0 issues (G4 fence intact — proxy.go still only imports interface+primitive, no infra leak), go test ./... 10/10 packages PASS (34-test handlers_test.go untouched, green), G12 sandbox primitive 14/14 + module 1/1 PASS (task didn't touch primitive/module layers).
+
+**Signal:** docs/signals/ops-rebuild-verify-api-gateway-20260709T1958Z.json (post-rebuild proxy+dashboard behavior verification, P1, blocking:false).
+
+**Decision journal:** docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-api-gateway.md
