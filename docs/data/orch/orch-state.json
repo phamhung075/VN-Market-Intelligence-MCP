@@ -267,12 +267,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "FACTORY-SCHEDULER-job-table-registry closed DONE_VERIFIED (po Step 6, docker-deployment-runbook.md Close Gate — 79 scheduleCron blocks -> declarative JOB_TABLE). Benign verify-deploy-sha drift accepted (deployed source byte-identical to HEAD, only doc/memory commits since build). Idle handback — router: pick next BOUNDED-1 backlog row. Remaining review[] rows (BCTC-BANK-SUMMARY / CTG-REFINE / PDF-TEST-01-FIX / ARCH-SHIP-WAVE-REAUDIT) are BLOCKED/DEFERRED-on-ops, not po-actionable.",
-    "updated_at": "2026-07-09T00:35:50Z",
-    "updated_by": "po (step 6 sign-off)"
+    "status": "review",
+    "active_task_id": "FACTORY-PDF-split-extractLayoutFirst-execute",
+    "next_agent": "ops",
+    "next_action": "FACTORY-PDF-split-extractLayoutFirst-execute at REVIEW -- ops: rebuild+swap pdf-extractor container, then qa: live-endpoint RAW-verify of ExtractLayoutFirstUseCase.execute() Tier0-3 pipeline.",
+    "updated_at": "2026-07-09T01:04:39Z",
+    "updated_by": "dev-pdf-extractor"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -567,8 +567,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T00:35:50Z",
-    "_updated_by": "po (step 6 close FACTORY-SCHEDULER-job-table-registry)",
+    "_updated_at": "2026-07-09T01:04:39Z",
+    "_updated_by": "dev-pdf-extractor",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -3875,15 +3875,6 @@
         "supervised_at": "2026-07-04T19:23:49Z",
         "supervised_by": "dev-team (2026-07-04T19:07Z tick)",
         "supervised_note": "SPRINT-scale structural god-file split (needs architect staged brief + per-stage gated execution, server.ts precedent bce8be44b..8c228ffa6) or safety-critical dispatch-guard — NOT a BOUNDED-1 auto-pickup target; held for router/PO/user-adjudicated dispatch."
-      },
-      {
-        "title": "Extract ExtractLayoutFirstUseCase.execute into per-Tier private methods",
-        "priority": "P1",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-PDF-split-extractLayoutFirst-execute",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-extractLayoutFirst-execute"
       },
       {
         "title": "Delete the deprecated /inspect viewer surface still wired into main.py",
@@ -8748,6 +8739,24 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
+      },
+      {
+        "title": "Extract ExtractLayoutFirstUseCase.execute into per-Tier private methods",
+        "priority": "P1",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-PDF-split-extractLayoutFirst-execute",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-split-extractLayoutFirst-execute",
+        "promoted_at": "2026-07-09T00:47:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T00:48:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "moved_to_review_at": "2026-07-09T01:04:39Z",
+        "moved_by": "dev-pdf-extractor",
+        "review_note": "Code split DONE + tests DONE: ExtractLayoutFirstUseCase.execute() (~480L, Tier0-3 inline) refactored into 4 private Tier methods (_tier0_document_map 46L, _tier1_zone_pages 45L, _tier2_ocr_and_stitch 52L, _tier3_invariant_gate 68L, all <=120L per DoD) plus 2 per-unit sub-helpers (_zone_unit_pages 110L, _gate_check_unit 117L) needed to keep the Tier methods under the cap. execute() is now a 147L linear pipeline; signature (report_id, pdf_path) and return shape unchanged; quarantine/needs_vision_verify semantics preserved exactly. RAW-verify: fully-injected-fake harness (build_document_map_fn/zone_page_fn/ocr_unit_fn + mocked pdf2image.convert_from_path) exercising Tier0-abort, Tier1-abort, and a happy-path with pass/quarantine(invariant-gate+ocr_error)/vision-verify branches -- execute() return dict + push_layout call args + all 3 eval_push_stage calls byte-identical before/after (JSON diff empty). pytest -q: 1088 pass / 12 pre-existing env failures (PIL/Tesseract/poppler, confirmed via git-stash baseline, unrelated files) / 1 skipped -- identical before and after, zero regressions. mypy blocked by pre-existing pyproject.toml importlinter package-name bug, confirmed present at baseline too (git stash) -- not introduced by this diff. Commit c3f30df24. rebuild_required: true -- pdf-extractor container must be rebuilt to deploy this refactor before a live-endpoint RAW-verify is meaningful; holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy -- next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification."
       }
     ],
     "qa": [],
@@ -8767,7 +8776,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-08T23:18:51Z",
+    "last_triaged_at": "2026-07-09T00:47:59Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
