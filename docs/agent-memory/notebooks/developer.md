@@ -1,16 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-09 | **Cycle:** FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX
-
-## Session 2026-07-09 — FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT (FAST-TRACK, architect brief = spec)
-
-**Task:** ops Docker Close Gate Step-4→qa handoff had NO checked-in atomic jq helper — 2 confirmed occurrences (`f4afa0e03`, `b907a8ea6`) of a hand-rolled inline jq one-liner updating the board row's `next_agent` but forgetting `.head` (or vice versa). Architect brief `docs/architecture-briefs/2026-07-09-closegate-step4-atomic-handoff.md` §2.1 fully specified the fix; PO fast-tracked (skip ba/pm). **Zone:** `scripts/` (confirmed in system-map.json) + `docs/protocols/` (no zone match → developer fallback) — both mine per the router's explicit split note.
-
-**Fix:** minted `scripts/ops-closegate-handoff.jq` — one jq expr, `--arg task_id/from_lane/next_agent/now`; `error()`s if `.task_board[$from_lane][] | select(.id==$task_id)` is absent (no silent no-op); sets that row's `.next_agent` only (status/lane untouched); conditionally syncs `.head.next_agent/.updated_at/.updated_by` ONLY IF `.head.active_task_id==$task_id` (verified live — at pickup `.head.active_task_id` WAS this very task, so scenario A path exercised for real before I even wrote the test harness). No hardcoded task-id/lane literal in the filter body (grep-verified; the only literal is `"ops"` for `updated_by`, per brief spec). Added runbook `docs/protocols/docker-deployment-runbook.md` § Close-gate table Step 4b row + updated the Delegation-rule sentence to include it.
-
-**Verification (no `.jq` unit-test convention exists in this repo — `router-d1-claim.jq`/`devteam-backlog-claim-bounded1.jq` ship without one):** 3 manual scratch-copy scenarios against a copy of the real live `orch-state.json` — (A) row present + `.head` matches → both writes land; (B) row present + `.head` points at a DIFFERENT task → row updates, `.head` untouched byte-for-byte; (C) row absent from the stated lane → `error()`, non-zero exit, empty stdout (no partial write). Also ran the real `bun scripts/orch-validate.mjs` against scenario A's candidate output — Stage 0+1 PASS (123 pre-existing coherence warnings unrelated to this change, same count before/after).
-
-**Scope discipline (per dispatch split note):** did NOT touch the commit-gate footnote (brief §2.2), the STEP ops-Sn journal-filename enforcement line (§2.3), or `.claude/skills/commit-boundary/SKILL.md`'s zone table — those are the follow-on `FIX-CLOSEGATE-STEP4-COMMIT-JOURNAL-DISCIPLINE` task (agent-father, `depends_on: [this task]`). No `apps/*` change, no Docker Close Gate needed (script + doc only, no rebuild) — flipped board row REVIEW, `next_agent`→qa via `orch-apply.sh`.
+**Last updated:** 2026-07-09 | **Cycle:** FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE
 
 ## Session 2026-07-09 — FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT (qa CHANGES_REQUESTED bounce, one-line-class doc fix)
 
@@ -33,3 +23,15 @@
 **Live-verified beyond fixtures:** ran the exact reproducer from the bug report (`TASK17-FOREIGN-FLOW` against the real live `backlog-detail.json`) — exit 5 crash pre-fix, exit 0 post-fix. End-to-end scratch-copy run through `orch-apply.sh` (`ORCH_APPLY_LIVE_FILE_OVERRIDE`, WIP forced to 0 on a copy — never the live file, since live WIP was 2): exactly one row promoted, no "empty candidate" abort.
 
 **Scope discipline:** inspected companion `devteam-backlog-claim-bounded1.jq` — never touches `backlog-detail.json` (only claims whatever `ready[]` row promote already stamped), no equivalent bug, left unchanged. Diff confined to the one shape-defensive binding + the new test case (2 files). Board flipped IN_PROGRESS→REVIEW, `next_agent`→qa via `orch-apply.sh`.
+
+## Session 2026-07-09 — FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE (4th BOUNDED-1 eligibility-gate defect in ~5 days)
+
+**Task:** `devteam-backlog-promote-bounded1.jq`'s eligibility filter read `supervised` ONLY off the thin `task_board.backlog[]` row, but `supervised:true` is authoritative in `docs/data/orch/archive/backlog-detail.json` `.items[<id>].supervised` for `detail_ref`'d rows — every detail_ref'd supervised row silently evaluated false. Caused a LIVE near-miss (2026-07-09T15:48Z): auto-promoted+claimed `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD` (P0, explicitly "NOT a BOUNDED-1 auto-pickup target", supervised since 07-04) into `in_progress`. Router reverted the claim + hand-stamped `supervised:true` onto all 8 Phase-1 rows — a data-hygiene patch, not the fix. **Zone:** `cross-service/` → developer direct, no dispatch.
+
+**Fix:** added `def effective_supervised($detail_items): (.supervised==true) or ($detail_items[.id].supervised//false)==true` mirroring the shipped `effective_depends_on` precedence pattern (from `FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE`); swapped the candidate-selection filter to call it. Deliberately no `.detail_ref != null` precondition (unlike depends_on) — PO's mint spec had none, and id-keyed `$detail_items` makes the lookup a safe no-op for rows lacking a matching id. Absent/null in both locations = promotable (baseline preserved). No new call-site change — `--slurpfile detail` already threaded for the depends_on gate.
+
+**Test:** new `test-devteam-bounded1-supervised-flag.sh` — 15/15 GREEN, covering detail-only (exact 07-09 repro), board-only (router-stamp shape), neither, both, absent-key, and ARRAY-shaped `backlog-detail.json .items`.
+
+**Live-verified beyond fixtures:** scratch-only (live `orch-state.json`/`backlog-detail.json` never touched) — re-ran the OLD script (via `git show HEAD:...`) against a WIP-0 fixture with `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD`'s inline `supervised` stripped (its real pre-router-patch shape) + real `backlog-detail.json`: OLD promoted it (bug reproduced), NEW skipped it. End-to-end `orch-apply.sh` run (`ORCH_APPLY_LIVE_FILE_OVERRIDE`, coherent WIP-0 fixture): exactly one row promoted; re-run on the resulting WIP-1 state = no-op, no abort (124 pre-existing SHG warnings, non-blocking).
+
+**Self-caught regression:** sibling `test-devteam-bounded1-depends-on.sh`'s static grep-count assertion broke (my first comment draft pushed `--slurpfile detail` occurrences 2→3) — reworded to drop the literal substring; both suites GREEN (18/18 + 15/15). Updated `docs/agents/dev-team/flow/main.md` + `docs/policies/dev-standards.md` prose pointers. graphify skipped — no LLM API key in this sandbox. Board flipped IN_PROGRESS→REVIEW, `next_agent`→qa via `orch-apply.sh`.
