@@ -291,13 +291,12 @@
     }
   ],
   "head": {
-    "status": "done",
-    "updated_at": "2026-07-09T16:28:13Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": "router",
-    "note": "ops close-gate Step 4 complete: pdf-extractor rebuild + swap + health-verify done. Image SHA 131d16bdfba5. Awaiting qa live-verify.",
-    "next_action": "FACTORY-PDF-split-generic-md-table DONE_VERIFIED (qa live-endpoint RAW-verify PASS 2026-07-09T16:28:13Z — docker inspect image match sha256:131d16bdfba5, all 8 split submodules present+compiled+import-clean in-container, zero boot-log errors, byte-identical extraction output pre/post split on 2 real BCTC PDFs (host + live in-container reproduction), pytest clean A/B on true pre-split parent commit = identical 11-failure env-only set both sides). No new follow-up bug discovered this cycle."
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-07-09T16:47:32Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6394,34 +6393,6 @@
         "supervised": true
       },
       {
-        "id": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
-        "status": "BACKLOG",
-        "title": "BOUNDED-1 promote script: cross-check supervised from backlog-detail.json .items[] (not just the thin board row) so the Phase-1 supervised set can't be auto-promoted",
-        "owner": "po",
-        "next_agent": "developer",
-        "type": "FIX",
-        "zone": "cross-service/",
-        "size": "S",
-        "priority": "P0",
-        "severity": "HIGH",
-        "created_at": "2026-07-09T15:57:12Z",
-        "created_by": "po (triage 2026-07-09T15:37Z, router-driven dev-team tick)",
-        "related": [
-          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE",
-          "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
-          "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-          "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-          "SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW"
-        ],
-        "recurrence_class": "project_bounded1_first_pickup_stale_backlog_hygiene_debt (3rd+ variant: bypasses an explicit safety flag, not just staleness)",
-        "files": [
-          "scripts/devteam-backlog-promote-bounded1.jq",
-          "docs/agents/dev-team/flow/main.md",
-          "scripts/test-devteam-bounded1-supervised-flag.sh"
-        ],
-        "status_note": "LIVE near-miss on a safety-critical dispatch guard (2026-07-09T15:48Z): scripts/devteam-backlog-promote-bounded1.jq auto-promoted+claimed FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (P0, supervised since 2026-07-04T19:23:49Z/4231a1157) into in_progress despite supervised_note='NOT a BOUNDED-1 auto-pickup target'. ROOT CAUSE: the candidate-selection filter (~L165) `select((.value.supervised // false) != true)` reads supervised ONLY off the thin task_board.backlog[] row, but supervised:true is authoritatively written to docs/data/orch/archive/backlog-detail.json .items[].supervised -- so the check silently evaluated false for every detail_ref'd supervised row (all 8 in the Phase-1 set). Router mitigated (90e970b47): reverted the claim (row back to backlog[], .head->idle) + stamped supervised:true onto every Phase-1 board row -- a DATA-HYGIENE PATCH that must be re-applied by hand on every future supervised-set addition, NOT the fix. APPROACH (mirror the depends_on gate that already shipped in this same file): the script ALREADY receives --slurpfile detail docs/data/orch/archive/backlog-detail.json and id-keys it into $detail_items (see the FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX ingest ~L156). Add def effective_supervised($detail_items): true if EITHER `.supervised == true` on the inline board row OR `$detail_items[.id].supervised == true` (detail-authoritative). Change the ~L165 filter to `select((.value | effective_supervised($detail_items)) != true)`. NO new call-site change needed -- the --slurpfile detail is already threaded through BOTH dev-team flow invocations for the depends_on gate; VERIFY (do not re-add). Conservative default: absent/null supervised in both places = NOT supervised (promotable) -- preserves baseline behavior. Add scripts/test-devteam-bounded1-supervised-flag.sh covering: (a) supervised ONLY in backlog-detail.json .items[] (board row has no flag) -> SKIPPED (the exact 07-09 failure), (b) supervised ONLY on the board row (router-stamp case) -> SKIPPED, (c) supervised in neither -> promoted (baseline), (d) supervised in both -> SKIPPED. Keep orch-apply.sh-gated, no hardcoded task IDs, idempotent/re-run-safe. DJ-GATE applies before any DONE/REVIEW flip. This is the 4th distinct BOUNDED-1 eligibility-gate defect in ~5 days (stale 07-04, depends_on 07-08, array-index 07-09, supervised-flag 07-09) -- SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (architect, non-blocking) asks whether all eligibility metadata should resolve through ONE detail-resolution contract; do NOT wait on it -- ship this hole-closer now."
-      },
-      {
         "id": "SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW",
         "status": "BACKLOG",
         "title": "SPIKE (architect, plan-only): 4 distinct BOUNDED-1 eligibility-gate defects in ~5 days -- should the promote filter resolve ALL gating metadata (depends_on, supervised, future) through one shared detail-resolution contract instead of hole-by-hole patches?",
@@ -7189,7 +7160,41 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE",
+        "status": "IN_PROGRESS",
+        "title": "BOUNDED-1 promote script: cross-check supervised from backlog-detail.json .items[] (not just the thin board row) so the Phase-1 supervised set can't be auto-promoted",
+        "owner": "po",
+        "next_agent": "developer",
+        "type": "FIX",
+        "zone": "cross-service/",
+        "size": "S",
+        "priority": "P0",
+        "severity": "HIGH",
+        "created_at": "2026-07-09T15:57:12Z",
+        "created_by": "po (triage 2026-07-09T15:37Z, router-driven dev-team tick)",
+        "related": [
+          "FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE",
+          "FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX",
+          "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+          "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+          "SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW"
+        ],
+        "recurrence_class": "project_bounded1_first_pickup_stale_backlog_hygiene_debt (3rd+ variant: bypasses an explicit safety flag, not just staleness)",
+        "files": [
+          "scripts/devteam-backlog-promote-bounded1.jq",
+          "docs/agents/dev-team/flow/main.md",
+          "scripts/test-devteam-bounded1-supervised-flag.sh"
+        ],
+        "status_note": "LIVE near-miss on a safety-critical dispatch guard (2026-07-09T15:48Z): scripts/devteam-backlog-promote-bounded1.jq auto-promoted+claimed FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (P0, supervised since 2026-07-04T19:23:49Z/4231a1157) into in_progress despite supervised_note='NOT a BOUNDED-1 auto-pickup target'. ROOT CAUSE: the candidate-selection filter (~L165) `select((.value.supervised // false) != true)` reads supervised ONLY off the thin task_board.backlog[] row, but supervised:true is authoritatively written to docs/data/orch/archive/backlog-detail.json .items[].supervised -- so the check silently evaluated false for every detail_ref'd supervised row (all 8 in the Phase-1 set). Router mitigated (90e970b47): reverted the claim (row back to backlog[], .head->idle) + stamped supervised:true onto every Phase-1 board row -- a DATA-HYGIENE PATCH that must be re-applied by hand on every future supervised-set addition, NOT the fix. APPROACH (mirror the depends_on gate that already shipped in this same file): the script ALREADY receives --slurpfile detail docs/data/orch/archive/backlog-detail.json and id-keys it into $detail_items (see the FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX ingest ~L156). Add def effective_supervised($detail_items): true if EITHER `.supervised == true` on the inline board row OR `$detail_items[.id].supervised == true` (detail-authoritative). Change the ~L165 filter to `select((.value | effective_supervised($detail_items)) != true)`. NO new call-site change needed -- the --slurpfile detail is already threaded through BOTH dev-team flow invocations for the depends_on gate; VERIFY (do not re-add). Conservative default: absent/null supervised in both places = NOT supervised (promotable) -- preserves baseline behavior. Add scripts/test-devteam-bounded1-supervised-flag.sh covering: (a) supervised ONLY in backlog-detail.json .items[] (board row has no flag) -> SKIPPED (the exact 07-09 failure), (b) supervised ONLY on the board row (router-stamp case) -> SKIPPED, (c) supervised in neither -> promoted (baseline), (d) supervised in both -> SKIPPED. Keep orch-apply.sh-gated, no hardcoded task IDs, idempotent/re-run-safe. DJ-GATE applies before any DONE/REVIEW flip. This is the 4th distinct BOUNDED-1 eligibility-gate defect in ~5 days (stale 07-04, depends_on 07-08, array-index 07-09, supervised-flag 07-09) -- SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (architect, non-blocking) asks whether all eligibility metadata should resolve through ONE detail-resolution contract; do NOT wait on it -- ship this hole-closer now.",
+        "promoted_at": "2026-07-09T16:46:54Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-07-09T16:47:32Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ],
     "ready": [],
     "review": [
       {
@@ -7376,7 +7381,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T15:48:27Z",
+    "last_triaged_at": "2026-07-09T16:46:54Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)"
   },
   "_meta": {
