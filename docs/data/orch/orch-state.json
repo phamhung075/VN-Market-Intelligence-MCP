@@ -264,15 +264,23 @@
       "decision": "FACTORY-APP-split-fetchParseAndStoreBctc Close Gate Steps 1-4 COMPLETE. Step 1: Docker memory check PASS (mcp-server 150MiB/3GiB, total fleet healthy). Step 2-3: Rebuilt mcp-server with GIT_SHA=c1d6c2c7f (--build-arg flag), deployed to running container, status=running (healthy). Step 4: SHA gate PASS (deployed SHA matches HEAD c1d6c2c7f). RAW-verify: live DB (named volume) contains 80 financial_reports, recent entries (D2D/VHM/GVR 2025Q4) parsed successfully 2026-07-07T17:37Z, extraction_method=pdf-parse, confirming BCTC fetch/parse/store pipeline end-to-end working through refactored code (resolvePdfText.ts + newsChainFallback.ts + insertBctcAnalysis.ts modules all present and active in container). NEXT: qa Step 5 (health endpoint + tool count verification).",
       "what_considered": "Docker memory check (pass) → single-service rebuild only (no peer disruption per runbook) → deployed successfully → verified refactored modules present in container (head -50 /app/src/application/usecases/bctc/resolvePdfText.ts matched FACTORY-APP-split description) → live DB verification confirmed pipeline active with recent data.",
       "why_change": "No change from ops Close Gate protocol; all steps passed validation."
+    },
+    {
+      "agent": "po",
+      "task_id": "CI-RED-06043b3c-FIX",
+      "timestamp": "2026-07-09T02:27:00Z",
+      "decision": "Triaged ci_red signal (check_id=CI-RED-06043b3c, HEAD 06043b3cf70ff9daa57cf3c05cb710857713f949, failing job=bun test). Minted .task_board.backlog[] FIX row CI-RED-06043b3c-FIX (status TODO), zone apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts, FAST-TRACK next_agent=dev-mcp-server (skip ba/pm design). Root cause pre-diagnosed + router-confirmed: .head.status committed as literal \"done\" is absent from 1837a-pipeline-state.test.ts L96 validStatuses enum -> deterministic bun test failure; fix = add \"done\" to that array (one line). Zod HeadSchema.status = z.string().passthrough() (unconstrained) so no schema change. Exact precedent commit 728ef563c. verification_gate=ci_green_on_subsequent_push carried in status_note. Recommending router dispatch dev-mcp-server directly; did NOT self-spawn (signal-triage-only tick + live concurrent FACTORY-PDF Docker Close Gate churn — avoid worker overlap/host starvation). Head guardrail respected: did NOT touch .head (FACTORY-PDF-delete-deprecated-inspect / review / po Step 6) — out of this tick's scope.",
+      "what_considered": "(A) Route through the full po->ba->pm->architect->dev design chain — REJECTED as overkill: fix is a single-line test-enum addition with an exact prior-art commit (728ef563c); BA spec + architect design + pm decomposition add latency and zero value for a deterministic one-liner. (B) Self-spawn dev-mcp-server from this PO tick — REJECTED: this is a signal-triage-only tick and heavy unrelated concurrent churn (FACTORY-PDF Docker Close Gate) is live this cycle; spawning would risk overlap/host starvation and is the router's role, not PO's. (C) Skip/close as low-value — REJECTED: CI is RED on main HEAD, deterministic, and blocks a clean green gate for every subsequent push until fixed.",
+      "why_change": "New ci_red signal to=po requires a .task_board entry per triage-signals.md ci_red row; no existing duplicate (exact 06043b3c scan across all array lanes = []). Fast-track over full chain because the root cause is fully diagnosed, one-line, and backed by a direct precedent commit."
     }
   ],
   "head": {
-    "status": "review",
-    "active_task_id": "FACTORY-PDF-delete-deprecated-inspect",
-    "next_agent": "po",
-    "next_action": "po Step 6 sign-off -- qa Step 5 live-endpoint verification PASS (see task_board.review[] qa_note / decision journal qa-S30).",
-    "updated_at": "2026-07-09T02:22:00Z",
-    "updated_by": "qa (step 5 live-verify)"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-PDF-delete-deprecated-inspect CLOSED DONE_VERIFIED by po (Step 6 Docker Close Gate) -- moved review[]->done_verified[]. Board idle: next BOUNDED-1 idle-capacity backlog pickup eligible for router. Lock task:FACTORY-PDF-delete-deprecated-inspect pending router release (po session gateway-blind).",
+    "updated_at": "2026-07-09T04:31:00Z",
+    "updated_by": "po (step 6 sign-off)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -567,8 +575,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T01:39:16Z",
-    "_updated_by": "po (step 6 sign-off FACTORY-PDF-split-extractLayoutFirst-execute)",
+    "_updated_at": "2026-07-09T04:31:00Z",
+    "_updated_by": "po (step 6 sign-off FACTORY-PDF-delete-deprecated-inspect)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -7670,6 +7678,23 @@
           "docs/signals/processed/dev-team-20260708T033700Z-gateway-blind-main-session.json"
         ],
         "desc": "RECURRING DEFECT (5th guaranteed-slot miss, multi-day) — per standing recurring-bug-escalation policy (memory feedback_recurring_bug_escalation: 2+ recurrences -> block/escalate). Guaranteed cowork slots keep MISSING (chef-morning 05:15Z, chef-eod 08:45Z, fb-daily 09:15Z, digest-daily 17:30Z, chef-evening 19:45Z) because the affected agent flows call native mcp__gateway__call_tool, which is blind under the per-session Claude Code MCP-client handshake failure (root cause = out-of-repo harness lifecycle, established by SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE DONE; the gateway server itself is proven healthy via raw-curl HTTP 200). The repo-actionable bridge ALREADY EXISTS and is proven live: scripts/agents-flow/mcp-call.sh (mcp_call + mcp_call_gateway_meta, delivered by FIX-GATEWAY-BLIND-DEGRADED-MODE-PROCEDURE DONE_VERIFIED, commit a6031047e) POSTs JSON-RPC-over-curl directly and bypasses the blind native MCP client — which is exactly why cowork-team's OWN dispatcher ticks never miss. GAP: that bridge + the SS6 degraded-mode procedure in docs/standards/gateway-call-contract.md were built but NEVER APPLIED to the guaranteed-slot agent flows (verified: grep -rl mcp-call.sh over docs/agents/unified-agent/ + docs/agents/fb-market-poster/ = zero hits), and NO in-flight retrofit task exists in any lane. SCOPE: retrofit the gateway-blind-affected flows to fall back to the mcp-call.sh curl bypass when native mcp__gateway__call_tool is unavailable/blind. Confirmed-affected (per the cowork-team 7-agent-type tally): docs/agents/unified-agent/flow/chef.md (chef-morning/eod/evening), docs/agents/fb-market-poster/flow/main.md (fb-daily; note it HAS Bash but no bridge reference), plus alert-commander, news-scout, market-watcher, digest, refine_bctc_md. DESIGN NOTE (needs_design): architect design pass for the native-first / curl-bypass-fallback pattern (per-tool coverage matrix already in gateway-call-contract.md SS6b; search_tools raw schema uses {query:} not {keyword:}). MUST respect the standing rule that agent flow-doc edits route through the proper owner (agent-father / owning agent), not edited ad-hoc. DoD: each affected guaranteed slot delivers on a subsequent tick even when the spawning session is gateway-blind (verify against a live blind session or via QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL 7-point test)."
+      },
+      {
+        "id": "CI-RED-06043b3c-FIX",
+        "title": "CI-RED-06043b3c-FIX — CI RED: bun test",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "high",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "zone": "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts",
+        "created_at": "2026-07-09T02:27:00Z",
+        "created_by": "po-signal-triage-20260709T0226Z",
+        "source_signal": "docs/signals/ci-red-06043b3c-20260709021739.json",
+        "head_sha": "06043b3cf70ff9daa57cf3c05cb710857713f949",
+        "note": "FAST-TRACK (skip ba/pm design): pre-diagnosed one-line test-enum addition with exact direct precedent commit 728ef563c. Router may dispatch dev-mcp-server directly — no spec/architect pass needed.",
+        "status_note": "ROOT CAUSE (pre-diagnosed, router-confirmed by reading files): at pushed commit 06043b3cf, orch-state.json .head.status was committed as the literal string \"done\" (written by po Step 6 sign-off of FACTORY-PDF-split-extractLayoutFirst-execute). apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts L96 (AC-2) hardcodes validStatuses = [\"in_progress\",\"idle\",\"blocked\",\"stale\",\"review\",\"active\",\"qa\",\"ready\"], which omits \"done\" -> deterministic (NOT flaky) failure every time .head.status commits as \"done\". FIX = ONE line: add \"done\" to the validStatuses array; nothing else changes. Zod side already confirmed NOT drifting — HeadSchema.status is z.string() with .passthrough() (orchStateSchema.ts L220-233), unconstrained, so no schema change; StatusEnum (L40-53) is the uppercase .task_board-row enum, unrelated to .head.status. Direct precedent: commit 728ef563c 'fix(test/1837a): add \"active\" and \"qa\" to valid head.status enum' — identical one-line enum addition. AC / verification_gate=ci_green_on_subsequent_push: `gh run list --branch main --limit 3` shows conclusion=success for a push AFTER 06043b3cf70ff9daa57cf3c05cb710857713f949. Priority: high. Failing jobs: bun test. DONE only when CI GREEN on a subsequent push."
       }
     ],
     "closed_sprints": [
@@ -8637,6 +8662,44 @@
           "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head set status=done / active_task_id=null / next_agent=router (idle handback for the BOUNDED-1 auto-pickup loop) alongside the row flip — proactively closing the recurring Close-Gate .head-sync gap (feedback_close_gate_step4_head_sync_gap; here qa's Step-5 write had left .head on the now-done task with next_agent=po). Write-time re-verified .head.active_task_id == the task-id first (no concurrent takeover). No .sprint_goal.entries match (0) -> not touched, mirroring sibling FACTORY-SCHEDULER-job-table-registry. .task_board.head (deprecated stub) left UNTOUCHED — canonical is top-level .head per feedback_orchstate_dual_head_keys_toplevel_authoritative. Did NOT touch the task:FACTORY-PDF-split-extractLayoutFirst-execute lock — per dispatch instruction lock release is the router's job on report-back (po session is gateway-blind: only Read/Edit/Write/Bash bound). qa correctly held REVIEW+next_agent=po (did not self-close) -> qa-self-close count stays 1, below the recurring-2+ bar, parked qa-guardrail-mint stays parked.",
           "residual_advisory": "No blocking residual. Standing hygiene note (non-blocking): the pdf-extractor SHA gate remains DEFERRED to Phase B (Dockerfile LABEL key is plain git_sha, verify-deploy-sha.sh checks namespaced vn.market.git_sha) — this predates the task and trips exit-1 on every pdf-extractor deploy; the real invariant (deployed source == committed source) is proven satisfied here by no-apps-drift + ancestor-contains. Phase-B label-namespace alignment would eliminate the recurring benign exit-1 for pdf-extractor."
         }
+      },
+      {
+        "title": "Delete the deprecated /inspect viewer surface still wired into main.py",
+        "priority": "P1",
+        "zone": "pdf-extractor",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-PDF-delete-deprecated-inspect",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-delete-deprecated-inspect",
+        "promoted_at": "2026-07-09T01:44:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T01:44:27Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "po",
+        "moved_to_review_at": "2026-07-09T01:56:55Z",
+        "moved_by": "dev-pdf-extractor",
+        "review_note": "Deleted deprecated /inspect viewer surface: removed InspectionStore import+construction+register_routes param (main.py, handlers.py), deleted 4 route closures (GET /inspect, /inspect/pdfs, /inspect/pdf/{doc_id}, /inspect/extraction/{doc_id}) + dead HTMLResponse/Response/Path/_VIEWER_HTML_PATH imports, deleted infrastructure/inspection_store.py + interface/viewer.html, deleted 3 tests-only-for-this-surface files (test_inspection_store.py, test_inspection_routes.py, test_pi3_served_url_acceptance.py — 72 tests), dropped now-unneeded inspection_store= stub kwarg from 3 unrelated call sites (test_local_pdf_input.py x3, test_fu1_fail_loud.py x1, scenarios/pek_single_doc_extraction.py x3). QA-sign-off-pending check: mcp-server GET /api/bctc-inspect replacement confirmed DONE-on-real-data (PO REOPEN-2 sign-off ca955baf1) and actively developed since (LF-OVERLAY, HC-DEV-6/7, BEQ fixes, FIX-INSPECT-NAV-RELOAD) — outright delete, not env-gate, is correct per backlog default. RAW-verify: grep zero hits for InspectionStore/inspection_store/viewer.html repo-wide; live create_app() (real composition root, no mocks) + TestClient — GET /health 200, GET /inspect 404, GET /inspect/pdfs 404 (both were live routes before); route table confirmed zero /inspect* paths, all real routes intact (/extract, /extract-layout-first, /extract-tables, /extract-md-tables, /pek-extract, /rasterize, /page-text, /health). pytest -q: 12 failed / 1016 passed / 1 skipped — identical 12 pre-existing env-only failures to baseline (A/B confirmed via git stash/git stash pop, same test IDs both runs); the 72-test drop (1088->1016) is exactly the 3 deleted files (29+18+25=72 via git show HEAD:<path> | grep -c def test_), zero other regressions. mypy: same pre-existing \"pdf-extractor is not a valid Python package name\" env error as baseline (git stash confirmed). handlers.py 808->673L (-135L), main.py 280->271L (-9L). Commits: 47453d546 (code), 8ddb4c0f3 (memory). rebuild_required: true — holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy / Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification (confirm /inspect gone + real extraction endpoints unaffected on the live container), then po Step 6 sign-off.",
+        "rebuild_required": true,
+        "ops_close_gate_note": "Rebuild successful (image d3abfe8bb831→5cd186998f6d); all deprecated /inspect routes return 404; real extraction routes intact; SHA-gate deferred (known Phase-B DRIFT-3 label-key mismatch); next_agent=qa for live container verification",
+        "ops_sha_gate_fixed_at": "2026-07-09T04:19:00Z",
+        "ops_sha_gate_fixed_by": "ops",
+        "ops_note": "Corrective SHA-value-only pass after QA functional verification; Phase-B key-namespace deferral (DRIFT-3) confirmed separately valid",
+        "qa_verify_at": "2026-07-09T02:22:00Z",
+        "qa_verify_by": "qa",
+        "qa_note": "Step 5 (Docker Microservice Code-Change Close Gate) live-endpoint QA verification -- independent RAW-verify complete, PASS. Re-confirmed image identity direct via docker inspect: .Image=sha256:747291222d1625d4a93ab7a48f06ae4c8aa35a7c96f37ebf62956e811af222bd, git_sha label=9deff6da8b3da77fc2e999eeac0e6f3a6cadd163, exact match to ops-reported values; vn.market.git_sha empty (accepted Phase-B/DRIFT-3 deferral, not re-litigated). GET /health=200. All 4 deleted /inspect* routes 404 live (GET /inspect, /inspect/pdfs, /inspect/pdf/{doc_id}, /inspect/extraction/{doc_id}). Real extraction routes unaffected: POST /extract-tables /extract /extract-layout-first /extract-md-tables /pek-extract /rasterize all 422 (route exists, validates input, no payload given); /page-text confirmed GET-only (OPTIONS allow:GET) after an initial wrong-verb probe, GET /page-text=422 not 404 -- route genuinely present. /docs=200. docker ps: 11/11 services healthy, pdf-extractor Up ~3min matching the recent swap, zero unexpected restarts on any peer. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md #qa-S30. VERDICT PASS -- routing to po for Step 6 sign-off.",
+        "done_at": "2026-07-09T04:31:00Z",
+        "done_by": "po",
+        "updated_at": "2026-07-09T04:31:00Z",
+        "updated_by": "po (step 6 sign-off)",
+        "po_closeout": {
+          "by": "po",
+          "at": "2026-07-09T04:31:00Z",
+          "verdict": "DONE_VERIFIED — po Step 6 close of the Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate). All 5 upstream steps passed with independent RAW verification at every hop (dev-pdf-extractor 47453d546/8ddb4c0f3/91a0d8fe4 -> ops Steps 1-4 9deff6da8 -> ops SHA-gate corrective pass 781551f0a -> qa Step 5 6cc0e807d), router-verified at each handoff; po independently re-verified the load-bearing facts before flipping -- not blind chain-trust.",
+          "evidence": "PO OWN SPOT-CHECK (raw git/docker/curl, not trusted-from-prose): (1) All 6 chain commits (47453d546/8ddb4c0f3/91a0d8fe4/9deff6da8/781551f0a/6cc0e807d) are real ancestors of HEAD (6cc0e807d=HEAD itself). git show --stat 47453d546 confirms the claimed deletions (test_inspection_routes.py, test_pi3_served_url_acceptance.py, test_fu1_fail_loud.py edit, etc). (2) NO post-commit code drift -- git diff --stat 47453d546..HEAD -- apps/**/*.py is EMPTY, so the deployed image source is byte-identical to HEAD; merge-base --is-ancestor 47453d546 9deff6da8 = YES, so the deployed image genuinely contains the delete commit. (3) Live liveness -- container vn-market-intelligence-mcp-pdf-extractor-1 Up 8min (healthy); docker inspect: Image=sha256:747291222d1625d4a93ab7a48f06ae4c8aa35a7c96f37ebf62956e811af222bd, label git_sha=9deff6da8b3da77fc2e999eeac0e6f3a6cadd163 (exact match to the deploy commit, not merely an ancestor), label vn.market.git_sha=empty (confirms the Phase-B/DRIFT-3 key-namespace deferral is real). curl localhost:5001/health = {status:ok,service:pdf-extractor,ocr_source_ok:true}. (4) DECISIVE route check, own curls: all 4 deleted routes (/inspect, /inspect/pdfs, /inspect/pdf/{id}, /inspect/extraction/{id}) = 404 live; all 7 real extraction routes (/extract-tables, /extract, /extract-layout-first, /extract-md-tables, /pek-extract, /rasterize, /page-text) = 422 (route exists, input-validated, NOT 404) -- exact match to qa's Step 5 claims. (5) bash scripts/verify-deploy-sha.sh pdf-extractor reproduced independently: fails with ONLY 'vn.market.git_sha label absent' -- the settled narrower Phase-B/DRIFT-3 deferral, not a value-mismatch (which ops's corrective pass 781551f0a already fixed). VERDICT: the delete-deprecated-inspect claim holds on every axis -- real multi-commit diff, no post-commit drift, image label is the exact deploy commit, live /health ok, all 4 deleted routes 404, all 7 real routes non-404.",
+          "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head set status=done / active_task_id=null / next_agent=router (idle handback for the BOUNDED-1 auto-pickup loop) alongside the row flip. Write-time re-verified .head.active_task_id == FACTORY-PDF-delete-deprecated-inspect first (no concurrent takeover -- head was still pinned on this exact task, next_agent=po, at read time). Row's own next_agent field left untouched (stays 'po'), matching the FACTORY-PDF-split-extractLayoutFirst-execute sibling convention (S11) -- only the top-level .head next_agent is authoritative for routing once a row is DONE_VERIFIED. No sprint_goal.entries match for this task-id -> not touched. .task_board.head (deprecated stub) left UNTOUCHED -- canonical is top-level .head per feedback_orchstate_dual_head_keys_toplevel_authoritative. Did NOT touch the task:FACTORY-PDF-delete-deprecated-inspect lock -- per dispatch instruction, lock release is the router's job on report-back. qa correctly held REVIEW+next_agent=po (did not self-close) -> qa-self-close count stays at the existing tracked level, below the recurring-2+ bar, parked qa-guardrail-mint stays parked. A separate, unrelated po instance was dispatched concurrently to triage a ci_red signal (test enum-drift) plus 2 cowork-team signals -- explicitly NOT duplicated here; this write touches ONLY the FACTORY-PDF-delete-deprecated-inspect row + top-level .head.",
+          "residual_advisory": "No blocking residual. Standing hygiene note (non-blocking, same class already logged against the sibling FACTORY-PDF-split-extractLayoutFirst-execute close): the pdf-extractor SHA gate remains DEFERRED to Phase B (Dockerfile LABEL key is plain git_sha, verify-deploy-sha.sh checks namespaced vn.market.git_sha) -- this predates the task and trips exit-1 on every pdf-extractor deploy; the real invariant (deployed source == committed source) is proven satisfied here by no-apps-drift + exact-label-match + live route behavior. Phase-B label-namespace alignment would eliminate the recurring benign exit-1 for pdf-extractor. Separately: the concurrent ci_red enum-drift (.head.status='done' not in a test's validStatuses list) is being triaged by a different po instance -- if that fix lands, note that THIS write also sets .head.status='done', so worth the other instance cross-checking the validStatuses fix covers 'done' (it should, per the ci_red description)."
+        }
       }
     ],
     "head": {
@@ -8767,32 +8830,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Delete the deprecated /inspect viewer surface still wired into main.py",
-        "priority": "P1",
-        "zone": "pdf-extractor",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-PDF-delete-deprecated-inspect",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-PDF-delete-deprecated-inspect",
-        "promoted_at": "2026-07-09T01:44:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T01:44:27Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "po",
-        "moved_to_review_at": "2026-07-09T01:56:55Z",
-        "moved_by": "dev-pdf-extractor",
-        "review_note": "Deleted deprecated /inspect viewer surface: removed InspectionStore import+construction+register_routes param (main.py, handlers.py), deleted 4 route closures (GET /inspect, /inspect/pdfs, /inspect/pdf/{doc_id}, /inspect/extraction/{doc_id}) + dead HTMLResponse/Response/Path/_VIEWER_HTML_PATH imports, deleted infrastructure/inspection_store.py + interface/viewer.html, deleted 3 tests-only-for-this-surface files (test_inspection_store.py, test_inspection_routes.py, test_pi3_served_url_acceptance.py — 72 tests), dropped now-unneeded inspection_store= stub kwarg from 3 unrelated call sites (test_local_pdf_input.py x3, test_fu1_fail_loud.py x1, scenarios/pek_single_doc_extraction.py x3). QA-sign-off-pending check: mcp-server GET /api/bctc-inspect replacement confirmed DONE-on-real-data (PO REOPEN-2 sign-off ca955baf1) and actively developed since (LF-OVERLAY, HC-DEV-6/7, BEQ fixes, FIX-INSPECT-NAV-RELOAD) — outright delete, not env-gate, is correct per backlog default. RAW-verify: grep zero hits for InspectionStore/inspection_store/viewer.html repo-wide; live create_app() (real composition root, no mocks) + TestClient — GET /health 200, GET /inspect 404, GET /inspect/pdfs 404 (both were live routes before); route table confirmed zero /inspect* paths, all real routes intact (/extract, /extract-layout-first, /extract-tables, /extract-md-tables, /pek-extract, /rasterize, /page-text, /health). pytest -q: 12 failed / 1016 passed / 1 skipped — identical 12 pre-existing env-only failures to baseline (A/B confirmed via git stash/git stash pop, same test IDs both runs); the 72-test drop (1088->1016) is exactly the 3 deleted files (29+18+25=72 via git show HEAD:<path> | grep -c def test_), zero other regressions. mypy: same pre-existing \"pdf-extractor is not a valid Python package name\" env error as baseline (git stash confirmed). handlers.py 808->673L (-135L), main.py 280->271L (-9L). Commits: 47453d546 (code), 8ddb4c0f3 (memory). rebuild_required: true — holding at REVIEW (not self-flipping DONE_VERIFIED) per standing dev-team policy / Docker Microservice Code-Change Close Gate — next_agent=ops for gated rebuild+swap, then qa for live-endpoint verification (confirm /inspect gone + real extraction endpoints unaffected on the live container), then po Step 6 sign-off.",
-        "rebuild_required": true,
-        "ops_close_gate_note": "Rebuild successful (image d3abfe8bb831→5cd186998f6d); all deprecated /inspect routes return 404; real extraction routes intact; SHA-gate deferred (known Phase-B DRIFT-3 label-key mismatch); next_agent=qa for live container verification",
-        "ops_sha_gate_fixed_at": "2026-07-09T04:19:00Z",
-        "ops_sha_gate_fixed_by": "ops",
-        "ops_note": "Corrective SHA-value-only pass after QA functional verification; Phase-B key-namespace deferral (DRIFT-3) confirmed separately valid",
-        "qa_verify_at": "2026-07-09T02:22:00Z",
-        "qa_verify_by": "qa",
-        "qa_note": "Step 5 (Docker Microservice Code-Change Close Gate) live-endpoint QA verification -- independent RAW-verify complete, PASS. Re-confirmed image identity direct via docker inspect: .Image=sha256:747291222d1625d4a93ab7a48f06ae4c8aa35a7c96f37ebf62956e811af222bd, git_sha label=9deff6da8b3da77fc2e999eeac0e6f3a6cadd163, exact match to ops-reported values; vn.market.git_sha empty (accepted Phase-B/DRIFT-3 deferral, not re-litigated). GET /health=200. All 4 deleted /inspect* routes 404 live (GET /inspect, /inspect/pdfs, /inspect/pdf/{doc_id}, /inspect/extraction/{doc_id}). Real extraction routes unaffected: POST /extract-tables /extract /extract-layout-first /extract-md-tables /pek-extract /rasterize all 422 (route exists, validates input, no payload given); /page-text confirmed GET-only (OPTIONS allow:GET) after an initial wrong-verb probe, GET /page-text=422 not 404 -- route genuinely present. /docs=200. docker ps: 11/11 services healthy, pdf-extractor Up ~3min matching the recent swap, zero unexpected restarts on any peer. DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md #qa-S30. VERDICT PASS -- routing to po for Step 6 sign-off."
       }
     ],
     "qa": [],
@@ -8822,6 +8859,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-08T22:55:12Z",
-  "_updated_by": "qa"
+  "_updated_at": "2026-07-09T02:27:00Z",
+  "_updated_by": "po-signal-triage-20260709"
 }
