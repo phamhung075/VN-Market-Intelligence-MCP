@@ -4,6 +4,30 @@
 
 ---
 
+## Session: 2026-07-09 (FACTORY-FRONTEND-split-dashboard-analysis — BOUNDED-1 idle-pickup)
+
+**FACTORY-FRONTEND-split-dashboard-analysis DONE — 1836L route split into formatters + 22 components**
+
+Zone health: 83 test files; 2047 pass / 2 fail (pre-existing QUE-TOOLTIP, unrelated); tsc 0 errors; eslint clean (same 5 pre-existing react-hooks/exhaustive-deps errors in unrelated CorporateEventsZone/FinancialsZone/TechnicalZone, confirmed unrelated); Playwright G12 4/4 GREEN (isolated port) | HEALTHY
+
+Task: direct sequel to FACTORY-FRONTEND-extract-computeDecision — split remaining 1836L `dashboard.analysis.tsx` per `docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md`.
+
+Files created (20 commits, one extraction per commit):
+- `domain/formatters/{signal-color,confidence-pct,confidence-label,indicator-label,signal-direction-label}.ts` — 5 pure helpers moved verbatim
+- `components/analysis/{ConfidenceBar,SectionShell,StockSelector,WatchlistTile,WatchlistOverviewGrid,SectorPeersBar,MacroImpactPanel,KinhDichMarketPanel,MacroSignalPanel,StockTable,AnalysisDecision,InfoSourcePanel,buildInfoSourceRows,buildInfoSourcePriceTaRows,InfoSourceRow,StockSignalsPanel,MiniPriceTable,StockDetailPanel,StockDetailBottomGrid,AiDeepDivePanel,BriefSection,AccuracyDigestCard}.tsx` — 22 files, all <=120L (initial audit found 2 over: WatchlistTile 121L comment-trimmed to 119L; StockDetailPanel 133L split into itself 78L + new StockDetailBottomGrid 78L)
+
+Files updated:
+- `routes/dashboard.analysis.tsx` — 1836L→457L; only loader + default export + `AnalysisBriefDto`/`AnalysisBriefResult`/`StockDetail` types remain (now exported so moved components `import type` them — same pattern as FinancialsZone/NewsBuzzZone); honest size-justification header added (457L is smallest of 19 `/dashboard/*.tsx` routes in the zone, all currently unheaded — monorepo CI-size-lint-justification gate not built yet)
+- `docs/architecture/microservice/frontend/domain-model.md` — formatters + component-split documented
+
+RAW-verify: fresh isolated dev server (unused port, bypassing the stale live :3001 Docker container) — curl `/dashboard/analysis` (9/9 content checks pass) and `?stock=VNM` (8/8 pass, all StockDetailPanel sub-panels present); one anomaly found (2 deterministic null bytes mid-"định") confirmed PRE-EXISTING via git-stash A/B test against the original 1836L file — not a regression.
+
+Commits: `a5e6294`..`41279090e` (18 extraction + 2 doc/fixup) | tsc: 0 errors | vitest: 2047/2049 | eslint clean | Playwright 4/4 GREEN
+
+rebuild_required=true — route file touched; board flipped `in_progress`→`review`, `next_agent=ops` for Docker Close Gate.
+
+---
+
 ## Session: 2026-07-09 (FACTORY-FRONTEND-extract-computeDecision — BOUNDED-1 idle-pickup)
 
 **FACTORY-FRONTEND-extract-computeDecision DONE — computeDecision moved route→domain**
@@ -49,57 +73,6 @@ GOTCHA (load-bearing for future Playwright runs): port 3001 is bound by the LIVE
 Container note: mcp-server rebuild for Zone 1 still user-gated — `GET /api/cron-status` 404s live today; proxy relays as-is, loader degrades to empty-shape DTO, table shows "Không có dữ liệu." until the rebuild ships (expected, not a defect).
 
 Commit: `b563c0d2` (code+tests+docs), `3a29d352` (orch-state board) | tsc: 0 errors | vitest: 2047 pass / 2 pre-existing fail | Playwright: 4/4 GREEN (isolated port)
-
----
-
-## Session: 2026-07-02 (MERGE-MONEY-RADAR-INTO-MOMENTUM — merge money-radar into momentum)
-
-**WU-1-MERGE-PAGES + WU-2-COVERAGE-MAP DONE — /dashboard/momentum now carries BOTH momentum (Section A) + money-radar (Section B)**
-
-Zone health: 82 test files; 2006 pass / 2 fail (pre-existing QUE-TOOLTIP); tsc 0 errors; Playwright 4/4 GREEN | HEALTHY
-
-Task: merge `/dashboard/money-radar` (MONEY-RADAR-P0) into `/dashboard/momentum` (TASK-502) per `docs/handoffs/BA-MERGE-MONEY-RADAR-INTO-MOMENTUM.md` — one unified page, two distinct DTO/parser/formatter families (do-not-homogenize preserved, AC3/AC10).
-
-Files updated:
-- `routes/dashboard.momentum.tsx` — Section B ("Radar Dòng Tiền") ported verbatim, colocated (PM-RATIFY-1, no new `app/lib/moneyRadar/`); merged `loader()` via `Promise.allSettled(fetchMomentumIndicators, fetchMoneyRadarComposite)` — per-feed isolation (AC2); page FreshnessBadge = older(momentum.generated_at, radar.generated_at); h2 headings added per section
-- `routes/dashboard.money-radar.tsx` — collapsed to loader-only 302 redirect → `/dashboard/momentum` (AC4, no default export — loader always redirects before render)
-- `components/TopNav.tsx` — `ANALYST_NAV[26]` relabeled "Động Lực P1" → "Động Lực & Dòng Tiền" (same position/route; SSOT 27/34 unchanged)
-- `__tests__/money-radar-cards.test.ts` — import path only (FR-2.4)
-- `__tests__/ind-p1-momentum-nav.test.tsx` — 6 label assertions + DOM assertion relabeled
-- `__tests__/ind-p1-indicator-gauges-nav.test.tsx`, `__tests__/task17-page19-news-buzz-nav.test.tsx` — 1 hardcoded "Động Lực P1" regression-guard assertion each (found beyond BA's file-inventory grep, fixed same commit)
-- `docs/data/frontend-data-coverage-map.json` — +4 rows for `/dashboard/momentum` radar scalars (score, foreign_accum_z_market, rel_vol_z_20, divergence.flag), status LIVE; rows 45→49, LIVE 35→39
-
-Commit: `ced952ca` | tsc: 0 errors | vitest: 2006 pass / 2 pre-existing fail | Playwright: 4/4 GREEN
-Manual RAW-verify: curl /dashboard/momentum → 200, both `aria-label="Chỉ báo..."` sections present; curl /dashboard/money-radar → 302 → /dashboard/momentum.
-
----
-
-## Session: 2026-06-30 (TASK-502-MOMENTUM-FRONTEND — 4 P1 momentum gauge cards)
-
-**TASK-502-MOMENTUM-FRONTEND DONE — GaugeCard extracted, 4 momentum cards wired, nav added, honest-NULL enforced**
-
-Zone health: 81 test files; 1967 pass / 2 fail (pre-existing QUE-TOOLTIP); tsc 0 errors; Playwright 3/3 GREEN | HEALTHY
-
-Task: surface 4 P1 momentum scalars on `/dashboard/momentum`:
-  momentum_factor_z (ROC), market_rs_composite (RS), net_new_highs (52W), foreign_accum_z_market (FA).
-
-Files created:
-- `components/GaugeCard.tsx` — extracted from dashboard.indicator-gauges (AC-M1); adds expandContent prop
-- `routes/api.momentum-indicators.tsx` — transparent proxy (proxyUpstream pattern)
-- `routes/dashboard.momentum.tsx` — loader + 4 GaugeCards; parseMomentumIndicatorsDto; formatRSComposite; honest-NULL; InfoCardExpand dropdowns
-- `__tests__/ind-p1-momentum-cards.test.ts` — 10 suites, 49 cases GREEN
-- `__tests__/ind-p1-momentum-nav.test.tsx` — 7 suites, nav count + position
-
-Files updated:
-- `routes/dashboard.indicator-gauges.tsx` — inline GaugeCard removed; import from ~/components/GaugeCard
-- `components/TopNav.tsx` — 'Động Lực P1' at ANALYST_NAV[26] (26→27, 33→34 NAV_ITEMS)
-- `__tests__/FE-HEADER-SSOT-top-nav.test.tsx` — SSOT counts bumped 26→27, 33→34
-- `__tests__/ind-p1-indicator-gauges-nav.test.tsx` — count + position guards updated
-- `__tests__/task17-page19-news-buzz-nav.test.tsx` — count + position guards updated
-- `docs/data/frontend-data-coverage-map.json` — +4 GAP rows for /dashboard/momentum
-
-Commits: `8828a68e` (AC-M1 atomic extract), `24de1fe5` (feature)
-Pre-existing QUE-TOOLTIP failures (2) — unrelated to TASK-502; tracking from prior sessions.
 
 ---
 
