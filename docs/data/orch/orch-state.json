@@ -283,12 +283,12 @@
     }
   ],
   "head": {
-    "status": "qa_verification",
-    "active_task_id": "FACTORY-MACRO-split-repositories",
-    "next_agent": "po",
-    "next_action": "PO Step 6 sign-off: FACTORY-MACRO-split-repositories QA Step 5 PASS. Live /health=200, POST /snapshot independently re-verified twice (values live-ticking: vnIndex 1841.29->1842.46->1843.08; all 8 fields non-null/plausible). SHA-gate drift (deployed 9d712bdad vs HEAD 5b326844c) confirmed benign doc-only (zero apps/macro-indicators diff, refactor commit c3962350d is ancestor of deployed SHA). router.go zero-diff across refactor -- tool/route surface unaffected. Full detail: sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S35.",
-    "updated_at": "2026-07-09T07:36:58Z",
-    "updated_by": "qa"
+    "status": "done",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "FACTORY-MACRO-split-repositories DONE_VERIFIED (po Step 6, atomic .head+row close). Board idle — next BOUNDED-1 idle-capacity backlog pickup eligible.",
+    "updated_at": "2026-07-09T07:44:00Z",
+    "updated_by": "po"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -583,7 +583,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-09T06:05:00Z",
+    "_updated_at": "2026-07-09T07:45:30Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -7570,6 +7570,81 @@
         "updated_at": "2026-07-09T06:43:50Z",
         "updated_by": "qa",
         "status_note": "qa RAW-verify PASS (2026-07-09T06:43:50Z): read full diff (60c9a880a) against reconstructed pre-split main.go line-by-line -- compareFields/formatVal genuinely preserve original %q/%v formatting + error text for all 6 primitive comparators + both module-tier diff sites, no silent logic change. Independently reproduced before/after parity from scratch (git worktree at parent commit, built both binaries, ran identical 20-scenario fixture suite -- byte-identical output+exit 0 both; 2 own forced-mismatch probes, primitive+module tier -- byte-identical FAIL text+exit 1 both). Read dispatch_test.go in full: 8 real dispatch-routing tests, not tautological (one non-blocking limitation noted: 6-way primitive subtest cannot distinguish a within-group case swap via go test alone -- DoD asked for light coverage only, real fixture suite would catch it). Repo-wide grep confirms zero external references to any moved identifier (package main). Full zone test suite (go build/vet/test -count=1 all 11 packages + golangci-lint) green beyond router's cmd/sandbox-only checks. .gitignore anchor fix verified live via git check-ignore. done_verified."
+      },
+      {
+        "title": "Split repositories.go into per-adapter files; share openReadOnly",
+        "priority": "P1",
+        "zone": "macro-indicators",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-MACRO-split-repositories",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-repositories",
+        "promoted_at": "2026-07-09T06:48:56Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T06:49:03Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "po",
+        "completed_at": "2026-07-09T07:01:55Z",
+        "completed_by": "dev-macro-indicators",
+        "commit_sha": "c3962350d",
+        "verification_note": "repositories.go (905L, 6 adapters) split -> repositories_fixture.go(110L)+repositories_market_index.go(159L)+repositories_commodity.go(283L)+repositories_sbv_rate.go(141L)+repositories_carry_yield.go(335L, incl. new shared openReadOnly(dbPath) helper reused by all 5 live SQLite adapters). go build/vet/test/golangci-lint (0 issues) all GREEN across the zone. repositories_test.go full suite (30+ cases) unchanged and PASS. Extra local RAW-verify: throwaway fixture-DB harness (not committed) called the real constructors + all 9 port methods through DB_PATH env wiring pre-split (git stash) vs post-split -- VN-Index/prev-session/commodity current+prev/SBV rate/deposit rate/Fed funds+source-date/earning yield all byte-identical. cmd/server/main.go imports pkg/infrastructure and constructs all 6 adapter types from this file; Dockerfile builds ./cmd/server/ -- this IS the live-deployed service (unlike sibling FACTORY-MACRO-split-sandbox), so next_agent=ops for the standard Docker Microservice Code-Change Close Gate (rebuild/health/SHA-gate/curl); local verification above does not substitute for ops's post-rebuild live curl checks.",
+        "qa_verification_started_at": "2026-07-09T09:21:49Z",
+        "qa_verification_started_by": "ops",
+        "verify_note": "ops Steps 1-4 PASS: memory check (700/7000 MB), rebuild with git SHA, container healthy, SHA gate verified. Step 5 raw-verify: POST /snapshot endpoint returning non-null plausible values for VN-Index/commodities/rates/carry/yield. Refactored openReadOnly() path verified live. Next: QA liveness + tool-count verification.",
+        "ops_close_gate_steps": {
+          "step_1_memory_check": {
+            "status": "PASS",
+            "docker_total_mb": 700,
+            "threshold_mb": 7000,
+            "note": "docker stats shows ~700MB total across all containers, well under 7GB limit"
+          },
+          "step_2_rebuild": {
+            "status": "PASS",
+            "git_sha": "9d712bdad752c6ca27b8a4d52a19ab36f92f69a7",
+            "timestamp": "2026-07-09T09:20:28Z",
+            "note": "docker compose build --build-arg GIT_SHA succeeded, image built"
+          },
+          "step_3_verify_container": {
+            "status": "PASS",
+            "container_state": "running (healthy)",
+            "port": 5004,
+            "timestamp": "2026-07-09T09:21:21Z"
+          },
+          "step_4_sha_gate": {
+            "status": "PASS",
+            "deployed_sha": "9d712bdad752c6ca27b8a4d52a19ab36f92f69a7",
+            "verification_result": "OK: deployed SHA matches HEAD",
+            "timestamp": "2026-07-09T09:21:24Z"
+          },
+          "step_5_raw_verify_endpoints": {
+            "status": "PASS",
+            "endpoint": "POST /snapshot",
+            "verified_fields": {
+              "vnIndex": 1841.29,
+              "oilUsd": 77.74,
+              "goldUsd": 4115.8,
+              "usdVnd": 26111,
+              "vndDepositRate": 5,
+              "fedFundsRate": 3.63,
+              "earningYield": 7.052186177715091,
+              "carrySpread": 1.37
+            },
+            "data_quality": "all values non-null and plausible; refactored openReadOnly() path verified live"
+          }
+        },
+        "qa_verify_at": "2026-07-09T07:36:58Z",
+        "qa_verify_by": "qa",
+        "qa_note": "Step 5 PASS. docker inspect: container healthy since 2026-07-09T07:21:18Z, git_sha label 9d712bdad752c6ca27b8a4d52a19ab36f92f69a7 exact match ops claim. GET /health=200. verify-deploy-sha.sh macro-indicators now reads drift (deployed=9d712bdad vs current HEAD=5b326844c) -- investigated: git diff --stat touches zero apps/macro-indicators/, git merge-base --is-ancestor c3962350d 9d712bdad=true (refactor commit baked into the deployed build) -- benign doc-only drift (memory project_verify_deploy_sha_benign_doc_drift), same class as qa-S32/S33. Re-ran POST /snapshot myself TWICE 3s apart (not ops's numbers): vnIndex ticked 1841.29(ops)->1842.46->1843.08, dataSource:live; oilUsd/goldUsd also moved between my 2 calls -- proves genuinely live-computed not frozen/cached. usdVnd=26111, vndDepositRate=5%, fedFundsRate=3.63%, earningYield=7.052186177715091%, carrySpread=1.37pp byte-identical to ops report both my calls (expected: daily-fixing fields, sticky vs intraday VN-Index), internally consistent with response's own reasoning strings. All 8 fields non-null/non-zero/plausible. Tool/route surface unaffected: git diff c3962350d^..c3962350d -- pkg/interface/http/router.go = EMPTY -- live router still exposes exactly /health+/snapshot+6 optional VMT routes, no change. Source-level: repositories.go gone, 5 new files at exact claimed sizes (110/159/283/141/335L), openReadOnly is a single package-level func called from all 5 adapter files; cmd/server/main.go wired to all 6 constructors from the split files. Fresh go build/vet/test ./... -count=1 myself: all 11 packages green. docker logs since start: zero error/panic lines. Left status:QA untouched per established qa-S33 precedent (git show a6c10eab5 -- qa never touches status, only next_agent; Step 6 DONE_VERIFIED flip is po-exclusive authority per po-S3..S15). DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S35.",
+        "closed_at": "2026-07-09T07:44:00Z",
+        "po_closeout": {
+          "by": "po",
+          "at": "2026-07-09T07:44:00Z",
+          "verdict": "DONE_VERIFIED — po Step 6 close of the Docker Microservice Code-Change Close Gate (docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate). All 5 upstream steps PASS with independent RAW re-verification at every hop: dev-macro-indicators split apps/macro-indicators/pkg/infrastructure/repositories.go (905L, 6 adapters) into 5 per-adapter files + a shared openReadOnly(dbPath) helper (commit c3962350d; go build/vet/test/golangci-lint all GREEN, repositories_test.go 30+ cases unchanged+PASS, throwaway fixture-DB harness proved all 9 port methods byte-identical pre/post-split) -> ops Steps 1-4 (commit 3f8515d46: mem 700/7000MB, rebuild --build-arg GIT_SHA, container running(healthy) port 5004, SHA-gate PASS at build, image git_sha 9d712bdad) -> qa Step 5 (commit c1a896c8c: live /health=200, POST /snapshot re-run twice showing genuinely live-ticking VN-Index 1841.29->1842.46->1843.08, all 8 fields plausible, router.go zero-diff). po did NOT re-run Steps 1-5 (already double-RAW-verified by dev/ops/qa AND the router at every hop) — only independently spot-re-verified the load-bearing facts.",
+          "evidence": "PO OWN SPOT-CHECK (raw git/docker/curl/grep, not trusted-from-prose): (1) all 3 chain commits genuine — c3962350d refactor / 3f8515d46 ops / c1a896c8c qa (=HEAD). (2) REAL SPLIT at source: apps/macro-indicators/pkg/infrastructure/repositories.go REMOVED; 5 new files present at wc -l 110/159/283/139/335 (fixture/market_index/commodity/sbv_rate/carry_yield); func openReadOnly defined EXACTLY ONCE (repositories_carry_yield.go:44) and used by all live SQLite adapters (repositories_sbv_rate.go:79 db,_:=openReadOnly(a.dbPath)). (3) TOOL/ROUTE SURFACE UNAFFECTED: git diff c3962350d^..c3962350d -- pkg/interface/http/router.go = EMPTY. (4) BENIGN SHA-DRIFT confirmed: git merge-base --is-ancestor c3962350d 9d712bdad(deployed) = YES (refactor baked into the deployed build); git diff 9d712bdad..HEAD -- apps/macro-indicators/ = EMPTY (zero post-build source drift) — the verify-deploy-sha.sh drift qa flagged is doc-only (project_verify_deploy_sha_benign_doc_drift). (5) LIVE CONTAINER: vn-market-intelligence-mcp-macro-indicators-1 Up(healthy), docker inspect git_sha label = 9d712bdad (EXACT ops/qa match). (6) LIVE ENDPOINT (my own 5 calls at 07:40-07:41Z, not ops/qa numbers): /health=200; POST /snapshot vnIndex moved 1843.08(qa 07:36Z)->1838.38->1839.06 = genuinely live over the interval (no tick within my 3s windows just means upstream source updates on a coarser-than-3s cadence, not stale); usdVnd=26111 stable non-null via the SAME refactored openReadOnly + sbv_rates table -> the refactored DB-open path is proven live-working; oilUsd/goldUsd non-null live; docker logs since qa-verify = zero error/panic/fatal. VERDICT: real source split, deployed==committed, zero post-build drift, live service exercises the refactored openReadOnly path end-to-end.",
+          "process_note": ".HEAD-SYNC done in the SAME scripts/orch-apply.sh write: top-level canonical .head reset idle (status=done / active_task_id=null / next_agent=router) alongside the review[]->done_verified[] row flip — the atomic .head+board-row discipline (feedback_close_gate_step4_head_sync_gap; UNBLOCK-CLOSEGATE-STEP4-HEAD-SYNC escalated this session). Write-time jq guard re-verified .head.active_task_id == FACTORY-MACRO-split-repositories before writing (it tracked this task from the 06:48Z BOUNDED-1 pickup through qa Step 5 — no concurrent takeover; orch-apply CAS-mtime guard covers read->rename interleaving). Row's own next_agent KEPT 'po' (task-row schema orchStateSchema.ts:100 next_agent=z.string().optional() rejects raw null — a null tripped the validator earlier this session; kept-'po' is the dominant done_verified sibling convention; top-level .head is authoritative for routing once DONE_VERIFIED per feedback_orchstate_dual_head_keys_toplevel_authoritative). Deprecated .task_board.head left UNTOUCHED. No sprint_goal.entries match this task-id -> not touched. qa correctly HELD REVIEW+next_agent=po (did not self-close a rebuild_required=true FACTORY) -> qa-self-close count stays 1, below the recurring-2+ bar; parked qa-guardrail-mint stays parked. Gateway-blind THIS session (Read/Edit/Write/Bash only — no mcp__gateway__call_tool) -> release of lock task:FACTORY-MACRO-split-repositories DEFERRED to router on report-back per dispatch.",
+          "residual_advisory": "Two non-blocking observations I surfaced that qa could NOT have (market state changed since qa's 07:36Z read), both proven ORTHOGONAL to this pure structural refactor (NOT regressions): (A) COSMETIC line-count: qa/dev claimed repositories_sbv_rate.go = 141L; my wc -l = 139L (2-line drift). Not corrected here (editing the Go source would force a needless rebuild + reintroduce SHA-gate drift + touch dev-macro-indicators zone — PO does not edit production code); correct forward record = 139L, folds into the next dev-macro touch (same cosmetic class as the frontend 457L/476L precedent, po-S15). (B) DATA-PLANE freshness: at my 07:40Z calls the 4 daily-fixing macro fields (vndDepositRate/fedFundsRate/earningYield/carrySpread) safe-degraded to null (stable across 3 calls, zero error/panic in logs), where ops/qa saw them non-null ~4 min earlier on the SAME byte-identical binary (git_sha 9d712bdad, my own docker inspect). A deterministic code bug is IMPOSSIBLE (same binary produced non-null then null -> a state/data-dependent path, not code); the source has an explicit safe-degrade staleness contract (repositories_sbv_rate.go: 6h fetched_at window, return 0/null on stale/absent row by design); usdVnd (same sbv_rates table + same openReadOnly) stayed non-null, isolating the null to specific stale daily-fixing rows, NOT the DB-open path. Conclusion: upstream SBV/Fed/yield crawl-freshness event, fully independent of the refactor DoD. DID NOT mint a new probe (would be duplicate churn) — this cluster is ALREADY tracked: BA-FIX-MACRO-SNAPSHOT-DELTAS-NULL (BA spec DONE, high, zone apps/macro-indicators/) + FIX-MACRO-CARRY-YIELD-ESTIMATE-FLAG (P2 — carry+yield derive from vndDepositRate with staleness) + FIX-COMMODITY-WTI-DELTA-CORRUPT. My live 07:40Z reading (all 4 daily-fixing fields simultaneously null DURING market hours, on the SAME sbv_rates table whose usd_vnd_official row is fresh) is a fresh corroborating data-point for architect/dev to factor into that tracked fix — surfaced, dedup per churn-not-product (feedback_recurring_detection_vs_recurring_failed_fix), NOT a blocker on this close."
+        }
       }
     ],
     "head": {
@@ -7700,72 +7775,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "title": "Split repositories.go into per-adapter files; share openReadOnly",
-        "priority": "P1",
-        "zone": "macro-indicators",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-MACRO-split-repositories",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-MACRO-split-repositories",
-        "promoted_at": "2026-07-09T06:48:56Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T06:49:03Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "po",
-        "completed_at": "2026-07-09T07:01:55Z",
-        "completed_by": "dev-macro-indicators",
-        "commit_sha": "c3962350d",
-        "verification_note": "repositories.go (905L, 6 adapters) split -> repositories_fixture.go(110L)+repositories_market_index.go(159L)+repositories_commodity.go(283L)+repositories_sbv_rate.go(141L)+repositories_carry_yield.go(335L, incl. new shared openReadOnly(dbPath) helper reused by all 5 live SQLite adapters). go build/vet/test/golangci-lint (0 issues) all GREEN across the zone. repositories_test.go full suite (30+ cases) unchanged and PASS. Extra local RAW-verify: throwaway fixture-DB harness (not committed) called the real constructors + all 9 port methods through DB_PATH env wiring pre-split (git stash) vs post-split -- VN-Index/prev-session/commodity current+prev/SBV rate/deposit rate/Fed funds+source-date/earning yield all byte-identical. cmd/server/main.go imports pkg/infrastructure and constructs all 6 adapter types from this file; Dockerfile builds ./cmd/server/ -- this IS the live-deployed service (unlike sibling FACTORY-MACRO-split-sandbox), so next_agent=ops for the standard Docker Microservice Code-Change Close Gate (rebuild/health/SHA-gate/curl); local verification above does not substitute for ops's post-rebuild live curl checks.",
-        "qa_verification_started_at": "2026-07-09T09:21:49Z",
-        "qa_verification_started_by": "ops",
-        "verify_note": "ops Steps 1-4 PASS: memory check (700/7000 MB), rebuild with git SHA, container healthy, SHA gate verified. Step 5 raw-verify: POST /snapshot endpoint returning non-null plausible values for VN-Index/commodities/rates/carry/yield. Refactored openReadOnly() path verified live. Next: QA liveness + tool-count verification.",
-        "ops_close_gate_steps": {
-          "step_1_memory_check": {
-            "status": "PASS",
-            "docker_total_mb": 700,
-            "threshold_mb": 7000,
-            "note": "docker stats shows ~700MB total across all containers, well under 7GB limit"
-          },
-          "step_2_rebuild": {
-            "status": "PASS",
-            "git_sha": "9d712bdad752c6ca27b8a4d52a19ab36f92f69a7",
-            "timestamp": "2026-07-09T09:20:28Z",
-            "note": "docker compose build --build-arg GIT_SHA succeeded, image built"
-          },
-          "step_3_verify_container": {
-            "status": "PASS",
-            "container_state": "running (healthy)",
-            "port": 5004,
-            "timestamp": "2026-07-09T09:21:21Z"
-          },
-          "step_4_sha_gate": {
-            "status": "PASS",
-            "deployed_sha": "9d712bdad752c6ca27b8a4d52a19ab36f92f69a7",
-            "verification_result": "OK: deployed SHA matches HEAD",
-            "timestamp": "2026-07-09T09:21:24Z"
-          },
-          "step_5_raw_verify_endpoints": {
-            "status": "PASS",
-            "endpoint": "POST /snapshot",
-            "verified_fields": {
-              "vnIndex": 1841.29,
-              "oilUsd": 77.74,
-              "goldUsd": 4115.8,
-              "usdVnd": 26111,
-              "vndDepositRate": 5,
-              "fedFundsRate": 3.63,
-              "earningYield": 7.052186177715091,
-              "carrySpread": 1.37
-            },
-            "data_quality": "all values non-null and plausible; refactored openReadOnly() path verified live"
-          }
-        },
-        "qa_verify_at": "2026-07-09T07:36:58Z",
-        "qa_verify_by": "qa",
-        "qa_note": "Step 5 PASS. docker inspect: container healthy since 2026-07-09T07:21:18Z, git_sha label 9d712bdad752c6ca27b8a4d52a19ab36f92f69a7 exact match ops claim. GET /health=200. verify-deploy-sha.sh macro-indicators now reads drift (deployed=9d712bdad vs current HEAD=5b326844c) -- investigated: git diff --stat touches zero apps/macro-indicators/, git merge-base --is-ancestor c3962350d 9d712bdad=true (refactor commit baked into the deployed build) -- benign doc-only drift (memory project_verify_deploy_sha_benign_doc_drift), same class as qa-S32/S33. Re-ran POST /snapshot myself TWICE 3s apart (not ops's numbers): vnIndex ticked 1841.29(ops)->1842.46->1843.08, dataSource:live; oilUsd/goldUsd also moved between my 2 calls -- proves genuinely live-computed not frozen/cached. usdVnd=26111, vndDepositRate=5%, fedFundsRate=3.63%, earningYield=7.052186177715091%, carrySpread=1.37pp byte-identical to ops report both my calls (expected: daily-fixing fields, sticky vs intraday VN-Index), internally consistent with response's own reasoning strings. All 8 fields non-null/non-zero/plausible. Tool/route surface unaffected: git diff c3962350d^..c3962350d -- pkg/interface/http/router.go = EMPTY -- live router still exposes exactly /health+/snapshot+6 optional VMT routes, no change. Source-level: repositories.go gone, 5 new files at exact claimed sizes (110/159/283/141/335L), openReadOnly is a single package-level func called from all 5 adapter files; cmd/server/main.go wired to all 6 constructors from the split files. Fresh go build/vet/test ./... -count=1 myself: all 11 packages green. docker logs since start: zero error/panic lines. Left status:QA untouched per established qa-S33 precedent (git show a6c10eab5 -- qa never touches status, only next_agent; Step 6 DONE_VERIFIED flip is po-exclusive authority per po-S3..S15). DJ: sprint-SYSTEMIC-REMAKE-P1-qa.md STEP qa-S35."
       }
     ],
     "qa": [],
