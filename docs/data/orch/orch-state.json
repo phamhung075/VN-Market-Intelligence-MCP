@@ -330,10 +330,33 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-07-08T23:00:01.546Z",
-    "_updated_by": "mcp-server",
+    "_updated_at": "2026-07-09T17:31Z",
+    "_updated_by": "dev-team",
     "archive": [],
-    "rows": [],
+    "rows": [
+      {
+        "id": "dev-20260709T173139Z-a",
+        "ts": "2026-07-09T17:31Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "mock-guard HARD-FAIL: fabricated data in production source (likely Go _test.go false-positive)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "dev-20260709T173139Z-b",
+        "ts": "2026-07-09T17:31Z",
+        "from": "dev-team",
+        "to": "agents-architect",
+        "type": "system-issue",
+        "summary": "mock-guard HARD-FAIL: fabricated data in production source (likely Go _test.go false-positive)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
+      }
+    ],
     "last_triaged_at": "2026-07-03T19:49:38Z",
     "last_triaged_by": "po"
   },
