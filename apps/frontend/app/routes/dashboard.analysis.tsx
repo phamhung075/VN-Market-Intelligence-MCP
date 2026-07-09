@@ -54,6 +54,11 @@ import {
 import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
 import { formatChangePct } from "~/domain/formatters/change-pct.js";
 import { formatSignalTypeLabel } from "~/domain/formatters/signal-type-label.js";
+import { signalColor } from "~/domain/formatters/signal-color";
+import { confidencePct } from "~/domain/formatters/confidence-pct";
+import { confidenceLabel } from "~/domain/formatters/confidence-label";
+import { indicatorLabel } from "~/domain/formatters/indicator-label";
+import { directionLabel } from "~/domain/formatters/signal-direction-label";
 import { formatDateOnlyVi, formatSignalTimestamp } from "~/lib/formatDate";
 import { TechnicalZone } from "~/components/analysis/TechnicalZone";
 import { CorporateEventsZone } from "~/components/analysis/CorporateEventsZone";
@@ -270,18 +275,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 // Helpers
 // --------------------------------------------------------------------------
 
-function signalColor(signal: string): string {
-  const s = signal.toUpperCase();
-  if (s.includes("MUA") || s.includes("BULLISH")) return "text-green-400";
-  if (s.includes("BÁN") || s.includes("BEARISH")) return "text-red-400";
-  if (s.includes("THẬN TRỌNG") || s.includes("THAN TRONG")) return "text-yellow-400";
-  return "text-slate-300";
-}
-
-function confidencePct(confidence: number): string {
-  return `${Math.round(confidence * 100)}%`;
-}
-
 function confidenceBar(confidence: number) {
   const pct = Math.round(confidence * 100);
   const color =
@@ -297,23 +290,6 @@ function confidenceBar(confidence: number) {
       <span className="text-xs text-slate-400">{pct}%</span>
     </div>
   );
-}
-
-function indicatorLabel(indicator: string): string {
-  switch (indicator) {
-    // legacy underscore-keyed names
-    case "oil_usd": return "Dầu thô (WTI)";
-    case "gold_usd": return "Vàng";
-    case "usd_vnd": return "USD/VND";
-    // canonical keyed-object keys from Go SignalResult (dtos.go)
-    case "oil": return "Dầu thô (WTI)";
-    case "gold": return "Vàng";
-    case "usdvnd": return "USD/VND";
-    case "investment-clock": return "Investment Clock";
-    case "carry": return "Carry Trade";
-    case "yield": return "Yield Spread";
-    default: return indicator;
-  }
 }
 
 // --------------------------------------------------------------------------
@@ -1206,37 +1182,6 @@ function InfoSourcePanel({
 // --------------------------------------------------------------------------
 
 /**
- * Format a SQLite/ISO datetime string for compact display.
- * If the date portion equals today (Asia/Ho_Chi_Minh), show only HH:mm.
- * Otherwise show MM-DD HH:mm.
- * Delegates to the shared formatSignalTimestamp helper — never returns "Invalid Date".
- */
-function formatSignalTime(createdAt: string): string {
-  return formatSignalTimestamp(createdAt);
-}
-
-function directionLabel(direction: string): { text: string; cls: string } {
-  const d = direction.toUpperCase();
-  if (d === "BULLISH") return { text: "BULLISH↑", cls: "text-green-400" };
-  if (d === "BEARISH") return { text: "BEARISH↓", cls: "text-red-400" };
-  return { text: direction || "NEUTRAL", cls: "text-slate-400" };
-}
-
-function confidenceLabel(confidence: number | null): { text: string; cls: string } {
-  // null = genuine absence — render "—" (not 0%, not 50%)
-  const hasConfidence =
-    confidence !== null &&
-    typeof confidence === "number" &&
-    !Number.isNaN(confidence);
-  if (!hasConfidence) return { text: "—", cls: "text-slate-600" };
-  const pct = Math.round(confidence * 100);
-  const text = `${pct}%`;
-  if (pct >= 70) return { text, cls: "text-green-400" };
-  if (pct >= 40) return { text, cls: "text-amber-400" };
-  return { text, cls: "text-slate-400" };
-}
-
-/**
  * Render an accuracy badge inline.
  * - absent accuracy → dash
  * - sample_count < 3 → grey "New"
@@ -1295,7 +1240,7 @@ function StockSignalsPanel({ signals }: { signals: AgentSignal[] | null }) {
                 return (
                   <tr key={sig.id} className="border-b border-slate-800 last:border-0">
                     <td suppressHydrationWarning className="py-1.5 pr-3 font-mono text-slate-400 whitespace-nowrap">
-                      {formatSignalTime(sig.createdAt)}
+                      {formatSignalTimestamp(sig.createdAt)}
                     </td>
                     <td className="py-1.5 pr-3">
                       <span className="rounded bg-slate-800 px-1.5 py-0.5 text-slate-300">
