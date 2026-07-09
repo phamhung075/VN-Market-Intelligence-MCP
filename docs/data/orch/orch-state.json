@@ -294,9 +294,9 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "FACTORY-APIGW-proxy-timeout-constant moved to REVIEW by dev-api-gateway — idle-capacity freed for next BOUNDED-1 pickup",
-    "updated_at": "2026-07-09T20:25:05Z",
-    "updated_by": "dev-api-gateway"
+    "next_action": "await next tick",
+    "updated_at": "2026-07-09T20:55:11Z",
+    "updated_by": "dev-stock-price (task complete)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3939,15 +3939,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-vndirect-mapper-tests"
       },
       {
-        "title": "Split the 743L stock-price sandbox by executor seam",
-        "priority": "P1",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-STOCK-split-sandbox",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-split-sandbox"
-      },
-      {
         "title": "Dedup priceHistory handlers + name the days=30 default",
         "priority": "P3",
         "zone": "stock-price",
@@ -7326,6 +7317,22 @@
         "completed_at": "2026-07-09T20:25:05Z",
         "completed_by": "dev-api-gateway",
         "status_note": "Named the inline `*5` proxy-timeout fallback as domain.DefaultProxyTimeoutMultiplier=5 (pkg/domain/models.go) with a new domain.ServiceConfig.EffectiveProxyTimeoutMs() accessor; proxy.go serveProxied simplified from (overrideMs,timeoutMs int64) to a single pre-resolved effectiveMs int64, both HandleProxy call sites now call the accessor instead of inlining the fallback branch. Deviated from the backlog note's suggested registry.go placement: proxy.go is Fence-C-restricted from importing pkg/infrastructure (registry.go's package), so the constant+accessor had to live in pkg/domain instead — documented in the decision journal. New pkg/domain/models_test.go pins EffectiveProxyTimeoutMs() (2000ms+no override->10000ms; 120000ms override wins; 0+no override->0) plus the constant value itself. go build/vet clean, gofmt -l clean (no new unformatted files — pre-existing registry.go debt confirmed via git-stash baseline, out of scope), golangci-lint 0 issues (confirms Fence-C respected), go test ./... 10/10 packages PASS, G12 sandbox primitive 14/14 + module 1/1 PASS. rebuild_required=true (hottest-path prod HTTP handler) — deferred post-rebuild behavior verification tracked in signal docs/signals/ops-rebuild-verify-api-gateway-20260709T2022Z.json. Kept REVIEW (not self-asserted DONE_VERIFIED) pending router/qa sign-off given hottest-path risk. DJ: docs/agent-memory/decisions/dev-api-gateway-20260709T2022Z-FACTORY-APIGW-proxy-timeout-constant.md"
+      },
+      {
+        "title": "Split the 743L stock-price sandbox by executor seam",
+        "priority": "P1",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-STOCK-split-sandbox",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-split-sandbox",
+        "promoted_at": "2026-07-09T20:47:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T20:47:26Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "reviewed_at": "2026-07-09T20:55:11Z",
+        "reviewed_by": "dev-stock-price"
       }
     ],
     "qa": [],
@@ -7345,7 +7352,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-09T20:17:18Z",
+    "last_triaged_at": "2026-07-09T20:47:26Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },

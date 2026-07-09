@@ -2,6 +2,10 @@
 
 Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
 
+## Session 2026-07-09 — FACTORY-STOCK-split-sandbox DONE
+
+Split 743L cmd/sandbox/main.go into 8 files: main.go (101L), discover.go (71L), helpers.go (23L), dispatch.go (75L), exec_primitive_normalizer.go (97L), exec_primitive_selector.go (123L), exec_primitive_staleness.go (76L), exec_module_resolution.go (150L). All build/vet/test/lint/sandbox PASS. Two files over 120L justified (single cohesive executors with no natural seams).
+
 ## Session 2026-06-04 — DSI-S2-PRICE (Data Serve Integrity) DONE
 
 ### Problem
