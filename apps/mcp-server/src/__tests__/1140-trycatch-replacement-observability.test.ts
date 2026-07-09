@@ -5,74 +5,89 @@ import { describe, it, expect } from 'bun:test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-const JOBS_TS = join(import.meta.dir, '../../src/scheduler/startScheduler.ts')
+// FACTORY-SCHEDULER-job-table-registry: bctcOverdueCheckJob / vpsProxyWatchdogJob /
+// cronHealthAlertJob's cron registrations moved from an inline
+// scheduleCron(CRONS.x, async () => { jobRunRepo.wrapRun('xJob', ...) }, opts) block in
+// startScheduler.ts into a declarative { name, cron, options, runner } entry in
+// schedulerJobTable.ts's buildJobTable(). registerJobTable() wraps EVERY entry in
+// jobRunRepo.wrapRun(j.name, j.runner) generically.
+const JOBS_TS = join(import.meta.dir, '../../src/scheduler/schedulerJobTable.ts')
+
+/** Extracts a single buildJobTable() entry's source text by its `name: 'jobName'` marker,
+ *  walking backward to the entry's opening `{` and forward (brace-depth-aware) to its
+ *  matching closing `}` — robust to nested objects/functions inside the runner body. */
+function extractJobTableEntry(source: string, jobName: string): string {
+  const idx = source.indexOf(`name: '${jobName}'`)
+  if (idx === -1) return ''
+  const start = source.lastIndexOf('{', idx)
+  if (start === -1) return ''
+  let depth = 0
+  let end = start
+  for (let i = start; i < source.length; i++) {
+    if (source[i] === '{') depth++
+    else if (source[i] === '}') {
+      depth--
+      if (depth === 0) { end = i + 1; break }
+    }
+  }
+  return source.slice(start, end)
+}
 
 describe('Task 1140 — try/catch replacement with observability wrapper (Phase 2)', () => {
   const src = readFileSync(JOBS_TS, 'utf8')
   // Task 1839a Phase 2: recordJobRun(getDb(), ...) replaced by jobRunRepo.wrapRun(...)
 
-  it('bctcOverdueCheckJob uses jobRunRepo.wrapRun wrapper', () => {
-    expect(src).toContain("jobRunRepo.wrapRun('bctcOverdueCheckJob'")
+  it('bctcOverdueCheckJob JOB_TABLE entry wired to CRONS.bctcOverdueCheck', () => {
+    const entry = extractJobTableEntry(src, 'bctcOverdueCheckJob')
+    expect(entry).not.toBe('')
+    expect(entry).toContain('cron: CRONS.bctcOverdueCheck')
   })
 
-  it('vpsProxyWatchdogJob uses jobRunRepo.wrapRun wrapper', () => {
-    expect(src).toContain("jobRunRepo.wrapRun('vpsProxyWatchdogJob'")
+  it('vpsProxyWatchdogJob JOB_TABLE entry wired to CRONS.vpsProxyWatchdog', () => {
+    const entry = extractJobTableEntry(src, 'vpsProxyWatchdogJob')
+    expect(entry).not.toBe('')
+    expect(entry).toContain('cron: CRONS.vpsProxyWatchdog')
   })
 
-  it('cronHealthAlertJob uses jobRunRepo.wrapRun wrapper', () => {
-    expect(src).toContain("jobRunRepo.wrapRun('cronHealthAlertJob'")
+  it('cronHealthAlertJob JOB_TABLE entry wired to CRONS.cronHealthAlert', () => {
+    const entry = extractJobTableEntry(src, 'cronHealthAlertJob')
+    expect(entry).not.toBe('')
+    expect(entry).toContain('cron: CRONS.cronHealthAlert')
   })
 
-  it('AC-4: no standalone try/catch remains for bctcOverdueCheck', () => {
-    // Extract the bctcOverdueCheck cron block and assert no raw try{ found inside it
-    const bctcStart = src.indexOf("CRONS.bctcOverdueCheck")
-    const bctcEnd = src.indexOf("CRONS.vpsProxyWatchdog")
-    expect(bctcStart).toBeGreaterThan(-1)
-    expect(bctcEnd).toBeGreaterThan(bctcStart)
-    const bctcBlock = src.slice(bctcStart, bctcEnd)
-    // The block must not contain a bare try {
-    expect(bctcBlock).not.toMatch(/\btry\s*\{/)
+  it('AC-4: no standalone try/catch remains inside bctcOverdueCheckJob runner', () => {
+    const entry = extractJobTableEntry(src, 'bctcOverdueCheckJob')
+    expect(entry).not.toBe('')
+    expect(entry).not.toMatch(/\btry\s*\{/)
   })
 
-  it('AC-4: no standalone try/catch remains for vpsProxyWatchdog', () => {
-    const vpsStart = src.indexOf("CRONS.vpsProxyWatchdog")
-    const vpsEnd = src.indexOf("CRONS.cronHealthAlert")
-    expect(vpsStart).toBeGreaterThan(-1)
-    expect(vpsEnd).toBeGreaterThan(vpsStart)
-    const vpsBlock = src.slice(vpsStart, vpsEnd)
-    expect(vpsBlock).not.toMatch(/\btry\s*\{/)
+  it('AC-4: no standalone try/catch remains inside vpsProxyWatchdogJob runner', () => {
+    const entry = extractJobTableEntry(src, 'vpsProxyWatchdogJob')
+    expect(entry).not.toBe('')
+    expect(entry).not.toMatch(/\btry\s*\{/)
   })
 
-  it('AC-4: no standalone try/catch remains for cronHealthAlert', () => {
-    const cronStart = src.indexOf("CRONS.cronHealthAlert")
-    const cronEnd = src.indexOf("CRONS.evidenceAccumulator")
-    expect(cronStart).toBeGreaterThan(-1)
-    expect(cronEnd).toBeGreaterThan(cronStart)
-    const cronBlock = src.slice(cronStart, cronEnd)
-    expect(cronBlock).not.toMatch(/\btry\s*\{/)
+  it('AC-4: no standalone try/catch remains inside cronHealthAlertJob runner', () => {
+    const entry = extractJobTableEntry(src, 'cronHealthAlertJob')
+    expect(entry).not.toBe('')
+    expect(entry).not.toMatch(/\btry\s*\{/)
   })
 
   it('bctcOverdueCheckJob returns rowsWritten from alertsInserted', () => {
-    const bctcStart = src.indexOf("CRONS.bctcOverdueCheck")
-    const bctcEnd = src.indexOf("CRONS.vpsProxyWatchdog")
-    const bctcBlock = src.slice(bctcStart, bctcEnd)
-    expect(bctcBlock).toContain('alertsInserted')
-    expect(bctcBlock).toContain('rowsWritten')
+    const entry = extractJobTableEntry(src, 'bctcOverdueCheckJob')
+    expect(entry).toContain('alertsInserted')
+    expect(entry).toContain('rowsWritten')
   })
 
   it('vpsProxyWatchdogJob does not pass rowsWritten (Pattern C)', () => {
-    const vpsStart = src.indexOf("CRONS.vpsProxyWatchdog")
-    const vpsEnd = src.indexOf("CRONS.cronHealthAlert")
-    const vpsBlock = src.slice(vpsStart, vpsEnd)
+    const entry = extractJobTableEntry(src, 'vpsProxyWatchdogJob')
     // Pattern C: no rowsWritten return — the callback returns void
-    expect(vpsBlock).not.toContain('rowsWritten')
+    expect(entry).not.toContain('rowsWritten')
   })
 
   it('cronHealthAlertJob returns rowsWritten from alertsSent', () => {
-    const cronStart = src.indexOf("CRONS.cronHealthAlert")
-    const cronEnd = src.indexOf("CRONS.evidenceAccumulator")
-    const cronBlock = src.slice(cronStart, cronEnd)
-    expect(cronBlock).toContain('alertsSent')
-    expect(cronBlock).toContain('rowsWritten')
+    const entry = extractJobTableEntry(src, 'cronHealthAlertJob')
+    expect(entry).toContain('alertsSent')
+    expect(entry).toContain('rowsWritten')
   })
 })

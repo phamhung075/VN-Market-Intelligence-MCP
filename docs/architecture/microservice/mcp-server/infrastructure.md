@@ -155,6 +155,28 @@ flow and stay bespoke, not built through `wrapVnstockScript`.
 - `getLastRunForJob(db, jobName)` — single-job `MAX(started_at)` + status, same `status IN ('success','error')` filter as `schedulerWatchdogJob.queryLastStartedAt` (CN-3 parity).
 - `getDistinctJobNames(db)` — `SELECT DISTINCT job_name FROM cron_job_runs`, used by `cronStatusCompute`'s CN-1 tier-2 fallback.
 
+### Scheduler Job Table (`scheduler/schedulerJobTable.ts` + `scheduler/walEscalation.ts`)
+FACTORY-SCHEDULER-job-table-registry replaced 79 copy-paste `scheduleCron(CRONS.x, async () =>
+{ jobRunRepo.wrapRun('xJob', ...) }, opts)` blocks that used to live inline in
+`startScheduler.ts` (1257L → 305L). 57 jobs share the plain `jobRunRepo.wrapRun(name,
+runner)` envelope — declared as `{name, cron, options, runner}` entries in
+`buildJobTable(ctx)`, registered by a single generic loop `registerJobTable(table,
+jobRunRepo)`. 22 bespoke jobs (skip `wrapRun` entirely, use a `run*WithDb`
+`startupHelpers.ts` DB-backed dedup wrapper, or build extra local state before
+registering — e.g. the WAL-checkpoint escalation closure, the scheduler-watchdog
+self-heal manifest) keep individual verbatim `scheduleCron(...)` call sites in
+`registerBespokeJobs(ctx)`. `startScheduler.ts` stays the composition root: DB/repo init,
+startup repairs/probes/backfills that are NOT cron registrations, and the two calls
+`registerJobTable(buildJobTable(ctx), jobRunRepo)` + `registerBespokeJobs(ctx)`.
+
+`walEscalation.ts`'s `createWalEscalateFn(orchStatePath?)` extracts the WAL-checkpoint
+D-1 guardrail closure (appends a `WAL_ESCALATION` `signal_queue` row when WAL > 10 MB) —
+previously an inline closure in `startScheduler.ts`, now independently testable.
+
+Equivalence (cron key + options + wrapRun job-name, all 79 registrations) verified via a
+scratch pre/post comparison script — see `docs/agent-memory/notebooks/dev-mcp-server.md`
+2026-07-08/09 entry.
+
 ## Repositories (6 SQLite implementations)
 - `SqliteWatchlistRepository`, `SqliteMarketPriceRepository`
 - `SqliteKinhDichScoreRepository`, `SqliteHexagramRepository`

@@ -180,12 +180,14 @@ describe("AC-5: imfIndicatorPoller cron registration", () => {
   it("cronConfig.ts CRONS map contains imfIndicatorPoller with 6h schedule", () => {
     const configPath = path.resolve(import.meta.dir, "../scheduler/cronConfig.ts");
     const configSource = readFileSync(configPath, "utf-8");
-    const schedulerPath = path.resolve(import.meta.dir, "../scheduler/startScheduler.ts");
+    // FACTORY-SCHEDULER-job-table-registry: the regular cron registration (previously
+    // inline in startScheduler.ts) now lives in schedulerJobTable.ts's buildJobTable().
+    const schedulerPath = path.resolve(import.meta.dir, "../scheduler/schedulerJobTable.ts");
     const schedulerSource = readFileSync(schedulerPath, "utf-8");
 
     expect(configSource).toContain("imfIndicatorPoller");
     expect(configSource).toContain("0 */6 * * *");
-    // Confirm the job is wired to runImfIndicatorPollerJob in startScheduler
+    // Confirm the job is wired to runImfIndicatorPollerJob in schedulerJobTable's JOB_TABLE
     expect(schedulerSource).toContain("runImfIndicatorPollerJob");
   });
 

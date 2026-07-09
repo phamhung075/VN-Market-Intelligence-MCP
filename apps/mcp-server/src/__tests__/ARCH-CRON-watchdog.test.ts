@@ -658,6 +658,13 @@ describe('ARCH-CRON-watchdog — WD-11: call-site derived integrity — every ma
         path: resolve(testsDir, '../scheduler/startScheduler.ts'),
       },
       {
+        // FACTORY-SCHEDULER-job-table-registry: the 79 scheduleCron(...) registrations
+        // (57 declarative JOB_TABLE entries + 22 bespoke, incl. the scheduler-watchdog
+        // self-heal manifest) moved out of startScheduler.ts into this file.
+        label: 'schedulerJobTable.ts',
+        path: resolve(testsDir, '../scheduler/schedulerJobTable.ts'),
+      },
+      {
         label: 'startupHelpers.ts',
         path: resolve(testsDir, '../scheduler/startupHelpers.ts'),
       },
@@ -707,6 +714,14 @@ describe('ARCH-CRON-watchdog — WD-11: call-site derived integrity — every ma
     //   We detect the template form (backtick with ${...}) so we can handle it explicitly.
     const SUMMARY_TEMPLATE_RE = /recordJobRun\([^,]+,\s*`summaryJob:\$\{[^}]+\}`/
 
+    // Regex 5: Detect schedulerJobTable.ts's declarative JOB_TABLE indirection.
+    //   Matches:  { name: 'xJob', cron: CRONS.x, ... }
+    //   registerJobTable() calls jobRunRepo.wrapRun(j.name, j.runner) generically — the
+    //   job_name literal is a `name:` object-literal field, not a wrapRun(...) call-site
+    //   argument, so WRAP_RUN_RE above cannot see it. Scoped to schedulerJobTable.ts only
+    //   (same pattern as JOB_NAME_CONST_RE's vnstockFundamentalsJob.ts scoping).
+    const JOB_TABLE_NAME_RE = /\bname:\s*['"]([^'"]+)['"]/g
+
     const derivedNames = new Set<string>()
     const scannedFiles: string[] = []
 
@@ -733,6 +748,18 @@ describe('ARCH-CRON-watchdog — WD-11: call-site derived integrity — every ma
       RECORD_JOB_RUN_LITERAL_RE.lastIndex = 0
       while ((m = RECORD_JOB_RUN_LITERAL_RE.exec(src)) !== null) {
         derivedNames.add(m[1]!)
+      }
+
+      // ── Indirection (iii): schedulerJobTable.ts declarative JOB_TABLE `name:` fields ──
+      //    buildJobTable() entries carry their job_name as `name: 'xJob'` — an object
+      //    literal field, not a wrapRun(...) call-site argument (the generic loop calls
+      //    jobRunRepo.wrapRun(j.name, j.runner), so 'xJob' never appears adjacent to the
+      //    literal text "wrapRun("). Scoped to schedulerJobTable.ts only.
+      if (label === 'schedulerJobTable.ts') {
+        JOB_TABLE_NAME_RE.lastIndex = 0
+        while ((m = JOB_TABLE_NAME_RE.exec(src)) !== null) {
+          derivedNames.add(m[1]!)
+        }
       }
 
       // ── Indirection (i): JOB_NAME_FUNDAMENTALS const ─────────────────────
