@@ -291,12 +291,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-07-09T15:50:26Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "FACTORY-PDF-split-generic-md-table repo scope shipped -> review[] lane, next_agent=qa, rebuild_required=true. REVERTED erroneous BOUNDED-1 auto-pickup of FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD (2026-07-09T15:48Z): task is supervised true in backlog-detail.json since 2026-07-04T19:23:49Z (held for router/PO/user-adjudicated dispatch per its supervised_note) but the board-level backlog row never carried a supervised flag, so devteam-backlog-promote-bounded1.jq only checks the thin board rows .supervised field which silently defaults false. Stamped supervised:true on the board row as an immediate data-hygiene fix; real fix is extending the script eligibility filter to also check $detail items supervised (it already slurps backlog-detail.json for the depends_on gate) — routed to PO for a proper FIX task."
+    "status": "waiting-qa",
+    "updated_at": "2026-07-09T18:10:28Z",
+    "updated_by": "ops",
+    "active_task_id": "FACTORY-PDF-split-generic-md-table",
+    "next_agent": "qa",
+    "note": "ops close-gate Step 4 complete: pdf-extractor rebuild + swap + health-verify done. Image SHA 131d16bdfba5. Awaiting qa live-verify."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7349,11 +7349,11 @@
         "owner": "dev-pdf-extractor",
         "size": "XL",
         "next_agent": "qa",
-        "updated_at": "2026-07-09T15:40:27Z",
-        "updated_by": "dev-pdf-extractor",
+        "updated_at": "2026-07-09T18:10:28Z",
+        "updated_by": "ops",
         "reviewed_at": "2026-07-09T15:40:27Z",
         "reviewed_by": "dev-pdf-extractor",
-        "review_note": "Split the 4111L generic_md_table_extractor.py god-file into infrastructure/generic_md_table/ (constants.py, markdown_emit.py, grid_cleanup.py, ordinal_grid.py, document_map.py, page_zoning.py, unit_ocr.py, extractor.py) behind a 164L thin re-export shim — 8 sequential commits (21686062b..f261bd4b6), one sub-module per commit, tests run between every stage. Every function body moved verbatim (ast span extraction + byte-diff verified against the pre-move source at every stage, via new reusable scripts/pdf-extractor-god-file-extract.py). GenericMdTableExtractor._process_page (largest method) split into 3 named stage helpers (Step A tokenize / Step A2 classify+measure / Steps C5-G per-region reconstruct+emit) while staying a bound method (test seam preserved: tests call/monkeypatch extractor._process_page directly). Symbol-parity verified: AST-diffed the original module's 112 top-level names (git c2069debd, pre-split) against the final shim's resolved dir() namespace -- 0 missing (except 5 unused stdlib typing re-exports, confirmed zero callers via repo-wide grep), 0 unexpected extras. Callers unchanged: main.py composition-root imports (build_document_map/zone_page/ocr_unit/GenericMdTableExtractor) smoke-tested against the new shim. Every new file <=120L or carries an honest # size-justification: header. Tests: baseline established first (pytest -q = 11 failed/1017 passed/1 skipped, pre-existing env-only failures -- no PDF fixtures/Tesseract/poppler binary in sandbox) and re-confirmed identical after every one of the 8 stages, including test_generic_md_table_extractor.py (149/149, incl. the AC-1 Fence-A AST import-boundary check) post-split. mypy: pre-existing env-blocking \"pdf-extractor is not a valid Python package name\" error confirmed identical on the ORIGINAL unmodified file via git stash/git stash pop A/B -- not caused by this change. G12 pilot sandbox-runner gate: N/A -- pilot-status-pdf-extractor.json status=DONE (closed 2026-05-24) and the flow doc's sandbox_runner.py script no longer exists in this repo state; pytest is the live DoD gate. rebuild_required=true (infra code moved/restructured) -- ops rebuild+swap needed before qa live-verify. Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md STEP dev-pdf-extractor-S5."
+        "review_note": "Split the 4111L generic_md_table_extractor.py god-file into infrastructure/generic_md_table/ (constants.py, markdown_emit.py, grid_cleanup.py, ordinal_grid.py, document_map.py, page_zoning.py, unit_ocr.py, extractor.py) behind a 164L thin re-export shim — 8 sequential commits (21686062b..f261bd4b6), one sub-module per commit, tests run between every stage. Every function body moved verbatim (ast span extraction + byte-diff verified against the pre-move source at every stage, via new reusable scripts/pdf-extractor-god-file-extract.py). GenericMdTableExtractor._process_page (largest method) split into 3 named stage helpers (Step A tokenize / Step A2 classify+measure / Steps C5-G per-region reconstruct+emit) while staying a bound method (test seam preserved: tests call/monkeypatch extractor._process_page directly). Symbol-parity verified: AST-diffed the original module's 112 top-level names (git c2069debd, pre-split) against the final shim's resolved dir() namespace -- 0 missing (except 5 unused stdlib typing re-exports, confirmed zero callers via repo-wide grep), 0 unexpected extras. Callers unchanged: main.py composition-root imports (build_document_map/zone_page/ocr_unit/GenericMdTableExtractor) smoke-tested against the new shim. Every new file <=120L or carries an honest # size-justification: header. Tests: baseline established first (pytest -q = 11 failed/1017 passed/1 skipped, pre-existing env-only failures -- no PDF fixtures/Tesseract/poppler binary in sandbox) and re-confirmed identical after every one of the 8 stages, including test_generic_md_table_extractor.py (149/149, incl. the AC-1 Fence-A AST import-boundary check) post-split. mypy: pre-existing env-blocking \"pdf-extractor is not a valid Python package name\" error confirmed identical on the ORIGINAL unmodified file via git stash/git stash pop A/B -- not caused by this change. G12 pilot sandbox-runner gate: N/A -- pilot-status-pdf-extractor.json status=DONE (closed 2026-05-24) and the flow doc's sandbox_runner.py script no longer exists in this repo state; pytest is the live DoD gate. rebuild_required=true (infra code moved/restructured) -- ops rebuild+swap needed before qa live-verify. Decision journal: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-pdf-extractor.md STEP dev-pdf-extractor-S5. OPS-CLOSE-GATE: rebuild + swap + health-verify completed 2026-07-09T18:10:28Z; new image SHA: 131d16bdfba5be84a8977ca9c32bbf36f971d24483ca172ff661383b36960e5e; all services healthy; no collateral damage; builder cache pruned 474MB."
       }
     ],
     "qa": [],
