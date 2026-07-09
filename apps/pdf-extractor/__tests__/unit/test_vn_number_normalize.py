@@ -179,6 +179,49 @@ def test_single_thousands_group():
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# FIX-BCTC-FPT-BT5-BALANCE-GATE: OCR-misread trailing separator
+# (last "." rendered as "," by Tesseract on a large VN thousands-grouped
+# integer) — root cause of the 43-trillion-VND balance-sheet imbalance on
+# FPT's B01-DN corporate-form code 400 (Total Equity).
+# ---------------------------------------------------------------------------
+
+
+def test_ocr_misread_last_separator_fpt_code_400():
+    """
+    FPT code 400 (Total Equity) OCR text: "43.751.466.292,590".
+    Raw OCR rendered the LAST thousands-dot as a comma. Must normalize to
+    the full integer "43751466292590", NOT be treated as a 3-digit decimal
+    fraction ("43751466292.59" — the bug that caused BT-5 gate delta=43.7T).
+    """
+    result = vn_number_normalize("43.751.466.292,590")
+    assert result == "43751466292590"
+    assert float(result) == 43_751_466_292_590.0
+
+
+def test_ocr_misread_last_separator_negative():
+    """Parenthetical negative variant of the OCR-misread-last-separator case."""
+    result = vn_number_normalize("(43.751.466.292,590)")
+    assert result == "-43751466292590"
+
+
+def test_ocr_misread_last_separator_requires_preceding_dot_group():
+    """
+    A bare comma-3-digit suffix with NO preceding thousands-dot-group is NOT
+    reinterpreted (insufficient evidence of an OCR-misread separator) — falls
+    through to Pattern B (genuine VN decimal) unaffected. Guards against
+    over-generalizing the fix beyond the observed OCR-artifact shape.
+    """
+    result = vn_number_normalize("292,590")
+    assert result == "292.590"
+
+
+def test_genuine_two_digit_decimal_unaffected_by_ocr_misread_rule():
+    """Non-regression: real 2-digit VN decimals (EPS/ratio style) still parse as decimals."""
+    result = vn_number_normalize("1.234.567,89")
+    assert result == "1234567.89"
+
+
 def test_vn_number_normalize_parenthetical_vcb():
     """FR-6: parenthetical VN number parsing — core assumption check (VCB FM-VCB-4).
 

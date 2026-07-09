@@ -80,6 +80,17 @@ _VN_INT_RE = re.compile(r"^\d{1,3}(?:\.\d{3})+$")
 # e.g. "1.234,56", "1.234.567,89", "0,5", "123,45"
 _VN_DECIMAL_RE = re.compile(r"^\d{1,3}(?:\.\d{3})*,\d+$")
 
+# OCR-misread trailing separator: Tesseract renders the LAST thousands-dot of
+# a large VN-formatted integer as a comma, e.g. "43.751.466.292,590" (should
+# be "43.751.466.292.590" = 43,751,466,292,590). Requires >=1 existing
+# thousands-dot group before the comma AND EXACTLY 3 digits after the comma
+# (matching VN thousands-group width). BCTC monetary figures are recorded to
+# the whole dong — a genuine VN decimal fraction never has exactly 3 digits
+# immediately after an existing dot-grouped integer (real decimal suffixes in
+# this corpus are 1-2 digits: "0,5", "1.234,56"). This is a structural/format
+# disambiguation, not per-issuer branching — applies to any BCTC figure.
+_VN_OCR_MISREAD_LAST_SEP_RE = re.compile(r"^\d{1,3}(?:\.\d{3})+,\d{3}$")
+
 # EN-US format (comma-thousands + dot-decimal): reject these
 # e.g. "1,234.5", "1,234,567.89"
 _EN_US_RE = re.compile(r"^\d{1,3}(?:,\d{3})+\.\d+$")
@@ -133,6 +144,15 @@ def vn_number_normalize(raw: str) -> str | None:
     # Reject EN-US format (comma-thousands, dot-decimal)
     if _EN_US_RE.match(stripped):
         return None
+
+    # OCR-misread trailing separator (checked BEFORE Pattern B): a comma
+    # immediately following an existing VN thousands-dot-group, with exactly
+    # 3 digits after it, is a Tesseract misread of "." as "," on the LAST
+    # separator of a large integer — not a genuine decimal fraction. Strip
+    # both separators (no decimal point introduced).
+    if _VN_OCR_MISREAD_LAST_SEP_RE.match(stripped):
+        normalized = stripped.replace(".", "").replace(",", "")
+        return ("-" + normalized) if negative else normalized
 
     # Pattern B: VN decimal (thousands dots + comma-decimal)
     if _VN_DECIMAL_RE.match(stripped):
