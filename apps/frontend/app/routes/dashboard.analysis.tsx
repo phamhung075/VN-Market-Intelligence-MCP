@@ -72,6 +72,7 @@ import { StockSelector } from "~/components/analysis/StockSelector";
 import { WatchlistOverviewGrid } from "~/components/analysis/WatchlistOverviewGrid";
 import { SectorPeersBar } from "~/components/analysis/SectorPeersBar";
 import { MacroImpactPanel } from "~/components/analysis/MacroImpactPanel";
+import { KinhDichMarketPanel } from "~/components/analysis/KinhDichMarketPanel";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -395,30 +396,6 @@ function AccuracyDigestCard({
             · {data!.newStocksCount} stocks still seeding
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-// --------------------------------------------------------------------------
-// Kinh Dịch market panel
-// --------------------------------------------------------------------------
-
-function KinhDichMarketPanel({ market }: { market: KinhDichMarket }) {
-  return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-8">
-      <div className="flex flex-col items-center gap-1 rounded-lg border border-slate-700 bg-slate-800 px-6 py-4 shrink-0">
-        <QueName
-          hexagram={market.hexagram}
-          name={market.name}
-          className="text-sm font-semibold text-slate-300"
-        />
-      </div>
-      <div className="flex-1 space-y-2 text-sm">
-        <Row label="Xu hướng" value={<span className="font-medium text-slate-200">{market.trend}</span>} />
-        <Row label="Tín hiệu" value={<span className={`font-semibold ${signalColor(market.signal)}`}>{market.signal}</span>} />
-        <Row label="Độ tin cậy" value={<ConfidenceBar confidence={market.confidence} />} />
-        <Row label="Thời gian" value={<ClientTimestamp iso={market.timestamp} />} />
       </div>
     </div>
   );
