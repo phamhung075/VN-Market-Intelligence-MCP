@@ -12,5 +12,11 @@
     "blocking": false
   },
   "status": "pending",
-  "notes": "Per DoD: rebuild_required=true (hottest live-serving HTTP path). handlers.go (421L) split into dashboard.go (119L)/middleware.go (44L)/proxy.go (117L, new private newReverseProxy+serveProxied helpers collapsing 2 duplicate reverse-proxy blocks)/handlers.go (85L), same package, all exported symbols/behavior unchanged, go test ./... 10/10 packages PASS pre-rebuild, golangci-lint 0 issues, G12 sandbox primitive 14/14 + module 1/1 PASS. This signal tracks the deferred post-rebuild behavior verification that was user-gated (feedback_user_gates_delegate_to_ops.md). Task closed as REVIEW (not self-asserted DONE_VERIFIED) pending this check given hottest-path risk."
+  "notes": "Per DoD: rebuild_required=true (hottest live-serving HTTP path). handlers.go (421L) split into dashboard.go (119L)/middleware.go (44L)/proxy.go (117L, new private newReverseProxy+serveProxied helpers collapsing 2 duplicate reverse-proxy blocks)/handlers.go (85L), same package, all exported symbols/behavior unchanged, go test ./... 10/10 packages PASS pre-rebuild, golangci-lint 0 issues, G12 sandbox primitive 14/14 + module 1/1 PASS. This signal tracks the deferred post-rebuild behavior verification that was user-gated (feedback_user_gates_delegate_to_ops.md). Task closed as REVIEW (not self-asserted DONE_VERIFIED) pending this check given hottest-path risk.",
+  "_processed": {
+    "fingerprint": "f714730d9a66af1a21de89110b05e725ecd206a3bd16ab151c692f5cee0fc1cd",
+    "processedAt": "2026-07-09T20:16:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

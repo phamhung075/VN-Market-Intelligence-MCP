@@ -1,6 +1,6 @@
 # Digest Predict — Notebook
 
-**Last updated:** 2026-07-03 17:37 UTC | **Sprint:** FEAT-PREDICTION-CLAIMS-DAILY-CADENCE
+**Last updated:** 2026-07-04 17:52 UTC | **Sprint:** FEAT-PREDICTION-CLAIMS-DAILY-CADENCE
 
 ## Known patterns / preferences
 
@@ -38,29 +38,6 @@
 - **next_cycle_hint**: Kiểm tra resolution FPT/VPB vào 2026-07-01. FPT vị thế người dùng 5.000cp @ 80.300 — giá hiện 70.800 (lỗ 11.8%) — cân nhắc điều kiện cắt lỗ nếu tiếp tục giảm. VPB kiểm toán Lạng Sơn cần theo dõi.
 - **carry_over**: kinh-dich backtest 501 (5th cycle); cascade rules 0 evaluated; FPT vị thế lỗ; VPB audit risk
 - **estimated_tokens**: 6000
-
-### Daily Predictions (17:37 UTC) 2026-06-30
-
-- **slot**: digest-daily (cron 30 17 * * * — H1 cuối kỳ)
-- **dedup_gate**: PASS — task claimed: published:digest-daily:2026-06-30 (claimed=true, TTL 86400s)
-- **regime**: NEUTRAL — VN-Index 1.860,01 (+5,04pts), BRENT $73,62 NEUTRAL, GOLD $4.044,3 BULLISH (safe-haven), USD/VND 26.106 BEARISH, carry 1,37pp NEUTRAL, EY 7,05% CHEAP, inv-clock 8/10 CORE_VN. Volatility NORMAL rv_20d=14,4% (71st pct). DAMPENING_ACTIVE=true (Brier 0,2135 +0,076 degrading, ×0,90).
-- **calibration**: Brier 0,2135 degrading (+0,076) | 65% bucket over-confident (50% actual) | DAMPENING_ACTIVE=true
-- **market_hexagram**: Quẻ 36 Minh Di BẤT LỢI 64% (TIÊU CỰC — ánh sáng bị thương, cần ẩn nhẫn)
-- **context**: Ngày cuối H1 2026. VN-Index +4% nửa đầu năm. GDP H2 dự báo +11,9% (lợi cho BID/CTG/VCB). VNM CRITICAL volume spike 6,3× (-2,32%). chain_catalyst: commodity inflation risk H2 (impact=7, COC:headwind, M2:headwind, phase=slowdown).
-- **screened** (score_date=2026-06-30 FRESH): CTG bearish=0,75, VCB bearish=0,75, VHM bearish=0,6203, VNM bearish=0,5305, SSI bearish=0,3867, BID bearish=0,2195 — tất cả UNTRUSTED LR=1,0 n=0
-- **decisions**:
-  - CTG bearish=0,75: Quẻ 8 Ty THUẬN LỢI 100% MÂU THUẪN trực tiếp + GDP +11,9% H2 state-bank-bullish + giá +0,15% → LOẠI
-  - VCB bearish=0,75: Quẻ 45 Tuy THUẬN LỢI MÂU THUẪN + GDP +11,9% H2 (VCB hưởng lợi trực tiếp) + giá +0,32% → LOẠI
-  - VHM bearish=0,6203: Quẻ 64 Vi Tế TRUNG TÍNH 38% (không xác nhận) + giá +1,00% phục hồi phản xu hướng + UNTRUSTED → LOẠI
-  - VNM bearish=0,5305: dưới ngưỡng P-4 (<0,6) dù CRITICAL volume spike 6,3× (-2,32%) → không đủ điều kiện
-- **claims_created**: 0 — honest NO-OP (qualify_count_effective=0 sau lọc mâu thuẫn)
-- **actions**:
-  - dedup gate task_claim ✓ (claimed=true, key=published:digest-daily:2026-06-30)
-  - log_agent_work id=1519 completed ✓
-  - send_telegram WORK ✓ (NO-OP notice H1 cuối kỳ)
-  - notebook write ✓
-- **carry_over**: FPT/VPB resolution 2026-07-01; POW resolution 2026-07-03; evidence UNTRUSTED systemic (LR=1,0 n=0 — 12th cycle); Brier 0,2135 degrading; VNM anomaly volume; GDP H2 +11,9% catalyst banking
-- **estimated_tokens**: 5500
 
 ### Daily Predictions (17:38 UTC) 2026-07-01
 
@@ -137,3 +114,30 @@
   - git commit SKIPPED — no Bash/git tool available in this session (router instructed "do not push" this cycle)
 - **carry_over**: POW id=12 resolution HÔM NAY 07-03 (ref 14.800, target >15.000, giá đóng cửa gần nhất 14.900 — CHƯA ĐẠT, verdictResolutionJob sẽ xử lý tự động); CTG/MBB/VIC id=13/14/15 resolution 07-09 vẫn active — áp dụng loại trừ trùng lặp lần đầu cho 3/4 ứng viên cùng lúc; VPB id=16 resolution 07-10; Brier 0,2135 degrading chưa cập nhật FP 07-01 — cần recompute; regime-extraction fallback NEUTRAL do get_macro_snapshot schema drift — theo dõi chu kỳ tới có tái diễn không
 - **estimated_tokens**: 11000
+
+### Daily Predictions (17:52 UTC) 2026-07-04
+
+- **slot**: digest-daily (cron 30 17 * * * — thứ Bảy, VN market đóng cửa cuối tuần)
+- **dedup_gate**: PASS — task claimed: published:digest-daily:2026-07-04 (claimed=true, TTL 86400s)
+- **regime**: NEUTRAL (fallback — get_macro_snapshot vẫn schema JSON, không có REGIME field). VN-Index 1.862,08 (-0,23%, -4,27đ). Gold BULLISH $4.187,3 (safe-haven, 3 phiên tăng liên tiếp). USD/VND BEARISH 26.103. Carry NEUTRAL 1,37pp. EY CHEAP 8,2% (spread +3,2pp). Investment-clock 8/10 CORE_VN. Vol regime NORMAL rv_20d=14,13% (30th pct). Breadth INSUFFICIENT (4 phiên), ADL -80.
+- **calibration**: Brier 0,2135 degrading (+0,076, chưa cập nhật từ 06-28) | 65% bucket over-confident | DAMPENING_ACTIVE=true (×0,90)
+- **context**: GDP 6 tháng đầu năm tăng trưởng cao nhất nhiều nhiệm kỳ. Khủng hoảng chip nhớ toàn cầu — giá laptop/RAM/SSD tăng, áp lực CPI tiêu dùng VN (chain_catalyst impact=9, M2/COC headwind, phase=slowdown).
+- **screened** (36 mã tradeable, score_date=2026-07-04 fresh trừ ghi chú): CTG bearish=0,75, MBB bearish=0,75, VPB bullish=0,64, VIC bullish=0,7293, HPG bullish=0,6030, POW bullish=0,75 — 6 mã >0,6; DPM/NVL/VRE/REE stale (không tính)
+- **decisions**:
+  - CTG bearish=0,75 / MBB bearish=0,75 / VIC bullish=0,7293 / VPB bullish=0,64: TRÙNG claim id=13/14/15/16 đang hoạt động (resolution 07-09/07-10 chưa tới) → LOẠI cả 4 (không độc lập)
+  - HPG bullish=0,6030: không có claim đang hoạt động — ĐỦ ĐIỀU KIỆN, LR top=0,16 (n=16 TRUSTED), final_p=0,603×0,16×0,90=0,087
+  - POW bullish=0,75: claim cũ id=12 hết hạn 07-03 (chưa đạt, không còn active) — ĐỦ ĐIỀU KIỆN, LR top=1,0 (n=4 UNTRUSTED), final_p=0,75×1,0×0,90=0,675. BCTC Q1/2026 CORRUPT (total_assets=0, OCR fail) — không dùng xác nhận cơ bản
+- **claims_created**: 2
+  - id=17: HPG TĂNG p=0,09 horizon=5d resolution=2026-07-10 | giá ref: 23.250 VNĐ, target >24.000
+  - id=18: POW TĂNG p=0,68 horizon=5d resolution=2026-07-10 | giá ref: 14.900 VNĐ, target >15.300
+- **actions**:
+  - dedup gate task_claim ✓ (claimed=true, key=published:digest-daily:2026-07-04)
+  - log_agent_work id=1581 completed ✓
+  - get_bctc_full(POW) → CORRUPT [SKIP dùng làm xác nhận]
+  - create_prediction_claim HPG id=17 ✓, POW id=18 ✓
+  - send_telegram WORK ✓
+  - notebook write ✓ (dropped ### sub-block 06-30 per AC-2b cap=4)
+  - git commit SKIPPED — no Bash/git tool available in this session (same limitation as 07-01/07-02/07-03 cycles)
+- **known_issue**: claim_text id=17/18 viết thiếu dấu tiếng Việt (lỗi thao tác chu kỳ này) — chu kỳ tới đảm bảo full diacritics theo constraint agent
+- **carry_over**: HPG id=17 / POW id=18 resolution 07-10; CTG/MBB/VIC/VPB id=13/14/15/16 vẫn active (resolution 07-09/07-10); Brier 0,2135 degrading chưa cập nhật resolution gần đây — cần dev-team recompute; POW BCTC OCR corrupt (total_assets=0) — cần dev-team fix pipeline; FPT vị thế lỗ user vẫn theo dõi (5.000cp @ 80.300)
+- **estimated_tokens**: 24000

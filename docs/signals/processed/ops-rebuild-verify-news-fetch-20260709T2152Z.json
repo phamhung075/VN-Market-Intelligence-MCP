@@ -13,5 +13,11 @@
   },
   "status": "pending",
   "notes": "Per DoD: normalizeDate deduped into src/primitive/published-at-parser/index.ts (parsePublishedAt core + null-tolerant normalizeDate wrapper), both stealth-scraper local definitions removed and replaced with import+re-export. bun test 233 pass/0 fail, bun tsc --noEmit clean, G12 sandbox 16/16 PASS, direct before/after script comparison 0 mismatches across 12 inputs. Container still running pre-change image — this signal tracks the deferred live-rebuild confirmation (feedback_user_gates_delegate_to_ops.md). Do not close task as DONE_VERIFIED until ops confirms rebuild + output verification.",
-  "status_note_of": "FACTORY-NEWS-dedup-normalizeDate"
+  "status_note_of": "FACTORY-NEWS-dedup-normalizeDate",
+  "_processed": {
+    "fingerprint": "a90c5d1befeb5ab5c4a1726878608be40e319ecbcd22704ddd5bc1e8e43421a8",
+    "processedAt": "2026-07-09T22:16:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

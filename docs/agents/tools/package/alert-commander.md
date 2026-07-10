@@ -140,7 +140,7 @@ if (bootstrap.market_context?.trading_window === "closed") {
 // Get high-risk alerts
 const alerts = await call_tool(
   server: "vn-market", tool: "get_alerts",
-  arguments: { type: "risk" }
+  arguments: { type: "all" }  // enum is system|price|all (verified live 2026-07-03) — "risk" is not valid
 );
 
 // Validate against live market

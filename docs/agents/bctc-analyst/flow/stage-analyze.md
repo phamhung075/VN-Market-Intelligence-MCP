@@ -53,7 +53,8 @@ G-Bond regime check (Pillar 5.2):
 
 **4. Chain validation**
 `get_open_chain_findings(minutes_back=30)` → BCTC confirm/contradict catalyst?
-`post_agent_signal(type="fundamental_validation", ticker=..., validation_result=...)`
+`post_agent_signal(signal_type="fundamental_validation", from_agent="bctc-analyst", to_agent="alert-commander", stock_code=..., payload={title, detail (>=80 chars combined, must reference profit/cost-of-capital pillar), impact_score}, finding_data={confidence_score, btn_check|accruals_flag|m_score|f_score, direction})`
+— actual required shape (2026-07-04 live-verified): bare `type=`/`ticker=`/`validation_result=` kwargs DO NOT exist on this tool and will fail Zod validation with missing `from_agent`/`to_agent`. Omitting `finding_data.btn_check|accruals_flag|m_score|f_score` fails the TNB critic gate's BCTC-forensics pillar (score capped ~0.2) even with a valid call shape.
 
 **4b. Signal feedback → news-scout** (per financial-analyst pattern — accepted/rejected per chain finding)
 
@@ -104,7 +105,7 @@ If unavailable → `eval_status = "unknown"`.
 *†"vs YoY Same Q" is primary. If Q1 reported: compare vs Q1 prior year only.*
 
 **R4. Signal + ledger**
-`post_agent_signal(type="fundamental_validation", beat_miss="beat|miss|in-line")`
+`post_agent_signal(signal_type="fundamental_validation", from_agent="bctc-analyst", to_agent="alert-commander", stock_code=..., payload={title, detail, impact_score}, finding_data={confidence_score, beat_miss: "beat|miss|in-line", btn_check|accruals_flag|m_score|f_score})` — see Step 4 note above for the required call-shape correction.
 
 Compute `net_profit_delta_pct` (YoY). Set `beat_miss` verdict from YoY comparison.
 

@@ -39,10 +39,17 @@ IF weekday != Sunday:
 
   DAILY_TASK_ID = "published:digest-daily:" + UTC_DATE
 
+  # owner_client_session is a REQUIRED field on the live task_claim schema (not shown in the
+  # older task-lock-protocol.md example — doc gap observed 2026-07-04). Use the coordination
+  # session UUID passed by the spawning dispatcher/cron in the invocation prompt; if none was
+  # passed (bare cron fire with no coordination parameter), fall back to any stable per-session
+  # identifier (e.g. a freshly generated UUID) — the value only needs to be a syntactically
+  # valid string, uniqueness across agents is not required for this gate's correctness.
   DAILY_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
     task_id:     DAILY_TASK_ID,
     task_kind:   "cowork-slot",
     owner_agent: "digest-predict",
+    owner_client_session: <coordination session UUID from spawn prompt, or fallback>,
     ttl_seconds: 86400    # 24-hour window
   })
 
@@ -94,6 +101,7 @@ PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id:     PUBLISH_TASK_ID,
   task_kind:   "cowork-slot",
   owner_agent: "digest-predict",
+  owner_client_session: <coordination session UUID from spawn prompt, or fallback>,  # REQUIRED field — see Step pre-D note above
   ttl_seconds: 691200    # ~8 days — weekly slot (spawn-fanout.md)
 })
 

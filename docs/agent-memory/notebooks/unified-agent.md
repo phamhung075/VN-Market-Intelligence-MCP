@@ -1,6 +1,18 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-07-03T08:45Z · **Cycle:** Chef EOD (08:45 UTC)
+**Last updated:** 2026-07-07T19:45Z · **Cycle:** Chef Evening FAILED (19:45 UTC)
+
+## Session: 2026-07-07 (evening 19:45 UTC) — FAILED
+
+### Chef Dish — evening 19:45 UTC [FAILED]
+- Cycle ID: chef-evening-20260707T194500Z
+- Failure mode: gateway-blind-runtime-defect
+- Available tools: [Read, Write, Edit] only — NO MCP gateway access
+- Failure point: Step 0.5 (published-marker-gate) — task_claim unavailable
+- Issue: Session has confirmed gateway-blind defect (3+ prior cases this session: fb-market-poster, digest-predict, bctc-analyst). Cannot proceed with any MCP-dependent steps (bootstrap, send_telegram, data gathering).
+- Bug escalation signal written: docs/signals/unified-agent-20260707T194500Z-gateway-blind.json
+- Remedy required: Session restart + MCP server connectivity review
+- EXIT: non-zero (1) per fail-loud protocol
 
 ## Session: 2026-07-03 (eod 08:45 UTC)
 

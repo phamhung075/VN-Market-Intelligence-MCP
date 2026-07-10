@@ -13,5 +13,11 @@
   },
   "status": "pending",
   "notes": "Per DoD: split apps/news-fetch/src/sandbox/runner.ts (486L) into cli.ts, registry.ts, discover.ts, equal.ts, execute.ts, report.ts + runner.ts as a thin orchestrator (all files <=120L, execute.ts=120L exactly). registry.ts stores a per-entry argAdapter fn replacing the by-name if/else signature switch. import.meta.dir resolution preserved (all files stay in src/sandbox/). bun test 233 pass/6 skip/0 fail (unchanged baseline), bun tsc --noEmit clean, eslint lint:ci clean, scenario JSON valid, G12 sandbox gate 16 PASS/0 FAIL/0 ERROR (unchanged). Direct before/after trace-JSON diff (pre-split vs post-split runner.ts, runAt field excluded) = byte-identical. Container still running pre-change image — this signal tracks the deferred live-rebuild confirmation (feedback_user_gates_delegate_to_ops.md). Do not close task as DONE_VERIFIED until ops confirms rebuild + boot check.",
-  "status_note_of": "FACTORY-NEWS-split-sandbox"
+  "status_note_of": "FACTORY-NEWS-split-sandbox",
+  "_processed": {
+    "fingerprint": "aa7d96f0c5abff2ff22bd71c2a6f84b00b609550625c309390f9c19647ef31bb",
+    "processedAt": "2026-07-09T22:46:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

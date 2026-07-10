@@ -40,3 +40,8 @@ Close: 75.000 VND | Daily: -1.45% | Sentiment: BULLISH (FPT + NVIDIA AI partners
 
 **[Market Watcher] 16:07 UTC**
 Close: 72,500 VND | Daily: -0.55% | RSI: 42 | Volume: 5.69M (+2.1% avg) | YoY: -3.1% | Sentiment: Neutral | Brief action: Watch (downtrend from 76.5 peak; RSI below 50) | Regime: NEUTRAL
+
+## EOD 2026-07-04
+
+**[Market Watcher] 16:05 UTC**
+Close: 72,300 VND | Daily: -0.28% | RSI: N/A | Volume: 7.49M (103.3% avg) | YoY: -4.99% | Trend: Consolidating below MA5 72,409; MACD mixed, BB lower band 70,200 support. Tech sector headwinds persist (30d return -4.99%). Sentiment: Neutral | Brief action: Hold, monitor MA support | Regime: NEUTRAL

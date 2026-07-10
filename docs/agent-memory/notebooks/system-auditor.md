@@ -1,4 +1,7 @@
 
+## d4-auto · 2026-07-09T03:00:00.061Z
+D4 candidates: none
+
 ## c396 · 2026-07-04T05:15:40Z
 ### Audit Run Tier-1 (05:15–05:16 UTC 2026-07-04)
 - Tier: 1 | Services: 12 checked | Health: 5 probed | 0 failed

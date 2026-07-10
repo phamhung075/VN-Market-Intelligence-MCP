@@ -1,0 +1,35 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "HIGH",
+  "tick": "2026-07-09T20:15Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "tnb-audit"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "tnb-audit",
+      "agent": "tran-ngoc-bau",
+      "guaranteed": true,
+      "reason": "undeliverable-gateway-blind — trigger_id=trig_01QgnBwnEyzLj5as55i53tea (non-null) but _superseded_by=cowork-dispatcher (superseded-despite-trigger-id pattern)"
+    }
+  ],
+  "signal_queue_drained": [],
+  "escalation_note": "GUARANTEED SLOT MISSED: tnb-audit (TNB 6-layer completeness audit of CHEF dishes, tran-ngoc-bau, cron 13 20 * * *) could not be spawned this tick. This is the 6th guaranteed-slot miss this session (1st: chef-morning 05:15Z, 2nd: chef-eod 08:45Z, 3rd: fb-daily 09:15Z, 4th: digest-daily 17:30Z, 5th: chef-evening 19:45Z, 6th: tnb-audit 20:15Z) — 6 distinct guaranteed slots, not repeats of the same one. New slot type this session (first tran-ngoc-bau match). Pattern: superseded-despite-trigger-id, same class as chef-eod/chef-evening. Root cause unchanged: native mcp__gateway__call_tool absent from tool set. Compounding note: since all 3 CHEF dishes today (morning/eod/evening) were also undeliverable this session, tnb-audit's own audit target was already empty — this miss is somewhat moot in practice but still logged per standing escalation policy. Re-confirmed feedback_recurring_bug_escalation.md still does not apply (git-log-detected code-fix loop, not a live session MCP gap). No architect escalation filed. Durable fix requires user action: register gateway in .mcp.json + reconnect (see docs/handoffs/GATEWAY-BLIND-USER-ACTION-2026-06-18.md).",
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "tnb-audit is parallel_group=audit, not chef — Step 4.5c mutex not applicable.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). tnb-audit: superseded-despite-trigger-id pattern, same class as chef-eod (08:45Z) and chef-evening (19:45Z).",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (emit_pressure_state + send_telegram succeeded).",
+  "work_channel_message_sent": true,
+  "stale_warning_note": "stale_warning TRUE this tick. Cumulative (02:00-20:15, 43 WORK ticks; SILENT ticks not counted): 16 true, 27 absent.",
+  "recurring_symptom_note": "New slot type this session: tnb-audit (first tran-ngoc-bau match). Downstream compounding: tnb-audit's audit target (today's 3 CHEF dishes) was itself never produced, since all 3 chef-* slots also missed this session.",
+  "emitted_at": "2026-07-09T20:16:49.284Z",
+  "_processed": {
+    "fingerprint": "a9fb8acf72761f79051078568fcbf51d5b7b94b3e14174a1c6a2aa80d032aca9",
+    "processedAt": "2026-07-09T20:46:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

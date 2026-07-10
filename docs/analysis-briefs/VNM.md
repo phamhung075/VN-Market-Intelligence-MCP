@@ -32,6 +32,8 @@ Sentiment baseline established.
 ### 2026-01-15
 Price monitoring initiated.
 
+2026-07-04 16:00 | Close: 54,900 VND (-1.08%) | RSI: N/A | Vol: 4.13M (71.5% avg) | YoY: -6.31% | Trend: Weak consolidation, trending below MA5/MA20; 30d return -6.31% YTD pressure on staple sector. Monitor support near 54,800 (recent low). Regime: NEUTRAL
+
 ---
 
 ## [Insider Tracker] Management Activity

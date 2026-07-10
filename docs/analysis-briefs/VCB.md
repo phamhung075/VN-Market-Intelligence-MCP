@@ -53,3 +53,5 @@ Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
 
 ## [Market Watcher] EOD Updates
 2026-07-02 16:00 | Close: 62,100 VND | RSI: 48 | Vol: 2.74M (-3.2% avg) | YoY: +2.5% | Regime: Neutral
+
+2026-07-04 16:00 | Close: 62,000 VND (-0.16%) | RSI: 51.9 | Vol: 2.60M (42.2% of band) | YoY: -0.32% | Trend: Neutral, MA5 near MA20 22,260 vs 61,685; MACD bullish histogram +73; price 66.6% of BB band. Monitor support at MA50 61,698. Regime: NEUTRAL

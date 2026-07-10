@@ -20,5 +20,11 @@
     ],
     "source_decision_journal": "docs/agent-memory/decisions/dev-pdf-extractor-2026-07-09T2300Z-FIX-BCTC-FPT-BT5-BALANCE-GATE.md",
     "recommended_owner": "dev-pdf-extractor"
+  },
+  "_processed": {
+    "fingerprint": "0d995e935987f2fc25080032d8729e9e1e6184adda5a30491023a508c9a691cb",
+    "processedAt": "2026-07-09T23:17:05Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

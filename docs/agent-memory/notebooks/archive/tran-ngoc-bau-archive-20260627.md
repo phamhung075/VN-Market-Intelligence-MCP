@@ -396,3 +396,44 @@
 **Carry-forward:** F2=BCTC-overdue (CTG 29+, 29 tickers) | F3/F4/F9 structural
 
 **Actions:** Handoff + signal + notebook committed | WORK report pending
+
+---
+
+**[SECOND APPENDED RANGE — 2026-07-07: cycles labeled c99–c100 dated 2026-06-26/06-27, moved from live notebook for 200L-cap compliance. NOTE: cycle-number collision with the c92–c103 range above (dated 06-09–06-22) — a pre-existing numbering-counter discontinuity in this agent's own history, not corrected here; flagged for awareness only, out of scope to reconcile retroactively.]**
+
+---
+
+## c99 · 2026-06-26T20:13Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (all 3 guaranteed slots + 2 intraday published).
+**Session mode:** MCP failure mode A — file-evidence audit (notebooks 2026-06-26). Layer scores INDICATIVE.
+
+**Layer scores (EOD 08:50 UTC + Evening 19:47 UTC — both 3.5/6 NEEDS_ATTENTION):**
+- L1: PASS (FX >25500, volume signals, macro-micro contradiction)
+- L2: FAIL (macro_health structural, 15+ cycles)
+- L3: PARTIAL (carry NEUTRAL; VIRA/CPI absent)
+- L4: PARTIAL (3/4 EOD, slight improvement evening)
+- L5: PASS (Quẻ 36 Minh Di BẤT LỢI + per-ticker hexagrams)
+- L6: PASS (explicit gap tokens EOD; less formal evening)
+- Business context: ABSENT (F9, 25th+)
+
+**POSITIVE: Evening QUALITY:degraded (correct self-assessment vs c98 overclaim). Calibration improvement.**
+**Adversarial T-45:** PASS — market Quẻ 36 BẤT LỢI vs per-ticker BUY signals contradiction noted.
+**9-step (unified-agent):** 4/9 NEEDS_ATTENTION (D+E structural).
+**Actions:** Handoff written | Signal emitted | WORK/commit SKIPPED (MCP unavailable).
+
+---
+
+## c100 · 2026-06-27T20:13Z
+
+**Status:** BLOCKED — MCP gateway unavailable (failure mode A)
+**Direction:** N/A (Saturday — weekend, only Evening dish expected)
+
+**MCP Status:** `mcp__gateway__call_tool` NOT present in session. Failure mode A per bootstrap.md. Recurrent pattern across all local CLI spawn cycles. Cloud cron path has connector.
+**Published Marker Gate:** SKIPPED — task_claim requires MCP. Week estimated: 2026-06-22/2026-06-28.
+**Previous handoff ACK:** c99 ACK'd by PO 2026-06-26T22:44:38Z ✓. All c99 findings tracked; no unACK'd pending.
+**Weekend context:** 2026-06-27 Saturday VN. Morning/EOD weekday-only — correctly absent. Evening dish audit deferred (no CHEF-DETAIL read without MCP). Per bootstrap.md: NOT switching to file-evidence mode.
+
+**Carry-forward from c99:** F-MCP-SUBAGENT-SYSTEMIC (HIGH) | F-MORNING-NB-MISSING (MED, 17th+) | F2 (MED, 15+ cycles) | F4 | F9 (26th cycle) | F-HPG-DB-EMPTY (HIGH, 20d) | F-ACV-DB-EMPTY (HIGH, 11d) | F-12-TICKERS-OVERDUE (34d to deadline) | F-VCB-KD-TREND (Quẻ Bóc 23 BẤT LỢI at c072) | F-PC1-LEGAL-RISK (signal #7597).
+
+**Actions:** Notebook entry appended | Handoff updated | WORK/commit SKIPPED (MCP unavailable).

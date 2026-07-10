@@ -21,11 +21,13 @@ Append regime caveat to each MARKET alert (Vietnamese):
 
 After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 
-**write_alert_verdict** (call after `send_telegram` AND `mark_alert_read`, before Step 4b):
-- Input: `ticker` (alert.ticker), `direction` (bullish|bearish, from signal), `conviction` (0–1, from signal), `alertSource` (signal_type: urgent_news|verified_chain|chain_catalyst|price_anomaly|position_danger|watchlist_opportunity), `firedAt` (ISO 8601 now)
-- Output: `{ success: true, id, verdict: "pending" }`
+**write_alert_verdict** (default order: call after `send_telegram` AND `mark_alert_read`, before Step 4b):
+- Input: `ticker` (alert.ticker), `direction` (bullish|bearish, from signal), `conviction` (0–1, from signal), `alertSource` (signal_type: urgent_news|verified_chain|chain_catalyst|price_anomaly|position_danger|watchlist_opportunity|legal_risk|crisis_velocity), `firedAt` (ISO 8601 now)
+- Output: `{ success: true, id, verdict: "pending", duplicate?: true }` — `duplicate:true` means a PENDING verdict already exists for this (ticker, alertSource) pair (FIX-LEGAL-RISK-ALERT-DEDUP-LOOKBACK dedup guard); the echoed `id`/`verdict` are the EXISTING row, not a new one.
 - On success: log `"Verdict {id} recorded as pending for {ticker}"` → continue to Step 4b
 - On error: log to session → `send_telegram(channel="work", message="[alert-commander] BUG: write_alert_verdict failed for {ticker}")`
+
+**Pre-check ordering exception (2026-07-04, discovered live):** when a `legal_risk` (or other CRITICAL-tier) bus signal LOOKS like a re-emission of a story already fired this session/day for the same ticker, call `write_alert_verdict(ticker, alertSource)` FIRST — before `send_telegram` — and inspect the response. If `duplicate:true` → SUPPRESS (do not `send_telegram`, call `record_signal_outcome(signal_id, "suppressed", "duplicate — pending verdict <id> already exists")` instead). Only proceed to `send_telegram` when the response has no `duplicate` flag (genuinely new (ticker, alertSource) pair). This is NOT a violation of the "never suppress legal risk" policy — `write_alert_verdict`'s own dedup guard is a concrete system signal, not an ad hoc conviction/judgment gate, and prevents duplicate user-facing MARKET alerts when an upstream gatherer (e.g. news-scout) re-posts the same underlying story under a new signal ID.
 
 **4b. WORK channel** — ULTRA tier per `.claude/skills/caveman/SKILL.md` (cycle-status ping = inter-agent state change):
 ```

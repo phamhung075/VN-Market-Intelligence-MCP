@@ -4,6 +4,32 @@
 
 ---
 
+## c106 · 2026-07-07T20:15Z
+
+**Status:** CRITICAL FINDING — chef dish production outage | **Direction:** DEGRADING sharply (single-cycle format slips at c105 → multi-day zero-dish outage at c106)
+**Session mode:** File-tools only (Read/Edit/Write/Glob/Grep, no MCP) — **by dispatch design this cycle, not a defect**: per cowork-team's own tick-report, tran-ngoc-bau "has no Bash/MCP gateway tool grant... not affected by the session-wide gateway-blind defect confirmed 4/4 this session." Audited from `unified-agent.md`, `docs/data/cowork-schedule.json`, `docs/signals/*`, cross-agent notebooks (fb-market-poster.md, market-watcher.md).
+**Previous handoff ACK:** c105 ACK'd by PO 2026-07-03T21:12:27Z (task SPIKE-HSX-STRATEGY0-0URLS minted). No unACK'd blocker carried in.
+
+**Primary finding — most recent dish attempt FAILED, nothing new to layer-walk:**
+`unified-agent.md` newest entry: "Session 2026-07-07 (evening 19:45 UTC) — FAILED" (cycle chef-evening-20260707T194500Z). Cause: session-wide gateway-blind-runtime-defect (tools=[Read,Write,Edit] only, zero `mcp__gateway__call_tool`), failed at Step 0.5 published-marker-gate, exited non-zero, did NOT fabricate a dish — fail-loud protocol held. Bug signal `docs/signals/unified-agent-20260707T194500Z-gateway-blind.json` already `status:"ESCALATED"`. Router corroborates (`cowork-team-20260707T194801Z.json`): "3 prior confirmed failures this session (fb-market-poster-1st, digest-predict, bctc-analyst-slot-2)" — evening was the 4th. Per dispatch instruction: reporting honestly, not backfilling a layer-walk for non-existent content, not re-auditing the 07-03 dish as fresh (already fully audited + PO-ACK'd at c105). **Layer-walk this cycle: 0/6 assessable. QUALITY: N/A (production failure, not narrative-quality).**
+
+**New finding — outage is broader/older than today's single evening incident:**
+`cowork-schedule.json`: `chef-morning.last_fired` = `chef-eod.last_fired` = 2026-07-03 (Friday) — both unchanged. Morning/EOD are guaranteed weekday slots; 2026-07-06 (Mon) and 2026-07-07 (Tue, today) are both weekdays with **zero** recorded morning/EOD activity — today's 08:45Z EOD was 11+h overdue at audit time. `unified-agent.md` is only 85 lines (well under 200L cap — rules out the known notebook-rotation evidence-loss failure mode) yet has a hard 4-day gap: no entries for 07-04/05/06 evenings (chef-evening is DAILY, not weekday-only) nor 07-06/07-07 morning/EOD. Corroboration: `fb-market-poster.md` (cycle 07-07T17:45Z, ~2h before the FAILED evening entry) still cites the 07-03 EOD dish as unified-agent's "LATEST entry"; `market-watcher.md` off-hours cadence frozen at 2026-07-04T16:05 UTC, matching `cowork-schedule.json`'s `news-scout-offhours`/`market-watcher-offhours`/`alert-commander-critical` all frozen at the identical `2026-07-04T16:05:03Z`. Searched `docs/signals/` + `docs/signals/processed/` for the 07-04–07-07 window: **no dedicated BUG/miss signal found for chef-morning or chef-eod** specifically — only today's evening cycle has an escalated signal.
+
+**New findings (c106):**
+- **F-CHEF-MULTIDAY-OUTAGE-0706-0707 (HIGH, NEW):** chef-morning + chef-eod (guaranteed weekday) show zero activity for 2 consecutive weekdays (Mon 07-06, Tue 07-07); today's EOD 11+h overdue at audit time; no dedicated BUG signal exists for this specific gap yet.
+- **F-CHEF-EVENING-0707-FAILED (HIGH, CONFIRMED — contrast with c105's WATCH-only 0703 case):** self-reported FAILED, exit 1, corroborated by router + already-ESCALATED signal. This is a confirmed hard miss, not a stale-field false alarm like the 06-24 precedent.
+- **F-GATHERER-OFFHOURS-STALL-0704 (MED, NEW):** news-scout-offhours/market-watcher-offhours/alert-commander-critical frozen at identical 2026-07-04T16:05:03Z; today's 20:00Z router tick withheld re-spawn citing the same gateway-blind defect, but the freeze predates today's confirmations by ~3 days — root cause not established by file evidence alone; out of TNB audit scope, flagged for ops/infra.
+
+**Carry-forward (from c105 — chef-quality items now MOOT pending pipeline recovery, no fresher dish to check):** F-MCP-SUBAGENT-SYSTEMIC (HIGH, 10th+ cycle) | F2 L2 macro_health structural (MED) | F4 VIRA scraper (MED) | F9 biz-ctx absent (MED — last confirmed dish 07-03 had it ABSENT) | F-ACV-DB-EMPTY (HIGH, ~21d) | F-12-TICKERS-OVERDUE (MED, Q2 deadline 2026-07-31, 24d) | F-EOD-GAPTOKEN-REGRESSION-0703 / F-EOD-L5-INCOMPLETE-0703 (MED, MOOT — no newer dish to confirm).
+
+**Positive:** FAILED entry is honest and well-formed (correct exit-code, correct bug-signal, no fabricated dish) — fail-loud held even under total tool-access loss ✓. Router correctly diagnosed the pattern as session-wide (4/4+) not agent-specific, withholding further spawns rather than burning cycles ✓. Did not fabricate/backfill an audit for non-existent dish content per explicit dispatch instruction ✓.
+
+**Auto-cures applied this cycle:** 0 — production/infra outage, not a chef.md methodology defect; root-cause diagnosis is out of scope (not_my_job: infrastructure diagnosis).
+**WORK/BUG/send_telegram:** SKIPPED — no MCP/telegram tool granted this cycle (by task design, not failure). Findings routed via notebook + handoff + signal file; router/PO must relay F-CHEF-MULTIDAY-OUTAGE-0706-0707 to BUG channel.
+
+---
+
 ## c105 · 2026-07-03T20:22Z
 
 **Status:** NEEDS_ATTENTION | Direction: DEGRADING (EOD dish shows a partial regression on the c103 auto-cure discipline; morning dish clean; evening dish status unconfirmed)
@@ -124,51 +150,14 @@ Dispatch context: VN-Index 1860.01 +0.27%, banking -1.15% vs GDP +11.9%, USD/VND
 
 ---
 
-## c100 · 2026-06-27T20:13Z
-
-**Status:** BLOCKED — MCP gateway unavailable (failure mode A)
-**Direction:** N/A (Saturday — weekend, only Evening dish expected)
-
-**MCP Status:** `mcp__gateway__call_tool` NOT present in session. Failure mode A per bootstrap.md. Recurrent pattern across all local CLI spawn cycles. Cloud cron path has connector.
-**Published Marker Gate:** SKIPPED — task_claim requires MCP. Week estimated: 2026-06-22/2026-06-28.
-**Previous handoff ACK:** c99 ACK'd by PO 2026-06-26T22:44:38Z ✓. All c99 findings tracked; no unACK'd pending.
-**Weekend context:** 2026-06-27 Saturday VN. Morning/EOD weekday-only — correctly absent. Evening dish audit deferred (no CHEF-DETAIL read without MCP). Per bootstrap.md: NOT switching to file-evidence mode.
-
-**Carry-forward from c99:** F-MCP-SUBAGENT-SYSTEMIC (HIGH) | F-MORNING-NB-MISSING (MED, 17th+) | F2 (MED, 15+ cycles) | F4 | F9 (26th cycle) | F-HPG-DB-EMPTY (HIGH, 20d) | F-ACV-DB-EMPTY (HIGH, 11d) | F-12-TICKERS-OVERDUE (34d to deadline) | F-VCB-KD-TREND (Quẻ Bóc 23 BẤT LỢI at c072) | F-PC1-LEGAL-RISK (signal #7597).
-
-**Actions:** Notebook entry appended | Handoff updated | WORK/commit SKIPPED (MCP unavailable).
+**[ARCHIVED CYCLES: docs/agent-memory/notebooks/archive/tran-ngoc-bau-archive-20260627.md (c92–c103, 2026-06-09 through 2026-06-24; + c99–c100, 2026-06-26/06-27, appended 2026-07-07 for 200L-cap compliance)]**
 
 ---
 
-## c99 · 2026-06-26T20:13Z
+**Agent methodology scores (c106 updated):**
+- news-scout: 7+/9 GOOD (clean cycles; last file activity 07-03/07-04, see F-GATHERER-OFFHOURS-STALL-0704)
+- market-watcher: GOOD (limited scope; frozen at 07-04T16:05, see F-GATHERER-OFFHOURS-STALL-0704)
+- bctc-analyst: 8/9 GOOD (GVR/MBB forensic ESC-2/ESC-4 gates active c072-c075; HPG stays resolved; ACV still empty; still firing normally 07-07 per cowork-schedule)
+- unified-agent: **PIPELINE OUTAGE, not scoreable** — no new dish since 07-03T09:00 EOD; 07-06/07-07 morning+EOD zero activity; 07-07 evening self-reported FAILED (gateway-blind). Last scoreable dish remains the 07-03 EOD (already audited at c105: ~3.5/8 NEEDS_ATTENTION).
 
-**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (all 3 guaranteed slots + 2 intraday published).
-**Session mode:** MCP failure mode A — file-evidence audit (notebooks 2026-06-26). Layer scores INDICATIVE.
-
-**Layer scores (EOD 08:50 UTC + Evening 19:47 UTC — both 3.5/6 NEEDS_ATTENTION):**
-- L1: PASS (FX >25500, volume signals, macro-micro contradiction)
-- L2: FAIL (macro_health structural, 15+ cycles)
-- L3: PARTIAL (carry NEUTRAL; VIRA/CPI absent)
-- L4: PARTIAL (3/4 EOD, slight improvement evening)
-- L5: PASS (Quẻ 36 Minh Di BẤT LỢI + per-ticker hexagrams)
-- L6: PASS (explicit gap tokens EOD; less formal evening)
-- Business context: ABSENT (F9, 25th+)
-
-**POSITIVE: Evening QUALITY:degraded (correct self-assessment vs c98 overclaim). Calibration improvement.**
-**Adversarial T-45:** PASS — market Quẻ 36 BẤT LỢI vs per-ticker BUY signals contradiction noted.
-**9-step (unified-agent):** 4/9 NEEDS_ATTENTION (D+E structural).
-**Actions:** Handoff written | Signal emitted | WORK/commit SKIPPED (MCP unavailable).
-
----
-
-**[ARCHIVED CYCLES: docs/agent-memory/notebooks/archive/tran-ngoc-bau-archive-20260627.md (c98 and prior, 2026-06-09 through 2026-06-24)]**
-
----
-
-**Agent methodology scores (c105 updated):**
-- news-scout: 7+/9 GOOD (clean cycles)
-- market-watcher: GOOD (limited scope)
-- bctc-analyst: 8/9 GOOD (GVR/MBB forensic ESC-2/ESC-4 gates active c072-c075; HPG stays resolved; ACV still empty)
-- unified-agent: ~3.5/8 NEEDS_ATTENTION on EOD 07-03 (D+E structural F2+F4 persist, no gap-token this cycle; morning 07-03 dish scores better with clean token discipline — Step 7.5 auto-cure core intent holds but token-format discipline regressed on EOD)
-
-**Persistent structural gaps:** F-MORNING-NB-MISSING (200L cap + 5 slots, monitor — improved/present 07-02 and 07-03) | F2 (macro_health tool) | F4 (VIRA scraper) | F9 (BCTC business-context, streak continuing) | F-MCP-SUBAGENT-SYSTEMIC (9th+ blocked cycle c97-c105) | F-ACV-DB-EMPTY (~17d, still trống at bctc-analyst c075) | F-12-TICKERS-OVERDUE (28d to Q2 deadline) | F-EOD-GAPTOKEN-REGRESSION-0703 (NEW c105) | F-EOD-L5-INCOMPLETE-0703 (NEW c105) | F-CHEF-EVENING-0703-UNCONFIRMED (NEW c105, WATCH only — see anti-false-positive note above)
+**Persistent structural gaps:** F-CHEF-MULTIDAY-OUTAGE-0706-0707 (NEW c106, HIGH — top priority) | F-CHEF-EVENING-0707-FAILED (NEW c106, HIGH, CONFIRMED) | F-GATHERER-OFFHOURS-STALL-0704 (NEW c106, MED) | F-MCP-SUBAGENT-SYSTEMIC (10th+ blocked/degraded cycle c97-c106) | F2 (macro_health tool) | F4 (VIRA scraper) | F9 (BCTC business-context, streak continuing — last confirmed dish 07-03) | F-ACV-DB-EMPTY (~21d) | F-12-TICKERS-OVERDUE (24d to Q2 deadline) | F-EOD-GAPTOKEN-REGRESSION-0703 / F-EOD-L5-INCOMPLETE-0703 (c105, MOOT pending pipeline recovery) | F-CHEF-EVENING-0703-UNCONFIRMED (c105, now superseded — 0707 case is a confirmed miss, 0703 stays WATCH-only per its own precedent)

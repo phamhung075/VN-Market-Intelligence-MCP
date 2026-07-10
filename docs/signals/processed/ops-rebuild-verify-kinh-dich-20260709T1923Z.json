@@ -12,5 +12,11 @@
     "blocking": false
   },
   "status": "pending",
-  "notes": "Per DoD: rebuild_required=true. This signal tracks the deferred verification that was user-gated (feedback_user_gates_delegate_to_ops.md). Do not close task as DONE_VERIFIED until ops confirms rebuild + score verification."
+  "notes": "Per DoD: rebuild_required=true. This signal tracks the deferred verification that was user-gated (feedback_user_gates_delegate_to_ops.md). Do not close task as DONE_VERIFIED until ops confirms rebuild + score verification.",
+  "_processed": {
+    "fingerprint": "89ae75d4fa124f45601ab9f8e09f78596a1a61d567a52b6237514dce620381e7",
+    "processedAt": "2026-07-09T19:46:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

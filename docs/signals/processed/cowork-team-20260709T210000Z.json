@@ -1,0 +1,34 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-09T21:00Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "bctc-analyst-slot-3"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "bctc-analyst-slot-3",
+      "agent": "bctc-analyst",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=null (never-configured pattern, same class as bctc-analyst-slot-1/slot-2)"
+    }
+  ],
+  "signal_queue_drained": [],
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "bctc-analyst-slot-3 is parallel_group=bctc-analyst, not chef — Step 4.5c mutex not applicable.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). bctc-analyst-slot-3: never-configured pattern (trigger_id=null AND _superseded_by=null), same class as bctc-analyst-slot-1/slot-2.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (emit_pressure_state succeeded).",
+  "work_channel_message_sent": false,
+  "stale_warning_note": "stale_warning TRUE this tick. Cumulative (02:00-21:00, 44 WORK ticks; SILENT ticks not counted): 17 true, 27 absent.",
+  "recurring_symptom_note": "bctc-analyst-slot-1/2/3 all share the never-configured backstop pattern — no trigger_id was ever assigned to this slot group, distinct from the superseded-despite-trigger-id pattern seen on chef-eod/chef-evening/tnb-audit.",
+  "emitted_at": "2026-07-09T21:01:48.369Z",
+  "_processed": {
+    "fingerprint": "eddbac6ba10f9e7b18eba8ae1147b1303418b5bc53185c7ec2add7c341a9c041",
+    "processedAt": "2026-07-09T21:16:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

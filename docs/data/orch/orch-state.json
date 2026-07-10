@@ -292,11 +292,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-BCTC-BANK-SCALAR-MAPPING",
-    "next_agent": "pm",
-    "next_action": "Reconcile FIX-BCTC-BANK-SCALAR-MAPPING with the still-active twin sprint FIX-BCTC-BANK-SUMMARY-MAPPING (AC-14) onto ONE execution thread; decompose Track 1 (CTG orphaned-row carry-forward, docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md §2.5) as the concrete W5 replacement, sequenced strictly after the twin sprint W2 row-repair deploys. Track 2 (general 62-report unblock) is separate backlog scope.",
-    "updated_at": "2026-07-10T00:20:00Z",
-    "updated_by": "architect"
+    "active_task_id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Implement Track 1 (AC-14 dedup resolution): CTG orphaned-row carry-forward migration. Architect brief §2.5 operative. Extend backfill_bctc_scalars with optional source_report_id param or create migration script; copy 451 rows from 96e36139-... to e497f7d1-.... Sequence verified after W2 deploy (2026-07-03 ✓). Re-check RISK-2 (gateway recovery) before committing dev effort.",
+    "updated_at": "2026-07-10T00:45:00Z",
+    "updated_by": "pm"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6743,6 +6743,31 @@
         ],
         "evidence": "Both zone tasks (TASK-DASH-CRON-1: backend status-compute, TASK-DASH-CRON-2: frontend proxy+UI) approved by QA with full coverage (RAW-verified, not relayed). Zone 1 backend delivers /api/cron-status endpoint with cronLivenessClassifier (4-branch status ladder: ON_TIME/LATE/MISSED/STALE), infrastructure registry of 13 live crons from .claude/commands, and 72/72 passing tests. Zone 2 frontend delivers api.cron-status proxy route, CronRecheckTable component with independent Promise.all fetch, and coverage-map integration. Both layers tested independently; honest degradation to empty-shape DTO when /api/cron-status 404s (container rebuild pending user gate). Known caveat: Zone 1 live data upload (/api/cron-status) and frontend container swap user-gated pending.",
         "note": "Sprint closed 2026-07-02 after both tasks APPROVED by QA (TASK-DASH-CRON-1 round 3 APPROVED, TASK-DASH-CRON-2 round 1 APPROVED). Both moved to done_verified via PM closeout. Decision journal: docs/agent-memory/decisions/sprint-DASH-CRON-RECHECK-TABLE-qa.md (complete with STEP qa-S1 through qa-S4)."
+      },
+      {
+        "id": "FIX-BCTC-BANK-SCALAR-MAPPING",
+        "type": "FIX",
+        "priority": "high",
+        "status": "DUPLICATE",
+        "zone": "apps/mcp-server/",
+        "title": "FIX-BCTC-BANK-SCALAR-MAPPING: bank B02-TCTD scalar summarizer garbage (CLOSED AS DUPLICATE)",
+        "size": "M",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SCALAR-MAPPING",
+        "promoted_at": "2026-07-09T23:47:35Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T23:47:35Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md",
+        "ba_completed_at": "2026-07-09T23:58:33Z",
+        "architect_brief": "docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md",
+        "architect_completed_at": "2026-07-10T00:20:00Z",
+        "architect_note": "FR-8 verdict=(a) gateway-blind, pipeline cannot execute end-to-end. FR-9 re-scoped: Track 1 (CTG orphaned-row carry-forward) becomes concrete W5 replacement for twin sprint FIX-BCTC-BANK-SUMMARY-MAPPING.",
+        "duplicate_of": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "closed_at": "2026-07-10T00:45:00Z",
+        "closed_by": "pm",
+        "closed_note": "Dedup reconciliation per AC-14: Twin task FIX-BCTC-BANK-SUMMARY-MAPPING (minted 06-16, W1-W4 done_verified) is canonical; this near-duplicate (minted 06-16 21h later, same defect/ticker/numbers) merged onto single thread. Track 1 (CTG carry-forward) created as W5 replacement."
       }
     ],
     "done": [
@@ -7017,7 +7042,37 @@
       "next_agent": null,
       "note": "DEPRECATED — do NOT read or write this field. Canonical head SSOT is TOP-LEVEL .head (dev-team flow Step 0b, orch-state-access.md §2/§4, router-d1-claim). RE-INFLATION RECURRENCE: collapsed to a stub by po-s66 (2026-06-15) but updated_by=dev-team RE-INFLATED routing fields on 2026-07-01T06:26:45Z (status=in_progress, active_task_id=BA-PREDICTION-EVIDENCE-REVIVAL, next_agent=architect), frozen >27h. BA-PREDICTION-EVIDENCE-REVIVAL is ABANDONED/SUPERSEDED — no real board row ever existed; its concrete work was spun out to FIX-EVIDENCE-PIPELINE-STARVED (real root: evidence_fragments=0 -> accumulator falsely reports success) + FIX-VPS-SSC-INSIDER-502 (decoupled VPS dep, 2026-07-01T06:49Z). Do NOT resurrect the umbrella. Any write to .task_board.head is a BUG — write .head. Durable write-gate guard tracked by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD (DeprecatedHeadStubSchema.passthrough() currently lets routing keys pass Zod silently)."
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD",
+        "type": "FIX-MIGRATION",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "title": "W5: CTG orphaned-row carry-forward (Track 1 — deterministic migration, W5 replacement)",
+        "size": "S",
+        "sprint": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "spec_ref": "docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md",
+        "architecture_brief": "docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md",
+        "acceptance": [
+          "AC-TRACK1-1: source_report_id param or migration script",
+          "AC-TRACK1-2: live execution on named-volume DB, 451 rows migrated",
+          "AC-TRACK1-3: CTG scalars (total_assets, net_revenue, net_margin_pct) become plausible",
+          "AC-TRACK1-4: VCB/FPT/VNM non-regressions verified",
+          "AC-TRACK1-5: AC-16 report_id freshness re-checked",
+          "AC-TRACK1-6: commit discipline (dedup note, brief ref, no session UUIDs)"
+        ],
+        "depends": [],
+        "created_at": "2026-07-10T00:45:00Z",
+        "created_by": "pm",
+        "next_agent": "dev-mcp-server",
+        "risk_flags": [
+          "RISK-1 [HIGH]: sequenced after W2 deploy (verified ✓ 2026-07-03)",
+          "RISK-2 [MEDIUM]: if gateway recovers, original W5 becomes viable — re-check live",
+          "RISK-3 [LOW]: unidentified orphans (4316f6d1/65a9c724/d6f1885f) out of scope"
+        ]
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -7390,30 +7445,7 @@
     },
     "last_triaged_at": "2026-07-09T23:47:35Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-BCTC-BANK-SCALAR-MAPPING",
-        "type": "FIX",
-        "priority": "high",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "title": "FIX-BCTC-BANK-SCALAR-MAPPING: bank B02-TCTD scalar summarizer garbage (net_margin_pct=229157%, total_assets=0)",
-        "size": "M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-BANK-SCALAR-MAPPING",
-        "promoted_at": "2026-07-09T23:47:35Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T23:47:35Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "pm",
-        "ba_spec_complete": true,
-        "ba_handoff": "docs/handoffs/BA-FIX-BCTC-BANK-SCALAR-MAPPING.md",
-        "ba_completed_at": "2026-07-09T23:58:33Z",
-        "architect_brief": "docs/architecture-briefs/2026-07-10-FIX-BCTC-BANK-SCALAR-MAPPING.md",
-        "architect_completed_at": "2026-07-10T00:20:00Z",
-        "architect_note": "FR-8 verdict=(a) gateway-blind, pipeline cannot execute end-to-end. FR-9 re-scoped: BA literal ask (force_reflow->PENDING) is a no-op (already default); real fallback = CTG-specific orphaned-row carry-forward (Track 1), sequenced after twin sprint W2 deploy. AC-14: pm/po should reconcile with twin sprint FIX-BCTC-BANK-SUMMARY-MAPPING onto ONE thread, not mint a parallel W5."
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
