@@ -1,6 +1,18 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-09 | **Cycle:** FIX-DEVTEAM-BOUNDED1-SUPERVISED-FLAG-GATE
+**Last updated:** 2026-07-10 | **Cycle:** FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE
+
+## Session 2026-07-10 — FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE (4th BOUNDED-1 eligibility-gate defect this class; PO batch, direct-execute FIX routing)
+
+**Task:** `devteam-backlog-promote-bounded1.jq` had WIP + `effective_supervised` + `deps_satisfied` gates but NO gate excluding epic-wrapper rows (non-null `children[]`). On 2026-07-09T23:17Z it auto-claimed `AUDIT-FETCH-COMPLETE` (mode=audit-epic, children=4) for direct dispatch; dev-team point-fixed `supervised:true` on that ONE row. `FACTORY-GUARD-CI-REGRESSION-SPIKE` (children=7, `supervised:null` everywhere) stayed exposed — the supervised gate cannot catch `null`, only a structural `children!=null` gate protects it. **Zone:** `cross-service/` (files span `scripts/` + `docs/`) → developer direct, no dispatch. No PM-minted board row existed (PO batch bypassed PM decomposition per FIX-type direct-execute routing) — self-registered via new `scripts/dev-mint-fix-devteam-bounded1-epic-wrapper-gate-20260710.jq`.
+
+**Fix:** added `effective_children`/`is_epic_wrapper($detail_items)` mirroring `effective_supervised`'s precedence exactly (inline `.children` OR `$detail_items[.id].children`, no `.detail_ref` precondition, reused the already-threaded `--slurpfile detail`); wired `select((.value | is_epic_wrapper($detail_items)) != true)` alongside the supervised/deps filters at candidate-selection time.
+
+**Test:** new `test-devteam-bounded1-epic-wrapper.sh` — 15/15 GREEN, covering detail-only children with `supervised:null` (the exact live `FACTORY-GUARD-CI-REGRESSION-SPIKE` reproducer), board-only, both-signal (`AUDIT-FETCH-COMPLETE` shape), empty-array (not a wrapper), missing-key (conservative-default promotable), and ARRAY-shaped `$detail_items`.
+
+**Live-verified beyond fixtures:** live-data dry-run (read-only, never through `orch-apply.sh`) against real `orch-state.json`+`backlog-detail.json` — current WIP=1 → identity no-op; scratch copy with WIP forced to 0 → both `FACTORY-GUARD-CI-REGRESSION-SPIKE` and `AUDIT-FETCH-COMPLETE` correctly skipped, `ARCH-DAILY-FOREIGN-FLOW-TABLE` (P1, non-epic) promoted instead. Baseline suites re-confirmed unregressed: `test-devteam-bounded1-supervised-flag.sh` 15/15 + `test-devteam-bounded1-depends-on.sh` 18/18.
+
+**Scope discipline:** updated `docs/agents/dev-team/flow/main.md` + `docs/policies/dev-standards.md` prose pointers (single-paragraph edits, zero line-count delta, size-justification headers untouched — no new-line-count drift introduced by this task). `SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW` (architect, non-blocking) already open from the 07-09 supervised-gate fix covers the recurring-class question; not re-escalated (still 4th, same open spike tracks it). DJ-GATE-1: `sprint-SYSTEMIC-REMAKE-P1-developer.md` STEP developer-S12. graphify skipped — no LLM API key in this sandbox. Board self-registered IN_PROGRESS→REVIEW, `next_agent`→qa via `orch-apply.sh` (did not touch `.head`, which still owns `TASK-W5-...`).
 
 ## Session 2026-07-09 — FIX-CLOSEGATE-STEP4-ATOMIC-HANDOFF-SCRIPT (qa CHANGES_REQUESTED bounce, one-line-class doc fix)
 
