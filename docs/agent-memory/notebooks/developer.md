@@ -1,6 +1,18 @@
 # Developer — Notebook
 
-**Last updated:** 2026-07-10 | **Cycle:** D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND
+**Last updated:** 2026-07-10 | **Cycle:** D1-BACKLOG-HYGIENE-SWEEP-EXECUTE
+
+## Session 2026-07-10 — D1-BACKLOG-HYGIENE-SWEEP-EXECUTE (sprint BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP, router-dispatched, zone `scripts/`) — BLOCKED, not fake-green
+
+**Task:** Router asked to run D4's newly-extended `orch-cold-evict.sh` live against `orch-state.json`, using D0's `triage_result` to build `--exclude-ids` (the 4 D0-flagged false-positives). Router explicitly required verifying exact IDs from that field, no guessing.
+
+**Finding (blocking):** D0 (`DONE_VERIFIED`, commit `26ffe7567`) claims "73 confirm-terminal, 4 exclude, 11 relabel" but its `triage_result` field only persists aggregate counts + 2 named exceptions (1 confirm-terminal, 1 exclude — `FIX-BCTC-BANK-SUMMARY-MAPPING`). Verified via `git show 26ffe7567` (diff touches only D0's own board row + pm.md, no per-row annotation) and a repo-wide grep for `exclude_count`/`relabel_count`/the task ID — no other artifact exists anywhere. The other 3 exclude IDs and all 11 relabel IDs are unrecoverable. This is the same class of bug PM's own notebook flagged as "3RD confirmed data-loss instance this session" (agent claims a deliverable that isn't actually persisted) — a 4th instance, this time in a board-row field rather than a notebook.
+
+**Evidence gathered (read-only):** `orch-cold-evict.sh --dry-run --exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING` → 55 rows (54 backlog + 1 review) currently match `TERMINAL_TASK_STATUSES` and would auto-evict with only 1 of 15 needed protections applied. Confirmed the pool already contains at least 1 of D0's 15 flagged rows (the known exclude, status=DONE) — the script has zero awareness of D0's categorization beyond `--exclude-ids`, so the other 14 are plausibly in-pool too, unprotected. D4's own tooling behaved correctly (dry-run byte-identical, no mutation) — the blocker is upstream data, not D4's code. Also confirmed (git log) D3 already landed (`e7fc1d44a`, 62 rows normalized) — live coherence warnings now 72 (down from architect's 129 baseline), matching D3's expected drop.
+
+**Action taken:** Did NOT execute live eviction (R-CRIT-1 risk — silently archiving genuinely-open work, exactly what architect's Exception 1 spot-check already proved happens). Flipped D1's own board row `BACKLOG→BLOCKED` with a status_note documenting the gap + remedy (D0 needs to append the full 4+11 ID lists before D1 can re-run), committed `d45c03f1a`. No task rows evicted, no cold archive file touched, no other row mutated.
+
+**Scope discipline:** Brief §8 D1 also covers closing Exception 2 (`devteam-close-task-done-verified.jq`) and relocating D2 candidates — router explicitly narrowed this cycle to eviction-only, so neither was attempted. `send_telegram` unavailable in this sub-agent's toolset (Read/Edit/Write/Bash only, same limitation noted in the prior D4 cycle) — escalation relayed via RETURN block to router instead. DJ: `sprint-BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP-developer.md` STEP developer-S4.
 
 ## Session 2026-07-10 — D4-BACKLOG-HYGIENE-ORCH-COLD-EVICT-EXTEND (sprint BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP, router-dispatched, zone `scripts/`)
 

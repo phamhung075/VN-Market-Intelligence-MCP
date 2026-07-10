@@ -29,3 +29,13 @@
 - only path: R-HIGH-1 (brief) flags this as the sole SSOT eviction script — regression proof was mandatory before considering the change safe to hand off.
 **why-decision:** fixture-only verification per standing rule against live-file test execution.
 **why-change:** no change from plan.
+
+### STEP developer-S4 · developer · 2026-07-10T20:15:00Z
+**task-id:** D1-BACKLOG-HYGIENE-SWEEP-EXECUTE
+**what-done:** Attempted live sweep. Read D0's `triage_result` field directly — found it holds ONLY aggregate counts (73/4/11) + 2 named exceptions, NOT the full per-row bucket lists PM's notebook claimed exist. Confirmed via `git show 26ffe7567` (D0's commit touched only its own board row + pm.md, no per-row annotation) + repo-wide grep (no other artifact). Dry-run (`orch-cold-evict.sh --dry-run --exclude-ids FIX-BCTC-BANK-SUMMARY-MAPPING`) showed 55 rows would auto-evict on 1-of-15 known protections. Did NOT run live — flipped D1's own row BACKLOG→BLOCKED with a status_note documenting the gap + remedy, committed (`d45c03f1a`).
+**what-considered:**
+- Guess the missing 14 IDs from context clues — rejected: router explicitly forbade guessing; matches R-CRIT-1.
+- Re-derive D0's full triage myself (Tier 2 mechanical pass over the 55-row pool) — rejected: that is D0's MEDIUM-HIGH-risk judgment task, out of D1's scope, and router narrowed D1 to eviction-only this cycle.
+- Run eviction anyway, accept the risk — rejected: architect brief already proved (Exception 1) this exact label class silently ships a live-reproducing P1 defect to the archive.
+**why-decision:** halting with a documented, falsifiable finding (concrete dry-run numbers + git-verified provenance) is safer and more useful to the sprint than a live mutation built on an incomplete input; matches standing "no fake data / verify SERVING value" class of lessons.
+**why-change:** D1 could not proceed to execution as scoped — root blocker is upstream (D0's persisted output), not a defect in D4's tooling (D4 itself worked correctly in dry-run).
