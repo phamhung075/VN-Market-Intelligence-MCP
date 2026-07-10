@@ -307,14 +307,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
-    "next_agent": "architect",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX corrected pre-dispatch: backlog-detail.json marks plan_only=true, owner=architect, route_to=architect — routing to architect for root-cause/design (NOT developer/zone-detect Tier-3 fallback), per main.md NON-CODE/DESIGN row next_agent gap guidance.",
-    "updated_at": "2026-07-10T15:24:25Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)",
-    "corrected_at": "2026-07-10T15:25:32Z",
-    "corrected_by": "router (pre-dispatch plan_only gate)"
+    "status": "idle",
+    "updated_at": "2026-07-10T15:35:33Z",
+    "updated_by": "architect",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7308,6 +7305,27 @@
         "completed_by": "qa",
         "qa_reviewed_at": "2026-07-09T08:56:21Z",
         "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
+      },
+      {
+        "id": "FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
+        "type": "FIX",
+        "status": "DONE",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "title": "task_claim owner_session is server-INSTANCE-scoped (pid+startupTs), not client-scoped -> concurrent clients on one mcp-server collapse to one owner identity -> re-entrant self-reclaim returns claimed:true -> mutual exclusion DEFEATED (cowork double-fire)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
+        "promoted_at": "2026-07-10T15:24:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-10T15:24:25Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "po",
+        "completed_at": "2026-07-10T15:35:33Z",
+        "completed_by": "architect",
+        "architecture_brief": "docs/architecture-briefs/2026-07-10-tasklock-owner-session-already-fixed.md",
+        "finding": "Root cause STALE — already fixed by CROSS-SESSION-MULTI-TEAM-ORCH sprint P1 chain (TASK_1973-1981), commit dea481e40 (TASK_1980/P1-FINAL, 2026-06-28), 2 days after this ticket was minted (2026-06-26T05:31Z), independently and never cross-linked. Live re-read of coordinationTools.ts/coordinationStore.ts confirms owner_client_session is now the REQUIRED sole ownership key in every WHERE clause (claim/heartbeat/release/orphan-release); owner_session (the old process-scoped const) is demoted to diagnostic-only, never read for ownership. RAW-verified 2026-07-10: bun test on 1980-p1-final-required-flip.test.ts + 3 sibling coordination test files = 116 pass/0 fail; live task_list_held probe via scripts/agents-flow/mcp-call.sh confirms owner_client_session populated/distinct on live rows; both production claimTask() call sites (coordinationTools.ts, bctcRefineJob.ts) supply it. Independently confirmed (not just cited) via server.ts:299-456 why option (a) RequestHandlerExtra.sessionId is structurally impossible here: /mcp opens a fresh transport+McpServer per request, no cross-call session persists. Option (b) explicit owner-token is what shipped, as a stricter MANDATORY (not opt-in) variant. All 4 backlog ACs verified true (1 is stale-wording/functionally-met, not a functional gap — see brief section 5). No code change recommended.",
+        "review_note": "PLAN-ONLY dispatch — architect verified fix already live+GREEN, no dev-mcp-server dispatch needed. PO: close as SUPERSEDED/RESOLVED citing commit dea481e40 + this brief. Optional non-blocking follow-up: AC wording in backlog-detail.json record says owner_session, shipped field is owner_client_session (same intent, different name) -- doc-only nit, not required."
       }
     ],
     "done_verified": [
@@ -8165,24 +8183,7 @@
     },
     "last_triaged_at": "2026-07-10T15:24:17Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "title": "task_claim owner_session is server-INSTANCE-scoped (pid+startupTs), not client-scoped -> concurrent clients on one mcp-server collapse to one owner identity -> re-entrant self-reclaim returns claimed:true -> mutual exclusion DEFEATED (cowork double-fire)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX",
-        "promoted_at": "2026-07-10T15:24:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-10T15:24:25Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "architect"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

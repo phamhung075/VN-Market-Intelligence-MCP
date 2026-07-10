@@ -83,3 +83,14 @@
 **why-change:** n/a — first triage pass for this task; supersedes the task brief's own suggested mirror-pattern (refine_status) with the verified-correct one (validation_status).
 **board-mutation:** `.task_board.backlog[id=FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS]`: status BACKLOG→READY, next_agent architect→dev-mcp-server, status_note replaced with full implementation spec (gate condition, exact insertion points in both tools, response shape, language-boundary note). Applied via `scripts/orch-apply.sh` (Stage 0+1 PASS, pre-existing SHG-migration coherence warnings only, non-blocking).
 **next-agent:** dev-mcp-server — implement per status_note, no further design/PM step needed.
+
+### STEP architect-S6 · architect · 2026-07-10T15:45:00Z
+**task-id:** FIX-TASKLOCK-OWNER-SESSION-SERVER-SCOPED-DEFEATS-MUTEX
+**what-done:** Re-read coordinationTools.ts/coordinationStore.ts fresh (not from the 06-26 note); RAW-ran the 1980/store/tools/DWF-phase2 test files (GREEN, 116 pass/0 fail); live `task_list_held` probe via mcp-call.sh; independently confirmed via server.ts:299-456 (fresh transport+McpServer per /mcp request, no sessionIdGenerator) why option (a) is structurally impossible here.
+**what-considered:**
+- Option (a) RequestHandlerExtra.sessionId — REJECTED, independently corroborated not just cited: gateway/transport opens+closes a fresh McpServer+transport pair per call, no cross-call server-observable identity exists.
+- Option (b) explicit owner-token — the fix ALREADY SHIPPED (TASK_1980/P1-FINAL, commit dea481e40, 2026-06-28), as a stricter mandatory (not opt-in) variant closing the silent-omission gap opt-in would leave.
+- Propose new option (c) — REJECTED: shipped design (required owner_client_session, owner_session demoted to diagnostic) is sound, tested, live-correct; no gap found.
+**why-decision:** This ticket (minted 2026-06-26) predates and was never cross-linked to the independently-run CROSS-SESSION-MULTI-TEAM-ORCH P1 chain that shipped the identical fix 2 days later (2026-06-28). All 4 backlog ACs verified true (1 is a stale-wording/functionally-met nit, not a gap, per brief §5).
+**why-change:** n/a — no new design; this task closes as SUPERSEDED/RESOLVED, not implemented.
+**next-agent:** po — close as SUPERSEDED, no dev dispatch. Brief: docs/architecture-briefs/2026-07-10-tasklock-owner-session-already-fixed.md
