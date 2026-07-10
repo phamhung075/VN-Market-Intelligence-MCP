@@ -64,6 +64,8 @@ Published       : 2026-01-15
 | Condition | Response |
 |-----------|----------|
 | No row found for ticker + filters | "No financial data found for {code}. Run bctcReparseJob cron or trigger_sbv_vps_fetch to load data." |
+| Row exists but `validation_status='pending_extraction'` (FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS) — a PDF-pull shell row (D2) whose extraction hasn't run yet, zero real financial data | "PDF downloaded but not yet extracted for {code} {period}. Extraction runs automatically after the PDF is pulled — check back shortly." |
+| Balance-sheet identity violation (`total_assets<=0` or `total_assets<equity_total`) — `checkBctcIdentityGuard` | "[CORRUPT DATA — SKIP]" block, no derived ratios shown |
 | Database error | "Error retrieving summary for {code}: {message}" |
 
 ## Usage Examples

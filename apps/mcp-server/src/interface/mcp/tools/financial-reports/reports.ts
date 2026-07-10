@@ -180,6 +180,15 @@ interface ReportRow {
   published_at: string;
   yoy_delta_json: string | null;
   qoq_delta_json: string | null;
+  /**
+   * FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS: SELECT * already returns this
+   * column — the interface was just missing the field. 'pending_extraction'
+   * is D2's additive-only enum value (ensureFinancialReportShellRow.ts L34)
+   * marking an unextracted shell row (NULL financial data, confidence 0),
+   * distinct from legacy values (pending|passed|failed|passed_with_warnings|
+   * low_confidence) which all carry real extracted data.
+   */
+  validation_status: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -291,6 +300,28 @@ export function registerReportTools(
                 type: "text" as const,
                 text: `No financial data found for ${actionCode}${periodStr}. ` +
                   `Run fetch_ssc_reports to load data from the SSC portal.`,
+              },
+            ],
+          };
+        }
+
+        // ── Pending-extraction gate (FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS) ────
+        // D2's ensureFinancialReportShellRow.ts upserts a shell row the moment a
+        // PDF is pulled, before extraction runs — validation_status='pending_extraction',
+        // extraction_confidence=0, all financial columns NULL/0. Gate on
+        // validation_status (NOT refine_status like get_bctc_full's PUB-1) —
+        // refine_status only transitions via the separate agentic-refine pipeline;
+        // rows extracted ONLY through the legacy scalar pipeline
+        // (fetchParseAndStoreBctc/storeReport) never touch refine_status and sit
+        // at the DB default forever despite holding real data — mirroring PUB-1's
+        // field verbatim would wrongly hide legitimate legacy reports.
+        if (row.validation_status === "pending_extraction") {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `PDF downloaded but not yet extracted for ${actionCode} ${row.sort_key}. ` +
+                  `Extraction runs automatically after the PDF is pulled — check back shortly.`,
               },
             ],
           };
@@ -422,6 +453,37 @@ export function registerReportTools(
               },
             ],
           };
+        }
+
+        // ── Pending-extraction gate (FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS) ────
+        // D2's ensureFinancialReportShellRow.ts upserts a shell row the moment a
+        // PDF is pulled, before extraction runs — validation_status='pending_extraction',
+        // extraction_confidence=0, all financial columns NULL/0. Check BOTH
+        // periods (mirrors the guard1/guard2 dual-check idiom below): a delta
+        // computed against an unextracted shell period is meaningless regardless
+        // of which side (period1/period2) is pending. Gate on validation_status
+        // (NOT refine_status like get_bctc_full's PUB-1) — see get_financial_summary
+        // above for the full rationale.
+        {
+          const pending: string[] = [];
+          if (row1.validation_status === "pending_extraction") {
+            pending.push(`${period1.year}-${period1.quarter}`);
+          }
+          if (row2.validation_status === "pending_extraction") {
+            pending.push(`${period2.year}-${period2.quarter}`);
+          }
+          if (pending.length > 0) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `PDF downloaded but not yet extracted for ${actionCode}: ` +
+                    pending.join(", ") +
+                    `. Extraction runs automatically after the PDF is pulled — check back shortly.`,
+                },
+              ],
+            };
+          }
         }
 
         // ── Balance-sheet identity guard (FIX-BCTC-BANK-SUMMARY-MAPPING W1) ────

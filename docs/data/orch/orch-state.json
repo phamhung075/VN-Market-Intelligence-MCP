@@ -564,8 +564,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-07-10T18:00:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-07-10T12:54:31Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -6666,32 +6666,6 @@
         "created_by": "po-triage-scope-expansion-20260710T110002Z",
         "origin_signal_id": "cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z",
         "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge). Triaged from HIGH-severity scope-expansion signal cowork-recurring-guaranteed-miss-scope-expansion-20260710T0917Z (supersedes the CHEF-only framing of prior signal cowork-recurring-guaranteed-miss-20260710T0847Z, now READ). EVIDENCE FOR SINGLE DISPATCHER-LEVEL DEFECT: three DISTINCT guaranteed slots each missed their cron tick on BOTH 2026-07-09 and 2026-07-10 — chef-morning (05:15Z) + chef-eod (08:45Z) [chef parallel_group] AND fb-daily (09:15Z) [fb-poster parallel_group]. The fb-daily miss is the key datum: it is NOT in the chef parallel_group, so the defect is dispatcher-wide across ALL guaranteed slots, not CHEF-specific. Same deprecated-backstop symptom pattern on all three: _superseded_by=cowork-dispatcher marks the slot undeliverable via the gateway-blind bypass; fb-daily shows trigger_id=null while the two chef slots reportedly have trigger_id set — investigator must reconcile this discrepancy between the two source signals as part of the spike. Session guaranteed-miss count = 9. SCOPE: investigate the guaranteed-slot backstop/supersede dispatch path (docs/agents/cowork-team/flow/, docs/data/cowork-schedule.json, scripts/agents-flow/) as ONE defect; deliverable is a findings doc + durable-fix recommendation, NOT 3 separate per-slot fixes and NOT a live dispatch. CROSS-REFERENCES (do not duplicate): OPS-COWORK-GUARANTEED-SLOT-INSTALL (REVIEW — launchd guaranteed-slot firer is a DELIVERY-SIDE mitigation/workaround, complementary to but distinct from this root-cause investigation; first live fire window 2026-07-11T05:15Z chef-morning); FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY (BACKLOG — last_fired bumped on dispatch not delivery proof MASKS misses, adjacent detection defect); FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK (BACKLOG P1 — curl-bypass retrofit for gateway-blind flows); SPIKE-GATEWAY-BLIND-CLI-HANDSHAKE (DONE — root-caused gateway-blind to CLI MCP-client handshake; prior art the investigator should read first). Route to architect after normal po->ba->pm chain."
-      },
-      {
-        "id": "FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS",
-        "type": "FIX",
-        "priority": "high",
-        "status": "READY",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "Add validation_status gate to get_financial_summary and compare_financials tools",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D2-QA-FINDING",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "D2 shell-row feature introduces validation_status=pending_extraction rows with extraction_confidence=0 and NULL financial data. get_bctc_full correctly gates refine_status=PENDING via PUB-1; get_financial_summary and compare_financials lack validation_status gates, rendering 0.0 tỷ VND for zero-data shell rows. Mirrors recurring bctcIdentityGuard.ts precedent (serve-layer gate, not per-ticker patch). Out of D2 scope; non-blocking backlog finding from QA.",
-        "blocked_note": "",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts"
-        ],
-        "status_note": "ARCHITECT TRIAGE (S, mechanical — no design doc; PUB-1 pattern is NOT a blind copy, see rationale). Gate condition: row.validation_status === 'pending_extraction' — NOT refine_status (unlike get_bctc_full's PUB-1 refine_status==='PENDING' check). Rationale: refine_status only transitions via the separate agentic-refine pipeline (finalizeBctcRefine.ts); rows extracted ONLY through the legacy scalar pipeline (fetchParseAndStoreBctc/storeReport) never touch refine_status and sit at DB DEFAULT 'PENDING' forever even though they hold real data — mirroring PUB-1's field verbatim would wrongly hide legitimate legacy reports (regression). validation_status='pending_extraction' is D2's new additive-only enum value (ensureFinancialReportShellRow.ts L34), exclusive to unextracted shell rows, no collision with pending|passed|failed|passed_with_warnings|low_confidence. Steps: (1) add validation_status: string field to ReportRow interface, reports.ts ~L139-183 (SELECT * already returns the column; interface just lacks the field). (2) get_financial_summary (~L255-369): after the existing if(!row) 404 branch (~L283-297) and BEFORE checkBctcIdentityGuard (~L302-321), add a check: if row.validation_status === 'pending_extraction' return { content: [{ type: text, text: <English pending-extraction message, same tone/shape as the existing 404 text at L292-293, e.g. PDF downloaded but not yet extracted> }] } — plain text content, NOT isError, NOT thrown, mirrors both get_bctc_full's PUB-1 shape and this function's own existing 404 shape one branch up. (3) compare_financials (~L387-565): after if(!row1 || !row2) (~L411-425) and BEFORE the dual identity-guard block (~L432-457), check row1.validation_status and row2.validation_status individually, mirroring the existing per-period guard1/guard2 dual-check idiom at L433-456; report which period(s) are pending in the same missing-period message style. (4) Keep messages English — reports.ts's established convention differs from bctcFullTools.ts's Vietnamese 'Chưa có dữ liệu BCTC'; do not cross-import, each tool keeps its own established language boundary. Full rationale: docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-architect.md STEP architect-S5.",
-        "next_agent": "dev-mcp-server",
-        "commit": null,
-        "qa_verified_at": null,
-        "done_verified": false
       }
     ],
     "closed_sprints": [
@@ -7504,6 +7478,39 @@
         "qa_verified_at": "2026-07-10T12:30:53Z",
         "qa_verified_by": "qa",
         "qa_note": "APPROVED. Fresh-eyes read beyond router's independent re-run (tests/regression/tsc/mock-guard already matched). pekExtractTrigger.ts + bctcVpsIngestHandler.ts diff read in full: discriminated union (queued|market_hours|pdf_extractor_error|unreachable) preserves the exact original try/catch branch order and error-message/log-call fidelity; res.end fallback for market_hours preserved verbatim. Re-ran new test myself: 6/6 pass, 25 expect() — exact match; assertions confirmed substantive (spy-logger captures real args; default-log-param test genuinely exercises the real singleton, confirmed via console output during the run). Grepped repo: helper called from exactly 1 site (the handler) — confirms D3B auto-trigger wiring genuinely not wired yet, matching the stated out-of-scope instruction. Zero process.env/secrets/DB-writes in the new file — no-fake-data lens confirmed N/A (pure network passthrough). Pure mechanical extraction confirmed, zero new logic/branches. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md task-id-stamped entry present)."
+      },
+      {
+        "id": "FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS",
+        "type": "FIX",
+        "priority": "high",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "Add validation_status gate to get_financial_summary and compare_financials tools",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D2-QA-FINDING",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "D2 shell-row feature introduces validation_status=pending_extraction rows with extraction_confidence=0 and NULL financial data. get_bctc_full correctly gates refine_status=PENDING via PUB-1; get_financial_summary and compare_financials lack validation_status gates, rendering 0.0 tỷ VND for zero-data shell rows. Mirrors recurring bctcIdentityGuard.ts precedent (serve-layer gate, not per-ticker patch). Out of D2 scope; non-blocking backlog finding from QA.",
+        "blocked_note": "",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
+          "apps/mcp-server/src/__tests__/FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS.test.ts"
+        ],
+        "status_note": "Architect triage (STEP architect-S5) implemented verbatim. Added validation_status: string to the ReportRow interface (SELECT * already returned the column, interface just lacked the field). get_financial_summary: new gate inserted after the existing !row 404 branch, before checkBctcIdentityGuard — row.validation_status==='pending_extraction' returns a plain-text \"PDF downloaded but not yet extracted\" message (not thrown, not isError), mirroring both get_bctc_full's PUB-1 shape and this function's own 404 shape one branch up. compare_financials: same gate after !row1||!row2, before the dual identity-guard block — checks row1/row2 individually (mirrors the guard1/guard2 dual-check idiom immediately below), reports which period(s) are pending in the same missing-period message style. Gate deliberately keys on validation_status (NOT refine_status like PUB-1) per the architect's verified rationale: refine_status only transitions via the separate agentic-refine pipeline (finalizeBctcRefine.ts); rows extracted ONLY through the legacy scalar pipeline (fetchParseAndStoreBctc/storeReport) never touch refine_status and sit at the DB default forever despite holding real data — mirroring PUB-1's field verbatim would wrongly hide legitimate legacy reports. Messages kept English (reports.ts's own convention, no cross-import from bctcFullTools.ts's Vietnamese).\n\nNew FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS.test.ts (6 tests, 20 expect() calls): (a) get_financial_summary pending-extraction row → pending message, not the 404 branch, not the real-data report header; (b) compare_financials one-period-pending → only that period listed, both-pending → both listed; (c) REGRESSION proof (the exact case the architect flagged) — a legacy row at the DB DEFAULT validation_status='pending' (bctc-schema.ts:818, never touched by the refine_status pipeline) still serves real data unaffected, plus explicit legacy 'passed'/'failed' rows and a legacy-vs-legacy compare_financials case. All pending-extraction fixtures created via the real ensureFinancialReportShellRow usecase (not hand-rolled SQL) for production fidelity.\n\nTargeted regression: 085-tool-reports.test.ts + FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts + 1181-financial-reports-persist.test.ts + 1086-financial-reports-trend.test.ts (16 pass/2 skip/0 fail), plus every test file that imports reports.ts/registerReportTools — fix-bctc-identity-serve-guard.test.ts (all 15 DV-BCTC-GUARD-* identity-guard cases), 087-server-wiring, FIX-BCTC-BANK-SUMMARY-MAPPING-W4, 230-remove-dead-tools, 084-tool-market, 123-integration-mcp (93 pass/1 skip/0 fail total). tsc clean. mock-guard PASS on both changed files.\n\nFull per-file-isolation sweep (scripts/ci-per-file-isolation.sh P=12 — canonical host-safety runner; bare `bun test` killed after hanging with zero CPU, same documented Bun 1.3.13 sandbox issue as S29-S33): 14303 pass/40 skip/65 fail across 16 files — grepped all 16 failed files for reports.js/get_financial_summary/compare_financials/checkBctcIdentityGuard/ensureFinancialReportShellRow/validation_status: zero matches, all in the pre-existing pollNews/Chromium/SSC-breaker/pdf-extractor/RAG realm (2 already root-caused in prior S30/S31/S33 cycles this same session: 1294b-bctc-fallback.test.ts standalone hang, FIX-1267-ssc-circuit-breaker.test.ts pre-documented flake).\n\ntoolCount=183 unchanged (gen-project-stats.ts --dry-run + live :3000/health both confirm — no MCP tool registered/removed, only existing-tool handler internals edited). No scheduler/cron file touched. Live server-boot probe: module load clean through all startup steps (backfillBctcPdfPaths etc.), final httpServer.listen() hit a pre-existing process already bound to :3000 (EADDRINUSE, same precedent as S31/S32 — not started by this task) — live health/bctc-inspect/news-fetch dashboard probes via that running instance all clean (toolCount=183, both dashboards return 200 HTML).\n\ngit status --porcelain -- apps/mcp-server/ confirms exactly 2 files touched (1 modified: reports.ts, 1 new: test file) — matches the board row's declared files:[] scope. NOT committed by this agent — router RAW-verifies and commits per this session's established dispatch instruction.\n",
+        "next_agent": "pm",
+        "commit": "pending",
+        "qa_verified_at": "2026-07-10T13:03:15Z",
+        "done_verified": true,
+        "started_at": "2026-07-10T12:54:31Z",
+        "updated_at": "2026-07-10T13:03:15Z",
+        "updated_by": "qa",
+        "qa_verdict": "APPROVED",
+        "qa_verified_by": "qa",
+        "qa_note": "APPROVED. Router already independently re-ran/confirmed tests(6/6,20 expect())/tsc/mock-guard/diff-read — did not re-verify those, focused on the 6 dispatcher-specified substance points. (1) Regression-proof test read directly: legacy validation_status='pending' (DB DEFAULT, bctc-schema.ts:818) row asserts BOTH the real report header (\"=== GATETEST4\") AND a real fixture value (\"39\" from netRevenue~39.5B) — non-trivial, not just \"doesn't throw\". (2) compare_financials one-pending case confirmed the message names ONLY the pending period (\"2024-Q2\" present, \"2024-Q1\" explicitly asserted absent) — genuinely distinguishes which period, not a generic message. (3) Read reports.ts directly: pending-extraction gate sits strictly BEFORE checkBctcIdentityGuard in both tools (get_financial_summary L308-328 before L330-352; compare_financials L458-487 before L489-519). Traced further: a shell row's total_assets is genuinely NULL (omitted from the shell INSERT, no schema DEFAULT) so the identity guard fails OPEN on null by its own docstring — without this gate the row would have silently rendered a fabricated-looking \"Confidence:100%,NetRevenue:0.0 ty VND\" reading (the exact pre-fix regression), never even reaching a guard-caught message — placement before the guard is correct and load-bearing. (4) Both new messages read in full: pure English, matches reports.ts's own message convention, no cross-import from bctcFullTools.ts Vietnamese. (5) git status --porcelain confirms exactly 2 files touched, matches board files:[]. (6) All 3 pending-extraction fixtures call the REAL ensureFinancialReportShellRow usecase (import+call sites read directly); 5 legacy real-data fixtures use raw-SQL insertRealRow() by necessity (simulating pre-existing DB state, no real usecase produces it) with plausible values that also pass checkBctcIdentityGuard. Independently re-ran the new test file myself: 6 pass/0 fail/20 expect() — exact match. Informational (non-blocking, out of scope): confirmed docs/agents/tools/list/compare_financials.md documents a different tool (compareTools.ts actually registers compare_stocks, different params/output) — genuinely stale, left untouched. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md task-id-stamped entry present, line 329)."
       }
     ],
     "head": {
@@ -8033,7 +8040,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T12:30:53Z",
+    "last_triaged_at": "2026-07-10T13:03:15Z",
     "last_triaged_by": "qa",
     "in_progress": [
       {
