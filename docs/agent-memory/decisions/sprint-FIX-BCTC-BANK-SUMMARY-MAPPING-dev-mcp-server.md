@@ -54,3 +54,19 @@ dispatcher's "OLD image, do not run live" instruction.
 **why-change:** No change to sprint scope; W5(b)'s own text already anticipated the
 "code fix alone will not unfreeze it" caveat — this journal entry documents WHY the
 script cannot go further (transcription requires a live subagent, out of script reach).
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-07-10T02:52:25Z
+**task-id:** TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD
+**what-done:** Built scripts/migrations/carry-forward-bctc-orphaned-rows.ts,
+copied 451 CTG 2026-Q1 bctc_table_rows 96e36139→e497f7d1 live, reused
+buildBackfillBctcScalarsHandler to reflow scalars (commit 0647db163).
+**what-considered:**
+- Standalone migration script (chosen) vs backfill_bctc_scalars param extension
+  — tool already deregistered (TOOL-SURFACE-UPGRADE U3), script matches precedent.
+- Force-promote scalars anyway on PARTIAL — REJECTED: no-fake-data policy.
+**why-decision:** Reused prod reflow handler (zero duplicated aggregation logic);
+BEQ-6 section gate correctly refused DONE since carried rows are 208
+income_statement + 173 cash_flow + 70 notes, zero balance_sheet.
+**why-change:** AC-TRACK1-3 escalated not fixed — balance-sheet page window was
+never captured in the source refine pass, root defect deeper than this ticket's
+scope (blocked on gateway-blind defect); routed to pm as new backlog item.
