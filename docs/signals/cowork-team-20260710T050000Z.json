@@ -1,0 +1,29 @@
+{
+  "tick": "2026-07-10T05:00Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["news-scout-sentiment", "alert-commander-market"],
+  "new_signals": 0,
+  "severity": "MEDIUM",
+  "classification": {
+    "news-scout-sentiment": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "new slot this session — daily cron 0 5 * * 1-5, first occurrence today."
+    },
+    "alert-commander-market": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "13th consecutive tick this session (02:00Z through 05:00Z) — sustained streak during VN market hours cadence */15 2-8 * * 1-5."
+    }
+  },
+  "chef_mutex_note": "not applicable — no chef-group slot matched",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 6,
+  "stale_warning_note": "true this tick — cumulative tally 22 true / 36 absent over 58 WORK ticks",
+  "action": "no dispatch — both slots undeliverable-gateway-blind, no telegram escalation (neither guaranteed)"
+}

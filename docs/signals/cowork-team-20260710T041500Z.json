@@ -1,0 +1,29 @@
+{
+  "tick": "2026-07-10T04:15Z",
+  "verdict": "WORK",
+  "drift_min": 1,
+  "matched_slots": ["chef-intraday", "alert-commander-market"],
+  "new_signals": 0,
+  "severity": "MEDIUM",
+  "classification": {
+    "chef-intraday": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "3rd occurrence this session (02:15Z, 03:15Z, 04:15Z) — confirms hourly recurrence per cron 13 2-8 * * 1-5. Next expected 05:15Z, 06:15Z, 07:15Z."
+    },
+    "alert-commander-market": {
+      "pattern": "deprecated-backstop",
+      "trigger_id": null,
+      "_superseded_by": "cowork-dispatcher",
+      "guaranteed": false,
+      "note": "10th consecutive tick this session (02:00Z through 04:15Z) — sustained streak during VN market hours cadence */15 2-8 * * 1-5."
+    }
+  },
+  "chef_mutex_note": "not applicable — only chef-intraday matched, no coincident guaranteed CHEF slot",
+  "gateway_blind_status": "unresolved — native mcp__gateway__call_tool still absent; routed via mcp_call bash bypass, functioning normally",
+  "guaranteed_miss_count_session": 6,
+  "stale_warning_note": "absent this tick — cumulative tally 21 true / 34 absent over 55 WORK ticks",
+  "action": "no dispatch — both slots undeliverable-gateway-blind, no telegram escalation (neither guaranteed)"
+}
