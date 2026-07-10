@@ -1,0 +1,26 @@
+{
+  "from": "dev-team",
+  "to": "architect",
+  "type": "recurring-bug",
+  "priority": "medium",
+  "payload": {
+    "module": ".claude/skills/decision-journal/SKILL.md (DJ-GATE-1 enforcement)",
+    "count": 2,
+    "occurrences": [
+      {
+        "tick": "2026-07-10T01:07Z",
+        "task_id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD",
+        "mechanism": "worker (dev-mcp-server, sprint-FIX-BCTC-BANK-SUMMARY-MAPPING) never wrote any decision-journal entry before REVIEW flip — QA independently caught the gap via canonical grep and held the board at REVIEW instead of DONE_VERIFIED"
+      },
+      {
+        "tick": "2026-07-10T01:37Z",
+        "task_id": "ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "mechanism": "worker (pm, sprint-SYSTEMIC-REMAKE-P1) wrote a decision-journal entry with correct content, but to an ad-hoc filename (docs/agent-memory/decisions/arch-daily-foreign-flow-table-pm-atomization.md) instead of the skill's own deterministic §Resolve-Sprint-ID path (docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-pm.md) — invisible to the canonical grep pattern 'sprint-*-*.md', same gate defeated via a different proximate cause; confirmed pm has never written to its canonical journal path this sprint despite 15 other agents having theirs. dev-team caught this via RAW-verification (not a downstream agent this time) and dispatched fixer to correct it (task:FIX-PM-DJGATE1-JOURNAL-FILENAME)."
+      }
+    ],
+    "diagnosis": "DJ-GATE-1 compliance currently relies entirely on each individual spawned agent correctly following the decision-journal skill's instructions at flip-time — there is no deterministic/automated check (e.g. baked into scripts/orch-apply.sh, or a pre-flip lint) that actually verifies a journal entry exists at the canonical sprint-<sprint-id>-<agent-id>.md path before a DONE/REVIEW/DONE_VERIFIED flip is permitted. Both occurrences so far were caught by a downstream reviewer (QA, then dev-team's own RAW-verification) rather than prevented structurally — the gate is honor-system, not enforced.",
+    "suggested_fix": "Consider hardening DJ-GATE-1 from an honor-system grep-after-the-fact check into an actual precondition gate — e.g. scripts/orch-apply.sh (or a wrapper it calls) could refuse a status transition into REVIEW/DONE/DONE_VERIFIED for a given task_id unless docs/agent-memory/decisions/sprint-*-<updated_by>.md already contains a matching 'task-id:** <id>' line, computed via the same sprint-id resolution logic the skill itself uses. This moves the check from 'downstream reviewer might notice' to 'the write itself is refused.' Scope/feasibility assessment left to architect.",
+    "verification_gate": "architect assessment doc or brief addressing feasibility; not a code-fix verification gate at this stage"
+  },
+  "createdAt": "2026-07-10T02:10:13Z"
+}
