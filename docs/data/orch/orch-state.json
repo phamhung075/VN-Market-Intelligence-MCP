@@ -299,12 +299,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST moved in_progress->review (status-flip=lane-move fix; 2nd occurrence of feedback_review_status_stuck_in_inprogress_lane_blocks_wip, 1st was FACTORY-KINHDICH-name-price-score-constants 07-09). chef.md Step 7.6 landed commit 7320e4f50, awaiting live CHEF cycle to verify unified-agent-synthesis-<DATE>-<SLOT>.json is written.",
-    "updated_at": "2026-07-10T08:58:53Z",
-    "updated_by": "dev-team"
+    "status": "design_complete",
+    "active_task_id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
+    "next_agent": "pm",
+    "next_action": "pm decompose FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md) into atomic dev-mcp-server tasks — D1 (financial_reports.id stability) must sequence before D2 (shell-row+pdf_path) and D3 (auto PEK trigger+reconciliation cron); also atomize the status-enum consumer updates (vpsHealthPoller.ts, freshnessSlaMonitorJob.ts, bctcQueueEnricherJob.ts)",
+    "updated_at": "2026-07-10T09:41:54Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6568,26 +6568,6 @@
         "created_at": "2026-07-10T08:58:53Z",
         "created_by": "dev-team",
         "opened_by": "dev-team"
-      },
-      {
-        "id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
-        "type": "SPRINT-S",
-        "priority": "high",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "title": "Wire automatic table-extraction into bctcPdfPullJob, decoupled from the synchronous 0-row gate",
-        "detail": "Per SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW (docs/spikes/SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW.md, commit 336a6ce11) + PO round BATCH triage (task_id OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE): bctcPdfPullJob's */30min cron calls ONLY pdf-extractor's scalar-only /extract endpoint (pdfExtractorClient.ts:65), never a table-extraction endpoint, so its own 0-row gate (bctc_table_rows=0 AND bctc_md_tables=0) fires enrich_failed unconditionally on EVERY newly-pulled report batch-wide (VCI/VHM confirmed hitting it live outside the 2025-Q4 12-ticker cohort). Not a Jul-8 regression (corroborated by architect SPIKE docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md predating fdb424178). Three concerns for architect design: (a) fire /pek-extract (or /extract-md-tables) automatically for newly-pulled reports; PEK is 202/async so the existing synchronous 0-row gate MUST become deferred/next-cycle (else it still reads 0 immediately after firing); (b) populate financial_reports.pdf_path at PDF-save time, not deferred to the legacy scalar pipeline's success (GVR/MBB/D2D currently have pdf_path IS NULL despite the file existing on disk, blocking /api/trigger-pek-extract's own NULL-pdf_path skip rule); (c) decouple financial_reports shell-row creation from the legacy OCR-confidence gate (_OCR_CONFIDENCE_THRESHOLD=0.5 in domain/services.py) so a PEK-extractable PDF (e.g. GAS, likely scanned, currently has NO financial_reports row at all) is not blocked by an unrelated low-confidence scalar read. SPIKE RAW-verified pdf-extractor's /pek-extract endpoint + push-back path already exist and work (manual POST /api/trigger-pek-extract is proven functional) — keep single-zone apps/mcp-server/; escalate to `multi` zone ONLY if the deferred-gate write-back contract genuinely needs a new pdf-extractor callback change.",
-        "baseline_pass": "pnpm --filter vn-market check green",
-        "related": [
-          "telegram-report:3542",
-          "telegram-report:3546",
-          "spike:SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
-          "task:OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE"
-        ],
-        "created_at": "2026-07-10T09:40:00Z",
-        "created_by": "po-triage-BATCH-dispatch-20260710T0940Z",
-        "updated_at": "2026-07-10T09:40:00Z",
-        "updated_by": "dev-team"
       }
     ],
     "closed_sprints": [
@@ -7305,7 +7285,30 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
+        "type": "SPRINT-S",
+        "priority": "high",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "title": "Wire automatic table-extraction into bctcPdfPullJob, decoupled from the synchronous 0-row gate",
+        "detail": "Per SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW (docs/spikes/SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW.md, commit 336a6ce11) + PO round BATCH triage (task_id OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE): bctcPdfPullJob's */30min cron calls ONLY pdf-extractor's scalar-only /extract endpoint (pdfExtractorClient.ts:65), never a table-extraction endpoint, so its own 0-row gate (bctc_table_rows=0 AND bctc_md_tables=0) fires enrich_failed unconditionally on EVERY newly-pulled report batch-wide (VCI/VHM confirmed hitting it live outside the 2025-Q4 12-ticker cohort). Not a Jul-8 regression (corroborated by architect SPIKE docs/architecture-briefs/2026-07-03-bctc-discover-pipeline-dead.md predating fdb424178). Three concerns for architect design: (a) fire /pek-extract (or /extract-md-tables) automatically for newly-pulled reports; PEK is 202/async so the existing synchronous 0-row gate MUST become deferred/next-cycle (else it still reads 0 immediately after firing); (b) populate financial_reports.pdf_path at PDF-save time, not deferred to the legacy scalar pipeline's success (GVR/MBB/D2D currently have pdf_path IS NULL despite the file existing on disk, blocking /api/trigger-pek-extract's own NULL-pdf_path skip rule); (c) decouple financial_reports shell-row creation from the legacy OCR-confidence gate (_OCR_CONFIDENCE_THRESHOLD=0.5 in domain/services.py) so a PEK-extractable PDF (e.g. GAS, likely scanned, currently has NO financial_reports row at all) is not blocked by an unrelated low-confidence scalar read. SPIKE RAW-verified pdf-extractor's /pek-extract endpoint + push-back path already exist and work (manual POST /api/trigger-pek-extract is proven functional) — keep single-zone apps/mcp-server/; escalate to `multi` zone ONLY if the deferred-gate write-back contract genuinely needs a new pdf-extractor callback change.",
+        "baseline_pass": "pnpm --filter vn-market check green",
+        "related": [
+          "telegram-report:3542",
+          "telegram-report:3546",
+          "spike:SPIKE-BCTC-2025Q4-PDFPULL-OCR-0ROW",
+          "task:OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE"
+        ],
+        "created_at": "2026-07-10T09:40:00Z",
+        "created_by": "po-triage-BATCH-dispatch-20260710T0940Z",
+        "updated_at": "2026-07-10T09:41:54Z",
+        "updated_by": "architect",
+        "owner": "pm",
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md"
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
