@@ -7186,7 +7186,7 @@
         "type": "ARCHITECTURE",
         "title": "ARCH-DAILY-FOREIGN-FLOW-TABLE: Separate staging table to eliminate R-1 data-loss window",
         "zone": "apps/mcp-server/",
-        "status": "DONE",
+        "status": "DONE_VERIFIED",
         "priority": "P1",
         "size": "L",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-DAILY-FOREIGN-FLOW-TABLE",
