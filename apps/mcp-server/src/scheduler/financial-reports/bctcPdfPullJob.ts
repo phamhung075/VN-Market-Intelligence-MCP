@@ -72,6 +72,7 @@ import { logger } from "../../infrastructure/logger.js";
 import { withDeadline } from "../../infrastructure/fetchers/fetchDeadline.js";
 import { ensureFinancialReportShellRow } from "../../application/usecases/bctc/ensureFinancialReportShellRow.js";
 import type { PekTriggerOutcome } from "../../infrastructure/fetchers/pekExtractTrigger.js";
+import { isVnMarketHours } from "../../domain/services/freshnessSlaChecker.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -348,12 +349,16 @@ export function buildPdfSavePath(
  * @param opts.batchSize - Max items per run (default 10)
  * @param opts.deps      - Injectable I/O deps (defaults to production)
  * @param opts.pdfDir    - Override pdf save directory (for tests)
+ * @param opts.now       - Injectable clock for the FIX-BCTC-R-HIGH-2 market-hours
+ *                         guard (defaults to `new Date()`; tests pin a fixed Date
+ *                         so the guard's outcome is deterministic).
  */
 export async function runBctcPdfPullJob(opts: {
   db?: Database;
   batchSize?: number;
   deps?: BctcPdfPullDeps;
   pdfDir?: string;
+  now?: Date;
 } = {}): Promise<BctcPdfPullResult> {
   // ── Overlap guard (FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD) ────────────────────
   // See the `_isRunning` doc comment above for the full rationale. Early
@@ -378,6 +383,7 @@ export async function runBctcPdfPullJob(opts: {
     const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
     const deps = opts.deps ?? (await makeProductionDeps());
     const apiKey = Bun.env.VPS_PUSH_API_KEY ?? "";
+    const now = opts.now ?? new Date();
 
     const result: BctcPdfPullResult = {
       itemsProcessed: 0,
@@ -633,7 +639,23 @@ export async function runBctcPdfPullJob(opts: {
       // triggerPekExtractionForReport() itself (log.error) — D3C will still
       // correctly terminal-fail those rows after MAX_RECONCILE_ATTEMPTS since
       // bctc_layout_units stays genuinely empty for them.
-      if (shellRow) {
+      // FIX-BCTC-R-HIGH-2: client-side market-hours pre-check (PM option A).
+      // pdf-extractor's own Layer-2 guard already 503s any /pek-extract call
+      // received during VN market hours (02:00-08:59 UTC) — that outcome was
+      // already folded into 'pek_triggered' above (see the block comment),
+      // so correctness does not depend on this guard. It exists purely to
+      // avoid firing a call this cron KNOWS will fail every ~30 min during
+      // market hours (noisy 503 log spam + a wasted round-trip). The row
+      // still advances to 'pek_triggered' exactly as if the call had fired —
+      // bctcExtractReconcileJob.ts (D3C) re-fires/re-checks later once market
+      // hours have passed, so the guard only skips the network call, never
+      // the state machine.
+      if (shellRow && isVnMarketHours(now)) {
+        logger.info("[bctcPdfPull] skipping PEK extraction trigger — VN market hours (client-side guard)", {
+          ticker: row.action_code,
+          reportId: shellRow.id,
+        });
+      } else if (shellRow) {
         try {
           const pekOutcome = await (deps.triggerPekExtraction ?? DEFAULT_PEK_TRIGGER_STUB)(
             shellRow.id,

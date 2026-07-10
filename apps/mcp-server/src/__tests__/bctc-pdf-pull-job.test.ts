@@ -31,6 +31,16 @@
  * market-hours, and genuine trigger-call errors all land on 'pek_triggered' —
  * D3C is the only place that decides done vs enrich_failed).
  *
+ * FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD (2026-07-10): TC-14..TC-16 now pin an
+ * explicit off-hours `now` (OFF_HOURS_NOW) so their "trigger IS called"
+ * assertions stay deterministic regardless of the real wall-clock time the
+ * suite runs at — the new client-side isVnMarketHours(now) pre-check (added
+ * immediately before the triggerPekExtraction call site) would otherwise
+ * skip the call whenever the suite happened to run during 02:00-08:59 UTC.
+ * TC-18..TC-20 are new: they cover the guard itself (skip when market open,
+ * call as before when market closed, and the pre-existing shellRow-null
+ * branch is unaffected by the guard either way).
+ *
  * FIX-BCTC-EXTRACT-LOCALPATH (TC-11, TC-12):
  *   Root cause: bctcPdfPullJob L143 called extractViaMicroservice(params.pdfUrl)
  *   passing the VPS source URL. The pdf-extractor microservice fetches that URL
@@ -51,6 +61,7 @@ import type { Database } from "bun:sqlite";
 import { Database as SqliteDatabase } from "bun:sqlite";
 
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
+import { isVnMarketHours } from "../domain/services/freshnessSlaChecker.js";
 import {
   runBctcPdfPullJob,
   VPS_BCTC_BASE_URL,
@@ -59,6 +70,13 @@ import {
   type BctcPdfPullDeps,
   type BctcPdfPullResult,
 } from "../scheduler/financial-reports/bctcPdfPullJob.js";
+
+// FIX-BCTC-R-HIGH-2: fixed clocks for the market-hours guard so TC-14..TC-20
+// are deterministic regardless of the real wall-clock time the suite runs at
+// (2026-07-06 is a Monday / VN trading day — see isVnMarketHours sanity
+// assertions at each use site below).
+const OFF_HOURS_NOW = new Date("2026-07-06T09:30:00Z"); // after 08:59 UTC close
+const MARKET_HOURS_NOW = new Date("2026-07-06T04:00:00Z"); // inside 02:00-08:59 UTC
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -642,7 +660,10 @@ describe("bctcPdfPullJob", () => {
     };
 
     const pdfDir = "/app/data/pdfs";
-    await runBctcPdfPullJob({ db: testDb, deps, pdfDir });
+    // FIX-BCTC-R-HIGH-2: pin an off-hours clock — this test asserts the
+    // trigger IS called, which is only true when the new market-hours guard
+    // does not fire (see TC-18 for the guard-fires case).
+    await runBctcPdfPullJob({ db: testDb, deps, pdfDir, now: OFF_HOURS_NOW });
 
     const expectedPath = buildPdfSavePath("REE", 2025, "Q4", pdfDir);
     const shellRow = testDb
@@ -671,7 +692,11 @@ describe("bctcPdfPullJob", () => {
       }),
     };
 
-    await runBctcPdfPullJob({ db: testDb, deps, pdfDir: "/app/data/pdfs" });
+    // FIX-BCTC-R-HIGH-2: off-hours clock — this test's 503 outcome must come
+    // from the deps mock (simulating a call that WAS made and pdf-extractor's
+    // own Layer-2 guard rejected it), not from the new client-side guard
+    // short-circuiting the call before it happens.
+    await runBctcPdfPullJob({ db: testDb, deps, pdfDir: "/app/data/pdfs", now: OFF_HOURS_NOW });
 
     const queueRow = getQueueRow(testDb, "HSG", 2025, "Q4");
     expect(queueRow?.status).toBe("pek_triggered");
@@ -694,7 +719,8 @@ describe("bctcPdfPullJob", () => {
           ({ ...outcome, reportId, pdfPath }) as never,
       };
 
-      await runBctcPdfPullJob({ db: testDb, deps, pdfDir: "/app/data/pdfs" });
+      // FIX-BCTC-R-HIGH-2: off-hours clock — same rationale as TC-15 above.
+      await runBctcPdfPullJob({ db: testDb, deps, pdfDir: "/app/data/pdfs", now: OFF_HOURS_NOW });
 
       const queueRow = getQueueRow(testDb, code, 2025, "Q4");
       expect(queueRow?.status).toBe("pek_triggered");
@@ -726,6 +752,113 @@ describe("bctcPdfPullJob", () => {
     expect(result.downloaded).toBe(1); // row still advances (non-fatal)
 
     const queueRow = getQueueRow(testDb, "DGC", 2025, "Q4");
+    expect(queueRow?.status).toBe("pek_triggered");
+  });
+
+  // ── TC-18..TC-20: FIX-BCTC-R-HIGH-2-MARKET-HOURS-GUARD ──────────────────────
+  // Design: docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md
+  // §Risk flags R-HIGH-2 (PM option A: client-side isVnMarketHours() pre-check).
+  // pdf-extractor's own Layer-2 guard already 503s any /pek-extract call
+  // received during VN market hours — this client-side guard exists only to
+  // avoid the guaranteed-failure round-trip + noisy 503 log spam every
+  // ~30 min during 02:00-08:59 UTC. It must guard the network call ONLY —
+  // the queue row's advance to 'pek_triggered' must be unaffected either way.
+
+  it("TC-18: isVnMarketHours()=true (market open) → triggerPekExtraction is NOT called, row still advances to pek_triggered", async () => {
+    expect(isVnMarketHours(MARKET_HOURS_NOW)).toBe(true); // sanity
+
+    const sourceUrl = `${VPS_BCTC_BASE_URL}VCB/20260130-VCB-BCTC.pdf`;
+    insertQueueItem(testDb, "VCB", 2025, "Q4", sourceUrl);
+
+    let pekCalled = false;
+    const deps: BctcPdfPullDeps = {
+      fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+      savePdf: async () => {},
+      triggerExtraction: async () => {},
+      triggerPekExtraction: async (reportId, pdfPath) => {
+        pekCalled = true;
+        return { outcome: "queued", status: 202, reportId, pdfPath };
+      },
+    };
+
+    const result = await runBctcPdfPullJob({
+      db: testDb,
+      deps,
+      pdfDir: "/app/data/pdfs",
+      now: MARKET_HOURS_NOW,
+    });
+
+    expect(pekCalled).toBe(false); // guard must skip the call entirely
+    expect(result.downloaded).toBe(1); // row still "advanced" this cycle
+
+    const queueRow = getQueueRow(testDb, "VCB", 2025, "Q4");
+    expect(queueRow?.status).toBe("pek_triggered"); // state machine unaffected by the guard
+  });
+
+  it("TC-19: isVnMarketHours()=false (market closed) → triggerPekExtraction IS called (unchanged baseline behavior)", async () => {
+    expect(isVnMarketHours(OFF_HOURS_NOW)).toBe(false); // sanity
+
+    const sourceUrl = `${VPS_BCTC_BASE_URL}BID/20260130-BID-BCTC.pdf`;
+    insertQueueItem(testDb, "BID", 2025, "Q4", sourceUrl);
+
+    let pekCalled = false;
+    const deps: BctcPdfPullDeps = {
+      fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+      savePdf: async () => {},
+      triggerExtraction: async () => {},
+      triggerPekExtraction: async (reportId, pdfPath) => {
+        pekCalled = true;
+        return { outcome: "queued", status: 202, reportId, pdfPath };
+      },
+    };
+
+    await runBctcPdfPullJob({
+      db: testDb,
+      deps,
+      pdfDir: "/app/data/pdfs",
+      now: OFF_HOURS_NOW,
+    });
+
+    expect(pekCalled).toBe(true);
+
+    const queueRow = getQueueRow(testDb, "BID", 2025, "Q4");
+    expect(queueRow?.status).toBe("pek_triggered");
+  });
+
+  it("TC-20: shellRow-null branch is unaffected by the market-hours guard — still logs the pre-existing skip reason, not the guard's, even during market hours", async () => {
+    expect(isVnMarketHours(MARKET_HOURS_NOW)).toBe(true); // sanity
+
+    const sourceUrl = `${VPS_BCTC_BASE_URL}CTG/20260130-CTG-BCTC.pdf`;
+    insertQueueItem(testDb, "CTG", 2025, "Q4", sourceUrl);
+
+    let pekCalled = false;
+    const deps: BctcPdfPullDeps = {
+      fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+      savePdf: async () => {},
+      triggerExtraction: async () => {},
+      triggerPekExtraction: async (reportId, pdfPath) => {
+        pekCalled = true;
+        return { outcome: "queued", status: 202, reportId, pdfPath };
+      },
+    };
+
+    // Same technique as TC-17: force ensureFinancialReportShellRow to throw
+    // so `shellRow` stays undefined — the guard's `shellRow &&` short-circuit
+    // must route straight to the pre-existing "shell row unavailable" branch
+    // regardless of `isVnMarketHours(now)`.
+    testDb.exec("DROP TABLE financial_reports");
+
+    const result = await runBctcPdfPullJob({
+      db: testDb,
+      deps,
+      pdfDir: "/app/data/pdfs",
+      now: MARKET_HOURS_NOW,
+    });
+
+    expect(pekCalled).toBe(false); // no report_id available — same reason as TC-17, not the guard
+    expect(result.downloaded).toBe(1);
+
+    const queueRow = getQueueRow(testDb, "CTG", 2025, "Q4");
     expect(queueRow?.status).toBe("pek_triggered");
   });
 });
