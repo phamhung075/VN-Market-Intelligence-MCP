@@ -308,7 +308,7 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-07-10T16:35:52Z",
+    "updated_at": "2026-07-10T16:55:06Z",
     "updated_by": "router",
     "active_task_id": null,
     "next_agent": null
@@ -4963,16 +4963,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE"
       },
       {
-        "id": "SHG-1",
-        "title": "Create scripts/orch-state-validate.sh with G-1…G-6 checks",
-        "status": "TODO",
-        "zone": "scripts/",
-        "priority": "HIGH",
-        "size": "XS",
-        "type": "TASK",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-1"
-      },
-      {
         "id": "SHG-2",
         "title": "One-time migration: rewrite all non-canonical status values to canonical enum",
         "status": "BACKLOG",
@@ -6030,7 +6020,8 @@
         "type": "FIX",
         "zone": "docs/data/orch/orch-state.json (task_board.backlog)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "supervised": true
+        "supervised": true,
+        "status_note": " | UPDATE 2026-07-10T16:55:06Z (router): SHG-1 confirmed as a 5th stale-pick instance (scripts/orch-state-validate.sh pre-existed, commit d6f9b0580). Wider check: SHG-2 (41d925d8c), SHG-3+SHG-4 (46eba4b33, eviction-exec b7fc62411), SHG-5 (4a5d655df) ALL have matching completion commits yet remain BACKLOG/TODO rows — but orch-validate.mjs:375 documents an still-unflipped coherence hard-fail condition gated on SHG-2+SHG-4 \"complete\", and this tick's own orch-apply.sh runs show 129 live coherence violations — genuine open work, not just unflipped checkboxes. Whoever picks up this sweep should treat the SHG-1..SHG-5 cluster as a concrete first case study: verify each individually (SHG-1 done, closed this tick; SHG-2/3/4/5 need actual investigation of the coherence-hard-fail-flip readiness before any DONE_VERIFIED flip)."
       },
       {
         "id": "INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
@@ -7712,6 +7703,29 @@
         "router_verified_at": "2026-07-10T16:35:52Z",
         "router_verified_by": "router",
         "router_note": "APPROVED. Independent RAW-verify beyond dev-mcp-server's own report: per-lane count reconciliation against last committed baseline (10a9a934d) proves the disclosed incident+recovery left zero residual data loss (backlog 387->386, review 21->22 = exactly this one row moving, every other lane + signal_queue.rows id-set byte-identical). Read orch-conservation-check.mjs + all 3 diffs (orch-apply.sh, orch-state-hook-prewrite.mjs, orch-cold-evict.sh) in full — matches the architecture brief design exactly, fail-open policy consistent with the existing validator pattern. Ran scripts/test/orch-apply-wrapper-tests.sh myself: 31/31 PASS. Independently reproduced RED-before by genuinely swapping in the git-committed pre-fix orch-apply.sh (confirmed 0 conservation references) and rerunning the same extended harness: COLLAPSE failed exactly as expected (28/31) — restored, 31/31 GREEN again. Ran bun test scripts/agents-flow/orch-state-hook.test.mjs myself: 19/19 PASS. Confirmed zero apps/mcp-server/src changes. Notebook + DJ-GATE-1 present and accurate."
+      },
+      {
+        "id": "SHG-1",
+        "title": "Create scripts/orch-state-validate.sh with G-1…G-6 checks",
+        "status": "DONE_VERIFIED",
+        "zone": "scripts/",
+        "priority": "HIGH",
+        "size": "XS",
+        "type": "TASK",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-1",
+        "promoted_at": "2026-07-10T16:48:21Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-10T16:48:21Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "done_verified": true,
+        "updated_at": "2026-07-10T16:55:06Z",
+        "updated_by": "router",
+        "commit": "pending",
+        "router_verdict": "SUPERSEDED — already done",
+        "router_verified_at": "2026-07-10T16:55:06Z",
+        "router_verified_by": "router",
+        "router_note": "STALE BOUNDED-1 PICK (5th confirmed instance of the project_bounded1_first_pickup_stale_backlog_hygiene_debt pattern) — NOT dispatched to a developer. scripts/orch-state-validate.sh already exists (created by commit d6f9b0580 \"feat(scripts/SHG-1): create orch-state-validate.sh write-gate validator\", later hardened by 4a5d655df \"SHG-5 promote G-5 status-enum check to hard gate\" and demoted to a thin shim of the canonical scripts/orch-validate.mjs by 33b3f12be — a documented SUPERSET of the original G-1..G-6 checks). Actively in live use: this very tick's own orch-apply.sh writes ran through this exact validation path. Pre-verify-pruned per established mitigation rather than spawning duplicate work. Broader finding (all of SHG-2..SHG-5 also show matching completion commits yet remain BACKLOG/TODO, plus a genuinely-still-open coherence hard-fail flip condition documented in orch-validate.mjs line 375 with 129 live violations this tick) routed to BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP's status_note for adjudicated follow-up — NOT closed here, out of this tick's scope."
       }
     ],
     "head": {
@@ -8241,7 +8255,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T16:35:52Z",
+    "last_triaged_at": "2026-07-10T16:55:06Z",
     "last_triaged_by": "router",
     "in_progress": []
   },
