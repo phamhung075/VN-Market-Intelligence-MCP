@@ -191,16 +191,20 @@ function writeZeroCounter(
 }
 
 /**
- * Returns true when there is at least one active queue row (pending or
- * url_not_found) — i.e. we are inside an active earnings window.
- * Generic: keyed on row status only, no ticker/exchange filter.
+ * Returns true when there is at least one active queue row (pending,
+ * url_not_found, or pek_triggered) — i.e. we are inside an active earnings
+ * window. Generic: keyed on row status only, no ticker/exchange filter.
+ *
+ * FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS: 'pek_triggered' added — a row
+ * awaiting async PEK table-extraction reconciliation (bctcExtractReconcileJob,
+ * not yet landed) is genuinely in-progress work, not idle/stalled/orphaned.
  */
 function isEarningsWindowActive(db: Database): boolean {
   try {
     const row = db
       .query<{ cnt: number }, []>(
         `SELECT COUNT(*) AS cnt FROM bctc_vps_queue
-         WHERE status IN ('pending', 'url_not_found')`,
+         WHERE status IN ('pending', 'url_not_found', 'pek_triggered')`,
       )
       .get();
     return (row?.cnt ?? 0) > 0;
@@ -294,6 +298,16 @@ export async function runBctcQueueEnricherJob(opts: {
   // rows terminalized by incrementAttemptsStmt/markUrlNotFoundStmt never had
   // last_attempt set (see below) and so could NEVER satisfy this arm's
   // `last_attempt IS NOT NULL` predicate — a permanent false-terminal.
+  //
+  // FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS: 'pek_triggered' is deliberately
+  // NOT added to this arm's status list. Unlike url_not_found/enrich_failed
+  // (genuinely-terminal/stuck states eligible for a fresh discovery pass),
+  // a pek_triggered row already has a real (non-placeholder) source_url and a
+  // valid pdf_path/report_id — resetting it to source_url=NULL/status='pending'
+  // here would corrupt in-flight PEK work, not repair a stuck row. Reconciling
+  // pek_triggered → done/enrich_failed based on actual bctc_layout_units row
+  // counts is bctcExtractReconcileJob.ts's job (FIX-BCTC-D3C-RECONCILE-JOB,
+  // not yet landed) — this arm must stay hands-off until that job lands.
   //
   // FIX-CTG-1 (2026-06-03): include period_year and period_quarter in SELECT so
   // each row is enriched with its OWN quarter's PDF URL, not the current year/Q4 default.

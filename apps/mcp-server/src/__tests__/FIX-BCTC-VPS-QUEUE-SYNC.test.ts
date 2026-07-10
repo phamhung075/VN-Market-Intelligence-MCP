@@ -91,9 +91,12 @@ function makePullDeps(overrides: Partial<BctcPdfPullDeps> = {}): BctcPdfPullDeps
 }
 
 /**
- * FIX-BCTC-ENRICH-SILENT-0ROWS: seed a minimal financial_reports header + 1
- * bctc_table_rows row so the 0-row gate in bctcPdfPullJob passes and the
- * happy-path tests advance to 'done'.
+ * Seed a minimal financial_reports header + 1 bctc_table_rows row.
+ * Historically (FIX-BCTC-ENRICH-SILENT-0ROWS) this fed a synchronous 0-row
+ * gate in bctcPdfPullJob; that gate was removed by
+ * FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS — kept here only as harmless seed
+ * data, not load-bearing for the happy-path tests below (which now advance
+ * to 'pek_triggered' regardless of table-row presence).
  */
 function seedExtractionResult(db: Database, code: string, year: number, quarter: string): void {
   const q = quarter.startsWith("Q") ? quarter : `Q${quarter}`;
@@ -248,7 +251,11 @@ describe("G1 — 404 retry cap → deferred_infra", () => {
     expect(result.downloaded).toBe(1);
     expect(result.deferred).toBe(0);
     const row = getRow(db, "VCB", 2026, "Q1");
-    expect(row?.status).toBe("done");
+    // FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS: successful rows now land on
+    // 'pek_triggered' (the synchronous 0-row gate that used to decide 'done'
+    // here was removed) — this test's actual subject (failed/deferred counts
+    // reset on a fresh success) is unaffected by the status-value rename.
+    expect(row?.status).toBe("pek_triggered");
   });
 });
 

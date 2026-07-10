@@ -21,6 +21,12 @@
  *   (b) the guard resets after completion so the next tick runs normally.
  *   (c) the guard resets even if the body throws.
  *
+ * FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS (2026-07-10): a successfully
+ * processed row now lands on 'pek_triggered' (not 'done') — the OLD
+ * synchronous 0-row gate this job used to run was removed. Terminal status
+ * assertions below were updated accordingly; the overlap-guard behaviour
+ * itself (this file's actual subject) is unaffected.
+ *
  * All I/O is injected — no real network, no real file system.
  */
 
@@ -183,7 +189,6 @@ describe("FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD", () => {
     expect(secondResult.downloaded).toBe(0);
     expect(secondResult.failed).toBe(0);
     expect(secondResult.deferred).toBe(0);
-    expect(secondResult.enrichFailed).toBe(0);
 
     // Proof of "does NOT re-process": fetchPdf was never called a 2nd time...
     expect(fetchCalls.length).toBe(1);
@@ -199,7 +204,7 @@ describe("FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD", () => {
     expect(firstResult.downloaded).toBe(1);
 
     const rowAfter = getQueueRow(testDb, "VCB", 2025, "Q4");
-    expect(rowAfter?.status).toBe("done");
+    expect(rowAfter?.status).toBe("pek_triggered"); // FIX-BCTC-D3B (was 'done')
   });
 
   // ── (b) guard resets after completion — next tick runs normally ─────────────
@@ -223,7 +228,7 @@ describe("FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD", () => {
     expect(secondResult.downloaded).toBe(1);
 
     const row = getQueueRow(testDb, "HPG", 2025, "Q4");
-    expect(row?.status).toBe("done");
+    expect(row?.status).toBe("pek_triggered"); // FIX-BCTC-D3B (was 'done')
   });
 
   // ── (c) guard resets even if the body throws ────────────────────────────────
@@ -265,6 +270,6 @@ describe("FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD", () => {
     expect(followUpResult.downloaded).toBe(1);
 
     const rowAfter = getQueueRow(testDb, "ACB", 2025, "Q4");
-    expect(rowAfter?.status).toBe("done");
+    expect(rowAfter?.status).toBe("pek_triggered"); // FIX-BCTC-D3B (was 'done')
   });
 });

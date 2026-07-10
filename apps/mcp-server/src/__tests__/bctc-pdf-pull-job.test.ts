@@ -8,10 +8,28 @@
  *   2. Downloads each PDF via fetch with X-API-Key header.
  *   3. Validates size >= MIN_PDF_BYTES (10 240).
  *   4. Saves to data/pdfs/<TICKER>_<YEAR>_Q<QUARTER>.pdf.
- *   5. Updates bctc_vps_queue status to 'done'.
- *   6. Triggers extraction pipeline (injectable for tests).
+ *   4b. Ensures a financial_reports shell row exists with pdf_path set.
+ *   5. Awaits the legacy scalar text-extraction pipeline (injectable, unrelated
+ *      to table extraction below).
+ *   6. Fires the async PEK table-extraction trigger and updates
+ *      bctc_vps_queue status to 'pek_triggered'.
  *
  * All I/O is injected — no real network calls, no real FS writes.
+ *
+ * FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS (2026-07-10): the OLD synchronous
+ * 0-row gate (bctc_table_rows/bctc_md_tables count → done/enrich_failed,
+ * decided synchronously right after triggerExtraction) has been REMOVED —
+ * /pek-extract is fire-and-forget (202), so a synchronous post-fire row-count
+ * check was structurally guaranteed to read 0. Every row that reaches Step 4
+ * (PDF saved) now advances to the new intermediate 'pek_triggered' status;
+ * reconciliation to a genuine done/enrich_failed verdict is deferred to the
+ * NOT-YET-LANDED bctcExtractReconcileJob.ts (FIX-BCTC-D3C-RECONCILE-JOB).
+ * Tests below that previously asserted 'done' or 'enrich_failed' as the final
+ * queue status now assert 'pek_triggered' instead — see inline notes at each
+ * updated test. TC-14..TC-17 are new: they cover the PEK-trigger call
+ * contract (report_id/pdf_path) and the outcome-folding rule (202, 503
+ * market-hours, and genuine trigger-call errors all land on 'pek_triggered' —
+ * D3C is the only place that decides done vs enrich_failed).
  *
  * FIX-BCTC-EXTRACT-LOCALPATH (TC-11, TC-12):
  *   Root cause: bctcPdfPullJob L143 called extractViaMicroservice(params.pdfUrl)
@@ -207,7 +225,7 @@ describe("bctcPdfPullJob", () => {
 
   // ── TC-3: successful download path ────────────────────────────────────────
 
-  it("downloads PDF, saves file, marks status done, triggers extraction", async () => {
+  it("downloads PDF, saves file, marks status pek_triggered, triggers extraction", async () => {
     const sourceUrl = `${VPS_BCTC_BASE_URL}VCB/20260130-VCB-BCTC.pdf`;
     insertQueueItem(testDb, "VCB", 2025, "Q4", sourceUrl);
     // FIX-BCTC-ENRICH-SILENT-0ROWS: seed extraction result so 0-row gate passes
@@ -238,9 +256,10 @@ describe("bctcPdfPullJob", () => {
     expect(triggerCalls[0]!.year).toBe(2025);
     expect(triggerCalls[0]!.quarter).toBe("Q4");
 
-    // Queue row marked done
+    // Queue row marked pek_triggered (FIX-BCTC-D3B — the 0-row gate that used
+    // to decide done vs enrich_failed synchronously has been removed).
     const row = getQueueRow(testDb, "VCB", 2025, "Q4");
-    expect(row?.status).toBe("done");
+    expect(row?.status).toBe("pek_triggered");
   });
 
   // ── TC-4: size guard — PDF too small ─────────────────────────────────────
@@ -368,50 +387,50 @@ describe("bctcPdfPullJob", () => {
 
     for (const code of ["VCB", "FPT", "HPG"]) {
       const row = getQueueRow(testDb, code, 2025, "Q4");
-      expect(row?.status).toBe("done");
+      expect(row?.status).toBe("pek_triggered"); // FIX-BCTC-D3B
     }
   });
 
-  // ── TC-10: extraction failure + 0 rows → enrich_failed (FIX-BCTC-ENRICH-SILENT-0ROWS) ──
-  // Pre-fix: queue was marked 'done' even when triggerExtraction throws and 0 rows landed.
-  // Post-fix: when triggerExtraction throws AND bctc_table_rows == 0 AND bctc_md_tables == 0,
-  //           queue is marked 'enrich_failed' (not 'done') — the 0-row gate applies.
-  // Corollary: if triggerExtraction throws BUT rows WERE seeded (by a prior partial run),
-  //            the queue still advances to done (rows already landed, throw was non-fatal).
+  // ── TC-10/TC-10b: SUPERSEDED by FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS ──────
+  // Historic behaviour (FIX-BCTC-ENRICH-SILENT-0ROWS, now removed): a
+  // triggerExtraction throw was fed into a synchronous bctc_table_rows/
+  // bctc_md_tables count that decided 'enrich_failed' (0 rows) vs 'done'
+  // (rows pre-seeded). That decision point no longer exists in this job —
+  // the legacy triggerExtraction dep is independent of the new PEK-trigger
+  // step, and BOTH scenarios below now land on 'pek_triggered' regardless of
+  // whether triggerExtraction throws or table rows happen to already exist.
+  // (Reconciling to done/enrich_failed based on actual bctc_layout_units
+  // counts is bctcExtractReconcileJob.ts's job — FIX-BCTC-D3C-RECONCILE-JOB,
+  // not yet landed.) sendBugFn is no longer a runBctcPdfPullJob option (the
+  // BUG notification responsibility moved to D3C per the design doc) — both
+  // tests below drop that plumbing.
 
-  it("TC-10: triggerExtraction throws + 0 rows → enrich_failed (not done)", async () => {
+  it("TC-10: triggerExtraction throws + 0 table rows → still advances to pek_triggered (not blocked by legacy-pipeline failure)", async () => {
     const sourceUrl = `${VPS_BCTC_BASE_URL}ACB/acb.pdf`;
     insertQueueItem(testDb, "ACB", 2025, "Q4", sourceUrl);
-    // No seedExtractionResult — 0 rows (extraction threw before producing any)
+    // No seedExtractionResult — 0 bctc_table_rows (irrelevant to the new flow;
+    // this job no longer inspects that table at all).
 
-    const bugMessages: string[] = [];
     const deps: BctcPdfPullDeps = {
       fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
       savePdf: async () => {},
       triggerExtraction: async () => { throw new Error("Pipeline unavailable"); },
     };
 
-    const result = await runBctcPdfPullJob({
-      db: testDb,
-      deps,
-      sendBugFn: async (msg) => { bugMessages.push(msg); },
-    });
+    const result = await runBctcPdfPullJob({ db: testDb, deps });
 
-    // Extraction threw + 0 rows → enrich_failed
-    expect(result.downloaded).toBe(0); // NOT counted since enrich_failed
-    expect(result.enrichFailed).toBe(1);
+    expect(result.downloaded).toBe(1); // legacy-pipeline throw is non-fatal
     expect(result.failed).toBe(0);
 
     const row = getQueueRow(testDb, "ACB", 2025, "Q4");
-    expect(row?.status).toBe("enrich_failed");
-    // Bug notification must have fired
-    expect(bugMessages.length).toBeGreaterThan(0);
+    expect(row?.status).toBe("pek_triggered");
   });
 
-  it("TC-10b: triggerExtraction throws but rows WERE seeded → still advances to done", async () => {
+  it("TC-10b: triggerExtraction throws but table rows WERE already seeded → still pek_triggered (row-count no longer inspected)", async () => {
     const sourceUrl = `${VPS_BCTC_BASE_URL}ACB/acb.pdf`;
     insertQueueItem(testDb, "ACB", 2025, "Q4", sourceUrl);
-    // Rows seeded as if a prior partial run already pushed them
+    // Rows seeded as if a prior partial run already pushed them — proves the
+    // presence/absence of bctc_table_rows no longer influences the outcome.
     seedExtractionResult(testDb, "ACB", 2025, "Q4");
 
     const deps: BctcPdfPullDeps = {
@@ -422,11 +441,9 @@ describe("bctcPdfPullJob", () => {
 
     const result = await runBctcPdfPullJob({ db: testDb, deps });
 
-    // Rows exist → 0-row gate passes → advance to done despite throw
     expect(result.downloaded).toBe(1);
-    expect(result.enrichFailed).toBe(0);
     const row = getQueueRow(testDb, "ACB", 2025, "Q4");
-    expect(row?.status).toBe("done");
+    expect(row?.status).toBe("pek_triggered");
   });
 
   // ── TC-11: FIX-BCTC-EXTRACT-LOCALPATH — filePath must be non-empty and canonical ──
@@ -543,11 +560,13 @@ describe("bctcPdfPullJob", () => {
     expect(shellRow!.pdf_path).toBe(expectedPath);
     expect(shellRow!.validation_status).toBe("pending_extraction");
 
-    // 0-row gate has no data for a shell-only row → enrich_failed (not done);
-    // this is the pre-existing D3-scope gate, unaffected by D2 — the shell
-    // row's existence/pdf_path is the D2 assertion above.
+    // FIX-BCTC-D3B: the 0-row gate that used to synchronously decide
+    // done/enrich_failed for a shell-only row has been removed — the queue
+    // row now advances to 'pek_triggered' regardless (the shell row's
+    // existence/pdf_path is the D2 assertion above; the PEK trigger fired for
+    // this row is asserted separately in the TC-14+ suite below).
     const queueRow = getQueueRow(testDb, "GAS", 2025, "Q4");
-    expect(queueRow?.status).toBe("enrich_failed");
+    expect(queueRow?.status).toBe("pek_triggered");
   });
 
   it("TC-13b: pre-existing legacy row with pdf_path IS NULL gets pdf_path set at PDF-save time (same id preserved)", async () => {
@@ -596,5 +615,117 @@ describe("bctcPdfPullJob", () => {
     // validation_status untouched by the shell-row upsert (DO UPDATE SET
     // only touches pdf_path) — legacy row's own status survives.
     expect(row!.validation_status).toBe("passed");
+  });
+
+  // ── TC-14..TC-17: FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS ────────────────────
+  // Design: docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md §D3.
+  // Covers the PEK-trigger call contract (report_id/pdf_path) and the
+  // outcome-folding rule: every triggerPekExtraction() outcome (202 queued,
+  // 503 market-hours, or a genuine trigger-call error) lands the queue row on
+  // 'pek_triggered' — none is a proven synchronous success/failure at this
+  // layer; only the not-yet-landed bctcExtractReconcileJob's actual
+  // bctc_layout_units row-count check is.
+
+  it("TC-14: triggerPekExtraction called with the shell row's report_id and the saved filePath", async () => {
+    const sourceUrl = `${VPS_BCTC_BASE_URL}REE/20260130-REE-BCTC.pdf`;
+    insertQueueItem(testDb, "REE", 2025, "Q4", sourceUrl);
+
+    const pekCalls: Array<{ reportId: string; pdfPath: string }> = [];
+    const deps: BctcPdfPullDeps = {
+      fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+      savePdf: async () => {},
+      triggerExtraction: async () => {},
+      triggerPekExtraction: async (reportId, pdfPath) => {
+        pekCalls.push({ reportId, pdfPath });
+        return { outcome: "queued", status: 202, reportId, pdfPath };
+      },
+    };
+
+    const pdfDir = "/app/data/pdfs";
+    await runBctcPdfPullJob({ db: testDb, deps, pdfDir });
+
+    const expectedPath = buildPdfSavePath("REE", 2025, "Q4", pdfDir);
+    const shellRow = testDb
+      .prepare(`SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?`)
+      .get("REE", "2025-Q4") as { id: string } | null;
+
+    expect(shellRow).not.toBeNull();
+    expect(pekCalls).toHaveLength(1);
+    expect(pekCalls[0]!.reportId).toBe(shellRow!.id);
+    expect(pekCalls[0]!.pdfPath).toBe(expectedPath);
+
+    const queueRow = getQueueRow(testDb, "REE", 2025, "Q4");
+    expect(queueRow?.status).toBe("pek_triggered");
+  });
+
+  it("TC-15: /pek-extract 503 (VN market-hours guard) folds into pek_triggered — no separate pek_deferred_market_hours status", async () => {
+    const sourceUrl = `${VPS_BCTC_BASE_URL}HSG/20260130-HSG-BCTC.pdf`;
+    insertQueueItem(testDb, "HSG", 2025, "Q4", sourceUrl);
+
+    const deps: BctcPdfPullDeps = {
+      fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+      savePdf: async () => {},
+      triggerExtraction: async () => {},
+      triggerPekExtraction: async (reportId, pdfPath) => ({
+        outcome: "market_hours", status: 503, reportId, pdfPath, body: "market open",
+      }),
+    };
+
+    await runBctcPdfPullJob({ db: testDb, deps, pdfDir: "/app/data/pdfs" });
+
+    const queueRow = getQueueRow(testDb, "HSG", 2025, "Q4");
+    expect(queueRow?.status).toBe("pek_triggered");
+  });
+
+  it("TC-16: /pek-extract genuine error outcomes (pdf_extractor_error, unreachable) also fold into pek_triggered — D3C's row-count check is the only terminal-verdict authority", async () => {
+    for (const outcome of [
+      { outcome: "pdf_extractor_error" as const, status: 502 as const, pekStatus: 500, body: "boom" },
+      { outcome: "unreachable" as const, status: 502 as const, error: "ECONNREFUSED" },
+    ]) {
+      const code = outcome.outcome === "pdf_extractor_error" ? "PVD" : "PVS";
+      const sourceUrl = `${VPS_BCTC_BASE_URL}${code}/${code.toLowerCase()}.pdf`;
+      insertQueueItem(testDb, code, 2025, "Q4", sourceUrl);
+
+      const deps: BctcPdfPullDeps = {
+        fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+        savePdf: async () => {},
+        triggerExtraction: async () => {},
+        triggerPekExtraction: async (reportId, pdfPath) =>
+          ({ ...outcome, reportId, pdfPath }) as never,
+      };
+
+      await runBctcPdfPullJob({ db: testDb, deps, pdfDir: "/app/data/pdfs" });
+
+      const queueRow = getQueueRow(testDb, code, 2025, "Q4");
+      expect(queueRow?.status).toBe("pek_triggered");
+    }
+  });
+
+  it("TC-17: ensureFinancialReportShellRow failure → PEK trigger skipped, row still advances to pek_triggered (D3C re-derives report_id later)", async () => {
+    const sourceUrl = `${VPS_BCTC_BASE_URL}DGC/20260130-DGC-BCTC.pdf`;
+    insertQueueItem(testDb, "DGC", 2025, "Q4", sourceUrl);
+
+    let pekCalled = false;
+    const deps: BctcPdfPullDeps = {
+      fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+      savePdf: async () => {},
+      triggerExtraction: async () => {},
+      triggerPekExtraction: async (reportId, pdfPath) => {
+        pekCalled = true;
+        return { outcome: "queued", status: 202, reportId, pdfPath };
+      },
+    };
+
+    // Force ensureFinancialReportShellRow to throw: drop the financial_reports
+    // table entirely so the INSERT inside the usecase fails with "no such table".
+    testDb.exec("DROP TABLE financial_reports");
+
+    const result = await runBctcPdfPullJob({ db: testDb, deps, pdfDir: "/app/data/pdfs" });
+
+    expect(pekCalled).toBe(false); // no report_id available — PEK trigger must not fire
+    expect(result.downloaded).toBe(1); // row still advances (non-fatal)
+
+    const queueRow = getQueueRow(testDb, "DGC", 2025, "Q4");
+    expect(queueRow?.status).toBe("pek_triggered");
   });
 });

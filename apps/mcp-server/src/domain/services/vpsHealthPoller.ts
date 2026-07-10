@@ -87,7 +87,11 @@ export interface FreshnessConfig {
   /**
    * FIX-BCTC-FRESHNESS-GATE: optional earnings-window guard SQL.
    * Must return { active_count: number } — count of "actionable" queue rows
-   * (e.g. status IN ('pending','url_not_found','enrich_failed')).
+   * (e.g. status IN ('pending','url_not_found','enrich_failed','pek_triggered')
+   * — FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS added 'pek_triggered': a row
+   * awaiting async PEK table-extraction reconciliation is genuinely
+   * in-progress work, not idle — omitting it would misread normal async
+   * operation as a false "queue idle" state).
    *
    * Semantics: if active_count == 0 AND latestTimestampSql returns null or a
    * timestamp older than 7 days (no recent "done" row), the check returns "idle"
@@ -203,9 +207,16 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
     // Threshold: 24h (4 missed VPS push cycles of 6h each = definitively broken).
     //
     // Earnings-window guard (queueGuardSql): if the queue has NO active rows
-    // (pending / url_not_found / enrich_failed) AND no recent done rows in the
-    // last 7 days, return "idle" (off-season honest quiet state, not a false alarm).
-    // If active rows exist, the normal 24h freshness check applies.
+    // (pending / url_not_found / enrich_failed / pek_triggered) AND no recent
+    // done rows in the last 7 days, return "idle" (off-season honest quiet
+    // state, not a false alarm). If active rows exist, the normal 24h
+    // freshness check applies.
+    //
+    // FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS: 'pek_triggered' added — a row
+    // whose PDF was pulled and whose /pek-extract POST was fired is genuinely
+    // in-progress (awaiting bctcExtractReconcileJob's reconciliation, not yet
+    // landed), not idle. Omitting it would misclassify normal async PEK
+    // operation as a false "queue idle" reading.
     //
     // Generic invariant: all SQL uses only status predicates — no ticker/date/
     // exchange literal.  Works for any ticker fleet size.
@@ -220,7 +231,7 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
     queueGuardSql: `
       SELECT COUNT(*) AS active_count
       FROM bctc_vps_queue
-      WHERE status IN ('pending', 'url_not_found', 'enrich_failed')
+      WHERE status IN ('pending', 'url_not_found', 'enrich_failed', 'pek_triggered')
     `,
     queueGuardRecentMs: 7 * 24 * 60 * 60_000, // 7 days
   },

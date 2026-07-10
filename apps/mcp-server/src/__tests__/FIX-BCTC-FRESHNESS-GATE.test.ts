@@ -92,12 +92,15 @@ describe("FIX-BCTC-FRESHNESS-GATE — Contract 2", () => {
     expect(cfg.maxAgeMs).toBe(24 * 60 * 60_000);
   });
 
-  it("config: has queueGuardSql covering pending/url_not_found/enrich_failed", () => {
+  it("config: has queueGuardSql covering pending/url_not_found/enrich_failed/pek_triggered", () => {
     const cfg = bctcConfig();
     expect(cfg.queueGuardSql).toBeDefined();
     expect(cfg.queueGuardSql).toContain("pending");
     expect(cfg.queueGuardSql).toContain("url_not_found");
     expect(cfg.queueGuardSql).toContain("enrich_failed");
+    // FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS: a row awaiting async PEK
+    // reconciliation is in-progress work, not idle — must count as active.
+    expect(cfg.queueGuardSql).toContain("pek_triggered");
     // Generic: no ticker name
     expect(cfg.queueGuardSql).not.toMatch(/VCB|VNM|HPG|TCB/);
   });
@@ -173,6 +176,24 @@ describe("FIX-BCTC-FRESHNESS-GATE — Contract 2", () => {
     // Queue has work but no successful push yet → not idle, but no data rows.
     expect(result.healthStatus).toBe("unreachable");
     expect(result.errorMessage).toContain("No data rows found");
+    db.close();
+  });
+
+  // ── baseline_pass_F (FIX-BCTC-D3B): pek_triggered-only queue → NOT idle ──
+
+  it("baseline_pass_F: queue has ONLY pek_triggered rows (no pending/url_not_found/enrich_failed) + no done rows → UNREACHABLE (active, not idle)", () => {
+    const db = buildDb();
+    // Only a pek_triggered row — async PEK work in progress, awaiting the
+    // (not-yet-landed) reconciliation job. No pending/url_not_found/
+    // enrich_failed rows and no done rows at all.
+    insertQueueRow(db, "VCB", "pek_triggered", null);
+
+    const result = checkServiceFreshness(db, bctcConfig(), NOW_ISO);
+    // Must NOT be idle — a pek_triggered row is genuinely active/in-progress
+    // work, not an empty/off-season queue. No done rows yet → unreachable
+    // (mirrors baseline_pass_E's "active queue, no data yet" semantics).
+    expect(result.healthStatus).toBe("unreachable");
+    expect(result.healthStatus).not.toBe("idle");
     db.close();
   });
 

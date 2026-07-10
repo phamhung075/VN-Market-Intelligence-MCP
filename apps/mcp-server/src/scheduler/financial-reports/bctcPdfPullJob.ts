@@ -13,14 +13,33 @@
  *   4. Save to data/pdfs/<TICKER>_<YEAR>_Q<QUARTER>.pdf.
  *   4b. Ensure a financial_reports shell row exists with pdf_path set
  *       (FIX-BCTC-D2-ENSURE-SHELL-ROW; errors logged, non-fatal).
- *   5. Update bctc_vps_queue status to 'done'.
- *   6. Await PDF text extraction pipeline (Bug 1352a fix; errors logged, non-fatal).
+ *   5. Await legacy scalar text-extraction pipeline (Bug 1352a fix; errors
+ *      logged, non-fatal) — UNCHANGED, unrelated to table extraction below.
+ *   6. Fire the async PEK table-extraction trigger (FIX-BCTC-D3B) via the
+ *      shared triggerPekExtractionForReport() helper (FIX-BCTC-D3A) and mark
+ *      bctc_vps_queue status = 'pek_triggered'.
  *
- * All I/O (fetch, save, extraction trigger) is injectable so tests run without
- * real network, real file system, or real DB writes. Step 4b writes directly
- * via the job's own `db` handle (opts.db ?? getDb()) rather than through the
- * injectable deps — it is a pure SQLite persistence op on the same DB the job
- * already reads/writes bctc_vps_queue against, not external I/O.
+ * FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS (2026-07-10): the OLD synchronous
+ * 0-row gate (FIX-BCTC-ENRICH-SILENT-0ROWS — read bctc_table_rows/bctc_md_tables
+ * counts immediately after triggerExtraction and decide done vs enrich_failed
+ * on the spot) has been REMOVED. Root cause: /pek-extract (the only proven-
+ * functional table-extraction endpoint) is 202/fire-and-forget — a
+ * synchronous post-fire row-count check is structurally guaranteed to read 0.
+ * The queue row now lands at the new intermediate status 'pek_triggered'
+ * (PDF saved + shell row upserted + /pek-extract POST returned 202, or the
+ * VN-market-hours 503, or any other trigger-call outcome — see step 6 below
+ * for the full outcome-folding rationale). Reconciliation to a genuine
+ * 'done'/'enrich_failed' verdict (based on actual bctc_layout_units row
+ * counts, checked out-of-band with a grace window) is the job of the
+ * NOT-YET-LANDED bctcExtractReconcileJob.ts (FIX-BCTC-D3C-RECONCILE-JOB) —
+ * until that job lands, 'pek_triggered' rows have no further transition path.
+ * Design: docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md §D3.
+ *
+ * All I/O (fetch, save, extraction triggers) is injectable so tests run
+ * without real network, real file system, or real DB writes. Step 4b writes
+ * directly via the job's own `db` handle (opts.db ?? getDb()) rather than
+ * through the injectable deps — it is a pure SQLite persistence op on the
+ * same DB the job already reads/writes bctc_vps_queue against, not external I/O.
  *
  * Runs every 30 min (CRON_BCTC_PDF_PULL env var) or right after bctcQueueEnricher.
  *
@@ -37,6 +56,9 @@
  *   Tier 2: file://${filePath} — local path via shared volume
  *   Tier 3: direct pdf-parse from local buffer (Bun process — segfault risk for
  *            large PDFs via pdf-parse; known separate bug exit 132 on PPC 74p/16.7MB)
+ * This legacy scalar pipeline is UNRELATED to /pek-extract (table extraction)
+ * and is untouched by FIX-BCTC-D3B — the two pipelines populate different
+ * columns/tables (scalars/JSON on financial_reports vs bctc_layout_units).
  *
  * Layer: interface/scheduler — imports from infrastructure (DB, logger) only.
  *
@@ -49,6 +71,7 @@ import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
 import { withDeadline } from "../../infrastructure/fetchers/fetchDeadline.js";
 import { ensureFinancialReportShellRow } from "../../application/usecases/bctc/ensureFinancialReportShellRow.js";
+import type { PekTriggerOutcome } from "../../infrastructure/fetchers/pekExtractTrigger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -139,12 +162,55 @@ export interface BctcPdfPullDeps {
     /** VPS source URL — Tier 1 attempt only; expected to fail (401) for VPS PDFs. */
     pdfUrl: string;
   }) => Promise<void>;
+
+  /**
+   * FIX-BCTC-D3B: fire the async PEK table-extraction trigger for a report.
+   * Production default (makeProductionDeps) delegates to the shared
+   * triggerPekExtractionForReport() helper (infrastructure/fetchers/pekExtractTrigger.ts,
+   * FIX-BCTC-D3A) — the SAME implementation the manual `/api/trigger-pek-extract`
+   * MCP route uses, so both call sites share one HTTP-call implementation.
+   *
+   * OPTIONAL (unlike the sibling deps above): most existing tests in this
+   * suite predate FIX-BCTC-D3B and do not exercise this contract. When a
+   * caller-supplied `deps` object omits this field, runBctcPdfPullJob falls
+   * back to a stub that reports `{ outcome: "queued" }` (see DEFAULT_PEK_TRIGGER_STUB
+   * below) — this never runs in production, where makeProductionDeps() always
+   * populates the real implementation.
+   */
+  triggerPekExtraction?: (
+    reportId: string,
+    pdfPath: string,
+  ) => Promise<PekTriggerOutcome>;
 }
+
+/**
+ * FIX-BCTC-D3B: default stub used ONLY when a caller-supplied `deps` object
+ * omits `triggerPekExtraction` (test ergonomics — see the field's own doc
+ * comment above). Never used by makeProductionDeps(), which always wires the
+ * real triggerPekExtractionForReport() helper.
+ */
+const DEFAULT_PEK_TRIGGER_STUB: (
+  reportId: string,
+  pdfPath: string,
+) => Promise<PekTriggerOutcome> = async (reportId, pdfPath) => ({
+  outcome: "queued",
+  status: 202,
+  reportId,
+  pdfPath,
+});
 
 export interface BctcPdfPullResult {
   /** Total queue rows examined (matched VPS prefix and were pending). */
   itemsProcessed: number;
-  /** PDFs successfully downloaded and saved. */
+  /**
+   * PDFs successfully downloaded, saved, and advanced to 'pek_triggered'
+   * (shell row upserted + PEK extraction trigger fired). Historically named
+   * for the OLD synchronous 0-row-gate's "advanced to done" counter —
+   * FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS repoints it at the new terminal
+   * write (`pek_triggered`) so the field's numeric meaning ("this job
+   * completed a full pull+shell+trigger cycle for the row") and its one
+   * production consumer (schedulerJobTable.ts's `rowsWritten`) stay intact.
+   */
   downloaded: number;
   /** Items that failed (HTTP error, size guard, fetch throw). */
   failed: number;
@@ -153,13 +219,6 @@ export interface BctcPdfPullResult {
    * their attempt count reached MAX_404_ATTEMPTS. Subset of `failed`.
    */
   deferred: number;
-  /**
-   * FIX-BCTC-ENRICH-SILENT-0ROWS: rows where extraction completed but yielded
-   * 0 bctc_table_rows AND 0 bctc_md_tables — silent-swallow class.
-   * These rows are marked 'enrich_failed' instead of 'done' so the parse
-   * failure (B02-TCTD / bank form) is surfaced rather than hidden.
-   */
-  enrichFailed: number;
   /**
    * FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD: set to 'already_running' when this
    * invocation early-returned because a previous invocation was still
@@ -248,6 +307,15 @@ async function makeProductionDeps(): Promise<BctcPdfPullDeps> {
         pdfUrl: params.pdfUrl,
       });
     },
+
+    triggerPekExtraction: async (reportId: string, pdfPath: string) => {
+      // FIX-BCTC-D3B: shared helper (FIX-BCTC-D3A) — same implementation the
+      // manual /api/trigger-pek-extract MCP route uses (bctcVpsIngestHandler.ts).
+      const { triggerPekExtractionForReport } = await import(
+        "../../infrastructure/fetchers/pekExtractTrigger.js"
+      );
+      return triggerPekExtractionForReport(reportId, pdfPath);
+    },
   };
 }
 
@@ -286,14 +354,6 @@ export async function runBctcPdfPullJob(opts: {
   batchSize?: number;
   deps?: BctcPdfPullDeps;
   pdfDir?: string;
-  /**
-   * FIX-BCTC-ENRICH-SILENT-0ROWS: injectable BUG notification function.
-   * Called when enrich yields 0 bctc_table_rows AND 0 bctc_md_tables.
-   * Defaults to sendTelegramBug (lazy import) in production.
-   * Tests inject a spy to verify the loud signal is emitted.
-   * Errors from sendBugFn are caught and logged — never block the fail-loud path.
-   */
-  sendBugFn?: (msg: string) => Promise<void>;
 } = {}): Promise<BctcPdfPullResult> {
   // ── Overlap guard (FIX-BCTC-PDFPULL-JOB-OVERLAP-GUARD) ────────────────────
   // See the `_isRunning` doc comment above for the full rationale. Early
@@ -308,7 +368,6 @@ export async function runBctcPdfPullJob(opts: {
       downloaded: 0,
       failed: 0,
       deferred: 0,
-      enrichFailed: 0,
       skippedReason: "already_running",
     };
   }
@@ -325,7 +384,6 @@ export async function runBctcPdfPullJob(opts: {
       downloaded: 0,
       failed: 0,
       deferred: 0,
-      enrichFailed: 0,
     };
 
     // ── 1. Query pending pull-eligible rows ──────────────────────────────────
@@ -358,8 +416,17 @@ export async function runBctcPdfPullJob(opts: {
     }
 
     // ── Prepare update statement ──────────────────────────────────────────────
-    const updateDone = db.prepare<void, [number]>(
-      `UPDATE bctc_vps_queue SET status = 'done', last_attempt = datetime('now') WHERE id = ?`,
+    /**
+     * FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS: replaces the OLD `updateDone`
+     * (which the removed synchronous 0-row gate wrote after a table-row-count
+     * check that could only ever read 0 for /pek-extract's fire-and-forget
+     * 202). PDF saved + shell row upserted + PEK trigger attempted (any HTTP
+     * outcome — see the call site below) → 'pek_triggered'. Reconciliation to
+     * 'done'/'enrich_failed' is bctcExtractReconcileJob.ts's job
+     * (FIX-BCTC-D3C-RECONCILE-JOB, not yet landed).
+     */
+    const updatePekTriggered = db.prepare<void, [number]>(
+      `UPDATE bctc_vps_queue SET status = 'pek_triggered', last_attempt = datetime('now') WHERE id = ?`,
     );
     const updateAttempt = db.prepare<void, [number]>(
       `UPDATE bctc_vps_queue SET attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`,
@@ -373,48 +440,6 @@ export async function runBctcPdfPullJob(opts: {
     const updateDeferredInfra = db.prepare<void, [number]>(
       `UPDATE bctc_vps_queue SET status = 'deferred_infra', attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`,
     );
-    /**
-     * FIX-BCTC-ENRICH-SILENT-0ROWS: mark a queue row 'enrich_failed' when the
-     * extraction pipeline completed but yielded 0 bctc_table_rows AND 0 bctc_md_tables.
-     * This is the FAIL-LOUD counterpart to the silent-advance bug: the row is NOT
-     * marked 'done' — it stays visible so the parse fix (dev-pdf-extractor B02-TCTD)
-     * can re-trigger extraction. The status is distinct from 'pending' (awaiting URL)
-     * and 'url_not_found' (discovery exhausted) to enable targeted triage queries.
-     */
-    const updateEnrichFailed = db.prepare<void, [number]>(
-      `UPDATE bctc_vps_queue SET status = 'enrich_failed', last_attempt = datetime('now') WHERE id = ?`,
-    );
-
-    // ── FIX-BCTC-ENRICH-SILENT-0ROWS: 0-row gate queries ────────────────────────
-    // Read the ACTUAL row counts from the DB after triggerExtraction completes.
-    // This is the anti-default-mask contract: no `rows = result || [PLACEHOLDER]`.
-    // Both queries use the report's sort_key derived from the queue row's period fields.
-    //
-    // Guard: bctc_table_rows and bctc_md_tables are created by migrateFinancialReports()
-    // which runs at startup in production. In test DBs (or a fresh DB before migration)
-    // the tables may not exist yet — db.prepare() would throw "no such table". We catch
-    // that here so the 0-row gate is silently bypassed (null = skip gate) rather than
-    // crashing the entire job. This is generic: any missing table = gate inactive.
-    let countTableRows: ReturnType<typeof db.prepare<{ cnt: number }, [string, string]>> | null;
-    let countMdTables: ReturnType<typeof db.prepare<{ cnt: number }, [string, string]>> | null;
-    try {
-      countTableRows = db.prepare<{ cnt: number }, [string, string]>(`
-        SELECT COUNT(*) AS cnt
-        FROM bctc_table_rows tr
-        JOIN financial_reports fr ON fr.id = tr.report_id
-        WHERE fr.action_code = ? AND fr.sort_key = ?
-      `);
-      countMdTables = db.prepare<{ cnt: number }, [string, string]>(`
-        SELECT COUNT(*) AS cnt
-        FROM bctc_md_tables bmt
-        JOIN financial_reports fr ON fr.id = bmt.report_id
-        WHERE fr.action_code = ? AND fr.sort_key = ?
-      `);
-    } catch {
-      // Schema tables not yet created (pre-migration or test DB) — skip 0-row gate.
-      countTableRows = null;
-      countMdTables = null;
-    }
 
     /**
      * FIX-BCTC-VPS-QUEUE-SYNC G1 helper: record a failed fetch attempt.
@@ -542,11 +567,15 @@ export async function runBctcPdfPullJob(opts: {
       // Errors are logged and non-fatal: the pull job's own success (file saved
       // to disk) must not be reverted by a shell-row write failure; the legacy
       // scalar pipeline triggered next can still create/complete the row itself.
+      //
+      // The returned `id` (report_id) is captured for the PEK trigger call in
+      // Step 6 below (FIX-BCTC-D3B) — undefined when the upsert itself threw.
+      let shellRow: { id: string; sortKey: string } | undefined;
       try {
         const shellQuarter = row.period_quarter.startsWith("Q")
           ? (row.period_quarter as "Q1" | "Q2" | "Q3" | "Q4")
           : (`Q${row.period_quarter}` as "Q1" | "Q2" | "Q3" | "Q4");
-        await ensureFinancialReportShellRow({
+        shellRow = await ensureFinancialReportShellRow({
           db,
           actionCode: row.action_code,
           year: row.period_year,
@@ -561,11 +590,14 @@ export async function runBctcPdfPullJob(opts: {
         });
       }
 
-      // ── 5. Trigger extraction (await — ensures text is stored before done) ────
+      // ── 5. Trigger legacy scalar text-extraction (await — ensures text is
+      //      stored before the row advances) ─────────────────────────────────
       // Bug 1352a: was fire-and-forget; MCP tools called immediately after
       // runBctcPdfPullJob saw empty text because OCR had not completed yet.
       // FIX-BCTC-EXTRACT-LOCALPATH: production triggerExtraction now delegates to
       // triggerPushBctcExtraction (3-tier fallback via filePath, not raw pdfUrl).
+      // UNCHANGED by FIX-BCTC-D3B — this is the scalar/JSON pipeline, unrelated
+      // to the table-extraction (/pek-extract) trigger in Step 6 below.
       try {
         await deps.triggerExtraction({
           actionCode: row.action_code,
@@ -575,8 +607,6 @@ export async function runBctcPdfPullJob(opts: {
           pdfUrl: row.source_url, // FIX-BCTC-EXTRACT-LOCALPATH: Tier 1 attempt; filePath is primary
         });
       } catch (err) {
-        // Extraction failure is logged. The 0-row gate below still runs to detect
-        // whether the failure resulted in 0 rows (enrich_failed) vs partial success.
         logger.warn("[bctcPdfPull] extraction trigger failed (non-fatal)", {
           ticker: row.action_code,
           filePath,
@@ -584,73 +614,57 @@ export async function runBctcPdfPullJob(opts: {
         });
       }
 
-      // ── 6. FIX-BCTC-ENRICH-SILENT-0ROWS: 0-row gate ─────────────────────────
-      // Read ACTUAL row counts from DB — never rely on extraction return value or
-      // default/placeholder. Both bctc_table_rows AND bctc_md_tables must be 0
-      // to trigger fail-loud (either table populated = data landed, mark done).
+      // ── 6. FIX-BCTC-D3B: fire the async PEK table-extraction trigger and
+      //      mark 'pek_triggered' (replaces the OLD synchronous 0-row gate) ──
+      // /pek-extract is fire-and-forget (202 accepted); there is no
+      // synchronous success/failure signal to gate on here — the
+      // NOT-YET-LANDED bctcExtractReconcileJob.ts (FIX-BCTC-D3C-RECONCILE-JOB)
+      // is the sole authority for the eventual done/enrich_failed verdict. It
+      // re-derives report_id via (action_code, sort_key) when it runs, so it
+      // does NOT depend on the `shellRow` local variable below.
       //
-      // sort_key derivation: period_quarter is stored as "Q1".."Q4" in the queue;
-      // financial_reports.sort_key = "<year>-<quarter>" e.g. "2026-Q1".
-      //
-      // If countTableRows/countMdTables are null (tables absent — pre-migration or
-      // test DB), skip the gate entirely: fall through to updateDone so the job
-      // completes normally. The gate is a production-only enrichment contract.
-      if (countTableRows === null || countMdTables === null) {
-        updateDone.run(row.id);
-        result.downloaded++;
-        continue;
-      }
-
-      const sortKey = `${row.period_year}-${row.period_quarter}`;
-      const tableRowCnt = countTableRows.get(row.action_code, sortKey)?.cnt ?? 0;
-      const mdTableCnt  = countMdTables.get(row.action_code, sortKey)?.cnt ?? 0;
-
-      if (tableRowCnt === 0 && mdTableCnt === 0) {
-        // FAIL LOUD — 0 rows extracted. Do NOT advance to 'done'.
-        // Mark 'enrich_failed' so the status is visible for triage and the
-        // parse fix (dev-pdf-extractor B02-TCTD) can re-trigger extraction.
-        updateEnrichFailed.run(row.id);
-        result.enrichFailed++;
-
-        const bugMsg =
-          `[bctcPdfPull] ENRICH 0-rows FAIL-LOUD: ${row.action_code} ` +
-          `${row.period_year}-${row.period_quarter} — ` +
-          `bctc_table_rows=0 AND bctc_md_tables=0 after extraction. ` +
-          `Queue row marked enrich_failed (NOT done). ` +
-          `Root: B02-TCTD parse failure or extraction pipeline stall. ` +
-          `Action: run dev-pdf-extractor fix or trigger bctcReparseJob.`;
-
-        logger.error("[bctcPdfPull] ENRICH 0-rows — FAIL LOUD", {
-          ticker: row.action_code,
-          year: row.period_year,
-          quarter: row.period_quarter,
-          sortKey,
-          tableRowCnt,
-          mdTableCnt,
-        });
-
-        const effectiveSendBug = opts.sendBugFn ?? (async (msg: string) => {
-          const { sendTelegramBug } = await import(
-            "../../infrastructure/notifiers/telegram.js"
-          );
-          await sendTelegramBug(msg);
-        });
-
+      // ALL triggerPekExtraction() outcomes land the row at 'pek_triggered' —
+      // none of {202 queued, 503 market-hours, 502 pdf-extractor error, 502
+      // unreachable} is a proven synchronous success or failure at this
+      // layer; only D3C's actual bctc_layout_units row-count check is. The
+      // market-hours 503 is explicitly folded in per the design doc's state
+      // machine note (§D3) rather than a separate pek_deferred_market_hours
+      // status. The two genuine-error outcomes are already logged loudly by
+      // triggerPekExtractionForReport() itself (log.error) — D3C will still
+      // correctly terminal-fail those rows after MAX_RECONCILE_ATTEMPTS since
+      // bctc_layout_units stays genuinely empty for them.
+      if (shellRow) {
         try {
-          await effectiveSendBug(bugMsg);
-        } catch (notifyErr) {
-          // Bug notification errors must NEVER block the fail-loud path.
-          logger.warn("[bctcPdfPull] sendBugFn threw (non-fatal to fail-loud)", {
+          const pekOutcome = await (deps.triggerPekExtraction ?? DEFAULT_PEK_TRIGGER_STUB)(
+            shellRow.id,
+            filePath,
+          );
+          logger.info("[bctcPdfPull] PEK extraction trigger fired", {
             ticker: row.action_code,
-            error: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+            reportId: shellRow.id,
+            outcome: pekOutcome.outcome,
+          });
+        } catch (err) {
+          // triggerPekExtractionForReport() never throws (all failure modes
+          // are represented in its return union) — defensive catch only.
+          logger.warn("[bctcPdfPull] triggerPekExtraction threw unexpectedly (non-fatal)", {
+            ticker: row.action_code,
+            error: err instanceof Error ? err.message : String(err),
           });
         }
-
-        continue; // Do NOT fall through to updateDone
+      } else {
+        // Shell-row upsert failed above (rare — logged there already). No
+        // report_id is available to call /pek-extract with this cycle; the
+        // row still advances to 'pek_triggered' so D3C's own
+        // (action_code, sort_key) re-derivation gets a chance to resolve it
+        // (or terminal-fail it if the row genuinely never landed).
+        logger.warn("[bctcPdfPull] skipping PEK extraction trigger — shell row unavailable", {
+          ticker: row.action_code,
+          filePath,
+        });
       }
 
-      // ── 7. Mark done — extraction has completed and rows were landed ──────────
-      updateDone.run(row.id);
+      updatePekTriggered.run(row.id);
       result.downloaded++;
     }
 
@@ -659,7 +673,6 @@ export async function runBctcPdfPullJob(opts: {
       downloaded: result.downloaded,
       failed: result.failed,
       deferred: result.deferred,
-      enrichFailed: result.enrichFailed,
     });
 
     return result;

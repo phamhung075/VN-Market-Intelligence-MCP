@@ -178,8 +178,12 @@ export function querySignalAges(
  * completely normal, not a crash. This reads the two live signals the
  * fix_spec requires:
  *   - queueDepth: COUNT of actionable bctc_vps_queue rows (pending /
- *     url_not_found / enrich_failed) — mirrors the queueGuardSql pattern
- *     already used by vpsHealthPoller.ts (FIX-BCTC-FRESHNESS-GATE).
+ *     url_not_found / enrich_failed / pek_triggered) — mirrors the
+ *     queueGuardSql pattern already used by vpsHealthPoller.ts
+ *     (FIX-BCTC-FRESHNESS-GATE). FIX-BCTC-D3B-GATE-PEK-TRIGGERED-STATUS added
+ *     'pek_triggered': a row awaiting async PEK reconciliation is genuinely
+ *     in-progress, not idle — omitting it would misread normal async
+ *     operation as a false "queue idle" state.
  *   - serviceActive: latest vps_service_health.health_status for
  *     'vn-bctc-fetch' — 'unreachable' means the poller found zero evidence
  *     of the service ever running; any other status (healthy/idle/unhealthy)
@@ -209,7 +213,7 @@ export function queryBctcPipelineRuntimeState(
       .query<{ active_count: number }, []>(
         `SELECT COUNT(*) AS active_count
            FROM bctc_vps_queue
-          WHERE status IN ('pending', 'url_not_found', 'enrich_failed')`,
+          WHERE status IN ('pending', 'url_not_found', 'enrich_failed', 'pek_triggered')`,
       )
       .get();
     const queueDepth = queueRow?.active_count ?? 0;

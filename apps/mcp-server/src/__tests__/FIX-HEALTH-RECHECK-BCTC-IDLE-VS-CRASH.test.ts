@@ -306,6 +306,18 @@ describe("FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH — Group C: queryBctcPipelineRu
     db.close();
   });
 
+  it("C-2b (FIX-BCTC-D3B): pek_triggered rows count toward queueDepth — async PEK work is active, not idle", () => {
+    const db = makeDb();
+    insertQueueRow(db, "VCB", "pending");
+    insertQueueRow(db, "VNM", "pek_triggered");
+    insertQueueRow(db, "HPG", "done"); // not actionable — excluded
+    insertHealthRow(db, "healthy");
+
+    const state = queryBctcPipelineRuntimeState(db);
+    expect(state).toEqual({ serviceActive: true, queueDepth: 2 });
+    db.close();
+  });
+
   it("C-3: latest health row = unreachable => serviceActive: false", () => {
     const db = makeDb();
     insertHealthRow(db, "healthy"); // older
