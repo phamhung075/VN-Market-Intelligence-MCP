@@ -7960,6 +7960,22 @@
         "escalated_at": "2026-07-10T17:48:41Z",
         "escalated_by": "router",
         "escalation_reason": "3rd confirmed instance this session (recurring-bug-2+ policy) — D0-BACKLOG-HYGIENE-TERMINAL-ROW-TRIAGE sub-agent's notebook write deleted the c324 entry on pm.md with no replacement, same root cause already diagnosed in this row's own note. Router restored the lost content directly; promoting for immediate dispatch rather than leaving a proven-recurring data-loss bug sitting in backlog."
+      },
+      {
+        "id": "D0B-BACKLOG-HYGIENE-TRIAGE-PERSIST-EXCLUDE-RELABEL-IDS",
+        "size": "M",
+        "sprint": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "status": "READY",
+        "title": "D0B: Re-derive + PERSIST full machine-readable exclude/relabel ID lists (D0's triage_result only has 2 of 15 named)",
+        "type": "MAINTENANCE",
+        "zone": "cross-service",
+        "owner": "pm",
+        "priority": "high",
+        "depends": [],
+        "note": "Blocks D1 re-run (self-blocked commit d45c03f1a, status_note documents the exact gap) and transitively D5. D0 (DONE_VERIFIED, commit 26ffe7567) triage_result.exceptions[] has only 2 of the claimed 15 items (4 exclude + 11 relabel) with per-row id+action+reason. Re-run the same 88-row triage methodology (spot-check pattern already proven correct on the 2 existing exceptions), but this time append EVERY exclude/relabel row to triage_result.exceptions[] (or a new triage_result.exclude_ids[]/relabel_ids[] array) — not just outliers. Do not touch D0's DONE_VERIFIED status; this is additive persistence on the same row, or a new row referencing it — pm's judgment call on which is cleaner, as long as D1 ends up with a machine-readable full ID list to build --exclude-ids from.",
+        "created_at": "2026-07-10T18:14:00Z",
+        "created_by": "router",
+        "escalation_reason": "4th confirmed instance this session of the 'agent claims a deliverable that is not actually persisted' defect class (2 prior notebook-write instances + this board-row instance + D0's own notebook incident earlier this tick). D1 independently verified and self-blocked rather than guess. Minted directly to ready[] (not backlog[]) given it blocks an already-in-flight sprint's remaining tasks (D1, D5)."
       }
     ],
     "review": [
@@ -8481,7 +8497,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T18:02:04Z",
+    "last_triaged_at": "2026-07-10T18:14:00Z",
     "last_triaged_by": "router",
     "in_progress": []
   },
