@@ -6587,6 +6587,33 @@
         "created_at": "2026-07-10T14:55:00Z",
         "created_by": "pm",
         "note": "Non-blocking follow-up from D3C QA review. Low risk: mirrors pre-existing attempts-column gap already accepted. Candidate for next sprint if backlog has capacity."
+      },
+      {
+        "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER",
+        "title": "Implement magnitude-bounded conservation circuit-breaker as a new Stage-2 gate in scripts/orch-apply.sh (whole-board task_total + signal_total must retain >=50% of live value) + new shared scripts/orch-conservation-check.mjs + PreToolUse hook parity + extend the existing scripts/test/orch-apply-wrapper-tests.sh harness — closes the content-safety half of FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT that was never implemented and is empirically live-exploitable today",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "size": "M",
+        "supervised": true,
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "recurring_bug_escalation": true,
+        "parent_task": "FIX-AUDITOR-ORCHSTATE-FULLDOC-OVERWRITE-CLOBBERS-SSOT",
+        "architecture_brief": "docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md",
+        "created_at": "2026-07-10T16:07:01Z",
+        "promoted_at": "2026-07-10T16:07:01Z",
+        "promoted_by": "po (PLAN-ONLY->IMPLEMENT handoff, recurring_bug_escalation)",
+        "files": [
+          "scripts/orch-apply.sh",
+          "scripts/orch-conservation-check.mjs",
+          "scripts/agents-flow/orch-state-hook-prewrite.mjs",
+          "scripts/test/orch-apply-wrapper-tests.sh"
+        ],
+        "verification_gate": "Extend the EXISTING scripts/test/orch-apply-wrapper-tests.sh (same ORCH_APPLY_LIVE_FILE_OVERRIDE + real-file-hash-unchanged safety pattern — do NOT create a parallel test file) with 3 cases per brief SS8: (1) COLLAPSE — populated fixture (>=312 backlog, >=97 signal rows) + de595a44-shaped scaffold candidate -> assert exit 1, fixture byte-unchanged (CONFIRMED RED today: currently exit 0, fixture destroyed; must go GREEN after fix); (2) APPEND-HAPPY — same fixture + 1 legit appended signal row -> assert exit 0, rows==pre+1, backlog unchanged (regression guard against over-blocking the auditor's real write); (3) SHRINK-ALLOWED — same fixture + done_verified[] emptied + ORCH_APPLY_ALLOW_SHRINK=cold-evict-test -> assert exit 0 (proves cold-evict.sh/task-archive.md bypass honored).",
+        "design_summary": "Brief SS4: new Stage-2 gate in scripts/orch-apply.sh AFTER schema validation, BEFORE the CAS-mtime rename. task_total (sum of all task-bearing lanes + active/closed sprint tasks) and signal_total (signal_queue.rows length) — a candidate that drops either below FLOOR_RATIO (default 0.5) of the live value, once live >= MIN_BASELINE (default 10), aborts exit 1 (reuses the existing validation-failed/live-untouched exit class). Logic lives in a new shared scripts/orch-conservation-check.mjs (bun, same runtime as orch-validate.mjs) called by orch-apply.sh AND scripts/agents-flow/orch-state-hook-prewrite.mjs (parity). NARROW NAMED BYPASS ORCH_APPLY_ALLOW_SHRINK=<reason> (mirrors the existing ORCH_APPLY_LIVE_FILE_OVERRIDE test-only precedent in that script) wired ONLY into scripts/orch-cold-evict.sh + docs/agents/pm/flow/task-archive.md (the 2 already-shipped legitimate bulk-eviction writers). REJECT the parent fix_spec's literal 'no lane may ever decrease' wording (brief SS4.2): it would falsely block normal single-task backlog->ready->in_progress lane moves AND both legitimate bulk-eviction writers — the whole-board magnitude-bounded ratio design avoids both false-positive modes because a single-task lane move nets to zero on task_total.",
+        "routing_note": "PLAN-ONLY->IMPLEMENT handoff from architect brief (parent DONE in done[]). supervised:true -> router dispatches dev-mcp-server DIRECTLY (WIP<=2 supervised budget), NOT via BOUNDED-1 FIFO and NOT via zone-detect generic-developer fallback. dev-mcp-server chosen (not ops, not architect-split) because every touched file is a host-side bash/bun repo script — zero apps/mcp-server/src changes, zero container rebuild. Full evidence + rejected-design proof: the architecture_brief. AC/DoD: verification_gate field above must be GREEN (COLLAPSE was RED before the fix)."
       }
     ],
     "closed_sprints": [
@@ -8212,6 +8239,6 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-07-10T07:55:00Z",
-  "_updated_by": "po-triage-20260710T0755Z"
+  "_updated_at": "2026-07-10T16:07:01Z",
+  "_updated_by": "po"
 }
