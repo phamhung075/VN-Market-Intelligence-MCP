@@ -7468,6 +7468,42 @@
         "done_verified": true,
         "qa_verified_at": "2026-07-10T11:56:42Z",
         "qa_verified_by": "qa"
+      },
+      {
+        "id": "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
+        "type": "FIX",
+        "priority": "high",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "title": "Extract triggerPekExtractionForReport() shared helper from handleTriggerPekExtract",
+        "owner": "dev-mcp-server",
+        "depends": [
+          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
+        ],
+        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3a",
+        "created_at": "2026-07-10T12:00:00Z",
+        "created_by": "pm",
+        "note": "Refactoring prep: extract shared HTTP fetch/market-hours-handling logic from handleTriggerPekExtract. Reuse in both manual route and new auto-trigger. DRY refactor, no new logic.",
+        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED",
+        "started_at": "2026-07-10T12:09:00Z",
+        "updated_at": "2026-07-10T12:30:53Z",
+        "updated_by": "qa",
+        "next_agent": "pm",
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/pekExtractTrigger.ts",
+          "apps/mcp-server/src/interface/mcp/routes/bctcVpsIngestHandler.ts",
+          "apps/mcp-server/src/__tests__/FIX-BCTC-D3A-PEK-TRIGGER-HELPER.test.ts",
+          "docs/agent-memory/decisions/sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md",
+          "docs/agent-memory/notebooks/dev-mcp-server.md"
+        ],
+        "status_note": "Pure DRY extraction (no new logic): moved handleTriggerPekExtract fetch/market-hours-handling block (bctcVpsIngestHandler.ts:194-280) into new triggerPekExtractionForReport(reportId, pdfPath, log?) in infrastructure/fetchers/pekExtractTrigger.ts (co-located with pdfExtractorClient.ts per design doc DDD table); returns discriminated union {queued|market_hours|pdf_extractor_error|unreachable}; handler translates outcome to byte-for-byte identical res.writeHead/res.end shapes (verified via git diff). log defaults to infra singleton logger (matches bctcPdfPullJob.ts convention for the still-BACKLOG D3b auto-trigger caller); handler passes its own injected log through unchanged. D3b auto-trigger wiring NOT implemented (still BACKLOG/blocked-on-this-task, out of scope per dispatch instructions). New FIX-BCTC-D3A-PEK-TRIGGER-HELPER.test.ts: 6/6 pass, 25 expect() calls (202/503/non-OK/network-error/POST-body-shape/default-log-param). Targeted regression (8 files: new test + 1112-bctc-vps-proxy + bctc-pdf-pull-job + FIX-BCTC-D1/D2 + FIX-BCTC-VPS-QUEUE-SYNC + FIX-1281-bctc-vps-only + pek-render-seam): 82/82 pass, 287 expect() calls. bun tsc --noEmit: clean. scripts/audits/mock-guard.sh --files on all 3 changed/new files: PASS. Bare bun test hung (documented S29/S30/S31 pattern) — used scripts/ci-per-file-isolation.sh 12 (canonical per host-safety convention): 14295 pass/40 skip/58 fail/1185 files; 3 files SIGILL pass-then-crash (known Bun 1.3.13 teardown crash, not counted as fails); 1 file (FIX-1267-ssc-circuit-breaker.test.ts) hung near-zero-CPU 5.5min, killed — independently pre-documented flaky on unrelated diffs unchanged baseline (sprint-FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP-architect.md). Grepped all 16 genuinely-failed files for pekExtractTrigger/triggerPekExtractionForReport/bctcVpsIngestHandler/handleTriggerPekExtract: zero matches. toolCount=183 unchanged, no scheduler/cron file touched. git status --porcelain -- apps/mcp-server/ confirms exactly 3 files touched (1 modified, 2 new) — matches pure-refactor scope. Decision journal STEP dev-mcp-server-S33 + notebook entry appended. NOT committed by this agent — router RAW-verifies and commits per explicit dispatch instruction.",
+        "done_verified": true,
+        "commit": "pending",
+        "qa_verdict": "APPROVED",
+        "qa_verified_at": "2026-07-10T12:30:53Z",
+        "qa_verified_by": "qa",
+        "qa_note": "APPROVED. Fresh-eyes read beyond router's independent re-run (tests/regression/tsc/mock-guard already matched). pekExtractTrigger.ts + bctcVpsIngestHandler.ts diff read in full: discriminated union (queued|market_hours|pdf_extractor_error|unreachable) preserves the exact original try/catch branch order and error-message/log-call fidelity; res.end fallback for market_hours preserved verbatim. Re-ran new test myself: 6/6 pass, 25 expect() — exact match; assertions confirmed substantive (spy-logger captures real args; default-log-param test genuinely exercises the real singleton, confirmed via console output during the run). Grepped repo: helper called from exactly 1 site (the handler) — confirms D3B auto-trigger wiring genuinely not wired yet, matching the stated out-of-scope instruction. Zero process.env/secrets/DB-writes in the new file — no-fake-data lens confirmed N/A (pure network passthrough). Pure mechanical extraction confirmed, zero new logic/branches. DJ-GATE-1 satisfied (sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md task-id-stamped entry present)."
       }
     ],
     "head": {
@@ -7997,7 +8033,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-07-10T10:44:06Z",
+    "last_triaged_at": "2026-07-10T12:30:53Z",
     "last_triaged_by": "qa",
     "in_progress": [
       {
@@ -8032,27 +8068,6 @@
         ],
         "dependency_order": "D1→D2→D3A→D3B→(D3C+R-HIGH-1+R-HIGH-2 parallel)",
         "note": "Parent task DECOMPOSED into 7 atomic sub-tasks. All sub-tasks in backlog/READY, ready for dev-mcp-server dispatch starting with D1 (no deps). Architect sequencing critical: D1 (id stability) MUST land first; D2, D3A, D3B, D3C/R-HIGH-1/R-HIGH-2 chain per dependency graph."
-      },
-      {
-        "id": "FIX-BCTC-D3A-PEK-TRIGGER-HELPER",
-        "type": "FIX",
-        "priority": "high",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "title": "Extract triggerPekExtractionForReport() shared helper from handleTriggerPekExtract",
-        "owner": "dev-mcp-server",
-        "depends": [
-          "FIX-BCTC-D2-ENSURE-SHELL-ROW"
-        ],
-        "detail_ref": "docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md#D3-D3a",
-        "created_at": "2026-07-10T12:00:00Z",
-        "created_by": "pm",
-        "note": "Refactoring prep: extract shared HTTP fetch/market-hours-handling logic from handleTriggerPekExtract. Reuse in both manual route and new auto-trigger. DRY refactor, no new logic.",
-        "blocked_note": "status-flip-lane-move fix (3rd occurrence this session, router 2026-07-10T~12:05Z): stayed in backlog[] lane, relabeled READY->BACKLOG since depends[] unmet; will promote to ready[] once its dependency lands DONE_VERIFIED",
-        "started_at": "2026-07-10T12:09:00Z",
-        "updated_at": "2026-07-10T12:09:00Z",
-        "updated_by": "dev-mcp-server"
       }
     ]
   },

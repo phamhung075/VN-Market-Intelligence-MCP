@@ -71,3 +71,17 @@ Commit: NOT committed by this agent — router RAW-verifies (3rd independent ver
 gateway MCP bridge unreachable in this sandboxed sub-session (ongoing known gap, not mine to fix) — could not `send_telegram`, same limitation QA itself noted in round 1.
 
 Zone health: tsc clean, targeted suite 28/28 pass (unchanged), mock-guard PASS, single-file/single-line-class fix scoped exactly to QA's blocking finding, no new full-suite sweep needed (no behavior change outside the one column) | HEALTHY.
+
+## 2026-07-10 — FIX-BCTC-D3A-PEK-TRIGGER-HELPER → REVIEW
+
+**Session:** 5a45feda-431e-46c8-941d-a6539a0eca77 (D3a of the FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION chain — D1/D2 landed DONE_VERIFIED; D3b auto-trigger wiring still BACKLOG, blocked on this task)
+
+Pure DRY refactor, no new logic (per the board row's own note). Read `handleTriggerPekExtract` (`bctcVpsIngestHandler.ts:194-280`) first, then extracted its fetch + market-hours-handling block into a new `triggerPekExtractionForReport(reportId, pdfPath, log?)` (`infrastructure/fetchers/pekExtractTrigger.ts`, co-located with `pdfExtractorClient.ts` per the design doc's DDD-layer table). Returns a discriminated union (`queued|market_hours|pdf_extractor_error|unreachable`) — the handler now just translates each outcome into the exact same `res.writeHead`/`res.end` shapes it always produced (verified via `git diff`: response bodies/status codes byte-for-byte unchanged). `log` defaults to the infra singleton `logger` (matches `bctcPdfPullJob.ts`'s own convention — the future D3b caller has no injected per-request logger); the HTTP handler passes its injected `log` through explicitly so its own log call-sites stay identical.
+
+New `FIX-BCTC-D3A-PEK-TRIGGER-HELPER.test.ts` (6 tests, 25 expect() calls, mocked `globalThis.fetch`): 202→queued, 503→market_hours (body forwarded verbatim), non-OK→pdf_extractor_error, thrown fetch error→unreachable, POST body forwards `{report_id, pdf_path}` verbatim, default-param (no log arg) path used by the future D3b caller. Targeted regression (8 files incl. `1112-bctc-vps-proxy`, `bctc-pdf-pull-job`, D1/D2 tests, `pek-render-seam`) 82/82 pass, 287 expect() calls. tsc clean. mock-guard PASS on all 3 changed/new files.
+
+Bare `bun test` hung again (documented S29/S30/S31 pattern) — used `scripts/ci-per-file-isolation.sh 12`: 14295 pass/40 skip/58 fail/1185 files. 3 files SIGILL pass-then-crash (known Bun 1.3.13 teardown crash, summary printed before crash so not counted as fails); 1 file (`FIX-1267-ssc-circuit-breaker.test.ts`) hung near-zero-CPU 5.5min, killed — independently pre-documented flaky (`sprint-FIX-MACRO-THRESHOLD-FXFLOOR-OVERCLAMP-architect.md`: same file flaky on an unrelated diff's unchanged baseline). Grepped all 16 genuinely-failed files for `pekExtractTrigger`/`triggerPekExtractionForReport`/`bctcVpsIngestHandler`/`handleTriggerPekExtract`: zero matches. toolCount=183 unchanged, no scheduler/cron file touched (D3b out of scope). `git status --porcelain -- apps/mcp-server/` confirms exactly 3 files (1 modified, 2 new) — matches the pure-refactor scope claim.
+
+Commit: NOT committed by this agent — router RAW-verifies and commits per explicit dispatch instruction. Board: `ready`→`in_progress`→`review` via orch-apply.sh, `next_agent=qa`.
+
+Zone health: tsc clean, new test 6/6 pass + targeted regression 82/82 pass, full-suite sweep 14295 pass/58 fail (16 files, zero overlap with this diff's touched files), mock-guard PASS, toolCount=183 unchanged | HEALTHY.

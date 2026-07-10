@@ -28,7 +28,7 @@ import type { createLogger } from "../../../infrastructure/logger.js";
 import { requireVpsApiKey } from "./_shared/requireVpsApiKey.js";
 import { parseMultipartFields } from "./_shared/multipartParser.js";
 import { safeLogVpsPush } from "../../../infrastructure/db/vpsPushLogStore.js";
-import { withDeadline } from "../../../infrastructure/fetchers/fetchDeadline.js";
+import { triggerPekExtractionForReport } from "../../../infrastructure/fetchers/pekExtractTrigger.js";
 
 type Logger = ReturnType<typeof createLogger>;
 
@@ -237,44 +237,29 @@ export async function handleTriggerPekExtract(
     return;
   }
 
-  // Call pdf-extractor with both report_id and pdf_path (PekExtractRequestSchema requires both)
-  try {
-    const pekUrl = "http://pdf-extractor:5001/pek-extract";
-    const pekResp = await withDeadline(
-      (signal) =>
-        fetch(pekUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ report_id: reportId, pdf_path: pdfPath }),
-          signal,
-        }),
-      30_000,
-      "triggerPekExtract",
-    );
+  // Call pdf-extractor with both report_id and pdf_path (PekExtractRequestSchema requires both).
+  // FIX-BCTC-D3A-PEK-TRIGGER-HELPER: fetch + market-hours-handling logic moved to the shared
+  // triggerPekExtractionForReport() helper (infrastructure/fetchers/pekExtractTrigger.ts) so the
+  // forthcoming D3B automatic post-pull trigger can reuse it — response shapes below are
+  // byte-for-byte unchanged from the pre-refactor inline implementation.
+  const result = await triggerPekExtractionForReport(reportId, pdfPath, log);
 
-    // Propagate 503 (market hours guard) verbatim
-    if (pekResp.status === 503) {
+  switch (result.outcome) {
+    case "market_hours":
       res.writeHead(503, { "Content-Type": "application/json" });
-      const pekBody = await pekResp.text();
-      res.end(pekBody || JSON.stringify({ error: "market_open", detail: "pdf-extractor returned 503 (VN market hours guard)" }));
+      res.end(result.body || JSON.stringify({ error: "market_open", detail: "pdf-extractor returned 503 (VN market hours guard)" }));
       return;
-    }
-
-    if (!pekResp.ok) {
-      const pekBody = await pekResp.text();
-      log.error("[trigger-pek-extract] pdf-extractor error", { status: pekResp.status, reportId, body: pekBody });
+    case "pdf_extractor_error":
       res.writeHead(502, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "pdf_extractor_error", status: pekResp.status, detail: pekBody }));
+      res.end(JSON.stringify({ error: "pdf_extractor_error", status: result.pekStatus, detail: result.body }));
       return;
-    }
-
-    log.info("[trigger-pek-extract] extraction triggered", { reportId, pdfPath });
-    res.writeHead(202, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true, report_id: reportId, pdf_path: pdfPath, status: "extraction_queued" }));
-  } catch (fetchErr) {
-    log.error("[trigger-pek-extract] fetch error", { error: fetchErr instanceof Error ? fetchErr.message : String(fetchErr), reportId });
-    res.writeHead(502, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "pdf_extractor_unreachable", detail: fetchErr instanceof Error ? fetchErr.message : String(fetchErr) }));
+    case "unreachable":
+      res.writeHead(502, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "pdf_extractor_unreachable", detail: result.error }));
+      return;
+    case "queued":
+      res.writeHead(202, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, report_id: reportId, pdf_path: pdfPath, status: "extraction_queued" }));
+      return;
   }
-  return;
 }
