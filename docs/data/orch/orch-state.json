@@ -6424,6 +6424,97 @@
         "created_at": "2026-07-10T05:02:34Z",
         "created_by": "dev-team",
         "opened_by": "dev-team"
+      },
+      {
+        "id": "FIX-MCP-BOOTSTRAP-BLOCKING-EXECSYNC-PROJECTROOT",
+        "type": "FIX",
+        "priority": "high",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "title": "Stop blocking execSync in getProjectRoot() on the eager buildToolNameMap() boot path",
+        "detail": "Replace execSync('git rev-parse --show-toplevel') in projectRoot.ts with an import.meta.dir walk-up memoize (no subprocess) OR make registerAgentMemoryTools' root-resolution lazy (off the registration-probe path). Real production server.ts:40 cold-start bug + the CI-flake amplifier (SPIKE-CI-PERFILE-ISOLATION-FLAKE item 1).",
+        "files": [
+          "apps/mcp-server/src/infrastructure/projectRoot.ts",
+          "apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts"
+        ],
+        "baseline_pass": "green on quiet machine; flakes only under CI CPU-oversubscription",
+        "ac": "cold-start non-regression guard + all ~107 tool names resolve + 1299b + ~30 agentBootstrap-importer tests green",
+        "related": [
+          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
+        ],
+        "created_at": "2026-07-10T06:50:00Z",
+        "created_by": "po-triage-20260710T0650Z"
+      },
+      {
+        "id": "FIX-CYCLEJOB-1294-FOLLOWUP-SWEEP-UNMOCKED-LIVE-FETCH",
+        "type": "FIX",
+        "priority": "medium",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "title": "Inject macroFetchFn/vnstockSyncFn no-op stubs into 106-intelligence-cycle + sweep 7 named test files",
+        "detail": "SPIKE confirmed 106-intelligence-cycle.test.ts fires live yahooFinance/SBV I/O. Mirror the 1294-macro-spam-fix.test.ts stub pattern in 106, then sweep 1228,1255,137,1383,1501,278,311. Sequence after FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH merges (SPIKE item 2).",
+        "files": [
+          "apps/mcp-server/src/__tests__/106-intelligence-cycle.test.ts"
+        ],
+        "baseline_pass": "green quiet; live-network exposure",
+        "ac": "zero live network in swept tests",
+        "depends_on": "FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-LIVE-FETCH",
+        "related": [
+          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
+        ],
+        "created_at": "2026-07-10T06:50:00Z",
+        "created_by": "po-triage-20260710T0650Z"
+      },
+      {
+        "id": "FIX-RAG-TEMPORAL-DECAY-TEST-JITTER",
+        "type": "FIX",
+        "priority": "low",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "title": "Deflake 135-rag-temporal-decay zero-tolerance boundary assertion",
+        "detail": "Freeze now into applyTemporalDecay for the 'brand-new result' test OR relax toBeLessThanOrEqual(0.6)->0.6001. Pure test-hygiene (retriever.ts is _deprecated/) (SPIKE item 3).",
+        "files": [
+          "apps/mcp-server/src/__tests__/135-rag-temporal-decay.test.ts"
+        ],
+        "baseline_pass": true,
+        "related": [
+          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
+        ],
+        "created_at": "2026-07-10T06:50:00Z",
+        "created_by": "po-triage-20260710T0650Z"
+      },
+      {
+        "id": "CI-PERFILE-STRUCTURAL-MITIGATION",
+        "type": "PLAN-ONLY",
+        "priority": "low",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "title": "ci-per-file-isolation.sh rc-fail-loud + parallelism-vs-vCPU decision",
+        "detail": "(a) rc captured but never checked -> a killed 0-parsed-fail process is invisible to the gate; (b) parallelism=16 on 2-4 vCPU = 4-8x oversubscription. Plan-only, not dispatched (SPIKE item 4).",
+        "related": [
+          "docs/spikes/SPIKE_CI-PERFILE-ISOLATION-FLAKE.md"
+        ],
+        "created_at": "2026-07-10T06:50:00Z",
+        "created_by": "po-triage-20260710T0650Z"
+      },
+      {
+        "id": "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
+        "type": "OPS-BACKLOG",
+        "priority": "medium",
+        "status": "TODO",
+        "owner": "bctc-analyst/ops",
+        "zone": "apps/pdf-extractor/",
+        "title": "Reparse ACB+BID 2025-Q4 bank enrich_failed rows (0-row B02-TCTD); links reports 3542+3543",
+        "detail": "Operational-first (ZERO new code): trigger bctcReparseJob on the two enrich_failed rows. ESCALATE to a code SPIKE (bank B02-TCTD 2025-Q4 0-row RC; candidate: FIX-BCTC-BANK-FORM-CLASSIFIER-BOLD-STRIP) IF either ticker still yields 0 bctc_table_rows after a reparse pass.",
+        "related": [
+          "telegram-report:3542",
+          "telegram-report:3543"
+        ],
+        "created_at": "2026-07-10T06:50:00Z",
+        "created_by": "po-triage-20260710T0650Z"
       }
     ],
     "closed_sprints": [
