@@ -4970,7 +4970,10 @@
         "priority": "HIGH",
         "size": "XS",
         "type": "TASK",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-2"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-2",
+        "folded_into": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "blocked_reason": "Completion commit landed code, but 129 live coherence violations + orch-validate.mjs:375 hard-fail-flip readiness are unresolved. NOT a rubber-stamp close — verify/prune under the sweep, then flip coherence hard-fail, then close.",
+        "folded_at": "2026-07-10T17:05:08Z"
       },
       {
         "id": "SHG-3",
@@ -4980,7 +4983,10 @@
         "priority": "HIGH",
         "size": "S",
         "type": "TASK",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-3"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-3",
+        "folded_into": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "blocked_reason": "Completion commit landed code, but 129 live coherence violations + orch-validate.mjs:375 hard-fail-flip readiness are unresolved. NOT a rubber-stamp close — verify/prune under the sweep, then flip coherence hard-fail, then close.",
+        "folded_at": "2026-07-10T17:05:08Z"
       },
       {
         "id": "SHG-4",
@@ -4990,7 +4996,10 @@
         "priority": "HIGH",
         "size": "S",
         "type": "TASK",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-4"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-4",
+        "folded_into": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "blocked_reason": "Completion commit landed code, but 129 live coherence violations + orch-validate.mjs:375 hard-fail-flip readiness are unresolved. NOT a rubber-stamp close — verify/prune under the sweep, then flip coherence hard-fail, then close.",
+        "folded_at": "2026-07-10T17:05:08Z"
       },
       {
         "id": "SHG-5",
@@ -5000,7 +5009,10 @@
         "priority": "NORMAL",
         "size": "XS",
         "type": "TASK",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-5"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#SHG-5",
+        "folded_into": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "blocked_reason": "Completion commit landed code, but 129 live coherence violations + orch-validate.mjs:375 hard-fail-flip readiness are unresolved. NOT a rubber-stamp close — verify/prune under the sweep, then flip coherence hard-fail, then close.",
+        "folded_at": "2026-07-10T17:05:08Z"
       },
       {
         "id": "FIX-MOCKGUARD-SCOPE-EXCLUDE-TESTGO",
@@ -6010,18 +6022,6 @@
         "id": "FACTORY-INTERFACE-split-server-ts",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-split-server-ts",
         "size": "L"
-      },
-      {
-        "id": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "priority": "P1",
-        "size": "M",
-        "status": "BACKLOG",
-        "title": "Batch verify-prune sweep of task_board.backlog[] — 4 confirmed stale-already-done BOUNDED-1 picks in one tick (FACTORY-INTERFACE 07-04T09:07Z, FACTORY-INFRA 07-04T09:37Z, FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + SYS-FUNC-05-FIX both 07-07T16:37Z)",
-        "type": "FIX",
-        "zone": "docs/data/orch/orch-state.json (task_board.backlog)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
-        "supervised": true,
-        "status_note": " | UPDATE 2026-07-10T16:55:06Z (router): SHG-1 confirmed as a 5th stale-pick instance (scripts/orch-state-validate.sh pre-existed, commit d6f9b0580). Wider check: SHG-2 (41d925d8c), SHG-3+SHG-4 (46eba4b33, eviction-exec b7fc62411), SHG-5 (4a5d655df) ALL have matching completion commits yet remain BACKLOG/TODO rows — but orch-validate.mjs:375 documents an still-unflipped coherence hard-fail condition gated on SHG-2+SHG-4 \"complete\", and this tick's own orch-apply.sh runs show 129 live coherence violations — genuine open work, not just unflipped checkboxes. Whoever picks up this sweep should treat the SHG-1..SHG-5 cluster as a concrete first case study: verify each individually (SHG-1 done, closed this tick; SHG-2/3/4/5 need actual investigation of the coherence-hard-fail-flip readiness before any DONE_VERIFIED flip)."
       },
       {
         "id": "INFRA-CLOUDFLARE-TUNNEL-OUTAGE-ROOT-CAUSE",
@@ -7735,7 +7735,26 @@
       "last_updated_at": "2026-07-10T09:19:45Z",
       "last_updated_by": "ops"
     },
-    "ready": [],
+    "ready": [
+      {
+        "id": "BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "priority": "P1",
+        "size": "M",
+        "status": "READY",
+        "title": "Batch verify-prune sweep of task_board.backlog[] — 4 confirmed stale-already-done BOUNDED-1 picks in one tick (FACTORY-INTERFACE 07-04T09:07Z, FACTORY-INFRA 07-04T09:37Z, FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + SYS-FUNC-05-FIX both 07-07T16:37Z)",
+        "type": "FIX",
+        "zone": "cross-service",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP",
+        "supervised": false,
+        "status_note": "SHARPENED + PROMOTED 2026-07-10T17:03Z (po adjudicated dispatch; WIP=0 idle capacity). SCOPE (RAW-verified this tick): backlog[]=385 rows; validator reports 129 lane-coherence warnings. CONCRETE: 55 terminal-status rows stranded in backlog[] (34 DONE + 12 CANCELLED + 9 DONE_VERIFIED) + 12 mislaned active rows (5 REVIEW + 4 BLOCKED + 3 IN_PROGRESS) + 1 review-lane row w/ DONE_VERIFIED status; remainder ~62 DEFERRED/TODO/HELD needing enum-normalize (SHG-2 residual). ROOT (verified): scripts/orch-cold-evict.sh only evicts from .done/.done_verified/.active_sprints — it NEVER scans backlog[], so terminal rows flipped-in-place (feedback_review_status_stuck_in_inprogress_lane_blocks_wip) never evict and accumulate. DELIVERABLES: D0 recon — RAW-verify each of the 55 terminal rows against git/live-DB ground truth (per project_bounded1_first_pickup_stale_backlog_hygiene_debt — do NOT trust the status label). D1 cold-evict/relocate the verified-terminal 55 out of backlog[]->archive. D2 relocate the ~12 mislaned active rows to correct lanes. D3 normalize ~62 DEFERRED/TODO/HELD->canonical BACKLOG (SHG-2 residual). D4 ROOT FIX: extend orch-cold-evict.sh (or SHG-4 eviction §) to also evict terminal-status rows found in ANY non-terminal lane so this never re-accumulates. D5 once backlog[] coherence-clean: flip scripts/orch-validate.mjs:375 lane-coherence warn-only->hard-fail (the SHG-2+SHG-4 complete gate) then close SHG-2/SHG-3/SHG-4/SHG-5 DONE_VERIFIED. GENERIC MANDATE: reusable scripts/orch-backlog-hygiene-sweep.sh with conservation guard + --dry-run; route all writes via orch-apply.sh (hazards: negative_path_corrupts_ssot, jq_empty_guard_clobbers, coldevict_complete_status_drift, dup_key_last_wins). VERIFICATION GATE: bash scripts/orch-state-validate.sh reports 0 coherence warnings AND SHG-2..SHG-5 DONE_VERIFIED AND a fresh BOUNDED-1/drain-signals pick lands on a genuinely-open row. next_agent=architect (D0 recon + D4/D5 design touch a shared eviction predicate + a validator hard-fail gate — architect-first then decompose to dev).",
+        "next_agent": "architect",
+        "owner": "architect",
+        "adjudicated_dispatch": true,
+        "dispatched_by": "po",
+        "promoted_at": "2026-07-10T17:05:08Z",
+        "updated_at": "2026-07-10T17:05:08Z"
+      }
+    ],
     "review": [
       {
         "id": "TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-VALIDATION-REINGEST",
