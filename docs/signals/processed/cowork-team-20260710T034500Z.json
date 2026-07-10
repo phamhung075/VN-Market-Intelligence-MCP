@@ -1,0 +1,34 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-10T03:45Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "alert-commander-market"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher (deprecated-backstop pattern), 8th consecutive tick for this slot (02:00Z-03:45Z)."
+    }
+  ],
+  "signal_queue_drained": [],
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "No chef-group slot matched this tick — Step 4.5c mutex not applicable.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). alert-commander-market: deprecated-backstop pattern, unchanged.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (emit_pressure_state succeeded).",
+  "work_channel_message_sent": false,
+  "stale_warning_note": "stale_warning field ABSENT this tick. Cumulative (02:00Z 07-09 through 03:45Z 07-10, 53 WORK ticks; SILENT ticks not counted): 20 true, 33 absent.",
+  "recurring_symptom_note": "alert-commander-market not guaranteed:true — no new guaranteed-slot miss this tick. Session guaranteed-miss count remains 6. Steady-state undeliverable pattern continues through VN market hours.",
+  "emitted_at": "2026-07-10T03:46:46.561Z",
+  "_processed": {
+    "fingerprint": "0b346923ff2d17ad9da8a5f6d9e77804b9da84f71cbed48688848ba7644201ba",
+    "processedAt": "2026-07-10T04:02:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

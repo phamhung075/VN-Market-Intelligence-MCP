@@ -1,0 +1,55 @@
+{
+  "source": "cowork-team",
+  "type": "tick-report",
+  "severity": "MEDIUM",
+  "tick": "2026-07-10T04:00Z",
+  "verdict": "WORK",
+  "matched_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours",
+    "alert-commander-market",
+    "alert-commander-critical"
+  ],
+  "spawned": [],
+  "skipped": [
+    {
+      "slot_id": "news-scout-offhours",
+      "agent": "news-scout",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher (deprecated-backstop pattern), 5th occurrence of the recurring 4h-cron trio this session (prior: 12:00Z, 16:00Z, 20:00Z, 00:00Z)."
+    },
+    {
+      "slot_id": "market-watcher-offhours",
+      "agent": "market-watcher",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — same pattern, same trio."
+    },
+    {
+      "slot_id": "alert-commander-market",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — trigger_id=null, _superseded_by=cowork-dispatcher (deprecated-backstop pattern), 9th consecutive tick for this slot (02:00Z-04:00Z)."
+    },
+    {
+      "slot_id": "alert-commander-critical",
+      "agent": "alert-commander",
+      "guaranteed": false,
+      "reason": "undeliverable-gateway-blind — deprecated-backstop pattern, same trio as news-scout-offhours/market-watcher-offhours."
+    }
+  ],
+  "signal_queue_drained": [],
+  "chef_mutex_applied": false,
+  "chef_mutex_note": "No chef-group slot matched this tick — Step 4.5c mutex not applicable.",
+  "methodology_note": "Discriminator per docs/agents/cowork-team/flow/spawn-fanout.md (trigger_id + _superseded_by, OR logic). All 4 matched slots: deprecated-backstop pattern, unchanged.",
+  "gateway_blind_status": "still live — native mcp__gateway__call_tool tool absent from available tool set this tick; mcp_call bypass reachable (emit_pressure_state succeeded).",
+  "work_channel_message_sent": false,
+  "stale_warning_note": "stale_warning field TRUE this tick. Cumulative (02:00Z 07-09 through 04:00Z 07-10, 54 WORK ticks; SILENT ticks not counted): 21 true, 33 absent.",
+  "recurring_symptom_note": "None of the 4 matched slots guaranteed:true — no new guaranteed-slot miss this tick. Session guaranteed-miss count remains 6. First tick where the offhours 4h-trio coincides with the now-active alert-commander-market cadence, producing a 4-slot match — heaviest single-tick undeliverable volume this session so far.",
+  "emitted_at": "2026-07-10T04:01:49.200Z",
+  "_processed": {
+    "fingerprint": "63275a82e47bed2c5e823d95292e9d23aeb3a6d9d77bcc80f2b25c091a7d89f4",
+    "processedAt": "2026-07-10T04:02:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
