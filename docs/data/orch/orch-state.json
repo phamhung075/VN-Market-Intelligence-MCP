@@ -6309,6 +6309,141 @@
         ],
         "detail_ref": "docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md",
         "notes": "Not a defect in the carry-forward script; the script correctly refused to promote PARTIAL status because the source rows lack balance-sheet data. This is a genuine data-completeness gap requiring re-extraction from the original CTG report source. Escalated by QA 2026-07-10 per the task's own AC-TRACK1-3 clause (if source rows are still corrupted / incomplete, escalate — found incomplete). Mint timing: after gateway-blind defect resolves (blocker confirmed live as of 2026-07-10T01:24Z). QA Review Record indicates the AC-TRACK1-3 escalation is legitimate and correctly routed to backlog."
+      },
+      {
+        "id": "TASK_2000",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-1: daily_foreign_flow DDL + index + daily_ohlcv_with_flow view",
+        "zone": "apps/mcp-server/",
+        "status": "TODO",
+        "priority": "P1",
+        "size": "M",
+        "depends_on": [],
+        "blocks": [
+          "TASK_2001",
+          "TASK_2003",
+          "TASK_2004"
+        ],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "handoff": "docs/handoffs/TASK_2000-daily-ff-schema.md",
+        "note": "New table + view creation, additive only, unblocks all downstream subtasks"
+      },
+      {
+        "id": "TASK_2001",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-2: one-time backfill from legacy daily_ohlcv.foreign_*",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "depends_on": [
+          "TASK_2000"
+        ],
+        "blocks": [
+          "TASK_2002"
+        ],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "handoff": "docs/handoffs/TASK_2001-daily-ff-backfill.md",
+        "note": "R-6 critical: backfill MUST land before writer cutover"
+      },
+      {
+        "id": "TASK_2002",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-3: writer cutover to unconditional upsert into daily_foreign_flow",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "L",
+        "depends_on": [
+          "TASK_2001"
+        ],
+        "blocks": [
+          "TASK_2005"
+        ],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "handoff": "docs/handoffs/TASK_2002-daily-ff-writer-cutover.md",
+        "note": "Closes R-1 structurally; rewrite writeForeignFlowToOhlcv, add SSOT freeze annotation, unit tests T-1/T-2/T-4/T-5"
+      },
+      {
+        "id": "TASK_2003",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-4: migrate 5 Class-A read sites to daily_ohlcv_with_flow view",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "depends_on": [
+          "TASK_2000"
+        ],
+        "blocks": [
+          "TASK_2005"
+        ],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "handoff": "docs/handoffs/TASK_2003-daily-ff-class-a-reads.md",
+        "note": "5 files, one-line rename each; parallel-safe with -2/-3"
+      },
+      {
+        "id": "TASK_2004",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-5: migrate 4 Class-B freshness/health probes to daily_foreign_flow",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "depends_on": [
+          "TASK_2000"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "handoff": "docs/handoffs/TASK_2004-daily-ff-class-b-probes.md",
+        "note": "Direct table queries for clean freshness signal (not through view); decouples foreign-flow health from OHLCV health"
+      },
+      {
+        "id": "TASK_2005",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-6: integration test + behavioral gate (R-1 elimination proof)",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "depends_on": [
+          "TASK_2002",
+          "TASK_2003"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "handoff": "docs/handoffs/TASK_2005-daily-ff-integration-test.md",
+        "note": "Direct falsification of chưa trả số từng mã symptom; T-3 view correctness + late-OHLCV join"
+      },
+      {
+        "id": "TASK_2006",
+        "type": "DEVELOPMENT",
+        "title": "SUBTASK-DAILY-FF-7 (follow-on): schema comment marking daily_ohlcv.foreign_* frozen",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "depends_on": [
+          "TASK_2002"
+        ],
+        "blocks": [],
+        "created_at": "2026-07-10T19:30:00Z",
+        "created_by": "pm",
+        "promotion_note": "PM atomization of ARCH-DAILY-FOREIGN-FLOW-TABLE (optional follow-on)",
+        "handoff": "docs/handoffs/TASK_2006-daily-ff-deprecation-comment.md",
+        "note": "Optional: annotation-only deprecation comment for legacy columns (no DROP COLUMN per live DB risk)"
       }
     ],
     "closed_sprints": [
@@ -7045,7 +7180,33 @@
         "qa_note": "RAW-verified: commit 6f054ea3a touched exactly the 8 claimed files (git show --stat); f511c1d39 touched exactly orch-state.json; both present on origin/main (f511c1d39 IS origin/main HEAD). STEP ops-Sn grep confirms sequential S1-S6, no gaps/dupes; pre-existing duplicate-S2 bug fix confirmed via before/after diff (old S1 relocate-stock-catalog->S3, old S2 extract-computeDecision->S4, old S2 split-repositories->S6). 3 offender files confirmed genuinely absent from disk + git ls-files + repo-wide find. Brief section 5 DoD items 3-4 text confirmed verbatim-satisfied (runbook footnote + commit-boundary ops zone row + STEP ops-Sn enforcement line + 3 offenders folded). agent-father-S5 journal + notebook (85L, under 200L) confirmed. Board handoff f511c1d39 coherent: review lane, next_agent=qa, head synced (status=review, active_task_id unchanged, next_agent=qa). NON-BLOCKING gap noted: runbook Step 4/4b Commit-Gate Invariant has no direct hook in ops flow files (init.md/handlers.md/docker.md) -- enforcement relies entirely on the pre-existing PO/developer dispatch-prompt citation of the runbook Microservice Code-Change Close Gate heading (developer/flow/microservice-main.md:162, po/flow/sprint-signoff.md:13), not on ops own bootstrapped knowledge list. Acceptable for THIS task literal DoD (section 5 items 3-4 only require the doc text, not flow-file wiring) and mirrors the same enforcement model as the agents-architect Brief-Commit Invariant it is modeled on (self-attested, not code-gated) -- flagging for a possible future hardening task, not a blocker here."
       }
     ],
-    "done_verified": [],
+    "done_verified": [
+      {
+        "id": "ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "type": "ARCHITECTURE",
+        "title": "ARCH-DAILY-FOREIGN-FLOW-TABLE: Separate staging table to eliminate R-1 data-loss window",
+        "zone": "apps/mcp-server/",
+        "status": "DONE",
+        "priority": "P1",
+        "size": "L",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-DAILY-FOREIGN-FLOW-TABLE",
+        "promoted_at": "2026-07-10T01:47:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-10T01:47:52Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "pm",
+        "next_agent_correction_note": "BOUNDED-1 auto-pickup: zone apps/mcp-server/ resembles a dev-zone pattern but backlog-detail.owner=\"architect\" (type=ARCHITECTURE design task) — corrected next_agent from developer placeholder to architect per main.md NON-CODE/DESIGN gap-fix (2026-07-09T17:48Z).",
+        "handoff": "docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md",
+        "architect_done_at": "2026-07-10T01:59:03Z",
+        "note": "Design deliverable shipped (handoff); additive daily_foreign_flow table + daily_ohlcv_with_flow compat VIEW eliminates R-1 structurally (unconditional write, no NOT NULL price coupling). 7-subtask PM atomization (SUBTASK-DAILY-FF-1..7) in handoff; -2 backfill MUST land before -3 writer cutover (R-6).",
+        "updated_at": "2026-07-10T01:59:03Z",
+        "updated_by": "architect",
+        "completed_at": "2026-07-10T19:30:00Z",
+        "completed_by": "pm",
+        "completion_note": "PM atomization complete: 7 subtasks seeded in backlog with proper dependencies"
+      }
+    ],
     "head": {
       "status": "deprecated",
       "canonical_moved_to": ".head",
@@ -7461,28 +7622,6 @@
         "status_note": "ROOT CAUSE (verified by PO reading scripts/devteam-backlog-promote-bounded1.jq): the BOUNDED-1 idle-pickup promote gate had WIP + effective_supervised + deps_satisfied filters but NO gate excluding epic-wrapper rows (rows carrying a non-null/non-empty children[] array). On 2026-07-09T23:17Z it auto-claimed the P1 epic AUDIT-FETCH-COMPLETE (mode=audit-epic, children=4, no own next_agent/probe) for direct dispatch; dev-team reverted + point-fixed supervised:true on that ONE row. docs/data/orch/archive/backlog-detail.json has a SECOND children[]-bearing row still exposed: FACTORY-GUARD-CI-REGRESSION-SPIKE (children=7, supervised:null) -- the supervised gate does NOT catch supervised:null, so only a structural children!=null gate protects it. FIX: added effective_children/is_epic_wrapper predicate mirroring the shipped effective_supervised precedence (inline .children OR $detail_items[.id].children, no .detail_ref precondition) -- reused the already-threaded --slurpfile detail. Applied the select() filter at candidate-selection time alongside the existing supervised/deps filters. Added scripts/test-devteam-bounded1-epic-wrapper.sh (15/15 pass) covering detail-only children (the exact FACTORY-GUARD-CI-REGRESSION-SPIKE reproducer with supervised:null), board-only children, both-signal (AUDIT-FETCH-COMPLETE shape), empty children[] (not a wrapper), missing key (conservative-default promotable), and ARRAY-shaped $detail_items (no crash). Verified baseline suites unregressed: test-devteam-bounded1-supervised-flag.sh (15/15) + test-devteam-bounded1-depends-on.sh (18/18), all green after the change. Live-data dry-run (never through orch-apply.sh) confirmed the shipped gate now skips both FACTORY-GUARD-CI-REGRESSION-SPIKE and AUDIT-FETCH-COMPLETE and promotes a legitimate non-epic row instead when WIP is forced to 0 on a scratch copy. This is the 4th BOUNDED-1 eligibility-gate defect in the same class -- SPIKE-BOUNDED1-ELIGIBILITY-CONTRACT-REVIEW (architect, non-blocking, already minted 2026-07-09) covers whether a shared detail-resolution contract should replace hole-by-hole patches; not re-escalated again here, same open spike already tracks it. DJ-GATE-1 entry required before DONE/REVIEW flip. -- IMPLEMENTATION DONE: shipped effective_children/is_epic_wrapper gate + candidate-selection wiring in scripts/devteam-backlog-promote-bounded1.jq; new scripts/test-devteam-bounded1-epic-wrapper.sh (15/15 GREEN); baseline test-devteam-bounded1-supervised-flag.sh (15/15) + test-devteam-bounded1-depends-on.sh (18/18) re-confirmed GREEN, no regression; live-data dry-run confirms both FACTORY-GUARD-CI-REGRESSION-SPIKE and AUDIT-FETCH-COMPLETE now skip promotion. DJ-GATE-1 entry: sprint-SYSTEMIC-REMAKE-P1-developer.md STEP developer-S12.",
         "done_by": "developer",
         "done_at": "2026-07-10T00:35:55Z"
-      },
-      {
-        "id": "ARCH-DAILY-FOREIGN-FLOW-TABLE",
-        "type": "ARCHITECTURE",
-        "title": "ARCH-DAILY-FOREIGN-FLOW-TABLE: Separate staging table to eliminate R-1 data-loss window",
-        "zone": "apps/mcp-server/",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "L",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ARCH-DAILY-FOREIGN-FLOW-TABLE",
-        "promoted_at": "2026-07-10T01:47:26Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-10T01:47:52Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "pm",
-        "next_agent_correction_note": "BOUNDED-1 auto-pickup: zone apps/mcp-server/ resembles a dev-zone pattern but backlog-detail.owner=\"architect\" (type=ARCHITECTURE design task) — corrected next_agent from developer placeholder to architect per main.md NON-CODE/DESIGN gap-fix (2026-07-09T17:48Z).",
-        "handoff": "docs/handoffs/ARCH-DAILY-FOREIGN-FLOW-TABLE-architect-design.md",
-        "architect_done_at": "2026-07-10T01:59:03Z",
-        "note": "Design deliverable shipped (handoff); additive daily_foreign_flow table + daily_ohlcv_with_flow compat VIEW eliminates R-1 structurally (unconditional write, no NOT NULL price coupling). 7-subtask PM atomization (SUBTASK-DAILY-FF-1..7) in handoff; -2 backfill MUST land before -3 writer cutover (R-6).",
-        "updated_at": "2026-07-10T01:59:03Z",
-        "updated_by": "architect"
       }
     ],
     "qa": [],
